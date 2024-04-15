@@ -16,6 +16,9 @@
 #include <UObject/NameTypes.h>           // FName
 #include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS
 
+#include "SpCore/CppFuncComponent.h"
+#include "SpCore/StableNameComponent.h"
+
 #include "SpCoreActor.generated.h"
 
 class UStableNameComponent;
@@ -64,16 +67,18 @@ public:
     #endif
 
 private:
-    // Required so this actor can be found through the Unreal::findActor interface, e.g., to call
-    // SubscribeToActorHitEvents().
+    // Required so this actor can be found through our Unreal::findActor interface.
     UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Stable Name Component");
     UStableNameComponent* StableNameComponent = nullptr;
 
-    // Calling UGameplayStatics::SetGamePaused() doesn't synchronize with the default play/pause button in the
-    // editor. So we provide custom buttons and a custom read-only property to update and visualize the engine-
-    // level (as opposed to the editor-level) pause state of the game. This functionality is implemented by
-    // interacting directly with UGameplayStatics, and is therefore guaranteed to be synchronized with the
-    // engine-level state.
+    // Used for debugging.
+    UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "CPP Func Component");
+    UCppFuncComponent* CppFuncComponent = nullptr;
+
+    // Calling UGameplayStatics::SetGamePaused() doesn't synchronize with the default play/pause button in the editor
+    // So we provide custom buttons and a custom read-only property to update and visualize the engine-level (as
+    // opposed to the editor-level) pause state of the game. This functionality is implemented by interacting directly
+    // with UGameplayStatics, and is therefore guaranteed to be synchronized with the engine-level state.
     UFUNCTION(CallInEditor, Category="SPEAR")
     void PauseGame();
 

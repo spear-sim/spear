@@ -4,7 +4,6 @@
 
 #include "SpCore/Unreal.h"
 
-#include <stddef.h> // size_t
 #include <stdint.h> // uint8_t
 
 #include <map>
@@ -20,7 +19,7 @@
 #include <Dom/JsonObject.h>
 #include <Dom/JsonValue.h>
 #include <GameFramework/Actor.h>
-#include <HAL/Platform.h>            // TCHAR
+#include <HAL/Platform.h>            // TCHAR, uint16
 #include <JsonObjectConverter.h>
 #include <Serialization/JsonReader.h>
 #include <Serialization/JsonSerializer.h>
@@ -414,7 +413,7 @@ std::map<std::string, std::string> Unreal::callFunction(UObject* uobject, UFunct
     SP_ASSERT(ufunction);
 
     // Create buffer to store all args and the return value.
-    size_t num_bytes = ufunction->ParmsSize;
+    uint16 num_bytes = ufunction->ParmsSize;
     uint8_t initial_value = 0;
     std::vector<uint8_t> args_vector(num_bytes, initial_value);
 

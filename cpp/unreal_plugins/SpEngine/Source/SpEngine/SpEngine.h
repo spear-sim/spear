@@ -9,6 +9,7 @@
 #include <Modules/ModuleInterface.h>
 
 #include "SpCore/Rpclib.h"
+#include "SpEngine/CppFuncService.h"
 #include "SpEngine/EngineService.h"
 #include "SpEngine/GameWorldService.h"
 #include "SpEngine/LegacyService.h"
@@ -20,6 +21,7 @@ public:
     void ShutdownModule() override;
 private:
     std::unique_ptr<rpc::server> rpc_server_ = nullptr;
+    std::unique_ptr<CppFuncService> cpp_func_service_ = nullptr;
     std::unique_ptr<EngineService<rpc::server>> engine_service_ = nullptr;
     std::unique_ptr<GameWorldService> game_world_service_ = nullptr;
     std::unique_ptr<LegacyService> legacy_service_ = nullptr;

@@ -5,19 +5,23 @@
 #include "SpCore/SpCoreActor.h"
 
 #include <Containers/Array.h>
-#include <Engine/Engine.h>      // GEngine
-#include <Engine/EngineTypes.h> // FHitResult
+#include <Engine/Engine.h>          // GEngine
+#include <Engine/EngineBaseTypes.h> // ETickingGroup
+#include <Engine/EngineTypes.h>     // FHitResult
 #include <GameFramework/Actor.h>
-#include <HAL/Platform.h>       // uint64
+#include <HAL/Platform.h>           // uint64
 #include <Kismet/GameplayStatics.h>
 #include <Math/Vector.h>
 #include <Misc/CoreDelegates.h>
-#include <UObject/NameTypes.h>  // FName
+#include <UObject/NameTypes.h>      // FName
 
 #include "SpCore/Assert.h"
+#include "SpCore/CppFuncData.h"
+#include "SpCore/CppFuncComponent.h"
 #include "SpCore/Log.h"
 #include "SpCore/StableNameComponent.h"
 #include "SpCore/Unreal.h"
+#include "SpCore/UnrealObj.h"
 
 ASpCoreActor::ASpCoreActor()
 {
@@ -29,6 +33,51 @@ ASpCoreActor::ASpCoreActor()
 
     StableNameComponent = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, "stable_name");
     SP_ASSERT(StableNameComponent);
+
+    CppFuncComponent = Unreal::createComponentInsideOwnerConstructor<UCppFuncComponent>(this, "cpp_func");
+    SP_ASSERT(CppFuncComponent);
+
+    // TODO: remove these CppFuncs because they are only here for debugging
+
+    CppFuncComponent->registerFunc("hello_world", [](const CppFuncComponentArgs& args) -> CppFuncComponentReturnValues {
+
+        CppFuncData<uint8_t> hello("hello");
+        hello.setData("Hello!"); // initialize from string literal
+
+        CppFuncData<uint8_t> world("world");
+        std::string world_str = "World!";
+        world.setData(world_str); // or from string
+
+        CppFuncData<double> data("data");
+        data.setData({1.1, 2.2, 4.4, 8.8}); // or from initializer list of double
+
+        // NOTE: for maximum efficiency, getReturnValuesFromData(...) performs std::move operations and invalidates data objects
+        CppFuncComponentReturnValues return_values;
+        return_values.return_values_ = CppFuncDataUtils::getReturnValuesFromData({hello.getPtr(), world.getPtr(), data.getPtr()});
+
+        return return_values;
+    });
+
+    CppFuncComponent->registerFunc("my_func", [](const CppFuncComponentArgs& args) -> CppFuncComponentReturnValues {
+
+        // create data objects directly from arg data
+        CppFuncData<double> location("location");
+        CppFuncData<double> rotation("rotation");
+        CppFuncDataUtils::setDataFromArgs({location.getPtr(), rotation.getPtr()}, args.args_);
+
+        // create new data objects
+        CppFuncData<double> new_location("new_location");
+        CppFuncData<double> new_rotation("new_rotation");
+        new_location.setData(location.getData() | std::views::transform([](auto x) { return 2.0*x; })); // initialize from range of double
+        new_rotation.setData(rotation.getData() | std::views::transform([](auto x) { return 3.0*x; })); // initialize from range of double
+
+        // set return data from data objects (NOTE: getReturnValuesFromData(...) performs std::move operations and invalidates data objects)
+        CppFuncComponentReturnValues return_values;
+        return_values.return_values_ = CppFuncDataUtils::getReturnValuesFromData({new_location.getPtr(), new_rotation.getPtr()});
+
+
+        return return_values;
+    });
 }
 
 ASpCoreActor::~ASpCoreActor()

@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <stddef.h> // size_t
-
 #include <concepts> // std::derived_from
 #include <map>
 #include <ranges>   // std::views::filter, std::views::transform
@@ -628,7 +626,7 @@ public:
         USceneComponent* root = parent->GetRootComponent();
         std::vector<TReturnAsComponent*> components;
         if (Cast<TSceneComponent>(root)) { // no RTTI available, so use Cast instead of dynamic_cast
-            components.push_back(root);
+            components.push_back(static_cast<TReturnAsComponent*>(root));
         }
         if (root && include_all_descendants) {
             std::vector<TReturnAsComponent*> children = getChildrenComponentsByType<TSceneComponent, TReturnAsComponent>(root, include_all_descendants);
@@ -647,7 +645,10 @@ public:
         parent->GetChildrenComponents(include_all_descendants, children_tarray);
         std::vector<USceneComponent*> children = toStdVector(children_tarray);
         SP_ASSERT(!Std::contains(children, nullptr));
-        return Std::toVector<TReturnAsComponent*>(children | std::views::filter([](auto child) { return Cast<TSceneComponent>(child); })); // no RTTI available, so use Cast instead of dynamic_cast
+        return Std::toVector<TReturnAsComponent*>(
+            children |
+            std::views::filter([](auto child) { return Cast<TSceneComponent>(child); }) | // no RTTI available, so use Cast instead of dynamic_cast
+            std::views::transform([](auto child) { return static_cast<TReturnAsComponent*>(child); }));
     }
 
     //

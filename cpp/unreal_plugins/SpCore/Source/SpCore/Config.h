@@ -8,8 +8,7 @@
 #include <vector>
 
 #include "SpCore/Assert.h"
-#include "SpCore/Log.h"
-#include "SpCore/Std.h"
+#include "SpCore/Yaml.h"
 #include "SpCore/YamlCpp.h"
 
 class SPCORE_API Config
@@ -40,63 +39,21 @@ public:
     //
     //     float time_delta_seconds = Config::get<float>("SIMULATOR.TIME_DELTA_SECONDS");
 
-    // These public get(...) functions are stateful, in the sense that they depend on s_config_node_.
     template <typename TValue>
     static TValue get(const std::string& key)
     {
         SP_ASSERT(isInitialized());
-        return get<TValue>(s_config_node_, key);
+        return Yaml::get<TValue>(s_config_node_, key);
     }
 
     template <typename TValue>
     static TValue get(const std::vector<std::string>& keys)
     {
         SP_ASSERT(isInitialized());
-        return get<TValue>(s_config_node_, keys);
+        return Yaml::get<TValue>(s_config_node_, keys);
     }
 
 private:
-    // These private get(...) functions are stateless, in the sense that they require a YAML node to be passed
-    // in. If we need YAML functionality in other parts of the code, we could move these methods into their own
-    // class.
-    template <typename TValue>
-    static TValue get(const YAML::Node& node, const std::string& key)
-    {
-        SP_ASSERT(key != "");
-        return get<TValue>(node, Std::tokenize(key, "."));
-    }
-
-    template <typename TValue>
-    static TValue get(const YAML::Node& node, const std::vector<std::string>& keys)
-    {
-        SP_ASSERT(!keys.empty());
-        SP_ASSERT(node.IsDefined());
-
-        YAML::Node current_node = node;
-        for (auto& key : keys) {
-            SP_ASSERT(key != "");
-
-            // If the key is invalid, print an informative error message.
-            if (!current_node[key]) {
-                std::string str = "Invalid key, keys == [";
-                for (int i = 0; i < keys.size() - 1; i++) {
-                    str = str + "\"" + keys.at(i)  + "\", ";
-                }
-                str = str + "\"" + keys.at(keys.size() - 1) + "\"], key \"" + key + "\" is invalid.";
-                SP_LOG(str);
-                SP_ASSERT(false);
-            }
-
-            // We don't use current_node = current_node[key], because operator= merges the right-hand side
-            // into the left-hand side Node. Also, repeated assignment to the same Node consumes additional
-            // memory, as noted here:
-            //     https://github.com/jbeder/yaml-cpp/issues/502.
-            current_node.reset(current_node[key]);
-        }
-
-        return current_node.as<TValue>();
-    }
-
     inline static YAML::Node s_config_node_;
     inline static bool s_initialized_ = false;
 };

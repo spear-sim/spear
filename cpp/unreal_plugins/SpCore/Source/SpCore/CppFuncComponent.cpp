@@ -4,7 +4,15 @@
 
 #include "SpCore/CppFuncComponent.h"
 
+#include <functional> // std::function
+#include <string>
+
+#include <Containers/UnrealString.h>
+#include <Containers/Array.h>
+
+#include "SpCore/CppFuncRegistrar.h"
 #include "SpCore/Log.h"
+#include "SpCore/SharedMemoryRegion.h"
 #include "SpCore/Unreal.h"
 
 UCppFuncComponent::UCppFuncComponent()
@@ -17,19 +25,36 @@ UCppFuncComponent::~UCppFuncComponent()
     SP_LOG_CURRENT_FUNCTION();
 }
 
-void UCppFuncComponent::registerFunc(const std::string& func_name, const std::function<TReturn(const TArgs&)>& func)
+void UCppFuncComponent::registerFunc(const std::string& name, const std::function<CppFuncComponentReturnValues(const CppFuncComponentArgs&)>& func)
 {
-    funcs_.registerFunc(func_name, func);
-    FuncNames.Add(Unreal::toFString(func_name));
+    funcs_.registerFunc(name, func);
+    FuncNames.Add(Unreal::toFString(name));
 }
 
-void UCppFuncComponent::unregisterFunc(const std::string& func_name)
+void UCppFuncComponent::unregisterFunc(const std::string& name)
 {
-    FuncNames.Remove(Unreal::toFString(func_name));
-    funcs_.unregisterFunc(func_name);
+    FuncNames.Remove(Unreal::toFString(name));
+    funcs_.unregisterFunc(name);
 }
 
-typename UCppFuncComponent::TReturn UCppFuncComponent::call(const std::string& func_name, const typename UCppFuncComponent::TArgs& args)
+void UCppFuncComponent::registerSharedMemoryView(const std::string& name, const SharedMemoryView& shared_memory_view)
 {
-    return funcs_.call(func_name, args);
+    Std::insert(shared_memory_views_, name, shared_memory_view);
+    SharedMemoryViewNames.Add(Unreal::toFString(name));
+}
+
+void UCppFuncComponent::unregisterSharedMemoryView(const std::string& name)
+{
+    SharedMemoryViewNames.Remove(Unreal::toFString(name));
+    Std::remove(shared_memory_views_, name);
+}
+
+const std::map<std::string, SharedMemoryView>& UCppFuncComponent::getSharedMemoryViews() const
+{
+    return shared_memory_views_;
+}
+
+CppFuncComponentReturnValues UCppFuncComponent::callFunc(const std::string& name, const CppFuncComponentArgs& args)
+{
+    return funcs_.call(name, args);
 }

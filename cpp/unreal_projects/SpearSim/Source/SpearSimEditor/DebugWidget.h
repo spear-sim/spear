@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <memory> // std::unique_ptr
+
 #include <Containers/Array.h>
 #include <Containers/Map.h>
 #include <Containers/Set.h>
@@ -44,6 +46,9 @@ private:
     void CallFunctions();
 
     UFUNCTION(CallInEditor, Category="SPEAR")
+    void CallCppFunctions();
+
+    UFUNCTION(CallInEditor, Category="SPEAR")
     void CreateObjects();
 
     UFUNCTION(CallInEditor, Category = "SPEAR")
@@ -80,4 +85,5 @@ private:
     TSet<FString> SetOfStrings;
 
     UCppFuncComponent* cpp_func_component_ = nullptr;
+    std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
 };

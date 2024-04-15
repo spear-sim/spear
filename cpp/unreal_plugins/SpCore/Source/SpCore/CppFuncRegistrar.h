@@ -47,20 +47,20 @@ template <typename TReturn, typename... TArgs>
 class CppFuncRegistrar
 {
 public:
-    void registerFunc(const std::string& func_name, const std::function<TReturn(TArgs...)>& func)
+    void registerFunc(const std::string& name, const std::function<TReturn(TArgs...)>& func)
     {
         SP_ASSERT(func);
-        Std::insert(funcs_, func_name, func);
+        Std::insert(funcs_, name, func);
     }
 
-    void unregisterFunc(const std::string& func_name)
+    void unregisterFunc(const std::string& name)
     { 
-        Std::remove(funcs_, func_name);
+        Std::remove(funcs_, name);
     }
 
-    TReturn call(const std::string& func_name, TArgs... args)
+    TReturn call(const std::string& name, TArgs... args)
     {
-        return funcs_.at(func_name)(args...);
+        return funcs_.at(name)(args...);
     }
 
 private:
