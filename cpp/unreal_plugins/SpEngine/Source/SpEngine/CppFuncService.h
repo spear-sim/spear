@@ -123,7 +123,6 @@ public:
                     SP_ASSERT(arg.num_elements_ >= 0);
                     SP_ASSERT(arg.shared_memory_name_ != "");
 
-                    // use arg.shared_memory_name_ to get a specific SharedMemoryView
                     const std::map<std::string, CppFuncSharedMemoryView>& shared_memory_views = cpp_func_component->getSharedMemoryViews();
                     SP_ASSERT(Std::containsKey(shared_memory_views, arg.shared_memory_name_));
                     const CppFuncSharedMemoryView& shared_memory_view = shared_memory_views.at(arg.shared_memory_name_);
@@ -171,7 +170,6 @@ public:
                     SP_ASSERT(component_return_value.num_elements_ >= 0);
                     SP_ASSERT(component_return_value.shared_memory_name_ != "");
 
-                    // use return_value.shared_memory_name_ to get a specific SharedMemoryView
                     const std::map<std::string, CppFuncSharedMemoryView>& shared_memory_views = cpp_func_component->getSharedMemoryViews();
                     SP_ASSERT(Std::containsKey(shared_memory_views, component_return_value.shared_memory_name_));
                     const CppFuncSharedMemoryView& shared_memory_view = shared_memory_views.at(component_return_value.shared_memory_name_);

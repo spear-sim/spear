@@ -20,7 +20,7 @@
 // functions can be called from higher-level code dynamically by name. In our naming convention in this
 // codebase, we refer to such a function as a "CppFunc". CppFuncs can accept as input, and return as
 // output, the following data types: (1) a map of names to data arrays that can each have a different
-// data type; (2) a map of names to Unreal structs; and (3) YAML data. This file is concerned
+// data type; (2) a map of names to Unreal structs; and (3) an info string. This file is concerned
 // specifically with representing and operating on data arrays.
 
 // Needs to match SpEngine/CppFuncService.h
@@ -186,7 +186,7 @@ public:
         shared_memory_name_ = shared_memory_name;
     }
 
-    // setValues(...) set the underlying values observed by view_
+    // setValues(...) sets the underlying values observed by view_ without updating data_ or view_
 
     void setValues(std::initializer_list<TValue> src)
     {
@@ -222,7 +222,7 @@ private:
 };
 
 //
-// CppFuncView is a strongly typed class that can be instantiated to retrieve an arg or return value.
+// CppFuncView is a read-only strongly typed class that can be instantiated to retrieve an arg or return value.
 //
 
 class CppFuncViewBase
@@ -264,7 +264,7 @@ private:
 };
 
 //
-// CppFuncDataUtils is a set of functions for getting items from data objects, and getting views from items.
+// CppFuncDataUtils is a set of functions for getting items from data objects, getting views from items, and getting data objects from items.
 //
 
 class SPCORE_API CppFuncUtils
