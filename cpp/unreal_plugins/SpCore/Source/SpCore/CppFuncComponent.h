@@ -23,6 +23,8 @@
 
 #include "CppFuncComponent.generated.h"
 
+// This is the input type and return type for all CppFuncs. We choose to make this a struct so it will be
+// easier to add fields if necessary, without needing to update the definition of every CppFunc.
 struct CppFuncComponentItems
 {
     std::map<std::string, CppFuncItem> items_;

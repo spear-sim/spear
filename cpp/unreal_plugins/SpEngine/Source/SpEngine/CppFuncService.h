@@ -28,37 +28,20 @@
 #include "SpCore/SpCoreActor.h"
 #include "SpCore/Unreal.h"
 
-// Needs to match SpCore/CppFunc.h
-enum class CppFuncServiceDataType : int8_t
-{
-    Invalid    = -1,
-    UInteger8  = 0,
-    Integer8   = 1,
-    UInteger16 = 2,
-    Integer16  = 3,
-    UInteger32 = 4,
-    Integer32  = 5,
-    UInteger64 = 6,
-    Integer64  = 7,
-    Float32    = 8,
-    Float64    = 9
-};
-MSGPACK_ADD_ENUM(CppFuncServiceDataType);
+// We use MSGPACK macros here to define structs that can be passed into, and returned from, the service entry
+// points defined below. There are already similar struct defined in SpCore, but we choose to define separate
+// structs here for the following reasons. First, we avoid a dependency on RPCLib in SpCore. Second, the data
+// needed at the SpCore level is sometimes slightly different from the data needed at the SpEngine level, e.g.,
+// CppFuncItem needs to maintain a view_ pointer but CppFuncServiceItem doesn't.
 
-// Needs to match SpCore/CppFuncComponent.h
-enum class CppFuncServiceSharedMemoryUsageFlags : uint8_t
-{
-    DoNotUse    = 0,
-    Arg         = 1 << 0,
-    ReturnValue = 1 << 1
-};
-MSGPACK_ADD_ENUM(CppFuncServiceSharedMemoryUsageFlags);
+MSGPACK_ADD_ENUM(CppFuncDataType);
+MSGPACK_ADD_ENUM(CppFuncSharedMemoryUsageFlags);
 
 struct CppFuncServiceItem
 {
     std::vector<uint8_t> data_;
     int num_elements_ = -1;
-    CppFuncServiceDataType data_type_ = CppFuncServiceDataType::Invalid;
+    CppFuncDataType data_type_ = CppFuncDataType::Invalid;
     bool use_shared_memory_ = false;
     std::string shared_memory_name_;
 
@@ -79,7 +62,7 @@ struct CppFuncServiceSharedMemoryView
     std::string name_;
     std::string id_;
     int num_bytes_ = -1;
-    CppFuncServiceSharedMemoryUsageFlags usage_flags_;
+    CppFuncSharedMemoryUsageFlags usage_flags_;
 
     MSGPACK_DEFINE_MAP(name_, id_, num_bytes_, usage_flags_);
 };
@@ -114,7 +97,7 @@ public:
             CppFuncComponentItems component_args;
             for (auto& [arg_name, arg] : args.items_) {
                 SP_ASSERT(arg_name != "");
-                SP_ASSERT(arg.data_type_ != CppFuncServiceDataType::Invalid);
+                SP_ASSERT(arg.data_type_ != CppFuncDataType::Invalid);
 
                 CppFuncItem component_arg;
 
@@ -127,7 +110,7 @@ public:
                     SP_ASSERT(Std::containsKey(shared_memory_views, arg.shared_memory_name_));
                     const CppFuncSharedMemoryView& shared_memory_view = shared_memory_views.at(arg.shared_memory_name_);
                     SP_ASSERT(shared_memory_view.view_.data_);
-                    SP_ASSERT(arg.num_elements_* CppFuncDataTypeUtils::getSizeOf(static_cast<CppFuncDataType>(arg.data_type_)) <= shared_memory_view.view_.num_bytes_);
+                    SP_ASSERT(arg.num_elements_* CppFuncDataTypeUtils::getSizeOf(arg.data_type_) <= shared_memory_view.view_.num_bytes_);
                     SP_ASSERT(shared_memory_view.usage_flags_ & CppFuncSharedMemoryUsageFlags::Arg);
 
                     component_arg.data_ = {};
@@ -137,18 +120,18 @@ public:
                     component_arg.shared_memory_name_ = arg.shared_memory_name_;
 
                 } else {
-                    SP_ASSERT(arg.data_.size() % CppFuncDataTypeUtils::getSizeOf(static_cast<CppFuncDataType>(arg.data_type_)) == 0);
+                    SP_ASSERT(arg.data_.size() % CppFuncDataTypeUtils::getSizeOf(arg.data_type_) == 0);
                     SP_ASSERT(arg.num_elements_ == -1);
                     SP_ASSERT(arg.shared_memory_name_ == "");
 
                     component_arg.data_ = std::move(arg.data_);
                     component_arg.view_ = component_arg.data_.data();
-                    component_arg.num_elements_ = component_arg.data_.size() % CppFuncDataTypeUtils::getSizeOf(static_cast<CppFuncDataType>(arg.data_type_));
+                    component_arg.num_elements_ = component_arg.data_.size() % CppFuncDataTypeUtils::getSizeOf(arg.data_type_);
                     component_arg.use_shared_memory_ = false;
                     component_arg.shared_memory_name_ = "";
                 }
 
-                component_arg.data_type_ = static_cast<CppFuncDataType>(arg.data_type_);
+                component_arg.data_type_ = arg.data_type_;
                 Std::insert(component_args.items_, arg_name, std::move(component_arg));
             }
             component_args.unreal_obj_strings_ = std::move(args.unreal_obj_strings_);
@@ -193,7 +176,7 @@ public:
                     return_value.shared_memory_name_ = "";
                 }
 
-                return_value.data_type_ = static_cast<CppFuncServiceDataType>(component_return_value.data_type_);
+                return_value.data_type_ = component_return_value.data_type_;
                 Std::insert(return_values.items_, component_return_value_name, std::move(return_value));
             }
             return_values.unreal_obj_strings_ = std::move(component_return_values.unreal_obj_strings_);
@@ -219,7 +202,7 @@ public:
                 shared_memory_view.name_ = component_shared_memory_view.view_.name_;
                 shared_memory_view.id_ = component_shared_memory_view.view_.id_;
                 shared_memory_view.num_bytes_ = component_shared_memory_view.view_.num_bytes_;
-                shared_memory_view.usage_flags_ = static_cast<CppFuncServiceSharedMemoryUsageFlags>(component_shared_memory_view.usage_flags_);
+                shared_memory_view.usage_flags_ = component_shared_memory_view.usage_flags_;
                 Std::insert(shared_memory_views.views_, component_shared_memory_view_name, shared_memory_view);
             }
 

@@ -20,7 +20,7 @@
 // functions can be called from higher-level code dynamically by name. In our naming convention in this
 // codebase, we refer to such a function as a "CppFunc". CppFuncs can accept as input, and return as
 // output, the following data types: (1) a map of names to data arrays that can each have a different
-// data type; (2) a map of names to Unreal structs; and (3) an info string. This file is concerned
+// data type; (2) a map of names to Unreal objects; and (3) an info string. This file is concerned
 // specifically with representing and operating on data arrays.
 
 // Needs to match SpEngine/CppFuncService.h
@@ -93,7 +93,7 @@ struct CppFuncItem
 //
 // CppFuncData is a strongly typed class that can be instantiated to manipulate an arg or return value.
 // A CppFuncData object must be converted to a CppFuncItem before it can be passed to, or returned from,
-// a CppFunc. To perform this conversion, use CppFuncUtils::moveDataToItems(...) and CppFuncUtils::getViewsFromItems(...).
+// a CppFunc. To perform this conversion, use the static functions in CppFuncUtils.
 //
 
 class CppFuncDataBase
@@ -105,6 +105,8 @@ public:
 
     // typically called before calling a CppFunc to set args, and from inside a CppFunc to set return values
     virtual void moveDataToItem(CppFuncItem& item) = 0;
+
+    // useful for transferring an arg or a return value item to a local data object
     virtual void moveItemToData(CppFuncItem& item) = 0;
 
     std::string getName() const { SP_ASSERT(name_ != ""); return name_; };
@@ -222,7 +224,7 @@ private:
 };
 
 //
-// CppFuncView is a read-only strongly typed class that can be instantiated to retrieve an arg or return value.
+// CppFuncView is a {strongly typed, read-only} class that can be instantiated to retrieve an arg or return value.
 //
 
 class CppFuncViewBase
@@ -264,7 +266,8 @@ private:
 };
 
 //
-// CppFuncDataUtils is a set of functions for getting items from data objects, getting views from items, and getting data objects from items.
+// CppFuncDataUtils is a set of functions for getting items from data objects (moveDataToItems), getting
+// views from items (setViewsFromItems), and getting data objects from items (moveItemsToData).
 //
 
 class SPCORE_API CppFuncUtils
