@@ -6,10 +6,10 @@
 
 #include <stdint.h> // uint8_t
 
-#include <functional> // std::function
+#include <functional>  // std::function
 #include <map>
-#include <span>
 #include <string>
+#include <type_traits> // std::underlying_type_t
 #include <vector>
 
 #include <Components/SceneComponent.h>
@@ -17,25 +17,31 @@
 #include <Containers/Array.h> 
 #include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UPROPERTY
 
-#include "SpCore/CppFuncData.h"
+#include "SpCore/CppFunc.h"
 #include "SpCore/CppFuncRegistrar.h"
 #include "SpCore/SharedMemoryRegion.h"
-#include "SpCore/YamlCpp.h"
 
 #include "CppFuncComponent.generated.h"
 
-struct CppFuncComponentArgs
+struct CppFuncComponentItems
 {
-    std::map<std::string, CppFuncArg> args_;
+    std::map<std::string, CppFuncItem> items_;
     std::map<std::string, std::string> unreal_obj_strings_;
-    YAML::Node config_;
+    std::string info_;
 };
 
-struct CppFuncComponentReturnValues
+// Needs to match SpEngine/CppFuncService.h
+enum class CppFuncSharedMemoryUsageFlags : uint8_t
 {
-    std::map<std::string, CppFuncReturnValue> return_values_;
-    std::map<std::string, std::string> unreal_obj_strings_;
-    YAML::Node info_;
+    DoNotUse    = 0,
+    Arg         = 1 << 0,
+    ReturnValue = 1 << 1
+};
+
+struct CppFuncSharedMemoryView
+{
+    SharedMemoryView view_;
+    CppFuncSharedMemoryUsageFlags usage_flags_;
 };
 
 // We need meta=(BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
@@ -55,16 +61,37 @@ public:
     TArray<FString> SharedMemoryViewNames;
 
     // typically called by the owning component to register/unregister CppFuncs
-    void registerSharedMemoryView(const std::string& name, const SharedMemoryView& shared_memory_view);
-    void unregisterSharedMemoryView(const std::string& name);
-    void registerFunc(const std::string& name, const std::function<CppFuncComponentReturnValues(const CppFuncComponentArgs&)>& func);
-    void unregisterFunc(const std::string& name);
+    void registerSharedMemoryView(const std::string& shared_memory_name, const SharedMemoryView& shared_memory_view, CppFuncSharedMemoryUsageFlags usage_flags);
+    void unregisterSharedMemoryView(const std::string& shared_memory_name);
+    void registerFunc(const std::string& func_name, const std::function<CppFuncComponentItems(CppFuncComponentItems&)>& func);
+    void unregisterFunc(const std::string& func_name);
 
     // typically called by code that wants to call CppFuncs
-    const std::map<std::string, SharedMemoryView>& getSharedMemoryViews() const;
-    CppFuncComponentReturnValues callFunc(const std::string& name, const CppFuncComponentArgs& args);
+    const std::map<std::string, CppFuncSharedMemoryView>& getSharedMemoryViews() const;
+    CppFuncComponentItems callFunc(const std::string& func_name, CppFuncComponentItems& args);
 
 private:
-    CppFuncRegistrar<CppFuncComponentReturnValues, const CppFuncComponentArgs&> funcs_;
-    std::map<std::string, SharedMemoryView> shared_memory_views_;
+    CppFuncRegistrar<CppFuncComponentItems, CppFuncComponentItems&> funcs_;
+    std::map<std::string, CppFuncSharedMemoryView> shared_memory_views_;
 };
+
+//
+// Needed to perform | and & operations on CppFuncSharedMemoryUsageFlags
+//
+
+static CppFuncSharedMemoryUsageFlags operator|(CppFuncSharedMemoryUsageFlags lhs, CppFuncSharedMemoryUsageFlags rhs)
+{
+    return static_cast<CppFuncSharedMemoryUsageFlags>(
+        static_cast<std::underlying_type_t<CppFuncSharedMemoryUsageFlags>>(lhs) |
+        static_cast<std::underlying_type_t<CppFuncSharedMemoryUsageFlags>>(rhs));
+}
+static CppFuncSharedMemoryUsageFlags operator&(CppFuncSharedMemoryUsageFlags lhs, CppFuncSharedMemoryUsageFlags rhs)
+{
+    return static_cast<CppFuncSharedMemoryUsageFlags>(
+        static_cast<std::underlying_type_t<CppFuncSharedMemoryUsageFlags>>(lhs) &
+        static_cast<std::underlying_type_t<CppFuncSharedMemoryUsageFlags>>(rhs));
+}
+static bool operator||(CppFuncSharedMemoryUsageFlags lhs, bool rhs) // needed for SP_ASSERT
+{
+    return static_cast<std::underlying_type_t<CppFuncSharedMemoryUsageFlags>>(lhs) || rhs;
+}

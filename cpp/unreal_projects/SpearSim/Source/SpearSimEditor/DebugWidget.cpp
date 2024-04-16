@@ -19,9 +19,10 @@
 #include <UObject/Object.h>
 
 #include "SpCore/Assert.h"
+#include "SpCore/CppFunc.h"
 #include "SpCore/CppFuncComponent.h"
-#include "SpCore/CppFuncData.h"
 #include "SpCore/Log.h"
+#include "SpCore/SharedMemoryRegion.h"
 #include "SpCore/SpCoreActor.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
@@ -37,24 +38,30 @@ ADebugWidget::ADebugWidget()
     cpp_func_component_ = Unreal::createComponentInsideOwnerConstructor<UCppFuncComponent>(this, "cpp_func");
     SP_ASSERT(cpp_func_component_);
 
-    std::string shared_memory_name = Unreal::toStdString(GetFullName()) + ":shared_memory:" + "my_shared_memory";
-    shared_memory_region_ = std::make_unique<SharedMemoryRegion>(shared_memory_name, 1024);
-    cpp_func_component_->registerSharedMemoryView("my_shared_memory", shared_memory_region_->getView());
+    std::string shared_memory_name = "my_shared_memory";
+    std::vector<std::string> shared_memory_name_tokens = Std::tokenize(Unreal::toStdString(GetFullName()), "\\/. ");
+    std::string shared_memory_long_name = Std::join(shared_memory_name_tokens, "_") + ":shared_memory:" + shared_memory_name;
+    int shared_memory_num_bytes = 1024;
+    CppFuncSharedMemoryUsageFlags shared_memory_usage_flags = CppFuncSharedMemoryUsageFlags::Arg | CppFuncSharedMemoryUsageFlags::ReturnValue;
+    shared_memory_region_ = std::make_unique<SharedMemoryRegion>(shared_memory_long_name, shared_memory_num_bytes);
+    SP_ASSERT(shared_memory_region_);
+    cpp_func_component_->registerSharedMemoryView(shared_memory_name, shared_memory_region_->getView(), shared_memory_usage_flags);
 
-    cpp_func_component_->registerFunc("my_func", [](const CppFuncComponentArgs& args) -> CppFuncComponentReturnValues {
+    cpp_func_component_->registerFunc("my_func", [this](CppFuncComponentItems& args) -> CppFuncComponentItems {
 
-        // create data objects directly from arg data
-        CppFuncData<double> location("location");
-        CppFuncData<double> rotation("rotation");
-        CppFuncDataUtils::setDataFromArgs({location.getPtr(), rotation.getPtr()}, args.args_);
+        // create view objects directly from arg data
+        CppFuncView<double> location("location");
+        CppFuncView<double> rotation("rotation");
+        CppFuncView<double> shared_doubles("shared_doubles");
+        CppFuncUtils::setViewsFromItems({location.getPtr(), rotation.getPtr(), shared_doubles.getPtr()}, args.items_);
 
         // create Unreal objects directly from arg strings
         UnrealObj<FVector> vec("vec");
         UnrealObj<FRotator> rot("rot");
         UnrealObjUtils::setObjectPropertiesFromStrings({vec.getPtr(), rot.getPtr()}, args.unreal_obj_strings_);
 
-        // get arg config
-        std::string initialize_data_mode = Yaml::get<std::string>(args.config_, "INITIALIZE_DATA_MODE");
+        // get arg info string as a YAML value
+        std::string initialize_data_mode = Yaml::get<std::string>(YAML::Load(args.info_), "INITIALIZE_DATA_MODE");
 
         // create new data objects
         CppFuncData<double> hello("hello");
@@ -75,8 +82,15 @@ ADebugWidget::ADebugWidget()
 
         CppFuncData<double> new_location("new_location");
         CppFuncData<double> new_rotation("new_rotation");
-        new_location.setData(location.getData() | std::views::transform([](auto x) { return 2.0*x; })); // initialize from range of double
-        new_rotation.setData(rotation.getData() | std::views::transform([](auto x) { return 3.0*x; })); // initialize from range of double
+        CppFuncData<double> new_shared_doubles("new_shared_doubles");
+        new_location.setData(location.getView() | std::views::transform([](auto x) { return 2.0*x; })); // initialize from range of double
+        new_rotation.setData(rotation.getView() | std::views::transform([](auto x) { return 3.0*x; })); // initialize from range of double
+        new_shared_doubles.setData("my_shared_memory", shared_memory_region_->getView(), 3);
+        new_shared_doubles.setValues(shared_doubles.getView() | std::views::transform([](auto x) { return 4.0*x; }));
+
+        // create new data objects by moving arg data
+        CppFuncData<double> location_as_return_value("location");
+        CppFuncUtils::moveItemsToData({location_as_return_value.getPtr()}, args.items_);
 
         // create new Unreal objects
         UnrealObj<FVector> new_vec("new_vec");
@@ -84,16 +98,16 @@ ADebugWidget::ADebugWidget()
         new_vec.setObj(4.0*vec.getObj());
         new_rot.setObj(5.0*rot.getObj());
 
-        CppFuncComponentReturnValues return_values;
+        CppFuncComponentItems return_values;
 
-        // set return data from data objects (NOTE: getReturnValuesFromData(...) performs std::move operations and invalidates data objects)
-        return_values.return_values_ = CppFuncDataUtils::getReturnValuesFromData({new_location.getPtr(), new_rotation.getPtr()});
+        // set return data from data objects
+        return_values.items_ = CppFuncUtils::moveDataToItems({new_location.getPtr(), new_rotation.getPtr(), new_shared_doubles.getPtr(), location_as_return_value.getPtr()});
 
         // set return strings from Unreal objects
         return_values.unreal_obj_strings_ = UnrealObjUtils::getObjectPropertiesAsStrings({new_vec.getPtr(), new_rot.getPtr()});
 
-        // set return info
-        return_values.info_ = YAML::Load("SUCCESS: true");
+        // set return info string as a YAML string
+        return_values.info_ = "SUCCESS: True";
 
         return return_values;
     });
@@ -389,7 +403,7 @@ void ADebugWidget::CallCppFunctions()
     UCppFuncComponent* cpp_func_component = Unreal::getComponentByType<UCppFuncComponent>(this);
     SP_ASSERT(cpp_func_component);
 
-    CppFuncComponentArgs args;
+    CppFuncComponentItems args;
 
     // create new data objects
     CppFuncData<double> location("location");
@@ -403,30 +417,36 @@ void ADebugWidget::CallCppFunctions()
     vec.setObj(FVector(10.0, 20.0, 30.0));
     rot.setObj(FRotator(30.0, 50.0, 70.0));
 
-    // set arg data from data objects
-    args.args_ = CppFuncDataUtils::getArgsFromData({location.getPtr(), rotation.getPtr()});
+    CppFuncData<double> shared_doubles("shared_doubles");
+    shared_doubles.setData("my_shared_memory", shared_memory_region_->getView(), 3);
+    shared_doubles.setValues({99.0, 98.0, 97.0});
+
+    // set arg items from data objects
+    args.items_ = CppFuncUtils::moveDataToItems({location.getPtr(), rotation.getPtr(), shared_doubles.getPtr()});
 
     // set arg strings from Unreal objects
     args.unreal_obj_strings_ = UnrealObjUtils::getObjectPropertiesAsStrings({vec.getPtr(), rot.getPtr()});
 
-    // set arg config
-    args.config_ = YAML::Load("INITIALIZE_DATA_MODE: rvalue_reference_to_vector_of_uint8");
+    // set arg info string as a YAML string
+    args.info_ = "INITIALIZE_DATA_MODE: rvalue_reference_to_vector_of_uint8";
 
     // call function
-    CppFuncComponentReturnValues return_values = cpp_func_component->callFunc("my_func", args);
+    CppFuncComponentItems return_values = cpp_func_component->callFunc("my_func", args);
 
-    // create data objects directly from return data
-    CppFuncData<double> new_location("new_location");
-    CppFuncData<double> new_rotation("new_rotation");
-    CppFuncDataUtils::setDataFromReturnValues({new_location.getPtr(), new_rotation.getPtr()}, return_values.return_values_);
+    // create view objects directly from return data
+    CppFuncView<double> location_as_return_value("location");
+    CppFuncView<double> new_location("new_location");
+    CppFuncView<double> new_rotation("new_rotation");
+    CppFuncView<double> new_shared_doubles("new_shared_doubles");
+    CppFuncUtils::setViewsFromItems({location_as_return_value.getPtr(), new_location.getPtr(), new_rotation.getPtr(), new_shared_doubles.getPtr()}, return_values.items_);
 
     // create Unreal objects directly from return strings
     UnrealObj<FVector> new_vec("new_vec");
     UnrealObj<FRotator> new_rot("new_rot");
     UnrealObjUtils::setObjectPropertiesFromStrings({new_vec.getPtr(), new_rot.getPtr()}, return_values.unreal_obj_strings_);
 
-    // get return info
-    bool success = Yaml::get<bool>(return_values.info_, "SUCCESS");
+    // get return info string as a YAML value
+    bool success = Yaml::get<bool>(YAML::Load(return_values.info_), "SUCCESS");
     SP_ASSERT(success);
 
     i++;

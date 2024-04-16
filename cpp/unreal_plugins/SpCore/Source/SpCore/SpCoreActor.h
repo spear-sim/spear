@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <string>
+#include <memory> // std::unique_ptr
 
 #include <Containers/Array.h>
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
@@ -17,6 +17,7 @@
 #include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS
 
 #include "SpCore/CppFuncComponent.h"
+#include "SpCore/SharedMemoryRegion.h"
 #include "SpCore/StableNameComponent.h"
 
 #include "SpCoreActor.generated.h"
@@ -74,6 +75,7 @@ private:
     // Used for debugging.
     UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "CPP Func Component");
     UCppFuncComponent* CppFuncComponent = nullptr;
+    std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
 
     // Calling UGameplayStatics::SetGamePaused() doesn't synchronize with the default play/pause button in the editor
     // So we provide custom buttons and a custom read-only property to update and visualize the engine-level (as

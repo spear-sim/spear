@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <stdint.h> // uint8_t
+
 #include <atomic>
 #include <concepts> // std::same_as
 #include <future>   // std::promise, std::future
@@ -14,21 +16,11 @@
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
+#include "SpEngine/EntryPointBinder.h"
 #include "SpEngine/WorkQueue.h"
 
-template <typename TEntryPointBinder>
-concept CEntryPointBinder = requires(TEntryPointBinder entry_point_binder) {
-    { entry_point_binder.bind("", []() -> void {}) } -> std::same_as<void>;
-};
-
-template <typename TUnrealEntryPointBinder>
-concept CUnrealEntryPointBinder = requires(TUnrealEntryPointBinder unreal_entry_point_binder) {
-    { unreal_entry_point_binder.bindFuncNoUnreal("", "", []() -> void {}) } -> std::same_as<void>;
-    { unreal_entry_point_binder.bindFuncUnreal("", "", []() -> void {}) } -> std::same_as<void>;
-};
-
 // Different possible frame states for thread synchronization
-enum class FrameState
+enum class FrameState : uint8_t
 {
     Idle,
     RequestPreTick,
@@ -110,14 +102,13 @@ public:
 
     ~EngineService()
     {
-        frame_state_ = FrameState::Idle;
-
         FCoreDelegates::OnEndFrame.Remove(end_frame_handle_);
         FCoreDelegates::OnBeginFrame.Remove(begin_frame_handle_);
 
         end_frame_handle_.Reset();
         begin_frame_handle_.Reset();
-        
+
+        SP_ASSERT(entry_point_binder_);
         entry_point_binder_ = nullptr;
     }
 

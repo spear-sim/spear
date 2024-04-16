@@ -4,6 +4,10 @@
 
 #include "SpCore/SpCoreActor.h"
 
+#include <memory> // std::make_unique
+#include <string>
+#include <vector>
+
 #include <Containers/Array.h>
 #include <Engine/Engine.h>          // GEngine
 #include <Engine/EngineBaseTypes.h> // ETickingGroup
@@ -16,9 +20,10 @@
 #include <UObject/NameTypes.h>      // FName
 
 #include "SpCore/Assert.h"
-#include "SpCore/CppFuncData.h"
+#include "SpCore/CppFunc.h"
 #include "SpCore/CppFuncComponent.h"
 #include "SpCore/Log.h"
+#include "SpCore/SharedMemoryRegion.h"
 #include "SpCore/StableNameComponent.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealObj.h"
@@ -34,13 +39,22 @@ ASpCoreActor::ASpCoreActor()
     StableNameComponent = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, "stable_name");
     SP_ASSERT(StableNameComponent);
 
+    // TODO: remove these CppFuncs because they are only here for debugging
+
     CppFuncComponent = Unreal::createComponentInsideOwnerConstructor<UCppFuncComponent>(this, "cpp_func");
     SP_ASSERT(CppFuncComponent);
 
-    // TODO: remove these CppFuncs because they are only here for debugging
+    std::string shared_memory_name = "my_shared_memory";
+    std::vector<std::string> shared_memory_name_tokens = Std::tokenize(Unreal::toStdString(GetFullName()), "\\/. ");
+    std::string shared_memory_long_name = Std::join(shared_memory_name_tokens, "_") + ":shared_memory:" + shared_memory_name;
+    int shared_memory_num_bytes = 1024;
+    CppFuncSharedMemoryUsageFlags shared_memory_usage_flags = CppFuncSharedMemoryUsageFlags::Arg | CppFuncSharedMemoryUsageFlags::ReturnValue;
+    shared_memory_region_ = std::make_unique<SharedMemoryRegion>(shared_memory_long_name, shared_memory_num_bytes);
+    SP_ASSERT(shared_memory_region_);
+    CppFuncComponent->registerSharedMemoryView(shared_memory_name, shared_memory_region_->getView(), shared_memory_usage_flags);
 
-    CppFuncComponent->registerFunc("hello_world", [](const CppFuncComponentArgs& args) -> CppFuncComponentReturnValues {
-
+    CppFuncComponent->registerFunc("hello_world", [](CppFuncComponentItems& args) -> CppFuncComponentItems
+    {
         CppFuncData<uint8_t> hello("hello");
         hello.setData("Hello!"); // initialize from string literal
 
@@ -51,30 +65,32 @@ ASpCoreActor::ASpCoreActor()
         CppFuncData<double> data("data");
         data.setData({1.1, 2.2, 4.4, 8.8}); // or from initializer list of double
 
-        // NOTE: for maximum efficiency, getReturnValuesFromData(...) performs std::move operations and invalidates data objects
-        CppFuncComponentReturnValues return_values;
-        return_values.return_values_ = CppFuncDataUtils::getReturnValuesFromData({hello.getPtr(), world.getPtr(), data.getPtr()});
+        CppFuncComponentItems return_values;
+        return_values.items_ = CppFuncUtils::moveDataToItems({hello.getPtr(), world.getPtr(), data.getPtr()});
 
         return return_values;
     });
 
-    CppFuncComponent->registerFunc("my_func", [](const CppFuncComponentArgs& args) -> CppFuncComponentReturnValues {
-
-        // create data objects directly from arg data
-        CppFuncData<double> location("location");
-        CppFuncData<double> rotation("rotation");
-        CppFuncDataUtils::setDataFromArgs({location.getPtr(), rotation.getPtr()}, args.args_);
+    CppFuncComponent->registerFunc("my_func", [this](CppFuncComponentItems& args) -> CppFuncComponentItems
+    {
+        // create view objects directly from arg data
+        CppFuncView<double> location("location");
+        CppFuncView<double> rotation("rotation");
+        CppFuncUtils::setViewsFromItems({location.getPtr(), rotation.getPtr()}, args.items_);
 
         // create new data objects
         CppFuncData<double> new_location("new_location");
         CppFuncData<double> new_rotation("new_rotation");
-        new_location.setData(location.getData() | std::views::transform([](auto x) { return 2.0*x; })); // initialize from range of double
-        new_rotation.setData(rotation.getData() | std::views::transform([](auto x) { return 3.0*x; })); // initialize from range of double
+        new_location.setData(location.getView() | std::views::transform([](auto x) { return 2.0*x; })); // initialize from range of double
+        new_rotation.setData(rotation.getView() | std::views::transform([](auto x) { return 3.0*x; })); // initialize from range of double
 
-        // set return data from data objects (NOTE: getReturnValuesFromData(...) performs std::move operations and invalidates data objects)
-        CppFuncComponentReturnValues return_values;
-        return_values.return_values_ = CppFuncDataUtils::getReturnValuesFromData({new_location.getPtr(), new_rotation.getPtr()});
+        // create new data objects backed by shared memory
+        CppFuncData<float> my_floats("my_floats");
+        my_floats.setData("my_shared_memory", shared_memory_region_->getView(), 3);
+        my_floats.setValues({99.0, 98.0, 97.0});
 
+        CppFuncComponentItems return_values;
+        return_values.items_ = CppFuncUtils::moveDataToItems({new_location.getPtr(), new_rotation.getPtr(), my_floats.getPtr()});
 
         return return_values;
     });
@@ -83,6 +99,13 @@ ASpCoreActor::ASpCoreActor()
 ASpCoreActor::~ASpCoreActor()
 {
     SP_LOG_CURRENT_FUNCTION();
+
+    CppFuncComponent->unregisterFunc("my_func");
+    CppFuncComponent->unregisterFunc("hello_world");
+
+    CppFuncComponent->unregisterSharedMemoryView("my_shared_memory");
+    SP_ASSERT(shared_memory_region_);
+    shared_memory_region_ = nullptr;
 }
 
 void ASpCoreActor::Tick(float delta_time)

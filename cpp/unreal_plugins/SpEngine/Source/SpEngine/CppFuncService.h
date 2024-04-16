@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <stdint.h> // uint8_t
+#include <stdint.h> // int8_t, uint8_t
 
 #include <map>
 #include <string>
@@ -17,18 +17,19 @@
 #include <GameFramework/Actor.h>
 
 #include "SpCore/Assert.h"
+#include "SpCore/CppFunc.h"
 #include "SpCore/CppFuncComponent.h"
-#include "SpCore/CppFuncData.h"
-#include "SpCore/Log.h"
 #include "SpCore/Rpclib.h"
+#include "SpCore/SharedMemoryRegion.h"
 #include "SpCore/Std.h"
+#include "SpEngine/EntryPointBinder.h"
+
+// TODO: remove these headers when SpCoreActor is removed as the hard-coded target for function calls
 #include "SpCore/SpCoreActor.h"
 #include "SpCore/Unreal.h"
-#include "SpCore/YamlCpp.h"
-#include "SpEngine/EngineService.h"
 
-// Needs to match SpCore/CppFuncData.h
-enum class CppFuncServiceDataType
+// Needs to match SpCore/CppFunc.h
+enum class CppFuncServiceDataType : int8_t
 {
     Invalid    = -1,
     UInteger8  = 0,
@@ -44,33 +45,50 @@ enum class CppFuncServiceDataType
 };
 MSGPACK_ADD_ENUM(CppFuncServiceDataType);
 
-struct CppFuncServiceData
+// Needs to match SpCore/CppFuncComponent.h
+enum class CppFuncServiceSharedMemoryUsageFlags : uint8_t
+{
+    DoNotUse    = 0,
+    Arg         = 1 << 0,
+    ReturnValue = 1 << 1
+};
+MSGPACK_ADD_ENUM(CppFuncServiceSharedMemoryUsageFlags);
+
+struct CppFuncServiceItem
 {
     std::vector<uint8_t> data_;
+    int num_elements_ = -1;
     CppFuncServiceDataType data_type_ = CppFuncServiceDataType::Invalid;
     bool use_shared_memory_ = false;
-    int shared_memory_num_bytes_ = -1;
     std::string shared_memory_name_;
 
-    MSGPACK_DEFINE_MAP(data_, data_type_, use_shared_memory_, shared_memory_num_bytes_, shared_memory_name_);
+    MSGPACK_DEFINE_MAP(data_, num_elements_, data_type_, use_shared_memory_, shared_memory_name_);
 };
 
-struct CppFuncServiceArgs
+struct CppFuncServiceItems
 {
-    std::map<std::string, CppFuncServiceData> args_;
-    std::map<std::string, std::string> unreal_obj_strings_;
-    std::string config_;
-
-    MSGPACK_DEFINE_MAP(args_, unreal_obj_strings_, config_);
-};
-
-struct CppFuncServiceReturnValues
-{
-    std::map<std::string, CppFuncServiceData> return_values_;
+    std::map<std::string, CppFuncServiceItem> items_;
     std::map<std::string, std::string> unreal_obj_strings_;
     std::string info_;
 
-    MSGPACK_DEFINE_MAP(return_values_, unreal_obj_strings_, info_);
+    MSGPACK_DEFINE_MAP(items_, unreal_obj_strings_, info_);
+};
+
+struct CppFuncServiceSharedMemoryView
+{
+    std::string name_;
+    std::string id_;
+    int num_bytes_ = -1;
+    CppFuncServiceSharedMemoryUsageFlags usage_flags_;
+
+    MSGPACK_DEFINE_MAP(name_, id_, num_bytes_, usage_flags_);
+};
+
+struct CppFuncServiceSharedMemoryViews
+{
+    std::map<std::string, CppFuncServiceSharedMemoryView> views_;
+
+    MSGPACK_DEFINE_MAP(views_);
 };
 
 class CppFuncService {
@@ -83,56 +101,131 @@ public:
         post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &CppFuncService::postWorldInitializationHandler);
         world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &CppFuncService::worldCleanupHandler);
 
-        unreal_entry_point_binder->bindFuncUnreal("cpp_func_service", "call_func", [this](const std::string& func_name, const CppFuncServiceArgs& args) -> CppFuncServiceReturnValues {
+        unreal_entry_point_binder->bindFuncUnreal("cpp_func_service", "call_func", [this](const std::string& func_name, const CppFuncServiceItems& args) -> CppFuncServiceItems {
             SP_ASSERT(world_);
 
             // TODO: make the object ptr an input to this function
             UObject* object = Unreal::findActorByType<ASpCoreActor>(world_);
             SP_ASSERT(object);
 
-            // get UCppFuncComponent
-            UCppFuncComponent* cpp_func_component = nullptr;
-            if (object->IsA(AActor::StaticClass())) {
-                AActor* actor = const_cast<AActor*>(static_cast<const AActor*>(object));
-                bool include_all_descendants = false;
-                cpp_func_component = Unreal::getChildComponentByType<AActor, UCppFuncComponent>(actor, include_all_descendants);
-            } else if (object->IsA(USceneComponent::StaticClass())) {
-                USceneComponent* component = const_cast<USceneComponent*>(static_cast<const USceneComponent*>(object));
-                bool include_all_descendants = false;
-                cpp_func_component = Unreal::getChildComponentByType<USceneComponent, UCppFuncComponent>(component, include_all_descendants);
-            } else {
-                SP_ASSERT(false);
-            }
-            SP_ASSERT(cpp_func_component);
+            UCppFuncComponent* cpp_func_component = getCppFuncComponent(object);
 
             // prepare args
-            CppFuncComponentArgs component_args;
-            for (auto& [arg_name, arg] : args.args_) {
-                CppFuncArg component_arg;
-                component_arg.data_ = Std::toSpan(arg.data_);
-                component_arg.data_type_ = static_cast<const CppFuncDataType>(arg.data_type_);
-                Std::insert(component_args.args_, arg_name, std::move(component_arg));
+            CppFuncComponentItems component_args;
+            for (auto& [arg_name, arg] : args.items_) {
+                SP_ASSERT(arg_name != "");
+                SP_ASSERT(arg.data_type_ != CppFuncServiceDataType::Invalid);
+
+                CppFuncItem component_arg;
+
+                if (arg.use_shared_memory_) {
+                    SP_ASSERT(arg.data_.empty());
+                    SP_ASSERT(arg.num_elements_ >= 0);
+                    SP_ASSERT(arg.shared_memory_name_ != "");
+
+                    // use arg.shared_memory_name_ to get a specific SharedMemoryView
+                    const std::map<std::string, CppFuncSharedMemoryView>& shared_memory_views = cpp_func_component->getSharedMemoryViews();
+                    SP_ASSERT(Std::containsKey(shared_memory_views, arg.shared_memory_name_));
+                    const CppFuncSharedMemoryView& shared_memory_view = shared_memory_views.at(arg.shared_memory_name_);
+                    SP_ASSERT(shared_memory_view.view_.data_);
+                    SP_ASSERT(arg.num_elements_* CppFuncDataTypeUtils::getSizeOf(static_cast<CppFuncDataType>(arg.data_type_)) <= shared_memory_view.view_.num_bytes_);
+                    SP_ASSERT(shared_memory_view.usage_flags_ & CppFuncSharedMemoryUsageFlags::Arg);
+
+                    component_arg.data_ = {};
+                    component_arg.view_ = shared_memory_view.view_.data_;
+                    component_arg.num_elements_ = arg.num_elements_;
+                    component_arg.use_shared_memory_ = true;
+                    component_arg.shared_memory_name_ = arg.shared_memory_name_;
+
+                } else {
+                    SP_ASSERT(arg.data_.size() % CppFuncDataTypeUtils::getSizeOf(static_cast<CppFuncDataType>(arg.data_type_)) == 0);
+                    SP_ASSERT(arg.num_elements_ == -1);
+                    SP_ASSERT(arg.shared_memory_name_ == "");
+
+                    component_arg.data_ = std::move(arg.data_);
+                    component_arg.view_ = component_arg.data_.data();
+                    component_arg.num_elements_ = component_arg.data_.size() % CppFuncDataTypeUtils::getSizeOf(static_cast<CppFuncDataType>(arg.data_type_));
+                    component_arg.use_shared_memory_ = false;
+                    component_arg.shared_memory_name_ = "";
+                }
+
+                component_arg.data_type_ = static_cast<CppFuncDataType>(arg.data_type_);
+                Std::insert(component_args.items_, arg_name, std::move(component_arg));
             }
-            component_args.unreal_obj_strings_ = args.unreal_obj_strings_;
-            component_args.config_ = YAML::Load(args.config_);
+            component_args.unreal_obj_strings_ = std::move(args.unreal_obj_strings_);
+            component_args.info_ = std::move(args.info_);
 
             // call CppFunc
-            CppFuncComponentReturnValues component_return_values = cpp_func_component->callFunc(func_name, component_args);
+            CppFuncComponentItems component_return_values = cpp_func_component->callFunc(func_name, component_args);
 
             // prepare return values
-            CppFuncServiceReturnValues return_values;
-            for (auto& [component_return_value_name, component_return_value] : component_return_values.return_values_) {
-                CppFuncServiceData return_value;
-                return_value.data_ = std::move(component_return_value.data_);
+            CppFuncServiceItems return_values;
+            for (auto& [component_return_value_name, component_return_value] : component_return_values.items_) {
+                SP_ASSERT(component_return_value_name != "");
+                SP_ASSERT(component_return_value.data_type_ != CppFuncDataType::Invalid);
+
+                CppFuncServiceItem return_value;
+
+                if (component_return_value.use_shared_memory_) {
+                    SP_ASSERT(component_return_value.data_.empty());
+                    SP_ASSERT(component_return_value.num_elements_ >= 0);
+                    SP_ASSERT(component_return_value.shared_memory_name_ != "");
+
+                    // use return_value.shared_memory_name_ to get a specific SharedMemoryView
+                    const std::map<std::string, CppFuncSharedMemoryView>& shared_memory_views = cpp_func_component->getSharedMemoryViews();
+                    SP_ASSERT(Std::containsKey(shared_memory_views, component_return_value.shared_memory_name_));
+                    const CppFuncSharedMemoryView& shared_memory_view = shared_memory_views.at(component_return_value.shared_memory_name_);
+                    SP_ASSERT(shared_memory_view.view_.data_);
+                    SP_ASSERT(component_return_value.num_elements_*CppFuncDataTypeUtils::getSizeOf(component_return_value.data_type_) <= shared_memory_view.view_.num_bytes_);
+                    SP_ASSERT(shared_memory_view.usage_flags_ & CppFuncSharedMemoryUsageFlags::ReturnValue);
+
+                    return_value.data_ = {};
+                    return_value.num_elements_ = component_return_value.num_elements_;
+                    return_value.use_shared_memory_ = true;
+                    return_value.shared_memory_name_ = component_return_value.shared_memory_name_;
+
+                } else {
+                    SP_ASSERT(component_return_value.data_.size() % CppFuncDataTypeUtils::getSizeOf(component_return_value.data_type_) == 0);
+                    SP_ASSERT(component_return_value.num_elements_ == -1);
+                    SP_ASSERT(component_return_value.shared_memory_name_ == "");
+
+                    return_value.data_ = std::move(component_return_value.data_);
+                    return_value.num_elements_ = return_value.data_.size() % CppFuncDataTypeUtils::getSizeOf(component_return_value.data_type_);
+                    return_value.use_shared_memory_ = false;
+                    return_value.shared_memory_name_ = "";
+                }
+
                 return_value.data_type_ = static_cast<CppFuncServiceDataType>(component_return_value.data_type_);
-                Std::insert(return_values.return_values_, component_return_value_name, std::move(return_value));
+                Std::insert(return_values.items_, component_return_value_name, std::move(return_value));
             }
-            return_values.unreal_obj_strings_ = component_return_values.unreal_obj_strings_;
-            YAML::Emitter emitter;
-            emitter << component_return_values.info_;
-            return_values.info_ = emitter.c_str();
+            return_values.unreal_obj_strings_ = std::move(component_return_values.unreal_obj_strings_);
+            return_values.info_ = std::move(component_return_values.info_);
 
             return return_values;
+        });
+
+        unreal_entry_point_binder->bindFuncUnreal("cpp_func_service", "get_shared_memory_views", [this]() -> CppFuncServiceSharedMemoryViews {
+            SP_ASSERT(world_);
+
+            // TODO: make the object ptr an input to this function
+            UObject* object = Unreal::findActorByType<ASpCoreActor>(world_);
+            SP_ASSERT(object);
+
+            UCppFuncComponent* cpp_func_component = getCppFuncComponent(object);
+
+            CppFuncServiceSharedMemoryViews shared_memory_views;
+            for (auto& [component_shared_memory_view_name, component_shared_memory_view] : cpp_func_component->getSharedMemoryViews()) {
+                SP_ASSERT(component_shared_memory_view_name != "");
+
+                CppFuncServiceSharedMemoryView shared_memory_view;
+                shared_memory_view.name_ = component_shared_memory_view.view_.name_;
+                shared_memory_view.id_ = component_shared_memory_view.view_.id_;
+                shared_memory_view.num_bytes_ = component_shared_memory_view.view_.num_bytes_;
+                shared_memory_view.usage_flags_ = static_cast<CppFuncServiceSharedMemoryUsageFlags>(component_shared_memory_view.usage_flags_);
+                Std::insert(shared_memory_views.views_, component_shared_memory_view_name, shared_memory_view);
+            }
+
+            return shared_memory_views;
         });
     }
 
@@ -145,10 +238,12 @@ public:
         post_world_initialization_handle_.Reset();
     }
 
+private:
     void postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values);
     void worldCleanupHandler(UWorld* world, bool session_ended, bool cleanup_resources);
 
-private:
+    static UCppFuncComponent* getCppFuncComponent(UObject* object);
+
     FDelegateHandle post_world_initialization_handle_;
     FDelegateHandle world_cleanup_handle_;
     UWorld* world_ = nullptr;

@@ -15,6 +15,7 @@
 #include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
 #include "SpCore/CppFuncComponent.h"
+#include "SpCore/SharedMemoryRegion.h"
 
 #include "DebugWidget.generated.h"
 

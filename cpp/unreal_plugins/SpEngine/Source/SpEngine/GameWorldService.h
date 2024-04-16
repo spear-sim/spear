@@ -15,7 +15,7 @@
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
-#include "SpEngine/EngineService.h"
+#include "SpEngine/EntryPointBinder.h"
 
 class GameWorldService {
 public:
