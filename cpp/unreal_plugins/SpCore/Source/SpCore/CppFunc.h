@@ -156,7 +156,7 @@ public:
 
     void setData(std::vector<uint8_t>&& src)
     {
-        data_ = std::move(src); // src type matches ours so we don't need to reinterpret
+        data_ = std::move(src); // src value type is uint8_t, which matches data_, so we don't need to reinterpret
         view_ = Std::reinterpretAsSpanOf<TValue>(data_);
         use_shared_memory_ = false;
         shared_memory_name_ = "";
@@ -196,7 +196,7 @@ public:
         std::memcpy(view_.data(), std::ranges::data(src), std::ranges::size(src)*sizeof(TValue));
     }
 
-    template <typename TSpan> requires std::same_as<typename TSpan::value_type, TValue>
+    template <typename TSpan> requires CSpan<TSpan> && std::same_as<typename TSpan::value_type, TValue>
     void setValues(const TSpan& src)
     {
         SP_ASSERT(src.size() <= view_.size());
