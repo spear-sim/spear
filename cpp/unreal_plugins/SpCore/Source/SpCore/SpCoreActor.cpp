@@ -41,38 +41,44 @@ ASpCoreActor::ASpCoreActor()
 
     // TODO: remove these CppFuncs because they are only here for debugging
 
-    CppFuncComponent = Unreal::createComponentInsideOwnerConstructor<UCppFuncComponent>(this, "cpp_func");
-    SP_ASSERT(CppFuncComponent);
-
     std::string shared_memory_name = "my_shared_memory";
     std::vector<std::string> shared_memory_name_tokens = Std::tokenize(Unreal::toStdString(GetFullName()), "\\/. ");
     std::string shared_memory_long_name = Std::join(shared_memory_name_tokens, "_") + ":shared_memory:" + shared_memory_name;
     int shared_memory_num_bytes = 1024;
-    CppFuncSharedMemoryUsageFlags shared_memory_usage_flags = CppFuncSharedMemoryUsageFlags::Arg | CppFuncSharedMemoryUsageFlags::ReturnValue;
     shared_memory_region_ = std::make_unique<SharedMemoryRegion>(shared_memory_long_name, shared_memory_num_bytes);
     SP_ASSERT(shared_memory_region_);
+
+    CppFuncComponent = Unreal::createComponentInsideOwnerConstructor<UCppFuncComponent>(this, "cpp_func");
+    SP_ASSERT(CppFuncComponent);
+
+    CppFuncSharedMemoryUsageFlags shared_memory_usage_flags = CppFuncSharedMemoryUsageFlags::Arg | CppFuncSharedMemoryUsageFlags::ReturnValue;
     CppFuncComponent->registerSharedMemoryView(shared_memory_name, shared_memory_region_->getView(), shared_memory_usage_flags);
 
-    CppFuncComponent->registerFunc("hello_world", [](CppFuncComponentItems& args) -> CppFuncComponentItems
+    CppFuncComponent->registerFunc("hello_world", [this](CppFuncComponentItems& args) -> CppFuncComponentItems
     {
+        // CppFuncData objects are {named, strongly typed} arrays that can be efficiently passed
+        // {to, from} Python.
         CppFuncData<uint8_t> hello("hello");
-        hello.setData("Hello!"); // initialize from string literal
+        hello.setData("Hello World!");
 
-        CppFuncData<uint8_t> world("world");
-        std::string world_str = "World!";
-        world.setData(world_str); // or from string
+        // Get some some data from the Unreal Engine.
+        AActor* actor = Unreal::findActorByName(GetWorld(), "SpCore/SpCoreActor");
+        FVector location = actor->GetActorLocation();
 
-        CppFuncData<double> data("data");
-        data.setData({1.1, 2.2, 4.4, 8.8}); // or from initializer list of double
+        // Store the Unreal data in a CppFuncData object to efficiently return it to Python.
+        // Here we use shared memory for the most efficient possible communication with Python.
+        CppFuncData<double> unreal_data("location");
+        unreal_data.setData("my_shared_memory", shared_memory_region_->getView(), 3);
+        unreal_data.setValues({location.X, location.Y, location.Z});
 
+        // Return CppFuncData objects.
         CppFuncComponentItems return_values;
-        return_values.items_ = CppFuncUtils::moveDataToItems({hello.getPtr(), world.getPtr(), data.getPtr()});
-
+        return_values.items_ = CppFuncUtils::moveDataToItems({hello.getPtr(), unreal_data.getPtr()});
         return return_values;
     });
 
-    CppFuncComponent->registerFunc("my_func", [this](CppFuncComponentItems& args) -> CppFuncComponentItems
-    {
+    CppFuncComponent->registerFunc("my_func", [this](CppFuncComponentItems& args) -> CppFuncComponentItems {
+
         // create view objects directly from arg data
         CppFuncView<double> location("location");
         CppFuncView<double> rotation("rotation");
