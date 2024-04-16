@@ -26,7 +26,7 @@ if __name__ == "__main__":
     # modify config params
     config.defrost()
     config.SPEAR.LAUNCH_MODE = "standalone"
-    config.SPEAR.STANDALONE = args.executable
+    config.SPEAR.STANDALONE_EXECUTABLE = args.executable
     if args.scene_id is not None:
         config.SP_ENGINE.LEGACY_SERVICE.SCENE_ID = args.scene_id
     if args.map_id is not None:

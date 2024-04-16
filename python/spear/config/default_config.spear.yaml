@@ -10,7 +10,7 @@ SPEAR:
   LAUNCH_MODE: ""
 
   # If launch_mode is "STANDALONE", specify this path to an Unreal application.
-  STANDALONE: ""
+  STANDALONE_EXECUTABLE: ""
 
   # The location of downloaded (or built) pak files. This must be specified if you are attempting
   # to load any scene other than the default scene.

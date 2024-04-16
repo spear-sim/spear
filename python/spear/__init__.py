@@ -58,18 +58,18 @@ def configure_system(config):
     # create a symlink to SPEAR.PAKS_DIR
     if config.SPEAR.LAUNCH_MODE == "standalone" and config.SPEAR.PAKS_DIR != "":
 
-        assert os.path.exists(config.SPEAR.STANDALONE)
+        assert os.path.exists(config.SPEAR.STANDALONE_EXECUTABLE)
         assert os.path.exists(config.SPEAR.PAKS_DIR)
 
         if sys.platform == "win32":
             paks_dir = \
-                os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(config.SPEAR.STANDALONE)), "..", "..", "Content", "Paks"))
+                os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(config.SPEAR.STANDALONE_EXECUTABLE)), "..", "..", "Content", "Paks"))
         elif sys.platform == "darwin":
             paks_dir = \
-                os.path.realpath(os.path.join(config.SPEAR.STANDALONE, "Contents", "UE", "SpearSim", "Content", "Paks"))
+                os.path.realpath(os.path.join(config.SPEAR.STANDALONE_EXECUTABLE, "Contents", "UE", "SpearSim", "Content", "Paks"))
         elif sys.platform == "linux":
             paks_dir = \
-                os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(config.SPEAR.STANDALONE)), "SpearSim", "Content", "Paks"))
+                os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(config.SPEAR.STANDALONE_EXECUTABLE)), "SpearSim", "Content", "Paks"))
         else:
             assert False
 
