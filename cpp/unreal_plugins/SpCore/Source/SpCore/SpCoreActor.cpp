@@ -66,7 +66,7 @@ ASpCoreActor::ASpCoreActor()
         FVector location = actor->GetActorLocation();
 
         // Store the Unreal data in a CppFuncData object to efficiently return it to Python.
-        // Here we use shared memory for the most efficient possible communication with Python.
+        // Here we use shared memory for the most efficient possible communication.
         CppFuncData<double> unreal_data("location");
         unreal_data.setData("my_shared_memory", shared_memory_region_->getView(), 3);
         unreal_data.setValues({location.X, location.Y, location.Z});
