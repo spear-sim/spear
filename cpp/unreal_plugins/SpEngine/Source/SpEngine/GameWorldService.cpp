@@ -7,13 +7,11 @@
 #include <string>
 #include <vector>
 
-#include <Delegates/IDelegateInstance.h> // FDelegateHandle
-#include <Engine/Engine.h>               // GEngine
-#include <Engine/World.h>                // UWorld
+#include <Engine/Engine.h> // GEngine
+#include <Engine/World.h>
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
-#include "SpEngine/EngineService.h"
 
 void GameWorldService::postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values)
 {

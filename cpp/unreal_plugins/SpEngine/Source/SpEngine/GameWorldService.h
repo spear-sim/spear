@@ -8,10 +8,11 @@
 #include <vector>
 
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
-#include <Engine/World.h>                // UWorld
+#include <Engine/World.h>                // FWorldDelegates
 #include <Kismet/GameplayStatics.h>
 
 #include "SpCore/Assert.h"
+#include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
 #include "SpEngine/EntryPointBinder.h"
 
