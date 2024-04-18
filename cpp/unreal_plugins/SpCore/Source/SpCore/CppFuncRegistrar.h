@@ -50,16 +50,19 @@ public:
     void registerFunc(const std::string& name, const std::function<TReturn(TArgs...)>& func)
     {
         SP_ASSERT(func);
+        SP_ASSERT(name != "");
         Std::insert(funcs_, name, func);
     }
 
     void unregisterFunc(const std::string& name)
     { 
+        SP_ASSERT(name != "");
         Std::remove(funcs_, name);
     }
 
     TReturn call(const std::string& name, TArgs... args)
     {
+        SP_ASSERT(Std::containsKey(funcs_, name));
         return funcs_.at(name)(args...);
     }
 

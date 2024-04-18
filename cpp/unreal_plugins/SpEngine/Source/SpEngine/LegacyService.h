@@ -8,10 +8,10 @@
 #include <vector>
 
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
-#include <Engine/World.h>                // UWorld
+#include <Engine/World.h>                // FWorldDelegates
 
 #include "SpCore/Assert.h"
-#include "SpEngine/EngineService.h"
+#include "SpEngine/EntryPointBinder.h"
 #include "SpEngine/Legacy/Agent.h"
 #include "SpEngine/Legacy/NavMesh.h"
 #include "SpEngine/Legacy/Task.h"

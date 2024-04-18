@@ -48,6 +48,7 @@ SP_END_SUPPRESS_COMPILER_WARNINGS
 // ----------------------------------------------------------------------------------------------------------
 
 #include <boost/algorithm/string/case_conv.hpp> // boost::algorithm::to_lower_copy
+#include <boost/algorithm/string/join.hpp>      // boost::algorithm::join
 #include <boost/circular_buffer.hpp>
 #include <boost/current_function.hpp>           // BOOST_CURRENT_FUNCTION
 #include <boost/format.hpp>                     // TODO: remove when we can use std::format on all platforms

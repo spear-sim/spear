@@ -177,10 +177,17 @@ public:
         return reinterpret_cast<TPtr*>(std::strtoull(string.c_str(), nullptr, 16));
     }
 
+    template <typename TRange> requires CRangeHasValuesConvertibleTo<TRange, std::string>
+    static std::string join(TRange&& range, const std::string& delim)
+    {
+        return boost::algorithm::join(std::forward<decltype(range)>(range), delim);
+    }
+
     //
     // std::ranges::range functions
     //
 
+    // TODO: replace with std::ranges::to<std::vector> in C++23
     template <typename TValue, typename TRange> requires CRangeHasValuesConvertibleTo<TRange, TValue>
     static std::vector<TValue> toVector(TRange&& range)
     {
@@ -481,7 +488,7 @@ public:
         std::vector<TDestValue> dest;
         for (auto range_value : range) {
             dest.resize(dest.size() + num_dest_elements_per_src_element);
-            TDestValue* dest_ptr = &(dest.at(dest.size() - num_dest_elements_per_src_element));
+            TDestValue* dest_ptr = &(dest.at(dest.size() - num_dest_elements_per_src_element)); // get ptr after resize because data might have moved
             SP_ASSERT(dest_ptr);
             TSrcValue* src_ptr = reinterpret_cast<TSrcValue*>(dest_ptr);
             *src_ptr = range_value;

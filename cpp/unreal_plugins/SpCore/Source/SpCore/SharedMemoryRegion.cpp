@@ -12,7 +12,7 @@
 SharedMemoryRegion::SharedMemoryRegion(const std::string& name, int num_bytes)
 {
     SP_ASSERT(name != "");
-    SP_ASSERT(num_bytes != 0);
+    SP_ASSERT(num_bytes > 0);
 
     view_.name_ = name;
     view_.num_bytes_ = num_bytes;
@@ -32,13 +32,16 @@ SharedMemoryRegion::SharedMemoryRegion(const std::string& name, int num_bytes)
     #else
         #error
     #endif
+
+    view_.data_ = mapped_region_.get_address();
 }
 
 SharedMemoryRegion::~SharedMemoryRegion()
 {
     SP_ASSERT(view_.name_ != "");
-    SP_ASSERT(view_.num_bytes_ != 0);
-    #if BOOST_OS_MACOS || BOOST_OS_LINUX
+    SP_ASSERT(view_.num_bytes_ > 0);
+    SP_ASSERT(view_.data_);
+#if BOOST_OS_MACOS || BOOST_OS_LINUX
         boost::interprocess::shared_memory_object::remove(view_.id_.c_str());
     #endif
 }
@@ -47,5 +50,6 @@ const SharedMemoryView& SharedMemoryRegion::getView()
 {
     SP_ASSERT(view_.name_ != "");
     SP_ASSERT(view_.num_bytes_ > 0);
+    SP_ASSERT(view_.data_);
     return view_;
 }

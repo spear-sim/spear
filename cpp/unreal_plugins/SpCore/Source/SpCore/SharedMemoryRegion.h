@@ -26,6 +26,6 @@ public:
     const SharedMemoryView& getView();
 
 private:
-    SharedMemoryView view_;
     boost::interprocess::mapped_region mapped_region_;
+    SharedMemoryView view_;
 };

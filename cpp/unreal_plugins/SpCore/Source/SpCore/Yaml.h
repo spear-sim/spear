@@ -67,4 +67,11 @@ public:
 
         return current_node.as<TValue>();
     }
+
+    static std::string toString(const YAML::Node& node)
+    {
+        YAML::Emitter emitter;
+        emitter << node;
+        return emitter.c_str();
+    }
 };
