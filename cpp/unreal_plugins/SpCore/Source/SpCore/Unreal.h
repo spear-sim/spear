@@ -74,20 +74,19 @@ public:
     static std::vector<AActor*> findActors(const UWorld* world);
     static std::map<std::string, AActor*> findActorsAsMap(const UWorld* world);
 
-
     //
     // Get components unconditionally and return an std::vector or an std::map
     //
 
-    std::vector<UActorComponent*> getComponents(const AActor* actor);
-    std::map<std::string, UActorComponent*> getComponentsAsMap(const AActor* actor);
+    static std::vector<UActorComponent*> getComponents(const AActor* actor);
+    static std::map<std::string, UActorComponent*> getComponentsAsMap(const AActor* actor);
 
     //
     // Get children components unconditionally and return an std::vector or an std::map
     //
 
-    std::vector<USceneComponent*> getChildrenComponents(const USceneComponent* parent, bool include_all_descendants = true);
-    std::map<std::string, USceneComponent*> getChildrenComponentsAsMap(const USceneComponent* parent, bool include_all_descendants = true);
+    static std::vector<USceneComponent*> getChildrenComponents(const USceneComponent* parent, bool include_all_descendants = true);
+    static std::map<std::string, USceneComponent*> getChildrenComponentsAsMap(const USceneComponent* parent, bool include_all_descendants = true);
 
     //
     // Get and set object properties, uobject can't be const because we cast it to void*
