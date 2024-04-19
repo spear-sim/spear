@@ -29,48 +29,31 @@
 #include "SpCore/Unreal.h"
 
 // We use MSGPACK macros here to define structs that can be passed into, and returned from, the service entry
-// points defined below. There are already similar struct defined in SpCore, but we choose to define separate
-// structs here for the following reasons. First, we avoid a dependency on RPCLib in SpCore. Second, the data
-// needed at the SpCore level is sometimes slightly different from the data needed at the SpEngine level, e.g.,
-// CppFuncItem needs to maintain a view_ pointer but CppFuncServiceItem doesn't.
+// points defined below. There are already similar structs defined in SpCore, but we choose to define separate
+// structs here to avoid a dependency on RPCLib in SpCore.
 
 MSGPACK_ADD_ENUM(CppFuncDataType);
 MSGPACK_ADD_ENUM(CppFuncSharedMemoryUsageFlags);
 
-struct CppFuncServiceItem
+struct CppFuncServiceItem : public CppFuncItem
 {
-    std::vector<uint8_t> data_;
-    int num_elements_ = -1;
-    CppFuncDataType data_type_ = CppFuncDataType::Invalid;
-    bool use_shared_memory_ = false;
-    std::string shared_memory_name_;
-
     MSGPACK_DEFINE_MAP(data_, num_elements_, data_type_, use_shared_memory_, shared_memory_name_);
 };
 
-struct CppFuncServiceItems
+struct CppFuncServiceItems : public CppFuncComponentItems
 {
     std::map<std::string, CppFuncServiceItem> items_;
-    std::map<std::string, std::string> unreal_obj_strings_;
-    std::string info_;
-
     MSGPACK_DEFINE_MAP(items_, unreal_obj_strings_, info_);
 };
 
-struct CppFuncServiceSharedMemoryView
+struct CppFuncServiceSharedMemoryView : public CppFuncSharedMemoryView
 {
-    std::string name_;
-    std::string id_;
-    int num_bytes_ = -1;
-    CppFuncSharedMemoryUsageFlags usage_flags_;
-
-    MSGPACK_DEFINE_MAP(name_, id_, num_bytes_, usage_flags_);
+    MSGPACK_DEFINE_MAP(MSGPACK_NVP("name_", view_.name_), MSGPACK_NVP("id_", view_.id_), MSGPACK_NVP("num_bytes_", view_.num_bytes_), usage_flags_);
 };
 
 struct CppFuncServiceSharedMemoryViews
 {
     std::map<std::string, CppFuncServiceSharedMemoryView> views_;
-
     MSGPACK_DEFINE_MAP(views_);
 };
 
@@ -97,41 +80,37 @@ public:
             CppFuncComponentItems component_args;
             for (auto& [arg_name, arg] : args.items_) {
                 SP_ASSERT(arg_name != "");
+                SP_ASSERT(!arg.view_);
                 SP_ASSERT(arg.data_type_ != CppFuncDataType::Invalid);
 
-                CppFuncItem component_arg;
+                // Assign CppFuncItem directly from CppFuncServiceItem. This operation is valid because
+                // CppFuncServiceItem inherits from CppFuncItem and does not define any new data members, so
+                // we expect the data layout of each class to be identical.
+                CppFuncItem component_arg = std::move(static_cast<const CppFuncItem>(arg));
 
                 if (arg.use_shared_memory_) {
-                    SP_ASSERT(arg.data_.empty());
-                    SP_ASSERT(arg.num_elements_ >= 0);
-                    SP_ASSERT(arg.shared_memory_name_ != "");
+                    SP_ASSERT(component_arg.data_.empty());
+                    SP_ASSERT(component_arg.num_elements_ >= 0);
+                    SP_ASSERT(component_arg.shared_memory_name_ != "");
 
                     const std::map<std::string, CppFuncSharedMemoryView>& shared_memory_views = cpp_func_component->getSharedMemoryViews();
-                    SP_ASSERT(Std::containsKey(shared_memory_views, arg.shared_memory_name_));
-                    const CppFuncSharedMemoryView& shared_memory_view = shared_memory_views.at(arg.shared_memory_name_);
+                    SP_ASSERT(Std::containsKey(shared_memory_views, component_arg.shared_memory_name_));
+                    const CppFuncSharedMemoryView& shared_memory_view = shared_memory_views.at(component_arg.shared_memory_name_);
                     SP_ASSERT(shared_memory_view.view_.data_);
-                    SP_ASSERT(arg.num_elements_* CppFuncDataTypeUtils::getSizeOf(arg.data_type_) <= shared_memory_view.view_.num_bytes_);
+                    SP_ASSERT(component_arg.num_elements_*CppFuncDataTypeUtils::getSizeOf(component_arg.data_type_) <= shared_memory_view.view_.num_bytes_);
                     SP_ASSERT(shared_memory_view.usage_flags_ & CppFuncSharedMemoryUsageFlags::Arg);
 
-                    component_arg.data_ = {};
                     component_arg.view_ = shared_memory_view.view_.data_;
-                    component_arg.num_elements_ = arg.num_elements_;
-                    component_arg.use_shared_memory_ = true;
-                    component_arg.shared_memory_name_ = arg.shared_memory_name_;
 
                 } else {
-                    SP_ASSERT(arg.data_.size() % CppFuncDataTypeUtils::getSizeOf(arg.data_type_) == 0);
-                    SP_ASSERT(arg.num_elements_ == -1);
-                    SP_ASSERT(arg.shared_memory_name_ == "");
+                    SP_ASSERT(component_arg.data_.size() % CppFuncDataTypeUtils::getSizeOf(component_arg.data_type_) == 0);
+                    SP_ASSERT(component_arg.num_elements_ == -1);
+                    SP_ASSERT(component_arg.shared_memory_name_ == "");
 
-                    component_arg.data_ = std::move(arg.data_);
                     component_arg.view_ = component_arg.data_.data();
-                    component_arg.num_elements_ = component_arg.data_.size() % CppFuncDataTypeUtils::getSizeOf(arg.data_type_);
-                    component_arg.use_shared_memory_ = false;
-                    component_arg.shared_memory_name_ = "";
+                    component_arg.num_elements_ = component_arg.data_.size() / CppFuncDataTypeUtils::getSizeOf(component_arg.data_type_);
                 }
 
-                component_arg.data_type_ = arg.data_type_;
                 Std::insert(component_args.items_, arg_name, std::move(component_arg));
             }
             component_args.unreal_obj_strings_ = std::move(args.unreal_obj_strings_);
@@ -144,39 +123,35 @@ public:
             CppFuncServiceItems return_values;
             for (auto& [component_return_value_name, component_return_value] : component_return_values.items_) {
                 SP_ASSERT(component_return_value_name != "");
+                SP_ASSERT(component_return_value.view_);
+                SP_ASSERT(component_return_value.num_elements_ >= 0);
                 SP_ASSERT(component_return_value.data_type_ != CppFuncDataType::Invalid);
 
-                CppFuncServiceItem return_value;
+                // Assign CppFuncServiceItem directly from CppFuncItem. This operation is valid because
+                // CppFuncServiceItem inherits from CppFuncItem and does not define any new data members, so
+                // we expect the data layout of each class to be identical.
+                CppFuncServiceItem return_value = std::move(static_cast<CppFuncServiceItem>(component_return_value));
+                return_value.view_ = nullptr;
 
-                if (component_return_value.use_shared_memory_) {
-                    SP_ASSERT(component_return_value.data_.empty());
-                    SP_ASSERT(component_return_value.num_elements_ >= 0);
-                    SP_ASSERT(component_return_value.shared_memory_name_ != "");
+                if (return_value.use_shared_memory_) {
+                    SP_ASSERT(return_value.data_.empty());
+                    SP_ASSERT(return_value.shared_memory_name_ != "");
 
                     const std::map<std::string, CppFuncSharedMemoryView>& shared_memory_views = cpp_func_component->getSharedMemoryViews();
-                    SP_ASSERT(Std::containsKey(shared_memory_views, component_return_value.shared_memory_name_));
-                    const CppFuncSharedMemoryView& shared_memory_view = shared_memory_views.at(component_return_value.shared_memory_name_);
+                    SP_ASSERT(Std::containsKey(shared_memory_views, return_value.shared_memory_name_));
+                    const CppFuncSharedMemoryView& shared_memory_view = shared_memory_views.at(return_value.shared_memory_name_);
                     SP_ASSERT(shared_memory_view.view_.data_);
-                    SP_ASSERT(component_return_value.num_elements_*CppFuncDataTypeUtils::getSizeOf(component_return_value.data_type_) <= shared_memory_view.view_.num_bytes_);
+                    SP_ASSERT(return_value.num_elements_*CppFuncDataTypeUtils::getSizeOf(return_value.data_type_) <= shared_memory_view.view_.num_bytes_);
                     SP_ASSERT(shared_memory_view.usage_flags_ & CppFuncSharedMemoryUsageFlags::ReturnValue);
 
-                    return_value.data_ = {};
-                    return_value.num_elements_ = component_return_value.num_elements_;
-                    return_value.use_shared_memory_ = true;
-                    return_value.shared_memory_name_ = component_return_value.shared_memory_name_;
-
                 } else {
-                    SP_ASSERT(component_return_value.data_.size() % CppFuncDataTypeUtils::getSizeOf(component_return_value.data_type_) == 0);
-                    SP_ASSERT(component_return_value.num_elements_ == -1);
-                    SP_ASSERT(component_return_value.shared_memory_name_ == "");
+                    SP_ASSERT(return_value.data_.size() / CppFuncDataTypeUtils::getSizeOf(return_value.data_type_) == return_value.num_elements_);
+                    SP_ASSERT(return_value.data_.size() % CppFuncDataTypeUtils::getSizeOf(return_value.data_type_) == 0);
+                    SP_ASSERT(return_value.shared_memory_name_ == "");
 
-                    return_value.data_ = std::move(component_return_value.data_);
-                    return_value.num_elements_ = return_value.data_.size() % CppFuncDataTypeUtils::getSizeOf(component_return_value.data_type_);
-                    return_value.use_shared_memory_ = false;
-                    return_value.shared_memory_name_ = "";
+                    return_value.num_elements_ = -1;
                 }
 
-                return_value.data_type_ = component_return_value.data_type_;
                 Std::insert(return_values.items_, component_return_value_name, std::move(return_value));
             }
             return_values.unreal_obj_strings_ = std::move(component_return_values.unreal_obj_strings_);
@@ -198,11 +173,12 @@ public:
             for (auto& [component_shared_memory_view_name, component_shared_memory_view] : cpp_func_component->getSharedMemoryViews()) {
                 SP_ASSERT(component_shared_memory_view_name != "");
 
-                CppFuncServiceSharedMemoryView shared_memory_view;
-                shared_memory_view.name_ = component_shared_memory_view.view_.name_;
-                shared_memory_view.id_ = component_shared_memory_view.view_.id_;
-                shared_memory_view.num_bytes_ = component_shared_memory_view.view_.num_bytes_;
-                shared_memory_view.usage_flags_ = component_shared_memory_view.usage_flags_;
+                // Assign CppFuncServiceSharedMemoryView directly from CppFuncSharedMemoryView. This
+                // operation is valid because CppFuncServiceSharedMemoryView inherits from CppFuncSharedMemoryView
+                // and does not define any new data members, so we expect the data layout of each class to
+                // be identical.
+                CppFuncServiceSharedMemoryView shared_memory_view = std::move(static_cast<CppFuncServiceSharedMemoryView>(component_shared_memory_view));
+
                 Std::insert(shared_memory_views.views_, component_shared_memory_view_name, shared_memory_view);
             }
 

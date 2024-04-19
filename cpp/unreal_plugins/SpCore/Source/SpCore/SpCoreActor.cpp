@@ -39,89 +39,47 @@ ASpCoreActor::ASpCoreActor()
     StableNameComponent = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, "stable_name");
     SP_ASSERT(StableNameComponent);
 
-    // TODO: remove these CppFuncs because they are only here for debugging
-
-    std::string shared_memory_name = "my_shared_memory";
-    std::vector<std::string> shared_memory_name_tokens = Std::tokenize(Unreal::toStdString(GetFullName()), "\\/. ");
-    std::string shared_memory_long_name = Std::join(shared_memory_name_tokens, "_") + ":shared_memory:" + shared_memory_name;
-    int shared_memory_num_bytes = 1024;
-    shared_memory_region_ = std::make_unique<SharedMemoryRegion>(shared_memory_long_name, shared_memory_num_bytes);
-    SP_ASSERT(shared_memory_region_);
-
+    // TODO: remove CppFuncComponent because it is only here for debugging
     CppFuncComponent = Unreal::createComponentInsideOwnerConstructor<UCppFuncComponent>(this, "cpp_func");
     SP_ASSERT(CppFuncComponent);
 
-    CppFuncSharedMemoryUsageFlags shared_memory_usage_flags = CppFuncSharedMemoryUsageFlags::Arg | CppFuncSharedMemoryUsageFlags::ReturnValue;
-    CppFuncComponent->registerSharedMemoryView(shared_memory_name, shared_memory_region_->getView(), shared_memory_usage_flags);
-
-    CppFuncComponent->registerFunc("hello_world", [this](CppFuncComponentItems& args) -> CppFuncComponentItems
-    {
-        // CppFuncData objects are {named, strongly typed} arrays that can be efficiently passed
-        // {to, from} Python.
-        CppFuncData<uint8_t> hello("hello");
-        hello.setData("Hello World!");
-
-        // Get some some data from the Unreal Engine.
-        AActor* actor = Unreal::findActorByName(GetWorld(), "SpCore/SpCoreActor");
-        FVector location = actor->GetActorLocation();
-
-        // Store the Unreal data in a CppFuncData object to efficiently return it to Python.
-        // Here we use shared memory for the most efficient possible communication.
-        CppFuncData<double> unreal_data("unreal_data");
-        unreal_data.setData("my_shared_memory", shared_memory_region_->getView(), 3);
-        unreal_data.setValues({location.X, location.Y, location.Z});
-
-        // Return CppFuncData objects.
-        CppFuncComponentItems return_values;
-        return_values.items_ = CppFuncUtils::moveDataToItems({hello.getPtr(), unreal_data.getPtr()});
-        return return_values;
-    });
-
-    CppFuncComponent->registerFunc("my_func", [this](CppFuncComponentItems& args) -> CppFuncComponentItems {
-
-        // create view objects directly from arg data
-        CppFuncView<double> location("location");
-        CppFuncView<double> rotation("rotation");
-        CppFuncUtils::setViewsFromItems({location.getPtr(), rotation.getPtr()}, args.items_);
-
-        // create new data objects
-        CppFuncData<double> new_location("new_location");
-        CppFuncData<double> new_rotation("new_rotation");
-        new_location.setData(location.getView() | std::views::transform([](auto x) { return 2.0*x; })); // initialize from range of double
-        new_rotation.setData(rotation.getView() | std::views::transform([](auto x) { return 3.0*x; })); // initialize from range of double
-
-        // create new data objects backed by shared memory
-        CppFuncData<float> my_floats("my_floats");
-        my_floats.setData("my_shared_memory", shared_memory_region_->getView(), 3);
-        my_floats.setValues({99.0, 98.0, 97.0});
-
-        CppFuncComponentItems return_values;
-        return_values.items_ = CppFuncUtils::moveDataToItems({new_location.getPtr(), new_rotation.getPtr(), my_floats.getPtr()});
-
-        return return_values;
-    });
+    initializeCppFuncs();
 }
 
 ASpCoreActor::~ASpCoreActor()
 {
     SP_LOG_CURRENT_FUNCTION();
+}
 
-    CppFuncComponent->unregisterFunc("my_func");
-    CppFuncComponent->unregisterFunc("hello_world");
-
-    CppFuncComponent->unregisterSharedMemoryView("my_shared_memory");
-    SP_ASSERT(shared_memory_region_);
-    shared_memory_region_ = nullptr;
+void ASpCoreActor::BeginDestroy()
+{
+    AActor::BeginDestroy();
+    terminateCppFuncs();
+    #if WITH_EDITOR
+        requestTerminateActorLabelHandlers();
+    #endif
 }
 
 void ASpCoreActor::Tick(float delta_time)
 {
     AActor::Tick(delta_time);
-
     IsGamePaused = UGameplayStatics::IsGamePaused(GetWorld());
-
     actor_hit_event_descs_.Empty();
 }
+
+#if WITH_EDITOR // defined in an auto-generated header
+    void ASpCoreActor::PostActorCreated()
+    { 
+        AActor::PostActorCreated();
+        initializeActorLabelHandlers();
+    }
+
+    void ASpCoreActor::PostLoad()
+    {
+        AActor::PostLoad();
+        initializeActorLabelHandlers();
+    }
+#endif
 
 void ASpCoreActor::PauseGame()
 {
@@ -177,25 +135,77 @@ void ASpCoreActor::ActorHitHandler(AActor* self_actor, AActor* other_actor, FVec
     SP_LOG(return_values.at("ReturnValue"));
 }
 
-#if WITH_EDITOR // defined in an auto-generated header
-    void ASpCoreActor::PostActorCreated()
-    { 
-        AActor::PostActorCreated();
-        initializeActorLabelHandlers();
-    }
+void ASpCoreActor::initializeCppFuncs()
+{
+    std::string shared_memory_name = "my_shared_memory";
+    std::vector<std::string> shared_memory_name_tokens = Std::tokenize(Unreal::toStdString(GetFullName()), "\\/. ");
+    std::string shared_memory_long_name = Std::join(shared_memory_name_tokens, "_") + ":shared_memory:" + shared_memory_name;
+    int shared_memory_num_bytes = 1024;
+    shared_memory_region_ = std::make_unique<SharedMemoryRegion>(shared_memory_long_name, shared_memory_num_bytes);
+    SP_ASSERT(shared_memory_region_);
 
-    void ASpCoreActor::PostLoad()
-    {
-        AActor::PostLoad();
-        initializeActorLabelHandlers();
-    }
+    CppFuncSharedMemoryUsageFlags shared_memory_usage_flags = CppFuncSharedMemoryUsageFlags::Arg | CppFuncSharedMemoryUsageFlags::ReturnValue;
+    CppFuncComponent->registerSharedMemoryView(shared_memory_name, shared_memory_region_->getView(), shared_memory_usage_flags);
 
-    void ASpCoreActor::BeginDestroy()
-    {
-        AActor::BeginDestroy();
-        requestTerminateActorLabelHandlers();
-    }
+    CppFuncComponent->registerFunc("hello_world", [this](CppFuncComponentItems& args) -> CppFuncComponentItems {
 
+        // CppFuncData objects are {named, strongly typed} arrays that can be efficiently passed
+        // {to, from} Python.
+        CppFuncData<uint8_t> hello("hello");
+        hello.setData("Hello World!");
+
+        // Get some some data from the Unreal Engine.
+        AActor* actor = Unreal::findActorByName(GetWorld(), "SpCore/SpCoreActor");
+        FVector location = actor->GetActorLocation();
+
+        // Store the Unreal data in a CppFuncData object to efficiently return it to Python.
+        // Here we use shared memory for the most efficient possible communication.
+        CppFuncData<double> unreal_data("unreal_data");
+        unreal_data.setData("my_shared_memory", shared_memory_region_->getView(), 3);
+        unreal_data.setValues({location.X, location.Y, location.Z});
+
+        // Return CppFuncData objects.
+        CppFuncComponentItems return_values;
+        return_values.items_ = CppFuncUtils::moveDataToItems({hello.getPtr(), unreal_data.getPtr()});
+        return return_values;
+    });
+
+    CppFuncComponent->registerFunc("my_func", [this](CppFuncComponentItems& args) -> CppFuncComponentItems {
+
+        // create view objects directly from arg data
+        CppFuncView<double> location("location");
+        CppFuncView<double> rotation("rotation");
+        CppFuncUtils::setViewsFromItems({location.getPtr(), rotation.getPtr()}, args.items_);
+
+        // create new data objects
+        CppFuncData<double> new_location("new_location");
+        CppFuncData<double> new_rotation("new_rotation");
+        new_location.setData(location.getView() | std::views::transform([](auto x) { return 2.0*x; })); // initialize from range of double
+        new_rotation.setData(rotation.getView() | std::views::transform([](auto x) { return 3.0*x; })); // initialize from range of double
+
+        // create new data objects backed by shared memory
+        CppFuncData<float> my_floats("my_floats");
+        my_floats.setData("my_shared_memory", shared_memory_region_->getView(), 3);
+        my_floats.setValues({99.0, 98.0, 97.0});
+
+        CppFuncComponentItems return_values;
+        return_values.items_ = CppFuncUtils::moveDataToItems({new_location.getPtr(), new_rotation.getPtr(), my_floats.getPtr()});
+
+        return return_values;
+    });
+}
+
+void ASpCoreActor::terminateCppFuncs()
+{
+    CppFuncComponent->unregisterFunc("my_func");
+    CppFuncComponent->unregisterFunc("hello_world");
+
+    CppFuncComponent->unregisterSharedMemoryView("my_shared_memory");
+    SP_ASSERT(shared_memory_region_);
+    shared_memory_region_ = nullptr;
+}
+
+#if WITH_EDITOR
     void ASpCoreActor::initializeActorLabelHandlers()
     {
         SP_ASSERT(GEngine);
