@@ -13,7 +13,7 @@
 #include <vector>
 
 #include <Components/ActorComponent.h>
-#include <Containers/Array.h>        // TArray
+#include <Containers/Array.h>
 #include <Containers/StringConv.h>   // TCHAR_TO_UTF8, UTF8_TO_TCHAR
 #include <Containers/UnrealString.h> // FString::operator*
 #include <Dom/JsonObject.h>

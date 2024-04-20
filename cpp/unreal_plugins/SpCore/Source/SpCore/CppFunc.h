@@ -143,7 +143,7 @@ public:
         SP_ASSERT(item.num_elements_ >= 0);
         SP_ASSERT(item.data_type_ == CppFuncDataTypeUtils::getDataType<TValue>());
         data_ = std::move(item.data_);
-        view_ = std::span<TValue>(reinterpret_cast<TValue*>(item.view_), item.num_elements_);
+        view_ = std::span<TValue>(static_cast<TValue*>(item.view_), item.num_elements_);
         use_shared_memory_ = item.use_shared_memory_;
         shared_memory_name_ = item.shared_memory_name_;
     }
@@ -183,7 +183,7 @@ public:
     {
         SP_ASSERT(num_elements*sizeof(TValue) <= shared_memory_view.num_bytes_);
         data_ = {};
-        view_ = std::span<TValue>(reinterpret_cast<TValue*>(shared_memory_view.data_), num_elements);
+        view_ = std::span<TValue>(static_cast<TValue*>(shared_memory_view.data_), num_elements);
         use_shared_memory_ = true;
         shared_memory_name_ = shared_memory_name;
     }
@@ -255,7 +255,7 @@ public:
     void setViewFromItem(const CppFuncItem& item) override
     {
         SP_ASSERT(item.data_type_ == CppFuncDataTypeUtils::getDataType<TValue>());
-        view_ = std::span<const TValue>(reinterpret_cast<const TValue*>(item.view_), item.num_elements_);
+        view_ = std::span<const TValue>(static_cast<const TValue*>(item.view_), item.num_elements_);
     }
 
     // CppFuncView interface

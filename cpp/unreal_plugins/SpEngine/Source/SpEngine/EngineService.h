@@ -96,7 +96,7 @@ public:
 
         entry_point_binder_->bind("engine_service.get_byte_order", []() -> std::string {
             uint32_t dummy = 0x01020304;
-            return (reinterpret_cast<char*>(&dummy)[3] == 1) ? "little" : "big";
+            return (reinterpret_cast<uint8_t*>(&dummy)[3] == 1) ? "little" : "big";
         });
     }
 

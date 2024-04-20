@@ -13,7 +13,7 @@
 
 #include <Components/ActorComponent.h>
 #include <Components/SceneComponent.h>
-#include <Containers/Array.h>        // TArray
+#include <Containers/Array.h>
 #include <Containers/UnrealString.h> // FString::operator*
 #include <EngineUtils.h>             // TActorIterator
 #include <GameFramework/Actor.h>
@@ -740,7 +740,7 @@ private:
     template <typename TValue>
     static const TValue& getItem(const std::vector<TValue>& vector, void* default_value, bool assert_if_size_is_zero, bool assert_if_size_is_greater_than_one)
     {
-        return getItem(vector, reinterpret_cast<TValue>(default_value), assert_if_size_is_zero, assert_if_size_is_greater_than_one);
+        return getItem(vector, static_cast<TValue>(default_value), assert_if_size_is_zero, assert_if_size_is_greater_than_one);
     }
 
     template <typename TValue>

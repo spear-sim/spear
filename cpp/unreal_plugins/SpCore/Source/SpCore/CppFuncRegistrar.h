@@ -31,7 +31,7 @@
 // follows.
 //
 //     new_registrar.registerFunc("float", [](int num_elements) -> void* { return new float[num_elements]; });
-//     delete_registrar.registerFunc("float", [](void* array) -> void { delete[] reinterpret_cast<float*>(array); });
+//     delete_registrar.registerFunc("float", [](void* array) -> void { delete[] static_cast<float*>(array); });
 //
 // Here, we are registering the name "float" with a create function that allocates an array of floats, and
 // a corresponding destroy function that deletes the array. In our destroy function, we need to explicitly

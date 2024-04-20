@@ -83,10 +83,10 @@ public:
                 SP_ASSERT(!arg.view_);
                 SP_ASSERT(arg.data_type_ != CppFuncDataType::Invalid);
 
-                // Assign CppFuncItem directly from CppFuncServiceItem. This operation is valid because
-                // CppFuncServiceItem inherits from CppFuncItem and does not define any new data members, so
-                // we expect the data layout of each class to be identical.
-                CppFuncItem component_arg = std::move(static_cast<const CppFuncItem>(arg));
+                // Assign CppFuncItem (base) directly from CppFuncServiceItem (derived). This operation is
+                // valid because CppFuncServiceItem inherits from CppFuncItem and does not define any new
+                // data members, so we expect the data layout of each class to be identical.
+                CppFuncItem component_arg = std::move(static_cast<const CppFuncItem&>(arg));
 
                 if (arg.use_shared_memory_) {
                     SP_ASSERT(component_arg.data_.empty());
@@ -127,10 +127,10 @@ public:
                 SP_ASSERT(component_return_value.num_elements_ >= 0);
                 SP_ASSERT(component_return_value.data_type_ != CppFuncDataType::Invalid);
 
-                // Assign CppFuncServiceItem directly from CppFuncItem. This operation is valid because
-                // CppFuncServiceItem inherits from CppFuncItem and does not define any new data members, so
-                // we expect the data layout of each class to be identical.
-                CppFuncServiceItem return_value = std::move(static_cast<CppFuncServiceItem>(component_return_value));
+                // Assign CppFuncServiceItem (derived) directly from CppFuncItem (base). This operation is
+                // valid because CppFuncServiceItem inherits from CppFuncItem and does not define any new
+                // data members, so we expect the data layout of each class to be identical.
+                CppFuncServiceItem return_value = std::move(static_cast<CppFuncServiceItem&>(component_return_value));
                 return_value.view_ = nullptr;
 
                 if (return_value.use_shared_memory_) {
@@ -173,11 +173,11 @@ public:
             for (auto& [component_shared_memory_view_name, component_shared_memory_view] : cpp_func_component->getSharedMemoryViews()) {
                 SP_ASSERT(component_shared_memory_view_name != "");
 
-                // Assign CppFuncServiceSharedMemoryView directly from CppFuncSharedMemoryView. This
-                // operation is valid because CppFuncServiceSharedMemoryView inherits from CppFuncSharedMemoryView
-                // and does not define any new data members, so we expect the data layout of each class to
-                // be identical.
-                CppFuncServiceSharedMemoryView shared_memory_view = std::move(static_cast<CppFuncServiceSharedMemoryView>(component_shared_memory_view));
+                // Assign CppFuncServiceSharedMemoryView (derived) directly from CppFuncSharedMemoryView
+                // (base). This operation is valid because CppFuncServiceSharedMemoryView inherits from
+                // CppFuncSharedMemoryView and does not define any new data members, so we expect the data
+                // layout of each class to be identical.
+                CppFuncServiceSharedMemoryView shared_memory_view = std::move(static_cast<const CppFuncServiceSharedMemoryView&>(component_shared_memory_view));
 
                 Std::insert(shared_memory_views.views_, component_shared_memory_view_name, shared_memory_view);
             }
