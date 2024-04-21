@@ -77,7 +77,10 @@ public:
 
 //
 // CppFuncItem is a data-only type that represents an arg or return value that can be passed to or returned
-// from a CppFunc.
+// from a CppFunc. We represent the data payload in each CppFuncItem as a std::vector<uint8_t>, regardless of
+// its actual data type, because vectors of uint8_t get converted to a more efficient MSGPACK representation
+// than other types. This results in faster data movement. See the following link for details:
+//     https://github.com/msgpack/msgpack-c/wiki/v2_0_cpp_adaptor
 //
 
 struct CppFuncItem
@@ -266,8 +269,8 @@ private:
 };
 
 //
-// CppFuncDataUtils is a set of functions for getting items from data objects (moveDataToItems), getting
-// views from items (setViewsFromItems), and getting data objects from items (moveItemsToData).
+// CppFuncUtils is a set of functions for converting to items from data objects (moveDataToItems), converting
+// to data objects from items (moveItemsToData), and converting to views from items (setViewsFromItems)
 //
 
 class SPCORE_API CppFuncUtils
@@ -281,13 +284,13 @@ public:
     static std::map<std::string, CppFuncItem> moveDataToItems(const std::vector<CppFuncDataBase*>& data_objs);
     static std::map<std::string, CppFuncItem> moveDataToItems(const std::map<std::string, CppFuncDataBase*>& data_objs);
 
+    // typically called when transferring an arg or a return value item to a local data object
+    static void moveItemsToData(std::initializer_list<CppFuncDataBase*> data_objs, std::map<std::string, CppFuncItem>& items);
+    static void moveItemsToData(const std::vector<CppFuncDataBase*>& data_objs, std::map<std::string, CppFuncItem>& items);
+    static void moveItemsToData(const std::map<std::string, CppFuncDataBase*>& data_objs, std::map<std::string, CppFuncItem>& items);
+
     // typically called from inside a CppFunc to retrieve args, and after calling a CppFunc to retrieve return values
     static void setViewsFromItems(std::initializer_list<CppFuncViewBase*> view_objs, const std::map<std::string, CppFuncItem>& items);
     static void setViewsFromItems(const std::vector<CppFuncViewBase*>& view_objs, const std::map<std::string, CppFuncItem>& items);
     static void setViewsFromItems(const std::map<std::string, CppFuncViewBase*>& view_objs, const std::map<std::string, CppFuncItem>& items);
-
-    // useful for transferring an arg or a return value item to a local data object
-    static void moveItemsToData(std::initializer_list<CppFuncDataBase*> data_objs, std::map<std::string, CppFuncItem>& items);
-    static void moveItemsToData(const std::vector<CppFuncDataBase*>& data_objs, std::map<std::string, CppFuncItem>& items);
-    static void moveItemsToData(const std::map<std::string, CppFuncDataBase*>& data_objs, std::map<std::string, CppFuncItem>& items);
 };

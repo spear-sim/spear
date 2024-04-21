@@ -45,6 +45,33 @@ std::map<std::string, CppFuncItem> CppFuncUtils::moveDataToItems(const std::map<
 }
 
 //
+// typically called when transferring an arg or a return value item to a local data object
+//
+
+void CppFuncUtils::moveItemsToData(std::initializer_list<CppFuncDataBase*> data_objs, std::map<std::string, CppFuncItem>& items)
+{
+    // convert from initializer_list to vector
+    moveItemsToData(Std::toVector<CppFuncDataBase*>(data_objs), items);
+}
+
+void CppFuncUtils::moveItemsToData(const std::vector<CppFuncDataBase*>& data_objs, std::map<std::string, CppFuncItem>& items)
+{
+    // convert from vector to map
+    SP_ASSERT(!Std::contains(data_objs, nullptr));
+    auto data_obj_map = Std::toMap<std::string, CppFuncDataBase*>(
+        data_objs | std::views::transform([](auto data_obj) { return std::make_pair(data_obj->getName(), data_obj); }));
+    moveItemsToData(data_obj_map, items);
+}
+
+void CppFuncUtils::moveItemsToData(const std::map<std::string, CppFuncDataBase*>& data_objs, std::map<std::string, CppFuncItem>& items)
+{
+    for (auto& [name, data_obj] : data_objs) {
+        SP_ASSERT(Std::containsKey(items, name));
+        data_obj->moveItemToData(items.at(name));
+    }
+}
+
+//
 // typically called from inside a CppFunc to retrieve args, and after calling a CppFunc to retrieve return values
 //
 
@@ -68,32 +95,5 @@ void CppFuncUtils::setViewsFromItems(const std::map<std::string, CppFuncViewBase
     for (auto& [name, view_obj] : view_objs) {
         SP_ASSERT(Std::containsKey(items, name));
         view_obj->setViewFromItem(items.at(name));
-    }
-}
-
-//
-// useful for transferring an arg or a return value item to a local data object
-//
-
-void CppFuncUtils::moveItemsToData(std::initializer_list<CppFuncDataBase*> data_objs, std::map<std::string, CppFuncItem>& items)
-{
-    // convert from initializer_list to vector
-    moveItemsToData(Std::toVector<CppFuncDataBase*>(data_objs), items);
-}
-
-void CppFuncUtils::moveItemsToData(const std::vector<CppFuncDataBase*>& data_objs, std::map<std::string, CppFuncItem>& items)
-{
-    // convert from vector to map
-    SP_ASSERT(!Std::contains(data_objs, nullptr));
-    auto data_obj_map = Std::toMap<std::string, CppFuncDataBase*>(
-        data_objs | std::views::transform([](auto data_obj) { return std::make_pair(data_obj->getName(), data_obj); }));
-    moveItemsToData(data_obj_map, items);
-}
-
-void CppFuncUtils::moveItemsToData(const std::map<std::string, CppFuncDataBase*>& data_objs, std::map<std::string, CppFuncItem>& items)
-{
-    for (auto& [name, data_obj] : data_objs) {
-        SP_ASSERT(Std::containsKey(items, name));
-        data_obj->moveItemToData(items.at(name));
     }
 }
