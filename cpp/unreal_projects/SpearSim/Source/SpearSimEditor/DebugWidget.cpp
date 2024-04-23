@@ -38,88 +38,18 @@ ADebugWidget::ADebugWidget()
     cpp_func_component_ = Unreal::createComponentInsideOwnerConstructor<UCppFuncComponent>(this, "cpp_func");
     SP_ASSERT(cpp_func_component_);
 
-    std::string shared_memory_name = "my_shared_memory";
-    std::vector<std::string> shared_memory_name_tokens = Std::tokenize(Unreal::toStdString(GetFullName()), "\\/. ");
-    std::string shared_memory_long_name = Std::join(shared_memory_name_tokens, "_") + ":shared_memory:" + shared_memory_name;
-    int shared_memory_num_bytes = 1024;
-    CppFuncSharedMemoryUsageFlags shared_memory_usage_flags = CppFuncSharedMemoryUsageFlags::Arg | CppFuncSharedMemoryUsageFlags::ReturnValue;
-    shared_memory_region_ = std::make_unique<SharedMemoryRegion>(shared_memory_long_name, shared_memory_num_bytes);
-    SP_ASSERT(shared_memory_region_);
-    cpp_func_component_->registerSharedMemoryView(shared_memory_name, shared_memory_region_->getView(), shared_memory_usage_flags);
-
-    cpp_func_component_->registerFunc("my_func", [this](CppFuncComponentItems& args) -> CppFuncComponentItems {
-
-        // create view objects directly from arg data
-        CppFuncView<double> location("location");
-        CppFuncView<double> rotation("rotation");
-        CppFuncView<double> shared_doubles("shared_doubles");
-        CppFuncUtils::setViewsFromItems({location.getPtr(), rotation.getPtr(), shared_doubles.getPtr()}, args.items_);
-
-        // create Unreal objects directly from arg strings
-        UnrealObj<FVector> vec("vec");
-        UnrealObj<FRotator> rot("rot");
-        UnrealObjUtils::setObjectPropertiesFromStrings({vec.getPtr(), rot.getPtr()}, args.unreal_obj_strings_);
-
-        // get arg info string as a YAML value
-        std::string initialize_data_mode = Yaml::get<std::string>(YAML::Load(args.info_), "INITIALIZE_DATA_MODE");
-
-        // create new data objects
-        CppFuncData<double> hello("hello");
-        if (initialize_data_mode == "initializer_list_of_double") {
-            hello.setData({16.0, 32.0}); // initialize from initializer list of double
-        } else if (initialize_data_mode == "vector_of_double") {
-            std::vector<double> hello_vector = {64.0, 128.0};
-            hello.setData(hello_vector); // initialize from vector of double
-        } else if (initialize_data_mode == "rvalue_reference_to_vector_of_uint8") {
-            std::vector<uint8_t> hello_vector_uint8 = {1, 2, 3, 4, 5, 6, 7, 8};
-            hello.setData(std::move(hello_vector_uint8)); // initialize from rvalue reference to vector of uint8_t (avoids copy)
-        } else {
-            SP_ASSERT(false);
-        }
-
-        CppFuncData<uint8_t> hello_str("hello_str");
-        hello_str.setData("Hello world!"); // initialize from string literal
-
-        CppFuncData<double> new_location("new_location");
-        CppFuncData<double> new_rotation("new_rotation");
-        CppFuncData<double> new_shared_doubles("new_shared_doubles");
-        new_location.setData(location.getView() | std::views::transform([](auto x) { return 2.0*x; })); // initialize from range of double
-        new_rotation.setData(rotation.getView() | std::views::transform([](auto x) { return 3.0*x; })); // initialize from range of double
-        new_shared_doubles.setData("my_shared_memory", shared_memory_region_->getView(), 3);
-        new_shared_doubles.setValues(shared_doubles.getView() | std::views::transform([](auto x) { return 4.0*x; }));
-
-        // create new data objects by moving arg data
-        CppFuncData<double> location_as_return_value("location");
-        CppFuncUtils::moveItemsToData({location_as_return_value.getPtr()}, args.items_);
-
-        // create new Unreal objects
-        UnrealObj<FVector> new_vec("new_vec");
-        UnrealObj<FRotator> new_rot("new_rot");
-        new_vec.setObj(4.0*vec.getObj());
-        new_rot.setObj(5.0*rot.getObj());
-
-        CppFuncComponentItems return_values;
-
-        // set return data from data objects
-        return_values.items_ = CppFuncUtils::moveDataToItems({new_location.getPtr(), new_rotation.getPtr(), new_shared_doubles.getPtr(), location_as_return_value.getPtr()});
-
-        // set return strings from Unreal objects
-        return_values.unreal_obj_strings_ = UnrealObjUtils::getObjectPropertiesAsStrings({new_vec.getPtr(), new_rot.getPtr()});
-
-        // set return info string as a YAML string
-        return_values.info_ = "SUCCESS: True";
-
-        return return_values;
-    });
+    initializeCppFuncs();
 }
 
 ADebugWidget::~ADebugWidget()
 {
     SP_LOG_CURRENT_FUNCTION();
+}
 
-    cpp_func_component_->unregisterFunc("my_func");
-    cpp_func_component_->unregisterSharedMemoryView("my_shared_memory");
-    shared_memory_region_ = nullptr;
+void ADebugWidget::BeginDestroy()
+{
+    AActor::BeginDestroy();
+    terminateCppFuncs();
 }
 
 void ADebugWidget::LoadConfig()
@@ -519,4 +449,89 @@ UObject* ADebugWidget::GetWorldContextObject(const UObject* world_context_object
 {
     SP_LOG_CURRENT_FUNCTION();
     return const_cast<UObject*>(world_context_object);
+}
+
+void ADebugWidget::initializeCppFuncs()
+{
+    std::string shared_memory_name = "my_shared_memory";
+    std::vector<std::string> shared_memory_name_tokens = Std::tokenize(Unreal::toStdString(GetFullName()), "\\/. ");
+    std::string shared_memory_long_name = Std::join(shared_memory_name_tokens, "_") + ":shared_memory:" + shared_memory_name;
+    int shared_memory_num_bytes = 1024;
+    shared_memory_region_ = std::make_unique<SharedMemoryRegion>(shared_memory_long_name, shared_memory_num_bytes);
+    SP_ASSERT(shared_memory_region_);
+
+    CppFuncSharedMemoryUsageFlags shared_memory_usage_flags = CppFuncSharedMemoryUsageFlags::Arg | CppFuncSharedMemoryUsageFlags::ReturnValue;
+    cpp_func_component_->registerSharedMemoryView(shared_memory_name, shared_memory_region_->getView(), shared_memory_usage_flags);
+
+    cpp_func_component_->registerFunc("my_func", [this](CppFuncComponentItems& args) -> CppFuncComponentItems {
+
+        // create view objects directly from arg data
+        CppFuncView<double> location("location");
+        CppFuncView<double> rotation("rotation");
+        CppFuncView<double> shared_doubles("shared_doubles");
+        CppFuncUtils::setViewsFromItems({location.getPtr(), rotation.getPtr(), shared_doubles.getPtr()}, args.items_);
+
+        // create Unreal objects directly from arg strings
+        UnrealObj<FVector> vec("vec");
+        UnrealObj<FRotator> rot("rot");
+        UnrealObjUtils::setObjectPropertiesFromStrings({vec.getPtr(), rot.getPtr()}, args.unreal_obj_strings_);
+
+        // get arg info string as a YAML value
+        std::string initialize_data_mode = Yaml::get<std::string>(YAML::Load(args.info_), "INITIALIZE_DATA_MODE");
+
+        // create new data objects
+        CppFuncData<double> hello("hello");
+        if (initialize_data_mode == "initializer_list_of_double") {
+            hello.setData({16.0, 32.0}); // initialize from initializer list of double
+        } else if (initialize_data_mode == "vector_of_double") {
+            std::vector<double> hello_vector = {64.0, 128.0};
+            hello.setData(hello_vector); // initialize from vector of double
+        } else if (initialize_data_mode == "rvalue_reference_to_vector_of_uint8") {
+            std::vector<uint8_t> hello_vector_uint8 = {1, 2, 3, 4, 5, 6, 7, 8};
+            hello.setData(std::move(hello_vector_uint8)); // initialize from rvalue reference to vector of uint8_t (avoids copy)
+        } else {
+            SP_ASSERT(false);
+        }
+
+        CppFuncData<uint8_t> hello_str("hello_str");
+        hello_str.setData("Hello world!"); // initialize from string literal
+
+        CppFuncData<double> new_location("new_location");
+        CppFuncData<double> new_rotation("new_rotation");
+        CppFuncData<double> new_shared_doubles("new_shared_doubles");
+        new_location.setData(location.getView() | std::views::transform([](auto x) { return 2.0*x; })); // initialize from range of double
+        new_rotation.setData(rotation.getView() | std::views::transform([](auto x) { return 3.0*x; })); // initialize from range of double
+        new_shared_doubles.setData("my_shared_memory", shared_memory_region_->getView(), 3);
+        new_shared_doubles.setValues(shared_doubles.getView() | std::views::transform([](auto x) { return 4.0*x; }));
+
+        // create new data objects by moving arg data
+        CppFuncData<double> location_as_return_value("location");
+        CppFuncUtils::moveItemsToData({location_as_return_value.getPtr()}, args.items_);
+
+        // create new Unreal objects
+        UnrealObj<FVector> new_vec("new_vec");
+        UnrealObj<FRotator> new_rot("new_rot");
+        new_vec.setObj(4.0*vec.getObj());
+        new_rot.setObj(5.0*rot.getObj());
+
+        CppFuncComponentItems return_values;
+
+        // set return data from data objects
+        return_values.items_ = CppFuncUtils::moveDataToItems({new_location.getPtr(), new_rotation.getPtr(), new_shared_doubles.getPtr(), location_as_return_value.getPtr()});
+
+        // set return strings from Unreal objects
+        return_values.unreal_obj_strings_ = UnrealObjUtils::getObjectPropertiesAsStrings({new_vec.getPtr(), new_rot.getPtr()});
+
+        // set return info string as a YAML string
+        return_values.info_ = "SUCCESS: True";
+
+        return return_values;
+    });
+}
+
+void ADebugWidget::terminateCppFuncs()
+{
+    cpp_func_component_->unregisterFunc("my_func");
+    cpp_func_component_->unregisterSharedMemoryView("my_shared_memory");
+    shared_memory_region_ = nullptr;
 }

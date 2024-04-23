@@ -58,22 +58,22 @@ public:
     ~ASpCoreActor();
 
     // AActor interface
+    void BeginDestroy() override;
     void Tick(float delta_time) override;
 
     // Required for keeping StableNameComponents up-to-date.
     #if WITH_EDITOR // defined in an auto-generated header
         void PostActorCreated() override;
         void PostLoad() override;
-        void BeginDestroy() override;
     #endif
 
 private:
-    // Required so this actor can be found through our Unreal::findActor interface.
+    // Required so this actor can be found through the findActor interface in Unreal.h.
     UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Stable Name Component");
     UStableNameComponent* StableNameComponent = nullptr;
 
     // Used for debugging.
-    UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "CPP Func Component");
+    UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "CppFunc Component");
     UCppFuncComponent* CppFuncComponent = nullptr;
     std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
 
@@ -106,6 +106,10 @@ private:
     UFUNCTION()
     void ActorHitHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result);
     TArray<FActorHitEventDesc> actor_hit_event_descs_;
+
+    // Used for debugging.
+    void initializeCppFuncs();
+    void terminateCppFuncs(); // don't call from destructor because CppFuncComponent might have been garbage-collected already
 
     // Required for keeping StableNameComponents up-to-date.
     #if WITH_EDITOR // defined in an auto-generated header

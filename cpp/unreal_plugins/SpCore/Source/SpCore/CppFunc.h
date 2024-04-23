@@ -77,7 +77,10 @@ public:
 
 //
 // CppFuncItem is a data-only type that represents an arg or return value that can be passed to or returned
-// from a CppFunc.
+// from a CppFunc. We represent the data payload in each CppFuncItem as a std::vector<uint8_t>, regardless of
+// its actual data type, because vectors of uint8_t get converted to a more efficient MSGPACK representation
+// than other types. This results in faster data movement. See the following link for details:
+//     https://github.com/msgpack/msgpack-c/wiki/v2_0_cpp_adaptor
 //
 
 struct CppFuncItem
@@ -143,7 +146,7 @@ public:
         SP_ASSERT(item.num_elements_ >= 0);
         SP_ASSERT(item.data_type_ == CppFuncDataTypeUtils::getDataType<TValue>());
         data_ = std::move(item.data_);
-        view_ = std::span<TValue>(reinterpret_cast<TValue*>(item.view_), item.num_elements_);
+        view_ = std::span<TValue>(static_cast<TValue*>(item.view_), item.num_elements_);
         use_shared_memory_ = item.use_shared_memory_;
         shared_memory_name_ = item.shared_memory_name_;
     }
@@ -183,7 +186,7 @@ public:
     {
         SP_ASSERT(num_elements*sizeof(TValue) <= shared_memory_view.num_bytes_);
         data_ = {};
-        view_ = std::span<TValue>(reinterpret_cast<TValue*>(shared_memory_view.data_), num_elements);
+        view_ = std::span<TValue>(static_cast<TValue*>(shared_memory_view.data_), num_elements);
         use_shared_memory_ = true;
         shared_memory_name_ = shared_memory_name;
     }
@@ -255,7 +258,7 @@ public:
     void setViewFromItem(const CppFuncItem& item) override
     {
         SP_ASSERT(item.data_type_ == CppFuncDataTypeUtils::getDataType<TValue>());
-        view_ = std::span<const TValue>(reinterpret_cast<const TValue*>(item.view_), item.num_elements_);
+        view_ = std::span<const TValue>(static_cast<const TValue*>(item.view_), item.num_elements_);
     }
 
     // CppFuncView interface
@@ -266,8 +269,8 @@ private:
 };
 
 //
-// CppFuncDataUtils is a set of functions for getting items from data objects (moveDataToItems), getting
-// views from items (setViewsFromItems), and getting data objects from items (moveItemsToData).
+// CppFuncUtils is a set of functions for converting to items from data objects (moveDataToItems), converting
+// to data objects from items (moveItemsToData), and converting to views from items (setViewsFromItems)
 //
 
 class SPCORE_API CppFuncUtils
@@ -281,13 +284,13 @@ public:
     static std::map<std::string, CppFuncItem> moveDataToItems(const std::vector<CppFuncDataBase*>& data_objs);
     static std::map<std::string, CppFuncItem> moveDataToItems(const std::map<std::string, CppFuncDataBase*>& data_objs);
 
+    // typically called when transferring an arg or a return value item to a local data object
+    static void moveItemsToData(std::initializer_list<CppFuncDataBase*> data_objs, std::map<std::string, CppFuncItem>& items);
+    static void moveItemsToData(const std::vector<CppFuncDataBase*>& data_objs, std::map<std::string, CppFuncItem>& items);
+    static void moveItemsToData(const std::map<std::string, CppFuncDataBase*>& data_objs, std::map<std::string, CppFuncItem>& items);
+
     // typically called from inside a CppFunc to retrieve args, and after calling a CppFunc to retrieve return values
     static void setViewsFromItems(std::initializer_list<CppFuncViewBase*> view_objs, const std::map<std::string, CppFuncItem>& items);
     static void setViewsFromItems(const std::vector<CppFuncViewBase*>& view_objs, const std::map<std::string, CppFuncItem>& items);
     static void setViewsFromItems(const std::map<std::string, CppFuncViewBase*>& view_objs, const std::map<std::string, CppFuncItem>& items);
-
-    // useful for transferring an arg or a return value item to a local data object
-    static void moveItemsToData(std::initializer_list<CppFuncDataBase*> data_objs, std::map<std::string, CppFuncItem>& items);
-    static void moveItemsToData(const std::vector<CppFuncDataBase*>& data_objs, std::map<std::string, CppFuncItem>& items);
-    static void moveItemsToData(const std::map<std::string, CppFuncDataBase*>& data_objs, std::map<std::string, CppFuncItem>& items);
 };

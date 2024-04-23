@@ -15,7 +15,6 @@
 #include <Misc/CoreDelegates.h>
 
 #include "SpCore/Assert.h"
-#include "SpCore/Log.h"
 #include "SpEngine/EntryPointBinder.h"
 #include "SpEngine/WorkQueue.h"
 
@@ -45,7 +44,7 @@ public:
         frame_state_ = FrameState::Idle;
 
         entry_point_binder_->bind("engine_service.ping", []() -> std::string {
-            return "EngineService received a call to ping()...";
+            return "received a call to engine_service.ping";
         });
 
         entry_point_binder_->bind("engine_service.request_close", []() -> void {
@@ -65,38 +64,33 @@ public:
             frame_state_executing_pre_tick_future_ = frame_state_executing_pre_tick_promise_.get_future();
             frame_state_executing_post_tick_future_ = frame_state_executing_post_tick_promise_.get_future();
 
-            // indicate that we want the game thread to advance the simulation, wait here until frame_state == FrameState::ExecutingPreTick
+            // allow beginFrameHandler() to start executing, wait here until frame_state_ == FrameState::ExecutingPreTick
             frame_state_ = FrameState::RequestPreTick;
             frame_state_executing_pre_tick_future_.wait();
-
             SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
         });
 
         entry_point_binder_->bind("engine_service.tick", [this]() -> void {
             SP_ASSERT(frame_state_ == FrameState::ExecutingPreTick);
 
-            // allow beginFrameHandler() to finish executing, wait here until frame_state == FrameState::ExecutingPostTick
+            // allow beginFrameHandler() to finish executing, wait here until frame_state_ == FrameState::ExecutingPostTick
             work_queue_.reset();
-
             frame_state_executing_post_tick_future_.wait();
-
             SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
         });
 
         entry_point_binder_->bind("engine_service.end_tick", [this]() -> void {
             SP_ASSERT(frame_state_ == FrameState::ExecutingPostTick);
 
-            // allow endFrameHandler() to finish executing, wait here until frame_state == FrameState::Idle
+            // allow endFrameHandler() to finish executing, wait here until frame_state_ == FrameState::Idle
             work_queue_.reset();
-
             frame_state_idle_future_.wait();
-
             SP_ASSERT(frame_state_ == FrameState::Idle);
         });
 
         entry_point_binder_->bind("engine_service.get_byte_order", []() -> std::string {
             uint32_t dummy = 0x01020304;
-            return (reinterpret_cast<char*>(&dummy)[3] == 1) ? "little" : "big";
+            return (reinterpret_cast<uint8_t*>(&dummy)[3] == 1) ? "little" : "big";
         });
     }
 
@@ -114,7 +108,9 @@ public:
 
     void bindFuncNoUnreal(const std::string& service_name, const std::string& func_name, auto&& func)
     {
-        entry_point_binder_->bind(service_name + "." + func_name, std::forward<decltype(func)>(func));
+        entry_point_binder_->bind(
+            service_name + "." + func_name,
+            std::forward<decltype(func)>(func));
     }
 
     void bindFuncUnreal(const std::string& service_name, const std::string& func_name, auto&& func)
@@ -128,14 +124,14 @@ public:
     {
         if (frame_state_ == FrameState::RequestPreTick) {
 
-            // update frame state, allow begin_tick() to finish executing
+            // allow begin_tick() to finish executing
             frame_state_ = FrameState::ExecutingPreTick;
             frame_state_executing_pre_tick_promise_.set_value();
 
             // execute all pre-tick work, wait here for tick() to unblock
             work_queue_.run();
 
-            // update local state
+            // update frame state
             frame_state_ = FrameState::ExecutingTick;
         }
     }
@@ -144,14 +140,14 @@ public:
     {
         if (frame_state_ == FrameState::ExecutingTick) {
 
-            // update frame state, allow tick() to finish executing
+            // allow tick() to finish executing
             frame_state_ = FrameState::ExecutingPostTick;
             frame_state_executing_post_tick_promise_.set_value();
 
-            // execute all post-tick work, wait here for endTick() to unblock
+            // execute all post-tick work, wait here for end_tick() to unblock
             work_queue_.run();
 
-            // update frame state, allow endTick() to finish executing
+            // update frame state, allow end_tick() to finish executing
             frame_state_ = FrameState::Idle;
             frame_state_idle_promise_.set_value();
         }
@@ -165,7 +161,7 @@ private:
     FDelegateHandle begin_frame_handle_;
     FDelegateHandle end_frame_handle_;
 
-    // thread sychronization state
+    // thread synchronization state
     std::atomic<FrameState> frame_state_;
 
     std::promise<void> frame_state_idle_promise_;

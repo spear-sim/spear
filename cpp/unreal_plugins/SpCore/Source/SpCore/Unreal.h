@@ -13,7 +13,7 @@
 
 #include <Components/ActorComponent.h>
 #include <Components/SceneComponent.h>
-#include <Containers/Array.h>        // TArray
+#include <Containers/Array.h>
 #include <Containers/UnrealString.h> // FString::operator*
 #include <EngineUtils.h>             // TActorIterator
 #include <GameFramework/Actor.h>
@@ -123,17 +123,11 @@ public:
     static std::map<std::string, std::string> callFunction(UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args);
 
     //
-    // Convert a vector of objects into a map using each object's stable name as its key
+    // Find special struct by name. For this function to behave as expected, ASpCoreActor must have a UPROPERTY defined
+    // on it named _SP_SPECIAL_STRUCT_TypeName_ of type TypeName.
     //
 
-    template <typename TObject> requires CActor<TObject> || CComponent<TObject>
-    static std::map<std::string, TObject*> getObjectsAsMap(const std::vector<TObject*>& objects)
-    {
-        return Std::toMap<std::string, TObject*>(
-            objects |
-            std::views::filter([](const auto& object) { return hasStableName(object); }) |
-            std::views::transform([](const auto& object) { return std::make_pair(getStableName(object), object); }));
-    }
+    static UStruct* findSpecialStructByName(const std::string& name);
 
     //
     // Get and set actor and component stable names
@@ -217,13 +211,6 @@ public:
     static std::string toStdString(const TCHAR* str);
     static FString toFString(const std::string& str);
     static FName toFName(const std::string& str);
-
-    //
-    // Find special struct by name. For this function to behave as expected, ASpCoreActor must have a UPROPERTY defined
-    // on it named _SP_SPECIAL_STRUCT_TypeName_ of type TypeName.
-    //
-
-    static UStruct* findSpecialStructByName(const std::string& name);
 
     //
     // Helper functions to create components.
@@ -326,7 +313,7 @@ public:
     static std::vector<TReturnAsActor*> findActorsByName(const UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found = true)
     {
         std::vector<TReturnAsActor*> actors;
-        std::map<std::string, TReturnAsActor*> actor_map = getObjectsAsMap(findActorsByType<TActor, TReturnAsActor>(world));
+        std::map<std::string, TReturnAsActor*> actor_map = toMap(findActorsByType<TActor, TReturnAsActor>(world));
         if (return_null_if_not_found) {
             actors = Std::at(actor_map, names, nullptr);
         } else {
@@ -381,32 +368,32 @@ public:
         if (return_null_if_not_found) {
             return Std::zip(names, findActorsByName<TActor, TReturnAsActor>(world, names, return_null_if_not_found));
         } else {
-            return getObjectsAsMap(findActorsByName<TActor, TReturnAsActor>(world, names, return_null_if_not_found));
+            return toMap(findActorsByName<TActor, TReturnAsActor>(world, names, return_null_if_not_found));
         }
     }
 
     template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
     static std::map<std::string, TReturnAsActor*> findActorsByTagAsMap(const UWorld* world, const std::string& tag)
     {
-        return getObjectsAsMap(findActorsByTagAny<TActor, TReturnAsActor>(world, {tag}));
+        return toMap(findActorsByTagAny<TActor, TReturnAsActor>(world, {tag}));
     }
     
     template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
     static std::map<std::string, TReturnAsActor*> findActorsByTagAnyAsMap(const UWorld* world, const std::vector<std::string>& tags)
     {
-        return getObjectsAsMap(findActorsByTagAny<TActor, TReturnAsActor>(world, tags));
+        return toMap(findActorsByTagAny<TActor, TReturnAsActor>(world, tags));
     }
 
     template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
     static std::map<std::string, TReturnAsActor*> findActorsByTagAllAsMap(const UWorld* world, const std::vector<std::string>& tags)
     {
-        return getObjectsAsMap(findActorsByTagAll<TActor, TReturnAsActor>(world, tags));
+        return toMap(findActorsByTagAll<TActor, TReturnAsActor>(world, tags));
     }
 
     template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires std::derived_from<TActor, TReturnAsActor>
     static std::map<std::string, TReturnAsActor*> findActorsByTypeAsMap(const UWorld* world)
     {
-        return getObjectsAsMap(findActorsByType<TActor, TReturnAsActor>(world));
+        return toMap(findActorsByType<TActor, TReturnAsActor>(world));
     }
 
     //
@@ -453,7 +440,7 @@ public:
     static std::vector<TReturnAsComponent*> getComponentsByName(const AActor* actor, const std::vector<std::string>& names, bool return_null_if_not_found = true)
     {
         std::vector<TReturnAsComponent*> components;
-        std::map<std::string, TReturnAsComponent*> component_map = getObjectsAsMap(getComponentsByType<TComponent, TReturnAsComponent>(actor));
+        std::map<std::string, TReturnAsComponent*> component_map = toMap(getComponentsByType<TComponent, TReturnAsComponent>(actor));
         if (return_null_if_not_found) {
             components = Std::at(component_map, names, nullptr);
         } else {
@@ -507,32 +494,32 @@ public:
         if (return_null_if_not_found) {
             return Std::zip(names, getComponentsByName<TComponent, TReturnAsComponent>(actor, names, return_null_if_not_found));
         } else {
-            return getObjectsAsMap(getComponentsByName<TComponent, TReturnAsComponent>(actor, names, return_null_if_not_found));
+            return toMap(getComponentsByName<TComponent, TReturnAsComponent>(actor, names, return_null_if_not_found));
         }
     }
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
     static std::map<std::string, TReturnAsComponent*> getComponentsByTagAsMap(const AActor* actor, const std::string& tag)
     {
-        return getObjectsAsMap(getComponentsByTagAny<TComponent, TReturnAsComponent>(actor, {tag}));
+        return toMap(getComponentsByTagAny<TComponent, TReturnAsComponent>(actor, {tag}));
     }
     
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
     static std::map<std::string, TReturnAsComponent*> getComponentsByTagAnyAsMap(const AActor* actor, const std::vector<std::string>& tags)
     {
-        return getObjectsAsMap(getComponentsByTagAny<TComponent, TReturnAsComponent>(actor, tags));
+        return toMap(getComponentsByTagAny<TComponent, TReturnAsComponent>(actor, tags));
     }
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
     static std::map<std::string, TReturnAsComponent*> getComponentsByTagAllAsMap(const AActor* actor, const std::vector<std::string>& tags)
     {
-        return getObjectsAsMap(getComponentsByTagAll<TComponent, TReturnAsComponent>(actor, tags));
+        return toMap(getComponentsByTagAll<TComponent, TReturnAsComponent>(actor, tags));
     }
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
     static std::map<std::string, TReturnAsComponent*> getComponentsByTypeAsMap(const AActor* actor)
     {
-        return getObjectsAsMap(getComponentsByType<TComponent, TReturnAsComponent>(actor));
+        return toMap(getComponentsByType<TComponent, TReturnAsComponent>(actor));
     }
 
     //
@@ -580,7 +567,7 @@ public:
     static std::vector<TReturnAsComponent*> getChildrenComponentsByName(const TParent* parent, const std::vector<std::string>& names, bool include_all_descendants = true, bool return_null_if_not_found = true)
     {
         std::vector<TReturnAsComponent*> components;
-        std::map<std::string, TReturnAsComponent*> component_map = getObjectsAsMap(getChildrenComponentsByType<TSceneComponent, TReturnAsComponent>(parent, include_all_descendants));
+        std::map<std::string, TReturnAsComponent*> component_map = toMap(getChildrenComponentsByType<TSceneComponent, TReturnAsComponent>(parent, include_all_descendants));
         if (return_null_if_not_found) {
             components = Std::at(component_map, names, nullptr);
         } else {
@@ -661,7 +648,7 @@ public:
         if (return_null_if_not_found) {
             return Std::zip(names, getChildrenComponentsByName<TParent, TSceneComponent, TReturnAsComponent>(parent, names, include_all_descendants, return_null_if_not_found));
         } else {
-            return getObjectsAsMap(getChildrenComponentsByName<TParent, TSceneComponent, TReturnAsComponent>(parent, names, include_all_descendants, return_null_if_not_found));
+            return toMap(getChildrenComponentsByName<TParent, TSceneComponent, TReturnAsComponent>(parent, names, include_all_descendants, return_null_if_not_found));
         }
     }
 
@@ -669,28 +656,28 @@ public:
         std::derived_from<TSceneComponent, TReturnAsComponent>
     static std::map<std::string, TReturnAsComponent*> getChildrenComponentsByTagAsMap(const TParent* parent, const std::string& tag, bool include_all_descendants = true)
     {
-        return getObjectsAsMap(getChildrenComponentsByTagAny<TParent, TSceneComponent, TReturnAsComponent>(parent, {tag}, include_all_descendants));
+        return toMap(getChildrenComponentsByTagAny<TParent, TSceneComponent, TReturnAsComponent>(parent, {tag}, include_all_descendants));
     }
     
     template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsComponent>
     static std::map<std::string, TReturnAsComponent*> getChildrenComponentsByTagAnyAsMap(const TParent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true)
     {
-        return getObjectsAsMap(getChildrenComponentsByTagAny<TParent, TSceneComponent, TReturnAsComponent>(parent, tags, include_all_descendants));
+        return toMap(getChildrenComponentsByTagAny<TParent, TSceneComponent, TReturnAsComponent>(parent, tags, include_all_descendants));
     }
 
     template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsComponent>
     static std::map<std::string, TReturnAsComponent*> getChildrenComponentsByTagAllAsMap(const TParent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true)
     {
-        return getObjectsAsMap(getChildrenComponentsByTagAll<TParent, TSceneComponent, TReturnAsComponent>(parent, tags, include_all_descendants));
+        return toMap(getChildrenComponentsByTagAll<TParent, TSceneComponent, TReturnAsComponent>(parent, tags, include_all_descendants));
     }
 
     template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsComponent>
     static std::map<std::string, TReturnAsComponent*> getChildrenComponentsByTypeAsMap(const TParent* parent, bool include_all_descendants = true)
     {
-        return getObjectsAsMap(getChildrenComponentsByType<TSceneComponent, TReturnAsComponent>(parent, include_all_descendants));
+        return toMap(getChildrenComponentsByType<TSceneComponent, TReturnAsComponent>(parent, include_all_descendants));
     }
 
     //
@@ -740,10 +727,19 @@ private:
     // Helper functions for finding actors and getting components
     //
 
+    template <typename TObject> requires CActor<TObject> || CComponent<TObject>
+    static std::map<std::string, TObject*> toMap(const std::vector<TObject*>& objects)
+    {
+        return Std::toMap<std::string, TObject*>(
+            objects |
+            std::views::filter([](const auto& object) { return hasStableName(object); }) |
+            std::views::transform([](const auto& object) { return std::make_pair(getStableName(object), object); }));
+    }
+
     template <typename TValue>
     static const TValue& getItem(const std::vector<TValue>& vector, void* default_value, bool assert_if_size_is_zero, bool assert_if_size_is_greater_than_one)
     {
-        return getItem(vector, reinterpret_cast<TValue>(default_value), assert_if_size_is_zero, assert_if_size_is_greater_than_one);
+        return getItem(vector, static_cast<TValue>(default_value), assert_if_size_is_zero, assert_if_size_is_greater_than_one);
     }
 
     template <typename TValue>

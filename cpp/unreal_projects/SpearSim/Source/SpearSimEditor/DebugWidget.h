@@ -29,6 +29,9 @@ public:
     ADebugWidget();
     ~ADebugWidget();
 
+    // AActor interface
+    void BeginDestroy() override;
+
 private:
     UFUNCTION(CallInEditor, Category="SPEAR")
     void LoadConfig();
@@ -63,6 +66,9 @@ private:
 
     UFUNCTION()
     static UObject* GetWorldContextObject(const UObject* world_context_object, FString arg_0, bool arg_1);
+
+    void initializeCppFuncs();
+    void terminateCppFuncs(); // don't call from destructor because CppFuncComponent might have been garbage-collected already
 
     UPROPERTY()
     TArray<int> ArrayOfInts;
