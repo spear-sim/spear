@@ -60,11 +60,11 @@ class GameWorldService():
     def find_function_by_name(self, uclass, name, include_super_flag):
         return self._rpc_client.call("game_world_service.find_function_by_name", uclass, name, include_super_flag)
 
-    def call_function_without_args(self, uobject, ufunction):
-        return self._rpc_client.call("game_world_service.call_function_without_args", uobject, ufunction)
-
-    def call_function_with_args(self, uobject, ufunction, **kwargs):
-        return self._rpc_client.call("game_world_service.call_function_with_args", uobject, ufunction, kwargs)
+    def call_function(self, uobject, ufunction, **kwargs):
+        if len(kwargs.items()) > 0:
+            return self._rpc_client.call("game_world_service.call_function_with_args", uobject, ufunction, kwargs)
+        else:
+            return self._rpc_client.call("game_world_service.call_function_without_args", uobject, ufunction)
 
     def actor_has_stable_name(self, actor):
         return self._rpc_client.call("game_world_service.actor_has_stable_name", actor)
