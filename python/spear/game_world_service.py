@@ -54,17 +54,17 @@ class GameWorldService():
     def get_property_value_as_string(self, property_desc):
         return self._rpc_client.call("game_world_service.get_property_value_as_string", property_desc)
 
-    def set_property_value_as_string(self, property_desc, string):
-        return self._rpc_client.call("game_world_service.set_property_value_as_string", property_desc, string)
+    def set_property_value_from_string(self, property_desc, string):
+        return self._rpc_client.call("game_world_service.set_property_value_from_string", property_desc, string)
 
     def find_function_by_name(self, uclass, name, include_super_flag):
         return self._rpc_client.call("game_world_service.find_function_by_name", uclass, name, include_super_flag)
 
     def call_function(self, uobject, ufunction, **kwargs):
-        if len(kwargs.items()) > 0:
-            return self._rpc_client.call("game_world_service.call_function_with_args", uobject, ufunction, kwargs)
-        else:
-            return self._rpc_client.call("game_world_service.call_function_without_args", uobject, ufunction)
+        return self._rpc_client.call("game_world_service.call_function", uobject, ufunction, kwargs)
+
+    def find_special_struct_by_name(self, name):
+        return self._rpc_client.call("game_world_service.find_special_struct_by_name", name)
 
     def actor_has_stable_name(self, actor):
         return self._rpc_client.call("game_world_service.actor_has_stable_name", actor)
@@ -86,6 +86,3 @@ class GameWorldService():
 
     def get_component_tags(self, actor):
         return self._rpc_client.call("game_world_service.get_component_tags", actor)
-
-    def find_special_struct_by_name(self, name):
-        return self._rpc_client.call("game_world_service.find_special_struct_by_name", name)
