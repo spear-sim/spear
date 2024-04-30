@@ -97,3 +97,7 @@ static bool operator||(CppFuncSharedMemoryUsageFlags lhs, bool rhs) // needed fo
 {
     return static_cast<std::underlying_type_t<CppFuncSharedMemoryUsageFlags>>(lhs) || rhs;
 }
+static bool operator!(CppFuncSharedMemoryUsageFlags val) // needed for SP_ASSERT
+{
+    return !static_cast<std::underlying_type_t<CppFuncSharedMemoryUsageFlags>>(val);
+}

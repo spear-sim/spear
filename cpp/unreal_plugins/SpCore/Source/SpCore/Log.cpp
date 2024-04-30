@@ -5,7 +5,6 @@
 #include "SpCore/Log.h"
 
 #include <filesystem>
-#include <format>
 #include <iostream> // std::cout
 #include <regex>
 #include <string>   // std::string::operator<<
@@ -19,6 +18,11 @@
 #include "SpCore/Boost.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+
+// TODO: remove platform-specific include
+#if BOOST_COMP_MSVC
+    #include <format>
+#endif
 
 DECLARE_LOG_CATEGORY_EXTERN(LogSpear, Log, All);
 DEFINE_LOG_CATEGORY(LogSpear);
