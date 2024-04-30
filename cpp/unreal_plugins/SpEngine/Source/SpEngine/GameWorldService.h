@@ -46,9 +46,6 @@ public:
         post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &GameWorldService::postWorldInitializationHandler);
         world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &GameWorldService::worldCleanupHandler);
 
-        using TMapStringToString = std::map<std::string, std::string>;
-        using TMapStringToInt = std::map<std::string, uint64_t>;
-
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "set_game_paused", [this](const bool& paused) -> void {
             SP_ASSERT(world_);
             UGameplayStatics::SetGamePaused(world_, paused);
@@ -66,117 +63,108 @@ public:
         });
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "find_actors", [this]() -> std::vector<uint64_t> {
-            return Std::reinterpretAsVectorOf<uint64_t>(Unreal::findActors(world_));
+            return toUint64(Unreal::findActors(world_));
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "find_actors_as_map", [this]() -> TMapStringToInt {
-            return getIntMapFrom(Unreal::findActorsAsMap(world_));
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "find_actors_as_map", [this]() -> std::map<std::string, uint64_t> {
+            return toUint64(Unreal::findActorsAsMap(world_));
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_components", [this](const uint64_t& ptr) -> std::vector<uint64_t> {
-            return Std::reinterpretAsVectorOf<uint64_t>(Unreal::getComponents(reinterpretAs<AActor*>(ptr)));
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_components", [this](const uint64_t& actor) -> std::vector<uint64_t> {
+            return toUint64(Unreal::getComponents(reinterpret_cast<AActor*>(actor)));
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_components_as_map", [this](const uint64_t& ptr) -> TMapStringToInt {
-            return getIntMapFrom(Unreal::getComponentsAsMap(reinterpretAs<AActor*>(ptr)));
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_components_as_map", [this](const uint64_t& actor) -> std::map<std::string, uint64_t> {
+            return toUint64(Unreal::getComponentsAsMap(reinterpret_cast<AActor*>(actor)));
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_children_components", [this](const uint64_t& ptr, const bool& include_all_descendants) -> std::vector<uint64_t> {
-            return Std::reinterpretAsVectorOf<uint64_t>(Unreal::getChildrenComponents(reinterpretAs<USceneComponent*>(ptr), include_all_descendants));
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_children_components",
+            [this](const uint64_t& parent, const bool& include_all_descendants) -> std::vector<uint64_t> {
+                return toUint64(Unreal::getChildrenComponents(reinterpret_cast<USceneComponent*>(parent), include_all_descendants));
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_children_components_as_map", [this](const uint64_t& ptr, const bool& include_all_descendants) -> TMapStringToInt {
-            return getIntMapFrom(Unreal::getChildrenComponentsAsMap(reinterpretAs<USceneComponent*>(ptr), include_all_descendants));
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_children_components_as_map",
+            [this](const uint64_t& parent, const bool& include_all_descendants) -> std::map<std::string, uint64_t> {
+                return toUint64(Unreal::getChildrenComponentsAsMap(reinterpret_cast<USceneComponent*>(parent), include_all_descendants));
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_object_properties_as_string_from_object", [this](const uint64_t& ptr) -> std::string {
-            return Unreal::getObjectPropertiesAsString(reinterpretAs<UObject*>(ptr));
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_object_properties_as_string_from_object", [this](const uint64_t& uobject) -> std::string {
+            return Unreal::getObjectPropertiesAsString(reinterpret_cast<UObject*>(uobject));
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_object_properties_as_string_from_struct", [this](const uint64_t& value_ptr, const uint64_t& struct_ptr) -> std::string {
-            return Unreal::getObjectPropertiesAsString(reinterpretAs<void*>(value_ptr), reinterpretAs<UStruct*>(struct_ptr));
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_object_properties_as_string_from_struct",
+            [this](const uint64_t& value_ptr, const uint64_t& ustruct) -> std::string {
+                return Unreal::getObjectPropertiesAsString(reinterpret_cast<void*>(value_ptr), reinterpret_cast<UStruct*>(ustruct));
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "set_object_properties_from_string_for_object", [this](const uint64_t& ptr, const std::string& string) -> void {
-            Unreal::setObjectPropertiesFromString(reinterpretAs<UObject*>(ptr), string);
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "set_object_properties_from_string_for_object", [this](const uint64_t& uobject, const std::string& string) -> void {
+            Unreal::setObjectPropertiesFromString(reinterpret_cast<UObject*>(uobject), string);
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "set_object_properties_from_string_for_struct", [this](const uint64_t& value_ptr, const uint64_t& struct_ptr, const std::string& string) -> void {
-            Unreal::setObjectPropertiesFromString(reinterpretAs<void*>(value_ptr), reinterpretAs<UStruct*>(struct_ptr), string);
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "set_object_properties_from_string_for_struct",
+            [this](const uint64_t& value_ptr, const uint64_t& ustruct, const std::string& string) -> void {
+                Unreal::setObjectPropertiesFromString(reinterpret_cast<void*>(value_ptr), reinterpret_cast<UStruct*>(ustruct), string);
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "find_property_by_name_from_object", [this](const uint64_t& ptr, const std::string& name) -> GameWorldServicePropertyDesc {
-            Unreal::PropertyDesc property_desc = Unreal::findPropertyByName(reinterpretAs<UObject*>(ptr), name);
-            GameWorldServicePropertyDesc game_world_property_desc;
-            game_world_property_desc.property_ = reinterpretAs<uint64_t>(property_desc.property_);
-            game_world_property_desc.value_ptr_ = reinterpretAs<uint64_t>(property_desc.value_ptr_);
-            return game_world_property_desc;
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "find_property_by_name_from_object",
+            [this](const uint64_t& uobject, const std::string& name) -> GameWorldServicePropertyDesc {
+                return toPropertyDesc(Unreal::findPropertyByName(reinterpret_cast<UObject*>(uobject), name));
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "find_property_by_name_from_struct", [this](const uint64_t& value_ptr, const uint64_t& struct_ptr, const std::string& name) -> GameWorldServicePropertyDesc {
-            Unreal::PropertyDesc property_desc = Unreal::findPropertyByName(reinterpretAs<void*>(value_ptr), reinterpretAs<UStruct*>(struct_ptr), name);
-            GameWorldServicePropertyDesc game_world_property_desc;
-            game_world_property_desc.property_ = reinterpretAs<uint64_t>(property_desc.property_);
-            game_world_property_desc.value_ptr_ = reinterpretAs<uint64_t>(property_desc.value_ptr_);
-            return game_world_property_desc;
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "find_property_by_name_from_struct",
+            [this](const uint64_t& value_ptr, const uint64_t& ustruct, const std::string& name) -> GameWorldServicePropertyDesc {
+                return toPropertyDesc(Unreal::findPropertyByName(reinterpret_cast<void*>(value_ptr), reinterpret_cast<UStruct*>(ustruct), name));
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_property_value_as_string", [this](const GameWorldServicePropertyDesc& service_property_desc) -> std::string {
-            Unreal::PropertyDesc property_desc;
-            property_desc.property_ = reinterpretAs<FProperty*>(service_property_desc.property_);
-            property_desc.value_ptr_ = reinterpretAs<void*>(service_property_desc.value_ptr_);
-            return Unreal::getPropertyValueAsString(property_desc);
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_property_value_as_string", [this](const GameWorldServicePropertyDesc& game_world_property_desc) -> std::string {
+            return Unreal::getPropertyValueAsString(toPropertyDesc(game_world_property_desc));
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "set_property_value_as_string", [this](const GameWorldServicePropertyDesc& service_property_desc, const std::string& string) -> void {
-            Unreal::PropertyDesc property_desc;
-            property_desc.property_ = reinterpretAs<FProperty*>(service_property_desc.property_);
-            property_desc.value_ptr_ = reinterpretAs<void*>(service_property_desc.value_ptr_);
-            Unreal::setPropertyValueFromString(property_desc, string);
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "set_property_value_from_string",
+            [this](const GameWorldServicePropertyDesc& game_world_property_desc, const std::string& string) -> void {
+                Unreal::setPropertyValueFromString(toPropertyDesc(game_world_property_desc), string);
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "find_function_by_name", [this](const uint64_t& ptr, const std::string& name, const EIncludeSuperFlag::Type& include_super_flag) -> uint64_t {
-            return reinterpretAs<uint64_t>(Unreal::findFunctionByName(reinterpretAs<UClass*>(ptr), name, include_super_flag));
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "find_function_by_name",
+            [this](const uint64_t& uclass, const std::string& name, const EIncludeSuperFlag::Type& include_super_flag) -> uint64_t {
+                return reinterpret_cast<uint64_t>(Unreal::findFunctionByName(reinterpret_cast<UClass*>(uclass), name, include_super_flag));
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "call_function_without_args", [this](const uint64_t& object_ptr, const uint64_t& function_ptr) -> TMapStringToString {
-            return Unreal::callFunction(reinterpretAs<UObject*>(object_ptr), reinterpretAs<UFunction*>(function_ptr));
-        });
-
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "call_function_with_args", [this](const uint64_t& object_ptr, const uint64_t& function_ptr, const TMapStringToString& args) -> TMapStringToString {
-            return Unreal::callFunction(reinterpretAs<UObject*>(object_ptr), reinterpretAs<UFunction*>(function_ptr), args);
-        });
-
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "actor_has_stable_name", [this](const uint64_t& ptr) -> bool {
-            return Unreal::hasStableName(reinterpretAs<AActor*>(ptr));
-        });
-
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "component_has_stable_name", [this](const uint64_t& ptr) -> bool {
-            return Unreal::hasStableName(reinterpretAs<UActorComponent*>(ptr));
-        });
-
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_stable_name_for_actor", [this](const uint64_t& ptr) -> std::string {
-            return Unreal::getStableName(reinterpretAs<AActor*>(ptr));
-        });
-
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_stable_name_for_actor_component", [this](const uint64_t& ptr, const bool& include_actor_name) -> std::string {
-            return Unreal::getStableName(reinterpretAs<UActorComponent*>(ptr), include_actor_name);
-        });
-
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_stable_name_for_scene_component", [this](const uint64_t& ptr, const bool& include_actor_name) -> std::string {
-            return Unreal::getStableName(reinterpretAs<USceneComponent*>(ptr), include_actor_name);
-        });
-
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_actor_tags", [this](const uint64_t& ptr) -> std::vector<std::string> {
-            return Unreal::getTags(reinterpretAs<AActor*>(ptr));
-        });
-
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_component_tags", [this](const uint64_t& ptr) -> std::vector<std::string> {
-            return Unreal::getTags(reinterpretAs<UActorComponent*>(ptr));
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "call_function",
+            [this](const uint64_t& uobject, const uint64_t& ufunction, const std::map<std::string, std::string>& args) -> std::map<std::string, std::string> {
+                return Unreal::callFunction(reinterpret_cast<UObject*>(uobject), reinterpret_cast<UFunction*>(ufunction), args);
         });
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "find_special_struct_by_name", [this](const std::string& name) -> uint64_t {
-            return reinterpretAs<uint64_t>(Unreal::findSpecialStructByName(name));
+            return reinterpret_cast<uint64_t>(Unreal::findSpecialStructByName(name));
+        });
+
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "actor_has_stable_name", [this](const uint64_t& actor) -> bool {
+            return Unreal::hasStableName(reinterpret_cast<AActor*>(actor));
+        });
+
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "component_has_stable_name", [this](const uint64_t& component) -> bool {
+            return Unreal::hasStableName(reinterpret_cast<UActorComponent*>(component));
+        });
+
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_stable_name_for_actor", [this](const uint64_t& actor) -> std::string {
+            return Unreal::getStableName(reinterpret_cast<AActor*>(actor));
+        });
+
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_stable_name_for_actor_component", [this](const uint64_t& actor_component, const bool& include_actor_name) -> std::string {
+            return Unreal::getStableName(reinterpret_cast<UActorComponent*>(actor_component), include_actor_name);
+        });
+
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_stable_name_for_scene_component", [this](const uint64_t& scene_component, const bool& include_actor_name) -> std::string {
+            return Unreal::getStableName(reinterpret_cast<USceneComponent*>(scene_component), include_actor_name);
+        });
+
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_actor_tags", [this](const uint64_t& actor) -> std::vector<std::string> {
+            return Unreal::getTags(reinterpret_cast<AActor*>(actor));
+        });
+
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_component_tags", [this](const uint64_t& component) -> std::vector<std::string> {
+            return Unreal::getTags(reinterpret_cast<UActorComponent*>(component));
         });
     }
 
@@ -195,18 +183,21 @@ public:
 private:
 
     template <typename TKey, typename TSrcValue>
-    std::map<TKey, uint64_t> getIntMapFrom(std::map<TKey, TSrcValue>&& input_map)
+    static std::map<TKey, uint64_t> toUint64(std::map<TKey, TSrcValue>&& input_map)
     {
         return Std::toMap<TKey, uint64_t>(
             input_map | 
             std::views::transform([](auto& pair) { auto& [key, value] = pair; return std::make_pair(key, reinterpret_cast<uint64_t>(value)); }));
     }
 
-    template <typename TReturn, typename TSrc>
-    TReturn reinterpretAs(TSrc ptr_addr)
+    template <typename TValueType>
+    static std::vector<uint64_t> toUint64(const std::vector<TValueType>& src)
     {
-        return reinterpret_cast<TReturn>(ptr_addr);
+        Std::reinterpretAsVectorOf<uint64_t>(src);
     }
+
+    static GameWorldServicePropertyDesc toPropertyDesc(const Unreal::PropertyDesc& property_desc);
+    static Unreal::PropertyDesc toPropertyDesc(const GameWorldServicePropertyDesc& game_world_property_desc);
 
     FDelegateHandle post_world_initialization_handle_;
     FDelegateHandle world_cleanup_handle_;
