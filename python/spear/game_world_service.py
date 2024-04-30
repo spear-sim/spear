@@ -19,7 +19,7 @@ class GameWorldService():
         return self._rpc_client.call("game_world_service.find_actors")
 
     def find_actors_as_map(self):
-        return self._rpc_client.call("game_world_service.find_actors_as_map")    
+        return self._rpc_client.call("game_world_service.find_actors_as_map")
 
     def get_components(self, actor):
         return self._rpc_client.call("game_world_service.get_components", actor)
