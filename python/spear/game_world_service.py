@@ -3,6 +3,7 @@
 #
 
 class GameWorldService():
+
     def __init__(self, rpc_client):
         self._rpc_client = rpc_client
 
@@ -86,3 +87,6 @@ class GameWorldService():
 
     def get_component_tags(self, actor):
         return self._rpc_client.call("game_world_service.get_component_tags", actor)
+
+    def get_class_from_instance(self, instance):
+        return self._rpc_client.call("game_world_service.get_class_from_instance", instance)

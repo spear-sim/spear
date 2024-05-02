@@ -4,13 +4,12 @@
 
 SPEAR:
   LAUNCH_MODE: "standalone"
-  STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
-  
+  STANDALONE_EXECUTABLE: "C:/github/spear/cpp/unreal_projects/SpearSim/Standalone-Development/Windows/SpearSim/Binaries/Win64/SpearSim-Cmd.exe"
+
   INSTANCE:
     COMMAND_LINE_ARGS:
-      resx: 512
-      resy: 512
-
+      resx: 1024
+      resy: 720
 
 SP_ENGINE:
   LEGACY_SERVICE:
