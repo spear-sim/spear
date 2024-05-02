@@ -84,16 +84,21 @@ private:
 static CppFuncSharedMemoryUsageFlags operator|(CppFuncSharedMemoryUsageFlags lhs, CppFuncSharedMemoryUsageFlags rhs)
 {
     return static_cast<CppFuncSharedMemoryUsageFlags>(
-        static_cast<std::underlying_type_t<CppFuncSharedMemoryUsageFlags>>(lhs) |
-        static_cast<std::underlying_type_t<CppFuncSharedMemoryUsageFlags>>(rhs));
+        static_cast<std::underlying_type_t<CppFuncSharedMemoryUsageFlags>>(lhs) | static_cast<std::underlying_type_t<CppFuncSharedMemoryUsageFlags>>(rhs));
 }
+
 static CppFuncSharedMemoryUsageFlags operator&(CppFuncSharedMemoryUsageFlags lhs, CppFuncSharedMemoryUsageFlags rhs)
 {
     return static_cast<CppFuncSharedMemoryUsageFlags>(
-        static_cast<std::underlying_type_t<CppFuncSharedMemoryUsageFlags>>(lhs) &
-        static_cast<std::underlying_type_t<CppFuncSharedMemoryUsageFlags>>(rhs));
+        static_cast<std::underlying_type_t<CppFuncSharedMemoryUsageFlags>>(lhs) & static_cast<std::underlying_type_t<CppFuncSharedMemoryUsageFlags>>(rhs));
 }
+
 static bool operator||(CppFuncSharedMemoryUsageFlags lhs, bool rhs) // needed for SP_ASSERT
 {
     return static_cast<std::underlying_type_t<CppFuncSharedMemoryUsageFlags>>(lhs) || rhs;
+}
+
+static bool operator!(CppFuncSharedMemoryUsageFlags val) // needed for SP_ASSERT
+{
+    return !static_cast<std::underlying_type_t<CppFuncSharedMemoryUsageFlags>>(val);
 }

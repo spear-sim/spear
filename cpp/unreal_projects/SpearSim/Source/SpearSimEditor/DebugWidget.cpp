@@ -453,13 +453,11 @@ UObject* ADebugWidget::GetWorldContextObject(const UObject* world_context_object
 
 void ADebugWidget::initializeCppFuncs()
 {
-    std::string shared_memory_name = "my_shared_memory";
-    std::vector<std::string> shared_memory_name_tokens = Std::tokenize(Unreal::toStdString(GetFullName()), "\\/. ");
-    std::string shared_memory_long_name = Std::join(shared_memory_name_tokens, "_") + ":shared_memory:" + shared_memory_name;
     int shared_memory_num_bytes = 1024;
-    shared_memory_region_ = std::make_unique<SharedMemoryRegion>(shared_memory_long_name, shared_memory_num_bytes);
+    shared_memory_region_ = std::make_unique<SharedMemoryRegion>(shared_memory_num_bytes);
     SP_ASSERT(shared_memory_region_);
 
+    std::string shared_memory_name = "my_shared_memory";
     CppFuncSharedMemoryUsageFlags shared_memory_usage_flags = CppFuncSharedMemoryUsageFlags::Arg | CppFuncSharedMemoryUsageFlags::ReturnValue;
     cpp_func_component_->registerSharedMemoryView(shared_memory_name, shared_memory_region_->getView(), shared_memory_usage_flags);
 

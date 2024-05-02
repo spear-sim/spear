@@ -48,7 +48,7 @@ struct CppFuncServiceItems : public CppFuncComponentItems
 
 struct CppFuncServiceSharedMemoryView : public CppFuncSharedMemoryView
 {
-    MSGPACK_DEFINE_MAP(MSGPACK_NVP("name_", view_.name_), MSGPACK_NVP("id_", view_.id_), MSGPACK_NVP("num_bytes_", view_.num_bytes_), usage_flags_);
+    MSGPACK_DEFINE_MAP(MSGPACK_NVP("id_", view_.id_), MSGPACK_NVP("num_bytes_", view_.num_bytes_), usage_flags_);
 };
 
 struct CppFuncServiceSharedMemoryViews

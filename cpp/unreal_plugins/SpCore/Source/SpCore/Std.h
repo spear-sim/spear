@@ -12,7 +12,6 @@
 #include <concepts>  // std::convertible_to, std::same_as
 #include <cstdlib>   // std::strtoull
 #include <cstring>   // std::memcpy
-#include <format>
 #include <initializer_list>
 #include <iterator>  // std::back_inserter, std::ranges::distance
 #include <map>
@@ -25,6 +24,11 @@
 
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
+
+// TODO: remove platform-specific include
+#if BOOST_COMP_MSVC
+    #include <format>
+#endif
 
 //
 // helper concepts
