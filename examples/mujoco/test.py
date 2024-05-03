@@ -114,55 +114,124 @@ if __name__ == "__main__":
     body_names = [ mujoco_model.body(body_id).name for body_id in range(mujoco_model.nbody) ]
 
     # filter out only actors and components that are chairs
-    mj_chair_body_ids = [ x for x, y in zip(body_ids, body_names) if "Meshes/05_chair/Kitchen" in y ]
-    mj_chair_body_names = [ y for x, y in zip(body_ids, body_names) if "Meshes/05_chair/Kitchen" in y ]
-    
-    chair_xpos_means = {i:mujoco_data.body(i).xpos for i in mj_chair_body_ids}
+    mj_chair_body_ids = [ x for x, y in zip(body_ids, body_names) if "Meshes/05_chair" in y ]
+    mj_chair_body_names = [ y for x, y in zip(body_ids, body_names) if "Meshes/05_chair" in y ]
+
+    print({i:name for i,name in zip(mj_chair_body_ids, mj_chair_body_names)})
+
+    chair_xpos_start = {i:mujoco_data.body(i).xpos for i in mj_chair_body_ids}
 
     # for x in range(mujoco_model.njnt):
-    #     print(mujoco_model.body(mujoco_model.joint(x).bodyid[0]).name)
+        # print(mujoco_model.body(mujoco_model.joint(x).bodyid[0]).name)
+        # print(mujoco_model.joint(x))
+        # print(mujoco_data.joint(x))
 
-    print("mujoco_model.nu = ", mujoco_model.nu)
-    print("mujoco_model.njnt = ", mujoco_model.njnt)
+    # print("mujoco_model.nu (actuators) = ", mujoco_model.nu)
+    # print("mujoco_model.njnt (joints)  = ", mujoco_model.njnt)
+    # print("mujoco_model.nq (generalized coordinates)  = ", mujoco_model.nq)
 
     # get mujoco viewer object
     viewer = mujoco.viewer.launch_passive(mujoco_model, mujoco_data)
 
-    period = 1000
-    start = time.time()
-    t = 0
-    muj_update_steps = 20
-
+    # scene_option = mujoco.MjvOption()
+    # scene_option.flags[mujoco.mjtLabel.mjLABEL_SELECTION] = True
+    viewer.opt.label = mujoco.mjtLabel.mjLABEL_SELECTION
+    # viewer.user_scn.flags[mujoco.mjtVisFlag.mjVIS_JOINT] = True
     viewer.cam.lookat = [0, 300.0, 100]
     viewer.cam.distance = 500.0
     viewer.cam.azimuth = 180
     viewer.cam.elevation = 0
+    viewer.sync()
 
-    qpos = []
-    xpos = []
-    while viewer.is_running() and time.time() - start < 10:
+    period = 1000
+    start = time.time()
+    t = 0
+    count = 0
+    muj_update_steps = 20
+    time_seconds = 10
+    jnt_id = 0
+
+    qpos = np.zeros((100000, 7))
+    xpos = np.zeros((100000, 3))
+
+    print(f"joint id ({jnt_id}) = joint's body name ({mujoco_model.body(mujoco_model.joint(jnt_id).bodyid[0]).name})")
+
+    while viewer.is_running(): # and time.time() - start < time_seconds:
+
+        # l = np.sign(np.sin(2*np.pi*t/period))
+        # for i in mj_chair_body_ids:
+            # mujoco_data.xfrc_applied[i] = l * np.array([0.0, 1000000.0, 0.0, 0, 0, 0])
+            # mujoco_data.body(i).xpos = chair_xpos_start[i] + l * np.array([1000.0, 1000.0, 0.0])
 
         for _ in range(muj_update_steps):
 
-            # for i in range(mujoco_model.njnt):
-                # mujoco_data.joint(i).qfrc_applied = np.array([10.0, 0, 0, 0, 0, 0], dtype=np.float64)
+            # l = np.sign(np.sin(2*np.pi*t/period))
 
-            for i in mj_chair_body_ids:
-                mujoco_data.body(i).xpos = chair_xpos_means[i] + [0.0, 10.0, 0.0]
+            # for i in range(mujoco_model.njnt):
+                # mujoco_data.joint(i).qfrc_applied = l * np.array([10.0, 0, 0, 0, 0, 0])
+
+            # for i in mj_chair_body_ids:
+                # mujoco_data.xfrc_applied[i] = l * np.array([0.0, 100000.0, 0.0, 0.0, 0.0, 0.0])
+                # mujoco_data.body(i).xpos = chair_xpos_start[i] + l * np.array([0.0, 100.0, 10.0])
 
             mujoco.mj_step(mujoco_model, mujoco_data)
-            
+
             # updated qpos
-            qpos.append(mujoco_data.joint(0).qpos[0])
-            xpos.append(mujoco_data.body(mj_chair_body_ids[0]).xpos[1])
+            qpos[count,:] = mujoco_data.joint(jnt_id).qpos.reshape(1, 7)
+            xpos[count,:] = mujoco_data.body(mujoco_model.joint(jnt_id).bodyid[0]).xpos.reshape(1, 3)
+
+            count += 1
 
             # increament time
             t += 1
+
+        # increament time
+        t += 1
 
         viewer.sync()
 
     viewer.close()
 
-    plt.plot(qpos)
-    plt.plot(xpos)
+    # plot graphs
+    fig = plt.figure(figsize=(20, 16))
+    plt.subplot(5,2,1)
+    plt.title("qpos[0]", fontsize=8)
+    plt.plot(qpos[:,0])
+
+    plt.subplot(5,2,2)
+    plt.title("qpos[1]", fontsize=8)
+    plt.plot(qpos[:,1])
+
+    plt.subplot(5,2,3)
+    plt.title("qpos[2]", fontsize=8)
+    plt.plot(qpos[:,2])
+
+    plt.subplot(5,2,4)
+    plt.title("qpos[3]", fontsize=8)
+    plt.plot(qpos[:,3])
+
+    plt.subplot(5,2,5)
+    plt.title("qpos[4]", fontsize=8)
+    plt.plot(qpos[:,4])
+
+    plt.subplot(5,2,6)
+    plt.title("qpos[5]", fontsize=8)
+    plt.plot(qpos[:,5])
+
+    plt.subplot(5,2,7)
+    plt.title("qpos[6]", fontsize=8)
+    plt.plot(qpos[:,6])
+
+    plt.subplot(5,2,8)
+    plt.title("xpos[0]", fontsize=8)
+    plt.plot(xpos[:,0])
+
+    plt.subplot(5,2,9)
+    plt.title("xpos[1]", fontsize=8)
+    plt.plot(xpos[:,1])
+
+    plt.subplot(5,2,10)
+    plt.title("xpos[2]", fontsize=8)
+    plt.plot(xpos[:,2])
+
     plt.show()
