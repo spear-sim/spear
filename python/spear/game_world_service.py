@@ -20,7 +20,7 @@ class GameWorldService():
         return self._rpc_client.call("game_world_service.find_actors")
 
     def find_actors_as_map(self):
-        return self._rpc_client.call("game_world_service.find_actors_as_map")
+        return self._rpc_client.call("game_world_service.find_actors_as_map")    
 
     def get_components(self, actor):
         return self._rpc_client.call("game_world_service.get_components", actor)
@@ -34,23 +34,23 @@ class GameWorldService():
     def get_children_components_as_map(self, actor, include_all_descendants):
         return self._rpc_client.call("game_world_service.get_children_components_as_map", actor, include_all_descendants)
 
-    def get_object_properties_as_string_from_object(self, object):
-        return self._rpc_client.call("game_world_service.get_object_properties_as_string_from_object", object)
+    def get_object_properties_as_string_from_uobject(self, uobject):
+        return self._rpc_client.call("game_world_service.get_object_properties_as_string_from_uobject", uobject)
 
-    def get_object_properties_as_string_from_struct(self, value_ptr, struct):
-        return self._rpc_client.call("game_world_service.get_object_properties_as_string_from_struct", value_ptr, struct)
+    def get_object_properties_as_string_from_ustruct(self, value_ptr, ustruct):
+        return self._rpc_client.call("game_world_service.get_object_properties_as_string_from_ustruct", value_ptr, ustruct)
 
-    def set_object_properties_from_string_for_object(self, object, string):
-        self._rpc_client.call("game_world_service.set_object_properties_from_string_for_object", object, string)
+    def set_object_properties_from_string_for_uobject(self, uobject, string):
+        self._rpc_client.call("game_world_service.set_object_properties_from_string_for_uobject", uobject, string)
 
-    def set_object_properties_from_string_for_struct(self, value_ptr, struct, string):
-        self._rpc_client.call("game_world_service.set_object_properties_from_string_for_struct", value_ptr, struct, string)
+    def set_object_properties_from_string_for_ustruct(self, value_ptr, ustruct, string):
+        self._rpc_client.call("game_world_service.set_object_properties_from_string_for_ustruct", value_ptr, ustruct, string)
 
-    def find_property_by_name_from_object(self, object, name):
-        return self._rpc_client.call("game_world_service.find_property_by_name_from_object", object, name)
+    def find_property_by_name_on_object(self, uobject, name):
+        return self._rpc_client.call("game_world_service.find_property_by_name_on_uobject", uobject, name)
 
-    def find_property_by_name_from_struct(self, value_ptr, struct, name):
-        return self._rpc_client.call("game_world_service.find_property_by_name_from_struct", value_ptr, struct, name)
+    def find_property_by_name_on_struct(self, value_ptr, ustruct, name):
+        return self._rpc_client.call("game_world_service.find_property_by_name_on_ustruct", value_ptr, ustruct, name)
 
     def get_property_value_as_string(self, property_desc):
         return self._rpc_client.call("game_world_service.get_property_value_as_string", property_desc)
@@ -67,11 +67,8 @@ class GameWorldService():
     def find_special_struct_by_name(self, name):
         return self._rpc_client.call("game_world_service.find_special_struct_by_name", name)
 
-    def actor_has_stable_name(self, actor):
-        return self._rpc_client.call("game_world_service.actor_has_stable_name", actor)
-
-    def component_has_stable_name(self, actor):
-        return self._rpc_client.call("game_world_service.component_has_stable_name", actor)
+    def has_stable_name(self, actor):
+        return self._rpc_client.call("game_world_service.has_stable_name", actor)
 
     def get_stable_name_for_actor(self, actor):
         return self._rpc_client.call("game_world_service.get_stable_name_for_actor", actor)
