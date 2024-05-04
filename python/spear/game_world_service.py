@@ -2,6 +2,8 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
+import json
+
 class GameWorldService():
     def __init__(self, rpc_client):
         self._rpc_client = rpc_client
@@ -33,44 +35,53 @@ class GameWorldService():
     def get_children_components_as_map(self, actor, include_all_descendants):
         return self._rpc_client.call("game_world_service.get_children_components_as_map", actor, include_all_descendants)
 
-    def get_object_properties_as_string_from_object(self, object):
-        return self._rpc_client.call("game_world_service.get_object_properties_as_string_from_object", object)
+    def get_object_properties_as_string_from_uobject(self, uobject):
+        return self._rpc_client.call("game_world_service.get_object_properties_as_string_from_uobject", uobject)
 
-    def get_object_properties_as_string_from_struct(self, value_ptr, struct):
-        return self._rpc_client.call("game_world_service.get_object_properties_as_string_from_struct", value_ptr, struct)
+    def get_object_properties_as_string_from_ustruct(self, value_ptr, ustruct):
+        return self._rpc_client.call("game_world_service.get_object_properties_as_string_from_ustruct", value_ptr, ustruct)
 
-    def set_object_properties_from_string_for_object(self, object, string):
-        self._rpc_client.call("game_world_service.set_object_properties_from_string_for_object", object, string)
+    def set_object_properties_from_string_for_uobject(self, uobject, string):
+        self._rpc_client.call("game_world_service.set_object_properties_from_string_for_uobject", uobject, string)
 
-    def set_object_properties_from_string_for_struct(self, value_ptr, struct, string):
-        self._rpc_client.call("game_world_service.set_object_properties_from_string_for_struct", value_ptr, struct, string)
+    def set_object_properties_from_string_for_ustruct(self, value_ptr, ustruct, string):
+        self._rpc_client.call("game_world_service.set_object_properties_from_string_for_ustruct", value_ptr, ustruct, string)
 
-    def find_property_by_name_from_object(self, object, name):
-        return self._rpc_client.call("game_world_service.find_property_by_name_from_object", object, name)
+    def find_property_by_name_on_object(self, uobject, name):
+        return self._rpc_client.call("game_world_service.find_property_by_name_on_uobject", uobject, name)
 
-    def find_property_by_name_from_struct(self, value_ptr, struct, name):
-        return self._rpc_client.call("game_world_service.find_property_by_name_from_struct", value_ptr, struct, name)
+    def find_property_by_name_on_struct(self, value_ptr, ustruct, name):
+        return self._rpc_client.call("game_world_service.find_property_by_name_on_ustruct", value_ptr, ustruct, name)
 
     def get_property_value_as_string(self, property_desc):
         return self._rpc_client.call("game_world_service.get_property_value_as_string", property_desc)
 
-    def set_property_value_as_string(self, property_desc, string):
-        return self._rpc_client.call("game_world_service.set_property_value_as_string", property_desc, string)
+    def set_property_value_from_string(self, property_desc, string):
+        return self._rpc_client.call("game_world_service.set_property_value_from_string", property_desc, string)
 
     def find_function_by_name(self, uclass, name, include_super_flag):
         return self._rpc_client.call("game_world_service.find_function_by_name", uclass, name, include_super_flag)
 
     def call_function(self, uobject, ufunction, **kwargs):
-        if len(kwargs.items()) > 0:
-            return self._rpc_client.call("game_world_service.call_function_with_args", uobject, ufunction, kwargs)
-        else:
-            return self._rpc_client.call("game_world_service.call_function_without_args", uobject, ufunction)
+        func_args = {}
+        for key, value in kwargs.items():
+            if isinstance(value, zip):
+                func_args[key] = json.dumps(dict(value))
+            elif isinstance(value, (dict, list)):
+                func_args[key] = json.dumps(value)
+            elif isinstance(value, (bool, float, int)):
+                func_args[key] = str(value)
+            elif isinstance(value, str):
+                func_args[key] = value
+            else:
+                assert False
+        return self._rpc_client.call("game_world_service.call_function", uobject, ufunction, func_args)
 
-    def actor_has_stable_name(self, actor):
-        return self._rpc_client.call("game_world_service.actor_has_stable_name", actor)
+    def find_special_struct_by_name(self, name):
+        return self._rpc_client.call("game_world_service.find_special_struct_by_name", name)
 
-    def component_has_stable_name(self, actor):
-        return self._rpc_client.call("game_world_service.component_has_stable_name", actor)
+    def has_stable_name(self, actor):
+        return self._rpc_client.call("game_world_service.has_stable_name", actor)
 
     def get_stable_name_for_actor(self, actor):
         return self._rpc_client.call("game_world_service.get_stable_name_for_actor", actor)
@@ -87,5 +98,5 @@ class GameWorldService():
     def get_component_tags(self, actor):
         return self._rpc_client.call("game_world_service.get_component_tags", actor)
 
-    def find_special_struct_by_name(self, name):
-        return self._rpc_client.call("game_world_service.find_special_struct_by_name", name)
+    def get_class(self, uobject):
+        return self._rpc_client.call("game_world_service.get_class", uobject)

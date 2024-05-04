@@ -33,3 +33,19 @@ void GameWorldService::worldCleanupHandler(UWorld* world, bool session_ended, bo
         world_ = nullptr;
     }
 }
+
+GameWorldServicePropertyDesc GameWorldService::toPropertyDesc(const Unreal::PropertyDesc& property_desc)
+{
+    GameWorldServicePropertyDesc game_world_property_desc;
+    game_world_property_desc.property_ = reinterpret_cast<uint64_t>(property_desc.property_);
+    game_world_property_desc.value_ptr_ = reinterpret_cast<uint64_t>(property_desc.value_ptr_);
+    return game_world_property_desc;
+}
+
+Unreal::PropertyDesc GameWorldService::toPropertyDesc(const GameWorldServicePropertyDesc& game_world_property_desc)
+{
+    Unreal::PropertyDesc property_desc;
+    property_desc.property_ = reinterpret_cast<FProperty*>(game_world_property_desc.property_);
+    property_desc.value_ptr_ = reinterpret_cast<void*>(game_world_property_desc.value_ptr_);
+    return property_desc;
+}
