@@ -4,7 +4,7 @@
 
 SPEAR:
   LAUNCH_MODE: "standalone"
-  STANDALONE_EXECUTABLE: "C:/github/spear/cpp/unreal_projects/SpearSim/Standalone-Development/Windows/SpearSim/Binaries/Win64/SpearSim-Cmd.exe"
+  STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
 
   INSTANCE:
     COMMAND_LINE_ARGS:

@@ -177,7 +177,7 @@ public:
                 return Unreal::getTags(reinterpret_cast<UActorComponent*>(component));
             });
 
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_class_from_instance",
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_class",
             [this](const uint64_t& instance) -> uint64_t {
                 return reinterpret_cast<uint64_t>(reinterpret_cast<UObject*>(instance)->GetClass());
             });

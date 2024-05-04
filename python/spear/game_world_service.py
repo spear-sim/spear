@@ -2,8 +2,9 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-class GameWorldService():
+import json
 
+class GameWorldService():
     def __init__(self, rpc_client):
         self._rpc_client = rpc_client
 
@@ -62,7 +63,19 @@ class GameWorldService():
         return self._rpc_client.call("game_world_service.find_function_by_name", uclass, name, include_super_flag)
 
     def call_function(self, uobject, ufunction, **kwargs):
-        return self._rpc_client.call("game_world_service.call_function", uobject, ufunction, kwargs)
+        func_args = {}
+        for key, value in kwargs.items():
+            if isinstance(value, zip):
+                func_args[key] = json.dumps(dict(value))
+            elif isinstance(value, (dict, list)):
+                func_args[key] = json.dumps(value)
+            elif isinstance(value, (bool, float, int)):
+                func_args[key] = str(value)
+            elif isinstance(value, str):
+                func_args[key] = value
+            else:
+                assert False
+        return self._rpc_client.call("game_world_service.call_function", uobject, ufunction, func_args)
 
     def find_special_struct_by_name(self, name):
         return self._rpc_client.call("game_world_service.find_special_struct_by_name", name)
@@ -85,5 +98,5 @@ class GameWorldService():
     def get_component_tags(self, actor):
         return self._rpc_client.call("game_world_service.get_component_tags", actor)
 
-    def get_class_from_instance(self, instance):
-        return self._rpc_client.call("game_world_service.get_class_from_instance", instance)
+    def get_class(self, uobject):
+        return self._rpc_client.call("game_world_service.get_class", uobject)
