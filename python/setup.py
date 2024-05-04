@@ -23,6 +23,7 @@ setuptools.setup(
         "pandas==1.5.1",
         "psutil==5.9.0",
         "pyglet==1.5.0",
+        "scipy==1.10.1",
         "tensorflow==2.13.0",
         "trimesh[easy]==4.1.4",
         "vtk==9.2.6",
