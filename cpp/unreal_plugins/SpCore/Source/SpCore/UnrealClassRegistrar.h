@@ -43,6 +43,18 @@ public:
     static void terminate();
 
     //
+    // Get static class using a class name instead of template parameters
+    //
+
+    static UClass* getStaticClass(const std::string& class_name);
+
+    //
+    // Get Default object using a class name instead of template parameters
+    //
+
+    static UObject* getDefaultObject(const std::string& class_name);
+
+    //
     // Spawn actor using a class name instead of template parameters
     //
 
@@ -79,12 +91,6 @@ public:
         uint32 load_flags = ELoadFlags::LOAD_None,
         UPackageMap* sandbox = nullptr,
         const FLinkerInstancingContext* instancing_context = nullptr);
-
-    //
-    // Get static class using a class name instead of template parameters
-    //
-
-    static UClass* getStaticClass(const std::string& class_name);
 
     //
     // Find actors using a class name instead of template parameters
@@ -570,6 +576,11 @@ public:
             class_name, []() -> UClass* {
                 return TClass::StaticClass();
             });
+
+        s_get_default_object_registrar_.registerFunc(
+            class_name, []() -> UObject* {
+                return TClass::StaticClass()->GetDefaultObject();
+            });
     }
 
     template <CActor TActor>
@@ -682,6 +693,7 @@ public:
     static void unregisterClassCommon(const std::string& class_name)
     {
         s_get_static_class_registrar_.unregisterFunc(class_name);
+        s_get_default_object_registrar_.unregisterFunc(class_name);
     }
 
     //
@@ -799,6 +811,12 @@ private:
     //
 
     inline static CppFuncRegistrar<UClass*> s_get_static_class_registrar_;
+
+    //
+    // Registrars for getting default object using a class name instead of template parameters
+    //
+
+    inline static CppFuncRegistrar<UObject*> s_get_default_object_registrar_;
 
     //
     // Registrars for creating objects using a class name instead of template parameters

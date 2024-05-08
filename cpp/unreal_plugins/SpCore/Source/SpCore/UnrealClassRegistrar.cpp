@@ -76,6 +76,22 @@ void UnrealClassRegistrar::terminate()
 }
 
 //
+// Get static class using a class name instead of template parameters
+//
+
+UClass* UnrealClassRegistrar::getStaticClass(const std::string& class_name) {
+    return s_get_static_class_registrar_.call(class_name);
+}
+
+//
+// Get Default object using a class name instead of template parameters
+//
+
+UObject* UnrealClassRegistrar::getDefaultObject(const std::string& class_name) {
+    return s_get_default_object_registrar_.call(class_name);
+}
+
+//
 // Spawn actor using a class name instead of template parameters
 //
 
@@ -130,14 +146,6 @@ UObject* UnrealClassRegistrar::loadObject(
     const FLinkerInstancingContext* instancing_context)
 {
     return s_load_object_registrar_.call(class_name, outer, name, filename, load_flags, sandbox, instancing_context);
-}
-
-//
-// Get static class using a class name instead of template parameters
-//
-
-UClass* UnrealClassRegistrar::getStaticClass(const std::string& class_name) {
-    return s_get_static_class_registrar_.call(class_name);
 }
 
 //

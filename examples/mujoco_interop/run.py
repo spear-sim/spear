@@ -50,7 +50,7 @@ if __name__ == "__main__":
     unreal_actor_class = unreal_actor_classes[0]
 
     unreal_set_actor_location_and_rotation_func = spear_instance.game_world_service.find_function_by_name(
-        uclass=unreal_actor_class, name="K2_SetActorLocationAndRotation", include_super_flag=1)
+        uclass=unreal_actor_class, name="K2_SetActorLocationAndRotation", include_super_flag=spear_instance.game_world_service.EIncludeSuperFlag.IncludeSuperFlag.value)
 
     spear_instance.engine_service.tick()
     spear_instance.engine_service.end_tick()
