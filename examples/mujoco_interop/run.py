@@ -45,12 +45,11 @@ if __name__ == "__main__":
     unreal_actors = spear_instance.game_world_service.find_actors_as_map()
     unreal_actors = { unreal_actor_name: unreal_actor for unreal_actor_name, unreal_actor in unreal_actors.items() if unreal_actor_name.startswith(name_prefix) }
 
-    unreal_actor_classes = list(set([ spear_instance.game_world_service.get_class(unreal_actor) for unreal_actor in unreal_actors.values() ]))
-    assert len(unreal_actor_classes) == 1
-    unreal_actor_class = unreal_actor_classes[0]
+    unreal_actor_static_class = spear_instance.game_world_service.get_static_class("AActor")
+    assert unreal_actor_static_class
 
     unreal_set_actor_location_and_rotation_func = spear_instance.game_world_service.find_function_by_name(
-        uclass=unreal_actor_class, name="K2_SetActorLocationAndRotation", include_super_flag=spear_instance.game_world_service.EIncludeSuperFlag.IncludeSuperFlag.value)
+        uclass=unreal_actor_static_class, name="K2_SetActorLocationAndRotation", include_super_flag=spear_instance.game_world_service.EIncludeSuperFlag.IncludeSuperFlag.value)
 
     spear_instance.engine_service.tick()
     spear_instance.engine_service.end_tick()
