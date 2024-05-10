@@ -6,30 +6,208 @@
 
 #include <map>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
+#include <Components/ChildActorComponent.h>
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
-#include <Engine/World.h>                // FWorldDelegates
+#include <Engine/Level.h>                // ULevel
+#include <Engine/World.h>                // FWorldDelegates, FActorSpawnParameters
 #include <Kismet/GameplayStatics.h>
+#include "UObject/Class.h"               // EIncludeSuperFlag::Type
+#include "UObject/ObjectMacros.h"        // EObjectFlags, ELoadFlags
+#include <UObject/Package.h>
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/Rpclib.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealClassRegistrar.h"
+#include "SpCore/UnrealObj.h"
 #include "SpEngine/EntryPointBinder.h"
 
-// We use MSGPACK macros here to define structs that can be passed into, and returned from, the service entry
-// points defined below. There are already similar struct defined in SpCore, but we choose to define separate
-// structs here for the following reasons. First, we avoid a dependency on RPCLib in SpCore. Second, the data
-// needed at the SpCore level is sometimes slightly different from the data needed at the SpEngine level, e.g.,
-// PropertyDesc needs to maintain a FProperty pointer but GameWorldServicePropertyDesc doesn't. Third, some
-// data types used in SpCore cannot be sent via RPCLib, e.g., FProperty* in PropertyDesc.
+// We need to include this for UnrealBuildTool to recognize structs with USTRUCT() macro declared in this file.
+#include "GameWorldService.generated.h"
 
-MSGPACK_ADD_ENUM(EIncludeSuperFlag::Type);
-MSGPACK_ADD_ENUM(ELoadFlags);
-MSGPACK_ADD_ENUM(EObjectFlags);
+
+// This corresponds to EIncludeSuperFlag::Type declared in Engine/Source/Runtime/CoreUObject/Public/UObject/Class.h
+UENUM()
+enum class ESpIncludeSuperFlag
+{
+    ExcludeSuper = static_cast<std::underlying_type_t<EIncludeSuperFlag::Type>>(EIncludeSuperFlag::Type::ExcludeSuper),
+    IncludeSuper = static_cast<std::underlying_type_t<EIncludeSuperFlag::Type>>(EIncludeSuperFlag::Type::IncludeSuper)
+};
+
+// This corresponds to ESpawnActorNameMode declared in Engine/Source/Runtime/Engine/Classes/Engine/World.h
+UENUM()
+enum class ESpSpawnActorNameMode : uint8
+{
+    Required_Fatal              = static_cast<std::underlying_type_t<FActorSpawnParameters::ESpawnActorNameMode>>(FActorSpawnParameters::ESpawnActorNameMode::Required_Fatal),
+    Required_ErrorAndReturnNull = static_cast<std::underlying_type_t<FActorSpawnParameters::ESpawnActorNameMode>>(FActorSpawnParameters::ESpawnActorNameMode::Required_ErrorAndReturnNull),
+    Required_ReturnNull         = static_cast<std::underlying_type_t<FActorSpawnParameters::ESpawnActorNameMode>>(FActorSpawnParameters::ESpawnActorNameMode::Required_ReturnNull),
+    Requested                   = static_cast<std::underlying_type_t<FActorSpawnParameters::ESpawnActorNameMode>>(FActorSpawnParameters::ESpawnActorNameMode::Requested)
+};
+
+// This corresponds to EObjectFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectMacros.h
+UENUM()
+enum class ESpObjectFlags
+{
+    RF_NoFlags                      = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_NoFlags),
+    RF_Public                       = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_Public),
+    RF_Standalone                   = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_Standalone),
+    RF_MarkAsNative                 = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_MarkAsNative),
+    RF_Transactional                = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_Transactional),
+    RF_ClassDefaultObject           = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_ClassDefaultObject),
+    RF_ArchetypeObject              = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_ArchetypeObject),
+    RF_Transient                    = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_Transient),
+    RF_MarkAsRootSet                = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_MarkAsRootSet),
+    RF_TagGarbageTemp               = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_TagGarbageTemp),
+    RF_NeedInitialization           = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_NeedInitialization),
+    RF_NeedLoad                     = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_NeedLoad),
+    RF_KeepForCooker                = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_KeepForCooker),
+    RF_NeedPostLoad                 = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_NeedPostLoad),
+    RF_NeedPostLoadSubobjects       = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_NeedPostLoadSubobjects),
+    RF_NewerVersionExists           = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_NewerVersionExists),
+    RF_BeginDestroyed               = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_BeginDestroyed),
+    RF_FinishDestroyed              = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_FinishDestroyed),
+    RF_BeingRegenerated             = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_BeingRegenerated),
+    RF_DefaultSubObject             = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_DefaultSubObject),
+    RF_WasLoaded                    = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_WasLoaded),
+    RF_TextExportTransient          = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_TextExportTransient),
+    RF_LoadCompleted                = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_LoadCompleted),
+    RF_InheritableComponentTemplate = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_InheritableComponentTemplate),
+    RF_DuplicateTransient           = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_DuplicateTransient),
+    RF_StrongRefOnFrame             = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_StrongRefOnFrame),
+    RF_NonPIEDuplicateTransient     = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_NonPIEDuplicateTransient),
+    RF_WillBeLoaded                 = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_WillBeLoaded),
+    RF_HasExternalPackage           = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_HasExternalPackage),
+    RF_AllocatedInSharedPage        = static_cast<std::underlying_type_t<EObjectFlags>>(EObjectFlags::RF_AllocatedInSharedPage),
+};
+
+// This corresponds to ELoadFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectMacros.h
+UENUM()
+enum class ESpLoadFlags
+{
+    LOAD_None                        = static_cast<std::underlying_type_t<ELoadFlags>>(ELoadFlags::LOAD_None),
+    LOAD_Async                       = static_cast<std::underlying_type_t<ELoadFlags>>(ELoadFlags::LOAD_Async),
+    LOAD_NoWarn                      = static_cast<std::underlying_type_t<ELoadFlags>>(ELoadFlags::LOAD_NoWarn),
+    LOAD_EditorOnly                  = static_cast<std::underlying_type_t<ELoadFlags>>(ELoadFlags::LOAD_EditorOnly),
+    LOAD_ResolvingDeferredExports    = static_cast<std::underlying_type_t<ELoadFlags>>(ELoadFlags::LOAD_ResolvingDeferredExports),
+    LOAD_Verify                      = static_cast<std::underlying_type_t<ELoadFlags>>(ELoadFlags::LOAD_Verify),
+    LOAD_NoVerify                    = static_cast<std::underlying_type_t<ELoadFlags>>(ELoadFlags::LOAD_NoVerify),
+    LOAD_IsVerifying                 = static_cast<std::underlying_type_t<ELoadFlags>>(ELoadFlags::LOAD_IsVerifying),
+    LOAD_SkipLoadImportedPackages    = static_cast<std::underlying_type_t<ELoadFlags>>(ELoadFlags::LOAD_SkipLoadImportedPackages),
+    LOAD_RegenerateBulkDataGuids     = static_cast<std::underlying_type_t<ELoadFlags>>(ELoadFlags::LOAD_RegenerateBulkDataGuids),
+    LOAD_DisableDependencyPreloading = static_cast<std::underlying_type_t<ELoadFlags>>(ELoadFlags::LOAD_DisableDependencyPreloading),
+    LOAD_Quiet                       = static_cast<std::underlying_type_t<ELoadFlags>>(ELoadFlags::LOAD_Quiet),
+    LOAD_FindIfFail                  = static_cast<std::underlying_type_t<ELoadFlags>>(ELoadFlags::LOAD_FindIfFail),
+    LOAD_MemoryReader                = static_cast<std::underlying_type_t<ELoadFlags>>(ELoadFlags::LOAD_MemoryReader),
+    LOAD_NoRedirects                 = static_cast<std::underlying_type_t<ELoadFlags>>(ELoadFlags::LOAD_NoRedirects),
+    LOAD_ForDiff                     = static_cast<std::underlying_type_t<ELoadFlags>>(ELoadFlags::LOAD_ForDiff),
+    LOAD_PackageForPIE               = static_cast<std::underlying_type_t<ELoadFlags>>(ELoadFlags::LOAD_PackageForPIE),
+    LOAD_DeferDependencyLoads        = static_cast<std::underlying_type_t<ELoadFlags>>(ELoadFlags::LOAD_DeferDependencyLoads),
+    LOAD_ForFileDiff                 = static_cast<std::underlying_type_t<ELoadFlags>>(ELoadFlags::LOAD_ForFileDiff),
+    LOAD_DisableCompileOnLoad        = static_cast<std::underlying_type_t<ELoadFlags>>(ELoadFlags::LOAD_DisableCompileOnLoad),
+    LOAD_DisableEngineVersionChecks  = static_cast<std::underlying_type_t<ELoadFlags>>(ELoadFlags::LOAD_DisableEngineVersionChecks)
+};
+
+// This struct is intended to be a wrapper for ESpIncludeSuperFlag declared above. Wrapping enums in a struct with USTRUCT() macro
+// helps us take advantage of UnrealObj and UnrealObjUtils to pass enums to and from Python as a JSON string.
+USTRUCT()
+struct FSpIncludeSuperFlag
+{
+    GENERATED_BODY()
+
+    UPROPERTY()
+    ESpIncludeSuperFlag Enum;
+};
+
+// This struct is intended to be a wrapper for ESpObjectFlags declared above. Wrapping enums in a struct with USTRUCT() macro
+// helps us take advantage of UnrealObj and UnrealObjUtils to pass enums to and from Python as a JSON string.USTRUCT()
+USTRUCT()
+struct FSpObjectFlags
+{
+    GENERATED_BODY()
+
+    UPROPERTY()
+    ESpObjectFlags Enum;
+};
+
+// This struct is intended to be a wrapper for ESpLoadFlags declared above. Wrapping enums in a struct with USTRUCT() macro
+// helps us take advantage of UnrealObj and UnrealObjUtils to pass enums to and from Python as a JSON string.USTRUCT()
+USTRUCT()
+struct FSpLoadFlags
+{
+    GENERATED_BODY()
+
+    UPROPERTY()
+    ESpLoadFlags Enum;
+};
+
+// This struct is intended to be identical to Unreal's FActorSpawnParameters struct, except we tag our struct
+// as a USTRUCT so it is easier to pass to and from Python as a JSON string, see:
+//     Engine/Source/Runtime/Engine/Classes/Engine/World.h
+USTRUCT()
+struct FSpActorSpawnParameters
+{
+    GENERATED_BODY();
+
+    FSpActorSpawnParameters()
+        : Name(NAME_None)
+        , Template(NULL)
+        , Owner(NULL)
+        , Instigator(NULL)
+        , OverrideLevel(NULL)
+        , OverrideParentComponent(nullptr)
+        , SpawnCollisionHandlingOverride(ESpawnActorCollisionHandlingMethod::Undefined)
+        , bNoFail(false)
+        , bDeferConstruction(false)
+        , bAllowDuringConstructionScript(false)
+        , NameMode(ESpSpawnActorNameMode::Required_Fatal)
+        , ObjectFlags(ESpObjectFlags::RF_Transactional)
+    {
+    }
+
+    UPROPERTY()
+    FName Name;
+
+    UPROPERTY()
+    AActor* Template;
+
+    UPROPERTY()
+    AActor* Owner;
+
+    UPROPERTY()
+    APawn* Instigator;
+
+    UPROPERTY()
+    ULevel* OverrideLevel;
+
+    UPROPERTY()
+    UChildActorComponent* OverrideParentComponent;
+
+    UPROPERTY()
+    ESpawnActorCollisionHandlingMethod SpawnCollisionHandlingOverride;
+
+    UPROPERTY()
+    ESpawnActorScaleMethod TransformScaleMethod = ESpawnActorScaleMethod::MultiplyWithRoot;
+
+    UPROPERTY()
+    uint8 bNoFail;
+
+    UPROPERTY()
+    uint8 bDeferConstruction;
+
+    UPROPERTY()
+    uint8 bAllowDuringConstructionScript;
+
+    UPROPERTY()
+    ESpSpawnActorNameMode NameMode;
+
+    UPROPERTY()
+    ESpObjectFlags ObjectFlags;
+};
 
 struct GameWorldServicePropertyDesc
 {
@@ -39,106 +217,6 @@ struct GameWorldServicePropertyDesc
     MSGPACK_DEFINE_MAP(property_, value_ptr_);
 };
 
-/* Struct of optional parameters passed to SpawnActor function(s). */
-USTRUCT()
-struct FActorSpawnParameters
-{
-    GENERATED_BODY();
-
-    FActorSpawnParameters();
-
-    /* A name to assign as the Name of the Actor being spawned. If no value is specified, the name of the spawned Actor will be automatically generated using the form [Class]_[Number]. */
-    FName Name;
-
-    /* An Actor to use as a template when spawning the new Actor. The spawned Actor will be initialized using the property values of the template Actor. If left NULL the class default object (CDO) will be used to initialize the spawned Actor. */
-    AActor* Template;
-
-    /* The Actor that spawned this Actor. (Can be left as NULL). */
-    AActor* Owner;
-
-    /* The APawn that is responsible for damage done by the spawned Actor. (Can be left as NULL). */
-    APawn* Instigator;
-
-    /* The ULevel to spawn the Actor in, i.e. the Outer of the Actor. If left as NULL the Outer of the Owner is used. If the Owner is NULL the persistent level is used. */
-    class	ULevel* OverrideLevel;
-
-#if WITH_EDITOR
-    /* The UPackage to set the Actor in. If left as NULL the Package will not be set and the actor will be saved in the same package as the persistent level. */
-    class	UPackage* OverridePackage;
-
-    /** The Guid to set to this actor. Should only be set when reinstancing blueprint actors. */
-    FGuid	OverrideActorGuid;
-#endif
-
-    /* The parent component to set the Actor in. */
-    class   UChildActorComponent* OverrideParentComponent;
-
-    /** Method for resolving collisions at the spawn point. Undefined means no override, use the actor's setting. */
-    ESpawnActorCollisionHandlingMethod SpawnCollisionHandlingOverride;
-
-    /** Determines whether to multiply or override root component with provided spawn transform */
-    ESpawnActorScaleMethod TransformScaleMethod = ESpawnActorScaleMethod::MultiplyWithRoot;
-
-private:
-
-    friend class UPackageMapClient;
-
-#if UE_WITH_IRIS
-    friend class UActorReplicationBridge;
-#endif // UE_WITH_IRIS
-
-    /* Is the actor remotely owned. This should only be set true by the package map when it is creating an actor on a client that was replicated from the server. */
-    uint8	bRemoteOwned : 1;
-
-public:
-
-    bool IsRemoteOwned() const { return bRemoteOwned; }
-
-    /* Determines whether spawning will not fail if certain conditions are not met. If true, spawning will not fail because the class being spawned is `bStatic=true` or because the class of the template Actor is not the same as the class of the Actor being spawned. */
-    uint8	bNoFail : 1;
-
-    /* Determines whether the construction script will be run. If true, the construction script will not be run on the spawned Actor. Only applicable if the Actor is being spawned from a Blueprint. */
-    uint8	bDeferConstruction : 1;
-
-    /* Determines whether or not the actor may be spawned when running a construction script. If true spawning will fail if a construction script is being run. */
-    uint8	bAllowDuringConstructionScript : 1;
-
-#if WITH_EDITOR
-    /* Determines whether the begin play cycle will run on the spawned actor when in the editor. */
-    uint8	bTemporaryEditorActor : 1;
-
-    /* Determines whether or not the actor should be hidden from the Scene Outliner */
-    uint8	bHideFromSceneOutliner : 1;
-
-    /** Determines whether to create a new package for the actor or not, if the level supports it. */
-    uint16	bCreateActorPackage : 1;
-#endif
-
-    /* Modes that SpawnActor can use the supplied name when it is not None. */
-    enum class ESpawnActorNameMode : uint8
-    {
-        /* Fatal if unavailable, application will assert */
-        Required_Fatal,
-
-        /* Report an error return null if unavailable */
-        Required_ErrorAndReturnNull,
-
-        /* Return null if unavailable */
-        Required_ReturnNull,
-
-        /* If the supplied Name is already in use the generate an unused one using the supplied version as a base */
-        Requested
-    };
-
-    /* In which way should SpawnActor should treat the supplied Name if not none. */
-    ESpawnActorNameMode NameMode;
-
-    /* Flags used to describe the spawned actor/object instance. */
-    EObjectFlags ObjectFlags;
-
-    /* Custom function allowing the caller to specific a function to execute post actor construction but before other systems see this actor spawn. */
-    TFunction<void(AActor*)> CustomPreSpawnInitalization;
-};
 
 class GameWorldService {
 public:
@@ -164,6 +242,11 @@ public:
             [this]() -> std::string {
                 SP_ASSERT(world_);
                 return Unreal::toStdString(world_->GetName());
+            });
+
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_default_object",
+            [this](const uint64_t& uclass, const bool& create_if_needed) -> uint64_t {
+                return reinterpret_cast<uint64_t>(reinterpret_cast<UClass*>(uclass)->GetDefaultObject(create_if_needed));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "find_actors",
@@ -237,7 +320,10 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "find_function_by_name",
-            [this](const uint64_t& uclass, const std::string& name, const EIncludeSuperFlag::Type& include_super_flag) -> uint64_t {
+            [this](const uint64_t& uclass, const std::string& name, const std::map<std::string, std::string>& unreal_obj_strings) -> uint64_t {
+                UnrealObj<FSpIncludeSuperFlag> sp_include_super_flag("IncludeSuperFlag");
+                UnrealObjUtils::setObjectPropertiesFromStrings({&sp_include_super_flag}, unreal_obj_strings);
+                EIncludeSuperFlag::Type include_super_flag = static_cast<EIncludeSuperFlag::Type>(sp_include_super_flag.getObj().Enum);
                 return reinterpret_cast<uint64_t>(Unreal::findFunctionByName(reinterpret_cast<UClass*>(uclass), name, include_super_flag));
             });
 
@@ -291,19 +377,41 @@ public:
                 return reinterpret_cast<uint64_t>(UnrealClassRegistrar::getStaticClass(class_name));
             });
 
-        // TODO: How do we expose FActorSpawnParameters?
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "spawn_actor",
-            [this](const std::string& class_name, const std::vector<double>& location, const std::vector<double>& rotation, const spawn_params) -> uint64_t {
+            [this](
+                const std::string& class_name,
+                const std::vector<double>& location,
+                const std::vector<double>& rotation,
+                const std::map<std::string,std::string>& unreal_obj_strings) -> uint64_t {
+
                 SP_ASSERT(location.size() == 3);
                 SP_ASSERT(rotation.size() == 3);
+
+                UnrealObj<FSpActorSpawnParameters> sp_spawn_params("SpawnParams");
+                UnrealObjUtils::setObjectPropertiesFromStrings({&sp_spawn_params}, unreal_obj_strings);
+                FActorSpawnParameters spawn_params;
+                spawn_params.Name = sp_spawn_params.getObj().Name;
+                spawn_params.Template = sp_spawn_params.getObj().Template;
+                spawn_params.Owner = sp_spawn_params.getObj().Owner;
+                spawn_params.Instigator = sp_spawn_params.getObj().Instigator;
+                spawn_params.OverrideLevel = sp_spawn_params.getObj().OverrideLevel;
+                spawn_params.OverrideParentComponent = sp_spawn_params.getObj().OverrideParentComponent;
+                spawn_params.SpawnCollisionHandlingOverride = static_cast<ESpawnActorCollisionHandlingMethod>(sp_spawn_params.getObj().SpawnCollisionHandlingOverride);
+                spawn_params.TransformScaleMethod = sp_spawn_params.getObj().TransformScaleMethod;
+                spawn_params.bNoFail = sp_spawn_params.getObj().bNoFail;
+                spawn_params.bDeferConstruction = sp_spawn_params.getObj().bDeferConstruction;
+                spawn_params.bAllowDuringConstructionScript = sp_spawn_params.getObj().bAllowDuringConstructionScript;
+                spawn_params.NameMode = static_cast<FActorSpawnParameters::ESpawnActorNameMode>(sp_spawn_params.getObj().NameMode);
+                spawn_params.ObjectFlags = static_cast<EObjectFlags>(sp_spawn_params.getObj().ObjectFlags);
+
                 return reinterpret_cast<uint64_t>(
                     UnrealClassRegistrar::spawnActor(
                         class_name,
                         world_,
                         FVector(location.at(0), location.at(1), location.at(2)),
                         FRotator(rotation.at(0), rotation.at(1), rotation.at(2)),
-                        FActorSpawnParameters()));
-            }); // create a USTRUCT copy of FActorSpawnParameters. Then serialize and deserialize to json to transfer over rpclib.
+                        spawn_params));
+            });
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "create_component_outside_owner_constructor", 
             [this](const std::string& class_name, const uint64_t& owner, const std::string& name) -> uint64_t {
@@ -331,17 +439,23 @@ public:
                 const std::string& class_name,
                 const uint64_t& outer,
                 const std::string& name,
-                const EObjectFlags& flags,
+                const std::map<std::string, std::string>& unreal_obj_strings,
                 const uint64_t& uobject_template,
                 const bool& copy_transients_from_class_defaults,
                 const uint64_t& in_instance_graph,
                 const uint64_t& external_package) -> uint64_t {
+
+                // TODO: support users to specify multiple object flags
+                UnrealObj<FSpLoadFlags> sp_object_flags("ObjectFlags");
+                UnrealObjUtils::setObjectPropertiesFromStrings({&sp_object_flags}, unreal_obj_strings);
+                EObjectFlags object_flags = static_cast<EObjectFlags>(sp_object_flags.getObj().Enum);
+
                 return reinterpret_cast<uint64_t>(
                     UnrealClassRegistrar::newObject(
                         class_name,
                         reinterpret_cast<UObject*>(outer),
                         Unreal::toFName(name),
-                        flags,
+                        object_flags,
                         reinterpret_cast<UObject*>(uobject_template),
                         copy_transients_from_class_defaults,
                         reinterpret_cast<FObjectInstancingGraph*>(in_instance_graph),
@@ -354,9 +468,15 @@ public:
                 const uint64_t& outer,
                 const std::string& name,
                 const std::string& filename,
-                const ELoadFlags& load_flags,
+                const std::map<std::string, std::string>& unreal_obj_strings,
                 const uint64_t& sandbox,
                 const uint64_t& instancing_context) -> uint64_t {
+
+                // TODO: support users to specify multiple load flags
+                UnrealObj<FSpLoadFlags> sp_load_flags("LoadFlags");
+                UnrealObjUtils::setObjectPropertiesFromStrings({&sp_load_flags}, unreal_obj_strings);
+                ELoadFlags load_flags = static_cast<ELoadFlags>(sp_load_flags.getObj().Enum);
+
                 return reinterpret_cast<uint64_t>(
                     UnrealClassRegistrar::loadObject(
                         class_name,

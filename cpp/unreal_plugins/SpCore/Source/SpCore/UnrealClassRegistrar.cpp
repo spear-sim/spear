@@ -40,6 +40,7 @@ struct FObjectInstancingGraph;
 void UnrealClassRegistrar::initialize()
 {
     // Unreal classes
+    registerActorClass<AActor>("AActor");
     registerActorClass<AStaticMeshActor>("AStaticMeshActor");
     registerComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
     registerClass<UGameplayStatics>("UGameplayStatics");
@@ -59,6 +60,7 @@ void UnrealClassRegistrar::initialize()
 void UnrealClassRegistrar::terminate()
 {
     // Unreal classes
+    unregisterActorClass<AActor>("AActor");
     unregisterActorClass<AStaticMeshActor>("AStaticMeshActor");
     unregisterComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
     unregisterClass<UGameplayStatics>("UGameplayStatics");
@@ -73,22 +75,6 @@ void UnrealClassRegistrar::terminate()
     // need to unregister special structs
     unregisterSpecialStruct<FRotator>();
     unregisterSpecialStruct<FVector>();
-}
-
-//
-// Get static class using a class name instead of template parameters
-//
-
-UClass* UnrealClassRegistrar::getStaticClass(const std::string& class_name) {
-    return s_get_static_class_registrar_.call(class_name);
-}
-
-//
-// Get Default object using a class name instead of template parameters
-//
-
-UObject* UnrealClassRegistrar::getDefaultObject(const std::string& class_name) {
-    return s_get_default_object_registrar_.call(class_name);
 }
 
 //
@@ -146,6 +132,14 @@ UObject* UnrealClassRegistrar::loadObject(
     const FLinkerInstancingContext* instancing_context)
 {
     return s_load_object_registrar_.call(class_name, outer, name, filename, load_flags, sandbox, instancing_context);
+}
+
+//
+// Get static class using a class name instead of template parameters
+//
+
+UClass* UnrealClassRegistrar::getStaticClass(const std::string& class_name) {
+    return s_get_static_class_registrar_.call(class_name);
 }
 
 //
