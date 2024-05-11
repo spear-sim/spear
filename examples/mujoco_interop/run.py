@@ -82,12 +82,12 @@ if __name__ == "__main__":
         spear_instance.engine_service.begin_tick()
 
         for unreal_actor_name, unreal_actor in unreal_actors.items():
-            unreal_location_dict = zip(["X", "Y", "Z"], mj_bodies_xpos[unreal_actor_name + ":StaticMeshComponent0"])
-            unreal_rotation_dict = zip(["Roll", "Pitch", "Yaw"], unreal_rpy_from_mujoco_quaternion(mj_bodies_xquat[unreal_actor_name + ":StaticMeshComponent0"]))
-
-            spear_instance.game_world_service.call_function(
-                unreal_actor, unreal_set_actor_location_and_rotation_func,
-                NewLocation=unreal_location_dict, NewRotation=unreal_rotation_dict, bSweep=False, bTeleport=True)
+            args = {
+                "NewLocation" : dict(zip(["X", "Y", "Z"], mj_bodies_xpos[unreal_actor_name + ":StaticMeshComponent0"])),
+                "NewRotation" : dict(zip(["Roll", "Pitch", "Yaw"], unreal_rpy_from_mujoco_quaternion(mj_bodies_xquat[unreal_actor_name + ":StaticMeshComponent0"]))),
+                "bSweep"      : False,
+                "bTeleport"   : True}
+            spear_instance.game_world_service.call_function(unreal_actor, unreal_set_actor_location_and_rotation_func, args)
 
         spear_instance.engine_service.tick()
         spear_instance.engine_service.end_tick()

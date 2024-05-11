@@ -126,9 +126,7 @@ class Instance():
         # that leverage temporal coherence between frames.
         for i in range(1 + self._config.SPEAR.INSTANCE.NUM_EXTRA_WARMUP_TICKS):
             self.engine_service.begin_tick()
-            self.game_world_service.set_game_paused(False)
             self.engine_service.tick()
-            self.game_world_service.set_game_paused(True)
             self.engine_service.end_tick()
 
         spear.log("Finished initializing Unreal instance.")

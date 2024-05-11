@@ -27,9 +27,7 @@
 #include "SpCore/UnrealObj.h"
 #include "SpEngine/EntryPointBinder.h"
 
-// We need to include this for UnrealBuildTool to recognize structs with USTRUCT() macro declared in this file.
 #include "GameWorldService.generated.h"
-
 
 // This corresponds to EIncludeSuperFlag::Type declared in Engine/Source/Runtime/CoreUObject/Public/UObject/Class.h
 UENUM()
@@ -112,8 +110,10 @@ enum class ESpLoadFlags
     LOAD_DisableEngineVersionChecks  = static_cast<std::underlying_type_t<ELoadFlags>>(ELoadFlags::LOAD_DisableEngineVersionChecks)
 };
 
-// This struct is intended to be a wrapper for ESpIncludeSuperFlag declared above. Wrapping enums in a struct with USTRUCT() macro
-// helps us take advantage of UnrealObj and UnrealObjUtils to pass enums to and from Python as a JSON string.
+// These USTRUCT types are intended to be wrappers for the UENUM types declared above. Wrapping enums in
+// structs like this helps us take advantage of UnrealObj and UnrealObjUtils to pass enums to and from
+// Python as a JSON string.
+
 USTRUCT()
 struct FSpIncludeSuperFlag
 {
@@ -123,8 +123,6 @@ struct FSpIncludeSuperFlag
     ESpIncludeSuperFlag Enum;
 };
 
-// This struct is intended to be a wrapper for ESpObjectFlags declared above. Wrapping enums in a struct with USTRUCT() macro
-// helps us take advantage of UnrealObj and UnrealObjUtils to pass enums to and from Python as a JSON string.USTRUCT()
 USTRUCT()
 struct FSpObjectFlags
 {
@@ -134,8 +132,6 @@ struct FSpObjectFlags
     ESpObjectFlags Enum;
 };
 
-// This struct is intended to be a wrapper for ESpLoadFlags declared above. Wrapping enums in a struct with USTRUCT() macro
-// helps us take advantage of UnrealObj and UnrealObjUtils to pass enums to and from Python as a JSON string.USTRUCT()
 USTRUCT()
 struct FSpLoadFlags
 {
@@ -145,68 +141,50 @@ struct FSpLoadFlags
     ESpLoadFlags Enum;
 };
 
-// This struct is intended to be identical to Unreal's FActorSpawnParameters struct, except we tag our struct
-// as a USTRUCT so it is easier to pass to and from Python as a JSON string, see:
-//     Engine/Source/Runtime/Engine/Classes/Engine/World.h
+// This struct is intended to be identical to Unreal's FActorSpawnParameters struct, see Engine/Source/Runtime/Engine/Classes/Engine/World.h
 USTRUCT()
 struct FSpActorSpawnParameters
 {
-    GENERATED_BODY();
-
-    FSpActorSpawnParameters()
-        : Name(NAME_None)
-        , Template(NULL)
-        , Owner(NULL)
-        , Instigator(NULL)
-        , OverrideLevel(NULL)
-        , OverrideParentComponent(nullptr)
-        , SpawnCollisionHandlingOverride(ESpawnActorCollisionHandlingMethod::Undefined)
-        , bNoFail(false)
-        , bDeferConstruction(false)
-        , bAllowDuringConstructionScript(false)
-        , NameMode(ESpSpawnActorNameMode::Required_Fatal)
-        , ObjectFlags(ESpObjectFlags::RF_Transactional)
-    {
-    }
+    GENERATED_BODY()
 
     UPROPERTY()
-    FName Name;
+    FName Name = NAME_None;
 
     UPROPERTY()
-    AActor* Template;
+    AActor* Template = nullptr;
 
     UPROPERTY()
-    AActor* Owner;
+    AActor* Owner = nullptr;
 
     UPROPERTY()
-    APawn* Instigator;
+    APawn* Instigator = nullptr;
 
     UPROPERTY()
-    ULevel* OverrideLevel;
+    ULevel* OverrideLevel = nullptr;
 
     UPROPERTY()
-    UChildActorComponent* OverrideParentComponent;
+    UChildActorComponent* OverrideParentComponent = nullptr;
 
     UPROPERTY()
-    ESpawnActorCollisionHandlingMethod SpawnCollisionHandlingOverride;
+    ESpawnActorCollisionHandlingMethod SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::Undefined;
 
     UPROPERTY()
     ESpawnActorScaleMethod TransformScaleMethod = ESpawnActorScaleMethod::MultiplyWithRoot;
 
     UPROPERTY()
-    uint8 bNoFail;
+    uint8 bNoFail = false;
 
     UPROPERTY()
-    uint8 bDeferConstruction;
+    uint8 bDeferConstruction = false;
 
     UPROPERTY()
-    uint8 bAllowDuringConstructionScript;
+    uint8 bAllowDuringConstructionScript = false;
 
     UPROPERTY()
-    ESpSpawnActorNameMode NameMode;
+    ESpSpawnActorNameMode NameMode = ESpSpawnActorNameMode::Required_Fatal;
 
     UPROPERTY()
-    ESpObjectFlags ObjectFlags;
+    ESpObjectFlags ObjectFlags = ESpObjectFlags::RF_Transactional;
 };
 
 struct GameWorldServicePropertyDesc
@@ -228,26 +206,15 @@ public:
         post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &GameWorldService::postWorldInitializationHandler);
         world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &GameWorldService::worldCleanupHandler);
 
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "set_game_paused",
-            [this](const bool& paused) -> void {
-                UGameplayStatics::SetGamePaused(world_, paused);
-            });
-
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "open_level",
-            [this](const std::string& level_name) -> void {
-                UGameplayStatics::OpenLevel(world_, Unreal::toFName(level_name));
-            });
-
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_world_name",
             [this]() -> std::string {
                 SP_ASSERT(world_);
                 return Unreal::toStdString(world_->GetName());
             });
 
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_default_object",
-            [this](const uint64_t& uclass, const bool& create_if_needed) -> uint64_t {
-                return reinterpret_cast<uint64_t>(reinterpret_cast<UClass*>(uclass)->GetDefaultObject(create_if_needed));
-            });
+        //
+        // Find actors unconditionally and return a list or dict
+        //
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "find_actors",
             [this]() -> std::vector<uint64_t> {
@@ -259,6 +226,10 @@ public:
                 return toUint64(Unreal::findActorsAsMap(world_));
             });
 
+        //
+        // Get components unconditionally and return a list or dict
+        //
+
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_components",
             [this](const uint64_t& actor) -> std::vector<uint64_t> {
                 return toUint64(Unreal::getComponents(reinterpret_cast<AActor*>(actor)));
@@ -268,6 +239,9 @@ public:
             [this](const uint64_t& actor) -> std::map<std::string, uint64_t> {
                 return toUint64(Unreal::getComponentsAsMap(reinterpret_cast<AActor*>(actor)));
             });
+        //
+        // Get children components unconditionally and return a list or dict
+        //
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_children_components",
             [this](const uint64_t& parent, const bool& include_all_descendants) -> std::vector<uint64_t> {
@@ -278,6 +252,10 @@ public:
             [this](const uint64_t& parent, const bool& include_all_descendants) -> std::map<std::string, uint64_t> {
                 return toUint64(Unreal::getChildrenComponentsAsMap(reinterpret_cast<USceneComponent*>(parent), include_all_descendants));
             });
+
+        //
+        // Get and set object properties
+        //
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_object_properties_as_string_from_uobject",
             [this](const uint64_t& uobject) -> std::string {
@@ -299,6 +277,10 @@ public:
                 Unreal::setObjectPropertiesFromString(reinterpret_cast<void*>(value_ptr), reinterpret_cast<UStruct*>(ustruct), string);
             });
 
+        //
+        // Find properties
+        //
+
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "find_property_by_name_on_uobject",
             [this](const uint64_t& uobject, const std::string& name) -> GameWorldServicePropertyDesc {
                 return toPropertyDesc(Unreal::findPropertyByName(reinterpret_cast<UObject*>(uobject), name));
@@ -308,6 +290,11 @@ public:
             [this](const uint64_t& value_ptr, const uint64_t& ustruct, const std::string& name) -> GameWorldServicePropertyDesc {
                 return toPropertyDesc(Unreal::findPropertyByName(reinterpret_cast<void*>(value_ptr), reinterpret_cast<UStruct*>(ustruct), name));
             });
+
+
+        //
+        // Get property values
+        //
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_property_value_as_string",
             [this](const GameWorldServicePropertyDesc& game_world_property_desc) -> std::string {
@@ -319,11 +306,19 @@ public:
                 Unreal::setPropertyValueFromString(toPropertyDesc(game_world_property_desc), string);
             });
 
+        //
+        // Find and call functions
+        //
+
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "find_function_by_name",
             [this](const uint64_t& uclass, const std::string& name, const std::map<std::string, std::string>& unreal_obj_strings) -> uint64_t {
-                UnrealObj<FSpIncludeSuperFlag> sp_include_super_flag("IncludeSuperFlag");
-                UnrealObjUtils::setObjectPropertiesFromStrings({&sp_include_super_flag}, unreal_obj_strings);
-                EIncludeSuperFlag::Type include_super_flag = static_cast<EIncludeSuperFlag::Type>(sp_include_super_flag.getObj().Enum);
+
+                UnrealObj<FSpIncludeSuperFlag> sp_include_super_flag_obj("IncludeSuperFlag");
+                UnrealObjUtils::setObjectPropertiesFromStrings({&sp_include_super_flag_obj}, unreal_obj_strings);
+
+                FSpIncludeSuperFlag sp_include_super_flag = sp_include_super_flag_obj.getObj();
+                EIncludeSuperFlag::Type include_super_flag = static_cast<EIncludeSuperFlag::Type>(sp_include_super_flag.Enum);
+
                 return reinterpret_cast<uint64_t>(Unreal::findFunctionByName(reinterpret_cast<UClass*>(uclass), name, include_super_flag));
             });
 
@@ -332,10 +327,19 @@ public:
                 return Unreal::callFunction(reinterpret_cast<UObject*>(uobject), reinterpret_cast<UFunction*>(ufunction), args);
             });
 
+        //
+        // Find special structs by name
+        //
+
+
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "find_special_struct_by_name",
             [this](const std::string& name) -> uint64_t {
                 return reinterpret_cast<uint64_t>(Unreal::findSpecialStructByName(name));
             });
+
+        //
+        // Stable name helper functions
+        //
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "has_stable_name",
             [this](const uint64_t& actor) -> bool {
@@ -357,6 +361,10 @@ public:
                 return Unreal::getStableName(reinterpret_cast<USceneComponent*>(scene_component), include_actor_name);
             });
 
+        //
+        // Get actor and component tags
+        //
+
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_actor_tags",
             [this](const uint64_t& actor) -> std::vector<std::string> {
                 return Unreal::getTags(reinterpret_cast<AActor*>(actor));
@@ -367,51 +375,18 @@ public:
                 return Unreal::getTags(reinterpret_cast<UActorComponent*>(component));
             });
 
+        //
+        // Get class
+        //
+
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_class",
             [this](const uint64_t& uobject) -> uint64_t {
                 return reinterpret_cast<uint64_t>(reinterpret_cast<UObject*>(uobject)->GetClass());
             });
 
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_static_class",
-            [this](const std::string& class_name) -> uint64_t {
-                return reinterpret_cast<uint64_t>(UnrealClassRegistrar::getStaticClass(class_name));
-            });
-
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "spawn_actor",
-            [this](
-                const std::string& class_name,
-                const std::vector<double>& location,
-                const std::vector<double>& rotation,
-                const std::map<std::string,std::string>& unreal_obj_strings) -> uint64_t {
-
-                SP_ASSERT(location.size() == 3);
-                SP_ASSERT(rotation.size() == 3);
-
-                UnrealObj<FSpActorSpawnParameters> sp_spawn_params("SpawnParams");
-                UnrealObjUtils::setObjectPropertiesFromStrings({&sp_spawn_params}, unreal_obj_strings);
-                FActorSpawnParameters spawn_params;
-                spawn_params.Name = sp_spawn_params.getObj().Name;
-                spawn_params.Template = sp_spawn_params.getObj().Template;
-                spawn_params.Owner = sp_spawn_params.getObj().Owner;
-                spawn_params.Instigator = sp_spawn_params.getObj().Instigator;
-                spawn_params.OverrideLevel = sp_spawn_params.getObj().OverrideLevel;
-                spawn_params.OverrideParentComponent = sp_spawn_params.getObj().OverrideParentComponent;
-                spawn_params.SpawnCollisionHandlingOverride = static_cast<ESpawnActorCollisionHandlingMethod>(sp_spawn_params.getObj().SpawnCollisionHandlingOverride);
-                spawn_params.TransformScaleMethod = sp_spawn_params.getObj().TransformScaleMethod;
-                spawn_params.bNoFail = sp_spawn_params.getObj().bNoFail;
-                spawn_params.bDeferConstruction = sp_spawn_params.getObj().bDeferConstruction;
-                spawn_params.bAllowDuringConstructionScript = sp_spawn_params.getObj().bAllowDuringConstructionScript;
-                spawn_params.NameMode = static_cast<FActorSpawnParameters::ESpawnActorNameMode>(sp_spawn_params.getObj().NameMode);
-                spawn_params.ObjectFlags = static_cast<EObjectFlags>(sp_spawn_params.getObj().ObjectFlags);
-
-                return reinterpret_cast<uint64_t>(
-                    UnrealClassRegistrar::spawnActor(
-                        class_name,
-                        world_,
-                        FVector(location.at(0), location.at(1), location.at(2)),
-                        FRotator(rotation.at(0), rotation.at(1), rotation.at(2)),
-                        spawn_params));
-            });
+        //
+        // Create components
+        //
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "create_component_outside_owner_constructor", 
             [this](const std::string& class_name, const uint64_t& owner, const std::string& name) -> uint64_t {
@@ -434,6 +409,10 @@ public:
                 return reinterpret_cast<uint64_t>(UnrealClassRegistrar::createSceneComponentOutsideOwnerConstructor(class_name, reinterpret_cast<USceneComponent*>(owner), name));
             });
 
+        //
+        // Create new object
+        //
+
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "new_object",
             [this](
                 const std::string& class_name,
@@ -446,9 +425,11 @@ public:
                 const uint64_t& external_package) -> uint64_t {
 
                 // TODO: support users to specify multiple object flags
-                UnrealObj<FSpLoadFlags> sp_object_flags("ObjectFlags");
-                UnrealObjUtils::setObjectPropertiesFromStrings({&sp_object_flags}, unreal_obj_strings);
-                EObjectFlags object_flags = static_cast<EObjectFlags>(sp_object_flags.getObj().Enum);
+                UnrealObj<FSpObjectFlags> sp_object_flags_obj("ObjectFlags");
+                UnrealObjUtils::setObjectPropertiesFromStrings({&sp_object_flags_obj}, unreal_obj_strings);
+
+                FSpObjectFlags sp_object_flags = sp_object_flags_obj.getObj();
+                EObjectFlags object_flags = static_cast<EObjectFlags>(sp_object_flags.Enum);
 
                 return reinterpret_cast<uint64_t>(
                     UnrealClassRegistrar::newObject(
@@ -462,6 +443,10 @@ public:
                         reinterpret_cast<UPackage*>(external_package)));
             });
 
+        //
+        // Load object
+        //
+
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "load_object",
             [this](
                 const std::string& class_name,
@@ -473,9 +458,11 @@ public:
                 const uint64_t& instancing_context) -> uint64_t {
 
                 // TODO: support users to specify multiple load flags
-                UnrealObj<FSpLoadFlags> sp_load_flags("LoadFlags");
-                UnrealObjUtils::setObjectPropertiesFromStrings({&sp_load_flags}, unreal_obj_strings);
-                ELoadFlags load_flags = static_cast<ELoadFlags>(sp_load_flags.getObj().Enum);
+                UnrealObj<FSpLoadFlags> sp_load_flags_obj("LoadFlags");
+                UnrealObjUtils::setObjectPropertiesFromStrings({&sp_load_flags_obj}, unreal_obj_strings);
+
+                FSpLoadFlags sp_load_flags = sp_load_flags_obj.getObj();
+                ELoadFlags load_flags = static_cast<ELoadFlags>(sp_load_flags.Enum);
 
                 return reinterpret_cast<uint64_t>(
                     UnrealClassRegistrar::loadObject(
@@ -487,6 +474,70 @@ public:
                         reinterpret_cast<UPackageMap*>(sandbox),
                         reinterpret_cast<FLinkerInstancingContext*>(instancing_context)));
             });
+
+        //
+        // Get default object
+        //
+
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_default_object",
+            [this](const uint64_t& uclass, const bool& create_if_needed) -> uint64_t {
+                return reinterpret_cast<uint64_t>(reinterpret_cast<UClass*>(uclass)->GetDefaultObject(create_if_needed));
+            });
+
+        //
+        // Get static class
+        //
+
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_static_class",
+            [this](const std::string& class_name) -> uint64_t {
+                return reinterpret_cast<uint64_t>(UnrealClassRegistrar::getStaticClass(class_name));
+            });
+
+        //
+        // Spawn actor
+        //
+
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "spawn_actor",
+            [this](
+                const std::string& class_name,
+                const std::map<std::string, std::string>& unreal_obj_strings) -> uint64_t {
+
+                    UnrealObj<FSpActorSpawnParameters> sp_actor_spawn_parameters_obj("SpawnParameters");
+                    UnrealObj<FVector> location_obj("Location");
+                    UnrealObj<FRotator> rotation_obj("Rotation");
+                    UnrealObjUtils::setObjectPropertiesFromStrings({&sp_actor_spawn_parameters_obj, &location_obj, &rotation_obj}, unreal_obj_strings);
+
+                    FVector location = location_obj.getObj();
+                    FRotator rotation = rotation_obj.getObj();
+
+                    FSpActorSpawnParameters sp_actor_spawn_parameters = sp_actor_spawn_parameters_obj.getObj();
+                    FActorSpawnParameters actor_spawn_parameters;
+                    actor_spawn_parameters.Name = sp_actor_spawn_parameters.Name;
+                    actor_spawn_parameters.Template = sp_actor_spawn_parameters.Template;
+                    actor_spawn_parameters.Owner = sp_actor_spawn_parameters.Owner;
+                    actor_spawn_parameters.Instigator = sp_actor_spawn_parameters.Instigator;
+                    actor_spawn_parameters.OverrideLevel = sp_actor_spawn_parameters.OverrideLevel;
+                    actor_spawn_parameters.OverrideParentComponent = sp_actor_spawn_parameters.OverrideParentComponent;
+                    actor_spawn_parameters.SpawnCollisionHandlingOverride = static_cast<ESpawnActorCollisionHandlingMethod>(sp_actor_spawn_parameters.SpawnCollisionHandlingOverride);
+                    actor_spawn_parameters.TransformScaleMethod = sp_actor_spawn_parameters.TransformScaleMethod;
+                    actor_spawn_parameters.bNoFail = sp_actor_spawn_parameters.bNoFail;
+                    actor_spawn_parameters.bDeferConstruction = sp_actor_spawn_parameters.bDeferConstruction;
+                    actor_spawn_parameters.bAllowDuringConstructionScript = sp_actor_spawn_parameters.bAllowDuringConstructionScript;
+                    actor_spawn_parameters.NameMode = static_cast<FActorSpawnParameters::ESpawnActorNameMode>(sp_actor_spawn_parameters.NameMode);
+                    actor_spawn_parameters.ObjectFlags = static_cast<EObjectFlags>(sp_actor_spawn_parameters.ObjectFlags);
+
+                    return reinterpret_cast<uint64_t>(
+                        UnrealClassRegistrar::spawnActor(
+                            class_name,
+                            world_,
+                            location,
+                            rotation,
+                            actor_spawn_parameters));
+            });
+
+        //
+        // Find actors conditionally and return a list or dict
+        //
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "find_actors_by_name",
             [this](const std::string& class_name, const std::vector<std::string>& names,const bool& return_null_if_not_found) -> std::vector<uint64_t> {
@@ -548,6 +599,11 @@ public:
                 return toUint64(UnrealClassRegistrar::findActorsByTypeAsMap(class_name, world_));
             });
 
+
+        //
+        // Find actor conditionally
+        //
+
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "find_actor_by_name",
             [this](const std::string& class_name, const std::string& name, const bool& assert_if_not_found) -> uint64_t {
                 return reinterpret_cast<uint64_t>(
@@ -600,6 +656,10 @@ public:
                         assert_if_not_found,
                         assert_if_multiple_found));
             });
+
+        //
+        // Get components conditionally and return a list or dict
+        //
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_components_by_name",
             [this](const std::string& class_name, const uint64_t& actor, const std::vector<std::string>& names, const bool& return_null_if_not_found) -> std::vector<uint64_t> {
@@ -661,6 +721,10 @@ public:
                 return toUint64(UnrealClassRegistrar::getComponentsByTypeAsMap(class_name, reinterpret_cast<AActor*>(actor)));
             });
 
+        //
+        // Get component conditionally
+        //
+
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_component_by_name",
             [this](const std::string& class_name, const uint64_t& actor, const std::string& name, const bool& assert_if_not_found) -> uint64_t {
                 return reinterpret_cast<uint64_t>(
@@ -713,6 +777,10 @@ public:
                         assert_if_not_found,
                         assert_if_multiple_found));
             });
+
+        //
+        // Get children components conditionally from an actor and return a list or dict
+        //
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_children_components_by_name_from_actor",
             [this](
@@ -785,6 +853,10 @@ public:
             [this](const std::string& class_name, const uint64_t& parent, const bool& include_all_descendants) -> std::map<std::string, uint64> {
                 return toUint64(UnrealClassRegistrar::getChildrenComponentsByTypeAsMap(class_name, reinterpret_cast<AActor*>(parent), include_all_descendants));
             });
+
+        //
+        // Get child component conditionally from an actor
+        //
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_child_component_by_name_from_actor",
             [this](const std::string& class_name, const uint64_t& parent, const std::string& name, const bool& include_all_descendants, const bool& assert_if_not_found) -> uint64_t {
@@ -867,6 +939,10 @@ public:
                         assert_if_multiple_found));
             });
 
+        //
+        // Get children components conditionally from a scene component and return a list or dict
+        //
+
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_children_components_by_name_from_scene_component",
             [this](
                 const std::string& class_name,
@@ -938,6 +1014,10 @@ public:
             [this](const std::string& class_name, const uint64_t& parent, const bool& include_all_descendants) -> std::map<std::string, uint64> {
                 return toUint64(UnrealClassRegistrar::getChildrenComponentsByTypeAsMap(class_name, reinterpret_cast<USceneComponent*>(parent), include_all_descendants));
             });
+
+        //
+        // Get child component conditionally from a scene component
+        //
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_child_component_by_name_from_scene_component",
             [this](const std::string& class_name, const uint64_t& parent, const std::string& name, const bool& include_all_descendants, const bool& assert_if_not_found) -> uint64_t {
