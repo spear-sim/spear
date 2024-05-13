@@ -12,6 +12,20 @@ class GameWorldService():
         return self._rpc_client.call("game_world_service.get_world_name")
 
     #
+    # Get default object
+    #
+
+    def get_default_object(self, uclass, create_if_needed):
+        return self._rpc_client.call("game_world_service.get_default_object", uclass, create_if_needed)
+
+    #
+    # Get class
+    #
+
+    def get_class(self, uobject):
+        return self._rpc_client.call("game_world_service.get_class", uobject)
+
+    #
     # Find actors unconditionally and return a list or dict
     #
 
@@ -122,11 +136,11 @@ class GameWorldService():
         return self._rpc_client.call("game_world_service.get_component_tags", actor)
 
     #
-    # Get class
+    # Spawn actor
     #
 
-    def get_class(self, uobject):
-        return self._rpc_client.call("game_world_service.get_class", uobject)
+    def spawn_actor(self, class_name, location, rotation, spawn_parameters):
+        return self._rpc_client.call("game_world_service.spawn_actor", class_name, {"Location": json.dumps(location), "Rotation": json.dumps(rotation), "SpawnParameters": json.dumps(spawn_parameters)})
 
     #
     # Create components
@@ -148,22 +162,15 @@ class GameWorldService():
     # Create new object
     #
 
-    def new_object(self, class_name, outer, name, flags, uobject_template, copy_transients_from_class_defaults, in_instance_graph):
-        return self._rpc_client.call("game_world_service.new_object", class_name, outer, name, {"ObjectFlags": json.dumps({"Enum": flags})}, uobject_template, copy_transients_from_class_defaults, in_instance_graph)
+    def new_object(self, class_name, outer, name, uobject_template, copy_transients_from_class_defaults, in_instance_graph, external_package, object_flags):
+        return self._rpc_client.call("game_world_service.new_object", class_name, outer, name, uobject_template, copy_transients_from_class_defaults, in_instance_graph, external_package, {"ObjectFlags": object_flags})
 
     #
     # Load object
     #
 
-    def load_object(self, class_name, outer, name, filename, load_flags, sandbox, instancing_context):
-        return self._rpc_client.call("game_world_service.load_object", class_name, outer, name, filename, {"LoadFlags": json.dumps({"Enum": load_flags})}, sandbox, instancing_context)
-
-    #
-    # Get default object
-    #
-
-    def get_default_object(self, uclass, create_if_needed):
-        return self._rpc_client.call("game_world_service.get_default_object", uclass, create_if_needed)
+    def load_object(self, class_name, outer, name, filename, sandbox, instancing_context, load_flags):
+        return self._rpc_client.call("game_world_service.load_object", class_name, outer, name, filename, sandbox, instancing_context, {"LoadFlags": load_flags})
 
     #
     # Get static class
@@ -171,13 +178,6 @@ class GameWorldService():
 
     def get_static_class(self, class_name):
         return self._rpc_client.call("game_world_service.get_static_class", class_name)
-
-    #
-    # Spawn actor
-    #
-
-    def spawn_actor(self, class_name, location, rotation, spawn_parameters):
-        return self._rpc_client.call("game_world_service.spawn_actor", class_name, {"Location": json.dumps(location), "Rotation": json.dumps(rotation), "SpawnParameters": json.dumps(spawn_parameters)})
 
     #
     # Find actors conditionally and return a list or dict

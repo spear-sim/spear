@@ -25,12 +25,7 @@ def open_level(instance, scene_id, map_id=""):
     assert gameplay_statics_default_object
     open_level_func = instance.game_world_service.find_function_by_name(uclass=gameplay_statics_class, name="OpenLevel", include_super_flag="IncludeSuper")
     assert open_level_func
-    instance.engine_service.tick()
-    instance.engine_service.end_tick()
-
-    instance.engine_service.begin_tick()
-    instance.game_world_service.call_function(uobject=gameplay_statics_default_object, ufunction=open_level_func, args={"WorldContextObject": gameplay_statics_default_object, "LevelName": level_name})
-    # instance.game_world_service.open_level(level_name)
+    instance.game_world_service.call_function(uobject=gameplay_statics_default_object, ufunction=open_level_func, args={"LevelName": level_name})
     instance.engine_service.tick()
     instance.engine_service.end_tick()
 

@@ -87,13 +87,13 @@ class Env(gym.Env):
 
     def begin_tick(self):
         self._instance.engine_service.begin_tick()
-        self._instance.game_world_service.call_function(uobject=self.gameplay_statics_default_object, ufunction=self.set_game_paused_func, args={"WorldContextObject": self.gameplay_statics_default_object, "bPaused": False})
+        self._instance.game_world_service.call_function(uobject=self.gameplay_statics_default_object, ufunction=self.set_game_paused_func, args={"bPaused": False})
 
     def tick(self):
         self._instance.engine_service.tick()
 
     def end_tick(self):
-        self._instance.game_world_service.call_function(uobject=self.gameplay_statics_default_object, ufunction=self.set_game_paused_func, args={"WorldContextObject": self.gameplay_statics_default_object, "bPaused": True})
+        self._instance.game_world_service.call_function(uobject=self.gameplay_statics_default_object, ufunction=self.set_game_paused_func, args={"bPaused": True})
         self._instance.engine_service.end_tick()
 
     def _get_action_space(self):

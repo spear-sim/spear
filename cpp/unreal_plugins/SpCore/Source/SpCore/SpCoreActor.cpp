@@ -131,7 +131,7 @@ void ASpCoreActor::ActorHitHandler(AActor* self_actor, AActor* other_actor, FVec
 
     // HACK: Strictly speaking, this code doesn't need to be here, but I wanted to test this function when the array of hit events is non-empty.
     UFunction* ufunction = Unreal::findFunctionByName(this->GetClass(), "GetActorHitEventDescs");
-    std::map<std::string, std::string> return_values = Unreal::callFunction(this, ufunction);
+    std::map<std::string, std::string> return_values = Unreal::callFunction(GetWorld(), this, ufunction);
     SP_LOG(return_values.at("ReturnValue"));
 }
 

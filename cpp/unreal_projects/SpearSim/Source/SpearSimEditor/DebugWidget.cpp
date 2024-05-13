@@ -253,13 +253,13 @@ void ADebugWidget::CallFunctions()
     args = {{"arg_0", "\"Hello World\""}, {"arg_1", "true"}, {"arg_2", "12345"}, {"arg_3", vec_str}};
     ufunction = Unreal::findFunctionByName(this->GetClass(), "GetString");
     SP_ASSERT(ufunction);
-    return_values = Unreal::callFunction(this, ufunction, args);
+    return_values = Unreal::callFunction(GetWorld(), this, ufunction, args);
     SP_LOG(return_values.at("ReturnValue"));
 
     args = {{"arg_0", "\"Hello World\""}, {"arg_1", "true"}, {"arg_2", "12345"}, {"arg_3", vec_str}};
     ufunction = Unreal::findFunctionByName(this->GetClass(), "GetVector");
     SP_ASSERT(ufunction);
-    return_values = Unreal::callFunction(this, ufunction, args);
+    return_values = Unreal::callFunction(GetWorld(), this, ufunction, args);
     SP_LOG(return_values.at("arg_3")); // arg_3 is modified by GetVector(...)
     SP_LOG(return_values.at("ReturnValue"));
 
@@ -268,7 +268,7 @@ void ADebugWidget::CallFunctions()
     args = {{"world_context_object", Std::toStringFromPtr(GetWorld())}, {"arg_0", "\"Hello World\""}, {"arg_1", "true"}};
     ufunction = Unreal::findFunctionByName(this->GetClass(), "GetWorldContextObject");
     SP_ASSERT(ufunction);
-    return_values = Unreal::callFunction(this->GetClass()->GetDefaultObject(), ufunction, args);
+    return_values = Unreal::callFunction(GetWorld(), this->GetClass()->GetDefaultObject(), ufunction, args);
     SP_LOG(return_values.at("ReturnValue"));
 
     UWorld* world = GetWorld();
@@ -307,20 +307,20 @@ void ADebugWidget::CallFunctions()
     args = {{"DeltaLocation", vec_str}, {"bSweep", "false"}, {"bTeleport", "false"}};
     ufunction = Unreal::findFunctionByName(static_mesh_component->GetClass(), "K2_AddRelativeLocation");
     SP_ASSERT(ufunction);
-    return_values = Unreal::callFunction(static_mesh_component, ufunction, args);
+    return_values = Unreal::callFunction(GetWorld(), static_mesh_component, ufunction, args);
     SP_LOG(return_values.at("SweepHitResult"));
 
     UObject* uobject = Unreal::findActorByName(world, "SpCore/SpCoreActor");
     SP_ASSERT(uobject);
     ufunction = Unreal::findFunctionByName(uobject->GetClass(), "GetActorHitEventDescs");
     SP_ASSERT(ufunction);
-    return_values = Unreal::callFunction(uobject, ufunction, {});
+    return_values = Unreal::callFunction(GetWorld(), uobject, ufunction, {});
     SP_LOG(return_values.at("ReturnValue"));
 
     args = {{"DeltaLocation", vec_str}, {"bSweep", "false"}, {"bTeleport", "false"}};
     ufunction = Unreal::findFunctionByName(static_mesh_component->GetClass(), "K2_AddRelativeLocation");
     SP_ASSERT(ufunction);
-    return_values = Unreal::callFunction(static_mesh_component, ufunction, args);
+    return_values = Unreal::callFunction(GetWorld(), static_mesh_component, ufunction, args);
     SP_LOG(return_values.at("SweepHitResult"));
 
     i++;
@@ -429,7 +429,7 @@ void ADebugWidget::SubscribeToActorHitEvents()
     SP_ASSERT(sp_core_actor);
 
     UFunction* ufunction = Unreal::findFunctionByName(sp_core_actor->GetClass(), "SubscribeToActorHitEvents");
-    Unreal::callFunction(sp_core_actor, ufunction, {{"actor", Std::toStringFromPtr(static_mesh_actor)}});
+    Unreal::callFunction(GetWorld(), sp_core_actor, ufunction, {{"actor", Std::toStringFromPtr(static_mesh_actor)}});
 }
 
 FString ADebugWidget::GetString(FString arg_0, bool arg_1, int arg_2, FVector arg_3)

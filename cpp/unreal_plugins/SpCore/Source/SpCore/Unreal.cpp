@@ -254,6 +254,7 @@ std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& propert
         property_desc.property_->IsA(FFloatProperty::StaticClass())  ||
         property_desc.property_->IsA(FDoubleProperty::StaticClass()) ||
         property_desc.property_->IsA(FStrProperty::StaticClass())    ||
+        property_desc.property_->IsA(FNameProperty::StaticClass())    ||
         property_desc.property_->IsA(FByteProperty::StaticClass())) {
 
         TSharedPtr<FJsonValue> json_value = FJsonObjectConverter::UPropertyToJsonValue(property_desc.property_, property_desc.value_ptr_);
@@ -360,6 +361,7 @@ void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_des
         property_desc.property_->IsA(FFloatProperty::StaticClass())  ||
         property_desc.property_->IsA(FDoubleProperty::StaticClass()) ||
         property_desc.property_->IsA(FStrProperty::StaticClass())    ||
+        property_desc.property_->IsA(FNameProperty::StaticClass())   ||
         property_desc.property_->IsA(FByteProperty::StaticClass())   ||
         property_desc.property_->IsA(FArrayProperty::StaticClass())  ||
         property_desc.property_->IsA(FSetProperty::StaticClass())    ||
@@ -402,13 +404,9 @@ UFunction* Unreal::findFunctionByName(const UClass* uclass, const std::string& n
     return function;
 }
 
-std::map<std::string, std::string> Unreal::callFunction(UObject* uobject, UFunction* ufunction)
+std::map<std::string, std::string> Unreal::callFunction(UWorld* world, UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args, const std::string& world_context)
 {
-    return callFunction(uobject, ufunction, {});
-}
-
-std::map<std::string, std::string> Unreal::callFunction(UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args)
-{
+    SP_ASSERT(world);
     SP_ASSERT(uobject);
     SP_ASSERT(ufunction);
 
@@ -438,7 +436,16 @@ std::map<std::string, std::string> Unreal::callFunction(UObject* uobject, UFunct
     // Set property values.
     for (auto& property_desc : property_descs) {
         std::string property_name = toStdString(property_desc.property_->GetName());
+
+        if (property_name == world_context) {
+            SP_ASSERT(!Std::containsKey(args, property_name));
+            setPropertyValueFromString(property_desc, Std::toStringFromPtr(world));
+        }
+
+        // If the property name is in args, then set it using the string in args, and make sure the property
+        // name was not also flagged by the caller as being the special world_context arg.
         if (Std::containsKey(args, property_name)) {
+            SP_ASSERT(property_name != world_context);
             setPropertyValueFromString(property_desc, args.at(property_name));
         }
     }
