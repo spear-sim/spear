@@ -708,12 +708,7 @@ public:
                 const bool& include_all_descendants,
                 const bool& return_null_if_not_found) -> std::vector<uint64_t> {
                 return Std::reinterpretAsVectorOf<uint64_t>(
-                    UnrealClassRegistrar::getChildrenComponentsByName(
-                        class_name,
-                        reinterpret_cast<AActor*>(parent),
-                        names,
-                        include_all_descendants,
-                        return_null_if_not_found));
+                    UnrealClassRegistrar::getChildrenComponentsByName(class_name, reinterpret_cast<AActor*>(parent), names, include_all_descendants, return_null_if_not_found));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_children_components_by_tag_from_actor",
@@ -744,12 +739,7 @@ public:
                 const bool& include_all_descendants,
                 const bool& return_null_if_not_found) -> std::map<std::string, uint64> {
                 return toUint64(
-                    UnrealClassRegistrar::getChildrenComponentsByNameAsMap(
-                        class_name,
-                        reinterpret_cast<AActor*>(parent),
-                        names,
-                        include_all_descendants,
-                        return_null_if_not_found));
+                    UnrealClassRegistrar::getChildrenComponentsByNameAsMap(class_name, reinterpret_cast<AActor*>(parent), names, include_all_descendants, return_null_if_not_found));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_children_components_by_tag_as_map_from_actor",
@@ -844,12 +834,7 @@ public:
                 const bool& assert_if_not_found,
                 const bool& assert_if_multiple_found) -> uint64_t {
                 return reinterpret_cast<uint64_t>(
-                    UnrealClassRegistrar::getChildComponentByType(
-                        class_name,
-                        reinterpret_cast<AActor*>(parent),
-                        include_all_descendants,
-                        assert_if_not_found,
-                        assert_if_multiple_found));
+                    UnrealClassRegistrar::getChildComponentByType(class_name, reinterpret_cast<AActor*>(parent), include_all_descendants, assert_if_not_found, assert_if_multiple_found));
             });
 
         //
