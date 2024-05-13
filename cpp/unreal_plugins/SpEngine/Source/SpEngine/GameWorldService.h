@@ -408,7 +408,7 @@ public:
             });
 
         //
-        // Spawn actor
+        // Spawn and destroy actor
         //
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "spawn_actor",
@@ -440,8 +440,15 @@ public:
                 return reinterpret_cast<uint64_t>(UnrealClassRegistrar::spawnActor(class_name, world_, location, rotation, actor_spawn_parameters));
             });
 
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "destroy_actor",
+            [this](const uint64_t& actor, const bool& net_force, const bool& should_modify_level) -> bool {
+                AActor* actor_ptr = reinterpret_cast<AActor*>(actor);
+                SP_ASSERT(actor_ptr);
+                return actor_ptr->Destroy(net_force, should_modify_level);
+            });
+
         //
-        // Create components
+        // Create and destroy component
         //
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "create_component_outside_owner_constructor", 
@@ -463,6 +470,13 @@ public:
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "create_scene_component_outside_owner_constructor_from_component",
             [this](const std::string& class_name, const uint64_t& owner, const std::string& name) -> uint64_t {
                 return reinterpret_cast<uint64_t>(UnrealClassRegistrar::createSceneComponentOutsideOwnerConstructor(class_name, reinterpret_cast<USceneComponent*>(owner), name));
+            });
+
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "destroy_component",
+            [this](const uint64_t& component, const bool& promote_children) -> void {
+                UActorComponent* actor_component = reinterpret_cast<UActorComponent*>(component);
+                SP_ASSERT(actor_component);
+                actor_component->DestroyComponent(promote_children);
             });
 
         //

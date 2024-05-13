@@ -136,14 +136,17 @@ class GameWorldService():
         return self._rpc_client.call("game_world_service.get_component_tags", actor)
 
     #
-    # Spawn actor
+    # Spawn and destroy actor
     #
 
     def spawn_actor(self, class_name, location, rotation, spawn_parameters):
         return self._rpc_client.call("game_world_service.spawn_actor", class_name, {"Location": json.dumps(location), "Rotation": json.dumps(rotation), "SpawnParameters": json.dumps(spawn_parameters)})
 
+    def destroy_actor(self, actor, net_force=False, should_modify_level=True):
+        return self._rpc_client.call("game_world_service.destroy_actor", actor, net_force, should_modify_level)
+
     #
-    # Create components
+    # Create and destroy component
     #
 
     def create_component_on_actor(self, class_name, owner, name):
@@ -157,6 +160,9 @@ class GameWorldService():
 
     def create_scene_component_on_owning_scene_component(self, class_name, owner, name):
         return self._rpc_client.call("game_world_service.create_scene_component_outside_owner_constructor_from_component", class_name, owner, name)
+
+    def destroy_component(self, component, promote_children=False):
+        self._rpc_client.call("game_world_service.destroy_component", component, promote_children)
 
     #
     # Create new object
