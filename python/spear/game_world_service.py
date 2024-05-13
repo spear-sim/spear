@@ -98,9 +98,9 @@ class GameWorldService():
     def find_function_by_name(self, uclass, name, include_super_flag):
         return self._rpc_client.call("game_world_service.find_function_by_name", uclass, name, {"IncludeSuperFlag": json.dumps({"Enum": include_super_flag})})
 
-    def call_function(self, uobject, ufunction, args):
+    def call_function(self, uobject, ufunction, args={}, world_context="WorldContextObject"):
         arg_strings = { arg_name: json.dumps(arg) for arg_name, arg in args.items() }
-        return self._rpc_client.call("game_world_service.call_function", uobject, ufunction, arg_strings)
+        return self._rpc_client.call("game_world_service.call_function", uobject, ufunction, arg_strings, world_context)
 
     #
     # Find special structs by name

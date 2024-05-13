@@ -437,6 +437,15 @@ std::map<std::string, std::string> Unreal::callFunction(UWorld* world, UObject* 
     for (auto& property_desc : property_descs) {
         std::string property_name = toStdString(property_desc.property_->GetName());
 
+        // If the current property name has been flagged by the caller as being the special world_context
+        // arg, then set the property using the input world pointer instead of using a string in args, and
+        // make sure the property name is not also present in args. Strictly speaking, we could assign the
+        // world pointer directly to *(property_desc.value_ptr), but this could lead to undefined behavior
+        // if the property is not actually a UObject pointer. So we assign via setPropertValueFromString(...),
+        // because it provides well-defined behavior in all cases. Either the assignment is possible
+        // according to Unreal's JSON assignment rules, in which case setPropertValueFromString(...) will
+        // perform the assignment, or the assignment is not possible, in which case setPropertValueFromString(...)
+        // will assert.
         if (property_name == world_context) {
             SP_ASSERT(!Std::containsKey(args, property_name));
             setPropertyValueFromString(property_desc, Std::toStringFromPtr(world));
