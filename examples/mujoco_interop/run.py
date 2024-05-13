@@ -11,7 +11,7 @@ import scipy
 import spear
 
 
-name_prefix  = "Meshes/05_chair/"
+name_prefix = "Meshes/05_chair/"
 
 
 def unreal_rpy_from_mujoco_quaternion(mujoco_quaternion):
