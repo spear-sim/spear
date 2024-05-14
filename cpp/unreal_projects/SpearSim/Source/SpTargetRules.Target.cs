@@ -79,7 +79,7 @@ public class SpTargetRulesTarget : TargetRules
             SP_LOG("    " + arg);
 
         } else if (target.Platform == UnrealTargetPlatform.LinuxArm64) {
-            SP_LOG("Note: We only expect to see target.Platform == UnrealTargetPlatform.LinuxArm64 when we're on Linux and the editor is attmepting to open SpearSim.uproject for the first time. In this case, there is no additional build configuration to do.");
+            SP_LOG("NOTE: We only expect to see target.Platform == UnrealTargetPlatform.LinuxArm64 when we're on Linux and the editor is attempting to open a uproject for the first time. If the editor is not attempting to open a uproject for the first time on Linux, target.Platform == UnrealTargetPlatform.LinuxArm64 is unexpected.");
 
         } else {
             throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + target.Platform);
