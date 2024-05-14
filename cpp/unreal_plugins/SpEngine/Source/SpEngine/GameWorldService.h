@@ -208,7 +208,7 @@ private:
     template <typename TValueType>
     static std::vector<uint64_t> toUint64(const std::vector<TValueType>& src)
     {
-        Std::reinterpretAsVectorOf<uint64_t>(src);
+        return Std::reinterpretAsVectorOf<uint64_t>(src);
     }
 
     static GameWorldServicePropertyDesc toPropertyDesc(const Unreal::PropertyDesc& property_desc);

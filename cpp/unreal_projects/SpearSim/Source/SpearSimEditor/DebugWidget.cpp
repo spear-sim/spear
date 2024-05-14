@@ -314,7 +314,7 @@ void ADebugWidget::CallFunctions()
     SP_ASSERT(uobject);
     ufunction = Unreal::findFunctionByName(uobject->GetClass(), "GetActorHitEventDescs");
     SP_ASSERT(ufunction);
-    return_values = Unreal::callFunction(uobject, ufunction, {});
+    return_values = Unreal::callFunction(uobject, ufunction);
     SP_LOG(return_values.at("ReturnValue"));
 
     args = {{"DeltaLocation", vec_str}, {"bSweep", "false"}, {"bTeleport", "false"}};
@@ -458,10 +458,10 @@ void ADebugWidget::initializeCppFuncs()
     SP_ASSERT(shared_memory_region_);
 
     std::string shared_memory_name = "my_shared_memory";
-    CppFuncSharedMemoryUsageFlags shared_memory_usage_flags = CppFuncSharedMemoryUsageFlags::Arg | CppFuncSharedMemoryUsageFlags::ReturnValue;
-    cpp_func_component_->registerSharedMemoryView(shared_memory_name, shared_memory_region_->getView(), shared_memory_usage_flags);
+    CppFuncSharedMemoryView shared_memory_view(shared_memory_region_->getView(), CppFuncSharedMemoryUsageFlags::Arg | CppFuncSharedMemoryUsageFlags::ReturnValue);
+    CppFuncComponent->registerSharedMemoryView(shared_memory_name, shared_memory_view);
 
-    cpp_func_component_->registerFunc("my_func", [this](CppFuncComponentItems& args) -> CppFuncComponentItems {
+    cpp_func_component_->registerFunc("my_func", [this](CppFuncPackage& args) -> CppFuncPackage {
 
         // create view objects directly from arg data
         CppFuncView<double> location("location");
@@ -512,7 +512,7 @@ void ADebugWidget::initializeCppFuncs()
         new_vec.setObj(4.0*vec.getObj());
         new_rot.setObj(5.0*rot.getObj());
 
-        CppFuncComponentItems return_values;
+        CppFuncPackage return_values;
 
         // set return data from data objects
         return_values.items_ = CppFuncUtils::moveDataToItems({new_location.getPtr(), new_rotation.getPtr(), new_shared_doubles.getPtr(), location_as_return_value.getPtr()});

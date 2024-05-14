@@ -14,7 +14,6 @@
 #include "SpCore/CppFunc.h"
 #include "SpCore/CppFuncRegistrar.h"
 #include "SpCore/Log.h"
-#include "SpCore/SharedMemoryRegion.h"
 #include "SpCore/Unreal.h"
 
 UCppFuncComponent::UCppFuncComponent()
@@ -27,7 +26,7 @@ UCppFuncComponent::~UCppFuncComponent()
     SP_LOG_CURRENT_FUNCTION();
 }
 
-void UCppFuncComponent::registerFunc(const std::string& func_name, const std::function<CppFuncComponentItems(CppFuncComponentItems&)>& func)
+void UCppFuncComponent::registerFunc(const std::string& func_name, const std::function<CppFuncPackage(CppFuncPackage&)>& func)
 {
     funcs_.registerFunc(func_name, func);
     FuncNames.Add(Unreal::toFString(func_name));
@@ -39,13 +38,10 @@ void UCppFuncComponent::unregisterFunc(const std::string& func_name)
     funcs_.unregisterFunc(func_name);
 }
 
-void UCppFuncComponent::registerSharedMemoryView(const std::string& shared_memory_name, const SharedMemoryView& shared_memory_view, CppFuncSharedMemoryUsageFlags usage_flags)
+void UCppFuncComponent::registerSharedMemoryView(const std::string& shared_memory_name, const CppFuncSharedMemoryView& shared_memory_view)
 {
     SP_ASSERT(shared_memory_name != "");
-    CppFuncSharedMemoryView view;
-    view.view_ = shared_memory_view;
-    view.usage_flags_ = usage_flags;
-    Std::insert(shared_memory_views_, shared_memory_name, view);
+    Std::insert(shared_memory_views_, shared_memory_name, shared_memory_view);
     SharedMemoryViewNames.Add(Unreal::toFString(shared_memory_name));
 }
 
@@ -61,7 +57,7 @@ const std::map<std::string, CppFuncSharedMemoryView>& UCppFuncComponent::getShar
     return shared_memory_views_;
 }
 
-CppFuncComponentItems UCppFuncComponent::callFunc(const std::string& func_name, CppFuncComponentItems& args)
+CppFuncPackage UCppFuncComponent::callFunc(const std::string& func_name, CppFuncPackage& args) const
 {
     return funcs_.call(func_name, args);
 }

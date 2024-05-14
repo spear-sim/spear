@@ -4,11 +4,14 @@
 
 #include "SpEngine/CppFuncService.h"
 
+#include <Components/SceneComponent.h>
 #include <Engine/Engine.h> // GEngine
-#include <Engine/World.h>  // FWorldDelegates
+#include <Engine/World.h>
+#include <GameFramework/Actor.h>
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
+#include "SpCore/Unreal.h"
 
 void CppFuncService::postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values)
 {

@@ -142,10 +142,10 @@ void ASpCoreActor::initializeCppFuncs()
     SP_ASSERT(shared_memory_region_);
 
     std::string shared_memory_name = "my_shared_memory";
-    CppFuncSharedMemoryUsageFlags shared_memory_usage_flags = CppFuncSharedMemoryUsageFlags::Arg | CppFuncSharedMemoryUsageFlags::ReturnValue;
-    CppFuncComponent->registerSharedMemoryView(shared_memory_name, shared_memory_region_->getView(), shared_memory_usage_flags);
+    CppFuncSharedMemoryView shared_memory_view(shared_memory_region_->getView(), CppFuncSharedMemoryUsageFlags::Arg | CppFuncSharedMemoryUsageFlags::ReturnValue);
+    CppFuncComponent->registerSharedMemoryView(shared_memory_name, shared_memory_view);
 
-    CppFuncComponent->registerFunc("hello_world", [this](CppFuncComponentItems& args) -> CppFuncComponentItems {
+    CppFuncComponent->registerFunc("hello_world", [this](CppFuncPackage& args) -> CppFuncPackage {
 
         // CppFuncData objects are {named, strongly typed} arrays that can be efficiently passed
         // {to, from} Python.
@@ -163,12 +163,12 @@ void ASpCoreActor::initializeCppFuncs()
         unreal_data.setValues({location.X, location.Y, location.Z});
 
         // Return CppFuncData objects.
-        CppFuncComponentItems return_values;
+        CppFuncPackage return_values;
         return_values.items_ = CppFuncUtils::moveDataToItems({hello.getPtr(), unreal_data.getPtr()});
         return return_values;
     });
 
-    CppFuncComponent->registerFunc("my_func", [this](CppFuncComponentItems& args) -> CppFuncComponentItems {
+    CppFuncComponent->registerFunc("my_func", [this](CppFuncPackage& args) -> CppFuncPackage {
 
         // create view objects directly from arg data
         CppFuncView<double> location("location");
@@ -186,7 +186,7 @@ void ASpCoreActor::initializeCppFuncs()
         my_floats.setData("my_shared_memory", shared_memory_region_->getView(), 3);
         my_floats.setValues({99.0, 98.0, 97.0});
 
-        CppFuncComponentItems return_values;
+        CppFuncPackage return_values;
         return_values.items_ = CppFuncUtils::moveDataToItems({new_location.getPtr(), new_rotation.getPtr(), my_floats.getPtr()});
 
         return return_values;
