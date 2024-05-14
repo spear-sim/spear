@@ -40,6 +40,7 @@ struct FObjectInstancingGraph;
 void UnrealClassRegistrar::initialize()
 {
     // Unreal classes
+    registerActorClass<AActor>("AActor");
     registerActorClass<AStaticMeshActor>("AStaticMeshActor");
     registerComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
     registerClass<UGameplayStatics>("UGameplayStatics");
@@ -59,6 +60,7 @@ void UnrealClassRegistrar::initialize()
 void UnrealClassRegistrar::terminate()
 {
     // Unreal classes
+    unregisterActorClass<AActor>("AActor");
     unregisterActorClass<AStaticMeshActor>("AStaticMeshActor");
     unregisterComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
     unregisterClass<UGameplayStatics>("UGameplayStatics");

@@ -38,6 +38,15 @@ concept CStruct =
     } &&
     std::derived_from<std::remove_pointer_t<decltype(TStruct::StaticStruct())>, UStruct>;
 
+template <typename TEnumStruct>
+concept CEnumStruct =
+    CStruct<TEnumStruct> &&
+    requires(TEnumStruct enum_struct) {
+        { TEnumStruct::TEnumType };
+        { enum_struct.getEnumName() } -> std::same_as<std::string>;
+        { enum_struct.getEnumValue() } -> std::same_as<typename TEnumStruct::TEnumType>;
+};
+
 template <typename TObject>
 concept CObject = std::derived_from<TObject, UObject>;
 
@@ -119,8 +128,7 @@ public:
     //
 
     static UFunction* findFunctionByName(const UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag = EIncludeSuperFlag::IncludeSuper);
-    static std::map<std::string, std::string> callFunction(UObject* uobject, UFunction* ufunction);
-    static std::map<std::string, std::string> callFunction(UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args);
+    static std::map<std::string, std::string> callFunction(UWorld* world, UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args = {}, const std::string& world_context = "WorldContextObject");
 
     //
     // Find special struct by name. For this function to behave as expected, ASpCoreActor must have a UPROPERTY defined
@@ -719,6 +727,28 @@ public:
     static TReturnAsComponent* getChildComponentByType(const TParent* parent, bool include_all_descendants = true, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
         return getItem(getChildrenComponentsByType<TSceneComponent, TReturnAsComponent>(parent, include_all_descendants), nullptr, assert_if_not_found, assert_if_multiple_found);
+    }
+
+    //
+    // Helper function to combine enum values from strings
+    //
+
+    template <CEnumStruct TEnumStruct>
+    static auto combineEnumFlagStrings(const std::vector<std::string>& enum_value_strings)
+    {
+        using TUnderlyingEnumType = std::underlying_type_t<typename TEnumStruct::TEnumType>;
+
+        TUnderlyingEnumType combined_value = 0;
+
+        for (auto& enum_value_string : enum_value_strings) {
+            TEnumStruct enum_struct;
+            std::string enum_struct_string = "{\"" + TEnumStruct::getEnumName() + "\": \"" + enum_value_string + "\" }";
+            setObjectPropertiesFromString(&enum_struct, TEnumStruct::StaticStruct(), enum_struct_string);
+            TUnderlyingEnumType enum_value = static_cast<TUnderlyingEnumType>(enum_struct.getEnumValue());
+            combined_value |= enum_value;
+        }
+
+        return combined_value;
     }
 
 private:

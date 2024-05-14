@@ -27,6 +27,16 @@ class Env(gym.Env):
 
         self._ready = False
 
+        self._instance.engine_service.begin_tick()
+        gameplay_statics_class = self._instance.game_world_service.get_static_class(class_name="UGameplayStatics")
+        assert gameplay_statics_class
+        self._gameplay_statics_default_object = self._instance.game_world_service.get_default_object(uclass=gameplay_statics_class, create_if_needed=False)
+        assert self._gameplay_statics_default_object
+        self._set_game_paused_func = self._instance.game_world_service.find_function_by_name(uclass=gameplay_statics_class, name="SetGamePaused", include_super_flag="IncludeSuper")
+        assert self._set_game_paused_func
+        self._instance.engine_service.tick()
+        self._instance.engine_service.end_tick()
+
         self.action_space = self._action_space_desc.space
         self.observation_space = self._observation_space_desc.space
 
@@ -77,13 +87,13 @@ class Env(gym.Env):
 
     def begin_tick(self):
         self._instance.engine_service.begin_tick()
-        self._instance.game_world_service.set_game_paused(False)
+        self._instance.game_world_service.call_function(uobject=self._gameplay_statics_default_object, ufunction=self._set_game_paused_func, args={"bPaused": False})
 
     def tick(self):
         self._instance.engine_service.tick()
 
     def end_tick(self):
-        self._instance.game_world_service.set_game_paused(True)
+        self._instance.game_world_service.call_function(uobject=self._gameplay_statics_default_object, ufunction=self._set_game_paused_func, args={"bPaused": True})
         self._instance.engine_service.end_tick()
 
     def _get_action_space(self):
