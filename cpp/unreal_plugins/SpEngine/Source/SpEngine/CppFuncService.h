@@ -47,17 +47,17 @@ public:
 
             // get CppFuncComponent and shared memory views
             UCppFuncComponent* cpp_func_component = getCppFuncComponent(object);
-            std::map<std::string, CppFuncSharedMemoryView> shared_memory_views = cpp_func_component->getSharedMemoryViews();
+            const std::map<std::string, CppFuncSharedMemoryView>& inner_shared_memory_views = cpp_func_component->getSharedMemoryViews();
 
             // prepare args
             CppFuncPackage inner_args = CppFuncServiceUtils::moveToPackage(args);
-            CppFuncUtils::resolveArgs(inner_args.items_, shared_memory_views);
+            CppFuncUtils::resolveArgs(inner_args.items_, inner_shared_memory_views);
 
             // call CppFunc
             CppFuncPackage inner_return_values = cpp_func_component->callFunc(func_name, inner_args);
 
             // prepare return values
-            CppFuncUtils::resolveReturnValues(inner_return_values.items_, shared_memory_views);
+            CppFuncUtils::resolveReturnValues(inner_return_values.items_, inner_shared_memory_views);
             CppFuncServicePackage return_values = CppFuncServiceUtils::moveToServicePackage(inner_return_values);
 
             return return_values;
@@ -72,9 +72,10 @@ public:
 
             // get CppFuncComponent and shared memory views
             UCppFuncComponent* cpp_func_component = getCppFuncComponent(object);
-            const std::map<std::string, CppFuncSharedMemoryView>& shared_memory_views = cpp_func_component->getSharedMemoryViews();
+            const std::map<std::string, CppFuncSharedMemoryView>& inner_shared_memory_views = cpp_func_component->getSharedMemoryViews();
+            std::map<std::string, CppFuncServiceSharedMemoryView> shared_memory_views = CppFuncServiceUtils::toServiceSharedMemoryViews(inner_shared_memory_views);
 
-            return CppFuncServiceUtils::toServiceSharedMemoryViews(shared_memory_views);
+            return shared_memory_views;
         });
     }
 
