@@ -47,4 +47,3 @@ VEHICLE:
                                       # are more sluggish, values > 1 are more twitchy.
     SPRING_RATE: 0.167                # Spring force in [N/m]
     SPRING_PRELOAD: 0.033             # Spring preload in [N/m]
-

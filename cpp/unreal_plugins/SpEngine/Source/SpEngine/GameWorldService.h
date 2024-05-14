@@ -326,13 +326,13 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_property_value_as_string",
-            [this](const GameWorldServicePropertyDesc& game_world_property_desc) -> std::string {
-                return Unreal::getPropertyValueAsString(toPropertyDesc(game_world_property_desc));
+            [this](const GameWorldServicePropertyDesc& property_desc) -> std::string {
+                return Unreal::getPropertyValueAsString(toPropertyDesc(property_desc));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "set_property_value_from_string",
-            [this](const GameWorldServicePropertyDesc& game_world_property_desc, const std::string& string) -> void {
-                Unreal::setPropertyValueFromString(toPropertyDesc(game_world_property_desc), string);
+            [this](const GameWorldServicePropertyDesc& property_desc, const std::string& string) -> void {
+                Unreal::setPropertyValueFromString(toPropertyDesc(property_desc), string);
             });
 
         //
@@ -383,7 +383,7 @@ public:
                 return Unreal::getStableName(reinterpret_cast<AActor*>(actor));
             });
 
-        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_stable_name_for_actor_component",
+        unreal_entry_point_binder->bindFuncUnreal("game_world_service", "get_stable_name_for_component",
             [this](const uint64_t& actor_component, const bool& include_actor_name) -> std::string {
                 return Unreal::getStableName(reinterpret_cast<UActorComponent*>(actor_component), include_actor_name);
             });

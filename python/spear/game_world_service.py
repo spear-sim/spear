@@ -119,8 +119,8 @@ class GameWorldService():
     def get_stable_name_for_actor(self, actor):
         return self._rpc_client.call("game_world_service.get_stable_name_for_actor", actor)
 
-    def get_stable_name_for_actor_component(self, component, include_actor_name):
-        return self._rpc_client.call("game_world_service.get_stable_name_for_actor_component", component, include_actor_name)
+    def get_stable_name_for_component(self, component, include_actor_name):
+        return self._rpc_client.call("game_world_service.get_stable_name_for_component", component, include_actor_name)
 
     def get_stable_name_for_scene_component(self, component, include_actor_name):
         return self._rpc_client.call("game_world_service.get_stable_name_for_scene_component", component, include_actor_name)

@@ -254,7 +254,7 @@ std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& propert
         property_desc.property_->IsA(FFloatProperty::StaticClass())  ||
         property_desc.property_->IsA(FDoubleProperty::StaticClass()) ||
         property_desc.property_->IsA(FStrProperty::StaticClass())    ||
-        property_desc.property_->IsA(FNameProperty::StaticClass())    ||
+        property_desc.property_->IsA(FNameProperty::StaticClass())   ||
         property_desc.property_->IsA(FByteProperty::StaticClass())) {
 
         TSharedPtr<FJsonValue> json_value = FJsonObjectConverter::UPropertyToJsonValue(property_desc.property_, property_desc.value_ptr_);
