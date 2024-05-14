@@ -31,10 +31,10 @@ public:
     UCppFuncComponent();
     ~UCppFuncComponent();
 
-    UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Func Names");
+    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="Func Names");
     TArray<FString> FuncNames;
 
-    UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Shared Memory View Names");
+    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="Shared Memory View Names");
     TArray<FString> SharedMemoryViewNames;
 
     // typically called by the owning actor or component to register/unregister a CppFunc
