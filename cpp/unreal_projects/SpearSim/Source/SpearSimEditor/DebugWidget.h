@@ -55,7 +55,7 @@ private:
     UFUNCTION(CallInEditor, Category="SPEAR")
     void CreateObjects();
 
-    UFUNCTION(CallInEditor, Category = "SPEAR")
+    UFUNCTION(CallInEditor, Category="SPEAR")
     void SubscribeToActorHitEvents();
 
     UFUNCTION()
@@ -91,6 +91,8 @@ private:
     UPROPERTY()
     TSet<FString> SetOfStrings;
 
-    UCppFuncComponent* cpp_func_component_ = nullptr;
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
+    UCppFuncComponent* CppFuncComponent = nullptr;
+
     std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
 };

@@ -68,15 +68,15 @@ public:
     // UPhysicsConstraintComponent interface
     void BeginPlay() override;
 
-    UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Joint Type")
+    UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="Joint Type")
     EJointType JointType = EJointType::Invalid;
-    UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Control Type")
+    UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="Control Type")
     EJointControlType JointControlType = EJointControlType::NotActuated;
-    UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Interface Type")
+    UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="Interface Type")
     EJointInterfaceType JointInterfaceType = EJointInterfaceType::NoInterface;
-    UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Child StaticMeshComponent")
+    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="Child StaticMeshComponent")
     UStaticMeshComponent* ChildStaticMeshComponent;
-    UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Parent StaticMeshComponent")
+    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="Parent StaticMeshComponent")
     UStaticMeshComponent* ParentStaticMeshComponent;
 
     // TODO (MR): support linear translation offsets

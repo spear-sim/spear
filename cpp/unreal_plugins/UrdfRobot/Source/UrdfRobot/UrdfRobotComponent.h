@@ -36,7 +36,7 @@ public:
     void BeginPlay() override;
     void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-    UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Root LinkComponent")
+    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="Root LinkComponent")
     UUrdfLinkComponent* RootLinkComponent;
 
     // We make these TArrays VisibleAnywhere rather than EditAnywhere to avoid counter-intuitive editor behavior.
@@ -46,9 +46,9 @@ public:
     // component will remain active (e.g., if it is a joint, it will remain in the scene constraining the motion
     // of objects). In the latter case, there will be no way to edit the component. We prefer to set these TArrays
     // to be VisibleAnywhere to avoid all such confusion.
-    UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Link Components")
+    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="Link Components")
     TArray<UUrdfLinkComponent*> LinkComponents;
-    UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Joint Components")
+    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="Joint Components")
     TArray<UUrdfJointComponent*> JointComponents;
 
     // This function recursively creates and configures the component hierarchy for an entire URDF robot.

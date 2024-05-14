@@ -69,11 +69,11 @@ public:
 
 private:
     // Required so this actor can be found through the findActor interface in Unreal.h.
-    UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Stable Name Component");
+    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="Stable Name Component");
     UStableNameComponent* StableNameComponent = nullptr;
 
     // Used for debugging.
-    UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "CppFunc Component");
+    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="CppFunc Component");
     UCppFuncComponent* CppFuncComponent = nullptr;
     std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
 
@@ -90,7 +90,7 @@ private:
     UFUNCTION(CallInEditor, Category="SPEAR")
     void ToggleGamePaused();
 
-    UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName="Is Game Paused");
+    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="Is Game Paused");
     bool IsGamePaused = false;
 
     // Interface for subscribing to, unsubscribing from, and getting actor hit events. Part of this interface must

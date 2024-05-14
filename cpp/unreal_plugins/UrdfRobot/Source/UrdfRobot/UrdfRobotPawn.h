@@ -34,12 +34,12 @@ public:
     UFUNCTION(CallInEditor, Category="SPEAR")
     void Initialize();
 
-    UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "URDF file used for initialization")
+    UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="URDF file used for initialization")
     FString UrdfFile;
 
-    UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "URDF Robot Component")
+    UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="URDF Robot Component")
     UUrdfRobotComponent* UrdfRobotComponent = nullptr;
 
-    UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Camera Component")
+    UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="Camera Component")
     UCameraComponent* CameraComponent = nullptr;
 };
