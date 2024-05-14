@@ -7,9 +7,9 @@
 #include "SpCore/Assert.h"
 #include "SpCore/Std.h"
 
-// The functions below assign directly to/from base/derived types. These operations are valid because each
-// base/derived pair, because each derived type inherits from the base type and does not define any new data
-// members, so we expect the data layout of each class to be identical.
+// The functions below assign directly to base type lvalues from derived type rvalues, and vice versa. These
+// operations are valid because each derived type inherits from the base type without defining any new data
+// members, so we expect the data layout of each base and derived type to identical.
 
 std::map<std::string, CppFuncServiceSharedMemoryView> CppFuncServiceUtils::toServiceSharedMemoryViews(const std::map<std::string, CppFuncSharedMemoryView>& shared_memory_views)
 {
