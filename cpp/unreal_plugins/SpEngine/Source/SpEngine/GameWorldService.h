@@ -313,12 +313,12 @@ public:
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "find_property_by_name_on_uobject",
             [this](const uint64_t& uobject, const std::string& name) -> GameWorldServicePropertyDesc {
-                return toPropertyDesc(Unreal::findPropertyByName(reinterpret_cast<UObject*>(uobject), name));
+                return toServicePropertyDesc(Unreal::findPropertyByName(reinterpret_cast<UObject*>(uobject), name));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("game_world_service", "find_property_by_name_on_ustruct",
             [this](const uint64_t& value_ptr, const uint64_t& ustruct, const std::string& name) -> GameWorldServicePropertyDesc {
-                return toPropertyDesc(Unreal::findPropertyByName(reinterpret_cast<void*>(value_ptr), reinterpret_cast<UStruct*>(ustruct), name));
+                return toServicePropertyDesc(Unreal::findPropertyByName(reinterpret_cast<void*>(value_ptr), reinterpret_cast<UStruct*>(ustruct), name));
             });
 
         //
@@ -1024,7 +1024,7 @@ private:
         return Std::reinterpretAsVectorOf<uint64_t>(src);
     }
 
-    static GameWorldServicePropertyDesc toPropertyDesc(const Unreal::PropertyDesc& property_desc);
+    static GameWorldServicePropertyDesc toServicePropertyDesc(const Unreal::PropertyDesc& property_desc);
     static Unreal::PropertyDesc toPropertyDesc(const GameWorldServicePropertyDesc& game_world_property_desc);
 
     FDelegateHandle post_world_initialization_handle_;

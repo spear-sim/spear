@@ -34,7 +34,7 @@ void GameWorldService::worldCleanupHandler(UWorld* world, bool session_ended, bo
     }
 }
 
-GameWorldServicePropertyDesc GameWorldService::toPropertyDesc(const Unreal::PropertyDesc& property_desc)
+GameWorldServicePropertyDesc GameWorldService::toServicePropertyDesc(const Unreal::PropertyDesc& property_desc)
 {
     GameWorldServicePropertyDesc game_world_property_desc;
     game_world_property_desc.property_ = reinterpret_cast<uint64_t>(property_desc.property_);

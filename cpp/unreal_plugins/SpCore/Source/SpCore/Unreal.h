@@ -31,6 +31,13 @@ class UClass;
 class UStruct;
 class UWorld;
 
+// In the CStruct and CClass concepts below, there does not seem to be a clean way to encode the desired
+// std::derived_from<...> relationships directly in the requires(...) { ... } statement of each concept. This
+// is because, e.g., the type TStruct is implicitly passed as the first template parameter to std::derived_from<...>,
+// but we actually need the type std::remove_pointer_t<TStruct> to be passed instead, in order for std::derived_from<...>
+// to behave as expected. So we encode the std::derived_from<...> constraint outside the requires(...) { ... }
+// statement in each concept, where we can manipulate TStruct and TClass more freely.
+
 template <typename TStruct>
 concept CStruct =
     requires() {
@@ -42,7 +49,7 @@ template <typename TEnumStruct>
 concept CEnumStruct =
     CStruct<TEnumStruct> &&
     requires(TEnumStruct enum_struct) {
-        { TEnumStruct::TEnumType };
+        typename TEnumStruct::TEnumType;
         { enum_struct.getEnumName() } -> std::same_as<std::string>;
         { enum_struct.getEnumValue() } -> std::same_as<typename TEnumStruct::TEnumType>;
 };
