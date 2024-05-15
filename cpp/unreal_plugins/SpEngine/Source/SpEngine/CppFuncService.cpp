@@ -34,15 +34,15 @@ void CppFuncService::worldCleanupHandler(UWorld* world, bool session_ended, bool
     }
 }
 
-UCppFuncComponent* CppFuncService::getCppFuncComponent(UObject* object)
+UCppFuncComponent* CppFuncService::getCppFuncComponent(const UObject* uobject)
 {
     UCppFuncComponent* cpp_func_component = nullptr;
-    if (object->IsA(AActor::StaticClass())) {
-        AActor* actor = const_cast<AActor*>(static_cast<const AActor*>(object));
+    if (uobject->IsA(AActor::StaticClass())) {
+        AActor* actor = const_cast<AActor*>(static_cast<const AActor*>(uobject));
         bool include_all_descendants = false;
         cpp_func_component = Unreal::getChildComponentByType<AActor, UCppFuncComponent>(actor, include_all_descendants);
-    } else if (object->IsA(USceneComponent::StaticClass())) {
-        USceneComponent* component = const_cast<USceneComponent*>(static_cast<const USceneComponent*>(object));
+    } else if (uobject->IsA(USceneComponent::StaticClass())) {
+        USceneComponent* component = const_cast<USceneComponent*>(static_cast<const USceneComponent*>(uobject));
         bool include_all_descendants = false;
         cpp_func_component = Unreal::getChildComponentByType<USceneComponent, UCppFuncComponent>(component, include_all_descendants);
     } else {

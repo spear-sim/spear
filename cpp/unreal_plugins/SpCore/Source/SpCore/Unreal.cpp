@@ -128,7 +128,7 @@ void Unreal::setObjectPropertiesFromString(void* value_ptr, const UStruct* ustru
 }
 
 //
-// Find property by name, get and set property values
+// Find property by name, get and set property values, uobject can't be const because we cast it to void*
 //
 
 Unreal::PropertyDesc Unreal::findPropertyByName(UObject* uobject, const std::string& name)

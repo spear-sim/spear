@@ -19,7 +19,7 @@
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>            // TCHAR
 #include <Templates/Casts.h>
-#include <UObject/Class.h>           // EIncludeSuperFlag
+#include <UObject/Class.h>           // EIncludeSuperFlag, UClass, UStruct
 #include <UObject/NameTypes.h>       // FName
 #include <UObject/Object.h>          // UObject
 #include <UObject/UnrealType.h>      // FProperty
@@ -27,8 +27,6 @@
 #include "SpCore/Assert.h"
 #include "SpCore/Std.h"
 
-class UClass;
-class UStruct;
 class UWorld;
 
 // In the CStruct and CClass concepts below, there does not seem to be a clean way to encode the desired
@@ -115,7 +113,7 @@ public:
     static void setObjectPropertiesFromString(void* value_ptr, const UStruct* ustruct, const std::string& string);
 
     //
-    // Find property by name, get and set property values
+    // Find property by name, get and set property values, uobject can't be const because we cast it to void*
     //
 
     struct PropertyDesc
@@ -131,7 +129,8 @@ public:
     static void setPropertyValueFromString(const PropertyDesc& property_desc, const std::string& string);
 
     //
-    // Find function by name, call function, ufunction can't be const because we pass it to uobject->ProcessEvent(...), which expects non-const
+    // Find function by name, call function, uobject can't be const because we call uobject->ProcessEvent which is non-const,
+    // ufunction can't be const because we call because we pass it to uobject->ProcessEvent(...), which expects non-const
     //
 
     static UFunction* findFunctionByName(const UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag = EIncludeSuperFlag::IncludeSuper);

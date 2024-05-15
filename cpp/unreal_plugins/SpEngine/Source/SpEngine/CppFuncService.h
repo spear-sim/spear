@@ -42,11 +42,11 @@ public:
             SP_ASSERT(world_);
 
             // TODO: make the object ptr an input to this function
-            UObject* object = Unreal::findActorByType<ASpCoreActor>(world_);
-            SP_ASSERT(object);
+            UObject* uobject = Unreal::findActorByType<ASpCoreActor>(world_);
+            SP_ASSERT(uobject);
 
             // get CppFuncComponent and shared memory views
-            UCppFuncComponent* cpp_func_component = getCppFuncComponent(object);
+            UCppFuncComponent* cpp_func_component = getCppFuncComponent(uobject);
             const std::map<std::string, CppFuncSharedMemoryView>& inner_shared_memory_views = cpp_func_component->getSharedMemoryViews();
 
             // prepare args
@@ -67,11 +67,11 @@ public:
             SP_ASSERT(world_);
 
             // TODO: make the object ptr an input to this function
-            UObject* object = Unreal::findActorByType<ASpCoreActor>(world_);
-            SP_ASSERT(object);
+            UObject* uobject = Unreal::findActorByType<ASpCoreActor>(world_);
+            SP_ASSERT(uobject);
 
             // get CppFuncComponent and shared memory views
-            UCppFuncComponent* cpp_func_component = getCppFuncComponent(object);
+            UCppFuncComponent* cpp_func_component = getCppFuncComponent(uobject);
             const std::map<std::string, CppFuncSharedMemoryView>& inner_shared_memory_views = cpp_func_component->getSharedMemoryViews();
             std::map<std::string, CppFuncServiceSharedMemoryView> shared_memory_views = CppFuncServiceUtils::toServiceSharedMemoryViews(inner_shared_memory_views);
 
@@ -92,7 +92,7 @@ private:
     void postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values);
     void worldCleanupHandler(UWorld* world, bool session_ended, bool cleanup_resources);
 
-    static UCppFuncComponent* getCppFuncComponent(UObject* object);
+    static UCppFuncComponent* getCppFuncComponent(const UObject* uobject);
 
     FDelegateHandle post_world_initialization_handle_;
     FDelegateHandle world_cleanup_handle_;
