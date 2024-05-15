@@ -55,6 +55,9 @@ examples/imitation_learning_openbot/tmp
 examples/imitation_learning_openbot/user_config.yaml
 examples/imitation_learning_openbot/videos
 
+examples/mujoco_interop/tmp
+examples/mujoco_interop/user_config.yaml
+
 examples/open_loop_control_fetch/images
 examples/open_loop_control_fetch/tmp
 examples/open_loop_control_fetch/user_config.yaml

@@ -69,7 +69,7 @@ if __name__ == "__main__":
     while mj_viewer.is_running():
 
         # perform multiple MuJoCo simulation steps per Unreal frame
-        mj_update_steps = 30
+        mj_update_steps = 10
         for _ in range(mj_update_steps):
             mujoco.mj_step(mj_model, mj_data)
         mj_viewer.sync()
