@@ -6,14 +6,13 @@
 
 #include <Modules/ModuleManager.h> // IMPLEMENT_MODULE
 
-#include "SpCore/Assert.h"
+#include "SpCore/AssertModuleLoaded.h"
 #include "SpCore/Log.h"
-#include "SpCore/Unreal.h"
 
 void Vehicle::StartupModule()
 {
+    SP_ASSERT_MODULE_LOADED("SpCore");
     SP_LOG_CURRENT_FUNCTION();
-    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("SpCore")));
 }
 
 void Vehicle::ShutdownModule()

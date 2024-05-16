@@ -9,6 +9,7 @@
 #include <Modules/ModuleManager.h> // IMPLEMENT_MODULE
 
 #include "SpCore/Assert.h"
+#include "SpCore/AssertModuleLoaded.h"
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
 #include "SpCore/Rpclib.h"
@@ -20,10 +21,10 @@
 
 void SpEngine::StartupModule()
 {
+    SP_ASSERT_MODULE_LOADED("SpCore");
+    SP_ASSERT_MODULE_LOADED("UrdfRobot");
+    SP_ASSERT_MODULE_LOADED("Vehicle");
     SP_LOG_CURRENT_FUNCTION();
-    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("SpCore")));
-    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("UrdfRobot")));
-    SP_ASSERT(FModuleManager::Get().IsModuleLoaded(Unreal::toFName("Vehicle")));
 
     if (Config::isInitialized()) {
         rpc_server_ = std::make_unique<rpc::server>(Config::get<int>("SP_ENGINE.PORT"));

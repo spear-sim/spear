@@ -19,6 +19,7 @@ class SpEngine : public IModuleInterface
 public:
     void StartupModule() override;
     void ShutdownModule() override;
+
 private:
     std::unique_ptr<rpc::server> rpc_server_ = nullptr;
 
