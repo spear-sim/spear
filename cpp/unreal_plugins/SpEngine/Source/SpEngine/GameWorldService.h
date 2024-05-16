@@ -502,13 +502,18 @@ public:
                 const uint64_t& external_package,
                 const std::map<std::string, std::vector<std::string>>& unreal_flag_strings) -> uint64_t {
 
+                FName fname = NAME_None;
+                if (name != "") {
+                    fname = Unreal::toFName(name);
+                }
+
                 EObjectFlags object_flags = static_cast<EObjectFlags>(Unreal::combineEnumFlagStrings<FSpObjectFlags>(unreal_flag_strings.at("ObjectFlags")));
 
                 return reinterpret_cast<uint64_t>(
                     UnrealClassRegistrar::newObject(
                         class_name,
                         reinterpret_cast<UObject*>(outer),
-                        Unreal::toFName(name),
+                        fname,
                         object_flags,
                         reinterpret_cast<UObject*>(uobject_template),
                         copy_transients_from_class_defaults,

@@ -11,7 +11,7 @@ import scipy
 import spear
 
 
-name_prefix = "Meshes/05_chair/"
+name_prefix = "Meshes/05_chair"
 
 
 def unreal_rpy_from_mujoco_quaternion(mujoco_quaternion):
@@ -46,10 +46,8 @@ if __name__ == "__main__":
     unreal_actors = { unreal_actor_name: unreal_actor for unreal_actor_name, unreal_actor in unreal_actors.items() if unreal_actor_name.startswith(name_prefix) }
 
     unreal_actor_static_class = spear_instance.game_world_service.get_static_class("AActor")
-    assert unreal_actor_static_class
-
     unreal_set_actor_location_and_rotation_func = spear_instance.game_world_service.find_function_by_name(
-        uclass=unreal_actor_static_class, name="K2_SetActorLocationAndRotation", include_super_flag="IncludeSuper")
+        uclass=unreal_actor_static_class, name="K2_SetActorLocationAndRotation")
 
     spear_instance.engine_service.tick()
     spear_instance.engine_service.end_tick()
@@ -64,6 +62,17 @@ if __name__ == "__main__":
 
     # launch MuJoCo viewer
     mj_viewer = mujoco.viewer.launch_passive(mj_model, mj_data)
+
+    # initialize MuJoCo camera (not needed when launching the viewer through the command-line, but needed when using launch_passive)
+    mj_viewer.cam.distance = 30.0*100.0 # 30 meters * 100 Unreal units per meter
+    mj_viewer.cam.azimuth = 90.0
+    mj_viewer.cam.elevation = -45.0
+    mj_viewer.cam.lookat = np.array([0.0, 0.0, 0.0])
+
+    # initialize MuJoCo viewer options
+    mj_viewer.opt.label = mujoco.mjtLabel.mjLABEL_SELECTION
+
+    # update MuJoCo viewer state
     mj_viewer.sync()
 
     while mj_viewer.is_running():
@@ -82,6 +91,8 @@ if __name__ == "__main__":
         spear_instance.engine_service.begin_tick()
 
         for unreal_actor_name, unreal_actor in unreal_actors.items():
+
+            # call function for each actor
             args = {
                 "NewLocation" : dict(zip(["X", "Y", "Z"], mj_bodies_xpos[unreal_actor_name + ":StaticMeshComponent0"])),
                 "NewRotation" : dict(zip(["Roll", "Pitch", "Yaw"], unreal_rpy_from_mujoco_quaternion(mj_bodies_xquat[unreal_actor_name + ":StaticMeshComponent0"]))),
