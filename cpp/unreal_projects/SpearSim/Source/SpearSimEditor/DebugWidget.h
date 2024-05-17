@@ -91,7 +91,7 @@ private:
     UPROPERTY()
     TSet<FString> SetOfStrings;
 
-    UPROPERTY(VisibleAnywhere, Category="SPEAR")
+    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="CppFunc Component")
     UCppFuncComponent* CppFuncComponent = nullptr;
 
     std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
