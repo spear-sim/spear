@@ -129,7 +129,7 @@ public:
         // has started executing but has not finished. In this case, we must set frame_state_ and
         // frame_state_executing_pre_tick_promise_, otherwise engine_service.begin_tick() will never
         // return, and this will prevent us from cleanly shutting down our RPC server.
-                
+
         if (frame_state_ == FrameState::RequestPreTick) {
             frame_state_ = FrameState::ExecutingPreTick;
             frame_state_executing_pre_tick_promise_.set_value();
