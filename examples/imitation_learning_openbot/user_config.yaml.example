@@ -25,7 +25,7 @@ SPEAR:
       resy: 512
 
 
-SP_ENGINE:
+SP_SERVICES:
 
   LEGACY_SERVICE:
     AGENT: "VehicleAgent"

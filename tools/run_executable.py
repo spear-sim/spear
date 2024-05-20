@@ -5,6 +5,7 @@
 import argparse
 import os
 import spear
+import time
 
 
 if __name__ == "__main__":
@@ -15,7 +16,7 @@ if __name__ == "__main__":
     parser.add_argument("--scene_id")
     parser.add_argument("--map_id")
     parser.add_argument("--vk_icd_filenames")
-    parser.add_argument("--gpu_id")
+    parser.add_argument("--graphics_adaptor")
     args = parser.parse_args()
 
     assert os.path.exists(args.executable)
@@ -28,21 +29,24 @@ if __name__ == "__main__":
     config.SPEAR.LAUNCH_MODE = "standalone"
     config.SPEAR.STANDALONE_EXECUTABLE = args.executable
     if args.scene_id is not None:
-        config.SP_ENGINE.LEGACY_SERVICE.SCENE_ID = args.scene_id
+        config.SP_SERVICES.LEGACY_SERVICE.SCENE_ID = args.scene_id
     if args.map_id is not None:
-        config.SP_ENGINE.LEGACY_SERVICE.MAP_ID = args.map_id
+        config.SP_SERVICES.LEGACY_SERVICE.MAP_ID = args.map_id
     if args.paks_dir is not None:
         config.SPEAR.PAKS_DIR = args.paks_dir
     if args.vk_icd_filenames is not None:
         config.SPEAR.ENVIRONMENT_VARS.VK_ICD_FILENAMES = args.vk_icd_filenames
-    if args.gpu_id is not None:
-        config.SPEAR.INSTANCE.COMMAND_LINE_ARGS.graphics_adaptor = args.gpu_id
+    if args.graphics_adaptor is not None:
+        config.SPEAR.INSTANCE.COMMAND_LINE_ARGS.graphics_adaptor = args.graphics_adaptor
     config.freeze()
 
     # configure system based on config settings
     spear.configure_system(config)
 
     # launch the executable
-    spear.Instance(config)
+    instance = spear.Instance(config)
+    while instance.is_running():
+        time.sleep(1.0)
+    instance.close()
 
     spear.log("Done.")

@@ -8,23 +8,24 @@ import os
 import sys
 from yacs.config import CfgNode
 
-from spear.log import log, log_current_function, log_no_prefix, log_get_prefix
 from spear.engine_service import EngineService
 from spear.env import Env
 from spear.instance import Instance
 from spear.legacy_service import LegacyService
-from spear.game_world_service import GameWorldService
+from spear.log import log, log_current_function, log_no_prefix, log_get_prefix
 from spear.path import path_exists, remove_path
+from spear.unreal_service import UnrealService
 
 
-spear_root_dir = os.path.dirname(os.path.realpath(__file__))
 # ordered from low-level to high-level
+spear_root_dir = os.path.dirname(os.path.realpath(__file__))
 default_config_files = [
     os.path.realpath(os.path.join(spear_root_dir, "config", "default_config.sp_core.yaml")),
     os.path.realpath(os.path.join(spear_root_dir, "config", "default_config.vehicle.yaml")),
     os.path.realpath(os.path.join(spear_root_dir, "config", "default_config.urdf_robot.yaml")),
-    os.path.realpath(os.path.join(spear_root_dir, "config", "default_config.sp_engine.yaml")),
+    os.path.realpath(os.path.join(spear_root_dir, "config", "default_config.sp_services.yaml")),
     os.path.realpath(os.path.join(spear_root_dir, "config", "default_config.spear.yaml")) ]
+
 
 # This function returns a config object, obtained by loading and merging a list of config
 # files in the order they appear in the user_config_files input argument. This function is
@@ -85,7 +86,8 @@ def configure_system(config):
         log(f"Creating symlink: {spear_paks_dir} -> {config.SPEAR.PAKS_DIR}")
         os.symlink(config.SPEAR.PAKS_DIR, spear_paks_dir)
 
-    # provide additional control over which Vulkan devices are recognized by Unreal
-    if config.SPEAR.ENVIRONMENT_VARS.VK_ICD_FILENAMES != "":
-        log("Setting VK_ICD_FILENAMES environment variable: " + config.SPEAR.ENVIRONMENT_VARS.VK_ICD_FILENAMES)
-        os.environ["VK_ICD_FILENAMES"] = config.SPEAR.ENVIRONMENT_VARS.VK_ICD_FILENAMES
+    # set environment variables
+    if config.SPEAR.LAUNCH_MODE in ["editor", "standalone"]:
+        for environment_var_name, environment_var_value in config.SPEAR.ENVIRONMENT_VARS.items():
+            log("Setting environment variable ", environment_var_name, ": ", environment_var_value)
+            os.environ[environment_var_name] = environment_var_value

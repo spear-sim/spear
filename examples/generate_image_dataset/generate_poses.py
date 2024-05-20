@@ -44,7 +44,7 @@ if __name__ == "__main__":
     # load config
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
     config.defrost()
-    config.SP_ENGINE.LEGACY_SERVICE.AGENT = "NullAgent"
+    config.SP_SERVICES.LEGACY_SERVICE.AGENT = "NullAgent"
     config.freeze()
 
     spear.configure_system(config)

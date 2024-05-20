@@ -33,11 +33,11 @@
             "Enabled": true
         },
         {
-            "Name": "SpEngine",
+            "Name": "SpModuleRules",
             "Enabled": true
         },
         {
-            "Name": "SpModuleRules",
+            "Name": "SpServices",
             "Enabled": true
         },
         {

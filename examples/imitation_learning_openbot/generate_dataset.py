@@ -44,17 +44,17 @@ if __name__ == "__main__":
             os.path.realpath(os.path.join(common_dir, "default_config.common.yaml"))])
 
     config.defrost()
-    config.SP_ENGINE.LEGACY_SERVICE.TASK = "ImitationLearningTask"
-    config.SP_ENGINE.LEGACY.IMITATION_LEARNING_TASK.EPISODES_FILE = os.path.abspath(args.episodes_file)
+    config.SP_SERVICES.LEGACY_SERVICE.TASK = "ImitationLearningTask"
+    config.SP_SERVICES.LEGACY.IMITATION_LEARNING_TASK.EPISODES_FILE = os.path.abspath(args.episodes_file)
     config.freeze()
  
     if args.debug:
         config.defrost()
-        config.SP_ENGINE.LEGACY.IMU_SENSOR.DEBUG_RENDER = True # only has an effect in Development mode, not shipping mode
-        config.SP_ENGINE.LEGACY.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT = 512
-        config.SP_ENGINE.LEGACY.VEHICLE_AGENT.CAMERA.IMAGE_WIDTH = 512
-        config.SP_ENGINE.LEGACY.VEHICLE_AGENT.CAMERA.RENDER_PASSES = ["depth", "final_color", "segmentation"]
-        config.SP_ENGINE.LEGACY.VEHICLE_AGENT.OBSERVATION_COMPONENTS = ["camera", "imu", "location", "rotation", "wheel_rotation_speeds"]
+        config.SP_SERVICES.LEGACY.IMU_SENSOR.DEBUG_RENDER = True # only has an effect in Development mode, not shipping mode
+        config.SP_SERVICES.LEGACY.VEHICLE_AGENT.CAMERA.IMAGE_HEIGHT = 512
+        config.SP_SERVICES.LEGACY.VEHICLE_AGENT.CAMERA.IMAGE_WIDTH = 512
+        config.SP_SERVICES.LEGACY.VEHICLE_AGENT.CAMERA.RENDER_PASSES = ["depth", "final_color", "segmentation"]
+        config.SP_SERVICES.LEGACY.VEHICLE_AGENT.OBSERVATION_COMPONENTS = ["camera", "imu", "location", "rotation", "wheel_rotation_speeds"]
         # aim camera in a third-person view facing backwards at an angle
         # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.LOCATION_X = -50.0
         # config.VEHICLE.VEHICLE_PAWN.CAMERA_COMPONENT.LOCATION_Y = -50.0

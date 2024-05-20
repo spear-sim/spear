@@ -30,7 +30,6 @@
 // data type.
 //
 
-// Needs to match SpEngine/CppFuncService.h
 enum class CppFuncDataType : int8_t
 {
     Invalid    = -1,
@@ -87,7 +86,6 @@ public:
 // specified by the system that owns the shared memory to indicate how the shared memory should be used.
 //
 
-// Needs to match SpEngine/CppFuncService.h
 enum class CppFuncSharedMemoryUsageFlags : uint8_t
 {
     DoNotUse    = 0,

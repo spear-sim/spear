@@ -12,7 +12,7 @@ SPEAR:
       renderoffscreen: null
 
 
-SP_ENGINE:
+SP_SERVICES:
   LEGACY_SERVICE:
     AGENT: "CameraAgent"
     TASK: "NullTask"
