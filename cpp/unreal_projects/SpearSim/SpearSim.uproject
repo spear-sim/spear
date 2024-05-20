@@ -25,6 +25,10 @@
             "Enabled": true
         },
         {
+            "Name": "SpComponents",
+            "Enabled": true
+        },
+        {
             "Name": "SpCore",
             "Enabled": true
         },

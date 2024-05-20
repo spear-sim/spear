@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "SpearSimEditor/DebugWidget.h"
+#include "SpComponents/SpDebugWidget.h"
 
 #include <stdint.h> // uint8_t
 
@@ -23,7 +23,6 @@
 #include "SpCore/CppFuncComponent.h"
 #include "SpCore/Log.h"
 #include "SpCore/SharedMemoryRegion.h"
-#include "SpCore/SpCoreActor.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealObj.h"
@@ -31,7 +30,9 @@
 #include "SpCore/Yaml.h"
 #include "SpCore/YamlCpp.h"
 
-ADebugWidget::ADebugWidget()
+#include "SpComponents/SpHitEventActor.h"
+
+ASpDebugWidget::ASpDebugWidget()
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -41,33 +42,33 @@ ADebugWidget::ADebugWidget()
     initializeCppFuncs();
 }
 
-ADebugWidget::~ADebugWidget()
+ASpDebugWidget::~ASpDebugWidget()
 {
     SP_LOG_CURRENT_FUNCTION();
 }
 
-void ADebugWidget::BeginDestroy()
+void ASpDebugWidget::BeginDestroy()
 {
     AActor::BeginDestroy();
     terminateCppFuncs();
 }
 
-void ADebugWidget::LoadConfig()
+void ASpDebugWidget::LoadConfig()
 {
     AActor::LoadConfig();
 }
 
-void ADebugWidget::SaveConfig()
+void ASpDebugWidget::SaveConfig()
 {
     AActor::SaveConfig();
 }
 
-void ADebugWidget::PrintDebugString()
+void ASpDebugWidget::PrintDebugString()
 {
     SP_LOG("DebugString: ", Unreal::toStdString(DebugString));
 }
 
-void ADebugWidget::GetAndSetObjectProperties()
+void ASpDebugWidget::GetAndSetObjectProperties()
 {
     UWorld* world = GetWorld();
     SP_ASSERT(world);
@@ -241,7 +242,7 @@ void ADebugWidget::GetAndSetObjectProperties()
     i++;
 }
 
-void ADebugWidget::CallFunctions()
+void ASpDebugWidget::CallFunctions()
 {
     static int i = 1;
 
@@ -310,23 +311,17 @@ void ADebugWidget::CallFunctions()
     return_values = Unreal::callFunction(GetWorld(), static_mesh_component, ufunction, args);
     SP_LOG(return_values.at("SweepHitResult"));
 
-    UObject* uobject = Unreal::findActorByName(world, "SpCore/SpCoreActor");
+    UObject* uobject = Unreal::findActorByName(world, "SpComponents/SpHitEventActor");
     SP_ASSERT(uobject);
     ufunction = Unreal::findFunctionByName(uobject->GetClass(), "GetActorHitEventDescs");
     SP_ASSERT(ufunction);
-    return_values = Unreal::callFunction(GetWorld(), uobject, ufunction, {});
+    return_values = Unreal::callFunction(GetWorld(), uobject, ufunction);
     SP_LOG(return_values.at("ReturnValue"));
-
-    args = {{"DeltaLocation", vec_str}, {"bSweep", "false"}, {"bTeleport", "false"}};
-    ufunction = Unreal::findFunctionByName(static_mesh_component->GetClass(), "K2_AddRelativeLocation");
-    SP_ASSERT(ufunction);
-    return_values = Unreal::callFunction(GetWorld(), static_mesh_component, ufunction, args);
-    SP_LOG(return_values.at("SweepHitResult"));
 
     i++;
 }
 
-void ADebugWidget::CallCppFunctions()
+void ASpDebugWidget::CallCppFunctions()
 {
     static int i = 1;
 
@@ -382,7 +377,7 @@ void ADebugWidget::CallCppFunctions()
     i++;
 }
 
-void ADebugWidget::CreateObjects()
+void ASpDebugWidget::CreateObjects()
 {
     static int i = 1;
 
@@ -420,38 +415,38 @@ void ADebugWidget::CreateObjects()
     i++;
 }
 
-void ADebugWidget::SubscribeToActorHitEvents()
+void ASpDebugWidget::SubscribeToActorHitEvents()
 {
     AStaticMeshActor* static_mesh_actor = Unreal::findActorByName<AStaticMeshActor>(GetWorld(), "Debug/SM_Prop_04");
     SP_ASSERT(static_mesh_actor);
 
-    ASpCoreActor* sp_core_actor = Unreal::findActorByName<ASpCoreActor>(GetWorld(), "SpCore/SpCoreActor");
-    SP_ASSERT(sp_core_actor);
+    ASpHitEventActor* hit_event_actor = Unreal::findActorByName<ASpHitEventActor>(GetWorld(), "SpComponents/SpHitEventActor");
+    SP_ASSERT(hit_event_actor);
 
-    UFunction* ufunction = Unreal::findFunctionByName(sp_core_actor->GetClass(), "SubscribeToActorHitEvents");
-    Unreal::callFunction(GetWorld(), sp_core_actor, ufunction, {{"actor", Std::toStringFromPtr(static_mesh_actor)}});
+    UFunction* ufunction = Unreal::findFunctionByName(hit_event_actor->GetClass(), "SubscribeToActorHitEvents");
+    Unreal::callFunction(GetWorld(), hit_event_actor, ufunction, {{"Actor", Std::toStringFromPtr(static_mesh_actor)}});
 }
 
-FString ADebugWidget::GetString(FString arg_0, bool arg_1, int arg_2, FVector arg_3)
+FString ASpDebugWidget::GetString(FString arg_0, bool arg_1, int arg_2, FVector arg_3)
 {
     SP_LOG_CURRENT_FUNCTION();
     return FString("GetString return value.");
 }
 
-FVector ADebugWidget::GetVector(FString arg_0, bool arg_1, int arg_2, FVector& arg_3)
+FVector ASpDebugWidget::GetVector(FString arg_0, bool arg_1, int arg_2, FVector& arg_3)
 {
     SP_LOG_CURRENT_FUNCTION();
     arg_3 = FVector(1.11, 2.22, 3.33);
     return FVector(9.87, 6.54, 3.21);
 }
 
-UObject* ADebugWidget::GetWorldContextObject(const UObject* world_context_object, FString arg_0, bool arg_1)
+UObject* ASpDebugWidget::GetWorldContextObject(const UObject* world_context_object, FString arg_0, bool arg_1)
 {
     SP_LOG_CURRENT_FUNCTION();
     return const_cast<UObject*>(world_context_object);
 }
 
-void ADebugWidget::initializeCppFuncs()
+void ASpDebugWidget::initializeCppFuncs()
 {
     int shared_memory_num_bytes = 1024;
     shared_memory_region_ = std::make_unique<SharedMemoryRegion>(shared_memory_num_bytes);
@@ -461,7 +456,30 @@ void ADebugWidget::initializeCppFuncs()
     CppFuncSharedMemoryView shared_memory_view(shared_memory_region_->getView(), CppFuncSharedMemoryUsageFlags::Arg | CppFuncSharedMemoryUsageFlags::ReturnValue);
     CppFuncComponent->registerSharedMemoryView(shared_memory_name, shared_memory_view);
 
-    CppFuncComponent->registerFunc("my_func", [this](CppFuncPackage& args) -> CppFuncPackage {
+    CppFuncComponent->registerFunc("hello_world", [this](CppFuncPackage& args) -> CppFuncPackage {
+
+        // CppFuncData objects are {named, strongly typed} arrays that can be efficiently passed
+        // {to, from} Python.
+        CppFuncData<uint8_t> hello("hello");
+        hello.setData("Hello World!");
+
+        // Get some some data from the Unreal Engine.
+        AActor* actor = Unreal::findActorByName(GetWorld(), "SpComponents/SpHitEventActor");
+        FVector location = actor->GetActorLocation();
+
+        // Store the Unreal data in a CppFuncData object to efficiently return it to Python.
+        // Here we use shared memory for the most efficient possible communication.
+        CppFuncData<double> unreal_data("unreal_data");
+        unreal_data.setData("my_shared_memory", shared_memory_region_->getView(), 3);
+        unreal_data.setValues({location.X, location.Y, location.Z});
+
+        // Return CppFuncData objects.
+        CppFuncPackage return_values;
+        return_values.items_ = CppFuncUtils::moveDataToItems({hello.getPtr(), unreal_data.getPtr()});
+        return return_values;
+    });
+
+    CppFuncComponent->registerFunc("my_func_1", [this](CppFuncPackage& args) -> CppFuncPackage {
 
         // create view objects directly from arg data
         CppFuncView<double> location("location");
@@ -525,12 +543,38 @@ void ADebugWidget::initializeCppFuncs()
 
         return return_values;
     });
+
+    CppFuncComponent->registerFunc("my_func_2", [this](CppFuncPackage& args) -> CppFuncPackage {
+
+        // create view objects directly from arg data
+        CppFuncView<double> location("location");
+        CppFuncView<double> rotation("rotation");
+        CppFuncUtils::setViewsFromItems({location.getPtr(), rotation.getPtr()}, args.items_);
+
+        // create new data objects
+        CppFuncData<double> new_location("new_location");
+        CppFuncData<double> new_rotation("new_rotation");
+        new_location.setData(location.getView() | std::views::transform([](auto x) { return 2.0*x; })); // initialize from range of double
+        new_rotation.setData(rotation.getView() | std::views::transform([](auto x) { return 3.0*x; })); // initialize from range of double
+
+        // create new data objects backed by shared memory
+        CppFuncData<float> my_floats("my_floats");
+        my_floats.setData("my_shared_memory", shared_memory_region_->getView(), 3);
+        my_floats.setValues({99.0, 98.0, 97.0});
+
+        CppFuncPackage return_values;
+        return_values.items_ = CppFuncUtils::moveDataToItems({new_location.getPtr(), new_rotation.getPtr(), my_floats.getPtr()});
+
+        return return_values;
+    });
 }
 
-void ADebugWidget::terminateCppFuncs()
+void ASpDebugWidget::terminateCppFuncs()
 {
-    CppFuncComponent->unregisterFunc("my_func");
-    
+    CppFuncComponent->unregisterFunc("my_func_2");
+    CppFuncComponent->unregisterFunc("my_func_1");
+    CppFuncComponent->unregisterFunc("hello_world");
+
     CppFuncComponent->unregisterSharedMemoryView("my_shared_memory");
     shared_memory_region_ = nullptr;
 }

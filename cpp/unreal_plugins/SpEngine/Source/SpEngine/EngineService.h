@@ -15,6 +15,7 @@
 #include <Misc/CoreDelegates.h>
 
 #include "SpCore/Assert.h"
+
 #include "SpEngine/EntryPointBinder.h"
 #include "SpEngine/WorkQueue.h"
 

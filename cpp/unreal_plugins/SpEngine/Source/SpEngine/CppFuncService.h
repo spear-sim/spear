@@ -19,14 +19,55 @@
 #include "SpCore/Rpclib.h"
 #include "SpCore/SharedMemoryRegion.h"
 #include "SpCore/Std.h"
+
 #include "SpEngine/CppFuncServiceTypes.h"
 #include "SpEngine/EntryPointBinder.h"
 
-// TODO: remove these headers when SpCoreActor is removed as the hard-coded target for function calls
-#include "SpCore/SpCoreActor.h"
+// TODO: remove these headers when ACppFuncServiceDebugActor is removed as the hard-coded target for function calls
+#include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
 
+// TODO: remove this header when ACppFuncServiceDebugActor is removed as the hard-coded target for function calls
+#include "CppFuncService.generated.h"
+
+class UObject;
 class UWorld;
+
+// TODO: remove this class as the hard-coded target for function calls
+UCLASS(ClassGroup="SPEAR", HideCategories=(Rendering, Replication, Collision, HLOD, Physics, Networking, Input, Actor, Cooking))
+class ASpCppFuncServiceDebugActor : public AActor
+{
+    GENERATED_BODY()
+public: 
+    ASpCppFuncServiceDebugActor()
+    {
+        SP_LOG_CURRENT_FUNCTION();
+
+        cpp_func_component_ = Unreal::createComponentInsideOwnerConstructor<UCppFuncComponent>(this, "cpp_func");
+        SP_ASSERT(cpp_func_component_);
+
+        cpp_func_component_->registerFunc("hello_world", [this](CppFuncPackage& args) -> CppFuncPackage {
+            CppFuncData<uint8_t> hello("hello");
+            CppFuncData<double> my_data("my_data");
+
+            hello.setData("Hello World!");
+            my_data.setData({ 1.0, 2.0, 3.0 });
+
+            // Return CppFuncData objects.
+            CppFuncPackage return_values;
+            return_values.items_ = CppFuncUtils::moveDataToItems({ hello.getPtr(), my_data.getPtr() });
+            return return_values;
+        });
+    };
+
+    ~ASpCppFuncServiceDebugActor()
+    {
+        SP_LOG_CURRENT_FUNCTION();
+    };
+
+private:
+    UCppFuncComponent* cpp_func_component_ = nullptr;
+};
 
 class CppFuncService {
 public:
@@ -42,7 +83,7 @@ public:
             SP_ASSERT(world_);
 
             // TODO: make the object ptr an input to this function
-            UObject* uobject = Unreal::findActorByType<ASpCoreActor>(world_);
+            UObject* uobject = ASpCppFuncServiceDebugActor::StaticClass()->GetDefaultObject();
             SP_ASSERT(uobject);
 
             // get CppFuncComponent and shared memory views
@@ -67,7 +108,7 @@ public:
             SP_ASSERT(world_);
 
             // TODO: make the object ptr an input to this function
-            UObject* uobject = Unreal::findActorByType<ASpCoreActor>(world_);
+            UObject* uobject = ASpCppFuncServiceDebugActor::StaticClass()->GetDefaultObject();
             SP_ASSERT(uobject);
 
             // get CppFuncComponent and shared memory views

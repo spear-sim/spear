@@ -11,6 +11,7 @@
 #include <Engine/World.h>                // FWorldDelegates
 
 #include "SpCore/Assert.h"
+
 #include "SpEngine/EntryPointBinder.h"
 #include "SpEngine/Legacy/Agent.h"
 #include "SpEngine/Legacy/NavMesh.h"

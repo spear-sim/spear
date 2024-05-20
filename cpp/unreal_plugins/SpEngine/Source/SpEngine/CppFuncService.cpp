@@ -5,9 +5,10 @@
 #include "SpEngine/CppFuncService.h"
 
 #include <Components/SceneComponent.h>
-#include <Engine/Engine.h> // GEngine
+#include <Engine/Engine.h>  // GEngine
 #include <Engine/World.h>
 #include <GameFramework/Actor.h>
+#include <UObject/Object.h> // UObject
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"

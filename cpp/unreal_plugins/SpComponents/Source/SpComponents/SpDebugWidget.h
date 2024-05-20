@@ -17,17 +17,17 @@
 #include "SpCore/CppFuncComponent.h"
 #include "SpCore/SharedMemoryRegion.h"
 
-#include "DebugWidget.generated.h"
+#include "SpDebugWidget.generated.h"
 
 class UObject;
 
 UCLASS(Config=Spear, HideCategories=(Rendering, Replication, Collision, HLOD, Physics, Networking, Input, Actor, Cooking))
-class ADebugWidget : public AActor
+class ASpDebugWidget : public AActor
 {
     GENERATED_BODY()
 public: 
-    ADebugWidget();
-    ~ADebugWidget();
+    ASpDebugWidget();
+    ~ASpDebugWidget();
 
     // AActor interface
     void BeginDestroy() override;
@@ -67,9 +67,6 @@ private:
     UFUNCTION()
     static UObject* GetWorldContextObject(const UObject* world_context_object, FString arg_0, bool arg_1);
 
-    void initializeCppFuncs();
-    void terminateCppFuncs(); // don't call from destructor because CppFuncComponent might have been garbage-collected already
-
     UPROPERTY()
     TArray<int> ArrayOfInts;
 
@@ -91,8 +88,11 @@ private:
     UPROPERTY()
     TSet<FString> SetOfStrings;
 
-    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="CppFunc Component")
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
     UCppFuncComponent* CppFuncComponent = nullptr;
+
+    void initializeCppFuncs();
+    void terminateCppFuncs(); // don't call from destructor because CppFuncComponent might have been garbage-collected already
 
     std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
 };
