@@ -59,17 +59,17 @@ class GameWorldService():
     # Get and set object properties
     #
 
-    def get_object_properties_as_string_from_uobject(self, uobject):
-        return self._rpc_client.call("game_world_service.get_object_properties_as_string_from_uobject", uobject)
+    def get_object_properties_from_uobject(self, uobject):
+        return json.loads(self._rpc_client.call("game_world_service.get_object_properties_as_string_from_uobject", uobject))
 
-    def get_object_properties_as_string_from_ustruct(self, value_ptr, ustruct):
-        return self._rpc_client.call("game_world_service.get_object_properties_as_string_from_ustruct", value_ptr, ustruct)
+    def get_object_properties_from_ustruct(self, value_ptr, ustruct):
+        return json.loads(self._rpc_client.call("game_world_service.get_object_properties_as_string_from_ustruct", value_ptr, ustruct))
 
-    def set_object_properties_from_string_for_uobject(self, uobject, string):
-        self._rpc_client.call("game_world_service.set_object_properties_from_string_for_uobject", uobject, string)
+    def set_object_properties_for_uobject(self, uobject, properties):
+        self._rpc_client.call("game_world_service.set_object_properties_from_string_for_uobject", uobject, json.dumps(properties))
 
-    def set_object_properties_from_string_for_ustruct(self, value_ptr, ustruct, string):
-        self._rpc_client.call("game_world_service.set_object_properties_from_string_for_ustruct", value_ptr, ustruct, string)
+    def set_object_properties_for_ustruct(self, value_ptr, ustruct, properties):
+        self._rpc_client.call("game_world_service.set_object_properties_from_string_for_ustruct", value_ptr, ustruct, json.dumps(properties))
 
     #
     # Find properties
@@ -85,11 +85,11 @@ class GameWorldService():
     # Get property values
     #
 
-    def get_property_value_as_string(self, property_desc):
+    def get_property_value(self, property_desc):
         return self._rpc_client.call("game_world_service.get_property_value_as_string", property_desc)
 
-    def set_property_value_from_string(self, property_desc, string):
-        return self._rpc_client.call("game_world_service.set_property_value_from_string", property_desc, string)
+    def set_property_value(self, property_desc, property_value):
+        return self._rpc_client.call("game_world_service.set_property_value_from_string", property_desc, property_value)
 
     #
     # Find and call functions
