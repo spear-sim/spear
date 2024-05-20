@@ -14,7 +14,7 @@ setuptools.setup(
     install_requires=[
         "coacd==1.0.0",
         "ffmpeg-python==0.2.0",
-        "gym==0.21.0",
+        "gym==0.23.0",
         "matplotlib==3.6.2",
         "mayavi==4.8.1",
         "mujoco==3.1.3",
