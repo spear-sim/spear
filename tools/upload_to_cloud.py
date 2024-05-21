@@ -1,5 +1,6 @@
 import argparse
 import os
+import posixpath
 import spear
 import subprocess
 import sys
@@ -27,7 +28,7 @@ if __name__ == "__main__":
     else:
         assert False
 
-    cloud_folder = os.path.join(args.cloud_path_prefix, args.version_tag, "")
+    cloud_folder = posixpath.join(args.cloud_path_prefix, args.version_tag, "")
     # TODO: update this to process all built pak files
     archive_file_name = os.path.realpath(os.path.join(args.input_dir, f"SpearSim-{args.version_tag}-{platform_name}-Shipping.zip"))
 
