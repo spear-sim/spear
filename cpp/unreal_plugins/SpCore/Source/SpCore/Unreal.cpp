@@ -158,11 +158,11 @@ Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* 
         property_desc.value_ptr_ = property_desc.property_->ContainerPtrToValuePtr<void>(property_desc.value_ptr_);
         SP_ASSERT(property_desc.value_ptr_);
 
-        // If the current property is an array or map property, and the name includes the index operator, then update
-        // the current property to refer to the array or map element based on the index. For map properties, we expect
-        // an index string that is enclosed enclosed in "" quotes if the key type is a string, and not enclosed in
-        // quotes otherwise. The index string must exactly match whatever is returned by getPropertyValueAsString(...)
-        // for the key.
+        // If the current property is an array or map property, and the name includes the index operator,
+        // then update the current property to refer to the array or map element based on the index. For map
+        // properties, we expect an index string that is enclosed enclosed in "" quotes if the key type is a
+        // string, and not enclosed in quotes otherwise. The index string must exactly match whatever is
+        // returned by getPropertyValueAsString(...) for the key.
         if (property_desc.property_->IsA(FArrayProperty::StaticClass()) && property_name_tokens.size() == 2) {
             int index = std::atoi(property_name_tokens.at(1).c_str());
             FArrayProperty* array_property = static_cast<FArrayProperty*>(property_desc.property_);
@@ -217,9 +217,9 @@ Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* 
 
         // If the current property name is not the last name in our sequence, then by definition the current
         // property refers to something with named properties (i.e., a struct or an object). In this case,
-        // we need to update our ustruct pointer, and potentially our value_ptr if our current property refers
-        // to an object. In contrast, if the current property name is the last name in our sequence, then
-        // there is nothing more to do, because we have already filled in our PropertyDesc object.
+        // we need to update our ustruct pointer, and potentially our value_ptr if our current property
+        // refers to an object. In contrast, if the current property name is the last name in our sequence,
+        // then there is nothing more to do, because we have already filled in our PropertyDesc object.
         if (i < property_names.size() - 1) {
             if (property_desc.property_->IsA(FObjectProperty::StaticClass())) {
                 FObjectProperty* object_property = static_cast<FObjectProperty*>(property_desc.property_);
@@ -393,7 +393,9 @@ void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_des
 }
 
 //
-// Find function by name, call function, ufunction can't be const because we pass it to uobject->ProcessEvent(...), which expects non-const
+// Find function by name, call function, world can't be const because we cast it to void*, uobject can't be
+// const because we call uobject->ProcessEvent(...) which is non-const, ufunction can't be const because we
+// call because we pass it to uobject->ProcessEvent(...) which expects non-const
 //
 
 UFunction* Unreal::findFunctionByName(const UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag)

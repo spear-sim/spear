@@ -129,16 +129,17 @@ public:
     static void setPropertyValueFromString(const PropertyDesc& property_desc, const std::string& string);
 
     //
-    // Find function by name, call function, uobject can't be const because we call uobject->ProcessEvent which is non-const,
-    // ufunction can't be const because we call because we pass it to uobject->ProcessEvent(...), which expects non-const
+    // Find function by name, call function, world can't be const because we cast it to void*, uobject can't
+    // be const because we call uobject->ProcessEvent(...) which is non-const, ufunction can't be const
+    // because we call because we pass it to uobject->ProcessEvent(...) which expects non-const
     //
 
     static UFunction* findFunctionByName(const UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag = EIncludeSuperFlag::IncludeSuper);
     static std::map<std::string, std::string> callFunction(UWorld* world, UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args = {}, const std::string& world_context = "WorldContextObject");
 
     //
-    // Find special struct by name. For this function to behave as expected, ASpCoreActor must have a UPROPERTY defined
-    // on it named _SP_SPECIAL_STRUCT_TypeName_ of type TypeName.
+    // Find special struct by name. For this function to behave as expected, ASpSpecialStructActor must have
+    // a UPROPERTY defined on it named TypeName_ of type TypeName.
     //
 
     static UStruct* findSpecialStructByName(const std::string& name);
@@ -229,17 +230,18 @@ public:
     //
     // Helper functions to create components.
     //
-    // If we are inside the constructor of an owner AActor (either directly or indirectly via the constructor of a child
-    // component), then we must call CreateDefaultSubobject.
+    // If we are inside the constructor of an owner AActor (either directly or indirectly via the constructor
+    // of a child component), then we must call CreateDefaultSubobject.
     // 
-    // If we are outside the constructor of an owner AActor (either directly or indirectly via the constructor of a child
-    // component), then we must call NewObject and RegisterComponent.
+    // If we are outside the constructor of an owner AActor (either directly or indirectly via the
+    // constructor of a child component), then we must call NewObject and RegisterComponent.
     // 
-    // If we are creating a USceneComponent that is intended to be a root component, then we must call SetRootComponent
-    // to attach the newly created component to its parent AActor.
+    // If we are creating a USceneComponent that is intended to be a root component, then we must call
+    // SetRootComponent to attach the newly created component to its parent AActor.
     //
-    // If we are creating a USceneComponent that is not intended to be a root component, then its parent must also be a
-    // USceneComponent, and we must call SetupAttachment to attach the newly created component to its parent component.
+    // If we are creating a USceneComponent that is not intended to be a root component, then its parent must
+    // also be a USceneComponent, and we must call SetupAttachment to attach the newly created component to
+    // its parent component.
     //
     // SetupAttachment must be called before RegisterComponent.
     //
