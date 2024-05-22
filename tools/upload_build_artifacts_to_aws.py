@@ -1,3 +1,7 @@
+#
+# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+#
+
 import argparse
 import os
 import posixpath
@@ -9,9 +13,10 @@ import sys
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cloud_path_prefix", required=True)
+    parser.add_argument("--aws_path_prefix", required=True)
     parser.add_argument("--version_tag", required=True)
-    parser.add_argument("--paks", action="store_true")
+    parser.add_argument("--upload_executable", action="store_true")
+    parser.add_argument("--upload_paks", action="store_true")
     parser.add_argument("--input_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "build")))
     args = parser.parse_args()
 
@@ -29,16 +34,18 @@ if __name__ == "__main__":
     else:
         assert False
 
-    cloud_dir = posixpath.join(args.cloud_path_prefix, args.version_tag, "")
+    aws_dir = posixpath.join(args.aws_path_prefix, args.version_tag, "")
 
-    if args.paks:
-        files_to_upload = [ os.path.realpath(os.path.join(args.input_dir, x)) for x in os.listdir(args.input_dir) if x.endswith(paks_filter_string) ]
-    else:
-        files_to_upload = [ os.path.realpath(os.path.join(args.input_dir, f"SpearSim-{args.version_tag}-{platform_name}-Shipping.zip")) ]
+    files_to_upload = []
+    if args.upload_paks:
+        files_to_upload.append(os.path.realpath(os.path.join(args.input_dir, x)) for x in os.listdir(args.input_dir) if x.endswith(paks_filter_string))
+
+    if args.upload_executable:
+        files_to_upload.append(os.path.realpath(os.path.join(args.input_dir, f"SpearSim-{args.version_tag}-{platform_name}-Shipping.zip")))
 
     for file in files_to_upload:
         assert os.path.exists(file)
-        cmd = ["aws", "s3", "cp", file, cloud_dir]
+        cmd = ["aws", "s3", "cp", file, aws_dir]
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
