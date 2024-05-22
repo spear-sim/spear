@@ -1,0 +1,42 @@
+{
+    "semantics": {
+        "wall": {
+            "convex_decomposition_strategy": "axis_align"
+        },
+        "floor": {
+            "convex_decomposition_strategy": "axis_align"
+        },
+        "ceiling": {
+            "convex_decomposition_strategy": "none"
+        },
+        "floormat": {
+            "convex_decomposition_strategy": "none"
+        },
+        "chair": {
+            "body_type": "dynamic"
+        },
+        "table": {
+            "body_type": "dynamic"
+        },
+        "otherprop": {
+            "body_type": "dynamic"
+        },
+        "Prop_04": {
+            "body_type": "dynamic"
+        },
+        "pillow": {
+            "body_type": "dynamic"
+        },
+        "lamp": {
+            "body_type": "static"
+        }
+    },
+    "actors": {
+        "LivingRoom_Lamp_01": {
+            "body_type": "dynamic"
+        },
+        "LivingRoom_Lamp_02": {
+            "body_type": "dynamic"
+        }
+    }
+}

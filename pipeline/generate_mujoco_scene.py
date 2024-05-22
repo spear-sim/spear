@@ -14,9 +14,11 @@ import spear.pipeline
 import xml.dom.minidom
 import xml.etree.ElementTree
 
+from pipeline import pipeline_util
+
 parser = argparse.ArgumentParser()
-parser.add_argument("--pipeline_dir", required=True)
-parser.add_argument("--scene_id", required=True)
+parser.add_argument("--pipeline_dir", default=r"F:\intel\interiorsim\pipeline")
+parser.add_argument("--scene_id", default="apartment_0000")
 parser.add_argument("--ignore_actors")
 parser.add_argument("--color_mode", default="unique_color_per_geom")
 args = parser.parse_args()
@@ -31,28 +33,27 @@ else:
 np.random.seed(0)
 
 main_mjcf_str = \
-"""<mujoco model="{0}">
-
-    <option gravity="0 0 -981"/>
-
-    <asset>
-        <texture name="grid" type="2d" builtin="checker" rgb1=".1 .2 .3" rgb2=".2 .3 .4" width="300" height="300"/>
-        <material name="grid" texture="grid" texrepeat="8 8" reflectance=".2"/>
-        <include file="meshes.mjcf"/>
-    </asset>
-
-    <worldbody>
-        <geom size="1000 1000 1" type="plane" material="grid"/>
-        <light pos="0 0 1000"/>
-        <include file="bodies.mjcf"/>
-    </worldbody>
-
-</mujoco>
-""".format(args.scene_id)
+    """<mujoco model="{0}">
+    
+        <option gravity="0 0 -981"/>
+    
+        <asset>
+            <texture name="grid" type="2d" builtin="checker" rgb1=".1 .2 .3" rgb2=".2 .3 .4" width="300" height="300"/>
+            <material name="grid" texture="grid" texrepeat="8 8" reflectance=".2"/>
+            <include file="meshes.mjcf"/>
+        </asset>
+    
+        <worldbody>
+            <geom size="1000 1000 1" type="plane" material="grid"/>
+            <light pos="0 0 1000"/>
+            <include file="bodies.mjcf"/>
+        </worldbody>
+    
+    </mujoco>
+    """.format(args.scene_id)
 
 
 def process_scene():
-
     collision_geometry_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "collision_geometry"))
     actors_json_file = os.path.realpath(os.path.join(collision_geometry_dir, "actors.json"))
     spear.log("Reading JSON file: " + actors_json_file)
@@ -60,7 +61,7 @@ def process_scene():
     with open(actors_json_file, "r") as f:
         actors_json = json.load(f)
 
-    actors = { actor_name: actor_kinematic_tree for actor_name, actor_kinematic_tree in actors_json.items() if actor_name not in ignore_actors }
+    actors = {actor_name: actor_kinematic_tree for actor_name, actor_kinematic_tree in actors_json.items() if actor_name not in ignore_actors}
 
     meshes_element = xml.etree.ElementTree.Element("meshes")
     bodies_element = xml.etree.ElementTree.Element("bodies")
@@ -199,36 +200,32 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
 #
 
 def add_mujoco_elements_for_kinematic_tree_node(
-    actor_name, kinematic_tree_node, meshes_element, parent_element, transform_world_from_parent_node, root_node, color, log_prefix_str):
-
+        actor_name, kinematic_tree_node, meshes_element, parent_element, transform_world_from_parent_node, root_node, color, log_prefix_str):
     kinematic_tree_node_name = kinematic_tree_node["name"]
     spear.log(log_prefix_str, "Processing kinematic tree node: ", kinematic_tree_node_name)
 
     transform_parent_node_from_current_node = spear.pipeline.get_transform_from_transform_data(kinematic_tree_node["transform_parent_node_from_current_node"])
     transform_world_from_current_node = spear.pipeline.compose_transforms([transform_world_from_parent_node, transform_parent_node_from_current_node])
 
-    rotation_x_axis = transform_parent_node_from_current_node["rotation"][:,0].A1
-    rotation_y_axis = transform_parent_node_from_current_node["rotation"][:,1].A1
-    rotation_z_axis = transform_parent_node_from_current_node["rotation"][:,2].A1
+    rotation_x_axis = transform_parent_node_from_current_node["rotation"][:, 0].A1
+    rotation_y_axis = transform_parent_node_from_current_node["rotation"][:, 1].A1
+    rotation_z_axis = transform_parent_node_from_current_node["rotation"][:, 2].A1
     assert np.allclose(np.cross(rotation_x_axis, rotation_y_axis), rotation_z_axis)
 
     # TODO: get static-vs-dynamic flag from the JSON data, use better heuristic for avoiding interpenetrations
-    if "Meshes/05_chair" not in actor_name:
-        body_type = "static"
-    else:
-        body_type = "dynamic"
+    body_type = pipeline_util.get_config_value(actor_name, "body_type")
 
     if body_type == "static":
         pos_offset = np.matrix([0.0, 0.0, 0.0]).T
     elif body_type == "dynamic":
-        pos_offset = np.matrix([0.0, 0.0, 20.0]).T
+        pos_offset = np.matrix([0.0, 0.0, 0.0]).T
     else:
         assert False
 
     body_name = actor_name + ":" + kinematic_tree_node_name
     body_element = xml.etree.ElementTree.SubElement(parent_element, "body", attrib={
         "name": body_name,
-        "pos": get_mujoco_pos_str(transform_world_from_parent_node["scale"]*transform_parent_node_from_current_node["location"] + pos_offset),
+        "pos": get_mujoco_pos_str(transform_world_from_parent_node["scale"] * transform_parent_node_from_current_node["location"] + pos_offset),
         "xyaxes": get_mujoco_xyaxes_str(transform_parent_node_from_current_node["rotation"])})
 
     if body_type == "dynamic" and root_node:
@@ -244,8 +241,7 @@ def add_mujoco_elements_for_kinematic_tree_node(
             color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
 
         # TODO: retrieve desired decomposition strategy from the JSON data
-        convex_decomposition_strategy = "coacd"
-
+        convex_decomposition_strategy = pipeline_util.get_config_value(actor_name, "convex_decomposition_strategy")
         # we don't use os.path.realpath here because we don't want to convert to an absolute path
         merge_id_obj_dir = posixpath.join(
             "..",
@@ -253,7 +249,7 @@ def add_mujoco_elements_for_kinematic_tree_node(
             convex_decomposition_strategy,
             actor_name.replace("/", "."),
             kinematic_tree_node["name"],
-            f"merge_id_{int(merge_id):04}") # JSON stores keys as strings, so we need to convert merge_id to an int
+            f"merge_id_{int(merge_id):04}")  # JSON stores keys as strings, so we need to convert merge_id to an int
 
         part_ids = kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["merge_ids"][merge_id][convex_decomposition_strategy]["part_ids"]
         for part_id in part_ids:
@@ -287,7 +283,7 @@ def add_mujoco_elements_for_kinematic_tree_node(
             transform_world_from_parent_node=transform_world_from_current_node,
             root_node=False,
             color=color,
-            log_prefix_str=log_prefix_str+"    ")
+            log_prefix_str=log_prefix_str + "    ")
 
 
 def get_element_str(element):
@@ -295,17 +291,20 @@ def get_element_str(element):
 
 
 def get_mujoco_pos_str(pos):
-    return " ".join([ str(value) for value in pos.A1 ])
+    return " ".join([str(value) for value in pos.A1])
+
 
 def get_mujoco_xyaxes_str(rotation):
-    return " ".join([ str(value) for value in rotation[:,0].A1 ]) + " " + " ".join([ str(value) for value in rotation[:,1].A1 ])
+    return " ".join([str(value) for value in rotation[:, 0].A1]) + " " + " ".join([str(value) for value in rotation[:, 1].A1])
+
 
 def get_mujoco_scale_str(scale):
-    return " ".join([ str(value) for value in np.diag(scale) ])
+    return " ".join([str(value) for value in np.diag(scale)])
+
 
 def get_mujoco_rgba_str(rgb):
     rgba = list(rgb) + [1.0]
-    return " ".join([ str(value) for value in rgba ])
+    return " ".join([str(value) for value in rgba])
 
 
 if __name__ == '__main__':
