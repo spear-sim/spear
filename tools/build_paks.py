@@ -26,13 +26,14 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     assert os.path.exists(args.unreal_engine_dir)
-    assert os.path.exists(args.unreal_project_dir)
     if args.skip_create_symlinks:
         assert args.scene_ids is not None
     else:
         assert os.path.exists(args.perforce_content_dir)
 
-    unreal_project_dir         = args.unreal_project_dir
+    unreal_project_dir = os.path.realpath(args.unreal_project_dir)
+    assert os.path.exists(unreal_project_dir)
+
     uproject                   = os.path.realpath(os.path.join(unreal_project_dir, "SpearSim.uproject"))
     unreal_project_content_dir = os.path.realpath(os.path.join(unreal_project_dir, "Content"))
     output_dir                 = os.path.realpath(args.output_dir)
