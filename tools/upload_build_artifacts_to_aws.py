@@ -37,11 +37,12 @@ if __name__ == "__main__":
     aws_dir = posixpath.join(args.aws_path_prefix, args.version_tag, "")
 
     files_to_upload = []
-    if args.upload_paks:
-        files_to_upload.append(os.path.realpath(os.path.join(args.input_dir, x)) for x in os.listdir(args.input_dir) if x.endswith(paks_filter_string))
 
     if args.upload_executable:
         files_to_upload.append(os.path.realpath(os.path.join(args.input_dir, f"SpearSim-{args.version_tag}-{platform_name}-Shipping.zip")))
+
+    if args.upload_paks:
+        files_to_upload.append(os.path.realpath(os.path.join(args.input_dir, x)) for x in os.listdir(args.input_dir) if x.endswith(paks_filter_string))
 
     for file in files_to_upload:
         assert os.path.exists(file)
