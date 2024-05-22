@@ -88,7 +88,7 @@ if __name__ == "__main__":
         shutil.rmtree(unreal_tmp_dir, ignore_errors=True)
 
     if not args.skip_clone_github_repo:
-        
+
         # remove our temporary repository directory to ensure a clean build
         if os.path.exists(repo_dir):
             spear.log(f"Repository exists, removing: {repo_dir}")
