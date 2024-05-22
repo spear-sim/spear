@@ -2,7 +2,6 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-import argparse
 import os 
 import shutil
 import spear
@@ -11,11 +10,7 @@ import sys
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
-    args = parser.parse_args()
-
-    unreal_project_dir = os.path.realpath(args.unreal_project_dir)
+    unreal_project_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim"))
     assert os.path.exists(unreal_project_dir)
 
     # entire directories to be removed
@@ -44,7 +39,7 @@ if __name__ == "__main__":
         dirs.extend([
                 os.path.realpath(os.path.join(plugin_dir, "Binaries")),
                 os.path.realpath(os.path.join(plugin_dir, "Intermediate"))])
-    
+
     # remove dirs
     for dir in dirs:
         if os.path.exists(dir):
