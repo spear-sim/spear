@@ -13,17 +13,14 @@
 #include <Engine/StaticMesh.h>
 #include <Engine/StaticMeshActor.h>
 #include <Engine/TextureRenderTarget2D.h>
+#include <GameFramework/Actor.h>
 #include <Kismet/GameplayStatics.h>
 #include <Materials/Material.h>
 #include <Materials/MaterialInterface.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 
-#include "SpCore/SpCoreActor.h"
-
-class AActor;
 class FLinkerInstancingContext;
-class UActorComponent;
 class UClass;
 class UObject;
 class UPackage;
@@ -40,6 +37,7 @@ struct FObjectInstancingGraph;
 void UnrealClassRegistrar::initialize()
 {
     // Unreal classes
+    registerActorClass<AActor>("AActor");
     registerActorClass<AStaticMeshActor>("AStaticMeshActor");
     registerComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
     registerClass<UGameplayStatics>("UGameplayStatics");
@@ -47,9 +45,6 @@ void UnrealClassRegistrar::initialize()
     registerClass<UMaterialInterface>("UMaterialInterface");
     registerClass<UStaticMesh>("UStaticMesh");
     registerClass<UTextureRenderTarget2D>("UTextureRenderTarget2D");
-
-    // SpCore classes
-    registerActorClass<ASpCoreActor>("ASpCoreActor");
 
     // need to register special structs, i.e., structs that don't define a StaticStruct() method
     registerSpecialStruct<FRotator>("FRotator");
@@ -59,6 +54,7 @@ void UnrealClassRegistrar::initialize()
 void UnrealClassRegistrar::terminate()
 {
     // Unreal classes
+    unregisterActorClass<AActor>("AActor");
     unregisterActorClass<AStaticMeshActor>("AStaticMeshActor");
     unregisterComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
     unregisterClass<UGameplayStatics>("UGameplayStatics");
@@ -66,9 +62,6 @@ void UnrealClassRegistrar::terminate()
     unregisterClass<UMaterialInterface>("UMaterialInterface");
     unregisterClass<UStaticMesh>("UStaticMesh");
     unregisterClass<UTextureRenderTarget2D>("UTextureRenderTarget2D");
-
-    // SpCore classes
-    unregisterActorClass<ASpCoreActor>("ASpCoreActor");
 
     // need to unregister special structs
     unregisterSpecialStruct<FRotator>();

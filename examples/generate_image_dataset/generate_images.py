@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
             # create dir for storing images
             if not args.benchmark:
-                for render_pass in config.SP_ENGINE.LEGACY.CAMERA_AGENT.CAMERA.RENDER_PASSES:
+                for render_pass in config.SP_SERVICES.LEGACY.CAMERA_AGENT.CAMERA.RENDER_PASSES:
                     render_pass_dir = os.path.realpath(os.path.join(args.images_dir, pose["scene_id"], render_pass))
                     shutil.rmtree(render_pass_dir, ignore_errors=True)
                     os.makedirs(render_pass_dir)
@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
         # save images for each render pass
         if not args.benchmark:
-            for render_pass in config.SP_ENGINE.LEGACY.CAMERA_AGENT.CAMERA.RENDER_PASSES:
+            for render_pass in config.SP_SERVICES.LEGACY.CAMERA_AGENT.CAMERA.RENDER_PASSES:
                 render_pass_dir = os.path.realpath(os.path.join(args.images_dir, pose["scene_id"], render_pass))
                 assert os.path.exists(render_pass_dir)
                 if render_pass == "depth":

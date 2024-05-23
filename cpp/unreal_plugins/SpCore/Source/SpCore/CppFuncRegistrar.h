@@ -60,7 +60,7 @@ public:
         Std::remove(funcs_, name);
     }
 
-    TReturn call(const std::string& name, TArgs... args)
+    TReturn call(const std::string& name, TArgs... args) const
     {
         SP_ASSERT(Std::containsKey(funcs_, name));
         return funcs_.at(name)(args...);

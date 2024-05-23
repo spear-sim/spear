@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     # set certain default parameters required by this script
     config.defrost()
-    config.SP_ENGINE.LEGACY_SERVICE.TASK = "NullTask"
+    config.SP_SERVICES.LEGACY_SERVICE.TASK = "NullTask"
     config.freeze()
 
     spear.configure_system(config)

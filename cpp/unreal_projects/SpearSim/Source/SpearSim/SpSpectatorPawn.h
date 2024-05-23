@@ -28,7 +28,7 @@ public:
     void BeginPlay() override;
     void Tick(float delta_time) override;
 
-    UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName="Stable Name Component")
+    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="Stable Name Component")
     UStableNameComponent* StableNameComponent = nullptr;
 
     UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="Spectator Pawn Movement")

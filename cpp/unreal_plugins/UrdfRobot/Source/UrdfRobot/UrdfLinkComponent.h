@@ -35,7 +35,7 @@ public:
     // component will remain active (e.g., if it is a joint, it will remain in the scene constraining the motion
     // of objects). In the latter case, there will be no way to edit the component. We prefer to set this TArray
     // to be VisibleAnywhere to avoid all such confusion.
-    UPROPERTY(VisibleAnywhere, Category = "SPEAR", DisplayName = "Static Mesh Components")
+    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="Static Mesh Components")
     TArray<UStaticMeshComponent*> StaticMeshComponents;
 
     // This function non-recursively configures all of a link's properties, and creates all of the link's child

@@ -19,7 +19,7 @@
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>            // TCHAR
 #include <Templates/Casts.h>
-#include <UObject/Class.h>           // EIncludeSuperFlag
+#include <UObject/Class.h>           // EIncludeSuperFlag, UClass, UStruct
 #include <UObject/NameTypes.h>       // FName
 #include <UObject/Object.h>          // UObject
 #include <UObject/UnrealType.h>      // FProperty
@@ -27,9 +27,14 @@
 #include "SpCore/Assert.h"
 #include "SpCore/Std.h"
 
-class UClass;
-class UStruct;
 class UWorld;
+
+// In the CStruct and CClass concepts below, there does not seem to be a clean way to encode the desired
+// std::derived_from<...> relationships directly in the requires(...) { ... } statement of each concept. This
+// is because, e.g., the type TStruct is implicitly passed as the first template parameter to std::derived_from<...>,
+// but we actually need the type std::remove_pointer_t<TStruct> to be passed instead, in order for std::derived_from<...>
+// to behave as expected. So we encode the std::derived_from<...> constraint outside the requires(...) { ... }
+// statement in each concept, where we can manipulate TStruct and TClass more freely.
 
 template <typename TStruct>
 concept CStruct =
@@ -37,6 +42,15 @@ concept CStruct =
         { TStruct::StaticStruct() };
     } &&
     std::derived_from<std::remove_pointer_t<decltype(TStruct::StaticStruct())>, UStruct>;
+
+template <typename TEnumStruct>
+concept CEnumStruct =
+    CStruct<TEnumStruct> &&
+    requires(TEnumStruct enum_struct) {
+        typename TEnumStruct::TEnumType;
+        { enum_struct.getEnumName() } -> std::same_as<std::string>;
+        { enum_struct.getEnumValue() } -> std::same_as<typename TEnumStruct::TEnumType>;
+};
 
 template <typename TObject>
 concept CObject = std::derived_from<TObject, UObject>;
@@ -99,7 +113,7 @@ public:
     static void setObjectPropertiesFromString(void* value_ptr, const UStruct* ustruct, const std::string& string);
 
     //
-    // Find property by name, get and set property values
+    // Find property by name, get and set property values, uobject can't be const because we cast it to void*
     //
 
     struct PropertyDesc
@@ -115,16 +129,17 @@ public:
     static void setPropertyValueFromString(const PropertyDesc& property_desc, const std::string& string);
 
     //
-    // Find function by name, call function, ufunction can't be const because we pass it to uobject->ProcessEvent(...), which expects non-const
+    // Find function by name, call function, world can't be const because we cast it to void*, uobject can't
+    // be const because we call uobject->ProcessEvent(...) which is non-const, ufunction can't be const
+    // because we call because we pass it to uobject->ProcessEvent(...) which expects non-const
     //
 
     static UFunction* findFunctionByName(const UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag = EIncludeSuperFlag::IncludeSuper);
-    static std::map<std::string, std::string> callFunction(UObject* uobject, UFunction* ufunction);
-    static std::map<std::string, std::string> callFunction(UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args);
+    static std::map<std::string, std::string> callFunction(UWorld* world, UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args = {}, const std::string& world_context = "WorldContextObject");
 
     //
-    // Find special struct by name. For this function to behave as expected, ASpCoreActor must have a UPROPERTY defined
-    // on it named _SP_SPECIAL_STRUCT_TypeName_ of type TypeName.
+    // Find special struct by name. For this function to behave as expected, ASpSpecialStructActor must have
+    // a UPROPERTY defined on it named TypeName_ of type TypeName.
     //
 
     static UStruct* findSpecialStructByName(const std::string& name);
@@ -215,17 +230,18 @@ public:
     //
     // Helper functions to create components.
     //
-    // If we are inside the constructor of an owner AActor (either directly or indirectly via the constructor of a child
-    // component), then we must call CreateDefaultSubobject.
+    // If we are inside the constructor of an owner AActor (either directly or indirectly via the constructor
+    // of a child component), then we must call CreateDefaultSubobject.
     // 
-    // If we are outside the constructor of an owner AActor (either directly or indirectly via the constructor of a child
-    // component), then we must call NewObject and RegisterComponent.
+    // If we are outside the constructor of an owner AActor (either directly or indirectly via the
+    // constructor of a child component), then we must call NewObject and RegisterComponent.
     // 
-    // If we are creating a USceneComponent that is intended to be a root component, then we must call SetRootComponent
-    // to attach the newly created component to its parent AActor.
+    // If we are creating a USceneComponent that is intended to be a root component, then we must call
+    // SetRootComponent to attach the newly created component to its parent AActor.
     //
-    // If we are creating a USceneComponent that is not intended to be a root component, then its parent must also be a
-    // USceneComponent, and we must call SetupAttachment to attach the newly created component to its parent component.
+    // If we are creating a USceneComponent that is not intended to be a root component, then its parent must
+    // also be a USceneComponent, and we must call SetupAttachment to attach the newly created component to
+    // its parent component.
     //
     // SetupAttachment must be called before RegisterComponent.
     //
@@ -719,6 +735,28 @@ public:
     static TReturnAsComponent* getChildComponentByType(const TParent* parent, bool include_all_descendants = true, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
     {
         return getItem(getChildrenComponentsByType<TSceneComponent, TReturnAsComponent>(parent, include_all_descendants), nullptr, assert_if_not_found, assert_if_multiple_found);
+    }
+
+    //
+    // Helper function to combine enum values from strings
+    //
+
+    template <CEnumStruct TEnumStruct>
+    static auto combineEnumFlagStrings(const std::vector<std::string>& enum_value_strings)
+    {
+        using TUnderlyingEnumType = std::underlying_type_t<typename TEnumStruct::TEnumType>;
+
+        TUnderlyingEnumType combined_value = 0;
+
+        for (auto& enum_value_string : enum_value_strings) {
+            TEnumStruct enum_struct;
+            std::string enum_struct_string = "{\"" + TEnumStruct::getEnumName() + "\": \"" + enum_value_string + "\" }";
+            setObjectPropertiesFromString(&enum_struct, TEnumStruct::StaticStruct(), enum_struct_string);
+            TUnderlyingEnumType enum_value = static_cast<TUnderlyingEnumType>(enum_struct.getEnumValue());
+            combined_value |= enum_value;
+        }
+
+        return combined_value;
     }
 
 private:

@@ -9,9 +9,4 @@ SPEAR:
   INSTANCE:
     COMMAND_LINE_ARGS:
       resx: 1024
-      resy: 720
-
-SP_ENGINE:
-  LEGACY_SERVICE:
-    AGENT: "NullAgent"
-    TASK: "NullTask"
+      resy: 1024

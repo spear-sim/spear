@@ -11,7 +11,7 @@ import scipy
 import spear
 
 
-name_prefix  = "Meshes/05_chair/"
+name_prefix = "Meshes/05_chair"
 
 
 def unreal_rpy_from_mujoco_quaternion(mujoco_quaternion):
@@ -42,15 +42,12 @@ if __name__ == "__main__":
     # get Unreal actors and functions
     spear_instance.engine_service.begin_tick()
 
-    unreal_actors = spear_instance.game_world_service.find_actors_as_map()
+    unreal_actors = spear_instance.unreal_service.find_actors_as_dict()
     unreal_actors = { unreal_actor_name: unreal_actor for unreal_actor_name, unreal_actor in unreal_actors.items() if unreal_actor_name.startswith(name_prefix) }
 
-    unreal_actor_classes = list(set([ spear_instance.game_world_service.get_class(unreal_actor) for unreal_actor in unreal_actors.values() ]))
-    assert len(unreal_actor_classes) == 1
-    unreal_actor_class = unreal_actor_classes[0]
-
-    unreal_set_actor_location_and_rotation_func = spear_instance.game_world_service.find_function_by_name(
-        uclass=unreal_actor_class, name="K2_SetActorLocationAndRotation", include_super_flag=1)
+    unreal_actor_static_class = spear_instance.unreal_service.get_static_class("AActor")
+    unreal_set_actor_location_and_rotation_func = spear_instance.unreal_service.find_function_by_name(
+        uclass=unreal_actor_static_class, name="K2_SetActorLocationAndRotation")
 
     spear_instance.engine_service.tick()
     spear_instance.engine_service.end_tick()
@@ -65,30 +62,43 @@ if __name__ == "__main__":
 
     # launch MuJoCo viewer
     mj_viewer = mujoco.viewer.launch_passive(mj_model, mj_data)
+
+    # initialize MuJoCo camera (not needed when launching the viewer through the command-line, but needed when using launch_passive)
+    mj_viewer.cam.distance = 30.0*100.0 # 30 meters * 100 Unreal units per meter
+    mj_viewer.cam.azimuth = 90.0
+    mj_viewer.cam.elevation = -45.0
+    mj_viewer.cam.lookat = np.array([0.0, 0.0, 0.0])
+
+    # initialize MuJoCo viewer options
+    mj_viewer.opt.label = mujoco.mjtLabel.mjLABEL_SELECTION
+
+    # update MuJoCo viewer state
     mj_viewer.sync()
 
     while mj_viewer.is_running():
 
         # perform multiple MuJoCo simulation steps per Unreal frame
-        mj_update_steps = 30
+        mj_update_steps = 10
         for _ in range(mj_update_steps):
             mujoco.mj_step(mj_model, mj_data)
         mj_viewer.sync()
 
         # get updated poses from MuJoCo
-        mj_body_xpos = { mj_body_name: mj_data.body(mj_body).xpos for mj_body_name, mj_body in mj_bodies.items() }
-        mj_body_xquat = { mj_body_name: mj_data.body(mj_body).xquat for mj_body_name, mj_body in mj_bodies.items() }
+        mj_bodies_xpos = { mj_body_name: mj_data.body(mj_body).xpos for mj_body_name, mj_body in mj_bodies.items() }
+        mj_bodies_xquat = { mj_body_name: mj_data.body(mj_body).xquat for mj_body_name, mj_body in mj_bodies.items() }
 
         # set updated poses in SPEAR
         spear_instance.engine_service.begin_tick()
 
         for unreal_actor_name, unreal_actor in unreal_actors.items():
-            unreal_location_dict = zip(["X", "Y", "Z"], mj_body_xpos[unreal_actor_name + ":StaticMeshComponent0"])
-            unreal_rotation_dict = zip(["Roll", "Pitch", "Yaw"], unreal_rpy_from_mujoco_quaternion(mj_body_xquat[unreal_actor_name + ":StaticMeshComponent0"]))
 
-            spear_instance.game_world_service.call_function(
-                unreal_actor, unreal_set_actor_location_and_rotation_func,
-                NewLocation=unreal_location_dict, NewRotation=unreal_rotation_dict, bSweep=False, bTeleport=True)
+            # call function for each actor
+            args = {
+                "NewLocation" : dict(zip(["X", "Y", "Z"], mj_bodies_xpos[unreal_actor_name + ":StaticMeshComponent0"])),
+                "NewRotation" : dict(zip(["Roll", "Pitch", "Yaw"], unreal_rpy_from_mujoco_quaternion(mj_bodies_xquat[unreal_actor_name + ":StaticMeshComponent0"]))),
+                "bSweep"      : False,
+                "bTeleport"   : True}
+            spear_instance.unreal_service.call_function(unreal_actor, unreal_set_actor_location_and_rotation_func, args)
 
         spear_instance.engine_service.tick()
         spear_instance.engine_service.end_tick()

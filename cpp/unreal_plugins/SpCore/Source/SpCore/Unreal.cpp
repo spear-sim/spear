@@ -33,7 +33,7 @@
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
-#include "SpCore/SpCoreActor.h"
+#include "SpCore/SpSpecialStructActor.h"
 #include "SpCore/StableNameComponent.h"
 #include "SpCore/Std.h"
 
@@ -128,7 +128,7 @@ void Unreal::setObjectPropertiesFromString(void* value_ptr, const UStruct* ustru
 }
 
 //
-// Find property by name, get and set property values
+// Find property by name, get and set property values, uobject can't be const because we cast it to void*
 //
 
 Unreal::PropertyDesc Unreal::findPropertyByName(UObject* uobject, const std::string& name)
@@ -158,11 +158,11 @@ Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* 
         property_desc.value_ptr_ = property_desc.property_->ContainerPtrToValuePtr<void>(property_desc.value_ptr_);
         SP_ASSERT(property_desc.value_ptr_);
 
-        // If the current property is an array or map property, and the name includes the index operator, then update
-        // the current property to refer to the array or map element based on the index. For map properties, we expect
-        // an index string that is enclosed enclosed in "" quotes if the key type is a string, and not enclosed in
-        // quotes otherwise. The index string must exactly match whatever is returned by getPropertyValueAsString(...)
-        // for the key.
+        // If the current property is an array or map property, and the name includes the index operator,
+        // then update the current property to refer to the array or map element based on the index. For map
+        // properties, we expect an index string that is enclosed enclosed in "" quotes if the key type is a
+        // string, and not enclosed in quotes otherwise. The index string must exactly match whatever is
+        // returned by getPropertyValueAsString(...) for the key.
         if (property_desc.property_->IsA(FArrayProperty::StaticClass()) && property_name_tokens.size() == 2) {
             int index = std::atoi(property_name_tokens.at(1).c_str());
             FArrayProperty* array_property = static_cast<FArrayProperty*>(property_desc.property_);
@@ -217,9 +217,9 @@ Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* 
 
         // If the current property name is not the last name in our sequence, then by definition the current
         // property refers to something with named properties (i.e., a struct or an object). In this case,
-        // we need to update our ustruct pointer, and potentially our value_ptr if our current property refers
-        // to an object. In contrast, if the current property name is the last name in our sequence, then
-        // there is nothing more to do, because we have already filled in our PropertyDesc object.
+        // we need to update our ustruct pointer, and potentially our value_ptr if our current property
+        // refers to an object. In contrast, if the current property name is the last name in our sequence,
+        // then there is nothing more to do, because we have already filled in our PropertyDesc object.
         if (i < property_names.size() - 1) {
             if (property_desc.property_->IsA(FObjectProperty::StaticClass())) {
                 FObjectProperty* object_property = static_cast<FObjectProperty*>(property_desc.property_);
@@ -254,6 +254,7 @@ std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& propert
         property_desc.property_->IsA(FFloatProperty::StaticClass())  ||
         property_desc.property_->IsA(FDoubleProperty::StaticClass()) ||
         property_desc.property_->IsA(FStrProperty::StaticClass())    ||
+        property_desc.property_->IsA(FNameProperty::StaticClass())   ||
         property_desc.property_->IsA(FByteProperty::StaticClass())) {
 
         TSharedPtr<FJsonValue> json_value = FJsonObjectConverter::UPropertyToJsonValue(property_desc.property_, property_desc.value_ptr_);
@@ -360,6 +361,7 @@ void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_des
         property_desc.property_->IsA(FFloatProperty::StaticClass())  ||
         property_desc.property_->IsA(FDoubleProperty::StaticClass()) ||
         property_desc.property_->IsA(FStrProperty::StaticClass())    ||
+        property_desc.property_->IsA(FNameProperty::StaticClass())   ||
         property_desc.property_->IsA(FByteProperty::StaticClass())   ||
         property_desc.property_->IsA(FArrayProperty::StaticClass())  ||
         property_desc.property_->IsA(FSetProperty::StaticClass())    ||
@@ -391,7 +393,9 @@ void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_des
 }
 
 //
-// Find function by name, call function, ufunction can't be const because we pass it to uobject->ProcessEvent(...), which expects non-const
+// Find function by name, call function, world can't be const because we cast it to void*, uobject can't be
+// const because we call uobject->ProcessEvent(...) which is non-const, ufunction can't be const because we
+// call because we pass it to uobject->ProcessEvent(...) which expects non-const
 //
 
 UFunction* Unreal::findFunctionByName(const UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag)
@@ -402,13 +406,9 @@ UFunction* Unreal::findFunctionByName(const UClass* uclass, const std::string& n
     return function;
 }
 
-std::map<std::string, std::string> Unreal::callFunction(UObject* uobject, UFunction* ufunction)
+std::map<std::string, std::string> Unreal::callFunction(UWorld* world, UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args, const std::string& world_context)
 {
-    return callFunction(uobject, ufunction, {});
-}
-
-std::map<std::string, std::string> Unreal::callFunction(UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args)
-{
+    SP_ASSERT(world);
     SP_ASSERT(uobject);
     SP_ASSERT(ufunction);
 
@@ -438,7 +438,25 @@ std::map<std::string, std::string> Unreal::callFunction(UObject* uobject, UFunct
     // Set property values.
     for (auto& property_desc : property_descs) {
         std::string property_name = toStdString(property_desc.property_->GetName());
+
+        // If the current property name has been flagged by the caller as being the special world_context
+        // arg, then set the property using the input world pointer instead of using a string in args, and
+        // make sure the property name is not also present in args. Strictly speaking, we could assign the
+        // world pointer directly to *(property_desc.value_ptr), but this could lead to undefined behavior
+        // if the property is not actually a UObject pointer. So we assign via setPropertValueFromString(...),
+        // because it provides well-defined behavior in all cases. Either the assignment is possible
+        // according to Unreal's JSON assignment rules, in which case setPropertValueFromString(...) will
+        // perform the assignment, or the assignment is not possible, in which case setPropertValueFromString(...)
+        // will assert.
+        if (property_name == world_context) {
+            SP_ASSERT(!Std::containsKey(args, property_name));
+            setPropertyValueFromString(property_desc, Std::toStringFromPtr(world));
+        }
+
+        // If the property name is in args, then set it using the string in args, and make sure the property
+        // name was not also flagged by the caller as being the special world_context arg.
         if (Std::containsKey(args, property_name)) {
+            SP_ASSERT(property_name != world_context);
             setPropertyValueFromString(property_desc, args.at(property_name));
         }
     }
@@ -457,20 +475,20 @@ std::map<std::string, std::string> Unreal::callFunction(UObject* uobject, UFunct
 }
 
 //
-// Find special struct by name. For this function to behave as expected, ASpCoreActor must have a UPROPERTY
-// defined on it named _SP_SPECIAL_STRUCT_TypeName_ of type TypeName.
+// Find special struct by name. For this function to behave as expected, ASpSpecialStructActor must have a
+// UPROPERTY defined on it named TypeName_ of type TypeName.
 //
 
 UStruct* Unreal::findSpecialStructByName(const std::string& name)
 {
-    // We only need ASpCoreActor's property metadata here, so we can use the default object. This makes it so
-    // this function is usable even in levels that don't have an ASpCoreActor in them, and avoids the need to
-    // do a findActor operation.
-    UClass* sp_core_actor_uclass = ASpCoreActor::StaticClass();
-    SP_ASSERT(sp_core_actor_uclass);
-    UObject* sp_core_actor_default_object = sp_core_actor_uclass->GetDefaultObject();
-    SP_ASSERT(sp_core_actor_default_object);
-    PropertyDesc property_desc = findPropertyByName(sp_core_actor_default_object, "_SP_SPECIAL_STRUCT_" + name + "_");
+    // We only need ASpSpecialStructActor's property metadata here, so we can use the default object. This
+    // makes it so this function is usable even in levels that don't have an ASpSpecialStructActor in them,
+    // and avoids the need to do a findActor operation.
+    UClass* special_struct_actor_uclass = ASpSpecialStructActor::StaticClass();
+    SP_ASSERT(special_struct_actor_uclass);
+    UObject* special_struct_actor_default_object = special_struct_actor_uclass->GetDefaultObject();
+    SP_ASSERT(special_struct_actor_default_object);
+    PropertyDesc property_desc = findPropertyByName(special_struct_actor_default_object, name + "_");
     SP_ASSERT(property_desc.property_);
     SP_ASSERT(property_desc.property_->IsA(FStructProperty::StaticClass()));
     FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);

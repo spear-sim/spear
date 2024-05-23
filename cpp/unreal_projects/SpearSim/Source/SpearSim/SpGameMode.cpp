@@ -7,6 +7,7 @@
 #include <Containers/UnrealString.h> // FString
 #include <Engine/Engine.h>           // GEngine
 #include <GameFramework/GameModeBase.h>
+#include <GameFramework/Pawn.h>
 #include <GameFramework/PlayerController.h>
 #include <HAL/Platform.h>            // uint64
 #include <Math/Color.h>
@@ -34,16 +35,20 @@ void ASpGameMode::PostLogin(APlayerController* new_player)
 {
     AGameModeBase::PostLogin(new_player);
 
-    // Set the stable name for the DefaultPawnClass instance so we can find it later.
-    SP_ASSERT(new_player->GetPawn());
-    Unreal::setStableName(new_player->GetPawn(), "Default/" + Unreal::toStdString(DefaultPawnClass->GetName()));
+    // Set the stable name for the DefaultPawnClass instance so we can find it later. We only do this if the
+    // pawn is non-null (it is possible for pawn to be null if we press "Simulate" in the editor), and if the
+    // pawn has a UStableNameComponent.
+    APawn* pawn = new_player->GetPawn();
+    if (pawn && Unreal::hasStableName(pawn)) {
+        Unreal::setStableName(pawn, "Default/" + Unreal::toStdString(DefaultPawnClass->GetName()));
+    }
 }
 
 void ASpGameMode::SpAddOnScreenDebugMessage(float display_time, FString message)
 {
-    // Note that GEngine->AddOnScreenDebugMessage(...) is only available when the game is running, either in standalone mode or
-    // in play-in-editor mode. But in pracice this is not an issue, because UFUNTION(Exec) methods only execute when the game
-    // is running anyway.
+    // Note that GEngine->AddOnScreenDebugMessage(...) is only available when the game is running, either in
+    // standalone mode or in play-in-editor mode. But in practice this is not an issue, because UFUNTION(Exec)
+    // methods only execute when the game is running anyway.
     uint64 key              = -1;
     FColor color            = FColor::Yellow;
     std::string message_str = SP_LOG_GET_PREFIX() + Unreal::toStdString(message);

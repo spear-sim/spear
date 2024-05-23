@@ -22,8 +22,8 @@ class Instance():
 
         # Need to do these after we have a valid rpc_client
         self.engine_service = spear.EngineService(self.rpc_client)
-        self.game_world_service = spear.GameWorldService(self.rpc_client)
         self.legacy_service = spear.LegacyService(self.rpc_client)
+        self.unreal_service = spear.UnrealService(self.rpc_client)
 
         # Need to do this after we have a valid EngineService object because we call begin_tick(), tick(), and end_tick() here.
         self._initialize_unreal_instance()
@@ -34,6 +34,14 @@ class Instance():
         # the Unreal instance to close it. So we close the Unreal instance first and then close the client.
         self._request_close_unreal_instance()
         self._close_rpc_client()
+
+    def is_running(self):
+        try:
+            self.rpc_client.call("engine_service.ping")
+            return True
+        except Exception as e:
+            spear.log("Exception:", e)
+        return False
 
     def _request_launch_unreal_instance(self):
 
@@ -126,9 +134,7 @@ class Instance():
         # that leverage temporal coherence between frames.
         for i in range(1 + self._config.SPEAR.INSTANCE.NUM_EXTRA_WARMUP_TICKS):
             self.engine_service.begin_tick()
-            self.game_world_service.set_game_paused(False)
             self.engine_service.tick()
-            self.game_world_service.set_game_paused(True)
             self.engine_service.end_tick()
 
         spear.log("Finished initializing Unreal instance.")
@@ -140,18 +146,24 @@ class Instance():
             return
 
         spear.log("Closing Unreal instance...")
-        self.rpc_client.call("engine_service.request_close")
+
+        try:
+            self.rpc_client.call("engine_service.request_close")
+        except Exception as e:
+            spear.log("Exception: ", e)
+
         status = "running"
         while status in expected_status_values:
+            time.sleep(self._config.SPEAR.INSTANCE.REQUEST_CLOSE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS)
             try:
                 status = self._process.status()
             except psutil.NoSuchProcess:
                 break
-        time.sleep(self._config.SPEAR.INSTANCE.REQUEST_CLOSE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS)
 
         spear.log("Finished closing Unreal instance.")
 
     def _force_kill_unreal_instance(self):
+
         spear.log("Forcefully killing Unreal instance...")
         self._process.terminate()
         self._process.kill()
@@ -168,7 +180,7 @@ class Instance():
 
             try:
                 self.rpc_client = msgpackrpc.Client(
-                    msgpackrpc.Address("127.0.0.1", self._config.SP_ENGINE.PORT),
+                    msgpackrpc.Address("127.0.0.1", self._config.SP_SERVICES.PORT),
                     timeout=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS,
                     reconnect_limit=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
                 self.rpc_client.call("engine_service.ping")
@@ -195,7 +207,7 @@ class Instance():
 
                 try:
                     self.rpc_client = msgpackrpc.Client(
-                        msgpackrpc.Address("127.0.0.1", self._config.SP_ENGINE.PORT), 
+                        msgpackrpc.Address("127.0.0.1", self._config.SP_SERVICES.PORT), 
                         timeout=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
                         reconnect_limit=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
                     self.rpc_client.call("engine_service.ping")

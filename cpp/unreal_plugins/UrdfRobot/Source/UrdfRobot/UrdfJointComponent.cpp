@@ -124,23 +124,23 @@ void UUrdfJointComponent::initialize(const UrdfJointDesc* joint_desc, UUrdfLinkC
     float twist_limit_angle = FMath::RadiansToDegrees(joint_desc->upper_ - joint_desc->lower_) * 0.5f; // rad to deg
     float linear_limit_size = (joint_desc->upper_ - joint_desc->lower_) * m_to_cm;                     // m to cm
     switch (joint_desc->type_) {
-    case UrdfJointType::Revolute:
-        SP_ASSERT(joint_desc->lower_ == -joint_desc->upper_); // TODO (MR): support asymmetric limits
-        ConstraintInstance.SetAngularTwistLimit(EAngularConstraintMotion::ACM_Limited, twist_limit_angle);
-        break;
-    case UrdfJointType::Continuous:
-        break;
-    case UrdfJointType::Prismatic:
-        SP_ASSERT(joint_desc->lower_ == -joint_desc->upper_); // TODO (MR): support asymmetric limits
-        ConstraintInstance.SetAngularTwistLimit(EAngularConstraintMotion::ACM_Locked, 0.0f);
-        ConstraintInstance.SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, linear_limit_size);
-        break;
-    case UrdfJointType::Fixed:
-        ConstraintInstance.SetAngularTwistLimit(EAngularConstraintMotion::ACM_Locked, 0.0f);
-        break;
-    default:
-        SP_ASSERT(false); // TODO (MR): support planar joints
-        break;
+        case UrdfJointType::Revolute:
+            SP_ASSERT(joint_desc->lower_ == -joint_desc->upper_); // TODO (MR): support asymmetric limits
+            ConstraintInstance.SetAngularTwistLimit(EAngularConstraintMotion::ACM_Limited, twist_limit_angle);
+            break;
+        case UrdfJointType::Continuous:
+            break;
+        case UrdfJointType::Prismatic:
+            SP_ASSERT(joint_desc->lower_ == -joint_desc->upper_); // TODO (MR): support asymmetric limits
+            ConstraintInstance.SetAngularTwistLimit(EAngularConstraintMotion::ACM_Locked, 0.0f);
+            ConstraintInstance.SetLinearXLimit(ELinearConstraintMotion::LCM_Limited, linear_limit_size);
+            break;
+        case UrdfJointType::Fixed:
+            ConstraintInstance.SetAngularTwistLimit(EAngularConstraintMotion::ACM_Locked, 0.0f);
+            break;
+        default:
+            SP_ASSERT(false); // TODO (MR): support planar joints
+            break;
     }
 
     // Enable position and velocity drives
@@ -150,55 +150,55 @@ void UUrdfJointComponent::initialize(const UrdfJointDesc* joint_desc, UUrdfLinkC
     bool enable_y_drive = false;
     bool enable_z_drive = false;
     switch (joint_desc->control_type_) {
-    case UrdfJointControlType::Position:
-        switch (joint_desc->type_) {
-        case UrdfJointType::Revolute:
-        case UrdfJointType::Continuous:
-            ConstraintInstance.SetOrientationDriveTwistAndSwing(enable_twist_drive, enable_swing_drive);
-        case UrdfJointType::Prismatic:
-            ConstraintInstance.SetLinearPositionDrive(enable_x_drive, enable_y_drive, enable_z_drive);
+        case UrdfJointControlType::Position:
+            switch (joint_desc->type_) {
+                case UrdfJointType::Revolute:
+                case UrdfJointType::Continuous:
+                    ConstraintInstance.SetOrientationDriveTwistAndSwing(enable_twist_drive, enable_swing_drive);
+                case UrdfJointType::Prismatic:
+                    ConstraintInstance.SetLinearPositionDrive(enable_x_drive, enable_y_drive, enable_z_drive);
+                    break;
+                case UrdfJointType::Fixed:
+                    break;
+                default:
+                    SP_ASSERT(false); // TODO (MR): support planar joints
+                    break;
+            }
             break;
-        case UrdfJointType::Fixed:
+        case UrdfJointControlType::Velocity:
+            switch (joint_desc->type_) {
+                case UrdfJointType::Revolute:
+                case UrdfJointType::Continuous:
+                    ConstraintInstance.SetAngularVelocityDriveTwistAndSwing(enable_twist_drive, enable_swing_drive);
+                    break;
+                case UrdfJointType::Prismatic:
+                    ConstraintInstance.SetLinearVelocityDrive(enable_x_drive, enable_y_drive, enable_z_drive);
+                    break;
+                case UrdfJointType::Fixed:
+                    break;
+                default:
+                    SP_ASSERT(false); // TODO (MR): support planar joints
+                    break;
+            }
             break;
-        default:
-            SP_ASSERT(false); // TODO (MR): support planar joints
+        case UrdfJointControlType::PositionAndVelocity:
+            switch (joint_desc->type_) {
+                case UrdfJointType::Revolute:
+                case UrdfJointType::Continuous:
+                    ConstraintInstance.SetOrientationDriveTwistAndSwing(enable_twist_drive, enable_swing_drive);
+                    ConstraintInstance.SetAngularVelocityDriveTwistAndSwing(enable_twist_drive, enable_swing_drive);
+                    break;
+                case UrdfJointType::Prismatic:
+                    ConstraintInstance.SetLinearPositionDrive(enable_x_drive, enable_y_drive, enable_z_drive);
+                    ConstraintInstance.SetLinearVelocityDrive(enable_x_drive, enable_y_drive, enable_z_drive);
+                    break;
+                case UrdfJointType::Fixed:
+                    break;
+                default:
+                    SP_ASSERT(false); // TODO (MR): support planar joints
+                    break;
+            }
             break;
-        }
-        break;
-    case UrdfJointControlType::Velocity:
-        switch (joint_desc->type_) {
-        case UrdfJointType::Revolute:
-        case UrdfJointType::Continuous:
-            ConstraintInstance.SetAngularVelocityDriveTwistAndSwing(enable_twist_drive, enable_swing_drive);
-            break;
-        case UrdfJointType::Prismatic:
-            ConstraintInstance.SetLinearVelocityDrive(enable_x_drive, enable_y_drive, enable_z_drive);
-            break;
-        case UrdfJointType::Fixed:
-            break;
-        default:
-            SP_ASSERT(false); // TODO (MR): support planar joints
-            break;
-        }
-        break;
-    case UrdfJointControlType::PositionAndVelocity:
-        switch (joint_desc->type_) {
-        case UrdfJointType::Revolute:
-        case UrdfJointType::Continuous:
-            ConstraintInstance.SetOrientationDriveTwistAndSwing(enable_twist_drive, enable_swing_drive);
-            ConstraintInstance.SetAngularVelocityDriveTwistAndSwing(enable_twist_drive, enable_swing_drive);
-            break;
-        case UrdfJointType::Prismatic:
-            ConstraintInstance.SetLinearPositionDrive(enable_x_drive, enable_y_drive, enable_z_drive);
-            ConstraintInstance.SetLinearVelocityDrive(enable_x_drive, enable_y_drive, enable_z_drive);
-            break;
-        case UrdfJointType::Fixed:
-            break;
-        default:
-            SP_ASSERT(false); // TODO (MR): support planar joints
-            break;
-        }
-        break;
     }
 
     // Set drive params
@@ -206,31 +206,31 @@ void UUrdfJointComponent::initialize(const UrdfJointDesc* joint_desc, UUrdfLinkC
     float damping = 0.0f;
     float force_limit = 0.0f;
     switch (joint_desc->control_type_) {
-    case UrdfJointControlType::Position:
-    case UrdfJointControlType::Velocity:
-    case UrdfJointControlType::PositionAndVelocity:
-        switch (joint_desc->type_) {
-        case UrdfJointType::Revolute:
-        case UrdfJointType::Continuous:
-            spring = FMath::RadiansToDegrees(joint_desc->spring_) * m_to_cm; // m to cm, rad to deg
-            damping = FMath::RadiansToDegrees(joint_desc->damping_) * m_to_cm; // m to cm, rad to deg
-            force_limit = FMath::RadiansToDegrees(joint_desc->effort_) * m_to_cm; // m to cm, rad to deg
-            ConstraintInstance.SetAngularDriveMode(EAngularDriveMode::TwistAndSwing);
-            ConstraintInstance.SetAngularDriveParams(spring, damping, force_limit);
+        case UrdfJointControlType::Position:
+        case UrdfJointControlType::Velocity:
+        case UrdfJointControlType::PositionAndVelocity:
+            switch (joint_desc->type_) {
+                case UrdfJointType::Revolute:
+                case UrdfJointType::Continuous:
+                    spring = FMath::RadiansToDegrees(joint_desc->spring_) * m_to_cm; // m to cm, rad to deg
+                    damping = FMath::RadiansToDegrees(joint_desc->damping_) * m_to_cm; // m to cm, rad to deg
+                    force_limit = FMath::RadiansToDegrees(joint_desc->effort_) * m_to_cm; // m to cm, rad to deg
+                    ConstraintInstance.SetAngularDriveMode(EAngularDriveMode::TwistAndSwing);
+                    ConstraintInstance.SetAngularDriveParams(spring, damping, force_limit);
+                    break;
+                case UrdfJointType::Prismatic:
+                    spring = joint_desc->spring_ * m_to_cm * m_to_cm; // m to cm applied twice
+                    damping = joint_desc->damping_ * m_to_cm * m_to_cm; // m to cm applied twice
+                    force_limit = joint_desc->effort_ * m_to_cm * m_to_cm; // m to cm applied twice
+                    ConstraintInstance.SetLinearDriveParams(spring, damping, force_limit);
+                    break;
+                case UrdfJointType::Fixed:
+                    break;
+                default:
+                    SP_ASSERT(false); // TODO (MR): support planar joints
+                    break;
+            }
             break;
-        case UrdfJointType::Prismatic:
-            spring = joint_desc->spring_ * m_to_cm * m_to_cm; // m to cm applied twice
-            damping = joint_desc->damping_ * m_to_cm * m_to_cm; // m to cm applied twice
-            force_limit = joint_desc->effort_ * m_to_cm * m_to_cm; // m to cm applied twice
-            ConstraintInstance.SetLinearDriveParams(spring, damping, force_limit);
-            break;
-        case UrdfJointType::Fixed:
-            break;
-        default:
-            SP_ASSERT(false); // TODO (MR): support planar joints
-            break;
-        }
-        break;
     }
 }
 
