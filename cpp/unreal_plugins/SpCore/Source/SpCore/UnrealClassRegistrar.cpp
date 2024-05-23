@@ -72,8 +72,11 @@ void UnrealClassRegistrar::terminate()
 // Spawn actor using a class name instead of template parameters
 //
 
-AActor* UnrealClassRegistrar::spawnActor(const std::string& class_name, UWorld* world, const FVector& location, const FRotator& rotation, const FActorSpawnParameters& spawn_parameters) {
-    return s_spawn_actor_registrar_.call(class_name, world, location, rotation, spawn_parameters);
+AActor* UnrealClassRegistrar::spawnActor(
+    const std::string& class_name, UWorld* world, const FVector& location, const FRotator& rotation, const FActorSpawnParameters& spawn_parameters) {
+    // return s_spawn_actor_registrar_.call(class_name, world, location, rotation, spawn_parameters);
+    UClass* uclass  = LoadClass<UObject>(nullptr, *Unreal::toFString(class_name), nullptr, LOAD_None, nullptr);
+    return world->SpawnActor<AActor>(uclass, FTransform(rotation, location), spawn_parameters);
 }
 
 //
