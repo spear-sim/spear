@@ -29,6 +29,9 @@
         },
         "lamp": {
             "body_type": "static"
+        },
+        "cabinet": {
+            "body_type": "dynamic"
         }
     },
     "actors": {

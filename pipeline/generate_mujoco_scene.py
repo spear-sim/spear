@@ -200,7 +200,8 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
 #
 
 def add_mujoco_elements_for_kinematic_tree_node(
-        actor_name, kinematic_tree_node, meshes_element, parent_element, transform_world_from_parent_node, root_node, color, log_prefix_str):
+        actor_name, kinematic_tree_node, meshes_element, parent_element, transform_world_from_parent_node, root_node, color, log_prefix_str,
+        physics_constraint_component_node=None):
     kinematic_tree_node_name = kinematic_tree_node["name"]
     spear.log(log_prefix_str, "Processing kinematic tree node: ", kinematic_tree_node_name)
 
@@ -228,8 +229,42 @@ def add_mujoco_elements_for_kinematic_tree_node(
         "pos": get_mujoco_pos_str(transform_world_from_parent_node["scale"] * transform_parent_node_from_current_node["location"] + pos_offset),
         "xyaxes": get_mujoco_xyaxes_str(transform_parent_node_from_current_node["rotation"])})
 
-    if body_type == "dynamic" and root_node:
+    if physics_constraint_component_node is not None:
+        joint_transform_matrix_from_parent = physics_constraint_component_node["pipeline_info"]["generate_kinematic_trees"]["transform_current_node_from_current_component"]
+        joint_transform_from_parent = spear.pipeline.get_transform_from_transform_data(
+            physics_constraint_component_node["pipeline_info"]["generate_kinematic_trees"]["transform_current_node_from_current_component"])
+
+        constraint_instance = physics_constraint_component_node["editor_properties"]["constraint_instance"]
+        ConstraintProfileProperties = constraint_instance["editor_properties"]["profile_instance"]
+        linear_limit = ConstraintProfileProperties["editor_properties"]["linear_limit"]
+        twist_limit = ConstraintProfileProperties["editor_properties"]["twist_limit"]
+
+        if twist_limit["editor_properties"]["twist_motion"] == "<AngularConstraintMotion.ACM_LIMITED: 1>":
+            joint_type = "hinge"
+            twist_limit_degrees = twist_limit["editor_properties"]["twist_limit_degrees"]
+            angular_rotation_offset = constraint_instance["editor_properties"]["angular_rotation_offset"]["editor_properties"]["roll"]
+            joint_x_axis = joint_transform_matrix_from_parent["rotation"]["x_plane"]
+            joint_range = f"{-twist_limit_degrees + angular_rotation_offset} {twist_limit_degrees + angular_rotation_offset}"
+        elif linear_limit["editor_properties"]["x_motion"] == "<LinearConstraintMotion.LCM_LIMITED: 1>":
+            joint_type = "slide"
+            joint_x_axis = joint_transform_matrix_from_parent["rotation"]["x_plane"]
+            linear_limit_distance = linear_limit["editor_properties"]["limit"]
+            joint_range = f"{-linear_limit_distance} {linear_limit_distance}"
+        else:
+            spear.log("unknown physics_constraint_component_node")
+            assert False
+
+        joint_element = xml.etree.ElementTree.SubElement(body_element, "joint", attrib={
+            "name": actor_name + ":" + physics_constraint_component_node["name"],
+            "type": joint_type,
+            "axis": f"{joint_x_axis['x']} {joint_x_axis['y']} {joint_x_axis['z']}",
+            "pos": get_mujoco_pos_str(0.1 * joint_transform_from_parent["location"]),
+            "range": joint_range,
+        })
+    elif body_type == "dynamic" and root_node:
         xml.etree.ElementTree.SubElement(body_element, "freejoint")
+    else:
+        pass
 
     if args.color_mode == "unique_color_per_body":
         color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
@@ -275,6 +310,9 @@ def add_mujoco_elements_for_kinematic_tree_node(
 
     # Recurse for each child node.
     for child_kinematic_tree_node in kinematic_tree_node["children_nodes"].values():
+        physics_constraint_component_node = None
+        if "physics_constraint_component" in child_kinematic_tree_node:
+            physics_constraint_component_node = child_kinematic_tree_node['physics_constraint_component']
         add_mujoco_elements_for_kinematic_tree_node(
             actor_name=actor_name,
             kinematic_tree_node=child_kinematic_tree_node["node"],
@@ -283,7 +321,8 @@ def add_mujoco_elements_for_kinematic_tree_node(
             transform_world_from_parent_node=transform_world_from_current_node,
             root_node=False,
             color=color,
-            log_prefix_str=log_prefix_str + "    ")
+            log_prefix_str=log_prefix_str + "    ",
+            physics_constraint_component_node=physics_constraint_component_node)
 
 
 def get_element_str(element):
