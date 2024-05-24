@@ -356,8 +356,8 @@ public:
             [this](
                 const uint64_t& uobject,
                 const uint64_t& ufunction,
-                const std::map<std::string,
-                std::string>& args, const std::string& world_context) -> std::map<std::string, std::string> {
+                const std::map<std::string, std::string>& args,
+                const std::string& world_context) -> std::map<std::string, std::string> {
                 return Unreal::callFunction(world_, reinterpret_cast<UObject*>(uobject), reinterpret_cast<UFunction*>(ufunction), args, world_context);
             });
 
