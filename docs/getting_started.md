@@ -22,11 +22,8 @@ The next step is to install the `spear` Python package as follows.
 
 ```console
 # create environment
-conda create --name spear-env python=3.8
+conda create --name spear-env python=3.9
 conda activate spear-env
-
-# install pip
-conda install -c anaconda pip
 
 # install msgpack-rpc-python separately from other Python dependencies so
 # we can use a specific commit from the msgpack-rpc-python GitHub repository

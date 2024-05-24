@@ -16,7 +16,8 @@ import sys
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--unreal_engine_dir", required=True)    
+    parser.add_argument("--unreal_engine_dir", required=True)
+    parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
     parser.add_argument("--output_dir", required=True)
     parser.add_argument("--version_tag", required=True)
     parser.add_argument("--skip_create_symlinks", action="store_true")
@@ -30,7 +31,9 @@ if __name__ == '__main__':
     else:
         assert os.path.exists(args.perforce_content_dir)
 
-    unreal_project_dir         = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim"))
+    unreal_project_dir = os.path.realpath(args.unreal_project_dir)
+    assert os.path.exists(unreal_project_dir)
+
     uproject                   = os.path.realpath(os.path.join(unreal_project_dir, "SpearSim.uproject"))
     unreal_project_content_dir = os.path.realpath(os.path.join(unreal_project_dir, "Content"))
     output_dir                 = os.path.realpath(args.output_dir)

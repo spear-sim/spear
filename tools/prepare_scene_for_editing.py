@@ -27,6 +27,7 @@ if __name__ == "__main__":
         perforce_content_dir = args.perforce_content_dir
 
     unreal_project_content_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "Content"))
+    assert os.path.exists(unreal_project_content_dir)
 
     # We do not want to use os.path.realpath(...) for the values in this dictionary, because that will resolve
     # to the directory inside the user's Perforce workspace. Instead, we want this path to refer to the symlinked
