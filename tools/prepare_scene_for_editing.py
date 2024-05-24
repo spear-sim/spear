@@ -15,9 +15,6 @@ if __name__ == "__main__":
     parser.add_argument("--remove_symlinks", action="store_true")
     args = parser.parse_args()
 
-    unreal_project_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim"))
-    assert os.path.exists(unreal_project_dir)
-
     # Only check the validity of args.perforce_content_dir if we need to create symlinks to it.
     if not args.remove_symlinks:
         assert args.perforce_content_dir is not None
@@ -29,7 +26,8 @@ if __name__ == "__main__":
     else:
         perforce_content_dir = args.perforce_content_dir
 
-    unreal_project_content_dir = os.path.join(unreal_project_dir, "Content")
+    unreal_project_content_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "Content"))
+    assert os.path.exists(unreal_project_content_dir)
 
     # We do not want to use os.path.realpath(...) for the values in this dictionary, because that will resolve
     # to the directory inside the user's Perforce workspace. Instead, we want this path to refer to the symlinked
