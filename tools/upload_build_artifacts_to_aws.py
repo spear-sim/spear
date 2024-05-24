@@ -46,7 +46,12 @@ if __name__ == "__main__":
 
     for file in files_to_upload:
         assert os.path.exists(file)
-        cmd = ["aws", "s3", "cp", file, aws_dir]
+        cmd = [
+            "aws",
+            "s3",
+            "cp",
+            file,
+            aws_dir]
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
