@@ -95,12 +95,7 @@ if __name__ == "__main__":
             shutil.rmtree(repo_dir, ignore_errors=True)
 
         # clone repo with submodules
-        cmd = [
-            "git",
-            "clone",
-            "--recurse-submodules",
-            "https://github.com/isl-org/spear",
-            repo_dir]
+        cmd = ["git", "clone", "--recurse-submodules", "https://github.com/isl-org/spear", repo_dir]
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
@@ -108,11 +103,7 @@ if __name__ == "__main__":
         if args.commit_id:
             cwd = os.getcwd()
             os.chdir(repo_dir)
-            cmd = [
-                "git",
-                "reset",
-                "--hard",
-                args.commit_id]
+            cmd = ["git", "reset", "--hard", args.commit_id]
             spear.log(f"Executing: {' '.join(cmd)}")
             subprocess.run(cmd, check=True)
             os.chdir(cwd)

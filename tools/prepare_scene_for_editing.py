@@ -11,12 +11,11 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--perforce_content_dir")
-    parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
     parser.add_argument("--scene_id", required=True)
     parser.add_argument("--remove_symlinks", action="store_true")
     args = parser.parse_args()
 
-    unreal_project_dir = os.path.realpath(args.unreal_project_dir)
+    unreal_project_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim"))
     assert os.path.exists(unreal_project_dir)
 
     # Only check the validity of args.perforce_content_dir if we need to create symlinks to it.
