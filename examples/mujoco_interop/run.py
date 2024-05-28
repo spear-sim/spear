@@ -18,9 +18,9 @@ def unreal_rpy_from_mujoco_quaternion(mujoco_quaternion):
 
     # Unreal and scipy.spatial.transform.Rotation have different Euler angle conventions, see python/spear/pipeline.py for details
     scipy_roll, scipy_pitch, scipy_yaw = scipy.spatial.transform.Rotation.from_quat(scipy_quaternion).as_euler("xyz")
-    unreal_roll  = np.rad2deg(-scipy_roll)
+    unreal_roll = np.rad2deg(-scipy_roll)
     unreal_pitch = np.rad2deg(-scipy_pitch)
-    unreal_yaw   = np.rad2deg(scipy_yaw)
+    unreal_yaw = np.rad2deg(scipy_yaw)
 
     return np.array([unreal_roll, unreal_pitch, unreal_yaw])
 
@@ -39,13 +39,20 @@ if __name__ == "__main__":
     # get Unreal actors and functions
     spear_instance.engine_service.begin_tick()
 
-    unreal_actors = spear_instance.unreal_service.find_actors_by_type_as_dict(class_name="AActor")
-    unreal_static_mesh_actors = spear_instance.unreal_service.find_actors_by_type_as_dict(class_name="AStaticMeshActor")
-    unreal_articulated_actors = { unreal_actor_name: unreal_actor for unreal_actor_name, unreal_actor in unreal_actors.items() if unreal_actor_name not in unreal_static_mesh_actors }
-
     unreal_actor_static_class = spear_instance.unreal_service.get_static_class("AActor")
     unreal_set_actor_location_and_rotation_func = spear_instance.unreal_service.find_function_by_name(
         uclass=unreal_actor_static_class, name="K2_SetActorLocationAndRotation")
+    unreal_static_mesh_component_static_class = spear_instance.unreal_service.get_static_class("UStaticMeshComponent")
+    unreal_set_component_location_and_rotation_func = spear_instance.unreal_service.find_function_by_name(
+        uclass=unreal_static_mesh_component_static_class, name="K2_SetRelativeLocationAndRotation")
+
+    unreal_actors = spear_instance.unreal_service.find_actors_by_type_as_dict(class_name="AActor")
+    unreal_static_mesh_actors = spear_instance.unreal_service.find_actors_by_type_as_dict(class_name="AStaticMeshActor")
+    unreal_articulated_actors = {unreal_actor_name: unreal_actor for unreal_actor_name, unreal_actor in unreal_actors.items() if unreal_actor_name not in unreal_static_mesh_actors}
+
+    unreal_articulated_actor_components = {}
+    for unreal_actor_name, unreal_actor in unreal_articulated_actors.items():
+        unreal_articulated_actor_components[unreal_actor_name] = spear_instance.unreal_service.get_components_by_type_as_dict("UStaticMeshComponent", unreal_actor)
 
     spear_instance.engine_service.tick()
     spear_instance.engine_service.end_tick()
@@ -91,12 +98,36 @@ if __name__ == "__main__":
         for unreal_actor_name, unreal_actor in unreal_static_mesh_actors.items():
             # call function for each actor
             args = {
-                "NewLocation" : dict(zip(["X", "Y", "Z"], mj_bodies_xpos[unreal_actor_name + ":StaticMeshComponent0"])),
-                "NewRotation" : dict(zip(["Roll", "Pitch", "Yaw"], unreal_rpy_from_mujoco_quaternion(mj_bodies_xquat[unreal_actor_name + ":StaticMeshComponent0"]))),
-                "bSweep"      : False,
-                "bTeleport"   : True}
+                "NewLocation": dict(zip(["X", "Y", "Z"], mj_bodies_xpos[unreal_actor_name + ":StaticMeshComponent0"])),
+                "NewRotation": dict(zip(["Roll", "Pitch", "Yaw"], unreal_rpy_from_mujoco_quaternion(mj_bodies_xquat[unreal_actor_name + ":StaticMeshComponent0"]))),
+                "bSweep": False,
+                "bTeleport": True}
             spear_instance.unreal_service.call_function(unreal_actor, unreal_set_actor_location_and_rotation_func, args)
+        for unreal_actor_name, unreal_actor in unreal_articulated_actors.items():
 
+            # call function for each actor
+            unreal_actor_root_component_name = unreal_actor_name + ":DefaultSceneRoot"
+            if unreal_actor_root_component_name in mj_bodies_xpos:
+                args = {
+                    "NewLocation": dict(zip(["X", "Y", "Z"], mj_bodies_xpos[unreal_actor_root_component_name])),
+                    "NewRotation": dict(zip(["Roll", "Pitch", "Yaw"], unreal_rpy_from_mujoco_quaternion(mj_bodies_xquat[unreal_actor_root_component_name]))),
+                    "bSweep": False,
+                    "bTeleport": True}
+                spear_instance.unreal_service.call_function(unreal_actor, unreal_set_actor_location_and_rotation_func, args)
+
+            for unreal_component_name, unreal_component in unreal_articulated_actor_components[unreal_actor_name].items():
+                component_full_name = unreal_actor_name + ":DefaultSceneRoot." + unreal_component_name
+                if component_full_name in mj_bodies_xpos:
+                    location = mj_bodies_xpos[component_full_name]
+                    args = {
+                        "NewLocation": dict(zip(["X", "Y", "Z"], mj_bodies_xpos[component_full_name])),
+                        "NewRotation": dict(zip(["Roll", "Pitch", "Yaw"], unreal_rpy_from_mujoco_quaternion(mj_bodies_xquat[component_full_name]))),
+                        "bSweep": False,
+                        "bTeleport": True}
+                    spear_instance.unreal_service.call_function(unreal_component, unreal_set_component_location_and_rotation_func, args)
+                else:
+                    # spear.log("invalid_component=",component_full_name)
+                    pass
         spear_instance.engine_service.tick()
         spear_instance.engine_service.end_tick()
 
