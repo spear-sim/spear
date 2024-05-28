@@ -32,6 +32,9 @@
         },
         "cabinet": {
             "body_type": "dynamic"
+        },
+        "sofa": {
+            "body_type": "dynamic"
         }
     },
     "actors": {
