@@ -1,10 +1,10 @@
 {
     "semantics": {
         "wall": {
-            "convex_decomposition_strategy": "axis_align"
+            "convex_decomposition_strategy": "unreal"
         },
         "floor": {
-            "convex_decomposition_strategy": "axis_align"
+            "convex_decomposition_strategy": "unreal"
         },
         "ceiling": {
             "convex_decomposition_strategy": "none"
@@ -31,7 +31,8 @@
             "body_type": "static"
         },
         "cabinet": {
-            "body_type": "dynamic"
+            "body_type": "dynamic",
+            "convex_decomposition_strategy": "unreal"
         },
         "sofa": {
             "body_type": "dynamic"

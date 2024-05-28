@@ -3,6 +3,7 @@
 #
 
 import argparse
+import copy
 import glob
 import subprocess
 
@@ -14,6 +15,7 @@ import pathlib
 import spear
 import spear.pipeline
 import trimesh
+import open3d as o3d
 
 from pipeline import pipeline_util
 
@@ -28,7 +30,6 @@ physics_constraint_component_classes = ["PhysicsConstraintComponent"]
 
 
 def process_scene():
-
     kinematic_trees_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "kinematic_trees"))
     kinematic_trees_actors_json_file = os.path.realpath(os.path.join(kinematic_trees_dir, "actors.json"))
     assert os.path.exists(kinematic_trees_dir)
@@ -59,7 +60,6 @@ def generate_collision_geometry(actor_name, kinematic_tree):
 
 
 def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tree_node, log_prefix_str):
-
     spear.log(log_prefix_str, "Processing kinematic tree node: ", kinematic_tree_node["name"])
 
     # TODO: retrieve merge_ids from the JSON data, group static_mesh_components by merge_id
@@ -89,10 +89,12 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
         kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["merge_ids"][merge_id]["static_mesh_components"] = \
             static_mesh_components_for_merge_id
 
+        # Run COACD. TODO: retrieve COACD parameters from the JSON data
+        convex_decomposition_strategy = pipeline_util.get_config_value(actor_name, "convex_decomposition_strategy")
+
         # Combine multiple static mesh components that have the same merge_id into a single mesh.
         raw_merge_id_mesh_scene = trimesh.Scene()
         for static_mesh_component_name, static_mesh_component_desc in static_mesh_components_for_merge_id.items():
-
             transform_current_node_from_current_component = \
                 spear.pipeline.get_transform_from_transform_data(
                     static_mesh_component_desc["pipeline_info"]["generate_kinematic_trees"]["transform_current_node_from_current_component"])
@@ -104,7 +106,8 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
 
             obj_path_suffix = os.path.join(*static_mesh_asset_path.parts[4:]) + ".obj"
             numerical_parity_obj_path = \
-                os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_geometry", "numerical_parity", obj_path_suffix))
+                os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_geometry",
+                                              "numerical_parity" if convex_decomposition_strategy != "unreal" else "numerical_parity_collision", obj_path_suffix))
             spear.log(log_prefix_str, "Reading OBJ file: ", numerical_parity_obj_path)
 
             mesh = trimesh.load_mesh(numerical_parity_obj_path, process=False, validate=False)
@@ -121,9 +124,6 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
         raw_merge_id_obj_path = os.path.realpath(os.path.join(raw_obj_dir, f"merge_id_{merge_id:04}.obj"))
         spear.log(log_prefix_str, "Writing OBJ file: ", raw_merge_id_obj_path)
         raw_merge_id_mesh.export(raw_merge_id_obj_path, "obj")
-
-        # Run COACD. TODO: retrieve COACD parameters from the JSON data
-        convex_decomposition_strategy =pipeline_util.get_config_value(actor_name,"convex_decomposition_strategy")
 
         kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["merge_ids"][merge_id][convex_decomposition_strategy] = {}
         kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["merge_ids"][merge_id][convex_decomposition_strategy]["part_ids"] = []
@@ -184,6 +184,34 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
                 filename = os.path.basename(file)
                 coacd_part_id = int(filename.removeprefix("part_id_").removesuffix(".obj"))
                 kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["merge_ids"][merge_id][convex_decomposition_strategy]["part_ids"].append(coacd_part_id)
+        elif convex_decomposition_strategy == "unreal":
+            # Save COACD result as individual parts, and as a combined mesh for debugging.
+            coacd_obj_dir = os.path.realpath(os.path.join(
+                args.pipeline_dir, args.scene_id, "collision_geometry", "unreal", actor_name.replace("/", "."), kinematic_tree_node["name"]))
+            os.makedirs(coacd_obj_dir, exist_ok=True)
+
+            coacd_part_obj_dir = os.path.realpath(os.path.join(coacd_obj_dir, f"merge_id_{merge_id:04}"))
+            os.makedirs(coacd_part_obj_dir, exist_ok=True)
+
+            mesh = o3d.io.read_triangle_mesh(raw_merge_id_obj_path)
+
+            with o3d.utility.VerbosityContextManager(
+                    o3d.utility.VerbosityLevel.Debug) as cm:
+                triangle_clusters, cluster_n_triangles, cluster_area = (
+                    mesh.cluster_connected_triangles())
+            triangle_clusters = np.asarray(triangle_clusters)
+            cluster_n_triangles = np.asarray(cluster_n_triangles)
+            for unreal_part_id in range(0, cluster_n_triangles.shape[0]):
+                unreal_part_mesh = copy.deepcopy(mesh)
+                triangles_to_remove = triangle_clusters != unreal_part_id
+                unreal_part_mesh.remove_triangles_by_mask(triangles_to_remove)
+                unreal_part_mesh.remove_unreferenced_vertices()
+
+                coacd_part_obj_path = os.path.realpath(os.path.join(coacd_part_obj_dir, f"part_id_{unreal_part_id:04}.obj"))
+                spear.log(log_prefix_str, "Writing OBJ file: ", coacd_part_obj_path)
+                o3d.io.write_triangle_mesh(coacd_part_obj_path, unreal_part_mesh)
+                kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["merge_ids"][merge_id][convex_decomposition_strategy]["part_ids"].append(unreal_part_id)
+
         else:
             spear.log("skip unknown convex_decomposition_strategy")
 
