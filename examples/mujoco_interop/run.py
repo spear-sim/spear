@@ -25,6 +25,16 @@ def unreal_rpy_from_mujoco_quaternion(mujoco_quaternion):
     return np.array([unreal_roll, unreal_pitch, unreal_yaw])
 
 
+def compute_camera_transform(cam):
+    rotation = scipy.spatial.transform.Rotation.from_euler("xyz", [0, cam.elevation, cam.azimuth], degrees=True)
+    rotation_matrix = rotation.as_matrix()
+    print(rotation_matrix)
+    cam_location = np.array(cam.lookat) - rotation_matrix[:, 0] * cam.distance
+    cam_rotation = rotation.as_euler("xyz", degrees=True)
+    print("cam_rotation", cam_rotation)
+    return cam_location.tolist(), cam_rotation.tolist()
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -71,10 +81,10 @@ if __name__ == "__main__":
     mj_viewer = mujoco.viewer.launch_passive(mj_model, mj_data)
 
     # initialize MuJoCo camera (not needed when launching the viewer through the command-line, but needed when using launch_passive)
-    mj_viewer.cam.distance = 30.0 * 100.0  # 30 meters * 100 Unreal units per meter
-    mj_viewer.cam.azimuth = 90.0
-    mj_viewer.cam.elevation = -45.0
-    mj_viewer.cam.lookat = np.array([0.0, 0.0, 0.0])
+    # mj_viewer.cam.distance = 30.0 * 100.0  # 30 meters * 100 Unreal units per meter
+    # mj_viewer.cam.azimuth = 90.0
+    # mj_viewer.cam.elevation = -45.0
+    # mj_viewer.cam.lookat = np.array([0.0, 0.0, 0.0])
 
     # initialize MuJoCo viewer options
     mj_viewer.opt.label = mujoco.mjtLabel.mjLABEL_SELECTION
@@ -107,6 +117,18 @@ if __name__ == "__main__":
                 "bTeleport": True}
             spear_instance.unreal_service.call_function(unreal_actor, unreal_set_actor_location_and_rotation_func, args)
 
+        # update camera actors
+        for unreal_actor_name, unreal_actor in unreal_articulated_actors.items():
+            # update root component transform
+            mujoco_actor_root_component_name = unreal_actor_name + ":DefaultSceneRoot"
+            if mujoco_actor_root_component_name not in mj_bodies_xpos:
+                location, rotation = compute_camera_transform(mj_viewer.cam)
+                args = {
+                    "NewLocation": dict(zip(["X", "Y", "Z"], location)),
+                    "NewRotation": dict(zip(["Roll", "Pitch", "Yaw"], rotation)),
+                    "bSweep": False,
+                    "bTeleport": True}
+                spear_instance.unreal_service.call_function(unreal_actor, unreal_set_actor_location_and_rotation_func, args)
         # update articulated actors
         for unreal_actor_name, unreal_actor in unreal_articulated_actors.items():
             # update root component transform
