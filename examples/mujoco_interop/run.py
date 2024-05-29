@@ -25,13 +25,15 @@ def unreal_rpy_from_mujoco_quaternion(mujoco_quaternion):
     return np.array([unreal_roll, unreal_pitch, unreal_yaw])
 
 
+# see https://github.com/google-deepmind/mujoco/blob/195bd32aa6bd9361245e0832f22651df7c44e81d/src/engine/engine_vis_visualize.c#L2133
 def compute_camera_transform(cam):
-    rotation = scipy.spatial.transform.Rotation.from_euler("xyz", [0, cam.elevation, cam.azimuth], degrees=True)
-    rotation_matrix = rotation.as_matrix()
-    print(rotation_matrix)
-    cam_location = np.array(cam.lookat) - rotation_matrix[:, 0] * cam.distance
-    cam_rotation = rotation.as_euler("xyz", degrees=True)
-    print("cam_rotation", cam_rotation)
+    ca = np.cos(cam.azimuth / 180.0 * np.pi)
+    sa = np.sin(cam.azimuth / 180.0 * np.pi)
+    ce = np.cos(cam.elevation / 180.0 * np.pi)
+    se = np.sin(cam.elevation / 180.0 * np.pi)
+    forward = np.array([ce * ca, ce * sa, se])
+    cam_location = np.array(cam.lookat) + forward * (-cam.distance)
+    cam_rotation = np.array([0, cam.elevation, cam.azimuth])
     return cam_location.tolist(), cam_rotation.tolist()
 
 
