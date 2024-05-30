@@ -13,11 +13,10 @@ import time
 
 common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
+
 sys.path.append(common_dir)
 
-
 num_steps = 100
-
 
 if __name__ == "__main__":
 
@@ -36,68 +35,28 @@ if __name__ == "__main__":
     spear.configure_system(config)
     instance = spear.Instance(config)
 
-    # create or get gym object
-    if config.SP_SERVICES.LEGACY_SERVICE.AGENT == "SphereAgent":
-        env = spear.Env(instance, config)
-    elif config.SP_SERVICES.LEGACY_SERVICE.AGENT == "VehicleAgent":
-        env = openbot_env.OpenBotEnv(instance, config)
+    # spawn agent
+    instance.engine_service.begin_tick()
 
-    # reset the simulation to get the first observation
-    obs = env.reset()
+    agent = instance.unreal_service.spawn_actor(
+        class_name="/Game/MyVehiclePawn.MyVehiclePawn_C",
+        location={"X": 0.0, "Y": 0.0, "Z": 100.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}, spawn_parameters={"Name": "Agent"}
+    )
+    spear.log("agent", agent)
 
-    if args.benchmark:
-        start_time_seconds = time.time()
-    else:
-        cv2.imshow("camera.final_color", obs["camera.final_color"]) # note that spear.Env returns BGRA by default
-        cv2.waitKey(0)
+    instance.engine_service.tick()
+    instance.engine_service.end_tick()
 
-    # take a few steps
     for i in range(num_steps):
-        if config.SP_SERVICES.LEGACY_SERVICE.AGENT == "SphereAgent":
-            obs, reward, done, info = env.step(action={
-                "add_force": np.array([10000.0, 0.0, 0.0], dtype=np.float64),
-                "add_to_rotation": np.array([0.0, 1.0, 0.0])
-            })
-            if not args.benchmark:
-                spear.log("SphereAgent:")
-                spear.log("    camera.final_color: ", obs["camera.final_color"].shape, " ", obs["camera.final_color"].dtype)
-                spear.log("    location:           ", obs["location"])
-                spear.log("    rotation:           ", obs["rotation"])
-                spear.log("    reward:             ", reward)
-                spear.log("    done:               ", done)
-                spear.log("    info:               ", info.keys())
-        elif config.SP_SERVICES.LEGACY_SERVICE.AGENT == "VehicleAgent":
-            obs, reward, done, info = env.step(action={"set_duty_cycles": np.array([1.0, 0.715], dtype=np.float64)})
-            if not args.benchmark:
-                spear.log("VehicleAgent:")
-                spear.log("    camera.final_color:    ", obs["camera.final_color"].shape, " ", obs["camera.final_color"].dtype)
-                spear.log("    location:              ", obs["location"])
-                spear.log("    rotation:              ", obs["rotation"])
-                spear.log("    wheel_rotation_speeds: ", obs["wheel_rotation_speeds"])
-                spear.log("    reward:                ", reward)
-                spear.log("    done:                  ", done)
-                spear.log("    info:                  ", info.keys())
-        else:
-            assert False
+        # set updated poses in SPEAR
+        spear.log("frame=", i)
+        instance.engine_service.begin_tick()
 
-        if not args.benchmark:
-            cv2.imshow("camera.final_color", obs["camera.final_color"]) # note that spear.Env returns BGRA by default
-            cv2.waitKey(0)
+        # TODO update transform or apply keyboard actions
 
-        if done:
-            env.reset()
+        instance.engine_service.tick()
+        instance.engine_service.end_tick()
 
-    if args.benchmark:
-        end_time_seconds = time.time()
-        elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log("Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
-    else:
-        cv2.destroyAllWindows()
-
-    # close the environment
-    env.close()
-
-    # close the unreal instance and rpc connection
     instance.close()
 
     spear.log("Done.")
