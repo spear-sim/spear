@@ -12,6 +12,41 @@ import spear
 import subprocess
 import sys
 
+def cook(unreal_editor_bin, uproject, platform):
+    # see https://docs.unrealengine.com/5.2/en-US/SharingAndReleasing/Deployment/Cooking for more information on these parameters
+    cmd = [
+        unreal_editor_bin,
+        uproject,
+        "-run=Cook",
+        "-targetplatform=" + platform,
+        "-unattended",                           # don't require any user input
+        "-iterate",                              # only cook content that needs to be updated
+        "-fileopenlog",                          # generate a log of which files are opened in which order
+        "-ddc=InstalledDerivedDataBackendGraph", # use the default cache location for installed (i.e., not source) builds of the engine
+        "-unversioned",                          # save all of the cooked packages without versions
+        "-stdout",                               # ensure log output is written to the terminal 
+        "-fullstdoutlogoutput",                  # ensure log output is written to the terminal
+        "-nologtimes"                            # don't print timestamps next to log messages twice
+    ]
+    spear.log(f"Executing: {' '.join(cmd)}")
+    subprocess.run(cmd, check=True)
+
+def create_pak(unreal_pak_bin, pak_file, txt_file, platform):
+    # construct command to generate the final pak file
+    cmd = [
+        unreal_pak_bin,
+        pak_file,
+        "-create=" + txt_file,
+        "-platform=" + platform,
+        "-multiprocess",
+        "-compressed"]
+
+    spear.log(f"Executing: {' '.join(cmd)}")
+    subprocess.run(cmd, check=True)
+
+    assert os.path.exists(pak_file)
+    spear.log(f"Successfully built {pak_file}")
+
 
 if __name__ == '__main__':
 
@@ -81,7 +116,7 @@ if __name__ == '__main__':
         assert len(scene_ids) > 0
 
     # Create a symlink to common top-level directories
-    if not args.skip_create_symlinks:        
+    if not args.skip_create_symlinks:
         # We do not want to use os.path.realpath(...) for the values in this dictionary, because that will resolve
         # to the directory inside the user's Perforce workspace. Instead, we want this path to refer to the symlinked
         # version inside the user's Unreal project directory.
@@ -100,14 +135,33 @@ if __name__ == '__main__':
             spear.log(f"Creating symlink: {unreal_project_dir} -> {perforce_dir}")
             os.symlink(perforce_dir, unreal_project_dir)
 
+    # build and package common content's pak file
+    common_txt_file = os.path.realpath(os.path.join(output_dir, "common-" + args.version_tag + "-" + platform + ".txt"))
+    common_pak_file = os.path.realpath(os.path.join(output_dir, "common-" + args.version_tag + "-" + platform + ".pak"))
+
+    common_dirs = [
+        os.path.realpath(os.path.join(unreal_project_cooked_dir, "Engine", "Content")),
+        os.path.realpath(os.path.join(unreal_project_cooked_dir, "Engine", "Plugins")),
+        os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Megascans")),
+        os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "MSPresets"))]
+
+    # cook contents with no scene-specific information
+    cook(unreal_editor_bin, uproject, platform)
+
+    # once cooking is complete, package the cooked contents into a pak file
+    with open(common_txt_file, mode="w") as f:
+        for common_dir in common_dirs:
+            for content_file in glob.glob(os.path.realpath(os.path.join(common_dir, "**", "*.*")), recursive=True):
+                content_file_posix = content_file.replace(ntpath.sep, posixpath.sep)
+                assert content_file_posix.startswith(unreal_project_cooked_dir_posix)
+                mount_file_posix = posixpath.join("..", "..", "..", content_file_posix.replace(unreal_project_cooked_dir_posix + posixpath.sep, ""))
+                f.write(f'"{content_file_posix}" "{mount_file_posix}" "" \n')
+
+    create_pak(unreal_pak_bin, common_pak_file, common_txt_file, platform)
+
     for scene_id in scene_ids:
 
-        pak_dirs = [
-            os.path.realpath(os.path.join(unreal_project_cooked_dir, "Engine", "Content")),
-            os.path.realpath(os.path.join(unreal_project_cooked_dir, "Engine", "Plugins")),
-            os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Megascans")),
-            os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "MSPresets")),
-            os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Scenes", scene_id))]
+        scene_dir = os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Scenes", scene_id))
 
         txt_file = os.path.realpath(os.path.join(output_dir, scene_id + "-" + args.version_tag + "-" + platform + ".txt"))
         pak_file = os.path.realpath(os.path.join(output_dir, scene_id + "-" + args.version_tag + "-" + platform + ".pak"))
@@ -126,54 +180,26 @@ if __name__ == '__main__':
             spear.log(f"Creating symlink: {unreal_project_content_scene_dir} -> {perforce_content_scene_dir}")
             os.symlink(perforce_content_scene_dir, unreal_project_content_scene_dir)
 
-        # Now that we have created a symlink, our Unreal project should contain exactly three scenes: apartment_0000, debug_0000 and scene_id
+        # Now that we have created a symlink, our Unreal project should contain exactly four scenes: apartment_0000, debug_0000, debug_0001 and scene_id
         ignore_names = [".DS_Store"]
         unreal_project_scenes = { os.path.basename(x) for x in os.listdir(unreal_project_content_scenes_dir) if x not in ignore_names }
         assert unreal_project_scenes == {"apartment_0000", "debug_0000", "debug_0001", scene_id}
 
-        # see https://docs.unrealengine.com/5.2/en-US/SharingAndReleasing/Deployment/Cooking for more information on these parameters
-        cmd = [
-            unreal_editor_bin,
-            uproject,
-            "-run=Cook",
-            "-targetplatform=" + platform,
-            "-unattended",                           # don't require any user input
-            "-iterate",                              # only cook content that needs to be updated
-            "-fileopenlog",                          # generate a log of which files are opened in which order
-            "-ddc=InstalledDerivedDataBackendGraph", # use the default cache location for installed (i.e., not source) builds of the engine
-            "-unversioned",                          # save all of the cooked packages without versions
-            "-stdout",                               # ensure log output is written to the terminal 
-            "-fullstdoutlogoutput",                  # ensure log output is written to the terminal
-            "-nologtimes"                            # don't print timestamps next to log messages twice
-        ]
-        spear.log(f"Executing: {' '.join(cmd)}")
-        subprocess.run(cmd, check=True)
+        # cook with the updated scene contents
+        cook(unreal_editor_bin, uproject, platform)
 
         # create the output_dir
         os.makedirs(output_dir, exist_ok=True)
 
         with open(txt_file, mode="w") as f:
-            for pak_dir in pak_dirs:
-                for content_file in glob.glob(os.path.realpath(os.path.join(pak_dir, "**", "*.*")), recursive=True):
-                    content_file_posix = content_file.replace(ntpath.sep, posixpath.sep)
-                    assert content_file_posix.startswith(unreal_project_cooked_dir_posix)
-                    mount_file_posix = posixpath.join("..", "..", "..", content_file_posix.replace(unreal_project_cooked_dir_posix + posixpath.sep, ""))
-                    f.write(f'"{content_file_posix}" "{mount_file_posix}" "" \n')
+            for content_file in glob.glob(os.path.realpath(os.path.join(scene_dir, "**", "*.*")), recursive=True):
+                content_file_posix = content_file.replace(ntpath.sep, posixpath.sep)
+                assert content_file_posix.startswith(unreal_project_cooked_dir_posix)
+                mount_file_posix = posixpath.join("..", "..", "..", content_file_posix.replace(unreal_project_cooked_dir_posix + posixpath.sep, ""))
+                f.write(f'"{content_file_posix}" "{mount_file_posix}" "" \n')
 
-        # construct command to generate the final pak file
-        cmd = [
-            unreal_pak_bin,
-            pak_file,
-            "-create=" + txt_file,
-            "-platform=" + platform,
-            "-multiprocess",
-            "-compressed"]
-
-        spear.log(f"Executing: {' '.join(cmd)}")
-        subprocess.run(cmd, check=True)
-
-        assert os.path.exists(pak_file)
-        spear.log(f"Successfully built {pak_file}")
+        # create paks
+        create_pak(unreal_pak_bin, pak_file, txt_file, platform)
 
         if not args.skip_create_symlinks:
             spear.log(f"Removing symlink: {unreal_project_content_scene_dir}")
