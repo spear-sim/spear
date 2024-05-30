@@ -160,8 +160,8 @@ std::map<std::string, ArrayDesc> SphereAgent::getActionSpace() const
 
     if (Std::contains(action_components, "add_force")) {
         ArrayDesc array_desc;
-        array_desc.low_      = -10000; // std::numeric_limits < double> ::lowest();
-        array_desc.high_     = 10000; // std::numeric_limits<double>::max();
+        array_desc.low_      = -1; // std::numeric_limits < double> ::lowest();
+        array_desc.high_     = 1; // std::numeric_limits<double>::max();
         array_desc.shape_ = {3};
         array_desc.datatype_ = DataType::Float64;
         Std::insert(action_space, "add_force", std::move(array_desc));
@@ -169,8 +169,8 @@ std::map<std::string, ArrayDesc> SphereAgent::getActionSpace() const
 
     if (Std::contains(action_components, "add_to_rotation")) {
         ArrayDesc array_desc;
-        array_desc.low_      = -10000; // std::numeric_limits < double> ::lowest();
-        array_desc.high_     = 10000;  // std::numeric_limits<double>::max();
+        array_desc.low_      = -1; // std::numeric_limits < double> ::lowest();
+        array_desc.high_     = 1;  // std::numeric_limits<double>::max();
         array_desc.shape_ = {3};
         array_desc.datatype_ = DataType::Float64;
         Std::insert(action_space, "add_to_rotation", std::move(array_desc));

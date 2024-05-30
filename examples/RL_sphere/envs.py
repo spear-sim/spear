@@ -27,21 +27,22 @@ class BaseEnv(gym.Env):
         spear.log("try action_space")
         self.action_space = self._env.action_space
         self.observation_space = self._env.observation_space
-        print("self.action_space",self.action_space)
-        print("self.observation_space",self.observation_space)
+        print("self.action_space", self.action_space)
+        print("self.observation_space", self.observation_space)
         spear.log("__init__ Done.")
 
-    def reset(self,):
+    def reset(self):
         obs = self._env.reset()
         return self._transform_observation(obs)
         # return {}
+
     # def reset(self, *, seed=None, options=None):
     #     obs = self._env.reset()
     #     # return self._transform_observation(obs)
     #     return {}
 
     def step(self, action):
-        print("step",action)
+        print("step", action)
         obs, reward, done, info = self._env.step(action)
         truncated = False
         print(reward, done, info)
@@ -67,8 +68,8 @@ class PhysicalObservationEnv(BaseEnv):
     def _set_spaces(self):
         self.action_space = self._env.action_space
         self.observation_space = self._env.observation_space
-        print("self.action_space",self.action_space)
-        print("self.action_space",self.observation_space)
+        print("self.action_space", self.action_space)
+        print("self.action_space", self.observation_space)
 
     def _transform_observation(self, obs):
         return obs

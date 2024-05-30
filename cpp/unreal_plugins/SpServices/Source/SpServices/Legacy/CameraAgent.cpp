@@ -101,8 +101,8 @@ std::map<std::string, ArrayDesc> CameraAgent::getActionSpace() const
 
     if (Std::contains(action_components, "set_location")) {
         ArrayDesc array_desc;
-        array_desc.low_ = std::numeric_limits<float>::lowest();
-        array_desc.high_ = std::numeric_limits<float>::max();
+        array_desc.low_      = -10000; // std::numeric_limits < double> ::lowest();
+        array_desc.high_     = 10000;  // std::numeric_limits<double>::max();
         array_desc.shape_ = {3};
         array_desc.datatype_ = DataType::Float64;
         Std::insert(action_space, "set_location", std::move(array_desc));
@@ -110,8 +110,8 @@ std::map<std::string, ArrayDesc> CameraAgent::getActionSpace() const
 
     if (Std::contains(action_components, "set_rotation")) {
         ArrayDesc array_desc;
-        array_desc.low_ = std::numeric_limits<float>::lowest();
-        array_desc.high_ = std::numeric_limits<float>::max();
+        array_desc.low_      = -10000; // std::numeric_limits < double> ::lowest();
+        array_desc.high_     = 10000;  // std::numeric_limits<double>::max();
         array_desc.shape_ = {3};
         array_desc.datatype_ = DataType::Float64;
         Std::insert(action_space, "set_rotation", std::move(array_desc));
