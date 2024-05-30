@@ -160,8 +160,8 @@ std::map<std::string, ArrayDesc> SphereAgent::getActionSpace() const
 
     if (Std::contains(action_components, "add_force")) {
         ArrayDesc array_desc;
-        array_desc.low_ = std::numeric_limits<double>::lowest();
-        array_desc.high_ = std::numeric_limits<double>::max();
+        array_desc.low_      = -10000; // std::numeric_limits < double> ::lowest();
+        array_desc.high_     = 10000; // std::numeric_limits<double>::max();
         array_desc.shape_ = {3};
         array_desc.datatype_ = DataType::Float64;
         Std::insert(action_space, "add_force", std::move(array_desc));
@@ -169,8 +169,8 @@ std::map<std::string, ArrayDesc> SphereAgent::getActionSpace() const
 
     if (Std::contains(action_components, "add_to_rotation")) {
         ArrayDesc array_desc;
-        array_desc.low_ = std::numeric_limits<double>::lowest();
-        array_desc.high_ = std::numeric_limits<double>::max();
+        array_desc.low_      = -10000; // std::numeric_limits < double> ::lowest();
+        array_desc.high_     = 10000;  // std::numeric_limits<double>::max();
         array_desc.shape_ = {3};
         array_desc.datatype_ = DataType::Float64;
         Std::insert(action_space, "add_to_rotation", std::move(array_desc));
@@ -186,8 +186,8 @@ std::map<std::string, ArrayDesc> SphereAgent::getObservationSpace() const
 
     if (Std::contains(observation_components, "location")) {
         ArrayDesc array_desc;
-        array_desc.low_ = std::numeric_limits<double>::lowest();
-        array_desc.high_ = std::numeric_limits<double>::max();
+        array_desc.low_      = -10000; // std::numeric_limits < double> ::lowest();
+        array_desc.high_     = 10000;  // std::numeric_limits<double>::max();
         array_desc.shape_ = {3};
         array_desc.datatype_ = DataType::Float64;
         Std::insert(observation_space, "location", std::move(array_desc));
@@ -195,8 +195,8 @@ std::map<std::string, ArrayDesc> SphereAgent::getObservationSpace() const
 
     if (Std::contains(observation_components, "rotation")) {
         ArrayDesc array_desc;
-        array_desc.low_ = std::numeric_limits<double>::lowest();
-        array_desc.high_ = std::numeric_limits<double>::max();
+        array_desc.low_      = -10000; // std::numeric_limits < double> ::lowest();
+        array_desc.high_     = 10000;  // std::numeric_limits<double>::max();
         array_desc.shape_ = {3};
         array_desc.datatype_ = DataType::Float64;
         Std::insert(observation_space, "rotation", std::move(array_desc));
@@ -216,8 +216,8 @@ std::map<std::string, ArrayDesc> SphereAgent::getStepInfoSpace() const
 
     if (Std::contains(step_info_components, "debug")) {
         ArrayDesc array_desc;
-        array_desc.low_ = std::numeric_limits<double>::lowest();
-        array_desc.high_ = std::numeric_limits<double>::max();
+        array_desc.low_      = -10000; // std::numeric_limits < double> ::lowest();
+        array_desc.high_     = 10000;  // std::numeric_limits<double>::max();
         array_desc.shape_ = {-1, 3};
         array_desc.datatype_ = DataType::Float64;
         Std::insert(step_info_space, "debug", std::move(array_desc));

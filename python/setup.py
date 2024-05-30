@@ -14,9 +14,9 @@ setuptools.setup(
     install_requires=[
         "coacd==1.0.0",
         "ffmpeg-python==0.2.0",
-        "gym==0.23.0",
+        "gym==0.26.0",
         "matplotlib==3.6.2",
-        "mayavi==4.8.1",
+        # "mayavi==4.8.1",
         "mujoco==3.1.3",
         "numpy==1.22.3",
         "opencv-python==4.5.5.64",
@@ -24,8 +24,9 @@ setuptools.setup(
         "psutil==5.9.0",
         "pyglet==1.5.0",
         "scipy==1.10.1",
-        "tensorflow==2.13.0",
+        # "tensorflow==2.13.0",
         "trimesh[easy]==4.1.4",
-        "vtk==9.2.6",
-        "wxPython==4.2.1",
-        "yacs==0.1.8"])
+        # "vtk==9.2.6",
+        # "wxPython==4.2.1",
+        "yacs==0.1.8"
+    ])

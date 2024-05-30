@@ -19,18 +19,31 @@ class BaseEnv(gym.Env):
             user_config_files=[
                 os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml")),
                 os.path.realpath(os.path.join(common_dir, "default_config.common.yaml"))])
-
-        spear.configure_system(env_config)
-        self._instance = spear.Instance(env_config)
+        self._config = config
+        spear.configure_system(config)
+        self._instance = spear.Instance(config)
         self._env = spear.Env(self._instance, config)
 
-    def reset(self):
+        spear.log("try action_space")
+        self.action_space = self._env.action_space
+        self.observation_space = self._env.observation_space
+        print("self.action_space",self.action_space)
+        print("self.observation_space",self.observation_space)
+        spear.log("__init__ Done.")
+
+    def reset(self,):
         obs = self._env.reset()
         return self._transform_observation(obs)
+        # return {}
+    # def reset(self, *, seed=None, options=None):
+    #     obs = self._env.reset()
+    #     # return self._transform_observation(obs)
+    #     return {}
 
     def step(self, action):
-        print(action)
+        print("step",action)
         obs, reward, done, info = self._env.step(action)
+        truncated = False
         print(reward, done, info)
         return self._transform_observation(obs), reward, done, info
 
@@ -41,7 +54,7 @@ class BaseEnv(gym.Env):
         # close the unreal instance and rpc connection
         self._instance.close()
 
-        spear.log("Done.")
+        spear.log("close Done.")
 
     def _set_spaces(self):
         assert False
@@ -54,6 +67,8 @@ class PhysicalObservationEnv(BaseEnv):
     def _set_spaces(self):
         self.action_space = self._env.action_space
         self.observation_space = self._env.observation_space
+        print("self.action_space",self.action_space)
+        print("self.action_space",self.observation_space)
 
     def _transform_observation(self, obs):
         return obs

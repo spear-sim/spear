@@ -23,6 +23,7 @@
 #include <UObject/NameTypes.h>       // FName
 #include <UObject/Object.h>          // UObject
 #include <UObject/UnrealType.h>      // FProperty
+#include "Kismet/GameplayStatics.h"
 
 #include "SpCore/Assert.h"
 #include "SpCore/Std.h"
@@ -329,12 +330,13 @@ public:
     static std::vector<TReturnAsActor*> findActorsByName(const UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found = true)
     {
         std::vector<TReturnAsActor*> actors;
-        std::map<std::string, TReturnAsActor*> actor_map = toMap(findActorsByType<TActor, TReturnAsActor>(world));
-        if (return_null_if_not_found) {
-            actors = Std::at(actor_map, names, nullptr);
-        } else {
-            auto names_found_in_actor_map = Std::toVector<std::string>(names | std::views::filter([&actor_map](const auto& name) { return Std::containsKey(actor_map, name); }));
-            actors = Std::at(actor_map, names_found_in_actor_map);
+        std::vector<TReturnAsActor*> all_actors = findActorsByType<TActor, TReturnAsActor>(world);
+        if (names.size() > 0) {
+            for (TReturnAsActor* actor : all_actors) {
+                if (actor->GetName() == Unreal::toFString(names[0])) {
+                    actors.push_back(actor);
+                }
+            }
         }
         return actors;
     }

@@ -211,7 +211,6 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
                 spear.log(log_prefix_str, "Writing OBJ file: ", coacd_part_obj_path)
                 o3d.io.write_triangle_mesh(coacd_part_obj_path, unreal_part_mesh)
                 kinematic_tree_node["pipeline_info"]["generate_collision_geometry"]["merge_ids"][merge_id][convex_decomposition_strategy]["part_ids"].append(unreal_part_id)
-
         else:
             spear.log("skip unknown convex_decomposition_strategy")
 

@@ -27,6 +27,7 @@
 #include "SpServices/Legacy/NavMesh.h"
 #include "SpServices/Legacy/NullAgent.h"
 #include "SpServices/Legacy/NullTask.h"
+#include "SpServices/Legacy/PointGoalNavTask.h"
 #include "SpServices/Legacy/SphereAgent.h"
 #include "SpServices/Legacy/Task.h"
 #include "SpServices/Legacy/UrdfRobotAgent.h"
@@ -163,6 +164,8 @@ void LegacyService::worldBeginPlayHandler()
             task_ = std::make_unique<NullTask>();
         } else if (Config::get<std::string>("SP_SERVICES.LEGACY_SERVICE.TASK") == "ImitationLearningTask") {
             task_ = std::make_unique<ImitationLearningTask>(world_);
+        } else if (Config::get<std::string>("SP_SERVICES.LEGACY_SERVICE.TASK") == "PointGoalNavTask") {
+            task_ = std::make_unique<PointGoalNavTask>(world_);
         } else {
             SP_ASSERT(false);
         }
