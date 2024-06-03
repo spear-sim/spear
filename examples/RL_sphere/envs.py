@@ -15,10 +15,7 @@ sys.path.append(common_dir)
 
 class BaseEnv(gym.Env):
     def __init__(self, env_config):
-        config = spear.get_config(
-            user_config_files=[
-                os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml")),
-                os.path.realpath(os.path.join(common_dir, "default_config.common.yaml"))])
+        config = env_config['config']
         self._config = config
         spear.configure_system(config)
         self._instance = spear.Instance(config)
@@ -45,7 +42,10 @@ class BaseEnv(gym.Env):
         print("step", action)
         obs, reward, done, info = self._env.step(action)
         truncated = False
-        print(reward, done, info)
+        print("obs", obs)
+        print("reward", reward)
+        print("done", done)
+        print("info", info)
         return self._transform_observation(obs), reward, done, info
 
     def close(self):
