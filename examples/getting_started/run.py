@@ -5,6 +5,8 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import argparse
+import json
+
 import cv2
 import numpy as np
 import os
@@ -48,6 +50,10 @@ if __name__ == "__main__":
     unreal_actor_static_class = instance.unreal_service.get_static_class("AActor")
     unreal_set_actor_location_and_rotation_func = instance.unreal_service.find_function_by_name(
         uclass=unreal_actor_static_class, name="K2_SetActorLocationAndRotation")
+    unreal_get_actor_location_func = instance.unreal_service.find_function_by_name(
+        uclass=unreal_actor_static_class, name="K2_GetActorLocation")
+    unreal_get_actor_rotation_func = instance.unreal_service.find_function_by_name(
+        uclass=unreal_actor_static_class, name="K2_GetActorRotation")
 
     instance.engine_service.tick()
     instance.engine_service.end_tick()
@@ -55,8 +61,10 @@ if __name__ == "__main__":
     dummy_img = np.zeros([512, 512, 3])
     cv2.imshow('img', dummy_img)
 
-    agent_location = np.array([0, 0, 0])
+    current_location = np.array([0, 0, 0])
+    current_rotation = np.array([0, 0, 0])
     speed = 10
+    rotation_speed = 1
     if agent == 0:
         spear.log("spawn agent failed")
         args.num_steps = 0
@@ -68,14 +76,22 @@ if __name__ == "__main__":
 
         # TODO update transform or apply keyboard actions
         transform_args = {
-            "NewLocation": dict(zip(["X", "Y", "Z"], agent_location.tolist())),
-            "NewRotation": dict(zip(["Roll", "Pitch", "Yaw"], [0, 0, 0])),
+            "NewLocation": dict(zip(["X", "Y", "Z"], current_location.tolist())),
+            "NewRotation": dict(zip(["Roll", "Pitch", "Yaw"], current_rotation.tolist())),
             "bSweep": False,
             "bTeleport": True}
         instance.unreal_service.call_function(agent, unreal_set_actor_location_and_rotation_func, transform_args)
+
+        current_location = instance.unreal_service.call_function(agent, unreal_get_actor_location_func)['ReturnValue']
+        current_rotation = instance.unreal_service.call_function(agent, unreal_get_actor_rotation_func)['ReturnValue']
+        current_location = json.loads(current_location)
+        current_location = np.array([current_location['x'], current_location['y'], current_location['z']])
+        current_rotation = json.loads(current_rotation)
+        current_rotation = np.array([current_rotation['roll'], current_rotation['yaw'], current_rotation['pitch']])
         instance.engine_service.tick()
         instance.engine_service.end_tick()
-
+        print("current_location", current_location)
+        print("current_rotation", current_rotation)
         cv2.imshow('img', dummy_img)
         k = cv2.waitKey(10)
 
@@ -85,18 +101,21 @@ if __name__ == "__main__":
             elif k == -1:  # normally -1 returned,so don't print it
                 pass
             elif k == ord('w'):
-                agent_location += np.array([1, 0, 0]) * speed
+                current_location += np.array([1, 0, 0]) * speed
             elif k == ord('s'):
-                agent_location += np.array([-1, 0, 0]) * speed
+                current_location += np.array([-1, 0, 0]) * speed
             elif k == ord('a'):
-                agent_location += np.array([0, -1, 0]) * speed
+                current_location += np.array([0, -1, 0]) * speed
             elif k == ord('d'):
-                agent_location += np.array([0, 1, 0]) * speed
+                current_location += np.array([0, 1, 0]) * speed
+            elif k == ord('z'):
+                current_rotation += np.array([0, 0, -1]) * rotation_speed
+            elif k == ord('c'):
+                current_rotation += np.array([0, 0, 1]) * rotation_speed
             else:
                 pass
         else:
-            agent_location += np.array([1, 0, 0]) * speed
-
+            current_rotation += np.array([1, 0, 0]) * speed
 
     instance.close()
 
