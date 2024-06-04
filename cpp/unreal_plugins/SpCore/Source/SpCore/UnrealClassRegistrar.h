@@ -686,23 +686,23 @@ public:
 
     //
     // The functions below are required to support the getStaticStruct<T>() method in cases where an otherwise
-    // well-formed struct type doesn't define a StaticStruct() method, as is the case with FRotator and FVector.
-    // See the following file for more examples of similar special struct types:
+    // well-formed struct type doesn't define a StaticStruct() method, as is the case with FRotator and
+    // FVector. See the following file for more examples of similar special struct types:
     //     Engine/Source/CoreUObject/Public/UObject/NoExportTypes.h
     //
-    // For the getStaticStruct<T>() method to behave as expected for a type T, the type must meet the following
-    // conditions. First, the type needs to be registered by calling registerSpecialStruct<T>(...) before calling
-    // getStaticStruct<T>(). If the type is registered by UStruct*, then there are no other requirements. If the
-    // type is registered by name, then getStaticStruct<T>() will call Unreal::findSpecialStructByName(...)
+    // For the getStaticStruct<T>() method to behave as expected for a type T, the type must meet the
+    // following conditions. First, the type needs to be registered by calling registerSpecialStruct<T>(...)
+    // before calling getStaticStruct<T>(). If the type is registered by UStruct*, then there are no other
+    // requirements. If the type is registered by name, then getStaticStruct<T>() will call Unreal::findSpecialStructByName(...)
     // internally to find the appropriate UStruct*. For a type to be visible to Unreal::findSpecialStructByName(...),
-    // ASpCoreActor must define a UPROPERTY of type T that is named according to a particular naming convention.
-    // When a type no longer needs to be visible to getStaticStruct<T>(), it should be unregistered by calling
-    // UnrealClassRegistrar::unregisterSpecialStruct<T>().
+    // the ASpecialStructActor class must define a UPROPERTY of type T that is named according to a
+    // particular naming convention. When a type no longer needs to be visible to getStaticStruct<T>(), it
+    // should be unregistered by calling UnrealClassRegistrar::unregisterSpecialStruct<T>().
     // 
-    // Registering special structs by name is more convenient because it doesn't require the caller to obtain a
-    // valid UStruct*, and can therefore be done any time during a program's execution. On the other hand,
-    // registering special structs by UStruct* is is more flexible because it enables the caller to register
-    // special structs that are not registered by default in this class.
+    // Registering special structs by name is more convenient because it doesn't require the caller to obtain
+    // a valid UStruct*, but it requires ASpecialStructActor to have defined the appropriate UPROPERTY. On
+    // the other hand, registering special structs by UStruct* is is more flexible because it enables the
+    // caller to register special structs that are not present in ASpecialStructActor.
     //
 
     template <typename TSpecialStruct> requires (!CStruct<TSpecialStruct>)
@@ -728,7 +728,7 @@ public:
     static void unregisterSpecialStruct()
     {
         std::string type_id_string = getTypeIdString<TSpecialStruct>();
-        SP_ASSERT(Std::containsKey(s_special_struct_names_, type_id_string) + Std::containsKey(s_special_structs_, type_id_string) == 1);
+        SP_ASSERT(Std::containsKey(s_special_struct_names_, type_id_string) || Std::containsKey(s_special_structs_, type_id_string));
         if (Std::containsKey(s_special_struct_names_, type_id_string)) {
             Std::remove(s_special_struct_names_, type_id_string);
         }
@@ -747,7 +747,7 @@ public:
     static UStruct* getStaticStruct()
     {
         std::string type_id_string = getTypeIdString<TSpecialStruct>();
-        SP_ASSERT(Std::containsKey(s_special_struct_names_, type_id_string) + Std::containsKey(s_special_structs_, type_id_string) == 1);
+        SP_ASSERT(Std::containsKey(s_special_struct_names_, type_id_string) || Std::containsKey(s_special_structs_, type_id_string));
         if (Std::containsKey(s_special_struct_names_, type_id_string)) {
             std::string name = s_special_struct_names_.at(type_id_string);
             return Unreal::findSpecialStructByName(name);

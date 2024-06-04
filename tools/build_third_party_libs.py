@@ -75,40 +75,21 @@ if __name__ == "__main__":
 
     if sys.platform == "win32":
 
-        cmd = [
-            "bootstrap.bat"]
+        cmd = ["bootstrap.bat"]
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
-        cmd = [
-            "b2",
-            "headers"]
+        cmd = ["b2", "headers"]
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
-    elif sys.platform == "darwin":
+    elif sys.platform in ["darwin", "linux"]:
 
-        cmd = [
-            "./bootstrap.sh"]
+        cmd = ["./bootstrap.sh"]
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
-        cmd = [
-            "./b2",
-            "headers"]
-        spear.log(f"Executing: {' '.join(cmd)}")
-        subprocess.run(cmd, check=True)
-
-    elif sys.platform == "linux":
-
-        cmd = [
-            "./bootstrap.sh"]
-        spear.log(f"Executing: {' '.join(cmd)}")
-        subprocess.run(cmd, check=True)
-
-        cmd = [
-            "./b2",
-            "headers"]
+        cmd = ["./b2", "headers"]
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
@@ -137,21 +118,13 @@ if __name__ == "__main__":
             "cmake",
             "-DCMAKE_C_COMPILER=" + c_compiler,
             "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
-            "-DCMAKE_BUILD_TYPE=Release",
             "-DCMAKE_CXX_FLAGS=" + cxx_flags,
             os.path.join("..", "..")]
 
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
-        cmd = [
-            "cmake",
-            "--build",
-            ".",
-            "--config",
-            "Release",
-            "-j",
-            f"{args.num_parallel_jobs}"]
+        cmd = ["cmake", "--build", ".", "--config", "Release", "-j", f"{args.num_parallel_jobs}"]
 
     elif sys.platform == "darwin":
 
@@ -159,7 +132,6 @@ if __name__ == "__main__":
             "cmake",
             "-DCMAKE_C_COMPILER=" + c_compiler,
             "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
-            "-DCMAKE_BUILD_TYPE=Release",
             "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64",
             "-DCMAKE_CXX_FLAGS=" + cxx_flags,
             os.path.join("..", "..")]
@@ -167,12 +139,7 @@ if __name__ == "__main__":
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
-        cmd = [
-            "cmake",
-            "--build",
-            ".",
-            "-j",
-            f"{args.num_parallel_jobs}"]
+        cmd = ["cmake", "--build", ".", "--config", "Release", "-j", f"{args.num_parallel_jobs}"]
 
     elif sys.platform == "linux":
 
@@ -180,7 +147,6 @@ if __name__ == "__main__":
             "cmake",
             "-DCMAKE_C_COMPILER=" + c_compiler,
             "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
-            "-DCMAKE_BUILD_TYPE=Release" ,
             "-DCMAKE_CXX_FLAGS=" + cxx_flags,
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
             os.path.join("..", "..")]
@@ -188,12 +154,7 @@ if __name__ == "__main__":
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
-        cmd = [
-            "cmake",
-            "--build",
-            ".",
-            "-j",
-            f"{args.num_parallel_jobs}"]
+        cmd = ["cmake", "--build", ".", "--config", "Release", "-j", f"{args.num_parallel_jobs}"]
 
     else:
         assert False
@@ -224,21 +185,13 @@ if __name__ == "__main__":
             "cmake",
             "-DCMAKE_C_COMPILER=" + c_compiler,
             "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
-            "-DCMAKE_BUILD_TYPE=Release",
             "-DCMAKE_CXX_FLAGS=" + cxx_flags,
             os.path.join("..", "..")]
 
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
-        cmd = [
-            "cmake",
-            "--build",
-            ".",
-            "--config",
-            "Release",
-            "-j",
-            "{0}".format(args.num_parallel_jobs)]
+        cmd = ["cmake", "--build", ".", "--config", "Release", "-j", f"{args.num_parallel_jobs}"]
 
     elif sys.platform == "darwin":
 
@@ -246,7 +199,6 @@ if __name__ == "__main__":
             "cmake",
             "-DCMAKE_C_COMPILER=" + c_compiler,
             "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
-            "-DCMAKE_BUILD_TYPE=Release",
             "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64",
             "-DCMAKE_CXX_FLAGS=" + cxx_flags,
             os.path.join("..", "..")]
@@ -254,12 +206,7 @@ if __name__ == "__main__":
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
-        cmd = [
-            "cmake",
-            "--build",
-            ".",
-            "-j",
-            f"{args.num_parallel_jobs}"]
+        cmd = ["cmake", "--build", ".", "--config", "Release", "-j", f"{args.num_parallel_jobs}"]
 
     elif sys.platform == "linux":
 
@@ -267,7 +214,6 @@ if __name__ == "__main__":
             "cmake",
             "-DCMAKE_C_COMPILER=" + c_compiler,
             "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
-            "-DCMAKE_BUILD_TYPE=Release" ,
             "-DCMAKE_CXX_FLAGS=" + cxx_flags,
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
             os.path.join("..", "..")]
@@ -275,12 +221,7 @@ if __name__ == "__main__":
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
-        cmd = [
-            "cmake",
-            "--build",
-            ".",
-            "-j",
-            f"{args.num_parallel_jobs}"]
+        cmd = ["cmake", "--build", ".", "--config", "Release", "-j", f"{args.num_parallel_jobs}"]
 
     else:
         assert False
@@ -289,4 +230,5 @@ if __name__ == "__main__":
     subprocess.run(cmd, check=True)
 
     spear.log("Built yaml-cpp successfully.")
+
     spear.log("Done.")
