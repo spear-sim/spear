@@ -25,6 +25,7 @@ if __name__ == "__main__":
     parser.add_argument("--agent_class", default="/Game/Agents/BP_SimpleAgentPawn.BP_SimpleAgentPawn_C")
     parser.add_argument("--num_steps", default=10000)
     parser.add_argument("--keyboard", default=True)
+    parser.add_argument("--use_force", default=True)
     args = parser.parse_args()
 
     np.set_printoptions(linewidth=200)
@@ -43,9 +44,17 @@ if __name__ == "__main__":
 
     agent = instance.unreal_service.spawn_actor(
         class_name=args.agent_class,
-        location={"X": 0.0, "Y": 0.0, "Z": 100.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}, spawn_parameters={"Name": "Agent"}
+        location={"X": 0.0, "Y": 0.0, "Z": 0.0},
+        rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
+        spawn_parameters={"Name": "Agent", "SpawnCollisionHandlingOverride": "AlwaysSpawn"}
     )
     spear.log("agent", agent)
+    if agent == 0:
+        spear.log("spawn agent failed")
+        instance.close()
+        exit()
+
+    root_component = instance.unreal_service.get_component_by_name("UStaticMeshComponent", agent, "StaticMeshComponent")
 
     unreal_actor_static_class = instance.unreal_service.get_static_class("AActor")
     unreal_set_actor_location_and_rotation_func = instance.unreal_service.find_function_by_name(
@@ -55,67 +64,84 @@ if __name__ == "__main__":
     unreal_get_actor_rotation_func = instance.unreal_service.find_function_by_name(
         uclass=unreal_actor_static_class, name="K2_GetActorRotation")
 
+    unreal_static_mesh_static_class = instance.unreal_service.get_static_class("UStaticMeshComponent")
+    unreal_add_force_func = instance.unreal_service.find_function_by_name(
+        uclass=unreal_static_mesh_static_class, name="AddForce")
+
+    gameplay_statics_class = instance.unreal_service.get_static_class(class_name="UGameplayStatics")
+    gameplay_statics_default_object = instance.unreal_service.get_default_object(uclass=gameplay_statics_class, create_if_needed=False)
+    set_game_paused_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_class, name="SetGamePaused")
+
     instance.engine_service.tick()
     instance.engine_service.end_tick()
 
     dummy_img = np.zeros([512, 512, 3])
     cv2.imshow('img', dummy_img)
 
+    action = np.array([0, 0, 0])
     current_location = np.array([0, 0, 0])
     current_rotation = np.array([0, 0, 0])
-    speed = 10
-    rotation_speed = 1
-    if agent == 0:
-        spear.log("spawn agent failed")
-        args.num_steps = 0
+    scale = 100
 
     for i in range(args.num_steps):
         # set updated poses in SPEAR
         spear.log("frame=", i)
         instance.engine_service.begin_tick()
+        instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
 
-        # TODO update transform or apply keyboard actions
-        transform_args = {
-            "NewLocation": dict(zip(["X", "Y", "Z"], current_location.tolist())),
-            "NewRotation": dict(zip(["Roll", "Pitch", "Yaw"], current_rotation.tolist())),
-            "bSweep": False,
-            "bTeleport": True}
-        instance.unreal_service.call_function(agent, unreal_set_actor_location_and_rotation_func, transform_args)
+        # apply action
+        if args.use_force:
+            add_force_args = {
+                "Force": dict(zip(["X", "Y", "Z"], action.tolist()))
+            }
+            instance.unreal_service.call_function(root_component, unreal_add_force_func, add_force_args)
+            action = np.array([0, 0, 0])
+        else:
+            update_location = current_location + action
+            transform_args = {
+                "NewLocation": dict(zip(["X", "Y", "Z"], update_location.tolist())),
+                "NewRotation": dict(zip(["Roll", "Pitch", "Yaw"], current_rotation.tolist())),
+                "bSweep": False,
+                "bTeleport": True}
+            instance.unreal_service.call_function(agent, unreal_set_actor_location_and_rotation_func, transform_args)
+
+        instance.engine_service.tick()
 
         current_location = instance.unreal_service.call_function(agent, unreal_get_actor_location_func)['ReturnValue']
-        current_rotation = instance.unreal_service.call_function(agent, unreal_get_actor_rotation_func)['ReturnValue']
         current_location = json.loads(current_location)
         current_location = np.array([current_location['x'], current_location['y'], current_location['z']])
+        print("current_location", current_location)
+
+        current_rotation = instance.unreal_service.call_function(agent, unreal_get_actor_rotation_func)['ReturnValue']
         current_rotation = json.loads(current_rotation)
         current_rotation = np.array([current_rotation['roll'], current_rotation['yaw'], current_rotation['pitch']])
-        instance.engine_service.tick()
-        instance.engine_service.end_tick()
-        print("current_location", current_location)
         print("current_rotation", current_rotation)
+
+        # TODO get image obs
         cv2.imshow('img', dummy_img)
         k = cv2.waitKey(10)
 
+        # generate action
         if args.keyboard:
             if k == 27:  # Esc key to stop
                 break
             elif k == -1:  # normally -1 returned,so don't print it
                 pass
             elif k == ord('w'):
-                current_location += np.array([1, 0, 0]) * speed
+                action += np.array([1, 0, 0]) * scale
             elif k == ord('s'):
-                current_location += np.array([-1, 0, 0]) * speed
+                action += np.array([-1, 0, 0]) * scale
             elif k == ord('a'):
-                current_location += np.array([0, -1, 0]) * speed
+                action += np.array([0, -1, 0]) * scale
             elif k == ord('d'):
-                current_location += np.array([0, 1, 0]) * speed
-            elif k == ord('z'):
-                current_rotation += np.array([0, 0, -1]) * rotation_speed
-            elif k == ord('c'):
-                current_rotation += np.array([0, 0, 1]) * rotation_speed
+                action += np.array([0, 1, 0]) * scale
             else:
                 pass
         else:
-            current_rotation += np.array([1, 0, 0]) * speed
+            action += np.array([1, 0, 0]) * scale
+
+        instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
+        instance.engine_service.end_tick()
 
     instance.close()
 

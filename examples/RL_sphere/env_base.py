@@ -25,6 +25,13 @@ class SimpleEnv(gym.Env):
         self._instance = spear.Instance(self._config)
 
         self._instance.engine_service.begin_tick()
+        self._gameplay_statics_class = self._instance.unreal_service.get_static_class(class_name="UGameplayStatics")
+        self._gameplay_statics_default_object = self._instance.unreal_service.get_default_object(uclass=self._gameplay_statics_class, create_if_needed=False)
+        self._set_game_paused_func = self._instance.unreal_service.find_function_by_name(uclass=self._gameplay_statics_class, name="SetGamePaused")
+        self._instance.engine_service.tick()
+        self._instance.engine_service.end_tick()
+
+        self.begin_frame()
 
         # spawn agent
         self._agent = SimpleAgent(self._instance)
@@ -32,16 +39,27 @@ class SimpleEnv(gym.Env):
         self.observation_space = self._agent.get_observation_space()
 
         self._instance.engine_service.tick()
-        self._instance.engine_service.end_tick()
+
+        self.end_frame()
 
         self._goal = np.array([10, 0, 0])
+        self._step = 0
 
         spear.log("self.action_space", self.action_space)
         spear.log("self.observation_space", self.observation_space)
         spear.log("__init__ Done.")
 
-    def reset(self):
+    def begin_frame(self):
         self._instance.engine_service.begin_tick()
+        self._instance.unreal_service.call_function(uobject=self._gameplay_statics_default_object, ufunction=self._set_game_paused_func, args={"bPaused": False})
+        pass
+
+    def end_frame(self):
+        self._instance.unreal_service.call_function(uobject=self._gameplay_statics_default_object, ufunction=self._set_game_paused_func, args={"bPaused": True})
+        self._instance.engine_service.end_tick()
+
+    def reset(self):
+        self.begin_frame()
 
         self._agent.reset()
 
@@ -49,14 +67,15 @@ class SimpleEnv(gym.Env):
 
         obs = self._agent.get_observation()
 
-        self._instance.engine_service.end_tick()
+        self.end_frame()
 
+        self._step = 0
         spear.log("reset Done.")
         return obs
 
     def step(self, action):
 
-        self._instance.engine_service.begin_tick()
+        self.begin_frame()
 
         current_obs = self._agent.get_observation()
         self._agent.apply_action(action)
@@ -65,7 +84,7 @@ class SimpleEnv(gym.Env):
 
         obs = self._agent.get_observation()
 
-        self._instance.engine_service.end_tick()
+        self.end_frame()
 
         distance = np.linalg.norm(obs['location'] - self._goal)
         reward = - distance
@@ -83,6 +102,10 @@ class SimpleEnv(gym.Env):
         if reward > 0:
             # print("SUCC!")
             spear.log("SUCC", obs['location'], action, reward, done, info)
+        if self._step % 100 == 0 or done:
+            print("step", self._step, obs, action, reward, done, info)
+
+        self._step += 1
         return obs, reward, done, info
 
     def close(self):
