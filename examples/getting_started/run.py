@@ -12,6 +12,7 @@ import numpy as np
 import os
 import spear
 import time
+import mmap
 
 common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
@@ -116,29 +117,42 @@ if __name__ == "__main__":
         current_location = instance.unreal_service.call_function(agent, unreal_get_actor_location_func)['ReturnValue']
         current_location = json.loads(current_location)
         current_location = np.array([current_location['x'], current_location['y'], current_location['z']])
-        print("current_location", current_location)
+        # print("current_location", current_location)
 
         current_rotation = instance.unreal_service.call_function(agent, unreal_get_actor_rotation_func)['ReturnValue']
         current_rotation = json.loads(current_rotation)
         current_rotation = np.array([current_rotation['roll'], current_rotation['yaw'], current_rotation['pitch']])
-        print("current_rotation", current_rotation)
+        # print("current_rotation", current_rotation)
 
         instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
 
-        rgb_data = instance.unreal_service.call_function(uobject=camera_sensor_component, ufunction=unreal_get_observation_func)['ReturnValue']
-        rgb_data = json.loads(rgb_data)
-        img = np.zeros([512, 512, 4])
-        i = 0
-        for x in range(0, 512):
-            for y in range(0, 512):
-                val = rgb_data[x * 512 + y]
-                img[x, y, :] = np.array([val['b'], val['g'], val['r'], val['a']]) / 255.0
-                i += 1
-        print("rgb_data", rgb_data)
+        return_value = instance.rpc_client.call("cpp_func_service.call_func", camera_sensor_component, "camera_sensor.camera", {})
+        # print('return_value', return_value)
+
+        return_shared_memory = instance.rpc_client.call("cpp_func_service.get_shared_memory_views", camera_sensor_component)
+        print('return_shared_memory', return_shared_memory)
+        num_bytes = return_shared_memory['final_color']['num_bytes_']
+        id = return_shared_memory['final_color']['id_']
+        shared_memory_object = mmap.mmap(-1, num_bytes, id)
+        shared_memory_array = np.ndarray(
+            shape=(-1,), dtype=np.uint8, buffer=shared_memory_object)
+        print("shared_memory_array", shared_memory_array[0:10])
+
+
+        # rgb_data = instance.unreal_service.call_function(uobject=camera_sensor_component, ufunction=unreal_get_observation_func)['ReturnValue']
+        # rgb_data = json.loads(rgb_data)
+        # img = np.zeros([512, 512, 4])
+        # i = 0
+        # for x in range(0, 512):
+        #     for y in range(0, 512):
+        #         val = rgb_data[x * 512 + y]
+        #         img[x, y, :] = np.array([val['b'], val['g'], val['r'], val['a']]) / 255.0
+        #         i += 1
+
         instance.engine_service.end_tick()
 
         # TODO get image obs
-        cv2.imshow('img', img)
+        cv2.imshow('img', dummy_img)
         k = cv2.waitKey(10)
 
         # generate action

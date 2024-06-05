@@ -30,17 +30,12 @@ struct RenderPassDesc
     int height_    = -1;
     int num_bytes_ = -1;
 
-    // only used if SIMULATION_CONTROLLER.CAMERA_SENSOR.USE_SHARED_MEMORY is set to True
-    std::string shared_memory_name_; // externally visible name
-    std::string shared_memory_id_;   // ID used to manage the shared memory resource internally
-    std::unique_ptr<SharedMemoryRegion> shared_memory_region_;
+    std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
 };
 
 // We need meta=(BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
-UCLASS(ClassGroup     = "SPEAR",
-       HideCategories = (Rendering, Tags, Activation, Cooking, Physics, LOD, AssetUserData, Collision),
-       meta           = (BlueprintSpawnableComponent))
-class SPCORE_API UCameraSensorComponent : public UCppFuncComponent
+UCLASS(ClassGroup = "SPEAR", HideCategories = (Rendering, Activation, Cooking, Physics, LOD, AssetUserData, Collision), meta = (BlueprintSpawnableComponent))
+class SPCORE_API UCameraSensorComponent : public USceneComponent
 {
     GENERATED_BODY()
 public:
@@ -52,6 +47,12 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "SPEAR", meta = (DisplayName = "get observation", ScriptName = "getObservation"))
     TArray<FColor> getObservation() const;
+
+    // TODO
     UCameraComponent* camera_component_;
+
     std::map<std::string, RenderPassDesc> render_pass_descs_;
+
+    UPROPERTY(EditAnywhere,  Category = "SPEAR", DisplayName = "Debug string")
+    UCppFuncComponent* cpp_component_;
 };

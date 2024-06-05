@@ -62,6 +62,32 @@ const std::map<std::string, DataType> RENDER_PASS_CHANNEL_DATATYPE = {
 
 UCameraSensorComponent::UCameraSensorComponent()
 {
+    cpp_component_ = Unreal::createComponentInsideOwnerConstructor<UCppFuncComponent>(this, "cpp_component");
+    cpp_component_->registerFunc("camera_sensor.camera", [this](CppFuncPackage& args) -> CppFuncPackage {
+        CppFuncData<uint8_t> hello("hello");
+        CppFuncData<double> my_data("my_data");
+
+        hello.setData("Hello World!");
+        my_data.setData({1.0, 2.0, 3.0});
+
+        CppFuncData<uint8_t> shared_data("shared_data");
+        RenderPassDesc& render_pass_desc = render_pass_descs_["final_color"];
+        //auto shared_memory_region_       = render_pass_desc.shared_memory_region_;
+        auto& view = render_pass_desc.shared_memory_region_->getView();
+        shared_data.setData("final_color", view, render_pass_desc.num_bytes_);
+        char* data = reinterpret_cast<char*>(view.data_);
+        data[0]    = 'h';
+        data[1]    = 'e';
+        data[2]    = 'l';
+        data[3]    = 'l';
+        data[4]    = 'o';
+        
+
+        // Return CppFuncData objects.
+        CppFuncPackage return_values;
+        return_values.items_ = CppFuncUtils::moveDataToItems({hello.getPtr(), my_data.getPtr(), shared_data.getPtr()});
+        return return_values;
+    });
 }
 
 UCameraSensorComponent::~UCameraSensorComponent()
@@ -123,55 +149,15 @@ void UCameraSensorComponent::setup(UCameraComponent* camera_component)
         }
 
         // create shared_memory_object
-        if (Config::get<bool>("SP_SERVICES.LEGACY.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
-            render_pass_desc.shared_memory_name_ = "camera." + render_pass_name;
+        render_pass_desc.shared_memory_region_ = std::make_unique<SharedMemoryRegion>(render_pass_desc.num_bytes_);
+        SP_ASSERT(render_pass_desc.shared_memory_region_);
 
-#if BOOST_OS_WINDOWS
-            int shared_memory_num_bytes            = 1024;
-            render_pass_desc.shared_memory_region_ = std::make_unique<SharedMemoryRegion>(shared_memory_num_bytes);
-            SP_ASSERT(render_pass_desc.shared_memory_region_);
-            CppFuncSharedMemoryView shared_memory_view(render_pass_desc.shared_memory_region_->getView(),
-                                                       CppFuncSharedMemoryUsageFlags::Arg | CppFuncSharedMemoryUsageFlags::ReturnValue);
-            registerSharedMemoryView(render_pass_desc.shared_memory_name_, shared_memory_view);
-
-#elif BOOST_OS_MACOS || BOOST_OS_LINUX
-            render_pass_desc.shared_memory_id_ = "/" + render_pass_desc.shared_memory_name_; // use leading slash on macOS and Linux
-            boost::interprocess::shared_memory_object::remove(render_pass_desc.shared_memory_id_.c_str());
-            boost::interprocess::shared_memory_object shared_memory_object(boost::interprocess::create_only, render_pass_desc.shared_memory_id_.c_str(),
-                                                                           boost::interprocess::read_write);
-            shared_memory_object.truncate(render_pass_desc.num_bytes_);
-            render_pass_desc.shared_memory_mapped_region_ = boost::interprocess::mapped_region(shared_memory_object, boost::interprocess::read_write);
-#else
-#error
-#endif
-        }
+        CppFuncSharedMemoryView shared_memory_view(render_pass_desc.shared_memory_region_->getView(), CppFuncSharedMemoryUsageFlags::ReturnValue);
+        cpp_component_->registerSharedMemoryView(render_pass_name, shared_memory_view);
 
         // update render_pass_descs_
         Std::insert(render_pass_descs_, render_pass_name, std::move(render_pass_desc));
     }
-
-    registerFunc("hello_world.camera", [this](CppFuncPackage& args) -> CppFuncPackage {
-        // Store the Unreal data in a CppFuncData object to efficiently return it to Python.
-        // Here we use shared memory for the most efficient possible communication.
-        CppFuncPackage return_values;
-        for (auto& [render_pass_name, render_pass_desc] : render_pass_descs_) {
-
-            CppFuncData<uint8_t> unreal_data(render_pass_desc.shared_memory_name_);
-            unreal_data.setData("my_shared_memory", render_pass_desc.shared_memory_region_->getView(), render_pass_desc.num_bytes_);
-
-            TArray<FColor> dummy_observation;
-            dummy_observation.SetNum(render_pass_desc.width_ * render_pass_desc.height_);
-
-            FTextureRenderTargetResource* texture_render_target_resource =
-                render_pass_desc.scene_capture_component_2d_->TextureTarget->GameThread_GetRenderTargetResource();
-            SP_ASSERT(texture_render_target_resource);
-            texture_render_target_resource->ReadPixelsPtr(static_cast<FColor*>(render_pass_desc.shared_memory_region_->getView().data_));
-
-            return_values.items_ = CppFuncUtils::moveDataToItems({unreal_data.getPtr()});
-        }
-        // Return CppFuncData objects.
-        return return_values;
-    });
 }
 
 TArray<FColor> UCameraSensorComponent::getObservation() const
