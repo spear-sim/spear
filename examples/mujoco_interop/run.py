@@ -125,6 +125,7 @@ if __name__ == "__main__":
             mujoco_actor_root_component_name = unreal_actor_name + ":DefaultSceneRoot"
             if mujoco_actor_root_component_name not in mj_bodies_xpos:
                 location, rotation = compute_camera_transform(mj_viewer.cam)
+                print("step", location, rotation)
                 args = {
                     "NewLocation": dict(zip(["X", "Y", "Z"], location)),
                     "NewRotation": dict(zip(["Roll", "Pitch", "Yaw"], rotation)),

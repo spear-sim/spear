@@ -38,7 +38,7 @@
         },
         {
             "Name": "SpServices",
-            "Enabled": false
+            "Enabled": true
         },
         {
             "Name": "UrdfRobot",

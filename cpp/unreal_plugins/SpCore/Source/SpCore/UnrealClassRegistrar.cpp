@@ -20,6 +20,8 @@
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 
+#include "SpCore/CameraSensorComponent.h"
+
 class FLinkerInstancingContext;
 class UClass;
 class UObject;
@@ -40,6 +42,9 @@ void UnrealClassRegistrar::initialize()
     registerActorClass<AActor>("AActor");
     registerActorClass<AStaticMeshActor>("AStaticMeshActor");
     registerComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
+    registerComponentClass<UStaticMeshComponent>("USceneComponent");
+    registerComponentClass<UStaticMeshComponent>("UActorComponent");
+    registerComponentClass<UCameraSensorComponent>("UCameraSensorComponent");
     registerClass<UGameplayStatics>("UGameplayStatics");
     registerClass<UMaterial>("UMaterial");
     registerClass<UMaterialInterface>("UMaterialInterface");
@@ -57,6 +62,9 @@ void UnrealClassRegistrar::terminate()
     unregisterActorClass<AActor>("AActor");
     unregisterActorClass<AStaticMeshActor>("AStaticMeshActor");
     unregisterComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
+    unregisterComponentClass<UStaticMeshComponent>("USceneComponent");
+    unregisterComponentClass<UStaticMeshComponent>("UActorComponent");
+    unregisterComponentClass<UCameraSensorComponent>("UCameraSensorComponent");
     unregisterClass<UGameplayStatics>("UGameplayStatics");
     unregisterClass<UMaterial>("UMaterial");
     unregisterClass<UMaterialInterface>("UMaterialInterface");

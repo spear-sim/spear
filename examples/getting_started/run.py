@@ -54,6 +54,12 @@ if __name__ == "__main__":
         instance.close()
         exit()
 
+    camera_sensor_component = instance.unreal_service.get_component_by_type("UCameraSensorComponent", agent)
+    camera_sensor_component_class = instance.unreal_service.get_class(camera_sensor_component)
+    print("camera_sensor_component_class", camera_sensor_component_class)
+    unreal_get_observation_func = instance.unreal_service.find_function_by_name(uclass=camera_sensor_component_class, name="getObservation")
+    print("unreal_get_observation_func", unreal_get_observation_func)
+
     root_component = instance.unreal_service.get_component_by_name("UStaticMeshComponent", agent, "StaticMeshComponent")
 
     unreal_actor_static_class = instance.unreal_service.get_static_class("AActor")
@@ -118,10 +124,21 @@ if __name__ == "__main__":
         print("current_rotation", current_rotation)
 
         instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
+
+        rgb_data = instance.unreal_service.call_function(uobject=camera_sensor_component, ufunction=unreal_get_observation_func)['ReturnValue']
+        rgb_data = json.loads(rgb_data)
+        img = np.zeros([512, 512, 4])
+        i = 0
+        for x in range(0, 512):
+            for y in range(0, 512):
+                val = rgb_data[x * 512 + y]
+                img[x, y, :] = np.array([val['b'], val['g'], val['r'], val['a']]) / 255.0
+                i += 1
+        print("rgb_data", rgb_data)
         instance.engine_service.end_tick()
 
         # TODO get image obs
-        cv2.imshow('img', dummy_img)
+        cv2.imshow('img', img)
         k = cv2.waitKey(10)
 
         # generate action
@@ -142,7 +159,6 @@ if __name__ == "__main__":
                 pass
         else:
             action += np.array([1, 0, 0]) * scale
-
 
     instance.close()
 
