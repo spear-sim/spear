@@ -19,7 +19,7 @@ sys.path.append(common_dir)
 
 
 def random_position():
-    pos = np.random.rand(3,)
+    pos = np.random.rand(3, )
     pos = pos / np.linalg.norm(pos) * 20
     return pos
 
@@ -46,11 +46,12 @@ class SimpleEnv2(gym.Env):
         obs = {
             "location": self._current_location,
         }
+        self._step = 0
         print("reset Done.", self._current_location)
         return obs
 
     def step(self, action):
-        self._current_location += action['add_to_location']
+        self._current_location += action['add_to_location'] / np.linalg.norm(action['add_to_location'])
         obs = {
             "location": self._current_location,
         }
@@ -64,9 +65,10 @@ class SimpleEnv2(gym.Env):
         if distance > 100:
             done = True
         info = {}
+        if self._step % 100 == 0 or done:
+            print("step",self._step, obs, action, reward, done, info)
 
-        print("step", obs, action, reward, done, info)
-
+        self._step += 1
         return obs, reward, done, info
 
     def close(self):
