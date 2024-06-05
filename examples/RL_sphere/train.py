@@ -2,18 +2,18 @@ import argparse
 import os
 import psutil
 from ray import tune
-from yacs.config import CfgNode
 import spear
 
 from envs import PhysicalObservationEnv, VisualObservationEnv
 from model import get_model_config_conv, get_model_config_fc
 from env_base import SimpleEnv
+from env_base_simple import SimpleEnv2
 
 common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--observation_mode", default="simple")
+    parser.add_argument("--observation_mode", default="simple2")
     parser.add_argument("--resume", action="store_true", default=False)
     parser.add_argument("--run_name")
     args = parser.parse_args()
@@ -29,7 +29,9 @@ if __name__ == "__main__":
     spear.configure_system(config)
     if args.observation_mode == "simple":
         env = SimpleEnv
-        model_config = get_model_config_fc()
+        # model_config = get_model_config_fc()
+    elif args.observation_mode == "simple2":
+        env = SimpleEnv2
     elif args.observation_mode == "physical":
         env = PhysicalObservationEnv
         model_config = get_model_config_fc()
@@ -44,20 +46,19 @@ if __name__ == "__main__":
     ray_config = {
         "env": env,
         "num_workers": 1,
-        "num_gpus":0,
+        # "num_gpus":0,
         "env_config": env_config,
-        "model": model_config,
+        # "model": model_config,
         "framework": "torch",
         "disable_env_checking": True,
-        "simple_optimizer":True,
-        "log_level":"INFO"
+        "log_level":"INFO",
     }
 
     experiment_analysis = tune.run(
         "PPO",
-        stop={"episode_reward_mean": 90.0},
+        stop={"episode_reward_mean": 800.0},
         config=ray_config,
-        checkpoint_freq=1,
+        checkpoint_freq=10,
         checkpoint_at_end=True,
         log_to_file=True,
         resume=args.resume,
@@ -65,5 +66,6 @@ if __name__ == "__main__":
     )
 
     assert experiment_analysis.get_last_checkpoint() is not None
+    print("experiment_analysis.get_last_checkpoint()",experiment_analysis.get_last_checkpoint())
 
-    print("\n\n\nLast checkpoint: " + experiment_analysis.get_last_checkpoint() + "\n\n\n")
+    print("\n\n\nLast checkpoint: " + str(experiment_analysis.get_last_checkpoint()) + "\n\n\n")
