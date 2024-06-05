@@ -37,16 +37,18 @@ UStableNameComponent::~UStableNameComponent()
     void UStableNameComponent::requestUpdate()
     {
         AActor* actor = GetOwner();
-        SP_ASSERT(actor);
 
-        // This method will not update the stable name of any actor spawned at runtime. Any such actor
-        // needs to update its stable name via Unreal::setStableName(...).
-        if (!actor->HasAnyFlags(RF_Transient)) {
-            FName folder_path = actor->GetFolderPath();
-            if (folder_path.IsNone()) {
-                StableName = Unreal::toFString(Unreal::toStdString(actor->GetActorLabel()));
-            } else {
-                StableName = Unreal::toFString(Unreal::toStdString(folder_path) + "/" + Unreal::toStdString(actor->GetActorLabel()));
+        // skip update if no actor - maybe in BP loading stage
+        if (actor) {
+            // This method will not update the stable name of any actor spawned at runtime. Any such actor
+            // needs to update its stable name via Unreal::setStableName(...).
+            if (!actor->HasAnyFlags(RF_Transient)) {
+                FName folder_path = actor->GetFolderPath();
+                if (folder_path.IsNone()) {
+                    StableName = Unreal::toFString(Unreal::toStdString(actor->GetActorLabel()));
+                } else {
+                    StableName = Unreal::toFString(Unreal::toStdString(folder_path) + "/" + Unreal::toStdString(actor->GetActorLabel()));
+                }
             }
         }
     }

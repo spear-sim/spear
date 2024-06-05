@@ -117,6 +117,9 @@ if __name__ == "__main__":
         current_rotation = np.array([current_rotation['roll'], current_rotation['yaw'], current_rotation['pitch']])
         print("current_rotation", current_rotation)
 
+        instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
+        instance.engine_service.end_tick()
+
         # TODO get image obs
         cv2.imshow('img', dummy_img)
         k = cv2.waitKey(10)
@@ -140,8 +143,6 @@ if __name__ == "__main__":
         else:
             action += np.array([1, 0, 0]) * scale
 
-        instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
-        instance.engine_service.end_tick()
 
     instance.close()
 
