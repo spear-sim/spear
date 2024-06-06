@@ -13,8 +13,6 @@
 #include <Containers/UnrealString.h> // FString
 #include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS
 
-#include "SpCore/ArrayDesc.h"
-#include "SpCore/Boost.h"
 #include "SpCore/CppFuncComponent.h"
 
 #include "CameraSensorComponent.generated.h"
@@ -33,7 +31,7 @@ struct RenderPassDesc
     std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
 };
 
-// We need meta=(BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
+// Wrapper for CameraComponent to return render image to python
 UCLASS(ClassGroup = "SPEAR", HideCategories = (Rendering, Activation, Cooking, Physics, LOD, AssetUserData, Collision), meta = (BlueprintSpawnableComponent))
 class SPCORE_API UCameraSensorComponent : public USceneComponent
 {
@@ -43,7 +41,10 @@ public:
     ~UCameraSensorComponent();
 
     UFUNCTION(BlueprintCallable, Category = "SPEAR", meta = (DisplayName = "setup", ScriptName = "setup"))
-    void setup(UCameraComponent* camera_component);
+    void setup(UCameraComponent* camera_component, TArray<FString> render_pass_names, int width, int height, float fov);
+    UFUNCTION(BlueprintCallable, Category = "SPEAR", meta = (DisplayName = "setup0", ScriptName = "setup0"))
+    void setup0(TArray<FString> render_pass_names, int width, int height, float fov);
+
 
     UFUNCTION(BlueprintCallable, Category = "SPEAR", meta = (DisplayName = "get observation", ScriptName = "getObservation"))
     TArray<FColor> getObservation() const;
@@ -53,6 +54,6 @@ public:
 
     std::map<std::string, RenderPassDesc> render_pass_descs_;
 
-    UPROPERTY(EditAnywhere,  Category = "SPEAR", DisplayName = "Debug string")
+    UPROPERTY(EditAnywhere, Category = "SPEAR", DisplayName = "Debug string")
     UCppFuncComponent* cpp_component_;
 };

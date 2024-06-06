@@ -79,15 +79,12 @@ public:
         post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &CppFuncService::postWorldInitializationHandler);
         world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &CppFuncService::worldCleanupHandler);
 
-        unreal_entry_point_binder->bindFuncUnreal("cpp_func_service", "call_func", [this](const std::string& func_name, const CppFuncServicePackage& args) -> CppFuncServicePackage {
+        unreal_entry_point_binder->bindFuncUnreal("cpp_func_service", "call_func", [this](const uint64_t& uobject, const std::string& func_name, const CppFuncServicePackage& args) -> CppFuncServicePackage {
             SP_ASSERT(world_);
 
-            // TODO: make the object ptr an input to this function
-            UObject* uobject = ASpCppFuncServiceDebugActor::StaticClass()->GetDefaultObject();
-            SP_ASSERT(uobject);
-
             // get CppFuncComponent and shared memory views
-            UCppFuncComponent* cpp_func_component = getCppFuncComponent(uobject);
+            UCppFuncComponent* cpp_func_component = getCppFuncComponent(reinterpret_cast<UObject*>(uobject));
+            SP_ASSERT(cpp_func_component);
             const std::map<std::string, CppFuncSharedMemoryView>& inner_shared_memory_views = cpp_func_component->getSharedMemoryViews();
 
             // prepare args
@@ -104,15 +101,11 @@ public:
             return return_values;
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("cpp_func_service", "get_shared_memory_views", [this]() -> std::map<std::string, CppFuncServiceSharedMemoryView> {
+        unreal_entry_point_binder->bindFuncUnreal("cpp_func_service", "get_shared_memory_views", [this](const uint64_t& uobject) -> std::map<std::string, CppFuncServiceSharedMemoryView> {
             SP_ASSERT(world_);
 
-            // TODO: make the object ptr an input to this function
-            UObject* uobject = ASpCppFuncServiceDebugActor::StaticClass()->GetDefaultObject();
-            SP_ASSERT(uobject);
-
             // get CppFuncComponent and shared memory views
-            UCppFuncComponent* cpp_func_component = getCppFuncComponent(uobject);
+            UCppFuncComponent* cpp_func_component                                           = getCppFuncComponent(reinterpret_cast<UObject*>(uobject));
             const std::map<std::string, CppFuncSharedMemoryView>& inner_shared_memory_views = cpp_func_component->getSharedMemoryViews();
             std::map<std::string, CppFuncServiceSharedMemoryView> shared_memory_views = CppFuncServiceUtils::toServiceSharedMemoryViews(inner_shared_memory_views);
 

@@ -19,10 +19,9 @@
 #include <Materials/MaterialInstanceDynamic.h>
 #include <UObject/UObjectGlobals.h> // LoadObject, NewObject
 
-#include "SpCore/ArrayDesc.h" // DataType
+#include "SpCore/ArrayDesc.h"
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
-#include "SpCore/Config.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 
@@ -32,83 +31,87 @@ struct FLinearColor;
 // Unfortunately, Unreal's ReadPixels functions all assume 4 channels of output. For greater efficiency, we could
 // potentially combine depth and/or world-space position and/or normal data into a single rendering pass. Similarly,
 // we could also combine segmentation data and instance data into a single pass.
-const std::map<std::string, int> RENDER_PASS_NUM_CHANNELS = {{"depth", 4}, {"final_color", 4}, {"normal", 4}, {"segmentation", 4}};
+const std::map<std::string, int> RENDER_PASS_NUM_CHANNELS = {
+    {"depth", 4}, 
+    {"final_color", 4}, 
+    {"normal", 4}, 
+    {"segmentation", 4}
+};
 
-const std::map<std::string, int> RENDER_PASS_NUM_BYTES_PER_CHANNEL = {{"depth", 4}, {"final_color", 1}, {"normal", 4}, {"segmentation", 1}};
+const std::map<std::string, int> RENDER_PASS_NUM_BYTES_PER_CHANNEL = {
+    {"depth", 4}, 
+    {"final_color", 1}, 
+    {"normal", 4}, 
+    {"segmentation", 1}
+};
 
 const std::map<std::string, ETextureRenderTargetFormat> RENDER_PASS_TEXTURE_RENDER_TARGET_FORMAT = {
     {"depth", ETextureRenderTargetFormat::RTF_RGBA32f},
     {"final_color", ETextureRenderTargetFormat::RTF_RGBA8_SRGB},
     {"normal", ETextureRenderTargetFormat::RTF_RGBA32f},
-    {"segmentation", ETextureRenderTargetFormat::RTF_RGBA8}};
+    {"segmentation", ETextureRenderTargetFormat::RTF_RGBA8}
+};
 
-const std::map<std::string, std::string> RENDER_PASS_MATERIAL = {{"depth", "/SpServices/Materials/PPM_Depth.PPM_Depth"},
-                                                                 {"normal", "/SpServices/Materials/PPM_Normal.PPM_Normal"},
-                                                                 {"segmentation", "/SpServices/Materials/PPM_Segmentation.PPM_Segmentation"}};
+const std::map<std::string, std::string> RENDER_PASS_MATERIAL = {
+    {"depth", "/SpServices/Materials/PPM_Depth.PPM_Depth"},
+    {"normal", "/SpServices/Materials/PPM_Normal.PPM_Normal"},
+    {"segmentation", "/SpServices/Materials/PPM_Segmentation.PPM_Segmentation"}
+};
 
 const std::map<std::string, double> RENDER_PASS_LOW = {
     {"depth", 0.0},
     {"final_color", 0.0},
     {"normal", std::numeric_limits<double>::lowest()}, // Unreal can return normals that are not unit length
-    {"segmentation", 0.0}};
+    {"segmentation", 0.0}
+};
 
-const std::map<std::string, double> RENDER_PASS_HIGH = {{"depth", std::numeric_limits<double>::max()},
-                                                        {"final_color", 255.0},
-                                                        {"normal", std::numeric_limits<double>::max()}, // Unreal can return normals that are not unit length
-                                                        {"segmentation", 255.0}};
+const std::map<std::string, double> RENDER_PASS_HIGH = {
+    {"depth", std::numeric_limits<double>::max()},
+    {"final_color", 255.0},
+    {"normal", std::numeric_limits<double>::max()}, // Unreal can return normals that are not unit length
+    {"segmentation", 255.0}
+};
 
 const std::map<std::string, DataType> RENDER_PASS_CHANNEL_DATATYPE = {
-    {"depth", DataType::Float32}, {"final_color", DataType::UInteger8}, {"normal", DataType::Float32}, {"segmentation", DataType::UInteger8}};
+    {"depth", DataType::Float32}, 
+    {"final_color", DataType::UInteger8}, 
+    {"normal", DataType::Float32}, 
+    {"segmentation", DataType::UInteger8}
+};
 
 UCameraSensorComponent::UCameraSensorComponent()
 {
     cpp_component_ = Unreal::createComponentInsideOwnerConstructor<UCppFuncComponent>(this, "cpp_component");
-    cpp_component_->registerFunc("camera_sensor.camera", [this](CppFuncPackage& args) -> CppFuncPackage {
-        CppFuncData<uint8_t> hello("hello");
-        CppFuncData<double> my_data("my_data");
 
-        hello.setData("Hello World!");
-        my_data.setData({1.0, 2.0, 3.0});
+    cpp_component_->registerFunc("camera_sensor.camera", [this](CppFuncPackage& args) -> CppFuncPackage {
 
         CppFuncData<uint8_t> shared_data("shared_data");
         RenderPassDesc& render_pass_desc = render_pass_descs_["final_color"];
-        //auto shared_memory_region_       = render_pass_desc.shared_memory_region_;
         auto& view = render_pass_desc.shared_memory_region_->getView();
         shared_data.setData("final_color", view, render_pass_desc.num_bytes_);
-        char* data = reinterpret_cast<char*>(view.data_);
-        data[0]    = 'h';
-        data[1]    = 'e';
-        data[2]    = 'l';
-        data[3]    = 'l';
-        data[4]    = 'o';
-        
+
+        FTextureRenderTargetResource* texture_render_target_resource =
+            render_pass_desc.scene_capture_component_2d_->TextureTarget->GameThread_GetRenderTargetResource();
+        SP_ASSERT(texture_render_target_resource);
+        texture_render_target_resource->ReadPixelsPtr(reinterpret_cast<FColor*>(view.data_));
 
         // Return CppFuncData objects.
         CppFuncPackage return_values;
-        return_values.items_ = CppFuncUtils::moveDataToItems({hello.getPtr(), my_data.getPtr(), shared_data.getPtr()});
+        return_values.items_ = CppFuncUtils::moveDataToItems({shared_data.getPtr()});
         return return_values;
     });
 }
 
 UCameraSensorComponent::~UCameraSensorComponent()
 {
-    for (auto& [render_pass_name, render_pass_desc] : render_pass_descs_) {
-        if (Config::get<bool>("SP_SERVICES.LEGACY.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
-#if BOOST_OS_MACOS || BOOST_OS_LINUX
-            boost::interprocess::shared_memory_object::remove(render_pass_desc.shared_memory_id_.c_str());
-#endif
-        }
-    }
 }
 
-void UCameraSensorComponent::setup(UCameraComponent* camera_component)
+void UCameraSensorComponent::setup(UCameraComponent* camera_component, TArray<FString> render_pass_names, int width, int height, float fov)
 {
-    camera_component_                          = camera_component;
-    std::vector<std::string> render_pass_names = {"final_color"};
-    int width                                  = 512;
-    int height                                 = 512;
-    float fov                                  = 90;
-    for (auto& render_pass_name : render_pass_names) {
+    camera_component_                 = camera_component;
+
+    for (auto& render_pass_name_fstring : render_pass_names) {
+        std::string render_pass_name = Unreal::toStdString(render_pass_name_fstring);
         RenderPassDesc render_pass_desc;
 
         render_pass_desc.width_     = width;
@@ -160,46 +163,35 @@ void UCameraSensorComponent::setup(UCameraComponent* camera_component)
     }
 }
 
+void UCameraSensorComponent::setup0(TArray<FString> render_pass_names, int width, int height, float fov)
+{
+    // TODO (RW): workaround to get camera component, Type 'uint64' is not supported by blueprint
+    UCameraComponent* camera_component = Cast<UCameraComponent>(GetOwner()->GetComponentByClass(UCameraComponent::StaticClass()));
+    setup(camera_component, render_pass_names, width, height, fov);
+}
+
 TArray<FColor> UCameraSensorComponent::getObservation() const
 {
-    TArray<FColor> dummy_observation;
-    std::map<std::string, std::vector<uint8_t>> observation;
+    TArray<FColor> observation;
 
     for (auto& [render_pass_name, render_pass_desc] : render_pass_descs_) {
-        void* dest_ptr = nullptr;
-        // if (Config::get<bool>("SP_SERVICES.LEGACY.CAMERA_SENSOR.USE_SHARED_MEMORY")) {
-        //     //dest_ptr = render_pass_desc.shared_memory_mapped_region_.get_address();
-        // } else {
-        Std::insert(observation, "camera." + render_pass_name, {});
-        observation.at("camera." + render_pass_name).resize(render_pass_desc.num_bytes_);
-        dest_ptr = observation.at("camera." + render_pass_name).data();
-        //}
-        SP_ASSERT(dest_ptr);
+        FTextureRenderTargetResource* texture_render_target_resource =
+            render_pass_desc.scene_capture_component_2d_->TextureTarget->GameThread_GetRenderTargetResource();
+        SP_ASSERT(texture_render_target_resource);
 
-        if (Config::get<bool>("SP_SERVICES.LEGACY.CAMERA_SENSOR.READ_SURFACE_DATA")) {
-            FTextureRenderTargetResource* texture_render_target_resource =
-                render_pass_desc.scene_capture_component_2d_->TextureTarget->GameThread_GetRenderTargetResource();
-            SP_ASSERT(texture_render_target_resource);
-
-            if (render_pass_name == "final_color" || render_pass_name == "segmentation") {
-                // ReadPixelsPtr assumes 4 channels per pixel, 1 byte per channel, so it can be used to read
-                // the following ETextureRenderTargetFormat formats:
-                //     final_color:  RTF_RGBA8
-                //     segmentation: RTF_RGBA8_SRGB
-                dummy_observation.SetNum(render_pass_desc.width_ * render_pass_desc.height_);
-                texture_render_target_resource->ReadPixelsPtr(dummy_observation.GetData());
-            } else if (render_pass_name == "depth" || render_pass_name == "normal") {
-                // ReadLinearColorPixelsPtr assumes 4 channels per pixel, 4 bytes per channel, so it can be used
-                // to read the following ETextureRenderTargetFormat formats:
-                //     depth:  RTF_RGBA32f
-                //     normal: RTF_RGBA32f
-                texture_render_target_resource->ReadLinearColorPixelsPtr(static_cast<FLinearColor*>(dest_ptr));
-            } else {
-                SP_ASSERT(false);
-            }
+        if (render_pass_name == "final_color" || render_pass_name == "segmentation") {
+            // ReadPixelsPtr assumes 4 channels per pixel, 1 byte per channel, so it can be used to read
+            // the following ETextureRenderTargetFormat formats:
+            //     final_color:  RTF_RGBA8
+            //     segmentation: RTF_RGBA8_SRGB
+            observation.SetNum(render_pass_desc.width_ * render_pass_desc.height_);
+            texture_render_target_resource->ReadPixelsPtr(observation.GetData());
+        } else if (render_pass_name == "depth" || render_pass_name == "normal") {
+            SP_ASSERT(false);
+        } else {
+            SP_ASSERT(false);
         }
     }
 
-    // return observation;
-    return dummy_observation;
+    return observation;
 }

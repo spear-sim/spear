@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include <Camera/CameraComponent.h>
 #include <Components/ActorComponent.h>
 #include <Components/StaticMeshComponent.h>
 #include <Engine/StaticMesh.h>
@@ -42,8 +43,9 @@ void UnrealClassRegistrar::initialize()
     registerActorClass<AActor>("AActor");
     registerActorClass<AStaticMeshActor>("AStaticMeshActor");
     registerComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
-    registerComponentClass<UStaticMeshComponent>("USceneComponent");
-    registerComponentClass<UStaticMeshComponent>("UActorComponent");
+    registerComponentClass<USceneComponent>("USceneComponent");
+    registerComponentClass<UActorComponent>("UActorComponent");
+    registerComponentClass<UCameraComponent>("UCameraComponent");
     registerComponentClass<UCameraSensorComponent>("UCameraSensorComponent");
     registerClass<UGameplayStatics>("UGameplayStatics");
     registerClass<UMaterial>("UMaterial");
