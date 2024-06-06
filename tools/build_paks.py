@@ -9,6 +9,7 @@ import json
 import ntpath
 import os
 import posixpath
+import shutil
 import spear
 import subprocess
 import sys
@@ -72,8 +73,10 @@ def build_pak(pak_name, symlink_dirs=[], cooked_include_dirs=[], expected_unreal
     with open(txt_file, mode="w") as f:
         for cooked_include_dir in cooked_include_dirs:
             for cooked_include_file in glob.glob(os.path.realpath(os.path.join(cooked_include_dir, "**", "*.*")), recursive=True):
+
                 cooked_include_file_posix = cooked_include_file.replace(ntpath.sep, posixpath.sep)
                 asset_name = cooked_include_file_posix.removeprefix(unreal_project_cooked_dir_posix + posixpath.sep)
+
                 if asset_name not in default_manifest_asset_names:
                     assert cooked_include_file_posix.startswith(unreal_project_cooked_dir_posix)
                     cooked_mount_file_posix = posixpath.join("..", "..", "..", cooked_include_file_posix.replace(unreal_project_cooked_dir_posix + posixpath.sep, ""))
@@ -107,8 +110,7 @@ if __name__ == '__main__':
 
     assert os.path.exists(args.unreal_engine_dir)
     assert os.path.exists(args.perforce_content_dir)
-    unreal_project_dir = os.path.realpath(args.unreal_project_dir)
-    assert os.path.exists(unreal_project_dir)
+    assert os.path.exists(args.unreal_project_dir)
 
     if sys.platform == "win32":
         platform          = "Windows"
@@ -125,17 +127,26 @@ if __name__ == '__main__':
     else:
         assert False
 
-    unreal_project_content_dir           = os.path.realpath(os.path.join(unreal_project_dir, "Content"))
-    unreal_project_cooked_dir            = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform))
-    unreal_project_content_scenes_dir    = os.path.realpath(os.path.join(unreal_project_content_dir, "Scenes"))
-    unreal_project_default_manifest_file = os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Metadata", "packagestore.manifest"))
-    perforce_content_scenes_dir          = os.path.realpath(os.path.join(args.perforce_content_dir, "Scenes"))
+    unreal_project_dir                       = os.path.realpath(args.unreal_project_dir)
+    unreal_project_content_dir               = os.path.realpath(os.path.join(unreal_project_dir, "Content"))
+    unreal_project_content_scenes_dir        = os.path.realpath(os.path.join(unreal_project_content_dir, "Scenes"))
+    unreal_project_cooked_dir                = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform))
+    unreal_project_default_manifest_file     = os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Metadata", "packagestore.manifest"))
+    unreal_project_default_manifest_file_bkp = os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Metadata", "packagestore_bkp.manifest"))
+    perforce_content_scenes_dir              = os.path.realpath(os.path.join(args.perforce_content_dir, "Scenes"))
+
+    # We need to create the backup file (unreal_project_default_manifest_file_bkp) the first time this script is run because we want to preserve 
+    # unreal_project_default_manifest_file before any cooking process is triggered from this script. This is because unreal_project_default_manifest_file
+    # gets updated everytime we cook, and will contain new content's assets. Since we are using unreal_project_default_manifest_file to skip duplicate assets, 
+    # we will end up skipping non-duplicate assets as well when this script is re-run.
+    if not os.path.exists(unreal_project_default_manifest_file_bkp):
+        shutil.copyfile(unreal_project_default_manifest_file, unreal_project_default_manifest_file_bkp)
 
     # get asset names that are available by default
-    assert os.path.exists(unreal_project_default_manifest_file)
-    with open(unreal_project_default_manifest_file) as f:
+    assert os.path.exists(unreal_project_default_manifest_file_bkp)
+    with open(unreal_project_default_manifest_file_bkp) as f:
         default_manifest = json.load(f)
-        default_manifest_asset_names = [ default_manifest_asset["Path"] for default_manifest_asset in default_manifest["Files"] ]
+        default_manifest_asset_names = [ asset["Path"] for asset in default_manifest["Files"] ]
 
     # We do not want to use os.path.realpath(...) for the values in symlink_dirs and cooked_include_dirs, because
     # we do not want these values to resolve to directories inside the user's Perforce workspace. Instead,
