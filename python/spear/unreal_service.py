@@ -100,7 +100,9 @@ class UnrealService():
 
     def call_function(self, uobject, ufunction, args={}, world_context="WorldContextObject"):
         arg_strings = { arg_name: json.dumps(arg) for arg_name, arg in args.items() }
-        return self._rpc_client.call("unreal_service.call_function", uobject, ufunction, arg_strings, world_context)
+        return_value_strings = self._rpc_client.call("unreal_service.call_function", uobject, ufunction, arg_strings, world_context)
+        return_values = { return_value_name: json.loads(return_value_string) for return_value_name, return_value_string in return_value_strings.items() }
+        return return_values
 
     #
     # Find special structs by name
