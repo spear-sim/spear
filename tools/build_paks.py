@@ -5,6 +5,7 @@
 import argparse
 import fnmatch
 import glob
+import json
 import ntpath
 import os
 import posixpath
@@ -14,12 +15,12 @@ import sys
 
 
 # globals needed in build_pak(...)
-args = default_cooked_files = unreal_project_dir = unreal_project_content_dir = unreal_project_cooked_dir = None
+args = default_manifest_asset_names = unreal_project_dir = unreal_project_content_dir = unreal_project_cooked_dir = None
 
 
 def build_pak(pak_name, symlink_dirs=[], cooked_include_dirs=[], expected_unreal_project_content_scene_dirs=None):
 
-    global args, default_cooked_files, unreal_project_dir, unreal_project_content_dir, unreal_project_cooked_dir
+    global args, default_manifest_asset_names, unreal_project_dir, unreal_project_content_dir, unreal_project_cooked_dir
 
     spear.log(f"Building: {pak_name}")
 
@@ -72,12 +73,8 @@ def build_pak(pak_name, symlink_dirs=[], cooked_include_dirs=[], expected_unreal
         for cooked_include_dir in cooked_include_dirs:
             for cooked_include_file in glob.glob(os.path.realpath(os.path.join(cooked_include_dir, "**", "*.*")), recursive=True):
                 cooked_include_file_posix = cooked_include_file.replace(ntpath.sep, posixpath.sep)
-                mod_file =  [ cooked_include_file_posix[i:] for i in range(len(cooked_include_file_posix)) if cooked_include_file_posix.startswith("Engine" + posixpath.sep, i) ]
-                if len(mod_file):
-                    mod_file = mod_file[0]
-                else:
-                    mod_file = cooked_include_file
-                if mod_file not in default_cooked_files:
+                asset_name = cooked_include_file_posix.removeprefix(unreal_project_cooked_dir_posix + posixpath.sep)
+                if asset_name not in default_manifest_asset_names:
                     assert cooked_include_file_posix.startswith(unreal_project_cooked_dir_posix)
                     cooked_mount_file_posix = posixpath.join("..", "..", "..", cooked_include_file_posix.replace(unreal_project_cooked_dir_posix + posixpath.sep, ""))
                     f.write(f'"{cooked_include_file_posix}" "{cooked_mount_file_posix}" "" \n')
@@ -104,7 +101,6 @@ if __name__ == '__main__':
     parser.add_argument("--version_tag", required=True)
     parser.add_argument("--perforce_content_dir", required=True)
     parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
-    parser.add_argument("--default_cooked_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "default_cooked_files.txt")))
     parser.add_argument("--scene_ids")
     parser.add_argument("--skip_build_common_pak", action="store_true")
     args = parser.parse_args()
@@ -129,17 +125,17 @@ if __name__ == '__main__':
     else:
         assert False
 
-    unreal_project_content_dir        = os.path.realpath(os.path.join(unreal_project_dir, "Content"))
-    unreal_project_cooked_dir         = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform))
-    unreal_project_content_scenes_dir = os.path.realpath(os.path.join(unreal_project_content_dir, "Scenes"))
-    perforce_content_scenes_dir       = os.path.realpath(os.path.join(args.perforce_content_dir, "Scenes"))
+    unreal_project_content_dir           = os.path.realpath(os.path.join(unreal_project_dir, "Content"))
+    unreal_project_cooked_dir            = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform))
+    unreal_project_content_scenes_dir    = os.path.realpath(os.path.join(unreal_project_content_dir, "Scenes"))
+    unreal_project_default_manifest_file = os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Metadata", "packagestore.manifest"))
+    perforce_content_scenes_dir          = os.path.realpath(os.path.join(args.perforce_content_dir, "Scenes"))
 
-    # get asset files that are available by default
-    default_cooked_file_path = os.path.realpath(args.default_cooked_file)
-    assert os.path.exists(default_cooked_file_path)
-    default_cooked_files = []
-    with open(default_cooked_file_path, 'r') as infile:
-        default_cooked_files.extend([ line.strip() for line in infile ])
+    # get asset names that are available by default
+    assert os.path.exists(unreal_project_default_manifest_file)
+    with open(unreal_project_default_manifest_file) as f:
+        default_manifest = json.load(f)
+        default_manifest_asset_names = [ default_manifest_asset["Path"] for default_manifest_asset in default_manifest["Files"] ]
 
     # We do not want to use os.path.realpath(...) for the values in symlink_dirs and cooked_include_dirs, because
     # we do not want these values to resolve to directories inside the user's Perforce workspace. Instead,
