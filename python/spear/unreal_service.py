@@ -114,7 +114,7 @@ class UnrealService():
     #     return_value_ptr = unreal_service.from_ptr(return_values["ReturnValue"])
     #
 
-    # the Ptr class is for internal use, and does not need to be invoked directly by users
+    # The Ptr class is for internal use, and does not need to be instantiated directly by users.
     class Ptr:
         def __init__(self, handle):
             self._handle = handle
@@ -122,13 +122,13 @@ class UnrealService():
         def to_string(self):
             return f"{self._handle:#0{10}x}"
 
-    # convert a pointer obtained from another UnrealService function into a form that can be passed as an
-    # argument to unreal_service.call_function(...)
+    # Convert a pointer obtained from another UnrealService function into a form that can be passed as an
+    # argument to unreal_service.call_function(...).
     def to_ptr(self, handle):
         return UnrealService.Ptr(handle)
 
-    # convert a return value returned by unreal_service.call_function(...) into a form that can be passed to
-    # another UnrealService function
+    # Convert a return value returned by unreal_service.call_function(...) into a form that can be passed to
+    # another UnrealService function.
     def from_ptr(self, str):
         return int(str, 0)
 
