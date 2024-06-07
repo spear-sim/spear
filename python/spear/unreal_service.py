@@ -92,16 +92,60 @@ class UnrealService():
         return self._rpc_client.call("unreal_service.set_property_value_from_string", property_desc, property_value)
 
     #
-    # Find and call functions
+    # Find functions
     #
 
     def find_function_by_name(self, uclass, name, include_super_flag="IncludeSuper"):
         return self._rpc_client.call("unreal_service.find_function_by_name", uclass, name, {"IncludeSuperFlag": json.dumps({"Enum": include_super_flag})})
 
+    #
+    # Interface for calling functions. When using this interface, pointers must be handled specially. For
+    # example, suppose you want to call a function that takes a pointer as input and returns a pointer as
+    # output. Suppose that you already have a pointer that you would like to pass as input to the function,
+    # that you already obtained from another UnrealService function, e.g.,
+    #
+    #     ptr = unreal_service.find_actor_by_name(...)
+    #
+    # You would invoke your desired function as follows. After executing this code, return_value_ptr will be
+    # in the correct form to pass into other functions in unreal_service.
+    # 
+    #     args = {"Arg": unreal_service.to_ptr(ptr)}
+    #     return_values = unreal_service.call_function(uobject, ufunction, args)
+    #     return_value_ptr = unreal_service.from_ptr(return_values["ReturnValue"])
+    #
+
+    # the Ptr class is for internal use, and does not need to be invoked directly by users
+    class Ptr:
+        def __init__(self, handle):
+            self._handle = handle
+
+        def to_string(self):
+            return f"{self._handle:#0{10}x}"
+
+    # convert a pointer obtained from another UnrealService function into a form that can be passed as an
+    # argument to unreal_service.call_function(...)
+    def to_ptr(self, handle):
+        return UnrealService.Ptr(handle)
+
+    # convert a return value returned by unreal_service.call_function(...) into a form that can be passed to
+    # another UnrealService function
+    def from_ptr(self, str):
+        return int(str, 0)
+
+    # call an arbitrary function
     def call_function(self, uobject, ufunction, args={}, world_context="WorldContextObject"):
-        arg_strings = { arg_name: json.dumps(arg) for arg_name, arg in args.items() }
+
+        arg_strings = {}
+        for arg_name, arg in args.items():
+            if isinstance(arg, UnrealService.Ptr):
+                arg_string = arg.to_string()
+            else:
+                arg_string = json.dumps(arg)
+            arg_strings[arg_name] = arg_string
+
         return_value_strings = self._rpc_client.call("unreal_service.call_function", uobject, ufunction, arg_strings, world_context)
         return_values = { return_value_name: json.loads(return_value_string) for return_value_name, return_value_string in return_value_strings.items() }
+
         return return_values
 
     #
