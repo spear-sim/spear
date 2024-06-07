@@ -102,7 +102,7 @@ class UnrealService():
     # Interface for calling functions. When using this interface, pointers must be handled specially. For
     # example, suppose you want to call a function that takes a pointer as input and returns a pointer as
     # output. Suppose that you already have a pointer that you would like to pass as input to the function,
-    # that you already obtained from another UnrealService function, e.g.,
+    # that you obtained from another UnrealService function, e.g.,
     #
     #     ptr = unreal_service.find_actor_by_name(...)
     #
