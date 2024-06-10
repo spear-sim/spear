@@ -114,19 +114,19 @@ if __name__ == '__main__':
 
     if sys.platform == "win32":
         platform          = "Windows"
-        platform_name     = "Win64"
         unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealEditor.exe"))
         unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealPak.exe"))
+        default_pak       = os.path.realpath(os.path.join(args.build_dir, "SpearSim-Win64-Shipping", "Windows", "SpearSim", "Content", "Paks", "SpearSim-Windows.pak"))
     elif sys.platform == "darwin":
         platform          = "Mac"
-        platform_name     = "Mac"
         unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UnrealEditor.app", "Contents", "MacOS", "UnrealEditor"))
         unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UnrealPak"))
+        default_pak       = os.path.realpath(os.path.join(args.build_dir, "SpearSim-Mac-Shipping", "Mac", "SpearSim-Mac-Shipping.app", "Contents", "UE", "SpearSim", "Content", "Paks", "SpearSim-Mac.pak"))
     elif sys.platform == "linux":
         platform          = "Linux"
-        platform_name     = "Linux"
         unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UnrealEditor"))
         unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UnrealPak"))
+        default_pak       = os.path.realpath(os.path.join(args.build_dir, "SpearSim-Linux-Shipping", "Linux", "SpearSim", "Content", "Paks", "SpearSim-Linux.pak"))
     else:
         assert False
 
@@ -134,7 +134,6 @@ if __name__ == '__main__':
     unreal_project_content_dir               = os.path.realpath(os.path.join(unreal_project_dir, "Content"))
     unreal_project_content_scenes_dir        = os.path.realpath(os.path.join(unreal_project_content_dir, "Scenes"))
     unreal_project_cooked_dir                = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform))
-    default_pak                              = os.path.realpath(os.path.join(args.build_dir, "SpearSim-" + platform_name + "-Shipping", platform, "SpearSim", "Content", "Paks", "SpearSim-" + platform + ".pak"))
     perforce_content_scenes_dir              = os.path.realpath(os.path.join(args.perforce_content_dir, "Scenes"))
 
     # extract asset names from the executable's pak file
