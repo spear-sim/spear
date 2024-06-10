@@ -102,7 +102,7 @@ if __name__ == '__main__':
     parser.add_argument("--version_tag", required=True)
     parser.add_argument("--perforce_content_dir", required=True)
     parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
-    parser.add_argument("--spearsim_executable_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "build", "SpearSim-Win64-Shipping")))
+    parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "build")))
     parser.add_argument("--skip_build_common_pak", action="store_true")
     parser.add_argument("--scene_ids")
     args = parser.parse_args()
@@ -110,18 +110,21 @@ if __name__ == '__main__':
     assert os.path.exists(args.unreal_engine_dir)
     assert os.path.exists(args.perforce_content_dir)
     assert os.path.exists(args.unreal_project_dir)
-    assert os.path.exists(args.spearsim_executable_dir)
+    assert os.path.exists(args.build_dir)
 
     if sys.platform == "win32":
         platform          = "Windows"
+        platform_name     = "Win64"
         unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealEditor.exe"))
         unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealPak.exe"))
     elif sys.platform == "darwin":
         platform          = "Mac"
+        platform_name     = "Mac"
         unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UnrealEditor.app", "Contents", "MacOS", "UnrealEditor"))
         unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UnrealPak"))
     elif sys.platform == "linux":
         platform          = "Linux"
+        platform_name     = "Linux"
         unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UnrealEditor"))
         unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UnrealPak"))
     else:
@@ -131,11 +134,11 @@ if __name__ == '__main__':
     unreal_project_content_dir               = os.path.realpath(os.path.join(unreal_project_dir, "Content"))
     unreal_project_content_scenes_dir        = os.path.realpath(os.path.join(unreal_project_content_dir, "Scenes"))
     unreal_project_cooked_dir                = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform))
-    spearsim_executable_pak_file             = os.path.realpath(os.path.join(args.spearsim_executable_dir, platform, "SpearSim", "Content", "Paks", "SpearSim-" + platform + ".pak"))
+    default_pak                              = os.path.realpath(os.path.join(args.build_dir, "SpearSim-" + platform_name + "-Shipping", platform, "SpearSim", "Content", "Paks", "SpearSim-" + platform + ".pak"))
     perforce_content_scenes_dir              = os.path.realpath(os.path.join(args.perforce_content_dir, "Scenes"))
 
     # extract asset names from the executable's pak file
-    cmd = [unreal_pak_bin, "-List", spearsim_executable_pak_file]
+    cmd = [unreal_pak_bin, "-List", default_pak]
     spear.log(f"    Executing: {' '.join(cmd)}")
     ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
     default_pak_asset_names = []
