@@ -5,11 +5,9 @@
 import argparse
 import fnmatch
 import glob
-import json
 import ntpath
 import os
 import posixpath
-import shutil
 import spear
 import subprocess
 import sys
