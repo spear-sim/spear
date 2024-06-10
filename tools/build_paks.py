@@ -134,6 +134,7 @@ if __name__ == '__main__':
     spearsim_executable_pak_file             = os.path.realpath(os.path.join(args.spearsim_executable_dir, platform, "SpearSim", "Content", "Paks", "SpearSim-" + platform + ".pak"))
     perforce_content_scenes_dir              = os.path.realpath(os.path.join(args.perforce_content_dir, "Scenes"))
 
+    # extract asset names from the executable's pak file
     cmd = [unreal_pak_bin, "-List", spearsim_executable_pak_file]
     spear.log(f"    Executing: {' '.join(cmd)}")
     ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
