@@ -16,12 +16,12 @@ import sys
 
 
 # globals needed in build_pak(...)
-args = default_manifest_asset_names = unreal_project_dir = unreal_project_content_dir = unreal_project_cooked_dir = None
+args = default_pak_asset_names = unreal_project_dir = unreal_project_content_dir = unreal_project_cooked_dir = None
 
 
 def build_pak(pak_name, symlink_dirs=[], cooked_include_dirs=[], expected_unreal_project_content_scene_dirs=None):
 
-    global args, default_manifest_asset_names, unreal_project_dir, unreal_project_content_dir, unreal_project_cooked_dir
+    global args, default_pak_asset_names, unreal_project_dir, unreal_project_content_dir, unreal_project_cooked_dir
 
     spear.log(f"Building: {pak_name}")
 
@@ -77,7 +77,7 @@ def build_pak(pak_name, symlink_dirs=[], cooked_include_dirs=[], expected_unreal
                 cooked_include_file_posix = cooked_include_file.replace(ntpath.sep, posixpath.sep)
                 asset_name = cooked_include_file_posix.removeprefix(unreal_project_cooked_dir_posix + posixpath.sep)
 
-                if asset_name not in default_manifest_asset_names:
+                if asset_name not in default_pak_asset_names:
                     assert cooked_include_file_posix.startswith(unreal_project_cooked_dir_posix)
                     cooked_mount_file_posix = posixpath.join("..", "..", "..", cooked_include_file_posix.replace(unreal_project_cooked_dir_posix + posixpath.sep, ""))
                     f.write(f'"{cooked_include_file_posix}" "{cooked_mount_file_posix}" "" \n')
@@ -104,13 +104,15 @@ if __name__ == '__main__':
     parser.add_argument("--version_tag", required=True)
     parser.add_argument("--perforce_content_dir", required=True)
     parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
-    parser.add_argument("--scene_ids")
+    parser.add_argument("--spearsim_executable_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "build", "SpearSim-Win64-Shipping")))
     parser.add_argument("--skip_build_common_pak", action="store_true")
+    parser.add_argument("--scene_ids")
     args = parser.parse_args()
 
     assert os.path.exists(args.unreal_engine_dir)
     assert os.path.exists(args.perforce_content_dir)
     assert os.path.exists(args.unreal_project_dir)
+    assert os.path.exists(args.spearsim_executable_dir)
 
     if sys.platform == "win32":
         platform          = "Windows"
@@ -131,22 +133,17 @@ if __name__ == '__main__':
     unreal_project_content_dir               = os.path.realpath(os.path.join(unreal_project_dir, "Content"))
     unreal_project_content_scenes_dir        = os.path.realpath(os.path.join(unreal_project_content_dir, "Scenes"))
     unreal_project_cooked_dir                = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform))
-    unreal_project_default_manifest_file     = os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Metadata", "packagestore.manifest"))
-    unreal_project_default_manifest_file_bkp = os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Metadata", "packagestore_bkp.manifest"))
+    spearsim_executable_pak_file             = os.path.realpath(os.path.join(args.spearsim_executable_dir, platform, "SpearSim", "Content", "Paks", "SpearSim-" + platform + ".pak"))
     perforce_content_scenes_dir              = os.path.realpath(os.path.join(args.perforce_content_dir, "Scenes"))
 
-    # We need to create the backup file (unreal_project_default_manifest_file_bkp) the first time this script is run because we want to preserve 
-    # unreal_project_default_manifest_file before any cooking process is triggered from this script. This is because unreal_project_default_manifest_file
-    # gets updated everytime we cook, and will contain new content's assets. Since we are using unreal_project_default_manifest_file to skip duplicate assets, 
-    # we will end up skipping non-duplicate assets as well when this script is re-run.
-    if not os.path.exists(unreal_project_default_manifest_file_bkp):
-        shutil.copyfile(unreal_project_default_manifest_file, unreal_project_default_manifest_file_bkp)
-
-    # get asset names that are available by default
-    assert os.path.exists(unreal_project_default_manifest_file_bkp)
-    with open(unreal_project_default_manifest_file_bkp) as f:
-        default_manifest = json.load(f)
-        default_manifest_asset_names = [ asset["Path"] for asset in default_manifest["Files"] ]
+    cmd = [unreal_pak_bin, "-List", spearsim_executable_pak_file]
+    spear.log(f"    Executing: {' '.join(cmd)}")
+    ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
+    default_pak_asset_names = []
+    for line in ps.stdout:
+        default_pak_asset_names.append(line.removeprefix('LogPakFile: Display: "').split('" offset: ', 1)[0])
+    ps.wait()
+    ps.stdout.close()
 
     # We do not want to use os.path.realpath(...) for the values in symlink_dirs and cooked_include_dirs, because
     # we do not want these values to resolve to directories inside the user's Perforce workspace. Instead,
