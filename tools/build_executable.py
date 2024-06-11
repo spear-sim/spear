@@ -88,7 +88,7 @@ if __name__ == "__main__":
         shutil.rmtree(unreal_tmp_dir, ignore_errors=True)
 
     if not args.skip_clone_github_repo:
-        
+
         # remove our temporary repository directory to ensure a clean build
         if os.path.exists(repo_dir):
             spear.log(f"Repository exists, removing: {repo_dir}")
@@ -159,8 +159,7 @@ if __name__ == "__main__":
         "-target=SpearSim",
         "-archivedirectory=" + archive_dir,
         "-clientconfig=" + build_config,
-        run_uat_platform_args
-    ]
+        run_uat_platform_args]
     spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
 
