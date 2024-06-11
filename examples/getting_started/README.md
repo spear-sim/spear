@@ -7,8 +7,8 @@ Before running this example, rename `user_config.yaml.example` to `user_config.y
 ### Important configuration options
 
 You can control the behavior of this example by setting the following parameters in your `user_config.yaml` file, e.g.,
-  - `SIMULATION_CONTROLLER.AGENT` can be set to `"SphereAgent"` or `"VehicleAgent"` to change the type of agent in the simulation.
-  - `SIMULATION_CONTROLLER.SPHERE_AGENT.CAMERA.RENDER_PASSES` and `SIMULATION_CONTROLLER.VEHICLE_AGENT.CAMERA.RENDER_PASSES` can be set to a list of image modalities that you want the agent to return (e.g., setting the value `["depth", "final_color"]` will return depth images and photorealistic RGB images).
+  - `SP_SERVICES.LEGACY_SERVICE.AGENT` can be set to `"SphereAgent"` or `"VehicleAgent"` to change the type of agent in the simulation.
+  - `SP_SERVICES.LEGACY.SPHERE_AGENT.CAMERA.RENDER_PASSES` and `SP_SERVICES.LEGACY.VEHICLE_AGENT.CAMERA.RENDER_PASSES` can be set to a list of image modalities that you want the agent to return (e.g., setting the value `["depth", "final_color"]` will return depth images and photorealistic RGB images).
 
 Your `user_config.yaml` file only needs to specify the value of a parameter if it differs from the defaults defined in the `python/config` directory. You can browse this directory for a complete set of all user-configurable parameters.
 
