@@ -6,17 +6,16 @@ SPEAR:
   LAUNCH_MODE: "standalone"
   STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
   PAKS_DIR: "/Users/mroberts/Downloads/spear-paks"
-
   INSTANCE:
     COMMAND_LINE_ARGS:
       resx: 512
       resy: 512
     RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 10.0
-
   ENV:
     NUM_EXTRA_WARMUP_TICKS: 10
 
 SP_SERVICES:
+
   LEGACY_SERVICE:
     AGENT: "UrdfRobotAgent"
     TASK: "NullTask"
