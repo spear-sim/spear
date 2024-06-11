@@ -17,7 +17,7 @@ if __name__ == "__main__":
     parser.add_argument("--version_tag", required=True)
     parser.add_argument("--conda_env", default="spear-env")
     parser.add_argument("--num_parallel_jobs", type=int, default=1)
-    parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "build")))
+    parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
     parser.add_argument("--temp_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "tmp")))
     parser.add_argument("--conda_script")
     parser.add_argument("--commit_id")

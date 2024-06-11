@@ -73,10 +73,10 @@ def build_pak(pak_name, symlink_dirs=[], cooked_include_dirs=[], expected_unreal
             for cooked_include_file in glob.glob(os.path.realpath(os.path.join(cooked_include_dir, "**", "*.*")), recursive=True):
 
                 cooked_include_file_posix = cooked_include_file.replace(ntpath.sep, posixpath.sep)
+                assert cooked_include_file_posix.startswith(unreal_project_cooked_dir_posix)
                 asset_name = cooked_include_file_posix.removeprefix(unreal_project_cooked_dir_posix + posixpath.sep)
 
                 if asset_name not in default_pak_asset_names:
-                    assert cooked_include_file_posix.startswith(unreal_project_cooked_dir_posix)
                     cooked_mount_file_posix = posixpath.join("..", "..", "..", cooked_include_file_posix.replace(unreal_project_cooked_dir_posix + posixpath.sep, ""))
                     f.write(f'"{cooked_include_file_posix}" "{cooked_mount_file_posix}" "" \n')
 
@@ -102,9 +102,9 @@ if __name__ == '__main__':
     parser.add_argument("--version_tag", required=True)
     parser.add_argument("--perforce_content_dir", required=True)
     parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
-    parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "build")))
-    parser.add_argument("--skip_build_common_pak", action="store_true")
+    parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
     parser.add_argument("--scene_ids")
+    parser.add_argument("--skip_build_common_pak", action="store_true")
     args = parser.parse_args()
 
     assert os.path.exists(args.unreal_engine_dir)
@@ -130,11 +130,11 @@ if __name__ == '__main__':
     else:
         assert False
 
-    unreal_project_dir                       = os.path.realpath(args.unreal_project_dir)
-    unreal_project_content_dir               = os.path.realpath(os.path.join(unreal_project_dir, "Content"))
-    unreal_project_content_scenes_dir        = os.path.realpath(os.path.join(unreal_project_content_dir, "Scenes"))
-    unreal_project_cooked_dir                = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform))
-    perforce_content_scenes_dir              = os.path.realpath(os.path.join(args.perforce_content_dir, "Scenes"))
+    unreal_project_dir                = os.path.realpath(args.unreal_project_dir)
+    unreal_project_content_dir        = os.path.realpath(os.path.join(unreal_project_dir, "Content"))
+    unreal_project_content_scenes_dir = os.path.realpath(os.path.join(unreal_project_content_dir, "Scenes"))
+    unreal_project_cooked_dir         = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform))
+    perforce_content_scenes_dir       = os.path.realpath(os.path.join(args.perforce_content_dir, "Scenes"))
 
     # extract asset names from the executable's pak file
     cmd = [unreal_pak_bin, "-List", default_pak]

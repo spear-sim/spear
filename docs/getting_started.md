@@ -13,7 +13,7 @@ git clone --recurse-submodules https://github.com/isl-org/spear path/to/spear
 
 # checkout the code corresponding to a specific release
 cd path/to/spear
-git checkout v0.4.0
+git checkout v0.5.0
 ```
 
 ### Install the `spear` Python package
@@ -25,8 +25,8 @@ The next step is to install the `spear` Python package as follows.
 conda create --name spear-env python=3.9
 conda activate spear-env
 
-# install msgpack-rpc-python separately from other Python dependencies so
-# we can use a specific commit from the msgpack-rpc-python GitHub repository
+# install msgpack-rpc-python separately from other Python dependencies, because we need
+# to use a specific commit from a specific fork of the msgpack-rpc-python GitHub repository
 pip install -e third_party/msgpack-rpc-python
 
 # install the spear Python package
@@ -66,7 +66,7 @@ We provide several example applications that demonstrate how to programmatically
 
 In typical use cases, you will need to configure the behavior of SPEAR before you interact with it. In each of our example applications, we include a configuration file named `user_config.yaml.example` to use as a starting point. To run each example application, you must rename this file to `user_config.yaml` and modify the contents appropriately for your system. In all cases, you will need to set the `SPEAR.STANDALONE_EXECUTABLE` parameter to the location of your `SpearSim` executable (see the note above for which executable to use, depending on your platform). Your `user_config.yaml` file only needs to specify the value of a parameter if it differs from the defaults defined in the `python/config` directory. You can browse this directory for a complete set of all user-configurable parameters.
 
-If you're running on Linux, you may need to set the `SPEAR.VK_ICD_FILENAMES` parameter, which will be used to set the `VK_ICD_FILENAMES` environment variable before launching `SpearSim`. See above for a more detailed discussion.
+If you're running on Linux, you may need to set the `SPEAR.ENVIRONMENT_VARS.VK_ICD_FILENAMES` parameter to an appropriate value for your specific hardware setup. See the note above for a more detailed discussion.
 
 ### Run an example application
 
@@ -80,4 +80,5 @@ We recommend browsing through each of our example applications to get a sense of
   - [`examples/getting_started`](../examples/getting_started) demonstrates how to control a simple agent and obtain egocentric visual observations.
   - [`examples/generate_image_dataset`](../examples/generate_image_dataset) demonstrates how to generate a dataset of images using our camera agent.
   - [`examples/imitation_learning_openbot`](../examples/imitation_learning_openbot) demonstrates how to collect navigation training data for an OpenBot.
+  - [`examples/mujoco_interop`](../examples/mujoco_interop) demonstrates how to interoperate with the MuJoCo physics engine.
   - [`examples/open_loop_control_fetch`](../examples/open_loop_control_fetch) demonstrates how to control a Fetch robot agent.
