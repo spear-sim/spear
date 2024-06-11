@@ -103,8 +103,8 @@ if __name__ == '__main__':
     parser.add_argument("--perforce_content_dir", required=True)
     parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
     parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
-    parser.add_argument("--skip_build_common_pak", action="store_true")
     parser.add_argument("--scene_ids")
+    parser.add_argument("--skip_build_common_pak", action="store_true")
     args = parser.parse_args()
 
     assert os.path.exists(args.unreal_engine_dir)
