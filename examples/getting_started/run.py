@@ -12,48 +12,12 @@ import numpy as np
 import os
 import spear
 
+from examples.common.camera import CameraSensor
+
 common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
 
 sys.path.append(common_dir)
-
-
-class CameraSensor:
-    def __init__(self, instance, agent):
-        self._width = 512
-        self._height = 512
-        self._fov = 90
-        self._render_pass_names = ["final_color"]
-
-        self._camera_sensor_component = instance.unreal_service.get_component_by_type("UCameraSensorComponent", agent)
-        self._camera_sensor_component_class = instance.unreal_service.get_class(self._camera_sensor_component)
-
-        # setup CameraSensorComponent
-        # TODO call setup with pointer from python
-        camera_component = instance.unreal_service.get_component_by_type("UCameraComponent", agent)
-        setup_args = {
-            # "CameraComponent": camera_component,
-            "render_pass_names": self._render_pass_names,
-            "width": self._width,
-            "height": self._height,
-            "fov": self._fov,
-        }
-        unreal_camera_sensor_setup_func = instance.unreal_service.find_function_by_name(uclass=self._camera_sensor_component_class, name="setup0")
-        instance.unreal_service.call_function(self._camera_sensor_component, unreal_camera_sensor_setup_func, setup_args)
-
-    def get_rgb_img(self):
-        # do rendering
-        instance.rpc_client.call("cpp_func_service.call_func", self._camera_sensor_component, "camera_sensor.camera", {})
-
-        # get rendered image via shared memory
-        shared_memory_desc = instance.rpc_client.call("cpp_func_service.get_shared_memory_views", self._camera_sensor_component)
-        shared_memory_object = mmap.mmap(-1, shared_memory_desc['final_color']['num_bytes_'], shared_memory_desc['final_color']['id_'])
-        shared_memory_array = np.ndarray(shape=(-1,), dtype=np.uint8, buffer=shared_memory_object)
-
-        img = shared_memory_array.reshape([self._width, self._height, 4])
-        img[:, [0, 1, 2]] = img[:, [2, 1, 0]]
-
-        return img[:, :, :3]
 
 
 if __name__ == "__main__":
@@ -180,6 +144,7 @@ if __name__ == "__main__":
                 pass
         else:
             action += np.array([1, 0, 0]) * scale
+        print("step", i, current_location, current_rotation)
 
     instance.close()
 

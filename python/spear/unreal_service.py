@@ -33,7 +33,7 @@ class UnrealService():
         return self._rpc_client.call("unreal_service.find_actors")
 
     def find_actors_as_dict(self):
-        return self._rpc_client.call("unreal_service.find_actors_as_map")    
+        return self._rpc_client.call("unreal_service.find_actors_as_map")
 
     #
     # Get components unconditionally and return a list or dict
@@ -145,8 +145,8 @@ class UnrealService():
 
         return_value_strings = self._rpc_client.call("unreal_service.call_function", uobject, ufunction, arg_strings, world_context)
         return_values = { return_value_name: json.loads(return_value_string) for return_value_name, return_value_string in return_value_strings.items() }
-
-        return return_values
+        # TODO json.loads(return_value_string) failed when return_value_string is a pointer
+        return return_value_strings # return_values
 
     #
     # Find special structs by name

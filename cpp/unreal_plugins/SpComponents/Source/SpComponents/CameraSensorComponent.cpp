@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "SpCore/CameraSensorComponent.h"
+#include "SpComponents/CameraSensorComponent.h"
 
 #include <stdint.h> // uint8_t
 
@@ -161,13 +161,6 @@ void UCameraSensorComponent::setup(UCameraComponent* camera_component, TArray<FS
         // update render_pass_descs_
         Std::insert(render_pass_descs_, render_pass_name, std::move(render_pass_desc));
     }
-}
-
-void UCameraSensorComponent::setup0(TArray<FString> render_pass_names, int width, int height, float fov)
-{
-    // TODO (RW): workaround to get camera component, Type 'uint64' is not supported by blueprint
-    UCameraComponent* camera_component = Cast<UCameraComponent>(GetOwner()->GetComponentByClass(UCameraComponent::StaticClass()));
-    setup(camera_component, render_pass_names, width, height, fov);
 }
 
 TArray<FColor> UCameraSensorComponent::getObservation() const

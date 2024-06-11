@@ -61,7 +61,7 @@ class SimpleAgent(AgentBase):
         return gym.spaces.Dict({
             # "camera.final_color": gym.spaces.Box(0, 255, (480, 640, 3,), np.uint8),
             "location": gym.spaces.Box(-1000, 1000, (3,), np.float64),
-            # "rotation": gym.spaces.Box(-1000, 1000, (3,), np.float64),
+            "rotation": gym.spaces.Box(-1000, 1000, (3,), np.float64),
         })
 
     def get_action_space(self):
@@ -88,7 +88,7 @@ class SimpleAgent(AgentBase):
         self._obs = {
             # "camera.final_color": np.zeros([480, 640, 3], dtype=np.float64),
             "location": current_location,
-            # "rotation": current_rotation,
+            "rotation": current_rotation,
         }
         return self._obs
 
@@ -129,3 +129,29 @@ class SimpleAgent(AgentBase):
             "location": new_location,
             # "rotation": current_rotation,
         }
+
+
+class OpenBotAgent(AgentBase):
+    def __init__(self, instance):
+        self._agent = self._instance.unreal_service.spawn_actor(
+            class_name="/Game/Agents/BP_OpenBotPawn.BP_OpenBotPawn_C",
+            location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}, spawn_parameters={"Name": "Agent"}
+        )
+        # get camera sensor
+
+    def get_observation_space(self):
+        return gym.spaces.Dict({
+            "location": gym.spaces.Box(-1000, 1000, (3,), np.float64),
+            "rotation": gym.spaces.Box(-1000, 1000, (3,), np.float64),
+        })
+
+    def get_observation(self):
+        assert False
+
+    def get_action_space(self):
+        return gym.spaces.Dict({
+            "set_duty_cycles": gym.spaces.Box(-1000, 1000, (2,), np.float64),
+        })
+
+    def apply_action(self, action):
+        assert False

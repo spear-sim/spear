@@ -31,9 +31,9 @@ struct RenderPassDesc
     std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
 };
 
-// Wrapper for CameraComponent to return render image to python
+// Wrapper for CameraComponent to return render image data to python
 UCLASS(ClassGroup = "SPEAR", HideCategories = (Rendering, Activation, Cooking, Physics, LOD, AssetUserData, Collision), meta = (BlueprintSpawnableComponent))
-class SPCORE_API UCameraSensorComponent : public USceneComponent
+class UCameraSensorComponent : public USceneComponent
 {
     GENERATED_BODY()
 public:
@@ -42,9 +42,6 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "SPEAR", meta = (DisplayName = "setup", ScriptName = "setup"))
     void setup(UCameraComponent* camera_component, TArray<FString> render_pass_names, int width, int height, float fov);
-    UFUNCTION(BlueprintCallable, Category = "SPEAR", meta = (DisplayName = "setup0", ScriptName = "setup0"))
-    void setup0(TArray<FString> render_pass_names, int width, int height, float fov);
-
 
     UFUNCTION(BlueprintCallable, Category = "SPEAR", meta = (DisplayName = "get observation", ScriptName = "getObservation"))
     TArray<FColor> getObservation() const;
