@@ -5,7 +5,6 @@
 SPEAR:
   LAUNCH_MODE: "standalone"
   STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
-  
   INSTANCE:
     COMMAND_LINE_ARGS:
       resx: 512
