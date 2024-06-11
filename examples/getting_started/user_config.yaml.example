@@ -11,7 +11,6 @@ SPEAR:
       resx: 512
       resy: 512
 
-
 SP_SERVICES:
 
   LEGACY_SERVICE:
