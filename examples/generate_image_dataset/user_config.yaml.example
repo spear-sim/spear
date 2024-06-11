@@ -11,11 +11,9 @@ SPEAR:
       renderoffscreen: null
 
 SP_SERVICES:
-
   LEGACY_SERVICE:
     AGENT: "CameraAgent"
     TASK: "NullTask"
-
   LEGACY:
     NAVMESH:
       MIN_REGION_AREA: 0.0
