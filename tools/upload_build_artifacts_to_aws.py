@@ -45,7 +45,7 @@ if __name__ == "__main__":
         files_to_upload.append(os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{args.version_tag}-{platform_name}-Shipping.zip")))
 
     if args.upload_paks:
-        files_to_upload.extend([os.path.realpath(os.path.join(args.paks_dir, x)) for x in os.listdir(args.paks_dir) if x.endswith(paks_filter_string)])
+        files_to_upload.extend([ os.path.realpath(os.path.join(args.paks_dir, x)) for x in os.listdir(args.paks_dir) if x.endswith(paks_filter_string) ])
 
     for file in files_to_upload:
         assert os.path.exists(file)
