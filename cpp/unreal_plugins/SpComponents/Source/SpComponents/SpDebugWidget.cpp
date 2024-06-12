@@ -184,6 +184,16 @@ void ASpDebugWidget::GetAndSetObjectProperties()
     SP_LOG(Unreal::getPropertyValueAsString(relative_location_z_property_desc));
     SP_LOG();
 
+    // String properties can be get and set using our Unreal API
+    MyString = Unreal::toFString("HELLO WORLD!");
+
+    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "MyString")));
+    Unreal::setPropertyValueFromString(Unreal::findPropertyByName(this, "MyString"), "hello world!");
+    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "MyString")));
+
+    SP_LOG(Unreal::getObjectPropertiesAsString(this));
+
+    // Arrays can be indexed when searching for properties
     ArrayOfInts.Add(10);
     ArrayOfInts.Add(20);
     ArrayOfInts.Add(30);
@@ -192,13 +202,12 @@ void ASpDebugWidget::GetAndSetObjectProperties()
     ArrayOfStrings.Add(Unreal::toFString("Hello"));
     SP_LOG(Unreal::getObjectPropertiesAsString(this));
 
-    // Arrays can be indexed when searching for properties
     SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "ArrayOfInts[1]")));
     SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "ArrayOfVectors[1]")));
 
-    Unreal::setPropertyValueFromString(Unreal::findPropertyByName(this, "PrimaryActorTick.TickGroup"), "\"TG_PostPhysics\"");
+    Unreal::setPropertyValueFromString(Unreal::findPropertyByName(this, "PrimaryActorTick.TickGroup"), "TG_PostPhysics");
     SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "PrimaryActorTick.TickGroup")));
-    Unreal::setPropertyValueFromString(Unreal::findPropertyByName(this, "PrimaryActorTick.TickGroup"), "\"TG_PrePhysics\"");
+    Unreal::setPropertyValueFromString(Unreal::findPropertyByName(this, "PrimaryActorTick.TickGroup"), "TG_PrePhysics");
     SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "PrimaryActorTick.TickGroup")));
 
     SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "ArrayOfInts")));
@@ -251,13 +260,13 @@ void ASpDebugWidget::CallFunctions()
     std::map<std::string, std::string> return_values;
     std::string vec_str = Std::toString("{", "\"x\": ", 1.1*i, ", \"y\": ", 2.2*i, ", \"z\": ", 3.3*i, "}");
 
-    args = {{"arg_0", "\"Hello World\""}, {"arg_1", "true"}, {"arg_2", "12345"}, {"arg_3", vec_str}};
+    args = {{"arg_0", "Hello World"}, {"arg_1", "true"}, {"arg_2", "12345"}, {"arg_3", vec_str}};
     ufunction = Unreal::findFunctionByName(this->GetClass(), "GetString");
     SP_ASSERT(ufunction);
     return_values = Unreal::callFunction(GetWorld(), this, ufunction, args);
     SP_LOG(return_values.at("ReturnValue"));
 
-    args = {{"arg_0", "\"Hello World\""}, {"arg_1", "true"}, {"arg_2", "12345"}, {"arg_3", vec_str}};
+    args = {{"arg_0", "Hello World"}, {"arg_1", "true"}, {"arg_2", "12345"}, {"arg_3", vec_str}};
     ufunction = Unreal::findFunctionByName(this->GetClass(), "GetVector");
     SP_ASSERT(ufunction);
     return_values = Unreal::callFunction(GetWorld(), this, ufunction, args);
@@ -266,7 +275,7 @@ void ASpDebugWidget::CallFunctions()
 
     // Pointers can be passed into functions by converting them to strings, and static functions can be
     // called by passing in the class' default object when calling callFunction(...).
-    args = {{"world_context_object", Std::toStringFromPtr(GetWorld())}, {"arg_0", "\"Hello World\""}, {"arg_1", "true"}};
+    args = {{"world_context_object", Std::toStringFromPtr(GetWorld())}, {"arg_0", "Hello World"}, {"arg_1", "true"}};
     ufunction = Unreal::findFunctionByName(this->GetClass(), "GetWorldContextObject");
     SP_ASSERT(ufunction);
     return_values = Unreal::callFunction(GetWorld(), this->GetClass()->GetDefaultObject(), ufunction, args);
@@ -313,7 +322,7 @@ void ASpDebugWidget::CallFunctions()
 
     UObject* uobject = Unreal::findActorByName(world, "SpComponents/SpHitEventActor");
     SP_ASSERT(uobject);
-    ufunction = Unreal::findFunctionByName(uobject->GetClass(), "GetActorHitEventDescs");
+    ufunction = Unreal::findFunctionByName(uobject->GetClass(), "GetHitEventDescs");
     SP_ASSERT(ufunction);
     return_values = Unreal::callFunction(GetWorld(), uobject, ufunction);
     SP_LOG(return_values.at("ReturnValue"));

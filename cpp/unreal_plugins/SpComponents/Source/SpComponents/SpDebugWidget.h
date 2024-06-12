@@ -68,6 +68,9 @@ private:
     static UObject* GetWorldContextObject(const UObject* world_context_object, FString arg_0, bool arg_1);
 
     UPROPERTY()
+    FString MyString;
+
+    UPROPERTY()
     TArray<int> ArrayOfInts;
 
     UPROPERTY()
