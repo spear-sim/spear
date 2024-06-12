@@ -281,6 +281,12 @@ void ASpDebugWidget::CallFunctions()
     return_values = Unreal::callFunction(GetWorld(), this->GetClass()->GetDefaultObject(), ufunction, args);
     SP_LOG(return_values.at("ReturnValue"));
 
+    args = {};
+    ufunction = Unreal::findFunctionByName(this->GetClass(), "UpdateMap");
+    SP_ASSERT(ufunction);
+    return_values = Unreal::callFunction(GetWorld(), this->GetClass()->GetDefaultObject(), ufunction, args);
+    SP_LOG(return_values.at("map_from_string_to_vector"));
+
     UWorld* world = GetWorld();
     SP_ASSERT(world);
 
@@ -453,6 +459,14 @@ UObject* ASpDebugWidget::GetWorldContextObject(const UObject* world_context_obje
 {
     SP_LOG_CURRENT_FUNCTION();
     return const_cast<UObject*>(world_context_object);
+}
+
+void ASpDebugWidget::UpdateMap(TMap<FString, FVector>& map_from_string_to_vector)
+{
+    SP_LOG_CURRENT_FUNCTION();
+    FVector vec(1.23, 4.56, 7.89);
+    map_from_string_to_vector.Add(Unreal::toFString("Hello"), 1.0*vec);
+    map_from_string_to_vector.Add(Unreal::toFString("World"), 2.0*vec);
 }
 
 void ASpDebugWidget::initializeCppFuncs()
