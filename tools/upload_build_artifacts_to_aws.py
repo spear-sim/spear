@@ -15,12 +15,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--aws_path_prefix", required=True)
     parser.add_argument("--version_tag", required=True)
+    parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
     parser.add_argument("--upload_executable", action="store_true")
     parser.add_argument("--upload_paks", action="store_true")
-    parser.add_argument("--input_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "build")))
+    parser.add_argument("--paks_dir")
     args = parser.parse_args()
 
-    assert os.path.exists(args.input_dir)
+    assert os.path.exists(args.build_dir)
+    if args.upload_paks:
+        assert os.path.exists(args.paks_dir)
 
     if sys.platform == "win32":
         platform_name = "Win64"
@@ -39,10 +42,10 @@ if __name__ == "__main__":
     files_to_upload = []
 
     if args.upload_executable:
-        files_to_upload.append(os.path.realpath(os.path.join(args.input_dir, f"SpearSim-{args.version_tag}-{platform_name}-Shipping.zip")))
+        files_to_upload.append(os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{args.version_tag}-{platform_name}-Shipping.zip")))
 
     if args.upload_paks:
-        files_to_upload.append(os.path.realpath(os.path.join(args.input_dir, x)) for x in os.listdir(args.input_dir) if x.endswith(paks_filter_string))
+        files_to_upload.extend([ os.path.realpath(os.path.join(args.paks_dir, x)) for x in os.listdir(args.paks_dir) if x.endswith(paks_filter_string) ])
 
     for file in files_to_upload:
         assert os.path.exists(file)

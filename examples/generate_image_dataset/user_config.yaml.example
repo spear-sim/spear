@@ -6,21 +6,17 @@ SPEAR:
   LAUNCH_MODE: "standalone"
   STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
   PAKS_DIR: "/Users/mroberts/Downloads/spear-paks"
-
   INSTANCE:
     COMMAND_LINE_ARGS:
       renderoffscreen: null
-
 
 SP_SERVICES:
   LEGACY_SERVICE:
     AGENT: "CameraAgent"
     TASK: "NullTask"
-
   LEGACY:
     NAVMESH:
       MIN_REGION_AREA: 0.0
-
     CAMERA_AGENT:
       CAMERA_ACTOR_NAME: "camera_actor"
       SPAWN_MODE: "specify_pose" # "specify_existing_actor"

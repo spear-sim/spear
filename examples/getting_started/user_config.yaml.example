@@ -5,20 +5,16 @@
 SPEAR:
   LAUNCH_MODE: "standalone"
   STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
-  
   INSTANCE:
     COMMAND_LINE_ARGS:
       resx: 512
       resy: 512
 
-
 SP_SERVICES:
-
   LEGACY_SERVICE:
     # AGENT: "SphereAgent" # uncomment when using SphereAgent
     AGENT: "VehicleAgent" # uncomment when using VehicleAgent
     TASK: "NullTask"
-
   LEGACY:
     SPHERE_AGENT:
       SPHERE_ACTOR_NAME: "sphere_actor"
@@ -37,7 +33,6 @@ SP_SERVICES:
         IMAGE_HEIGHT: 512
         IMAGE_WIDTH: 512
         FOV: 90.0
-
     VEHICLE_AGENT:
       VEHICLE_ACTOR_NAME: "vehicle_actor"
       ACTION_COMPONENTS: ["set_drive_torques"] # "set_brake_torques", "set_drive_torques"
