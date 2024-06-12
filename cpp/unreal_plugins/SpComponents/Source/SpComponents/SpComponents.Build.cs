@@ -10,7 +10,7 @@ public class SpComponents : SpModuleRules
     {
         SP_LOG_CURRENT_FUNCTION();
 
-        PublicDependencyModuleNames.AddRange(new string[] {"SpCore"});
+        PublicDependencyModuleNames.AddRange(new string[] { "ChaosVehicles", "SpCore" });
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }
