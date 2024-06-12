@@ -120,7 +120,7 @@ class UnrealService():
             self._handle = handle
 
         def to_string(self):
-            return f"{self._handle:#0{10}x}"
+            return f"{self._handle:#0{18}x}"
 
     # Convert a pointer obtained from another UnrealService function into a form that can be passed as an
     # argument to unreal_service.call_function(...).
@@ -129,22 +129,36 @@ class UnrealService():
 
     # Convert a return value returned by unreal_service.call_function(...) into a form that can be passed to
     # another UnrealService function.
-    def from_ptr(self, str):
-        return int(str, 0)
+    def from_ptr(self, string):
+        return int(string, 0)
 
     # call an arbitrary function
     def call_function(self, uobject, ufunction, args={}, world_context="WorldContextObject"):
 
+        # If an arg is a string, then don't convert. If an arg is a Ptr, then use Ptr.to_string() to convert.
+        # If an arg is any other type, then assume it is valid JSON and use json.dumps(...) to convert.
         arg_strings = {}
         for arg_name, arg in args.items():
-            if isinstance(arg, UnrealService.Ptr):
+            if isinstance(arg, str):
+                arg_string = arg
+            elif isinstance(arg, UnrealService.Ptr):
                 arg_string = arg.to_string()
             else:
                 arg_string = json.dumps(arg)
             arg_strings[arg_name] = arg_string
 
         return_value_strings = self._rpc_client.call("unreal_service.call_function", uobject, ufunction, arg_strings, world_context)
-        return_values = { return_value_name: json.loads(return_value_string) for return_value_name, return_value_string in return_value_strings.items() }
+
+        # Try to parse each return value string as JSON, and if that doesn't work, then return the string
+        # directly. If the returned string is intended to be a pointer, then the user can get it as a pointer
+        # by calling unreal_service.from_ptr(...).
+        return_values = {}
+        for return_value_name, return_value_string in return_value_strings.items():
+            try:
+                return_value = json.loads(return_value_string)
+            except:
+                return_value = return_value_string 
+            return_values[return_value_name] = return_value
 
         return return_values
 
