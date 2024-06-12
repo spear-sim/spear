@@ -368,7 +368,6 @@ void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_des
         property_desc.property_->IsA(FMapProperty::StaticClass())    ||
         property_desc.property_->IsA(FStructProperty::StaticClass())) {
 
-        //
         // If our property is a {bool, int, float, double}, then we expect string to contain the property
         // value formatted as a string with no quotes, and we do not need to add any quotes to construct our
         // dummy JSON string below. Likewise, if our property is an {array, set, map, struct}, then we expect
@@ -380,8 +379,6 @@ void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_des
         //
         // If our property is an enum byte, treat it like a string. If it is a non-enum byte, treat it like
         // an int.
-        //
-
         std::string quote_string = "";
         if (property_desc.property_->IsA(FStrProperty::StaticClass()) || property_desc.property_->IsA(FNameProperty::StaticClass())) {
             quote_string = "\"";
