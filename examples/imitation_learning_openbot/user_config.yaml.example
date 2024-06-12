@@ -13,12 +13,10 @@ IMITATION_LEARNING_OPENBOT:
   ROTATION_YAW_DERIVATIVE_GAIN: 0.1   # derivative gain for the autopilot
   PILOT_NET_POLICY_PATH: ""
 
-
 SPEAR:
   LAUNCH_MODE: "standalone"
   STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
   PAKS_DIR: "/Users/mroberts/Downloads/spear-paks"
-
   INSTANCE:
     COMMAND_LINE_ARGS:
       resx: 512
@@ -26,11 +24,9 @@ SPEAR:
 
 
 SP_SERVICES:
-
   LEGACY_SERVICE:
     AGENT: "VehicleAgent"
     TASK: "ImitationLearningTask"
-
   LEGACY:
     VEHICLE_AGENT:
       VEHICLE_ACTOR_NAME: "vehicle_actor"
@@ -50,7 +46,6 @@ SP_SERVICES:
         IMAGE_HEIGHT: 120
         IMAGE_WIDTH: 160
         FOV: 70.0
-
     IMITATION_LEARNING_TASK:
       AGENT_ACTOR_NAME: "vehicle_actor"
       GOAL_ACTOR_NAME: "goal_actor"
@@ -60,7 +55,6 @@ SP_SERVICES:
       AGENT_SPAWN_OFFSET_LOCATION_X: 0.0
       AGENT_SPAWN_OFFSET_LOCATION_Y: 0.0
       AGENT_SPAWN_OFFSET_LOCATION_Z: 1.3
-
     NAVMESH:
       AGENT_RADIUS: 20.0
       AGENT_HEIGHT: 20.0
