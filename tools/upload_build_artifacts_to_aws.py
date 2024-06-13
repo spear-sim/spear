@@ -21,7 +21,9 @@ if __name__ == "__main__":
     parser.add_argument("--paks_dir")
     args = parser.parse_args()
 
-    assert os.path.exists(args.build_dir)
+    if args.upload_executable:
+        assert os.path.exists(args.build_dir)
+
     if args.upload_paks:
         assert os.path.exists(args.paks_dir)
 
