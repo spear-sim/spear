@@ -9,6 +9,7 @@ import posixpath
 import spear
 import wget
 
+
 # list all available scene_ids for download
 available_scene_ids = [
     "kujiale_0000",
@@ -44,6 +45,7 @@ available_scene_ids = [
     "kujiale_0030",
     "kujiale_0031",
     "warehouse_0000"]
+
 
 if __name__ == '__main__':
 
