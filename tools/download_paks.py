@@ -43,7 +43,7 @@ if __name__ == '__main__':
         download_url  = posixpath.join(download_url_prefix, args.version_tag, pak_file_name)
         output_file   = os.path.join(output_dir, pak_file_name)
 
-        spear.log(f"Downloading {download_url} to {output_file} ...")
+        spear.log(f"Downloading {download_url} to {output_file}")
 
         # create a progress bar
         response = urllib.request.urlopen(download_url)
