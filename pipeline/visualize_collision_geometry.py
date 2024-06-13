@@ -156,5 +156,5 @@ def draw_collision_geometry_for_kinematic_tree_node(actor_name, transform_world_
             log_prefix_str=log_prefix_str+"    ")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     process_scene()
