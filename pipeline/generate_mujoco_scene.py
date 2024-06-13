@@ -308,5 +308,5 @@ def get_mujoco_rgba_str(rgb):
     return " ".join([ str(value) for value in rgba ])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     process_scene()
