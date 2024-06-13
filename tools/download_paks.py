@@ -43,8 +43,7 @@ available_scene_ids = [
     "kujiale_0029",
     "kujiale_0030",
     "kujiale_0031",
-    "warehouse_0000"
-]
+    "warehouse_0000"]
 
 if __name__ == '__main__':
 
