@@ -95,10 +95,11 @@ We are now ready to build the `SpearSim` executable as follows.
 
 ```console
 # build, cook, stage, package, archive
-path/to/UE_5.2/Engine/Build/BatchFiles/RunUAT.sh BuildCookRun -project=path/to/spear/cpp/unreal_projects/SpearSim/SpearSim.uproject -build -cook -stage -package -archive -pak -iterativecooking -targetPlatform=Mac -target=SpearSim -clientconfig=Development -archivedirectory=path/to/spear/cpp/unreal_projects/SpearSim/Standalone-Development
+cd tools
+python run_uat.py --unreal_engine_dir path/to/UE_5.2 --build_config Development -build -cook -stage -package -archive -pak -iterativecooking
 ```
 
-On Windows, you will need to replace `RunUAT.sh` with `RunUAT.bat`. Depending on your platform, you will need to specify `-targetPlatform` as `Win64`, `Mac`, or `Linux`. This step will generate an executable at the following locations.
+Note that our `run_uat.py` tool is a thin wrapper around Unreal's [RunUAT](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Deployment/BuildOperations) tool. Our tool consumes `--unreal_engine_dir` and `--build_config`, provides `RunUAT` with sensible default values for a few commonly used arguments, and otherwise forwards all arguments directly to `RunUAT`. This step will generate an executable at the following locations.
 
 ```
 Windows: cpp/unreal_projects/SpearSim/Standalone-Development/Windows/SpearSim/Binaries/Win64/SpearSim-Cmd.exe
