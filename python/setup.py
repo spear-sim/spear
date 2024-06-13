@@ -25,6 +25,7 @@ setuptools.setup(
         "pyglet==1.5.0",
         "scipy==1.10.1",
         "tensorflow==2.13.0",
+        "tqdm==4.66.4",
         "trimesh==4.4.0",
         "vtk==9.2.6",
         "wxPython==4.2.1",
