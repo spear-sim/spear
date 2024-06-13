@@ -94,7 +94,7 @@ def build_pak(pak_name, symlink_dirs=[], cooked_include_dirs=[], expected_unreal
         spear.remove_path(symlink_dir_virtual)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--unreal_engine_dir", required=True)
