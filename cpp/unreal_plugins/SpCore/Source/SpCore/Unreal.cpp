@@ -28,7 +28,7 @@
 #include <UObject/NameTypes.h>       // FName
 #include <UObject/Object.h>          // UObject
 #include <UObject/ObjectMacros.h>    // EPropertyFlags
-#include <UObject/UnrealType.h>      // FArrayProperty, FBoolProperty, FDoubleProperty, FEnumProperty, FFloatProperty, FIntProperty, FMapProperty, FProperty,
+#include <UObject/UnrealType.h>      // FArrayProperty, FBoolProperty, FByteProperty, FDoubleProperty, FFloatProperty, FIntProperty, FMapProperty, FProperty,
                                      // FScriptArrayHelper, FScriptMapHelper, FScriptSetHelper, FSetProperty, FStrProperty, FStructProperty, TFieldIterator
 
 #include "SpCore/Assert.h"
