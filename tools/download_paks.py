@@ -7,8 +7,7 @@ import fnmatch
 import os
 import posixpath
 import spear
-from tqdm import tqdm
-import urllib.request
+import wget
 
 if __name__ == '__main__':
 
@@ -36,7 +35,6 @@ if __name__ == '__main__':
 
     # construct url and download files
     download_url_prefix = "https://d3q9jkhps5jb4b.cloudfront.net"
-    block_size = 1024
     for scene_id in scene_ids:
 
         pak_file_name = scene_id + "-" + args.version_tag + "-" + args.platform + ".pak"
@@ -45,19 +43,6 @@ if __name__ == '__main__':
 
         spear.log(f"Downloading {download_url} to {output_file}")
 
-        # create a progress bar
-        response = urllib.request.urlopen(download_url)
-        total_size = int(response.info().get('Content-Length').strip())
-        tqdm_bar = tqdm(total=total_size, unit='iB', unit_scale=True)
-
-        with open(output_file, 'wb') as file:
-            while True:
-                buffer = response.read(block_size)
-                if not buffer:
-                    break
-
-                file.write(buffer)
-                tqdm_bar.update(len(buffer))
-        tqdm_bar.close()
+        wget.download(download_url, out=output_file)
 
     spear.log("Done.")
