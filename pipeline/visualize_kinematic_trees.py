@@ -151,5 +151,5 @@ def draw_kinematic_tree_node(transform_world_from_parent_node, kinematic_tree_no
             log_prefix_str=log_prefix_str+"    ")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     process_scene()
