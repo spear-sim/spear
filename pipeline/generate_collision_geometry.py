@@ -157,5 +157,5 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
     return kinematic_tree_node
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     process_scene()
