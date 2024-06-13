@@ -17,7 +17,6 @@ if __name__ == '__main__':
     parser.add_argument("--platform", required=True)
     parser.add_argument("--version_tag", required=True)
     parser.add_argument("--scene_ids", required=True)
-
     args = parser.parse_args()
 
     assert args.platform in ["Windows", "Linux", "Mac"]
