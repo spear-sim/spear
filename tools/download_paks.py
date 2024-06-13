@@ -13,10 +13,11 @@ import urllib.request
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("--output_dir", required=True)
+    parser.add_argument("--platform", required=True)
     parser.add_argument("--version_tag", required=True)
     parser.add_argument("--scene_ids", required=True)
-    parser.add_argument("--platform", required=True)
-    parser.add_argument("--output_dir", required=True)
+
     args = parser.parse_args()
 
     assert args.platform in ["Windows", "Linux", "Mac"]
