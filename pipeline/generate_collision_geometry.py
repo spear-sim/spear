@@ -12,6 +12,7 @@ import spear
 import spear.pipeline
 import trimesh
 
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--pipeline_dir", required=True)
 parser.add_argument("--scene_id", required=True)

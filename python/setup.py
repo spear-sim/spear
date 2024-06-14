@@ -16,7 +16,7 @@ setuptools.setup(
         "ffmpeg-python==0.2.0",
         "gym==0.23.0",
         "matplotlib==3.6.2",
-        "mayavi==4.8.1",
+        "mayavi==4.8.2",
         "mujoco==3.1.3",
         "numpy==1.22.3",
         "opencv-python==4.5.5.64",
