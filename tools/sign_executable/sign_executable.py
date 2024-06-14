@@ -75,18 +75,20 @@ if __name__ == "__main__":
             "runtime",
             "--entitlements", args.entitlements_file,
             "--sign",
-            f'"Developer ID Application: {args.developer_id}"',
+            args.developer_id,
             file]
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
     # Customizing the Notarization Workflow - create an archive (-c) in pkzip format (-k) and embed the parent directory name in the archive (-keepParent)
+    # while preserving HFS metadata (--sequesterRsrc)
     #     https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow
     notarization_zip = os.path.realpath(os.path.join(args.temp_dir, f"{os.path.splitext(executable_name)[0]}.zip"))
     cmd = [
         "ditto",
         "-c",
         "-k",
+        "--sequesterRsrc",
         "--keepParent",
         executable,
         notarization_zip]
@@ -148,6 +150,6 @@ if __name__ == "__main__":
         executable]
     spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
-    
+
     spear.log(f"{executable} has been successfully signed.")
     spear.log("Done.")
