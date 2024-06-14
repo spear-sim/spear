@@ -282,12 +282,13 @@ void ASpDebugWidget::CallFunctions()
     SP_LOG(return_values.at("ReturnValue"));
 
     args = {};
-    ufunction = Unreal::findFunctionByName(this->GetClass(), "UpdateMap");
+    ufunction = Unreal::findFunctionByName(this->GetClass(), "UpdateData");
     SP_ASSERT(ufunction);
     return_values = Unreal::callFunction(GetWorld(), this->GetClass()->GetDefaultObject(), ufunction, args);
     SP_LOG(return_values.at("map_from_string_to_vector"));
+    SP_LOG(return_values.at("array_of_vectors"));
 
-    UWorld* world = GetWorld();
+    UWorld* world = GetWorld(); 
     SP_ASSERT(world);
 
     AStaticMeshActor* static_mesh_actor = Unreal::findActorByName<AStaticMeshActor>(world, "Debug/SM_Prop_04");
@@ -461,12 +462,14 @@ UObject* ASpDebugWidget::GetWorldContextObject(const UObject* world_context_obje
     return const_cast<UObject*>(world_context_object);
 }
 
-void ASpDebugWidget::UpdateMap(TMap<FString, FVector>& map_from_string_to_vector)
+void ASpDebugWidget::UpdateData(TMap<FString, FVector>& map_from_string_to_vector, TArray<FVector>& array_of_vectors)
 {
     SP_LOG_CURRENT_FUNCTION();
     FVector vec(1.23, 4.56, 7.89);
     map_from_string_to_vector.Add(Unreal::toFString("Hello"), 1.0*vec);
     map_from_string_to_vector.Add(Unreal::toFString("World"), 2.0*vec);
+    array_of_vectors.Add(FVector(1.0f, 2.0f, 3.0f));
+    array_of_vectors.Add(FVector(4.0f, 5.0f, 6.0f));
 }
 
 void ASpDebugWidget::initializeCppFuncs()

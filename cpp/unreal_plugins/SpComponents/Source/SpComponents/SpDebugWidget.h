@@ -68,7 +68,7 @@ private:
     static UObject* GetWorldContextObject(const UObject* world_context_object, FString arg_0, bool arg_1);
 
     UFUNCTION()
-    static void UpdateMap(TMap<FString, FVector>& map_from_string_to_vector);
+    static void UpdateData(TMap<FString, FVector>& map_from_string_to_vector, TArray<FVector>& array_of_vectors);
 
     UPROPERTY()
     FString MyString;

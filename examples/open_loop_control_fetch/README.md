@@ -1,6 +1,6 @@
 # Open-Loop Control with Fetch
 
-In this example application, we demonstrate how control a Fetch agent to pick up an object and move it to another location.
+In this example application, we demonstrate how to control a Fetch agent to pick up an object and move it to another location.
 
 Before running this example, rename `user_config.yaml.example` to `user_config.yaml` and modify the contents appropriately for your system, as described in our [Getting Started](../../docs/getting_started.md) tutorial.
 

@@ -1,12 +1,19 @@
-# Building `SpearSim`
+# Running our Asset Pipeline
 
 ## Assumptions
 
-We will assume that you are developing on a version of Windows, macOS, or Linux that is compatible with Unreal Engine 5.2. We will also assume that you're using Anaconda Python to manage your Python environment, and that you have CMake installed. We will assume that you have cloned this entire repository including all submodules, and that you have installed the `spear` Python package, as described in our [Getting Started](getting_started.md) tutorial. All `cd` commands in this tutorial are specified relative to the top-level repository directory.
+We will assume that you have completed our [Building SpearSim](building_spearsim.md) tutorial. All `cd` commands in this tutorial are specified relative to the top-level repository directory.
 
-## Install the Unreal Engine
+## Configure the Unreal Editor Python environment
 
-We recommend installing the Unreal Engine version 5.2 via the Epic Games Launcher, rather than building it from source. We recommend installing to a path that does not contain spaces. You may need to disconnect from your VPN or proxy server when running the Epic Games Launcher. When you install the Unreal Engine, make sure to select _Editor symbols for debugging_ from the list of optional components.
+The Unreal Editor ships with its own Python environment that can be used to run Python scripts from inside the editor. Some of our pipeline steps must be run from within the editor Python environment, and therefore we must configure this Python environment, even though we have already configured an Anaconda Python environment in our [Getting Started](getting_started.md) tutorial. 
+
+```console
+cd tools
+python configure_unreal_editor_python.py --unreal_engine_dir path/to/UE_5.2
+```
+
+The Unreal Editor ships with its own Python environment. You will need to configure We recommend installing the Unreal Engine version 5.2 via the Epic Games Launcher, rather than building it from source. We recommend installing to a path that does not contain spaces. You may need to disconnect from your VPN or proxy server when running the Epic Games Launcher. When you install the Unreal Engine, make sure to select _Editor symbols for debugging_ from the list of optional components.
 
 If you're developing on Linux, you will need to download the Unreal Engine from [here](https://www.unrealengine.com/en-US/linux).
 
@@ -99,7 +106,9 @@ cd tools
 python run_uat.py --unreal_engine_dir path/to/UE_5.2 --build_config Development -build -cook -stage -package -archive -pak -iterativecooking
 ```
 
-Note that our `run_uat.py` tool is a thin wrapper around Unreal's [RunUAT](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Deployment/BuildOperations) tool. Our tool consumes `--unreal_engine_dir` and `--build_config`, provides `RunUAT` with sensible default values for a few commonly used arguments, and otherwise forwards all arguments directly to `RunUAT`. This step will generate an executable at the following locations.
+Note that our `run_uat.py` tool is a thin wrapper around Unreal's [RunUAT](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Deployment/BuildOperations) tool. Our tool consumes `--unreal_engine_dir` and `--build_config`, provides `RunUAT` with sensible default values for a few commonly used arguments, and otherwise forwards all arguments directly to `RunUAT`.
+
+This step will generate an executable at the following locations.
 
 ```
 Windows: cpp/unreal_projects/SpearSim/Standalone-Development/Windows/SpearSim/Binaries/Win64/SpearSim-Cmd.exe
@@ -109,10 +118,9 @@ Linux:   cpp/unreal_projects/SpearSim/Standalone-Development/Linux/SpearSim.sh
 
 ### Helpful command-line options
 
-- After you have done a complete `-build -cook -stage -package -archive` once, you can replace `-build` with `-skipbuild`, `-cook` with `-skipcook`, and `-stage -package -archive` with `-skipstage -skippackage -skiparchive`, depending on what you're doing. You only need to `-cook` if you have edited the project in the Unreal Editor, and you only need to `-stage -package -archive` if you want to update the standalone executable in `-archivedirectory`.
+- After you have done a complete `-build -cook -stage -package -archive` once, you can replace `-build` with `-skipbuild`, `-cook` with `-skipcook`, and `-stage -package -archive` with `-skipstage -skippackage -skiparchive`, depending on what you're doing. You only need to `-cook` if you have edited the project in the Unreal Editor, and you only need to `-stage -package -archive` if you want to update the standalone executable.
 - If you specify `-skipcook`, you can also specify `-nocompileeditor`, which saves time by not building a second executable that is only required when cooking.
-- If you specify `-skipstage -skippackage -skiparchive`, you don't need to specify `-archivedirectory`.
-- If you only want to propagate changes in `cpp/unreal_projects/SpearSim/Config` to the executable in `-archivedirectory`, you can specify `-skipbuild -skipcook`.
+- If you only want to propagate changes in `cpp/unreal_projects/SpearSim/Config` to the standalone executable, you can specify `-skipbuild -skipcook`.
 - You can replace `Development` with `Shipping` to build a more optimized executable.
 - You can specify `-specifiedarchitecture=arm64+x86_64` to build a universal binary on macOS.
 - You can specify `-clean` to do a clean build.
