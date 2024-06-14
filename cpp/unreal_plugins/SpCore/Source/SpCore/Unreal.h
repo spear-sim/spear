@@ -517,6 +517,14 @@ public:
         return components;
     }
 
+    static UActorComponent* getComponentByTypeV2(const AActor* actor, UClass* uclass)
+    {
+        SP_ASSERT(actor);
+        UActorComponent* component = actor->GetComponentByClass(uclass);
+        SP_ASSERT(component);
+        return component;
+    }
+
     //
     // Get components by name or tag or type and return an std::map
     //

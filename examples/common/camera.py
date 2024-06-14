@@ -12,7 +12,8 @@ class CameraSensor:
         self._height = height
         self._fov = fov
 
-        self._camera_sensor_component = instance.unreal_service.get_component_by_type("UCameraSensorComponent", unreal_actor)
+        self._camera_sensor_component = instance.unreal_service.get_component_by_type_v2("/Script/CoreUObject.Class'/Script/SpComponents.CameraSensorComponent'", unreal_actor)
+        assert self._camera_sensor_component
         self._camera_sensor_component_class = instance.unreal_service.get_class(self._camera_sensor_component)
 
         # setup CameraSensorComponent

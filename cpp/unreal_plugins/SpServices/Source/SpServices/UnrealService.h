@@ -557,6 +557,10 @@ public:
             [this](const std::string& class_name) -> uint64_t {
                 return reinterpret_cast<uint64_t>(UnrealClassRegistrar::getStaticClass(class_name));
             });
+        unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_static_class_v2",
+            [this](const std::string& class_name) -> uint64_t {
+                return reinterpret_cast<uint64_t>(UnrealClassRegistrar::getStaticClass(class_name));
+            });
 
         //
         // Find actors conditionally and return an std::vector or std::map
@@ -722,6 +726,12 @@ public:
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_component_by_type",
             [this](const std::string& class_name, const uint64_t& actor, const bool& assert_if_not_found, const bool& assert_if_multiple_found) -> uint64_t {
                 return reinterpret_cast<uint64_t>(UnrealClassRegistrar::getComponentByType(class_name, reinterpret_cast<AActor*>(actor), assert_if_not_found, assert_if_multiple_found));
+            });
+
+        unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_component_by_type_v2",
+            [this](const std::string& class_name, const uint64_t& actor, const bool& assert_if_not_found, const bool& assert_if_multiple_found) -> uint64_t {
+                UClass* uclass = reinterpret_cast<UClass*>(StaticLoadObject(UObject::StaticClass() , nullptr, *Unreal::toFString(class_name), nullptr, LOAD_None, nullptr));
+                return reinterpret_cast<uint64_t>(Unreal::getComponentByTypeV2(reinterpret_cast<AActor*>(actor), uclass));
             });
 
         //

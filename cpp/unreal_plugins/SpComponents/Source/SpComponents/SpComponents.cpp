@@ -11,7 +11,6 @@
 #include "SpCore/Log.h"
 #include "SpCore/UnrealClassRegistrar.h"
 
-#include "SpComponents/CameraSensorComponent.h"
 #include "SpComponents/SpHitEventActor.h"
 
 void SpComponents::StartupModule()
@@ -20,7 +19,6 @@ void SpComponents::StartupModule()
     SP_LOG_CURRENT_FUNCTION();
 
     UnrealClassRegistrar::registerActorClass<ASpHitEventActor>("ASpHitEventActor");
-    UnrealClassRegistrar::registerComponentClass<UCameraSensorComponent>("UCameraSensorComponent");
     UnrealClassRegistrar::registerComponentClass<UChaosWheeledVehicleMovementComponent>("UChaosWheeledVehicleMovementComponent");
 }
 
@@ -29,7 +27,6 @@ void SpComponents::ShutdownModule()
     SP_LOG_CURRENT_FUNCTION();
 
     UnrealClassRegistrar::unregisterActorClass<ASpHitEventActor>("ASpHitEventActor");
-    UnrealClassRegistrar::unregisterComponentClass<UCameraSensorComponent>("UCameraSensorComponent");
     UnrealClassRegistrar::unregisterComponentClass<UChaosWheeledVehicleMovementComponent>("UChaosWheeledVehicleMovementComponent");
 }
 
