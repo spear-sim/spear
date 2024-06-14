@@ -10,16 +10,24 @@ import spear
 import spear.unreal
 import trimesh
 
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--pipeline_dir", required=True)
+parser.add_argument("--scene_id")
 args = parser.parse_args()
 
 asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
 unreal_editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
-editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
+level_editor_subsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+
+editor_world_name = None
 
 
 def process_scene():
+
+    global editor_world_name
+
+    editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
     spear.log("Processing scene: ", editor_world_name)
 
     actors = spear.unreal.find_actors()
@@ -34,6 +42,9 @@ def process_scene():
 
 def generate_unreal_geometry(actor):
 
+    global editor_world_name
+
+    print(editor_world_name)
     static_mesh_components  = spear.unreal.find_components(actor, unreal.StaticMeshComponent)
     static_meshes           = [ static_mesh_component.get_editor_property("static_mesh") for static_mesh_component in static_mesh_components ]
     static_meshes           = [ static_mesh for static_mesh in static_meshes if static_mesh is not None ]
@@ -102,4 +113,9 @@ def generate_unreal_geometry(actor):
 
 
 if __name__ == "__main__":
+
+    # TODO: enable script to process multiple scenes
+    if args.scene_id is not None:
+        level_editor_subsystem.load_level("/Game/Scenes/" + args.scene_id + "/Maps/" + args.scene_id + "." + args.scene_id)
+
     process_scene()

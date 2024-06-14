@@ -17,11 +17,19 @@
     ],
     "Plugins": [
         {
+            "Name": "EditorScriptingUtilities",
+            "Enabled": true
+        },
+        {
             "Name": "HDRIBackdrop",
             "Enabled": true
         },
         {
             "Name": "ModelingToolsEditorMode",
+            "Enabled": true
+        },
+        {
+            "Name": "PythonScriptPlugin",
             "Enabled": true
         },
         {

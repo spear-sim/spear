@@ -10,11 +10,14 @@ import unreal
 import spear
 import spear.unreal
 
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--pipeline_dir", required=True)
+parser.add_argument("--scene_id")
 args = parser.parse_args()
 
 unreal_editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+level_editor_subsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
 
 editor_properties_csv_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "editor_properties.csv"))
 df_editor_properties = pd.read_csv(editor_properties_csv_file)
@@ -171,4 +174,9 @@ def get_editor_property_desc(editor_property):
 
 
 if __name__ == "__main__":
+
+    # TODO: enable script to process multiple scenes
+    if args.scene_id is not None:
+        level_editor_subsystem.load_level("/Game/Scenes/" + args.scene_id + "/Maps/" + args.scene_id + "." + args.scene_id)
+
     process_scene()
