@@ -12,4 +12,4 @@ You can run the example as follows.
 python run.py --mjcf_file path/to/spear-pipeline/apartment_0000/mujoco_scene/main.mjcf
 ```
 
-This will launch an interactive MuJoCo viewer and a SPEAR rendering window. The positions of the chairs in the MuJoCo simulation will be synchronized in real-time with SPEAR.
+This will launch an interactive MuJoCo viewer and a SPEAR rendering window. The poses of the chairs in the MuJoCo simulation will be synchronized in real-time with SPEAR.
