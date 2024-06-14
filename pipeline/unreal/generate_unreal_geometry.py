@@ -34,7 +34,7 @@ def process_scene():
     actors = [ actor for actor in actors if actor.get_editor_property("root_component") is not None ]
 
     for actor in actors:
-        spear.log("    Processing actor: ", spear.unreal.get_stable_actor_name(actor))
+        spear.log("    Processing actor: ", spear.unreal.get_stable_name_for_actor(actor))
         generate_unreal_geometry(actor)
 
     spear.log("Done.")
