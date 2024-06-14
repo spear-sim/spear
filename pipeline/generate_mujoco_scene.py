@@ -14,6 +14,7 @@ import spear.pipeline
 import xml.dom.minidom
 import xml.etree.ElementTree
 
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--pipeline_dir", required=True)
 parser.add_argument("--scene_id", required=True)
