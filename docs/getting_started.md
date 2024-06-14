@@ -45,14 +45,14 @@ python tools/run_executable.py --executable path/to/executable --scene_id debug_
 Depending on your platform, you will need to specify the following path to your `--executable`.
 
 ```
-Windows: path/to/SpearSim-v0.4.0-Win64-Shipping/SpearSim/Binaries/Win64/SpearSim-Win64-Shipping-Cmd.exe
+Windows: path/to/SpearSim-v0.5.0-Win64-Shipping/SpearSim/Binaries/Win64/SpearSim-Win64-Shipping-Cmd.exe
 macOS:   path/to/SpearSim-Mac-Shipping.app
-Linux:   path/to/SpearSim-v0.4.0-Linux-Shipping/SpearSim.sh
+Linux:   path/to/SpearSim-v0.5.0-Linux-Shipping/SpearSim.sh
 ```
 
 You will also need to specify the following command-line arguments.
 
-  - `--scene_id` is the name of the scene you want to navigate around (e.g., `apartment_0000`, `debug_0000`, `kujiale_0000`, `kujiale_0001`, `...`, `warehouse_0000`). If you specify a `kujiale` or `warehouse` scene, then you also need to specify `--paks_dir` as the directory containing the pak file for that scene. We provide links to pak files in our [release notes](https://github.com/isl-org/spear/releases/tag/v0.4.0).
+  - `--scene_id` is the name of the scene you want to navigate around (e.g., `apartment_0000`, `debug_0000`, `kujiale_0000`, `kujiale_0001`, `...`, `warehouse_0000`). If you specify a `kujiale` or `warehouse` scene, then you also need to specify `--paks_dir` as the directory containing the pak file for that scene. We provide links to pak files in our [release notes](https://github.com/isl-org/spear/releases/tag/v0.5.0).
 
 The following command-line arguments are optional.
 
