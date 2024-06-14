@@ -76,7 +76,7 @@ if __name__ == "__main__":
             "runtime",
             "--entitlements", args.entitlements_file,
             "--sign",
-            f'"Developer ID Application: {args.developer_id}"',
+            args.developer_id,
             file]
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
@@ -88,6 +88,7 @@ if __name__ == "__main__":
         "ditto",
         "-c",
         "-k",
+        "--sequesterRsrc",
         "--keepParent",
         executable,
         notarization_zip]
@@ -149,6 +150,6 @@ if __name__ == "__main__":
         executable]
     spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
-    
+
     spear.log(f"{executable} has been successfully signed.")
     spear.log("Done.")
