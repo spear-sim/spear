@@ -4,6 +4,7 @@
 
 import json
 
+
 class UnrealService():
     def __init__(self, rpc_client):
         self._rpc_client = rpc_client
