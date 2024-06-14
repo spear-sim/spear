@@ -2,7 +2,7 @@
 
 ## Assumptions
 
-We will assume that you have completed our [Getting Started](getting_started.md) and [Building SpearSim](building_spearsim.md) tutorials. We will also assume that we want to run the pipeline for a single scene. All `cd` commands in this tutorial are specified relative to the top-level repository directory.
+We will assume that you have completed our [Getting Started](getting_started.md) and [Building SpearSim](building_spearsim.md) tutorials. We will also assume that we want to run the export pipeline for the `apartment_0000` scene. All `cd` commands in this tutorial are specified relative to the top-level repository directory.
 
 ## Configure the Unreal Editor Python environment
 
