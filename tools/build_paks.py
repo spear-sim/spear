@@ -152,7 +152,7 @@ if __name__ == "__main__":
  
     # build common pak
     if not args.skip_build_common_pak:
-        pak_name = "Common"
+        pak_name = "common"
         symlink_dirs = {
             os.path.realpath(os.path.join(args.perforce_content_dir, "Megascans")) : os.path.join(unreal_project_content_dir, "Megascans"),
             os.path.realpath(os.path.join(args.perforce_content_dir, "MSPresets")) : os.path.join(unreal_project_content_dir, "MSPresets")}
