@@ -102,7 +102,6 @@ if __name__ == "__main__":
     parser.add_argument("--paks_dir", required=True)
     parser.add_argument("--version_tag", required=True)
     parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
-    parser.add_argument("--temp_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "tmp")))
     parser.add_argument("--scene_ids")
     parser.add_argument("--skip_build_common_pak", action="store_true")
     args = parser.parse_args()
@@ -110,7 +109,6 @@ if __name__ == "__main__":
     assert os.path.exists(args.unreal_engine_dir)
     assert os.path.exists(args.perforce_content_dir)
     assert os.path.exists(args.build_dir)
-    assert os.path.exists(args.temp_dir)
 
     if sys.platform == "win32":
         platform          = "Windows"
@@ -130,7 +128,7 @@ if __name__ == "__main__":
     else:
         assert False
 
-    unreal_project_dir                = os.path.realpath(os.path.join(args.temp_dir, "spear", "cpp", "unreal_projects", "SpearSim"))
+    unreal_project_dir                = os.path.realpath(os.path.join(args.build_dir, "spear", "cpp", "unreal_projects", "SpearSim"))
     unreal_project_content_dir        = os.path.realpath(os.path.join(unreal_project_dir, "Content"))
     unreal_project_content_scenes_dir = os.path.realpath(os.path.join(unreal_project_content_dir, "Scenes"))
     unreal_project_cooked_dir         = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform))
