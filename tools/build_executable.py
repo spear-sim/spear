@@ -18,7 +18,6 @@ if __name__ == "__main__":
     parser.add_argument("--conda_env", default="spear-env")
     parser.add_argument("--num_parallel_jobs", type=int, default=1)
     parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
-    parser.add_argument("--temp_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "tmp")))
     parser.add_argument("--conda_script")
     parser.add_argument("--commit_id")
     parser.add_argument("--skip_clone_github_repo", action="store_true")
@@ -27,7 +26,7 @@ if __name__ == "__main__":
 
     assert os.path.exists(args.unreal_engine_dir)
 
-    repo_dir           = os.path.realpath(os.path.join(args.temp_dir, "spear"))
+    repo_dir           = os.path.realpath(os.path.join(args.build_dir, "spear"))
     unreal_project_dir = os.path.realpath(os.path.join(repo_dir, "cpp", "unreal_projects", "SpearSim"))
     unreal_plugins_dir = os.path.realpath(os.path.join(repo_dir, "cpp", "unreal_plugins"))
     third_party_dir    = os.path.realpath(os.path.join(repo_dir, "third_party"))
