@@ -76,7 +76,7 @@ def configure_system(config):
         if config.SPEAR.PAKS_VERSION_TAG != "":
             user_paks_version_dir = os.path.realpath(os.path.join(config.SPEAR.PAKS_DIR, config.SPEAR.PAKS_VERSION_TAG))
         else:
-            user_paks_version_dir = os.path.realpath(os.path.join(config.SPEAR.PAKS_DIR, spear.__version__))
+            user_paks_version_dir = os.path.realpath(os.path.join(config.SPEAR.PAKS_DIR, __version__))
 
         assert os.path.exists(content_paks_dir)
         assert os.path.exists(user_paks_version_dir)
