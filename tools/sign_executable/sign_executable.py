@@ -32,24 +32,29 @@ if __name__ == "__main__":
     parser.add_argument("--apple_id", required=True)
     parser.add_argument("--apple_team_id", required=True)
     parser.add_argument("--apple_password", required=True)
-    parser.add_argument("--input_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "BUILD", "SpearSim-Mac-Shipping-Unsigned")))
-    parser.add_argument("--output_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "BUILD", "SpearSim-Mac-Shipping")))
+    parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "BUILD")))
     parser.add_argument("--temp_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "tmp")))
     parser.add_argument("--entitlements_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "entitlements.plist")))
     args = parser.parse_args()
 
+    assert os.path.exists(args.build_dir)
     assert os.path.exists(args.entitlements_file)
 
+    input_dir = os.path.realpath(os.path.join(args.build_dir, "SpearSim-Mac-Shipping-Unsigned"))
+    output_dir = os.path.realpath(os.path.join(args.build_dir, "SpearSim-Mac-Shipping"))
+
+    assert os.path.exists(input_dir)
+
     # make sure output_dir is empty
-    shutil.rmtree(args.output_dir, ignore_errors=True)
+    shutil.rmtree(output_dir, ignore_errors=True)
 
     # create the temp directory
     os.makedirs(args.temp_dir, exist_ok=True)
 
     # create a copy of the executable in output_dir and use it throughout this file
-    shutil.copytree(args.input_dir, args.output_dir)
+    shutil.copytree(input_dir, output_dir)
 
-    executable = os.path.realpath(os.path.join(args.output_dir, "Mac", "SpearSim-Mac-Shipping.app"))
+    executable = os.path.realpath(os.path.join(output_dir, "Mac", "SpearSim-Mac-Shipping.app"))
     assert os.path.exists(executable)
 
     executable_name = os.path.basename(executable)
