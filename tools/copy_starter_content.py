@@ -19,11 +19,11 @@ if __name__ == "__main__":
     assert os.path.exists(args.unreal_project_dir)
 
     unreal_engine_starter_content_dir = os.path.realpath(os.path.join(args.unreal_engine_dir, "Samples", "StarterContent", "Content", "StarterContent"))
-    project_starter_content_dir = os.path.join(args.unreal_project_dir, "Content", "StarterContent") # don't want os.path.realpath here in case it is a symlink
+    project_starter_content_dir = os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "StarterContent"))
 
-    if spear.path_exists(project_starter_content_dir):
-        spear.log(f"File or directory or symlink exists, removing: {project_starter_content_dir}")
-        spear.remove_path(project_starter_content_dir)
+    if os.path.exists(project_starter_content_dir):
+        spear.log(f"Directory exists, removing: {project_starter_content_dir}")
+        shutil.rmtree(project_starter_content_dir)
 
     spear.log(f"Copying: {unreal_engine_starter_content_dir} -> {project_starter_content_dir}")
     shutil.copytree(unreal_engine_starter_content_dir, project_starter_content_dir)

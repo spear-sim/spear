@@ -12,9 +12,14 @@ SPEAR:
   # If launch_mode is "STANDALONE", specify this path to an Unreal application.
   STANDALONE_EXECUTABLE: ""
 
-  # The location of downloaded (or built) pak files. This must be specified if you are attempting to load any
-  # scene other than the default scene.
+  # The base location of downloaded (or built) pak files. This must be specified if you are attempting to
+  # load any scene other than the default scene. PAKS_DIR is expected to have a subdirectory that contains
+  # the actual PAK files, whose name matches the PAKS_VERSION_TAG parameter below if it is specified, or
+  # spear.__version__ if PAKS_VERSION_TAG is not specified. A PAK file must be in this subdirectory,
+  # otherwise its contents will not be loadable. This design is intended to avoid issues with multiple
+  # versions of PAK files living side-by-side on a user's system.
   PAKS_DIR: ""
+  PAKS_VERSION_TAG: ""
 
   # ENVIRONMENT_VARS are added to Python's os.environ dict when calling spear.configure_system(...). This can
   # be useful to set various graphics driver environment variables. For example, a user can set the VK_ICD_FILENAMES
@@ -78,7 +83,7 @@ SPEAR:
 
     # Once a connection has been established, the RPC client will wait for this amount of
     # time before throwing when calling a server function.
-    RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 5.0
+    RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 10.0
 
     # Number of ticks to execute after launching the Unreal instance. This is useful to warm up
     # various caches and rendering features that leverage temporal coherence between frames.

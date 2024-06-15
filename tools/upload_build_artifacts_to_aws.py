@@ -39,15 +39,15 @@ if __name__ == "__main__":
     else:
         assert False
 
-    aws_dir = posixpath.join(args.aws_path_prefix, args.version_tag, "")
-
+    aws_dir = posixpath.join(args.aws_path_prefix, args.version_tag, "") # joining with a trailing empty string forces the path to end in "/"
     files_to_upload = []
 
     if args.upload_executable:
         files_to_upload.append(os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{args.version_tag}-{platform_name}-Shipping.zip")))
 
     if args.upload_paks:
-        files_to_upload.extend([ os.path.realpath(os.path.join(args.paks_dir, x)) for x in os.listdir(args.paks_dir) if x.endswith(paks_filter_string) ])
+        paks_version_dir = os.path.realpath(os.path.join(args.paks_dir, args.version_tag))
+        files_to_upload.extend([ os.path.realpath(os.path.join(paks_version_dir, x)) for x in os.listdir(paks_version_dir) if x.endswith(paks_filter_string) ])
 
     for file in files_to_upload:
         assert os.path.exists(file)

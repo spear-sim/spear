@@ -2,7 +2,7 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-__version__ = "0.5.0"
+__version__ = "v0.5.0"
 
 import os
 import sys
@@ -60,31 +60,36 @@ def configure_system(config):
     if config.SPEAR.LAUNCH_MODE == "standalone" and config.SPEAR.PAKS_DIR != "":
 
         assert os.path.exists(config.SPEAR.STANDALONE_EXECUTABLE)
-        assert os.path.exists(config.SPEAR.PAKS_DIR)
 
         if sys.platform == "win32":
-            paks_dir = \
+            content_paks_dir = \
                 os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(config.SPEAR.STANDALONE_EXECUTABLE)), "..", "..", "Content", "Paks"))
         elif sys.platform == "darwin":
-            paks_dir = \
+            content_paks_dir = \
                 os.path.realpath(os.path.join(config.SPEAR.STANDALONE_EXECUTABLE, "Contents", "UE", "SpearSim", "Content", "Paks"))
         elif sys.platform == "linux":
-            paks_dir = \
+            content_paks_dir = \
                 os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(config.SPEAR.STANDALONE_EXECUTABLE)), "SpearSim", "Content", "Paks"))
         else:
             assert False
 
-        assert os.path.exists(paks_dir)
+        if config.SPEAR.PAKS_VERSION_TAG != "":
+            user_paks_version_dir = os.path.realpath(os.path.join(config.SPEAR.PAKS_DIR, config.SPEAR.PAKS_VERSION_TAG))
+        else:
+            user_paks_version_dir = os.path.realpath(os.path.join(config.SPEAR.PAKS_DIR, spear.__version__))
+
+        assert os.path.exists(content_paks_dir)
+        assert os.path.exists(user_paks_version_dir)
 
         # we don't use os.path.realpath here because we don't want to resolve the symlink
-        spear_paks_dir = os.path.join(paks_dir, "SpearPaks")
+        content_paks_user_dir = os.path.join(content_paks_dir, "User")
 
-        if path_exists(spear_paks_dir):
-            log(f"File or directory or symlink exists, removing: {spear_paks_dir}")
-            remove_path(spear_paks_dir)
+        if path_exists(content_paks_user_dir):
+            log(f"File or directory or symlink exists, removing: {content_paks_user_dir}")
+            remove_path(content_paks_user_dir)
 
-        log(f"Creating symlink: {spear_paks_dir} -> {config.SPEAR.PAKS_DIR}")
-        os.symlink(config.SPEAR.PAKS_DIR, spear_paks_dir)
+        log(f"Creating symlink: {content_paks_user_dir} -> {user_paks_version_dir}")
+        os.symlink(user_paks_version_dir, content_paks_user_dir)
 
     # set environment variables
     if config.SPEAR.LAUNCH_MODE in ["editor", "standalone"]:

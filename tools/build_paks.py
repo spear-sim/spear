@@ -29,9 +29,9 @@ def build_pak(pak_name, symlink_dirs=[], cooked_include_dirs=[], expected_unreal
     unreal_project_cooked_dir_posix = unreal_project_cooked_dir.replace(ntpath.sep, posixpath.sep)
 
     # output paths
-    output_dir = os.path.realpath(args.output_dir)
-    txt_file   = os.path.realpath(os.path.join(output_dir, pak_name + "-" + args.version_tag + "-" + platform + ".txt"))
-    pak_file   = os.path.realpath(os.path.join(output_dir, pak_name + "-" + args.version_tag + "-" + platform + ".pak"))
+    paks_version_dir = os.path.realpath(os.path.join(args.paks_dir, args.version_tag))
+    txt_file         = os.path.realpath(os.path.join(paks_version_dir, pak_name + "-" + args.version_tag + "-" + platform + ".txt"))
+    pak_file         = os.path.realpath(os.path.join(paks_version_dir, pak_name + "-" + args.version_tag + "-" + platform + ".pak"))
 
     # create symlinks
     for symlink_dir_physical, symlink_dir_virtual in symlink_dirs.items():
@@ -64,8 +64,8 @@ def build_pak(pak_name, symlink_dirs=[], cooked_include_dirs=[], expected_unreal
     spear.log(f"    Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
 
-    # create the output_dir
-    os.makedirs(output_dir, exist_ok=True)
+    # create the output dir
+    os.makedirs(paks_version_dir, exist_ok=True)
 
     # create manifest file in output dir
     with open(txt_file, mode="w") as f:
@@ -98,19 +98,19 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--unreal_engine_dir", required=True)
-    parser.add_argument("--output_dir", required=True)
-    parser.add_argument("--version_tag", required=True)
     parser.add_argument("--perforce_content_dir", required=True)
-    parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
+    parser.add_argument("--paks_dir", required=True)
+    parser.add_argument("--version_tag", required=True)
     parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
+    parser.add_argument("--temp_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "tmp")))
     parser.add_argument("--scene_ids")
     parser.add_argument("--skip_build_common_pak", action="store_true")
     args = parser.parse_args()
 
     assert os.path.exists(args.unreal_engine_dir)
     assert os.path.exists(args.perforce_content_dir)
-    assert os.path.exists(args.unreal_project_dir)
     assert os.path.exists(args.build_dir)
+    assert os.path.exists(args.temp_dir)
 
     if sys.platform == "win32":
         platform          = "Windows"
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     else:
         assert False
 
-    unreal_project_dir                = os.path.realpath(args.unreal_project_dir)
+    unreal_project_dir                = os.path.realpath(os.path.join(args.temp_dir, "spear", "cpp", "unreal_projects", "SpearSim"))
     unreal_project_content_dir        = os.path.realpath(os.path.join(unreal_project_dir, "Content"))
     unreal_project_content_scenes_dir = os.path.realpath(os.path.join(unreal_project_content_dir, "Scenes"))
     unreal_project_cooked_dir         = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform))

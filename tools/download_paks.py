@@ -7,6 +7,7 @@ import fnmatch
 import os
 import posixpath
 import spear
+import sys
 import wget
 
 
@@ -53,17 +54,20 @@ available_scene_ids = [
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output_dir", required=True)
-    parser.add_argument("--platform", required=True)
-    parser.add_argument("--version_tag", required=True)
+    parser.add_argument("--paks_dir", required=True)
     parser.add_argument("--scene_ids")
+    parser.add_argument("--version_tag")
+    parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args()
 
-    assert args.platform in ["Windows", "Linux", "Mac"]
-
-    # create output dir
-    output_dir = os.path.realpath(args.output_dir)
-    os.makedirs(output_dir, exist_ok=True)
+    if sys.platform == "win32":
+        platform = "Windows"
+    elif sys.platform == "darwin":
+        platform = "Mac"
+    elif sys.platform == "linux":
+        platform = "Linux"
+    else:
+        assert False
 
     scene_ids = []
     if args.scene_ids is None:
@@ -73,16 +77,32 @@ if __name__ == '__main__':
         for arg_scene_id_string in arg_scene_id_strings:
             scene_ids.extend([ available_scene_id for available_scene_id in available_scene_ids if fnmatch.fnmatch(available_scene_id, arg_scene_id_string) ])
 
+    if args.version_tag is not None:
+        version_tag = args.version_tag
+    else:
+        version_tag = spear.__version__
+
+    # create output dir
+    paks_version_dir = os.path.realpath(os.path.join(args.paks_dir, version_tag))
+    os.makedirs(paks_version_dir, exist_ok=True)
+
     # construct url and download files
-    download_url_prefix = "https://d3q9jkhps5jb4b.cloudfront.net"
+    pak_url_prefix = "https://d3q9jkhps5jb4b.cloudfront.net"
     for scene_id in scene_ids:
 
-        pak_file_name = scene_id + "-" + args.version_tag + "-" + args.platform + ".pak"
-        download_url  = posixpath.join(download_url_prefix, args.version_tag, pak_file_name)
-        output_file   = os.path.join(output_dir, pak_file_name)
+        pak_file = scene_id + "-" + version_tag + "-" + platform + ".pak"
+        pak_url  = posixpath.join(pak_url_prefix, version_tag, pak_file)
+        pak_path = os.path.join(paks_version_dir, pak_file)
 
-        spear.log(f"Downloading {download_url} to {output_file}")
+        if os.path.exists(pak_path) and args.overwrite:
+            spear.log(f"File exists, removing: {pak_path}")
+            os.remove(pak_path)
 
-        wget.download(download_url, out=output_file)
+        if not os.path.exists(pak_path):
+            spear.log(f"Downloading {pak_url} to {pak_path}")
+            wget.download(pak_url, out=pak_path)
+            print() # wget doesn't seem to print a newline character when it is finished downloading
+        else:
+            spear.log(f"File exists, skipping: {pak_path}")
 
     spear.log("Done.")
