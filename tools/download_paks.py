@@ -12,17 +12,16 @@ import wget
 
 # list all available scene_ids for download
 available_scene_ids = [
+    "Common",
     "kujiale_0000",
     "kujiale_0001",
     "kujiale_0002",
     "kujiale_0003",
     "kujiale_0004",
-    "kujiale_0005",
     "kujiale_0006",
     "kujiale_0007",
     "kujiale_0008",
     "kujiale_0009",
-    "kujiale_0010",
     "kujiale_0011",
     "kujiale_0012",
     "kujiale_0013",
@@ -36,14 +35,13 @@ available_scene_ids = [
     "kujiale_0021",
     "kujiale_0022",
     "kujiale_0023",
-    "kujiale_0024",
     "kujiale_0025",
-    "kujiale_0026",
     "kujiale_0027",
-    "kujiale_0028",
     "kujiale_0029",
     "kujiale_0030",
     "kujiale_0031",
+    "kujiale_0032",
+    "kujiale_0033",
     "warehouse_0000"]
 
 
