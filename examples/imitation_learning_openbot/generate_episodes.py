@@ -18,6 +18,7 @@ sys.path.append(common_dir)
 import instance_utils
 import navmesh
 
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
