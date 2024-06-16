@@ -41,9 +41,9 @@ if __name__ == "__main__":
     # load config
     config = spear.get_config(
         user_config_files=[
-            os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml")),
-            os.path.realpath(os.path.join(common_dir, "default_config.common.yaml"))])
-
+            os.path.realpath(os.path.join(common_dir, "default_config.common.yaml")),
+            os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    
     config.defrost()
     config.IMITATION_LEARNING_OPENBOT.PILOT_NET_POLICY_PATH = os.path.realpath(args.policy_file)
     config.SP_SERVICES.LEGACY_SERVICE.TASK = "ImitationLearningTask"
