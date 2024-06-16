@@ -16,6 +16,7 @@ import time
 import policies
 import utils
 
+
 common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
 sys.path.append(common_dir)
@@ -23,6 +24,7 @@ import instance_utils
 import navmesh
 import openbot_env
 import visualization_utils
+
 
 if __name__ == "__main__":
 
@@ -40,8 +42,8 @@ if __name__ == "__main__":
     # load config
     config = spear.get_config(
         user_config_files=[
-            os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml")),
-            os.path.realpath(os.path.join(common_dir, "default_config.common.yaml"))])
+            os.path.realpath(os.path.join(common_dir, "default_config.common.yaml")),
+            os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
     config.defrost()
     config.SP_SERVICES.LEGACY_SERVICE.TASK = "ImitationLearningTask"
