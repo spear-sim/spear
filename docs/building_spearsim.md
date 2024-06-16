@@ -17,7 +17,7 @@ For each platform, you will need to install a specific compiler that is compatib
 ```
 Windows: Visual Studio 2022
 macOS:   XCode 14.3
-Linux:   clang 15.0.1
+Linux:   clang and libc++ 15.0.1
 ```
 
 If you're developing on Windows, make sure to select _Desktop development with C++_ from the _Workloads_ menu when installing Visual Studio.
