@@ -36,7 +36,6 @@ pip install -e python
 In order to work with multiple scenes, we need to download the scene data as follows.
 
 ```console
-# download scenes
 python tools/download_paks.py --paks_dir path/to/spear-paks
 ```
 
@@ -47,7 +46,6 @@ The `--paks_dir` argument is the top-level directory where scene data will be do
 At this point, you can use our `run_executable.py` command-line tool to select which scene you want to navigate around. If you wanted to navigate through our `debug_0000` scene, you would use the following command.
 
 ```console
-# interactively navigate through a specific scene
 python tools/run_executable.py --executable path/to/executable --scene_id debug_0000
 ```
 
