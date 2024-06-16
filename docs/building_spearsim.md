@@ -91,8 +91,6 @@ Linux:   path/to/Linux_Unreal_Engine_5.2.0
 We are now ready to build the `SpearSim` executable as follows.
 
 ```console
-# build, cook, stage, package, archive
-cd tools
 python tools/run_uat.py --unreal_engine_dir path/to/UE_5.2 --build_config Development -build -cook -stage -package -archive -pak -iterativecooking
 ```
 
