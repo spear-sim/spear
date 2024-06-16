@@ -53,7 +53,7 @@ Depending on your platform, you will need to specify the following path to your 
 
 ```
 Windows: path/to/SpearSim-v0.5.0-Win64-Shipping/SpearSim/Binaries/Win64/SpearSim-Win64-Shipping-Cmd.exe
-macOS:   path/to/SpearSim-Mac-Shipping.app
+macOS:   path/to/SpearSim-v0.5.0-Mac-Shipping/SpearSim-Mac-Shipping.app
 Linux:   path/to/SpearSim-v0.5.0-Linux-Shipping/SpearSim.sh
 ```
 
