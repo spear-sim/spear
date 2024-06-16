@@ -14,7 +14,7 @@ python tools/configure_editor_python.py --unreal_engine_dir path/to/UE_5.2
 
 ## Run each pipeline stage
 
-Our export pipeline consists of several modular stages. We will assume that that you have created a directory called `spear-pipeline` to store the generated output from each pipeline stage. We can execute our pipeline as follows.
+Our export pipeline consists of several modular stages that can be executed sequentially as follows. In this example, each pipeline stage will generate its output in a directory called `spear-pipeline` that we specify using the `--pipeline_dir` command-line argument.
 
 ```console
 # generate Unreal metadata
