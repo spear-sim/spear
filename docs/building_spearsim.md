@@ -2,7 +2,7 @@
 
 ## Assumptions
 
-We will assume that you are developing on a version of Windows, macOS, or Linux that is compatible with Unreal Engine 5.2. We will also assume that you're using Anaconda Python to manage your Python environment, and that you have CMake installed. We will assume that you have cloned this entire repository including all submodules, and that you have installed the `spear` Python package, as described in our [Getting Started](getting_started.md) tutorial. All `cd` commands in this tutorial are specified relative to the top-level repository directory.
+We will assume that you are developing on a version of Windows, macOS, or Linux that is compatible with Unreal Engine 5.2. We will also assume that you're using Anaconda Python to manage your Python environment, and that you have CMake installed. We will assume that you have cloned this entire repository including all submodules, and that you have installed the `spear` Python package, as described in our [Getting Started](getting_started.md) tutorial.
 
 ## Install the Unreal Engine
 
@@ -55,8 +55,7 @@ After executing these commands, you can use the _Developer PowerShell for VS 202
 Our `SpearSim` project requires you to build several third-party C++ libraries. We provide a command-line tool for this purpose.
 
 ```console
-cd tools
-python build_third_party_libs.py
+python tools/build_third_party_libs.py
 ```
 
 This command-line tool accepts an optional `--num_parallel_jobs` argument. This argument can be used to specify the number of parallel jobs that `cmake` should use when building third-party libraries.
@@ -68,8 +67,7 @@ Our `SpearSim` project requires you to create several symbolic links. We provide
 If you're developing on Windows, you will need to run this command with administrator privileges.
 
 ```console
-cd tools
-python create_symlinks.py
+python tools/create_symlinks.py
 ```
 
 ## Copy starter content
@@ -77,8 +75,7 @@ python create_symlinks.py
 Our `SpearSim` project requires you to explicitly copy some starter content from your Unreal Engine installation to the project directory. We provide a command-line tool for this purpose.
 
 ```console
-cd tools
-python copy_starter_content.py --unreal_engine_dir path/to/UE_5.2
+python tools/copy_starter_content.py --unreal_engine_dir path/to/UE_5.2
 ```
 
 The `--unreal_engine_dir` argument must point to the top-level directory where you installed the Unreal Engine. Depending on your platform, the default install location will be as follows. However, as noted above, we recommend installing the Unreal Engine to a path that doesn't contain spaces. If you're developing on Linux, you must specify the path to the top-level directory where you unzipped the `Linux_Unreal_Engine_5.2.0.zip` you downloaded earlier.
@@ -96,7 +93,7 @@ We are now ready to build the `SpearSim` executable as follows.
 ```console
 # build, cook, stage, package, archive
 cd tools
-python run_uat.py --unreal_engine_dir path/to/UE_5.2 --build_config Development -build -cook -stage -package -archive -pak -iterativecooking
+python tools/run_uat.py --unreal_engine_dir path/to/UE_5.2 --build_config Development -build -cook -stage -package -archive -pak -iterativecooking
 ```
 
 Note that our `run_uat.py` tool is a thin wrapper around Unreal's [RunUAT](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Deployment/BuildOperations) tool. Our tool consumes `--unreal_engine_dir` and `--build_config`, provides `RunUAT` with sensible default values for a few commonly used arguments, and otherwise forwards all arguments directly to `RunUAT`. This step will generate an executable at the following locations.
