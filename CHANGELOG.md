@@ -1,3 +1,23 @@
+## SPEAR v0.5.0
+
+This release includes the following new user-facing features and improvements.
+
+- We have developed an experimental new Python API that can be used to call any public Unreal function, and can be used to get or set any public Unreal property, on any Unreal object, at any time. Our new API exposes more than 10,000 public Unreal functions and more than 50,000 public Unreal properties. As far as we are aware, there is no comparable functionality in any existing video game simulator. We have started using the new API in our `mujoco_interop` example application (see below), and we expect it to support all of our internal use cases going forward.
+
+- We have developed an export pipeline to support interoperability with the MuJoCo physics engine. To demonstrate this pipeline, we have developed a new example application, `mujoco_interop`, shown in the image below. In this example application, an interactive MuJoCo simulation (left) is used to set the poses of objects in the photorealistic SPEAR rendering (right).
+
+<img width="1738" alt="image" src="https://github.com/isl-org/spear/assets/2341965/259c11ac-fabb-49d8-9360-6c593cbdbad5">
+
+- We are releasing 23 new photorealistic Kujiale scenes. The following images of `kujiale_0010`, `kujiale_0020`, `kujiale_0030` were captured in SPEAR running at over 60 fps.
+
+![image](https://github.com/isl-org/spear/assets/2341965/c06b5699-ccfd-423a-b50c-5b2d1ed9bfc3)
+
+![image](https://github.com/isl-org/spear/assets/2341965/701d9b94-61c3-4c6a-ae50-5135c28a0144)
+
+![image](https://github.com/isl-org/spear/assets/2341965/9653d787-6f94-4ffe-985d-2ccd2aad47eb)
+
+- We have made many usability and readability improvements to our code.
+
 ## SPEAR v0.4.0
 
 This release includes the following new user-facing features and improvements.
