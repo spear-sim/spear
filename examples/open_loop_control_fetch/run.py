@@ -19,6 +19,7 @@ sys.path.append(common_dir)
 import instance_utils
 import visualization_utils
 
+
 def get_action(row):
     names = [ name[:-2] for name in row.dtype.names ][::3] # strip .x .y .z from each name, select every third entry
     data = np.array([ row[name] for name in row.dtype.names ], dtype=np.float64).reshape(-1,3) # get data as Nx3 array
