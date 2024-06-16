@@ -64,4 +64,5 @@ examples/open_loop_control_fetch/user_config.yaml
 
 python/spear_sim.egg-info
 
+tools/BUILD
 tools/tmp
