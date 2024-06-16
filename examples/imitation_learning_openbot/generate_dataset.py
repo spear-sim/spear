@@ -16,7 +16,6 @@ import time
 import policies
 import utils
 
-
 common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
 sys.path.append(common_dir)
