@@ -24,6 +24,7 @@ import navmesh
 import openbot_env
 import visualization_utils
 
+
 if __name__ == "__main__":
 
     # parse arguments
