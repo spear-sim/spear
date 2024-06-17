@@ -21,7 +21,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     assert os.path.exists(args.third_party_dir)
-    if sys.platform in ["darwin", "linux"] and (args.c_compiler is None or args.cxx_compiler is None):
+    if sys.platform == "linux" and (args.c_compiler is None or args.cxx_compiler is None):
         assert os.path.exists(args.unreal_engine_dir)
 
     #
