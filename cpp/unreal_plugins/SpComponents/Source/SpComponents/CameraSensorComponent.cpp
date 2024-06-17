@@ -96,8 +96,7 @@ UCameraSensorComponent::UCameraSensorComponent()
         auto& view = render_pass_desc.shared_memory_region_->getView();
         shared_data.setData(render_pass_name, view, render_pass_desc.num_bytes_);
 
-        FTextureRenderTargetResource* texture_render_target_resource =
-            render_pass_desc.scene_capture_component_2d_->TextureTarget->GameThread_GetRenderTargetResource();
+        FTextureRenderTargetResource* texture_render_target_resource = render_pass_desc.scene_capture_component_2d_->TextureTarget->GameThread_GetRenderTargetResource();
         SP_ASSERT(texture_render_target_resource);
 
         if (render_pass_name == "final_color" || render_pass_name == "segmentation") {

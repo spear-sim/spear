@@ -4,7 +4,7 @@ import numpy as np
 
 
 class CameraSensor:
-    def __init__(self, instance, unreal_actor, render_pass_names=["final_color"], width=512, height=512, fov=90):
+    def __init__(self, instance, unreal_actor, render_pass_names=["final_color", "depth", "normal", "segmentation"], width=512, height=512, fov=90):
         assert unreal_actor
         self._instance = instance
         self._render_pass_names = render_pass_names
@@ -39,7 +39,7 @@ class CameraSensor:
         # get rendered image from shared memory
         shared_memory_desc = self._instance.rpc_client.call("cpp_func_service.get_shared_memory_views", self._camera_sensor_component)
         shared_memory_object = mmap.mmap(-1, shared_memory_desc[render_pass_name]['num_bytes_'], shared_memory_desc[render_pass_name]['id_'])
-        if render_pass_name == 'final_color':
+        if render_pass_name == 'final_color' or render_pass_name == 'segmentation':
             shared_memory_array = np.ndarray(shape=(-1,), dtype=np.uint8, buffer=shared_memory_object)
             img = shared_memory_array.reshape([self._width, self._height, -1])
             img[:, [0, 1, 2]] = img[:, [2, 1, 0]]
