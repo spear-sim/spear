@@ -39,18 +39,6 @@ if __name__ == "__main__":
         linux_libcpp_lib_dir     = os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "lib", "Unix", "x86_64-unknown-linux-gnu")
         linux_libcpp_include_dir = os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "include", "c++", "v1")
 
-    if args.cxx_compiler is None:
-        if sys.platform == "win32":
-            cxx_compiler = "cl"
-        elif sys.platform == "darwin":
-            cxx_compiler == "clang++"
-        elif sys.platform == "linux":
-            cxx_compiler = os.path.join(linux_clang_bin_dir, "clang++")
-        else:
-            assert False
-    else:
-        cxx_compiler = args.cxx_compiler
-
     if sys.platform == "win32":
         platform_dir = "Win64"
         cxx_flags = "'/std:c++20 /EHsc'"
@@ -62,6 +50,19 @@ if __name__ == "__main__":
         cxx_flags = "-std=c++20 -stdlib=libc++"
     else:
         assert False
+
+    if args.cxx_compiler is None:
+        if sys.platform == "win32":
+            cxx_compiler = "cl"
+        elif sys.platform == "darwin":
+            cxx_compiler == "clang++"
+        elif sys.platform == "linux":
+            cxx_compiler = os.path.join(linux_clang_bin_dir, "clang++")
+            cxx_flags += f" -nostdinc++ -I{linux_libcpp_include_dir} -L{linux_libcpp_lib_dir}"
+        else:
+            assert False
+    else:
+        cxx_compiler = args.cxx_compiler
 
     #
     # Boost
@@ -148,15 +149,10 @@ if __name__ == "__main__":
         cmd = ["cmake", "--build", ".", "--config", "Release", "-j", f"{args.num_parallel_jobs}"]
 
     elif sys.platform == "linux":
-
-        rpclib_cxx_flags = cxx_flags
-        if args.cxx_compiler is None:
-            rpclib_cxx_flags += f" -nostdinc++ -I{linux_libcpp_include_dir} -L{linux_libcpp_lib_dir}"
-
         cmd = [
             "cmake",
             "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
-            "-DCMAKE_CXX_FLAGS=" + rpclib_cxx_flags,
+            "-DCMAKE_CXX_FLAGS=" + cxx_flags,
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
             "-DCMAKE_VERBOSE_MAKEFILE=" + verbose_makefile,
             os.path.join("..", "..")]
@@ -219,15 +215,10 @@ if __name__ == "__main__":
         cmd = ["cmake", "--build", ".", "--config", "Release", "-j", f"{args.num_parallel_jobs}"]
 
     elif sys.platform == "linux":
-
-        yamlcpp_cxx_flags = cxx_flags
-        if args.cxx_compiler is None:
-            yamlcpp_cxx_flags += f" -nostdinc++ -I{linux_libcpp_include_dir} -L{linux_libcpp_lib_dir}"
-
         cmd = [
             "cmake",
             "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
-            "-DCMAKE_CXX_FLAGS=" + yamlcpp_cxx_flags,
+            "-DCMAKE_CXX_FLAGS=" + cxx_flags,
             "-DYAML_CPP_BUILD_TESTS=OFF",
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
             "-DCMAKE_VERBOSE_MAKEFILE=" + verbose_makefile,
