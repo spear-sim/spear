@@ -151,7 +151,7 @@ if __name__ == "__main__":
 
         rpclib_cxx_flags = cxx_flags
         if args.cxx_compiler is None:
-            rpclib_cxx_flags += f" -stdlib=libc++ -nostdinc++ -I{linux_libcpp_include_dir} -L{linux_libcpp_lib_dir}"
+            rpclib_cxx_flags += f" -stdlib=libc++ -I{linux_libcpp_include_dir} -L{linux_libcpp_lib_dir}"
 
         cmd = [
             "cmake",
@@ -221,14 +221,14 @@ if __name__ == "__main__":
     elif sys.platform == "linux":
 
         yamlcpp_cxx_flags = cxx_flags
-        # TODO: include bare min required before merge
-        # if args.cxx_compiler is None:
-            # yamlcpp_cxx_flags += f" -stdlib=libc++ -nostdinc++ -I{linux_libcpp_include_dir} -L{linux_libcpp_lib_dir}"
+        if args.cxx_compiler is None:
+            yamlcpp_cxx_flags += f" -stdlib=libc++ -I{linux_libcpp_include_dir} -L{linux_libcpp_lib_dir}"
 
         cmd = [
             "cmake",
             "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
             "-DCMAKE_CXX_FLAGS=" + yamlcpp_cxx_flags,
+            "-DYAML_CPP_BUILD_TESTS=OFF",
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
             "-DCMAKE_VERBOSE_MAKEFILE=" + verbose_makefile,
             os.path.join("..", "..")]
