@@ -68,7 +68,7 @@ if __name__ == "__main__":
         cxx_flags = "'-std=c++20 -mmacosx-version-min=10.14'"
     elif sys.platform == "linux":
         platform_dir = "Linux"
-        cxx_flags = f"'-std=c++20 -stdlib=libc++ -I{linux_libcpp_include_dir} -L{linux_libcpp_lib_dir} -Qunused-arguments'"
+        cxx_flags = f"'-std=c++20 -stdlib=libc++ -nostdinc++ -I{linux_libcpp_include_dir} -L{linux_libcpp_lib_dir} -Qunused-arguments'"
     else:
         assert False
 
