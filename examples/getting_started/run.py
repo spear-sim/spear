@@ -92,7 +92,7 @@ if __name__ == "__main__":
         exit(-1)
 
     # get access to camera sensor
-    unreal_camera_sensor = CameraSensor(instance, agent._agent)
+    unreal_camera_sensor = CameraSensor(instance, agent._agent, render_pass_names=["final_color", "depth", "normal"])
 
     obs = agent.get_observation()
     action = get_keyboard_action(-1, args.agent)
@@ -119,14 +119,14 @@ if __name__ == "__main__":
 
         # get observation after tick
         obs = agent.get_observation()
-        images = unreal_camera_sensor.get_images()
+        image = unreal_camera_sensor.get_images(render_pass_name='normal')
 
         instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
         instance.engine_service.end_tick()
 
         # generate action
         if not args.benchmark:
-            cv2.imshow('img', images['final_color'])
+            cv2.imshow('img', image)
             k = cv2.waitKey(10)
             if args.keyboard:
                 if k == 27:  # Esc key to stop

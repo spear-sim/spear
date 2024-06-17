@@ -29,19 +29,29 @@ class CameraSensor:
         unreal_camera_sensor_setup_func = instance.unreal_service.find_function_by_name(uclass=self._camera_sensor_component_class, name="setup")
         instance.unreal_service.call_function(self._camera_sensor_component, unreal_camera_sensor_setup_func, setup_args)
 
-    def get_images(self):
+    def get_images(self, render_pass_name="final_color"):
+        assert render_pass_name in self._render_pass_names
         # do rendering
-        self._instance.rpc_client.call("cpp_func_service.call_func", self._camera_sensor_component, "camera_sensor.camera", {})
-
+        self._instance.rpc_client.call("cpp_func_service.call_func", self._camera_sensor_component, "camera_sensor.render",
+                                       {'items_':
+                                            {'render_pass_name': {'data_': render_pass_name, 'data_type_': 0}}}
+                                       )
         # get rendered image from shared memory
-        images = {}
         shared_memory_desc = self._instance.rpc_client.call("cpp_func_service.get_shared_memory_views", self._camera_sensor_component)
-        for render_pass in self._render_pass_names:
-            shared_memory_object = mmap.mmap(-1, shared_memory_desc['final_color']['num_bytes_'], shared_memory_desc['final_color']['id_'])
+        shared_memory_object = mmap.mmap(-1, shared_memory_desc[render_pass_name]['num_bytes_'], shared_memory_desc[render_pass_name]['id_'])
+        if render_pass_name == 'final_color':
             shared_memory_array = np.ndarray(shape=(-1,), dtype=np.uint8, buffer=shared_memory_object)
-
-            img = shared_memory_array.reshape([self._width, self._height, 4])
+            img = shared_memory_array.reshape([self._width, self._height, -1])
             img[:, [0, 1, 2]] = img[:, [2, 1, 0]]
-            images[render_pass] = img[:, :, :3]
-
-        return images
+            return img[:, :, :3]
+        if render_pass_name == "depth":
+            shared_memory_array = np.ndarray(shape=(-1,), dtype=np.float32, buffer=shared_memory_object)
+            img = shared_memory_array.reshape([self._width, self._height, -1])
+            return img[:, :, 0]
+        elif render_pass_name == 'normal':
+            shared_memory_array = np.ndarray(shape=(-1,), dtype=np.float32, buffer=shared_memory_object)
+            img = shared_memory_array.reshape([self._width, self._height, -1])
+            img = img * 0.5 + 0.5
+            return img[:, :, :3]
+        else:
+            assert False

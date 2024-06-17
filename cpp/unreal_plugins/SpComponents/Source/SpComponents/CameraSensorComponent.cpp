@@ -83,17 +83,34 @@ UCameraSensorComponent::UCameraSensorComponent()
 {
     cpp_component_ = Unreal::createComponentInsideOwnerConstructor<UCppFuncComponent>(this, "cpp_component");
 
-    cpp_component_->registerFunc("camera_sensor.camera", [this](CppFuncPackage& args) -> CppFuncPackage {
+    cpp_component_->registerFunc("camera_sensor.render", [this]( CppFuncPackage& args) -> CppFuncPackage {
+        CppFuncView<uint8_t> render_pass_name_view("render_pass_name");
+        CppFuncUtils::setViewsFromItems({render_pass_name_view.getPtr()}, args.items_);
+        
+        std::string render_pass_name = std::string(reinterpret_cast<char const*>(render_pass_name_view.getView().data()));
+        render_pass_name             = render_pass_name.substr(0, render_pass_name_view.getView().size());
+        SP_ASSERT(Std::containsKey(render_pass_descs_, render_pass_name));
 
         CppFuncData<uint8_t> shared_data("shared_data");
-        RenderPassDesc& render_pass_desc = render_pass_descs_["final_color"];
+        RenderPassDesc& render_pass_desc = render_pass_descs_[render_pass_name];
         auto& view = render_pass_desc.shared_memory_region_->getView();
-        shared_data.setData("final_color", view, render_pass_desc.num_bytes_);
+        shared_data.setData(render_pass_name, view, render_pass_desc.num_bytes_);
 
         FTextureRenderTargetResource* texture_render_target_resource =
             render_pass_desc.scene_capture_component_2d_->TextureTarget->GameThread_GetRenderTargetResource();
         SP_ASSERT(texture_render_target_resource);
-        texture_render_target_resource->ReadPixelsPtr(reinterpret_cast<FColor*>(view.data_));
+
+        if (render_pass_name == "final_color" || render_pass_name == "segmentation") {
+            // ReadPixelsPtr assumes 4 channels per pixel, 1 byte per channel, so it can be used to read
+            // the following ETextureRenderTargetFormat formats:
+            //     final_color:  RTF_RGBA8
+            //     segmentation: RTF_RGBA8_SRGB
+            texture_render_target_resource->ReadPixelsPtr(reinterpret_cast<FColor*>(view.data_));
+        } else if (render_pass_name == "depth" || render_pass_name == "normal") {
+            texture_render_target_resource->ReadLinearColorPixelsPtr(static_cast<FLinearColor*>(view.data_));   
+        } else {     
+            SP_ASSERT(false);
+        }
 
         // Return CppFuncData objects.
         CppFuncPackage return_values;
