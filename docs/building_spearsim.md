@@ -10,23 +10,24 @@ We recommend installing the Unreal Engine version 5.2 via the Epic Games Launche
 
 If you're developing on Linux, you will need to download the Unreal Engine from [here](https://www.unrealengine.com/en-US/linux).
 
+Several of our command-line tools require an `--unreal_engine_dir` argument. This argument must point to the top-level directory where you installed the Unreal Engine. Depending on your platform, the default install location will be as follows. However, as noted above, we recommend installing the Unreal Engine to a path that doesn't contain spaces. If you're developing on Linux, you must specify the path to the top-level directory where you unzipped the `Linux_Unreal_Engine_5.2.0.zip` file linked above.
+
+```
+Windows: C:\Program Files\Epic Games\UE_5.2
+macOS:   /Users/Shared/Epic Games/UE_5.2
+Linux:   path/to/Linux_Unreal_Engine_5.2.0
+```
+
 ## Install an appropriate compiler
 
-For each platform, you will need to install a specific compiler that is compatible with Unreal Engine 5.2. We have verified that the following compilers behave as expected.
+If you're developing on Windows or macOS, you will need to install a specific compiler that is compatible with Unreal Engine 5.2. If you're developing on Linux, the Unreal Engine ships with its own version of `clang` and `libc++`, so there is no need to install another compiler. We have verified that the following compilers behave as expected.
 
 ```
 Windows: Visual Studio 2022
 macOS:   XCode 14.3
-Linux:   clang and libc++ 15.0.1
 ```
 
 If you're developing on Windows, make sure to select _Desktop development with C++_ from the _Workloads_ menu when installing Visual Studio.
-
-If you're developing on Linux, you can install `clang` and `libc++` as follows.
-
-```console
-sudo apt install libc++-dev libc++abi-dev clang
-```
 
 ## Configure your terminal
 
@@ -58,7 +59,9 @@ Our `SpearSim` project requires you to build several third-party C++ libraries. 
 python tools/build_third_party_libs.py
 ```
 
-This command-line tool accepts an optional `--num_parallel_jobs` argument. This argument can be used to specify the number of parallel jobs that `cmake` should use when building third-party libraries.
+If you're developing on Linux, you must specify `--unreal_engine_dir`, because we use the version of `clang` and `libc++` that ships with the Unreal Engine to build our third-party libraries.
+
+This command-line tool also accepts an optional `--num_parallel_jobs` argument that can be used to specify the number of parallel jobs that `cmake` should use when building third-party libraries.
 
 ## Create symbolic links
 
@@ -78,14 +81,6 @@ Our `SpearSim` project requires you to explicitly copy some starter content from
 python tools/copy_starter_content.py --unreal_engine_dir path/to/UE_5.2
 ```
 
-The `--unreal_engine_dir` argument must point to the top-level directory where you installed the Unreal Engine. Depending on your platform, the default install location will be as follows. However, as noted above, we recommend installing the Unreal Engine to a path that doesn't contain spaces. If you're developing on Linux, you must specify the path to the top-level directory where you unzipped the `Linux_Unreal_Engine_5.2.0.zip` you downloaded earlier.
-
-```
-Windows: C:\Program Files\Epic Games\UE_5.2
-macOS:   /Users/Shared/Epic Games/UE_5.2
-Linux:   path/to/Linux_Unreal_Engine_5.2.0
-```
-
 ## Build the `SpearSim` executable
 
 We are now ready to build the `SpearSim` executable as follows.
@@ -94,7 +89,7 @@ We are now ready to build the `SpearSim` executable as follows.
 python tools/run_uat.py --unreal_engine_dir path/to/UE_5.2 --build_config Development -build -cook -stage -package -archive -pak -iterativecooking
 ```
 
-Note that our `run_uat.py` tool is a thin wrapper around Unreal's [RunUAT](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Deployment/BuildOperations) tool. Our tool consumes `--unreal_engine_dir` and `--build_config`, provides `RunUAT` with sensible default values for a few commonly used arguments, and otherwise forwards all arguments directly to `RunUAT`. This step will generate an executable at the following locations.
+This tool is a thin wrapper around Unreal's [RunUAT](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Deployment/BuildOperations) tool. Our tool consumes `--unreal_engine_dir` and `--build_config`, provides Unreal's `RunUAT` tool with sensible default values for a few commonly used arguments, and otherwise forwards all arguments directly to `RunUAT`. This step will generate an executable at the following locations.
 
 ```
 Windows: cpp/unreal_projects/SpearSim/Standalone-Development/Windows/SpearSim/Binaries/Win64/SpearSim-Cmd.exe
