@@ -61,7 +61,7 @@ Our `SpearSim` project requires you to build several third-party C++ libraries. 
 python tools/build_third_party_libs.py
 ```
 
-If you're developing on Linux, you must specify `--unreal_engine_dir`.
+If you're developing on Linux, you must specify `--unreal_engine_dir`, because we use the version of `clang` and `libc++` that ships with the Unreal Engine to build our third-party libraries.
 
 This command-line tool also accepts an optional `--num_parallel_jobs` argument that can be used to specify the number of parallel jobs that `cmake` should use when building third-party libraries.
 
