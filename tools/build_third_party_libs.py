@@ -60,7 +60,7 @@ if __name__ == "__main__":
         cxx_flags = "'/std:c++20 /EHsc'"
     elif sys.platform == "darwin":
         platform_dir = "Mac"
-        cxx_flags = f"'-std=c++20 -mmacosx-version-min=10.14'"
+        cxx_flags = "'-std=c++20 -mmacosx-version-min=10.14'"
     elif sys.platform == "linux":
         platform_dir = "Linux"
         libcxx_dir = os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "lib", "Unix", "x86_64-unknown-linux-gnu")
