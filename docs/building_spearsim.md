@@ -20,7 +20,7 @@ Linux:   path/to/Linux_Unreal_Engine_5.2.0
 
 ## Install an appropriate compiler
 
-If you're developing on Windows or macOS, you will need to install a specific compiler that is compatible with Unreal Engine 5.2. We have verified that the following compilers behave as expected.
+If you're developing on Windows or macOS, you will need to install a specific compiler that is compatible with Unreal Engine 5.2. If you're developing on Linux, the Unreal Engine ships with its own version of `clang` and `libc++`, so there is no need to install another compiler. We have verified that the following compilers behave as expected.
 
 ```
 Windows: Visual Studio 2022
@@ -28,8 +28,6 @@ macOS:   XCode 14.3
 ```
 
 If you're developing on Windows, make sure to select _Desktop development with C++_ from the _Workloads_ menu when installing Visual Studio.
-
-If you're developing on Linux, the Unreal Engine ships with its own version of `clang` and `libc++`, so there is no need to install another compiler.
 
 ## Configure your terminal
 
