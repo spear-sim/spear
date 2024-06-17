@@ -15,21 +15,34 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--third_party_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "third_party")))
     parser.add_argument("--num_parallel_jobs", type=int, default=1)
+    parser.add_argument("--unreal_engine_dir")
     parser.add_argument("--c_compiler")
     parser.add_argument("--cxx_compiler")
     args = parser.parse_args()
+
+    assert os.path.exists(args.third_party_dir)
+    if sys.platform in ["darwin", "linux"] and (args.c_compiler is None or args.cxx_compiler is None):
+        assert os.path.exists(args.unreal_engine_dir)
 
     #
     # define build variables
     #
 
-    third_party_dir = os.path.realpath(args.third_party_dir)
+    unreal_engine_dir = os.path.realpath(args.unreal_engine_dir)
+    third_party_dir   = os.path.realpath(args.third_party_dir)
+
+    if sys.platform == "linux":
+        clang_bin_dir       = os.path.join(unreal_engine_dir, "Engine", "Extras", "ThirdPartyNotUE", "SDKs", "HostLinux", "Linux_x64", "v21_clang-15.0.1-centos7", "x86_64-unknown-linux-gnu", "bin")
+        std_lib_include_dir = os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "include", "c++", "v1")
+        libcxx_dir          = os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "lib", "Unix", "x86_64-unknown-linux-gnu")
+    elif sys.platform == "darwin":
+        spear.log("yettoadd")
 
     if args.c_compiler is None:
         if sys.platform == "win32":
             c_compiler = "cl"
         elif sys.platform in ["darwin", "linux"]:
-            c_compiler = "clang"
+            c_compiler = os.path.join(clang_bin_dir, "clang")
         else:
             assert False
     else:
@@ -39,7 +52,7 @@ if __name__ == "__main__":
         if sys.platform == "win32":
             cxx_compiler = "cl"
         elif sys.platform in ["darwin", "linux"]:
-            cxx_compiler = "clang++"
+            cxx_compiler = os.path.join(clang_bin_dir, "clang++")
         else:
             assert False
     else:
@@ -50,10 +63,10 @@ if __name__ == "__main__":
         cxx_flags = "'/std:c++20 /EHsc'"
     elif sys.platform == "darwin":
         platform_dir = "Mac"
-        cxx_flags = "'-std=c++20 -mmacosx-version-min=10.14'"
+        cxx_flags = f"'-std=c++20 -mmacosx-version-min=10.14' -I{std_lib_include_dir} -L{libcxx_dir} -Qunused-arguments"
     elif sys.platform == "linux":
         platform_dir = "Linux"
-        cxx_flags = "'-std=c++20 -stdlib=libc++'"
+        cxx_flags = f"'-std=c++20 -stdlib=libc++ -I{std_lib_include_dir} -L{libcxx_dir} -Qunused-arguments'"
     else:
         assert False
 
