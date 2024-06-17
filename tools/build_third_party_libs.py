@@ -14,8 +14,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--third_party_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "third_party")))
-    parser.add_argument("--num_parallel_jobs", type=int, default=1)
     parser.add_argument("--unreal_engine_dir")
+    parser.add_argument("--num_parallel_jobs", type=int, default=1)
     parser.add_argument("--c_compiler")
     parser.add_argument("--cxx_compiler")
     args = parser.parse_args()
@@ -31,13 +31,18 @@ if __name__ == "__main__":
     unreal_engine_dir = os.path.realpath(args.unreal_engine_dir)
     third_party_dir   = os.path.realpath(args.third_party_dir)
 
+    if sys.platform == "linux":
+        linux_clang_bin_dir      = os.path.join(unreal_engine_dir, "Engine", "Extras", "ThirdPartyNotUE", "SDKs", "HostLinux", "Linux_x64", "v21_clang-15.0.1-centos7", "x86_64-unknown-linux-gnu", "bin")
+        linux_libcpp_lib_dir     = os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "lib", "Unix", "x86_64-unknown-linux-gnu")
+        linux_libcpp_include_dir = os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "include", "c++", "v1")
+
     if args.c_compiler is None:
         if sys.platform == "win32":
             c_compiler = "cl"
         elif sys.platform == "darwin":
             c_compiler = "clang"
         elif sys.platform == "linux":
-            c_compiler = os.path.join(unreal_engine_dir, "Engine", "Extras", "ThirdPartyNotUE", "SDKs", "HostLinux", "Linux_x64", "v21_clang-15.0.1-centos7", "x86_64-unknown-linux-gnu", "bin", "clang")
+            c_compiler = os.path.join(linux_clang_bin_dir, "clang")
         else:
             assert False
     else:
@@ -49,7 +54,7 @@ if __name__ == "__main__":
         elif sys.platform == "darwin":
             cxx_compiler == "clang++"
         elif sys.platform == "linux":
-            cxx_compiler = os.path.join(unreal_engine_dir, "Engine", "Extras", "ThirdPartyNotUE", "SDKs", "HostLinux", "Linux_x64", "v21_clang-15.0.1-centos7", "x86_64-unknown-linux-gnu", "bin", "clang++")
+            cxx_compiler = os.path.join(linux_clang_bin_dir, "clang++")
         else:
             assert False
     else:
@@ -63,9 +68,7 @@ if __name__ == "__main__":
         cxx_flags = "'-std=c++20 -mmacosx-version-min=10.14'"
     elif sys.platform == "linux":
         platform_dir = "Linux"
-        libcxx_dir = os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "lib", "Unix", "x86_64-unknown-linux-gnu")
-        std_lib_include_dir = os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "include", "c++", "v1")
-        cxx_flags = f"'-std=c++20 -stdlib=libc++ -I{std_lib_include_dir} -L{libcxx_dir} -Qunused-arguments'"
+        cxx_flags = f"'-std=c++20 -stdlib=libc++ -I{linux_libcpp_include_dir} -L{linux_libcpp_lib_dir} -Qunused-arguments'"
     else:
         assert False
 
