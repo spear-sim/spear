@@ -59,7 +59,7 @@ if __name__ == "__main__":
         cxx_flags = "'-std=c++20 -mmacosx-version-min=10.14'"
     elif sys.platform == "linux":
         platform_dir = "Linux"
-        cxx_flags = "-std=c++20"
+        cxx_flags = "-std=c++20 -stdlib=libc++"
     else:
         assert False
 
@@ -151,7 +151,7 @@ if __name__ == "__main__":
 
         rpclib_cxx_flags = cxx_flags
         if args.cxx_compiler is None:
-            rpclib_cxx_flags += f" -stdlib=libc++ -I{linux_libcpp_include_dir} -L{linux_libcpp_lib_dir}"
+            rpclib_cxx_flags += f" -nostdinc++ -I{linux_libcpp_include_dir} -L{linux_libcpp_lib_dir}"
 
         cmd = [
             "cmake",
@@ -222,7 +222,7 @@ if __name__ == "__main__":
 
         yamlcpp_cxx_flags = cxx_flags
         if args.cxx_compiler is None:
-            yamlcpp_cxx_flags += f" -stdlib=libc++ -I{linux_libcpp_include_dir} -L{linux_libcpp_lib_dir}"
+            yamlcpp_cxx_flags += f" -nostdinc++ -I{linux_libcpp_include_dir} -L{linux_libcpp_lib_dir}"
 
         cmd = [
             "cmake",
