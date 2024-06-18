@@ -126,7 +126,8 @@ if __name__ == "__main__":
         instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
 
         hit_actors = agent.get_hit_actors()
-        spear.log("hit!", len(hit_actors), hit_actors)
+        if len(hit_actors) > 0:
+            spear.log("hit!", len(hit_actors), hit_actors)
 
         # apply actions
         agent.apply_action(action)
@@ -147,6 +148,12 @@ if __name__ == "__main__":
             if args.keyboard:
                 if k == 27:  # Esc key to stop
                     break
+                if k == ord('r'):  # random reset agent location
+                    instance.engine_service.begin_tick()
+                    agent.reset()
+                    agent.get_observation()
+                    instance.engine_service.tick()
+                    instance.engine_service.end_tick()
                 else:
                     # update action based on keyboard input
                     action = get_keyboard_action(k, args.agent)

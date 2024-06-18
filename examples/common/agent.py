@@ -32,12 +32,25 @@ class AgentBase():
         self._hit_event_class = self._instance.unreal_service.get_static_class_v2("/Script/CoreUObject.Class'/Script/SpComponents.SpHitEventActor'")
         self._hit_event_actor = self._instance.unreal_service.spawn_actor(
             class_name="/Script/CoreUObject.Class'/Script/SpComponents.SpHitEventActor'",
-            location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}, spawn_parameters={"Name": "HitEventActor"}
+            location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}, spawn_parameters={"Name": "SpHitEventActor"}
         )
         self._subscribe_actor_func = self._instance.unreal_service.find_function_by_name(
             uclass=self._hit_event_class, name="SubscribeToActor")
         self._get_hit_event_desc_func = self._instance.unreal_service.find_function_by_name(
             uclass=self._hit_event_class, name="GetHitEventDescs")
+
+        self._nav_mesh_actor_class = self._instance.unreal_service.get_static_class_v2("/Script/CoreUObject.Class'/Script/SpComponents.SpNavMeshActor'")
+        self._nav_mesh_actor = self._instance.unreal_service.spawn_actor(
+            class_name="/Script/CoreUObject.Class'/Script/SpComponents.SpNavMeshActor'",
+            location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}, spawn_parameters={"Name": "SpNavMeshActor"}
+        )
+        self._nav_mesh_setup_func = self._instance.unreal_service.find_function_by_name(uclass=self._nav_mesh_actor_class, name="setup")
+        self._get_point_func = self._instance.unreal_service.find_function_by_name(uclass=self._nav_mesh_actor_class, name="getRandomPoints")
+        self._get_path_func = self._instance.unreal_service.find_function_by_name(uclass=self._nav_mesh_actor_class, name="getPaths")
+
+        self._instance.unreal_service.call_function(uobject=self._nav_mesh_actor, ufunction=self._nav_mesh_setup_func, args={
+            "agent_height": 100.0, "agent_radius": 100.0
+        })
 
     def get_observation_space(self):
         assert False
@@ -62,14 +75,20 @@ class AgentBase():
                 hit_actors.add(event['otherActor'])
         return hit_actors
 
+    def get_random_points(self, num_points):
+        points = self._instance.unreal_service.call_function(uobject=self._nav_mesh_actor, ufunction=self._get_point_func, args={"num_points": num_points})['ReturnValue']
+        return points
+
 
 class SimpleAgent(AgentBase):
     def __init__(self, instance):
         super().__init__(instance)
 
+        new_location = self.get_random_points(1)[0]
+        new_location['z'] += 50  # add distance between agent center and z_min
         self._agent = self._instance.unreal_service.spawn_actor(
             class_name="/Game/Agents/BP_SimpleAgentPawn.BP_SimpleAgentPawn_C",
-            location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}, spawn_parameters={"Name": "Agent"}
+            location=new_location, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}, spawn_parameters={"Name": "Agent", "SpawnCollisionHandlingOverride": "AlwaysSpawn"}
         )
         spear.log("agent = ", self._agent)
         if self._agent == 0:
@@ -122,10 +141,11 @@ class SimpleAgent(AgentBase):
         self._instance.unreal_service.call_function(self._agent, self._unreal_set_actor_location_and_rotation_func, transform_args)
 
     def reset(self):
-        new_location = random_position()
+        new_location = self.get_random_points(1)[0]
+        new_location['z'] += 50
         new_rotation = np.array([0, 0, 0])
         transform_args = {
-            "NewLocation": dict(zip(["X", "Y", "Z"], new_location.tolist())),
+            "NewLocation": new_location,
             "NewRotation": dict(zip(["Roll", "Pitch", "Yaw"], new_rotation.tolist())),
             "bSweep": False,
             "bTeleport": True}
@@ -156,21 +176,29 @@ class SimpleForceAgent(SimpleAgent):
 class OpenBotAgent(AgentBase):
     def __init__(self, instance):
         super().__init__(instance)
+
+        init_position = self.get_random_points(1)[0]
+        init_position['z'] += 3  # add distance between agent center and z_min
         self._agent = self._instance.unreal_service.spawn_actor(
             class_name="/Game/Agents/BP_OpenBotPawn.BP_OpenBotPawn_C",
-            location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}, spawn_parameters={"Name": "Agent"}
+            location=init_position, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}, spawn_parameters={"Name": "Agent", "SpawnCollisionHandlingOverride": "AlwaysSpawn"}
         )
         spear.log("agent = ", self._agent)
         if self._agent == 0:
             print("spawn agent failed! ")
-        # TODO get vehicle component
-        self._chaos_vehicle_movement_component = instance.unreal_service.get_component_by_type_v2("/Script/CoreUObject.Class'/Script/ChaosVehicles.ChaosWheeledVehicleMovementComponent'", self._agent)
+            self._agent = self._instance.unreal_service.spawn_actor(
+                class_name="/Game/Agents/BP_OpenBotPawn.BP_OpenBotPawn_C",
+                location={"X": 0.0, "Y": 0.0, "Z": 10.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
+                spawn_parameters={"Name": "Agent1", "SpawnCollisionHandlingOverride": "AlwaysSpawn"}
+            )
+
+        # get vehicle component
+        self._chaos_vehicle_movement_component = instance.unreal_service.get_component_by_type_v2(
+            "/Script/CoreUObject.Class'/Script/ChaosVehicles.ChaosWheeledVehicleMovementComponent'", self._agent)
         self._chaos_vehicle_movement_component_class = instance.unreal_service.get_class(self._chaos_vehicle_movement_component)
 
-        self._set_drive_torque_func = self._instance.unreal_service.find_function_by_name(
-            uclass=self._chaos_vehicle_movement_component_class, name="SetDriveTorque")
-        self._set_brake_torque_func = self._instance.unreal_service.find_function_by_name(
-            uclass=self._chaos_vehicle_movement_component_class, name="SetBrakeTorque")
+        self._set_drive_torque_func = self._instance.unreal_service.find_function_by_name(uclass=self._chaos_vehicle_movement_component_class, name="SetDriveTorque")
+        self._set_brake_torque_func = self._instance.unreal_service.find_function_by_name(uclass=self._chaos_vehicle_movement_component_class, name="SetBrakeTorque")
 
         self._instance.unreal_service.call_function(uobject=self._hit_event_actor, ufunction=self._subscribe_actor_func, args={
             "Actor": self._instance.unreal_service.to_ptr(self._agent),
@@ -218,3 +246,20 @@ class OpenBotAgent(AgentBase):
                 "WheelIndex": wheel_index
             }
             self._instance.unreal_service.call_function(self._chaos_vehicle_movement_component, self._set_brake_torque_func, set_brake_torque_args)
+
+    def reset(self):
+        new_location = self.get_random_points(1)[0]
+        new_location['z'] += 3
+        new_rotation = np.array([0, 0, 0])
+
+        transform_args = {
+            "NewLocation": new_location,
+            "NewRotation": dict(zip(["Roll", "Pitch", "Yaw"], new_rotation.tolist())),
+            "bSweep": False,
+            "bTeleport": True}
+        self._instance.unreal_service.call_function(self._agent, self._unreal_set_actor_location_and_rotation_func, transform_args)
+        return {
+            # "camera.final_color": np.zeros([480, 640, 3], dtype=np.float64),
+            "location": new_location,
+            "rotation": new_rotation,
+        }
