@@ -151,8 +151,8 @@ if __name__ == "__main__":
                 if k == ord('r'):  # random reset agent location
                     instance.engine_service.begin_tick()
                     agent.reset()
-                    agent.get_observation()
                     instance.engine_service.tick()
+                    agent.get_observation()
                     instance.engine_service.end_tick()
                 else:
                     # update action based on keyboard input

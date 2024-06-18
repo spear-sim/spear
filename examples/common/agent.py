@@ -48,9 +48,6 @@ class AgentBase():
         self._get_point_func = self._instance.unreal_service.find_function_by_name(uclass=self._nav_mesh_actor_class, name="getRandomPoints")
         self._get_path_func = self._instance.unreal_service.find_function_by_name(uclass=self._nav_mesh_actor_class, name="getPaths")
 
-        self._instance.unreal_service.call_function(uobject=self._nav_mesh_actor, ufunction=self._nav_mesh_setup_func, args={
-            "agent_height": 100.0, "agent_radius": 100.0
-        })
 
     def get_observation_space(self):
         assert False
@@ -84,7 +81,11 @@ class SimpleAgent(AgentBase):
     def __init__(self, instance):
         super().__init__(instance)
 
+        self._instance.unreal_service.call_function(uobject=self._nav_mesh_actor, ufunction=self._nav_mesh_setup_func, args={
+            "agent_height": 100.0, "agent_radius": 100.0
+        })
         new_location = self.get_random_points(1)[0]
+
         new_location['z'] += 50  # add distance between agent center and z_min
         self._agent = self._instance.unreal_service.spawn_actor(
             class_name="/Game/Agents/BP_SimpleAgentPawn.BP_SimpleAgentPawn_C",
@@ -92,7 +93,7 @@ class SimpleAgent(AgentBase):
         )
         spear.log("agent = ", self._agent)
         if self._agent == 0:
-            print("spawn agent failed! ")
+            spear.log("spawn agent failed!")
         self._root_component = self._instance.unreal_service.get_component_by_name("UStaticMeshComponent", self._agent, "StaticMeshComponent")
 
         spear.log("root_component = ", self._root_component)
@@ -111,7 +112,7 @@ class SimpleAgent(AgentBase):
     def get_action_space(self):
         return gym.spaces.Dict({
             "add_to_location": gym.spaces.Box(-1, 1, (3,), np.float64),
-            "add_to_rotation": gym.spaces.Box(-1, 1, (3,), np.float64),
+            # "add_to_rotation": gym.spaces.Box(-1, 1, (3,), np.float64),
         })
 
     def get_observation(self):
@@ -128,10 +129,10 @@ class SimpleAgent(AgentBase):
         return self._obs
 
     def apply_action(self, action):
-        new_location = self._obs['location'] + action['add_to_location']
+        new_location = self._obs['location'] + action['add_to_location'] * 10
         new_rotation = self._obs['rotation']
-        if "add_to_rotation" in action:
-            new_rotation += action['add_to_rotation']
+        # if "add_to_rotation" in action:
+        #     new_rotation += action['add_to_rotation']
 
         transform_args = {
             "NewLocation": dict(zip(["X", "Y", "Z"], new_location.tolist())),
@@ -177,6 +178,9 @@ class OpenBotAgent(AgentBase):
     def __init__(self, instance):
         super().__init__(instance)
 
+        self._instance.unreal_service.call_function(uobject=self._nav_mesh_actor, ufunction=self._nav_mesh_setup_func, args={
+            "agent_height": 20.0, "agent_radius": 20.0
+        })
         init_position = self.get_random_points(1)[0]
         init_position['z'] += 3  # add distance between agent center and z_min
         self._agent = self._instance.unreal_service.spawn_actor(
@@ -185,7 +189,7 @@ class OpenBotAgent(AgentBase):
         )
         spear.log("agent = ", self._agent)
         if self._agent == 0:
-            print("spawn agent failed! ")
+            spear.log("spawn agent failed! ")
             self._agent = self._instance.unreal_service.spawn_actor(
                 class_name="/Game/Agents/BP_OpenBotPawn.BP_OpenBotPawn_C",
                 location={"X": 0.0, "Y": 0.0, "Z": 10.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
@@ -203,6 +207,7 @@ class OpenBotAgent(AgentBase):
         self._instance.unreal_service.call_function(uobject=self._hit_event_actor, ufunction=self._subscribe_actor_func, args={
             "Actor": self._instance.unreal_service.to_ptr(self._agent),
         })
+
 
     def get_observation_space(self):
         return gym.spaces.Dict({
@@ -239,7 +244,6 @@ class OpenBotAgent(AgentBase):
                 "DriveTorque": float(set_drive_torque[wheel_index]),
                 "WheelIndex": wheel_index
             }
-            # print("set_drive_torque_args", set_drive_torque_args)
             self._instance.unreal_service.call_function(self._chaos_vehicle_movement_component, self._set_drive_torque_func, set_drive_torque_args)
             set_brake_torque_args = {
                 "BrakeTorque": float(set_brake_torque[wheel_index]),
