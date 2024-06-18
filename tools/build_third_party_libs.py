@@ -14,36 +14,30 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--third_party_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "third_party")))
+    parser.add_argument("--unreal_engine_dir")
     parser.add_argument("--num_parallel_jobs", type=int, default=1)
-    parser.add_argument("--c_compiler")
     parser.add_argument("--cxx_compiler")
+    parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()
+
+    assert os.path.exists(args.third_party_dir)
+    third_party_dir = os.path.realpath(args.third_party_dir)
 
     #
     # define build variables
     #
 
-    third_party_dir = os.path.realpath(args.third_party_dir)
-
-    if args.c_compiler is None:
-        if sys.platform == "win32":
-            c_compiler = "cl"
-        elif sys.platform in ["darwin", "linux"]:
-            c_compiler = "clang"
-        else:
-            assert False
+    if args.verbose:
+        verbose_makefile = "ON"
     else:
-        c_compiler = args.c_compiler
+        verbose_makefile = "OFF"
 
-    if args.cxx_compiler is None:
-        if sys.platform == "win32":
-            cxx_compiler = "cl"
-        elif sys.platform in ["darwin", "linux"]:
-            cxx_compiler = "clang++"
-        else:
-            assert False
-    else:
-        cxx_compiler = args.cxx_compiler
+    if sys.platform == "linux" and args.cxx_compiler is None:
+        assert os.path.exists(args.unreal_engine_dir)
+        unreal_engine_dir        = os.path.realpath(args.unreal_engine_dir)
+        linux_clang_bin_dir      = os.path.join(unreal_engine_dir, "Engine", "Extras", "ThirdPartyNotUE", "SDKs", "HostLinux", "Linux_x64", "v21_clang-15.0.1-centos7", "x86_64-unknown-linux-gnu", "bin")
+        linux_libcpp_lib_dir     = os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "lib", "Unix", "x86_64-unknown-linux-gnu")
+        linux_libcpp_include_dir = os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "include", "c++", "v1")
 
     if sys.platform == "win32":
         platform_dir = "Win64"
@@ -56,6 +50,19 @@ if __name__ == "__main__":
         cxx_flags = "'-std=c++20 -stdlib=libc++'"
     else:
         assert False
+
+    if args.cxx_compiler is None:
+        if sys.platform == "win32":
+            cxx_compiler = "cl"
+        elif sys.platform == "darwin":
+            cxx_compiler == "clang++"
+        elif sys.platform == "linux":
+            cxx_compiler = os.path.join(linux_clang_bin_dir, "clang++")
+            cxx_flags = f"'-std=c++20 -stdlib=libc++ -nostdinc++ -I{linux_libcpp_include_dir} -L{linux_libcpp_lib_dir}'"
+        else:
+            assert False
+    else:
+        cxx_compiler = args.cxx_compiler
 
     #
     # Boost
@@ -116,9 +123,9 @@ if __name__ == "__main__":
 
         cmd = [
             "cmake",
-            "-DCMAKE_C_COMPILER=" + c_compiler,
             "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
             "-DCMAKE_CXX_FLAGS=" + cxx_flags,
+            "-DCMAKE_VERBOSE_MAKEFILE=" + verbose_makefile,
             os.path.join("..", "..")]
 
         spear.log(f"Executing: {' '.join(cmd)}")
@@ -130,10 +137,10 @@ if __name__ == "__main__":
 
         cmd = [
             "cmake",
-            "-DCMAKE_C_COMPILER=" + c_compiler,
             "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
-            "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64",
             "-DCMAKE_CXX_FLAGS=" + cxx_flags,
+            "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64",
+            "-DCMAKE_VERBOSE_MAKEFILE=" + verbose_makefile,
             os.path.join("..", "..")]
 
         spear.log(f"Executing: {' '.join(cmd)}")
@@ -142,13 +149,12 @@ if __name__ == "__main__":
         cmd = ["cmake", "--build", ".", "--config", "Release", "-j", f"{args.num_parallel_jobs}"]
 
     elif sys.platform == "linux":
-
         cmd = [
             "cmake",
-            "-DCMAKE_C_COMPILER=" + c_compiler,
             "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
             "-DCMAKE_CXX_FLAGS=" + cxx_flags,
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
+            "-DCMAKE_VERBOSE_MAKEFILE=" + verbose_makefile,
             os.path.join("..", "..")]
 
         spear.log(f"Executing: {' '.join(cmd)}")
@@ -183,9 +189,10 @@ if __name__ == "__main__":
 
         cmd = [
             "cmake",
-            "-DCMAKE_C_COMPILER=" + c_compiler,
             "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
             "-DCMAKE_CXX_FLAGS=" + cxx_flags,
+            "-DCMAKE_VERBOSE_MAKEFILE=" + verbose_makefile,
+            "-DYAML_CPP_BUILD_TESTS=OFF",
             os.path.join("..", "..")]
 
         spear.log(f"Executing: {' '.join(cmd)}")
@@ -197,10 +204,11 @@ if __name__ == "__main__":
 
         cmd = [
             "cmake",
-            "-DCMAKE_C_COMPILER=" + c_compiler,
             "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
-            "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64",
             "-DCMAKE_CXX_FLAGS=" + cxx_flags,
+            "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64",
+            "-DCMAKE_VERBOSE_MAKEFILE=" + verbose_makefile,
+            "-DYAML_CPP_BUILD_TESTS=OFF",
             os.path.join("..", "..")]
 
         spear.log(f"Executing: {' '.join(cmd)}")
@@ -209,13 +217,13 @@ if __name__ == "__main__":
         cmd = ["cmake", "--build", ".", "--config", "Release", "-j", f"{args.num_parallel_jobs}"]
 
     elif sys.platform == "linux":
-
         cmd = [
             "cmake",
-            "-DCMAKE_C_COMPILER=" + c_compiler,
             "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
             "-DCMAKE_CXX_FLAGS=" + cxx_flags,
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
+            "-DCMAKE_VERBOSE_MAKEFILE=" + verbose_makefile,
+            "-DYAML_CPP_BUILD_TESTS=OFF",
             os.path.join("..", "..")]
 
         spear.log(f"Executing: {' '.join(cmd)}")
