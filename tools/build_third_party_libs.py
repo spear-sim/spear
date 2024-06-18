@@ -20,6 +20,9 @@ if __name__ == "__main__":
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()
 
+    assert os.path.exists(args.third_party_dir)
+    third_party_dir = os.path.realpath(args.third_party_dir)
+
     #
     # define build variables
     #
@@ -28,9 +31,6 @@ if __name__ == "__main__":
         verbose_makefile = "ON"
     else:
         verbose_makefile = "OFF"
-
-    assert os.path.exists(args.third_party_dir)
-    third_party_dir = os.path.realpath(args.third_party_dir)
 
     if sys.platform == "linux" and args.cxx_compiler is None:
         assert os.path.exists(args.unreal_engine_dir)
@@ -47,7 +47,7 @@ if __name__ == "__main__":
         cxx_flags = "'-std=c++20 -mmacosx-version-min=10.14'"
     elif sys.platform == "linux":
         platform_dir = "Linux"
-        cxx_flags = "-std=c++20 -stdlib=libc++"
+        cxx_flags = "'-std=c++20 -stdlib=libc++'"
     else:
         assert False
 
@@ -58,7 +58,7 @@ if __name__ == "__main__":
             cxx_compiler == "clang++"
         elif sys.platform == "linux":
             cxx_compiler = os.path.join(linux_clang_bin_dir, "clang++")
-            cxx_flags += f" -nostdinc++ -I{linux_libcpp_include_dir} -L{linux_libcpp_lib_dir}"
+            cxx_flags = f"'-std=c++20 -stdlib=libc++ -nostdinc++ -I{linux_libcpp_include_dir} -L{linux_libcpp_lib_dir}'"
         else:
             assert False
     else:
@@ -192,6 +192,7 @@ if __name__ == "__main__":
             "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
             "-DCMAKE_CXX_FLAGS=" + cxx_flags,
             "-DCMAKE_VERBOSE_MAKEFILE=" + verbose_makefile,
+            "-DYAML_CPP_BUILD_TESTS=OFF",
             os.path.join("..", "..")]
 
         spear.log(f"Executing: {' '.join(cmd)}")
@@ -207,6 +208,7 @@ if __name__ == "__main__":
             "-DCMAKE_CXX_FLAGS=" + cxx_flags,
             "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64",
             "-DCMAKE_VERBOSE_MAKEFILE=" + verbose_makefile,
+            "-DYAML_CPP_BUILD_TESTS=OFF",
             os.path.join("..", "..")]
 
         spear.log(f"Executing: {' '.join(cmd)}")
@@ -219,9 +221,9 @@ if __name__ == "__main__":
             "cmake",
             "-DCMAKE_CXX_COMPILER=" + cxx_compiler,
             "-DCMAKE_CXX_FLAGS=" + cxx_flags,
-            "-DYAML_CPP_BUILD_TESTS=OFF",
             "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
             "-DCMAKE_VERBOSE_MAKEFILE=" + verbose_makefile,
+            "-DYAML_CPP_BUILD_TESTS=OFF",
             os.path.join("..", "..")]
 
         spear.log(f"Executing: {' '.join(cmd)}")
