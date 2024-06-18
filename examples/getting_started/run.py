@@ -34,6 +34,19 @@ def get_keyboard_action(k, agent_type):
         elif k == ord('d'):
             action['add_to_location'] = np.array([0, 1, 0]) * 100
 
+    elif agent_type == "simple_force":
+        action = {
+            "add_force": np.array([0, 0, 0])
+        }
+        if k == ord('w'):
+            action['add_force'] = np.array([1, 0, 0]) * 100
+        elif k == ord('s'):
+            action['add_force'] = np.array([-1, 0, 0]) * 100
+        elif k == ord('a'):
+            action['add_force'] = np.array([0, -1, 0]) * 100
+        elif k == ord('d'):
+            action['add_force'] = np.array([0, 1, 0]) * 100
+
     elif agent_type == "openbot":
         action = {
             "set_drive_torque": np.zeros([4, ]),
@@ -60,7 +73,7 @@ if __name__ == "__main__":
     parser.add_argument("--benchmark", action="store_true")
     parser.add_argument("--num_steps", default=10000)
     parser.add_argument("--keyboard", default=True)
-    parser.add_argument("--agent", default="openbot", )
+    parser.add_argument("--agent", default="openbot")
 
     parser.add_argument("--use_force", default=True)
 
@@ -92,7 +105,7 @@ if __name__ == "__main__":
         exit(-1)
 
     # get access to camera sensor
-    unreal_camera_sensor = CameraSensor(instance, agent._agent, render_pass_names=["final_color", "depth", "normal","segmentation"])
+    unreal_camera_sensor = CameraSensor(instance, agent._agent, render_pass_names=["final_color", "depth", "normal", "segmentation"])
 
     obs = agent.get_observation()
     action = get_keyboard_action(-1, args.agent)
@@ -111,6 +124,9 @@ if __name__ == "__main__":
     for i in range(args.num_steps):
         instance.engine_service.begin_tick()
         instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
+
+        hit_actors = agent.get_hit_actors()
+        spear.log("hit!", len(hit_actors), hit_actors)
 
         # apply actions
         agent.apply_action(action)
@@ -131,8 +147,6 @@ if __name__ == "__main__":
             if args.keyboard:
                 if k == 27:  # Esc key to stop
                     break
-                elif k == -1:  # continue if no keyboard input
-                    pass
                 else:
                     # update action based on keyboard input
                     action = get_keyboard_action(k, args.agent)

@@ -559,7 +559,8 @@ public:
             });
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_static_class_v2",
             [this](const std::string& class_name) -> uint64_t {
-                return reinterpret_cast<uint64_t>(UnrealClassRegistrar::getStaticClass(class_name));
+                UClass* uclass = reinterpret_cast<UClass*>(StaticLoadObject(UObject::StaticClass(), nullptr, *Unreal::toFString(class_name), nullptr, LOAD_None, nullptr));
+                return reinterpret_cast<uint64_t>(uclass);
             });
 
         //

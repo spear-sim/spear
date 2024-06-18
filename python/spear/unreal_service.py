@@ -253,6 +253,8 @@ class UnrealService():
     def get_static_class(self, class_name):
         return self._rpc_client.call("unreal_service.get_static_class", class_name)
 
+    def get_static_class_v2(self, class_name):
+        return self._rpc_client.call("unreal_service.get_static_class_v2", class_name)
     #
     # Find actors conditionally and return a list or dict
     #

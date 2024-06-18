@@ -29,6 +29,16 @@ class AgentBase():
         self._unreal_add_force_func = self._instance.unreal_service.find_function_by_name(
             uclass=unreal_static_mesh_static_class, name="AddForce")
 
+        self._hit_event_class = self._instance.unreal_service.get_static_class_v2("/Script/CoreUObject.Class'/Script/SpComponents.SpHitEventActor'")
+        self._hit_event_actor = self._instance.unreal_service.spawn_actor(
+            class_name="/Script/CoreUObject.Class'/Script/SpComponents.SpHitEventActor'",
+            location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}, spawn_parameters={"Name": "HitEventActor"}
+        )
+        self._subscribe_actor_func = self._instance.unreal_service.find_function_by_name(
+            uclass=self._hit_event_class, name="SubscribeToActor")
+        self._get_hit_event_desc_func = self._instance.unreal_service.find_function_by_name(
+            uclass=self._hit_event_class, name="GetHitEventDescs")
+
     def get_observation_space(self):
         assert False
 
@@ -43,6 +53,14 @@ class AgentBase():
 
     def reset(self):
         assert False
+
+    def get_hit_actors(self):
+        hit_events = self._instance.unreal_service.call_function(uobject=self._hit_event_actor, ufunction=self._get_hit_event_desc_func)['ReturnValue']
+        hit_actors = set()
+        if len(hit_events) > 0:
+            for event in hit_events:
+                hit_actors.add(event['otherActor'])
+        return hit_actors
 
 
 class SimpleAgent(AgentBase):
@@ -60,6 +78,10 @@ class SimpleAgent(AgentBase):
 
         spear.log("root_component = ", self._root_component)
 
+        self._instance.unreal_service.call_function(uobject=self._hit_event_actor, ufunction=self._subscribe_actor_func, args={
+            "Actor": self._instance.unreal_service.to_ptr(self._agent),
+        })
+
     def get_observation_space(self):
         return gym.spaces.Dict({
             # "camera.final_color": gym.spaces.Box(0, 255, (480, 640, 3,), np.uint8),
@@ -70,7 +92,7 @@ class SimpleAgent(AgentBase):
     def get_action_space(self):
         return gym.spaces.Dict({
             "add_to_location": gym.spaces.Box(-1, 1, (3,), np.float64),
-            # "add_to_rotation": gym.spaces.Box(-1, 1, (3,), np.float64),
+            "add_to_rotation": gym.spaces.Box(-1, 1, (3,), np.float64),
         })
 
     def get_observation(self):
@@ -123,7 +145,7 @@ class SimpleForceAgent(SimpleAgent):
         })
 
     def apply_action(self, action):
-        scale = 1000000
+        scale = 1
         force = action['add_force'] * scale
         add_force_args = {
             "Force": dict(zip(["X", "Y", "Z"], force.tolist()))
@@ -142,13 +164,17 @@ class OpenBotAgent(AgentBase):
         if self._agent == 0:
             print("spawn agent failed! ")
         # TODO get vehicle component
-        self._chaos_vehicle_movement_component = instance.unreal_service.get_component_by_type("UChaosWheeledVehicleMovementComponent", self._agent)
+        self._chaos_vehicle_movement_component = instance.unreal_service.get_component_by_type_v2("/Script/CoreUObject.Class'/Script/ChaosVehicles.ChaosWheeledVehicleMovementComponent'", self._agent)
         self._chaos_vehicle_movement_component_class = instance.unreal_service.get_class(self._chaos_vehicle_movement_component)
 
         self._set_drive_torque_func = self._instance.unreal_service.find_function_by_name(
             uclass=self._chaos_vehicle_movement_component_class, name="SetDriveTorque")
         self._set_brake_torque_func = self._instance.unreal_service.find_function_by_name(
             uclass=self._chaos_vehicle_movement_component_class, name="SetBrakeTorque")
+
+        self._instance.unreal_service.call_function(uobject=self._hit_event_actor, ufunction=self._subscribe_actor_func, args={
+            "Actor": self._instance.unreal_service.to_ptr(self._agent),
+        })
 
     def get_observation_space(self):
         return gym.spaces.Dict({
@@ -163,6 +189,7 @@ class OpenBotAgent(AgentBase):
 
         current_location = np.array([current_location['x'], current_location['y'], current_location['z']])
         current_rotation = np.array([current_rotation['roll'], current_rotation['yaw'], current_rotation['pitch']])
+
         self._obs = {
             # "camera.final_color": np.zeros([480, 640, 3], dtype=np.float64),
             "location": current_location,
@@ -179,12 +206,12 @@ class OpenBotAgent(AgentBase):
     def apply_action(self, action):
         set_drive_torque = action['set_drive_torque']
         set_brake_torque = action['set_brake_torque']
-        for wheel_index in range(0,4):
+        for wheel_index in range(0, 4):
             set_drive_torque_args = {
                 "DriveTorque": float(set_drive_torque[wheel_index]),
                 "WheelIndex": wheel_index
             }
-            print("set_drive_torque_args",set_drive_torque_args)
+            # print("set_drive_torque_args", set_drive_torque_args)
             self._instance.unreal_service.call_function(self._chaos_vehicle_movement_component, self._set_drive_torque_func, set_drive_torque_args)
             set_brake_torque_args = {
                 "BrakeTorque": float(set_brake_torque[wheel_index]),
