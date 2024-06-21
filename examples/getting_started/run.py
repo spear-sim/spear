@@ -10,7 +10,7 @@ import numpy as np
 import os
 import spear
 
-from examples.common.agent import SimpleAgent, OpenBotAgent, SimpleForceAgent
+from examples.common.agent import SimpleAgent, OpenBotAgent, SimpleForceAgent, HabitatNavAgent
 from examples.common.camera import CameraSensor
 
 common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
@@ -47,6 +47,20 @@ def get_keyboard_action(k, agent_type):
         elif k == ord('d'):
             action['add_force'] = np.array([0, 1, 0]) * 100
 
+    elif agent_type == "habitat":
+        action = {
+            "move_foward": np.array([0, ]),
+            "move_left": np.array([0, ]),
+            "move_right": np.array([0, ]),
+        }
+        if k == ord('w'):
+            action['move_foward'] = np.array([10, ])
+        elif k == ord('s'):
+            action['move_foward'] = np.array([-10, ])
+        elif k == ord('a'):
+            action['move_left'] = np.array([15, ])
+        elif k == ord('d'):
+            action['move_right'] = np.array([15, ])
     elif agent_type == "openbot":
         action = {
             "set_drive_torque": np.zeros([4, ]),
@@ -73,7 +87,7 @@ if __name__ == "__main__":
     parser.add_argument("--benchmark", action="store_true")
     parser.add_argument("--num_steps", default=10000)
     parser.add_argument("--keyboard", default=True)
-    parser.add_argument("--agent", default="openbot")
+    parser.add_argument("--agent", default="habitat")
 
     parser.add_argument("--use_force", default=True)
 
@@ -98,6 +112,8 @@ if __name__ == "__main__":
         agent = SimpleAgent(instance)
     elif args.agent == "simple_force":
         agent = SimpleForceAgent(instance)
+    elif args.agent == "habitat":
+        agent = HabitatNavAgent(instance)
     elif args.agent == "openbot":
         agent = OpenBotAgent(instance)
     else:
