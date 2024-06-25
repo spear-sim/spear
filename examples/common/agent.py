@@ -117,9 +117,9 @@ class SimpleAgent(AgentBase):
     def apply_action(self, action):
         new_location = self._obs['location'] + action['add_to_location']
 
-        new_rotation = self._obs['rotation']
-        # if "add_to_rotation" in action:
-        #     new_rotation += action['add_to_rotation']
+        new_rotation = self._obs['rotation'].astype(np.float64)
+        if "add_to_rotation" in action:
+            new_rotation += action['add_to_rotation'].astype(np.float64)
 
         transform_args = {
             "NewLocation": dict(zip(["X", "Y", "Z"], new_location.tolist())),
@@ -131,7 +131,7 @@ class SimpleAgent(AgentBase):
     def reset(self):
         new_location = self.get_random_points(1)[0]
         new_location['z'] += 50
-        new_rotation = np.array([0, 0, 0])
+        new_rotation = np.array([0.0, 0.0, 0.0])
         transform_args = {
             "NewLocation": new_location,
             "NewRotation": dict(zip(["Roll", "Pitch", "Yaw"], new_rotation.tolist())),

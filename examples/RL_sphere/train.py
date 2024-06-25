@@ -15,7 +15,7 @@ env = None
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--observation_mode", default="SpPointNav")
-    parser.add_argument("--resume", action="store_true", default="ERRORED_ONLY")
+    parser.add_argument("--resume", action="store_true", default=False)
     parser.add_argument("--check_point", default=r"C:\Users\admin\ray_results")
     parser.add_argument("--run_name", default="SpPointNav0620_dummy_1")
     parser.add_argument("--test", default=False)
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     ray_config = {
         "env": env_class,
         "num_workers": 1,
-        # "num_gpus":0,
+        # "num_gpus": 0,
         "env_config": env_config,
         # "model": model_config,
         "framework": "torch",
@@ -64,7 +64,8 @@ if __name__ == "__main__":
     experiment_analysis = tune.run(
         "PPO",
         stop={
-            "episode_reward_mean": 90.0
+            # "episode_reward_mean": 90.0,
+            "training_iteration": 20,
         },
         config=ray_config,
         checkpoint_freq=10,
@@ -98,6 +99,6 @@ if __name__ == "__main__":
                 action = agent.compute_single_action(obs)
                 obs, reward, done, info = env.step(action)
                 episode_reward += reward
-                print("episode_reward", episode_reward)
+                # print("episode_reward", episode_reward)
 
     print("\n\n\nLast checkpoint: " + str(experiment_analysis.get_last_checkpoint()) + "\n\n\n")

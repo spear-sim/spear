@@ -14,7 +14,8 @@ from agent import OpenBotAgent, SimpleAgent, HabitatNavAgent
 
 def random_position(range=550):
     pos = np.random.rand(3)
-    pos *= range
+    pos += -0.5
+    pos *= range * 2
     pos[2] = 50
     return pos.astype(np.float64)
 
@@ -64,9 +65,9 @@ class SpPointNavEnv(gym.Env):
             "goal_in_agent_frame": gym.spaces.Box(-2000, 2000, (3,), np.float64),
         })
         self.action_space = gym.spaces.Dict({
-            "add_to_location": gym.spaces.Box(-10, 10, (2,), np.float64),
-            # "move_left": gym.spaces.Box(-360, 360, (1,), np.float64),
-            # "move_right": gym.spaces.Box(-10, 10, (1,), np.float64),
+            # "add_to_location": gym.spaces.Box(-10, 10, (2,), np.float64),
+            "move_forward": gym.spaces.Box(-50, 50, (1,), np.float64),
+            "move_right": gym.spaces.Box(-30, 30, (1,), np.float64),
             # "stop": gym.spaces.Box(0, 1, (1,), np.int),
         })
         self._obs = {
@@ -86,7 +87,6 @@ class SpPointNavEnv(gym.Env):
         if self._dummy:
             new_location = random_position()
             new_rotation = np.array([0, 0, 0])
-
         else:
             self._instance.engine_service.begin_tick()
             self._instance.unreal_service.call_function(uobject=self._gameplay_statics_default_object, ufunction=self._set_game_paused_func, args={"bPaused": False})
@@ -120,11 +120,11 @@ class SpPointNavEnv(gym.Env):
 
     def step(self, action):
         if self._dummy:
-            new_rotation = self._obs['rotation']
+            new_rotation = self._obs['rotation'] + np.array([0, 0, action['move_right'][0]])
             quat = Rotation.from_euler("xyz", new_rotation, degrees=True)
             new_rotation = np.array(quat.as_euler("xyz", degrees=True))
 
-            new_location = self._obs['location'] + np.array([action['add_to_location'][0], action['add_to_location'][1], 0])
+            new_location = self._obs['location'] + action['move_forward'][0] * quat.as_matrix().dot(np.array([1, 0, 0]))
 
             collision = abs(new_location[0]) > 550 or abs(new_location[1]) > 550
         else:
@@ -132,7 +132,14 @@ class SpPointNavEnv(gym.Env):
             self._instance.unreal_service.call_function(uobject=self._gameplay_statics_default_object, ufunction=self._set_game_paused_func, args={"bPaused": False})
 
             old_obs = self._agent.get_observation()
-            self._agent.apply_action({"add_to_location": np.array([action['add_to_location'][0], action['add_to_location'][1], 0])})
+
+            new_rotation = self._obs['rotation'] + np.array([0, 0, action['move_right'][0]])
+            quat = Rotation.from_euler("xyz", new_rotation, degrees=True)
+
+            self._agent.apply_action({
+                "add_to_location": action['move_forward'][0] * quat.as_matrix().dot(np.array([1, 0, 0])),
+                "add_to_rotation": np.array([0.0, 0.0, action['move_right'][0]]),
+            })
 
             self._instance.engine_service.tick()
 
@@ -143,9 +150,9 @@ class SpPointNavEnv(gym.Env):
             quat = Rotation.from_euler("xyz", new_rotation, degrees=True)
             new_rotation = np.array(quat.as_euler("xyz", degrees=True))
 
-            diff = np.array([action['add_to_location'][0], action['add_to_location'][1], 0]) + old_obs['location'] - new_location
-            if np.linalg.norm(diff) > 10:
-                print("DIFF?", diff, action, obs['location'], new_location)
+            # diff = np.array([action['add_to_location'][0], action['add_to_location'][1], 0]) + old_obs['location'] - new_location
+            # if np.linalg.norm(diff) > 10:
+            #     print("DIFF?", diff, action, obs['location'], new_location)
             self._instance.unreal_service.call_function(uobject=self._gameplay_statics_default_object, ufunction=self._set_game_paused_func, args={"bPaused": True})
             self._instance.engine_service.end_tick()
 
