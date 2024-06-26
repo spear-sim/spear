@@ -72,10 +72,20 @@ class AgentBase():
 
     def get_hit_actors(self):
         hit_events = self._instance.unreal_service.call_function(uobject=self._hit_event_actor, ufunction=self._get_hit_event_desc_func)['ReturnValue']
+        # print("hit_events", hit_events)
         hit_actors = set()
         if len(hit_events) > 0:
             for event in hit_events:
                 hit_actors.add(event['otherActor'])
+        # for hit_actor in hit_actors:
+        #     hit_actor_name = None
+        #     if hit_actor not in self._actor_maps:
+        #         hit_actor_name = self._instance.unreal_service.get_stable_name_for_component(hit_actor, include_actor_name=True)
+        #         self._actor_maps[hit_actor] = {"actor_name", hit_actor_name}
+        #     else:
+        #         hit_actor_name = self._actor_maps[hit_actor]
+        #     print("    hit_actor_name", hit_actor_name)
+
         return hit_actors
 
     def get_random_points(self, num_points):
@@ -130,7 +140,7 @@ class SimpleAgent(AgentBase):
 
     def reset(self):
         new_location = self.get_random_points(1)[0]
-        new_location['z'] += 50
+        new_location['z'] += 10
         new_rotation = np.array([0.0, 0.0, 0.0])
         transform_args = {
             "NewLocation": new_location,
@@ -212,7 +222,7 @@ class HabitatNavAgent(AgentBase):
 
     def reset(self):
         new_location = self.get_random_points(1)[0]
-        new_location['z'] += 50
+        new_location['z'] += 10
         new_rotation = np.array([0, 0, 0])
         transform_args = {
             "NewLocation": new_location,

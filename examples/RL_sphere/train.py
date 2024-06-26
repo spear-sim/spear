@@ -17,8 +17,9 @@ if __name__ == "__main__":
     parser.add_argument("--observation_mode", default="SpPointNav")
     parser.add_argument("--resume", action="store_true", default=False)
     parser.add_argument("--check_point", default=r"C:\Users\admin\ray_results")
-    parser.add_argument("--run_name", default="SpPointNav0620_dummy_1")
+    parser.add_argument("--run_name", default="SpPointNav0625")
     parser.add_argument("--test", default=False)
+    parser.add_argument("--dummy", default=False)
     args = parser.parse_args()
 
     # RLlib overwrites this environment variable, so we copy it into env_config before invoking RLlib.
@@ -48,7 +49,7 @@ if __name__ == "__main__":
     else:
         assert False
 
-    env_config = {"config": config, "dummy": False, "test": args.test}
+    env_config = {"config": config, "dummy": args.dummy, "test": args.test}
 
     ray_config = {
         "env": env_class,

@@ -130,6 +130,9 @@ if __name__ == "__main__":
     gameplay_statics_default_object = instance.unreal_service.get_default_object(uclass=gameplay_statics_class, create_if_needed=False)
     set_game_paused_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_class, name="SetGamePaused")
 
+    unreal_actors = instance.unreal_service.find_actors_by_type_as_dict(class_name="AActor")
+    print("unreal_actors", unreal_actors)
+    unreal_actors_map = {v: k for k, v in unreal_actors.items()}
     instance.engine_service.tick()
     instance.engine_service.end_tick()
 
@@ -143,7 +146,17 @@ if __name__ == "__main__":
 
         hit_actors = agent.get_hit_actors()
         if len(hit_actors) > 0:
-            spear.log("hit!", len(hit_actors), hit_actors)
+            hit_actor_names = []
+            for hit_actor in hit_actors:
+                if hit_actor in unreal_actors_map:
+                    hit_actor_name = unreal_actors_map[hit_actor]
+                    hit_actor_name_list = hit_actor_name.split("/")
+                    if len(hit_actor_name_list) > 2 and hit_actor_name_list[1] == "02_floor":
+                        pass
+                    else:
+                        hit_actor_names.append(hit_actor_name)
+            if len(hit_actor_names) > 0:
+                spear.log("hit!", len(hit_actor_names), hit_actor_names)
 
         # apply actions
         agent.apply_action(action)

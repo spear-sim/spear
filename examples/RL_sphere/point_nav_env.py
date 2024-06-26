@@ -42,6 +42,10 @@ class SpPointNavEnv(gym.Env):
             self._gameplay_statics_class = self._instance.unreal_service.get_static_class(class_name="UGameplayStatics")
             self._gameplay_statics_default_object = self._instance.unreal_service.get_default_object(uclass=self._gameplay_statics_class, create_if_needed=False)
             self._set_game_paused_func = self._instance.unreal_service.find_function_by_name(uclass=self._gameplay_statics_class, name="SetGamePaused")
+
+            self._unreal_actors = self._instance.unreal_service.find_actors_by_type_as_dict(class_name="AActor")
+            self._unreal_actors_map = {v: k for k, v in self._unreal_actors.items()}
+
             self._instance.engine_service.tick()
             self._instance.engine_service.end_tick()
 
@@ -60,18 +64,18 @@ class SpPointNavEnv(gym.Env):
 
         self.observation_space = gym.spaces.Dict({
             # "camera.final_color": gym.spaces.Box(0, 255, (480, 640, 3,), np.uint8),
-            # "location": gym.spaces.Box(-1000, 1000, (3,), np.float64),
+            "location": gym.spaces.Box(-1000, 1000, (3,), np.float64),
             # "rotation": gym.spaces.Box(-1000, 1000, (3,), np.float64),
             "goal_in_agent_frame": gym.spaces.Box(-2000, 2000, (3,), np.float64),
         })
         self.action_space = gym.spaces.Dict({
             # "add_to_location": gym.spaces.Box(-10, 10, (2,), np.float64),
-            "move_forward": gym.spaces.Box(-50, 50, (1,), np.float64),
+            "move_forward": gym.spaces.Box(-0, 50, (1,), np.float64),
             "move_right": gym.spaces.Box(-30, 30, (1,), np.float64),
             # "stop": gym.spaces.Box(0, 1, (1,), np.int),
         })
         self._obs = {
-            "location": np.array([0, 0, 50]),
+            "location": np.array([0, 0, 10]),
             "rotation": np.array([0, 0, 0]),
             "goal_in_agent_frame": np.array([0, 0, 0]),
         }
@@ -100,7 +104,8 @@ class SpPointNavEnv(gym.Env):
             new_rotation = agent_obs['rotation']
 
             # position = self._agent.get_random_points(1)[0]
-            # self._goal = np.array([position['x'], position['y'], position['z'] + 50])
+            # self._goal = np.array([position['x'], position['y'], position['z'] + 10])
+            self._goal = np.array([0, 0, 10])
 
             self._instance.unreal_service.call_function(uobject=self._gameplay_statics_default_object, ufunction=self._set_game_paused_func, args={"bPaused": True})
             self._instance.engine_service.end_tick()
@@ -116,7 +121,10 @@ class SpPointNavEnv(gym.Env):
 
         self._step = 0
 
-        return {"goal_in_agent_frame": self._obs["goal_in_agent_frame"]}
+        return {
+            "location": self._obs["location"],
+            "goal_in_agent_frame": self._obs["goal_in_agent_frame"],
+        }
 
     def step(self, action):
         if self._dummy:
@@ -156,7 +164,21 @@ class SpPointNavEnv(gym.Env):
             self._instance.unreal_service.call_function(uobject=self._gameplay_statics_default_object, ufunction=self._set_game_paused_func, args={"bPaused": True})
             self._instance.engine_service.end_tick()
 
-            collision = len(hit_actors) > 1
+            collision = abs(new_location[0]) > 1000 or abs(new_location[1]) > 1000 or abs(new_location[1]) > 1000
+            if len(hit_actors) > 0:
+                hit_actor_names = []
+                for hit_actor in hit_actors:
+                    if hit_actor in self._unreal_actors_map:
+                        hit_actor_name = self._unreal_actors_map[hit_actor]
+                        hit_actor_name_list = hit_actor_name.split("/")
+                        if hit_actor_name_list[1] == "02_floor":
+                            pass
+                        else:
+                            hit_actor_names.append(hit_actor_name)
+                if len(hit_actor_names) > 0:
+                    spear.log("hit!", len(hit_actor_names), hit_actor_names)
+                    collision = True
+            new_location = np.clip(new_location, -1000, 1000)
 
         self._obs['location'] = new_location
         self._obs['rotation'] = new_rotation
@@ -164,9 +186,9 @@ class SpPointNavEnv(gym.Env):
 
         distance = np.linalg.norm(self._goal - self._obs['location'])
         succ = distance < 50
-
+        timeout = self._step > 2000
         reward = -distance * 0.001 + (100 if succ else 0) + (-10 if collision else 0)
-        done = succ or collision
+        done = succ or collision or timeout
 
         info = {}
 
@@ -176,7 +198,11 @@ class SpPointNavEnv(gym.Env):
             # spear.log("step ", self._step, self._goal, self._obs['location'], self._obs['goal_in_agent_frame'], action, reward, done)
             pass
         self._step += 1
-        return {"goal_in_agent_frame": self._obs["goal_in_agent_frame"]}, reward, done, info
+
+        return {
+                   "location": self._obs["location"],
+                   "goal_in_agent_frame": self._obs["goal_in_agent_frame"],
+               }, reward, done, info
 
     def close(self):
         if self._dummy:
