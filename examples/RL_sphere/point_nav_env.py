@@ -11,7 +11,7 @@ common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "com
 import sys
 
 sys.path.append(common_dir)
-from agent import OpenBotAgent, SimpleAgent, HabitatNavAgent
+from examples.common.agent import SimpleAgent, HabitatNavAgent, SimpleForceAgent
 
 
 def random_position(range=550):

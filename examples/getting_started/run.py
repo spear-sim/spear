@@ -36,16 +36,17 @@ def get_keyboard_action(k, agent_type):
 
     elif agent_type == "simple_force":
         action = {
-            "add_force": np.array([0, 0, 0])
+            "add_force": np.array([0, 0, 0]),
+            "add_torque": np.array([0, 0, 0]),
         }
         if k == ord('w'):
             action['add_force'] = np.array([1, 0, 0]) * 100
         elif k == ord('s'):
             action['add_force'] = np.array([-1, 0, 0]) * 100
         elif k == ord('a'):
-            action['add_force'] = np.array([0, -1, 0]) * 100
+            action['add_torque'] = np.array([0, 0, -30]) * 2000
         elif k == ord('d'):
-            action['add_force'] = np.array([0, 1, 0]) * 100
+            action['add_torque'] = np.array([0, 0, 30]) * 2000
 
     elif agent_type == "habitat":
         action = {
@@ -87,7 +88,7 @@ if __name__ == "__main__":
     parser.add_argument("--benchmark", action="store_true")
     parser.add_argument("--num_steps", default=10000)
     parser.add_argument("--keyboard", default=True)
-    parser.add_argument("--agent", default="habitat")
+    parser.add_argument("--agent", default="simple_force")
 
     parser.add_argument("--use_force", default=True)
 
@@ -135,7 +136,7 @@ if __name__ == "__main__":
     unreal_actors_map = {v: k for k, v in unreal_actors.items()}
 
     for unreal_actor_name, unreal_actor_ptr in unreal_actors.items():
-        assert unreal_actor_name ==  instance.unreal_service.get_stable_name_for_actor(unreal_actor_ptr)
+        assert unreal_actor_name == instance.unreal_service.get_stable_name_for_actor(unreal_actor_ptr)
     instance.engine_service.tick()
     instance.engine_service.end_tick()
 
@@ -152,7 +153,6 @@ if __name__ == "__main__":
             hit_actor_names = []
             for hit_actor in hit_actors:
                 hit_actor_name = instance.unreal_service.get_stable_name_for_actor(hit_actor)
-                print("hit_actor_name",hit_actor_name)
                 if hit_actor in unreal_actors_map:
                     hit_actor_name = unreal_actors_map[hit_actor]
                     hit_actor_name_list = hit_actor_name.split("/")
@@ -171,7 +171,7 @@ if __name__ == "__main__":
 
         # get observation after tick
         obs = agent.get_observation()
-        image = unreal_camera_sensor.get_images(render_pass_name='final_color')
+        image = unreal_camera_sensor.get_images()
 
         instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
         instance.engine_service.end_tick()

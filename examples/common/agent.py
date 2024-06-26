@@ -20,6 +20,7 @@ class AgentBase():
         self._unreal_get_actor_rotation_func = self._instance.unreal_service.find_function_by_name(uclass=unreal_actor_static_class, name="K2_GetActorRotation")
         unreal_static_mesh_static_class = self._instance.unreal_service.get_static_class("UStaticMeshComponent")
         self._unreal_add_force_func = self._instance.unreal_service.find_function_by_name(uclass=unreal_static_mesh_static_class, name="AddForce")
+        self._unreal_add_torque_func = self._instance.unreal_service.find_function_by_name(uclass=unreal_static_mesh_static_class, name="AddTorqueInDegrees")
 
         self._hit_event_class = self._instance.unreal_service.get_static_class_v2("/Script/CoreUObject.Class'/Script/SpComponents.SpHitEventActor'")
         self._hit_event_actor = self._instance.unreal_service.spawn_actor(
@@ -154,17 +155,19 @@ class SimpleAgent(AgentBase):
 class SimpleForceAgent(SimpleAgent):
     def get_action_space(self):
         return gym.spaces.Dict({
-            "add_force": gym.spaces.Box(-1, 1, (3,), np.float64),
-            # "add_to_rotation": gym.spaces.Box(-1, 1, (3,), np.float64),
+            "add_force": gym.spaces.Box(-100, 100, (3,), np.float64),
+            "add_torque": gym.spaces.Box(-100000, 100000, (3,), np.float64),
         })
 
     def apply_action(self, action):
-        scale = 1
-        force = action['add_force'] * scale
         add_force_args = {
-            "Force": dict(zip(["X", "Y", "Z"], force.tolist()))
+            "Force": dict(zip(["X", "Y", "Z"], action['add_force'].tolist()))
         }
         self._instance.unreal_service.call_function(self._root_component, self._unreal_add_force_func, add_force_args)
+        add_force_args = {
+            "Torque": dict(zip(["X", "Y", "Z"], action['add_torque'].tolist()))
+        }
+        self._instance.unreal_service.call_function(self._root_component, self._unreal_add_torque_func, add_force_args)
 
 
 class HabitatNavAgent(AgentBase):
@@ -304,3 +307,17 @@ class OpenBotAgent(AgentBase):
             "location": new_location,
             "rotation": new_rotation,
         }
+
+
+class UrdfBotAgent(AgentBase):
+    def __init__(self):
+        pass
+
+    def get_action_space(self):
+        pass
+
+    def apply_action(self, action):
+        pass
+
+    def reset(self):
+        pass
