@@ -1,4 +1,5 @@
 import json
+import random
 
 import gym
 import numpy as np
@@ -13,25 +14,20 @@ class AgentBase():
         self._agent = None
 
         unreal_actor_static_class = self._instance.unreal_service.get_static_class("AActor")
-        self._unreal_set_actor_location_and_rotation_func = self._instance.unreal_service.find_function_by_name(
-            uclass=unreal_actor_static_class, name="K2_SetActorLocationAndRotation")
-        self._unreal_get_actor_location_func = self._instance.unreal_service.find_function_by_name(
-            uclass=unreal_actor_static_class, name="K2_GetActorLocation")
-        self._unreal_get_actor_rotation_func = self._instance.unreal_service.find_function_by_name(
-            uclass=unreal_actor_static_class, name="K2_GetActorRotation")
+        self._unreal_set_actor_location_and_rotation_func = self._instance.unreal_service.find_function_by_name(uclass=unreal_actor_static_class,
+                                                                                                                name="K2_SetActorLocationAndRotation")
+        self._unreal_get_actor_location_func = self._instance.unreal_service.find_function_by_name(uclass=unreal_actor_static_class, name="K2_GetActorLocation")
+        self._unreal_get_actor_rotation_func = self._instance.unreal_service.find_function_by_name(uclass=unreal_actor_static_class, name="K2_GetActorRotation")
         unreal_static_mesh_static_class = self._instance.unreal_service.get_static_class("UStaticMeshComponent")
-        self._unreal_add_force_func = self._instance.unreal_service.find_function_by_name(
-            uclass=unreal_static_mesh_static_class, name="AddForce")
+        self._unreal_add_force_func = self._instance.unreal_service.find_function_by_name(uclass=unreal_static_mesh_static_class, name="AddForce")
 
         self._hit_event_class = self._instance.unreal_service.get_static_class_v2("/Script/CoreUObject.Class'/Script/SpComponents.SpHitEventActor'")
         self._hit_event_actor = self._instance.unreal_service.spawn_actor(
             class_name="/Script/CoreUObject.Class'/Script/SpComponents.SpHitEventActor'",
             location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}, spawn_parameters={"Name": "SpHitEventActor"}
         )
-        self._subscribe_actor_func = self._instance.unreal_service.find_function_by_name(
-            uclass=self._hit_event_class, name="SubscribeToActor")
-        self._get_hit_event_desc_func = self._instance.unreal_service.find_function_by_name(
-            uclass=self._hit_event_class, name="GetHitEventDescs")
+        self._subscribe_actor_func = self._instance.unreal_service.find_function_by_name(uclass=self._hit_event_class, name="SubscribeToActor")
+        self._get_hit_event_desc_func = self._instance.unreal_service.find_function_by_name(uclass=self._hit_event_class, name="GetHitEventDescs")
 
         self._nav_mesh_actor_class = self._instance.unreal_service.get_static_class_v2("/Script/CoreUObject.Class'/Script/SpComponents.SpNavMeshActor'")
         self._nav_mesh_actor = self._instance.unreal_service.spawn_actor(
@@ -223,7 +219,7 @@ class HabitatNavAgent(AgentBase):
     def reset(self):
         new_location = self.get_random_points(1)[0]
         new_location['z'] += 10
-        new_rotation = np.array([0, 0, 0])
+        new_rotation = np.array([0, 0, (random.random() - 0.5) * 2 * 180])
         transform_args = {
             "NewLocation": new_location,
             "NewRotation": dict(zip(["Roll", "Pitch", "Yaw"], new_rotation.tolist())),

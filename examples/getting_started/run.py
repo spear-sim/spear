@@ -133,6 +133,9 @@ if __name__ == "__main__":
     unreal_actors = instance.unreal_service.find_actors_by_type_as_dict(class_name="AActor")
     print("unreal_actors", unreal_actors)
     unreal_actors_map = {v: k for k, v in unreal_actors.items()}
+
+    for unreal_actor_name, unreal_actor_ptr in unreal_actors.items():
+        assert unreal_actor_name ==  instance.unreal_service.get_stable_name_for_actor(unreal_actor_ptr)
     instance.engine_service.tick()
     instance.engine_service.end_tick()
 
@@ -148,6 +151,8 @@ if __name__ == "__main__":
         if len(hit_actors) > 0:
             hit_actor_names = []
             for hit_actor in hit_actors:
+                hit_actor_name = instance.unreal_service.get_stable_name_for_actor(hit_actor)
+                print("hit_actor_name",hit_actor_name)
                 if hit_actor in unreal_actors_map:
                     hit_actor_name = unreal_actors_map[hit_actor]
                     hit_actor_name_list = hit_actor_name.split("/")
@@ -155,6 +160,7 @@ if __name__ == "__main__":
                         pass
                     else:
                         hit_actor_names.append(hit_actor_name)
+
             if len(hit_actor_names) > 0:
                 spear.log("hit!", len(hit_actor_names), hit_actor_names)
 

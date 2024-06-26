@@ -5,6 +5,8 @@ import os
 import spear
 from scipy.spatial.transform import Rotation
 
+from examples.common.camera import CameraSensor
+
 common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
 import sys
 
@@ -25,12 +27,13 @@ class SpPointNavEnv(gym.Env):
         spear.log("__init__ Start.")
         self._config = env_config['config']
         self._dummy = env_config["dummy"]
+        self._use_camera = env_config['use_camera']
         if env_config['test']:
             self._dummy = True
+
         if self._dummy:
             pass
         else:
-
             self._config = spear.get_config(
                 user_config_files=[
                     os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml")),
@@ -53,21 +56,27 @@ class SpPointNavEnv(gym.Env):
 
             # spawn agent
             self._agent = SimpleAgent(self._instance)
-            # self.action_space = self._agent.get_action_space()
-            # self.observation_space = self._agent.get_observation_space()
+
+            if self._use_camera:
+                self._camera_sensor = CameraSensor(self._instance, self._agent._agent, render_pass_names=["final_color", "depth"], width=240, height=320)
 
             self._instance.engine_service.tick()
 
-            # self._goal = np.array([position['x'], position['y'], position['z'] + 50])
-
             self._instance.engine_service.end_tick()
-
-        self.observation_space = gym.spaces.Dict({
-            # "camera.final_color": gym.spaces.Box(0, 255, (480, 640, 3,), np.uint8),
-            "location": gym.spaces.Box(-1000, 1000, (3,), np.float64),
-            # "rotation": gym.spaces.Box(-1000, 1000, (3,), np.float64),
-            "goal_in_agent_frame": gym.spaces.Box(-2000, 2000, (3,), np.float64),
-        })
+        if self._use_camera:
+            self.observation_space = gym.spaces.Dict({
+                "rgb": gym.spaces.Box(0, 255, (self._camera_sensor._width, self._camera_sensor._height, 3,), np.uint8),
+                "location": gym.spaces.Box(-1000, 1000, (3,), np.float64),
+                # "rotation": gym.spaces.Box(-1000, 1000, (3,), np.float64),
+                "goal_in_agent_frame": gym.spaces.Box(-2000, 2000, (3,), np.float64),
+            })
+        else:
+            self.observation_space = gym.spaces.Dict({
+                # "camera.final_color": gym.spaces.Box(0, 255, (480, 640, 3,), np.uint8),
+                "location": gym.spaces.Box(-1000, 1000, (3,), np.float64),
+                # "rotation": gym.spaces.Box(-1000, 1000, (3,), np.float64),
+                "goal_in_agent_frame": gym.spaces.Box(-2000, 2000, (3,), np.float64),
+            })
         self.action_space = gym.spaces.Dict({
             # "add_to_location": gym.spaces.Box(-10, 10, (2,), np.float64),
             "move_forward": gym.spaces.Box(-0, 50, (1,), np.float64),
@@ -79,6 +88,8 @@ class SpPointNavEnv(gym.Env):
             "rotation": np.array([0, 0, 0]),
             "goal_in_agent_frame": np.array([0, 0, 0]),
         }
+        if self._use_camera:
+            self._obs["rgb"] = np.zeros([self._camera_sensor._width, self._camera_sensor._height, 3])
         self._goal = random_position(range=500)  # + np.array([-200, -200,0])
         self._step = 0
 
@@ -107,6 +118,9 @@ class SpPointNavEnv(gym.Env):
             # self._goal = np.array([position['x'], position['y'], position['z'] + 10])
             self._goal = np.array([0, 0, 10])
 
+            if self._use_camera:
+                self._obs["rgb"] = self._camera_sensor.get_images()
+
             self._instance.unreal_service.call_function(uobject=self._gameplay_statics_default_object, ufunction=self._set_game_paused_func, args={"bPaused": True})
             self._instance.engine_service.end_tick()
 
@@ -122,6 +136,7 @@ class SpPointNavEnv(gym.Env):
         self._step = 0
 
         return {
+            "rgb": self._obs["rgb"],
             "location": self._obs["location"],
             "goal_in_agent_frame": self._obs["goal_in_agent_frame"],
         }
@@ -157,6 +172,9 @@ class SpPointNavEnv(gym.Env):
             new_rotation = obs['rotation']
             quat = Rotation.from_euler("xyz", new_rotation, degrees=True)
             new_rotation = np.array(quat.as_euler("xyz", degrees=True))
+
+            if self._use_camera:
+                self._obs["rgb"] = self._camera_sensor.get_images()
 
             # diff = np.array([action['add_to_location'][0], action['add_to_location'][1], 0]) + old_obs['location'] - new_location
             # if np.linalg.norm(diff) > 10:
@@ -200,6 +218,7 @@ class SpPointNavEnv(gym.Env):
         self._step += 1
 
         return {
+                   "rgb": self._obs["rgb"],
                    "location": self._obs["location"],
                    "goal_in_agent_frame": self._obs["goal_in_agent_frame"],
                }, reward, done, info
