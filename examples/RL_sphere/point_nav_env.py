@@ -31,6 +31,7 @@ class SpPointNavEnv(gym.Env):
         self._use_random_goal = True
         if env_config['test']:
             self._dummy = True
+            self._agent = None
 
         if self._dummy:
             pass
@@ -57,7 +58,7 @@ class SpPointNavEnv(gym.Env):
 
             # spawn agent
             self._agent = SimpleForceAgent(self._instance)
-            #self._agent = SimpleAgent(self._instance)
+            # self._agent = SimpleAgent(self._instance)
 
             self._unreal_goal_actor = self._instance.unreal_service.spawn_actor(
                 class_name="/Game/Agents/BP_Goal.BP_Goal_C",
@@ -79,7 +80,13 @@ class SpPointNavEnv(gym.Env):
         })
         if self._use_camera:
             self.observation_space["rgb"] = gym.spaces.Box(0, 255, (self._camera_sensor._width, self._camera_sensor._height, 3,), np.uint8)
-        self.action_space = self._agent.get_action_space()
+        if self._agent:
+            self.action_space = self._agent.get_action_space()
+        else:
+            self.action_space = gym.spaces.Dict({
+                "add_force": gym.spaces.Box(0, 1, (1,), np.float64),
+                "add_torque": gym.spaces.Box(-1, 1, (1,), np.float64),
+            })
 
         # init obs and action
         self._obs = {
