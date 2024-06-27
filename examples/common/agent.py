@@ -18,9 +18,9 @@ class AgentBase():
                                                                                                                 name="K2_SetActorLocationAndRotation")
         self._unreal_get_actor_location_func = self._instance.unreal_service.find_function_by_name(uclass=unreal_actor_static_class, name="K2_GetActorLocation")
         self._unreal_get_actor_rotation_func = self._instance.unreal_service.find_function_by_name(uclass=unreal_actor_static_class, name="K2_GetActorRotation")
-        unreal_static_mesh_static_class = self._instance.unreal_service.get_static_class("UStaticMeshComponent")
-        self._unreal_add_force_func = self._instance.unreal_service.find_function_by_name(uclass=unreal_static_mesh_static_class, name="AddForce")
-        self._unreal_add_torque_func = self._instance.unreal_service.find_function_by_name(uclass=unreal_static_mesh_static_class, name="AddTorqueInDegrees")
+        self._unreal_static_mesh_static_class = self._instance.unreal_service.get_static_class("UStaticMeshComponent")
+        self._unreal_add_force_func = self._instance.unreal_service.find_function_by_name(uclass=self._unreal_static_mesh_static_class, name="AddForce")
+        self._unreal_add_torque_func = self._instance.unreal_service.find_function_by_name(uclass=self._unreal_static_mesh_static_class, name="AddTorqueInDegrees")
 
         self._hit_event_class = self._instance.unreal_service.get_static_class_v2("/Script/CoreUObject.Class'/Script/SpComponents.SpHitEventActor'")
         self._hit_event_actor = self._instance.unreal_service.spawn_actor(
@@ -109,6 +109,10 @@ class SimpleAgent(AgentBase):
             spear.log("spawn agent failed!")
         self._root_component = self._instance.unreal_service.get_component_by_name("UStaticMeshComponent", self._agent, "StaticMeshComponent")
 
+        self._unreal_set_velocity_func = self._instance.unreal_service.find_function_by_name(uclass=self._unreal_static_mesh_static_class, name="SetPhysicsLinearVelocity")
+        self._unreal_set_angular_velocity_func = self._instance.unreal_service.find_function_by_name(uclass=self._unreal_static_mesh_static_class,
+                                                                                                     name="SetPhysicsAngularVelocityInRadians")
+
         spear.log("root_component = ", self._root_component)
 
         self._instance.unreal_service.call_function(uobject=self._hit_event_actor, ufunction=self._subscribe_actor_func, args={
@@ -140,15 +144,24 @@ class SimpleAgent(AgentBase):
 
         new_location = self.get_random_points(1)[0]
         new_location['z'] += 10
-        new_rotation = np.array([0.0, 0.0, 0.0])
-        transform_args = {
+        new_rotation = np.array([0.0, 0.0, (random.random() - 0.5) * 180])
+        self._instance.unreal_service.call_function(self._agent, self._unreal_set_actor_location_and_rotation_func, {
             "NewLocation": new_location,
             "NewRotation": dict(zip(["Roll", "Pitch", "Yaw"], new_rotation.tolist())),
             "bSweep": False,
-            "bTeleport": True}
-        self._instance.unreal_service.call_function(self._agent, self._unreal_set_actor_location_and_rotation_func, transform_args)
+            "bTeleport": True})
+
+        # reset velocity and angular velocity
+        self._instance.unreal_service.call_function(self._root_component, self._unreal_set_velocity_func, {
+            "NewVel": dict(zip(["X", "Y", "Z"], [0, 0, 0])),
+            "bAddToCurrent": False
+        })
+        self._instance.unreal_service.call_function(self._root_component, self._unreal_set_angular_velocity_func, {
+            "NewAngVel": dict(zip(["X", "Y", "Z"], [0, 0, 0])),
+            "bAddToCurrent": False
+        })
+
         return {
-            # "camera.final_color": np.zeros([480, 640, 3], dtype=np.float64),
             "location": new_location,
             "rotation": new_rotation,
         }
