@@ -52,7 +52,6 @@ class AgentBase():
         current_location = np.array([current_location['x'], current_location['y'], current_location['z']])
         current_rotation = np.array([current_rotation['roll'], current_rotation['pitch'], current_rotation['yaw']])
         self._obs = {
-            # "camera.final_color": np.zeros([480, 640, 3], dtype=np.float64),
             "location": current_location,
             "rotation": current_rotation,
         }
@@ -69,20 +68,10 @@ class AgentBase():
 
     def get_hit_actors(self):
         hit_events = self._instance.unreal_service.call_function(uobject=self._hit_event_actor, ufunction=self._get_hit_event_desc_func)['ReturnValue']
-        # print("hit_events", hit_events)
         hit_actors = set()
         if len(hit_events) > 0:
             for event in hit_events:
                 hit_actors.add(event['otherActor'])
-        # for hit_actor in hit_actors:
-        #     hit_actor_name = None
-        #     if hit_actor not in self._actor_maps:
-        #         hit_actor_name = self._instance.unreal_service.get_stable_name_for_component(hit_actor, include_actor_name=True)
-        #         self._actor_maps[hit_actor] = {"actor_name", hit_actor_name}
-        #     else:
-        #         hit_actor_name = self._actor_maps[hit_actor]
-        #     print("    hit_actor_name", hit_actor_name)
-
         return hit_actors
 
     def get_random_points(self, num_points):
@@ -304,6 +293,7 @@ class OpenBotAgent(AgentBase):
 
         self._set_drive_torque_func = self._instance.unreal_service.find_function_by_name(uclass=self._chaos_vehicle_movement_component_class, name="SetDriveTorque")
         self._set_brake_torque_func = self._instance.unreal_service.find_function_by_name(uclass=self._chaos_vehicle_movement_component_class, name="SetBrakeTorque")
+        self._stop_movement_func = self._instance.unreal_service.find_function_by_name(uclass=self._chaos_vehicle_movement_component_class, name="StopMovementImmediately")
 
         self._instance.unreal_service.call_function(uobject=self._hit_event_actor, ufunction=self._subscribe_actor_func, args={
             "Actor": self._instance.unreal_service.to_ptr(self._agent),
@@ -341,8 +331,9 @@ class OpenBotAgent(AgentBase):
             "bSweep": False,
             "bTeleport": True}
         self._instance.unreal_service.call_function(self._agent, self._unreal_set_actor_location_and_rotation_func, transform_args)
+
+        self._instance.unreal_service.call_function(self._chaos_vehicle_movement_component, self._stop_movement_func, {})
         return {
-            # "camera.final_color": np.zeros([480, 640, 3], dtype=np.float64),
             "location": new_location,
             "rotation": new_rotation,
         }
