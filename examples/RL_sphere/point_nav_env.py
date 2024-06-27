@@ -28,6 +28,7 @@ class SpPointNavEnv(gym.Env):
         self._config = env_config['config']
         self._dummy = env_config["dummy"]
         self._use_camera = env_config['use_camera']
+        self._use_random_goal = True
         if env_config['test']:
             self._dummy = True
 
@@ -55,8 +56,14 @@ class SpPointNavEnv(gym.Env):
             self._instance.engine_service.begin_tick()
 
             # spawn agent
-            # self._agent = SimpleAgent(self._instance)
             self._agent = SimpleForceAgent(self._instance)
+            #self._agent = SimpleAgent(self._instance)
+
+            self._unreal_goal_actor = self._instance.unreal_service.spawn_actor(
+                class_name="/Game/Agents/BP_Goal.BP_Goal_C",
+                location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
+                spawn_parameters={"Name": "Goal", "SpawnCollisionHandlingOverride": "AlwaysSpawn"}
+            )
 
             if self._use_camera:
                 self._camera_sensor = CameraSensor(self._instance, self._agent._agent, render_pass_names=["final_color", "depth"], width=240, height=320)
@@ -100,7 +107,7 @@ class SpPointNavEnv(gym.Env):
             self._instance.engine_service.begin_tick()
             self._instance.unreal_service.call_function(uobject=self._gameplay_statics_default_object, ufunction=self._set_game_paused_func, args={"bPaused": False})
 
-            agent_obs = self._agent.reset()
+            self._agent.reset()
 
             self._instance.engine_service.tick()
 
@@ -108,9 +115,18 @@ class SpPointNavEnv(gym.Env):
             new_location = agent_obs['location']
             new_rotation = agent_obs['rotation']
 
-            # position = self._agent.get_random_points(1)[0]
-            # self._goal = np.array([position['x'], position['y'], position['z'] + 10])
-            self._goal = np.array([0, 0, 10])
+            if self._use_random_goal:
+                position = self._agent.get_random_points(1)[0]
+                self._goal = np.array([position['x'], position['y'], position['z'] + 10])
+            else:
+                self._goal = np.array([0, 0, 10])
+            if self._unreal_goal_actor:
+                self._instance.unreal_service.call_function(self._unreal_goal_actor, self._agent._unreal_set_actor_location_and_rotation_func, {
+                    "NewLocation": dict(zip(["X", "Y", "Z"], self._goal.tolist())),
+                    "NewRotation": {"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
+                    "bSweep": False,
+                    "bTeleport": True
+                })
 
             if self._use_camera:
                 self._obs["rgb"] = self._camera_sensor.get_images()

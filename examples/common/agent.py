@@ -116,7 +116,6 @@ class SimpleAgent(AgentBase):
 
     def apply_action(self, action):
         new_location = self._obs['location'] + action['add_to_location']
-
         new_rotation = self._obs['rotation'].astype(np.float64)
         if "add_to_rotation" in action:
             new_rotation += action['add_to_rotation'].astype(np.float64)
@@ -129,8 +128,6 @@ class SimpleAgent(AgentBase):
         self._instance.unreal_service.call_function(self._agent, self._unreal_set_actor_location_and_rotation_func, transform_args)
 
     def reset(self):
-        # TODO reset velocity as well
-
         new_location = self.get_random_points(1)[0]
         new_location['z'] += 10
         new_rotation = np.array([0.0, 0.0, (random.random() - 0.5) * 180])
@@ -177,7 +174,6 @@ class SimpleForceAgent(SimpleAgent):
 
     def apply_action(self, action):
         if self._use_agent_frame:
-
             quat = Rotation.from_euler("xyz", self._obs['rotation'], degrees=True)
             add_force_world_frame = quat.as_matrix().dot(np.array([1, 0, 0])) * action['add_force'][0] * self._force_scale
             add_torque_world_frame = np.array([0, 0, action['add_torque'][0]]) * self._torque_scale
@@ -190,8 +186,6 @@ class SimpleForceAgent(SimpleAgent):
                 "Torque": dict(zip(["X", "Y", "Z"], add_torque_world_frame.tolist()))
             }
             self._instance.unreal_service.call_function(self._root_component, self._unreal_add_torque_func, add_force_args)
-
-            pass
         else:
             add_force_args = {
                 "Force": dict(zip(["X", "Y", "Z"], action['add_force'].tolist()))
@@ -203,31 +197,7 @@ class SimpleForceAgent(SimpleAgent):
             self._instance.unreal_service.call_function(self._root_component, self._unreal_add_torque_func, add_force_args)
 
 
-class HabitatNavAgent(AgentBase):
-
-    def __init__(self, instance):
-        super().__init__(instance)
-
-        self._instance.unreal_service.call_function(uobject=self._nav_mesh_actor, ufunction=self._nav_mesh_setup_func, args={
-            "agent_height": 100.0, "agent_radius": 100.0
-        })
-        new_location = self.get_random_points(1)[0]
-
-        new_location['z'] = 50  # add distance between agent center and z_min
-        self._agent = self._instance.unreal_service.spawn_actor(
-            class_name="/Game/Agents/BP_SimpleAgentPawn.BP_SimpleAgentPawn_C",
-            location=new_location, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}, spawn_parameters={"Name": "Agent", "SpawnCollisionHandlingOverride": "AlwaysSpawn"}
-        )
-        spear.log("agent = ", self._agent)
-        if self._agent == 0:
-            spear.log("spawn agent failed!")
-        self._root_component = self._instance.unreal_service.get_component_by_name("UStaticMeshComponent", self._agent, "StaticMeshComponent")
-
-        spear.log("root_component = ", self._root_component)
-
-        self._instance.unreal_service.call_function(uobject=self._hit_event_actor, ufunction=self._subscribe_actor_func, args={
-            "Actor": self._instance.unreal_service.to_ptr(self._agent),
-        })
+class HabitatNavAgent(SimpleAgent):
 
     def get_action_space(self):
         return gym.spaces.Dict({
@@ -241,27 +211,13 @@ class HabitatNavAgent(AgentBase):
         quat = Rotation.from_euler("xyz", new_rotation, degrees=True)
         new_location = self._obs['location'] + action['move_forward'][0] * quat.as_matrix().dot(np.array([1, 0, 0]))
 
-        transform_args = {
-            "NewLocation": dict(zip(["X", "Y", "Z"], new_location.tolist())),
-            "NewRotation": dict(zip(["Roll", "Pitch", "Yaw"], new_rotation.tolist())),
-            "bSweep": False,
-            "bTeleport": True}
-        self._instance.unreal_service.call_function(self._agent, self._unreal_set_actor_location_and_rotation_func, transform_args)
-
-    def reset(self):
-        new_location = self.get_random_points(1)[0]
-        new_location['z'] += 10
-        new_rotation = np.array([0, 0, (random.random() - 0.5) * 2 * 180])
-        transform_args = {
-            "NewLocation": new_location,
-            "NewRotation": dict(zip(["Roll", "Pitch", "Yaw"], new_rotation.tolist())),
-            "bSweep": False,
-            "bTeleport": True}
-        self._instance.unreal_service.call_function(self._agent, self._unreal_set_actor_location_and_rotation_func, transform_args)
-        return {
-            "location": new_location,
-            "rotation": new_rotation,
-        }
+        self._instance.unreal_service.call_function(self._agent, self._unreal_set_actor_location_and_rotation_func,
+                                                    {
+                                                        "NewLocation": dict(zip(["X", "Y", "Z"], new_location.tolist())),
+                                                        "NewRotation": dict(zip(["Roll", "Pitch", "Yaw"], new_rotation.tolist())),
+                                                        "bSweep": False,
+                                                        "bTeleport": True}
+                                                    )
 
 
 class OpenBotAgent(AgentBase):

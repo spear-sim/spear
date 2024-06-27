@@ -15,6 +15,9 @@
 | PPO_SpPointNavEnv_f6730_00000 | 2024-06-25_22-05-22 | spear + random_goal + goal_in_agent_frame only + barycentric_action 0-50 + apartment_0000 | failed | 
 
 # table 2
+
 | name                          | time                | config                                                                  | state |
 | ------------------------------- | --------------------- | ------------------------------------------------------------------------- | ------ |
-| PPO_SpPointNavEnv_724a8_00000 | 2024-06-26_09-50-21  | spear + fixed_goal + goal_in_agent_frame+location + barycentric_action | succ |                                                    |      |
+| PPO_SpPointNavEnv_724a8_00000 | 2024-06-26_09-50-21 | spear + fixed_goal + goal_in_agent_frame+location + barycentric_action | succ |                                                    |      |
+| PPO_SpPointNavEnv_f6730_00000 | 2024-06-25_22-05-22 | spear + random_goal + goal_in_agent_frame+location + barycentric_action + apartment_0000 | fail |           
+| PPO_SpPointNavEnv_b6919_00000 | 2024-06-26_20-07-52 | spear + fixed_goal + goal_in_agent_frame+location + force action | succ |
