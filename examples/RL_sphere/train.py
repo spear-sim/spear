@@ -20,7 +20,7 @@ if __name__ == "__main__":
     parser.add_argument("--run_name", default="SpPointNav0625")
     parser.add_argument("--test", default=False)
     parser.add_argument("--dummy", default=False)
-    parser.add_argument("--use_camera", default=True)
+    parser.add_argument("--use_camera", default=False)
     args = parser.parse_args()
 
     # RLlib overwrites this environment variable, so we copy it into env_config before invoking RLlib.

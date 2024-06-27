@@ -55,7 +55,8 @@ class SpPointNavEnv(gym.Env):
             self._instance.engine_service.begin_tick()
 
             # spawn agent
-            self._agent = SimpleAgent(self._instance)
+            # self._agent = SimpleAgent(self._instance)
+            self._agent = SimpleForceAgent(self._instance)
 
             if self._use_camera:
                 self._camera_sensor = CameraSensor(self._instance, self._agent._agent, render_pass_names=["final_color", "depth"], width=240, height=320)
@@ -63,26 +64,17 @@ class SpPointNavEnv(gym.Env):
             self._instance.engine_service.tick()
 
             self._instance.engine_service.end_tick()
-        if self._use_camera:
-            self.observation_space = gym.spaces.Dict({
-                "rgb": gym.spaces.Box(0, 255, (self._camera_sensor._width, self._camera_sensor._height, 3,), np.uint8),
-                "location": gym.spaces.Box(-1000, 1000, (3,), np.float64),
-                # "rotation": gym.spaces.Box(-1000, 1000, (3,), np.float64),
-                "goal_in_agent_frame": gym.spaces.Box(-2000, 2000, (3,), np.float64),
-            })
-        else:
-            self.observation_space = gym.spaces.Dict({
-                # "camera.final_color": gym.spaces.Box(0, 255, (480, 640, 3,), np.uint8),
-                "location": gym.spaces.Box(-1000, 1000, (3,), np.float64),
-                # "rotation": gym.spaces.Box(-1000, 1000, (3,), np.float64),
-                "goal_in_agent_frame": gym.spaces.Box(-2000, 2000, (3,), np.float64),
-            })
-        self.action_space = gym.spaces.Dict({
-            # "add_to_location": gym.spaces.Box(-10, 10, (2,), np.float64),
-            "move_forward": gym.spaces.Box(-0, 50, (1,), np.float64),
-            "move_right": gym.spaces.Box(-30, 30, (1,), np.float64),
-            # "stop": gym.spaces.Box(0, 1, (1,), np.int),
+        # define obs and action
+        self.observation_space = gym.spaces.Dict({
+            # "location": gym.spaces.Box(-1000, 1000, (3,), np.float64),
+            # "rotation": gym.spaces.Box(-1000, 1000, (3,), np.float64),
+            "goal_in_agent_frame": gym.spaces.Box(-2000, 2000, (3,), np.float64),
         })
+        if self._use_camera:
+            self.observation_space["rgb"] = gym.spaces.Box(0, 255, (self._camera_sensor._width, self._camera_sensor._height, 3,), np.uint8)
+        self.action_space = self._agent.get_action_space()
+
+        # init obs and action
         self._obs = {
             "location": np.array([0, 0, 10]),
             "rotation": np.array([0, 0, 0]),
@@ -90,6 +82,8 @@ class SpPointNavEnv(gym.Env):
         }
         if self._use_camera:
             self._obs["rgb"] = np.zeros([self._camera_sensor._width, self._camera_sensor._height, 3])
+
+        # define episode information
         self._goal = random_position(range=500)  # + np.array([-200, -200,0])
         self._step = 0
 
@@ -135,11 +129,11 @@ class SpPointNavEnv(gym.Env):
 
         self._step = 0
 
-        return {
-            "rgb": self._obs["rgb"],
-            "location": self._obs["location"],
-            "goal_in_agent_frame": self._obs["goal_in_agent_frame"],
-        }
+        obs = {}
+        for key, value in self._obs.items():
+            if key in self.observation_space.spaces:
+                obs[key] = value
+        return obs
 
     def step(self, action):
         if self._dummy:
@@ -156,13 +150,7 @@ class SpPointNavEnv(gym.Env):
 
             old_obs = self._agent.get_observation()
 
-            new_rotation = self._obs['rotation'] + np.array([0, 0, action['move_right'][0]])
-            quat = Rotation.from_euler("xyz", new_rotation, degrees=True)
-
-            self._agent.apply_action({
-                "add_to_location": action['move_forward'][0] * quat.as_matrix().dot(np.array([1, 0, 0])),
-                "add_to_rotation": np.array([0.0, 0.0, action['move_right'][0]]),
-            })
+            self._agent.apply_action(action)
 
             self._instance.engine_service.tick()
 
@@ -183,6 +171,7 @@ class SpPointNavEnv(gym.Env):
             self._instance.engine_service.end_tick()
 
             collision = abs(new_location[0]) > 1000 or abs(new_location[1]) > 1000 or abs(new_location[1]) > 1000
+            collision |= abs(new_rotation[0]) > 30 or abs(new_rotation[1]) > 30
             if len(hit_actors) > 0:
                 hit_actor_names = []
                 for hit_actor in hit_actors:
@@ -204,7 +193,7 @@ class SpPointNavEnv(gym.Env):
 
         distance = np.linalg.norm(self._goal - self._obs['location'])
         succ = distance < 50
-        timeout = self._step > 2000
+        timeout = self._step > 500
         reward = -distance * 0.001 + (100 if succ else 0) + (-10 if collision else 0)
         done = succ or collision or timeout
 
@@ -217,11 +206,11 @@ class SpPointNavEnv(gym.Env):
             pass
         self._step += 1
 
-        return {
-                   "rgb": self._obs["rgb"],
-                   "location": self._obs["location"],
-                   "goal_in_agent_frame": self._obs["goal_in_agent_frame"],
-               }, reward, done, info
+        obs = {}
+        for key, value in self._obs.items():
+            if key in self.observation_space.spaces:
+                obs[key] = value
+        return obs, reward, done, info
 
     def close(self):
         if self._dummy:

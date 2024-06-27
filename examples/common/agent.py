@@ -42,7 +42,7 @@ class AgentBase():
     def get_observation_space(self):
         return gym.spaces.Dict({
             "location": gym.spaces.Box(-1000, 1000, (3,), np.float64),
-            "rotation": gym.spaces.Box(-1000, 1000, (3,), np.float64),
+            # "rotation": gym.spaces.Box(-1000, 1000, (3,), np.float64),
         })
 
     def get_observation(self):
@@ -136,6 +136,8 @@ class SimpleAgent(AgentBase):
         self._instance.unreal_service.call_function(self._agent, self._unreal_set_actor_location_and_rotation_func, transform_args)
 
     def reset(self):
+        # TODO reset velocity as well
+
         new_location = self.get_random_points(1)[0]
         new_location['z'] += 10
         new_rotation = np.array([0.0, 0.0, 0.0])
@@ -153,21 +155,50 @@ class SimpleAgent(AgentBase):
 
 
 class SimpleForceAgent(SimpleAgent):
+    def __init__(self, instance):
+        super().__init__(instance)
+        self._use_agent_frame = True
+        self._force_scale = 200
+        self._torque_scale = 30 * 2000
+
     def get_action_space(self):
-        return gym.spaces.Dict({
-            "add_force": gym.spaces.Box(-100, 100, (3,), np.float64),
-            "add_torque": gym.spaces.Box(-100000, 100000, (3,), np.float64),
-        })
+        if self._use_agent_frame:
+            return gym.spaces.Dict({
+                "add_force": gym.spaces.Box(0, 1, (1,), np.float64),
+                "add_torque": gym.spaces.Box(-1, 1, (1,), np.float64),
+            })
+        else:
+            return gym.spaces.Dict({
+                "add_force": gym.spaces.Box(-1, 1, (3,), np.float64),
+                "add_torque": gym.spaces.Box(-1, 1, (3,), np.float64),
+            })
 
     def apply_action(self, action):
-        add_force_args = {
-            "Force": dict(zip(["X", "Y", "Z"], action['add_force'].tolist()))
-        }
-        self._instance.unreal_service.call_function(self._root_component, self._unreal_add_force_func, add_force_args)
-        add_force_args = {
-            "Torque": dict(zip(["X", "Y", "Z"], action['add_torque'].tolist()))
-        }
-        self._instance.unreal_service.call_function(self._root_component, self._unreal_add_torque_func, add_force_args)
+        if self._use_agent_frame:
+
+            quat = Rotation.from_euler("xyz", self._obs['rotation'], degrees=True)
+            add_force_world_frame = quat.as_matrix().dot(np.array([1, 0, 0])) * action['add_force'][0] * self._force_scale
+            add_torque_world_frame = np.array([0, 0, action['add_torque'][0]]) * self._torque_scale
+
+            add_force_args = {
+                "Force": dict(zip(["X", "Y", "Z"], add_force_world_frame.tolist()))
+            }
+            self._instance.unreal_service.call_function(self._root_component, self._unreal_add_force_func, add_force_args)
+            add_force_args = {
+                "Torque": dict(zip(["X", "Y", "Z"], add_torque_world_frame.tolist()))
+            }
+            self._instance.unreal_service.call_function(self._root_component, self._unreal_add_torque_func, add_force_args)
+
+            pass
+        else:
+            add_force_args = {
+                "Force": dict(zip(["X", "Y", "Z"], action['add_force'].tolist()))
+            }
+            self._instance.unreal_service.call_function(self._root_component, self._unreal_add_force_func, add_force_args)
+            add_force_args = {
+                "Torque": dict(zip(["X", "Y", "Z"], action['add_torque'].tolist()))
+            }
+            self._instance.unreal_service.call_function(self._root_component, self._unreal_add_torque_func, add_force_args)
 
 
 class HabitatNavAgent(AgentBase):
@@ -198,19 +229,15 @@ class HabitatNavAgent(AgentBase):
 
     def get_action_space(self):
         return gym.spaces.Dict({
-            "move_foward": gym.spaces.Box(-10, 10, (1,), np.float64),
-            "move_left": gym.spaces.Box(-180, 180, (1,), np.float64),
-            "move_right": gym.spaces.Box(-180, 180, (1,), np.float64),
+            "move_forward": gym.spaces.Box(0, 50, (1,), np.float64),
+            "move_right": gym.spaces.Box(-30, 30, (1,), np.float64),
             # "stop": gym.spaces.Box(0, 1, (1,), np.int),
         })
 
     def apply_action(self, action):
-        add_rotation = action['move_right'][0] - action['move_left'][0]
-        new_rotation = self._obs['rotation'] + np.array([0, 0, add_rotation])
-
+        new_rotation = self._obs['rotation'] + np.array([0, 0, action['move_right'][0]])
         quat = Rotation.from_euler("xyz", new_rotation, degrees=True)
-        direction = quat.as_matrix() * np.array([1, 0, 0])
-        new_location = self._obs['location'] + action['move_foward'] * direction[:, 0]
+        new_location = self._obs['location'] + action['move_forward'][0] * quat.as_matrix().dot(np.array([1, 0, 0]))
 
         transform_args = {
             "NewLocation": dict(zip(["X", "Y", "Z"], new_location.tolist())),
@@ -230,7 +257,6 @@ class HabitatNavAgent(AgentBase):
             "bTeleport": True}
         self._instance.unreal_service.call_function(self._agent, self._unreal_set_actor_location_and_rotation_func, transform_args)
         return {
-            # "camera.final_color": np.zeros([480, 640, 3], dtype=np.float64),
             "location": new_location,
             "rotation": new_rotation,
         }

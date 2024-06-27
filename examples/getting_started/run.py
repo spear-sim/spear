@@ -36,22 +36,21 @@ def get_keyboard_action(k, agent_type):
 
     elif agent_type == "simple_force":
         action = {
-            "add_force": np.array([0, 0, 0]),
-            "add_torque": np.array([0, 0, 0]),
+            "add_force": np.array([0]),
+            "add_torque": np.array([0]),
         }
         if k == ord('w'):
-            action['add_force'] = np.array([1, 0, 0]) * 100
+            action['add_force'] = np.array([1])
         elif k == ord('s'):
-            action['add_force'] = np.array([-1, 0, 0]) * 100
+            action['add_force'] = np.array([-1])
         elif k == ord('a'):
-            action['add_torque'] = np.array([0, 0, -30]) * 2000
+            action['add_torque'] = np.array([-1])
         elif k == ord('d'):
-            action['add_torque'] = np.array([0, 0, 30]) * 2000
+            action['add_torque'] = np.array([1])
 
     elif agent_type == "habitat":
         action = {
             "move_foward": np.array([0, ]),
-            "move_left": np.array([0, ]),
             "move_right": np.array([0, ]),
         }
         if k == ord('w'):
@@ -59,7 +58,7 @@ def get_keyboard_action(k, agent_type):
         elif k == ord('s'):
             action['move_foward'] = np.array([-10, ])
         elif k == ord('a'):
-            action['move_left'] = np.array([15, ])
+            action['move_right'] = np.array([-15, ])
         elif k == ord('d'):
             action['move_right'] = np.array([15, ])
     elif agent_type == "openbot":
