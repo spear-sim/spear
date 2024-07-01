@@ -97,14 +97,14 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <sphere radius="0.058"/> <!-- 0.0601 --> <!-- 0.06033 -->
+                <sphere radius="0.0595"/> <!-- 0.0601 --> <!-- 0.06033 -->
             </geometry>
             <material name="caster_link_material"/>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <sphere radius="0.058"/> <!-- 0.0601 --> <!-- 0.06033 -->
+                <sphere radius="0.0595"/> <!-- 0.0601 --> <!-- 0.06033 -->
             </geometry>
         </collision>
     </link>
@@ -124,14 +124,14 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <sphere radius="0.058"/> <!-- 0.0601 --> <!-- 0.06033 -->
+                <sphere radius="0.0595"/> <!-- 0.0601 --> <!-- 0.06033 -->
             </geometry>
             <material name="caster_link_material"/>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <sphere radius="0.058"/> <!-- 0.0601 --> <!-- 0.06033 -->
+                <sphere radius="0.0595"/> <!-- 0.0601 --> <!-- 0.06033 -->
             </geometry>
         </collision>
     </link>
@@ -151,14 +151,14 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <sphere radius="0.058"/> <!-- 0.0601 --> <!-- 0.06033 -->
+                <sphere radius="0.0595"/> <!-- 0.0601 --> <!-- 0.06033 -->
             </geometry>
             <material name="caster_link_material"/>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <sphere radius="0.058"/> <!-- 0.0601 --> <!-- 0.06033 -->
+                <sphere radius="0.0595"/> <!-- 0.0601 --> <!-- 0.06033 -->
             </geometry>
         </collision>
     </link>
@@ -178,14 +178,14 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <sphere radius="0.058"/> <!-- 0.0601 --> <!-- 0.06033 -->
+                <sphere radius="0.0595"/> <!-- 0.0601 --> <!-- 0.06033 -->
             </geometry>
             <material name="caster_link_material"/>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <sphere radius="0.058"/> <!-- 0.0601 --> <!-- 0.06033 -->
+                <sphere radius="0.0595"/> <!-- 0.0601 --> <!-- 0.06033 -->
             </geometry>
         </collision>
     </link>

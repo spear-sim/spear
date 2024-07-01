@@ -735,6 +735,21 @@ public:
                 return reinterpret_cast<uint64_t>(Unreal::getComponentByTypeV2(reinterpret_cast<AActor*>(actor), uclass));
             });
 
+        unreal_entry_point_binder->bindFuncUnreal(
+            "unreal_service", "get_components_by_type_v2",
+            [this](const std::string& class_name, const uint64_t& actor, const bool& assert_if_not_found,
+                   const bool& assert_if_multiple_found) -> std::map<std::string, uint64_t> {
+                UClass* uclass =
+                    reinterpret_cast<UClass*>(StaticLoadObject(UObject::StaticClass(), nullptr, *Unreal::toFString(class_name), nullptr, LOAD_None, nullptr));
+                TArray<UActorComponent*> components = Unreal::getComponentsByTypeV2(reinterpret_cast<AActor*>(actor), uclass);
+                std::map<std::string, uint64_t> result;
+                for (auto& component : components) {
+                    std::string stablename = Unreal::getStableName(component);
+                    result[stablename]     = reinterpret_cast<uint64_t>(component);
+                }
+                return result;
+            });
+
         //
         // Get children components conditionally from an actor and return an std::vector or std::map
         //

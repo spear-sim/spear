@@ -363,6 +363,8 @@ class UnrealService():
 
     def get_component_by_type_v2(self, class_name, actor, assert_if_not_found=True, assert_if_multiple_found=True):
         return self._rpc_client.call("unreal_service.get_component_by_type_v2", class_name, actor, assert_if_not_found, assert_if_multiple_found)
+    def get_components_by_type_v2(self, class_name, actor, assert_if_not_found=True, assert_if_multiple_found=True):
+        return self._rpc_client.call("unreal_service.get_components_by_type_v2", class_name, actor, assert_if_not_found, assert_if_multiple_found)
     #
     # Get children components conditionally from an actor and return a list or dict
     #

@@ -525,6 +525,13 @@ public:
         return component;
     }
 
+    static TArray<UActorComponent*> getComponentsByTypeV2(const AActor* actor, UClass* uclass)
+    {
+        SP_ASSERT(actor);
+        TArray<UActorComponent*> components = actor->GetComponentsByClass(uclass);
+        return components;
+    }
+
     //
     // Get components by name or tag or type and return an std::map
     //

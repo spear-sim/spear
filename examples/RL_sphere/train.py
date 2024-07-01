@@ -15,10 +15,10 @@ env = None
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--observation_mode", default="SpPointNav")
-    parser.add_argument("--resume", action="store_true", default=False)
+    parser.add_argument("--resume", action="store_true", default=True)
     parser.add_argument("--check_point", default=r"C:\Users\admin\ray_results")
     parser.add_argument("--run_name", default="SpPointNav0625")
-    parser.add_argument("--test", default=False)
+    parser.add_argument("--test", default=True)
     parser.add_argument("--dummy", default=False)
     parser.add_argument("--use_camera", default=False)
     args = parser.parse_args()

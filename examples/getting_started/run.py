@@ -10,7 +10,7 @@ import numpy as np
 import os
 import spear
 
-from examples.common.agent import SimpleAgent, OpenBotAgent, SimpleForceAgent, HabitatNavAgent
+from examples.common.agent import SimpleAgent, OpenBotAgent, SimpleForceAgent, HabitatNavAgent, UrdfRobotAgent
 from examples.common.camera import CameraSensor
 
 common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
@@ -76,6 +76,23 @@ def get_keyboard_action(k, agent_type):
             action['set_drive_torque'] = np.array([1, -1, 1, -1]) * 0.05
         elif k == 32:
             action['set_brake_torque'] = np.array([1, 1, 1, 1]) * 0.1
+    elif agent_type == "urdf":
+        action = {
+            "wheel_joint_l": np.zeros([1, ]),
+            "wheel_joint_r": np.zeros([1, ]),
+        }
+        if k == ord('w'):
+            action['wheel_joint_l'] = np.array([1, ]) * 1.0
+            action['wheel_joint_r'] = np.array([1, ]) * 1.0
+        elif k == ord('s'):
+            action['wheel_joint_l'] = np.array([-1, ]) * 1.0
+            action['wheel_joint_r'] = np.array([-1, ]) * 1.0
+        elif k == ord('a'):
+            action['wheel_joint_l'] = np.array([1, ]) * 1.0
+            action['wheel_joint_r'] = np.array([-1, ]) * 1.0
+        elif k == ord('d'):
+            action['wheel_joint_l'] = np.array([-1, ]) * 1.0
+            action['wheel_joint_r'] = np.array([1, ]) * 1.0
     else:
         pass
     return action
@@ -87,7 +104,7 @@ if __name__ == "__main__":
     parser.add_argument("--benchmark", action="store_true")
     parser.add_argument("--num_steps", default=10000)
     parser.add_argument("--keyboard", default=True)
-    parser.add_argument("--agent", default="simple_force")
+    parser.add_argument("--agent", default="urdf")
 
     parser.add_argument("--use_force", default=True)
 
@@ -116,6 +133,8 @@ if __name__ == "__main__":
         agent = HabitatNavAgent(instance)
     elif args.agent == "openbot":
         agent = OpenBotAgent(instance)
+    elif args.agent == "urdf":
+        agent = UrdfRobotAgent(instance)
     else:
         spear.log("Unknown agent: ", args.agent)
         exit(-1)
@@ -184,9 +203,11 @@ if __name__ == "__main__":
                     break
                 if k == ord('r'):  # random reset agent location
                     instance.engine_service.begin_tick()
+                    instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
                     agent.reset()
                     instance.engine_service.tick()
                     agent.get_observation()
+                    instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
                     instance.engine_service.end_tick()
                 else:
                     # update action based on keyboard input
