@@ -11,7 +11,7 @@ common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "com
 import sys
 
 sys.path.append(common_dir)
-from examples.common.agent import SimpleAgent, HabitatNavAgent, SimpleForceAgent
+from examples.common.agent import SimpleAgent, HabitatNavAgent, SimpleForceAgent, OpenBotAgent, UrdfRobotAgent
 
 
 def random_position(range=550):
@@ -57,8 +57,20 @@ class SpPointNavEnv(gym.Env):
             self._instance.engine_service.begin_tick()
 
             # spawn agent
-            self._agent = SimpleForceAgent(self._instance)
-            # self._agent = SimpleAgent(self._instance)
+            if env_config["agent"] == "openbot":
+                if env_config["agent"] == "simple":
+                    self._agent = SimpleAgent(self._instance)
+                elif env_config["agent"] == "simple_force":
+                    self._agent = SimpleForceAgent(self._instance)
+                elif env_config["agent"] == "habitat":
+                    self._agent = HabitatNavAgent(self._instance)
+                elif env_config["agent"] == "openbot":
+                    self._agent = OpenBotAgent(self._instance)
+                elif env_config["agent"] == "urdf":
+                    self._agent = UrdfRobotAgent(self._instance)
+                else:
+                    spear.log("Unknown agent: ", env_config["agent"])
+                    exit(-1)
 
             self._unreal_goal_actor = self._instance.unreal_service.spawn_actor(
                 class_name="/Game/Agents/BP_Goal.BP_Goal_C",

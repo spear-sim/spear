@@ -227,7 +227,7 @@ class OpenBotAgent(AgentBase):
             "agent_height": 20.0, "agent_radius": 20.0
         })
         init_position = self.get_random_points(1)[0]
-        init_position['Z'] += self._z_offset  # add distance between agent center and z_min
+        init_position['z'] += self._z_offset  # add distance between agent center and z_min
         self._agent = self._instance.unreal_service.spawn_actor(
             class_name="/Game/Agents/BP_OpenBotPawn.BP_OpenBotPawn_C",
             location=init_position,
@@ -251,24 +251,26 @@ class OpenBotAgent(AgentBase):
 
     def get_action_space(self):
         return gym.spaces.Dict({
-            "set_drive_torque": gym.spaces.Box(-1000, 1000, (4,), np.float64),
-            "set_brake_torque": gym.spaces.Box(-1000, 1000, (4,), np.float64)
+            "set_drive_torque": gym.spaces.Box(0, 1, (2,), np.float64),
+            "set_brake_torque": gym.spaces.Box(0, 1, (2,), np.float64)
         })
 
     def apply_action(self, action):
         set_drive_torque = action['set_drive_torque']
-        set_brake_torque = action['set_brake_torque']
+        if "set_brake_torque" in action:
+            set_brake_torque = action['set_brake_torque']
         for wheel_index in range(0, 4):
             set_drive_torque_args = {
-                "DriveTorque": set_drive_torque[wheel_index],
+                "DriveTorque": set_drive_torque[wheel_index % 2],
                 "WheelIndex": wheel_index
             }
             self._instance.unreal_service.call_function(self._chaos_vehicle_movement_component, self._set_drive_torque_func, set_drive_torque_args)
-            set_brake_torque_args = {
-                "BrakeTorque": set_brake_torque[wheel_index],
-                "WheelIndex": wheel_index
-            }
-            self._instance.unreal_service.call_function(self._chaos_vehicle_movement_component, self._set_brake_torque_func, set_brake_torque_args)
+            if "set_brake_torque" in action:
+                set_brake_torque_args = {
+                    "BrakeTorque": set_brake_torque[wheel_index % 2],
+                    "WheelIndex": wheel_index
+                }
+                self._instance.unreal_service.call_function(self._chaos_vehicle_movement_component, self._set_brake_torque_func, set_brake_torque_args)
 
     def reset(self):
         new_location = self.get_random_points(1)[0]
@@ -291,7 +293,7 @@ class OpenBotAgent(AgentBase):
 class UrdfRobotAgent(AgentBase):
     def __init__(self, instance):
         super().__init__(instance)
-        self._z_offset = 20
+        self._z_offset = 5
         self._wheel_velocity_scale = 10
 
         self._instance.unreal_service.call_function(uobject=self._nav_mesh_actor, ufunction=self._nav_mesh_setup_func, args={

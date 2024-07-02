@@ -63,19 +63,19 @@ def get_keyboard_action(k, agent_type):
             action['move_right'] = np.array([15, ])
     elif agent_type == "openbot":
         action = {
-            "set_drive_torque": np.zeros([4, ]),
-            "set_brake_torque": np.zeros([4, ]),
+            "set_drive_torque": np.zeros([2, ]),
+            "set_brake_torque": np.zeros([2, ]),
         }
         if k == ord('w'):
-            action['set_drive_torque'] = np.array([1, 1, 1, 1]) * 0.1
+            action['set_drive_torque'] = np.array([1, 1]) * 0.1
         elif k == ord('s'):
-            action['set_drive_torque'] = np.array([-1, -1, -1, -1]) * 0.1
+            action['set_drive_torque'] = np.array([-1, -1, ]) * 0.1
         elif k == ord('a'):
-            action['set_drive_torque'] = np.array([-1, 1, -1, 1]) * 0.05
+            action['set_drive_torque'] = np.array([-1, 1, ]) * 0.05
         elif k == ord('d'):
-            action['set_drive_torque'] = np.array([1, -1, 1, -1]) * 0.05
+            action['set_drive_torque'] = np.array([1, -1, ]) * 0.05
         elif k == 32:
-            action['set_brake_torque'] = np.array([1, 1, 1, 1]) * 0.1
+            action['set_brake_torque'] = np.array([1, 1, ]) * 0.1
     elif agent_type == "urdf":
         action = {
             "wheel_joint_l": np.zeros([1, ]),
