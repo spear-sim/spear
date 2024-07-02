@@ -180,7 +180,7 @@ class Instance():
 
             try:
                 self.rpc_client = msgpackrpc.Client(
-                    msgpackrpc.Address("127.0.0.1", self._config.SP_SERVICES.PORT),
+                    msgpackrpc.Address(self._config.SP_SERVICES.IP, self._config.SP_SERVICES.PORT),
                     timeout=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS,
                     reconnect_limit=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
                 self.rpc_client.call("engine_service.ping")
@@ -207,7 +207,7 @@ class Instance():
 
                 try:
                     self.rpc_client = msgpackrpc.Client(
-                        msgpackrpc.Address("127.0.0.1", self._config.SP_SERVICES.PORT), 
+                        msgpackrpc.Address(self._config.SP_SERVICES.IP, self._config.SP_SERVICES.PORT),
                         timeout=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
                         reconnect_limit=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
                     self.rpc_client.call("engine_service.ping")

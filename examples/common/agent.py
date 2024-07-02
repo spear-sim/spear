@@ -222,6 +222,7 @@ class OpenBotAgent(AgentBase):
     def __init__(self, instance):
         super().__init__(instance)
         self._z_offset = 3
+        self._force_scale = 1
 
         self._instance.unreal_service.call_function(uobject=self._nav_mesh_actor, ufunction=self._nav_mesh_setup_func, args={
             "agent_height": 20.0, "agent_radius": 20.0
@@ -249,25 +250,74 @@ class OpenBotAgent(AgentBase):
             "Actor": self._instance.unreal_service.to_ptr(self._agent),
         })
 
-    def get_action_space(self):
+    def get_observation_space(self):
         return gym.spaces.Dict({
-            "set_drive_torque": gym.spaces.Box(0, 1, (2,), np.float64),
-            "set_brake_torque": gym.spaces.Box(0, 1, (2,), np.float64)
+            "location": gym.spaces.Box(-1000, 1000, (3,), np.float64),
+            "rotation": gym.spaces.Box(-1000, 1000, (3,), np.float64),
+            # "linear_velocity": gym.spaces.Box(-1000, 1000, (3,), np.float64), # TODO
+            # "angular_velocity": gym.spaces.Box(-1000, 1000, (3,), np.float64), # TODO
+            # "wheel_velocity": gym.spaces.Box(-1000, 1000, (4,), np.float64),
         })
 
+    def get_observation(self):
+        # get observation
+        current_location = self._instance.unreal_service.call_function(self._agent, self._unreal_get_actor_location_func)['ReturnValue']
+        current_rotation = self._instance.unreal_service.call_function(self._agent, self._unreal_get_actor_rotation_func)['ReturnValue']
+        current_location = np.array([current_location['x'], current_location['y'], current_location['z']])
+        current_rotation = np.array([current_rotation['roll'], current_rotation['pitch'], current_rotation['yaw']])
+        self._obs = {
+            "location": current_location,
+            "rotation": current_rotation,
+        }
+        return self._obs
+
+    def get_action_space(self):
+        return gym.spaces.Dict({
+            # "set_drive_torque": gym.spaces.Box(-1, 1, (2,), np.float64),
+            # "set_brake_torque": gym.spaces.Box(0, 1, (2,), np.float64)
+            "apply_voltage": gym.spaces.Box(-1, 1, (2,), np.float64),
+        })
+
+    def rpmToRadSec(self, val):
+        return val * np.pi / 30.0
+
     def apply_action(self, action):
-        set_drive_torque = action['set_drive_torque']
+        if "apply_voltage" in action:
+            wheel_rotation_speed = np.array([0, 0, 0, 0])
+            battery_voltage = 12.0
+            motor_velocity_constant = 65.89
+            gear_ratio = 50.0
+            motor_torque_max = 0.19
+            control_dead_zone = 2.5
+            action_scale = 255
+            electrical_resistance = 0.5
+
+            motor_torque_constant = 1 / motor_velocity_constant
+            motor_speed = gear_ratio * self.rpmToRadSec(wheel_rotation_speed)
+            counter_electromotive_force = motor_torque_constant * motor_speed
+
+            motor_winding_current = battery_voltage * action["apply_voltage"] - counter_electromotive_force / electrical_resistance
+            motor_torque = motor_torque_constant * motor_winding_current
+            motor_torque = np.clip(motor_torque, -motor_torque_max, motor_torque_max)
+
+            wheel_torque = gear_ratio * motor_torque
+            dead_zone_mask = motor_speed < 1e-5 and action["apply_voltage"] <= control_dead_zone / action_scale
+            wheel_torque[dead_zone_mask] = 0.0
+            set_drive_torque = wheel_torque
+        else:
+            set_drive_torque = action['set_drive_torque']
+
         if "set_brake_torque" in action:
             set_brake_torque = action['set_brake_torque']
         for wheel_index in range(0, 4):
             set_drive_torque_args = {
-                "DriveTorque": set_drive_torque[wheel_index % 2],
+                "DriveTorque": set_drive_torque[wheel_index % 2] * self._force_scale,
                 "WheelIndex": wheel_index
             }
             self._instance.unreal_service.call_function(self._chaos_vehicle_movement_component, self._set_drive_torque_func, set_drive_torque_args)
             if "set_brake_torque" in action:
                 set_brake_torque_args = {
-                    "BrakeTorque": set_brake_torque[wheel_index % 2],
+                    "BrakeTorque": set_brake_torque[wheel_index % 2] * self._force_scale,
                     "WheelIndex": wheel_index
                 }
                 self._instance.unreal_service.call_function(self._chaos_vehicle_movement_component, self._set_brake_torque_func, set_brake_torque_args)
@@ -302,7 +352,7 @@ class UrdfRobotAgent(AgentBase):
 
         self._agent = self._instance.unreal_service.spawn_actor(
             # class_name="/Game/Agents/BP_Fetch.BP_Fetch_C",
-            class_name="/Game/Agents/BP_FetchSimple.BP_FetchSimple_C",
+            class_name="/Game/Agents/BP_FetchBase.BP_FetchBase_C",
             location={"x": 0.0, "y": 0.0, "Z": 0.0},
             rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0},
             spawn_parameters={"Name": "Agent", "SpawnCollisionHandlingOverride": "AlwaysSpawn"}
@@ -335,8 +385,8 @@ class UrdfRobotAgent(AgentBase):
 
     def get_action_space(self):
         return gym.spaces.Dict({
-            "wheel_joint_l": gym.spaces.Box(-1, 1, (1,), np.float64),
-            "wheel_joint_r": gym.spaces.Box(-1, 1, (1,), np.float64),
+            "wheel_joint_l": gym.spaces.Box(0, 1, (1,), np.float64),
+            "wheel_joint_r": gym.spaces.Box(0, 1, (1,), np.float64),
         })
 
     def apply_action(self, actions):
@@ -355,7 +405,6 @@ class UrdfRobotAgent(AgentBase):
         for joint_name, joint_component in self._joint_components.items():
             if "wheel_joint" in joint_name or "caster_joint" in joint_name:
                 constraint = self._instance.unreal_service.call_function(joint_component, self._unreal_get_constraint_func)["ReturnValue"]
-                print("constraint", constraint)
                 self._instance.unreal_service.call_function(self._constraint_instance_bpl_default_object,
                                                             self._set_parent_dominate_func,
                                                             args={"Accessor": constraint, "bParentDominates": True})

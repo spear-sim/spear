@@ -28,7 +28,7 @@ class SpPointNavEnv(gym.Env):
         self._config = env_config['config']
         self._dummy = env_config["dummy"]
         self._use_camera = env_config['use_camera']
-        self._use_random_goal = True
+        self._use_random_goal = False
         if env_config['test']:
             self._dummy = True
             self._agent = None
@@ -57,20 +57,22 @@ class SpPointNavEnv(gym.Env):
             self._instance.engine_service.begin_tick()
 
             # spawn agent
-            if env_config["agent"] == "openbot":
-                if env_config["agent"] == "simple":
-                    self._agent = SimpleAgent(self._instance)
-                elif env_config["agent"] == "simple_force":
-                    self._agent = SimpleForceAgent(self._instance)
-                elif env_config["agent"] == "habitat":
-                    self._agent = HabitatNavAgent(self._instance)
-                elif env_config["agent"] == "openbot":
-                    self._agent = OpenBotAgent(self._instance)
-                elif env_config["agent"] == "urdf":
-                    self._agent = UrdfRobotAgent(self._instance)
-                else:
-                    spear.log("Unknown agent: ", env_config["agent"])
-                    exit(-1)
+            if env_config["agent"] == "simple":
+                self._agent = SimpleAgent(self._instance)
+            elif env_config["agent"] == "simple_force":
+                self._agent = SimpleForceAgent(self._instance)
+            elif env_config["agent"] == "habitat":
+                self._agent = HabitatNavAgent(self._instance)
+            elif env_config["agent"] == "openbot":
+                self._agent = OpenBotAgent(self._instance)
+            elif env_config["agent"] == "urdf":
+                self._agent = UrdfRobotAgent(self._instance)
+            else:
+                spear.log("Unknown agent: ", env_config["agent"])
+                self._instance.engine_service.tick()
+                self._instance.engine_service.end_tick()
+                self._instance.close()
+                exit(-1)
 
             self._unreal_goal_actor = self._instance.unreal_service.spawn_actor(
                 class_name="/Game/Agents/BP_Goal.BP_Goal_C",
@@ -96,8 +98,8 @@ class SpPointNavEnv(gym.Env):
             self.action_space = self._agent.get_action_space()
         else:
             self.action_space = gym.spaces.Dict({
-                "add_force": gym.spaces.Box(0, 1, (1,), np.float64),
-                "add_torque": gym.spaces.Box(-1, 1, (1,), np.float64),
+                "set_drive_torque": gym.spaces.Box(0, 1, (2,), np.float64),
+                "set_brake_torque": gym.spaces.Box(0, 1, (2,), np.float64)
             })
 
         # init obs and action
@@ -136,9 +138,9 @@ class SpPointNavEnv(gym.Env):
 
             if self._use_random_goal:
                 position = self._agent.get_random_points(1)[0]
-                self._goal = np.array([position['x'], position['y'], position['z'] + 10])
+                self._goal = np.array([position['x'], position['y'], position['z'] + self._agent._z_offset])
             else:
-                self._goal = np.array([0, 0, 10])
+                self._goal = np.array([0, 0, 0 + self._agent._z_offset])
             if self._unreal_goal_actor:
                 self._instance.unreal_service.call_function(self._unreal_goal_actor, self._agent._unreal_set_actor_location_and_rotation_func, {
                     "NewLocation": dict(zip(["X", "Y", "Z"], self._goal.tolist())),
@@ -207,6 +209,8 @@ class SpPointNavEnv(gym.Env):
 
             collision = abs(new_location[0]) > 1000 or abs(new_location[1]) > 1000 or abs(new_location[1]) > 1000
             collision |= abs(new_rotation[0]) > 30 or abs(new_rotation[1]) > 30
+            if collision:
+                spear.log("hit boundary", new_location, new_rotation)
             if len(hit_actors) > 0:
                 hit_actor_names = []
                 for hit_actor in hit_actors:

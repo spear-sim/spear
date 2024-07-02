@@ -46,27 +46,27 @@ class Env(gym.Env):
         self.tick()
         obs = self._get_observation()
         reward = self._get_reward()
-        is_done = not self._ready or self._is_episode_done() # if the last call to reset() failed or the episode is done
+        is_done = not self._ready or self._is_episode_done()  # if the last call to reset() failed or the episode is done
         step_info = self._get_step_info()
         self.end_tick()
 
         return obs, reward, is_done, step_info
 
     def reset(self, reset_info=None):
-        
+
         for i in range(self._config.SPEAR.ENV.MAX_NUM_TICKS_AFTER_RESET):
             self.begin_tick()
             if i == 0:
-                self._reset() # only reset the simulation once
+                self._reset()  # only reset the simulation once
             self.tick()
             ready = self._is_ready()
             if ready or i == self._config.SPEAR.ENV.MAX_NUM_TICKS_AFTER_RESET - 1:
-                obs = self._get_observation() # only get the observation if ready, or if we're about to give up
+                obs = self._get_observation()  # only get the observation if ready, or if we're about to give up
             self.end_tick()
             if ready:
                 break
 
-        self._ready = ready # store if our reset() attempt was successful or not, so step(...) can return done=True if we were unsuccessful
+        self._ready = ready  # store if our reset() attempt was successful or not, so step(...) can return done=True if we were unsuccessful
 
         if reset_info is not None:
             assert isinstance(reset_info, dict)
@@ -115,10 +115,10 @@ class Env(gym.Env):
 
         assert action.keys() == self._action_space_desc.space.spaces.keys()
 
-        action_shared = { name:component for name, component in action.items() if name in self._action_space_desc.space_shared.spaces.keys() }
+        action_shared = {name: component for name, component in action.items() if name in self._action_space_desc.space_shared.spaces.keys()}
         self._action_space_desc.set_shared_memory_data(action_shared)
 
-        action_non_shared = { name:component for name, component in action.items() if name in self._action_space_desc.space_non_shared.spaces.keys() }
+        action_non_shared = {name: component for name, component in action.items() if name in self._action_space_desc.space_non_shared.spaces.keys()}
         action_non_shared_serialized = _serialize_arrays(
             action_non_shared, space=self._action_space_desc.space_non_shared, byte_order=self._byte_order)
         self._instance.legacy_service.apply_action(action_non_shared_serialized)
@@ -137,7 +137,7 @@ class Env(gym.Env):
 
     def _get_reward(self):
         return self._instance.legacy_service.get_reward()
-    
+
     def _is_episode_done(self):
         return self._instance.legacy_service.is_episode_done()
 
@@ -177,8 +177,8 @@ class SpaceDesc():
 
         # array_descs
         self.array_descs = array_descs
-        self.array_descs_shared = { name:array_desc for name, array_desc in self.array_descs.items() if array_desc["use_shared_memory_"] }
-        self.array_descs_non_shared = { name:array_desc for name, array_desc in self.array_descs.items() if not array_desc["use_shared_memory_"] }
+        self.array_descs_shared = {name: array_desc for name, array_desc in self.array_descs.items() if array_desc["use_shared_memory_"]}
+        self.array_descs_non_shared = {name: array_desc for name, array_desc in self.array_descs.items() if not array_desc["use_shared_memory_"]}
 
         # spaces
         self.space = _create_dict_space(self.array_descs, dict_space_type=dict_space_type, box_space_type=box_space_type)
@@ -265,7 +265,8 @@ DATATYPE_TO_DTYPE = {
 
 # functions for creating Python spaces from C++ array_descs
 def _create_dict_space(array_descs, dict_space_type, box_space_type):
-    return dict_space_type({ name: _create_box_space(array_desc, box_space_type=box_space_type) for name, array_desc in array_descs.items() })
+    return dict_space_type({name: _create_box_space(array_desc, box_space_type=box_space_type) for name, array_desc in array_descs.items()})
+
 
 def _create_box_space(array_desc, box_space_type):
     low = array_desc["low_"]
@@ -278,11 +279,13 @@ def _create_box_space(array_desc, box_space_type):
 # functions for converting arrays between Python and C++ data
 def _deserialize_arrays(data, space, byte_order):
     assert data.keys() == space.spaces.keys()
-    return { name: _deserialize_array(component, space=space.spaces[name], byte_order=byte_order) for name, component in data.items() }
+    return {name: _deserialize_array(component, space=space.spaces[name], byte_order=byte_order) for name, component in data.items()}
+
 
 def _serialize_arrays(arrays, space, byte_order):
     assert arrays.keys() == space.spaces.keys()
-    return { name: _serialize_array(component, space=space.spaces[name], byte_order=byte_order) for name, component in arrays.items() }
+    return {name: _serialize_array(component, space=space.spaces[name], byte_order=byte_order) for name, component in arrays.items()}
+
 
 def _deserialize_array(data, space, byte_order):
     dtype = space.dtype if byte_order is None else space.dtype.newbyteorder(byte_order)
@@ -290,6 +293,7 @@ def _deserialize_array(data, space, byte_order):
     assert (array >= space.low).all()
     assert (array <= space.high).all()
     return array
+
 
 def _serialize_array(array, space, byte_order):
     assert isinstance(array, np.ndarray)

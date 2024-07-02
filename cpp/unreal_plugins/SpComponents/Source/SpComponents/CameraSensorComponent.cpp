@@ -32,16 +32,16 @@ struct FLinearColor;
 // potentially combine depth and/or world-space position and/or normal data into a single rendering pass. Similarly,
 // we could also combine segmentation data and instance data into a single pass.
 const std::map<std::string, int> RENDER_PASS_NUM_CHANNELS = {
-    {"depth", 4}, 
-    {"final_color", 4}, 
-    {"normal", 4}, 
+    {"depth", 4},
+    {"final_color", 4},
+    {"normal", 4},
     {"segmentation", 4}
 };
 
 const std::map<std::string, int> RENDER_PASS_NUM_BYTES_PER_CHANNEL = {
-    {"depth", 4}, 
-    {"final_color", 1}, 
-    {"normal", 4}, 
+    {"depth", 4},
+    {"final_color", 1},
+    {"normal", 4},
     {"segmentation", 1}
 };
 
@@ -73,9 +73,9 @@ const std::map<std::string, double> RENDER_PASS_HIGH = {
 };
 
 const std::map<std::string, DataType> RENDER_PASS_CHANNEL_DATATYPE = {
-    {"depth", DataType::Float32}, 
-    {"final_color", DataType::UInteger8}, 
-    {"normal", DataType::Float32}, 
+    {"depth", DataType::Float32},
+    {"final_color", DataType::UInteger8},
+    {"normal", DataType::Float32},
     {"segmentation", DataType::UInteger8}
 };
 
@@ -83,17 +83,17 @@ UCameraSensorComponent::UCameraSensorComponent()
 {
     cpp_component_ = Unreal::createComponentInsideOwnerConstructor<UCppFuncComponent>(this, "cpp_component");
 
-    cpp_component_->registerFunc("camera_sensor.render", [this]( CppFuncPackage& args) -> CppFuncPackage {
+    cpp_component_->registerFunc("camera_sensor.render", [this](CppFuncPackage& args) -> CppFuncPackage {
         CppFuncView<uint8_t> render_pass_name_view("render_pass_name");
         CppFuncUtils::setViewsFromItems({render_pass_name_view.getPtr()}, args.items_);
-        
+
         std::string render_pass_name = std::string(reinterpret_cast<char const*>(render_pass_name_view.getView().data()));
         render_pass_name             = render_pass_name.substr(0, render_pass_name_view.getView().size());
         SP_ASSERT(Std::containsKey(render_pass_descs_, render_pass_name));
 
         CppFuncData<uint8_t> shared_data("shared_data");
         RenderPassDesc& render_pass_desc = render_pass_descs_[render_pass_name];
-        auto& view = render_pass_desc.shared_memory_region_->getView();
+        auto& view                       = render_pass_desc.shared_memory_region_->getView();
         shared_data.setData(render_pass_name, view, render_pass_desc.num_bytes_);
 
         FTextureRenderTargetResource* texture_render_target_resource = render_pass_desc.scene_capture_component_2d_->TextureTarget->GameThread_GetRenderTargetResource();
@@ -106,8 +106,8 @@ UCameraSensorComponent::UCameraSensorComponent()
             //     segmentation: RTF_RGBA8_SRGB
             texture_render_target_resource->ReadPixelsPtr(reinterpret_cast<FColor*>(view.data_));
         } else if (render_pass_name == "depth" || render_pass_name == "normal") {
-            texture_render_target_resource->ReadLinearColorPixelsPtr(static_cast<FLinearColor*>(view.data_));   
-        } else {     
+            texture_render_target_resource->ReadLinearColorPixelsPtr(static_cast<FLinearColor*>(view.data_));
+        } else {
             SP_ASSERT(false);
         }
 
@@ -124,7 +124,7 @@ UCameraSensorComponent::~UCameraSensorComponent()
 
 void UCameraSensorComponent::setup(UCameraComponent* camera_component, TArray<FString> render_pass_names, int width, int height, float fov)
 {
-    camera_component_                 = camera_component;
+    camera_component_ = camera_component;
 
     for (auto& render_pass_name_fstring : render_pass_names) {
         std::string render_pass_name = Unreal::toStdString(render_pass_name_fstring);
@@ -179,28 +179,39 @@ void UCameraSensorComponent::setup(UCameraComponent* camera_component, TArray<FS
     }
 }
 
-TArray<FColor> UCameraSensorComponent::getObservation() const
+TArray<FColor> UCameraSensorComponent::getObservation(FString render_pass_name) const
 {
     TArray<FColor> observation;
 
-    for (auto& [render_pass_name, render_pass_desc] : render_pass_descs_) {
-        FTextureRenderTargetResource* texture_render_target_resource =
-            render_pass_desc.scene_capture_component_2d_->TextureTarget->GameThread_GetRenderTargetResource();
-        SP_ASSERT(texture_render_target_resource);
+    std::string render_pass_name0 = Unreal::toStdString(render_pass_name);
 
-        if (render_pass_name == "final_color" || render_pass_name == "segmentation") {
-            // ReadPixelsPtr assumes 4 channels per pixel, 1 byte per channel, so it can be used to read
-            // the following ETextureRenderTargetFormat formats:
-            //     final_color:  RTF_RGBA8
-            //     segmentation: RTF_RGBA8_SRGB
-            observation.SetNum(render_pass_desc.width_ * render_pass_desc.height_);
-            texture_render_target_resource->ReadPixelsPtr(observation.GetData());
-        } else if (render_pass_name == "depth" || render_pass_name == "normal") {
-            SP_ASSERT(false);
-        } else {
-            SP_ASSERT(false);
-        }
+    const RenderPassDesc& render_pass_desc = render_pass_descs_.at(render_pass_name0);
+
+    FTextureRenderTargetResource* texture_render_target_resource =
+        render_pass_desc.scene_capture_component_2d_->TextureTarget->GameThread_GetRenderTargetResource();
+    SP_ASSERT(texture_render_target_resource);
+
+    if (render_pass_name == "final_color" || render_pass_name == "segmentation") {
+        // ReadPixelsPtr assumes 4 channels per pixel, 1 byte per channel, so it can be used to read
+        // the following ETextureRenderTargetFormat formats:
+        //     final_color:  RTF_RGBA8
+        //     segmentation: RTF_RGBA8_SRGB
+        observation.SetNum(render_pass_desc.width_ * render_pass_desc.height_);
+        texture_render_target_resource->ReadPixelsPtr(observation.GetData());
+    } else if (render_pass_name == "depth" || render_pass_name == "normal") {
+        SP_ASSERT(false);
+    } else {
+        SP_ASSERT(false);
     }
 
     return observation;
+}
+
+TArray<uint8> UCameraSensorComponent::getObservationV2(FString render_pass_name) const
+{
+    TArray<FColor> observation = getObservation(render_pass_name);
+    TArray<uint8> obs;
+    obs.SetNum(observation.Num() * 4, false);
+    FMemory::Memcpy(obs.GetData(), observation.GetData(), observation.Num() * 4);
+    return obs;
 }

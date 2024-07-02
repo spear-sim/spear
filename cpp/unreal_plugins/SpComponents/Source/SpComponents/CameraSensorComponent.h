@@ -44,8 +44,10 @@ public:
     void setup(UCameraComponent* camera_component, TArray<FString> render_pass_names, int width, int height, float fov);
 
     UFUNCTION(BlueprintCallable, Category = "SPEAR", meta = (DisplayName = "get observation", ScriptName = "getObservation"))
-    TArray<FColor> getObservation() const;
+    TArray<FColor> getObservation(FString render_pass_name) const;
 
+    UFUNCTION(BlueprintCallable, Category = "SPEAR", meta = (DisplayName = "get observation v2", ScriptName = "getObservation"))
+    TArray<uint8> getObservationV2(FString render_pass_name) const;
     // TODO
     UCameraComponent* camera_component_;
 

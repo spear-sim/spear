@@ -29,6 +29,15 @@ class CameraSensor:
         unreal_camera_sensor_setup_func = instance.unreal_service.find_function_by_name(uclass=self._camera_sensor_component_class, name="setup")
         instance.unreal_service.call_function(self._camera_sensor_component, unreal_camera_sensor_setup_func, setup_args)
 
+        self._get_obs_func = instance.unreal_service.find_function_by_name(uclass=self._camera_sensor_component_class, name="getObservationV2")
+
+    def get_images_raw(self, render_pass_name="final_color"):
+        data = self._instance.unreal_service.call_function(self._camera_sensor_component, self._get_obs_func, {
+            "render_pass_name": render_pass_name
+        })["ReturnValue"]
+        image = np.array(data).astype(dtype=np.uint8).reshape([self._height, self._width, 4])
+        return image[:, :, :3]
+
     def get_images(self, render_pass_name="final_color"):
         assert render_pass_name in self._render_pass_names
         # do rendering

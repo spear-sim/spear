@@ -18,7 +18,7 @@ if __name__ == "__main__":
     parser.add_argument("--resume", action="store_true", default=False)
     parser.add_argument("--check_point", default=r"C:\Users\admin\ray_results")
     parser.add_argument("--run_name", default="SpPointNavOpenBot")
-    parser.add_argument("--agent", default="openbot")
+    parser.add_argument("--agent", default="urdf")
     parser.add_argument("--test", default=False)
     parser.add_argument("--dummy", default=False)
     parser.add_argument("--use_camera", default=False)
