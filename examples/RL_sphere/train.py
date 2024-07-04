@@ -22,7 +22,7 @@ if __name__ == "__main__":
     parser.add_argument("--dummy", action="store_true", default=False)
     parser.add_argument("--test", action="store_true", default=False)
     parser.add_argument("--use_random_goal", action="store_true", default=True)
-    parser.add_argument("--use_camera", action="store_true", default=False)
+    parser.add_argument("--use_camera", action="store_true", default=True)
     args = parser.parse_args()
 
     # RLlib overwrites this environment variable, so we copy it into env_config before invoking RLlib.
@@ -65,6 +65,7 @@ if __name__ == "__main__":
         "framework": "torch",
         "disable_env_checking": True,
         "log_level": "INFO",
+        "train_batch_size": 800,
     }
 
     if args.resume:
@@ -84,7 +85,7 @@ if __name__ == "__main__":
             checkpoint_at_end=True,
             log_to_file=True,
             resume=args.resume,
-            name=args.run_name
+            name=args.run_name,
         )
 
         assert experiment_analysis.get_last_checkpoint() is not None

@@ -85,7 +85,7 @@ class SimpleAgent(AgentBase):
         self._z_offset = 10
 
         self._instance.unreal_service.call_function(uobject=self._nav_mesh_actor, ufunction=self._nav_mesh_setup_func, args={
-            "agent_height": 100.0, "agent_radius": 100.0
+            "agent_height": 100.0, "agent_radius": 40.0
         })
         new_location = self.get_random_points(1)[0]
 

@@ -35,7 +35,7 @@ class SpPointNavEnv(gym.Env):
             self._agent = None
 
         if self._dummy:
-            pass
+            self._agent = None
         else:
             self._config = spear.get_config(
                 user_config_files=[
@@ -98,8 +98,8 @@ class SpPointNavEnv(gym.Env):
             self.action_space = self._agent.get_action_space()
         else:
             self.action_space = gym.spaces.Dict({
-                "wheel_joint_l": gym.spaces.Box(0, 1, (1,), np.float64),
-                "wheel_joint_r": gym.spaces.Box(0, 1, (1,), np.float64),
+                "move_forward": gym.spaces.Box(0, 50, (1,), np.float64),
+                "move_right": gym.spaces.Box(-30, 30, (1,), np.float64),
             })
 
         # init obs and action
