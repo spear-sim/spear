@@ -41,7 +41,9 @@ public:
     ~UCameraSensorComponent();
 
     UFUNCTION(BlueprintCallable, Category = "SPEAR", meta = (DisplayName = "setup", ScriptName = "setup"))
-    void setup(UCameraComponent* camera_component, TArray<FString> render_pass_names, int width, int height, float fov);
+    void setup(UCameraComponent* camera_component, TArray<FString> render_pass_names, int camera_width, int camera_height, float camera_fov);
+    UFUNCTION(BlueprintCallable, Category = "SPEAR", meta = (DisplayName = "setup0", ScriptName = "setup0"))
+    void setup0(UCameraComponent* camera_component, TArray<FString> render_pass_names);
 
     UFUNCTION(BlueprintCallable, Category = "SPEAR", meta = (DisplayName = "get observation", ScriptName = "getObservation"))
     TArray<FColor> getObservation(FString render_pass_name) const;

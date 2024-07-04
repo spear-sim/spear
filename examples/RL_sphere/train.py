@@ -18,19 +18,15 @@ if __name__ == "__main__":
     parser.add_argument("--resume", action="store_true", default=False)
     parser.add_argument("--check_point", default=r"C:\Users\admin\ray_results")
     parser.add_argument("--run_name", default="SpPointNavOpenBot")
-    parser.add_argument("--agent", default="urdf")
-    parser.add_argument("--test", default=False)
-    parser.add_argument("--dummy", default=False)
-    parser.add_argument("--use_camera", default=False)
+    parser.add_argument("--agent", default="habitat")
+    parser.add_argument("--dummy", action="store_true", default=False)
+    parser.add_argument("--test", action="store_true", default=False)
+    parser.add_argument("--use_random_goal", action="store_true", default=True)
+    parser.add_argument("--use_camera", action="store_true", default=False)
     args = parser.parse_args()
 
     # RLlib overwrites this environment variable, so we copy it into env_config before invoking RLlib.
     # See https://docs.ray.io/en/master/ray-core/using-ray-with-gpus.html
-
-    if args.resume:
-        experiment_analysis = tune.ExperimentAnalysis(os.path.join(args.check_point, args.run_name))
-        assert experiment_analysis.get_last_checkpoint() is not None
-        print("Resuming ", args.run_name, " at checkpoint: ", experiment_analysis.get_last_checkpoint(), "\n\n\n")
 
     config = spear.get_config(
         user_config_files=[
@@ -56,13 +52,14 @@ if __name__ == "__main__":
         "dummy": args.dummy,
         "test": args.test,
         "agent": args.agent,
-        "use_camera": args.use_camera
+        "use_camera": args.use_camera,
+        "use_random_goal": args.use_random_goal,
     }
 
     ray_config = {
         "env": env_class,
         "num_workers": 1,
-        # "num_gpus": 0,
+        "num_gpus": 1,
         "env_config": env_config,
         # "model": model_config,
         "framework": "torch",
@@ -70,22 +67,28 @@ if __name__ == "__main__":
         "log_level": "INFO",
     }
 
-    experiment_analysis = tune.run(
-        "PPO",
-        stop={
-            # "episode_reward_mean": 90.0,
-            "training_iteration": 20,
-        },
-        config=ray_config,
-        checkpoint_freq=10,
-        checkpoint_at_end=True,
-        log_to_file=True,
-        resume=args.resume,
-        name=args.run_name
-    )
+    if args.resume:
+        experiment_analysis = tune.ExperimentAnalysis(os.path.join(args.check_point, args.run_name))
+        assert experiment_analysis.get_last_checkpoint() is not None
+        print("Resuming ", args.run_name, " at checkpoint: ", experiment_analysis.get_last_checkpoint(), "\n\n\n")
 
-    assert experiment_analysis.get_last_checkpoint() is not None
-    print("experiment_analysis.get_last_checkpoint()", experiment_analysis.get_last_checkpoint())
+    if not args.test:
+        experiment_analysis = tune.run(
+            "PPO",
+            stop={
+                # "episode_reward_mean": 90.0,
+                "training_iteration": 20,
+            },
+            config=ray_config,
+            checkpoint_freq=10,
+            checkpoint_at_end=True,
+            log_to_file=True,
+            resume=args.resume,
+            name=args.run_name
+        )
+
+        assert experiment_analysis.get_last_checkpoint() is not None
+        print("experiment_analysis.get_last_checkpoint()", experiment_analysis.get_last_checkpoint())
 
     if args.test:
         print("start test")

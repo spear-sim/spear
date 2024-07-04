@@ -122,7 +122,8 @@ UCameraSensorComponent::~UCameraSensorComponent()
 {
 }
 
-void UCameraSensorComponent::setup(UCameraComponent* camera_component, TArray<FString> render_pass_names, int width, int height, float fov)
+void UCameraSensorComponent::setup(
+    UCameraComponent* camera_component, TArray<FString> render_pass_names, int camera_width, int camera_height, float camera_fov)
 {
     camera_component_ = camera_component;
 
@@ -130,9 +131,10 @@ void UCameraSensorComponent::setup(UCameraComponent* camera_component, TArray<FS
         std::string render_pass_name = Unreal::toStdString(render_pass_name_fstring);
         RenderPassDesc render_pass_desc;
 
-        render_pass_desc.width_     = width;
-        render_pass_desc.height_    = height;
-        render_pass_desc.num_bytes_ = height * width * RENDER_PASS_NUM_CHANNELS.at(render_pass_name) * RENDER_PASS_NUM_BYTES_PER_CHANNEL.at(render_pass_name);
+        render_pass_desc.width_     = camera_width;
+        render_pass_desc.height_ = camera_height;
+        render_pass_desc.num_bytes_ =
+            camera_height * camera_width * RENDER_PASS_NUM_CHANNELS.at(render_pass_name) * RENDER_PASS_NUM_BYTES_PER_CHANNEL.at(render_pass_name);
 
         // create TextureRenderTarget2D
         auto texture_render_target_2d = NewObject<UTextureRenderTarget2D>(GetOwner(), Unreal::toFName("texture_render_target_2d_" + render_pass_name));
@@ -140,7 +142,7 @@ void UCameraSensorComponent::setup(UCameraComponent* camera_component, TArray<FS
 
         bool clear_render_target                     = true;
         texture_render_target_2d->RenderTargetFormat = RENDER_PASS_TEXTURE_RENDER_TARGET_FORMAT.at(render_pass_name);
-        texture_render_target_2d->InitAutoFormat(width, height);
+        texture_render_target_2d->InitAutoFormat(camera_width, camera_height);
         texture_render_target_2d->UpdateResourceImmediate(clear_render_target);
 
         // create SceneCaptureComponent2D
@@ -148,7 +150,7 @@ void UCameraSensorComponent::setup(UCameraComponent* camera_component, TArray<FS
             GetOwner(), camera_component, "scene_capture_component_2d_" + render_pass_name);
         SP_ASSERT(render_pass_desc.scene_capture_component_2d_);
         render_pass_desc.scene_capture_component_2d_->TextureTarget = texture_render_target_2d;
-        render_pass_desc.scene_capture_component_2d_->FOVAngle      = fov;
+        render_pass_desc.scene_capture_component_2d_->FOVAngle      = camera_fov;
         render_pass_desc.scene_capture_component_2d_->CaptureSource = ESceneCaptureSource::SCS_FinalToneCurveHDR;
         render_pass_desc.scene_capture_component_2d_->SetVisibility(true);
 
@@ -177,6 +179,14 @@ void UCameraSensorComponent::setup(UCameraComponent* camera_component, TArray<FS
         // update render_pass_descs_
         Std::insert(render_pass_descs_, render_pass_name, std::move(render_pass_desc));
     }
+}
+
+void UCameraSensorComponent::setup0(UCameraComponent* camera_component, TArray<FString> render_pass_names)
+{
+    int width  = 320;
+    int height = 240;
+    float fov = 90;
+    setup(camera_component, render_pass_names, width, height, fov);
 }
 
 TArray<FColor> UCameraSensorComponent::getObservation(FString render_pass_name) const

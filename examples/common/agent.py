@@ -249,6 +249,12 @@ class OpenBotAgent(AgentBase):
         self._instance.unreal_service.call_function(uobject=self._hit_event_actor, ufunction=self._subscribe_actor_func, args={
             "Actor": self._instance.unreal_service.to_ptr(self._agent),
         })
+        wheels_property = self._instance.unreal_service.find_property_by_name_on_uobject(self._chaos_vehicle_movement_component, "Wheels")
+        ReturnValue = self._instance.unreal_service.get_property_value(wheels_property)
+        self._wheels = ReturnValue[1:-1].strip().split(",")
+        # print("self._wheels", self._wheels)
+        self._wheel_class = self._instance.unreal_service.get_static_class_v2("/Script/CoreUObject.Class'/Script/ChaosVehicles.ChaosVehicleWheel'")
+        self._get_wheel_angular_velocity_func = self._instance.unreal_service.find_function_by_name(uclass=self._wheel_class, name="GetWheelAngularVelocity")
 
     def get_observation_space(self):
         return gym.spaces.Dict({
@@ -265,25 +271,31 @@ class OpenBotAgent(AgentBase):
         current_rotation = self._instance.unreal_service.call_function(self._agent, self._unreal_get_actor_rotation_func)['ReturnValue']
         current_location = np.array([current_location['x'], current_location['y'], current_location['z']])
         current_rotation = np.array([current_rotation['roll'], current_rotation['pitch'], current_rotation['yaw']])
+        wheel_velocity = np.zeros([4, ])
+        for i in range(0, len(self._wheels)):
+            wheel = self._wheels[i]
+            wheel_velocity[i] = self._instance.unreal_service.call_function(self._instance.unreal_service.from_ptr(wheel), self._get_wheel_angular_velocity_func)['ReturnValue']
+
         self._obs = {
             "location": current_location,
             "rotation": current_rotation,
+            "wheel_velocity": wheel_velocity,
         }
         return self._obs
 
     def get_action_space(self):
         return gym.spaces.Dict({
-            # "set_drive_torque": gym.spaces.Box(-1, 1, (2,), np.float64),
+            # "set_drive_torque": gym.spaces.Box(-0.5, 0.5, (2,), np.float64),
             # "set_brake_torque": gym.spaces.Box(0, 1, (2,), np.float64)
             "apply_voltage": gym.spaces.Box(-1, 1, (2,), np.float64),
         })
 
-    def rpmToRadSec(self, val):
-        return val * np.pi / 30.0
-
     def apply_action(self, action):
         if "apply_voltage" in action:
-            wheel_rotation_speed = np.array([0, 0, 0, 0])
+            # see e87b904f - AOpenBotPawn::setDriveTorquesFromDutyCycle
+            apply_voltage = np.array([action["apply_voltage"][0], action["apply_voltage"][1], action["apply_voltage"][0], action["apply_voltage"][1]])
+            wheel_rotation_speed = self._obs["wheel_velocity"]
+
             battery_voltage = 12.0
             motor_velocity_constant = 65.89
             gear_ratio = 50.0
@@ -293,34 +305,36 @@ class OpenBotAgent(AgentBase):
             electrical_resistance = 0.5
 
             motor_torque_constant = 1 / motor_velocity_constant
-            motor_speed = gear_ratio * self.rpmToRadSec(wheel_rotation_speed)
+            motor_speed = gear_ratio * wheel_rotation_speed * np.pi / 30.0
             counter_electromotive_force = motor_torque_constant * motor_speed
 
-            motor_winding_current = battery_voltage * action["apply_voltage"] - counter_electromotive_force / electrical_resistance
+            motor_winding_current = battery_voltage * apply_voltage - counter_electromotive_force / electrical_resistance
             motor_torque = motor_torque_constant * motor_winding_current
             motor_torque = np.clip(motor_torque, -motor_torque_max, motor_torque_max)
 
-            wheel_torque = gear_ratio * motor_torque
-            dead_zone_mask = motor_speed < 1e-5 and action["apply_voltage"] <= control_dead_zone / action_scale
-            wheel_torque[dead_zone_mask] = 0.0
-            set_drive_torque = wheel_torque
-        else:
-            set_drive_torque = action['set_drive_torque']
-
-        if "set_brake_torque" in action:
-            set_brake_torque = action['set_brake_torque']
-        for wheel_index in range(0, 4):
-            set_drive_torque_args = {
-                "DriveTorque": set_drive_torque[wheel_index % 2] * self._force_scale,
-                "WheelIndex": wheel_index
-            }
-            self._instance.unreal_service.call_function(self._chaos_vehicle_movement_component, self._set_drive_torque_func, set_drive_torque_args)
-            if "set_brake_torque" in action:
-                set_brake_torque_args = {
-                    "BrakeTorque": set_brake_torque[wheel_index % 2] * self._force_scale,
+            motor_torque[np.logical_and(abs(motor_speed) < 1e-5, abs(apply_voltage) <= control_dead_zone / action_scale)] = 0.0
+            for wheel_index in range(0, 4):
+                set_drive_torque_args = {
+                    "DriveTorque": motor_torque[wheel_index],
                     "WheelIndex": wheel_index
                 }
-                self._instance.unreal_service.call_function(self._chaos_vehicle_movement_component, self._set_brake_torque_func, set_brake_torque_args)
+                self._instance.unreal_service.call_function(self._chaos_vehicle_movement_component, self._set_drive_torque_func, set_drive_torque_args)
+        else:
+            if "set_brake_torque" in action:
+                set_brake_torque = action['set_brake_torque']
+
+            for wheel_index in range(0, 4):
+                set_drive_torque_args = {
+                    "DriveTorque": action['set_drive_torque'][wheel_index % 2] * self._force_scale,
+                    "WheelIndex": wheel_index
+                }
+                self._instance.unreal_service.call_function(self._chaos_vehicle_movement_component, self._set_drive_torque_func, set_drive_torque_args)
+                if "set_brake_torque" in action:
+                    set_brake_torque_args = {
+                        "BrakeTorque": set_brake_torque[wheel_index % 2] * self._force_scale,
+                        "WheelIndex": wheel_index
+                    }
+                    self._instance.unreal_service.call_function(self._chaos_vehicle_movement_component, self._set_brake_torque_func, set_brake_torque_args)
 
     def reset(self):
         new_location = self.get_random_points(1)[0]
@@ -423,7 +437,7 @@ class UrdfRobotAgent(AgentBase):
         for joint_name, joint_component in self._joint_components.items():
             if "wheel_joint" in joint_name or "caster_joint" in joint_name:
                 constraint = self._instance.unreal_service.call_function(joint_component, self._unreal_get_constraint_func)["ReturnValue"]
-                print("constraint", constraint)
+                # print("constraint", constraint)
                 self._instance.unreal_service.call_function(self._constraint_instance_bpl_default_object,
                                                             self._set_parent_dominate_func,
                                                             args={"Accessor": constraint, "bParentDominates": False})

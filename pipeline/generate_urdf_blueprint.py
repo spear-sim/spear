@@ -20,6 +20,7 @@ class UnrealUrdfBuilder():
         component, component_handle = self.create_component(parent_handle, unreal.StaticMeshComponent, link_name)
 
         component.body_instance.set_editor_property("simulate_physics", True)
+        component.set_editor_property("can_ever_affect_navigation", False)
 
         # set transform for non root component
         if link_name in self.robot.parent_map:

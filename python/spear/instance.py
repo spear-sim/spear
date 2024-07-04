@@ -99,6 +99,8 @@ class Instance():
                 launch_args.append("-{}={}".format(arg, value))
 
         launch_args.append("-config_file={}".format(temp_config_file))
+        if self._config.SPEAR.INSTANCE.LEVEL_NAME is not None:
+            launch_args.append(self._config.SPEAR.INSTANCE.LEVEL_NAME)
 
         cmd = [launch_executable_internal] + launch_args
 

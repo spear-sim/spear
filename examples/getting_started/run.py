@@ -63,17 +63,17 @@ def get_keyboard_action(k, agent_type):
             action['move_right'] = np.array([15, ])
     elif agent_type == "openbot":
         action = {
-            "set_drive_torque": np.array([0.0, 0.0, ]),
-            "set_brake_torque": np.array([0.0, 0.0, ]),
+            "apply_voltage": np.array([0.0, 0.0, ]),
+            # "set_brake_torque": np.array([0.0, 0.0, ]),
         }
         if k == ord('w'):
-            action['set_drive_torque'] = np.array([1.0, 1.0])
+            action['apply_voltage'] = np.array([1.0, 1.0])
         elif k == ord('s'):
-            action['set_drive_torque'] = np.array([-1.0, -1.0, ])
+            action['apply_voltage'] = np.array([-1.0, -1.0, ])
         elif k == ord('a'):
-            action['set_drive_torque'] = np.array([-1.0, 1.0, ])
+            action['apply_voltage'] = np.array([-1.0, 1.0, ])
         elif k == ord('d'):
-            action['set_drive_torque'] = np.array([1.0, -1.0, ])
+            action['apply_voltage'] = np.array([1.0, -1.0, ])
         elif k == 32:
             action['set_brake_torque'] = np.array([1.0, 1.0, ])
     elif agent_type == "urdf":
@@ -101,10 +101,10 @@ def get_keyboard_action(k, agent_type):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--benchmark", action="store_true")
+    parser.add_argument("--benchmark", action="store_true",default=False)
     parser.add_argument("--num_steps", default=10000)
     parser.add_argument("--keyboard", default=True)
-    parser.add_argument("--agent", default="urdf")
+    parser.add_argument("--agent", default="openbot")
 
     parser.add_argument("--use_force", default=True)
 
@@ -158,29 +158,29 @@ if __name__ == "__main__":
     instance.engine_service.tick()
     instance.engine_service.end_tick()
 
-    img = np.zeros([unreal_camera_sensor._width, unreal_camera_sensor._height, 3])
+    img = np.zeros([240,320, 3])
     if not args.benchmark:
         cv2.imshow('img', img)
 
     for i in range(args.num_steps):
         instance.engine_service.begin_tick()
         instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
-
-        hit_actors = agent.get_hit_actors()
-        if len(hit_actors) > 0:
-            hit_actor_names = []
-            for hit_actor in hit_actors:
-                hit_actor_name = instance.unreal_service.get_stable_name_for_actor(hit_actor)
-                if hit_actor in unreal_actors_map:
-                    hit_actor_name = unreal_actors_map[hit_actor]
-                    hit_actor_name_list = hit_actor_name.split("/")
-                    if len(hit_actor_name_list) > 2 and hit_actor_name_list[1] == "02_floor":
-                        pass
-                    else:
-                        hit_actor_names.append(hit_actor_name)
-
-            if len(hit_actor_names) > 0:
-                spear.log("hit!", len(hit_actor_names), hit_actor_names)
+        #
+        # hit_actors = agent.get_hit_actors()
+        # if len(hit_actors) > 0:
+        #     hit_actor_names = []
+        #     for hit_actor in hit_actors:
+        #         hit_actor_name = instance.unreal_service.get_stable_name_for_actor(hit_actor)
+        #         if hit_actor in unreal_actors_map:
+        #             hit_actor_name = unreal_actors_map[hit_actor]
+        #             hit_actor_name_list = hit_actor_name.split("/")
+        #             if len(hit_actor_name_list) > 2 and hit_actor_name_list[1] == "02_floor":
+        #                 pass
+        #             else:
+        #                 hit_actor_names.append(hit_actor_name)
+        #
+        #     if len(hit_actor_names) > 0:
+        #         spear.log("hit!", len(hit_actor_names), hit_actor_names)
 
         # apply actions
         agent.apply_action(action)

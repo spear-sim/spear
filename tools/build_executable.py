@@ -9,30 +9,29 @@ import spear
 import subprocess
 import sys
 
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--unreal_engine_dir", required=True)
-    parser.add_argument("--version_tag", required=True)
-    parser.add_argument("--conda_env", default="spear-env")
+    parser.add_argument("--unreal_engine_dir", default=r"F:\Program Files\Epic Games\UE_5.2")
+    parser.add_argument("--version_tag", required=False)
+    parser.add_argument("--conda_env", default="spear")
     parser.add_argument("--num_parallel_jobs", type=int, default=1)
     parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
     parser.add_argument("--temp_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "tmp")))
     parser.add_argument("--conda_script")
     parser.add_argument("--commit_id")
-    parser.add_argument("--skip_clone_github_repo", action="store_true")
-    parser.add_argument("--skip_build_third_party_libs", action="store_true")
+    parser.add_argument("--skip_clone_github_repo", action="store_true", default=True)
+    parser.add_argument("--skip_build_third_party_libs", action="store_true", default=True)
     args = parser.parse_args()
 
     assert os.path.exists(args.unreal_engine_dir)
 
-    repo_dir           = os.path.realpath(os.path.join(args.temp_dir, "spear"))
+    repo_dir = os.path.realpath(r"F:\intel\interiorsim")
     unreal_project_dir = os.path.realpath(os.path.join(repo_dir, "cpp", "unreal_projects", "SpearSim"))
     unreal_plugins_dir = os.path.realpath(os.path.join(repo_dir, "cpp", "unreal_plugins"))
-    third_party_dir    = os.path.realpath(os.path.join(repo_dir, "third_party"))
-    uproject           = os.path.realpath(os.path.join(unreal_project_dir, "SpearSim.uproject"))
-    build_config       = "Shipping"
+    third_party_dir = os.path.realpath(os.path.join(repo_dir, "third_party"))
+    uproject = os.path.realpath(os.path.join(unreal_project_dir, "SpearSim.uproject"))
+    build_config = "Development"
 
     # set various platform-specific variables that we use throughout our build procedure
     if sys.platform == "win32":
@@ -60,7 +59,7 @@ if __name__ == "__main__":
 
     elif sys.platform == "linux":
         target_platform = "Linux"
-        run_uat_script        = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh"))        
+        run_uat_script        = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh"))
         archive_dir           = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{build_config}"))
         run_uat_platform_args = ""
         unreal_tmp_dir        = ""
@@ -129,7 +128,7 @@ if __name__ == "__main__":
         f"--unreal_plugins_dir {unreal_plugins_dir} " + \
         f"--third_party_dir {third_party_dir}"
     spear.log(f"Executing: {cmd}")
-    subprocess.run(cmd, shell=True, check=True)
+    # subprocess.run(cmd, shell=True, check=True)
 
     # copy starter content (we need shell=True because we want to run in a specific anaconda env,
     # and we need to break up this string extra carefully so we can enclose unreal_engine_dir in
@@ -141,7 +140,7 @@ if __name__ == "__main__":
         f'--unreal_engine_dir "{args.unreal_engine_dir}" ' + \
         f"--unreal_project_dir {unreal_project_dir}"
     spear.log(f"Executing: {cmd}")
-    subprocess.run(cmd, shell=True, check=True)
+    # subprocess.run(cmd, shell=True, check=True)
 
     # build SpearSim project
     cmd = [

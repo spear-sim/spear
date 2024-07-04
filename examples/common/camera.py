@@ -22,10 +22,12 @@ class CameraSensor:
         setup_args = {
             "camera_component": instance.unreal_service.to_ptr(camera_component),
             "render_pass_names": self._render_pass_names,
-            "width": self._width,
-            "height": self._height,
-            "fov": self._fov,
+            "camera_width": self._width,
+            "camera_height": self._height,
+            "camera_fov": self._fov,
         }
+        print("self._camera_sensor_component", self._camera_sensor_component)
+        print("self._camera_sensor_component_class", self._camera_sensor_component_class)
         unreal_camera_sensor_setup_func = instance.unreal_service.find_function_by_name(uclass=self._camera_sensor_component_class, name="setup")
         instance.unreal_service.call_function(self._camera_sensor_component, unreal_camera_sensor_setup_func, setup_args)
 

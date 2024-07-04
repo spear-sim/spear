@@ -53,7 +53,7 @@ SPEAR:
       stdout: null              # ensure log output is written to the terminal
       fullstdoutlogoutput: null # ensure log output is written to the terminal
       nologtimes: null          # don't print timestamps next to log messages twice
-
+    LEVEL_NAME: null
       # Non-exhaustive optional arguments that we sometimes find useful:
       # renderoffscreen: null   # run in headless mode
 

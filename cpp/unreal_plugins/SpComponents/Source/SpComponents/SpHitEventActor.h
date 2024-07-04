@@ -68,7 +68,7 @@ private:
     void ActorHitHandler(AActor* SelfActor, AActor* OtherActor, FVector NormalImpulse, const FHitResult& HitResult);
 
     UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="Store debug info")
-    bool bStoreDebugInfo = true;
+    bool bStoreDebugInfo = false;
 
     TArray<FActorHitEventDesc> actor_hit_event_descs_;
 };
