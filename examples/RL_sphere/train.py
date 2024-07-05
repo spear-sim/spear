@@ -22,7 +22,8 @@ if __name__ == "__main__":
     parser.add_argument("--dummy", action="store_true", default=False)
     parser.add_argument("--test", action="store_true", default=False)
     parser.add_argument("--use_random_goal", action="store_true", default=True)
-    parser.add_argument("--use_camera", action="store_true", default=True)
+    parser.add_argument("--use_camera", action="store_true", default=False)
+    parser.add_argument("--use_obstacle", action="store_true", default=False)
     args = parser.parse_args()
 
     # RLlib overwrites this environment variable, so we copy it into env_config before invoking RLlib.
@@ -54,6 +55,7 @@ if __name__ == "__main__":
         "agent": args.agent,
         "use_camera": args.use_camera,
         "use_random_goal": args.use_random_goal,
+        "use_obstacle": args.use_obstacle,
     }
 
     ray_config = {
@@ -81,7 +83,7 @@ if __name__ == "__main__":
                 "training_iteration": 20,
             },
             config=ray_config,
-            checkpoint_freq=10,
+            checkpoint_freq=5,
             checkpoint_at_end=True,
             log_to_file=True,
             resume=args.resume,
@@ -103,7 +105,7 @@ if __name__ == "__main__":
         env = env_class(env_config)
 
         print("start evaluation")
-        for it in range(0, 10):
+        for it in range(0, 20):
             # run until episode ends
             episode_reward = 0
             done = False
@@ -113,5 +115,6 @@ if __name__ == "__main__":
                 obs, reward, done, info = env.step(action)
                 episode_reward += reward
                 # print("episode_reward", episode_reward)
+        env.close()
 
     print("\n\n\nLast checkpoint: " + str(experiment_analysis.get_last_checkpoint()) + "\n\n\n")

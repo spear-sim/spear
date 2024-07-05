@@ -3,51 +3,18 @@
 #
 
 SPEAR:
-  LAUNCH_MODE: "standalone"
-  STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
+  LAUNCH_MODE: "standalone" # standalone | none
+  STANDALONE_EXECUTABLE: "F:/intel/interiorsim/tools/BUILD/SpearSim-Win64-Development/Windows/SpearSim/Binaries/Win64/SpearSim-Cmd.exe"
+
   INSTANCE:
     COMMAND_LINE_ARGS:
       resx: 512
       resy: 512
+      renderoffscreen: null   # run in headless mode
+    LEVEL_NAME: "/Game/Scenes/apartment_0000/Maps/Experiment_2"
 
 SP_SERVICES:
   LEGACY_SERVICE:
     # AGENT: "SphereAgent" # uncomment when using SphereAgent
-    AGENT: "VehicleAgent" # uncomment when using VehicleAgent
+    AGENT: "NullAgent" # uncomment when using VehicleAgent
     TASK: "NullTask"
-  LEGACY:
-    SPHERE_AGENT:
-      SPHERE_ACTOR_NAME: "sphere_actor"
-      CAMERA_ACTOR_NAME: "camera_actor"
-      ACTION_COMPONENTS: ["add_force", "add_to_rotation"] # "add_force", "add_to_rotation"
-      OBSERVATION_COMPONENTS: ["camera", "location", "rotation"] # "camera", "location", "rotation"
-      STEP_INFO_COMPONENTS: ["debug"] # "debug"
-      SPAWN_LOCATION_X: 460.0
-      SPAWN_LOCATION_Y: 260.0
-      SPAWN_LOCATION_Z: 55.0 # sphere origin is roughly 25cm above the floor, and the floor in apartment_0000 is at roughly z=30cm
-      SPAWN_ROTATION_PITCH: 0.0
-      SPAWN_ROTATION_YAW: 0.0
-      SPAWN_ROTATION_ROLL: 0.0
-      CAMERA:
-        RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation"
-        IMAGE_HEIGHT: 512
-        IMAGE_WIDTH: 512
-        FOV: 90.0
-    VEHICLE_AGENT:
-      VEHICLE_ACTOR_NAME: "vehicle_actor"
-      ACTION_COMPONENTS: ["set_drive_torques"] # "set_brake_torques", "set_drive_torques"
-      OBSERVATION_COMPONENTS: ["camera", "location", "rotation", "wheel_rotation_speeds"] # "camera", "imu", "location", "rotation", "wheel_rotation_speeds"
-      IS_READY_VELOCITY_THRESHOLD: 0.001
-      SPAWN_MODE: "specify_pose" # "specify_existing_actor", "specify_pose"
-      SPAWN_ACTOR_NAME: ""
-      SPAWN_LOCATION_X: 460.0
-      SPAWN_LOCATION_Y: 260.0
-      SPAWN_LOCATION_Z: 30.0 # OpenBot origin is roughly at the floor, and the floor in apartment_0000 is roughly at z=30cm
-      SPAWN_ROTATION_PITCH: 0.0
-      SPAWN_ROTATION_YAW: 90.0
-      SPAWN_ROTATION_ROLL: 0.0
-      CAMERA:
-        RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation" 
-        IMAGE_HEIGHT: 512
-        IMAGE_WIDTH: 512
-        FOV: 90.0

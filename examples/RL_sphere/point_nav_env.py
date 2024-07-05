@@ -29,6 +29,7 @@ class SpPointNavEnv(gym.Env):
         self._dummy = env_config["dummy"]
         self._use_camera = env_config['use_camera']
         self._use_random_goal = env_config["use_random_goal"]
+        self._use_obstacle = env_config["use_obstacle"]
         print("self._use_random_goal", self._use_random_goal)
         if env_config['test']:
             self._dummy = True
@@ -78,6 +79,12 @@ class SpPointNavEnv(gym.Env):
                 location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
                 spawn_parameters={"Name": "Goal", "SpawnCollisionHandlingOverride": "AlwaysSpawn"}
             )
+            if self._use_obstacle:
+                self._unreal_obstacle_actor = self._instance.unreal_service.spawn_actor(
+                    class_name="/Game/Agents/BP_Obstacle.BP_Obstacle_C",
+                    location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
+                    spawn_parameters={"Name": "Obstacle", "SpawnCollisionHandlingOverride": "AlwaysSpawn"}
+                )
 
             if self._use_camera:
                 self._camera_sensor = CameraSensor(self._instance, self._agent._agent, render_pass_names=["final_color", "depth"], width=240, height=320)
@@ -92,7 +99,7 @@ class SpPointNavEnv(gym.Env):
             "goal_in_agent_frame": gym.spaces.Box(-2000, 2000, (3,), np.float64),
         })
         if self._use_camera:
-            self.observation_space["rgb"] = gym.spaces.Box(0, 255, (self._camera_sensor._width, self._camera_sensor._height, 3,), np.uint8)
+            self.observation_space["rgb"] = gym.spaces.Box(0, 255, (240, 320, 3,), np.uint8)
 
         if self._agent:
             self.action_space = self._agent.get_action_space()
@@ -109,7 +116,7 @@ class SpPointNavEnv(gym.Env):
             "goal_in_agent_frame": np.array([0, 0, 0]),
         }
         if self._use_camera:
-            img = np.zeros([self._camera_sensor._width, self._camera_sensor._height, 3])
+            img = np.zeros([320, 240, 3])
             self._obs["rgb"] = np.transpose(img, (1, 0, 2))
         # define episode information
         self._goal = random_position(range=500)  # + np.array([-200, -200,0])
@@ -145,6 +152,16 @@ class SpPointNavEnv(gym.Env):
             if self._unreal_goal_actor:
                 self._instance.unreal_service.call_function(self._unreal_goal_actor, self._agent._unreal_set_actor_location_and_rotation_func, {
                     "NewLocation": dict(zip(["X", "Y", "Z"], self._goal.tolist())),
+                    "NewRotation": {"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
+                    "bSweep": False,
+                    "bTeleport": True
+                })
+            if self._use_obstacle:
+                # find a location between agent and goal
+                obstacle_position = (new_location + self._goal) * 0.5 + random_position(100)
+                obstacle_position[2] = 0
+                self._instance.unreal_service.call_function(self._unreal_obstacle_actor, self._agent._unreal_set_actor_location_and_rotation_func, {
+                    "NewLocation": dict(zip(["X", "Y", "Z"], obstacle_position.tolist())),
                     "NewRotation": {"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
                     "bSweep": False,
                     "bTeleport": True
@@ -214,16 +231,21 @@ class SpPointNavEnv(gym.Env):
             collision |= abs(new_rotation[0]) > 30 or abs(new_rotation[1]) > 30
             if collision:
                 spear.log("hit boundary", new_location, new_rotation)
+
             if len(hit_actors) > 0:
                 hit_actor_names = []
                 for hit_actor in hit_actors:
                     if hit_actor in self._unreal_actors_map:
                         hit_actor_name = self._unreal_actors_map[hit_actor]
                         hit_actor_name_list = hit_actor_name.split("/")
-                        if hit_actor_name_list[1] == "02_floor":
+                        if len(hit_actor_name_list) >= 2 and hit_actor_name_list[1] == "02_floor":
                             pass
                         else:
                             hit_actor_names.append(hit_actor_name)
+                    else:
+                        print("hit ", hit_actor)
+                        if hit_actor == self._unreal_obstacle_actor:
+                            hit_actor_names.append("obstacle")
                 if len(hit_actor_names) > 0:
                     spear.log("hit!", len(hit_actor_names), hit_actor_names)
                     collision = True
@@ -239,8 +261,6 @@ class SpPointNavEnv(gym.Env):
         reward = -distance * 0.001 + (100 if succ else 0) + (-10 if collision else 0)
         done = succ or collision or timeout
 
-        info = {}
-
         if done:
             spear.log("SUCC " if succ else "COLL ", self._step, self._goal, self._obs['location'], self._obs['goal_in_agent_frame'], action, reward, done)
         elif self._step % 100 == 0 or done:
@@ -252,6 +272,7 @@ class SpPointNavEnv(gym.Env):
         for key, value in self._obs.items():
             if key in self.observation_space.spaces:
                 obs[key] = value
+        info = {"coll": collision, "succ": succ, "timeout": timeout}
         return obs, reward, done, info
 
     def close(self):
