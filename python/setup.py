@@ -22,7 +22,6 @@ setuptools.setup(
         "opencv-python==4.5.5.64",
         "pandas==1.5.1",
         "psutil==5.9.0",
-        "pyglet==1.5.0",
         "scipy==1.10.1",
         "tensorflow==2.13.0",
         "trimesh==4.4.0",
