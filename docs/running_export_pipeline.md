@@ -16,6 +16,9 @@ python tools/configure_editor_python.py --unreal_engine_dir path/to/UE_5.2
 
 Our export pipeline consists of several modular stages that can be executed sequentially as follows. In this example, each pipeline stage will generate its output in a directory called `spear-pipeline` that we specify using the `--pipeline_dir` command-line argument.
 
+In order to use our optional debug visualization tools below, you will need to install an appropriate [TraitsUI](https://docs.enthought.com/traitsui/#installation) backend for your platform.
+
+
 ```console
 # generate Unreal metadata
 python tools/run_editor_script.py --unreal_engine_dir path/to/UE_5.2 --script generate_unreal_metadata.py --pipeline_dir path/to/spear-pipeline --scene_id apartment_0000
