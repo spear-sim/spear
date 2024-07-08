@@ -28,5 +28,4 @@ setuptools.setup(
         "trimesh==4.4.0",
         "vtk==9.2.6",
         "wget==3.2",
-        "wxPython==4.2.1",
         "yacs==0.1.8"])
