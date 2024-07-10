@@ -4,6 +4,7 @@
 
 import argparse
 import json
+import sys
 
 import mujoco.viewer
 import os
@@ -60,46 +61,54 @@ def build_mj_bodies(mjcf_file, debug=False):
     for mj_body_id in range(mj_model.nbody):
         mj_body = mj_model.body(mj_body_id)
         mj_body_name = mj_model.body(mj_body_id).name
-        mj_body_name_list = mj_body_name.split("/")
+
+        # skip sub component body
         if str(mj_body_name).count(".") > 0:
-            # skip sub component body
             continue
 
-        is_fixed = False
-
-        if len(mj_body_name_list) > 2:
+        mj_body_name_list = mj_body_name.split("/")
+        if len(mj_body_name_list) >= 2:
             actor_type = mj_body_name.split("/")[1]
             if actor_type.endswith("_wall"):
                 walls.add(mj_body_name)
                 is_fixed = True
-            if actor_type.endswith("_floor"):
+            elif actor_type.endswith("_floor"):
                 floors.add(mj_body_name)
                 is_fixed = True
-            if actor_type.endswith("_ceiling"):
+            elif actor_type.endswith("_ceiling"):
                 floors.add(mj_body_name)
                 is_fixed = True
+            else:
+                is_fixed = False
         else:
-            is_fixed = True
+            continue
+
         if mj_body.dofnum[0] == 6:
             movable = True
         else:
             movable = False
+
         pos = mj_data.body(mj_body_id).xpos
         quat = mj_data.body(mj_body_id).xquat
-        rotation_matrix = mj_data.body(mj_body_id).xmat.reshape(3, 3)
-        body = mj_data.body(mj_body_id)
-        rotation = R.from_quat(np.array([quat[1], quat[2], quat[3], quat[0]]))
-        mat = rotation.as_matrix()
+
         # https://github.com/google-deepmind/mujoco/issues/1032
-        # xpos = mj_model.xpos[mj_body_id]
-        geom_pos = mj_model.geom_pos[mj_body_id]
-        aabb = mj_model.geom_aabb[mj_body_id].reshape((2, 3))
-        center = aabb[0]
-        size = aabb[1]
-        world_center = aabb[0] + pos
-        world_size = rotation_matrix @ size
-        if debug and "Round_Table" in mj_body_name:
-            print(mj_body_name, center, size)
+        body_min = np.array([sys.float_info.max, sys.float_info.max, sys.float_info.max])
+        body_max = body_min * -1
+        for geom_offset in range(0, mj_body.geomnum[0]):
+            geom = mj_data.geom(mj_body.geomadr + geom_offset)
+            geom_aabb = mj_model.geom_aabb[geom.id].reshape((2, 3))
+            geom_center = geom.xmat.reshape((3, 3)).dot(geom_aabb[0]) + geom.xpos
+            geom_size = np.abs(geom.xmat.reshape((3, 3)).dot(geom_aabb[1]))
+            geom_min = geom_center - geom_size
+            geom_max = geom_center + geom_size
+            body_min = np.minimum(body_min, geom_min)
+            body_max = np.maximum(body_max, geom_max)
+
+        world_center = (body_max + body_min) * 0.5
+        world_size = (body_max - body_min) * 0.5
+
+        if debug:
+            print(mj_body_name, pos, world_center, world_size)
 
         mj_body_data = {
             "name": mj_body_name,
@@ -111,13 +120,12 @@ def build_mj_bodies(mjcf_file, debug=False):
             "location": pos,
             "rotation": quat
         }
-        # print(mj_body_data)
         mj_bodies.append(mj_body_data)
     return mj_bodies
 
 
-def build_connectivity(mj_bodies, debug=False):
-    extra_extend = np.array([1, 1, 1]) * 100
+def build_connectivity(mj_bodies, aabb_extend, debug=False):
+    extra_extend = np.array([1, 1, 1]) * aabb_extend
     edges = []
     actor_adjacent_actors = {}
     for i in range(0, len(mj_bodies)):
@@ -170,12 +178,14 @@ def build_clusters(mj_bodies, actor_adjacent_actors, debug=False):
     # print("clustering complete", len(clusters))
     if debug:
         print("debug clusters")
-        print("#cluster = ", len(cluster_map), "#body=", len(mj_bodies))
+        print("#cluster=", len(cluster_map), "#body=", len(mj_bodies))
+        cluster_index = 0
         for cluster_id, cluster in cluster_map.items():
             cluster_names = []
             for index in cluster:
                 cluster_names.append(mj_bodies[index]["name"])
-            print(cluster_id, cluster_names)
+            print(cluster_index, cluster_id, cluster_names)
+            cluster_index += 1
     return list(cluster_map.values())
 
 
@@ -219,7 +229,7 @@ mjcf_template = """
 
 
 def build_mjcf(body_indexes, mj_bodies, body_elements, dst):
-    spear.log("build_mjcf init.")
+    # spear.log("build_mjcf init.")
     mjcf_model = ET.ElementTree(ET.fromstring(mjcf_template))
 
     worldbody = mjcf_model.getroot().find("worldbody")
@@ -237,20 +247,21 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--pipeline_dir", default=r"F:\intel\interiorsim\pipeline")
     parser.add_argument("--scene_id", default="apartment_0000")
+    parser.add_argument("--mjcf_name", default="main")
     # parser.add_argument("--template", default=r"F:\intel\interiorsim\pipeline\apartment_0000\mujoco_scene\template.mjcf")
     args = parser.parse_args()
 
     # load bodies
-    mj_bodies = build_mj_bodies(os.path.join(args.pipeline_dir, args.scene_id, "mujoco_scene", "main.mjcf"))
+    mj_bodies = build_mj_bodies(os.path.join(args.pipeline_dir, args.scene_id, "mujoco_scene", f"{args.mjcf_name}.mjcf"), debug=True)
     fixed_bodies = []
     for i in range(len(mj_bodies)):
         mj_body = mj_bodies[i]
         if mj_body['is_fixed']:
             fixed_bodies.append(i)
-    save_scene_data(mj_bodies, "mj_bodies.json")
+    # save_scene_data(mj_bodies, "mj_bodies.json")
 
     # build adjacency
-    actor_adjacent_actors = build_connectivity(mj_bodies, debug=False)
+    actor_adjacent_actors = build_connectivity(mj_bodies, aabb_extend=10, debug=False)
 
     # clustering
     clusters = build_clusters(mj_bodies, actor_adjacent_actors, debug=True)
