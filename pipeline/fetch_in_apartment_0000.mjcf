@@ -1,0 +1,19 @@
+<mujoco model="apartment_0000">
+
+    <compiler angle="radian"/>
+        <option gravity="0 0 -981"/>
+
+        <asset>
+            <texture name="grid" type="2d" builtin="checker" rgb1=".1 .2 .3" rgb2=".2 .3 .4" width="300" height="300"/>
+            <material name="grid" texture="grid" texrepeat="8 8" reflectance=".2"/>
+            <include file="apartment_0000/mujoco_scene/meshes.mjcf"/>
+            <include file="fetch/meshes.mjcf"/>
+        </asset>
+
+        <worldbody>
+            <geom size="1000 1000 1000" type="plane" material="grid"/>
+            <light pos="0 0 1000"/>
+            <include file="fetch/bodies.mjcf"/>
+            <include file="apartment_0000/mujoco_scene/bodies.mjcf"/>
+        </worldbody>
+    </mujoco>

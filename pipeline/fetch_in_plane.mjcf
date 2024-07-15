@@ -12,15 +12,10 @@
     <worldbody>
         <geom size="1000 1000 1000" type="plane" material="grid"/>
         <light pos="0 0 1000"/>
-        <!--        <include file="apartment_0000/mujoco_scene/bodies.mjcf"/>-->
-        <!--        <include file="apartment_0000/mujoco_scene/bodies_floor.mjcf"/>-->
-        <include file="fetch/bodies.mjcf"/>
+
+        <!--            <include file="apartment_0000/mujoco_scene/bodies.mjcf"/>-->
+        <include file="apartment_0000/mujoco_scene/bodies_floor.mjcf"/>
+        <include file="apartment_0000/mujoco_scene/bodies_floor.mjcf"/>
+
     </worldbody>
-
-
-    <actuator>
-        <velocity name="wheel_left" joint="wheel_joint_l" kv="1"/>
-        <velocity name="wheel_right" joint="wheel_joint_r" kv="1"/>
-    </actuator>
-
 </mujoco>

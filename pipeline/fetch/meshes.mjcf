@@ -1,0 +1,20 @@
+<meshes><mesh name="base_link_collision" file="F:\intel\interiorsim\pipeline\fetch\meshes\base_link_collision.STL" scale="100 100 100" />
+    <mesh name="l_wheel_link_collision" file="F:\intel\interiorsim\pipeline\fetch\meshes\l_wheel_link_collision.STL" scale="100 100 100" />
+    <mesh name="r_wheel_link_collision" file="F:\intel\interiorsim\pipeline\fetch\meshes\r_wheel_link_collision.STL" scale="100 100 100" />
+    <mesh name="estop_link" file="F:\intel\interiorsim\pipeline\fetch\meshes\estop_link.STL" scale="100 100 100" />
+    <mesh name="laser_link" file="F:\intel\interiorsim\pipeline\fetch\meshes\laser_link.STL" scale="100 100 100" />
+    <mesh name="torso_lift_link_collision" file="F:\intel\interiorsim\pipeline\fetch\meshes\torso_lift_link_collision.STL" scale="100 100 100" />
+    <mesh name="torso_fixed_link" file="F:\intel\interiorsim\pipeline\fetch\meshes\torso_fixed_link.STL" scale="100 100 100" />
+    <mesh name="shoulder_pan_link_collision" file="F:\intel\interiorsim\pipeline\fetch\meshes\shoulder_pan_link_collision.STL" scale="100 100 100" />
+    <mesh name="shoulder_lift_link_collision" file="F:\intel\interiorsim\pipeline\fetch\meshes\shoulder_lift_link_collision.STL" scale="100 100 100" />
+    <mesh name="upperarm_roll_link_collision" file="F:\intel\interiorsim\pipeline\fetch\meshes\upperarm_roll_link_collision.STL" scale="100 100 100" />
+    <mesh name="elbow_flex_link_collision" file="F:\intel\interiorsim\pipeline\fetch\meshes\elbow_flex_link_collision.STL" scale="100 100 100" />
+    <mesh name="forearm_roll_link_collision" file="F:\intel\interiorsim\pipeline\fetch\meshes\forearm_roll_link_collision.STL" scale="100 100 100" />
+    <mesh name="wrist_flex_link_collision" file="F:\intel\interiorsim\pipeline\fetch\meshes\wrist_flex_link_collision.STL" scale="100 100 100" />
+    <mesh name="wrist_roll_link_collision" file="F:\intel\interiorsim\pipeline\fetch\meshes\wrist_roll_link_collision.STL" scale="100 100 100" />
+    <mesh name="gripper_link" file="F:\intel\interiorsim\pipeline\fetch\meshes\gripper_link.STL" scale="100 100 100" />
+    <mesh name="l_gripper_finger_link" file="F:\intel\interiorsim\pipeline\fetch\meshes\l_gripper_finger_link.STL" scale="100 100 100" />
+    <mesh name="r_gripper_finger_link" file="F:\intel\interiorsim\pipeline\fetch\meshes\r_gripper_finger_link.STL" scale="100 100 100" />
+    <mesh name="head_pan_link_collision" file="F:\intel\interiorsim\pipeline\fetch\meshes\head_pan_link_collision.STL" scale="100 100 100" />
+    <mesh name="head_tilt_link_collision" file="F:\intel\interiorsim\pipeline\fetch\meshes\head_tilt_link_collision.STL" scale="100 100 100" />
+  </meshes>
