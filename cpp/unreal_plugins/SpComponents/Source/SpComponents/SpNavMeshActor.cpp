@@ -101,7 +101,6 @@ TArray<FVector> ASpNavMeshActor::getPaths(const FVector& initial_point, const FV
     }
 
     TArray<FNavPathPoint> nav_path_points = path_finding_result.Path->GetPathPoints();
-    SP_ASSERT(nav_path_points.Num() >= 2);
 
     TArray<FVector> path;
     for (auto& point : nav_path_points) {

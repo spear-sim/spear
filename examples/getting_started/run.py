@@ -200,6 +200,9 @@ if __name__ == "__main__":
             # get observation after tick
             obs = agent.get_observation()
             image = unreal_camera_sensor.get_images()
+            print("obs",obs)
+            path_between_agent_and_origin = agent.get_path_between_points(obs["location"], np.array([0.0, 0.0, 0.0]))
+            print("path_between_agent_and_origin", path_between_agent_and_origin)
 
             instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
             instance.engine_service.end_tick()

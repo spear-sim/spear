@@ -78,6 +78,14 @@ class AgentBase():
         points = self._instance.unreal_service.call_function(uobject=self._nav_mesh_actor, ufunction=self._get_point_func, args={"num_points": num_points})['ReturnValue']
         return points
 
+    def get_path_between_points(self, start, end):
+        path_between_points = self._instance.unreal_service.call_function(uobject=self._nav_mesh_actor, ufunction=self._get_path_func,
+                                                                          args={
+                                                                              "initial_point": dict(zip(["X", "Y", "Z"], start.tolist())),
+                                                                              "goal_point": dict(zip(["X", "Y", "Z"], end.tolist()))}
+                                                                          )['ReturnValue']
+        return path_between_points
+
 
 class SimpleAgent(AgentBase):
     def __init__(self, instance):
