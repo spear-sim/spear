@@ -104,7 +104,7 @@ if __name__ == "__main__":
     parser.add_argument("--benchmark", action="store_true", default=False)
     parser.add_argument("--num_steps", default=10000)
     parser.add_argument("--keyboard", default=True)
-    parser.add_argument("--agent", default="habitat")
+    parser.add_argument("--agent", default="urdf")
 
     parser.add_argument("--use_force", default=True)
 
@@ -164,7 +164,7 @@ if __name__ == "__main__":
         instance.engine_service.tick()
         instance.engine_service.end_tick()
 
-        img = np.zeros([240, 320, 3])
+        img = np.zeros([320, 240, 1])
         if not args.benchmark:
             cv2.imshow('img', img)
 
@@ -200,7 +200,7 @@ if __name__ == "__main__":
             # get observation after tick
             obs = agent.get_observation()
             image = unreal_camera_sensor.get_images()
-            print("obs",obs)
+
             path_between_agent_and_origin = agent.get_path_between_points(obs["location"], np.array([0.0, 0.0, 0.0]))
             print("path_between_agent_and_origin", path_between_agent_and_origin)
 
@@ -209,6 +209,7 @@ if __name__ == "__main__":
 
             # generate action
             if not args.benchmark:
+                # print("image",image.shape)
                 cv2.imshow('img', image)
                 k = cv2.waitKey(10)
                 if args.keyboard:

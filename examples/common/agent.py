@@ -17,6 +17,7 @@ class AgentBase():
                                                                                                                 name="K2_SetActorLocationAndRotation")
         self._unreal_get_actor_location_func = self._instance.unreal_service.find_function_by_name(uclass=unreal_actor_static_class, name="K2_GetActorLocation")
         self._unreal_get_actor_rotation_func = self._instance.unreal_service.find_function_by_name(uclass=unreal_actor_static_class, name="K2_GetActorRotation")
+        self._unreal_get_actor_velocity_func = self._instance.unreal_service.find_function_by_name(uclass=unreal_actor_static_class, name="GetVelocity")
         self._unreal_static_mesh_static_class = self._instance.unreal_service.get_static_class("UStaticMeshComponent")
         self._unreal_add_force_func = self._instance.unreal_service.find_function_by_name(uclass=self._unreal_static_mesh_static_class, name="AddForce")
         self._unreal_add_torque_func = self._instance.unreal_service.find_function_by_name(uclass=self._unreal_static_mesh_static_class, name="AddTorqueInDegrees")
@@ -51,9 +52,11 @@ class AgentBase():
         current_rotation = self._instance.unreal_service.call_function(self._agent, self._unreal_get_actor_rotation_func)['ReturnValue']
         current_location = np.array([current_location['x'], current_location['y'], current_location['z']])
         current_rotation = np.array([current_rotation['roll'], current_rotation['pitch'], current_rotation['yaw']])
+        current_velocity = self._instance.unreal_service.call_function(self._agent, self._unreal_get_actor_velocity_func)['ReturnValue']
         self._obs = {
             "location": current_location,
             "rotation": current_rotation,
+            "current_velocity": current_velocity,
         }
         return self._obs
 
