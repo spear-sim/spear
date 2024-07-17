@@ -73,12 +73,12 @@ If you're developing on Windows, you will need to run this command with administ
 python tools/create_symlinks.py
 ```
 
-## Copy starter content
+## Copy content from the Unreal Engine
 
-Our `SpearSim` project requires you to explicitly copy some starter content from your Unreal Engine installation to the project directory. We provide a command-line tool for this purpose.
+Our `SpearSim` project requires you to explicitly copy some content from your Unreal Engine installation to the project directory. We provide a command-line tool for this purpose.
 
 ```console
-python tools/copy_starter_content.py --unreal_engine_dir path/to/UE_5.2
+python tools/copy_unreal_engine_dir_content.py --unreal_engine_dir path/to/UE_5.2
 ```
 
 ## Build the `SpearSim` executable
