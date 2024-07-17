@@ -58,6 +58,14 @@ private:
     UFUNCTION(CallInEditor, Category="SPEAR")
     void SubscribeToActorHitEvents();
 
+    UFUNCTION(CallInEditor, Category="SPEAR")
+    void GetPoseableMeshPoses();
+
+    UFUNCTION(CallInEditor, Category="SPEAR")
+    void SetPoseableMeshPoses();
+    UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="Poseable Mesh Scale Factor")
+    double PoseableMeshScaleFactor = 1.0;
+
     UFUNCTION()
     FString GetString(FString arg_0, bool arg_1, int arg_2, FVector arg_3);
 

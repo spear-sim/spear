@@ -9,9 +9,11 @@
 #include <memory> // std::make_unique
 #include <ranges> // std::views::transform
 
+#include <Components/PoseableMeshComponent.h>
+#include <Components/SkinnedMeshComponent.h> // EBoneSpaces::Type
 #include <Components/StaticMeshComponent.h>
 #include <Engine/StaticMeshActor.h>
-#include <Engine/World.h> // FActorSpawnParameters
+#include <Engine/World.h>                    // FActorSpawnParameters
 #include <GameFramework/Actor.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
@@ -470,6 +472,60 @@ void ASpDebugWidget::UpdateData(TMap<FString, FVector>& map_from_string_to_vecto
     map_from_string_to_vector.Add(Unreal::toFString("World"), 2.0*vec);
     array_of_vectors.Add(FVector(1.0f, 2.0f, 3.0f));
     array_of_vectors.Add(FVector(4.0f, 5.0f, 6.0f));
+}
+
+void ASpDebugWidget::GetPoseableMeshPoses()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    AActor* actor = Unreal::findActorByName(GetWorld(), "Debug/Manny");
+    SP_ASSERT(actor);
+
+    UPoseableMeshComponent* poseable_mesh_component = Unreal::getComponentByType<UPoseableMeshComponent>(actor);
+    SP_ASSERT(poseable_mesh_component);
+
+    int num_bones = poseable_mesh_component->GetNumBones();
+    for (int i = 0; i < num_bones; i++) {        
+        FName bone_name = poseable_mesh_component->GetBoneName(i);
+        FTransform transform = poseable_mesh_component->GetBoneTransformByName(bone_name, EBoneSpaces::Type::ComponentSpace);
+        SP_LOG(i);
+        SP_LOG(Unreal::toStdString(bone_name));
+
+        void* value_ptr = &transform;
+        UStruct* ustruct = UnrealClassRegistrar::getStaticStruct<FTransform>();
+        SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
+        SP_LOG();
+    }
+}
+
+void ASpDebugWidget::SetPoseableMeshPoses()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    AActor* actor = Unreal::findActorByName(GetWorld(), "Debug/Manny");
+    SP_ASSERT(actor);
+
+    UPoseableMeshComponent* poseable_mesh_component = Unreal::getComponentByType<UPoseableMeshComponent>(actor);
+    SP_ASSERT(poseable_mesh_component);
+
+    std::vector<std::string> bone_names = {"hand_l", "hand_r", "head"};
+    for (auto& bone_name : bone_names) {
+        FTransform transform;
+        UStruct* ustruct = UnrealClassRegistrar::getStaticStruct<FTransform>();
+        void* value_ptr = &transform;
+
+        transform = poseable_mesh_component->GetBoneTransformByName(Unreal::toFName(bone_name), EBoneSpaces::Type::ComponentSpace);
+        SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
+
+        FVector scale = transform.GetScale3D();
+        transform.SetScale3D(scale*PoseableMeshScaleFactor);        
+        poseable_mesh_component->SetBoneTransformByName(Unreal::toFName(bone_name), transform, EBoneSpaces::Type::ComponentSpace);
+
+        transform = poseable_mesh_component->GetBoneTransformByName(Unreal::toFName(bone_name), EBoneSpaces::Type::ComponentSpace);
+        SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
+    }
+
+    // poseable_mesh_component->RefreshBoneTransforms();
 }
 
 void ASpDebugWidget::initializeCppFuncs()

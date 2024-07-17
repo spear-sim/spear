@@ -11,6 +11,19 @@
 #include "SpCore/Yaml.h"
 #include "SpCore/YamlCpp.h"
 
+
+//
+// We need the variables below to be globals because they are referenced in templated code. This requirement
+// arises because templated code gets compiled at each call site. If a call site is in a different module
+// (i.e., outside of SpCore), and it references a static variable, then the module will get its own local
+// copy of the static variable. This behavior only happens on Clang, because MSVC has a different methodology
+// for handling static variables in shared libraries. See the link below for details:
+//     https://stackoverflow.com/questions/31495877/i-receive-different-results-on-unix-and-win-when-use-static-members-with-static
+//
+
+extern SPCORE_API YAML::Node g_config_node;
+
+
 class SPCORE_API Config
 {
 public:
@@ -43,17 +56,16 @@ public:
     static TValue get(const std::string& key)
     {
         SP_ASSERT(isInitialized());
-        return Yaml::get<TValue>(s_config_node_, key);
+        return Yaml::get<TValue>(g_config_node, key);
     }
 
     template <typename TValue>
     static TValue get(const std::vector<std::string>& keys)
     {
         SP_ASSERT(isInitialized());
-        return Yaml::get<TValue>(s_config_node_, keys);
+        return Yaml::get<TValue>(g_config_node, keys);
     }
 
 private:
-    inline static YAML::Node s_config_node_;
     inline static bool s_initialized_ = false;
 };

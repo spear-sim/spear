@@ -6,6 +6,7 @@
 
 #include <GameFramework/Actor.h>
 #include <Math/Rotator.h>
+#include <Math/Transform.h>
 #include <Math/Vector.h>
 
 #include "SpCore/Log.h"
@@ -26,6 +27,9 @@ private:
 
     UPROPERTY()
     FRotator FRotator_;
+
+    UPROPERTY()
+    FTransform FTransform_;
 
     UPROPERTY()
     FVector FVector_;

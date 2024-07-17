@@ -78,6 +78,9 @@ public class SpTargetRulesTarget : TargetRules
             AdditionalCompilerArguments += arg;
             SP_LOG("    " + arg);
 
+        } else if (target.Platform == UnrealTargetPlatform.IOS || target.Platform == UnrealTargetPlatform.TVOS) {
+            SP_LOG("NOTE: We only expect to see target.Platform == UnrealTargetPlatform.IOS or target.Platform == UnrealTargetPlatform.TVOS when we're on macOS and we're attempting to generate XCode project files. If we're not on macOS generating XCode project files, target.Platform == UnrealTargetPlatform.IOS and target.Platform == UnrealTargetPlatform.TVOS are unexpected.");
+
         } else if (target.Platform == UnrealTargetPlatform.LinuxArm64) {
             SP_LOG("NOTE: We only expect to see target.Platform == UnrealTargetPlatform.LinuxArm64 when we're on Linux and the editor is attempting to open a uproject for the first time. If the editor is not attempting to open a uproject for the first time on Linux, target.Platform == UnrealTargetPlatform.LinuxArm64 is unexpected.");
 
