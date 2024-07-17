@@ -34,7 +34,7 @@ if __name__ == "__main__":
     parser.add_argument("--mjcf_file", required=True)
     args = parser.parse_args()
 
-    # create spear Instance
+    # create SPEAR instance
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
     spear.configure_system(config)
     spear_instance = spear.Instance(config)
