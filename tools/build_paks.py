@@ -152,8 +152,8 @@ if __name__ == "__main__":
     if not args.skip_build_common_pak:
         pak_name = "common"
         symlink_dirs = {
-            os.path.realpath(os.path.join(args.perforce_content_dir, "Megascans")) : os.path.join(unreal_project_content_dir, "Megascans"),
-            os.path.realpath(os.path.join(args.perforce_content_dir, "MSPresets")) : os.path.join(unreal_project_content_dir, "MSPresets")}
+            os.path.realpath(os.path.join(args.perforce_content_dir, "Megascans")): os.path.join(unreal_project_content_dir, "Megascans"),
+            os.path.realpath(os.path.join(args.perforce_content_dir, "MSPresets")): os.path.join(unreal_project_content_dir, "MSPresets")}
         cooked_include_dirs = [
             os.path.join(unreal_project_cooked_dir, "Engine", "Content"),
             os.path.join(unreal_project_cooked_dir, "Engine", "Plugins"),
@@ -178,9 +178,9 @@ if __name__ == "__main__":
     for scene_id in scene_ids:
         pak_name = scene_id
         symlink_dirs = {
-            os.path.realpath(os.path.join(args.perforce_content_dir, "Megascans")) : os.path.join(unreal_project_content_dir, "Megascans"),
-            os.path.realpath(os.path.join(args.perforce_content_dir, "MSPresets")) : os.path.join(unreal_project_content_dir, "MSPresets"),
-            os.path.realpath(os.path.join(perforce_content_scenes_dir, scene_id))  : os.path.join(unreal_project_content_scenes_dir, scene_id)}
+            os.path.realpath(os.path.join(args.perforce_content_dir, "Megascans")): os.path.join(unreal_project_content_dir, "Megascans"),
+            os.path.realpath(os.path.join(args.perforce_content_dir, "MSPresets")): os.path.join(unreal_project_content_dir, "MSPresets"),
+            os.path.realpath(os.path.join(perforce_content_scenes_dir, scene_id)):  os.path.join(unreal_project_content_scenes_dir, scene_id)}
         cooked_include_dirs = [
             os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Scenes", scene_id))]
         expected_unreal_project_content_scene_dirs = ["apartment_0000", "debug_0000", "debug_0001", scene_id]

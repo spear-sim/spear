@@ -136,7 +136,7 @@ if __name__ == "__main__":
     cmd = \
         cmd_prefix + \
         "python " + \
-        "copy_starter_content.py " + \
+        "copy_unreal_engine_dir_content.py " + \
         f'--unreal_engine_dir "{args.unreal_engine_dir}" ' + \
         f"--unreal_project_dir {unreal_project_dir}"
     spear.log(f"Executing: {cmd}")

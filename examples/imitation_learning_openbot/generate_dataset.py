@@ -255,38 +255,38 @@ if __name__ == "__main__":
 
                 # low-level commands sent to the motors
                 df_ctrl = pd.DataFrame({
-                    "timestamp"     : episode_timestamp_data[:num_iterations_executed],
-                    "control_left"  : episode_control_data[:num_iterations_executed, 0],
-                    "control_right" : episode_control_data[:num_iterations_executed, 1]})
+                    "timestamp":     episode_timestamp_data[:num_iterations_executed],
+                    "control_left":  episode_control_data[:num_iterations_executed, 0],
+                    "control_right": episode_control_data[:num_iterations_executed, 1]})
                 df_ctrl.to_csv(os.path.realpath(os.path.join(sensor_data_dir, "ctrlLog.txt")), mode="w", index=False, header=True)
 
                 # reference of the images correespoinding to each control input
                 df_rgb = pd.DataFrame({
-                    "timestamp" : episode_timestamp_data[:num_iterations_executed],
-                    "frame_id"  : episode_frame_id_data[:num_iterations_executed]})
+                    "timestamp": episode_timestamp_data[:num_iterations_executed],
+                    "frame_id":  episode_frame_id_data[:num_iterations_executed]})
                 df_rgb.to_csv(os.path.realpath(os.path.join(sensor_data_dir, "rgbFrames.txt")), mode="w", index=False, header=True)
 
                 # high level commands
                 df_goal = pd.DataFrame({
-                    "timestamp"        : episode_timestamp_data[:num_iterations_executed],
-                    "distance_to_goal" : episode_goal_data[:num_iterations_executed, 0],
-                    "sin_yaw"          : episode_goal_data[:num_iterations_executed, 1],
-                    "cos_yaw"          : episode_goal_data[:num_iterations_executed, 2]})
+                    "timestamp":        episode_timestamp_data[:num_iterations_executed],
+                    "distance_to_goal": episode_goal_data[:num_iterations_executed, 0],
+                    "sin_yaw":          episode_goal_data[:num_iterations_executed, 1],
+                    "cos_yaw":          episode_goal_data[:num_iterations_executed, 2]})
                 df_goal.to_csv(os.path.realpath(os.path.join(sensor_data_dir, "goalLog.txt")), mode="w", index=False, header=True)
 
                 # raw pose data (for debug purposes and (also) to prevent one from having to re-run the data collection in case of a deg2rad issue...)
                 df_pose = pd.DataFrame({
-                    "timestamp"      : episode_timestamp_data[:num_iterations_executed],
-                    "frame_id"       : episode_frame_id_data[:num_iterations_executed],
-                    "location_x"     : episode_location_data[:num_iterations_executed, 0],
-                    "location_y"     : episode_location_data[:num_iterations_executed, 1],
-                    "location_z"     : episode_location_data[:num_iterations_executed, 2],
-                    "rotation_pitch" : episode_rotation_data[:num_iterations_executed, 0],
-                    "rotation_yaw"   : episode_rotation_data[:num_iterations_executed, 1],
-                    "rotation_roll"  : episode_rotation_data[:num_iterations_executed, 2],
-                    "waypoint_x"     : episode_waypoint_data[:num_iterations_executed, 0],
-                    "waypoint_y"     : episode_waypoint_data[:num_iterations_executed, 1],
-                    "waypoint_z"     : episode_waypoint_data[:num_iterations_executed, 2]})
+                    "timestamp":       episode_timestamp_data[:num_iterations_executed],
+                    "frame_id":        episode_frame_id_data[:num_iterations_executed],
+                    "location_x":      episode_location_data[:num_iterations_executed, 0],
+                    "location_y":      episode_location_data[:num_iterations_executed, 1],
+                    "location_z":      episode_location_data[:num_iterations_executed, 2],
+                    "rotation_pitch":  episode_rotation_data[:num_iterations_executed, 0],
+                    "rotation_yaw":    episode_rotation_data[:num_iterations_executed, 1],
+                    "rotation_roll":   episode_rotation_data[:num_iterations_executed, 2],
+                    "waypoint_x":      episode_waypoint_data[:num_iterations_executed, 0],
+                    "waypoint_y":      episode_waypoint_data[:num_iterations_executed, 1],
+                    "waypoint_z":      episode_waypoint_data[:num_iterations_executed, 2]})
                 df_pose.to_csv(os.path.realpath(os.path.join(sensor_data_dir, "debugLog.txt")), mode="w", index=False, header=True)
 
                 # Create plots. Note that creating these plots will resize our cv2 windows in an
