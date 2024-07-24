@@ -42,53 +42,6 @@ class USceneComponent;
 class UStruct;
 class UWorld;
 
-// 
-// Find actors unconditionally and return an std::vector or an std::map
-//
-
-std::vector<AActor*> Unreal::findActors(const UWorld* world)
-{
-    return findActorsByType(world);
-}
-
-std::map<std::string, AActor*> Unreal::findActorsAsMap(const UWorld* world)
-{
-    return toMap(findActors(world));
-}
-
-// 
-// Get components unconditionally and return an std::vector or an std::map
-//
-
-std::vector<UActorComponent*> Unreal::getComponents(const AActor* actor)
-{
-    return getComponentsByType(actor);
-}
-
-std::map<std::string, UActorComponent*> Unreal::getComponentsAsMap(const AActor* actor)
-{
-    return toMap(getComponents(actor));
-}
-
-// 
-// Get children components unconditionally and return an std::vector or an std::map
-//
-
-std::vector<USceneComponent*> Unreal::getChildrenComponents(const USceneComponent* parent, bool include_all_descendants)
-{
-    SP_ASSERT(parent);
-    TArray<USceneComponent*> children_tarray;
-    parent->GetChildrenComponents(include_all_descendants, children_tarray);
-    std::vector<USceneComponent*> children = toStdVector(children_tarray);
-    SP_ASSERT(!Std::contains(children, nullptr));
-    return children;
-}
-
-std::map<std::string, USceneComponent*> Unreal::getChildrenComponentsAsMap(const USceneComponent* parent, bool include_all_descendants)
-{
-    return toMap(getChildrenComponents(parent, include_all_descendants));
-}
-
 //
 // Get and set object properties, uobject can't be const because we cast it to void*
 //
@@ -163,6 +116,7 @@ Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* 
         // properties, we expect an index string that is enclosed enclosed in "" quotes if the key type is a
         // string, and not enclosed in quotes otherwise. The index string must exactly match whatever is
         // returned by getPropertyValueAsString(...) for the key.
+
         if (property_desc.property_->IsA(FArrayProperty::StaticClass()) && property_name_tokens.size() == 2) {
             int index = std::atoi(property_name_tokens.at(1).c_str());
             FArrayProperty* array_property = static_cast<FArrayProperty*>(property_desc.property_);
@@ -220,6 +174,7 @@ Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* 
         // we need to update our ustruct pointer, and potentially our value_ptr if our current property
         // refers to an object. In contrast, if the current property name is the last name in our sequence,
         // then there is nothing more to do, because we have already filled in our PropertyDesc object.
+
         if (i < property_names.size() - 1) {
             if (property_desc.property_->IsA(FObjectProperty::StaticClass())) {
                 FObjectProperty* object_property = static_cast<FObjectProperty*>(property_desc.property_);
@@ -379,6 +334,7 @@ void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_des
         //
         // If our property is an enum byte, treat it like a string. If it is a non-enum byte, treat it like
         // an int.
+
         std::string quote_string = "";
         if (property_desc.property_->IsA(FStrProperty::StaticClass()) || property_desc.property_->IsA(FNameProperty::StaticClass())) {
             quote_string = "\"";
@@ -454,7 +410,7 @@ std::map<std::string, std::string> Unreal::callFunction(UWorld* world, UObject* 
 
     // Input args must be a subset of the function's args.
     auto property_names = Std::toVector<std::string>(property_descs | std::views::transform([](const auto& desc) { return toStdString(desc.property_->GetName()); }));
-    SP_ASSERT(Std::all(Std::contains(property_names, Std::keys(args))));
+    SP_ASSERT(Std::isSubsetOf(Std::keys(args), property_names));
 
     // Set property values.
     for (auto& property_desc : property_descs) {
@@ -469,6 +425,7 @@ std::map<std::string, std::string> Unreal::callFunction(UWorld* world, UObject* 
         // according to Unreal's JSON assignment rules, in which case setPropertValueFromString(...) will
         // perform the assignment, or the assignment is not possible, in which case setPropertValueFromString(...)
         // will assert.
+
         if (property_name == world_context) {
             SP_ASSERT(!Std::containsKey(args, property_name));
             setPropertyValueFromString(property_desc, Std::toStringFromPtr(world));
@@ -496,24 +453,50 @@ std::map<std::string, std::string> Unreal::callFunction(UWorld* world, UObject* 
 }
 
 //
-// Find special struct by name. For this function to behave as expected, ASpSpecialStructActor must have a
-// UPROPERTY defined on it named TypeName_ of type TypeName.
+// Find actors unconditionally and return an std::vector or an std::map
 //
 
-UStruct* Unreal::findSpecialStructByName(const std::string& name)
+std::vector<AActor*> Unreal::findActors(const UWorld* world)
 {
-    // We only need ASpSpecialStructActor's property metadata here, so we can use the default object. This
-    // makes it so this function is usable even in levels that don't have an ASpSpecialStructActor in them,
-    // and avoids the need to do a findActor operation.
-    UClass* special_struct_actor_uclass = ASpSpecialStructActor::StaticClass();
-    SP_ASSERT(special_struct_actor_uclass);
-    UObject* special_struct_actor_default_object = special_struct_actor_uclass->GetDefaultObject();
-    SP_ASSERT(special_struct_actor_default_object);
-    PropertyDesc property_desc = findPropertyByName(special_struct_actor_default_object, name + "_");
-    SP_ASSERT(property_desc.property_);
-    SP_ASSERT(property_desc.property_->IsA(FStructProperty::StaticClass()));
-    FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
-    return struct_property->Struct;
+    return findActorsByType(world);
+}
+
+std::map<std::string, AActor*> Unreal::findActorsAsMap(const UWorld* world)
+{
+    return toMap(findActors(world));
+}
+
+// 
+// Get components unconditionally and return an std::vector or an std::map
+//
+
+std::vector<UActorComponent*> Unreal::getComponents(const AActor* actor)
+{
+    return getComponentsByType(actor);
+}
+
+std::map<std::string, UActorComponent*> Unreal::getComponentsAsMap(const AActor* actor)
+{
+    return toMap(getComponents(actor));
+}
+
+// 
+// Get children components unconditionally and return an std::vector or an std::map
+//
+
+std::vector<USceneComponent*> Unreal::getChildrenComponents(const USceneComponent* parent, bool include_all_descendants)
+{
+    SP_ASSERT(parent);
+    TArray<USceneComponent*> children_tarray;
+    parent->GetChildrenComponents(include_all_descendants, children_tarray);
+    std::vector<USceneComponent*> children = toStdVector(children_tarray);
+    SP_ASSERT(!Std::contains(children, nullptr));
+    return children;
+}
+
+std::map<std::string, USceneComponent*> Unreal::getChildrenComponentsAsMap(const USceneComponent* parent, bool include_all_descendants)
+{
+    return toMap(getChildrenComponents(parent, include_all_descendants));
 }
 
 //
@@ -577,6 +560,28 @@ std::vector<std::string> Unreal::getTags(const UActorComponent* component)
 }
 
 //
+// Find special struct by name. For this function to behave as expected, ASpSpecialStructActor must have a
+// UPROPERTY defined on it named TypeName_ of type TypeName.
+//
+
+UStruct* Unreal::findSpecialStructByName(const std::string& name)
+{
+    // We only need ASpSpecialStructActor's property metadata here, so we can use the default object. This
+    // makes it so this function is usable even in levels that don't have an ASpSpecialStructActor in them,
+    // and avoids the need to do a findActor operation.
+
+    UClass* special_struct_actor_uclass = ASpSpecialStructActor::StaticClass();
+    SP_ASSERT(special_struct_actor_uclass);
+    UObject* special_struct_actor_default_object = special_struct_actor_uclass->GetDefaultObject();
+    SP_ASSERT(special_struct_actor_default_object);
+    PropertyDesc property_desc = findPropertyByName(special_struct_actor_default_object, name + "_");
+    SP_ASSERT(property_desc.property_);
+    SP_ASSERT(property_desc.property_->IsA(FStructProperty::StaticClass()));
+    FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
+    return struct_property->Struct;
+}
+
+//
 // String functions
 //
 
@@ -622,6 +627,7 @@ std::string Unreal::getArrayPropertyValueAsFormattedString(const FProperty* inne
     // If the array is empty, then set the join string to be an empty string. Otherwise, if the inner property
     // is a primitive type, then format the entire array on a single line. Otherwise put each element on a new
     // line.
+
     std::string join_string;
     if (num_elements > 0) {
         if (inner_property->IsA(FStructProperty::StaticClass())) {
@@ -681,6 +687,7 @@ std::string Unreal::getMapPropertyValueAsFormattedString(
     // If the map is non-empty, put each element on a new line. Strictly speaking, Unreal appears to always
     // set the join string to a new-line, even when the map is empty. But we don't try to replicate this
     // behavior for better consistency with our array formatting implementation.
+
     std::string join_string = "\n";
     if (num_elements > 0) {
         join_string = "\n";
@@ -705,6 +712,7 @@ std::string Unreal::getMapPropertyValueAsFormattedString(
     // Build the formatted string except for indentation. Strictly speaking, Unreal appears to add an
     // extra new-line at the start of map strings, but we don't try to replicate this behavior for better
     // consistency with our array formatting implementation.
+
     formatted_string += "{" + join_string;
     for (int i = 0; i < num_elements; i++) {
         std::string join_prefix_string;

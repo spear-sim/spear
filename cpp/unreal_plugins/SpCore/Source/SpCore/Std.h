@@ -206,7 +206,7 @@ public:
     {
         std::vector<std::pair<TKey, TValue>> pairs = toVector<std::pair<TKey, TValue>>(std::forward<decltype(range)>(range));
         std::vector<TKey> keys = toVector<TKey>(pairs | std::views::transform([](const auto& pair) { const auto& [key, value] = pair; return key; }));
-        SP_ASSERT(Std::allUnique(keys));
+        SP_ASSERT(allUnique(keys));
         return std::map<TKey, TValue>(std::ranges::begin(pairs), std::ranges::end(pairs));
     }
 
@@ -243,7 +243,13 @@ public:
     template <typename TSpan, typename TValues> requires CSpanHasValuesConvertibleFromContainer<TSpan, TValues>
     static std::vector<bool> contains(const TSpan& span, const TValues& values)
     {
-        return toVector<bool>(values | std::views::transform([&span](const auto& value) { return Std::contains(span, value); }));
+        return toVector<bool>(values | std::views::transform([&span](const auto& value) { return contains(span, value); }));
+    }
+
+    template <typename TSpan> requires CSpan<TSpan>
+    static bool isSubsetOf(const TSpan& small, const TSpan& big)
+    {
+        return all(contains(big, small));
     }
 
     template <typename TSpan> requires CSpan<TSpan>
@@ -288,7 +294,7 @@ public:
         int num_elements = std::ranges::size(keys);
         std::map<TKey, TValue> map;
         for (int i = 0; i < num_elements; i++) {
-            Std::insert(map, Std::at(keys, i), Std::at(values, i));
+            insert(map, at(keys, i), at(values, i));
         }
         return map;
     }
@@ -309,7 +315,7 @@ public:
         CSpan<TSpanKeys>
     static std::vector<bool> containsKeys(const TKeyValueContainer& key_value_container, const TSpanKeys& keys)
     {
-        return Std::contains(Std::keys(key_value_container), keys);
+        return contains(Std::keys(key_value_container), keys); // need fully qualified Std::keys(...) because keys is a local variable
     }
 
     template <typename TKeyValueContainer, typename TSpanKeys> requires
@@ -319,7 +325,7 @@ public:
         using TValue = typename TKeyValueContainer::mapped_type;
 
         // if no default value is provided, then all keys must be present
-        SP_ASSERT(Std::all(containsKeys(key_value_container, keys)));
+        SP_ASSERT(all(containsKeys(key_value_container, keys)));
 
         return toVector<TValue>(
             keys |

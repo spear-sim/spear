@@ -13,48 +13,24 @@ class UnrealService():
         return self._rpc_client.call("unreal_service.get_world_name")
 
     #
-    # Get default object
+    # Get uclass from class name, get default object from uclass, get uclass from object
     #
+
+    def get_static_class(self, class_name):
+        return self._rpc_client.call("unreal_service.get_static_class", class_name)
 
     def get_default_object(self, uclass, create_if_needed=True):
         return self._rpc_client.call("unreal_service.get_default_object", uclass, create_if_needed)
-
-    #
-    # Get class
-    #
 
     def get_class(self, uobject):
         return self._rpc_client.call("unreal_service.get_class", uobject)
 
     #
-    # Find actors unconditionally and return a list or dict
+    # Get static struct
     #
 
-    def find_actors(self):
-        return self._rpc_client.call("unreal_service.find_actors")
-
-    def find_actors_as_dict(self):
-        return self._rpc_client.call("unreal_service.find_actors_as_map")    
-
-    #
-    # Get components unconditionally and return a list or dict
-    #
-
-    def get_components(self, actor):
-        return self._rpc_client.call("unreal_service.get_components", actor)
-
-    def get_components_as_dict(self, actor):
-        return self._rpc_client.call("unreal_service.get_components_as_map", actor)
-
-    #
-    # Get children components unconditionally and return a list or dict
-    #
-
-    def get_children_components(self, actor, include_all_descendants=True):
-        return self._rpc_client.call("unreal_service.get_children_components", actor, include_all_descendants)
-
-    def get_children_components_as_dict(self, actor, include_all_descendants=True):
-        return self._rpc_client.call("unreal_service.get_children_components_as_map", actor, include_all_descendants)
+    def get_static_struct(self, struct_name):
+        return self._rpc_client.call("unreal_service.get_static_struct", name)
 
     #
     # Get and set object properties
@@ -93,7 +69,7 @@ class UnrealService():
         return self._rpc_client.call("unreal_service.set_property_value_from_string", property_desc, property_value)
 
     #
-    # Find functions
+    # Find and call functions
     #
 
     def find_function_by_name(self, uclass, name, include_super_flag="IncludeSuper"):
@@ -164,37 +140,301 @@ class UnrealService():
         return return_values
 
     #
-    # Find special structs by name
+    # Find actors unconditionally and return a list or dict
     #
 
-    def find_special_struct_by_name(self, name):
-        return self._rpc_client.call("unreal_service.find_special_struct_by_name", name)
+    def find_actors(self):
+        return self._rpc_client.call("unreal_service.find_actors")
+
+    def find_actors_as_dict(self):
+        return self._rpc_client.call("unreal_service.find_actors_as_map")    
 
     #
-    # Stable name helper functions
+    # Get components unconditionally and return a list or dict
     #
 
-    def has_stable_name(self, actor):
-        return self._rpc_client.call("unreal_service.has_stable_name", actor)
+    def get_components(self, actor):
+        return self._rpc_client.call("unreal_service.get_components", actor)
 
-    def get_stable_name_for_actor(self, actor):
-        return self._rpc_client.call("unreal_service.get_stable_name_for_actor", actor)
-
-    def get_stable_name_for_component(self, component, include_actor_name=False):
-        return self._rpc_client.call("unreal_service.get_stable_name_for_component", component, include_actor_name)
-
-    def get_stable_name_for_scene_component(self, component, include_actor_name=False):
-        return self._rpc_client.call("unreal_service.get_stable_name_for_scene_component", component, include_actor_name)
+    def get_components_as_dict(self, actor):
+        return self._rpc_client.call("unreal_service.get_components_as_map", actor)
 
     #
-    # Get actor and component tags
+    # Get children components unconditionally and return a list or dict
     #
 
-    def get_actor_tags(self, actor):
-        return self._rpc_client.call("unreal_service.get_actor_tags", actor)
+    def get_children_components(self, actor, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components", actor, include_all_descendants)
 
-    def get_component_tags(self, actor):
-        return self._rpc_client.call("unreal_service.get_component_tags", actor)
+    def get_children_components_as_dict(self, actor, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components_as_map", actor, include_all_descendants)
+
+    #
+    # Find actors conditionally and return a list
+    #
+
+    def find_actors_by_name(self, class_name, names, return_null_if_not_found=True):
+        return self._rpc_client.call("unreal_service.find_actors_by_name", class_name, names, return_null_if_not_found)
+
+    def find_actors_by_tag(self, class_name, tag):
+        return self._rpc_client.call("unreal_service.find_actors_by_tag", class_name, tag)
+
+    def find_actors_by_tag_any(self, class_name, tags):
+        return self._rpc_client.call("unreal_service.find_actors_by_tag_any", class_name, tags)
+
+    def find_actors_by_tag_all(self, class_name, tags):
+        return self._rpc_client.call("unreal_service.find_actors_by_tag_all", class_name, tags)
+
+    def find_actors_by_type(self, class_name):
+        return self._rpc_client.call("unreal_service.find_actors_by_type", class_name)
+
+    def find_actors_by_class(self, uclass):
+        return self._rpc_client.call("unreal_service.find_actors_by_class", uclass)
+
+    #
+    # Find actors conditionally and return a dict
+    #
+
+    def find_actors_by_name_as_dict(self, class_name, names, return_null_if_not_found=True):
+        return self._rpc_client.call("unreal_service.find_actors_by_name_as_map", class_name, names, return_null_if_not_found)
+
+    def find_actors_by_tag_as_dict(self, class_name, tag):
+        return self._rpc_client.call("unreal_service.find_actors_by_tag_as_map", class_name, tag)
+
+    def find_actors_by_tag_any_as_dict(self, class_name, tags):
+        return self._rpc_client.call("unreal_service.find_actors_by_tag_any_as_map", class_name, tags)
+
+    def find_actors_by_tag_all_as_dict(self, class_name, tags):
+        return self._rpc_client.call("unreal_service.find_actors_by_tag_all_as_map", class_name, tags)
+
+    def find_actors_by_type_as_dict(self, class_name):
+        return self._rpc_client.call("unreal_service.find_actors_by_type_as_map", class_name)
+
+    def find_actors_by_class_as_dict(self, uclass):
+        return self._rpc_client.call("unreal_service.find_actors_by_class_as_map", uclass)
+
+    #
+    # Find actor conditionally
+    #
+
+    def find_actor_by_name(self, class_name, name, assert_if_not_found=True):
+        return self._rpc_client.call("unreal_service.find_actor_by_name", class_name, name, assert_if_not_found)
+
+    def find_actor_by_tag(self, class_name, tag, assert_if_not_found=True, assert_if_multiple_found=True):
+        return self._rpc_client.call("unreal_service.find_actor_by_tag", class_name, tag, assert_if_not_found, assert_if_multiple_found)
+
+    def find_actor_by_tag_any(self, class_name, tags, assert_if_not_found=True, assert_if_multiple_found=True):
+        return self._rpc_client.call("unreal_service.find_actor_by_tag_any", class_name, tags, assert_if_not_found, assert_if_multiple_found)
+
+    def find_actor_by_tag_all(self, class_name, tags, assert_if_not_found=True, assert_if_multiple_found=True):
+        return self._rpc_client.call("unreal_service.find_actor_by_tag_all", class_name, tags, assert_if_not_found, assert_if_multiple_found)
+
+    def find_actor_by_type(self, class_name, assert_if_not_found=True, assert_if_multiple_found=True):
+        return self._rpc_client.call("unreal_service.find_actor_by_type", class_name, assert_if_not_found, assert_if_multiple_found)
+
+    def find_actor_by_class(self, uclass, assert_if_not_found=True, assert_if_multiple_found=True):
+        return self._rpc_client.call("unreal_service.find_actor_by_class", uclass, assert_if_not_found, assert_if_multiple_found)
+
+    #
+    # Get components conditionally and return a list
+    #
+
+    def get_components_by_name(self, class_name, actor, names, include_from_child_actors=False, return_null_if_not_found=True):
+        return self._rpc_client.call("unreal_service.get_components_by_name", class_name, actor, names, include_from_child_actors, return_null_if_not_found)
+
+    def get_components_by_tag(self, class_name, actor, tag, include_from_child_actors=False):
+        return self._rpc_client.call("unreal_service.get_components_by_tag", class_name, actor, tag, include_from_child_actors)
+
+    def get_components_by_tag_any(self, class_name, actor, tags, include_from_child_actors=False):
+        return self._rpc_client.call("unreal_service.get_components_by_tag_any", class_name, actor, tags, include_from_child_actors)
+
+    def get_components_by_tag_all(self, class_name, actor, tags, include_from_child_actors=False):
+        return self._rpc_client.call("unreal_service.get_components_by_tag_all", class_name, actor, tags, include_from_child_actors)
+
+    def get_components_by_type(self, class_name, actor, include_from_child_actors=False):
+        return self._rpc_client.call("unreal_service.get_components_by_type", class_name, actor, include_from_child_actors)
+
+    def get_components_by_class(self, actor, uclass, include_from_child_actors=False):
+        return self._rpc_client.call("unreal_service.get_components_by_class", actor, uclass, include_from_child_actors)
+
+    #
+    # Get components conditionally and return a dict
+    #
+
+    def get_components_by_name_as_dict(self, class_name, actor, names, include_from_child_actors=False, return_null_if_not_found=True):
+        return self._rpc_client.call("unreal_service.get_components_by_name_as_map", class_name, actor, names, include_from_child_actors, return_null_if_not_found)
+
+    def get_components_by_tag_as_dict(self, class_name, actor, tag, include_from_child_actors=False):
+        return self._rpc_client.call("unreal_service.get_components_by_tag_as_map", class_name, actor, tag, include_from_child_actors)
+
+    def get_components_by_tag_any_as_dict(self, class_name, actor, tags, include_from_child_actors=False):
+        return self._rpc_client.call("unreal_service.get_components_by_tag_any_as_map", class_name, actor, tags, include_from_child_actors)
+
+    def get_components_by_tag_all_as_dict(self, class_name, actor, tags, include_from_child_actors=False):
+        return self._rpc_client.call("unreal_service.get_components_by_tag_all_as_map", class_name, actor, tags, include_from_child_actors)
+
+    def get_components_by_type_as_dict(self, class_name, actor, include_from_child_actors=False):
+        return self._rpc_client.call("unreal_service.get_components_by_type_as_map", class_name, actor, include_from_child_actors)
+
+    def get_components_by_class_as_dict(self, actor, uclass, include_from_child_actors=False):
+        return self._rpc_client.call("unreal_service.get_components_by_class_as_map", actor, uclass, include_from_child_actors)
+
+    #
+    # Get component conditionally
+    #
+
+    def get_component_by_name(self, class_name, actor, name, include_from_child_actors=False, assert_if_not_found=True):
+        return self._rpc_client.call("unreal_service.get_component_by_name", class_name, actor, name, include_from_child_actors, assert_if_not_found)
+
+    def get_component_by_tag(self, class_name, actor, tag, include_from_child_actors=False, assert_if_not_found=True, assert_if_multiple_found=True):
+        return self._rpc_client.call("unreal_service.get_component_by_tag", class_name, actor, tag, include_from_child_actors, assert_if_not_found, assert_if_multiple_found)
+
+    def get_component_by_tag_any(self, class_name, actor, tags, include_from_child_actors=False, assert_if_not_found=True, assert_if_multiple_found=True):
+        return self._rpc_client.call("unreal_service.get_component_by_tag_any", class_name, actor, tags, include_from_child_actors, assert_if_not_found, assert_if_multiple_found)
+
+    def get_component_by_tag_all(self, class_name, actor, tags, include_from_child_actors=False, assert_if_not_found=True, assert_if_multiple_found=True):
+        return self._rpc_client.call("unreal_service.get_component_by_tag_all", class_name, actor, tags, include_from_child_actors, assert_if_not_found, assert_if_multiple_found)
+
+    def get_component_by_type(self, class_name, actor, include_from_child_actors=False, assert_if_not_found=True, assert_if_multiple_found=True):
+        return self._rpc_client.call("unreal_service.get_component_by_type", class_name, actor, include_from_child_actors, assert_if_not_found, assert_if_multiple_found)
+
+    def get_component_by_class(self, actor, uclass, include_from_child_actors=False, assert_if_not_found=True, assert_if_multiple_found=True):
+        return self._rpc_client.call("unreal_service.get_component_by_class", actor, uclass, include_from_child_actors, assert_if_not_found, assert_if_multiple_found)
+
+    #
+    # Get children components conditionally from an actor and return a list
+    #
+
+    def get_children_components_by_name_from_actor(self, class_name,  parent, names, include_all_descendants=True, return_null_if_not_found=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_name_from_actor", class_name,  parent, names, include_all_descendants, return_null_if_not_found)
+
+    def get_children_components_by_tag_from_actor(self, class_name, parent, tag, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_tag_from_actor", class_name, parent, tag, include_all_descendants)
+
+    def get_children_components_by_tag_any_from_actor(self, class_name, parent, tags, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_tag_any_from_actor", class_name, parent, tags, include_all_descendants)
+
+    def get_children_components_by_tag_all_from_actor(self, class_name, parent, tags, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_tag_all_from_actor", class_name, parent, tags, include_all_descendants)
+
+    def get_children_components_by_type_from_actor(self, class_name, parent, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_type_from_actor", class_name, parent, include_all_descendants)
+
+    def get_children_components_by_class_from_actor(self, parent, uclass, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_class_from_actor", parent, uclass, include_all_descendants)
+
+    #
+    # Get children components conditionally from an actor and return a dict
+    #
+
+    def get_children_components_by_name_as_dict_from_actor(self, class_name, parent, names, include_all_descendants=True, return_null_if_not_found=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_name_as_map_from_actor", class_name, parent, names, include_all_descendants, return_null_if_not_found)
+
+    def get_children_components_by_tag_as_dict_from_actor(self, class_name, parent, tag, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_tag_as_map_from_actor", class_name, parent, tag, include_all_descendants)
+
+    def get_children_components_by_tag_any_as_dict_from_actor(self, class_name, parent, tags, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_tag_any_as_map_from_actor", class_name, parent, tags, include_all_descendants)
+
+    def get_children_components_by_tag_all_as_dict_from_actor(self, class_name, parent, tags, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_tag_all_as_map_from_actor", class_name, parent, tags, include_all_descendants)
+
+    def get_children_components_by_type_as_dict_from_actor(self, class_name, parent, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_type_as_map_from_actor", class_name, parent, include_all_descendants)
+
+    def get_children_components_by_class_as_dict_from_actor(self, parent, uclass, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_class_as_map_from_actor", parent, uclass, include_all_descendants)
+
+    #
+    # Get child component conditionally from an actor
+    #
+
+    def get_child_component_by_name_from_actor(self, class_name, parent, name, include_all_descendants=True, assert_if_not_found=True):
+        return self._rpc_client.call("unreal_service.get_child_component_by_name_from_actor", class_name, parent, name, include_all_descendants, assert_if_not_found)
+
+    def get_child_component_by_tag_from_actor(self, class_name, parent, tag, include_all_descendants=True, assert_if_not_found=True, assert_if_multiple_found=True):
+        return self._rpc_client.call("unreal_service.get_child_component_by_tag_from_actor", class_name, parent, tag, include_all_descendants, assert_if_not_found, assert_if_multiple_found)
+
+    def get_child_component_by_tag_any_from_actor(self, class_name, parent, tags, include_all_descendants=True, assert_if_not_found=True, assert_if_multiple_found=True):
+        return self._rpc_client.call("unreal_service.get_child_component_by_tag_any_from_actor", class_name, parent, tags, include_all_descendants, assert_if_not_found, assert_if_multiple_found)
+
+    def get_child_component_by_tag_all_from_actor(self, class_name, parent, tags, include_all_descendants=True, assert_if_not_found=True, assert_if_multiple_found=True):
+        return self._rpc_client.call("unreal_service.get_child_component_by_tag_all_from_actor", class_name, parent, tags, include_all_descendants, assert_if_not_found, assert_if_multiple_found)
+
+    def get_child_component_by_type_from_actor(self, class_name, parent, include_all_descendants=True, assert_if_not_found=True, assert_if_multiple_found=True):
+        return self._rpc_client.call("unreal_service.get_child_component_by_type_from_actor", class_name, parent, include_all_descendants, assert_if_not_found, assert_if_multiple_found)
+
+    def get_child_component_by_class_from_actor(self, parent, uclass, include_all_descendants=True, assert_if_not_found=True, assert_if_multiple_found=True):
+        return self._rpc_client.call("unreal_service.get_child_component_by_class_from_actor", parent, uclass, include_all_descendants, assert_if_not_found, assert_if_multiple_found)
+
+    #
+    # Get children components conditionally from a scene component and return a list
+    #
+
+    def get_children_components_by_name_from_scene_component(self, class_name, parent, names, include_all_descendants=True, return_null_if_not_found=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_name_from_scene_component", class_name, parent, names, include_all_descendants, return_null_if_not_found)
+
+    def get_children_components_by_tag_from_scene_component(self, class_name, parent, tag, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_tag_from_scene_component", class_name, parent, tag, include_all_descendants)
+
+    def get_children_components_by_tag_any_from_scene_component(self, class_name, parent, tags, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_tag_any_from_scene_component", class_name, parent, tags, include_all_descendants)
+
+    def get_children_components_by_tag_all_from_scene_component(self, class_name, parent, tags, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_tag_all_from_scene_component", class_name, parent, tags, include_all_descendants)
+
+    def get_children_components_by_type_from_scene_component(self, class_name, parent, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_type_from_scene_component", class_name, parent, include_all_descendants)
+
+    def get_children_components_by_type_from_scene_component(self, class_name, parent, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_type_from_scene_component", class_name, parent, include_all_descendants)
+
+    def get_children_components_by_class_from_scene_component(self, parent, uclass, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_class_from_scene_component", parent, uclass, include_all_descendants)
+
+    #
+    # Get children components conditionally from a scene component and return a dict
+    #
+
+    def get_children_components_by_name_as_map_from_scene_component(self, class_name, parent, names, include_all_descendants=True, return_null_if_not_found=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_name_as_map_from_scene_component", class_name, parent, names, include_all_descendants, return_null_if_not_found)
+
+    def get_children_components_by_tag_as_map_from_scene_component(self, class_name, parent, tag, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_tag_as_map_from_scene_component", class_name, parent, tag, include_all_descendants)
+
+    def get_children_components_by_tag_any_as_map_from_scene_component(self, class_name, parent, tags, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_tag_any_as_map_from_scene_component", class_name, parent, tags, include_all_descendants)
+
+    def get_children_components_by_tag_all_as_map_from_scene_component(self, class_name, parent, tags, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_tag_all_as_map_from_scene_component", class_name, parent, tags, include_all_descendants)
+
+    def get_children_components_by_type_as_map_from_scene_component(self, class_name, parent, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_type_as_map_from_scene_component", class_name, parent, include_all_descendants)
+
+    def get_children_components_by_class_as_map_from_scene_component(self, parent, uclass, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_class_as_map_from_scene_component", parent, uclass, include_all_descendants)
+
+    #
+    # Get child component conditionally from a scene component
+    #
+
+    def get_child_component_by_name_from_scene_component(self, class_name, parent, name, include_all_descendants=True, assert_if_not_found=True):
+        return self._rpc_client.call("unreal_service.get_child_component_by_name_from_scene_component", class_name, parent, name, include_all_descendants, assert_if_not_found)
+
+    def get_child_component_by_tag_from_scene_component(self, class_name, parent, tag, include_all_descendants=True, assert_if_not_found=True, assert_if_multiple_found=True):
+        return self._rpc_client.call("unreal_service.get_child_component_by_tag_from_scene_component", class_name, parent, tag, include_all_descendants, assert_if_not_found, assert_if_multiple_found)
+
+    def get_child_component_by_tag_any_from_scene_component(self, class_name, parent, tags, include_all_descendants=True, assert_if_not_found=True, assert_if_multiple_found=True):
+        return self._rpc_client.call("unreal_service.get_child_component_by_tag_any_from_scene_component", class_name, parent, tags, include_all_descendants, assert_if_not_found, assert_if_multiple_found)
+
+    def get_child_component_by_tag_all_from_scene_component(self, class_name, parent, tags, include_all_descendants=True, assert_if_not_found=True, assert_if_multiple_found=True):
+        return self._rpc_client.call("unreal_service.get_child_component_by_tag_all_from_scene_component", class_name, parent, tags, include_all_descendants, assert_if_not_found, assert_if_multiple_found)
+
+    def get_child_component_by_type_from_scene_component(self, class_name, parent, include_all_descendants=True, assert_if_not_found=True, assert_if_multiple_found=True):
+        return self._rpc_client.call("unreal_service.get_child_component_by_type_from_scene_component", class_name, parent, include_all_descendants, assert_if_not_found, assert_if_multiple_found)
+
+    def get_child_component_by_class_from_scene_component(self, parent, uclass, include_all_descendants=True, assert_if_not_found=True, assert_if_multiple_found=True):
+        return self._rpc_client.call("unreal_service.get_child_component_by_class_from_scene_component", parent, uclass, include_all_descendants, assert_if_not_found, assert_if_multiple_found)
 
     #
     # Spawn actor
@@ -202,6 +442,9 @@ class UnrealService():
 
     def spawn_actor(self, class_name, location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}, spawn_parameters=""):
         return self._rpc_client.call("unreal_service.spawn_actor", class_name, {"Location": json.dumps(location), "Rotation": json.dumps(rotation), "SpawnParameters": json.dumps(spawn_parameters)})
+
+    def spawn_actor_from_uclass(self, uclass, location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}, spawn_parameters=""):
+        return self._rpc_client.call("unreal_service.spawn_actor_from_uclass", uclass, {"Location": json.dumps(location), "Rotation": json.dumps(rotation), "SpawnParameters": json.dumps(spawn_parameters)})
 
     #
     # Destroy actor
@@ -241,227 +484,43 @@ class UnrealService():
         return self._rpc_client.call("unreal_service.new_object", class_name, outer, name, template, copy_transients_from_class_defaults, in_instance_graph, external_package, {"ObjectFlags": object_flags})
 
     #
-    # Load object
+    # Load objects and classes
     #
 
-    def load_object(self, class_name, outer, name, filename=0, load_flags=["LOAD_None"], sandbox=0, instancing_context=0):
+    def load_object(self, class_name, outer, name="", filename="", load_flags=["LOAD_None"], sandbox=0, instancing_context=0):
         return self._rpc_client.call("unreal_service.load_object", class_name, outer, name, filename, sandbox, instancing_context, {"LoadFlags": load_flags})
 
-    #
-    # Get static class
-    #
+    def load_class(self, class_name, outer, name="", filename="", load_flags=["LOAD_None"], sandbox=0):
+        return self._rpc_client.call("unreal_service.load_object", class_name, outer, name, filename, sandbox, {"LoadFlags": load_flags})
 
-    def get_static_class(self, class_name):
-        return self._rpc_client.call("unreal_service.get_static_class", class_name)
+    def static_load_object(self, uclass, in_outer, name="", filename="", load_flags=["LOAD_None"], sandbox=0, allow_object_reconciliation=True, instancing_context=0):
+        return self._rpc_client.call("unreal_service.static_load_object", uclass, in_outer, name, filename, sandbox, allow_object_reconciliation, instancing_context, {"LoadFlags": load_flags})
 
-    #
-    # Find actors conditionally and return a list or dict
-    #
-
-    def find_actors_by_name(self, class_name, names, return_null_if_not_found=True):
-        return self._rpc_client.call("unreal_service.find_actors_by_name", class_name, names, return_null_if_not_found)
-
-    def find_actors_by_tag(self, class_name, tag):
-        return self._rpc_client.call("unreal_service.find_actors_by_tag", class_name, tag)
-
-    def find_actors_by_tag_any(self, class_name, tags):
-        return self._rpc_client.call("unreal_service.find_actors_by_tag_any", class_name, tags)
-
-    def find_actors_by_tag_all(self, class_name, tags):
-        return self._rpc_client.call("unreal_service.find_actors_by_tag_all", class_name, tags)
-
-    def find_actors_by_type(self, class_name):
-        return self._rpc_client.call("unreal_service.find_actors_by_type", class_name)
-
-    def find_actors_by_name_as_dict(self, class_name, names, return_null_if_not_found=True):
-        return self._rpc_client.call("unreal_service.find_actors_by_name_as_map", class_name, names, return_null_if_not_found)
-
-    def find_actors_by_tag_as_dict(self, class_name, tag):
-        return self._rpc_client.call("unreal_service.find_actors_by_tag_as_map", class_name, tag)
-
-    def find_actors_by_tag_any_as_dict(self, class_name, tags):
-        return self._rpc_client.call("unreal_service.find_actors_by_tag_any_as_map", class_name, tags)
-
-    def find_actors_by_tag_all_as_dict(self, class_name, tags):
-        return self._rpc_client.call("unreal_service.find_actors_by_tag_all_as_map", class_name, tags)
-
-    def find_actors_by_type_as_dict(self, class_name):
-        return self._rpc_client.call("unreal_service.find_actors_by_type_as_map", class_name)
+    def static_load_class(self, base_uclass, in_outer, name="", filename="", load_flags=["LOAD_None"], sandbox=0):
+        return self._rpc_client.call("unreal_service.static_load_class", base_uclass, in_outer, name, filename, sandbox, {"LoadFlags": load_flags})
 
     #
-    # Find actor conditionally
+    # Stable name helper functions
     #
 
-    def find_actor_by_name(self, class_name, name, assert_if_not_found=True):
-        return self._rpc_client.call("unreal_service.find_actor_by_name", class_name, name, assert_if_not_found)
+    def has_stable_name(self, actor):
+        return self._rpc_client.call("unreal_service.has_stable_name", actor)
 
-    def find_actor_by_tag(self, class_name, tag, assert_if_not_found=True, assert_if_multiple_found=True):
-        return self._rpc_client.call("unreal_service.find_actor_by_tag", class_name, tag, assert_if_not_found, assert_if_multiple_found)
+    def get_stable_name_for_actor(self, actor):
+        return self._rpc_client.call("unreal_service.get_stable_name_for_actor", actor)
 
-    def find_actor_by_tag_any(self, class_name, tags, assert_if_not_found=True, assert_if_multiple_found=True):
-        return self._rpc_client.call("unreal_service.find_actor_by_tag_any", class_name, tags, assert_if_not_found, assert_if_multiple_found)
+    def get_stable_name_for_component(self, component, include_actor_name=False):
+        return self._rpc_client.call("unreal_service.get_stable_name_for_component", component, include_actor_name)
 
-    def find_actor_by_tag_all(self, class_name, tags, assert_if_not_found=True, assert_if_multiple_found=True):
-        return self._rpc_client.call("unreal_service.find_actor_by_tag_all", class_name, tags, assert_if_not_found, assert_if_multiple_found)
-
-    def find_actor_by_type(self, class_name, assert_if_not_found=True, assert_if_multiple_found=True):
-        return self._rpc_client.call("unreal_service.find_actor_by_type", class_name, assert_if_not_found, assert_if_multiple_found)
+    def get_stable_name_for_scene_component(self, component, include_actor_name=False):
+        return self._rpc_client.call("unreal_service.get_stable_name_for_scene_component", component, include_actor_name)
 
     #
-    # Get components conditionally and return a list or dict
+    # Get actor and component tags
     #
 
-    def get_components_by_name(self, class_name, actor, names, return_null_if_not_found=True):
-        return self._rpc_client.call("unreal_service.get_components_by_name", class_name, actor, names, return_null_if_not_found)
+    def get_actor_tags(self, actor):
+        return self._rpc_client.call("unreal_service.get_actor_tags", actor)
 
-    def get_components_by_tag(self, class_name, actor, tag):
-        return self._rpc_client.call("unreal_service.get_components_by_tag", class_name, actor, tag)
-
-    def get_components_by_tag_any(self, class_name, actor, tags):
-        return self._rpc_client.call("unreal_service.get_components_by_tag_any", class_name, actor, tags)
-
-    def get_components_by_tag_all(self, class_name, actor, tags):
-        return self._rpc_client.call("unreal_service.get_components_by_tag_all", class_name, actor, tags)
-
-    def get_components_by_type(self, class_name, actor):
-        return self._rpc_client.call("unreal_service.get_components_by_type", class_name, actor)
-
-    def get_components_by_name_as_dict(self, class_name, actor, names, return_null_if_not_found=True):
-        return self._rpc_client.call("unreal_service.get_components_by_name_as_map", class_name, actor, names, return_null_if_not_found)
-
-    def get_components_by_tag_as_dict(self, class_name, actor, tag):
-        return self._rpc_client.call("unreal_service.get_components_by_tag_as_map", class_name, actor, tag)
-
-    def get_components_by_tag_any_as_dict(self, class_name, actor, tags):
-        return self._rpc_client.call("unreal_service.get_components_by_tag_any_as_map", class_name, actor, tags)
-
-    def get_components_by_tag_all_as_dict(self, class_name, actor, tags):
-        return self._rpc_client.call("unreal_service.get_components_by_tag_all_as_map", class_name, actor, tags)
-
-    def get_components_by_type_as_dict(self, class_name, actor):
-        return self._rpc_client.call("unreal_service.get_components_by_type_as_map", class_name, actor)
-
-    #
-    # Get component conditionally
-    #
-
-    def get_component_by_name(self, class_name, actor, name, assert_if_not_found=True):
-        return self._rpc_client.call("unreal_service.get_component_by_name", class_name, actor, name, assert_if_not_found)
-
-    def get_component_by_tag(self, class_name, actor, tag, assert_if_not_found=True, assert_if_multiple_found=True):
-        return self._rpc_client.call("unreal_service.get_component_by_tag", class_name, actor, tag, assert_if_not_found, assert_if_multiple_found)
-
-    def get_component_by_tag_any(self, class_name, actor, tags, assert_if_not_found=True, assert_if_multiple_found=True):
-        return self._rpc_client.call("unreal_service.get_component_by_tag_any", class_name, actor, tags, assert_if_not_found, assert_if_multiple_found)
-
-    def get_component_by_tag_all(self, class_name, actor, tags, assert_if_not_found=True, assert_if_multiple_found=True):
-        return self._rpc_client.call("unreal_service.get_component_by_tag_all", class_name, actor, tags, assert_if_not_found, assert_if_multiple_found)
-
-    def get_component_by_type(self, class_name, actor, assert_if_not_found=True, assert_if_multiple_found=True):
-        return self._rpc_client.call("unreal_service.get_component_by_type", class_name, actor, assert_if_not_found, assert_if_multiple_found)
-
-    #
-    # Get children components conditionally from an actor and return a list or dict
-    #
-
-    def get_children_components_by_name_from_actor(self, class_name,  parent, names, include_all_descendants=True, return_null_if_not_found=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_name_from_actor", class_name,  parent, names, include_all_descendants, return_null_if_not_found)
-
-    def get_children_components_by_tag_from_actor(self, class_name, parent, tag, include_all_descendants=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_tag_from_actor", class_name, parent, tag, include_all_descendants)
-
-    def get_children_components_by_tag_any_from_actor(self, class_name, parent, tags, include_all_descendants=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_tag_any_from_actor", class_name, parent, tags, include_all_descendants)
-
-    def get_children_components_by_tag_all_from_actor(self, class_name, parent, tags, include_all_descendants=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_tag_all_from_actor", class_name, parent, tags, include_all_descendants)
-
-    def get_children_components_by_type_from_actor(self, class_name, parent, include_all_descendants=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_type_from_actor", class_name, parent, include_all_descendants)
-
-    def get_children_components_by_name_as_map_from_actor(self, class_name, parent, names, include_all_descendants=True, return_null_if_not_found=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_name_as_map_from_actor", class_name, parent, names, include_all_descendants, return_null_if_not_found)
-
-    def get_children_components_by_tag_as_map_from_actor(self, class_name, parent, tag, include_all_descendants=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_tag_as_map_from_actor", class_name, parent, tag, include_all_descendants)
-
-    def get_children_components_by_tag_any_as_map_from_actor(self, class_name, parent, tags, include_all_descendants=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_tag_any_as_map_from_actor", class_name, parent, tags, include_all_descendants)
-
-    def get_children_components_by_tag_all_as_map_from_actor(self, class_name, parent, tags, include_all_descendants=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_tag_all_as_map_from_actor", class_name, parent, tags, include_all_descendants)
-
-    def get_children_components_by_type_as_map_from_actor(self, class_name, parent, include_all_descendants=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_type_as_map_from_actor", class_name, parent, include_all_descendants)
-
-    #
-    # Get child component conditionally from an actor
-    #
-
-    def get_child_component_by_name_from_actor(self, class_name, parent, name, include_all_descendants=True, assert_if_not_found=True):
-        return self._rpc_client.call("unreal_service.get_child_component_by_name_from_actor", class_name, parent, name, include_all_descendants, assert_if_not_found)
-
-    def get_child_component_by_tag_from_actor(self, class_name, parent, tag, include_all_descendants=True, assert_if_not_found=True, assert_if_multiple_found=True):
-        return self._rpc_client.call("unreal_service.get_child_component_by_tag_from_actor", class_name, parent, tag, include_all_descendants, assert_if_not_found, assert_if_multiple_found)
-
-    def get_child_component_by_tag_any_from_actor(self, class_name, parent, tags, include_all_descendants=True, assert_if_not_found=True, assert_if_multiple_found=True):
-        return self._rpc_client.call("unreal_service.get_child_component_by_tag_any_from_actor", class_name, parent, tags, include_all_descendants, assert_if_not_found, assert_if_multiple_found)
-
-    def get_child_component_by_tag_all_from_actor(self, class_name, parent, tags, include_all_descendants=True, assert_if_not_found=True, assert_if_multiple_found=True):
-        return self._rpc_client.call("unreal_service.get_child_component_by_tag_all_from_actor", class_name, parent, tags, include_all_descendants, assert_if_not_found, assert_if_multiple_found)
-
-    def get_child_component_by_type_from_actor(self, class_name, parent, include_all_descendants=True, assert_if_not_found=True, assert_if_multiple_found=True):
-        return self._rpc_client.call("unreal_service.get_child_component_by_type_from_actor", class_name, parent, include_all_descendants, assert_if_not_found, assert_if_multiple_found)
-
-    #
-    # Get children components conditionally from a scene component and return a list or dict
-    #
-
-    def get_children_components_by_name_from_scene_component(self, class_name, parent, names, include_all_descendants=True, return_null_if_not_found=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_name_from_scene_component", class_name, parent, names, include_all_descendants, return_null_if_not_found)
-
-    def get_children_components_by_tag_from_scene_component(self, class_name, parent, tag, include_all_descendants=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_tag_from_scene_component", class_name, parent, tag, include_all_descendants)
-
-    def get_children_components_by_tag_any_from_scene_component(self, class_name, parent, tags, include_all_descendants=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_tag_any_from_scene_component", class_name, parent, tags, include_all_descendants)
-
-    def get_children_components_by_tag_all_from_scene_component(self, class_name, parent, tags, include_all_descendants=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_tag_all_from_scene_component", class_name, parent, tags, include_all_descendants)
-
-    def get_children_components_by_type_from_scene_component(self, class_name, parent, include_all_descendants=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_type_from_scene_component", class_name, parent, include_all_descendants)
-
-    def get_children_components_by_name_as_map_from_scene_component(self, class_name, parent, names, include_all_descendants=True, return_null_if_not_found=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_name_as_map_from_scene_component", class_name, parent, names, include_all_descendants, return_null_if_not_found)
-
-    def get_children_components_by_tag_as_map_from_scene_component(self, class_name, parent, tag, include_all_descendants=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_tag_as_map_from_scene_component", class_name, parent, tag, include_all_descendants)
-
-    def get_children_components_by_tag_any_as_map_from_scene_component(self, class_name, parent, tags, include_all_descendants=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_tag_any_as_map_from_scene_component", class_name, parent, tags, include_all_descendants)
-
-    def get_children_components_by_tag_all_as_map_from_scene_component(self, class_name, parent, tags, include_all_descendants=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_tag_all_as_map_from_scene_component", class_name, parent, tags, include_all_descendants)
-
-    def get_children_components_by_type_as_map_from_scene_component(self, class_name, parent, include_all_descendants=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_type_as_map_from_scene_component", class_name, parent, include_all_descendants)
-
-    #
-    # Get child component conditionally from a scene component
-    #
-
-    def get_child_component_by_name_from_scene_component(self, class_name, parent, name, include_all_descendants=True, assert_if_not_found=True):
-        return self._rpc_client.call("unreal_service.get_child_component_by_name_from_scene_component", class_name, parent, name, include_all_descendants, assert_if_not_found)
-
-    def get_child_component_by_tag_from_scene_component(self, class_name, parent, tag, include_all_descendants=True, assert_if_not_found=True, assert_if_multiple_found=True):
-        return self._rpc_client.call("unreal_service.get_child_component_by_tag_from_scene_component", class_name, parent, tag, include_all_descendants, assert_if_not_found, assert_if_multiple_found)
-
-    def get_child_component_by_tag_any_from_scene_component(self, class_name, parent, tags, include_all_descendants=True, assert_if_not_found=True, assert_if_multiple_found=True):
-        return self._rpc_client.call("unreal_service.get_child_component_by_tag_any_from_scene_component", class_name, parent, tags, include_all_descendants, assert_if_not_found, assert_if_multiple_found)
-
-    def get_child_component_by_tag_all_from_scene_component(self, class_name, parent, tags, include_all_descendants=True, assert_if_not_found=True, assert_if_multiple_found=True):
-        return self._rpc_client.call("unreal_service.get_child_component_by_tag_all_from_scene_component", class_name, parent, tags, include_all_descendants, assert_if_not_found, assert_if_multiple_found)
-
-    def get_child_component_by_type_from_scene_component(self, class_name, parent, include_all_descendants=True, assert_if_not_found=True, assert_if_multiple_found=True):
-        return self._rpc_client.call("unreal_service.get_child_component_by_type_from_scene_component", class_name, parent, include_all_descendants, assert_if_not_found, assert_if_multiple_found)
+    def get_component_tags(self, actor):
+        return self._rpc_client.call("unreal_service.get_component_tags", actor)
