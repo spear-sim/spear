@@ -404,14 +404,14 @@ public:
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
     static std::vector<TReturnAsComponent*> getComponentsByTag(const AActor* actor, const std::string& tag, bool include_from_child_actors = false)
     {
-        return getComponentsByTagAny<TComponent, TReturnAsComponent>(actor, {tag});
+        return getComponentsByTagAny<TComponent, TReturnAsComponent>(actor, {tag}, include_from_child_actors);
     }
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
     static std::vector<TReturnAsComponent*> getComponentsByTagAny(const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors = false)
     {
         return Std::toVector<TReturnAsComponent*>(
-            getComponentsByType<TComponent, TReturnAsComponent>(actor) |
+            getComponentsByType<TComponent, TReturnAsComponent>(actor, include_from_child_actors) |
             std::views::filter([&tags](auto component) { return Std::any(Std::contains(getTags(component), tags)); }));
     }
 
@@ -419,14 +419,14 @@ public:
     static std::vector<TReturnAsComponent*> getComponentsByTagAll(const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors = false)
     {
         return Std::toVector<TReturnAsComponent*>(
-            getComponentsByType<TComponent, TReturnAsComponent>(actor) |
+            getComponentsByType<TComponent, TReturnAsComponent>(actor, include_from_child_actors) |
             std::views::filter([&tags](auto component) { return Std::all(Std::contains(getTags(component), tags)); }));
     }
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
     static std::vector<TReturnAsComponent*> getComponentsByType(const AActor* actor, bool include_from_child_actors = false)
     {
-        return getComponentsByClass<TReturnAsComponent>(actor, TComponent::StaticClass());
+        return getComponentsByClass<TReturnAsComponent>(actor, TComponent::StaticClass(), include_from_child_actors);
     }
 
     template <CComponent TReturnAsComponent = UActorComponent>
@@ -435,7 +435,7 @@ public:
         SP_ASSERT(actor);
         SP_ASSERT(uclass);
         TArray<UActorComponent*> components_tarray;
-        actor->GetComponents(uclass, components_tarray); // uclass can't be const because then we can't pass to GetComponents(...)
+        actor->GetComponents(uclass, components_tarray, include_from_child_actors); // uclass can't be const because then we can't pass to GetComponents(...)
         std::vector<UActorComponent*> components = toStdVector(components_tarray);
         SP_ASSERT(!Std::contains(components, nullptr));
         std::vector<TReturnAsComponent*> return_as_components = Std::toVector<TReturnAsComponent*>(
@@ -454,40 +454,40 @@ public:
         const AActor* actor, const std::vector<std::string>& names, bool include_from_child_actors = false, bool return_null_if_not_found = true)
     {
         if (return_null_if_not_found) {
-            return Std::zip(names, getComponentsByName<TComponent, TReturnAsComponent>(actor, names, return_null_if_not_found));
+            return Std::zip(names, getComponentsByName<TComponent, TReturnAsComponent>(actor, names, include_from_child_actors, return_null_if_not_found));
         } else {
-            return toMap(getComponentsByName<TComponent, TReturnAsComponent>(actor, names, return_null_if_not_found));
+            return toMap(getComponentsByName<TComponent, TReturnAsComponent>(actor, names, include_from_child_actors, return_null_if_not_found));
         }
     }
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
     static std::map<std::string, TReturnAsComponent*> getComponentsByTagAsMap(const AActor* actor, const std::string& tag, bool include_from_child_actors = false)
     {
-        return toMap(getComponentsByTagAny<TComponent, TReturnAsComponent>(actor, {tag}));
+        return toMap(getComponentsByTagAny<TComponent, TReturnAsComponent>(actor, {tag}, include_from_child_actors));
     }
     
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
     static std::map<std::string, TReturnAsComponent*> getComponentsByTagAnyAsMap(const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors = false)
     {
-        return toMap(getComponentsByTagAny<TComponent, TReturnAsComponent>(actor, tags));
+        return toMap(getComponentsByTagAny<TComponent, TReturnAsComponent>(actor, tags, include_from_child_actors));
     }
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
     static std::map<std::string, TReturnAsComponent*> getComponentsByTagAllAsMap(const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors = false)
     {
-        return toMap(getComponentsByTagAll<TComponent, TReturnAsComponent>(actor, tags));
+        return toMap(getComponentsByTagAll<TComponent, TReturnAsComponent>(actor, tags, include_from_child_actors));
     }
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires std::derived_from<TComponent, TReturnAsComponent>
     static std::map<std::string, TReturnAsComponent*> getComponentsByTypeAsMap(const AActor* actor, bool include_from_child_actors = false)
     {
-        return toMap(getComponentsByType<TComponent, TReturnAsComponent>(actor));
+        return toMap(getComponentsByType<TComponent, TReturnAsComponent>(actor, include_from_child_actors));
     }
 
     template <CComponent TReturnAsComponent = UActorComponent>
     static std::map<std::string, TReturnAsComponent*> getComponentsByClassAsMap(const AActor* actor, UClass* uclass, bool include_from_child_actors = false)
     {
-        return toMap(getComponentsByClass<TReturnAsComponent>(actor, uclass));
+        return toMap(getComponentsByClass<TReturnAsComponent>(actor, uclass, include_from_child_actors));
     }
 
     //
