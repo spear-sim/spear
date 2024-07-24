@@ -87,6 +87,14 @@ void ASpDebugWidget::GetAndSetObjectProperties()
     // Get actor from registrar
     AActor* static_mesh_actor_from_registrar = UnrealClassRegistrar::findActorByName("AStaticMeshActor", world, "Debug/SM_Prop_04");
     SP_ASSERT(static_mesh_actor_from_registrar);
+    SP_LOG(static_mesh_actor_from_registrar);
+
+    // Get actor from class
+    bool assert_if_not_found = true;
+    bool assert_if_multiple_found = false;
+    AActor* static_mesh_actor_from_class = Unreal::findActorByClass(world, AStaticMeshActor::StaticClass(), assert_if_not_found, assert_if_multiple_found);
+    SP_ASSERT(static_mesh_actor_from_class);
+    SP_LOG(Unreal::toStdString(static_mesh_actor_from_class->GetName()));
 
     // Get and set object properties from UObject*
     SP_LOG(Unreal::getObjectPropertiesAsString(static_mesh_actor));
@@ -112,6 +120,16 @@ void ASpDebugWidget::GetAndSetObjectProperties()
 
     UStaticMeshComponent* static_mesh_component = Unreal::getComponentByType<UStaticMeshComponent>(static_mesh_actor);
     SP_ASSERT(static_mesh_component);
+    SP_LOG(static_mesh_component);
+
+    // Get component from class
+    UActorComponent* actor_component = Unreal::getComponentByClass(static_mesh_actor, USceneComponent::StaticClass());
+    SP_ASSERT(actor_component);
+    SP_LOG(actor_component);
+
+    USceneComponent* scene_component = Unreal::getChildComponentByClass(static_mesh_actor, USceneComponent::StaticClass());
+    SP_ASSERT(scene_component);
+    SP_LOG(scene_component);
 
     // Get component from registrar
     UActorComponent* static_mesh_component_from_registrar = UnrealClassRegistrar::getComponentByType("UStaticMeshComponent", static_mesh_actor);

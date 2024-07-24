@@ -55,7 +55,7 @@ if __name__ == "__main__":
         if sys.platform == "win32":
             cxx_compiler = "cl"
         elif sys.platform == "darwin":
-            cxx_compiler == "clang++"
+            cxx_compiler = "clang++"
         elif sys.platform == "linux":
             cxx_compiler = os.path.join(linux_clang_bin_dir, "clang++")
             cxx_flags = f"'-std=c++20 -stdlib=libc++ -nostdinc++ -I{linux_libcpp_include_dir} -L{linux_libcpp_lib_dir}'"
