@@ -390,7 +390,7 @@ public:
     static std::vector<TReturnAsComponent*> getComponentsByName(const AActor* actor, const std::vector<std::string>& names, bool include_from_child_actors = false, bool return_null_if_not_found = true)
     {
         std::vector<TReturnAsComponent*> components;
-        std::map<std::string, TReturnAsComponent*> component_map = toMap(getComponentsByType<TComponent, TReturnAsComponent>(actor));
+        std::map<std::string, TReturnAsComponent*> component_map = toMap(getComponentsByType<TComponent, TReturnAsComponent>(actor, include_from_child_actors));
         if (return_null_if_not_found) {
             components = Std::at(component_map, names, nullptr);
         } else {

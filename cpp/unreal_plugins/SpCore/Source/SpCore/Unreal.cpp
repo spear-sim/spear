@@ -506,8 +506,9 @@ std::map<std::string, USceneComponent*> Unreal::getChildrenComponentsAsMap(const
 bool Unreal::hasStableName(const AActor* actor)
 {
     SP_ASSERT(actor);
+    bool include_from_child_actors = false;
     bool assert_if_not_found = false;
-    UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor, assert_if_not_found);
+    UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor, include_from_child_actors, assert_if_not_found);
     return stable_name_component != nullptr;
 }
 
@@ -535,8 +536,9 @@ void Unreal::setStableName(const AActor* actor, const std::string& stable_name)
     void Unreal::requestUpdateStableName(const AActor* actor)
     {
         SP_ASSERT(actor);
+        bool include_from_child_actors = false;
         bool assert_if_not_found = false;
-        UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor, assert_if_not_found);
+        UStableNameComponent* stable_name_component = getComponentByType<UStableNameComponent>(actor, include_from_child_actors, assert_if_not_found);
         if (stable_name_component) {
             stable_name_component->requestUpdate();
         }
