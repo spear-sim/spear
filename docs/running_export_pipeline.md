@@ -16,15 +16,17 @@ python tools/configure_editor_python.py --unreal_engine_dir path/to/UE_5.2
 
 Our export pipeline consists of several modular stages that can be executed sequentially as follows. In this example, each pipeline stage will generate its output in a directory called `spear-pipeline` that we specify using the `--pipeline_dir` command-line argument.
 
+Our `run_editor_script.py` tool executes a user-specified Python script from within the Unreal Editor's Python environment. Our `run_editor_script.py` tool consumes `--script` and otherwise forwards all arguments directly to the user's script. Note that our `run_editor_script.py` tool makes no attempt to modify the forwarded arguments, so if any forwarded arguments contain relative paths, these paths will be interpreted as being relative to the Unreal Engine's Python environment. Therefore, to avoid confusion, we should specify an absolute path when specifying `--pipeline_dir` in our first two pipeline stages below.
+
 In order to use our optional debug visualization tools below, you will need to install an appropriate [TraitsUI](https://docs.enthought.com/traitsui/#installation) backend for your platform.
 
 
 ```console
 # generate Unreal metadata
-python tools/run_editor_script.py --unreal_engine_dir path/to/UE_5.2 --script generate_unreal_metadata.py --pipeline_dir path/to/spear-pipeline --scene_id apartment_0000
+python tools/run_editor_script.py --unreal_engine_dir path/to/UE_5.2 --script generate_unreal_metadata.py --pipeline_dir absolute/path/to/spear-pipeline --scene_id apartment_0000
 
 # generate Unreal geometry
-python tools/run_editor_script.py --unreal_engine_dir path/to/UE_5.2 --script generate_unreal_geometry.py --pipeline_dir path/to/spear-pipeline --scene_id apartment_0000
+python tools/run_editor_script.py --unreal_engine_dir path/to/UE_5.2 --script generate_unreal_geometry.py --pipeline_dir absolute/path/to/spear-pipeline --scene_id apartment_0000
 
 # visualize Unreal geometry (optional)
 python pipeline/visualize_unreal_geometry.py --pipeline_dir path/to/spear-pipeline --scene_id apartment_0000
