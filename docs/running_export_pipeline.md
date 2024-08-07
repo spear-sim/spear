@@ -42,8 +42,8 @@ python pipeline/generate_collision_geometry.py --pipeline_dir path/to/spear-pipe
 python pipeline/visualize_collision_geometry.py --pipeline_dir path/to/spear-pipeline --scene_id apartment_0000
 
 # generate a MuJoCo scene (ignoring the ceiling actor is optional but makes the scene easier to visualize)
-python pipeline/generate_collision_geometry.py --pipeline_dir path/to/spear-pipeline --scene_id apartment_0000 --ignore_actors Meshes/22_ceiling/Ceiling
+python pipeline/generate_mujoco_scene.py --pipeline_dir path/to/spear-pipeline --scene_id apartment_0000 --ignore_actors Meshes/22_ceiling/Ceiling
 
-# interactively browse the MuJoCo scene using the default MuJoCo viewer
+# interactively browse the MuJoCo scene using the default MuJoCo viewer (optional)
 python -m mujoco.viewer --mjcf=path/to/spear-pipeline/apartment_0000/mujoco_scene/main.mjcf
 ```
