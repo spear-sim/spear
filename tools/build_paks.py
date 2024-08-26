@@ -17,7 +17,7 @@ import sys
 args = default_pak_asset_names = unreal_project_dir = unreal_project_content_dir = unreal_project_cooked_dir = None
 
 
-def build_pak(pak_name, symlink_dirs=[], cooked_include_dirs=[], expected_unreal_project_content_scene_dirs=None):
+def build_pak(pak_name, symlink_dirs={}, cooked_include_dirs=[], expected_unreal_project_content_scene_dirs=None):
 
     global args, default_pak_asset_names, unreal_project_dir, unreal_project_content_dir, unreal_project_cooked_dir
 

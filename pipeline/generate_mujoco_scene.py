@@ -54,7 +54,7 @@ main_mjcf_str = \
 
 def process_scene():
 
-    collision_geometry_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "collision_geometry"))
+    collision_geometry_dir = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "collision_geometry"))
     actors_json_file = os.path.realpath(os.path.join(collision_geometry_dir, "actors.json"))
     spear.log("Reading JSON file: " + actors_json_file)
     assert os.path.exists(collision_geometry_dir)
@@ -69,7 +69,7 @@ def process_scene():
     for actor_name, actor_kinematic_tree in actors.items():
         add_mujoco_elements(actor_name, actor_kinematic_tree, meshes_element, bodies_element, color)
 
-    mujoco_scene_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "mujoco_scene"))
+    mujoco_scene_dir = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "mujoco_scene"))
     os.makedirs(mujoco_scene_dir, exist_ok=True)
 
     meshes_mjcf_file = os.path.realpath(os.path.join(mujoco_scene_dir, "meshes.mjcf"))

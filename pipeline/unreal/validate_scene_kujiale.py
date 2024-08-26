@@ -587,15 +587,6 @@ def vector_to_array(vector):
 def array_to_vector(array):
     return unreal.Vector(array[0], array[1], array[2])
 
-# Unlike the default ActorComponent.get_parent_components() function, this function returns parent components in root-to-leaf order.
-def get_parent_components(component):
-    c = component
-    parents = []
-    while c.get_attach_parent() is not None:
-        c = c.get_attach_parent()
-        parents = [c] + parents
-    return parents
-
 def get_debug_string_static_mesh(static_mesh):
     return static_mesh.get_path_name()
 

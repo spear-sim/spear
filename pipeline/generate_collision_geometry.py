@@ -25,7 +25,7 @@ physics_constraint_component_classes = ["PhysicsConstraintComponent"]
 
 def process_scene():
 
-    kinematic_trees_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "kinematic_trees"))
+    kinematic_trees_dir = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "kinematic_trees"))
     kinematic_trees_actors_json_file = os.path.realpath(os.path.join(kinematic_trees_dir, "actors.json"))
     assert os.path.exists(kinematic_trees_dir)
     spear.log("Reading JSON file: " + kinematic_trees_actors_json_file)
@@ -35,7 +35,7 @@ def process_scene():
     actors = actors_json
     actors = { actor_name: generate_collision_geometry(actor_name, actor_kinematic_tree) for actor_name, actor_kinematic_tree in actors.items() }
 
-    collision_geometry_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "collision_geometry"))
+    collision_geometry_dir = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "collision_geometry"))
     collision_geometry_actors_json_file = os.path.realpath(os.path.join(collision_geometry_dir, "actors.json"))
     spear.log("Writing JSON file: " + collision_geometry_actors_json_file)
     os.makedirs(collision_geometry_dir, exist_ok=True)
@@ -67,7 +67,7 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
         static_mesh_components_grouped_by_merge_id = {}
 
     raw_obj_dir = os.path.realpath(os.path.join(
-        args.pipeline_dir, args.scene_id, "collision_geometry", "raw", actor_name.replace("/", "."), kinematic_tree_node["name"]))
+        args.pipeline_dir, "scenes", args.scene_id, "collision_geometry", "raw", actor_name.replace("/", "."), kinematic_tree_node["name"]))
     os.makedirs(raw_obj_dir, exist_ok=True)
 
     # TODO: Break this group-by-merge-id step into a different pipeline stage, so we can generate the
@@ -100,7 +100,7 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
 
             obj_path_suffix = os.path.join(*static_mesh_asset_path.parts[4:]) + ".obj"
             numerical_parity_obj_path = \
-                os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_geometry", "numerical_parity", obj_path_suffix))
+                os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "unreal_geometry", "numerical_parity", obj_path_suffix))
             spear.log(log_prefix_str, "Reading OBJ file: ", numerical_parity_obj_path)
 
             mesh = trimesh.load_mesh(numerical_parity_obj_path, process=False, validate=False)
@@ -124,7 +124,7 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
 
         # Save COACD result as individual parts, and as a combined mesh for debugging.
         coacd_obj_dir = os.path.realpath(os.path.join(
-            args.pipeline_dir, args.scene_id, "collision_geometry", "coacd", actor_name.replace("/", "."), kinematic_tree_node["name"]))
+            args.pipeline_dir, "scenes", args.scene_id, "collision_geometry", "coacd", actor_name.replace("/", "."), kinematic_tree_node["name"]))
         os.makedirs(coacd_obj_dir, exist_ok=True)
 
         coacd_part_obj_dir = os.path.realpath(os.path.join(coacd_obj_dir, f"merge_id_{merge_id:04}"))

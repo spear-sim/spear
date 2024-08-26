@@ -56,7 +56,7 @@ if args.visual_parity_with_unreal:
 
 def process_scene():
 
-    unreal_metadata_dir = os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_metadata"))
+    unreal_metadata_dir = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "unreal_metadata"))
     actors_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "actors.json"))
     assert os.path.exists(unreal_metadata_dir)
     spear.log("Reading JSON file: " + actors_json_file)
@@ -133,7 +133,7 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
 
                     obj_path_suffix = os.path.join(*static_mesh_asset_path.parts[4:]) + ".obj"
                     numerical_parity_obj_path = \
-                        os.path.realpath(os.path.join(args.pipeline_dir, args.scene_id, "unreal_geometry", "numerical_parity", obj_path_suffix))
+                        os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "unreal_geometry", "numerical_parity", obj_path_suffix))
                     spear.log(log_prefix_str, "Reading OBJ file: ", numerical_parity_obj_path)
 
                     mesh = trimesh.load_mesh(numerical_parity_obj_path, process=False, validate=False)

@@ -44,8 +44,7 @@ def generate_unreal_geometry(actor):
 
     global editor_world_name
 
-    print(editor_world_name)
-    static_mesh_components  = spear.unreal.find_components(actor, unreal.StaticMeshComponent)
+    static_mesh_components  = spear.unreal.get_components(actor, unreal.StaticMeshComponent)
     static_meshes           = [ static_mesh_component.get_editor_property("static_mesh") for static_mesh_component in static_mesh_components ]
     static_meshes           = [ static_mesh for static_mesh in static_meshes if static_mesh is not None ]
     static_mesh_asset_paths = [ pathlib.PurePosixPath(static_mesh.get_path_name()) for static_mesh in static_meshes ]
@@ -61,7 +60,7 @@ def generate_unreal_geometry(actor):
         # what they were originally.
 
         obj_path_suffix = os.path.join(*static_mesh_asset_path.parts[4:]) + ".obj"
-        raw_obj_path = os.path.realpath(os.path.join(args.pipeline_dir, editor_world_name, "unreal_geometry", "raw", obj_path_suffix))
+        raw_obj_path = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", editor_world_name, "unreal_geometry", "raw", obj_path_suffix))
 
         errors = []
         asset_export_task = unreal.AssetExportTask()
@@ -105,8 +104,8 @@ def generate_unreal_geometry(actor):
         mesh.visual = trimesh.visual.ColorVisuals()
 
         obj_dir_suffix = os.path.join(*static_mesh_asset_path.parts[4:-1])
-        numerical_parity_obj_dir = os.path.realpath(os.path.join(args.pipeline_dir, editor_world_name, "unreal_geometry", "numerical_parity", obj_dir_suffix))
-        numerical_parity_obj_path = os.path.realpath(os.path.join(args.pipeline_dir, editor_world_name, "unreal_geometry", "numerical_parity", obj_path_suffix))
+        numerical_parity_obj_dir = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", editor_world_name, "unreal_geometry", "numerical_parity", obj_dir_suffix))
+        numerical_parity_obj_path = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", editor_world_name, "unreal_geometry", "numerical_parity", obj_path_suffix))
         os.makedirs(numerical_parity_obj_dir, exist_ok=True)
         with open(numerical_parity_obj_path, "w"):
             mesh.export(numerical_parity_obj_path, "obj")

@@ -25,7 +25,7 @@ def find_actor(name):
         return None
 
 
-def find_components(actor, component_class=unreal.ActorComponent):
+def get_components(actor, component_class=unreal.ActorComponent):
     components = []
     component_names = []
 
@@ -48,13 +48,13 @@ def find_components(actor, component_class=unreal.ActorComponent):
     return components
 
 
-def find_component(stable_name, actor=None):
+def get_component(stable_name, actor=None):
     if actor is None:
         stable_actor_name, stable_component_name = stable_name.split(":")
         actor = find_actor(stable_actor_name)
     else:
         stable_component_name = stable_name
-    components = [ c for c in find_components(actor) if get_stable_name_for_component(c) == stable_component_name ]
+    components = [ c for c in get_components(actor) if get_stable_name_for_component(c) == stable_component_name ]
     if len(components) == 1:
         return components[0]
     else:
