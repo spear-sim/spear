@@ -13,8 +13,8 @@ import sys
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--unreal_engine_dir", required=True)
     parser.add_argument("--version_tag", required=True)
+    parser.add_argument("--unreal_engine_dir", required=True)
     parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
     parser.add_argument("--conda_env", default="spear-env")
     parser.add_argument("--num_parallel_jobs", type=int, default=1)
@@ -113,17 +113,17 @@ if __name__ == "__main__":
         cmd = \
             cmd_prefix + \
             "python " + \
-            "build_third_party_libs.py " + \
+            f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'build_third_party_libs.py'))} " + \
             f"--third_party_dir  {third_party_dir} " + \
             f"--num_parallel_jobs {args.num_parallel_jobs}"
-        spear.log(f"Executing: {' '.join(cmd)}")
+        spear.log(f"Executing: {cmd}")
         subprocess.run(cmd, shell=True, check=True)
 
     # create symbolic links (we need shell=True because we want to run in a specific anaconda env)
     cmd = \
         cmd_prefix + \
         "python " + \
-        "create_symlinks.py " + \
+        f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'update_symlinks_for_project.py'))} " + \
         f"--unreal_project_dir {unreal_project_dir} " + \
         f"--unreal_plugins_dir {unreal_plugins_dir} " + \
         f"--third_party_dir {third_party_dir}"
@@ -136,7 +136,7 @@ if __name__ == "__main__":
     cmd = \
         cmd_prefix + \
         "python " + \
-        "copy_unreal_engine_dir_content.py " + \
+        f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'copy_engine_content.py'))} " + \
         f'--unreal_engine_dir "{args.unreal_engine_dir}" ' + \
         f"--unreal_project_dir {unreal_project_dir}"
     spear.log(f"Executing: {cmd}")

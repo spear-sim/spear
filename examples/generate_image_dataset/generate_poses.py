@@ -18,7 +18,7 @@ import instance_utils
 import navmesh
 
 
-CAMERA_LOCATION_Z_OFFSET = 200.0
+camera_location_z_offset = 200.0
 
 
 if __name__ == "__main__":

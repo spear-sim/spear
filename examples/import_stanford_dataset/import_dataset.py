@@ -2,7 +2,9 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
+import argparse
 import os
+import pandas as pd
 import posixpath
 import spear
 import unreal
@@ -12,30 +14,32 @@ mesh_descs = [
     {
         "gltf_file": os.path.realpath(os.path.join(os.path.dirname(__file__), "gltf", "bunny", "mesh.gltf")),
         "static_mesh_name": "SM_Bunny",
-        "static_mesh_path": "/Game/User/Meshes",
+        "static_mesh_path": "/Game/Stanford/Meshes",
         "material_name": "M_Metal_Gold",
         "material_path": "/Game/StarterContent/Materials",
         "blueprint_name": "BP_Bunny",
-        "blueprint_path": "/Game/User/Blueprints"
+        "blueprint_path": "/Game/Stanford/Blueprints"
     },
     {
         "gltf_file": os.path.realpath(os.path.join(os.path.dirname(__file__), "gltf", "happy", "mesh.gltf")),
         "static_mesh_name": "SM_Happy",
-        "static_mesh_path": "/Game/User/Meshes",
+        "static_mesh_path": "/Game/Stanford/Meshes",
         "material_name": "M_Metal_Rust",
         "material_path": "/Game/StarterContent/Materials",
         "blueprint_name": "BP_Happy",
-        "blueprint_path": "/Game/User/Blueprints"
+        "blueprint_path": "/Game/Stanford/Blueprints",
     },
     {
         "gltf_file": os.path.realpath(os.path.join(os.path.dirname(__file__), "gltf", "dragon", "mesh.gltf")),
         "static_mesh_name": "SM_Dragon",
-        "static_mesh_path": "/Game/User/Meshes",
+        "static_mesh_path": "/Game/Stanford/Meshes",
         "material_name": "M_Ground_Grass",
         "material_path": "/Game/StarterContent/Materials",
         "blueprint_name": "BP_Dragon",
-        "blueprint_path": "/Game/User/Blueprints"
+        "blueprint_path": "/Game/Stanford/Blueprints",
     }]
+
+include_assets = [os.path.join("SpearSim", "Content", "Stanford", "**", "*.*")]
 
 asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
 editor_asset_subsystem = unreal.get_editor_subsystem(unreal.EditorAssetSubsystem)
@@ -44,10 +48,14 @@ subobject_data_subsystem = unreal.get_engine_subsystem(unreal.SubobjectDataSubsy
 
 if __name__ == "__main__":
 
+    # import data into Unreal project
     for mesh_desc in mesh_descs:
 
+        static_mesh_tmp_path = posixpath.join(mesh_desc["static_mesh_path"], "mesh")
+        static_mesh_path = posixpath.join(mesh_desc["static_mesh_path"], mesh_desc["static_mesh_name"])
+
         # import mesh, note that asset_import_task.destination_name seems to be ignored, so we need to rename after import
-        spear.log(f"Importing {mesh_desc['gltf_file']} to {mesh_desc['static_mesh_path']}/{mesh_desc['static_mesh_name']}...")
+        spear.log(f"Importing {mesh_desc['gltf_file']} to {static_mesh_tmp_path}...")
 
         asset_import_task = unreal.AssetImportTask()
         asset_import_task.set_editor_property("async_", False)
@@ -62,35 +70,31 @@ if __name__ == "__main__":
         asset_tools.import_asset_tasks([asset_import_task])
 
         # rename
-        source_path = posixpath.join(mesh_desc["static_mesh_path"], "mesh")
-        destination_path = posixpath.join(mesh_desc["static_mesh_path"], mesh_desc["static_mesh_name"])
-        destination_package_path, destination_asset_name = os.path.split(destination_path)
-
-        if unreal.EditorAssetLibrary.does_asset_exist(destination_path):
-            spear.log(f"Asset exists, deleting {destination_path}...")
-            success = unreal.EditorAssetLibrary.delete_asset(destination_path)
+        if unreal.EditorAssetLibrary.does_asset_exist(static_mesh_path):
+            spear.log(f"Asset exists, removing: {static_mesh_path}")
+            success = unreal.EditorAssetLibrary.delete_asset(static_mesh_path)
             assert success
 
-        spear.log(f"Renaming {source_path} to {destination_path}...")
+        spear.log(f"Renaming {static_mesh_tmp_path} to {static_mesh_path}")
 
-        asset = unreal.load_asset(source_path)
+        asset = unreal.load_asset(static_mesh_tmp_path)
         assert asset is not None
 
         asset_rename_data = unreal.AssetRenameData()
         asset_rename_data.set_editor_property("asset", asset)
-        asset_rename_data.set_editor_property("new_name", destination_asset_name)
-        asset_rename_data.set_editor_property("new_package_path", destination_package_path)
+        asset_rename_data.set_editor_property("new_name", mesh_desc["static_mesh_name"])
+        asset_rename_data.set_editor_property("new_package_path", mesh_desc["static_mesh_path"])
 
         asset_tools.rename_assets([asset_rename_data])
 
         # create blueprint type
         blueprint_path = posixpath.join(mesh_desc["blueprint_path"], mesh_desc["blueprint_name"])
         if unreal.EditorAssetLibrary.does_asset_exist(blueprint_path):
-            spear.log(f"Asset exists, deleting {blueprint_path}...")
+            spear.log(f"Asset exists, removing: {blueprint_path}")
             success = unreal.EditorAssetLibrary.delete_asset(blueprint_path)
             assert success
 
-        spear.log(f"Creating {blueprint_path}...")
+        spear.log(f"Creating: {blueprint_path}")
          
         blueprint_factory = unreal.BlueprintFactory()
         blueprint_factory.set_editor_property("parent_class", unreal.StaticMeshActor)
@@ -134,8 +138,16 @@ if __name__ == "__main__":
         pivot_offset = unreal.Vector(bounds_origin.x, bounds_origin.y, bounds_origin.z - bounds_half_extent.z)
         actor.set_editor_property("pivot_offset", pivot_offset)
 
-        spear.log(f"Saving: {blueprint_path}...")
+        spear.log(f"Saving: {blueprint_path}")
 
         editor_asset_subsystem.save_loaded_asset(blueprint_asset)
+
+    # create manifest include file
+    include_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "include.csv"))
+
+    spear.log(f"Writing include file: {include_file}")
+
+    df = pd.DataFrame(columns=["include_assets"], data={"include_assets": include_assets})
+    df.to_csv(include_file, index=False)
 
     spear.log(f"Done.")

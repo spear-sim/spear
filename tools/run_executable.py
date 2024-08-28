@@ -13,7 +13,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--executable", required=True)
     parser.add_argument("--paks_dir")
-    parser.add_argument("--paks_version_tag")
+    parser.add_argument("--version_tag")
     parser.add_argument("--scene_id")
     parser.add_argument("--map_id")
     parser.add_argument("--vk_icd_filenames")
@@ -31,8 +31,8 @@ if __name__ == "__main__":
     config.SPEAR.STANDALONE_EXECUTABLE = args.executable
     if args.paks_dir is not None:
         config.SPEAR.PAKS_DIR = args.paks_dir
-    if args.paks_version_tag is not None:
-        config.SPEAR.PAKS_VERSION_TAG = args.paks_version_tag
+    if args.version_tag is not None:
+        config.SPEAR.PAKS_VERSION_TAG = args.version_tag
     if args.scene_id is not None:
         config.SP_SERVICES.LEGACY_SERVICE.SCENE_ID = args.scene_id
     if args.map_id is not None:

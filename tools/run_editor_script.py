@@ -12,8 +12,8 @@ import sys
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--unreal_engine_dir", required=True)
     parser.add_argument("--script", required=True)
+    parser.add_argument("--unreal_engine_dir", required=True)
     args, unknown_args = parser.parse_known_args() # get remaining args to pass to inner script
 
     assert os.path.exists(args.unreal_engine_dir)

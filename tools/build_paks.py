@@ -7,183 +7,278 @@ import fnmatch
 import glob
 import ntpath
 import os
+import pandas as pd
 import posixpath
 import spear
 import subprocess
 import sys
 
 
-# globals needed in build_pak(...)
-args = default_pak_asset_names = unreal_project_dir = unreal_project_content_dir = unreal_project_cooked_dir = None
-
-
-def build_pak(pak_name, symlink_dirs={}, cooked_include_dirs=[], expected_unreal_project_content_scene_dirs=None):
-
-    global args, default_pak_asset_names, unreal_project_dir, unreal_project_content_dir, unreal_project_cooked_dir
-
-    spear.log(f"Building: {pak_name}")
-
-    # input paths
-    uproject = os.path.realpath(os.path.join(unreal_project_dir, "SpearSim.uproject"))
-    unreal_project_content_scenes_dir = os.path.realpath(os.path.join(unreal_project_content_dir, "Scenes"))
-    unreal_project_cooked_dir_posix = unreal_project_cooked_dir.replace(ntpath.sep, posixpath.sep)
-
-    # output paths
-    paks_version_dir = os.path.realpath(os.path.join(args.paks_dir, args.version_tag))
-    txt_file         = os.path.realpath(os.path.join(paks_version_dir, pak_name + "-" + args.version_tag + "-" + platform + ".txt"))
-    pak_file         = os.path.realpath(os.path.join(paks_version_dir, pak_name + "-" + args.version_tag + "-" + platform + ".pak"))
-
-    # create symlinks
-    for symlink_dir_physical, symlink_dir_virtual in symlink_dirs.items():
-        if spear.path_exists(symlink_dir_virtual):
-            spear.log(f"    File or directory or symlink exists, removing: {symlink_dir_virtual}")
-            spear.remove_path(symlink_dir_virtual)
-        spear.log(f"    Creating symlink: {symlink_dir_virtual} -> {symlink_dir_physical}")
-        os.symlink(symlink_dir_physical, symlink_dir_virtual)
-
-    # now that we have created our symlinks, check that the Content/Scenes dir contains exactly expected_unreal_project_content_scene_dirs
-    if expected_unreal_project_content_scene_dirs is not None:
-        ignore_names = [".DS_Store"]
-        unreal_project_content_scene_dirs = { os.path.basename(x) for x in os.listdir(unreal_project_content_scenes_dir) if x not in ignore_names }
-        assert unreal_project_content_scene_dirs == set(expected_unreal_project_content_scene_dirs)
-
-    # cook project, see https://docs.unrealengine.com/5.2/en-US/SharingAndReleasing/Deployment/Cooking for more details
-    cmd = [
-        unreal_editor_bin,
-        uproject,
-        "-run=Cook",
-        "-targetplatform=" + platform,
-        "-unattended",                           # don't require any user input
-        "-iterate",                              # only cook content that needs to be updated
-        "-fileopenlog",                          # generate a log of which files are opened in which order
-        "-ddc=InstalledDerivedDataBackendGraph", # use the default cache location for installed (i.e., not source) builds of the engine
-        "-unversioned",                          # save all of the cooked packages without versions
-        "-stdout",                               # ensure log output is written to the terminal 
-        "-fullstdoutlogoutput",                  # ensure log output is written to the terminal
-        "-nologtimes"]                           # don't print timestamps next to log messages twice
-    spear.log(f"    Executing: {' '.join(cmd)}")
-    subprocess.run(cmd, check=True)
-
-    # create the output dir
-    os.makedirs(paks_version_dir, exist_ok=True)
-
-    # create manifest file in output dir
-    with open(txt_file, mode="w") as f:
-        for cooked_include_dir in cooked_include_dirs:
-            for cooked_include_file in glob.glob(os.path.realpath(os.path.join(cooked_include_dir, "**", "*.*")), recursive=True):
-
-                cooked_include_file_posix = cooked_include_file.replace(ntpath.sep, posixpath.sep)
-                assert cooked_include_file_posix.startswith(unreal_project_cooked_dir_posix)
-                asset_name = cooked_include_file_posix.removeprefix(unreal_project_cooked_dir_posix + posixpath.sep)
-
-                if asset_name not in default_pak_asset_names:
-                    cooked_mount_file_posix = posixpath.join("..", "..", "..", cooked_include_file_posix.replace(unreal_project_cooked_dir_posix + posixpath.sep, ""))
-                    f.write(f'"{cooked_include_file_posix}" "{cooked_mount_file_posix}" "" \n')
-
-    # build pak file
-    cmd = [unreal_pak_bin, pak_file, "-create=" + txt_file, "-platform=" + platform, "-multiprocess", "-compressed"]
-    spear.log(f"    Executing: {' '.join(cmd)}")
-    subprocess.run(cmd, check=True)
-
-    assert os.path.exists(pak_file)
-    spear.log(f"    Successfully built: {pak_file}")
-
-    # remove symlinks
-    for symlink_dir_physical, symlink_dir_virtual in symlink_dirs.items():
-        spear.log(f"    Removing symlink: {symlink_dir_virtual}")
-        spear.remove_path(symlink_dir_virtual)
-
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--unreal_engine_dir", required=True)
-    parser.add_argument("--perforce_content_dir", required=True)
+    parser.add_argument("--external_content_dir", required=True)
     parser.add_argument("--paks_dir", required=True)
     parser.add_argument("--version_tag", required=True)
+    parser.add_argument("--unreal_engine_dir", required=True)
     parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
+    parser.add_argument("--conda_env", default="spear-env")
+    parser.add_argument("--conda_script")
     parser.add_argument("--scene_ids")
     parser.add_argument("--skip_build_common_pak", action="store_true")
+    parser.add_argument("--skip_build_scene_paks", action="store_true")
     args = parser.parse_args()
 
     assert os.path.exists(args.unreal_engine_dir)
-    assert os.path.exists(args.perforce_content_dir)
+    assert os.path.exists(args.external_content_dir)
     assert os.path.exists(args.build_dir)
 
     if sys.platform == "win32":
-        platform          = "Windows"
-        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealEditor.exe"))
-        unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealPak.exe"))
-        default_pak       = os.path.realpath(os.path.join(args.build_dir, "SpearSim-Win64-Shipping", "Windows", "SpearSim", "Content", "Paks", "SpearSim-Windows.pak"))
+        platform       = "Windows"
+        unreal_pak_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealPak.exe"))
+        default_pak    = os.path.realpath(os.path.join(args.build_dir, "SpearSim-Win64-Shipping", "Windows", "SpearSim", "Content", "Paks", "SpearSim-Windows.pak"))
+        cmd_prefix     = f"conda activate {args.conda_env}& "
+
     elif sys.platform == "darwin":
-        platform          = "Mac"
-        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UnrealEditor.app", "Contents", "MacOS", "UnrealEditor"))
-        unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UnrealPak"))
-        default_pak       = os.path.realpath(os.path.join(args.build_dir, "SpearSim-Mac-Shipping-Unsigned", "Mac", "SpearSim-Mac-Shipping.app", "Contents", "UE", "SpearSim", "Content", "Paks", "SpearSim-Mac.pak"))
+        platform       = "Mac"
+        unreal_pak_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UnrealPak"))
+        default_pak    = os.path.realpath(os.path.join(args.build_dir, "SpearSim-Mac-Shipping-Unsigned", "Mac", "SpearSim-Mac-Shipping.app", "Contents", "UE", "SpearSim", "Content", "Paks", "SpearSim-Mac.pak"))
+
+        if args.conda_script:
+            conda_script = args.conda_script
+        else:
+            # default for graphical install, see https://docs.anaconda.com/anaconda/user-guide/faq
+            conda_script = os.path.expanduser(os.path.join("~", "opt", "anaconda3", "etc", "profile.d", "conda.sh"))
+
+        cmd_prefix = f". {conda_script}; conda activate {args.conda_env}; "
+
     elif sys.platform == "linux":
-        platform          = "Linux"
-        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UnrealEditor"))
-        unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UnrealPak"))
-        default_pak       = os.path.realpath(os.path.join(args.build_dir, "SpearSim-Linux-Shipping", "Linux", "SpearSim", "Content", "Paks", "SpearSim-Linux.pak"))
+        platform       = "Linux"
+        unreal_pak_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UnrealPak"))
+        default_pak    = os.path.realpath(os.path.join(args.build_dir, "SpearSim-Linux-Shipping", "Linux", "SpearSim", "Content", "Paks", "SpearSim-Linux.pak"))
+
+        if args.conda_script:
+            conda_script = args.conda_script
+        else:
+            # see https://docs.anaconda.com/anaconda/user-guide/faq
+            conda_script = os.path.expanduser(os.path.join("~", "anaconda3", "etc", "profile.d", "conda.sh"))
+
+        cmd_prefix = f". {conda_script}; conda activate {args.conda_env}; "
+
     else:
         assert False
 
-    unreal_project_dir                = os.path.realpath(os.path.join(args.build_dir, "spear", "cpp", "unreal_projects", "SpearSim"))
-    unreal_project_content_dir        = os.path.realpath(os.path.join(unreal_project_dir, "Content"))
-    unreal_project_content_scenes_dir = os.path.realpath(os.path.join(unreal_project_content_dir, "Scenes"))
-    unreal_project_cooked_dir         = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform))
-    perforce_content_scenes_dir       = os.path.realpath(os.path.join(args.perforce_content_dir, "Scenes"))
+    unreal_project_dir = os.path.realpath(os.path.join(args.build_dir, "spear", "cpp", "unreal_projects", "SpearSim"))
 
-    # extract asset names from the executable's pak file
-    cmd = [unreal_pak_bin, "-List", default_pak]
-    spear.log(f"    Executing: {' '.join(cmd)}")
-    ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
-    default_pak_asset_names = []
-    for line in ps.stdout:
-        default_pak_asset_names.append(line.removeprefix('LogPakFile: Display: "').split('" offset: ', 1)[0])
-    ps.wait()
-    ps.stdout.close()
+    #
+    # create directory for include/exclude files
+    #
 
-    # We do not want to use os.path.realpath(...) for the values in symlink_dirs and cooked_include_dirs, because
-    # we do not want these values to resolve to directories inside the user's Perforce workspace. Instead,
-    # we want these values to refer to unresolved symlink directories in the user's Unreal project directory.
- 
+    build_paks_dir = os.path.realpath(os.path.join(args.build_dir, "paks"))
+    os.makedirs(build_paks_dir, exist_ok=True)
+
+    #
+    # create symlinks for Megascans and MSPresets
+    #
+
+    content_dir = "Megascans"
+    update_action = "create"
+    cmd = \
+        cmd_prefix + \
+        "python " + \
+        f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'update_symlinks_for_external_content.py'))} " + \
+        f"--unreal_project_content_dir {content_dir} " + \
+        f"--unreal_project_dir {unreal_project_dir} " + \
+        f"--external_content_dir {os.path.realpath(os.path.join(args.external_content_dir, content_dir))} " + \
+        f"--{update_action}"
+    spear.log(f"Executing: {cmd}")
+    subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
+
+    content_dir = "MSPresets"
+    update_action = "create"
+    cmd = \
+        cmd_prefix + \
+        "python " + \
+        f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'update_symlinks_for_external_content.py'))} " + \
+        f"--unreal_project_content_dir {content_dir} " + \
+        f"--unreal_project_dir {unreal_project_dir} " + \
+        f"--external_content_dir {os.path.realpath(os.path.join(args.external_content_dir, content_dir))} " + \
+        f"--{update_action}"
+    spear.log(f"Executing: {cmd}")
+    subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
+
+    #
     # build common pak
+    #
+
     if not args.skip_build_common_pak:
-        pak_name = "common"
-        symlink_dirs = {
-            os.path.realpath(os.path.join(args.perforce_content_dir, "Megascans")): os.path.join(unreal_project_content_dir, "Megascans"),
-            os.path.realpath(os.path.join(args.perforce_content_dir, "MSPresets")): os.path.join(unreal_project_content_dir, "MSPresets")}
-        cooked_include_dirs = [
-            os.path.join(unreal_project_cooked_dir, "Engine", "Content"),
-            os.path.join(unreal_project_cooked_dir, "Engine", "Plugins"),
-            os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Megascans"),
-            os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "MSPresets")]
-        expected_unreal_project_content_scene_dirs = ["apartment_0000", "debug_0000", "debug_0001"]
-        build_pak(pak_name, symlink_dirs, cooked_include_dirs, expected_unreal_project_content_scene_dirs)
 
-    # get scene ids for building per-scene paks
-    ignore_names = [".DS_Store"]
-    candidate_scene_ids = [ os.path.basename(x) for x in os.listdir(perforce_content_scenes_dir) if x not in ignore_names ]
+        include_file = os.path.realpath(os.path.join(build_paks_dir, f"common-{args.version_tag}-{platform}_include_assets.csv"))
+        include_assets = [
+            os.path.join("Engine", "Content", "**", "*.*"),
+            os.path.join("Engine", "Plugins", "**", "*.*"),
+            os.path.join("SpearSim", "Content", "Megascans", "**", "*.*"),
+            os.path.join("SpearSim", "Content", "MSPresets", "**", "*.*")]
+        df = pd.DataFrame(columns=["include_assets"], data={"include_assets": include_assets})
+        df.to_csv(include_file, index=False)
 
-    if args.scene_ids is None:
-        scene_ids = candidate_scene_ids
-    else:
-        arg_scene_id_strings = args.scene_ids.split(",")
-        scene_ids = []
-        for arg_scene_id_string in arg_scene_id_strings:
-            scene_ids.extend([ candidate_scene_id for candidate_scene_id in candidate_scene_ids if fnmatch.fnmatch(candidate_scene_id, arg_scene_id_string) ])
+        exclude_file = os.path.realpath(os.path.join(build_paks_dir, f"common-{args.version_tag}-{platform}_exclude_assets.csv"))
+        exclude_pak_files = [default_pak]
+        exclude_assets = []
+        for exclude_pak_file in exclude_pak_files:
+            cmd = [unreal_pak_bin, "-List", exclude_pak_file]
+            spear.log(f"Executing: {' '.join(cmd)}")
+            ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
+            for line in ps.stdout:
+                line_split = line.split('"')
+                if len(line_split) == 3:
+                    asset = line_split[1]
+                    exclude_assets.append(asset)
+            ps.wait()
+            ps.stdout.close()
+        exclude_assets = sorted(list(set(exclude_assets)))
+        df = pd.DataFrame(columns=["exclude_assets"], data={"exclude_assets": exclude_assets})
+        df.to_csv(exclude_file, index=False)
 
-    # build per-scene paks
-    for scene_id in scene_ids:
-        pak_name = scene_id
-        symlink_dirs = {
-            os.path.realpath(os.path.join(args.perforce_content_dir, "Megascans")): os.path.join(unreal_project_content_dir, "Megascans"),
-            os.path.realpath(os.path.join(args.perforce_content_dir, "MSPresets")): os.path.join(unreal_project_content_dir, "MSPresets"),
-            os.path.realpath(os.path.join(perforce_content_scenes_dir, scene_id)):  os.path.join(unreal_project_content_scenes_dir, scene_id)}
-        cooked_include_dirs = [
-            os.path.realpath(os.path.join(unreal_project_cooked_dir, "SpearSim", "Content", "Scenes", scene_id))]
-        expected_unreal_project_content_scene_dirs = ["apartment_0000", "debug_0000", "debug_0001", scene_id]
-        build_pak(pak_name, symlink_dirs, cooked_include_dirs, expected_unreal_project_content_scene_dirs)
+        pak_file = f"common-{args.version_tag}-{platform}.pak"
+        cmd = \
+            cmd_prefix + \
+            "python " + \
+            f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'build_pak.py'))} " + \
+            f"--paks_dir {args.paks_dir} " + \
+            f"--version_tag {args.version_tag} " + \
+            f"--pak_file {pak_file} " + \
+            f"--include_file {include_file} " + \
+            f"--exclude_file {exclude_file} " + \
+            f"--unreal_engine_dir {args.unreal_engine_dir} " + \
+            f"--unreal_project_dir {unreal_project_dir}"
+        spear.log(f"Executing: {cmd}")
+        subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
+
+    #
+    # build scene-specific paks
+    #
+
+    if not args.skip_build_scene_paks:
+
+        external_content_scenes_dir = os.path.realpath(os.path.join(args.external_content_dir, "Scenes"))
+        ignore_names = [".DS_Store"]
+        candidate_scene_ids = [ os.path.basename(x) for x in sorted(os.listdir(external_content_scenes_dir)) if x not in ignore_names ]
+
+        if args.scene_ids is None:
+            scene_ids = candidate_scene_ids
+        else:
+            arg_scene_ids = args.scene_ids.split(",")
+            matched_scene_ids = []
+            for candidate_scene_id in candidate_scene_ids:
+                for arg_scene_id in arg_scene_ids:
+                    if fnmatch.fnmatch(candidate_scene_id, arg_scene_id):
+                        matched_scene_ids.append(candidate_scene_id)
+                        break
+            scene_ids = matched_scene_ids
+
+        for scene_id in scene_ids:
+
+            # create symlink
+            content_dir = os.path.join("Scenes", scene_id)
+            update_action = "create"
+            cmd = \
+                cmd_prefix + \
+                "python " + \
+                f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'update_symlinks_for_external_content.py'))} " + \
+                f"--unreal_project_content_dir {content_dir} " + \
+                f"--unreal_project_dir {unreal_project_dir} " + \
+                f"--external_content_dir {os.path.realpath(os.path.join(args.external_content_dir, content_dir))} " + \
+                f"--{update_action}"
+            spear.log(f"Executing: {cmd}")
+            subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
+
+            # build pak
+            include_file = os.path.realpath(os.path.join(build_paks_dir, f"{scene_id}-{args.version_tag}-{platform}_include_assets.csv"))
+            include_assets = [
+                os.path.join("Engine", "Content", "**", "*.*"),
+                os.path.join("Engine", "Plugins", "**", "*.*"),
+                os.path.join("SpearSim", "Content", "Megascans", "**", "*.*"),
+                os.path.join("SpearSim", "Content", "MSPresets", "**", "*.*"),
+                os.path.join("SpearSim", "Content", "Scenes", scene_id, "**", "*.*")]
+            df = pd.DataFrame(columns=["include_assets"], data={"include_assets": include_assets})
+            df.to_csv(include_file, index=False)
+
+            exclude_file = os.path.realpath(os.path.join(build_paks_dir, f"{scene_id}-{args.version_tag}-{platform}_exclude_assets.csv"))
+            exclude_pak_files = [default_pak, os.path.realpath(os.path.join(args.paks_dir, args.version_tag, f"common-{args.version_tag}-{platform}.pak"))]
+            exclude_assets = []
+            for exclude_pak_file in exclude_pak_files:
+                cmd = [unreal_pak_bin, "-List", exclude_pak_file]
+                spear.log(f"Executing: {' '.join(cmd)}")
+                ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
+                for line in ps.stdout:
+                    line_split = line.split('"')
+                    if len(line_split) == 3:
+                        asset = line_split[1]
+                        exclude_assets.append(asset)
+                ps.wait()
+                ps.stdout.close()
+            exclude_assets = sorted(list(set(exclude_assets)))
+            df = pd.DataFrame(columns=["exclude_assets"], data={"exclude_assets": exclude_assets})
+            df.to_csv(exclude_file, index=False)
+
+            pak_file = f"{scene_id}-{args.version_tag}-{platform}.pak"
+            cmd = \
+                cmd_prefix + \
+                "python " + \
+                f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'build_pak.py'))} " + \
+                f"--paks_dir {args.paks_dir} " + \
+                f"--version_tag {args.version_tag} " + \
+                f"--pak_file {pak_file} " + \
+                f"--include_file {include_file} " + \
+                f"--exclude_file {exclude_file} " + \
+                f"--unreal_engine_dir {args.unreal_engine_dir} " + \
+                f"--unreal_project_dir {unreal_project_dir}"
+            spear.log(f"Executing: {cmd}")
+            subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
+
+            # remove symlink
+            content_dir = os.path.join("Scenes", scene_id)
+            update_action = "remove"
+            cmd = \
+                cmd_prefix + \
+                "python " + \
+                f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'update_symlinks_for_external_content.py'))} " + \
+                f"--unreal_project_content_dir {content_dir} " + \
+                f"--unreal_project_dir {unreal_project_dir} " + \
+                f"--external_content_dir {os.path.realpath(os.path.join(args.external_content_dir, content_dir))} " + \
+                f"--{update_action}"
+            spear.log(f"Executing: {cmd}")
+            subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
+
+    #
+    # remove symlinks for Megascans and MSPresets
+    #
+
+    content_dir = "Megascans"
+    update_action = "remove"
+    cmd = \
+        cmd_prefix + \
+        "python " + \
+        f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'update_symlinks_for_external_content.py'))} " + \
+        f"--unreal_project_content_dir {content_dir} " + \
+        f"--unreal_project_dir {unreal_project_dir} " + \
+        f"--external_content_dir {os.path.realpath(os.path.join(args.external_content_dir, content_dir))} " + \
+        f"--{update_action}"
+    spear.log(f"Executing: {cmd}")
+    subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
+
+    content_dir = "MSPresets"
+    update_action = "remove"
+    cmd = \
+        cmd_prefix + \
+        "python " + \
+        f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'update_symlinks_for_external_content.py'))} " + \
+        f"--unreal_project_content_dir {content_dir} " + \
+        f"--unreal_project_dir {unreal_project_dir} " + \
+        f"--external_content_dir {os.path.realpath(os.path.join(args.external_content_dir, content_dir))} " + \
+        f"--{update_action}"
+    spear.log(f"Executing: {cmd}")
+    subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
 
     spear.log("Done.")
