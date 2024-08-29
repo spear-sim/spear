@@ -15,7 +15,7 @@ mesh_descs = [
         "gltf_file": os.path.realpath(os.path.join(os.path.dirname(__file__), "gltf", "bunny", "mesh.gltf")),
         "static_mesh_name": "SM_Bunny",
         "static_mesh_path": "/Game/Stanford/Meshes",
-        "material_name": "M_Metal_Gold",
+        "material_name": "M_Metal_Rust",
         "material_path": "/Game/StarterContent/Materials",
         "blueprint_name": "BP_Bunny",
         "blueprint_path": "/Game/Stanford/Blueprints"
@@ -24,7 +24,7 @@ mesh_descs = [
         "gltf_file": os.path.realpath(os.path.join(os.path.dirname(__file__), "gltf", "happy", "mesh.gltf")),
         "static_mesh_name": "SM_Happy",
         "static_mesh_path": "/Game/Stanford/Meshes",
-        "material_name": "M_Metal_Rust",
+        "material_name": "M_Ground_Grass",
         "material_path": "/Game/StarterContent/Materials",
         "blueprint_name": "BP_Happy",
         "blueprint_path": "/Game/Stanford/Blueprints",
@@ -33,7 +33,7 @@ mesh_descs = [
         "gltf_file": os.path.realpath(os.path.join(os.path.dirname(__file__), "gltf", "dragon", "mesh.gltf")),
         "static_mesh_name": "SM_Dragon",
         "static_mesh_path": "/Game/Stanford/Meshes",
-        "material_name": "M_Ground_Grass",
+        "material_name": "M_Basic_Floor",
         "material_path": "/Game/StarterContent/Materials",
         "blueprint_name": "BP_Dragon",
         "blueprint_path": "/Game/Stanford/Blueprints",
@@ -143,7 +143,7 @@ if __name__ == "__main__":
         editor_asset_subsystem.save_loaded_asset(blueprint_asset)
 
     # create manifest include file
-    include_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "include.csv"))
+    include_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "include_assets.csv"))
 
     spear.log(f"Writing include file: {include_file}")
 

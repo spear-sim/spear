@@ -62,34 +62,34 @@ def configure_system(config):
         assert os.path.exists(config.SPEAR.STANDALONE_EXECUTABLE)
 
         if sys.platform == "win32":
-            content_paks_dir = \
+            executable_content_paks_dir = \
                 os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(config.SPEAR.STANDALONE_EXECUTABLE)), "..", "..", "Content", "Paks"))
         elif sys.platform == "darwin":
-            content_paks_dir = \
+            executable_content_paks_dir = \
                 os.path.realpath(os.path.join(config.SPEAR.STANDALONE_EXECUTABLE, "Contents", "UE", "SpearSim", "Content", "Paks"))
         elif sys.platform == "linux":
-            content_paks_dir = \
+            executable_content_paks_dir = \
                 os.path.realpath(os.path.join(os.path.dirname(os.path.realpath(config.SPEAR.STANDALONE_EXECUTABLE)), "SpearSim", "Content", "Paks"))
         else:
             assert False
 
         if config.SPEAR.PAKS_VERSION_TAG != "":
-            user_paks_version_dir = os.path.realpath(os.path.join(config.SPEAR.PAKS_DIR, config.SPEAR.PAKS_VERSION_TAG))
+            external_paks_version_dir = os.path.realpath(os.path.join(config.SPEAR.PAKS_DIR, config.SPEAR.PAKS_VERSION_TAG))
         else:
-            user_paks_version_dir = os.path.realpath(os.path.join(config.SPEAR.PAKS_DIR, __version__))
+            external_paks_version_dir = os.path.realpath(os.path.join(config.SPEAR.PAKS_DIR, __version__))
 
-        assert os.path.exists(content_paks_dir)
-        assert os.path.exists(user_paks_version_dir)
+        assert os.path.exists(executable_content_paks_dir)
+        assert os.path.exists(external_paks_version_dir)
 
         # we don't use os.path.realpath here because we don't want to resolve the symlink
-        content_paks_user_dir = os.path.join(content_paks_dir, "User")
+        executable_content_paks_external_dir = os.path.join(executable_content_paks_dir, "External")
 
-        if path_exists(content_paks_user_dir):
-            log(f"File or directory or symlink exists, removing: {content_paks_user_dir}")
-            remove_path(content_paks_user_dir)
+        if path_exists(executable_content_paks_external_dir):
+            log(f"File or directory or symlink exists, removing: {executable_content_paks_external_dir}")
+            remove_path(executable_content_paks_external_dir)
 
-        log(f"Creating symlink: {content_paks_user_dir} -> {user_paks_version_dir}")
-        os.symlink(user_paks_version_dir, content_paks_user_dir)
+        log(f"Creating symlink: {executable_content_paks_external_dir} -> {external_paks_version_dir}")
+        os.symlink(external_paks_version_dir, executable_content_paks_external_dir)
 
     # set environment variables
     if config.SPEAR.LAUNCH_MODE in ["editor", "standalone"]:
