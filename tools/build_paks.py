@@ -113,16 +113,16 @@ if __name__ == "__main__":
 
     if not args.skip_build_common_pak:
 
-        include_file = os.path.realpath(os.path.join(build_paks_dir, f"common-{args.version_tag}-{platform}_include_assets.csv"))
+        include_assets_file = os.path.realpath(os.path.join(build_paks_dir, f"common-{args.version_tag}-{platform}_include_assets.csv"))
         include_assets = [
             os.path.join("Engine", "Content", "**", "*.*"),
             os.path.join("Engine", "Plugins", "**", "*.*"),
             os.path.join("SpearSim", "Content", "Megascans", "**", "*.*"),
             os.path.join("SpearSim", "Content", "MSPresets", "**", "*.*")]
         df = pd.DataFrame(columns=["include_assets"], data={"include_assets": include_assets})
-        df.to_csv(include_file, index=False)
+        df.to_csv(include_assets_file, index=False)
 
-        exclude_file = os.path.realpath(os.path.join(build_paks_dir, f"common-{args.version_tag}-{platform}_exclude_assets.csv"))
+        exclude_assets_file = os.path.realpath(os.path.join(build_paks_dir, f"common-{args.version_tag}-{platform}_exclude_assets.csv"))
         exclude_pak_files = [default_pak]
         exclude_assets = []
         for exclude_pak_file in exclude_pak_files:
@@ -138,7 +138,7 @@ if __name__ == "__main__":
             ps.stdout.close()
         exclude_assets = sorted(list(set(exclude_assets)))
         df = pd.DataFrame(columns=["exclude_assets"], data={"exclude_assets": exclude_assets})
-        df.to_csv(exclude_file, index=False)
+        df.to_csv(exclude_assets_file, index=False)
 
         pak_file = f"common-{args.version_tag}-{platform}.pak"
         cmd = \
@@ -148,8 +148,8 @@ if __name__ == "__main__":
             f"--paks_dir {args.paks_dir} " + \
             f"--version_tag {args.version_tag} " + \
             f"--pak_file {pak_file} " + \
-            f"--include_file {include_file} " + \
-            f"--exclude_file {exclude_file} " + \
+            f"--include_assets_file {include_assets_file} " + \
+            f"--exclude_assets_file {exclude_assets_file} " + \
             f"--unreal_engine_dir {args.unreal_engine_dir} " + \
             f"--unreal_project_dir {unreal_project_dir}"
         spear.log(f"Executing: {cmd}")
@@ -194,7 +194,7 @@ if __name__ == "__main__":
             subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
 
             # build pak
-            include_file = os.path.realpath(os.path.join(build_paks_dir, f"{scene_id}-{args.version_tag}-{platform}_include_assets.csv"))
+            include_assets_file = os.path.realpath(os.path.join(build_paks_dir, f"{scene_id}-{args.version_tag}-{platform}_include_assets.csv"))
             include_assets = [
                 os.path.join("Engine", "Content", "**", "*.*"),
                 os.path.join("Engine", "Plugins", "**", "*.*"),
@@ -202,9 +202,9 @@ if __name__ == "__main__":
                 os.path.join("SpearSim", "Content", "MSPresets", "**", "*.*"),
                 os.path.join("SpearSim", "Content", "Scenes", scene_id, "**", "*.*")]
             df = pd.DataFrame(columns=["include_assets"], data={"include_assets": include_assets})
-            df.to_csv(include_file, index=False)
+            df.to_csv(include_assets_file, index=False)
 
-            exclude_file = os.path.realpath(os.path.join(build_paks_dir, f"{scene_id}-{args.version_tag}-{platform}_exclude_assets.csv"))
+            exclude_assets_file = os.path.realpath(os.path.join(build_paks_dir, f"{scene_id}-{args.version_tag}-{platform}_exclude_assets.csv"))
             exclude_pak_files = [default_pak, os.path.realpath(os.path.join(args.paks_dir, args.version_tag, f"common-{args.version_tag}-{platform}.pak"))]
             exclude_assets = []
             for exclude_pak_file in exclude_pak_files:
@@ -220,7 +220,7 @@ if __name__ == "__main__":
                 ps.stdout.close()
             exclude_assets = sorted(list(set(exclude_assets)))
             df = pd.DataFrame(columns=["exclude_assets"], data={"exclude_assets": exclude_assets})
-            df.to_csv(exclude_file, index=False)
+            df.to_csv(exclude_assets_file, index=False)
 
             pak_file = f"{scene_id}-{args.version_tag}-{platform}.pak"
             cmd = \
@@ -230,8 +230,8 @@ if __name__ == "__main__":
                 f"--paks_dir {args.paks_dir} " + \
                 f"--version_tag {args.version_tag} " + \
                 f"--pak_file {pak_file} " + \
-                f"--include_file {include_file} " + \
-                f"--exclude_file {exclude_file} " + \
+                f"--include_assets_file {include_assets_file} " + \
+                f"--exclude_assets_file {exclude_assets_file} " + \
                 f"--unreal_engine_dir {args.unreal_engine_dir} " + \
                 f"--unreal_project_dir {unreal_project_dir}"
             spear.log(f"Executing: {cmd}")

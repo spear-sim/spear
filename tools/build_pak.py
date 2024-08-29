@@ -20,17 +20,17 @@ if __name__ == "__main__":
     parser.add_argument("--paks_dir", required=True)
     parser.add_argument("--version_tag", required=True)
     parser.add_argument("--pak_file", required=True)
-    parser.add_argument("--include_file", required=True)
+    parser.add_argument("--include_assets_file", required=True)
     parser.add_argument("--unreal_engine_dir", required=True)
     parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
-    parser.add_argument("--exclude_file")
+    parser.add_argument("--exclude_assets_file")
     args = parser.parse_args()
 
     assert os.path.exists(args.unreal_engine_dir)
-    assert os.path.exists(args.include_file)
+    assert os.path.exists(args.include_assets_file)
 
-    if args.exclude_file is not None:
-        assert os.path.exists(args.exclude_file)
+    if args.exclude_assets_file is not None:
+        assert os.path.exists(args.exclude_assets_file)
 
     if sys.platform == "win32":
         platform          = "Windows"
@@ -75,12 +75,12 @@ if __name__ == "__main__":
     pak_file = os.path.realpath(os.path.join(paks_version_dir, args.pak_file))
     os.makedirs(paks_version_dir, exist_ok=True)
 
-    include_assets = pd.read_csv(args.include_file)["include_assets"].tolist()
+    include_assets = pd.read_csv(args.include_assets_file)["include_assets"].tolist()
 
-    if args.exclude_file is None:
+    if args.exclude_assets_file is None:
         exclude_assets = []
     else:
-        exclude_assets = pd.read_csv(args.exclude_file)["exclude_assets"].tolist() # need tolist() so we can test for membership using "in" keyword below
+        exclude_assets = pd.read_csv(args.exclude_assets_file)["exclude_assets"].tolist() # need tolist() so we can test for membership using "in" keyword below
 
     # create manifest file in output dir
     manifest_file = os.path.splitext(pak_file)[0] + ".txt"
