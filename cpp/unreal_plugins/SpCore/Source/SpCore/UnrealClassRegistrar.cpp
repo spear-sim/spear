@@ -179,6 +179,7 @@ void UnrealClassRegistrar::initialize()
     registerComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
     registerComponentClass<UPoseableMeshComponent>("UPoseableMeshComponent");
     registerClass<UObject>("UObject");
+    registerClass<UClass>("UClass");
     registerClass<UGameplayStatics>("UGameplayStatics");
     registerClass<UMaterial>("UMaterial");
     registerClass<UMaterialInterface>("UMaterialInterface");
@@ -199,6 +200,7 @@ void UnrealClassRegistrar::terminate()
     unregisterComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
     unregisterComponentClass<UPoseableMeshComponent>("UPoseableMeshComponent");
     unregisterClass<UObject>("UObject");
+    unregisterClass<UClass>("UClass");
     unregisterClass<UGameplayStatics>("UGameplayStatics");
     unregisterClass<UMaterial>("UMaterial");
     unregisterClass<UMaterialInterface>("UMaterialInterface");

@@ -61,6 +61,8 @@ examples/import_stanford_dataset/download
 examples/import_stanford_dataset/gltf
 examples/import_stanford_dataset/ply
 examples/import_stanford_dataset/stanford
+examples/import_stanford_dataset/tmp
+examples/import_stanford_dataset/user_config.yaml
 
 examples/mujoco_interop/tmp
 examples/mujoco_interop/user_config.yaml

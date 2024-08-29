@@ -790,6 +790,8 @@ public:
             });
     }
 
+    static void registerUClass();
+
     template <CActor TActor>
     static void unregisterActorClass(const std::string& class_name)
     {
