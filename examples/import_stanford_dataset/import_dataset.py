@@ -142,12 +142,12 @@ if __name__ == "__main__":
 
         editor_asset_subsystem.save_loaded_asset(blueprint_asset)
 
-    # create manifest include file
-    include_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "include_assets.csv"))
+    # create include assets file
+    include_assets_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "include_assets.csv"))
 
-    spear.log(f"Writing include file: {include_file}")
+    spear.log(f"Writing include assets file: {include_assets_file}")
 
     df = pd.DataFrame(columns=["include_assets"], data={"include_assets": include_assets})
-    df.to_csv(include_file, index=False)
+    df.to_csv(include_assets_file, index=False)
 
     spear.log(f"Done.")
