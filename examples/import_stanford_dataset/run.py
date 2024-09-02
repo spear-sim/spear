@@ -29,8 +29,8 @@ if __name__ == "__main__":
     bp_dragon_actor = spear_instance.unreal_service.spawn_actor_from_uclass(uclass=bp_dragon_uclass, location={"X": 80.0, "Y": 350.0, "Z": 5.0})
 
     # set scale
-    spear_instance.unreal_service.call_function(uobject=bp_bunny_actor,  ufunction=set_actor_scale_3d_func, args={"NewScale3D": {"X": 4.0, "Y": 4.0, "Z": 4.0}})
-    spear_instance.unreal_service.call_function(uobject=bp_happy_actor,  ufunction=set_actor_scale_3d_func, args={"NewScale3D": {"X": 4.0, "Y": 4.0, "Z": 4.0}})
+    spear_instance.unreal_service.call_function(uobject=bp_bunny_actor, ufunction=set_actor_scale_3d_func, args={"NewScale3D": {"X": 4.0, "Y": 4.0, "Z": 4.0}})
+    spear_instance.unreal_service.call_function(uobject=bp_happy_actor, ufunction=set_actor_scale_3d_func, args={"NewScale3D": {"X": 4.0, "Y": 4.0, "Z": 4.0}})
     spear_instance.unreal_service.call_function(uobject=bp_dragon_actor, ufunction=set_actor_scale_3d_func, args={"NewScale3D": {"X": 4.0, "Y": 4.0, "Z": 4.0}})
 
     spear_instance.engine_service.tick()
