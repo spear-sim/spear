@@ -70,7 +70,7 @@ Our `SpearSim` project requires you to create several symbolic links. We provide
 If you're developing on Windows, you will need to run this command with administrator privileges.
 
 ```console
-python tools/update_symlinks_for_project.py
+python tools/create_project_symlinks.py
 ```
 
 ## Copy content from the Unreal Engine
