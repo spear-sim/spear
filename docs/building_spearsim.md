@@ -70,7 +70,7 @@ Our `SpearSim` project requires you to create several symbolic links. We provide
 If you're developing on Windows, you will need to run this command with administrator privileges.
 
 ```console
-python tools/create_symlinks.py
+python tools/update_symlinks_for_project.py
 ```
 
 ## Copy content from the Unreal Engine
@@ -78,7 +78,7 @@ python tools/create_symlinks.py
 Our `SpearSim` project requires you to explicitly copy some content from your Unreal Engine installation to the project directory. We provide a command-line tool for this purpose.
 
 ```console
-python tools/copy_unreal_engine_dir_content.py --unreal_engine_dir path/to/UE_5.2
+python tools/copy_engine_content.py --unreal_engine_dir path/to/UE_5.2
 ```
 
 ## Build the `SpearSim` executable
@@ -86,10 +86,10 @@ python tools/copy_unreal_engine_dir_content.py --unreal_engine_dir path/to/UE_5.
 We are now ready to build the `SpearSim` executable as follows.
 
 ```console
-python tools/run_uat.py --unreal_engine_dir path/to/UE_5.2 --build_config Development -build -cook -stage -package -archive -pak -iterativecooking
+python tools/run_uat.py --build_config Development --unreal_engine_dir path/to/UE_5.2 -build -cook -stage -package -archive -pak -iterativecooking
 ```
 
-This tool is a thin wrapper around Unreal's [RunUAT](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Deployment/BuildOperations) tool. Our tool consumes `--unreal_engine_dir` and `--build_config`, provides Unreal's `RunUAT` tool with sensible default values for a few commonly used arguments, and otherwise forwards all arguments directly to `RunUAT`. This step will generate an executable at the following locations.
+This tool is a thin wrapper around Unreal's [RunUAT](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Deployment/BuildOperations) tool. Our tool consumes `--build_config` and `--unreal_engine_dir`, provides Unreal's `RunUAT` tool with sensible default values for a few commonly used arguments, and otherwise forwards all arguments directly to `RunUAT`. This step will generate an executable at the following locations.
 
 ```
 Windows: cpp/unreal_projects/SpearSim/Standalone-Development/Windows/SpearSim/Binaries/Win64/SpearSim-Cmd.exe
@@ -99,11 +99,10 @@ Linux:   cpp/unreal_projects/SpearSim/Standalone-Development/Linux/SpearSim.sh
 
 ### Helpful command-line options
 
-- After you have done a complete `-build -cook -stage -package -archive` once, you can replace `-build` with `-skipbuild`, `-cook` with `-skipcook`, and `-stage -package -archive` with `-skipstage -skippackage -skiparchive`, depending on what you're doing. You only need to `-cook` if you have edited the project in the Unreal Editor, and you only need to `-stage -package -archive` if you want to update the standalone executable in `-archivedirectory`.
-- If you specify `-skipcook`, you can also specify `-nocompileeditor`, which saves time by not building a second executable that is only required when cooking.
-- If you specify `-skipstage -skippackage -skiparchive`, you don't need to specify `-archivedirectory`.
-- If you only want to propagate changes in `cpp/unreal_projects/SpearSim/Config` to the executable in `-archivedirectory`, you can specify `-skipbuild -skipcook`.
-- You can replace `Development` with `Shipping` to build a more optimized executable.
+- After you have done a complete `-build -cook -stage -package -archive` once, you can replace `-build` with `-skipbuild`, `-cook` with `-skipcook`, and `-stage -package -archive` with `-skipstage -skippackage -skiparchive`, depending on what you're doing.
+- You only need to specify `-cook` if you have edited the project in the Unreal Editor. If you specify `-skipcook`, you can also specify `-nocompileeditor`, which saves time by not building a second executable that is only required when cooking.
+- You only need to `-stage -package -archive` if you want to update the standalone executable in `Standalone-Development`. If you only want to propagate changes in `cpp/unreal_projects/SpearSim/Config` to the executable in `Standalone-Development`, you can specify `-skipbuild -skipcook`.
+- You can replace `Development` with `Shipping` to build a more optimized executable. In this case, the executable will be generated in `Standalone-Shipping`.
 - You can specify `-specifiedarchitecture=arm64+x86_64` to build a universal binary on macOS.
 - You can specify `-clean` to do a clean build.
 - You can specify `-verbose`, `-UbtArgs="-verbose"`, and `-UbtArgs="-VeryVerbose"` to see additional build details (e.g., the exact command-line arguments that Unreal uses when invoking the underlying compiler).
