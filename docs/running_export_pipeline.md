@@ -9,7 +9,7 @@ We will assume that you have completed our [Getting Started](getting_started.md)
 The Unreal Editor ships with its own Python environment that can be used to run scripts from inside the editor. Some of our pipeline steps must be run from inside the editor, and therefore we must configure the editor's Python environment, even though we have already configured an Anaconda Python environment in our [Getting Started](getting_started.md) tutorial. 
 
 ```console
-python tools/configure_editor_python.py --unreal_engine_dir path/to/UE_5.2
+python tools/configure_editor_python_env.py --unreal_engine_dir path/to/UE_5.2
 ```
 
 ## Run each pipeline stage
@@ -23,10 +23,10 @@ In order to use our optional debug visualization tools below, you will need to i
 
 ```console
 # generate Unreal metadata
-python tools/run_editor_script.py --unreal_engine_dir path/to/UE_5.2 --script generate_unreal_metadata.py --pipeline_dir /absolute/path/to/spear-pipeline --scene_id apartment_0000
+python tools/run_editor_script.py --script generate_unreal_metadata.py --unreal_engine_dir path/to/UE_5.2 --pipeline_dir /absolute/path/to/spear-pipeline --scene_id apartment_0000
 
 # generate Unreal geometry
-python tools/run_editor_script.py --unreal_engine_dir path/to/UE_5.2 --script generate_unreal_geometry.py --pipeline_dir /absolute/path/to/spear-pipeline --scene_id apartment_0000
+python tools/run_editor_script.py --script generate_unreal_geometry.py --unreal_engine_dir path/to/UE_5.2 --pipeline_dir /absolute/path/to/spear-pipeline --scene_id apartment_0000
 
 # visualize Unreal geometry (optional)
 python pipeline/visualize_unreal_geometry.py --pipeline_dir path/to/spear-pipeline --scene_id apartment_0000
