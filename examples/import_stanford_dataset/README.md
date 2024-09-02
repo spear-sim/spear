@@ -27,7 +27,7 @@ python ../../tools/update_symlinks_for_external_content.py --unreal_project_cont
 python ../../tools/run_editor_script.py --script /absolute/path/to/spear/examples/import_stanford_dataset/import_dataset.py --unreal_engine_dir path/to/UE_5.2
 
 # build PAK file containing the assets within the Stanford directory
-python ../../tools/build_pak.py --paks_dir path/to/spear-paks --version_tag examples --pak_file stanford-examples-platform.pak --include_assets_file include_assets.csv --unreal_engine_dir path/to/UE_5.2
+python ../../tools/build_pak.py --paks_dir path/to/spear-paks --version_tag examples --pak_file stanford.pak --include_assets_file include_assets.csv --unreal_engine_dir path/to/UE_5.2
 
 # remove Stanford symlink to restore the SpearSim project to its original state
 python ../../tools/update_symlinks_for_external_content.py --unreal_project_content_dir Stanford --remove
