@@ -39,7 +39,7 @@ In order to work with multiple scenes, we need to download the scene data as fol
 python tools/download_paks.py --paks_dir path/to/spear-paks
 ```
 
-The `--paks_dir` argument is the top-level directory where scene data will be downloaded. You will also need to provide this directory in other settings, e.g., when navigating through a specific scene (see below).
+The `--paks_dir` argument is the top-level directory where scene data will be downloaded. You will also need to provide this directory in other settings, e.g., when navigating around a specific scene (see below).
  
 ## Navigate around a specific scene
 
