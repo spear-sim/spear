@@ -59,7 +59,7 @@ Linux:   path/to/SpearSim-v0.5.0-Linux-Shipping/SpearSim.sh
 
 You will also need to specify the following command-line arguments.
 
-  - `--scene_id` is the name of the scene you want to navigate around (e.g., `apartment_0000`, `debug_0000`, `kujiale_0000`, `kujiale_0001`, `...`, `warehouse_0000`). If you specify a `kujiale` or `warehouse` scene, then you also need to specify the same `--paks_dir` as you specified when downloading scene data (see above).
+  - `--scene_id` is the name of the scene you want to navigate around (e.g., `apartment_0000`, `debug_0000`, `kujiale_0000`, `warehouse_0000`, `...`). If you specify a `kujiale` or `warehouse` scene, then you also need to specify the same `--paks_dir` as you specified when downloading scene data (see above).
 
 The following command-line arguments are optional.
 
