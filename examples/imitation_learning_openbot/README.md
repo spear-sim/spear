@@ -18,16 +18,16 @@ You can run the example as follows.
 
 ```console
 # generate navigation episodes
-python generate_episodes.py --episodes_file train_episodes.csv
-python generate_episodes.py --episodes_file test_episodes.csv
+python generate_episodes.py --episodes_dir episodes --split train
+python generate_episodes.py --episodes_dir episodes --split test
 
 # execute episodes using a global path planner and save data to use during training
-python generate_dataset.py --episodes_file train_episodes.csv --split train
+python generate_dataset.py --episodes_file episodes/train_episodes.csv --split train
 
 # optional: train a navigation policy using the OpenBot framework (see the OpenBot GitHub repository)
 
 # execute navigation episodes using a trained policy
-python run_trained_policy.py --episodes_file test_episodes.csv
+python run_trained_policy.py --episodes_file episodes/test_episodes.csv
 ```
 
 Running `generate_episodes.py` will generate navigation episodes and store them in a CSV file. This tool accepts several optional command-line arguments that can be used to control its behavior (see the source code for details), e.g.,
