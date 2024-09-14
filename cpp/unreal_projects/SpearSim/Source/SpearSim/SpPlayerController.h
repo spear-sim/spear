@@ -10,7 +10,7 @@
 
 #include "SpPlayerController.generated.h"
 
-class UUserInputComponent;
+class USpUserInputComponent;
 
 UCLASS()
 class ASpPlayerController : public APlayerController
@@ -25,6 +25,6 @@ public:
     void EndPlay(const EEndPlayReason::Type end_play_reason) override;
 
 private:
-    UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="User Input Component")
-    UUserInputComponent* UserInputComponent = nullptr;
+    UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="SP User Input Component")
+    USpUserInputComponent* SpUserInputComponent = nullptr;
 };

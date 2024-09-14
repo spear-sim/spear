@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <stdint.h> // uint8_t
-
 #include <functional>  // std::function
 #include <map>
 #include <string>
@@ -17,19 +15,19 @@
 #include <Containers/Array.h> 
 #include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UPROPERTY
 
-#include "SpCore/CppFunc.h"
-#include "SpCore/CppFuncRegistrar.h"
+#include "SpCore/FuncRegistrar.h"
+#include "SpCore/SpFuncArray.h"
 
-#include "CppFuncComponent.generated.h"
+#include "SpFuncComponent.generated.h"
 
 // We need meta=(BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
 UCLASS(ClassGroup="SPEAR", HideCategories=(Rendering, Tags, Activation, Cooking, Physics, LOD, AssetUserData, Collision), meta=(BlueprintSpawnableComponent))
-class SPCORE_API UCppFuncComponent : public USceneComponent
+class SPCOMPONENTS_API USpFuncComponent : public USceneComponent
 {
     GENERATED_BODY()
 public:
-    UCppFuncComponent();
-    ~UCppFuncComponent();
+    USpFuncComponent();
+    ~USpFuncComponent();
 
     UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="Func Names");
     TArray<FString> FuncNames;
@@ -38,16 +36,16 @@ public:
     TArray<FString> SharedMemoryViewNames;
 
     // typically called by the owning actor or component to register/unregister a CppFunc
-    void registerSharedMemoryView(const std::string& shared_memory_name, const CppFuncSharedMemoryView& shared_memory_view);
+    void registerSharedMemoryView(const std::string& shared_memory_name, const SpFuncSharedMemoryView& shared_memory_view);
     void unregisterSharedMemoryView(const std::string& shared_memory_name);
-    void registerFunc(const std::string& func_name, const std::function<CppFuncPackage(CppFuncPackage&)>& func);
+    void registerFunc(const std::string& func_name, const std::function<SpFuncDataBundle(SpFuncDataBundle&)>& func);
     void unregisterFunc(const std::string& func_name);
 
     // typically called by code that wants to call a CppFunc
-    const std::map<std::string, CppFuncSharedMemoryView>& getSharedMemoryViews() const;
-    CppFuncPackage callFunc(const std::string& func_name, CppFuncPackage& args) const;
+    const std::map<std::string, SpFuncSharedMemoryView>& getSharedMemoryViews() const;
+    SpFuncDataBundle callFunc(const std::string& func_name, SpFuncDataBundle& args) const;
 
 private:
-    CppFuncRegistrar<CppFuncPackage, CppFuncPackage&> funcs_;
-    std::map<std::string, CppFuncSharedMemoryView> shared_memory_views_;
+    FuncRegistrar<SpFuncDataBundle, SpFuncDataBundle&> funcs_;
+    std::map<std::string, SpFuncSharedMemoryView> shared_memory_views_;
 };

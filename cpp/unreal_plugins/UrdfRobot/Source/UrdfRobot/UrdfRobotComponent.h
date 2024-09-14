@@ -14,13 +14,13 @@
 #include <Containers/Array.h>
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UPROPERTY
 
-#include "SpCore/ArrayDesc.h"
+#include "SpCore/ArrayDesc.h" // TODO: remove
 
 #include "UrdfRobotComponent.generated.h"
 
+class USpUserInputComponent;
 class UUrdfJointComponent;
 class UUrdfLinkComponent;
-class UUserInputComponent;
 struct UrdfLinkDesc;
 struct UrdfRobotDesc;
 
@@ -38,6 +38,9 @@ public:
 
     UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="Root LinkComponent")
     UUrdfLinkComponent* RootLinkComponent;
+
+    UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="SP User Input Component")
+    USpUserInputComponent* SpUserInputComponent = nullptr;
 
     // We make these TArrays VisibleAnywhere rather than EditAnywhere to avoid counter-intuitive editor behavior.
     // More specifically, depending on how a user removes an entry from these lists (the leftmost dropdown, the
@@ -75,6 +78,5 @@ private:
     std::map<std::string, UUrdfLinkComponent*> link_components_;
     std::map<std::string, UUrdfJointComponent*> joint_components_;
 
-    UUserInputComponent* user_input_component_ = nullptr;
     bool request_initialize_deferred_ = false;
 };

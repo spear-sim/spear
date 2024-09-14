@@ -8,19 +8,20 @@
 
 #include <map>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include <Containers/Array.h>
 #include <Engine/EngineBaseTypes.h> // ETickingGroup
 
-#include "SpCore/ArrayDesc.h"
+#include "SpCore/ArrayDesc.h" // TODO: remove
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
-#include "SpCore/UserInputComponent.h"
+
+#include "SpComponents/SpUserInputComponent.h"
+
 #include "UrdfRobot/UrdfJointComponent.h"
 #include "UrdfRobot/UrdfLinkComponent.h"
 #include "UrdfRobot/UrdfParser.h"
@@ -47,9 +48,9 @@ UUrdfRobotComponent::UUrdfRobotComponent()
     PrimaryComponentTick.bTickEvenWhenPaused = false;
     PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
 
-    // UUserInputComponent
-    user_input_component_ = Unreal::createComponentInsideOwnerConstructor<UUserInputComponent>(this, "user_input_component");
-    SP_ASSERT(user_input_component_);
+    // USpUserInputComponent
+    SpUserInputComponent = Unreal::createComponentInsideOwnerConstructor<USpUserInputComponent>(this, "sp_user_input_component");
+    SP_ASSERT(SpUserInputComponent);
 }
 
 UUrdfRobotComponent::~UUrdfRobotComponent()
@@ -70,8 +71,8 @@ void UUrdfRobotComponent::BeginPlay()
         user_input_actions = DEFAULT_USER_INPUT_ACTIONS;
     }
 
-    user_input_component_->subscribeToUserInputs(Std::keys(user_input_actions));
-    user_input_component_->setHandleUserInputFunc([this, user_input_actions](const std::string& key, float axis_value) -> void {
+    SpUserInputComponent->subscribeToUserInputs(Std::keys(user_input_actions));
+    SpUserInputComponent->setHandleUserInputFunc([this, user_input_actions](const std::string& key, float axis_value) -> void {
         applyAction(user_input_actions.at(key));
     });
 }

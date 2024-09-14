@@ -13,8 +13,10 @@
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
+#include "SpCore/SpStableNameComponent.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+
 #include "UrdfRobot/UrdfParser.h"
 #include "UrdfRobot/UrdfRobotComponent.h"
 
@@ -23,6 +25,10 @@ const auto DEFAULT_URDF_FILE = std::filesystem::path() / ".." / ".." / ".." / "p
 AUrdfRobotPawn::AUrdfRobotPawn(const FObjectInitializer& object_initializer) : APawn(object_initializer)
 {
     SP_LOG_CURRENT_FUNCTION();
+
+    // USpStableNameComponent
+    SpStableNameComponent = Unreal::createComponentInsideOwnerConstructor<USpStableNameComponent>(this, "sp_stable_name_component");
+    SP_ASSERT(SpStableNameComponent);
 
     // UUrdfRobotComponent
     UrdfRobotComponent = Unreal::createComponentInsideOwnerConstructor<UUrdfRobotComponent>(this, "urdf_robot_component");

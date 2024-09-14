@@ -13,6 +13,7 @@
 class FObjectInitializer;
 class UCameraComponent;
 
+class USpStableNameComponent;
 class UUrdfRobotComponent;
 
 UCLASS()
@@ -33,6 +34,9 @@ public:
     // and setting UrdfFile will have no effect.
     UFUNCTION(CallInEditor, Category="SPEAR")
     void Initialize();
+
+    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="SP Stable Name Component")
+    USpStableNameComponent* SpStableNameComponent = nullptr;
 
     UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="URDF file used for initialization")
     FString UrdfFile;

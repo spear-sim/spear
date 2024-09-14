@@ -23,7 +23,7 @@ public class Vehicle : SpModuleRules
         // But since ChaosVehiclesCore is defined in Engine/Source, rather than Engine/Plugins, we can list it in
         // SpModuleRules without needing to add clutter to our uplugin files.
 
-        PublicDependencyModuleNames.AddRange(new string[] {"ChaosVehicles", "SpCore"});
+        PublicDependencyModuleNames.AddRange(new string[] {"ChaosVehicles", "SpComponents", "SpCore"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }

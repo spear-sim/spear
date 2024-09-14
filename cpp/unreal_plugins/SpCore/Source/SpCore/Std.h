@@ -403,7 +403,7 @@ public:
         CKeyValueContainerHasKeysConvertibleFrom<TKeyValueContainer, TKey>
     static void remove(TKeyValueContainer& key_value_container, const TKey& key)
     {
-        int num_elements_removed = key_value_container.erase(key);
+        uint64_t num_elements_removed = key_value_container.erase(key);
         SP_ASSERT(num_elements_removed == 1);
     }
 
@@ -464,13 +464,13 @@ public:
 
     // the constraint here enforces that if TSrcValue is const, then TDestValue also needs to be const
     template <typename TDestValue, typename TSrcValue> requires (std::is_const_v<TDestValue> || !std::is_const_v<TSrcValue>)
-    static std::span<TDestValue> reinterpretAsSpan(TSrcValue* src_data, int src_num_elements)
+    static std::span<TDestValue> reinterpretAsSpan(TSrcValue* src_data, uint64_t src_num_elements)
     {
         std::span<TDestValue> dest;
         if (src_num_elements > 0) {
-            int src_num_bytes = src_num_elements * sizeof(TSrcValue);
+            uint64_t src_num_bytes = src_num_elements * sizeof(TSrcValue);
             SP_ASSERT(src_num_bytes % sizeof(TDestValue) == 0);
-            int dest_num_elements = src_num_bytes / sizeof(TDestValue);
+            uint64_t dest_num_elements = src_num_bytes / sizeof(TDestValue);
             dest = std::span<TDestValue>(reinterpret_cast<TDestValue*>(src_data), dest_num_elements);
         }
         return dest;
@@ -514,13 +514,13 @@ public:
 
     // We can infer TSrcValue here because there is no potential for ambiguity.
     template <typename TDestValue, typename TSrcValue>
-    static std::vector<TDestValue> reinterpretAsVector(const TSrcValue* src_data, int src_num_elements)
+    static std::vector<TDestValue> reinterpretAsVector(const TSrcValue* src_data, uint64_t src_num_elements)
     {
         std::vector<TDestValue> dest;
         if (src_num_elements > 0) {
-            int src_num_bytes = src_num_elements * sizeof(TSrcValue);
+            uint64_t src_num_bytes = src_num_elements * sizeof(TSrcValue);
             SP_ASSERT(src_num_bytes % sizeof(TDestValue) == 0);
-            int dest_num_elements = src_num_bytes / sizeof(TDestValue);
+            uint64_t dest_num_elements = src_num_bytes / sizeof(TDestValue);
             dest.resize(dest_num_elements);
             std::memcpy(std::ranges::data(dest), src_data, src_num_bytes);
         }

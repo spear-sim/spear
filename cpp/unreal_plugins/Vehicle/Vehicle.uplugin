@@ -3,7 +3,7 @@
     "Version": 1,
     "VersionName": "1.0",
     "FriendlyName": "Vehicle",
-    "Description": "WARNING: The loading phases for {SpCore, Vehicle} must be ordered as follows: LoadingPhase(SpCore) < LoadingPhase(Vehicle)",
+    "Description": "WARNING: The loading phases for {SpComponents, SpCore, Vehicle} must be ordered as follows: LoadingPhase(SpCore) < LoadingPhase(SpComponents) < LoadingPhase(Vehicle)",
     "Category": "Other",
     "CreatedBy": "",
     "CreatedByURL": "",
@@ -24,6 +24,10 @@
     "Plugins": [
         {
             "Name": "ChaosVehiclesPlugin",
+            "Enabled": true
+        },
+        {
+            "Name": "SpComponents",
             "Enabled": true
         },
         {

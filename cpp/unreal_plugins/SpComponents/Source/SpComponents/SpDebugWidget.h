@@ -14,8 +14,9 @@
 #include <Math/Vector.h>
 #include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
-#include "SpCore/CppFuncComponent.h"
 #include "SpCore/SharedMemoryRegion.h"
+
+#include "SpComponents/SpFuncComponent.h"
 
 #include "SpDebugWidget.generated.h"
 
@@ -50,21 +51,13 @@ private:
     void CallFunctions();
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void CallCppFunctions();
+    void CallSpFunc();
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void CreateObjects();
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void SubscribeToActorHitEvents();
-
-    UFUNCTION(CallInEditor, Category="SPEAR")
-    void GetPoseableMeshPoses();
-
-    UFUNCTION(CallInEditor, Category="SPEAR")
-    void SetPoseableMeshPoses();
-    UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="Poseable Mesh Scale Factor")
-    double PoseableMeshScaleFactor = 1.0;
 
     UFUNCTION()
     FString GetString(FString arg_0, bool arg_1, int arg_2, FVector arg_3);
@@ -77,6 +70,9 @@ private:
 
     UFUNCTION()
     static void UpdateData(TMap<FString, FVector>& map_from_string_to_vector, TArray<FVector>& array_of_vectors);
+
+    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="SP Func Component")
+    USpFuncComponent* SpFuncComponent = nullptr;
 
     UPROPERTY()
     FString MyString;
@@ -102,11 +98,9 @@ private:
     UPROPERTY()
     TSet<FString> SetOfStrings;
 
-    UPROPERTY(VisibleAnywhere, Category="SPEAR")
-    UCppFuncComponent* CppFuncComponent = nullptr;
-
-    void initializeCppFuncs();
-    void terminateCppFuncs(); // don't call from destructor because CppFuncComponent might have been garbage-collected already
+    void initializeSpFuncs();
+    void terminateSpFuncs(); // don't call from destructor because SpFuncComponent might have been garbage-collected already
 
     std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
+    SpFuncSharedMemoryView shared_memory_view_;
 };

@@ -20,7 +20,7 @@
 #endif
 
 #include <rpc/config.h>
-#include <rpc/msgpack.hpp> // MSGPACK_ADD_ENUM, MSGPACK_DEFINE_MAP
+#include <rpc/msgpack.hpp> // clmdep_msgpack, MSGPACK_ADD_ENUM
 #include <rpc/server.h>
 
 #pragma pop_macro("check")

@@ -20,6 +20,7 @@
 #include "SpCore/Unreal.h"
 
 #include "SpServices/EngineService.h"
+
 #include "SpServices/Legacy/Agent.h"
 #include "SpServices/Legacy/CameraAgent.h"
 #include "SpServices/Legacy/ClassRegistrationUtils.h"

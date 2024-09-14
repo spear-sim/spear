@@ -10,9 +10,13 @@
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Engine/World.h>                // FWorldDelegates
 
+#include "SpCore/ArrayDesc.h" // TODO: remove
 #include "SpCore/Assert.h"
 
 #include "SpServices/EntryPointBinder.h"
+#include "SpServices/Msgpack.h"
+#include "SpServices/Rpclib.h"
+
 #include "SpServices/Legacy/Agent.h"
 #include "SpServices/Legacy/NavMesh.h"
 #include "SpServices/Legacy/Task.h"
@@ -46,7 +50,7 @@ public:
             return task_->getStepInfoSpace();
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "apply_action", [this](const std::map<std::string, std::vector<uint8_t>>& action) -> void {
+        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "apply_action", [this](std::map<std::string, std::vector<uint8_t>>& action) -> void {
             SP_ASSERT(agent_);
             agent_->applyAction(action);
         });
@@ -96,22 +100,19 @@ public:
             return task_->isReady();
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_random_points",
-            [this](const int& num_points) -> std::vector<double> {
-                SP_ASSERT(nav_mesh_);
-                return nav_mesh_->getRandomPoints(num_points);
+        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_random_points", [this](int& num_points) -> std::vector<double> {
+            SP_ASSERT(nav_mesh_);
+            return nav_mesh_->getRandomPoints(num_points);
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_random_reachable_points_in_radius",
-            [this](const std::vector<double>& initial_points, const float& radius) -> std::vector<double> {
-                SP_ASSERT(nav_mesh_);
-                return nav_mesh_->getRandomReachablePointsInRadius(initial_points, radius);
+        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_random_reachable_points_in_radius", [this](std::vector<double>& initial_points, float& radius) -> std::vector<double> {
+            SP_ASSERT(nav_mesh_);
+            return nav_mesh_->getRandomReachablePointsInRadius(initial_points, radius);
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_paths",
-            [this](const std::vector<double>& initial_points, const std::vector<double>& goal_points) -> std::vector<std::vector<double>> {
-                SP_ASSERT(nav_mesh_);
-                return nav_mesh_->getPaths(initial_points, goal_points);
+        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_paths", [this](std::vector<double>& initial_points, std::vector<double>& goal_points) -> std::vector<std::vector<double>> {
+            SP_ASSERT(nav_mesh_);
+            return nav_mesh_->getPaths(initial_points, goal_points);
         });
     }
 
@@ -149,4 +150,43 @@ private:
 
     // Navmesh helper object
     std::unique_ptr<NavMesh> nav_mesh_ = nullptr;
+};
+
+//
+// Enums
+//
+
+MSGPACK_ADD_ENUM(DataType);
+
+//
+// ArrayDesc
+//
+
+template <> // needed to receive a custom type as an arg
+struct clmdep_msgpack::adaptor::convert<ArrayDesc> {
+    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, ArrayDesc& array_desc) const {
+        std::map<std::string, clmdep_msgpack::object> map = Msgpack::toMap(object);
+        SP_ASSERT(map.size() == 6);
+        array_desc.low_ = Msgpack::to<double>(map.at("low_"));
+        array_desc.high_ = Msgpack::to<double>(map.at("high_"));
+        array_desc.shape_ = Msgpack::to<std::vector<int64_t>>(map.at("shape_"));
+        array_desc.datatype_ = Msgpack::to<DataType>(map.at("datatype_"));
+        array_desc.use_shared_memory_ = Msgpack::to<bool>(map.at("use_shared_memory_"));
+        array_desc.shared_memory_name_ = Msgpack::to<std::string>(map.at("shared_memory_name_"));
+        return object;
+    }
+};
+
+template <> // needed to send a custom type as a return value
+struct clmdep_msgpack::adaptor::object_with_zone<ArrayDesc> {
+    void operator()(clmdep_msgpack::object::with_zone& object, ArrayDesc const& array_desc) const {
+        std::map<std::string, clmdep_msgpack::object> map = {
+            {"low_", clmdep_msgpack::object(array_desc.low_, object.zone)},
+            {"high_", clmdep_msgpack::object(array_desc.high_, object.zone)},
+            {"shape_", clmdep_msgpack::object(array_desc.shape_, object.zone)},
+            {"datatype_", clmdep_msgpack::object(array_desc.datatype_, object.zone)},
+            {"use_shared_memory_", clmdep_msgpack::object(array_desc.use_shared_memory_, object.zone)},
+            {"shared_memory_name_", clmdep_msgpack::object(array_desc.shared_memory_name_, object.zone)}};
+        Msgpack::toObject(object, map);
+    }
 };

@@ -10,8 +10,6 @@
 #include <string>
 #include <vector>
 
-#include "SpCore/Rpclib.h"
-
 // enum values must match python/spear/env.py, which is why we write them out explicitly
 enum class DataType
 {
@@ -26,7 +24,6 @@ enum class DataType
     Float32    = 7,
     Float64    = 8,
 };
-MSGPACK_ADD_ENUM(DataType);
 
 struct ArrayDesc
 {
@@ -36,6 +33,4 @@ struct ArrayDesc
     DataType datatype_ = DataType::Invalid;
     bool use_shared_memory_ = false;
     std::string shared_memory_name_;
-
-    MSGPACK_DEFINE_MAP(low_, high_, shape_, datatype_, use_shared_memory_, shared_memory_name_);
 };

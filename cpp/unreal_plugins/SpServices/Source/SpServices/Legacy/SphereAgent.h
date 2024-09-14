@@ -13,7 +13,7 @@
 
 #include <Math/Rotator.h>
 
-#include "SpCore/ArrayDesc.h"
+#include "SpCore/ArrayDesc.h" // TODO: remove
 
 #include "SpServices/Legacy/Agent.h"
 #include "SpServices/Legacy/ClassRegistrationUtils.h"

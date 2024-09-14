@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "SpCore/SpStableNameManagerActor.h"
+#include "SpComponents/SpStableNameManagerActor.h"
 
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Engine/Engine.h>               // GEngine

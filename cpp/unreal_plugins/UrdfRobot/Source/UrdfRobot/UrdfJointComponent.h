@@ -13,14 +13,14 @@
 #include <PhysicsEngine/PhysicsConstraintComponent.h>
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UENUM, UMETA, UPROPERTY
 
-#include "SpCore/ArrayDesc.h"
+#include "SpCore/ArrayDesc.h" // TODO: remove
 
 #include "UrdfJointComponent.generated.h"
 
 class UStaticMeshComponent;
 
+class USpUserInputComponent;
 class UUrdfLinkComponent;
-class UUserInputComponent;
 struct UrdfJointDesc;
 
 // enum values must match UrdfJointType in UrdfParser.h
@@ -68,6 +68,9 @@ public:
     // UPhysicsConstraintComponent interface
     void BeginPlay() override;
 
+    UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="SP User Input Component")
+    USpUserInputComponent* SpUserInputComponent = nullptr;
+
     UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="Joint Type")
     EJointType JointType = EJointType::Invalid;
     UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="Control Type")
@@ -91,7 +94,4 @@ public:
     std::map<std::string, ArrayDesc> getObservationSpace() const;
     void applyActionComponent(const std::pair<std::string, std::vector<double>>& action_component);
     std::map<std::string, std::vector<uint8_t>> getObservation() const;
-
-private:
-    UUserInputComponent* user_input_component_ = nullptr;
 };

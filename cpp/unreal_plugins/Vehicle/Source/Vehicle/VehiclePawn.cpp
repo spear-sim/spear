@@ -23,14 +23,16 @@
 #include <UObject/UObjectGlobals.h> // FObjectInitializer
 #include <WheeledVehiclePawn.h>
 
-#include "SpCore/ArrayDesc.h"
+#include "SpCore/ArrayDesc.h" // TODO: remove
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
-#include "SpCore/StableNameComponent.h"
-#include "SpCore/UserInputComponent.h"
+#include "SpCore/SpStableNameComponent.h"
+
+#include "SpComponents/SpUserInputComponent.h"
+
 #include "Vehicle/VehicleMovementComponent.h"
 
 const std::map<std::string, std::map<std::string, std::vector<double>>> DEFAULT_USER_INPUT_ACTIONS = {
@@ -49,13 +51,13 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    // UStableNameComponent
-    StableNameComponent = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, "stable_name");
-    SP_ASSERT(StableNameComponent);
+    // USpStableNameComponent
+    SpStableNameComponent = Unreal::createComponentInsideOwnerConstructor<USpStableNameComponent>(this, "sp_stable_name_component");
+    SP_ASSERT(SpStableNameComponent);
 
-    // UUserInputComponent
-    UserInputComponent = Unreal::createComponentInsideOwnerConstructor<UUserInputComponent>(this, GetMesh(), "user_input");
-    SP_ASSERT(UserInputComponent);
+    // USpUserInputComponent
+    SpUserInputComponent = Unreal::createComponentInsideOwnerConstructor<USpUserInputComponent>(this, GetMesh(), "sp_user_input_component");
+    SP_ASSERT(SpUserInputComponent);
 
     // USkeletalMeshComponent
     std::string skeletal_mesh_str;
@@ -108,7 +110,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
         aspect_ratio = 1.333333f;
     }
 
-    CameraComponent = Unreal::createComponentInsideOwnerConstructor<UCameraComponent>(this, GetMesh(), "camera");
+    CameraComponent = Unreal::createComponentInsideOwnerConstructor<UCameraComponent>(this, GetMesh(), "camera_component");
     SP_ASSERT(CameraComponent);
     CameraComponent->SetRelativeLocationAndRotation(camera_location, camera_rotation);
     CameraComponent->bUsePawnControlRotation = false;
@@ -133,7 +135,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
         imu_rotation = FRotator::ZeroRotator;
     }
 
-    ImuComponent = Unreal::createComponentInsideOwnerConstructor<UBoxComponent>(this, GetMesh(), "imu");
+    ImuComponent = Unreal::createComponentInsideOwnerConstructor<UBoxComponent>(this, GetMesh(), "imu_component");
     SP_ASSERT(ImuComponent);
     ImuComponent->SetRelativeLocationAndRotation(imu_location, imu_rotation);
 
@@ -160,8 +162,8 @@ void AVehiclePawn::BeginPlay()
         user_input_actions = DEFAULT_USER_INPUT_ACTIONS;
     }
 
-    UserInputComponent->subscribeToUserInputs(Std::keys(user_input_actions));
-    UserInputComponent->setHandleUserInputFunc([this, user_input_actions](const std::string& key, float axis_value) -> void {
+    SpUserInputComponent->subscribeToUserInputs(Std::keys(user_input_actions));
+    SpUserInputComponent->setHandleUserInputFunc([this, user_input_actions](const std::string& key, float axis_value) -> void {
         applyAction(user_input_actions.at(key));
     });
 }

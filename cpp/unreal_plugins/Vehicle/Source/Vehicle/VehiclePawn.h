@@ -13,7 +13,7 @@
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS
 #include <WheeledVehiclePawn.h>
 
-#include "SpCore/ArrayDesc.h"
+#include "SpCore/ArrayDesc.h" // TODO: remove
 
 #include "VehiclePawn.generated.h"
 
@@ -21,8 +21,8 @@ class FObjectInitializer;
 class UBoxComponent;
 class UCameraComponent;
 
-class UStableNameComponent;
-class UUserInputComponent;
+class USpStableNameComponent;
+class USpUserInputComponent;
 class UVehicleMovementComponent;
 
 UCLASS()
@@ -36,11 +36,11 @@ public:
     // APawn interface
     void BeginPlay() override;
 
-    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="Stable Name Component")
-    UStableNameComponent* StableNameComponent = nullptr;
+    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="SP Stable Name Component")
+    USpStableNameComponent* SpStableNameComponent = nullptr;
 
-    UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="User Input Component")
-    UUserInputComponent* UserInputComponent = nullptr;
+    UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="SP User Input Component")
+    USpUserInputComponent* SpUserInputComponent = nullptr;
     
     UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="Camera Component")
     UCameraComponent* CameraComponent = nullptr;

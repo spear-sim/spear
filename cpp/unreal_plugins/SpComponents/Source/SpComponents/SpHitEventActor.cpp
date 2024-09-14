@@ -21,6 +21,10 @@ ASpHitEventActor::ASpHitEventActor()
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.bTickEvenWhenPaused = false;
     PrimaryActorTick.TickGroup = ETickingGroup::TG_PrePhysics;
+
+    // USpStableNameComponent
+    SpStableNameComponent = Unreal::createComponentInsideOwnerConstructor<USpStableNameComponent>(this, "sp_stable_name_component");
+    SP_ASSERT(SpStableNameComponent);
 }
 
 ASpHitEventActor::~ASpHitEventActor()

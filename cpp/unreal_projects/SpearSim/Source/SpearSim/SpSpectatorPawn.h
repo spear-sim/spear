@@ -14,7 +14,7 @@
 #include "SpSpectatorPawn.generated.h"
 
 class USpectatorPawnMovement;
-class UStableNameComponent;
+class USpStableNameComponent;
 
 UCLASS()
 class ASpSpectatorPawn : public ASpectatorPawn
@@ -28,8 +28,8 @@ public:
     void BeginPlay() override;
     void Tick(float delta_time) override;
 
-    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="Stable Name Component")
-    UStableNameComponent* StableNameComponent = nullptr;
+    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="SP Stable Name Component")
+    USpStableNameComponent* SpStableNameComponent = nullptr;
 
     UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="Spectator Pawn Movement")
     USpectatorPawnMovement* SpectatorPawnMovement = nullptr;

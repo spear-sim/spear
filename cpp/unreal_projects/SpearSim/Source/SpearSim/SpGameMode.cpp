@@ -37,10 +37,10 @@ void ASpGameMode::PostLogin(APlayerController* new_player)
 
     // Set the stable name for the DefaultPawnClass instance so we can find it later. We only do this if the
     // pawn is non-null (it is possible for pawn to be null if we press "Simulate" in the editor), and if the
-    // pawn has a UStableNameComponent.
+    // pawn has a USpStableNameComponent.
     APawn* pawn = new_player->GetPawn();
     if (pawn && Unreal::hasStableName(pawn)) {
-        Unreal::setStableName(pawn, "Default/" + Unreal::toStdString(DefaultPawnClass->GetName()));
+        Unreal::setStableName(pawn, "DefaultPawn/" + Unreal::toStdString(DefaultPawnClass->GetName()));
     }
 }
 

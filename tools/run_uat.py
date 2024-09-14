@@ -12,7 +12,7 @@ import sys
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--build_config", required=True)
+    parser.add_argument("--build_config", default="Development")
     parser.add_argument("--unreal_engine_dir", required=True)
     args, unknown_args = parser.parse_known_args() # get remaining args to pass to RunUAT
 

@@ -62,10 +62,10 @@ class UnrealService():
     # Get property values
     #
 
-    def get_property_value(self, property_desc):
+    def get_property_value_as_string(self, property_desc):
         return self._rpc_client.call("unreal_service.get_property_value_as_string", property_desc)
 
-    def set_property_value(self, property_desc, property_value):
+    def set_property_value_as_string(self, property_desc, property_value):
         return self._rpc_client.call("unreal_service.set_property_value_from_string", property_desc, property_value)
 
     #
@@ -88,7 +88,7 @@ class UnrealService():
     # 
     #     args = {"Arg": unreal_service.to_ptr(ptr)}
     #     return_values = unreal_service.call_function(uobject, ufunction, args)
-    #     return_value_ptr = unreal_service.from_ptr(return_values["ReturnValue"])
+    #     return_value = unreal_service.to_handle(return_values["ReturnValue"])
     #
 
     # The Ptr class is for internal use, and does not need to be instantiated directly by users.
@@ -106,7 +106,7 @@ class UnrealService():
 
     # Convert a return value returned by unreal_service.call_function(...) into a form that can be passed to
     # another UnrealService function.
-    def from_ptr(self, string):
+    def to_handle(self, string):
         return int(string, 0)
 
     # call an arbitrary function

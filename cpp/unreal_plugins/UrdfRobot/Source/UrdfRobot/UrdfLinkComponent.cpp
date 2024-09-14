@@ -23,11 +23,12 @@
 #include <PhysicsEngine/BodyInstance.h>
 #include <PhysicalMaterials/PhysicalMaterial.h>
 
-#include "SpCore/ArrayDesc.h"
+#include "SpCore/ArrayDesc.h" // TODO: remove
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/Std.h"
+
 #include "UrdfRobot/UrdfParser.h"
 
 UUrdfLinkComponent::UUrdfLinkComponent()

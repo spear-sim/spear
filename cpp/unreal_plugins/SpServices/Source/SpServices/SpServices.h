@@ -8,11 +8,10 @@
 
 #include <Modules/ModuleInterface.h>
 
-#include "SpCore/Rpclib.h"
-
-#include "SpServices/CppFuncService.h"
 #include "SpServices/EngineService.h"
 #include "SpServices/LegacyService.h"
+#include "SpServices/Rpclib.h"
+#include "SpServices/SpFuncService.h"
 #include "SpServices/UnrealService.h"
 
 class SpServices : public IModuleInterface
@@ -26,7 +25,7 @@ private:
 
     std::unique_ptr<EngineService<rpc::server>> engine_service_ = nullptr;
 
-    std::unique_ptr<CppFuncService> cpp_func_service_ = nullptr;
+    std::unique_ptr<SpFuncService> sp_func_service_ = nullptr;
     std::unique_ptr<LegacyService> legacy_service_ = nullptr;
     std::unique_ptr<UnrealService> unreal_service_ = nullptr;
 };

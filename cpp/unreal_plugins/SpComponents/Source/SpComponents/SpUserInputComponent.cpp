@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "SpCore/UserInputComponent.h"
+#include "SpComponents/SpUserInputComponent.h"
 
 #include <functional> // std::function
 #include <string>
@@ -19,7 +19,7 @@
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 
-UUserInputComponent::UUserInputComponent()
+USpUserInputComponent::USpUserInputComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -28,12 +28,12 @@ UUserInputComponent::UUserInputComponent()
     PrimaryComponentTick.TickGroup = ETickingGroup::TG_PrePhysics;
 }
 
-UUserInputComponent::~UUserInputComponent()
+USpUserInputComponent::~USpUserInputComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
 }
 
-void UUserInputComponent::TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function)
+void USpUserInputComponent::TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function)
 {
     USceneComponent::TickComponent(delta_time, level_tick, this_tick_function);
 
@@ -47,7 +47,7 @@ void UUserInputComponent::TickComponent(float delta_time, ELevelTick level_tick,
     }
 }
 
-void UUserInputComponent::subscribeToUserInputs(const std::vector<std::string>& user_input_names)
+void USpUserInputComponent::subscribeToUserInputs(const std::vector<std::string>& user_input_names)
 {
     SP_ASSERT(GetWorld());
     SP_ASSERT(GetWorld()->GetFirstPlayerController());
@@ -74,7 +74,7 @@ void UUserInputComponent::subscribeToUserInputs(const std::vector<std::string>& 
     }
 }
 
-void UUserInputComponent::unsubscribeFromUserInputs(const std::vector<std::string>& user_input_names)
+void USpUserInputComponent::unsubscribeFromUserInputs(const std::vector<std::string>& user_input_names)
 {
     SP_ASSERT(input_component_);
     SP_ASSERT(player_input_);
@@ -90,15 +90,15 @@ void UUserInputComponent::unsubscribeFromUserInputs(const std::vector<std::strin
     }
 }
 
-void UUserInputComponent::setHandleUserInputFunc(const std::function<void(const std::string&, float)>& handle_user_input_func)
+void USpUserInputComponent::setHandleUserInputFunc(const std::function<void(const std::string&, float)>& handle_user_input_func)
 {
     handle_user_input_func_ = handle_user_input_func;
 }
 
-FName UUserInputComponent::getUniqueAxisNameFromUserInputName(const std::string& user_input_name) const
+FName USpUserInputComponent::getUniqueAxisNameFromUserInputName(const std::string& user_input_name) const
 {
     // The only requirement when setting creating an axis name is that it is a globally unique string. We do not
     // need to use the actor's stable name specifically. So we avoid using the actor's stable name here, because
-    // this will enable the use of UUserInputComponents on actors that don't have a UStableNameComponent.
+    // this will enable the use of USpUserInputComponent on actors that don't have an USpStableNameComponent.
     return Unreal::toFName(Unreal::toStdString(GetOwner()->GetFullName()) + ":" + Unreal::getStableName(this) + ":axis:" + user_input_name);
 }

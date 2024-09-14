@@ -16,46 +16,47 @@
     #include <format>
 #endif
 
-SharedMemoryRegion::SharedMemoryRegion(int num_bytes) : SharedMemoryRegion(getUniqueId(), num_bytes) {}
+SharedMemoryRegion::SharedMemoryRegion(int num_bytes) : SharedMemoryRegion(num_bytes, getUniqueId()) {}
 
-SharedMemoryRegion::SharedMemoryRegion(uint64_t id, int num_bytes)
+SharedMemoryRegion::SharedMemoryRegion(int num_bytes, uint64_t id)
 {
     SP_ASSERT(num_bytes > 0);
 
-    view_.id_ = getUniqueIdString(id);
-    view_.num_bytes_ = num_bytes;
+    id_ = getUniqueIdString(id);
+    num_bytes_ = num_bytes;
+
+    SP_ASSERT(id_ != "");
 
     #if BOOST_OS_WINDOWS
-        boost::interprocess::windows_shared_memory windows_shared_memory(boost::interprocess::create_only, view_.id_.c_str(), boost::interprocess::read_write, num_bytes);
+        boost::interprocess::windows_shared_memory windows_shared_memory(boost::interprocess::create_only, id_.c_str(), boost::interprocess::read_write, num_bytes_);
         mapped_region_ = boost::interprocess::mapped_region(windows_shared_memory, boost::interprocess::read_write);
     #elif BOOST_OS_MACOS || BOOST_OS_LINUX
-        boost::interprocess::shared_memory_object::remove(view_.id_.c_str());
-        boost::interprocess::shared_memory_object shared_memory_object(boost::interprocess::create_only, view_.id_.c_str(), boost::interprocess::read_write);
-        shared_memory_object.truncate(num_bytes);
+        boost::interprocess::shared_memory_object::remove(id_.c_str());
+        boost::interprocess::shared_memory_object shared_memory_object(boost::interprocess::create_only, id_.c_str(), boost::interprocess::read_write);
+        shared_memory_object.truncate(num_bytes_);
         mapped_region_ = boost::interprocess::mapped_region(shared_memory_object, boost::interprocess::read_write);
     #else
         #error
     #endif
 
-    view_.data_ = mapped_region_.get_address();
+    SP_ASSERT(mapped_region_.get_address());
 }
 
 SharedMemoryRegion::~SharedMemoryRegion()
 {
-    SP_ASSERT(view_.id_ != "");
-    SP_ASSERT(view_.num_bytes_ > 0);
-    SP_ASSERT(view_.data_);
+    SP_ASSERT(id_ != "");
     #if BOOST_OS_MACOS || BOOST_OS_LINUX
-        boost::interprocess::shared_memory_object::remove(view_.id_.c_str());
+        boost::interprocess::shared_memory_object::remove(id_.c_str());
     #endif
 }
 
-const SharedMemoryView& SharedMemoryRegion::getView()
+SharedMemoryView SharedMemoryRegion::getView()
 {
-    SP_ASSERT(view_.id_ != "");
-    SP_ASSERT(view_.num_bytes_ > 0);
-    SP_ASSERT(view_.data_);
-    return view_;
+    SharedMemoryView view;
+    view.id_ = id_;
+    view.num_bytes_ = num_bytes_;
+    view.data_ = mapped_region_.get_address();
+    return view;
 }
 
 uint64_t SharedMemoryRegion::getUniqueId()

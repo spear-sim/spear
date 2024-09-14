@@ -5,7 +5,7 @@
 #include "SpearSim/SpSpectatorPawn.h"
 
 #include <chrono>
-#include <numeric>
+#include <numeric> // std::accumulate
 #include <string>
 
 #include <Engine/EngineBaseTypes.h> // ETickingGroup
@@ -19,7 +19,7 @@
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
 #include "SpCore/Log.h"
-#include "SpCore/StableNameComponent.h"
+#include "SpCore/SpStableNameComponent.h"
 #include "SpCore/Unreal.h"
 
 ASpSpectatorPawn::ASpSpectatorPawn()
@@ -39,9 +39,9 @@ ASpSpectatorPawn::ASpSpectatorPawn()
     PrimaryActorTick.bTickEvenWhenPaused = true;
     PrimaryActorTick.TickGroup = ETickingGroup::TG_PrePhysics;
 
-    // UStableNameComponent
-    StableNameComponent = Unreal::createComponentInsideOwnerConstructor<UStableNameComponent>(this, "stable_name");
-    SP_ASSERT(StableNameComponent);
+    // USpStableNameComponent
+    SpStableNameComponent = Unreal::createComponentInsideOwnerConstructor<USpStableNameComponent>(this, "sp_stable_name_component");
+    SP_ASSERT(SpStableNameComponent);
 
     // USpectatorPawnMovement
     SpectatorPawnMovement = Cast<USpectatorPawnMovement>(GetMovementComponent()); // no RTTI available, so use Cast instead of dynamic_cast

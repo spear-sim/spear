@@ -10,7 +10,8 @@
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
-#include "SpCore/UserInputComponent.h"
+
+#include "SpComponents/SpUserInputComponent.h"
 
 ASpPlayerController::ASpPlayerController()
 {
@@ -24,13 +25,13 @@ ASpPlayerController::ASpPlayerController()
     // is worth it.
     bShowMouseCursor = true;
 
-    // UUserInputComponent
-    UserInputComponent = Unreal::createComponentInsideOwnerConstructor<UUserInputComponent>(this, GetRootComponent(), "user_input");
-    SP_ASSERT(UserInputComponent);
+    // USpUserInputComponent
+    SpUserInputComponent = Unreal::createComponentInsideOwnerConstructor<USpUserInputComponent>(this, GetRootComponent(), "sp_user_input_component");
+    SP_ASSERT(SpUserInputComponent);
 
-    UserInputComponent->bHandleUserInput = true; // UserInputComponents need to be explicitly enabled
-    UserInputComponent->PrimaryComponentTick.bTickEvenWhenPaused = true; // we want to exit even when paused
-    UserInputComponent->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PrePhysics;
+    SpUserInputComponent->bHandleUserInput = true; // UserInputComponents need to be explicitly enabled
+    SpUserInputComponent->PrimaryComponentTick.bTickEvenWhenPaused = true; // we want to exit even when paused
+    SpUserInputComponent->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PrePhysics;
 }
 
 ASpPlayerController::~ASpPlayerController()
@@ -45,8 +46,8 @@ void ASpPlayerController::BeginPlay()
     // Need to set this to true to avoid blurry visual artifacts in the editor when the game is paused.
     GetWorld()->bIsCameraMoveableWhenPaused = true;
 
-    UserInputComponent->subscribeToUserInputs({"Escape"});
-    UserInputComponent->setHandleUserInputFunc([](const std::string& key, float axis_value) -> void {
+    SpUserInputComponent->subscribeToUserInputs({"Escape"});
+    SpUserInputComponent->setHandleUserInputFunc([](const std::string& key, float axis_value) -> void {
         bool force = false;
         FGenericPlatformMisc::RequestExit(force);
     });
@@ -56,6 +57,6 @@ void ASpPlayerController::EndPlay(const EEndPlayReason::Type end_play_reason)
 {
     APlayerController::EndPlay(end_play_reason);
 
-    UserInputComponent->setHandleUserInputFunc(nullptr);
-    UserInputComponent->unsubscribeFromUserInputs({"Escape"});
+    SpUserInputComponent->setHandleUserInputFunc(nullptr);
+    SpUserInputComponent->unsubscribeFromUserInputs({"Escape"});
 }

@@ -11,7 +11,11 @@
 #include <Math/Vector.h>
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
+#include "SpCore/SpStableNameComponent.h"
+
 #include "SpHitEventActor.generated.h"
+
+class USpStableNameComponent;
 
 USTRUCT()
 struct FActorHitEventDesc
@@ -62,6 +66,9 @@ public:
 
     UFUNCTION()
     TArray<FActorHitEventDesc> GetHitEventDescs();
+
+    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="SP Stable Name Component")
+    USpStableNameComponent* SpStableNameComponent = nullptr;
 
 private:
     UFUNCTION()

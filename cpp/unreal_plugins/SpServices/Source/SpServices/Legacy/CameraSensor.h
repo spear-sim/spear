@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-#include "SpCore/ArrayDesc.h"
+#include "SpCore/ArrayDesc.h" // TODO: remove
 #include "SpCore/Boost.h"
 
 class AActor;

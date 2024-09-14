@@ -21,7 +21,7 @@
 #include <Math/Vector.h>
 #include <UObject/UObjectGlobals.h> // LoadObject
 
-#include "SpCore/ArrayDesc.h" // DataType
+#include "SpCore/ArrayDesc.h" // TODO: remove
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Std.h"

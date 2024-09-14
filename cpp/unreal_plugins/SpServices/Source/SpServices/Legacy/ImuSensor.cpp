@@ -23,7 +23,7 @@
 #include <Math/Vector.h>
 #include <PhysicsEngine/PhysicsSettings.h>
 
-#include "SpCore/ArrayDesc.h" // DataType
+#include "SpCore/ArrayDesc.h" // TODO: remove
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 

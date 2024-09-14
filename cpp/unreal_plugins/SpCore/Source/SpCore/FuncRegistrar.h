@@ -12,18 +12,18 @@
 #include "SpCore/Std.h"
 
 //
-// A CppFuncRegistrar<TReturn, TArgs...> is a templated type that allows a caller to call native C++
-// functions by name. The user is responsible for registering each function that may be called through a
-// particular CppFuncRegistrar object. For example, a typical user-specified function might call the new
-// operator on a derived type and return a base class pointer.
+// A FuncRegistrar<TReturn, TArgs...> is a templated type that allows a caller to call native C++ functions
+// by name. The user is responsible for registering each function that may be called through a particular
+// FuncRegistrar object. For example, a typical user-specified function might call the new operator on a
+// derived type and return a base class pointer.
 // 
 // All functions that are registered with a registrar must have the same signature, taking as input TArgs...
 // and returning as output TReturn.
 //
 // This following example demonstrates a typical use case.
 // 
-//     CppFuncRegistrar<void*, int> new_registrar;
-//     CppFuncRegistrar<void, void*> delete_registrar;
+//     FuncRegistrar<void*, int> new_registrar;
+//     FuncRegistrar<void, void*> delete_registrar;
 //
 // In this case, all functions registered with new_registrar must take as input an int and return as output
 // void*. Likewise, all functions registered with delete_registrar must take as input a void* and return
@@ -44,7 +44,7 @@
 //
 
 template <typename TReturn, typename... TArgs>
-class CppFuncRegistrar
+class FuncRegistrar
 {
 public:
     void registerFunc(const std::string& name, const std::function<TReturn(TArgs...)>& func)

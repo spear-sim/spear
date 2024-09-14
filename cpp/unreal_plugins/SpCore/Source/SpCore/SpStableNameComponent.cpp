@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "SpCore/StableNameComponent.h"
+#include "SpCore/SpStableNameComponent.h"
 
 #include <Components/ActorComponent.h>
 #include <GameFramework/Actor.h>
@@ -11,30 +11,30 @@
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
 
-UStableNameComponent::UStableNameComponent()
+USpStableNameComponent::USpStableNameComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
 }
 
-UStableNameComponent::~UStableNameComponent()
+USpStableNameComponent::~USpStableNameComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
 }
 
 #if WITH_EDITOR // defined in an auto-generated header
-    void UStableNameComponent::OnComponentCreated()
+    void USpStableNameComponent::OnComponentCreated()
     {
         UActorComponent::OnComponentCreated();
         requestUpdate();
     }
 
-    void UStableNameComponent::PostLoad()
+    void USpStableNameComponent::PostLoad()
     {
         UActorComponent::PostLoad();
         requestUpdate();
     }
 
-    void UStableNameComponent::requestUpdate()
+    void USpStableNameComponent::requestUpdate()
     {
         AActor* actor = GetOwner();
         SP_ASSERT(actor);

@@ -21,10 +21,9 @@
 #include <UObject/Object.h>
 
 #include "SpCore/Assert.h"
-#include "SpCore/CppFunc.h"
-#include "SpCore/CppFuncComponent.h"
 #include "SpCore/Log.h"
 #include "SpCore/SharedMemoryRegion.h"
+#include "SpCore/SpFuncArray.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealObj.h"
@@ -32,16 +31,17 @@
 #include "SpCore/Yaml.h"
 #include "SpCore/YamlCpp.h"
 
+#include "SpComponents/SpFuncComponent.h"
 #include "SpComponents/SpHitEventActor.h"
 
 ASpDebugWidget::ASpDebugWidget()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    CppFuncComponent = Unreal::createComponentInsideOwnerConstructor<UCppFuncComponent>(this, "cpp_func");
-    SP_ASSERT(CppFuncComponent);
+    SpFuncComponent = Unreal::createComponentInsideOwnerConstructor<USpFuncComponent>(this, "sp_func_component");
+    SP_ASSERT(SpFuncComponent);
 
-    initializeCppFuncs();
+    initializeSpFuncs();
 }
 
 ASpDebugWidget::~ASpDebugWidget()
@@ -52,7 +52,8 @@ ASpDebugWidget::~ASpDebugWidget()
 void ASpDebugWidget::BeginDestroy()
 {
     AActor::BeginDestroy();
-    terminateCppFuncs();
+
+    terminateSpFuncs();
 }
 
 void ASpDebugWidget::LoadConfig()
@@ -357,18 +358,14 @@ void ASpDebugWidget::CallFunctions()
     i++;
 }
 
-void ASpDebugWidget::CallCppFunctions()
+void ASpDebugWidget::CallSpFunc()
 {
-    static int i = 1;
+    USpFuncComponent* sp_func_component = Unreal::getComponentByType<USpFuncComponent>(this);
+    SP_ASSERT(sp_func_component);
 
-    UCppFuncComponent* cpp_func_component = Unreal::getComponentByType<UCppFuncComponent>(this);
-    SP_ASSERT(cpp_func_component);
-
-    CppFuncPackage args;
-
-    // create new data objects
-    CppFuncData<double> location("location");
-    CppFuncData<double> rotation("rotation");
+    // create new SpFuncArray objects
+    SpFuncArray<double> location("location");
+    SpFuncArray<double> rotation("rotation");
     location.setData({1.0, 2.0, 4.0});
     rotation.setData({3.0, 5.0, 7.0});
 
@@ -378,39 +375,35 @@ void ASpDebugWidget::CallCppFunctions()
     vec.setObj(FVector(10.0, 20.0, 30.0));
     rot.setObj(FRotator(30.0, 50.0, 70.0));
 
-    CppFuncData<double> shared_doubles("shared_doubles");
-    shared_doubles.setData("my_shared_memory", shared_memory_region_->getView(), 3);
-    shared_doubles.setValues({99.0, 98.0, 97.0});
+    // create new SpFuncArray objects backed by shared memory
+    SpFuncArray<double> shared_doubles("shared_doubles");
+    shared_doubles.setData("my_shared_memory", shared_memory_view_, {3});
+    shared_doubles.setDataValues({99.0, 98.0, 97.0});
 
-    // set arg items from data objects
-    args.items_ = CppFuncUtils::moveDataToItems({location.getPtr(), rotation.getPtr(), shared_doubles.getPtr()});
-
-    // set arg strings from Unreal objects
+    // set args
+    SpFuncDataBundle args;
+    args.packed_arrays_ = SpFuncArrayUtils::moveToPackedArrays({location.getPtr(), rotation.getPtr(), shared_doubles.getPtr()});
     args.unreal_obj_strings_ = UnrealObjUtils::getObjectPropertiesAsStrings({vec.getPtr(), rot.getPtr()});
-
-    // set arg info string as a YAML string
     args.info_ = "INITIALIZE_DATA_MODE: rvalue_reference_to_vector_of_uint8";
 
     // call function
-    CppFuncPackage return_values = cpp_func_component->callFunc("my_func", args);
+    SpFuncDataBundle return_values = sp_func_component->callFunc("my_func_1", args);
 
-    // create view objects directly from return data
-    CppFuncView<double> location_as_return_value("location");
-    CppFuncView<double> new_location("new_location");
-    CppFuncView<double> new_rotation("new_rotation");
-    CppFuncView<double> new_shared_doubles("new_shared_doubles");
-    CppFuncUtils::setViewsFromItems({location_as_return_value.getPtr(), new_location.getPtr(), new_rotation.getPtr(), new_shared_doubles.getPtr()}, return_values.items_);
+    // create view objects directly from return values
+    SpFuncArrayView<double> location_as_return_value("location");
+    SpFuncArrayView<double> new_location("new_location");
+    SpFuncArrayView<double> new_rotation("new_rotation");
+    SpFuncArrayView<double> new_shared_doubles("new_shared_doubles");
+    SpFuncArrayUtils::setViewsFromPackedArrays({location_as_return_value.getPtr(), new_location.getPtr(), new_rotation.getPtr(), new_shared_doubles.getPtr()}, return_values.packed_arrays_);
 
-    // create Unreal objects directly from return strings
+    // create Unreal objects directly from return values
     UnrealObj<FVector> new_vec("new_vec");
     UnrealObj<FRotator> new_rot("new_rot");
     UnrealObjUtils::setObjectPropertiesFromStrings({new_vec.getPtr(), new_rot.getPtr()}, return_values.unreal_obj_strings_);
 
-    // get return info string as a YAML value
+    // parse info string as YAML
     bool success = Yaml::get<bool>(YAML::Load(return_values.info_), "SUCCESS");
     SP_ASSERT(success);
-
-    i++;
 }
 
 void ASpDebugWidget::CreateObjects()
@@ -492,111 +485,55 @@ void ASpDebugWidget::UpdateData(TMap<FString, FVector>& map_from_string_to_vecto
     array_of_vectors.Add(FVector(4.0f, 5.0f, 6.0f));
 }
 
-void ASpDebugWidget::GetPoseableMeshPoses()
-{
-    SP_LOG_CURRENT_FUNCTION();
-
-    AActor* actor = Unreal::findActorByName(GetWorld(), "Debug/Manny");
-    SP_ASSERT(actor);
-
-    UPoseableMeshComponent* poseable_mesh_component = Unreal::getComponentByType<UPoseableMeshComponent>(actor);
-    SP_ASSERT(poseable_mesh_component);
-
-    int num_bones = poseable_mesh_component->GetNumBones();
-    for (int i = 0; i < num_bones; i++) {        
-        FName bone_name = poseable_mesh_component->GetBoneName(i);
-        FTransform transform = poseable_mesh_component->GetBoneTransformByName(bone_name, EBoneSpaces::Type::ComponentSpace);
-        SP_LOG(i);
-        SP_LOG(Unreal::toStdString(bone_name));
-
-        void* value_ptr = &transform;
-        UStruct* ustruct = UnrealClassRegistrar::getStaticStruct<FTransform>();
-        SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
-        SP_LOG();
-    }
-}
-
-void ASpDebugWidget::SetPoseableMeshPoses()
-{
-    SP_LOG_CURRENT_FUNCTION();
-
-    AActor* actor = Unreal::findActorByName(GetWorld(), "Debug/Manny");
-    SP_ASSERT(actor);
-
-    UPoseableMeshComponent* poseable_mesh_component = Unreal::getComponentByType<UPoseableMeshComponent>(actor);
-    SP_ASSERT(poseable_mesh_component);
-
-    std::vector<std::string> bone_names = {"hand_l", "hand_r", "head"};
-    for (auto& bone_name : bone_names) {
-        FTransform transform;
-        UStruct* ustruct = UnrealClassRegistrar::getStaticStruct<FTransform>();
-        void* value_ptr = &transform;
-
-        transform = poseable_mesh_component->GetBoneTransformByName(Unreal::toFName(bone_name), EBoneSpaces::Type::ComponentSpace);
-        SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
-
-        FVector scale = transform.GetScale3D();
-        transform.SetScale3D(scale*PoseableMeshScaleFactor);        
-        poseable_mesh_component->SetBoneTransformByName(Unreal::toFName(bone_name), transform, EBoneSpaces::Type::ComponentSpace);
-
-        transform = poseable_mesh_component->GetBoneTransformByName(Unreal::toFName(bone_name), EBoneSpaces::Type::ComponentSpace);
-        SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
-    }
-
-    // poseable_mesh_component->RefreshBoneTransforms();
-}
-
-void ASpDebugWidget::initializeCppFuncs()
+void ASpDebugWidget::initializeSpFuncs()
 {
     int shared_memory_num_bytes = 1024;
     shared_memory_region_ = std::make_unique<SharedMemoryRegion>(shared_memory_num_bytes);
     SP_ASSERT(shared_memory_region_);
 
-    std::string shared_memory_name = "my_shared_memory";
-    CppFuncSharedMemoryView shared_memory_view(shared_memory_region_->getView(), CppFuncSharedMemoryUsageFlags::Arg | CppFuncSharedMemoryUsageFlags::ReturnValue);
-    CppFuncComponent->registerSharedMemoryView(shared_memory_name, shared_memory_view);
+    shared_memory_view_ = SpFuncSharedMemoryView(shared_memory_region_->getView(), SpFuncSharedMemoryUsageFlags::Arg | SpFuncSharedMemoryUsageFlags::ReturnValue);
+    SpFuncComponent->registerSharedMemoryView("my_shared_memory", shared_memory_view_);
 
-    CppFuncComponent->registerFunc("hello_world", [this](CppFuncPackage& args) -> CppFuncPackage {
+    SpFuncComponent->registerFunc("hello_world", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
 
-        // CppFuncData objects are {named, strongly typed} arrays that can be efficiently passed
-        // {to, from} Python.
-        CppFuncData<uint8_t> hello("hello");
+        // SpFuncArray objects are named strongly typed arrays that can be efficiently passed to and from Python.
+        SpFuncArray<uint8_t> hello("hello");
         hello.setData("Hello World!");
 
         // Get some some data from the Unreal Engine.
         AActor* actor = Unreal::findActorByName(GetWorld(), "SpComponents/SpHitEventActor");
         FVector location = actor->GetActorLocation();
 
-        // Store the Unreal data in a CppFuncData object to efficiently return it to Python.
-        // Here we use shared memory for the most efficient possible communication.
-        CppFuncData<double> unreal_data("unreal_data");
-        unreal_data.setData("my_shared_memory", shared_memory_region_->getView(), 3);
-        unreal_data.setValues({location.X, location.Y, location.Z});
+        // Store the Unreal data in an SpFuncArray object to efficiently return it to Python. Here we use
+        // inter-process shared memory for the most efficient possible communication.
+        SpFuncArray<double> unreal_data("unreal_data");
+        unreal_data.setData("my_shared_memory", shared_memory_view_, {3});
+        unreal_data.setDataValues({location.X, location.Y, location.Z});
 
-        // Return CppFuncData objects.
-        CppFuncPackage return_values;
-        return_values.items_ = CppFuncUtils::moveDataToItems({hello.getPtr(), unreal_data.getPtr()});
+        // Create SpFuncDataBundle object to store return values.
+        SpFuncDataBundle return_values;
+        return_values.packed_arrays_ = SpFuncArrayUtils::moveToPackedArrays({hello.getPtr(), unreal_data.getPtr()});
         return return_values;
     });
 
-    CppFuncComponent->registerFunc("my_func_1", [this](CppFuncPackage& args) -> CppFuncPackage {
+    SpFuncComponent->registerFunc("my_func_1", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
 
-        // create view objects directly from arg data
-        CppFuncView<double> location("location");
-        CppFuncView<double> rotation("rotation");
-        CppFuncView<double> shared_doubles("shared_doubles");
-        CppFuncUtils::setViewsFromItems({location.getPtr(), rotation.getPtr(), shared_doubles.getPtr()}, args.items_);
+        // SpFuncArrayView objects are like SpFuncArray objects except they are read-only.
+        SpFuncArrayView<double> location("location");
+        SpFuncArrayView<double> rotation("rotation");
+        SpFuncArrayView<double> shared_doubles("shared_doubles");
+        SpFuncArrayUtils::setViewsFromPackedArrays({location.getPtr(), rotation.getPtr(), shared_doubles.getPtr()}, args.packed_arrays_);
 
-        // create Unreal objects directly from arg strings
+        // Create Unreal objects directly from args.
         UnrealObj<FVector> vec("vec");
         UnrealObj<FRotator> rot("rot");
         UnrealObjUtils::setObjectPropertiesFromStrings({vec.getPtr(), rot.getPtr()}, args.unreal_obj_strings_);
 
-        // get arg info string as a YAML value
+        // Get arg info string as a YAML value.
         std::string initialize_data_mode = Yaml::get<std::string>(YAML::Load(args.info_), "INITIALIZE_DATA_MODE");
 
-        // create new data objects
-        CppFuncData<double> hello("hello");
+        // Create new SpFuncArray object using a different initialization strategy depending on the info string.
+        SpFuncArray<double> hello("hello");
         if (initialize_data_mode == "initializer_list_of_double") {
             hello.setData({16.0, 32.0}); // initialize from initializer list of double
         } else if (initialize_data_mode == "vector_of_double") {
@@ -609,72 +546,66 @@ void ASpDebugWidget::initializeCppFuncs()
             SP_ASSERT(false);
         }
 
-        CppFuncData<uint8_t> hello_str("hello_str");
+        SpFuncArray<uint8_t> hello_str("hello_str");
         hello_str.setData("Hello world!"); // initialize from string literal
 
-        CppFuncData<double> new_location("new_location");
-        CppFuncData<double> new_rotation("new_rotation");
-        CppFuncData<double> new_shared_doubles("new_shared_doubles");
+        SpFuncArray<double> new_location("new_location");
+        SpFuncArray<double> new_rotation("new_rotation");
+        SpFuncArray<double> new_shared_doubles("new_shared_doubles");
         new_location.setData(location.getView() | std::views::transform([](auto x) { return 2.0*x; })); // initialize from range of double
         new_rotation.setData(rotation.getView() | std::views::transform([](auto x) { return 3.0*x; })); // initialize from range of double
-        new_shared_doubles.setData("my_shared_memory", shared_memory_region_->getView(), 3);
-        new_shared_doubles.setValues(shared_doubles.getView() | std::views::transform([](auto x) { return 4.0*x; }));
+        new_shared_doubles.setData("my_shared_memory", shared_memory_view_, {3});
+        new_shared_doubles.setDataValues(shared_doubles.getView() | std::views::transform([](auto x) { return 4.0*x; }));
 
-        // create new data objects by moving arg data
-        CppFuncData<double> location_as_return_value("location");
-        CppFuncUtils::moveItemsToData({location_as_return_value.getPtr()}, args.items_);
+        // Create new SpFuncArray object by moving arg data.
+        SpFuncArray<double> location_as_return_value("location");
+        SpFuncArrayUtils::moveFromPackedArrays({location_as_return_value.getPtr()}, args.packed_arrays_);
 
-        // create new Unreal objects
+        // Create new Unreal objects.
         UnrealObj<FVector> new_vec("new_vec");
         UnrealObj<FRotator> new_rot("new_rot");
         new_vec.setObj(4.0*vec.getObj());
         new_rot.setObj(5.0*rot.getObj());
 
-        CppFuncPackage return_values;
-
-        // set return data from data objects
-        return_values.items_ = CppFuncUtils::moveDataToItems({new_location.getPtr(), new_rotation.getPtr(), new_shared_doubles.getPtr(), location_as_return_value.getPtr()});
-
-        // set return strings from Unreal objects
+        // Create SpFuncDataBundle object to store return values.
+        SpFuncDataBundle return_values;
+        return_values.packed_arrays_ = SpFuncArrayUtils::moveToPackedArrays({new_location.getPtr(), new_rotation.getPtr(), new_shared_doubles.getPtr(), location_as_return_value.getPtr()});
         return_values.unreal_obj_strings_ = UnrealObjUtils::getObjectPropertiesAsStrings({new_vec.getPtr(), new_rot.getPtr()});
-
-        // set return info string as a YAML string
         return_values.info_ = "SUCCESS: True";
-
         return return_values;
     });
 
-    CppFuncComponent->registerFunc("my_func_2", [this](CppFuncPackage& args) -> CppFuncPackage {
+    SpFuncComponent->registerFunc("my_func_2", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
 
-        // create view objects directly from arg data
-        CppFuncView<double> location("location");
-        CppFuncView<double> rotation("rotation");
-        CppFuncUtils::setViewsFromItems({location.getPtr(), rotation.getPtr()}, args.items_);
+        // SpFuncArrayView objects are like SpFuncArray objects except they are read-only.
+        SpFuncArrayView<double> location("location");
+        SpFuncArrayView<double> rotation("rotation");
+        SpFuncArrayUtils::setViewsFromPackedArrays({location.getPtr(), rotation.getPtr()}, args.packed_arrays_);
 
-        // create new data objects
-        CppFuncData<double> new_location("new_location");
-        CppFuncData<double> new_rotation("new_rotation");
+        // SpFuncArray objects are named strongly typed arrays that can be efficiently passed to and from Python.
+        SpFuncArray<double> new_location("new_location");
+        SpFuncArray<double> new_rotation("new_rotation");
         new_location.setData(location.getView() | std::views::transform([](auto x) { return 2.0*x; })); // initialize from range of double
         new_rotation.setData(rotation.getView() | std::views::transform([](auto x) { return 3.0*x; })); // initialize from range of double
 
-        // create new data objects backed by shared memory
-        CppFuncData<float> my_floats("my_floats");
-        my_floats.setData("my_shared_memory", shared_memory_region_->getView(), 3);
-        my_floats.setValues({99.0, 98.0, 97.0});
+        // SpFuncArray objects can be backed by shared memory.
+        SpFuncArray<float> my_floats("my_floats");
+        my_floats.setData("my_shared_memory", shared_memory_view_, {3});
+        my_floats.setDataValues({99.0, 98.0, 97.0});
 
-        CppFuncPackage return_values;
-        return_values.items_ = CppFuncUtils::moveDataToItems({new_location.getPtr(), new_rotation.getPtr(), my_floats.getPtr()});
-
+        // Create SpFuncDataBundle object to store return values.
+        SpFuncDataBundle return_values;
+        return_values.packed_arrays_ = SpFuncArrayUtils::moveToPackedArrays({new_location.getPtr(), new_rotation.getPtr(), my_floats.getPtr()});
         return return_values;
     });
 }
 
-void ASpDebugWidget::terminateCppFuncs()
+void ASpDebugWidget::terminateSpFuncs()
 {
-    CppFuncComponent->unregisterFunc("my_func_2");
-    CppFuncComponent->unregisterFunc("my_func_1");
-    CppFuncComponent->unregisterFunc("hello_world");
+    SpFuncComponent->unregisterFunc("my_func_2");
+    SpFuncComponent->unregisterFunc("my_func_1");
+    SpFuncComponent->unregisterFunc("hello_world");
 
-    CppFuncComponent->unregisterSharedMemoryView("my_shared_memory");
+    SpFuncComponent->unregisterSharedMemoryView("my_shared_memory");
     shared_memory_region_ = nullptr;
 }

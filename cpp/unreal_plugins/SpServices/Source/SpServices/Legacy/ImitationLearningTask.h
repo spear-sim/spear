@@ -13,7 +13,7 @@
 
 #include <Math/Vector.h>
 
-#include "SpCore/ArrayDesc.h"
+#include "SpCore/ArrayDesc.h" // TODO: remove
 
 #include "SpServices/Legacy/ActorHitComponent.h"
 #include "SpServices/Legacy/StandaloneComponent.h"

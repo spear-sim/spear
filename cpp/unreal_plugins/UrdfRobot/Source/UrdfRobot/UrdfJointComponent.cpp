@@ -18,12 +18,14 @@
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 
-#include "SpCore/ArrayDesc.h"
+#include "SpCore/ArrayDesc.h" // TODO: remove
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
-#include "SpCore/UserInputComponent.h"
+
+#include "SpComponents/SpUserInputComponent.h"
+
 #include "UrdfRobot/UrdfLinkComponent.h"
 #include "UrdfRobot/UrdfParser.h"
 
@@ -47,9 +49,9 @@ UUrdfJointComponent::UUrdfJointComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    // UUserInputComponent
-    user_input_component_ = Unreal::createComponentInsideOwnerConstructor<UUserInputComponent>(this, "user_input_component");
-    SP_ASSERT(user_input_component_);
+    // USpUserInputComponent
+    SpUserInputComponent = Unreal::createComponentInsideOwnerConstructor<USpUserInputComponent>(this, "sp_user_input_component");
+    SP_ASSERT(SpUserInputComponent);
 }
 
 UUrdfJointComponent::~UUrdfJointComponent()
@@ -62,8 +64,8 @@ void UUrdfJointComponent::BeginPlay()
     UPhysicsConstraintComponent::BeginPlay();
 
     const std::map<std::string, std::pair<std::string, std::vector<double>>> user_input_actions = USER_INPUT_ACTIONS;
-    user_input_component_->subscribeToUserInputs(Std::keys(user_input_actions));
-    user_input_component_->setHandleUserInputFunc([this, user_input_actions](const std::string& key, float axis_value) -> void {
+    SpUserInputComponent->subscribeToUserInputs(Std::keys(user_input_actions));
+    SpUserInputComponent->setHandleUserInputFunc([this, user_input_actions](const std::string& key, float axis_value) -> void {
         applyActionComponent(user_input_actions.at(key));
     });
 

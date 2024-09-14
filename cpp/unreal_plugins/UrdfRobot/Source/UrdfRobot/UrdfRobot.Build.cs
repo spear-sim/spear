@@ -10,7 +10,7 @@ public class UrdfRobot : SpModuleRules
     {
         SP_LOG_CURRENT_FUNCTION();
 
-        PublicDependencyModuleNames.AddRange(new string[] {"SpCore"});
+        PublicDependencyModuleNames.AddRange(new string[] {"SpComponents", "SpCore"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }

@@ -14,7 +14,7 @@
 #include <Containers/Array.h>
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UPROPERTY
 
-#include "SpCore/ArrayDesc.h"
+#include "SpCore/ArrayDesc.h" // TODO: remove
 
 #include "UrdfLinkComponent.generated.h"
 

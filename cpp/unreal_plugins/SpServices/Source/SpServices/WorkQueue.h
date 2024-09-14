@@ -40,7 +40,7 @@ public:
     template <typename TFunc>
     static auto wrapFuncToExecuteInWorkQueueBlocking(WorkQueue& work_queue, TFunc&& func)
     {
-        return wrapFuncToExecuteInWorkQueueBlockingImpl(work_queue, std::forward<TFunc>(func), FuncInfo<TFunc>());
+        return wrapFuncToExecuteInWorkQueueBlockingImpl(work_queue, std::forward<decltype(func)>(func), FuncInfo<TFunc>());
     }
 
 private:
@@ -59,35 +59,44 @@ private:
     template <typename TReturn, typename... TArgs>
     struct FuncInfo<TReturn(*)(TArgs...)> {};
 
-    template <typename TFunc, typename TReturn, typename... TArgs> requires CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs...>
-    static auto wrapFuncToExecuteInWorkQueueBlockingImpl(WorkQueue& work_queue, TFunc&& func, const FuncInfo<TReturn(*)(TArgs&...)>& fi)
+    template <typename TFunc, typename TReturn, typename... TArgs> requires CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs&...>
+    static auto wrapFuncToExecuteInWorkQueueBlockingImpl(WorkQueue& work_queue, TFunc&& func, const FuncInfo<TReturn(*)(TArgs...)>& fi)
     {
         // Note that we capture func by value because we want to guarantee that func is still accessible
         // after this wrapFuncToExecuteInWorkQueueBlocking(...) function returns.
 
-        // Note also that we assume that the user's function accepts arguments by const reference. This
-        // will avoid an unnecessary copy when the surrounding code (e.g., the RPC server) calls the
-        // function returned here. Deeper inside our implementation, we will eventually copy these
-        // arguments so they are guaranteed to be accessible when we eventually execute the user's
-        // function, but we want to avoid copying wherever possible.
+        // Note also that we assume that the user's function accepts arguments by reference. This will avoid
+        // an unnecessary copy when the surrounding code (e.g., the RPC server) calls the function returned
+        // here. Deeper inside our implementation, we will eventually copy these arguments so they are
+        // guaranteed to be accessible when we eventually execute the user's function, but we want to avoid
+        // copying wherever possible.
 
-        // The lambda returned here is typically bound to a specific RPC entry point and called from a worker thread.
+        // The lambda returned here is typically bound to a specific RPC entry point and called from a worker
+        // thread.
+
         return [&work_queue, func](TArgs&... args) -> TReturn {
-            return work_queue.scheduleAndExecuteTaskBlocking(func, args...);
+            return work_queue.scheduleAndExecuteFuncBlocking(func, args...);
         };
     }
 
-    template <typename TFunc, typename... TArgs> requires CFuncIsCallableWithArgs<TFunc, TArgs...>
-    auto scheduleAndExecuteTaskBlocking(const TFunc& func, TArgs... args)
+    template <typename TFunc, typename... TArgs> requires CFuncIsCallableWithArgs<TFunc, TArgs&...>
+    auto scheduleAndExecuteFuncBlocking(const TFunc& func, TArgs&... args)
     {
-        using TReturn = std::invoke_result_t<TFunc, TArgs...>;
+        using TReturn = std::invoke_result_t<TFunc, TArgs&...>;
 
-        // Note that we capture func and args by value because we want to guarantee that they are both
-        // still accessible after scheduleAndExecuteTaskBlocking(...) returns. Strictly speaking, this
-        // guarantee is not necessary for this blocking implementation, but we capture by value anyway
-        // for consistency with our non-blocking implementation.
+        // Note that we capture func and args by value because we want to guarantee that they are both still
+        // accessible after scheduleAndExecuteTaskBlocking(...) returns. Strictly speaking, this guarantee is
+        // not necessary for this blocking implementation, but we capture by value anyway for consistency
+        // with a non-blocking implementation.
+
+        // The mutable keyword is required here, because otherwise args... will be treated as a const member
+        // variable inside the lambda. This is because, by default, capturing variables by value is
+        // equivalent to declaring them as const member variables. It is impossible to pass any const member
+        // variable to any function by non-const reference, so we use the mutable keyword to force args... to
+        // be a non-const member variable inside the lambda.
+
         auto task = CopyConstructiblePackagedTask<TReturn>(
-            [func, args...]() -> TReturn {
+            [func, args...]() mutable -> TReturn {
                 return func(args...);
             });
 
@@ -96,8 +105,9 @@ private:
         return future.get();
     }
 
-    // The purpose of this class is to provide a copy-constructible type that derives from std::packaged_task. This is necessary 
-    // because boost::asio requires that task objects are copy-constructible, but std::packaged_task is not copy-constructible.
+    // The purpose of this class is to provide a copy-constructible type that derives from std::packaged_task.
+    // This is necessary because boost::asio requires that task objects are copy-constructible, but std::packaged_task
+    // is not copy-constructible.
     template <typename TReturn>
     struct CopyConstructiblePackagedTask : std::packaged_task<TReturn()>
     {

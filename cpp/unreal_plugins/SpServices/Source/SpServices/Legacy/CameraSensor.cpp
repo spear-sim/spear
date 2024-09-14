@@ -19,7 +19,7 @@
 #include <Materials/MaterialInstanceDynamic.h>
 #include <UObject/UObjectGlobals.h>       // LoadObject, NewObject
 
-#include "SpCore/ArrayDesc.h" // DataType
+#include "SpCore/ArrayDesc.h" // TODO: remove
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
 #include "SpCore/Config.h"
