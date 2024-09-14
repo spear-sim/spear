@@ -28,7 +28,7 @@ void SpFuncPackedArray::setView(const SpFuncSharedMemoryView& shared_memory_view
     // validate consistency of internal state and shared memory state
     uint64_t num_elements = 0;
     if (!shape_.empty()) {
-        num_elements = std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<uint32_t>());
+        num_elements = std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<uint64_t>());
     }
     SP_ASSERT(num_elements*SpFuncArrayDataTypeUtils::getSizeOf(data_type_) <= shared_memory_view.num_bytes_);
 
@@ -43,7 +43,7 @@ void SpFuncPackedArray::validate(SpFuncSharedMemoryUsageFlags usage_flags) const
 
     uint64_t num_elements = 0;
     if (!shape_.empty()) {
-        num_elements = std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<uint32_t>());
+        num_elements = std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<uint64_t>());
     }
 
     switch (data_source_) {
