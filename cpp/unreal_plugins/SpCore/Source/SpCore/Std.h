@@ -44,7 +44,7 @@ concept CConvertibleFrom = std::convertible_to<TSrc, TDest>;
 template <typename TRange, typename TValue>
 concept CRangeHasValuesConvertibleTo =
     std::ranges::range<TRange> &&
-    requires(TRange&& range) {
+    requires(TRange range) {
         { *std::ranges::begin(range) } -> std::convertible_to<TValue>;
     };
 
@@ -227,11 +227,19 @@ public:
     //
 
     template <typename TSpan> requires CSpan<TSpan>
+    static auto toSpan(TSpan& span)
+    {
+        using TValue = typename TSpan::value_type;
+        
+        return Std::reinterpretAsSpanOf<TValue>(span);
+    }
+
+    template <typename TSpan> requires CSpan<TSpan>
     static auto toSpan(const TSpan& span)
     {
         using TValue = typename TSpan::value_type;
 
-        return std::span<const TValue>(std::ranges::data(span), std::ranges::size(span));
+        return Std::reinterpretAsSpanOf<const TValue>(span);
     }
 
     template <typename TSpan, typename TValue> requires CSpanHasValuesConvertibleFrom<TSpan, TValue>
@@ -455,15 +463,15 @@ public:
     // Functions for safely reinterpreting ranges, spans, and initializer lists
     //
 
-    // the constraint here enforces that if TSrcSpan is const, then TDestValue also needs to be const
-    template <typename TDestValue, typename TSrcSpan> requires CSpan<TSrcSpan> && (std::is_const_v<TDestValue> || !std::is_const_v<TSrcSpan>)
-    static std::span<TDestValue> reinterpretAsSpanOf(TSrcSpan& src)
+    // we want to preserve the constness of TSrcSpan so we can enforce the constraint that if TSrcSpan is const, then TDestValue also needs to be const
+    template <typename TDestValue, typename TSrcSpan> requires CSpan<std::remove_reference_t<TSrcSpan>> && (!std::is_const_v<TSrcSpan> || std::is_const_v<TDestValue>)
+    static std::span<TDestValue> reinterpretAsSpanOf(TSrcSpan&& src)
     {
-        return reinterpretAsSpan<TDestValue>(std::ranges::data(src), std::ranges::size(src));
+        return reinterpretAsSpan<TDestValue>(std::ranges::data(std::forward<decltype(src)>(src)), std::ranges::size(std::forward<decltype(src)>(src)));
     }
 
-    // the constraint here enforces that if TSrcValue is const, then TDestValue also needs to be const
-    template <typename TDestValue, typename TSrcValue> requires (std::is_const_v<TDestValue> || !std::is_const_v<TSrcValue>)
+    // if TSrcValue is const, then TDestValue also needs to be const
+    template <typename TDestValue, typename TSrcValue> requires (!std::is_const_v<TSrcValue> || std::is_const_v<TDestValue>)
     static std::span<TDestValue> reinterpretAsSpan(TSrcValue* src_data, uint64_t src_num_elements)
     {
         std::span<TDestValue> dest;
@@ -522,7 +530,7 @@ public:
             SP_ASSERT(src_num_bytes % sizeof(TDestValue) == 0);
             uint64_t dest_num_elements = src_num_bytes / sizeof(TDestValue);
             dest.resize(dest_num_elements);
-            std::memcpy(std::ranges::data(dest), src_data, src_num_bytes);
+            std::memcpy(dest.data(), src_data, src_num_bytes);
         }
         return dest;
     }

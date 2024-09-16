@@ -1049,18 +1049,15 @@ public:
 
 private:
 
-    template <typename T>
-    static uint64_t toUInt64(const T* ptr)
+    static uint64_t toUInt64(const auto* src)
     {
-        return reinterpret_cast<uint64_t>(ptr);
+        return reinterpret_cast<uint64_t>(src);
     }
 
-    template <typename TKey, typename TSrcValue>
-    static std::map<TKey, uint64_t> toUInt64(std::map<TKey, TSrcValue>&& input_map)
+    template <typename TKey, typename TValue>
+    static std::map<TKey, uint64_t> toUInt64(const std::map<TKey, TValue>& src)
     {
-        return Std::toMap<TKey, uint64_t>(
-            input_map | 
-            std::views::transform([](auto& pair) { auto& [key, value] = pair; return std::make_pair(key, toUInt64(value)); }));
+        return Std::toMap<TKey, uint64_t>(src | std::views::transform([](auto& pair) { auto& [key, value] = pair; return std::make_pair(key, toUInt64(value)); }));
     }
 
     template <typename TValueType>
@@ -1070,9 +1067,9 @@ private:
     }
 
     template <typename T>
-    static T* toPtr(uint64_t ptr)
+    static T* toPtr(uint64_t src)
     {
-        return reinterpret_cast<T*>(ptr);
+        return reinterpret_cast<T*>(src);
     }
 
     FDelegateHandle post_world_initialization_handle_;

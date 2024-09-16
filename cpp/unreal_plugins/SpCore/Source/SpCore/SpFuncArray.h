@@ -10,7 +10,7 @@
 #include <functional> // std::multiplies
 #include <map>
 #include <numeric>    // std::accumulate
-#include <ranges>     // std::views::filter, std::ranges::size
+#include <ranges>     // std::ranges::data, std::views::filter, std::ranges::size
 #include <span>
 #include <string>
 #include <vector>
@@ -327,15 +327,15 @@ public:
 
     void setDataValues(std::initializer_list<TValue> src)
     {
-        SP_ASSERT(std::ranges::size(src) <= view_.size());
+        SP_ASSERT(src.size() <= view_.size());
         std::memcpy(view_.data(), std::ranges::data(src), std::ranges::size(src)*sizeof(TValue));
     }
 
     template <typename TSpan> requires CSpan<TSpan> && std::same_as<typename TSpan::value_type, TValue>
     void setDataValues(const TSpan& src)
     {
-        SP_ASSERT(src.size() <= view_.size());
-        std::memcpy(view_.data(), src.data(), src.size()*sizeof(TValue));
+        SP_ASSERT(std::ranges::size(src) <= view_.size());
+        std::memcpy(view_.data(), std::ranges::data(src), std::ranges::size(src)*sizeof(TValue));
     }
 
     template <typename TRange> requires CRangeHasValuesConvertibleTo<TRange, TValue>

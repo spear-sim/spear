@@ -62,20 +62,20 @@ private:
     template <typename TFunc, typename TReturn, typename... TArgs> requires CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs&...>
     static auto wrapFuncToExecuteInWorkQueueBlockingImpl(WorkQueue& work_queue, TFunc&& func, const FuncInfo<TReturn(*)(TArgs...)>& fi)
     {
+        // The lambda returned here is typically bound to a specific RPC entry point and called from a worker
+        // thread by the RPC server.
+
         // Note that we capture func by value because we want to guarantee that func is still accessible
         // after this wrapFuncToExecuteInWorkQueueBlocking(...) function returns.
 
-        // Note also that we assume that the user's function accepts arguments by reference. This will avoid
-        // an unnecessary copy when the surrounding code (e.g., the RPC server) calls the function returned
-        // here. Deeper inside our implementation, we will eventually copy these arguments so they are
-        // guaranteed to be accessible when we eventually execute the user's function, but we want to avoid
-        // copying wherever possible.
-
-        // The lambda returned here is typically bound to a specific RPC entry point and called from a worker
-        // thread.
+        // Note also that we assume that the user's function always accepts all arguments by non-const
+        // reference. This will avoid unnecessary copying when we eventually call the user's function. We
+        // can't assume the user's function accepts arguments by const reference, because the user's function
+        // might want to modify the arguments, e.g., when a user function resolves pointers to shared memory
+        // for an input SpFuncPackedArray& before forwarding it to an inner function.
 
         return [&work_queue, func](TArgs&... args) -> TReturn {
-            return work_queue.scheduleAndExecuteFuncBlocking(func, args...);
+            return work_queue.scheduleAndExecuteFuncBlocking(func, args...); // std::forward not needed because we capture func by value
         };
     }
 
@@ -84,16 +84,34 @@ private:
     {
         using TReturn = std::invoke_result_t<TFunc, TArgs&...>;
 
-        // Note that we capture func and args by value because we want to guarantee that they are both still
-        // accessible after scheduleAndExecuteTaskBlocking(...) returns. Strictly speaking, this guarantee is
-        // not necessary for this blocking implementation, but we capture by value anyway for consistency
-        // with a non-blocking implementation.
+        // The lambda declared below is typically executed on the game thread when run() is called, i.e.,
+        // during EngineService::beginFrameHandler(...) or EngineService::endFrameHandler(...)
 
-        // The mutable keyword is required here, because otherwise args... will be treated as a const member
-        // variable inside the lambda. This is because, by default, capturing variables by value is
-        // equivalent to declaring them as const member variables. It is impossible to pass any const member
-        // variable to any function by non-const reference, so we use the mutable keyword to force args... to
-        // be a non-const member variable inside the lambda.
+        // Note that we capture func and args... by value because we want to guarantee that they are both
+        // still accessible after scheduleAndExecuteTaskBlocking(...) returns. Strictly speaking, this
+        // guarantee is not necessary for this blocking implementation, but we capture by value anyway for
+        // consistency with a non-blocking implementation.
+
+        // Even in a non-blocking implementation, we could technically capture func by reference. This is
+        // because, in practice, the lifetime of func corresponds to the lifetime of the lambda declared in
+        // wrapFuncToExecuteInWorkQueueBlockingImpl(...) above, which in turn corresponds to the the lifetime
+        // of the RPC server. Moreover, the lambda declared below only ever executes when run() is called,
+        // i.e., during EngineService::beginFrameHandler(...) or EngineService::endFrameHandler(...), and
+        // the RPC server (and therefore func) is guaranteed to be accessible inside these EngineService
+        // functions. So, even if we capture func by reference, it is guaranteed to be accessible whenever
+        // the lambda below is executed. However, the WorkQueue class should not depend on this high-level
+        // system behavior, so we insist on capturing func by value, even in a non-blocking implementation.
+
+        // Since we capture args... by value, it is deep-copied into the lambda object constructed below. But
+        // the user's function accepts all arguments by non-const reference, so args... is not copied again
+        // when calling the user's function from inside the lambda body.
+
+        // The mutable keyword is required because otherwise args... will be treated as a const member
+        // variable inside the lambda body. This is because, by default, capturing variables by value is
+        // equivalent to declaring them as const member variables in the anonymous lambda class. It is
+        // impossible to pass any const member variable to any function by non-const reference, but we need
+        // to pass args... by non-const reference to the user's function. So we use the mutable keyword to
+        // force args... to be treated as a non-const member variable inside the lambda body.
 
         auto task = CopyConstructiblePackagedTask<TReturn>(
             [func, args...]() mutable -> TReturn {

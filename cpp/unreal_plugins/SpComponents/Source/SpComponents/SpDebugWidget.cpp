@@ -401,7 +401,7 @@ void ASpDebugWidget::CallSpFunc()
     UnrealObj<FRotator> new_rot("new_rot");
     UnrealObjUtils::setObjectPropertiesFromStrings({new_vec.getPtr(), new_rot.getPtr()}, return_values.unreal_obj_strings_);
 
-    // parse info string as YAML
+    // parse info string as YAML and get "SUCCESS" YAML parameter as a bool
     bool success = Yaml::get<bool>(YAML::Load(return_values.info_), "SUCCESS");
     SP_ASSERT(success);
 }

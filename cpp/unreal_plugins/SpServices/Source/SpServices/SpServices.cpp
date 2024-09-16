@@ -37,7 +37,7 @@ void SpServices::StartupModule()
 
     // EngineService needs its own custom logic for binding its entry points, because they are intended to
     // run directly on the RPC server worker thread, whereas all other entry points are intended to run on
-    // work queues maintained by EngineService. So we pass in the server when constructing EngineService,
+    // work queues maintained by EngineService. So we pass in the RPC server when constructing EngineService,
     // and we pass in EngineService when constructing all other services.
     engine_service_ = std::make_unique<EngineService<rpc::server>>(rpc_server_.get());
 
