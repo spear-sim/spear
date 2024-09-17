@@ -128,18 +128,14 @@ public:
         entry_point_binder_ = nullptr;
     }
 
-    void bindFuncNoUnreal(const std::string& service_name, const std::string& func_name, auto&& func)
+    void bindFuncNoUnreal(const std::string& service_name, const std::string& func_name, const auto& func)
     {
-        entry_point_binder_->bind(
-            service_name + "." + func_name,
-            std::forward<decltype(func)>(func));
+        entry_point_binder_->bind(service_name + "." + func_name, func);
     }
 
-    void bindFuncUnreal(const std::string& service_name, const std::string& func_name, auto&& func)
+    void bindFuncUnreal(const std::string& service_name, const std::string& func_name, const auto& func)
     {
-        entry_point_binder_->bind(
-            service_name + "." + func_name,
-            WorkQueue::wrapFuncToExecuteInWorkQueueBlocking(work_queue_, std::forward<decltype(func)>(func)));
+        entry_point_binder_->bind(service_name + "." + func_name, WorkQueue::wrapFuncToExecuteInWorkQueueBlocking(work_queue_, func));
     }
 
     void close()

@@ -77,13 +77,8 @@ concept CSpanHasValuesConvertibleFromContainer =
 // Key-value container (e.g., std::map) concepts
 //
 
-// Ideally we would constrain the type of .second to be convertible to TKeyValueContainer::mapped_type in the
-// concept below, but doing so prevents this constraint for being satisfied, even when the input type is std::map.
-// So we only constrain .first to be convertible to TKeyValueContainer::key_type.
-
 // We use std::move(value) here, because mapped_type might be movable but not copyable, in which case std::map::insert(...)
 // won't accept an std::pair<key_type, mapped_type>, but it will accept an std::pair<key_type, mapped_type&&>.
-
 template <typename TKeyValueContainer>
 concept CKeyValueContainer =
     std::ranges::range<TKeyValueContainer> &&
@@ -93,11 +88,11 @@ concept CKeyValueContainer =
     } &&
     requires(TKeyValueContainer key_value_container, typename TKeyValueContainer::key_type key, typename TKeyValueContainer::mapped_type value) {
         { (*std::ranges::begin(key_value_container)).first } -> std::convertible_to<typename TKeyValueContainer::key_type>;
-        { (*std::ranges::begin(key_value_container)).second };
+        { (*std::ranges::begin(key_value_container)).second } -> std::convertible_to<const typename TKeyValueContainer::mapped_type&>;
         { key_value_container.insert({key, std::move(value)}).first };
         { key_value_container.insert({key, std::move(value)}).second } -> std::convertible_to<bool>;
         { (*(key_value_container.insert({key, std::move(value)}).first)).first } -> std::convertible_to<typename TKeyValueContainer::key_type>;
-        { (*(key_value_container.insert({key, std::move(value)}).first)).second };
+        { (*(key_value_container.insert({key, std::move(value)}).first)).second } -> std::convertible_to<const typename TKeyValueContainer::mapped_type&>;
         { key_value_container.erase(key) } -> std::same_as<size_t>;
     };
 
@@ -123,7 +118,7 @@ concept CKeyValueContainerHasValuesConvertibleFromInitializerList =
         { key_value_container.insert({key, initializer_list}).first };
         { key_value_container.insert({key, initializer_list}).second } -> std::convertible_to<bool>;
         { (*(key_value_container.insert({key, initializer_list}).first)).first } -> std::convertible_to<typename TDestKeyValueContainer::key_type>;
-        { (*(key_value_container.insert({key, initializer_list}).first)).second };
+        { (*(key_value_container.insert({key, initializer_list}).first)).second } -> std::convertible_to<const typename TDestKeyValueContainer::mapped_type&>;
     };
 
 template <typename TDestKeyValueContainer>
@@ -132,7 +127,7 @@ concept CKeyValueContainerHasValuesConvertibleFromEmptyInitializerList =
         { key_value_container.insert({key, {}}).first };
         { key_value_container.insert({key, {}}).second } -> std::convertible_to<bool>;
         { (*(key_value_container.insert({key, {}}).first)).first } -> std::convertible_to<typename TDestKeyValueContainer::key_type>;
-        { (*(key_value_container.insert({key, {}}).first)).second };
+        { (*(key_value_container.insert({key, {}}).first)).second } -> std::convertible_to<const typename TDestKeyValueContainer::mapped_type&>;
     };
 
 template <typename TDestKeyValueContainer, typename TSrcKeyValueContainer>
@@ -157,9 +152,9 @@ public:
     static std::vector<std::string> tokenize(const std::string& string, const std::string& separators);
     static std::string toLower(const std::string& string);
 
-    static std::string toString(auto&&... args)
+    static std::string toString(const auto&... args)
     {
-        return (... + boost::lexical_cast<std::string>(std::forward<decltype(args)>(args)));
+        return (... + boost::lexical_cast<std::string>(args));
     }
 
     static std::string toString()
@@ -196,7 +191,8 @@ public:
     //
 
     // TODO: replace with std::ranges::to<std::vector> in C++23
-    template <typename TValue, typename TRange> requires CRangeHasValuesConvertibleTo<TRange, TValue>
+    template <typename TValue, typename TRange> requires
+        CRangeHasValuesConvertibleTo<TRange, TValue>
     static std::vector<TValue> toVector(TRange&& range)
     {
         std::vector<TValue> vector;
@@ -205,7 +201,8 @@ public:
     }
 
     // TODO: replace with std::ranges::to<std::map> in C++23
-    template <typename TKey, typename TValue, typename TRange> requires CRangeHasValuesConvertibleTo<TRange, std::pair<TKey, TValue>>
+    template <typename TKey, typename TValue, typename TRange> requires
+        CRangeHasValuesConvertibleTo<TRange, std::pair<TKey, TValue>>
     static std::map<TKey, TValue> toMap(TRange&& range)
     {
         std::vector<std::pair<TKey, TValue>> pairs = toVector<std::pair<TKey, TValue>>(std::forward<decltype(range)>(range));
@@ -214,13 +211,15 @@ public:
         return std::map<TKey, TValue>(std::ranges::begin(pairs), std::ranges::end(pairs));
     }
 
-    template <typename TRange> requires CRangeHasValuesConvertibleTo<TRange, bool>
+    template <typename TRange> requires
+        CRangeHasValuesConvertibleTo<TRange, bool>
     static bool all(TRange&& range)
     {
         return std::ranges::all_of(std::forward<decltype(range)>(range), [](auto val) { return val; });
     }
 
-    template <typename TRange> requires CRangeHasValuesConvertibleTo<TRange, bool>
+    template <typename TRange> requires
+        CRangeHasValuesConvertibleTo<TRange, bool>
     static bool any(TRange&& range)
     {
         return std::ranges::any_of(std::forward<decltype(range)>(range), [](auto val) { return val; });
@@ -230,7 +229,8 @@ public:
     // Span (e.g., std::span) functions
     //
 
-    template <typename TSpan> requires CSpan<TSpan>
+    template <typename TSpan> requires
+        CSpan<TSpan>
     static auto toSpan(TSpan& span)
     {
         using TValue = typename TSpan::value_type;
@@ -238,7 +238,8 @@ public:
         return Std::reinterpretAsSpanOf<TValue>(span);
     }
 
-    template <typename TSpan> requires CSpan<TSpan>
+    template <typename TSpan> requires
+        CSpan<TSpan>
     static auto toSpan(const TSpan& span)
     {
         using TValue = typename TSpan::value_type;
@@ -246,45 +247,52 @@ public:
         return Std::reinterpretAsSpanOf<const TValue>(span);
     }
 
-    template <typename TSpan, typename TValue> requires CSpanHasValuesConvertibleFrom<TSpan, TValue>
+    template <typename TSpan, typename TValue> requires
+        CSpanHasValuesConvertibleFrom<TSpan, TValue>
     static bool contains(const TSpan& span, const TValue& value)
     {
         return std::ranges::find(span, value) != std::ranges::end(span);
     }
 
-    template <typename TSpan, typename TValues> requires CSpanHasValuesConvertibleFromContainer<TSpan, TValues>
+    template <typename TSpan, typename TValues> requires
+        CSpanHasValuesConvertibleFromContainer<TSpan, TValues>
     static std::vector<bool> contains(const TSpan& span, const TValues& values)
     {
         return toVector<bool>(values | std::views::transform([&span](const auto& value) { return contains(span, value); }));
     }
 
-    template <typename TSpan> requires CSpan<TSpan>
+    template <typename TSpan> requires
+        CSpan<TSpan>
     static bool isSubsetOf(const TSpan& small, const TSpan& big)
     {
         return all(contains(big, small));
     }
 
-    template <typename TSpan> requires CSpan<TSpan>
+    template <typename TSpan> requires
+        CSpan<TSpan>
     static auto at(const TSpan& span, int index) // TODO:: replace with span.at() in C++26
     {
         SP_ASSERT(index < std::ranges::size(span));
         return span[index];
     }
 
-    template <typename TSpan, typename TValue> requires CSpanHasValuesConvertibleFrom<TSpan, TValue>
+    template <typename TSpan, typename TValue> requires
+        CSpanHasValuesConvertibleFrom<TSpan, TValue>
     static int index(const TSpan& span, const TValue& value)
     {
         int index = std::ranges::distance(std::ranges::begin(span), std::ranges::find(span, value));
         return (index < std::ranges::size(span)) ? index : -1;
     }
 
-    template <typename TSpan> requires CSpan<TSpan>
+    template <typename TSpan> requires
+        CSpan<TSpan>
     static bool allUnique(const TSpan& span)
     {
         return std::ranges::size(span) == std::ranges::size(unique(span));
     }
 
-    template <typename TSpan> requires CSpan<TSpan>
+    template <typename TSpan> requires
+        CSpan<TSpan>
     static auto unique(const TSpan& span)
     {
         using TValue = typename TSpan::value_type;
@@ -296,7 +304,9 @@ public:
         return values;
     }
 
-    template <typename TSpanKeys, typename TSpanValues> requires CSpan<TSpanKeys> && CSpan<TSpanValues>
+    template <typename TSpanKeys, typename TSpanValues> requires
+        CSpan<TSpanKeys> &&
+        CSpan<TSpanValues>
     static auto zip(const TSpanKeys& keys, const TSpanValues& values)
     {
         using TKey = typename TSpanKeys::value_type;
@@ -470,14 +480,17 @@ public:
 
     // We use TSrcSpan&& because want to preserve and forward the const-ness and rvalue-ness of src. We do
     // this to enforce the constraint that if TSrcSpan is const, then TDestValue also needs to be const.
-    template <typename TDestValue, typename TSrcSpan> requires CSpan<std::remove_reference_t<TSrcSpan>> && (!std::is_const_v<TSrcSpan> || std::is_const_v<TDestValue>)
+    template <typename TDestValue, typename TSrcSpan> requires
+        CSpan<std::remove_reference_t<TSrcSpan>> &&
+        (!std::is_const_v<TSrcSpan> || std::is_const_v<TDestValue>)
     static std::span<TDestValue> reinterpretAsSpanOf(TSrcSpan&& src)
     {
         return reinterpretAsSpan<TDestValue>(std::ranges::data(std::forward<decltype(src)>(src)), std::ranges::size(std::forward<decltype(src)>(src)));
     }
 
     // If TSrcValue is const, then TDestValue also needs to be const.
-    template <typename TDestValue, typename TSrcValue> requires (!std::is_const_v<TSrcValue> || std::is_const_v<TDestValue>)
+    template <typename TDestValue, typename TSrcValue> requires
+        (!std::is_const_v<TSrcValue> || std::is_const_v<TDestValue>)
     static std::span<TDestValue> reinterpretAsSpan(TSrcValue* src_data, uint64_t src_num_elements)
     {
         std::span<TDestValue> dest;
@@ -490,7 +503,8 @@ public:
         return dest;
     }
 
-    template <typename TDestValue, typename TSrcSpan> requires CSpan<TSrcSpan>
+    template <typename TDestValue, typename TSrcSpan> requires
+        CSpan<TSrcSpan>
     static std::vector<TDestValue> reinterpretAsVectorOf(const TSrcSpan& src)
     {
         return reinterpretAsVector<TDestValue>(std::ranges::data(src), std::ranges::size(src));
@@ -504,7 +518,8 @@ public:
     // e.g., an std::vector, where the user would have already specified its value type somewhere in their
     // code.
 
-    template <typename TDestValue, typename TSrcValue, typename TRange> requires CRangeHasValuesConvertibleTo<TRange, TSrcValue>
+    template <typename TDestValue, typename TSrcValue, typename TRange> requires
+        CRangeHasValuesConvertibleTo<TRange, TSrcValue>
     static std::vector<TDestValue> reinterpretAsVector(TRange&& range)
     {
         SP_ASSERT(sizeof(TSrcValue) % sizeof(TDestValue) == 0);
@@ -520,7 +535,8 @@ public:
         return dest;
     }
 
-    template <typename TDestValue, typename TSrcValue, typename TSrcInitializerListValue> requires std::same_as<TSrcValue, TSrcInitializerListValue>
+    template <typename TDestValue, typename TSrcValue, typename TSrcInitializerListValue> requires
+        std::same_as<TSrcValue, TSrcInitializerListValue>
     static std::vector<TDestValue> reinterpretAsVector(std::initializer_list<TSrcInitializerListValue> src)
     {
         return reinterpretAsVector<TDestValue>(std::ranges::data(src), std::ranges::size(src));
