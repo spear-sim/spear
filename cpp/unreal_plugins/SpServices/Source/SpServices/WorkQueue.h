@@ -38,9 +38,9 @@ public:
 
     // typically called from the game thread in EngineService::bindFuncUnreal(...)
     template <typename TFunc>
-    static auto wrapFuncToExecuteInWorkQueueBlocking(WorkQueue& work_queue, TFunc&& func)
+    static auto wrapFuncToExecuteInWorkQueueBlocking(WorkQueue& work_queue, const TFunc& func)
     {
-        return wrapFuncToExecuteInWorkQueueBlockingImpl(work_queue, std::forward<decltype(func)>(func), FuncInfo<TFunc>());
+        return wrapFuncToExecuteInWorkQueueBlockingImpl(work_queue, func, FuncInfo<TFunc>());
     }
 
 private:
@@ -60,7 +60,7 @@ private:
     struct FuncInfo<TReturn(*)(TArgs...)> {};
 
     template <typename TFunc, typename TReturn, typename... TArgs> requires CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs&...>
-    static auto wrapFuncToExecuteInWorkQueueBlockingImpl(WorkQueue& work_queue, TFunc&& func, const FuncInfo<TReturn(*)(TArgs...)>& fi)
+    static auto wrapFuncToExecuteInWorkQueueBlockingImpl(WorkQueue& work_queue, const TFunc& func, const FuncInfo<TReturn(*)(TArgs...)>& fi)
     {
         // The lambda returned here is typically bound to a specific RPC entry point and called from a worker
         // thread by the RPC server.
@@ -126,6 +126,8 @@ private:
     // The purpose of this class is to provide a copy-constructible type that derives from std::packaged_task.
     // This is necessary because boost::asio requires that task objects are copy-constructible, but std::packaged_task
     // is not copy-constructible.
+
+    // We use auto&& because we want to preserve and forward the const-ness and rvalue-ness of func.
     template <typename TReturn>
     struct CopyConstructiblePackagedTask : std::packaged_task<TReturn()>
     {

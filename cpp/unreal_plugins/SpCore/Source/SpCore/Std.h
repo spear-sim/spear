@@ -360,7 +360,7 @@ public:
                 return containsKey(key_value_container, key) ? key_value_container.at(key) : default_value; }));
     }
 
-    // We use TValue&& because we want to be able to preserve and forward the rvalue-ness of TValue to key_value_container.insert(...).
+    // We use TValue&& because we want to preserve and forward the const-ness and rvalue-ness of value.
     template <typename TKeyValueContainer, typename TKey, typename TValue> requires
         CKeyValueContainerHasKeysConvertibleFrom<TKeyValueContainer, TKey> &&
         CKeyValueContainerHasValuesConvertibleFrom<TKeyValueContainer, TValue>
@@ -468,8 +468,8 @@ public:
     // Functions for safely reinterpreting ranges, spans, and initializer lists
     //
 
-    // We use TSrcSpan&& because want to preserve and forward the const-ness of TSrcSpan. We do this to
-    // enforce the constraint that if TSrcSpan is const, then TDestValue also needs to be const.
+    // We use TSrcSpan&& because want to preserve and forward the const-ness and rvalue-ness of src. We do
+    // this to enforce the constraint that if TSrcSpan is const, then TDestValue also needs to be const.
     template <typename TDestValue, typename TSrcSpan> requires CSpan<std::remove_reference_t<TSrcSpan>> && (!std::is_const_v<TSrcSpan> || std::is_const_v<TDestValue>)
     static std::span<TDestValue> reinterpretAsSpanOf(TSrcSpan&& src)
     {
