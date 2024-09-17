@@ -77,9 +77,13 @@ concept CSpanHasValuesConvertibleFromContainer =
 // Key-value container (e.g., std::map) concepts
 //
 
-// Ideally we would constrain the type of .second to be convertible to TKeyValueContainer::mapped_type
-// in the concept below, but doing so prevents this constraint for being satisfied, even when the input
-// type is std::map. So we only constrain .first to be convertible to TKeyValueContainer::key_type.
+// Ideally we would constrain the type of .second to be convertible to TKeyValueContainer::mapped_type in the
+// concept below, but doing so prevents this constraint for being satisfied, even when the input type is std::map.
+// So we only constrain .first to be convertible to TKeyValueContainer::key_type.
+
+// We use std::move(value) here, because mapped_type might be movable but not copyable, in which case std::map::insert(...)
+// won't accept an std::pair<key_type, mapped_type>, but it will accept an std::pair<key_type, mapped_type&&>.
+
 template <typename TKeyValueContainer>
 concept CKeyValueContainer =
     std::ranges::range<TKeyValueContainer> &&
@@ -87,13 +91,13 @@ concept CKeyValueContainer =
         typename TKeyValueContainer::key_type;
         typename TKeyValueContainer::mapped_type;
     } &&
-    requires(TKeyValueContainer key_value_container, typename TKeyValueContainer::key_type key, typename TKeyValueContainer::mapped_type&& value) {
+    requires(TKeyValueContainer key_value_container, typename TKeyValueContainer::key_type key, typename TKeyValueContainer::mapped_type value) {
         { (*std::ranges::begin(key_value_container)).first } -> std::convertible_to<typename TKeyValueContainer::key_type>;
         { (*std::ranges::begin(key_value_container)).second };
-        { key_value_container.insert({key, std::forward<decltype(value)>(value)}).first };
-        { key_value_container.insert({key, std::forward<decltype(value)>(value)}).second } -> std::convertible_to<bool>;
-        { (*(key_value_container.insert({key, std::forward<decltype(value)>(value)}).first)).first } -> std::convertible_to<typename TKeyValueContainer::key_type>;
-        { (*(key_value_container.insert({key, std::forward<decltype(value)>(value)}).first)).second };
+        { key_value_container.insert({key, std::move(value)}).first };
+        { key_value_container.insert({key, std::move(value)}).second } -> std::convertible_to<bool>;
+        { (*(key_value_container.insert({key, std::move(value)}).first)).first } -> std::convertible_to<typename TKeyValueContainer::key_type>;
+        { (*(key_value_container.insert({key, std::move(value)}).first)).second };
         { key_value_container.erase(key) } -> std::same_as<size_t>;
     };
 
