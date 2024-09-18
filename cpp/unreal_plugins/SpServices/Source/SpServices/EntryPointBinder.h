@@ -5,12 +5,14 @@
 #pragma once
 
 template <typename TEntryPointBinder>
-concept CEntryPointBinder = requires(TEntryPointBinder entry_point_binder) {
-    { entry_point_binder.bind("", []() -> void {}) } -> std::same_as<void>;
-};
+concept CEntryPointBinder =
+    requires(TEntryPointBinder entry_point_binder) {
+        { entry_point_binder.bind("", []() -> void {}) } -> std::same_as<void>;
+    };
 
 template <typename TUnrealEntryPointBinder>
-concept CUnrealEntryPointBinder = requires(TUnrealEntryPointBinder unreal_entry_point_binder) {
-    { unreal_entry_point_binder.bindFuncNoUnreal("", "", []() -> void {}) } -> std::same_as<void>;
-    { unreal_entry_point_binder.bindFuncUnreal("", "", []() -> void {}) } -> std::same_as<void>;
-};
+concept CUnrealEntryPointBinder =
+    requires(TUnrealEntryPointBinder unreal_entry_point_binder) {
+        { unreal_entry_point_binder.bindFuncNoUnreal("", "", []() -> void {}) } -> std::same_as<void>;
+        { unreal_entry_point_binder.bindFuncUnreal("", "", []() -> void {}) } -> std::same_as<void>;
+    };

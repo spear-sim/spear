@@ -47,7 +47,7 @@ template <typename TDest, typename TSrc>
 concept CConvertibleFrom = std::convertible_to<TSrc, TDest>;
 
 //
-// std::ranges::range concepts
+// Range (e.g., std::ranges::range) concepts
 //
 
 template <typename TRange, typename TValue>
@@ -58,93 +58,97 @@ concept CRangeHasValuesConvertibleTo =
     };
 
 //
-// std::span concepts
+// Vector (e.g., std::span, std::vector) concepts
 //
 
-template <typename TSpan>
-concept CSpan =
-    std::ranges::sized_range<TSpan> &&
-    std::ranges::contiguous_range<TSpan> &&
-    requires (TSpan span) {
-        typename TSpan::value_type;
-        { span[0] } -> std::convertible_to<typename TSpan::value_type>;
-        { *std::ranges::begin(span) } -> std::convertible_to<typename TSpan::value_type>;
+template <typename TVector>
+concept CVector =
+    std::ranges::sized_range<TVector> &&
+    std::ranges::contiguous_range<TVector> &&
+    requires (TVector vector) {
+        typename TVector::value_type;
+        { *(vector.begin()) } -> std::convertible_to<typename TVector::value_type>;
+        { vector[0] } -> std::convertible_to<typename TVector::value_type>;
+        { vector.data() } -> std::convertible_to<const typename TVector::value_type*>;
+        { vector.size() } -> std::same_as<size_t>;
     };
 
-template <typename TDestSpan, typename TSrcValue>
-concept CSpanHasValuesConvertibleFrom =
-    CSpan<TDestSpan> &&
-    CConvertibleFrom<typename TDestSpan::value_type, TSrcValue>;
+template <typename TDestVector, typename TSrcValue>
+concept CVectorHasValuesConvertibleFrom =
+    CVector<TDestVector> &&
+    CConvertibleFrom<typename TDestVector::value_type, TSrcValue>;
 
-template <typename TDestSpan, typename TSrcSpan>
-concept CSpanHasValuesConvertibleFromContainer =
-    CSpan<TDestSpan> &&
-    CSpan<TSrcSpan> &&
-    CConvertibleFrom<typename TDestSpan::value_type, typename TSrcSpan::value_type>;
+template <typename TDestVector, typename TSrcVector>
+concept CVectorHasValuesConvertibleFromContainer =
+    CVector<TDestVector> &&
+    CVector<TSrcVector> &&
+    CConvertibleFrom<typename TDestVector::value_type, typename TSrcVector::value_type>;
 
 //
-// Key-value container (e.g., std::map) concepts
+// Map (e.g., std::map) concepts
 //
 
 // We use std::move(value) here, because mapped_type might be movable but not copyable, in which case std::map::insert(...)
 // won't accept an std::pair<key_type, mapped_type>, but it will accept an std::pair<key_type, mapped_type&&>.
-template <typename TKeyValueContainer>
-concept CKeyValueContainer =
-    std::ranges::range<TKeyValueContainer> &&
-    requires(TKeyValueContainer key_value_container) {
-        typename TKeyValueContainer::key_type;
-        typename TKeyValueContainer::mapped_type;
+template <typename TMap>
+concept CMap =
+    std::ranges::range<TMap> &&
+    requires(TMap map) {
+        typename TMap::key_type;
+        typename TMap::mapped_type;
     } &&
-    requires(TKeyValueContainer key_value_container, typename TKeyValueContainer::key_type key, typename TKeyValueContainer::mapped_type value) {
-        { (*std::ranges::begin(key_value_container)).first } -> std::convertible_to<typename TKeyValueContainer::key_type>;
-        { (*std::ranges::begin(key_value_container)).second } -> std::convertible_to<const typename TKeyValueContainer::mapped_type&>;
-        { key_value_container.insert({key, std::move(value)}).first };
-        { key_value_container.insert({key, std::move(value)}).second } -> std::convertible_to<bool>;
-        { (*(key_value_container.insert({key, std::move(value)}).first)).first } -> std::convertible_to<typename TKeyValueContainer::key_type>;
-        { (*(key_value_container.insert({key, std::move(value)}).first)).second } -> std::convertible_to<const typename TKeyValueContainer::mapped_type&>;
-        { key_value_container.erase(key) } -> std::same_as<size_t>;
+    requires(TMap map, typename TMap::key_type key, typename TMap::mapped_type value) {
+        { (*(map.begin())).first } -> std::convertible_to<typename TMap::key_type>;
+        { (*(map.begin())).second } -> std::convertible_to<const typename TMap::mapped_type&>;
+        { map.at(key) } -> std::convertible_to<const typename TMap::mapped_type&>;
+        { map.contains(key) } -> std::same_as<bool>;
+        { map.insert({key, std::move(value)}).first };
+        { map.insert({key, std::move(value)}).second } -> std::convertible_to<bool>;
+        { (*(map.insert({key, std::move(value)}).first)).first } -> std::convertible_to<typename TMap::key_type>;
+        { (*(map.insert({key, std::move(value)}).first)).second } -> std::convertible_to<const typename TMap::mapped_type&>;
+        { map.erase(key) } -> std::same_as<size_t>;
     };
 
-template <typename TDestKeyValueContainer, typename TSrcKey>
-concept CKeyValueContainerHasKeysConvertibleFrom =
-    CKeyValueContainer<TDestKeyValueContainer> &&
-    CConvertibleFrom<typename TDestKeyValueContainer::key_type, TSrcKey>;
+template <typename TDestMap, typename TSrcKey>
+concept CMapHasKeysConvertibleFrom =
+    CMap<TDestMap> &&
+    CConvertibleFrom<typename TDestMap::key_type, TSrcKey>;
 
-template <typename TDestKeyValueContainer, typename TSrcValue>
-concept CKeyValueContainerHasValuesConvertibleFrom =
-    CKeyValueContainer<TDestKeyValueContainer> &&
-    CConvertibleFrom<typename TDestKeyValueContainer::mapped_type, TSrcValue>;
+template <typename TDestMap, typename TSrcValue>
+concept CMapHasValuesConvertibleFrom =
+    CMap<TDestMap> &&
+    CConvertibleFrom<typename TDestMap::mapped_type, TSrcValue>;
 
-template <typename TDestKeyValueContainer, typename TSrcKeyContainer>
-concept CKeyValueContainerHasKeysConvertibleFromContainer =
-    CKeyValueContainer<TDestKeyValueContainer> &&
-    CConvertibleFrom<typename TDestKeyValueContainer::key_type, typename TSrcKeyContainer::value_type>;
+template <typename TDestMap, typename TSrcKeyContainer>
+concept CMapHasKeysConvertibleFromVector =
+    CMap<TDestMap> &&
+    CConvertibleFrom<typename TDestMap::key_type, typename TSrcKeyContainer::value_type>;
 
-template <typename TDestKeyValueContainer, typename TSrcInitializerListValue>
-concept CKeyValueContainerHasValuesConvertibleFromInitializerList =
-    CKeyValueContainer<TDestKeyValueContainer> &&
-    requires(TDestKeyValueContainer key_value_container, typename TDestKeyValueContainer::key_type key, std::initializer_list<TSrcInitializerListValue> initializer_list) {
-        { key_value_container.insert({key, initializer_list}).first };
-        { key_value_container.insert({key, initializer_list}).second } -> std::convertible_to<bool>;
-        { (*(key_value_container.insert({key, initializer_list}).first)).first } -> std::convertible_to<typename TDestKeyValueContainer::key_type>;
-        { (*(key_value_container.insert({key, initializer_list}).first)).second } -> std::convertible_to<const typename TDestKeyValueContainer::mapped_type&>;
+template <typename TDestMap, typename TSrcInitializerListValue>
+concept CMapHasValuesConvertibleFromInitializerList =
+    CMap<TDestMap> &&
+    requires(TDestMap dest_map, typename TDestMap::key_type key, std::initializer_list<TSrcInitializerListValue> src_initializer_list) {
+        { dest_map.insert({key, src_initializer_list}).first };
+        { dest_map.insert({key, src_initializer_list}).second } -> std::convertible_to<bool>;
+        { (*(dest_map.insert({key, src_initializer_list}).first)).first } -> std::convertible_to<typename TDestMap::key_type>;
+        { (*(dest_map.insert({key, src_initializer_list}).first)).second } -> std::convertible_to<const typename TDestMap::mapped_type&>;
     };
 
-template <typename TDestKeyValueContainer>
-concept CKeyValueContainerHasValuesConvertibleFromEmptyInitializerList =
-    requires(TDestKeyValueContainer key_value_container, typename TDestKeyValueContainer::key_type key) {
-        { key_value_container.insert({key, {}}).first };
-        { key_value_container.insert({key, {}}).second } -> std::convertible_to<bool>;
-        { (*(key_value_container.insert({key, {}}).first)).first } -> std::convertible_to<typename TDestKeyValueContainer::key_type>;
-        { (*(key_value_container.insert({key, {}}).first)).second } -> std::convertible_to<const typename TDestKeyValueContainer::mapped_type&>;
+template <typename TDestMap>
+concept CMapHasValuesConvertibleFromEmptyInitializerList =
+    requires(TDestMap dest_map, typename TDestMap::key_type key) {
+        { dest_map.insert({key, {}}).first };
+        { dest_map.insert({key, {}}).second } -> std::convertible_to<bool>;
+        { (*(dest_map.insert({key, {}}).first)).first } -> std::convertible_to<typename TDestMap::key_type>;
+        { (*(dest_map.insert({key, {}}).first)).second } -> std::convertible_to<const typename TDestMap::mapped_type&>;
     };
 
-template <typename TDestKeyValueContainer, typename TSrcKeyValueContainer>
-concept CKeyValueContainerHasKeysAndValuesConvertibleFromContainer =
-    CKeyValueContainer<TDestKeyValueContainer> &&
-    CKeyValueContainer<TSrcKeyValueContainer> &&
-    requires(TDestKeyValueContainer dest_key_value_container, TSrcKeyValueContainer src_key_value_container) {
-        { dest_key_value_container.insert(std::ranges::begin(src_key_value_container), std::ranges::end(src_key_value_container)) } -> std::same_as<void>;
+template <typename TDestMap, typename TSrcMap>
+concept CMapHasKeysAndValuesConvertibleFromMap =
+    CMap<TDestMap> &&
+    CMap<TSrcMap> &&
+    requires(TDestMap dest_map, TSrcMap src_map) {
+        { dest_map.insert(src_map.begin(), src_map.end()) } -> std::same_as<void>;
     };
 
 class SPCORE_API Std
@@ -189,7 +193,8 @@ public:
         return reinterpret_cast<TPtr*>(std::strtoull(string.c_str(), nullptr, 16));
     }
 
-    template <typename TRange> requires CRangeHasValuesConvertibleTo<TRange, std::string>
+    template <typename TRange> requires
+        CRangeHasValuesConvertibleTo<TRange, std::string>
     static std::string join(TRange&& range, const std::string& delim)
     {
         return boost::algorithm::join(std::forward<decltype(range)>(range), delim);
@@ -217,7 +222,7 @@ public:
         std::vector<std::pair<TKey, TValue>> pairs = toVector<std::pair<TKey, TValue>>(std::forward<decltype(range)>(range));
         std::vector<TKey> keys = toVector<TKey>(pairs | std::views::transform([](const auto& pair) { const auto& [key, value] = pair; return key; }));
         SP_ASSERT(allUnique(keys));
-        return std::map<TKey, TValue>(std::ranges::begin(pairs), std::ranges::end(pairs));
+        return std::map<TKey, TValue>(pairs.begin(), pairs.end());
     }
 
     template <typename TRange> requires
@@ -235,94 +240,93 @@ public:
     }
 
     //
-    // Span (e.g., std::span) functions
+    // Vector (e.g., std::span, std::vector) functions
     //
 
-    template <typename TSpan> requires
-        CSpan<TSpan>
-    static auto toSpan(TSpan& span)
+    template <typename TVector> requires
+        CVector<TVector>
+    static auto toSpan(TVector& vector)
     {
-        using TValue = typename TSpan::value_type;
+        using TValue = typename TVector::value_type;
         
-        return Std::reinterpretAsSpanOf<TValue>(span);
+        return Std::reinterpretAsSpanOf<TValue>(vector);
     }
 
-    template <typename TSpan> requires
-        CSpan<TSpan>
-    static auto toSpan(const TSpan& span)
+    template <typename TVector> requires
+        CVector<TVector>
+    static auto toSpan(const TVector& vector)
     {
-        using TValue = typename TSpan::value_type;
+        using TValue = typename TVector::value_type;
 
-        return Std::reinterpretAsSpanOf<const TValue>(span);
+        return Std::reinterpretAsSpanOf<const TValue>(vector);
     }
 
-    template <typename TSpan, typename TValue> requires
-        CSpanHasValuesConvertibleFrom<TSpan, TValue>
-    static bool contains(const TSpan& span, const TValue& value)
+    template <typename TVector, typename TValue> requires
+        CVectorHasValuesConvertibleFrom<TVector, TValue>
+    static bool contains(const TVector& vector, const TValue& value)
     {
-        return std::ranges::find(span, value) != std::ranges::end(span);
+        return std::ranges::find(vector, value) != vector.end();
     }
 
-    template <typename TSpan, typename TValues> requires
-        CSpanHasValuesConvertibleFromContainer<TSpan, TValues>
-    static std::vector<bool> contains(const TSpan& span, const TValues& values)
+    template <typename TVector, typename TValues> requires
+        CVectorHasValuesConvertibleFromContainer<TVector, TValues>
+    static std::vector<bool> contains(const TVector& vector, const TValues& values)
     {
-        return toVector<bool>(values | std::views::transform([&span](const auto& value) { return contains(span, value); }));
+        return toVector<bool>(values | std::views::transform([&vector](const auto& value) { return contains(vector, value); }));
     }
 
-    template <typename TSpan> requires
-        CSpan<TSpan>
-    static bool isSubsetOf(const TSpan& small, const TSpan& big)
+    template <typename TVector> requires
+        CVector<TVector>
+    static bool isSubsetOf(const TVector& small, const TVector& big)
     {
         return all(contains(big, small));
     }
 
-    template <typename TSpan> requires
-        CSpan<TSpan>
-    static auto at(const TSpan& span, int index) // TODO:: replace with span.at() in C++26
+    template <typename TVector> requires
+        CVector<TVector>
+    static auto at(const TVector& vector, int index) // TODO:: replace with vector.at() in C++26
     {
-        SP_ASSERT(index < std::ranges::size(span));
-        return span[index];
+        SP_ASSERT(index < vector.size());
+        return vector[index];
     }
 
-    template <typename TSpan, typename TValue> requires
-        CSpanHasValuesConvertibleFrom<TSpan, TValue>
-    static int index(const TSpan& span, const TValue& value)
+    template <typename TVector, typename TValue> requires
+        CVectorHasValuesConvertibleFrom<TVector, TValue>
+    static int index(const TVector& vector, const TValue& value)
     {
-        int index = std::ranges::distance(std::ranges::begin(span), std::ranges::find(span, value));
-        return (index < std::ranges::size(span)) ? index : -1;
+        int index = std::ranges::distance(vector.begin(), std::ranges::find(vector, value));
+        return (index < vector.size()) ? index : -1;
     }
 
-    template <typename TSpan> requires
-        CSpan<TSpan>
-    static bool allUnique(const TSpan& span)
+    template <typename TVector> requires
+        CVector<TVector>
+    static bool allUnique(const TVector& vector)
     {
-        return std::ranges::size(span) == std::ranges::size(unique(span));
+        return vector.size() == unique(vector).size();
     }
 
-    template <typename TSpan> requires
-        CSpan<TSpan>
-    static auto unique(const TSpan& span)
+    template <typename TVector> requires
+        CVector<TVector>
+    static auto unique(const TVector& vector)
     {
-        using TValue = typename TSpan::value_type;
+        using TValue = typename TVector::value_type;
 
-        std::vector<TValue> values = toVector<TValue>(span);
+        std::vector<TValue> values = toVector<TValue>(vector);
         std::ranges::sort(values);
-        auto [begin, end] = std::ranges::unique(std::ranges::begin(values), std::ranges::end(values));
+        auto [begin, end] = std::ranges::unique(values);
         values.erase(begin, end);
         return values;
     }
 
-    template <typename TSpanKeys, typename TSpanValues> requires
-        CSpan<TSpanKeys> &&
-        CSpan<TSpanValues>
-    static auto zip(const TSpanKeys& keys, const TSpanValues& values)
+    template <typename TVectorKeys, typename TVectorValues> requires
+        CVector<TVectorKeys> && CVector<TVectorValues>
+    static auto zip(const TVectorKeys& keys, const TVectorValues& values)
     {
-        using TKey = typename TSpanKeys::value_type;
-        using TValue = typename TSpanValues::value_type;
+        using TKey = typename TVectorKeys::value_type;
+        using TValue = typename TVectorValues::value_type;
 
-        SP_ASSERT(std::ranges::size(keys) == std::ranges::size(values));
-        int num_elements = std::ranges::size(keys);
+        SP_ASSERT(keys.size() == values.size());
+        int num_elements = keys.size();
         std::map<TKey, TValue> map;
         for (int i = 0; i < num_elements; i++) {
             insert(map, at(keys, i), at(values, i));
@@ -331,61 +335,54 @@ public:
     }
 
     //
-    // Key-value container (e.g., std::map) functions
+    // Map (e.g., std::map) functions
     //
 
-    template <typename TKeyValueContainer, typename TKey> requires
-        CKeyValueContainerHasKeysConvertibleFrom<TKeyValueContainer, TKey>
-    static bool containsKey(const TKeyValueContainer& key_value_container, const TKey& key)
+    template <typename TMap, typename TKey> requires
+        CMapHasKeysConvertibleFrom<TMap, TKey>
+    static bool containsKey(const TMap& map, const TKey& key)
     {
-        return key_value_container.contains(key);
+        return map.contains(key);
     }
 
-    template <typename TKeyValueContainer, typename TSpanKeys> requires
-        CKeyValueContainerHasKeysConvertibleFromContainer<TKeyValueContainer, TSpanKeys> &&
-        CSpan<TSpanKeys>
-    static std::vector<bool> containsKeys(const TKeyValueContainer& key_value_container, const TSpanKeys& keys)
+    template <typename TMap, typename TVectorKeys> requires
+        CMapHasKeysConvertibleFromVector<TMap, TVectorKeys> &&
+        CVector<TVectorKeys>
+    static std::vector<bool> containsKeys(const TMap& map, const TVectorKeys& keys)
     {
-        return contains(Std::keys(key_value_container), keys); // need fully qualified Std::keys(...) because keys is a local variable
+        return contains(Std::keys(map), keys); // need fully qualified Std::keys(...) because keys is a local variable
     }
 
-    template <typename TKeyValueContainer, typename TSpanKeys> requires
-        CKeyValueContainerHasKeysConvertibleFromContainer<TKeyValueContainer, TSpanKeys>
-    static auto at(const TKeyValueContainer& key_value_container, const TSpanKeys& keys)
+    template <typename TMap, typename TVectorKeys> requires
+        CMapHasKeysConvertibleFromVector<TMap, TVectorKeys>
+    static auto at(const TMap& map, const TVectorKeys& keys)
     {
-        using TValue = typename TKeyValueContainer::mapped_type;
+        using TValue = typename TMap::mapped_type;
 
         // if no default value is provided, then all keys must be present
-        SP_ASSERT(all(containsKeys(key_value_container, keys)));
-
-        return toVector<TValue>(
-            keys |
-            std::views::transform([&key_value_container](const auto& key) {
-                return key_value_container.at(key); }));
+        SP_ASSERT(all(containsKeys(map, keys)));
+        return toVector<TValue>(keys | std::views::transform([&map](const auto& key) { return map.at(key); }));
     }
 
-    template <typename TKeyValueContainer, typename TSpanKeys, typename TValue> requires
-        CKeyValueContainerHasKeysConvertibleFromContainer<TKeyValueContainer, TSpanKeys> &&
-        CKeyValueContainerHasValuesConvertibleFrom<TKeyValueContainer, TValue>
-    static auto at(const TKeyValueContainer& key_value_container, const TSpanKeys& keys, const TValue& default_value)
+    template <typename TMap, typename TVectorKeys, typename TValue> requires
+        CMapHasKeysConvertibleFromVector<TMap, TVectorKeys> &&
+        CMapHasValuesConvertibleFrom<TMap, TValue>
+    static auto at(const TMap& map, const TVectorKeys& keys, const TValue& default_value)
     {
         // not necessarily the same as TValue, e.g., if we pass in nullptr
-        using TKeyValueContainerValue = typename TKeyValueContainer::mapped_type;
+        using TMapValue = typename TMap::mapped_type;
 
         // since a default value is provided, we don't require all keys to be present
-        return toVector<TKeyValueContainerValue>(
-            keys |
-            std::views::transform([&key_value_container, &default_value](const auto& key) {
-                return containsKey(key_value_container, key) ? key_value_container.at(key) : default_value; }));
+        return toVector<TMapValue>(keys | std::views::transform([&map, &default_value](const auto& key) { return containsKey(map, key) ? map.at(key) : default_value; }));
     }
 
     // We use TValue&& because we want to preserve and forward the const-ness and rvalue-ness of value.
-    template <typename TKeyValueContainer, typename TKey, typename TValue> requires
-        CKeyValueContainerHasKeysConvertibleFrom<TKeyValueContainer, TKey> &&
-        CKeyValueContainerHasValuesConvertibleFrom<TKeyValueContainer, TValue>
-    static void insert(TKeyValueContainer& key_value_container, const TKey& key, TValue&& value)
+    template <typename TMap, typename TKey, typename TValue> requires
+        CMapHasKeysConvertibleFrom<TMap, TKey> &&
+        CMapHasValuesConvertibleFrom<TMap, TValue>
+    static void insert(TMap& map, const TKey& key, TValue&& value)
     {
-        auto [itr, success] = key_value_container.insert({key, std::forward<decltype(value)>(value)});
+        auto [itr, success] = map.insert({key, std::forward<decltype(value)>(value)});
         SP_ASSERT(success); // will only succeed if key wasn't already present
     }
 
@@ -393,12 +390,12 @@ public:
     // Only the value type of the initializer list can be inferred (e.g., the int type in std::initializer_list<int>),
     // and only when the initializer list passed to the templated function is non-empty. So this insert(...)
     // specialization is required handle situations where a caller passes in a non-empty initializer list.
-    template <typename TKeyValueContainer, typename TKey, typename TInitializerListValue> requires
-        CKeyValueContainerHasKeysConvertibleFrom<TKeyValueContainer, TKey> &&
-        CKeyValueContainerHasValuesConvertibleFromInitializerList<TKeyValueContainer, TInitializerListValue>
-    static void insert(TKeyValueContainer& key_value_container, const TKey& key, std::initializer_list<TInitializerListValue> initializer_list)
+    template <typename TMap, typename TKey, typename TInitializerListValue> requires
+        CMapHasKeysConvertibleFrom<TMap, TKey> &&
+        CMapHasValuesConvertibleFromInitializerList<TMap, TInitializerListValue>
+    static void insert(TMap& map, const TKey& key, std::initializer_list<TInitializerListValue> initializer_list)
     {
-        auto [itr, success] = key_value_container.insert({key, initializer_list});
+        auto [itr, success] = map.insert({key, initializer_list});
         SP_ASSERT(success); // will only succeed if key wasn't already present
     }
 
@@ -408,75 +405,75 @@ public:
 private:
     class EmptyInitializerList;
 public:
-    template <typename TKeyValueContainer, typename TKey> requires
-        CKeyValueContainerHasKeysConvertibleFrom<TKeyValueContainer, TKey> &&
-        CKeyValueContainerHasValuesConvertibleFromEmptyInitializerList<TKeyValueContainer>
-    static void insert(TKeyValueContainer& key_value_container, const TKey& key, std::initializer_list<EmptyInitializerList> initializer_list)
+    template <typename TMap, typename TKey> requires
+        CMapHasKeysConvertibleFrom<TMap, TKey> &&
+        CMapHasValuesConvertibleFromEmptyInitializerList<TMap>
+    static void insert(TMap& map, const TKey& key, std::initializer_list<EmptyInitializerList> initializer_list)
     {
-        auto [itr, success] = key_value_container.insert({key, {}});
+        auto [itr, success] = map.insert({key, {}});
         SP_ASSERT(success); // will only succeed if key wasn't already present
     }
 
-    template <typename TDestKeyValueContainer, typename TSrcKeyValueContainer> requires
-        CKeyValueContainerHasKeysAndValuesConvertibleFromContainer<TDestKeyValueContainer, TSrcKeyValueContainer>
-    static void insert(TDestKeyValueContainer& dest_key_value_container, const TSrcKeyValueContainer& src_key_value_container)
+    template <typename TDestMap, typename TSrcMap> requires
+        CMapHasKeysAndValuesConvertibleFromMap<TDestMap, TSrcMap>
+    static void insert(TDestMap& dest_map, const TSrcMap& src_map)
     {
-        using TKey = typename TDestKeyValueContainer::key_type;
+        using TKey = typename TDestMap::key_type;
 
         // Assert if there are duplicate keys.
         std::vector<TKey> keys_set_intersection;
-        std::ranges::set_intersection(keys(dest_key_value_container), keys(src_key_value_container), std::back_inserter(keys_set_intersection));
+        std::ranges::set_intersection(keys(dest_map), keys(src_map), std::back_inserter(keys_set_intersection));
         SP_ASSERT(keys_set_intersection.empty());
 
-        dest_key_value_container.insert(std::ranges::begin(src_key_value_container), std::ranges::end(src_key_value_container));
+        dest_map.insert(std::ranges::begin(src_map), std::ranges::end(src_map));
     }
 
-    template <typename TKeyValueContainer, typename TKey> requires
-        CKeyValueContainerHasKeysConvertibleFrom<TKeyValueContainer, TKey>
-    static void remove(TKeyValueContainer& key_value_container, const TKey& key)
+    template <typename TMap, typename TKey> requires
+        CMapHasKeysConvertibleFrom<TMap, TKey>
+    static void remove(TMap& map, const TKey& key)
     {
-        uint64_t num_elements_removed = key_value_container.erase(key);
+        int num_elements_removed = map.erase(key);
         SP_ASSERT(num_elements_removed == 1);
     }
 
-    template <typename TKeyValueContainer, typename TSpanKeys> requires
-        CKeyValueContainerHasKeysConvertibleFromContainer<TKeyValueContainer, TSpanKeys> &&
-        CSpan<TSpanKeys>
-    static void remove(TKeyValueContainer& key_value_container, const TSpanKeys& keys)
+    template <typename TMap, typename TVectorKeys> requires
+        CMapHasKeysConvertibleFromVector<TMap, TVectorKeys> &&
+        CVector<TVectorKeys>
+    static void remove(TMap& map, const TVectorKeys& keys)
     {
         for (auto& key : keys) {
-            remove(key_value_container, key);
+            remove(map, key);
         }
     }
 
-    template <typename TKeyValueContainer> requires
-        CKeyValueContainer<TKeyValueContainer>
-    static auto keys(const TKeyValueContainer& key_value_container)
+    template <typename TMap> requires
+        CMap<TMap>
+    static auto keys(const TMap& map)
     {
-        using TKey = typename TKeyValueContainer::key_type;
+        using TKey = typename TMap::key_type;
 
         // TODO: remove platform-specific logic in C++23
         #if BOOST_COMP_MSVC
-            return toVector<TKey>(std::views::keys(key_value_container));
+            return toVector<TKey>(std::views::keys(map));
         #elif BOOST_COMP_CLANG
             std::vector<TKey> keys;
-            boost::copy(key_value_container | boost::adaptors::map_keys, std::back_inserter(keys));
+            boost::copy(map | boost::adaptors::map_keys, std::back_inserter(keys));
             return keys;
         #else
             #error
         #endif
     }
 
-    template <typename TKeyValueContainer> requires
-        CKeyValueContainer<TKeyValueContainer>
-    static auto zip(const TKeyValueContainer& key_value_container)
+    template <typename TMap> requires
+        CMap<TMap>
+    static auto zip(const TMap& map)
     {
-        using TKey = typename TKeyValueContainer::key_type;
-        using TValue = typename TKeyValueContainer::mapped_type;
+        using TKey = typename TMap::key_type;
+        using TValue = typename TMap::mapped_type;
 
         std::vector<TKey> keys;
         std::vector<TValue> values;
-        for (const auto& [key, value] : key_value_container) {
+        for (const auto& [key, value] : map) {
             keys.push_back(key);
             values.push_back(value);
         }
@@ -487,14 +484,14 @@ public:
     // Functions for safely reinterpreting ranges, spans, and initializer lists
     //
 
-    // We use TSrcSpan&& because want to preserve and forward the const-ness and rvalue-ness of src. We do
-    // this to enforce the constraint that if TSrcSpan is const, then TDestValue also needs to be const.
-    template <typename TDestValue, typename TSrcSpan> requires
-        CSpan<std::remove_reference_t<TSrcSpan>> &&
-        (!std::is_const_v<TSrcSpan> || std::is_const_v<TDestValue>)
-    static std::span<TDestValue> reinterpretAsSpanOf(TSrcSpan&& src)
+    // We use TSrcVector&& because want to preserve and forward the const-ness and rvalue-ness of src. We do
+    // this to enforce the constraint that if TSrcVector is const, then TDestValue also needs to be const.
+    template <typename TDestValue, typename TSrcVector> requires
+        CVector<std::remove_const_t<std::remove_reference_t<TSrcVector>>> &&
+        (!std::is_const_v<TSrcVector> || std::is_const_v<TDestValue>)
+    static std::span<TDestValue> reinterpretAsSpanOf(TSrcVector&& src)
     {
-        return reinterpretAsSpan<TDestValue>(std::ranges::data(std::forward<decltype(src)>(src)), std::ranges::size(std::forward<decltype(src)>(src)));
+        return reinterpretAsSpan<TDestValue>(src.data(), src.size());
     }
 
     // If TSrcValue is const, then TDestValue also needs to be const.
@@ -512,11 +509,11 @@ public:
         return dest;
     }
 
-    template <typename TDestValue, typename TSrcSpan> requires
-        CSpan<TSrcSpan>
-    static std::vector<TDestValue> reinterpretAsVectorOf(const TSrcSpan& src)
+    template <typename TDestValue, typename TSrcVector> requires
+        CVector<TSrcVector>
+    static std::vector<TDestValue> reinterpretAsVectorOf(const TSrcVector& src)
     {
-        return reinterpretAsVector<TDestValue>(std::ranges::data(src), std::ranges::size(src));
+        return reinterpretAsVector<TDestValue>(src.data(), src.size());
     }
 
     // Don't infer TSrcValue from the input in the functions below, because we want to force the user to

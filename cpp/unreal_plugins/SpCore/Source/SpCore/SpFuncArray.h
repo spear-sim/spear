@@ -218,7 +218,8 @@ public:
         setData(initializer_list, {-1});
     }
 
-    template <typename TRange> requires CRangeHasValuesConvertibleTo<TRange, TValue>
+    template <typename TRange> requires
+        CRangeHasValuesConvertibleTo<TRange, TValue>
     void setData(TRange&& range)
     {
         setData(std::forward<decltype(range)>(range), {-1});
@@ -251,7 +252,8 @@ public:
         shared_memory_usage_flags_ = SpFuncSharedMemoryUsageFlags::DoNotUse;
     }
 
-    template <typename TRange> requires CRangeHasValuesConvertibleTo<TRange, TValue>
+    template <typename TRange> requires
+        CRangeHasValuesConvertibleTo<TRange, TValue>
     void setData(TRange&& range, const std::vector<int64_t>& shape)
     {
         data_ = Std::reinterpretAsVector<uint8_t, TValue>(std::forward<decltype(range)>(range));
@@ -308,14 +310,17 @@ public:
         std::memcpy(view_.data(), std::ranges::data(src), std::ranges::size(src)*sizeof(TValue));
     }
 
-    template <typename TSpan> requires CSpan<TSpan> && std::same_as<typename TSpan::value_type, TValue>
-    void setDataValues(const TSpan& src)
+    template <typename TVector> requires
+        CVector<TVector> &&
+        std::same_as<typename TVector::value_type, TValue>
+    void setDataValues(const TVector& src)
     {
         SP_ASSERT(std::ranges::size(src) <= view_.size());
         std::memcpy(view_.data(), std::ranges::data(src), std::ranges::size(src)*sizeof(TValue));
     }
 
-    template <typename TRange> requires CRangeHasValuesConvertibleTo<TRange, TValue>
+    template <typename TRange> requires
+        CRangeHasValuesConvertibleTo<TRange, TValue>
     void setDataValues(TRange&& range)
     {
         TValue* view_ptr = view_.data();

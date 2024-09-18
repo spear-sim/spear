@@ -758,7 +758,8 @@ public:
     // caller to register special structs that are not present in ASpecialStructActor.
     //
 
-    template <typename TSpecialStruct> requires (!CStruct<TSpecialStruct>)
+    template <typename TSpecialStruct> requires
+        (!CStruct<TSpecialStruct>)
     static void registerSpecialStruct(const std::string& struct_name)
     {
         registerStructCommon<TSpecialStruct>(struct_name);
@@ -769,7 +770,8 @@ public:
         Std::insert(g_special_struct_names, type_id_string, struct_name);
     }
 
-    template <typename TSpecialStruct> requires (!CStruct<TSpecialStruct>)
+    template <typename TSpecialStruct> requires
+        (!CStruct<TSpecialStruct>)
     static void registerSpecialStruct(const std::string& struct_name, UStruct* ustruct)
     {
         registerStructCommon<TSpecialStruct>(struct_name);
@@ -909,7 +911,8 @@ public:
         unregisterStructCommon<TStruct>(struct_name);
     }
 
-    template <typename TSpecialStruct> requires (!CStruct<TSpecialStruct>)
+    template <typename TSpecialStruct> requires
+        (!CStruct<TSpecialStruct>)
     static void unregisterSpecialStruct(const std::string& struct_name)
     {
         unregisterStructCommon<TSpecialStruct>(struct_name);
@@ -942,7 +945,8 @@ public:
         return TStruct::StaticStruct();
     }
 
-    template <typename TSpecialStruct> requires (!CStruct<TSpecialStruct>)
+    template <typename TSpecialStruct> requires
+        (!CStruct<TSpecialStruct>)
     static UStruct* getStaticStruct()
     {
         std::string type_id_string = getTypeIdString<TSpecialStruct>();

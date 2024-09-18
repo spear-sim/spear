@@ -59,7 +59,8 @@ private:
     template <typename TReturn, typename... TArgs>
     struct FuncInfo<TReturn(*)(TArgs...)> {};
 
-    template <typename TFunc, typename TReturn, typename... TArgs> requires CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs&...>
+    template <typename TFunc, typename TReturn, typename... TArgs> requires
+        CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs&...>
     static auto wrapFuncToExecuteInWorkQueueBlockingImpl(WorkQueue& work_queue, const TFunc& func, const FuncInfo<TReturn(*)(TArgs...)>& fi)
     {
         // The lambda returned here is typically bound to a specific RPC entry point and called from a worker
@@ -79,7 +80,8 @@ private:
         };
     }
 
-    template <typename TFunc, typename... TArgs> requires CFuncIsCallableWithArgs<TFunc, TArgs&...>
+    template <typename TFunc, typename... TArgs> requires
+        CFuncIsCallableWithArgs<TFunc, TArgs&...>
     auto scheduleAndExecuteFuncBlocking(const TFunc& func, TArgs&... args)
     {
         using TReturn = std::invoke_result_t<TFunc, TArgs&...>;
