@@ -201,7 +201,7 @@ public:
     }
 
     //
-    // std::ranges::range functions
+    // Range (e.g., std::ranges::range) functions
     //
 
     // TODO: replace with std::ranges::to<std::vector> in C++23
@@ -481,7 +481,7 @@ public:
     }
 
     //
-    // Functions for safely reinterpreting ranges, spans, and initializer lists
+    // Functions for safely reinterpreting ranges, vectors, and initializer lists
     //
 
     // We use TSrcVector&& because want to preserve and forward the const-ness and rvalue-ness of src. We do
