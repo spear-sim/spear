@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <concepts> // std::derived_from
-
 #include <Components/ActorComponent.h>
 #include <Components/SceneComponent.h>
 #include <Engine/World.h>

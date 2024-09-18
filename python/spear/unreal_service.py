@@ -440,11 +440,19 @@ class UnrealService():
     # Spawn actor
     #
 
-    def spawn_actor(self, class_name, location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}, spawn_parameters={}):
-        return self._rpc_client.call("unreal_service.spawn_actor", class_name, {"Location": json.dumps(location), "Rotation": json.dumps(rotation), "SpawnParameters": json.dumps(spawn_parameters)})
+    def spawn_actor(self, class_name, location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}, spawn_parameters={}, spawn_parameters_object_flags=["RF_Transactional"]):
+        return self._rpc_client.call(
+            "unreal_service.spawn_actor",
+            class_name,
+            {"Location": json.dumps(location), "Rotation": json.dumps(rotation), "SpawnParameters": json.dumps(spawn_parameters)},
+            spawn_parameters_object_flags)
 
-    def spawn_actor_from_uclass(self, uclass, location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}, spawn_parameters={}):
-        return self._rpc_client.call("unreal_service.spawn_actor_from_uclass", uclass, {"Location": json.dumps(location), "Rotation": json.dumps(rotation), "SpawnParameters": json.dumps(spawn_parameters)})
+    def spawn_actor_from_uclass(self, uclass, location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}, spawn_parameters={}, spawn_parameters_object_flags=["RF_Transactional"]):
+        return self._rpc_client.call(
+            "unreal_service.spawn_actor_from_uclass",
+            uclass,
+            {"Location": json.dumps(location), "Rotation": json.dumps(rotation), "SpawnParameters": json.dumps(spawn_parameters)},
+            spawn_parameters_object_flags)
 
     #
     # Destroy actor
@@ -481,23 +489,23 @@ class UnrealService():
     #
 
     def new_object(self, class_name, outer, name="", object_flags=["RF_NoFlags"], template=0, copy_transients_from_class_defaults=False, in_instance_graph=0, external_package=0):
-        return self._rpc_client.call("unreal_service.new_object", class_name, outer, name, template, copy_transients_from_class_defaults, in_instance_graph, external_package, {"ObjectFlags": object_flags})
+        return self._rpc_client.call("unreal_service.new_object", class_name, outer, name, object_flags, template, copy_transients_from_class_defaults, in_instance_graph, external_package)
 
     #
     # Load objects and classes
     #
 
     def load_object(self, class_name, outer, name="", filename="", load_flags=["LOAD_None"], sandbox=0, instancing_context=0):
-        return self._rpc_client.call("unreal_service.load_object", class_name, outer, name, filename, sandbox, instancing_context, {"LoadFlags": load_flags})
+        return self._rpc_client.call("unreal_service.load_object", class_name, outer, name, filename, load_flags, sandbox, instancing_context)
 
     def load_class(self, class_name, outer, name="", filename="", load_flags=["LOAD_None"], sandbox=0):
-        return self._rpc_client.call("unreal_service.load_object", class_name, outer, name, filename, sandbox, {"LoadFlags": load_flags})
+        return self._rpc_client.call("unreal_service.load_object", class_name, outer, name, filename, load_flags, sandbox)
 
     def static_load_object(self, uclass, in_outer, name="", filename="", load_flags=["LOAD_None"], sandbox=0, allow_object_reconciliation=True, instancing_context=0):
-        return self._rpc_client.call("unreal_service.static_load_object", uclass, in_outer, name, filename, sandbox, allow_object_reconciliation, instancing_context, {"LoadFlags": load_flags})
+        return self._rpc_client.call("unreal_service.static_load_object", uclass, in_outer, name, filename, load_flags, sandbox, allow_object_reconciliation, instancing_context)
 
     def static_load_class(self, base_uclass, in_outer, name="", filename="", load_flags=["LOAD_None"], sandbox=0):
-        return self._rpc_client.call("unreal_service.static_load_class", base_uclass, in_outer, name, filename, sandbox, {"LoadFlags": load_flags})
+        return self._rpc_client.call("unreal_service.static_load_class", base_uclass, in_outer, name, filename, load_flags, sandbox)
 
     #
     # Stable name helper functions

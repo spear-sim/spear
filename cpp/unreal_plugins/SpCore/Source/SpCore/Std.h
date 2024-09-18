@@ -4,22 +4,23 @@
 
 #pragma once
 
-#include <stddef.h> // size_t
-#include <stdint.h> // uint64_t
+#include <stddef.h>    // size_t
+#include <stdint.h>    // uint64_t
 
-#include <algorithm> // std::ranges::all_of, std::ranges::any_of, std::ranges::find, std::ranges::copy, std::ranges::equal, std::ranges::sort,
-                     // std::ranges::set_intersection, std::ranges::unique
-#include <concepts>  // std::convertible_to, std::same_as
-#include <cstdlib>   // std::strtoull
-#include <cstring>   // std::memcpy
+#include <algorithm>   // std::ranges::all_of, std::ranges::any_of, std::ranges::find, std::ranges::copy, std::ranges::equal, std::ranges::sort,
+                       // std::ranges::set_intersection, std::ranges::unique
+#include <concepts>    // std::convertible_to, std::same_as
+#include <cstdlib>     // std::strtoull
+#include <cstring>     // std::memcpy
 #include <initializer_list>
-#include <iterator>  // std::back_inserter, std::ranges::distance
+#include <iterator>    // std::back_inserter, std::ranges::distance
 #include <map>
-#include <ranges>    // std::ranges::begin, std::ranges::contiguous_range, std::ranges::data, std::ranges::end, std::ranges::range,
-                     // std::ranges::sized_range, std::ranges::size, std::views::keys, std::views::transform
+#include <ranges>      // std::ranges::begin, std::ranges::contiguous_range, std::ranges::data, std::ranges::end, std::ranges::range,
+                       // std::ranges::sized_range, std::ranges::size, std::views::keys, std::views::transform
+#include <type_traits> // std::underlying_type_t
 #include <span>
 #include <string>
-#include <utility>   // std::forward
+#include <utility>     // std::forward
 #include <vector>
 
 #include "SpCore/Assert.h"
@@ -29,6 +30,14 @@
 #if BOOST_COMP_MSVC
     #include <format>
 #endif
+
+// These operators are needed so an enum class can be used like an integer to represent bit flags. Note that
+// operator|| and operator! are needed for SP_ASSERT
+#define SP_DECLARE_ENUM_FLAG_OPERATORS(TEnum) \
+    static TEnum operator|(TEnum lhs, TEnum rhs) { return static_cast<TEnum>(static_cast<std::underlying_type_t<TEnum>>(lhs) | static_cast<std::underlying_type_t<TEnum>>(rhs)); }; \
+    static TEnum operator&(TEnum lhs, TEnum rhs) { return static_cast<TEnum>(static_cast<std::underlying_type_t<TEnum>>(lhs) & static_cast<std::underlying_type_t<TEnum>>(rhs)); }; \
+    static bool operator||(TEnum lhs, bool rhs) { return static_cast<std::underlying_type_t<TEnum>>(lhs) || rhs; };                                                                 \
+    static bool operator!(TEnum val) { return !static_cast<std::underlying_type_t<TEnum>>(val); };
 
 //
 // helper concepts

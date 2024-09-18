@@ -94,6 +94,7 @@ enum class SpFuncSharedMemoryUsageFlags : uint8_t
     Arg         = 1 << 0,
     ReturnValue = 1 << 1
 };
+SP_DECLARE_ENUM_FLAG_OPERATORS(SpFuncSharedMemoryUsageFlags);
 
 struct SpFuncSharedMemoryView : SharedMemoryView
 {
@@ -105,30 +106,6 @@ struct SpFuncSharedMemoryView : SharedMemoryView
 
     SpFuncSharedMemoryUsageFlags usage_flags_ = SpFuncSharedMemoryUsageFlags::DoNotUse;
 };
-
-// Needed to perform | and & operations on SpFuncSharedMemoryUsageFlags
-
-static SpFuncSharedMemoryUsageFlags operator|(SpFuncSharedMemoryUsageFlags lhs, SpFuncSharedMemoryUsageFlags rhs)
-{
-    return static_cast<SpFuncSharedMemoryUsageFlags>(
-        static_cast<std::underlying_type_t<SpFuncSharedMemoryUsageFlags>>(lhs) | static_cast<std::underlying_type_t<SpFuncSharedMemoryUsageFlags>>(rhs));
-}
-
-static SpFuncSharedMemoryUsageFlags operator&(SpFuncSharedMemoryUsageFlags lhs, SpFuncSharedMemoryUsageFlags rhs)
-{
-    return static_cast<SpFuncSharedMemoryUsageFlags>(
-        static_cast<std::underlying_type_t<SpFuncSharedMemoryUsageFlags>>(lhs) & static_cast<std::underlying_type_t<SpFuncSharedMemoryUsageFlags>>(rhs));
-}
-
-static bool operator||(SpFuncSharedMemoryUsageFlags lhs, bool rhs) // needed for SP_ASSERT
-{
-    return static_cast<std::underlying_type_t<SpFuncSharedMemoryUsageFlags>>(lhs) || rhs;
-}
-
-static bool operator!(SpFuncSharedMemoryUsageFlags val) // needed for SP_ASSERT
-{
-    return !static_cast<std::underlying_type_t<SpFuncSharedMemoryUsageFlags>>(val);
-}
 
 //
 // SpFuncPackedArray represents an array that can be passed to or returned from an SpFunc. We represent the
