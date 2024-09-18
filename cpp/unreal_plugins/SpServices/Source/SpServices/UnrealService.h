@@ -84,7 +84,7 @@ enum class ESpObjectFlags
     RF_NonPIEDuplicateTransient     = Unreal::getEnumValueAsConst(EObjectFlags::RF_NonPIEDuplicateTransient),
     RF_WillBeLoaded                 = Unreal::getEnumValueAsConst(EObjectFlags::RF_WillBeLoaded),
     RF_HasExternalPackage           = Unreal::getEnumValueAsConst(EObjectFlags::RF_HasExternalPackage),
-    RF_AllocatedInSharedPage        = Unreal::getEnumValueAsConst(EObjectFlags::RF_AllocatedInSharedPage),
+    RF_AllocatedInSharedPage        = Unreal::getEnumValueAsConst(EObjectFlags::RF_AllocatedInSharedPage)
 };
 ENUM_CLASS_FLAGS(ESpObjectFlags);
 
@@ -770,7 +770,7 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "spawn_actor",
-            [this](std::string& class_name, std::map<std::string, std::string>& unreal_obj_strings, std::vector<std::string>& spawn_parameters_object_flag_strings) -> uint64_t {
+            [this](std::string& class_name, std::map<std::string, std::string>& unreal_obj_strings, std::vector<std::string>& object_flag_strings) -> uint64_t {
                 
                 UnrealObj<FVector> location_obj("Location");
                 UnrealObj<FRotator> rotation_obj("Rotation");
@@ -794,13 +794,13 @@ public:
                 actor_spawn_parameters.bDeferConstruction = sp_actor_spawn_parameters.bDeferConstruction;
                 actor_spawn_parameters.bAllowDuringConstructionScript = sp_actor_spawn_parameters.bAllowDuringConstructionScript;
                 actor_spawn_parameters.NameMode = Unreal::getEnumValueAs<FActorSpawnParameters::ESpawnActorNameMode>(sp_actor_spawn_parameters.NameMode);
-                actor_spawn_parameters.ObjectFlags = Unreal::getEnumValueAs<EObjectFlags>(Unreal::combineEnumFlagStrings<FSpObjectFlags>(spawn_parameters_object_flag_strings));
+                actor_spawn_parameters.ObjectFlags = Unreal::getEnumValueAs<EObjectFlags>(Unreal::combineEnumFlagStrings<FSpObjectFlags>(object_flag_strings));
 
                 return toUInt64(UnrealClassRegistrar::spawnActor(class_name, world_, location, rotation, actor_spawn_parameters));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "spawn_actor_from_uclass",
-            [this](uint64_t& uclass, std::map<std::string, std::string>& unreal_obj_strings, std::vector<std::string>& spawn_parameters_object_flag_strings) -> uint64_t {
+            [this](uint64_t& uclass, std::map<std::string, std::string>& unreal_obj_strings, std::vector<std::string>& object_flag_strings) -> uint64_t {
 
                 UnrealObj<FVector> location_obj("Location");
                 UnrealObj<FRotator> rotation_obj("Rotation");
@@ -824,7 +824,7 @@ public:
                 actor_spawn_parameters.bDeferConstruction = sp_actor_spawn_parameters.bDeferConstruction;
                 actor_spawn_parameters.bAllowDuringConstructionScript = sp_actor_spawn_parameters.bAllowDuringConstructionScript;
                 actor_spawn_parameters.NameMode = Unreal::getEnumValueAs<FActorSpawnParameters::ESpawnActorNameMode>(sp_actor_spawn_parameters.NameMode);
-                actor_spawn_parameters.ObjectFlags = Unreal::getEnumValueAs<EObjectFlags>(Unreal::combineEnumFlagStrings<FSpObjectFlags>(spawn_parameters_object_flag_strings));
+                actor_spawn_parameters.ObjectFlags = Unreal::getEnumValueAs<EObjectFlags>(Unreal::combineEnumFlagStrings<FSpObjectFlags>(object_flag_strings));
 
                 return toUInt64(world_->SpawnActor(toPtr<UClass>(uclass), &location, &rotation, actor_spawn_parameters));
             });
@@ -1034,7 +1034,8 @@ public:
 
 private:
 
-    static uint64_t toUInt64(const auto* src)
+    template <typename TValue>
+    static uint64_t toUInt64(const TValue* src)
     {
         return reinterpret_cast<uint64_t>(src);
     }

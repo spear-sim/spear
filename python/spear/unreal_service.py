@@ -440,19 +440,31 @@ class UnrealService():
     # Spawn actor
     #
 
-    def spawn_actor(self, class_name, location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}, spawn_parameters={}, spawn_parameters_object_flags=["RF_Transactional"]):
-        return self._rpc_client.call(
-            "unreal_service.spawn_actor",
-            class_name,
-            {"Location": json.dumps(location), "Rotation": json.dumps(rotation), "SpawnParameters": json.dumps(spawn_parameters)},
-            spawn_parameters_object_flags)
+    def spawn_actor(self, class_name, location={}, rotation={}, spawn_parameters={}):
 
-    def spawn_actor_from_uclass(self, uclass, location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}, spawn_parameters={}, spawn_parameters_object_flags=["RF_Transactional"]):
+        if "TransformScaleMethod" not in spawn_parameters:
+            spawn_parameters["TransformScaleMethod"] = "MultiplyWithRoot" # see Engine/Source/Runtime/Engine/Classes/Engine/World.h
+
+        if "ObjectFlags" in spawn_parameters:
+            object_flags = spawn_parameters.pop("ObjectFlags")
+        else:
+            object_flags = ["RF_Transactional"] # see Engine/Source/Runtime/Engine/Private/World.cpp
+
         return self._rpc_client.call(
-            "unreal_service.spawn_actor_from_uclass",
-            uclass,
-            {"Location": json.dumps(location), "Rotation": json.dumps(rotation), "SpawnParameters": json.dumps(spawn_parameters)},
-            spawn_parameters_object_flags)
+            "unreal_service.spawn_actor", class_name, {"Location": json.dumps(location), "Rotation": json.dumps(rotation), "SpawnParameters": json.dumps(spawn_parameters)}, object_flags)
+
+    def spawn_actor_from_uclass(self, uclass, location={}, rotation={}, spawn_parameters={}):
+
+        if "TransformScaleMethod" not in spawn_parameters:
+            spawn_parameters["TransformScaleMethod"] = "MultiplyWithRoot" # see Engine/Source/Runtime/Engine/Classes/Engine/World.h
+
+        if "ObjectFlags" in spawn_parameters:
+            object_flags = spawn_parameters.pop("ObjectFlags")
+        else:
+            object_flags = ["RF_Transactional"] # see Engine/Source/Runtime/Engine/Private/World.cpp
+
+        return self._rpc_client.call(
+            "unreal_service.spawn_actor_from_uclass", uclass, {"Location": json.dumps(location), "Rotation": json.dumps(rotation), "SpawnParameters": json.dumps(spawn_parameters)}, object_flags)
 
     #
     # Destroy actor
