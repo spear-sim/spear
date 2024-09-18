@@ -820,14 +820,14 @@ public:
     // Helper functions for working with enums
     //
 
-    template <typename TEnum>
-    static auto getEnumValue(TEnum value) {
-        return static_cast<std::underlying_type_t<TEnum>>(value);
+    template <typename TSrcEnum>
+    static auto getEnumValue(TSrcEnum value) {
+        return static_cast<std::underlying_type_t<TSrcEnum>>(value);
     }
 
-    template <typename TEnum>
-    static constexpr auto getEnumValueAsConst(TEnum value) { // constexpr needed so we can use getEnumValueAsConst when declaring enum classes
-        return static_cast<std::underlying_type_t<TEnum>>(value);
+    template <typename TSrcEnum>
+    static constexpr auto getEnumValueAsConst(TSrcEnum value) { // constexpr needed so we can use getEnumValueAsConst when declaring enum classes
+        return static_cast<std::underlying_type_t<TSrcEnum>>(value);
     }
 
     template <typename TDestEnum>
@@ -837,7 +837,7 @@ public:
 
     template <typename TDestEnum, typename TSrcEnum>
     static TDestEnum getEnumValueAs(TSrcEnum value) {
-        return static_cast<TDestEnum>(static_cast<std::underlying_type_t<TSrcEnum>>(value));
+        return static_cast<TDestEnum>(getEnumValue(value));
     }
 
     template <typename TDestEnum, CEnumStruct TEnumStruct>

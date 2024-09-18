@@ -40,7 +40,7 @@
     static bool operator!(TEnum val) { return !static_cast<std::underlying_type_t<TEnum>>(val); };
 
 //
-// helper concepts
+// Helper concepts
 //
 
 template <typename TDest, typename TSrc>

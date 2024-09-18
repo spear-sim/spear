@@ -1045,8 +1045,8 @@ private:
         return Std::toMap<TKey, uint64_t>(src | std::views::transform([](auto& pair) { auto& [key, value] = pair; return std::make_pair(key, toUInt64(value)); }));
     }
 
-    template <typename TValueType>
-    static std::vector<uint64_t> toUInt64(const std::vector<TValueType>& src)
+    template <typename TValue>
+    static std::vector<uint64_t> toUInt64(const std::vector<TValue>& src)
     {
         return Std::reinterpretAsVectorOf<uint64_t>(src);
     }

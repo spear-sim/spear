@@ -34,9 +34,7 @@ if __name__ == "__main__":
     root_component = spear_instance.unreal_service.to_handle(string=root_component_string)
     root_component_object_properties = spear_instance.unreal_service.get_object_properties_from_uobject(uobject=root_component)
 
-    # print properties and helper objects
-    spear.log(root_component_property_desc)
-    spear.log(root_component_string)
+    # print properties
     spear.log(root_component)
     spear.log(root_component_object_properties)
 
