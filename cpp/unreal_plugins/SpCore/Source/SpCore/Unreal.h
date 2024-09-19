@@ -702,7 +702,7 @@ public:
         parent->GetChildrenComponents(include_all_descendants, children_tarray);
         std::vector<USceneComponent*> children = toStdVector(children_tarray);
         SP_ASSERT(!Std::contains(children, nullptr));
-        SP_ASSERT(Std::all(Std::toVector<bool>(children | std::views::transform([](auto child) { return child->GetClass(); }))));
+        SP_ASSERT(Std::all(Std::toVector<bool>(children | std::views::transform([](auto child) { return static_cast<bool>(child->GetClass()); })))); // cast to bool needed on Windows
         return Std::toVector<TReturnAsComponent*>(
             children |
             std::views::filter([uclass](auto child) { return child->GetClass()->IsChildOf(uclass); }) |
@@ -859,28 +859,30 @@ public:
     //
 
     template <typename TSrcEnum>
-    static auto getEnumValue(TSrcEnum value) {
-        return static_cast<std::underlying_type_t<TSrcEnum>>(value);
+    static auto getEnumValue(TSrcEnum src) {
+        return static_cast<std::underlying_type_t<TSrcEnum>>(src);
     }
 
     template <typename TSrcEnum>
-    static constexpr auto getEnumValueAsConst(TSrcEnum value) { // constexpr needed so we can use getEnumValueAsConst when declaring enum classes
-        return static_cast<std::underlying_type_t<TSrcEnum>>(value);
+    static constexpr auto getEnumValueAsConst(TSrcEnum src) { // constexpr needed so we can use getEnumValueAsConst when declaring enum classes
+        return static_cast<std::underlying_type_t<TSrcEnum>>(src);
     }
 
     template <typename TDestEnum>
-    static TDestEnum getEnumValueAs(int value) {
-        return static_cast<TDestEnum>(value);
+    static TDestEnum getEnumValueAs(int src) {
+        return static_cast<TDestEnum>(src);
     }
 
-    template <typename TDestEnum, typename TSrcEnum>
-    static TDestEnum getEnumValueAs(TSrcEnum value) {
-        return static_cast<TDestEnum>(getEnumValue(value));
+    template <typename TDestEnum, typename TSrcEnum> requires
+        (!CEnumStruct<TSrcEnum>)
+    static TDestEnum getEnumValueAs(TSrcEnum src) {
+        return static_cast<TDestEnum>(getEnumValue(src));
     }
 
-    template <typename TDestEnum, CEnumStruct TEnumStruct>
-    static TDestEnum getEnumValueAs(const TEnumStruct& enum_struct) {
-        return getEnumValueAs<TDestEnum>(enum_struct.getValue());
+    template <typename TDestEnum, typename TSrcEnumStruct> requires
+        CEnumStruct<TSrcEnumStruct>
+    static TDestEnum getEnumValueAs(const TSrcEnumStruct& src) {
+        return getEnumValueAs<TDestEnum>(src.getValue());
     }
 
     template <CEnumStruct TEnumStruct>

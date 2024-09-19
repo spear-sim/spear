@@ -24,7 +24,7 @@ std::map<std::string, clmdep_msgpack::object> Msgpack::toMap(clmdep_msgpack::obj
     SP_ASSERT(object.type == clmdep_msgpack::type::MAP);
     clmdep_msgpack::object_kv* object_kvs = static_cast<clmdep_msgpack::object_kv*>(object.via.map.ptr);
     std::map<std::string, clmdep_msgpack::object> objects;
-    for (int i = 0; i < object.via.map.size; i++) {
+    for (unsigned int i = 0; i < object.via.map.size; i++) { // unsigned int needed on Windows
         Std::insert(objects, Msgpack::to<std::string>(object_kvs[i].key), std::move(object_kvs[i].val));
     }
     return objects;
