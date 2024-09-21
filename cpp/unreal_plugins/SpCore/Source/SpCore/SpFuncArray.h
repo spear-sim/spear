@@ -219,7 +219,7 @@ public:
     }
 
     template <typename TRange> requires
-        CRangeHasValuesConvertibleTo<TRange, TValue>
+        CRangeValuesAreConvertibleTo<TRange, TValue>
     void setData(TRange&& range)
     {
         setData(std::forward<decltype(range)>(range), {-1});
@@ -253,7 +253,7 @@ public:
     }
 
     template <typename TRange> requires
-        CRangeHasValuesConvertibleTo<TRange, TValue>
+        CRangeValuesAreConvertibleTo<TRange, TValue>
     void setData(TRange&& range, const std::vector<int64_t>& shape)
     {
         data_ = Std::reinterpretAsVector<uint8_t, TValue>(std::forward<decltype(range)>(range));
@@ -312,7 +312,7 @@ public:
 
     template <typename TVector> requires
         CVector<TVector> &&
-        std::same_as<typename TVector::value_type, TValue>
+        std::same_as<TValue, typename TVector::value_type>
     void setDataValues(const TVector& src)
     {
         SP_ASSERT(std::ranges::size(src) <= view_.size());
@@ -320,7 +320,7 @@ public:
     }
 
     template <typename TRange> requires
-        CRangeHasValuesConvertibleTo<TRange, TValue>
+        CRangeValuesAreConvertibleTo<TRange, TValue>
     void setDataValues(TRange&& range)
     {
         TValue* view_ptr = view_.data();

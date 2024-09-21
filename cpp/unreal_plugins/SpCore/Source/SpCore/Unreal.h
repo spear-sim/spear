@@ -8,7 +8,7 @@
 #include <map>
 #include <ranges>      // std::views::filter, std::views::transform
 #include <string>
-#include <type_traits> // std::underlying_type_t
+#include <type_traits> // std::remove_pointer_t, std::underlying_type_t
 #include <utility>     // std::make_pair
 #include <vector>
 
@@ -49,7 +49,7 @@ class UWorld;
 template <typename TStruct>
 concept CStruct =
     requires() {
-        { TStruct::StaticStruct() };
+        { TStruct::StaticStruct() }; // can't use std::same_as<UStruct*> because the type of the returned pointer might be derived from UStruct
     } &&
     std::derived_from<std::remove_pointer_t<decltype(TStruct::StaticStruct())>, UStruct>;
 
@@ -60,7 +60,7 @@ concept CEnumStruct =
         typename TEnumStruct::TEnum;
         { enum_struct.getName() } -> std::same_as<std::string>;
         { enum_struct.getValue() } -> std::same_as<typename TEnumStruct::TEnum>;
-};
+    };
 
 template <typename TObject>
 concept CObject =
@@ -70,7 +70,7 @@ template <typename TClass>
 concept CClass =
     CObject<TClass> &&
     requires() {
-        { TClass::StaticClass() };
+        { TClass::StaticClass() }; // can't use std::same_as<UClass*> because the type of the returned pointer might be derived from UClass
     } &&
     std::derived_from<std::remove_pointer_t<decltype(TClass::StaticClass())>, UClass>;
 
