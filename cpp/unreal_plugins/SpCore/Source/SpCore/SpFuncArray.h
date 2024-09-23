@@ -134,8 +134,8 @@ public:
 
 //
 // SpFuncArray represents a strongly typed array that can be instantiated to manipulate an arg or return value.
-// A CppFuncData object must be converted to a CppFuncItem before it can be passed to, or returned from,
-// a CppFunc. To perform this conversion, use the static functions in CppFuncUtils.
+// A SpFuncArray object must be converted to an SpFuncPackedArray before it can be passed to, or returned from,
+// an SpFunc. To perform this conversion, use the static functions in SpFuncArrayUtils.
 //
 
 class SpFuncArrayBase
@@ -316,7 +316,7 @@ public:
     void setDataValues(const TVector& src)
     {
         SP_ASSERT(std::ranges::size(src) <= view_.size());
-        std::memcpy(view_.data(), std::ranges::data(src), std::ranges::size(src)*sizeof(TValue));
+        std::memcpy(view_.data(), src.data(), src.size()*sizeof(TValue));
     }
 
     template <typename TRange> requires
@@ -449,7 +449,7 @@ public:
     static void resolve(std::vector<SpFuncPackedArray>& packed_arrays, const std::map<std::string, SpFuncSharedMemoryView>& shared_memory_views);
     static void resolve(std::map<std::string, SpFuncPackedArray>& packed_arrays, const std::map<std::string, SpFuncSharedMemoryView>& shared_memory_views);
 
-    // typically called after resolve(...) to validate the internal consistency of packed arrays before they are used in an SpFunc
+    // validate the internal consistency of packed arrays before they are passed to an SpFunc and after they are returned from an SpFunc
     static void validate(const SpFuncPackedArray& packed_array, SpFuncSharedMemoryUsageFlags usage_flags = SpFuncSharedMemoryUsageFlags::DoNotUse);
     static void validate(const std::vector<SpFuncPackedArray>& packed_arrays, SpFuncSharedMemoryUsageFlags usage_flags = SpFuncSharedMemoryUsageFlags::DoNotUse);
     static void validate(const std::map<std::string, SpFuncPackedArray>& packed_arrays, SpFuncSharedMemoryUsageFlags usage_flags = SpFuncSharedMemoryUsageFlags::DoNotUse);
@@ -471,8 +471,8 @@ public:
 };
 
 //
-// SpFuncDataBundle is intended as a high-level helper struct that can be used as the argument to and the
-// return value from an SpFunc. We choose to make this a struct so it will be easier to add fields if
+// SpFuncDataBundle is intended as a high-level helper struct that can be used as the argument to, and the
+// return value from, an SpFunc. We choose to make this a struct so it will be easier to add fields if
 // necessary, without needing to explicitly update the signature of every SpFunc.
 //
 
