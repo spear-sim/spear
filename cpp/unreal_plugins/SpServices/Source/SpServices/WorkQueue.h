@@ -76,7 +76,7 @@ private:
         // for an input SpFuncPackedArray& before forwarding it to an inner function.
 
         return [&work_queue, func](TArgs&... args) -> TReturn {
-            return work_queue.scheduleAndExecuteFuncBlocking(func, args...); // std::forward not needed because we capture func by value
+            return work_queue.scheduleAndExecuteFuncBlocking(func, args...);
         };
     }
 
