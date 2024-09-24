@@ -32,9 +32,6 @@ if __name__ == "__main__":
     unreal_project_content_dir = os.path.join(args.unreal_project_dir, "Content", args.unreal_project_content_dir)
     unreal_project_content_base_dir = os.path.split(unreal_project_content_dir)[0]
 
-    print(unreal_project_content_dir)
-    print(unreal_project_content_base_dir)
-    
     assert os.path.exists(unreal_project_content_base_dir)
 
     # Remove existing symlink
