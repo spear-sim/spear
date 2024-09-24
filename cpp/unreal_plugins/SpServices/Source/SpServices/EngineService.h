@@ -51,9 +51,11 @@ public:
 
         frame_state_ = FrameState::Idle;
 
-        // To work around a rendering bug that appears to be standalone only, shipping only, and macOS only,
-        // we explicitly disable Lumen and then conditionally re-enable it the first time beginFrameHandler()
-        // gets called.
+        // To work around a platform-specific rendering bug, we explicitly disable Lumen and then
+        // conditionally re-enable it the first time beginFrameHandler() gets called. We have not seen this
+        // bug on Windows, but we have seen it macOS, where it appears to only affect standalone shipping
+        // builds. Since we're not exactly sure what configurations are affected, we choose to implement the
+        // workaround on all standalone builds.
         #if !WITH_EDITOR // defined in an auto-generated header
             r_lumen_diffuse_indirect_allow_cvar_ = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.Lumen.DiffuseIndirect.Allow"));
             r_lumen_diffuse_indirect_allow_cvar_initial_value_ = r_lumen_diffuse_indirect_allow_cvar_->GetInt();
@@ -178,8 +180,7 @@ public:
 private:
     void beginFrameHandler()
     {
-        // To work around a rendering bug that appears to be standalone only, shipping only, and macOS only,
-        // we explicitly disable Lumen in the constructor and then conditionally re-enable it here.
+        // Works around a platform-specific rendering bug. See comment in the constructor above.
         #if !WITH_EDITOR
             static bool once = false;
             if (!once) {
