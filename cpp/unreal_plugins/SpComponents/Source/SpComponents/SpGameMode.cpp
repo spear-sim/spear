@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "SpearSim/SpGameMode.h"
+#include "SpComponents/SpGameMode.h"
 
 #include <Containers/UnrealString.h> // FString
 #include <Engine/Engine.h>           // GEngine
@@ -15,8 +15,9 @@
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
-#include "SpearSim/SpPlayerController.h"
-#include "SpearSim/SpSpectatorPawn.h"
+
+#include "SpComponents/SpPlayerController.h"
+#include "SpComponents/SpSpectatorPawn.h"
 
 ASpGameMode::ASpGameMode()
 {

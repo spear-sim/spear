@@ -42,10 +42,6 @@ class ClassRegistrationUtils;
 //
 // The world argument here is a UWorld* pointer. This function will return a new SphereAgent object that was constructed
 // using the SphereAgent::SphereAgent(UWorld* world) constructor.
-//
-// We use SP_LOG(...) throughout this code because most of it executes before main(), so it can be especially helpful to
-// see it executing in our debug output. We use SP_LOG() instead of SP_LOG_CURRENT_FUNCTION() because all the template
-// parameters here confuse SP_LOG_CURRENT_FUNCTION().
 
 template <typename TBase, typename... TArgs>
 class ClassRegistrar
@@ -53,18 +49,6 @@ class ClassRegistrar
     friend class ClassRegistrationUtils;
 
 public:
-    ClassRegistrar()
-    {
-        SP_LOG_CURRENT_FUNCTION();
-    }
-
-    ~ClassRegistrar()
-    {
-        SP_LOG_CURRENT_FUNCTION();
-
-        create_funcs_.clear();
-    }
-
     template <typename TDerived>
     class ClassRegistrationHandle
     {
@@ -76,9 +60,6 @@ public:
         // wants the inner code to modify.
         ClassRegistrationHandle(std::shared_ptr<ClassRegistrar<TBase, TArgs...>>& class_registrar, const std::string& class_name)
         {
-            SP_LOG_CURRENT_FUNCTION();
-            SP_LOG("Creating ClassRegistrationHandle: ", class_registrar.get(), ", \"", class_name, "\"");
-
             // We usually avoid this type of lazy initialization. But we make an exception in this case because the construction
             // order of a static ClassRegistrar object, relative to the static ClassRegistrationHandle objects that need it, is not
             // guaranteed. So the ClassRegistrar object must be constructed by the first ClassRegistrationHandle object that needs
@@ -101,8 +82,6 @@ public:
 
         ~ClassRegistrationHandle()
         {
-            SP_LOG_CURRENT_FUNCTION();
-
             class_registrar_ = nullptr;
         }
 

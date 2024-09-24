@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "SpearSim/SpPlayerController.h"
+#include "SpComponents/SpPlayerController.h"
 
 #include <Engine/EngineTypes.h> // EEndPlayReason
 #include <GenericPlatform/GenericPlatformMisc.h>

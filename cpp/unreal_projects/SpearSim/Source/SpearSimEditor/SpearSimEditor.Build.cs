@@ -10,7 +10,7 @@ public class SpearSimEditor : SpModuleRules
     {
         SP_LOG_CURRENT_FUNCTION();
         
-        PublicDependencyModuleNames.AddRange(new string[] {"SpCore", "UnrealEd", "UrdfRobot", "Vehicle"});
+        PublicDependencyModuleNames.AddRange(new string[] {});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }

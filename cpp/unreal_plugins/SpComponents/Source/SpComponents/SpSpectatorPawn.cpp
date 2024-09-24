@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "SpearSim/SpSpectatorPawn.h"
+#include "SpComponents/SpSpectatorPawn.h"
 
 #include <chrono>
 #include <numeric> // std::accumulate

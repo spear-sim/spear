@@ -3,7 +3,7 @@
     "Version": 1,
     "VersionName": "1.0",
     "FriendlyName": "SpComponents",
-    "Description": "WARNING: The loading phases for {SpCore, SpComponents} must be ordered as follows: LoadingPhase(SpCore) < LoadingPhase(SpComponents)",
+    "Description": "WARNING: The loading phases for {SpComponents, SpCore} must be ordered as follows: LoadingPhase(SpCore) < LoadingPhase(SpComponents)",
     "Category": "Other",
     "CreatedBy": "",
     "CreatedByURL": "",
@@ -18,6 +18,11 @@
         {
             "Name": "SpComponents",
             "Type": "Runtime",
+            "LoadingPhase": "PreDefault"
+        },
+        {
+            "Name": "SpComponentsEditor",
+            "Type": "Editor",
             "LoadingPhase": "PreDefault"
         }
     ],

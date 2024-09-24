@@ -20,6 +20,7 @@ public class SpTargetRulesTarget : TargetRules
         // Added to projects by default in UE 5.2.
         DefaultBuildSettings = BuildSettingsVersion.V2;
         IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_2;
+        ExtraModuleNames.AddRange(new string[] {"SpearSim"});
 
         if (target.Platform == UnrealTargetPlatform.Win64) {
 

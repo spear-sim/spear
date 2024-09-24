@@ -15,6 +15,7 @@
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Engine/Level.h>                // ULevel
 #include <Engine/World.h>                // FWorldDelegates, FActorSpawnParameters
+#include <HAL/IConsoleManager.h>
 #include <Kismet/GameplayStatics.h>
 #include <Misc/EnumClassFlags.h>         // ENUM_CLASS_FLAGS
 #include <UObject/Class.h>               // EIncludeSuperFlag::Type
@@ -88,7 +89,7 @@ enum class ESpObjectFlags
 };
 ENUM_CLASS_FLAGS(ESpObjectFlags);
 
-// This corresponds to ELoadFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectMacros.h
+// This enum corresponds to ELoadFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectMacros.h
 UENUM()
 enum class ESpLoadFlags
 {
@@ -116,6 +117,41 @@ enum class ESpLoadFlags
 };
 ENUM_CLASS_FLAGS(ESpLoadFlags);
 
+// This enum corresponds to EConsoleVariableFlags declared in Engine/Source/Runtime/Core/Public/HAL/IConsoleManager.h
+UENUM()
+enum class ESpConsoleVariableFlags
+{
+    ECVF_FlagMask                 = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_FlagMask),
+    ECVF_Default                  = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_Default),
+    ECVF_Cheat                    = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_Cheat),
+    ECVF_ReadOnly                 = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_ReadOnly),
+    ECVF_Unregistered             = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_Unregistered),
+    ECVF_CreatedFromIni           = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_CreatedFromIni),
+    ECVF_RenderThreadSafe         = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_RenderThreadSafe),
+    ECVF_Scalability              = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_Scalability),
+    ECVF_ScalabilityGroup         = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_ScalabilityGroup),
+    ECVF_Preview                  = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_Preview),
+    ECVF_GeneralShaderChange      = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_GeneralShaderChange),
+    ECVF_MobileShaderChange       = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_MobileShaderChange),
+    ECVF_DesktopShaderChange      = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_DesktopShaderChange),
+    ECVF_ExcludeFromPreview       = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_ExcludeFromPreview),
+    ECVF_SetFlagMask              = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetFlagMask),
+    ECVF_Set_NoSinkCall_Unsafe    = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_Set_NoSinkCall_Unsafe),
+    ECVF_SetByMask                = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetByMask),
+    ECVF_SetByConstructor         = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetByConstructor),
+    ECVF_SetByScalability         = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetByScalability),
+    ECVF_SetByGameSetting         = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetByGameSetting),
+    ECVF_SetByProjectSetting      = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetByProjectSetting),
+    ECVF_SetBySystemSettingsIni   = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetBySystemSettingsIni),
+    ECVF_SetByDeviceProfile       = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetByDeviceProfile),
+    ECVF_SetByGameOverride        = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetByGameOverride),
+    ECVF_SetByConsoleVariablesIni = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetByConsoleVariablesIni),
+    ECVF_SetByCommandline         = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetByCommandline),
+    ECVF_SetByCode                = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetByCode),
+    ECVF_SetByConsole             = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetByConsole)
+};
+ENUM_CLASS_FLAGS(ESpConsoleVariableFlags);
+
 // These enum structs are intended to be wrappers for the UENUM types declared above. Wrapping enums in
 // structs like this helps us take advantage of UnrealObj and UnrealObjUtils to pass enums to and from Python
 // as human-readable strings, as well as the Unreal::combineEnumFlagStrings<...>(...) function for combining
@@ -125,10 +161,8 @@ USTRUCT()
 struct FSpIncludeSuperFlag
 {
     GENERATED_BODY()
-
     UPROPERTY()
     ESpIncludeSuperFlag Enum;
-
     SP_DECLARE_ENUM_PROPERTY(ESpIncludeSuperFlag, Enum);
 };
 
@@ -136,10 +170,8 @@ USTRUCT()
 struct FSpObjectFlags
 {
     GENERATED_BODY()
-
     UPROPERTY()
     ESpObjectFlags Enum;
-
     SP_DECLARE_ENUM_PROPERTY(ESpObjectFlags, Enum);
 };
 
@@ -147,11 +179,18 @@ USTRUCT()
 struct FSpLoadFlags
 {
     GENERATED_BODY()
-
     UPROPERTY()
     ESpLoadFlags Enum;
-
     SP_DECLARE_ENUM_PROPERTY(ESpLoadFlags, Enum);
+};
+
+USTRUCT()
+struct FSpConsoleVariableFlags
+{
+    GENERATED_BODY()
+    UPROPERTY()
+    ESpConsoleVariableFlags Enum;
+    SP_DECLARE_ENUM_PROPERTY(ESpConsoleVariableFlags, Enum);
 };
 
 // This struct is intended to be identical to Unreal's FActorSpawnParameters struct, see Engine/Source/Runtime/Engine/Classes/Engine/World.h
@@ -225,11 +264,13 @@ public:
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_default_object",
             [this](uint64_t& uclass, bool& create_if_needed) -> uint64_t {
+                SP_ASSERT(uclass);
                 return toUInt64(toPtr<UClass>(uclass)->GetDefaultObject(create_if_needed));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_class",
             [this](uint64_t& uobject) -> uint64_t {
+                SP_ASSERT(uobject);
                 return toUInt64(toPtr<UObject>(uobject)->GetClass());
             });
 
@@ -802,6 +843,8 @@ public:
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "spawn_actor_from_uclass",
             [this](uint64_t& uclass, std::map<std::string, std::string>& unreal_obj_strings, std::vector<std::string>& object_flag_strings) -> uint64_t {
 
+                SP_ASSERT(world_);
+
                 UnrealObj<FVector> location_obj("Location");
                 UnrealObj<FRotator> rotation_obj("Rotation");
                 UnrealObj<FSpActorSpawnParameters> sp_actor_spawn_parameters_obj("SpawnParameters");
@@ -835,9 +878,8 @@ public:
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "destroy_actor",
             [this](uint64_t& actor, bool& net_force, bool& should_modify_level) -> bool {
-                AActor* actor_ptr = toPtr<AActor>(actor);
-                SP_ASSERT(actor_ptr);
-                return actor_ptr->Destroy(net_force, should_modify_level);
+                SP_ASSERT(actor);
+                return toPtr<AActor>(actor)->Destroy(net_force, should_modify_level);
             });
 
         //
@@ -870,9 +912,8 @@ public:
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "destroy_component",
             [this](uint64_t& component, bool& promote_children) -> void {
-                UActorComponent* actor_component = toPtr<UActorComponent>(component);
-                SP_ASSERT(actor_component);
-                actor_component->DestroyComponent(promote_children);
+                SP_ASSERT(component);
+                toPtr<UActorComponent>(component)->DestroyComponent(promote_children);
             });
 
         //
@@ -991,6 +1032,63 @@ public:
                         *Unreal::toFString(filename),
                         Unreal::getEnumValueAs<ELoadFlags>(Unreal::combineEnumFlagStrings<FSpLoadFlags>(load_flag_strings)),
                         toPtr<UPackageMap>(sandbox)));
+            });
+
+        //
+        // Find, get, and set console variables
+        //
+
+        unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_console_variable",
+            [this](std::string& name) -> uint64_t {
+                return toUInt64(IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString(name)));
+            });
+
+        unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_console_variable_value_as_bool",
+            [this](uint64_t& cvar) -> bool {
+                SP_ASSERT(cvar);
+                return toPtr<IConsoleVariable>(cvar)->GetBool();
+            });
+
+        unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_console_variable_value_as_int",
+            [this](uint64_t& cvar) -> int32_t {
+                SP_ASSERT(cvar);
+                return toPtr<IConsoleVariable>(cvar)->GetInt();
+            });
+
+        unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_console_variable_value_as_float",
+            [this](uint64_t& cvar) -> float {
+                SP_ASSERT(cvar);
+                return toPtr<IConsoleVariable>(cvar)->GetFloat();
+            });
+
+        unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_console_variable_value_as_string",
+            [this](uint64_t& cvar) -> std::string {
+                SP_ASSERT(cvar);
+                return Unreal::toStdString(toPtr<IConsoleVariable>(cvar)->GetString());
+            });
+
+        unreal_entry_point_binder->bindFuncUnreal("unreal_service", "set_console_variable_value_from_bool",
+            [this](uint64_t& cvar, bool& val, std::vector<std::string>& set_by_strings) -> void {
+                SP_ASSERT(cvar);
+                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getEnumValueAs<EConsoleVariableFlags>(Unreal::combineEnumFlagStrings<FSpConsoleVariableFlags>(set_by_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncUnreal("unreal_service", "set_console_variable_value_from_int",
+            [this](uint64_t& cvar, int& val, std::vector<std::string>& set_by_strings) -> void {
+                SP_ASSERT(cvar);
+                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getEnumValueAs<EConsoleVariableFlags>(Unreal::combineEnumFlagStrings<FSpConsoleVariableFlags>(set_by_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncUnreal("unreal_service", "set_console_variable_value_from_float",
+            [this](uint64_t& cvar, float& val, std::vector<std::string>& set_by_strings) -> void {
+                SP_ASSERT(cvar);
+                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getEnumValueAs<EConsoleVariableFlags>(Unreal::combineEnumFlagStrings<FSpConsoleVariableFlags>(set_by_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncUnreal("unreal_service", "set_console_variable_value_from_string",
+            [this](uint64_t& cvar, std::string& val, std::vector<std::string>& set_by_strings) -> void {
+                SP_ASSERT(cvar);
+                toPtr<IConsoleVariable>(cvar)->Set(*Unreal::toFString(val), Unreal::getEnumValueAs<EConsoleVariableFlags>(Unreal::combineEnumFlagStrings<FSpConsoleVariableFlags>(set_by_strings)));
             });
 
         //

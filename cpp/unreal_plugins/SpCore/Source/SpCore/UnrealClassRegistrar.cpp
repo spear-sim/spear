@@ -16,6 +16,7 @@
 #include <Engine/StaticMeshActor.h>
 #include <Engine/TextureRenderTarget2D.h>
 #include <GameFramework/Actor.h>
+#include <GameFramework/GameUserSettings.h>
 #include <Kismet/GameplayStatics.h>
 #include <Materials/Material.h>
 #include <Materials/MaterialInterface.h>
@@ -183,6 +184,7 @@ void UnrealClassRegistrar::initialize()
     registerClass<UObject>("UObject");
     registerClass<UClass>("UClass");
     registerClass<UGameplayStatics>("UGameplayStatics");
+    registerClass<UGameUserSettings>("UGameUserSettings");
     registerClass<UMaterial>("UMaterial");
     registerClass<UMaterialInterface>("UMaterialInterface");
     registerClass<UStaticMesh>("UStaticMesh");
@@ -204,6 +206,7 @@ void UnrealClassRegistrar::terminate()
     unregisterClass<UObject>("UObject");
     unregisterClass<UClass>("UClass");
     unregisterClass<UGameplayStatics>("UGameplayStatics");
+    unregisterClass<UGameUserSettings>("UGameUserSettings");
     unregisterClass<UMaterial>("UMaterial");
     unregisterClass<UMaterialInterface>("UMaterialInterface");
     unregisterClass<UStaticMesh>("UStaticMesh");

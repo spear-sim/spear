@@ -2,11 +2,11 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "SpearSimEditor/SpUnrealEdEngine.h"
+#include "SpComponents/SpGameEngine.h"
 
 #include <string>
 
-#include <Editor/UnrealEdEngine.h>
+#include <Engine/GameEngine.h>
 #include <HAL/Platform.h> // TCHAR
 
 #include "SpCore/Log.h"
@@ -15,20 +15,20 @@
 class FOutputDevice;
 class UWorld;
 
-USpUnrealEdEngine::USpUnrealEdEngine()
+USpGameEngine::USpGameEngine()
 {
     SP_LOG_CURRENT_FUNCTION();
 }
 
-USpUnrealEdEngine::~USpUnrealEdEngine()
+USpGameEngine::~USpGameEngine()
 {
     SP_LOG_CURRENT_FUNCTION();
 }
 
-bool USpUnrealEdEngine::Exec(UWorld* world, const TCHAR* cmd, FOutputDevice& output_device)
+bool USpGameEngine::Exec(UWorld* world, const TCHAR* cmd, FOutputDevice& output_device)
 {
     std::string cmd_str = Unreal::toStdString(cmd);
     SP_LOG(cmd_str);
 
-    return UUnrealEdEngine::Exec(world, cmd, output_device);
+    return UGameEngine::Exec(world, cmd, output_device);
 }

@@ -520,6 +520,37 @@ class UnrealService():
         return self._rpc_client.call("unreal_service.static_load_class", base_uclass, in_outer, name, filename, load_flags, sandbox)
 
     #
+    # Find, get, and set console variables
+    #
+
+    def find_console_variable(self, name):
+        return self._rpc_client.call("unreal_service.find_console_variable", name)
+
+    def get_console_variable_value_as_bool(self, cvar):
+        return self._rpc_client.call("unreal_service.get_console_variable_value_as_bool", cvar)
+
+    def get_console_variable_value_as_int(self, cvar):
+        return self._rpc_client.call("unreal_service.get_console_variable_value_as_int", cvar)
+
+    def get_console_variable_value_as_float(self, cvar):
+        return self._rpc_client.call("unreal_service.get_console_variable_value_as_float", cvar)
+
+    def get_console_variable_value_as_string(self, cvar):
+        return self._rpc_client.call("unreal_service.get_console_variable_value_as_string", cvar)
+
+    def set_console_variable_value(self, cvar, val, set_by_flags=["ECVF_SetByCode"]):
+        if isinstance(val, bool):
+            return self._rpc_client.call("unreal_service.set_console_variable_value_from_bool", cvar, val, set_by_flags)
+        elif isinstance(val, int):
+            return self._rpc_client.call("unreal_service.set_console_variable_value_from_int", cvar, val, set_by_flags)
+        elif isinstance(val, float):
+            return self._rpc_client.call("unreal_service.set_console_variable_value_from_float", cvar, val, set_by_flags)
+        elif isinstance(val, str):
+            return self._rpc_client.call("unreal_service.set_console_variable_value_from_string", cvar, val, set_by_flags)
+        else:
+            assert False
+
+    #
     # Stable name helper functions
     #
 

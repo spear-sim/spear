@@ -19,6 +19,12 @@
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/WorkQueue.h"
 
+#if !WITH_EDITOR
+    #include <HAL/IConsoleManager.h>
+
+    #include "SpCore/Unreal.h"
+#endif
+
 enum class FrameState : int8_t
 {
     Invalid           = -1,
@@ -44,6 +50,15 @@ public:
         end_frame_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &EngineService::endFrameHandler);
 
         frame_state_ = FrameState::Idle;
+
+        // To work around a rendering bug that appears to be standalone only, shipping only, and macOS only,
+        // we explicitly disable Lumen and then conditionally re-enable it the first time beginFrameHandler()
+        // gets called.
+        #if !WITH_EDITOR // defined in an auto-generated header
+            r_lumen_diffuse_indirect_allow_cvar_ = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.Lumen.DiffuseIndirect.Allow"));
+            r_lumen_diffuse_indirect_allow_cvar_initial_value_ = r_lumen_diffuse_indirect_allow_cvar_->GetInt();
+            r_lumen_diffuse_indirect_allow_cvar_->Set(0);
+        #endif
 
         entry_point_binder_->bind("engine_service.ping", []() -> std::string {
             return "received a call to engine_service.ping";
@@ -163,6 +178,16 @@ public:
 private:
     void beginFrameHandler()
     {
+        // To work around a rendering bug that appears to be standalone only, shipping only, and macOS only,
+        // we explicitly disable Lumen in the constructor and then conditionally re-enable it here.
+        #if !WITH_EDITOR
+            static bool once = false;
+            if (!once) {
+                r_lumen_diffuse_indirect_allow_cvar_->Set(r_lumen_diffuse_indirect_allow_cvar_initial_value_);
+                once = true;
+            }
+        #endif
+
         if (frame_state_ == FrameState::RequestPreTick) {
             // Allow begin_tick() to finish executing. There is no need to lock frame_state_mutex_ here,
             // because if frame_state_ == FrameState::RequestPreTick, then we know the RPC worker thread is
@@ -213,4 +238,9 @@ private:
     std::future<void> frame_state_idle_future_;
     std::future<void> frame_state_executing_pre_tick_future_;
     std::future<void> frame_state_executing_post_tick_future_;
+
+    #if !WITH_EDITOR
+        IConsoleVariable* r_lumen_diffuse_indirect_allow_cvar_ = nullptr;        
+        int r_lumen_diffuse_indirect_allow_cvar_initial_value_ = -1;
+    #endif
 };
