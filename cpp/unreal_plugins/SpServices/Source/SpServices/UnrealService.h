@@ -155,7 +155,9 @@ ENUM_CLASS_FLAGS(ESpConsoleVariableFlags);
 // These enum structs are intended to be wrappers for the UENUM types declared above. Wrapping enums in
 // structs like this helps us take advantage of UnrealObj and UnrealObjUtils to pass enums to and from Python
 // as human-readable strings, as well as the Unreal::combineEnumFlagStrings<...>(...) function for combining
-// enum strings as though they were bit flags.
+// enum strings as though they were bit flags. We can't abbreviate these declarations using higher-level
+// macros, any more than they already are, because then they wouldn't interact correctly with the Unreal
+// build system.
 
 USTRUCT()
 struct FSpIncludeSuperFlag
