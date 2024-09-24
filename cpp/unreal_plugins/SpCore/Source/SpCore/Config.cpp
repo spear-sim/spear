@@ -12,7 +12,6 @@
 #include "SpCore/Unreal.h"
 #include "SpCore/YamlCpp.h"
 
-
 //
 // We need the variables below to be globals because they are referenced in templated code. This requirement
 // arises because templated code gets compiled at each call site. If a call site is in a different module
@@ -23,7 +22,6 @@
 //
 
 YAML::Node g_config_node;
-
 
 void Config::requestInitialize()
 {

@@ -35,7 +35,6 @@ class UWorld;
 struct FActorSpawnParameters;
 struct FObjectInstancingGraph;
 
-
 //
 // We need the variables below to be globals because they are referenced in templated code. This requirement
 // arises because templated code gets compiled at each call site. If a call site is in a different module
@@ -166,7 +165,6 @@ FuncRegistrar<USceneComponent*, const USceneComponent*, bool, bool, bool>       
 
 std::map<std::string, std::string> g_special_struct_names; // map from platform-dependent type name to user-facing name
 std::map<std::string, UStruct*> g_special_structs;         // map from platform-dependent type name to UStruct*
-
 
 // Normally we would do the operations in initialize() and terminate(...) in the opposite order. But we make an
 // exception here (i.e., we do the operations in the same order) to make it easier and less error-prone to add

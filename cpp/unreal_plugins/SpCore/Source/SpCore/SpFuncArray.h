@@ -437,6 +437,10 @@ private:
     std::span<const TValue> view_;
 };
 
+//
+// SpFuncArrayUtils is a set of helper functions for working with collections of SpFuncArrays and
+// SpFuncPackedArrays.
+//
 
 class SPCORE_API SpFuncArrayUtils
 {

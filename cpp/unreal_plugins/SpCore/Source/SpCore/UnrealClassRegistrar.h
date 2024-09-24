@@ -33,7 +33,6 @@ class UStruct;
 struct FActorSpawnParameters;
 struct FObjectInstancingGraph;
 
-
 //
 // We need the variables below to be globals because they are referenced in templated code. This requirement
 // arises because templated code gets compiled at each call site. If a call site is in a different module
@@ -164,7 +163,6 @@ extern SPCORE_API FuncRegistrar<UClass*, UObject*, const TCHAR*, const TCHAR*, u
 
 extern SPCORE_API std::map<std::string, std::string> g_special_struct_names; // map from platform-dependent type name to user-facing name
 extern SPCORE_API std::map<std::string, UStruct*> g_special_structs;         // map from platform-dependent type name to UStruct*
-
 
 class SPCORE_API UnrealClassRegistrar
 {
@@ -716,7 +714,6 @@ public:
                 return LoadClass<TClass>(outer, name, filename, load_flags, sandbox);
             });
     }
-
 
     template <CClass TClass>
     static void registerClassCommon(const std::string& class_name)

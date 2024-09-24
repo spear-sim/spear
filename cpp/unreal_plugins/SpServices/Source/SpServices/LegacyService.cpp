@@ -33,7 +33,6 @@
 #include "SpServices/Legacy/UrdfRobotAgent.h"
 #include "SpServices/Legacy/VehicleAgent.h"
 
-
 void LegacyService::postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values)
 {
     SP_LOG_CURRENT_FUNCTION();

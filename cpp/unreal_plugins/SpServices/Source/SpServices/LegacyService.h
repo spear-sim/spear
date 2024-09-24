@@ -21,7 +21,6 @@
 #include "SpServices/Legacy/NavMesh.h"
 #include "SpServices/Legacy/Task.h"
 
-
 class LegacyService {
 public:
     LegacyService() = delete;

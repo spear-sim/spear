@@ -238,7 +238,6 @@ struct FSpActorSpawnParameters
     ESpSpawnActorNameMode NameMode = ESpSpawnActorNameMode::Required_Fatal;
 };
 
-
 class UnrealService {
 public:
     UnrealService() = delete;
@@ -1163,7 +1162,6 @@ private:
 
     UWorld* world_ = nullptr;
 };
-
 
 //
 // Unreal::PropertyDesc
