@@ -25,7 +25,7 @@ If you find SPEAR useful in your research, please cite this repository as follow
 
 ### Minimum and recommended system specifications
 
-Minimum and recommended system specifications for the Unreal Engine are given [here](https://docs.unrealengine.com/5.2/en-US/hardware-and-software-specifications-for-unreal-engine). Note that some of the Unreal Engine's latest rendering features are [not available](https://www.unrealengine.com/en-US/tech-blog/unreal-engine-5-2-brings-native-support-for-apple-silicon-and-other-developments-for-macos) on macOS.
+Minimum and recommended system specifications for the Unreal Engine are given [here](https://docs.unrealengine.com/5.2/en-US/hardware-and-software-specifications-for-unreal-engine).
 
 ### Precompiled binaries
 
