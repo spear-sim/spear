@@ -11,13 +11,12 @@ The SPEAR code is released under an [MIT License](LICENSE.txt), and the SPEAR as
 If you find SPEAR useful in your research, please cite this repository as follows:
 
 ```
-@misc{roberts:2022,
-    author       = {Mike Roberts AND Quentin Leboutet AND Rachith Prakash AND Renhan Wang AND
-                    Hailin Zhang AND Rui Tang AND Marti Ferragut AND Stefan Leutenegger AND
-                    Stephan R. Richter AND Vladlen Koltun AND Matthias M{\"u}ller AND German Ros},
+@misc{spear,
+    author       = {Mike Roberts AND Rachith Prakash AND Renhan Wang AND Quentin Leboutet AND
+                    Stephan R. Richter AND Stefan Leutenegger AND Rui Tang AND Matthias M{\"u}ller AND
+                    German Ros AND Vladlen Koltun},
     title        = {{SPEAR}: {A} Simulator for Photorealistic Embodied AI Research},
-    howpublished = {\url{http://github.com/isl-org/spear}},
-    year         = {2022},
+    howpublished = {\url{http://github.com/spear-sim/spear}}
 }
 ```
 
