@@ -52,3 +52,7 @@ See our latest [release notes](https://github.com/isl-org/spear/releases/tag/v0.
 - The OpenBot and Fetch assets in this repository are licensed under a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0).
 - The license for the `kujiale` scenes is given [here](LICENSE_KUJIALE.txt).
 - The license for the `StarterContent` assets referenced in the `debug` scenes is given [here](https://www.unrealengine.com/en-US/eula/unreal).
+
+## Acknowledgements
+
+From 2021 to 2024, SPEAR was developed with generous support from [Kujiale](https://www.kujiale.com) and the [Intelligent Systems Lab](https://github.com/isl-org) at [Intel](https://www.intel.com). Beginning in 2024, SPEAR is being developed by an independent consortium with generous support from [Kujiale](https://www.kujiale.com).
