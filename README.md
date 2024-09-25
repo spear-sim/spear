@@ -13,8 +13,8 @@ If you find SPEAR useful in your research, please cite this repository as follow
 ```
 @misc{spear,
     author       = {Mike Roberts AND Rachith Prakash AND Renhan Wang AND Quentin Leboutet AND
-                    Stephan R. Richter AND Stefan Leutenegger AND Rui Tang AND Matthias M{\"u}ller AND
-                    German Ros AND Vladlen Koltun},
+                    Stephan R. Richter AND Stefan Leutenegger AND Rui Tang AND Matthias
+                    M{\"u}ller AND German Ros AND Vladlen Koltun},
     title        = {{SPEAR}: {A} Simulator for Photorealistic Embodied AI Research},
     howpublished = {\url{http://github.com/spear-sim/spear}}
 }
