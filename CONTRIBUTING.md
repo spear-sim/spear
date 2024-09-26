@@ -2,7 +2,7 @@
 
 ## Submitting issues, questions, and feature requests
 
-Issues with existing functionality, questions, and feature requests can be submitted [here](http://github.com/isl-org/spear/issues). Before submitting a new issue, search through the existing open and closed issues to see if your issue has already been reported.
+Issues with existing functionality, questions, and feature requests can be submitted [here](http://github.com/spear-sim/spear/issues). Before submitting a new issue, search through the existing open and closed issues to see if your issue has already been reported.
 
 ## Fixing bugs and adding features
 

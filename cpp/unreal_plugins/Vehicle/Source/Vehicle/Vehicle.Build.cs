@@ -2,11 +2,11 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-using UnrealBuildTool;
+using UnrealBuildTool; // ReadOnlyTargetRules
 
 public class Vehicle : SpModuleRules
 {
-    public Vehicle(ReadOnlyTargetRules target) : base(target)
+    public Vehicle(ReadOnlyTargetRules readOnlyTargetRules) : base(readOnlyTargetRules)
     {
         SP_LOG_CURRENT_FUNCTION();
 

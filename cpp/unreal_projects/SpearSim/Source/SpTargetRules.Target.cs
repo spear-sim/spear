@@ -2,14 +2,14 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-using System;
-using System.IO;
-using System.Runtime.CompilerServices;
-using UnrealBuildTool;
+using System;                          // Console, Exception
+using System.IO;                       // Directory, DirectoryInfo, Path
+using System.Runtime.CompilerServices; // CallerFilePath, CallerLineNumber, CallerMemberName
+using UnrealBuildTool;                 // TargetInfo, TargetRules
 
 public class SpTargetRulesTarget : TargetRules
 {
-    public SpTargetRulesTarget(TargetInfo target) : base(target)
+    public SpTargetRulesTarget(TargetInfo targetInfo) : base(targetInfo)
     {
         SP_LOG_CURRENT_FUNCTION();
 
@@ -20,9 +20,9 @@ public class SpTargetRulesTarget : TargetRules
         // Added to projects by default in UE 5.2.
         DefaultBuildSettings = BuildSettingsVersion.V2;
         IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_2;
-        ExtraModuleNames.AddRange(new string[] {"SpearSim"});
+        ExtraModuleNames.Add("SpearSim");
 
-        if (target.Platform == UnrealTargetPlatform.Win64) {
+        if (targetInfo.Platform == UnrealTargetPlatform.Win64) {
 
             // On Windows, we need to build an additional app so that calls to UE_Log and writes to std::cout are visible in the terminal.
             bBuildAdditionalConsoleApp = true;
@@ -31,7 +31,7 @@ public class SpTargetRulesTarget : TargetRules
             // bOverrideBuildEnvironment = true;
             // AdditionalCompilerArguments = "/showIncludes";
 
-        } else if (target.Platform == UnrealTargetPlatform.Mac || target.Platform == UnrealTargetPlatform.Linux) {
+        } else if (targetInfo.Platform == UnrealTargetPlatform.Mac || targetInfo.Platform == UnrealTargetPlatform.Linux) {
 
             // On macOS and Linux, we need to remap the paths of our symbolic links as we're compiling our executable, so the paths that get
             // written into the application's debug symbols aren't symbolic links. This is necessary to enable debugging in XCode and LLDB.
@@ -79,14 +79,14 @@ public class SpTargetRulesTarget : TargetRules
             AdditionalCompilerArguments += arg;
             SP_LOG("    " + arg);
 
-        } else if (target.Platform == UnrealTargetPlatform.IOS || target.Platform == UnrealTargetPlatform.TVOS) {
-            SP_LOG("NOTE: We only expect to see target.Platform == UnrealTargetPlatform.IOS or target.Platform == UnrealTargetPlatform.TVOS when we're on macOS and we're attempting to generate XCode project files. If we're not on macOS generating XCode project files, target.Platform == UnrealTargetPlatform.IOS and target.Platform == UnrealTargetPlatform.TVOS are unexpected.");
+        } else if (targetInfo.Platform == UnrealTargetPlatform.IOS || targetInfo.Platform == UnrealTargetPlatform.TVOS) {
+            SP_LOG("NOTE: We only expect to see targetInfo.Platform == UnrealTargetPlatform.IOS or targetInfo.Platform == UnrealTargetPlatform.TVOS when we're on macOS and we're attempting to generate XCode project files. If we're not on macOS generating XCode project files, target.Platform == UnrealTargetPlatform.IOS and target.Platform == UnrealTargetPlatform.TVOS are unexpected.");
 
-        } else if (target.Platform == UnrealTargetPlatform.LinuxArm64) {
-            SP_LOG("NOTE: We only expect to see target.Platform == UnrealTargetPlatform.LinuxArm64 when we're on Linux and the editor is attempting to open a uproject for the first time. If the editor is not attempting to open a uproject for the first time on Linux, target.Platform == UnrealTargetPlatform.LinuxArm64 is unexpected.");
+        } else if (targetInfo.Platform == UnrealTargetPlatform.LinuxArm64) {
+            SP_LOG("NOTE: We only expect to see targetInfo.Platform == UnrealTargetPlatform.LinuxArm64 when we're on Linux and the editor is attempting to open a uproject for the first time. If the editor is not attempting to open a uproject for the first time on Linux, target.Platform == UnrealTargetPlatform.LinuxArm64 is unexpected.");
 
         } else {
-            throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + target.Platform);
+            throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + targetInfo.Platform);
         }
     }
 

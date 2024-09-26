@@ -4,7 +4,7 @@
 
 #include "UrdfRobot/UrdfRobot.h"
 
-#include <Modules/ModuleManager.h> // IMPLEMENT_MODULE
+#include <Modules/ModuleManager.h> // IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
 
 #include "SpCore/AssertModuleLoaded.h"
 #include "SpCore/Log.h"
@@ -20,4 +20,8 @@ void UrdfRobot::ShutdownModule()
     SP_LOG_CURRENT_FUNCTION();
 }
 
-IMPLEMENT_MODULE(UrdfRobot, UrdfRobot)
+// use if module does not implement any Unreal classes
+// IMPLEMENT_MODULE(UrdfRobot, UrdfRobot);
+
+// use if module implements any Unreal classes
+IMPLEMENT_GAME_MODULE(UrdfRobot, UrdfRobot);

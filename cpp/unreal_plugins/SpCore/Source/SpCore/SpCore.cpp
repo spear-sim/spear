@@ -6,7 +6,7 @@
 
 #include <iostream> // std::cin
 
-#include <Modules/ModuleManager.h> // IMPLEMENT_MODULE
+#include <Modules/ModuleManager.h> // IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
 
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
@@ -34,4 +34,8 @@ void SpCore::ShutdownModule()
     Config::terminate();
 }
 
-IMPLEMENT_MODULE(SpCore, SpCore)
+// use if module does not implement any Unreal classes
+// IMPLEMENT_MODULE(SpCore, SpCore);
+
+// use if module implements any Unreal classes
+IMPLEMENT_GAME_MODULE(SpCore, SpCore);

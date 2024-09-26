@@ -4,7 +4,7 @@
 
 #include "SpComponents/SpComponents.h"
 
-#include <Modules/ModuleManager.h> // IMPLEMENT_MODULE
+#include <Modules/ModuleManager.h> // IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
 
 #include "SpCore/AssertModuleLoaded.h"
 #include "SpCore/Log.h"
@@ -27,4 +27,8 @@ void SpComponents::ShutdownModule()
     UnrealClassRegistrar::unregisterActorClass<ASpHitEventActor>("ASpHitEventActor");
 }
 
-IMPLEMENT_MODULE(SpComponents, SpComponents)
+// use if module does not implement any Unreal classes
+// IMPLEMENT_MODULE(SpComponents, SpComponents);
+
+// use if module implements any Unreal classes
+IMPLEMENT_GAME_MODULE(SpComponents, SpComponents);

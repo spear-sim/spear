@@ -33,14 +33,14 @@ class Instance():
         # we would do things in the reverse order here. But if we close the client first, then we can't send a command to
         # the Unreal instance to close it. So we close the Unreal instance first and then close the client.
         self._request_close_unreal_instance()
-        self._close_rpc_client()
+        self._close_rpc_client(verbose=True)
 
     def is_running(self):
         try:
             self.rpc_client.call("engine_service.ping")
             return True
         except Exception as e:
-            spear.log("Exception:", e)
+            pass # no need to log exception because this case is expected when the instance is no longer running
         return False
 
     def _request_launch_unreal_instance(self):
@@ -64,7 +64,7 @@ class Instance():
         # set up launch executable and command-line arguments
         launch_args = []
 
-        if self._config.SPEAR.LAUNCH_MODE == "uproject":
+        if self._config.SPEAR.LAUNCH_MODE == "editor":
             launch_executable = self._config.SPEAR.INSTANCE.EDITOR_EXECUTABLE
             launch_args.append(self._config.SPEAR.INSTANCE.UPROJECT)
             launch_args.append("-game") # launch the game using uncooked content
@@ -117,8 +117,10 @@ class Instance():
             spear.log("ERROR: Unrecognized process status: " + status)
             spear.log("ERROR: Killing process " + str(self._process.pid) + "...")
             self._force_kill_unreal_instance()
-            self._close_rpc_client()
+            self._close_rpc_client(verbose=True)
             assert False
+
+        spear.log("Finished launching Unreal instance.")
 
     def _initialize_unreal_instance(self):
 
@@ -126,13 +128,19 @@ class Instance():
             spear.log('SPEAR.LAUNCH_MODE == "none" so we assume that the Unreal instance is already initialized...')
             return
 
-        spear.log("Initializing Unreal instance, warming up for " + str(1 + self._config.SPEAR.INSTANCE.NUM_EXTRA_WARMUP_TICKS) + " ticks...")
+        spear.log("Initializing Unreal instance, waiting for " + str(self._config.SPEAR.INSTANCE.INITIALIZE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS) + " seconds before proceeding...")
+        time.sleep(self._config.SPEAR.INSTANCE.INITIALIZE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS)
+
+        if self._config.SPEAR.INSTANCE.INITIALIZE_UNREAL_INSTANCE_NUM_WARMUP_FRAMES == 1:
+            spear.log("Initializing Unreal instance, executing 1 warmup frame...")
+        else:
+            spear.log("Initializing Unreal instance, executing " + str(self._config.SPEAR.INSTANCE.INITIALIZE_UNREAL_INSTANCE_NUM_WARMUP_FRAMES) + " warmup frames...")
 
         # Do at least one complete tick to guarantee that we can receive valid observations. If we don't
         # do this, it is possible that Unreal will return an initial visual observation of all zeros. We
         # generally also want to do more than one tick to warm up various caches and rendering features
         # that leverage temporal coherence between frames.
-        for i in range(1 + self._config.SPEAR.INSTANCE.NUM_EXTRA_WARMUP_TICKS):
+        for i in range(self._config.SPEAR.INSTANCE.INITIALIZE_UNREAL_INSTANCE_NUM_WARMUP_FRAMES):
             self.engine_service.begin_tick()
             self.engine_service.tick()
             self.engine_service.end_tick()
@@ -150,9 +158,13 @@ class Instance():
         try:
             self.rpc_client.call("engine_service.request_close")
         except Exception as e:
-            spear.log("Exception: ", e)
+            pass # no need to log exception because this case is expected when the instance is no longer running
 
-        status = "running"
+        try:
+            status = self._process.status()
+        except psutil.NoSuchProcess:
+            status = None
+
         while status in expected_status_values:
             time.sleep(self._config.SPEAR.INSTANCE.REQUEST_CLOSE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS)
             try:
@@ -179,6 +191,9 @@ class Instance():
         if self._config.SPEAR.LAUNCH_MODE == "none":
 
             try:
+                # Once a connection has been established, the RPC client will wait for timeout seconds before
+                # throwing when calling a server function. The RPC client will try to connect reconnect_limit
+                # times before returning from its constructor.
                 self.rpc_client = msgpackrpc.Client(
                     msgpackrpc.Address("127.0.0.1", self._config.SP_SERVICES.PORT),
                     timeout=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS,
@@ -187,10 +202,11 @@ class Instance():
                 connected = True
 
             except Exception as e:
-                # Client may not clean up resources correctly in this case, so we clean things up explicitly.
-                # See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14 for more details.
-                spear.log("Exception: ", e)
-                self._close_rpc_client()
+                # The client may not clean up resources correctly in this case, so we clean things up
+                # explicitly. See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14 for more
+                # details.
+                spear.log("Exception:", e)
+                self._close_rpc_client(verbose=True)
 
         # otherwise try to connect repeatedly, since the RPC server might not have started yet
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "standalone"]:
@@ -206,6 +222,9 @@ class Instance():
                     break
 
                 try:
+                    # Once a connection has been established, the RPC client will wait for timeout seconds
+                    # before throwing when calling a server function. The RPC client will try to connect
+                    # reconnect_limit times before returning from its constructor.
                     self.rpc_client = msgpackrpc.Client(
                         msgpackrpc.Address("127.0.0.1", self._config.SP_SERVICES.PORT), 
                         timeout=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
@@ -215,10 +234,12 @@ class Instance():
                     break
 
                 except Exception as e:
-                    # Client may not clean up resources correctly in this case, so we clean things up explicitly.
-                    # See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14 for more details.
-                    spear.log("Exception:", e)
-                    self._close_rpc_client()
+                    # The client may not clean up resources correctly in this case, so we clean things up
+                    # explicitly. See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14 for more
+                    # details. There is no need to log the exception because this case is expected until
+                    # until we can successfully connect to the RPC server, which is why we set verbose=False
+                    # when closing the RPC client.
+                    self._close_rpc_client(verbose=False)
 
                 time.sleep(self._config.SPEAR.INSTANCE.INITIALIZE_RPC_CLIENT_SLEEP_TIME_SECONDS)
                 elapsed_time_seconds = time.time() - start_time_seconds
@@ -234,8 +255,10 @@ class Instance():
 
         spear.log("Finished initializing RPC client.")
 
-    def _close_rpc_client(self):
-        spear.log("Closing RPC client...")
+    def _close_rpc_client(self, verbose):
+        if verbose:
+            spear.log("Closing RPC client...")
         self.rpc_client.close()
         self.rpc_client._loop._ioloop.close()
-        spear.log("Finished closing RPC client.")
+        if verbose:
+            spear.log("Finished closing RPC client.")

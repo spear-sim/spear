@@ -6,15 +6,15 @@ This release includes the following new user-facing features and improvements.
 
 - We have developed an export pipeline to support interoperability with the MuJoCo physics engine. To demonstrate this pipeline, we have developed a new example application, `mujoco_interop`, shown in the image below. In this example application, an interactive MuJoCo simulation (left) is used to set the poses of objects in the photorealistic SPEAR rendering (right).
 
-<img width="1738" alt="image" src="https://github.com/isl-org/spear/assets/2341965/259c11ac-fabb-49d8-9360-6c593cbdbad5">
+<img width="1738" alt="image" src="https://github.com/spear-sim/spear/assets/2341965/259c11ac-fabb-49d8-9360-6c593cbdbad5">
 
 - We are releasing 23 new photorealistic Kujiale scenes. The following images of `kujiale_0010`, `kujiale_0020`, `kujiale_0030` were captured in SPEAR running at over 60 fps.
 
-![image](https://github.com/isl-org/spear/assets/2341965/c06b5699-ccfd-423a-b50c-5b2d1ed9bfc3)
+![image](https://github.com/spear-sim/spear/assets/2341965/c06b5699-ccfd-423a-b50c-5b2d1ed9bfc3)
 
-![image](https://github.com/isl-org/spear/assets/2341965/701d9b94-61c3-4c6a-ae50-5135c28a0144)
+![image](https://github.com/spear-sim/spear/assets/2341965/701d9b94-61c3-4c6a-ae50-5135c28a0144)
 
-![image](https://github.com/isl-org/spear/assets/2341965/9653d787-6f94-4ffe-985d-2ccd2aad47eb)
+![image](https://github.com/spear-sim/spear/assets/2341965/9653d787-6f94-4ffe-985d-2ccd2aad47eb)
 
 - We have made many usability and readability improvements to our code.
 
@@ -24,11 +24,11 @@ This release includes the following new user-facing features and improvements.
 
 - We are releasing nine new photorealistic Kujiale scenes. The following image of `kujiale_0004` was captured in SPEAR running at 4K resolution at 50 fps.
 
-![image](https://github.com/isl-org/spear/assets/2341965/a58d19b9-5494-42d5-bc66-4e17d2a6ad8c)
+![image](https://github.com/spear-sim/spear/assets/2341965/a58d19b9-5494-42d5-bc66-4e17d2a6ad8c)
 
 - We are re-releasing our `warehouse_0000` scene (pictured below), which is now fully compatible with Unreal Engine 5.
 
-![image](https://github.com/isl-org/spear/assets/2341965/075daa76-eb75-46fa-8789-0e88686cb1c9)
+![image](https://github.com/spear-sim/spear/assets/2341965/075daa76-eb75-46fa-8789-0e88686cb1c9)
 
 - We have re-enabled our Fetch robot agent, which is now fully compatible with Unreal Engine 5 (pictured above). We have also implemented an improved tutorial, `open_loop_control_fetch`, demonstrating how to interact with our Fetch agent in a mobile manipulation application.
 
@@ -40,17 +40,17 @@ This release includes the following new user-facing features and improvements.
 
 - We are releasing a new photorealistic scene, `apartment_0000` under a Creative Commons license. We include all of the Unreal content for this scene directly in our GitHub repository, so users can easily modify and experiment with the content directly in the Unreal Editor. The following image of `apartment_0000` was captured in SPEAR running at 4K resolution at 60 fps.
 
-![image](https://github.com/isl-org/spear/assets/2341965/f08aa881-5873-4d84-8113-b9b37d126939)
+![image](https://github.com/spear-sim/spear/assets/2341965/f08aa881-5873-4d84-8113-b9b37d126939)
 
 - We have upgraded from Unreal Engine 4 to Unreal Engine 5. This update significantly improves the overall visual quality that users can expect from SPEAR, and makes rendering noticeably more consistent across platforms. The following image shows our `kujiale_0000` scene, and demonstrates the visual quality users can expect in Unreal Engine 5. This image was captured in SPEAR running at 4K resolution at 40 fps.
 
-![image](https://github.com/isl-org/spear/assets/2341965/8c6413b4-b72d-4f8e-9efc-fa264b7ec825)
+![image](https://github.com/spear-sim/spear/assets/2341965/8c6413b4-b72d-4f8e-9efc-fa264b7ec825)
 
 - Under the hood, upgrading to Unreal Engine 5 enables SPEAR to take advantage of Unreal's latest rendering features, including a state-of-the-art fully dynamic global illumination lighting system known as Lumen, and a state-of-the-art virtual geometry streaming system known as Nanite. Lumen enables all lights and objects to be moved fully dynamically with minimal precomputation required, and Nanite enables very high-resolution geometry to be imported and rendered such that the overall rendering cost scales with pixels rather than triangles. We expect these features to be especially useful as we scale the number of scenes that are available in SPEAR in the coming months.
 
 - We have improved the visual appearance of our OpenBot model.
 
-![image](https://github.com/isl-org/spear/assets/2341965/a1fbf106-ae32-49d7-a5b1-cc98a58d59bc)
+![image](https://github.com/spear-sim/spear/assets/2341965/a1fbf106-ae32-49d7-a5b1-cc98a58d59bc)
 
 - We have made several usability and readability improvements to our code, especially to our examples.
 

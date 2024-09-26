@@ -73,4 +73,8 @@ void SpServices::ShutdownModule()
     rpc_server_ = nullptr;
 }
 
-IMPLEMENT_MODULE(SpServices, SpServices)
+// use if module does not implement any Unreal classes
+// IMPLEMENT_MODULE(SpComponents, SpComponents);
+
+// use if module implements any Unreal classes
+IMPLEMENT_GAME_MODULE(SpServices, SpServices);

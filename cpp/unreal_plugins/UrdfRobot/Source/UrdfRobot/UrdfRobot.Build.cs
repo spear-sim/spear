@@ -6,7 +6,7 @@ using UnrealBuildTool;
 
 public class UrdfRobot : SpModuleRules
 {
-    public UrdfRobot(ReadOnlyTargetRules target) : base(target)
+    public UrdfRobot(ReadOnlyTargetRules readOnlyTargetRules) : base(readOnlyTargetRules)
     {
         SP_LOG_CURRENT_FUNCTION();
 

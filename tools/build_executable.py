@@ -94,7 +94,7 @@ if __name__ == "__main__":
             shutil.rmtree(repo_dir, ignore_errors=True)
 
         # clone repo with submodules
-        cmd = ["git", "clone", "--recurse-submodules", "https://github.com/isl-org/spear", repo_dir]
+        cmd = ["git", "clone", "--recurse-submodules", "https://github.com/spear-sim/spear", repo_dir]
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 

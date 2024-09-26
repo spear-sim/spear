@@ -2,14 +2,14 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-using System;
-using System.IO;
-using System.Runtime.CompilerServices;
-using UnrealBuildTool;
+using System;                          // Console, Exception
+using System.IO;                       // Directory, FileSystemInfo, Path 
+using System.Runtime.CompilerServices; // CallerFilePath, CallerLineNumber, CallerMemberName
+using UnrealBuildTool;                 // ModuleRules, ReadOnlyTargetRules
 
 public class SpModuleRules : ModuleRules
 {
-    public SpModuleRules(ReadOnlyTargetRules target) : base(target)
+    public SpModuleRules(ReadOnlyTargetRules readOnlyTargetRules) : base(readOnlyTargetRules)
     {
         SP_LOG_CURRENT_FUNCTION();
 
@@ -63,14 +63,14 @@ public class SpModuleRules : ModuleRules
 
         PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "rpclib", "include")));
 
-        if (target.Platform == UnrealTargetPlatform.Win64) {
+        if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Win64) {
             PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "rpclib", "BUILD", "Win64", "Release", "rpc.lib")));
-        } else if (target.Platform == UnrealTargetPlatform.Mac) {
+        } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Mac) {
             PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "rpclib", "BUILD", "Mac", "librpc.a")));
-        } else if (target.Platform == UnrealTargetPlatform.Linux) {
+        } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Linux) {
             PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "rpclib", "BUILD", "Linux", "librpc.a")));
         } else {
-            throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + target.Platform);
+            throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + readOnlyTargetRules.Platform);
         }
 
         //
@@ -80,15 +80,15 @@ public class SpModuleRules : ModuleRules
         bEnableExceptions = true;
         PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "yaml-cpp", "include")));
 
-        if (target.Platform == UnrealTargetPlatform.Win64) {
+        if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Win64) {
             PublicDefinitions.Add("YAML_CPP_STATIC_DEFINE");
             PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "yaml-cpp", "BUILD", "Win64", "Release", "yaml-cpp.lib")));
-        } else if (target.Platform == UnrealTargetPlatform.Mac) {
+        } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Mac) {
             PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "yaml-cpp", "BUILD", "Mac", "libyaml-cpp.a")));
-        } else if (target.Platform == UnrealTargetPlatform.Linux) {
+        } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Linux) {
             PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "yaml-cpp", "BUILD", "Linux", "libyaml-cpp.a")));
         } else {
-            throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + target.Platform);
+            throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + readOnlyTargetRules.Platform);
         }
     }
 

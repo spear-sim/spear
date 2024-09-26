@@ -7,7 +7,7 @@ If you'd like to work with multiple scenes, or programmatically interact with SP
 The first step is to clone this repository including submodules. We have found that the _recurse submodules_ features in some Git applications don't always download submodules as expected. We therefore recommend using the following commands.
 
 ```console
-git clone --recurse-submodules https://github.com/isl-org/spear path/to/spear
+git clone --recurse-submodules https://github.com/spear-sim/spear path/to/spear
 
 # checkout the code corresponding to a specific release
 cd path/to/spear
@@ -49,7 +49,7 @@ At this point, you can use our `run_executable.py` command-line tool to select w
 python tools/run_executable.py --executable path/to/executable --scene_id debug_0000
 ```
 
-Depending on your platform, you will need to specify the following path to your `--executable`. We provide links to precompiled binaries in our [release notes](https://github.com/isl-org/spear/releases/tag/v0.5.0).
+Depending on your platform, you will need to specify the following path to your `--executable`. We provide links to precompiled binaries in our [release notes](https://github.com/spear-sim/spear/releases/tag/v0.5.0).
 
 ```
 Windows: path/to/SpearSim-v0.5.0-Win64-Shipping/SpearSim/Binaries/Win64/SpearSim-Win64-Shipping-Cmd.exe

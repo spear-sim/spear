@@ -2,11 +2,11 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-using UnrealBuildTool;
+using UnrealBuildTool; // TargetInfo
 
 public class SpearSimTarget : SpTargetRulesTarget
 {
-    public SpearSimTarget(TargetInfo target) : base(target)
+    public SpearSimTarget(TargetInfo targetInfo) : base(targetInfo)
     {
         SP_LOG_CURRENT_FUNCTION();
 
