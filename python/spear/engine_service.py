@@ -8,6 +8,9 @@ class EngineService():
     def __init__(self, rpc_client):
         self._rpc_client = rpc_client
 
+    def ping(self):
+        return self._rpc_client.call("engine_service.ping")
+
     def begin_tick(self):
         self._rpc_client.call("engine_service.begin_tick")
 

@@ -128,7 +128,7 @@ class Instance():
             spear.log('SPEAR.LAUNCH_MODE == "none" so we assume that the Unreal instance is already initialized...')
             return
 
-        spear.log("Initializing Unreal instance, waiting for " + str(self._config.SPEAR.INSTANCE.INITIALIZE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS) + " seconds before proceeding...")
+        spear.log("Initializing Unreal instance, waiting for " + str(self._config.SPEAR.INSTANCE.INITIALIZE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS) + " seconds...")
         time.sleep(self._config.SPEAR.INSTANCE.INITIALIZE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS)
 
         if self._config.SPEAR.INSTANCE.INITIALIZE_UNREAL_INSTANCE_NUM_WARMUP_FRAMES == 1:
