@@ -34,7 +34,7 @@ See our latest [release notes](https://github.com/spear-sim/spear/releases/tag/v
 
 - Our [Getting Started](docs/getting_started.md) tutorial explains how to interact with multiple scenes and our Python interface.
 - Our [Building SpearSim](docs/building_spearsim.md) tutorial explains how to build from source.
-- Our [Running the Export Pipeline](docs/running_export_pipeline.md) tutorial explains how to export our scene data.
+- Our [Importing and Exporting Assets](docs/importing_and_exporting_assets.md) tutorial explains how to import and export scene data.
 - Our [Coding Guidelines](docs/coding_guidelines.md) document describes our coding standard.
 - Our [Contribution Guidelines](CONTRIBUTING.md) document contains information on how to contribute effectively.
 
