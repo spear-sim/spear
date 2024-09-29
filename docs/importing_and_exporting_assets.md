@@ -1,6 +1,6 @@
 # Importing and Exporting Assets
 
-Our approach for importing and exporting assets is to formulate each task (e.g., import from dataset X, export to destination application Y, etc) as a pipeline consisting of modular stages. Each pipeline is a directed acyclic graph of stages, and each stage is a Python program that produces and/or consumes data in a user-specified top-level directory. Each stage can optionally access the Unreal Editor via a Python interface.
+Our approach for importing and exporting assets is to formulate each task (e.g., import from dataset X, export to destination application Y, etc) as a pipeline consisting of modular stages. More specifically, each pipeline is a directed acyclic graph of stages, and each stage is a Python program that produces and/or consumes data in a user-specified top-level directory. Each stage can optionally access functionality available in the Unreal Editor via a Python interface.
 
 ## Assumptions
 
@@ -8,13 +8,13 @@ In order to execute the pipelines in this document, we will assume that you have
 
 ## Accessing the Unreal Editor via Python
 
-In order to access the Unreal Editor via Python, we must first configure the Unreal Editor's Python environment, even though we have already configured an Anaconda Python environment in our [Getting Started](getting_started.md) tutorial.
+In order to access the Unreal Editor via Python, we must first configure the editor's Python environment, even though we have already configured an Anaconda Python environment in our [Getting Started](getting_started.md) tutorial.
 
 ```console
 python tools/configure_editor_python_env.py --unreal_engine_dir path/to/UE_5.2
 ```
 
-Any pipeline stage that needs to access the Unreal Editor must be executed using our `run_editor_script.py` tool, which runs a user-specified program (specified by `--script`) from within the Unreal Editor's Python environment. Our `run_editor_script.py` tool consumes `--script` and `--unreal_engine_dir`, and forwards all other arguments directly to `--script`. `--script` must be relative to `spear/pipeline` or absolute. Any path arguments that are forwarded to `--script` must be absolute.
+Any pipeline stage that needs to access the Unreal Editor must be executed using our `run_editor_script.py` tool, which runs a user-specified program (specified by `--script`) from within the editor's Python environment. `run_editor_script.py` consumes `--script` and `--unreal_engine_dir`, and forwards all other arguments directly to the user's program. `--script` must be relative to `spear/pipeline` or absolute. Any path arguments that are forwarded to the user's program must be absolute.
 
 ## Debug visualization tools
 
@@ -22,7 +22,7 @@ In order to use our optional debug visualization tools, you will need to install
 
 ## Pipelines
 
-#### Export to MuJoCo
+### Export to MuJoCo
 
 ```console
 # generate Unreal metadata
