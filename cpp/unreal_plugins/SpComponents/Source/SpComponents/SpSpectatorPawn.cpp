@@ -60,6 +60,8 @@ ASpSpectatorPawn::~ASpSpectatorPawn()
 
 void ASpSpectatorPawn::BeginPlay()
 {
+    SP_LOG_CURRENT_FUNCTION();
+
     ASpectatorPawn::BeginPlay();
 
     int num_samples = 200;

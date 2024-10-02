@@ -41,7 +41,7 @@ void ASpGameMode::PostLogin(APlayerController* new_player)
     // pawn has a USpStableNameComponent.
     APawn* pawn = new_player->GetPawn();
     if (pawn && Unreal::hasStableName(pawn)) {
-        Unreal::setStableName(pawn, "DefaultPawn/" + Unreal::toStdString(DefaultPawnClass->GetName()));
+        Unreal::setStableName(pawn, "__SP_DEFAULT_PAWN__" + Unreal::toStdString(DefaultPawnClass->GetName()));
     }
 }
 

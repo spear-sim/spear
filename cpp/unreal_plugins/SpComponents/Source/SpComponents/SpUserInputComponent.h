@@ -32,7 +32,7 @@ public:
     // USceneComponent interface
     void TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override;
 
-    // USpUserInputComponents need to be enabled explicitly
+    // USpUserInputComponents need to be enabled explicitly to avoid a single key press unexpectedly doing multiple things
     UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="Handle User Input");
     bool bHandleUserInput = false;
 

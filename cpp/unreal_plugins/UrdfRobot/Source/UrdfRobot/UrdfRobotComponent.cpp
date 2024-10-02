@@ -49,7 +49,7 @@ UUrdfRobotComponent::UUrdfRobotComponent()
     PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
 
     // USpUserInputComponent
-    SpUserInputComponent = Unreal::createComponentInsideOwnerConstructor<USpUserInputComponent>(this, "sp_user_input_component");
+    SpUserInputComponent = Unreal::createComponentInsideOwnerConstructor<USpUserInputComponent>(this, Unreal::toStdString(GetName()) + "__sp_user_input_component");
     SP_ASSERT(SpUserInputComponent);
 }
 

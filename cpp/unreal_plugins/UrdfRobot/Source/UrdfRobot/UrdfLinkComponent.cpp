@@ -31,6 +31,15 @@
 
 #include "UrdfRobot/UrdfParser.h"
 
+// TODO: remove platform-specific include
+#if BOOST_COMP_MSVC
+    #include <format>
+#elif BOOST_COMP_CLANG
+    #include "SpCore/Boost.h"
+#else
+    #error
+#endif
+
 UUrdfLinkComponent::UUrdfLinkComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
@@ -71,16 +80,26 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
     SetMassOverrideInKg(NAME_None, link_desc->inertial_desc_.mass_, true);
 
     // visual
+    int i = 0; // name is optional in UrdfVisualDesc, so we need a counter to give our static mesh components unique names
     for (auto& visual_desc : link_desc->visual_descs_) {
 
         // needs to be const because link_desc is const
         const UrdfGeometryDesc& geometry_desc = visual_desc.geometry_desc_;
 
-        // create child static mesh component for each UrdfSpearLinkDesc
-        auto static_mesh_component = Unreal::createComponentOutsideOwnerConstructor<UStaticMeshComponent>(this, "static_mesh_component");
+        // TODO: remove platform-specific logic
+        #if BOOST_COMP_MSVC
+            std::string i_str = std::format("{:04}", i);
+        #elif BOOST_COMP_CLANG
+            std::string i_str = (boost::format("%04d")%i).str();
+        #else
+            #error
+        #endif
+
+        // create child static mesh component for each UrdfVisualDesc
+        auto static_mesh_component = Unreal::createComponentOutsideOwnerConstructor<UStaticMeshComponent>(this, Unreal::toStdString(GetName()) + "__static_mesh_component_" + i_str);
         SP_ASSERT(static_mesh_component);
 
-        // each UrdfSpearLinkDesc has its own reference frame
+        // each UrdfVisualDesc has its own reference frame
         FVector static_mesh_location = FVector(
             visual_desc.xyz_.at(0), visual_desc.xyz_.at(1), visual_desc.xyz_.at(2)) * m_to_cm; // m to cm
         FRotator static_mesh_rotation = FMath::RadiansToDegrees(FRotator(
@@ -173,6 +192,7 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
         }
 
         StaticMeshComponents.Add(static_mesh_component);
+        i++;
     }
 }
 

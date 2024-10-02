@@ -128,18 +128,16 @@ class Instance():
             spear.log('SPEAR.LAUNCH_MODE == "none" so we assume that the Unreal instance is already initialized...')
             return
 
-        spear.log("Initializing Unreal instance, waiting for " + str(self._config.SPEAR.INSTANCE.INITIALIZE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS) + " seconds...")
+        spear.log("Initializing Unreal instance...")
+
+        spear.log("Waiting for " + str(self._config.SPEAR.INSTANCE.INITIALIZE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS) + " seconds...")
         time.sleep(self._config.SPEAR.INSTANCE.INITIALIZE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS)
 
-        if self._config.SPEAR.INSTANCE.INITIALIZE_UNREAL_INSTANCE_NUM_WARMUP_FRAMES == 1:
-            spear.log("Initializing Unreal instance, executing 1 warmup frame...")
-        else:
-            spear.log("Initializing Unreal instance, executing " + str(self._config.SPEAR.INSTANCE.INITIALIZE_UNREAL_INSTANCE_NUM_WARMUP_FRAMES) + " warmup frames...")
-
-        # Do at least one complete tick to guarantee that we can receive valid observations. If we don't
-        # do this, it is possible that Unreal will return an initial visual observation of all zeros. We
-        # generally also want to do more than one tick to warm up various caches and rendering features
-        # that leverage temporal coherence between frames.
+        # Execute at least one complete warmup frame to guarantee that we can receive valid observations. If
+        # we don't do this, it is possible that Unreal will return an initial visual observation of all
+        # zeros. We generally also want to execute more than one warmup frame to warm up various caches and
+        # rendering features that leverage temporal coherence between frames.
+        spear.log("Executing " + str(self._config.SPEAR.INSTANCE.INITIALIZE_UNREAL_INSTANCE_NUM_WARMUP_FRAMES) + " warmup frames...")
         for i in range(self._config.SPEAR.INSTANCE.INITIALIZE_UNREAL_INSTANCE_NUM_WARMUP_FRAMES):
             self.engine_service.begin_tick()
             self.engine_service.tick()

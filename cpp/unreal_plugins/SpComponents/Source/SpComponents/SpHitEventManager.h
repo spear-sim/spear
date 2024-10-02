@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <map>
+
 #include <Containers/Array.h>
 #include <Engine/EngineTypes.h>   // FHitResult
 #include <GameFramework/Actor.h>
@@ -13,7 +15,7 @@
 
 #include "SpCore/SpStableNameComponent.h"
 
-#include "SpHitEventActor.generated.h"
+#include "SpHitEventManager.generated.h"
 
 class USpStableNameComponent;
 
@@ -31,24 +33,24 @@ struct FActorHitEventDesc
     UPROPERTY()
     FHitResult HitResult;
 
-    // Debug info
+    // Optional debug info
     UPROPERTY()
-    FString SelfActorDebugPtr;
+    FString SelfActorPtr;
     UPROPERTY()
-    FString SelfActorDebugInfo;
+    FString SelfActorPropertiesString;
     UPROPERTY()
-    FString OtherActorDebugPtr;
+    FString OtherActorPtr;
     UPROPERTY()
-    FString OtherActorDebugInfo;
+    FString OtherActorPropertiesString;
 };
 
-UCLASS(ClassGroup="SPEAR", HideCategories=(Rendering, Replication, Collision, HLOD, Physics, Networking, Input, Actor, Cooking))
-class ASpHitEventActor : public AActor
+UCLASS()
+class ASpHitEventManager : public AActor
 {
     GENERATED_BODY()
 public: 
-    ASpHitEventActor();
-    ~ASpHitEventActor();
+    ASpHitEventManager();
+    ~ASpHitEventManager();
 
     // AActor interface
     void Tick(float delta_time) override;
@@ -59,23 +61,15 @@ public:
     // UFUNCTION.
 
     UFUNCTION()
-    void SubscribeToActor(AActor* Actor);
+    static void SubscribeToActor(AActor* Actor, bool bRecordDebugInfo);
 
     UFUNCTION()
-    void UnsubscribeFromActor(AActor* Actor);
+    static void UnsubscribeFromActor(AActor* Actor);
 
     UFUNCTION()
-    TArray<FActorHitEventDesc> GetHitEventDescs();
-
-    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="SP Stable Name Component")
-    USpStableNameComponent* SpStableNameComponent = nullptr;
+    static TArray<FActorHitEventDesc> GetHitEventDescs();
 
 private:
-    UFUNCTION()
+    UFUNCTION() // needs to be a UFUNCTION
     void ActorHitHandler(AActor* SelfActor, AActor* OtherActor, FVector NormalImpulse, const FHitResult& HitResult);
-
-    UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="Store debug info")
-    bool bStoreDebugInfo = true;
-
-    TArray<FActorHitEventDesc> actor_hit_event_descs_;
 };

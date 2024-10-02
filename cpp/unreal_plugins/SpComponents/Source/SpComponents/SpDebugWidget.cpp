@@ -32,7 +32,7 @@
 #include "SpCore/YamlCpp.h"
 
 #include "SpComponents/SpFuncComponent.h"
-#include "SpComponents/SpHitEventActor.h"
+#include "SpComponents/SpHitEventManager.h"
 
 ASpDebugWidget::ASpDebugWidget()
 {
@@ -348,7 +348,7 @@ void ASpDebugWidget::CallFunctions()
     return_values = Unreal::callFunction(GetWorld(), static_mesh_component, ufunction, args);
     SP_LOG(return_values.at("SweepHitResult"));
 
-    UObject* uobject = Unreal::findActorByName(world, "SpComponents/SpHitEventActor");
+    UObject* uobject = ASpHitEventManager::StaticClass()->GetDefaultObject();
     SP_ASSERT(uobject);
     ufunction = Unreal::findFunctionByName(uobject->GetClass(), "GetHitEventDescs");
     SP_ASSERT(ufunction);
@@ -446,14 +446,16 @@ void ASpDebugWidget::CreateObjects()
 
 void ASpDebugWidget::SubscribeToActorHitEvents()
 {
+    SP_LOG_CURRENT_FUNCTION();
+
     AStaticMeshActor* static_mesh_actor = Unreal::findActorByName<AStaticMeshActor>(GetWorld(), "Debug/SM_Prop_04");
     SP_ASSERT(static_mesh_actor);
 
-    ASpHitEventActor* hit_event_actor = Unreal::findActorByName<ASpHitEventActor>(GetWorld(), "SpComponents/SpHitEventActor");
-    SP_ASSERT(hit_event_actor);
+    UObject* hit_event_manager = ASpHitEventManager::StaticClass()->GetDefaultObject();
+    SP_ASSERT(hit_event_manager);
 
-    UFunction* ufunction = Unreal::findFunctionByName(hit_event_actor->GetClass(), "SubscribeToActorHitEvents");
-    Unreal::callFunction(GetWorld(), hit_event_actor, ufunction, {{"Actor", Std::toStringFromPtr(static_mesh_actor)}});
+    UFunction* ufunction = Unreal::findFunctionByName(hit_event_manager->GetClass(), "SubscribeToActor");
+    Unreal::callFunction(GetWorld(), hit_event_manager, ufunction, {{"Actor", Std::toStringFromPtr(static_mesh_actor)}, {"bRecordDebugInfo", "true"}});
 }
 
 FString ASpDebugWidget::GetString(FString arg_0, bool arg_1, int arg_2, FVector arg_3)
@@ -501,7 +503,7 @@ void ASpDebugWidget::initializeSpFuncs()
         hello.setData("Hello World!");
 
         // Get some some data from the Unreal Engine.
-        AActor* actor = Unreal::findActorByName(GetWorld(), "SpComponents/SpHitEventActor");
+        AActor* actor = Unreal::findActorByName(GetWorld(), "Debug/SM_Prop_04");
         FVector location = actor->GetActorLocation();
 
         // Store the Unreal data in an SpFuncArray object to efficiently return it to Python. Here we use

@@ -10,21 +10,21 @@
 #include "SpCore/Log.h"
 #include "SpCore/UnrealClassRegistrar.h"
 
-#include "SpComponents/SpHitEventActor.h"
+#include "SpComponents/SpHitEventManager.h"
 
 void SpComponents::StartupModule()
 {
     SP_ASSERT_MODULE_LOADED("SpCore");
     SP_LOG_CURRENT_FUNCTION();
 
-    UnrealClassRegistrar::registerActorClass<ASpHitEventActor>("ASpHitEventActor");
+    UnrealClassRegistrar::registerActorClass<ASpHitEventManager>("ASpHitEventManager");
 }
 
 void SpComponents::ShutdownModule()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    UnrealClassRegistrar::unregisterActorClass<ASpHitEventActor>("ASpHitEventActor");
+    UnrealClassRegistrar::unregisterActorClass<ASpHitEventManager>("ASpHitEventManager");
 }
 
 // use if module does not implement any Unreal classes

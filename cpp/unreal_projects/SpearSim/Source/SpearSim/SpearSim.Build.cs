@@ -10,7 +10,7 @@ public class SpearSim : SpModuleRules
     {
         SP_LOG_CURRENT_FUNCTION();
 
-        PublicDependencyModuleNames.AddRange(new string[] {});
+        PublicDependencyModuleNames.AddRange(new string[] {"SpCore"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }

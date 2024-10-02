@@ -26,10 +26,10 @@ ASpPlayerController::ASpPlayerController()
     bShowMouseCursor = true;
 
     // USpUserInputComponent
-    SpUserInputComponent = Unreal::createComponentInsideOwnerConstructor<USpUserInputComponent>(this, GetRootComponent(), "sp_user_input_component");
+    SpUserInputComponent = Unreal::createComponentInsideOwnerConstructor<USpUserInputComponent>(this, "sp_user_input_component");
     SP_ASSERT(SpUserInputComponent);
 
-    SpUserInputComponent->bHandleUserInput = true; // UserInputComponents need to be explicitly enabled
+    SpUserInputComponent->bHandleUserInput = true; // SpUserInputComponents need to be explicitly enabled
     SpUserInputComponent->PrimaryComponentTick.bTickEvenWhenPaused = true; // we want to exit even when paused
     SpUserInputComponent->PrimaryComponentTick.TickGroup = ETickingGroup::TG_PrePhysics;
 }
@@ -41,6 +41,8 @@ ASpPlayerController::~ASpPlayerController()
 
 void ASpPlayerController::BeginPlay()
 {
+    SP_LOG_CURRENT_FUNCTION();
+
     APlayerController::BeginPlay();
 
     // Need to set this to true to avoid blurry visual artifacts in the editor when the game is paused.
@@ -55,6 +57,8 @@ void ASpPlayerController::BeginPlay()
 
 void ASpPlayerController::EndPlay(const EEndPlayReason::Type end_play_reason)
 {
+    SP_LOG_CURRENT_FUNCTION();
+
     APlayerController::EndPlay(end_play_reason);
 
     SpUserInputComponent->setHandleUserInputFunc(nullptr);
