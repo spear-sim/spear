@@ -28,7 +28,7 @@ public:
     USpStableNameComponent();
     ~USpStableNameComponent();
 
-    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="Stable Name");
+    UPROPERTY(VisibleAnywhere, Category="SPEAR");
     FString StableName;
 
     #if WITH_EDITOR // defined in an auto-generated header

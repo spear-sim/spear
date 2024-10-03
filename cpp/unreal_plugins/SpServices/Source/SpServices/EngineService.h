@@ -11,6 +11,7 @@
 #include <mutex>
 #include <string>
 
+#include <Containers/UnrealString.h>     // FString::operator*
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Misc/CoreDelegates.h>
 

@@ -8,7 +8,7 @@
 #include <map>
 #include <string>
 
-#include <Containers/UnrealString.h>
+#include <Containers/UnrealString.h> // FString
 #include <Containers/Array.h>
 
 #include "SpCore/FuncRegistrar.h"
@@ -29,27 +29,39 @@ USpFuncComponent::~USpFuncComponent()
 void USpFuncComponent::registerFunc(const std::string& func_name, const std::function<SpFuncDataBundle(SpFuncDataBundle&)>& func)
 {
     funcs_.registerFunc(func_name, func);
-    FuncNames.Add(Unreal::toFString(func_name));
+
+    #if WITH_EDITOR // defined in an auto-generated header
+        FuncNames.Add(Unreal::toFString(func_name));
+    #endif
 }
 
 void USpFuncComponent::unregisterFunc(const std::string& func_name)
 {
-    FuncNames.Remove(Unreal::toFString(func_name));
     funcs_.unregisterFunc(func_name);
+
+    #if WITH_EDITOR // defined in an auto-generated header
+        FuncNames.Remove(Unreal::toFString(func_name));
+    #endif
 }
 
 void USpFuncComponent::registerSharedMemoryView(const std::string& shared_memory_name, const SpFuncSharedMemoryView& shared_memory_view)
 {
     SP_ASSERT(shared_memory_name != "");
     Std::insert(shared_memory_views_, shared_memory_name, shared_memory_view);
-    SharedMemoryViewNames.Add(Unreal::toFString(shared_memory_name));
+
+    #if WITH_EDITOR // defined in an auto-generated header
+        SharedMemoryViewNames.Add(Unreal::toFString(shared_memory_name));
+    #endif
 }
 
 void USpFuncComponent::unregisterSharedMemoryView(const std::string& shared_memory_name)
 {
     SP_ASSERT(shared_memory_name != "");
-    SharedMemoryViewNames.Remove(Unreal::toFString(shared_memory_name));
     Std::remove(shared_memory_views_, shared_memory_name);
+
+    #if WITH_EDITOR // defined in an auto-generated header
+        SharedMemoryViewNames.Remove(Unreal::toFString(shared_memory_name));
+    #endif
 }
 
 const std::map<std::string, SpFuncSharedMemoryView>& USpFuncComponent::getSharedMemoryViews() const

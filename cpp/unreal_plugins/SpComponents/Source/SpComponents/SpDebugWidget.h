@@ -22,7 +22,7 @@
 
 class UObject;
 
-UCLASS(Config=Spear, HideCategories=(Rendering, Replication, Collision, HLOD, Physics, Networking, Input, Actor, Cooking))
+UCLASS(ClassGroup="SPEAR", Config=Spear, HideCategories=(Rendering, Replication, Collision, HLOD, Physics, Networking, Input, Actor, Cooking))
 class ASpDebugWidget : public AActor
 {
     GENERATED_BODY()
@@ -41,7 +41,7 @@ private:
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void PrintDebugString();
-    UPROPERTY(EditAnywhere, Config, Category="SPEAR", DisplayName="Debug string")
+    UPROPERTY(EditAnywhere, Config, Category="SPEAR", DisplayName="My debug string")
     FString DebugString;
 
     UFUNCTION(CallInEditor, Category="SPEAR")
@@ -71,7 +71,7 @@ private:
     UFUNCTION()
     static void UpdateData(TMap<FString, FVector>& map_from_string_to_vector, TArray<FVector>& array_of_vectors);
 
-    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="SP Func Component")
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
     USpFuncComponent* SpFuncComponent = nullptr;
 
     UPROPERTY()

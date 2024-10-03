@@ -7,11 +7,12 @@
 #include <map>
 
 #include <Containers/Array.h>
-#include <Engine/EngineTypes.h>   // FHitResult
+#include <Containers/UnrealString.h> // FString
+#include <Engine/EngineTypes.h>      // FHitResult
 #include <GameFramework/Actor.h>
-#include <HAL/Platform.h>         // uint64
+#include <HAL/Platform.h>            // uint64
 #include <Math/Vector.h>
-#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
+#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
 #include "SpCore/SpStableNameComponent.h"
 

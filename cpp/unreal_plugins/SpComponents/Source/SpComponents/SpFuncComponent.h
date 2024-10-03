@@ -7,8 +7,6 @@
 #include <functional>  // std::function
 #include <map>
 #include <string>
-#include <type_traits> // std::underlying_type_t
-#include <vector>
 
 #include <Components/SceneComponent.h>
 #include <Containers/UnrealString.h> // FString
@@ -29,12 +27,6 @@ public:
     USpFuncComponent();
     ~USpFuncComponent();
 
-    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="Func Names");
-    TArray<FString> FuncNames;
-
-    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="Shared Memory View Names");
-    TArray<FString> SharedMemoryViewNames;
-
     // typically called by the owning actor or component to register/unregister an SpFunc
     void registerSharedMemoryView(const std::string& shared_memory_name, const SpFuncSharedMemoryView& shared_memory_view);
     void unregisterSharedMemoryView(const std::string& shared_memory_name);
@@ -48,6 +40,14 @@ public:
     SpFuncDataBundle callFunc(const std::string& func_name, SpFuncDataBundle& args) const;
 
 private:
+    #if WITH_EDITORONLY_DATA // defined in an auto-generated header
+        UPROPERTY(VisibleAnywhere, Category="SPEAR");
+        TArray<FString> FuncNames;
+
+        UPROPERTY(VisibleAnywhere, Category="SPEAR");
+        TArray<FString> SharedMemoryViewNames;
+    #endif
+
     FuncRegistrar<SpFuncDataBundle, SpFuncDataBundle&> funcs_;
     std::map<std::string, SpFuncSharedMemoryView> shared_memory_views_;
 };

@@ -4,8 +4,9 @@
 
 #pragma once
 
+#include <Containers/UnrealString.h> // FString
 #include <GameFramework/GameModeBase.h>
-#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
+#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpGameMode.generated.h"
 

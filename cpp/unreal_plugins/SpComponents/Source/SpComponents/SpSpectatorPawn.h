@@ -28,10 +28,10 @@ public:
     void BeginPlay() override;
     void Tick(float delta_time) override;
 
-    UPROPERTY(VisibleAnywhere, Category="SPEAR", DisplayName="SP Stable Name Component")
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
     USpStableNameComponent* SpStableNameComponent = nullptr;
 
-    UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="Spectator Pawn Movement")
+    UPROPERTY(EditAnywhere, Category="SPEAR")
     USpectatorPawnMovement* SpectatorPawnMovement = nullptr;
 
 private:

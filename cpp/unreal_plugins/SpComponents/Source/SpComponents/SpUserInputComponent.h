@@ -33,7 +33,7 @@ public:
     void TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override;
 
     // USpUserInputComponents need to be enabled explicitly to avoid a single key press unexpectedly doing multiple things
-    UPROPERTY(EditAnywhere, Category="SPEAR", DisplayName="Handle User Input");
+    UPROPERTY(EditAnywhere, Category="SPEAR");
     bool bHandleUserInput = false;
 
     // Must be called between BeginPlay() and EndPlay(), because GetWorld() needs to be valid.
