@@ -505,29 +505,24 @@ std::map<std::string, USceneComponent*> Unreal::getChildrenComponentsAsMap(const
 
 bool Unreal::hasStableName(const AActor* actor)
 {
-    SP_ASSERT(actor);
     bool include_from_child_actors = false;
-    bool assert_if_not_found = false;
-    USpStableNameComponent* sp_stable_name_component = getComponentByType<USpStableNameComponent>(actor, include_from_child_actors, assert_if_not_found);
-    return sp_stable_name_component != nullptr;
+    std::vector<USpStableNameComponent*> sp_stable_name_components = getComponentsByType<USpStableNameComponent>(actor, include_from_child_actors);
+    return sp_stable_name_components.size() == 1; // an actor with 0 or multiple USpStableNameComponents is considered to not have a stable name
 }
 
 bool Unreal::hasStableName(const UActorComponent* component)
 {
-    SP_ASSERT(component);
     return true;
 }
 
 std::string Unreal::getStableName(const AActor* actor)
 {
-    SP_ASSERT(actor);
     USpStableNameComponent* sp_stable_name_component = getComponentByType<USpStableNameComponent>(actor);
     return toStdString(sp_stable_name_component->StableName);
 }
 
 void Unreal::setStableName(const AActor* actor, const std::string& stable_name)
 {
-    SP_ASSERT(actor);
     USpStableNameComponent* sp_stable_name_component = getComponentByType<USpStableNameComponent>(actor);
     sp_stable_name_component->StableName = toFString(stable_name);
 }
@@ -535,12 +530,10 @@ void Unreal::setStableName(const AActor* actor, const std::string& stable_name)
 #if WITH_EDITOR // defined in an auto-generated header
     void Unreal::requestUpdateStableName(const AActor* actor)
     {
-        SP_ASSERT(actor);
         bool include_from_child_actors = false;
-        bool assert_if_not_found = false;
-        USpStableNameComponent* sp_stable_name_component = getComponentByType<USpStableNameComponent>(actor, include_from_child_actors, assert_if_not_found);
-        if (sp_stable_name_component) {
-            sp_stable_name_component->requestUpdate();
+        std::vector<USpStableNameComponent*> sp_stable_name_components = getComponentsByType<USpStableNameComponent>(actor, include_from_child_actors);
+        if (sp_stable_name_components.size() == 1) {
+            sp_stable_name_components.at(0)->requestUpdate();
         }
     }
 #endif

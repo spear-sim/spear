@@ -39,6 +39,14 @@ class UWorld;
     static std::string getName() { return #Enum; } \
     TEnum getValue() const { return Enum; }
 
+//
+// Concepts for Unreal objects
+//
+
+template <typename TObject>
+concept CObject =
+    std::derived_from<TObject, UObject>;
+
 // In the CStruct and CClass concepts below, there does not seem to be a clean way to encode the desired
 // std::derived_from<...> relationships directly in the requires(...) { ... } statement of each concept. This
 // is because, e.g., the type TStruct is implicitly passed as the first template parameter to std::derived_from<...>,
@@ -53,6 +61,14 @@ concept CStruct =
     } &&
     std::derived_from<std::remove_pointer_t<decltype(TStruct::StaticStruct())>, UStruct>;
 
+template <typename TClass>
+concept CClass =
+    CObject<TClass> &&
+    requires() {
+        { TClass::StaticClass() }; // can't use std::same_as<UClass*> because the type of the returned pointer might be derived from UClass
+    } &&
+    std::derived_from<std::remove_pointer_t<decltype(TClass::StaticClass())>, UClass>;
+
 template <typename TEnumStruct>
 concept CEnumStruct =
     CStruct<TEnumStruct> &&
@@ -61,18 +77,6 @@ concept CEnumStruct =
         { enum_struct.getName() } -> std::same_as<std::string>;
         { enum_struct.getValue() } -> std::same_as<typename TEnumStruct::TEnum>;
     };
-
-template <typename TObject>
-concept CObject =
-    std::derived_from<TObject, UObject>;
-
-template <typename TClass>
-concept CClass =
-    CObject<TClass> &&
-    requires() {
-        { TClass::StaticClass() }; // can't use std::same_as<UClass*> because the type of the returned pointer might be derived from UClass
-    } &&
-    std::derived_from<std::remove_pointer_t<decltype(TClass::StaticClass())>, UClass>;
 
 template <typename TComponent>
 concept CComponent =
@@ -89,9 +93,17 @@ concept CActor =
     CObject<TActor> &&
     std::derived_from<TActor, AActor>;
 
+template <typename TStableNameObject>
+concept CStableNameObject =
+    CActor<TStableNameObject> || CComponent<TStableNameObject>;
+
 template <typename TParent>
 concept CParent =
     CActor<TParent> || CSceneComponent<TParent>;
+
+//
+// General-purpose functions for working with Unreal objects.
+//
 
 class SPCORE_API Unreal
 {
@@ -382,45 +394,44 @@ public:
 
     template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires
         std::derived_from<TActor, TReturnAsActor>
-    static TReturnAsActor* findActorByName(const UWorld* world, const std::string& name, bool assert_if_not_found = true)
+    static TReturnAsActor* findActorByName(const UWorld* world, const std::string& name)
     {
-        bool assert_if_multiple_found = true;
         bool return_null_if_not_found = false;
-        return getItem(findActorsByName<TActor, TReturnAsActor>(world, {name}, return_null_if_not_found), nullptr, assert_if_not_found, assert_if_multiple_found);
+        return getItem(findActorsByName<TActor, TReturnAsActor>(world, {name}, return_null_if_not_found));
     }
 
     template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires
         std::derived_from<TActor, TReturnAsActor>
-    static TReturnAsActor* findActorByTag(const UWorld* world, const std::string& tag, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    static TReturnAsActor* findActorByTag(const UWorld* world, const std::string& tag)
     {
-        return getItem(findActorsByTag<TActor, TReturnAsActor>(world, tag), nullptr, assert_if_not_found, assert_if_multiple_found);
+        return getItem(findActorsByTag<TActor, TReturnAsActor>(world, tag));
     }
 
     template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires
         std::derived_from<TActor, TReturnAsActor>
-    static TReturnAsActor* findActorByTagAny(const UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    static TReturnAsActor* findActorByTagAny(const UWorld* world, const std::vector<std::string>& tags)
     {
-        return getItem(findActorsByTagAny<TActor, TReturnAsActor>(world, tags), nullptr, assert_if_not_found, assert_if_multiple_found);
+        return getItem(findActorsByTagAny<TActor, TReturnAsActor>(world, tags));
     }
 
     template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires
         std::derived_from<TActor, TReturnAsActor>
-    static TReturnAsActor* findActorByTagAll(const UWorld* world, const std::vector<std::string>& tags, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    static TReturnAsActor* findActorByTagAll(const UWorld* world, const std::vector<std::string>& tags)
     {
-        return getItem(findActorsByTagAll<TActor, TReturnAsActor>(world, tags), nullptr, assert_if_not_found, assert_if_multiple_found);
+        return getItem(findActorsByTagAll<TActor, TReturnAsActor>(world, tags));
     }
 
     template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires
         std::derived_from<TActor, TReturnAsActor>
-    static TReturnAsActor* findActorByType(const UWorld* world, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    static TReturnAsActor* findActorByType(const UWorld* world)
     {
-        return getItem(findActorsByType<TActor, TReturnAsActor>(world), nullptr, assert_if_not_found, assert_if_multiple_found);
+        return getItem(findActorsByType<TActor, TReturnAsActor>(world));
     }
 
     template <CActor TReturnAsActor = AActor>
-    static TReturnAsActor* findActorByClass(const UWorld* world, UClass* uclass, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    static TReturnAsActor* findActorByClass(const UWorld* world, UClass* uclass)
     {
-        return getItem(findActorsByClass<TReturnAsActor>(world, uclass), nullptr, assert_if_not_found, assert_if_multiple_found);
+        return getItem(findActorsByClass<TReturnAsActor>(world, uclass));
     }
 
     //
@@ -547,51 +558,44 @@ public:
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires
         std::derived_from<TComponent, TReturnAsComponent>
-    static TReturnAsComponent* getComponentByName(
-        const AActor* actor, const std::string& name, bool include_from_child_actors = false, bool assert_if_not_found = true)
+    static TReturnAsComponent* getComponentByName(const AActor* actor, const std::string& name, bool include_from_child_actors = false)
     {
-        bool assert_if_multiple_found = true;
         bool return_null_if_not_found = false;
-        return getItem(getComponentsByName<TComponent, TReturnAsComponent>(actor, {name}, include_from_child_actors, return_null_if_not_found), nullptr, assert_if_not_found, assert_if_multiple_found);
+        return getItem(getComponentsByName<TComponent, TReturnAsComponent>(actor, {name}, include_from_child_actors, return_null_if_not_found));
     }
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires
         std::derived_from<TComponent, TReturnAsComponent>
-    static TReturnAsComponent* getComponentByTag(
-        const AActor* actor, const std::string& tag, bool include_from_child_actors = false, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    static TReturnAsComponent* getComponentByTag(const AActor* actor, const std::string& tag, bool include_from_child_actors = false)
     {
-        return getItem(getComponentsByTag<TComponent, TReturnAsComponent>(actor, tag, include_from_child_actors), nullptr, assert_if_not_found, assert_if_multiple_found);
+        return getItem(getComponentsByTag<TComponent, TReturnAsComponent>(actor, tag, include_from_child_actors));
     }
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires
         std::derived_from<TComponent, TReturnAsComponent>
-    static TReturnAsComponent* getComponentByTagAny(
-        const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors = false, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    static TReturnAsComponent* getComponentByTagAny(const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors = false)
     {
-        return getItem(getComponentsByTagAny<TComponent, TReturnAsComponent>(actor, tags, include_from_child_actors), nullptr, assert_if_not_found, assert_if_multiple_found);
+        return getItem(getComponentsByTagAny<TComponent, TReturnAsComponent>(actor, tags, include_from_child_actors));
     }
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires
         std::derived_from<TComponent, TReturnAsComponent>
-    static TReturnAsComponent* getComponentByTagAll(
-        const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors = false, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    static TReturnAsComponent* getComponentByTagAll(const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors = false)
     {
-        return getItem(getComponentsByTagAll<TComponent, TReturnAsComponent>(actor, tags, include_from_child_actors), nullptr, assert_if_not_found, assert_if_multiple_found);
+        return getItem(getComponentsByTagAll<TComponent, TReturnAsComponent>(actor, tags, include_from_child_actors));
     }
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires
         std::derived_from<TComponent, TReturnAsComponent>
-    static TReturnAsComponent* getComponentByType(
-        const AActor* actor, bool include_from_child_actors = false, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    static TReturnAsComponent* getComponentByType(const AActor* actor, bool include_from_child_actors = false)
     {
-        return getItem(getComponentsByType<TComponent, TReturnAsComponent>(actor, include_from_child_actors), nullptr, assert_if_not_found, assert_if_multiple_found);
+        return getItem(getComponentsByType<TComponent, TReturnAsComponent>(actor, include_from_child_actors));
     }
 
     template <CComponent TReturnAsComponent = UActorComponent>
-    static TReturnAsComponent* getComponentByClass(
-        const AActor* actor, UClass* uclass, bool include_from_child_actors = false, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    static TReturnAsComponent* getComponentByClass(const AActor* actor, UClass* uclass, bool include_from_child_actors = false)
     {
-        return getItem(getComponentsByClass<TReturnAsComponent>(actor, uclass, include_from_child_actors), nullptr, assert_if_not_found, assert_if_multiple_found);
+        return getItem(getComponentsByClass<TReturnAsComponent>(actor, uclass, include_from_child_actors));
     }
 
     //
@@ -764,45 +768,44 @@ public:
 
     template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsComponent>
-    static TReturnAsComponent* getChildComponentByName(const TParent* parent, const std::string& name, bool include_all_descendants = true, bool assert_if_not_found = true)
+    static TReturnAsComponent* getChildComponentByName(const TParent* parent, const std::string& name, bool include_all_descendants = true)
     {
-        bool assert_if_multiple_found = true;
         bool return_null_if_not_found = false;
-        return getItem(getChildrenComponentsByName<TParent, TSceneComponent, TReturnAsComponent>(parent, {name}, include_all_descendants, return_null_if_not_found), nullptr, assert_if_not_found, assert_if_multiple_found);
+        return getItem(getChildrenComponentsByName<TParent, TSceneComponent, TReturnAsComponent>(parent, {name}, include_all_descendants, return_null_if_not_found));
     }
 
     template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsComponent>
-    static TReturnAsComponent* getChildComponentByTag(const TParent* parent, const std::string& tag, bool include_all_descendants = true, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    static TReturnAsComponent* getChildComponentByTag(const TParent* parent, const std::string& tag, bool include_all_descendants = true)
     {
-        return getItem(getChildrenComponentsByTag<TParent, TSceneComponent, TReturnAsComponent>(parent, tag, include_all_descendants), nullptr, assert_if_not_found, assert_if_multiple_found);
+        return getItem(getChildrenComponentsByTag<TParent, TSceneComponent, TReturnAsComponent>(parent, tag, include_all_descendants));
     }
 
     template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsComponent>
-    static TReturnAsComponent* getChildComponentByTagAny(const TParent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    static TReturnAsComponent* getChildComponentByTagAny(const TParent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true)
     {
-        return getItem(getChildrenComponentsByTagAny<TParent, TSceneComponent, TReturnAsComponent>(parent, tags, include_all_descendants), nullptr, assert_if_not_found, assert_if_multiple_found);
+        return getItem(getChildrenComponentsByTagAny<TParent, TSceneComponent, TReturnAsComponent>(parent, tags, include_all_descendants));
     }
 
     template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsComponent>
-    static TReturnAsComponent* getChildComponentByTagAll(const TParent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    static TReturnAsComponent* getChildComponentByTagAll(const TParent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true)
     {
-        return getItem(getChildrenComponentsByTagAll<TParent, TSceneComponent, TReturnAsComponent>(parent, tags, include_all_descendants), nullptr, assert_if_not_found, assert_if_multiple_found);
+        return getItem(getChildrenComponentsByTagAll<TParent, TSceneComponent, TReturnAsComponent>(parent, tags, include_all_descendants));
     }
 
     template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsComponent>
-    static TReturnAsComponent* getChildComponentByType(const TParent* parent, bool include_all_descendants = true, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    static TReturnAsComponent* getChildComponentByType(const TParent* parent, bool include_all_descendants = true)
     {
-        return getItem(getChildrenComponentsByType<TSceneComponent, TReturnAsComponent>(parent, include_all_descendants), nullptr, assert_if_not_found, assert_if_multiple_found);
+        return getItem(getChildrenComponentsByType<TSceneComponent, TReturnAsComponent>(parent, include_all_descendants));
     }
 
     template <CParent TParent, CSceneComponent TReturnAsComponent = USceneComponent>
-    static TReturnAsComponent* getChildComponentByClass(const TParent* parent, UClass* uclass, bool include_all_descendants = true, bool assert_if_not_found = true, bool assert_if_multiple_found = true)
+    static TReturnAsComponent* getChildComponentByClass(const TParent* parent, UClass* uclass, bool include_all_descendants = true)
     {
-        return getItem(getChildrenComponentsByClass<TReturnAsComponent>(parent, uclass, include_all_descendants), nullptr, assert_if_not_found, assert_if_multiple_found);
+        return getItem(getChildrenComponentsByClass<TReturnAsComponent>(parent, uclass, include_all_descendants));
     }
 
     //
@@ -949,36 +952,20 @@ private:
     // Helper functions for finding actors and getting components
     //
 
-    template <typename TObject> requires
-        CActor<TObject> || CComponent<TObject>
-    static std::map<std::string, TObject*> toMap(const std::vector<TObject*>& objects)
+    template <typename TStableNameObject> requires CStableNameObject<TStableNameObject>
+    static std::map<std::string, TStableNameObject*> toMap(const std::vector<TStableNameObject*>& objects)
     {
-        return Std::toMap<std::string, TObject*>(
+        return Std::toMap<std::string, TStableNameObject*>(
             objects |
-            std::views::filter([](const auto& object) { return hasStableName(object); }) |
-            std::views::transform([](const auto& object) { return std::make_pair(getStableName(object), object); }));
+            std::views::filter([](auto object) { return hasStableName(object); }) |
+            std::views::transform([](auto object) { return std::make_pair(getStableName(object), object); }));
     }
 
     template <typename TValue>
-    static const TValue& getItem(const std::vector<TValue>& vector, void* default_value, bool assert_if_size_is_zero, bool assert_if_size_is_greater_than_one)
+    static const TValue& getItem(const std::vector<TValue>& vector)
     {
-        return getItem(vector, static_cast<TValue>(default_value), assert_if_size_is_zero, assert_if_size_is_greater_than_one);
-    }
-
-    template <typename TValue>
-    static const TValue& getItem(const std::vector<TValue>& vector, const TValue& default_value, bool assert_if_size_is_zero, bool assert_if_size_is_greater_than_one)
-    {
-        if (assert_if_size_is_zero) {
-            SP_ASSERT(vector.size() != 0);
-        }
-        if (assert_if_size_is_greater_than_one) {
-            SP_ASSERT(vector.size() <= 1);
-        }
-        if (vector.size() == 0) {
-            return default_value;
-        } else {
-            return vector.at(0);
-        }
+        SP_ASSERT(vector.size() == 1);
+        return vector.at(0);
     }
 
     //

@@ -91,10 +91,7 @@ void ASpDebugWidget::GetAndSetObjectProperties()
     SP_LOG(static_mesh_actor_from_registrar);
 
     // Get actor from class
-    bool assert_if_not_found = true;
-    bool assert_if_multiple_found = false;
-    AActor* static_mesh_actor_from_class = Unreal::findActorByClass(world, AStaticMeshActor::StaticClass(), assert_if_not_found, assert_if_multiple_found);
-    SP_ASSERT(static_mesh_actor_from_class);
+    AActor* static_mesh_actor_from_class = Unreal::findActorByClass(world, AStaticMeshActor::StaticClass());
     SP_LOG(Unreal::toStdString(static_mesh_actor_from_class->GetName()));
 
     // Get and set object properties from UObject*
