@@ -4,6 +4,7 @@
 
 import argparse
 import os
+import pwd
 import spear
 import subprocess
 import sys
@@ -30,6 +31,20 @@ if __name__ == "__main__":
         target_platform = "Linux"
     else:
         assert False
+
+    # The Unreal Build Tool expects "~/.config" to be owned by the user, so it can create and write to "~/.config/Unreal Engine/"
+    # without requiring admin privileges. This check might seem esoteric, but we have seen cases where "~/.config/"
+    # is owned by root in some corporate environments, so we choose to check it here as a courtesy to new
+    # users. We don't know if we need a similar check on Windows.
+    if sys.platform in ["darwin", "linux"]:
+        config_dir = os.path.expanduser(os.path.join("~", ".config"))
+        if os.path.exists(config_dir):
+            current_user = pwd.getpwuid(os.getuid()).pw_name
+            config_dir_owner = pwd.getpwuid(os.stat(config_dir).st_uid).pw_name
+            if current_user != config_dir_owner:
+                spear.log(f"ERROR: The Unreal Build Tool expects {current_user} to be the owner of {config_dir}, but the current owner is {config_dir_owner}. To update, run the following command (-R indicates recursive):")
+                spear.log(f"    sudo chown {current_user} {config_dir}")
+                assert False
 
     project = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "SpearSim.uproject"))
     archive_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "Standalone-" + args.build_config))

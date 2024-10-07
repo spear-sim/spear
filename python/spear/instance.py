@@ -130,7 +130,7 @@ class Instance():
 
         spear.log("Initializing Unreal instance...")
 
-        spear.log("Waiting for " + str(self._config.SPEAR.INSTANCE.INITIALIZE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS) + " seconds...")
+        spear.log("Waiting for " + str(self._config.SPEAR.INSTANCE.INITIALIZE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS) + " seconds before attempting to execute warmup frames...")
         time.sleep(self._config.SPEAR.INSTANCE.INITIALIZE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS)
 
         # Execute at least one complete warmup frame to guarantee that we can receive valid observations. If

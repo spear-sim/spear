@@ -37,11 +37,6 @@ public class SpTargetRulesTarget : TargetRules
             // written into the application's debug symbols aren't symbolic links. This is necessary to enable debugging in XCode and LLDB.
             bOverrideBuildEnvironment = true;
 
-            // The "-fexperimental-library" flag is required to enable support for std::ranges on Linux. This is because
-            // UE 5.2 builds using Clang 15 on Linux, but std::ranges are not fully supported in Clang 15 without this
-            // additional flag. The flag will not be necessary UE 5.3, which builds using Clang 16 on Linux.
-            AdditionalCompilerArguments = "-fexperimental-library";
-
             string arg = "";
             SP_LOG("Additional compiler arguments:");
 
@@ -78,6 +73,13 @@ public class SpTargetRulesTarget : TargetRules
                 Path.GetFullPath(Path.Combine(ProjectFile.Directory.FullName, "..", "..", "..", "third_party"));
             AdditionalCompilerArguments += arg;
             SP_LOG("    " + arg);
+
+            // The "-fexperimental-library" flag is required to enable support for std::ranges on Linux. This is because
+            // UE 5.2 builds using Clang 15 on Linux, but std::ranges are not fully supported in Clang 15 without this
+            // additional flag. The flag will not be necessary UE 5.3, which builds using Clang 16 on Linux.
+            if (targetInfo.Platform == UnrealTargetPlatform.Linux) {
+                AdditionalCompilerArguments = "-fexperimental-library";
+            }
 
         } else if (targetInfo.Platform == UnrealTargetPlatform.IOS || targetInfo.Platform == UnrealTargetPlatform.TVOS) {
             SP_LOG("NOTE: We only expect to see targetInfo.Platform == UnrealTargetPlatform.IOS or targetInfo.Platform == UnrealTargetPlatform.TVOS when we're on macOS and we're attempting to generate XCode project files. If we're not on macOS generating XCode project files, target.Platform == UnrealTargetPlatform.IOS and target.Platform == UnrealTargetPlatform.TVOS are unexpected.");

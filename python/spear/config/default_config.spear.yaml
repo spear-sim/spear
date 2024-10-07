@@ -48,8 +48,8 @@ SPEAR:
     #     - macOS:   ~/Library/Logs/SpearSim
     #     - Linux:   path\to\spear\cpp\unreal_projects\SpearSim\Standalone-Development/Linux/SpearSim/Saved/Logs
     COMMAND_LINE_ARGS:
-      resx: 1024                # window resolution
-      resy: 1024                # window resolution
+      resx: 512                 # window resolution
+      resy: 512                 # window resolution
       graphicsadapter: 0        # GPU ID
       log: ""                   # see description above
       windowed: null            # run in windowed mode
@@ -89,8 +89,7 @@ SPEAR:
     # frames. This is useful because it can take a bit of time between when engine_service.ping can return
     # for the first time, and when {engine_service.begin_tick, engine_service.tick, engine_service.end_tick}
     # can return for the first time. If this amount of time is set too low, then we need to set
-    # RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS to be overly conservative. We need to set this to at least 10.0,
-    # because 5.0 fails for the kujiale_0000 scene on macOS laptops.
+    # RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS to be overly conservative.
     INITIALIZE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS: 10.0
 
     # Number of warmup frames to execute after launching the Unreal instance. This is useful to warm up
@@ -102,7 +101,7 @@ SPEAR:
     # and rendering features that leverage temporal coherence between frames.
     INITIALIZE_UNREAL_INSTANCE_NUM_WARMUP_FRAMES: 1
 
-    # Sleep for this amount of time when waiting for the Unreal instance to close.
+    # Sleep for this amount of time in-between checks to see if the Unreal instance has closed.
     REQUEST_CLOSE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS: 1.0
 
   ENV:
