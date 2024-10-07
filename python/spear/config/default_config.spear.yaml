@@ -90,7 +90,7 @@ SPEAR:
     # for the first time, and when {engine_service.begin_tick, engine_service.tick, engine_service.end_tick}
     # can return for the first time. If this amount of time is set too low, then we need to set
     # RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS to be overly conservative.
-    INITIALIZE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS: 10.0
+    INITIALIZE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS: 15.0
 
     # Number of warmup frames to execute after launching the Unreal instance. This is useful to warm up
     # various caches and rendering features that leverage temporal coherence between frames. This value

@@ -69,9 +69,9 @@ std::string SharedMemoryRegion::getUniqueIdString(uint64_t id)
 {
     // TODO: remove platform-specific logic
     #if BOOST_COMP_MSVC
-        return std::format("sp_smem_{:20}", id); // don't use leading slash on Windows
+        return std::format("__SP_SMEM_{:#018x}__", id); // don't use leading slash on Windows
     #elif BOOST_COMP_CLANG
-        return (boost::format("/sp_smem_%20d")%id).str(); // use leading slash on macOS and Linux, must be 31 chars or less
+        return (boost::format("/__SP_SMEM_0x%016x__")%id).str(); // use leading slash on macOS and Linux, must be 31 chars or less
     #else
         #error
     #endif
