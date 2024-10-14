@@ -511,7 +511,7 @@ class UnrealService():
         return self._rpc_client.call("unreal_service.load_object", class_name, outer, name, filename, load_flags, sandbox, instancing_context)
 
     def load_class(self, class_name, outer, name="", filename="", load_flags=["LOAD_None"], sandbox=0):
-        return self._rpc_client.call("unreal_service.load_object", class_name, outer, name, filename, load_flags, sandbox)
+        return self._rpc_client.call("unreal_service.load_class", class_name, outer, name, filename, load_flags, sandbox)
 
     def static_load_object(self, uclass, in_outer, name="", filename="", load_flags=["LOAD_None"], sandbox=0, allow_object_reconciliation=True, instancing_context=0):
         return self._rpc_client.call("unreal_service.static_load_object", uclass, in_outer, name, filename, load_flags, sandbox, allow_object_reconciliation, instancing_context)
