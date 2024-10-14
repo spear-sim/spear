@@ -78,17 +78,17 @@ class UnrealService():
     #
     # Interface for calling functions. When using this interface, pointers must be handled specially. For
     # example, suppose you want to call a function that takes a pointer as input and returns a pointer as
-    # output. Suppose that you already have a pointer that you would like to pass as input to the function,
+    # output. Suppose that you already have a handle that you would like to pass as input to the function,
     # that you obtained from another UnrealService function, e.g.,
     #
-    #     ptr = unreal_service.find_actor_by_name(...)
+    #     actor_handle = unreal_service.find_actor_by_name(...)
     #
-    # You would invoke your desired function as follows. After executing this code, return_value_ptr will be
-    # in the correct form to pass into other functions in unreal_service.
+    # You would invoke your desired function as follows. After executing this code, return_value_handle will
+    # be in the correct form to pass into other functions in unreal_service.
     # 
-    #     args = {"Arg": unreal_service.to_ptr(ptr)}
+    #     args = {"Actor": unreal_service.to_ptr(actor_handle)}
     #     return_values = unreal_service.call_function(uobject, ufunction, args)
-    #     return_value = unreal_service.to_handle(return_values["ReturnValue"])
+    #     return_value_handle = unreal_service.to_handle(return_values["ReturnValue"])
     #
 
     # The Ptr class is for internal use, and does not need to be instantiated directly by users.
@@ -99,7 +99,7 @@ class UnrealService():
         def to_string(self):
             return f"{self._handle:#0{18}x}"
 
-    # Convert a pointer obtained from another UnrealService function into a form that can be passed as an
+    # Convert a handle obtained from another UnrealService function into a form that can be passed as an
     # argument to unreal_service.call_function(...).
     def to_ptr(self, handle):
         return UnrealService.Ptr(handle)
@@ -127,8 +127,8 @@ class UnrealService():
         return_value_strings = self._rpc_client.call("unreal_service.call_function", uobject, ufunction, arg_strings, world_context)
 
         # Try to parse each return value string as JSON, and if that doesn't work, then return the string
-        # directly. If the returned string is intended to be a pointer, then the user can get it as a pointer
-        # by calling unreal_service.from_ptr(...).
+        # directly. If the returned string is intended to be a handle, then the user can get it as a handle
+        # by calling unreal_service.to_handle(...).
         return_values = {}
         for return_value_name, return_value_string in return_value_strings.items():
             try:
