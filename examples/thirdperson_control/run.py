@@ -62,6 +62,9 @@ if __name__ == "__main__":
 
     # TODO PlayerController possess agent, otherwise nothing happens when invoke Jump
     instance.unreal_service.call_function(uobject=player_controller, ufunction=possess_func, args={"InPawn": instance.unreal_service.to_ptr(agent)})
+
+    # find agent functions
+    add_movement_input_func = instance.unreal_service.find_function_by_name(uclass=agent_uclass, name="AddMovementInput")
     jump_func = instance.unreal_service.find_function_by_name(uclass=agent_uclass, name="Jump")
 
     instance.engine_service.tick()
@@ -75,10 +78,14 @@ if __name__ == "__main__":
         instance.engine_service.begin_tick()
         instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
 
-        # TODO apply action
-        if frame == 100:
+        if frame < 200 and frame >= 100:
+            result = instance.unreal_service.call_function(uobject=agent, ufunction=add_movement_input_func, args={
+                "WorldDirection": {"X": 1.0, "Y": 0.0, "Z": 0.0},
+                "ScaleValue": 10.0,
+            })
+
+        if frame == 300:
             result = instance.unreal_service.call_function(uobject=agent, ufunction=jump_func, args={})
-            print("result", result)
 
         instance.engine_service.tick()
 
