@@ -45,7 +45,12 @@ if __name__ == "__main__":
                                                                                 args={"PlayerIndex": 0})
     player_controller = instance.unreal_service.to_handle(get_player_controller_return_values["ReturnValue"])
     controller_class = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.Controller", filename="")
-    possess_func = instance.unreal_service.find_function_by_name(uclass=controller_class, name="Possess")
+
+    enhanced_input_component_class = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/EnhancedInput.EnhancedInputComponent", filename="")
+    enhanced_input_component = instance.unreal_service.get_component_by_class(player_controller, enhanced_input_component_class)
+    print("enhanced_input_component", enhanced_input_component)
+
+    character_movement_component_class = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.CharacterMovementComponent", filename="")
 
     # spawn a blueprint actor
     agent_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name=args.bp_class_reference, filename="")
@@ -60,10 +65,10 @@ if __name__ == "__main__":
 
     instance.engine_service.begin_tick()
 
-    # TODO PlayerController possess agent, otherwise nothing happens when invoke Jump
-    instance.unreal_service.call_function(uobject=player_controller, ufunction=possess_func, args={"InPawn": instance.unreal_service.to_ptr(agent)})
+    # set bRunPhysicsWithNoController to True
+    movement_component = instance.unreal_service.get_component_by_class(agent, character_movement_component_class)
+    instance.unreal_service.set_object_properties_for_uobject(movement_component, {"bRunPhysicsWithNoController": True})
 
-    # find agent functions
     add_movement_input_func = instance.unreal_service.find_function_by_name(uclass=agent_uclass, name="AddMovementInput")
     jump_func = instance.unreal_service.find_function_by_name(uclass=agent_uclass, name="Jump")
 
@@ -74,17 +79,17 @@ if __name__ == "__main__":
 
     frame = 0
     start_time_seconds = time.time()
-    while frame < 500:
+    while frame < 200:
         instance.engine_service.begin_tick()
         instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
 
-        if frame < 200 and frame >= 100:
-            result = instance.unreal_service.call_function(uobject=agent, ufunction=add_movement_input_func, args={
-                "WorldDirection": {"X": 1.0, "Y": 0.0, "Z": 0.0},
-                "ScaleValue": 10.0,
-            })
+        # if frame < 200 and frame >= 100:
+        #     result = instance.unreal_service.call_function(uobject=agent, ufunction=add_movement_input_func, args={
+        #         "WorldDirection": {"X": 1.0, "Y": 0.0, "Z": 0.0},
+        #         "ScaleValue": 10.0,
+        #     })
 
-        if frame == 300:
+        if frame == 100:
             result = instance.unreal_service.call_function(uobject=agent, ufunction=jump_func, args={})
 
         instance.engine_service.tick()
