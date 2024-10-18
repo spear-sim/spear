@@ -9,7 +9,7 @@ The first step is to clone this repository including submodules. We have found t
 ```console
 git clone --recurse-submodules https://github.com/spear-sim/spear path/to/spear
 
-# checkout the code corresponding to a specific release
+# checkout the code corresponding to a specific release (optional)
 cd path/to/spear
 git checkout v0.5.0
 ```
