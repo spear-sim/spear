@@ -31,8 +31,13 @@ public class SpTargetRulesTarget : TargetRules
             // bOverrideBuildEnvironment = true;
             // AdditionalCompilerArguments = "/showIncludes";
 
-        } else if (targetInfo.Platform == UnrealTargetPlatform.Mac || targetInfo.Platform == UnrealTargetPlatform.Linux) {
+        } else if (targetInfo.Platform == UnrealTargetPlatform.Mac) {
+            // Suppresses warning on Xcode 16:
+            //     ld: warning: ignoring duplicate libraries: 'path/to/spear/third_party/rpclib/BUILD/Mac/librpc.a', 'path/to/spear/third_party/yaml-cpp/BUILD/Mac/libyaml-cpp.a'
+            bOverrideBuildEnvironment = true;
+            AdditionalLinkerArguments = " -Wl,-no_warn_duplicate_libraries";
 
+        } else if (targetInfo.Platform == UnrealTargetPlatform.Linux) {
             // pass
 
         } else if (targetInfo.Platform == UnrealTargetPlatform.IOS || targetInfo.Platform == UnrealTargetPlatform.TVOS) {
