@@ -16,13 +16,15 @@ if __name__ == "__main__":
     # entire directories to be removed
     dirs = [
         os.path.realpath(os.path.join(unreal_project_dir, "Binaries")),
-        os.path.realpath(os.path.join(unreal_project_dir, "Build")),
+        os.path.realpath(os.path.join(unreal_project_dir, "Build", "Mac", "FileOpenOrder")),
         os.path.realpath(os.path.join(unreal_project_dir, "DerivedDataCache")),
         os.path.realpath(os.path.join(unreal_project_dir, "Intermediate")),
         os.path.realpath(os.path.join(unreal_project_dir, "Saved"))]
 
     # individual files to be removed
-    files = []
+    files = [
+        os.path.realpath(os.path.join(unreal_project_dir, "Build", "Mac", "Resources", "Info.Template.plist")),
+        os.path.realpath(os.path.join(unreal_project_dir, "Build", "Mac", "SpearSim.PackageVersionCounter"))]
 
     # based on the platform, add project generated files or directories
     if sys.platform == "win32":

@@ -1,4 +1,5 @@
 __pycache__
+.DS_Store
 
 cpp/unreal_plugins/*/Binaries
 cpp/unreal_plugins/*/Intermediate
@@ -15,33 +16,15 @@ cpp/unreal_projects/SpearSim/Content/Scenes/warehouse_*
 cpp/unreal_projects/SpearSim/Content/Stanford
 cpp/unreal_projects/SpearSim/Content/StarterContent
 cpp/unreal_projects/SpearSim/DerivedDataCache
-cpp/unreal_projects/SpearSim/enc_temp_folder
 cpp/unreal_projects/SpearSim/Intermediate
 cpp/unreal_projects/SpearSim/Makefile
 cpp/unreal_projects/SpearSim/Plugins
-cpp/unreal_projects/SpearSim/SpearSim.code-workspace
-cpp/unreal_projects/SpearSim/SpearSim.kdev4
-cpp/unreal_projects/SpearSim/SpearSim.pro
-cpp/unreal_projects/SpearSim/SpearSim.sln
-cpp/unreal_projects/SpearSim/SpearSim.xcodeproj
-cpp/unreal_projects/SpearSim/SpearSim.xcworkspace
-cpp/unreal_projects/SpearSim/SpearSimCodeCompletionFolders.txt
-cpp/unreal_projects/SpearSim/SpearSimCodeLitePreProcessor.txt
-cpp/unreal_projects/SpearSim/SpearSimConfig.pri
-cpp/unreal_projects/SpearSim/SpearSimDefines.pri
-cpp/unreal_projects/SpearSim/SpearSimHeader.pri
-cpp/unreal_projects/SpearSim/SpearSimIncludes.pri
-cpp/unreal_projects/SpearSim/SpearSimSource.pri
 cpp/unreal_projects/SpearSim/Saved
+cpp/unreal_projects/SpearSim/SpearSim.sln
+cpp/unreal_projects/SpearSim/SpearSim (Mac).xcworkspace
 cpp/unreal_projects/SpearSim/Standalone-Development
 cpp/unreal_projects/SpearSim/Standalone-Shipping
 cpp/unreal_projects/SpearSim/ThirdParty
-cpp/unreal_projects/SpearSim/user_config.yaml
-cpp/unreal_projects/SpearSim/.vs
-cpp/unreal_projects/SpearSim/.vscode
-cpp/unreal_projects/SpearSim/.vsconfig
-cpp/unreal_projects/SpearSim/.ignore
-cpp/unreal_projects/SpearSim/.kdev4
 
 examples/generate_image_dataset/images
 examples/generate_image_dataset/tmp

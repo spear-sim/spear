@@ -57,7 +57,7 @@ void NavMesh::findObjectReferences(UWorld* world)
         recast_nav_mesh_->AgentRadius = Config::get<float>("SP_SERVICES.LEGACY.NAVMESH.AGENT_RADIUS");
         recast_nav_mesh_->AgentHeight = Config::get<float>("SP_SERVICES.LEGACY.NAVMESH.AGENT_HEIGHT");
         recast_nav_mesh_->AgentMaxSlope = Config::get<float>("SP_SERVICES.LEGACY.NAVMESH.AGENT_MAX_SLOPE");
-        recast_nav_mesh_->AgentMaxStepHeight = Config::get<float>("SP_SERVICES.LEGACY.NAVMESH.AGENT_MAX_STEP_HEIGHT");
+        // recast_nav_mesh_->AgentMaxStepHeight = Config::get<float>("SP_SERVICES.LEGACY.NAVMESH.AGENT_MAX_STEP_HEIGHT"); // TODO: not available in UE 5.4
         recast_nav_mesh_->MinRegionArea = Config::get<float>("SP_SERVICES.LEGACY.NAVMESH.MIN_REGION_AREA");
         recast_nav_mesh_->MergeRegionSize = Config::get<float>("SP_SERVICES.LEGACY.NAVMESH.MERGE_REGION_SIZE");
         recast_nav_mesh_->MaxSimplificationError = Config::get<float>("SP_SERVICES.LEGACY.NAVMESH.MAX_SIMPLIFICATION_ERROR");
@@ -70,7 +70,7 @@ void NavMesh::findObjectReferences(UWorld* world)
         recast_nav_mesh_->AgentRadius = 50.0;
         recast_nav_mesh_->AgentHeight = 200.0;
         recast_nav_mesh_->AgentMaxSlope = 1.0;
-        recast_nav_mesh_->AgentMaxStepHeight = 1.0;
+        // recast_nav_mesh_->AgentMaxStepHeight = 1.0; // TODO: not available in UE 5.4
         recast_nav_mesh_->MinRegionArea = 100.0;
         recast_nav_mesh_->MergeRegionSize = 400.0;
         recast_nav_mesh_->MaxSimplificationError = 1.3;

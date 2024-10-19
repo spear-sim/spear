@@ -22,9 +22,6 @@ public class SpModuleRules : ModuleRules
         // Turn off code optimization except in shipping builds for faster build times.
         OptimizeCode = ModuleRules.CodeOptimization.InShippingBuildsOnly;
 
-        // Required for concepts and ranges
-        CppStandard = CppStandardVersion.Cpp20;
-
         // Our SP_ASSERT macro throws exceptions, yaml-cpp (used by Config) throws exceptions,
         // and boost::interprocess::mapped_region (used by camera sensors) throws exceptions.
         // So we need to enable exceptions everywhere.
@@ -77,7 +74,6 @@ public class SpModuleRules : ModuleRules
         // yaml-cpp
         //
 
-        bEnableExceptions = true;
         PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "yaml-cpp", "include")));
 
         if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Win64) {

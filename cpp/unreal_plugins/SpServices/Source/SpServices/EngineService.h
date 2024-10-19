@@ -52,17 +52,6 @@ public:
 
         frame_state_ = FrameState::Idle;
 
-        // To work around a platform-specific rendering bug, we explicitly disable Lumen and then
-        // conditionally re-enable it the first time beginFrameHandler() gets called. We have not seen this
-        // bug on Windows, but we have seen it macOS, where it appears to only affect standalone shipping
-        // builds. Since we're not exactly sure what configurations are affected, we choose to implement the
-        // workaround on all standalone builds.
-        #if !WITH_EDITOR // defined in an auto-generated header
-            r_lumen_diffuse_indirect_allow_cvar_ = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.Lumen.DiffuseIndirect.Allow"));
-            r_lumen_diffuse_indirect_allow_cvar_initial_value_ = r_lumen_diffuse_indirect_allow_cvar_->GetInt();
-            r_lumen_diffuse_indirect_allow_cvar_->Set(0);
-        #endif
-
         entry_point_binder_->bind("engine_service.ping", []() -> std::string {
             return "received a call to engine_service.ping";
         });
@@ -181,15 +170,6 @@ public:
 private:
     void beginFrameHandler()
     {
-        // Works around a platform-specific rendering bug. See comment in the constructor above.
-        #if !WITH_EDITOR
-            static bool once = false;
-            if (!once) {
-                r_lumen_diffuse_indirect_allow_cvar_->Set(r_lumen_diffuse_indirect_allow_cvar_initial_value_);
-                once = true;
-            }
-        #endif
-
         if (frame_state_ == FrameState::RequestPreTick) {
             // Allow begin_tick() to finish executing. There is no need to lock frame_state_mutex_ here,
             // because if frame_state_ == FrameState::RequestPreTick, then we know the RPC worker thread is

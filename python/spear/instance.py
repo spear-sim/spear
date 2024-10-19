@@ -10,7 +10,7 @@ from subprocess import Popen
 import sys
 import time
 
-expected_status_values = ["disk-sleep", "running", "sleeping"]
+expected_status_values = ["disk-sleep", "running", "sleeping", "stopped"] # stopped can happen when attaching to a debugger
 
 class Instance():
     def __init__(self, config):

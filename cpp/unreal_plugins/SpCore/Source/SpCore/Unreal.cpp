@@ -351,7 +351,7 @@ void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_des
         success = FJsonSerializer::Deserialize(json_reader, json_object);
         SP_ASSERT(success);
         SP_ASSERT(json_object.IsValid());
-        TSharedPtr<FJsonValue> json_value = json_object.Get()->TryGetField("dummy");
+        TSharedPtr<FJsonValue> json_value = json_object.Get()->TryGetField(toFString("dummy"));
         SP_ASSERT(json_value.Get());
         success = FJsonObjectConverter::JsonValueToUProperty(json_value, property_desc.property_, property_desc.value_ptr_);
         SP_ASSERT(success);
