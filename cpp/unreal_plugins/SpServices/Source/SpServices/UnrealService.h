@@ -27,7 +27,6 @@
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealClassRegistrar.h"
-#include "SpCore/UnrealObj.h"
 
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/Msgpack.h"
@@ -36,7 +35,17 @@
 
 #include "UnrealService.generated.h"
 
+// Each USTRUCT below is intended to be a wrapper for a particular UENUM type. Wrapping enums in structs like
+// this helps us take advantage of the Unreal property system to pass enums to and from Python as human-
+// readable strings. Additionally, we make use of these enum structs to combine strings enum strings as
+// though they were bit flags. Unfortunately, we can't abbreviate these declarations using higher-level
+// macros, any more than they already are, because then they wouldn't interact correctly with the Unreal
+// build system.
+
+//
 // This enum corresponds to EIncludeSuperFlag::Type declared in Engine/Source/Runtime/CoreUObject/Public/UObject/Class.h
+//
+
 UENUM()
 enum class ESpIncludeSuperFlag
 {
@@ -44,17 +53,19 @@ enum class ESpIncludeSuperFlag
     IncludeSuper = Unreal::getConstEnumValue(EIncludeSuperFlag::Type::IncludeSuper)
 };
 
-// This enum corresponds to ESpawnActorNameMode declared in Engine/Source/Runtime/Engine/Classes/Engine/World.h
-UENUM()
-enum class ESpSpawnActorNameMode
+USTRUCT() // used to convert to and from strings
+struct FSpIncludeSuperFlag
 {
-    Required_Fatal              = Unreal::getConstEnumValue(FActorSpawnParameters::ESpawnActorNameMode::Required_Fatal),
-    Required_ErrorAndReturnNull = Unreal::getConstEnumValue(FActorSpawnParameters::ESpawnActorNameMode::Required_ErrorAndReturnNull),
-    Required_ReturnNull         = Unreal::getConstEnumValue(FActorSpawnParameters::ESpawnActorNameMode::Required_ReturnNull),
-    Requested                   = Unreal::getConstEnumValue(FActorSpawnParameters::ESpawnActorNameMode::Requested)
+    GENERATED_BODY()
+    UPROPERTY()
+    ESpIncludeSuperFlag Enum = Unreal::getEnumValueAs<ESpIncludeSuperFlag>(0);
+    SP_DECLARE_ENUM_PROPERTY(ESpIncludeSuperFlag, Enum);
 };
 
+//
 // This enum corresponds to EObjectFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectMacros.h
+//
+
 UENUM()
 enum class ESpObjectFlags
 {
@@ -89,9 +100,22 @@ enum class ESpObjectFlags
     RF_HasExternalPackage           = Unreal::getConstEnumValue(EObjectFlags::RF_HasExternalPackage),
     RF_AllocatedInSharedPage        = Unreal::getConstEnumValue(EObjectFlags::RF_AllocatedInSharedPage)
 };
-ENUM_CLASS_FLAGS(ESpObjectFlags);
 
+USTRUCT() // used to convert to and from strings
+struct FSpObjectFlags
+{
+    GENERATED_BODY()
+    UPROPERTY()
+    ESpObjectFlags Enum = Unreal::getEnumValueAs<ESpObjectFlags>(0);
+    SP_DECLARE_ENUM_PROPERTY(ESpObjectFlags, Enum);
+};
+
+ENUM_CLASS_FLAGS(ESpObjectFlags); // used to combine using bitwise operations
+
+//
 // This enum corresponds to ELoadFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectMacros.h
+//
+
 UENUM()
 enum class ESpLoadFlags
 {
@@ -117,9 +141,22 @@ enum class ESpLoadFlags
     LOAD_DisableCompileOnLoad        = Unreal::getConstEnumValue(ELoadFlags::LOAD_DisableCompileOnLoad),
     LOAD_DisableEngineVersionChecks  = Unreal::getConstEnumValue(ELoadFlags::LOAD_DisableEngineVersionChecks)
 };
-ENUM_CLASS_FLAGS(ESpLoadFlags);
 
+USTRUCT() // used to convert to and from strings
+struct FSpLoadFlags
+{
+    GENERATED_BODY()
+    UPROPERTY()
+    ESpLoadFlags Enum = Unreal::getEnumValueAs<ESpLoadFlags>(0);
+    SP_DECLARE_ENUM_PROPERTY(ESpLoadFlags, Enum);
+};
+
+ENUM_CLASS_FLAGS(ESpLoadFlags); // used to combine using bitwise operations
+
+//
 // This enum corresponds to EConsoleVariableFlags declared in Engine/Source/Runtime/Core/Public/HAL/IConsoleManager.h
+//
+
 UENUM()
 enum class ESpConsoleVariableFlags
 {
@@ -152,43 +189,8 @@ enum class ESpConsoleVariableFlags
     ECVF_SetByCode                = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_SetByCode),
     ECVF_SetByConsole             = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_SetByConsole)
 };
-ENUM_CLASS_FLAGS(ESpConsoleVariableFlags);
 
-// These enum structs are intended to be wrappers for the UENUM types declared above. Wrapping enums in
-// structs like this helps us take advantage of UnrealObj and UnrealObjUtils to pass enums to and from Python
-// as human-readable strings, as well as the Unreal::combineEnumFlagStringsAs<...>(...) function for
-// combining enum strings as though they were bit flags. We can't abbreviate these declarations using
-// higher-level macros, any more than they already are, because then they wouldn't interact correctly with
-// the Unreal build system.
-
-USTRUCT()
-struct FSpIncludeSuperFlag
-{
-    GENERATED_BODY()
-    UPROPERTY()
-    ESpIncludeSuperFlag Enum = Unreal::getEnumValueAs<ESpIncludeSuperFlag>(0);
-    SP_DECLARE_ENUM_PROPERTY(ESpIncludeSuperFlag, Enum);
-};
-
-USTRUCT()
-struct FSpObjectFlags
-{
-    GENERATED_BODY()
-    UPROPERTY()
-    ESpObjectFlags Enum = Unreal::getEnumValueAs<ESpObjectFlags>(0);
-    SP_DECLARE_ENUM_PROPERTY(ESpObjectFlags, Enum);
-};
-
-USTRUCT()
-struct FSpLoadFlags
-{
-    GENERATED_BODY()
-    UPROPERTY()
-    ESpLoadFlags Enum = Unreal::getEnumValueAs<ESpLoadFlags>(0);
-    SP_DECLARE_ENUM_PROPERTY(ESpLoadFlags, Enum);
-};
-
-USTRUCT()
+USTRUCT() // used to convert to and from strings
 struct FSpConsoleVariableFlags
 {
     GENERATED_BODY()
@@ -197,7 +199,25 @@ struct FSpConsoleVariableFlags
     SP_DECLARE_ENUM_PROPERTY(ESpConsoleVariableFlags, Enum);
 };
 
+ENUM_CLASS_FLAGS(ESpConsoleVariableFlags); // used to combine using bitwise operations
+
+//
+// This enum corresponds to ESpawnActorNameMode declared in Engine/Source/Runtime/Engine/Classes/Engine/World.h
+//
+
+UENUM()
+enum class ESpSpawnActorNameMode
+{
+    Required_Fatal              = Unreal::getConstEnumValue(FActorSpawnParameters::ESpawnActorNameMode::Required_Fatal),
+    Required_ErrorAndReturnNull = Unreal::getConstEnumValue(FActorSpawnParameters::ESpawnActorNameMode::Required_ErrorAndReturnNull),
+    Required_ReturnNull         = Unreal::getConstEnumValue(FActorSpawnParameters::ESpawnActorNameMode::Required_ReturnNull),
+    Requested                   = Unreal::getConstEnumValue(FActorSpawnParameters::ESpawnActorNameMode::Requested)
+};
+
+//
 // This struct is intended to be identical to Unreal's FActorSpawnParameters struct, see Engine/Source/Runtime/Engine/Classes/Engine/World.h
+//
+
 USTRUCT()
 struct FSpActorSpawnParameters
 {
@@ -239,6 +259,10 @@ struct FSpActorSpawnParameters
     UPROPERTY()
     ESpSpawnActorNameMode NameMode = ESpSpawnActorNameMode::Required_Fatal;
 };
+
+//
+// UnrealService is our service for interacting with the Unreal property system.
+//
 
 class UnrealService {
 public:
@@ -344,8 +368,8 @@ public:
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_function_by_name",
             [this](uint64_t& uclass, std::string& function_name, std::string& include_super_flag_string) -> uint64_t {
-                EIncludeSuperFlag::Type include_super_flag = Unreal::getEnumValueFromString<FSpIncludeSuperFlag, EIncludeSuperFlag::Type>(include_super_flag_string);
-                return toUInt64(Unreal::findFunctionByName(toPtr<UClass>(uclass), function_name, include_super_flag));
+                return toUInt64(Unreal::findFunctionByName(
+                    toPtr<UClass>(uclass), function_name, Unreal::getEnumValueFromString<FSpIncludeSuperFlag, EIncludeSuperFlag::Type>(include_super_flag_string)));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "call_function",
@@ -809,9 +833,11 @@ public:
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "spawn_actor",
             [this](std::string& class_name, std::string& location_string, std::string& rotation_string, std::string& spawn_parameters_string, std::vector<std::string>& object_flag_strings) -> uint64_t {
+
                 FVector location;
                 FRotator rotation;
                 FSpActorSpawnParameters sp_actor_spawn_parameters;
+
                 Unreal::setObjectPropertiesFromString(&location, UnrealClassRegistrar::getStaticStruct<FVector>(), location_string);
                 Unreal::setObjectPropertiesFromString(&rotation, UnrealClassRegistrar::getStaticStruct<FRotator>(), rotation_string);
                 Unreal::setObjectPropertiesFromString(&sp_actor_spawn_parameters, FSpActorSpawnParameters::StaticStruct(), spawn_parameters_string);
@@ -841,6 +867,7 @@ public:
                 FVector location;
                 FRotator rotation;
                 FSpActorSpawnParameters sp_actor_spawn_parameters;
+                
                 Unreal::setObjectPropertiesFromString(&location, UnrealClassRegistrar::getStaticStruct<FVector>(), location_string);
                 Unreal::setObjectPropertiesFromString(&rotation, UnrealClassRegistrar::getStaticStruct<FRotator>(), rotation_string);
                 Unreal::setObjectPropertiesFromString(&sp_actor_spawn_parameters, FSpActorSpawnParameters::StaticStruct(), spawn_parameters_string);
@@ -1131,7 +1158,7 @@ private:
     void postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values);
     void worldCleanupHandler(UWorld* world, bool session_ended, bool cleanup_resources);
 
-    // these local helper functions are here to make the usages throughout this file more concise
+    // these helper functions are intended to make calls to ServiceUtils more concise
     template <typename TValue>                static uint64_t                 toUInt64(const TValue* src)                 { return ServiceUtils::toUInt64(src); }
     template <typename TValue>                static std::vector<uint64_t>    toUInt64(const std::vector<TValue>& src)    { return ServiceUtils::toUInt64(src); }
     template <typename TKey, typename TValue> static std::map<TKey, uint64_t> toUInt64(const std::map<TKey, TValue>& src) { return ServiceUtils::toUInt64(src); }

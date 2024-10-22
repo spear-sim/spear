@@ -77,6 +77,7 @@ concept CEnumStruct =
         typename TEnumStruct::TEnum;
         { enum_struct.getName() } -> std::same_as<std::string>;
         { enum_struct.getValue() } -> std::same_as<typename TEnumStruct::TEnum>;
+        { enum_struct.setValue() } -> std::same_as<void>;
     };
 
 template <typename TComponent>

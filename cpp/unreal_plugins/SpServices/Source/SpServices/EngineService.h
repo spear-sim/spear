@@ -39,7 +39,7 @@ enum class EFrameState
     Closing           = 5
 };
 
-USTRUCT()
+USTRUCT() // used to convert to and from strings
 struct FFrameState
 {
     GENERATED_BODY()
