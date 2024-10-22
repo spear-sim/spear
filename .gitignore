@@ -26,6 +26,9 @@ cpp/unreal_projects/SpearSim/Standalone-Development
 cpp/unreal_projects/SpearSim/Standalone-Shipping
 cpp/unreal_projects/SpearSim/ThirdParty
 
+examples/control_simple_agent/tmp
+examples/control_simple_agent/user_config.yaml
+
 examples/generate_image_dataset/images
 examples/generate_image_dataset/tmp
 examples/generate_image_dataset/user_config.yaml
