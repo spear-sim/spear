@@ -51,6 +51,7 @@ if __name__ == "__main__":
     print("enhanced_input_component", enhanced_input_component)
 
     character_movement_component_class = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.CharacterMovementComponent", filename="")
+    SetMovementMode_func = instance.unreal_service.find_function_by_name(uclass=character_movement_component_class, name="SetMovementMode")
 
     # spawn a blueprint actor
     agent_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name=args.bp_class_reference, filename="")
@@ -68,6 +69,7 @@ if __name__ == "__main__":
     # set bRunPhysicsWithNoController to True
     movement_component = instance.unreal_service.get_component_by_class(agent, character_movement_component_class)
     instance.unreal_service.set_object_properties_for_uobject(movement_component, {"bRunPhysicsWithNoController": True})
+    instance.unreal_service.call_function(uobject=movement_component, ufunction=SetMovementMode_func, args={"NewMovementMode": "MOVE_Walking"})
 
     add_movement_input_func = instance.unreal_service.find_function_by_name(uclass=agent_uclass, name="AddMovementInput")
     jump_func = instance.unreal_service.find_function_by_name(uclass=agent_uclass, name="Jump")
@@ -83,11 +85,11 @@ if __name__ == "__main__":
         instance.engine_service.begin_tick()
         instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
 
-        # if frame < 200 and frame >= 100:
-        #     result = instance.unreal_service.call_function(uobject=agent, ufunction=add_movement_input_func, args={
-        #         "WorldDirection": {"X": 1.0, "Y": 0.0, "Z": 0.0},
-        #         "ScaleValue": 10.0,
-        #     })
+        if frame < 200 and frame >= 1:
+            result = instance.unreal_service.call_function(uobject=agent, ufunction=add_movement_input_func, args={
+                "WorldDirection": {"X": 1.0, "Y": 0.0, "Z": 0.0},
+                "ScaleValue": 1.0,
+            })
 
         if frame == 100:
             result = instance.unreal_service.call_function(uobject=agent, ufunction=jump_func, args={})
@@ -97,8 +99,8 @@ if __name__ == "__main__":
         instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
         instance.engine_service.end_tick()
 
+        spear.log("frame ", frame)
         frame += 1
-        spear.log("frame", frame)
 
     # close the instance
     instance.close()
