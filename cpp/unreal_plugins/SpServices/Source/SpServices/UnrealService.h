@@ -8,11 +8,12 @@
 
 #include <map>
 #include <string>
-#include <utility>     // std::make_pair, std::move
+#include <utility> // std::make_pair, std::move
 #include <vector>
 
 #include <Components/ChildActorComponent.h>
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
+#include <Engine/Engine.h>               // GEngine
 #include <Engine/Level.h>                // ULevel
 #include <Engine/World.h>                // FWorldDelegates, FActorSpawnParameters
 #include <HAL/IConsoleManager.h>
@@ -31,6 +32,7 @@
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/Msgpack.h"
 #include "SpServices/Rpclib.h"
+#include "SpServices/ServiceUtils.h"
 
 #include "UnrealService.generated.h"
 
@@ -38,54 +40,54 @@
 UENUM()
 enum class ESpIncludeSuperFlag
 {
-    ExcludeSuper = Unreal::getEnumValueAsConst(EIncludeSuperFlag::Type::ExcludeSuper),
-    IncludeSuper = Unreal::getEnumValueAsConst(EIncludeSuperFlag::Type::IncludeSuper)
+    ExcludeSuper = Unreal::getConstEnumValue(EIncludeSuperFlag::Type::ExcludeSuper),
+    IncludeSuper = Unreal::getConstEnumValue(EIncludeSuperFlag::Type::IncludeSuper)
 };
 
 // This enum corresponds to ESpawnActorNameMode declared in Engine/Source/Runtime/Engine/Classes/Engine/World.h
 UENUM()
 enum class ESpSpawnActorNameMode
 {
-    Required_Fatal              = Unreal::getEnumValueAsConst(FActorSpawnParameters::ESpawnActorNameMode::Required_Fatal),
-    Required_ErrorAndReturnNull = Unreal::getEnumValueAsConst(FActorSpawnParameters::ESpawnActorNameMode::Required_ErrorAndReturnNull),
-    Required_ReturnNull         = Unreal::getEnumValueAsConst(FActorSpawnParameters::ESpawnActorNameMode::Required_ReturnNull),
-    Requested                   = Unreal::getEnumValueAsConst(FActorSpawnParameters::ESpawnActorNameMode::Requested)
+    Required_Fatal              = Unreal::getConstEnumValue(FActorSpawnParameters::ESpawnActorNameMode::Required_Fatal),
+    Required_ErrorAndReturnNull = Unreal::getConstEnumValue(FActorSpawnParameters::ESpawnActorNameMode::Required_ErrorAndReturnNull),
+    Required_ReturnNull         = Unreal::getConstEnumValue(FActorSpawnParameters::ESpawnActorNameMode::Required_ReturnNull),
+    Requested                   = Unreal::getConstEnumValue(FActorSpawnParameters::ESpawnActorNameMode::Requested)
 };
 
 // This enum corresponds to EObjectFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectMacros.h
 UENUM()
 enum class ESpObjectFlags
 {
-    RF_NoFlags                      = Unreal::getEnumValueAsConst(EObjectFlags::RF_NoFlags),
-    RF_Public                       = Unreal::getEnumValueAsConst(EObjectFlags::RF_Public),
-    RF_Standalone                   = Unreal::getEnumValueAsConst(EObjectFlags::RF_Standalone),
-    RF_MarkAsNative                 = Unreal::getEnumValueAsConst(EObjectFlags::RF_MarkAsNative),
-    RF_Transactional                = Unreal::getEnumValueAsConst(EObjectFlags::RF_Transactional),
-    RF_ClassDefaultObject           = Unreal::getEnumValueAsConst(EObjectFlags::RF_ClassDefaultObject),
-    RF_ArchetypeObject              = Unreal::getEnumValueAsConst(EObjectFlags::RF_ArchetypeObject),
-    RF_Transient                    = Unreal::getEnumValueAsConst(EObjectFlags::RF_Transient),
-    RF_MarkAsRootSet                = Unreal::getEnumValueAsConst(EObjectFlags::RF_MarkAsRootSet),
-    RF_TagGarbageTemp               = Unreal::getEnumValueAsConst(EObjectFlags::RF_TagGarbageTemp),
-    RF_NeedInitialization           = Unreal::getEnumValueAsConst(EObjectFlags::RF_NeedInitialization),
-    RF_NeedLoad                     = Unreal::getEnumValueAsConst(EObjectFlags::RF_NeedLoad),
-    RF_KeepForCooker                = Unreal::getEnumValueAsConst(EObjectFlags::RF_KeepForCooker),
-    RF_NeedPostLoad                 = Unreal::getEnumValueAsConst(EObjectFlags::RF_NeedPostLoad),
-    RF_NeedPostLoadSubobjects       = Unreal::getEnumValueAsConst(EObjectFlags::RF_NeedPostLoadSubobjects),
-    RF_NewerVersionExists           = Unreal::getEnumValueAsConst(EObjectFlags::RF_NewerVersionExists),
-    RF_BeginDestroyed               = Unreal::getEnumValueAsConst(EObjectFlags::RF_BeginDestroyed),
-    RF_FinishDestroyed              = Unreal::getEnumValueAsConst(EObjectFlags::RF_FinishDestroyed),
-    RF_BeingRegenerated             = Unreal::getEnumValueAsConst(EObjectFlags::RF_BeingRegenerated),
-    RF_DefaultSubObject             = Unreal::getEnumValueAsConst(EObjectFlags::RF_DefaultSubObject),
-    RF_WasLoaded                    = Unreal::getEnumValueAsConst(EObjectFlags::RF_WasLoaded),
-    RF_TextExportTransient          = Unreal::getEnumValueAsConst(EObjectFlags::RF_TextExportTransient),
-    RF_LoadCompleted                = Unreal::getEnumValueAsConst(EObjectFlags::RF_LoadCompleted),
-    RF_InheritableComponentTemplate = Unreal::getEnumValueAsConst(EObjectFlags::RF_InheritableComponentTemplate),
-    RF_DuplicateTransient           = Unreal::getEnumValueAsConst(EObjectFlags::RF_DuplicateTransient),
-    RF_StrongRefOnFrame             = Unreal::getEnumValueAsConst(EObjectFlags::RF_StrongRefOnFrame),
-    RF_NonPIEDuplicateTransient     = Unreal::getEnumValueAsConst(EObjectFlags::RF_NonPIEDuplicateTransient),
-    RF_WillBeLoaded                 = Unreal::getEnumValueAsConst(EObjectFlags::RF_WillBeLoaded),
-    RF_HasExternalPackage           = Unreal::getEnumValueAsConst(EObjectFlags::RF_HasExternalPackage),
-    RF_AllocatedInSharedPage        = Unreal::getEnumValueAsConst(EObjectFlags::RF_AllocatedInSharedPage)
+    RF_NoFlags                      = Unreal::getConstEnumValue(EObjectFlags::RF_NoFlags),
+    RF_Public                       = Unreal::getConstEnumValue(EObjectFlags::RF_Public),
+    RF_Standalone                   = Unreal::getConstEnumValue(EObjectFlags::RF_Standalone),
+    RF_MarkAsNative                 = Unreal::getConstEnumValue(EObjectFlags::RF_MarkAsNative),
+    RF_Transactional                = Unreal::getConstEnumValue(EObjectFlags::RF_Transactional),
+    RF_ClassDefaultObject           = Unreal::getConstEnumValue(EObjectFlags::RF_ClassDefaultObject),
+    RF_ArchetypeObject              = Unreal::getConstEnumValue(EObjectFlags::RF_ArchetypeObject),
+    RF_Transient                    = Unreal::getConstEnumValue(EObjectFlags::RF_Transient),
+    RF_MarkAsRootSet                = Unreal::getConstEnumValue(EObjectFlags::RF_MarkAsRootSet),
+    RF_TagGarbageTemp               = Unreal::getConstEnumValue(EObjectFlags::RF_TagGarbageTemp),
+    RF_NeedInitialization           = Unreal::getConstEnumValue(EObjectFlags::RF_NeedInitialization),
+    RF_NeedLoad                     = Unreal::getConstEnumValue(EObjectFlags::RF_NeedLoad),
+    RF_KeepForCooker                = Unreal::getConstEnumValue(EObjectFlags::RF_KeepForCooker),
+    RF_NeedPostLoad                 = Unreal::getConstEnumValue(EObjectFlags::RF_NeedPostLoad),
+    RF_NeedPostLoadSubobjects       = Unreal::getConstEnumValue(EObjectFlags::RF_NeedPostLoadSubobjects),
+    RF_NewerVersionExists           = Unreal::getConstEnumValue(EObjectFlags::RF_NewerVersionExists),
+    RF_BeginDestroyed               = Unreal::getConstEnumValue(EObjectFlags::RF_BeginDestroyed),
+    RF_FinishDestroyed              = Unreal::getConstEnumValue(EObjectFlags::RF_FinishDestroyed),
+    RF_BeingRegenerated             = Unreal::getConstEnumValue(EObjectFlags::RF_BeingRegenerated),
+    RF_DefaultSubObject             = Unreal::getConstEnumValue(EObjectFlags::RF_DefaultSubObject),
+    RF_WasLoaded                    = Unreal::getConstEnumValue(EObjectFlags::RF_WasLoaded),
+    RF_TextExportTransient          = Unreal::getConstEnumValue(EObjectFlags::RF_TextExportTransient),
+    RF_LoadCompleted                = Unreal::getConstEnumValue(EObjectFlags::RF_LoadCompleted),
+    RF_InheritableComponentTemplate = Unreal::getConstEnumValue(EObjectFlags::RF_InheritableComponentTemplate),
+    RF_DuplicateTransient           = Unreal::getConstEnumValue(EObjectFlags::RF_DuplicateTransient),
+    RF_StrongRefOnFrame             = Unreal::getConstEnumValue(EObjectFlags::RF_StrongRefOnFrame),
+    RF_NonPIEDuplicateTransient     = Unreal::getConstEnumValue(EObjectFlags::RF_NonPIEDuplicateTransient),
+    RF_WillBeLoaded                 = Unreal::getConstEnumValue(EObjectFlags::RF_WillBeLoaded),
+    RF_HasExternalPackage           = Unreal::getConstEnumValue(EObjectFlags::RF_HasExternalPackage),
+    RF_AllocatedInSharedPage        = Unreal::getConstEnumValue(EObjectFlags::RF_AllocatedInSharedPage)
 };
 ENUM_CLASS_FLAGS(ESpObjectFlags);
 
@@ -93,27 +95,27 @@ ENUM_CLASS_FLAGS(ESpObjectFlags);
 UENUM()
 enum class ESpLoadFlags
 {
-    LOAD_None                        = Unreal::getEnumValueAsConst(ELoadFlags::LOAD_None),
-    LOAD_Async                       = Unreal::getEnumValueAsConst(ELoadFlags::LOAD_Async),
-    LOAD_NoWarn                      = Unreal::getEnumValueAsConst(ELoadFlags::LOAD_NoWarn),
-    LOAD_EditorOnly                  = Unreal::getEnumValueAsConst(ELoadFlags::LOAD_EditorOnly),
-    LOAD_ResolvingDeferredExports    = Unreal::getEnumValueAsConst(ELoadFlags::LOAD_ResolvingDeferredExports),
-    LOAD_Verify                      = Unreal::getEnumValueAsConst(ELoadFlags::LOAD_Verify),
-    LOAD_NoVerify                    = Unreal::getEnumValueAsConst(ELoadFlags::LOAD_NoVerify),
-    LOAD_IsVerifying                 = Unreal::getEnumValueAsConst(ELoadFlags::LOAD_IsVerifying),
-    LOAD_SkipLoadImportedPackages    = Unreal::getEnumValueAsConst(ELoadFlags::LOAD_SkipLoadImportedPackages),
-    LOAD_RegenerateBulkDataGuids     = Unreal::getEnumValueAsConst(ELoadFlags::LOAD_RegenerateBulkDataGuids),
-    LOAD_DisableDependencyPreloading = Unreal::getEnumValueAsConst(ELoadFlags::LOAD_DisableDependencyPreloading),
-    LOAD_Quiet                       = Unreal::getEnumValueAsConst(ELoadFlags::LOAD_Quiet),
-    LOAD_FindIfFail                  = Unreal::getEnumValueAsConst(ELoadFlags::LOAD_FindIfFail),
-    LOAD_MemoryReader                = Unreal::getEnumValueAsConst(ELoadFlags::LOAD_MemoryReader),
-    LOAD_NoRedirects                 = Unreal::getEnumValueAsConst(ELoadFlags::LOAD_NoRedirects),
-    LOAD_ForDiff                     = Unreal::getEnumValueAsConst(ELoadFlags::LOAD_ForDiff),
-    LOAD_PackageForPIE               = Unreal::getEnumValueAsConst(ELoadFlags::LOAD_PackageForPIE),
-    LOAD_DeferDependencyLoads        = Unreal::getEnumValueAsConst(ELoadFlags::LOAD_DeferDependencyLoads),
-    LOAD_ForFileDiff                 = Unreal::getEnumValueAsConst(ELoadFlags::LOAD_ForFileDiff),
-    LOAD_DisableCompileOnLoad        = Unreal::getEnumValueAsConst(ELoadFlags::LOAD_DisableCompileOnLoad),
-    LOAD_DisableEngineVersionChecks  = Unreal::getEnumValueAsConst(ELoadFlags::LOAD_DisableEngineVersionChecks)
+    LOAD_None                        = Unreal::getConstEnumValue(ELoadFlags::LOAD_None),
+    LOAD_Async                       = Unreal::getConstEnumValue(ELoadFlags::LOAD_Async),
+    LOAD_NoWarn                      = Unreal::getConstEnumValue(ELoadFlags::LOAD_NoWarn),
+    LOAD_EditorOnly                  = Unreal::getConstEnumValue(ELoadFlags::LOAD_EditorOnly),
+    LOAD_ResolvingDeferredExports    = Unreal::getConstEnumValue(ELoadFlags::LOAD_ResolvingDeferredExports),
+    LOAD_Verify                      = Unreal::getConstEnumValue(ELoadFlags::LOAD_Verify),
+    LOAD_NoVerify                    = Unreal::getConstEnumValue(ELoadFlags::LOAD_NoVerify),
+    LOAD_IsVerifying                 = Unreal::getConstEnumValue(ELoadFlags::LOAD_IsVerifying),
+    LOAD_SkipLoadImportedPackages    = Unreal::getConstEnumValue(ELoadFlags::LOAD_SkipLoadImportedPackages),
+    LOAD_RegenerateBulkDataGuids     = Unreal::getConstEnumValue(ELoadFlags::LOAD_RegenerateBulkDataGuids),
+    LOAD_DisableDependencyPreloading = Unreal::getConstEnumValue(ELoadFlags::LOAD_DisableDependencyPreloading),
+    LOAD_Quiet                       = Unreal::getConstEnumValue(ELoadFlags::LOAD_Quiet),
+    LOAD_FindIfFail                  = Unreal::getConstEnumValue(ELoadFlags::LOAD_FindIfFail),
+    LOAD_MemoryReader                = Unreal::getConstEnumValue(ELoadFlags::LOAD_MemoryReader),
+    LOAD_NoRedirects                 = Unreal::getConstEnumValue(ELoadFlags::LOAD_NoRedirects),
+    LOAD_ForDiff                     = Unreal::getConstEnumValue(ELoadFlags::LOAD_ForDiff),
+    LOAD_PackageForPIE               = Unreal::getConstEnumValue(ELoadFlags::LOAD_PackageForPIE),
+    LOAD_DeferDependencyLoads        = Unreal::getConstEnumValue(ELoadFlags::LOAD_DeferDependencyLoads),
+    LOAD_ForFileDiff                 = Unreal::getConstEnumValue(ELoadFlags::LOAD_ForFileDiff),
+    LOAD_DisableCompileOnLoad        = Unreal::getConstEnumValue(ELoadFlags::LOAD_DisableCompileOnLoad),
+    LOAD_DisableEngineVersionChecks  = Unreal::getConstEnumValue(ELoadFlags::LOAD_DisableEngineVersionChecks)
 };
 ENUM_CLASS_FLAGS(ESpLoadFlags);
 
@@ -121,34 +123,34 @@ ENUM_CLASS_FLAGS(ESpLoadFlags);
 UENUM()
 enum class ESpConsoleVariableFlags
 {
-    ECVF_FlagMask                 = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_FlagMask),
-    ECVF_Default                  = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_Default),
-    ECVF_Cheat                    = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_Cheat),
-    ECVF_ReadOnly                 = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_ReadOnly),
-    ECVF_Unregistered             = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_Unregistered),
-    ECVF_CreatedFromIni           = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_CreatedFromIni),
-    ECVF_RenderThreadSafe         = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_RenderThreadSafe),
-    ECVF_Scalability              = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_Scalability),
-    ECVF_ScalabilityGroup         = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_ScalabilityGroup),
-    ECVF_Preview                  = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_Preview),
-    ECVF_GeneralShaderChange      = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_GeneralShaderChange),
-    ECVF_MobileShaderChange       = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_MobileShaderChange),
-    ECVF_DesktopShaderChange      = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_DesktopShaderChange),
-    ECVF_ExcludeFromPreview       = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_ExcludeFromPreview),
-    ECVF_SetFlagMask              = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetFlagMask),
-    ECVF_Set_NoSinkCall_Unsafe    = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_Set_NoSinkCall_Unsafe),
-    ECVF_SetByMask                = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetByMask),
-    ECVF_SetByConstructor         = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetByConstructor),
-    ECVF_SetByScalability         = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetByScalability),
-    ECVF_SetByGameSetting         = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetByGameSetting),
-    ECVF_SetByProjectSetting      = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetByProjectSetting),
-    ECVF_SetBySystemSettingsIni   = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetBySystemSettingsIni),
-    ECVF_SetByDeviceProfile       = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetByDeviceProfile),
-    ECVF_SetByGameOverride        = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetByGameOverride),
-    ECVF_SetByConsoleVariablesIni = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetByConsoleVariablesIni),
-    ECVF_SetByCommandline         = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetByCommandline),
-    ECVF_SetByCode                = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetByCode),
-    ECVF_SetByConsole             = Unreal::getEnumValueAsConst(EConsoleVariableFlags::ECVF_SetByConsole)
+    ECVF_FlagMask                 = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_FlagMask),
+    ECVF_Default                  = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_Default),
+    ECVF_Cheat                    = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_Cheat),
+    ECVF_ReadOnly                 = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_ReadOnly),
+    ECVF_Unregistered             = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_Unregistered),
+    ECVF_CreatedFromIni           = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_CreatedFromIni),
+    ECVF_RenderThreadSafe         = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_RenderThreadSafe),
+    ECVF_Scalability              = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_Scalability),
+    ECVF_ScalabilityGroup         = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_ScalabilityGroup),
+    ECVF_Preview                  = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_Preview),
+    ECVF_GeneralShaderChange      = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_GeneralShaderChange),
+    ECVF_MobileShaderChange       = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_MobileShaderChange),
+    ECVF_DesktopShaderChange      = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_DesktopShaderChange),
+    ECVF_ExcludeFromPreview       = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_ExcludeFromPreview),
+    ECVF_SetFlagMask              = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_SetFlagMask),
+    ECVF_Set_NoSinkCall_Unsafe    = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_Set_NoSinkCall_Unsafe),
+    ECVF_SetByMask                = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_SetByMask),
+    ECVF_SetByConstructor         = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_SetByConstructor),
+    ECVF_SetByScalability         = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_SetByScalability),
+    ECVF_SetByGameSetting         = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_SetByGameSetting),
+    ECVF_SetByProjectSetting      = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_SetByProjectSetting),
+    ECVF_SetBySystemSettingsIni   = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_SetBySystemSettingsIni),
+    ECVF_SetByDeviceProfile       = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_SetByDeviceProfile),
+    ECVF_SetByGameOverride        = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_SetByGameOverride),
+    ECVF_SetByConsoleVariablesIni = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_SetByConsoleVariablesIni),
+    ECVF_SetByCommandline         = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_SetByCommandline),
+    ECVF_SetByCode                = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_SetByCode),
+    ECVF_SetByConsole             = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_SetByConsole)
 };
 ENUM_CLASS_FLAGS(ESpConsoleVariableFlags);
 
@@ -164,7 +166,7 @@ struct FSpIncludeSuperFlag
 {
     GENERATED_BODY()
     UPROPERTY()
-    ESpIncludeSuperFlag Enum;
+    ESpIncludeSuperFlag Enum = Unreal::getEnumValueAs<ESpIncludeSuperFlag>(0);
     SP_DECLARE_ENUM_PROPERTY(ESpIncludeSuperFlag, Enum);
 };
 
@@ -173,7 +175,7 @@ struct FSpObjectFlags
 {
     GENERATED_BODY()
     UPROPERTY()
-    ESpObjectFlags Enum;
+    ESpObjectFlags Enum = Unreal::getEnumValueAs<ESpObjectFlags>(0);
     SP_DECLARE_ENUM_PROPERTY(ESpObjectFlags, Enum);
 };
 
@@ -182,7 +184,7 @@ struct FSpLoadFlags
 {
     GENERATED_BODY()
     UPROPERTY()
-    ESpLoadFlags Enum;
+    ESpLoadFlags Enum = Unreal::getEnumValueAs<ESpLoadFlags>(0);
     SP_DECLARE_ENUM_PROPERTY(ESpLoadFlags, Enum);
 };
 
@@ -191,7 +193,7 @@ struct FSpConsoleVariableFlags
 {
     GENERATED_BODY()
     UPROPERTY()
-    ESpConsoleVariableFlags Enum;
+    ESpConsoleVariableFlags Enum = Unreal::getEnumValueAs<ESpConsoleVariableFlags>(0);
     SP_DECLARE_ENUM_PROPERTY(ESpConsoleVariableFlags, Enum);
 };
 
@@ -313,8 +315,8 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_property_by_name_on_uobject",
-            [this](uint64_t& uobject, std::string& name) -> Unreal::PropertyDesc {
-                return Unreal::findPropertyByName(toPtr<UObject>(uobject), name);
+            [this](uint64_t& uobject, std::string& property_name) -> Unreal::PropertyDesc {
+                return Unreal::findPropertyByName(toPtr<UObject>(uobject), property_name);
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_property_by_name_on_ustruct",
@@ -341,15 +343,9 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_function_by_name",
-            [this](uint64_t& uclass, std::string& name, std::map<std::string, std::string>& unreal_obj_strings) -> uint64_t {
-
-                UnrealObj<FSpIncludeSuperFlag> sp_include_super_flag_obj("IncludeSuperFlag");
-                UnrealObjUtils::setObjectPropertiesFromStrings({&sp_include_super_flag_obj}, unreal_obj_strings);
-
-                FSpIncludeSuperFlag sp_include_super_flag = sp_include_super_flag_obj.getObj();
-                EIncludeSuperFlag::Type include_super_flag = Unreal::getEnumValueAs<EIncludeSuperFlag::Type>(sp_include_super_flag);
-
-                return toUInt64(Unreal::findFunctionByName(toPtr<UClass>(uclass), name, include_super_flag));
+            [this](uint64_t& uclass, std::string& function_name, std::string& include_super_flag_string) -> uint64_t {
+                EIncludeSuperFlag::Type include_super_flag = Unreal::getEnumValueFromString<FSpIncludeSuperFlag, EIncludeSuperFlag::Type>(include_super_flag_string);
+                return toUInt64(Unreal::findFunctionByName(toPtr<UClass>(uclass), function_name, include_super_flag));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "call_function",
@@ -812,16 +808,13 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "spawn_actor",
-            [this](std::string& class_name, std::map<std::string, std::string>& unreal_obj_strings, std::vector<std::string>& object_flag_strings) -> uint64_t {
-                
-                UnrealObj<FVector> location_obj("Location");
-                UnrealObj<FRotator> rotation_obj("Rotation");
-                UnrealObj<FSpActorSpawnParameters> sp_actor_spawn_parameters_obj("SpawnParameters");
-                UnrealObjUtils::setObjectPropertiesFromStrings({&location_obj, &rotation_obj, &sp_actor_spawn_parameters_obj}, unreal_obj_strings);
-
-                FVector location = location_obj.getObj();
-                FRotator rotation = rotation_obj.getObj();
-                FSpActorSpawnParameters sp_actor_spawn_parameters = sp_actor_spawn_parameters_obj.getObj();
+            [this](std::string& class_name, std::string& location_string, std::string& rotation_string, std::string& spawn_parameters_string, std::vector<std::string>& object_flag_strings) -> uint64_t {
+                FVector location;
+                FRotator rotation;
+                FSpActorSpawnParameters sp_actor_spawn_parameters;
+                Unreal::setObjectPropertiesFromString(&location, UnrealClassRegistrar::getStaticStruct<FVector>(), location_string);
+                Unreal::setObjectPropertiesFromString(&rotation, UnrealClassRegistrar::getStaticStruct<FRotator>(), rotation_string);
+                Unreal::setObjectPropertiesFromString(&sp_actor_spawn_parameters, FSpActorSpawnParameters::StaticStruct(), spawn_parameters_string);
 
                 FActorSpawnParameters actor_spawn_parameters;
                 actor_spawn_parameters.Name = sp_actor_spawn_parameters.Name;
@@ -842,18 +835,15 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "spawn_actor_from_uclass",
-            [this](uint64_t& uclass, std::map<std::string, std::string>& unreal_obj_strings, std::vector<std::string>& object_flag_strings) -> uint64_t {
-
+            [this](uint64_t& uclass, std::string& location_string, std::string& rotation_string, std::string& spawn_parameters_string, std::vector<std::string>& object_flag_strings) -> uint64_t {
                 SP_ASSERT(world_);
 
-                UnrealObj<FVector> location_obj("Location");
-                UnrealObj<FRotator> rotation_obj("Rotation");
-                UnrealObj<FSpActorSpawnParameters> sp_actor_spawn_parameters_obj("SpawnParameters");
-                UnrealObjUtils::setObjectPropertiesFromStrings({&location_obj, &rotation_obj, &sp_actor_spawn_parameters_obj}, unreal_obj_strings);
-
-                FVector location = location_obj.getObj();
-                FRotator rotation = rotation_obj.getObj();
-                FSpActorSpawnParameters sp_actor_spawn_parameters = sp_actor_spawn_parameters_obj.getObj();
+                FVector location;
+                FRotator rotation;
+                FSpActorSpawnParameters sp_actor_spawn_parameters;
+                Unreal::setObjectPropertiesFromString(&location, UnrealClassRegistrar::getStaticStruct<FVector>(), location_string);
+                Unreal::setObjectPropertiesFromString(&rotation, UnrealClassRegistrar::getStaticStruct<FRotator>(), rotation_string);
+                Unreal::setObjectPropertiesFromString(&sp_actor_spawn_parameters, FSpActorSpawnParameters::StaticStruct(), spawn_parameters_string);
 
                 FActorSpawnParameters actor_spawn_parameters;
                 actor_spawn_parameters.Name = sp_actor_spawn_parameters.Name;
@@ -888,23 +878,23 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "create_component_outside_owner_constructor", 
-            [this](std::string& class_name, uint64_t& owner, std::string& name) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::createComponentOutsideOwnerConstructor(class_name, toPtr<AActor>(owner), name));
+            [this](std::string& class_name, uint64_t& owner, std::string& component_name) -> uint64_t {
+                return toUInt64(UnrealClassRegistrar::createComponentOutsideOwnerConstructor(class_name, toPtr<AActor>(owner), component_name));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "create_scene_component_outside_owner_constructor_from_actor",
-            [this](std::string& class_name, uint64_t& actor, std::string& name) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::createSceneComponentOutsideOwnerConstructor(class_name, toPtr<AActor>(actor), name));
+            [this](std::string& class_name, uint64_t& actor, std::string& scene_component_name) -> uint64_t {
+                return toUInt64(UnrealClassRegistrar::createSceneComponentOutsideOwnerConstructor(class_name, toPtr<AActor>(actor), scene_component_name));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "create_scene_component_outside_owner_constructor_from_object",
-            [this](std::string& class_name, uint64_t& owner, uint64_t& parent, std::string& name) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::createSceneComponentOutsideOwnerConstructor(class_name, toPtr<UObject>(owner), toPtr<USceneComponent>(parent), name));
+            [this](std::string& class_name, uint64_t& owner, uint64_t& parent, std::string& scene_component_name) -> uint64_t {
+                return toUInt64(UnrealClassRegistrar::createSceneComponentOutsideOwnerConstructor(class_name, toPtr<UObject>(owner), toPtr<USceneComponent>(parent), scene_component_name));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "create_scene_component_outside_owner_constructor_from_component",
-            [this](std::string& class_name, uint64_t& owner, std::string& name) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::createSceneComponentOutsideOwnerConstructor(class_name, toPtr<USceneComponent>(owner), name));
+            [this](std::string& class_name, uint64_t& owner, std::string& scene_component_name) -> uint64_t {
+                return toUInt64(UnrealClassRegistrar::createSceneComponentOutsideOwnerConstructor(class_name, toPtr<USceneComponent>(owner), scene_component_name));
             });
 
         //
@@ -1039,9 +1029,9 @@ public:
         // Find, get, and set console variables
         //
 
-        unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_console_variable",
-            [this](std::string& name) -> uint64_t {
-                return toUInt64(IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString(name)));
+        unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_console_variable_by_name",
+            [this](std::string& cvar_name) -> uint64_t {
+                return toUInt64(IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString(cvar_name)));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_console_variable_value_as_bool",
@@ -1093,6 +1083,15 @@ public:
             });
 
         //
+        // Execute console commands
+        //
+
+        unreal_entry_point_binder->bindFuncUnreal("unreal_service", "execute_console_command",
+            [this](std::string& command) -> void {
+                GEngine->Exec(world_, *Unreal::toFString(command));
+            });
+
+        //
         // Stable name helper functions
         //
 
@@ -1128,34 +1127,15 @@ public:
         post_world_initialization_handle_.Reset();
     }
 
+private:
     void postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values);
     void worldCleanupHandler(UWorld* world, bool session_ended, bool cleanup_resources);
 
-private:
-
-    template <typename TValue>
-    static uint64_t toUInt64(const TValue* src)
-    {
-        return reinterpret_cast<uint64_t>(src);
-    }
-
-    template <typename TKey, typename TValue>
-    static std::map<TKey, uint64_t> toUInt64(const std::map<TKey, TValue>& src)
-    {
-        return Std::toMap<TKey, uint64_t>(src | std::views::transform([](auto& pair) { auto& [key, value] = pair; return std::make_pair(key, toUInt64(value)); }));
-    }
-
-    template <typename TValue>
-    static std::vector<uint64_t> toUInt64(const std::vector<TValue>& src)
-    {
-        return Std::reinterpretAsVectorOf<uint64_t>(src);
-    }
-
-    template <typename T>
-    static T* toPtr(uint64_t src)
-    {
-        return reinterpret_cast<T*>(src);
-    }
+    // these local helper functions are here to make the usages throughout this file more concise
+    template <typename TValue>                static uint64_t                 toUInt64(const TValue* src)                 { return ServiceUtils::toUInt64(src); }
+    template <typename TValue>                static std::vector<uint64_t>    toUInt64(const std::vector<TValue>& src)    { return ServiceUtils::toUInt64(src); }
+    template <typename TKey, typename TValue> static std::map<TKey, uint64_t> toUInt64(const std::map<TKey, TValue>& src) { return ServiceUtils::toUInt64(src); }
+    template <typename TPtr>                  static TPtr*                    toPtr(uint64_t src)                         { return ServiceUtils::toPtr<TPtr>(src); }
 
     FDelegateHandle post_world_initialization_handle_;
     FDelegateHandle world_cleanup_handle_;

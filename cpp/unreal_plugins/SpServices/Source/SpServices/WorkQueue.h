@@ -31,12 +31,16 @@ public:
     WorkQueue() : io_context_(), executor_work_guard_(io_context_.get_executor()) {}
 
     // typically called from the game thread in EngineService::beginFrameHandler(...) and EngineService::endFrameHandler(...)
+    // to block the game thread indefinitely, while the WorkQueue waits for and executes incoming work
     void run();
 
-    // typically called from a worker thread in the "engine_service.tick" and "engine_service.end_tick" entry points
+    // typically called from an RPC worker thread in the "engine_service.tick" and "engine_service.end_tick"
+    // entry points to instruct the WorkQueue that it can stop blocking, as soon as it is finished executing
+    // all of its scheduled work
     void reset();
 
-    // typically called from the game thread in EngineService::bindFuncUnreal(...)
+    // typically called from the game thread in EngineService::bindFuncUnreal(...) to get an outer func that
+    // executes the given inner func via a given WorkQueue
     template <typename TFunc>
     static auto wrapFuncToExecuteInWorkQueueBlocking(WorkQueue& work_queue, const TFunc& func)
     {

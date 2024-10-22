@@ -24,9 +24,10 @@ class Instance():
         self.engine_service = spear.EngineService(self.rpc_client)
         self.legacy_service = spear.LegacyService(self.rpc_client)
         self.unreal_service = spear.UnrealService(self.rpc_client)
+        self.sp_func_service = spear.SpFuncService(self.rpc_client)
 
         # Need to do this after we have a valid EngineService object because we call begin_tick(), tick(), and end_tick() here.
-        self._initialize_unreal_instance()
+        self._request_initialize_unreal_instance()
 
     def close(self):
         # Note that in the constructor, we launch the Unreal instance first and then initialize the RPC client. Normally,
@@ -37,19 +38,18 @@ class Instance():
 
     def is_running(self):
         try:
-            self.rpc_client.call("engine_service.ping")
-            return True
+            return self.engine_service.get_world() != 0
         except Exception as e:
             pass # no need to log exception because this case is expected when the instance is no longer running
         return False
 
     def _request_launch_unreal_instance(self):
 
+        spear.log("Requesting to launch Unreal instance...")
+
         if self._config.SPEAR.LAUNCH_MODE == "none":
             spear.log('SPEAR.LAUNCH_MODE == "none" so we assume that an Unreal instance has been launched externally...')
             return
-
-        spear.log("Launching Unreal instance...")
 
         # write temp file
         temp_dir = os.path.realpath(os.path.join(self._config.SPEAR.INSTANCE.TEMP_DIR))
@@ -122,13 +122,13 @@ class Instance():
 
         spear.log("Finished launching Unreal instance.")
 
-    def _initialize_unreal_instance(self):
+    def _request_initialize_unreal_instance(self):
+
+        spear.log("Requesting to initialize Unreal instance...")
 
         if self._config.SPEAR.LAUNCH_MODE == "none":
             spear.log('SPEAR.LAUNCH_MODE == "none" so we assume that the Unreal instance is already initialized...')
             return
-
-        spear.log("Initializing Unreal instance...")
 
         spear.log("Waiting for " + str(self._config.SPEAR.INSTANCE.INITIALIZE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS) + " seconds before attempting to execute warmup frames...")
         time.sleep(self._config.SPEAR.INSTANCE.INITIALIZE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS)
@@ -147,11 +147,11 @@ class Instance():
 
     def _request_close_unreal_instance(self):
 
+        spear.log("Requesting to close Unreal instance...")
+
         if self._config.SPEAR.LAUNCH_MODE == "none":
             spear.log('SPEAR.LAUNCH_MODE == "none" so we assume that the Unreal instance should remain open...')
             return
-
-        spear.log("Closing Unreal instance...")
 
         try:
             self.rpc_client.call("engine_service.request_close")
@@ -193,17 +193,21 @@ class Instance():
                 # throwing when calling a server function. The RPC client will try to connect reconnect_limit
                 # times before returning from its constructor.
                 self.rpc_client = msgpackrpc.Client(
-                    msgpackrpc.Address("127.0.0.1", self._config.SP_SERVICES.PORT),
+                    msgpackrpc.Address("127.0.0.1", self._config.SP_SERVICES.RPC_SERVER_PORT),
                     timeout=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS,
                     reconnect_limit=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
-                self.rpc_client.call("engine_service.ping")
-                connected = True
+                world = self.rpc_client.call("engine_service.get_world") # don't use self.engine_service because it hasn't been initialized yet
+                spear.log("World: ", world)
+                if world:
+                    connected = True
 
             except Exception as e:
-                # The client may not clean up resources correctly in this case, so we clean things up
-                # explicitly. See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14 for more
-                # details.
-                spear.log("Exception:", e)
+                spear.log("Exception: ", e)
+
+            # The client may not clean up resources correctly in this case, so we clean things up
+            # explicitly. See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14 for more
+            # details.
+            if not connected:
                 self._close_rpc_client(verbose=True)
 
         # otherwise try to connect repeatedly, since the RPC server might not have started yet
@@ -224,20 +228,25 @@ class Instance():
                     # before throwing when calling a server function. The RPC client will try to connect
                     # reconnect_limit times before returning from its constructor.
                     self.rpc_client = msgpackrpc.Client(
-                        msgpackrpc.Address("127.0.0.1", self._config.SP_SERVICES.PORT), 
+                        msgpackrpc.Address("127.0.0.1", self._config.SP_SERVICES.RPC_SERVER_PORT), 
                         timeout=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
                         reconnect_limit=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
-                    self.rpc_client.call("engine_service.ping")
-                    connected = True
-                    break
+                    world = self.rpc_client.call("engine_service.get_world") # don't use self.engine_service because it hasn't been initialized yet
+                    spear.log("World: ", world)
+                    if world:
+                        connected = True
+                        break
+
+                # The client may not clean up resources correctly in this case, so we clean things up
+                # explicitly. See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14 for more
+                # details. There is no need to log the exception because this case is expected until
+                # until we can successfully connect to the RPC server, which is why we set verbose=False
+                # when closing the RPC client.
 
                 except Exception as e:
-                    # The client may not clean up resources correctly in this case, so we clean things up
-                    # explicitly. See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14 for more
-                    # details. There is no need to log the exception because this case is expected until
-                    # until we can successfully connect to the RPC server, which is why we set verbose=False
-                    # when closing the RPC client.
-                    self._close_rpc_client(verbose=False)
+                    pass
+
+                self._close_rpc_client(verbose=False)
 
                 time.sleep(self._config.SPEAR.INSTANCE.INITIALIZE_RPC_CLIENT_SLEEP_TIME_SECONDS)
                 elapsed_time_seconds = time.time() - start_time_seconds

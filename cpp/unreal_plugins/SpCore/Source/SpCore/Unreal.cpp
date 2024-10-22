@@ -84,29 +84,29 @@ void Unreal::setObjectPropertiesFromString(void* value_ptr, const UStruct* ustru
 // Find property by name, get and set property values, uobject can't be const because we cast it to void*
 //
 
-Unreal::PropertyDesc Unreal::findPropertyByName(UObject* uobject, const std::string& name)
+Unreal::PropertyDesc Unreal::findPropertyByName(UObject* uobject, const std::string& property_name)
 {
     SP_ASSERT(uobject);
-    return findPropertyByName(uobject, uobject->GetClass(), name);
+    return findPropertyByName(uobject, uobject->GetClass(), property_name);
 }
 
-Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* ustruct, const std::string& name)
+Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* ustruct, const std::string& property_name)
 {
     SP_ASSERT(value_ptr);
     SP_ASSERT(ustruct);
 
-    std::vector<std::string> property_names = Std::tokenize(name, ".");
+    std::vector<std::string> property_names = Std::tokenize(property_name, ".");
 
     PropertyDesc property_desc;
     property_desc.value_ptr_ = value_ptr;
 
     for (int i = 0; i < property_names.size(); i++) {
 
-        std::string& property_name = property_names.at(i);
-        std::vector<std::string> property_name_tokens = Std::tokenize(property_name, "[]");
-        SP_ASSERT(property_name_tokens.size() >= 1 && property_name_tokens.size() <= 2);
+        std::string& name = property_names.at(i);
+        std::vector<std::string> name_tokens = Std::tokenize(name, "[]");
+        SP_ASSERT(name_tokens.size() >= 1 && name_tokens.size() <= 2);
 
-        property_desc.property_ = ustruct->FindPropertyByName(Unreal::toFName(property_name_tokens.at(0)));
+        property_desc.property_ = ustruct->FindPropertyByName(Unreal::toFName(name_tokens.at(0)));
         SP_ASSERT(property_desc.property_);
         property_desc.value_ptr_ = property_desc.property_->ContainerPtrToValuePtr<void>(property_desc.value_ptr_);
         SP_ASSERT(property_desc.value_ptr_);
@@ -117,8 +117,8 @@ Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* 
         // string, and not enclosed in quotes otherwise. The index string must exactly match whatever is
         // returned by getPropertyValueAsString(...) for the key.
 
-        if (property_desc.property_->IsA(FArrayProperty::StaticClass()) && property_name_tokens.size() == 2) {
-            int index = std::atoi(property_name_tokens.at(1).c_str());
+        if (property_desc.property_->IsA(FArrayProperty::StaticClass()) && name_tokens.size() == 2) {
+            int index = std::atoi(name_tokens.at(1).c_str());
             FArrayProperty* array_property = static_cast<FArrayProperty*>(property_desc.property_);
             FScriptArrayHelper array_helper(array_property, property_desc.value_ptr_);
             SP_ASSERT(index < array_helper.Num());
@@ -128,7 +128,7 @@ Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* 
             property_desc.value_ptr_ = array_property->GetValueAddressAtIndex_Direct(property_desc.property_, property_desc.value_ptr_, index);
             SP_ASSERT(property_desc.value_ptr_);
 
-        } else if (property_desc.property_->IsA(FMapProperty::StaticClass()) && property_name_tokens.size() == 2) {
+        } else if (property_desc.property_->IsA(FMapProperty::StaticClass()) && name_tokens.size() == 2) {
 
             FMapProperty* map_property = static_cast<FMapProperty*>(property_desc.property_);
             FScriptMapHelper map_helper(map_property, property_desc.value_ptr_);
@@ -149,15 +149,15 @@ Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* 
                 if (inner_key_property_desc.property_->IsA(FBoolProperty::StaticClass()) ||
                     inner_key_property_desc.property_->IsA(FIntProperty::StaticClass())  ||
                     inner_key_property_desc.property_->IsA(FByteProperty::StaticClass())) {
-                    if (property_name_tokens.at(1) == inner_key_string) {
+                    if (name_tokens.at(1) == inner_key_string) {
                         found = true;
                     }
                 } else if (inner_key_property_desc.property_->IsA(FStrProperty::StaticClass())) {
-                    if (property_name_tokens.at(1) == "\"" + inner_key_string + "\"") {
+                    if (name_tokens.at(1) == "\"" + inner_key_string + "\"") {
                         found = true;
                     }
                 } else {
-                    SP_LOG(property_name, " has an unsupported key type: ", toStdString(map_property->KeyProp->GetClass()->GetName()));
+                    SP_LOG(name, " has an unsupported key type: ", toStdString(map_property->KeyProp->GetClass()->GetName()));
                     SP_ASSERT(false);
                 }
                 if (found) {
@@ -188,7 +188,7 @@ Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* 
                 ustruct = struct_property->Struct;
 
             } else {
-                SP_LOG(property_name, " is an unsupported type: ", toStdString(property_desc.property_->GetClass()->GetName()));
+                SP_LOG(name, " is an unsupported type: ", toStdString(property_desc.property_->GetClass()->GetName()));
                 SP_ASSERT(false);
             }
         }
@@ -210,7 +210,8 @@ std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& propert
         property_desc.property_->IsA(FDoubleProperty::StaticClass()) ||
         property_desc.property_->IsA(FStrProperty::StaticClass())    ||
         property_desc.property_->IsA(FNameProperty::StaticClass())   ||
-        property_desc.property_->IsA(FByteProperty::StaticClass())) {
+        property_desc.property_->IsA(FByteProperty::StaticClass())   ||
+        property_desc.property_->IsA(FEnumProperty::StaticClass())) {
 
         TSharedPtr<FJsonValue> json_value = FJsonObjectConverter::UPropertyToJsonValue(property_desc.property_, property_desc.value_ptr_);
         SP_ASSERT(json_value.Get());
@@ -318,6 +319,7 @@ void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_des
         property_desc.property_->IsA(FStrProperty::StaticClass())    ||
         property_desc.property_->IsA(FNameProperty::StaticClass())   ||
         property_desc.property_->IsA(FByteProperty::StaticClass())   ||
+        property_desc.property_->IsA(FEnumProperty::StaticClass())   ||
         property_desc.property_->IsA(FArrayProperty::StaticClass())  ||
         property_desc.property_->IsA(FSetProperty::StaticClass())    ||
         property_desc.property_->IsA(FMapProperty::StaticClass())    ||
@@ -328,15 +330,17 @@ void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_des
         // dummy JSON string below. Likewise, if our property is an {array, set, map, struct}, then we expect
         // string to be a JSON string, and again we do not need to add any quotes.
         //
-        // On the other hand, if our property is a {string, name}, then we expect string to contain a string
-        // with no quotes because this is the formatting convention of getPropertyValueFromString(...), and
-        // therefore we need to add quotes to construct our dummy JSON string.
+        // On the other hand, if our property is a {enum, string, name}, then we expect string to contain a
+        // string with no quotes because this is the formatting convention of getPropertyValueFromString(...),
+        // and therefore we need to add quotes to construct our dummy JSON string.
         //
         // If our property is an enum byte, treat it like a string. If it is a non-enum byte, treat it like
         // an int.
 
         std::string quote_string = "";
-        if (property_desc.property_->IsA(FStrProperty::StaticClass()) || property_desc.property_->IsA(FNameProperty::StaticClass())) {
+        if (property_desc.property_->IsA(FEnumProperty::StaticClass()) ||
+            property_desc.property_->IsA(FStrProperty::StaticClass())  ||
+            property_desc.property_->IsA(FNameProperty::StaticClass())) {
             quote_string = "\"";
         } else if (property_desc.property_->IsA(FByteProperty::StaticClass())) {
             FByteProperty* byte_property = static_cast<FByteProperty*>(property_desc.property_);
@@ -375,10 +379,10 @@ void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_des
 // call because we pass it to uobject->ProcessEvent(...) which expects non-const
 //
 
-UFunction* Unreal::findFunctionByName(const UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag)
+UFunction* Unreal::findFunctionByName(const UClass* uclass, const std::string& function_name, EIncludeSuperFlag::Type include_super_flag)
 {
     SP_ASSERT(uclass);
-    UFunction* function = uclass->FindFunctionByName(toFName(name), include_super_flag);
+    UFunction* function = uclass->FindFunctionByName(toFName(function_name), include_super_flag);
     SP_ASSERT(function);
     return function;
 }
@@ -559,7 +563,7 @@ std::vector<std::string> Unreal::getTags(const UActorComponent* component)
 // UPROPERTY defined on it named TypeName_ of type TypeName.
 //
 
-UStruct* Unreal::findSpecialStructByName(const std::string& name)
+UStruct* Unreal::findSpecialStructByName(const std::string& struct_name)
 {
     // We only need ASpSpecialStructActor's property metadata here, so we can use the default object. This
     // makes it so this function is usable even in levels that don't have an ASpSpecialStructActor in them,
@@ -569,7 +573,7 @@ UStruct* Unreal::findSpecialStructByName(const std::string& name)
     SP_ASSERT(special_struct_actor_static_class);
     UObject* special_struct_actor_default_object = special_struct_actor_static_class->GetDefaultObject();
     SP_ASSERT(special_struct_actor_default_object);
-    PropertyDesc property_desc = findPropertyByName(special_struct_actor_default_object, name + "_");
+    PropertyDesc property_desc = findPropertyByName(special_struct_actor_default_object, struct_name + "_");
     SP_ASSERT(property_desc.property_);
     SP_ASSERT(property_desc.property_->IsA(FStructProperty::StaticClass()));
     FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);

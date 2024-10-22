@@ -184,19 +184,19 @@ public:
     // Find actors using a class name instead of template parameters
     //
 
-    static std::vector<AActor*> findActorsByName(const std::string& class_name, const UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found = true);
+    static std::vector<AActor*> findActorsByName(const std::string& class_name, const UWorld* world, const std::vector<std::string>& actor_names, bool return_null_if_not_found = true);
     static std::vector<AActor*> findActorsByTag(const std::string& class_name, const UWorld* world, const std::string& tag);
     static std::vector<AActor*> findActorsByTagAny(const std::string& class_name, const UWorld* world, const std::vector<std::string>& tags);
     static std::vector<AActor*> findActorsByTagAll(const std::string& class_name, const UWorld* world, const std::vector<std::string>& tags);
     static std::vector<AActor*> findActorsByType(const std::string& class_name, const UWorld* world);
 
-    static std::map<std::string, AActor*> findActorsByNameAsMap(const std::string& class_name, const UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found = true);
+    static std::map<std::string, AActor*> findActorsByNameAsMap(const std::string& class_name, const UWorld* world, const std::vector<std::string>& actor_names, bool return_null_if_not_found = true);
     static std::map<std::string, AActor*> findActorsByTagAsMap(const std::string& class_name, const UWorld* world, const std::string& tag);
     static std::map<std::string, AActor*> findActorsByTagAnyAsMap(const std::string& class_name, const UWorld* world, const std::vector<std::string>& tags);
     static std::map<std::string, AActor*> findActorsByTagAllAsMap(const std::string& class_name, const UWorld* world, const std::vector<std::string>& tags);
     static std::map<std::string, AActor*> findActorsByTypeAsMap(const std::string& class_name, const UWorld* world);
 
-    static AActor* findActorByName(const std::string& class_name, const UWorld* world, const std::string& name);
+    static AActor* findActorByName(const std::string& class_name, const UWorld* world, const std::string& actor_name);
     static AActor* findActorByTag(const std::string& class_name, const UWorld* world, const std::string& tag);
     static AActor* findActorByTagAny(const std::string& class_name, const UWorld* world, const std::vector<std::string>& tags);
     static AActor* findActorByTagAll(const std::string& class_name, const UWorld* world, const std::vector<std::string>& tags);
@@ -206,19 +206,19 @@ public:
     // Get components using a class name instead of template parameters
     //
 
-    static std::vector<UActorComponent*> getComponentsByName(const std::string& class_name, const AActor* actor, const std::vector<std::string>& names, bool include_from_child_actors = false, bool return_null_if_not_found = true);
+    static std::vector<UActorComponent*> getComponentsByName(const std::string& class_name, const AActor* actor, const std::vector<std::string>& component_names, bool include_from_child_actors = false, bool return_null_if_not_found = true);
     static std::vector<UActorComponent*> getComponentsByTag(const std::string& class_name, const AActor* actor, const std::string& tag, bool include_from_child_actors = false);
     static std::vector<UActorComponent*> getComponentsByTagAny(const std::string& class_name, const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors = false);
     static std::vector<UActorComponent*> getComponentsByTagAll(const std::string& class_name, const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors = false);
     static std::vector<UActorComponent*> getComponentsByType(const std::string& class_name, const AActor* actor, bool include_from_child_actors = false);
 
-    static std::map<std::string, UActorComponent*> getComponentsByNameAsMap(const std::string& class_name, const AActor* actor, const std::vector<std::string>& names, bool include_from_child_actors = false, bool return_null_if_not_found = true);
+    static std::map<std::string, UActorComponent*> getComponentsByNameAsMap(const std::string& class_name, const AActor* actor, const std::vector<std::string>& component_names, bool include_from_child_actors = false, bool return_null_if_not_found = true);
     static std::map<std::string, UActorComponent*> getComponentsByTagAsMap(const std::string& class_name, const AActor* actor, const std::string& tag, bool include_from_child_actors = false);
     static std::map<std::string, UActorComponent*> getComponentsByTagAnyAsMap(const std::string& class_name, const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors = false);
     static std::map<std::string, UActorComponent*> getComponentsByTagAllAsMap(const std::string& class_name, const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors = false);
     static std::map<std::string, UActorComponent*> getComponentsByTypeAsMap(const std::string& class_name, const AActor* actor, bool include_from_child_actors = false);
 
-    static UActorComponent* getComponentByName(const std::string& class_name, const AActor* actor, const std::string& name, bool include_from_child_actors = false);
+    static UActorComponent* getComponentByName(const std::string& class_name, const AActor* actor, const std::string& component_name, bool include_from_child_actors = false);
     static UActorComponent* getComponentByTag(const std::string& class_name, const AActor* actor, const std::string& tag, bool include_from_child_actors = false);
     static UActorComponent* getComponentByTagAny(const std::string& class_name, const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors = false);
     static UActorComponent* getComponentByTagAll(const std::string& class_name, const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors = false);
@@ -228,19 +228,19 @@ public:
     // Get children components using a class name and an AActor* instead of template parameters
     //
 
-    static std::vector<USceneComponent*> getChildrenComponentsByName(const std::string& class_name, const AActor* parent, const std::vector<std::string>& names, bool include_all_descendants = true, bool return_null_if_not_found = true);
+    static std::vector<USceneComponent*> getChildrenComponentsByName(const std::string& class_name, const AActor* parent, const std::vector<std::string>& children_component_names, bool include_all_descendants = true, bool return_null_if_not_found = true);
     static std::vector<USceneComponent*> getChildrenComponentsByTag(const std::string& class_name, const AActor* parent, const std::string& tag, bool include_all_descendants = true);
     static std::vector<USceneComponent*> getChildrenComponentsByTagAny(const std::string& class_name, const AActor* parent, const std::vector<std::string>& tags, bool include_all_descendants = true);
     static std::vector<USceneComponent*> getChildrenComponentsByTagAll(const std::string& class_name, const AActor* parent, const std::vector<std::string>& tags, bool include_all_descendants = true);
     static std::vector<USceneComponent*> getChildrenComponentsByType(const std::string& class_name, const AActor* parent, bool include_all_descendants = true);
 
-    static std::map<std::string, USceneComponent*> getChildrenComponentsByNameAsMap(const std::string& class_name, const AActor* parent, const std::vector<std::string>& names, bool include_all_descendants = true, bool return_null_if_not_found = true);
+    static std::map<std::string, USceneComponent*> getChildrenComponentsByNameAsMap(const std::string& class_name, const AActor* parent, const std::vector<std::string>& children_component_names, bool include_all_descendants = true, bool return_null_if_not_found = true);
     static std::map<std::string, USceneComponent*> getChildrenComponentsByTagAsMap(const std::string& class_name, const AActor* parent, const std::string& tag, bool include_all_descendants = true);
     static std::map<std::string, USceneComponent*> getChildrenComponentsByTagAnyAsMap(const std::string& class_name, const AActor* parent, const std::vector<std::string>& tags, bool include_all_descendants = true);
     static std::map<std::string, USceneComponent*> getChildrenComponentsByTagAllAsMap(const std::string& class_name, const AActor* parent, const std::vector<std::string>& tags, bool include_all_descendants = true);
     static std::map<std::string, USceneComponent*> getChildrenComponentsByTypeAsMap(const std::string& class_name, const AActor* parent, bool include_all_descendants = true);
 
-    static USceneComponent* getChildComponentByName(const std::string& class_name, const AActor* parent, const std::string& name, bool include_all_descendants = true);
+    static USceneComponent* getChildComponentByName(const std::string& class_name, const AActor* parent, const std::string& child_component_name, bool include_all_descendants = true);
     static USceneComponent* getChildComponentByTag(const std::string& class_name, const AActor* parent, const std::string& tag, bool include_all_descendants = true);
     static USceneComponent* getChildComponentByTagAny(const std::string& class_name, const AActor* parent, const std::vector<std::string>& tags, bool include_all_descendants = true);
     static USceneComponent* getChildComponentByTagAll(const std::string& class_name, const AActor* parent, const std::vector<std::string>& tags, bool include_all_descendants = true);
@@ -250,19 +250,19 @@ public:
     // Get children components using a class name and an USceneComponent* instead of template parameters
     //
 
-    static std::vector<USceneComponent*> getChildrenComponentsByName(const std::string& class_name, const USceneComponent* parent, const std::vector<std::string>& names, bool include_all_descendants = true, bool return_null_if_not_found = true);
+    static std::vector<USceneComponent*> getChildrenComponentsByName(const std::string& class_name, const USceneComponent* parent, const std::vector<std::string>& children_component_names, bool include_all_descendants = true, bool return_null_if_not_found = true);
     static std::vector<USceneComponent*> getChildrenComponentsByTag(const std::string& class_name, const USceneComponent* parent, const std::string& tag, bool include_all_descendants = true);
     static std::vector<USceneComponent*> getChildrenComponentsByTagAny(const std::string& class_name, const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true);
     static std::vector<USceneComponent*> getChildrenComponentsByTagAll(const std::string& class_name, const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true);
     static std::vector<USceneComponent*> getChildrenComponentsByType(const std::string& class_name, const USceneComponent* parent, bool include_all_descendants = true);
 
-    static std::map<std::string, USceneComponent*> getChildrenComponentsByNameAsMap(const std::string& class_name, const USceneComponent* parent, const std::vector<std::string>& names, bool include_all_descendants = true, bool return_null_if_not_found = true);
+    static std::map<std::string, USceneComponent*> getChildrenComponentsByNameAsMap(const std::string& class_name, const USceneComponent* parent, const std::vector<std::string>& children_component_names, bool include_all_descendants = true, bool return_null_if_not_found = true);
     static std::map<std::string, USceneComponent*> getChildrenComponentsByTagAsMap(const std::string& class_name, const USceneComponent* parent, const std::string& tag, bool include_all_descendants = true);
     static std::map<std::string, USceneComponent*> getChildrenComponentsByTagAnyAsMap(const std::string& class_name, const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true);
     static std::map<std::string, USceneComponent*> getChildrenComponentsByTagAllAsMap(const std::string& class_name, const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true);
     static std::map<std::string, USceneComponent*> getChildrenComponentsByTypeAsMap(const std::string& class_name, const USceneComponent* parent, bool include_all_descendants = true);
 
-    static USceneComponent* getChildComponentByName(const std::string& class_name, const USceneComponent* parent, const std::string& name, bool include_all_descendants = true);
+    static USceneComponent* getChildComponentByName(const std::string& class_name, const USceneComponent* parent, const std::string& child_component_name, bool include_all_descendants = true);
     static USceneComponent* getChildComponentByTag(const std::string& class_name, const USceneComponent* parent, const std::string& tag, bool include_all_descendants = true);
     static USceneComponent* getChildComponentByTagAny(const std::string& class_name, const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true);
     static USceneComponent* getChildComponentByTagAll(const std::string& class_name, const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true);
@@ -278,10 +278,10 @@ public:
     // Create component using a class name instead of template parameters
     //
 
-    static UActorComponent* createComponentOutsideOwnerConstructor(const std::string& class_name, AActor* owner, const std::string& name);
-    static USceneComponent* createSceneComponentOutsideOwnerConstructor(const std::string& class_name, AActor* owner, const std::string& name);
-    static USceneComponent* createSceneComponentOutsideOwnerConstructor(const std::string& class_name, UObject* owner, USceneComponent* parent, const std::string& name);
-    static USceneComponent* createSceneComponentOutsideOwnerConstructor(const std::string& class_name, USceneComponent* owner, const std::string& name);
+    static UActorComponent* createComponentOutsideOwnerConstructor(const std::string& class_name, AActor* owner, const std::string& component_name);
+    static USceneComponent* createSceneComponentOutsideOwnerConstructor(const std::string& class_name, AActor* owner, const std::string& scene_component_name);
+    static USceneComponent* createSceneComponentOutsideOwnerConstructor(const std::string& class_name, UObject* owner, USceneComponent* parent, const std::string& scene_component_name);
+    static USceneComponent* createSceneComponentOutsideOwnerConstructor(const std::string& class_name, USceneComponent* owner, const std::string& scene_component_name);
 
     //
     // Create new object using a class name instead of template parameters
@@ -340,8 +340,8 @@ public:
         //
 
         g_find_actors_by_name_func_registrar.registerFunc(
-            class_name, [](const UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found) -> std::vector<AActor*> {
-                return Unreal::findActorsByName<TActor, AActor>(world, names, return_null_if_not_found); });
+            class_name, [](const UWorld* world, const std::vector<std::string>& actor_names, bool return_null_if_not_found) -> std::vector<AActor*> {
+                return Unreal::findActorsByName<TActor, AActor>(world, actor_names, return_null_if_not_found); });
 
         g_find_actors_by_tag_func_registrar.registerFunc(
             class_name, [](const UWorld* world, const std::string& tag) -> std::vector<AActor*> {
@@ -364,8 +364,8 @@ public:
         //
 
         g_find_actors_by_name_as_map_func_registrar.registerFunc(
-            class_name, [](const UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found) -> std::map<std::string, AActor*> {
-                return Unreal::findActorsByNameAsMap<TActor, AActor>(world, names, return_null_if_not_found); });
+            class_name, [](const UWorld* world, const std::vector<std::string>& actor_names, bool return_null_if_not_found) -> std::map<std::string, AActor*> {
+                return Unreal::findActorsByNameAsMap<TActor, AActor>(world, actor_names, return_null_if_not_found); });
 
         g_find_actors_by_tag_as_map_func_registrar.registerFunc(
             class_name, [](const UWorld* world, const std::string& tag) -> std::map<std::string, AActor*> {
@@ -388,8 +388,8 @@ public:
         //
 
         g_find_actor_by_name_func_registrar.registerFunc(
-            class_name, [](const UWorld* world, const std::string& name) -> AActor* {
-                return Unreal::findActorByName<TActor, AActor>(world, name); });
+            class_name, [](const UWorld* world, const std::string& actor_name) -> AActor* {
+                return Unreal::findActorByName<TActor, AActor>(world, actor_name); });
         
         g_find_actor_by_tag_func_registrar.registerFunc(
             class_name, [](const UWorld* world, const std::string& tag) -> AActor* {
@@ -418,8 +418,8 @@ public:
         //
 
         g_create_component_outside_owner_constructor_func_registrar.registerFunc(
-            class_name, [](AActor* owner, const std::string& name) -> UActorComponent* {
-                return Unreal::createComponentOutsideOwnerConstructor<TComponent, UActorComponent>(owner, name); });
+            class_name, [](AActor* owner, const std::string& component_name) -> UActorComponent* {
+                return Unreal::createComponentOutsideOwnerConstructor<TComponent, UActorComponent>(owner, component_name); });
     }
 
     template <CSceneComponent TSceneComponent>
@@ -432,24 +432,24 @@ public:
         //
 
         g_create_scene_component_outside_owner_constructor_from_actor_func_registrar.registerFunc(
-            class_name, [](AActor* owner, const std::string& name) -> USceneComponent* {
-                return Unreal::createComponentOutsideOwnerConstructor<TSceneComponent, USceneComponent>(owner, name); });
+            class_name, [](AActor* owner, const std::string& scene_component_name) -> USceneComponent* {
+                return Unreal::createComponentOutsideOwnerConstructor<TSceneComponent, USceneComponent>(owner, scene_component_name); });
 
         g_create_scene_component_outside_owner_constructor_from_object_func_registrar.registerFunc(
-            class_name, [](UObject* owner, USceneComponent* parent, const std::string& name) -> USceneComponent* {
-                return Unreal::createComponentOutsideOwnerConstructor<TSceneComponent, USceneComponent>(owner, parent, name); });
+            class_name, [](UObject* owner, USceneComponent* parent, const std::string& scene_component_name) -> USceneComponent* {
+                return Unreal::createComponentOutsideOwnerConstructor<TSceneComponent, USceneComponent>(owner, parent, scene_component_name); });
 
         g_create_scene_component_outside_owner_constructor_from_scene_component_func_registrar.registerFunc(
-            class_name, [](USceneComponent* owner, const std::string& name) -> USceneComponent* {
-                return Unreal::createComponentOutsideOwnerConstructor<TSceneComponent, USceneComponent>(owner, name); });
+            class_name, [](USceneComponent* owner, const std::string& scene_component_name) -> USceneComponent* {
+                return Unreal::createComponentOutsideOwnerConstructor<TSceneComponent, USceneComponent>(owner, scene_component_name); });
 
         //
         // Get children components by name or tag or type from an AActor* and return an std::vector
         //
 
         g_get_children_components_by_name_from_actor_func_registrar.registerFunc(
-            class_name, [](const AActor* parent, const std::vector<std::string>& names, bool include_all_descendants, bool return_null_if_not_found) -> std::vector<USceneComponent*> {
-                return Unreal::getChildrenComponentsByName<AActor, TSceneComponent, USceneComponent>(parent, names, include_all_descendants, return_null_if_not_found); });
+            class_name, [](const AActor* parent, const std::vector<std::string>& children_component_names, bool include_all_descendants, bool return_null_if_not_found) -> std::vector<USceneComponent*> {
+                return Unreal::getChildrenComponentsByName<AActor, TSceneComponent, USceneComponent>(parent, children_component_names, include_all_descendants, return_null_if_not_found); });
 
         g_get_children_components_by_tag_from_actor_func_registrar.registerFunc(
             class_name, [](const AActor* parent, const std::string& tag, bool include_all_descendants) -> std::vector<USceneComponent*> {
@@ -472,8 +472,8 @@ public:
         //
 
         g_get_children_components_by_name_as_map_from_actor_func_registrar.registerFunc(
-            class_name, [](const AActor* parent, const std::vector<std::string>& names, bool include_all_descendants, bool return_null_if_not_found) -> std::map<std::string, USceneComponent*> {
-                return Unreal::getChildrenComponentsByNameAsMap<AActor, TSceneComponent, USceneComponent>(parent, names, include_all_descendants, return_null_if_not_found);
+            class_name, [](const AActor* parent, const std::vector<std::string>& children_component_names, bool include_all_descendants, bool return_null_if_not_found) -> std::map<std::string, USceneComponent*> {
+                return Unreal::getChildrenComponentsByNameAsMap<AActor, TSceneComponent, USceneComponent>(parent, children_component_names, include_all_descendants, return_null_if_not_found);
             });
 
         g_get_children_components_by_tag_as_map_from_actor_func_registrar.registerFunc(
@@ -501,8 +501,8 @@ public:
         //
 
         g_get_child_component_by_name_from_actor_func_registrar.registerFunc(
-            class_name, [](const AActor* parent, const std::string& name, bool include_all_descendants) -> USceneComponent* {
-                return Unreal::getChildComponentByName<AActor, TSceneComponent, USceneComponent>(parent, name, include_all_descendants);
+            class_name, [](const AActor* parent, const std::string& child_component_name, bool include_all_descendants) -> USceneComponent* {
+                return Unreal::getChildComponentByName<AActor, TSceneComponent, USceneComponent>(parent, child_component_name, include_all_descendants);
             });
 
         g_get_child_component_by_tag_from_actor_func_registrar.registerFunc(
@@ -530,8 +530,8 @@ public:
         //
 
         g_get_children_components_by_name_from_scene_component_func_registrar.registerFunc(
-            class_name, [](const USceneComponent* parent, const std::vector<std::string>& names, bool include_all_descendants, bool return_null_if_not_found) -> std::vector<USceneComponent*> {
-                return Unreal::getChildrenComponentsByName<USceneComponent, TSceneComponent, USceneComponent>(parent, names, include_all_descendants, return_null_if_not_found); });
+            class_name, [](const USceneComponent* parent, const std::vector<std::string>& children_component_names, bool include_all_descendants, bool return_null_if_not_found) -> std::vector<USceneComponent*> {
+                return Unreal::getChildrenComponentsByName<USceneComponent, TSceneComponent, USceneComponent>(parent, children_component_names, include_all_descendants, return_null_if_not_found); });
 
         g_get_children_components_by_tag_from_scene_component_func_registrar.registerFunc(
             class_name, [](const USceneComponent* parent, const std::string& tag, bool include_all_descendants) -> std::vector<USceneComponent*> {
@@ -554,8 +554,8 @@ public:
         //
 
         g_get_children_components_by_name_as_map_from_scene_component_func_registrar.registerFunc(
-            class_name, [](const USceneComponent* parent, const std::vector<std::string>& names, bool include_all_descendants, bool return_null_if_not_found) -> std::map<std::string, USceneComponent*> {
-                return Unreal::getChildrenComponentsByNameAsMap<USceneComponent, TSceneComponent, USceneComponent>(parent, names, include_all_descendants, return_null_if_not_found);
+            class_name, [](const USceneComponent* parent, const std::vector<std::string>& children_component_names, bool include_all_descendants, bool return_null_if_not_found) -> std::map<std::string, USceneComponent*> {
+                return Unreal::getChildrenComponentsByNameAsMap<USceneComponent, TSceneComponent, USceneComponent>(parent, children_component_names, include_all_descendants, return_null_if_not_found);
             });
 
         g_get_children_components_by_tag_as_map_from_scene_component_func_registrar.registerFunc(
@@ -583,8 +583,8 @@ public:
         //
 
         g_get_child_component_by_name_from_scene_component_func_registrar.registerFunc(
-            class_name, [](const USceneComponent* parent, const std::string& name, bool include_all_descendants) -> USceneComponent* {
-                return Unreal::getChildComponentByName<USceneComponent, TSceneComponent, USceneComponent>(parent, name, include_all_descendants);
+            class_name, [](const USceneComponent* parent, const std::string& child_component_name, bool include_all_descendants) -> USceneComponent* {
+                return Unreal::getChildComponentByName<USceneComponent, TSceneComponent, USceneComponent>(parent, child_component_name, include_all_descendants);
             });
 
         g_get_child_component_by_tag_from_scene_component_func_registrar.registerFunc(
@@ -622,8 +622,8 @@ public:
         //
 
         g_get_components_by_name_func_registrar.registerFunc(
-            class_name, [](const AActor* actor, const std::vector<std::string>& names, bool include_from_child_actors, bool return_null_if_not_found) -> std::vector<UActorComponent*> {
-                return Unreal::getComponentsByName<TComponent, UActorComponent>(actor, names, include_from_child_actors, return_null_if_not_found); });
+            class_name, [](const AActor* actor, const std::vector<std::string>& component_names, bool include_from_child_actors, bool return_null_if_not_found) -> std::vector<UActorComponent*> {
+                return Unreal::getComponentsByName<TComponent, UActorComponent>(actor, component_names, include_from_child_actors, return_null_if_not_found); });
 
         g_get_components_by_tag_func_registrar.registerFunc(
             class_name, [](const AActor* actor, const std::string& tag, bool include_from_child_actors) -> std::vector<UActorComponent*> {
@@ -646,8 +646,8 @@ public:
         //
 
         g_get_components_by_name_as_map_func_registrar.registerFunc(
-            class_name, [](const AActor* actor, const std::vector<std::string>& names, bool include_from_child_actors, bool return_null_if_not_found) -> std::map<std::string, UActorComponent*> {
-                return Unreal::getComponentsByNameAsMap<TComponent, UActorComponent>(actor, names, include_from_child_actors, return_null_if_not_found); });
+            class_name, [](const AActor* actor, const std::vector<std::string>& component_names, bool include_from_child_actors, bool return_null_if_not_found) -> std::map<std::string, UActorComponent*> {
+                return Unreal::getComponentsByNameAsMap<TComponent, UActorComponent>(actor, component_names, include_from_child_actors, return_null_if_not_found); });
 
         g_get_components_by_tag_as_map_func_registrar.registerFunc(
             class_name, [](const AActor* actor, const std::string& tag, bool include_from_child_actors) -> std::map<std::string, UActorComponent*> {
@@ -670,8 +670,8 @@ public:
         //
 
         g_get_component_by_name_func_registrar.registerFunc(
-            class_name, [](const AActor* actor, const std::string& name, bool include_from_child_actors) -> UActorComponent* {
-                return Unreal::getComponentByName<TComponent, UActorComponent>(actor, name, include_from_child_actors); });
+            class_name, [](const AActor* actor, const std::string& component_name, bool include_from_child_actors) -> UActorComponent* {
+                return Unreal::getComponentByName<TComponent, UActorComponent>(actor, component_name, include_from_child_actors); });
         
         g_get_component_by_tag_func_registrar.registerFunc(
             class_name, [](const AActor* actor, const std::string& tag, bool include_from_child_actors) -> UActorComponent* {

@@ -139,16 +139,15 @@ private:
 
     UWorld* world_ = nullptr;
 
-    // Unreal life cycle state
-    bool has_world_begin_play_executed_ = false;
-    bool open_level_pending_ = false;
-
     // OpenAI Gym helper objects
     std::unique_ptr<Agent> agent_ = nullptr;
     std::unique_ptr<Task> task_ = nullptr;
 
     // Navmesh helper object
     std::unique_ptr<NavMesh> nav_mesh_ = nullptr;
+
+    // Unreal life cycle state
+    bool has_world_begin_play_executed_ = false;
 };
 
 //

@@ -8,8 +8,6 @@
 #include <string>
 #include <utility> // std::forward
 
-#include <CoreGlobals.h> // IsRunningCommandlet
-
 #include "SpCore/Boost.h"
 #include "SpCore/Std.h"
 
@@ -33,6 +31,7 @@
 // returns false) and std::cout otherwise.
 #define SP_LOG(...)               Log::log(__FILE__, __LINE__ SP_VA_ARGS_WITH_LEADING_COMMA(__VA_ARGS__))
 #define SP_LOG_CURRENT_FUNCTION() Log::logCurrentFunction(__FILE__, __LINE__, BOOST_CURRENT_FUNCTION)
+#define SP_LOG_NO_PREFIX(...)     Log::logNoPrefix(__VA_ARGS__)
 
 // Helper macro that can be useful when printing to the game viewport or some other target.
 #define SP_LOG_GET_PREFIX() Log::getPrefix(__FILE__, __LINE__)
@@ -45,25 +44,23 @@ public:
 
     static void log(const std::filesystem::path& current_file, int current_line, auto&&... args)
     {
-        std::string str = getPrefix(current_file, current_line) + Std::toString(std::forward<decltype(args)>(args)...);
-        
-        #if WITH_EDITOR // defined in an auto-generated header
-            if (IsRunningCommandlet()) {
-                logStdout(str); // editor mode via command-line (e.g., during cooking)
-            } else {
-                logUnreal(str); // editor mode via GUI
-            }
-        #else
-            logStdout(str); // standalone mode
-        #endif
+        std::string str = getPrefix(current_file, current_line) + Std::toString(std::forward<decltype(args)>(args)...);        
+        logString(str);
+    }
+
+    static void logNoPrefix(auto&&... args)
+    {
+        std::string str = Std::toString(std::forward<decltype(args)>(args)...);
+        logString(str);
     }
 
     static void logCurrentFunction(const std::filesystem::path& current_file, int current_line, const std::string& current_function);
     static std::string getPrefix(const std::filesystem::path& current_file, int current_line);
 
 private:
-    static void logStdout(const std::string& str);
-    static void logUnreal(const std::string& str);
+    static void logString(const std::string& str);
+    static void logStringToStdout(const std::string& str);
+    static void logStringToUnreal(const std::string& str);
 
     static std::string getCurrentFileAbbreviated(const std::filesystem::path& current_file);
     static std::string getCurrentFunctionAbbreviated(const std::string& current_function);

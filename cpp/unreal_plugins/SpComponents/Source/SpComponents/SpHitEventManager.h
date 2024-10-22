@@ -26,11 +26,11 @@ struct FActorHitEventDesc
     GENERATED_BODY()
 
     UPROPERTY()
-    uint64 SelfActor;
+    uint64 SelfActor = 0;
     UPROPERTY()
-    uint64 OtherActor;
+    uint64 OtherActor = 0;
     UPROPERTY()
-    FVector NormalImpulse;
+    FVector NormalImpulse = FVector::ZeroVector;
     UPROPERTY()
     FHitResult HitResult;
 

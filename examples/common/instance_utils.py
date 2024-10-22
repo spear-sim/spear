@@ -23,7 +23,7 @@ def open_level(instance, scene_id, map_id=""):
 
     gameplay_statics_class = instance.unreal_service.get_static_class(class_name="UGameplayStatics")
     gameplay_statics_default_object = instance.unreal_service.get_default_object(uclass=gameplay_statics_class)
-    open_level_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_class, name="OpenLevel")
+    open_level_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_class, function_name="OpenLevel")
     instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=open_level_func, args={"LevelName": level_name})
 
     instance.engine_service.tick()

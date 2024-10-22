@@ -10,8 +10,6 @@ You can control the behavior of this example by setting the following parameters
   - `SPEAR.PAKS_DIR` is a directory containing scene data in the form of PAK files.
   - `SPEAR.PAKS_VERSION_TAG` is the name of a custom version tag for the PAK file we generate in this example.
 
-Your `user_config.yaml` file only needs to specify the value of a parameter if it differs from the defaults defined in the `python/config` directory. You can browse this directory for a complete set of all user-configurable parameters.
-
 ### Building a PAK file
 
 In order to run this example, you need to build a PAK file containing the Stanford assets as follows.
@@ -35,10 +33,12 @@ python ../../tools/update_symlinks_for_external_content.py --unreal_project_cont
 
 ### Running the example
 
-Once you have built a PAK file, you can run the example as follows.
+Once you have built a PAK file, you can run this example as follows.
 
 ```console
 python run.py
 ```
 
 When running this example, the `SPEAR.PAKS_DIR` and `SPEAR.PAKS_VERSION_TAG` parameters in your `user_config.yaml` file need to match the `--paks_dir` and `--version_tag` command-line arguments you specified when building a PAK file.
+
+You should see a game window appear with the imported custom objects placed in the scene.

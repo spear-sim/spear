@@ -26,30 +26,6 @@
         {
             "Name": "PythonScriptPlugin",
             "Enabled": true
-        },
-        {
-            "Name": "SpComponents",
-            "Enabled": true
-        },
-        {
-            "Name": "SpCore",
-            "Enabled": true
-        },
-        {
-            "Name": "SpModuleRules",
-            "Enabled": true
-        },
-        {
-            "Name": "SpServices",
-            "Enabled": true
-        },
-        {
-            "Name": "UrdfRobot",
-            "Enabled": true
-        },
-        {
-            "Name": "Vehicle",
-            "Enabled": true
         }
     ]
 }

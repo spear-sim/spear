@@ -4,101 +4,46 @@
 
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
-import argparse
-import cv2
-import numpy as np
 import os
+import pprint
 import spear
 import time
 
-common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
-import sys
-sys.path.append(common_dir)
-import openbot_env
-
-
-num_steps = 100
-
-
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--benchmark", action="store_true")
-    args = parser.parse_args()
-
-    np.set_printoptions(linewidth=200)
-
     # load config
-    config = spear.get_config(
-        user_config_files=[
-            os.path.realpath(os.path.join(common_dir, "default_config.common.yaml")),
-            os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
-
+    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
     spear.configure_system(config)
     instance = spear.Instance(config)
 
-    # create or get gym object
-    if config.SP_SERVICES.LEGACY_SERVICE.AGENT == "SphereAgent":
-        env = spear.Env(instance, config)
-    elif config.SP_SERVICES.LEGACY_SERVICE.AGENT == "VehicleAgent":
-        env = openbot_env.OpenBotEnv(instance, config)
+    instance.engine_service.begin_tick()
 
-    # reset the simulation to get the first observation
-    obs = env.reset()
+    # find SetActorScale3D function
+    actor_static_class = instance.unreal_service.get_static_class(class_name="AActor")
+    set_actor_scale_3d_func = instance.unreal_service.find_function_by_name(uclass=actor_static_class, function_name="SetActorScale3D")
 
-    if args.benchmark:
-        start_time_seconds = time.time()
-    else:
-        cv2.imshow("camera.final_color", obs["camera.final_color"]) # note that spear.Env returns BGRA by default
-        cv2.waitKey(0)
+    # spawn object
+    bp_axes_uclass = instance.unreal_service.load_object(class_name="UClass", outer=0, name="/SpComponents/Blueprints/BP_Axes.BP_Axes_C")
+    bp_axes_actor = instance.unreal_service.spawn_actor_from_uclass(uclass=bp_axes_uclass, location={"X": -10.0, "Y": 280.0, "Z": 50.0})
 
-    # take a few steps
-    for i in range(num_steps):
-        if config.SP_SERVICES.LEGACY_SERVICE.AGENT == "SphereAgent":
-            obs, reward, done, info = env.step(action={
-                "add_force": np.array([10000.0, 0.0, 0.0], dtype=np.float64),
-                "add_to_rotation": np.array([0.0, 1.0, 0.0])
-            })
-            if not args.benchmark:
-                spear.log("SphereAgent:")
-                spear.log("    camera.final_color: ", obs["camera.final_color"].shape, " ", obs["camera.final_color"].dtype)
-                spear.log("    location:           ", obs["location"])
-                spear.log("    rotation:           ", obs["rotation"])
-                spear.log("    reward:             ", reward)
-                spear.log("    done:               ", done)
-                spear.log("    info:               ", info.keys())
-        elif config.SP_SERVICES.LEGACY_SERVICE.AGENT == "VehicleAgent":
-            obs, reward, done, info = env.step(action={"set_duty_cycles": np.array([1.0, 0.715], dtype=np.float64)})
-            if not args.benchmark:
-                spear.log("VehicleAgent:")
-                spear.log("    camera.final_color:    ", obs["camera.final_color"].shape, " ", obs["camera.final_color"].dtype)
-                spear.log("    location:              ", obs["location"])
-                spear.log("    rotation:              ", obs["rotation"])
-                spear.log("    wheel_rotation_speeds: ", obs["wheel_rotation_speeds"])
-                spear.log("    reward:                ", reward)
-                spear.log("    done:                  ", done)
-                spear.log("    info:                  ", info.keys())
-        else:
-            assert False
+    # set scale
+    instance.unreal_service.call_function(uobject=bp_axes_actor, ufunction=set_actor_scale_3d_func, args={"NewScale3D": {"X": 4.0, "Y": 4.0, "Z": 4.0}})
 
-        if not args.benchmark:
-            cv2.imshow("camera.final_color", obs["camera.final_color"]) # note that spear.Env returns BGRA by default
-            cv2.waitKey(0)
+    # access object properties on the root component of bp_axes_actor
+    root_component_property_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=bp_axes_actor, property_name="RootComponent")
+    root_component_string = instance.unreal_service.get_property_value_as_string(property_desc=root_component_property_desc)
+    root_component = spear.to_handle(string=root_component_string)
+    root_component_object_properties = instance.unreal_service.get_object_properties_from_uobject(uobject=root_component)
 
-        if done:
-            env.reset()
+    # print properties
+    spear.log("RootComponent: ")
+    pprint.pprint(root_component_object_properties)
 
-    if args.benchmark:
-        end_time_seconds = time.time()
-        elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log("Average frame time: %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
-    else:
-        cv2.destroyAllWindows()
+    instance.engine_service.tick()
+    instance.engine_service.end_tick()
 
-    # close the environment
-    env.close()
-
-    # close the unreal instance and rpc connection
+    while instance.is_running():
+        time.sleep(1.0)
     instance.close()
 
     spear.log("Done.")

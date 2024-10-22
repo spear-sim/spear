@@ -11,6 +11,7 @@
 #include <vector>
 
 #include <Containers/UnrealString.h> // FString::operator*
+#include <CoreGlobals.h>             // IsRunningCommandlet
 #include <HAL/Platform.h>            // TEXT
 #include <Logging/LogMacros.h>       // DECLARE_LOG_CATEGORY_EXTERN, DEFINE_LOG_CATEGORY, UE_LOG
 
@@ -35,12 +36,25 @@ void Log::logCurrentFunction(const std::filesystem::path& current_file, int curr
     log(current_file, current_line, getCurrentFunctionAbbreviated(current_function));
 }
 
-void Log::logStdout(const std::string& str)
+void Log::logString(const std::string& str)
+{
+    #if WITH_EDITOR // defined in an auto-generated header
+        if (IsRunningCommandlet()) {
+            logStringToStdout(str); // editor mode via command-line (e.g., during cooking)
+        } else {
+            logStringToUnreal(str); // editor mode via GUI
+        }
+    #else
+        logStringToStdout(str); // standalone mode
+    #endif
+}
+
+void Log::logStringToStdout(const std::string& str)
 {
     std::cout << str << std::endl;
 }
 
-void Log::logUnreal(const std::string& str)
+void Log::logStringToUnreal(const std::string& str)
 {
     // We need to use TEXT() instead of *Unreal::toFString() because the * operator doesn't return a const pointer
     UE_LOG(LogSpear, Log, TEXT("%s"), *Unreal::toFString(str));

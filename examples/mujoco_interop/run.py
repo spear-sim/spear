@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
     unreal_actor_static_class = spear_instance.unreal_service.get_static_class(class_name="AActor")
     unreal_set_actor_location_and_rotation_func = spear_instance.unreal_service.find_function_by_name(
-        uclass=unreal_actor_static_class, name="K2_SetActorLocationAndRotation")
+        uclass=unreal_actor_static_class, function_name="K2_SetActorLocationAndRotation")
 
     spear_instance.engine_service.tick()
     spear_instance.engine_service.end_tick()

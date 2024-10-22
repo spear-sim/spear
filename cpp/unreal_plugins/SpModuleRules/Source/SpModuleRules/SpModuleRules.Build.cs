@@ -33,8 +33,8 @@ public class SpModuleRules : ModuleRules
         bEnableUndefinedIdentifierWarnings = false;
 
         PublicDependencyModuleNames.AddRange(new string[] {
-            "ChaosVehiclesCore", "Core", "CoreUObject", "Engine", "InputCore", "Json", "JsonUtilities", "NavigationSystem", "PhysicsCore", "RenderCore", "RHI",
-            "XmlParser"});
+            "Chaos", "ChaosVehiclesCore", "Core", "CoreUObject", "Engine", "EngineSettings", "InputCore", "Json", "JsonUtilities", "NavigationSystem",
+            "PhysicsCore", "RenderCore", "RHI", "XmlParser"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         // Resolve the top-level module directory and the ThirdParty directory, taking care to follow symlinks.

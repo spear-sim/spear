@@ -18,7 +18,8 @@ class Env(gym.Env):
         self._instance = instance
         self._config = config
 
-        self._byte_order = self._instance.engine_service.get_byte_order()
+        assert self._instance.engine_service.get_byte_order() == sys.byteorder
+        self._byte_order = None
 
         self._action_space_desc = SpaceDesc(self._get_action_space(), dict_space_type=gym.spaces.Dict, box_space_type=gym.spaces.Box)
         self._observation_space_desc = SpaceDesc(self._get_observation_space(), dict_space_type=gym.spaces.Dict, box_space_type=gym.spaces.Box)
@@ -31,7 +32,7 @@ class Env(gym.Env):
 
         gameplay_statics_class = self._instance.unreal_service.get_static_class(class_name="UGameplayStatics")
         self._gameplay_statics_default_object = self._instance.unreal_service.get_default_object(uclass=gameplay_statics_class, create_if_needed=False)
-        self._set_game_paused_func = self._instance.unreal_service.find_function_by_name(uclass=gameplay_statics_class, name="SetGamePaused")
+        self._set_game_paused_func = self._instance.unreal_service.find_function_by_name(uclass=gameplay_statics_class, function_name="SetGamePaused")
 
         self._instance.engine_service.tick()
         self._instance.engine_service.end_tick()

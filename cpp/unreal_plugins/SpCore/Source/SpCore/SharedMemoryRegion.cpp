@@ -61,7 +61,7 @@ SharedMemoryView SharedMemoryRegion::getView()
 
 uint64_t SharedMemoryRegion::getUniqueId()
 {
-    static uint64_t id = 0;
+    static uint64_t id = 1;
     return id++;    
 }
 

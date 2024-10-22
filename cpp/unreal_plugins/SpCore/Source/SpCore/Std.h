@@ -504,7 +504,7 @@ public:
     {
         std::span<TDestValue> dest;
         if (src_num_elements > 0) {
-            uint64_t src_num_bytes = src_num_elements * sizeof(TSrcValue);
+            uint64_t src_num_bytes = src_num_elements*sizeof(TSrcValue);
             SP_ASSERT(src_num_bytes % sizeof(TDestValue) == 0);
             uint64_t dest_num_elements = src_num_bytes / sizeof(TDestValue);
             dest = std::span<TDestValue>(reinterpret_cast<TDestValue*>(src_data), dest_num_elements);
@@ -557,7 +557,7 @@ public:
     {
         std::vector<TDestValue> dest;
         if (src_num_elements > 0) {
-            uint64_t src_num_bytes = src_num_elements * sizeof(TSrcValue);
+            uint64_t src_num_bytes = src_num_elements*sizeof(TSrcValue);
             SP_ASSERT(src_num_bytes % sizeof(TDestValue) == 0);
             uint64_t dest_num_elements = src_num_bytes / sizeof(TDestValue);
             dest.resize(dest_num_elements);

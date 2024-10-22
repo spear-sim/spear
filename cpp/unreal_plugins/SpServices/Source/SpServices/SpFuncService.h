@@ -11,7 +11,6 @@
 #include <vector>
 
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
-#include <Engine/Engine.h>               // GEngine
 
 #include "SpCore/Assert.h"
 #include "SpCore/SharedMemoryRegion.h"
@@ -23,6 +22,7 @@
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/Msgpack.h"
 #include "SpServices/Rpclib.h"
+#include "SpServices/ServiceUtils.h"
 
 // TODO: remove these headers when ASpFuncServiceDebugActor is removed as the hard-coded target for function calls
 #include "SpCore/Log.h"
@@ -79,15 +79,14 @@ public:
         post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SpFuncService::postWorldInitializationHandler);
         world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &SpFuncService::worldCleanupHandler);
 
-        unreal_entry_point_binder->bindFuncUnreal("sp_func_service", "call_func", [this](std::string& func_name, SpFuncDataBundle& args) -> SpFuncDataBundle {
+        unreal_entry_point_binder->bindFuncUnreal("sp_func_service", "call_function", [this](uint64_t& uobject, std::string& function_name, SpFuncDataBundle& args) -> SpFuncDataBundle {
             SP_ASSERT(world_);
 
-            // TODO: make the object ptr an input to this function
-            UObject* uobject = ASpFuncServiceDebugActor::StaticClass()->GetDefaultObject();
-            SP_ASSERT(uobject);
+            UObject* uobject_ptr = ServiceUtils::toPtr<UObject>(uobject);
+            SP_ASSERT(uobject_ptr);
 
             // get SpFuncComponent and shared memory views
-            USpFuncComponent* sp_func_component = getSpFuncComponent(uobject);
+            USpFuncComponent* sp_func_component = getSpFuncComponent(uobject_ptr);
             const std::map<std::string, SpFuncSharedMemoryView>& shared_memory_views = sp_func_component->getSharedMemoryViews();
 
             // resolve references to shared memory and validate args
@@ -95,7 +94,7 @@ public:
             SpFuncArrayUtils::validate(args.packed_arrays_, SpFuncSharedMemoryUsageFlags::Arg);
 
             // call SpFunc
-            SpFuncDataBundle return_values = sp_func_component->callFunc(func_name, args);
+            SpFuncDataBundle return_values = sp_func_component->callFunc(function_name, args);
 
             // validate return values
             SpFuncArrayUtils::validate(return_values.packed_arrays_, SpFuncSharedMemoryUsageFlags::ReturnValue);
@@ -103,15 +102,14 @@ public:
             return return_values;
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("sp_func_service", "get_shared_memory_views", [this]() -> std::map<std::string, SpFuncSharedMemoryView> {
+        unreal_entry_point_binder->bindFuncUnreal("sp_func_service", "get_shared_memory_views", [this](uint64_t& uobject) -> std::map<std::string, SpFuncSharedMemoryView> {
             SP_ASSERT(world_);
 
-            // TODO: make the object ptr an input to this function
-            UObject* uobject = ASpFuncServiceDebugActor::StaticClass()->GetDefaultObject();
-            SP_ASSERT(uobject);
+            UObject* uobject_ptr = ServiceUtils::toPtr<UObject>(uobject);
+            SP_ASSERT(uobject_ptr);
 
             // get SpFuncComponent and return shared memory views
-            USpFuncComponent* sp_func_component = getSpFuncComponent(uobject);
+            USpFuncComponent* sp_func_component = getSpFuncComponent(uobject_ptr);
             return sp_func_component->getSharedMemoryViews();
         });
     }

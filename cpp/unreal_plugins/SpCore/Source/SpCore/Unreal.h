@@ -37,7 +37,8 @@ class UWorld;
 #define SP_DECLARE_ENUM_PROPERTY(TEnumType, Enum) \
     using TEnum = TEnumType;                       \
     static std::string getName() { return #Enum; } \
-    TEnum getValue() const { return Enum; }
+    TEnum getValue() const { return Enum; }        \
+    void setValue(TEnum value) { Enum = value; }
 
 //
 // Concepts for Unreal objects
@@ -131,8 +132,8 @@ public:
         void* value_ptr_ = nullptr;
     };
 
-    static PropertyDesc findPropertyByName(UObject* uobject, const std::string& name);
-    static PropertyDesc findPropertyByName(void* value_ptr, const UStruct* ustruct, const std::string& name);
+    static PropertyDesc findPropertyByName(UObject* uobject, const std::string& property_name);
+    static PropertyDesc findPropertyByName(void* value_ptr, const UStruct* ustruct, const std::string& property_name);
 
     static std::string getPropertyValueAsString(const PropertyDesc& property_desc);
     static void setPropertyValueFromString(const PropertyDesc& property_desc, const std::string& string);
@@ -143,7 +144,7 @@ public:
     // because we call because we pass it to uobject->ProcessEvent(...) which expects non-const
     //
 
-    static UFunction* findFunctionByName(const UClass* uclass, const std::string& name, EIncludeSuperFlag::Type include_super_flag = EIncludeSuperFlag::IncludeSuper);
+    static UFunction* findFunctionByName(const UClass* uclass, const std::string& function_name, EIncludeSuperFlag::Type include_super_flag = EIncludeSuperFlag::IncludeSuper);
     static std::map<std::string, std::string> callFunction(UWorld* world, UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args = {}, const std::string& world_context = "WorldContextObject");
 
     //
@@ -172,20 +173,20 @@ public:
 
     template <CComponent TComponent, CComponent TReturnAsComponent = TComponent> requires
         std::derived_from<TComponent, TReturnAsComponent>
-    static TReturnAsComponent* createComponentInsideOwnerConstructor(AActor* owner, const std::string& name)
+    static TReturnAsComponent* createComponentInsideOwnerConstructor(AActor* owner, const std::string& component_name)
     {
         SP_ASSERT(owner);
-        TReturnAsComponent* actor_component = owner->CreateDefaultSubobject<TComponent>(toFName(name));
+        TReturnAsComponent* actor_component = owner->CreateDefaultSubobject<TComponent>(toFName(component_name));
         SP_ASSERT(actor_component);
         return actor_component;
     }
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
-    static TReturnAsSceneComponent* createComponentInsideOwnerConstructor(AActor* owner, const std::string& name)
+    static TReturnAsSceneComponent* createComponentInsideOwnerConstructor(AActor* owner, const std::string& scene_component_name)
     {
         SP_ASSERT(owner);
-        TReturnAsSceneComponent* scene_component = owner->CreateDefaultSubobject<TSceneComponent>(toFName(name));
+        TReturnAsSceneComponent* scene_component = owner->CreateDefaultSubobject<TSceneComponent>(toFName(scene_component_name));
         SP_ASSERT(scene_component);
         owner->SetRootComponent(scene_component);
         return scene_component;
@@ -193,11 +194,11 @@ public:
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
-    static TReturnAsSceneComponent* createComponentInsideOwnerConstructor(UObject* owner, USceneComponent* parent, const std::string& name)
+    static TReturnAsSceneComponent* createComponentInsideOwnerConstructor(UObject* owner, USceneComponent* parent, const std::string& scene_component_name)
     {
         SP_ASSERT(owner);
         SP_ASSERT(parent);
-        TReturnAsSceneComponent* scene_component = owner->CreateDefaultSubobject<TSceneComponent>(toFName(name));
+        TReturnAsSceneComponent* scene_component = owner->CreateDefaultSubobject<TSceneComponent>(toFName(scene_component_name));
         SP_ASSERT(scene_component);
         scene_component->SetupAttachment(parent);
         return scene_component;
@@ -205,17 +206,17 @@ public:
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
-    static TReturnAsSceneComponent* createComponentInsideOwnerConstructor(USceneComponent* owner, const std::string& name)
+    static TReturnAsSceneComponent* createComponentInsideOwnerConstructor(USceneComponent* owner, const std::string& scene_component_name)
     {
-        return createComponentInsideOwnerConstructor<TSceneComponent, TReturnAsSceneComponent>(owner, owner, name);
+        return createComponentInsideOwnerConstructor<TSceneComponent, TReturnAsSceneComponent>(owner, owner, scene_component_name);
     }
 
     template <CComponent TComponent, CComponent TReturnAsComponent = TComponent> requires
         std::derived_from<TComponent, TReturnAsComponent>
-    static TReturnAsComponent* createComponentOutsideOwnerConstructor(AActor* owner, const std::string& name)
+    static TReturnAsComponent* createComponentOutsideOwnerConstructor(AActor* owner, const std::string& component_name)
     {
         SP_ASSERT(owner);
-        TReturnAsComponent* actor_component = NewObject<TComponent>(owner, toFName(name));
+        TReturnAsComponent* actor_component = NewObject<TComponent>(owner, toFName(component_name));
         SP_ASSERT(actor_component);
         actor_component->RegisterComponent();
         return actor_component;
@@ -223,10 +224,10 @@ public:
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
-    static TReturnAsSceneComponent* createComponentOutsideOwnerConstructor(AActor* owner, const std::string& name)
+    static TReturnAsSceneComponent* createComponentOutsideOwnerConstructor(AActor* owner, const std::string& scene_component_name)
     {
         SP_ASSERT(owner);
-        TReturnAsSceneComponent* scene_component = NewObject<TSceneComponent>(owner, toFName(name));
+        TReturnAsSceneComponent* scene_component = NewObject<TSceneComponent>(owner, toFName(scene_component_name));
         SP_ASSERT(scene_component);
         owner->SetRootComponent(scene_component);
         scene_component->RegisterComponent();
@@ -235,11 +236,11 @@ public:
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
-    static TReturnAsSceneComponent* createComponentOutsideOwnerConstructor(UObject* owner, USceneComponent* parent, const std::string& name)
+    static TReturnAsSceneComponent* createComponentOutsideOwnerConstructor(UObject* owner, USceneComponent* parent, const std::string& scene_component_name)
     {
         SP_ASSERT(owner);
         SP_ASSERT(parent);
-        TReturnAsSceneComponent* scene_component = NewObject<TSceneComponent>(owner, toFName(name));
+        TReturnAsSceneComponent* scene_component = NewObject<TSceneComponent>(owner, toFName(scene_component_name));
         SP_ASSERT(scene_component);
         scene_component->SetupAttachment(parent);
         scene_component->RegisterComponent();
@@ -248,9 +249,9 @@ public:
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
-    static TReturnAsSceneComponent* createComponentOutsideOwnerConstructor(USceneComponent* owner, const std::string& name)
+    static TReturnAsSceneComponent* createComponentOutsideOwnerConstructor(USceneComponent* owner, const std::string& scene_component_name)
     {
-        return createComponentOutsideOwnerConstructor<TSceneComponent, TReturnAsSceneComponent>(owner, owner, name);
+        return createComponentOutsideOwnerConstructor<TSceneComponent, TReturnAsSceneComponent>(owner, owner, scene_component_name);
     }
 
     // 
@@ -280,14 +281,14 @@ public:
 
     template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires
         std::derived_from<TActor, TReturnAsActor>
-    static std::vector<TReturnAsActor*> findActorsByName(const UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found = true)
+    static std::vector<TReturnAsActor*> findActorsByName(const UWorld* world, const std::vector<std::string>& actor_names, bool return_null_if_not_found = true)
     {
         std::vector<TReturnAsActor*> actors;
         std::map<std::string, TReturnAsActor*> actor_map = toMap(findActorsByType<TActor, TReturnAsActor>(world));
         if (return_null_if_not_found) {
-            actors = Std::at(actor_map, names, nullptr);
+            actors = Std::at(actor_map, actor_names, nullptr);
         } else {
-            auto names_found_in_actor_map = Std::toVector<std::string>(names | std::views::filter([&actor_map](const auto& name) { return Std::containsKey(actor_map, name); }));
+            auto names_found_in_actor_map = Std::toVector<std::string>(actor_names | std::views::filter([&actor_map](const auto& name) { return Std::containsKey(actor_map, name); }));
             actors = Std::at(actor_map, names_found_in_actor_map);
         }
         return actors;
@@ -345,12 +346,12 @@ public:
 
     template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires
         std::derived_from<TActor, TReturnAsActor>
-    static std::map<std::string, TReturnAsActor*> findActorsByNameAsMap(const UWorld* world, const std::vector<std::string>& names, bool return_null_if_not_found = true)
+    static std::map<std::string, TReturnAsActor*> findActorsByNameAsMap(const UWorld* world, const std::vector<std::string>& actor_names, bool return_null_if_not_found = true)
     {
         if (return_null_if_not_found) {
-            return Std::zip(names, findActorsByName<TActor, TReturnAsActor>(world, names, return_null_if_not_found));
+            return Std::zip(actor_names, findActorsByName<TActor, TReturnAsActor>(world, actor_names, return_null_if_not_found));
         } else {
-            return toMap(findActorsByName<TActor, TReturnAsActor>(world, names, return_null_if_not_found));
+            return toMap(findActorsByName<TActor, TReturnAsActor>(world, actor_names, return_null_if_not_found));
         }
     }
 
@@ -394,10 +395,10 @@ public:
 
     template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires
         std::derived_from<TActor, TReturnAsActor>
-    static TReturnAsActor* findActorByName(const UWorld* world, const std::string& name)
+    static TReturnAsActor* findActorByName(const UWorld* world, const std::string& actor_name)
     {
         bool return_null_if_not_found = false;
-        return getItem(findActorsByName<TActor, TReturnAsActor>(world, {name}, return_null_if_not_found));
+        return getItem(findActorsByName<TActor, TReturnAsActor>(world, {actor_name}, return_null_if_not_found));
     }
 
     template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires
@@ -440,15 +441,15 @@ public:
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires
         std::derived_from<TComponent, TReturnAsComponent>
-    static std::vector<TReturnAsComponent*> getComponentsByName(const AActor* actor, const std::vector<std::string>& names, bool include_from_child_actors = false, bool return_null_if_not_found = true)
+    static std::vector<TReturnAsComponent*> getComponentsByName(const AActor* actor, const std::vector<std::string>& component_names, bool include_from_child_actors = false, bool return_null_if_not_found = true)
     {
         std::vector<TReturnAsComponent*> components;
         std::map<std::string, TReturnAsComponent*> component_map = toMap(getComponentsByType<TComponent, TReturnAsComponent>(actor, include_from_child_actors));
         if (return_null_if_not_found) {
-            components = Std::at(component_map, names, nullptr);
+            components = Std::at(component_map, component_names, nullptr);
         } else {
             auto names_found_in_component_map =
-                Std::toVector<std::string>(names | std::views::filter([&component_map](const auto& name) { return Std::containsKey(component_map, name); }));
+                Std::toVector<std::string>(component_names | std::views::filter([&component_map](const auto& name) { return Std::containsKey(component_map, name); }));
             components = Std::at(component_map, names_found_in_component_map);
         }
         return components;
@@ -509,12 +510,12 @@ public:
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires
         std::derived_from<TComponent, TReturnAsComponent>
     static std::map<std::string, TReturnAsComponent*> getComponentsByNameAsMap(
-        const AActor* actor, const std::vector<std::string>& names, bool include_from_child_actors = false, bool return_null_if_not_found = true)
+        const AActor* actor, const std::vector<std::string>& component_names, bool include_from_child_actors = false, bool return_null_if_not_found = true)
     {
         if (return_null_if_not_found) {
-            return Std::zip(names, getComponentsByName<TComponent, TReturnAsComponent>(actor, names, include_from_child_actors, return_null_if_not_found));
+            return Std::zip(component_names, getComponentsByName<TComponent, TReturnAsComponent>(actor, component_names, include_from_child_actors, return_null_if_not_found));
         } else {
-            return toMap(getComponentsByName<TComponent, TReturnAsComponent>(actor, names, include_from_child_actors, return_null_if_not_found));
+            return toMap(getComponentsByName<TComponent, TReturnAsComponent>(actor, component_names, include_from_child_actors, return_null_if_not_found));
         }
     }
 
@@ -558,10 +559,10 @@ public:
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires
         std::derived_from<TComponent, TReturnAsComponent>
-    static TReturnAsComponent* getComponentByName(const AActor* actor, const std::string& name, bool include_from_child_actors = false)
+    static TReturnAsComponent* getComponentByName(const AActor* actor, const std::string& component_name, bool include_from_child_actors = false)
     {
         bool return_null_if_not_found = false;
-        return getItem(getComponentsByName<TComponent, TReturnAsComponent>(actor, {name}, include_from_child_actors, return_null_if_not_found));
+        return getItem(getComponentsByName<TComponent, TReturnAsComponent>(actor, {component_name}, include_from_child_actors, return_null_if_not_found));
     }
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires
@@ -604,15 +605,15 @@ public:
 
     template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsComponent>
-    static std::vector<TReturnAsComponent*> getChildrenComponentsByName(const TParent* parent, const std::vector<std::string>& names, bool include_all_descendants = true, bool return_null_if_not_found = true)
+    static std::vector<TReturnAsComponent*> getChildrenComponentsByName(const TParent* parent, const std::vector<std::string>& scene_component_names, bool include_all_descendants = true, bool return_null_if_not_found = true)
     {
         std::vector<TReturnAsComponent*> components;
         std::map<std::string, TReturnAsComponent*> component_map = toMap(getChildrenComponentsByType<TSceneComponent, TReturnAsComponent>(parent, include_all_descendants));
         if (return_null_if_not_found) {
-            components = Std::at(component_map, names, nullptr);
+            components = Std::at(component_map, scene_component_names, nullptr);
         } else {
             auto names_found_in_component_map =
-                Std::toVector<std::string>(names | std::views::filter([&component_map](const auto& name) { return Std::containsKey(component_map, name); }));
+                Std::toVector<std::string>(scene_component_names | std::views::filter([&component_map](const auto& name) { return Std::containsKey(component_map, name); }));
             components = Std::at(component_map, names_found_in_component_map);
         }
         return components;
@@ -719,12 +720,12 @@ public:
 
     template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsComponent>
-    static std::map<std::string, TReturnAsComponent*> getChildrenComponentsByNameAsMap(const TParent* parent, const std::vector<std::string>& names, bool include_all_descendants = true, bool return_null_if_not_found = true)
+    static std::map<std::string, TReturnAsComponent*> getChildrenComponentsByNameAsMap(const TParent* parent, const std::vector<std::string>& children_component_names, bool include_all_descendants = true, bool return_null_if_not_found = true)
     {
         if (return_null_if_not_found) {
-            return Std::zip(names, getChildrenComponentsByName<TParent, TSceneComponent, TReturnAsComponent>(parent, names, include_all_descendants, return_null_if_not_found));
+            return Std::zip(children_component_names, getChildrenComponentsByName<TParent, TSceneComponent, TReturnAsComponent>(parent, children_component_names, include_all_descendants, return_null_if_not_found));
         } else {
-            return toMap(getChildrenComponentsByName<TParent, TSceneComponent, TReturnAsComponent>(parent, names, include_all_descendants, return_null_if_not_found));
+            return toMap(getChildrenComponentsByName<TParent, TSceneComponent, TReturnAsComponent>(parent, children_component_names, include_all_descendants, return_null_if_not_found));
         }
     }
 
@@ -768,10 +769,10 @@ public:
 
     template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsComponent>
-    static TReturnAsComponent* getChildComponentByName(const TParent* parent, const std::string& name, bool include_all_descendants = true)
+    static TReturnAsComponent* getChildComponentByName(const TParent* parent, const std::string& child_component_name, bool include_all_descendants = true)
     {
         bool return_null_if_not_found = false;
-        return getItem(getChildrenComponentsByName<TParent, TSceneComponent, TReturnAsComponent>(parent, {name}, include_all_descendants, return_null_if_not_found));
+        return getItem(getChildrenComponentsByName<TParent, TSceneComponent, TReturnAsComponent>(parent, {child_component_name}, include_all_descendants, return_null_if_not_found));
     }
 
     template <CParent TParent, CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsComponent = TSceneComponent> requires
@@ -861,31 +862,55 @@ public:
     // Helper functions for working with enums
     //
 
-    template <typename TSrcEnum>
-    static auto getEnumValue(TSrcEnum src) {
-        return static_cast<std::underlying_type_t<TSrcEnum>>(src);
+    template <typename TEnum>
+    static constexpr auto getConstEnumValue(const TEnum src)
+    {
+        return static_cast<std::underlying_type_t<TEnum>>(src);
     }
 
-    template <typename TSrcEnum>
-    static constexpr auto getEnumValueAsConst(TSrcEnum src) { // constexpr needed so we can use getEnumValueAsConst when declaring enum classes
-        return static_cast<std::underlying_type_t<TSrcEnum>>(src);
+    static auto getEnumValue(int src)
+    {
+        return src;
     }
 
-    template <typename TDestEnum>
-    static TDestEnum getEnumValueAs(int src) {
-        return static_cast<TDestEnum>(src);
+    template <typename TEnum>
+    static auto getEnumValue(TEnum src)
+    {
+        return static_cast<std::underlying_type_t<TEnum>>(src);
     }
 
-    template <typename TDestEnum, typename TSrcEnum> requires
-        (!CEnumStruct<TSrcEnum>)
-    static TDestEnum getEnumValueAs(TSrcEnum src) {
+    template <CEnumStruct TEnumStruct>
+    static auto getEnumValue(TEnumStruct src)
+    {
+        using TEnum = typename TEnumStruct::TEnum;
+
+        return static_cast<std::underlying_type_t<TEnum>>(src.getValue());
+    }
+
+    template <typename TDestEnum, typename TSrcEnum>
+    static TDestEnum getEnumValueAs(TSrcEnum src)
+    {
         return static_cast<TDestEnum>(getEnumValue(src));
     }
 
-    template <typename TDestEnum, typename TSrcEnumStruct> requires
-        CEnumStruct<TSrcEnumStruct>
-    static TDestEnum getEnumValueAs(const TSrcEnumStruct& src) {
-        return getEnumValueAs<TDestEnum>(src.getValue());
+    template <CEnumStruct TEnumStruct, typename TSrcEnum>
+    static std::string getEnumValueAsString(TSrcEnum src)
+    {
+        using TEnum = typename TEnumStruct::TEnum;
+
+        TEnumStruct enum_struct;
+        enum_struct.setValue(getEnumValueAs<TEnum>(src));
+        PropertyDesc property_desc = findPropertyByName(&enum_struct, TEnumStruct::StaticStruct(), enum_struct.getName());
+        return getPropertyValueAsString(property_desc);
+    }
+
+    template <CEnumStruct TEnumStruct, typename TDestEnum>
+    static TDestEnum getEnumValueFromString(const std::string& string)
+    {
+        TEnumStruct enum_struct;
+        PropertyDesc property_desc = findPropertyByName(&enum_struct, TEnumStruct::StaticStruct(), enum_struct.getName());
+        setPropertyValueFromString(property_desc, string);
+        return getEnumValueAs<TDestEnum>(enum_struct);
     }
 
     template <CEnumStruct TEnumStruct>
@@ -894,15 +919,9 @@ public:
         using TEnum = typename TEnumStruct::TEnum;
 
         TEnum combined_value = getEnumValueAs<TEnum>(0);
-
         for (auto& enum_flag_string : enum_flag_strings) {
-            TEnumStruct enum_struct;
-            std::string enum_struct_string = "{\"" + TEnumStruct::getName() + "\": \"" + enum_flag_string + "\" }";
-            setObjectPropertiesFromString(&enum_struct, TEnumStruct::StaticStruct(), enum_struct_string);
-            TEnum value = enum_struct.getValue();
-            combined_value |= value;
+            combined_value |= getEnumValueFromString<TEnumStruct, TEnum>(enum_flag_string);
         }
-
         return combined_value;
     }
 
@@ -910,7 +929,7 @@ public:
     // Helper function to find special structs
     //
 
-    static UStruct* findSpecialStructByName(const std::string& name);
+    static UStruct* findSpecialStructByName(const std::string& struct_name);
 
     //
     // Container functions

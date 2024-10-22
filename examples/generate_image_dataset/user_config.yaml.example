@@ -25,6 +25,6 @@ SP_SERVICES:
       STEP_INFO_COMPONENTS: []
       CAMERA:
         RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation"
-        IMAGE_HEIGHT: 1024
-        IMAGE_WIDTH: 1024
+        IMAGE_HEIGHT: 512
+        IMAGE_WIDTH: 512
         FOV: 90.0

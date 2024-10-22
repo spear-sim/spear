@@ -4,29 +4,19 @@
 
 SP_SERVICES:
 
-  IP: "127.0.0.1"
-  PORT: 30000
+  # Port for the RPC server.
+  RPC_SERVER_PORT: 30000
+
+  # If this string is non-empty, it will override the default map that gets loaded on startup. The expected
+  # format is the same as the GameDefaultMap config parameter in the /Script/EngineSettings.GameMapsSettings
+  # section of cpp/unreal_projects/SpearSim/Config/DefaultEngine.ini:
+  #     "/Game/Scenes/debug_0000/Maps/debug_0000"
+  GAME_DEFAULT_MAP: ""
 
   LEGACY_SERVICE:
-    # Setting SCENE_ID and MAP_ID will load the following map: /Game/Scenes/SCENE_ID/Maps/MAP_ID.MAP_ID
-    # If SCENE_ID is not set, the default map will be loaded. If MAP_ID is not set, it will be set to SCENE_ID.
-    SCENE_ID: ""
-    MAP_ID: ""
 
     TASK: "NullTask"
     AGENT: "NullAgent"
-    CUSTOM_UNREAL_CONSOLE_COMMANDS: []
-
-    #
-    # Unreal systems
-    #
-
-    PHYSICS:
-      SIMULATION_STEP_TIME: 0.05
-      ENABLE_ENHANCED_DETERMINISM: True
-      ENABLE_SUBSTEPPING: True
-      MAX_SUBSTEP_DELTA_TIME: 0.01
-      MAX_SUBSTEPS: 100
 
   #
   # Agents

@@ -3,7 +3,7 @@
 #
 
 import json
-
+import spear
 
 class UnrealService():
     def __init__(self, rpc_client):
@@ -30,7 +30,7 @@ class UnrealService():
     #
 
     def get_static_struct(self, struct_name):
-        return self._rpc_client.call("unreal_service.get_static_struct", name)
+        return self._rpc_client.call("unreal_service.get_static_struct", struct_name)
 
     #
     # Get and set object properties
@@ -52,11 +52,11 @@ class UnrealService():
     # Find properties
     #
 
-    def find_property_by_name_on_uobject(self, uobject, name):
-        return self._rpc_client.call("unreal_service.find_property_by_name_on_uobject", uobject, name)
+    def find_property_by_name_on_uobject(self, uobject, property_name):
+        return self._rpc_client.call("unreal_service.find_property_by_name_on_uobject", uobject, property_name)
 
-    def find_property_by_name_on_ustruct(self, value_ptr, ustruct, name):
-        return self._rpc_client.call("unreal_service.find_property_by_name_on_ustruct", value_ptr, ustruct, name)
+    def find_property_by_name_on_ustruct(self, value_ptr, ustruct, property_name):
+        return self._rpc_client.call("unreal_service.find_property_by_name_on_ustruct", value_ptr, ustruct, property_name)
 
     #
     # Get property values
@@ -72,8 +72,8 @@ class UnrealService():
     # Find and call functions
     #
 
-    def find_function_by_name(self, uclass, name, include_super_flag="IncludeSuper"):
-        return self._rpc_client.call("unreal_service.find_function_by_name", uclass, name, {"IncludeSuperFlag": json.dumps({"Enum": include_super_flag})})
+    def find_function_by_name(self, uclass, function_name, include_super_flag="IncludeSuper"):
+        return self._rpc_client.call("unreal_service.find_function_by_name", uclass, function_name, include_super_flag)
 
     #
     # Interface for calling functions. When using this interface, pointers must be handled specially. For
@@ -86,39 +86,22 @@ class UnrealService():
     # You would invoke your desired function as follows. After executing this code, return_value_handle will
     # be in the correct form to pass into other functions in unreal_service.
     # 
-    #     args = {"Actor": unreal_service.to_ptr(actor_handle)}
+    #     args = {"Actor": spear.to_ptr(actor_handle)}
     #     return_values = unreal_service.call_function(uobject, ufunction, args)
-    #     return_value_handle = unreal_service.to_handle(return_values["ReturnValue"])
+    #     return_value_handle = spear.to_handle(return_values["ReturnValue"])
     #
-
-    # The Ptr class is for internal use, and does not need to be instantiated directly by users.
-    class Ptr:
-        def __init__(self, handle):
-            self._handle = handle
-
-        def to_string(self):
-            return f"{self._handle:#0{18}x}"
-
-    # Convert a handle obtained from another UnrealService function into a form that can be passed as an
-    # argument to unreal_service.call_function(...).
-    def to_ptr(self, handle):
-        return UnrealService.Ptr(handle)
-
-    # Convert a return value returned by unreal_service.call_function(...) into a form that can be passed to
-    # another UnrealService function.
-    def to_handle(self, string):
-        return int(string, 0)
 
     # call an arbitrary function
     def call_function(self, uobject, ufunction, args={}, world_context="WorldContextObject"):
 
-        # If an arg is a string, then don't convert. If an arg is a Ptr, then use Ptr.to_string() to convert.
-        # If an arg is any other type, then assume it is valid JSON and use json.dumps(...) to convert.
+        # If an arg is a string, then don't convert. If an arg is a spear.Ptr, then use spear.Ptr.to_string()
+        # to convert. If an arg is any other type, then assume it is valid JSON and use json.dumps(...) to
+        # convert.
         arg_strings = {}
         for arg_name, arg in args.items():
             if isinstance(arg, str):
                 arg_string = arg
-            elif isinstance(arg, UnrealService.Ptr):
+            elif isinstance(arg, spear.Ptr):
                 arg_string = arg.to_string()
             else:
                 arg_string = json.dumps(arg)
@@ -173,8 +156,8 @@ class UnrealService():
     # Find actors conditionally and return a list
     #
 
-    def find_actors_by_name(self, class_name, names, return_null_if_not_found=True):
-        return self._rpc_client.call("unreal_service.find_actors_by_name", class_name, names, return_null_if_not_found)
+    def find_actors_by_name(self, class_name, actor_names, return_null_if_not_found=True):
+        return self._rpc_client.call("unreal_service.find_actors_by_name", class_name, actor_names, return_null_if_not_found)
 
     def find_actors_by_tag(self, class_name, tag):
         return self._rpc_client.call("unreal_service.find_actors_by_tag", class_name, tag)
@@ -195,8 +178,8 @@ class UnrealService():
     # Find actors conditionally and return a dict
     #
 
-    def find_actors_by_name_as_dict(self, class_name, names, return_null_if_not_found=True):
-        return self._rpc_client.call("unreal_service.find_actors_by_name_as_map", class_name, names, return_null_if_not_found)
+    def find_actors_by_name_as_dict(self, class_name, actor_names, return_null_if_not_found=True):
+        return self._rpc_client.call("unreal_service.find_actors_by_name_as_map", class_name, actor_names, return_null_if_not_found)
 
     def find_actors_by_tag_as_dict(self, class_name, tag):
         return self._rpc_client.call("unreal_service.find_actors_by_tag_as_map", class_name, tag)
@@ -217,8 +200,8 @@ class UnrealService():
     # Find actor conditionally
     #
 
-    def find_actor_by_name(self, class_name, name):
-        return self._rpc_client.call("unreal_service.find_actor_by_name", class_name, name)
+    def find_actor_by_name(self, class_name, actor_name):
+        return self._rpc_client.call("unreal_service.find_actor_by_name", class_name, actor_name)
 
     def find_actor_by_tag(self, class_name, tag):
         return self._rpc_client.call("unreal_service.find_actor_by_tag", class_name, tag)
@@ -239,8 +222,8 @@ class UnrealService():
     # Get components conditionally and return a list
     #
 
-    def get_components_by_name(self, class_name, actor, names, include_from_child_actors=False, return_null_if_not_found=True):
-        return self._rpc_client.call("unreal_service.get_components_by_name", class_name, actor, names, include_from_child_actors, return_null_if_not_found)
+    def get_components_by_name(self, class_name, actor, component_names, include_from_child_actors=False, return_null_if_not_found=True):
+        return self._rpc_client.call("unreal_service.get_components_by_name", class_name, actor, component_names, include_from_child_actors, return_null_if_not_found)
 
     def get_components_by_tag(self, class_name, actor, tag, include_from_child_actors=False):
         return self._rpc_client.call("unreal_service.get_components_by_tag", class_name, actor, tag, include_from_child_actors)
@@ -261,8 +244,8 @@ class UnrealService():
     # Get components conditionally and return a dict
     #
 
-    def get_components_by_name_as_dict(self, class_name, actor, names, include_from_child_actors=False, return_null_if_not_found=True):
-        return self._rpc_client.call("unreal_service.get_components_by_name_as_map", class_name, actor, names, include_from_child_actors, return_null_if_not_found)
+    def get_components_by_name_as_dict(self, class_name, actor, component_names, include_from_child_actors=False, return_null_if_not_found=True):
+        return self._rpc_client.call("unreal_service.get_components_by_name_as_map", class_name, actor, component_names, include_from_child_actors, return_null_if_not_found)
 
     def get_components_by_tag_as_dict(self, class_name, actor, tag, include_from_child_actors=False):
         return self._rpc_client.call("unreal_service.get_components_by_tag_as_map", class_name, actor, tag, include_from_child_actors)
@@ -283,8 +266,8 @@ class UnrealService():
     # Get component conditionally
     #
 
-    def get_component_by_name(self, class_name, actor, name, include_from_child_actors=False):
-        return self._rpc_client.call("unreal_service.get_component_by_name", class_name, actor, name, include_from_child_actors)
+    def get_component_by_name(self, class_name, actor, component_name, include_from_child_actors=False):
+        return self._rpc_client.call("unreal_service.get_component_by_name", class_name, actor, component_name, include_from_child_actors)
 
     def get_component_by_tag(self, class_name, actor, tag, include_from_child_actors=False):
         return self._rpc_client.call("unreal_service.get_component_by_tag", class_name, actor, tag, include_from_child_actors)
@@ -305,8 +288,8 @@ class UnrealService():
     # Get children components conditionally from an actor and return a list
     #
 
-    def get_children_components_by_name_from_actor(self, class_name,  parent, names, include_all_descendants=True, return_null_if_not_found=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_name_from_actor", class_name,  parent, names, include_all_descendants, return_null_if_not_found)
+    def get_children_components_by_name_from_actor(self, class_name,  parent, children_component_names, include_all_descendants=True, return_null_if_not_found=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_name_from_actor", class_name,  parent, children_component_names, include_all_descendants, return_null_if_not_found)
 
     def get_children_components_by_tag_from_actor(self, class_name, parent, tag, include_all_descendants=True):
         return self._rpc_client.call("unreal_service.get_children_components_by_tag_from_actor", class_name, parent, tag, include_all_descendants)
@@ -327,8 +310,8 @@ class UnrealService():
     # Get children components conditionally from an actor and return a dict
     #
 
-    def get_children_components_by_name_as_dict_from_actor(self, class_name, parent, names, include_all_descendants=True, return_null_if_not_found=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_name_as_map_from_actor", class_name, parent, names, include_all_descendants, return_null_if_not_found)
+    def get_children_components_by_name_as_dict_from_actor(self, class_name, parent, children_component_names, include_all_descendants=True, return_null_if_not_found=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_name_as_map_from_actor", class_name, parent, children_component_names, include_all_descendants, return_null_if_not_found)
 
     def get_children_components_by_tag_as_dict_from_actor(self, class_name, parent, tag, include_all_descendants=True):
         return self._rpc_client.call("unreal_service.get_children_components_by_tag_as_map_from_actor", class_name, parent, tag, include_all_descendants)
@@ -349,8 +332,8 @@ class UnrealService():
     # Get child component conditionally from an actor
     #
 
-    def get_child_component_by_name_from_actor(self, class_name, parent, name, include_all_descendants=True):
-        return self._rpc_client.call("unreal_service.get_child_component_by_name_from_actor", class_name, parent, name, include_all_descendants)
+    def get_child_component_by_name_from_actor(self, class_name, parent, child_component_name, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_child_component_by_name_from_actor", class_name, parent, child_component_name, include_all_descendants)
 
     def get_child_component_by_tag_from_actor(self, class_name, parent, tag, include_all_descendants=True):
         return self._rpc_client.call("unreal_service.get_child_component_by_tag_from_actor", class_name, parent, tag, include_all_descendants)
@@ -371,8 +354,8 @@ class UnrealService():
     # Get children components conditionally from a scene component and return a list
     #
 
-    def get_children_components_by_name_from_scene_component(self, class_name, parent, names, include_all_descendants=True, return_null_if_not_found=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_name_from_scene_component", class_name, parent, names, include_all_descendants, return_null_if_not_found)
+    def get_children_components_by_name_from_scene_component(self, class_name, parent, children_component_names, include_all_descendants=True, return_null_if_not_found=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_name_from_scene_component", class_name, parent, children_component_names, include_all_descendants, return_null_if_not_found)
 
     def get_children_components_by_tag_from_scene_component(self, class_name, parent, tag, include_all_descendants=True):
         return self._rpc_client.call("unreal_service.get_children_components_by_tag_from_scene_component", class_name, parent, tag, include_all_descendants)
@@ -396,8 +379,8 @@ class UnrealService():
     # Get children components conditionally from a scene component and return a dict
     #
 
-    def get_children_components_by_name_as_map_from_scene_component(self, class_name, parent, names, include_all_descendants=True, return_null_if_not_found=True):
-        return self._rpc_client.call("unreal_service.get_children_components_by_name_as_map_from_scene_component", class_name, parent, names, include_all_descendants, return_null_if_not_found)
+    def get_children_components_by_name_as_map_from_scene_component(self, class_name, parent, children_component_names, include_all_descendants=True, return_null_if_not_found=True):
+        return self._rpc_client.call("unreal_service.get_children_components_by_name_as_map_from_scene_component", class_name, parent, children_component_names, include_all_descendants, return_null_if_not_found)
 
     def get_children_components_by_tag_as_map_from_scene_component(self, class_name, parent, tag, include_all_descendants=True):
         return self._rpc_client.call("unreal_service.get_children_components_by_tag_as_map_from_scene_component", class_name, parent, tag, include_all_descendants)
@@ -418,8 +401,8 @@ class UnrealService():
     # Get child component conditionally from a scene component
     #
 
-    def get_child_component_by_name_from_scene_component(self, class_name, parent, name, include_all_descendants=True):
-        return self._rpc_client.call("unreal_service.get_child_component_by_name_from_scene_component", class_name, parent, name, include_all_descendants)
+    def get_child_component_by_name_from_scene_component(self, class_name, parent, child_component_name, include_all_descendants=True):
+        return self._rpc_client.call("unreal_service.get_child_component_by_name_from_scene_component", class_name, parent, child_component_name, include_all_descendants)
 
     def get_child_component_by_tag_from_scene_component(self, class_name, parent, tag, include_all_descendants=True):
         return self._rpc_client.call("unreal_service.get_child_component_by_tag_from_scene_component", class_name, parent, tag, include_all_descendants)
@@ -451,7 +434,7 @@ class UnrealService():
             object_flags = ["RF_Transactional"] # see Engine/Source/Runtime/Engine/Private/World.cpp
 
         return self._rpc_client.call(
-            "unreal_service.spawn_actor", class_name, {"Location": json.dumps(location), "Rotation": json.dumps(rotation), "SpawnParameters": json.dumps(spawn_parameters)}, object_flags)
+            "unreal_service.spawn_actor", class_name, json.dumps(location), json.dumps(rotation), json.dumps(spawn_parameters), object_flags)
 
     def spawn_actor_from_uclass(self, uclass, location={}, rotation={}, spawn_parameters={}):
 
@@ -464,7 +447,7 @@ class UnrealService():
             object_flags = ["RF_Transactional"] # see Engine/Source/Runtime/Engine/Private/World.cpp
 
         return self._rpc_client.call(
-            "unreal_service.spawn_actor_from_uclass", uclass, {"Location": json.dumps(location), "Rotation": json.dumps(rotation), "SpawnParameters": json.dumps(spawn_parameters)}, object_flags)
+            "unreal_service.spawn_actor_from_uclass", uclass, json.dumps(location), json.dumps(rotation), json.dumps(spawn_parameters), object_flags)
 
     #
     # Destroy actor
@@ -477,17 +460,17 @@ class UnrealService():
     # Create component
     #
 
-    def create_component_on_actor(self, class_name, owner, name):
-        return self._rpc_client.call("unreal_service.create_component_outside_owner_constructor", class_name, owner, name)
+    def create_component_on_actor(self, class_name, owner, component_name):
+        return self._rpc_client.call("unreal_service.create_component_outside_owner_constructor", class_name, owner, component_name)
 
-    def create_scene_component_on_actor(self, class_name, owner, name):
-        return self._rpc_client.call("unreal_service.create_scene_component_outside_owner_constructor_from_actor", class_name, owner, name)
+    def create_scene_component_on_actor(self, class_name, owner, scene_component_name):
+        return self._rpc_client.call("unreal_service.create_scene_component_outside_owner_constructor_from_actor", class_name, owner, scene_component_name)
 
-    def create_scene_component_on_component(self, class_name, owner, parent, name):
-        return self._rpc_client.call("unreal_service.create_scene_component_outside_owner_constructor_from_object", class_name, owner, parent, name)
+    def create_scene_component_on_component(self, class_name, owner, parent, scene_component_name):
+        return self._rpc_client.call("unreal_service.create_scene_component_outside_owner_constructor_from_object", class_name, owner, parent, scene_component_name)
 
-    def create_scene_component_on_owning_scene_component(self, class_name, owner, name):
-        return self._rpc_client.call("unreal_service.create_scene_component_outside_owner_constructor_from_component", class_name, owner, name)
+    def create_scene_component_on_owning_scene_component(self, class_name, owner, scene_component_name):
+        return self._rpc_client.call("unreal_service.create_scene_component_outside_owner_constructor_from_component", class_name, owner, scene_component_name)
 
     #
     # Destroy component
@@ -523,8 +506,8 @@ class UnrealService():
     # Find, get, and set console variables
     #
 
-    def find_console_variable(self, name):
-        return self._rpc_client.call("unreal_service.find_console_variable", name)
+    def find_console_variable_by_name(self, console_variable_name):
+        return self._rpc_client.call("unreal_service.find_console_variable_by_name", cvar_name)
 
     def get_console_variable_value_as_bool(self, cvar):
         return self._rpc_client.call("unreal_service.get_console_variable_value_as_bool", cvar)
@@ -549,6 +532,13 @@ class UnrealService():
             return self._rpc_client.call("unreal_service.set_console_variable_value_from_string", cvar, val, set_by_flags)
         else:
             assert False
+
+    #
+    # Execute console commands
+    #
+
+    def execute_console_command(self, command):
+        return self._rpc_client.call("unreal_service.execute_console_command", command)
 
     #
     # Stable name helper functions
