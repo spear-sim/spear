@@ -925,6 +925,12 @@ public:
         return combined_value;
     }
 
+    template <CEnumStruct TEnumStruct, typename TDestEnum>
+    static auto combineEnumFlagStringsAs(const std::vector<std::string>& enum_flag_strings)
+    {
+        return getEnumValueAs<TDestEnum>(combineEnumFlagStrings<TEnumStruct>(enum_flag_strings));
+    }
+
     //
     // Helper function to find special structs
     //
