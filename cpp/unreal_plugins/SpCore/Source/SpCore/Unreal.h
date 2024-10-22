@@ -73,11 +73,11 @@ concept CClass =
 template <typename TEnumStruct>
 concept CEnumStruct =
     CStruct<TEnumStruct> &&
-    requires(TEnumStruct enum_struct) {
+    requires(TEnumStruct enum_struct, typename TEnumStruct::TEnum value) {
         typename TEnumStruct::TEnum;
         { enum_struct.getName() } -> std::same_as<std::string>;
         { enum_struct.getValue() } -> std::same_as<typename TEnumStruct::TEnum>;
-        { enum_struct.setValue() } -> std::same_as<void>;
+        { enum_struct.setValue(value) } -> std::same_as<void>;
     };
 
 template <typename TComponent>
