@@ -15,7 +15,6 @@ if __name__ == "__main__":
     parser.add_argument("--paks_dir")
     parser.add_argument("--version_tag")
     parser.add_argument("--scene_id")
-    parser.add_argument("--map_id")
     parser.add_argument("--vk_icd_filenames")
     parser.add_argument("--graphics_adaptor")
     args = parser.parse_args()
@@ -34,9 +33,7 @@ if __name__ == "__main__":
     if args.version_tag is not None:
         config.SPEAR.PAKS_VERSION_TAG = args.version_tag
     if args.scene_id is not None:
-        config.SP_SERVICES.LEGACY_SERVICE.SCENE_ID = args.scene_id
-    if args.map_id is not None:
-        config.SP_SERVICES.LEGACY_SERVICE.MAP_ID = args.map_id
+        config.SP_SERVICES.GAME_DEFAULT_MAP = "/Game/Scenes/" + args.scene_id + "/Maps/" + args.scene_id
     if args.vk_icd_filenames is not None:
         config.SPEAR.ENVIRONMENT_VARS.VK_ICD_FILENAMES = args.vk_icd_filenames
     if args.graphics_adaptor is not None:
