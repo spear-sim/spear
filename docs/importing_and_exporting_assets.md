@@ -16,7 +16,7 @@ python tools/configure_editor_python_env.py --unreal_engine_dir path/to/UE_5.4
 
 Any pipeline stage that needs to access the Unreal Editor must be executed using our `run_editor_script.py` tool, which runs a user-specified program (specified by `--script`) from within the editor's Python environment. `run_editor_script.py` consumes `--script` and `--unreal_engine_dir`, and forwards all other arguments directly to the user's program. `--script` must be relative to `spear/pipeline` or absolute. Any path arguments that are forwarded to the user's program must be absolute.
 
-## Debug visualization tools
+## Using our debug visualization tools
 
 In order to use our optional debug visualization tools, you will need to install an appropriate [TraitsUI](https://docs.enthought.com/traitsui/#installation) backend for your platform.
 
