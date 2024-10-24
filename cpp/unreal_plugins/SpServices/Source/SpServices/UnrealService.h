@@ -57,8 +57,10 @@ USTRUCT() // used to convert to and from strings
 struct FSpIncludeSuperFlag
 {
     GENERATED_BODY()
+private:
     UPROPERTY()
     ESpIncludeSuperFlag Enum = Unreal::getEnumValueAs<ESpIncludeSuperFlag>(0);
+public:
     SP_DECLARE_ENUM_PROPERTY(ESpIncludeSuperFlag, Enum);
 };
 
@@ -105,8 +107,10 @@ USTRUCT() // used to convert to and from strings
 struct FSpObjectFlags
 {
     GENERATED_BODY()
+private:
     UPROPERTY()
     ESpObjectFlags Enum = Unreal::getEnumValueAs<ESpObjectFlags>(0);
+public:
     SP_DECLARE_ENUM_PROPERTY(ESpObjectFlags, Enum);
 };
 
@@ -146,8 +150,10 @@ USTRUCT() // used to convert to and from strings
 struct FSpLoadFlags
 {
     GENERATED_BODY()
+private:
     UPROPERTY()
     ESpLoadFlags Enum = Unreal::getEnumValueAs<ESpLoadFlags>(0);
+public:
     SP_DECLARE_ENUM_PROPERTY(ESpLoadFlags, Enum);
 };
 
@@ -194,8 +200,10 @@ USTRUCT() // used to convert to and from strings
 struct FSpConsoleVariableFlags
 {
     GENERATED_BODY()
+private:
     UPROPERTY()
     ESpConsoleVariableFlags Enum = Unreal::getEnumValueAs<ESpConsoleVariableFlags>(0);
+public:
     SP_DECLARE_ENUM_PROPERTY(ESpConsoleVariableFlags, Enum);
 };
 
@@ -274,12 +282,6 @@ public:
         post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &UnrealService::postWorldInitializationHandler);
         world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &UnrealService::worldCleanupHandler);
 
-        unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_world_name",
-            [this]() -> std::string {
-                SP_ASSERT(world_);
-                return Unreal::toStdString(world_->GetName());
-            });
-
         //
         // Get UClass from class name, get default object from UClass, get UClass from object
         //
@@ -344,8 +346,8 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_property_by_name_on_ustruct",
-            [this](uint64_t& value_ptr, uint64_t& ustruct, std::string& name) -> Unreal::PropertyDesc {
-                return Unreal::findPropertyByName(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), name);
+            [this](uint64_t& value_ptr, uint64_t& ustruct, std::string& property_name) -> Unreal::PropertyDesc {
+                return Unreal::findPropertyByName(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), property_name);
             });
 
         //
@@ -424,8 +426,8 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actors_by_name",
-            [this](std::string& class_name, std::vector<std::string>& names, bool& return_null_if_not_found) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::findActorsByName(class_name, world_, names, return_null_if_not_found));
+            [this](std::string& class_name, std::vector<std::string>& actor_names, bool& return_null_if_not_found) -> std::vector<uint64_t> {
+                return toUInt64(UnrealClassRegistrar::findActorsByName(class_name, world_, actor_names, return_null_if_not_found));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actors_by_tag",
@@ -458,8 +460,8 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actors_by_name_as_map",
-            [this](std::string& class_name, std::vector<std::string>& names, bool& return_null_if_not_found) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::findActorsByNameAsMap(class_name, world_, names, return_null_if_not_found));
+            [this](std::string& class_name, std::vector<std::string>& actor_names, bool& return_null_if_not_found) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealClassRegistrar::findActorsByNameAsMap(class_name, world_, actor_names, return_null_if_not_found));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actors_by_tag_as_map",
@@ -492,8 +494,8 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actor_by_name",
-            [this](std::string& class_name, std::string& name) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::findActorByName(class_name, world_, name));
+            [this](std::string& class_name, std::string& actor_name) -> uint64_t {
+                return toUInt64(UnrealClassRegistrar::findActorByName(class_name, world_, actor_name));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actor_by_tag",
@@ -526,8 +528,8 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_components_by_name",
-            [this](std::string& class_name, uint64_t& actor, std::vector<std::string>& names, bool& include_from_child_actors, bool& return_null_if_not_found) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getComponentsByName(class_name, toPtr<AActor>(actor), names, include_from_child_actors, return_null_if_not_found));
+            [this](std::string& class_name, uint64_t& actor, std::vector<std::string>& component_names, bool& include_from_child_actors, bool& return_null_if_not_found) -> std::vector<uint64_t> {
+                return toUInt64(UnrealClassRegistrar::getComponentsByName(class_name, toPtr<AActor>(actor), component_names, include_from_child_actors, return_null_if_not_found));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_components_by_tag",
@@ -560,8 +562,8 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_components_by_name_as_map",
-            [this](std::string& class_name, uint64_t& actor, std::vector<std::string>& names, bool& include_from_child_actors, bool& return_null_if_not_found) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getComponentsByNameAsMap(class_name, toPtr<AActor>(actor), names, include_from_child_actors, return_null_if_not_found));
+            [this](std::string& class_name, uint64_t& actor, std::vector<std::string>& component_names, bool& include_from_child_actors, bool& return_null_if_not_found) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealClassRegistrar::getComponentsByNameAsMap(class_name, toPtr<AActor>(actor), component_names, include_from_child_actors, return_null_if_not_found));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_components_by_tag_as_map",
@@ -594,8 +596,8 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_component_by_name",
-            [this](std::string& class_name, uint64_t& actor, std::string& name, bool& include_from_child_actors) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getComponentByName(class_name, toPtr<AActor>(actor), name, include_from_child_actors));
+            [this](std::string& class_name, uint64_t& actor, std::string& component_name, bool& include_from_child_actors) -> uint64_t {
+                return toUInt64(UnrealClassRegistrar::getComponentByName(class_name, toPtr<AActor>(actor), component_name, include_from_child_actors));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_component_by_tag",
@@ -628,8 +630,8 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_children_components_by_name_from_actor",
-            [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& names, bool& include_all_descendants, bool& return_null_if_not_found) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByName(class_name, toPtr<AActor>(parent), names, include_all_descendants, return_null_if_not_found));
+            [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& children_component_names, bool& include_all_descendants, bool& return_null_if_not_found) -> std::vector<uint64_t> {
+                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByName(class_name, toPtr<AActor>(parent), children_component_names, include_all_descendants, return_null_if_not_found));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_children_components_by_tag_from_actor",
@@ -662,8 +664,8 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_children_components_by_name_as_map_from_actor",
-            [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& names, bool& include_all_descendants, bool& return_null_if_not_found) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByNameAsMap(class_name, toPtr<AActor>(parent), names, include_all_descendants, return_null_if_not_found));
+            [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& children_component_names, bool& include_all_descendants, bool& return_null_if_not_found) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByNameAsMap(class_name, toPtr<AActor>(parent), children_component_names, include_all_descendants, return_null_if_not_found));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_children_components_by_tag_as_map_from_actor",
@@ -696,8 +698,8 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_child_component_by_name_from_actor",
-            [this](std::string& class_name, uint64_t& parent, std::string& name, bool& include_all_descendants) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getChildComponentByName(class_name, toPtr<AActor>(parent), name, include_all_descendants));
+            [this](std::string& class_name, uint64_t& parent, std::string& child_component_name, bool& include_all_descendants) -> uint64_t {
+                return toUInt64(UnrealClassRegistrar::getChildComponentByName(class_name, toPtr<AActor>(parent), child_component_name, include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_child_component_by_tag_from_actor",
@@ -730,8 +732,8 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_children_components_by_name_from_scene_component",
-            [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& names, bool& include_all_descendants, bool& return_null_if_not_found) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByName(class_name, toPtr<USceneComponent>(parent), names, include_all_descendants, return_null_if_not_found));
+            [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& children_component_names, bool& include_all_descendants, bool& return_null_if_not_found) -> std::vector<uint64_t> {
+                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByName(class_name, toPtr<USceneComponent>(parent), children_component_names, include_all_descendants, return_null_if_not_found));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_children_components_by_tag_from_scene_component",
@@ -764,8 +766,8 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_children_components_by_name_as_map_from_scene_component",
-            [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& names, bool& include_all_descendants, bool& return_null_if_not_found) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByNameAsMap(class_name, toPtr<USceneComponent>(parent), names, include_all_descendants, return_null_if_not_found));
+            [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& children_component_names, bool& include_all_descendants, bool& return_null_if_not_found) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByNameAsMap(class_name, toPtr<USceneComponent>(parent), children_component_names, include_all_descendants, return_null_if_not_found));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_children_components_by_tag_as_map_from_scene_component",
@@ -798,8 +800,8 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_child_component_by_name_from_scene_component",
-            [this](std::string& class_name, uint64_t& parent, std::string& name, bool& include_all_descendants) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getChildComponentByName(class_name, toPtr<USceneComponent>(parent), name, include_all_descendants));
+            [this](std::string& class_name, uint64_t& parent, std::string& child_component_name, bool& include_all_descendants) -> uint64_t {
+                return toUInt64(UnrealClassRegistrar::getChildComponentByName(class_name, toPtr<USceneComponent>(parent), child_component_name, include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_child_component_by_tag_from_scene_component",
@@ -867,7 +869,7 @@ public:
                 FVector location;
                 FRotator rotation;
                 FSpActorSpawnParameters sp_actor_spawn_parameters;
-                
+
                 Unreal::setObjectPropertiesFromString(&location, UnrealClassRegistrar::getStaticStruct<FVector>(), location_string);
                 Unreal::setObjectPropertiesFromString(&rotation, UnrealClassRegistrar::getStaticStruct<FRotator>(), rotation_string);
                 Unreal::setObjectPropertiesFromString(&sp_actor_spawn_parameters, FSpActorSpawnParameters::StaticStruct(), spawn_parameters_string);

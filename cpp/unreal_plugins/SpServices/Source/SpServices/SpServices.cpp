@@ -17,7 +17,6 @@
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
-#include "SpCore/UnrealClassRegistrar.h"
 
 #include "SpServices/EngineService.h"
 #include "SpServices/LegacyService.h"
@@ -32,9 +31,6 @@ void SpServices::StartupModule()
     SP_ASSERT_MODULE_LOADED("UrdfRobot");
     SP_ASSERT_MODULE_LOADED("Vehicle");
     SP_LOG_CURRENT_FUNCTION();
-
-    // Register SpServices classes
-    UnrealClassRegistrar::registerActorClass<ASpFuncServiceDebugActor>("ASpFuncServiceDebugActor");
 
     // Create RPC server object but don't launch it yet. We want to defer launching the server as late as
     // possible in worldBeginPlayHandler(), to give other plugins and game code a chance to register custom
@@ -103,8 +99,6 @@ void SpServices::ShutdownModule()
     rpc_server_->close_sessions();
     rpc_server_->stop();
     rpc_server_ = nullptr;
-
-    UnrealClassRegistrar::unregisterActorClass<ASpFuncServiceDebugActor>("ASpFuncServiceDebugActor");
 }
 
 void SpServices::postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values)

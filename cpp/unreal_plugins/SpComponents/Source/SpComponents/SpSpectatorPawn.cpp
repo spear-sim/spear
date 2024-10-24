@@ -39,11 +39,9 @@ ASpSpectatorPawn::ASpSpectatorPawn()
     PrimaryActorTick.bTickEvenWhenPaused = true;
     PrimaryActorTick.TickGroup = ETickingGroup::TG_PrePhysics;
 
-    // USpStableNameComponent
     SpStableNameComponent = Unreal::createComponentInsideOwnerConstructor<USpStableNameComponent>(this, "sp_stable_name_component");
     SP_ASSERT(SpStableNameComponent);
 
-    // USpectatorPawnMovement
     SpectatorPawnMovement = Cast<USpectatorPawnMovement>(GetMovementComponent()); // no RTTI available, so use Cast instead of dynamic_cast
     SP_ASSERT(SpectatorPawnMovement);
 

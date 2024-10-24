@@ -467,7 +467,7 @@ std::vector<AActor*> Unreal::findActors(const UWorld* world)
 
 std::map<std::string, AActor*> Unreal::findActorsAsMap(const UWorld* world)
 {
-    return toMap(findActors(world));
+    return toMap<AActor>(findActors(world));
 }
 
 // 
@@ -481,7 +481,7 @@ std::vector<UActorComponent*> Unreal::getComponents(const AActor* actor)
 
 std::map<std::string, UActorComponent*> Unreal::getComponentsAsMap(const AActor* actor)
 {
-    return toMap(getComponents(actor));
+    return toMap<UActorComponent>(getComponents(actor));
 }
 
 // 
@@ -500,7 +500,7 @@ std::vector<USceneComponent*> Unreal::getChildrenComponents(const USceneComponen
 
 std::map<std::string, USceneComponent*> Unreal::getChildrenComponentsAsMap(const USceneComponent* parent, bool include_all_descendants)
 {
-    return toMap(getChildrenComponents(parent, include_all_descendants));
+    return toMap<USceneComponent>(getChildrenComponents(parent, include_all_descendants));
 }
 
 //

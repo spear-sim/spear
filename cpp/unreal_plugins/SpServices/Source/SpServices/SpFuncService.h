@@ -11,6 +11,7 @@
 #include <vector>
 
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
+#include <UObject/Object.h>
 
 #include "SpCore/Assert.h"
 #include "SpCore/SharedMemoryRegion.h"
@@ -24,50 +25,7 @@
 #include "SpServices/Rpclib.h"
 #include "SpServices/ServiceUtils.h"
 
-// TODO: remove these headers when ASpFuncServiceDebugActor is removed as the hard-coded target for function calls
-#include "SpCore/Log.h"
-#include "SpCore/Unreal.h"
-
-// TODO: remove this header when ASpFuncServiceDebugActor is removed as the hard-coded target for function calls
-#include "SpFuncService.generated.h"
-
-class UObject;
 class UWorld;
-
-// TODO: remove this class as the hard-coded target for function calls
-UCLASS(ClassGroup="SPEAR", HideCategories=(Rendering, Replication, Collision, HLOD, Physics, Networking, Input, Actor, Cooking))
-class ASpFuncServiceDebugActor : public AActor
-{
-    GENERATED_BODY()
-public: 
-    ASpFuncServiceDebugActor()
-    {
-        SP_LOG_CURRENT_FUNCTION();
-
-        sp_func_component_ = Unreal::createComponentInsideOwnerConstructor<USpFuncComponent>(this, "sp_func_component");
-        SP_ASSERT(sp_func_component_);
-
-        sp_func_component_->registerFunc("hello_world", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
-            SpFuncArray<uint8_t> hello("hello");
-            SpFuncArray<double> my_data("my_data");
-
-            hello.setData("Hello World!");
-            my_data.setData({1.0, 2.0, 3.0});
-
-            SpFuncDataBundle return_values;
-            return_values.packed_arrays_ = SpFuncArrayUtils::moveToPackedArrays({hello.getPtr(), my_data.getPtr()});
-            return return_values;
-        });
-    };
-
-    ~ASpFuncServiceDebugActor()
-    {
-        SP_LOG_CURRENT_FUNCTION();
-    };
-
-private:
-    USpFuncComponent* sp_func_component_ = nullptr;
-};
 
 class SpFuncService {
 public:

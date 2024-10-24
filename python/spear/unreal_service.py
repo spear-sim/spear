@@ -9,9 +9,6 @@ class UnrealService():
     def __init__(self, rpc_client):
         self._rpc_client = rpc_client
 
-    def get_world_name(self):
-        return self._rpc_client.call("unreal_service.get_world_name")
-
     #
     # Get uclass from class name, get default object from uclass, get uclass from object
     #

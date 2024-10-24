@@ -64,3 +64,6 @@ class LegacyService():
 
     def is_agent_ready(self):
         return self._rpc_client.call("legacy_service.is_agent_ready")
+
+    def get_world_name(self):
+        return self._rpc_client.call("legacy_service.get_world_name")

@@ -189,6 +189,12 @@
   #define PPK_ASSERT_0(level, ...)         PPK_ASSERT_APPLY_VA_ARGS(PPK_ASSERT_2, level, __VA_ARGS__)
   #define PPK_ASSERT_1(level, expression)  PPK_ASSERT_2(level, expression, PPK_ASSERT_NULLPTR)
 
+  // ---- BEGIN SPEAR MODIFICATION ----
+  //
+  // Note that the PPK_ASSERT_3 macros defined below have been modified to handle the BreakThenThrow case.
+  //
+  // ---- END SPEAR MODIFICATION ----
+
   #if defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 140050215)
 
     #if defined(PPK_ASSERT_DISABLE_IGNORE_LINE)
@@ -201,8 +207,13 @@
           if (PPK_ASSERT_LIKELY(expression) || ppk::assert::implementation::ignoreAllAsserts());\
           else\
           {\
-            if (ppk::assert::implementation::handleAssert(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, level, PPK_ASSERT_NULLPTR, __VA_ARGS__) == ppk::assert::implementation::AssertAction::Break)\
+            ppk::assert::implementation::AssertAction::AssertAction action = ppk::assert::implementation::handleAssert(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, level, PPK_ASSERT_NULLPTR, __VA_ARGS__);\
+            if (action == ppk::assert::implementation::AssertAction::Break) {\
               PPK_ASSERT_DEBUG_BREAK();\
+            } else if (action == ppk::assert::implementation::AssertAction::BreakThenThrow)\
+              PPK_ASSERT_DEBUG_BREAK();\
+              ppk::assert::implementation::handleThrow(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, __VA_ARGS__);\
+            }\
           }\
         }\
         while (false)\
@@ -219,8 +230,13 @@
           if (PPK_ASSERT_LIKELY(expression) || _ignore || ppk::assert::implementation::ignoreAllAsserts());\
           else\
           {\
-            if (ppk::assert::implementation::handleAssert(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, level, &_ignore, __VA_ARGS__) == ppk::assert::implementation::AssertAction::Break)\
+            ppk::assert::implementation::AssertAction::AssertAction action = ppk::assert::implementation::handleAssert(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, level, &_ignore, __VA_ARGS__);\
+            if (action == ppk::assert::implementation::AssertAction::Break) {\
               PPK_ASSERT_DEBUG_BREAK();\
+            else if (action == ppk::assert::implementation::AssertAction::BreakThenThrow) {\
+              PPK_ASSERT_DEBUG_BREAK();\
+              ppk::assert::implementation::handleThrow(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, __VA_ARGS__);\
+            }\
           }\
         }\
         while (false)\
@@ -251,8 +267,13 @@
           else\
           {\
             _PPK_ASSERT_WFORMAT_AS_ERROR_BEGIN\
-            if (ppk::assert::implementation::handleAssert(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, level, PPK_ASSERT_NULLPTR, __VA_ARGS__) == ppk::assert::implementation::AssertAction::Break)\
+            ppk::assert::implementation::AssertAction::AssertAction action = ppk::assert::implementation::handleAssert(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, level, PPK_ASSERT_NULLPTR, __VA_ARGS__);\
+            if (action == ppk::assert::implementation::AssertAction::Break) {\
               PPK_ASSERT_DEBUG_BREAK();\
+            } else if (action == ppk::assert::implementation::AssertAction::BreakThenThrow) {\
+              PPK_ASSERT_DEBUG_BREAK();\
+              ppk::assert::implementation::handleThrow(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, __VA_ARGS__);\
+            }\
             _PPK_ASSERT_WFORMAT_AS_ERROR_END\
           }\
         }\
@@ -268,8 +289,13 @@
           else\
           {\
             _PPK_ASSERT_WFORMAT_AS_ERROR_BEGIN\
-            if (ppk::assert::implementation::handleAssert(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, level, &_ignore, __VA_ARGS__) == ppk::assert::implementation::AssertAction::Break)\
+            ppk::assert::implementation::AssertAction::AssertAction action = ppk::assert::implementation::handleAssert(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, level, &_ignore, __VA_ARGS__);\
+            if (action == ppk::assert::implementation::AssertAction::Break) {\
               PPK_ASSERT_DEBUG_BREAK();\
+            } else if (action == ppk::assert::implementation::AssertAction::BreakThenThrow) {\
+              PPK_ASSERT_DEBUG_BREAK();\
+              ppk::assert::implementation::handleThrow(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, __VA_ARGS__);\
+            }\
             _PPK_ASSERT_WFORMAT_AS_ERROR_END\
           }\
         }\
@@ -466,7 +492,19 @@
         IgnoreLine,
       #endif
         IgnoreAll,
-        Throw
+
+        // ---- BEGIN SPEAR MODIFICATION ----
+        //
+        // Throw
+        //
+        // We add a BreakThenThrow case because if we're in a debugger, it is sometimes helpful to break and
+        // then continue running cleanly, but this requires that we throw after breaking.
+        //
+
+        Throw,
+        BreakThenThrow
+
+        // ---- END SPEAR MODIFICATION ----
 
       }; // AssertAction
 
@@ -527,6 +565,20 @@
 
     PPK_ASSERT_FUNCSPEC
     bool SPCORE_API PPK_ASSERT_CALL ignoreAllAsserts();
+
+#if defined(__GNUC__) || defined(__clang__)
+  #define PPK_ASSERT_HANDLE_THROW_FORMAT __attribute__((format (printf, 5, 6)))
+#else
+  #define PPK_ASSERT_HANDLE_THROW_FORMAT
+#endif
+
+    // This function is not in the original implementation, but we use it to customize our assert behavior.
+    PPK_ASSERT_FUNCSPEC
+    void SPCORE_API PPK_ASSERT_CALL handleThrow(const char* file,
+                                                int line,
+                                                const char* function,
+                                                const char* expression,
+                                                const char* message, ...) PPK_ASSERT_HANDLE_THROW_FORMAT;
 
     // ---- END SPEAR MODIFICATION ----
 

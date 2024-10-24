@@ -40,13 +40,11 @@ public:
     SpFuncDataBundle callFunc(const std::string& func_name, SpFuncDataBundle& args) const;
 
 private:
-    #if WITH_EDITORONLY_DATA // defined in an auto-generated header
-        UPROPERTY(VisibleAnywhere, Category="SPEAR");
-        TArray<FString> FuncNames;
+    UPROPERTY(VisibleAnywhere, Category="SPEAR");
+    TArray<FString> FuncNames;
 
-        UPROPERTY(VisibleAnywhere, Category="SPEAR");
-        TArray<FString> SharedMemoryViewNames;
-    #endif
+    UPROPERTY(VisibleAnywhere, Category="SPEAR");
+    TArray<FString> SharedMemoryViewNames;
 
     FuncRegistrar<SpFuncDataBundle, SpFuncDataBundle&> funcs_;
     std::map<std::string, SpFuncSharedMemoryView> shared_memory_views_;

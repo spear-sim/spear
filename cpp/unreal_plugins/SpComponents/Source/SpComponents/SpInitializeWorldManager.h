@@ -25,6 +25,8 @@ struct FSpPhysicsSettings
 {
     GENERATED_BODY()
 
+private:
+
     //
     // Copied from Engine/Source/Runtime/Engine/Classes/PhysicsEngine/PhysicsSettings.h
     //
@@ -252,6 +254,7 @@ public:
     // AActor interface
     void BeginPlay();
 
+private:
     UPROPERTY(EditAnywhere, Category="SPEAR")
     bool bSetPhysicsSettings = false;
     UPROPERTY(EditAnywhere, Category="SPEAR")

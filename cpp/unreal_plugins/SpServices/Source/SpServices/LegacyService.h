@@ -12,6 +12,7 @@
 
 #include "SpCore/ArrayDesc.h" // TODO: remove
 #include "SpCore/Assert.h"
+#include "SpCore/Unreal.h"
 
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/Msgpack.h"
@@ -113,6 +114,11 @@ public:
             SP_ASSERT(nav_mesh_);
             return nav_mesh_->getPaths(initial_points, goal_points);
         });
+
+        unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_world_name", [this]() -> std::string {
+            SP_ASSERT(world_);
+            return Unreal::toStdString(world_->GetName());
+        });
     }
 
     ~LegacyService()
@@ -134,8 +140,8 @@ public:
 
 private:
     FDelegateHandle post_world_initialization_handle_;
-    FDelegateHandle world_begin_play_handle_;
     FDelegateHandle world_cleanup_handle_;
+    FDelegateHandle world_begin_play_handle_;
 
     UWorld* world_ = nullptr;
 

@@ -8,6 +8,7 @@ import spear
 class SpFuncService():
     def __init__(self, rpc_client):
         self._rpc_client = rpc_client
+        self._unreal_instance_byte_order = self._rpc_client.call("engine_service.get_byte_order")
 
     def call_function(self, uobject, function_name, packed_arrays={}, unreal_objs={}, info=""):
 

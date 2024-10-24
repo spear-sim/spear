@@ -961,7 +961,6 @@ public:
     }
 
 private:
-
     template <typename T>
     static const char* getTypeIdString()
     {
