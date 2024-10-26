@@ -24,8 +24,7 @@ if __name__ == "__main__":
         sp_debug_widget_static_class = instance.unreal_service.get_static_class(class_name="ASpDebugWidget")
         sp_debug_widget_default_object = instance.unreal_service.get_default_object(uclass=sp_debug_widget_static_class, create_if_needed=False)
 
-        # Get handles to any shared memory regions created by the object. Unreal objects can define their own
-        # shared memory regions for returning array data to Python as efficiently as possible.
+        # Get handles to any shared memory regions created by the Unreal object.
         sp_debug_widget_shared_memory_handles = instance.sp_func_service.create_shared_memory_handles_for_uobject(uobject=sp_debug_widget_default_object)
 
         # Create a numpy array.
@@ -37,8 +36,8 @@ if __name__ == "__main__":
 
         # Prepare args for calling a custom function on our object. Note that any array backed by shared
         # memory needs to be wrapped with spear.to_shared(...) when passing it to SpFuncService.call_function(...).
-        # Otherwise it will be treated as a regular array, and will be sent to the object via a slower code
-        # path.
+        # Otherwise it will be treated as a regular array, and will be sent to the Unreal object via a slower
+        # code path.
         arrays = {"action": action, "action_shared": spear.to_shared(array=action_shared, shared_memory_name="smem_action")}
         unreal_objs = {"in_location": {"X": 6.0, "Y": 7.0, "Z": 8.0}, "in_rotation": {"Pitch": 9.0, "Yaw": 10.0, "Roll": 11.0}}
         info = "Hello world"
@@ -58,7 +57,7 @@ if __name__ == "__main__":
 
         spear.log("return_values: ", return_values)
 
-        # Destroy handles to the object's shared memory regions.
+        # Destroy handles to the shared memory regions created by the Unreal object.
         instance.sp_func_service.destroy_shared_memory_handles_for_uobject(shared_memory_handles=sp_debug_widget_shared_memory_handles)
 
         # Destroy the shared memory region we created ourselves.
