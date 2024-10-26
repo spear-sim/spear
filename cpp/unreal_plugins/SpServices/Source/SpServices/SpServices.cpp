@@ -32,15 +32,16 @@ void SpServices::StartupModule()
     SP_ASSERT_MODULE_LOADED("Vehicle");
     SP_LOG_CURRENT_FUNCTION();
 
-    // Create RPC server object but don't launch it yet. We want to defer launching the server as late as
-    // possible in worldBeginPlayHandler(), to give other plugins and game code a chance to register custom
-    // types with UnrealClassRegistrar.
+    // Create RPC server.
     int rpc_server_port = 30000;
     if (Config::isInitialized()) {
         rpc_server_port = Config::get<int>("SP_SERVICES.RPC_SERVER_PORT");
     }
     rpc_server_ = std::make_unique<rpc::server>(rpc_server_port);
     SP_ASSERT(rpc_server_);
+
+    int num_worker_threads = 1;
+    rpc_server_->async_run(num_worker_threads);
 
     // EngineService needs its own custom logic for binding its entry points, because they are intended to
     // run directly on the RPC server worker thread, whereas all other entry points are intended to run on
@@ -52,13 +53,6 @@ void SpServices::StartupModule()
     legacy_service_ = std::make_unique<LegacyService>(engine_service_.get());
     sp_func_service_ = std::make_unique<SpFuncService>(engine_service_.get());
     unreal_service_ = std::make_unique<UnrealService>(engine_service_.get());
-
-    // Add callbacks after creating all other services. If other services add callbacks, we want to add ours
-    // last, because this will guarantee that it gets called first. If our postWorldInitializationHandler(...)
-    // callback gets called first, that means our worldBeginPlayHandler(...) callback will get called last,
-    // which is the behavior we want, because we want to launch the RPC server as late as possible.
-    post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SpServices::postWorldInitializationHandler);
-    world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &SpServices::worldCleanupHandler);
 
     // Override the default game map. We want to do this early enough to avoid loading the default map
     // specified in Unreal's config system, but late enough that that the UGameMapSettings default object
@@ -77,12 +71,6 @@ void SpServices::ShutdownModule()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    FWorldDelegates::OnWorldCleanup.Remove(world_cleanup_handle_);
-    FWorldDelegates::OnPostWorldInitialization.Remove(post_world_initialization_handle_);
-
-    world_cleanup_handle_.Reset();
-    post_world_initialization_handle_.Reset();
-
     SP_ASSERT(unreal_service_);
     SP_ASSERT(sp_func_service_);
     SP_ASSERT(legacy_service_);
@@ -94,59 +82,10 @@ void SpServices::ShutdownModule()
     engine_service_->close();
     engine_service_ = nullptr;
 
-    // not exactly symmetic with StartupModule because we deferred initialization until worldBeginPlayHandler()
     SP_ASSERT(rpc_server_);
     rpc_server_->close_sessions();
     rpc_server_->stop();
     rpc_server_ = nullptr;
-}
-
-void SpServices::postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values)
-{
-    SP_LOG_CURRENT_FUNCTION();
-    SP_ASSERT(world);
-
-    SP_LOG("World name: ", Unreal::toStdString(world->GetName()));
-
-    if (world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
-        SP_LOG("Caching world...");
-        SP_ASSERT(!world_);
-        world_ = world;
-        world_begin_play_handle_ = world_->OnWorldBeginPlay.AddRaw(this, &SpServices::worldBeginPlayHandler);
-    }
-}
-
-void SpServices::worldCleanupHandler(UWorld* world, bool session_ended, bool cleanup_resources)
-{
-    SP_LOG_CURRENT_FUNCTION();
-    SP_ASSERT(world);
-
-    SP_LOG("World name: ", Unreal::toStdString(world->GetName()));
-
-    if (world == world_) {
-        SP_LOG("Clearing cached world...");
-        world_->OnWorldBeginPlay.Remove(world_begin_play_handle_);
-        world_begin_play_handle_.Reset();
-        world_ = nullptr;
-    }
-}
-
-void SpServices::worldBeginPlayHandler()
-{
-    SP_LOG_CURRENT_FUNCTION();
-    SP_ASSERT(world_);
-
-    // We defer launching the RPC server until here, to give other plugins and other game code as long as
-    // possibe to register custom types with UnrealClassRegistar before the server is launched. This approach
-    // guarantees that, if custom type is registered any time before this worldBeginPlayHandler() function,
-    // e.g., in the StartupModule() function of a plugin or game module, then the custom type will be
-    // accessible from Python for the entire lifetime of the RPC server.
-    static bool once = false;
-    if (!once) {
-        once = true;
-        int num_worker_threads = 1;
-        rpc_server_->async_run(num_worker_threads);
-    }
 }
 
 // use if module does not implement any Unreal classes

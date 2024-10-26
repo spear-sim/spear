@@ -6,12 +6,12 @@
 from spear.config import get_config
 from spear.log import log, log_current_function, log_no_prefix, log_get_prefix
 from spear.path import path_exists, remove_path
-from spear.ptr import to_handle, to_ptr
+from spear.func_utils import to_handle, to_ptr, to_shared
 from spear.system import configure_system
 
 # classes
 from spear.instance import Instance
-from spear.ptr import Ptr
+from spear.func_utils import Ptr, Shared
 
 # services
 from spear.engine_service import EngineService

@@ -4,7 +4,13 @@
 
 #pragma once
 
+#include <memory> // std::unique_ptr
+
 #include <Components/SceneCaptureComponent2D.h>
+#include <Engine/EngineTypes.h> // EEndPlayReason
+
+#include "SpCore/SharedMemoryRegion.h"
+#include "SpCore/SpFuncArray.h"
 
 #include "SpComponents/SpFuncComponent.h"
 
@@ -19,7 +25,14 @@ public:
     USpSceneCaptureComponent2D();
     ~USpSceneCaptureComponent2D();
 
+    // USceneCaptureComponent2D interface
+    void BeginPlay() override;
+    void EndPlay(const EEndPlayReason::Type end_play_reason) override;
+
 private:
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
     USpFuncComponent* SpFuncComponent = nullptr;
+
+    std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
+    SpFuncSharedMemoryView shared_memory_view_;
 };

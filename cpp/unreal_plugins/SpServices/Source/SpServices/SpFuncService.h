@@ -17,6 +17,7 @@
 #include "SpCore/SharedMemoryRegion.h"
 #include "SpCore/SpFuncArray.h"
 #include "SpCore/Std.h"
+#include "SpCore/Unreal.h"
 
 #include "SpComponents/SpFuncComponent.h"
 
@@ -24,6 +25,8 @@
 #include "SpServices/Msgpack.h"
 #include "SpServices/Rpclib.h"
 #include "SpServices/ServiceUtils.h"
+
+#include "SpFuncService.generated.h"
 
 class UWorld;
 
@@ -37,6 +40,18 @@ public:
         post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SpFuncService::postWorldInitializationHandler);
         world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &SpFuncService::worldCleanupHandler);
 
+        unreal_entry_point_binder->bindFuncNoUnreal("sp_func_service", "get_byte_order", []() -> std::string {
+            SP_ASSERT(BOOST_ENDIAN_BIG_BYTE + BOOST_ENDIAN_LITTLE_BYTE == 1);
+            
+            if (BOOST_ENDIAN_BIG_BYTE) {
+                return "big";
+            } else if (BOOST_ENDIAN_LITTLE_BYTE) {
+                return "little";
+            } else {
+                return "";
+            }
+        });
+
         unreal_entry_point_binder->bindFuncUnreal("sp_func_service", "call_function", [this](uint64_t& uobject, std::string& function_name, SpFuncDataBundle& args) -> SpFuncDataBundle {
             SP_ASSERT(world_);
 
@@ -49,12 +64,10 @@ public:
 
             // resolve references to shared memory and validate args
             SpFuncArrayUtils::resolve(args.packed_arrays_, shared_memory_views);
-            SpFuncArrayUtils::validate(args.packed_arrays_, SpFuncSharedMemoryUsageFlags::Arg);
 
             // call SpFunc
+            SpFuncArrayUtils::validate(args.packed_arrays_, SpFuncSharedMemoryUsageFlags::Arg);
             SpFuncDataBundle return_values = sp_func_component->callFunc(function_name, args);
-
-            // validate return values
             SpFuncArrayUtils::validate(return_values.packed_arrays_, SpFuncSharedMemoryUsageFlags::ReturnValue);
             
             return return_values;
@@ -96,9 +109,51 @@ private:
 // Enums
 //
 
-MSGPACK_ADD_ENUM(SpFuncArrayDataSource);
-MSGPACK_ADD_ENUM(SpFuncArrayDataType);
-MSGPACK_ADD_ENUM(SpFuncSharedMemoryUsageFlags);
+//
+// SpFuncArrayDataSource
+//
+
+UENUM()
+enum class ESpFuncArrayDataSource
+{
+    Invalid  = Unreal::getConstEnumValue(SpFuncArrayDataSource::Invalid),
+    Internal = Unreal::getConstEnumValue(SpFuncArrayDataSource::Internal),
+    External = Unreal::getConstEnumValue(SpFuncArrayDataSource::External),
+    Shared   = Unreal::getConstEnumValue(SpFuncArrayDataSource::Shared)
+};
+
+//
+// SpFuncArrayDataType
+//
+
+UENUM()
+enum class ESpFuncArrayDataType
+{
+    Invalid = Unreal::getConstEnumValue(SpFuncArrayDataType::Invalid),
+    u1      = Unreal::getConstEnumValue(SpFuncArrayDataType::UInt8),
+    i1      = Unreal::getConstEnumValue(SpFuncArrayDataType::Int8),
+    u2      = Unreal::getConstEnumValue(SpFuncArrayDataType::UInt16),
+    i2      = Unreal::getConstEnumValue(SpFuncArrayDataType::Int16),
+    u4      = Unreal::getConstEnumValue(SpFuncArrayDataType::UInt32),
+    i4      = Unreal::getConstEnumValue(SpFuncArrayDataType::Int32),
+    u8      = Unreal::getConstEnumValue(SpFuncArrayDataType::UInt64),
+    i8      = Unreal::getConstEnumValue(SpFuncArrayDataType::Int64),
+    f4      = Unreal::getConstEnumValue(SpFuncArrayDataType::Float32),
+    f8      = Unreal::getConstEnumValue(SpFuncArrayDataType::Float64)
+};
+
+//
+// SpFuncArrayDataType
+//
+
+UENUM(Flags)
+enum class ESpFuncSharedMemoryUsageFlags
+{
+    DoNotUse    = Unreal::getConstEnumValue(SpFuncSharedMemoryUsageFlags::DoNotUse),
+    Arg         = Unreal::getConstEnumValue(SpFuncSharedMemoryUsageFlags::Arg),
+    ReturnValue = Unreal::getConstEnumValue(SpFuncSharedMemoryUsageFlags::ReturnValue)
+};
+ENUM_CLASS_FLAGS(ESpFuncSharedMemoryUsageFlags); // required if combining values using bitwise operations
 
 //
 // SpFuncDataBundle
@@ -119,11 +174,10 @@ struct clmdep_msgpack::adaptor::convert<SpFuncDataBundle> {
 template <> // needed to send a custom type as a return value
 struct clmdep_msgpack::adaptor::object_with_zone<SpFuncDataBundle> {
     void operator()(clmdep_msgpack::object::with_zone& object, SpFuncDataBundle const& data_bundle) const {
-        std::map<std::string, clmdep_msgpack::object> map = {
+        Msgpack::toObject(object, {
             {"packed_arrays", clmdep_msgpack::object(data_bundle.packed_arrays_, object.zone)},
             {"unreal_obj_strings", clmdep_msgpack::object(data_bundle.unreal_obj_strings_, object.zone)},
-            {"info", clmdep_msgpack::object(data_bundle.info_, object.zone)}};
-        Msgpack::toObject(object, map);
+            {"info", clmdep_msgpack::object(data_bundle.info_, object.zone)}});
     }
 };
 
@@ -137,9 +191,9 @@ struct clmdep_msgpack::adaptor::convert<SpFuncPackedArray> {
         std::map<std::string, clmdep_msgpack::object> map = Msgpack::toMap(object);
         SP_ASSERT(map.size() == 5);
         packed_array.data_ = Msgpack::to<std::vector<uint8_t>>(map.at("data"));
-        packed_array.data_source_ = Msgpack::to<SpFuncArrayDataSource>(map.at("data_source"));
+        packed_array.data_source_ = Unreal::getEnumValueFromStringAs<SpFuncArrayDataSource, ESpFuncArrayDataSource>(Msgpack::to<std::string>(map.at("data_source")));
         packed_array.shape_ = Msgpack::to<std::vector<uint64_t>>(map.at("shape"));
-        packed_array.data_type_ = Msgpack::to<SpFuncArrayDataType>(map.at("data_type"));
+        packed_array.data_type_ = Unreal::getEnumValueFromStringAs<SpFuncArrayDataType, ESpFuncArrayDataType>(Msgpack::to<std::string>(map.at("data_type")));
         packed_array.shared_memory_name_ = Msgpack::to<std::string>(map.at("shared_memory_name"));
         return object;
     }
@@ -148,13 +202,12 @@ struct clmdep_msgpack::adaptor::convert<SpFuncPackedArray> {
 template <> // needed to send a custom type as a return value
 struct clmdep_msgpack::adaptor::object_with_zone<SpFuncPackedArray> {
     void operator()(clmdep_msgpack::object::with_zone& object, SpFuncPackedArray const& packed_array) const {
-        std::map<std::string, clmdep_msgpack::object> map = {
+        Msgpack::toObject(object, {
             {"data", clmdep_msgpack::object(packed_array.data_, object.zone)},
-            {"data_source", clmdep_msgpack::object(packed_array.data_source_, object.zone)},
+            {"data_source", clmdep_msgpack::object(Unreal::getStringFromEnumValue<ESpFuncArrayDataSource>(packed_array.data_source_), object.zone)},
             {"shape", clmdep_msgpack::object(packed_array.shape_, object.zone)},
-            {"data_type", clmdep_msgpack::object(packed_array.data_type_, object.zone)},
-            {"shared_memory_name", clmdep_msgpack::object(packed_array.shared_memory_name_, object.zone)}};
-        Msgpack::toObject(object, map);
+            {"data_type", clmdep_msgpack::object(Unreal::getStringFromEnumValue<ESpFuncArrayDataType>(packed_array.data_type_), object.zone)},
+            {"shared_memory_name", clmdep_msgpack::object(packed_array.shared_memory_name_, object.zone)}});
     }
 };
 
@@ -169,7 +222,7 @@ struct clmdep_msgpack::adaptor::convert<SpFuncSharedMemoryView> {
         SP_ASSERT(map.size() == 3);
         shared_memory_view.id_ = Msgpack::to<std::string>(map.at("id"));
         shared_memory_view.num_bytes_ = Msgpack::to<int>(map.at("num_bytes"));
-        shared_memory_view.usage_flags_ = Msgpack::to<SpFuncSharedMemoryUsageFlags>(map.at("usage_flags"));
+        shared_memory_view.usage_flags_ = Unreal::getCombinedEnumFlagValueFromStringsAs<SpFuncSharedMemoryUsageFlags, ESpFuncSharedMemoryUsageFlags>(Msgpack::to<std::vector<std::string>>(map.at("usage_flags")));
         return object;
     }
 };
@@ -177,10 +230,9 @@ struct clmdep_msgpack::adaptor::convert<SpFuncSharedMemoryView> {
 template <> // needed to send a custom type as a return value
 struct clmdep_msgpack::adaptor::object_with_zone<SpFuncSharedMemoryView> {
     void operator()(clmdep_msgpack::object::with_zone& object, SpFuncSharedMemoryView const& shared_memory_view) const {
-        std::map<std::string, clmdep_msgpack::object> map = {
+        Msgpack::toObject(object, {
             {"id", clmdep_msgpack::object(shared_memory_view.id_, object.zone)},
             {"num_bytes", clmdep_msgpack::object(shared_memory_view.num_bytes_, object.zone)},
-            {"usage_flags", clmdep_msgpack::object(shared_memory_view.usage_flags_, object.zone)}};
-        Msgpack::toObject(object, map);
+            {"usage_flags", clmdep_msgpack::object(Unreal::getStringsFromCombinedEnumFlagValue<ESpFuncSharedMemoryUsageFlags, SpFuncSharedMemoryUsageFlags>(shared_memory_view.usage_flags_), object.zone)}});
     }
 };

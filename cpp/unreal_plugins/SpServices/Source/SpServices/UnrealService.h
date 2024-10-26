@@ -53,22 +53,11 @@ enum class ESpIncludeSuperFlag
     IncludeSuper = Unreal::getConstEnumValue(EIncludeSuperFlag::Type::IncludeSuper)
 };
 
-USTRUCT() // used to convert to and from strings
-struct FSpIncludeSuperFlag
-{
-    GENERATED_BODY()
-private:
-    UPROPERTY()
-    ESpIncludeSuperFlag Enum = Unreal::getEnumValueAs<ESpIncludeSuperFlag>(0);
-public:
-    SP_DECLARE_ENUM_PROPERTY(ESpIncludeSuperFlag, Enum);
-};
-
 //
 // This enum corresponds to EObjectFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectMacros.h
 //
 
-UENUM()
+UENUM(Flags)
 enum class ESpObjectFlags
 {
     RF_NoFlags                      = Unreal::getConstEnumValue(EObjectFlags::RF_NoFlags),
@@ -102,25 +91,13 @@ enum class ESpObjectFlags
     RF_HasExternalPackage           = Unreal::getConstEnumValue(EObjectFlags::RF_HasExternalPackage),
     RF_AllocatedInSharedPage        = Unreal::getConstEnumValue(EObjectFlags::RF_AllocatedInSharedPage)
 };
-
-USTRUCT() // used to convert to and from strings
-struct FSpObjectFlags
-{
-    GENERATED_BODY()
-private:
-    UPROPERTY()
-    ESpObjectFlags Enum = Unreal::getEnumValueAs<ESpObjectFlags>(0);
-public:
-    SP_DECLARE_ENUM_PROPERTY(ESpObjectFlags, Enum);
-};
-
-ENUM_CLASS_FLAGS(ESpObjectFlags); // used to combine using bitwise operations
+ENUM_CLASS_FLAGS(ESpObjectFlags); // required if combining values using bitwise operations
 
 //
 // This enum corresponds to ELoadFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectMacros.h
 //
 
-UENUM()
+UENUM(Flags)
 enum class ESpLoadFlags
 {
     LOAD_None                        = Unreal::getConstEnumValue(ELoadFlags::LOAD_None),
@@ -145,25 +122,13 @@ enum class ESpLoadFlags
     LOAD_DisableCompileOnLoad        = Unreal::getConstEnumValue(ELoadFlags::LOAD_DisableCompileOnLoad),
     LOAD_DisableEngineVersionChecks  = Unreal::getConstEnumValue(ELoadFlags::LOAD_DisableEngineVersionChecks)
 };
-
-USTRUCT() // used to convert to and from strings
-struct FSpLoadFlags
-{
-    GENERATED_BODY()
-private:
-    UPROPERTY()
-    ESpLoadFlags Enum = Unreal::getEnumValueAs<ESpLoadFlags>(0);
-public:
-    SP_DECLARE_ENUM_PROPERTY(ESpLoadFlags, Enum);
-};
-
-ENUM_CLASS_FLAGS(ESpLoadFlags); // used to combine using bitwise operations
+ENUM_CLASS_FLAGS(ESpLoadFlags); // required if combining values using bitwise operations
 
 //
 // This enum corresponds to EConsoleVariableFlags declared in Engine/Source/Runtime/Core/Public/HAL/IConsoleManager.h
 //
 
-UENUM()
+UENUM(Flags)
 enum class ESpConsoleVariableFlags
 {
     ECVF_FlagMask                 = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_FlagMask),
@@ -195,19 +160,7 @@ enum class ESpConsoleVariableFlags
     ECVF_SetByCode                = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_SetByCode),
     ECVF_SetByConsole             = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_SetByConsole)
 };
-
-USTRUCT() // used to convert to and from strings
-struct FSpConsoleVariableFlags
-{
-    GENERATED_BODY()
-private:
-    UPROPERTY()
-    ESpConsoleVariableFlags Enum = Unreal::getEnumValueAs<ESpConsoleVariableFlags>(0);
-public:
-    SP_DECLARE_ENUM_PROPERTY(ESpConsoleVariableFlags, Enum);
-};
-
-ENUM_CLASS_FLAGS(ESpConsoleVariableFlags); // used to combine using bitwise operations
+ENUM_CLASS_FLAGS(ESpConsoleVariableFlags); // required if combining values using bitwise operations
 
 //
 // This enum corresponds to ESpawnActorNameMode declared in Engine/Source/Runtime/Engine/Classes/Engine/World.h
@@ -371,7 +324,7 @@ public:
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_function_by_name",
             [this](uint64_t& uclass, std::string& function_name, std::string& include_super_flag_string) -> uint64_t {
                 return toUInt64(Unreal::findFunctionByName(
-                    toPtr<UClass>(uclass), function_name, Unreal::getEnumValueFromString<FSpIncludeSuperFlag, EIncludeSuperFlag::Type>(include_super_flag_string)));
+                    toPtr<UClass>(uclass), function_name, Unreal::getEnumValueFromStringAs<EIncludeSuperFlag::Type, ESpIncludeSuperFlag>(include_super_flag_string)));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "call_function",
@@ -857,7 +810,7 @@ public:
                 actor_spawn_parameters.bDeferConstruction = sp_actor_spawn_parameters.bDeferConstruction;
                 actor_spawn_parameters.bAllowDuringConstructionScript = sp_actor_spawn_parameters.bAllowDuringConstructionScript;
                 actor_spawn_parameters.NameMode = Unreal::getEnumValueAs<FActorSpawnParameters::ESpawnActorNameMode>(sp_actor_spawn_parameters.NameMode);
-                actor_spawn_parameters.ObjectFlags = Unreal::combineEnumFlagStringsAs<FSpObjectFlags, EObjectFlags>(object_flag_strings);
+                actor_spawn_parameters.ObjectFlags = Unreal::getCombinedEnumFlagValueFromStringsAs<EObjectFlags, ESpObjectFlags>(object_flag_strings);
 
                 return toUInt64(UnrealClassRegistrar::spawnActor(class_name, world_, location, rotation, actor_spawn_parameters));
             });
@@ -887,7 +840,7 @@ public:
                 actor_spawn_parameters.bDeferConstruction = sp_actor_spawn_parameters.bDeferConstruction;
                 actor_spawn_parameters.bAllowDuringConstructionScript = sp_actor_spawn_parameters.bAllowDuringConstructionScript;
                 actor_spawn_parameters.NameMode = Unreal::getEnumValueAs<FActorSpawnParameters::ESpawnActorNameMode>(sp_actor_spawn_parameters.NameMode);
-                actor_spawn_parameters.ObjectFlags = Unreal::combineEnumFlagStringsAs<FSpObjectFlags, EObjectFlags>(object_flag_strings);
+                actor_spawn_parameters.ObjectFlags = Unreal::getCombinedEnumFlagValueFromStringsAs<EObjectFlags, ESpObjectFlags>(object_flag_strings);
 
                 return toUInt64(world_->SpawnActor(toPtr<UClass>(uclass), &location, &rotation, actor_spawn_parameters));
             });
@@ -961,7 +914,7 @@ public:
                         class_name,
                         toPtr<UObject>(outer),
                         fname,
-                        Unreal::combineEnumFlagStringsAs<FSpObjectFlags, EObjectFlags>(object_flag_strings),
+                        Unreal::getCombinedEnumFlagValueFromStringsAs<EObjectFlags, ESpObjectFlags>(object_flag_strings),
                         toPtr<UObject>(uobject_template),
                         copy_transients_from_class_defaults,
                         toPtr<FObjectInstancingGraph>(in_instance_graph),
@@ -988,7 +941,7 @@ public:
                         toPtr<UObject>(outer),
                         *Unreal::toFString(name),
                         *Unreal::toFString(filename),
-                        Unreal::combineEnumFlagStringsAs<FSpLoadFlags, ELoadFlags>(load_flag_strings),
+                        Unreal::getCombinedEnumFlagValueFromStringsAs<ELoadFlags, ESpLoadFlags>(load_flag_strings),
                         toPtr<UPackageMap>(sandbox),
                         toPtr<FLinkerInstancingContext>(instancing_context)));
             });
@@ -1008,7 +961,7 @@ public:
                         toPtr<UObject>(outer),
                         *Unreal::toFString(name),
                         *Unreal::toFString(filename),
-                        Unreal::combineEnumFlagStringsAs<FSpLoadFlags, ELoadFlags>(load_flag_strings),
+                        Unreal::getCombinedEnumFlagValueFromStringsAs<ELoadFlags, ESpLoadFlags>(load_flag_strings),
                         toPtr<UPackageMap>(sandbox)));
             });
 
@@ -1029,7 +982,7 @@ public:
                         toPtr<UClass>(in_outer),
                         *Unreal::toFString(name),
                         *Unreal::toFString(filename),
-                        Unreal::combineEnumFlagStringsAs<FSpLoadFlags, ELoadFlags>(load_flag_strings),
+                        Unreal::getCombinedEnumFlagValueFromStringsAs<ELoadFlags, ESpLoadFlags>(load_flag_strings),
                         toPtr<UPackageMap>(sandbox),
                         allow_object_reconciliation,
                         toPtr<FLinkerInstancingContext>(instancing_context)));
@@ -1050,7 +1003,7 @@ public:
                         toPtr<UClass>(in_outer),
                         *Unreal::toFString(name),
                         *Unreal::toFString(filename),
-                        Unreal::combineEnumFlagStringsAs<FSpLoadFlags, ELoadFlags>(load_flag_strings),
+                        Unreal::getCombinedEnumFlagValueFromStringsAs<ELoadFlags, ESpLoadFlags>(load_flag_strings),
                         toPtr<UPackageMap>(sandbox)));
             });
 
@@ -1090,25 +1043,25 @@ public:
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "set_console_variable_value_from_bool",
             [this](uint64_t& cvar, bool& val, std::vector<std::string>& set_by_strings) -> void {
                 SP_ASSERT(cvar);
-                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::combineEnumFlagStringsAs<FSpConsoleVariableFlags, EConsoleVariableFlags>(set_by_strings));
+                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "set_console_variable_value_from_int",
             [this](uint64_t& cvar, int& val, std::vector<std::string>& set_by_strings) -> void {
                 SP_ASSERT(cvar);
-                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::combineEnumFlagStringsAs<FSpConsoleVariableFlags, EConsoleVariableFlags>(set_by_strings));
+                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "set_console_variable_value_from_float",
             [this](uint64_t& cvar, float& val, std::vector<std::string>& set_by_strings) -> void {
                 SP_ASSERT(cvar);
-                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::combineEnumFlagStringsAs<FSpConsoleVariableFlags, EConsoleVariableFlags>(set_by_strings));
+                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "set_console_variable_value_from_string",
             [this](uint64_t& cvar, std::string& val, std::vector<std::string>& set_by_strings) -> void {
                 SP_ASSERT(cvar);
-                toPtr<IConsoleVariable>(cvar)->Set(*Unreal::toFString(val), Unreal::combineEnumFlagStringsAs<FSpConsoleVariableFlags, EConsoleVariableFlags>(set_by_strings));
+                toPtr<IConsoleVariable>(cvar)->Set(*Unreal::toFString(val), Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings));
             });
 
         //
@@ -1190,9 +1143,8 @@ struct clmdep_msgpack::adaptor::convert<Unreal::PropertyDesc> {
 template <> // needed to send a custom type as a return value
 struct clmdep_msgpack::adaptor::object_with_zone<Unreal::PropertyDesc> {
     void operator()(clmdep_msgpack::object::with_zone& object, Unreal::PropertyDesc const& property_desc) const {
-        std::map<std::string, clmdep_msgpack::object> map = {
+        Msgpack::toObject(object, {
             {"property", Msgpack::toObject(property_desc.property_, object.zone)},
-            {"value_ptr", Msgpack::toObject(property_desc.value_ptr_, object.zone)}};
-        Msgpack::toObject(object, map);
+            {"value_ptr", Msgpack::toObject(property_desc.value_ptr_, object.zone)}});
     }
 };

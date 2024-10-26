@@ -31,8 +31,9 @@ SharedMemoryRegion::SharedMemoryRegion(int num_bytes, uint64_t id)
         boost::interprocess::windows_shared_memory windows_shared_memory(boost::interprocess::create_only, id_.c_str(), boost::interprocess::read_write, num_bytes_);
         mapped_region_ = boost::interprocess::mapped_region(windows_shared_memory, boost::interprocess::read_write);
     #elif BOOST_OS_MACOS || BOOST_OS_LINUX
-        boost::interprocess::shared_memory_object::remove(id_.c_str());
-        boost::interprocess::shared_memory_object shared_memory_object(boost::interprocess::create_only, id_.c_str(), boost::interprocess::read_write);
+        std::string native_id = "/" + id_; // add leading slash when creating, but not when referencing from Python
+        boost::interprocess::shared_memory_object::remove(native_id.c_str());
+        boost::interprocess::shared_memory_object shared_memory_object(boost::interprocess::create_only, native_id.c_str(), boost::interprocess::read_write);
         shared_memory_object.truncate(num_bytes_);
         mapped_region_ = boost::interprocess::mapped_region(shared_memory_object, boost::interprocess::read_write);
     #else
@@ -46,7 +47,8 @@ SharedMemoryRegion::~SharedMemoryRegion()
 {
     SP_ASSERT(id_ != "");
     #if BOOST_OS_MACOS || BOOST_OS_LINUX
-        boost::interprocess::shared_memory_object::remove(id_.c_str());
+        std::string native_id = "/" + id_; // add leading slash when removing
+        boost::interprocess::shared_memory_object::remove(native_id.c_str());
     #endif
 }
 
@@ -69,9 +71,9 @@ std::string SharedMemoryRegion::getUniqueIdString(uint64_t id)
 {
     // TODO: remove platform-specific logic
     #if BOOST_COMP_MSVC
-        return std::format("__SP_SMEM_{:#018x}__", id); // don't use leading slash on Windows
+        return std::format("__SP_SMEM_{:#018x}__", id);
     #elif BOOST_COMP_CLANG
-        return (boost::format("/__SP_SMEM_0x%016x__")%id).str(); // use leading slash on macOS and Linux, must be 31 chars or less
+        return (boost::format("__SP_SMEM_0x%016x__")%id).str(); // must be 30 chars or less
     #else
         #error
     #endif

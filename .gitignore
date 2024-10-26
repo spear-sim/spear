@@ -53,6 +53,9 @@ examples/import_stanford_dataset/user_config.yaml
 examples/mujoco_interop/tmp
 examples/mujoco_interop/user_config.yaml
 
+examples/numpy_interop/tmp
+examples/numpy_interop/user_config.yaml
+
 examples/open_loop_control_fetch/images
 examples/open_loop_control_fetch/tmp
 examples/open_loop_control_fetch/user_config.yaml

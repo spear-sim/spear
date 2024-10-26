@@ -20,11 +20,16 @@ class Instance():
         self._request_launch_unreal_instance()
         self._initialize_rpc_client()
 
-        # Need to do these after we have a valid RPC client
-        self.engine_service = spear.EngineService(self._rpc_client)
-        self.legacy_service = spear.LegacyService(self._rpc_client)
-        self.unreal_service = spear.UnrealService(self._rpc_client)
-        self.sp_func_service = spear.SpFuncService(self._rpc_client)
+        # We need to initialize services after we have a valid RPC client. EngineService needs its own custom
+        # logic for interacting directly with the RPC client, because EngineService implements the context
+        # managers returned by begin_frame() and end_frame(). So we pass in the RPC client when constructing
+        # EngineService, and we pass in EngineService when constructing all other services.
+        self._engine_service = spear.EngineService(self._rpc_client, self._config)
+
+        # Construct all other services by passing in EngineService
+        self.legacy_service = spear.LegacyService(self._engine_service)
+        self.unreal_service = spear.UnrealService(self._engine_service)
+        self.sp_func_service = spear.SpFuncService(self._engine_service)
 
         # We need to do this after we have a valid EngineService object because we call EngineService.begin_frame()
         # and EngineService.end_frame() here.
@@ -32,16 +37,18 @@ class Instance():
 
     def is_running(self):
         try:
-            return self.engine_service.get_world() != 0
+            world = self._engine_service.get_world()
+            frame_state = self._engine_service.get_frame_state()
+            return world != 0 and frame_state != "NotInitialized"
         except:
             pass # no need to log exception because this case is expected when the instance is no longer running
         return False
 
     def begin_frame(self):
-        return self.engine_service.begin_frame()
+        return self._engine_service.begin_frame()
 
     def end_frame(self):
-        return self.engine_service.end_frame()
+        return self._engine_service.end_frame()
 
     def close(self):
         # Note that in the constructor, we launch the Unreal instance first and then initialize the RPC client. Normally,
@@ -162,7 +169,7 @@ class Instance():
             return
 
         try:
-            self.engine_service.request_exit()
+            self._engine_service.request_exit()
         except:
             pass # no need to log exception because this case is expected when the instance is no longer running
 
@@ -204,9 +211,14 @@ class Instance():
                     msgpackrpc.Address("127.0.0.1", self._config.SP_SERVICES.RPC_SERVER_PORT),
                     timeout=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS,
                     reconnect_limit=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
-                world = self._rpc_client.call("engine_service.get_world") # don't use self.engine_service because it hasn't been initialized yet
+
+                # don't use self._engine_service because it hasn't been initialized yet
+                world = self._rpc_client.call("engine_service.get_world")
                 spear.log("World: ", world)
-                if world:
+                frame_state = self._rpc_client.call("engine_service.get_frame_state")
+                spear.log("Frame state: ", frame_state)
+
+                if world and frame_state == "Idle":
                     connected = True
 
             except Exception as e:
@@ -239,9 +251,13 @@ class Instance():
                         msgpackrpc.Address("127.0.0.1", self._config.SP_SERVICES.RPC_SERVER_PORT), 
                         timeout=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
                         reconnect_limit=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
-                    world = self._rpc_client.call("engine_service.get_world") # don't use self.engine_service because it hasn't been initialized yet
+
+                    world = self._rpc_client.call("engine_service.get_world")
                     spear.log("World: ", world)
-                    if world:
+                    frame_state = self._rpc_client.call("engine_service.get_frame_state")
+                    spear.log("Frame state: ", frame_state)
+
+                    if world and frame_state == "Idle":
                         connected = True
                         break
 

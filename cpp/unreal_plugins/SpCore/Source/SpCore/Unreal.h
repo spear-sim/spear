@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <stdint.h> // int32_t, int64_t
+
 #include <concepts>    // std::derived_from
 #include <map>
 #include <ranges>      // std::views::filter, std::views::transform
@@ -15,30 +17,21 @@
 #include <Components/ActorComponent.h>
 #include <Components/SceneComponent.h>
 #include <Containers/Array.h>
-#include <Containers/UnrealString.h> // FString::operator*
-#include <EngineUtils.h>             // TActorIterator
+#include <Containers/UnrealString.h>        // FString::operator*
+#include <EngineUtils.h>                    // TActorIterator
 #include <GameFramework/Actor.h>
-#include <HAL/Platform.h>            // TCHAR
+#include <HAL/Platform.h>                   // TCHAR
 #include <Templates/Casts.h>
-#include <UObject/Class.h>           // EIncludeSuperFlag, UClass, UStruct
-#include <UObject/NameTypes.h>       // FName
-#include <UObject/Object.h>          // UObject
-#include <UObject/UnrealType.h>      // FProperty
+#include <UObject/Class.h>                  // EIncludeSuperFlag, UClass, UEnum, UStruct
+#include <UObject/NameTypes.h>              // FName
+#include <UObject/Object.h>                 // UObject
+#include <UObject/ReflectedTypeAccessors.h> // StaticEnum
+#include <UObject/UnrealType.h>             // FProperty
 
 #include "SpCore/Assert.h"
 #include "SpCore/Std.h"
 
 class UWorld;
-
-//
-// Helper macros for working with enums
-//
-
-#define SP_DECLARE_ENUM_PROPERTY(TEnumType, Enum) \
-    using TEnum = TEnumType;                       \
-    static std::string getName() { return #Enum; } \
-    TEnum getValue() const { return Enum; }        \
-    void setValue(TEnum value) { Enum = value; }
 
 //
 // Concepts for Unreal objects
@@ -55,6 +48,12 @@ concept CObject =
 // to behave as expected. So we encode the std::derived_from<...> constraint outside the requires(...) { ... }
 // statement in each concept, where we can manipulate TStruct and TClass more freely.
 
+template <typename TEnum>
+concept CEnum =
+    requires() {
+        { StaticEnum<TEnum>() } -> std::same_as<UEnum*>;
+    };
+
 template <typename TStruct>
 concept CStruct =
     requires() {
@@ -69,16 +68,6 @@ concept CClass =
         { TClass::StaticClass() }; // can't use std::same_as<UClass*> because the type of the returned pointer might be derived from UClass
     } &&
     std::derived_from<std::remove_pointer_t<decltype(TClass::StaticClass())>, UClass>;
-
-template <typename TEnumStruct>
-concept CEnumStruct =
-    CStruct<TEnumStruct> &&
-    requires(TEnumStruct enum_struct, typename TEnumStruct::TEnum value) {
-        typename TEnumStruct::TEnum;
-        { enum_struct.getName() } -> std::same_as<std::string>;
-        { enum_struct.getValue() } -> std::same_as<typename TEnumStruct::TEnum>;
-        { enum_struct.setValue(value) } -> std::same_as<void>;
-    };
 
 template <typename TComponent>
 concept CComponent =
@@ -893,29 +882,21 @@ public:
     // Helper functions for working with enums
     //
 
+    // Enum output, enum input
+
     template <typename TEnum>
     static constexpr auto getConstEnumValue(const TEnum src)
     {
         return static_cast<std::underlying_type_t<TEnum>>(src);
     }
 
-    static auto getEnumValue(int src)
-    {
-        return src;
-    }
+    static auto getEnumValue(int32_t src) { return src; }
+    static auto getEnumValue(int64_t src) { return src; }
 
     template <typename TEnum>
     static auto getEnumValue(TEnum src)
     {
         return static_cast<std::underlying_type_t<TEnum>>(src);
-    }
-
-    template <CEnumStruct TEnumStruct>
-    static auto getEnumValue(TEnumStruct src)
-    {
-        using TEnum = typename TEnumStruct::TEnum;
-
-        return static_cast<std::underlying_type_t<TEnum>>(src.getValue());
     }
 
     template <typename TDestEnum, typename TSrcEnum>
@@ -924,42 +905,51 @@ public:
         return static_cast<TDestEnum>(getEnumValue(src));
     }
 
-    template <CEnumStruct TEnumStruct, typename TSrcEnum>
-    static std::string getEnumValueAsString(TSrcEnum src)
-    {
-        using TEnum = typename TEnumStruct::TEnum;
+    // Enum output, string input
 
-        TEnumStruct enum_struct;
-        enum_struct.setValue(getEnumValueAs<TEnum>(src));
-        PropertyDesc property_desc = findPropertyByName(&enum_struct, TEnumStruct::StaticStruct(), enum_struct.getName());
-        return getPropertyValueAsString(property_desc);
+    template <CEnum TEnum>
+    static TEnum getEnumValueFromString(const std::string& string)
+    {
+        UEnum* uenum = StaticEnum<TEnum>();
+        return getEnumValueAs<TEnum>(uenum->GetValueByName(toFName(string)));
     }
 
-    template <CEnumStruct TEnumStruct, typename TDestEnum>
-    static TDestEnum getEnumValueFromString(const std::string& string)
+    template <typename TDestEnum, CEnum TEnum>
+    static TDestEnum getEnumValueFromStringAs(const std::string& string)
     {
-        TEnumStruct enum_struct;
-        PropertyDesc property_desc = findPropertyByName(&enum_struct, TEnumStruct::StaticStruct(), enum_struct.getName());
-        setPropertyValueFromString(property_desc, string);
-        return getEnumValueAs<TDestEnum>(enum_struct);
+        return getEnumValueAs<TDestEnum>(getEnumValueFromString<TEnum>(string));
     }
 
-    template <CEnumStruct TEnumStruct>
-    static auto combineEnumFlagStrings(const std::vector<std::string>& enum_flag_strings)
+    template <CEnum TEnum>
+    static auto getCombinedEnumFlagValueFromStrings(const std::vector<std::string>& strings)
     {
-        using TEnum = typename TEnumStruct::TEnum;
-
         TEnum combined_value = getEnumValueAs<TEnum>(0);
-        for (auto& enum_flag_string : enum_flag_strings) {
-            combined_value |= getEnumValueFromString<TEnumStruct, TEnum>(enum_flag_string);
+        for (auto& string : strings) {
+            combined_value |= getEnumValueFromString<TEnum>(string);
         }
         return combined_value;
     }
 
-    template <CEnumStruct TEnumStruct, typename TDestEnum>
-    static auto combineEnumFlagStringsAs(const std::vector<std::string>& enum_flag_strings)
+    template <typename TDestEnum, CEnum TEnum>
+    static auto getCombinedEnumFlagValueFromStringsAs(const std::vector<std::string>& strings)
     {
-        return getEnumValueAs<TDestEnum>(combineEnumFlagStrings<TEnumStruct>(enum_flag_strings));
+        return getEnumValueAs<TDestEnum>(getCombinedEnumFlagValueFromStrings<TEnum>(strings));
+    }
+
+    // String output, enum input
+
+    template <CEnum TEnum, typename TSrcEnum = TEnum>
+    static std::string getStringFromEnumValue(TSrcEnum src)
+    {
+        UEnum* uenum = StaticEnum<TEnum>();
+        return toStdString(uenum->GetNameStringByValue(getEnumValue(src)));
+    }
+
+    template <CEnum TEnum, typename TSrcEnum = TEnum>
+    static std::vector<std::string> getStringsFromCombinedEnumFlagValue(TSrcEnum src)
+    {
+        UEnum* uenum = StaticEnum<TEnum>();
+        return Std::tokenize(toStdString(uenum->GetValueOrBitfieldAsString(getEnumValue(src))), "| ");
     }
 
     //

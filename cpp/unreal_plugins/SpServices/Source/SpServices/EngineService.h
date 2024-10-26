@@ -41,17 +41,6 @@ enum class EFrameState
     Error             = 7
 };
 
-USTRUCT() // used to convert to and from strings
-struct FFrameState
-{
-    GENERATED_BODY()
-private:
-    UPROPERTY()
-    EFrameState Enum = EFrameState::NotInitialized;
-public:
-    SP_DECLARE_ENUM_PROPERTY(EFrameState, Enum);
-};
-
 template <CEntryPointBinder TEntryPointBinder>
 class EngineService {
 public:
@@ -66,6 +55,14 @@ public:
         world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &EngineService::worldCleanupHandler);
         begin_frame_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &EngineService::beginFrameHandler);
         end_frame_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &EngineService::endFrameHandler);
+
+        entry_point_binder_->bind("engine_service.get_world", [this]() -> uint64 {
+            return ServiceUtils::toUInt64(world_.load());
+        });
+
+        entry_point_binder_->bind("engine_service.get_frame_state", [this]() -> std::string {
+            return Unreal::getStringFromEnumValue<EFrameState>(frame_state_.load());
+        });
 
         entry_point_binder_->bind("engine_service.begin_tick", [this]() -> void {
 
@@ -133,25 +130,6 @@ public:
             // Wait here until endFrameHandler() updates frame_state_ and calls frame_state_idle_promise_.set_value().
             frame_state_idle_future_.wait();
             SP_ASSERT(frame_state_ == EFrameState::Idle);
-        });
-
-        entry_point_binder_->bind("engine_service.get_byte_order", []() -> std::string {
-            SP_ASSERT(BOOST_ENDIAN_BIG_BYTE + BOOST_ENDIAN_LITTLE_BYTE == 1);
-            if (BOOST_ENDIAN_BIG_BYTE) {
-                return "big";
-            } else if (BOOST_ENDIAN_LITTLE_BYTE) {
-                return "little";
-            } else {
-                return "";
-            }
-        });
-
-        entry_point_binder_->bind("engine_service.get_world", [this]() -> uint64 {
-            return ServiceUtils::toUInt64(world_.load());
-        });
-
-        entry_point_binder_->bind("engine_service.get_frame_state", [this]() -> std::string {
-            return Unreal::getEnumValueAsString<FFrameState>(frame_state_.load());
         });
 
         entry_point_binder_->bind("engine_service.request_exit", []() -> void {
@@ -222,14 +200,14 @@ private:
 
         SP_LOG("World name: ", Unreal::toStdString(world->GetName()));
 
+        frame_state_ = EFrameState::NotInitialized;
+
         if (world == world_) {
             SP_LOG("Clearing cached world...");
             world_.load()->OnWorldBeginPlay.Remove(world_begin_play_handle_);
             world_begin_play_handle_.Reset();
             world_ = nullptr;
         }
-
-        frame_state_ = EFrameState::NotInitialized;
     }
 
     void worldBeginPlayHandler()

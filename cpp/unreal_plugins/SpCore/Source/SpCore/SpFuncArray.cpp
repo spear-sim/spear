@@ -19,6 +19,15 @@
 // SpFuncPackedArray
 //
 
+void SpFuncPackedArray::setView()
+{
+    // validate internal state
+    SP_ASSERT(!view_);
+    SP_ASSERT(data_source_ == SpFuncArrayDataSource::Internal);
+    
+    view_ = data_.data();
+}
+
 void SpFuncPackedArray::setView(const SpFuncSharedMemoryView& shared_memory_view)
 {
     // validate internal state
@@ -55,13 +64,13 @@ void SpFuncPackedArray::validate(SpFuncSharedMemoryUsageFlags usage_flags) const
 
         case SpFuncArrayDataSource::External:
             SP_ASSERT(data_.empty());
-            SP_ASSERT(num_elements == 0 || view_);
+            SP_ASSERT(num_elements == 0 || view_); // if view_ is not set, then num_elements must be 0; if view_ is set, then num_elements can be anything
             SP_ASSERT(shared_memory_name_ == "");
             break;
 
         case SpFuncArrayDataSource::Shared:
             SP_ASSERT(data_.empty());
-            SP_ASSERT(num_elements == 0 || view_);
+            SP_ASSERT(num_elements == 0 || view_); // if view_ is not set, then num_elements must be 0; if view_ is set, then num_elements can be anything
             SP_ASSERT(shared_memory_name_ != "");
             SP_ASSERT(shared_memory_usage_flags_ & usage_flags);
             break;
@@ -86,7 +95,9 @@ void SpFuncPackedArray::validate(SpFuncSharedMemoryUsageFlags usage_flags) const
 
 void SpFuncArrayUtils::resolve(SpFuncPackedArray& packed_array, const std::map<std::string, SpFuncSharedMemoryView>& shared_memory_views)
 {
-    if (packed_array.data_source_ == SpFuncArrayDataSource::Shared) {
+    if (packed_array.data_source_ == SpFuncArrayDataSource::Internal) {
+        packed_array.setView();
+    } else if (packed_array.data_source_ == SpFuncArrayDataSource::Shared) {
         SP_ASSERT(packed_array.shared_memory_name_ != "");
         SP_ASSERT(Std::containsKey(shared_memory_views, packed_array.shared_memory_name_));
         packed_array.setView(shared_memory_views.at(packed_array.shared_memory_name_));
