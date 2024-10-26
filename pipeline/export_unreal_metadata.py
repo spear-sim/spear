@@ -40,7 +40,6 @@ def process_scene():
 
     spear.log("Done.")
 
-
 def get_actor_desc(actor):
     actor_name = spear.unreal.get_stable_name_for_actor(actor)
     spear.log("Processing actor: ", actor_name)
@@ -61,7 +60,6 @@ def get_actor_desc(actor):
         "name": actor_name,
         "other_components": { spear.unreal.get_stable_name_for_component(c): get_component_desc(c) for c in other_components },
         "root_component": get_component_desc(actor.get_editor_property("root_component"))}
-
 
 def get_component_desc(component):
 
@@ -87,7 +85,6 @@ def get_component_desc(component):
         component_desc["debug_info"]["world_transform"] = get_editor_property_desc(component.get_world_transform().to_matrix())
 
     return component_desc
-
 
 def get_editor_property_descs(uobject):
 
@@ -119,7 +116,6 @@ def get_editor_property_descs(uobject):
             pass
 
     return editor_property_descs
-
 
 def get_editor_property_desc(editor_property):
 

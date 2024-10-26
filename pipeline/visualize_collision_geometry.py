@@ -84,7 +84,6 @@ def process_scene():
 
     spear.log("Done.")
 
-
 def draw_collision_geometry(actor_name, kinematic_tree, color):
     if args.color_mode == "unique_color_per_actor":
         color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
@@ -94,7 +93,6 @@ def draw_collision_geometry(actor_name, kinematic_tree, color):
         kinematic_tree_node=kinematic_tree["root_node"],
         color=color,
         log_prefix_str="    ")
-
 
 def draw_collision_geometry_for_kinematic_tree_node(actor_name, transform_world_from_parent_node, kinematic_tree_node, color, log_prefix_str):
 

@@ -43,7 +43,6 @@ def process_scene():
 
     spear.log("Done.")
 
-
 def get_kinematic_tree(actor_desc):
     actor_name = actor_desc["name"]
     spear.log("Processing actor: ", actor_name)
@@ -54,7 +53,6 @@ def get_kinematic_tree(actor_desc):
             component_is_root_within_node=True,
             transform_node_from_parent_component=spear.pipeline.TRANSFORM_IDENTITY,
             log_prefix_str="    ")}
-
 
 def get_kinematic_tree_node(actor_name, component_desc, component_is_root_within_node, transform_node_from_parent_component, log_prefix_str):
 

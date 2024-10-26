@@ -33,10 +33,8 @@ public:
     void registerFunc(const std::string& func_name, const std::function<SpFuncDataBundle(SpFuncDataBundle&)>& func);
     void unregisterFunc(const std::string& func_name);
 
-    // typically called by code that wants to call an SpFunc; note that getSharedMemoryViews() returns by
-    // const reference because getSharedMemoryViews() is called every time we call an SpFunc, and returning
-    // by value might be expensive if lots of shared memory views have been registered
-    const std::map<std::string, SpFuncSharedMemoryView>& getSharedMemoryViews() const;
+    // typically called by code that wants to call an SpFunc
+    std::map<std::string, SpFuncSharedMemoryView> getSharedMemoryViews() const;
     SpFuncDataBundle callFunc(const std::string& func_name, SpFuncDataBundle& args) const;
 
 private:

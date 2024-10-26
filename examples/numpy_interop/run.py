@@ -17,25 +17,29 @@ if __name__ == "__main__":
 
     with instance.begin_frame():
 
-        # get the default ASpDebugWidget object
+        # Create a shared memory region for passing array data to Unreal as efficiently as possible.
+        action_shared_memory_handle = instance.sp_func_service.create_shared_memory_region(num_bytes=1024, shared_memory_name="smem_action")
+
+        # Get the default ASpDebugWidget object.
         sp_debug_widget_static_class = instance.unreal_service.get_static_class(class_name="ASpDebugWidget")
         sp_debug_widget_default_object = instance.unreal_service.get_default_object(uclass=sp_debug_widget_static_class, create_if_needed=False)
 
-        # create handles to the object's shared memory regions
+        # Get handles to any shared memory regions created by the object. Unreal objects can define their own
+        # shared memory regions for returning array data to Python as efficiently as possible.
         sp_debug_widget_shared_memory_handles = instance.sp_func_service.create_shared_memory_handles_for_uobject(uobject=sp_debug_widget_default_object)
 
-        # create a shared memory region
-        action_shared_memory_handle = instance.sp_func_service.create_shared_memory_region(num_bytes=1024, shared_memory_name="smem_action_shared")
-
-        # create numpy array
+        # Create a numpy array.
         action = np.array([0.0, 1.0, 2.0])
 
-        # create numpy array backed by the shared memory region
+        # Create numpy array backed by the shared memory region we created.
         action_shared = np.ndarray(shape=(3,), dtype=np.float64, buffer=action_shared_memory_handle["buffer"])
         action_shared[:] = [3.0, 4.0, 5.0]
 
-        # prepare args
-        arrays = {"action": action, "action_shared": spear.to_shared(action_shared, "smem_action_shared")}
+        # Prepare args for calling a custom function on our object. Note that any array backed by shared
+        # memory needs to be wrapped with spear.to_shared(...) when passing it to SpFuncService.call_function(...).
+        # Otherwise it will be treated as a regular array, and will be sent to the object via a slower code
+        # path.
+        arrays = {"action": action, "action_shared": spear.to_shared(array=action_shared, shared_memory_name="smem_action")}
         unreal_objs = {"in_location": {"X": 6.0, "Y": 7.0, "Z": 8.0}, "in_rotation": {"Pitch": 9.0, "Yaw": 10.0, "Roll": 11.0}}
         info = "Hello world"
 
@@ -43,7 +47,7 @@ if __name__ == "__main__":
         spear.log("unreal_objs: ", unreal_objs)
         spear.log("info:        ", info)
 
-        # call "hello_world" function on debug widget
+        # Call the "hello_world" function on our object.
         return_values = instance.sp_func_service.call_function(
             sp_debug_widget_default_object,
             "hello_world",
@@ -54,11 +58,11 @@ if __name__ == "__main__":
 
         spear.log("return_values: ", return_values)
 
-        # destroy shared memory region
-        instance.sp_func_service.destroy_shared_memory_region(shared_memory_name="smem_action_shared")
-
-        # destroy shared memory handles for object
+        # Destroy handles to the object's shared memory regions.
         instance.sp_func_service.destroy_shared_memory_handles_for_uobject(shared_memory_handles=sp_debug_widget_shared_memory_handles)
+
+        # Destroy the shared memory region we created ourselves.
+        instance.sp_func_service.destroy_shared_memory_region(shared_memory_name="smem_action")
 
     with instance.end_frame():
         pass

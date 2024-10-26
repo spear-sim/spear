@@ -43,7 +43,7 @@ void USpSceneCaptureComponent2D::BeginPlay()
     SP_ASSERT(shared_memory_region_);
 
     shared_memory_view_ = SpFuncSharedMemoryView(shared_memory_region_->getView(), SpFuncSharedMemoryUsageFlags::ReturnValue);
-    SpFuncComponent->registerSharedMemoryView("smem_observation_shared", shared_memory_view_);
+    SpFuncComponent->registerSharedMemoryView("smem_observation", shared_memory_view_);
 
     SpFuncComponent->registerFunc("hello_world", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
 
@@ -75,7 +75,7 @@ void USpSceneCaptureComponent2D::BeginPlay()
 
         // set return value objects
         observation.setData({12.0, 13.0, 14.0});
-        observation_shared.setData(shared_memory_view_, {3}, "smem_observation_shared");
+        observation_shared.setData(shared_memory_view_, {3}, "smem_observation");
         observation_shared.setDataValues({15.0, 16.0, 17.0});
         out_location.setObj(FVector(18.0, 19.0, 20.0));
         out_rotation.setObj(FRotator(21.0, 22.0, 23.0));
@@ -108,7 +108,7 @@ void USpSceneCaptureComponent2D::EndPlay(const EEndPlayReason::Type end_play_rea
     USceneCaptureComponent2D::EndPlay(end_play_reason);
 
     SpFuncComponent->unregisterFunc("hello_world");
-    SpFuncComponent->unregisterSharedMemoryView("smem_observation_shared");
+    SpFuncComponent->unregisterSharedMemoryView("smem_observation");
 
     shared_memory_region_ = nullptr;
 }

@@ -15,7 +15,6 @@ def validate_level(level):
 
     pass
 
-
 def validate_content_browser(level):
 
     #
@@ -31,7 +30,6 @@ def validate_content_browser(level):
     #
 
     pass
-
 
 def validate_outliner(level):
 
@@ -95,7 +93,6 @@ def validate_outliner(level):
 
     for k in sorted(properties.keys()):
         print(k, properties[k])
-
 
 def validate_actor(level, actor):
 
@@ -247,7 +244,6 @@ def validate_actor(level, actor):
             spear.log("WARNING: Unexpected path: ", get_debug_string_actor(actor))
             return
 
-
 def validate_meshes_actor(level, actor):
 
     if len(actor.get_components_by_class(unreal.PhysicsConstraintComponent)) == 0:
@@ -265,7 +261,6 @@ def validate_meshes_actor(level, actor):
         if type(component) == unreal.StaticMeshComponent:
             validate_static_mesh_component(level, actor, component)
 
-
 def validate_meshes_static_mesh_actor(level, actor):
 
     if len(actor.get_components_by_class(unreal.PhysicsConstraintComponent)) != 0:
@@ -278,7 +273,6 @@ def validate_meshes_static_mesh_actor(level, actor):
             validate_light_component(level, actor, component)
         if type(component) == unreal.StaticMeshComponent:
             validate_static_mesh_component(level, actor, component)
-
 
 def validate_light_component(level, actor, component):
 
@@ -299,7 +293,6 @@ def validate_light_component(level, actor, component):
     if len(component_name[1]) != 4 or not component_name[1].isdigit():
         spear.log("WARNING: Unexpected component name: ", get_debug_string_actor(actor), ".", get_debug_string_component(component))
         return
-
 
 def validate_physics_constraint_component(level, actor, component):
 
@@ -367,7 +360,6 @@ def validate_physics_constraint_component(level, actor, component):
             get_debug_string_actor(actor), ".", get_debug_string_component(component), " (", component_name2_name, ")")
         return
 
-
 def validate_scene_component(level, actor, component):
 
     #
@@ -381,7 +373,6 @@ def validate_scene_component(level, actor, component):
     if component.get_name() != "DefaultSceneRoot":
         spear.log("WARNING: Unexpected component name: ", get_debug_string_actor(actor), ".", get_debug_string_component(component))
         return
-
 
 def validate_static_mesh_component(level, actor, component):
 
@@ -579,7 +570,6 @@ def validate_static_mesh_component(level, actor, component):
                         "WARNING: Unexpected material path: ",
                         get_debug_string_actor(actor), ".", get_debug_string_component(component), " (", get_debug_string_material(material), ")")
                     return
-
 
 def vector_to_array(vector):
     return np.array([vector.x, vector.y, vector.z])

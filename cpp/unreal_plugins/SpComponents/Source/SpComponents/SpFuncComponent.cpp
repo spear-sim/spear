@@ -52,7 +52,7 @@ void USpFuncComponent::unregisterSharedMemoryView(const std::string& shared_memo
     SharedMemoryViewNames.Remove(Unreal::toFString(shared_memory_name));
 }
 
-const std::map<std::string, SpFuncSharedMemoryView>& USpFuncComponent::getSharedMemoryViews() const
+std::map<std::string, SpFuncSharedMemoryView> USpFuncComponent::getSharedMemoryViews() const
 {
     return shared_memory_views_;
 }

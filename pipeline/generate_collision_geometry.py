@@ -44,7 +44,6 @@ def process_scene():
 
     spear.log("Done.")
 
-
 def generate_collision_geometry(actor_name, kinematic_tree):
     spear.log("Processing actor: ", actor_name)
     return {
@@ -52,7 +51,6 @@ def generate_collision_geometry(actor_name, kinematic_tree):
             actor_name=actor_name,
             kinematic_tree_node=kinematic_tree["root_node"],
             log_prefix_str="    ")}
-
 
 def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tree_node, log_prefix_str):
 

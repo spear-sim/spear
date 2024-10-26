@@ -39,6 +39,8 @@ void SpFuncService::worldCleanupHandler(UWorld* world, bool session_ended, bool 
 
 USpFuncComponent* SpFuncService::getSpFuncComponent(const UObject* uobject)
 {
+    SP_ASSERT(uobject);
+
     USpFuncComponent* sp_func_component = nullptr;
     if (uobject->IsA(AActor::StaticClass())) {
         AActor* actor = const_cast<AActor*>(static_cast<const AActor*>(uobject));
@@ -52,5 +54,6 @@ USpFuncComponent* SpFuncService::getSpFuncComponent(const UObject* uobject)
         SP_ASSERT(false);
     }
     SP_ASSERT(sp_func_component);
+
     return sp_func_component;
 }

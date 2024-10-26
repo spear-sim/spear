@@ -78,14 +78,8 @@ public:
         });
 
         unreal_entry_point_binder->bindFuncUnreal("sp_func_service", "call_function", [this](uint64_t& uobject, std::string& function_name, SpFuncDataBundle& args) -> SpFuncDataBundle {
-            SP_ASSERT(world_);
-
             UObject* uobject_ptr = ServiceUtils::toPtr<UObject>(uobject);
-            SP_ASSERT(uobject_ptr);
-
-            // get SpFuncComponent and shared memory views
             USpFuncComponent* sp_func_component = getSpFuncComponent(uobject_ptr);
-            const std::map<std::string, SpFuncSharedMemoryView>& shared_memory_views = sp_func_component->getSharedMemoryViews();
 
             // resolve references to shared memory and validate args, assume that shared memory views for args are in shared_memory_views_
             SpFuncArrayUtils::resolve(args.packed_arrays_, shared_memory_views_);
@@ -99,13 +93,9 @@ public:
         });
 
         unreal_entry_point_binder->bindFuncUnreal("sp_func_service", "get_shared_memory_views", [this](uint64_t& uobject) -> std::map<std::string, SpFuncSharedMemoryView> {
-            SP_ASSERT(world_);
-
             UObject* uobject_ptr = ServiceUtils::toPtr<UObject>(uobject);
-            SP_ASSERT(uobject_ptr);
-
-            // get SpFuncComponent and return shared memory views
             USpFuncComponent* sp_func_component = getSpFuncComponent(uobject_ptr);
+            
             return sp_func_component->getSharedMemoryViews();
         });
     }

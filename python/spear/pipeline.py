@@ -5,12 +5,10 @@
 import numpy as np
 import scipy
 
-
 TRANSFORM_IDENTITY = {"location": np.matrix(np.zeros(3)).T, "rotation": np.matrix(np.identity(3)), "scale": np.matrix(np.identity(3))}
 
 matrix_column_names = ["x_plane","y_plane","z_plane", "w_plane"]
 matrix_row_names = ["x", "y", "z", "w"]
-
 
 #
 # Functions for working with components.
@@ -109,7 +107,6 @@ def any_component_transform_absolute(component_desc):
 
     return absolute_location or absolute_rotation or absolute_scale
 
-
 #
 # Functions for getting transform and transform data objects. Transform data objects are serializable as JSON.
 #
@@ -164,7 +161,6 @@ def get_transform_data_from_transform(transform):
     transform_data["scale"]    = get_matrix_data_from_matrix(transform["scale"])
 
     return transform_data
-
 
 #
 # Functions for getting matrix and matrix data objects. Matrix data objects are serializable as JSON. Note that
