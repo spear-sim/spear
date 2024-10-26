@@ -7,6 +7,7 @@
 #include <stdint.h> // int8_t, uint8_t, uint64_t
 
 #include <map>
+#include <memory> // std::make_unique, std::unique_ptr
 #include <string>
 #include <vector>
 
@@ -42,7 +43,6 @@ public:
 
         unreal_entry_point_binder->bindFuncNoUnreal("sp_func_service", "get_byte_order", []() -> std::string {
             SP_ASSERT(BOOST_ENDIAN_BIG_BYTE + BOOST_ENDIAN_LITTLE_BYTE == 1);
-            
             if (BOOST_ENDIAN_BIG_BYTE) {
                 return "big";
             } else if (BOOST_ENDIAN_LITTLE_BYTE) {
@@ -50,6 +50,31 @@ public:
             } else {
                 return "";
             }
+        });
+
+        unreal_entry_point_binder->bindFuncNoUnreal("sp_func_service", "create_shared_memory_region", [this](int& num_bytes, std::string& shared_memory_name) -> SpFuncSharedMemoryView {
+            std::string name = shared_memory_name; // need to copy so we can pass to functions that expect a const ref
+            SP_ASSERT(!Std::containsKey(shared_memory_regions_, name));
+            SP_ASSERT(!Std::containsKey(shared_memory_views_, name));
+
+            std::unique_ptr<SharedMemoryRegion> shared_memory_region = std::make_unique<SharedMemoryRegion>(num_bytes);
+            SP_ASSERT(shared_memory_region);            
+            SharedMemoryView view = shared_memory_region->getView();
+            Std::insert(shared_memory_regions_, shared_memory_name, std::move(shared_memory_region));
+
+            // assume that any shared memory region created from Python is an arg
+            SpFuncSharedMemoryView shared_memory_view = SpFuncSharedMemoryView(view, SpFuncSharedMemoryUsageFlags::Arg);
+            Std::insert(shared_memory_views_, shared_memory_name, shared_memory_view);
+
+            return shared_memory_view;
+        });
+
+        unreal_entry_point_binder->bindFuncNoUnreal("sp_func_service", "destroy_shared_memory_region", [this](std::string& shared_memory_name) -> void {
+            std::string name = shared_memory_name; // need to copy so we can pass to functions that expect a const ref
+            SP_ASSERT(Std::containsKey(shared_memory_regions_, name));
+            SP_ASSERT(Std::containsKey(shared_memory_views_, name));
+            Std::remove(shared_memory_regions_, name);
+            Std::remove(shared_memory_views_, name);
         });
 
         unreal_entry_point_binder->bindFuncUnreal("sp_func_service", "call_function", [this](uint64_t& uobject, std::string& function_name, SpFuncDataBundle& args) -> SpFuncDataBundle {
@@ -62,8 +87,8 @@ public:
             USpFuncComponent* sp_func_component = getSpFuncComponent(uobject_ptr);
             const std::map<std::string, SpFuncSharedMemoryView>& shared_memory_views = sp_func_component->getSharedMemoryViews();
 
-            // resolve references to shared memory and validate args
-            SpFuncArrayUtils::resolve(args.packed_arrays_, shared_memory_views);
+            // resolve references to shared memory and validate args, assume that shared memory views for args are in shared_memory_views_
+            SpFuncArrayUtils::resolve(args.packed_arrays_, shared_memory_views_);
 
             // call SpFunc
             SpFuncArrayUtils::validate(args.packed_arrays_, SpFuncSharedMemoryUsageFlags::Arg);
@@ -102,7 +127,11 @@ private:
 
     FDelegateHandle post_world_initialization_handle_;
     FDelegateHandle world_cleanup_handle_;
+
     UWorld* world_ = nullptr;
+
+    std::map<std::string, std::unique_ptr<SharedMemoryRegion>> shared_memory_regions_;
+    std::map<std::string, SpFuncSharedMemoryView> shared_memory_views_;
 };
 
 //

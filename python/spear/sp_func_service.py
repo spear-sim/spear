@@ -12,6 +12,7 @@ import sys
 class SpFuncService():
     def __init__(self, entry_point_caller):
         self._entry_point_caller = entry_point_caller
+        self._shared_memory_handles = {}
 
         unreal_instance_byte_order = self._entry_point_caller.call("sp_func_service.get_byte_order")
         if unreal_instance_byte_order == sys.byteorder:
@@ -20,10 +21,38 @@ class SpFuncService():
             self._unreal_instance_byte_order = unreal_instance_byte_order
 
     #
+    # High-level functions for interacting with shared memory.
+    #
+
+    def create_shared_memory_region(self, num_bytes, shared_memory_name):
+        assert shared_memory_name not in self._shared_memory_handles.keys()
+        view = self._entry_point_caller.call("sp_func_service.create_shared_memory_region", num_bytes, shared_memory_name)
+        handle = self.create_shared_memory_handle(view)
+        self._shared_memory_handles[shared_memory_name] = handle
+        return handle
+
+    def destroy_shared_memory_region(self, shared_memory_name):
+        assert shared_memory_name in self._shared_memory_handles.keys()
+        self.destroy_shared_memory_handle(self._shared_memory_handles[shared_memory_name])
+        self._shared_memory_handles.pop(shared_memory_name)
+        self._entry_point_caller.call("sp_func_service.destroy_shared_memory_region", shared_memory_name)
+
+    def create_shared_memory_handles_for_uobject(self, uobject):
+        views = self._entry_point_caller.call("sp_func_service.get_shared_memory_views", uobject)
+        handles = {}
+        for name, view in views.items():
+            handles[name] = self.create_shared_memory_handle(view)
+        return handles
+
+    def destroy_shared_memory_handles_for_uobject(self, shared_memory_handles):
+        for name, handle in shared_memory_handles.items():
+            self.destroy_shared_memory_handle(handle)
+
+    #
     # Call function interface.
     #
 
-    def call_function(self, uobject, function_name, arrays={}, unreal_objs={}, info="", shared_memory_handles={}):
+    def call_function(self, uobject, function_name, arrays={}, unreal_objs={}, info="", uobject_shared_memory_handles={}):
 
         # If an arg is a numpy array, then convert it to a packed array that uses Internal storage with the
         # Unreal instance's native byte order. If an arg is a spear.Shared object, then convert it to a
@@ -38,7 +67,8 @@ class SpFuncService():
                     "data_type": array.dtype.str.replace("<", "").replace(">", ""),
                     "shared_memory_name": ""}
             elif isinstance(array, spear.Shared):
-                assert "Arg" in shared_memory_handles[array.shared_memory_name]["view"]["usage_flags"]
+                # assume that the handle for the array is in self._shared_memory_handles
+                assert "Arg" in self._shared_memory_handles[array.shared_memory_name]["view"]["usage_flags"]
                 packed_array = {
                     "data": np.array([]).data,
                     "data_source": "Shared",
@@ -75,8 +105,9 @@ class SpFuncService():
                 dtype = np.dtype(packed_array["data_type"]).newbyteorder(self._unreal_instance_byte_order)
                 array = np.frombuffer(packed_array["data"], dtype=dtype, count=-1).reshape(packed_array["shape"])
             elif packed_array["data_source"] == "Shared":
-                assert "ReturnValue" in shared_memory_handles[packed_array["shared_memory_name"]]["view"]["usage_flags"]
-                buffer = shared_memory_handles[packed_array["shared_memory_name"]]["buffer"]
+                # assume that the handle for the array is uobject_shared_memory_handles
+                assert "ReturnValue" in uobject_shared_memory_handles[packed_array["shared_memory_name"]]["view"]["usage_flags"]
+                buffer = uobject_shared_memory_handles[packed_array["shared_memory_name"]]["buffer"]
                 array = np.ndarray(shape=packed_array["shape"], dtype=np.dtype(packed_array["data_type"]), buffer=buffer)
             else:
                 assert False
@@ -97,19 +128,9 @@ class SpFuncService():
         return {"arrays": arrays, "unreal_objs": unreal_objs, "info": return_values["info"]}
 
     #
-    # Helper functions for interacting with shared memory.
+    # Low-level helper functions for interacting with shared memory. Most users will not need to call these
+    # functions directly.
     #
-
-    def create_shared_memory_handles(self, uobject):
-        views = self._entry_point_caller.call("sp_func_service.get_shared_memory_views", uobject)
-        handles = {}
-        for name, view in views.items():
-            handles[name] = self.create_shared_memory_handle(view)
-        return handles
-
-    def destroy_shared_memory_handles(self, shared_memory_handles):
-        for name, handle in shared_memory_handles.items():
-            self.destroy_shared_memory_handle(handle)
 
     def create_shared_memory_handle(self, shared_memory_view):
         if sys.platform == "win32":
@@ -129,11 +150,6 @@ class SpFuncService():
             shared_memory_handle["handle"].close()
         else:
             assert False
-
-    #
-    # Low-level helper function for getting shared memory views. Most users will not need to call this
-    # function directly.
-    #
 
     def get_shared_memory_views(self, uobject):
         return self._entry_point_caller.call("sp_func_service.get_shared_memory_views", uobject)

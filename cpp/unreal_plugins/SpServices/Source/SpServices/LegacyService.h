@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <memory> // std::unique_ptr
 #include <string>
 #include <vector>
 

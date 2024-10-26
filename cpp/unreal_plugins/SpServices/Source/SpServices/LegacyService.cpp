@@ -4,6 +4,7 @@
 
 #include "SpServices/LegacyService.h"
 
+#include <memory> // std::make_unique, std::unique_ptr
 #include <string>
 #include <vector>
 

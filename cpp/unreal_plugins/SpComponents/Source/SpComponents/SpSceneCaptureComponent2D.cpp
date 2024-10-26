@@ -4,6 +4,8 @@
 
 #include "SpComponents/SpSceneCaptureComponent2D.h"
 
+#include <memory> // std::make_unique
+
 #include <Engine/EngineTypes.h> // EEndPlayReason
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
@@ -40,12 +42,8 @@ void USpSceneCaptureComponent2D::BeginPlay()
     shared_memory_region_ = std::make_unique<SharedMemoryRegion>(shared_memory_num_bytes);
     SP_ASSERT(shared_memory_region_);
 
-    SP_LOG(shared_memory_region_->getView().id_);
-    SP_LOG(shared_memory_region_->getView().num_bytes_);
-    SP_LOG(shared_memory_region_->getView().data_);
-
-    shared_memory_view_ = SpFuncSharedMemoryView(shared_memory_region_->getView(), SpFuncSharedMemoryUsageFlags::Arg | SpFuncSharedMemoryUsageFlags::ReturnValue);
-    SpFuncComponent->registerSharedMemoryView("hello_shared_memory", shared_memory_view_);
+    shared_memory_view_ = SpFuncSharedMemoryView(shared_memory_region_->getView(), SpFuncSharedMemoryUsageFlags::ReturnValue);
+    SpFuncComponent->registerSharedMemoryView("smem_observation_shared", shared_memory_view_);
 
     SpFuncComponent->registerFunc("hello_world", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
 
@@ -59,15 +57,15 @@ void USpSceneCaptureComponent2D::BeginPlay()
         SpFuncArrayUtils::setViewsFromPackedArrays({action.getPtr(), action_shared.getPtr()}, args.packed_arrays_);
         UnrealObjUtils::setObjectPropertiesFromStrings({in_location.getPtr(), in_rotation.getPtr()}, args.unreal_obj_strings_);
 
-        SP_LOG("action[0]: ",        Std::at(action.getView(), 0));
-        SP_LOG("action[1]: ",        Std::at(action.getView(), 1));
-        SP_LOG("action[2]: ",        Std::at(action.getView(), 2));
+        SP_LOG("action[0]:        ", Std::at(action.getView(), 0));
+        SP_LOG("action[1]:        ", Std::at(action.getView(), 1));
+        SP_LOG("action[2]:        ", Std::at(action.getView(), 2));
         SP_LOG("action_shared[0]: ", Std::at(action_shared.getView(), 0));
         SP_LOG("action_shared[1]: ", Std::at(action_shared.getView(), 1));
         SP_LOG("action_shared[2]: ", Std::at(action_shared.getView(), 2));
-        SP_LOG("in_location: ",      in_location.getObj().X, " ", in_location.getObj().Y, " ", in_location.getObj().Z);
-        SP_LOG("in_rotation: ",      in_rotation.getObj().Pitch, " ", in_rotation.getObj().Yaw, " ", in_rotation.getObj().Roll);
-        SP_LOG("info: ",             args.info_);
+        SP_LOG("in_location:      ", in_location.getObj().X, " ", in_location.getObj().Y, " ", in_location.getObj().Z);
+        SP_LOG("in_rotation:      ", in_rotation.getObj().Pitch, " ", in_rotation.getObj().Yaw, " ", in_rotation.getObj().Roll);
+        SP_LOG("info:             ", args.info_);
 
         // define return value objects
         SpFuncArray<double> observation("observation");
@@ -77,25 +75,21 @@ void USpSceneCaptureComponent2D::BeginPlay()
 
         // set return value objects
         observation.setData({12.0, 13.0, 14.0});
-        observation_shared.setData(shared_memory_view_, {3}, "hello_shared_memory");
+        observation_shared.setData(shared_memory_view_, {3}, "smem_observation_shared");
         observation_shared.setDataValues({15.0, 16.0, 17.0});
         out_location.setObj(FVector(18.0, 19.0, 20.0));
         out_rotation.setObj(FRotator(21.0, 22.0, 23.0));
         std::string info = "Success";
 
-        SP_LOG("action_shared[0]: ", Std::at(action_shared.getView(), 0));
-        SP_LOG("action_shared[1]: ", Std::at(action_shared.getView(), 1));
-        SP_LOG("action_shared[2]: ", Std::at(action_shared.getView(), 2));
-
-        SP_LOG("observation[0]: ",        Std::at(observation.getView(), 0));
-        SP_LOG("observation[1]: ",        Std::at(observation.getView(), 1));
-        SP_LOG("observation[2]: ",        Std::at(observation.getView(), 2));
+        SP_LOG("observation[0]:        ", Std::at(observation.getView(), 0));
+        SP_LOG("observation[1]:        ", Std::at(observation.getView(), 1));
+        SP_LOG("observation[2]:        ", Std::at(observation.getView(), 2));
         SP_LOG("observation_shared[0]: ", Std::at(observation_shared.getView(), 0));
         SP_LOG("observation_shared[1]: ", Std::at(observation_shared.getView(), 1));
         SP_LOG("observation_shared[2]: ", Std::at(observation_shared.getView(), 2));
-        SP_LOG("in_location: ",           out_location.getObj().X, " ", out_location.getObj().Y, " ", out_location.getObj().Z);
-        SP_LOG("in_rotation: ",           out_rotation.getObj().Pitch, " ", out_rotation.getObj().Yaw, " ", out_rotation.getObj().Roll);
-        SP_LOG("info: ",                  info);
+        SP_LOG("out_location:          ", out_location.getObj().X, " ", out_location.getObj().Y, " ", out_location.getObj().Z);
+        SP_LOG("out_rotation:          ", out_rotation.getObj().Pitch, " ", out_rotation.getObj().Yaw, " ", out_rotation.getObj().Roll);
+        SP_LOG("info:                  ", info);
 
         // initialize data bundle from return value objects
         SpFuncDataBundle return_values;
@@ -114,7 +108,7 @@ void USpSceneCaptureComponent2D::EndPlay(const EEndPlayReason::Type end_play_rea
     USceneCaptureComponent2D::EndPlay(end_play_reason);
 
     SpFuncComponent->unregisterFunc("hello_world");
-    SpFuncComponent->unregisterSharedMemoryView("hello_shared_memory");
+    SpFuncComponent->unregisterSharedMemoryView("smem_observation_shared");
 
     shared_memory_region_ = nullptr;
 }
