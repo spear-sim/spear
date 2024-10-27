@@ -20,9 +20,12 @@ class Instance():
         self._request_launch_unreal_instance()
         self._initialize_rpc_client()
 
-        # We need to initialize services after we have a valid RPC client. EngineService needs its own custom
-        # logic for interacting directly with the RPC client, because EngineService implements the context
-        # managers returned by begin_frame() and end_frame(). So we pass in the RPC client when constructing
+        # Initialize services after we have a valid RPC client.
+
+        # EngineService needs its own custom logic for interacting directly with the RPC client, because
+        # EngineService implements the context managers returned by begin_frame() and end_frame().
+        # Additionally, all other services call RPC entry points through EngineService.call(), rather than
+        # going through the RPC client directly. So we pass in the RPC client directly when constructing
         # EngineService, and we pass in EngineService when constructing all other services.
         self._engine_service = spear.EngineService(self._rpc_client, self._config)
 

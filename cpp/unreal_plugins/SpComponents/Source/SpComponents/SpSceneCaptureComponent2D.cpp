@@ -42,6 +42,7 @@ void USpSceneCaptureComponent2D::BeginPlay()
     shared_memory_region_ = std::make_unique<SharedMemoryRegion>(shared_memory_num_bytes);
     SP_ASSERT(shared_memory_region_);
 
+    // the "smem_observation" name needs to be unique within this SpFuncComponent, but does not need to be globally unique
     shared_memory_view_ = SpFuncSharedMemoryView(shared_memory_region_->getView(), SpFuncSharedMemoryUsageFlags::ReturnValue);
     SpFuncComponent->registerSharedMemoryView("smem_observation", shared_memory_view_);
 
@@ -53,7 +54,7 @@ void USpSceneCaptureComponent2D::BeginPlay()
         UnrealObj<FVector> in_location("in_location");
         UnrealObj<FRotator> in_rotation("in_rotation");
 
-        // initialize arg objects from data bundle
+        // initialize arg objects from the data bundle that was passed in
         SpFuncArrayUtils::setViewsFromPackedArrays({action.getPtr(), action_shared.getPtr()}, args.packed_arrays_);
         UnrealObjUtils::setObjectPropertiesFromStrings({in_location.getPtr(), in_rotation.getPtr()}, args.unreal_obj_strings_);
 
@@ -91,7 +92,7 @@ void USpSceneCaptureComponent2D::BeginPlay()
         SP_LOG("out_rotation:          ", out_rotation.getObj().Pitch, " ", out_rotation.getObj().Yaw, " ", out_rotation.getObj().Roll);
         SP_LOG("info:                  ", info);
 
-        // initialize data bundle from return value objects
+        // initialize output data bundle from return value objects
         SpFuncDataBundle return_values;
         return_values.packed_arrays_ = SpFuncArrayUtils::moveToPackedArrays({observation.getPtr(), observation_shared.getPtr()});
         return_values.unreal_obj_strings_ = UnrealObjUtils::getObjectPropertiesAsStrings({out_location.getPtr(), out_rotation.getPtr()});
