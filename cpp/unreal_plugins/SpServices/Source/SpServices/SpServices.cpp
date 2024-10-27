@@ -6,6 +6,7 @@
 
 #include <memory> // std::make_unique, std::unique_ptr
 
+#include <CoreGlobals.h>                 // IsRunningCommandlet
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Engine/Engine.h>               // GEngine
 #include <Engine/World.h>                // FWorldDelegates
@@ -31,6 +32,15 @@ void SpServices::StartupModule()
     SP_ASSERT_MODULE_LOADED("UrdfRobot");
     SP_ASSERT_MODULE_LOADED("Vehicle");
     SP_LOG_CURRENT_FUNCTION();
+
+    // If we're cooking, then return early. In this case, there is no need to launch our services, and if
+    // if we attempt to launch the RPC server while cooking, and the editor or game is already open, then we
+    // will get an error because the port already be in use.
+    #if WITH_EDITOR // defined in an auto-generated header
+        if (IsRunningCommandlet()) {
+            return;
+        }
+    #endif
 
     // Create RPC server.
     int rpc_server_port = 30000;
@@ -70,6 +80,12 @@ void SpServices::StartupModule()
 void SpServices::ShutdownModule()
 {
     SP_LOG_CURRENT_FUNCTION();
+
+    #if WITH_EDITOR // defined in an auto-generated header
+        if (IsRunningCommandlet()) {
+            return;
+        }
+    #endif
 
     SP_ASSERT(unreal_service_);
     SP_ASSERT(sp_func_service_);
