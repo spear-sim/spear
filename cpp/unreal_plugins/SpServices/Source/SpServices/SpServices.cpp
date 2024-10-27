@@ -87,6 +87,21 @@ void SpServices::ShutdownModule()
         }
     #endif
 
+    // We need to call engine_service_->close() before shutting down the RPC server, so engine_service_ has a
+    // chance to stop waiting on any futures that it might be waiting on. It will not be possible to shut
+    // down the RPC server if an entry point is currently executing and is waiting on a future.
+    SP_ASSERT(engine_service_);
+    engine_service_->close();
+
+    // We need to shut down the RPC server before destroying our services. Otherwise, the RPC server might
+    // attempt to call a service's entry points after the service has been destroyed. This will be a problem
+    // if the entry point is a lambda that has captured a pointer to the service, which several of our
+    // services do.
+    SP_ASSERT(rpc_server_);
+    rpc_server_->close_sessions();
+    rpc_server_->stop();
+    rpc_server_ = nullptr;
+
     SP_ASSERT(unreal_service_);
     SP_ASSERT(sp_func_service_);
     SP_ASSERT(legacy_service_);
@@ -95,13 +110,7 @@ void SpServices::ShutdownModule()
     legacy_service_ = nullptr;
 
     SP_ASSERT(engine_service_);
-    engine_service_->close();
     engine_service_ = nullptr;
-
-    SP_ASSERT(rpc_server_);
-    rpc_server_->close_sessions();
-    rpc_server_->stop();
-    rpc_server_ = nullptr;
 }
 
 // use if module does not implement any Unreal classes

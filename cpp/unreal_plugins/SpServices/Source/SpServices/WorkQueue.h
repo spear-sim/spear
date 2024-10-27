@@ -39,7 +39,7 @@ public:
     // to block the game thread indefinitely, while the WorkQueue waits for and executes incoming work
     void run();
 
-    // typically called from an RPC worker thread in the "engine_service.tick" and "engine_service.end_tick"
+    // typically called from an RPC worker thread in the "engine_service.execute_frame" and "engine_service.end_frame"
     // entry points to instruct the WorkQueue that it can stop blocking, as soon as it is finished executing
     // all of its scheduled work
     void reset();

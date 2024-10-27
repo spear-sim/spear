@@ -40,9 +40,8 @@ class Instance():
 
     def is_running(self):
         try:
-            world = self._engine_service.get_world()
-            frame_state = self._engine_service.get_frame_state()
-            return world != 0 and frame_state != "NotInitialized"
+            world_initialized = self._engine_service.is_world_initialized()
+            return world_initialized
         except:
             pass # no need to log exception because this case is expected when the instance is no longer running
         return False
@@ -216,12 +215,9 @@ class Instance():
                     reconnect_limit=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
 
                 # don't use self._engine_service because it hasn't been initialized yet
-                world = self._rpc_client.call("engine_service.get_world")
-                spear.log("World: ", world)
-                frame_state = self._rpc_client.call("engine_service.get_frame_state")
-                spear.log("Frame state: ", frame_state)
-
-                if world and frame_state == "Idle":
+                world_initialized = self._rpc_client.call("engine_service.is_world_initialized")
+                spear.log("is_world_initialized: ", world_initialized)
+                if world_initialized:
                     connected = True
 
             except Exception as e:
@@ -254,13 +250,9 @@ class Instance():
                         msgpackrpc.Address("127.0.0.1", self._config.SP_SERVICES.RPC_SERVER_PORT), 
                         timeout=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
                         reconnect_limit=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
-
-                    world = self._rpc_client.call("engine_service.get_world")
-                    spear.log("World: ", world)
-                    frame_state = self._rpc_client.call("engine_service.get_frame_state")
-                    spear.log("Frame state: ", frame_state)
-
-                    if world and frame_state == "Idle":
+                    world_initialized = self._rpc_client.call("engine_service.is_world_initialized")
+                    spear.log("is_world_initialized: ", world_initialized)
+                    if world_initialized:
                         connected = True
                         break
 

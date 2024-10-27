@@ -42,7 +42,7 @@ void USpSceneCaptureComponent2D::BeginPlay()
     shared_memory_region_ = std::make_unique<SharedMemoryRegion>(shared_memory_num_bytes);
     SP_ASSERT(shared_memory_region_);
 
-    // the "smem_observation" name needs to be unique within this SpFuncComponent, but does not need to be globally unique
+    // the "smem_observation" name needs to be unique within this USpFuncComponent, but does not need to be globally unique
     shared_memory_view_ = SpFuncSharedMemoryView(shared_memory_region_->getView(), SpFuncSharedMemoryUsageFlags::ReturnValue);
     SpFuncComponent->registerSharedMemoryView("smem_observation", shared_memory_view_);
 

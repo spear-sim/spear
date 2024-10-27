@@ -31,14 +31,13 @@
 UENUM()
 enum class EFrameState
 {
-    NotInitialized    = 0,
-    Idle              = 1,
-    RequestPreTick    = 2,
-    ExecutingPreTick  = 3,
-    ExecutingTick     = 4,
-    ExecutingPostTick = 5,
-    Closing           = 6,
-    Error             = 7
+    Idle                = 0,
+    RequestBeginFrame   = 1,
+    ExecutingBeginFrame = 2,
+    ExecutingFrame      = 3,
+    ExecutingEndFrame   = 4,
+    Closing             = 5,
+    Error               = 6
 };
 
 template <CEntryPointBinder TEntryPointBinder>
@@ -56,80 +55,91 @@ public:
         begin_frame_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &EngineService::beginFrameHandler);
         end_frame_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &EngineService::endFrameHandler);
 
-        entry_point_binder_->bind("engine_service.get_world", [this]() -> uint64 {
-            return ServiceUtils::toUInt64(world_.load());
+        entry_point_binder_->bind("engine_service.is_world_initialized", [this]() -> bool {
+            return world_initialized_;
         });
 
-        entry_point_binder_->bind("engine_service.get_frame_state", [this]() -> std::string {
-            return Unreal::getStringFromEnumValue<EFrameState>(frame_state_.load());
-        });
-
-        entry_point_binder_->bind("engine_service.begin_tick", [this]() -> void {
-
-            // If we're in an error state, return immediately.
-            if (frame_state_ == EFrameState::Error) {
-                return;
-            }
+        entry_point_binder_->bind("engine_service.begin_frame", [this]() -> void {
 
             {
                 std::lock_guard<std::mutex> lock(frame_state_mutex_);
+                SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::Closing || frame_state_ == EFrameState::Error,
+                    "frame_state_ == %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state_.load()).c_str());
 
-                SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::Closing);
-
-                if (frame_state_ == EFrameState::Idle) {
-                    // Reset promises and futures.
-                    frame_state_idle_promise_ = std::promise<void>();
-                    frame_state_executing_pre_tick_promise_ = std::promise<void>();
-                    frame_state_executing_post_tick_promise_ = std::promise<void>();
-
-                    frame_state_idle_future_ = frame_state_idle_promise_.get_future();
-                    frame_state_executing_pre_tick_future_ = frame_state_executing_pre_tick_promise_.get_future();
-                    frame_state_executing_post_tick_future_ = frame_state_executing_post_tick_promise_.get_future();
-
-                    // Allow beginFrameHandler() to start executing.
-                    frame_state_ = EFrameState::RequestPreTick;
+                if (frame_state_ == EFrameState::Closing || frame_state_ == EFrameState::Error) {
+                    return;
                 }
+
+                // Reset promises and futures.
+                frame_state_idle_promise_ = std::promise<void>();
+                frame_state_executing_begin_frame_promise_ = std::promise<void>();
+                frame_state_executing_end_frame_promise_ = std::promise<void>();
+
+                frame_state_idle_future_ = frame_state_idle_promise_.get_future();
+                frame_state_executing_begin_frame_future_ = frame_state_executing_begin_frame_promise_.get_future();
+                frame_state_executing_end_frame_future_ = frame_state_executing_end_frame_promise_.get_future();
+
+                // Allow beginFrameHandler() to start executing.
+                frame_state_ = EFrameState::RequestBeginFrame;
             }
 
-            if (frame_state_ == EFrameState::RequestPreTick) {
-                // Wait here until beginFrameHandler() or close() updates frame_state_ and calls frame_state_executing_pre_tick_promise_.set_value().
-                frame_state_executing_pre_tick_future_.wait();
-                SP_ASSERT(frame_state_ == EFrameState::ExecutingPreTick || frame_state_ == EFrameState::Closing);
+            // Note that close() could execute here on the game thread, which will change the value of
+            // frame_state_.
+
+            if (frame_state_ == EFrameState::RequestBeginFrame) {
+                // Wait here until beginFrameHandler() or close() updates frame_state_ and calls frame_state_executing_begin_frame_promise_.set_value().
+                frame_state_executing_begin_frame_future_.wait();
+
+                EFrameState frame_state = frame_state_;
+                SP_ASSERT(frame_state == EFrameState::ExecutingBeginFrame || frame_state == EFrameState::Closing,
+                    "frame_state == %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state).c_str());
             }
         });
 
-        entry_point_binder_->bind("engine_service.tick", [this]() -> void {
+        entry_point_binder_->bind("engine_service.execute_frame", [this]() -> void {
 
-            // If we're in an error state, return immediately.
-            if (frame_state_ == EFrameState::Error) {
+            EFrameState frame_state;
+
+            frame_state = frame_state_;
+            SP_ASSERT(frame_state == EFrameState::ExecutingBeginFrame || frame_state == EFrameState::Closing || frame_state == EFrameState::Error,
+                "frame_state == %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state).c_str());
+
+            if (frame_state == EFrameState::Closing || frame_state == EFrameState::Error) {
                 return;
             }
-
-            SP_ASSERT(frame_state_ == EFrameState::ExecutingPreTick);
 
             // Allow beginFrameHandler() to finish executing.
             work_queue_.reset();
 
-            // Wait here until endFrameHandler() updates frame_state_ and calls frame_state_executing_post_tick_promise_.set_value().
-            frame_state_executing_post_tick_future_.wait();
-            SP_ASSERT(frame_state_ == EFrameState::ExecutingPostTick);
+            // Wait here until endFrameHandler() updates frame_state_ and calls frame_state_executing_end_frame_promise_.set_value().
+            frame_state_executing_end_frame_future_.wait();
+
+            frame_state = frame_state_;
+            SP_ASSERT(frame_state == EFrameState::ExecutingEndFrame,
+                "frame_state == %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state).c_str());
         });
 
-        entry_point_binder_->bind("engine_service.end_tick", [this]() -> void {
+        entry_point_binder_->bind("engine_service.end_frame", [this]() -> void {
 
-            // If we're in an error state, return immediately.
-            if (frame_state_ == EFrameState::Error) {
+            EFrameState frame_state;
+
+            frame_state = frame_state_;
+            SP_ASSERT(frame_state == EFrameState::ExecutingEndFrame || frame_state == EFrameState::Closing || frame_state == EFrameState::Error,
+                "frame_state == %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state).c_str());
+
+            if (frame_state == EFrameState::Closing || frame_state == EFrameState::Error) {
                 return;
             }
-
-            SP_ASSERT(frame_state_ == EFrameState::ExecutingPostTick);
 
             // Allow endFrameHandler() to finish executing.
             work_queue_.reset();
 
             // Wait here until endFrameHandler() updates frame_state_ and calls frame_state_idle_promise_.set_value().
             frame_state_idle_future_.wait();
-            SP_ASSERT(frame_state_ == EFrameState::Idle);
+
+            frame_state = frame_state_;
+            SP_ASSERT(frame_state == EFrameState::Idle,
+                "frame_state == %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state).c_str());
         });
 
         entry_point_binder_->bind("engine_service.request_exit", []() -> void {
@@ -159,20 +169,19 @@ public:
     void bindFuncUnreal(const std::string& service_name, const std::string& func_name, const auto& func)
     {
         std::string long_func_name = service_name + "." + func_name;
-        entry_point_binder_->bind(service_name + "." + func_name, WorkQueue::wrapFuncToExecuteInWorkQueueBlocking(work_queue_, long_func_name, func));
+        entry_point_binder_->bind(long_func_name, WorkQueue::wrapFuncToExecuteInWorkQueueBlocking(work_queue_, long_func_name, func));
     }
 
     void close()
     {
         std::lock_guard<std::mutex> lock(frame_state_mutex_);
-        SP_ASSERT(frame_state_ == EFrameState::NotInitialized || frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestPreTick);
+        SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame,
+            "frame_state_ == %d", frame_state_.load()); // don't try to print string because Unreal's reflection system is already shut down
 
-        EFrameState previous_frame_state = EFrameState::NotInitialized;
+        EFrameState frame_state = frame_state_;
         frame_state_ = EFrameState::Closing;
-
-        if (previous_frame_state == EFrameState::RequestPreTick) {
-            // Allow begin_tick() to finish executing.
-            frame_state_executing_pre_tick_promise_.set_value();
+        if (frame_state == EFrameState::RequestBeginFrame) {
+            frame_state_executing_begin_frame_promise_.set_value(); // avoids deadlock if close() executes after begin_frame()
         }
     }
 
@@ -200,10 +209,9 @@ private:
 
         SP_LOG("World name: ", Unreal::toStdString(world->GetName()));
 
-        frame_state_ = EFrameState::NotInitialized;
-
         if (world == world_) {
             SP_LOG("Clearing cached world...");
+            world_initialized_ = false;
             world_.load()->OnWorldBeginPlay.Remove(world_begin_play_handle_);
             world_begin_play_handle_.Reset();
             world_ = nullptr;
@@ -216,22 +224,27 @@ private:
         SP_ASSERT(world_);
 
         work_queue_.initialize();
-        frame_state_ = EFrameState::Idle;
+        world_initialized_ = true;
     }
 
     void beginFrameHandler()
     {
         std::lock_guard<std::mutex> lock(frame_state_mutex_);
+        SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame || frame_state_ == EFrameState::Error,
+            "frame_state_ == %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state_.load()).c_str());
 
-        if (frame_state_ == EFrameState::RequestPreTick) {
+        if (frame_state_ == EFrameState::RequestBeginFrame) {
 
-            // Allow begin_tick() to finish executing.
-            frame_state_ = EFrameState::ExecutingPreTick;
-            frame_state_executing_pre_tick_promise_.set_value();
+            // Allow begin_frame() to finish executing.
+            frame_state_ = EFrameState::ExecutingBeginFrame;
+            frame_state_executing_begin_frame_promise_.set_value();
 
-            // Execute all pre-tick work and wait until tick() calls work_queue_.reset().
             try {
+                // Execute all pre-frame work and wait here until execute_frame() calls work_queue_.reset().
                 work_queue_.run();
+
+                // Set frame state.
+                frame_state_ = EFrameState::ExecutingFrame;
 
             // In case of an exception, set the frame state to be in an error state and return.
             } catch(const std::exception& e) {
@@ -243,25 +256,28 @@ private:
                 frame_state_ = EFrameState::Error;
                 return;
             }
-
-            // Update frame state.
-            frame_state_ = EFrameState::ExecutingTick;
         }
     }
 
     void endFrameHandler()
     {
         std::lock_guard<std::mutex> lock(frame_state_mutex_);
+        SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame || frame_state_ == EFrameState::ExecutingFrame || frame_state_ == EFrameState::Error,
+            "frame_state_ == %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state_.load()).c_str());
 
-        if (frame_state_ == EFrameState::ExecutingTick) {
+        if (frame_state_ == EFrameState::ExecutingFrame) {
 
-            // Allow tick() to finish executing.
-            frame_state_ = EFrameState::ExecutingPostTick;
-            frame_state_executing_post_tick_promise_.set_value();
+            // Allow execute_frame() to finish executing.
+            frame_state_ = EFrameState::ExecutingEndFrame;
+            frame_state_executing_end_frame_promise_.set_value();
 
-            // Execute all pre-tick work and wait until end_tick() calls work_queue_.reset().
             try {
+                // Execute all post-frame work and wait here until end_frame() calls work_queue_.reset().
                 work_queue_.run();
+
+                // Allow end_frame() to finish executing.
+                frame_state_ = EFrameState::Idle;
+                frame_state_idle_promise_.set_value();
 
             // In case of an exception, set the frame state to be in an error state and return.
             } catch(const std::exception& e) {
@@ -273,10 +289,6 @@ private:
                 frame_state_ = EFrameState::Error;
                 return;
             }
-
-            // Allow end_tick() to finish executing.
-            frame_state_ = EFrameState::Idle;
-            frame_state_idle_promise_.set_value();
         }
     }
 
@@ -334,18 +346,19 @@ private:
     FDelegateHandle end_frame_handle_;
 
     std::atomic<UWorld*> world_ = nullptr;
+    std::atomic<bool> world_initialized_ = false;
 
     TEntryPointBinder* entry_point_binder_ = nullptr;
     WorkQueue work_queue_;
 
-    std::atomic<EFrameState> frame_state_ = EFrameState::NotInitialized;
+    std::atomic<EFrameState> frame_state_ = EFrameState::Idle;
     std::mutex frame_state_mutex_;
 
     std::promise<void> frame_state_idle_promise_;
-    std::promise<void> frame_state_executing_pre_tick_promise_;
-    std::promise<void> frame_state_executing_post_tick_promise_;
+    std::promise<void> frame_state_executing_begin_frame_promise_;
+    std::promise<void> frame_state_executing_end_frame_promise_;
 
     std::future<void> frame_state_idle_future_;
-    std::future<void> frame_state_executing_pre_tick_future_;
-    std::future<void> frame_state_executing_post_tick_future_;
+    std::future<void> frame_state_executing_begin_frame_future_;
+    std::future<void> frame_state_executing_end_frame_future_;
 };
