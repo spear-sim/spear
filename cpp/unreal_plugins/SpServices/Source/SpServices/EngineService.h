@@ -28,6 +28,8 @@
 
 #include "EngineService.generated.h"
 
+class UGameInstance;
+
 UENUM()
 enum class EFrameState
 {
@@ -49,6 +51,10 @@ public:
         SP_ASSERT(entry_point_binder);
 
         entry_point_binder_ = entry_point_binder;
+
+        #if WITH_EDITOR
+            pie_started_handle_ = FWorldDelegates::OnPIEStarted.AddRaw(this, &EngineService::PIEStartedHandler);
+        #endif
 
         post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &EngineService::postWorldInitializationHandler);
         world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &EngineService::worldCleanupHandler);
@@ -186,6 +192,23 @@ public:
     }
 
 private:
+
+    #if WITH_EDITOR // defined in an auto-generated header
+        void PIEStartedHandler(UGameInstance* game_instance)
+        {
+            SP_LOG_CURRENT_FUNCTION();
+
+            // Reset error state if the user has just pressed play in the editor. We don't want to do this in
+            // the constructor, because that will only be called once per application lifetime. We also don't
+            // want to do this in worldBeginPlay(), because worldBeginPlay() will be called whenever a new
+            // map is loaded. This event handler will be called once per PIE session, which is exactly what
+            // we want.
+            std::lock_guard<std::mutex> lock(frame_state_mutex_);
+            work_queue_.initialize();
+            frame_state_ = EFrameState::Idle;
+        }
+    #endif
+
     void postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values)
     {
         SP_LOG_CURRENT_FUNCTION();
@@ -222,8 +245,6 @@ private:
     {
         SP_LOG_CURRENT_FUNCTION();
         SP_ASSERT(world_);
-
-        work_queue_.initialize();
         world_initialized_ = true;
     }
 
@@ -339,19 +360,20 @@ private:
         };
     }
 
+    FDelegateHandle pie_started_handle_;
     FDelegateHandle post_world_initialization_handle_;
     FDelegateHandle world_cleanup_handle_;
     FDelegateHandle world_begin_play_handle_;
     FDelegateHandle begin_frame_handle_;
     FDelegateHandle end_frame_handle_;
 
-    std::atomic<UWorld*> world_ = nullptr;
-    std::atomic<bool> world_initialized_ = false;
-
     TEntryPointBinder* entry_point_binder_ = nullptr;
+
     WorkQueue work_queue_;
 
     std::atomic<EFrameState> frame_state_ = EFrameState::Idle;
+    std::atomic<UWorld*> world_ = nullptr;
+    std::atomic<bool> world_initialized_ = false;
     std::mutex frame_state_mutex_;
 
     std::promise<void> frame_state_idle_promise_;

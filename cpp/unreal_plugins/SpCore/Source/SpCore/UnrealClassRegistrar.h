@@ -25,6 +25,7 @@
 class AActor;
 class FLinkerInstancingContext;
 class UActorComponent;
+class UClass;
 class UObject;
 class UPackage;
 class UPackageMap;

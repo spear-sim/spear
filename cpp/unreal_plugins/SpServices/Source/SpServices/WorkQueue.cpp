@@ -20,7 +20,7 @@ void WorkQueue::run()
     // run all scheduled work and wait for executor_work_guard_.reset() to be called from a worker thread
     io_context_.run();
 
-    // local copy of shared error state
+    // local copy of error state, needs to be outside of the lock's scope
     WorkQueueErrorState error_state = WorkQueueErrorState::NoError;
     std::exception_ptr exception_ptr = nullptr;
 
