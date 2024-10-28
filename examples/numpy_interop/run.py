@@ -21,7 +21,7 @@ if __name__ == "__main__":
         # In typical use cases, Python code is responsible for defining shared memory regions for passing
         # arguments to Unreal objects, and Unreal objects are responsible for defining shared memory regions
         # for passing return values to Python. The name "smem_action" needs to be unique across all Python
-        # code interacting with SpFuncService.
+        # code interacting with instance.sp_func_service.
         action_shared_memory_handle = instance.sp_func_service.create_shared_memory_region(num_bytes=1024, shared_memory_name="smem_action")
 
         # Get the default ASpDebugWidget object. In this example, we're calling a custom function on an
@@ -29,7 +29,7 @@ if __name__ == "__main__":
         sp_debug_widget_static_class = instance.unreal_service.get_static_class(class_name="ASpDebugWidget")
         sp_debug_widget_default_object = instance.unreal_service.get_default_object(uclass=sp_debug_widget_static_class, create_if_needed=False)
 
-        # Create handles to any shared memory regions created by the Unreal object. SpFuncService.call_function(...)
+        # Create handles to any shared memory regions created by the Unreal object. instance.sp_func_service.call_function(...)
         # will use these handles internally to access data returned via shared memory.
         sp_debug_widget_shared_memory_handles = instance.sp_func_service.create_shared_memory_handles_for_uobject(uobject=sp_debug_widget_default_object)
 
@@ -41,7 +41,7 @@ if __name__ == "__main__":
         action_shared[:] = [3.0, 4.0, 5.0]
 
         # Prepare args for calling a custom function on our object. Note that any array backed by shared
-        # memory needs to be wrapped with spear.to_shared(...) when passing it to SpFuncService.call_function(...).
+        # memory needs to be wrapped with spear.to_shared(...) when passing it to instance.sp_func_service.call_function(...).
         # Otherwise it will be treated as a regular array, and will be sent to the Unreal object via a slower
         # code path.
         arrays = {

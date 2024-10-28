@@ -89,14 +89,14 @@ void SpServices::ShutdownModule()
 
     // We need to call engine_service_->close() before shutting down the RPC server, so engine_service_ has a
     // chance to stop waiting on any futures that it might be waiting on. It will not be possible to shut
-    // down the RPC server if an entry point is currently executing and is waiting on a future.
+    // down the RPC server gracefully if a live entry point is waiting on a future.
     SP_ASSERT(engine_service_);
     engine_service_->close();
 
     // We need to shut down the RPC server before destroying our services. Otherwise, the RPC server might
-    // attempt to call a service's entry points after the service has been destroyed. This will be a problem
-    // if the entry point is a lambda that has captured a pointer to the service, which several of our
-    // services do.
+    // attempt to call a service's entry points after the service has been destroyed. Many of our services
+    // bind entry points that capture a pointer back to the service, so we need to make sure that the RPC
+    // server is destroyed before our services.
     SP_ASSERT(rpc_server_);
     rpc_server_->close_sessions();
     rpc_server_->stop();
