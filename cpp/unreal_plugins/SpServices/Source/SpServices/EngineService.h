@@ -55,11 +55,11 @@ public:
         begin_frame_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &EngineService::beginFrameHandler);
         end_frame_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &EngineService::endFrameHandler);
 
-        entry_point_binder_->bind("engine_service.is_world_initialized", [this]() -> bool {
+        bindFuncNoUnreal("engine_service", "is_world_initialized", [this]() -> bool {
             return world_initialized_;
         });
 
-        entry_point_binder_->bind("engine_service.begin_frame", [this]() -> void {
+        bindFuncNoUnreal("engine_service", "begin_frame", [this]() -> void {
 
             {
                 std::lock_guard<std::mutex> lock(frame_state_mutex_);
@@ -96,7 +96,7 @@ public:
             }
         });
 
-        entry_point_binder_->bind("engine_service.execute_frame", [this]() -> void {
+        bindFuncNoUnreal("engine_service", "execute_frame", [this]() -> void {
 
             EFrameState frame_state;
 
@@ -119,7 +119,7 @@ public:
                 "frame_state == %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state).c_str());
         });
 
-        entry_point_binder_->bind("engine_service.end_frame", [this]() -> void {
+        bindFuncNoUnreal("engine_service", "end_frame", [this]() -> void {
 
             EFrameState frame_state;
 
@@ -142,7 +142,7 @@ public:
                 "frame_state == %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state).c_str());
         });
 
-        entry_point_binder_->bind("engine_service.request_exit", []() -> void {
+        bindFuncNoUnreal("engine_service", "request_exit", []() -> void {
             bool immediate_shutdown = false;
             FGenericPlatformMisc::RequestExit(immediate_shutdown);
         });

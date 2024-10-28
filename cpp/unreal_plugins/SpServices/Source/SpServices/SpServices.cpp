@@ -35,7 +35,7 @@ void SpServices::StartupModule()
 
     // If we're cooking, then return early. In this case, there is no need to launch our services, and if
     // if we attempt to launch the RPC server while cooking, and the editor or game is already open, then we
-    // will get an error because the port already be in use.
+    // will get an error because the port is in use.
     #if WITH_EDITOR // defined in an auto-generated header
         if (IsRunningCommandlet()) {
             return;
