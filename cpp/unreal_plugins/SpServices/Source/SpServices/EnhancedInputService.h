@@ -45,8 +45,8 @@ public:
     {
         SP_ASSERT(unreal_entry_point_binder);
 
-        // Register EnhancedInput types. We can't do this in SpCore, because if SpCore depends on the EnhancedInput
-        // plugin, we get cooking errors.
+        // Register EnhancedInput types. We can't do this in SpCore, because if we set SpCore to depend on
+        // the EnhancedInputPlugin, then we get cooking errors.
         UnrealClassRegistrar::registerSubsystemClass<ULocalPlayer, UEnhancedInputLocalPlayerSubsystem>("UEnhancedInputLocalPlayerSubsystem");
         UnrealClassRegistrar::registerClass<UInputAction>("UInputAction");
         UnrealClassRegistrar::registerClass<UInputModifierScalar>("UInputModifierScalar");
