@@ -30,6 +30,7 @@ class Instance():
         self._engine_service = spear.EngineService(self._rpc_client, self._config)
 
         # Construct all other services by passing in EngineService
+        self.enhanced_input_service = spear.EnhancedInputService(self._engine_service)
         self.legacy_service = spear.LegacyService(self._engine_service)
         self.unreal_service = spear.UnrealService(self._engine_service)
         self.sp_func_service = spear.SpFuncService(self._engine_service)

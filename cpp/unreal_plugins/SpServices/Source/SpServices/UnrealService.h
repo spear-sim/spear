@@ -17,21 +17,19 @@
 #include <Engine/Level.h>                // ULevel
 #include <Engine/World.h>                // FWorldDelegates, FActorSpawnParameters
 #include <HAL/IConsoleManager.h>
-#include <Kismet/GameplayStatics.h>
 #include <Misc/EnumClassFlags.h>         // ENUM_CLASS_FLAGS
 #include <UObject/Class.h>               // EIncludeSuperFlag::Type
 #include <UObject/ObjectMacros.h>        // EObjectFlags, ELoadFlags
 #include <UObject/Package.h>
 
 #include "SpCore/Assert.h"
-#include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealClassRegistrar.h"
 
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/Msgpack.h"
 #include "SpServices/Rpclib.h"
-#include "SpServices/ServiceUtils.h"
+#include "SpServices/Service.h"
 
 #include "UnrealService.generated.h"
 
@@ -225,15 +223,26 @@ struct FSpActorSpawnParameters
 // UnrealService is our service for interacting with the Unreal property system.
 //
 
-class UnrealService {
+class UnrealService : public Service {
 public:
     UnrealService() = delete;
     UnrealService(CUnrealEntryPointBinder auto* unreal_entry_point_binder)
     {
         SP_ASSERT(unreal_entry_point_binder);
 
-        post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &UnrealService::postWorldInitializationHandler);
-        world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &UnrealService::worldCleanupHandler);
+        //
+        // Get subsystems
+        //
+
+        unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_subsystem_by_type",
+            [this](std::string& class_name) -> uint64_t {
+                return toUInt64(UnrealClassRegistrar::getSubsystemByType(class_name, getWorld()));
+            });
+
+        unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_subsystem_by_class",
+            [this](std::string& class_name, uint64_t& uclass) -> uint64_t {
+                return toUInt64(UnrealClassRegistrar::getSubsystemByClass(class_name, getWorld(), toPtr<UClass>(uclass)));
+            });
 
         //
         // Get UClass from class name, get default object from UClass, get UClass from object
@@ -329,7 +338,7 @@ public:
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "call_function",
             [this](uint64_t& uobject, uint64_t& ufunction, std::map<std::string, std::string>& args, std::string& world_context) -> std::map<std::string, std::string> {
-                return Unreal::callFunction(world_, toPtr<UObject>(uobject), toPtr<UFunction>(ufunction), args, world_context);
+                return Unreal::callFunction(getWorld(), toPtr<UObject>(uobject), toPtr<UFunction>(ufunction), args, world_context);
             });
 
         //
@@ -338,12 +347,12 @@ public:
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actors",
             [this]() -> std::vector<uint64_t> {
-                return toUInt64(Unreal::findActors(world_));
+                return toUInt64(Unreal::findActors(getWorld()));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actors_as_map",
             [this]() -> std::map<std::string, uint64_t> {
-                return toUInt64(Unreal::findActorsAsMap(world_));
+                return toUInt64(Unreal::findActorsAsMap(getWorld()));
             });
 
         //
@@ -380,32 +389,32 @@ public:
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actors_by_name",
             [this](std::string& class_name, std::vector<std::string>& actor_names, bool& return_null_if_not_found) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::findActorsByName(class_name, world_, actor_names, return_null_if_not_found));
+                return toUInt64(UnrealClassRegistrar::findActorsByName(class_name, getWorld(), actor_names, return_null_if_not_found));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actors_by_tag",
             [this](std::string& class_name, std::string& tag) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::findActorsByTag(class_name, world_, tag));
+                return toUInt64(UnrealClassRegistrar::findActorsByTag(class_name, getWorld(), tag));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actors_by_tag_any",
             [this](std::string& class_name, std::vector<std::string>& tags) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::findActorsByTagAny(class_name, world_, tags));
+                return toUInt64(UnrealClassRegistrar::findActorsByTagAny(class_name, getWorld(), tags));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actors_by_tag_all",
             [this](std::string& class_name, std::vector<std::string>& tags) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::findActorsByTagAll(class_name, world_, tags));
+                return toUInt64(UnrealClassRegistrar::findActorsByTagAll(class_name, getWorld(), tags));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actors_by_type",
             [this](std::string& class_name) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::findActorsByType(class_name, world_));
+                return toUInt64(UnrealClassRegistrar::findActorsByType(class_name, getWorld()));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actors_by_class",
             [this](uint64_t& uclass) -> std::vector<uint64_t> {
-                return toUInt64(Unreal::findActorsByClass(world_, toPtr<UClass>(uclass)));
+                return toUInt64(Unreal::findActorsByClass(getWorld(), toPtr<UClass>(uclass)));
             });
 
         //
@@ -414,32 +423,32 @@ public:
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actors_by_name_as_map",
             [this](std::string& class_name, std::vector<std::string>& actor_names, bool& return_null_if_not_found) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::findActorsByNameAsMap(class_name, world_, actor_names, return_null_if_not_found));
+                return toUInt64(UnrealClassRegistrar::findActorsByNameAsMap(class_name, getWorld(), actor_names, return_null_if_not_found));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actors_by_tag_as_map",
             [this](std::string& class_name, std::string& tag) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::findActorsByTagAsMap(class_name, world_, tag));
+                return toUInt64(UnrealClassRegistrar::findActorsByTagAsMap(class_name, getWorld(), tag));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actors_by_tag_any_as_map",
             [this](std::string& class_name, std::vector<std::string>& tags) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::findActorsByTagAnyAsMap(class_name, world_, tags));
+                return toUInt64(UnrealClassRegistrar::findActorsByTagAnyAsMap(class_name, getWorld(), tags));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actors_by_tag_all_as_map",
             [this](std::string& class_name, std::vector<std::string>& tags) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::findActorsByTagAllAsMap(class_name, world_, tags));
+                return toUInt64(UnrealClassRegistrar::findActorsByTagAllAsMap(class_name, getWorld(), tags));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actors_by_type_as_map",
             [this](std::string& class_name) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::findActorsByTypeAsMap(class_name, world_));
+                return toUInt64(UnrealClassRegistrar::findActorsByTypeAsMap(class_name, getWorld()));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actors_by_class_as_map",
             [this](uint64_t& uclass) -> std::map<std::string, uint64_t> {
-                return toUInt64(Unreal::findActorsByClassAsMap(world_, toPtr<UClass>(uclass)));
+                return toUInt64(Unreal::findActorsByClassAsMap(getWorld(), toPtr<UClass>(uclass)));
             });
 
         //
@@ -448,32 +457,32 @@ public:
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actor_by_name",
             [this](std::string& class_name, std::string& actor_name) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::findActorByName(class_name, world_, actor_name));
+                return toUInt64(UnrealClassRegistrar::findActorByName(class_name, getWorld(), actor_name));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actor_by_tag",
             [this](std::string& class_name, std::string& tag) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::findActorByTag(class_name, world_, tag));
+                return toUInt64(UnrealClassRegistrar::findActorByTag(class_name, getWorld(), tag));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actor_by_tag_any",
             [this](std::string& class_name, std::vector<std::string>& tags) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::findActorByTagAny(class_name, world_, tags));
+                return toUInt64(UnrealClassRegistrar::findActorByTagAny(class_name, getWorld(), tags));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actor_by_tag_all",
             [this](std::string& class_name, std::vector<std::string>& tags) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::findActorByTagAll(class_name, world_, tags));
+                return toUInt64(UnrealClassRegistrar::findActorByTagAll(class_name, getWorld(), tags));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actor_by_type",
             [this](std::string& class_name) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::findActorByType(class_name, world_));
+                return toUInt64(UnrealClassRegistrar::findActorByType(class_name, getWorld()));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "find_actor_by_class",
             [this](uint64_t& uclass) -> uint64_t {
-                return toUInt64(Unreal::findActorByClass(world_, toPtr<UClass>(uclass)));
+                return toUInt64(Unreal::findActorByClass(getWorld(), toPtr<UClass>(uclass)));
             });
 
         //
@@ -812,12 +821,11 @@ public:
                 actor_spawn_parameters.NameMode = Unreal::getEnumValueAs<FActorSpawnParameters::ESpawnActorNameMode>(sp_actor_spawn_parameters.NameMode);
                 actor_spawn_parameters.ObjectFlags = Unreal::getCombinedEnumFlagValueFromStringsAs<EObjectFlags, ESpObjectFlags>(object_flag_strings);
 
-                return toUInt64(UnrealClassRegistrar::spawnActor(class_name, world_, location, rotation, actor_spawn_parameters));
+                return toUInt64(UnrealClassRegistrar::spawnActor(class_name, getWorld(), location, rotation, actor_spawn_parameters));
             });
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "spawn_actor_from_uclass",
             [this](uint64_t& uclass, std::string& location_string, std::string& rotation_string, std::string& spawn_parameters_string, std::vector<std::string>& object_flag_strings) -> uint64_t {
-                SP_ASSERT(world_);
 
                 FVector location;
                 FRotator rotation;
@@ -842,7 +850,8 @@ public:
                 actor_spawn_parameters.NameMode = Unreal::getEnumValueAs<FActorSpawnParameters::ESpawnActorNameMode>(sp_actor_spawn_parameters.NameMode);
                 actor_spawn_parameters.ObjectFlags = Unreal::getCombinedEnumFlagValueFromStringsAs<EObjectFlags, ESpObjectFlags>(object_flag_strings);
 
-                return toUInt64(world_->SpawnActor(toPtr<UClass>(uclass), &location, &rotation, actor_spawn_parameters));
+                SP_ASSERT(getWorld());
+                return toUInt64(getWorld()->SpawnActor(toPtr<UClass>(uclass), &location, &rotation, actor_spawn_parameters));
             });
 
         //
@@ -904,6 +913,11 @@ public:
                 uint64_t& in_instance_graph,
                 uint64_t& external_package) -> uint64_t {
 
+                UObject* outer_ptr = toPtr<UObject>(outer);
+                if (!outer_ptr) {
+                    outer_ptr = GetTransientPackage();
+                }
+
                 FName fname = NAME_None;
                 if (name != "") {
                     fname = Unreal::toFName(name);
@@ -912,7 +926,7 @@ public:
                 return toUInt64(
                     UnrealClassRegistrar::newObject(
                         class_name,
-                        toPtr<UObject>(outer),
+                        outer_ptr,
                         fname,
                         Unreal::getCombinedEnumFlagValueFromStringsAs<EObjectFlags, ESpObjectFlags>(object_flag_strings),
                         toPtr<UObject>(uobject_template),
@@ -1008,6 +1022,24 @@ public:
             });
 
         //
+        // Load objects and classes
+        //
+
+        unreal_entry_point_binder->bindFuncUnreal("unreal_service", "add_uobject_to_root",
+            [this](uint64_t& uobject) -> void {
+                UObject* uboject_ptr = toPtr<UObject>(uobject);
+                SP_ASSERT(uboject_ptr);
+                uboject_ptr->AddToRoot();
+            });
+
+        unreal_entry_point_binder->bindFuncUnreal("unreal_service", "remove_uobject_from_root",
+            [this](uint64_t& uobject) -> void {
+                UObject* uboject_ptr = toPtr<UObject>(uobject);
+                SP_ASSERT(uboject_ptr);
+                uboject_ptr->RemoveFromRoot();
+            });
+
+        //
         // Find, get, and set console variables
         //
 
@@ -1070,7 +1102,7 @@ public:
 
         unreal_entry_point_binder->bindFuncUnreal("unreal_service", "execute_console_command",
             [this](std::string& command) -> void {
-                GEngine->Exec(world_, *Unreal::toFString(command));
+                GEngine->Exec(getWorld(), *Unreal::toFString(command));
             });
 
         //
@@ -1100,29 +1132,7 @@ public:
             [this](uint64_t& component) -> std::vector<std::string> { return Unreal::getTags(toPtr<UActorComponent>(component)); });
     }
 
-    ~UnrealService()
-    {
-        FWorldDelegates::OnWorldCleanup.Remove(world_cleanup_handle_);
-        FWorldDelegates::OnPostWorldInitialization.Remove(post_world_initialization_handle_);
-
-        world_cleanup_handle_.Reset();
-        post_world_initialization_handle_.Reset();
-    }
-
-private:
-    void postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values);
-    void worldCleanupHandler(UWorld* world, bool session_ended, bool cleanup_resources);
-
-    // these helper functions are intended to make calls to ServiceUtils more concise
-    template <typename TValue>                static uint64_t                 toUInt64(const TValue* src)                 { return ServiceUtils::toUInt64(src); }
-    template <typename TValue>                static std::vector<uint64_t>    toUInt64(const std::vector<TValue>& src)    { return ServiceUtils::toUInt64(src); }
-    template <typename TKey, typename TValue> static std::map<TKey, uint64_t> toUInt64(const std::map<TKey, TValue>& src) { return ServiceUtils::toUInt64(src); }
-    template <typename TPtr>                  static TPtr*                    toPtr(uint64_t src)                         { return ServiceUtils::toPtr<TPtr>(src); }
-
-    FDelegateHandle post_world_initialization_handle_;
-    FDelegateHandle world_cleanup_handle_;
-
-    UWorld* world_ = nullptr;
+    ~UnrealService() = default;
 };
 
 //

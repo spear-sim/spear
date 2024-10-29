@@ -4,24 +4,22 @@
 
 #include "SpServices/SpServices.h"
 
-#include <memory> // std::make_unique, std::unique_ptr
+#include <memory> // std::make_unique
 
-#include <CoreGlobals.h>                 // IsRunningCommandlet
-#include <Delegates/IDelegateInstance.h> // FDelegateHandle
-#include <Engine/Engine.h>               // GEngine
-#include <Engine/World.h>                // FWorldDelegates
-#include <GameMapsSettings.h>
-#include <Modules/ModuleManager.h>       // IMPLEMENT_MODULE
+#include <CoreGlobals.h>           // IsRunningCommandlet
+#include <Modules/ModuleManager.h> // IMPLEMENT_MODULE
 
 #include "SpCore/Assert.h"
 #include "SpCore/AssertModuleLoaded.h"
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
-#include "SpCore/Unreal.h"
+
+#include "SpServices/Rpclib.h"
 
 #include "SpServices/EngineService.h"
+#include "SpServices/EnhancedInputService.h"
+#include "SpServices/GameMapSettingsService.h"
 #include "SpServices/LegacyService.h"
-#include "SpServices/Rpclib.h"
 #include "SpServices/SpFuncService.h"
 #include "SpServices/UnrealService.h"
 
@@ -60,21 +58,11 @@ void SpServices::StartupModule()
     engine_service_ = std::make_unique<EngineService<rpc::server>>(rpc_server_.get());
 
     // Construct all other services by passing in EngineService.
+    enhanced_input_service_ = std::make_unique<EnhancedInputService>(engine_service_.get());
+    game_map_settings_service_ = std::make_unique<GameMapSettingsService>(engine_service_.get());
     legacy_service_ = std::make_unique<LegacyService>(engine_service_.get());
     sp_func_service_ = std::make_unique<SpFuncService>(engine_service_.get());
     unreal_service_ = std::make_unique<UnrealService>(engine_service_.get());
-
-    // Override the default game map. We want to do this early enough to avoid loading the default map
-    // specified in Unreal's config system, but late enough that that the UGameMapSettings default object
-    // has been initialized.
-    std::string game_default_map;
-    if (Config::isInitialized()) {
-        game_default_map = Config::get<std::string>("SP_SERVICES.GAME_DEFAULT_MAP");
-    }
-    if (game_default_map != "") {
-        SP_LOG("Overriding default game map: ", game_default_map);
-        UGameMapsSettings::SetGameDefaultMap(Unreal::toFString(game_default_map));
-    }
 }
 
 void SpServices::ShutdownModule()
@@ -105,9 +93,12 @@ void SpServices::ShutdownModule()
     SP_ASSERT(unreal_service_);
     SP_ASSERT(sp_func_service_);
     SP_ASSERT(legacy_service_);
+    SP_ASSERT(enhanced_input_service_);
     unreal_service_ = nullptr;
     sp_func_service_ = nullptr;
     legacy_service_ = nullptr;
+    game_map_settings_service_ = nullptr;
+    enhanced_input_service_ = nullptr;
 
     SP_ASSERT(engine_service_);
     engine_service_ = nullptr;

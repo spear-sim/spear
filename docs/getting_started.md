@@ -82,6 +82,7 @@ python examples/getting_started/run.py
 
 We recommend browsing through each of our example applications to get a sense of what is currently possible with SPEAR.
   - [`examples/control_simple_agent`](../examples/control_simple_agent) demonstrates how to control a simple agent and obtain egocentric visual observations.
+  - [`examples/enhanced_input`](../examples/enhanced_input) demonstrates how to interact with Unreal's Enhanced Input system.
   - [`examples/generate_image_dataset`](../examples/generate_image_dataset) demonstrates how to generate a dataset of images using our camera agent.
   - [`examples/getting_started`](../examples/getting_started) demonstrates how to spawn an object and access object properties.
   - [`examples/imitation_learning_openbot`](../examples/imitation_learning_openbot) demonstrates how to collect navigation training data for an OpenBot.

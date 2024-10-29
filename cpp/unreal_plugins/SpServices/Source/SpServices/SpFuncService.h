@@ -4,14 +4,15 @@
 
 #pragma once
 
-#include <stdint.h> // int8_t, uint8_t, uint64_t
+#include <stdint.h> // uint8_t, uint64_t
 
 #include <map>
 #include <memory> // std::make_unique, std::unique_ptr
 #include <string>
 #include <vector>
 
-#include <Delegates/IDelegateInstance.h> // FDelegateHandle
+#include <Components/SceneComponent.h>
+#include <GameFramework/Actor.h>
 #include <UObject/Object.h>
 
 #include "SpCore/Assert.h"
@@ -25,21 +26,18 @@
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/Msgpack.h"
 #include "SpServices/Rpclib.h"
-#include "SpServices/ServiceUtils.h"
+#include "SpServices/Service.h"
 
 #include "SpFuncService.generated.h"
 
 class UWorld;
 
-class SpFuncService {
+class SpFuncService : public Service {
 public:
     SpFuncService() = delete;
     SpFuncService(CUnrealEntryPointBinder auto* unreal_entry_point_binder)
     {
         SP_ASSERT(unreal_entry_point_binder);
-
-        post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &SpFuncService::postWorldInitializationHandler);
-        world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &SpFuncService::worldCleanupHandler);
 
         unreal_entry_point_binder->bindFuncNoUnreal("sp_func_service", "get_byte_order", []() -> std::string {
             SP_ASSERT(BOOST_ENDIAN_BIG_BYTE + BOOST_ENDIAN_LITTLE_BYTE == 1);
@@ -78,7 +76,7 @@ public:
         });
 
         unreal_entry_point_binder->bindFuncUnreal("sp_func_service", "call_function", [this](uint64_t& uobject, std::string& function_name, SpFuncDataBundle& args) -> SpFuncDataBundle {
-            UObject* uobject_ptr = ServiceUtils::toPtr<UObject>(uobject);
+            UObject* uobject_ptr = toPtr<UObject>(uobject);
             USpFuncComponent* sp_func_component = getSpFuncComponent(uobject_ptr);
 
             // resolve references to shared memory and validate args, assume that shared memory views for args are in shared_memory_views_
@@ -93,32 +91,36 @@ public:
         });
 
         unreal_entry_point_binder->bindFuncUnreal("sp_func_service", "get_shared_memory_views", [this](uint64_t& uobject) -> std::map<std::string, SpFuncSharedMemoryView> {
-            UObject* uobject_ptr = ServiceUtils::toPtr<UObject>(uobject);
+            UObject* uobject_ptr = toPtr<UObject>(uobject);
             USpFuncComponent* sp_func_component = getSpFuncComponent(uobject_ptr);
             
             return sp_func_component->getSharedMemoryViews();
         });
     }
 
-    ~SpFuncService()
-    {
-        FWorldDelegates::OnWorldCleanup.Remove(world_cleanup_handle_);
-        FWorldDelegates::OnPostWorldInitialization.Remove(post_world_initialization_handle_);
-
-        world_cleanup_handle_.Reset();
-        post_world_initialization_handle_.Reset();
-    }
+    ~SpFuncService() = default;
 
 private:
-    void postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values);
-    void worldCleanupHandler(UWorld* world, bool session_ended, bool cleanup_resources);
+    static USpFuncComponent* getSpFuncComponent(const UObject* uobject)
+    {
+        SP_ASSERT(uobject);
 
-    static USpFuncComponent* getSpFuncComponent(const UObject* uobject);
+        USpFuncComponent* sp_func_component = nullptr;
+        if (uobject->IsA(AActor::StaticClass())) {
+            AActor* actor = const_cast<AActor*>(static_cast<const AActor*>(uobject));
+            bool include_all_descendants = false;
+            sp_func_component = Unreal::getChildComponentByType<AActor, USpFuncComponent>(actor, include_all_descendants);
+        } else if (uobject->IsA(USceneComponent::StaticClass())) {
+            USceneComponent* component = const_cast<USceneComponent*>(static_cast<const USceneComponent*>(uobject));
+            bool include_all_descendants = false;
+            sp_func_component = Unreal::getChildComponentByType<USceneComponent, USpFuncComponent>(component, include_all_descendants);
+        } else {
+            SP_ASSERT(false);
+        }
+        SP_ASSERT(sp_func_component);
 
-    FDelegateHandle post_world_initialization_handle_;
-    FDelegateHandle world_cleanup_handle_;
-
-    UWorld* world_ = nullptr;
+        return sp_func_component;
+    }
 
     std::map<std::string, std::unique_ptr<SharedMemoryRegion>> shared_memory_regions_;
     std::map<std::string, SpFuncSharedMemoryView> shared_memory_views_;

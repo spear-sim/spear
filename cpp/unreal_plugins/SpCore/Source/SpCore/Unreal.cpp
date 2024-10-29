@@ -48,7 +48,7 @@ class UWorld;
 
 std::string Unreal::getObjectPropertiesAsString(UObject* uobject)
 {
-    return getObjectPropertiesAsString(uobject, uobject->GetClass());
+    return getObjectPropertiesAsString(uobject, uobject->GetClass()); // GetClass() returns UClass*, UClass inherits from UStruct
 }
 
 std::string Unreal::getObjectPropertiesAsString(void* value_ptr, const UStruct* ustruct)

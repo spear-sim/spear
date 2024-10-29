@@ -18,9 +18,11 @@
 #include <Components/SceneComponent.h>
 #include <Containers/Array.h>
 #include <Containers/UnrealString.h>        // FString::operator*
+#include <Engine/World.h>
 #include <EngineUtils.h>                    // TActorIterator
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>                   // TCHAR
+#include <Subsystems/Subsystem.h>
 #include <Templates/Casts.h>
 #include <UObject/Class.h>                  // EIncludeSuperFlag, UClass, UEnum, UStruct
 #include <UObject/NameTypes.h>              // FName
@@ -30,8 +32,6 @@
 
 #include "SpCore/Assert.h"
 #include "SpCore/Std.h"
-
-class UWorld;
 
 //
 // Concepts for Unreal objects
@@ -91,6 +91,26 @@ concept CStableNameObject =
 template <typename TParent>
 concept CParent =
     CActor<TParent> || CSceneComponent<TParent>;
+
+template <typename TSubsystem>
+concept CSubsystem =
+    CClass<TSubsystem> &&
+    std::derived_from<TSubsystem, USubsystem>;
+
+template <typename TSubsystemProvider>
+concept CSubsystemProvider =
+    CClass<TSubsystemProvider> &&
+    requires(TSubsystemProvider subsystem_provider) {
+        { subsystem_provider.template GetSubsystem<USubsystem>() } -> std::same_as<USubsystem*>;
+    };
+
+template <typename TSubsystemBaseProvider>
+concept CSubsystemBaseProvider =
+    CSubsystemProvider<TSubsystemBaseProvider> &&
+    requires(TSubsystemBaseProvider subsystem_base_provider, UClass* uclass) {
+        { subsystem_base_provider.GetSubsystemBase(nullptr) };
+    } &&
+    std::derived_from<std::remove_pointer_t<decltype(TSubsystemBaseProvider().GetSubsystemBase(nullptr))>, USubsystem>;
 
 //
 // General-purpose functions for working with Unreal objects.
@@ -830,6 +850,30 @@ public:
     }
 
     //
+    // Helper functions for getting subsystem providers
+    //
+
+    template <CSubsystemProvider TSubsystemProvider>
+    static TSubsystemProvider* getSubsystemProvider(UObject* context)
+    {
+        SP_ASSERT(false);
+        return nullptr;
+    }
+
+    template <>
+    ULocalPlayer* getSubsystemProvider<ULocalPlayer>(UObject* context)
+    {
+        SP_ASSERT(context);
+        UWorld* world = Cast<UWorld>(context);
+        SP_ASSERT(world);
+        APlayerController* player_controller = world->GetFirstPlayerController();
+        SP_ASSERT(player_controller);
+        ULocalPlayer* local_player = player_controller->GetLocalPlayer();
+        SP_ASSERT(local_player);
+        return local_player;
+    }
+
+    //
     // Get and set actor and component stable names
     //
 
@@ -978,6 +1022,16 @@ public:
         std::vector<TDestValue> dest;
         for (auto& data : src) {
             dest.push_back(data);
+        }
+        return dest;
+    }
+
+    template <typename TValue>
+    static TArray<TValue> toTArray(const std::vector<TValue>& src)
+    {
+        TArray<TValue> dest;
+        for (auto& data : src) {
+            dest.Add(data);
         }
         return dest;
     }

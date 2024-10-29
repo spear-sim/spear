@@ -15,6 +15,7 @@ from spear.func_utils import Ptr, Shared
 
 # services
 from spear.engine_service import EngineService
+from spear.enhanced_input_service import EnhancedInputService
 from spear.legacy_service import LegacyService
 from spear.sp_func_service import SpFuncService
 from spear.unreal_service import UnrealService

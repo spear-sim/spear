@@ -27,6 +27,10 @@
             "Enabled":  true
         },
         {
+            "Name": "EnhancedInput",
+            "Enabled":  true
+        },
+        {
             "Name": "SpComponents",
             "Enabled": true
         },

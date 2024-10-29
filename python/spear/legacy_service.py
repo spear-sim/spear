@@ -64,6 +64,3 @@ class LegacyService():
 
     def is_agent_ready(self):
         return self._entry_point_caller.call("legacy_service.is_agent_ready")
-
-    def get_world_name(self):
-        return self._entry_point_caller.call("legacy_service.get_world_name")

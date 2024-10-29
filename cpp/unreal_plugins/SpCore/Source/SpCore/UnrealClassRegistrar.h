@@ -31,6 +31,7 @@ class UPackage;
 class UPackageMap;
 class USceneComponent;
 class UStruct;
+class USubsystem;
 struct FActorSpawnParameters;
 struct FObjectInstancingGraph;
 
@@ -42,6 +43,13 @@ struct FObjectInstancingGraph;
 // for handling static variables in shared libraries. See the link below for details:
 //     https://stackoverflow.com/questions/31495877/i-receive-different-results-on-unix-and-win-when-use-static-members-with-static
 //
+
+//
+// Registrars for getting subsystems using a class name instead of template parameters
+//
+
+extern SPCORE_API FuncRegistrar<USubsystem*, UObject*>          g_get_subsystem_func_by_type_registrar;
+extern SPCORE_API FuncRegistrar<USubsystem*, UObject*, UClass*> g_get_subsystem_func_by_class_registrar;
 
 //
 // Registrars for getting a static class or static struct using a class name instead of template parameters
@@ -153,9 +161,9 @@ extern SPCORE_API FuncRegistrar<USceneComponent*, USceneComponent*, const std::s
 // Registrars for creating objects and classes using a class name instead of template parameters
 //
 
-extern SPCORE_API FuncRegistrar<UObject*, UObject*, FName, EObjectFlags, UObject*, bool, FObjectInstancingGraph*, UPackage*> g_new_object_func_registrar;
+extern SPCORE_API FuncRegistrar<UObject*, UObject*, FName, EObjectFlags, UObject*, bool, FObjectInstancingGraph*, UPackage*>           g_new_object_func_registrar;
 extern SPCORE_API FuncRegistrar<UObject*, UObject*, const TCHAR*, const TCHAR*, uint32, UPackageMap*, const FLinkerInstancingContext*> g_load_object_func_registrar;
-extern SPCORE_API FuncRegistrar<UClass*, UObject*, const TCHAR*, const TCHAR*, uint32, UPackageMap*> g_load_class_func_registrar;
+extern SPCORE_API FuncRegistrar<UClass*, UObject*, const TCHAR*, const TCHAR*, uint32, UPackageMap*>                                   g_load_class_func_registrar;
 
 //
 // These maps are necessary to support getStaticStruct<T>() for special struct types that don't have a
@@ -173,6 +181,13 @@ public:
 
     static void initialize();
     static void terminate();
+
+    //
+    // Get subsystem using a class name instead of template parameters
+    //
+
+    static USubsystem* getSubsystemByType(const std::string& class_name, UObject* context);
+    static USubsystem* getSubsystemByClass(const std::string& class_name, UObject* context, UClass* uclass);
 
     //
     // Get static class or static struct using a class name instead of template parameters
@@ -320,6 +335,32 @@ public:
         UPackageMap* sandbox = nullptr);
 
     //
+    // Register and unregister a subsystem base provider class, i.e., a class that has a GetSubsystemBase() method
+    //
+
+    template <CSubsystemBaseProvider TSubsystemBaseProvider>
+    static void registerSubsystemBaseProviderClass(const std::string& class_name)
+    {
+        g_get_subsystem_func_by_class_registrar.registerFunc(
+            class_name, [](UObject* context, UClass* uclass) -> USubsystem* {
+                return Unreal::getSubsystemProvider<TSubsystemBaseProvider>(context)->GetSubsystemBase(uclass);
+            });
+    }
+
+    //
+    // Register and unregister subsystem class
+    //
+
+    template <CSubsystemProvider TSubsystemProvider, CSubsystem TSubsystem>
+    static void registerSubsystemClass(const std::string& class_name)
+    {
+        g_get_subsystem_func_by_type_registrar.registerFunc(
+            class_name, [](UObject* context) -> USubsystem* {
+                return Unreal::getSubsystemProvider<TSubsystemProvider>(context)->template GetSubsystem<TSubsystem>();
+            });
+    }
+
+    //
     // Register and unregister actor class
     //
 
@@ -408,6 +449,10 @@ public:
             class_name, [](const UWorld* world) -> AActor* {
                 return Unreal::findActorByType<TActor, AActor>(world); });
     }
+
+    //
+    // Register and unregister component class
+    //
 
     template <CComponent TComponent>
     static void registerComponentClass(const std::string& class_name)
@@ -609,10 +654,6 @@ public:
             });
     }
 
-    //
-    // Register and unregister component class
-    //
-
     template <CComponent TComponent>
     static void registerComponentClassCommon(const std::string& class_name)
     {
@@ -790,7 +831,21 @@ public:
             });
     }
 
-    static void registerUClass();
+    //
+    // Unregister classes
+    //
+
+    template <CSubsystemBaseProvider TSubsystemBaseProvider>
+    static void unregisterSubsystemBaseProviderClass(const std::string& class_name)
+    {
+        g_get_subsystem_func_by_class_registrar.unregisterFunc(class_name);
+    }
+
+    template <CSubsystemProvider TSubsystemProvider, CSubsystem TSubsystem>
+    static void unregisterSubsystemClass(const std::string& class_name)
+    {
+        g_get_subsystem_func_by_type_registrar.unregisterFunc(class_name);
+    }
 
     template <CActor TActor>
     static void unregisterActorClass(const std::string& class_name)
@@ -934,7 +989,9 @@ public:
     }
 
     //
-    // Templated helper functions for getting static structs, can't be private because it is used by UnrealObj
+    // Templated helper functions for getting static structs, can't be private because it is used by UnrealObj,
+    // and can't be in the Unreal namespace because the special struct implementation depends on a map of
+    // types maintained by UnrealClassRegistrar.
     //
 
     template <CStruct TStruct>

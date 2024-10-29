@@ -10,6 +10,16 @@ class UnrealService():
         self._entry_point_caller = entry_point_caller
 
     #
+    # Get subsystems
+    #
+
+    def get_subsystem_by_type(self, class_name):
+        return self._entry_point_caller.call("unreal_service.get_subsystem_by_type", class_name)
+
+    def get_subsystem_by_class(self, class_name, uclass):
+        return self._entry_point_caller.call("unreal_service.get_subsystem_by_class", class_name, uclass)
+
+    #
     # Get uclass from class name, get default object from uclass, get uclass from object
     #
 
@@ -34,10 +44,18 @@ class UnrealService():
     #
 
     def get_object_properties_from_uobject(self, uobject):
-        return json.loads(self._entry_point_caller.call("unreal_service.get_object_properties_as_string_from_uobject", uobject))
+        object_properties_string = self._entry_point_caller.call("unreal_service.get_object_properties_as_string_from_uobject", uobject)
+        try:
+            return json.loads(object_properties_string)
+        except:
+            return {}
 
     def get_object_properties_from_ustruct(self, value_ptr, ustruct):
-        return json.loads(self._entry_point_caller.call("unreal_service.get_object_properties_as_string_from_ustruct", value_ptr, ustruct))
+        object_properties_string = self._entry_point_caller.call("unreal_service.get_object_properties_as_string_from_ustruct", value_ptr, ustruct)
+        try:
+            return json.loads(object_properties_string)
+        except:
+            return {}
 
     def set_object_properties_for_uobject(self, uobject, properties):
         self._entry_point_caller.call("unreal_service.set_object_properties_from_string_for_uobject", uobject, json.dumps(properties))
@@ -59,11 +77,21 @@ class UnrealService():
     # Get property values
     #
 
-    def get_property_value_as_string(self, property_desc):
-        return self._entry_point_caller.call("unreal_service.get_property_value_as_string", property_desc)
+    def get_property_value(self, property_desc):
+        property_value_string = self._entry_point_caller.call("unreal_service.get_property_value_as_string", property_desc)
+        try:
+            return json.loads(property_value_string)
+        except:
+            return property_value_string
 
-    def set_property_value_as_string(self, property_desc, property_value):
-        return self._entry_point_caller.call("unreal_service.set_property_value_from_string", property_desc, property_value)
+    def set_property_value(self, property_desc, property_value):
+        if isinstance(property_value, str):
+            property_value_string = property_value
+        elif isinstance(property_value, spear.Ptr):
+            property_value_string = property_value.to_string()
+        else:
+            property_value_string = json.dumps(property_value)
+        self._entry_point_caller.call("unreal_service.set_property_value_from_string", property_desc, property_value_string)
 
     #
     # Find and call functions
@@ -480,7 +508,7 @@ class UnrealService():
     # Create new object
     #
 
-    def new_object(self, class_name, outer, name="", object_flags=["RF_NoFlags"], template=0, copy_transients_from_class_defaults=False, in_instance_graph=0, external_package=0):
+    def new_object(self, class_name, outer=0, name="", object_flags=["RF_NoFlags"], template=0, copy_transients_from_class_defaults=False, in_instance_graph=0, external_package=0):
         return self._entry_point_caller.call("unreal_service.new_object", class_name, outer, name, object_flags, template, copy_transients_from_class_defaults, in_instance_graph, external_package)
 
     #
@@ -498,6 +526,16 @@ class UnrealService():
 
     def static_load_class(self, base_uclass, in_outer, name="", filename="", load_flags=["LOAD_None"], sandbox=0):
         return self._entry_point_caller.call("unreal_service.static_load_class", base_uclass, in_outer, name, filename, load_flags, sandbox)
+
+    #
+    # Enable and disable garbage collection for uobjects
+    #
+
+    def add_uobject_to_root(self, uobject):
+        return self._entry_point_caller.call("unreal_service.add_uobject_to_root", uobject)
+
+    def remove_uobject_from_root(self, uobject):
+        return self._entry_point_caller.call("unreal_service.remove_uobject_from_root", uobject)
 
     #
     # Find, get, and set console variables

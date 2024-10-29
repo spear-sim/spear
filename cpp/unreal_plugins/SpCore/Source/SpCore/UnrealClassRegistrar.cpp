@@ -12,6 +12,7 @@
 #include <Components/PoseableMeshComponent.h>
 #include <Components/SceneComponent.h>
 #include <Components/StaticMeshComponent.h>
+#include <Engine/LocalPlayer.h>
 #include <Engine/StaticMesh.h>
 #include <Engine/StaticMeshActor.h>
 #include <Engine/TextureRenderTarget2D.h>
@@ -29,8 +30,11 @@
 
 class FLinkerInstancingContext;
 class UClass;
+class UObject;
 class UPackage;
 class UPackageMap;
+class UStruct;
+class USubsystem;
 class UWorld;
 struct FActorSpawnParameters;
 struct FObjectInstancingGraph;
@@ -45,34 +49,18 @@ struct FObjectInstancingGraph;
 //
 
 //
+// Registrars for getting subsystems using a class name instead of template parameters
+//
+
+FuncRegistrar<USubsystem*, UObject*>          g_get_subsystem_func_by_type_registrar;
+FuncRegistrar<USubsystem*, UObject*, UClass*> g_get_subsystem_func_by_class_registrar;
+
+//
 // Registrars for getting static classes using a class name instead of template parameters
 //
 
 FuncRegistrar<UClass*> g_get_static_class_func_registrar;
 FuncRegistrar<UStruct*> g_get_static_struct_func_registrar;
-
-//
-// Registrars for spawning actors using a class name instead of template parameters
-//
-
-FuncRegistrar<AActor*, UWorld*, const FVector&, const FRotator&, const FActorSpawnParameters&> g_spawn_actor_func_registrar;
-
-//
-// Registrars for creating components using a class name instead of template parameters
-//
-
-FuncRegistrar<UActorComponent*, AActor*, const std::string&>                    g_create_component_outside_owner_constructor_func_registrar;
-FuncRegistrar<USceneComponent*, AActor*, const std::string&>                    g_create_scene_component_outside_owner_constructor_from_actor_func_registrar;
-FuncRegistrar<USceneComponent*, UObject*, USceneComponent*, const std::string&> g_create_scene_component_outside_owner_constructor_from_object_func_registrar;
-FuncRegistrar<USceneComponent*, USceneComponent*, const std::string&>           g_create_scene_component_outside_owner_constructor_from_scene_component_func_registrar;
-
-//
-// Registrars for creating objects using a class name instead of template parameters
-//
-
-FuncRegistrar<UObject*, UObject*, FName, EObjectFlags, UObject*, bool, FObjectInstancingGraph*, UPackage*> g_new_object_func_registrar;
-FuncRegistrar<UObject*, UObject*, const TCHAR*, const TCHAR*, uint32, UPackageMap*, const FLinkerInstancingContext*> g_load_object_func_registrar;
-FuncRegistrar<UClass*, UObject*, const TCHAR*, const TCHAR*, uint32, UPackageMap*> g_load_class_func_registrar;
 
 //
 // Registrars for finding actors using a class name instead of template parameters
@@ -159,6 +147,29 @@ FuncRegistrar<USceneComponent*, const USceneComponent*, const std::vector<std::s
 FuncRegistrar<USceneComponent*, const USceneComponent*, bool>                                                               g_get_child_component_by_type_from_scene_component_func_registrar;
 
 //
+// Registrars for spawning actors using a class name instead of template parameters
+//
+
+FuncRegistrar<AActor*, UWorld*, const FVector&, const FRotator&, const FActorSpawnParameters&> g_spawn_actor_func_registrar;
+
+//
+// Registrars for creating components using a class name instead of template parameters
+//
+
+FuncRegistrar<UActorComponent*, AActor*, const std::string&>                    g_create_component_outside_owner_constructor_func_registrar;
+FuncRegistrar<USceneComponent*, AActor*, const std::string&>                    g_create_scene_component_outside_owner_constructor_from_actor_func_registrar;
+FuncRegistrar<USceneComponent*, UObject*, USceneComponent*, const std::string&> g_create_scene_component_outside_owner_constructor_from_object_func_registrar;
+FuncRegistrar<USceneComponent*, USceneComponent*, const std::string&>           g_create_scene_component_outside_owner_constructor_from_scene_component_func_registrar;
+
+//
+// Registrars for creating objects using a class name instead of template parameters
+//
+
+FuncRegistrar<UObject*, UObject*, FName, EObjectFlags, UObject*, bool, FObjectInstancingGraph*, UPackage*>           g_new_object_func_registrar;
+FuncRegistrar<UObject*, UObject*, const TCHAR*, const TCHAR*, uint32, UPackageMap*, const FLinkerInstancingContext*> g_load_object_func_registrar;
+FuncRegistrar<UClass*, UObject*, const TCHAR*, const TCHAR*, uint32, UPackageMap*>                                   g_load_class_func_registrar;
+
+//
 // These maps are necessary to support getStaticStruct<T>() for special struct types that don't have a
 // StaticStruct() method., e.g., FRotator and FVector.
 //
@@ -173,6 +184,7 @@ std::map<std::string, UStruct*> g_special_structs;         // map from platform-
 void UnrealClassRegistrar::initialize()
 {
     // Unreal classes
+    registerSubsystemBaseProviderClass<ULocalPlayer>("ULocalPlayer");
     registerActorClass<AActor>("AActor");
     registerActorClass<AStaticMeshActor>("AStaticMeshActor");
     registerComponentClass<UActorComponent>("UActorComponent");
@@ -180,7 +192,7 @@ void UnrealClassRegistrar::initialize()
     registerComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
     registerComponentClass<UPoseableMeshComponent>("UPoseableMeshComponent");
     registerClass<UObject>("UObject");
-    registerClass<UClass>("UClass");
+    registerClass<UClass>("UClass"); // needed for spawning Blueprint types from Python
     registerClass<UGameplayStatics>("UGameplayStatics");
     registerClass<UGameUserSettings>("UGameUserSettings");
     registerClass<UMaterial>("UMaterial");
@@ -195,6 +207,7 @@ void UnrealClassRegistrar::initialize()
 void UnrealClassRegistrar::terminate()
 {
     // Unreal classes
+    unregisterSubsystemBaseProviderClass<ULocalPlayer>("ULocalPlayer");
     unregisterActorClass<AActor>("AActor");
     unregisterActorClass<AStaticMeshActor>("AStaticMeshActor");
     unregisterComponentClass<UActorComponent>("UActorComponent");
@@ -202,7 +215,7 @@ void UnrealClassRegistrar::terminate()
     unregisterComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
     unregisterComponentClass<UPoseableMeshComponent>("UPoseableMeshComponent");
     unregisterClass<UObject>("UObject");
-    unregisterClass<UClass>("UClass");
+    unregisterClass<UClass>("UClass"); // needed for spawning Blueprint types from Python
     unregisterClass<UGameplayStatics>("UGameplayStatics");
     unregisterClass<UGameUserSettings>("UGameUserSettings");
     unregisterClass<UMaterial>("UMaterial");
@@ -212,6 +225,18 @@ void UnrealClassRegistrar::terminate()
     unregisterSpecialStruct<FRotator>("FRotator");
     unregisterSpecialStruct<FTransform>("FTransform");
     unregisterSpecialStruct<FVector>("FVector");
+}
+
+//
+// Get subsystem using a class name instead of template parameters
+//
+
+USubsystem* UnrealClassRegistrar::getSubsystemByType(const std::string& class_name, UObject* context) {
+    return g_get_subsystem_func_by_type_registrar.call(class_name, context);
+}
+
+USubsystem* UnrealClassRegistrar::getSubsystemByClass(const std::string& class_name, UObject* context, UClass* uclass) {
+    return g_get_subsystem_func_by_class_registrar.call(class_name, context, uclass);
 }
 
 //

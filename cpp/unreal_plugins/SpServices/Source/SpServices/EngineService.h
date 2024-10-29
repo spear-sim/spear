@@ -4,26 +4,23 @@
 
 #pragma once
 
-#include <stdint.h> // uint8_t
-
 #include <atomic>
-#include <future> // std::promise, std::future
+#include <future> // std::promise
 #include <mutex>
 #include <string>
 
-#include <Containers/UnrealString.h>     // FString::operator*
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
+#include <Engine/World.h>                // FWorldDelegates, FActorSpawnParameters
 #include <Misc/CoreDelegates.h>
-#include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS, UENUM, UPROPERTY, USTRUCT
+#include <UObject/ObjectMacros.h>        // UENUM
 
 #include "SpCore/Assert.h"
-#include "SpCore/Boost.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
 
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/FuncInfo.h"
-#include "SpServices/ServiceUtils.h"
+#include "SpServices/Service.h"
 #include "SpServices/WorkQueue.h"
 
 #include "EngineService.generated.h"
@@ -43,7 +40,7 @@ enum class EFrameState
 };
 
 template <CEntryPointBinder TEntryPointBinder>
-class EngineService {
+class EngineService : public Service {
 public:
     EngineService() = delete;
     EngineService(TEntryPointBinder* entry_point_binder)
@@ -56,8 +53,6 @@ public:
             pie_started_handle_ = FWorldDelegates::OnPIEStarted.AddRaw(this, &EngineService::PIEStartedHandler);
         #endif
 
-        post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &EngineService::postWorldInitializationHandler);
-        world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &EngineService::worldCleanupHandler);
         begin_frame_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &EngineService::beginFrameHandler);
         end_frame_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &EngineService::endFrameHandler);
 
@@ -159,11 +154,48 @@ public:
         FCoreDelegates::OnEndFrame.Remove(end_frame_handle_);
         FCoreDelegates::OnBeginFrame.Remove(begin_frame_handle_);
 
+        #if WITH_EDITOR
+            FWorldDelegates::OnPIEStarted.Remove(pie_started_handle_);
+        #endif
+
         end_frame_handle_.Reset();
         begin_frame_handle_.Reset();
+        pie_started_handle_.Reset();
+    }
 
-        SP_ASSERT(entry_point_binder_);
-        entry_point_binder_ = nullptr;
+    void postWorldInitialization(UWorld* world, const UWorld::InitializationValues initialization_values) override
+    {
+        Service::postWorldInitialization(world, initialization_values);
+
+        SP_LOG("World: ", Unreal::toStdString(world->GetName()));
+
+        if (world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
+            SP_LOG("Caching world...");
+            SP_ASSERT(!world_);
+            world_ = world;
+        }
+    }
+
+
+    void worldCleanup(UWorld* world, bool session_ended, bool cleanup_resources) override
+    {
+        Service::worldCleanup(world, session_ended, cleanup_resources);
+
+        SP_LOG("World: ", Unreal::toStdString(world->GetName()));
+
+        if (world == world_) {
+            SP_LOG("Clearing cached world...");
+            world_initialized_ = false;
+            world_ = nullptr;
+        }
+    }
+
+    void worldBeginPlay() override
+    {
+        Service::worldBeginPlay();
+
+        SP_ASSERT(world_);
+        world_initialized_ = true;
     }
 
     void bindFuncNoUnreal(const std::string& service_name, const std::string& func_name, const auto& func)
@@ -181,7 +213,7 @@ public:
     void close()
     {
         std::lock_guard<std::mutex> lock(frame_state_mutex_);
-        SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame,
+        SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame || frame_state_ == EFrameState::Error,
             "frame_state_ == %d", frame_state_.load()); // don't try to print string because Unreal's reflection system is already shut down
 
         EFrameState frame_state = frame_state_;
@@ -208,45 +240,6 @@ private:
             frame_state_ = EFrameState::Idle;
         }
     #endif
-
-    void postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values)
-    {
-        SP_LOG_CURRENT_FUNCTION();
-        SP_ASSERT(world);
-
-        SP_LOG("World name: ", Unreal::toStdString(world->GetName()));
-
-        if (world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
-            SP_LOG("Caching world...");
-            SP_ASSERT(!world_);
-            world_ = world;
-            world_begin_play_handle_ = world_.load()->OnWorldBeginPlay.AddRaw(this, &EngineService::worldBeginPlayHandler);
-        }
-    }
-
-
-    void worldCleanupHandler(UWorld* world, bool session_ended, bool cleanup_resources)
-    {
-        SP_LOG_CURRENT_FUNCTION();
-        SP_ASSERT(world);
-
-        SP_LOG("World name: ", Unreal::toStdString(world->GetName()));
-
-        if (world == world_) {
-            SP_LOG("Clearing cached world...");
-            world_initialized_ = false;
-            world_.load()->OnWorldBeginPlay.Remove(world_begin_play_handle_);
-            world_begin_play_handle_.Reset();
-            world_ = nullptr;
-        }
-    }
-
-    void worldBeginPlayHandler()
-    {
-        SP_LOG_CURRENT_FUNCTION();
-        SP_ASSERT(world_);
-        world_initialized_ = true;
-    }
 
     void beginFrameHandler()
     {
@@ -361,9 +354,6 @@ private:
     }
 
     FDelegateHandle pie_started_handle_;
-    FDelegateHandle post_world_initialization_handle_;
-    FDelegateHandle world_cleanup_handle_;
-    FDelegateHandle world_begin_play_handle_;
     FDelegateHandle begin_frame_handle_;
     FDelegateHandle end_frame_handle_;
 

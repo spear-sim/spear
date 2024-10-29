@@ -8,6 +8,7 @@
 
 #include <initializer_list>
 #include <map>
+#include <ranges>  // std::views::transform
 #include <string>
 #include <utility> // std::make_pair
 #include <vector>

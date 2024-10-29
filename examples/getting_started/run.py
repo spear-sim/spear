@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
         # access object properties on the root component of bp_axes_actor
         root_component_property_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=bp_axes_actor, property_name="RootComponent")
-        root_component_string = instance.unreal_service.get_property_value_as_string(property_desc=root_component_property_desc)
+        root_component_string = instance.unreal_service.get_property_value(property_desc=root_component_property_desc)
         root_component = spear.to_handle(string=root_component_string)
         root_component_object_properties = instance.unreal_service.get_object_properties_from_uobject(uobject=root_component)
 
