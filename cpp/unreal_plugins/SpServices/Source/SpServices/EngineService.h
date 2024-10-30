@@ -65,7 +65,7 @@ public:
             {
                 std::lock_guard<std::mutex> lock(frame_state_mutex_);
                 SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::Closing || frame_state_ == EFrameState::Error,
-                    "frame_state_ == %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state_.load()).c_str());
+                    "frame_state_: %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state_.load()).c_str());
 
                 if (frame_state_ == EFrameState::Closing || frame_state_ == EFrameState::Error) {
                     return;
@@ -93,7 +93,7 @@ public:
 
                 EFrameState frame_state = frame_state_;
                 SP_ASSERT(frame_state == EFrameState::ExecutingBeginFrame || frame_state == EFrameState::Closing,
-                    "frame_state == %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state).c_str());
+                    "frame_state_: %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state).c_str());
             }
         });
 
@@ -103,7 +103,7 @@ public:
 
             frame_state = frame_state_;
             SP_ASSERT(frame_state == EFrameState::ExecutingBeginFrame || frame_state == EFrameState::Closing || frame_state == EFrameState::Error,
-                "frame_state == %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state).c_str());
+                "frame_state_: %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state).c_str());
 
             if (frame_state == EFrameState::Closing || frame_state == EFrameState::Error) {
                 return;
@@ -117,7 +117,7 @@ public:
 
             frame_state = frame_state_;
             SP_ASSERT(frame_state == EFrameState::ExecutingEndFrame,
-                "frame_state == %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state).c_str());
+                "frame_state_: %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state).c_str());
         });
 
         bindFuncNoUnreal("engine_service", "end_frame", [this]() -> void {
@@ -126,7 +126,7 @@ public:
 
             frame_state = frame_state_;
             SP_ASSERT(frame_state == EFrameState::ExecutingEndFrame || frame_state == EFrameState::Closing || frame_state == EFrameState::Error,
-                "frame_state == %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state).c_str());
+                "frame_state_: %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state).c_str());
 
             if (frame_state == EFrameState::Closing || frame_state == EFrameState::Error) {
                 return;
@@ -140,7 +140,7 @@ public:
 
             frame_state = frame_state_;
             SP_ASSERT(frame_state == EFrameState::Idle,
-                "frame_state == %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state).c_str());
+                "frame_state_: %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state).c_str());
         });
 
         bindFuncNoUnreal("engine_service", "request_exit", []() -> void {
@@ -214,7 +214,7 @@ public:
     {
         std::lock_guard<std::mutex> lock(frame_state_mutex_);
         SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame || frame_state_ == EFrameState::Error,
-            "frame_state_ == %d", frame_state_.load()); // don't try to print string because Unreal's reflection system is already shut down
+            "frame_state_: %d", frame_state_.load()); // don't try to print string because Unreal's reflection system is already shut down
 
         EFrameState frame_state = frame_state_;
         frame_state_ = EFrameState::Closing;
@@ -245,7 +245,7 @@ private:
     {
         std::lock_guard<std::mutex> lock(frame_state_mutex_);
         SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame || frame_state_ == EFrameState::Error,
-            "frame_state_ == %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state_.load()).c_str());
+            "frame_state_: %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state_.load()).c_str());
 
         if (frame_state_ == EFrameState::RequestBeginFrame) {
 
@@ -277,7 +277,7 @@ private:
     {
         std::lock_guard<std::mutex> lock(frame_state_mutex_);
         SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame || frame_state_ == EFrameState::ExecutingFrame || frame_state_ == EFrameState::Error,
-            "frame_state_ == %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state_.load()).c_str());
+            "frame_state_: %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state_.load()).c_str());
 
         if (frame_state_ == EFrameState::ExecutingFrame) {
 

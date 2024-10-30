@@ -31,8 +31,8 @@ class WorkQueue {
 public:
     WorkQueue() : io_context_(), executor_work_guard_(io_context_.get_executor()) {}
 
-    // typically called from the game thread in EngineService::worldBeginPlayHandler() to reset the work
-    // queue's state, which is useful if a previous run put the work queue in an error state.
+    // called from the game thread in EngineService::PIEStartedHandler() to reset the work queue's state,
+    // which is useful if a previous PIE session run put the work queue in an error state.
     void initialize();
 
     // typically called from the game thread in EngineService::beginFrameHandler(...) and EngineService::endFrameHandler(...)
