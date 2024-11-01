@@ -24,7 +24,7 @@
 // std::vector, backed by an external pointer, backed by shared memory, etc)
 //
 
-enum class SpFuncArrayDataType : int8_t
+enum class SpFuncArrayDataType
 {
     Invalid = -1,
     UInt8   = 0,
@@ -39,7 +39,7 @@ enum class SpFuncArrayDataType : int8_t
     Float64 = 9
 };
 
-enum class SpFuncArrayDataSource : int8_t
+enum class SpFuncArrayDataSource
 {
     Invalid  = -1,
     Internal = 0,
@@ -88,7 +88,7 @@ public:
 // specified by the system that owns the shared memory to indicate how the shared memory should be used.
 //
 
-enum class SpFuncSharedMemoryUsageFlags : uint8_t
+enum class SpFuncSharedMemoryUsageFlags
 {
     DoNotUse    = 0,
     Arg         = 1 << 0,

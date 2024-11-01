@@ -2,7 +2,6 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-import json
 import spear
 
 class UnrealService():
@@ -44,24 +43,16 @@ class UnrealService():
     #
 
     def get_object_properties_from_uobject(self, uobject):
-        object_properties_string = self._entry_point_caller.call("unreal_service.get_object_properties_as_string_from_uobject", uobject)
-        try:
-            return json.loads(object_properties_string)
-        except:
-            return {}
+        return spear.try_to_dict(self._entry_point_caller.call("unreal_service.get_object_properties_as_string_from_uobject", uobject), default_value={})
 
     def get_object_properties_from_ustruct(self, value_ptr, ustruct):
-        object_properties_string = self._entry_point_caller.call("unreal_service.get_object_properties_as_string_from_ustruct", value_ptr, ustruct)
-        try:
-            return json.loads(object_properties_string)
-        except:
-            return {}
+        return spear.try_to_dict(self._entry_point_caller.call("unreal_service.get_object_properties_as_string_from_ustruct", value_ptr, ustruct), default_value={})
 
     def set_object_properties_for_uobject(self, uobject, properties):
-        self._entry_point_caller.call("unreal_service.set_object_properties_from_string_for_uobject", uobject, json.dumps(properties))
+        self._entry_point_caller.call("unreal_service.set_object_properties_from_string_for_uobject", uobject, spear.to_json_string(properties))
 
     def set_object_properties_for_ustruct(self, value_ptr, ustruct, properties):
-        self._entry_point_caller.call("unreal_service.set_object_properties_from_string_for_ustruct", value_ptr, ustruct, json.dumps(properties))
+        self._entry_point_caller.call("unreal_service.set_object_properties_from_string_for_ustruct", value_ptr, ustruct, spear.to_json_string(properties))
 
     #
     # Find properties
@@ -78,20 +69,10 @@ class UnrealService():
     #
 
     def get_property_value(self, property_desc):
-        property_value_string = self._entry_point_caller.call("unreal_service.get_property_value_as_string", property_desc)
-        try:
-            return json.loads(property_value_string)
-        except:
-            return property_value_string
+        return spear.try_to_dict(self._entry_point_caller.call("unreal_service.get_property_value_as_string", property_desc))
 
     def set_property_value(self, property_desc, property_value):
-        if isinstance(property_value, str):
-            property_value_string = property_value
-        elif isinstance(property_value, spear.Ptr):
-            property_value_string = property_value.to_string()
-        else:
-            property_value_string = json.dumps(property_value)
-        self._entry_point_caller.call("unreal_service.set_property_value_from_string", property_desc, property_value_string)
+        self._entry_point_caller.call("unreal_service.set_property_value_from_string", property_desc, spear.to_json_string(property_value))
 
     #
     # Find and call functions
@@ -118,34 +99,7 @@ class UnrealService():
 
     # call an arbitrary function
     def call_function(self, uobject, ufunction, args={}, world_context="WorldContextObject"):
-
-        # If an arg is a string, then don't convert. If an arg is a spear.Ptr, then use spear.Ptr.to_string()
-        # to convert. If an arg is any other type, then assume it is valid JSON and use json.dumps(...) to
-        # convert.
-        arg_strings = {}
-        for arg_name, arg in args.items():
-            if isinstance(arg, str):
-                arg_string = arg
-            elif isinstance(arg, spear.Ptr):
-                arg_string = arg.to_string()
-            else:
-                arg_string = json.dumps(arg)
-            arg_strings[arg_name] = arg_string
-
-        return_value_strings = self._entry_point_caller.call("unreal_service.call_function", uobject, ufunction, arg_strings, world_context)
-
-        # Try to parse each return value string as JSON, and if that doesn't work, then return the string
-        # directly. If the returned string is intended to be a handle, then the user can get it as a handle
-        # by calling unreal_service.to_handle(...).
-        return_values = {}
-        for return_value_name, return_value_string in return_value_strings.items():
-            try:
-                return_value = json.loads(return_value_string)
-            except:
-                return_value = return_value_string 
-            return_values[return_value_name] = return_value
-
-        return return_values
+        return spear.try_to_dicts(self._entry_point_caller.call("unreal_service.call_function", uobject, ufunction, spear.to_json_strings(args), world_context))
 
     #
     # Find actors unconditionally and return a list or dict
@@ -459,7 +413,7 @@ class UnrealService():
             object_flags = ["RF_Transactional"] # see Engine/Source/Runtime/Engine/Private/World.cpp
 
         return self._entry_point_caller.call(
-            "unreal_service.spawn_actor", class_name, json.dumps(location), json.dumps(rotation), json.dumps(spawn_parameters), object_flags)
+            "unreal_service.spawn_actor", class_name, spear.to_json_string(location), spear.to_json_string(rotation), spear.to_json_string(spawn_parameters), object_flags)
 
     def spawn_actor_from_uclass(self, uclass, location={}, rotation={}, spawn_parameters={}):
 
@@ -472,7 +426,7 @@ class UnrealService():
             object_flags = ["RF_Transactional"] # see Engine/Source/Runtime/Engine/Private/World.cpp
 
         return self._entry_point_caller.call(
-            "unreal_service.spawn_actor_from_uclass", uclass, json.dumps(location), json.dumps(rotation), json.dumps(spawn_parameters), object_flags)
+            "unreal_service.spawn_actor_from_uclass", uclass, spear.to_json_string(location), spear.to_json_string(rotation), spear.to_json_string(spawn_parameters), object_flags)
 
     #
     # Destroy actor

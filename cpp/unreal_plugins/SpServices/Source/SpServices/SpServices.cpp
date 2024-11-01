@@ -4,6 +4,7 @@
 
 #include "SpServices/SpServices.h"
 
+#include <exception>
 #include <memory> // std::make_unique
 
 #include <CoreGlobals.h>           // IsRunningCommandlet
@@ -41,18 +42,23 @@ void SpServices::StartupModule()
     #endif
 
     // Create RPC server.
-    int rpc_server_port = 30000;
-    if (Config::isInitialized()) {
-        rpc_server_port = Config::get<int>("SP_SERVICES.RPC_SERVER_PORT");
-    }
-    rpc_server_ = std::make_unique<rpc::server>(rpc_server_port);
-    SP_ASSERT(rpc_server_);
+    try {
+        int rpc_server_port = 30000;
+        if (Config::isInitialized()) {
+            rpc_server_port = Config::get<int>("SP_SERVICES.RPC_SERVER_PORT");
+        }        
+        rpc_server_ = std::make_unique<rpc::server>(rpc_server_port);
+        SP_ASSERT(rpc_server_);
+        int num_worker_threads = 1;
+        rpc_server_->async_run(num_worker_threads);
 
-    int num_worker_threads = 1;
-    rpc_server_->async_run(num_worker_threads);
+    } catch (...) {
+        SP_LOG("ERROR: Couldn't launch RPC server. There might be another SPEAR executable running in the background. Check for other SPEAR executables, close them, and relaunch.");
+        std::rethrow_exception(std::current_exception());
+    }
 
     // EngineService needs its own custom logic for binding its entry points, because they are intended to
-    // run directly on the RPC server worker thread, whereas all other entry points are intended to run on
+    // run directly on the RPC server worker thread, whereas most other entry points are intended to run on
     // work queues maintained by EngineService. So we pass in the RPC server when constructing EngineService,
     // and we pass in EngineService when constructing all other services.
     engine_service_ = std::make_unique<EngineService<rpc::server>>(rpc_server_.get());

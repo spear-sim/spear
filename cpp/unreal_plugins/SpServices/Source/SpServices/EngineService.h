@@ -56,16 +56,16 @@ public:
         begin_frame_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &EngineService::beginFrameHandler);
         end_frame_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &EngineService::endFrameHandler);
 
-        bindFuncNoUnreal("engine_service", "is_world_initialized", [this]() -> bool {
+        bindFuncToExecuteOnWorkerThread("engine_service", "is_world_initialized", [this]() -> bool {
             return world_initialized_;
         });
 
-        bindFuncNoUnreal("engine_service", "begin_frame", [this]() -> void {
+        bindFuncToExecuteOnWorkerThread("engine_service", "begin_frame", [this]() -> void {
 
             {
                 std::lock_guard<std::mutex> lock(frame_state_mutex_);
                 SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::Closing || frame_state_ == EFrameState::Error,
-                    "frame_state_: %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state_.load()).c_str());
+                    "frame_state_: %s", Unreal::getStringFromEnumValue(frame_state_.load()).c_str());
 
                 if (frame_state_ == EFrameState::Closing || frame_state_ == EFrameState::Error) {
                     return;
@@ -93,17 +93,17 @@ public:
 
                 EFrameState frame_state = frame_state_;
                 SP_ASSERT(frame_state == EFrameState::ExecutingBeginFrame || frame_state == EFrameState::Closing,
-                    "frame_state_: %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state).c_str());
+                    "frame_state_: %s", Unreal::getStringFromEnumValue(frame_state).c_str());
             }
         });
 
-        bindFuncNoUnreal("engine_service", "execute_frame", [this]() -> void {
+        bindFuncToExecuteOnWorkerThread("engine_service", "execute_frame", [this]() -> void {
 
             EFrameState frame_state;
 
             frame_state = frame_state_;
             SP_ASSERT(frame_state == EFrameState::ExecutingBeginFrame || frame_state == EFrameState::Closing || frame_state == EFrameState::Error,
-                "frame_state_: %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state).c_str());
+                "frame_state_: %s", Unreal::getStringFromEnumValue(frame_state).c_str());
 
             if (frame_state == EFrameState::Closing || frame_state == EFrameState::Error) {
                 return;
@@ -117,16 +117,16 @@ public:
 
             frame_state = frame_state_;
             SP_ASSERT(frame_state == EFrameState::ExecutingEndFrame,
-                "frame_state_: %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state).c_str());
+                "frame_state_: %s", Unreal::getStringFromEnumValue(frame_state).c_str());
         });
 
-        bindFuncNoUnreal("engine_service", "end_frame", [this]() -> void {
+        bindFuncToExecuteOnWorkerThread("engine_service", "end_frame", [this]() -> void {
 
             EFrameState frame_state;
 
             frame_state = frame_state_;
             SP_ASSERT(frame_state == EFrameState::ExecutingEndFrame || frame_state == EFrameState::Closing || frame_state == EFrameState::Error,
-                "frame_state_: %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state).c_str());
+                "frame_state_: %s", Unreal::getStringFromEnumValue(frame_state).c_str());
 
             if (frame_state == EFrameState::Closing || frame_state == EFrameState::Error) {
                 return;
@@ -140,10 +140,10 @@ public:
 
             frame_state = frame_state_;
             SP_ASSERT(frame_state == EFrameState::Idle,
-                "frame_state_: %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state).c_str());
+                "frame_state_: %s", Unreal::getStringFromEnumValue(frame_state).c_str());
         });
 
-        bindFuncNoUnreal("engine_service", "request_exit", []() -> void {
+        bindFuncToExecuteOnWorkerThread("engine_service", "request_exit", []() -> void {
             bool immediate_shutdown = false;
             FGenericPlatformMisc::RequestExit(immediate_shutdown);
         });
@@ -198,13 +198,13 @@ public:
         world_initialized_ = true;
     }
 
-    void bindFuncNoUnreal(const std::string& service_name, const std::string& func_name, const auto& func)
+    void bindFuncToExecuteOnWorkerThread(const std::string& service_name, const std::string& func_name, const auto& func)
     {
         std::string long_func_name = service_name + "." + func_name;
-        entry_point_binder_->bind(long_func_name, wrapFuncToExecuteInTryCatchBlock(long_func_name, func));
+        entry_point_binder_->bind(long_func_name, wrapFuncToExecuteInTryCatch(long_func_name, func));
     }
 
-    void bindFuncUnreal(const std::string& service_name, const std::string& func_name, const auto& func)
+    void bindFuncToExecuteOnGameThread(const std::string& service_name, const std::string& func_name, const auto& func)
     {
         std::string long_func_name = service_name + "." + func_name;
         entry_point_binder_->bind(long_func_name, WorkQueue::wrapFuncToExecuteInWorkQueueBlocking(work_queue_, long_func_name, func));
@@ -245,7 +245,7 @@ private:
     {
         std::lock_guard<std::mutex> lock(frame_state_mutex_);
         SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame || frame_state_ == EFrameState::Error,
-            "frame_state_: %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state_.load()).c_str());
+            "frame_state_: %s", Unreal::getStringFromEnumValue(frame_state_.load()).c_str());
 
         if (frame_state_ == EFrameState::RequestBeginFrame) {
 
@@ -277,7 +277,7 @@ private:
     {
         std::lock_guard<std::mutex> lock(frame_state_mutex_);
         SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame || frame_state_ == EFrameState::ExecutingFrame || frame_state_ == EFrameState::Error,
-            "frame_state_: %s", Unreal::getStringFromEnumValue<EFrameState>(frame_state_.load()).c_str());
+            "frame_state_: %s", Unreal::getStringFromEnumValue(frame_state_.load()).c_str());
 
         if (frame_state_ == EFrameState::ExecutingFrame) {
 
@@ -307,14 +307,14 @@ private:
     }
 
     template <typename TFunc>
-    auto wrapFuncToExecuteInTryCatchBlock(const std::string& long_func_name, const TFunc& func)
+    auto wrapFuncToExecuteInTryCatch(const std::string& long_func_name, const TFunc& func)
     {
-        return wrapFuncToExecuteInTryCatchBlockImpl(long_func_name, func, FuncInfo<TFunc>());
+        return wrapFuncToExecuteInTryCatchImpl(long_func_name, func, FuncInfo<TFunc>());
     }
 
     template <typename TFunc, typename TReturn, typename... TArgs> requires
         CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs&...>
-    auto wrapFuncToExecuteInTryCatchBlockImpl(const std::string& long_func_name, const TFunc& func, const FuncInfo<TReturn(*)(TArgs...)>& fi)
+    auto wrapFuncToExecuteInTryCatchImpl(const std::string& long_func_name, const TFunc& func, const FuncInfo<TReturn(*)(TArgs...)>& fi)
     {
         // The lambda returned here is typically bound to a specific RPC entry point and called from a worker
         // thread by the RPC server.

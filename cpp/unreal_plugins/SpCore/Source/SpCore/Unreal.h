@@ -147,6 +147,7 @@ public:
 
     static std::string getPropertyValueAsString(const PropertyDesc& property_desc);
     static void setPropertyValueFromString(const PropertyDesc& property_desc, const std::string& string);
+    static void setPropertyValueFromJsonValue(const PropertyDesc& property_desc, TSharedPtr<FJsonValue> json_value);
 
     //
     // Find function by name, call function, world can't be const because we cast it to void*, uobject can't
@@ -982,15 +983,27 @@ public:
 
     // String output, enum input
 
-    template <CEnum TEnum, typename TSrcEnum = TEnum>
-    static std::string getStringFromEnumValue(TSrcEnum src)
+    template <CEnum TEnum>
+    static std::string getStringFromEnumValue(TEnum src)
+    {
+        return getStringFromEnumValueAs<TEnum>(src);
+    }
+
+    template <CEnum TEnum, typename TSrcEnum>
+    static std::string getStringFromEnumValueAs(TSrcEnum src)
     {
         UEnum* uenum = StaticEnum<TEnum>();
         return toStdString(uenum->GetNameStringByValue(getEnumValue(src)));
     }
 
-    template <CEnum TEnum, typename TSrcEnum = TEnum>
-    static std::vector<std::string> getStringsFromCombinedEnumFlagValue(TSrcEnum src)
+    template <CEnum TEnum>
+    static std::vector<std::string> getStringsFromCombinedEnumFlagValue(TEnum src)
+    {
+        return getStringsFromCombinedEnumFlagValueAs<TEnum>(src);
+    }
+
+    template <CEnum TEnum, typename TSrcEnum>
+    static std::vector<std::string> getStringsFromCombinedEnumFlagValueAs(TSrcEnum src)
     {
         UEnum* uenum = StaticEnum<TEnum>();
         return Std::tokenize(toStdString(uenum->GetValueOrBitfieldAsString(getEnumValue(src))), "| ");
@@ -1030,6 +1043,16 @@ public:
     static TArray<TValue> toTArray(const std::vector<TValue>& src)
     {
         TArray<TValue> dest;
+        for (auto& data : src) {
+            dest.Add(data);
+        }
+        return dest;
+    }
+
+    template <typename TDestValue, typename TValue>
+    static TArray<TDestValue> toTArrayOf(const std::vector<TValue>& src)
+    {
+        TArray<TDestValue> dest;
         for (auto& data : src) {
             dest.Add(data);
         }
@@ -1079,4 +1102,6 @@ private:
     static std::string getMapPropertyValueAsFormattedString(
         const FProperty* inner_key_property, const std::vector<std::string>& inner_key_strings,
         const FProperty* inner_value_property, const std::vector<std::string>& inner_value_strings);
+
+    static std::string getQuoteStringForProperty(const FProperty* property);
 };

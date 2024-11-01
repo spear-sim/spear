@@ -16,22 +16,33 @@ if __name__ == "__main__":
     # entire directories to be removed
     dirs = [
         os.path.realpath(os.path.join(unreal_project_dir, "Binaries")),
-        os.path.realpath(os.path.join(unreal_project_dir, "Build", "Mac", "FileOpenOrder")),
         os.path.realpath(os.path.join(unreal_project_dir, "DerivedDataCache")),
         os.path.realpath(os.path.join(unreal_project_dir, "Intermediate")),
         os.path.realpath(os.path.join(unreal_project_dir, "Saved"))]
 
     # individual files to be removed
-    files = [
-        os.path.realpath(os.path.join(unreal_project_dir, "Build", "Mac", "Resources", "Info.Template.plist")),
-        os.path.realpath(os.path.join(unreal_project_dir, "Build", "Mac", "SpearSim.PackageVersionCounter"))]
+    files = []
 
     # based on the platform, add project generated files or directories
     if sys.platform == "win32":
-        dirs.append(os.path.realpath(os.path.join(unreal_project_dir, ".vs")))
+        dirs.extend([
+            os.path.realpath(os.path.join(unreal_project_dir, ".vs")),
+            os.path.realpath(os.path.join(unreal_project_dir, "Build"))])
         files.extend([
-                os.path.realpath(os.path.join(unreal_project_dir, ".vsconfig")),
-                os.path.realpath(os.path.join(unreal_project_dir, "SpearSim.sln"))])
+            os.path.realpath(os.path.join(unreal_project_dir, "SpearSim.sln"))])
+
+    elif sys.platform == "darwin":
+        dirs.extend([
+            os.path.realpath(os.path.join(unreal_project_dir, "Build", "Mac", "FileOpenOrder")),
+            os.path.realpath(os.path.join(unreal_project_dir, "SpearSim (Mac).xcworkspace"))])
+        files.extend([
+            os.path.realpath(os.path.join(unreal_project_dir, "Build", "Mac", "Resources", "Info.Template.plist")),
+            os.path.realpath(os.path.join(unreal_project_dir, "Build", "Mac", "SpearSim.PackageVersionCounter")),
+            os.path.realpath(os.path.join(unreal_project_dir, "SpearSim (Mac).xcworkspace")),
+            os.path.realpath(os.path.join(unreal_project_dir, "SpearSim.sln"))])
+
+    else:
+        assert False # TODO: update for Linux
 
     # add plugin specific directories to the list of dirs to be removed
     plugins_dir = os.path.realpath(os.path.join(unreal_project_dir, "Plugins"))
