@@ -28,9 +28,6 @@ public:
     USpStableNameComponent();
     ~USpStableNameComponent();
 
-    UPROPERTY(VisibleAnywhere, Category="SPEAR");
-    FString StableName;
-
     #if WITH_EDITOR // defined in an auto-generated header
         // UActorComponent interface
         void OnComponentCreated() override;
@@ -39,6 +36,9 @@ public:
         // Interface for updating StableName if the component isn't spawned at runtime.
         void requestUpdate();
     #endif
+
+    UPROPERTY(VisibleAnywhere, Category="SPEAR");
+    FString StableName;
 };
 
 //

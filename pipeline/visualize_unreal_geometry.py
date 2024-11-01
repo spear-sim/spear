@@ -89,7 +89,6 @@ def process_scene():
 
     spear.log("Done.")
 
-
 def draw_actor(actor_desc, color):
     if args.color_mode == "unique_color_per_actor":
         color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
@@ -98,7 +97,6 @@ def draw_actor(actor_desc, color):
         component_desc=actor_desc["root_component"],
         color=color,
         log_prefix_str="    ")
-
 
 def draw_component(transform_world_from_parent_component, component_desc, color, log_prefix_str):
 

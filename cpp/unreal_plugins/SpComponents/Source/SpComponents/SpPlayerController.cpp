@@ -25,7 +25,6 @@ ASpPlayerController::ASpPlayerController()
     // is worth it.
     bShowMouseCursor = true;
 
-    // USpUserInputComponent
     SpUserInputComponent = Unreal::createComponentInsideOwnerConstructor<USpUserInputComponent>(this, "sp_user_input_component");
     SP_ASSERT(SpUserInputComponent);
 

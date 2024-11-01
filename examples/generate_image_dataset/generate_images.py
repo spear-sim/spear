@@ -44,21 +44,26 @@ class CustomEnv(spear.Env):
             return self.single_step(get_observation=True)
 
     def single_step(self, action=None, get_observation=False):
-    
-        self.begin_tick()
-        if action:
-            self._apply_action(action)
-        self.tick()
-        if get_observation:
-            obs = self._get_observation()
-            reward = self._get_reward()
-            is_done = self._is_episode_done()
-            step_info = self._get_step_info()
-            self.end_tick()
-            return obs, reward, is_done, step_info
-        else:
-            self.end_tick()
-            return None, None, None, None
+
+        with self._instance.begin_frame():
+            self._unpause()
+            if action:
+                self._apply_action(action)
+
+        with self._instance.end_frame():
+            if get_observation:
+                obs = self._get_observation()
+                reward = self._get_reward()
+                is_done = self._is_episode_done()
+                step_info = self._get_step_info()
+            else:
+                obs = None
+                reward = None
+                is_done = None
+                step_info = None
+            self._pause()
+
+        return obs, reward, is_done, step_info
 
 
 if __name__ == "__main__":

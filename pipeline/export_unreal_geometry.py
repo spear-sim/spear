@@ -39,7 +39,6 @@ def process_scene():
 
     spear.log("Done.")
 
-
 def generate_unreal_geometry(actor):
 
     global editor_world_name

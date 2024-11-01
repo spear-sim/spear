@@ -2,29 +2,29 @@
 
 ## Assumptions
 
-We will assume that you are developing on a version of Windows, macOS, or Linux that is compatible with Unreal Engine 5.2. We will also assume that you're using Anaconda Python to manage your Python environment, and that you have CMake installed. We will assume that you have cloned this entire repository including all submodules, and that you have installed the `spear` Python package, as described in our [Getting Started](getting_started.md) tutorial.
+We will assume that you are developing on a version of Windows, macOS, or Linux that is compatible with Unreal Engine 5.4. We will also assume that you're using Anaconda Python to manage your Python environment, and that you have CMake installed. We will assume that you have cloned this entire repository including all submodules, and that you have installed the `spear` Python package, as described in our [Getting Started](getting_started.md) tutorial.
 
 ## Install the Unreal Engine
 
-We recommend installing the Unreal Engine version 5.2 via the Epic Games Launcher, rather than building it from source. We recommend installing to a path that does not contain spaces. You may need to disconnect from your VPN or proxy server when running the Epic Games Launcher. When you install the Unreal Engine, make sure to select _Editor symbols for debugging_ from the list of optional components.
+We recommend installing the Unreal Engine version 5.4 via the Epic Games Launcher, rather than building it from source. We recommend installing to a path that does not contain spaces. You may need to disconnect from your VPN or proxy server when running the Epic Games Launcher. When you install the Unreal Engine, make sure to select _Editor symbols for debugging_ from the list of optional components.
 
 If you're developing on Linux, you will need to download the Unreal Engine from [here](https://www.unrealengine.com/en-US/linux).
 
-Several of our command-line tools require an `--unreal_engine_dir` argument. This argument must point to the top-level directory where you installed the Unreal Engine. Depending on your platform, the default install location will be as follows. However, as noted above, we recommend installing the Unreal Engine to a path that doesn't contain spaces. If you're developing on Linux, you must specify the path to the top-level directory where you unzipped the `Linux_Unreal_Engine_5.2.0.zip` file linked above.
+Several of our command-line tools require an `--unreal_engine_dir` argument. This argument must point to the top-level directory where you installed the Unreal Engine. Depending on your platform, the default install location will be as follows. However, as noted above, we recommend installing the Unreal Engine to a path that doesn't contain spaces. If you're developing on Linux, you must specify the path to the top-level directory where you unzipped the `Linux_Unreal_Engine_5.4.0.zip` file linked above.
 
 ```
-Windows: C:\Program Files\Epic Games\UE_5.2
-macOS:   /Users/Shared/Epic Games/UE_5.2
-Linux:   path/to/Linux_Unreal_Engine_5.2.0
+Windows: C:\Program Files\Epic Games\UE_5.4
+macOS:   /Users/Shared/Epic Games/UE_5.4
+Linux:   path/to/Linux_Unreal_Engine_5.4.0
 ```
 
 ## Install an appropriate compiler
 
-If you're developing on Windows or macOS, you will need to install a specific compiler that is compatible with Unreal Engine 5.2. If you're developing on Linux, the Unreal Engine ships with its own version of `clang` and `libc++`, so there is no need to install another compiler. We have verified that the following compilers behave as expected.
+If you're developing on Windows or macOS, you will need to install a specific compiler that is compatible with Unreal Engine 5.4. If you're developing on Linux, the Unreal Engine ships with its own version of `clang` and `libc++`, so there is no need to install another compiler. We have verified that the following compilers behave as expected.
 
 ```
 Windows: Visual Studio 2022
-macOS:   XCode 14.3
+macOS:   XCode 16
 ```
 
 If you're developing on Windows, make sure to select _Desktop development with C++_ from the _Workloads_ menu when installing Visual Studio.
@@ -78,7 +78,7 @@ python tools/create_project_symlinks.py
 Our `SpearSim` project requires you to explicitly copy some content from your Unreal Engine installation to the project directory. We provide a command-line tool for this purpose.
 
 ```console
-python tools/copy_engine_content.py --unreal_engine_dir path/to/UE_5.2
+python tools/copy_engine_content.py --unreal_engine_dir path/to/UE_5.4
 ```
 
 ## Build the `SpearSim` executable
@@ -86,7 +86,7 @@ python tools/copy_engine_content.py --unreal_engine_dir path/to/UE_5.2
 We are now ready to build the `SpearSim` executable as follows.
 
 ```console
-python tools/run_uat.py --unreal_engine_dir path/to/UE_5.2 -build -cook -stage -package -archive -pak -iterativecooking
+python tools/run_uat.py --unreal_engine_dir path/to/UE_5.4 -build -cook -stage -package -archive -pak -iterativecooking
 ```
 
 This tool is a thin wrapper around Unreal's [RunUAT](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Deployment/BuildOperations) tool. Our tool consumes `--unreal_engine_dir`, provides Unreal's `RunUAT` tool with sensible default values for a few commonly used arguments, and otherwise forwards all arguments directly to `RunUAT`. This step will generate an executable at the following locations.

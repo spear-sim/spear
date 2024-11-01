@@ -40,17 +40,17 @@ if __name__ == "__main__":
     spear_instance = spear.Instance(config)
 
     # get Unreal actors and functions
-    spear_instance.engine_service.begin_tick()
+    with spear_instance.begin_frame():
 
-    unreal_actors = spear_instance.unreal_service.find_actors_as_dict()
-    unreal_actors = { unreal_actor_name: unreal_actor for unreal_actor_name, unreal_actor in unreal_actors.items() if unreal_actor_name.startswith(name_prefix) }
+        unreal_actors = spear_instance.unreal_service.find_actors_as_dict()
+        unreal_actors = { unreal_actor_name: unreal_actor for unreal_actor_name, unreal_actor in unreal_actors.items() if unreal_actor_name.startswith(name_prefix) }
 
-    unreal_actor_static_class = spear_instance.unreal_service.get_static_class(class_name="AActor")
-    unreal_set_actor_location_and_rotation_func = spear_instance.unreal_service.find_function_by_name(
-        uclass=unreal_actor_static_class, name="K2_SetActorLocationAndRotation")
+        unreal_actor_static_class = spear_instance.unreal_service.get_static_class(class_name="AActor")
+        unreal_set_actor_location_and_rotation_func = spear_instance.unreal_service.find_function_by_name(
+            uclass=unreal_actor_static_class, function_name="K2_SetActorLocationAndRotation")
 
-    spear_instance.engine_service.tick()
-    spear_instance.engine_service.end_tick()
+    with spear_instance.end_frame():
+        pass
 
     # initialize MuJoCo
     mj_model = mujoco.MjModel.from_xml_path(os.path.realpath(args.mjcf_file))
@@ -88,20 +88,19 @@ if __name__ == "__main__":
         mj_bodies_xquat = { mj_body_name: mj_data.body(mj_body).xquat for mj_body_name, mj_body in mj_bodies.items() }
 
         # set updated poses in SPEAR
-        spear_instance.engine_service.begin_tick()
+        with spear_instance.begin_frame():
+            for unreal_actor_name, unreal_actor in unreal_actors.items():
 
-        for unreal_actor_name, unreal_actor in unreal_actors.items():
+                # call function for each actor
+                args = {
+                    "NewLocation": dict(zip(["X", "Y", "Z"], mj_bodies_xpos[unreal_actor_name + ":StaticMeshComponent0"])),
+                    "NewRotation": dict(zip(["Roll", "Pitch", "Yaw"], unreal_rpy_from_mujoco_quaternion(mj_bodies_xquat[unreal_actor_name + ":StaticMeshComponent0"]))),
+                    "bSweep":      False,
+                    "bTeleport":   True}
+                spear_instance.unreal_service.call_function(uobject=unreal_actor, ufunction=unreal_set_actor_location_and_rotation_func, args=args)
 
-            # call function for each actor
-            args = {
-                "NewLocation": dict(zip(["X", "Y", "Z"], mj_bodies_xpos[unreal_actor_name + ":StaticMeshComponent0"])),
-                "NewRotation": dict(zip(["Roll", "Pitch", "Yaw"], unreal_rpy_from_mujoco_quaternion(mj_bodies_xquat[unreal_actor_name + ":StaticMeshComponent0"]))),
-                "bSweep":      False,
-                "bTeleport":   True}
-            spear_instance.unreal_service.call_function(uobject=unreal_actor, ufunction=unreal_set_actor_location_and_rotation_func, args=args)
-
-        spear_instance.engine_service.tick()
-        spear_instance.engine_service.end_tick()
+        with spear_instance.end_frame():
+            pass
 
     mj_viewer.close()
     spear_instance.close()

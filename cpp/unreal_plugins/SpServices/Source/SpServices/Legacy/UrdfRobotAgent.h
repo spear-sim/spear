@@ -14,7 +14,6 @@
 #include "SpCore/ArrayDesc.h" // TODO: remove
 
 #include "SpServices/Legacy/Agent.h"
-#include "SpServices/Legacy/ClassRegistrationUtils.h"
 
 class UWorld;
 
@@ -46,6 +45,4 @@ private:
     AUrdfRobotPawn* urdf_robot_pawn_ = nullptr;
 
     std::unique_ptr<CameraSensor> camera_sensor_;
-
-    inline static auto s_class_registration_handler_ = ClassRegistrationUtils::registerClass<UrdfRobotAgent>(Agent::s_class_registrar_, "UrdfRobotAgent");
 };

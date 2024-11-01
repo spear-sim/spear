@@ -118,6 +118,7 @@ struct SpFuncSharedMemoryView : SharedMemoryView
 class SpFuncPackedArray
 {
 public:
+    void setView();
     void setView(const SpFuncSharedMemoryView& shared_memory_view);
     void validate(SpFuncSharedMemoryUsageFlags usage_flags) const;
 
@@ -283,7 +284,7 @@ public:
         shared_memory_usage_flags_ = SpFuncSharedMemoryUsageFlags::DoNotUse;
     }
 
-    void setData(const std::string& shared_memory_name, const SpFuncSharedMemoryView& shared_memory_view, const std::vector<uint64_t>& shape)
+    void setData(const SpFuncSharedMemoryView& shared_memory_view, const std::vector<uint64_t>& shape, const std::string& shared_memory_name)
     {
         uint64_t num_elements = 0;
         if (!shape.empty()) {

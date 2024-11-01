@@ -6,7 +6,6 @@ import os
 import shutil
 import sys
 
-
 def path_exists(path):
     if os.path.exists(path) or os.path.islink(path):
         return True
@@ -16,7 +15,6 @@ def path_exists(path):
         return os.path.exists(head)
     else:
         return tail in os.listdir(head)
-
 
 def remove_path(path):
     if not path_exists(path):

@@ -14,7 +14,6 @@
 #include "SpCore/ArrayDesc.h" // TODO: remove
 
 #include "SpServices/Legacy/Agent.h"
-#include "SpServices/Legacy/ClassRegistrationUtils.h"
 
 class UWorld;
 
@@ -48,6 +47,4 @@ private:
 
     std::unique_ptr<CameraSensor> camera_sensor_;
     std::unique_ptr<ImuSensor> imu_sensor_;
-
-    inline static auto s_class_registration_handler_ = ClassRegistrationUtils::registerClass<VehicleAgent>(Agent::s_class_registrar_, "VehicleAgent");
 };

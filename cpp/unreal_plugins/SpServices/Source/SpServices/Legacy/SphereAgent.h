@@ -16,7 +16,6 @@
 #include "SpCore/ArrayDesc.h" // TODO: remove
 
 #include "SpServices/Legacy/Agent.h"
-#include "SpServices/Legacy/ClassRegistrationUtils.h"
 #include "SpServices/Legacy/StandaloneComponent.h"
 #include "SpServices/Legacy/TickComponent.h"
 
@@ -58,6 +57,4 @@ private:
     std::unique_ptr<CameraSensor> camera_sensor_;
 
     FRotator rotation_ = FRotator::ZeroRotator;
-
-    inline static auto s_class_registration_handler_ = ClassRegistrationUtils::registerClass<SphereAgent>(Agent::s_class_registrar_, "SphereAgent");
 };

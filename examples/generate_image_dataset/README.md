@@ -10,11 +10,9 @@ You can control the behavior of this example by setting the following parameters
   - `SPEAR.PAKS_DIR` is the directory containing scene data in the form of PAK files.
   - `SP_SERVICES.LEGACY.CAMERA_AGENT.CAMERA.RENDER_PASSES` can be set to a list of image modalities that you want the agent to return (e.g., setting the value `["depth", "final_color", "segmentation"]` will return depth images, photorealistic RGB images, and segmentation images).
 
-Your `user_config.yaml` file only needs to specify the value of a parameter if it differs from the defaults defined in the `python/config` directory. You can browse this directory for a complete set of all user-configurable parameters.
-
 ### Running the example
 
-You can run the example as follows.
+You can run this example as follows.
 
 ```console
 # generate camera poses

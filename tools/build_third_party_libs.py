@@ -90,13 +90,35 @@ if __name__ == "__main__":
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
-    elif sys.platform in ["darwin", "linux"]:
+        cmd = ["b2", "--with-test", "link=static"]
+        spear.log(f"Executing: {' '.join(cmd)}")
+        subprocess.run(cmd, check=True)
+
+    elif sys.platform == "darwin":
 
         cmd = ["./bootstrap.sh"]
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
         cmd = ["./b2", "headers"]
+        spear.log(f"Executing: {' '.join(cmd)}")
+        subprocess.run(cmd, check=True)
+
+        cmd = ["./b2", "--with-test", "architecture=arm+x86", "cxxflags=-mmacosx-version-min=10.14"]
+        spear.log(f"Executing: {' '.join(cmd)}")
+        subprocess.run(cmd, check=True)
+
+    elif sys.platform == "linux":
+
+        cmd = ["./bootstrap.sh"]
+        spear.log(f"Executing: {' '.join(cmd)}")
+        subprocess.run(cmd, check=True)
+
+        cmd = ["./b2", "headers"]
+        spear.log(f"Executing: {' '.join(cmd)}")
+        subprocess.run(cmd, check=True)
+
+        cmd = ["./b2", "--with-test"]
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 

@@ -7,6 +7,9 @@
 
 #include "SpCore/Assert.h"
 
+#include <CoreGlobals.h> // IsRunningCommandlet
+
+#include "SpCore/Boost.h"
 #include "SpCore/SuppressCompilerWarnings.h"
 #include "SpCore/Windows.h"
 
@@ -208,13 +211,44 @@ namespace {
     else if (AssertLevel::Debug <= level && level < AssertLevel::Error)
     {
 #if (!TARGET_OS_IPHONE && !TARGET_IPHONE_SIMULATOR) && (!defined(__ANDROID__) && !defined(ANDROID)) || defined(PPK_ASSERT_DEFAULT_HANDLER_STDIN)
-      for (;;)
-      {
+
+      // ---- BEGIN SPEAR MODIFICATION ----
+      //
+      // In practice, this for loop doesn't interact cleanly with Unreal applications, and leads to a flood
+      // of output to the console in a variety of situations, so we disable.
+      //
+      // for (;;)
+      // {
+      //
+      // If we're in the GUI editor, then we can't expect to get a user response via fgets. In this case,
+      // break-then-throw if we're in a debugger, throw otherwise.
+
+      #if WITH_EDITOR // defined in an auto-generated header
+        if (!IsRunningCommandlet()) { // editor mode via GUI
+          if (boost::debug::under_debugger()) {
+            return AssertAction::BreakThenThrow;
+          } else {
+            return AssertAction::Throw;
+          }
+        }
+      #endif
+
+// #if defined(PPK_ASSERT_DISABLE_IGNORE_LINE)
+//         fprintf(stderr, "Press (I)gnore / Ignore (A)ll / (D)ebug / A(b)ort: ");
+// #else
+//         fprintf(stderr, "Press (I)gnore / Ignore (F)orever / Ignore (A)ll / (D)ebug / A(b)ort: ");
+// #endif
+
+        // Adding an option to throw.
+
 #if defined(PPK_ASSERT_DISABLE_IGNORE_LINE)
-        fprintf(stderr, "Press (I)gnore / Ignore (A)ll / (D)ebug / A(b)ort: ");
+        fprintf(stderr, "Press (I)gnore / Ignore (A)ll / (D)ebug / Debug if available then (T)hrow / Th(r)ow / A(b)ort: ");
 #else
-        fprintf(stderr, "Press (I)gnore / Ignore (F)orever / Ignore (A)ll / (D)ebug / A(b)ort: ");
+        fprintf(stderr, "Press (I)gnore / Ignore (F)orever / Ignore (A)ll / (D)ebug / Debug if available then (T)hrow / Th(r)ow / A(b)ort: ");
 #endif
+
+        // ---- END SPEAR MODIFICATION ----
+
         fflush(stderr);
 
         char buffer[256];
@@ -223,14 +257,44 @@ namespace {
           clearerr(stdin);
           fprintf(stderr, "\n");
           fflush(stderr);
-          continue;
+
+          // ---- BEGIN SPEAR MODIFICATION ----
+          //
+          // continue;
+          //
+          // If fgets returns null while waiting for input, then break-then-throw if we're in a debugger,
+          // throw otherwise.
+
+          if (boost::debug::under_debugger()) {
+            return AssertAction::BreakThenThrow;
+          } else {
+            return AssertAction::Throw;
+          }
+
+          // ---- END SPEAR MODIFICATION ----
         }
 
         // we eventually skip the leading spaces but that's it
         char input[2] = {'b', 0};
         if (sscanf(buffer, " %1[a-zA-Z] ", input) != 1)
-          continue;
 
+          // ---- BEGIN SPEAR MODIFICATION ----
+          //
+          // continue;
+          //
+          // If sscanf returns the wrong number of items, then break-then-throw if we're in a debugger, throw
+          // otherwise.
+
+          {
+            if (boost::debug::under_debugger()) {
+              return AssertAction::BreakThenThrow;
+            } else {
+              return AssertAction::Throw;
+            }
+          }
+
+          // ---- END SPEAR MODIFICATION ----
+ 
         switch (*input)
         {
           case 'b':
@@ -255,10 +319,30 @@ namespace {
           case 'A':
             return AssertAction::IgnoreAll;
 
+          // ---- BEGIN SPEAR MODIFICATION ----
+
+          case 't':
+          case 'T':
+            if (boost::debug::under_debugger()) {
+              return AssertAction::BreakThenThrow;
+            } else {
+              return AssertAction::Throw;
+            }
+
+          case 'r':
+          case 'R':
+            return AssertAction::Throw;
+
+          // ---- END SPEAR MODIFICATION ----
+
           default:
             break;
         }
-      }
+
+      // ---- BEGIN SPEAR MODIFICATION ----
+      // }
+      // ---- END SPEAR MODIFICATION ----
+
 #else
       return AssertAction::Break;
 #endif
@@ -267,6 +351,12 @@ namespace {
     {
       return AssertAction::Throw;
     }
+
+    // ---- BEGIN SPEAR MODIFICATION ----
+
+    fprintf(stderr, "Unrecognized input, choosing A(b)ort...\n");
+
+    // ---- END SPEAR MODIFICATION ----
 
     return AssertAction::Abort;
   }
@@ -509,6 +599,40 @@ namespace implementation {
 
     return AssertAction::None;
   }
+
+  // ---- BEGIN SPEAR MODIFICATION ----
+
+  void PPK_ASSERT_CALL handleThrow(const char* file,
+                                   int line,
+                                   const char* function,
+                                   const char* expression,
+                                   const char* message, ...)
+  {
+    char message_[PPK_ASSERT_MESSAGE_BUFFER_SIZE] = {0};
+    const char* file_;
+
+    if (message)
+    {
+      va_list args;
+      va_start(args, message);
+      vsnprintf(message_, PPK_ASSERT_MESSAGE_BUFFER_SIZE, message, args);
+      va_end(args);
+
+      message = message_;
+    }
+
+#if defined(_WIN32)
+    file_ = strrchr(file, '\\');
+#else
+    file_ = strrchr(file, '/');
+#endif // #if defined(_WIN32)
+
+    file = file_ ? file_ + 1 : file;
+
+    _throw(file, line, function, expression, message);
+  }
+
+  // ---- END SPEAR MODIFICATION ----
 
 } // namespace implementation
 } // namespace assert

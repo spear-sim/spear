@@ -8,7 +8,7 @@
 // All headers that are required by this header go here.
 //
 
-#include <boost/predef.h> // BOOST_OS_MACOS, BOOST_OS_LINUX, BOOST_OS_WINDOWS
+#include <boost/predef.h> // BOOST_ENDIAN_BIG_BYTE, BOOST_ENDIAN_LITTLE_BYTE, BOOST_OS_MACOS, BOOST_OS_LINUX, BOOST_OS_WINDOWS
 
 #include "SpCore/SuppressCompilerWarnings.h"
 #include "SpCore/Windows.h"
@@ -84,6 +84,7 @@ SP_END_SUPPRESS_COMPILER_WARNINGS
 
 // ----------------------------------------------------------------------------------------------------------
 
+#include <boost/test/debug.hpp>           // boost::under_debugger
 #include <boost/tokenizer.hpp>            // boost::char_separator
 #include <boost/range/adaptor/map.hpp>    // boost::adaptors::map_keys
 #include <boost/range/algorithm/copy.hpp> // boost::copy

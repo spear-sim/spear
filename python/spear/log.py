@@ -5,7 +5,6 @@
 import inspect
 import os
 
-
 def log(*args):
     current_frame = inspect.currentframe()
     print(_log_get_prefix(current_frame) + "".join([str(arg) for arg in args]))

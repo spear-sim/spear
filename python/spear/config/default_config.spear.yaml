@@ -69,8 +69,9 @@ SPEAR:
     TEMP_CONFIG_FILE: "config.yaml"
 
     # Maximum time to wait when initializing the RPC client. This is useful because it can take a bit of time
-    # between when an executable is invoked on the command-line, and when engine_service.ping can return for
-    # first time, which is when the RPC client is considered to be initialized.
+    # between when an executable is invoked on the command-line, and when engine_service.get_world and
+    # engine_service.get_frame_state can return for first time, which is when the RPC client is considered to
+    # be initialized.
     INITIALIZE_RPC_CLIENT_MAX_TIME_SECONDS: 120.0
 
     # Sleep for this amount of time in-between attempts to initialize the RPC client.
@@ -86,25 +87,30 @@ SPEAR:
     RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 1.0
 
     # Number of seconds to sleep after launching the Unreal instance, but before attempting to execute warmup
-    # frames. This is useful because it can take a bit of time between when engine_service.ping can return
-    # for the first time, and when {engine_service.begin_tick, engine_service.tick, engine_service.end_tick}
-    # can return for the first time. If this amount of time is set too low, then we need to set
-    # RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS to be overly conservative.
-    INITIALIZE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS: 15.0
+    # frames. This is useful because it can take a bit of time between when {engine_service.get_frame_state,
+    # engine_service.get_world} can return for the first time, and when {engine_service.begin_frame,
+    # engine_service.execute_frame, engine_service.end_frame} can return for the first time. If this amount
+    # of time is set too low, then we need to set RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS to be overly
+    # conservative.
+    INITIALIZE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS: 5.0
 
     # Number of warmup frames to execute after launching the Unreal instance. This is useful to warm up
     # various caches and rendering features that leverage temporal coherence between frames. This value
     # should be at least 1 to guarantee that visual observations are always valid. If we don't execute at
     # least 1 warmup frame, it is possible that Unreal will return an initial visual observation of all zeros
-    # (e.g., if we attempt to get visual observations in between begin_tick() and tick(), and we have not yet
-    # rendered a frame). We sometimes also want to execute more than 1 warmup frame to warm up various caches
-    # and rendering features that leverage temporal coherence between frames.
+    # (e.g., if we attempt to get visual observations in a "with begin_frame()" code block, and we have not
+    # yet rendered a frame). We sometimes also want to execute more than 1 warmup frame to warm up various
+    # caches and rendering features that leverage temporal coherence between frames.
     INITIALIZE_UNREAL_INSTANCE_NUM_WARMUP_FRAMES: 1
 
     # Sleep for this amount of time in-between checks to see if the Unreal instance has closed.
     REQUEST_CLOSE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS: 1.0
 
+  ENGINE_SERVICE:
+    # If true, print each entry point that is called via EngineService.call(...).
+    PRINT_ENTRY_POINT_CALLS: False
+
   ENV:
-    # The maximum number of ticks to execute during env.reset() before giving up. This is useful in
-    # situations where the physics simulation does not successfully settle down after calling env.reset().
+    # The maximum number of ticks to execute during Env.reset() before giving up. This is useful in
+    # situations where the physics simulation does not successfully settle down after calling Env.reset().
     MAX_NUM_FRAMES_AFTER_RESET: 10

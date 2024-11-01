@@ -89,7 +89,6 @@ def process_scene():
 
     spear.log("Done.")
 
-
 def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_element, color):
     spear.log("Processing actor: ", actor_name)
     if args.color_mode == "unique_color_per_actor":
@@ -103,7 +102,6 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
         root_node=True,
         color=color,
         log_prefix_str="    ")
-
 
 #
 # MuJoCo allows for scale transformations at leaf nodes in its kinematic tree representation via the "scale"
@@ -290,10 +288,8 @@ def add_mujoco_elements_for_kinematic_tree_node(
             color=color,
             log_prefix_str=log_prefix_str+"    ")
 
-
 def get_element_str(element):
     return xml.dom.minidom.parseString(xml.etree.ElementTree.tostring(element)).toprettyxml(indent="    ")
-
 
 def get_mujoco_pos_str(pos):
     return " ".join([ str(value) for value in pos.A1 ])

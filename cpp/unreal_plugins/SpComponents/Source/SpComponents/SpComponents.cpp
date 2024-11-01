@@ -10,6 +10,7 @@
 #include "SpCore/Log.h"
 #include "SpCore/UnrealClassRegistrar.h"
 
+#include "SpComponents/SpDebugWidget.h"
 #include "SpComponents/SpHitEventManager.h"
 
 void SpComponents::StartupModule()
@@ -17,6 +18,7 @@ void SpComponents::StartupModule()
     SP_ASSERT_MODULE_LOADED("SpCore");
     SP_LOG_CURRENT_FUNCTION();
 
+    UnrealClassRegistrar::registerActorClass<ASpDebugWidget>("ASpDebugWidget");
     UnrealClassRegistrar::registerActorClass<ASpHitEventManager>("ASpHitEventManager");
 }
 
@@ -24,6 +26,7 @@ void SpComponents::ShutdownModule()
 {
     SP_LOG_CURRENT_FUNCTION();
 
+    UnrealClassRegistrar::unregisterActorClass<ASpDebugWidget>("ASpDebugWidget");
     UnrealClassRegistrar::unregisterActorClass<ASpHitEventManager>("ASpHitEventManager");
 }
 

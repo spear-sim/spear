@@ -22,9 +22,6 @@ public class SpModuleRules : ModuleRules
         // Turn off code optimization except in shipping builds for faster build times.
         OptimizeCode = ModuleRules.CodeOptimization.InShippingBuildsOnly;
 
-        // Required for concepts and ranges
-        CppStandard = CppStandardVersion.Cpp20;
-
         // Our SP_ASSERT macro throws exceptions, yaml-cpp (used by Config) throws exceptions,
         // and boost::interprocess::mapped_region (used by camera sensors) throws exceptions.
         // So we need to enable exceptions everywhere.
@@ -36,8 +33,8 @@ public class SpModuleRules : ModuleRules
         bEnableUndefinedIdentifierWarnings = false;
 
         PublicDependencyModuleNames.AddRange(new string[] {
-            "ChaosVehiclesCore", "Core", "CoreUObject", "Engine", "InputCore", "Json", "JsonUtilities", "NavigationSystem", "PhysicsCore", "RenderCore", "RHI",
-            "XmlParser"});
+            "Chaos", "ChaosVehiclesCore", "Core", "CoreUObject", "Engine", "EngineSettings", "InputCore", "Json", "JsonUtilities", "NavigationSystem",
+            "PhysicsCore", "RenderCore", "RHI", "XmlParser"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         // Resolve the top-level module directory and the ThirdParty directory, taking care to follow symlinks.
@@ -56,6 +53,16 @@ public class SpModuleRules : ModuleRules
         //
 
         PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost")));
+
+        if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Win64) {
+            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_unit_test_framework.lib")));
+        } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Mac) {
+            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_unit_test_framework.a")));
+        } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Linux) {
+            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_unit_test_framework.a")));
+        } else {
+            throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + readOnlyTargetRules.Platform);
+        }
 
         //
         // rpclib
@@ -77,7 +84,6 @@ public class SpModuleRules : ModuleRules
         // yaml-cpp
         //
 
-        bEnableExceptions = true;
         PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "yaml-cpp", "include")));
 
         if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Win64) {

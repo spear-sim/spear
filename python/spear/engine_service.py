@@ -2,38 +2,121 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
+import contextlib
+import spear
 import sys
 
 class EngineService():
-    def __init__(self, rpc_client):
+    def __init__(self, rpc_client, config):
         self._rpc_client = rpc_client
+        self._config = config
+        self._frame_state = "idle"
 
-    def ping(self):
-        return self._rpc_client.call("engine_service.ping")
+    #
+    # These context managers are intended as exception-safe wrappers around the {begin_frame, execute_frame,
+    # end_frame} entry points in EngineService.
+    #
 
-    def begin_tick(self):
-        self._rpc_client.call("engine_service.begin_tick")
+    @contextlib.contextmanager
+    def begin_frame(self):
 
-    def tick(self):
-        self._rpc_client.call("engine_service.tick")
+        assert self._frame_state == "idle"
+        self._frame_state = "request_begin_frame"
 
-    def end_tick(self):
-        self._rpc_client.call("engine_service.end_tick")
+        # try calling begin_frame()
+        try:
+            self._rpc_client.call("engine_service.begin_frame")
+        except Exception as e:
+            spear.log("Exception: ", e)
+            self._frame_state = "idle"
+            raise e
 
-    # TODO: Move to sp_func_service.py, because this is the only place where we need to concern ourselves
-    # the endian-ness of the Unreal instance. All other services send and receive std::vector<T> where T is
-    # not uint8_t, and therefore the endian-ness of the Unreal instance is handled implicitly at the msgpack
-    # layer. Since SpFuncService sends and receives std::vector<uint8_t>, the msgpack layer does not attempt
-    # to perform any endian conversions, so sp_func_service.py needs to perform any required conversions
-    # explicitly. On the Unreal instance, we should use Boost to detect endian-ness.
-    def get_byte_order(self):
-        unreal_instance_byte_order = self._rpc_client.call("engine_service.get_byte_order")
-        rpc_client_byte_order = sys.byteorder
-        if unreal_instance_byte_order == rpc_client_byte_order:
-            return None
-        elif unreal_instance_byte_order == "little":
-            return "<"
-        elif unreal_instance_byte_order == "big":
-            return ">"
-        else:
+        assert self._frame_state == "request_begin_frame"
+        self._frame_state = "executing_begin_frame"
+
+        # try executing pre-frame work
+        try:
+            yield
+        except Exception as e:
+            spear.log("Exception: ", e)
+            spear.log("Attempting to exit critical section...")
+            self._rpc_client.call("engine_service.execute_frame")
+            self._rpc_client.call("engine_service.end_frame")
+            self._frame_state = "idle"
+            raise e
+
+        assert self._frame_state == "executing_begin_frame"
+        self._frame_state = "finished_executing_begin_frame"
+
+
+    @contextlib.contextmanager
+    def end_frame(self):
+
+        assert self._frame_state == "finished_executing_begin_frame"
+        self._frame_state = "executing_frame"
+
+        # try executing execute_frame()
+        try:
+            self._rpc_client.call("engine_service.execute_frame")
+        except Exception as e:
+            spear.log("Exception: ", e)
+            spear.log("We're currently in a critical section, but there is nothing we can do to get out of it from here, so we need to give up...")
+            self._frame_state = "error"
+            raise e
+
+        assert self._frame_state == "executing_frame"
+        self._frame_state = "executing_end_frame"
+
+        # try executing post-frame work
+        try:
+            yield
+        except Exception as e:
+            spear.log("Exception: ", e)
+            spear.log("Attempting to exit critical section...")
+            self._rpc_client.call("engine_service.end_frame")
+            self._frame_state = "idle"
+            raise e
+
+        assert self._frame_state == "executing_end_frame"
+        self._frame_state = "request_end_frame"
+
+        # try executing end_frame()
+        try:
+            self._rpc_client.call("engine_service.end_frame")
+        except Exception as e:
+            spear.log("Exception: ", e)
+            spear.log("We're currently in a critical section, but there is nothing we can do to get out of it from here, so we need to give up...")
+            self._frame_state = "error"
+            raise e
+
+        assert self._frame_state == "request_end_frame"
+        self._frame_state = "idle"
+
+
+    # This function is called by all other services.
+    def call(self, func_name, *args):
+        if self._frame_state == "finished_executing_begin_frame":
+            spear.log('ERROR: Calling SPEAR functions in between "with begin_frame()" and "with end_frame()" code blocks is not supported.')
+            spear.log("Attempting to exit critical section...")
+            self._rpc_client.call("engine_service.execute_frame")
+            self._rpc_client.call("engine_service.end_frame")
+            self._frame_state = "idle"
             assert False
+
+        if self._config.SPEAR.ENGINE_SERVICE.PRINT_ENTRY_POINT_CALLS:
+            spear.log("Calling:               ", func_name, args)
+
+        return_value = self._rpc_client.call(func_name, *args)
+
+        if self._config.SPEAR.ENGINE_SERVICE.PRINT_ENTRY_POINT_CALLS:
+            spear.log("Obtained return value: ", return_value)
+
+        return return_value
+
+    # This function is used in Instance.is_running() to determine if there is a valid simulation running.
+    def is_world_initialized(self):
+        return self.call("engine_service.is_world_initialized")
+
+    # This function is used in Instance.close() to close the Unreal application.
+    def request_exit(self):
+        return self.call("engine_service.request_exit")

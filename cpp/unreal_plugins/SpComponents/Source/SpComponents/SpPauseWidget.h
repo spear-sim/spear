@@ -17,26 +17,18 @@ public:
     ASpPauseWidget();
     ~ASpPauseWidget();
 
-    #if WITH_EDITOR // defined in an auto-generated header
-        // AActor interface
-        void Tick(float delta_time) override;
-    #endif
+    // AActor interface
+    void Tick(float delta_time) override;
 
 private:
-
     // Calling UGameplayStatics::SetGamePaused() doesn't synchronize with the default play/pause button in
     // the editor. So we provide a custom button and a custom read-only property to update and visualize the
     // engine-level (as opposed to the editor-level) pause state of the game. All of this functionality is
     // implemented by interacting directly with UGameplayStatics, and is therefore guaranteed to be correctly
     // synchronized with the engine-level state.
+    UFUNCTION(CallInEditor, Category="SPEAR")
+    void ToggleGamePaused();
 
-    #if WITH_EDITOR // defined in an auto-generated header
-        UFUNCTION(CallInEditor, Category="SPEAR")
-        void ToggleGamePaused();
-    #endif
-
-    #if WITH_EDITORONLY_DATA // defined in an auto-generated header
-        UPROPERTY(VisibleAnywhere, Category="SPEAR");
-        bool bIsGamePaused = false;
-    #endif
+    UPROPERTY(VisibleAnywhere, Category="SPEAR");
+    bool bIsGamePaused = false;
 };

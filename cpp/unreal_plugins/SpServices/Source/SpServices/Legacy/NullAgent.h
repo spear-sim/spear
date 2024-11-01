@@ -12,8 +12,6 @@
 
 #include "SpCore/ArrayDesc.h" // TODO: remove
 
-#include "SpServices/Legacy/ClassRegistrationUtils.h"
-
 class UWorld;
 
 class NullAgent: public Agent
@@ -59,6 +57,4 @@ public:
     {
         return true;
     };
-
-    inline static auto s_class_registrar_ = ClassRegistrationUtils::registerClass<NullAgent>(Agent::s_class_registrar_, "NullAgent");
 };

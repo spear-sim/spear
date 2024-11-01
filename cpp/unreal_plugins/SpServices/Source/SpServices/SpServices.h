@@ -8,9 +8,12 @@
 
 #include <Modules/ModuleInterface.h>
 
-#include "SpServices/EngineService.h"
-#include "SpServices/LegacyService.h"
 #include "SpServices/Rpclib.h"
+
+#include "SpServices/EngineService.h"
+#include "SpServices/EnhancedInputService.h"
+#include "SpServices/GameMapSettingsService.h"
+#include "SpServices/LegacyService.h"
 #include "SpServices/SpFuncService.h"
 #include "SpServices/UnrealService.h"
 
@@ -22,9 +25,9 @@ public:
 
 private:
     std::unique_ptr<rpc::server> rpc_server_ = nullptr;
-
     std::unique_ptr<EngineService<rpc::server>> engine_service_ = nullptr;
-
+    std::unique_ptr<EnhancedInputService> enhanced_input_service_ = nullptr;
+    std::unique_ptr<GameMapSettingsService> game_map_settings_service_ = nullptr;
     std::unique_ptr<LegacyService> legacy_service_ = nullptr;
     std::unique_ptr<SpFuncService> sp_func_service_ = nullptr;
     std::unique_ptr<UnrealService> unreal_service_ = nullptr;

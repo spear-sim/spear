@@ -4,31 +4,38 @@
 
 #pragma once
 
+#include <memory> // std::make_unique, std::unique_ptr
 #include <string>
 #include <vector>
 
-#include <Delegates/IDelegateInstance.h> // FDelegateHandle
-#include <Engine/World.h>                // FWorldDelegates
-
 #include "SpCore/ArrayDesc.h" // TODO: remove
 #include "SpCore/Assert.h"
+#include "SpCore/Config.h"
+#include "SpCore/Unreal.h"
 
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/Msgpack.h"
 #include "SpServices/Rpclib.h"
+#include "SpServices/Service.h"
 
 #include "SpServices/Legacy/Agent.h"
-#include "SpServices/Legacy/NavMesh.h"
-#include "SpServices/Legacy/Task.h"
+#include "SpServices/Legacy/CameraAgent.h"
+#include "SpServices/Legacy/NullAgent.h"
+#include "SpServices/Legacy/SphereAgent.h"
+#include "SpServices/Legacy/UrdfRobotAgent.h"
+#include "SpServices/Legacy/VehicleAgent.h"
 
-class LegacyService {
+#include "SpServices/Legacy/Task.h"
+#include "SpServices/Legacy/ImitationLearningTask.h"
+#include "SpServices/Legacy/NullTask.h"
+
+#include "SpServices/Legacy/NavMesh.h"
+
+class LegacyService : public Service {
 public:
     LegacyService() = delete;
     LegacyService(CUnrealEntryPointBinder auto* unreal_entry_point_binder)
     {
-        post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &LegacyService::postWorldInitializationHandler);
-        world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &LegacyService::worldCleanupHandler);
-
         unreal_entry_point_binder->bindFuncNoUnreal("legacy_service", "get_action_space", [this]() -> std::map<std::string, ArrayDesc> {
             SP_ASSERT(agent_);
             return agent_->getActionSpace();
@@ -113,42 +120,94 @@ public:
             SP_ASSERT(nav_mesh_);
             return nav_mesh_->getPaths(initial_points, goal_points);
         });
+
+        unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_world_name", [this]() -> std::string {
+            SP_ASSERT(getWorld());
+            return Unreal::toStdString(getWorld()->GetName());
+        });
     }
 
-    ~LegacyService()
+    ~LegacyService() = default;
+
+    void worldBeginPlay() override
     {
-        // If an object of this class is destroyed in the middle of simulation for some reason, raise an error.
-        // We expect worldCleanUpEvenHandler(...) to be called before ~LegacyService().
-        SP_ASSERT(!world_begin_play_handle_.IsValid());
+        Service::worldBeginPlay();
 
-        FWorldDelegates::OnWorldCleanup.Remove(world_cleanup_handle_);
-        FWorldDelegates::OnPostWorldInitialization.Remove(post_world_initialization_handle_);
+        SP_ASSERT(getWorld());
 
-        world_cleanup_handle_.Reset();
-        post_world_initialization_handle_.Reset();
+        if (Config::isInitialized()) {
+            if (Config::get<std::string>("SP_SERVICES.LEGACY_SERVICE.AGENT") == "NullAgent") {
+                agent_ = std::make_unique<NullAgent>();
+            } else if (Config::get<std::string>("SP_SERVICES.LEGACY_SERVICE.AGENT") == "CameraAgent") {
+                agent_ = std::make_unique<CameraAgent>(getWorld());
+            } else if (Config::get<std::string>("SP_SERVICES.LEGACY_SERVICE.AGENT") == "SphereAgent") {
+                agent_ = std::make_unique<SphereAgent>(getWorld());
+            } else if (Config::get<std::string>("SP_SERVICES.LEGACY_SERVICE.AGENT") == "UrdfRobotAgent") {
+                agent_ = std::make_unique<UrdfRobotAgent>(getWorld());
+            } else if (Config::get<std::string>("SP_SERVICES.LEGACY_SERVICE.AGENT") == "VehicleAgent") {
+                agent_ = std::make_unique<VehicleAgent>(getWorld());
+            } else {
+                SP_ASSERT(false);
+            }
+
+            if (Config::get<std::string>("SP_SERVICES.LEGACY_SERVICE.TASK") == "NullTask") {
+                task_ = std::make_unique<NullTask>();
+            } else if (Config::get<std::string>("SP_SERVICES.LEGACY_SERVICE.TASK") == "ImitationLearningTask") {
+                task_ = std::make_unique<ImitationLearningTask>(getWorld());
+            } else {
+                SP_ASSERT(false);
+            }
+
+        } else {
+            agent_ = std::make_unique<NullAgent>();
+            task_ = std::make_unique<NullTask>();
+        }
+        SP_ASSERT(agent_);
+        SP_ASSERT(task_);
+
+        nav_mesh_ = std::make_unique<NavMesh>();
+        SP_ASSERT(nav_mesh_);
+
+        agent_->findObjectReferences(getWorld());
+        task_->findObjectReferences(getWorld());
+        nav_mesh_->findObjectReferences(getWorld());
+
+        has_world_begin_play_executed_ = true;
     }
 
-    void postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values);
-    void worldCleanupHandler(UWorld* world, bool session_ended, bool cleanup_resources);
-    void worldBeginPlayHandler();
+    void worldCleanup(UWorld* world, bool session_ended, bool cleanup_resources) override
+    {
+        Service::worldCleanup(world, session_ended, cleanup_resources);
+
+        SP_ASSERT(world);
+
+        if (has_world_begin_play_executed_) {
+            has_world_begin_play_executed_ = false;
+
+            SP_ASSERT(nav_mesh_);
+            SP_ASSERT(task_);
+            SP_ASSERT(agent_);
+
+            nav_mesh_->cleanUpObjectReferences();
+            task_->cleanUpObjectReferences();
+            agent_->cleanUpObjectReferences();
+
+            nav_mesh_ = nullptr;
+            task_ = nullptr;
+            agent_ = nullptr;
+        }
+    }
 
 private:
-    FDelegateHandle post_world_initialization_handle_;
-    FDelegateHandle world_begin_play_handle_;
-    FDelegateHandle world_cleanup_handle_;
-
-    UWorld* world_ = nullptr;
-
-    // Unreal life cycle state
-    bool has_world_begin_play_executed_ = false;
-    bool open_level_pending_ = false;
-
     // OpenAI Gym helper objects
     std::unique_ptr<Agent> agent_ = nullptr;
     std::unique_ptr<Task> task_ = nullptr;
 
     // Navmesh helper object
     std::unique_ptr<NavMesh> nav_mesh_ = nullptr;
+
+    // Unreal life cycle state
+    bool has_world_begin_play_executed_ = false;
 };
 
 //

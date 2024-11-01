@@ -42,7 +42,7 @@ if __name__ == "__main__":
             current_user = pwd.getpwuid(os.getuid()).pw_name
             config_dir_owner = pwd.getpwuid(os.stat(config_dir).st_uid).pw_name
             if current_user != config_dir_owner:
-                spear.log(f"ERROR: The Unreal Build Tool expects {current_user} to be the owner of {config_dir}, but the current owner is {config_dir_owner}. To update, run the following command (-R indicates recursive):")
+                spear.log(f"ERROR: The Unreal Build Tool expects {current_user} to be the owner of {config_dir}, but the current owner is {config_dir_owner}. To update, run the following command:")
                 spear.log(f"    sudo chown {current_user} {config_dir}")
                 assert False
 

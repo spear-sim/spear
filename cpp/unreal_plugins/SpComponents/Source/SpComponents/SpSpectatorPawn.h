@@ -28,13 +28,13 @@ public:
     void BeginPlay() override;
     void Tick(float delta_time) override;
 
+private:
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
     USpStableNameComponent* SpStableNameComponent = nullptr;
 
     UPROPERTY(EditAnywhere, Category="SPEAR")
     USpectatorPawnMovement* SpectatorPawnMovement = nullptr;
 
-private:
     boost::circular_buffer<double> previous_time_deltas_;
     std::chrono::time_point<std::chrono::high_resolution_clock> previous_time_point_;
     bool previous_is_benchmarking_ = false;

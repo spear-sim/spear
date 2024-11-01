@@ -4,5 +4,6 @@
 
 SP_CORE:
 
-  # Wait for keyboard input during initialization, which can be useful when attempting to attach a debugger to the running executable.
+  # Wait for keyboard input during initialization, which can be useful when attempting to attach a debugger
+  # to the running executable.
   WAIT_FOR_KEYBOARD_INPUT_DURING_INITIALIZATION: False
