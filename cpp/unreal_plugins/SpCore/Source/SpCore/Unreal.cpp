@@ -43,15 +43,47 @@ class UStruct;
 class UWorld;
 
 //
+// Helper function for structs
+//
+
+std::string Unreal::getStaticStructName(const UStruct* ustruct)
+{
+    SP_ASSERT(Unreal::toStdString(UObject::StaticClass()->GetPrefixCPP()) + Unreal::toStdString(UObject::StaticClass()->GetName()) == "UObject");
+    return Unreal::toStdString(ustruct->GetPrefixCPP()) + Unreal::toStdString(ustruct->GetName());
+}
+
+//
+// Find special struct by name. For this function to behave as expected, ASpSpecialStructActor must have a
+// UPROPERTY defined on it named TypeName_ of type TypeName.
+//
+
+UStruct* Unreal::findSpecialStructByName(const std::string& struct_name)
+{
+    // We only need ASpSpecialStructActor's property metadata here, so we can use the default object. This
+    // makes it so this function is usable even in levels that don't have an ASpSpecialStructActor in them,
+    // and avoids the need to do a findActor operation.
+
+    UClass* special_struct_actor_static_class = ASpSpecialStructActor::StaticClass();
+    SP_ASSERT(special_struct_actor_static_class);
+    UObject* special_struct_actor_default_object = special_struct_actor_static_class->GetDefaultObject();
+    SP_ASSERT(special_struct_actor_default_object);
+    PropertyDesc property_desc = findPropertyByName(special_struct_actor_default_object, struct_name + "_");
+    SP_ASSERT(property_desc.property_);
+    SP_ASSERT(property_desc.property_->IsA(FStructProperty::StaticClass()));
+    FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
+    return struct_property->Struct;
+}
+
+//
 // Get and set object properties, uobject can't be const because we cast it to void*
 //
 
-std::string Unreal::getObjectPropertiesAsString(UObject* uobject)
+std::string Unreal::getObjectPropertiesAsString(const UObject* uobject)
 {
     return getObjectPropertiesAsString(uobject, uobject->GetClass()); // GetClass() returns UClass*, UClass inherits from UStruct
 }
 
-std::string Unreal::getObjectPropertiesAsString(void* value_ptr, const UStruct* ustruct)
+std::string Unreal::getObjectPropertiesAsString(const void* value_ptr, const UStruct* ustruct)
 {
     SP_ASSERT(value_ptr);
     SP_ASSERT(ustruct);
@@ -81,7 +113,8 @@ void Unreal::setObjectPropertiesFromString(void* value_ptr, const UStruct* ustru
 }
 
 //
-// Find property by name, get and set property values, uobject can't be const because we cast it to void*
+// Find property by name, get and set property values, uobject can't be const because we cast it to void*,
+// value_ptr can't be const because we assign to PropertyDesc::value_ptr_.
 //
 
 Unreal::PropertyDesc Unreal::findPropertyByName(UObject* uobject, const std::string& property_name)
@@ -503,7 +536,7 @@ UFunction* Unreal::findFunctionByName(const UClass* uclass, const std::string& f
     return function;
 }
 
-std::map<std::string, std::string> Unreal::callFunction(UWorld* world, UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args, const std::string& world_context)
+std::map<std::string, std::string> Unreal::callFunction(const UWorld* world, UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args, const std::string& world_context)
 {
     SP_ASSERT(world);
     SP_ASSERT(uobject);
@@ -672,28 +705,6 @@ std::vector<std::string> Unreal::getTags(const UActorComponent* component)
 {
     SP_ASSERT(component);
     return Std::toVector<std::string>(toStdVector(component->ComponentTags) | std::views::transform([](const auto& tag) { return toStdString(tag); }));
-}
-
-//
-// Find special struct by name. For this function to behave as expected, ASpSpecialStructActor must have a
-// UPROPERTY defined on it named TypeName_ of type TypeName.
-//
-
-UStruct* Unreal::findSpecialStructByName(const std::string& struct_name)
-{
-    // We only need ASpSpecialStructActor's property metadata here, so we can use the default object. This
-    // makes it so this function is usable even in levels that don't have an ASpSpecialStructActor in them,
-    // and avoids the need to do a findActor operation.
-
-    UClass* special_struct_actor_static_class = ASpSpecialStructActor::StaticClass();
-    SP_ASSERT(special_struct_actor_static_class);
-    UObject* special_struct_actor_default_object = special_struct_actor_static_class->GetDefaultObject();
-    SP_ASSERT(special_struct_actor_default_object);
-    PropertyDesc property_desc = findPropertyByName(special_struct_actor_default_object, struct_name + "_");
-    SP_ASSERT(property_desc.property_);
-    SP_ASSERT(property_desc.property_->IsA(FStructProperty::StaticClass()));
-    FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
-    return struct_property->Struct;
 }
 
 //

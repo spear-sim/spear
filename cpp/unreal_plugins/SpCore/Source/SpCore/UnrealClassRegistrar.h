@@ -48,8 +48,8 @@ struct FObjectInstancingGraph;
 // Registrars for getting subsystems using a class name instead of template parameters
 //
 
-extern SPCORE_API FuncRegistrar<USubsystem*, UObject*>          g_get_subsystem_func_by_type_registrar;
-extern SPCORE_API FuncRegistrar<USubsystem*, UObject*, UClass*> g_get_subsystem_func_by_class_registrar;
+extern SPCORE_API FuncRegistrar<USubsystem*, const UObject*>          g_get_subsystem_func_by_type_registrar;
+extern SPCORE_API FuncRegistrar<USubsystem*, const UObject*, UClass*> g_get_subsystem_func_by_class_registrar;
 
 //
 // Registrars for getting a static class or static struct using a class name instead of template parameters
@@ -186,8 +186,8 @@ public:
     // Get subsystem using a class name instead of template parameters
     //
 
-    static USubsystem* getSubsystemByType(const std::string& class_name, UObject* context);
-    static USubsystem* getSubsystemByClass(const std::string& class_name, UObject* context, UClass* uclass);
+    static USubsystem* getSubsystemByType(const std::string& class_name, const UObject* context);
+    static USubsystem* getSubsystemByClass(const std::string& class_name, const UObject* context, UClass* uclass);
 
     //
     // Get static class or static struct using a class name instead of template parameters
@@ -342,7 +342,7 @@ public:
     static void registerSubsystemBaseProviderClass(const std::string& class_name)
     {
         g_get_subsystem_func_by_class_registrar.registerFunc(
-            class_name, [](UObject* context, UClass* uclass) -> USubsystem* {
+            class_name, [](const UObject* context, UClass* uclass) -> USubsystem* {
                 return Unreal::getSubsystemProvider<TSubsystemBaseProvider>(context)->GetSubsystemBase(uclass);
             });
     }
@@ -355,7 +355,7 @@ public:
     static void registerSubsystemClass(const std::string& class_name)
     {
         g_get_subsystem_func_by_type_registrar.registerFunc(
-            class_name, [](UObject* context) -> USubsystem* {
+            class_name, [](const UObject* context) -> USubsystem* {
                 return Unreal::getSubsystemProvider<TSubsystemProvider>(context)->template GetSubsystem<TSubsystem>();
             });
     }
@@ -994,14 +994,15 @@ public:
     // types maintained by UnrealClassRegistrar.
     //
 
-    template <CStruct TStruct>
+    template <typename TStructOrClass> requires
+        CStruct<TStructOrClass> || CClass<TStructOrClass>
     static UStruct* getStaticStruct()
     {
-        return TStruct::StaticStruct();
+        return Unreal::getStaticStruct<TStructOrClass>();
     }
 
     template <typename TSpecialStruct> requires
-        (!CStruct<TSpecialStruct>)
+        (!(CStruct<TSpecialStruct> || CClass<TSpecialStruct>))
     static UStruct* getStaticStruct()
     {
         std::string type_id_string = getTypeIdString<TSpecialStruct>();

@@ -11,7 +11,7 @@ def to_json_strings(objs):
     if isinstance(objs, list):
         return [ to_json_string(o) for o in objs ]
     elif isinstance(objs, dict):
-        return { k: to_json_string(v) for k, v in objs }
+        return { k: to_json_string(v) for k, v in objs.items() }
     else:
         assert False
 
@@ -47,8 +47,8 @@ def to_json_string(obj, stringify=True):
 def try_to_dicts(json_strings, default_value=None):
     if isinstance(json_strings, list):
         return [ try_to_dict(s, default_value=default_value) for s in json_strings ]
-    elif isinstance(strings, dict):
-        return { k: try_to_dict(s, default_value=default_value) for k, v in json_strings }
+    elif isinstance(json_strings, dict):
+        return { k: try_to_dict(v, default_value=default_value) for k, v in json_strings.items() }
     else:
         assert False
 

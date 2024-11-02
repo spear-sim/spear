@@ -66,11 +66,35 @@ public:
         SP_ASSERT(unreal_entry_point_binder);
 
         // Register EnhancedInput types. We can't do this in SpCore, because if we set SpCore to depend on
-        // the EnhancedInputPlugin, then we get cooking errors.
+        // the EnhancedInput plugin, then we get cooking errors, presumably because SpCore gets loaded before
+        // EnhancedInput.
+
         UnrealClassRegistrar::registerSubsystemClass<ULocalPlayer, UEnhancedInputLocalPlayerSubsystem>("UEnhancedInputLocalPlayerSubsystem");
         UnrealClassRegistrar::registerClass<UInputAction>("UInputAction");
+
+        UnrealClassRegistrar::registerClass<UInputModifierDeadZone>("UInputModifierDeadZone");
+        UnrealClassRegistrar::registerClass<UInputModifierFOVScaling>("UInputModifierFOVScaling");
+        UnrealClassRegistrar::registerClass<UInputModifierNegate>("UInputModifierNegate");
+        UnrealClassRegistrar::registerClass<UInputModifierResponseCurveExponential>("UInputModifierResponseCurveExponential");
+        UnrealClassRegistrar::registerClass<UInputModifierResponseCurveUser>("UInputModifierResponseCurveUser");
         UnrealClassRegistrar::registerClass<UInputModifierScalar>("UInputModifierScalar");
+        UnrealClassRegistrar::registerClass<UInputModifierScaleByDeltaTime>("UInputModifierScaleByDeltaTime");
+        UnrealClassRegistrar::registerClass<UInputModifierSmooth>("UInputModifierSmooth");
+        UnrealClassRegistrar::registerClass<UInputModifierSmoothDelta>("UInputModifierSmoothDelta");
+        UnrealClassRegistrar::registerClass<UInputModifierSwizzleAxis>("UInputModifierSwizzleAxis");
+        UnrealClassRegistrar::registerClass<UInputModifierToWorldSpace>("UInputModifierToWorldSpace");
+
+        UnrealClassRegistrar::registerClass<UInputTriggerCombo>("UInputTriggerCombo");
+        UnrealClassRegistrar::registerClass<UInputTriggerChordAction>("UInputTriggerChordAction");
+        UnrealClassRegistrar::registerClass<UInputTriggerChordBlocker>("UInputTriggerChordBlocker");
+        UnrealClassRegistrar::registerClass<UInputTriggerDown>("UInputTriggerDown");
+        UnrealClassRegistrar::registerClass<UInputTriggerHold>("UInputTriggerHold");
+        UnrealClassRegistrar::registerClass<UInputTriggerHoldAndRelease>("UInputTriggerHoldAndRelease");
         UnrealClassRegistrar::registerClass<UInputTriggerPressed>("UInputTriggerPressed");
+        UnrealClassRegistrar::registerClass<UInputTriggerPulse>("UInputTriggerPulse");
+        UnrealClassRegistrar::registerClass<UInputTriggerReleased>("UInputTriggerReleased");
+        UnrealClassRegistrar::registerClass<UInputTriggerTap>("UInputTriggerTap");
+        UnrealClassRegistrar::registerClass<UInputTriggerTimedBase>("UInputTriggerTimedBase");
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("enhanced_input_service", "inject_input",
             [this](
@@ -219,9 +243,32 @@ public:
     ~EnhancedInputService()
     {
         // Unregister EnhancedInput types.
+
         UnrealClassRegistrar::unregisterSubsystemClass<ULocalPlayer, UEnhancedInputLocalPlayerSubsystem>("UEnhancedInputLocalPlayerSubsystem");
         UnrealClassRegistrar::unregisterClass<UInputAction>("UInputAction");
+
+        UnrealClassRegistrar::unregisterClass<UInputModifierDeadZone>("UInputModifierDeadZone");
+        UnrealClassRegistrar::unregisterClass<UInputModifierFOVScaling>("UInputModifierFOVScaling");
+        UnrealClassRegistrar::unregisterClass<UInputModifierNegate>("UInputModifierNegate");
+        UnrealClassRegistrar::unregisterClass<UInputModifierResponseCurveExponential>("UInputModifierResponseCurveExponential");
+        UnrealClassRegistrar::unregisterClass<UInputModifierResponseCurveUser>("UInputModifierResponseCurveUser");
         UnrealClassRegistrar::unregisterClass<UInputModifierScalar>("UInputModifierScalar");
-        UnrealClassRegistrar::unregisterClass<UInputTriggerPressed>("UInputTriggerPressed");        
+        UnrealClassRegistrar::unregisterClass<UInputModifierScaleByDeltaTime>("UInputModifierScaleByDeltaTime");
+        UnrealClassRegistrar::unregisterClass<UInputModifierSmooth>("UInputModifierSmooth");
+        UnrealClassRegistrar::unregisterClass<UInputModifierSmoothDelta>("UInputModifierSmoothDelta");
+        UnrealClassRegistrar::unregisterClass<UInputModifierSwizzleAxis>("UInputModifierSwizzleAxis");
+        UnrealClassRegistrar::unregisterClass<UInputModifierToWorldSpace>("UInputModifierToWorldSpace");
+
+        UnrealClassRegistrar::unregisterClass<UInputTriggerCombo>("UInputTriggerCombo");
+        UnrealClassRegistrar::unregisterClass<UInputTriggerChordAction>("UInputTriggerChordAction");
+        UnrealClassRegistrar::unregisterClass<UInputTriggerChordBlocker>("UInputTriggerChordBlocker");
+        UnrealClassRegistrar::unregisterClass<UInputTriggerDown>("UInputTriggerDown");
+        UnrealClassRegistrar::unregisterClass<UInputTriggerHold>("UInputTriggerHold");
+        UnrealClassRegistrar::unregisterClass<UInputTriggerHoldAndRelease>("UInputTriggerHoldAndRelease");
+        UnrealClassRegistrar::unregisterClass<UInputTriggerPressed>("UInputTriggerPressed");
+        UnrealClassRegistrar::unregisterClass<UInputTriggerPulse>("UInputTriggerPulse");
+        UnrealClassRegistrar::unregisterClass<UInputTriggerReleased>("UInputTriggerReleased");
+        UnrealClassRegistrar::unregisterClass<UInputTriggerTap>("UInputTriggerTap");
+        UnrealClassRegistrar::unregisterClass<UInputTriggerTimedBase>("UInputTriggerTimedBase");
     }
 };

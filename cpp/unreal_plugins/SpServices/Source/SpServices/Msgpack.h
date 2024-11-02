@@ -46,6 +46,6 @@ public:
     // functions for sending custom types as return values
     //
 
-    static clmdep_msgpack::object toObject(void* ptr, clmdep_msgpack::zone& zone); // use instead of clmdep_msgpack::object(ptr, zone) for pointers
+    static clmdep_msgpack::object toObject(const void* ptr, clmdep_msgpack::zone& zone); // use instead of clmdep_msgpack::object(ptr, zone) for pointers
     static void toObject(clmdep_msgpack::object::with_zone& object, const std::map<std::string, clmdep_msgpack::object>& objects);
 };
