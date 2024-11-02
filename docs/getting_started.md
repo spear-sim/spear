@@ -20,7 +20,7 @@ The next step is to install the `spear` Python package as follows.
 
 ```console
 # create environment
-conda create --name spear-env python=3.9
+conda create --name spear-env python=3.11
 conda activate spear-env
 
 # install msgpack-rpc-python separately from other Python dependencies, because we need
