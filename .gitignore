@@ -59,6 +59,9 @@ examples/mujoco_interop/user_config.yaml
 examples/numpy_interop/tmp
 examples/numpy_interop/user_config.yaml
 
+examples/render_image/tmp
+examples/render_image/user_config.yaml
+
 examples/open_loop_control_fetch/images
 examples/open_loop_control_fetch/tmp
 examples/open_loop_control_fetch/user_config.yaml

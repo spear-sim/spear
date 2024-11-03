@@ -92,6 +92,7 @@ class SpFuncService():
                 array = np.frombuffer(packed_array["data"], dtype=dtype, count=-1).reshape(packed_array["shape"])
             elif packed_array["data_source"] == "Shared":
                 # assume that the handle for the array is uobject_shared_memory_handles
+                assert packed_array["shared_memory_name"] in uobject_shared_memory_handles
                 assert "ReturnValue" in uobject_shared_memory_handles[packed_array["shared_memory_name"]]["view"]["usage_flags"]
                 buffer = uobject_shared_memory_handles[packed_array["shared_memory_name"]]["buffer"]
                 array = np.ndarray(shape=packed_array["shape"], dtype=np.dtype(packed_array["data_type"]), buffer=buffer)
@@ -100,7 +101,7 @@ class SpFuncService():
             arrays[packed_array_name] = array
 
         # Return all converted data.
-        return {"arrays": arrays, "unreal_objs": spear.try_to_dicts(return_values["unreal_objs"]), "info": return_values["info"]}
+        return {"arrays": arrays, "unreal_objs": spear.try_to_dicts(return_values["unreal_obj_strings"]), "info": return_values["info"]}
 
     #
     # Low-level helper functions for interacting with shared memory. Most users will not need to call these

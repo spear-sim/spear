@@ -29,6 +29,7 @@
 #include <UObject/Object.h>                 // UObject
 #include <UObject/ReflectedTypeAccessors.h> // StaticEnum
 #include <UObject/UnrealType.h>             // FProperty
+#include <UObject/UObjectGlobals.h>         // NewObject
 
 #include "SpCore/Assert.h"
 #include "SpCore/Std.h"

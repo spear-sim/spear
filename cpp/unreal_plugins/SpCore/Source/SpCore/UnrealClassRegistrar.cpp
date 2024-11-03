@@ -13,6 +13,7 @@
 #include <Components/SceneComponent.h>
 #include <Components/StaticMeshComponent.h>
 #include <Engine/LocalPlayer.h>
+#include <Engine/PostProcessVolume.h>
 #include <Engine/StaticMesh.h>
 #include <Engine/StaticMeshActor.h>
 #include <Engine/TextureRenderTarget2D.h>
@@ -187,6 +188,7 @@ void UnrealClassRegistrar::initialize()
     // yet, so these names can't be inferred from the type yet.
     registerSubsystemBaseProviderClass<ULocalPlayer>("ULocalPlayer");
     registerActorClass<AActor>("AActor");
+    registerActorClass<APostProcessVolume>("APostProcessVolume");
     registerActorClass<AStaticMeshActor>("AStaticMeshActor");
     registerComponentClass<UActorComponent>("UActorComponent");
     registerComponentClass<USceneComponent>("USceneComponent");
@@ -211,6 +213,7 @@ void UnrealClassRegistrar::terminate()
     // yet, so these names can't be inferred from the type yet.
     unregisterSubsystemBaseProviderClass<ULocalPlayer>("ULocalPlayer");
     unregisterActorClass<AActor>("AActor");
+    unregisterActorClass<APostProcessVolume>("APostProcessVolume");
     unregisterActorClass<AStaticMeshActor>("AStaticMeshActor");
     unregisterComponentClass<UActorComponent>("UActorComponent");
     unregisterComponentClass<USceneComponent>("USceneComponent");

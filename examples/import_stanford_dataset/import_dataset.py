@@ -10,7 +10,8 @@ import spear
 import unreal
 
 
-mesh_descs = [
+mesh_descs = \
+[
     {
         "gltf_file": os.path.realpath(os.path.join(os.path.dirname(__file__), "gltf", "bunny", "mesh.gltf")),
         "static_mesh_name": "SM_Bunny",
@@ -37,7 +38,8 @@ mesh_descs = [
         "material_path": "/Game/StarterContent/Materials",
         "blueprint_name": "BP_Dragon",
         "blueprint_path": "/Game/Stanford/Blueprints",
-    }]
+    }
+]
 
 include_assets = [os.path.join("SpearSim", "Content", "Stanford", "**", "*.*")]
 
@@ -94,7 +96,7 @@ if __name__ == "__main__":
             success = unreal.EditorAssetLibrary.delete_asset(blueprint_path)
             assert success
 
-        spear.log(f"Creating: {blueprint_path}")
+        spear.log(f"Creating blueprint: {blueprint_path}")
          
         blueprint_factory = unreal.BlueprintFactory()
         blueprint_factory.set_editor_property("parent_class", unreal.StaticMeshActor)
@@ -120,7 +122,7 @@ if __name__ == "__main__":
         static_mesh_component = unreal.SubobjectDataBlueprintFunctionLibrary.get_object(static_mesh_component_subobject_data)
         assert isinstance(static_mesh_component, unreal.StaticMeshComponent)
 
-        # we could add new components here by calling unreal.SubobjectDataBlueprintFunctionLibrary.add_new_subobject(...) but in this case it isn't necessary
+        # we could add new components here by calling unreal.SubobjectDataSubsystem.add_new_subobject(...) but in this case it isn't necessary
 
         static_mesh_path = posixpath.join(mesh_desc["static_mesh_path"], mesh_desc["static_mesh_name"] + "." + mesh_desc["static_mesh_name"])
         static_mesh = unreal.load_asset(static_mesh_path)
@@ -138,7 +140,7 @@ if __name__ == "__main__":
         pivot_offset = unreal.Vector(bounds_origin.x, bounds_origin.y, bounds_origin.z - bounds_half_extent.z)
         actor.set_editor_property("pivot_offset", pivot_offset)
 
-        spear.log(f"Saving: {blueprint_path}")
+        spear.log(f"Saving blueprint: {blueprint_path}")
 
         editor_asset_subsystem.save_loaded_asset(blueprint_asset)
 

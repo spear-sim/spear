@@ -736,6 +736,7 @@ public:
     static void registerClass(const std::string& class_name)
     {
         registerClassCommon<TClass>(class_name);
+        registerStructCommon<TClass>(class_name);
 
         //
         // Create object

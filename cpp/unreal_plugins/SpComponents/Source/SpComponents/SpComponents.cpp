@@ -12,6 +12,7 @@
 
 #include "SpComponents/SpDebugWidget.h"
 #include "SpComponents/SpHitEventManager.h"
+#include "SpComponents/SpSceneCaptureComponent2D.h"
 
 void SpComponents::StartupModule()
 {
@@ -20,6 +21,7 @@ void SpComponents::StartupModule()
 
     UnrealClassRegistrar::registerActorClass<ASpDebugWidget>("ASpDebugWidget");
     UnrealClassRegistrar::registerActorClass<ASpHitEventManager>("ASpHitEventManager");
+    UnrealClassRegistrar::registerComponentClass<USpSceneCaptureComponent2D>("USpSceneCaptureComponent2D");
 }
 
 void SpComponents::ShutdownModule()
@@ -28,6 +30,7 @@ void SpComponents::ShutdownModule()
 
     UnrealClassRegistrar::unregisterActorClass<ASpDebugWidget>("ASpDebugWidget");
     UnrealClassRegistrar::unregisterActorClass<ASpHitEventManager>("ASpHitEventManager");
+    UnrealClassRegistrar::unregisterComponentClass<USpSceneCaptureComponent2D>("USpSceneCaptureComponent2D");
 }
 
 // use if module does not implement any Unreal classes
