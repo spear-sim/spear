@@ -75,6 +75,7 @@ void ASpInitializeWorldManager::BeginPlay()
     // Execute console commands
     if (bExecuteConsoleCommands) {
         SP_LOG("Executing console commands...");
+        SP_ASSERT(GEngine);
         for (auto& command : ConsoleCommands) {
             GEngine->Exec(GetWorld(), *command);
         }

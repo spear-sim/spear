@@ -54,7 +54,7 @@ if __name__ == "__main__":
             triggers=[trigger_pressed])
 
         # get actor
-        actor = instance.unreal_service.find_actor_by_name(class_name="AActor", actor_name="__SP_DEFAULT_PAWN__BP_SpSpectatorPawn_C")
+        actor = instance.unreal_service.find_actor_by_name(class_name="AActor", actor_name="__SP_DEFAULT_PAWN__")
         spear.log("actor: ", actor)
 
         # inject input for a specific actor

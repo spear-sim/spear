@@ -1102,6 +1102,7 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "execute_console_command",
             [this](std::string& command) -> void {
+                SP_ASSERT(GEngine);
                 GEngine->Exec(getWorld(), *Unreal::toFString(command));
             });
 

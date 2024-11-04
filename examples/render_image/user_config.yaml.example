@@ -8,4 +8,4 @@ SPEAR:
   INSTANCE:
     COMMAND_LINE_ARGS:
       resx: 512
-      resy: 512
+      resy: 384

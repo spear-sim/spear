@@ -4,10 +4,11 @@
 
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
+import cv2
+import math
 import os
 import spear
 
-import cv2
 
 if __name__ == "__main__":
 
@@ -21,35 +22,60 @@ if __name__ == "__main__":
 
         # find functions
         actor_static_class = instance.unreal_service.get_static_class(class_name="AActor")
-        get_actor_location_func = instance.unreal_service.find_function_by_name(uclass=actor_static_class, function_name="K2_GetActorLocation")
-        get_actor_rotation_func = instance.unreal_service.find_function_by_name(uclass=actor_static_class, function_name="K2_GetActorRotation")
         set_actor_location_func = instance.unreal_service.find_function_by_name(uclass=actor_static_class, function_name="K2_SetActorLocation")
         set_actor_rotation_func = instance.unreal_service.find_function_by_name(uclass=actor_static_class, function_name="K2_SetActorRotation")
 
         sp_scene_capture_component_2d_static_class = instance.unreal_service.get_static_class(class_name="USpSceneCaptureComponent2D")
         initialize_func = instance.unreal_service.find_function_by_name(uclass=sp_scene_capture_component_2d_static_class, function_name="Initialize")
         terminate_func = instance.unreal_service.find_function_by_name(uclass=sp_scene_capture_component_2d_static_class, function_name="Terminate")
-        terminate_func = instance.unreal_service.find_function_by_name(uclass=sp_scene_capture_component_2d_static_class, function_name="Terminate")
 
         # find actors
         post_process_volume = instance.unreal_service.find_actor_by_type(class_name="APostProcessVolume")
-        spectator_pawn = instance.unreal_service.find_actor_by_name(class_name="AActor", actor_name="__SP_DEFAULT_PAWN__SpSpectatorPawn")
 
-        # spawn camera sensor
+        player_controller = instance.world_service.get_first_player_controller()
+        player_camera_manager_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=player_controller, property_name="PlayerCameraManager")
+        player_camera_manager = spear.to_handle(instance.unreal_service.get_property_value(property_desc=player_camera_manager_desc))
+
+        # spawn camera sensor and get the final_tone_curve_hdr component
         bp_camera_sensor_uclass = instance.unreal_service.load_object(class_name="UClass", outer=0, name="/SpComponents/Blueprints/BP_Camera_Sensor.BP_Camera_Sensor_C")
         bp_camera_sensor = instance.unreal_service.spawn_actor_from_uclass(uclass=bp_camera_sensor_uclass)
+        final_tone_curve_hdr_component = instance.unreal_service.get_component_by_name(class_name="USceneComponent", actor=bp_camera_sensor, component_name="DefaultSceneRoot.final_tone_curve_hdr")
 
-        # get component
-        final_tone_curve_hdr_component = instance.unreal_service.get_component_by_name(
-            class_name="USceneComponent",
-            actor=bp_camera_sensor,
-            component_name="DefaultSceneRoot.final_tone_curve_hdr")
+        # update camera sensor to match the player camera manager and the post-process volume in the scene
+        viewport_size = instance.engine_service.get_viewport_size()
+        viewport_x = viewport_size[0]
+        viewport_y = viewport_size[1]
 
-        # update camera sensor pose to match the spectator pawn
-        spectator_pawn_location = instance.unreal_service.call_function(uobject=spectator_pawn, ufunction=get_actor_location_func)["ReturnValue"]
-        spectator_pawn_rotation = instance.unreal_service.call_function(uobject=spectator_pawn, ufunction=get_actor_rotation_func)["ReturnValue"]
-        instance.unreal_service.call_function(uobject=bp_camera_sensor, ufunction=set_actor_location_func, args={"NewLocation": spectator_pawn_location})
-        instance.unreal_service.call_function(uobject=bp_camera_sensor, ufunction=set_actor_rotation_func, args={"NewRotation": spectator_pawn_rotation})
+        view_target_pov_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=player_camera_manager, property_name="ViewTarget.POV")
+        view_target_pov = instance.unreal_service.get_property_value(property_desc=view_target_pov_desc)
+        spear.log(view_target_pov)
+
+        # this logic is necessary to determine the final FOV value that will match a standalone game viewport exactly
+        if viewport_x > viewport_y:
+            fov_value = view_target_pov["fOV"]
+        else:
+            fov_x = view_target_pov["fOV"]*math.pi/180.0
+            half_fov_x = fov_x/2.0
+            half_fov_x_adjusted = math.atan(math.tan(half_fov_x)/view_target_pov["aspectRatio"])
+            half_fov_y = math.atan(math.tan(half_fov_x_adjusted)/view_target_pov["aspectRatio"])
+            fov_y = half_fov_y*2.0
+            fov_y_degrees = fov_y*180.0/math.pi
+            fov_value = fov_y_degrees
+
+        instance.unreal_service.call_function(uobject=bp_camera_sensor, ufunction=set_actor_location_func, args={"NewLocation": view_target_pov["location"]})
+        instance.unreal_service.call_function(uobject=bp_camera_sensor, ufunction=set_actor_rotation_func, args={"NewRotation": view_target_pov["rotation"]})
+        fov_angle_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=final_tone_curve_hdr_component, property_name="FOVAngle")
+        instance.unreal_service.set_property_value(property_desc=fov_angle_desc, property_value=fov_value)
+
+        width_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=final_tone_curve_hdr_component, property_name="Width")
+        height_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=final_tone_curve_hdr_component, property_name="Height")
+        instance.unreal_service.set_property_value(property_desc=width_desc, property_value=viewport_x)
+        instance.unreal_service.set_property_value(property_desc=height_desc, property_value=viewport_y)
+
+        volume_settings_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=post_process_volume, property_name="Settings")
+        volume_settings = instance.unreal_service.get_property_value(property_desc=volume_settings_desc)
+        component_settings_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=final_tone_curve_hdr_component, property_name="PostProcessSettings")
+        instance.unreal_service.set_property_value(property_desc=component_settings_desc, property_value=volume_settings)
 
         # call Initialize() on component
         instance.unreal_service.call_function(uobject=final_tone_curve_hdr_component, ufunction=initialize_func)
@@ -57,15 +83,8 @@ if __name__ == "__main__":
         # get handles to the component's shared memory
         final_tone_curve_hdr_component_shared_memory_handles = instance.sp_func_service.create_shared_memory_handles_for_uobject(uobject=final_tone_curve_hdr_component)
 
-        # update post-process settings on the component to match the post-process volume in the scene
-        post_process_volume_settings_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=post_process_volume, property_name="Settings")
-        final_tone_curve_hdr_settings_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=final_tone_curve_hdr_component, property_name="PostProcessSettings")
-
-        post_process_volume_settings = instance.unreal_service.get_property_value(property_desc=post_process_volume_settings_desc)
-        instance.unreal_service.set_property_value(property_desc=final_tone_curve_hdr_settings_desc, property_value=post_process_volume_settings)
-
     with instance.end_frame():
-        pass # we could get rendered data here, but it will look better if we let temporal anti-aliasing accumulate additional information across frames
+        pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing accumulate additional information across frames
 
     # # let temporal anti-aliasing accumulate additional information across frames
     # for i in range(1):

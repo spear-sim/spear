@@ -4,12 +4,15 @@
 
 #pragma once
 
+#include <stdint.h> // uint64_t
+
 #include <atomic>
 #include <future> // std::promise
 #include <mutex>
 #include <string>
 
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
+#include <Engine/Engine.h>               // GEngine
 #include <Engine/World.h>                // FWorldDelegates, FActorSpawnParameters
 #include <Misc/CoreDelegates.h>
 #include <UObject/ObjectMacros.h>        // UENUM
@@ -55,10 +58,6 @@ public:
 
         begin_frame_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &EngineService::beginFrameHandler);
         end_frame_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &EngineService::endFrameHandler);
-
-        bindFuncToExecuteOnWorkerThread("engine_service", "is_world_initialized", [this]() -> bool {
-            return world_initialized_;
-        });
 
         bindFuncToExecuteOnWorkerThread("engine_service", "begin_frame", [this]() -> void {
 
@@ -143,9 +142,25 @@ public:
                 "frame_state_: %s", Unreal::getStringFromEnumValue(frame_state).c_str());
         });
 
+        bindFuncToExecuteOnWorkerThread("engine_service", "is_initialized", [this]() -> bool {
+            return initialized_;
+        });
+
         bindFuncToExecuteOnWorkerThread("engine_service", "request_exit", []() -> void {
             bool immediate_shutdown = false;
             FGenericPlatformMisc::RequestExit(immediate_shutdown);
+        });
+
+        bindFuncToExecuteOnGameThread("engine_service", "get_engine", [this]() -> uint64_t {
+            return toUInt64(GEngine);
+        });
+
+        bindFuncToExecuteOnGameThread("engine_service", "get_viewport_size", [this]() -> std::vector<double> {
+            SP_ASSERT(GEngine);
+            SP_ASSERT(GEngine->GameViewport);
+            FVector2D viewport_size;
+            GEngine->GameViewport->GetViewportSize(viewport_size);
+            return {viewport_size.X, viewport_size.Y};
         });
     }
 
@@ -169,6 +184,8 @@ public:
 
         SP_LOG("World: ", Unreal::toStdString(world->GetName()));
 
+        SP_ASSERT(GEngine);
+
         if (world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
             SP_LOG("Caching world...");
             SP_ASSERT(!world_);
@@ -185,7 +202,7 @@ public:
 
         if (world == world_) {
             SP_LOG("Clearing cached world...");
-            world_initialized_ = false;
+            initialized_ = false;
             world_ = nullptr;
         }
     }
@@ -195,7 +212,7 @@ public:
         Service::worldBeginPlay();
 
         SP_ASSERT(world_);
-        world_initialized_ = true;
+        initialized_ = true;
     }
 
     void bindFuncToExecuteOnWorkerThread(const std::string& service_name, const std::string& func_name, const auto& func)
@@ -361,9 +378,10 @@ private:
 
     WorkQueue work_queue_;
 
+    UWorld* world_ = nullptr;
+
     std::atomic<EFrameState> frame_state_ = EFrameState::Idle;
-    std::atomic<UWorld*> world_ = nullptr;
-    std::atomic<bool> world_initialized_ = false;
+    std::atomic<bool> initialized_ = false;
     std::mutex frame_state_mutex_;
 
     std::promise<void> frame_state_idle_promise_;

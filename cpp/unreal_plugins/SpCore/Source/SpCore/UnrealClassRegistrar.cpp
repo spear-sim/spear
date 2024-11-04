@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+#include <Camera/CameraComponent.h>
+#include <Camera/PlayerCameraManager.h>
 #include <Components/ActorComponent.h>
 #include <Components/PoseableMeshComponent.h>
 #include <Components/SceneComponent.h>
@@ -19,6 +21,7 @@
 #include <Engine/TextureRenderTarget2D.h>
 #include <GameFramework/Actor.h>
 #include <GameFramework/GameUserSettings.h>
+#include <GameFramework/PlayerController.h>
 #include <Kismet/GameplayStatics.h>
 #include <Materials/Material.h>
 #include <Materials/MaterialInterface.h>
@@ -188,9 +191,12 @@ void UnrealClassRegistrar::initialize()
     // yet, so these names can't be inferred from the type yet.
     registerSubsystemBaseProviderClass<ULocalPlayer>("ULocalPlayer");
     registerActorClass<AActor>("AActor");
+    registerActorClass<APlayerCameraManager>("APlayerCameraManager");
+    registerActorClass<APlayerController>("APlayerController");
     registerActorClass<APostProcessVolume>("APostProcessVolume");
     registerActorClass<AStaticMeshActor>("AStaticMeshActor");
     registerComponentClass<UActorComponent>("UActorComponent");
+    registerComponentClass<UCameraComponent>("UCameraComponent");
     registerComponentClass<USceneComponent>("USceneComponent");
     registerComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
     registerComponentClass<UPoseableMeshComponent>("UPoseableMeshComponent");
@@ -213,9 +219,12 @@ void UnrealClassRegistrar::terminate()
     // yet, so these names can't be inferred from the type yet.
     unregisterSubsystemBaseProviderClass<ULocalPlayer>("ULocalPlayer");
     unregisterActorClass<AActor>("AActor");
+    unregisterActorClass<APlayerCameraManager>("APlayerCameraManager");
+    unregisterActorClass<APlayerController>("APlayerController");
     unregisterActorClass<APostProcessVolume>("APostProcessVolume");
     unregisterActorClass<AStaticMeshActor>("AStaticMeshActor");
     unregisterComponentClass<UActorComponent>("UActorComponent");
+    unregisterComponentClass<UCameraComponent>("UCameraComponent");
     unregisterComponentClass<USceneComponent>("USceneComponent");
     unregisterComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
     unregisterComponentClass<UPoseableMeshComponent>("UPoseableMeshComponent");

@@ -35,7 +35,9 @@ UWorld* Service::getWorld()
 
 void Service::postWorldInitialization(UWorld* world, const UWorld::InitializationValues initialization_values)
 {
+    SP_ASSERT(GEngine);
     SP_ASSERT(world);
+
     if (world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
         SP_ASSERT(!world_);
         world_ = world;
@@ -46,6 +48,7 @@ void Service::postWorldInitialization(UWorld* world, const UWorld::Initializatio
 void Service::worldCleanup(UWorld* world, bool session_ended, bool cleanup_resources)
 {
     SP_ASSERT(world);
+
     if (world == world_) {
         world_->OnWorldBeginPlay.Remove(world_begin_play_handle_);
         world_begin_play_handle_.Reset();
