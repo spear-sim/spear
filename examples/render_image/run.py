@@ -45,15 +45,15 @@ if __name__ == "__main__":
         viewport_size = instance.engine_service.get_viewport_size()
         viewport_x = viewport_size[0]
         viewport_y = viewport_size[1]
-        aspect_ratio = viewport_x/viewport_y
+        viewport_aspect_ratio = viewport_x/viewport_y
 
         view_target_pov_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=player_camera_manager, property_name="ViewTarget.POV")
         view_target_pov = instance.unreal_service.get_property_value(property_desc=view_target_pov_desc)
 
-        # this logic is necessary to determine the final FOV value that matches the game viewport
+        # this logic is necessary to determine an FOV value that matches the game viewport
         fov = view_target_pov["fOV"]*math.pi/180.0
         half_fov = fov/2.0
-        half_fov_adjusted = math.atan(math.tan(half_fov)*aspect_ratio/view_target_pov["aspectRatio"])
+        half_fov_adjusted = math.atan(math.tan(half_fov)*viewport_aspect_ratio/view_target_pov["aspectRatio"])
         fov_adjusted = half_fov_adjusted*2.0
         fov_adjusted_degrees = fov_adjusted*180.0/math.pi
         fov_value = fov_adjusted_degrees
