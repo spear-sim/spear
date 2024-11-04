@@ -45,22 +45,18 @@ if __name__ == "__main__":
         viewport_size = instance.engine_service.get_viewport_size()
         viewport_x = viewport_size[0]
         viewport_y = viewport_size[1]
+        aspect_ratio = viewport_x/viewport_y
 
         view_target_pov_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=player_camera_manager, property_name="ViewTarget.POV")
         view_target_pov = instance.unreal_service.get_property_value(property_desc=view_target_pov_desc)
-        spear.log(view_target_pov)
 
-        # this logic is necessary to determine the final FOV value that will match a standalone game viewport exactly
-        if viewport_x > viewport_y:
-            fov_value = view_target_pov["fOV"]
-        else:
-            fov_x = view_target_pov["fOV"]*math.pi/180.0
-            half_fov_x = fov_x/2.0
-            half_fov_x_adjusted = math.atan(math.tan(half_fov_x)/view_target_pov["aspectRatio"])
-            half_fov_y = math.atan(math.tan(half_fov_x_adjusted)/view_target_pov["aspectRatio"])
-            fov_y = half_fov_y*2.0
-            fov_y_degrees = fov_y*180.0/math.pi
-            fov_value = fov_y_degrees
+        # this logic is necessary to determine the final FOV value that matches the game viewport
+        fov = view_target_pov["fOV"]*math.pi/180.0
+        half_fov = fov/2.0
+        half_fov_adjusted = math.atan(math.tan(half_fov)*aspect_ratio/view_target_pov["aspectRatio"])
+        fov_adjusted = half_fov_adjusted*2.0
+        fov_adjusted_degrees = fov_adjusted*180.0/math.pi
+        fov_value = fov_adjusted_degrees
 
         instance.unreal_service.call_function(uobject=bp_camera_sensor, ufunction=set_actor_location_func, args={"NewLocation": view_target_pov["location"]})
         instance.unreal_service.call_function(uobject=bp_camera_sensor, ufunction=set_actor_rotation_func, args={"NewRotation": view_target_pov["rotation"]})
@@ -101,8 +97,10 @@ if __name__ == "__main__":
             final_tone_curve_hdr_component,
             "read_pixels",
             uobject_shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
-        cv2.imshow("final_tone_curve_hdr", return_values["arrays"]["data"])
-        cv2.waitKey(0)
+
+    # show rendered frame now that we're outside of with instance.end_frame()
+    cv2.imshow("final_tone_curve_hdr", return_values["arrays"]["data"])
+    cv2.waitKey(0)
 
     # terminate actors and components
     with instance.begin_frame():
