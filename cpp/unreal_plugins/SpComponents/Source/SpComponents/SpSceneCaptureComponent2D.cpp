@@ -52,7 +52,7 @@ void USpSceneCaptureComponent2D::Initialize()
     auto texture_render_target_2d = NewObject<UTextureRenderTarget2D>(this);
     SP_ASSERT(texture_render_target_2d);
     texture_render_target_2d->RenderTargetFormat = TextureRenderTargetFormat;
-    texture_render_target_2d->ClearColor = FLinearColor(255, 0, 255);
+    texture_render_target_2d->ClearColor = FLinearColor(255, 0, 255); // bright pink
     texture_render_target_2d->InitAutoFormat(Width, Height);
     bool clear_render_target = true;
     texture_render_target_2d->UpdateResourceImmediate(clear_render_target);
@@ -101,8 +101,6 @@ void USpSceneCaptureComponent2D::Initialize()
             dest_ptr = packed_array.data_.data();
         }
         SP_ASSERT(dest_ptr);
-
-        std::memset(dest_ptr, 69, Height*Width*NumChannelsPerPixel*SpFuncArrayDataTypeUtils::getSizeOf(channel_data_type));
 
         if (bReadPixelData) {
             FTextureRenderTargetResource* texture_render_target_resource = TextureTarget->GameThread_GetRenderTargetResource();
