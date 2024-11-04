@@ -44,7 +44,7 @@ if __name__ == "__main__":
         viewport_size = instance.engine_service.get_viewport_size()
         viewport_x = viewport_size[0]
         viewport_y = viewport_size[1]
-        viewport_aspect_ratio = viewport_x/viewport_y
+        viewport_aspect_ratio = viewport_x/viewport_y # see Engine/Source/Editor/UnrealEd/Private/EditorViewportClient.cpp:2130 for evidence that Unreal computes aspect ratio as x/y
 
         view_target_pov_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=player_camera_manager, property_name="ViewTarget.POV")
         view_target_pov = instance.unreal_service.get_property_value(property_desc=view_target_pov_desc)
@@ -54,7 +54,6 @@ if __name__ == "__main__":
         half_fov_adjusted = math.atan(math.tan(half_fov)*viewport_aspect_ratio/view_target_pov["aspectRatio"])
         fov_adjusted = half_fov_adjusted*2.0
         fov_adjusted_degrees = fov_adjusted*180.0/math.pi
-        fov_value = fov_adjusted_degrees
 
         volume_settings_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=post_process_volume, property_name="Settings")
         volume_settings = instance.unreal_service.get_property_value(property_desc=volume_settings_desc)
@@ -68,7 +67,7 @@ if __name__ == "__main__":
         component_settings_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=final_tone_curve_hdr_component, property_name="PostProcessSettings")
         instance.unreal_service.set_property_value(property_desc=width_desc, property_value=viewport_x)
         instance.unreal_service.set_property_value(property_desc=height_desc, property_value=viewport_y)
-        instance.unreal_service.set_property_value(property_desc=fov_angle_desc, property_value=fov_value)
+        instance.unreal_service.set_property_value(property_desc=fov_angle_desc, property_value=fov_adjusted_degrees)
         instance.unreal_service.set_property_value(property_desc=component_settings_desc, property_value=volume_settings)
 
         # now that the final_tone_curve_hdr component is fully configured, initialize it and get handles to its shared memory
