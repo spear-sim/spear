@@ -121,9 +121,7 @@ class EngineService():
     def request_exit(self):
         return self.call("engine_service.request_exit")
 
-    # Game thread functions.
-    def get_engine(self):
-        self.call("engine_service.get_engine")
+    # Entry points for miscellaneous functions that are accessible via GEngine.
 
     def get_viewport_size(self):
         return self.call("engine_service.get_viewport_size")

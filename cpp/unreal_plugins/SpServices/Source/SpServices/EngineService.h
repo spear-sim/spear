@@ -151,15 +151,13 @@ public:
             FGenericPlatformMisc::RequestExit(immediate_shutdown);
         });
 
-        bindFuncToExecuteOnGameThread("engine_service", "get_engine", [this]() -> uint64_t {
-            return toUInt64(GEngine);
-        });
+        // Entry points for miscellaneous functions that are accessible via GEngine.
 
         bindFuncToExecuteOnGameThread("engine_service", "get_viewport_size", [this]() -> std::vector<double> {
             SP_ASSERT(GEngine);
             SP_ASSERT(GEngine->GameViewport);
             FVector2D viewport_size;
-            GEngine->GameViewport->GetViewportSize(viewport_size);
+            GEngine->GameViewport->GetViewportSize(viewport_size); // GameViewport is a UPROPERTY but GetViewportSize(...) isn't a UFUNCTION
             return {viewport_size.X, viewport_size.Y};
         });
     }

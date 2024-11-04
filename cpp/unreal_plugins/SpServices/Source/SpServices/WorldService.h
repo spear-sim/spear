@@ -16,9 +16,12 @@ public:
     {
         SP_ASSERT(unreal_entry_point_binder);
 
+        // Entry points for miscellaneous functions that are accessible via getWorld(), but are not
+        // accessible via the property system.
+
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("world_service", "get_first_player_controller",
             [this]() -> uint64_t {
-                return toUInt64(getWorld()->GetFirstPlayerController());
+                return toUInt64(getWorld()->GetFirstPlayerController()); // GetFirstPlayerController() isn't a UFUNCTION
             });
     }
 
