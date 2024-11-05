@@ -44,12 +44,12 @@ if __name__ == "__main__":
         viewport_size = instance.engine_service.get_viewport_size()
         viewport_x = viewport_size[0]
         viewport_y = viewport_size[1]
-        viewport_aspect_ratio = viewport_x/viewport_y # see Engine/Source/Editor/UnrealEd/Private/EditorViewportClient.cpp:2130 for evidence that Unreal computes aspect ratio as x/y
+        viewport_aspect_ratio = viewport_x/viewport_y # see Engine/Source/Editor/UnrealEd/Private/EditorViewportClient.cpp:2130 for evidence that Unreal's aspect ratio convention is x/y
 
         view_target_pov_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=player_camera_manager, property_name="ViewTarget.POV")
         view_target_pov = instance.unreal_service.get_property_value(property_desc=view_target_pov_desc)
 
-        fov = view_target_pov["fOV"]*math.pi/180.0 # this logic is necessary to determine an FOV value that matches the game viewport
+        fov = view_target_pov["fOV"]*math.pi/180.0 # this adjustment is necessary to compute an FOV value that matches the game viewport
         half_fov = fov/2.0
         half_fov_adjusted = math.atan(math.tan(half_fov)*viewport_aspect_ratio/view_target_pov["aspectRatio"])
         fov_adjusted = half_fov_adjusted*2.0
