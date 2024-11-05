@@ -7,6 +7,7 @@ import posixpath
 import spear
 import unreal
 
+
 blueprint_desc = \
 {
     "blueprint_name": "BP_Camera_Sensor",
