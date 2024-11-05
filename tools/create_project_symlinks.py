@@ -8,7 +8,7 @@ import os
 import spear
 
 
-plugins = ["SpCore", "SpComponents", "SpServices", "UrdfRobot", "Vehicle"]
+plugins = ["SpComponents", "SpCore", "SpModuleRules", "SpServices", "UrdfRobot", "Vehicle"]
 
 
 if __name__ == "__main__":
