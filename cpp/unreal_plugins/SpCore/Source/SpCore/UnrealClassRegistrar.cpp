@@ -8,16 +8,20 @@
 #include <string>
 #include <vector>
 
+#include <Camera/CameraComponent.h>
+#include <Camera/PlayerCameraManager.h>
 #include <Components/ActorComponent.h>
 #include <Components/PoseableMeshComponent.h>
 #include <Components/SceneComponent.h>
 #include <Components/StaticMeshComponent.h>
 #include <Engine/LocalPlayer.h>
+#include <Engine/PostProcessVolume.h>
 #include <Engine/StaticMesh.h>
 #include <Engine/StaticMeshActor.h>
 #include <Engine/TextureRenderTarget2D.h>
 #include <GameFramework/Actor.h>
 #include <GameFramework/GameUserSettings.h>
+#include <GameFramework/PlayerController.h>
 #include <Kismet/GameplayStatics.h>
 #include <Materials/Material.h>
 #include <Materials/MaterialInterface.h>
@@ -52,8 +56,8 @@ struct FObjectInstancingGraph;
 // Registrars for getting subsystems using a class name instead of template parameters
 //
 
-FuncRegistrar<USubsystem*, UObject*>          g_get_subsystem_func_by_type_registrar;
-FuncRegistrar<USubsystem*, UObject*, UClass*> g_get_subsystem_func_by_class_registrar;
+FuncRegistrar<USubsystem*, const UObject*>          g_get_subsystem_func_by_type_registrar;
+FuncRegistrar<USubsystem*, const UObject*, UClass*> g_get_subsystem_func_by_class_registrar;
 
 //
 // Registrars for getting static classes using a class name instead of template parameters
@@ -183,11 +187,16 @@ std::map<std::string, UStruct*> g_special_structs;         // map from platform-
 
 void UnrealClassRegistrar::initialize()
 {
-    // Unreal classes
+    // Register Unreal classes. We provide string names here because the property system isn't initialized
+    // yet, so these names can't be inferred from the type yet.
     registerSubsystemBaseProviderClass<ULocalPlayer>("ULocalPlayer");
     registerActorClass<AActor>("AActor");
+    registerActorClass<APlayerCameraManager>("APlayerCameraManager");
+    registerActorClass<APlayerController>("APlayerController");
+    registerActorClass<APostProcessVolume>("APostProcessVolume");
     registerActorClass<AStaticMeshActor>("AStaticMeshActor");
     registerComponentClass<UActorComponent>("UActorComponent");
+    registerComponentClass<UCameraComponent>("UCameraComponent");
     registerComponentClass<USceneComponent>("USceneComponent");
     registerComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
     registerComponentClass<UPoseableMeshComponent>("UPoseableMeshComponent");
@@ -206,11 +215,16 @@ void UnrealClassRegistrar::initialize()
 
 void UnrealClassRegistrar::terminate()
 {
-    // Unreal classes
+    // Unregister Unreal classes. We provide string names here because the property system isn't initialized
+    // yet, so these names can't be inferred from the type yet.
     unregisterSubsystemBaseProviderClass<ULocalPlayer>("ULocalPlayer");
     unregisterActorClass<AActor>("AActor");
+    unregisterActorClass<APlayerCameraManager>("APlayerCameraManager");
+    unregisterActorClass<APlayerController>("APlayerController");
+    unregisterActorClass<APostProcessVolume>("APostProcessVolume");
     unregisterActorClass<AStaticMeshActor>("AStaticMeshActor");
     unregisterComponentClass<UActorComponent>("UActorComponent");
+    unregisterComponentClass<UCameraComponent>("UCameraComponent");
     unregisterComponentClass<USceneComponent>("USceneComponent");
     unregisterComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
     unregisterComponentClass<UPoseableMeshComponent>("UPoseableMeshComponent");
@@ -231,11 +245,11 @@ void UnrealClassRegistrar::terminate()
 // Get subsystem using a class name instead of template parameters
 //
 
-USubsystem* UnrealClassRegistrar::getSubsystemByType(const std::string& class_name, UObject* context) {
+USubsystem* UnrealClassRegistrar::getSubsystemByType(const std::string& class_name, const UObject* context) {
     return g_get_subsystem_func_by_type_registrar.call(class_name, context);
 }
 
-USubsystem* UnrealClassRegistrar::getSubsystemByClass(const std::string& class_name, UObject* context, UClass* uclass) {
+USubsystem* UnrealClassRegistrar::getSubsystemByClass(const std::string& class_name, const UObject* context, UClass* uclass) {
     return g_get_subsystem_func_by_class_registrar.call(class_name, context, uclass);
 }
 

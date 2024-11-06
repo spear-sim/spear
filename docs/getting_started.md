@@ -20,7 +20,7 @@ The next step is to install the `spear` Python package as follows.
 
 ```console
 # create environment
-conda create --name spear-env python=3.9
+conda create --name spear-env python=3.11
 conda activate spear-env
 
 # install msgpack-rpc-python separately from other Python dependencies, because we need
@@ -90,3 +90,4 @@ We recommend browsing through each of our example applications to get a sense of
   - [`examples/mujoco_interop`](../examples/mujoco_interop) demonstrates how to interoperate with the MuJoCo physics engine.
   - [`examples/numpy_interop`](../examples/numpy_interop) demonstrates how to efficiently pass NumPy arrays to and from Unreal game entities.
   - [`examples/open_loop_control_fetch`](../examples/open_loop_control_fetch) demonstrates how to control a Fetch robot agent.
+  - [`examples/render_image`](../examples/render_image) demonstrates how to spawn a camera sensor object and render an image.

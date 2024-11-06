@@ -14,18 +14,18 @@ import spear
 name_prefix = "Meshes/05_chair"
 
 
-def unreal_rpy_from_mujoco_quaternion(mujoco_quaternion):
+def unreal_pyr_from_mujoco_quaternion(mujoco_quaternion):
 
     # MuJoCo assumes quaternions are stored in scalar-first (wxyz) order, but scipy.spatial.transform.Rotation assumes scalar-last (xyzw) order
     scipy_quaternion = mujoco_quaternion[[1,2,3,0]]
 
     # Unreal and scipy.spatial.transform.Rotation have different Euler angle conventions, see python/spear/pipeline.py for details
     scipy_roll, scipy_pitch, scipy_yaw = scipy.spatial.transform.Rotation.from_quat(scipy_quaternion).as_euler("xyz")
-    unreal_roll  = np.rad2deg(-scipy_roll)
     unreal_pitch = np.rad2deg(-scipy_pitch)
     unreal_yaw   = np.rad2deg(scipy_yaw)
+    unreal_roll  = np.rad2deg(-scipy_roll)
 
-    return np.array([unreal_roll, unreal_pitch, unreal_yaw])
+    return np.array([unreal_pitch, unreal_yaw, unreal_roll])
 
 
 if __name__ == "__main__":
@@ -94,7 +94,7 @@ if __name__ == "__main__":
                 # call function for each actor
                 args = {
                     "NewLocation": dict(zip(["X", "Y", "Z"], mj_bodies_xpos[unreal_actor_name + ":StaticMeshComponent0"])),
-                    "NewRotation": dict(zip(["Roll", "Pitch", "Yaw"], unreal_rpy_from_mujoco_quaternion(mj_bodies_xquat[unreal_actor_name + ":StaticMeshComponent0"]))),
+                    "NewRotation": dict(zip(["Pitch", "Yaw", "Roll"], unreal_pyr_from_mujoco_quaternion(mj_bodies_xquat[unreal_actor_name + ":StaticMeshComponent0"]))),
                     "bSweep":      False,
                     "bTeleport":   True}
                 spear_instance.unreal_service.call_function(uobject=unreal_actor, ufunction=unreal_set_actor_location_and_rotation_func, args=args)

@@ -45,7 +45,9 @@ USpStableNameComponent::~USpStableNameComponent()
     void USpStableNameComponent::requestUpdate()
     {
         AActor* actor = GetOwner();
-        SP_ASSERT(actor);
+        if (!actor) {
+            return;
+        }
 
         // This method will not update the stable name of any actor spawned at runtime. Any such actor
         // needs to update its stable name via Unreal::setStableName(...).

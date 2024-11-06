@@ -41,12 +41,14 @@ void ASpGameMode::PostLogin(APlayerController* new_player)
     // pawn has a USpStableNameComponent.
     APawn* pawn = new_player->GetPawn();
     if (pawn && Unreal::hasStableName(pawn)) {
-        Unreal::setStableName(pawn, "__SP_DEFAULT_PAWN__" + Unreal::toStdString(DefaultPawnClass->GetName()));
+        Unreal::setStableName(pawn, "__SP_DEFAULT_PAWN__");
     }
 }
 
 void ASpGameMode::SpAddOnScreenDebugMessage(float display_time, FString message)
 {
+    SP_ASSERT(GEngine);
+
     // Note that GEngine->AddOnScreenDebugMessage(...) is only available when the game is running, either in
     // standalone mode or in play-in-editor mode. But in practice this is not an issue, because UFUNTION(Exec)
     // methods only execute when the game is running anyway.

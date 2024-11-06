@@ -36,92 +36,92 @@ public:
     LegacyService() = delete;
     LegacyService(CUnrealEntryPointBinder auto* unreal_entry_point_binder)
     {
-        unreal_entry_point_binder->bindFuncNoUnreal("legacy_service", "get_action_space", [this]() -> std::map<std::string, ArrayDesc> {
+        unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("legacy_service", "get_action_space", [this]() -> std::map<std::string, ArrayDesc> {
             SP_ASSERT(agent_);
             return agent_->getActionSpace();
         });
 
-        unreal_entry_point_binder->bindFuncNoUnreal("legacy_service", "get_observation_space", [this]() -> std::map<std::string, ArrayDesc> {
+        unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("legacy_service", "get_observation_space", [this]() -> std::map<std::string, ArrayDesc> {
             SP_ASSERT(agent_);
             return agent_->getObservationSpace();
         });
 
-        unreal_entry_point_binder->bindFuncNoUnreal("legacy_service", "get_agent_step_info_space", [this]() -> std::map<std::string, ArrayDesc> {
+        unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("legacy_service", "get_agent_step_info_space", [this]() -> std::map<std::string, ArrayDesc> {
             SP_ASSERT(agent_);
             return agent_->getStepInfoSpace();
         });
 
-        unreal_entry_point_binder->bindFuncNoUnreal("legacy_service", "get_task_step_info_space", [this]() -> std::map<std::string, ArrayDesc> {
+        unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("legacy_service", "get_task_step_info_space", [this]() -> std::map<std::string, ArrayDesc> {
             SP_ASSERT(task_);
             return task_->getStepInfoSpace();
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "apply_action", [this](std::map<std::string, std::vector<uint8_t>>& action) -> void {
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("legacy_service", "apply_action", [this](std::map<std::string, std::vector<uint8_t>>& action) -> void {
             SP_ASSERT(agent_);
             agent_->applyAction(action);
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_observation", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("legacy_service", "get_observation", [this]() -> std::map<std::string, std::vector<uint8_t>> {
             SP_ASSERT(agent_);
             return agent_->getObservation();
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_reward", [this]() -> float {
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("legacy_service", "get_reward", [this]() -> float {
             SP_ASSERT(task_);
             return task_->getReward();
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "is_episode_done", [this]() -> bool {
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("legacy_service", "is_episode_done", [this]() -> bool {
             SP_ASSERT(task_);
             return task_->isEpisodeDone();
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_agent_step_info", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("legacy_service", "get_agent_step_info", [this]() -> std::map<std::string, std::vector<uint8_t>> {
             SP_ASSERT(agent_);
             return agent_->getStepInfo();
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_task_step_info", [this]() -> std::map<std::string, std::vector<uint8_t>> {
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("legacy_service", "get_task_step_info", [this]() -> std::map<std::string, std::vector<uint8_t>> {
             SP_ASSERT(task_);
             return task_->getStepInfo();
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "reset_agent", [this]() -> void {
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("legacy_service", "reset_agent", [this]() -> void {
             SP_ASSERT(agent_);
             agent_->reset();
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "reset_task", [this]() -> void {
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("legacy_service", "reset_task", [this]() -> void {
             SP_ASSERT(task_);
             task_->reset();
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "is_agent_ready", [this]() -> bool {
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("legacy_service", "is_agent_ready", [this]() -> bool {
             SP_ASSERT(agent_);
             return agent_->isReady();
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "is_task_ready", [this]() -> bool {
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("legacy_service", "is_task_ready", [this]() -> bool {
             SP_ASSERT(task_);
             return task_->isReady();
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_random_points", [this](int& num_points) -> std::vector<double> {
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("legacy_service", "get_random_points", [this](int& num_points) -> std::vector<double> {
             SP_ASSERT(nav_mesh_);
             return nav_mesh_->getRandomPoints(num_points);
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_random_reachable_points_in_radius", [this](std::vector<double>& initial_points, float& radius) -> std::vector<double> {
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("legacy_service", "get_random_reachable_points_in_radius", [this](std::vector<double>& initial_points, float& radius) -> std::vector<double> {
             SP_ASSERT(nav_mesh_);
             return nav_mesh_->getRandomReachablePointsInRadius(initial_points, radius);
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("legacy_service", "get_paths", [this](std::vector<double>& initial_points, std::vector<double>& goal_points) -> std::vector<std::vector<double>> {
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("legacy_service", "get_paths", [this](std::vector<double>& initial_points, std::vector<double>& goal_points) -> std::vector<std::vector<double>> {
             SP_ASSERT(nav_mesh_);
             return nav_mesh_->getPaths(initial_points, goal_points);
         });
 
-        unreal_entry_point_binder->bindFuncUnreal("unreal_service", "get_world_name", [this]() -> std::string {
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_world_name", [this]() -> std::string {
             SP_ASSERT(getWorld());
             return Unreal::toStdString(getWorld()->GetName());
         });

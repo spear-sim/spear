@@ -175,7 +175,7 @@ public:
         return "";
     }
 
-    static std::string toStringFromPtr(void* ptr)
+    static std::string toStringFromPtr(const void* ptr)
     {
         // TODO: remove platform-specific logic
         #if BOOST_COMP_MSVC

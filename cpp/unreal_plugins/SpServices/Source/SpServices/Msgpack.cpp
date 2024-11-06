@@ -34,7 +34,7 @@ std::map<std::string, clmdep_msgpack::object> Msgpack::toMap(clmdep_msgpack::obj
 // functions for sending custom types as return values
 //
 
-clmdep_msgpack::object Msgpack::toObject(void* ptr, clmdep_msgpack::zone& zone)
+clmdep_msgpack::object Msgpack::toObject(const void* ptr, clmdep_msgpack::zone& zone)
 {
     return clmdep_msgpack::object(reinterpret_cast<uint64_t>(ptr), zone);
 }

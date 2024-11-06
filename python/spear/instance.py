@@ -27,13 +27,14 @@ class Instance():
         # Additionally, all other services call RPC entry points through EngineService.call(), rather than
         # going through the RPC client directly. So we pass in the RPC client directly when constructing
         # EngineService, and we pass in EngineService when constructing all other services.
-        self._engine_service = spear.EngineService(self._rpc_client, self._config)
+        self.engine_service = spear.EngineService(self._rpc_client, self._config)
 
         # Construct all other services by passing in EngineService
-        self.enhanced_input_service = spear.EnhancedInputService(self._engine_service)
-        self.legacy_service = spear.LegacyService(self._engine_service)
-        self.unreal_service = spear.UnrealService(self._engine_service)
-        self.sp_func_service = spear.SpFuncService(self._engine_service)
+        self.enhanced_input_service = spear.EnhancedInputService(self.engine_service)
+        self.legacy_service = spear.LegacyService(self.engine_service)
+        self.sp_func_service = spear.SpFuncService(self.engine_service)
+        self.unreal_service = spear.UnrealService(self.engine_service)
+        self.world_service = spear.WorldService(self.engine_service)
 
         # We need to do this after we have a valid EngineService object because we call EngineService.begin_frame()
         # and EngineService.end_frame() here.
@@ -41,17 +42,17 @@ class Instance():
 
     def is_running(self):
         try:
-            world_initialized = self._engine_service.is_world_initialized()
-            return world_initialized
+            initialized = self.engine_service.is_initialized()
+            return initialized
         except:
             pass # no need to log exception because this case is expected when the instance is no longer running
         return False
 
     def begin_frame(self):
-        return self._engine_service.begin_frame()
+        return self.engine_service.begin_frame()
 
     def end_frame(self):
-        return self._engine_service.end_frame()
+        return self.engine_service.end_frame()
 
     def close(self):
         # Note that in the constructor, we launch the Unreal instance first and then initialize the RPC client. Normally,
@@ -172,7 +173,7 @@ class Instance():
             return
 
         try:
-            self._engine_service.request_exit()
+            self.engine_service.request_exit()
         except:
             pass # no need to log exception because this case is expected when the instance is no longer running
 
@@ -216,9 +217,9 @@ class Instance():
                     reconnect_limit=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
 
                 # don't use self._engine_service because it hasn't been initialized yet
-                world_initialized = self._rpc_client.call("engine_service.is_world_initialized")
-                spear.log("is_world_initialized: ", world_initialized)
-                if world_initialized:
+                engine_service_is_initialized = self._rpc_client.call("engine_service.is_initialized")
+                spear.log("engine_service_is_initialized: ", engine_service_is_initialized)
+                if engine_service_is_initialized:
                     connected = True
 
             except Exception as e:
@@ -251,9 +252,9 @@ class Instance():
                         msgpackrpc.Address("127.0.0.1", self._config.SP_SERVICES.RPC_SERVER_PORT), 
                         timeout=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
                         reconnect_limit=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
-                    world_initialized = self._rpc_client.call("engine_service.is_world_initialized")
-                    spear.log("is_world_initialized: ", world_initialized)
-                    if world_initialized:
+                    engine_service_is_initialized = self._rpc_client.call("engine_service.is_initialized")
+                    spear.log("engine_service_is_initialized: ", engine_service_is_initialized)
+                    if engine_service_is_initialized:
                         connected = True
                         break
 

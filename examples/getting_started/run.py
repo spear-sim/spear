@@ -8,6 +8,7 @@ import os
 import pprint
 import spear
 
+
 if __name__ == "__main__":
 
     # load config

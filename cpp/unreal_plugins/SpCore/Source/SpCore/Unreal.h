@@ -29,6 +29,7 @@
 #include <UObject/Object.h>                 // UObject
 #include <UObject/ReflectedTypeAccessors.h> // StaticEnum
 #include <UObject/UnrealType.h>             // FProperty
+#include <UObject/UObjectGlobals.h>         // NewObject
 
 #include "SpCore/Assert.h"
 #include "SpCore/Std.h"
@@ -123,17 +124,43 @@ public:
     ~Unreal() = delete;
 
     //
+    // Helper function for structs
+    //
+
+    template <CClass TClass>
+    static UStruct* getStaticStruct()
+    {
+        return TClass::StaticClass();
+    }
+
+    template <CStruct TStruct>
+    static UStruct* getStaticStruct()
+    {
+        return TStruct::StaticStruct();
+    }
+
+    static std::string getStaticStructName(const UStruct* ustruct);
+
+    //
+    // Find special struct by name. For this function to behave as expected, ASpSpecialStructActor must have
+    // a UPROPERTY defined on it named TypeName_ of type TypeName.
+    //
+
+    static UStruct* findSpecialStructByName(const std::string& struct_name);
+
+    //
     // Get and set object properties, uobject can't be const because we cast it to void*
     //
 
-    static std::string getObjectPropertiesAsString(UObject* uobject);
-    static std::string getObjectPropertiesAsString(void* value_ptr, const UStruct* ustruct);
+    static std::string getObjectPropertiesAsString(const UObject* uobject);
+    static std::string getObjectPropertiesAsString(const void* value_ptr, const UStruct* ustruct);
 
     static void setObjectPropertiesFromString(UObject* uobject, const std::string& string);
     static void setObjectPropertiesFromString(void* value_ptr, const UStruct* ustruct, const std::string& string);
 
     //
-    // Find property by name, get and set property values, uobject can't be const because we cast it to void*
+    // Find property by name, get and set property values, uobject can't be const because we cast it to
+    // (non-const) void*, value_ptr can't be const because we assign to PropertyDesc::value_ptr_.
     //
 
     struct PropertyDesc
@@ -147,20 +174,16 @@ public:
 
     static std::string getPropertyValueAsString(const PropertyDesc& property_desc);
     static void setPropertyValueFromString(const PropertyDesc& property_desc, const std::string& string);
+    static void setPropertyValueFromJsonValue(const PropertyDesc& property_desc, TSharedPtr<FJsonValue> json_value);
 
     //
-    // Find function by name, call function, world can't be const because we cast it to void*, uobject can't
-    // be const because we call uobject->ProcessEvent(...) which is non-const, ufunction can't be const
-    // because we call because we pass it to uobject->ProcessEvent(...) which expects non-const
+    // Find function by name, call function, uobject can't be const because we call uobject->ProcessEvent(...)
+    // which is non-const, ufunction can't be const because we call because we pass it to uobject->ProcessEvent(...)
+    // which expects non-const
     //
 
     static UFunction* findFunctionByName(const UClass* uclass, const std::string& function_name, EIncludeSuperFlag::Type include_super_flag = EIncludeSuperFlag::IncludeSuper);
-    static std::map<std::string, std::string> callFunction(UWorld* world, UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args = {}, const std::string& world_context = "WorldContextObject");
-
-    //
-    // Find special struct by name. For this function to behave as expected, ASpSpecialStructActor must have
-    // a UPROPERTY defined on it named TypeName_ of type TypeName.
-    //
+    static std::map<std::string, std::string> callFunction(const UWorld* world, UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args = {}, const std::string& world_context = "WorldContextObject");
 
     //
     // Helper functions to create components.
@@ -854,17 +877,17 @@ public:
     //
 
     template <CSubsystemProvider TSubsystemProvider>
-    static TSubsystemProvider* getSubsystemProvider(UObject* context)
+    static TSubsystemProvider* getSubsystemProvider(const UObject* context)
     {
         SP_ASSERT(false);
         return nullptr;
     }
 
     template <>
-    ULocalPlayer* getSubsystemProvider<ULocalPlayer>(UObject* context)
+    ULocalPlayer* getSubsystemProvider<ULocalPlayer>(const UObject* context)
     {
         SP_ASSERT(context);
-        UWorld* world = Cast<UWorld>(context);
+        const UWorld* world = Cast<UWorld>(context); // no RTTI available, so use Cast instead of dynamic_cast
         SP_ASSERT(world);
         APlayerController* player_controller = world->GetFirstPlayerController();
         SP_ASSERT(player_controller);
@@ -982,25 +1005,31 @@ public:
 
     // String output, enum input
 
-    template <CEnum TEnum, typename TSrcEnum = TEnum>
-    static std::string getStringFromEnumValue(TSrcEnum src)
+    template <CEnum TEnum>
+    static std::string getStringFromEnumValue(TEnum src)
+    {
+        return getStringFromEnumValueAs<TEnum>(src);
+    }
+
+    template <CEnum TEnum, typename TSrcEnum>
+    static std::string getStringFromEnumValueAs(TSrcEnum src)
     {
         UEnum* uenum = StaticEnum<TEnum>();
         return toStdString(uenum->GetNameStringByValue(getEnumValue(src)));
     }
 
-    template <CEnum TEnum, typename TSrcEnum = TEnum>
-    static std::vector<std::string> getStringsFromCombinedEnumFlagValue(TSrcEnum src)
+    template <CEnum TEnum>
+    static std::vector<std::string> getStringsFromCombinedEnumFlagValue(TEnum src)
+    {
+        return getStringsFromCombinedEnumFlagValueAs<TEnum>(src);
+    }
+
+    template <CEnum TEnum, typename TSrcEnum>
+    static std::vector<std::string> getStringsFromCombinedEnumFlagValueAs(TSrcEnum src)
     {
         UEnum* uenum = StaticEnum<TEnum>();
         return Std::tokenize(toStdString(uenum->GetValueOrBitfieldAsString(getEnumValue(src))), "| ");
     }
-
-    //
-    // Helper function to find special structs
-    //
-
-    static UStruct* findSpecialStructByName(const std::string& struct_name);
 
     //
     // Container functions
@@ -1030,6 +1059,16 @@ public:
     static TArray<TValue> toTArray(const std::vector<TValue>& src)
     {
         TArray<TValue> dest;
+        for (auto& data : src) {
+            dest.Add(data);
+        }
+        return dest;
+    }
+
+    template <typename TDestValue, typename TValue>
+    static TArray<TDestValue> toTArrayOf(const std::vector<TValue>& src)
+    {
+        TArray<TDestValue> dest;
         for (auto& data : src) {
             dest.Add(data);
         }
@@ -1079,4 +1118,6 @@ private:
     static std::string getMapPropertyValueAsFormattedString(
         const FProperty* inner_key_property, const std::vector<std::string>& inner_key_strings,
         const FProperty* inner_value_property, const std::vector<std::string>& inner_value_strings);
+
+    static std::string getQuoteStringForProperty(const FProperty* property);
 };

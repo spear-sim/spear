@@ -91,7 +91,9 @@ void ASpDebugWidget::GetAndSetObjectProperties()
     SP_LOG(static_mesh_actor_from_registrar);
 
     // Get actor from class
-    AActor* static_mesh_actor_from_class = Unreal::findActorByClass(world, AStaticMeshActor::StaticClass());
+    std::vector<AActor*> static_mesh_actors_from_class = Unreal::findActorsByClass(world, AStaticMeshActor::StaticClass());
+    SP_ASSERT(!static_mesh_actors_from_class.empty());
+    AActor* static_mesh_actor_from_class = static_mesh_actors_from_class.at(0);
     SP_LOG(Unreal::toStdString(static_mesh_actor_from_class->GetName()));
 
     // Get and set object properties from UObject*
@@ -218,6 +220,12 @@ void ASpDebugWidget::GetAndSetObjectProperties()
     ArrayOfVectors.Add(FVector(1.0f, 2.0f, 3.0f));
     ArrayOfVectors.Add(FVector(4.0f, 5.0f, 6.0f));
     ArrayOfStrings.Add(Unreal::toFString("Hello"));
+    ArrayOfPointers.Add(this);
+    ArrayOfPointers.Add(nullptr);
+    ArrayOfPointers.Add(this);
+    ArrayOfEnums.Add(EDebugWidgetEnum::Hello);
+    ArrayOfEnums.Add(EDebugWidgetEnum::World);
+    ArrayOfEnums.Add(EDebugWidgetEnum::Hello);
     SP_LOG(Unreal::getObjectPropertiesAsString(this));
 
     SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "ArrayOfInts[1]")));
@@ -229,16 +237,26 @@ void ASpDebugWidget::GetAndSetObjectProperties()
     SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "PrimaryActorTick.TickGroup")));
 
     SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "ArrayOfInts")));
-    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "ArrayOfVectors")));
+    Unreal::setPropertyValueFromString(Unreal::findPropertyByName(this, "ArrayOfInts"), "[9, 8, 7, 6, 5, 4, 3, 2, 1, 0]");
+    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "ArrayOfInts")));
 
+    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "ArrayOfVectors")));
     str = Std::toString("{", "\"x\": ", 12.3*i, ", \"y\": ", 45.6*i, ", \"z\": ", 78.9*i, "}");
     Unreal::setPropertyValueFromString(Unreal::findPropertyByName(this, "ArrayOfVectors"), "[ " + str + ", " + str + ", " + str + "]");
     SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "ArrayOfVectors")));
+
+    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "ArrayOfPointers")));
+    Unreal::setPropertyValueFromString(Unreal::findPropertyByName(this, "ArrayOfPointers"), "[\"0x0\", \"" + Std::toStringFromPtr(static_mesh_actor->GetStaticMeshComponent()) + "\"]");
+    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "ArrayOfPointers")));
 
     MapFromIntToInt.Add(1, 2);
     MapFromIntToInt.Add(3, 4);
     MapFromIntToInt.Add(5, 6);
     SP_LOG(Unreal::getObjectPropertiesAsString(this));
+
+    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "MapFromIntToInt")));
+    Unreal::setPropertyValueFromString(Unreal::findPropertyByName(this, "MapFromIntToInt"), "{\"10\": 20, \"30\": 40, \"3\": 100}");
+    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "MapFromIntToInt")));
 
     MapFromStringToVector.Add(Unreal::toFString("Hello"), 1.0*vec);
     MapFromStringToVector.Add(Unreal::toFString("World"), 2.0*vec);
@@ -255,6 +273,10 @@ void ASpDebugWidget::GetAndSetObjectProperties()
     SetOfStrings.Add("World");
     SetOfStrings.Add("2");
     SP_LOG(Unreal::getObjectPropertiesAsString(this));
+    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "SetOfStrings")));
+
+    SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "SetOfStrings")));
+    Unreal::setPropertyValueFromString(Unreal::findPropertyByName(this, "SetOfStrings"), "[\"10\", \"Hello\", \"30\"]");
     SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "SetOfStrings")));
 
     //

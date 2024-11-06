@@ -34,7 +34,7 @@ public class SpModuleRules : ModuleRules
 
         PublicDependencyModuleNames.AddRange(new string[] {
             "Chaos", "ChaosVehiclesCore", "Core", "CoreUObject", "Engine", "EngineSettings", "InputCore", "Json", "JsonUtilities", "NavigationSystem",
-            "PhysicsCore", "RenderCore", "RHI", "XmlParser"});
+            "PhysicsCore", "RenderCore", "RHI", "Slate", "XmlParser"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         // Resolve the top-level module directory and the ThirdParty directory, taking care to follow symlinks.

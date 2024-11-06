@@ -8,6 +8,7 @@ import numpy as np
 import os
 import spear
 
+
 if __name__ == "__main__":
 
     # load config

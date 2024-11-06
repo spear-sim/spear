@@ -114,9 +114,14 @@ class EngineService():
         return return_value
 
     # This function is used in Instance.is_running() to determine if there is a valid simulation running.
-    def is_world_initialized(self):
-        return self.call("engine_service.is_world_initialized")
+    def is_initialized(self):
+        return self.call("engine_service.is_initialized")
 
     # This function is used in Instance.close() to close the Unreal application.
     def request_exit(self):
         return self.call("engine_service.request_exit")
+
+    # Entry points for miscellaneous functions that are accessible via GEngine.
+
+    def get_viewport_size(self):
+        return self.call("engine_service.get_viewport_size")

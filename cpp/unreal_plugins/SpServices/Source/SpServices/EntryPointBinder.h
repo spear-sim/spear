@@ -13,6 +13,6 @@ concept CEntryPointBinder =
 template <typename TUnrealEntryPointBinder>
 concept CUnrealEntryPointBinder =
     requires(TUnrealEntryPointBinder unreal_entry_point_binder) {
-        { unreal_entry_point_binder.bindFuncNoUnreal("", "", []() -> void {}) } -> std::same_as<void>;
-        { unreal_entry_point_binder.bindFuncUnreal("", "", []() -> void {}) } -> std::same_as<void>;
+        { unreal_entry_point_binder.bindFuncToExecuteOnWorkerThread("", "", []() -> void {}) } -> std::same_as<void>;
+        { unreal_entry_point_binder.bindFuncToExecuteOnGameThread("", "", []() -> void {}) } -> std::same_as<void>;
     };

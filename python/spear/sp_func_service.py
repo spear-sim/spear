@@ -2,7 +2,6 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-import json
 import mmap
 import multiprocessing.shared_memory
 import numpy as np
@@ -79,21 +78,8 @@ class SpFuncService():
                 assert False
             packed_arrays[array_name] = packed_array
 
-        # If an arg is a string, then don't convert. If an arg is a spear.Ptr, then use spear.Ptr.to_string()
-        # to convert. If an arg is any other type, then assume it is valid JSON and use json.dumps(...) to
-        # convert.
-        unreal_obj_strings = {}
-        for unreal_obj_name, unreal_obj in unreal_objs.items():
-            if isinstance(unreal_obj, str):
-                unreal_obj_string = unreal_obj
-            elif isinstance(unreal_obj, spear.Ptr):
-                unreal_obj_string = unreal_obj.to_string()
-            else:
-                unreal_obj_string = json.dumps(unreal_obj)
-            unreal_obj_strings[unreal_obj_name] = unreal_obj_string
-
         # Call function.
-        args = {"packed_arrays": packed_arrays, "unreal_obj_strings": unreal_obj_strings, "info": info}
+        args = {"packed_arrays": packed_arrays, "unreal_obj_strings": spear.to_json_strings(unreal_objs), "info": info}
         return_values = self._entry_point_caller.call("sp_func_service.call_function", uobject, function_name, args)
 
         # If a return value is backed by Internal storage, then convert to a numpy array using the packed
@@ -106,6 +92,7 @@ class SpFuncService():
                 array = np.frombuffer(packed_array["data"], dtype=dtype, count=-1).reshape(packed_array["shape"])
             elif packed_array["data_source"] == "Shared":
                 # assume that the handle for the array is uobject_shared_memory_handles
+                assert packed_array["shared_memory_name"] in uobject_shared_memory_handles
                 assert "ReturnValue" in uobject_shared_memory_handles[packed_array["shared_memory_name"]]["view"]["usage_flags"]
                 buffer = uobject_shared_memory_handles[packed_array["shared_memory_name"]]["buffer"]
                 array = np.ndarray(shape=packed_array["shape"], dtype=np.dtype(packed_array["data_type"]), buffer=buffer)
@@ -113,19 +100,8 @@ class SpFuncService():
                 assert False
             arrays[packed_array_name] = array
 
-        # Try to parse each return value string as JSON, and if that doesn't work, then return the string
-        # directly. If the returned string is intended to be a handle, then the user can get it as a handle
-        # by calling spear.to_handle(...).
-        unreal_objs = {}
-        for unreal_obj_name, unreal_obj_string in return_values["unreal_obj_strings"].items():
-            try:
-                unreal_obj = json.loads(unreal_obj_string)
-            except:
-                unreal_obj = unreal_obj_string
-            unreal_objs[unreal_obj_name] = unreal_obj
-
         # Return all converted data.
-        return {"arrays": arrays, "unreal_objs": unreal_objs, "info": return_values["info"]}
+        return {"arrays": arrays, "unreal_objs": spear.try_to_dicts(return_values["unreal_obj_strings"]), "info": return_values["info"]}
 
     #
     # Low-level helper functions for interacting with shared memory. Most users will not need to call these

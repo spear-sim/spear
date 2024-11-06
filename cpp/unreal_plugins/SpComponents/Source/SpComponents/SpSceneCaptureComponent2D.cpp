@@ -6,9 +6,14 @@
 
 #include <memory> // std::make_unique
 
-#include <Engine/EngineTypes.h> // EEndPlayReason
+#include <Components/SceneCaptureComponent2D.h>
+#include <Engine/Scene.h>                 // FPostProcessingSettings
+#include <Engine/TextureRenderTarget2D.h> // ETextureRenderTargetFormat
+#include <Materials/MaterialInstanceDynamic.h>
+#include <Math/Color.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
+#include <UObject/UObjectGlobals.h>       // NewObject
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
@@ -25,6 +30,12 @@ USpSceneCaptureComponent2D::USpSceneCaptureComponent2D()
 
     SpFuncComponent = Unreal::createComponentInsideOwnerConstructor<USpFuncComponent>(this, "sp_func_component");
     SP_ASSERT(SpFuncComponent);
+
+    // we want to be able to capture the scene even when the game is paused; note that we don't set
+    // PrimaryActorTick.TickGroup because we don't want to interfere with when our component gets
+    // ticked
+    PrimaryComponentTick.bCanEverTick = true;
+    PrimaryComponentTick.bTickEvenWhenPaused = true;
 }
 
 USpSceneCaptureComponent2D::~USpSceneCaptureComponent2D()
@@ -32,84 +43,113 @@ USpSceneCaptureComponent2D::~USpSceneCaptureComponent2D()
     SP_LOG_CURRENT_FUNCTION();
 }
 
-void USpSceneCaptureComponent2D::BeginPlay()
+void USpSceneCaptureComponent2D::Initialize()
 {
-    SP_LOG_CURRENT_FUNCTION();
+    if (initialized_) {
+        return;
+    }
 
-    USceneCaptureComponent2D::BeginPlay();
+    auto texture_render_target_2d = NewObject<UTextureRenderTarget2D>(this);
+    SP_ASSERT(texture_render_target_2d);
+    texture_render_target_2d->RenderTargetFormat = TextureRenderTargetFormat;
+    texture_render_target_2d->ClearColor = FLinearColor(255, 0, 255); // bright pink
+    texture_render_target_2d->InitAutoFormat(Width, Height);
+    bool clear_render_target = true;
+    texture_render_target_2d->UpdateResourceImmediate(clear_render_target);
+    TextureTarget = texture_render_target_2d;
+    SetVisibility(true);
 
-    int shared_memory_num_bytes = 1024;
-    shared_memory_region_ = std::make_unique<SharedMemoryRegion>(shared_memory_num_bytes);
-    SP_ASSERT(shared_memory_region_);
+    if (Material) {
+        material_instance_dynamic_ = UMaterialInstanceDynamic::Create(Material, this);
+        PostProcessSettings.AddBlendable(material_instance_dynamic_, 1.0f);
+    }
 
-    // the "smem_observation" name needs to be unique within this USpFuncComponent, but does not need to be globally unique
-    shared_memory_view_ = SpFuncSharedMemoryView(shared_memory_region_->getView(), SpFuncSharedMemoryUsageFlags::ReturnValue);
-    SpFuncComponent->registerSharedMemoryView("smem_observation", shared_memory_view_);
+    if (bUseSharedMemory) {
+        SP_ASSERT(!shared_memory_region_);
+        SpFuncArrayDataType channel_data_type = Unreal::getEnumValueAs<SpFuncArrayDataType, ESpFuncArrayDataType>(ChannelDataType);
+        int num_bytes = Height*Width*NumChannelsPerPixel*SpFuncArrayDataTypeUtils::getSizeOf(channel_data_type);
+        shared_memory_region_ = std::make_unique<SharedMemoryRegion>(num_bytes);
+        SP_ASSERT(shared_memory_region_);
+        shared_memory_view_ = SpFuncSharedMemoryView(shared_memory_region_->getView(), SpFuncSharedMemoryUsageFlags::ReturnValue);
+        SpFuncComponent->registerSharedMemoryView("smem:sp_scene_capture_component_2d", shared_memory_view_); // name needs to be unique per USpFuncComponent
+    }
 
-    SpFuncComponent->registerFunc("hello_world", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
+    SpFuncComponent->registerFunc("read_pixels", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
 
-        // define arg objects
-        SpFuncArrayView<double> action("action");
-        SpFuncArrayView<double> action_shared("action_shared");
-        UnrealObj<FVector> in_location("in_location");
-        UnrealObj<FRotator> in_rotation("in_rotation");
+        SP_ASSERT(initialized_);
 
-        // initialize arg objects from the data bundle that was passed in
-        SpFuncArrayUtils::setViewsFromPackedArrays({action.getPtr(), action_shared.getPtr()}, args.packed_arrays_);
-        UnrealObjUtils::setObjectPropertiesFromStrings({in_location.getPtr(), in_rotation.getPtr()}, args.unreal_obj_strings_);
+        SpFuncArrayDataType channel_data_type = Unreal::getEnumValueAs<SpFuncArrayDataType, ESpFuncArrayDataType>(ChannelDataType);
 
-        SP_LOG("action[0]:        ", Std::at(action.getView(), 0));
-        SP_LOG("action[1]:        ", Std::at(action.getView(), 1));
-        SP_LOG("action[2]:        ", Std::at(action.getView(), 2));
-        SP_LOG("action_shared[0]: ", Std::at(action_shared.getView(), 0));
-        SP_LOG("action_shared[1]: ", Std::at(action_shared.getView(), 1));
-        SP_LOG("action_shared[2]: ", Std::at(action_shared.getView(), 2));
-        SP_LOG("in_location:      ", in_location.getObj().X, " ", in_location.getObj().Y, " ", in_location.getObj().Z);
-        SP_LOG("in_rotation:      ", in_rotation.getObj().Pitch, " ", in_rotation.getObj().Yaw, " ", in_rotation.getObj().Roll);
-        SP_LOG("info:             ", args.info_);
+        SpFuncPackedArray packed_array;
+        packed_array.shape_ = {Height, Width, NumChannelsPerPixel};
+        packed_array.data_type_ = channel_data_type;
 
-        // define return value objects
-        SpFuncArray<double> observation("observation");
-        SpFuncArray<double> observation_shared("observation_shared");
-        UnrealObj<FVector> out_location("out_location");
-        UnrealObj<FRotator> out_rotation("out_rotation");
+        void* dest_ptr = nullptr;
+        
+        if (bUseSharedMemory) {
+            packed_array.view_ = shared_memory_view_.data_;
+            packed_array.data_source_ = SpFuncArrayDataSource::Shared;
+            packed_array.shared_memory_name_ = "smem:sp_scene_capture_component_2d";
+            packed_array.shared_memory_usage_flags_ = shared_memory_view_.usage_flags_;
+            dest_ptr = shared_memory_view_.data_;
 
-        // set return value objects
-        observation.setData({12.0, 13.0, 14.0});
-        observation_shared.setData(shared_memory_view_, {3}, "smem_observation");
-        observation_shared.setDataValues({15.0, 16.0, 17.0});
-        out_location.setObj(FVector(18.0, 19.0, 20.0));
-        out_rotation.setObj(FRotator(21.0, 22.0, 23.0));
-        std::string info = "Success";
+        } else {
+            int num_bytes = Height*Width*NumChannelsPerPixel*SpFuncArrayDataTypeUtils::getSizeOf(channel_data_type);
+            packed_array.data_.resize(num_bytes);
+            packed_array.view_ = packed_array.data_.data();
+            packed_array.data_source_ = SpFuncArrayDataSource::Internal;
+            dest_ptr = packed_array.data_.data();
+        }
+        SP_ASSERT(dest_ptr);
 
-        SP_LOG("observation[0]:        ", Std::at(observation.getView(), 0));
-        SP_LOG("observation[1]:        ", Std::at(observation.getView(), 1));
-        SP_LOG("observation[2]:        ", Std::at(observation.getView(), 2));
-        SP_LOG("observation_shared[0]: ", Std::at(observation_shared.getView(), 0));
-        SP_LOG("observation_shared[1]: ", Std::at(observation_shared.getView(), 1));
-        SP_LOG("observation_shared[2]: ", Std::at(observation_shared.getView(), 2));
-        SP_LOG("out_location:          ", out_location.getObj().X, " ", out_location.getObj().Y, " ", out_location.getObj().Z);
-        SP_LOG("out_rotation:          ", out_rotation.getObj().Pitch, " ", out_rotation.getObj().Yaw, " ", out_rotation.getObj().Roll);
-        SP_LOG("info:                  ", info);
+        if (bReadPixelData) {
+            FTextureRenderTargetResource* texture_render_target_resource = TextureTarget->GameThread_GetRenderTargetResource();
+            SP_ASSERT(texture_render_target_resource);
 
-        // initialize output data bundle from return value objects
+            // ReadPixelsPtr assumes 4 channels per pixel, 1 byte per channel
+            if (NumChannelsPerPixel == 4 && SpFuncArrayDataTypeUtils::getSizeOf(channel_data_type) == 1) {
+                texture_render_target_resource->ReadPixelsPtr(static_cast<FColor*>(dest_ptr));
+
+            // ReadLinearColorPixelsPtr assumes 4 channels per pixel, 4 bytes per channel
+            } else if (NumChannelsPerPixel == 4 && SpFuncArrayDataTypeUtils::getSizeOf(channel_data_type) == 4) {
+                texture_render_target_resource->ReadLinearColorPixelsPtr(static_cast<FLinearColor*>(dest_ptr));
+
+            } else {
+                SP_ASSERT(false);
+            }
+        }
+
         SpFuncDataBundle return_values;
-        return_values.packed_arrays_ = SpFuncArrayUtils::moveToPackedArrays({observation.getPtr(), observation_shared.getPtr()});
-        return_values.unreal_obj_strings_ = UnrealObjUtils::getObjectPropertiesAsStrings({out_location.getPtr(), out_rotation.getPtr()});
-        return_values.info_ = info;
-
+        return_values.packed_arrays_ = {{"data", std::move(packed_array)}};
         return return_values;
     });
+
+    initialized_ = true;
 }
 
-void USpSceneCaptureComponent2D::EndPlay(const EEndPlayReason::Type end_play_reason)
+void USpSceneCaptureComponent2D::Terminate()
 {
-    SP_LOG_CURRENT_FUNCTION();
+    if (!initialized_) {
+        return;
+    }
 
-    USceneCaptureComponent2D::EndPlay(end_play_reason);
+    initialized_ = false;
 
-    SpFuncComponent->unregisterFunc("hello_world");
-    SpFuncComponent->unregisterSharedMemoryView("smem_observation");
+    SpFuncComponent->unregisterFunc("read_pixels");
 
-    shared_memory_region_ = nullptr;
+    if (bUseSharedMemory) {
+        SP_ASSERT(shared_memory_region_);
+        SpFuncComponent->unregisterSharedMemoryView("smem:sp_scene_capture_component_2d");
+        shared_memory_view_ = SpFuncSharedMemoryView();
+        shared_memory_region_ = nullptr;
+    }
+
+    if (Material) {
+        SP_ASSERT(material_instance_dynamic_);
+        PostProcessSettings.RemoveBlendable(material_instance_dynamic_);
+    }
+
+    TextureTarget = nullptr;
+
+    SetVisibility(false);
 }

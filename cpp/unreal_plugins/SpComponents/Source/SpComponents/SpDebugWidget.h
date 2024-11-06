@@ -22,6 +22,13 @@
 
 class UObject;
 
+UENUM()
+enum class EDebugWidgetEnum
+{
+    Hello,
+    World
+};
+
 UCLASS(ClassGroup="SPEAR", Config=Spear, HideCategories=(Rendering, Replication, Collision, HLOD, Physics, Networking, Input, Actor, Cooking))
 class ASpDebugWidget : public AActor
 {
@@ -85,6 +92,12 @@ private:
 
     UPROPERTY()
     TArray<FString> ArrayOfStrings;
+
+    UPROPERTY()
+    TArray<UObject*> ArrayOfPointers;
+
+    UPROPERTY()
+    TArray<EDebugWidgetEnum> ArrayOfEnums;
 
     UPROPERTY()
     TMap<int, int> MapFromIntToInt;
