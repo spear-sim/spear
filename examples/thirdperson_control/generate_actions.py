@@ -7,7 +7,7 @@ import spear
 
 default_action = {
     "AddMovementInput": np.array([0.0, 0.0, 0.0], dtype=np.float64),
-    "Jump": np.array([0.0,0.0,0.0], dtype=np.float64),
+    "Jump": np.array([0.0, 0.0, 0.0], dtype=np.float64),
 }
 
 
@@ -32,11 +32,11 @@ if __name__ == "__main__":
     for _ in range(1):
         action = default_action.copy()
         # action["AddMovementInput"] = np.array([0.0, 0.0, 0.0], dtype=np.float64)
-        action["Jump"] = np.array([1.0,0.0,0.0], dtype=np.float64)
+        action["Jump"] = np.array([1.0, 0.0, 0.0], dtype=np.float64)
         df = pd.concat([df, get_data_frame(action)])
     for _ in range(100):
         action = default_action.copy()
-        action["AddMovementInput"] = np.array([1.0, 0.0, 0.0], dtype=np.float64)
+        action["AddMovementInput"] = np.array([0.0, 1.0, 0.0], dtype=np.float64)
         df = pd.concat([df, get_data_frame(action)])
     # save to csv
     df.to_csv(args.actions_file, float_format="%.5f", mode="w", index=False)
