@@ -123,7 +123,7 @@ if __name__ == "__main__":
             Jump_value = action['Jump']
             if Jump_value[0] != 0:
                 # instance.unreal_service.call_function(uobject=agent, ufunction=jump_func, args={})
-                instance.enhanced_input_service.inject_input_for_actor(
+                instance.enhanced_input_service.inject_input_for_blueprint_actor(
                     actor=agent,
                     input_action_name="IA_Jump",
                     trigger_event="Triggered",
@@ -133,7 +133,7 @@ if __name__ == "__main__":
             AddMovementInput_value = action['AddMovementInput']
             print("AddMovementInput_value", AddMovementInput_value)
             if np.any(AddMovementInput_value):
-                instance.enhanced_input_service.inject_input_for_actor(
+                instance.enhanced_input_service.inject_input_for_blueprint_actor(
                     actor=agent,
                     input_action_name="IA_Move",
                     trigger_event="Triggered",

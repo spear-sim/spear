@@ -219,43 +219,9 @@ public:
                 for (const FBlueprintEnhancedInputActionBinding& binding : enhanced_input_binding->InputActionDelegateBindings) {
                     const UInputAction* input_action = binding.InputAction;
                     if (input_action_name == Unreal::toStdString(input_action->GetName()) && trigger_event == binding.TriggerEvent) {
-                        // TODO now we have object and function
-                        UFunction* ufunction = Unreal::findFunctionByName(uobject_ptr->GetClass(), Unreal::toStdString(binding.FunctionNameToBind),
-                                                                         EIncludeSuperFlag::Type::IncludeSuper);
-                        SP_ASSERT(ufunction);
-
-                        uint16 num_bytes      = ufunction->ParmsSize;
-                        uint8_t initial_value = 0;
-                        std::vector<uint8_t> args_vector(num_bytes, initial_value);
-
-                        std::vector<Unreal::PropertyDesc> property_descs;
-                        for (TFieldIterator<FProperty> itr(ufunction); itr; ++itr) {
-                            Unreal::PropertyDesc property_desc;
-                            property_desc.property_ = *itr;
-                            SP_ASSERT(property_desc.property_);
-                            SP_ASSERT(property_desc.property_->HasAnyPropertyFlags(EPropertyFlags::CPF_Parm));
-
-                            property_desc.value_ptr_ = property_desc.property_->ContainerPtrToValuePtr<void>(args_vector.data());
-                            SP_ASSERT(property_desc.value_ptr_);
-
-                            property_descs.push_back(std::move(property_desc));
-                        }
-
-                        // Set property values.
-                        for (auto& property_desc : property_descs) {
-                            std::string property_name = Unreal::toStdString(property_desc.property_->GetName());
-                        
-                            if (property_name == "ActionValue") {
-                                if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
-                                    FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
-                                }
-                                //property_desc.value_ptr_  = (void*)temp;
-                                //Unreal::setPropertyValueFromString(property_desc, args.at(property_name));
-                            }
-                        }
-                        uobject_ptr->ProcessEvent(ufunction, args_vector.data());
-                        SP_LOG("");
-
+                        FEnhancedInputActionEventDelegateBinding<FEnhancedInputActionHandlerDynamicSignature> AB(input_action, binding.TriggerEvent);
+                        AB.Delegate.BindDelegate(uobject_ptr, binding.FunctionNameToBind);
+                        AB.Delegate.Execute(input_action_value, 0.0, 0.0, input_action);
                     }
                 }
             });
