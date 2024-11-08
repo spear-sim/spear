@@ -23,7 +23,16 @@ if __name__ == "__main__":
     # individual files to be removed
     files = []
 
-    # based on the platform, add project generated files or directories
+    # plugin files and directories
+    plugins_dir = os.path.realpath(os.path.join(unreal_project_dir, "Plugins"))
+    plugins = os.listdir(plugins_dir)
+    for plugin in plugins:
+        plugin_dir = os.path.realpath(os.path.join(plugins_dir, plugin))
+        dirs.extend([
+            os.path.realpath(os.path.join(plugin_dir, "Binaries")),
+            os.path.realpath(os.path.join(plugin_dir, "Intermediate"))])
+
+    # platform-specific files and directories
     if sys.platform == "win32":
         dirs.extend([
             os.path.realpath(os.path.join(unreal_project_dir, ".vs")),
@@ -43,15 +52,6 @@ if __name__ == "__main__":
 
     else:
         assert False # TODO: update for Linux
-
-    # add plugin specific directories to the list of dirs to be removed
-    plugins_dir = os.path.realpath(os.path.join(unreal_project_dir, "Plugins"))
-    plugins = os.listdir(plugins_dir)
-    for plugin in plugins:
-        plugin_dir = os.path.realpath(os.path.join(plugins_dir, plugin))
-        dirs.extend([
-                os.path.realpath(os.path.join(plugin_dir, "Binaries")),
-                os.path.realpath(os.path.join(plugin_dir, "Intermediate"))])
 
     # remove dirs
     for dir in dirs:
