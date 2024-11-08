@@ -15,6 +15,7 @@
 #include <Engine/LocalPlayer.h>
 #include <EnhancedInputComponent.h>  // FEnhancedInputActionEventBinding, FInputDebugKeyBinding, UEnhancedInputComponent
 #include <EnhancedInputSubsystems.h> // UEnhancedInputLocalPlayerSubsystem
+#include <EnhancedInputActionDelegateBinding.h>
 #include <Framework/Commands/InputChord.h>
 #include <InputAction.h>             // FInputActionInstance
 #include <InputActionValue.h>        // EInputActionValueType
@@ -23,6 +24,7 @@
 #include <Math/Vector.h>
 #include <Templates/UniquePtr.h>
 #include <UObject/ObjectPtr.h>
+#include <UObject/UnrealType.h>
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
@@ -157,7 +159,7 @@ public:
                 Unreal::setObjectPropertiesFromString(&sp_input_action_instance, FSpInputActionInstance::StaticStruct(), input_action_instance_string);
 
                 // The internal FInputActionValue in FInputActionInstance isn't exposed to the property
-                // system, so we handle it separately using this set function. 
+                // system, so we handle it separately using this set function.
                 sp_input_action_instance.setInputActionValue(input_action_value);
 
                 // setObjectPropertiesFromString(...) can't be used to set pointers, so we handle modifiers
@@ -176,7 +178,7 @@ public:
                     if (verbose) {
                         SP_LOG(Unreal::toStdString(input_action->GetName()));
                         SP_LOG(Unreal::getStringFromEnumValue(trigger_event));
-                        SP_LOG();
+                        SP_LOG("");
                     }
 
                     if (input_action_name == Unreal::toStdString(input_action->GetName()) && trigger_event == event_binding->GetTriggerEvent()) {
@@ -192,14 +194,75 @@ public:
                 }
             });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("enhanced_input_service", "inject_debug_key_for_actor",
-            [this](
-                uint64_t& actor,
-                std::string& chord_string,
-                std::string& key_event_string,
-                std::string& input_action_value_string,
-                bool verbose) -> void {
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(
+            "enhanced_input_service", "inject_input_for_blueprint_actor",
+            [this](uint64_t& uobject, std::string& input_action_name, std::string& trigger_event_string, std::string& input_action_value_string,
+                   std::string& input_action_instance_string, std::vector<uint64_t>& modifiers, std::vector<uint64_t>& triggers, bool verbose) -> void {
+                UObject* uobject_ptr                  = toPtr<UObject>(uobject);
+                UClass* binding_class                 = UEnhancedInputActionDelegateBinding::StaticClass(); // could be a variable
+                UInputDelegateBinding* binding_object = CastChecked<UInputDelegateBinding>(
+                    UBlueprintGeneratedClass::GetDynamicBindingObject(uobject_ptr->GetClass(), binding_class), ECastCheckedType::NullAllowed);
+                UEnhancedInputActionDelegateBinding* enhanced_input_binding = Cast<UEnhancedInputActionDelegateBinding>(binding_object);
+                SP_ASSERT(enhanced_input_binding);
 
+                ETriggerEvent trigger_event                         = Unreal::getEnumValueFromString<ETriggerEvent>(trigger_event_string);
+                TArray<TObjectPtr<UInputModifier>> modifiers_tarray = Unreal::toTArrayOf<TObjectPtr<UInputModifier>>(toPtr<UInputModifier>(modifiers));
+                TArray<TObjectPtr<UInputTrigger>> triggers_tarray   = Unreal::toTArrayOf<TObjectPtr<UInputTrigger>>(toPtr<UInputTrigger>(triggers));
+
+                FSpInputActionValue sp_input_action_value;
+                Unreal::setObjectPropertiesFromString(&sp_input_action_value, FSpInputActionValue::StaticStruct(), input_action_value_string);
+                FInputActionValue input_action_value(sp_input_action_value.ValueType, sp_input_action_value.Value);
+
+                FSpInputActionInstance sp_input_action_instance;
+                Unreal::setObjectPropertiesFromString(&sp_input_action_instance, FSpInputActionInstance::StaticStruct(), input_action_instance_string);
+
+                for (const FBlueprintEnhancedInputActionBinding& binding : enhanced_input_binding->InputActionDelegateBindings) {
+                    const UInputAction* input_action = binding.InputAction;
+                    if (input_action_name == Unreal::toStdString(input_action->GetName()) && trigger_event == binding.TriggerEvent) {
+                        // TODO now we have object and function
+                        UFunction* ufunction = Unreal::findFunctionByName(uobject_ptr->GetClass(), Unreal::toStdString(binding.FunctionNameToBind),
+                                                                         EIncludeSuperFlag::Type::IncludeSuper);
+                        SP_ASSERT(ufunction);
+
+                        uint16 num_bytes      = ufunction->ParmsSize;
+                        uint8_t initial_value = 0;
+                        std::vector<uint8_t> args_vector(num_bytes, initial_value);
+
+                        std::vector<Unreal::PropertyDesc> property_descs;
+                        for (TFieldIterator<FProperty> itr(ufunction); itr; ++itr) {
+                            Unreal::PropertyDesc property_desc;
+                            property_desc.property_ = *itr;
+                            SP_ASSERT(property_desc.property_);
+                            SP_ASSERT(property_desc.property_->HasAnyPropertyFlags(EPropertyFlags::CPF_Parm));
+
+                            property_desc.value_ptr_ = property_desc.property_->ContainerPtrToValuePtr<void>(args_vector.data());
+                            SP_ASSERT(property_desc.value_ptr_);
+
+                            property_descs.push_back(std::move(property_desc));
+                        }
+
+                        // Set property values.
+                        for (auto& property_desc : property_descs) {
+                            std::string property_name = Unreal::toStdString(property_desc.property_->GetName());
+                        
+                            if (property_name == "ActionValue") {
+                                if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
+                                    FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
+                                }
+                                //property_desc.value_ptr_  = (void*)temp;
+                                //Unreal::setPropertyValueFromString(property_desc, args.at(property_name));
+                            }
+                        }
+                        uobject_ptr->ProcessEvent(ufunction, args_vector.data());
+                        SP_LOG("");
+
+                    }
+                }
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(
+            "enhanced_input_service", "inject_debug_key_for_actor",
+            [this](uint64_t& actor, std::string& chord_string, std::string& key_event_string, std::string& input_action_value_string, bool verbose) -> void {
                 AActor* actor_ptr = toPtr<AActor>(actor);
 
                 // we choose to give up, rather than assert, for consistent behavior with inject_input and inject_input_for_actor
@@ -230,7 +293,7 @@ public:
                     if (verbose) {
                         SP_LOG(Unreal::getObjectPropertiesAsString(&(debug_key_binding->Chord), FInputChord::StaticStruct()));
                         SP_LOG(Unreal::getStringFromEnumValue(debug_key_binding->KeyEvent.GetValue()));
-                        SP_LOG();
+                        SP_LOG("");
                     }
 
                     if (chord == debug_key_binding->Chord && key_event == debug_key_binding->KeyEvent.GetValue()) {

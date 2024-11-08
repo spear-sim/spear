@@ -16,6 +16,10 @@ class EnhancedInputService():
         self._entry_point_caller.call("enhanced_input_service.inject_input_for_actor",
             actor, input_action_name, trigger_event, spear.to_json_string(input_action_value), spear.to_json_string(input_action_instance), modifiers, triggers, verbose)
 
+    def inject_input_for_blueprint_actor(self, actor, input_action_name, trigger_event, input_action_value, input_action_instance, modifiers=[], triggers=[], verbose=False):
+        self._entry_point_caller.call("enhanced_input_service.inject_input_for_blueprint_actor",
+            actor, input_action_name, trigger_event, spear.to_json_string(input_action_value), spear.to_json_string(input_action_instance), modifiers, triggers, verbose)
+
     def inject_debug_key_for_actor(self, actor, chord, key_event, input_action_value, verbose=False):
         self._entry_point_caller.call("enhanced_input_service.inject_debug_key_for_actor",
             actor, spear.to_json_string(chord), key_event, spear.to_json_string(input_action_value), verbose)

@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
     with instance.begin_frame():
         # need player_controller current actor to inject input
-        instance.unreal_service.call_function(uobject=player_controller, ufunction=possess_func, args={"InPawn": spear.func_utils.to_ptr(agent)})
+        # instance.unreal_service.call_function(uobject=player_controller, ufunction=possess_func, args={"InPawn": spear.func_utils.to_ptr(agent)})
 
         # set bRunPhysicsWithNoController to True to control pawn without controller
         character_movement_component = instance.unreal_service.get_component_by_class(agent, character_movement_component_class)
@@ -87,7 +87,7 @@ if __name__ == "__main__":
         instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
 
         # instance.unreal_service.call_function(uobject=agent, ufunction=jump_func, args={})
-        instance.enhanced_input_service.inject_input_for_actor(
+        instance.enhanced_input_service.inject_input_for_blueprint_actor(
             actor=agent,
             input_action_name="IA_Jump",
             trigger_event="Triggered",
@@ -101,11 +101,11 @@ if __name__ == "__main__":
     for frame in range(0, 100):
         with instance.begin_frame():
             instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
-            instance.enhanced_input_service.inject_input_for_actor(
+            instance.enhanced_input_service.inject_input_for_blueprint_actor(
                 actor=agent,
                 input_action_name="IA_Move",
                 trigger_event="Triggered",
-                input_action_value={"ValueType": "Axis2D", "Value": {"X": 1.0, "Y": 2.0, "Z": 0.0}},
+                input_action_value={"ValueType": "Axis2D", "Value": {"X": 0.0, "Y": 1.0, "Z": 0.0}},
                 input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0,
                                        "ElapsedProcessedTime": 0.1, "ElapsedTriggeredTime": 0.1},
                 modifiers=[],
