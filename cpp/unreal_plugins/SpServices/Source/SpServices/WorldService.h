@@ -25,5 +25,5 @@ public:
             });
     }
 
-    ~WorldService() = default;
+    ~WorldService() override = default;
 };

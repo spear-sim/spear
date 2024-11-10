@@ -39,5 +39,5 @@ public:
         }
     }
 
-    ~GameMapSettingsService() = default;
+    ~GameMapSettingsService() override = default;
 };

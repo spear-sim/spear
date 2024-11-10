@@ -32,12 +32,16 @@ USpStableNameComponent::~USpStableNameComponent()
 #if WITH_EDITOR // defined in an auto-generated header
     void USpStableNameComponent::OnComponentCreated()
     {
+        SP_LOG_CURRENT_FUNCTION();
+
         UActorComponent::OnComponentCreated();
         requestUpdate();
     }
 
     void USpStableNameComponent::PostLoad()
     {
+        SP_LOG_CURRENT_FUNCTION();
+
         UActorComponent::PostLoad();
         requestUpdate();
     }

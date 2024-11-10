@@ -207,10 +207,10 @@
           if (PPK_ASSERT_LIKELY(expression) || ppk::assert::implementation::ignoreAllAsserts());\
           else\
           {\
-            ppk::assert::implementation::AssertAction::AssertAction action = ppk::assert::implementation::handleAssert(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, level, PPK_ASSERT_NULLPTR, __VA_ARGS__);\
-            if (action == ppk::assert::implementation::AssertAction::Break) {\
+            ppk::assert::implementation::AssertAction::AssertAction __SP_ASSERT_ACTION__ = ppk::assert::implementation::handleAssert(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, level, PPK_ASSERT_NULLPTR, __VA_ARGS__);\
+            if (__SP_ASSERT_ACTION__ == ppk::assert::implementation::AssertAction::Break) {\
               PPK_ASSERT_DEBUG_BREAK();\
-            } else if (action == ppk::assert::implementation::AssertAction::BreakThenThrow)\
+            } else if (__SP_ASSERT_ACTION__ == ppk::assert::implementation::AssertAction::BreakThenThrow)\
               PPK_ASSERT_DEBUG_BREAK();\
               ppk::assert::implementation::handleThrow(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, __VA_ARGS__);\
             }\
@@ -230,10 +230,10 @@
           if (PPK_ASSERT_LIKELY(expression) || _ignore || ppk::assert::implementation::ignoreAllAsserts());\
           else\
           {\
-            ppk::assert::implementation::AssertAction::AssertAction action = ppk::assert::implementation::handleAssert(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, level, &_ignore, __VA_ARGS__);\
-            if (action == ppk::assert::implementation::AssertAction::Break) {\
+            ppk::assert::implementation::AssertAction::AssertAction __SP_ASSERT_ACTION__ = ppk::assert::implementation::handleAssert(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, level, &_ignore, __VA_ARGS__);\
+            if (__SP_ASSERT_ACTION__ == ppk::assert::implementation::AssertAction::Break) {\
               PPK_ASSERT_DEBUG_BREAK();\
-            else if (action == ppk::assert::implementation::AssertAction::BreakThenThrow) {\
+            else if (__SP_ASSERT_ACTION__ == ppk::assert::implementation::AssertAction::BreakThenThrow) {\
               PPK_ASSERT_DEBUG_BREAK();\
               ppk::assert::implementation::handleThrow(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, __VA_ARGS__);\
             }\
@@ -267,10 +267,10 @@
           else\
           {\
             _PPK_ASSERT_WFORMAT_AS_ERROR_BEGIN\
-            ppk::assert::implementation::AssertAction::AssertAction action = ppk::assert::implementation::handleAssert(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, level, PPK_ASSERT_NULLPTR, __VA_ARGS__);\
-            if (action == ppk::assert::implementation::AssertAction::Break) {\
+            ppk::assert::implementation::AssertAction::AssertAction __SP_ASSERT_ACTION__ = ppk::assert::implementation::handleAssert(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, level, PPK_ASSERT_NULLPTR, __VA_ARGS__);\
+            if (__SP_ASSERT_ACTION__ == ppk::assert::implementation::AssertAction::Break) {\
               PPK_ASSERT_DEBUG_BREAK();\
-            } else if (action == ppk::assert::implementation::AssertAction::BreakThenThrow) {\
+            } else if (__SP_ASSERT_ACTION__ == ppk::assert::implementation::AssertAction::BreakThenThrow) {\
               PPK_ASSERT_DEBUG_BREAK();\
               ppk::assert::implementation::handleThrow(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, __VA_ARGS__);\
             }\
@@ -289,10 +289,10 @@
           else\
           {\
             _PPK_ASSERT_WFORMAT_AS_ERROR_BEGIN\
-            ppk::assert::implementation::AssertAction::AssertAction action = ppk::assert::implementation::handleAssert(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, level, &_ignore, __VA_ARGS__);\
-            if (action == ppk::assert::implementation::AssertAction::Break) {\
+            ppk::assert::implementation::AssertAction::AssertAction __SP_ASSERT_ACTION__ = ppk::assert::implementation::handleAssert(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, level, &_ignore, __VA_ARGS__);\
+            if (__SP_ASSERT_ACTION__ == ppk::assert::implementation::AssertAction::Break) {\
               PPK_ASSERT_DEBUG_BREAK();\
-            } else if (action == ppk::assert::implementation::AssertAction::BreakThenThrow) {\
+            } else if (__SP_ASSERT_ACTION__ == ppk::assert::implementation::AssertAction::BreakThenThrow) {\
               PPK_ASSERT_DEBUG_BREAK();\
               ppk::assert::implementation::handleThrow(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, __VA_ARGS__);\
             }\

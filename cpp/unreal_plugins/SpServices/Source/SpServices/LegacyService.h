@@ -127,7 +127,7 @@ public:
         });
     }
 
-    ~LegacyService() = default;
+    ~LegacyService() override = default;
 
     void worldBeginPlay() override
     {

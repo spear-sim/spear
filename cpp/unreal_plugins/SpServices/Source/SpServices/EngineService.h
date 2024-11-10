@@ -8,7 +8,7 @@
 
 #include <atomic>
 #include <future> // std::promise
-#include <mutex>
+#include <mutex>  // std::lock_guard
 #include <string>
 
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
@@ -63,6 +63,7 @@ public:
 
             {
                 std::lock_guard<std::mutex> lock(frame_state_mutex_);
+
                 SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::Closing || frame_state_ == EFrameState::Error,
                     "frame_state_: %s", Unreal::getStringFromEnumValue(frame_state_.load()).c_str());
 
@@ -162,7 +163,7 @@ public:
         });
     }
 
-    ~EngineService()
+    ~EngineService() override
     {
         FCoreDelegates::OnEndFrame.Remove(end_frame_handle_);
         FCoreDelegates::OnBeginFrame.Remove(begin_frame_handle_);
@@ -228,6 +229,7 @@ public:
     void close()
     {
         std::lock_guard<std::mutex> lock(frame_state_mutex_);
+
         SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame || frame_state_ == EFrameState::Error,
             "frame_state_: %d", frame_state_.load()); // don't try to print string because Unreal's reflection system is already shut down
 
@@ -243,6 +245,8 @@ private:
     #if WITH_EDITOR // defined in an auto-generated header
         void PIEStartedHandler(UGameInstance* game_instance)
         {
+            std::lock_guard<std::mutex> lock(frame_state_mutex_);
+
             SP_LOG_CURRENT_FUNCTION();
 
             // Reset error state if the user has just pressed play in the editor. We don't want to do this in
@@ -250,7 +254,6 @@ private:
             // want to do this in worldBeginPlay(), because worldBeginPlay() will be called whenever a new
             // map is loaded. This event handler will be called once per PIE session, which is exactly what
             // we want.
-            std::lock_guard<std::mutex> lock(frame_state_mutex_);
             work_queue_.initialize();
             frame_state_ = EFrameState::Idle;
         }
@@ -259,6 +262,7 @@ private:
     void beginFrameHandler()
     {
         std::lock_guard<std::mutex> lock(frame_state_mutex_);
+
         SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame || frame_state_ == EFrameState::Error,
             "frame_state_: %s", Unreal::getStringFromEnumValue(frame_state_.load()).c_str());
 
@@ -291,6 +295,7 @@ private:
     void endFrameHandler()
     {
         std::lock_guard<std::mutex> lock(frame_state_mutex_);
+
         SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame || frame_state_ == EFrameState::ExecutingFrame || frame_state_ == EFrameState::Error,
             "frame_state_: %s", Unreal::getStringFromEnumValue(frame_state_.load()).c_str());
 
@@ -378,9 +383,10 @@ private:
 
     UWorld* world_ = nullptr;
 
-    std::atomic<EFrameState> frame_state_ = EFrameState::Idle;
     std::atomic<bool> initialized_ = false;
-    std::mutex frame_state_mutex_;
+    
+    std::atomic<EFrameState> frame_state_ = EFrameState::Idle; // need std::atomic because not all frame_state_ reads are synchronized with frame_state_mutex_
+    std::mutex frame_state_mutex_;                             // used to coordinate write-access to frame_state_
 
     std::promise<void> frame_state_idle_promise_;
     std::promise<void> frame_state_executing_begin_frame_promise_;

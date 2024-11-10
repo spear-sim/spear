@@ -28,6 +28,8 @@ public:
     ~USpFuncComponent();
 
     // typically called by the owning actor or component to register/unregister an SpFunc
+    void initialize();
+    void terminate();
     void registerSharedMemoryView(const std::string& shared_memory_name, const SpFuncSharedMemoryView& shared_memory_view);
     void unregisterSharedMemoryView(const std::string& shared_memory_name);
     void registerFunc(const std::string& func_name, const std::function<SpFuncDataBundle(SpFuncDataBundle&)>& func);

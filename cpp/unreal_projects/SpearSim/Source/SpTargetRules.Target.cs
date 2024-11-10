@@ -13,8 +13,8 @@ public class SpTargetRulesTarget : TargetRules
     {
         SP_LOG_CURRENT_FUNCTION();
 
-        // We need to set this to something other than Game or Editor or Program in order to successfully generate Visual Studio project files.
-        // Needs to be overridden in derived classes.
+        // We need to set this to something other than Game or Editor or Program in order to successfully
+        // generate Visual Studio project files. Needs to be overridden in derived classes.
         Type = TargetType.Client;
 
         // Added to projects by default in UE 5.4.
@@ -24,7 +24,8 @@ public class SpTargetRulesTarget : TargetRules
 
         if (targetInfo.Platform == UnrealTargetPlatform.Win64) {
 
-            // On Windows, we need to build an additional app so that calls to UE_LOG and writes to std::cout are visible in the terminal.
+            // On Windows, we need to build an additional app so that calls to UE_LOG and writes to std::cout
+            // are visible in the terminal.
             bBuildAdditionalConsoleApp = true;
 
             // Sometimes useful for debugging
@@ -32,13 +33,19 @@ public class SpTargetRulesTarget : TargetRules
             // AdditionalCompilerArguments = "/showIncludes";
 
         } else if (targetInfo.Platform == UnrealTargetPlatform.Mac) {
+
             // Suppresses warning on Xcode 16:
             //     ld: warning: ignoring duplicate libraries: 'path/to/spear/third_party/rpclib/BUILD/Mac/librpc.a', 'path/to/spear/third_party/yaml-cpp/BUILD/Mac/libyaml-cpp.a'
             bOverrideBuildEnvironment = true;
             AdditionalLinkerArguments = " -Wl,-no_warn_duplicate_libraries";
 
         } else if (targetInfo.Platform == UnrealTargetPlatform.Linux) {
-            // pass
+
+            // The "-fexperimental-library" flag is required to enable support for std::ranges on Linux. This
+            // is because UE 5.4 builds using Clang 16 on Linux, but std::ranges are not fully supported in
+            // Clang 16 without this additional flag.
+            bOverrideBuildEnvironment = true;
+            AdditionalCompilerArguments = "-fexperimental-library";
 
         } else if (targetInfo.Platform == UnrealTargetPlatform.IOS || targetInfo.Platform == UnrealTargetPlatform.TVOS) {
             SP_LOG("NOTE: We only expect to see targetInfo.Platform == UnrealTargetPlatform.IOS or targetInfo.Platform == UnrealTargetPlatform.TVOS when we're on macOS and we're attempting to generate XCode project files. If we're not on macOS generating XCode project files, target.Platform == UnrealTargetPlatform.IOS and target.Platform == UnrealTargetPlatform.TVOS are unexpected.");

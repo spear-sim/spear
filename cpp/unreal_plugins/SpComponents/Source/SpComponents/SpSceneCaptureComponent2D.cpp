@@ -7,20 +7,15 @@
 #include <memory> // std::make_unique
 
 #include <Components/SceneCaptureComponent2D.h>
-#include <Engine/Scene.h>                 // FPostProcessingSettings
-#include <Engine/TextureRenderTarget2D.h> // ETextureRenderTargetFormat
 #include <Materials/MaterialInstanceDynamic.h>
 #include <Math/Color.h>
-#include <Math/Rotator.h>
-#include <Math/Vector.h>
-#include <UObject/UObjectGlobals.h>       // NewObject
+#include <UObject/UObjectGlobals.h> // NewObject
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/SharedMemoryRegion.h"
 #include "SpCore/SpFuncArray.h"
 #include "SpCore/Unreal.h"
-#include "SpCore/UnrealObj.h"
 
 #include "SpComponents/SpFuncComponent.h"
 
@@ -32,8 +27,8 @@ USpSceneCaptureComponent2D::USpSceneCaptureComponent2D()
     SP_ASSERT(SpFuncComponent);
 
     // we want to be able to capture the scene even when the game is paused; note that we don't set
-    // PrimaryActorTick.TickGroup because we don't want to interfere with when our component gets
-    // ticked
+    // PrimaryActorTick.TickGroup because we don't want to interfere with when the base class component
+    // gets ticked
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.bTickEvenWhenPaused = true;
 }

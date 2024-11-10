@@ -9,6 +9,7 @@
 #include <memory> // std::make_unique
 #include <ranges> // std::views::transform
 
+#include <Components/ActorComponent.h>
 #include <Components/PoseableMeshComponent.h>
 #include <Components/SkinnedMeshComponent.h> // EBoneSpaces::Type
 #include <Components/StaticMeshComponent.h>
@@ -34,6 +35,10 @@
 #include "SpComponents/SpFuncComponent.h"
 #include "SpComponents/SpHitEventManager.h"
 
+// CALLED for the CDO
+// CALLED for a newly added editor-world object, when adding the object to a map
+// CALLED for an existing editor-world object, when loading the map
+// CALLED for an existing PIE-world object, when pressing play
 ASpDebugWidget::ASpDebugWidget()
 {
     SP_LOG_CURRENT_FUNCTION();
@@ -41,19 +46,87 @@ ASpDebugWidget::ASpDebugWidget()
     SpFuncComponent = Unreal::createComponentInsideOwnerConstructor<USpFuncComponent>(this, "sp_func_component");
     SP_ASSERT(SpFuncComponent);
 
-    initializeSpFuncs();
+    SP_LOG("    this: ", this);
+    SP_LOG("    SpFuncComponent: ", SpFuncComponent);
+
+    if (HasAnyFlags(RF_ClassDefaultObject)) {
+        SP_LOG("    HasAnyFlags(RF_ClassDefaultObject)");
+        initializeSpFunc();
+    }
 }
 
+// CALLED for an existing PIE-world object, when pressing stop
+// CALLED for an existing editor-world object, when unloading the map
+// CALLED for a newly removed editor-world object, when removing the object from the map (but only called when the map is unloaded)
+// CALLED for the CDO
 ASpDebugWidget::~ASpDebugWidget()
 {
     SP_LOG_CURRENT_FUNCTION();
+
+    SP_LOG("    this: ", this);
+    SP_LOG("    SpFuncComponent: ", SpFuncComponent);
 }
 
+// CALLED for the CDO
+// CALLED for a newly added editor-world object, when adding the object to a map
+// CALLED for an existing editor-world object, when loading the map
+// CALLED for an existing PIE-world object, when pressing play
+void ASpDebugWidget::PostInitProperties()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    AActor::PostInitProperties();
+
+    SP_LOG("    this: ", this);
+    SP_LOG("    SpFuncComponent: ", SpFuncComponent);
+}
+
+// NOT CALLED for the CDO
+// CALLED for a newly added editor-world object, when adding the object to a map
+// NOT CALLED for an existing editor-world object, when loading the map
+// NOT CALLED for an existing PIE-world object, when pressing play
+void ASpDebugWidget::PostActorCreated()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    AActor::PostActorCreated();
+
+    SP_LOG("    this: ", this);
+    SP_LOG("    SpFuncComponent: ", SpFuncComponent);
+
+    initializeSpFunc();
+}
+
+// NOT CALLED for the CDO
+// NOT CALLED for a newly added editor-world object, when adding the object to a map
+// CALLED for an existing editor-world object, when loading the map
+// CALLED for an existing PIE-world object, when pressing play
+void ASpDebugWidget::PostLoad()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    AActor::PostLoad();
+
+    SP_LOG("    this: ", this);
+    SP_LOG("    SpFuncComponent: ", SpFuncComponent);
+
+    initializeSpFunc();
+}
+
+// CALLED for an existing PIE-world object, when pressing stop
+// CALLED for an existing editor-world object, when unloading the map
+// CALLED for a newly removed editor-world object, when removing the object from the map (but only called when the map is unloaded)
+// CALLED for the CDO
 void ASpDebugWidget::BeginDestroy()
 {
+    SP_LOG_CURRENT_FUNCTION();
+
     AActor::BeginDestroy();
 
-    terminateSpFuncs(); // don't call from destructor because SpFuncComponent might have been garbage-collected already
+    SP_LOG("    this: ", this);
+    SP_LOG("    SpFuncComponent: ", SpFuncComponent);
+
+    terminateSpFunc();
 }
 
 void ASpDebugWidget::LoadConfig()
@@ -517,15 +590,22 @@ void ASpDebugWidget::UpdateData(TMap<FString, FVector>& map_from_string_to_vecto
     array_of_vectors.Add(FVector(4.0f, 5.0f, 6.0f));
 }
 
-void ASpDebugWidget::initializeSpFuncs()
+void ASpDebugWidget::initializeSpFunc()
 {
+    SP_ASSERT(SpFuncComponent);
+    SP_ASSERT(!shared_memory_region_);
+
     int shared_memory_num_bytes = 1024;
     shared_memory_region_ = std::make_unique<SharedMemoryRegion>(shared_memory_num_bytes);
     SP_ASSERT(shared_memory_region_);
 
-    // the "smem_observation" name needs to be unique within this USpFuncComponent, but does not need to be globally unique
+    SpFuncComponent->initialize();
+
+    // The name chosen here for the shared memory does not need to be globally unique. It only needs unique
+    // within this SpFuncComponent. Normally we would choose a human-readable name for the shared memory, e.g.,
+    // "smem:observation", but in this case, we set it to Std::toStringFromPtr(this) as a debugging tool.
     shared_memory_view_ = SpFuncSharedMemoryView(shared_memory_region_->getView(), SpFuncSharedMemoryUsageFlags::ReturnValue);
-    SpFuncComponent->registerSharedMemoryView("smem_observation", shared_memory_view_);
+    SpFuncComponent->registerSharedMemoryView(Std::toStringFromPtr(this), shared_memory_view_);
 
     SpFuncComponent->registerFunc("hello_world", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
 
@@ -557,7 +637,7 @@ void ASpDebugWidget::initializeSpFuncs()
 
         // set return value objects
         observation.setData({12.0, 13.0, 14.0});
-        observation_shared.setData(shared_memory_view_, {3}, "smem_observation");
+        observation_shared.setData(shared_memory_view_, {3}, Std::toStringFromPtr(this));
         observation_shared.setDataValues({15.0, 16.0, 17.0});
         out_location.setObj(FVector(18.0, 19.0, 20.0));
         out_rotation.setObj(FRotator(21.0, 22.0, 23.0));
@@ -583,10 +663,16 @@ void ASpDebugWidget::initializeSpFuncs()
     });
 }
 
-void ASpDebugWidget::terminateSpFuncs()
+void ASpDebugWidget::terminateSpFunc()
 {
-    SpFuncComponent->unregisterFunc("hello_world");
-    SpFuncComponent->unregisterSharedMemoryView("smem_observation");
+    // Terminate SpFuncComponent conditionally because BeginDestroy() might be called after SpFuncComponent
+    // has already been garbage collected and set to nullptr, e.g., if an editor-world object has been
+    // removed but BeginDestroy() is only called when the map is unloaded.
+    if (SpFuncComponent) {
+        SpFuncComponent->unregisterFunc("hello_world");
+        SpFuncComponent->unregisterSharedMemoryView(Std::toStringFromPtr(this));
+        SpFuncComponent->terminate();
+    }
 
     shared_memory_region_ = nullptr;
 }
