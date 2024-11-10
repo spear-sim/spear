@@ -4,7 +4,6 @@
 
 import argparse
 import os
-import pwd
 import spear
 import subprocess
 import sys
@@ -39,6 +38,7 @@ if __name__ == "__main__":
     if sys.platform in ["darwin", "linux"]:
         config_dir = os.path.expanduser(os.path.join("~", ".config"))
         if os.path.exists(config_dir):
+            import pwd # not available on Windows
             current_user = pwd.getpwuid(os.getuid()).pw_name
             config_dir_owner = pwd.getpwuid(os.stat(config_dir).st_uid).pw_name
             if current_user != config_dir_owner:

@@ -105,15 +105,16 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
     if component_class in scene_component_classes:
         spear.log(log_prefix_str, "Processing SceneComponent: ", component_desc["name"])
         
-        transform_world_from_current_component = spear.pipeline.compose_transform_with_component(transform_world_from_parent_component, component_desc)
-        M_world_from_current_component = spear.pipeline.get_matrix_from_transform(transform_world_from_current_component)
+        transform_world_from_current_component = spear.pipeline.compose_transform_with_component(
+            transform_ancestor_from_parent_component=transform_world_from_parent_component, component_desc=component_desc)
+        M_world_from_current_component = spear.pipeline.get_matrix_from_transform(transform=transform_world_from_current_component)
 
         # Check the M_world_from_current_component matrix that we computed above against Unreal's 
         # SceneComponent.get_world_transform() function. We store the output from get_world_transform() in our
         # exported JSON file for each SceneComponent, so we can simply compare the matrix we computed above
         # against the stored matrix.
 
-        debug_info_world_transform = spear.pipeline.get_matrix_from_matrix_desc(component_desc["debug_info"]["world_transform"])
+        debug_info_world_transform = spear.pipeline.get_matrix_from_matrix_desc(matrix_desc=component_desc["debug_info"]["world_transform"])
         assert np.allclose(M_world_from_current_component, debug_info_world_transform)
 
         # ...and only attempt to draw StaticMeshComponents...

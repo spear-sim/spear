@@ -26,10 +26,10 @@ In order to use our optional debug visualization tools, you will need to install
 
 ```console
 # generate Unreal metadata
-python tools/run_editor_script.py --script export_unreal_metadata.py --unreal_engine_dir path/to/UE_5.4 --pipeline_dir /absolute/path/to/spear-pipeline --scene_id apartment_0000
+python tools/run_editor_script.py --script export_unreal_metadata/export_unreal_metadata.py --unreal_engine_dir path/to/UE_5.4 --pipeline_dir /absolute/path/to/spear-pipeline --scene_id apartment_0000
 
 # generate Unreal geometry
-python tools/run_editor_script.py --script export_unreal_geometry.py --unreal_engine_dir path/to/UE_5.4 --pipeline_dir /absolute/path/to/spear-pipeline --scene_id apartment_0000
+python tools/run_editor_script.py --script export_unreal_metadata/export_unreal_geometry.py --unreal_engine_dir path/to/UE_5.4 --pipeline_dir /absolute/path/to/spear-pipeline --scene_id apartment_0000
 
 # visualize Unreal geometry (optional)
 python pipeline/visualize_unreal_geometry.py --pipeline_dir path/to/spear-pipeline --scene_id apartment_0000
