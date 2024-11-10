@@ -112,10 +112,10 @@ if __name__ == "__main__":
             spear.log("File exists, removing: ", f)
             os.remove(f)
 
-    # create a config file because there is does not appear to be any other way to specify a custom compiler path, see:
+    # create a config file because there does not appear to be any other way to specify a custom compiler path, see:
     #     https://www.boost.org/build/doc/html/bbv2/overview/configuration.html
 
-    user_config_str = f"using {boost_toolset} : : {cxx_compiler} ;"
+    user_config_str = f"using {boost_toolset} : : {cxx_compiler} ;\n"
     spear.log(f"Creating boost config file: {user_config_file}")
     spear.log(f"    {user_config_str}")
 
@@ -129,7 +129,7 @@ if __name__ == "__main__":
 
     if sys.platform == "win32":
 
-        cmd = ["bootstrap.bat"]
+        cmd = ["bootstrap.bat"] # --with-toolset not needed because bootstrap.bat doesn't build boost library code, it only builds the b2 build tool
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
@@ -143,7 +143,7 @@ if __name__ == "__main__":
 
     elif sys.platform == "darwin":
 
-        cmd = ["./bootstrap.sh"]
+        cmd = ["./bootstrap.sh"] # --with-toolset not needed because bootstrap.sh doesn't build boost library code, it only builds the b2 build tool
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
@@ -157,7 +157,7 @@ if __name__ == "__main__":
 
     elif sys.platform == "linux":
 
-        cmd = ["./bootstrap.sh"]
+        cmd = ["./bootstrap.sh"] # --with-toolset not needed because bootstrap.sh doesn't build boost library code, it only builds the b2 build tool
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
