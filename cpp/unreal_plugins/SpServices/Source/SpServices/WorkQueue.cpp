@@ -5,7 +5,7 @@
 #include "SpServices/WorkQueue.h"
 
 #include <exception>
-#include <mutex>
+#include <mutex> // std::lock_guard
 
 #include "SpCore/Boost.h"
 

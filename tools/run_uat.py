@@ -32,7 +32,7 @@ if __name__ == "__main__":
     else:
         assert False
 
-    # The Unreal Build Tool expects "~/.config" to be owned by the user, so it can create and write to "~/.config/Unreal Engine/"
+    # The Unreal Build Tool expects "~/.config/" to be owned by the user, so it can create and write to "~/.config/Unreal Engine/"
     # without requiring admin privileges. This check might seem esoteric, but we have seen cases where "~/.config/"
     # is owned by root in some corporate environments, so we choose to check it here as a courtesy to new
     # users. We don't know if we need a similar check on Windows.

@@ -8,6 +8,7 @@
 
 #include <map>
 #include <memory> // std::make_unique, std::unique_ptr
+#include <mutex>  // std::lock_guard
 #include <string>
 #include <vector>
 
@@ -51,6 +52,9 @@ public:
         });
 
         unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("sp_func_service", "create_shared_memory_region", [this](int& num_bytes, std::string& shared_memory_name) -> SpFuncSharedMemoryView {
+
+            std::lock_guard<std::mutex> lock(mutex_);
+
             std::string name = shared_memory_name; // need to copy so we can pass to functions that expect a const ref
             SP_ASSERT(!Std::containsKey(shared_memory_regions_, name));
             SP_ASSERT(!Std::containsKey(shared_memory_views_, name));
@@ -68,6 +72,9 @@ public:
         });
 
         unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("sp_func_service", "destroy_shared_memory_region", [this](std::string& shared_memory_name) -> void {
+
+            std::lock_guard<std::mutex> lock(mutex_);
+
             std::string name = shared_memory_name; // need to copy so we can pass to functions that expect a const ref
             SP_ASSERT(Std::containsKey(shared_memory_regions_, name));
             SP_ASSERT(Std::containsKey(shared_memory_views_, name));
@@ -76,6 +83,9 @@ public:
         });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("sp_func_service", "call_function", [this](uint64_t& uobject, std::string& function_name, SpFuncDataBundle& args) -> SpFuncDataBundle {
+
+            std::lock_guard<std::mutex> lock(mutex_);
+
             UObject* uobject_ptr = toPtr<UObject>(uobject);
             USpFuncComponent* sp_func_component = getSpFuncComponent(uobject_ptr);
 
@@ -91,6 +101,10 @@ public:
         });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("sp_func_service", "get_shared_memory_views", [this](uint64_t& uobject) -> std::map<std::string, SpFuncSharedMemoryView> {
+
+            // no synchronization needed here because this function doesn't access any member variables that
+            // might be accessed concurrently
+
             UObject* uobject_ptr = toPtr<UObject>(uobject);
             USpFuncComponent* sp_func_component = getSpFuncComponent(uobject_ptr);
             
@@ -122,6 +136,7 @@ private:
         return sp_func_component;
     }
 
+    std::mutex mutex_; // used to coordinate read and write access to shared_memory_regions_ and shared_memory_views_
     std::map<std::string, std::unique_ptr<SharedMemoryRegion>> shared_memory_regions_;
     std::map<std::string, SpFuncSharedMemoryView> shared_memory_views_;
 };
