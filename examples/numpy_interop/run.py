@@ -13,8 +13,8 @@ if __name__ == "__main__":
 
     # load config
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
-    spear.configure_system(config)
-    instance = spear.Instance(config)
+    spear.configure_system(config=config)
+    instance = spear.Instance(config=config)
 
     with instance.begin_frame():
 
@@ -59,8 +59,8 @@ if __name__ == "__main__":
 
         # Call the custom function named "hello_world" on our Unreal object.
         return_values = instance.sp_func_service.call_function(
-            sp_debug_widget_default_object,
-            "hello_world",
+            uobject=sp_debug_widget_default_object,
+            function_name="hello_world",
             arrays=arrays,
             unreal_objs=unreal_objs,
             info=info,

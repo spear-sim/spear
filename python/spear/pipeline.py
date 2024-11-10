@@ -87,7 +87,7 @@ def compose_transform_with_component(transform_ancestor_from_parent_component, c
     transform_parent_component_from_current_component["rotation"] = np.matrix(scipy.spatial.transform.Rotation.from_euler("xyz", [roll, pitch, yaw]).as_matrix())
     transform_parent_component_from_current_component["scale"] = np.matrix(np.diag([relative_scale3d_x, relative_scale3d_y, relative_scale3d_z]))
 
-    transform_ancestor_from_current_component = compose_transforms([transform_ancestor_from_parent_component, transform_parent_component_from_current_component])
+    transform_ancestor_from_current_component = compose_transforms(transforms=[transform_ancestor_from_parent_component, transform_parent_component_from_current_component])
 
     # If we're in absolute mode for {location, rotation, scale}, then don't accumulate.
     if absolute_location:
@@ -144,9 +144,9 @@ def get_transform_from_transform_data(transform_data):
         return None
 
     transform = {}
-    transform["location"] = get_matrix_from_matrix_data(transform_data["location"])
-    transform["rotation"] = get_matrix_from_matrix_data(transform_data["rotation"])
-    transform["scale"]    = get_matrix_from_matrix_data(transform_data["scale"])
+    transform["location"] = get_matrix_from_matrix_data(matrix_data=transform_data["location"])
+    transform["rotation"] = get_matrix_from_matrix_data(matrix_data=transform_data["rotation"])
+    transform["scale"]    = get_matrix_from_matrix_data(matrix_data=transform_data["scale"])
 
     return transform
 
@@ -156,9 +156,9 @@ def get_transform_data_from_transform(transform):
         return None
 
     transform_data = {}
-    transform_data["location"] = get_matrix_data_from_matrix(transform["location"])
-    transform_data["rotation"] = get_matrix_data_from_matrix(transform["rotation"])
-    transform_data["scale"]    = get_matrix_data_from_matrix(transform["scale"])
+    transform_data["location"] = get_matrix_data_from_matrix(matrix=transform["location"])
+    transform_data["rotation"] = get_matrix_data_from_matrix(matrix=transform["rotation"])
+    transform_data["scale"]    = get_matrix_data_from_matrix(matrix=transform["scale"])
 
     return transform_data
 

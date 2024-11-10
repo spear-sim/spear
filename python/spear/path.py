@@ -17,7 +17,7 @@ def path_exists(path):
         return tail in os.listdir(head)
 
 def remove_path(path):
-    if not path_exists(path):
+    if not path_exists(path=path):
         return
 
     if os.path.islink(path):

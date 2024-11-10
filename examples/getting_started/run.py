@@ -13,8 +13,8 @@ if __name__ == "__main__":
 
     # load config
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
-    spear.configure_system(config)
-    instance = spear.Instance(config)
+    spear.configure_system(config=config)
+    instance = spear.Instance(config=config)
 
     with instance.begin_frame():
 
@@ -26,6 +26,9 @@ if __name__ == "__main__":
         # spawn object
         bp_axes_uclass = instance.unreal_service.load_object(class_name="UClass", outer=0, name="/SpComponents/Blueprints/BP_Axes.BP_Axes_C")
         bp_axes_actor = instance.unreal_service.spawn_actor_from_uclass(uclass=bp_axes_uclass, location={"X": -10.0, "Y": 280.0, "Z": 50.0})
+
+        spear.log("bp_axes_actor: ")
+        pprint.pprint(instance.unreal_service.get_object_properties_from_uobject(bp_axes_actor))
 
         # get scale
         return_values = instance.unreal_service.call_function(uobject=bp_axes_actor, ufunction=get_actor_scale_3d_func)

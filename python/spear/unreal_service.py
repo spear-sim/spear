@@ -43,16 +43,16 @@ class UnrealService():
     #
 
     def get_object_properties_from_uobject(self, uobject):
-        return spear.try_to_dict(self._entry_point_caller.call("unreal_service.get_object_properties_as_string_from_uobject", uobject), default_value={})
+        return spear.try_to_dict(json_string=self._entry_point_caller.call("unreal_service.get_object_properties_as_string_from_uobject", uobject), default_value={})
 
     def get_object_properties_from_ustruct(self, value_ptr, ustruct):
-        return spear.try_to_dict(self._entry_point_caller.call("unreal_service.get_object_properties_as_string_from_ustruct", value_ptr, ustruct), default_value={})
+        return spear.try_to_dict(json_string=self._entry_point_caller.call("unreal_service.get_object_properties_as_string_from_ustruct", value_ptr, ustruct), default_value={})
 
     def set_object_properties_for_uobject(self, uobject, properties):
-        self._entry_point_caller.call("unreal_service.set_object_properties_from_string_for_uobject", uobject, spear.to_json_string(properties))
+        self._entry_point_caller.call("unreal_service.set_object_properties_from_string_for_uobject", uobject, spear.to_json_string(obj=properties))
 
     def set_object_properties_for_ustruct(self, value_ptr, ustruct, properties):
-        self._entry_point_caller.call("unreal_service.set_object_properties_from_string_for_ustruct", value_ptr, ustruct, spear.to_json_string(properties))
+        self._entry_point_caller.call("unreal_service.set_object_properties_from_string_for_ustruct", value_ptr, ustruct, spear.to_json_string(obj=properties))
 
     #
     # Find properties
@@ -69,10 +69,10 @@ class UnrealService():
     #
 
     def get_property_value(self, property_desc):
-        return spear.try_to_dict(self._entry_point_caller.call("unreal_service.get_property_value_as_string", property_desc))
+        return spear.try_to_dict(json_string=self._entry_point_caller.call("unreal_service.get_property_value_as_string", property_desc))
 
     def set_property_value(self, property_desc, property_value):
-        self._entry_point_caller.call("unreal_service.set_property_value_from_string", property_desc, spear.to_json_string(property_value))
+        self._entry_point_caller.call("unreal_service.set_property_value_from_string", property_desc, spear.to_json_string(obj=property_value))
 
     #
     # Find and call functions
@@ -92,14 +92,14 @@ class UnrealService():
     # You would invoke your desired function as follows. After executing this code, return_value_handle will
     # be in the correct form to pass into other functions in unreal_service.
     # 
-    #     args = {"Actor": spear.to_ptr(actor_handle)}
-    #     return_values = unreal_service.call_function(uobject, ufunction, args)
-    #     return_value_handle = spear.to_handle(return_values["ReturnValue"])
+    #     args = {"Actor": spear.to_ptr(handle=actor_handle)}
+    #     return_values = unreal_service.call_function(uobject=uobject, ufunction=ufunction, args=args)
+    #     return_value_handle = spear.to_handle(string=return_values["ReturnValue"])
     #
 
     # call an arbitrary function
     def call_function(self, uobject, ufunction, args={}, world_context="WorldContextObject"):
-        return spear.try_to_dicts(self._entry_point_caller.call("unreal_service.call_function", uobject, ufunction, spear.to_json_strings(args), world_context))
+        return spear.try_to_dicts(json_strings=self._entry_point_caller.call("unreal_service.call_function", uobject, ufunction, spear.to_json_strings(objs=args), world_context))
 
     #
     # Find actors unconditionally and return a list or dict
@@ -413,7 +413,7 @@ class UnrealService():
             object_flags = ["RF_Transactional"] # see Engine/Source/Runtime/Engine/Private/World.cpp
 
         return self._entry_point_caller.call(
-            "unreal_service.spawn_actor", class_name, spear.to_json_string(location), spear.to_json_string(rotation), spear.to_json_string(spawn_parameters), object_flags)
+            "unreal_service.spawn_actor", class_name, spear.to_json_string(obj=location), spear.to_json_string(obj=rotation), spear.to_json_string(obj=spawn_parameters), object_flags)
 
     def spawn_actor_from_uclass(self, uclass, location={}, rotation={}, spawn_parameters={}):
 
@@ -426,7 +426,7 @@ class UnrealService():
             object_flags = ["RF_Transactional"] # see Engine/Source/Runtime/Engine/Private/World.cpp
 
         return self._entry_point_caller.call(
-            "unreal_service.spawn_actor_from_uclass", uclass, spear.to_json_string(location), spear.to_json_string(rotation), spear.to_json_string(spawn_parameters), object_flags)
+            "unreal_service.spawn_actor_from_uclass", uclass, spear.to_json_string(obj=location), spear.to_json_string(obj=rotation), spear.to_json_string(obj=spawn_parameters), object_flags)
 
     #
     # Destroy actor
@@ -541,9 +541,6 @@ class UnrealService():
 
     def get_stable_name_for_component(self, component, include_actor_name=False):
         return self._entry_point_caller.call("unreal_service.get_stable_name_for_component", component, include_actor_name)
-
-    def get_stable_name_for_scene_component(self, component, include_actor_name=False):
-        return self._entry_point_caller.call("unreal_service.get_stable_name_for_scene_component", component, include_actor_name)
 
     #
     # Get actor and component tags

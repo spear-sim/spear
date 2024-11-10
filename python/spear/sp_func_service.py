@@ -26,13 +26,13 @@ class SpFuncService():
     def create_shared_memory_region(self, num_bytes, shared_memory_name):
         assert shared_memory_name not in self._shared_memory_handles.keys()
         view = self._entry_point_caller.call("sp_func_service.create_shared_memory_region", num_bytes, shared_memory_name)
-        handle = self.create_shared_memory_handle(view)
+        handle = self.create_shared_memory_handle(shared_memory_view=view)
         self._shared_memory_handles[shared_memory_name] = handle
         return handle
 
     def destroy_shared_memory_region(self, shared_memory_name):
         assert shared_memory_name in self._shared_memory_handles.keys()
-        self.destroy_shared_memory_handle(self._shared_memory_handles[shared_memory_name])
+        self.destroy_shared_memory_handle(shared_memory_handle=self._shared_memory_handles[shared_memory_name])
         self._shared_memory_handles.pop(shared_memory_name)
         self._entry_point_caller.call("sp_func_service.destroy_shared_memory_region", shared_memory_name)
 
@@ -40,12 +40,12 @@ class SpFuncService():
         views = self._entry_point_caller.call("sp_func_service.get_shared_memory_views", uobject)
         handles = {}
         for name, view in views.items():
-            handles[name] = self.create_shared_memory_handle(view)
+            handles[name] = self.create_shared_memory_handle(shared_memory_view=view)
         return handles
 
     def destroy_shared_memory_handles_for_uobject(self, shared_memory_handles):
         for name, handle in shared_memory_handles.items():
-            self.destroy_shared_memory_handle(handle)
+            self.destroy_shared_memory_handle(shared_memory_handle=handle)
 
     #
     # Call function interface.
@@ -79,7 +79,7 @@ class SpFuncService():
             packed_arrays[array_name] = packed_array
 
         # Call function.
-        args = {"packed_arrays": packed_arrays, "unreal_obj_strings": spear.to_json_strings(unreal_objs), "info": info}
+        args = {"packed_arrays": packed_arrays, "unreal_obj_strings": spear.to_json_strings(objs=unreal_objs), "info": info}
         return_values = self._entry_point_caller.call("sp_func_service.call_function", uobject, function_name, args)
 
         # If a return value is backed by Internal storage, then convert to a numpy array using the packed
@@ -101,7 +101,7 @@ class SpFuncService():
             arrays[packed_array_name] = array
 
         # Return all converted data.
-        return {"arrays": arrays, "unreal_objs": spear.try_to_dicts(return_values["unreal_obj_strings"]), "info": return_values["info"]}
+        return {"arrays": arrays, "unreal_objs": spear.try_to_dicts(json_strings=return_values["unreal_obj_strings"]), "info": return_values["info"]}
 
     #
     # Low-level helper functions for interacting with shared memory. Most users will not need to call these

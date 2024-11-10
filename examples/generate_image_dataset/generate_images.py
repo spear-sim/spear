@@ -79,8 +79,8 @@ if __name__ == "__main__":
     df = pd.read_csv(args.poses_file)
 
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
-    spear.configure_system(config)
-    instance = spear.Instance(config)
+    spear.configure_system(config=config)
+    instance = spear.Instance(config=config)
     env = CustomEnv(instance, config, num_internal_steps=args.num_internal_steps)
 
     # iterate over all poses
