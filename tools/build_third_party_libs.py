@@ -165,7 +165,7 @@ if __name__ == "__main__":
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
-        cmd = f'./b2 -a --with-test toolset={boost_toolset} --user-config={user_config_file} link=static cxxflags="{cxx_flags}" {boost_verbose_build_flag}'
+        cmd = f'./b2 -a --with-test toolset={boost_toolset} --user-config={user_config_file} link=static cxxflags="{cxx_flags} -fPIC" {boost_verbose_build_flag}'
         spear.log(f"Executing: {cmd}")
         subprocess.run(cmd, shell=True, check=True) # need shell=True to handle cxxflags
 
