@@ -5,8 +5,7 @@
 import numpy as np
 import scipy
 
-TRANSFORM_IDENTITY = {"location": np.matrix(np.zeros(3)).T, "rotation": np.matrix(np.identity(3)), "scale": np.matrix(np.identity(3))}
-
+identity_transform = {"location": np.matrix(np.zeros(3)).T, "rotation": np.matrix(np.identity(3)), "scale": np.matrix(np.identity(3))}
 matrix_column_names = ["x_plane","y_plane","z_plane", "w_plane"]
 matrix_row_names = ["x", "y", "z", "w"]
 

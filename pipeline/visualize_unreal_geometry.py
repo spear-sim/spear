@@ -93,7 +93,7 @@ def draw_actor(actor_desc, color):
     if args.color_mode == "unique_color_per_actor":
         color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
     draw_component(
-        transform_world_from_parent_component=spear.pipeline.TRANSFORM_IDENTITY,
+        transform_world_from_parent_component=spear.pipeline.identity_transform,
         component_desc=actor_desc["root_component"],
         color=color,
         log_prefix_str="    ")

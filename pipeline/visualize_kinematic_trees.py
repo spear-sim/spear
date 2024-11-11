@@ -89,7 +89,7 @@ def draw_kinematic_tree(kinematic_tree, color):
     if args.color_mode == "unique_color_per_actor":
         color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
     draw_kinematic_tree_node(
-        transform_world_from_parent_node=spear.pipeline.TRANSFORM_IDENTITY,
+        transform_world_from_parent_node=spear.pipeline.identity_transform,
         kinematic_tree_node=kinematic_tree["root_node"],
         color=color,
         log_prefix_str="    ")

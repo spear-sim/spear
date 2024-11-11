@@ -51,7 +51,7 @@ def get_kinematic_tree(actor_desc):
             actor_name=actor_name,
             component_desc=actor_desc["root_component"],
             component_is_root_within_node=True,
-            transform_node_from_parent_component=spear.pipeline.TRANSFORM_IDENTITY,
+            transform_node_from_parent_component=spear.pipeline.identity_transform,
             log_prefix_str="    ")}
 
 def get_kinematic_tree_node(actor_name, component_desc, component_is_root_within_node, transform_node_from_parent_component, log_prefix_str):
@@ -63,7 +63,7 @@ def get_kinematic_tree_node(actor_name, component_desc, component_is_root_within
         "name": component_name,
         "pipeline_info": {},
         "static_mesh_components": {},
-        "transform_parent_node_from_current_node": spear.pipeline.get_transform_data_from_transform(transform=spear.pipeline.TRANSFORM_IDENTITY)}
+        "transform_parent_node_from_current_node": spear.pipeline.get_transform_data_from_transform(transform=spear.pipeline.identity_transform)}
 
     spear.log(log_prefix_str, "Getting kinematic tree node for component: ", component_name)
 
@@ -79,7 +79,7 @@ def get_kinematic_tree_node(actor_name, component_desc, component_is_root_within
         if component_is_root_within_node:
             kinematic_tree_node["transform_parent_node_from_current_node"] = \
                 spear.pipeline.get_transform_data_from_transform(transform=transform_node_from_current_component)
-            transform_node_from_current_component = spear.pipeline.TRANSFORM_IDENTITY
+            transform_node_from_current_component = spear.pipeline.identity_transform
 
         # Only attempt to add geometry to the current node if the current component is a StaticMeshComponent...
         if component_desc["class"] in static_mesh_component_classes:
