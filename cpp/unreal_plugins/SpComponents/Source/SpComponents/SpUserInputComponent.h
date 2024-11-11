@@ -32,10 +32,6 @@ public:
     // USceneComponent interface
     void TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override;
 
-    // USpUserInputComponents need to be enabled explicitly to avoid a single key press unexpectedly doing multiple things
-    UPROPERTY(EditAnywhere, Category="SPEAR");
-    bool bHandleUserInput = false;
-
     // Must be called between BeginPlay() and EndPlay(), because GetWorld() needs to be valid.
     void subscribeToUserInputs(const std::vector<std::string>& user_input_names);
     void unsubscribeFromUserInputs(const std::vector<std::string>& user_input_names);
@@ -43,8 +39,15 @@ public:
     // Set by the code using this class to specify what happens when user input (e.g., keyboard or gamepad input) is received.
     void setHandleUserInputFunc(const std::function<void(const std::string&, float)>& handle_user_input_func);
 
+    // USpUserInputComponents need to be enabled explicitly to avoid a single key press unexpectedly doing multiple things
+    UPROPERTY(EditAnywhere, Category="SPEAR");
+    bool bHandleUserInput = false;
+
 private:
     FName getUniqueAxisNameFromUserInputName(const std::string& user_input_name) const;
+
+    UPROPERTY(VisibleAnywhere, Category="SPEAR");
+    TArray<FString> SubscribedToUserInputs;
 
     struct UserInputDesc
     {

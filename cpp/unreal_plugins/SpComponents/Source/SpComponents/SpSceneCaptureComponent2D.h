@@ -32,9 +32,10 @@ public:
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void Initialize();
-
     UFUNCTION(CallInEditor, Category="SPEAR")
     void Terminate();
+    UFUNCTION(CallInEditor, Category="SPEAR")
+    bool IsInitialized();
 
     UPROPERTY(EditAnywhere, Category="SPEAR")
     int Width = 512;

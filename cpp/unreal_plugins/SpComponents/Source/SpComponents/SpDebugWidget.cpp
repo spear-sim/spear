@@ -34,14 +34,18 @@
 
 #include "SpComponents/SpFuncComponent.h"
 #include "SpComponents/SpHitEventManager.h"
+#include "SpComponents/SpSceneCaptureComponent2D.h"
 
 // CALLED for the CDO
 // CALLED for a newly added editor-world object, when adding the object to a map
 // CALLED for an existing editor-world object, when loading the map
-// CALLED for an existing PIE-world object, when pressing play
+// CALLED for an existing PIE-world object, when pressing play (SpFuncComponent is set to nullptr initially, and then is set to a new USpFuncComponent* not owned by any other actor)
 ASpDebugWidget::ASpDebugWidget()
 {
     SP_LOG_CURRENT_FUNCTION();
+
+    SP_LOG("    this: ", this);
+    SP_LOG("    SpFuncComponent: ", SpFuncComponent);
 
     SpFuncComponent = Unreal::createComponentInsideOwnerConstructor<USpFuncComponent>(this, "sp_func_component");
     SP_ASSERT(SpFuncComponent);
@@ -70,7 +74,7 @@ ASpDebugWidget::~ASpDebugWidget()
 // CALLED for the CDO
 // CALLED for a newly added editor-world object, when adding the object to a map
 // CALLED for an existing editor-world object, when loading the map
-// CALLED for an existing PIE-world object, when pressing play
+// CALLED for an existing PIE-world object, when pressing play (SpFuncComponent is set to the USpFuncComponent* owned by the CDO in this function)
 void ASpDebugWidget::PostInitProperties()
 {
     SP_LOG_CURRENT_FUNCTION();
@@ -100,7 +104,7 @@ void ASpDebugWidget::PostActorCreated()
 // NOT CALLED for the CDO
 // NOT CALLED for a newly added editor-world object, when adding the object to a map
 // CALLED for an existing editor-world object, when loading the map
-// CALLED for an existing PIE-world object, when pressing play
+// CALLED for an existing PIE-world object, when pressing play (SpFuncComponent is set to the new USpFuncComponent* from the constructor in this function)
 void ASpDebugWidget::PostLoad()
 {
     SP_LOG_CURRENT_FUNCTION();
@@ -561,6 +565,54 @@ void ASpDebugWidget::SubscribeToActorHitEvents()
     Unreal::callFunction(GetWorld(), hit_event_manager, ufunction, {{"Actor", Std::toStringFromPtr(static_mesh_actor)}, {"bRecordDebugInfo", "true"}});
 }
 
+void ASpDebugWidget::ReadPixels()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    std::vector<AActor*> actors = Unreal::findActorsByName<AActor>(GetWorld(), {"Debug/BP_Camera_Sensor"});
+    AActor* actor = actors.at(0);
+    if (!actor) {
+        SP_LOG("Couldn't find Debug/BP_Camera_Sensor, giving up...");
+        return;
+    }
+
+    USpSceneCaptureComponent2D* sp_scene_capture_component_2d = Unreal::getComponentByName<USpSceneCaptureComponent2D>(actor, "DefaultSceneRoot.final_tone_curve_hdr");
+    SP_ASSERT(sp_scene_capture_component_2d);
+    if (!sp_scene_capture_component_2d->IsInitialized()) {
+        SP_LOG("Debug/BP_Camera_Sensor:DefaultSceneRoot.final_tone_curve_hdr isn't initialized, giving up...");
+        return;
+    }
+
+    USpFuncComponent* sp_func_component = Unreal::getComponentByName<USpFuncComponent>(actor, "DefaultSceneRoot.final_tone_curve_hdr.sp_func_component");
+    SP_ASSERT(sp_func_component);
+
+    SpFuncDataBundle args;
+
+    // call SpFunc
+    SpFuncArrayUtils::validate(args.packed_arrays_, SpFuncSharedMemoryUsageFlags::Arg);
+    SpFuncDataBundle return_values = sp_func_component->callFunc("read_pixels", args);
+    SpFuncArrayUtils::validate(return_values.packed_arrays_, SpFuncSharedMemoryUsageFlags::ReturnValue);
+
+    SP_LOG("return_values.packed_arrays_.at(\"data\").data_:                      ", Std::toStringFromPtr(return_values.packed_arrays_.at("data").data_.data()));
+    SP_LOG("return_values.packed_arrays_.at(\"data\").view_:                      ", Std::toStringFromPtr(return_values.packed_arrays_.at("data").view_));
+    SP_LOG("return_values.packed_arrays_.at(\"data\").data_source_:               ", Unreal::getEnumValue(return_values.packed_arrays_.at("data").data_source_));
+    SP_LOG("return_values.packed_arrays_.at(\"data\").data_type_:                 ", Unreal::getEnumValue(return_values.packed_arrays_.at("data").data_type_));
+    SP_LOG("return_values.packed_arrays_.at(\"data\").shared_memory_name_:        ", return_values.packed_arrays_.at("data").shared_memory_name_);
+    SP_LOG("return_values.packed_arrays_.at(\"data\").shared_memory_usage_flags_: ", Unreal::getEnumValue(return_values.packed_arrays_.at("data").shared_memory_usage_flags_));
+
+    for (int i = 0; i < return_values.packed_arrays_.at("data").shape_.size(); i++) {
+        SP_LOG("return_values.packed_arrays_.at(\"data\").shape_:                     ", return_values.packed_arrays_.at("data").shape_.at(i));
+    }
+
+    void* view_ptr = return_values.packed_arrays_.at("data").view_;
+
+    SP_LOG("view_ptr:    ", Std::toStringFromPtr(view_ptr));
+    SP_LOG("view_ptr[0]: ", (int)(((uint8_t*)view_ptr)[0]));
+    SP_LOG("view_ptr[1]: ", (int)(((uint8_t*)view_ptr)[1]));
+    SP_LOG("view_ptr[2]: ", (int)(((uint8_t*)view_ptr)[2]));
+    SP_LOG("view_ptr[3]: ", (int)(((uint8_t*)view_ptr)[3]));
+}
+
 FString ASpDebugWidget::GetString(FString arg_0, bool arg_1, int arg_2, FVector arg_3)
 {
     SP_LOG_CURRENT_FUNCTION();
@@ -601,7 +653,7 @@ void ASpDebugWidget::initializeSpFunc()
 
     SpFuncComponent->initialize();
 
-    // The name chosen here for the shared memory does not need to be globally unique. It only needs unique
+    // The name chosen here for our shared memory region not need to be globally unique. It only needs unique
     // within this SpFuncComponent. Normally we would choose a human-readable name for the shared memory, e.g.,
     // "smem:observation", but in this case, we set it to Std::toStringFromPtr(this) as a debugging tool.
     shared_memory_view_ = SpFuncSharedMemoryView(shared_memory_region_->getView(), SpFuncSharedMemoryUsageFlags::ReturnValue);

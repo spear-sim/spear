@@ -70,6 +70,9 @@ private:
     UFUNCTION(CallInEditor, Category="SPEAR")
     void SubscribeToActorHitEvents();
 
+    UFUNCTION(CallInEditor, Category="SPEAR")
+    void ReadPixels();
+
     UFUNCTION()
     FString GetString(FString arg_0, bool arg_1, int arg_2, FVector arg_3);
 

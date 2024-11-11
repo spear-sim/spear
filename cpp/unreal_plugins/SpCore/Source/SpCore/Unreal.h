@@ -309,6 +309,30 @@ public:
     static std::map<std::string, USceneComponent*> getChildrenComponentsAsMap(const USceneComponent* parent, bool include_all_descendants = true);
 
     //
+    // Find actor and component by path and return both
+    //
+
+    template <CActor TActor = AActor, CComponent TComponent = UActorComponent, CActor TReturnAsActor = TActor, CComponent TReturnAsComponent = TComponent> requires
+        std::derived_from<TActor, TReturnAsActor> && std::derived_from<TComponent, TReturnAsComponent>
+    static std::pair<TReturnAsActor*, TReturnAsComponent*> findActorAndComponentByPath(const UWorld* world, const AActor* owner, const std::string& path)
+    {
+        std::pair<TReturnAsActor*, TReturnAsComponent*> pair = std::make_pair(nullptr, nullptr);
+
+        std::vector<std::string> path_tokens = Std::tokenize(path, ":");
+        SP_ASSERT(path_tokens.size() == 1 || path_tokens.size() == 2);
+
+        if (path_tokens.size() == 1) {
+            pair.first = const_cast<TReturnAsActor*>(Cast<TReturnAsActor>(owner));
+            pair.second = Unreal::getComponentByName<TComponent, TReturnAsComponent>(pair.first, path_tokens.at(0));
+        } else if (path_tokens.size() == 2) {
+            pair.first = Unreal::findActorByName<TActor, TReturnAsActor>(world, path_tokens.at(0));
+            pair.second = Unreal::getComponentByName<TComponent, TReturnAsComponent>(pair.first, path_tokens.at(1));
+        }
+
+        return pair;
+    }
+
+    //
     // Find actors by name or tag or type and return an std::vector
     //
 

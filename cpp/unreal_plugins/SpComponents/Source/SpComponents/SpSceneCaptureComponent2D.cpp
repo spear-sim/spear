@@ -148,3 +148,8 @@ void USpSceneCaptureComponent2D::Terminate()
 
     SetVisibility(false);
 }
+
+bool USpSceneCaptureComponent2D::IsInitialized()
+{
+    return initialized_;
+}

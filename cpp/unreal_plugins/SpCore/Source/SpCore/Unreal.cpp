@@ -680,7 +680,7 @@ std::string Unreal::getStableName(const UActorComponent* component, bool include
 
     std::string component_name;
 
-    const USceneComponent* scene_component = Cast<USceneComponent>(component);
+    const USceneComponent* scene_component = Cast<USceneComponent>(component); // no RTTI available, so use Cast instead of dynamic_cast
     if (scene_component) {
         TArray<USceneComponent*> parents;
         scene_component->GetParentComponents(parents);

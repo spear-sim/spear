@@ -51,7 +51,6 @@ void USpUserInputComponent::subscribeToUserInputs(const std::vector<std::string>
 {
     SP_ASSERT(GetWorld());
     SP_ASSERT(GetWorld()->GetFirstPlayerController());
-    SP_ASSERT(GetOwner());
 
     input_component_ = GetWorld()->GetFirstPlayerController()->InputComponent;
     SP_ASSERT(input_component_);
@@ -71,6 +70,7 @@ void USpUserInputComponent::subscribeToUserInputs(const std::vector<std::string>
         input_component_->BindAxis(user_input_desc.axis_);
 
         Std::insert(user_input_descs_, user_input_name, user_input_desc);
+        SubscribedToUserInputs.Add(Unreal::toFString(user_input_name));
     }
 }
 
@@ -87,6 +87,7 @@ void USpUserInputComponent::unsubscribeFromUserInputs(const std::vector<std::str
         player_input_->RemoveAxisMapping(user_input_desc.input_axis_key_mapping_);
 
         Std::remove(user_input_descs_, user_input_name);
+        SubscribedToUserInputs.Remove(Unreal::toFString(user_input_name));
     }
 }
 
