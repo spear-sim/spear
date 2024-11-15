@@ -195,38 +195,6 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(
-            "enhanced_input_service", "inject_input_for_blueprint_actor",
-            [this](uint64_t& uobject, std::string& input_action_name, std::string& trigger_event_string, std::string& input_action_value_string,
-                   std::string& input_action_instance_string, std::vector<uint64_t>& modifiers, std::vector<uint64_t>& triggers, bool verbose) -> void {
-                UObject* uobject_ptr                  = toPtr<UObject>(uobject);
-                UClass* binding_class                 = UEnhancedInputActionDelegateBinding::StaticClass(); // could be a variable
-                UInputDelegateBinding* binding_object = CastChecked<UInputDelegateBinding>(
-                    UBlueprintGeneratedClass::GetDynamicBindingObject(uobject_ptr->GetClass(), binding_class), ECastCheckedType::NullAllowed);
-                UEnhancedInputActionDelegateBinding* enhanced_input_binding = Cast<UEnhancedInputActionDelegateBinding>(binding_object);
-                SP_ASSERT(enhanced_input_binding);
-
-                ETriggerEvent trigger_event                         = Unreal::getEnumValueFromString<ETriggerEvent>(trigger_event_string);
-                TArray<TObjectPtr<UInputModifier>> modifiers_tarray = Unreal::toTArrayOf<TObjectPtr<UInputModifier>>(toPtr<UInputModifier>(modifiers));
-                TArray<TObjectPtr<UInputTrigger>> triggers_tarray   = Unreal::toTArrayOf<TObjectPtr<UInputTrigger>>(toPtr<UInputTrigger>(triggers));
-
-                FSpInputActionValue sp_input_action_value;
-                Unreal::setObjectPropertiesFromString(&sp_input_action_value, FSpInputActionValue::StaticStruct(), input_action_value_string);
-                FInputActionValue input_action_value(sp_input_action_value.ValueType, sp_input_action_value.Value);
-
-                FSpInputActionInstance sp_input_action_instance;
-                Unreal::setObjectPropertiesFromString(&sp_input_action_instance, FSpInputActionInstance::StaticStruct(), input_action_instance_string);
-
-                for (const FBlueprintEnhancedInputActionBinding& binding : enhanced_input_binding->InputActionDelegateBindings) {
-                    const UInputAction* input_action = binding.InputAction;
-                    if (input_action_name == Unreal::toStdString(input_action->GetName()) && trigger_event == binding.TriggerEvent) {
-                        FEnhancedInputActionEventDelegateBinding<FEnhancedInputActionHandlerDynamicSignature> AB(input_action, binding.TriggerEvent);
-                        AB.Delegate.BindDelegate(uobject_ptr, binding.FunctionNameToBind);
-                        AB.Delegate.Execute(input_action_value, 0.0, 0.0, input_action);
-                    }
-                }
-            });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(
             "enhanced_input_service", "inject_debug_key_for_actor",
             [this](uint64_t& actor, std::string& chord_string, std::string& key_event_string, std::string& input_action_value_string, bool verbose) -> void {
                 AActor* actor_ptr = toPtr<AActor>(actor);

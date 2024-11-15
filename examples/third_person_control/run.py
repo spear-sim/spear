@@ -56,112 +56,41 @@ if __name__ == "__main__":
             spawn_parameters={"Name": "Agent", "SpawnCollisionHandlingOverride": "AlwaysSpawn"}
         )
 
-        agent2 = instance.unreal_service.spawn_actor_from_uclass(
-            uclass=agent_class,
-            location={"X": 0.0, "Y": 200.0, "Z": 130.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
-            spawn_parameters={"Name": "Agent2", "SpawnCollisionHandlingOverride": "AlwaysSpawn"}
-        )
-
-        agent3 = instance.unreal_service.spawn_actor_from_uclass(
-            uclass=agent_class,
-            location={"X": 0.0, "Y": 300.0, "Z": 130.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
-            spawn_parameters={"Name": "Agent3", "SpawnCollisionHandlingOverride": "AlwaysSpawn"}
-        )
         # need player_controller current actor to inject input
-        # instance.unreal_service.call_function(uobject=player_controller, ufunction=possess_func, args={"InPawn": spear.func_utils.to_ptr(agent)})
+        instance.unreal_service.call_function(uobject=player_controller, ufunction=possess_func, args={"InPawn": spear.func_utils.to_ptr(agent)})
 
         # set bRunPhysicsWithNoController to True to control pawn without controller
         character_movement_component = instance.unreal_service.get_component_by_class(agent, character_movement_component_class)
         instance.unreal_service.set_object_properties_for_uobject(character_movement_component, {"bRunPhysicsWithNoController": True})
         instance.unreal_service.call_function(uobject=character_movement_component, ufunction=set_movement_mode_func, args={"NewMovementMode": "MOVE_Walking"})
 
-        character_movement_component2 = instance.unreal_service.get_component_by_class(agent2, character_movement_component_class)
-        instance.unreal_service.set_object_properties_for_uobject(character_movement_component2, {"bRunPhysicsWithNoController": True})
-        instance.unreal_service.call_function(uobject=character_movement_component2, ufunction=set_movement_mode_func, args={"NewMovementMode": "MOVE_Walking"})
-
-        character_movement_component3 = instance.unreal_service.get_component_by_class(agent3, character_movement_component_class)
-        instance.unreal_service.set_object_properties_for_uobject(character_movement_component3, {"bRunPhysicsWithNoController": True})
-        instance.unreal_service.call_function(uobject=character_movement_component3, ufunction=set_movement_mode_func, args={"NewMovementMode": "MOVE_Walking"})
-
-        # instance.enhanced_input_service.init_input_for_actor(agent3)
     with instance.end_frame():
         pass
 
-    for count in range(0, 100):
+    for row in df.to_records(index=False):
+        action = get_action(row)
+
         with instance.begin_frame():
             instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
 
-        with instance.end_frame():
-            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
-
-    # with instance.begin_frame():
-    #     instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
-    #
-    #     instance.unreal_service.call_function(uobject=player_controller, ufunction=possess_func, args={"InPawn": spear.func_utils.to_ptr(agent)})
-    #     instance.enhanced_input_service.inject_input_for_blueprint_actor(
-    #         actor=agent,
-    #         input_action_name="IA_Jump",
-    #         trigger_event="Started",
-    #         input_action_value={},
-    #         input_action_instance={},verbose=True)
-    #     instance.unreal_service.call_function(uobject=player_controller, ufunction=unpossess_func, args={"InPawn": spear.func_utils.to_ptr(agent)})
-    # #
-    # # with instance.end_frame():
-    # #     instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
-    # #
-    # # for count in range(0, 100):
-    # #     with instance.begin_frame():
-    # #         instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
-    # #
-    # #     with instance.end_frame():
-    # #         instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
-    # #
-    # #
-    # # with instance.begin_frame():
-    # #     instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
-    #
-    #     instance.unreal_service.call_function(uobject=player_controller, ufunction=possess_func, args={"InPawn": spear.func_utils.to_ptr(agent2)})
-    #     instance.enhanced_input_service.inject_input_for_blueprint_actor(
-    #         actor=agent2,
-    #         input_action_name="IA_Jump",
-    #         trigger_event="Started",
-    #         input_action_value={},
-    #         input_action_instance={},verbose=True)
-    #     instance.unreal_service.call_function(uobject=player_controller, ufunction=unpossess_func, args={"InPawn": spear.func_utils.to_ptr(agent2)})
-    #
-    # with instance.end_frame():
-    #     instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
-
-    # with instance.end_frame():
-    #     instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
-
-    for count in range(0, 100):
-        with instance.begin_frame():
-            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
-            if count == 0:
-                instance.unreal_service.call_function(uobject=player_controller, ufunction=possess_func, args={"InPawn": spear.func_utils.to_ptr(agent)})
-            instance.enhanced_input_service.inject_input_for_actor(
-                actor=agent,
-                input_action_name="IA_Move",
-                trigger_event="Triggered",
-                input_action_value={"ValueType": "Axis2D", "Value": {"X": 0, "Y": 1, "Z": 0.0}},
-                input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0,
-                                       "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01},
-                modifiers=[],
-                triggers=[])
-            # instance.unreal_service.call_function(uobject=player_controller, ufunction=unpossess_func, args={"InPawn": spear.func_utils.to_ptr(agent)})
-            #
-            # instance.unreal_service.call_function(uobject=player_controller, ufunction=possess_func, args={"InPawn": spear.func_utils.to_ptr(agent2)})
-            # instance.enhanced_input_service.inject_input_for_blueprint_actor(
-            #     actor=agent2,
-            #     input_action_name="IA_Move",
-            #     trigger_event="Triggered",
-            #     input_action_value={"ValueType": "Axis2D", "Value": {"X": 0, "Y": 1, "Z": 0.0}},
-            #     input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0,
-            #                            "ElapsedProcessedTime": 0.1, "ElapsedTriggeredTime": 0.1},
-            #     modifiers=[],
-            #     triggers=[])
-            # instance.unreal_service.call_function(uobject=player_controller, ufunction=unpossess_func, args={"InPawn": spear.func_utils.to_ptr(agent2)})
+            Jump_value = action['Jump']
+            if Jump_value[0] != 0:
+                instance.enhanced_input_service.inject_input_for_actor(
+                    actor=agent,
+                    input_action_name="IA_Jump",
+                    trigger_event="Started",
+                    input_action_value={},
+                    input_action_instance={})
+            AddMovementInput_value = action['AddMovementInput']
+            if np.any(AddMovementInput_value):
+                instance.enhanced_input_service.inject_input_for_actor(
+                    actor=agent,
+                    input_action_name="IA_Move",
+                    trigger_event="Triggered",
+                    input_action_value={"ValueType": "Axis2D", "Value": {"X": AddMovementInput_value[0], "Y": AddMovementInput_value[1], "Z": AddMovementInput_value[2]}},
+                    input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01},
+                    modifiers=[],
+                    triggers=[])
         with instance.end_frame():
             instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
 
