@@ -34,8 +34,8 @@ if __name__ == "__main__":
             os.path.realpath(os.path.join(common_dir, "default_config.common.yaml")),
             os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
 
-    spear.configure_system(config)
-    instance = spear.Instance(config)
+    spear.configure_system(config=config)
+    instance = spear.Instance(config=config)
 
     # create or get gym object
     if config.SP_SERVICES.LEGACY_SERVICE.AGENT == "SphereAgent":

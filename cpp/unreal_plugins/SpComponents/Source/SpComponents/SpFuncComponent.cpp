@@ -26,6 +26,14 @@ USpFuncComponent::~USpFuncComponent()
     SP_LOG_CURRENT_FUNCTION();
 }
 
+void USpFuncComponent::initialize()
+{
+    FuncNames.Empty();
+    SharedMemoryViewNames.Empty();
+}
+
+void USpFuncComponent::terminate() {}
+
 void USpFuncComponent::registerFunc(const std::string& func_name, const std::function<SpFuncDataBundle(SpFuncDataBundle&)>& func)
 {
     funcs_.registerFunc(func_name, func);

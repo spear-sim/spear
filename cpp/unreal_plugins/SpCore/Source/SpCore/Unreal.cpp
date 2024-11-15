@@ -415,15 +415,15 @@ void Unreal::setPropertyValueFromJsonValue(const Unreal::PropertyDesc& property_
         SP_ASSERT(inner_property);
 
         for (int i = 0; i < json_values->Num(); i++) {
-            TSharedPtr<FJsonValue> json_value = (*json_values)[i];
-            SP_ASSERT(json_value.IsValid());
+            TSharedPtr<FJsonValue> inner_json_value = (*json_values)[i];
+            SP_ASSERT(inner_json_value.IsValid());
 
             PropertyDesc inner_property_desc;
             inner_property_desc.property_ = inner_property;
             inner_property_desc.value_ptr_ = array_property->GetValueAddressAtIndex_Direct(inner_property, property_desc.value_ptr_, i);
             SP_ASSERT(inner_property_desc.value_ptr_);
 
-            setPropertyValueFromJsonValue(inner_property_desc, json_value);
+            setPropertyValueFromJsonValue(inner_property_desc, inner_json_value);
         }
 
     } else if (property_desc.property_->IsA(FSetProperty::StaticClass())) {
@@ -441,8 +441,8 @@ void Unreal::setPropertyValueFromJsonValue(const Unreal::PropertyDesc& property_
         SP_ASSERT(inner_property);
 
         for (int i = 0; i < json_values->Num(); i++) {
-            TSharedPtr<FJsonValue> json_value = (*json_values)[i];
-            SP_ASSERT(json_value.IsValid());
+            TSharedPtr<FJsonValue> inner_json_value = (*json_values)[i];
+            SP_ASSERT(inner_json_value.IsValid());
 
             int32 index = set_helper.AddDefaultValue_Invalid_NeedsRehash();
 
@@ -451,7 +451,7 @@ void Unreal::setPropertyValueFromJsonValue(const Unreal::PropertyDesc& property_
             inner_property_desc.value_ptr_ = set_helper.GetElementPtr(index);
             SP_ASSERT(inner_property_desc.value_ptr_);
 
-            setPropertyValueFromJsonValue(inner_property_desc, json_value);
+            setPropertyValueFromJsonValue(inner_property_desc, inner_json_value);
         }
 
         set_helper.Rehash();
@@ -490,15 +490,15 @@ void Unreal::setPropertyValueFromJsonValue(const Unreal::PropertyDesc& property_
 
             setPropertyValueFromString(inner_key_property_desc, json_key);
 
-            TSharedPtr<FJsonValue> json_value = json_values[i];
-            SP_ASSERT(json_value.IsValid());
+            TSharedPtr<FJsonValue> inner_json_value = json_values[i];
+            SP_ASSERT(inner_json_value.IsValid());
 
             PropertyDesc inner_value_property_desc;
             inner_value_property_desc.property_ = inner_value_property;
             inner_value_property_desc.value_ptr_ = map_helper.GetValuePtr(index);
             SP_ASSERT(inner_value_property_desc.value_ptr_);
 
-            setPropertyValueFromJsonValue(inner_value_property_desc, json_value);
+            setPropertyValueFromJsonValue(inner_value_property_desc, inner_json_value);
         }
 
         map_helper.Rehash();
@@ -672,6 +672,32 @@ std::string Unreal::getStableName(const AActor* actor)
 {
     USpStableNameComponent* sp_stable_name_component = getComponentByType<USpStableNameComponent>(actor);
     return toStdString(sp_stable_name_component->StableName);
+}
+
+std::string Unreal::getStableName(const UActorComponent* component, bool include_actor_name)
+{
+    SP_ASSERT(component);
+
+    std::string component_name;
+
+    const USceneComponent* scene_component = Cast<USceneComponent>(component); // no RTTI available, so use Cast instead of dynamic_cast
+    if (scene_component) {
+        TArray<USceneComponent*> parents;
+        scene_component->GetParentComponents(parents);
+        for (auto parent : parents) {
+            component_name = toStdString(parent->GetName()) + "." + component_name;
+        }
+    }
+
+    component_name = component_name + toStdString(component->GetName());
+
+    if (include_actor_name) {
+        const AActor* actor = component->GetOwner();
+        SP_ASSERT(actor);
+        component_name = getStableName(actor) + ":" + component_name;
+    }
+
+    return component_name;
 }
 
 void Unreal::setStableName(const AActor* actor, const std::string& stable_name)

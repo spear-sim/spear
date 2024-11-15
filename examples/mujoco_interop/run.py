@@ -36,8 +36,8 @@ if __name__ == "__main__":
 
     # create SPEAR instance
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
-    spear.configure_system(config)
-    spear_instance = spear.Instance(config)
+    spear.configure_system(config=config)
+    spear_instance = spear.Instance(config=config)
 
     # get Unreal actors and functions
     with spear_instance.begin_frame():

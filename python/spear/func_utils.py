@@ -9,9 +9,9 @@ import spear
 # Convert a collection of objects to a collection of JSON strings so they can be passed to a service.
 def to_json_strings(objs):
     if isinstance(objs, list):
-        return [ to_json_string(o) for o in objs ]
+        return [ to_json_string(obj=o) for o in objs ]
     elif isinstance(objs, dict):
-        return { k: to_json_string(v) for k, v in objs.items() }
+        return { k: to_json_string(obj=v) for k, v in objs.items() }
     else:
         assert False
 
@@ -26,18 +26,18 @@ def to_json_string(obj, stringify=True):
             if isinstance(obj, numbers.Number):
                 return json.dumps(obj)
             if isinstance(obj, list):
-                return json.dumps([ to_json_string(o, stringify=False) for o in obj ])
+                return json.dumps([ to_json_string(obj=o, stringify=False) for o in obj ])
             elif isinstance(obj, dict):
-                return json.dumps({ to_json_string(k, stringify=True): to_json_string(v, stringify=False) for k, v in obj.items() })
+                return json.dumps({ to_json_string(obj=k, stringify=True): to_json_string(obj=v, stringify=False) for k, v in obj.items() })
             else:
                 assert False
         else:
             if isinstance(obj, numbers.Number):
                 return obj
             elif isinstance(obj, list):
-                return [ to_json_string(o, stringify=False) for o in obj ]
+                return [ to_json_string(obj=o, stringify=False) for o in obj ]
             elif isinstance(obj, dict):
-                return { to_json_string(k, stringify=True): to_json_string(v, stringify=False) for k, v in obj.items() }
+                return { to_json_string(obj=k, stringify=True): to_json_string(obj=v, stringify=False) for k, v in obj.items() }
             else:
                 assert False
     else:
@@ -46,9 +46,9 @@ def to_json_string(obj, stringify=True):
 # Convert a collection of JSON strings returned by a service to a collection of dicts.
 def try_to_dicts(json_strings, default_value=None):
     if isinstance(json_strings, list):
-        return [ try_to_dict(s, default_value=default_value) for s in json_strings ]
+        return [ try_to_dict(json_string=s, default_value=default_value) for s in json_strings ]
     elif isinstance(json_strings, dict):
-        return { k: try_to_dict(v, default_value=default_value) for k, v in json_strings.items() }
+        return { k: try_to_dict(json_string=v, default_value=default_value) for k, v in json_strings.items() }
     else:
         assert False
 

@@ -14,8 +14,8 @@ if __name__ == "__main__":
 
     # load config
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
-    spear.configure_system(config)
-    instance = spear.Instance(config)
+    spear.configure_system(config=config)
+    instance = spear.Instance(config=config)
 
     # initialize actors and components
     with instance.begin_frame():
@@ -39,7 +39,7 @@ if __name__ == "__main__":
         post_process_volume = instance.unreal_service.find_actor_by_type(class_name="APostProcessVolume")
         player_controller = instance.world_service.get_first_player_controller()
         player_camera_manager_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=player_controller, property_name="PlayerCameraManager")
-        player_camera_manager = spear.to_handle(instance.unreal_service.get_property_value(property_desc=player_camera_manager_desc))
+        player_camera_manager = spear.to_handle(string=instance.unreal_service.get_property_value(property_desc=player_camera_manager_desc))
 
         viewport_size = instance.engine_service.get_viewport_size()
         viewport_x = viewport_size[0]
@@ -89,8 +89,8 @@ if __name__ == "__main__":
         pass
     with instance.end_frame():
         return_values = instance.sp_func_service.call_function(
-            final_tone_curve_hdr_component,
-            "read_pixels",
+            uobject=final_tone_curve_hdr_component,
+            function_name="read_pixels",
             uobject_shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
 
     # show rendered frame now that we're outside of with instance.end_frame()

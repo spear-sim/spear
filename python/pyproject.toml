@@ -15,6 +15,7 @@ version = "0.5.0"
 requires-python = ">=3.11"
 dependencies = [
     "coacd==1.0.0",
+    "configobj==5.0.9",
     "ffmpeg-python==0.2.0",
     "gym==0.23.0",
     "matplotlib==3.6.2",

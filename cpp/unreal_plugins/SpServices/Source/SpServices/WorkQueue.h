@@ -8,7 +8,7 @@
 #include <exception>
 #include <future>
 #include <map>
-#include <mutex>
+#include <mutex>       // std::lock_guard
 #include <string>
 #include <utility>     // std::forward, std::move
 #include <vector>

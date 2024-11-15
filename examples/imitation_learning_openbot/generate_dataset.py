@@ -75,8 +75,8 @@ if __name__ == "__main__":
     # load the episodes to be executed
     df = pd.read_csv(args.episodes_file)
 
-    spear.configure_system(config)
-    instance = spear.Instance(config)
+    spear.configure_system(config=config)
+    instance = spear.Instance(config=config)
     navmesh = navmesh.NavMesh(instance)
     env = openbot_env.OpenBotEnv(instance, config)
 

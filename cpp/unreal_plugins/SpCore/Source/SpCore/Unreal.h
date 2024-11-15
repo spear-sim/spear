@@ -21,7 +21,7 @@
 #include <Engine/World.h>
 #include <EngineUtils.h>                    // TActorIterator
 #include <GameFramework/Actor.h>
-#include <HAL/Platform.h>                   // TCHAR
+#include <HAL/Platform.h>                   // int32, int64, TCHAR
 #include <Subsystems/Subsystem.h>
 #include <Templates/Casts.h>
 #include <UObject/Class.h>                  // EIncludeSuperFlag, UClass, UEnum, UStruct
@@ -307,6 +307,30 @@ public:
 
     static std::vector<USceneComponent*> getChildrenComponents(const USceneComponent* parent, bool include_all_descendants = true);
     static std::map<std::string, USceneComponent*> getChildrenComponentsAsMap(const USceneComponent* parent, bool include_all_descendants = true);
+
+    //
+    // Find actor and component by path and return both
+    //
+
+    template <CActor TActor = AActor, CComponent TComponent = UActorComponent, CActor TReturnAsActor = TActor, CComponent TReturnAsComponent = TComponent> requires
+        std::derived_from<TActor, TReturnAsActor> && std::derived_from<TComponent, TReturnAsComponent>
+    static std::pair<TReturnAsActor*, TReturnAsComponent*> findActorAndComponentByPath(const UWorld* world, const AActor* owner, const std::string& path)
+    {
+        std::pair<TReturnAsActor*, TReturnAsComponent*> pair = std::make_pair(nullptr, nullptr);
+
+        std::vector<std::string> path_tokens = Std::tokenize(path, ":");
+        SP_ASSERT(path_tokens.size() == 1 || path_tokens.size() == 2);
+
+        if (path_tokens.size() == 1) {
+            pair.first = const_cast<TReturnAsActor*>(Cast<TReturnAsActor>(owner));
+            pair.second = Unreal::getComponentByName<TComponent, TReturnAsComponent>(pair.first, path_tokens.at(0));
+        } else if (path_tokens.size() == 2) {
+            pair.first = Unreal::findActorByName<TActor, TReturnAsActor>(world, path_tokens.at(0));
+            pair.second = Unreal::getComponentByName<TComponent, TReturnAsComponent>(pair.first, path_tokens.at(1));
+        }
+
+        return pair;
+    }
 
     //
     // Find actors by name or tag or type and return an std::vector
@@ -904,34 +928,7 @@ public:
     static bool hasStableName(const UActorComponent* component);
 
     static std::string getStableName(const AActor* actor);
-    static std::string getStableName(const CComponent auto* actor_component, bool include_actor_name = false)
-    {
-        SP_ASSERT(actor_component);
-        std::string component_name = toStdString(actor_component->GetName());
-        if (include_actor_name) {
-            AActor* actor = actor_component->GetOwner();
-            SP_ASSERT(actor);
-            component_name = getStableName(actor) + ":" + component_name;
-        }
-        return component_name;
-    }
-
-    static std::string getStableName(const CSceneComponent auto* scene_component, bool include_actor_name = false)
-    {
-        SP_ASSERT(scene_component);
-        std::string component_name = toStdString(scene_component->GetName());
-        TArray<USceneComponent*> parents;
-        scene_component->GetParentComponents(parents);
-        for (auto parent : parents) {
-            component_name = toStdString(parent->GetName()) + "." + component_name;
-        }
-        if (include_actor_name) {
-            AActor* actor = scene_component->GetOwner();
-            SP_ASSERT(actor);
-            component_name = getStableName(actor) + ":" + component_name;
-        }
-        return component_name;
-    }
+    static std::string getStableName(const UActorComponent* component, bool include_actor_name = false);
 
     static void setStableName(const AActor* actor, const std::string& stable_name);
     #if WITH_EDITOR // defined in an auto-generated header
@@ -954,17 +951,17 @@ public:
     template <typename TEnum>
     static constexpr auto getConstEnumValue(const TEnum src)
     {
-        return static_cast<std::underlying_type_t<TEnum>>(src);
+        return static_cast<std::underlying_type_t<TEnum>>(src); // needed to assign existing enum values to new enum values
     }
 
-    static auto getEnumValue(int32_t src) { return src; }
-    static auto getEnumValue(int64_t src) { return src; }
-
     template <typename TEnum>
-    static auto getEnumValue(TEnum src)
+    static int64_t getEnumValue(TEnum src)
     {
         return static_cast<std::underlying_type_t<TEnum>>(src);
     }
+
+    template <> int64_t getEnumValue<int32>(int32 src) { return src; } // needed for getEnumValue(0)
+    template <> int64_t getEnumValue<int64>(int64 src) { return src; } // needed for getEnumValue(uenum->GetValueByName(...))
 
     template <typename TDestEnum, typename TSrcEnum>
     static TDestEnum getEnumValueAs(TSrcEnum src)

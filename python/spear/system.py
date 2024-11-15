@@ -39,17 +39,17 @@ def configure_system(config):
             assert os.path.exists(executable_content_paks_dir)
             assert os.path.exists(external_paks_version_dir)
 
-            if spear.path_exists(executable_content_paks_external_dir):
+            if spear.path_exists(path=executable_content_paks_external_dir):
                 log(f"File or directory or symlink exists, removing: {executable_content_paks_external_dir}")
-                spear.remove_path(executable_content_paks_external_dir)
+                spear.remove_path(path=executable_content_paks_external_dir)
 
             log(f"Creating symlink: {executable_content_paks_external_dir} -> {external_paks_version_dir}")
             os.symlink(external_paks_version_dir, executable_content_paks_external_dir)
 
         else:
-            if spear.path_exists(executable_content_paks_external_dir):
+            if spear.path_exists(path=executable_content_paks_external_dir):
                 log(f"File or directory or symlink exists, removing: {executable_content_paks_external_dir}")
-                spear.remove_path(executable_content_paks_external_dir)
+                spear.remove_path(path=executable_content_paks_external_dir)
 
     # set environment variables
     if config.SPEAR.LAUNCH_MODE in ["editor", "standalone"]:

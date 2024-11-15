@@ -94,7 +94,7 @@ class EngineService():
 
 
     # This function is called by all other services.
-    def call(self, func_name, *args):
+    def call(self, entry_point_name, *args):
         if self._frame_state == "finished_executing_begin_frame":
             spear.log('ERROR: Calling SPEAR functions in between "with begin_frame()" and "with end_frame()" code blocks is not supported.')
             spear.log("Attempting to exit critical section...")
@@ -104,9 +104,9 @@ class EngineService():
             assert False
 
         if self._config.SPEAR.ENGINE_SERVICE.PRINT_ENTRY_POINT_CALLS:
-            spear.log("Calling:               ", func_name, args)
+            spear.log("Calling:               ", entry_point_name, args)
 
-        return_value = self._rpc_client.call(func_name, *args)
+        return_value = self._rpc_client.call(entry_point_name, *args)
 
         if self._config.SPEAR.ENGINE_SERVICE.PRINT_ENTRY_POINT_CALLS:
             spear.log("Obtained return value: ", return_value)

@@ -98,7 +98,7 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
         kinematic_tree_node=kinematic_tree["root_node"],
         meshes_element=meshes_element,
         parent_element=bodies_element,
-        transform_world_from_parent_node=spear.pipeline.TRANSFORM_IDENTITY,
+        transform_world_from_parent_node=spear.pipeline.identity_transform,
         root_node=True,
         color=color,
         log_prefix_str="    ")
@@ -203,8 +203,8 @@ def add_mujoco_elements_for_kinematic_tree_node(
     kinematic_tree_node_name = kinematic_tree_node["name"]
     spear.log(log_prefix_str, "Processing kinematic tree node: ", kinematic_tree_node_name)
 
-    transform_parent_node_from_current_node = spear.pipeline.get_transform_from_transform_data(kinematic_tree_node["transform_parent_node_from_current_node"])
-    transform_world_from_current_node = spear.pipeline.compose_transforms([transform_world_from_parent_node, transform_parent_node_from_current_node])
+    transform_parent_node_from_current_node = spear.pipeline.get_transform_from_transform_data(transform_data=kinematic_tree_node["transform_parent_node_from_current_node"])
+    transform_world_from_current_node = spear.pipeline.compose_transforms(transforms=[transform_world_from_parent_node, transform_parent_node_from_current_node])
 
     rotation_x_axis = transform_parent_node_from_current_node["rotation"][:,0].A1
     rotation_y_axis = transform_parent_node_from_current_node["rotation"][:,1].A1

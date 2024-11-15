@@ -53,8 +53,8 @@ if __name__ == "__main__":
     config.SP_SERVICES.LEGACY_SERVICE.TASK = "NullTask"
     config.freeze()
 
-    spear.configure_system(config)
-    instance = spear.Instance(config)
+    spear.configure_system(config=config)
+    instance = spear.Instance(config=config)
     navmesh = navmesh.NavMesh(instance)
 
     # iterate over all scenes

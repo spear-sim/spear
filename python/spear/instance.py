@@ -27,13 +27,13 @@ class Instance():
         # Additionally, all other services call RPC entry points through EngineService.call(), rather than
         # going through the RPC client directly. So we pass in the RPC client directly when constructing
         # EngineService, and we pass in EngineService when constructing all other services.
-        self.engine_service = spear.EngineService(self._rpc_client, self._config)
+        self.engine_service = spear.EngineService(rpc_client=self._rpc_client, config=self._config)
 
         # Construct all other services by passing in EngineService
-        self.enhanced_input_service = spear.EnhancedInputService(self.engine_service)
-        self.legacy_service = spear.LegacyService(self.engine_service)
-        self.sp_func_service = spear.SpFuncService(self.engine_service)
-        self.unreal_service = spear.UnrealService(self.engine_service)
+        self.enhanced_input_service = spear.EnhancedInputService(entry_point_caller=self.engine_service)
+        self.legacy_service = spear.LegacyService(entry_point_caller=self.engine_service)
+        self.sp_func_service = spear.SpFuncService(entry_point_caller=self.engine_service)
+        self.unreal_service = spear.UnrealService(entry_point_caller=self.engine_service)
 
         # We need to do this after we have a valid EngineService object because we call EngineService.begin_frame()
         # and EngineService.end_frame() here.

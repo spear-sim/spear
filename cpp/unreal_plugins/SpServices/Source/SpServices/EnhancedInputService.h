@@ -237,7 +237,7 @@ public:
             });
     }
 
-    ~EnhancedInputService()
+    ~EnhancedInputService() override
     {
         // Unregister EnhancedInput types.
 

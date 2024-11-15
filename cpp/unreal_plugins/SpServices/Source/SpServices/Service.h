@@ -22,7 +22,7 @@
 class Service {
 public:
     Service();
-    ~Service();
+    virtual ~Service();
 
     UWorld* getWorld();
 

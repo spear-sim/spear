@@ -9,10 +9,11 @@
 #include <Containers/Array.h>
 #include <Containers/Map.h>
 #include <Containers/Set.h>
-#include <Containers/UnrealString.h> // FString
+#include <Containers/UnrealString.h>     // FString
+#include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <GameFramework/Actor.h>
 #include <Math/Vector.h>
-#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
+#include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
 #include "SpCore/SharedMemoryRegion.h"
 
@@ -38,6 +39,9 @@ public:
     ~ASpDebugWidget();
 
     // AActor interface
+    void PostInitProperties() override;
+    void PostActorCreated() override;
+    void PostLoad() override;
     void BeginDestroy() override;
 
 private:
@@ -65,6 +69,9 @@ private:
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void SubscribeToActorHitEvents();
+
+    UFUNCTION(CallInEditor, Category="SPEAR")
+    void ReadPixels();
 
     UFUNCTION()
     FString GetString(FString arg_0, bool arg_1, int arg_2, FVector arg_3);
@@ -111,8 +118,8 @@ private:
     UPROPERTY()
     TSet<FString> SetOfStrings;
 
-    void initializeSpFuncs();
-    void terminateSpFuncs(); // don't call from destructor because SpFuncComponent might have been garbage-collected already
+    void initializeSpFunc();
+    void terminateSpFunc();
 
     std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
     SpFuncSharedMemoryView shared_memory_view_;

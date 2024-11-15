@@ -20,7 +20,6 @@
 
 class UMaterial;
 class UMaterialInstanceDynamic;
-struct FPostProcessSettings;
 
 // We need meta=(BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
 UCLASS(ClassGroup="SPEAR", HideCategories=(Rendering, Tags, Activation, Cooking, Physics, LOD, AssetUserData, Collision), meta=(BlueprintSpawnableComponent))
@@ -33,13 +32,10 @@ public:
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void Initialize();
-
     UFUNCTION(CallInEditor, Category="SPEAR")
     void Terminate();
-
-private:
-    UPROPERTY(VisibleAnywhere, Category="SPEAR")
-    USpFuncComponent* SpFuncComponent = nullptr;
+    UFUNCTION(CallInEditor, Category="SPEAR")
+    bool IsInitialized();
 
     UPROPERTY(EditAnywhere, Category="SPEAR")
     int Width = 512;
@@ -65,6 +61,10 @@ private:
 
     UPROPERTY(EditAnywhere, Category="SPEAR")
     bool bReadPixelData = true;
+
+private:
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
+    USpFuncComponent* SpFuncComponent = nullptr;
 
     bool initialized_ = false;
     UMaterialInstanceDynamic* material_instance_dynamic_ = nullptr;

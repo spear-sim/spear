@@ -54,15 +54,15 @@ if __name__ == "__main__":
         assert False # TODO: update for Linux
 
     # remove dirs
-    for dir in dirs:
-        if os.path.exists(dir):
-            spear.log("Removing: ", dir)
-            shutil.rmtree(dir, ignore_errors=True)
+    for d in dirs:
+        if os.path.exists(d):
+            spear.log("Removing: ", d)
+            shutil.rmtree(d, ignore_errors=True)
 
     # remove files
-    for file in files:
-        if os.path.exists(file):
-            spear.log("Removing: ", file)
-            os.remove(file)
+    for f in files:
+        if os.path.exists(f):
+            spear.log("Removing: ", f)
+            os.remove(d)
 
     spear.log("Done.")

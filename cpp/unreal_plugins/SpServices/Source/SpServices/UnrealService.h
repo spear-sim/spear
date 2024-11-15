@@ -1119,9 +1119,6 @@ public:
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_stable_name_for_component",
             [this](uint64_t& actor_component, bool& include_actor_name) -> std::string { return Unreal::getStableName(toPtr<UActorComponent>(actor_component), include_actor_name); });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_stable_name_for_scene_component",
-            [this](uint64_t& scene_component, bool& include_actor_name) -> std::string { return Unreal::getStableName(toPtr<USceneComponent>(scene_component), include_actor_name); });
-
         //
         // Get actor and component tags
         //
@@ -1133,7 +1130,7 @@ public:
             [this](uint64_t& component) -> std::vector<std::string> { return Unreal::getTags(toPtr<UActorComponent>(component)); });
     }
 
-    ~UnrealService() = default;
+    ~UnrealService() override = default;
 };
 
 //
