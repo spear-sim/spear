@@ -8,7 +8,6 @@ import argparse
 import numpy as np
 import os
 import spear
-import time
 
 import pandas as pd
 
@@ -77,18 +76,14 @@ if __name__ == "__main__":
                 instance.enhanced_input_service.inject_input_for_actor(
                     actor=agent,
                     input_action_name="IA_Jump",
-                    trigger_event="Started",
-                    input_action_value={},
-                    input_action_instance={})
+                    trigger_event="Started")
             if np.any(action["IA_Move"]):
                 instance.enhanced_input_service.inject_input_for_actor(
                     actor=agent,
                     input_action_name="IA_Move",
                     trigger_event="Triggered",
                     input_action_value={"ValueType": "Axis2D", "Value": {"X": action["IA_Move"][0], "Y": action["IA_Move"][1], "Z": action["IA_Move"][2]}},
-                    input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01},
-                    modifiers=[],
-                    triggers=[])
+                    input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
         with instance.end_frame():
             instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})

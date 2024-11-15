@@ -71,7 +71,7 @@ if __name__ == "__main__":
             instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
 
             if np.any(action['IA_Throttle']):
-                instance.unreal_service.call_function(uobject=vehicle_movement_component, ufunction=set_throttle_input_func, args={"Throttle": 1.0, })
+                instance.unreal_service.call_function(uobject=vehicle_movement_component, ufunction=set_throttle_input_func, args={"Throttle": 1.0})
 
             if np.any(action['IA_Steering']):
                 instance.enhanced_input_service.inject_input_for_actor(
@@ -79,18 +79,13 @@ if __name__ == "__main__":
                     input_action_name="IA_Steering",
                     trigger_event="Triggered",
                     input_action_value={"ValueType": "Axis1D", "Value": {"X": action['IA_Steering'][0], "Y": action['IA_Steering'][1], "Z": action['IA_Steering'][2]}},
-                    input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01},
-                    modifiers=[],
-                    triggers=[])
+                    input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
+
             if np.any(action['IA_Reset']):
                 instance.enhanced_input_service.inject_input_for_actor(
                     actor=agent,
                     input_action_name="IA_Reset",
-                    trigger_event="Triggered",
-                    input_action_value={},
-                    input_action_instance={},
-                    modifiers=[],
-                    triggers=[])
+                    trigger_event="Triggered")
         with instance.end_frame():
             instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
 
