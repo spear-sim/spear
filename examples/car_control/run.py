@@ -5,95 +5,94 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import argparse
-
 import numpy as np
 import os
 import spear
 import time
 
-common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "common"))
-import sys
+import pandas as pd
 
-sys.path.append(common_dir)
+
+def get_action(row):
+    names = [name[:-2] for name in row.dtype.names][::3]  # strip .x .y .z from each name, select every third entry
+    data = np.array([row[name] for name in row.dtype.names], dtype=np.float64).reshape(-1, 3)  # get data as Nx3 array
+    return dict(zip(names, data))
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--actions_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "actions.csv")))
-    parser.add_argument("--bp_class_reference", default="/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_Pawn.OffroadCar_Pawn_C")
     args = parser.parse_args()
 
     np.set_printoptions(linewidth=200)
 
-    # load config
-    config = spear.get_config(
-        user_config_files=[
-            os.path.realpath(os.path.join(common_dir, "default_config.common.yaml")),
-            os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    # read pre-recorded actions from the actions file
+    df = pd.read_csv(args.actions_file)
 
+    # load config
+    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
     spear.configure_system(config)
     instance = spear.Instance(config)
 
-    instance.engine_service.begin_tick()
+    with instance.begin_frame():
+        gameplay_statics_class = instance.unreal_service.get_static_class(class_name="UGameplayStatics")
+        controller_class = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.Controller")
+        agent_class = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_Pawn.OffroadCar_Pawn_C")
+        vehicle_movement_component_class = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/ChaosVehicles.ChaosVehicleMovementComponent")
 
-    gameplay_statics_class = instance.unreal_service.get_static_class(class_name="UGameplayStatics")
-    gameplay_statics_default_object = instance.unreal_service.get_default_object(uclass=gameplay_statics_class, create_if_needed=False)
+        set_game_paused_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_class, function_name="SetGamePaused")
+        get_player_controller_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_class, function_name="GetPlayerController")
+        possess_func = instance.unreal_service.find_function_by_name(uclass=controller_class, function_name="Possess")
+        set_throttle_input_func = instance.unreal_service.find_function_by_name(uclass=vehicle_movement_component_class, function_name="SetThrottleInput")
 
-    set_game_paused_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_class, name="SetGamePaused")
+        gameplay_statics_default_object = instance.unreal_service.get_default_object(uclass=gameplay_statics_class, create_if_needed=False)
+        player_controller = spear.func_utils.to_handle(instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=get_player_controller_func,
+                                                                                             args={"PlayerIndex": 0})["ReturnValue"])
 
-    get_player_controller_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_class, name="GetPlayerController")
-    get_player_controller_return_values = instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=get_player_controller_func,
-                                                                                args={"PlayerIndex": 0})
-    player_controller = instance.unreal_service.to_handle(get_player_controller_return_values["ReturnValue"])
-    controller_class = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.Controller", filename="")
+        agent = instance.unreal_service.spawn_actor_from_uclass(
+            uclass=agent_class,
+            location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
+            spawn_parameters={"Name": "Agent", "SpawnCollisionHandlingOverride": "AlwaysSpawn"}
+        )
 
-    enhanced_input_component_class = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/EnhancedInput.EnhancedInputComponent", filename="")
-    enhanced_input_component = instance.unreal_service.get_component_by_class(player_controller, enhanced_input_component_class)
+        # need player_controller current actor to inject input
+        instance.unreal_service.call_function(uobject=player_controller, ufunction=possess_func, args={"InPawn": spear.func_utils.to_ptr(agent)})
 
-    vehicle_movement_component_class = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/ChaosVehicles.ChaosVehicleMovementComponent", filename="")
+        # set bRunPhysicsWithNoController to True to control pawn without controller
+        vehicle_movement_component = instance.unreal_service.get_component_by_class(agent, vehicle_movement_component_class)
 
-    # spawn a blueprint actor
-    agent_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name=args.bp_class_reference, filename="")
-    agent = instance.unreal_service.spawn_actor_from_uclass(
-        uclass=agent_uclass,
-        location={"X": 0.0, "Y": 300.0, "Z": 130.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
-        spawn_parameters={"Name": "Agent", "SpawnCollisionHandlingOverride": "AlwaysSpawn"}
-    )
+    with instance.end_frame():
+        pass
 
-    instance.engine_service.tick()
-    instance.engine_service.end_tick()
+    for row in df.to_records(index=False):
+        action = get_action(row)
 
-    instance.engine_service.begin_tick()
+        with instance.begin_frame():
+            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
 
-    movement_component = instance.unreal_service.get_component_by_class(agent, vehicle_movement_component_class)
-    set_throttle_input_func = instance.unreal_service.find_function_by_name(uclass=vehicle_movement_component_class, name="SetThrottleInput")
-    set_steering_input_func = instance.unreal_service.find_function_by_name(uclass=vehicle_movement_component_class, name="SetSteeringInput")
-    instance.unreal_service.set_object_properties_for_uobject(movement_component, {"bRequiresControllerForInputs": False})
+            if np.any(action['IA_Throttle']):
+                instance.unreal_service.call_function(uobject=vehicle_movement_component, ufunction=set_throttle_input_func, args={"Throttle": 1.0, })
 
-    instance.engine_service.tick()
-    instance.engine_service.end_tick()
-
-    spear.log("Executing sequence of actions as provided in the actions file...")
-
-    frame = 0
-    start_time_seconds = time.time()
-    while frame < 200:
-        instance.engine_service.begin_tick()
-        instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
-
-        if frame < 300 and frame >= 10:
-            result = instance.unreal_service.call_function(uobject=movement_component, ufunction=set_throttle_input_func,
-                                                           args={"Throttle": 1.0, })
-        if frame < 100 and frame >= 10:
-            result = instance.unreal_service.call_function(uobject=movement_component, ufunction=set_steering_input_func,
-                                                           args={"Steering": 1.0, })
-
-        instance.engine_service.tick()
-
-        instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
-        instance.engine_service.end_tick()
-
-        frame += 1
-        spear.log("frame", frame)
+            if np.any(action['IA_Steering']):
+                instance.enhanced_input_service.inject_input_for_actor(
+                    actor=agent,
+                    input_action_name="IA_Steering",
+                    trigger_event="Triggered",
+                    input_action_value={"ValueType": "Axis1D", "Value": {"X": action['IA_Steering'][0], "Y": action['IA_Steering'][1], "Z": action['IA_Steering'][2]}},
+                    input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01},
+                    modifiers=[],
+                    triggers=[])
+            if np.any(action['IA_Reset']):
+                instance.enhanced_input_service.inject_input_for_actor(
+                    actor=agent,
+                    input_action_name="IA_Reset",
+                    trigger_event="Triggered",
+                    input_action_value={},
+                    input_action_instance={},
+                    modifiers=[],
+                    triggers=[])
+        with instance.end_frame():
+            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
 
     # close the instance
     instance.close()
