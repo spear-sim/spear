@@ -34,7 +34,6 @@ class Instance():
         self.legacy_service = spear.LegacyService(self.engine_service)
         self.sp_func_service = spear.SpFuncService(self.engine_service)
         self.unreal_service = spear.UnrealService(self.engine_service)
-        self.world_service = spear.WorldService(self.engine_service)
 
         # We need to do this after we have a valid EngineService object because we call EngineService.begin_frame()
         # and EngineService.end_frame() here.

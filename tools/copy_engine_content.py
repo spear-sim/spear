@@ -23,8 +23,12 @@ if __name__ == "__main__":
             os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "StarterContent")),
         os.path.realpath(os.path.join(args.unreal_engine_dir, "Templates", "TemplateResources", "High", "Characters", "Content", "Mannequins")): \
             os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "Characters", "Mannequins")),
-        os.path.realpath(os.path.join(args.unreal_engine_dir, "Templates", "TP_ThirdPersonBP",  "Content", "ThirdPerson")): \
-            os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "Characters", "ThirdPerson"))
+        os.path.realpath(os.path.join(args.unreal_engine_dir, "Templates", "TP_ThirdPersonBP", "Content", "ThirdPerson")): \
+            os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "ThirdPerson")),
+        os.path.realpath(os.path.join(args.unreal_engine_dir, "Templates", "TemplateResources", "Standard", "Vehicles", "Content")): \
+            os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "Vehicles", )),
+        os.path.realpath(os.path.join(args.unreal_engine_dir, "Templates", "TP_VehicleAdvBP", "Content", "VehicleTemplate")): \
+            os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "VehicleTemplate")),
     }
 
     for unreal_engine_dir, project_dir in content_dirs.items():
