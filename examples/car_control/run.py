@@ -35,31 +35,29 @@ if __name__ == "__main__":
     instance = spear.Instance(config)
 
     with instance.begin_frame():
-        gameplay_statics_class = instance.unreal_service.get_static_class(class_name="UGameplayStatics")
-        controller_class = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.Controller")
-        agent_class = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_Pawn.OffroadCar_Pawn_C")
+        gameplay_statics_uclass = instance.unreal_service.get_static_class(class_name="UGameplayStatics")
+        controller_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.Controller")
+        bp_car_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_Pawn.OffroadCar_Pawn_C")
         vehicle_movement_component_class = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/ChaosVehicles.ChaosVehicleMovementComponent")
 
-        set_game_paused_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_class, function_name="SetGamePaused")
-        get_player_controller_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_class, function_name="GetPlayerController")
-        possess_func = instance.unreal_service.find_function_by_name(uclass=controller_class, function_name="Possess")
+        set_game_paused_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_uclass, function_name="SetGamePaused")
+        get_player_controller_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_uclass, function_name="GetPlayerController")
+        possess_func = instance.unreal_service.find_function_by_name(uclass=controller_uclass, function_name="Possess")
         set_throttle_input_func = instance.unreal_service.find_function_by_name(uclass=vehicle_movement_component_class, function_name="SetThrottleInput")
 
-        gameplay_statics_default_object = instance.unreal_service.get_default_object(uclass=gameplay_statics_class, create_if_needed=False)
+        gameplay_statics_default_object = instance.unreal_service.get_default_object(uclass=gameplay_statics_uclass, create_if_needed=False)
         player_controller = spear.func_utils.to_handle(instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=get_player_controller_func,
                                                                                              args={"PlayerIndex": 0})["ReturnValue"])
 
-        agent = instance.unreal_service.spawn_actor_from_uclass(
-            uclass=agent_class,
+        bp_car_actor = instance.unreal_service.spawn_actor_from_uclass(
+            uclass=bp_car_uclass,
             location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
             spawn_parameters={"Name": "Agent", "SpawnCollisionHandlingOverride": "AlwaysSpawn"}
         )
+        vehicle_movement_component = instance.unreal_service.get_component_by_class(bp_car_actor, vehicle_movement_component_class)
 
         # need player_controller current actor to inject input
-        instance.unreal_service.call_function(uobject=player_controller, ufunction=possess_func, args={"InPawn": spear.func_utils.to_ptr(agent)})
-
-        # set bRunPhysicsWithNoController to True to control pawn without controller
-        vehicle_movement_component = instance.unreal_service.get_component_by_class(agent, vehicle_movement_component_class)
+        instance.unreal_service.call_function(uobject=player_controller, ufunction=possess_func, args={"InPawn": spear.func_utils.to_ptr(bp_car_actor)})
 
     with instance.end_frame():
         pass
@@ -75,7 +73,7 @@ if __name__ == "__main__":
 
             if np.any(action['IA_Steering']):
                 instance.enhanced_input_service.inject_input_for_actor(
-                    actor=agent,
+                    actor=bp_car_actor,
                     input_action_name="IA_Steering",
                     trigger_event="Triggered",
                     input_action_value={"ValueType": "Axis1D", "Value": {"X": action['IA_Steering'][0], "Y": action['IA_Steering'][1], "Z": action['IA_Steering'][2]}},
@@ -83,7 +81,7 @@ if __name__ == "__main__":
 
             if np.any(action['IA_Reset']):
                 instance.enhanced_input_service.inject_input_for_actor(
-                    actor=agent,
+                    actor=bp_car_actor,
                     input_action_name="IA_Reset",
                     trigger_event="Triggered")
         with instance.end_frame():
