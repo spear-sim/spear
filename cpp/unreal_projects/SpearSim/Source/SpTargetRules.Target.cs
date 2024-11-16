@@ -17,9 +17,9 @@ public class SpTargetRulesTarget : TargetRules
         // generate Visual Studio project files. Needs to be overridden in derived classes.
         Type = TargetType.Client;
 
-        // Added to projects by default in UE 5.4.
+        // Added to projects by default in UE 5.5.
         DefaultBuildSettings = BuildSettingsVersion.V5;
-        IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_4;
+        IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_5;
         ExtraModuleNames.Add("SpearSim");
 
         if (targetInfo.Platform == UnrealTargetPlatform.Win64) {
@@ -42,7 +42,7 @@ public class SpTargetRulesTarget : TargetRules
         } else if (targetInfo.Platform == UnrealTargetPlatform.Linux) {
 
             // The "-fexperimental-library" flag is required to enable support for std::ranges on Linux. This
-            // is because UE 5.4 builds using Clang 16 on Linux, but std::ranges are not fully supported in
+            // is because UE 5.5 builds using Clang 16 on Linux, but std::ranges are not fully supported in
             // Clang 16 without this additional flag.
             bOverrideBuildEnvironment = true;
             AdditionalCompilerArguments = "-fexperimental-library";

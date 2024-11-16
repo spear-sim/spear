@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+#include <HAL/Platform.h> // SPCORE_API
+
 #include "SpCore/Assert.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"

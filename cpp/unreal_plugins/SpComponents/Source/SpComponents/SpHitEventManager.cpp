@@ -8,7 +8,7 @@
 
 #include <Containers/Array.h>
 #include <Engine/EngineBaseTypes.h> // ETickingGroup
-#include <Engine/EngineTypes.h>     // FHitResult
+#include <Engine/HitResult.h>
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>           // uint64
 

@@ -7,6 +7,7 @@
 #include <Components/PrimitiveComponent.h>
 #include <Components/SceneComponent.h>
 #include <Containers/UnrealString.h> // FString
+#include <HAL/Platform.h>            // SPCOMPONENTS_API
 
 #include "SpComponents/SpUserInputComponent.h"
 

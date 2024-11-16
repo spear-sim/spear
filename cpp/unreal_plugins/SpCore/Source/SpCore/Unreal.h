@@ -18,10 +18,12 @@
 #include <Components/SceneComponent.h>
 #include <Containers/Array.h>
 #include <Containers/UnrealString.h>        // FString::operator*
+#include <Dom/JsonValue.h>
+#include <Engine/LocalPlayer.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>                    // TActorIterator
 #include <GameFramework/Actor.h>
-#include <HAL/Platform.h>                   // int32, int64, TCHAR
+#include <HAL/Platform.h>                   // int32, int64, SPCORE_API, TCHAR
 #include <Subsystems/Subsystem.h>
 #include <Templates/Casts.h>
 #include <UObject/Class.h>                  // EIncludeSuperFlag, UClass, UEnum, UStruct

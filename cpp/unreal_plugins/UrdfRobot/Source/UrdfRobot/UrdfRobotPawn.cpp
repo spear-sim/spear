@@ -9,6 +9,7 @@
 #include <Camera/CameraComponent.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
+#include <Misc/Paths.h>
 
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"

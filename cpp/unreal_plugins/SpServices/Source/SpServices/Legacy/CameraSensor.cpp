@@ -16,7 +16,9 @@
 #include <Components/SceneCaptureComponent2D.h>
 #include <Engine/TextureRenderTarget2D.h> // ETextureRenderTargetFormat
 #include <GameFramework/Actor.h>
+#include <Materials/Material.h>
 #include <Materials/MaterialInstanceDynamic.h>
+#include <TextureResource.h>              // FTextureRenderTargetResource
 #include <UObject/UObjectGlobals.h>       // LoadObject, NewObject
 
 #include "SpCore/ArrayDesc.h" // TODO: remove

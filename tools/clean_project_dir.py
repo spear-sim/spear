@@ -63,6 +63,6 @@ if __name__ == "__main__":
     for f in files:
         if os.path.exists(f):
             spear.log("Removing: ", f)
-            os.remove(d)
+            os.remove(f)
 
     spear.log("Done.")

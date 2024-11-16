@@ -632,12 +632,24 @@ UObject* UnrealClassRegistrar::newObject(
 //
 
 UObject* UnrealClassRegistrar::loadObject(
-    const std::string& class_name, UObject* outer, const TCHAR* name, const TCHAR* filename, uint32 load_flags, UPackageMap* sandbox, const FLinkerInstancingContext* instancing_context)
+    const std::string& class_name,
+    UObject* outer,
+    const TCHAR* name,
+    const TCHAR* filename,
+    uint32 load_flags,
+    UPackageMap* sandbox,
+    const FLinkerInstancingContext* instancing_context)
 {
     return g_load_object_func_registrar.call(class_name, outer, name, filename, load_flags, sandbox, instancing_context);
 }
 
-UObject* UnrealClassRegistrar::loadClass(const std::string& class_name, UObject* outer, const TCHAR* name, const TCHAR* filename, uint32 load_flags, UPackageMap* sandbox)
+UObject* UnrealClassRegistrar::loadClass(
+    const std::string& class_name,
+    UObject* outer,
+    const TCHAR* name,
+    const TCHAR* filename,
+    uint32 load_flags,
+    UPackageMap* sandbox)
 {
     return g_load_class_func_registrar.call(class_name, outer, name, filename, load_flags, sandbox);
 }

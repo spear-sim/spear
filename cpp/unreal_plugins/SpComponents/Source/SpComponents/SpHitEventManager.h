@@ -8,7 +8,7 @@
 
 #include <Containers/Array.h>
 #include <Containers/UnrealString.h> // FString
-#include <Engine/EngineTypes.h>      // FHitResult
+#include <Engine/HitResult.h>
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>            // uint64
 #include <Math/Vector.h>

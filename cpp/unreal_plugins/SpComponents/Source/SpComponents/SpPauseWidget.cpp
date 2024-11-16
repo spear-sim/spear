@@ -5,6 +5,7 @@
 #include "SpComponents/SpPauseWidget.h"
 
 #include <Engine/EngineBaseTypes.h> // ETickingGroup
+#include <Engine/World.h>
 #include <GameFramework/Actor.h>
 #include <Kismet/GameplayStatics.h>
 
@@ -27,10 +28,13 @@ ASpPauseWidget::~ASpPauseWidget()
 void ASpPauseWidget::Tick(float delta_time)
 {
     AActor::Tick(delta_time);
-    bIsGamePaused = UGameplayStatics::IsGamePaused(GetWorld());
+
+    UWorld* world = GetWorld();
+    bIsGamePaused = UGameplayStatics::IsGamePaused(world);
 }
 
 void ASpPauseWidget::ToggleGamePaused()
 {
-    UGameplayStatics::SetGamePaused(GetWorld(), !UGameplayStatics::IsGamePaused(GetWorld()));
+    UWorld* world = GetWorld();
+    UGameplayStatics::SetGamePaused(world, !UGameplayStatics::IsGamePaused(world));
 }

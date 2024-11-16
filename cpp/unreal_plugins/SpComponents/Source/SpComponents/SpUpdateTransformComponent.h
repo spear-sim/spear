@@ -8,6 +8,8 @@
 #include <Containers/UnrealString.h> // FString
 #include <Engine/EngineBaseTypes.h>  // ELevelTick
 #include <Engine/EngineTypes.h>      // ETeleportType
+#include <Engine/HitResult.h>
+#include <HAL/Platform.h>            // SPCOMPONENTS_API
 
 #include "SpUpdateTransformComponent.generated.h"
 

@@ -30,8 +30,8 @@ void ASpInitializeWorldManager::BeginPlay()
     AActor::BeginPlay();
 
     // Set physics settings
-    if (bSetPhysicsSettings) {
-        SP_LOG("Setting physics settings...");
+    if (bOverridePhysicsSettings) {
+        SP_LOG("Overriding physics settings...");
 
         SP_LOG("Old physics settings: ");
         SP_LOG_NO_PREFIX(Unreal::getObjectPropertiesAsString(UPhysicsSettings::Get()));
@@ -44,8 +44,8 @@ void ASpInitializeWorldManager::BeginPlay()
     }
 
     // Set fixed delta time
-    if (bSetFixedDeltaTime) {    
-        SP_LOG("Setting fixed delta time...");
+    if (bOverrideFixedDeltaTime) {    
+        SP_LOG("Overriding fixed delta time...");
 
         SP_LOG("Old benchmarking:     ", FApp::IsBenchmarking());
         SP_LOG("Old fixed delta time: ", FApp::GetFixedDeltaTime());
@@ -65,8 +65,8 @@ void ASpInitializeWorldManager::BeginPlay()
     }
 
     // Set game paused
-    if (bSetGamePaused) {
-        SP_LOG("Setting game paused...");
+    if (bOverrideGamePaused) {
+        SP_LOG("Overriding game paused...");
         SP_LOG("Old game paused: ", UGameplayStatics::IsGamePaused(GetWorld()));
         SP_LOG("New game paused: ", GamePaused);
         UGameplayStatics::SetGamePaused(GetWorld(), GamePaused);

@@ -12,6 +12,7 @@
 #include <Components/SceneComponent.h>
 #include <Engine/EngineBaseTypes.h>    // ELevelTick
 #include <GameFramework/PlayerInput.h> // FInputAxisKeyMapping
+#include <HAL/Platform.h>              // SPCOMPONENTS_API
 #include <UObject/NameTypes.h>         // FName
 #include <UObject/ObjectMacros.h>      // GENERATED_BODY, UCLASS
 

@@ -9,6 +9,7 @@
 #include <Components/SceneCaptureComponent2D.h>
 #include <Containers/EnumAsByte.h>
 #include <Engine/TextureRenderTarget2D.h> // ETextureRenderTargetFormat
+#include <HAL/Platform.h>                 // SPCOMPONENTS_API
 
 #include "SpCore/SharedMemoryRegion.h"
 #include "SpCore/SpFuncArray.h"

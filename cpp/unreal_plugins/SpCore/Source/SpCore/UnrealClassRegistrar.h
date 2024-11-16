@@ -10,6 +10,7 @@
 #include <vector>
 
 #include <Engine/World.h>
+#include <HAL/Platform.h> // SPCORE_API
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 #include <UObject/NameTypes.h>      // FName

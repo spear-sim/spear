@@ -15,6 +15,8 @@
 #include <string>
 #include <vector>
 
+#include <HAL/Platform.h> // SPCORE_API
+
 #include "SpCore/Assert.h"
 #include "SpCore/SharedMemoryRegion.h"
 #include "SpCore/Std.h"

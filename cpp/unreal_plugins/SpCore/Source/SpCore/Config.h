@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include <HAL/Platform.h> // SPCORE_API
+
 #include "SpCore/Assert.h"
 #include "SpCore/Yaml.h"
 #include "SpCore/YamlCpp.h"

@@ -9,6 +9,8 @@
 
 #include <boost/predef.h> // BOOST_OS_MACOS
 
+#include <HAL/Platform.h> // SPCORE_API
+
 #define PPK_ASSERT_ENABLED 1
 
 // Required to build successfully on Windows and Linux
@@ -553,12 +555,12 @@
 
     PPK_ASSERT_FUNCSPEC
     AssertAction::AssertAction SPCORE_API PPK_ASSERT_CALL handleAssert(const char* file,
-                                                                          int line,
-                                                                          const char* function,
-                                                                          const char* expression,
-                                                                          int level,
-                                                                          bool* ignoreLine,
-                                                                          const char* message, ...) PPK_ASSERT_HANDLE_ASSERT_FORMAT;
+                                                                       int line,
+                                                                       const char* function,
+                                                                       const char* expression,
+                                                                       int level,
+                                                                       bool* ignoreLine,
+                                                                       const char* message, ...) PPK_ASSERT_HANDLE_ASSERT_FORMAT;
 
     PPK_ASSERT_FUNCSPEC
     void SPCORE_API PPK_ASSERT_CALL ignoreAllAsserts(bool value);
