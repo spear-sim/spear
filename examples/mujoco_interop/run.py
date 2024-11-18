@@ -102,6 +102,7 @@ if __name__ == "__main__":
         with spear_instance.end_frame():
             pass
 
+    # close MuJoCo viewer and SPEAR instance
     mj_viewer.close()
     spear_instance.close()
 

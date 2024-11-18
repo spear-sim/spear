@@ -34,6 +34,8 @@
 #include <UObject/UObjectGlobals.h>         // NewObject
 
 #include "SpCore/Assert.h"
+#include "SpCore/Config.h"
+#include "SpCore/Log.h"
 #include "SpCore/Std.h"
 
 //
@@ -323,13 +325,22 @@ public:
         std::vector<std::string> path_tokens = Std::tokenize(path, ":");
         SP_ASSERT(path_tokens.size() == 1 || path_tokens.size() == 2);
 
+        TReturnAsActor* actor = nullptr;
+        TReturnAsComponent* component = nullptr;
+        std::string component_path;
+
         if (path_tokens.size() == 1) {
-            pair.first = const_cast<TReturnAsActor*>(Cast<TReturnAsActor>(owner));
-            pair.second = Unreal::getComponentByName<TComponent, TReturnAsComponent>(pair.first, path_tokens.at(0));
+            actor = const_cast<TReturnAsActor*>(Cast<TReturnAsActor>(owner));
+            component_path = path_tokens.at(0);
         } else if (path_tokens.size() == 2) {
-            pair.first = Unreal::findActorByName<TActor, TReturnAsActor>(world, path_tokens.at(0));
-            pair.second = Unreal::getComponentByName<TComponent, TReturnAsComponent>(pair.first, path_tokens.at(1));
+            actor = Unreal::findActorByName<TActor, TReturnAsActor>(world, path_tokens.at(0));
+            component_path = path_tokens.at(1);
         }
+
+        component = Unreal::getComponentByPath<TComponent, TReturnAsComponent>(actor, component_path);
+
+        pair.first = actor;
+        pair.second = component;
 
         return pair;
     }
@@ -344,6 +355,11 @@ public:
     {
         std::vector<TReturnAsActor*> actors;
         std::map<std::string, TReturnAsActor*> all_actors_map = toMap<TReturnAsActor>(findActorsByType<TActor>(world));
+
+        if (Config::isInitialized() && Config::get<bool>("SP_CORE.PRINT_FIND_ACTOR_AND_GET_COMPONENT_QUERY_INFO")) {
+            SP_LOG("Query names: ", Std::join(actor_names, ", "));
+            SP_LOG("Actor names: ", Std::join(Std::keys(all_actors_map), ", "));
+        }
 
         if (return_null_if_not_found) {
             actors = Std::at(all_actors_map, actor_names, nullptr);
@@ -515,12 +531,45 @@ public:
         std::vector<TReturnAsComponent*> components;
         std::map<std::string, TReturnAsComponent*> all_components_map = toMap<TReturnAsComponent>(getComponentsByType<TComponent>(actor, include_from_child_actors));
 
+        if (Config::isInitialized() && Config::get<bool>("SP_CORE.PRINT_FIND_ACTOR_AND_GET_COMPONENT_QUERY_INFO")) {
+            SP_LOG("Query names: ", Std::join(component_names, ", "));
+            SP_LOG("Component names: ", Std::join(Std::keys(all_components_map), ", "));
+        }
+
         if (return_null_if_not_found) {
             components = Std::at(all_components_map, component_names, nullptr);
         } else {
             std::vector<std::string> component_names_found_in_map =
                 Std::toVector<std::string>(component_names | std::views::filter([&all_components_map](const auto& name) { return Std::containsKey(all_components_map, name); }));
             components = Std::at(all_components_map, component_names_found_in_map);
+        }
+
+        return components;
+    }
+
+    template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires
+        std::derived_from<TComponent, TReturnAsComponent>
+    static std::vector<TReturnAsComponent*> getComponentsByPath(
+        const AActor* actor, const std::vector<std::string>& component_paths, bool include_from_child_actors = false, bool return_null_if_not_found = true)
+    {
+        std::vector<TReturnAsComponent*> components;
+        std::map<std::string, TReturnAsComponent*> all_components_map = toMap<TReturnAsComponent>(getComponentsByType<TComponent>(actor, include_from_child_actors));
+
+        if (Config::isInitialized() && Config::get<bool>("SP_CORE.PRINT_FIND_ACTOR_AND_GET_COMPONENT_QUERY_INFO")) {
+            SP_LOG("Query paths: ", Std::join(component_paths, ", "));
+            SP_LOG("Component paths: ", Std::join(Std::keys(all_components_map), ", "));
+        }
+
+        for (auto& component_path : component_paths) {
+            std::vector<std::string> component_path_tokens = Std::tokenize(component_path, ".");
+            std::string component_name = component_path_tokens.at(component_path_tokens.size() - 1);
+            if (Std::containsKey(all_components_map, component_path)) {
+                components.push_back(all_components_map.at(component_path));
+            } else if (Std::containsKey(all_components_map, component_name)) {
+                components.push_back(all_components_map.at(component_name));
+            } else if (return_null_if_not_found) {
+                components.push_back(nullptr);
+            }
         }
 
         return components;
@@ -598,6 +647,24 @@ public:
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires
         std::derived_from<TComponent, TReturnAsComponent>
+    static std::map<std::string, TReturnAsComponent*> getComponentsByPathAsMap(
+        const AActor* actor, const std::vector<std::string>& component_paths, bool include_from_child_actors = false, bool return_null_if_not_found = true)
+    {
+        std::map<std::string, TReturnAsComponent*> component_map;
+        std::vector<std::string> unique_component_paths = Std::unique(component_paths);
+
+        if (return_null_if_not_found) {
+            component_map = Std::zip(unique_component_paths, getComponentsByPath<TComponent, TReturnAsComponent>(actor, unique_component_paths, return_null_if_not_found));
+        } else {
+            std::vector<TComponent*> components = getComponentsByPath<TComponent>(actor, unique_component_paths, return_null_if_not_found);
+            component_map = toMap<TReturnAsComponent>(components);
+        }
+
+        return component_map;
+    }
+
+    template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires
+        std::derived_from<TComponent, TReturnAsComponent>
     static std::map<std::string, TReturnAsComponent*> getComponentsByTagAsMap(const AActor* actor, const std::string& tag, bool include_from_child_actors = false)
     {
         return toMap<TReturnAsComponent>(getComponentsByTag<TComponent>(actor, tag, include_from_child_actors));
@@ -640,6 +707,14 @@ public:
     {
         bool return_null_if_not_found = false;
         return getItem(getComponentsByName<TComponent, TReturnAsComponent>(actor, {component_name}, include_from_child_actors, return_null_if_not_found));
+    }
+
+    template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires
+        std::derived_from<TComponent, TReturnAsComponent>
+    static TReturnAsComponent* getComponentByPath(const AActor* actor, const std::string& component_path, bool include_from_child_actors = false)
+    {
+        bool return_null_if_not_found = false;
+        return getItem(getComponentsByPath<TComponent, TReturnAsComponent>(actor, {component_path}, include_from_child_actors, return_null_if_not_found));
     }
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires
@@ -687,6 +762,11 @@ public:
     {
         std::vector<TReturnAsSceneComponent*> components;
         std::map<std::string, TReturnAsSceneComponent*> all_components_map = toMap<TReturnAsSceneComponent>(getChildrenComponentsByType<TSceneComponent>(parent, include_all_descendants));
+
+        if (Config::isInitialized() && Config::get<bool>("SP_CORE.PRINT_FIND_ACTOR_AND_GET_COMPONENT_QUERY_INFO")) {
+            SP_LOG("Query names: ", Std::join(children_component_names, ", "));
+            SP_LOG("Children component names: ", Std::join(Std::keys(all_components_map), ", "));
+        }
 
         if (return_null_if_not_found) {
             components = Std::at(all_components_map, children_component_names, nullptr);

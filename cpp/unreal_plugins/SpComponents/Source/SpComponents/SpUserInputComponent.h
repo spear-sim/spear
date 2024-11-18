@@ -41,7 +41,7 @@ public:
     void setHandleUserInputFunc(const std::function<void(const std::string&, float)>& handle_user_input_func);
 
     // USpUserInputComponents need to be enabled explicitly to avoid a single key press unexpectedly doing multiple things
-    UPROPERTY(EditAnywhere, Category="SPEAR");
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR");
     bool bHandleUserInput = false;
 
 private:

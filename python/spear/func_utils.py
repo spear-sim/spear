@@ -4,7 +4,10 @@
 
 import json
 import numbers
+import numpy as np
+import scipy
 import spear
+
 
 # Convert a collection of objects to a collection of JSON strings so they can be passed to a service.
 def to_json_strings(objs):
@@ -43,6 +46,7 @@ def to_json_string(obj, stringify=True):
     else:
         return json.dumps(obj)
 
+
 # Convert a collection of JSON strings returned by a service to a collection of dicts.
 def try_to_dicts(json_strings, default_value=None):
     if isinstance(json_strings, list):
@@ -62,6 +66,7 @@ def try_to_dict(json_string, default_value=None):
         else:
             return default_value
 
+
 # Convert a handle into a Ptr object that can be passed to a service.
 def to_ptr(handle):
     return Ptr(handle)
@@ -73,6 +78,28 @@ def to_handle(string):
 # Convert a numpy array backed by shared memory to a Shared object that can be passed to sp_func_service.
 def to_shared(array, shared_memory_name):
     return Shared(array, shared_memory_name)
+
+
+# Convert a dict containing Unreal Euler angles to a NumPy matrix. See pipeline.py for more details on Unreal's Euler angle conventions.
+def to_numpy_from_dict(unreal_pyr):
+    assert isinstance(unreal_pyr, dict)
+    assert set(["roll", "pitch", "yaw"]) == set(unreal_pyr.keys())
+    roll  = np.deg2rad(-unreal_pyr["roll"])
+    pitch = np.deg2rad(-unreal_pyr["pitch"])
+    yaw   = np.deg2rad(unreal_pyr["yaw"])
+    return np.matrix(scipy.spatial.transform.Rotation.from_euler("xyz", [roll, pitch, yaw]).as_matrix())
+
+# Convert a NumPy array or matrix containing an 3-vector to a dict.
+def to_dict_from_numpy(array):
+    if isinstance(array, np.matrix):
+        assert array.shape == (3, 1)
+        array = array.A1
+    elif isinstance(array, np.ndarray):
+        assert array.shape == (3,)
+    else:
+        assert False
+    return {"X": array[0], "Y": array[1], "Z": array[2]}
+
 
 # The Ptr and Shared classes are for internal use, and do not need to be instantiated directly by most users.
 

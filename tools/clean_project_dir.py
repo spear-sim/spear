@@ -35,23 +35,18 @@ if __name__ == "__main__":
     # platform-specific files and directories
     if sys.platform == "win32":
         dirs.extend([
-            os.path.realpath(os.path.join(unreal_project_dir, ".vs")),
             os.path.realpath(os.path.join(unreal_project_dir, "Build"))])
-        files.extend([
-            os.path.realpath(os.path.join(unreal_project_dir, "SpearSim.sln"))])
 
     elif sys.platform == "darwin":
         dirs.extend([
-            os.path.realpath(os.path.join(unreal_project_dir, "Build", "Mac", "FileOpenOrder")),
-            os.path.realpath(os.path.join(unreal_project_dir, "SpearSim (Mac).xcworkspace"))])
+            os.path.realpath(os.path.join(unreal_project_dir, "Build", "Mac", "FileOpenOrder"))])
         files.extend([
             os.path.realpath(os.path.join(unreal_project_dir, "Build", "Mac", "Resources", "Info.Template.plist")),
-            os.path.realpath(os.path.join(unreal_project_dir, "Build", "Mac", "SpearSim.PackageVersionCounter")),
-            os.path.realpath(os.path.join(unreal_project_dir, "SpearSim (Mac).xcworkspace")),
-            os.path.realpath(os.path.join(unreal_project_dir, "SpearSim.sln"))])
+            os.path.realpath(os.path.join(unreal_project_dir, "Build", "Mac", "SpearSim.PackageVersionCounter"))])
 
     else:
-        assert False # TODO: update for Linux
+        dirs.extend([
+            os.path.realpath(os.path.join(unreal_project_dir, "Build"))])
 
     # remove dirs
     for d in dirs:

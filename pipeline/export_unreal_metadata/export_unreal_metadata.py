@@ -6,9 +6,9 @@ import argparse
 import json
 import os
 import pandas as pd
-import unreal
 import spear
 import spear.editor
+import unreal
 
 
 parser = argparse.ArgumentParser()

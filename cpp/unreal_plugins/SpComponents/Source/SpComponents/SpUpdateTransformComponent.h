@@ -29,38 +29,38 @@ public:
     void BeginPlay() override;
     void TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override;
 
-private:
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     FString SourceComponentPath;
-    UPROPERTY(VisibleAnywhere, Category="SPEAR")
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString SourceComponent;
 
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     FString DestinationComponentPath;
-    UPROPERTY(VisibleAnywhere, Category="SPEAR")
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString DestinationComponent;
 
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bSetWorldLocation = false;
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bSetWorldLocationSweep = false;
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     FHitResult SetWorldLocationHitResult;
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     ETeleportType SetWorldLocationTeleport = ETeleportType::None;
 
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bSetWorldRotation = false;
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bSetWorldRotationSweep = false;
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     FHitResult SetWorldRotationHitResult;
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     ETeleportType SetWorldRotationTeleport = ETeleportType::None;
 
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bSetWorldScale3D = false;
 
+private:
     USceneComponent* src_component_ = nullptr;
     USceneComponent* dest_component_ = nullptr;
 };

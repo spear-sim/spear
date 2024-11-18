@@ -5,6 +5,7 @@
 import argparse
 import posixpath
 import spear
+import spear.editor
 import unreal
 
 
@@ -49,82 +50,47 @@ blueprint_desc = \
     ]
 }
 
-asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
 editor_asset_subsystem = unreal.get_editor_subsystem(unreal.EditorAssetSubsystem)
-subobject_data_subsystem = unreal.get_engine_subsystem(unreal.SubobjectDataSubsystem)
 
 
 if __name__ == "__main__":
 
-    # create blueprint type
+    # remove existing blueprint
     blueprint_path = posixpath.join(blueprint_desc["blueprint_path"], blueprint_desc["blueprint_name"])
     if unreal.EditorAssetLibrary.does_asset_exist(blueprint_path):
         spear.log(f"Asset exists, removing: {blueprint_path}")
         success = unreal.EditorAssetLibrary.delete_asset(blueprint_path)
         assert success
 
+    # create blueprint
     spear.log(f"Creating blueprint: {blueprint_path}")
-     
-    blueprint_factory = unreal.BlueprintFactory()
-    blueprint_factory.set_editor_property("parent_class", unreal.Actor)
-
-    blueprint_asset = asset_tools.create_asset(asset_name=blueprint_desc["blueprint_name"], package_path=blueprint_desc["blueprint_path"], asset_class=None, factory=blueprint_factory)
-    assert isinstance(blueprint_asset, unreal.Blueprint)
-
-    subobject_data_handles = subobject_data_subsystem.k2_gather_subobject_data_for_blueprint(blueprint_asset)
-
-    assert len(subobject_data_handles) == 2        
-    for subobject_data_handle in subobject_data_handles:
-        assert unreal.SubobjectDataBlueprintFunctionLibrary.is_handle_valid(subobject_data_handle)
-        subobject_data = unreal.SubobjectDataBlueprintFunctionLibrary.get_data(subobject_data_handle)
-        assert unreal.SubobjectDataBlueprintFunctionLibrary.is_valid(subobject_data)
-
-    actor_subobject_data_handle = subobject_data_handles[0]
-    actor_subobject_data = unreal.SubobjectDataBlueprintFunctionLibrary.get_data(actor_subobject_data_handle)
-    actor = unreal.SubobjectDataBlueprintFunctionLibrary.get_object(actor_subobject_data)
-    assert isinstance(actor, unreal.Actor)
-
-    scene_component_subobject_data_handle = subobject_data_handles[1]
-    scene_component_subobject_data = unreal.SubobjectDataBlueprintFunctionLibrary.get_data(scene_component_subobject_data_handle)
-    scene_component = unreal.SubobjectDataBlueprintFunctionLibrary.get_object(scene_component_subobject_data)
-    assert isinstance(scene_component, unreal.SceneComponent)
+    blueprint_asset, blueprint_subobject_descs = spear.editor.create_blueprint(
+        asset_name=blueprint_desc["blueprint_name"],
+        package_path=blueprint_desc["blueprint_path"])
 
     # create SpStableNameComponent
     component_name = "sp_stable_name_component"
     spear.log(f"Creating component: ", component_name)
-
-    add_new_subobject_params = unreal.AddNewSubobjectParams(
-        parent_handle=scene_component_subobject_data_handle,
-        new_class=unreal.SpStableNameComponent,
-        blueprint_context=blueprint_asset)
-    sp_stable_name_component_subobject_data_handle, fail_reason = subobject_data_subsystem.add_new_subobject(add_new_subobject_params)
-    assert fail_reason.is_empty()
-    subobject_data_subsystem.rename_subobject(sp_stable_name_component_subobject_data_handle, unreal.Text(component_name))
-
-    sp_stable_name_component_subobject_data = unreal.SubobjectDataBlueprintFunctionLibrary.get_data(sp_stable_name_component_subobject_data_handle)
-    sp_stable_name_component = unreal.SubobjectDataBlueprintFunctionLibrary.get_object(sp_stable_name_component_subobject_data)
-    assert isinstance(sp_stable_name_component, unreal.SpStableNameComponent)
+    sp_stable_name_component_desc = spear.editor.add_new_subobject(
+        blueprint_asset=blueprint_asset,
+        parent_data_handle=blueprint_subobject_descs["root_component"]["data_handle"],
+        subobject_name=component_name,
+        subobject_class=unreal.SpStableNameComponent)
 
     # create StaticMeshComponents
     for component_desc in blueprint_desc["component_descs"]:
 
         spear.log(f"Creating component: ", component_desc["name"])
-
-        add_new_subobject_params = unreal.AddNewSubobjectParams(
-            parent_handle=scene_component_subobject_data_handle,
-            new_class=unreal.StaticMeshComponent,
-            blueprint_context=blueprint_asset)
-        static_mesh_component_subobject_data_handle, fail_reason = subobject_data_subsystem.add_new_subobject(add_new_subobject_params)
-        assert fail_reason.is_empty()
-        subobject_data_subsystem.rename_subobject(static_mesh_component_subobject_data_handle, unreal.Text(component_desc["name"]))
-
-        static_mesh_component_subobject_data = unreal.SubobjectDataBlueprintFunctionLibrary.get_data(static_mesh_component_subobject_data_handle)
-        static_mesh_component = unreal.SubobjectDataBlueprintFunctionLibrary.get_object(static_mesh_component_subobject_data)
-        assert isinstance(static_mesh_component, unreal.StaticMeshComponent)
+        static_mesh_component_desc = spear.editor.add_new_subobject(
+            blueprint_asset=blueprint_asset,
+            parent_data_handle=blueprint_subobject_descs["root_component"]["data_handle"],
+            subobject_name=component_desc["name"],
+            subobject_class=unreal.StaticMeshComponent)
 
         static_mesh = unreal.load_asset(component_desc["static_mesh_path"])
         material = unreal.load_asset(component_desc["material_path"])
 
+        static_mesh_component = static_mesh_component_desc["object"]
         static_mesh_component.set_editor_property("static_mesh", static_mesh)
         static_mesh_component.set_material(0, material)
 
@@ -135,8 +101,8 @@ if __name__ == "__main__":
         static_mesh_component.set_relative_scale3d(
             new_scale3d=unreal.Vector(component_desc["scale3d"]["X"], component_desc["scale3d"]["Y"], component_desc["scale3d"]["Z"]))
 
+    # save blueprint
     spear.log(f"Saving blueprint: {blueprint_path}")
-
     editor_asset_subsystem.save_loaded_asset(blueprint_asset)
 
     spear.log(f"Done.")
