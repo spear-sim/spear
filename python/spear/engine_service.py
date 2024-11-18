@@ -103,12 +103,12 @@ class EngineService():
             self._frame_state = "idle"
             assert False
 
-        if self._config.SPEAR.ENGINE_SERVICE.PRINT_ENTRY_POINT_CALLS:
+        if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
             spear.log("Calling:               ", entry_point_name, args)
 
         return_value = self._rpc_client.call(entry_point_name, *args)
 
-        if self._config.SPEAR.ENGINE_SERVICE.PRINT_ENTRY_POINT_CALLS:
+        if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
             spear.log("Obtained return value: ", return_value)
 
         return return_value

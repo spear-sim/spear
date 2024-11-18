@@ -9,4 +9,4 @@ SP_CORE:
   WAIT_FOR_KEYBOARD_INPUT_DURING_INITIALIZATION: False
 
   # Print info when searching for actors and components by name or by path.
-  PRINT_FIND_ACTOR_AND_GET_COMPONENT_QUERY_INFO: False
+  PRINT_FIND_ACTOR_AND_GET_COMPONENT_DEBUG_INFO: False

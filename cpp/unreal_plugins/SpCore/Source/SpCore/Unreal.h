@@ -313,36 +313,23 @@ public:
     static std::map<std::string, USceneComponent*> getChildrenComponentsAsMap(const USceneComponent* parent, bool include_all_descendants = true);
 
     //
-    // Find actor and component by path and return both
+    // Find actor and component and return both
     //
+
+    template <CActor TActor = AActor, CComponent TComponent = UActorComponent, CActor TReturnAsActor = TActor, CComponent TReturnAsComponent = TComponent> requires
+        std::derived_from<TActor, TReturnAsActor> && std::derived_from<TComponent, TReturnAsComponent>
+    static std::pair<TReturnAsActor*, TReturnAsComponent*> findActorAndComponentByName(const UWorld* world, const AActor* owner, const std::string& path)
+    {
+        bool get_component_by_path = false;
+        return findActorAndComponent<TActor, TComponent, TReturnAsActor, TReturnAsComponent>(world, owner, path, get_component_by_path);
+    }
 
     template <CActor TActor = AActor, CComponent TComponent = UActorComponent, CActor TReturnAsActor = TActor, CComponent TReturnAsComponent = TComponent> requires
         std::derived_from<TActor, TReturnAsActor> && std::derived_from<TComponent, TReturnAsComponent>
     static std::pair<TReturnAsActor*, TReturnAsComponent*> findActorAndComponentByPath(const UWorld* world, const AActor* owner, const std::string& path)
     {
-        std::pair<TReturnAsActor*, TReturnAsComponent*> pair = std::make_pair(nullptr, nullptr);
-
-        std::vector<std::string> path_tokens = Std::tokenize(path, ":");
-        SP_ASSERT(path_tokens.size() == 1 || path_tokens.size() == 2);
-
-        TReturnAsActor* actor = nullptr;
-        TReturnAsComponent* component = nullptr;
-        std::string component_path;
-
-        if (path_tokens.size() == 1) {
-            actor = const_cast<TReturnAsActor*>(Cast<TReturnAsActor>(owner));
-            component_path = path_tokens.at(0);
-        } else if (path_tokens.size() == 2) {
-            actor = Unreal::findActorByName<TActor, TReturnAsActor>(world, path_tokens.at(0));
-            component_path = path_tokens.at(1);
-        }
-
-        component = Unreal::getComponentByPath<TComponent, TReturnAsComponent>(actor, component_path);
-
-        pair.first = actor;
-        pair.second = component;
-
-        return pair;
+        bool get_component_by_path = true;
+        return findActorAndComponent<TActor, TComponent, TReturnAsActor, TReturnAsComponent>(world, owner, path, get_component_by_path);
     }
 
     //
@@ -356,7 +343,7 @@ public:
         std::vector<TReturnAsActor*> actors;
         std::map<std::string, TReturnAsActor*> all_actors_map = toMap<TReturnAsActor>(findActorsByType<TActor>(world));
 
-        if (Config::isInitialized() && Config::get<bool>("SP_CORE.PRINT_FIND_ACTOR_AND_GET_COMPONENT_QUERY_INFO")) {
+        if (Config::isInitialized() && Config::get<bool>("SP_CORE.PRINT_FIND_ACTOR_AND_GET_COMPONENT_DEBUG_INFO")) {
             SP_LOG("Query names: ", Std::join(actor_names, ", "));
             SP_LOG("Actor names: ", Std::join(Std::keys(all_actors_map), ", "));
         }
@@ -531,7 +518,7 @@ public:
         std::vector<TReturnAsComponent*> components;
         std::map<std::string, TReturnAsComponent*> all_components_map = toMap<TReturnAsComponent>(getComponentsByType<TComponent>(actor, include_from_child_actors));
 
-        if (Config::isInitialized() && Config::get<bool>("SP_CORE.PRINT_FIND_ACTOR_AND_GET_COMPONENT_QUERY_INFO")) {
+        if (Config::isInitialized() && Config::get<bool>("SP_CORE.PRINT_FIND_ACTOR_AND_GET_COMPONENT_DEBUG_INFO")) {
             SP_LOG("Query names: ", Std::join(component_names, ", "));
             SP_LOG("Component names: ", Std::join(Std::keys(all_components_map), ", "));
         }
@@ -555,7 +542,7 @@ public:
         std::vector<TReturnAsComponent*> components;
         std::map<std::string, TReturnAsComponent*> all_components_map = toMap<TReturnAsComponent>(getComponentsByType<TComponent>(actor, include_from_child_actors));
 
-        if (Config::isInitialized() && Config::get<bool>("SP_CORE.PRINT_FIND_ACTOR_AND_GET_COMPONENT_QUERY_INFO")) {
+        if (Config::isInitialized() && Config::get<bool>("SP_CORE.PRINT_FIND_ACTOR_AND_GET_COMPONENT_DEBUG_INFO")) {
             SP_LOG("Query paths: ", Std::join(component_paths, ", "));
             SP_LOG("Component paths: ", Std::join(Std::keys(all_components_map), ", "));
         }
@@ -1169,6 +1156,39 @@ private:
     //
     // Helper functions for finding actors and getting components
     //
+
+    template <CActor TActor = AActor, CComponent TComponent = UActorComponent, CActor TReturnAsActor = TActor, CComponent TReturnAsComponent = TComponent> requires
+        std::derived_from<TActor, TReturnAsActor> && std::derived_from<TComponent, TReturnAsComponent>
+    static std::pair<TReturnAsActor*, TReturnAsComponent*> findActorAndComponent(const UWorld* world, const AActor* owner, const std::string& path, bool get_component_by_path)
+    {
+        std::pair<TReturnAsActor*, TReturnAsComponent*> pair = std::make_pair(nullptr, nullptr);
+
+        std::vector<std::string> path_tokens = Std::tokenize(path, ":");
+        SP_ASSERT(path_tokens.size() == 1 || path_tokens.size() == 2);
+
+        TReturnAsActor* actor = nullptr;
+        TReturnAsComponent* component = nullptr;
+        std::string component_path;
+
+        if (path_tokens.size() == 1) {
+            actor = const_cast<TReturnAsActor*>(Cast<TReturnAsActor>(owner));
+            component_path = path_tokens.at(0);
+        } else if (path_tokens.size() == 2) {
+            actor = Unreal::findActorByName<TActor, TReturnAsActor>(world, path_tokens.at(0));
+            component_path = path_tokens.at(1);
+        }
+
+        if (get_component_by_path) {
+            component = Unreal::getComponentByPath<TComponent, TReturnAsComponent>(actor, component_path);
+        } else {
+            component = Unreal::getComponentByName<TComponent, TReturnAsComponent>(actor, component_path);            
+        }
+
+        pair.first = actor;
+        pair.second = component;
+
+        return pair;
+    }
 
     template <typename TReturnAsStableNameObject, typename TStableNameObject> requires
         CStableNameObject<TStableNameObject> && std::derived_from<TStableNameObject, TReturnAsStableNameObject>

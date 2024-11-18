@@ -108,8 +108,8 @@ SPEAR:
     REQUEST_CLOSE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS: 1.0
 
   ENGINE_SERVICE:
-    # If true, print each entry point that is called via EngineService.call(...).
-    PRINT_ENTRY_POINT_CALLS: False
+    # If true, print debug info for each call to EngineService.call(...).
+    PRINT_CALL_DEBUG_INFO: False
 
   ENV:
     # The maximum number of ticks to execute during Env.reset() before giving up. This is useful in
