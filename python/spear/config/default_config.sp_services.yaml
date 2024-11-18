@@ -49,35 +49,6 @@ SP_SERVICES:
         IMAGE_WIDTH: 512
         FOV: 90.0
 
-    SPHERE_AGENT:
-      SPHERE_ACTOR_NAME: ""
-      CAMERA_ACTOR_NAME: ""
-      ACTION_COMPONENTS: ["add_force", "add_to_rotation"] # "add_force", "add_to_rotation"
-      OBSERVATION_COMPONENTS: ["camera", "location", "rotation"] #  "camera", "location", "rotation"
-      STEP_INFO_COMPONENTS: ["debug"] # "debug"
-      SPAWN_MODE: "specify_pose" # "specify_existing_actor", "specify_pose"
-      SPAWN_ACTOR_NAME: ""
-      SPAWN_LOCATION_X: 0.0
-      SPAWN_LOCATION_Y: 0.0
-      SPAWN_LOCATION_Z: 0.0
-      SPAWN_ROTATION_PITCH: 0.0
-      SPAWN_ROTATION_YAW: 0.0
-      SPAWN_ROTATION_ROLL: 0.0
-      SPHERE:
-        STATIC_MESH: "/Engine/BasicShapes/Sphere.Sphere"
-        MATERIAL: "/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"
-        MESH_SCALE_X: 0.5
-        MESH_SCALE_Y: 0.5
-        MESH_SCALE_Z: 0.5
-        MAX_ANGULAR_VELOCITY: 1.0
-        LINEAR_DAMPING: 0.0
-        ANGULAR_DAMPING: 0.0
-      CAMERA:
-        RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation" 
-        IMAGE_HEIGHT: 512
-        IMAGE_WIDTH: 512
-        FOV: 90.0
-
     URDF_ROBOT_AGENT:
       URDF_ROBOT_ACTOR_NAME: ""
       ACTION_COMPONENTS: ["control_joints"]
