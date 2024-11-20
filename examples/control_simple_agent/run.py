@@ -10,7 +10,7 @@ import os
 import spear
 
 
-num_steps = 100
+num_steps = 150
 
 
 if __name__ == "__main__":
