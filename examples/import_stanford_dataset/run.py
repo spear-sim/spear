@@ -14,7 +14,7 @@ if __name__ == "__main__":
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
 
-    with instance.begin_frame()
+    with instance.begin_frame():
 
         # find functions
         actor_static_class = instance.unreal_service.get_static_class(class_name="AActor")

@@ -25,12 +25,12 @@ blueprint_desc = \
             "simulate_physics": True
         },
         {
-            "name": "cube_", # use underscore to avoid FName conflict
-            "static_mesh_path": "/Engine/BasicShapes/Cube.Cube",
-            "material_path": "/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial",
+            "name": "camera_mesh",
+            "static_mesh_path": "/Engine/EditorMeshes/MatineeCam_SM.MatineeCam_SM",
+            "material_path": "/Engine/EditorMaterials/MatineeCam_mat.MatineeCam_mat",
             "location": {"X": 0.0, "Y": 0.0, "Z": 35.0},
             "rotation": {"Pitch": 0.0, "Yaw": 0.0, "Roll": 0.0},
-            "scale3d": {"X": 0.1, "Y": 0.1, "Z": 0.1}
+            "scale3d": {"X": 0.25, "Y": 0.25, "Z": 0.25}
         },
         {
             "name": "x_axis",

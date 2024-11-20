@@ -16,6 +16,10 @@
 ASpInitializeWorldManager::ASpInitializeWorldManager()
 {
     SP_LOG_CURRENT_FUNCTION();
+
+    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bTickEvenWhenPaused = true;
+    PrimaryActorTick.TickGroup = ETickingGroup::TG_PrePhysics;
 }
 
 ASpInitializeWorldManager::~ASpInitializeWorldManager()
@@ -29,7 +33,7 @@ void ASpInitializeWorldManager::BeginPlay()
 
     AActor::BeginPlay();
 
-    // Set physics settings
+    // Override physics settings.
     if (bOverridePhysicsSettings) {
         SP_LOG("Overriding physics settings...");
 
@@ -43,7 +47,7 @@ void ASpInitializeWorldManager::BeginPlay()
         Unreal::setObjectPropertiesFromString(UPhysicsSettings::Get(), sp_physics_settings_str);
     }
 
-    // Set fixed delta time
+    // Override fixed delta time.
     if (bOverrideFixedDeltaTime) {    
         SP_LOG("Overriding fixed delta time...");
 
@@ -64,7 +68,23 @@ void ASpInitializeWorldManager::BeginPlay()
         FApp::SetFixedDeltaTime(FixedDeltaTime);
     }
 
-    // Set game paused
+    // Force update skylight. This is necessary to work around an intermittent bug where the apartment scene
+    // sometimes appears too dark in standalone macOS builds.
+    if (bForceUpdateSkylight) {
+        SP_LOG("Forcing update of all skylights for ", ForceUpdateSkylightMaxDurationSeconds, " seconds...");
+
+        IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.SkylightUpdateEveryFrame"));
+        force_update_skylight_previous_cvar_value_ = cvar->GetInt();
+        cvar->Set(1);
+
+        SP_LOG("Old value of r.SkylightUpdateEveryFrame: ", force_update_skylight_previous_cvar_value_);
+        SP_LOG("New value of r.SkylightUpdateEveryFrame: 1");
+
+        force_update_skylight_completed_ = false;
+        force_update_skylight_duration_seconds_ = 0.0f;
+    }
+
+    // Override game paused.
     if (bOverrideGamePaused) {
         SP_LOG("Overriding game paused...");
         SP_LOG("Old game paused: ", UGameplayStatics::IsGamePaused(GetWorld()));
@@ -72,12 +92,35 @@ void ASpInitializeWorldManager::BeginPlay()
         UGameplayStatics::SetGamePaused(GetWorld(), GamePaused);
     }
 
-    // Execute console commands
+    // Execute console commands.
     if (bExecuteConsoleCommands) {
         SP_LOG("Executing console commands...");
         SP_ASSERT(GEngine);
         for (auto& command : ConsoleCommands) {
             GEngine->Exec(GetWorld(), *command);
+        }
+    }
+}
+
+void ASpInitializeWorldManager::Tick(float delta_time)
+{
+    AActor::Tick(delta_time);
+
+    // Force update skylight. We need to keep the r.SkylightUpdateEveryFrame switched on for several frames,
+    // to work around an intermittent bug where the apartment scene sometimes appears too dark in standalone
+    // macOS builds.
+    if (bForceUpdateSkylight && !force_update_skylight_completed_) {
+        force_update_skylight_duration_seconds_ += delta_time;
+
+        if (force_update_skylight_duration_seconds_ >= ForceUpdateSkylightMaxDurationSeconds) {
+            SP_LOG("Setting r.SkylightUpdateEveryFrame to ", force_update_skylight_previous_cvar_value_);
+
+            IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.SkylightUpdateEveryFrame"));
+            cvar->Set(force_update_skylight_previous_cvar_value_);
+
+            force_update_skylight_previous_cvar_value_ = -1;
+            force_update_skylight_duration_seconds_ = 0.0;
+            force_update_skylight_completed_ = true;
         }
     }
 }

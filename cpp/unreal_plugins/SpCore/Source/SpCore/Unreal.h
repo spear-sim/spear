@@ -996,8 +996,10 @@ public:
     static bool hasStableName(const AActor* actor);
     static bool hasStableName(const UActorComponent* component);
 
+    static std::string tryGetStableName(const AActor* actor);
+
     static std::string getStableName(const AActor* actor);
-    static std::string getStableName(const UActorComponent* component, bool include_actor_name = false);
+    static std::string getStableName(const UActorComponent* component, bool include_actor_name = false, bool actor_must_have_stable_name = true);
 
     static void setStableName(const AActor* actor, const std::string& stable_name);
     #if WITH_EDITOR // defined in an auto-generated header

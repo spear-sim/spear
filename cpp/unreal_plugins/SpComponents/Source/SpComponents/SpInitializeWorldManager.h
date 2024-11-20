@@ -252,7 +252,8 @@ public:
     ~ASpInitializeWorldManager();
 
     // AActor interface
-    void BeginPlay();
+    void BeginPlay() override;
+    void Tick(float delta_time) override;
 
 private:
     UPROPERTY(EditAnywhere, Category="SPEAR")
@@ -271,7 +272,17 @@ private:
     bool GamePaused = false;
 
     UPROPERTY(EditAnywhere, Category="SPEAR")
+    bool bForceUpdateSkylight = false;
+    UPROPERTY(EditAnywhere, Category="SPEAR")
+    float ForceUpdateSkylightMaxDurationSeconds = 1.0f;
+
+    UPROPERTY(EditAnywhere, Category="SPEAR")
     bool bExecuteConsoleCommands = false;
     UPROPERTY(EditAnywhere, Category="SPEAR")
     TArray<FString> ConsoleCommands;
+
+    // State needed to force skylight updates across several frames.
+    bool force_update_skylight_completed_ = false;
+    int force_update_skylight_previous_cvar_value_ = -1;
+    float force_update_skylight_duration_seconds_ = 0.0;
 };
