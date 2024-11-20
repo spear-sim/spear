@@ -272,9 +272,9 @@ private:
     bool GamePaused = false;
 
     UPROPERTY(EditAnywhere, Category="SPEAR")
-    bool bForceUpdateSkylight = false;
+    bool bForceSkylightUpdate = false;
     UPROPERTY(EditAnywhere, Category="SPEAR")
-    float ForceUpdateSkylightMaxDurationSeconds = 1.0f;
+    float ForceSkylightUpdateMaxDurationSeconds = 1.0f;
 
     UPROPERTY(EditAnywhere, Category="SPEAR")
     bool bExecuteConsoleCommands = false;
@@ -282,7 +282,7 @@ private:
     TArray<FString> ConsoleCommands;
 
     // State needed to force skylight updates across several frames.
-    bool force_update_skylight_completed_ = false;
-    int force_update_skylight_previous_cvar_value_ = -1;
-    float force_update_skylight_duration_seconds_ = 0.0;
+    bool force_skylight_update_completed_ = false;
+    int force_skylight_update_previous_cvar_value_ = -1;
+    float force_skylight_update_duration_seconds_ = 0.0;
 };
