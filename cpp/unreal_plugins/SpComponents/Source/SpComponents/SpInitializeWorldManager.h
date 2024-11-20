@@ -264,7 +264,7 @@ private:
     UPROPERTY(EditAnywhere, Category="SPEAR")
     bool bOverrideFixedDeltaTime = false;
     UPROPERTY(EditAnywhere, Category="SPEAR")
-    double FixedDeltaTime = 1.0 / 30.0; // Engine/Source/Runtime/Core/Private/Misc/App.cpp
+    double FixedDeltaTime = 1.0/30.0; // Engine/Source/Runtime/Core/Private/Misc/App.cpp
 
     UPROPERTY(EditAnywhere, Category="SPEAR")
     bool bOverrideGamePaused = false;

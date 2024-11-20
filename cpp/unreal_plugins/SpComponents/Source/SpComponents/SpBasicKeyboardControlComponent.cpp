@@ -9,8 +9,7 @@
 
 #include <Components/SceneComponent.h>
 #include <Engine/EngineBaseTypes.h> // ELevelTick
-#include <Engine/EngineTypes.h>     // EEndPlayReason
-#include <HAL/Platform.h>           // uint64
+#include <Engine/EngineTypes.h>     // EEndPlayReason, ETickingGroup
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 

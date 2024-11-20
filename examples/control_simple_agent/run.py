@@ -66,6 +66,9 @@ if __name__ == "__main__":
         # apply action
         with instance.begin_frame():
 
+            # unpause
+            instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": False})
+
             # add rotation
             instance.unreal_service.call_function(uobject=root_component, ufunction=add_relative_rotation_func, args={"DeltaRotation": {"Pitch": 0.0, "Yaw": 1.0, "Roll": 0.0}})
 
@@ -75,9 +78,6 @@ if __name__ == "__main__":
             force_component = np.matrix([1000.0, 0.0, 0.0]).T
             force_world = M_world_from_component*force_component
             instance.unreal_service.call_function(uobject=sphere_component, ufunction=add_force_func, args={"Force": spear.to_dict_from_numpy(force_world)})
-
-            # unpause
-            instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": False})
 
         # get observation
         with instance.end_frame():
