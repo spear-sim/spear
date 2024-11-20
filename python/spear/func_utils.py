@@ -80,17 +80,17 @@ def to_shared(array, shared_memory_name):
     return Shared(array, shared_memory_name)
 
 
-# Convert a dict containing Unreal Euler angles to a NumPy matrix. See pipeline.py for more details on Unreal's Euler angle conventions.
-def to_numpy_from_dict(unreal_pyr):
-    assert isinstance(unreal_pyr, dict)
-    assert set(["roll", "pitch", "yaw"]) == set(unreal_pyr.keys())
-    roll  = np.deg2rad(-unreal_pyr["roll"])
-    pitch = np.deg2rad(-unreal_pyr["pitch"])
-    yaw   = np.deg2rad(unreal_pyr["yaw"])
+# Convert to a NumPy matrix from an Unreal rotator. See pipeline.py for more details on Unreal's Euler angle conventions.
+def to_matrix_from_rotator(rotator):
+    assert isinstance(rotator, dict)
+    assert set(["roll", "pitch", "yaw"]) == set(rotator.keys())
+    roll  = np.deg2rad(-rotator["roll"])
+    pitch = np.deg2rad(-rotator["pitch"])
+    yaw   = np.deg2rad(rotator["yaw"])
     return np.matrix(scipy.spatial.transform.Rotation.from_euler("xyz", [roll, pitch, yaw]).as_matrix())
 
-# Convert a NumPy array or matrix containing an 3-vector to a dict.
-def to_dict_from_numpy(array):
+# Convert from a NumPy array or matrix to an Unreal vector.
+def to_vector_from_array(array):
     if isinstance(array, np.matrix):
         assert array.shape == (3, 1)
         array = array.A1

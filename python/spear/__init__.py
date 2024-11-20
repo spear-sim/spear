@@ -6,7 +6,7 @@
 from spear.config import get_config
 from spear.log import log, log_current_function, log_no_prefix, log_get_prefix
 from spear.path import path_exists, remove_path
-from spear.func_utils import to_dict_from_numpy, to_handle, to_json_string, to_json_strings, to_numpy_from_dict, to_ptr, to_shared, try_to_dict, try_to_dicts
+from spear.func_utils import to_handle, to_json_string, to_json_strings, to_matrix_from_rotator, to_ptr, to_shared, to_vector_from_array, try_to_dict, try_to_dicts
 from spear.system import configure_system
 
 # classes

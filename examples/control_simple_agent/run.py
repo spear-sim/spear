@@ -74,10 +74,10 @@ if __name__ == "__main__":
 
             # add force
             return_values = instance.unreal_service.call_function(uobject=root_component, ufunction=get_component_rotation_func)
-            M_world_from_component = spear.to_numpy_from_dict(return_values["ReturnValue"])
+            M_world_from_component = spear.to_matrix_from_rotator(return_values["ReturnValue"])
             force_component = np.matrix([1000.0, 0.0, 0.0]).T
             force_world = M_world_from_component*force_component
-            instance.unreal_service.call_function(uobject=sphere_component, ufunction=add_force_func, args={"Force": spear.to_dict_from_numpy(force_world)})
+            instance.unreal_service.call_function(uobject=sphere_component, ufunction=add_force_func, args={"Force": spear.to_vector_from_array(force_world)})
 
         # get observation
         with instance.end_frame():
