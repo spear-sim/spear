@@ -77,7 +77,7 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass
 
-    # we can also use Unreal's legacy input system using instance.input_service
+    # we can also use Unreal's legacy input system via instance.input_service
 
     with instance.begin_frame():
 
