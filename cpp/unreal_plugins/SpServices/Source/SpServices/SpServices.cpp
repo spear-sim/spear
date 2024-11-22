@@ -66,6 +66,7 @@ void SpServices::StartupModule()
     // Construct all other services by passing in EngineService.
     enhanced_input_service_ = std::make_unique<EnhancedInputService>(engine_service_.get());
     game_map_settings_service_ = std::make_unique<GameMapSettingsService>(engine_service_.get());
+    input_service_ = std::make_unique<InputService>(engine_service_.get());
     legacy_service_ = std::make_unique<LegacyService>(engine_service_.get());
     sp_func_service_ = std::make_unique<SpFuncService>(engine_service_.get());
     unreal_service_ = std::make_unique<UnrealService>(engine_service_.get());
@@ -97,12 +98,17 @@ void SpServices::ShutdownModule()
     rpc_server_->stop();
     rpc_server_ = nullptr;
 
-    SP_ASSERT(unreal_service_);
-    SP_ASSERT(sp_func_service_);
-    SP_ASSERT(legacy_service_);
     SP_ASSERT(enhanced_input_service_);
+    SP_ASSERT(game_map_settings_service_);
+    SP_ASSERT(input_service_);
+    SP_ASSERT(legacy_service_);
+    SP_ASSERT(sp_func_service_);
+    SP_ASSERT(unreal_service_);
+    SP_ASSERT(world_service_);
+
     enhanced_input_service_ = nullptr;
     game_map_settings_service_ = nullptr;
+    input_service_ = nullptr;
     legacy_service_ = nullptr;
     sp_func_service_ = nullptr;
     unreal_service_ = nullptr;

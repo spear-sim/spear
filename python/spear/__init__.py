@@ -18,6 +18,7 @@ from spear.engine_service import EngineService
 
 # services that depend on EngineService
 from spear.enhanced_input_service import EnhancedInputService
+from spear.input_service import InputService
 from spear.legacy_service import LegacyService
 from spear.sp_func_service import SpFuncService
 from spear.unreal_service import UnrealService

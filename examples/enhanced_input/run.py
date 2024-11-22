@@ -77,4 +77,22 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass
 
+    # we can also use Unreal's legacy input system using instance.input_service
+
+    with instance.begin_frame():
+
+        instance.input_service.inject_action_for_actor(
+            actor=actor,
+            action_name="DebugActionMapping",
+            key_event="IE_Pressed",
+            key_name="Equals")
+
+        instance.input_service.inject_axis_for_actor(
+            actor=actor,
+            axis_name="DebugAxisMapping",
+            axis_value=1.0)
+
+    with instance.end_frame():
+        pass
+
     spear.log("Done.")

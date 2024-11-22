@@ -43,12 +43,26 @@ if __name__ == "__main__":
 
         # spawn object and get components
         bp_sphere_agent_uclass = instance.unreal_service.load_object(class_name="UClass", outer=0, name="/SpComponents/Blueprints/BP_Sphere_Agent.BP_Sphere_Agent_C")
-        bp_sphere_agent = instance.unreal_service.spawn_actor_from_uclass(uclass=bp_sphere_agent_uclass, location={"X": -10.0, "Y": 280.0, "Z": 150.0})
-        root_component = instance.unreal_service.get_component_by_name(class_name="USceneComponent", actor=bp_sphere_agent, component_name="DefaultSceneRoot")        
-        final_tone_curve_hdr_component = instance.unreal_service.get_component_by_name(class_name="USceneComponent", actor=bp_sphere_agent, component_name="DefaultSceneRoot.final_tone_curve_hdr")
+        bp_sphere_agent_actor = instance.unreal_service.spawn_actor_from_uclass(uclass=bp_sphere_agent_uclass, location={"X": -10.0, "Y": 280.0, "Z": 150.0})
+        root_component = instance.unreal_service.get_component_by_name(class_name="USceneComponent", actor=bp_sphere_agent_actor, component_name="DefaultSceneRoot")        
+        final_tone_curve_hdr_component = instance.unreal_service.get_component_by_name(class_name="USceneComponent", actor=bp_sphere_agent_actor, component_name="DefaultSceneRoot.final_tone_curve_hdr")
 
-        # get sphere component by path because it gets relocated in the component hierarchy implicitly by Unreal
-        sphere_component = instance.unreal_service.get_component_by_path(class_name="USceneComponent", actor=bp_sphere_agent, component_path="DefaultSceneRoot.sphere_")
+        #
+        # We get the sphere component "by path" (instead of "by name") because this particular component gets
+        # automatically relocated in the component hierarchy by Unreal at some point during BeginPlay().
+        # Unreal performs this relocation operation because the component is physics-enabled. Searching by
+        # path will look for the component at the path "DefaultSceneRoot.sphere_" (its original path before
+        # getting relocated) and the path "sphere_" (its path after getting relocated).
+        #
+        # At this point in the code, we are certain that the relocation operation has already happened, so we
+        # could just search by name using the name "sphere_". But this would be confusing. And we have a
+        # dedicated C++ function for searching by path, which is helpful, e.g., inside BeginPlay() functions,
+        # since in this case it isn't clear if a relocation operation has happened yet. We choose to use this
+        # functionality here, so we can search for the component using it's original path, as a matter of
+        # readability.
+        #
+
+        sphere_component = instance.unreal_service.get_component_by_path(class_name="USceneComponent", actor=bp_sphere_agent_actor, component_path="DefaultSceneRoot.sphere_")
 
         # initialize final_tone_curve_hdr_component and get handles to its shared memory
         instance.unreal_service.call_function(uobject=final_tone_curve_hdr_component, ufunction=initialize_func)
@@ -101,7 +115,7 @@ if __name__ == "__main__":
     with instance.end_frame():
         instance.sp_func_service.destroy_shared_memory_handles_for_uobject(shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
         instance.unreal_service.call_function(uobject=final_tone_curve_hdr_component, ufunction=terminate_func)
-        instance.unreal_service.destroy_actor(actor=bp_sphere_agent)
+        instance.unreal_service.destroy_actor(actor=bp_sphere_agent_actor)
 
     # close OpenCV window
     cv2.destroyAllWindows()

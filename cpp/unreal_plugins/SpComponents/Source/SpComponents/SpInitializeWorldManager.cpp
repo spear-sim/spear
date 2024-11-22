@@ -4,12 +4,16 @@
 
 #include "SpComponents/SpInitializeWorldManager.h"
 
-#include <Engine/Engine.h> // GEngine
+#include <filesystem>
+
+#include <Engine/Engine.h>      // GEngine
+#include <Engine/EngineTypes.h> // EEndPlayReason
 #include <GameFramework/Actor.h>
 #include <Kismet/GameplayStatics.h>
 #include <Misc/App.h>
 #include <PhysicsEngine/PhysicsSettings.h>
 
+#include "SpCore/Config.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
 
@@ -92,6 +96,14 @@ void ASpInitializeWorldManager::BeginPlay()
         UGameplayStatics::SetGamePaused(GetWorld(), GamePaused);
     }
 
+    // Initialize config system.
+    std::string config_file = Unreal::toStdString(ConfigFile);
+    if (bInitializeConfigSystem && std::filesystem::exists(config_file) && !Config::isInitialized()) {
+        SP_LOG("Initializing config system...");
+        Config::initialize(config_file);
+        initialize_config_system_completed_ = true;
+    }
+
     // Execute console commands.
     if (bExecuteConsoleCommands) {
         SP_LOG("Executing console commands...");
@@ -99,6 +111,30 @@ void ASpInitializeWorldManager::BeginPlay()
         for (auto& command : ConsoleCommands) {
             GEngine->Exec(GetWorld(), *command);
         }
+    }
+}
+
+void ASpInitializeWorldManager::EndPlay(const EEndPlayReason::Type end_play_reason)
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    AActor::EndPlay(end_play_reason);
+
+    if (bInitializeConfigSystem && initialize_config_system_completed_) {
+        SP_LOG("Terminating config system...");
+        initialize_config_system_completed_ = false;
+        Config::terminate();
+    }
+
+    if (bForceSkylightUpdate && !force_skylight_update_completed_) {
+        SP_LOG("Setting r.SkylightUpdateEveryFrame to ", force_skylight_update_previous_cvar_value_);
+
+        IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.SkylightUpdateEveryFrame"));
+        cvar->Set(force_skylight_update_previous_cvar_value_);
+
+        force_skylight_update_previous_cvar_value_ = -1;
+        force_skylight_update_duration_seconds_ = 0.0;
+        force_skylight_update_completed_ = true;
     }
 }
 

@@ -9,7 +9,7 @@
 #include <Containers/Array.h>
 #include <Containers/EnumAsByte.h>
 #include <Containers/UnrealString.h>       // FString
-#include <Engine/EngineTypes.h>            // FRigidBodyErrorCorrection
+#include <Engine/EngineTypes.h>            // EEndPlayReason, FRigidBodyErrorCorrection
 #include <GameFramework/Actor.h>
 #include <GameFramework/WorldSettings.h>   // FBroadphaseSettings
 #include <HAL/Platform.h>                  // int32
@@ -253,29 +253,41 @@ public:
 
     // AActor interface
     void BeginPlay() override;
+    void EndPlay(const EEndPlayReason::Type end_play_reason) override;
     void Tick(float delta_time) override;
 
 private:
+    // Override physics settings
     UPROPERTY(EditAnywhere, Category="SPEAR")
     bool bOverridePhysicsSettings = false;
     UPROPERTY(EditAnywhere, Category="SPEAR")
     FSpPhysicsSettings SpPhysicsSettings;
 
+    // Override fixed delta time
     UPROPERTY(EditAnywhere, Category="SPEAR")
     bool bOverrideFixedDeltaTime = false;
     UPROPERTY(EditAnywhere, Category="SPEAR")
     double FixedDeltaTime = 1.0/30.0; // Engine/Source/Runtime/Core/Private/Misc/App.cpp
 
+    // Override game paused
     UPROPERTY(EditAnywhere, Category="SPEAR")
     bool bOverrideGamePaused = false;
     UPROPERTY(EditAnywhere, Category="SPEAR")
     bool GamePaused = false;
 
+    // Force skylight update
     UPROPERTY(EditAnywhere, Category="SPEAR")
     bool bForceSkylightUpdate = false;
     UPROPERTY(EditAnywhere, Category="SPEAR")
-    float ForceSkylightUpdateMaxDurationSeconds = 1.0f;
+    float ForceSkylightUpdateMaxDurationSeconds = 0.5f;
 
+    // Initialize config system
+    UPROPERTY(EditAnywhere, Category="SPEAR")
+    bool bInitializeConfigSystem = false;
+    UPROPERTY(EditAnywhere, Category="SPEAR")
+    FString ConfigFile;
+
+    // Execute console commands
     UPROPERTY(EditAnywhere, Category="SPEAR")
     bool bExecuteConsoleCommands = false;
     UPROPERTY(EditAnywhere, Category="SPEAR")
@@ -285,4 +297,7 @@ private:
     bool force_skylight_update_completed_ = false;
     int force_skylight_update_previous_cvar_value_ = -1;
     float force_skylight_update_duration_seconds_ = 0.0;
+
+    // State needed to terminate the config system.
+    bool initialize_config_system_completed_ = false;
 };

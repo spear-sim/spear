@@ -31,6 +31,7 @@ class Instance():
 
         # Construct all other services by passing in EngineService
         self.enhanced_input_service = spear.EnhancedInputService(entry_point_caller=self.engine_service)
+        self.input_service = spear.InputService(entry_point_caller=self.engine_service)
         self.legacy_service = spear.LegacyService(entry_point_caller=self.engine_service)
         self.sp_func_service = spear.SpFuncService(entry_point_caller=self.engine_service)
         self.unreal_service = spear.UnrealService(entry_point_caller=self.engine_service)
@@ -55,9 +56,10 @@ class Instance():
         return self.engine_service.end_frame()
 
     def close(self):
-        # Note that in the constructor, we launch the Unreal instance first and then initialize the RPC client. Normally,
-        # we would do things in the reverse order here. But if we close the client first, then we can't send a command to
-        # the Unreal instance to close it. So we close the Unreal instance first and then close the client.
+        # Note that in the constructor, we launch the Unreal instance first and then initialize the RPC
+        # client. Normally, we would do things in the reverse order here. But if we close the client first,
+        # then we can't send a command to the Unreal instance to close it. So we close the Unreal instance
+        # first and then close the client.
         self._request_close_unreal_instance()
         self._close_rpc_client(verbose=True)
 
@@ -65,11 +67,8 @@ class Instance():
 
         spear.log("Requesting to launch Unreal instance...")
 
-        if self._config.SPEAR.LAUNCH_MODE == "none":
-            spear.log('SPEAR.LAUNCH_MODE == "none" so we assume that an Unreal instance has been launched externally...')
-            return
-
-        # write temp file
+        # Write a temp config file. We do this before checking LAUNCH_MODE in case the user wants to
+        # initialize the config system in the editor using the temp file that gets written here.
         temp_dir = os.path.realpath(os.path.join(self._config.SPEAR.INSTANCE.TEMP_DIR))
         temp_config_file = os.path.realpath(os.path.join(temp_dir, self._config.SPEAR.INSTANCE.TEMP_CONFIG_FILE))
 
@@ -78,6 +77,10 @@ class Instance():
         os.makedirs(temp_dir, exist_ok=True)
         with open(temp_config_file, "w") as output:
             self._config.dump(stream=output, default_flow_style=False)
+
+        if self._config.SPEAR.LAUNCH_MODE == "none":
+            spear.log('SPEAR.LAUNCH_MODE == "none" so we assume that an Unreal instance has been launched externally...')
+            return
 
         # set up launch executable and command-line arguments
         launch_args = []
@@ -204,7 +207,8 @@ class Instance():
 
         connected = False
         
-        # if we're connecting to a running instance, then we assume that the RPC server is already running and only try to connect once
+        # If we're connecting to a running instance, then we assume that the RPC server is already running
+        # and only try to connect once.
         if self._config.SPEAR.LAUNCH_MODE == "none":
 
             try:
@@ -238,7 +242,7 @@ class Instance():
             elapsed_time_seconds = time.time() - start_time_seconds
             while elapsed_time_seconds < self._config.SPEAR.INSTANCE.INITIALIZE_RPC_CLIENT_MAX_TIME_SECONDS:
 
-                # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible status values
+                # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible values
                 status = self._process.status()
                 if status not in expected_status_values:
                     spear.log("ERROR: Unrecognized process status: " + status)

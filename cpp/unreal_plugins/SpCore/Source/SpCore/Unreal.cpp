@@ -752,14 +752,17 @@ std::vector<std::string> Unreal::getTags(const UActorComponent* component)
 
 std::string Unreal::toStdString(const FString& str)
 {
-    // Note that the * operator for FString returns a pointer to the underlying string
-    return std::string(TCHAR_TO_UTF8(*str));
+    return std::string(TCHAR_TO_UTF8(*str)); // the * operator for FString returns a pointer to the underlying string
+}
+
+std::string Unreal::toStdString(const FText& str)
+{
+    return toStdString(str.ToString()); // str.ToString() converts FText to FString
 }
 
 std::string Unreal::toStdString(const FName& str)
 {
-    // Note that str.ToString() converts FName to FString
-    return toStdString(str.ToString());
+    return toStdString(str.ToString()); // str.ToString() converts FName to FString
 }
 
 std::string Unreal::toStdString(const TCHAR* str)

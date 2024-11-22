@@ -4,6 +4,8 @@
 
 #include "SpCore/Config.h"
 
+#include <filesystem>
+
 #include <Containers/UnrealString.h> // FString
 #include <HAL/Platform.h>            // TEXT
 #include <Misc/CommandLine.h>
@@ -23,22 +25,27 @@
 
 YAML::Node g_config_node;
 
+void Config::initialize(const std::string& config_file)
+{
+    SP_LOG("Initializing config system from file: ", config_file);
+    g_config_node = YAML::LoadFile(config_file);
+    s_initialized_ = true;
+}
+
 void Config::requestInitialize()
 {
+    // if a config file is provided via the -config_file=path/to/config.yaml command-line argument, then load it
     FString config_file;
-
-    // if a config file is provided via the command-line, then load it
     if (FParse::Value(FCommandLine::Get(), *Unreal::toFString("config_file="), config_file)) {
-        SP_LOG("Found config file via the -config_file command-line argument: ", Unreal::toStdString(config_file));
-        g_config_node = YAML::LoadFile(Unreal::toStdString(config_file));
-        s_initialized_ = true;
-    } else {
-        s_initialized_ = false;
+        std::string config_file_str = Unreal::toStdString(config_file);
+        SP_LOG("Found config file via the -config_file command-line argument...");
+        initialize(config_file_str);
     }
 }
 
 void Config::terminate()
 {
+    SP_LOG("Terminating config system...");
     g_config_node.reset();
     s_initialized_ = false;
 }

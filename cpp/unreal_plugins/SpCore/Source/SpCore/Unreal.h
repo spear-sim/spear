@@ -1148,6 +1148,7 @@ public:
     //
 
     static std::string toStdString(const FString& str);
+    static std::string toStdString(const FText& str);
     static std::string toStdString(const FName& str);
     static std::string toStdString(const TCHAR* str);
     static FString toFString(const std::string& str);

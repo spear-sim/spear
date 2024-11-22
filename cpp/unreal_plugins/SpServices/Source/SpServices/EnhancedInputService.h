@@ -10,7 +10,6 @@
 #include <vector>
 
 #include <Containers/Array.h>
-#include <Containers/EnumAsByte.h>
 #include <Engine/EngineBaseTypes.h>  // EInputEvent
 #include <Engine/LocalPlayer.h>
 #include <EnhancedInputComponent.h>  // FEnhancedInputActionEventBinding, FInputDebugKeyBinding, UEnhancedInputComponent
@@ -21,10 +20,10 @@
 #include <InputModifiers.h>          // UInputModifier, UInputModifierScalar
 #include <InputTriggers.h>           // ETriggerEvent, UInputTrigger, UInputTriggerPressed
 #include <Math/Vector.h>
-#include <Templates/UniquePtr.h>
 #include <UObject/ObjectPtr.h>
 
 #include "SpCore/Assert.h"
+#include "SpCore/Config.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealClassRegistrar.h"
@@ -125,24 +124,12 @@ public:
                 std::string& input_action_value_string,
                 std::string& input_action_instance_string,
                 std::vector<uint64_t>& modifiers,
-                std::vector<uint64_t>& triggers,
-                bool verbose) -> void {
+                std::vector<uint64_t>& triggers) -> void {
 
-                AActor* actor_ptr = toPtr<AActor>(actor);
-
-                // we choose to give up, rather than assert, for consistent behavior with inject_input and inject_debug_key_for_actor
-                std::vector<UEnhancedInputComponent*> enhanced_input_components = Unreal::getComponentsByType<UEnhancedInputComponent>(actor_ptr);
-                if (enhanced_input_components.empty()) {
-                    std::string actor_name;
-                    if (Unreal::hasStableName(actor_ptr)) {
-                        actor_name = Unreal::getStableName(actor_ptr);
-                    } else {
-                        actor_name = Unreal::toStdString(actor_ptr->GetName());
-                    }
-                    SP_LOG("Couldn't find a UEnhancedInputComponent on actor ", actor_name, ", giving up...");
+                UEnhancedInputComponent* enhanced_input_component = getEnhancedInputComponent(actor);
+                if (!enhanced_input_component) {
                     return;
                 }
-                UEnhancedInputComponent* enhanced_input_component = enhanced_input_components.at(0);
 
                 ETriggerEvent trigger_event = Unreal::getEnumValueFromString<ETriggerEvent>(trigger_event_string);
 
@@ -168,14 +155,13 @@ public:
                 sp_input_action_instance.setModifiers(modifiers_tarray);
                 sp_input_action_instance.setTriggers(triggers_tarray);
 
-                const TArray<TUniquePtr<FEnhancedInputActionEventBinding>>& event_bindings = enhanced_input_component->GetActionEventBindings();
-                for (const auto& event_binding : event_bindings) {
+                for (const auto& event_binding : enhanced_input_component->GetActionEventBindings()) {
                     const UInputAction* input_action = event_binding->GetAction();
                     SP_ASSERT(input_action);
 
-                    if (verbose) {
+                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENHANCED_INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
                         SP_LOG(Unreal::toStdString(input_action->GetName()));
-                        SP_LOG(Unreal::getStringFromEnumValue(trigger_event));
+                        SP_LOG(Unreal::getStringFromEnumValue(event_binding->GetTriggerEvent()));
                         SP_LOG();
                     }
 
@@ -197,37 +183,25 @@ public:
                 uint64_t& actor,
                 std::string& chord_string,
                 std::string& key_event_string,
-                std::string& input_action_value_string,
-                bool verbose) -> void {
+                std::string& input_action_value_string) -> void {
 
-                AActor* actor_ptr = toPtr<AActor>(actor);
-
-                // we choose to give up, rather than assert, for consistent behavior with inject_input and inject_input_for_actor
-                std::vector<UEnhancedInputComponent*> enhanced_input_components = Unreal::getComponentsByType<UEnhancedInputComponent>(actor_ptr);
-                if (enhanced_input_components.empty()) {
-                    std::string actor_name;
-                    if (Unreal::hasStableName(actor_ptr)) {
-                        actor_name = Unreal::getStableName(actor_ptr);
-                    } else {
-                        actor_name = Unreal::toStdString(actor_ptr->GetName());
-                    }
-                    SP_LOG("Couldn't find a UEnhancedInputComponent on actor ", actor_name, ", giving up...");
+                UEnhancedInputComponent* enhanced_input_component = getEnhancedInputComponent(actor);
+                if (!enhanced_input_component) {
                     return;
                 }
-                UEnhancedInputComponent* enhanced_input_component = enhanced_input_components.at(0);
 
                 FInputChord chord;
                 Unreal::setObjectPropertiesFromString(&chord, FInputChord::StaticStruct(), chord_string);
+
                 EInputEvent key_event = Unreal::getEnumValueFromString<EInputEvent>(key_event_string);
 
                 FSpInputActionValue sp_input_action_value;
                 Unreal::setObjectPropertiesFromString(&sp_input_action_value, FSpInputActionValue::StaticStruct(), input_action_value_string);
                 FInputActionValue input_action_value(sp_input_action_value.ValueType, sp_input_action_value.Value);
 
-                const TArray<TUniquePtr<FInputDebugKeyBinding>>& debug_key_bindings = enhanced_input_component->GetDebugKeyBindings();
-                for (const auto& debug_key_binding : debug_key_bindings) {
+                for (const auto& debug_key_binding : enhanced_input_component->GetDebugKeyBindings()) {
 
-                    if (verbose) {
+                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENHANCED_INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
                         SP_LOG(Unreal::getObjectPropertiesAsString(&(debug_key_binding->Chord), FInputChord::StaticStruct()));
                         SP_LOG(Unreal::getStringFromEnumValue(debug_key_binding->KeyEvent.GetValue()));
                         SP_LOG();
@@ -270,5 +244,18 @@ public:
         UnrealClassRegistrar::unregisterClass<UInputTriggerReleased>("UInputTriggerReleased");
         UnrealClassRegistrar::unregisterClass<UInputTriggerTap>("UInputTriggerTap");
         UnrealClassRegistrar::unregisterClass<UInputTriggerTimedBase>("UInputTriggerTimedBase");
+    }
+
+private:
+    UEnhancedInputComponent* getEnhancedInputComponent(uint64_t& actor)
+    {
+        AActor* actor_ptr = toPtr<AActor>(actor);
+        std::vector<UEnhancedInputComponent*> enhanced_input_components = Unreal::getComponentsByType<UEnhancedInputComponent>(actor_ptr);
+        if (enhanced_input_components.size() != 1) {
+            SP_LOG("Couldn't find a unique UEnhancedInputComponent on actor ", Unreal::tryGetStableName(actor_ptr), ", giving up...");
+            return nullptr;
+        } else {
+            return enhanced_input_components.at(0);
+        }
     }
 };

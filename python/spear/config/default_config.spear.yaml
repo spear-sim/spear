@@ -107,8 +107,8 @@ SPEAR:
     # Sleep for this amount of time in-between checks to see if the Unreal instance has closed.
     REQUEST_CLOSE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS: 1.0
 
+  # Print debug info when calling entry points.
   ENGINE_SERVICE:
-    # If true, print debug info for each call to EngineService.call(...).
     PRINT_CALL_DEBUG_INFO: False
 
   ENV:
