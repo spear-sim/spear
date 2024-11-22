@@ -39,8 +39,7 @@ def compute_camera_transform(cam):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mjcf_file", default=r"F:\intel\interiorsim\pipeline\data\fetch_in_apartment_0000.mjcf")
-    parser.add_argument("--agent", default=False)
+    parser.add_argument("--mjcf_file", default=r"F:\intel\interiorsim\pipeline\data\apartment_0000\mujoco_scene\main_physics_ready.mjcf")
     args = parser.parse_args()
 
     # create spear Instance
@@ -80,6 +79,7 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass
 
+    spear.log("Initialize Mujoco instance...")
     # initialize MuJoCo
     mj_model = mujoco.MjModel.from_xml_path(os.path.realpath(args.mjcf_file))
     mj_data = mujoco.MjData(mj_model)
@@ -102,6 +102,7 @@ if __name__ == "__main__":
 
     # update MuJoCo viewer state
     mj_viewer.sync()
+    spear.log("Finished initializing Mujoco instance.")
 
     while mj_viewer.is_running():
         # perform multiple MuJoCo simulation steps per Unreal frame

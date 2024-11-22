@@ -5,7 +5,7 @@
 ```
    git clone --recurse-submodules https://github.com/spear-sim/spear.git
    cd spear 
-   git branch --rwang15/mujoco-cosim
+   git checkout --rwang15/mujoco-cosim
 ```
 
 2. install spear python(see getting_started.md)
@@ -34,11 +34,6 @@
    Typically, change `SPEAR.STANDALONE_EXECUTABLE` to standalone executable path
 
 4. run_sceme_cosimulation.py --mjcf_file <path_to_scene_mjcf>
-
-5. demo assets
-    1. spear.exe - unreal standalone executable
-    2. data/ - mujoco data
-    3. demo video
 
 ### TODO list
 

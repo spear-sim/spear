@@ -40,7 +40,6 @@ def compute_camera_transform(cam):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--mjcf_file", default=r"F:\intel\interiorsim\pipeline\data\fetch_in_apartment_0000.mjcf")
-    parser.add_argument("--agent", default=False)
     args = parser.parse_args()
 
     # create spear Instance
