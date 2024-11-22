@@ -1,0 +1,21 @@
+#
+# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+#
+
+SPEAR:
+  LAUNCH_MODE: "standalone" # standalone | none
+  STANDALONE_EXECUTABLE: "F:/intel/interiorsim/tools/BUILD/SpearSim-Win64-Shipping/Windows/SpearSim/Binaries/Win64/SpearSim-Win64-Shipping-Cmd.exe"
+
+  INSTANCE:
+    COMMAND_LINE_ARGS:
+      resx: 512
+      resy: 512
+      #renderoffscreen: null   # run in headless mode
+#    LEVEL_NAME: "/Game/Scenes/apartment_0000/Maps/Experiment"
+
+SP_SERVICES:
+  LEGACY_SERVICE:
+    # AGENT: "SphereAgent" # uncomment when using SphereAgent
+    AGENT: "NullAgent" # uncomment when using VehicleAgent
+    TASK: "NullTask"
+
