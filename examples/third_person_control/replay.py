@@ -11,10 +11,14 @@ def get_action(row):
     bone_names = [name.split(".")[0] for name in row.dtype.names][::10]
     fields = [name[name.find(".") + 1:] for name in row.dtype.names][:10]
     data = np.array([row[name] for name in row.dtype.names], dtype=np.float64).reshape(-1, 10)
-    result = {}
+    bone_transforms = {}
     for bone_name, value in dict(zip(bone_names, data)).items():
-        result[bone_name] = dict(zip(fields, value))
-    return result
+        transform = {"rotation": {}, "translation": {}, "scale3D": {}}
+        for key, value in dict(zip(fields, value)).items():
+            field, axis = key.split(".")
+            transform[field][axis] = value
+        bone_transforms[bone_name] = transform
+    return bone_transforms
 
 
 if __name__ == '__main__':
@@ -69,18 +73,22 @@ if __name__ == '__main__':
             actor1_bone_names.append(bone_name)
     with instance.end_frame():
         pass
-    df = json.load(open(args.actions_file))
-    for row in df:
+
+    df = pd.read_csv(args.actions_file)
+    for row in df.to_records(index=False):
         with instance.begin_frame():
             instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_ufunc, args={"bPaused": False})
-            actions = row
+
+            actions = get_action(row)
             for bone_name, transform in actions.items():
                 result = instance.unreal_service.call_function(poseable_mesh_component, set_bone_transform_by_name_ufunc, {
                     "BoneName": bone_name,
                     "BoneSpace": "WorldSpace",
                     "InTransform": transform
+
                 })
+
         with instance.end_frame():
             instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_ufunc, args={"bPaused": True})
-            pass
+
     print("Done.")

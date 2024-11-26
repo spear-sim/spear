@@ -98,7 +98,7 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass
 
-    df = []
+    df = pd.DataFrame()
 
     with instance.begin_frame():
         instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_ufunc, args={"bPaused": False})
@@ -124,7 +124,7 @@ if __name__ == "__main__":
             bone_transform = instance.unreal_service.call_function(skeletal_mesh_component1, get_bone_transform_ufunc,
                                                                    {"InBoneName": bone_name, "TransformSpace": "RTS_World"})['ReturnValue']
             skeletal_mesh_transforms[bone_name] = bone_transform
-        df.append(skeletal_mesh_transforms)
+        df = pd.concat([df,get_data_frame(skeletal_mesh_transforms)])
 
     for _ in range(200):
         with instance.begin_frame():
@@ -150,7 +150,7 @@ if __name__ == "__main__":
                 bone_transform = instance.unreal_service.call_function(skeletal_mesh_component1, get_bone_transform_ufunc,
                                                                        {"InBoneName": bone_name, "TransformSpace": "RTS_World"})['ReturnValue']
                 skeletal_mesh_transforms[bone_name] = bone_transform
-        df.append(skeletal_mesh_transforms)
+            df = pd.concat([df,get_data_frame(skeletal_mesh_transforms)])
 
     for _ in range(100):
         with instance.begin_frame():
@@ -164,10 +164,9 @@ if __name__ == "__main__":
                 bone_transform = instance.unreal_service.call_function(skeletal_mesh_component1, get_bone_transform_ufunc,
                                                                        {"InBoneName": bone_name, "TransformSpace": "RTS_World"})['ReturnValue']
                 skeletal_mesh_transforms[bone_name] = bone_transform
-            df.append(skeletal_mesh_transforms)
+            df = pd.concat([df,get_data_frame(skeletal_mesh_transforms)])
 
-    # df.to_csv(args.actions_file, float_format="%.5f", mode="w", index=False)
-    json.dump(df, open(args.actions_file, mode='w'))
+    df.to_csv(args.actions_file, float_format="%.5f", mode="w", index=False)
     # close the instance
     instance.close()
 
