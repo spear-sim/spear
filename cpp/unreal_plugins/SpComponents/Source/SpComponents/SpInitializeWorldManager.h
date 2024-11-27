@@ -243,7 +243,7 @@ private:
     //
 };
 
-UCLASS(ClassGroup="SPEAR", HideCategories=(Rendering, Replication, Collision, HLOD, Physics, Networking, Input, Actor, Cooking))
+UCLASS(ClassGroup="SPEAR", Config=Spear, HideCategories=(Rendering, Replication, Collision, HLOD, Physics, Networking, Input, Actor, Cooking))
 class ASpInitializeWorldManager : public AActor
 {
     GENERATED_BODY()
@@ -257,47 +257,58 @@ public:
     void Tick(float delta_time) override;
 
 private:
-    // Override physics settings
-    UPROPERTY(EditAnywhere, Category="SPEAR")
-    bool bOverridePhysicsSettings = false;
-    UPROPERTY(EditAnywhere, Category="SPEAR")
-    FSpPhysicsSettings SpPhysicsSettings;
-
-    // Override fixed delta time
-    UPROPERTY(EditAnywhere, Category="SPEAR")
-    bool bOverrideFixedDeltaTime = false;
-    UPROPERTY(EditAnywhere, Category="SPEAR")
-    double FixedDeltaTime = 1.0/30.0; // Engine/Source/Runtime/Core/Private/Misc/App.cpp
-
-    // Override game paused
-    UPROPERTY(EditAnywhere, Category="SPEAR")
-    bool bOverrideGamePaused = false;
-    UPROPERTY(EditAnywhere, Category="SPEAR")
-    bool GamePaused = false;
-
-    // Force skylight update
-    UPROPERTY(EditAnywhere, Category="SPEAR")
-    bool bForceSkylightUpdate = false;
-    UPROPERTY(EditAnywhere, Category="SPEAR")
-    float ForceSkylightUpdateMaxDurationSeconds = 0.5f;
 
     // Initialize config system
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
     bool bInitializeConfigSystem = false;
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
     FString ConfigFile;
 
-    // Execute console commands
-    UPROPERTY(EditAnywhere, Category="SPEAR")
-    bool bExecuteConsoleCommands = false;
-    UPROPERTY(EditAnywhere, Category="SPEAR")
-    TArray<FString> ConsoleCommands;
+    bool initialize_config_system_ = false;
 
-    // State needed to force skylight updates across several frames.
+    // Override game paused
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    bool bOverrideGamePaused = false;
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    bool GamePaused = false;
+
+    // Override benchmarking
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    bool bOverrideBenchmarking = false;
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    bool Benchmarking = false;
+
+    // Override fixed delta time
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    bool bOverrideFixedDeltaTime = false;
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    double FixedDeltaTime = 1.0/30.0; // Engine/Source/Runtime/Core/Private/Misc/App.cpp
+
+    // Override physics settings
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    bool bOverridePhysicsSettings = false;
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    FSpPhysicsSettings SpPhysicsSettings;
+
+    // Force skylight update. We set bForceSkylightUpdate to true here, rather than setting the corresponding
+    // config parameter in default_config.sp_components.yaml, becasue because we always want this default
+    // behavior, even when the config system isn't loaded.
+
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    bool bForceSkylightUpdate = true;
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    float ForceSkylightUpdateMaxDurationSeconds = 0.5f;
+
+    bool force_skylight_update_ = false;
     bool force_skylight_update_completed_ = false;
     int force_skylight_update_previous_cvar_value_ = -1;
-    float force_skylight_update_duration_seconds_ = 0.0;
+    float force_skylight_update_max_duration_seconds_ = -1.0f;
+    float force_skylight_update_duration_seconds_ = 0.0f;
 
-    // State needed to terminate the config system.
-    bool initialize_config_system_completed_ = false;
+    // Execute console commands
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    bool bExecuteConsoleCommands = false;
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    TArray<FString> ConsoleCommands;
 };

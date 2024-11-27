@@ -9,8 +9,9 @@ import yacs.config
 spear_root_dir = os.path.dirname(os.path.realpath(__file__))
 default_config_files = [
     os.path.realpath(os.path.join(spear_root_dir, "config", "default_config.sp_core.yaml")),
-    os.path.realpath(os.path.join(spear_root_dir, "config", "default_config.vehicle.yaml")),
+    os.path.realpath(os.path.join(spear_root_dir, "config", "default_config.sp_components.yaml")),
     os.path.realpath(os.path.join(spear_root_dir, "config", "default_config.urdf_robot.yaml")),
+    os.path.realpath(os.path.join(spear_root_dir, "config", "default_config.vehicle.yaml")),
     os.path.realpath(os.path.join(spear_root_dir, "config", "default_config.sp_services.yaml")),
     os.path.realpath(os.path.join(spear_root_dir, "config", "default_config.spear.yaml")) ]
 

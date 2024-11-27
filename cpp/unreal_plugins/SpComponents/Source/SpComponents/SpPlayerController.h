@@ -24,7 +24,7 @@ public:
     void BeginPlay() override;
     void EndPlay(const EEndPlayReason::Type end_play_reason) override;
 
-private:
+public:
     UPROPERTY(EditAnywhere, Category="SPEAR")
     USpUserInputComponent* SpUserInputComponent = nullptr;
 };
