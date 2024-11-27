@@ -872,7 +872,15 @@ public:
             [this](std::string& class_name, uint64_t& owner, std::string& component_name) -> uint64_t {
                 return toUInt64(UnrealClassRegistrar::createComponentOutsideOwnerConstructor(class_name, toPtr<AActor>(owner), component_name));
             });
-
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "create_component_outside_owner_constructor_by_class",
+            [this](uint64_t& owner, uint64_t& component_class, std::string& component_name) -> uint64_t {
+                AActor* actor          = toPtr<AActor>(owner);
+                UClass* componentClass = toPtr<UClass>(component_class);
+                USceneComponent* scene_component = NewObject<USceneComponent>(actor, componentClass, Unreal::toFName(component_name));
+                actor->SetRootComponent(scene_component);
+                scene_component->RegisterComponent();
+                return toUInt64(scene_component);
+            });
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "create_scene_component_outside_owner_constructor_from_actor",
             [this](std::string& class_name, uint64_t& actor, std::string& scene_component_name) -> uint64_t {
                 return toUInt64(UnrealClassRegistrar::createSceneComponentOutsideOwnerConstructor(class_name, toPtr<AActor>(actor), scene_component_name));

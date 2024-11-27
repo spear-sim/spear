@@ -5,7 +5,6 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import argparse
-import json
 import os
 
 import numpy as np
@@ -74,26 +73,33 @@ if __name__ == "__main__":
         )
 
         # set bRunPhysicsWithNoController to True to control pawn without controller
-        character_movement_component1 = instance.unreal_service.get_component_by_class(bp_third_person_actor1, character_movement_component_uclass)
-        character_movement_component2 = instance.unreal_service.get_component_by_class(bp_third_person_actor2, character_movement_component_uclass)
+        character_movement_component1 = instance.unreal_service.get_component_by_class(actor=bp_third_person_actor1, uclass=character_movement_component_uclass)
+        character_movement_component2 = instance.unreal_service.get_component_by_class(actor=bp_third_person_actor2, uclass=character_movement_component_uclass)
 
-        instance.unreal_service.set_object_properties_for_uobject(character_movement_component1, {"bRunPhysicsWithNoController": True})
-        instance.unreal_service.set_object_properties_for_uobject(character_movement_component2, {"bRunPhysicsWithNoController": True})
+        instance.unreal_service.set_object_properties_for_uobject(uobject=character_movement_component1, properties={"bRunPhysicsWithNoController": True})
+        instance.unreal_service.set_object_properties_for_uobject(uobject=character_movement_component2, properties={"bRunPhysicsWithNoController": True})
         instance.unreal_service.call_function(uobject=character_movement_component1, ufunction=set_movement_mode_ufunc, args={"NewMovementMode": "MOVE_Walking"})
         instance.unreal_service.call_function(uobject=character_movement_component2, ufunction=set_movement_mode_ufunc, args={"NewMovementMode": "MOVE_Walking"})
 
         # initialize input component
-        instance.enhanced_input_service.setup_enhanced_input_component(bp_third_person_actor1)
-        instance.enhanced_input_service.setup_enhanced_input_component(bp_third_person_actor2)
+        instance.enhanced_input_service.setup_enhanced_input_component(actor=bp_third_person_actor1)
+        instance.enhanced_input_service.setup_enhanced_input_component(actor=bp_third_person_actor2)
 
         # get all bone names
-        skeletal_mesh_component1 = instance.unreal_service.get_component_by_class(bp_third_person_actor1, skeletal_mesh_component_uclass)
-        instance.unreal_service.call_function(skeletal_mesh_component1, set_skeletal_mesh_asset_ufunc, {"NewMesh": spear.func_utils.to_ptr(manny_simple_uobject)})
-        skeletal_mesh_component_num_bones1 = instance.unreal_service.call_function(skeletal_mesh_component1, get_num_bones_ufunc)['ReturnValue']
+        skeletal_mesh_component1 = instance.unreal_service.get_component_by_class(actor=bp_third_person_actor1, uclass=skeletal_mesh_component_uclass)
+        instance.unreal_service.call_function(
+            uobject=skeletal_mesh_component1,
+            ufunction=set_skeletal_mesh_asset_ufunc,
+            args={"NewMesh": spear.func_utils.to_ptr(manny_simple_uobject)})
         actor1_bone_names = []
+        skeletal_mesh_component_num_bones1 = instance.unreal_service.call_function(
+            uobject=skeletal_mesh_component1,
+            ufunction=get_num_bones_ufunc)['ReturnValue']
         for i in range(skeletal_mesh_component_num_bones1):
-            bone_name = instance.unreal_service.call_function(skeletal_mesh_component1, get_bone_name_ufunc, {"BoneIndex": i})['ReturnValue']
-            actor1_bone_names.append(bone_name)
+            actor1_bone_names.append(instance.unreal_service.call_function(
+                uobject=skeletal_mesh_component1,
+                ufunction=get_bone_name_ufunc,
+                args={"BoneIndex": i})['ReturnValue'])
 
     with instance.end_frame():
         pass
@@ -121,10 +127,11 @@ if __name__ == "__main__":
 
         skeletal_mesh_transforms = {}
         for index, bone_name in enumerate(actor1_bone_names):
-            bone_transform = instance.unreal_service.call_function(skeletal_mesh_component1, get_bone_transform_ufunc,
-                                                                   {"InBoneName": bone_name, "TransformSpace": "RTS_World"})['ReturnValue']
-            skeletal_mesh_transforms[bone_name] = bone_transform
-        df = pd.concat([df,get_data_frame(skeletal_mesh_transforms)])
+            skeletal_mesh_transforms[bone_name] = instance.unreal_service.call_function(
+                uobject=skeletal_mesh_component1,
+                ufunction=get_bone_transform_ufunc,
+                args={"InBoneName": bone_name, "TransformSpace": "RTS_World"})['ReturnValue']
+        df = pd.concat([df, get_data_frame(skeletal_mesh_transforms)])
 
     for _ in range(200):
         with instance.begin_frame():
@@ -147,10 +154,11 @@ if __name__ == "__main__":
 
             skeletal_mesh_transforms = {}
             for index, bone_name in enumerate(actor1_bone_names):
-                bone_transform = instance.unreal_service.call_function(skeletal_mesh_component1, get_bone_transform_ufunc,
-                                                                       {"InBoneName": bone_name, "TransformSpace": "RTS_World"})['ReturnValue']
-                skeletal_mesh_transforms[bone_name] = bone_transform
-            df = pd.concat([df,get_data_frame(skeletal_mesh_transforms)])
+                skeletal_mesh_transforms[bone_name] = instance.unreal_service.call_function(
+                    uobject=skeletal_mesh_component1,
+                    ufunction=get_bone_transform_ufunc,
+                    args={"InBoneName": bone_name, "TransformSpace": "RTS_World"})['ReturnValue']
+            df = pd.concat([df, get_data_frame(skeletal_mesh_transforms)])
 
     for _ in range(100):
         with instance.begin_frame():
@@ -161,10 +169,11 @@ if __name__ == "__main__":
 
             skeletal_mesh_transforms = {}
             for index, bone_name in enumerate(actor1_bone_names):
-                bone_transform = instance.unreal_service.call_function(skeletal_mesh_component1, get_bone_transform_ufunc,
-                                                                       {"InBoneName": bone_name, "TransformSpace": "RTS_World"})['ReturnValue']
-                skeletal_mesh_transforms[bone_name] = bone_transform
-            df = pd.concat([df,get_data_frame(skeletal_mesh_transforms)])
+                skeletal_mesh_transforms[bone_name] = instance.unreal_service.call_function(
+                    uobject=skeletal_mesh_component1,
+                    ufunction=get_bone_transform_ufunc,
+                    args={"InBoneName": bone_name, "TransformSpace": "RTS_World"})['ReturnValue']
+            df = pd.concat([df, get_data_frame(skeletal_mesh_transforms)])
 
     df.to_csv(args.actions_file, float_format="%.5f", mode="w", index=False)
     # close the instance

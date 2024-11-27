@@ -267,7 +267,7 @@ class UnrealService():
     # Get children components conditionally from an actor and return a list
     #
 
-    def get_children_components_by_name_from_actor(self, class_name,  parent, children_component_names, include_all_descendants=True, return_null_if_not_found=True):
+    def get_children_components_by_name_from_actor(self, class_name, parent, children_component_names, include_all_descendants=True, return_null_if_not_found=True):
         return self._entry_point_caller.call("unreal_service.get_children_components_by_name_from_actor", class_name,  parent, children_component_names, include_all_descendants, return_null_if_not_found)
 
     def get_children_components_by_tag_from_actor(self, class_name, parent, tag, include_all_descendants=True):
@@ -441,6 +441,9 @@ class UnrealService():
 
     def create_component_on_actor(self, class_name, owner, component_name):
         return self._entry_point_caller.call("unreal_service.create_component_outside_owner_constructor", class_name, owner, component_name)
+
+    def create_component_on_actor_by_class(self, owner, component_class, component_name):
+        return self._entry_point_caller.call("unreal_service.create_component_outside_owner_constructor_by_class", owner, component_class,component_name)
 
     def create_scene_component_on_actor(self, class_name, owner, scene_component_name):
         return self._entry_point_caller.call("unreal_service.create_scene_component_outside_owner_constructor_from_actor", class_name, owner, scene_component_name)

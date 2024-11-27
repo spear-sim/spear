@@ -40,10 +40,13 @@ if __name__ == "__main__":
             location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
             spawn_parameters={"Name": "Agent", "SpawnCollisionHandlingOverride": "AlwaysSpawn"}
         )
-        vehicle_movement_component = instance.unreal_service.get_component_by_class(bp_car_actor, vehicle_movement_component_class)
+        vehicle_movement_component = instance.unreal_service.get_component_by_class(actor=bp_car_actor, uclass=vehicle_movement_component_class)
 
         # need player_controller current actor to inject input
-        instance.unreal_service.call_function(uobject=player_controller, ufunction=possess_func, args={"InPawn": spear.func_utils.to_ptr(bp_car_actor)})
+        instance.unreal_service.call_function(
+            uobject=player_controller,
+            ufunction=possess_func,
+            args={"InPawn": spear.func_utils.to_ptr(bp_car_actor)})
 
     with instance.end_frame():
         pass
@@ -52,7 +55,10 @@ if __name__ == "__main__":
         with instance.begin_frame():
             instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
 
-            instance.unreal_service.call_function(uobject=vehicle_movement_component, ufunction=set_throttle_input_func, args={"Throttle": 1.0})
+            instance.unreal_service.call_function(
+                uobject=vehicle_movement_component,
+                ufunction=set_throttle_input_func,
+                args={"Throttle": 1.0})
 
         with instance.end_frame():
             instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
@@ -61,7 +67,10 @@ if __name__ == "__main__":
         with instance.begin_frame():
             instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
 
-            instance.unreal_service.call_function(uobject=vehicle_movement_component, ufunction=set_throttle_input_func, args={"Throttle": 1.0})
+            instance.unreal_service.call_function(
+                uobject=vehicle_movement_component,
+                ufunction=set_throttle_input_func,
+                args={"Throttle": 1.0})
             instance.enhanced_input_service.inject_input_for_actor(
                 actor=bp_car_actor,
                 input_action_name="IA_Steering",
@@ -80,8 +89,7 @@ if __name__ == "__main__":
             input_action_name="IA_Reset",
             trigger_event="Triggered",
             input_action_value={},
-            input_action_instance={}
-        )
+            input_action_instance={})
 
     with instance.end_frame():
         instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
@@ -90,7 +98,10 @@ if __name__ == "__main__":
         with instance.begin_frame():
             instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
 
-            instance.unreal_service.call_function(uobject=vehicle_movement_component, ufunction=set_throttle_input_func, args={"Throttle": 1.0})
+            instance.unreal_service.call_function(
+                uobject=vehicle_movement_component,
+                ufunction=set_throttle_input_func,
+                args={"Throttle": 1.0})
             instance.enhanced_input_service.inject_input_for_actor(
                 actor=bp_car_actor,
                 input_action_name="IA_Steering",
@@ -104,7 +115,11 @@ if __name__ == "__main__":
     with instance.begin_frame():
         instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
 
-        instance.unreal_service.call_function(uobject=vehicle_movement_component, ufunction=set_throttle_input_func, args={"Throttle": 0.0})
+        instance.unreal_service.call_function(
+            uobject=vehicle_movement_component,
+            ufunction=set_throttle_input_func,
+            args={"Throttle": 0.0})
+
     with instance.end_frame():
         instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
 
