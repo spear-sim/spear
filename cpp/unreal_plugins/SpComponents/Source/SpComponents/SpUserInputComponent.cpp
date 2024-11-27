@@ -101,5 +101,7 @@ FName USpUserInputComponent::getUniqueAxisNameFromUserInputName(const std::strin
     // The only requirement when setting creating an axis name is that it is a globally unique string. We do not
     // need to use the actor's stable name specifically. So we avoid using the actor's stable name here, because
     // this will enable the use of USpUserInputComponent on actors that don't have an USpStableNameComponent.
-    return Unreal::toFName(Unreal::toStdString(GetOwner()->GetFullName()) + ":" + Unreal::getStableName(this) + ":axis:" + user_input_name);
+    bool include_actor_name = true;
+    bool actor_must_have_stable_name = false;
+    return Unreal::getStableName(this, include_actor_name, actor_must_have_stable_name) + ":axis:" + user_input_name;
 }

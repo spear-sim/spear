@@ -25,9 +25,9 @@ public class SpModuleRules : ModuleRules
         // Turn off code optimization except in shipping builds for faster build times.
         OptimizeCode = CodeOptimization.InShippingBuildsOnly;
 
-        // Our SP_ASSERT macro throws exceptions, yaml-cpp (used by Config) throws exceptions, and
-        // boost::interprocess::mapped_region (used by SharedMemoryRegion) throws exceptions. So we need to
-        // enable exceptions everywhere.
+        // Our error handling code throws exceptions, our SP_ASSERT macro throws exceptions, yaml-cpp (used
+        // by Config) throws exceptions, and boost::interprocess::mapped_region (used by SharedMemoryRegion)
+        // throws exceptions. So we enable exceptions everywhere.
         bEnableExceptions = true;
 
         // Required for:
