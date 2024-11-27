@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
     with instance.begin_frame():
         gameplay_statics_uclass = instance.unreal_service.get_static_class(class_name="UGameplayStatics")
-        aactor_uclass = instance.unreal_service.get_static_class(class_name="AActor")
+        actor_uclass = instance.unreal_service.get_static_class(class_name="AActor")
         poseable_mesh_component_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.PoseableMeshComponent")
 
         set_game_paused_ufunc = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_uclass, function_name="SetGamePaused")
@@ -45,7 +45,7 @@ if __name__ == '__main__':
         manny_simple_uobject = instance.unreal_service.load_object(class_name="UObject", outer=0, name="/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple")
 
         poseable_mesh_actor = instance.unreal_service.spawn_actor_from_uclass(
-            uclass=aactor_uclass,
+            uclass=actor_uclass,
             location={"X": 0.0, "Y": 100.0, "Z": 150.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
             spawn_parameters={"Name": "third_person_actor", "SpawnCollisionHandlingOverride": "AlwaysSpawn"}
         )
