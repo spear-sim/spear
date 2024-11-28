@@ -204,6 +204,9 @@ class UnrealService():
     def get_components_by_name(self, class_name, actor, component_names, include_from_child_actors=False, return_null_if_not_found=True):
         return self._entry_point_caller.call("unreal_service.get_components_by_name", class_name, actor, component_names, include_from_child_actors, return_null_if_not_found)
 
+    def get_components_by_path(self, class_name, actor, component_paths, include_from_child_actors=False, return_null_if_not_found=True):
+        return self._entry_point_caller.call("unreal_service.get_components_by_path", class_name, actor, component_paths, include_from_child_actors, return_null_if_not_found)
+
     def get_components_by_tag(self, class_name, actor, tag, include_from_child_actors=False):
         return self._entry_point_caller.call("unreal_service.get_components_by_tag", class_name, actor, tag, include_from_child_actors)
 
@@ -226,6 +229,9 @@ class UnrealService():
     def get_components_by_name_as_dict(self, class_name, actor, component_names, include_from_child_actors=False, return_null_if_not_found=True):
         return self._entry_point_caller.call("unreal_service.get_components_by_name_as_map", class_name, actor, component_names, include_from_child_actors, return_null_if_not_found)
 
+    def get_components_by_path_as_dict(self, class_name, actor, component_paths, include_from_child_actors=False, return_null_if_not_found=True):
+        return self._entry_point_caller.call("unreal_service.get_components_by_path_as_map", class_name, actor, component_paths, include_from_child_actors, return_null_if_not_found)
+
     def get_components_by_tag_as_dict(self, class_name, actor, tag, include_from_child_actors=False):
         return self._entry_point_caller.call("unreal_service.get_components_by_tag_as_map", class_name, actor, tag, include_from_child_actors)
 
@@ -247,6 +253,9 @@ class UnrealService():
 
     def get_component_by_name(self, class_name, actor, component_name, include_from_child_actors=False):
         return self._entry_point_caller.call("unreal_service.get_component_by_name", class_name, actor, component_name, include_from_child_actors)
+
+    def get_component_by_path(self, class_name, actor, component_path, include_from_child_actors=False):
+        return self._entry_point_caller.call("unreal_service.get_component_by_path", class_name, actor, component_path, include_from_child_actors)
 
     def get_component_by_tag(self, class_name, actor, tag, include_from_child_actors=False):
         return self._entry_point_caller.call("unreal_service.get_component_by_tag", class_name, actor, tag, include_from_child_actors)
@@ -499,7 +508,7 @@ class UnrealService():
     #
 
     def find_console_variable_by_name(self, console_variable_name):
-        return self._entry_point_caller.call("unreal_service.find_console_variable_by_name", cvar_name)
+        return self._entry_point_caller.call("unreal_service.find_console_variable_by_name", console_variable_name)
 
     def get_console_variable_value_as_bool(self, cvar):
         return self._entry_point_caller.call("unreal_service.get_console_variable_value_as_bool", cvar)
@@ -513,15 +522,15 @@ class UnrealService():
     def get_console_variable_value_as_string(self, cvar):
         return self._entry_point_caller.call("unreal_service.get_console_variable_value_as_string", cvar)
 
-    def set_console_variable_value(self, cvar, val, set_by_flags=["ECVF_SetByCode"]):
-        if isinstance(val, bool):
-            return self._entry_point_caller.call("unreal_service.set_console_variable_value_from_bool", cvar, val, set_by_flags)
-        elif isinstance(val, int):
-            return self._entry_point_caller.call("unreal_service.set_console_variable_value_from_int", cvar, val, set_by_flags)
-        elif isinstance(val, float):
-            return self._entry_point_caller.call("unreal_service.set_console_variable_value_from_float", cvar, val, set_by_flags)
-        elif isinstance(val, str):
-            return self._entry_point_caller.call("unreal_service.set_console_variable_value_from_string", cvar, val, set_by_flags)
+    def set_console_variable_value(self, cvar, value, set_by_flags=["ECVF_SetByCode"]):
+        if isinstance(value, bool):
+            return self._entry_point_caller.call("unreal_service.set_console_variable_value_from_bool", cvar, value, set_by_flags)
+        elif isinstance(value, int):
+            return self._entry_point_caller.call("unreal_service.set_console_variable_value_from_int", cvar, value, set_by_flags)
+        elif isinstance(value, float):
+            return self._entry_point_caller.call("unreal_service.set_console_variable_value_from_float", cvar, value, set_by_flags)
+        elif isinstance(value, str):
+            return self._entry_point_caller.call("unreal_service.set_console_variable_value_from_string", cvar, value, set_by_flags)
         else:
             assert False
 

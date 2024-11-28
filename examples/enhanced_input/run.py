@@ -11,7 +11,7 @@ import spear
 
 if __name__ == "__main__":
 
-    # load config
+    # create instance
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
@@ -73,6 +73,24 @@ if __name__ == "__main__":
             chord={"Key": "BackSpace", "bShift": False, "bCtrl": False, "bAlt": False, "bCmd": False},
             key_event="IE_Pressed",
             input_action_value={"ValueType": "Axis2D", "Value": {"X": 1.0, "Y": 2.0, "Z": 3.0}})
+
+    with instance.end_frame():
+        pass
+
+    # we can also use Unreal's legacy input system via instance.input_service
+
+    with instance.begin_frame():
+
+        instance.input_service.inject_action_for_actor(
+            actor=actor,
+            action_name="DebugActionMapping",
+            key_event="IE_Pressed",
+            key_name="Equals")
+
+        instance.input_service.inject_axis_for_actor(
+            actor=actor,
+            axis_name="DebugAxisMapping",
+            axis_value=1.0)
 
     with instance.end_frame():
         pass

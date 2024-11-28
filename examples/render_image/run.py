@@ -12,7 +12,7 @@ import spear
 
 if __name__ == "__main__":
 
-    # load config
+    # create instance
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
@@ -31,10 +31,10 @@ if __name__ == "__main__":
 
         # spawn camera sensor and get the final_tone_curve_hdr component
         bp_camera_sensor_uclass = instance.unreal_service.load_object(class_name="UClass", outer=0, name="/SpComponents/Blueprints/BP_Camera_Sensor.BP_Camera_Sensor_C")
-        bp_camera_sensor = instance.unreal_service.spawn_actor_from_uclass(uclass=bp_camera_sensor_uclass)
-        final_tone_curve_hdr_component = instance.unreal_service.get_component_by_name(class_name="USceneComponent", actor=bp_camera_sensor, component_name="DefaultSceneRoot.final_tone_curve_hdr")
+        bp_camera_sensor_actor = instance.unreal_service.spawn_actor_from_uclass(uclass=bp_camera_sensor_uclass)
+        final_tone_curve_hdr_component = instance.unreal_service.get_component_by_name(class_name="USceneComponent", actor=bp_camera_sensor_actor, component_name="DefaultSceneRoot.final_tone_curve_hdr")
 
-        # update the final_tone_curve_hdr component to match the viewport camera parameters
+        # configure the final_tone_curve_hdr component to match the viewport (width, height, FOV, post-processing settings, etc)
 
         post_process_volume = instance.unreal_service.find_actor_by_type(class_name="APostProcessVolume")
         player_controller = instance.world_service.get_first_player_controller()
@@ -58,8 +58,8 @@ if __name__ == "__main__":
         volume_settings_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=post_process_volume, property_name="Settings")
         volume_settings = instance.unreal_service.get_property_value(property_desc=volume_settings_desc)
 
-        instance.unreal_service.call_function(uobject=bp_camera_sensor, ufunction=set_actor_location_func, args={"NewLocation": view_target_pov["location"]})
-        instance.unreal_service.call_function(uobject=bp_camera_sensor, ufunction=set_actor_rotation_func, args={"NewRotation": view_target_pov["rotation"]})
+        instance.unreal_service.call_function(uobject=bp_camera_sensor_actor, ufunction=set_actor_location_func, args={"NewLocation": view_target_pov["location"]})
+        instance.unreal_service.call_function(uobject=bp_camera_sensor_actor, ufunction=set_actor_rotation_func, args={"NewRotation": view_target_pov["rotation"]})
 
         width_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=final_tone_curve_hdr_component, property_name="Width")
         height_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=final_tone_curve_hdr_component, property_name="Height")
@@ -75,9 +75,9 @@ if __name__ == "__main__":
         final_tone_curve_hdr_component_shared_memory_handles = instance.sp_func_service.create_shared_memory_handles_for_uobject(uobject=final_tone_curve_hdr_component)
 
     with instance.end_frame():
-        pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing accumulate additional information across frames
+        pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing etc accumulate additional information across frames
 
-    # # let temporal anti-aliasing accumulate additional information across frames
+    # # let temporal anti-aliasing etc accumulate additional information across multiple frames
     # for i in range(1):
     #     with instance.begin_frame():
     #         pass

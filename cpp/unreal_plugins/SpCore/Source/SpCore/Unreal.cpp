@@ -668,13 +668,22 @@ bool Unreal::hasStableName(const UActorComponent* component)
     return true;
 }
 
+std::string Unreal::tryGetStableName(const AActor* actor)
+{
+    if (hasStableName(actor)) {
+        return Unreal::getStableName(actor);
+    } else {
+        return Unreal::toStdString(actor->GetName());
+    }
+}
+
 std::string Unreal::getStableName(const AActor* actor)
 {
     USpStableNameComponent* sp_stable_name_component = getComponentByType<USpStableNameComponent>(actor);
     return toStdString(sp_stable_name_component->StableName);
 }
 
-std::string Unreal::getStableName(const UActorComponent* component, bool include_actor_name)
+std::string Unreal::getStableName(const UActorComponent* component, bool include_actor_name, bool actor_must_have_stable_name)
 {
     SP_ASSERT(component);
 
@@ -694,7 +703,11 @@ std::string Unreal::getStableName(const UActorComponent* component, bool include
     if (include_actor_name) {
         const AActor* actor = component->GetOwner();
         SP_ASSERT(actor);
-        component_name = getStableName(actor) + ":" + component_name;
+        if (actor_must_have_stable_name) {
+            component_name = getStableName(actor) + ":" + component_name;
+        } else {
+            component_name = tryGetStableName(actor) + ":" + component_name;            
+        }
     }
 
     return component_name;
@@ -739,14 +752,17 @@ std::vector<std::string> Unreal::getTags(const UActorComponent* component)
 
 std::string Unreal::toStdString(const FString& str)
 {
-    // Note that the * operator for FString returns a pointer to the underlying string
-    return std::string(TCHAR_TO_UTF8(*str));
+    return std::string(TCHAR_TO_UTF8(*str)); // the * operator for FString returns a pointer to the underlying string
+}
+
+std::string Unreal::toStdString(const FText& str)
+{
+    return toStdString(str.ToString()); // str.ToString() converts FText to FString
 }
 
 std::string Unreal::toStdString(const FName& str)
 {
-    // Note that str.ToString() converts FName to FString
-    return toStdString(str.ToString());
+    return toStdString(str.ToString()); // str.ToString() converts FName to FString
 }
 
 std::string Unreal::toStdString(const TCHAR* str)

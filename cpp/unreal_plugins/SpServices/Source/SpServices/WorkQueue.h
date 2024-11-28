@@ -44,8 +44,8 @@ public:
     // all of its scheduled work
     void reset();
 
-    // typically called from the game thread in EngineService::bindFuncUnreal(...) to get an outer func that
-    // executes a given inner func via a given WorkQueue
+    // typically called from the game thread in EngineService::bindFuncToExecuteOnGameThread(...) to get an
+    // outer func that executes a given inner func via a given WorkQueue
     template <typename TFunc>
     static auto wrapFuncToExecuteInWorkQueueBlocking(WorkQueue& work_queue, const std::string& func_name, const TFunc& func)
     {

@@ -7,6 +7,7 @@ import os
 import pandas as pd
 import posixpath
 import spear
+import spear.editor
 import unreal
 
 
@@ -45,7 +46,6 @@ include_assets = [os.path.join("SpearSim", "Content", "Stanford", "**", "*.*")]
 
 asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
 editor_asset_subsystem = unreal.get_editor_subsystem(unreal.EditorAssetSubsystem)
-subobject_data_subsystem = unreal.get_engine_subsystem(unreal.SubobjectDataSubsystem)
 
 
 if __name__ == "__main__":
@@ -64,7 +64,6 @@ if __name__ == "__main__":
         asset_import_task.set_editor_property("automated", True)
         asset_import_task.set_editor_property("destination_path", mesh_desc["static_mesh_path"])
         asset_import_task.set_editor_property("filename", mesh_desc["gltf_file"])
-        asset_import_task.set_editor_property("options", unreal.GLTFImportOptions())
         asset_import_task.set_editor_property("replace_existing", True)
         asset_import_task.set_editor_property("replace_existing_settings", True)
         asset_import_task.set_editor_property("save", True)
@@ -89,40 +88,27 @@ if __name__ == "__main__":
 
         asset_tools.rename_assets([asset_rename_data])
 
-        # create blueprint type
+        # remove existing blueprint
         blueprint_path = posixpath.join(mesh_desc["blueprint_path"], mesh_desc["blueprint_name"])
         if unreal.EditorAssetLibrary.does_asset_exist(blueprint_path):
             spear.log(f"Asset exists, removing: {blueprint_path}")
             success = unreal.EditorAssetLibrary.delete_asset(blueprint_path)
             assert success
 
+        # create blueprint
         spear.log(f"Creating blueprint: {blueprint_path}")
-         
-        blueprint_factory = unreal.BlueprintFactory()
-        blueprint_factory.set_editor_property("parent_class", unreal.StaticMeshActor)
+        blueprint_asset, blueprint_subobject_descs = spear.editor.create_blueprint(
+            asset_name=mesh_desc["blueprint_name"],
+            package_path=mesh_desc["blueprint_path"],
+            actor_class=unreal.StaticMeshActor)
 
-        blueprint_asset = asset_tools.create_asset(asset_name=mesh_desc["blueprint_name"], package_path=mesh_desc["blueprint_path"], asset_class=None, factory=blueprint_factory)
-        assert isinstance(blueprint_asset, unreal.Blueprint)
+        actor = blueprint_subobject_descs["actor"]["object"]
+        assert isinstance(actor, unreal.StaticMeshActor)
 
-        subobject_data_handles = subobject_data_subsystem.k2_gather_subobject_data_for_blueprint(blueprint_asset)
-
-        assert len(subobject_data_handles) == 2        
-        for subobject_data_handle in subobject_data_handles:
-            assert unreal.SubobjectDataBlueprintFunctionLibrary.is_handle_valid(subobject_data_handle)
-            subobject_data = unreal.SubobjectDataBlueprintFunctionLibrary.get_data(subobject_data_handle)
-            assert unreal.SubobjectDataBlueprintFunctionLibrary.is_valid(subobject_data)
-
-        actor_subobject_data_handle = subobject_data_handles[0]
-        actor_subobject_data = unreal.SubobjectDataBlueprintFunctionLibrary.get_data(actor_subobject_data_handle)
-        actor = unreal.SubobjectDataBlueprintFunctionLibrary.get_object(actor_subobject_data)
-        assert isinstance(actor, unreal.Actor)
-
-        static_mesh_component_subobject_data_handle = subobject_data_handles[1]
-        static_mesh_component_subobject_data = unreal.SubobjectDataBlueprintFunctionLibrary.get_data(static_mesh_component_subobject_data_handle)
-        static_mesh_component = unreal.SubobjectDataBlueprintFunctionLibrary.get_object(static_mesh_component_subobject_data)
+        static_mesh_component = blueprint_subobject_descs["root_component"]["object"]
         assert isinstance(static_mesh_component, unreal.StaticMeshComponent)
 
-        # we could add new components here by calling unreal.SubobjectDataSubsystem.add_new_subobject(...) but in this case it isn't necessary
+        # we could add new components here by calling spear.editor.add_new_subobject(...) but in this case it isn't necessary
 
         static_mesh_path = posixpath.join(mesh_desc["static_mesh_path"], mesh_desc["static_mesh_name"] + "." + mesh_desc["static_mesh_name"])
         static_mesh = unreal.load_asset(static_mesh_path)
@@ -141,14 +127,12 @@ if __name__ == "__main__":
         actor.set_editor_property("pivot_offset", pivot_offset)
 
         spear.log(f"Saving blueprint: {blueprint_path}")
-
         editor_asset_subsystem.save_loaded_asset(blueprint_asset)
 
     # create include assets file
     include_assets_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "include_assets.csv"))
-
     spear.log(f"Writing include assets file: {include_assets_file}")
-
+    
     df = pd.DataFrame(columns=["include_assets"], data={"include_assets": include_assets})
     df.to_csv(include_assets_file, index=False)
 

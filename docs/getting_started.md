@@ -83,11 +83,13 @@ python examples/getting_started/run.py
 We recommend browsing through each of our example applications to get a sense of what is currently possible with SPEAR.
   - [`examples/control_simple_agent`](../examples/control_simple_agent) demonstrates how to control a simple agent and obtain egocentric visual observations.
   - [`examples/enhanced_input`](../examples/enhanced_input) demonstrates how to interact with Unreal's Enhanced Input system.
-  - [`examples/generate_image_dataset`](../examples/generate_image_dataset) demonstrates how to generate a dataset of images using our camera agent.
   - [`examples/getting_started`](../examples/getting_started) demonstrates how to spawn an object and access object properties.
-  - [`examples/imitation_learning_openbot`](../examples/imitation_learning_openbot) demonstrates how to collect navigation training data for an OpenBot.
   - [`examples/import_stanford_dataset`](../examples/import_stanford_dataset) demonstrates how to import custom objects.
   - [`examples/mujoco_interop`](../examples/mujoco_interop) demonstrates how to interoperate with the MuJoCo physics engine.
   - [`examples/numpy_interop`](../examples/numpy_interop) demonstrates how to efficiently pass NumPy arrays to and from Unreal game entities.
-  - [`examples/open_loop_control_fetch`](../examples/open_loop_control_fetch) demonstrates how to control a Fetch robot agent.
   - [`examples/render_image`](../examples/render_image) demonstrates how to spawn a camera sensor object and render an image.
+
+We also have several example applications that use a deprecated legacy API. We are migrating these examples to use our new API.
+  - [`examples/legacy/generate_image_dataset`](../examples/legacy/generate_image_dataset) demonstrates how to generate a dataset of images.
+  - [`examples/legacy/imitation_learning_openbot`](../examples/legacy/imitation_learning_openbot) demonstrates how to collect data to train an OpenBot.
+  - [`examples/legacy/open_loop_control_fetch`](../examples/legacy/open_loop_control_fetch) demonstrates how to control a Fetch robot.

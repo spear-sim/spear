@@ -1,0 +1,28 @@
+#
+# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+#
+
+SP_COMPONENTS:
+  SP_INITIALIZE_WORLD_MANAGER:
+
+    # We set {OVERRIDE_GAME_PAUSED, OVERRIDE_BENCHMARKING, OVERRIDE_FIXED_DELTA_TIME} to True here, rather
+    # than setting the corresponding UPROPERTIES on USpInitializeWorldManager, because we only want this
+    # default behavior when we're running from Python.
+
+    OVERRIDE_GAME_PAUSED: True
+    GAME_PAUSED: True
+
+    OVERRIDE_BENCHMARKING: True
+    BENCHMARKING: True
+
+    OVERRIDE_FIXED_DELTA_TIME: True
+    FIXED_DELTA_TIME: 0.033333 # 1.0/30.0
+
+    OVERRIDE_PHYSICS_SETTINGS: False
+    SP_PHYSICS_SETTINGS_STRING: ""
+
+    FORCE_SKYLIGHT_UPDATE: False
+    FORCE_SKYLIGHT_UPDATE_MAX_DURATION_SECONDS: 0.0
+
+    EXECUTE_CONSOLE_COMMANDS: False
+    CONSOLE_COMMANDS: []

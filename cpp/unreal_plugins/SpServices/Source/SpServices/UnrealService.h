@@ -107,7 +107,7 @@ enum class ESpLoadFlags
     LOAD_NoVerify                    = Unreal::getConstEnumValue(ELoadFlags::LOAD_NoVerify),
     LOAD_IsVerifying                 = Unreal::getConstEnumValue(ELoadFlags::LOAD_IsVerifying),
     LOAD_SkipLoadImportedPackages    = Unreal::getConstEnumValue(ELoadFlags::LOAD_SkipLoadImportedPackages),
-    LOAD_RegenerateBulkDataGuids     = Unreal::getConstEnumValue(ELoadFlags::LOAD_RegenerateBulkDataGuids),
+    // LOAD_RegenerateBulkDataGuids     = Unreal::getConstEnumValue(ELoadFlags::LOAD_RegenerateBulkDataGuids), deprecated in UE 5.5
     LOAD_DisableDependencyPreloading = Unreal::getConstEnumValue(ELoadFlags::LOAD_DisableDependencyPreloading),
     LOAD_Quiet                       = Unreal::getConstEnumValue(ELoadFlags::LOAD_Quiet),
     LOAD_FindIfFail                  = Unreal::getConstEnumValue(ELoadFlags::LOAD_FindIfFail),
@@ -494,6 +494,11 @@ public:
                 return toUInt64(UnrealClassRegistrar::getComponentsByName(class_name, toPtr<AActor>(actor), component_names, include_from_child_actors, return_null_if_not_found));
             });
 
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_components_by_path",
+            [this](std::string& class_name, uint64_t& actor, std::vector<std::string>& component_paths, bool& include_from_child_actors, bool& return_null_if_not_found) -> std::vector<uint64_t> {
+                return toUInt64(UnrealClassRegistrar::getComponentsByPath(class_name, toPtr<AActor>(actor), component_paths, include_from_child_actors, return_null_if_not_found));
+            });
+
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_components_by_tag",
             [this](std::string& class_name, uint64_t& actor, std::string& tag, bool& include_from_child_actors) -> std::vector<uint64_t> {
                 return toUInt64(UnrealClassRegistrar::getComponentsByTag(class_name, toPtr<AActor>(actor), tag, include_from_child_actors));
@@ -528,6 +533,11 @@ public:
                 return toUInt64(UnrealClassRegistrar::getComponentsByNameAsMap(class_name, toPtr<AActor>(actor), component_names, include_from_child_actors, return_null_if_not_found));
             });
 
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_components_by_path_as_map",
+            [this](std::string& class_name, uint64_t& actor, std::vector<std::string>& component_paths, bool& include_from_child_actors, bool& return_null_if_not_found) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealClassRegistrar::getComponentsByPathAsMap(class_name, toPtr<AActor>(actor), component_paths, include_from_child_actors, return_null_if_not_found));
+            });
+
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_components_by_tag_as_map",
             [this](std::string& class_name, uint64_t& actor, std::string& tag, bool& include_from_child_actors) -> std::map<std::string, uint64_t> {
                 return toUInt64(UnrealClassRegistrar::getComponentsByTagAsMap(class_name, toPtr<AActor>(actor), tag, include_from_child_actors));
@@ -560,6 +570,11 @@ public:
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_component_by_name",
             [this](std::string& class_name, uint64_t& actor, std::string& component_name, bool& include_from_child_actors) -> uint64_t {
                 return toUInt64(UnrealClassRegistrar::getComponentByName(class_name, toPtr<AActor>(actor), component_name, include_from_child_actors));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_component_by_path",
+            [this](std::string& class_name, uint64_t& actor, std::string& component_path, bool& include_from_child_actors) -> uint64_t {
+                return toUInt64(UnrealClassRegistrar::getComponentByPath(class_name, toPtr<AActor>(actor), component_path, include_from_child_actors));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_component_by_tag",

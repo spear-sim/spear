@@ -5,10 +5,10 @@
 import argparse
 import os
 import pathlib
-import unreal
 import spear
 import spear.editor
 import trimesh
+import unreal
 
 
 parser = argparse.ArgumentParser()

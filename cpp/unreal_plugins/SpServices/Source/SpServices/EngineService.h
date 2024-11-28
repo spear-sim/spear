@@ -13,6 +13,7 @@
 
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Engine/Engine.h>               // GEngine
+#include <Engine/GameViewportClient.h>
 #include <Engine/World.h>                // FWorldDelegates, FActorSpawnParameters
 #include <Misc/CoreDelegates.h>
 #include <UObject/ObjectMacros.h>        // UENUM

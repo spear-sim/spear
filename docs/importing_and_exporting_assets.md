@@ -8,10 +8,10 @@ In order to execute the pipelines in this document, we will assume that you have
 
 ## Accessing the Unreal Editor via Python
 
-In order to access the Unreal Editor via Python, we must first configure the editor's Python environment, even though we have already configured an Anaconda Python environment in our [Getting Started](getting_started.md) tutorial.
+In order to access the Unreal Editor via Python, you must first configure the editor's Python environment, even though you have already configured an Anaconda Python environment in our [Getting Started](getting_started.md) tutorial.
 
 ```console
-python tools/configure_editor_python_env.py --unreal_engine_dir path/to/UE_5.4
+python tools/configure_editor_python_env.py --unreal_engine_dir path/to/UE_5.5
 ```
 
 Any pipeline stage that needs to access the Unreal Editor must be executed using our `run_editor_script.py` tool, which runs a user-specified program (specified by `--script`) from within the editor's Python environment. `run_editor_script.py` consumes `--script` and `--unreal_engine_dir`, and forwards all other arguments directly to the user's program. `--script` must be relative to `spear/pipeline` or absolute. Any path arguments that are forwarded to the user's program must be absolute.
@@ -26,10 +26,10 @@ In order to use our optional debug visualization tools, you will need to install
 
 ```console
 # generate Unreal metadata
-python tools/run_editor_script.py --script export_unreal_metadata/export_unreal_metadata.py --unreal_engine_dir path/to/UE_5.4 --pipeline_dir /absolute/path/to/spear-pipeline --scene_id apartment_0000
+python tools/run_editor_script.py --script export_unreal_metadata/export_unreal_metadata.py --unreal_engine_dir path/to/UE_5.5 --pipeline_dir /absolute/path/to/spear-pipeline --scene_id apartment_0000
 
 # generate Unreal geometry
-python tools/run_editor_script.py --script export_unreal_metadata/export_unreal_geometry.py --unreal_engine_dir path/to/UE_5.4 --pipeline_dir /absolute/path/to/spear-pipeline --scene_id apartment_0000
+python tools/run_editor_script.py --script export_unreal_metadata/export_unreal_geometry.py --unreal_engine_dir path/to/UE_5.5 --pipeline_dir /absolute/path/to/spear-pipeline --scene_id apartment_0000
 
 # visualize Unreal geometry (optional)
 python pipeline/visualize_unreal_geometry.py --pipeline_dir path/to/spear-pipeline --scene_id apartment_0000

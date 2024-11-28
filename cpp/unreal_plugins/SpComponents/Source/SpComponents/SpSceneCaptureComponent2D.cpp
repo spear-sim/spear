@@ -7,8 +7,10 @@
 #include <memory> // std::make_unique
 
 #include <Components/SceneCaptureComponent2D.h>
+#include <Materials/Material.h>
 #include <Materials/MaterialInstanceDynamic.h>
 #include <Math/Color.h>
+#include <TextureResource.h>        // FTextureRenderTargetResource
 #include <UObject/UObjectGlobals.h> // NewObject
 
 #include "SpCore/Assert.h"

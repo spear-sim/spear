@@ -78,7 +78,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
     SP_ASSERT(anim_instance.Succeeded());
 
     GetMesh()->SetSkeletalMesh(skeletal_mesh.Object);
-    GetMesh()->SetAnimClass(anim_instance.Class);
+    GetMesh()->SetAnimInstanceClass(anim_instance.Class);
 
     // The AWheeledVehiclePawn constructor sets this parameter to false, but we want it set to true.
     // We choose to exactly undo the behavior of the AWheeledVehiclePawn constructor and set this bool

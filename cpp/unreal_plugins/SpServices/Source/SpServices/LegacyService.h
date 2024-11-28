@@ -21,7 +21,6 @@
 #include "SpServices/Legacy/Agent.h"
 #include "SpServices/Legacy/CameraAgent.h"
 #include "SpServices/Legacy/NullAgent.h"
-#include "SpServices/Legacy/SphereAgent.h"
 #include "SpServices/Legacy/UrdfRobotAgent.h"
 #include "SpServices/Legacy/VehicleAgent.h"
 
@@ -140,8 +139,6 @@ public:
                 agent_ = std::make_unique<NullAgent>();
             } else if (Config::get<std::string>("SP_SERVICES.LEGACY_SERVICE.AGENT") == "CameraAgent") {
                 agent_ = std::make_unique<CameraAgent>(getWorld());
-            } else if (Config::get<std::string>("SP_SERVICES.LEGACY_SERVICE.AGENT") == "SphereAgent") {
-                agent_ = std::make_unique<SphereAgent>(getWorld());
             } else if (Config::get<std::string>("SP_SERVICES.LEGACY_SERVICE.AGENT") == "UrdfRobotAgent") {
                 agent_ = std::make_unique<UrdfRobotAgent>(getWorld());
             } else if (Config::get<std::string>("SP_SERVICES.LEGACY_SERVICE.AGENT") == "VehicleAgent") {

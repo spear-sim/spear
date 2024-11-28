@@ -9,12 +9,12 @@ import time
 
 if __name__ == "__main__":
 
-    # create SPEAR instance
+    # create instance
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
 
-    with instance.begin_frame()
+    with instance.begin_frame():
 
         # find functions
         actor_static_class = instance.unreal_service.get_static_class(class_name="AActor")
@@ -36,9 +36,5 @@ if __name__ == "__main__":
 
     with instance.end_frame():
         pass
-
-    while instance.is_running():
-        time.sleep(1.0)
-    instance.close()
 
     spear.log("Done.")

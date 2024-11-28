@@ -2,14 +2,14 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "SpComponents/SpDebugActionComponent.h"
+#include "SpComponents/SpBasicKeyboardControlComponent.h"
 
 #include <string>
 #include <vector>
 
 #include <Components/SceneComponent.h>
 #include <Engine/EngineBaseTypes.h> // ELevelTick
-#include <HAL/Platform.h>           // uint64
+#include <Engine/EngineTypes.h>     // EEndPlayReason, ETickingGroup
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 
@@ -21,7 +21,7 @@
 
 struct FActorComponentTickFunction;
 
-USpDebugActionComponent::USpDebugActionComponent()
+USpBasicKeyboardControlComponent::USpBasicKeyboardControlComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -33,12 +33,12 @@ USpDebugActionComponent::USpDebugActionComponent()
     SP_ASSERT(SpUserInputComponent);
 }
 
-USpDebugActionComponent::~USpDebugActionComponent()
+USpBasicKeyboardControlComponent::~USpBasicKeyboardControlComponent()
 {
     SP_LOG_CURRENT_FUNCTION();
 }
 
-void USpDebugActionComponent::BeginPlay()
+void USpBasicKeyboardControlComponent::BeginPlay()
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -89,4 +89,23 @@ void USpDebugActionComponent::BeginPlay()
             add_force_target_component_->AddForce(force);
         }
     });
+}
+
+void USpBasicKeyboardControlComponent::EndPlay(const EEndPlayReason::Type end_play_reason)
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    UActorComponent::EndPlay(end_play_reason);
+
+    SpUserInputComponent->setHandleUserInputFunc(nullptr);
+    SpUserInputComponent->unsubscribeFromUserInputs({"One", "Two", "Three", "Four"});
+
+    AddForceRotationComponent = Unreal::toFString("");
+    add_force_rotation_component_ = nullptr;
+
+    AddForceTargetComponent = Unreal::toFString("");
+    add_force_target_component_ = nullptr;
+
+    AddRotationComponent = Unreal::toFString("");
+    add_rotation_component_ = nullptr;
 }

@@ -9,7 +9,7 @@
 #include <Containers/Array.h>
 #include <Containers/EnumAsByte.h>
 #include <Containers/UnrealString.h>       // FString
-#include <Engine/EngineTypes.h>            // FRigidBodyErrorCorrection
+#include <Engine/EngineTypes.h>            // EEndPlayReason, FRigidBodyErrorCorrection
 #include <GameFramework/Actor.h>
 #include <GameFramework/WorldSettings.h>   // FBroadphaseSettings
 #include <HAL/Platform.h>                  // int32
@@ -19,6 +19,9 @@
 #include <PhysicsSettingsEnums.h>          // EFrictionCombineMode
 
 #include "SpInitializeWorldManager.generated.h"
+
+// This struct is intended to mimic UPhysicsSettings, but implemented as a USTRUCT so it can be declared
+// directly as a member variable (not a pointer) in ASpInitializeWorldManager.
 
 USTRUCT()
 struct FSpPhysicsSettings
@@ -243,7 +246,7 @@ private:
     //
 };
 
-UCLASS(ClassGroup="SPEAR", HideCategories=(Rendering, Replication, Collision, HLOD, Physics, Networking, Input, Actor, Cooking))
+UCLASS(ClassGroup="SPEAR", Config=Spear, HideCategories=(Rendering, Replication, Collision, HLOD, Physics, Networking, Input, Actor, Cooking))
 class ASpInitializeWorldManager : public AActor
 {
     GENERATED_BODY()
@@ -252,26 +255,63 @@ public:
     ~ASpInitializeWorldManager();
 
     // AActor interface
-    void BeginPlay();
+    void BeginPlay() override;
+    void EndPlay(const EEndPlayReason::Type end_play_reason) override;
+    void Tick(float delta_time) override;
 
 private:
-    UPROPERTY(EditAnywhere, Category="SPEAR")
-    bool bSetPhysicsSettings = false;
-    UPROPERTY(EditAnywhere, Category="SPEAR")
-    FSpPhysicsSettings SpPhysicsSettings;
 
-    UPROPERTY(EditAnywhere, Category="SPEAR")
-    bool bSetFixedDeltaTime = false;
-    UPROPERTY(EditAnywhere, Category="SPEAR")
-    double FixedDeltaTime = 1.0 / 30.0; // Engine/Source/Runtime/Core/Private/Misc/App.cpp
+    // Initialize config system
 
-    UPROPERTY(EditAnywhere, Category="SPEAR")
-    bool bSetGamePaused = false;
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    bool bInitializeConfigSystem = false;
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    FString ConfigFile;
+
+    bool initialize_config_system_ = false;
+
+    // Override game paused
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    bool bOverrideGamePaused = false;
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
     bool GamePaused = false;
 
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    // Override benchmarking
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    bool bOverrideBenchmarking = false;
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    bool Benchmarking = false;
+
+    // Override fixed delta time
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    bool bOverrideFixedDeltaTime = false;
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    double FixedDeltaTime = 1.0/30.0; // Engine/Source/Runtime/Core/Private/Misc/App.cpp
+
+    // Override physics settings
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    bool bOverridePhysicsSettings = false;
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    FSpPhysicsSettings SpPhysicsSettings;
+
+    // Force skylight update. We set bForceSkylightUpdate to true here, rather than setting the corresponding
+    // config parameter in default_config.sp_components.yaml, becasue because we always want this default
+    // behavior, even when the config system isn't loaded.
+
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    bool bForceSkylightUpdate = true;
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    float ForceSkylightUpdateMaxDurationSeconds = 0.5f;
+
+    bool force_skylight_update_ = false;
+    bool force_skylight_update_completed_ = false;
+    int force_skylight_update_previous_cvar_value_ = -1;
+    float force_skylight_update_max_duration_seconds_ = -1.0f;
+    float force_skylight_update_duration_seconds_ = 0.0f;
+
+    // Execute console commands
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
     bool bExecuteConsoleCommands = false;
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
     TArray<FString> ConsoleCommands;
 };

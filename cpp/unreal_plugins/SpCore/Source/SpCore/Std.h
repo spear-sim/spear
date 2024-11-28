@@ -23,6 +23,8 @@
 #include <utility>     // std::forward
 #include <vector>
 
+#include <HAL/Platform.h> // SPCORE_API
+
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
 

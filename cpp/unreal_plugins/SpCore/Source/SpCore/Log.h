@@ -8,6 +8,8 @@
 #include <string>
 #include <utility> // std::forward
 
+#include <HAL/Platform.h> // SPCORE_API
+
 #include "SpCore/Boost.h"
 #include "SpCore/Std.h"
 

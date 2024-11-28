@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include <HAL/Platform.h> // SPCORE_API
+
 #include "SpCore/Assert.h"
 #include "SpCore/Yaml.h"
 #include "SpCore/YamlCpp.h"
@@ -34,6 +36,7 @@ public:
     // successfully initialized by checking Config::isInitialized(). Calling terminate()  will completely reset
     // the state of the config system, regardless of whether or not it was successfully initialized.
 
+    static void initialize(const std::string& config_file);
     static void requestInitialize();
     static void terminate();
     static bool isInitialized();

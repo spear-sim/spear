@@ -11,6 +11,7 @@
 #include <Components/SceneComponent.h>
 #include <Containers/UnrealString.h> // FString
 #include <Containers/Array.h> 
+#include <HAL/Platform.h>            // SPCOMPONENTS_API
 #include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UPROPERTY
 
 #include "SpCore/FuncRegistrar.h"

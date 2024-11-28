@@ -8,6 +8,7 @@
 #include <Containers/UnrealString.h>     // FString
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <GameFramework/Actor.h>
+#include <HAL/Platform.h>                // SPCORE_API
 #include <UObject/NameTypes.h>           // FName
 #include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS
 

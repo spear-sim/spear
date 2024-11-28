@@ -11,7 +11,7 @@ import spear
 
 if __name__ == "__main__":
 
-    # load config
+    # create instance
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
@@ -46,7 +46,7 @@ if __name__ == "__main__":
         root_component_object_properties = instance.unreal_service.get_object_properties_from_uobject(uobject=root_component)
 
         # print properties
-        spear.log("RootComponent: ")
+        spear.log("root_component: ")
         pprint.pprint(root_component_object_properties)
 
     with instance.end_frame():

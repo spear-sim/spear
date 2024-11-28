@@ -1,8 +1,8 @@
 import numpy as np
 import pathlib
 import posixpath
-import unreal
 import spear
+import unreal
 
 
 def validate_level(level):
@@ -223,10 +223,10 @@ def validate_actor(level, actor):
 
         # check pivot location against computed bounds
         eps = 0.000001
-        bounds_origin = vector_to_numpy(bounds_origin)
-        bounds_half_extent = vector_to_numpy(bounds_half_extent)
+        bounds_origin = vector_to_array(bounds_origin)
+        bounds_half_extent = vector_to_array(bounds_half_extent)
         pivot_desired = np.array([bounds_origin[0], bounds_origin[1], bounds_origin[2] - bounds_half_extent[2]])
-        pivot_actual = vector_to_numpy(actor.get_actor_location())
+        pivot_actual = vector_to_array(actor.get_actor_location())
         if np.linalg.norm(pivot_desired - pivot_actual) > eps:
             np.set_printoptions(suppress=True)
             spear.log(

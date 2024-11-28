@@ -10,8 +10,15 @@ SPEAR:
       resx: 512
       resy: 512
 
-# Set the default game mode to a custom game mode. This game mode sets a default pawn that is just like our
-# usual default pawn, but has been set up to respond to enhanced input events.
 SP_SERVICES:
-  GAME_MAP_SETTINGS_SERVICE:
+
+  # INPUT_SERVICE:
+  #   PRINT_INJECT_DEBUG_INFO: True
+  # ENHANCED_INPUT_SERVICE:
+  #   PRINT_INJECT_DEBUG_INFO: True
+
+  # Set the default game mode to a custom game mode. This game mode sets a default pawn that is just like our
+  # usual default pawn, but has been set up to respond to enhanced input events.
+  INITIALIZE_ENGINE_SERVICE:
+    OVERRIDE_GLOBAL_DEFAULT_GAME_MODE: True
     GLOBAL_DEFAULT_GAME_MODE: "/SpComponents/Blueprints/BP_SpGameMode.BP_SpGameMode_C"

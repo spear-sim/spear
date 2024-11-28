@@ -9,6 +9,7 @@
 #include <Components/SceneCaptureComponent2D.h>
 #include <Containers/EnumAsByte.h>
 #include <Engine/TextureRenderTarget2D.h> // ETextureRenderTargetFormat
+#include <HAL/Platform.h>                 // SPCOMPONENTS_API
 
 #include "SpCore/SharedMemoryRegion.h"
 #include "SpCore/SpFuncArray.h"
@@ -62,10 +63,10 @@ public:
     UPROPERTY(EditAnywhere, Category="SPEAR")
     bool bReadPixelData = true;
 
-private:
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
     USpFuncComponent* SpFuncComponent = nullptr;
 
+private:
     bool initialized_ = false;
     UMaterialInstanceDynamic* material_instance_dynamic_ = nullptr;
     std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;

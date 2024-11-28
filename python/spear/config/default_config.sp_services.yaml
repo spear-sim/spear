@@ -7,13 +7,30 @@ SP_SERVICES:
   # Port for the RPC server.
   RPC_SERVER_PORT: 30000
 
-  # For each of the strings below, if the string is non-empty, it will override the corresponding config
-  # parameter in the /Script/EngineSettings.GameMapsSettings section of cpp/unreal_projects/SpearSim/Config/DefaultEngine.ini:
-  # GAME_MAP_SETTINGS_SERVICE:
+  # Print debug info when injecting input.
+  INPUT_SERVICE:
+    PRINT_INJECT_DEBUG_INFO: False
+  ENHANCED_INPUT_SERVICE:
+    PRINT_INJECT_DEBUG_INFO: False
+
+  #
+  # For each of the config strings below, if the corresponding override parameter is set to True, then the
+  # string will override the corresponding config parameter in the [/Script/EngineSettings.GameMapsSettings]
+  # section of cpp/unreal_projects/SpearSim/Config/DefaultEngine.ini. The strings below must be formatted in
+  # the format that would be expected in DefaultEngine.ini, e.g.,
+  #
+  #   OVERRIDE_GAME_DEFAULT_MAP: True
   #   GAME_DEFAULT_MAP: "/Game/Scenes/debug_0000/Maps/debug_0000"
+  #
+  #   OVERRIDE_GLOBAL_DEFAULT_GAME_MODE: True
   #   GLOBAL_DEFAULT_GAME_MODE: "/SpComponents/Blueprints/BP_SpGameMode.BP_SpGameMode_C"
-  GAME_MAP_SETTINGS_SERVICE:
+  #
+
+  INITIALIZE_ENGINE_SERVICE:
+    OVERRIDE_GAME_DEFAULT_MAP: False
     GAME_DEFAULT_MAP: ""
+
+    OVERRIDE_GLOBAL_DEFAULT_GAME_MODE: False
     GLOBAL_DEFAULT_GAME_MODE: ""
 
   #
@@ -45,35 +62,6 @@ SP_SERVICES:
       SPAWN_ROTATION_ROLL: 0.0
       CAMERA:
         RENDER_PASSES: ["final_color"] # "depth", "final_color", "normals", segmentation"
-        IMAGE_HEIGHT: 512
-        IMAGE_WIDTH: 512
-        FOV: 90.0
-
-    SPHERE_AGENT:
-      SPHERE_ACTOR_NAME: ""
-      CAMERA_ACTOR_NAME: ""
-      ACTION_COMPONENTS: ["add_force", "add_to_rotation"] # "add_force", "add_to_rotation"
-      OBSERVATION_COMPONENTS: ["camera", "location", "rotation"] #  "camera", "location", "rotation"
-      STEP_INFO_COMPONENTS: ["debug"] # "debug"
-      SPAWN_MODE: "specify_pose" # "specify_existing_actor", "specify_pose"
-      SPAWN_ACTOR_NAME: ""
-      SPAWN_LOCATION_X: 0.0
-      SPAWN_LOCATION_Y: 0.0
-      SPAWN_LOCATION_Z: 0.0
-      SPAWN_ROTATION_PITCH: 0.0
-      SPAWN_ROTATION_YAW: 0.0
-      SPAWN_ROTATION_ROLL: 0.0
-      SPHERE:
-        STATIC_MESH: "/Engine/BasicShapes/Sphere.Sphere"
-        MATERIAL: "/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"
-        MESH_SCALE_X: 0.5
-        MESH_SCALE_Y: 0.5
-        MESH_SCALE_Z: 0.5
-        MAX_ANGULAR_VELOCITY: 1.0
-        LINEAR_DAMPING: 0.0
-        ANGULAR_DAMPING: 0.0
-      CAMERA:
-        RENDER_PASSES: ["final_color"] # "depth", "final_color", "normal", "segmentation" 
         IMAGE_HEIGHT: 512
         IMAGE_WIDTH: 512
         FOV: 90.0

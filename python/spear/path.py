@@ -11,10 +11,13 @@ def path_exists(path):
         return True
 
     head, tail = os.path.split(path)
-    if tail == "":
-        return os.path.exists(head)
+    if os.path.exists(head) or os.path.islink(head):
+        if tail == "":
+            return os.path.exists(head) or os.path.islink(head)
+        else:
+            return tail in os.listdir(head)
     else:
-        return tail in os.listdir(head)
+        return False
 
 def remove_path(path):
     if not path_exists(path=path):

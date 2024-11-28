@@ -8,6 +8,8 @@
 
 #include <string>
 
+#include <HAL/Platform.h> // SPCORE_API
+
 #include "SpCore/Boost.h"
 
 struct SharedMemoryView
