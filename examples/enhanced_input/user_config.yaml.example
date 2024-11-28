@@ -19,5 +19,6 @@ SP_SERVICES:
 
   # Set the default game mode to a custom game mode. This game mode sets a default pawn that is just like our
   # usual default pawn, but has been set up to respond to enhanced input events.
-  GAME_MAP_SETTINGS_SERVICE:
+  INITIALIZE_ENGINE_SERVICE:
+    OVERRIDE_GLOBAL_DEFAULT_GAME_MODE: True
     GLOBAL_DEFAULT_GAME_MODE: "/SpComponents/Blueprints/BP_SpGameMode.BP_SpGameMode_C"

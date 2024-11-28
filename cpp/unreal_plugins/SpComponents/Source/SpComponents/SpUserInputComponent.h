@@ -40,12 +40,12 @@ public:
     // Set by the code using this class to specify what happens when user input (e.g., keyboard or gamepad input) is received.
     void setHandleUserInputFunc(const std::function<void(const std::string&, float)>& handle_user_input_func);
 
-    // USpUserInputComponents need to be enabled explicitly to avoid a single key press unexpectedly doing multiple things
+    // USpUserInputComponents need to be enabled explicitly to avoid a single key press unexpectedly doing multiple things.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR");
     bool bHandleUserInput = false;
 
 private:
-    FName getUniqueAxisNameFromUserInputName(const std::string& user_input_name) const;
+    std::string getUniqueAxisNameFromUserInputName(const std::string& user_input_name) const;
 
     UPROPERTY(VisibleAnywhere, Category="SPEAR");
     TArray<FString> SubscribedToUserInputs;

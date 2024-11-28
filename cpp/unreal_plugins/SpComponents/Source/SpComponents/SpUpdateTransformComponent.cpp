@@ -9,7 +9,7 @@
 
 #include <Components/ActorComponent.h>
 #include <Components/SceneComponent.h>
-#include <Engine/EngineBaseTypes.h> // ELevelTick
+#include <Engine/EngineBaseTypes.h> // ELevelTick, ETickingGroup
 #include <Engine/HitResult.h>
 
 #include "SpCore/Std.h"

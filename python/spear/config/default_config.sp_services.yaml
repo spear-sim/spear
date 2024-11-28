@@ -13,13 +13,24 @@ SP_SERVICES:
   ENHANCED_INPUT_SERVICE:
     PRINT_INJECT_DEBUG_INFO: False
 
-  # For each of the strings below, if the string is non-empty, it will override the corresponding config
-  # parameter in the /Script/EngineSettings.GameMapsSettings section of cpp/unreal_projects/SpearSim/Config/DefaultEngine.ini:
-  # GAME_MAP_SETTINGS_SERVICE:
+  #
+  # For each of the config strings below, if the corresponding override parameter is set to True, then the
+  # string will override the corresponding config parameter in the [/Script/EngineSettings.GameMapsSettings]
+  # section of cpp/unreal_projects/SpearSim/Config/DefaultEngine.ini. The strings below must be formatted in
+  # the format that would be expected in DefaultEngine.ini, e.g.,
+  #
+  #   OVERRIDE_GAME_DEFAULT_MAP: True
   #   GAME_DEFAULT_MAP: "/Game/Scenes/debug_0000/Maps/debug_0000"
+  #
+  #   OVERRIDE_GLOBAL_DEFAULT_GAME_MODE: True
   #   GLOBAL_DEFAULT_GAME_MODE: "/SpComponents/Blueprints/BP_SpGameMode.BP_SpGameMode_C"
-  GAME_MAP_SETTINGS_SERVICE:
+  #
+
+  INITIALIZE_ENGINE_SERVICE:
+    OVERRIDE_GAME_DEFAULT_MAP: False
     GAME_DEFAULT_MAP: ""
+
+    OVERRIDE_GLOBAL_DEFAULT_GAME_MODE: False
     GLOBAL_DEFAULT_GAME_MODE: ""
 
   #

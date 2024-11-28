@@ -70,7 +70,6 @@ void ASpInitializeWorldManager::BeginPlay()
     }
 
     if (override_game_paused) {
-        SP_LOG("Overriding game paused...");
         SP_LOG("Old game paused: ", UGameplayStatics::IsGamePaused(GetWorld()));
         SP_LOG("New game paused: ", game_paused);
         UGameplayStatics::SetGamePaused(GetWorld(), game_paused);
@@ -84,7 +83,7 @@ void ASpInitializeWorldManager::BeginPlay()
     bool benchmarking = false;
 
     if (Config::isInitialized() && Config::get<bool>("SP_COMPONENTS.SP_INITIALIZE_WORLD_MANAGER.OVERRIDE_BENCHMARKING")) {
-        benchmarking = Config::get<float>("SP_COMPONENTS.SP_INITIALIZE_WORLD_MANAGER.BENCHMARKING");
+        benchmarking = Config::get<bool>("SP_COMPONENTS.SP_INITIALIZE_WORLD_MANAGER.BENCHMARKING");
     } else if (bOverrideBenchmarking) {
         benchmarking = Benchmarking;
     }

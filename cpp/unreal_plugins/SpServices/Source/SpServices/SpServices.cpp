@@ -19,7 +19,8 @@
 
 #include "SpServices/EngineService.h"
 #include "SpServices/EnhancedInputService.h"
-#include "SpServices/GameMapSettingsService.h"
+#include "SpServices/InitializeEngineService.h"
+#include "SpServices/InputService.h"
 #include "SpServices/LegacyService.h"
 #include "SpServices/SpFuncService.h"
 #include "SpServices/UnrealService.h"
@@ -49,6 +50,7 @@ void SpServices::StartupModule()
         }        
         rpc_server_ = std::make_unique<rpc::server>(rpc_server_port);
         SP_ASSERT(rpc_server_);
+
         int num_worker_threads = 1;
         rpc_server_->async_run(num_worker_threads);
 
@@ -65,7 +67,7 @@ void SpServices::StartupModule()
 
     // Construct all other services by passing in EngineService.
     enhanced_input_service_ = std::make_unique<EnhancedInputService>(engine_service_.get());
-    game_map_settings_service_ = std::make_unique<GameMapSettingsService>(engine_service_.get());
+    initialize_engine_service_ = std::make_unique<InitializeEngineService>(engine_service_.get());
     input_service_ = std::make_unique<InputService>(engine_service_.get());
     legacy_service_ = std::make_unique<LegacyService>(engine_service_.get());
     sp_func_service_ = std::make_unique<SpFuncService>(engine_service_.get());
@@ -99,7 +101,7 @@ void SpServices::ShutdownModule()
     rpc_server_ = nullptr;
 
     SP_ASSERT(enhanced_input_service_);
-    SP_ASSERT(game_map_settings_service_);
+    SP_ASSERT(initialize_engine_service_);
     SP_ASSERT(input_service_);
     SP_ASSERT(legacy_service_);
     SP_ASSERT(sp_func_service_);
@@ -107,7 +109,7 @@ void SpServices::ShutdownModule()
     SP_ASSERT(world_service_);
 
     enhanced_input_service_ = nullptr;
-    game_map_settings_service_ = nullptr;
+    initialize_engine_service_ = nullptr;
     input_service_ = nullptr;
     legacy_service_ = nullptr;
     sp_func_service_ = nullptr;
