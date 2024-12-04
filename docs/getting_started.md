@@ -23,6 +23,9 @@ The next step is to install the `spear` Python package as follows.
 conda create --name spear-env python=3.11
 conda activate spear-env
 
+# install mayavi separately from other Python dependencies (Windows only)
+conda install -c conda-forge mayavi
+
 # install msgpack-rpc-python separately from other Python dependencies, because we need
 # to use a specific commit from a specific fork of the msgpack-rpc-python GitHub repository
 pip install -e third_party/msgpack-rpc-python
