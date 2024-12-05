@@ -31,10 +31,46 @@
 // the end of "SpCore/Windows.h". And since headers are only expanded once per compilation unit, OPTIONAL
 // will not be redefined when <winsock2.h> includes the header that would normally define it. Therefore,
 // our strategy is to redefine it here, include <boost/asio.hpp>, and then undefine it.
+
+// #if BOOST_OS_WINDOWS
+//     #pragma push_macro("OPTIONAL")
+//     #undef OPTIONAL
+//     #define OPTIONAL
+// #endif
+
 #if BOOST_OS_WINDOWS
+    #pragma push_macro("TRUE")
+    #pragma push_macro("FALSE")
     #pragma push_macro("OPTIONAL")
+
+    #pragma push_macro("InterlockedDecrement")
+    #pragma push_macro("InterlockedExchange")
+    #pragma push_macro("InterlockedExchangeAdd")
+    #pragma push_macro("InterlockedIncrement")
+    #pragma push_macro("InterlockedCompareExchange")
+    #pragma push_macro("InterlockedCompareExchangePointer")
+
+    #undef FALSE
+    #undef TRUE
     #undef OPTIONAL
+
+    #undef InterlockedDecrement
+    #undef InterlockedExchange
+    #undef InterlockedExchangeAdd
+    #undef InterlockedIncrement
+    #undef InterlockedCompareExchange
+    #undef InterlockedCompareExchangePointer
+
+    #define FALSE false
+    #define TRUE true
     #define OPTIONAL
+
+    #define InterlockedDecrement _InterlockedDecrement
+    #define InterlockedExchange _InterlockedExchange
+    #define InterlockedExchangeAdd _InterlockedExchangeAdd
+    #define InterlockedIncrement _InterlockedIncrement
+    #define InterlockedCompareExchange _InterlockedCompareExchange
+    #define InterlockedCompareExchangePointer _InterlockedCompareExchangePointer
 #endif
 
 SP_BEGIN_SUPPRESS_COMPILER_WARNINGS
@@ -42,7 +78,16 @@ SP_BEGIN_SUPPRESS_COMPILER_WARNINGS
 SP_END_SUPPRESS_COMPILER_WARNINGS
 
 #if BOOST_OS_WINDOWS
+    #pragma pop_macro("TRUE")
+    #pragma pop_macro("FALSE")
     #pragma pop_macro("OPTIONAL")
+
+    #pragma pop_macro("InterlockedDecrement")
+    #pragma pop_macro("InterlockedExchange")
+    #pragma pop_macro("InterlockedExchangeAdd")
+    #pragma pop_macro("InterlockedIncrement")
+    #pragma pop_macro("InterlockedCompareExchange")
+    #pragma pop_macro("InterlockedCompareExchangePointer")
 #endif
 
 // ----------------------------------------------------------------------------------------------------------

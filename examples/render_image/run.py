@@ -103,6 +103,6 @@ if __name__ == "__main__":
     with instance.end_frame():
         instance.sp_func_service.destroy_shared_memory_handles_for_uobject(shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
         instance.unreal_service.call_function(uobject=final_tone_curve_hdr_component, ufunction=terminate_func)
-        instance.unreal_service.destroy_actor(actor=bp_camera_sensor)
+        instance.unreal_service.destroy_actor(actor=bp_camera_sensor_actor)
 
     spear.log("Done.")

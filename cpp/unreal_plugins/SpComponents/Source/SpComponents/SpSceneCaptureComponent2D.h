@@ -9,7 +9,7 @@
 #include <Components/SceneCaptureComponent2D.h>
 #include <Containers/EnumAsByte.h>
 #include <Engine/TextureRenderTarget2D.h> // ETextureRenderTargetFormat
-#include <HAL/Platform.h>                 // SPCOMPONENTS_API
+#include <HAL/Platform.h>                 // SPCOMPONENTS_API, uint32
 
 #include "SpCore/SharedMemoryRegion.h"
 #include "SpCore/SpFuncArray.h"
@@ -39,13 +39,13 @@ public:
     bool IsInitialized();
 
     UPROPERTY(EditAnywhere, Category="SPEAR")
-    int Width = 512;
+    uint32 Width = 512;
 
     UPROPERTY(EditAnywhere, Category="SPEAR")
-    int Height = 512;
+    uint32 Height = 512;
 
     UPROPERTY(EditAnywhere, Category="SPEAR")
-    int NumChannelsPerPixel = 4;
+    uint32 NumChannelsPerPixel = 4;
 
     UPROPERTY(EditAnywhere, Category="SPEAR")
     ESpFuncArrayDataType ChannelDataType = ESpFuncArrayDataType::UInt8;
