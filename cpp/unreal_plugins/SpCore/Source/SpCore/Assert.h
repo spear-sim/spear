@@ -206,7 +206,9 @@
         __pragma(warning(disable: 4127))\
         do\
         {\
-          if (PPK_ASSERT_LIKELY(expression) || ppk::assert::implementation::ignoreAllAsserts());\
+          if (PPK_ASSERT_LIKELY(expression) || ppk::assert::implementation::ignoreAllAsserts())\
+          {\
+          }\
           else\
           {\
             ppk::assert::implementation::AssertAction::AssertAction __SP_ASSERT_ACTION__ = ppk::assert::implementation::handleAssert(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, level, PPK_ASSERT_NULLPTR, __VA_ARGS__);\
@@ -229,13 +231,15 @@
         do\
         {\
           static bool _ignore = false;\
-          if (PPK_ASSERT_LIKELY(expression) || _ignore || ppk::assert::implementation::ignoreAllAsserts());\
+          if (PPK_ASSERT_LIKELY(expression) || _ignore || ppk::assert::implementation::ignoreAllAsserts())\
+          {\
+          }\
           else\
           {\
             ppk::assert::implementation::AssertAction::AssertAction __SP_ASSERT_ACTION__ = ppk::assert::implementation::handleAssert(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, level, &_ignore, __VA_ARGS__);\
             if (__SP_ASSERT_ACTION__ == ppk::assert::implementation::AssertAction::Break) {\
               PPK_ASSERT_DEBUG_BREAK();\
-            else if (__SP_ASSERT_ACTION__ == ppk::assert::implementation::AssertAction::BreakThenThrow) {\
+            } else if (__SP_ASSERT_ACTION__ == ppk::assert::implementation::AssertAction::BreakThenThrow) {\
               PPK_ASSERT_DEBUG_BREAK();\
               ppk::assert::implementation::handleThrow(PPK_ASSERT_FILE, PPK_ASSERT_LINE, PPK_ASSERT_FUNCTION, #expression, __VA_ARGS__);\
             }\
@@ -265,7 +269,9 @@
       #define PPK_ASSERT_3(level, expression, ...)\
         do\
         {\
-          if (PPK_ASSERT_LIKELY(expression) || ppk::assert::implementation::ignoreAllAsserts());\
+          if (PPK_ASSERT_LIKELY(expression) || ppk::assert::implementation::ignoreAllAsserts())\
+          {\
+          }\
           else\
           {\
             _PPK_ASSERT_WFORMAT_AS_ERROR_BEGIN\
@@ -287,7 +293,9 @@
         do\
         {\
           static bool _ignore = false;\
-          if (PPK_ASSERT_LIKELY(expression) || _ignore || ppk::assert::implementation::ignoreAllAsserts());\
+          if (PPK_ASSERT_LIKELY(expression) || _ignore || ppk::assert::implementation::ignoreAllAsserts())\
+          {\
+          }\
           else\
           {\
             _PPK_ASSERT_WFORMAT_AS_ERROR_BEGIN\

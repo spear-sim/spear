@@ -17,6 +17,7 @@ if __name__ == "__main__":
     parser.add_argument("--unreal_engine_dir")
     parser.add_argument("--num_parallel_jobs", type=int, default=1)
     parser.add_argument("--boost_toolset")
+    parser.add_argument("--boost_toolset_version")
     parser.add_argument("--cxx_compiler")
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()
@@ -29,18 +30,23 @@ if __name__ == "__main__":
     #
 
     if sys.platform == "win32":
-        if args.boost_toolset is None:
-            boost_toolset = "msvc"
-        else:
-            boost_toolset = args.boost_toolset
+        assert args.boost_toolset is None
+        assert args.boost_toolset_version is None
+        assert args.cxx_compiler is None
 
-        if args.cxx_compiler is None:
-            cxx_compiler = "cl"
-        else:
-            cxx_compiler = args.cxx_compiler
+        boost_toolset = "msvc"
+        boost_toolset_version = "14.3"
+        cxx_compiler = "cl"
+
+        # On Windows, we don't include cxx_compiler in our generated user-config.jam file to avoid the
+        # following warning:
+        #     warning: Did not find command for MSVC toolset. If you have Visual Studio 2017 installed you
+        #     will need to specify the full path to the command, set VS150COMNTOOLS for your installation, or
+        #     build from the 'Visual Studio Command Prompt for VS 2017'.
+        boost_user_config_str = f"using {boost_toolset} : {boost_toolset_version} ;\n"
 
         platform_dir = "Win64"
-        cxx_flags = "/std:c++20 /EHsc"
+        cxx_flags = "/std:c++20 /EHsc /GR-"
 
     elif sys.platform == "darwin":
         if args.boost_toolset is None:
@@ -48,25 +54,36 @@ if __name__ == "__main__":
         else:
             boost_toolset = args.boost_toolset
 
+        if args.boost_toolset_version is None:
+            boost_toolset_version = ""
+        else:
+            boost_toolset_version = args.boost_toolset_version
+
         if args.cxx_compiler is None:
             cxx_compiler = "clang++"
         else:
             cxx_compiler = args.cxx_compiler
+
+        boost_user_config_str = f"using {boost_toolset} : {boost_toolset_version} : {cxx_compiler} ;\n"
 
         platform_dir = "Mac"
         cxx_flags = f"-std=c++20 -stdlib=libc++ -mmacosx-version-min=10.14"
 
     elif sys.platform == "linux":
         assert os.path.exists(args.unreal_engine_dir)
-        assert args.cxx_compiler is None
         assert args.boost_toolset is None
+        assert args.boost_toolset_version is None
+        assert args.cxx_compiler is None
 
         unreal_engine_dir        = os.path.realpath(args.unreal_engine_dir)
         linux_clang_bin_dir      = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Extras", "ThirdPartyNotUE", "SDKs", "HostLinux", "Linux_x64", "v22_clang-16.0.6-centos7", "x86_64-unknown-linux-gnu", "bin"))
         linux_libcpp_include_dir = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "include", "c++", "v1"))
 
         boost_toolset = "clang"
+        boost_toolset_version = ""
         cxx_compiler = os.path.join(linux_clang_bin_dir, "clang++")
+
+        boost_user_config_str = f"using {boost_toolset} : {boost_toolset_version} : {cxx_compiler} ;\n"
 
         platform_dir = "Linux"
         cxx_flags = f"-std=c++20 -stdlib=libc++ -nostdinc++ -I{linux_libcpp_include_dir}"
@@ -102,6 +119,8 @@ if __name__ == "__main__":
         os.path.realpath(os.path.join(boost_dir, "project-config.jam")),
         os.path.realpath(os.path.join(boost_dir, "user-config.jam"))]
 
+    remove_files = []
+
     for d in remove_dirs:
         if os.path.exists(d):
             spear.log("Directory exists, removing: ", d)
@@ -115,12 +134,11 @@ if __name__ == "__main__":
     # create a config file because there does not appear to be any other way to specify a custom compiler path, see:
     #     https://www.boost.org/build/doc/html/bbv2/overview/configuration.html
 
-    user_config_str = f"using {boost_toolset} : : {cxx_compiler} ;\n"
     spear.log(f"Creating boost config file: {user_config_file}")
-    spear.log(f"    {user_config_str}")
+    spear.log_no_prefix(boost_user_config_str)
 
     with open(user_config_file, "w") as f:
-        f.write(user_config_str)
+        f.write(boost_user_config_str)
 
     # build
 
