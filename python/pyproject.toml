@@ -28,6 +28,6 @@ dependencies = [
     "scipy==1.14.1",
     "tensorflow==2.18.0",
     "trimesh==4.4.0",
-    "vtk==9.2.6",
+    "vtk==9.3.1",
     "wget==3.2",
     "yacs==0.1.8"]
