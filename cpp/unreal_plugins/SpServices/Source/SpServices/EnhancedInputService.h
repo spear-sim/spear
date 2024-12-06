@@ -21,6 +21,7 @@
 #include <InputTriggers.h>           // ETriggerEvent, UInputTrigger, UInputTriggerPressed
 #include <Math/Vector.h>
 #include <UObject/ObjectPtr.h>
+#include <UObject/UnrealType.h>
 
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
@@ -144,7 +145,7 @@ public:
                 Unreal::setObjectPropertiesFromString(&sp_input_action_instance, FSpInputActionInstance::StaticStruct(), input_action_instance_string);
 
                 // The internal FInputActionValue in FInputActionInstance isn't exposed to the property
-                // system, so we handle it separately using this set function. 
+                // system, so we handle it separately using this set function.
                 sp_input_action_instance.setInputActionValue(input_action_value);
 
                 // setObjectPropertiesFromString(...) can't be used to set pointers, so we handle modifiers
@@ -204,7 +205,7 @@ public:
                     if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENHANCED_INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
                         SP_LOG(Unreal::getObjectPropertiesAsString(&(debug_key_binding->Chord), FInputChord::StaticStruct()));
                         SP_LOG(Unreal::getStringFromEnumValue(debug_key_binding->KeyEvent.GetValue()));
-                        SP_LOG();
+                        SP_LOG("");
                     }
 
                     if (chord == debug_key_binding->Chord && key_event == debug_key_binding->KeyEvent.GetValue()) {
