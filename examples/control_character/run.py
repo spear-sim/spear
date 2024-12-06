@@ -41,8 +41,10 @@ if __name__ == "__main__":
 
     with instance.begin_frame():
         gameplay_statics_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.GameplayStatics")
+        actor_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.Actor")
         character_movement_component_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.CharacterMovementComponent")
         skeletal_mesh_component_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.SkeletalMeshComponent")
+        enhanced_input_component_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/EnhancedInput.EnhancedInputComponent")
 
         set_game_paused_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_uclass, function_name="SetGamePaused")
         set_movement_mode_func = instance.unreal_service.find_function_by_name(uclass=character_movement_component_uclass, function_name="SetMovementMode")
@@ -50,6 +52,7 @@ if __name__ == "__main__":
         get_num_bones_func = instance.unreal_service.find_function_by_name(uclass=skeletal_mesh_component_uclass, function_name="GetNumBones")
         get_bone_name_func = instance.unreal_service.find_function_by_name(uclass=skeletal_mesh_component_uclass, function_name="GetBoneName")
         get_bone_transform_func = instance.unreal_service.find_function_by_name(uclass=skeletal_mesh_component_uclass, function_name="GetBoneTransform")
+        create_input_component_func = instance.unreal_service.find_function_by_name(uclass=actor_uclass, function_name="CreateInputComponent")
 
         gameplay_statics_default_object = instance.unreal_service.get_default_object(uclass=gameplay_statics_uclass, create_if_needed=False)
         manny_simple_uobject = instance.unreal_service.load_object(class_name="UObject", outer=0, name="/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple")
@@ -79,8 +82,19 @@ if __name__ == "__main__":
         instance.unreal_service.call_function(uobject=character_movement_component2, ufunction=set_movement_mode_func, args={"NewMovementMode": "MOVE_Walking"})
 
         # initialize input component
-        instance.enhanced_input_service.setup_enhanced_input_component(actor=bp_third_person_actor1)
-        instance.enhanced_input_service.setup_enhanced_input_component(actor=bp_third_person_actor2)
+        instance.unreal_service.call_function(
+            uobject=bp_third_person_actor1,
+            ufunction=create_input_component_func,
+            args={"InputComponentToCreate": spear.to_ptr(enhanced_input_component_uclass)})
+        input_component1 = instance.unreal_service.get_component_by_class(bp_third_person_actor1, enhanced_input_component_uclass)
+        instance.input_service.setup_player_input_component(actor=bp_third_person_actor1, input_component=input_component1)
+
+        instance.unreal_service.call_function(
+            uobject=bp_third_person_actor2,
+            ufunction=create_input_component_func,
+            args={"InputComponentToCreate": spear.to_ptr(enhanced_input_component_uclass)})
+        input_component2 = instance.unreal_service.get_component_by_class(bp_third_person_actor2, enhanced_input_component_uclass)
+        instance.input_service.setup_player_input_component(actor=bp_third_person_actor2, input_component=input_component2)
 
         # get all bone names
         skeletal_mesh_component1 = instance.unreal_service.get_component_by_class(actor=bp_third_person_actor1, uclass=skeletal_mesh_component_uclass)

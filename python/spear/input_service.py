@@ -8,7 +8,7 @@ class InputService():
     def __init__(self, entry_point_caller):
         self._entry_point_caller = entry_point_caller
 
-    def setup_enhanced_input_component(self, actor, input_component):
+    def setup_player_input_component(self, actor, input_component):
         self._entry_point_caller.call("input_service.setup_player_input_component", actor, input_component)
 
     def inject_key_for_actor(self, actor, chord, key_event):
