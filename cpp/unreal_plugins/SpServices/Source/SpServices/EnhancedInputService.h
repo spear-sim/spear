@@ -14,9 +14,7 @@
 #include <Engine/LocalPlayer.h>
 #include <EnhancedInputComponent.h>  // FEnhancedInputActionEventBinding, FInputDebugKeyBinding, UEnhancedInputComponent
 #include <EnhancedInputSubsystems.h> // UEnhancedInputLocalPlayerSubsystem
-#include <EnhancedInputActionDelegateBinding.h>
 #include <Framework/Commands/InputChord.h>
-#include <GameFramework/Pawn.h>
 #include <InputAction.h>             // FInputActionInstance
 #include <InputActionValue.h>        // EInputActionValueType
 #include <InputModifiers.h>          // UInputModifier, UInputModifierScalar
@@ -60,13 +58,6 @@ struct FSpInputActionInstance : public FInputActionInstance
     void setTriggers(const TArray<TObjectPtr<UInputTrigger>>& triggers) { Triggers = triggers; }
 };
 
-class EnhancedInputPawnWrapper : public APawn
-{
-public:
-    using APawn::CreateInputComponent;      // equivalent to creating a public method that calls the protected method
-    using APawn::SetupPlayerInputComponent; // equivalent to creating a public method that calls the protected method
-};
-
 class EnhancedInputService : public Service {
 public:
     EnhancedInputService() = delete;
@@ -104,17 +95,6 @@ public:
         UnrealClassRegistrar::registerClass<UInputTriggerReleased>("UInputTriggerReleased");
         UnrealClassRegistrar::registerClass<UInputTriggerTap>("UInputTriggerTap");
         UnrealClassRegistrar::registerClass<UInputTriggerTimedBase>("UInputTriggerTimedBase");
-
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(
-            "enhanced_input_service", "setup_enhanced_input_component", [this](uint64_t& actor) -> void {
-                APawn* pawn = toPtr<APawn>(actor);
-                SP_ASSERT(pawn);
-
-                EnhancedInputPawnWrapper* wrapper = static_cast<EnhancedInputPawnWrapper*>(pawn);
-                wrapper->CreateInputComponent(UEnhancedInputComponent::StaticClass());
-                wrapper->SetupPlayerInputComponent(wrapper->InputComponent);
-            });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("enhanced_input_service", "inject_input",
             [this](
@@ -183,7 +163,7 @@ public:
                     if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENHANCED_INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
                         SP_LOG(Unreal::toStdString(input_action->GetName()));
                         SP_LOG(Unreal::getStringFromEnumValue(event_binding->GetTriggerEvent()));
-                        SP_LOG("");
+                        SP_LOG();
                     }
 
                     if (input_action_name == Unreal::toStdString(input_action->GetName()) && trigger_event == event_binding->GetTriggerEvent()) {

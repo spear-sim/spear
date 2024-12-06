@@ -8,9 +8,6 @@ class EnhancedInputService():
     def __init__(self, entry_point_caller):
         self._entry_point_caller = entry_point_caller
 
-    def setup_enhanced_input_component(self, actor):
-        self._entry_point_caller.call("enhanced_input_service.setup_enhanced_input_component",actor)
-
     def inject_input(self, enhanced_input_subsystem, input_action, input_action_value, modifiers=[], triggers=[]):
         self._entry_point_caller.call("enhanced_input_service.inject_input",
             enhanced_input_subsystem, input_action, spear.to_json_string(obj=input_action_value), modifiers, triggers)

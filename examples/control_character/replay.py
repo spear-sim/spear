@@ -37,9 +37,9 @@ if __name__ == '__main__':
         actor_uclass = instance.unreal_service.get_static_class(class_name="AActor")
         poseable_mesh_component_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.PoseableMeshComponent")
 
-        set_game_paused_ufunc = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_uclass, function_name="SetGamePaused")
-        set_skinned_asset_and_update_ufunc = instance.unreal_service.find_function_by_name(uclass=poseable_mesh_component_uclass, function_name="SetSkinnedAssetAndUpdate")
-        set_bone_transform_by_name_ufunc = instance.unreal_service.find_function_by_name(uclass=poseable_mesh_component_uclass, function_name="SetBoneTransformByName")
+        set_game_paused_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_uclass, function_name="SetGamePaused")
+        set_skinned_asset_and_update_func = instance.unreal_service.find_function_by_name(uclass=poseable_mesh_component_uclass, function_name="SetSkinnedAssetAndUpdate")
+        set_bone_transform_by_name_func = instance.unreal_service.find_function_by_name(uclass=poseable_mesh_component_uclass, function_name="SetBoneTransformByName")
 
         gameplay_statics_default_object = instance.unreal_service.get_default_object(uclass=gameplay_statics_uclass, create_if_needed=False)
         manny_simple_uobject = instance.unreal_service.load_object(class_name="UObject", outer=0, name="/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple")
@@ -56,7 +56,7 @@ if __name__ == '__main__':
             component_name="poseable_mesh_component")
         instance.unreal_service.call_function(
             uobject=poseable_mesh_component,
-            ufunction=set_skinned_asset_and_update_ufunc,
+            ufunction=set_skinned_asset_and_update_func,
             args={"NewMesh": spear.func_utils.to_ptr(manny_simple_uobject)})
 
     with instance.end_frame():
@@ -65,13 +65,13 @@ if __name__ == '__main__':
     df = pd.read_csv(args.actions_file)
     for row in df.to_records(index=False):
         with instance.begin_frame():
-            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_ufunc, args={"bPaused": False})
+            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
 
             actions = get_action(row)
             for bone_name, transform in actions.items():
                 result = instance.unreal_service.call_function(
                     uobject=poseable_mesh_component,
-                    ufunction=set_bone_transform_by_name_ufunc,
+                    ufunction=set_bone_transform_by_name_func,
                     args={
                         "BoneName": bone_name,
                         "InTransform": transform,
@@ -79,6 +79,6 @@ if __name__ == '__main__':
                     })
 
         with instance.end_frame():
-            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_ufunc, args={"bPaused": True})
+            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
 
     print("Done.")

@@ -13,6 +13,7 @@
 #include <Engine/EngineBaseTypes.h> // EInputEvent
 #include <InputCoreTypes.h>         // ETouchType
 #include <Framework/Commands/InputChord.h>
+#include <GameFramework/Pawn.h>
 #include <Math/Vector.h>
 
 #include "SpCore/Assert.h"
@@ -24,12 +25,32 @@
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/Service.h"
 
+// The purpose of this wrapper class is to enable us to call APawn::SetupPlayerInputComponent(...), which is
+// protected, from outside the APawn class hierarchy. We don't use the usual Unreal naming convention here to
+// emphasize that InputServicePawnWrapper is not intended to be a UCLASS.
+class InputServicePawnWrapper : public APawn
+{
+public:
+    using APawn::SetupPlayerInputComponent; // equivalent to creating a public method that calls the protected method
+};
+
 class InputService : public Service {
 public:
     InputService() = delete;
     InputService(CUnrealEntryPointBinder auto* unreal_entry_point_binder)
     {
         SP_ASSERT(unreal_entry_point_binder);
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("input_service", "setup_player_input_component", 
+            [this](uint64_t& actor,uint64_t& input_component) -> void {
+                APawn* pawn_ptr = toPtr<APawn>(actor);
+                SP_ASSERT(pawn_ptr);
+
+                UInputComponent* input_component_ptr = toPtr<UInputComponent>(input_component);
+                SP_ASSERT(input_component_ptr);
+
+                static_cast<InputServicePawnWrapper*>(pawn_ptr)->SetupPlayerInputComponent(input_component_ptr);
+            });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("input_service", "inject_key_for_actor",
             [this](uint64_t& actor, std::string& chord_string, std::string& key_event_string) -> void {
