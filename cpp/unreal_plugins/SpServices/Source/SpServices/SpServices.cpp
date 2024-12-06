@@ -105,7 +105,6 @@ void SpServices::ShutdownModule()
     SP_ASSERT(legacy_service_);
     SP_ASSERT(sp_func_service_);
     SP_ASSERT(unreal_service_);
-    SP_ASSERT(world_service_);
 
     enhanced_input_service_ = nullptr;
     initialize_engine_service_ = nullptr;

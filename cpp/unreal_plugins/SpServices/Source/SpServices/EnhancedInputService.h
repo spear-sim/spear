@@ -16,6 +16,7 @@
 #include <EnhancedInputSubsystems.h> // UEnhancedInputLocalPlayerSubsystem
 #include <EnhancedInputActionDelegateBinding.h>
 #include <Framework/Commands/InputChord.h>
+#include <GameFramework/Pawn.h>
 #include <InputAction.h>             // FInputActionInstance
 #include <InputActionValue.h>        // EInputActionValueType
 #include <InputModifiers.h>          // UInputModifier, UInputModifierScalar
