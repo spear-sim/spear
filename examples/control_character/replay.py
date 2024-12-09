@@ -6,7 +6,6 @@
 
 import argparse
 import os
-import numpy as np
 import pandas as pd
 import spear
 
@@ -16,8 +15,7 @@ def get_transforms(df, transform_names):
     for transform_name in transform_names:
         transform = {
             "translation": {"X": df[transform_name + "_location_x"], "Y": df[transform_name + "_location_y"], "Z": df[transform_name + "_location_z"]},
-            "rotation": {"x": df[transform_name + "_rotation_x"], "y": df[transform_name + "_rotation_y"], "z": df[transform_name + "_rotation_z"],
-                         "w": df[transform_name + "_rotation_w"]},
+            "rotation": {"x": df[transform_name + "_rotation_x"], "y": df[transform_name + "_rotation_y"], "z": df[transform_name + "_rotation_z"], "w": df[transform_name + "_rotation_w"]},
             "scale3D": {"X": df[transform_name + "_scale3D_x"], "Y": df[transform_name + "_scale3D_y"], "Z": df[transform_name + "_scale3D_z"]}}
         transforms[transform_name] = transform
     return transforms
@@ -34,13 +32,17 @@ if __name__ == '__main__':
     instance = spear.Instance(config)
 
     with instance.begin_frame():
-        gameplay_statics_uclass = instance.unreal_service.get_static_class(class_name="UGameplayStatics")
+
+        # find functions
+        gameplay_statics_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.GameplayStatics")
         set_game_paused_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_uclass, function_name="SetGamePaused")
-        gameplay_statics_default_object = instance.unreal_service.get_default_object(uclass=gameplay_statics_uclass, create_if_needed=False)
 
         poseable_mesh_component_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.PoseableMeshComponent")
         set_skinned_asset_and_update_func = instance.unreal_service.find_function_by_name(uclass=poseable_mesh_component_uclass, function_name="SetSkinnedAssetAndUpdate")
         set_bone_transform_by_name_func = instance.unreal_service.find_function_by_name(uclass=poseable_mesh_component_uclass, function_name="SetBoneTransformByName")
+
+        # get UGameplayStatics default object
+        gameplay_statics = instance.unreal_service.get_default_object(uclass=gameplay_statics_uclass, create_if_needed=False)
 
         manny_simple_uobject = instance.unreal_service.load_object(class_name="UObject", outer=0, name="/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple")
         actor_uclass = instance.unreal_service.get_static_class(class_name="AActor")
@@ -66,7 +68,7 @@ if __name__ == '__main__':
     df = pd.read_csv(args.actions_file)
     for row in df.to_records(index=False):
         with instance.begin_frame():
-            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
+            instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": False})
 
             actions = get_transforms(row, )
             for bone_name, transform in actions.items():
@@ -76,6 +78,6 @@ if __name__ == '__main__':
                     args={"BoneName": bone_name, "InTransform": transform, "BoneSpace": "WorldSpace"})
 
         with instance.end_frame():
-            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
+            instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": True})
 
     spear.log("Done.")

@@ -6,7 +6,6 @@
 
 import argparse
 import os
-
 import numpy as np
 import pandas as pd
 import spear
@@ -57,9 +56,10 @@ if __name__ == "__main__":
     instance = spear.Instance(config)
 
     with instance.begin_frame():
+
+        # find functions
         gameplay_statics_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.GameplayStatics")
         set_game_paused_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_uclass, function_name="SetGamePaused")
-        gameplay_statics_default_object = instance.unreal_service.get_default_object(uclass=gameplay_statics_uclass, create_if_needed=False)
 
         actor_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.Actor")
         create_input_component_func = instance.unreal_service.find_function_by_name(uclass=actor_uclass, function_name="CreateInputComponent")
@@ -75,8 +75,8 @@ if __name__ == "__main__":
 
         enhanced_input_component_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/EnhancedInput.EnhancedInputComponent")
 
-        bp_character_uclass = instance.unreal_service.load_object(class_name="UObject", outer=0,
-                                                                  name="/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.BP_ThirdPersonCharacter_C")
+        # get UGameplayStatics default object
+        gameplay_statics = instance.unreal_service.get_default_object(uclass=gameplay_statics_uclass, create_if_needed=False)
 
         #
         # initialize characters
@@ -85,6 +85,7 @@ if __name__ == "__main__":
         character_descs = [
             {"name": "character_0", "location": {"X": 0.0, "Y": 100.0, "Z": 150.0}, "rotation": {"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}},
             {"name": "character_1", "location": {"X": 0.0, "Y": 200.0, "Z": 150.0}, "rotation": {"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}}]
+        bp_character_uclass = instance.unreal_service.load_object(class_name="UObject", outer=0, name="/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.BP_ThirdPersonCharacter_C")
 
         characters = []
         for character_desc in character_descs:
@@ -94,7 +95,6 @@ if __name__ == "__main__":
                 location=character_desc["location"],
                 rotation=character_desc["rotation"],
                 spawn_parameters={"Name": character_desc["name"], "SpawnCollisionHandlingOverride": "AlwaysSpawn"})
-
             character["movement_component"] = instance.unreal_service.get_component_by_class(actor=character["actor"], uclass=character_movement_component_uclass)
             character["skeletal_mesh_component"] = instance.unreal_service.get_component_by_class(actor=character["actor"], uclass=skeletal_mesh_component_uclass)
 
@@ -142,7 +142,7 @@ if __name__ == "__main__":
     df = pd.DataFrame()
 
     with instance.begin_frame():
-        instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
+        instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": False})
         for character in characters:
             instance.enhanced_input_service.inject_input_for_actor(
                 actor=character["actor"],
@@ -161,11 +161,11 @@ if __name__ == "__main__":
             transforms[bone_name] = return_values["ReturnValue"]
         df = pd.concat([df, get_data_frame(transforms)])
 
-        instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
+        instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": True})
 
     for _ in range(200):
         with instance.begin_frame():
-            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
+            instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": False})
 
             input_action_values = [
                 {"ValueType": "Axis2D", "Value": {"X": 0.0, "Y": 1.0, "Z": 0.0}},
@@ -192,7 +192,7 @@ if __name__ == "__main__":
                 transforms[bone_name] = return_values["ReturnValue"]
             df = pd.concat([df, get_data_frame(transforms)])
 
-            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
+            instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": True})
 
     df.to_csv(args.actions_file, float_format="%.5f", mode="w", index=False)
 
