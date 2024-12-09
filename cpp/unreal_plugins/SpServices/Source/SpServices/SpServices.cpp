@@ -72,7 +72,6 @@ void SpServices::StartupModule()
     legacy_service_ = std::make_unique<LegacyService>(engine_service_.get());
     sp_func_service_ = std::make_unique<SpFuncService>(engine_service_.get());
     unreal_service_ = std::make_unique<UnrealService>(engine_service_.get());
-    world_service_ = std::make_unique<WorldService>(engine_service_.get());
 }
 
 void SpServices::ShutdownModule()
@@ -106,7 +105,6 @@ void SpServices::ShutdownModule()
     SP_ASSERT(legacy_service_);
     SP_ASSERT(sp_func_service_);
     SP_ASSERT(unreal_service_);
-    SP_ASSERT(world_service_);
 
     enhanced_input_service_ = nullptr;
     initialize_engine_service_ = nullptr;
@@ -114,7 +112,6 @@ void SpServices::ShutdownModule()
     legacy_service_ = nullptr;
     sp_func_service_ = nullptr;
     unreal_service_ = nullptr;
-    world_service_ = nullptr;
 
     SP_ASSERT(engine_service_);
     engine_service_ = nullptr;
