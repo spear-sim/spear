@@ -9,9 +9,8 @@ import os
 import spear
 
 if __name__ == "__main__":
-    np.set_printoptions(linewidth=200)
 
-    # load config
+    # create instance
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
     spear.configure_system(config)
     instance = spear.Instance(config)
@@ -19,7 +18,7 @@ if __name__ == "__main__":
     with instance.begin_frame():
         gameplay_statics_static_class = instance.unreal_service.get_static_class(class_name="UGameplayStatics")
         player_controller_static_class = instance.unreal_service.get_static_class(class_name="APlayerController")
-        chaos_vehicle_movement_component_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/ChaosVehicles.ChaosVehicleMovementComponent")
+        chaos_vehicle_movement_component_uclass = instance.unreal_service.get_static_class(class_name="UChaosVehicleMovementComponent")
 
         get_player_controller_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_static_class, function_name="GetPlayerController")
         set_game_paused_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_static_class, function_name="SetGamePaused")

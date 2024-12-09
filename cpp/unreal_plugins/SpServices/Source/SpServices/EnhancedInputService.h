@@ -21,7 +21,6 @@
 #include <InputTriggers.h>           // ETriggerEvent, UInputTrigger, UInputTriggerPressed
 #include <Math/Vector.h>
 #include <UObject/ObjectPtr.h>
-#include <UObject/UnrealType.h>
 
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
@@ -205,7 +204,7 @@ public:
                     if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENHANCED_INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
                         SP_LOG(Unreal::getObjectPropertiesAsString(&(debug_key_binding->Chord), FInputChord::StaticStruct()));
                         SP_LOG(Unreal::getStringFromEnumValue(debug_key_binding->KeyEvent.GetValue()));
-                        SP_LOG("");
+                        SP_LOG();
                     }
 
                     if (chord == debug_key_binding->Chord && key_event == debug_key_binding->KeyEvent.GetValue()) {

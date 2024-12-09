@@ -493,7 +493,7 @@ class UnrealService():
     def load_object(self, class_name, outer, name="", filename="", load_flags=["LOAD_None"], sandbox=0, instancing_context=0):
         return self._entry_point_caller.call("unreal_service.load_object", class_name, outer, name, filename, load_flags, sandbox, instancing_context)
 
-    def load_class(self, class_name, outer, name="", filename="", load_flags=["LOAD_None"], sandbox=0,):
+    def load_class(self, class_name, outer, name="", filename="", load_flags=["LOAD_None"], sandbox=0):
         return self._entry_point_caller.call("unreal_service.load_class", class_name, outer, name, filename, load_flags, sandbox)
 
     def static_load_object(self, uclass, in_outer, name="", filename="", load_flags=["LOAD_None"], sandbox=0, allow_object_reconciliation=True, instancing_context=0):

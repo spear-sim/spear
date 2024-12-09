@@ -15,6 +15,9 @@ cpp/unreal_projects/SpearSim/Content/Scenes/kujiale_*
 cpp/unreal_projects/SpearSim/Content/Scenes/warehouse_*
 cpp/unreal_projects/SpearSim/Content/Stanford
 cpp/unreal_projects/SpearSim/Content/StarterContent
+cpp/unreal_projects/SpearSim/Content/ThirdPerson
+cpp/unreal_projects/SpearSim/Content/Vehicles
+cpp/unreal_projects/SpearSim/Content/VehicleTemplate
 cpp/unreal_projects/SpearSim/DerivedDataCache
 cpp/unreal_projects/SpearSim/Intermediate
 cpp/unreal_projects/SpearSim/Makefile

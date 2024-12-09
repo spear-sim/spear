@@ -13,6 +13,7 @@
 #include <Components/ActorComponent.h>
 #include <Components/PoseableMeshComponent.h>
 #include <Components/SceneComponent.h>
+#include <Components/SkeletalMeshComponent.h>
 #include <Components/StaticMeshComponent.h>
 #include <Engine/LocalPlayer.h>
 #include <Engine/PostProcessVolume.h>
@@ -20,6 +21,7 @@
 #include <Engine/StaticMeshActor.h>
 #include <Engine/TextureRenderTarget2D.h>
 #include <GameFramework/Actor.h>
+#include "GameFramework/CharacterMovementComponent.h"
 #include <GameFramework/GameUserSettings.h>
 #include <GameFramework/PlayerController.h>
 #include <Kismet/GameplayStatics.h>
@@ -200,7 +202,9 @@ void UnrealClassRegistrar::initialize()
     registerActorClass<AStaticMeshActor>("AStaticMeshActor");
     registerComponentClass<UActorComponent>("UActorComponent");
     registerComponentClass<UCameraComponent>("UCameraComponent");
+    registerComponentClass<UCharacterMovementComponent>("UCharacterMovementComponent");
     registerComponentClass<UPrimitiveComponent>("UPrimitiveComponent");
+    registerComponentClass<USkeletalMeshComponent>("USkeletalMeshComponent");
     registerComponentClass<USceneComponent>("USceneComponent");
     registerComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
     registerComponentClass<UPoseableMeshComponent>("UPoseableMeshComponent");
@@ -229,8 +233,10 @@ void UnrealClassRegistrar::terminate()
     unregisterActorClass<AStaticMeshActor>("AStaticMeshActor");
     unregisterComponentClass<UActorComponent>("UActorComponent");
     unregisterComponentClass<UCameraComponent>("UCameraComponent");
+    unregisterComponentClass<UCharacterMovementComponent>("UCharacterMovementComponent");
     unregisterComponentClass<UPrimitiveComponent>("UPrimitiveComponent");
     unregisterComponentClass<USceneComponent>("USceneComponent");
+    unregisterComponentClass<USkeletalMeshComponent>("USkeletalMeshComponent");
     unregisterComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
     unregisterComponentClass<UPoseableMeshComponent>("UPoseableMeshComponent");
     unregisterClass<UObject>("UObject");
