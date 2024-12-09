@@ -16,17 +16,16 @@ def get_data_frame(transforms):
     data = []
     for transform_name, transform in transforms.items():
         cols = [
-            transform_name + "_location_X",
-            transform_name + "_location_Y",
-            transform_name + "_location_Z",
-            transform_name + "_rotation_X",
-            transform_name + "_rotation_Y",
-            transform_name + "_rotation_Z",
-            transform_name + "_rotation_W",
-            transform_name + "_scale_X",
-            transform_name + "_scale_Y",
-            transform_name + "_scale_Z",
-        ]
+            transform_name + "_translation_x",
+            transform_name + "_translation_y",
+            transform_name + "_translation_z",
+            transform_name + "_rotation_x",
+            transform_name + "_rotation_y",
+            transform_name + "_rotation_z",
+            transform_name + "_rotation_w",
+            transform_name + "_scale3D_x",
+            transform_name + "_scale3D_y",
+            transform_name + "_scale3D_z"]
         columns.extend(cols)
         vals = [
             transform["translation"]["x"],
@@ -38,8 +37,7 @@ def get_data_frame(transforms):
             transform["rotation"]["w"],
             transform["scale3D"]["x"],
             transform["scale3D"]["y"],
-            transform["scale3D"]["z"],
-        ]
+            transform["scale3D"]["z"]]
         data.extend(vals)
     df = pd.DataFrame(columns=columns, data=np.array(data).reshape(1, -1))
     return df
@@ -85,7 +83,8 @@ if __name__ == "__main__":
         character_descs = [
             {"name": "character_0", "location": {"X": 0.0, "Y": 100.0, "Z": 150.0}, "rotation": {"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}},
             {"name": "character_1", "location": {"X": 0.0, "Y": 200.0, "Z": 150.0}, "rotation": {"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}}]
-        bp_character_uclass = instance.unreal_service.load_object(class_name="UObject", outer=0, name="/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.BP_ThirdPersonCharacter_C")
+        bp_character_uclass = instance.unreal_service.load_object(class_name="UObject", outer=0,
+                                                                  name="/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.BP_ThirdPersonCharacter_C")
 
         characters = []
         for character_desc in character_descs:
