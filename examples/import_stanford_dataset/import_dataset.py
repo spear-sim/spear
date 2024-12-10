@@ -42,6 +42,8 @@ mesh_descs = \
     }
 ]
 
+content_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "..", "cpp", "unreal_projects", "SpearSim", "Content"))
+cook_dirs = [os.path.join(content_dir, "Stanford")]
 include_assets = [os.path.join("SpearSim", "Content", "Stanford", "**", "*.*")]
 
 asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
@@ -129,10 +131,15 @@ if __name__ == "__main__":
         spear.log(f"Saving blueprint: {blueprint_path}")
         editor_asset_subsystem.save_loaded_asset(blueprint_asset)
 
+    # create cook dirs file
+    cook_dirs_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "cook_dirs.csv"))
+    spear.log(f"Writing cook dirs file: {cook_dirs_file}")
+    df = pd.DataFrame(columns=["cook_dirs"], data={"cook_dirs": cook_dirs})
+    df.to_csv(cook_dirs_file, index=False)
+
     # create include assets file
     include_assets_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "include_assets.csv"))
     spear.log(f"Writing include assets file: {include_assets_file}")
-    
     df = pd.DataFrame(columns=["include_assets"], data={"include_assets": include_assets})
     df.to_csv(include_assets_file, index=False)
 

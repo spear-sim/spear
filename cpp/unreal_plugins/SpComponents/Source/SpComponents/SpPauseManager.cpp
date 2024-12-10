@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "SpComponents/SpPauseWidget.h"
+#include "SpComponents/SpPauseManager.h"
 
 #include <Engine/EngineBaseTypes.h> // ETickingGroup
 #include <Engine/World.h>
@@ -11,7 +11,7 @@
 
 #include "SpCore/Log.h"
 
-ASpPauseWidget::ASpPauseWidget()
+ASpPauseManager::ASpPauseManager()
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -20,12 +20,12 @@ ASpPauseWidget::ASpPauseWidget()
     PrimaryActorTick.TickGroup = ETickingGroup::TG_PrePhysics;
 }
 
-ASpPauseWidget::~ASpPauseWidget()
+ASpPauseManager::~ASpPauseManager()
 {
     SP_LOG_CURRENT_FUNCTION();
 }
 
-void ASpPauseWidget::Tick(float delta_time)
+void ASpPauseManager::Tick(float delta_time)
 {
     AActor::Tick(delta_time);
 
@@ -33,7 +33,7 @@ void ASpPauseWidget::Tick(float delta_time)
     bIsGamePaused = UGameplayStatics::IsGamePaused(world);
 }
 
-void ASpPauseWidget::ToggleGamePaused()
+void ASpPauseManager::ToggleGamePaused()
 {
     UWorld* world = GetWorld();
     UGameplayStatics::SetGamePaused(world, !UGameplayStatics::IsGamePaused(world));

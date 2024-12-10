@@ -25,14 +25,14 @@ if __name__ == "__main__":
         # code interacting with instance.sp_func_service.
         action_shared_memory_handle = instance.sp_func_service.create_shared_memory_region(num_bytes=1024, shared_memory_name="smem:action")
 
-        # Get the default ASpDebugWidget object. In this example, we're calling a custom function on an
+        # Get the default ASpDebugManager object. In this example, we're calling a custom function on an
         # Unreal actor, but we can use the same interface to call custom functions on Unreal components.
-        sp_debug_widget_static_class = instance.unreal_service.get_static_class(class_name="ASpDebugWidget")
-        sp_debug_widget_default_object = instance.unreal_service.get_default_object(uclass=sp_debug_widget_static_class, create_if_needed=False)
+        sp_debug_manager_static_class = instance.unreal_service.get_static_class(class_name="ASpDebugManager")
+        sp_debug_manager_default_object = instance.unreal_service.get_default_object(uclass=sp_debug_manager_static_class, create_if_needed=False)
 
         # Create handles to any shared memory regions created by the Unreal object. instance.sp_func_service.call_function(...)
         # will use these handles internally to access data returned via shared memory.
-        sp_debug_widget_shared_memory_handles = instance.sp_func_service.create_shared_memory_handles_for_uobject(uobject=sp_debug_widget_default_object)
+        sp_debug_manager_shared_memory_handles = instance.sp_func_service.create_shared_memory_handles_for_uobject(uobject=sp_debug_manager_default_object)
 
         # Create a numpy array.
         action = np.array([0.0, 1.0, 2.0])
@@ -59,17 +59,17 @@ if __name__ == "__main__":
 
         # Call the custom function named "hello_world" on our Unreal object.
         return_values = instance.sp_func_service.call_function(
-            uobject=sp_debug_widget_default_object,
+            uobject=sp_debug_manager_default_object,
             function_name="hello_world",
             arrays=arrays,
             unreal_objs=unreal_objs,
             info=info,
-            uobject_shared_memory_handles=sp_debug_widget_shared_memory_handles)
+            uobject_shared_memory_handles=sp_debug_manager_shared_memory_handles)
 
         spear.log("return_values: ", return_values)
 
         # Destroy handles to the shared memory regions created by the Unreal object.
-        instance.sp_func_service.destroy_shared_memory_handles_for_uobject(shared_memory_handles=sp_debug_widget_shared_memory_handles)
+        instance.sp_func_service.destroy_shared_memory_handles_for_uobject(shared_memory_handles=sp_debug_manager_shared_memory_handles)
 
         # Destroy the shared memory region we created ourselves.
         instance.sp_func_service.destroy_shared_memory_region(shared_memory_name="smem:action")

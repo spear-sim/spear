@@ -263,44 +263,44 @@ private:
 
     // Initialize config system
 
-    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, Category="SPEAR")
     bool bInitializeConfigSystem = false;
-    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, Category="SPEAR")
     FString ConfigFile;
 
     bool initialize_config_system_ = false;
 
     // Override game paused
-    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, Category="SPEAR")
     bool bOverrideGamePaused = false;
-    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, Category="SPEAR")
     bool GamePaused = false;
 
     // Override benchmarking
-    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, Category="SPEAR")
     bool bOverrideBenchmarking = false;
-    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, Category="SPEAR")
     bool Benchmarking = false;
 
     // Override fixed delta time
-    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, Category="SPEAR")
     bool bOverrideFixedDeltaTime = false;
-    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, Category="SPEAR")
     double FixedDeltaTime = 1.0/30.0; // Engine/Source/Runtime/Core/Private/Misc/App.cpp
 
     // Override physics settings
-    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, Category="SPEAR")
     bool bOverridePhysicsSettings = false;
-    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, Category="SPEAR")
     FSpPhysicsSettings SpPhysicsSettings;
 
     // Force skylight update. We set bForceSkylightUpdate to true here, rather than setting the corresponding
     // config parameter in default_config.sp_components.yaml, becasue because we always want this default
     // behavior, even when the config system isn't loaded.
 
-    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, Category="SPEAR")
     bool bForceSkylightUpdate = true;
-    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, Category="SPEAR")
     float ForceSkylightUpdateMaxDurationSeconds = 0.5f;
 
     bool force_skylight_update_ = false;
@@ -310,8 +310,8 @@ private:
     float force_skylight_update_duration_seconds_ = 0.0f;
 
     // Execute console commands
-    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, Category="SPEAR")
     bool bExecuteConsoleCommands = false;
-    UPROPERTY(Transient, EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, Category="SPEAR")
     TArray<FString> ConsoleCommands;
 };

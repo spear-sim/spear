@@ -64,12 +64,15 @@ void ASpInitializeWorldManager::BeginPlay()
     bool game_paused = false;
 
     if (Config::isInitialized() && Config::get<bool>("SP_COMPONENTS.SP_INITIALIZE_WORLD_MANAGER.OVERRIDE_GAME_PAUSED")) {
+        override_game_paused = true;
         game_paused = Config::get<bool>("SP_COMPONENTS.SP_INITIALIZE_WORLD_MANAGER.GAME_PAUSED");
     } else if (bOverrideGamePaused) {
+        override_game_paused = true;
         game_paused = GamePaused;
     }
 
     if (override_game_paused) {
+        SP_LOG("Overriding game paused...");
         SP_LOG("Old game paused: ", UGameplayStatics::IsGamePaused(GetWorld()));
         SP_LOG("New game paused: ", game_paused);
         UGameplayStatics::SetGamePaused(GetWorld(), game_paused);
@@ -83,12 +86,17 @@ void ASpInitializeWorldManager::BeginPlay()
     bool benchmarking = false;
 
     if (Config::isInitialized() && Config::get<bool>("SP_COMPONENTS.SP_INITIALIZE_WORLD_MANAGER.OVERRIDE_BENCHMARKING")) {
+        override_benchmarking = true;
         benchmarking = Config::get<bool>("SP_COMPONENTS.SP_INITIALIZE_WORLD_MANAGER.BENCHMARKING");
     } else if (bOverrideBenchmarking) {
+        override_benchmarking = true;
         benchmarking = Benchmarking;
     }
 
     if (override_benchmarking) {
+        SP_LOG("Overriding benchmarking...");
+        SP_LOG("Old benchmarking: ", FApp::IsBenchmarking());
+        SP_LOG("New benchmarking: ", benchmarking);
         FApp::SetBenchmarking(benchmarking);
     }
 
@@ -100,12 +108,17 @@ void ASpInitializeWorldManager::BeginPlay()
     float fixed_delta_time = -1.0f;
 
     if (Config::isInitialized() && Config::get<bool>("SP_COMPONENTS.SP_INITIALIZE_WORLD_MANAGER.OVERRIDE_FIXED_DELTA_TIME")) {
+        override_fixed_delta_time = true;
         fixed_delta_time = Config::get<float>("SP_COMPONENTS.SP_INITIALIZE_WORLD_MANAGER.FIXED_DELTA_TIME");
     } else if (bOverrideFixedDeltaTime) {
+        override_fixed_delta_time = true;
         fixed_delta_time = FixedDeltaTime;
     }
 
     if (override_fixed_delta_time) {
+        SP_LOG("Overriding fixed delta time...");
+        SP_LOG("Old fixed delta time: ", FApp::GetFixedDeltaTime());
+        SP_LOG("New fixed delta time: ", fixed_delta_time);
         FApp::SetFixedDeltaTime(fixed_delta_time);
     }
 
@@ -192,6 +205,7 @@ void ASpInitializeWorldManager::BeginPlay()
     UPhysicsSettings* physics_settings = UPhysicsSettings::Get();
     if (FApp::IsBenchmarking() && physics_settings->bSubstepping) {
         double max_fixed_delta_time = physics_settings->MaxSubstepDeltaTime*physics_settings->MaxSubsteps;
+        SP_LOG("Current fixed delta time:         ", FApp::GetFixedDeltaTime());
         SP_LOG("Maximum allowed fixed delta time: ", max_fixed_delta_time);
         SP_ASSERT(FApp::GetFixedDeltaTime() <= max_fixed_delta_time);
     }

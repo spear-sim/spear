@@ -7,15 +7,15 @@
 #include <GameFramework/Actor.h>
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
-#include "SpPauseWidget.generated.h"
+#include "SpPauseManager.generated.h"
 
 UCLASS(ClassGroup="SPEAR", HideCategories=(Rendering, Replication, Collision, HLOD, Physics, Networking, Input, Actor, Cooking))
-class ASpPauseWidget : public AActor
+class ASpPauseManager : public AActor
 {
     GENERATED_BODY()
 public: 
-    ASpPauseWidget();
-    ~ASpPauseWidget();
+    ASpPauseManager();
+    ~ASpPauseManager();
 
     // AActor interface
     void Tick(float delta_time) override;

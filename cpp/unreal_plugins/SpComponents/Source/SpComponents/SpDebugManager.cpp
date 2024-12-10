@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "SpComponents/SpDebugWidget.h"
+#include "SpComponents/SpDebugManager.h"
 
 #include <stdint.h> // uint8_t
 
@@ -40,7 +40,7 @@
 // CALLED for a newly added editor-world object, when adding the object to a map
 // CALLED for an existing editor-world object, when loading the map
 // CALLED for an existing PIE-world object, when pressing play (SpFuncComponent is set to nullptr initially, and then is set to a new USpFuncComponent* not owned by any other actor)
-ASpDebugWidget::ASpDebugWidget()
+ASpDebugManager::ASpDebugManager()
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -63,7 +63,7 @@ ASpDebugWidget::ASpDebugWidget()
 // CALLED for an existing editor-world object, when unloading the map
 // CALLED for a newly removed editor-world object, when removing the object from the map (but only called when the map is unloaded)
 // CALLED for the CDO
-ASpDebugWidget::~ASpDebugWidget()
+ASpDebugManager::~ASpDebugManager()
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -75,7 +75,7 @@ ASpDebugWidget::~ASpDebugWidget()
 // CALLED for a newly added editor-world object, when adding the object to a map
 // CALLED for an existing editor-world object, when loading the map
 // CALLED for an existing PIE-world object, when pressing play (SpFuncComponent is set to the USpFuncComponent* owned by the CDO in this function)
-void ASpDebugWidget::PostInitProperties()
+void ASpDebugManager::PostInitProperties()
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -89,7 +89,7 @@ void ASpDebugWidget::PostInitProperties()
 // CALLED for a newly added editor-world object, when adding the object to a map
 // NOT CALLED for an existing editor-world object, when loading the map
 // NOT CALLED for an existing PIE-world object, when pressing play
-void ASpDebugWidget::PostActorCreated()
+void ASpDebugManager::PostActorCreated()
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -105,7 +105,7 @@ void ASpDebugWidget::PostActorCreated()
 // NOT CALLED for a newly added editor-world object, when adding the object to a map
 // CALLED for an existing editor-world object, when loading the map
 // CALLED for an existing PIE-world object, when pressing play (SpFuncComponent is set to the new USpFuncComponent* from the constructor in this function)
-void ASpDebugWidget::PostLoad()
+void ASpDebugManager::PostLoad()
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -121,7 +121,7 @@ void ASpDebugWidget::PostLoad()
 // CALLED for an existing editor-world object, when unloading the map
 // CALLED for a newly removed editor-world object, when removing the object from the map (but only called when the map is unloaded)
 // CALLED for the CDO
-void ASpDebugWidget::BeginDestroy()
+void ASpDebugManager::BeginDestroy()
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -133,22 +133,22 @@ void ASpDebugWidget::BeginDestroy()
     terminateSpFunc();
 }
 
-void ASpDebugWidget::LoadConfig()
+void ASpDebugManager::LoadConfig()
 {
     AActor::LoadConfig();
 }
 
-void ASpDebugWidget::SaveConfig()
+void ASpDebugManager::SaveConfig()
 {
     AActor::SaveConfig();
 }
 
-void ASpDebugWidget::PrintDebugString()
+void ASpDebugManager::PrintDebugString()
 {
     SP_LOG("DebugString: ", Unreal::toStdString(DebugString));
 }
 
-void ASpDebugWidget::GetAndSetObjectProperties()
+void ASpDebugManager::GetAndSetObjectProperties()
 {
     UWorld* world = GetWorld();
     SP_ASSERT(world);
@@ -300,9 +300,9 @@ void ASpDebugWidget::GetAndSetObjectProperties()
     ArrayOfPointers.Add(this);
     ArrayOfPointers.Add(nullptr);
     ArrayOfPointers.Add(this);
-    ArrayOfEnums.Add(EDebugWidgetEnum::Hello);
-    ArrayOfEnums.Add(EDebugWidgetEnum::World);
-    ArrayOfEnums.Add(EDebugWidgetEnum::Hello);
+    ArrayOfEnums.Add(EDebugManagerEnum::Hello);
+    ArrayOfEnums.Add(EDebugManagerEnum::World);
+    ArrayOfEnums.Add(EDebugManagerEnum::Hello);
     SP_LOG(Unreal::getObjectPropertiesAsString(this));
 
     SP_LOG(Unreal::getPropertyValueAsString(Unreal::findPropertyByName(this, "ArrayOfInts[1]")));
@@ -368,7 +368,7 @@ void ASpDebugWidget::GetAndSetObjectProperties()
     i++;
 }
 
-void ASpDebugWidget::CallFunctions()
+void ASpDebugManager::CallFunctions()
 {
     static int i = 1;
 
@@ -454,7 +454,7 @@ void ASpDebugWidget::CallFunctions()
     i++;
 }
 
-void ASpDebugWidget::CallSpFunc()
+void ASpDebugManager::CallSpFunc()
 {
     USpFuncComponent* sp_func_component = Unreal::getComponentByType<USpFuncComponent>(this);
     SP_ASSERT(sp_func_component);
@@ -513,7 +513,7 @@ void ASpDebugWidget::CallSpFunc()
     SP_LOG("info:                  ", return_values.info_);
 }
 
-void ASpDebugWidget::CreateObjects()
+void ASpDebugManager::CreateObjects()
 {
     static int i = 1;
 
@@ -551,7 +551,7 @@ void ASpDebugWidget::CreateObjects()
     i++;
 }
 
-void ASpDebugWidget::SubscribeToActorHitEvents()
+void ASpDebugManager::SubscribeToActorHitEvents()
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -565,7 +565,7 @@ void ASpDebugWidget::SubscribeToActorHitEvents()
     Unreal::callFunction(GetWorld(), hit_event_manager, ufunction, {{"Actor", Std::toStringFromPtr(static_mesh_actor)}, {"bRecordDebugInfo", "true"}});
 }
 
-void ASpDebugWidget::ReadPixels()
+void ASpDebugManager::ReadPixels()
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -613,26 +613,26 @@ void ASpDebugWidget::ReadPixels()
     SP_LOG("view_ptr[3]: ", (int)(((uint8_t*)view_ptr)[3]));
 }
 
-FString ASpDebugWidget::GetString(FString arg_0, bool arg_1, int arg_2, FVector arg_3)
+FString ASpDebugManager::GetString(FString arg_0, bool arg_1, int arg_2, FVector arg_3)
 {
     SP_LOG_CURRENT_FUNCTION();
     return FString("GetString return value.");
 }
 
-FVector ASpDebugWidget::GetVector(FString arg_0, bool arg_1, int arg_2, FVector& arg_3)
+FVector ASpDebugManager::GetVector(FString arg_0, bool arg_1, int arg_2, FVector& arg_3)
 {
     SP_LOG_CURRENT_FUNCTION();
     arg_3 = FVector(1.11, 2.22, 3.33);
     return FVector(9.87, 6.54, 3.21);
 }
 
-UObject* ASpDebugWidget::GetWorldContextObject(const UObject* world_context_object, FString arg_0, bool arg_1)
+UObject* ASpDebugManager::GetWorldContextObject(const UObject* world_context_object, FString arg_0, bool arg_1)
 {
     SP_LOG_CURRENT_FUNCTION();
     return const_cast<UObject*>(world_context_object);
 }
 
-void ASpDebugWidget::UpdateData(TMap<FString, FVector>& map_from_string_to_vector, TArray<FVector>& array_of_vectors)
+void ASpDebugManager::UpdateData(TMap<FString, FVector>& map_from_string_to_vector, TArray<FVector>& array_of_vectors)
 {
     SP_LOG_CURRENT_FUNCTION();
     FVector vec(1.23, 4.56, 7.89);
@@ -642,7 +642,7 @@ void ASpDebugWidget::UpdateData(TMap<FString, FVector>& map_from_string_to_vecto
     array_of_vectors.Add(FVector(4.0f, 5.0f, 6.0f));
 }
 
-void ASpDebugWidget::initializeSpFunc()
+void ASpDebugManager::initializeSpFunc()
 {
     SP_ASSERT(SpFuncComponent);
     SP_ASSERT(!shared_memory_region_);
@@ -715,7 +715,7 @@ void ASpDebugWidget::initializeSpFunc()
     });
 }
 
-void ASpDebugWidget::terminateSpFunc()
+void ASpDebugManager::terminateSpFunc()
 {
     // Terminate SpFuncComponent conditionally because BeginDestroy() might be called after SpFuncComponent
     // has already been garbage collected and set to nullptr, e.g., if an editor-world object has been

@@ -19,24 +19,24 @@
 
 #include "SpComponents/SpFuncComponent.h"
 
-#include "SpDebugWidget.generated.h"
+#include "SpDebugManager.generated.h"
 
 class UObject;
 
 UENUM()
-enum class EDebugWidgetEnum
+enum class EDebugManagerEnum
 {
     Hello,
     World
 };
 
 UCLASS(ClassGroup="SPEAR", Config=Spear, HideCategories=(Rendering, Replication, Collision, HLOD, Physics, Networking, Input, Actor, Cooking))
-class ASpDebugWidget : public AActor
+class ASpDebugManager : public AActor
 {
     GENERATED_BODY()
 public: 
-    ASpDebugWidget();
-    ~ASpDebugWidget();
+    ASpDebugManager();
+    ~ASpDebugManager();
 
     // AActor interface
     void PostInitProperties() override;
@@ -104,7 +104,7 @@ private:
     TArray<UObject*> ArrayOfPointers;
 
     UPROPERTY()
-    TArray<EDebugWidgetEnum> ArrayOfEnums;
+    TArray<EDebugManagerEnum> ArrayOfEnums;
 
     UPROPERTY()
     TMap<int, int> MapFromIntToInt;
