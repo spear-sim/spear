@@ -16,6 +16,39 @@ blueprint_desc = \
     "component_descs":
     [
         {
+            "name": "ambient_occlusion",
+            "width": 512,
+            "height": 512,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpFuncArrayDataType.FLOAT32,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpComponents/Materials/PPM_AmbientOcclusion.PPM_AmbientOcclusion",
+            "fov_angle": 90.0,
+        },
+        {
+            "name": "depth",
+            "width": 512,
+            "height": 512,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpFuncArrayDataType.FLOAT32,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
+            "material_path": "/SpComponents/Materials/PPM_Depth.PPM_Depth",
+            "fov_angle": 90.0,
+        },
+        {
+            "name": "diffuse_color",
+            "width": 512,
+            "height": 512,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpFuncArrayDataType.FLOAT32,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpComponents/Materials/PPM_DiffuseColor.PPM_DiffuseColor",
+            "fov_angle": 90.0,
+        },
+        {
             "name": "final_tone_curve_hdr",
             "width": 512,
             "height": 512,
@@ -29,14 +62,14 @@ blueprint_desc = \
             "show_flag_settings": [unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=True)]
         },
         {
-            "name": "depth",
+            "name": "metallic",
             "width": 512,
             "height": 512,
             "num_channels_per_pixel": 4,
             "channel_data_type": unreal.SpFuncArrayDataType.FLOAT32,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F,
-            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
-            "material_path": "/SpComponents/Materials/PPM_Depth.PPM_Depth",
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpComponents/Materials/PPM_Metallic.PPM_Metallic",
             "fov_angle": 90.0,
         },
         {
@@ -51,6 +84,17 @@ blueprint_desc = \
             "fov_angle": 90.0,
         },
         {
+            "name": "roughness",
+            "width": 512,
+            "height": 512,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpFuncArrayDataType.FLOAT32,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpComponents/Materials/PPM_Roughness.PPM_Roughness",
+            "fov_angle": 90.0,
+        },
+        {
             "name": "segmentation",
             "width": 512,
             "height": 512,
@@ -60,7 +104,18 @@ blueprint_desc = \
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
             "material_path": "/SpComponents/Materials/PPM_Segmentation.PPM_Segmentation",
             "fov_angle": 90.0,
-        }
+        },
+        {
+            "name": "specular_color",
+            "width": 512,
+            "height": 512,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpFuncArrayDataType.FLOAT32,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpComponents/Materials/PPM_SpecularColor.PPM_SpecularColor",
+            "fov_angle": 90.0,
+        },
     ]
 }
 
