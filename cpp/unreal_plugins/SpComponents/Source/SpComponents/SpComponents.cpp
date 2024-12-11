@@ -10,7 +10,7 @@
 #include "SpCore/Log.h"
 #include "SpCore/UnrealClassRegistrar.h"
 
-#include "SpComponents/SpDebugWidget.h"
+#include "SpComponents/SpDebugManager.h"
 #include "SpComponents/SpHitEventManager.h"
 #include "SpComponents/SpSceneCaptureComponent2D.h"
 
@@ -19,7 +19,7 @@ void SpComponents::StartupModule()
     SP_ASSERT_MODULE_LOADED("SpCore");
     SP_LOG_CURRENT_FUNCTION();
 
-    UnrealClassRegistrar::registerActorClass<ASpDebugWidget>("ASpDebugWidget");
+    UnrealClassRegistrar::registerActorClass<ASpDebugManager>("ASpDebugManager");
     UnrealClassRegistrar::registerActorClass<ASpHitEventManager>("ASpHitEventManager");
     UnrealClassRegistrar::registerComponentClass<USpSceneCaptureComponent2D>("USpSceneCaptureComponent2D");
 }
@@ -28,7 +28,7 @@ void SpComponents::ShutdownModule()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    UnrealClassRegistrar::unregisterActorClass<ASpDebugWidget>("ASpDebugWidget");
+    UnrealClassRegistrar::unregisterActorClass<ASpDebugManager>("ASpDebugManager");
     UnrealClassRegistrar::unregisterActorClass<ASpHitEventManager>("ASpHitEventManager");
     UnrealClassRegistrar::unregisterComponentClass<USpSceneCaptureComponent2D>("USpSceneCaptureComponent2D");
 }

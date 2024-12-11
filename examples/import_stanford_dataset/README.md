@@ -19,16 +19,16 @@ In order to run this example, you need to build a PAK file containing the Stanfo
 python download_dataset.py
 
 # create symlink within the SpearSim project named Stanford
-python ../../tools/update_symlinks_for_external_content.py --unreal_project_content_dir Stanford --external_content_dir stanford --create
+python ../../tools/update_symlinks_for_external_content.py --create --external_content_dir stanford --unreal_project_content_dir Stanford
 
 # import mesh data into the Stanford directory and generate list of assets to include within PAK file
-python ../../tools/run_editor_script.py --script /absolute/path/to/spear/examples/import_stanford_dataset/import_dataset.py --unreal_engine_dir path/to/UE_5.2
+python ../../tools/run_editor_script.py --script /absolute/path/to/spear/examples/import_stanford_dataset/import_dataset.py --unreal_engine_dir path/to/UE_5.5
 
 # build PAK file containing the assets within the Stanford directory
-python ../../tools/build_pak.py --paks_dir path/to/spear-paks --version_tag examples --pak_file stanford.pak --include_assets_file include_assets.csv --unreal_engine_dir path/to/UE_5.2
+python ../../tools/build_pak.py --paks_dir path/to/spear-paks --version_tag examples --pak_file stanford.pak --cook_dirs_file cook_dirs.csv --include_assets_file include_assets.csv --unreal_engine_dir path/to/UE_5.5
 
 # remove Stanford symlink to restore the SpearSim project to its original state
-python ../../tools/update_symlinks_for_external_content.py --unreal_project_content_dir Stanford --remove
+python ../../tools/update_symlinks_for_external_content.py --remove --external_content_dir stanford --unreal_project_content_dir Stanford
 ```
 
 ### Running the example
