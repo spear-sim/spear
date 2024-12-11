@@ -145,23 +145,33 @@ if __name__ == "__main__":
         # We do not want to use os.path.realpath(...) here, because that will resolve to the directory inside the
         # user's external directory. Instead, we want this path to refer to the symlinked path inside the user's
         # Unreal project directory.
-        cook_dirs_file = os.path.realpath(os.path.join(build_paks_dir, f"common-{args.version_tag}-{platform}_cook_dirs.csv"))
+        cook_dirs_file = os.path.realpath(os.path.join(build_paks_dir, f"kujiale_common-{args.version_tag}-{platform}_cook_dirs.csv"))
         cook_dirs = [
+            os.path.join(unreal_project_dir, "Content", "Kujiale", "BluePrints"),        # TODO: move to Kujiale/Blueprints
+            os.path.join(unreal_project_dir, "Content", "Kujiale", "Materials"),
+            os.path.join(unreal_project_dir, "Content", "Kujiale", "Meshes"),
+            os.path.join(unreal_project_dir, "Content", "Kujiale", "PhysicalMaterials"), # TODO: move to Kujiale/PhysicsMaterials
+            os.path.join(unreal_project_dir, "Content", "Kujiale", "Textures"),
             os.path.join(unreal_project_dir, "Content", "Megascans"),
             os.path.join(unreal_project_dir, "Content", "MSPresets")]
         df = pd.DataFrame(columns=["cook_dirs"], data={"cook_dirs": cook_dirs})
         df.to_csv(cook_dirs_file, index=False)
 
-        include_assets_file = os.path.realpath(os.path.join(build_paks_dir, f"common-{args.version_tag}-{platform}_include_assets.csv"))
+        include_assets_file = os.path.realpath(os.path.join(build_paks_dir, f"kujiale_common-{args.version_tag}-{platform}_include_assets.csv"))
         include_assets = [
             os.path.join("Engine", "Content", "**", "*.*"),
             os.path.join("Engine", "Plugins", "**", "*.*"),
+            os.path.join("SpearSim", "Content", "Kujiale", "BluePrints", "**", "*.*"),        # TODO: move to Kujiale/Blueprints
+            os.path.join("SpearSim", "Content", "Kujiale", "Materials", "**", "*.*"),
+            os.path.join("SpearSim", "Content", "Kujiale", "Meshes", "**", "*.*"),
+            os.path.join("SpearSim", "Content", "Kujiale", "PhysicalMaterials", "**", "*.*"), # TODO: move to Kujiale/PhysicsMaterials
+            os.path.join("SpearSim", "Content", "Kujiale", "Textures", "**", "*.*"),
             os.path.join("SpearSim", "Content", "Megascans", "**", "*.*"),
             os.path.join("SpearSim", "Content", "MSPresets", "**", "*.*")]
         df = pd.DataFrame(columns=["include_assets"], data={"include_assets": include_assets})
         df.to_csv(include_assets_file, index=False)
 
-        exclude_assets_file = os.path.realpath(os.path.join(build_paks_dir, f"common-{args.version_tag}-{platform}_exclude_assets.csv"))
+        exclude_assets_file = os.path.realpath(os.path.join(build_paks_dir, f"kujiale_common-{args.version_tag}-{platform}_exclude_assets.csv"))
         exclude_pak_files = [default_pak]
         exclude_assets = []
         for exclude_pak_file in exclude_pak_files:
@@ -179,13 +189,11 @@ if __name__ == "__main__":
         df = pd.DataFrame(columns=["exclude_assets"], data={"exclude_assets": exclude_assets})
         df.to_csv(exclude_assets_file, index=False)
 
-        pak_file = f"common-{args.version_tag}-{platform}.pak"
+        pak_file = os.path.realpath(os.path.join(args.paks_dir, args.version_tag, f"kujiale_common-{args.version_tag}-{platform}.pak"))
         cmd = \
             cmd_prefix + \
             "python " + \
             f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'build_pak.py'))} " + \
-            f"--paks_dir {args.paks_dir} " + \
-            f"--version_tag {args.version_tag} " + \
             f"--pak_file {pak_file} " + \
             f"--cook_dirs_file {cook_dirs_file} " + \
             f"--include_assets_file {include_assets_file} " + \
@@ -201,7 +209,7 @@ if __name__ == "__main__":
 
     if not args.skip_build_scene_paks:
 
-        external_content_scenes_dir = os.path.realpath(os.path.join(args.external_content_dir, "Kujiale", "Scenes"))
+        external_content_scenes_dir = os.path.realpath(os.path.join(args.external_content_dir, "Scenes")) # TODO: move to Kujiale/Scenes
         ignore_names = [".DS_Store"]
         candidate_scene_ids = [ os.path.basename(x) for x in sorted(os.listdir(external_content_scenes_dir)) if x not in ignore_names ]
 
@@ -220,7 +228,7 @@ if __name__ == "__main__":
         for scene_id in scene_ids:
 
             # create symlink
-            content_dir = os.path.join("Kujiale", "Scenes", scene_id)
+            content_dir = os.path.join("Scenes", scene_id) # TODO: move to Kujiale/Scenes
             update_action = "create"
             cmd = \
                 cmd_prefix + \
@@ -240,9 +248,14 @@ if __name__ == "__main__":
             # Unreal project directory.
             cook_dirs_file = os.path.realpath(os.path.join(build_paks_dir, f"{scene_id}-{args.version_tag}-{platform}_cook_dirs.csv"))
             cook_dirs = [
-                os.path.join("Content", "Megascans"),
-                os.path.join("Content", "MSPresets"),
-                os.path.join("Content", "Kujiale", "Scenes", scene_id)]
+                os.path.join(unreal_project_dir, "Content", "Kujiale", "BluePrints"),        # TODO: move to Kujiale/Blueprints
+                os.path.join(unreal_project_dir, "Content", "Kujiale", "Materials"),
+                os.path.join(unreal_project_dir, "Content", "Kujiale", "Meshes"),
+                os.path.join(unreal_project_dir, "Content", "Kujiale", "PhysicalMaterials"), # TODO: move to Kujiale/PhysicsMaterials
+                os.path.join(unreal_project_dir, "Content", "Kujiale", "Textures"),
+                os.path.join(unreal_project_dir, "Content", "Megascans"),
+                os.path.join(unreal_project_dir, "Content", "MSPresets"),
+                os.path.join(unreal_project_dir, "Content", "Scenes", scene_id)]             # TODO: move to Kujiale/Scenes
             df = pd.DataFrame(columns=["cook_dirs"], data={"cook_dirs": cook_dirs})
             df.to_csv(cook_dirs_file, index=False)
 
@@ -255,14 +268,19 @@ if __name__ == "__main__":
             include_assets = [
                 os.path.join("Engine", "Content", "**", "*.*"),
                 os.path.join("Engine", "Plugins", "**", "*.*"),
+                os.path.join("SpearSim", "Content", "Kujiale", "BluePrints", "**", "*.*"),        # TODO: move to Kujiale/Blueprints
+                os.path.join("SpearSim", "Content", "Kujiale", "Materials", "**", "*.*"),
+                os.path.join("SpearSim", "Content", "Kujiale", "Meshes", "**", "*.*"),
+                os.path.join("SpearSim", "Content", "Kujiale", "PhysicalMaterials", "**", "*.*"), # TODO: move to Kujiale/PhysicsMaterials
+                os.path.join("SpearSim", "Content", "Kujiale", "Textures", "**", "*.*"),
                 os.path.join("SpearSim", "Content", "Megascans", "**", "*.*"),
                 os.path.join("SpearSim", "Content", "MSPresets", "**", "*.*"),
-                os.path.join("SpearSim", "Content", "Kujiale", "Scenes", scene_id, "**", "*.*")]
+                os.path.join("SpearSim", "Content", "Scenes", scene_id, "**", "*.*")]             # TODO: move to Kujiale/Scenes
             df = pd.DataFrame(columns=["include_assets"], data={"include_assets": include_assets})
             df.to_csv(include_assets_file, index=False)
 
             exclude_assets_file = os.path.realpath(os.path.join(build_paks_dir, f"{scene_id}-{args.version_tag}-{platform}_exclude_assets.csv"))
-            exclude_pak_files = [default_pak, os.path.realpath(os.path.join(args.paks_dir, args.version_tag, f"common-{args.version_tag}-{platform}.pak"))]
+            exclude_pak_files = [default_pak, os.path.realpath(os.path.join(args.paks_dir, args.version_tag, f"kujiale_common-{args.version_tag}-{platform}.pak"))]
             exclude_assets = []
             for exclude_pak_file in exclude_pak_files:
                 cmd = [unreal_pak_bin, "-List", exclude_pak_file]
@@ -279,13 +297,11 @@ if __name__ == "__main__":
             df = pd.DataFrame(columns=["exclude_assets"], data={"exclude_assets": exclude_assets})
             df.to_csv(exclude_assets_file, index=False)
 
-            pak_file = f"{scene_id}-{args.version_tag}-{platform}.pak"
+            pak_file = os.path.realpath(os.path.join(args.paks_dir, args.version_tag, f"{scene_id}-{args.version_tag}-{platform}.pak"))
             cmd = \
                 cmd_prefix + \
                 "python " + \
                 f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'build_pak.py'))} " + \
-                f"--paks_dir {args.paks_dir} " + \
-                f"--version_tag {args.version_tag} " + \
                 f"--pak_file {pak_file} " + \
                 f"--cook_dirs_file {cook_dirs_file} " + \
                 f"--cook_maps_file {cook_maps_file} " + \
@@ -297,7 +313,7 @@ if __name__ == "__main__":
             subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
 
             # remove symlink
-            content_dir = os.path.join("Kujiale", "Scenes", scene_id)
+            content_dir = os.path.join("Scenes", scene_id) # TODO: move to Kujiale/Scenes
             update_action = "remove"
             cmd = \
                 cmd_prefix + \

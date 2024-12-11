@@ -18,8 +18,6 @@ import sys
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--paks_dir", required=True)
-    parser.add_argument("--version_tag", required=True)
     parser.add_argument("--pak_file", required=True)
     parser.add_argument("--cook_dirs_file")
     parser.add_argument("--cook_maps_file")
@@ -88,9 +86,9 @@ if __name__ == "__main__":
     subprocess.run(cmd, check=True)
 
     # create manifest file
-    paks_version_dir = os.path.realpath(os.path.join(args.paks_dir, args.version_tag))
-    pak_file = os.path.realpath(os.path.join(paks_version_dir, args.pak_file))
-    os.makedirs(paks_version_dir, exist_ok=True)
+    pak_file = os.path.realpath(os.path.join(args.pak_file))
+    pak_dir = os.path.split(pak_file)[0]
+    os.makedirs(pak_dir, exist_ok=True)
 
     include_assets = pd.read_csv(args.include_assets_file)["include_assets"]
 
