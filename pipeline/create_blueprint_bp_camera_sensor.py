@@ -16,17 +16,15 @@ blueprint_desc = \
     "component_descs":
     [
         {
-            "name": "final_tone_curve_hdr",
+            "name": "ambient_occlusion",
             "width": 512,
             "height": 512,
             "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpFuncArrayDataType.U_INT8,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB,
-            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
+            "channel_data_type": unreal.SpFuncArrayDataType.FLOAT32,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpComponents/Materials/PPM_AmbientOcclusion.PPM_AmbientOcclusion",
             "fov_angle": 90.0,
-            "dynamic_global_illumination_method": unreal.DynamicGlobalIlluminationMethod.LUMEN,
-            "reflection_method": unreal.ReflectionMethod.LUMEN,
-            "show_flag_settings": [unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=True)]
         },
         {
             "name": "depth",
@@ -37,17 +35,6 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
             "material_path": "/SpComponents/Materials/PPM_Depth.PPM_Depth",
-            "fov_angle": 90.0,
-        },
-        {
-            "name": "normal",
-            "width": 512,
-            "height": 512,
-            "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpFuncArrayDataType.FLOAT32,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F,
-            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
-            "material_path": "/SpComponents/Materials/PPM_Normal.PPM_Normal",
             "fov_angle": 90.0,
         },
         {
@@ -62,15 +49,17 @@ blueprint_desc = \
             "fov_angle": 90.0,
         },
         {
-            "name": "specular_color",
+            "name": "final_tone_curve_hdr",
             "width": 512,
             "height": 512,
             "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpFuncArrayDataType.FLOAT32,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F,
-            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
-            "material_path": "/SpComponents/Materials/PPM_SpecularColor.PPM_SpecularColor",
+            "channel_data_type": unreal.SpFuncArrayDataType.U_INT8,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
             "fov_angle": 90.0,
+            "dynamic_global_illumination_method": unreal.DynamicGlobalIlluminationMethod.LUMEN,
+            "reflection_method": unreal.ReflectionMethod.LUMEN,
+            "show_flag_settings": [unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=True)]
         },
         {
             "name": "metallic",
@@ -84,14 +73,14 @@ blueprint_desc = \
             "fov_angle": 90.0,
         },
         {
-            "name": "ambient_occlusion",
+            "name": "normal",
             "width": 512,
             "height": 512,
             "num_channels_per_pixel": 4,
             "channel_data_type": unreal.SpFuncArrayDataType.FLOAT32,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F,
-            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
-            "material_path": "/SpComponents/Materials/PPM_AmbientOcclusion.PPM_AmbientOcclusion",
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
+            "material_path": "/SpComponents/Materials/PPM_Normal.PPM_Normal",
             "fov_angle": 90.0,
         },
         {
@@ -115,7 +104,18 @@ blueprint_desc = \
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
             "material_path": "/SpComponents/Materials/PPM_Segmentation.PPM_Segmentation",
             "fov_angle": 90.0,
-        }
+        },
+        {
+            "name": "specular_color",
+            "width": 512,
+            "height": 512,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpFuncArrayDataType.FLOAT32,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpComponents/Materials/PPM_SpecularColor.PPM_SpecularColor",
+            "fov_angle": 90.0,
+        },
     ]
 }
 
