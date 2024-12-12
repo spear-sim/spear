@@ -46,7 +46,7 @@ if __name__ == "__main__":
         boost_user_config_str = f"using {boost_toolset} : {boost_toolset_version} ;\n"
 
         platform_dir = "Win64"
-        cxx_flags = "/std:c++20 /EHsc /GR-"
+        cxx_flags = "/std:c++20 /EHsc /GR-" # enable exceptions with standard C++ stack unwinding and assume extern "C" code never throws, disable RTTI
 
     elif sys.platform == "darwin":
         if args.boost_toolset is None:

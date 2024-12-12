@@ -28,9 +28,9 @@
 #include <UObject/NameTypes.h>       // FName
 #include <UObject/Object.h>          // UObject
 #include <UObject/ObjectMacros.h>    // EPropertyFlags
-#include <UObject/UnrealType.h>      // FArrayProperty, FBoolProperty, FByteProperty, FDoubleProperty, FFloatProperty, FIntProperty, FMapProperty, FProperty,
-                                     // FScriptArrayHelper, FScriptMapHelper, FScriptSetHelper, FSetProperty, FStrProperty, FStructProperty, TFieldIterator
-
+#include <UObject/UnrealType.h>      // FArrayProperty, FBoolProperty, FByteProperty, FDoubleProperty, FInt8Property, FInt16Property, FInt64Property,
+                                     // FFloatProperty, FIntProperty, FMapProperty, FProperty, FScriptArrayHelper, FScriptMapHelper, FScriptSetHelper,
+                                     // FSetProperty, FStrProperty, FStructProperty, FUInt16Property, FUInt32Property, FUInt64Property, TFieldIterator
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/SpSpecialStructActor.h"
@@ -245,8 +245,20 @@ std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& propert
     // the other hand, the equivalent code block in setPropertyValueFromString(...) doesn't need to call
     // TryGetString(), so it also behaves correctly for structs.
 
+    // See Engine/Source/Editor/Kismet/Internal/Reflection/FunctionUtilsPrivate.h for an exaustive
+    // enumeration of all possible property types. For now, we only handle the property types that have come
+    // up in practice in our experiments.
+
     if (property_desc.property_->IsA(FBoolProperty::StaticClass())   ||
         property_desc.property_->IsA(FIntProperty::StaticClass())    ||
+        property_desc.property_->IsA(FInt8Property::StaticClass())   ||
+        property_desc.property_->IsA(FInt16Property::StaticClass())  ||
+        // no FInt32Property because the int32 C++ type maps to FIntProperty
+        property_desc.property_->IsA(FInt64Property::StaticClass())  ||
+        // no FUInt8Property because the uint8 C++ type maps to FByteProperty
+        property_desc.property_->IsA(FUInt16Property::StaticClass()) ||
+        property_desc.property_->IsA(FUInt32Property::StaticClass()) ||
+        property_desc.property_->IsA(FUInt64Property::StaticClass()) ||
         property_desc.property_->IsA(FFloatProperty::StaticClass())  ||
         property_desc.property_->IsA(FDoubleProperty::StaticClass()) ||
         property_desc.property_->IsA(FStrProperty::StaticClass())    ||
@@ -385,8 +397,20 @@ void Unreal::setPropertyValueFromJsonValue(const Unreal::PropertyDesc& property_
     // We don't need a special case for FStructProperty in this code block, but we do in getPropertyValueFromString(...).
     // See the discussion above for details.
 
+    // See Engine/Source/Editor/Kismet/Internal/Reflection/FunctionUtilsPrivate.h for an exaustive
+    // enumeration of all possible property types. For now, we only handle the property types that have come
+    // up in practice in our experiments.
+
     if (property_desc.property_->IsA(FBoolProperty::StaticClass())   ||
         property_desc.property_->IsA(FIntProperty::StaticClass())    ||
+        property_desc.property_->IsA(FInt8Property::StaticClass())   ||
+        property_desc.property_->IsA(FInt16Property::StaticClass())  ||
+        // no FInt32Property because the int32 C++ type maps to FIntProperty
+        property_desc.property_->IsA(FInt64Property::StaticClass())  ||
+        // no FUInt8Property because the uint8 C++ type maps to FByteProperty
+        property_desc.property_->IsA(FUInt16Property::StaticClass()) ||
+        property_desc.property_->IsA(FUInt32Property::StaticClass()) ||
+        property_desc.property_->IsA(FUInt64Property::StaticClass()) ||
         property_desc.property_->IsA(FFloatProperty::StaticClass())  ||
         property_desc.property_->IsA(FDoubleProperty::StaticClass()) ||
         property_desc.property_->IsA(FStrProperty::StaticClass())    ||

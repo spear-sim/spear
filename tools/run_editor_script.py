@@ -14,6 +14,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--script", required=True)
     parser.add_argument("--unreal_engine_dir", required=True)
+    parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
     args, unknown_args = parser.parse_known_args() # get remaining args to pass to inner script
 
     assert os.path.exists(args.unreal_engine_dir)
@@ -27,7 +28,7 @@ if __name__ == "__main__":
     else:
         assert False
 
-    project = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "SpearSim.uproject"))
+    project = os.path.realpath(os.path.join(args.unreal_project_dir, "SpearSim.uproject"))
 
     # need shell=True to correctly handle the quotes in cmd
     cmd = unreal_editor_bin + " " + project + ' -run=pythonscript -script="' + args.script + " " + " ".join(unknown_args) + '"'

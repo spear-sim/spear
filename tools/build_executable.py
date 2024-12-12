@@ -6,6 +6,7 @@ import argparse
 import os
 import shutil
 import spear
+import spear.tools
 import subprocess
 import sys
 
@@ -13,7 +14,6 @@ import sys
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--version_tag", required=True)
     parser.add_argument("--unreal_engine_dir", required=True)
     parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
     parser.add_argument("--conda_env", default="spear-env")
@@ -40,7 +40,7 @@ if __name__ == "__main__":
         archive_dir           = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{build_config}"))
         run_uat_platform_args = ""
         unreal_tmp_dir        = ""
-        cmd_prefix            = f"conda activate {args.conda_env}& "
+        cmd_prefix            = f"conda activate {args.conda_env} & "
 
     elif sys.platform == "darwin":
         target_platform       = "Mac"
@@ -50,10 +50,26 @@ if __name__ == "__main__":
         unreal_tmp_dir        = os.path.expanduser(os.path.join("~", "Library", "Preferences", "Unreal Engine", "SpearSimEditor"))
 
         if args.conda_script:
-            conda_script = args.conda_script
+            if os.path.exists(args.conda_script):
+                spear.log(f"Found conda script at: ", args.conda_script)
+                conda_script = args.conda_script
+            assert conda_script is not None
+
         else:
-            # default for graphical install, see https://docs.anaconda.com/anaconda/user-guide/faq
-            conda_script = os.path.expanduser(os.path.join("~", "opt", "anaconda3", "etc", "profile.d", "conda.sh"))
+            # see https://docs.anaconda.com/anaconda/user-guide/faq
+            conda_script_candidates = [
+                os.path.expanduser(os.path.join("~", "anaconda3", "etc", "profile.d", "conda.sh")),  # anaconda shell install
+                os.path.join(os.sep, "opt", "anaconda3", "etc", "profile.d", "conda.sh"),            # anaconda graphical install
+                os.path.expanduser(os.path.join("~", "miniconda3", "etc", "profile.d", "conda.sh")), # miniconda shell install
+                os.path.join(os.sep, "opt", "miniconda3", "etc", "profile.d", "conda.sh")]           # miniconda graphical install
+
+            conda_script = None
+            for conda_script_candidate in conda_script_candidates:
+                if os.path.exists(conda_script_candidate):
+                    spear.log(f"Found conda script at: ", conda_script_candidate)
+                    conda_script = conda_script_candidate
+                    break
+            assert conda_script is not None
 
         cmd_prefix = f". {conda_script}; conda activate {args.conda_env}; "
 
@@ -65,10 +81,23 @@ if __name__ == "__main__":
         unreal_tmp_dir        = ""
 
         if args.conda_script:
-            conda_script = args.conda_script
-        else:
+            if os.path.exists(args.conda_script):
+                spear.log(f"Found conda script at: ", args.conda_script)
+                conda_script = args.conda_script
+            assert conda_script is not None
+
             # see https://docs.anaconda.com/anaconda/user-guide/faq
-            conda_script = os.path.expanduser(os.path.join("~", "anaconda3", "etc", "profile.d", "conda.sh"))
+            conda_script_candidates = [
+                os.path.expanduser(os.path.join("~", "anaconda3", "etc", "profile.d", "conda.sh")),
+                os.path.expanduser(os.path.join("~", "miniconda3", "etc", "profile.d", "conda.sh"))]
+
+            conda_script = None
+            for conda_script_candidate in conda_script_candidates:
+                if os.path.exists(conda_script_candidate):
+                    spear.log(f"Found conda script at: ", conda_script_candidate)
+                    conda_script = conda_script_candidate
+                    break
+            assert conda_script is not None
 
         cmd_prefix = f". {conda_script}; conda activate {args.conda_env}; "
 
@@ -123,7 +152,7 @@ if __name__ == "__main__":
     cmd = \
         cmd_prefix + \
         "python " + \
-        f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'update_symlinks_for_project.py'))} " + \
+        f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'create_project_symlinks.py'))} " + \
         f"--unreal_project_dir {unreal_project_dir} " + \
         f"--unreal_plugins_dir {unreal_plugins_dir} " + \
         f"--third_party_dir {third_party_dir}"
@@ -143,22 +172,30 @@ if __name__ == "__main__":
     subprocess.run(cmd, shell=True, check=True)
 
     # build SpearSim project
+
+    cook_dirs = spear.tools.get_cook_dirs()
+    cook_dir_args = [ "-cookdir=" + os.path.join(unreal_project_dir, cook_dir) for cook_dir in cook_dirs ]
+
+    cook_maps = spear.tools.get_cook_maps()
+    cook_maps_arg = ["-map=" + "+".join(cook_maps)]
+
     cmd = [
         run_uat_script,
         "BuildCookRun",
         "-project=" + os.path.realpath(os.path.join(unreal_project_dir, "SpearSim.uproject")),
-        "-build",            # build C++ executable
-        "-cook",             # prepare cross-platform content for a specific platform (e.g., compile shaders)
-        "-stage",            # copy C++ executable to a staging directory (required for -pak)
-        "-package",          # prepare staged executable for distribution on a specific platform (e.g., runs otool and xcrun on macOS)
-        "-archive",          # copy staged executable to -archivedirectory (on some platforms this will also move directories around relative to the executable)
-        "-pak",              # generate a pak file for cooked content and configure executable so it can load pak files
-        "-iterativecooking", # only cook content that needs to be updated
-        "-targetplatform=" + target_platform,
         "-target=SpearSim",
-        "-archivedirectory=" + archive_dir,
+        "-build",   # build C++ executable
+        "-cook",    # prepare cross-platform content for a specific platform (e.g., compile shaders)
+        "-stage",   # copy C++ executable to a staging directory (required for -pak)
+        "-package", # prepare staged executable for distribution on a specific platform (e.g., runs otool and xcrun on macOS)
+        "-archive", # copy staged executable to -archivedirectory (on some platforms this will also move directories around relative to the executable)
+        "-pak",     # generate a pak file for cooked content and configure executable so it can load pak files
+        "-targetplatform=" + target_platform,
         "-clientconfig=" + build_config,
-        run_uat_platform_args]
+        "-archivedirectory=" + archive_dir,
+        run_uat_platform_args] + \
+        cook_dir_args + \
+        cook_maps_arg
     spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
 

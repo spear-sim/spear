@@ -10,6 +10,7 @@ import pandas as pd
 import posixpath
 import shutil
 import spear
+import spear.tools
 import subprocess
 import sys
 
@@ -17,17 +18,20 @@ import sys
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--paks_dir", required=True)
-    parser.add_argument("--version_tag", required=True)
     parser.add_argument("--pak_file", required=True)
+    parser.add_argument("--cook_dirs_file")
+    parser.add_argument("--cook_maps_file")
     parser.add_argument("--include_assets_file", required=True)
+    parser.add_argument("--exclude_assets_file")
     parser.add_argument("--unreal_engine_dir", required=True)
     parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
-    parser.add_argument("--exclude_assets_file")
     args = parser.parse_args()
 
     assert os.path.exists(args.unreal_engine_dir)
     assert os.path.exists(args.include_assets_file)
+
+    if args.cook_dirs_file is not None:
+        assert os.path.exists(args.cook_dirs_file)
 
     if args.exclude_assets_file is not None:
         assert os.path.exists(args.exclude_assets_file)
@@ -53,6 +57,16 @@ if __name__ == "__main__":
 
     shutil.rmtree(unreal_project_cooked_dir, ignore_errors=True)
 
+    cook_dirs = spear.tools.get_cook_dirs()
+    if args.cook_dirs_file is not None:
+        cook_dirs = cook_dirs + pd.read_csv(args.cook_dirs_file)["cook_dirs"].tolist()
+    cook_dir_args = [ "-cookdir=" + os.path.join(args.unreal_project_dir, cook_dir) for cook_dir in cook_dirs ]
+
+    cook_maps = spear.tools.get_cook_maps()
+    if args.cook_maps_file is not None:
+        cook_maps = cook_maps + pd.read_csv(args.cook_maps_file)["cook_maps"].tolist()
+    cook_maps_arg = ["-map=" + "+".join(cook_maps)]
+
     # cook project, see https://docs.unrealengine.com/5.2/en-US/SharingAndReleasing/Deployment/Cooking for more details
     cmd = [
         unreal_editor_bin,
@@ -60,26 +74,26 @@ if __name__ == "__main__":
         "-run=Cook",
         "-targetplatform=" + platform,
         "-unattended",                           # don't require any user input
-        "-iterate",                              # only cook content that needs to be updated
         "-fileopenlog",                          # generate a log of which files are opened in which order
         "-ddc=InstalledDerivedDataBackendGraph", # use the default cache location for installed (i.e., not source) builds of the engine
         "-unversioned",                          # save all of the cooked packages without versions
         "-stdout",                               # ensure log output is written to the terminal 
-        "-fullstdoutlogoutput",                  # ensure log output is written to the terminal
-        "-nologtimes"]                           # don't print timestamps next to log messages twice
+        "-fullstdoutlogoutput",                  # ensure log output is written to the terminal, -nologtimes means don't print timestamps next to log messages twice
+        "-nologtimes"] + \
+        cook_dir_args + \
+        cook_maps_arg
     spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
 
     # create manifest file
-    paks_version_dir = os.path.realpath(os.path.join(args.paks_dir, args.version_tag))
-    pak_file = os.path.realpath(os.path.join(paks_version_dir, args.pak_file))
-    os.makedirs(paks_version_dir, exist_ok=True)
+    pak_file = os.path.realpath(os.path.join(args.pak_file))
+    pak_dir = os.path.split(pak_file)[0]
+    os.makedirs(pak_dir, exist_ok=True)
 
-    include_assets = pd.read_csv(args.include_assets_file)["include_assets"].tolist()
+    include_assets = pd.read_csv(args.include_assets_file)["include_assets"]
 
-    if args.exclude_assets_file is None:
-        exclude_assets = []
-    else:
+    exclude_assets = []
+    if args.exclude_assets_file is not None:
         exclude_assets = pd.read_csv(args.exclude_assets_file)["exclude_assets"].tolist() # need tolist() so we can test for membership using "in" keyword below
 
     # create manifest file in output dir

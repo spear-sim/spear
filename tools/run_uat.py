@@ -5,6 +5,7 @@
 import argparse
 import os
 import spear
+import spear.tools
 import subprocess
 import sys
 
@@ -14,6 +15,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--build_config", default="Development")
     parser.add_argument("--unreal_engine_dir", required=True)
+    parser.add_argument("--cook_dir", action="append")
+    parser.add_argument("--cook_map", action="append")
     args, unknown_args = parser.parse_known_args() # get remaining args to pass to RunUAT
 
     assert os.path.exists(args.unreal_engine_dir)
@@ -46,17 +49,27 @@ if __name__ == "__main__":
                 spear.log(f"    sudo chown {current_user} {config_dir}")
                 assert False
 
-    project = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "SpearSim.uproject"))
-    archive_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "Standalone-" + args.build_config))
+    project_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim"))
+    project = os.path.realpath(os.path.join(project_dir, "SpearSim.uproject"))
+    archive_dir = os.path.realpath(os.path.join(project_dir, "Standalone-" + args.build_config))
+
+    cook_dirs = spear.tools.get_cook_dirs() + args.cook_dir
+    cook_dir_args = [ "-cookdir=" + os.path.join(project_dir, cook_dir) for cook_dir in cook_dirs ]
+
+    cook_maps = spear.tools.get_cook_maps() + args.cook_map
+    cook_maps_arg = ["-map=" + "+".join(cook_maps)]
 
     cmd = [
         run_uat_script,
         "BuildCookRun",
         "-project=" + project,
         "-target=SpearSim",
-        "-targetPlatform=" + target_platform,
-        "-clientConfig=" + args.build_config,
-        "-archivedirectory=" + archive_dir] + unknown_args # append remaining args to pass to RunUAT
+        "-targetplatform=" + target_platform,
+        "-clientconfig=" + args.build_config,
+        "-archivedirectory=" + archive_dir] + \
+        unknown_args + \
+        cook_dir_args + \
+        cook_maps_arg
     spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
 

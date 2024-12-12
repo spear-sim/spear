@@ -20,7 +20,7 @@ SP_SERVICES:
   # the format that would be expected in DefaultEngine.ini, e.g.,
   #
   #   OVERRIDE_GAME_DEFAULT_MAP: True
-  #   GAME_DEFAULT_MAP: "/Game/Scenes/debug_0000/Maps/debug_0000"
+  #   GAME_DEFAULT_MAP: "/Game/Spear/Scenes/apartment_0000/Maps/apartment_0000.apartment_0000"
   #
   #   OVERRIDE_GLOBAL_DEFAULT_GAME_MODE: True
   #   GLOBAL_DEFAULT_GAME_MODE: "/SpComponents/Blueprints/BP_SpGameMode.BP_SpGameMode_C"
