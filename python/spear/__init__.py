@@ -22,7 +22,6 @@ from spear.input_service import InputService
 from spear.legacy_service import LegacyService
 from spear.sp_func_service import SpFuncService
 from spear.unreal_service import UnrealService
-from spear.world_service import WorldService
 
 # TODO: remove legacy classes
 from spear.env import Env

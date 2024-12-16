@@ -109,7 +109,7 @@ class UnrealService():
         return self._entry_point_caller.call("unreal_service.find_actors")
 
     def find_actors_as_dict(self):
-        return self._entry_point_caller.call("unreal_service.find_actors_as_map")    
+        return self._entry_point_caller.call("unreal_service.find_actors_as_map")
 
     #
     # Get components unconditionally and return a list or dict
@@ -276,7 +276,7 @@ class UnrealService():
     # Get children components conditionally from an actor and return a list
     #
 
-    def get_children_components_by_name_from_actor(self, class_name,  parent, children_component_names, include_all_descendants=True, return_null_if_not_found=True):
+    def get_children_components_by_name_from_actor(self, class_name, parent, children_component_names, include_all_descendants=True, return_null_if_not_found=True):
         return self._entry_point_caller.call("unreal_service.get_children_components_by_name_from_actor", class_name,  parent, children_component_names, include_all_descendants, return_null_if_not_found)
 
     def get_children_components_by_tag_from_actor(self, class_name, parent, tag, include_all_descendants=True):
@@ -460,6 +460,18 @@ class UnrealService():
     def create_scene_component_on_owning_scene_component(self, class_name, owner, scene_component_name):
         return self._entry_point_caller.call("unreal_service.create_scene_component_outside_owner_constructor_from_component", class_name, owner, scene_component_name)
 
+    def create_component_on_actor_by_class(self, component_class, owner, component_name):
+        return self._entry_point_caller.call("unreal_service.create_component_outside_owner_constructor_by_class", component_class, owner, component_name)
+
+    def create_scene_component_on_actor_by_class(self, component_class, owner, scene_component_name):
+        return self._entry_point_caller.call("unreal_service.create_scene_component_outside_owner_constructor_by_class_from_actor", component_class, owner, scene_component_name)
+
+    def create_scene_component_on_component_by_class(self, component_class, owner, parent, scene_component_name):
+        return self._entry_point_caller.call("unreal_service.create_scene_component_outside_owner_constructor_by_class_from_object", component_class, owner, parent, scene_component_name)
+
+    def create_scene_component_on_owning_scene_component_by_class(self, component_class, owner, scene_component_name):
+        return self._entry_point_caller.call("unreal_service.create_scene_component_outside_owner_constructor_by_class_from_component", component_class, owner, scene_component_name)
+
     #
     # Destroy component
     #
@@ -482,7 +494,7 @@ class UnrealService():
         return self._entry_point_caller.call("unreal_service.load_object", class_name, outer, name, filename, load_flags, sandbox, instancing_context)
 
     def load_class(self, class_name, outer, name="", filename="", load_flags=["LOAD_None"], sandbox=0):
-        return self._entry_point_caller.call("unreal_service.load_object", class_name, outer, name, filename, load_flags, sandbox)
+        return self._entry_point_caller.call("unreal_service.load_class", class_name, outer, name, filename, load_flags, sandbox)
 
     def static_load_object(self, uclass, in_outer, name="", filename="", load_flags=["LOAD_None"], sandbox=0, allow_object_reconciliation=True, instancing_context=0):
         return self._entry_point_caller.call("unreal_service.static_load_object", uclass, in_outer, name, filename, load_flags, sandbox, allow_object_reconciliation, instancing_context)
