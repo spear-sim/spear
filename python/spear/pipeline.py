@@ -112,9 +112,9 @@ def any_component_transform_absolute(component_desc):
 
 def compose_transforms(transforms):
 
-    l_composed = TRANSFORM_IDENTITY["location"]
-    R_composed = TRANSFORM_IDENTITY["rotation"]
-    S_composed = TRANSFORM_IDENTITY["scale"]
+    l_composed = identity_transform["location"]
+    R_composed = identity_transform["rotation"]
+    S_composed = identity_transform["scale"]
 
     for transform in transforms[::-1]:
         l_current = transform["location"]

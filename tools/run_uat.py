@@ -53,10 +53,14 @@ if __name__ == "__main__":
     project = os.path.realpath(os.path.join(project_dir, "SpearSim.uproject"))
     archive_dir = os.path.realpath(os.path.join(project_dir, "Standalone-" + args.build_config))
 
-    cook_dirs = spear.tools.get_cook_dirs() + args.cook_dir
+    cook_dirs = spear.tools.get_cook_dirs()
+    if args.cook_dir is not None:
+        cook_dirs = cook_dirs + args.cook_dir
     cook_dir_args = [ "-cookdir=" + os.path.join(project_dir, cook_dir) for cook_dir in cook_dirs ]
 
-    cook_maps = spear.tools.get_cook_maps() + args.cook_map
+    cook_maps = spear.tools.get_cook_maps()
+    if args.cook_map is not None:
+        cook_maps = cook_maps + args.cook_map
     cook_maps_arg = ["-map=" + "+".join(cook_maps)]
 
     cmd = [
