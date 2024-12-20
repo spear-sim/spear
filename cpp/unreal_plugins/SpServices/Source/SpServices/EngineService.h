@@ -232,7 +232,7 @@ public:
         std::lock_guard<std::mutex> lock(frame_state_mutex_);
 
         SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame || frame_state_ == EFrameState::Error,
-            "frame_state_: %d", frame_state_.load()); // don't try to print string because Unreal's reflection system is already shut down
+            "frame_state_: %lld", Unreal::getEnumValue(frame_state_.load())); // don't try to print string because Unreal's reflection system is already shut down
 
         EFrameState frame_state = frame_state_;
         frame_state_ = EFrameState::Closing;
