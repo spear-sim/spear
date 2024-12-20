@@ -144,7 +144,7 @@ public:
                 Unreal::setObjectPropertiesFromString(&sp_input_action_instance, FSpInputActionInstance::StaticStruct(), input_action_instance_string);
 
                 // The internal FInputActionValue in FInputActionInstance isn't exposed to the property
-                // system, so we handle it separately using this set function. 
+                // system, so we handle it separately using this set function.
                 sp_input_action_instance.setInputActionValue(input_action_value);
 
                 // setObjectPropertiesFromString(...) can't be used to set pointers, so we handle modifiers
