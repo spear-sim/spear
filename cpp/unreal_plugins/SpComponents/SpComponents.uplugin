@@ -28,6 +28,10 @@
     ],
     "Plugins": [
         {
+            "Name": "ChaosVehiclesPlugin",
+            "Enabled": true
+        },
+        {
             "Name": "SpCore",
             "Enabled": true
         }

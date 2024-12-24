@@ -83,8 +83,8 @@ if __name__ == "__main__":
         character_descs = [
             {"name": "character_0", "location": {"X": 0.0, "Y": 100.0, "Z": 150.0}, "rotation": {"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}},
             {"name": "character_1", "location": {"X": 0.0, "Y": 200.0, "Z": 150.0}, "rotation": {"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}}]
-        bp_character_uclass = instance.unreal_service.load_object(class_name="UObject", outer=0,
-                                                                  name="/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.BP_ThirdPersonCharacter_C")
+        bp_character_uclass = instance.unreal_service.load_object(outer=0,
+            class_name="UObject", name="/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.BP_ThirdPersonCharacter_C")
 
         characters = []
         for character_desc in character_descs:
@@ -119,7 +119,7 @@ if __name__ == "__main__":
         instance.unreal_service.call_function(
             uobject=characters[0]["skeletal_mesh_component"],
             ufunction=set_skeletal_mesh_asset_func,
-            args={"NewMesh": spear.func_utils.to_ptr(manny_simple_uobject)})
+            args={"NewMesh": spear.to_ptr(manny_simple_uobject)})
 
         # get bone names
         for character in characters:
@@ -142,6 +142,7 @@ if __name__ == "__main__":
 
     with instance.begin_frame():
         instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": False})
+
         for character in characters:
             instance.enhanced_input_service.inject_input_for_actor(
                 actor=character["actor"],
@@ -173,7 +174,6 @@ if __name__ == "__main__":
             for i in range(num_characters):
                 input_action_value = input_action_values[i]
                 character = characters[i]
-
                 instance.enhanced_input_service.inject_input_for_actor(
                     actor=character["actor"],
                     input_action_name="IA_Move",

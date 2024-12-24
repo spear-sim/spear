@@ -905,7 +905,7 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "create_component_outside_owner_constructor_by_class",
             [this](uint64_t& component_class, uint64_t& owner, std::string& component_name) -> uint64_t {
-                return toUInt64(Unreal::createComponentOutsideOwnerConstructorByClass(toPtr<UClass>(component_class), toPtr<AActor>(owner), component_name));
+                return toUInt64(Unreal::createSceneComponentOutsideOwnerConstructorByClass(toPtr<UClass>(component_class), toPtr<AActor>(owner), component_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "create_scene_component_outside_owner_constructor_by_class_from_actor",

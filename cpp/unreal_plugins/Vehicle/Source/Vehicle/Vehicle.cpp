@@ -5,7 +5,6 @@
 #include "Vehicle/Vehicle.h"
 
 #include <Modules/ModuleManager.h> // IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
-#include <ChaosVehicleMovementComponent.h>
 
 #include "SpCore/AssertModuleLoaded.h"
 #include "SpCore/Log.h"
@@ -15,15 +14,11 @@ void Vehicle::StartupModule()
 {
     SP_ASSERT_MODULE_LOADED("SpCore");
     SP_LOG_CURRENT_FUNCTION();
-
-    UnrealClassRegistrar::registerComponentClass<UChaosVehicleMovementComponent>("UChaosVehicleMovementComponent");
 }
 
 void Vehicle::ShutdownModule()
 {
     SP_LOG_CURRENT_FUNCTION();
-
-    UnrealClassRegistrar::unregisterComponentClass<UChaosVehicleMovementComponent>("UChaosVehicleMovementComponent");
 }
 
 // use if module does not implement any Unreal classes

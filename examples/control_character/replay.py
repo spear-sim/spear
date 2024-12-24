@@ -34,8 +34,8 @@ if __name__ == '__main__':
     with instance.begin_frame():
 
         # find functions
-        gameplay_statics_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.GameplayStatics")
-        set_game_paused_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_uclass, function_name="SetGamePaused")
+        gameplay_statics_static_class = instance.unreal_service.get_static_class(class_name="UGameplayStatics")
+        set_game_paused_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_static_class, function_name="SetGamePaused")
 
         poseable_mesh_component_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.PoseableMeshComponent")
         set_skinned_asset_and_update_func = instance.unreal_service.find_function_by_name(uclass=poseable_mesh_component_uclass, function_name="SetSkinnedAssetAndUpdate")
@@ -44,7 +44,7 @@ if __name__ == '__main__':
         get_bone_name_func = instance.unreal_service.find_function_by_name(uclass=poseable_mesh_component_uclass, function_name="GetBoneName")
 
         # get UGameplayStatics default object
-        gameplay_statics = instance.unreal_service.get_default_object(uclass=gameplay_statics_uclass, create_if_needed=False)
+        gameplay_statics = instance.unreal_service.get_default_object(uclass=gameplay_statics_static_class, create_if_needed=False)
 
         actor_uclass = instance.unreal_service.get_static_class(class_name="AActor")
         poseable_mesh_actor = instance.unreal_service.spawn_actor_from_uclass(
@@ -62,7 +62,7 @@ if __name__ == '__main__':
         instance.unreal_service.call_function(
             uobject=poseable_mesh_component,
             ufunction=set_skinned_asset_and_update_func,
-            args={"NewMesh": spear.func_utils.to_ptr(manny_simple_uobject)})
+            args={"NewMesh": spear.to_ptr(manny_simple_uobject)})
 
         bone_names = []
         return_values = instance.unreal_service.call_function(uobject=poseable_mesh_component, ufunction=get_num_bones_func)
