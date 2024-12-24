@@ -96,7 +96,7 @@ void UUrdfLinkComponent::initialize(const UrdfLinkDesc* link_desc)
         #endif
 
         // create child static mesh component for each UrdfVisualDesc
-        auto static_mesh_component = Unreal::createComponentOutsideOwnerConstructor<UStaticMeshComponent>(this, Unreal::toStdString(GetName()) + "__static_mesh_component_" + i_str);
+        auto static_mesh_component = Unreal::createSceneComponentOutsideOwnerConstructor<UStaticMeshComponent>(this, Unreal::toStdString(GetName()) + "__static_mesh_component_" + i_str);
         SP_ASSERT(static_mesh_component);
 
         // each UrdfVisualDesc has its own reference frame

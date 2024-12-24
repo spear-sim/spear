@@ -8,6 +8,7 @@
 
 #include "SpCore/AssertModuleLoaded.h"
 #include "SpCore/Log.h"
+#include "SpCore/UnrealClassRegistrar.h"
 
 void Vehicle::StartupModule()
 {

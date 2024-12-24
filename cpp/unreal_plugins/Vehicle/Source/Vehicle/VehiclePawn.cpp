@@ -56,7 +56,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
     SP_ASSERT(SpStableNameComponent);
 
     // USpUserInputComponent
-    SpUserInputComponent = Unreal::createComponentInsideOwnerConstructor<USpUserInputComponent>(this, GetMesh(), "sp_user_input_component");
+    SpUserInputComponent = Unreal::createSceneComponentInsideOwnerConstructor<USpUserInputComponent>(this, GetMesh(), "sp_user_input_component");
     SP_ASSERT(SpUserInputComponent);
 
     // USkeletalMeshComponent
@@ -110,7 +110,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
         aspect_ratio = 1.333333f;
     }
 
-    CameraComponent = Unreal::createComponentInsideOwnerConstructor<UCameraComponent>(this, GetMesh(), "camera_component");
+    CameraComponent = Unreal::createSceneComponentInsideOwnerConstructor<UCameraComponent>(this, GetMesh(), "camera_component");
     SP_ASSERT(CameraComponent);
     CameraComponent->SetRelativeLocationAndRotation(camera_location, camera_rotation);
     CameraComponent->bUsePawnControlRotation = false;
@@ -135,7 +135,7 @@ AVehiclePawn::AVehiclePawn(const FObjectInitializer& object_initializer) :
         imu_rotation = FRotator::ZeroRotator;
     }
 
-    ImuComponent = Unreal::createComponentInsideOwnerConstructor<UBoxComponent>(this, GetMesh(), "imu_component");
+    ImuComponent = Unreal::createSceneComponentInsideOwnerConstructor<UBoxComponent>(this, GetMesh(), "imu_component");
     SP_ASSERT(ImuComponent);
     ImuComponent->SetRelativeLocationAndRotation(imu_location, imu_rotation);
 

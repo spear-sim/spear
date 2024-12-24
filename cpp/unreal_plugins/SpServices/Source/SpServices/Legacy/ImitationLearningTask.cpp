@@ -40,7 +40,7 @@ ImitationLearningTask::ImitationLearningTask(UWorld* world)
     SP_ASSERT(goal_actor_);
 
     // Although scene_component appears to not being used anywhere, it is required here to make goal_actor_ movable.
-    auto scene_component = Unreal::createComponentOutsideOwnerConstructor<USceneComponent>(goal_actor_, "scene_component");
+    auto scene_component = Unreal::createSceneComponentInsideOwnerConstructor<USceneComponent>(goal_actor_, "scene_component");
     SP_ASSERT(scene_component);
     scene_component->SetMobility(EComponentMobility::Movable);
 

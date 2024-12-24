@@ -486,15 +486,15 @@ public:
 
         g_create_scene_component_outside_owner_constructor_from_actor_func_registrar.registerFunc(
             class_name, [](AActor* owner, const std::string& scene_component_name) -> USceneComponent* {
-                return Unreal::createComponentOutsideOwnerConstructor<TSceneComponent, USceneComponent>(owner, scene_component_name); });
+                return Unreal::createSceneComponentOutsideOwnerConstructor<TSceneComponent, USceneComponent>(owner, scene_component_name); });
 
         g_create_scene_component_outside_owner_constructor_from_object_func_registrar.registerFunc(
             class_name, [](UObject* owner, USceneComponent* parent, const std::string& scene_component_name) -> USceneComponent* {
-                return Unreal::createComponentOutsideOwnerConstructor<TSceneComponent, USceneComponent>(owner, parent, scene_component_name); });
+                return Unreal::createSceneComponentOutsideOwnerConstructor<TSceneComponent, USceneComponent>(owner, parent, scene_component_name); });
 
         g_create_scene_component_outside_owner_constructor_from_scene_component_func_registrar.registerFunc(
             class_name, [](USceneComponent* owner, const std::string& scene_component_name) -> USceneComponent* {
-                return Unreal::createComponentOutsideOwnerConstructor<TSceneComponent, USceneComponent>(owner, scene_component_name); });
+                return Unreal::createSceneComponentOutsideOwnerConstructor<TSceneComponent, USceneComponent>(owner, scene_component_name); });
 
         //
         // Get children components by name or tag or type from an AActor* and return an std::vector

@@ -50,7 +50,7 @@ UUrdfJointComponent::UUrdfJointComponent()
     SP_LOG_CURRENT_FUNCTION();
 
     // USpUserInputComponent
-    SpUserInputComponent = Unreal::createComponentInsideOwnerConstructor<USpUserInputComponent>(this, Unreal::toStdString(GetName()) + "__sp_user_input_component");
+    SpUserInputComponent = Unreal::createSceneComponentInsideOwnerConstructor<USpUserInputComponent>(this, Unreal::toStdString(GetName()) + "__sp_user_input_component");
     SP_ASSERT(SpUserInputComponent);
 }
 

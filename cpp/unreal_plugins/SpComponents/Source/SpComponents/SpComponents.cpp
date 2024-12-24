@@ -4,6 +4,7 @@
 
 #include "SpComponents/SpComponents.h"
 
+#include <ChaosVehicleMovementComponent.h>
 #include <Modules/ModuleManager.h> // IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
 
 #include "SpCore/AssertModuleLoaded.h"
@@ -21,6 +22,7 @@ void SpComponents::StartupModule()
 
     UnrealClassRegistrar::registerActorClass<ASpDebugManager>("ASpDebugManager");
     UnrealClassRegistrar::registerActorClass<ASpHitEventManager>("ASpHitEventManager");
+    UnrealClassRegistrar::registerComponentClass<UChaosVehicleMovementComponent>("UChaosVehicleMovementComponent");
     UnrealClassRegistrar::registerComponentClass<USpSceneCaptureComponent2D>("USpSceneCaptureComponent2D");
 }
 
@@ -30,6 +32,7 @@ void SpComponents::ShutdownModule()
 
     UnrealClassRegistrar::unregisterActorClass<ASpDebugManager>("ASpDebugManager");
     UnrealClassRegistrar::unregisterActorClass<ASpHitEventManager>("ASpHitEventManager");
+    UnrealClassRegistrar::unregisterComponentClass<UChaosVehicleMovementComponent>("UChaosVehicleMovementComponent");
     UnrealClassRegistrar::unregisterComponentClass<USpSceneCaptureComponent2D>("USpSceneCaptureComponent2D");
 }
 
