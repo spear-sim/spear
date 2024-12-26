@@ -470,7 +470,7 @@ class UnrealService():
         return self._entry_point_caller.call("unreal_service.create_scene_component_outside_owner_constructor_by_class_from_object", component_class, owner, parent, scene_component_name)
 
     def create_scene_component_on_owning_scene_component_by_class(self, component_class, owner, scene_component_name):
-        return self._entry_point_caller.call("unreal_service.create_scene_component_on_owning_scene_component_by_class", component_class, owner, scene_component_name)
+        return self._entry_point_caller.call("unreal_service.create_scene_component_outside_owner_constructor_by_class_from_component", component_class, owner, scene_component_name)
 
     #
     # Destroy component

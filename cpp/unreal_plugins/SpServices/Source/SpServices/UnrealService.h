@@ -905,22 +905,22 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "create_component_outside_owner_constructor_by_class",
             [this](uint64_t& component_class, uint64_t& owner, std::string& component_name) -> uint64_t {
-                return toUInt64(Unreal::createSceneComponentOutsideOwnerConstructorByClass(toPtr<UClass>(component_class), toPtr<AActor>(owner), component_name));
+                return toUInt64(Unreal::createComponentOutsideOwnerConstructorByClass(toPtr<UClass>(component_class), toPtr<AActor>(owner), component_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "create_scene_component_outside_owner_constructor_by_class_from_actor",
-            [this](uint64_t& component_class, uint64_t& actor, std::string& scene_component_name) -> uint64_t {
-                return toUInt64(Unreal::createSceneComponentOutsideOwnerConstructorByClass(toPtr<UClass>(component_class), toPtr<AActor>(actor), scene_component_name));
+            [this](uint64_t& scene_component_class, uint64_t& actor, std::string& scene_component_name) -> uint64_t {
+                return toUInt64(Unreal::createSceneComponentOutsideOwnerConstructorByClass(toPtr<UClass>(scene_component_class), toPtr<AActor>(actor), scene_component_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "create_scene_component_outside_owner_constructor_by_class_from_object",
-            [this](uint64_t& component_class, uint64_t& owner, uint64_t& parent, std::string& scene_component_name) -> uint64_t {
-                return toUInt64(Unreal::createSceneComponentOutsideOwnerConstructorByClass(toPtr<UClass>(component_class), toPtr<UObject>(owner), toPtr<USceneComponent>(parent), scene_component_name));
+            [this](uint64_t& scene_component_class, uint64_t& owner, uint64_t& parent, std::string& scene_component_name) -> uint64_t {
+                return toUInt64(Unreal::createSceneComponentOutsideOwnerConstructorByClass(toPtr<UClass>(scene_component_class), toPtr<UObject>(owner), toPtr<USceneComponent>(parent), scene_component_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "create_scene_component_outside_owner_constructor_by_class_from_component",
-            [this](uint64_t& component_class, uint64_t& owner, std::string& scene_component_name) -> uint64_t {
-                return toUInt64(Unreal::createSceneComponentOutsideOwnerConstructorByClass(toPtr<UClass>(component_class), toPtr<USceneComponent>(owner), scene_component_name));
+            [this](uint64_t& scene_component_class, uint64_t& owner, std::string& scene_component_name) -> uint64_t {
+                return toUInt64(Unreal::createSceneComponentOutsideOwnerConstructorByClass(toPtr<UClass>(scene_component_class), toPtr<USceneComponent>(owner), scene_component_name));
             });
 
         //

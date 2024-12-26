@@ -247,8 +247,7 @@ public:
     static USceneComponent* createSceneComponentInsideOwnerConstructorByClass(UClass* scene_component_class, AActor* owner, const std::string& scene_component_name)
     {
         SP_ASSERT(owner);
-        USceneComponent* scene_component =
-            Cast<USceneComponent>(owner->CreateDefaultSubobject(toFName(scene_component_name), scene_component_class, scene_component_class, true, false));
+        USceneComponent* scene_component = Cast<USceneComponent>(owner->CreateDefaultSubobject(toFName(scene_component_name), scene_component_class, scene_component_class, true, false));
         SP_ASSERT(scene_component);
         owner->SetRootComponent(scene_component);
         return scene_component;
@@ -321,30 +320,30 @@ public:
         return actor_component;
     }
 
-    static USceneComponent* createSceneComponentOutsideOwnerConstructorByClass(UClass* component_class, AActor* owner, const std::string& component_name)
+    static USceneComponent* createSceneComponentOutsideOwnerConstructorByClass(UClass* scene_component_class, AActor* owner, const std::string& scene_component_name)
     {
         SP_ASSERT(owner);
-        USceneComponent* scene_component = NewObject<USceneComponent>(owner, component_class, toFName(component_name));
+        USceneComponent* scene_component = NewObject<USceneComponent>(owner, scene_component_class, toFName(scene_component_name));
         SP_ASSERT(scene_component);
         owner->SetRootComponent(scene_component);
         scene_component->RegisterComponent();
         return scene_component;
     }
 
-    static USceneComponent* createSceneComponentOutsideOwnerConstructorByClass(UClass* component_class, UObject* owner, USceneComponent* parent, const std::string& scene_component_name)
+    static USceneComponent* createSceneComponentOutsideOwnerConstructorByClass(UClass* scene_component_class, UObject* owner, USceneComponent* parent, const std::string& scene_component_name)
     {
         SP_ASSERT(owner);
         SP_ASSERT(parent);
-        USceneComponent* scene_component = NewObject<USceneComponent>(owner, component_class, toFName(scene_component_name));
+        USceneComponent* scene_component = NewObject<USceneComponent>(owner, scene_component_class, toFName(scene_component_name));
         SP_ASSERT(scene_component);
         scene_component->SetupAttachment(parent);
         scene_component->RegisterComponent();
         return scene_component;
     }
 
-    static USceneComponent* createSceneComponentOutsideOwnerConstructorByClass(UClass* component_class, USceneComponent* owner, const std::string& scene_component_name)
+    static USceneComponent* createSceneComponentOutsideOwnerConstructorByClass(UClass* scene_component_class, USceneComponent* owner, const std::string& scene_component_name)
     {
-        return createSceneComponentOutsideOwnerConstructorByClass(component_class, owner, owner, scene_component_name);
+        return createSceneComponentOutsideOwnerConstructorByClass(scene_component_class, owner, owner, scene_component_name);
     }
 
     // 
