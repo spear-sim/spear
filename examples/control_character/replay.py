@@ -15,7 +15,8 @@ def get_transforms(df, transform_names):
     for transform_name in transform_names:
         transform = {
             "translation": {"x": df[transform_name + "_translation_x"], "y": df[transform_name + "_translation_y"], "z": df[transform_name + "_translation_z"]},
-            "rotation": {"x": df[transform_name + "_rotation_x"], "y": df[transform_name + "_rotation_y"], "z": df[transform_name + "_rotation_z"], "w": df[transform_name + "_rotation_w"]},
+            "rotation": {"x": df[transform_name + "_rotation_x"], "y": df[transform_name + "_rotation_y"], "z": df[transform_name + "_rotation_z"],
+                         "w": df[transform_name + "_rotation_w"]},
             "scale3D": {"x": df[transform_name + "_scale3D_x"], "y": df[transform_name + "_scale3D_y"], "z": df[transform_name + "_scale3D_z"]}}
         transforms[transform_name] = transform
     return transforms
@@ -33,9 +34,12 @@ if __name__ == '__main__':
 
     with instance.begin_frame():
 
+        # we could use get_static_class(...) here, as we do in our other examples, but we want to include
+        # an example of how load_class(...) can be used to accomplish the same thing
+
         # find functions
-        gameplay_statics_static_class = instance.unreal_service.get_static_class(class_name="UGameplayStatics")
-        set_game_paused_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_static_class, function_name="SetGamePaused")
+        gameplay_statics_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.GameplayStatics")
+        set_game_paused_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_uclass, function_name="SetGamePaused")
 
         poseable_mesh_component_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.PoseableMeshComponent")
         set_skinned_asset_and_update_func = instance.unreal_service.find_function_by_name(uclass=poseable_mesh_component_uclass, function_name="SetSkinnedAssetAndUpdate")
@@ -44,14 +48,14 @@ if __name__ == '__main__':
         get_bone_name_func = instance.unreal_service.find_function_by_name(uclass=poseable_mesh_component_uclass, function_name="GetBoneName")
 
         # get UGameplayStatics default object
-        gameplay_statics = instance.unreal_service.get_default_object(uclass=gameplay_statics_static_class, create_if_needed=False)
+        gameplay_statics = instance.unreal_service.get_default_object(uclass=gameplay_statics_uclass, create_if_needed=False)
 
-        actor_uclass = instance.unreal_service.get_static_class(class_name="AActor")
+        actor_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.Actor")
         poseable_mesh_actor = instance.unreal_service.spawn_actor_from_uclass(
             uclass=actor_uclass,
-            location={"X": 0.0, "Y": 100.0, "Z": 150.0}, rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
-            spawn_parameters={"Name": "character", "SpawnCollisionHandlingOverride": "AlwaysSpawn"}
-        )
+            location={"X": 0.0, "Y": 100.0, "Z": 150.0},
+            rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
+            spawn_parameters={"Name": "character", "SpawnCollisionHandlingOverride": "AlwaysSpawn"})
 
         # create UPoseableMeshComponent and setup skeletal mesh
         manny_simple_uobject = instance.unreal_service.load_object(class_name="UObject", outer=0, name="/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple")
@@ -74,6 +78,7 @@ if __name__ == '__main__':
                 args={"BoneIndex": i})
             bone_name = return_values['ReturnValue']
             bone_names.append(bone_name)
+
     with instance.end_frame():
         pass
 

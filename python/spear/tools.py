@@ -10,7 +10,10 @@ def get_cook_dirs():
     return [
         os.path.join("Content", "Characters"),
         os.path.join("Content", "Spear"),
-        os.path.join("Content", "StarterContent")]
+        os.path.join("Content", "StarterContent"),
+        os.path.join("Content", "ThirdPerson"),
+        os.path.join("Content", "Vehicles"),
+        os.path.join("Content", "VehicleTemplate")]
 
 def get_cook_maps():
     return [

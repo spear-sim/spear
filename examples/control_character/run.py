@@ -55,6 +55,9 @@ if __name__ == "__main__":
 
     with instance.begin_frame():
 
+        # we could use get_static_class(...) here, as we do in our other examples, but we want to include
+        # an example of how load_class(...) can be used to accomplish the same thing
+
         # find functions
         gameplay_statics_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.GameplayStatics")
         set_game_paused_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_uclass, function_name="SetGamePaused")
@@ -83,8 +86,7 @@ if __name__ == "__main__":
         character_descs = [
             {"name": "character_0", "location": {"X": 0.0, "Y": 100.0, "Z": 150.0}, "rotation": {"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}},
             {"name": "character_1", "location": {"X": 0.0, "Y": 200.0, "Z": 150.0}, "rotation": {"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}}]
-        bp_character_uclass = instance.unreal_service.load_object(outer=0,
-            class_name="UObject", name="/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.BP_ThirdPersonCharacter_C")
+        bp_character_uclass = instance.unreal_service.load_object(class_name="UObject", outer=0, name="/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.BP_ThirdPersonCharacter_C")
 
         characters = []
         for character_desc in character_descs:
