@@ -41,7 +41,7 @@ if __name__ == "__main__":
         bp_car_uclass = instance.unreal_service.load_object(class_name="UObject", outer=0, name="/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_Pawn.OffroadCar_Pawn_C")
         car = instance.unreal_service.spawn_actor_from_uclass(
             uclass=bp_car_uclass,
-            location={"X": 0.0, "Y": 0.0, "Z": 0.0},
+            location={"X": -2500.0, "Y": -9330.0, "Z": 20.0},
             rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
             spawn_parameters={"Name": "Agent", "SpawnCollisionHandlingOverride": "AlwaysSpawn"})
         chaos_vehicle_movement_component = instance.unreal_service.get_component_by_class(actor=car, uclass=chaos_vehicle_movement_component_uclass)

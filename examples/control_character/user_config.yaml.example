@@ -13,4 +13,4 @@ SPEAR:
 SP_SERVICES:
   INITIALIZE_ENGINE_SERVICE:
     OVERRIDE_GAME_DEFAULT_MAP: True
-    GAME_DEFAULT_MAP: "/Game/Scenes/debug_0002/Maps/debug_0002"
+    GAME_DEFAULT_MAP: "/Game/ThirdPerson/Maps/ThirdPersonMap"

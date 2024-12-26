@@ -84,8 +84,8 @@ if __name__ == "__main__":
         #
 
         character_descs = [
-            {"name": "character_0", "location": {"X": 0.0, "Y": 100.0, "Z": 150.0}, "rotation": {"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}},
-            {"name": "character_1", "location": {"X": 0.0, "Y": 200.0, "Z": 150.0}, "rotation": {"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}}]
+            {"name": "character_0", "location": {"X": 900.0, "Y": 1000.0, "Z": 100.0}, "rotation": {"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}},
+            {"name": "character_1", "location": {"X": 900.0, "Y": 1100.0, "Z": 100.0}, "rotation": {"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}}]
         bp_character_uclass = instance.unreal_service.load_object(class_name="UObject", outer=0, name="/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.BP_ThirdPersonCharacter_C")
 
         characters = []

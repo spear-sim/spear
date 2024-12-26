@@ -8,7 +8,10 @@ import os
 # command-line arguments, so we specify them in DefaultGame.ini.
 def get_cook_dirs():
     return [
+        os.path.join("Content", "__ExternalActors__"),
+        os.path.join("Content", "__ExternalObjects__"),
         os.path.join("Content", "Characters"),
+        os.path.join("Content", "LevelPrototyping"),
         os.path.join("Content", "Spear"),
         os.path.join("Content", "StarterContent"),
         os.path.join("Content", "ThirdPerson"),

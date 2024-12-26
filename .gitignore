@@ -7,7 +7,10 @@ cpp/unreal_plugins/*/ThirdParty
 
 cpp/unreal_projects/SpearSim/Binaries
 cpp/unreal_projects/SpearSim/Build
+cpp/unreal_projects/SpearSim/Content/__ExternalActors__
+cpp/unreal_projects/SpearSim/Content/__ExternalObjects__
 cpp/unreal_projects/SpearSim/Content/Characters
+cpp/unreal_projects/SpearSim/Content/LevelPrototyping
 cpp/unreal_projects/SpearSim/Content/Megascans
 cpp/unreal_projects/SpearSim/Content/MSPresets
 cpp/unreal_projects/SpearSim/Content/Scenes
