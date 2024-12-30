@@ -10,7 +10,7 @@ import spear
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--unreal_engine_dir", default=r"F:\Program Files\Epic Games\UE_5.5")
+    parser.add_argument("--unreal_engine_dir", required=True)
     parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
     args = parser.parse_args()
 
