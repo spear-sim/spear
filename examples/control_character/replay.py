@@ -48,7 +48,7 @@ if __name__ == '__main__':
         get_bone_name_func = instance.unreal_service.find_function_by_name(uclass=poseable_mesh_component_uclass, function_name="GetBoneName")
 
         # get UGameplayStatics default object
-        gameplay_statics = instance.unreal_service.get_default_object(uclass=gameplay_statics_uclass, create_if_needed=False)
+        gameplay_statics_default_object = instance.unreal_service.get_default_object(uclass=gameplay_statics_uclass, create_if_needed=False)
 
         actor_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/Engine.Actor")
         poseable_mesh_actor = instance.unreal_service.spawn_actor_from_uclass(
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     df = pd.read_csv(args.actions_file)
     for row in df.to_records():
         with instance.begin_frame():
-            instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": False})
+            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
 
             bone_transforms = get_transforms(row, bone_names)
             for bone_name, transform in bone_transforms.items():
@@ -95,6 +95,6 @@ if __name__ == '__main__':
                     args={"BoneName": bone_name, "InTransform": transform, "BoneSpace": "WorldSpace"})
 
         with instance.end_frame():
-            instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": True})
+            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
 
     spear.log("Done.")

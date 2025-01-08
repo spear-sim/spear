@@ -77,7 +77,7 @@ if __name__ == "__main__":
         enhanced_input_component_uclass = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/EnhancedInput.EnhancedInputComponent")
 
         # get UGameplayStatics default object
-        gameplay_statics = instance.unreal_service.get_default_object(uclass=gameplay_statics_uclass, create_if_needed=False)
+        gameplay_statics_default_object = instance.unreal_service.get_default_object(uclass=gameplay_statics_uclass, create_if_needed=False)
 
         #
         # initialize characters
@@ -86,6 +86,8 @@ if __name__ == "__main__":
         character_descs = [
             {"name": "character_0", "location": {"X": 900.0, "Y": 1000.0, "Z": 100.0}, "rotation": {"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}},
             {"name": "character_1", "location": {"X": 900.0, "Y": 1100.0, "Z": 100.0}, "rotation": {"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0}}]
+        num_characters = len(character_descs)
+
         bp_character_uclass = instance.unreal_service.load_object(class_name="UObject", outer=0, name="/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.BP_ThirdPersonCharacter_C")
 
         characters = []
@@ -114,8 +116,6 @@ if __name__ == "__main__":
 
             characters.append(character)
 
-        num_characters = len(characters)
-
         # update skeletal mesh
         manny_simple_uobject = instance.unreal_service.load_object(class_name="UObject", outer=0, name="/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple")
         instance.unreal_service.call_function(
@@ -143,7 +143,7 @@ if __name__ == "__main__":
     df = pd.DataFrame()
 
     with instance.begin_frame():
-        instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": False})
+        instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
 
         for character in characters:
             instance.enhanced_input_service.inject_input_for_actor(
@@ -163,11 +163,11 @@ if __name__ == "__main__":
             transforms[bone_name] = return_values["ReturnValue"]
         df = pd.concat([df, get_data_frame(transforms)])
 
-        instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": True})
+        instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
 
     for _ in range(200):
         with instance.begin_frame():
-            instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": False})
+            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
 
             input_action_values = [
                 {"ValueType": "Axis2D", "Value": {"X": 0.0, "Y": 1.0, "Z": 0.0}},
@@ -193,7 +193,7 @@ if __name__ == "__main__":
                 transforms[bone_name] = return_values["ReturnValue"]
             df = pd.concat([df, get_data_frame(transforms)])
 
-            instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": True})
+            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
 
     df.to_csv(args.actions_file, float_format="%.5f", mode="w", index=False)
 

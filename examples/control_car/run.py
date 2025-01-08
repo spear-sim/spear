@@ -28,10 +28,10 @@ if __name__ == "__main__":
         set_throttle_input_func = instance.unreal_service.find_function_by_name(uclass=chaos_vehicle_movement_component_uclass, function_name="SetThrottleInput")
 
         # get UGameplayStatics default object
-        gameplay_statics = instance.unreal_service.get_default_object(uclass=gameplay_statics_static_class, create_if_needed=False)
+        gameplay_statics_default_object = instance.unreal_service.get_default_object(uclass=gameplay_statics_static_class, create_if_needed=False)
 
         # get player controller
-        return_values = instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=get_player_controller_func, args={"PlayerIndex": 0})
+        return_values = instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=get_player_controller_func, args={"PlayerIndex": 0})
         player_controller = spear.to_handle(return_values["ReturnValue"])
 
         #
@@ -57,21 +57,21 @@ if __name__ == "__main__":
 
     # set throttle to 1.0
     with instance.begin_frame():
-        instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": False})
+        instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
         instance.unreal_service.call_function(uobject=chaos_vehicle_movement_component, ufunction=set_throttle_input_func, args={"Throttle": 1.0})
     with instance.end_frame():
-        instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": True})
+        instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
 
     # drive
     for _ in range(100):
         with instance.begin_frame():
-            instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": False})
+            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
         with instance.end_frame():
-            instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": True})
+            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
 
     # steer
     with instance.begin_frame():
-        instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": False})
+        instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
         instance.enhanced_input_service.inject_input_for_actor(
             actor=car,
             input_action_name="IA_Steering",
@@ -80,30 +80,31 @@ if __name__ == "__main__":
             input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
     with instance.end_frame():
-        instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": True})
+        instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
 
     # drive
     for _ in range(100):
         with instance.begin_frame():
-            instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": False})
+            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
         with instance.end_frame():
-            instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": True})
+            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
 
     # reset
     with instance.begin_frame():
-        instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": False})
+        instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
         instance.enhanced_input_service.inject_input_for_actor(
             actor=car,
             input_action_name="IA_Reset",
             trigger_event="Triggered",
             input_action_value={},
             input_action_instance={})
+
     with instance.end_frame():
-        instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": True})
+        instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
 
     # set throttle to 1.0 and steer
     with instance.begin_frame():
-        instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": False})
+        instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
         instance.unreal_service.call_function(uobject=chaos_vehicle_movement_component, ufunction=set_throttle_input_func, args={"Throttle": 1.0})
         instance.enhanced_input_service.inject_input_for_actor(
             actor=car,
@@ -113,28 +114,28 @@ if __name__ == "__main__":
             input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
     with instance.end_frame():
-        instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": True})
+        instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
 
     # drive
     for _ in range(100):
         with instance.begin_frame():
-            instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": False})
+            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
         with instance.end_frame():
-            instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": True})
+            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
 
     # set throttle to 0.0
     with instance.begin_frame():
-        instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": False})
+        instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
         instance.unreal_service.call_function(uobject=chaos_vehicle_movement_component, ufunction=set_throttle_input_func, args={"Throttle": 0.0})
     with instance.end_frame():
-        instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": True})
+        instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
 
     # coast
     for _ in range(100):
         with instance.begin_frame():
-            instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": False})
+            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
         with instance.end_frame():
-            instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": True})
+            instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
 
     # close the instance
     instance.close()
