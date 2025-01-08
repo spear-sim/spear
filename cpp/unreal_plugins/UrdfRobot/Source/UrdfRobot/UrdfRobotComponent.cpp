@@ -49,7 +49,7 @@ UUrdfRobotComponent::UUrdfRobotComponent()
     PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
 
     // USpUserInputComponent
-    SpUserInputComponent = Unreal::createComponentInsideOwnerConstructor<USpUserInputComponent>(this, Unreal::toStdString(GetName()) + "__sp_user_input_component");
+    SpUserInputComponent = Unreal::createSceneComponentInsideOwnerConstructor<USpUserInputComponent>(this, Unreal::toStdString(GetName()) + "__sp_user_input_component");
     SP_ASSERT(SpUserInputComponent);
 }
 
@@ -199,7 +199,7 @@ void UUrdfRobotComponent::initialize(const UrdfRobotDesc* robot_desc)
     // If this order is reversed and we end up creating more child components before registering the parent component,
     // the physics simulation will be unstable.
     SP_ASSERT(!Std::contains(root_link_desc->name_, "."));
-    RootLinkComponent = Unreal::createComponentOutsideOwnerConstructor<UUrdfLinkComponent>(this, root_link_desc->name_);
+    RootLinkComponent = Unreal::createSceneComponentOutsideOwnerConstructor<UUrdfLinkComponent>(this, root_link_desc->name_);
     SP_ASSERT(RootLinkComponent);
     RootLinkComponent->initialize(root_link_desc);
     LinkComponents.Add(RootLinkComponent);
@@ -222,7 +222,7 @@ void UUrdfRobotComponent::initialize(const UrdfLinkDesc* parent_link_desc, UUrdf
         SP_ASSERT(child_joint_desc);
 
         SP_ASSERT(!Std::contains(child_link_desc->name_, "."));
-        auto child_link_component = Unreal::createComponentOutsideOwnerConstructor<UUrdfLinkComponent>(this, parent_link_component, child_link_desc->name_);
+        auto child_link_component = Unreal::createSceneComponentOutsideOwnerConstructor<UUrdfLinkComponent>(this, parent_link_component, child_link_desc->name_);
         SP_ASSERT(child_link_component);
         child_link_component->initialize(child_link_desc);
         LinkComponents.Add(child_link_component);
@@ -235,7 +235,7 @@ void UUrdfRobotComponent::initialize(const UrdfLinkDesc* parent_link_desc, UUrdf
         // simplicity of our recursive code for creating the Unreal component hierarchy.
 
         SP_ASSERT(!Std::contains(child_joint_desc->name_, "."));
-        auto child_joint_component = Unreal::createComponentOutsideOwnerConstructor<UUrdfJointComponent>(this, parent_link_component, child_joint_desc->name_);
+        auto child_joint_component = Unreal::createSceneComponentOutsideOwnerConstructor<UUrdfJointComponent>(this, parent_link_component, child_joint_desc->name_);
         SP_ASSERT(child_joint_component);
         child_joint_component->initialize(child_joint_desc, parent_link_component, child_link_component);
         JointComponents.Add(child_joint_component);

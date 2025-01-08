@@ -7,7 +7,6 @@ import os
 import shutil
 import spear
 
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -21,8 +20,24 @@ if __name__ == "__main__":
     content_dirs = {
         os.path.realpath(os.path.join(args.unreal_engine_dir, "Samples", "StarterContent", "Content", "StarterContent")): \
             os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "StarterContent")),
+        os.path.realpath(os.path.join(args.unreal_engine_dir, "Templates", "TemplateResources", "High", "LevelPrototyping", "Content")): \
+            os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "LevelPrototyping")),
         os.path.realpath(os.path.join(args.unreal_engine_dir, "Templates", "TemplateResources", "High", "Characters", "Content", "Mannequins")): \
-            os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "Characters", "Mannequins"))}
+            os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "Characters", "Mannequins")),
+        os.path.realpath(os.path.join(args.unreal_engine_dir, "Templates", "TP_ThirdPersonBP", "Content", "ThirdPerson")): \
+            os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "ThirdPerson")),
+        os.path.realpath(os.path.join(args.unreal_engine_dir, "Templates", "TP_ThirdPersonBP", "Content", "__ExternalActors__", "ThirdPerson")): \
+            os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "__ExternalActors__", "ThirdPerson")),
+        os.path.realpath(os.path.join(args.unreal_engine_dir, "Templates", "TP_ThirdPersonBP", "Content", "__ExternalObjects__", "ThirdPerson")): \
+            os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "__ExternalObjects__", "ThirdPerson")),
+        os.path.realpath(os.path.join(args.unreal_engine_dir, "Templates", "TemplateResources", "Standard", "Vehicles", "Content")): \
+            os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "Vehicles")),
+        os.path.realpath(os.path.join(args.unreal_engine_dir, "Templates", "TP_VehicleAdvBP", "Content", "VehicleTemplate")): \
+            os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "VehicleTemplate")),
+        os.path.realpath(os.path.join(args.unreal_engine_dir, "Templates", "TP_VehicleAdvBP", "Content", "__ExternalActors__", "VehicleTemplate")): \
+            os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "__ExternalActors__", "VehicleTemplate")),
+        os.path.realpath(os.path.join(args.unreal_engine_dir, "Templates", "TP_VehicleAdvBP", "Content", "__ExternalObjects__", "VehicleTemplate")): \
+            os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "__ExternalObjects__", "VehicleTemplate"))}
 
     for unreal_engine_dir, project_dir in content_dirs.items():
 

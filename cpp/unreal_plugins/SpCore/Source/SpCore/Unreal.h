@@ -212,40 +212,60 @@ public:
         std::derived_from<TComponent, TReturnAsComponent>
     static TReturnAsComponent* createComponentInsideOwnerConstructor(AActor* owner, const std::string& component_name)
     {
-        SP_ASSERT(owner);
-        TReturnAsComponent* actor_component = owner->CreateDefaultSubobject<TComponent>(toFName(component_name));
-        SP_ASSERT(actor_component);
-        return actor_component;
+        return Cast<TReturnAsComponent>(createComponentInsideOwnerConstructorByClass(TComponent::StaticClass(), owner, component_name));
     }
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
-    static TReturnAsSceneComponent* createComponentInsideOwnerConstructor(AActor* owner, const std::string& scene_component_name)
+    static TReturnAsSceneComponent* createSceneComponentInsideOwnerConstructor(AActor* owner, const std::string& scene_component_name)
+    {
+        return Cast<TReturnAsSceneComponent>(createSceneComponentInsideOwnerConstructorByClass(TSceneComponent::StaticClass(), owner, scene_component_name));
+    }
+
+    template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
+        std::derived_from<TSceneComponent, TReturnAsSceneComponent>
+    static TReturnAsSceneComponent* createSceneComponentInsideOwnerConstructor(UObject* owner, USceneComponent* parent, const std::string& scene_component_name)
+    {
+        return Cast<TReturnAsSceneComponent>(createSceneComponentInsideOwnerConstructorByClass(TSceneComponent::StaticClass(), owner, parent, scene_component_name));
+    }
+
+    template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
+        std::derived_from<TSceneComponent, TReturnAsSceneComponent>
+    static TReturnAsSceneComponent* createSceneComponentInsideOwnerConstructor(USceneComponent* owner, const std::string& scene_component_name)
+    {
+        return createSceneComponentInsideOwnerConstructor<TSceneComponent, TReturnAsSceneComponent>(owner, owner, scene_component_name);
+    }
+
+    static UActorComponent* createComponentInsideOwnerConstructorByClass(UClass* component_class, AActor* owner, const std::string& component_name)
     {
         SP_ASSERT(owner);
-        TReturnAsSceneComponent* scene_component = owner->CreateDefaultSubobject<TSceneComponent>(toFName(scene_component_name));
+        UActorComponent* actor_component = Cast<UActorComponent>(owner->CreateDefaultSubobject(toFName(component_name), component_class, component_class, true, false));
+        SP_ASSERT(actor_component);
+        return actor_component;
+    }
+
+    static USceneComponent* createSceneComponentInsideOwnerConstructorByClass(UClass* scene_component_class, AActor* owner, const std::string& scene_component_name)
+    {
+        SP_ASSERT(owner);
+        USceneComponent* scene_component = Cast<USceneComponent>(owner->CreateDefaultSubobject(toFName(scene_component_name), scene_component_class, scene_component_class, true, false));
         SP_ASSERT(scene_component);
         owner->SetRootComponent(scene_component);
         return scene_component;
     }
 
-    template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
-        std::derived_from<TSceneComponent, TReturnAsSceneComponent>
-    static TReturnAsSceneComponent* createComponentInsideOwnerConstructor(UObject* owner, USceneComponent* parent, const std::string& scene_component_name)
+    static USceneComponent* createSceneComponentInsideOwnerConstructorByClass(UClass* scene_component_class, UObject* owner, USceneComponent* parent, const std::string& scene_component_name)
     {
         SP_ASSERT(owner);
         SP_ASSERT(parent);
-        TReturnAsSceneComponent* scene_component = owner->CreateDefaultSubobject<TSceneComponent>(toFName(scene_component_name));
+        USceneComponent* scene_component = Cast<USceneComponent>(owner->CreateDefaultSubobject(toFName(scene_component_name), scene_component_class, scene_component_class, true, false));
         SP_ASSERT(scene_component);
         scene_component->SetupAttachment(parent);
         return scene_component;
     }
 
-    template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
-        std::derived_from<TSceneComponent, TReturnAsSceneComponent>
-    static TReturnAsSceneComponent* createComponentInsideOwnerConstructor(USceneComponent* owner, const std::string& scene_component_name)
+    static USceneComponent* createSceneComponentInsideOwnerConstructorByClass(UClass* scene_component_class, USceneComponent* owner, const std::string& scene_component_name)
     {
-        return createComponentInsideOwnerConstructor<TSceneComponent, TReturnAsSceneComponent>(owner, owner, scene_component_name);
+        return createSceneComponentInsideOwnerConstructorByClass(scene_component_class, owner, owner, scene_component_name);
     }
 
     template <CComponent TComponent, CComponent TReturnAsComponent = TComponent> requires
@@ -261,7 +281,7 @@ public:
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
-    static TReturnAsSceneComponent* createComponentOutsideOwnerConstructor(AActor* owner, const std::string& scene_component_name)
+    static TReturnAsSceneComponent* createSceneComponentOutsideOwnerConstructor(AActor* owner, const std::string& scene_component_name)
     {
         SP_ASSERT(owner);
         TReturnAsSceneComponent* scene_component = NewObject<TSceneComponent>(owner, toFName(scene_component_name));
@@ -273,7 +293,7 @@ public:
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
-    static TReturnAsSceneComponent* createComponentOutsideOwnerConstructor(UObject* owner, USceneComponent* parent, const std::string& scene_component_name)
+    static TReturnAsSceneComponent* createSceneComponentOutsideOwnerConstructor(UObject* owner, USceneComponent* parent, const std::string& scene_component_name)
     {
         SP_ASSERT(owner);
         SP_ASSERT(parent);
@@ -286,9 +306,44 @@ public:
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
-    static TReturnAsSceneComponent* createComponentOutsideOwnerConstructor(USceneComponent* owner, const std::string& scene_component_name)
+    static TReturnAsSceneComponent* createSceneComponentOutsideOwnerConstructor(USceneComponent* owner, const std::string& scene_component_name)
     {
-        return createComponentOutsideOwnerConstructor<TSceneComponent, TReturnAsSceneComponent>(owner, owner, scene_component_name);
+        return createSceneComponentOutsideOwnerConstructor<TSceneComponent, TReturnAsSceneComponent>(owner, owner, scene_component_name);
+    }
+
+    static UActorComponent* createComponentOutsideOwnerConstructorByClass(UClass* component_class, AActor* owner, const std::string& component_name)
+    {
+        SP_ASSERT(owner);
+        UActorComponent* actor_component = NewObject<UActorComponent>(owner, component_class, toFName(component_name));
+        SP_ASSERT(actor_component);
+        actor_component->RegisterComponent();
+        return actor_component;
+    }
+
+    static USceneComponent* createSceneComponentOutsideOwnerConstructorByClass(UClass* scene_component_class, AActor* owner, const std::string& scene_component_name)
+    {
+        SP_ASSERT(owner);
+        USceneComponent* scene_component = NewObject<USceneComponent>(owner, scene_component_class, toFName(scene_component_name));
+        SP_ASSERT(scene_component);
+        owner->SetRootComponent(scene_component);
+        scene_component->RegisterComponent();
+        return scene_component;
+    }
+
+    static USceneComponent* createSceneComponentOutsideOwnerConstructorByClass(UClass* scene_component_class, UObject* owner, USceneComponent* parent, const std::string& scene_component_name)
+    {
+        SP_ASSERT(owner);
+        SP_ASSERT(parent);
+        USceneComponent* scene_component = NewObject<USceneComponent>(owner, scene_component_class, toFName(scene_component_name));
+        SP_ASSERT(scene_component);
+        scene_component->SetupAttachment(parent);
+        scene_component->RegisterComponent();
+        return scene_component;
+    }
+
+    static USceneComponent* createSceneComponentOutsideOwnerConstructorByClass(UClass* scene_component_class, USceneComponent* owner, const std::string& scene_component_name)
+    {
+        return createSceneComponentOutsideOwnerConstructorByClass(scene_component_class, owner, owner, scene_component_name);
     }
 
     // 

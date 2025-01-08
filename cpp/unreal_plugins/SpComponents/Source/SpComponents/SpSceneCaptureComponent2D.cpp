@@ -25,7 +25,7 @@ USpSceneCaptureComponent2D::USpSceneCaptureComponent2D()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    SpFuncComponent = Unreal::createComponentInsideOwnerConstructor<USpFuncComponent>(this, "sp_func_component");
+    SpFuncComponent = Unreal::createSceneComponentInsideOwnerConstructor<USpFuncComponent>(this, "sp_func_component");
     SP_ASSERT(SpFuncComponent);
 
     // we want to be able to capture the scene even when the game is paused; note that we don't set

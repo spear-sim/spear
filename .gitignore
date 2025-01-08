@@ -7,13 +7,19 @@ cpp/unreal_plugins/*/ThirdParty
 
 cpp/unreal_projects/SpearSim/Binaries
 cpp/unreal_projects/SpearSim/Build
+cpp/unreal_projects/SpearSim/Content/__ExternalActors__
+cpp/unreal_projects/SpearSim/Content/__ExternalObjects__
 cpp/unreal_projects/SpearSim/Content/Characters
+cpp/unreal_projects/SpearSim/Content/LevelPrototyping
 cpp/unreal_projects/SpearSim/Content/Megascans
 cpp/unreal_projects/SpearSim/Content/MSPresets
 cpp/unreal_projects/SpearSim/Content/Scenes
 cpp/unreal_projects/SpearSim/Content/Spear/Scenes/warehouse_0000
 cpp/unreal_projects/SpearSim/Content/Stanford
 cpp/unreal_projects/SpearSim/Content/StarterContent
+cpp/unreal_projects/SpearSim/Content/ThirdPerson
+cpp/unreal_projects/SpearSim/Content/Vehicles
+cpp/unreal_projects/SpearSim/Content/VehicleTemplate
 cpp/unreal_projects/SpearSim/DerivedDataCache
 cpp/unreal_projects/SpearSim/Intermediate
 cpp/unreal_projects/SpearSim/Makefile
@@ -26,47 +32,24 @@ cpp/unreal_projects/SpearSim/CMakeLists.txt
 cpp/unreal_projects/SpearSim/SpearSim.sln
 cpp/unreal_projects/SpearSim/SpearSim (Mac).xcworkspace
 
-examples/control_simple_agent/tmp
-examples/control_simple_agent/user_config.yaml
-
-examples/enhanced_input/tmp
-examples/enhanced_input/user_config.yaml
-
-examples/getting_started/tmp
-examples/getting_started/user_config.yaml
+examples/*/tmp
+examples/*/user_config.yaml
 
 examples/import_stanford_dataset/download
 examples/import_stanford_dataset/gltf
 examples/import_stanford_dataset/ply
 examples/import_stanford_dataset/stanford
-examples/import_stanford_dataset/tmp
 examples/import_stanford_dataset/cook_dirs.csv
 examples/import_stanford_dataset/include_assets.csv
-examples/import_stanford_dataset/user_config.yaml
-
-examples/mujoco_interop/tmp
-examples/mujoco_interop/user_config.yaml
-
-examples/numpy_interop/tmp
-examples/numpy_interop/user_config.yaml
-
-examples/render_image/tmp
-examples/render_image/user_config.yaml
 
 examples/legacy/generate_image_dataset/images
-examples/legacy/generate_image_dataset/tmp
-examples/legacy/generate_image_dataset/user_config.yaml
 
 examples/legacy/imitation_learning_openbot/dataset
 examples/legacy/imitation_learning_openbot/episodes
 examples/legacy/imitation_learning_openbot/eval
-examples/legacy/imitation_learning_openbot/tmp
 examples/legacy/imitation_learning_openbot/videos
-examples/legacy/imitation_learning_openbot/user_config.yaml
 
 examples/legacy/open_loop_control_fetch/images
-examples/legacy/open_loop_control_fetch/tmp
-examples/legacy/open_loop_control_fetch/user_config.yaml
 
 tmp
 

@@ -17,7 +17,6 @@
 #include "SpServices/LegacyService.h"
 #include "SpServices/SpFuncService.h"
 #include "SpServices/UnrealService.h"
-#include "SpServices/WorldService.h"
 
 class SpServices : public IModuleInterface
 {
@@ -36,5 +35,4 @@ private:
     std::unique_ptr<LegacyService> legacy_service_ = nullptr;
     std::unique_ptr<SpFuncService> sp_func_service_ = nullptr;
     std::unique_ptr<UnrealService> unreal_service_ = nullptr;
-    std::unique_ptr<WorldService> world_service_ = nullptr;
 };
