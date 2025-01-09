@@ -38,12 +38,18 @@ if __name__ == "__main__":
         # initialize car
         #
 
-        bp_car_uclass = instance.unreal_service.load_object(class_name="UObject", outer=0, name="/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_Pawn.OffroadCar_Pawn_C")
-        car = instance.unreal_service.spawn_actor_from_uclass(
-            uclass=bp_car_uclass,
-            location={"X": -2500.0, "Y": -9330.0, "Z": 20.0},
-            rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
-            spawn_parameters={"Name": "Agent", "SpawnCollisionHandlingOverride": "AlwaysSpawn"})
+        #
+        # it is also possible to spawn a new car (e.g., the default Unreal off-road car) as follows:
+        #
+        # bp_car_uclass = instance.unreal_service.load_object(class_name="UObject", outer=0, name="/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_Pawn.OffroadCar_Pawn_C")
+        # car = instance.unreal_service.spawn_actor_from_uclass(
+        #     uclass=bp_car_uclass,
+        #     location={"X": -2500.0, "Y": -9330.0, "Z": 20.0},
+        #     rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
+        #     spawn_parameters={"Name": "Agent", "SpawnCollisionHandlingOverride": "AlwaysSpawn"})
+        #
+
+        car = instance.unreal_service.find_actor_by_type(class_name="AWheeledVehiclePawn")
         chaos_vehicle_movement_component = instance.unreal_service.get_component_by_class(actor=car, uclass=chaos_vehicle_movement_component_uclass)
 
         # need player_controller current actor to inject input

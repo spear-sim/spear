@@ -57,9 +57,9 @@ if __name__ == "__main__":
 
     shutil.rmtree(unreal_project_cooked_dir, ignore_errors=True)
 
-    cook_dirs = spear.tools.get_cook_dirs()
+    cook_dirs = []
     if args.cook_dirs_file is not None:
-        cook_dirs = cook_dirs + pd.read_csv(args.cook_dirs_file)["cook_dirs"].tolist()
+        cook_dirs = pd.read_csv(args.cook_dirs_file)["cook_dirs"].tolist()
     cook_dir_args = [ "-cookdir=" + os.path.join(args.unreal_project_dir, cook_dir) for cook_dir in cook_dirs ]
 
     cook_maps = spear.tools.get_cook_maps()

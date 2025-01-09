@@ -43,7 +43,9 @@ void NavMesh::findObjectReferences(UWorld* world)
     }
 
     ANavigationData* navigation_data = navigation_system_v1_->GetNavDataForProps(agent_properties);
-    SP_ASSERT(navigation_data);
+    if (!navigation_data) {
+        return; // the NavMesh class is currently instantiated unconditionally by LegacyService, but not every map has a navmesh
+    }
 
     recast_nav_mesh_ = Cast<ARecastNavMesh>(navigation_data); // no RTTI available, so use Cast instead of dynamic_cast
     SP_ASSERT(recast_nav_mesh_);
@@ -92,7 +94,6 @@ void NavMesh::findObjectReferences(UWorld* world)
     //     Engine/Source/Runtime/NavigationSystem/Public/NavMesh/RecastNavMeshGenerator.h
     //     Engine/Source/Runtime/NavigationSystem/Private/NavMesh/RecastNavMeshGenerator.cpp
 #if !(UE_BUILD_SHIPPING || UE_BUILD_TEST)
-
     std::string debug_navigation_data_file = "";
 
     if (Config::isInitialized()) {
@@ -114,6 +115,8 @@ void NavMesh::cleanUpObjectReferences()
 
 std::vector<double> NavMesh::getRandomPoints(int num_points)
 {
+    SP_ASSERT(recast_nav_mesh_);
+
     std::vector<double> points;
 
     for (int i = 0; i < num_points; i++) {
@@ -128,6 +131,7 @@ std::vector<double> NavMesh::getRandomPoints(int num_points)
 
 std::vector<double> NavMesh::getRandomReachablePointsInRadius(const std::vector<double>& reference_points, float radius)
 {
+    SP_ASSERT(recast_nav_mesh_);
     SP_ASSERT(reference_points.size() % 3 == 0);
 
     std::vector<double> reachable_points;
@@ -150,6 +154,7 @@ std::vector<double> NavMesh::getRandomReachablePointsInRadius(const std::vector<
 
 std::vector<std::vector<double>> NavMesh::getPaths(const std::vector<double>& initial_points, const std::vector<double>& goal_points)
 {
+    SP_ASSERT(recast_nav_mesh_);
     SP_ASSERT(initial_points.size() == goal_points.size());
     SP_ASSERT(initial_points.size() % 3 == 0);
 

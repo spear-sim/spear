@@ -173,9 +173,6 @@ if __name__ == "__main__":
 
     # build SpearSim project
 
-    cook_dirs = spear.tools.get_cook_dirs()
-    cook_dir_args = [ "-cookdir=" + os.path.join(unreal_project_dir, cook_dir) for cook_dir in cook_dirs ]
-
     cook_maps = spear.tools.get_cook_maps()
     cook_maps_arg = ["-map=" + "+".join(cook_maps)]
 
@@ -194,7 +191,6 @@ if __name__ == "__main__":
         "-clientconfig=" + build_config,
         "-archivedirectory=" + archive_dir,
         run_uat_platform_args] + \
-        cook_dir_args + \
         cook_maps_arg
     spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)

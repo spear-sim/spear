@@ -6,6 +6,7 @@
 
 #include <ChaosVehicleMovementComponent.h>
 #include <Modules/ModuleManager.h> // IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
+#include <WheeledVehiclePawn.h>
 
 #include "SpCore/AssertModuleLoaded.h"
 #include "SpCore/Log.h"
@@ -20,9 +21,14 @@ void SpComponents::StartupModule()
     SP_ASSERT_MODULE_LOADED("SpCore");
     SP_LOG_CURRENT_FUNCTION();
 
+    // ChaosVehicles types (can't register in SpCore because SpCore is loaded before ChaosVehicles, and
+    // therefore SpCore cannot list ChaosVehicles as a dependency)
+    UnrealClassRegistrar::registerActorClass<AWheeledVehiclePawn>("AWheeledVehiclePawn");
+    UnrealClassRegistrar::registerComponentClass<UChaosVehicleMovementComponent>("UChaosVehicleMovementComponent");
+
+    // SpComponents types
     UnrealClassRegistrar::registerActorClass<ASpDebugManager>("ASpDebugManager");
     UnrealClassRegistrar::registerActorClass<ASpHitEventManager>("ASpHitEventManager");
-    UnrealClassRegistrar::registerComponentClass<UChaosVehicleMovementComponent>("UChaosVehicleMovementComponent");
     UnrealClassRegistrar::registerComponentClass<USpSceneCaptureComponent2D>("USpSceneCaptureComponent2D");
 }
 
@@ -30,9 +36,14 @@ void SpComponents::ShutdownModule()
 {
     SP_LOG_CURRENT_FUNCTION();
 
+    // ChaosVehicles types (can't unregister in SpCore because SpCore is loaded before ChaosVehicles, and
+    // therefore SpCore cannot list ChaosVehicles as a dependency)
+    UnrealClassRegistrar::unregisterActorClass<AWheeledVehiclePawn>("AWheeledVehiclePawn");
+    UnrealClassRegistrar::unregisterComponentClass<UChaosVehicleMovementComponent>("UChaosVehicleMovementComponent");
+
+    // SpComponents types
     UnrealClassRegistrar::unregisterActorClass<ASpDebugManager>("ASpDebugManager");
     UnrealClassRegistrar::unregisterActorClass<ASpHitEventManager>("ASpHitEventManager");
-    UnrealClassRegistrar::unregisterComponentClass<UChaosVehicleMovementComponent>("UChaosVehicleMovementComponent");
     UnrealClassRegistrar::unregisterComponentClass<USpSceneCaptureComponent2D>("USpSceneCaptureComponent2D");
 }
 

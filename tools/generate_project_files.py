@@ -18,17 +18,21 @@ if __name__ == "__main__":
     assert os.path.exists(args.unreal_engine_dir)
 
     if sys.platform == "win32":
-        generate_project_files_script = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "Windows", "GenerateProjectFiles.bat"))
+        generate_project_files_script = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "Build.bat"))
+        generate_project_files_args = ["-projectfiles"]
     elif sys.platform == "darwin":
         generate_project_files_script = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "Mac", "GenerateProjectFiles.sh"))
+        generate_project_files_args = []
     elif sys.platform == "linux":
         generate_project_files_script = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "Linux", "GenerateProjectFiles.sh"))
+        generate_project_files_args = []
     else:
         assert False
 
     project = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "SpearSim.uproject"))
 
     cmd = [generate_project_files_script, "-project=" + project]
+    cmd.extend(generate_project_files_args)
     spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
 
