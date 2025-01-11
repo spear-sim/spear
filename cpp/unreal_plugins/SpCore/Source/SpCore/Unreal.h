@@ -239,9 +239,9 @@ public:
     static UActorComponent* createComponentInsideOwnerConstructorByClass(UClass* component_class, AActor* owner, const std::string& component_name)
     {
         SP_ASSERT(owner);
-        UActorComponent* actor_component = Cast<UActorComponent>(owner->CreateDefaultSubobject(toFName(component_name), component_class, component_class, true, false));
-        SP_ASSERT(actor_component);
-        return actor_component;
+        UActorComponent* component = Cast<UActorComponent>(owner->CreateDefaultSubobject(toFName(component_name), component_class, component_class, true, false));
+        SP_ASSERT(component);
+        return component;
     }
 
     static USceneComponent* createSceneComponentInsideOwnerConstructorByClass(UClass* scene_component_class, AActor* owner, const std::string& scene_component_name)
@@ -272,36 +272,21 @@ public:
         std::derived_from<TComponent, TReturnAsComponent>
     static TReturnAsComponent* createComponentOutsideOwnerConstructor(AActor* owner, const std::string& component_name)
     {
-        SP_ASSERT(owner);
-        TReturnAsComponent* actor_component = NewObject<TComponent>(owner, toFName(component_name));
-        SP_ASSERT(actor_component);
-        actor_component->RegisterComponent();
-        return actor_component;
+        return Cast<TReturnAsComponent>(createComponentOutsideOwnerConstructorByClass(TComponent::StaticClass(), owner, component_name));
     }
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
     static TReturnAsSceneComponent* createSceneComponentOutsideOwnerConstructor(AActor* owner, const std::string& scene_component_name)
     {
-        SP_ASSERT(owner);
-        TReturnAsSceneComponent* scene_component = NewObject<TSceneComponent>(owner, toFName(scene_component_name));
-        SP_ASSERT(scene_component);
-        owner->SetRootComponent(scene_component);
-        scene_component->RegisterComponent();
-        return scene_component;
+        return Cast<TReturnAsSceneComponent>(createSceneComponentOutsideOwnerConstructorByClass(TSceneComponent::StaticClass(), owner, scene_component_name));
     }
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
     static TReturnAsSceneComponent* createSceneComponentOutsideOwnerConstructor(UObject* owner, USceneComponent* parent, const std::string& scene_component_name)
     {
-        SP_ASSERT(owner);
-        SP_ASSERT(parent);
-        TReturnAsSceneComponent* scene_component = NewObject<TSceneComponent>(owner, toFName(scene_component_name));
-        SP_ASSERT(scene_component);
-        scene_component->SetupAttachment(parent);
-        scene_component->RegisterComponent();
-        return scene_component;
+        return Cast<TReturnAsSceneComponent>(createSceneComponentOutsideOwnerConstructorByClass(TSceneComponent::StaticClass(), owner, parent, scene_component_name));
     }
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
@@ -314,10 +299,10 @@ public:
     static UActorComponent* createComponentOutsideOwnerConstructorByClass(UClass* component_class, AActor* owner, const std::string& component_name)
     {
         SP_ASSERT(owner);
-        UActorComponent* actor_component = NewObject<UActorComponent>(owner, component_class, toFName(component_name));
-        SP_ASSERT(actor_component);
-        actor_component->RegisterComponent();
-        return actor_component;
+        UActorComponent* component = NewObject<UActorComponent>(owner, component_class, toFName(component_name));
+        SP_ASSERT(component);
+        component->RegisterComponent();
+        return component;
     }
 
     static USceneComponent* createSceneComponentOutsideOwnerConstructorByClass(UClass* scene_component_class, AActor* owner, const std::string& scene_component_name)

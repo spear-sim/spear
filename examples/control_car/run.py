@@ -7,6 +7,7 @@
 import os
 import spear
 
+
 if __name__ == "__main__":
 
     # create instance
@@ -53,10 +54,7 @@ if __name__ == "__main__":
         chaos_vehicle_movement_component = instance.unreal_service.get_component_by_class(actor=car, uclass=chaos_vehicle_movement_component_uclass)
 
         # need player_controller current actor to inject input
-        instance.unreal_service.call_function(
-            uobject=player_controller,
-            ufunction=possess_func,
-            args={"InPawn": spear.to_ptr(car)})
+        instance.unreal_service.call_function(uobject=player_controller, ufunction=possess_func, args={"InPawn": spear.to_ptr(car)})
 
     with instance.end_frame():
         pass

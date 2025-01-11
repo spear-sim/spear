@@ -448,29 +448,29 @@ class UnrealService():
     # Create component
     #
 
-    def create_component_on_actor(self, class_name, owner, component_name):
+    def create_component(self, class_name, owner, component_name):
         return self._entry_point_caller.call("unreal_service.create_component_outside_owner_constructor", class_name, owner, component_name)
 
-    def create_scene_component_on_actor(self, class_name, owner, scene_component_name):
+    def create_scene_component_from_actor(self, class_name, owner, scene_component_name):
         return self._entry_point_caller.call("unreal_service.create_scene_component_outside_owner_constructor_from_actor", class_name, owner, scene_component_name)
 
-    def create_scene_component_on_component(self, class_name, owner, parent, scene_component_name):
+    def create_scene_component_from_object(self, class_name, owner, parent, scene_component_name):
         return self._entry_point_caller.call("unreal_service.create_scene_component_outside_owner_constructor_from_object", class_name, owner, parent, scene_component_name)
 
-    def create_scene_component_on_owning_scene_component(self, class_name, owner, scene_component_name):
+    def create_scene_component_from_component(self, class_name, owner, scene_component_name):
         return self._entry_point_caller.call("unreal_service.create_scene_component_outside_owner_constructor_from_component", class_name, owner, scene_component_name)
 
-    def create_component_on_actor_by_class(self, component_class, owner, component_name):
+    def create_component_by_class(self, component_class, owner, component_name):
         return self._entry_point_caller.call("unreal_service.create_component_outside_owner_constructor_by_class", component_class, owner, component_name)
 
-    def create_scene_component_on_actor_by_class(self, component_class, owner, scene_component_name):
-        return self._entry_point_caller.call("unreal_service.create_scene_component_outside_owner_constructor_by_class_from_actor", component_class, owner, scene_component_name)
+    def create_scene_component_by_class_from_actor(self, scene_component_class, owner, scene_component_name):
+        return self._entry_point_caller.call("unreal_service.create_scene_component_outside_owner_constructor_by_class_from_actor", scene_component_class, owner, scene_component_name)
 
-    def create_scene_component_on_component_by_class(self, component_class, owner, parent, scene_component_name):
-        return self._entry_point_caller.call("unreal_service.create_scene_component_outside_owner_constructor_by_class_from_object", component_class, owner, parent, scene_component_name)
+    def create_scene_component_by_class_from_object(self, scene_component_class, owner, parent, scene_component_name):
+        return self._entry_point_caller.call("unreal_service.create_scene_component_outside_owner_constructor_by_class_from_object", scene_component_class, owner, parent, scene_component_name)
 
-    def create_scene_component_on_owning_scene_component_by_class(self, component_class, owner, scene_component_name):
-        return self._entry_point_caller.call("unreal_service.create_scene_component_outside_owner_constructor_by_class_from_component", component_class, owner, scene_component_name)
+    def create_scene_component_by_class_from_component(self, scene_component_class, owner, scene_component_name):
+        return self._entry_point_caller.call("unreal_service.create_scene_component_outside_owner_constructor_by_class_from_component", scene_component_class, owner, scene_component_name)
 
     #
     # Destroy component

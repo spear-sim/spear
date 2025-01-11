@@ -159,7 +159,7 @@ extern SPCORE_API FuncRegistrar<AActor*, UWorld*, const FVector&, const FRotator
 extern SPCORE_API FuncRegistrar<UActorComponent*, AActor*, const std::string&>                    g_create_component_outside_owner_constructor_func_registrar;
 extern SPCORE_API FuncRegistrar<USceneComponent*, AActor*, const std::string&>                    g_create_scene_component_outside_owner_constructor_from_actor_func_registrar;
 extern SPCORE_API FuncRegistrar<USceneComponent*, UObject*, USceneComponent*, const std::string&> g_create_scene_component_outside_owner_constructor_from_object_func_registrar;
-extern SPCORE_API FuncRegistrar<USceneComponent*, USceneComponent*, const std::string&>           g_create_scene_component_outside_owner_constructor_from_scene_component_func_registrar;
+extern SPCORE_API FuncRegistrar<USceneComponent*, USceneComponent*, const std::string&>           g_create_scene_component_outside_owner_constructor_from_component_func_registrar;
 
 //
 // Registrars for creating objects and classes using a class name instead of template parameters
@@ -492,7 +492,7 @@ public:
             class_name, [](UObject* owner, USceneComponent* parent, const std::string& scene_component_name) -> USceneComponent* {
                 return Unreal::createSceneComponentOutsideOwnerConstructor<TSceneComponent, USceneComponent>(owner, parent, scene_component_name); });
 
-        g_create_scene_component_outside_owner_constructor_from_scene_component_func_registrar.registerFunc(
+        g_create_scene_component_outside_owner_constructor_from_component_func_registrar.registerFunc(
             class_name, [](USceneComponent* owner, const std::string& scene_component_name) -> USceneComponent* {
                 return Unreal::createSceneComponentOutsideOwnerConstructor<TSceneComponent, USceneComponent>(owner, scene_component_name); });
 
@@ -906,7 +906,7 @@ public:
 
         g_create_scene_component_outside_owner_constructor_from_actor_func_registrar.unregisterFunc(class_name);
         g_create_scene_component_outside_owner_constructor_from_object_func_registrar.unregisterFunc(class_name);
-        g_create_scene_component_outside_owner_constructor_from_scene_component_func_registrar.unregisterFunc(class_name);
+        g_create_scene_component_outside_owner_constructor_from_component_func_registrar.unregisterFunc(class_name);
 
         g_get_children_components_by_name_from_actor_func_registrar.unregisterFunc(class_name);
         g_get_children_components_by_tag_from_actor_func_registrar.unregisterFunc(class_name);

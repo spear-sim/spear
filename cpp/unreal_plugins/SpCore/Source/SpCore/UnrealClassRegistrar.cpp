@@ -168,7 +168,7 @@ FuncRegistrar<AActor*, UWorld*, const FVector&, const FRotator&, const FActorSpa
 FuncRegistrar<UActorComponent*, AActor*, const std::string&>                    g_create_component_outside_owner_constructor_func_registrar;
 FuncRegistrar<USceneComponent*, AActor*, const std::string&>                    g_create_scene_component_outside_owner_constructor_from_actor_func_registrar;
 FuncRegistrar<USceneComponent*, UObject*, USceneComponent*, const std::string&> g_create_scene_component_outside_owner_constructor_from_object_func_registrar;
-FuncRegistrar<USceneComponent*, USceneComponent*, const std::string&>           g_create_scene_component_outside_owner_constructor_from_scene_component_func_registrar;
+FuncRegistrar<USceneComponent*, USceneComponent*, const std::string&>           g_create_scene_component_outside_owner_constructor_from_component_func_registrar;
 
 //
 // Registrars for creating objects using a class name instead of template parameters
@@ -633,7 +633,7 @@ USceneComponent* UnrealClassRegistrar::createSceneComponentOutsideOwnerConstruct
 }
 
 USceneComponent* UnrealClassRegistrar::createSceneComponentOutsideOwnerConstructor(const std::string& class_name, USceneComponent* owner, const std::string& scene_component_name) {
-    return g_create_scene_component_outside_owner_constructor_from_scene_component_func_registrar.call(class_name, owner, scene_component_name);
+    return g_create_scene_component_outside_owner_constructor_from_component_func_registrar.call(class_name, owner, scene_component_name);
 }
 
 //
