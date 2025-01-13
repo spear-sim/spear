@@ -95,7 +95,6 @@ if __name__ == "__main__":
                 ufunction=get_bone_name_func,
                 args={"BoneIndex": i})
             bone_name = return_values["ReturnValue"]
-            print(bone_name)
             bone_names.append(bone_name)
 
     with instance.end_frame():
@@ -106,8 +105,12 @@ if __name__ == "__main__":
 
             bone_transforms = get_transforms(row, bone_names)
 
-            # even though we're setting bone transforms in world-space, we need to update the actor's
-            # transform to avoid Unreal renderer from frustum culling the skeletal mesh
+            # Even though we're setting bone transforms in world-space, we need to update the actor's
+            # transform, otherwise the engine's default frustum culling behavior will cull the skeletal mesh
+            # and it will flicker and eventually become visible in a counterintuitive way. Note that the
+            # capitalization of some bone names change when running in the editor, presumably because of the
+            # case-insensitivity of FName objects in Unreal. This unpleasant engine behavior means that if we
+            # execute run.py in the editor, we must also execute replay.py in the editor.
             root_transform = {}
             if "root" in bone_transforms.keys():
                 root_transform = bone_transforms["root"]
