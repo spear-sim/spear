@@ -196,4 +196,10 @@ if __name__ == "__main__":
         with instance.end_frame():
             instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
 
+    # unpause now that we're finished controlling the car
+    with instance.begin_frame():
+        instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
+    with instance.end_frame():
+        pass
+
     spear.log("Done.")
