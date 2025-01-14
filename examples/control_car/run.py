@@ -31,7 +31,7 @@ if __name__ == "__main__":
         # Instead of finding the existing car in the scene, it is also possible to spawn a new car (e.g., the
         # default Unreal off-road car) as follows:
         #        
-        # bp_car_uclass = instance.unreal_service.load_object(class_name="UObject", outer=0, name="/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_Pawn.OffroadCar_Pawn_C")
+        # bp_car_uclass = instance.unreal_service.load_object(class_name="UClass", outer=0, name="/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_Pawn.OffroadCar_Pawn_C")
         # car = instance.unreal_service.spawn_actor_from_uclass(
         #     uclass=bp_car_uclass,
         #     location={"X": -2500.0, "Y": -9330.0, "Z": 20.0},
@@ -54,7 +54,7 @@ if __name__ == "__main__":
 
         #
         # If we wanted to control the car by calling its UFUNCTIONS directly, rather than by programmatically
-        # injecting gamepad input via Unreal's Enhanced Input System, we would need to obtain handles to the
+        # injecting gamepad input via Unreal's Enhanced Input system, we would need to obtain handles to the
         # car's UChaosVehicleMovementComponent and its UFUNCTIONS as follows:
         #
         # chaos_vehicle_movement_component_static_class = instance.unreal_service.get_static_class(class_name="UChaosVehicleMovementComponent")

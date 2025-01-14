@@ -39,7 +39,8 @@ cpp/unreal_projects/SpearSim/UpgradeLog.htm
 examples/*/tmp
 examples/*/user_config.yaml
 
-examples/control_character/transforms.csv
+examples/control_character/character_0.csv
+examples/control_character/character_1.csv
 
 examples/import_stanford_dataset/download
 examples/import_stanford_dataset/gltf
