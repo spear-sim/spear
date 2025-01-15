@@ -39,7 +39,7 @@ if __name__ == "__main__":
         terminate_func = instance.unreal_service.find_function_by_name(uclass=sp_scene_capture_component_2d_static_class, function_name="Terminate")
 
         # get UGameplayStatics default object
-        gameplay_statics = instance.unreal_service.get_default_object(uclass=gameplay_statics_static_class)
+        gameplay_statics = instance.unreal_service.get_default_object(uclass=gameplay_statics_static_class, create_if_needed=False)
 
         # spawn object and get components
         bp_sphere_agent_uclass = instance.unreal_service.load_object(class_name="UClass", outer=0, name="/SpComponents/Blueprints/BP_Sphere_Agent.BP_Sphere_Agent_C")
