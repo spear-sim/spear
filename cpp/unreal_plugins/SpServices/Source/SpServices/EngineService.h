@@ -350,7 +350,6 @@ private:
         // for an input SpFuncPackedArray& before forwarding it to an inner function.
 
         return [this, long_func_name, func](TArgs&... args) -> TReturn {
-
             try {
                 return func(args...);
 
