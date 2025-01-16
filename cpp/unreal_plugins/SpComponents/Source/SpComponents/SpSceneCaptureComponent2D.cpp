@@ -97,6 +97,7 @@ void USpSceneCaptureComponent2D::Initialize()
             packed_array.data_source_ = SpFuncArrayDataSource::Internal;
             dest_ptr = packed_array.data_.data();
         }
+        
         SP_ASSERT(dest_ptr);
 
         if (bReadPixelData) {
