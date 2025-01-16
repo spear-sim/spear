@@ -20,7 +20,7 @@
 // All functions that are registered with a registrar must have the same signature, taking as input TArgs...
 // and returning as output TReturn.
 //
-// This following example demonstrates a typical use case.
+// The following example demonstrates a typical use case.
 // 
 //     FuncRegistrar<void*, int> new_registrar;
 //     FuncRegistrar<void, void*> delete_registrar;
