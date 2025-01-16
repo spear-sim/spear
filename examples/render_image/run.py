@@ -29,6 +29,12 @@ if __name__ == "__main__":
         initialize_func = instance.unreal_service.find_function_by_name(uclass=sp_scene_capture_component_2d_static_class, function_name="Initialize")
         terminate_func = instance.unreal_service.find_function_by_name(uclass=sp_scene_capture_component_2d_static_class, function_name="Terminate")
 
+        gameplay_statics_static_class = instance.unreal_service.get_static_class(class_name="UGameplayStatics")
+        get_player_controller_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_static_class, function_name="GetPlayerController")
+
+        # get UGameplayStatics default object
+        gameplay_statics_default_object = instance.unreal_service.get_default_object(uclass=gameplay_statics_static_class, create_if_needed=False)
+
         # spawn camera sensor and get the final_tone_curve_hdr component
         bp_camera_sensor_uclass = instance.unreal_service.load_object(class_name="UClass", outer=0, name="/SpComponents/Blueprints/BP_Camera_Sensor.BP_Camera_Sensor_C")
         bp_camera_sensor_actor = instance.unreal_service.spawn_actor_from_uclass(uclass=bp_camera_sensor_uclass)
@@ -37,7 +43,8 @@ if __name__ == "__main__":
         # configure the final_tone_curve_hdr component to match the viewport (width, height, FOV, post-processing settings, etc)
 
         post_process_volume = instance.unreal_service.find_actor_by_type(class_name="APostProcessVolume")
-        player_controller = instance.world_service.get_first_player_controller()
+        return_values = instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=get_player_controller_func, args={"PlayerIndex": 0})
+        player_controller = spear.to_handle(return_values["ReturnValue"])
         player_camera_manager_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=player_controller, property_name="PlayerCameraManager")
         player_camera_manager = spear.to_handle(string=instance.unreal_service.get_property_value(property_desc=player_camera_manager_desc))
 

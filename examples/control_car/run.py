@@ -42,8 +42,9 @@ if __name__ == "__main__":
         #
         # If we spawned a new car, then we would need to possess it as follows:
         #
-        # player_controller_static_class = instance.unreal_service.get_static_class(class_name="APlayerController")
         # get_player_controller_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_static_class, function_name="GetPlayerController")
+        #
+        # player_controller_static_class = instance.unreal_service.get_static_class(class_name="APlayerController")
         # possess_func = instance.unreal_service.find_function_by_name(uclass=player_controller_static_class, function_name="Possess")
         #
         # return_values = instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=get_player_controller_func, args={"PlayerIndex": 0})
