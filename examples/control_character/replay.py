@@ -78,7 +78,7 @@ if __name__ == "__main__":
 
             # there is no point specifying a location and rotation yet, because the spawned actor won't have a
             # root scene component, so we will need to set its location later
-            character["actor"] = instance.unreal_service.spawn_actor_from_uclass(
+            character["actor"] = instance.unreal_service.spawn_actor_from_class(
                 uclass=actor_uclass,
                 spawn_parameters={"Name": character_desc["name"], "SpawnCollisionHandlingOverride": "AlwaysSpawn"})
 

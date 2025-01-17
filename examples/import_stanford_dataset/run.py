@@ -25,9 +25,9 @@ if __name__ == "__main__":
         bp_happy_uclass = instance.unreal_service.load_object(class_name="UClass", outer=0, name="/Game/Stanford/Blueprints/BP_Happy.BP_Happy_C")
         bp_dragon_uclass = instance.unreal_service.load_object(class_name="UClass", outer=0, name="/Game/Stanford/Blueprints/BP_Dragon.BP_Dragon_C")
 
-        bp_bunny_actor = instance.unreal_service.spawn_actor_from_uclass(uclass=bp_bunny_uclass, location={"X": 80.0, "Y": 210.0, "Z": 15.0})
-        bp_happy_actor = instance.unreal_service.spawn_actor_from_uclass(uclass=bp_happy_uclass, location={"X": 80.0, "Y": 280.0, "Z": 5.0})
-        bp_dragon_actor = instance.unreal_service.spawn_actor_from_uclass(uclass=bp_dragon_uclass, location={"X": 80.0, "Y": 350.0, "Z": 5.0})
+        bp_bunny_actor = instance.unreal_service.spawn_actor_from_class(uclass=bp_bunny_uclass, location={"X": 80.0, "Y": 210.0, "Z": 15.0})
+        bp_happy_actor = instance.unreal_service.spawn_actor_from_class(uclass=bp_happy_uclass, location={"X": 80.0, "Y": 280.0, "Z": 5.0})
+        bp_dragon_actor = instance.unreal_service.spawn_actor_from_class(uclass=bp_dragon_uclass, location={"X": 80.0, "Y": 350.0, "Z": 5.0})
 
         # set scale
         instance.unreal_service.call_function(uobject=bp_bunny_actor, ufunction=set_actor_scale_3d_func, args={"NewScale3D": {"X": 4.0, "Y": 4.0, "Z": 4.0}})

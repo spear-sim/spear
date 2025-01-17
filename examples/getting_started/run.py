@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
         # spawn object
         bp_axes_uclass = instance.unreal_service.load_object(class_name="UClass", outer=0, name="/SpComponents/Blueprints/BP_Axes.BP_Axes_C")
-        bp_axes_actor = instance.unreal_service.spawn_actor_from_uclass(uclass=bp_axes_uclass, location={"X": -10.0, "Y": 280.0, "Z": 50.0})
+        bp_axes_actor = instance.unreal_service.spawn_actor_from_class(uclass=bp_axes_uclass, location={"X": -10.0, "Y": 280.0, "Z": 50.0})
 
         spear.log("bp_axes_actor: ")
         pprint.pprint(instance.unreal_service.get_object_properties_from_uobject(bp_axes_actor))

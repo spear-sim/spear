@@ -839,7 +839,7 @@ public:
                 return toUInt64(UnrealClassRegistrar::spawnActor(class_name, getWorld(), location, rotation, actor_spawn_parameters));
             });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "spawn_actor_from_uclass",
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "spawn_actor_from_class",
             [this](uint64_t& uclass, std::string& location_string, std::string& rotation_string, std::string& spawn_parameters_string, std::vector<std::string>& object_flag_strings) -> uint64_t {
 
                 FVector location;
@@ -1039,7 +1039,7 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "static_load_class",
             [this](
-                uint64_t& base_uclass,
+                uint64_t& uclass,
                 uint64_t& in_outer,
                 std::string& name,
                 std::string& filename,
@@ -1048,7 +1048,7 @@ public:
 
                 return toUInt64(
                     StaticLoadClass(
-                        toPtr<UClass>(base_uclass),
+                        toPtr<UClass>(uclass),
                         toPtr<UClass>(in_outer),
                         *Unreal::toFString(name),
                         *Unreal::toFString(filename),
@@ -1060,14 +1060,14 @@ public:
         // Load objects and classes
         //
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "add_uobject_to_root",
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "add_object_to_root",
             [this](uint64_t& uobject) -> void {
                 UObject* uboject_ptr = toPtr<UObject>(uobject);
                 SP_ASSERT(uboject_ptr);
                 uboject_ptr->AddToRoot();
             });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "remove_uobject_from_root",
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "remove_object_from_root",
             [this](uint64_t& uobject) -> void {
                 UObject* uboject_ptr = toPtr<UObject>(uobject);
                 SP_ASSERT(uboject_ptr);

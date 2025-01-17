@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
         # spawn camera sensor and get the final_tone_curve_hdr component
         bp_camera_sensor_uclass = instance.unreal_service.load_object(class_name="UClass", outer=0, name="/SpComponents/Blueprints/BP_Camera_Sensor.BP_Camera_Sensor_C")
-        bp_camera_sensor_actor = instance.unreal_service.spawn_actor_from_uclass(uclass=bp_camera_sensor_uclass)
+        bp_camera_sensor_actor = instance.unreal_service.spawn_actor_from_class(uclass=bp_camera_sensor_uclass)
         final_tone_curve_hdr_component = instance.unreal_service.get_component_by_name(class_name="USceneComponent", actor=bp_camera_sensor_actor, component_name="DefaultSceneRoot.final_tone_curve_hdr")
 
         # configure the final_tone_curve_hdr component to match the viewport (width, height, FOV, post-processing settings, etc)

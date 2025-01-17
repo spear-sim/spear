@@ -424,7 +424,7 @@ class UnrealService():
         return self._entry_point_caller.call(
             "unreal_service.spawn_actor", class_name, spear.to_json_string(obj=location), spear.to_json_string(obj=rotation), spear.to_json_string(obj=spawn_parameters), object_flags)
 
-    def spawn_actor_from_uclass(self, uclass, location={}, rotation={}, spawn_parameters={}):
+    def spawn_actor_from_class(self, uclass, location={}, rotation={}, spawn_parameters={}):
 
         if "TransformScaleMethod" not in spawn_parameters:
             spawn_parameters["TransformScaleMethod"] = "MultiplyWithRoot" # see Engine/Source/Runtime/Engine/Classes/Engine/World.h
@@ -435,7 +435,7 @@ class UnrealService():
             object_flags = ["RF_Transactional"] # see Engine/Source/Runtime/Engine/Private/World.cpp
 
         return self._entry_point_caller.call(
-            "unreal_service.spawn_actor_from_uclass", uclass, spear.to_json_string(obj=location), spear.to_json_string(obj=rotation), spear.to_json_string(obj=spawn_parameters), object_flags)
+            "unreal_service.spawn_actor_from_class", uclass, spear.to_json_string(obj=location), spear.to_json_string(obj=rotation), spear.to_json_string(obj=spawn_parameters), object_flags)
 
     #
     # Destroy actor
@@ -499,18 +499,18 @@ class UnrealService():
     def static_load_object(self, uclass, in_outer, name="", filename="", load_flags=["LOAD_None"], sandbox=0, allow_object_reconciliation=True, instancing_context=0):
         return self._entry_point_caller.call("unreal_service.static_load_object", uclass, in_outer, name, filename, load_flags, sandbox, allow_object_reconciliation, instancing_context)
 
-    def static_load_class(self, base_uclass, in_outer, name="", filename="", load_flags=["LOAD_None"], sandbox=0):
-        return self._entry_point_caller.call("unreal_service.static_load_class", base_uclass, in_outer, name, filename, load_flags, sandbox)
+    def static_load_class(self, uclass, in_outer, name="", filename="", load_flags=["LOAD_None"], sandbox=0):
+        return self._entry_point_caller.call("unreal_service.static_load_class", uclass, in_outer, name, filename, load_flags, sandbox)
 
     #
     # Enable and disable garbage collection for uobjects
     #
 
-    def add_uobject_to_root(self, uobject):
-        return self._entry_point_caller.call("unreal_service.add_uobject_to_root", uobject)
+    def add_object_to_root(self, uobject):
+        return self._entry_point_caller.call("unreal_service.add_object_to_root", uobject)
 
-    def remove_uobject_from_root(self, uobject):
-        return self._entry_point_caller.call("unreal_service.remove_uobject_from_root", uobject)
+    def remove_object_from_root(self, uobject):
+        return self._entry_point_caller.call("unreal_service.remove_object_from_root", uobject)
 
     #
     # Find, get, and set console variables

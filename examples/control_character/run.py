@@ -113,7 +113,7 @@ if __name__ == "__main__":
             character["move_input_action_value"] = character_desc["move_input_action_value"]
 
             # spawn character and get handles to components
-            character["actor"] = instance.unreal_service.spawn_actor_from_uclass(
+            character["actor"] = instance.unreal_service.spawn_actor_from_class(
                 uclass=bp_character_uclass,
                 location=character_desc["location"],
                 rotation=character_desc["rotation"],

@@ -32,7 +32,7 @@ if __name__ == "__main__":
         # default Unreal off-road car) as follows:
         #        
         # bp_car_uclass = instance.unreal_service.load_object(class_name="UClass", outer=0, name="/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_Pawn.OffroadCar_Pawn_C")
-        # car = instance.unreal_service.spawn_actor_from_uclass(
+        # car = instance.unreal_service.spawn_actor_from_class(
         #     uclass=bp_car_uclass,
         #     location={"X": -2500.0, "Y": -9330.0, "Z": 20.0},
         #     rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
