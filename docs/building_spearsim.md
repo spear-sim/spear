@@ -23,7 +23,7 @@ Linux:   path/to/Linux_Unreal_Engine_5.5.0
 If you're developing on Windows or macOS, you will need to install a specific compiler that is compatible with Unreal Engine 5.5. If you're developing on Linux, the Unreal Engine ships with its own version of `clang` and `libc++`, so there is no need to install another compiler. We have verified that the following compilers behave as expected.
 
 ```
-Windows: Visual Studio 2022 (with individual component MSVC v143 - VS2022 C++ x64/x86 build tools (v14.36-17.6))
+Windows: Visual Studio 2022 (with individual component "MSVC v143 - VS2022 C++ x64/x86 build tools (v14.36-17.6)")
 macOS:   XCode 16
 ```
 
