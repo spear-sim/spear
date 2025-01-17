@@ -44,16 +44,17 @@ if __name__ == "__main__":
 
         post_process_volume = instance.unreal_service.find_actor_by_type(class_name="APostProcessVolume")
         return_values = instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=get_player_controller_func, args={"PlayerIndex": 0})
-        player_controller = spear.to_handle(return_values["ReturnValue"])
-        player_camera_manager_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=player_controller, property_name="PlayerCameraManager")
-        player_camera_manager = spear.to_handle(string=instance.unreal_service.get_property_value(property_desc=player_camera_manager_desc))
+        player_controller = spear.to_handle(string=return_values["ReturnValue"])
+        player_camera_manager_desc = instance.unreal_service.find_property_by_name_on_object(uobject=player_controller, property_name="PlayerCameraManager")
+        player_camera_manager_string = instance.unreal_service.get_property_value(property_desc=player_camera_manager_desc)
+        player_camera_manager = spear.to_handle(string=player_camera_manager_string)
 
         viewport_size = instance.engine_service.get_viewport_size()
         viewport_x = viewport_size[0]
         viewport_y = viewport_size[1]
         viewport_aspect_ratio = viewport_x/viewport_y # see Engine/Source/Editor/UnrealEd/Private/EditorViewportClient.cpp:2130 for evidence that Unreal's aspect ratio convention is x/y
 
-        view_target_pov_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=player_camera_manager, property_name="ViewTarget.POV")
+        view_target_pov_desc = instance.unreal_service.find_property_by_name_on_object(uobject=player_camera_manager, property_name="ViewTarget.POV")
         view_target_pov = instance.unreal_service.get_property_value(property_desc=view_target_pov_desc)
 
         fov = view_target_pov["fOV"]*math.pi/180.0 # this adjustment is necessary to compute an FOV value that matches the game viewport
@@ -62,16 +63,16 @@ if __name__ == "__main__":
         fov_adjusted = half_fov_adjusted*2.0
         fov_adjusted_degrees = fov_adjusted*180.0/math.pi
 
-        volume_settings_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=post_process_volume, property_name="Settings")
+        volume_settings_desc = instance.unreal_service.find_property_by_name_on_object(uobject=post_process_volume, property_name="Settings")
         volume_settings = instance.unreal_service.get_property_value(property_desc=volume_settings_desc)
 
         instance.unreal_service.call_function(uobject=bp_camera_sensor_actor, ufunction=set_actor_location_func, args={"NewLocation": view_target_pov["location"]})
         instance.unreal_service.call_function(uobject=bp_camera_sensor_actor, ufunction=set_actor_rotation_func, args={"NewRotation": view_target_pov["rotation"]})
 
-        width_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=final_tone_curve_hdr_component, property_name="Width")
-        height_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=final_tone_curve_hdr_component, property_name="Height")
-        fov_angle_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=final_tone_curve_hdr_component, property_name="FOVAngle")
-        component_settings_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=final_tone_curve_hdr_component, property_name="PostProcessSettings")
+        width_desc = instance.unreal_service.find_property_by_name_on_object(uobject=final_tone_curve_hdr_component, property_name="Width")
+        height_desc = instance.unreal_service.find_property_by_name_on_object(uobject=final_tone_curve_hdr_component, property_name="Height")
+        fov_angle_desc = instance.unreal_service.find_property_by_name_on_object(uobject=final_tone_curve_hdr_component, property_name="FOVAngle")
+        component_settings_desc = instance.unreal_service.find_property_by_name_on_object(uobject=final_tone_curve_hdr_component, property_name="PostProcessSettings")
         instance.unreal_service.set_property_value(property_desc=width_desc, property_value=viewport_x)
         instance.unreal_service.set_property_value(property_desc=height_desc, property_value=viewport_y)
         instance.unreal_service.set_property_value(property_desc=fov_angle_desc, property_value=fov_adjusted_degrees)
@@ -79,7 +80,7 @@ if __name__ == "__main__":
 
         # now that the final_tone_curve_hdr component is fully configured, initialize it and get handles to its shared memory
         instance.unreal_service.call_function(uobject=final_tone_curve_hdr_component, ufunction=initialize_func)
-        final_tone_curve_hdr_component_shared_memory_handles = instance.sp_func_service.create_shared_memory_handles_for_uobject(uobject=final_tone_curve_hdr_component)
+        final_tone_curve_hdr_component_shared_memory_handles = instance.sp_func_service.create_shared_memory_handles_for_object(uobject=final_tone_curve_hdr_component)
 
     with instance.end_frame():
         pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing etc accumulate additional information across frames
@@ -108,7 +109,7 @@ if __name__ == "__main__":
     with instance.begin_frame():
         pass
     with instance.end_frame():
-        instance.sp_func_service.destroy_shared_memory_handles_for_uobject(shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
+        instance.sp_func_service.destroy_shared_memory_handles_for_object(shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
         instance.unreal_service.call_function(uobject=final_tone_curve_hdr_component, ufunction=terminate_func)
         instance.unreal_service.destroy_actor(actor=bp_camera_sensor_actor)
 

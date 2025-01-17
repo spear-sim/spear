@@ -90,7 +90,7 @@ if __name__ == "__main__":
             instance.unreal_service.call_function(
                 uobject=character["poseable_mesh_component"],
                 ufunction=set_skinned_asset_and_update_func,
-                args={"NewMesh": spear.to_ptr(manny_simple_uobject)})
+                args={"NewMesh": spear.to_ptr(handle=manny_simple_uobject)})
 
             # get bone names
             character["bone_names"] = []

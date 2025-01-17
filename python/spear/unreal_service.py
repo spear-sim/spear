@@ -42,27 +42,27 @@ class UnrealService():
     # Get and set object properties
     #
 
-    def get_object_properties_from_uobject(self, uobject):
-        return spear.try_to_dict(json_string=self._entry_point_caller.call("unreal_service.get_object_properties_as_string_from_uobject", uobject), default_value={})
+    def get_properties_from_object(self, uobject):
+        return spear.try_to_dict(json_string=self._entry_point_caller.call("unreal_service.get_properties_as_string_from_object", uobject), default_value={})
 
-    def get_object_properties_from_ustruct(self, value_ptr, ustruct):
-        return spear.try_to_dict(json_string=self._entry_point_caller.call("unreal_service.get_object_properties_as_string_from_ustruct", value_ptr, ustruct), default_value={})
+    def get_properties_from_struct(self, value_ptr, ustruct):
+        return spear.try_to_dict(json_string=self._entry_point_caller.call("unreal_service.get_properties_as_string_from_struct", value_ptr, ustruct), default_value={})
 
-    def set_object_properties_for_uobject(self, uobject, properties):
-        self._entry_point_caller.call("unreal_service.set_object_properties_from_string_for_uobject", uobject, spear.to_json_string(obj=properties))
+    def set_properties_for_object(self, uobject, properties):
+        self._entry_point_caller.call("unreal_service.set_properties_from_string_for_object", uobject, spear.to_json_string(obj=properties))
 
-    def set_object_properties_for_ustruct(self, value_ptr, ustruct, properties):
-        self._entry_point_caller.call("unreal_service.set_object_properties_from_string_for_ustruct", value_ptr, ustruct, spear.to_json_string(obj=properties))
+    def set_properties_for_struct(self, value_ptr, ustruct, properties):
+        self._entry_point_caller.call("unreal_service.set_properties_from_string_for_struct", value_ptr, ustruct, spear.to_json_string(obj=properties))
 
     #
     # Find properties
     #
 
-    def find_property_by_name_on_uobject(self, uobject, property_name):
-        return self._entry_point_caller.call("unreal_service.find_property_by_name_on_uobject", uobject, property_name)
+    def find_property_by_name_on_object(self, uobject, property_name):
+        return self._entry_point_caller.call("unreal_service.find_property_by_name_on_object", uobject, property_name)
 
-    def find_property_by_name_on_ustruct(self, value_ptr, ustruct, property_name):
-        return self._entry_point_caller.call("unreal_service.find_property_by_name_on_ustruct", value_ptr, ustruct, property_name)
+    def find_property_by_name_on_struct(self, value_ptr, ustruct, property_name):
+        return self._entry_point_caller.call("unreal_service.find_property_by_name_on_struct", value_ptr, ustruct, property_name)
 
     #
     # Get property values

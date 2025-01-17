@@ -278,22 +278,22 @@ public:
         // Get and set object properties
         //
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_object_properties_as_string_from_uobject",
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_properties_as_string_from_object",
             [this](uint64_t& uobject) -> std::string {
                 return Unreal::getObjectPropertiesAsString(toPtr<UObject>(uobject));
             });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_object_properties_as_string_from_ustruct",
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_properties_as_string_from_struct",
             [this](uint64_t& value_ptr, uint64_t& ustruct) -> std::string {
                 return Unreal::getObjectPropertiesAsString(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct));
             });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_object_properties_from_string_for_uobject",
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_properties_from_string_for_object",
             [this](uint64_t& uobject, std::string& string) -> void {
                 Unreal::setObjectPropertiesFromString(toPtr<UObject>(uobject), string);
             });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_object_properties_from_string_for_ustruct",
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_properties_from_string_for_struct",
             [this](uint64_t& value_ptr, uint64_t& ustruct, std::string& string) -> void {
                 Unreal::setObjectPropertiesFromString(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), string);
             });
@@ -302,12 +302,12 @@ public:
         // Find properties
         //
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_property_by_name_on_uobject",
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_property_by_name_on_object",
             [this](uint64_t& uobject, std::string& property_name) -> Unreal::PropertyDesc {
                 return Unreal::findPropertyByName(toPtr<UObject>(uobject), property_name);
             });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_property_by_name_on_ustruct",
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_property_by_name_on_struct",
             [this](uint64_t& value_ptr, uint64_t& ustruct, std::string& property_name) -> Unreal::PropertyDesc {
                 return Unreal::findPropertyByName(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), property_name);
             });

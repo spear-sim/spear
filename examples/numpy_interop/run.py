@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
         # Create handles to any shared memory regions created by the Unreal object. instance.sp_func_service.call_function(...)
         # will use these handles internally to access data returned via shared memory.
-        sp_debug_manager_shared_memory_handles = instance.sp_func_service.create_shared_memory_handles_for_uobject(uobject=sp_debug_manager_default_object)
+        sp_debug_manager_shared_memory_handles = instance.sp_func_service.create_shared_memory_handles_for_object(uobject=sp_debug_manager_default_object)
 
         # Create a numpy array.
         action = np.array([0.0, 1.0, 2.0])
@@ -69,7 +69,7 @@ if __name__ == "__main__":
         spear.log("return_values: ", return_values)
 
         # Destroy handles to the shared memory regions created by the Unreal object.
-        instance.sp_func_service.destroy_shared_memory_handles_for_uobject(shared_memory_handles=sp_debug_manager_shared_memory_handles)
+        instance.sp_func_service.destroy_shared_memory_handles_for_object(shared_memory_handles=sp_debug_manager_shared_memory_handles)
 
         # Destroy the shared memory region we created ourselves.
         instance.sp_func_service.destroy_shared_memory_region(shared_memory_name="smem:action")

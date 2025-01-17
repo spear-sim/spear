@@ -36,14 +36,14 @@ class SpFuncService():
         self._shared_memory_handles.pop(shared_memory_name)
         self._entry_point_caller.call("sp_func_service.destroy_shared_memory_region", shared_memory_name)
 
-    def create_shared_memory_handles_for_uobject(self, uobject):
+    def create_shared_memory_handles_for_object(self, uobject):
         views = self._entry_point_caller.call("sp_func_service.get_shared_memory_views", uobject)
         handles = {}
         for name, view in views.items():
             handles[name] = self.create_shared_memory_handle(shared_memory_view=view)
         return handles
 
-    def destroy_shared_memory_handles_for_uobject(self, shared_memory_handles):
+    def destroy_shared_memory_handles_for_object(self, shared_memory_handles):
         for name, handle in shared_memory_handles.items():
             self.destroy_shared_memory_handle(shared_memory_handle=handle)
 

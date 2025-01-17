@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
         # initialize final_tone_curve_hdr_component and get handles to its shared memory
         instance.unreal_service.call_function(uobject=final_tone_curve_hdr_component, ufunction=initialize_func)
-        final_tone_curve_hdr_component_shared_memory_handles = instance.sp_func_service.create_shared_memory_handles_for_uobject(uobject=final_tone_curve_hdr_component)
+        final_tone_curve_hdr_component_shared_memory_handles = instance.sp_func_service.create_shared_memory_handles_for_object(uobject=final_tone_curve_hdr_component)
 
         # show FPS
         instance.unreal_service.execute_console_command("stat fps")
@@ -88,10 +88,10 @@ if __name__ == "__main__":
 
             # add force
             return_values = instance.unreal_service.call_function(uobject=root_component, ufunction=get_component_rotation_func)
-            M_world_from_component = spear.to_matrix_from_rotator(return_values["ReturnValue"])
+            M_world_from_component = spear.to_matrix_from_rotator(rotator=return_values["ReturnValue"])
             force_component = np.matrix([1000.0, 0.0, 0.0]).T
             force_world = M_world_from_component*force_component
-            instance.unreal_service.call_function(uobject=sphere_component, ufunction=add_force_func, args={"Force": spear.to_vector_from_array(force_world)})
+            instance.unreal_service.call_function(uobject=sphere_component, ufunction=add_force_func, args={"Force": spear.to_vector_from_array(array=force_world)})
 
         # get observation
         with instance.end_frame():
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     with instance.begin_frame():
         pass
     with instance.end_frame():
-        instance.sp_func_service.destroy_shared_memory_handles_for_uobject(shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
+        instance.sp_func_service.destroy_shared_memory_handles_for_object(shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
         instance.unreal_service.call_function(uobject=final_tone_curve_hdr_component, ufunction=terminate_func)
         instance.unreal_service.destroy_actor(actor=bp_sphere_agent_actor)
 

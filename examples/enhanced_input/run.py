@@ -24,26 +24,26 @@ if __name__ == "__main__":
 
         # create UInputAction
         input_action = instance.unreal_service.load_object(class_name="UInputAction", outer=0, name="/SpComponents/Input/IA_InputAction.IA_InputAction")
-        spear.log("input_action: ", instance.unreal_service.get_object_properties_from_uobject(uobject=input_action))
+        spear.log("input_action: ", instance.unreal_service.get_properties_from_object(uobject=input_action))
 
         # create UInputModifierScalar
         modifier_scalar = instance.unreal_service.new_object(class_name="UInputModifierScalar")
-        spear.log("modifier_scalar: ", instance.unreal_service.get_object_properties_from_uobject(uobject=modifier_scalar))
+        spear.log("modifier_scalar: ", instance.unreal_service.get_properties_from_object(uobject=modifier_scalar))
 
         # modify UInputModifierScalar
-        modifier_scalar_value_property_desc = instance.unreal_service.find_property_by_name_on_uobject(uobject=modifier_scalar, property_name="Scalar")
+        modifier_scalar_value_property_desc = instance.unreal_service.find_property_by_name_on_object(uobject=modifier_scalar, property_name="Scalar")
         instance.unreal_service.set_property_value(property_desc=modifier_scalar_value_property_desc, property_value={"X": 4.0, "Y": 5.0, "Z": 6.0})
-        spear.log("modifier_scalar: ", instance.unreal_service.get_object_properties_from_uobject(uobject=modifier_scalar))
+        spear.log("modifier_scalar: ", instance.unreal_service.get_properties_from_object(uobject=modifier_scalar))
 
         # create UInputTriggerPressed
         trigger_pressed = instance.unreal_service.new_object(class_name="UInputTriggerPressed")
-        spear.log("trigger_pressed: ", instance.unreal_service.get_object_properties_from_uobject(uobject=trigger_pressed))
+        spear.log("trigger_pressed: ", instance.unreal_service.get_properties_from_object(uobject=trigger_pressed))
 
         # modify UInputTriggerPressed
-        trigger_pressed_actuation_threshold_property_desc = instance.unreal_service.find_property_by_name_on_uobject(
+        trigger_pressed_actuation_threshold_property_desc = instance.unreal_service.find_property_by_name_on_object(
             uobject=trigger_pressed, property_name="ActuationThreshold")
         instance.unreal_service.set_property_value(property_desc=trigger_pressed_actuation_threshold_property_desc, property_value=0.75)
-        spear.log("trigger_pressed: ", instance.unreal_service.get_object_properties_from_uobject(uobject=trigger_pressed))
+        spear.log("trigger_pressed: ", instance.unreal_service.get_properties_from_object(uobject=trigger_pressed))
 
         # call UEnhancedInputLocalPlayerSubsystem
         instance.enhanced_input_service.inject_input(

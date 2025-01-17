@@ -48,9 +48,9 @@ if __name__ == "__main__":
         # possess_func = instance.unreal_service.find_function_by_name(uclass=player_controller_static_class, function_name="Possess")
         #
         # return_values = instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=get_player_controller_func, args={"PlayerIndex": 0})
-        # player_controller = spear.to_handle(return_values["ReturnValue"])
+        # player_controller = spear.to_handle(string=return_values["ReturnValue"])
         #
-        # instance.unreal_service.call_function(uobject=player_controller, ufunction=possess_func, args={"InPawn": spear.to_ptr(car)})
+        # instance.unreal_service.call_function(uobject=player_controller, ufunction=possess_func, args={"InPawn": spear.to_ptr(handle=car)})
         #
 
         #

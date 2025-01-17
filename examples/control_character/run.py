@@ -122,14 +122,14 @@ if __name__ == "__main__":
             character["skeletal_mesh_component"] = instance.unreal_service.get_component_by_class(actor=character["actor"], uclass=skeletal_mesh_component_uclass)
 
             # configure character to be controlled without possessing
-            instance.unreal_service.set_object_properties_for_uobject(uobject=character["movement_component"], properties={"bRunPhysicsWithNoController": True})
+            instance.unreal_service.set_properties_for_object(uobject=character["movement_component"], properties={"bRunPhysicsWithNoController": True})
             instance.unreal_service.call_function(uobject=character["movement_component"], ufunction=set_movement_mode_func, args={"NewMovementMode": "MOVE_Walking"})
 
             # initialize input component
             instance.unreal_service.call_function(
                 uobject=character["actor"],
                 ufunction=create_input_component_func,
-                args={"InputComponentToCreate": spear.to_ptr(enhanced_input_component_uclass)})
+                args={"InputComponentToCreate": spear.to_ptr(handle=enhanced_input_component_uclass)})
             character["input_component"] = instance.unreal_service.get_component_by_class(actor=character["actor"], uclass=enhanced_input_component_uclass)
             instance.input_service.setup_player_input_component(actor=character["actor"], input_component=character["input_component"])
 
@@ -137,7 +137,7 @@ if __name__ == "__main__":
             instance.unreal_service.call_function(
                 uobject=character["skeletal_mesh_component"],
                 ufunction=set_skeletal_mesh_asset_func,
-                args={"NewMesh": spear.to_ptr(manny_simple_uobject)})
+                args={"NewMesh": spear.to_ptr(handle=manny_simple_uobject)})
 
             # get bone names
             character["bone_names"] = []
