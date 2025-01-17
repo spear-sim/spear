@@ -22,7 +22,11 @@ if __name__ == "__main__":
         set_game_paused_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_static_class, function_name="SetGamePaused")
 
         player_controller_static_class = instance.unreal_service.get_static_class(class_name="APlayerController")
+        get_pawn_func = instance.unreal_service.find_function_by_name(uclass=player_controller_static_class, function_name="K2_GetPawn")
         possess_func = instance.unreal_service.find_function_by_name(uclass=player_controller_static_class, function_name="Possess")
+
+        actor_static_class = instance.unreal_service.get_static_class(class_name="AActor")
+        get_actor_transform_func = instance.unreal_service.find_function_by_name(uclass=actor_static_class, function_name="GetTransform")
 
         # get UGameplayStatics default object
         gameplay_statics_default_object = instance.unreal_service.get_default_object(uclass=gameplay_statics_static_class, create_if_needed=False)
@@ -30,14 +34,35 @@ if __name__ == "__main__":
         return_values = instance.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=get_player_controller_func, args={"PlayerIndex": 0})
         player_controller = spear.to_handle(return_values["ReturnValue"])
 
-        # Instead of finding the existing car in the scene, it is also possible to spawn a new car (e.g., the
-        # default Unreal off-road car) as follows:
+        # find current possessed by first player controller
+        return_values = instance.unreal_service.call_function(uobject=player_controller, ufunction=get_pawn_func)
+        character = spear.to_handle(return_values["ReturnValue"])
 
-        bp_car_uclass = instance.unreal_service.load_object(class_name="UObject", outer=0, name="/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_Pawn.OffroadCar_Pawn_C")
-        car = instance.unreal_service.spawn_actor_from_uclass(
+        return_values = instance.unreal_service.call_function(uobject=character, ufunction=get_actor_transform_func)
+        character_transform = return_values["ReturnValue"]
+
+        city_sample_blueprint_library_class = instance.unreal_service.load_class(class_name="UObject", outer=0, name="/Script/CitySample.CitySampleBlueprintLibrary")
+        find_nearest_lane_location_by_name_func = instance.unreal_service.find_function_by_name(uclass=city_sample_blueprint_library_class, function_name="FindNearestLaneLocationByName")
+
+        city_sample_blueprint_library_default_object = instance.unreal_service.get_default_object(uclass=city_sample_blueprint_library_class, create_if_needed=False)
+
+        # find a safe car transform near default pawn location
+        return_values = instance.unreal_service.call_function(
+            uobject=city_sample_blueprint_library_default_object,
+            ufunction=find_nearest_lane_location_by_name_func,
+            args={"InPoint": character_transform,
+                  "LaneName": "Vehicle",
+                  "Radius": 10000.0})
+        car_location = return_values["OutPoint"]["translation"]
+        car_rotation = return_values["OutPoint"]["rotation"]
+
+        # spawn a new car with
+
+        bp_car_uclass = instance.unreal_service.load_object(class_name="UObject", outer=0, name="/Game/Vehicle/vehCar_vehicle03/BP_vehCar_vehicle03_Sandbox.BP_vehCar_vehicle03_Sandbox_C")
+        car = instance.unreal_service.spawn_actor_from_class(
             uclass=bp_car_uclass,
-            location={"X": -2500.0, "Y": -9330.0, "Z": 20.0},
-            rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
+            location=car_location,
+            rotation=car_rotation,
             spawn_parameters={"Name": "Agent", "SpawnCollisionHandlingOverride": "AlwaysSpawn"})
 
         # If we spawned a new car, then we would need to possess it as follows:
