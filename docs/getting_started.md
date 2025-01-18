@@ -7,7 +7,12 @@ If you'd like to work with multiple scenes, or programmatically interact with SP
 The first step is to clone this repository including submodules. We have found that the _recurse submodules_ features in some Git applications don't always download submodules as expected. We therefore recommend using the following commands.
 
 ```console
-git clone --recurse-submodules https://github.com/spear-sim/spear path/to/spear
+# clone repository and submodules non-recursively to avoid errors
+git clone https://github.com/spear-sim/spear path/to/spear --depth 1
+cd path/to/spear
+git submodule update --init --depth 1
+cd path/to/spear/third_party/boost
+git submodule update --init --depth 1
 
 # checkout the code corresponding to a specific release (optional)
 cd path/to/spear
