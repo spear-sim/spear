@@ -10,12 +10,12 @@ We recommend installing the Unreal Engine version 5.5 via the Epic Games Launche
 
 If you're developing on Linux, you will need to download the Unreal Engine from [here](https://www.unrealengine.com/en-US/linux).
 
-Several of our command-line tools require an `--unreal_engine_dir` argument. This argument must point to the top-level directory where you installed the Unreal Engine. Depending on your platform, the default install location will be as follows. However, as noted above, we recommend installing the Unreal Engine to a path that doesn't contain spaces. If you're developing on Linux, you must specify the path to the top-level directory where you unzipped the `Linux_Unreal_Engine_5.5.0.zip` file linked above.
+Several of our command-line tools require an `--unreal_engine_dir` argument. This argument must point to the top-level directory where you installed the Unreal Engine. Depending on your platform, the default install location will be as follows. However, as noted above, we recommend installing the Unreal Engine to a path that doesn't contain spaces. If you're developing on Linux, you must specify the path to the top-level directory where you unzipped the `Linux_Unreal_Engine_5.5.1.zip` file linked above.
 
 ```
 Windows: C:\Program Files\Epic Games\UE_5.5
 macOS:   /Users/Shared/Epic Games/UE_5.5
-Linux:   path/to/Linux_Unreal_Engine_5.5.0
+Linux:   path/to/Linux_Unreal_Engine_5.5.1
 ```
 
 ## Install an appropriate compiler
@@ -56,10 +56,14 @@ After executing these commands, you can use the _Developer PowerShell for VS 202
 Our `SpearSim` project requires you to build several third-party C++ libraries. We provide a command-line tool for this purpose.
 
 ```console
+# install g++ and make (Linux only) 
+sudo apt-get install g++ make
+
+# build third-party libraries
 python tools/build_third_party_libs.py
 ```
 
-If you're developing on Linux, you must specify `--unreal_engine_dir`, because we use the version of `clang` and `libc++` that ships with the Unreal Engine to build our third-party libraries.
+If you're developing on Linux, you will need to install `g++` and `make` if they aren't already installed on your system. `g++` is required to build the Boost build tool, and `make` is required by `cmake` to build our other third-party libraries. Additionally, you must specify `--unreal_engine_dir`, because we use the version of `clang` and `libc++` that ships with the Unreal Engine to build our third-party libraries.
 
 This command-line tool also accepts an optional `--num_parallel_jobs` argument that can be used to specify the number of parallel jobs that `cmake` should use when building third-party libraries.
 
