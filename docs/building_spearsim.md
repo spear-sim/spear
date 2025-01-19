@@ -10,12 +10,12 @@ We recommend installing the Unreal Engine version 5.5 via the Epic Games Launche
 
 If you're developing on Linux, you will need to download the Unreal Engine from [here](https://www.unrealengine.com/en-US/linux).
 
-Several of our command-line tools require an `--unreal_engine_dir` argument. This argument must point to the top-level directory where you installed the Unreal Engine. Depending on your platform, the default install location will be as follows. However, as noted above, we recommend installing the Unreal Engine to a path that doesn't contain spaces. If you're developing on Linux, you must specify the path to the top-level directory where you unzipped the `Linux_Unreal_Engine_5.5.1.zip` file linked above.
+Several of our command-line tools require an `--unreal_engine_dir` argument. This argument must point to the top-level directory where you installed the Unreal Engine. Depending on your platform, the default install location will be as follows. However, as noted above, we recommend installing the Unreal Engine to a path that doesn't contain spaces. If you're developing on Linux, you must specify the path to the top-level directory where you unzipped the `Linux_Unreal_Engine_5.5.0.zip` file linked above.
 
 ```
 Windows: C:\Program Files\Epic Games\UE_5.5
 macOS:   /Users/Shared/Epic Games/UE_5.5
-Linux:   path/to/Linux_Unreal_Engine_5.5.1
+Linux:   path/to/Linux_Unreal_Engine_5.5.0
 ```
 
 ## Install an appropriate compiler
