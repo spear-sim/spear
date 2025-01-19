@@ -236,7 +236,7 @@ public:
                 "frame_state_: %lld", Unreal::getEnumValue(frame_state_.load())); // don't try to print string because Unreal's reflection system is already shut down
         #elif BOOST_OS_LINUX
             SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame || frame_state_ == EFrameState::Error,
-                "frame_state_: %ld", Unreal::getEnumValue(frame_state_.load())); // don't try to print string because Unreal's reflection system is already shut down
+                "frame_state_: %ld", Unreal::getEnumValue(frame_state_.load()));  // don't try to print string because Unreal's reflection system is already shut down
         #else
             #error
         #endif
