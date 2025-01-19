@@ -97,7 +97,7 @@ if __name__ == "__main__":
         platform_dir = "Linux"
 
         common_cxx_flags = f"-nostdinc++ -I{linux_libcpp_include_dir} -Wno-reserved-macro-identifier"
-        boost_cxx_flags = f"-std=c++03 {common_cxx_flags}"
+        boost_cxx_flags = f"-std=c++03 {common_cxx_flags}" # need to compile Boost against C++03 or older to avoid "error: undefined symbol: __isoc23_sscanf" when building the SpearSim Unreal project on Linux
         cxx_flags = f"-std=c++20 {common_cxx_flags}"
 
     else:

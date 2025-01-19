@@ -6,7 +6,7 @@ import msgpackrpc
 import os
 import psutil
 import spear
-from subprocess import Popen
+import subprocess
 import sys
 import time
 
@@ -128,7 +128,7 @@ class Instance():
         spear.log("Launching executable with the following config values:")
         spear.log_no_prefix(self._config)
 
-        popen = Popen(cmd)
+        popen = subprocess.Popen(cmd)
         self._process = psutil.Process(popen.pid)
 
         # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible status values
