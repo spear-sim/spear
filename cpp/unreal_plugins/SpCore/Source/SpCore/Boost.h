@@ -8,7 +8,7 @@
 // All headers that are required by this header go here.
 //
 
-#include <boost/predef.h> // BOOST_ENDIAN_BIG_BYTE, BOOST_ENDIAN_LITTLE_BYTE, BOOST_OS_MACOS, BOOST_OS_LINUX, BOOST_OS_WINDOWS
+#include <boost/predef.h> // BOOST_ENDIAN_BIG_BYTE, BOOST_ENDIAN_LITTLE_BYTE, BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
 
 #include "SpCore/SuppressCompilerWarnings.h"
 #include "SpCore/Windows.h"

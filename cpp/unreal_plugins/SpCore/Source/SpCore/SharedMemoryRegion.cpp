@@ -8,6 +8,8 @@
 
 #include <string>
 
+#include <boost/predef.h> // BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
+
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
 

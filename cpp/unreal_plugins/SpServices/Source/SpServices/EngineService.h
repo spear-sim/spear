@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include <stdint.h> // uint64_t
-
 #include <atomic>
 #include <future> // std::promise
 #include <mutex>  // std::lock_guard
 #include <string>
+
+#include <boost/predef.h> // BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
 
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Engine/Engine.h>               // GEngine
@@ -231,8 +231,15 @@ public:
     {
         std::lock_guard<std::mutex> lock(frame_state_mutex_);
 
-        SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame || frame_state_ == EFrameState::Error,
-            "frame_state_: %lld", Unreal::getEnumValue(frame_state_.load())); // don't try to print string because Unreal's reflection system is already shut down
+        #if BOOST_OS_WINDOWS || BOOST_OS_MACOS
+            SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame || frame_state_ == EFrameState::Error,
+                "frame_state_: %lld", Unreal::getEnumValue(frame_state_.load())); // don't try to print string because Unreal's reflection system is already shut down
+        #elif BOOST_OS_LINUX
+            SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame || frame_state_ == EFrameState::Error,
+                "frame_state_: %ld", Unreal::getEnumValue(frame_state_.load())); // don't try to print string because Unreal's reflection system is already shut down
+        #else
+            #error
+        #endif
 
         EFrameState frame_state = frame_state_;
         frame_state_ = EFrameState::Closing;

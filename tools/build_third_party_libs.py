@@ -3,6 +3,7 @@
 #
 
 import argparse
+import glob
 import os 
 import shutil
 import spear
@@ -75,8 +76,16 @@ if __name__ == "__main__":
         assert args.boost_toolset_version is None
         assert args.cxx_compiler is None
 
-        unreal_engine_dir        = os.path.realpath(args.unreal_engine_dir)
-        linux_clang_bin_dir      = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Extras", "ThirdPartyNotUE", "SDKs", "HostLinux", "Linux_x64", "v22_clang-16.0.6-centos7", "x86_64-unknown-linux-gnu", "bin"))
+        unreal_engine_dir = os.path.realpath(args.unreal_engine_dir)
+
+        linux_clang_path_template = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Extras", "ThirdPartyNotUE", "SDKs", "HostLinux", "Linux_x64", "*clang*"))
+        linux_clang_paths = sorted(glob.glob(linux_clang_path_template))
+        assert len(linux_clang_paths) == 1
+        linux_clang_path = linux_clang_paths[0]
+
+        spear.log(f"Found Unreal clang: {linux_clang_path}")
+
+        linux_clang_bin_dir      = os.path.realpath(os.path.join(linux_clang_path, "x86_64-unknown-linux-gnu", "bin"))
         linux_libcpp_include_dir = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "include", "c++", "v1"))
 
         boost_toolset = "clang"
@@ -86,7 +95,10 @@ if __name__ == "__main__":
         boost_user_config_str = f"using {boost_toolset} : {boost_toolset_version} : {cxx_compiler} ;\n"
 
         platform_dir = "Linux"
-        cxx_flags = f"-std=c++20 -stdlib=libc++ -nostdinc++ -I{linux_libcpp_include_dir}"
+
+        common_cxx_flags = f"-nostdinc++ -I{linux_libcpp_include_dir} -Wno-reserved-macro-identifier"
+        boost_cxx_flags = f"-std=c++03 {common_cxx_flags}"
+        cxx_flags = f"-std=c++20 {common_cxx_flags}"
 
     else:
         assert False
@@ -185,7 +197,7 @@ if __name__ == "__main__":
 
         # we don't include -fPIC in cxx_flags for consistency with cmake libraries below, where -fPIC is
         # added to the compilation process via the CMAKE_POSITION_INDEPENDENT_CODE variable
-        cmd = f'./b2 -a --with-test toolset={boost_toolset} --user-config={user_config_file} link=static cxxflags="{cxx_flags} -fPIC" {boost_verbose_build_flag}'
+        cmd = f'./b2 -a --with-test toolset={boost_toolset} --user-config={user_config_file} link=static cxxflags="{boost_cxx_flags} -fPIC" {boost_verbose_build_flag}'
         spear.log(f"Executing: {cmd}")
         subprocess.run(cmd, shell=True, check=True) # need shell=True to handle cxxflags
 
@@ -313,6 +325,7 @@ if __name__ == "__main__":
             f"-DCMAKE_CXX_COMPILER={cxx_compiler}",
             f"-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
             f"-DCMAKE_CXX_FLAGS='{cxx_flags}'",
+            f"-DCMAKE_EXE_LINKER_FLAGS='-stdlib=libc++'",
             f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
             "-DYAML_CPP_BUILD_TESTS=OFF",
             os.path.join("..", "..")]

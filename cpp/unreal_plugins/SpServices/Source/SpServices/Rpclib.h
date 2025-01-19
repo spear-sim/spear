@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <boost/predef.h> // BOOST_OS_MACOS
+#include <boost/predef.h> // BOOST_OS_MACOS, BOOST_OS_WINDOWS
 
 #include "SpCore/Windows.h" // On Windows, rpclib expects <windows.h> to have been included
 

@@ -12,6 +12,8 @@
 #include <utility> // std::move
 #include <vector>
 
+#include <boost/predef.h> // BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
+
 #include <Camera/CameraComponent.h>
 #include <Components/SceneCaptureComponent2D.h>
 #include <Engine/TextureRenderTarget2D.h> // ETextureRenderTargetFormat
