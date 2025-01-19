@@ -31,10 +31,15 @@ conda install -c conda-forge mayavi
 # to use a specific commit from a specific fork of the msgpack-rpc-python GitHub repository
 pip install -e third_party/msgpack-rpc-python
 
+# install gcc (Linux only)
+sudo apt-get install gcc
+
 # install the spear Python package
 pip install -e python
 ```
- 
+
+If you're developing on Linux, you will need to install `gcc` if it isn't already installed on your system. `gcc` is required when installing one of our Python dependencies via `pip`.
+
 ## Navigate around a specific scene
 
 At this point, you can use our `run_executable.py` command-line tool to select which scene you want to navigate around. If you wanted to navigate through our `debug_0000` scene, you would use the following command.
