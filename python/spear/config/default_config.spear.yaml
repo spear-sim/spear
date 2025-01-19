@@ -55,12 +55,12 @@ SPEAR:
       graphicsadapter: 0        # GPU ID
       windowed: null            # run in windowed mode
       nosound: null             # turn off sound
-      fileopenlog: null         # generate a log of which files are opened in which order
       stdout: null              # ensure log output is written to the terminal
       fullstdoutlogoutput: null # ensure log output is written to the terminal
       nologtimes: null          # don't print timestamps next to log messages twice
 
       # Non-exhaustive optional arguments that we sometimes find useful:
+      # fileopenlog: null       # generate a log of which files are opened in which order (but causes texture loading problems on Linux)
       # log: "path/to/log.txt"  # see description above
       # renderoffscreen: null   # run in headless mode
 
