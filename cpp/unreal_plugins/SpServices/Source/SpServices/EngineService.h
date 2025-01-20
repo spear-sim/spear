@@ -231,6 +231,9 @@ public:
     {
         std::lock_guard<std::mutex> lock(frame_state_mutex_);
 
+        // We need platform-specific error handling here because the int64_t returned by Unreal::getEnumValue(...)
+        // needs to be formatted with %lld" on Windows and macOS, but "%ld" on Linux.
+        
         #if BOOST_OS_WINDOWS || BOOST_OS_MACOS
             SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame || frame_state_ == EFrameState::Error,
                 "frame_state_: %lld", Unreal::getEnumValue(frame_state_.load())); // don't try to print string because Unreal's reflection system is already shut down
