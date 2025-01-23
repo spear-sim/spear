@@ -20,6 +20,7 @@
 
 #pragma push_macro("check")  // Unreal macro, conflicts with Boost
 #pragma push_macro("verify") // Unreal macro, conflicts with Boost
+
 #undef check
 #undef verify
 
@@ -38,15 +39,15 @@
     #pragma push_macro("FALSE")
     #pragma push_macro("OPTIONAL")
 
+    #pragma push_macro("InterlockedCompareExchange")
+    #pragma push_macro("InterlockedCompareExchangePointer")
     #pragma push_macro("InterlockedDecrement")
     #pragma push_macro("InterlockedExchange")
     #pragma push_macro("InterlockedExchangeAdd")
     #pragma push_macro("InterlockedIncrement")
-    #pragma push_macro("InterlockedCompareExchange")
-    #pragma push_macro("InterlockedCompareExchangePointer")
 
-    #undef FALSE
     #undef TRUE
+    #undef FALSE
     #undef OPTIONAL
 
     #undef InterlockedDecrement
@@ -56,16 +57,16 @@
     #undef InterlockedCompareExchange
     #undef InterlockedCompareExchangePointer
 
-    #define FALSE false
     #define TRUE true
+    #define FALSE false
     #define OPTIONAL
 
+    #define InterlockedCompareExchange _InterlockedCompareExchange
+    #define InterlockedCompareExchangePointer _InterlockedCompareExchangePointer
     #define InterlockedDecrement _InterlockedDecrement
     #define InterlockedExchange _InterlockedExchange
     #define InterlockedExchangeAdd _InterlockedExchangeAdd
     #define InterlockedIncrement _InterlockedIncrement
-    #define InterlockedCompareExchange _InterlockedCompareExchange
-    #define InterlockedCompareExchangePointer _InterlockedCompareExchangePointer
 #endif
 
 SP_BEGIN_SUPPRESS_COMPILER_WARNINGS
@@ -77,12 +78,12 @@ SP_END_SUPPRESS_COMPILER_WARNINGS
     #pragma pop_macro("FALSE")
     #pragma pop_macro("OPTIONAL")
 
+    #pragma pop_macro("InterlockedCompareExchange")
+    #pragma pop_macro("InterlockedCompareExchangePointer")
     #pragma pop_macro("InterlockedDecrement")
     #pragma pop_macro("InterlockedExchange")
     #pragma pop_macro("InterlockedExchangeAdd")
     #pragma pop_macro("InterlockedIncrement")
-    #pragma pop_macro("InterlockedCompareExchange")
-    #pragma pop_macro("InterlockedCompareExchangePointer")
 #endif
 
 // ----------------------------------------------------------------------------------------------------------
