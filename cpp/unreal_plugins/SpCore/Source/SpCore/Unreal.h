@@ -19,6 +19,7 @@
 #include <Containers/Array.h>
 #include <Containers/UnrealString.h>        // FString::operator*
 #include <Dom/JsonValue.h>
+#include <Engine/EngineTypes.h>
 #include <Engine/LocalPlayer.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>                    // TActorIterator
@@ -544,6 +545,14 @@ public:
     static TReturnAsActor* findActorByClass(const UWorld* world, UClass* uclass)
     {
         return getItem(findActorsByClass<TReturnAsActor>(world, uclass));
+    }
+
+    static bool attachToActor(AActor* child_actor, AActor* parent_actor) {
+        return child_actor->AttachToActor(parent_actor, FAttachmentTransformRules::KeepRelativeTransform);
+    }
+
+    static bool attachToComponent(AActor* child_actor, USceneComponent* parent_component) {
+        return child_actor->AttachToComponent(parent_component, FAttachmentTransformRules::KeepRelativeTransform);
     }
 
     //

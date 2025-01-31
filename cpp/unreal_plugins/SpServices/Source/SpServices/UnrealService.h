@@ -485,6 +485,16 @@ public:
                 return toUInt64(Unreal::findActorByClass(getWorld(), toPtr<UClass>(uclass)));
             });
 
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "attach_to_actor",
+            [this](uint64_t& child_actor, uint64_t& parent_actor) -> uint64_t {
+                return (uint64_t)Unreal::attachToActor(toPtr<AActor>(child_actor), toPtr<AActor>(parent_actor));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "attach_to_component",
+            [this](uint64_t& child_actor, uint64_t& parent_component) -> uint64_t {
+                return (uint64_t)Unreal::attachToComponent(toPtr<AActor>(child_actor), toPtr<USceneComponent>(parent_component));
+            });
+
         //
         // Get components conditionally and return an std::vector
         //
