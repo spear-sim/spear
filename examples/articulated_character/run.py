@@ -41,6 +41,30 @@ if __name__ == "__main__":
     spear_instance.engine_service.end_tick()
 
     bone_names = ["Head", "LeftHand", "RightHand"] # ["head", "hand_l", "hand_r"]
+    skeleton_mapping = {
+        "Hips": "pelvis",
+        "Spine": "spine1",
+        "Spine1": "spine2",
+        "Spine2": "spine3",
+        "Neck": "neck",
+        "Head": "head",
+        "LeftShoulder": "left_collar",
+        "LeftArm": "left_shoulder",
+        "LeftForeArm": "left_elbow",
+        "LeftHand": "left_wrist",
+        "RightShoulder": "right_collar",
+        "RightArm": "right_shoulder",
+        "RightForeArm": "right_elbow",
+        "RightHand": "right_wrist",
+        "LeftUpLeg": "left_hip",
+        "LeftLeg": "left_knee",
+        "LeftFoot": "left_ankle",
+        "LeftToeBase": "left_foot",
+        "RightUpLeg": "right_hip",
+        "RightLeg": "right_knee",
+        "RightFoot": "right_ankle",
+        "RightToeBase": "right_foot",
+    }
 
     quit = False
     while not quit:
@@ -54,7 +78,7 @@ if __name__ == "__main__":
 
             spear_instance.engine_service.begin_tick()
 
-            for bone_name in bone_names:
+            for bone_name in skeleton_mapping.keys():
                 args = {"BoneName": bone_name, "BoneSpace": "ComponentSpace"}
                 return_values = spear_instance.unreal_service.call_function(uobject=poseable_mesh_component, ufunction=get_bone_transform_by_name_func, args=args)
                 spear.log(return_values)
