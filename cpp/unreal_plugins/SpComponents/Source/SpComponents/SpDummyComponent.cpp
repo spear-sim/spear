@@ -75,3 +75,8 @@ void USpDummyComponent::TickComponent(float delta_time, ELevelTick level_tick, F
 
     USceneComponent::TickComponent(delta_time, level_tick, this_tick_function);
 }
+
+void USpDummyComponent::HelloWorld()
+{
+    SP_LOG_CURRENT_FUNCTION();    
+}

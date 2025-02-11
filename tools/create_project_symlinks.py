@@ -28,8 +28,8 @@ if __name__ == "__main__":
     third_party_dir    = os.path.realpath(args.third_party_dir)
 
     # verify that our project is present
-    project = os.path.split(unreal_project_dir)[1]
-    uproject = os.path.realpath(os.path.join(unreal_project_dir, project + ".uproject"))
+    uproject_name = os.path.split(unreal_project_dir)[1]
+    uproject = os.path.realpath(os.path.join(unreal_project_dir, uproject_name + ".uproject"))
     assert os.path.exists(uproject)
     spear.log(f"Found uproject: {uproject}")
 

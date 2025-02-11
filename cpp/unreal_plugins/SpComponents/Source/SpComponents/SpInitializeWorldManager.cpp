@@ -38,6 +38,62 @@ void ASpInitializeWorldManager::BeginPlay()
 
     AActor::BeginPlay();
 
+    Initialize();
+}
+
+void ASpInitializeWorldManager::EndPlay(const EEndPlayReason::Type end_play_reason)
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    if (force_skylight_update_ && !force_skylight_update_completed_) {
+        SP_LOG("Setting r.SkylightUpdateEveryFrame to ", force_skylight_update_previous_cvar_value_);
+
+        IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.SkylightUpdateEveryFrame"));
+        cvar->Set(force_skylight_update_previous_cvar_value_);
+
+        force_skylight_update_ = false;
+        force_skylight_update_completed_ = false;
+        force_skylight_update_previous_cvar_value_ = -1;
+        force_skylight_update_max_duration_seconds_ = -1.0f;
+        force_skylight_update_duration_seconds_ = 0.0f;
+    }
+
+    if (initialize_config_system_) {
+        SP_LOG("Terminating config system...");
+        initialize_config_system_ = false;
+        Config::terminate();
+    }
+
+    AActor::EndPlay(end_play_reason);
+}
+
+void ASpInitializeWorldManager::Tick(float delta_time)
+{
+    AActor::Tick(delta_time);
+
+    // Force skylight update. We need to keep the r.SkylightUpdateEveryFrame console variable switched on for
+    // several frames to work around an intermittent bug where the apartment scene sometimes appears too dark
+    // in standalone macOS builds.
+    if (force_skylight_update_ && !force_skylight_update_completed_) {
+        force_skylight_update_duration_seconds_ += delta_time;
+
+        if (force_skylight_update_duration_seconds_ >= force_skylight_update_max_duration_seconds_) {
+            SP_LOG("Setting r.SkylightUpdateEveryFrame to ", force_skylight_update_previous_cvar_value_);
+
+            IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.SkylightUpdateEveryFrame"));
+            cvar->Set(force_skylight_update_previous_cvar_value_);
+
+            force_skylight_update_ = false;
+            force_skylight_update_completed_ = false;
+            force_skylight_update_previous_cvar_value_ = -1;
+            force_skylight_update_max_duration_seconds_ = -1.0f;
+            force_skylight_update_duration_seconds_ = 0.0f;
+        }
+    }
+}
+
+void ASpInitializeWorldManager::Initialize()
+{
     //
     // Initialize config system
     //
@@ -208,56 +264,5 @@ void ASpInitializeWorldManager::BeginPlay()
         SP_LOG("Current fixed delta time:         ", FApp::GetFixedDeltaTime());
         SP_LOG("Maximum allowed fixed delta time: ", max_fixed_delta_time);
         SP_ASSERT(FApp::GetFixedDeltaTime() <= max_fixed_delta_time);
-    }
-}
-
-void ASpInitializeWorldManager::EndPlay(const EEndPlayReason::Type end_play_reason)
-{
-    SP_LOG_CURRENT_FUNCTION();
-
-    if (force_skylight_update_ && !force_skylight_update_completed_) {
-        SP_LOG("Setting r.SkylightUpdateEveryFrame to ", force_skylight_update_previous_cvar_value_);
-
-        IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.SkylightUpdateEveryFrame"));
-        cvar->Set(force_skylight_update_previous_cvar_value_);
-
-        force_skylight_update_ = false;
-        force_skylight_update_completed_ = false;
-        force_skylight_update_previous_cvar_value_ = -1;
-        force_skylight_update_max_duration_seconds_ = -1.0f;
-        force_skylight_update_duration_seconds_ = 0.0f;
-    }
-
-    if (initialize_config_system_) {
-        SP_LOG("Terminating config system...");
-        initialize_config_system_ = false;
-        Config::terminate();
-    }
-
-    AActor::EndPlay(end_play_reason);
-}
-
-void ASpInitializeWorldManager::Tick(float delta_time)
-{
-    AActor::Tick(delta_time);
-
-    // Force skylight update. We need to keep the r.SkylightUpdateEveryFrame console variable switched on for
-    // several frames to work around an intermittent bug where the apartment scene sometimes appears too dark
-    // in standalone macOS builds.
-    if (force_skylight_update_ && !force_skylight_update_completed_) {
-        force_skylight_update_duration_seconds_ += delta_time;
-
-        if (force_skylight_update_duration_seconds_ >= force_skylight_update_max_duration_seconds_) {
-            SP_LOG("Setting r.SkylightUpdateEveryFrame to ", force_skylight_update_previous_cvar_value_);
-
-            IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.SkylightUpdateEveryFrame"));
-            cvar->Set(force_skylight_update_previous_cvar_value_);
-
-            force_skylight_update_ = false;
-            force_skylight_update_completed_ = false;
-            force_skylight_update_previous_cvar_value_ = -1;
-            force_skylight_update_max_duration_seconds_ = -1.0f;
-            force_skylight_update_duration_seconds_ = 0.0f;
-        }
     }
 }

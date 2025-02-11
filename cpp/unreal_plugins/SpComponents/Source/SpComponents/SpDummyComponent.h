@@ -36,6 +36,9 @@ public:
     void EndPlay(const EEndPlayReason::Type end_play_reason) override;
     void TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override;
 
+    UFUNCTION()
+    void HelloWorld();
+
     // Required for custom debug keyboard commands
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     USpUserInputComponent* SpUserInputComponent = nullptr;

@@ -15,8 +15,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--build_config", default="Development")
     parser.add_argument("--unreal_engine_dir", required=True)
+    parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
     parser.add_argument("--cook_dir", action="append")
     parser.add_argument("--cook_map", action="append")
+    parser.add_argument("--skip_default_cook_maps", action="store_true")
     args, unknown_args = parser.parse_known_args() # get remaining args to pass to RunUAT
 
     assert os.path.exists(args.unreal_engine_dir)
@@ -49,25 +51,32 @@ if __name__ == "__main__":
                 spear.log(f"    sudo chown {current_user} {config_dir}")
                 assert False
 
-    project_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim"))
-    project = os.path.realpath(os.path.join(project_dir, "SpearSim.uproject"))
-    archive_dir = os.path.realpath(os.path.join(project_dir, "Standalone-" + args.build_config))
+    unreal_project_dir = os.path.realpath(args.unreal_project_dir)
+    uproject_name = os.path.split(unreal_project_dir)[1]
+    uproject = os.path.realpath(os.path.join(unreal_project_dir, uproject_name + ".uproject"))
+    archive_dir = os.path.realpath(os.path.join(unreal_project_dir, "Standalone-" + args.build_config))
 
     cook_dirs = []
     if args.cook_dir is not None:
         cook_dirs.extend(args.cook_dir)
     cook_dir_args = [ "-cookdir=" + os.path.join(project_dir, cook_dir) for cook_dir in cook_dirs ]
 
-    cook_maps = spear.tools.get_cook_maps()
+    if args.skip_default_cook_maps:
+        cook_maps = []
+    else:
+        cook_maps = spear.tools.get_cook_maps()
     if args.cook_map is not None:
         cook_maps = cook_maps + args.cook_map
-    cook_maps_arg = ["-map=" + "+".join(cook_maps)]
+    if len(cook_maps) == 0:
+        cook_maps_arg = []
+    else:
+        cook_maps_arg = ["-map=" + "+".join(cook_maps)]
 
     cmd = [
         run_uat_script,
         "BuildCookRun",
-        "-project=" + project,
-        "-target=SpearSim",
+        "-project=" + uproject,
+        "-target=" + uproject_name,
         "-targetplatform=" + target_platform,
         "-clientconfig=" + args.build_config,
         "-archivedirectory=" + archive_dir] + \

@@ -259,6 +259,9 @@ public:
     void EndPlay(const EEndPlayReason::Type end_play_reason) override;
     void Tick(float delta_time) override;
 
+    UFUNCTION()
+    void Initialize();
+
 private:
 
     // Initialize config system
@@ -294,12 +297,9 @@ private:
     UPROPERTY(EditAnywhere, Category="SPEAR")
     FSpPhysicsSettings SpPhysicsSettings;
 
-    // Force skylight update. We set bForceSkylightUpdate to true here, rather than setting the corresponding
-    // config parameter in default_config.sp_components.yaml, becasue because we always want this default
-    // behavior, even when the config system isn't loaded.
-
+    // Force skylight update
     UPROPERTY(EditAnywhere, Category="SPEAR")
-    bool bForceSkylightUpdate = true;
+    bool bForceSkylightUpdate = false;
     UPROPERTY(EditAnywhere, Category="SPEAR")
     float ForceSkylightUpdateMaxDurationSeconds = 0.5f;
 

@@ -188,7 +188,7 @@ if __name__ == "__main__":
                     obs_final_color = visualization_utils.get_final_color_image_for_visualization(obs["camera.final_color"])
 
                     # save the collected rgb observations
-                    plt.imsave(os.path.realpath(os.path.join(images_dir, "%d.jpeg"%i)), obs_final_color)
+                    plt.imsave(os.path.realpath(os.path.join(images_dir, "%04d.jpeg" % i)), obs_final_color)
 
                     # During an episode, there is no guarantee that the agent reaches the predefined goal although its behavior is perfectly valid for training
                     # purposes. In practice, it may for instance occur that the agent is not given enough time steps or control authority to move along the whole

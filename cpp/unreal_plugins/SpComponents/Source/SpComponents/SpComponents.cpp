@@ -14,6 +14,7 @@
 
 #include "SpComponents/SpDebugManager.h"
 #include "SpComponents/SpHitEventManager.h"
+#include "SpComponents/SpInitializeWorldManager.h"
 #include "SpComponents/SpSceneCaptureComponent2D.h"
 
 void SpComponents::StartupModule()
@@ -28,6 +29,7 @@ void SpComponents::StartupModule()
 
     // SpComponents types
     UnrealClassRegistrar::registerActorClass<ASpDebugManager>("ASpDebugManager");
+    UnrealClassRegistrar::registerActorClass<ASpInitializeWorldManager>("ASpInitializeWorldManager");
     UnrealClassRegistrar::registerActorClass<ASpHitEventManager>("ASpHitEventManager");
     UnrealClassRegistrar::registerComponentClass<USpSceneCaptureComponent2D>("USpSceneCaptureComponent2D");
 }
@@ -43,6 +45,7 @@ void SpComponents::ShutdownModule()
 
     // SpComponents types
     UnrealClassRegistrar::unregisterActorClass<ASpDebugManager>("ASpDebugManager");
+    UnrealClassRegistrar::unregisterActorClass<ASpInitializeWorldManager>("ASpInitializeWorldManager");
     UnrealClassRegistrar::unregisterActorClass<ASpHitEventManager>("ASpHitEventManager");
     UnrealClassRegistrar::unregisterComponentClass<USpSceneCaptureComponent2D>("USpSceneCaptureComponent2D");
 }

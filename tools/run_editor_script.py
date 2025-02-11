@@ -28,10 +28,12 @@ if __name__ == "__main__":
     else:
         assert False
 
-    project = os.path.realpath(os.path.join(args.unreal_project_dir, "SpearSim.uproject"))
+    unreal_project_dir = os.path.realpath(args.unreal_project_dir)
+    uproject_name = os.path.split(unreal_project_dir)[1]
+    uproject = os.path.realpath(os.path.join(unreal_project_dir, uproject_name + ".uproject"))
 
     # need shell=True to correctly handle the quotes in cmd
-    cmd = unreal_editor_bin + " " + project + ' -run=pythonscript -script="' + args.script + " " + " ".join(unknown_args) + '"'
+    cmd = unreal_editor_bin + " " + uproject + ' -run=pythonscript -script="' + args.script + " " + " ".join(unknown_args) + '"'
     spear.log(f"Executing: {cmd}")
     subprocess.run(cmd, shell=True, check=True)
 

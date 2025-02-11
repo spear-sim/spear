@@ -85,7 +85,7 @@ if __name__ == "__main__":
                     obs_render_pass_vis = visualization_utils.get_segmentation_image_for_visualization(obs["camera.segmentation"])
                 else:
                     assert False
-                plt.imsave(os.path.realpath(os.path.join(render_pass_dir, "%04d.png"%index)), obs_render_pass_vis)
+                plt.imsave(os.path.realpath(os.path.join(render_pass_dir, "%04d.png" % index)), obs_render_pass_vis)
             index += 1
 
         if done:

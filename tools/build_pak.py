@@ -23,6 +23,7 @@ if __name__ == "__main__":
     parser.add_argument("--cook_maps_file")
     parser.add_argument("--include_assets_file", required=True)
     parser.add_argument("--exclude_assets_file")
+    parser.add_argument("--skip_default_cook_maps", action="store_true")
     parser.add_argument("--unreal_engine_dir", required=True)
     parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
     args = parser.parse_args()
@@ -51,8 +52,10 @@ if __name__ == "__main__":
     else:
         assert False
 
-    uproject = os.path.realpath(os.path.join(args.unreal_project_dir, "SpearSim.uproject"))
-    unreal_project_cooked_dir = os.path.realpath(os.path.join(args.unreal_project_dir, "Saved", "Cooked", platform))
+    unreal_project_dir = os.path.realpath(args.unreal_project_dir)
+    uproject_name = os.path.split(unreal_project_dir)[1]
+    uproject = os.path.realpath(os.path.join(unreal_project_dir, uproject_name + ".uproject"))
+    unreal_project_cooked_dir = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform))
     unreal_project_cooked_dir_posix = unreal_project_cooked_dir.replace(ntpath.sep, posixpath.sep)
 
     shutil.rmtree(unreal_project_cooked_dir, ignore_errors=True)
@@ -62,10 +65,16 @@ if __name__ == "__main__":
         cook_dirs = pd.read_csv(args.cook_dirs_file)["cook_dirs"].tolist()
     cook_dir_args = [ "-cookdir=" + os.path.join(args.unreal_project_dir, cook_dir) for cook_dir in cook_dirs ]
 
-    cook_maps = spear.tools.get_cook_maps()
+    if args.skip_default_cook_maps:
+        cook_maps = []
+    else:
+        cook_maps = spear.tools.get_cook_maps()
     if args.cook_maps_file is not None:
         cook_maps = cook_maps + pd.read_csv(args.cook_maps_file)["cook_maps"].tolist()
-    cook_maps_arg = ["-map=" + "+".join(cook_maps)]
+    if len(cook_maps) == 0:
+        cook_maps_arg = []
+    else:
+        cook_maps_arg = ["-map=" + "+".join(cook_maps)]
 
     # cook project, see https://docs.unrealengine.com/5.2/en-US/SharingAndReleasing/Deployment/Cooking for more details
     cmd = [
