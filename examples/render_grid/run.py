@@ -81,6 +81,7 @@ if __name__ == "__main__":
             class_name="USceneComponent"
         )
 
+        # Create the parent actor’s root scene component.
         parent_root_component = (
             instance.unreal_service.create_scene_component_by_class_from_actor(
                 scene_component_class=USceneComponent,
@@ -89,24 +90,31 @@ if __name__ == "__main__":
             )
         )
 
+        AActor_K2_AttachToComponent = instance.unreal_service.find_function_by_name(
+            uclass=AActor,
+            function_name="K2_AttachToComponent",
+        )
+
         bp_camera_sensor_actors = []
         final_tone_curve_hdr_components = []
         for i in range(rows):
             for j in range(cols):
                 # These offsets define the spatial displacement of the cameras in the grid
-                # with respect to the parent actor's pose
+                # relative to the parent actor’s pose.
                 offset = {"x": 0, "y": (j - cols / 2) * 20, "z": -(i - rows / 2) * 20}
 
                 bp_camera_sensor_actor = instance.unreal_service.spawn_actor_from_class(
                     uclass=BP_Camera_Sensor
                 )
 
+                # Set the sensor actor’s location (offset relative to the eventual parent).
                 instance.unreal_service.call_function(
                     uobject=bp_camera_sensor_actor,
                     ufunction=AActor_K2_SetActorLocation,
                     args={"NewLocation": offset},
                 )
 
+                # Get the component that renders the camera view.
                 final_tone_curve_hdr_component = (
                     instance.unreal_service.get_component_by_name(
                         class_name="USceneComponent",
@@ -115,15 +123,32 @@ if __name__ == "__main__":
                     )
                 )
 
-                # Attach the camera sensor actor to the parent actor
-                instance.unreal_service.attach_to_component(
-                    bp_camera_sensor_actor, parent_root_component
+                # Instead of calling our own attach function, use the existing UFUNCTION.
+                # Retrieve the sensor actor’s root scene component.
+                child_root_component = instance.unreal_service.get_component_by_name(
+                    class_name="USceneComponent",
+                    actor=bp_camera_sensor_actor,
+                    component_name="DefaultSceneRoot",
+                )
+                # Specify attachment rules as UENUM arguments (passed as strings).
+                attachment_args = {
+                    "Parent": spear.to_ptr(parent_root_component),
+                    "SocketName": "",
+                    "LocationRule": "KeepRelative",
+                    "RotationRule": "KeepRelative",
+                    "ScaleRule": "KeepRelative",
+                    "bWeldSimulatedBodies": False,
+                }
+                instance.unreal_service.call_function(
+                    uobject=bp_camera_sensor_actor,
+                    ufunction=AActor_K2_AttachToComponent,
+                    args=attachment_args,
                 )
 
                 bp_camera_sensor_actors.append(bp_camera_sensor_actor)
                 final_tone_curve_hdr_components.append(final_tone_curve_hdr_component)
 
-        # configure the final_tone_curve_hdr component to match the viewport (width, height, FOV, post-processing settings, etc)
+        # Configure the final_tone_curve_hdr component to match the viewport (width, height, FOV, post-processing settings, etc).
 
         post_process_volume = instance.unreal_service.find_actor_by_type(
             class_name="APostProcessVolume"

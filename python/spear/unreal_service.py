@@ -196,12 +196,6 @@ class UnrealService():
 
     def find_actor_by_class(self, uclass):
         return self._entry_point_caller.call("unreal_service.find_actor_by_class", uclass)
-    
-    def attach_to_actor(self, child_actor, parent_actor):
-        return self._entry_point_caller.call("unreal_service.attach_to_actor", child_actor, parent_actor)
-    
-    def attach_to_component(self, child_actor, parent_component):
-        return self._entry_point_caller.call("unreal_service.attach_to_component", child_actor, parent_component)
 
     #
     # Get components conditionally and return a list
