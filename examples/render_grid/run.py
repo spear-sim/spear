@@ -8,6 +8,8 @@ import numpy as np
 import os
 import spear
 
+num_frames = 600
+
 if __name__ == "__main__":
 
     # define the number of cameras in the grid
@@ -18,6 +20,18 @@ if __name__ == "__main__":
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
+
+    images_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "images")
+    if not os.path.exists(images_directory):
+        os.makedirs(images_directory)
+
+    camera_offsets = []
+    for i in range(rows):
+        for j in range(cols):
+            # These offsets define the spatial displacement of the cameras in the grid
+            # relative to the parent actor’s pose.
+            offset = {"x": 0, "y": (j - cols / 2) * 40, "z": -(i - rows / 2) * 40}
+            camera_offsets.append(offset)
 
     # initialize actors and components
     with instance.begin_frame():
@@ -67,52 +81,47 @@ if __name__ == "__main__":
 
         bp_camera_sensor_actors = []
         final_tone_curve_hdr_components = []
-        for i in range(rows):
-            for j in range(cols):
-                # These offsets define the spatial displacement of the cameras in the grid
-                # relative to the parent actor’s pose.
-                offset = {"x": 0, "y": (j - cols / 2) * 20, "z": -(i - rows / 2) * 20}
+        for offset in camera_offsets:
+            bp_camera_sensor_actor = instance.unreal_service.spawn_actor_from_class(uclass=bp_camera_sensor_uclass)
 
-                bp_camera_sensor_actor = instance.unreal_service.spawn_actor_from_class(uclass=bp_camera_sensor_uclass)
+            # Set the sensor actor’s location (offset relative to the eventual parent).
+            instance.unreal_service.call_function(
+                uobject=bp_camera_sensor_actor,
+                ufunction=set_actor_location_func,
+                args={"NewLocation": offset},
+            )
 
-                # Set the sensor actor’s location (offset relative to the eventual parent).
-                instance.unreal_service.call_function(
-                    uobject=bp_camera_sensor_actor,
-                    ufunction=set_actor_location_func,
-                    args={"NewLocation": offset},
-                )
+            # Get the component that renders the camera view.
+            final_tone_curve_hdr_component = instance.unreal_service.get_component_by_name(
+                class_name="USceneComponent",
+                actor=bp_camera_sensor_actor,
+                component_name="DefaultSceneRoot.final_tone_curve_hdr",
+            )
 
-                # Get the component that renders the camera view.
-                final_tone_curve_hdr_component = instance.unreal_service.get_component_by_name(
-                    class_name="USceneComponent",
-                    actor=bp_camera_sensor_actor,
-                    component_name="DefaultSceneRoot.final_tone_curve_hdr",
-                )
+            # Instead of calling our own attach function, use the existing UFUNCTION.
+            # Retrieve the sensor actor’s root scene component.
+            child_root_component = instance.unreal_service.get_component_by_name(
+                class_name="USceneComponent",
+                actor=bp_camera_sensor_actor,
+                component_name="DefaultSceneRoot",
+            )
+            # Specify attachment rules as UENUM arguments (passed as strings).
+            attachment_args = {
+                "Parent": spear.to_ptr(parent_root_component),
+                "SocketName": "",
+                "LocationRule": "KeepRelative",
+                "RotationRule": "KeepRelative",
+                "ScaleRule": "KeepRelative",
+                "bWeldSimulatedBodies": False,
+            }
+            instance.unreal_service.call_function(
+                uobject=bp_camera_sensor_actor,
+                ufunction=attach_to_component_func,
+                args=attachment_args,
+            )
 
-                # Instead of calling our own attach function, use the existing UFUNCTION.
-                # Retrieve the sensor actor’s root scene component.
-                child_root_component = instance.unreal_service.get_component_by_name(
-                    class_name="USceneComponent",
-                    actor=bp_camera_sensor_actor,
-                    component_name="DefaultSceneRoot",
-                )
-                # Specify attachment rules as UENUM arguments (passed as strings).
-                attachment_args = {
-                    "Parent": spear.to_ptr(parent_root_component),
-                    "SocketName": "",
-                    "LocationRule": "KeepRelative",
-                    "RotationRule": "KeepRelative",
-                    "ScaleRule": "KeepRelative",
-                    "bWeldSimulatedBodies": False,
-                }
-                instance.unreal_service.call_function(
-                    uobject=bp_camera_sensor_actor,
-                    ufunction=attach_to_component_func,
-                    args=attachment_args,
-                )
-
-                bp_camera_sensor_actors.append(bp_camera_sensor_actor)
-                final_tone_curve_hdr_components.append(final_tone_curve_hdr_component)
+            bp_camera_sensor_actors.append(bp_camera_sensor_actor)
+            final_tone_curve_hdr_components.append(final_tone_curve_hdr_component)
 
         # Configure the final_tone_curve_hdr component to match the viewport (width, height, FOV, post-processing settings, etc).
 
@@ -191,7 +200,7 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass
 
-    for frame_idx in range(600):
+    for frame_idx in range(num_frames):
         with instance.begin_frame():
             # move the parent actor around
             location = view_target_pov["location"]
@@ -248,8 +257,9 @@ if __name__ == "__main__":
                     j * viewport_x : (j + 1) * viewport_x,
                 ] = data
 
-        cv2.imwrite(f"montage_{frame_idx}.png", canvas)
-        print(f"Saved montage_{frame_idx}.png")
+        filename = os.path.join(images_directory, "%04d.png" % frame_idx)
+        cv2.imwrite(filename, canvas)
+        spear.log(filename)
 
     with instance.begin_frame():
         pass
