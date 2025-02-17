@@ -336,7 +336,7 @@ if __name__ == "__main__":
             f"-DCMAKE_CXX_COMPILER={cxx_compiler}",
             f"-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
             f"-DCMAKE_CXX_FLAGS='{cmake_cxx_flags}'",
-            f"-DCMAKE_EXE_LINKER_FLAGS='-stdlib=libc++ -L{linux_libcpp_lib_dir} -lpthread'",
+            f"-DCMAKE_EXE_LINKER_FLAGS='-stdlib=libc++ -L{linux_libcpp_lib_dir} -lpthread'", # -lpthread needed on some Linux environments
             f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
             "-DYAML_CPP_BUILD_TESTS=OFF",
             os.path.join("..", "..")]
