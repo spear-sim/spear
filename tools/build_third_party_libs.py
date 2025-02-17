@@ -31,6 +31,7 @@ if __name__ == "__main__":
     #
 
     if sys.platform == "win32":
+
         assert args.boost_toolset is None
         assert args.boost_toolset_version is None
         assert args.cxx_compiler is None
@@ -47,9 +48,13 @@ if __name__ == "__main__":
         boost_user_config_str = f"using {boost_toolset} : {boost_toolset_version} ;\n"
 
         platform_dir = "Win64"
-        cxx_flags = "/std:c++20 /EHsc /GR-" # enable exceptions with standard C++ stack unwinding and assume extern "C" code never throws, disable RTTI
+
+        common_cxx_flags = "/std:c++20 /EHsc /GR-" # enable exceptions with standard C++ stack unwinding and assume extern "C" code never throws, disable RTTI
+        boost_cxx_flags = common_cxx_flags
+        cmake_cxx_flags = common_cxx_flags
 
     elif sys.platform == "darwin":
+
         if args.boost_toolset is None:
             boost_toolset = "clang"
         else:
@@ -68,9 +73,14 @@ if __name__ == "__main__":
         boost_user_config_str = f"using {boost_toolset} : {boost_toolset_version} : {cxx_compiler} ;\n"
 
         platform_dir = "Mac"
-        cxx_flags = f"-std=c++20 -stdlib=libc++ -mmacosx-version-min=10.14"
+
+        common_cxx_flags = f"-std=c++20 -stdlib=libc++ -mmacosx-version-min=10.14"
+        boost_cxx_flags = common_cxx_flags
+        cmake_cxx_flags = common_cxx_flags
 
     elif sys.platform == "linux":
+
+        assert args.unreal_engine_dir is not None
         assert os.path.exists(args.unreal_engine_dir)
         assert args.boost_toolset is None
         assert args.boost_toolset_version is None
@@ -87,6 +97,7 @@ if __name__ == "__main__":
 
         linux_clang_bin_dir      = os.path.realpath(os.path.join(linux_clang_path, "x86_64-unknown-linux-gnu", "bin"))
         linux_libcpp_include_dir = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "include", "c++", "v1"))
+        linux_libcpp_lib_dir     = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "lib", "Unix", "x86_64-unknown-linux-gnu"))
 
         boost_toolset = "clang"
         boost_toolset_version = ""
@@ -98,7 +109,7 @@ if __name__ == "__main__":
 
         common_cxx_flags = f"-nostdinc++ -I{linux_libcpp_include_dir} -Wno-reserved-macro-identifier"
         boost_cxx_flags = f"-std=c++03 {common_cxx_flags}" # need to compile Boost against C++03 or older to avoid "error: undefined symbol: __isoc23_sscanf" when building the SpearSim Unreal project on Linux
-        cxx_flags = f"-std=c++20 {common_cxx_flags}"
+        cmake_cxx_flags = f"-std=c++20 {common_cxx_flags}"
 
     else:
         assert False
@@ -167,7 +178,7 @@ if __name__ == "__main__":
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
-        cmd = f'b2 --with-test toolset={boost_toolset} --user-config={user_config_file} link=static cxxflags="{cxx_flags}" {boost_verbose_build_flag}'
+        cmd = f'b2 --with-test toolset={boost_toolset} --user-config={user_config_file} link=static cxxflags="{boost_cxx_flags}" {boost_verbose_build_flag}'
         spear.log(f"Executing: {cmd}")
         subprocess.run(cmd, shell=True, check=True) # need shell=True to handle cxxflags
 
@@ -181,7 +192,7 @@ if __name__ == "__main__":
         spear.log(f"Executing: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
 
-        cmd = f'./b2 --with-test toolset={boost_toolset} --user-config={user_config_file} link=static architecture=arm+x86 cxxflags="{cxx_flags}" {boost_verbose_build_flag}'
+        cmd = f'./b2 --with-test toolset={boost_toolset} --user-config={user_config_file} link=static architecture=arm+x86 cxxflags="{boost_cxx_flags}" {boost_verbose_build_flag}'
         spear.log(f"Executing: {cmd}")
         subprocess.run(cmd, shell=True, check=True) # need shell=True to handle cxxflags
 
@@ -227,7 +238,7 @@ if __name__ == "__main__":
         cmd = [
             "cmake",
             f"-DCMAKE_CXX_COMPILER={cxx_compiler}",
-            f"-DCMAKE_CXX_FLAGS='{cxx_flags}'",
+            f"-DCMAKE_CXX_FLAGS='{cmake_cxx_flags}'",
             f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
             os.path.join("..", "..")]
 
@@ -242,7 +253,7 @@ if __name__ == "__main__":
             "cmake",
             f"-DCMAKE_CXX_COMPILER={cxx_compiler}",
             f"-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64",
-            f"-DCMAKE_CXX_FLAGS='{cxx_flags}'",
+            f"-DCMAKE_CXX_FLAGS='{cmake_cxx_flags}'",
             f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
             os.path.join("..", "..")]
 
@@ -256,7 +267,7 @@ if __name__ == "__main__":
             "cmake",
             f"-DCMAKE_CXX_COMPILER={cxx_compiler}",
             f"-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
-            f"-DCMAKE_CXX_FLAGS='{cxx_flags}'",
+            f"-DCMAKE_CXX_FLAGS='{cmake_cxx_flags}'",
             f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
             os.path.join("..", "..")]
 
@@ -293,7 +304,7 @@ if __name__ == "__main__":
         cmd = [
             "cmake",
             f"-DCMAKE_CXX_COMPILER={cxx_compiler}",
-            f"-DCMAKE_CXX_FLAGS='{cxx_flags}'",
+            f"-DCMAKE_CXX_FLAGS='{cmake_cxx_flags}'",
             f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
             "-DYAML_CPP_BUILD_TESTS=OFF",
             os.path.join("..", "..")]
@@ -309,7 +320,7 @@ if __name__ == "__main__":
             "cmake",
             f"-DCMAKE_CXX_COMPILER={cxx_compiler}",
             f"-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64",
-            f"-DCMAKE_CXX_FLAGS='{cxx_flags}'",
+            f"-DCMAKE_CXX_FLAGS='{cmake_cxx_flags}'",
             f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
             "-DYAML_CPP_BUILD_TESTS=OFF",
             os.path.join("..", "..")]
@@ -324,8 +335,8 @@ if __name__ == "__main__":
             "cmake",
             f"-DCMAKE_CXX_COMPILER={cxx_compiler}",
             f"-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
-            f"-DCMAKE_CXX_FLAGS='{cxx_flags}'",
-            f"-DCMAKE_EXE_LINKER_FLAGS='-stdlib=libc++'",
+            f"-DCMAKE_CXX_FLAGS='{cmake_cxx_flags}'",
+            f"-DCMAKE_EXE_LINKER_FLAGS='-stdlib=libc++ -L{linux_libcpp_lib_dir} -lpthread'",
             f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
             "-DYAML_CPP_BUILD_TESTS=OFF",
             os.path.join("..", "..")]
