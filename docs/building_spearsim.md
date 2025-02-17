@@ -60,11 +60,11 @@ Our `SpearSim` project requires you to build several third-party C++ libraries. 
 python tools/build_third_party_libs.py
 
 # build third-party libraries (Linux)
-sudo apt-get install g++ libc++-dev make
+sudo apt-get install g++ make
 python tools/build_third_party_libs.py --unreal_engine_dir path/to/UE_5.5
 ```
 
-If you're developing on Linux, you will need to install `g++`, `libc++-dev`, and `make` if they aren't already installed on your system. `g++` is required to build the Boost build tool. `libc++-dev` is required by `cmake` during its configure step, and `make` is required by `cmake` to build all third-party libraries other than Boost. Additionally, you must specify `--unreal_engine_dir`, because we use the version of `clang` and `libc++` that ships with the Unreal Engine to build our third-party libraries.
+If you're developing on Linux, you will need to install `g++` and `make` if they aren't already installed on your system. `g++` is required to build the Boost build tool, and `make` is required by `cmake` to build all third-party libraries other than Boost. Additionally, you must specify `--unreal_engine_dir`, because we use the version of `clang` and `libc++` that ships with the Unreal Engine to build our third-party libraries.
 
 This command-line tool also accepts an optional `--num_parallel_jobs` argument that can be used to specify the number of parallel jobs that `cmake` should use when building third-party libraries.
 
