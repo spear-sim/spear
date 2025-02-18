@@ -10,24 +10,24 @@ We recommend installing the Unreal Engine version 5.5 via the Epic Games Launche
 
 If you're developing on Linux, you will need to download the Unreal Engine from [here](https://www.unrealengine.com/en-US/linux).
 
-Several of our command-line tools require an `--unreal_engine_dir` argument. This argument must point to the top-level directory where you installed the Unreal Engine. Depending on your platform, the default install location will be as follows. However, as noted above, we recommend installing the Unreal Engine to a path that doesn't contain spaces. If you're developing on Linux, you must specify the path to the top-level directory where you unzipped the `Linux_Unreal_Engine_5.5.0.zip` file linked above.
+Several of our command-line tools require an `--unreal_engine_dir` argument. This argument must point to the top-level directory where you installed the Unreal Engine. Depending on your platform, the default install location will be as follows. However, as noted above, we recommend installing the Unreal Engine to a path that doesn't contain spaces. If you're developing on Linux, you must specify the path to the top-level directory where you unzipped the `Linux_Unreal_Engine_5.5.1.zip` file linked above.
 
 ```
 Windows: C:\Program Files\Epic Games\UE_5.5
 macOS:   /Users/Shared/Epic Games/UE_5.5
-Linux:   path/to/Linux_Unreal_Engine_5.5.0
+Linux:   path/to/Linux_Unreal_Engine_5.5.1
 ```
 
 ## Install an appropriate compiler
 
-If you're developing on Windows or macOS, you will need to install a specific compiler that is compatible with Unreal Engine 5.5. If you're developing on Linux, the Unreal Engine ships with its own version of `clang` and `libc++`, so there is no need to install another compiler. We have verified that the following compilers behave as expected.
+If you're developing on Windows or macOS, you will need to install a specific compiler that is compatible with Unreal Engine 5.5. If you're developing on Linux, the Unreal Engine ships with its own version of `clang` and `libc++`, so there is no need to install another compiler to build the `SpearSim` project in this repository. We have verified that the following compilers behave as expected.
 
 ```
 Windows: Visual Studio 2022
 macOS:   XCode 16
 ```
 
-If you're developing on Windows, make sure to select _Desktop development with C++_ from the _Workloads_ menu when installing Visual Studio, and also make sure to select _MSVC v143 - VS2022 C++ x64/x86 build tools (v14.36-17.6)_ from the _Individual Components_ menu.
+If you're developing on Windows, make sure to select _Desktop development with C++_ and _.NET desktop development_ from the _Workloads_ menu when installing Visual Studio, and also make sure to select _MSVC v143 - VS2022 C++ x64/x86 build tools (v14.36-17.6)_ from the _Individual Components_ menu.
 
 ## Configure your terminal
 
