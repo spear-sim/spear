@@ -58,8 +58,8 @@ void ASpPlayerController::EndPlay(const EEndPlayReason::Type end_play_reason)
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    APlayerController::EndPlay(end_play_reason);
-
     SpUserInputComponent->setHandleUserInputFunc(nullptr);
     SpUserInputComponent->unsubscribeFromUserInputs({"Escape"});
+
+    APlayerController::EndPlay(end_play_reason);
 }

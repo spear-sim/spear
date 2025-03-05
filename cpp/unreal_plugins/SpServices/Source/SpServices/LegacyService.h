@@ -128,6 +128,7 @@ public:
 
     ~LegacyService() override = default;
 
+protected:
     void worldBeginPlay() override
     {
         Service::worldBeginPlay();

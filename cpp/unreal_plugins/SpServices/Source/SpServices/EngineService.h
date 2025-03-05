@@ -15,7 +15,6 @@
 #include <Engine/Engine.h>               // GEngine
 #include <Engine/GameViewportClient.h>
 #include <Engine/World.h>                // FWorldDelegates, FActorSpawnParameters
-#include <Misc/CoreDelegates.h>
 #include <UObject/ObjectMacros.h>        // UENUM
 
 #include "SpCore/Assert.h"
@@ -56,9 +55,6 @@ public:
         #if WITH_EDITOR
             pie_started_handle_ = FWorldDelegates::OnPIEStarted.AddRaw(this, &EngineService::PIEStartedHandler);
         #endif
-
-        begin_frame_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &EngineService::beginFrameHandler);
-        end_frame_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &EngineService::endFrameHandler);
 
         bindFuncToExecuteOnWorkerThread("engine_service", "begin_frame", [this]() -> void {
 
@@ -166,53 +162,11 @@ public:
 
     ~EngineService() override
     {
-        FCoreDelegates::OnEndFrame.Remove(end_frame_handle_);
-        FCoreDelegates::OnBeginFrame.Remove(begin_frame_handle_);
-
         #if WITH_EDITOR
             FWorldDelegates::OnPIEStarted.Remove(pie_started_handle_);
         #endif
 
-        end_frame_handle_.Reset();
-        begin_frame_handle_.Reset();
         pie_started_handle_.Reset();
-    }
-
-    void postWorldInitialization(UWorld* world, const UWorld::InitializationValues initialization_values) override
-    {
-        Service::postWorldInitialization(world, initialization_values);
-
-        SP_LOG("World: ", Unreal::toStdString(world->GetName()));
-
-        SP_ASSERT(GEngine);
-
-        if (world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
-            SP_LOG("Caching world...");
-            SP_ASSERT(!world_);
-            world_ = world;
-        }
-    }
-
-
-    void worldCleanup(UWorld* world, bool session_ended, bool cleanup_resources) override
-    {
-        Service::worldCleanup(world, session_ended, cleanup_resources);
-
-        SP_LOG("World: ", Unreal::toStdString(world->GetName()));
-
-        if (world == world_) {
-            SP_LOG("Clearing cached world...");
-            initialized_ = false;
-            world_ = nullptr;
-        }
-    }
-
-    void worldBeginPlay() override
-    {
-        Service::worldBeginPlay();
-
-        SP_ASSERT(world_);
-        initialized_ = true;
     }
 
     void bindFuncToExecuteOnWorkerThread(const std::string& service_name, const std::string& func_name, const auto& func)
@@ -251,26 +205,20 @@ public:
         }
     }
 
-private:
+protected:
+    void worldCleanup(UWorld* world, bool session_ended, bool cleanup_resources) override
+    {
+        initialized_ = false;
+        Service::worldCleanup(world, session_ended, cleanup_resources);
+    }
 
-    #if WITH_EDITOR // defined in an auto-generated header
-        void PIEStartedHandler(UGameInstance* game_instance)
-        {
-            std::lock_guard<std::mutex> lock(frame_state_mutex_);
+    void worldBeginPlay() override
+    {
+        Service::worldBeginPlay();
+        initialized_ = true;
+    }
 
-            SP_LOG_CURRENT_FUNCTION();
-
-            // Reset error state if the user has just pressed play in the editor. We don't want to do this in
-            // the constructor, because that will only be called once per application lifetime. We also don't
-            // want to do this in worldBeginPlay(), because worldBeginPlay() will be called whenever a new
-            // map is loaded. This event handler will be called once per PIE session, which is exactly what
-            // we want.
-            work_queue_.initialize();
-            frame_state_ = EFrameState::Idle;
-        }
-    #endif
-
-    void beginFrameHandler()
+    void beginFrame() override
     {
         std::lock_guard<std::mutex> lock(frame_state_mutex_);
 
@@ -303,7 +251,7 @@ private:
         }
     }
 
-    void endFrameHandler()
+    void endFrame() override
     {
         std::lock_guard<std::mutex> lock(frame_state_mutex_);
 
@@ -336,6 +284,24 @@ private:
             }
         }
     }
+
+private:
+    #if WITH_EDITOR // defined in an auto-generated header
+        void PIEStartedHandler(UGameInstance* game_instance)
+        {
+            std::lock_guard<std::mutex> lock(frame_state_mutex_);
+
+            SP_LOG_CURRENT_FUNCTION();
+
+            // Reset error state if the user has just pressed play in the editor. We don't want to do this in
+            // the constructor, because that will only be called once per application lifetime. We also don't
+            // want to do this in worldBeginPlay(), because worldBeginPlay() will be called whenever a new
+            // map is loaded. This event handler will be called once per PIE session, which is exactly what
+            // we want.
+            work_queue_.initialize();
+            frame_state_ = EFrameState::Idle;
+        }
+    #endif
 
     template <typename TFunc>
     auto wrapFuncToExecuteInTryCatch(const std::string& long_func_name, const TFunc& func)
@@ -384,14 +350,10 @@ private:
     }
 
     FDelegateHandle pie_started_handle_;
-    FDelegateHandle begin_frame_handle_;
-    FDelegateHandle end_frame_handle_;
 
     TEntryPointBinder* entry_point_binder_ = nullptr;
 
     WorkQueue work_queue_;
-
-    UWorld* world_ = nullptr;
 
     std::atomic<bool> initialized_ = false;
     

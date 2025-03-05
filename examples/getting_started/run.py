@@ -46,7 +46,9 @@ if __name__ == "__main__":
         root_component_properties = instance.unreal_service.get_properties_from_object(uobject=root_component)
 
         # print properties
-        spear.log("root_component: ")
+        spear.log("root_component_string: ", root_component_string)
+        spear.log("root_component: ", root_component)
+        spear.log("root_component_properties: ")
         pprint.pprint(root_component_properties)
 
     with instance.end_frame():

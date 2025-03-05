@@ -24,13 +24,16 @@ public:
     Service();
     virtual ~Service();
 
-    UWorld* getWorld();
-
+protected:
     virtual void postWorldInitialization(UWorld* world, const UWorld::InitializationValues initialization_values);
     virtual void worldCleanup(UWorld* world, bool session_ended, bool cleanup_resources);
-    virtual void worldBeginPlay() {}
+    virtual void worldBeginPlay();
 
-protected:
+    virtual void beginFrame() {}
+    virtual void endFrame() {}
+
+    UWorld* getWorld();
+
     template <typename TValue>
     static uint64_t toUInt64(const TValue* src)
     {
@@ -71,10 +74,14 @@ private:
     void postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values);
     void worldCleanupHandler(UWorld* world, bool session_ended, bool cleanup_resources);
     void worldBeginPlayHandler();
+    void beginFrameHandler();
+    void endFrameHandler();
 
     FDelegateHandle post_world_initialization_handle_;
     FDelegateHandle world_cleanup_handle_;
     FDelegateHandle world_begin_play_handle_;
+    FDelegateHandle begin_frame_handle_;
+    FDelegateHandle end_frame_handle_;
 
     UWorld* world_ = nullptr;
 };

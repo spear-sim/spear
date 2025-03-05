@@ -33,7 +33,8 @@ if __name__ == "__main__":
     if args.version_tag is not None:
         config.SPEAR.PAKS_VERSION_TAG = args.version_tag
     if args.scene_id is not None:
-        config.SP_SERVICES.GAME_DEFAULT_MAP = "/Game/Scenes/" + args.scene_id + "/Maps/" + args.scene_id
+        config.SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_GAME_DEFAULT_MAP = True
+        config.SP_SERVICES.INITIALIZE_ENGINE_SERVICE.GAME_DEFAULT_MAP = "/Game/Scenes/" + args.scene_id + "/Maps/" + args.scene_id
     if args.vk_icd_filenames is not None:
         config.SPEAR.ENVIRONMENT_VARS.VK_ICD_FILENAMES = args.vk_icd_filenames
     if args.graphics_adaptor is not None:

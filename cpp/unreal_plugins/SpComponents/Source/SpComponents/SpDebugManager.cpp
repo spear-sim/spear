@@ -653,9 +653,10 @@ void ASpDebugManager::initializeSpFunc()
 
     SpFuncComponent->initialize();
 
-    // The name chosen here for our shared memory region not need to be globally unique. It only needs unique
-    // within this SpFuncComponent. Normally we would choose a human-readable name for the shared memory, e.g.,
-    // "smem:observation", but in this case, we set it to Std::toStringFromPtr(this) as a debugging tool.
+    // The name chosen here for our shared memory region does not need to be globally unique. It only needs
+    // unique within this SpFuncComponent. Normally we would choose a human-readable name for the shared
+    // memory, e.g., "smem:observation", but in this case, we set it to Std::toStringFromPtr(this) as a
+    // debugging tool.
     shared_memory_view_ = SpFuncSharedMemoryView(shared_memory_region_->getView(), SpFuncSharedMemoryUsageFlags::ReturnValue);
     SpFuncComponent->registerSharedMemoryView(Std::toStringFromPtr(this), shared_memory_view_);
 

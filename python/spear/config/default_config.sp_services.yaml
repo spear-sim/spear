@@ -7,31 +7,66 @@ SP_SERVICES:
   # Port for the RPC server.
   RPC_SERVER_PORT: 30000
 
-  # Print debug info when injecting input.
+  #
+  # InputService
+  #
+
+  # Print debug info when injecting input into InputService.
   INPUT_SERVICE:
     PRINT_INJECT_DEBUG_INFO: False
+
+  #
+  # EnhancedInputService
+  #
+
+  # Print debug info when injecting input into EnhancedInputService.
   ENHANCED_INPUT_SERVICE:
     PRINT_INJECT_DEBUG_INFO: False
 
   #
-  # For each of the config strings below, if the corresponding override parameter is set to True, then the
-  # string will override the corresponding config parameter in the [/Script/EngineSettings.GameMapsSettings]
-  # section of cpp/unreal_projects/SpearSim/Config/DefaultEngine.ini. The strings below must be formatted in
-  # the format that would be expected in DefaultEngine.ini, e.g.,
-  #
-  #   OVERRIDE_GAME_DEFAULT_MAP: True
-  #   GAME_DEFAULT_MAP: "/Game/Spear/Scenes/apartment_0000/Maps/apartment_0000.apartment_0000"
-  #
-  #   OVERRIDE_GLOBAL_DEFAULT_GAME_MODE: True
-  #   GLOBAL_DEFAULT_GAME_MODE: "/SpComponents/Blueprints/BP_SpGameMode.BP_SpGameMode_C"
+  # InitializeEngineService
   #
 
   INITIALIZE_ENGINE_SERVICE:
+
+    #
+    # For each of the config strings below, if the corresponding override parameter is set to True, then the
+    # string will override the corresponding config parameter in the [/Script/EngineSettings.GameMapsSettings]
+    # section of cpp/unreal_projects/SpearSim/Config/DefaultEngine.ini. The strings below must be formatted in
+    # the format that would be expected in DefaultEngine.ini, e.g.,
+    #
+    #   OVERRIDE_GAME_DEFAULT_MAP: True
+    #   GAME_DEFAULT_MAP: "/Game/Spear/Scenes/apartment_0000/Maps/apartment_0000.apartment_0000"
+    #
+    #   OVERRIDE_GLOBAL_DEFAULT_GAME_MODE: True
+    #   GLOBAL_DEFAULT_GAME_MODE: "/SpComponents/Blueprints/BP_SpGameMode.BP_SpGameMode_C"
+    #
+
     OVERRIDE_GAME_DEFAULT_MAP: False
     GAME_DEFAULT_MAP: ""
 
     OVERRIDE_GLOBAL_DEFAULT_GAME_MODE: False
     GLOBAL_DEFAULT_GAME_MODE: ""
+
+    # Other defaults for initializing the Unreal Engine.
+
+    OVERRIDE_GAME_PAUSED: True
+    GAME_PAUSED: True
+
+    OVERRIDE_BENCHMARKING: True
+    BENCHMARKING: True
+
+    OVERRIDE_FIXED_DELTA_TIME: True
+    FIXED_DELTA_TIME: 0.033333 # 1.0/30.0
+
+    OVERRIDE_PHYSICS_SETTINGS: False
+    PHYSICS_SETTINGS_STRING: ""
+
+    EXECUTE_CONSOLE_COMMANDS: False
+    CONSOLE_COMMANDS: []
+
+    FORCE_SKYLIGHT_UPDATE: True
+    FORCE_SKYLIGHT_UPDATE_MAX_DURATION_SECONDS: 1.0
 
   #
   # Legacy config parameters

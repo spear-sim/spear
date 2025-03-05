@@ -192,6 +192,7 @@ public:
     template <typename TPtr>
     static TPtr* toPtrFromString(const std::string& string)
     {
+        SP_ASSERT(string.starts_with("0x"));
         return reinterpret_cast<TPtr*>(std::strtoull(string.c_str(), nullptr, 16));
     }
 

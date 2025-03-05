@@ -64,7 +64,6 @@ void USpBasicKeyboardControlComponent::BeginPlay()
 
     SpUserInputComponent->subscribeToUserInputs({"One", "Two", "Three", "Four"});
     SpUserInputComponent->setHandleUserInputFunc([this](const std::string& key, float axis_value) -> void {
-
         if (key == "One" && add_rotation_component_) {
             add_rotation_component_->AddRelativeRotation(FRotator(0.0, -2.0, 0.0));
         }
@@ -95,8 +94,6 @@ void USpBasicKeyboardControlComponent::EndPlay(const EEndPlayReason::Type end_pl
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    UActorComponent::EndPlay(end_play_reason);
-
     SpUserInputComponent->setHandleUserInputFunc(nullptr);
     SpUserInputComponent->unsubscribeFromUserInputs({"One", "Two", "Three", "Four"});
 
@@ -108,4 +105,6 @@ void USpBasicKeyboardControlComponent::EndPlay(const EEndPlayReason::Type end_pl
 
     AddRotationComponent = Unreal::toFString("");
     add_rotation_component_ = nullptr;
+
+    UActorComponent::EndPlay(end_play_reason);
 }

@@ -73,7 +73,8 @@ def to_ptr(handle):
 
 # Convert a string returned by a service into a handle that can be passed a service.
 def to_handle(string):
-    return int(string, 0)
+    assert string.startswith("0x")
+    return int(string, 16)
 
 # Convert a numpy array backed by shared memory to a Shared object that can be passed to sp_func_service.
 def to_shared(array, shared_memory_name):
