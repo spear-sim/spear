@@ -8,8 +8,10 @@
 #include <vector>
 
 #include <GameMapsSettings.h>
+#include <GenericPlatform/GenericPlatformFile.h>
 #include <Kismet/GameplayStatics.h>
 #include <Misc/App.h>
+#include <Misc/CoreDelegates.h>
 #include <PhysicsEngine/PhysicsSettings.h>
 
 #include "SpCore/Config.h"
@@ -25,6 +27,35 @@ public:
     InitializeEngineService() = delete;
     InitializeEngineService(CUnrealEntryPointBinder auto* unreal_entry_point_binder)
     {
+        // Mount PAK files. PAK files in default locations are mounted before SpCore::StartupModule(), so
+        // there is no danger of attempting to mount PAK files too early. See the function below for guidance
+        // on how to set pak_order in Engine/Source/Runtime/PakFile/Private/IPlatformFilePak.cpp.
+        //
+        //     int32 FPakPlatformFile::GetPakOrderFromPakFilePath(const FString& PakFilePath)
+        //     {
+        //         if (PakFilePath.StartsWith(FString::Printf(TEXT("%sPaks/%s-"), *FPaths::ProjectContentDir(), FApp::GetProjectName())))
+        //             return 4;
+        //         else if (PakFilePath.StartsWith(FPaths::ProjectContentDir()))
+        //             return 3;
+        //         else if (PakFilePath.StartsWith(FPaths::EngineContentDir()))
+        //             return 2;
+        //         else if (PakFilePath.StartsWith(FPaths::ProjectSavedDir()))
+        //             return 1;
+        //         return 0;
+        //     }
+
+        if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.MOUNT_PAK_FILES") && FCoreDelegates::MountPak.IsBound()) {
+            std::vector<std::string> pak_files = Config::get<std::vector<std::string>>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.PAK_FILES");
+            int32 pak_order = 0;
+
+            SP_LOG("Mounting PAK files...");
+            for (auto& pak_file : pak_files) {
+                SP_LOG("Mounting PAK file: ", pak_file);
+                IPakFile* pak = FCoreDelegates::MountPak.Execute(Unreal::toFString(pak_file), pak_order);
+                SP_ASSERT(pak);
+            }
+        }
+
         // Override default game map settings. We want to do this early enough to avoid loading the default map
         // specified in Unreal's config system, but late enough that that the UGameMapSettings default object
         // has already been initialized.
@@ -140,6 +171,7 @@ protected:
             SP_LOG("Executing console commands...");
             SP_ASSERT(GEngine);
             for (auto& cmd : console_commands) {
+                SP_LOG("Executing console command: ", cmd);
                 GEngine->Exec(getWorld(), *Unreal::toFString(cmd));
             }
         }
@@ -156,7 +188,7 @@ protected:
 
         if (Config::isInitialized()) {
             force_skylight_update_ = Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.FORCE_SKYLIGHT_UPDATE");
-            force_skylight_update_max_duration_seconds_ = Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.FORCE_SKYLIGHT_UPDATE_MAX_DURATION_SECONDS");
+            force_skylight_update_max_duration_seconds_ = Config::get<float>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.FORCE_SKYLIGHT_UPDATE_MAX_DURATION_SECONDS");
         }
 
         if (force_skylight_update_) {
@@ -219,8 +251,8 @@ private:
     // State required to force skylight update.
     //
 
-    bool force_skylight_update_ = true;
-    float force_skylight_update_max_duration_seconds_ = 1.0f;
+    bool force_skylight_update_ = false;
+    float force_skylight_update_max_duration_seconds_ = -1.0f;
     int force_skylight_update_previous_cvar_value_ = -1;
     float force_skylight_update_duration_seconds_ = 0.0f;
 };

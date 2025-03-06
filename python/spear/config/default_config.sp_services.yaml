@@ -29,6 +29,11 @@ SP_SERVICES:
 
   INITIALIZE_ENGINE_SERVICE:
 
+    # Defaults for loading PAK files.
+
+    MOUNT_PAK_FILES: False
+    PAK_FILES: []
+
     #
     # For each of the config strings below, if the corresponding override parameter is set to True, then the
     # string will override the corresponding config parameter in the [/Script/EngineSettings.GameMapsSettings]

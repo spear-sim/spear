@@ -10,6 +10,7 @@
 #include <HAL/Platform.h> // SPCORE_API
 
 #include "SpCore/Assert.h"
+#include "SpCore/Std.h"
 #include "SpCore/Yaml.h"
 #include "SpCore/YamlCpp.h"
 
@@ -57,14 +58,28 @@ public:
     static TValue get(const std::string& key)
     {
         SP_ASSERT(isInitialized());
-        return Yaml::get<TValue>(g_config_node, key);
+
+        try {
+            return Yaml::get<TValue>(g_config_node, key);
+        } catch (...) {
+            SP_LOG("ERROR: Couldn't get value for key: ", key);
+            std::rethrow_exception(std::current_exception());
+            return TValue();
+        }
     }
 
     template <typename TValue>
     static TValue get(const std::vector<std::string>& keys)
     {
         SP_ASSERT(isInitialized());
-        return Yaml::get<TValue>(g_config_node, keys);
+
+        try {
+            return Yaml::get<TValue>(g_config_node, keys);
+        } catch (...) {
+            SP_LOG("ERROR: Couldn't get value for keys: [", Std::join(keys, ", "), "]");
+            std::rethrow_exception(std::current_exception());
+            return TValue();
+        }
     }
 
 private:
