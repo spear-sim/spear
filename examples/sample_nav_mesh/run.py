@@ -29,7 +29,7 @@ if __name__ == "__main__":
         bp_axes_uclass = instance.unreal_service.load_object(class_name="UClass", outer=0, name="/SpComponents/Blueprints/BP_Axes.BP_Axes_C")
 
         # since we're not using bp_axes_uclass in this frame, we need to explicitly prevent garbage collection
-        instance.unreal_service.add_object_to_root(bp_axes_uclass)
+        instance.unreal_service.add_object_to_root(uobject=bp_axes_uclass)
 
         # get navigation system
         navigation_system_v1_static_class = instance.unreal_service.get_static_class(class_name="UNavigationSystemV1")
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass
 
-    # spawn axes at previously sampled random locations
+    # spawn axes at previously sampled locations
     for i in range(num_points):
         with instance.begin_frame():
             bp_axes_actor = instance.unreal_service.spawn_actor_from_class(uclass=bp_axes_uclass, location={"X": points[i,0], "Y": points[i,1], "Z": points[i,2]})
@@ -82,7 +82,7 @@ if __name__ == "__main__":
         with instance.end_frame():
             pass
 
-    # destroy shared memory region and re-enable garbage collection
+    # destroy shared memory region and re-enable garbage collection for bp_axes_uclass
     with instance.begin_frame():
         instance.shared_memory_service.destroy_shared_memory_region(shared_memory_handle=shared_memory_handle)
         instance.unreal_service.remove_object_from_root(bp_axes_uclass)
