@@ -12,9 +12,8 @@
 #include <HAL/Platform.h>                 // SPCOMPONENTS_API, uint32
 
 #include "SpCore/SharedMemoryRegion.h"
-#include "SpCore/SpFuncArray.h"
+#include "SpCore/SpArray.h"
 
-#include "SpComponents/SpFuncArrayTypes.h"
 #include "SpComponents/SpFuncComponent.h"
 
 #include "SpSceneCaptureComponent2D.generated.h"
@@ -48,7 +47,7 @@ public:
     uint32 NumChannelsPerPixel = 4;
 
     UPROPERTY(EditAnywhere, Category="SPEAR")
-    ESpFuncArrayDataType ChannelDataType = ESpFuncArrayDataType::UInt8;
+    ESpArrayDataType ChannelDataType = ESpArrayDataType::UInt8;
 
     // TEnumAsByte avoids: "Error: You cannot use the raw enum name as a type for member variables, instead use TEnumAsByte or a C++11 enum class with an explicit underlying type."
     UPROPERTY(EditAnywhere, Category="SPEAR")
@@ -70,5 +69,5 @@ private:
     bool initialized_ = false;
     UMaterialInstanceDynamic* material_instance_dynamic_ = nullptr;
     std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
-    SpFuncSharedMemoryView shared_memory_view_;
+    SpArraySharedMemoryView shared_memory_view_;
 };

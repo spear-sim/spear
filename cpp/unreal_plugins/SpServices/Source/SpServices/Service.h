@@ -14,10 +14,9 @@
 
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Engine/World.h>                // UWorld::InitializationValues
-#include <Misc/CoreDelegates.h>
-#include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS, UENUM, UPROPERTY, USTRUCT
 
 #include "SpCore/Std.h"
+#include "SpCore/SpArray.h"
 
 class Service {
 public:
@@ -68,6 +67,39 @@ protected:
     static std::map<TKey, TPtr*> toPtr(const std::map<TKey, uint64_t>& src)
     {
         return Std::toMap<TKey, TPtr*>(src | std::views::transform([](auto& pair) { auto& [key, value] = pair; return std::make_pair(key, toPtr<TPtr>(value)); }));
+    }
+
+    template <typename TValue>
+    static SpPackedArray toPackedArray(
+        const std::vector<TValue>& data,
+        const std::vector<int64_t>& shape,
+        SpPackedArray& packed_array,
+        const std::map<std::string, SpArraySharedMemoryView>& shared_memory_views,
+        SpArraySharedMemoryUsageFlags usage_flags)
+    {
+        SpArray<TValue> array;
+
+        if (packed_array.data_source_ == SpArrayDataSource::Internal) {
+            array.setDataSource(data, shape); // set the data source of array to data
+
+        } else if (packed_array.data_source_ == SpArrayDataSource::Shared) {
+
+            // resolve packed_array's references to shared memory and validate that packed_array is consistent with usage_flags
+            SpArrayUtils::resolve(packed_array, shared_memory_views);
+            packed_array.validate(usage_flags);
+
+            // set the data source of array to the shared memory that is backing packed_array, and update array's data values to data
+            array.setDataSource(shared_memory_views.at(packed_array.shared_memory_name_), SpArrayShapeUtils::getShape(shape, data.size()), packed_array.shared_memory_name_);
+            array.setDataValues(data);
+
+        } else {
+            SP_ASSERT(false);
+        }
+
+        SpPackedArray return_value;
+        array.moveToPackedArray(return_value);
+
+        return return_value;
     }
 
 private:

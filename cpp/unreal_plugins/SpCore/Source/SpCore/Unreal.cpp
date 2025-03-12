@@ -23,6 +23,7 @@
 #include <JsonObjectConverter.h>
 #include <Serialization/JsonReader.h>
 #include <Serialization/JsonSerializer.h>
+#include <Templates/Casts.h>
 #include <Templates/SharedPointer.h> // TSharedPtr, TSharedRef
 #include <UObject/Class.h>           // EIncludeSuperFlag, UClass, UStruct
 #include <UObject/NameTypes.h>       // FName

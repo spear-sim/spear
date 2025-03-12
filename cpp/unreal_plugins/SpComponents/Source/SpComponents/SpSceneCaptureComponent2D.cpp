@@ -4,7 +4,8 @@
 
 #include "SpComponents/SpSceneCaptureComponent2D.h"
 
-#include <memory> // std::make_unique
+#include <memory>  // std::make_unique
+#include <utility> // std::move
 
 #include <Components/SceneCaptureComponent2D.h>
 #include <Materials/Material.h>
@@ -16,7 +17,8 @@
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/SharedMemoryRegion.h"
-#include "SpCore/SpFuncArray.h"
+#include "SpCore/SpArray.h"
+#include "SpCore/SpFuncDataBundle.h"
 #include "SpCore/Unreal.h"
 
 #include "SpComponents/SpFuncComponent.h"
@@ -63,11 +65,11 @@ void USpSceneCaptureComponent2D::Initialize()
 
     if (bUseSharedMemory) {
         SP_ASSERT(!shared_memory_region_);
-        SpFuncArrayDataType channel_data_type = Unreal::getEnumValueAs<SpFuncArrayDataType, ESpFuncArrayDataType>(ChannelDataType);
-        int num_bytes = Height*Width*NumChannelsPerPixel*SpFuncArrayDataTypeUtils::getSizeOf(channel_data_type);
+        SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
+        int num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
         shared_memory_region_ = std::make_unique<SharedMemoryRegion>(num_bytes);
         SP_ASSERT(shared_memory_region_);
-        shared_memory_view_ = SpFuncSharedMemoryView(shared_memory_region_->getView(), SpFuncSharedMemoryUsageFlags::ReturnValue);
+        shared_memory_view_ = SpArraySharedMemoryView(shared_memory_region_->getView(), SpArraySharedMemoryUsageFlags::ReturnValue);
         SpFuncComponent->registerSharedMemoryView("smem:sp_scene_capture_component_2d", shared_memory_view_); // name needs to be unique per USpFuncComponent
     }
 
@@ -75,9 +77,9 @@ void USpSceneCaptureComponent2D::Initialize()
 
         SP_ASSERT(initialized_);
 
-        SpFuncArrayDataType channel_data_type = Unreal::getEnumValueAs<SpFuncArrayDataType, ESpFuncArrayDataType>(ChannelDataType);
+        SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
 
-        SpFuncPackedArray packed_array;
+        SpPackedArray packed_array;
         packed_array.shape_ = {Height, Width, NumChannelsPerPixel};
         packed_array.data_type_ = channel_data_type;
 
@@ -85,16 +87,16 @@ void USpSceneCaptureComponent2D::Initialize()
         
         if (bUseSharedMemory) {
             packed_array.view_ = shared_memory_view_.data_;
-            packed_array.data_source_ = SpFuncArrayDataSource::Shared;
+            packed_array.data_source_ = SpArrayDataSource::Shared;
             packed_array.shared_memory_name_ = "smem:sp_scene_capture_component_2d";
             packed_array.shared_memory_usage_flags_ = shared_memory_view_.usage_flags_;
             dest_ptr = shared_memory_view_.data_;
 
         } else {
-            int num_bytes = Height*Width*NumChannelsPerPixel*SpFuncArrayDataTypeUtils::getSizeOf(channel_data_type);
+            int num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
             packed_array.data_.resize(num_bytes);
             packed_array.view_ = packed_array.data_.data();
-            packed_array.data_source_ = SpFuncArrayDataSource::Internal;
+            packed_array.data_source_ = SpArrayDataSource::Internal;
             dest_ptr = packed_array.data_.data();
         }
         
@@ -105,11 +107,11 @@ void USpSceneCaptureComponent2D::Initialize()
             SP_ASSERT(texture_render_target_resource);
 
             // ReadPixelsPtr assumes 4 channels per pixel, 1 byte per channel
-            if (NumChannelsPerPixel == 4 && SpFuncArrayDataTypeUtils::getSizeOf(channel_data_type) == 1) {
+            if (NumChannelsPerPixel == 4 && SpArrayDataTypeUtils::getSizeOf(channel_data_type) == 1) {
                 texture_render_target_resource->ReadPixelsPtr(static_cast<FColor*>(dest_ptr));
 
             // ReadLinearColorPixelsPtr assumes 4 channels per pixel, 4 bytes per channel
-            } else if (NumChannelsPerPixel == 4 && SpFuncArrayDataTypeUtils::getSizeOf(channel_data_type) == 4) {
+            } else if (NumChannelsPerPixel == 4 && SpArrayDataTypeUtils::getSizeOf(channel_data_type) == 4) {
                 texture_render_target_resource->ReadLinearColorPixelsPtr(static_cast<FLinearColor*>(dest_ptr));
 
             } else {
@@ -138,7 +140,7 @@ void USpSceneCaptureComponent2D::Terminate()
     if (bUseSharedMemory) {
         SP_ASSERT(shared_memory_region_);
         SpFuncComponent->unregisterSharedMemoryView("smem:sp_scene_capture_component_2d");
-        shared_memory_view_ = SpFuncSharedMemoryView();
+        shared_memory_view_ = SpArraySharedMemoryView();
         shared_memory_region_ = nullptr;
     }
 

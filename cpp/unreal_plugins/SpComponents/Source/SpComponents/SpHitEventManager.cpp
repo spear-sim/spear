@@ -11,6 +11,7 @@
 #include <Engine/HitResult.h>
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>           // uint64
+#include <Templates/Casts.h>
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"

@@ -11,6 +11,8 @@
 #include <Engine/EngineTypes.h>     // EEndPlayReason, ETickingGroup
 
 #include "SpCore/Log.h"
+#include "SpCore/SpArray.h"
+#include "SpCore/SpFuncDataBundle.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 

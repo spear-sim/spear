@@ -16,6 +16,7 @@
 #include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
 #include "SpCore/SharedMemoryRegion.h"
+#include "SpCore/SpArray.h"
 
 #include "SpComponents/SpFuncComponent.h"
 
@@ -122,5 +123,5 @@ private:
     void terminateSpFunc();
 
     std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
-    SpFuncSharedMemoryView shared_memory_view_;
+    SpArraySharedMemoryView shared_memory_view_;
 };

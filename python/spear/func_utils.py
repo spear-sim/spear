@@ -67,7 +67,7 @@ def try_to_dict(json_string, default_value=None):
             return default_value
 
 
-# Convert a handle into a Ptr object that can be passed to a service.
+# Convert a handle into a spear.Ptr object that can be passed to a service.
 def to_ptr(handle):
     return Ptr(handle)
 
@@ -76,9 +76,67 @@ def to_handle(string):
     assert string.startswith("0x")
     return int(string, 16)
 
-# Convert a numpy array backed by shared memory to a Shared object that can be passed to sp_func_service.
-def to_shared(array, shared_memory_name):
-    return Shared(array, shared_memory_name)
+
+# Convert a NumPy array backed by shared memory to a spear.Shared object that can be passed to a service.
+def to_shared(array, shared_memory_handle):
+    return Shared(array, shared_memory_handle)
+
+
+# Convert a collection of NumPy arrays to a collection of packed arrays.
+def to_packed_arrays(arrays, byte_order=None, usage_flags=None):
+    if isinstance(arrays, list):
+        return [ to_packed_array(array=a, byte_order=byte_order, usage_flags=usage_flags) for a in arrays ]
+    elif isinstance(arrays, dict):
+        return { k: to_packed_array(array=v, byte_order=byte_order, usage_flags=usage_flags) for k, v in arrays.items() }
+    else:
+        assert False
+
+# Convert a NumPy array to a packed array.
+def to_packed_array(array, byte_order=None, usage_flags=None):
+    if isinstance(array, np.ndarray):
+        assert byte_order is not None
+        return {
+            "data": np.array(array, dtype=array.dtype.newbyteorder(byte_order)).data,
+            "data_source": "Internal",
+            "shape": array.shape,
+            "data_type": array.dtype.str.replace("<", "").replace(">", ""),
+            "shared_memory_name": ""}
+    elif isinstance(array, spear.Shared):
+        assert usage_flags is not None
+        assert set(usage_flags) <= set(array.shared_memory_handle["view"]["usage_flags"])
+        return {
+            "data": np.array([]).data,
+            "data_source": "Shared",
+            "shape": array.array.shape,
+            "data_type": array.array.dtype.str.replace("<", "").replace(">", ""),
+            "shared_memory_name": array.shared_memory_handle["name"]}
+    else:
+        assert False
+
+
+# Convert a collection of packed arrays to a collection of NumPy arrays.
+def to_arrays(packed_arrays, byte_order=None, usage_flags=None, shared_memory_handles=None):
+    if isinstance(packed_arrays, list):
+        return [ to_array(packed_array=p, byte_order=byte_order, usage_flags=usage_flags, shared_memory_handles=shared_memory_handles) for p in packed_arrays ]
+    elif isinstance(packed_arrays, dict):
+        return { k: to_array(packed_array=v, byte_order=byte_order, usage_flags=usage_flags, shared_memory_handles=shared_memory_handles) for k, v in packed_arrays.items() }
+    else:
+        assert False
+
+# Convert a packed array to a NumPy array.
+def to_array(packed_array, byte_order=None, usage_flags=None, shared_memory_handles=None):
+    if packed_array["data_source"] == "Internal":
+        assert byte_order is not None
+        dtype = np.dtype(packed_array["data_type"]).newbyteorder(byte_order)
+        return np.frombuffer(packed_array["data"], dtype=dtype, count=-1).reshape(packed_array["shape"])
+    elif packed_array["data_source"] == "Shared":
+        assert packed_array["shared_memory_name"] in shared_memory_handles
+        assert usage_flags is not None
+        assert set(usage_flags) <= set(shared_memory_handles[packed_array["shared_memory_name"]]["view"]["usage_flags"])
+        buffer = shared_memory_handles[packed_array["shared_memory_name"]]["buffer"]
+        return np.ndarray(shape=packed_array["shape"], dtype=np.dtype(packed_array["data_type"]), buffer=buffer)
+    else:
+        assert False
 
 
 # Convert to a NumPy matrix from an Unreal rotator. See pipeline.py for more details on Unreal's Euler angle conventions.
@@ -112,6 +170,6 @@ class Ptr:
         return f"{self._handle:#0{18}x}"
 
 class Shared:
-    def __init__(self, array, shared_memory_name):
+    def __init__(self, array, shared_memory_handle):
         self.array = array
-        self.shared_memory_name = shared_memory_name
+        self.shared_memory_handle = shared_memory_handle

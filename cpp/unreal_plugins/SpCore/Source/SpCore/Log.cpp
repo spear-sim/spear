@@ -114,7 +114,7 @@ std::string Log::getCurrentFunctionAbbreviated(const std::string& current_functi
     current_function_simplified = std::regex_replace(current_function_simplified, function_non_void_arguments_regex, "(...)");
 
     // Return the token containing "(" and ")".
-    for (auto& token : Std::tokenize(current_function_simplified, " ")) {
+    for (auto& token : Std::tokenize(current_function_simplified, "*& ")) {
         if (Std::contains(token, "(") && Std::contains(token, ")")) {
             return token;
         }

@@ -411,7 +411,7 @@ class UnrealService():
     # Spawn actor
     #
 
-    def spawn_actor(self, class_name, location={}, rotation={}, spawn_parameters={}):
+    def spawn_actor(self, class_name, location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Pitch": 0.0, "Yaw": 0.0, "Roll": 0.0}, spawn_parameters={}):
 
         if "TransformScaleMethod" not in spawn_parameters:
             spawn_parameters["TransformScaleMethod"] = "MultiplyWithRoot" # see Engine/Source/Runtime/Engine/Classes/Engine/World.h
@@ -424,7 +424,7 @@ class UnrealService():
         return self._entry_point_caller.call(
             "unreal_service.spawn_actor", class_name, spear.to_json_string(obj=location), spear.to_json_string(obj=rotation), spear.to_json_string(obj=spawn_parameters), object_flags)
 
-    def spawn_actor_from_class(self, uclass, location={}, rotation={}, spawn_parameters={}):
+    def spawn_actor_from_class(self, uclass, location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Pitch": 0.0, "Yaw": 0.0, "Roll": 0.0}, spawn_parameters={}):
 
         if "TransformScaleMethod" not in spawn_parameters:
             spawn_parameters["TransformScaleMethod"] = "MultiplyWithRoot" # see Engine/Source/Runtime/Engine/Classes/Engine/World.h

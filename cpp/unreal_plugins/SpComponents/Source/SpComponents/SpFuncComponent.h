@@ -15,7 +15,8 @@
 #include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UPROPERTY
 
 #include "SpCore/FuncRegistrar.h"
-#include "SpCore/SpFuncArray.h"
+#include "SpCore/SpArray.h"
+#include "SpCore/SpFuncDataBundle.h"
 
 #include "SpFuncComponent.generated.h"
 
@@ -31,13 +32,13 @@ public:
     // typically called by the owning actor or component to register/unregister an SpFunc
     void initialize();
     void terminate();
-    void registerSharedMemoryView(const std::string& shared_memory_name, const SpFuncSharedMemoryView& shared_memory_view);
+    void registerSharedMemoryView(const std::string& shared_memory_name, const SpArraySharedMemoryView& shared_memory_view);
     void unregisterSharedMemoryView(const std::string& shared_memory_name);
     void registerFunc(const std::string& func_name, const std::function<SpFuncDataBundle(SpFuncDataBundle&)>& func);
     void unregisterFunc(const std::string& func_name);
 
     // typically called by code that wants to call an SpFunc
-    std::map<std::string, SpFuncSharedMemoryView> getSharedMemoryViews() const;
+    std::map<std::string, SpArraySharedMemoryView> getSharedMemoryViews() const;
     SpFuncDataBundle callFunc(const std::string& func_name, SpFuncDataBundle& args) const;
 
 private:
@@ -48,5 +49,5 @@ private:
     TArray<FString> SharedMemoryViewNames;
 
     FuncRegistrar<SpFuncDataBundle, SpFuncDataBundle&> funcs_;
-    std::map<std::string, SpFuncSharedMemoryView> shared_memory_views_;
+    std::map<std::string, SpArraySharedMemoryView> shared_memory_views_;
 };

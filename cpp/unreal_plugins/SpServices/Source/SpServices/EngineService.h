@@ -149,6 +149,19 @@ public:
             FGenericPlatformMisc::RequestExit(immediate_shutdown);
         });
 
+        // Entry points for miscellaneous functions that need to be accessed from multiple Python services.
+
+        bindFuncToExecuteOnWorkerThread("engine_service", "get_byte_order", []() -> std::string {
+            SP_ASSERT(BOOST_ENDIAN_BIG_BYTE + BOOST_ENDIAN_LITTLE_BYTE == 1);
+            if (BOOST_ENDIAN_BIG_BYTE) {
+                return "big";
+            } else if (BOOST_ENDIAN_LITTLE_BYTE) {
+                return "little";
+            } else {
+                return "";
+            }
+        });
+
         // Entry points for miscellaneous functions that are accessible via GEngine.
 
         bindFuncToExecuteOnGameThread("engine_service", "get_viewport_size", [this]() -> std::vector<double> {
@@ -323,7 +336,7 @@ private:
         // reference. This will avoid unnecessary copying when we eventually call the user's function. We
         // can't assume the user's function accepts arguments by const reference, because the user's function
         // might want to modify the arguments, e.g., when a user function resolves pointers to shared memory
-        // for an input SpFuncPackedArray& before forwarding it to an inner function.
+        // for an input SpPackedArray& before forwarding it to an inner function.
 
         return [this, long_func_name, func](TArgs&... args) -> TReturn {
             try {

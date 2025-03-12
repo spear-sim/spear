@@ -23,7 +23,7 @@ if __name__ == "__main__":
         # arguments to Unreal objects, and Unreal objects are responsible for defining shared memory regions
         # for passing return values to Python. The name "smem:action" needs to be unique across all Python
         # code interacting with instance.sp_func_service.
-        action_shared_memory_handle = instance.sp_func_service.create_shared_memory_region(num_bytes=1024, shared_memory_name="smem:action")
+        action_shared_memory_handle = instance.shared_memory_service.create_shared_memory_region(shared_memory_name="smem:action", num_bytes=1024, usage_flags=["Arg"])
 
         # Get the default ASpDebugManager object. In this example, we're calling a custom function on an
         # Unreal actor, but we can use the same interface to call custom functions on Unreal components.
@@ -34,10 +34,10 @@ if __name__ == "__main__":
         # will use these handles internally to access data returned via shared memory.
         sp_debug_manager_shared_memory_handles = instance.sp_func_service.create_shared_memory_handles_for_object(uobject=sp_debug_manager_default_object)
 
-        # Create a numpy array.
+        # Create a NumPy array.
         action = np.array([0.0, 1.0, 2.0])
 
-        # Create numpy array backed by the shared memory region we created.
+        # Create NumPy array backed by the shared memory region we created.
         action_shared = np.ndarray(shape=(3,), dtype=np.float64, buffer=action_shared_memory_handle["buffer"])
         action_shared[:] = [3.0, 4.0, 5.0]
 
@@ -47,7 +47,7 @@ if __name__ == "__main__":
         # code path.
         arrays = {
             "action": action,
-            "action_shared": spear.to_shared(array=action_shared, shared_memory_name="smem:action")}
+            "action_shared": spear.to_shared(array=action_shared, shared_memory_handle=action_shared_memory_handle)}
         unreal_objs = {
             "in_location": {"X": 6.0, "Y": 7.0, "Z": 8.0},
             "in_rotation": {"Pitch": 9.0, "Yaw": 10.0, "Roll": 11.0}}
@@ -72,7 +72,7 @@ if __name__ == "__main__":
         instance.sp_func_service.destroy_shared_memory_handles_for_object(shared_memory_handles=sp_debug_manager_shared_memory_handles)
 
         # Destroy the shared memory region we created ourselves.
-        instance.sp_func_service.destroy_shared_memory_region(shared_memory_name="smem:action")
+        instance.shared_memory_service.destroy_shared_memory_region(shared_memory_handle=action_shared_memory_handle)
 
     with instance.end_frame():
         pass

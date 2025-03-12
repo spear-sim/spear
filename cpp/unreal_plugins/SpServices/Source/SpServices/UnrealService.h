@@ -27,9 +27,10 @@
 #include "SpCore/UnrealClassRegistrar.h"
 
 #include "SpServices/EntryPointBinder.h"
-#include "SpServices/Msgpack.h"
-#include "SpServices/Rpclib.h"
+#include "SpServices/MsgpackAdaptors.h"
 #include "SpServices/Service.h"
+
+#include "SpCore/Log.h"
 
 #include "UnrealService.generated.h"
 
@@ -1166,28 +1167,4 @@ public:
     }
 
     ~UnrealService() override = default;
-};
-
-//
-// Unreal::PropertyDesc
-//
-
-template <> // needed to receive a custom type as an arg
-struct clmdep_msgpack::adaptor::convert<Unreal::PropertyDesc> {
-    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, Unreal::PropertyDesc& property_desc) const {
-        std::map<std::string, clmdep_msgpack::object> map = Msgpack::toMap(object);
-        SP_ASSERT(map.size() == 2);
-        property_desc.property_ = Msgpack::toPtr<FProperty>(map.at("property"));
-        property_desc.value_ptr_ = Msgpack::toPtr<void>(map.at("value_ptr"));
-        return object;
-    }
-};
-
-template <> // needed to send a custom type as a return value
-struct clmdep_msgpack::adaptor::object_with_zone<Unreal::PropertyDesc> {
-    void operator()(clmdep_msgpack::object::with_zone& object, Unreal::PropertyDesc const& property_desc) const {
-        Msgpack::toObject(object, {
-            {"property", Msgpack::toObject(property_desc.property_, object.zone)},
-            {"value_ptr", Msgpack::toObject(property_desc.value_ptr_, object.zone)}});
-    }
 };

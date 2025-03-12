@@ -20,7 +20,7 @@
 #include <type_traits> // std::underlying_type_t
 #include <span>
 #include <string>
-#include <utility>     // std::forward
+#include <utility>     // std::forward, std::move
 #include <vector>
 
 #include <HAL/Platform.h> // SPCORE_API

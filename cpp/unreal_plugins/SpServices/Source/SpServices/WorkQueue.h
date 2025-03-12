@@ -67,7 +67,7 @@ private:
         // reference. This will avoid unnecessary copying when we eventually call the user's function. We
         // can't assume the user's function accepts arguments by const reference, because the user's function
         // might want to modify the arguments, e.g., when a user function resolves pointers to shared memory
-        // for an input SpFuncPackedArray& before forwarding it to an inner function.
+        // for an input SpPackedArray& before forwarding it to an inner function.
 
         return [&work_queue, func_name, func](TArgs&... args) -> TReturn {
             return work_queue.scheduleAndExecuteFuncBlocking(func_name, func, args...);

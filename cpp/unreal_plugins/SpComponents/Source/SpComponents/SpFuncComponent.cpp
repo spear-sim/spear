@@ -13,7 +13,8 @@
 
 #include "SpCore/FuncRegistrar.h"
 #include "SpCore/Log.h"
-#include "SpCore/SpFuncArray.h"
+#include "SpCore/SpArray.h"
+#include "SpCore/SpFuncDataBundle.h"
 #include "SpCore/Unreal.h"
 
 USpFuncComponent::USpFuncComponent()
@@ -46,7 +47,7 @@ void USpFuncComponent::unregisterFunc(const std::string& func_name)
     FuncNames.Remove(Unreal::toFString(func_name));
 }
 
-void USpFuncComponent::registerSharedMemoryView(const std::string& shared_memory_name, const SpFuncSharedMemoryView& shared_memory_view)
+void USpFuncComponent::registerSharedMemoryView(const std::string& shared_memory_name, const SpArraySharedMemoryView& shared_memory_view)
 {
     SP_ASSERT(shared_memory_name != "");
     Std::insert(shared_memory_views_, shared_memory_name, shared_memory_view);
@@ -60,7 +61,7 @@ void USpFuncComponent::unregisterSharedMemoryView(const std::string& shared_memo
     SharedMemoryViewNames.Remove(Unreal::toFString(shared_memory_name));
 }
 
-std::map<std::string, SpFuncSharedMemoryView> USpFuncComponent::getSharedMemoryViews() const
+std::map<std::string, SpArraySharedMemoryView> USpFuncComponent::getSharedMemoryViews() const
 {
     return shared_memory_views_;
 }

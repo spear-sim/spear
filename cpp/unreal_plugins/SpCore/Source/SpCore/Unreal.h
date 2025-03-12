@@ -79,6 +79,11 @@ concept CComponent =
     CObject<TComponent> &&
     std::derived_from<TComponent, UActorComponent>;
 
+template <typename TNonSceneComponent>
+concept CNonSceneComponent =
+    CComponent<TNonSceneComponent> &&
+    !std::derived_from<TNonSceneComponent, USceneComponent>;
+
 template <typename TSceneComponent>
 concept CSceneComponent =
     CComponent<TSceneComponent> &&
@@ -208,11 +213,11 @@ public:
     // SetupAttachment must be called before RegisterComponent.
     //
 
-    template <CComponent TComponent, CComponent TReturnAsComponent = TComponent> requires
-        std::derived_from<TComponent, TReturnAsComponent>
-    static TReturnAsComponent* createComponentInsideOwnerConstructor(AActor* owner, const std::string& component_name)
+    template <CNonSceneComponent TNonSceneComponent, CNonSceneComponent TReturnAsNonSceneComponent = TNonSceneComponent> requires
+        std::derived_from<TNonSceneComponent, TReturnAsNonSceneComponent>
+    static TReturnAsNonSceneComponent* createComponentInsideOwnerConstructor(AActor* owner, const std::string& component_name)
     {
-        return Cast<TReturnAsComponent>(createComponentInsideOwnerConstructorByClass(TComponent::StaticClass(), owner, component_name));
+        return Cast<TReturnAsNonSceneComponent>(createComponentInsideOwnerConstructorByClass(TNonSceneComponent::StaticClass(), owner, component_name));
     }
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
@@ -268,11 +273,11 @@ public:
         return createSceneComponentInsideOwnerConstructorByClass(scene_component_class, owner, owner, scene_component_name);
     }
 
-    template <CComponent TComponent, CComponent TReturnAsComponent = TComponent> requires
-        std::derived_from<TComponent, TReturnAsComponent>
-    static TReturnAsComponent* createComponentOutsideOwnerConstructor(AActor* owner, const std::string& component_name)
+    template <CNonSceneComponent TNonSceneComponent, CNonSceneComponent TReturnAsNonSceneComponent = TNonSceneComponent> requires
+        std::derived_from<TNonSceneComponent, TReturnAsNonSceneComponent>
+    static TReturnAsNonSceneComponent* createComponentOutsideOwnerConstructor(AActor* owner, const std::string& component_name)
     {
-        return Cast<TReturnAsComponent>(createComponentOutsideOwnerConstructorByClass(TComponent::StaticClass(), owner, component_name));
+        return Cast<TReturnAsNonSceneComponent>(createComponentOutsideOwnerConstructorByClass(TNonSceneComponent::StaticClass(), owner, component_name));
     }
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
@@ -1246,6 +1251,11 @@ private:
     template <typename TValue>
     static const TValue& getItem(const std::vector<TValue>& vector)
     {
+        if (vector.size() == 0) {
+            SP_LOG("ERROR: Input vector is empty.");
+        } else if (vector.size() > 1) {
+            SP_LOG("ERROR: Input vector has multiple entries: [", Std::join(Std::toVector<std::string>(vector | std::views::transform([](auto v) { return Std::toString(v); })), ", "), "]");
+        }        
         SP_ASSERT(vector.size() == 1);
         return vector.at(0);
     }

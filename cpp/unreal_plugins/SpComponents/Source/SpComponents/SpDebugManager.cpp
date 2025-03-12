@@ -19,12 +19,13 @@
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 #include <PhysicsEngine/BodyInstance.h>
-#include <UObject/Object.h>
+#include <UObject/Object.h>                  // UObject
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/SharedMemoryRegion.h"
-#include "SpCore/SpFuncArray.h"
+#include "SpCore/SpArray.h"
+#include "SpCore/SpFuncDataBundle.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealObj.h"
@@ -47,7 +48,7 @@ ASpDebugManager::ASpDebugManager()
     SP_LOG("    this: ", this);
     SP_LOG("    SpFuncComponent: ", SpFuncComponent);
 
-    SpFuncComponent = Unreal::createComponentInsideOwnerConstructor<USpFuncComponent>(this, "sp_func_component");
+    SpFuncComponent = Unreal::createSceneComponentInsideOwnerConstructor<USpFuncComponent>(this, "sp_func_component");
     SP_ASSERT(SpFuncComponent);
 
     SP_LOG("    this: ", this);
@@ -460,14 +461,14 @@ void ASpDebugManager::CallSpFunc()
     SP_ASSERT(sp_func_component);
 
     // define arg objects
-    SpFuncArray<double> action("action");
-    SpFuncArray<double> action_shared("action_shared");
+    SpArray<double> action("action");
+    SpArray<double> action_shared("action_shared");
     UnrealObj<FVector> in_location("in_location");
     UnrealObj<FRotator> in_rotation("in_rotation");
 
     // set arg objects
-    action.setData({0.0, 1.0, 2.0});
-    action_shared.setData(shared_memory_view_, {3}, "hello_shared_memory");
+    action.setDataSource({0.0, 1.0, 2.0});
+    action_shared.setDataSource(shared_memory_view_, {3}, "hello_shared_memory");
     action_shared.setDataValues({3.0, 4.0, 5.0});
     in_location.setObj(FVector(6.0, 7.0, 8.0));
     in_rotation.setObj(FRotator(9.0, 10.0, 11.0));
@@ -485,7 +486,7 @@ void ASpDebugManager::CallSpFunc()
 
     // initialize data bundle from arg objects
     SpFuncDataBundle args;
-    args.packed_arrays_ = SpFuncArrayUtils::moveToPackedArrays({action.getPtr(), action_shared.getPtr()});
+    args.packed_arrays_ = SpArrayUtils::moveToPackedArrays({action.getPtr(), action_shared.getPtr()});
     args.unreal_obj_strings_ = UnrealObjUtils::getObjectPropertiesAsStrings({in_location.getPtr(), in_rotation.getPtr()});
     args.info_ = info;
 
@@ -493,13 +494,13 @@ void ASpDebugManager::CallSpFunc()
     SpFuncDataBundle return_values = sp_func_component->callFunc("hello_world", args);
 
     // define return value objects
-    SpFuncArrayView<double> observation("observation");
-    SpFuncArrayView<double> observation_shared("observation_shared");
+    SpArrayView<double> observation("observation");
+    SpArrayView<double> observation_shared("observation_shared");
     UnrealObj<FVector> out_location("out_location");
     UnrealObj<FRotator> out_rotation("out_rotation");
 
     // initialize return value objects from data bundle
-    SpFuncArrayUtils::setViewsFromPackedArrays({observation.getPtr(), observation_shared.getPtr()}, return_values.packed_arrays_);
+    SpArrayUtils::setViews({observation.getPtr(), observation_shared.getPtr()}, return_values.packed_arrays_);
     UnrealObjUtils::setObjectPropertiesFromStrings({out_location.getPtr(), out_rotation.getPtr()}, return_values.unreal_obj_strings_);
 
     SP_LOG("observation[0]:        ", Std::at(observation.getView(), 0));
@@ -589,9 +590,9 @@ void ASpDebugManager::ReadPixels()
     SpFuncDataBundle args;
 
     // call SpFunc
-    SpFuncArrayUtils::validate(args.packed_arrays_, SpFuncSharedMemoryUsageFlags::Arg);
+    SpArrayUtils::validate(args.packed_arrays_, SpArraySharedMemoryUsageFlags::Arg);
     SpFuncDataBundle return_values = sp_func_component->callFunc("read_pixels", args);
-    SpFuncArrayUtils::validate(return_values.packed_arrays_, SpFuncSharedMemoryUsageFlags::ReturnValue);
+    SpArrayUtils::validate(return_values.packed_arrays_, SpArraySharedMemoryUsageFlags::ReturnValue);
 
     SP_LOG("return_values.packed_arrays_.at(\"data\").data_:                      ", Std::toStringFromPtr(return_values.packed_arrays_.at("data").data_.data()));
     SP_LOG("return_values.packed_arrays_.at(\"data\").view_:                      ", Std::toStringFromPtr(return_values.packed_arrays_.at("data").view_));
@@ -657,19 +658,19 @@ void ASpDebugManager::initializeSpFunc()
     // unique within this SpFuncComponent. Normally we would choose a human-readable name for the shared
     // memory, e.g., "smem:observation", but in this case, we set it to Std::toStringFromPtr(this) as a
     // debugging tool.
-    shared_memory_view_ = SpFuncSharedMemoryView(shared_memory_region_->getView(), SpFuncSharedMemoryUsageFlags::ReturnValue);
+    shared_memory_view_ = SpArraySharedMemoryView(shared_memory_region_->getView(), SpArraySharedMemoryUsageFlags::ReturnValue);
     SpFuncComponent->registerSharedMemoryView(Std::toStringFromPtr(this), shared_memory_view_);
 
     SpFuncComponent->registerFunc("hello_world", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
 
         // define arg objects
-        SpFuncArrayView<double> action("action");
-        SpFuncArrayView<double> action_shared("action_shared");
+        SpArrayView<double> action("action");
+        SpArrayView<double> action_shared("action_shared");
         UnrealObj<FVector> in_location("in_location");
         UnrealObj<FRotator> in_rotation("in_rotation");
 
         // initialize arg objects from the data bundle that was passed in
-        SpFuncArrayUtils::setViewsFromPackedArrays({action.getPtr(), action_shared.getPtr()}, args.packed_arrays_);
+        SpArrayUtils::setViews({action.getPtr(), action_shared.getPtr()}, args.packed_arrays_);
         UnrealObjUtils::setObjectPropertiesFromStrings({in_location.getPtr(), in_rotation.getPtr()}, args.unreal_obj_strings_);
 
         SP_LOG("action[0]:        ", Std::at(action.getView(), 0));
@@ -683,14 +684,14 @@ void ASpDebugManager::initializeSpFunc()
         SP_LOG("info:             ", args.info_);
 
         // define return value objects
-        SpFuncArray<double> observation("observation");
-        SpFuncArray<double> observation_shared("observation_shared");
+        SpArray<double> observation("observation");
+        SpArray<double> observation_shared("observation_shared");
         UnrealObj<FVector> out_location("out_location");
         UnrealObj<FRotator> out_rotation("out_rotation");
 
         // set return value objects
-        observation.setData({12.0, 13.0, 14.0});
-        observation_shared.setData(shared_memory_view_, {3}, Std::toStringFromPtr(this));
+        observation.setDataSource({12.0, 13.0, 14.0});
+        observation_shared.setDataSource(shared_memory_view_, {3}, Std::toStringFromPtr(this));
         observation_shared.setDataValues({15.0, 16.0, 17.0});
         out_location.setObj(FVector(18.0, 19.0, 20.0));
         out_rotation.setObj(FRotator(21.0, 22.0, 23.0));
@@ -708,7 +709,7 @@ void ASpDebugManager::initializeSpFunc()
 
         // initialize output data bundle from return value objects
         SpFuncDataBundle return_values;
-        return_values.packed_arrays_ = SpFuncArrayUtils::moveToPackedArrays({observation.getPtr(), observation_shared.getPtr()});
+        return_values.packed_arrays_ = SpArrayUtils::moveToPackedArrays({observation.getPtr(), observation_shared.getPtr()});
         return_values.unreal_obj_strings_ = UnrealObjUtils::getObjectPropertiesAsStrings({out_location.getPtr(), out_rotation.getPtr()});
         return_values.info_ = info;
 

@@ -15,6 +15,8 @@
 #include "SpServices/InitializeEngineService.h"
 #include "SpServices/InputService.h"
 #include "SpServices/LegacyService.h"
+#include "SpServices/NavigationService.h"
+#include "SpServices/SharedMemoryService.h"
 #include "SpServices/SpFuncService.h"
 #include "SpServices/UnrealService.h"
 
@@ -29,10 +31,17 @@ private:
 
     std::unique_ptr<EngineService<rpc::server>> engine_service_ = nullptr;
 
-    std::unique_ptr<EnhancedInputService> enhanced_input_service_ = nullptr;
+    // Services that don't require a reference to EngineService.
     std::unique_ptr<InitializeEngineService> initialize_engine_service_ = nullptr;
+
+    // Services that do require a reference to EngineService.
+    std::unique_ptr<EnhancedInputService> enhanced_input_service_ = nullptr;
     std::unique_ptr<InputService> input_service_ = nullptr;
     std::unique_ptr<LegacyService> legacy_service_ = nullptr;
-    std::unique_ptr<SpFuncService> sp_func_service_ = nullptr;
+    std::unique_ptr<SharedMemoryService> shared_memory_service_ = nullptr;
     std::unique_ptr<UnrealService> unreal_service_ = nullptr;
+
+    // Services that require a reference to EngineService and SharedMemoryService.
+    std::unique_ptr<NavigationService> navigation_service_ = nullptr;
+    std::unique_ptr<SpFuncService> sp_func_service_ = nullptr;
 };

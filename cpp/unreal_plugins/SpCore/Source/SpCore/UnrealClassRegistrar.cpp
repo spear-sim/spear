@@ -30,6 +30,7 @@
 #include <Math/Rotator.h>
 #include <Math/Transform.h>
 #include <Math/Vector.h>
+#include <NavigationSystem.h>
 #include <UObject/Object.h> // UObject
 
 #include "SpCore/FuncRegistrar.h"
@@ -214,6 +215,7 @@ void UnrealClassRegistrar::initialize()
     registerClass<UGameUserSettings>("UGameUserSettings");
     registerClass<UMaterial>("UMaterial");
     registerClass<UMaterialInterface>("UMaterialInterface");
+    registerClass<UNavigationSystemV1>("UNavigationSystemV1");
     registerClass<UStaticMesh>("UStaticMesh");
     registerClass<UTextureRenderTarget2D>("UTextureRenderTarget2D");
     registerSpecialStruct<FRotator>("FRotator");
@@ -245,6 +247,7 @@ void UnrealClassRegistrar::terminate()
     unregisterClass<UGameUserSettings>("UGameUserSettings");
     unregisterClass<UMaterial>("UMaterial");
     unregisterClass<UMaterialInterface>("UMaterialInterface");
+    unregisterClass<UNavigationSystemV1>("UNavigationSystemV1");
     unregisterClass<UStaticMesh>("UStaticMesh");
     unregisterClass<UTextureRenderTarget2D>("UTextureRenderTarget2D");
     unregisterSpecialStruct<FRotator>("FRotator");
