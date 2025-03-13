@@ -70,7 +70,7 @@ void SpServices::StartupModule()
     // Construct services that don't require a reference to EngineService.
     initialize_engine_service_ = std::make_unique<InitializeEngineService>();
 
-    // Construct services that do require a reference to EngineService.
+    // Construct services that require a reference to EngineService.
     enhanced_input_service_ = std::make_unique<EnhancedInputService>(engine_service_.get());
     input_service_ = std::make_unique<InputService>(engine_service_.get());
     legacy_service_ = std::make_unique<LegacyService>(engine_service_.get());
