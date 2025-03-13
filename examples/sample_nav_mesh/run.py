@@ -63,7 +63,8 @@ if __name__ == "__main__":
         spear.log_no_prefix(shared)
 
         # if a shared NumPy array is passed as input, it will be used to store the output data; the function
-        # will still return a NumPy array, but the array will be backed by the same memory as the input array
+        # will still return a NumPy array, but the returned array will be backed by the same memory as the
+        # input array
         points = instance.navigation_service.get_random_points(
             navigation_data=navigation_data, num_points=num_points, out_array=spear.to_shared(array=shared, shared_memory_handle=shared_memory_handle))
         spear.log("points: ")
