@@ -35,11 +35,10 @@ if __name__ == "__main__":
         navigation_system_v1_static_class = instance.unreal_service.get_static_class(class_name="UNavigationSystemV1")
         get_navigation_system_func = instance.unreal_service.find_function_by_name(uclass=navigation_system_v1_static_class, function_name="GetNavigationSystem")
         navigation_system_v1_default_object = instance.unreal_service.get_default_object(uclass=navigation_system_v1_static_class, create_if_needed=False)
-        spear.log("navigation_system_v1_static_class: ", navigation_system_v1_static_class)
-        spear.log("navigation_system_v1_default_object: ", navigation_system_v1_default_object)
-
         return_values = instance.unreal_service.call_function(uobject=navigation_system_v1_default_object, ufunction=get_navigation_system_func)
         navigation_system = spear.to_handle(string=return_values["ReturnValue"])
+        spear.log("navigation_system_v1_static_class: ", navigation_system_v1_static_class)
+        spear.log("navigation_system_v1_default_object: ", navigation_system_v1_default_object)
         spear.log("navigation_system: ", navigation_system)
 
         # get navigation data

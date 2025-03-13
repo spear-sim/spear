@@ -18,7 +18,7 @@ class Env(gym.Env):
         self._instance = instance
         self._config = config
 
-        assert self._instance._rpc_client.call("sp_func_service.get_byte_order") == sys.byteorder
+        assert self._instance._rpc_client.call("engine_service.get_byte_order") == sys.byteorder
         self._byte_order = None
 
         self._action_space_desc = SpaceDesc(self._get_action_space(), dict_space_type=gym.spaces.Dict, box_space_type=gym.spaces.Box)
