@@ -11,14 +11,17 @@
 #include "SpServices/Rpclib.h"
 
 #include "SpServices/EngineService.h"
-#include "SpServices/EnhancedInputService.h"
+
 #include "SpServices/InitializeEngineService.h"
+
+#include "SpServices/EnhancedInputService.h"
 #include "SpServices/InputService.h"
 #include "SpServices/LegacyService.h"
-#include "SpServices/NavigationService.h"
 #include "SpServices/SharedMemoryService.h"
-#include "SpServices/SpFuncService.h"
 #include "SpServices/UnrealService.h"
+
+#include "SpServices/NavigationService.h"
+#include "SpServices/SpFuncService.h"
 
 class SpServices : public IModuleInterface
 {
@@ -34,7 +37,7 @@ private:
     // Services that don't require a reference to EngineService.
     std::unique_ptr<InitializeEngineService> initialize_engine_service_ = nullptr;
 
-    // Services that do require a reference to EngineService.
+    // Services that require a reference to EngineService.
     std::unique_ptr<EnhancedInputService> enhanced_input_service_ = nullptr;
     std::unique_ptr<InputService> input_service_ = nullptr;
     std::unique_ptr<LegacyService> legacy_service_ = nullptr;
