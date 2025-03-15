@@ -18,7 +18,7 @@
 #include <Engine/World.h>                // FWorldDelegates, FActorSpawnParameters
 #include <HAL/IConsoleManager.h>
 #include <Misc/EnumClassFlags.h>         // ENUM_CLASS_FLAGS
-#include <UObject/Class.h>               // EIncludeSuperFlag::Type
+#include <UObject/Class.h>               // EIncludeSuperFlag, UClass
 #include <UObject/ObjectMacros.h>        // EObjectFlags, ELoadFlags
 #include <UObject/Package.h>
 

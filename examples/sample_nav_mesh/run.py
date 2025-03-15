@@ -9,7 +9,7 @@ import os
 import spear
 
 
-num_points = 500
+num_points = 100
 
 
 if __name__ == "__main__":
@@ -46,7 +46,8 @@ if __name__ == "__main__":
         spear.log("navigation_data: ", navigation_data)
 
         # sample random points
-        points = instance.navigation_service.get_random_points(navigation_data=navigation_data, num_points=num_points)
+        points = instance.navigation_service.get_random_points(
+            navigation_data=navigation_data, num_points=num_points)
         spear.log("points: ")
         spear.log_no_prefix(points)
 
@@ -74,13 +75,57 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass
 
-    # spawn axes at previously sampled locations
+    # spawn axes
     for i in range(num_points):
         with instance.begin_frame():
             bp_axes_actor = instance.unreal_service.spawn_actor_from_class(uclass=bp_axes_uclass, location={"X": points[i,0], "Y": points[i,1], "Z": points[i,2]})
             instance.unreal_service.call_function(uobject=bp_axes_actor, ufunction=set_actor_scale_3d_func, args={"NewScale3D": {"X": 0.75, "Y": 0.75, "Z": 0.75}})
         with instance.end_frame():
             pass
+
+    # get random reachable points
+    with instance.begin_frame():
+        points = instance.navigation_service.get_random_points(
+            navigation_data=navigation_data, num_points=1)
+        spear.log("points: ")
+        spear.log_no_prefix(points)
+
+        reachable_points = instance.navigation_service.get_random_reachable_points_in_radius(
+            navigation_data=navigation_data, num_points=num_points, origin_points=points[0:1], radius=100.0, out_array=spear.to_shared(array=shared, shared_memory_handle=shared_memory_handle))
+        spear.log("reachable_points: ")
+        spear.log_no_prefix(reachable_points)
+
+    with instance.end_frame():
+        pass
+
+    # spawn axes
+    for i in range(num_points):
+        with instance.begin_frame():
+            bp_axes_actor = instance.unreal_service.spawn_actor_from_class(uclass=bp_axes_uclass, location={"X": reachable_points[i,0], "Y": reachable_points[i,1], "Z": reachable_points[i,2]})
+            instance.unreal_service.call_function(uobject=bp_axes_actor, ufunction=set_actor_scale_3d_func, args={"NewScale3D": {"X": 0.75, "Y": 0.75, "Z": 0.75}})
+        with instance.end_frame():
+            pass
+
+    # find paths
+    with instance.begin_frame():
+        start_points = instance.navigation_service.get_random_points(
+            navigation_data=navigation_data, num_points=1)
+        spear.log("start_points: ")
+        spear.log_no_prefix(start_points)
+
+        end_points = instance.navigation_service.get_random_reachable_points_in_radius(
+            navigation_data=navigation_data, num_points=1, origin_points=start_points[0:1], radius=2000.0)
+        spear.log("end_points: ")
+        spear.log_no_prefix(end_points)
+
+        paths = instance.navigation_service.find_paths(
+            navigation_system=navigation_system, navigation_data=navigation_data, num_paths=1, start_points=start_points[0:1], end_points=end_points[0:1])
+        spear.log("paths: ")
+        for p in paths:
+            spear.log_no_prefix(p)
+
+    with instance.end_frame():
+        pass
 
     # destroy shared memory region and re-enable garbage collection for bp_axes_uclass
     with instance.begin_frame():

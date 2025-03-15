@@ -7,6 +7,7 @@
 #include <vector>
 
 #include <ChaosWheeledVehicleMovementComponent.h>
+#include <UObject/Class.h>     // UClass
 #include <UObject/NameTypes.h> // FName
 
 #include "SpCore/Config.h"

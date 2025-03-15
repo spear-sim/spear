@@ -26,7 +26,7 @@
 #include <HAL/Platform.h>                   // int32, int64, SPCORE_API, TCHAR
 #include <Subsystems/Subsystem.h>
 #include <Templates/Casts.h>
-#include <UObject/Class.h>                  // EIncludeSuperFlag, UClass, UEnum, UStruct
+#include <UObject/Class.h>                  // EGetByNameFlags, EIncludeSuperFlag, UClass, UEnum, UStruct
 #include <UObject/NameTypes.h>              // FName
 #include <UObject/Object.h>                 // UObject
 #include <UObject/ReflectedTypeAccessors.h> // StaticEnum
@@ -1091,7 +1091,7 @@ public:
     static TEnum getEnumValueFromString(const std::string& string)
     {
         UEnum* uenum = StaticEnum<TEnum>();
-        return getEnumValueAs<TEnum>(uenum->GetValueByName(toFName(string)));
+        return getEnumValueAs<TEnum>(uenum->GetValueByName(toFName(string), EGetByNameFlags::ErrorIfNotFound | EGetByNameFlags::CaseSensitive));
     }
 
     template <typename TDestEnum, CEnum TEnum>
@@ -1128,7 +1128,9 @@ public:
     static std::string getStringFromEnumValueAs(TSrcEnum src)
     {
         UEnum* uenum = StaticEnum<TEnum>();
-        return toStdString(uenum->GetNameStringByValue(getEnumValue(src)));
+        std::string str = toStdString(uenum->GetNameStringByValue(getEnumValue(src)));
+        SP_ASSERT(str != "");
+        return str;
     }
 
     template <CEnum TEnum>

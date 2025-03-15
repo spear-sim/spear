@@ -11,7 +11,7 @@
 
 #include <Components/ActorComponent.h>
 #include <Components/PoseableMeshComponent.h>
-#include <Components/SkinnedMeshComponent.h> // EBoneSpaces::Type
+#include <Components/SkinnedMeshComponent.h> // EBoneSpaces
 #include <Components/StaticMeshComponent.h>
 #include <Engine/StaticMeshActor.h>
 #include <Engine/World.h>                    // FActorSpawnParameters
@@ -19,6 +19,7 @@
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 #include <PhysicsEngine/BodyInstance.h>
+#include <UObject/Class.h>                   // UClass
 #include <UObject/Object.h>                  // UObject
 
 #include "SpCore/Assert.h"
@@ -295,8 +296,8 @@ void ASpDebugManager::GetAndSetObjectProperties()
     ArrayOfInts.Add(10);
     ArrayOfInts.Add(20);
     ArrayOfInts.Add(30);
-    ArrayOfVectors.Add(FVector(1.0f, 2.0f, 3.0f));
-    ArrayOfVectors.Add(FVector(4.0f, 5.0f, 6.0f));
+    ArrayOfVectors.Add(FVector(1.0, 2.0, 3.0));
+    ArrayOfVectors.Add(FVector(4.0, 5.0, 6.0));
     ArrayOfStrings.Add(Unreal::toFString("Hello"));
     ArrayOfPointers.Add(this);
     ArrayOfPointers.Add(nullptr);
@@ -639,8 +640,8 @@ void ASpDebugManager::UpdateData(TMap<FString, FVector>& map_from_string_to_vect
     FVector vec(1.23, 4.56, 7.89);
     map_from_string_to_vector.Add(Unreal::toFString("Hello"), 1.0*vec);
     map_from_string_to_vector.Add(Unreal::toFString("World"), 2.0*vec);
-    array_of_vectors.Add(FVector(1.0f, 2.0f, 3.0f));
-    array_of_vectors.Add(FVector(4.0f, 5.0f, 6.0f));
+    array_of_vectors.Add(FVector(1.0, 2.0, 3.0));
+    array_of_vectors.Add(FVector(4.0, 5.0, 6.0));
 }
 
 void ASpDebugManager::initializeSpFunc()

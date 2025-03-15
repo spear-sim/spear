@@ -99,7 +99,7 @@ def to_packed_array(array, byte_order=None, usage_flags=None):
             "data": np.array(array, dtype=array.dtype.newbyteorder(byte_order)).data,
             "data_source": "Internal",
             "shape": array.shape,
-            "data_type": array.dtype.str.replace("<", "").replace(">", ""),
+            "data_type": array.dtype.str.replace("<", "").replace(">", "").replace("|", ""),
             "shared_memory_name": ""}
     elif isinstance(array, spear.Shared):
         assert usage_flags is not None
@@ -108,7 +108,7 @@ def to_packed_array(array, byte_order=None, usage_flags=None):
             "data": np.array([]).data,
             "data_source": "Shared",
             "shape": array.array.shape,
-            "data_type": array.array.dtype.str.replace("<", "").replace(">", ""),
+            "data_type": array.array.dtype.str.replace("<", "").replace(">", "").replace("|", ""),
             "shared_memory_name": array.shared_memory_handle["name"]}
     else:
         assert False

@@ -141,17 +141,6 @@ void SpPackedArray::validate(SpArraySharedMemoryUsageFlags usage_flags) const
 // typically called at the beginning of a C++ entry point to prepare items for use (e.g., by resolving pointers to shared memory)
 //
 
-void SpArrayUtils::resolve(SpPackedArray& packed_array, const std::map<std::string, SpArraySharedMemoryView>& shared_memory_views)
-{
-    if (packed_array.data_source_ == SpArrayDataSource::Internal) {
-        packed_array.resolve();
-    } else if (packed_array.data_source_ == SpArrayDataSource::Shared) {
-        SP_ASSERT(packed_array.shared_memory_name_ != "");
-        SP_ASSERT(Std::containsKey(shared_memory_views, packed_array.shared_memory_name_));
-        packed_array.resolve(shared_memory_views.at(packed_array.shared_memory_name_));
-    }
-}
-
 void SpArrayUtils::resolve(std::vector<SpPackedArray>& packed_arrays, const std::map<std::string, SpArraySharedMemoryView>& shared_memory_views)
 {
     for (auto& packed_array : packed_arrays) {
@@ -163,6 +152,17 @@ void SpArrayUtils::resolve(std::map<std::string, SpPackedArray>& packed_arrays, 
 {
     for (auto& [name, packed_array] : packed_arrays) {
         resolve(packed_array, shared_memory_views);
+    }
+}
+
+void SpArrayUtils::resolve(SpPackedArray& packed_array, const std::map<std::string, SpArraySharedMemoryView>& shared_memory_views)
+{
+    if (packed_array.data_source_ == SpArrayDataSource::Internal) {
+        packed_array.resolve();
+    } else if (packed_array.data_source_ == SpArrayDataSource::Shared) {
+        SP_ASSERT(packed_array.shared_memory_name_ != "");
+        SP_ASSERT(Std::containsKey(shared_memory_views, packed_array.shared_memory_name_));
+        packed_array.resolve(shared_memory_views.at(packed_array.shared_memory_name_));
     }
 }
 

@@ -280,6 +280,7 @@ public:
     // SpArray interface
 
     const std::span<TValue>& getView() { return view_; }
+    const std::vector<uint64_t>& getShape() { return shape_; }
 
     // setDataSource(...) updates all internal state
 
