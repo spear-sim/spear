@@ -91,7 +91,7 @@ if __name__ == "__main__":
         spear.log_no_prefix(points)
 
         reachable_points = instance.navigation_service.get_random_reachable_points_in_radius(
-            navigation_data=navigation_data, num_points=num_points, origin_points=points[0:1], radius=100.0, out_array=spear.to_shared(array=shared, shared_memory_handle=shared_memory_handle))
+            navigation_data=navigation_data, num_points=num_points, origin_points=points, radius=100.0, out_array=spear.to_shared(array=shared, shared_memory_handle=shared_memory_handle))
         spear.log("reachable_points: ")
         spear.log_no_prefix(reachable_points)
 
@@ -114,12 +114,12 @@ if __name__ == "__main__":
         spear.log_no_prefix(start_points)
 
         end_points = instance.navigation_service.get_random_reachable_points_in_radius(
-            navigation_data=navigation_data, num_points=1, origin_points=start_points[0:1], radius=2000.0)
+            navigation_data=navigation_data, num_points=1, origin_points=start_points, radius=2000.0)
         spear.log("end_points: ")
         spear.log_no_prefix(end_points)
 
         paths = instance.navigation_service.find_paths(
-            navigation_system=navigation_system, navigation_data=navigation_data, num_paths=1, start_points=start_points[0:1], end_points=end_points[0:1])
+            navigation_system=navigation_system, navigation_data=navigation_data, num_paths=1, start_points=start_points, end_points=end_points)
         spear.log("paths: ")
         for p in paths:
             spear.log_no_prefix(p)

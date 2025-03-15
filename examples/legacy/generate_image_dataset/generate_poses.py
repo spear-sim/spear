@@ -15,7 +15,6 @@ common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "com
 import sys
 sys.path.append(common_dir)
 import instance_utils
-import navmesh
 
 
 camera_location_z_offset = 200.0
@@ -49,7 +48,13 @@ if __name__ == "__main__":
 
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
-    navmesh = navmesh.NavMesh(instance)
+
+    # get navigation system
+    navigation_system_v1_static_class = instance.unreal_service.get_static_class(class_name="UNavigationSystemV1")
+    get_navigation_system_func = instance.unreal_service.find_function_by_name(uclass=navigation_system_v1_static_class, function_name="GetNavigationSystem")
+    navigation_system_v1_default_object = instance.unreal_service.get_default_object(uclass=navigation_system_v1_static_class, create_if_needed=False)
+    return_values = instance.unreal_service.call_function(uobject=navigation_system_v1_default_object, ufunction=get_navigation_system_func)
+    navigation_system = spear.to_handle(string=return_values["ReturnValue"])
 
     # iterate over all scenes
     for scene_id in scene_ids:
@@ -58,8 +63,11 @@ if __name__ == "__main__":
 
         instance_utils.open_level(instance, scene_id)
 
+        # get navigation data
+        navigation_data = instance.navigation_service.get_nav_data_for_agent_name(navigation_system=navigation_system, agent_name="Default")
+
         # get a few random points
-        points = navmesh.get_random_points(args.num_poses_per_scene)
+        points = instance.navigation_service.get_random_points(navigation_data=navigation_data, num_points=args.num_poses_per_scene)
 
         # generate random pitch, yaw, roll values
         pitch_values = np.random.uniform(low=0.0, high=0.0, size=args.num_poses_per_scene)

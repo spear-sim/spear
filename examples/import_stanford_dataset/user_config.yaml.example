@@ -9,5 +9,3 @@ SPEAR:
     COMMAND_LINE_ARGS:
       resx: 1024
       resy: 1024
-  PAKS_DIR: "/Users/mroberts/data/local/spear-paks"
-  PAKS_VERSION_TAG: "examples"

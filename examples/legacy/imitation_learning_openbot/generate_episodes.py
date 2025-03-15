@@ -16,7 +16,6 @@ common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "com
 import sys
 sys.path.append(common_dir)
 import instance_utils
-import navmesh
 
 
 if __name__ == "__main__":
@@ -55,7 +54,13 @@ if __name__ == "__main__":
 
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
-    navmesh = navmesh.NavMesh(instance)
+
+    # get navigation system
+    navigation_system_v1_static_class = instance.unreal_service.get_static_class(class_name="UNavigationSystemV1")
+    get_navigation_system_func = instance.unreal_service.find_function_by_name(uclass=navigation_system_v1_static_class, function_name="GetNavigationSystem")
+    navigation_system_v1_default_object = instance.unreal_service.get_default_object(uclass=navigation_system_v1_static_class, create_if_needed=False)
+    return_values = instance.unreal_service.call_function(uobject=navigation_system_v1_default_object, ufunction=get_navigation_system_func)
+    navigation_system = spear.to_handle(string=return_values["ReturnValue"])
 
     # iterate over all scenes
     for scene_id in scene_ids:
@@ -65,14 +70,33 @@ if __name__ == "__main__":
         # reset the simulation
         instance_utils.open_level(instance, scene_id)
 
-        # generate candidate points based out of args.num_episodes_per_scene
-        candidate_initial_points = navmesh.get_random_points(args.num_episodes_per_scene * args.num_candidates_per_episode)
+        # sample paths
+
+        num_candidates_per_scene = args.num_episodes_per_scene*args.num_candidates_per_episode
+        candidate_path_radius = 10000.0
+
+        # get navigation data
+        navigation_data = instance.navigation_service.get_nav_data_for_agent_name(navigation_system=navigation_system, agent_name="Default")
+
+        # generate candidate points
+        candidate_initial_points = instance.navigation_service.get_random_points(
+            navigation_data=navigation_data,
+            num_points=num_candidates_per_scene)
 
         # obtain a reachable goal point for every candidate point
-        candidate_goal_points = navmesh.get_random_reachable_points_in_radius(candidate_initial_points, 10000.0)
+        candidate_goal_points = instance.navigation_service.get_random_reachable_points_in_radius(
+            navigation_data=navigation_data,
+            num_points=num_candidates_per_scene,
+            origin_points=candidate_initial_points,
+            radius=candidate_path_radius)
 
         # obtain candidate paths for the candidate initial and goal points
-        candidate_paths = navmesh.get_paths(candidate_initial_points, candidate_goal_points)
+        candidate_paths = instance.navigation_service.find_paths(
+            navigation_system=navigation_system,
+            navigation_data=navigation_data,
+            num_paths=num_candidates_per_scene,
+            start_points=candidate_initial_points,
+            end_points=candidate_goal_points)
 
         # score each path and obtain best paths
         candidate_num_waypoints = np.array([ path.shape[0] for path in candidate_paths ])

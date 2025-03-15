@@ -8,21 +8,6 @@ class LegacyService():
     def __init__(self, entry_point_caller):
         self._entry_point_caller = entry_point_caller
 
-    def get_random_points(self, num_points):
-        random_points = self._entry_point_caller.call("legacy_service.get_random_points", num_points)
-        return np.asarray(random_points, dtype=np.float64).reshape(num_points, 3)
-
-    def get_random_reachable_points_in_radius(self, reference_points, radius):
-        assert reference_points.shape[1] == 3
-        reachable_points = self._entry_point_caller.call("legacy_service.get_random_reachable_points_in_radius", reference_points.flatten().tolist(), radius)
-        return np.asarray(reachable_points, dtype=np.float64).reshape(reference_points.shape)
-
-    def get_paths(self, initial_points, goal_points):
-        assert initial_points.shape[1] == 3
-        assert goal_points.shape[1] == 3
-        paths = self._entry_point_caller.call("legacy_service.get_paths", initial_points.flatten().tolist(), goal_points.flatten().tolist())
-        return [ np.asarray(path, dtype=np.float64).reshape(-1, 3) for path in paths ]
-
     def get_action_space(self):
         return self._entry_point_caller.call("legacy_service.get_action_space")
     
@@ -64,3 +49,6 @@ class LegacyService():
 
     def is_agent_ready(self):
         return self._entry_point_caller.call("legacy_service.is_agent_ready")
+
+    def get_world_name(self):
+        return self._entry_point_caller.call("legacy_service.get_world_name")

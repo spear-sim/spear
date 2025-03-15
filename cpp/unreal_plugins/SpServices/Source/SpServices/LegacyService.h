@@ -28,8 +28,6 @@
 #include "SpServices/Legacy/ImitationLearningTask.h"
 #include "SpServices/Legacy/NullTask.h"
 
-#include "SpServices/Legacy/NavMesh.h"
-
 class LegacyService : public Service {
 public:
     LegacyService() = delete;
@@ -105,22 +103,7 @@ public:
             return task_->isReady();
         });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("legacy_service", "get_random_points", [this](int& num_points) -> std::vector<double> {
-            SP_ASSERT(nav_mesh_);
-            return nav_mesh_->getRandomPoints(num_points);
-        });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("legacy_service", "get_random_reachable_points_in_radius", [this](std::vector<double>& initial_points, float& radius) -> std::vector<double> {
-            SP_ASSERT(nav_mesh_);
-            return nav_mesh_->getRandomReachablePointsInRadius(initial_points, radius);
-        });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("legacy_service", "get_paths", [this](std::vector<double>& initial_points, std::vector<double>& goal_points) -> std::vector<std::vector<double>> {
-            SP_ASSERT(nav_mesh_);
-            return nav_mesh_->getPaths(initial_points, goal_points);
-        });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_world_name", [this]() -> std::string {
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("legacy_service", "get_world_name", [this]() -> std::string {
             SP_ASSERT(getWorld());
             return Unreal::toStdString(getWorld()->GetName());
         });
@@ -163,12 +146,8 @@ protected:
         SP_ASSERT(agent_);
         SP_ASSERT(task_);
 
-        nav_mesh_ = std::make_unique<NavMesh>();
-        SP_ASSERT(nav_mesh_);
-
         agent_->findObjectReferences(getWorld());
         task_->findObjectReferences(getWorld());
-        nav_mesh_->findObjectReferences(getWorld());
 
         has_world_begin_play_executed_ = true;
     }
@@ -182,15 +161,12 @@ protected:
         if (has_world_begin_play_executed_) {
             has_world_begin_play_executed_ = false;
 
-            SP_ASSERT(nav_mesh_);
             SP_ASSERT(task_);
             SP_ASSERT(agent_);
 
-            nav_mesh_->cleanUpObjectReferences();
             task_->cleanUpObjectReferences();
             agent_->cleanUpObjectReferences();
 
-            nav_mesh_ = nullptr;
             task_ = nullptr;
             agent_ = nullptr;
         }
@@ -200,9 +176,6 @@ private:
     // OpenAI Gym helper objects
     std::unique_ptr<Agent> agent_ = nullptr;
     std::unique_ptr<Task> task_ = nullptr;
-
-    // Navmesh helper object
-    std::unique_ptr<NavMesh> nav_mesh_ = nullptr;
 
     // Unreal life cycle state
     bool has_world_begin_play_executed_ = false;

@@ -20,7 +20,6 @@ common_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "com
 import sys
 sys.path.append(common_dir)
 import instance_utils
-import navmesh
 import openbot_env
 import visualization_utils
 
@@ -77,8 +76,14 @@ if __name__ == "__main__":
 
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
-    navmesh = navmesh.NavMesh(instance)
     env = openbot_env.OpenBotEnv(instance, config)
+
+    # get navigation system
+    navigation_system_v1_static_class = instance.unreal_service.get_static_class(class_name="UNavigationSystemV1")
+    get_navigation_system_func = instance.unreal_service.find_function_by_name(uclass=navigation_system_v1_static_class, function_name="GetNavigationSystem")
+    navigation_system_v1_default_object = instance.unreal_service.get_default_object(uclass=navigation_system_v1_static_class, create_if_needed=False)
+    return_values = instance.unreal_service.call_function(uobject=navigation_system_v1_default_object, ufunction=get_navigation_system_func)
+    navigation_system = spear.to_handle(string=return_values["ReturnValue"])
 
     # iterate over all episodes
     prev_scene_id = ""
@@ -97,6 +102,9 @@ if __name__ == "__main__":
 
             # open a new OpenBotEnv
             env = openbot_env.OpenBotEnv(instance, config)
+
+            # get navigation data
+            navigation_data = instance.navigation_service.get_nav_data_for_agent_name(navigation_system=navigation_system, agent_name="Default")
 
         # now that we have checked if we need to create a new Env, we can update prev_scene_id
         prev_scene_id = episode["scene_id"]
@@ -123,7 +131,12 @@ if __name__ == "__main__":
         if not episode_skip:
 
             # initialize the driving policy with the desired path
-            path = navmesh.get_paths(episode_initial_location, episode_goal_location)[0]
+            path = instance.navigation_service.find_paths(
+                navigation_system=navigation_system,
+                navigation_data=navigation_data,
+                num_paths=1,
+                start_points=episode_initial_location,
+                end_points=episode_goal_location)[0]
             policy.reset(obs, path)
 
             if args.benchmark:

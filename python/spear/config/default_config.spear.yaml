@@ -13,15 +13,6 @@ SPEAR:
   # located in INSTANCE because it is being used in spear.configure_system(...) and spear.Instance.
   STANDALONE_EXECUTABLE: ""
 
-  # The base location of downloaded (or built) pak files. This must be specified if you are attempting to
-  # load any scene other than the default scene. PAKS_DIR is expected to have a subdirectory that contains
-  # the actual PAK files, whose name matches the PAKS_VERSION_TAG parameter below if it is specified, or
-  # spear.__version__ if PAKS_VERSION_TAG is not specified. A PAK file must be in this subdirectory,
-  # otherwise its contents will not be loadable. This design is intended to avoid issues with multiple
-  # versions of PAK files living side-by-side on a user's system.
-  PAKS_DIR: ""
-  PAKS_VERSION_TAG: ""
-
   # ENVIRONMENT_VARS are added to Python's os.environ dict when calling spear.configure_system(...). This can
   # be useful to set various graphics driver environment variables. For example, a user can set the VK_ICD_FILENAMES
   # environment variable to gain additional control over which Vulkan devices are recognized by Unreal, and

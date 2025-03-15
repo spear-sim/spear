@@ -149,7 +149,7 @@ public:
                 UClass* filter_class = nullptr;
                 UObject* querier     = nullptr;
 
-                if (origin_points.getShape().at(0)  == 1) { origin = {Std::at(origin_points.getView(), 0), Std::at(origin_points.getView(), 1), Std::at(origin_points.getView(), 2)}; }
+                if (origin_points.getShape().at(0)  == 1) { origin       = {Std::at(origin_points.getView(), 0), Std::at(origin_points.getView(), 1), Std::at(origin_points.getView(), 2)}; }
                 if (radii.getShape().at(0)          == 1) { radius       = Std::at(radii.getView(), 0); }
                 if (filter_classes.getShape().at(0) == 1) { filter_class = toPtr<UClass>(Std::at(filter_classes.getView(), 0)); }
                 if (queriers.getShape().at(0)       == 1) { querier      = toPtr<UObject>(Std::at(queriers.getView(), 0)); }
