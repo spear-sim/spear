@@ -8,7 +8,8 @@
 #include <string>
 #include <vector>
 
-#include "SpCore/ArrayDesc.h" // TODO: remove
+#include "SpCore/Legacy/ArrayDesc.h" // TODO: remove
+
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Unreal.h"
@@ -19,7 +20,6 @@
 #include "SpServices/Service.h"
 
 #include "SpServices/Legacy/Agent.h"
-#include "SpServices/Legacy/CameraAgent.h"
 #include "SpServices/Legacy/NullAgent.h"
 #include "SpServices/Legacy/UrdfRobotAgent.h"
 #include "SpServices/Legacy/VehicleAgent.h"
@@ -121,8 +121,6 @@ protected:
         if (Config::isInitialized()) {
             if (Config::get<std::string>("SP_SERVICES.LEGACY_SERVICE.AGENT") == "NullAgent") {
                 agent_ = std::make_unique<NullAgent>();
-            } else if (Config::get<std::string>("SP_SERVICES.LEGACY_SERVICE.AGENT") == "CameraAgent") {
-                agent_ = std::make_unique<CameraAgent>(getWorld());
             } else if (Config::get<std::string>("SP_SERVICES.LEGACY_SERVICE.AGENT") == "UrdfRobotAgent") {
                 agent_ = std::make_unique<UrdfRobotAgent>(getWorld());
             } else if (Config::get<std::string>("SP_SERVICES.LEGACY_SERVICE.AGENT") == "VehicleAgent") {

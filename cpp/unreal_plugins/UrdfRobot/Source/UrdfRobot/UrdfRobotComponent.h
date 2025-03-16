@@ -14,7 +14,7 @@
 #include <Containers/Array.h>
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UPROPERTY
 
-#include "SpCore/ArrayDesc.h" // TODO: remove
+#include "SpCore/Legacy/ArrayDesc.h" // TODO: remove
 
 #include "UrdfRobotComponent.generated.h"
 

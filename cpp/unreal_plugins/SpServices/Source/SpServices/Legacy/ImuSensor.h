@@ -13,7 +13,7 @@
 
 #include <Math/Vector.h>
 
-#include "SpCore/ArrayDesc.h" // TODO: remove
+#include "SpCore/Legacy/ArrayDesc.h" // TODO: remove
 
 #include "SpServices/Legacy/StandaloneComponent.h"
 #include "SpServices/Legacy/TickComponent.h"

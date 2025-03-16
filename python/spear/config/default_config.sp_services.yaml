@@ -29,7 +29,7 @@ SP_SERVICES:
 
   INITIALIZE_ENGINE_SERVICE:
 
-    # Defaults for loading PAK files.
+    # Defaults for mounting PAK files.
 
     MOUNT_PAK_FILES: False
     PAK_FILES: []

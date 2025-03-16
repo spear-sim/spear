@@ -23,7 +23,8 @@
 #include <UObject/UObjectGlobals.h> // FObjectInitializer
 #include <WheeledVehiclePawn.h>
 
-#include "SpCore/ArrayDesc.h" // TODO: remove
+#include "SpCore/Legacy/ArrayDesc.h" // TODO: remove
+
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"

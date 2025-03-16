@@ -36,4 +36,4 @@ from spear.sp_func_service import SpFuncService
 # TODO: remove legacy classes
 from spear.env import Env
 
-__version__ = "v0.5.0"
+__version__ = "v0.6.0"

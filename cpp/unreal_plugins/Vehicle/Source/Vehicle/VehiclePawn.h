@@ -13,7 +13,7 @@
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS
 #include <WheeledVehiclePawn.h>
 
-#include "SpCore/ArrayDesc.h" // TODO: remove
+#include "SpCore/Legacy/ArrayDesc.h" // TODO: remove
 
 #include "VehiclePawn.generated.h"
 

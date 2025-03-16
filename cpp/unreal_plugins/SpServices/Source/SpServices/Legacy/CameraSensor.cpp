@@ -23,7 +23,8 @@
 #include <TextureResource.h>              // FTextureRenderTargetResource
 #include <UObject/UObjectGlobals.h>       // LoadObject, NewObject
 
-#include "SpCore/ArrayDesc.h" // TODO: remove
+#include "SpCore/Legacy/ArrayDesc.h" // TODO: remove
+
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
 #include "SpCore/Config.h"

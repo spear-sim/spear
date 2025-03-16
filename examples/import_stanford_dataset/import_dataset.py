@@ -2,10 +2,10 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-import argparse
 import os
 import pandas as pd
 import posixpath
+import shutil
 import spear
 import spear.editor
 import unreal
@@ -51,6 +51,13 @@ editor_asset_subsystem = unreal.get_editor_subsystem(unreal.EditorAssetSubsystem
 
 
 if __name__ == "__main__":
+
+    # create output dir
+    csv_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "csv"))
+    if os.path.exists(csv_dir):
+        spear.log(f"Directory exists, removing: {csv_dir}")
+        shutil.rmtree(csv_dir, ignore_errors=True)
+    os.makedirs(csv_dir, exist_ok=True)
 
     # import data into Unreal project
     for mesh_desc in mesh_descs:
@@ -132,13 +139,13 @@ if __name__ == "__main__":
         editor_asset_subsystem.save_loaded_asset(blueprint_asset)
 
     # create cook dirs file
-    cook_dirs_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "cook_dirs.csv"))
+    cook_dirs_file = os.path.realpath(os.path.join(csv_dir, "cook_dirs.csv"))
     spear.log(f"Writing cook dirs file: {cook_dirs_file}")
     df = pd.DataFrame(columns=["cook_dirs"], data={"cook_dirs": cook_dirs})
     df.to_csv(cook_dirs_file, index=False)
 
     # create include assets file
-    include_assets_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "include_assets.csv"))
+    include_assets_file = os.path.realpath(os.path.join(csv_dir, "include_assets.csv"))
     spear.log(f"Writing include assets file: {include_assets_file}")
     df = pd.DataFrame(columns=["include_assets"], data={"include_assets": include_assets})
     df.to_csv(include_assets_file, index=False)

@@ -4,10 +4,10 @@
 
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
-import argparse
 import os
 import numpy as np
 import pandas as pd
+import shutil
 import spear
 
 
@@ -66,6 +66,13 @@ if __name__ == "__main__":
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
     spear.configure_system(config)
     instance = spear.Instance(config)
+
+    # create output dir
+    character_poses_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "camera_poses"))
+    if os.path.exists(character_poses_dir):
+        spear.log(f"Directory exists, removing: {character_poses_dir}")
+        shutil.rmtree(character_poses_dir, ignore_errors=True)
+    os.makedirs(character_poses_dir, exist_ok=True)
 
     with instance.begin_frame():
 
@@ -223,7 +230,7 @@ if __name__ == "__main__":
 
     # save bone transforms in a separate CSV file for each character
     for character in characters:
-        transforms_file = os.path.realpath(os.path.join(os.path.dirname(__file__), character["name"] + ".csv"))
-        character["data_frame"].to_csv(transforms_file, float_format="%.5f", mode="w", index=False)
+        transforms_file = os.path.realpath(os.path.join(character_poses_dir, character["name"] + ".csv"))
+        character["data_frame"].to_csv(transforms_file, mode="w", index=False)
 
     spear.log("Done.")

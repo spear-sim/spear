@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-#include "SpCore/ArrayDesc.h" // TODO: remove
+#include "SpCore/Legacy/ArrayDesc.h" // TODO: remove
 
 #include "SpServices/Legacy/Agent.h"
 

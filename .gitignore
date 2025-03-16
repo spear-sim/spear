@@ -13,6 +13,7 @@ cpp/unreal_projects/SpearSim/Build
 cpp/unreal_projects/SpearSim/Content/__ExternalActors__
 cpp/unreal_projects/SpearSim/Content/__ExternalObjects__
 cpp/unreal_projects/SpearSim/Content/Characters
+cpp/unreal_projects/SpearSim/Content/Kujiale/Scenes
 cpp/unreal_projects/SpearSim/Content/LevelPrototyping
 cpp/unreal_projects/SpearSim/Content/Megascans
 cpp/unreal_projects/SpearSim/Content/MSPresets
@@ -39,17 +40,16 @@ cpp/unreal_projects/SpearSim/UpgradeLog.htm
 examples/*/tmp
 examples/*/user_config.yaml
 
-examples/control_character/character_0.csv
-examples/control_character/character_1.csv
+examples/control_character/character_poses
 
+examples/import_stanford_dataset/csv
 examples/import_stanford_dataset/download
 examples/import_stanford_dataset/gltf
 examples/import_stanford_dataset/ply
 examples/import_stanford_dataset/stanford
-examples/import_stanford_dataset/cook_dirs.csv
-examples/import_stanford_dataset/include_assets.csv
 
-examples/legacy/generate_image_dataset/images
+examples/render_dataset/camera_poses
+examples/render_dataset/images
 
 examples/legacy/imitation_learning_openbot/dataset
 examples/legacy/imitation_learning_openbot/episodes

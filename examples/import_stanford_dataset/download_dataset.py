@@ -15,7 +15,8 @@ import wget
 #     http://graphics.stanford.edu/data/3Dscanrep/xyzrgb/xyzrgb_dragon.ply.gz",      format not recognized by shutil.unpack_archive(...)
 #     http://graphics.stanford.edu/data/3Dscanrep/xyzrgb/xyzrgb_statuette.ply.gz"    format not recognized by shutil.unpack_archive(...)
 
-mesh_descs = [
+mesh_descs = \
+[
     {
         "url": "http://graphics.stanford.edu/pub/3Dscanrep/bunny.tar.gz",
         "ply_file": os.path.realpath(os.path.join(os.path.dirname(__file__), "ply", "bunny", "reconstruction", "bun_zipper.ply")),
@@ -30,7 +31,8 @@ mesh_descs = [
         "url": "http://graphics.stanford.edu/pub/3Dscanrep/dragon/dragon_recon.tar.gz",
         "ply_file": os.path.realpath(os.path.join(os.path.dirname(__file__), "ply", "dragon_recon", "dragon_vrip.ply")),
         "gltf_file": os.path.realpath(os.path.join(os.path.dirname(__file__), "gltf", "dragon", "mesh.gltf"))
-    }]
+    }
+]
 
 
 if __name__ == '__main__':

@@ -7,5 +7,5 @@ SPEAR:
   STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
   INSTANCE:
     COMMAND_LINE_ARGS:
-      resx: 1024
+      resx: 512
       resy: 512

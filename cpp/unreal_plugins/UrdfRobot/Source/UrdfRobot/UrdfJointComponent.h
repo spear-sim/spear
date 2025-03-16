@@ -13,7 +13,7 @@
 #include <PhysicsEngine/PhysicsConstraintComponent.h>
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UENUM, UMETA, UPROPERTY
 
-#include "SpCore/ArrayDesc.h" // TODO: remove
+#include "SpCore/Legacy/ArrayDesc.h" // TODO: remove
 
 #include "UrdfJointComponent.generated.h"
 
