@@ -18,7 +18,7 @@ if __name__ == "__main__":
     with instance.begin_frame():
 
         # get UEnhancedInputLocalPlayerSubsystem
-        enhanced_input_subsystem = instance.unreal_service.get_subsystem_by_class(class_name="UEnhancedInputLocalPlayerSubsystem")
+        enhanced_input_subsystem = instance.unreal_service.get_subsystem_by_type(class_name="UEnhancedInputLocalPlayerSubsystem")
         spear.log("enhanced_input_subsystem: ", enhanced_input_subsystem)
 
         # create UInputAction

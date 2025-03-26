@@ -30,6 +30,9 @@ public:
     void ShutdownModule() override;
 
 private:
+    void registerClasses();
+    void unregisterClasses();
+
     std::unique_ptr<rpc::server> rpc_server_ = nullptr;
 
     std::unique_ptr<EngineService<rpc::server>> engine_service_ = nullptr;

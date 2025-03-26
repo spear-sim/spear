@@ -355,6 +355,8 @@ public:
     template <CSubsystem TSubsystem>
     static void registerEngineSubsystemClass(const std::string& class_name)
     {
+        registerClassCommon<TSubsystem>(class_name);
+
         g_get_engine_subsystem_by_type_func_registrar.registerFunc(
             class_name, []() -> USubsystem* {
                 return Unreal::getEngineSubsystemByType<TSubsystem>();
@@ -381,6 +383,8 @@ public:
     template <CSubsystem TSubsystem, CSubsystemProvider TSubsystemProvider>
     static void registerSubsystemClass(const std::string& class_name)
     {
+        registerClassCommon<TSubsystem>(class_name);
+
         g_get_subsystem_by_type_func_registrar.registerFunc(
             class_name, [](UWorld* world) -> USubsystem* {
                 return Unreal::getSubsystemByType<TSubsystem, TSubsystemProvider>(world);
@@ -478,13 +482,13 @@ public:
     }
 
     //
-    // Register and unregister component class
+    // Register component class
     //
 
-    template <CComponent TComponent>
+    template <CNonSceneComponent TNonSceneComponent>
     static void registerComponentClass(const std::string& class_name)
     {
-        registerComponentClassCommon<TComponent>(class_name);
+        registerComponentClassCommon<TNonSceneComponent>(class_name);
 
         //
         // Create component
@@ -492,7 +496,7 @@ public:
 
         g_create_component_outside_owner_constructor_func_registrar.registerFunc(
             class_name, [](AActor* owner, const std::string& component_name) -> UActorComponent* {
-                return Unreal::createComponentOutsideOwnerConstructor<TComponent, UActorComponent>(owner, component_name); });
+                return Unreal::createComponentOutsideOwnerConstructor<TNonSceneComponent, UActorComponent>(owner, component_name); });
     }
 
     template <CSceneComponent TSceneComponent>
@@ -878,6 +882,8 @@ public:
     template <CSubsystem TSubsystem>
     static void unregisterEngineSubsystemClass(const std::string& class_name)
     {
+        unregisterClassCommon<TSubsystem>(class_name);
+
         g_get_engine_subsystem_by_type_func_registrar.unregisterFunc(class_name);
     }
 
@@ -890,6 +896,8 @@ public:
     template <CSubsystem TSubsystem, CSubsystemProvider TSubsystemProvider>
     static void unregisterSubsystemClass(const std::string& class_name)
     {
+        unregisterClassCommon<TSubsystem>(class_name);
+
         g_get_subsystem_by_type_func_registrar.unregisterFunc(class_name);
     }
 
@@ -917,10 +925,10 @@ public:
         g_find_actor_by_type_func_registrar.unregisterFunc(class_name);
     }
 
-    template <CComponent TComponent>
+    template <CNonSceneComponent TNonSceneComponent>
     static void unregisterComponentClass(const std::string& class_name)
     {
-        unregisterComponentClassCommon<TComponent>(class_name);
+        unregisterComponentClassCommon<TNonSceneComponent>(class_name);
 
         g_create_component_outside_owner_constructor_func_registrar.unregisterFunc(class_name);
     }

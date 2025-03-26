@@ -10,6 +10,7 @@ public class SpServices : SpModuleRules
     {
         SP_LOG_CURRENT_FUNCTION();
 
+        //
         // As a matter of convenience, it is possible to place most Unreal module dependencies in SpModuleRules without
         // needing to make any changes to our uplugin files. The ChaosVehicles module is different. If we list ChaosVehicles
         // in SpModuleRules, then we must also list ChaosVehiclesPlugin in all of our uplugin files. To avoid this
@@ -23,9 +24,12 @@ public class SpServices : SpModuleRules
         // But since ChaosVehiclesCore is defined in Engine/Source, rather than Engine/Plugins, we can list it in
         // SpModuleRules without needing to add clutter to our uplugin files.
         //
-        // Similarly, we list EnhancedInput here, but not in SpModuleRules.
+        // Similarly, we list EnhancedInput and other plugins here, but not in SpModuleRules.
+        //
 
-        PublicDependencyModuleNames.AddRange(new string[] {"ChaosVehicles", "EnhancedInput", "SpComponents", "SpCore", "UrdfRobot", "Vehicle"});
+        PublicDependencyModuleNames.AddRange(new string[] {
+            "ChaosVehicles", "EnhancedInput", "MovieRenderPipelineCore", "MovieRenderPipelineRenderPasses", "MovieRenderPipelineSettings", "SpComponents",
+            "SpCore", "UrdfRobot", "Vehicle"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }
