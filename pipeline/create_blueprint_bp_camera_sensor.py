@@ -16,44 +16,44 @@ blueprint_desc = \
     "component_descs":
     [
         {
-            "name": "ambient_occlusion",
+            "name": "ambient_occlusion_",
             "width": 512,
             "height": 512,
             "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpFuncArrayDataType.FLOAT32,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpComponents/Materials/PPM_AmbientOcclusion.PPM_AmbientOcclusion",
             "fov_angle": 90.0,
         },
         {
-            "name": "depth",
+            "name": "depth_",
             "width": 512,
             "height": 512,
             "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpFuncArrayDataType.FLOAT32,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
             "material_path": "/SpComponents/Materials/PPM_Depth.PPM_Depth",
             "fov_angle": 90.0,
         },
         {
-            "name": "diffuse_color",
+            "name": "diffuse_color_",
             "width": 512,
             "height": 512,
             "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpFuncArrayDataType.FLOAT32,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpComponents/Materials/PPM_DiffuseColor.PPM_DiffuseColor",
             "fov_angle": 90.0,
         },
         {
-            "name": "final_tone_curve_hdr",
+            "name": "final_tone_curve_hdr_",
             "width": 512,
             "height": 512,
             "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpFuncArrayDataType.U_INT8,
+            "channel_data_type": unreal.SpArrayDataType.U_INT8,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
             "fov_angle": 90.0,
@@ -62,56 +62,56 @@ blueprint_desc = \
             "show_flag_settings": [unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=True)]
         },
         {
-            "name": "metallic",
+            "name": "metallic_",
             "width": 512,
             "height": 512,
             "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpFuncArrayDataType.FLOAT32,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpComponents/Materials/PPM_Metallic.PPM_Metallic",
             "fov_angle": 90.0,
         },
         {
-            "name": "normal",
+            "name": "normal_",
             "width": 512,
             "height": 512,
             "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpFuncArrayDataType.FLOAT32,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
             "material_path": "/SpComponents/Materials/PPM_Normal.PPM_Normal",
             "fov_angle": 90.0,
         },
         {
-            "name": "roughness",
+            "name": "roughness_",
             "width": 512,
             "height": 512,
             "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpFuncArrayDataType.FLOAT32,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpComponents/Materials/PPM_Roughness.PPM_Roughness",
             "fov_angle": 90.0,
         },
         {
-            "name": "segmentation",
+            "name": "segmentation_",
             "width": 512,
             "height": 512,
             "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpFuncArrayDataType.U_INT8,
+            "channel_data_type": unreal.SpArrayDataType.U_INT8,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
             "material_path": "/SpComponents/Materials/PPM_Segmentation.PPM_Segmentation",
             "fov_angle": 90.0,
         },
         {
-            "name": "specular_color",
+            "name": "specular_color_",
             "width": 512,
             "height": 512,
             "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpFuncArrayDataType.FLOAT32,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpComponents/Materials/PPM_SpecularColor.PPM_SpecularColor",
             "fov_angle": 90.0,
@@ -119,10 +119,15 @@ blueprint_desc = \
     ]
 }
 
+asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
 editor_asset_subsystem = unreal.get_editor_subsystem(unreal.EditorAssetSubsystem)
 
 
 if __name__ == "__main__":
+
+    # explicitly load "/SpComponents" into the asset registry, since it won't be loaded by default if we are
+    # running from the command-line
+    asset_registry.scan_paths_synchronous(paths=["/SpComponents"])
 
     # remove existing blueprint
     blueprint_path = posixpath.join(blueprint_desc["blueprint_path"], blueprint_desc["blueprint_name"])
@@ -138,7 +143,7 @@ if __name__ == "__main__":
         package_path=blueprint_desc["blueprint_path"])
 
     # create SpStableNameComponent
-    component_name = "sp_stable_name_component"
+    component_name = "sp_stable_name_component_"
     spear.log(f"Creating component: ", component_name)
     sp_stable_name_component_desc = spear.editor.add_new_subobject(
         blueprint_asset=blueprint_asset,
@@ -173,6 +178,8 @@ if __name__ == "__main__":
             material = unreal.load_asset(component_desc["material_path"])
             sp_scene_capture_component_2d.set_editor_property("material", material)
 
+        # SceneCaptureComponent2D properties (optional)
+
         if "fov_angle" in component_desc:
             sp_scene_capture_component_2d.set_editor_property("fov_angle", component_desc["fov_angle"])
 
@@ -197,4 +204,4 @@ if __name__ == "__main__":
     spear.log(f"Saving blueprint: {blueprint_path}")
     editor_asset_subsystem.save_loaded_asset(blueprint_asset)
 
-    spear.log(f"Done.")
+    spear.log("Done.")

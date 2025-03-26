@@ -114,6 +114,6 @@ if __name__ == "__main__":
 
     # TODO: enable script to process multiple scenes
     if args.scene_id is not None:
-        level_editor_subsystem.load_level("/Game/Scenes/" + args.scene_id + "/Maps/" + args.scene_id + "." + args.scene_id)
+        level_editor_subsystem.load_level(posixpath.join("/", "Game", "Spear", "Scenes", args.scene_id, "Maps", args.scene_id + "." + args.scene_id)
 
     process_scene()

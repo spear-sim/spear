@@ -150,4 +150,4 @@ if __name__ == "__main__":
     df = pd.DataFrame(columns=["include_assets"], data={"include_assets": include_assets})
     df.to_csv(include_assets_file, index=False)
 
-    spear.log(f"Done.")
+    spear.log("Done.")

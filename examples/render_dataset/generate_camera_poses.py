@@ -56,8 +56,8 @@ scene_descs = \
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--paks_dir")
-    parser.add_argument("--version_tag")
+    parser.add_argument("--paks_dir", required=True)
+    parser.add_argument("--version_tag", required=True)
     args = parser.parse_args()
 
     if sys.platform == "win32":

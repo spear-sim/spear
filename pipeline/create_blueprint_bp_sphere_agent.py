@@ -230,4 +230,4 @@ if __name__ == "__main__":
     spear.log(f"Saving blueprint: {blueprint_path}")
     editor_asset_subsystem.save_loaded_asset(blueprint_asset)
 
-    spear.log(f"Done.")
+    spear.log("Done.")

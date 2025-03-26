@@ -68,7 +68,8 @@ public:
         // the EnhancedInput plugin, then we get cooking errors, presumably because SpCore gets loaded before
         // EnhancedInput.
 
-        UnrealClassRegistrar::registerSubsystemClass<ULocalPlayer, UEnhancedInputLocalPlayerSubsystem>("UEnhancedInputLocalPlayerSubsystem");
+        UnrealClassRegistrar::registerSubsystemClass<UEnhancedInputLocalPlayerSubsystem, ULocalPlayer>("UEnhancedInputLocalPlayerSubsystem");
+
         UnrealClassRegistrar::registerClass<UInputAction>("UInputAction");
 
         UnrealClassRegistrar::registerClass<UInputModifierDeadZone>("UInputModifierDeadZone");
@@ -218,7 +219,8 @@ public:
     {
         // Unregister EnhancedInput types.
 
-        UnrealClassRegistrar::unregisterSubsystemClass<ULocalPlayer, UEnhancedInputLocalPlayerSubsystem>("UEnhancedInputLocalPlayerSubsystem");
+        UnrealClassRegistrar::unregisterSubsystemClass<UEnhancedInputLocalPlayerSubsystem, ULocalPlayer>("UEnhancedInputLocalPlayerSubsystem");
+
         UnrealClassRegistrar::unregisterClass<UInputAction>("UInputAction");
 
         UnrealClassRegistrar::unregisterClass<UInputModifierDeadZone>("UInputModifierDeadZone");

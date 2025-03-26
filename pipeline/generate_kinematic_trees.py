@@ -89,8 +89,8 @@ def get_kinematic_tree_node(actor_name, component_desc, component_is_root_within
             if static_mesh_desc is not None:
                 static_mesh_asset_path = pathlib.PurePosixPath(static_mesh_desc["path"])
     
-                # ...that is in the /Game/Scenes/<scene_id> directory.
-                if static_mesh_asset_path.parts[:4] == ("/", "Game", "Scenes", args.scene_id):
+                # ...that is in the /Game/Spear/Scenes/<scene_id> directory.
+                if static_mesh_asset_path.parts[:5] == ("/", "Game", "Spear", "Scenes", args.scene_id):
                     spear.log(log_prefix_str, "Component is a StaticMeshComponent with valid geometry.")
 
                     has_valid_geometry = True

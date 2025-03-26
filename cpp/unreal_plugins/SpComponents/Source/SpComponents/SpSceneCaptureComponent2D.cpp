@@ -8,13 +8,18 @@
 #include <utility> // std::move
 
 #include <Components/SceneCaptureComponent2D.h>
+#include <Containers/Array.h>
 #include <Materials/Material.h>
 #include <Materials/MaterialInstanceDynamic.h>
-#include <Math/Color.h>
+#include <Math/Color.h>             // FColor, FLinearColor
+#include <Math/Float16Color.h>
+#include <RHIDefinitions.h>         // ERangeCompressionMode
+#include <RHITypes.h>               // FReadSurfaceDataFlags
 #include <TextureResource.h>        // FTextureRenderTargetResource
 #include <UObject/UObjectGlobals.h> // NewObject
 
 #include "SpCore/Assert.h"
+#include "SpCore/Boost.h"
 #include "SpCore/Log.h"
 #include "SpCore/SharedMemoryRegion.h"
 #include "SpCore/SpArray.h"
@@ -78,13 +83,14 @@ void USpSceneCaptureComponent2D::Initialize()
         SP_ASSERT(initialized_);
 
         SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
+        int num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
 
         SpPackedArray packed_array;
         packed_array.shape_ = {Height, Width, NumChannelsPerPixel};
         packed_array.data_type_ = channel_data_type;
 
         void* dest_ptr = nullptr;
-        
+
         if (bUseSharedMemory) {
             packed_array.view_ = shared_memory_view_.data_;
             packed_array.data_source_ = SpArrayDataSource::Shared;
@@ -93,7 +99,6 @@ void USpSceneCaptureComponent2D::Initialize()
             dest_ptr = shared_memory_view_.data_;
 
         } else {
-            int num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
             packed_array.data_.resize(num_bytes);
             packed_array.view_ = packed_array.data_.data();
             packed_array.data_source_ = SpArrayDataSource::Internal;
@@ -106,13 +111,33 @@ void USpSceneCaptureComponent2D::Initialize()
             FTextureRenderTargetResource* texture_render_target_resource = TextureTarget->GameThread_GetRenderTargetResource();
             SP_ASSERT(texture_render_target_resource);
 
-            // ReadPixelsPtr assumes 4 channels per pixel, 1 byte per channel
-            if (NumChannelsPerPixel == 4 && SpArrayDataTypeUtils::getSizeOf(channel_data_type) == 1) {
-                texture_render_target_resource->ReadPixelsPtr(static_cast<FColor*>(dest_ptr));
+            // ReadPixels assumes 4 channels per pixel, 1 uint8 per channel
+            if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::UInt8) {
+                TArray<FColor> pixels;
+                bool success = texture_render_target_resource->ReadPixels(pixels);
+                SP_ASSERT(success);
+                std::memcpy(dest_ptr, &(pixels[0]), num_bytes);
 
-            // ReadLinearColorPixelsPtr assumes 4 channels per pixel, 4 bytes per channel
-            } else if (NumChannelsPerPixel == 4 && SpArrayDataTypeUtils::getSizeOf(channel_data_type) == 4) {
-                texture_render_target_resource->ReadLinearColorPixelsPtr(static_cast<FLinearColor*>(dest_ptr));
+            // ReadFloat16Pixels assumes 4 channels per pixel, 1 float16 per channel
+            } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float16) {
+                TArray<FFloat16Color> pixels;
+                ERangeCompressionMode compression_mode = ERangeCompressionMode::RCM_MinMax;
+                FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(compression_mode);
+                read_surface_flags.SetLinearToGamma(false);
+                bool success = texture_render_target_resource->ReadFloat16Pixels(pixels, read_surface_flags);
+                SP_ASSERT(success);
+                std::memcpy(dest_ptr, &(pixels[0]), num_bytes);
+
+            // ReadLinearColorPixels assumes 4 channels per pixel, 1 float32 per channel
+            } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32) {
+                SP_ASSERT(BOOST_OS_WINDOWS, "ERROR: NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32 is only supported on Windows.");
+                TArray<FLinearColor> pixels;
+                ERangeCompressionMode compression_mode = ERangeCompressionMode::RCM_MinMax;
+                FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(compression_mode);
+                read_surface_flags.SetLinearToGamma(false);
+                bool success = texture_render_target_resource->ReadLinearColorPixels(pixels);
+                SP_ASSERT(success);
+                std::memcpy(dest_ptr, &(pixels[0]), num_bytes);
 
             } else {
                 SP_ASSERT(false);

@@ -9,7 +9,17 @@ class UnrealService():
         self._entry_point_caller = entry_point_caller
 
     #
-    # Get subsystems
+    # Get engine subsystem
+    #
+
+    def get_engine_subsystem_by_type(self, class_name):
+        return self._entry_point_caller.call("unreal_service.get_engine_subsystem_by_type", class_name)
+
+    def get_engine_subsystem_by_class(self, uclass):
+        return self._entry_point_caller.call("unreal_service.get_engine_subsystem_by_class", uclass)
+
+    #
+    # Get subsystem
     #
 
     def get_subsystem_by_type(self, class_name):
@@ -55,7 +65,7 @@ class UnrealService():
         self._entry_point_caller.call("unreal_service.set_properties_from_string_for_struct", value_ptr, ustruct, spear.to_json_string(obj=properties))
 
     #
-    # Find properties
+    # Find property
     #
 
     def find_property_by_name_on_object(self, uobject, property_name):
@@ -65,7 +75,7 @@ class UnrealService():
         return self._entry_point_caller.call("unreal_service.find_property_by_name_on_struct", value_ptr, ustruct, property_name)
 
     #
-    # Get property values
+    # Get and set property value
     #
 
     def get_property_value(self, property_desc):
@@ -75,7 +85,7 @@ class UnrealService():
         self._entry_point_caller.call("unreal_service.set_property_value_from_string", property_desc, spear.to_json_string(obj=property_value))
 
     #
-    # Find and call functions
+    # Find and call function
     #
 
     def find_function_by_name(self, uclass, function_name, include_super_flag="IncludeSuper"):
@@ -487,7 +497,7 @@ class UnrealService():
         return self._entry_point_caller.call("unreal_service.new_object", class_name, outer, name, object_flags, template, copy_transients_from_class_defaults, in_instance_graph, external_package)
 
     #
-    # Load objects and classes
+    # Load object and class
     #
 
     def load_object(self, class_name, outer, name="", filename="", load_flags=["LOAD_None"], sandbox=0, instancing_context=0):
@@ -503,7 +513,7 @@ class UnrealService():
         return self._entry_point_caller.call("unreal_service.static_load_class", uclass, in_outer, name, filename, load_flags, sandbox)
 
     #
-    # Enable and disable garbage collection for uobjects
+    # Enable and disable garbage collection for uobject
     #
 
     def add_object_to_root(self, uobject):
@@ -513,7 +523,7 @@ class UnrealService():
         return self._entry_point_caller.call("unreal_service.remove_object_from_root", uobject)
 
     #
-    # Find, get, and set console variables
+    # Find, get, and set console variable
     #
 
     def find_console_variable_by_name(self, console_variable_name):
@@ -544,7 +554,7 @@ class UnrealService():
             assert False
 
     #
-    # Execute console commands
+    # Execute console command
     #
 
     def execute_console_command(self, command):

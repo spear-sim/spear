@@ -17,6 +17,7 @@
 #include <vector>
 
 #include <HAL/Platform.h> // SPCORE_API
+#include <Math/Float16.h>
 
 #include "SpCore/Assert.h"
 #include "SpCore/SharedMemoryRegion.h"
@@ -56,8 +57,9 @@ enum class SpArrayDataType
     Int32   = 5,
     UInt64  = 6,
     Int64   = 7,
-    Float32 = 8,
-    Float64 = 9
+    Float16 = 8,
+    Float32 = 9,
+    Float64 = 10
 };
 
 UENUM()
@@ -72,6 +74,7 @@ enum class ESpArrayDataType
     Int32   = Unreal::getConstEnumValue(SpArrayDataType::Int32),
     UInt64  = Unreal::getConstEnumValue(SpArrayDataType::UInt64),
     Int64   = Unreal::getConstEnumValue(SpArrayDataType::Int64),
+    Float16 = Unreal::getConstEnumValue(SpArrayDataType::Float16),
     Float32 = Unreal::getConstEnumValue(SpArrayDataType::Float32),
     Float64 = Unreal::getConstEnumValue(SpArrayDataType::Float64)
 };
@@ -88,6 +91,7 @@ enum class ESpArrayShortDataType
     i4      = Unreal::getConstEnumValue(SpArrayDataType::Int32),
     u8      = Unreal::getConstEnumValue(SpArrayDataType::UInt64),
     i8      = Unreal::getConstEnumValue(SpArrayDataType::Int64),
+    f2      = Unreal::getConstEnumValue(SpArrayDataType::Float16),
     f4      = Unreal::getConstEnumValue(SpArrayDataType::Float32),
     f8      = Unreal::getConstEnumValue(SpArrayDataType::Float64)
 };
@@ -124,6 +128,7 @@ public:
     template <> SpArrayDataType getDataType<int32_t>()  { return SpArrayDataType::Int32; }
     template <> SpArrayDataType getDataType<uint64_t>() { return SpArrayDataType::UInt64; }
     template <> SpArrayDataType getDataType<int64_t>()  { return SpArrayDataType::Int64; }
+    template <> SpArrayDataType getDataType<FFloat16>() { return SpArrayDataType::Float16; } // TODO: replace with std::float16_t
     template <> SpArrayDataType getDataType<float>()    { return SpArrayDataType::Float32; }
     template <> SpArrayDataType getDataType<double>()   { return SpArrayDataType::Float64; }
 
@@ -138,6 +143,7 @@ public:
             case SpArrayDataType::Int32:   return sizeof(int32_t);
             case SpArrayDataType::UInt64:  return sizeof(uint64_t);
             case SpArrayDataType::Int64:   return sizeof(int64_t);
+            case SpArrayDataType::Float16: return sizeof(FFloat16); // TODO: replace with std::float16_t
             case SpArrayDataType::Float32: return sizeof(float);
             case SpArrayDataType::Float64: return sizeof(double);
             default: SP_ASSERT(false); return -1;

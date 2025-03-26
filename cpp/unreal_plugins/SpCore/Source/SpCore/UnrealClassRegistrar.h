@@ -49,8 +49,9 @@ struct FObjectInstancingGraph;
 // Registrars for getting subsystems using a class name instead of template parameters
 //
 
-extern SPCORE_API FuncRegistrar<USubsystem*, const UObject*>          g_get_subsystem_func_by_type_registrar;
-extern SPCORE_API FuncRegistrar<USubsystem*, const UObject*, UClass*> g_get_subsystem_func_by_class_registrar;
+extern SPCORE_API FuncRegistrar<USubsystem*>                   g_get_engine_subsystem_by_type_func_registrar;
+extern SPCORE_API FuncRegistrar<USubsystem*, UWorld*>          g_get_subsystem_by_type_func_registrar;
+extern SPCORE_API FuncRegistrar<USubsystem*, UWorld*, UClass*> g_get_subsystem_by_class_func_registrar;
 
 //
 // Registrars for getting a static class or static struct using a class name instead of template parameters
@@ -187,11 +188,17 @@ public:
     static void terminate();
 
     //
+    // Get engine subsystem using a class name instead of template parameters
+    //
+
+    static USubsystem* getEngineSubsystemByType(const std::string& class_name);
+
+    //
     // Get subsystem using a class name instead of template parameters
     //
 
-    static USubsystem* getSubsystemByType(const std::string& class_name, const UObject* context);
-    static USubsystem* getSubsystemByClass(const std::string& class_name, const UObject* context, UClass* uclass);
+    static USubsystem* getSubsystemByType(const std::string& class_name, UWorld* world);
+    static USubsystem* getSubsystemByClass(const std::string& class_name, UWorld* world, UClass* uclass);
 
     //
     // Get static class or static struct using a class name instead of template parameters
@@ -321,7 +328,7 @@ public:
         UPackage* external_package = nullptr);
 
     //
-    // Load objects and classes using a class name instead of template parameters
+    // Load object and class using a class name instead of template parameters
     //
 
     static UObject* loadObject(
@@ -342,33 +349,46 @@ public:
         UPackageMap* sandbox = nullptr);
 
     //
-    // Register and unregister a subsystem base provider class, i.e., a class that has a GetSubsystemBase() method
+    // Register engine subsystem class
     //
 
-    template <CSubsystemBaseProvider TSubsystemBaseProvider>
-    static void registerSubsystemBaseProviderClass(const std::string& class_name)
+    template <CSubsystem TSubsystem>
+    static void registerEngineSubsystemClass(const std::string& class_name)
     {
-        g_get_subsystem_func_by_class_registrar.registerFunc(
-            class_name, [](const UObject* context, UClass* uclass) -> USubsystem* {
-                return Unreal::getSubsystemProvider<TSubsystemBaseProvider>(context)->GetSubsystemBase(uclass);
+        g_get_engine_subsystem_by_type_func_registrar.registerFunc(
+            class_name, []() -> USubsystem* {
+                return Unreal::getEngineSubsystemByType<TSubsystem>();
             });
     }
 
     //
-    // Register and unregister subsystem class
+    // Register subsystem provider class
     //
 
-    template <CSubsystemProvider TSubsystemProvider, CSubsystem TSubsystem>
+    template <CSubsystemProvider TSubsystemProvider>
+    static void registerSubsystemProviderClass(const std::string& class_name)
+    {
+        g_get_subsystem_by_class_func_registrar.registerFunc(
+            class_name, [](UWorld* world, UClass* uclass) -> USubsystem* {
+                return Unreal::getSubsystemByClass<TSubsystemProvider>(world, uclass);
+            });
+    }
+
+    //
+    // Register subsystem class
+    //
+
+    template <CSubsystem TSubsystem, CSubsystemProvider TSubsystemProvider>
     static void registerSubsystemClass(const std::string& class_name)
     {
-        g_get_subsystem_func_by_type_registrar.registerFunc(
-            class_name, [](const UObject* context) -> USubsystem* {
-                return Unreal::getSubsystemProvider<TSubsystemProvider>(context)->template GetSubsystem<TSubsystem>();
+        g_get_subsystem_by_type_func_registrar.registerFunc(
+            class_name, [](UWorld* world) -> USubsystem* {
+                return Unreal::getSubsystemByType<TSubsystem, TSubsystemProvider>(world);
             });
     }
 
     //
-    // Register and unregister actor class
+    // Register actor class
     //
 
     template <CActor TActor>
@@ -855,16 +875,22 @@ public:
     // Unregister classes
     //
 
-    template <CSubsystemBaseProvider TSubsystemBaseProvider>
-    static void unregisterSubsystemBaseProviderClass(const std::string& class_name)
+    template <CSubsystem TSubsystem>
+    static void unregisterEngineSubsystemClass(const std::string& class_name)
     {
-        g_get_subsystem_func_by_class_registrar.unregisterFunc(class_name);
+        g_get_engine_subsystem_by_type_func_registrar.unregisterFunc(class_name);
     }
 
-    template <CSubsystemProvider TSubsystemProvider, CSubsystem TSubsystem>
+    template <CSubsystemProvider TSubsystemProvider>
+    static void unregisterSubsystemProviderClass(const std::string& class_name)
+    {
+        g_get_subsystem_by_class_func_registrar.unregisterFunc(class_name);
+    }
+
+    template <CSubsystem TSubsystem, CSubsystemProvider TSubsystemProvider>
     static void unregisterSubsystemClass(const std::string& class_name)
     {
-        g_get_subsystem_func_by_type_registrar.unregisterFunc(class_name);
+        g_get_subsystem_by_type_func_registrar.unregisterFunc(class_name);
     }
 
     template <CActor TActor>

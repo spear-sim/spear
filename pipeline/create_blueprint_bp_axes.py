@@ -50,10 +50,15 @@ blueprint_desc = \
     ]
 }
 
+asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
 editor_asset_subsystem = unreal.get_editor_subsystem(unreal.EditorAssetSubsystem)
 
 
 if __name__ == "__main__":
+
+    # explicitly load "/SpComponents" into the asset registry, since it won't be loaded by default if we are
+    # running from the command-line
+    asset_registry.scan_paths_synchronous(paths=["/SpComponents"])
 
     # remove existing blueprint
     blueprint_path = posixpath.join(blueprint_desc["blueprint_path"], blueprint_desc["blueprint_name"])
@@ -105,4 +110,4 @@ if __name__ == "__main__":
     spear.log(f"Saving blueprint: {blueprint_path}")
     editor_asset_subsystem.save_loaded_asset(blueprint_asset)
 
-    spear.log(f"Done.")
+    spear.log("Done.")

@@ -54,8 +54,18 @@ component_descs = \
 [
     {
         "name": "final_tone_curve_hdr_component",
-        "long_name": "DefaultSceneRoot.final_tone_curve_hdr",
-        "visualize_func": lambda data : data[:,:,[2,1,0,3]]
+        "long_name": "DefaultSceneRoot.final_tone_curve_hdr_",
+        "visualize_func": lambda data : data[:,:,[2,1,0]]
+    },
+    {
+        "name": "normal",
+        "long_name": "DefaultSceneRoot.normal_",
+        "visualize_func": lambda data : np.clip(((data + 1.0) / 2.0)[:,:,0:3], 0.0, 1.0)
+    },
+    {
+        "name": "depth",
+        "long_name": "DefaultSceneRoot.depth_",
+        "visualize_func": lambda data : data[:,:,0]
     }
 ]
 
@@ -63,8 +73,8 @@ component_descs = \
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--paks_dir")
-    parser.add_argument("--version_tag")
+    parser.add_argument("--paks_dir", required=True)
+    parser.add_argument("--version_tag", required=True)
     args = parser.parse_args()
 
     if sys.platform == "win32":
@@ -172,6 +182,13 @@ if __name__ == "__main__":
                         uobject=component_desc["component"],
                         function_name="read_pixels",
                         uobject_shared_memory_handles=component_desc["shared_memory_handles"])
+                    data = return_values["arrays"]["data"]
+
+                    # spear.log("component: ", component_desc["name"])
+                    # spear.log("shape:     ", return_values["arrays"]["data"].shape)
+                    # spear.log("dtype:     ", return_values["arrays"]["data"].dtype)
+                    # spear.log("min:       ", np.min(return_values["arrays"]["data"]))
+                    # spear.log("max:       ", np.max(return_values["arrays"]["data"]))
 
                     component_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "images", scene_desc["name"], component_desc["name"]))
                     image_file = os.path.realpath(os.path.join(component_dir, "%04d.png"%camera_pose["index"]))

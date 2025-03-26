@@ -59,8 +59,9 @@ struct FObjectInstancingGraph;
 // Registrars for getting subsystems using a class name instead of template parameters
 //
 
-FuncRegistrar<USubsystem*, const UObject*>          g_get_subsystem_func_by_type_registrar;
-FuncRegistrar<USubsystem*, const UObject*, UClass*> g_get_subsystem_func_by_class_registrar;
+FuncRegistrar<USubsystem*>                   g_get_engine_subsystem_by_type_func_registrar;
+FuncRegistrar<USubsystem*, UWorld*>          g_get_subsystem_by_type_func_registrar;
+FuncRegistrar<USubsystem*, UWorld*, UClass*> g_get_subsystem_by_class_func_registrar;
 
 //
 // Registrars for getting static classes using a class name instead of template parameters
@@ -195,7 +196,7 @@ void UnrealClassRegistrar::initialize()
 {
     // Register Unreal classes. We provide string names here because the property system isn't initialized
     // yet, so these names can't be inferred from the type yet.
-    registerSubsystemBaseProviderClass<ULocalPlayer>("ULocalPlayer");
+    registerSubsystemProviderClass<ULocalPlayer>("ULocalPlayer");
     registerActorClass<AActor>("AActor");
     registerActorClass<APlayerCameraManager>("APlayerCameraManager");
     registerActorClass<APlayerController>("APlayerController");
@@ -227,7 +228,7 @@ void UnrealClassRegistrar::terminate()
 {
     // Unregister Unreal classes. We provide string names here because the property system isn't initialized
     // yet, so these names can't be inferred from the type yet.
-    unregisterSubsystemBaseProviderClass<ULocalPlayer>("ULocalPlayer");
+    unregisterSubsystemProviderClass<ULocalPlayer>("ULocalPlayer");
     unregisterActorClass<AActor>("AActor");
     unregisterActorClass<APlayerCameraManager>("APlayerCameraManager");
     unregisterActorClass<APlayerController>("APlayerController");
@@ -256,15 +257,23 @@ void UnrealClassRegistrar::terminate()
 }
 
 //
+// Get engine subsystem using a class name instead of template parameters
+//
+
+USubsystem* UnrealClassRegistrar::getEngineSubsystemByType(const std::string& class_name) {
+    return g_get_engine_subsystem_by_type_func_registrar.call(class_name);
+}
+
+//
 // Get subsystem using a class name instead of template parameters
 //
 
-USubsystem* UnrealClassRegistrar::getSubsystemByType(const std::string& class_name, const UObject* context) {
-    return g_get_subsystem_func_by_type_registrar.call(class_name, context);
+USubsystem* UnrealClassRegistrar::getSubsystemByType(const std::string& class_name, UWorld* world) {
+    return g_get_subsystem_by_type_func_registrar.call(class_name, world);
 }
 
-USubsystem* UnrealClassRegistrar::getSubsystemByClass(const std::string& class_name, const UObject* context, UClass* uclass) {
-    return g_get_subsystem_func_by_class_registrar.call(class_name, context, uclass);
+USubsystem* UnrealClassRegistrar::getSubsystemByClass(const std::string& class_name, UWorld* world, UClass* uclass) {
+    return g_get_subsystem_by_class_func_registrar.call(class_name, world, uclass);
 }
 
 //

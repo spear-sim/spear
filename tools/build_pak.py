@@ -126,4 +126,4 @@ if __name__ == "__main__":
     assert os.path.exists(pak_file)
     spear.log(f"Successfully built: {pak_file}")
 
-    spear.log(f"Done.")
+    spear.log("Done.")

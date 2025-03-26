@@ -232,7 +232,21 @@ public:
         SP_ASSERT(unreal_entry_point_binder);
 
         //
-        // Get subsystems
+        // Get engine subsystem
+        //
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_engine_subsystem_by_type",
+            [this](std::string& class_name) -> uint64_t {
+                return toUInt64(UnrealClassRegistrar::getEngineSubsystemByType(class_name));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_engine_subsystem_by_class",
+            [this](uint64_t& uclass) -> uint64_t {
+                return toUInt64(Unreal::getEngineSubsystemByClass(toPtr<UClass>(uclass))); // UnrealClassRegistrar not needed because Unreal::getEngineSubsystemBase(...) has no template parameters
+            });
+
+        //
+        // Get subsystem
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_subsystem_by_type",
@@ -300,7 +314,7 @@ public:
             });
 
         //
-        // Find properties
+        // Find property
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_property_by_name_on_object",
@@ -314,7 +328,7 @@ public:
             });
 
         //
-        // Get property values
+        // Get property value
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_property_value_as_string",
@@ -328,7 +342,7 @@ public:
             });
 
         //
-        // Find and call functions
+        // Find and call function
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_function_by_name",
@@ -972,7 +986,7 @@ public:
             });
 
         //
-        // Load objects and classes
+        // Load object and class
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "load_object",
@@ -1058,7 +1072,7 @@ public:
             });
 
         //
-        // Load objects and classes
+        // Enable and disable garbage collection for uobject
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "add_object_to_root",
@@ -1076,7 +1090,7 @@ public:
             });
 
         //
-        // Find, get, and set console variables
+        // Find, get, and set console variable
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_console_variable_by_name",
@@ -1133,7 +1147,7 @@ public:
             });
 
         //
-        // Execute console commands
+        // Execute console command
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "execute_console_command",

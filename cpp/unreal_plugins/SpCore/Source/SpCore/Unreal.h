@@ -19,6 +19,7 @@
 #include <Containers/Array.h>
 #include <Containers/UnrealString.h>        // FString::operator*
 #include <Dom/JsonValue.h>
+#include <Engine/Engine.h>                  // GEngine
 #include <Engine/LocalPlayer.h>
 #include <Engine/World.h>
 #include <EngineUtils.h>                    // TActorIterator
@@ -110,17 +111,11 @@ concept CSubsystem =
 template <typename TSubsystemProvider>
 concept CSubsystemProvider =
     CClass<TSubsystemProvider> &&
-    requires(TSubsystemProvider subsystem_provider) {
+    requires(TSubsystemProvider subsystem_provider, UClass* uclass) {
         { subsystem_provider.template GetSubsystem<USubsystem>() } -> std::same_as<USubsystem*>;
-    };
-
-template <typename TSubsystemBaseProvider>
-concept CSubsystemBaseProvider =
-    CSubsystemProvider<TSubsystemBaseProvider> &&
-    requires(TSubsystemBaseProvider subsystem_base_provider, UClass* uclass) {
-        { subsystem_base_provider.GetSubsystemBase(nullptr) };
+        { subsystem_provider.GetSubsystemBase(nullptr) }; // can't use std::same_as<USubsystem*> because the type of the returned pointer might be derived from USubsystem
     } &&
-    std::derived_from<std::remove_pointer_t<decltype(TSubsystemBaseProvider().GetSubsystemBase(nullptr))>, USubsystem>;
+    std::derived_from<std::remove_pointer_t<decltype(TSubsystemProvider().GetSubsystemBase(nullptr))>, USubsystem>;
 
 //
 // General-purpose functions for working with Unreal objects.
@@ -1011,27 +1006,67 @@ public:
     }
 
     //
-    // Helper functions for getting subsystem providers
+    // Helper functions for getting subsystems, world can't be const because we need to return it directly
+    // in some specializations
     //
 
     template <CSubsystemProvider TSubsystemProvider>
-    static TSubsystemProvider* getSubsystemProvider(const UObject* context)
+    static TSubsystemProvider* getSubsystemProvider(UWorld* world)
     {
         SP_ASSERT(false);
         return nullptr;
     }
 
     template <>
-    ULocalPlayer* getSubsystemProvider<ULocalPlayer>(const UObject* context)
+    ULocalPlayer* getSubsystemProvider<ULocalPlayer>(UWorld* world)
     {
-        SP_ASSERT(context);
-        const UWorld* world = Cast<UWorld>(context); // no RTTI available, so use Cast instead of dynamic_cast
         SP_ASSERT(world);
         APlayerController* player_controller = world->GetFirstPlayerController();
         SP_ASSERT(player_controller);
         ULocalPlayer* local_player = player_controller->GetLocalPlayer();
         SP_ASSERT(local_player);
         return local_player;
+    }
+
+    template <>
+    UWorld* getSubsystemProvider<UWorld>(UWorld* world)
+    {
+        SP_ASSERT(world);
+        return world;
+    }
+
+    //
+    // Get engine subsystem, uclass can't be const because we need to pass it to GetEngineSubsystemBase(...)
+    //
+
+    template <CSubsystem TSubsystem>
+    static TSubsystem* getEngineSubsystemByType()
+    {
+        SP_ASSERT(GEngine);
+        return GEngine->GetEngineSubsystem<TSubsystem>();
+    }
+
+    static USubsystem* getEngineSubsystemByClass(UClass* uclass)
+    {
+        SP_ASSERT(GEngine);
+        return GEngine->GetEngineSubsystemBase(uclass);
+    }
+
+    //
+    // Get subsystem, world can't be const because we need to return it directly in some specializations, and
+    // uclass can't be const because we need to pass it to GetSubsystemBase(...)
+    //
+
+    template <CSubsystem TSubsystem, CSubsystemProvider TSubsystemProvider>
+    static TSubsystem* getSubsystemByType(UWorld* world)
+    {
+        return getSubsystemProvider<TSubsystemProvider>(world)->template GetSubsystem<TSubsystem>();
+    }
+
+    template <CSubsystemProvider TSubsystemProvider>
+    static USubsystem* getSubsystemByClass(UWorld* world, UClass* uclass)
+    {
+        return getSubsystemProvider<TSubsystemProvider>(world)->GetSubsystemBase(uclass);
     }
 
     //

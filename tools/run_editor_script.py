@@ -32,8 +32,12 @@ if __name__ == "__main__":
     uproject_name = os.path.split(unreal_project_dir)[1]
     uproject = os.path.realpath(os.path.join(unreal_project_dir, uproject_name + ".uproject"))
 
+    unknown_arg_string = ""
+    if len(unknown_args) > 0:
+        unknown_arg_string = " " + " ".join(unknown_args)
+
     # need shell=True to correctly handle the quotes in cmd
-    cmd = unreal_editor_bin + " " + uproject + ' -run=pythonscript -script="' + args.script + " " + " ".join(unknown_args) + '"'
+    cmd = unreal_editor_bin + " " + uproject + ' -run=pythonscript -script="' + args.script + unknown_arg_string + '"'
     spear.log(f"Executing: {cmd}")
     subprocess.run(cmd, shell=True, check=True)
 
