@@ -10,6 +10,21 @@
 #include <CoreGlobals.h>           // IsRunningCommandlet
 #include <Modules/ModuleManager.h> // IMPLEMENT_MODULE
 
+// Unreal classes
+#include <Engine/LocalPlayer.h>
+#include <LevelSequence.h>
+
+// EnhancedInput classes
+#include <EnhancedInputSubsystems.h> // UEnhancedInputLocalPlayerSubsystem
+#include <InputAction.h>
+#include <InputModifiers.h>          // UInputModifier
+#include <InputTriggers.h>           // UInputTrigger
+
+// MovieRenderPipeline classes
+#include <MoviePipelinePrimaryConfig.h>
+#include <MoviePipelineQueue.h> // UMoviePipelineExecutorJob
+#include <MoviePipelineQueueEngineSubsystem.h>
+
 #include "SpCore/Assert.h"
 #include "SpCore/AssertModuleLoaded.h"
 #include "SpCore/Config.h"
@@ -18,21 +33,20 @@
 
 #include "SpServices/Rpclib.h"
 
-// EngineService.
+// EngineService
 #include "SpServices/EngineService.h"
 
-// Services that don't require a reference to EngineService.
+// Services that don't require a reference to EngineService
 #include "SpServices/InitializeEngineService.h"
-#include "SpServices/RegisterClassesService.h"
 
-// Services that require a reference to EngineService.
+// Services that require a reference to EngineService
 #include "SpServices/EnhancedInputService.h"
 #include "SpServices/InputService.h"
 #include "SpServices/LegacyService.h"
 #include "SpServices/SharedMemoryService.h"
 #include "SpServices/UnrealService.h"
 
-// Services that require a reference to EngineService and SharedMemoryService.
+// Services that require a reference to EngineService and SharedMemoryService
 #include "SpServices/NavigationService.h"
 #include "SpServices/SpFuncService.h"
 
@@ -52,6 +66,8 @@ void SpServices::StartupModule()
             return;
         }
     #endif
+
+    registerClasses();
 
     // Create RPC server.
     try {
@@ -78,7 +94,6 @@ void SpServices::StartupModule()
 
     // Construct services that don't require a reference to EngineService.
     initialize_engine_service_ = std::make_unique<InitializeEngineService>();
-    register_classes_service_ = std::make_unique<RegisterClassesService>();
 
     // Construct services that require a reference to EngineService.
     enhanced_input_service_ = std::make_unique<EnhancedInputService>(engine_service_.get());
@@ -135,10 +150,85 @@ void SpServices::ShutdownModule()
 
     SP_ASSERT(initialize_engine_service_);
     initialize_engine_service_ = nullptr;
-    register_classes_service_ = nullptr;
 
     SP_ASSERT(engine_service_);
     engine_service_ = nullptr;
+
+    unregisterClasses();
+}
+
+// Normally we would do the operations in registerClasses() and unregisterClasses(...) in the opposite order.
+// But we make an exception here (i.e., we do the operations in the same order) to make it easier and less
+// error-prone to register classes.
+
+void SpServices::registerClasses()
+{
+    // EnhancedInput classes
+    UnrealClassRegistrar::registerSubsystemClass<UEnhancedInputLocalPlayerSubsystem, ULocalPlayer>("UEnhancedInputLocalPlayerSubsystem");
+    UnrealClassRegistrar::registerClass<UInputAction>("UInputAction");
+    UnrealClassRegistrar::registerClass<UInputModifierDeadZone>("UInputModifierDeadZone");
+    UnrealClassRegistrar::registerClass<UInputModifierFOVScaling>("UInputModifierFOVScaling");
+    UnrealClassRegistrar::registerClass<UInputModifierNegate>("UInputModifierNegate");
+    UnrealClassRegistrar::registerClass<UInputModifierResponseCurveExponential>("UInputModifierResponseCurveExponential");
+    UnrealClassRegistrar::registerClass<UInputModifierResponseCurveUser>("UInputModifierResponseCurveUser");
+    UnrealClassRegistrar::registerClass<UInputModifierScalar>("UInputModifierScalar");
+    UnrealClassRegistrar::registerClass<UInputModifierScaleByDeltaTime>("UInputModifierScaleByDeltaTime");
+    UnrealClassRegistrar::registerClass<UInputModifierSmooth>("UInputModifierSmooth");
+    UnrealClassRegistrar::registerClass<UInputModifierSmoothDelta>("UInputModifierSmoothDelta");
+    UnrealClassRegistrar::registerClass<UInputModifierSwizzleAxis>("UInputModifierSwizzleAxis");
+    UnrealClassRegistrar::registerClass<UInputModifierToWorldSpace>("UInputModifierToWorldSpace");
+    UnrealClassRegistrar::registerClass<UInputTriggerCombo>("UInputTriggerCombo");
+    UnrealClassRegistrar::registerClass<UInputTriggerChordAction>("UInputTriggerChordAction");
+    UnrealClassRegistrar::registerClass<UInputTriggerChordBlocker>("UInputTriggerChordBlocker");
+    UnrealClassRegistrar::registerClass<UInputTriggerDown>("UInputTriggerDown");
+    UnrealClassRegistrar::registerClass<UInputTriggerHold>("UInputTriggerHold");
+    UnrealClassRegistrar::registerClass<UInputTriggerHoldAndRelease>("UInputTriggerHoldAndRelease");
+    UnrealClassRegistrar::registerClass<UInputTriggerPressed>("UInputTriggerPressed");
+    UnrealClassRegistrar::registerClass<UInputTriggerPulse>("UInputTriggerPulse");
+    UnrealClassRegistrar::registerClass<UInputTriggerReleased>("UInputTriggerReleased");
+    UnrealClassRegistrar::registerClass<UInputTriggerTap>("UInputTriggerTap");
+    UnrealClassRegistrar::registerClass<UInputTriggerTimedBase>("UInputTriggerTimedBase");
+
+    // MovieRenderPipeline classes
+    UnrealClassRegistrar::registerEngineSubsystemClass<UMoviePipelineQueueEngineSubsystem>("UMoviePipelineQueueEngineSubsystem");
+    UnrealClassRegistrar::registerClass<ULevelSequence>("ULevelSequence");
+    UnrealClassRegistrar::registerClass<UMoviePipelineExecutorJob>("UMoviePipelineExecutorJob");
+    UnrealClassRegistrar::registerClass<UMoviePipelinePrimaryConfig>("UMoviePipelinePrimaryConfig");
+}
+
+void SpServices::unregisterClasses()
+{
+    // EnhancedInput classes
+    UnrealClassRegistrar::unregisterSubsystemClass<UEnhancedInputLocalPlayerSubsystem, ULocalPlayer>("UEnhancedInputLocalPlayerSubsystem");
+    UnrealClassRegistrar::unregisterClass<UInputAction>("UInputAction");
+    UnrealClassRegistrar::unregisterClass<UInputModifierDeadZone>("UInputModifierDeadZone");
+    UnrealClassRegistrar::unregisterClass<UInputModifierFOVScaling>("UInputModifierFOVScaling");
+    UnrealClassRegistrar::unregisterClass<UInputModifierNegate>("UInputModifierNegate");
+    UnrealClassRegistrar::unregisterClass<UInputModifierResponseCurveExponential>("UInputModifierResponseCurveExponential");
+    UnrealClassRegistrar::unregisterClass<UInputModifierResponseCurveUser>("UInputModifierResponseCurveUser");
+    UnrealClassRegistrar::unregisterClass<UInputModifierScalar>("UInputModifierScalar");
+    UnrealClassRegistrar::unregisterClass<UInputModifierScaleByDeltaTime>("UInputModifierScaleByDeltaTime");
+    UnrealClassRegistrar::unregisterClass<UInputModifierSmooth>("UInputModifierSmooth");
+    UnrealClassRegistrar::unregisterClass<UInputModifierSmoothDelta>("UInputModifierSmoothDelta");
+    UnrealClassRegistrar::unregisterClass<UInputModifierSwizzleAxis>("UInputModifierSwizzleAxis");
+    UnrealClassRegistrar::unregisterClass<UInputModifierToWorldSpace>("UInputModifierToWorldSpace");
+    UnrealClassRegistrar::unregisterClass<UInputTriggerCombo>("UInputTriggerCombo");
+    UnrealClassRegistrar::unregisterClass<UInputTriggerChordAction>("UInputTriggerChordAction");
+    UnrealClassRegistrar::unregisterClass<UInputTriggerChordBlocker>("UInputTriggerChordBlocker");
+    UnrealClassRegistrar::unregisterClass<UInputTriggerDown>("UInputTriggerDown");
+    UnrealClassRegistrar::unregisterClass<UInputTriggerHold>("UInputTriggerHold");
+    UnrealClassRegistrar::unregisterClass<UInputTriggerHoldAndRelease>("UInputTriggerHoldAndRelease");
+    UnrealClassRegistrar::unregisterClass<UInputTriggerPressed>("UInputTriggerPressed");
+    UnrealClassRegistrar::unregisterClass<UInputTriggerPulse>("UInputTriggerPulse");
+    UnrealClassRegistrar::unregisterClass<UInputTriggerReleased>("UInputTriggerReleased");
+    UnrealClassRegistrar::unregisterClass<UInputTriggerTap>("UInputTriggerTap");
+    UnrealClassRegistrar::unregisterClass<UInputTriggerTimedBase>("UInputTriggerTimedBase");
+
+    // MovieRenderPipeline classes
+    UnrealClassRegistrar::unregisterEngineSubsystemClass<UMoviePipelineQueueEngineSubsystem>("UMoviePipelineQueueEngineSubsystem");
+    UnrealClassRegistrar::unregisterClass<ULevelSequence>("ULevelSequence");
+    UnrealClassRegistrar::unregisterClass<UMoviePipelineExecutorJob>("UMoviePipelineExecutorJob");
+    UnrealClassRegistrar::unregisterClass<UMoviePipelinePrimaryConfig>("UMoviePipelinePrimaryConfig");
 }
 
 // use if module does not implement any Unreal classes

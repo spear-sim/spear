@@ -10,12 +10,12 @@
 #include <vector>
 
 #include <Engine/World.h>
-#include <HAL/Platform.h> // SPCORE_API
+#include <HAL/Platform.h> // SPCORE_API, uint32
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 #include <UObject/NameTypes.h>      // FName
 #include <UObject/ObjectMacros.h>   // ELoadFlags, EObjectFlags
-#include <UObject/UObjectGlobals.h> // LoadObject, NewObject
+#include <UObject/UObjectGlobals.h> // LoadClass, LoadObject, NewObject
 
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
@@ -183,9 +183,6 @@ class SPCORE_API UnrealClassRegistrar
 public:
     UnrealClassRegistrar() = delete;
     ~UnrealClassRegistrar() = delete;
-
-    static void initialize();
-    static void terminate();
 
     //
     // Get engine subsystem using a class name instead of template parameters

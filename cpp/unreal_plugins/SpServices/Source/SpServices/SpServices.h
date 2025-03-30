@@ -10,21 +10,20 @@
 
 #include "SpServices/Rpclib.h"
 
-// EngineService.
+// EngineService
 #include "SpServices/EngineService.h"
 
-// Services that don't require a reference to EngineService.
+// Services that don't require a reference to EngineService
 #include "SpServices/InitializeEngineService.h"
-#include "SpServices/RegisterClassesService.h"
 
-// Services that require a reference to EngineService.
+// Services that require a reference to EngineService
 #include "SpServices/EnhancedInputService.h"
 #include "SpServices/InputService.h"
 #include "SpServices/LegacyService.h"
 #include "SpServices/SharedMemoryService.h"
 #include "SpServices/UnrealService.h"
 
-// Services that require a reference to EngineService and SharedMemoryService.
+// Services that require a reference to EngineService and SharedMemoryService
 #include "SpServices/NavigationService.h"
 #include "SpServices/SpFuncService.h"
 
@@ -35,23 +34,25 @@ public:
     void ShutdownModule() override;
 
 private:
+    void registerClasses();
+    void unregisterClasses();
+
     std::unique_ptr<rpc::server> rpc_server_ = nullptr;
 
-    // EngineService.
+    // EngineService
     std::unique_ptr<EngineService<rpc::server>> engine_service_ = nullptr;
 
-    // Services that don't require a reference to EngineService.
+    // Services that don't require a reference to EngineService
     std::unique_ptr<InitializeEngineService> initialize_engine_service_ = nullptr;
-    std::unique_ptr<RegisterClassesService> register_classes_service_ = nullptr;
 
-    // Services that require a reference to EngineService.
+    // Services that require a reference to EngineService
     std::unique_ptr<EnhancedInputService> enhanced_input_service_ = nullptr;
     std::unique_ptr<InputService> input_service_ = nullptr;
     std::unique_ptr<LegacyService> legacy_service_ = nullptr;
     std::unique_ptr<SharedMemoryService> shared_memory_service_ = nullptr;
     std::unique_ptr<UnrealService> unreal_service_ = nullptr;
 
-    // Services that require a reference to EngineService and SharedMemoryService.
+    // Services that require a reference to EngineService and SharedMemoryService
     std::unique_ptr<NavigationService> navigation_service_ = nullptr;
     std::unique_ptr<SpFuncService> sp_func_service_ = nullptr;
 };

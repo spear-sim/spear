@@ -8,38 +8,18 @@
 #include <string>
 #include <vector>
 
-#include <Camera/CameraComponent.h>
-#include <Camera/PlayerCameraManager.h>
-#include <Components/ActorComponent.h>
-#include <Components/PoseableMeshComponent.h>
-#include <Components/SceneComponent.h>
-#include <Components/SkeletalMeshComponent.h>
-#include <Components/StaticMeshComponent.h>
-#include <Engine/LocalPlayer.h>
-#include <Engine/PostProcessVolume.h>
-#include <Engine/StaticMesh.h>
-#include <Engine/StaticMeshActor.h>
-#include <Engine/TextureRenderTarget2D.h>
-#include <GameFramework/Actor.h>
-#include "GameFramework/CharacterMovementComponent.h"
-#include <GameFramework/GameUserSettings.h>
-#include <GameFramework/PlayerController.h>
-#include <Kismet/GameplayStatics.h>
-#include <Materials/Material.h>
-#include <Materials/MaterialInterface.h>
-#include <Math/Rotator.h>
-#include <Math/Transform.h>
-#include <Math/Vector.h>
-#include <NavigationSystem.h>
-#include <UObject/Object.h> // UObject
+#include <HAL/Platform.h> // uint32
 
 #include "SpCore/FuncRegistrar.h"
 
+class AActor;
 class FLinkerInstancingContext;
+class UActorComponent;
 class UClass;
 class UObject;
 class UPackage;
 class UPackageMap;
+class USceneComponent;
 class UStruct;
 class USubsystem;
 class UWorld;
@@ -187,74 +167,6 @@ FuncRegistrar<UClass*, UObject*, const TCHAR*, const TCHAR*, uint32, UPackageMap
 
 std::map<std::string, std::string> g_special_struct_names; // map from platform-dependent type name to user-facing name
 std::map<std::string, UStruct*> g_special_structs;         // map from platform-dependent type name to UStruct*
-
-// Normally we would do the operations in initialize() and terminate(...) in the opposite order. But we make an
-// exception here (i.e., we do the operations in the same order) to make it easier and less error-prone to add
-// classes and functions.
-
-void UnrealClassRegistrar::initialize()
-{
-    // Register Unreal classes. We provide string names here because the property system isn't initialized
-    // yet, so these names can't be inferred from the type yet.
-    registerSubsystemProviderClass<ULocalPlayer>("ULocalPlayer");
-    registerActorClass<AActor>("AActor");
-    registerActorClass<APlayerCameraManager>("APlayerCameraManager");
-    registerActorClass<APlayerController>("APlayerController");
-    registerActorClass<APostProcessVolume>("APostProcessVolume");
-    registerActorClass<AStaticMeshActor>("AStaticMeshActor");
-    registerComponentClass<UActorComponent>("UActorComponent");
-    registerComponentClass<UCameraComponent>("UCameraComponent");
-    registerComponentClass<UCharacterMovementComponent>("UCharacterMovementComponent");
-    registerComponentClass<UPrimitiveComponent>("UPrimitiveComponent");
-    registerComponentClass<USkeletalMeshComponent>("USkeletalMeshComponent");
-    registerComponentClass<USceneComponent>("USceneComponent");
-    registerComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
-    registerComponentClass<UPoseableMeshComponent>("UPoseableMeshComponent");
-    registerClass<UObject>("UObject");
-    registerClass<UClass>("UClass"); // needed for spawning Blueprint types from Python
-    registerClass<UGameplayStatics>("UGameplayStatics");
-    registerClass<UGameUserSettings>("UGameUserSettings");
-    registerClass<UMaterial>("UMaterial");
-    registerClass<UMaterialInterface>("UMaterialInterface");
-    registerClass<UNavigationSystemV1>("UNavigationSystemV1");
-    registerClass<UStaticMesh>("UStaticMesh");
-    registerClass<UTextureRenderTarget2D>("UTextureRenderTarget2D");
-    registerSpecialStruct<FRotator>("FRotator");
-    registerSpecialStruct<FTransform>("FTransform");
-    registerSpecialStruct<FVector>("FVector");
-}
-
-void UnrealClassRegistrar::terminate()
-{
-    // Unregister Unreal classes. We provide string names here because the property system isn't initialized
-    // yet, so these names can't be inferred from the type yet.
-    unregisterSubsystemProviderClass<ULocalPlayer>("ULocalPlayer");
-    unregisterActorClass<AActor>("AActor");
-    unregisterActorClass<APlayerCameraManager>("APlayerCameraManager");
-    unregisterActorClass<APlayerController>("APlayerController");
-    unregisterActorClass<APostProcessVolume>("APostProcessVolume");
-    unregisterActorClass<AStaticMeshActor>("AStaticMeshActor");
-    unregisterComponentClass<UActorComponent>("UActorComponent");
-    unregisterComponentClass<UCameraComponent>("UCameraComponent");
-    unregisterComponentClass<UCharacterMovementComponent>("UCharacterMovementComponent");
-    unregisterComponentClass<UPrimitiveComponent>("UPrimitiveComponent");
-    unregisterComponentClass<USceneComponent>("USceneComponent");
-    unregisterComponentClass<USkeletalMeshComponent>("USkeletalMeshComponent");
-    unregisterComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
-    unregisterComponentClass<UPoseableMeshComponent>("UPoseableMeshComponent");
-    unregisterClass<UObject>("UObject");
-    unregisterClass<UClass>("UClass"); // needed for spawning Blueprint types from Python
-    unregisterClass<UGameplayStatics>("UGameplayStatics");
-    unregisterClass<UGameUserSettings>("UGameUserSettings");
-    unregisterClass<UMaterial>("UMaterial");
-    unregisterClass<UMaterialInterface>("UMaterialInterface");
-    unregisterClass<UNavigationSystemV1>("UNavigationSystemV1");
-    unregisterClass<UStaticMesh>("UStaticMesh");
-    unregisterClass<UTextureRenderTarget2D>("UTextureRenderTarget2D");
-    unregisterSpecialStruct<FRotator>("FRotator");
-    unregisterSpecialStruct<FTransform>("FTransform");
-    unregisterSpecialStruct<FVector>("FVector");
-}
 
 //
 // Get engine subsystem using a class name instead of template parameters

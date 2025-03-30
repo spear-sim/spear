@@ -46,7 +46,8 @@ if __name__ == "__main__":
         spear.log("movie_pipeline_primary_config: ", movie_pipeline_primary_config)
 
         #
-        # On Windows, it is possible to access Unreal's path tracer.
+        # On Windows, it is possible to access Unreal's path tracer if the UMoviePipelinePrimaryConfig object
+        # used for rendering has been configured to enable path tracer output.
         #
 
         # ray_tracer_enable_cvar = instance.unreal_service.find_console_variable_by_name(console_variable_name="r.RayTracing.Enable")
@@ -76,8 +77,8 @@ if __name__ == "__main__":
             pass
 
     #
-    # On Windows, if we turned on hardware ray-tracing to access Unreal's path tracer, we should restore its
-    # previous enabled state.
+    # On Windows, if we turned on hardware ray tracing to access Unreal's path tracer, we should restore
+    # hardware ray tracing to its previous state here.
     #
 
     # with instance.begin_frame():

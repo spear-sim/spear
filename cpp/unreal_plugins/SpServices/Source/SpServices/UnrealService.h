@@ -11,16 +11,22 @@
 #include <utility> // std::make_pair, std::move
 #include <vector>
 
-#include <Components/ChildActorComponent.h>
+#include <Components/ActorComponent.h>
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Engine/Engine.h>               // GEngine
-#include <Engine/Level.h>                // ULevel
-#include <Engine/World.h>                // FWorldDelegates, FActorSpawnParameters
-#include <HAL/IConsoleManager.h>
+#include <Engine/EngineTypes.h>          // ESpawnActorCollisionHandlingMethod
+#include <Engine/World.h>                // FActorSpawnParameters
+#include <GameFramework/Actor.h>         // ESpawnActorScaleMethod
+#include <HAL/IConsoleManager.h>         // EConsoleVariableFlags, IConsoleVariable
+#include <Math/Rotator.h>
+#include <Math/Vector.h>
 #include <Misc/EnumClassFlags.h>         // ENUM_CLASS_FLAGS
 #include <UObject/Class.h>               // EIncludeSuperFlag, UClass
+#include <UObject/Object.h>              // UObject
 #include <UObject/ObjectMacros.h>        // EObjectFlags, ELoadFlags
+#include <UObject/NameTypes.h>           // FName
 #include <UObject/Package.h>
+#include <UObject/UObjectGlobals.h>      // GetTransientPackage
 
 #include "SpCore/Assert.h"
 #include "SpCore/Unreal.h"
@@ -30,9 +36,18 @@
 #include "SpServices/MsgpackAdaptors.h"
 #include "SpServices/Service.h"
 
-#include "SpCore/Log.h"
-
 #include "UnrealService.generated.h"
+
+class APawn;
+class UChildActorComponent;
+class UClass;
+class UPackageMap;
+class UFunction;
+class ULevel;
+class UObject;
+class UStruct;
+class USceneComponent;
+struct FObjectInstancingGraph;
 
 // Each USTRUCT below is intended to be a wrapper for a particular UENUM type. Wrapping enums in structs like
 // this helps us take advantage of the Unreal property system to pass enums to and from Python as human-

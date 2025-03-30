@@ -11,4 +11,8 @@ class SpComponents : public IModuleInterface
 public:
     void StartupModule() override;
     void ShutdownModule() override;
+
+private:
+    void registerClasses();
+    void unregisterClasses();
 };

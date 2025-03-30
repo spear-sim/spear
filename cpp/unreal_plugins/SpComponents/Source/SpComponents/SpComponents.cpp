@@ -4,14 +4,17 @@
 
 #include "SpComponents/SpComponents.h"
 
-#include <ChaosVehicleMovementComponent.h>
 #include <Modules/ModuleManager.h> // IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
+
+// ChaosVehiclesPlugin classes
 #include <WheeledVehiclePawn.h>
+#include <ChaosVehicleMovementComponent.h>
 
 #include "SpCore/AssertModuleLoaded.h"
 #include "SpCore/Log.h"
 #include "SpCore/UnrealClassRegistrar.h"
 
+// SpComponents classes
 #include "SpComponents/SpDebugManager.h"
 #include "SpComponents/SpHitEventManager.h"
 #include "SpComponents/SpInitializeWorldManager.h"
@@ -22,28 +25,40 @@ void SpComponents::StartupModule()
     SP_ASSERT_MODULE_LOADED("SpCore");
     SP_LOG_CURRENT_FUNCTION();
 
-    // ChaosVehicles types (can't register in SpCore because SpCore is loaded before ChaosVehicles, and
-    // therefore SpCore cannot list ChaosVehicles as a dependency)
-    UnrealClassRegistrar::registerActorClass<AWheeledVehiclePawn>("AWheeledVehiclePawn");
-    UnrealClassRegistrar::registerComponentClass<UChaosVehicleMovementComponent>("UChaosVehicleMovementComponent");
-
-    // SpComponents types
-    UnrealClassRegistrar::registerActorClass<ASpDebugManager>("ASpDebugManager");
-    UnrealClassRegistrar::registerActorClass<ASpInitializeWorldManager>("ASpInitializeWorldManager");
-    UnrealClassRegistrar::registerActorClass<ASpHitEventManager>("ASpHitEventManager");
-    UnrealClassRegistrar::registerComponentClass<USpSceneCaptureComponent2D>("USpSceneCaptureComponent2D");
+    registerClasses();
 }
 
 void SpComponents::ShutdownModule()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    // ChaosVehicles types (can't unregister in SpCore because SpCore is loaded before ChaosVehicles, and
-    // therefore SpCore cannot list ChaosVehicles as a dependency)
+    unregisterClasses();
+}
+
+// Normally we would do the operations in registerClasses() and unregisterClasses(...) in the opposite order.
+// But we make an exception here (i.e., we do the operations in the same order) to make it easier and less
+// error-prone to register classes.
+
+void SpComponents::registerClasses()
+{
+    // ChaosVehiclesPlugin classes
+    UnrealClassRegistrar::registerActorClass<AWheeledVehiclePawn>("AWheeledVehiclePawn");
+    UnrealClassRegistrar::registerComponentClass<UChaosVehicleMovementComponent>("UChaosVehicleMovementComponent");
+
+    // SpComponents classes
+    UnrealClassRegistrar::registerActorClass<ASpDebugManager>("ASpDebugManager");
+    UnrealClassRegistrar::registerActorClass<ASpInitializeWorldManager>("ASpInitializeWorldManager");
+    UnrealClassRegistrar::registerActorClass<ASpHitEventManager>("ASpHitEventManager");
+    UnrealClassRegistrar::registerComponentClass<USpSceneCaptureComponent2D>("USpSceneCaptureComponent2D");
+}
+
+void SpComponents::unregisterClasses()
+{
+    // ChaosVehiclesPlugin classes
     UnrealClassRegistrar::unregisterActorClass<AWheeledVehiclePawn>("AWheeledVehiclePawn");
     UnrealClassRegistrar::unregisterComponentClass<UChaosVehicleMovementComponent>("UChaosVehicleMovementComponent");
 
-    // SpComponents types
+    // SpComponents classes
     UnrealClassRegistrar::unregisterActorClass<ASpDebugManager>("ASpDebugManager");
     UnrealClassRegistrar::unregisterActorClass<ASpInitializeWorldManager>("ASpInitializeWorldManager");
     UnrealClassRegistrar::unregisterActorClass<ASpHitEventManager>("ASpHitEventManager");
