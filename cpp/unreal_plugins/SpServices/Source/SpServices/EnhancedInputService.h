@@ -11,7 +11,6 @@
 
 #include <Containers/Array.h>
 #include <Engine/EngineBaseTypes.h>  // EInputEvent
-#include <Engine/LocalPlayer.h>
 #include <EnhancedInputComponent.h>  // FEnhancedInputActionEventBinding, FInputDebugKeyBinding, UEnhancedInputComponent
 #include <EnhancedInputSubsystems.h> // UEnhancedInputLocalPlayerSubsystem
 #include <Framework/Commands/InputChord.h>

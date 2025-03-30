@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-using UnrealBuildTool;
+using UnrealBuildTool; // ReadOnlyTargetRules
 
 public class SpComponentsEditor : SpModuleRules
 {

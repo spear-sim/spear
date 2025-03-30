@@ -24,11 +24,11 @@
             "Enabled": true
         },
         {
-            "Name": "PythonScriptPlugin",
+            "Name": "MovieRenderPipeline",
             "Enabled": true
         },
         {
-            "Name": "MovieRenderPipeline",
+            "Name": "PythonScriptPlugin",
             "Enabled": true
         }
     ]

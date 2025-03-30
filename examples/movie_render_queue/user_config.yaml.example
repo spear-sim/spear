@@ -7,5 +7,6 @@ SPEAR:
   STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
   INSTANCE:
     COMMAND_LINE_ARGS:
-      resx: 512
+      resx: 1024
       resy: 512
+    RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 10.0 # set this to longer than usual because it takes a few seconds to initialize the Movie Render Queue
