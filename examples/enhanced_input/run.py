@@ -5,6 +5,7 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import os
+import pprint
 import spear
 
 
@@ -20,29 +21,35 @@ if __name__ == "__main__":
         # get UEnhancedInputLocalPlayerSubsystem
         enhanced_input_subsystem = instance.unreal_service.get_subsystem_by_type(class_name="UEnhancedInputLocalPlayerSubsystem")
         spear.log("enhanced_input_subsystem: ", enhanced_input_subsystem)
+        pprint.pprint(instance.unreal_service.get_properties_from_object(uobject=enhanced_input_subsystem))
 
         # create UInputAction
         input_action = instance.unreal_service.load_object(class_name="UInputAction", outer=0, name="/SpComponents/Input/IA_InputAction.IA_InputAction")
-        spear.log("input_action: ", instance.unreal_service.get_properties_from_object(uobject=input_action))
+        spear.log("input_action: ", input_action)
+        pprint.pprint(instance.unreal_service.get_properties_from_object(uobject=input_action))
 
         # create UInputModifierScalar
         modifier_scalar = instance.unreal_service.new_object(class_name="UInputModifierScalar")
-        spear.log("modifier_scalar: ", instance.unreal_service.get_properties_from_object(uobject=modifier_scalar))
+        spear.log("modifier_scalar: ", modifier_scalar)
+        pprint.pprint(instance.unreal_service.get_properties_from_object(uobject=modifier_scalar))
 
         # modify UInputModifierScalar
         modifier_scalar_value_property_desc = instance.unreal_service.find_property_by_name_on_object(uobject=modifier_scalar, property_name="Scalar")
         instance.unreal_service.set_property_value(property_desc=modifier_scalar_value_property_desc, property_value={"X": 4.0, "Y": 5.0, "Z": 6.0})
-        spear.log("modifier_scalar: ", instance.unreal_service.get_properties_from_object(uobject=modifier_scalar))
+        spear.log("modifier_scalar: ", modifier_scalar)
+        pprint.pprint(instance.unreal_service.get_properties_from_object(uobject=modifier_scalar))
 
         # create UInputTriggerPressed
         trigger_pressed = instance.unreal_service.new_object(class_name="UInputTriggerPressed")
-        spear.log("trigger_pressed: ", instance.unreal_service.get_properties_from_object(uobject=trigger_pressed))
+        spear.log("trigger_pressed: ", trigger_pressed)
+        pprint.pprint(instance.unreal_service.get_properties_from_object(uobject=trigger_pressed))
 
         # modify UInputTriggerPressed
         trigger_pressed_actuation_threshold_property_desc = instance.unreal_service.find_property_by_name_on_object(
             uobject=trigger_pressed, property_name="ActuationThreshold")
         instance.unreal_service.set_property_value(property_desc=trigger_pressed_actuation_threshold_property_desc, property_value=0.75)
-        spear.log("trigger_pressed: ", instance.unreal_service.get_properties_from_object(uobject=trigger_pressed))
+        spear.log("trigger_pressed: ", trigger_pressed)
+        pprint.pprint(instance.unreal_service.get_properties_from_object(uobject=trigger_pressed))
 
         # call UEnhancedInputLocalPlayerSubsystem
         instance.enhanced_input_service.inject_input(
@@ -55,6 +62,7 @@ if __name__ == "__main__":
         # get actor
         actor = instance.unreal_service.find_actor_by_name(class_name="AActor", actor_name="__SP_DEFAULT_PAWN__")
         spear.log("actor: ", actor)
+        pprint.pprint(instance.unreal_service.get_properties_from_object(uobject=actor))
 
         # inject input for a specific actor
         instance.enhanced_input_service.inject_input_for_actor(

@@ -22,6 +22,7 @@ if __name__ == "__main__":
         # get UMoviePipelineQueueEngineSubsystem
         movie_pipeline_queue_engine_subsystem = instance.unreal_service.get_engine_subsystem_by_type(class_name="UMoviePipelineQueueEngineSubsystem")
         spear.log("movie_pipeline_queue_engine_subsystem: ", movie_pipeline_queue_engine_subsystem)
+        pprint.pprint(instance.unreal_service.get_properties_from_object(uobject=movie_pipeline_queue_engine_subsystem))
 
         # find rendering functions
         movie_pipeline_queue_engine_subsystem_static_class = instance.unreal_service.get_static_class(class_name="UMoviePipelineQueueEngineSubsystem")
@@ -34,16 +35,19 @@ if __name__ == "__main__":
 
         # load level sequence
         level_sequence = instance.unreal_service.load_object(class_name="ULevelSequence", outer=0, name="/Game/Spear/Scenes/apartment_0000/Cinematic/LS_DebugLevelSequence.LS_DebugLevelSequence")
-        spear.log("level_sequence: ", instance.unreal_service.get_properties_from_object(uobject=level_sequence))
+        spear.log("level_sequence: ", level_sequence)
+        pprint.pprint(instance.unreal_service.get_properties_from_object(uobject=level_sequence))
 
         # allocate job
         return_values = instance.unreal_service.call_function(uobject=movie_pipeline_queue_engine_subsystem, ufunction=allocate_job_func, args={"InSequence": spear.to_ptr(level_sequence)})
         movie_pipeline_executor_job = spear.to_handle(string=return_values["ReturnValue"])
-        spear.log("movie_pipeline_executor_job: ", instance.unreal_service.get_properties_from_object(uobject=movie_pipeline_executor_job))
+        spear.log("movie_pipeline_executor_job: ", movie_pipeline_executor_job)
+        pprint.pprint(instance.unreal_service.get_properties_from_object(uobject=movie_pipeline_executor_job))
 
         # load configuration
         movie_pipeline_primary_config = instance.unreal_service.load_object(class_name="UMoviePipelinePrimaryConfig", outer=0, name="/Game/Spear/Scenes/apartment_0000/Cinematic/MPPC_DebugMoviePipelinePrimaryConfig.MPPC_DebugMoviePipelinePrimaryConfig")
         spear.log("movie_pipeline_primary_config: ", movie_pipeline_primary_config)
+        pprint.pprint(instance.unreal_service.get_properties_from_object(uobject=movie_pipeline_primary_config))
 
         #
         # On Windows, it is possible to access Unreal's path tracer if the UMoviePipelinePrimaryConfig object
@@ -54,7 +58,8 @@ if __name__ == "__main__":
         # ray_tracer_enable_cvar_value = instance.unreal_service.get_console_variable_value_as_int(cvar=ray_tracer_enable_cvar)
         # instance.unreal_service.set_console_variable_value(cvar=ray_tracer_enable_cvar, value=1)
         # movie_pipeline_primary_config = instance.unreal_service.load_object(class_name="UMoviePipelinePrimaryConfig", outer=0, name="/Game/Spear/Scenes/apartment_0000/Cinematic/MPPC_DebugMoviePipelinePrimaryConfigWithPathTracer.MPPC_DebugMoviePipelinePrimaryConfigWithPathTracer")
-        # spear.log("movie_pipeline_primary_config: ", instance.unreal_service.get_properties_from_object(uobject=movie_pipeline_primary_config))
+        # spear.log("movie_pipeline_primary_config: ", movie_pipeline_primary_config)
+        # pprint.pprint(instance.unreal_service.get_properties_from_object(uobject=movie_pipeline_primary_config))
 
         # set job's configuration
         instance.unreal_service.call_function(uobject=movie_pipeline_executor_job, ufunction=set_configuration_func, args={"InPreset": spear.to_ptr(movie_pipeline_primary_config)})

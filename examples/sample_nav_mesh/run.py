@@ -6,6 +6,7 @@
 
 import numpy as np
 import os
+import pprint
 import spear
 
 
@@ -40,10 +41,12 @@ if __name__ == "__main__":
         spear.log("navigation_system_v1_static_class: ", navigation_system_v1_static_class)
         spear.log("navigation_system_v1_default_object: ", navigation_system_v1_default_object)
         spear.log("navigation_system: ", navigation_system)
+        pprint.pprint(instance.unreal_service.get_properties_from_object(uobject=navigation_system))
 
         # get navigation data
         navigation_data = instance.navigation_service.get_nav_data_for_agent_name(navigation_system=navigation_system, agent_name="Default")
         spear.log("navigation_data: ", navigation_data)
+        pprint.pprint(instance.unreal_service.get_properties_from_object(uobject=navigation_data))
 
         # sample random points
         points = instance.navigation_service.get_random_points(
@@ -78,8 +81,8 @@ if __name__ == "__main__":
     # spawn axes
     for i in range(num_points):
         with instance.begin_frame():
-            bp_axes_actor = instance.unreal_service.spawn_actor_from_class(uclass=bp_axes_uclass, location={"X": points[i,0], "Y": points[i,1], "Z": points[i,2]})
-            instance.unreal_service.call_function(uobject=bp_axes_actor, ufunction=set_actor_scale_3d_func, args={"NewScale3D": {"X": 0.75, "Y": 0.75, "Z": 0.75}})
+            bp_axes = instance.unreal_service.spawn_actor_from_class(uclass=bp_axes_uclass, location={"X": points[i,0], "Y": points[i,1], "Z": points[i,2]})
+            instance.unreal_service.call_function(uobject=bp_axes, ufunction=set_actor_scale_3d_func, args={"NewScale3D": {"X": 0.75, "Y": 0.75, "Z": 0.75}})
         with instance.end_frame():
             pass
 
@@ -101,8 +104,8 @@ if __name__ == "__main__":
     # spawn axes
     for i in range(num_points):
         with instance.begin_frame():
-            bp_axes_actor = instance.unreal_service.spawn_actor_from_class(uclass=bp_axes_uclass, location={"X": reachable_points[i,0], "Y": reachable_points[i,1], "Z": reachable_points[i,2]})
-            instance.unreal_service.call_function(uobject=bp_axes_actor, ufunction=set_actor_scale_3d_func, args={"NewScale3D": {"X": 0.75, "Y": 0.75, "Z": 0.75}})
+            bp_axes = instance.unreal_service.spawn_actor_from_class(uclass=bp_axes_uclass, location={"X": reachable_points[i,0], "Y": reachable_points[i,1], "Z": reachable_points[i,2]})
+            instance.unreal_service.call_function(uobject=bp_axes, ufunction=set_actor_scale_3d_func, args={"NewScale3D": {"X": 0.75, "Y": 0.75, "Z": 0.75}})
         with instance.end_frame():
             pass
 
