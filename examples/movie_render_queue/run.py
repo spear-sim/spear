@@ -54,9 +54,9 @@ if __name__ == "__main__":
         # used for rendering has been configured to enable path tracer output.
         #
 
-        # ray_tracer_enable_cvar = instance.unreal_service.find_console_variable_by_name(console_variable_name="r.RayTracing.Enable")
-        # ray_tracer_enable_cvar_value = instance.unreal_service.get_console_variable_value_as_int(cvar=ray_tracer_enable_cvar)
-        # instance.unreal_service.set_console_variable_value(cvar=ray_tracer_enable_cvar, value=1)
+        # ray_tracing_enable_cvar = instance.unreal_service.find_console_variable_by_name(console_variable_name="r.RayTracing.Enable")
+        # ray_tracing_enable_cvar_value = instance.unreal_service.get_console_variable_value_as_int(cvar=ray_tracing_enable_cvar)
+        # instance.unreal_service.set_console_variable_value(cvar=ray_tracing_enable_cvar, value=1)
         # movie_pipeline_primary_config = instance.unreal_service.load_object(class_name="UMoviePipelinePrimaryConfig", outer=0, name="/Game/Spear/Scenes/apartment_0000/Cinematic/MPPC_DebugMoviePipelinePrimaryConfigWithPathTracer.MPPC_DebugMoviePipelinePrimaryConfigWithPathTracer")
         # spear.log("movie_pipeline_primary_config: ", movie_pipeline_primary_config)
         # pprint.pprint(instance.unreal_service.get_properties_from_object(uobject=movie_pipeline_primary_config))
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     #
 
     # with instance.begin_frame():
-    #     instance.unreal_service.set_console_variable_value(cvar=ray_tracer_enable_cvar, value=ray_tracer_enable_cvar_value)
+    #     instance.unreal_service.set_console_variable_value(cvar=ray_tracing_enable_cvar, value=ray_tracing_enable_cvar_value)
     # with instance.end_frame():
     #     pass
 
