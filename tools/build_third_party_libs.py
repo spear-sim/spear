@@ -89,7 +89,7 @@ if __name__ == "__main__":
         unreal_engine_dir = os.path.realpath(args.unreal_engine_dir)
 
         linux_clang_path_template = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Extras", "ThirdPartyNotUE", "SDKs", "HostLinux", "Linux_x64", "*clang*"))
-        linux_clang_paths = sorted(glob.glob(linux_clang_path_template))
+        linux_clang_paths = glob.glob(linux_clang_path_template)
         assert len(linux_clang_paths) == 1
         linux_clang_path = linux_clang_paths[0]
 

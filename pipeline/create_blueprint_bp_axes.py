@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
     # explicitly load "/SpComponents" into the asset registry, since it won't be loaded by default if we are
     # running from the command-line
-    asset_registry.scan_paths_synchronous(paths=["/SpComponents"])
+    asset_registry.scan_paths_synchronous(["/SpComponents"])
 
     # remove existing blueprint
     blueprint_path = posixpath.join(blueprint_desc["blueprint_path"], blueprint_desc["blueprint_name"])

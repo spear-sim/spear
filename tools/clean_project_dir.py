@@ -2,7 +2,7 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-import os 
+import os
 import shutil
 import spear
 import sys
@@ -25,7 +25,10 @@ if __name__ == "__main__":
 
     # plugin files and directories
     plugins_dir = os.path.realpath(os.path.join(unreal_project_dir, "Plugins"))
-    plugins = os.listdir(plugins_dir)
+    is_valid_plugin_dir = lambda p: \
+        os.path.isdir(os.path.realpath(os.path.join(plugins_dir, p))) and os.path.exists(os.path.realpath(os.path.join(plugins_dir, p, p + ".uplugin")))
+    plugins = [ p for p in sorted(os.listdir(plugins_dir)) if is_valid_plugin_dir(p) ]
+
     for plugin in plugins:
         plugin_dir = os.path.realpath(os.path.join(plugins_dir, plugin))
         dirs.extend([

@@ -53,8 +53,9 @@ if __name__ == "__main__":
         assert False
 
     unreal_project_dir = os.path.realpath(args.unreal_project_dir)
-    uproject_name = os.path.split(unreal_project_dir)[1]
-    uproject = os.path.realpath(os.path.join(unreal_project_dir, uproject_name + ".uproject"))
+    uprojects = glob.glob(os.path.realpath(os.path.join(unreal_project_dir, "*.uproject")))
+    assert len(uprojects) == 1
+    uproject = uprojects[0]
     unreal_project_cooked_dir = os.path.realpath(os.path.join(unreal_project_dir, "Saved", "Cooked", platform))
     unreal_project_cooked_dir_posix = unreal_project_cooked_dir.replace(ntpath.sep, posixpath.sep)
 

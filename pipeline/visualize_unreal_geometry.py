@@ -128,7 +128,7 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
                 spear.log(log_prefix_str, "StaticMesh asset path: ", static_mesh_asset_path)
     
                 # ...that are in the /Game/Scenes/<scene_id> directory.
-                if static_mesh_asset_path.parts[:4] == ("/", "Game", "Scenes", args.scene_id):
+                if static_mesh_asset_path.parts[:4] == ("/", "Game", "Spear", "Scenes", args.scene_id):
 
                     obj_path_suffix = os.path.join(*static_mesh_asset_path.parts[4:]) + ".obj"
                     numerical_parity_obj_path = \

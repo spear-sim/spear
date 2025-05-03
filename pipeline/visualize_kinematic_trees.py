@@ -117,7 +117,7 @@ def draw_kinematic_tree_node(transform_world_from_parent_node, kinematic_tree_no
         M_world_from_current_component = spear.pipeline.get_matrix_from_transform(transform=transform_world_from_current_component)
 
         static_mesh_asset_path = pathlib.PurePosixPath(static_mesh_component_desc["editor_properties"]["static_mesh"]["path"])
-        assert static_mesh_asset_path.parts[:4] == ("/", "Game", "Scenes", args.scene_id)
+        assert static_mesh_asset_path.parts[:4] == ("/", "Game", "Spear", "Scenes", args.scene_id)
 
         obj_path_suffix = os.path.join(*static_mesh_asset_path.parts[4:]) + ".obj"
         numerical_parity_obj_path = \

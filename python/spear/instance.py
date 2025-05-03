@@ -78,8 +78,8 @@ class Instance():
         spear.log("Writing temp config file: " + temp_config_file)
 
         os.makedirs(temp_dir, exist_ok=True)
-        with open(temp_config_file, "w") as output:
-            self._config.dump(stream=output, default_flow_style=False)
+        with open(temp_config_file, "w") as f:
+            self._config.dump(stream=f, default_flow_style=False)
 
         if self._config.SPEAR.LAUNCH_MODE == "none":
             spear.log('SPEAR.LAUNCH_MODE == "none" so we assume that an Unreal instance has been launched externally...')

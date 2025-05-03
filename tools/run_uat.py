@@ -3,6 +3,7 @@
 #
 
 import argparse
+import glob
 import os
 import spear
 import spear.tools
@@ -52,8 +53,10 @@ if __name__ == "__main__":
                 assert False
 
     unreal_project_dir = os.path.realpath(args.unreal_project_dir)
-    uproject_name = os.path.split(unreal_project_dir)[1]
-    uproject = os.path.realpath(os.path.join(unreal_project_dir, uproject_name + ".uproject"))
+    uprojects = glob.glob(os.path.realpath(os.path.join(unreal_project_dir, "*.uproject")))
+    assert len(uprojects) == 1
+    uproject = uprojects[0]
+    uproject_name = os.path.splitext(os.path.split(uproject)[1])[0]
     archive_dir = os.path.realpath(os.path.join(unreal_project_dir, "Standalone-" + args.build_config))
 
     cook_dirs = []

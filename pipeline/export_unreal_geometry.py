@@ -47,7 +47,7 @@ def generate_unreal_geometry(actor):
     static_meshes           = [ static_mesh_component.get_editor_property("static_mesh") for static_mesh_component in static_mesh_components ]
     static_meshes           = [ static_mesh for static_mesh in static_meshes if static_mesh is not None ]
     static_mesh_asset_paths = [ pathlib.PurePosixPath(static_mesh.get_path_name()) for static_mesh in static_meshes ]
-    static_mesh_asset_paths = [ path for path in static_mesh_asset_paths if path.parts[:4] == ("/", "Game", "Scenes", editor_world_name) ]
+    static_mesh_asset_paths = [ path for path in static_mesh_asset_paths if path.parts[:4] == ("/", "Game", "Spear", "Scenes", editor_world_name) ]
 
     for static_mesh_asset_path in static_mesh_asset_paths:
         spear.log("        Exporting asset: ", static_mesh_asset_path)

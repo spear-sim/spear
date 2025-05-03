@@ -26,8 +26,8 @@ if __name__ == "__main__":
     output_dir = os.path.realpath(os.path.dirname(args.output_file))
     os.makedirs(output_dir, exist_ok=True)
 
-    with open(args.output_file, "w") as output:
-        config.dump(stream=output, default_flow_style=False)
+    with open(args.output_file, "w") as f:
+        config.dump(stream=f, default_flow_style=False)
 
     spear.log("Generated config file: " + args.output_file)
     spear.log("Done.")

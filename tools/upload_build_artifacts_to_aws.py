@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
     if args.upload_paks:
         paks_version_dir = os.path.realpath(os.path.join(args.paks_dir, args.version_tag))
-        files_to_upload.extend([ os.path.realpath(os.path.join(paks_version_dir, x)) for x in os.listdir(paks_version_dir) if x.endswith(paks_filter_string) ])
+        files_to_upload.extend([ os.path.realpath(os.path.join(paks_version_dir, x)) for x in sorted(os.listdir(paks_version_dir)) if x.endswith(paks_filter_string) ])
 
     for file in files_to_upload:
         assert os.path.exists(file)

@@ -2,12 +2,17 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
+import glob
+import os
+import pathlib
 import posixpath
 import unreal
+
 
 asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
 editor_actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 subobject_data_subsystem = unreal.get_engine_subsystem(unreal.SubobjectDataSubsystem)
+
 
 #
 # Get actors and components
@@ -80,6 +85,7 @@ def get_stable_name_for_component(component, include_stable_actor_name=False):
         component_name_str = component.get_name()
     
     return actor_name_str + component_name_str
+
 
 #
 # Create new blueprint types
@@ -163,3 +169,49 @@ def create_blueprint(asset_name, package_path, actor_class=unreal.Actor, root_co
     blueprint_subobject_descs = {"actor": blueprint_subobject_descs[0], "root_component": blueprint_subobject_descs[1]}
 
     return blueprint_asset, blueprint_subobject_descs
+
+
+#
+# Get filesystem path from content path
+#
+
+def get_filesystem_path_from_content_path(content_path):
+
+    content_path_tokens = pathlib.PurePosixPath(content_path).parts
+    assert len(content_path_tokens) >= 2
+    content_root = content_path_tokens[1]
+
+    if content_root == "Game":
+        filesystem_base_dir = unreal.Paths.project_content_dir()
+    elif content_root == "Engine":
+        filesystem_base_dir = unreal.Paths.engine_content_dir()
+    else:
+        plugin_manager = unreal.PluginManager.get()
+        plugin = plugin_manager.find_plugin(content_root)
+        assert plugin is not None
+        filesystem_base_dir = plugin.get_content_dir()
+
+    if len(content_path_tokens) == 2:
+        return filesystem_base_dir
+    else:
+        content_sub_path = os.path.join(*content_path_tokens[2:])
+        filesystem_path = os.path.join(filesystem_base_dir, content_sub_path)
+        if os.path.exists(filesystem_path) and os.path.isdir(filesystem_path):
+            return filesystem_path
+        else:
+            content_file_tokens = content_path_tokens[-1].split(".")
+            if len(content_file_tokens) == 1:
+                filesystem_paths = glob.glob(os.path.join(filesystem_base_dir, *content_path_tokens[2:-1], content_file_tokens[0] + ".*"))
+                if len(filesystem_paths) == 1:
+                    return filesystem_paths[0]
+                else:
+                    return os.path.join(filesystem_base_dir, *content_path_tokens[2:])
+            elif len(content_file_tokens) == 2:
+                assert content_file_tokens[0] == content_file_tokens[1]
+                filesystem_paths = glob.glob(os.path.join(filesystem_base_dir, *content_path_tokens[2:-1], content_file_tokens[0] + ".*"))
+                if len(filesystem_paths) == 1:
+                    return filesystem_paths[0]
+                else:
+                    return os.path.join(filesystem_base_dir, *content_path_tokens[2:])
+            else:
+                assert False

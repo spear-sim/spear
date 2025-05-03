@@ -3,6 +3,7 @@
 #
 
 import argparse
+import glob
 import json
 import os
 import spear
@@ -28,9 +29,10 @@ if __name__ == "__main__":
     third_party_dir    = os.path.realpath(args.third_party_dir)
 
     # verify that our project is present
-    uproject_name = os.path.split(unreal_project_dir)[1]
-    uproject = os.path.realpath(os.path.join(unreal_project_dir, uproject_name + ".uproject"))
-    assert os.path.exists(uproject)
+    unreal_project_dir = os.path.realpath(args.unreal_project_dir)
+    uprojects = glob.glob(os.path.realpath(os.path.join(unreal_project_dir, "*.uproject")))
+    assert len(uprojects) == 1
+    uproject = uprojects[0]
     spear.log(f"Found uproject: {uproject}")
 
     # verify that each of our plugins is present
