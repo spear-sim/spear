@@ -8,7 +8,7 @@ import os
 import pathlib
 import shutil
 import spear
-import spear.tools
+import spear.pipeline
 import subprocess
 import sys
 
@@ -75,22 +75,22 @@ if __name__ == "__main__":
     # filesystem paths
     #
 
-    source_unreal_project_source_content_filesystem_path = spear.tools.get_filesystem_path_from_content_path(
+    source_unreal_project_source_content_filesystem_path = spear.pipeline.get_filesystem_path_from_content_path(
         content_path=args.source_content_path,
         unreal_project_dir=source_unreal_project_dir,
         unreal_engine_dir=args.unreal_engine_dir)
 
-    temp_unreal_project_source_content_filesystem_path = spear.tools.get_filesystem_path_from_content_path(
+    temp_unreal_project_source_content_filesystem_path = spear.pipeline.get_filesystem_path_from_content_path(
         content_path=args.source_content_path,
         unreal_project_dir=temp_unreal_project_dir,
         unreal_engine_dir=args.unreal_engine_dir)
 
-    temp_unreal_project_destination_content_filesystem_path = spear.tools.get_filesystem_path_from_content_path(
+    temp_unreal_project_destination_content_filesystem_path = spear.pipeline.get_filesystem_path_from_content_path(
         content_path=args.destination_content_path,
         unreal_project_dir=temp_unreal_project_dir,
         unreal_engine_dir=args.unreal_engine_dir)
 
-    destination_unreal_project_destination_content_filesystem_path = spear.tools.get_filesystem_path_from_content_path(
+    destination_unreal_project_destination_content_filesystem_path = spear.pipeline.get_filesystem_path_from_content_path(
         content_path=args.destination_content_path,
         unreal_project_dir=destination_unreal_project_dir,
         unreal_engine_dir=args.unreal_engine_dir)
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     # We could use run_editor_script.py here, but calling python scripts from other python scripts
     # isn't any more convenient than calling the editor directly.
 
-    script = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "pipeline", "editor_asset_library_utils_rename_content.py"))
+    script = os.path.realpath(os.path.join(os.path.dirname(__file__), "editor_asset_library_utils_rename_content.py"))
     script_args = \
         "--source_content_path " + args.source_content_path + " " + \
         "--destination_content_path " + args.destination_content_path
