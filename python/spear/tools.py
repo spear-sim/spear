@@ -12,5 +12,6 @@ def get_cook_maps():
     return [
         "apartment_0000",
         "debug_0000",
+        "debug_0001",
         "ThirdPersonMap",
         "VehicleExampleMap"]

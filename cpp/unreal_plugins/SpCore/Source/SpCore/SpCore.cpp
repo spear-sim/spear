@@ -61,7 +61,6 @@ void SpCore::ShutdownModule()
     SP_LOG_CURRENT_FUNCTION();
 
     unregisterClasses();
-
     Config::terminate();
 }
 
