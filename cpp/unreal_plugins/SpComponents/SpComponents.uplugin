@@ -32,6 +32,10 @@
             "Enabled": true
         },
         {
+            "Name": "MovieRenderPipeline",
+            "Enabled": true
+        },
+        {
             "Name": "SpCore",
             "Enabled": true
         }

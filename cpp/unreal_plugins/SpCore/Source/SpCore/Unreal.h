@@ -25,6 +25,7 @@
 #include <EngineUtils.h>                    // TActorIterator
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>                   // int32, int64, SPCORE_API, TCHAR
+#include <Internationalization/Text.h>      // FText
 #include <Subsystems/Subsystem.h>
 #include <Templates/Casts.h>
 #include <UObject/Class.h>                  // EGetByNameFlags, EIncludeSuperFlag, UClass, UEnum, UStruct
