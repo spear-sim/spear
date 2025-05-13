@@ -775,19 +775,19 @@ std::vector<std::string> Unreal::getTags(const UActorComponent* component)
 // String functions
 //
 
+std::string Unreal::toStdString(const FName& str)
+{
+    return toStdString(str.ToString()); // str.ToString() converts FName to FString
+}
+
 std::string Unreal::toStdString(const FString& str)
 {
-    return std::string(TCHAR_TO_UTF8(*str)); // the * operator for FString returns a pointer to the underlying string
+    return std::string(TCHAR_TO_UTF8(*str)); // the * operator for FString returns a pointer to the underlying TCHAR array
 }
 
 std::string Unreal::toStdString(const FText& str)
 {
     return toStdString(str.ToString()); // str.ToString() converts FText to FString
-}
-
-std::string Unreal::toStdString(const FName& str)
-{
-    return toStdString(str.ToString()); // str.ToString() converts FName to FString
 }
 
 std::string Unreal::toStdString(const TCHAR* str)
@@ -796,14 +796,19 @@ std::string Unreal::toStdString(const TCHAR* str)
     return std::string(TCHAR_TO_UTF8(str));
 }
 
-FString Unreal::toFString(const std::string& str)
-{
-    return FString(UTF8_TO_TCHAR(str.c_str()));
-}
-
 FName Unreal::toFName(const std::string& str)
 {
     return FName(str.c_str());
+}
+
+FText Unreal::toFText(const std::string& str)
+{
+    return FText::FromString(toFString(str));
+}
+
+FString Unreal::toFString(const std::string& str)
+{
+    return FString(UTF8_TO_TCHAR(str.c_str()));
 }
 
 //
