@@ -58,9 +58,9 @@ public:
     {
         IConsoleVariable* material_ao_cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.Lumen.ScreenProbeGather.MaterialAO"));
         SP_ASSERT(material_ao_cvar);
-        int material_ao = material_ao_cvar->GetInt();
+        int material_ao_cvar_value = material_ao_cvar->GetInt();
         material_ao_cvar->Set(0);
         UMoviePipelineDeferredPassBase::RenderSample_GameThreadImpl(in_sample_state);
-        material_ao_cvar->Set(material_ao);
+        material_ao_cvar->Set(material_ao_cvar_value);
     }
 };
