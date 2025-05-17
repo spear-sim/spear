@@ -28,12 +28,12 @@ Minimum and recommended system specifications for the Unreal Engine are given [h
 
 ### Precompiled binaries
 
-See our latest [release notes](https://github.com/spear-sim/spear/releases/tag/v0.5.0) for download links. The easiest way to start working with SPEAR is to download a precompiled binary for your platform. Our precompiled binaries come pre-packaged with the scene pictured above. You can start interactively navigating around this scene with the keyboard and mouse simply by running the downloaded binary with no additional arguments.
+See our latest [release notes](https://github.com/spear-sim/spear/releases/tag/v0.5.0) for download links. The easiest way to start working with SPEAR is to download a precompiled binary for your platform. Our precompiled binaries include the scene pictured above. You can start interactively navigating around this scene with the keyboard and mouse simply by running the downloaded binary with no additional arguments.
 
 ### Documentation
 
-- Our [Getting Started](docs/getting_started.md) tutorial explains how to programmatically interact with multiple scenes via a Python interface.
-- Our [Building SpearSim](docs/building_spearsim.md) tutorial explains how to build from source.
+- Our [Getting Started](docs/getting_started.md) tutorial explains how to programmatically interact with Unreal via Python.
+- Our [Building SpearSim](docs/building_spearsim.md) tutorial explains how to build our Unreal executable from source.
 - Our [Importing and Exporting Assets](docs/importing_and_exporting_assets.md) tutorial explains how to import and export assets.
 - Our [Coding Guidelines](docs/coding_guidelines.md) document describes our coding standard.
 - Our [Contribution Guidelines](CONTRIBUTING.md) document contains information on how to contribute effectively.
