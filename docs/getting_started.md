@@ -60,7 +60,7 @@ When executing our command-line tool, you will need to specify a logical Unreal 
 /Game/Spear/Scenes/debug_0000/Maps/debug_0000
 ```
 
-You can also optionally specify an `--executable`. If you don't specify an `--executable`, our command-line tool will assume that you built an executable from source in the default location in our [Building SpearSim](building_spearsim.md) tutorial. Depending on your platform, the path to your `--executable` should be formatted as follows.
+You can also optionally specify an `--executable`. If you don't specify an `--executable`, our command-line tool will assume that you built an executable from source in the default location in our [Building SpearSim](building_spearsim.md) tutorial. Depending on your platform, the path to your executable should be formatted as follows.
 
 ```
 Windows: path/to/Windows/SpearSim/Binaries/Win64/SpearSim-Cmd.exe
