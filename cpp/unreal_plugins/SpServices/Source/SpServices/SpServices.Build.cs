@@ -11,24 +11,14 @@ public class SpServices : SpModuleRules
         SP_LOG_CURRENT_FUNCTION();
 
         //
-        // As a matter of convenience, it is possible to place most Unreal module dependencies in SpModuleRules without
-        // needing to make any changes to our uplugin files. The ChaosVehicles module is different. If we list ChaosVehicles
-        // in SpModuleRules, then we must also list ChaosVehiclesPlugin in all of our uplugin files. To avoid this
-        // unnecessary clutter, we only list ChaosVehicles in this Build.cs file, where it is actually needed. The
-        // ChaosVehicles module is defined here:
-        //     Engine/Plugins/Experimental/ChaosVehiclesPlugin/Source/ChaosVehicles
-        //
-        // Our Vehicle module also depends on the ChaosVehiclesCore module, which is defined here:
-        //     Engine/Source/Runtime/Experimental/ChaosVehicles/ChaosVehiclesCore
-        //
-        // But since ChaosVehiclesCore is defined in Engine/Source, rather than Engine/Plugins, we can list it in
-        // SpModuleRules without needing to add clutter to our uplugin files.
-        //
-        // Similarly, we list EnhancedInput and other plugins here, but not in SpModuleRules.
+        // As a matter of convenience, it is possible to place most Unreal module dependencies in SpModuleRules
+        // without needing to make any changes to our uplugin files. Plugin modules are different. If we list
+        // a plugin module in SpModuleRules, then we must also list the plugin module in all of our uplugin
+        // files. To avoid this unnecessary clutter, we only list plugin modules in Build.cs files belonging
+        // to modules where the plugins are actually used.
         //
 
-        PublicDependencyModuleNames.AddRange(new string[] {
-            "ChaosVehicles", "EnhancedInput", "MovieRenderPipelineCore", "MovieRenderPipelineRenderPasses", "MovieRenderPipelineSettings", "SpCore"});
+        PublicDependencyModuleNames.AddRange(new string[] {"ChaosVehicles", "EnhancedInput", "MovieRenderPipelineCore", "SpCore"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }

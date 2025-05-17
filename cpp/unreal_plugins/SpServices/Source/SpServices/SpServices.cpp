@@ -14,6 +14,10 @@
 #include <Engine/LocalPlayer.h>
 #include <LevelSequence.h>
 
+// ChaosVehiclesPlugin classes
+#include <WheeledVehiclePawn.h>
+#include <ChaosVehicleMovementComponent.h>
+
 // EnhancedInput classes
 #include <EnhancedInputSubsystems.h> // UEnhancedInputLocalPlayerSubsystem
 #include <InputAction.h>
@@ -156,6 +160,10 @@ void SpServices::ShutdownModule()
 
 void SpServices::registerClasses()
 {
+    // ChaosVehiclesPlugin classes
+    UnrealClassRegistrar::registerActorClass<AWheeledVehiclePawn>("AWheeledVehiclePawn");
+    UnrealClassRegistrar::registerComponentClass<UChaosVehicleMovementComponent>("UChaosVehicleMovementComponent");
+
     // EnhancedInput classes
     UnrealClassRegistrar::registerSubsystemClass<UEnhancedInputLocalPlayerSubsystem, ULocalPlayer>("UEnhancedInputLocalPlayerSubsystem");
     UnrealClassRegistrar::registerClass<UInputAction>("UInputAction");
@@ -191,6 +199,10 @@ void SpServices::registerClasses()
 
 void SpServices::unregisterClasses()
 {
+    // ChaosVehiclesPlugin classes
+    UnrealClassRegistrar::unregisterActorClass<AWheeledVehiclePawn>("AWheeledVehiclePawn");
+    UnrealClassRegistrar::unregisterComponentClass<UChaosVehicleMovementComponent>("UChaosVehicleMovementComponent");
+
     // EnhancedInput classes
     UnrealClassRegistrar::unregisterSubsystemClass<UEnhancedInputLocalPlayerSubsystem, ULocalPlayer>("UEnhancedInputLocalPlayerSubsystem");
     UnrealClassRegistrar::unregisterClass<UInputAction>("UInputAction");

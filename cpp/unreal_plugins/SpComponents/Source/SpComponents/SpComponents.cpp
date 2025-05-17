@@ -6,10 +6,6 @@
 
 #include <Modules/ModuleManager.h> // IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
 
-// ChaosVehiclesPlugin classes
-#include <WheeledVehiclePawn.h>
-#include <ChaosVehicleMovementComponent.h>
-
 #include "SpCore/AssertModuleLoaded.h"
 #include "SpCore/Log.h"
 #include "SpCore/UnrealClassRegistrar.h"
@@ -41,10 +37,6 @@ void SpComponents::ShutdownModule()
 
 void SpComponents::registerClasses()
 {
-    // ChaosVehiclesPlugin classes
-    UnrealClassRegistrar::registerActorClass<AWheeledVehiclePawn>("AWheeledVehiclePawn");
-    UnrealClassRegistrar::registerComponentClass<UChaosVehicleMovementComponent>("UChaosVehicleMovementComponent");
-
     // SpComponents classes
     UnrealClassRegistrar::registerActorClass<ASpDebugManager>("ASpDebugManager");
     UnrealClassRegistrar::registerActorClass<ASpInitializeWorldManager>("ASpInitializeWorldManager");
@@ -54,10 +46,6 @@ void SpComponents::registerClasses()
 
 void SpComponents::unregisterClasses()
 {
-    // ChaosVehiclesPlugin classes
-    UnrealClassRegistrar::unregisterActorClass<AWheeledVehiclePawn>("AWheeledVehiclePawn");
-    UnrealClassRegistrar::unregisterComponentClass<UChaosVehicleMovementComponent>("UChaosVehicleMovementComponent");
-
     // SpComponents classes
     UnrealClassRegistrar::unregisterActorClass<ASpDebugManager>("ASpDebugManager");
     UnrealClassRegistrar::unregisterActorClass<ASpInitializeWorldManager>("ASpInitializeWorldManager");
