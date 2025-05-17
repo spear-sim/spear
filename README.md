@@ -32,7 +32,7 @@ See our latest [release notes](https://github.com/spear-sim/spear/releases/tag/v
 
 ### Documentation
 
-- Our [Getting Started](docs/getting_started.md) tutorial explains how to interact with multiple scenes and our Python interface.
+- Our [Getting Started](docs/getting_started.md) tutorial explains how to programmatically interact with multiple scenes via a Python interface.
 - Our [Building SpearSim](docs/building_spearsim.md) tutorial explains how to build from source.
 - Our [Importing and Exporting Assets](docs/importing_and_exporting_assets.md) tutorial explains how to import and export assets.
 - Our [Coding Guidelines](docs/coding_guidelines.md) document describes our coding standard.
@@ -52,4 +52,4 @@ See our latest [release notes](https://github.com/spear-sim/spear/releases/tag/v
 
 ## Acknowledgements
 
-From 2021 to 2024, SPEAR was developed with generous support from the [Intelligent Systems Lab](https://github.com/isl-org) at [Intel](https://www.intel.com) and [Kujiale](https://www.kujiale.com). Beginning in 2024, SPEAR is being developed by an independent consortium.
+From 2021 to 2024, SPEAR was developed with generous support from the [Intelligent Systems Lab](https://github.com/isl-org) at [Intel](https://www.intel.com). Starting in 2024, SPEAR is being developed by an independent consortium.
