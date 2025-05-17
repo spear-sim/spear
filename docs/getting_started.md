@@ -42,7 +42,7 @@ pip install -e python
 
 If you're developing on Linux, you will need to install `gcc` if it isn't already installed on your system. `gcc` is required when installing one of our Python dependencies via `pip`.
 
-## Obtaining a standalone executable
+## Building a standalone `SpearSim` executable
 
 In order to proceed further, you must build a standalone `SpearSim` executable from source by following our [Building SpearSim](docs/building_spearsim.md) tutorial.
 
