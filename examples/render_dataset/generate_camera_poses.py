@@ -23,33 +23,7 @@ scene_descs = \
         "map": "/Game/Spear/Scenes/apartment_0000/Maps/apartment_0000.apartment_0000",
         "mount_pak_files": False,
         "pak_file_prefixes": []
-    },
-    {
-        "name": "kujiale_0000",
-        "map": "/Game/Scenes/kujiale_0000/Maps/kujiale_0000.kujiale_0000", # TODO: move to Kujiale/Scenes
-        "mount_pak_files": True,
-        "pak_file_prefixes": ["kujiale_common", "kujiale_0000"]
-    },
-    {
-        "name": "kujiale_0001",
-        "map": "/Game/Scenes/kujiale_0001/Maps/kujiale_0001.kujiale_0001", # TODO: move to Kujiale/Scenes
-        "mount_pak_files": True,
-        "pak_file_prefixes": ["kujiale_common", "kujiale_0001"]
-    },
-    {
-        "name": "kujiale_0002",
-        "map": "/Game/Scenes/kujiale_0002/Maps/kujiale_0002.kujiale_0002", # TODO: move to Kujiale/Scenes
-        "mount_pak_files": True,
-        "pak_file_prefixes": ["kujiale_common", "kujiale_0002"]
-    },
-
-    # TODO: kujiale_0003 currently contains a degenerate navmesh
-    # {
-    #     "name": "kujiale_0003",
-    #     "map": "/Game/Scenes/kujiale_0003/Maps/kujiale_0003.kujiale_0003", # TODO: move to Kujiale/Scenes
-    #     "mount_pak_files": True,
-    #     "pak_file_prefixes": ["kujiale_common", "kujiale_0003"]
-    # },
+    }
 ]
 
 
