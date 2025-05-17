@@ -42,7 +42,7 @@ pip install -e python
 
 If you're developing on Linux, you will need to install `gcc` if it isn't already installed on your system. `gcc` is required when installing one of our Python dependencies via `pip`.
 
-## Navigate around a specific (optional)
+## Navigate around a specific scene
 
 At this point, you can use our `run_executable.py` command-line tool to navigate around a specific scene. For example, if you wanted to navigate through our `debug_0000` scene, you would use the following command.
 
