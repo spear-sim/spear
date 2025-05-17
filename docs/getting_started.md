@@ -64,8 +64,8 @@ You can also optionally specify an `--executable`. If you don't specify an `--ex
 
 ```
 Windows: path/to/Windows/SpearSim/Binaries/Win64/SpearSim-Cmd.exe
-macOS:   path/to/SpearSim-Mac-Shipping.app
-Linux:   path/to/SpearSim.sh
+macOS:   path/to/Mac/SpearSim.app
+Linux:   path/to/Linux/SpearSim.sh
 ```
 
 The following command-line arguments are optional.
