@@ -1,8 +1,6 @@
 # Import Stanford Dataset
 
-In this example application, we demonstrate how to import custom objects from the Stanford 3D Scanning Repository.
-
-In order to run this example, you need to build a PAK file containing the Stanford assets as follows.
+In this example application, we demonstrate how to import custom objects from the Stanford 3D Scanning Repository. In order to run this example, you need to build a PAK file containing the Stanford assets as follows.
 
 ```console
 # download mesh data
