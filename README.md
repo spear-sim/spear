@@ -30,6 +30,7 @@ Minimum and recommended system specifications for the Unreal Engine are given [h
 
 - Our [Getting Started](docs/getting_started.md) tutorial explains how to programmatically interact with SPEAR via Python.
 - Our [Building SpearSim](docs/building_spearsim.md) tutorial explains how to build our standalone `SpearSim` executable from source.
+- Our [Running our Example Applications](docs/running_our_example_applications.md) tutorial explains how to run our example applications.
 - Our [Importing and Exporting Assets](docs/importing_and_exporting_assets.md) tutorial explains how to import and export assets.
 - Our [Coding Guidelines](docs/coding_guidelines.md) document describes our coding standard.
 - Our [Contribution Guidelines](CONTRIBUTING.md) document contains information on how to contribute effectively.
