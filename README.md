@@ -32,7 +32,7 @@ See our latest [release notes](https://github.com/spear-sim/spear/releases/tag/v
 
 ### Documentation
 
-- Our [Getting Started](docs/getting_started.md) tutorial explains how to programmatically interact with Unreal via Python.
+- Our [Getting Started](docs/getting_started.md) tutorial explains how to programmatically interact with SPEAR via Python.
 - Our [Building SpearSim](docs/building_spearsim.md) tutorial explains how to build our Unreal executable from source.
 - Our [Importing and Exporting Assets](docs/importing_and_exporting_assets.md) tutorial explains how to import and export assets.
 - Our [Coding Guidelines](docs/coding_guidelines.md) document describes our coding standard.
