@@ -44,7 +44,7 @@ If you're developing on Linux, you will need to install `gcc` if it isn't alread
 
 ## Build a standalone `SpearSim` executable
 
-In order to proceed further, you must build a standalone `SpearSim` executable from source by following our [Building SpearSim](docs/building_spearsim.md) tutorial. After building our `SpearSim` executable, you can start interactively navigating around our default scene with the keyboard and mouse simply by running the executable with no additional arguments.
+In order to proceed further, you must build a standalone `SpearSim` executable from source by following our [Building SpearSim](building_spearsim.md) tutorial. After building our `SpearSim` executable, you can start interactively navigating around our default scene with the keyboard and mouse simply by running the executable with no additional arguments.
 
 ## Navigate around a specific scene
 
@@ -60,7 +60,7 @@ When executing our command-line tool, you will need to specify a logical Unreal 
 /Game/Spear/Scenes/debug_0000/Maps/debug_0000
 ```
 
-You can also optionally specify an `--executable`. If you don't specify an `--executable`, our command-line tool will assume that you built an executable from source in the default location in our [Building SpearSim](docs/building_spearsim.md) tutorial. Depending on your platform, the path to your `--executable` should be formatted as follows.
+You can also optionally specify an `--executable`. If you don't specify an `--executable`, our command-line tool will assume that you built an executable from source in the default location in our [Building SpearSim](building_spearsim.md) tutorial. Depending on your platform, the path to your `--executable` should be formatted as follows.
 
 ```
 Windows: path/to/SpearSim-v0.5.0-Win64-Shipping/SpearSim/Binaries/Win64/SpearSim-Win64-Shipping-Cmd.exe
@@ -75,4 +75,4 @@ The following command-line arguments are optional.
 
 ## Programmatically interact with SPEAR via Python
 
-We provide several example applications that demonstrate how to programmatically interact with SPEAR via Python. In order to run our example applications, you will need to follow the steps in our [Running our Example Applications](docs/running_our_example_applications.md) tutorial.
+We provide several example applications that demonstrate how to programmatically interact with SPEAR via Python. In order to run our example applications, you will need to follow the steps in our [Running our Example Applications](running_our_example_applications.md) tutorial.
