@@ -63,9 +63,9 @@ When executing our command-line tool, you will need to specify a logical Unreal 
 You can also optionally specify an `--executable`. If you don't specify an `--executable`, our command-line tool will assume that you built an executable from source in the default location in our [Building SpearSim](building_spearsim.md) tutorial. Depending on your platform, the path to your `--executable` should be formatted as follows.
 
 ```
-Windows: path/to/SpearSim-v0.5.0-Win64-Shipping/SpearSim/Binaries/Win64/SpearSim-Win64-Shipping-Cmd.exe
-macOS:   path/to/SpearSim-v0.5.0-Mac-Shipping/SpearSim-Mac-Shipping.app
-Linux:   path/to/SpearSim-v0.5.0-Linux-Shipping/SpearSim.sh
+Windows: path/to/Windows/SpearSim/Binaries/Win64/SpearSim-Cmd.exe
+macOS:   path/to/SpearSim-Mac-Shipping.app
+Linux:   path/to/SpearSim.sh
 ```
 
 The following command-line arguments are optional.
