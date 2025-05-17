@@ -44,7 +44,7 @@ If you're developing on Linux, you will need to install `gcc` if it isn't alread
 
 ## Build a standalone `SpearSim` executable
 
-In order to proceed further, you must build a standalone `SpearSim` executable from source by following our [Building SpearSim](docs/building_spearsim.md) tutorial.
+In order to proceed further, you must build a standalone `SpearSim` executable from source by following our [Building SpearSim](docs/building_spearsim.md) tutorial. After building our `SpearSim` executable, you can start interactively navigating around our default scene with the keyboard and mouse simply by running the executable with no additional arguments.
 
 ## Navigate around a specific scene
 
@@ -75,4 +75,4 @@ The following command-line arguments are optional.
 
 ## Programmatically interact with SPEAR via Python
 
-We provide several example applications that demonstrate how to programmatically interact with SPEAR via Python. In order to run our example applications, you will need to follow the steps in our [Running Examples](docs/running_examples.md) tutorial.
+We provide several example applications that demonstrate how to programmatically interact with SPEAR via Python. In order to run our example applications, you will need to follow the steps in our [Running our Example Applications](docs/running_our_example_applications.md) tutorial.
