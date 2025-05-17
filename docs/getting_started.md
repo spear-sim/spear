@@ -1,6 +1,8 @@
 # Getting Started
 
-If you'd like to work with multiple scenes, or programmatically interact with SPEAR via Python, you will need to follow the steps below.
+## Assumptions
+
+We will assume that you are developing on a version of Windows, macOS, or Linux that is compatible with Unreal Engine 5.5. We will also assume that you have Git and Anaconda Python installed.
 
 ## Clone this repository including submodules
 
@@ -40,15 +42,21 @@ pip install -e python
 
 If you're developing on Linux, you will need to install `gcc` if it isn't already installed on your system. `gcc` is required when installing one of our Python dependencies via `pip`.
 
-## Navigate around a specific scene
+## Navigate around a specific (optional)
 
-At this point, you can use our `run_executable.py` command-line tool to select which scene you want to navigate around. If you wanted to navigate through our `debug_0000` scene, you would use the following command.
+At this point, you can use our `run_executable.py` command-line tool to navigate around a specific scene. For example, if you wanted to navigate through our `debug_0000` scene, you would use the following command.
 
 ```console
-python tools/run_executable.py --executable path/to/executable --scene_id debug_0000
+python tools/run_executable.py --map /Game/Spear/Scenes/debug_0000/Maps/debug_0000 --executable path/to/executable
 ```
 
-Depending on your platform, you will need to specify the following path to your `--executable`. We provide links to precompiled binaries in our [release notes](https://github.com/spear-sim/spear/releases/tag/v0.5.0).
+When executing our command-line tool, you will need to specify a logical Unreal path to the `--map` you want to navigate around, e.g.,
+
+```
+/Game/Spear/Scenes/debug_0000/Maps/debug_0000
+```
+
+You can optionally specify a path to an `--executable`. We provide links to precompiled executables in our [release notes](https://github.com/spear-sim/spear/releases/tag/v0.5.0), or you can build an executable from source by following our [Building SpearSim](docs/building_spearsim.md) tutorial. If you don't specify an `--executable`, our command-line tool will assume that you built an executable from source in a default location. Depending on your platform, the path to your `--executable` should be formatted as follows.
 
 ```
 Windows: path/to/SpearSim-v0.5.0-Win64-Shipping/SpearSim/Binaries/Win64/SpearSim-Win64-Shipping-Cmd.exe
@@ -56,24 +64,10 @@ macOS:   path/to/SpearSim-v0.5.0-Mac-Shipping/SpearSim-Mac-Shipping.app
 Linux:   path/to/SpearSim-v0.5.0-Linux-Shipping/SpearSim.sh
 ```
 
-You will also need to specify the following command-line arguments.
-
-  - `--scene_id` is the name of the scene you want to navigate around (e.g., `apartment_0000`, `debug_0000`, `kujiale_0000`, `warehouse_0000`, `...`). If you specify a `kujiale` or `warehouse` scene, then you will need to download that scene separately (see below).
-
 The following command-line arguments are optional.
 
-  - `--paks_dir` is the location of your downloaded scene data (see below), and is necessary if you specify a `kujiale` or `warehouse` scene for `--scene_id`.
+  - `--pak_files` is a comma-separated list of PAK files to load during startup. It is necessary to specify additional PAK files when specifying a `--map` that isn't included with our `SpearSim` executable.
   - `--vk_icd_filenames` only has an effect on Linux, and is used to force the Vulkan runtime to load a vendor-specific GPU driver. Our `run_executable.py` script will set the `VK_ICD_FILENAMES` environment variable to whatever is passed into `--vk_icd_filenames`. This argument may or may not be necessary, depending on your specific hardware setup. If you have already set the `VK_ICD_FILENAMES` environment variable before invoking `run_executable.py`, you do not need to specify `--vk_icd_filenames`. If you have an NVIDIA GPU, you probably need to specify `--vk_icd_filenames /usr/share/vulkan/icd.d/nvidia_icd.json`.
-
-## Download scene data (optional)
-
-In order to work with a `kujiale` or `warehouse` scene, you will need to download each scene as follows.
-
-```console
-python tools/download_paks.py --paks_dir path/to/spear-paks --scene_ids kujiale_0000
-```
-
-The `--paks_dir` argument is the top-level directory where scene data will be downloaded. If you want to download all of our scene data, you can omit the `--scene_ids` argument.
 
 ## Programmatically interact with SPEAR via Python
 
@@ -97,8 +91,3 @@ We recommend browsing through each of our example applications to get a sense of
   - [`examples/mujoco_interop`](../examples/mujoco_interop) demonstrates how to interoperate with the MuJoCo physics engine.
   - [`examples/numpy_interop`](../examples/numpy_interop) demonstrates how to efficiently pass NumPy arrays to and from Unreal game entities.
   - [`examples/render_image`](../examples/render_image) demonstrates how to spawn a camera sensor object and render an image.
-
-We also have several example applications that use a deprecated legacy API. We are migrating these examples to use our new API.
-  - [`examples/legacy/generate_image_dataset`](../examples/legacy/generate_image_dataset) demonstrates how to generate a dataset of images.
-  - [`examples/legacy/imitation_learning_openbot`](../examples/legacy/imitation_learning_openbot) demonstrates how to collect data to train an OpenBot.
-  - [`examples/legacy/open_loop_control_fetch`](../examples/legacy/open_loop_control_fetch) demonstrates how to control a Fetch robot.
