@@ -35,9 +35,8 @@ If you're developing on Windows, you will need to run our build steps in a termi
 
 - Your terminal must be able to access Anaconda Python, `cmake`, and the Visual Studio command-line tools.
 - You will need to run our build steps from within the Anaconda environment where the `spear` package is installed.
-- You will need to one of run our build steps with administrator privileges (noted below), because we need to create various symbolic links within your local copy of this repository to work around limitations of the Unreal build system.
 
-There are multiple possible ways to satisfy these requirements. One possibility is to use the _Developer PowerShell for VS 2022_ profile in the Windows Terminal application to run our build steps. This profile will be installed to the Terminal application when you install Visual Studio. You can configure this profile to run with administrator privileges in the profile settings. Additionally, you can configure PowerShell to access your Anaconda environment by opening an Anaconda PowerShell prompt with administrator privileges (located in your Start menu after you install Anaconda) and executing the following commands.
+There are multiple possible ways to satisfy these requirements. One possibility is to use the _Developer PowerShell for VS 2022_ profile in the Windows Terminal application to run our build steps. This profile will be installed to the Terminal application when you install Visual Studio. Additionally, you can configure PowerShell to access your Anaconda environment by opening an Anaconda PowerShell prompt with administrator privileges (located in your Start menu after you install Anaconda) and executing the following commands.
 
 ```console
 # This step will add a block of PowerShell code to C:\Users\username\Documents\WindowsPowerShell\profile.ps1
@@ -67,16 +66,6 @@ python tools/build_third_party_libs.py --unreal_engine_dir path/to/UE_5.5
 If you're developing on Linux, you will need to install `g++` and `make` if they aren't already installed on your system. `g++` is required to build the Boost build tool, and `make` is required by `cmake` to build all third-party libraries other than Boost. Additionally, you must specify `--unreal_engine_dir`, because we use the version of `clang` and `libc++` that ships with the Unreal Engine to build our third-party libraries.
 
 This command-line tool also accepts an optional `--num_parallel_jobs` argument that can be used to specify the number of parallel jobs that `cmake` should use when building third-party libraries.
-
-## Create symbolic links
-
-Our `SpearSim` project requires you to create several symbolic links. We provide a command-line tool for this purpose.
-
-If you're developing on Windows, you will need to run this command with administrator privileges.
-
-```console
-python tools/create_project_symlinks.py
-```
 
 ## Copy content from the Unreal Engine
 
