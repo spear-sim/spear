@@ -12,11 +12,11 @@
 
 #include "SpCore/Log.h"
 #include "SpCore/SpArray.h"
+#include "SpCore/SpFuncComponent.h"
 #include "SpCore/SpFuncDataBundle.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 
-#include "SpComponents/SpFuncComponent.h"
 #include "SpComponents/SpUserInputComponent.h"
 
 struct FActorComponentTickFunction;

@@ -18,12 +18,12 @@
         {
             "Name": "SpComponents",
             "Type": "Runtime",
-            "LoadingPhase": "PreDefault"
+            "LoadingPhase": "PostDefault"
         },
         {
             "Name": "SpComponentsEditor",
             "Type": "Editor",
-            "LoadingPhase": "PreDefault"
+            "LoadingPhase": "PostDefault"
         }
     ],
     "Plugins": [

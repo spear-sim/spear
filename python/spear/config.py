@@ -9,8 +9,6 @@ import yacs.config
 spear_root_dir = os.path.dirname(os.path.realpath(__file__))
 default_config_files = [
     os.path.realpath(os.path.join(spear_root_dir, "config", "default_config.sp_core.yaml")),
-    os.path.realpath(os.path.join(spear_root_dir, "config", "default_config.urdf_robot.yaml")),
-    os.path.realpath(os.path.join(spear_root_dir, "config", "default_config.vehicle.yaml")),
     os.path.realpath(os.path.join(spear_root_dir, "config", "default_config.sp_services.yaml")),
     os.path.realpath(os.path.join(spear_root_dir, "config", "default_config.spear.yaml")) ]
 
@@ -28,10 +26,6 @@ def get_config(user_config_files):
 
     for c in default_config_files:
         config.merge_from_file(c)
-
-    # In some cases, we need to update specific config values with information that is available
-    # at runtime, but isn't available when we are authoring our default_config.*.yaml files.
-    config.URDF_ROBOT.URDF_ROBOT_PAWN.URDF_DIR = os.path.realpath(os.path.join(spear_root_dir, "urdf"))
 
     for c in user_config_files:
         config.set_new_allowed(True) # required to override an empty dict with a non-empty dict

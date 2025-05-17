@@ -28,8 +28,7 @@ public class SpServices : SpModuleRules
         //
 
         PublicDependencyModuleNames.AddRange(new string[] {
-            "ChaosVehicles", "EnhancedInput", "MovieRenderPipelineCore", "MovieRenderPipelineRenderPasses", "MovieRenderPipelineSettings", "SpComponents",
-            "SpCore", "UrdfRobot", "Vehicle"});
+            "ChaosVehicles", "EnhancedInput", "MovieRenderPipelineCore", "MovieRenderPipelineRenderPasses", "MovieRenderPipelineSettings", "SpCore"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }

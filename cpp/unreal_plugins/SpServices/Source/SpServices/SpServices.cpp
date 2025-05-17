@@ -42,7 +42,6 @@
 // Services that require a reference to EngineService
 #include "SpServices/EnhancedInputService.h"
 #include "SpServices/InputService.h"
-#include "SpServices/LegacyService.h"
 #include "SpServices/SharedMemoryService.h"
 #include "SpServices/UnrealService.h"
 
@@ -53,9 +52,6 @@
 void SpServices::StartupModule()
 {
     SP_ASSERT_MODULE_LOADED("SpCore");
-    SP_ASSERT_MODULE_LOADED("SpComponents");
-    SP_ASSERT_MODULE_LOADED("UrdfRobot");
-    SP_ASSERT_MODULE_LOADED("Vehicle");
     SP_LOG_CURRENT_FUNCTION();
 
     // If we're cooking, then return early. In this case, there is no need to launch our services, and if
@@ -98,7 +94,6 @@ void SpServices::StartupModule()
     // Construct services that require a reference to EngineService.
     enhanced_input_service_ = std::make_unique<EnhancedInputService>(engine_service_.get());
     input_service_ = std::make_unique<InputService>(engine_service_.get());
-    legacy_service_ = std::make_unique<LegacyService>(engine_service_.get());
     shared_memory_service_ = std::make_unique<SharedMemoryService>(engine_service_.get());
     unreal_service_ = std::make_unique<UnrealService>(engine_service_.get());
 
@@ -139,12 +134,10 @@ void SpServices::ShutdownModule()
 
     SP_ASSERT(enhanced_input_service_);
     SP_ASSERT(input_service_);
-    SP_ASSERT(legacy_service_);
     SP_ASSERT(shared_memory_service_);
     SP_ASSERT(unreal_service_);
     enhanced_input_service_ = nullptr;
     input_service_ = nullptr;
-    legacy_service_ = nullptr;
     shared_memory_service_ = nullptr;
     unreal_service_ = nullptr;
 

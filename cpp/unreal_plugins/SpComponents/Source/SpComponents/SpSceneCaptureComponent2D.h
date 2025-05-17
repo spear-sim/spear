@@ -13,8 +13,7 @@
 
 #include "SpCore/SharedMemoryRegion.h"
 #include "SpCore/SpArray.h"
-
-#include "SpComponents/SpFuncComponent.h"
+#include "SpCore/SpFuncComponent.h"
 
 #include "SpSceneCaptureComponent2D.generated.h"
 

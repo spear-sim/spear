@@ -19,7 +19,6 @@
 // Services that require a reference to EngineService
 #include "SpServices/EnhancedInputService.h"
 #include "SpServices/InputService.h"
-#include "SpServices/LegacyService.h"
 #include "SpServices/SharedMemoryService.h"
 #include "SpServices/UnrealService.h"
 
@@ -48,7 +47,6 @@ private:
     // Services that require a reference to EngineService
     std::unique_ptr<EnhancedInputService> enhanced_input_service_ = nullptr;
     std::unique_ptr<InputService> input_service_ = nullptr;
-    std::unique_ptr<LegacyService> legacy_service_ = nullptr;
     std::unique_ptr<SharedMemoryService> shared_memory_service_ = nullptr;
     std::unique_ptr<UnrealService> unreal_service_ = nullptr;
 

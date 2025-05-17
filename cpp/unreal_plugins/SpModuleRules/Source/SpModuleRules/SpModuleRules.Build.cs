@@ -40,16 +40,7 @@ public class SpModuleRules : ModuleRules
             "NavigationSystem", "PhysicsCore", "RenderCore", "RHI", "Slate", "XmlParser"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
-        // Resolve the top-level module directory and the ThirdParty directory, taking care to follow
-        // symlinks. The top-level module directory can be a symlink or not, and the ThirdParty directory can
-        // be a symlink or not. This is required to work around a bug that was introduced in UE 5.2.
-        string topLevelModuleDir = Path.GetFullPath(Path.Combine(ModuleDirectory, "..", ".."));
-        FileSystemInfo topLevelModuleDirInfo = Directory.ResolveLinkTarget(topLevelModuleDir, true);
-        topLevelModuleDir = (topLevelModuleDirInfo != null) ? topLevelModuleDirInfo.FullName : topLevelModuleDir;
-
-        string thirdPartyDir = Path.GetFullPath(Path.Combine(topLevelModuleDir, "ThirdParty"));
-        FileSystemInfo thirdPartyDirInfo = Directory.ResolveLinkTarget(thirdPartyDir, true);
-        thirdPartyDir = (thirdPartyDirInfo != null) ? thirdPartyDirInfo.FullName : thirdPartyDir;
+        string thirdPartyDir = Path.GetFullPath(Path.Combine(ModuleDirectory, "..", "..", "..", "..", "..", "third_party"));
 
         //
         // Boost

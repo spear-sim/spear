@@ -25,15 +25,11 @@ from spear.engine_service import EngineService
 # services that depend on EngineService
 from spear.enhanced_input_service import EnhancedInputService
 from spear.input_service import InputService
-from spear.legacy_service import LegacyService
 from spear.shared_memory_service import SharedMemoryService
 from spear.unreal_service import UnrealService
 
 # services that depend on EngineService and SharedMemoryService
 from spear.navigation_service import NavigationService
 from spear.sp_func_service import SpFuncService
-
-# TODO: remove legacy classes
-from spear.env import Env
 
 __version__ = "v0.6.0"

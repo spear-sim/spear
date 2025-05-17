@@ -9,7 +9,8 @@
 #include <Engine/EngineTypes.h>      // EEndPlayReason
 #include <HAL/Platform.h>            // SPCOMPONENTS_API
 
-#include "SpComponents/SpFuncComponent.h"
+#include "SpCore/SpFuncComponent.h"
+
 #include "SpComponents/SpUserInputComponent.h"
 
 #include "SpDummyComponent.generated.h"

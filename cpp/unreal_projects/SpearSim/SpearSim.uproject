@@ -35,5 +35,8 @@
             "Name": "PythonScriptPlugin",
             "Enabled": true
         }
+    ],
+    "AdditionalPluginDirectories": [
+        "../../unreal_plugins"
     ]
 }

@@ -32,7 +32,6 @@ class Instance():
         # Construct services that require a reference to EngineService.
         self.enhanced_input_service = spear.EnhancedInputService(entry_point_caller=self.engine_service)
         self.input_service = spear.InputService(entry_point_caller=self.engine_service)
-        self.legacy_service = spear.LegacyService(entry_point_caller=self.engine_service)
         self.shared_memory_service = spear.SharedMemoryService(entry_point_caller=self.engine_service)
         self.unreal_service = spear.UnrealService(entry_point_caller=self.engine_service)
 

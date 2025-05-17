@@ -15,9 +15,8 @@
 
 #include "SpCore/Assert.h"
 #include "SpCore/SpArray.h"
+#include "SpCore/SpFuncComponent.h"
 #include "SpCore/Unreal.h"
-
-#include "SpComponents/SpFuncComponent.h"
 
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/MsgpackAdaptors.h"
