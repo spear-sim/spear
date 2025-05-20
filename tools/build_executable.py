@@ -173,7 +173,7 @@ if __name__ == "__main__":
 
     # build SpearSim project
 
-    cook_maps = spear.tools.get_cook_maps()
+    cook_maps = spear.tools.get_default_maps_to_cook()
     cook_maps_arg = ["-map=" + "+".join(cook_maps)]
 
     cmd = [

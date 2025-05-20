@@ -17,9 +17,9 @@ if __name__ == "__main__":
     parser.add_argument("--build_config", default="Development")
     parser.add_argument("--unreal_engine_dir", required=True)
     parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
-    parser.add_argument("--cook_dir", action="append")
-    parser.add_argument("--cook_map", action="append")
-    parser.add_argument("--skip_default_cook_maps", action="store_true")
+    parser.add_argument("--cook_dirs", nargs="*")
+    parser.add_argument("--cook_maps", nargs="*")
+    parser.add_argument("--skip_cook_default_maps", action="store_true")
     args, unknown_args = parser.parse_known_args() # get remaining args to pass to RunUAT
 
     assert os.path.exists(args.unreal_engine_dir)
@@ -59,22 +59,27 @@ if __name__ == "__main__":
     uproject_name = os.path.splitext(os.path.split(uproject)[1])[0]
     archive_dir = os.path.realpath(os.path.join(unreal_project_dir, "Standalone-" + args.build_config))
 
+    # assemble dirs to cook
     cook_dirs = []
-    if args.cook_dir is not None:
-        cook_dirs.extend(args.cook_dir)
-    cook_dir_args = [ "-cookdir=" + os.path.join(project_dir, cook_dir) for cook_dir in cook_dirs ]
+    if args.cook_dirs is not None:
+        cook_dirs.extend(args.cook_dirs)
 
-    if args.skip_default_cook_maps:
-        cook_maps = []
-    else:
-        cook_maps = spear.tools.get_cook_maps()
-    if args.cook_map is not None:
-        cook_maps = cook_maps + args.cook_map
+    cook_dir_args = [ "-cookdir=" + os.path.join(unreal_project_dir, cook_dir) for cook_dir in cook_dirs ]
+
+    # assemble maps to cook
+
+    cook_maps = []
+    if not args.skip_cook_default_maps:
+        cook_maps.extend(spear.tools.get_default_maps_to_cook())
+    if args.cook_maps is not None:
+        cook_maps.extend(args.cook_maps)
+
     if len(cook_maps) == 0:
         cook_maps_arg = []
     else:
         cook_maps_arg = ["-map=" + "+".join(cook_maps)]
 
+    # build project
     cmd = [
         run_uat_script,
         "BuildCookRun",

@@ -5,40 +5,55 @@
 import argparse
 import os
 import spear
+import sys
 import time
 
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--executable", required=True)
-    parser.add_argument("--paks_dir")
-    parser.add_argument("--version_tag")
-    parser.add_argument("--scene_id")
+    parser.add_argument("--executable")
+    parser.add_argument("--map")
+    parser.add_argument("--pak_files", nargs="*")
     parser.add_argument("--vk_icd_filenames")
     parser.add_argument("--graphics_adaptor")
     args = parser.parse_args()
 
-    assert os.path.exists(args.executable)
+    if args.executable is not None:
+        executable = args.executable
+    else:
+        if sys.platform == "win32":
+            executable = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "Standalone-Development", "Windows", "SpearSim", "Binaries", "Win64", "SpearSim-Cmd.exe"))
+        elif sys.platform == "darwin":
+            executable = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "Standalone-Development", "Mac", "SpearSim.app"))
+        elif sys.platform == "linux":
+            executable = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "Standalone-Development", "Linux", "SpearSim.sh"))
+        else:
+            assert False
 
     # load config
-    config = spear.get_config(user_config_files=[])
+    config = spear.get_config()
 
     # modify config params
     config.defrost()
+
     config.SPEAR.LAUNCH_MODE = "standalone"
-    config.SPEAR.STANDALONE_EXECUTABLE = args.executable
-    if args.paks_dir is not None:
-        config.SPEAR.PAKS_DIR = args.paks_dir
-    if args.version_tag is not None:
-        config.SPEAR.PAKS_VERSION_TAG = args.version_tag
-    if args.scene_id is not None:
+    config.SPEAR.STANDALONE_EXECUTABLE = executable
+
+    if args.map is not None:
         config.SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_GAME_DEFAULT_MAP = True
-        config.SP_SERVICES.INITIALIZE_ENGINE_SERVICE.GAME_DEFAULT_MAP = "/Game/Scenes/" + args.scene_id + "/Maps/" + args.scene_id
+        config.SP_SERVICES.INITIALIZE_ENGINE_SERVICE.GAME_DEFAULT_MAP = args.map
+
+    if args.pak_files is not None:
+        config.SP_SERVICES.INITIALIZE_ENGINE_SERVICE.MOUNT_PAK_FILES = True
+        config.SP_SERVICES.INITIALIZE_ENGINE_SERVICE.PAK_FILES = args.pak_files
+
     if args.vk_icd_filenames is not None:
         config.SPEAR.ENVIRONMENT_VARS.VK_ICD_FILENAMES = args.vk_icd_filenames
+
     if args.graphics_adaptor is not None:
         config.SPEAR.INSTANCE.COMMAND_LINE_ARGS.graphics_adaptor = args.graphics_adaptor
+
     config.freeze()
 
     # configure system based on config settings

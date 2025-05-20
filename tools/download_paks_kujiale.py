@@ -14,7 +14,7 @@ import wget
 pak_url_prefix = "https://d3q9jkhps5jb4b.cloudfront.net"
 
 scene_ids = [
-    "common",
+    "kujiale_common",
     "kujiale_0000",
     "kujiale_0001",
     "kujiale_0002",
@@ -48,15 +48,14 @@ scene_ids = [
     "kujiale_0030",
     "kujiale_0031",
     "kujiale_0032",
-    "kujiale_0033",
-    "warehouse_0000"]
+    "kujiale_0033"]
 
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--paks_dir", required=True)
-    parser.add_argument("--scene_ids")
+    parser.add_argument("--scene_ids", nargs="*")
     parser.add_argument("--version_tag")
     parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args()
@@ -71,10 +70,9 @@ if __name__ == '__main__':
         assert False
 
     if args.scene_ids is not None:
-        arg_scene_ids = args.scene_ids.split(",")
         matched_scene_ids = []
         for scene_id in scene_ids:
-            for arg_scene_id in arg_scene_ids:
+            for arg_scene_id in args.scene_ids:
                 if fnmatch.fnmatch(scene_id, arg_scene_id):
                     matched_scene_ids.append(scene_id)
                     break

@@ -24,7 +24,7 @@ if __name__ == "__main__":
     parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
     parser.add_argument("--conda_env", default="spear-env")
     parser.add_argument("--conda_script")
-    parser.add_argument("--scene_ids")
+    parser.add_argument("--scene_ids", nargs="*")
     parser.add_argument("--skip_build_common_pak", action="store_true")
     parser.add_argument("--skip_build_scene_paks", action="store_true")
     args = parser.parse_args()
@@ -216,10 +216,9 @@ if __name__ == "__main__":
         if args.scene_ids is None:
             scene_ids = candidate_scene_ids
         else:
-            arg_scene_ids = args.scene_ids.split(",")
             matched_scene_ids = []
             for candidate_scene_id in candidate_scene_ids:
-                for arg_scene_id in arg_scene_ids:
+                for arg_scene_id in args.scene_ids:
                     if fnmatch.fnmatch(candidate_scene_id, arg_scene_id):
                         matched_scene_ids.append(candidate_scene_id)
                         break

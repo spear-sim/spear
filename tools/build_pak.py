@@ -23,7 +23,7 @@ if __name__ == "__main__":
     parser.add_argument("--cook_maps_file")
     parser.add_argument("--include_assets_file", required=True)
     parser.add_argument("--exclude_assets_file")
-    parser.add_argument("--skip_default_cook_maps", action="store_true")
+    parser.add_argument("--skip_cook_default_maps", action="store_true")
     parser.add_argument("--unreal_engine_dir", required=True)
     parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
     args = parser.parse_args()
@@ -61,17 +61,22 @@ if __name__ == "__main__":
 
     shutil.rmtree(unreal_project_cooked_dir, ignore_errors=True)
 
+    # assemble dirs to cook
+
     cook_dirs = []
     if args.cook_dirs_file is not None:
-        cook_dirs = pd.read_csv(args.cook_dirs_file)["cook_dirs"].tolist()
+        cook_dirs.extend(pd.read_csv(args.cook_dirs_file)["cook_dirs"].tolist())
+
     cook_dir_args = [ "-cookdir=" + os.path.join(args.unreal_project_dir, cook_dir) for cook_dir in cook_dirs ]
 
-    if args.skip_default_cook_maps:
-        cook_maps = []
-    else:
-        cook_maps = spear.tools.get_cook_maps()
+    # assemble maps to cook
+
+    cook_maps = []
+    if not args.skip_cook_default_maps:
+        cook_maps.extend(spear.tools.get_default_maps_to_cook())
     if args.cook_maps_file is not None:
-        cook_maps = cook_maps + pd.read_csv(args.cook_maps_file)["cook_maps"].tolist()
+        cook_maps.extend(pd.read_csv(args.cook_maps_file)["cook_maps"].tolist())
+
     if len(cook_maps) == 0:
         cook_maps_arg = []
     else:

@@ -9,3 +9,8 @@ SPEAR:
     COMMAND_LINE_ARGS:
       resx: 512
       resy: 512
+
+SP_SERVICES:
+  INITIALIZE_ENGINE_SERVICE:
+    MOUNT_PAK_FILES: True
+    PAK_FILES: ["/Users/mroberts/code/github/spear/examples/import_stanford_dataset/pak/stanford.pak"]

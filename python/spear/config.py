@@ -19,7 +19,7 @@ default_config_files = [
 # Before loading any of the config files specified in user_config_files, all the default
 # values required by the spear Python package and C++ plugins are loaded, and can be
 # overridden by any of the files appearing in user_config_files.
-def get_config(user_config_files):
+def get_config(user_config_files=[]):
 
     # create a single CfgNode that will eventually contain data from all config files
     config = yacs.config.CfgNode(new_allowed=True)

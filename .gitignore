@@ -27,11 +27,9 @@ cpp/unreal_projects/SpearSim/Content/VehicleTemplate
 cpp/unreal_projects/SpearSim/DerivedDataCache
 cpp/unreal_projects/SpearSim/Intermediate
 cpp/unreal_projects/SpearSim/Makefile
-cpp/unreal_projects/SpearSim/Plugins
 cpp/unreal_projects/SpearSim/Saved
 cpp/unreal_projects/SpearSim/Standalone-Development
 cpp/unreal_projects/SpearSim/Standalone-Shipping
-cpp/unreal_projects/SpearSim/ThirdParty
 cpp/unreal_projects/SpearSim/CMakeLists.txt
 cpp/unreal_projects/SpearSim/SpearSim.sln
 cpp/unreal_projects/SpearSim/SpearSim (Mac).xcworkspace
@@ -45,18 +43,12 @@ examples/control_character/character_poses
 examples/import_stanford_dataset/csv
 examples/import_stanford_dataset/download
 examples/import_stanford_dataset/gltf
+examples/import_stanford_dataset/pak
 examples/import_stanford_dataset/ply
 examples/import_stanford_dataset/stanford
 
 examples/render_dataset/camera_poses
 examples/render_dataset/images
-
-examples/legacy/imitation_learning_openbot/dataset
-examples/legacy/imitation_learning_openbot/episodes
-examples/legacy/imitation_learning_openbot/eval
-examples/legacy/imitation_learning_openbot/videos
-
-examples/legacy/open_loop_control_fetch/images
 
 tmp
 

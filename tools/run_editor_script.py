@@ -3,6 +3,7 @@
 #
 
 import argparse
+import glob
 import os
 import spear
 import subprocess

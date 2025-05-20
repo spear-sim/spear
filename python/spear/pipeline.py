@@ -3,6 +3,7 @@
 #
 
 import glob
+import json
 import numpy as np
 import os
 import pathlib
@@ -261,6 +262,19 @@ def get_filesystem_path_from_content_path(content_path, unreal_project_dir, unre
             os.path.join(unreal_project_dir, "Plugins"),
             os.path.join(unreal_engine_dir, "Engine", "Plugins"),
             os.path.join(unreal_engine_dir, "Engine", "Experimental")]
+
+        uprojects = glob.glob(os.path.realpath(os.path.join(unreal_project_dir, "*.uproject")))
+        assert len(uprojects) == 1
+        uproject = uprojects[0]
+        uproject_dict = {}
+        with open(uproject) as f:
+            uproject_dict = json.load(f)
+        if "AdditionalPluginDirectories" in uproject_dict:
+            for additional_plugins_dir in uproject_dict["AdditionalPluginDirectories"]:
+                if os.path.isabs(additional_plugins_dir):
+                    plugins_dirs.append(additional_plugins_dir)
+                else:
+                    plugins_dirs.append(os.path.realpath(os.path.join(unreal_project_dir, additional_plugins_dir)))
 
         found_plugin = False
         for plugins_dir in plugins_dirs:
