@@ -11,6 +11,7 @@ import sys
 if __name__ == "__main__":
 
     unreal_project_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim"))
+    unreal_plugins_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_plugins"))
     assert os.path.exists(unreal_project_dir)
 
     # entire directories to be removed
@@ -24,7 +25,7 @@ if __name__ == "__main__":
     files = []
 
     # plugin files and directories
-    plugins_dir = os.path.realpath(os.path.join(unreal_project_dir, "Plugins"))
+    plugins_dir = unreal_plugins_dir
     is_valid_plugin_dir = lambda p: \
         os.path.isdir(os.path.realpath(os.path.join(plugins_dir, p))) and os.path.exists(os.path.realpath(os.path.join(plugins_dir, p, p + ".uplugin")))
     plugins = [ p for p in sorted(os.listdir(plugins_dir)) if is_valid_plugin_dir(p) ]
