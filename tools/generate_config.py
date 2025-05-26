@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
     user_config_files = []
     if args.user_config_files is not None:
-        user_config_files.extend(args.user_config_files)
+        user_config_files = args.user_config_files
 
     # create a single CfgNode that contains data from all config files
     config = spear.get_config(user_config_files=user_config_files)

@@ -60,9 +60,10 @@ if __name__ == "__main__":
     archive_dir = os.path.realpath(os.path.join(unreal_project_dir, "Standalone-" + args.build_config))
 
     # assemble dirs to cook
+
     cook_dirs = []
     if args.cook_dirs is not None:
-        cook_dirs.extend(args.cook_dirs)
+        cook_dirs = args.cook_dirs
 
     cook_dir_args = [ "-cookdir=" + os.path.join(unreal_project_dir, cook_dir) for cook_dir in cook_dirs ]
 
