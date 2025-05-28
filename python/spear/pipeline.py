@@ -34,7 +34,7 @@ def compose_transform_with_component(transform_ancestor_from_parent_component, c
     relative_scale3d_z      = component_desc["editor_properties"]["relative_scale3d"]["editor_properties"]["z"]
 
     #
-    # Unreal defines roll-pitch-yaw Euler angles according to the following conventions, which can be
+    # Unreal defines each individual Euler angle according to the following conventions, which can be
     # verified by manual inspection in the editor.
     #     A positive roll  is a rotation around X, starting from +Z and rotating towards +Y
     #     A positive pitch is a rotation around Y, starting from +X and rotating towards +Z
@@ -58,7 +58,7 @@ def compose_transform_with_component(transform_ancestor_from_parent_component, c
     #
     # These conventions conflict. We therefore need to negate Unreal's roll (rotation around X) and pitch
     # (rotation around Y) but not yaw (rotation around Z) when constructing a scipy.spatial.transform.Rotation
-    # object from Unreal roll-pitch-yaw angles. Unreal editor properties also specify roll-pitch-yaw Euler
+    # object from an individual Unreal Euler angle. Unreal editor properties also specify roll-pitch-yaw Euler
     # angles in degrees, whereas the scipy.spatial.transform.Rotation.from_euler(...) function expects radians
     # by default. So we also need to convert from degrees to radians.
     #
@@ -68,21 +68,24 @@ def compose_transform_with_component(transform_ancestor_from_parent_component, c
     yaw   = np.deg2rad(relative_rotation_yaw)
 
     # 
-    # Unreal applies roll-pitch-yaw Euler angles in world-space in the following order, which can be verified
-    # by manual inspection the editor.
-    #     1. Rotate around world-space X by roll degrees
-    #     2. Rotate around world-space Y by pitch degrees
-    #     3. Rotate around world-space Z by yaw degrees
+    # Additionally, Unreal applies a triplet of roll-pitch-yaw Euler angles in the fixed parent coordinate
+    # system in the following order, which can be verified by manual inspection the editor.
+    #     1. Rotate around fixed parent-space X by roll degrees
+    #     2. Rotate around fixed parent-space Y by pitch degrees
+    #     3. Rotate around fixed parent-space Z by yaw degrees
     # 
-    # So, given a triplet of roll-pitch-yaw values that has been negated appropriately and converted to radians
-    # as described above, we define the rotation matrix that corresponds to the roll-pitch-yaw values as
-    # follows,
+    # So, given a triplet of roll-pitch-yaw values that has been negated appropriately and converted to
+    # radians as described above, we define the rotation matrix that corresponds to the roll-pitch-yaw values
+    # as follows.
     #     R_x = np.matrix(scipy.spatial.transform.Rotation.from_euler("x", roll).as_matrix())
     #     R_y = np.matrix(scipy.spatial.transform.Rotation.from_euler("y", pitch).as_matrix())
     #     R_z = np.matrix(scipy.spatial.transform.Rotation.from_euler("z", yaw).as_matrix())
     #     R   = R_z*R_y*R_x
     # which is equivalent to the following expression,
     #     R   = np.matrix(scipy.spatial.transform.Rotation.from_euler("xyz", [roll, pitch, yaw]).as_matrix())
+    #
+    # Once we have computed R, we rotate a child-space point p_child into parent-space as follows.
+    #     p_parent = R*p_child
     #
 
     transform_parent_component_from_current_component = {}
