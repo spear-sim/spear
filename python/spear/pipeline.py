@@ -58,9 +58,9 @@ def compose_transform_with_component(transform_ancestor_from_parent_component, c
     #
     # These conventions conflict. We therefore need to negate Unreal's roll (rotation around X) and pitch
     # (rotation around Y) but not yaw (rotation around Z) when constructing a scipy.spatial.transform.Rotation
-    # object from an individual Unreal Euler angle. Unreal editor properties also specify roll-pitch-yaw Euler
-    # angles in degrees, whereas the scipy.spatial.transform.Rotation.from_euler(...) function expects radians
-    # by default. So we also need to convert from degrees to radians.
+    # object from an individual Unreal Euler angle. Unreal editor properties also specify Euler angles in
+    # degrees, whereas the scipy.spatial.transform.Rotation.from_euler(...) function expects radians by default.
+    # So we also need to convert from degrees to radians.
     #
 
     roll  = np.deg2rad(-relative_rotation_roll)
@@ -84,7 +84,7 @@ def compose_transform_with_component(transform_ancestor_from_parent_component, c
     # which is equivalent to the following expression,
     #     R   = np.matrix(scipy.spatial.transform.Rotation.from_euler("xyz", [roll, pitch, yaw]).as_matrix())
     #
-    # Once we have computed R, we rotate a child-space point p_child into parent-space as follows.
+    # Once we have computed R, we can use it to rotate a child-space point p_child into parent-space as follows.
     #     p_parent = R*p_child
     #
 
