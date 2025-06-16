@@ -80,10 +80,16 @@ blueprint_desc = \
     ]
 }
 
+asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
 editor_asset_subsystem = unreal.get_editor_subsystem(unreal.EditorAssetSubsystem)
 
 
 if __name__ == "__main__":
+
+    # Explicitly load "/SpComponents" into the asset registry, since it won't be loaded by default if we are
+    # running as a commandlet, i.e., when the editor is invoked from the command-line with -run=pythonscript
+    # as opposed to -ExecutePythonScript.
+    asset_registry.scan_paths_synchronous(["/SpComponents"])
 
     # remove existing blueprint
     blueprint_path = posixpath.join(blueprint_desc["blueprint_path"], blueprint_desc["blueprint_name"])
