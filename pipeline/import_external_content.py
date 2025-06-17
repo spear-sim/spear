@@ -16,11 +16,11 @@ import sys
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--source_unreal_project_dir", required=True)
-    parser.add_argument("--source_content_path", required=True)
-    parser.add_argument("--destination_unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
     parser.add_argument("--destination_content_path", required=True)
+    parser.add_argument("--source_content_path", required=True)
+    parser.add_argument("--source_unreal_project_dir", required=True)
     parser.add_argument("--unreal_engine_dir", required=True)
+    parser.add_argument("--destination_unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
     parser.add_argument("--temp_dir", default="tmp")
     args = parser.parse_args()
 

@@ -2,6 +2,7 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
+import argparse
 import spear
 import unreal
 
@@ -10,15 +11,22 @@ asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
 editor_actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 level_editor_subsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
 
+
 if __name__ == "__main__":
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--load_level", action="store_true")
+    parser.add_argument("--save_level", action="store_true")
+    args = parser.parse_args()
+
     # Explicitly load "/SpComponents" into the asset registry, since it won't be loaded by default if we are
-    # running as a commandlet, i.e., when the editor is invoked from the command-line with -run=pythonscript
-    # as opposed to -ExecutePythonScript.
+    # running as a commandlet, i.e., when the editor is invoked from the command-line with "-run=pythonscript"
+    # instead of "-ExecutePythonScript".
     asset_registry.scan_paths_synchronous(["/SpComponents"])
 
     # Explicitly load level, which is required if we're running as a commandlet.
-    # level_editor_subsystem.load_level("/Game/Spear/Scenes/apartment_0000/Maps/apartment_0000")
+    if args.load_level:
+        level_editor_subsystem.load_level("/Game/Spear/Scenes/apartment_0000/Maps/apartment_0000")
 
     # spawn object
     bp_axes_uclass = unreal.load_object(outer=None, name="/SpComponents/Blueprints/BP_Axes.BP_Axes_C")
@@ -34,9 +42,8 @@ if __name__ == "__main__":
     scale_3d = bp_axes.get_actor_scale3d()
     spear.log("scale_3d: ", scale_3d.get_editor_property("x"), ", ", scale_3d.get_editor_property("y"), ", ", scale_3d.get_editor_property("z"))
 
-    print(level_editor_subsystem.get_current_level())
-
     # Explicitly save changes to level.
-    # level_editor_subsystem.save_current_level()
+    if args.save_level:
+        level_editor_subsystem.save_current_level()
 
     spear.log("Done.")

@@ -14,12 +14,12 @@ import sys
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--build_config", default="Development")
     parser.add_argument("--unreal_engine_dir", required=True)
-    parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
+    parser.add_argument("--skip_cook_default_maps", action="store_true")
     parser.add_argument("--cook_dirs", nargs="*")
     parser.add_argument("--cook_maps", nargs="*")
-    parser.add_argument("--skip_cook_default_maps", action="store_true")
+    parser.add_argument("--build_config", default="Development")
+    parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
     args, unknown_args = parser.parse_known_args() # get remaining args to pass to RunUAT
 
     assert os.path.exists(args.unreal_engine_dir)

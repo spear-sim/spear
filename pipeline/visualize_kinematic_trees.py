@@ -18,16 +18,15 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--pipeline_dir", required=True)
 parser.add_argument("--scene_id", required=True)
 parser.add_argument("--visual_parity_with_unreal", action="store_true")
-parser.add_argument("--ignore_actors")
+parser.add_argument("--ignore_actors", nargs="*")
 parser.add_argument("--color_mode", default="unique_color_per_node")
 args = parser.parse_args()
 
 assert args.color_mode in ["single_color", "unique_color_per_actor", "unique_color_per_node", "unique_color_per_component"]
 
+ignore_actors = []
 if args.ignore_actors is not None:
-    ignore_actors = args.ignore_actors.split(",")
-else:
-    ignore_actors = []
+    ignore_actors = args.ignore_actors
 
 np.random.seed(0)
 

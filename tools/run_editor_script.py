@@ -15,6 +15,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--script", required=True)
     parser.add_argument("--unreal_engine_dir", required=True)
+    parser.add_argument("--render_offscreen", action="store_true")
+    parser.add_argument("--launch_mode", default="commandlet")
     parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
     args, unknown_args = parser.parse_known_args() # get remaining args to pass to inner script
 
@@ -34,12 +36,24 @@ if __name__ == "__main__":
     assert len(uprojects) == 1
     uproject = uprojects[0]
 
+    render_offscreen_arg_string = ""
+    if args.render_offscreen:
+        assert args.launch_mode == "full"
+        render_offscreen_arg_string = " -renderoffscreen"
+
+    if args.launch_mode == "commandlet":
+        python_arg_string = " -run=pythonscript -script="
+    elif args.launch_mode == "full":
+        python_arg_string = " -executepythonscript="
+    else:
+        assert False
+
     unknown_arg_string = ""
     if len(unknown_args) > 0:
         unknown_arg_string = " " + " ".join(unknown_args)
 
     # need shell=True to correctly handle the quotes in cmd
-    cmd = unreal_editor_bin + " " + uproject + ' -run=pythonscript -script="' + args.script + unknown_arg_string + '"'
+    cmd = unreal_editor_bin + " " + uproject + render_offscreen_arg_string + python_arg_string + '"' + args.script + unknown_arg_string + '"'
     spear.log(f"Executing: {cmd}")
     subprocess.run(cmd, shell=True, check=True)
 

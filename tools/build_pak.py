@@ -18,13 +18,13 @@ import sys
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("--include_assets_file", required=True)
     parser.add_argument("--pak_file", required=True)
+    parser.add_argument("--unreal_engine_dir", required=True)
     parser.add_argument("--cook_dirs_file")
     parser.add_argument("--cook_maps_file")
-    parser.add_argument("--include_assets_file", required=True)
     parser.add_argument("--exclude_assets_file")
     parser.add_argument("--skip_cook_default_maps", action="store_true")
-    parser.add_argument("--unreal_engine_dir", required=True)
     parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
     args = parser.parse_args()
 

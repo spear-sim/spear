@@ -14,13 +14,13 @@ import sys
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--third_party_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "third_party")))
-    parser.add_argument("--unreal_engine_dir")
-    parser.add_argument("--num_parallel_jobs", type=int, default=1)
     parser.add_argument("--boost_toolset")
     parser.add_argument("--boost_toolset_version")
     parser.add_argument("--cxx_compiler")
+    parser.add_argument("--unreal_engine_dir") # only required on Linux
     parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--num_parallel_jobs", default=1, type=int)
+    parser.add_argument("--third_party_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "third_party")))
     args = parser.parse_args()
 
     assert os.path.exists(args.third_party_dir)

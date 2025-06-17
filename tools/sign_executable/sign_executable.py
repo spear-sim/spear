@@ -28,13 +28,13 @@ if __name__ == "__main__":
     assert sys.platform == "darwin"
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--developer_id", required=True)
     parser.add_argument("--apple_id", required=True)
-    parser.add_argument("--apple_team_id", required=True)
     parser.add_argument("--apple_password", required=True)
+    parser.add_argument("--apple_team_id", required=True)
+    parser.add_argument("--developer_id", required=True)
     parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "BUILD")))
-    parser.add_argument("--temp_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "tmp")))
     parser.add_argument("--entitlements_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "entitlements.plist")))
+    parser.add_argument("--temp_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "tmp")))
     args = parser.parse_args()
 
     assert os.path.exists(args.build_dir)

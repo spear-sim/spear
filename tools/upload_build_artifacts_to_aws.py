@@ -15,10 +15,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--aws_path_prefix", required=True)
     parser.add_argument("--version_tag", required=True)
-    parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
+    parser.add_argument("--paks_dir")
     parser.add_argument("--upload_executable", action="store_true")
     parser.add_argument("--upload_paks", action="store_true")
-    parser.add_argument("--paks_dir")
+    parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
     args = parser.parse_args()
 
     if args.upload_executable:

@@ -11,13 +11,13 @@ import spear
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("--external_content_dir", required=True)
+    parser.add_argument("--unreal_project_content_dir", required=True)
     parser.add_argument("--create", action="store_true")
     parser.add_argument("--remove", action="store_true")
-    parser.add_argument("--external_content_dir", required=True)
-    parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
-    parser.add_argument("--unreal_project_content_dir", required=True)
     parser.add_argument("--skip_create_directories", action="store_true")
     parser.add_argument("--skip_remove_directories", action="store_true")
+    parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
     args = parser.parse_args()
 
     assert args.create + args.remove == 1

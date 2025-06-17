@@ -55,9 +55,9 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--paks_dir", required=True)
-    parser.add_argument("--scene_ids", nargs="*")
     parser.add_argument("--version_tag")
     parser.add_argument("--overwrite", action="store_true")
+    parser.add_argument("--scene_ids", nargs="*")
     args = parser.parse_args()
 
     if sys.platform == "win32":

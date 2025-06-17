@@ -15,13 +15,13 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--unreal_engine_dir", required=True)
+    parser.add_argument("--commit_id")
+    parser.add_argument("--conda_script")
+    parser.add_argument("--skip_build_third_party_libs", action="store_true")
+    parser.add_argument("--skip_clone_github_repo", action="store_true")
     parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
     parser.add_argument("--conda_env", default="spear-env")
-    parser.add_argument("--num_parallel_jobs", type=int, default=1)
-    parser.add_argument("--conda_script")
-    parser.add_argument("--commit_id")
-    parser.add_argument("--skip_clone_github_repo", action="store_true")
-    parser.add_argument("--skip_build_third_party_libs", action="store_true")
+    parser.add_argument("--num_parallel_jobs", default=1, type=int)
     args = parser.parse_args()
 
     assert os.path.exists(args.unreal_engine_dir)
