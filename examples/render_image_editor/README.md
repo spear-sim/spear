@@ -13,5 +13,3 @@ Alternatively, you can run this script from the command-line as follows.
 ```console
 python ../../tools/run_editor_script.py --script /absolute/path/to/spear/examples/render_image_editor/run.py --unreal_engine_dir path/to/UE_5.5 --launch_mode full --render_offscreen
 ```
-
-After running this code from the command-line, you should see the coordinate axes in the scene the next time you open the editor.
