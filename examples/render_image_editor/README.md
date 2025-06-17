@@ -12,4 +12,4 @@ Alternatively, you can run this script from the command-line as follows.
 python ../../tools/run_editor_script.py --script /absolute/path/to/spear/examples/render_image_editor/run.py --unreal_engine_dir path/to/UE_5.5 --launch_mode full --render_offscreen
 ```
 
-After running this script, you should see a screenshot saved in this example directory.
+After running this script, you should see a screenshot saved in this directory.
