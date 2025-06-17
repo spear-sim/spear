@@ -31,7 +31,7 @@ if __name__ == "__main__":
     # spawn object
     bp_axes_uclass = unreal.load_object(outer=None, name="/SpComponents/Blueprints/BP_Axes.BP_Axes_C")
     bp_axes = unreal.EditorLevelLibrary.spawn_actor_from_class(actor_class=bp_axes_uclass, location=unreal.Vector(-10.0, 280.0, 50.0))
-    spear.log("bp_axes: ")
+    spear.log("bp_axes: ", bp_axes)
 
     # get scale
     scale_3d = bp_axes.get_actor_scale3d()

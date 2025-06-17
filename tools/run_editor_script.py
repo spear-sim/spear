@@ -53,7 +53,7 @@ if __name__ == "__main__":
         unknown_arg_string = " " + " ".join(unknown_args)
 
     # need shell=True to correctly handle the quotes in cmd
-    cmd = unreal_editor_bin + " " + uproject + render_offscreen_arg_string + python_arg_string + '"' + args.script + unknown_arg_string + '"'
+    cmd = '"' + unreal_editor_bin + '"' + " " + uproject + render_offscreen_arg_string + python_arg_string + '"' + args.script + unknown_arg_string + '"'
     spear.log(f"Executing: {cmd}")
     subprocess.run(cmd, shell=True, check=True)
 
