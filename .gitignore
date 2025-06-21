@@ -50,6 +50,8 @@ examples/import_stanford_dataset/stanford
 examples/render_dataset/camera_poses
 examples/render_dataset/images
 
+examples/render_image_editor/screenshot.png
+
 tmp
 
 tools/BUILD
