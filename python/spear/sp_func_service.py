@@ -5,7 +5,7 @@
 import mmap
 import multiprocessing.shared_memory
 import numpy as np
-import spear
+import spear.func_utils
 import sys
 
 class SpFuncService():
@@ -15,7 +15,7 @@ class SpFuncService():
 
 
     def create_shared_memory_handles_for_object(self, uobject):
-        views = self._entry_point_caller.call("sp_func_service.get_shared_memory_views", uobject)
+        views = self._entry_point_caller.call_on_game_thread("sp_func_service.get_shared_memory_views", uobject)
         return self._shared_memory_service.create_shared_memory_handles(shared_memory_views=views)
 
     def destroy_shared_memory_handles_for_object(self, shared_memory_handles):
@@ -26,12 +26,12 @@ class SpFuncService():
 
         # prepare args
         args = {
-            "packed_arrays": spear.to_packed_arrays(arrays=arrays, byte_order=self._shared_memory_service.unreal_instance_byte_order, usage_flags=["Arg"]),
-            "unreal_obj_strings": spear.to_json_strings(objs=unreal_objs),
+            "packed_arrays": spear.func_utils.to_packed_arrays(arrays=arrays, byte_order=self._shared_memory_service.unreal_instance_byte_order, usage_flags=["Arg"]),
+            "unreal_obj_strings": spear.func_utils.to_json_strings(objs=unreal_objs),
             "info": info}
 
         # call function
-        return_values = self._entry_point_caller.call("sp_func_service.call_function", uobject, function_name, args)
+        return_values = self._entry_point_caller.call_on_game_thread("sp_func_service.call_function", uobject, function_name, args)
 
         # get the shared memory handle for each return value
         arg_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_arrays(
@@ -45,11 +45,11 @@ class SpFuncService():
 
         # convert return values to NumPy arrays and return
         return {
-            "arrays": spear.to_arrays(
+            "arrays": spear.func_utils.to_arrays(
                 packed_arrays=return_values["packed_arrays"],
                 byte_order=self._shared_memory_service.unreal_instance_byte_order,
                 usage_flags=["ReturnValue"],
                 shared_memory_handles=return_value_shared_memory_handles),
-            "unreal_objs": spear.try_to_dicts(
+            "unreal_objs": spear.func_utils.try_to_dicts(
                 json_strings=return_values["unreal_obj_strings"]),
             "info": return_values["info"]}

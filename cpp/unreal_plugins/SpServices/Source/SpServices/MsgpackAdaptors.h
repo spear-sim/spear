@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <stddef.h> // uint64_t
+
 #include <map>
 #include <string>
 #include <vector>

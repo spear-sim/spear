@@ -15,7 +15,7 @@ class ASpPauseManager : public AActor
     GENERATED_BODY()
 public: 
     ASpPauseManager();
-    ~ASpPauseManager();
+    ~ASpPauseManager() override;
 
     // AActor interface
     void Tick(float delta_time) override;

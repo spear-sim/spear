@@ -27,7 +27,7 @@ class SPCORE_API USpStableNameComponent : public UActorComponent
     GENERATED_BODY()
 public:
     USpStableNameComponent();
-    ~USpStableNameComponent();
+    ~USpStableNameComponent() override;
 
     #if WITH_EDITOR // defined in an auto-generated header
         // UActorComponent interface
@@ -53,7 +53,7 @@ class ASpStableNameManager : public AActor
     GENERATED_BODY()
 public: 
     ASpStableNameManager();
-    ~ASpStableNameManager();
+    ~ASpStableNameManager() override;
 
 #if WITH_EDITOR // defined in an auto-generated header
     private:

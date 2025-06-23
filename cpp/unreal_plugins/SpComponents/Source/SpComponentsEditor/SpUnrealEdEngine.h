@@ -25,7 +25,7 @@ class USpUnrealEdEngine : public UUnrealEdEngine
     GENERATED_BODY()
 public:
     USpUnrealEdEngine();
-    ~USpUnrealEdEngine();
+    ~USpUnrealEdEngine() override;
 
     bool Exec(UWorld* world, const TCHAR* cmd, FOutputDevice& output_device) override;
 };

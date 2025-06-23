@@ -37,8 +37,8 @@ if __name__ == "__main__":
     # modify config params
     config.defrost()
 
-    config.SPEAR.LAUNCH_MODE = "standalone"
-    config.SPEAR.STANDALONE_EXECUTABLE = executable
+    config.SPEAR.LAUNCH_MODE = "game"
+    config.SPEAR.INSTANCE.GAME_EXECUTABLE = executable
 
     if args.map is not None:
         config.SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_GAME_DEFAULT_MAP = True

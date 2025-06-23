@@ -4,7 +4,7 @@
 
 #include "SpComponents/SpComponents.h"
 
-#include <Modules/ModuleManager.h> // IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
+#include <Modules/ModuleManager.h> // FDefaultGameModuleImpl, FDefaultModuleImpl, IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
 
 #include "SpCore/AssertModuleLoaded.h"
 #include "SpCore/Log.h"
@@ -14,6 +14,7 @@
 #include "SpComponents/SpDebugManager.h"
 #include "SpComponents/SpHitEventManager.h"
 #include "SpComponents/SpInitializeWorldManager.h"
+#include "SpComponents/SpMessageQueueManager.h"
 #include "SpComponents/SpSceneCaptureComponent2D.h"
 
 void SpComponents::StartupModule()
@@ -39,8 +40,9 @@ void SpComponents::registerClasses()
 {
     // SpComponents classes
     UnrealClassRegistrar::registerActorClass<ASpDebugManager>("ASpDebugManager");
-    UnrealClassRegistrar::registerActorClass<ASpInitializeWorldManager>("ASpInitializeWorldManager");
     UnrealClassRegistrar::registerActorClass<ASpHitEventManager>("ASpHitEventManager");
+    UnrealClassRegistrar::registerActorClass<ASpInitializeWorldManager>("ASpInitializeWorldManager");
+    UnrealClassRegistrar::registerActorClass<ASpMessageQueueManager>("ASpMessageQueueManager");
     UnrealClassRegistrar::registerComponentClass<USpSceneCaptureComponent2D>("USpSceneCaptureComponent2D");
 }
 
@@ -48,13 +50,11 @@ void SpComponents::unregisterClasses()
 {
     // SpComponents classes
     UnrealClassRegistrar::unregisterActorClass<ASpDebugManager>("ASpDebugManager");
-    UnrealClassRegistrar::unregisterActorClass<ASpInitializeWorldManager>("ASpInitializeWorldManager");
     UnrealClassRegistrar::unregisterActorClass<ASpHitEventManager>("ASpHitEventManager");
+    UnrealClassRegistrar::unregisterActorClass<ASpInitializeWorldManager>("ASpInitializeWorldManager");
+    UnrealClassRegistrar::unregisterActorClass<ASpMessageQueueManager>("ASpMessageQueueManager");
     UnrealClassRegistrar::unregisterComponentClass<USpSceneCaptureComponent2D>("USpSceneCaptureComponent2D");
 }
 
-// use if module does not implement any Unreal classes
-// IMPLEMENT_MODULE(SpComponents, SpComponents);
-
-// use if module implements any Unreal classes
+// use IMPLEMENT_GAME_MODULE if module implements Unreal classes, use IMPLEMENT_MODULE otherwise
 IMPLEMENT_GAME_MODULE(SpComponents, SpComponents);

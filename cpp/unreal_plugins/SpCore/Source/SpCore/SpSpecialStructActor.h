@@ -19,7 +19,7 @@ class ASpSpecialStructActor : public AActor
     GENERATED_BODY()
 public:
     ASpSpecialStructActor() { SP_LOG_CURRENT_FUNCTION(); }
-    ~ASpSpecialStructActor() { SP_LOG_CURRENT_FUNCTION(); }
+    ~ASpSpecialStructActor() override { SP_LOG_CURRENT_FUNCTION(); }
 
 private:
 

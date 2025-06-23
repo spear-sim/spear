@@ -9,6 +9,7 @@
 
 #include <GenericPlatform/GenericPlatformMisc.h>
 #include <HAL/Platform.h> // TEXT
+#include <Modules/ModuleManager.h>
 
 #include "SpCore/Boost.h"
 
@@ -23,7 +24,7 @@
 
 #if BOOST_COMP_MSVC
     #define SP_ASSERT_MODULE_LOADED_IMPL(module_name, current_file, current_line) \
-        if (!FModuleManager::Get().IsModuleLoaded(FName(TEXT(module_name)))) {                                                             \
+        if (!FModuleManager::Get().IsModuleLoaded(module_name)) {                                                                          \
             std::cout <<                                                                                                                   \
                 "[SPEAR | " + std::filesystem::path(current_file).filename().string() + ":" + std::format("{:04}", current_line) + "] " << \
                 "ERROR: \"" << module_name << "\" module not loaded, terminating..." << std::endl;                                         \
@@ -32,7 +33,7 @@
         }
 #elif BOOST_COMP_CLANG
     #define SP_ASSERT_MODULE_LOADED_IMPL(module_name, current_file, current_line) \
-        if (!FModuleManager::Get().IsModuleLoaded(FName(TEXT(module_name)))) {                                                                     \
+        if (!FModuleManager::Get().IsModuleLoaded(module_name)) {                                                                                  \
             std::cout <<                                                                                                                           \
                 "[SPEAR | " + std::filesystem::path(current_file).filename().string() + ":" + (boost::format("%04d")%current_line).str() + "] " << \
                 "ERROR: \"" << module_name << "\" module not loaded, terminating..." << std::endl;                                                 \

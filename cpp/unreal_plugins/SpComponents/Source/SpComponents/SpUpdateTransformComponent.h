@@ -23,7 +23,7 @@ class SPCOMPONENTS_API USpUpdateTransformComponent : public UActorComponent
     GENERATED_BODY()
 public:
     USpUpdateTransformComponent();
-    ~USpUpdateTransformComponent();
+    ~USpUpdateTransformComponent() override;
 
     // UActorComponent interface
     void BeginPlay() override;

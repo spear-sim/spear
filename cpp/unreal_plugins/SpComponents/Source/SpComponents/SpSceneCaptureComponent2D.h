@@ -27,7 +27,7 @@ class SPCOMPONENTS_API USpSceneCaptureComponent2D : public USceneCaptureComponen
     GENERATED_BODY()
 public:
     USpSceneCaptureComponent2D();
-    ~USpSceneCaptureComponent2D();
+    ~USpSceneCaptureComponent2D() override;
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void Initialize();

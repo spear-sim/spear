@@ -58,7 +58,7 @@ struct FSpInputActionInstance : public FInputActionInstance
 class EnhancedInputService : public Service {
 public:
     EnhancedInputService() = delete;
-    EnhancedInputService(CUnrealEntryPointBinder auto* unreal_entry_point_binder)
+    EnhancedInputService(CUnrealEntryPointBinder auto* unreal_entry_point_binder) : Service("EnhancedInputService")
     {
         SP_ASSERT(unreal_entry_point_binder);
 
@@ -180,8 +180,6 @@ public:
                 }
             });
     }
-
-    ~EnhancedInputService() = default;
 
 private:
     UEnhancedInputComponent* getEnhancedInputComponent(uint64_t& actor)

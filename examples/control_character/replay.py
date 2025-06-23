@@ -39,6 +39,7 @@ if __name__ == "__main__":
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
     spear.configure_system(config)
     instance = spear.Instance(config)
+    game = instance.get_game()
 
     with instance.begin_frame():
 
@@ -48,24 +49,24 @@ if __name__ == "__main__":
         # time using the UnrealClassRegistrar system in our C++ code.
 
         # find functions
-        actor_uclass = instance.unreal_service.load_object(class_name="UClass", outer=0, name="/Script/Engine.Actor")
-        set_actor_transform_func = instance.unreal_service.find_function_by_name(uclass=actor_uclass, function_name="K2_SetActorTransform")
+        actor_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/Script/Engine.Actor")
+        set_actor_transform_func = game.unreal_service.find_function_by_name(uclass=actor_uclass, function_name="K2_SetActorTransform")
 
-        gameplay_statics_uclass = instance.unreal_service.load_object(class_name="UClass", outer=0, name="/Script/Engine.GameplayStatics")
-        set_game_paused_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_uclass, function_name="SetGamePaused")
+        gameplay_statics_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/Script/Engine.GameplayStatics")
+        set_game_paused_func = game.unreal_service.find_function_by_name(uclass=gameplay_statics_uclass, function_name="SetGamePaused")
 
-        poseable_mesh_component_uclass = instance.unreal_service.load_object(class_name="UClass", outer=0, name="/Script/Engine.PoseableMeshComponent")
-        get_bone_name_func = instance.unreal_service.find_function_by_name(uclass=poseable_mesh_component_uclass, function_name="GetBoneName")
-        get_num_bones_func = instance.unreal_service.find_function_by_name(uclass=poseable_mesh_component_uclass, function_name="GetNumBones")
-        set_bone_transform_by_name_func = instance.unreal_service.find_function_by_name(uclass=poseable_mesh_component_uclass, function_name="SetBoneTransformByName")
-        set_skinned_asset_and_update_func = instance.unreal_service.find_function_by_name(uclass=poseable_mesh_component_uclass, function_name="SetSkinnedAssetAndUpdate")
+        poseable_mesh_component_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/Script/Engine.PoseableMeshComponent")
+        get_bone_name_func = game.unreal_service.find_function_by_name(uclass=poseable_mesh_component_uclass, function_name="GetBoneName")
+        get_num_bones_func = game.unreal_service.find_function_by_name(uclass=poseable_mesh_component_uclass, function_name="GetNumBones")
+        set_bone_transform_by_name_func = game.unreal_service.find_function_by_name(uclass=poseable_mesh_component_uclass, function_name="SetBoneTransformByName")
+        set_skinned_asset_and_update_func = game.unreal_service.find_function_by_name(uclass=poseable_mesh_component_uclass, function_name="SetSkinnedAssetAndUpdate")
 
         # get UGameplayStatics default object
-        gameplay_statics_default_object = instance.unreal_service.get_default_object(uclass=gameplay_statics_uclass, create_if_needed=False)
+        gameplay_statics_default_object = game.unreal_service.get_default_object(uclass=gameplay_statics_uclass, create_if_needed=False)
 
         # load classes and objects
-        actor_uclass = instance.unreal_service.load_object(class_name="UClass", outer=0, name="/Script/Engine.Actor")
-        manny_simple_uobject = instance.unreal_service.load_object(class_name="UObject", outer=0, name="/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple")
+        actor_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/Script/Engine.Actor")
+        manny_simple_uobject = game.unreal_service.load_object(class_name="UObject", outer=0, name="/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple")
 
         characters = []
         for character_desc in character_descs:
@@ -77,26 +78,26 @@ if __name__ == "__main__":
 
             # there is no point specifying a location and rotation yet, because the spawned actor won't have a
             # root scene component, so we will need to set its location later
-            character["actor"] = instance.unreal_service.spawn_actor_from_class(
+            character["actor"] = game.unreal_service.spawn_actor_from_class(
                 uclass=actor_uclass,
                 spawn_parameters={"Name": character_desc["name"], "SpawnCollisionHandlingOverride": "AlwaysSpawn"})
 
             # create UPoseableMeshComponent and setup skeletal mesh
-            character["poseable_mesh_component"] = instance.unreal_service.create_scene_component_by_class_from_actor(
+            character["poseable_mesh_component"] = game.unreal_service.create_scene_component_by_class_from_actor(
                 scene_component_class=poseable_mesh_component_uclass,
                 owner=character["actor"],
                 scene_component_name="poseable_mesh_component")
-            instance.unreal_service.call_function(
+            game.unreal_service.call_function(
                 uobject=character["poseable_mesh_component"],
                 ufunction=set_skinned_asset_and_update_func,
                 args={"NewMesh": spear.to_ptr(handle=manny_simple_uobject)})
 
             # get bone names
             character["bone_names"] = []
-            return_values = instance.unreal_service.call_function(uobject=character["poseable_mesh_component"], ufunction=get_num_bones_func)
+            return_values = game.unreal_service.call_function(uobject=character["poseable_mesh_component"], ufunction=get_num_bones_func)
             poseable_mesh_component_num_bones = return_values["ReturnValue"]
             for i in range(poseable_mesh_component_num_bones):
-                return_values = instance.unreal_service.call_function(
+                return_values = game.unreal_service.call_function(
                     uobject=character["poseable_mesh_component"],
                     ufunction=get_bone_name_func,
                     args={"BoneIndex": i})
@@ -134,11 +135,11 @@ if __name__ == "__main__":
                     root_transform = bone_transforms["root"]
                 elif "Root" in bone_transforms.keys():
                     root_transform = bone_transforms["Root"]
-                instance.unreal_service.call_function(uobject=character["actor"], ufunction=set_actor_transform_func, args={"NewTransform": root_transform})
+                game.unreal_service.call_function(uobject=character["actor"], ufunction=set_actor_transform_func, args={"NewTransform": root_transform})
 
                 # set bone transforms
                 for bone_name, transform in bone_transforms.items():
-                    result = instance.unreal_service.call_function(
+                    result = game.unreal_service.call_function(
                         uobject=character["poseable_mesh_component"],
                         ufunction=set_bone_transform_by_name_func,
                         args={"BoneName": bone_name, "InTransform": transform, "BoneSpace": "WorldSpace"})

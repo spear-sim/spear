@@ -19,33 +19,34 @@ if __name__ == "__main__":
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
+    game = instance.get_game()
 
     # initialize actors and components
     with instance.begin_frame():
 
         # find functions
-        gameplay_statics_static_class = instance.unreal_service.get_static_class(class_name="UGameplayStatics")
-        set_game_paused_func = instance.unreal_service.find_function_by_name(uclass=gameplay_statics_static_class, function_name="SetGamePaused")
+        gameplay_statics_static_class = game.unreal_service.get_static_class(class_name="UGameplayStatics")
+        set_game_paused_func = game.unreal_service.find_function_by_name(uclass=gameplay_statics_static_class, function_name="SetGamePaused")
 
-        scene_component_static_class = instance.unreal_service.get_static_class(class_name="USceneComponent")
-        add_relative_rotation_func = instance.unreal_service.find_function_by_name(uclass=scene_component_static_class, function_name="K2_AddRelativeRotation")
-        get_component_rotation_func = instance.unreal_service.find_function_by_name(uclass=scene_component_static_class, function_name="K2_GetComponentRotation")
+        scene_component_static_class = game.unreal_service.get_static_class(class_name="USceneComponent")
+        add_relative_rotation_func = game.unreal_service.find_function_by_name(uclass=scene_component_static_class, function_name="K2_AddRelativeRotation")
+        get_component_rotation_func = game.unreal_service.find_function_by_name(uclass=scene_component_static_class, function_name="K2_GetComponentRotation")
 
-        primitive_component_static_class = instance.unreal_service.get_static_class(class_name="UPrimitiveComponent")
-        add_force_func = instance.unreal_service.find_function_by_name(uclass=primitive_component_static_class, function_name="AddForce")
+        primitive_component_static_class = game.unreal_service.get_static_class(class_name="UPrimitiveComponent")
+        add_force_func = game.unreal_service.find_function_by_name(uclass=primitive_component_static_class, function_name="AddForce")
 
-        sp_scene_capture_component_2d_static_class = instance.unreal_service.get_static_class(class_name="USpSceneCaptureComponent2D")
-        initialize_func = instance.unreal_service.find_function_by_name(uclass=sp_scene_capture_component_2d_static_class, function_name="Initialize")
-        terminate_func = instance.unreal_service.find_function_by_name(uclass=sp_scene_capture_component_2d_static_class, function_name="Terminate")
+        sp_scene_capture_component_2d_static_class = game.unreal_service.get_static_class(class_name="USpSceneCaptureComponent2D")
+        initialize_func = game.unreal_service.find_function_by_name(uclass=sp_scene_capture_component_2d_static_class, function_name="Initialize")
+        terminate_func = game.unreal_service.find_function_by_name(uclass=sp_scene_capture_component_2d_static_class, function_name="Terminate")
 
         # get UGameplayStatics default object
-        gameplay_statics = instance.unreal_service.get_default_object(uclass=gameplay_statics_static_class, create_if_needed=False)
+        gameplay_statics = game.unreal_service.get_default_object(uclass=gameplay_statics_static_class, create_if_needed=False)
 
         # spawn object and get components
-        bp_sphere_agent_uclass = instance.unreal_service.load_object(class_name="UClass", outer=0, name="/SpComponents/Blueprints/BP_Sphere_Agent.BP_Sphere_Agent_C")
-        bp_sphere_agent_actor = instance.unreal_service.spawn_actor_from_class(uclass=bp_sphere_agent_uclass, location={"X": -10.0, "Y": 280.0, "Z": 150.0})
-        root_component = instance.unreal_service.get_component_by_name(class_name="USceneComponent", actor=bp_sphere_agent_actor, component_name="DefaultSceneRoot")        
-        final_tone_curve_hdr_component = instance.unreal_service.get_component_by_name(class_name="USceneComponent", actor=bp_sphere_agent_actor, component_name="DefaultSceneRoot.final_tone_curve_hdr_")
+        bp_sphere_agent_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/SpComponents/Blueprints/BP_Sphere_Agent.BP_Sphere_Agent_C")
+        bp_sphere_agent_actor = game.unreal_service.spawn_actor_from_class(uclass=bp_sphere_agent_uclass, location={"X": -10.0, "Y": 280.0, "Z": 150.0})
+        root_component = game.unreal_service.get_component_by_name(class_name="USceneComponent", actor=bp_sphere_agent_actor, component_name="DefaultSceneRoot")        
+        final_tone_curve_hdr_component = game.unreal_service.get_component_by_name(class_name="USceneComponent", actor=bp_sphere_agent_actor, component_name="DefaultSceneRoot.final_tone_curve_hdr")
 
         #
         # We get the sphere component "by path" (instead of "by name") because this particular component gets
@@ -62,14 +63,14 @@ if __name__ == "__main__":
         # readability.
         #
 
-        sphere_component = instance.unreal_service.get_component_by_path(class_name="USceneComponent", actor=bp_sphere_agent_actor, component_path="DefaultSceneRoot.sphere_")
+        sphere_component = game.unreal_service.get_component_by_path(class_name="USceneComponent", actor=bp_sphere_agent_actor, component_path="DefaultSceneRoot.sphere_")
 
         # initialize final_tone_curve_hdr_component and get handles to its shared memory
-        instance.unreal_service.call_function(uobject=final_tone_curve_hdr_component, ufunction=initialize_func)
+        game.unreal_service.call_function(uobject=final_tone_curve_hdr_component, ufunction=initialize_func)
         final_tone_curve_hdr_component_shared_memory_handles = instance.sp_func_service.create_shared_memory_handles_for_object(uobject=final_tone_curve_hdr_component)
 
         # show FPS
-        instance.unreal_service.execute_console_command("stat fps")
+        game.unreal_service.execute_console_command("stat fps")
 
     with instance.end_frame():
         pass
@@ -81,17 +82,17 @@ if __name__ == "__main__":
         with instance.begin_frame():
 
             # unpause
-            instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": False})
+            game.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": False})
 
             # add rotation
-            instance.unreal_service.call_function(uobject=root_component, ufunction=add_relative_rotation_func, args={"DeltaRotation": {"Pitch": 0.0, "Yaw": 1.0, "Roll": 0.0}})
+            game.unreal_service.call_function(uobject=root_component, ufunction=add_relative_rotation_func, args={"DeltaRotation": {"Pitch": 0.0, "Yaw": 1.0, "Roll": 0.0}})
 
             # add force
-            return_values = instance.unreal_service.call_function(uobject=root_component, ufunction=get_component_rotation_func)
+            return_values = game.unreal_service.call_function(uobject=root_component, ufunction=get_component_rotation_func)
             M_world_from_component = spear.to_matrix_from_rotator(rotator=return_values["ReturnValue"])
             force_component = np.matrix([1000.0, 0.0, 0.0]).T
             force_world = M_world_from_component*force_component
-            instance.unreal_service.call_function(uobject=sphere_component, ufunction=add_force_func, args={"Force": spear.to_vector_from_array(array=force_world)})
+            game.unreal_service.call_function(uobject=sphere_component, ufunction=add_force_func, args={"Force": spear.to_vector_from_array(array=force_world)})
 
         # get observation
         with instance.end_frame():
@@ -103,7 +104,7 @@ if __name__ == "__main__":
                 uobject_shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
 
             # pause
-            instance.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": True})
+            game.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": True})
 
         # show image in an OpenCV window
         cv2.imshow("final_tone_curve_hdr", return_values["arrays"]["data"])
@@ -114,8 +115,8 @@ if __name__ == "__main__":
         pass
     with instance.end_frame():
         instance.sp_func_service.destroy_shared_memory_handles_for_object(shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
-        instance.unreal_service.call_function(uobject=final_tone_curve_hdr_component, ufunction=terminate_func)
-        instance.unreal_service.destroy_actor(actor=bp_sphere_agent_actor)
+        game.unreal_service.call_function(uobject=final_tone_curve_hdr_component, ufunction=terminate_func)
+        game.unreal_service.destroy_actor(actor=bp_sphere_agent_actor)
 
     # close OpenCV window
     cv2.destroyAllWindows()

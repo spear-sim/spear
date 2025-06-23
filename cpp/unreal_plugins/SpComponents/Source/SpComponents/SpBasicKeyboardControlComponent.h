@@ -23,7 +23,7 @@ class SPCOMPONENTS_API USpBasicKeyboardControlComponent : public USceneComponent
     GENERATED_BODY()
 public:
     USpBasicKeyboardControlComponent();
-    ~USpBasicKeyboardControlComponent();
+    ~USpBasicKeyboardControlComponent() override;
 
     // UActorComponent interface
     void BeginPlay() override;

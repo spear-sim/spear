@@ -38,15 +38,16 @@ if __name__ == "__main__":
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
     spear.configure_system(config=config)
     spear_instance = spear.Instance(config=config)
+    spear_game = spear_instance.get_game()
 
     # get Unreal actors and functions
     with spear_instance.begin_frame():
 
-        unreal_actors = spear_instance.unreal_service.find_actors_as_dict()
+        unreal_actors = spear_game.unreal_service.find_actors_as_dict()
         unreal_actors = { unreal_actor_name: unreal_actor for unreal_actor_name, unreal_actor in unreal_actors.items() if unreal_actor_name.startswith(name_prefix) }
 
-        unreal_actor_static_class = spear_instance.unreal_service.get_static_class(class_name="AActor")
-        unreal_set_actor_location_and_rotation_func = spear_instance.unreal_service.find_function_by_name(
+        unreal_actor_static_class = spear_game.unreal_service.get_static_class(class_name="AActor")
+        unreal_set_actor_location_and_rotation_func = spear_game.unreal_service.find_function_by_name(
             uclass=unreal_actor_static_class, function_name="K2_SetActorLocationAndRotation")
 
     with spear_instance.end_frame():
@@ -97,7 +98,7 @@ if __name__ == "__main__":
                     "NewRotation": dict(zip(["Pitch", "Yaw", "Roll"], unreal_pyr_from_mujoco_quaternion(mj_bodies_xquat[unreal_actor_name + ":StaticMeshComponent0"]))),
                     "bSweep":      False,
                     "bTeleport":   True}
-                spear_instance.unreal_service.call_function(uobject=unreal_actor, ufunction=unreal_set_actor_location_and_rotation_func, args=args)
+                spear_game.unreal_service.call_function(uobject=unreal_actor, ufunction=unreal_set_actor_location_and_rotation_func, args=args)
 
         with spear_instance.end_frame():
             pass

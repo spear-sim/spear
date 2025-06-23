@@ -9,6 +9,20 @@ import scipy
 import spear
 
 
+# The Ptr and Shared classes are for internal use, and do not need to be instantiated directly by most users.
+class Ptr:
+    def __init__(self, handle):
+        self._handle = handle
+
+    def to_string(self):
+        return f"{self._handle:#0{18}x}"
+
+class Shared:
+    def __init__(self, array, shared_memory_handle):
+        self.array = array
+        self.shared_memory_handle = shared_memory_handle
+
+
 # Convert a collection of objects to a collection of JSON strings so they can be passed to a service.
 def to_json_strings(objs):
     if isinstance(objs, list):
@@ -22,7 +36,7 @@ def to_json_strings(objs):
 def to_json_string(obj, stringify=True):
     if isinstance(obj, str):
         return obj
-    elif isinstance(obj, spear.Ptr):
+    elif isinstance(obj, Ptr):
         return obj.to_string()
     elif isinstance(obj, numbers.Number) or isinstance(obj, list) or isinstance(obj, dict):
         if stringify:
@@ -67,7 +81,7 @@ def try_to_dict(json_string, default_value=None):
             return default_value
 
 
-# Convert a handle into a spear.Ptr object that can be passed to a service.
+# Convert a handle into a Ptr object that can be passed to a service.
 def to_ptr(handle):
     return Ptr(handle)
 
@@ -77,7 +91,7 @@ def to_handle(string):
     return int(string, 16)
 
 
-# Convert a NumPy array backed by shared memory to a spear.Shared object that can be passed to a service.
+# Convert a NumPy array backed by shared memory to a Shared object that can be passed to a service.
 def to_shared(array, shared_memory_handle):
     return Shared(array, shared_memory_handle)
 
@@ -101,7 +115,7 @@ def to_packed_array(array, byte_order=None, usage_flags=None):
             "shape": array.shape,
             "data_type": array.dtype.str.replace("<", "").replace(">", "").replace("|", ""),
             "shared_memory_name": ""}
-    elif isinstance(array, spear.Shared):
+    elif isinstance(array, Shared):
         assert usage_flags is not None
         assert set(usage_flags) <= set(array.shared_memory_handle["view"]["usage_flags"])
         return {
@@ -158,18 +172,3 @@ def to_vector_from_array(array):
     else:
         assert False
     return {"X": array[0], "Y": array[1], "Z": array[2]}
-
-
-# The Ptr and Shared classes are for internal use, and do not need to be instantiated directly by most users.
-
-class Ptr:
-    def __init__(self, handle):
-        self._handle = handle
-
-    def to_string(self):
-        return f"{self._handle:#0{18}x}"
-
-class Shared:
-    def __init__(self, array, shared_memory_handle):
-        self.array = array
-        self.shared_memory_handle = shared_memory_handle

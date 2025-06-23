@@ -53,6 +53,10 @@ extern SPCORE_API FuncRegistrar<USubsystem*>                   g_get_engine_subs
 extern SPCORE_API FuncRegistrar<USubsystem*, UWorld*>          g_get_subsystem_by_type_func_registrar;
 extern SPCORE_API FuncRegistrar<USubsystem*, UWorld*, UClass*> g_get_subsystem_by_class_func_registrar;
 
+#if WITH_EDITOR // defined in an auto-generated header
+    extern SPCORE_API FuncRegistrar<USubsystem*> g_get_editor_subsystem_by_type_func_registrar;
+#endif
+
 //
 // Registrars for getting a static class or static struct using a class name instead of template parameters
 //
@@ -189,6 +193,14 @@ public:
     //
 
     static USubsystem* getEngineSubsystemByType(const std::string& class_name);
+
+    //
+    // Get engine subsystem using a class name instead of template parameters
+    //
+
+#if WITH_EDITOR // defined in an auto-generated header
+    static USubsystem* getEditorSubsystemByType(const std::string& class_name);
+#endif
 
     //
     // Get subsystem using a class name instead of template parameters
@@ -359,6 +371,23 @@ public:
                 return Unreal::getEngineSubsystemByType<TSubsystem>();
             });
     }
+
+    //
+    // Register editor subsystem class
+    //
+
+#if WITH_EDITOR // defined in an auto-generated header
+    template <CSubsystem TSubsystem>
+    static void registerEditorSubsystemClass(const std::string& class_name)
+    {
+        registerClassCommon<TSubsystem>(class_name);
+
+        g_get_editor_subsystem_by_type_func_registrar.registerFunc(
+            class_name, []() -> USubsystem* {
+                return Unreal::getEditorSubsystemByType<TSubsystem>();
+            });
+    }
+#endif
 
     //
     // Register subsystem provider class
@@ -883,6 +912,16 @@ public:
 
         g_get_engine_subsystem_by_type_func_registrar.unregisterFunc(class_name);
     }
+
+#if WITH_EDITOR // defined in an auto-generated header
+    template <CSubsystem TSubsystem>
+    static void unregisterEditorSubsystemClass(const std::string& class_name)
+    {
+        unregisterClassCommon<TSubsystem>(class_name);
+
+        g_get_editor_subsystem_by_type_func_registrar.unregisterFunc(class_name);
+    }
+#endif
 
     template <CSubsystemProvider TSubsystemProvider>
     static void unregisterSubsystemProviderClass(const std::string& class_name)

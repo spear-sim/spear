@@ -40,6 +40,8 @@ examples/*/user_config.yaml
 
 examples/control_character/character_poses
 
+examples/control_editor/screenshot.png
+
 examples/import_stanford_dataset/csv
 examples/import_stanford_dataset/download
 examples/import_stanford_dataset/gltf
@@ -49,6 +51,8 @@ examples/import_stanford_dataset/stanford
 
 examples/render_dataset/camera_poses
 examples/render_dataset/images
+
+examples/render_grid/images
 
 examples/render_image_editor/screenshot.png
 

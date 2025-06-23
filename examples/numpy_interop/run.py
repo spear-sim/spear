@@ -15,6 +15,7 @@ if __name__ == "__main__":
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
+    game = instance.get_game()
 
     with instance.begin_frame():
 
@@ -27,8 +28,8 @@ if __name__ == "__main__":
 
         # Get the default ASpDebugManager object. In this example, we're calling a custom function on an
         # Unreal actor, but we can use the same interface to call custom functions on Unreal components.
-        sp_debug_manager_static_class = instance.unreal_service.get_static_class(class_name="ASpDebugManager")
-        sp_debug_manager_default_object = instance.unreal_service.get_default_object(uclass=sp_debug_manager_static_class, create_if_needed=False)
+        sp_debug_manager_static_class = game.unreal_service.get_static_class(class_name="ASpDebugManager")
+        sp_debug_manager_default_object = game.unreal_service.get_default_object(uclass=sp_debug_manager_static_class, create_if_needed=False)
 
         # Create handles to any shared memory regions created by the Unreal object. instance.sp_func_service.call_function(...)
         # will use these handles internally to access data returned via shared memory.

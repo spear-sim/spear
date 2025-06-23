@@ -13,25 +13,88 @@
 #include <vector>
 
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
+#include <Engine/Engine.h>               // GEngine
 #include <Engine/World.h>                // UWorld::InitializationValues
 
+#include "SpCore/Assert.h"
+#include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/SpArray.h"
+#include "SpCore/Unreal.h"
 
-class Service {
+class SPSERVICES_API Service {
 public:
-    Service();
+
+    class WorldFilter {
+    public:
+        WorldFilter() = default;
+        virtual ~WorldFilter() = default;
+
+        virtual std::string getName() const = 0;
+        virtual bool isValid(UWorld* world) const = 0;
+    };
+
+    class EditorWorldFilter : public WorldFilter {
+    public:
+        EditorWorldFilter() = default;
+        ~EditorWorldFilter() override = default;
+
+    private:
+        std::string getName() const
+        {
+            return "editor";
+        }
+
+        bool isValid(UWorld* world) const override
+        {
+            SP_ASSERT(GEngine);
+            SP_ASSERT(world);
+            return world->IsEditorWorld() && !world->IsGameWorld() && !world->IsPreviewWorld() && GEngine->GetWorldContextFromWorld(world);
+        }
+    };
+
+    class GameWorldFilter : public WorldFilter {
+    public:
+        GameWorldFilter() = default;
+        ~GameWorldFilter() override = default;
+
+    private:
+        std::string getName() const
+        {
+            return "game";
+        }
+
+        bool isValid(UWorld* world) const override
+        {
+            SP_ASSERT(GEngine);
+            SP_ASSERT(world);
+            return world->IsGameWorld() && !world->IsPreviewWorld() && GEngine->GetWorldContextFromWorld(world);
+        }
+    };
+
+    Service() = delete;
+    Service(std::string name);
+    Service(std::string name, WorldFilter* world_filter);
     virtual ~Service();
 
 protected:
     virtual void postWorldInitialization(UWorld* world, const UWorld::InitializationValues initialization_values);
     virtual void worldCleanup(UWorld* world, bool session_ended, bool cleanup_resources);
     virtual void worldBeginPlay();
+    virtual void beginFrame();
+    virtual void endFrame();
 
-    virtual void beginFrame() {}
-    virtual void endFrame() {}
+    UWorld* getWorld() const
+    {
+        SP_ASSERT(world_);
+        return world_;
+    };
 
-    UWorld* getWorld();
+    std::string getWorldTypeName() const
+    {
+        SP_ASSERT(world_filter_);
+        return world_filter_->getName();
+    };
 
     template <typename TValue>
     static uint64_t toUInt64(const TValue* src)
@@ -108,6 +171,9 @@ private:
     void worldBeginPlayHandler();
     void beginFrameHandler();
     void endFrameHandler();
+
+    std::string name_;
+    WorldFilter* world_filter_ = nullptr;
 
     FDelegateHandle post_world_initialization_handle_;
     FDelegateHandle world_cleanup_handle_;

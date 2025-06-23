@@ -252,7 +252,7 @@ class ASpInitializeWorldManager : public AActor
     GENERATED_BODY()
 public: 
     ASpInitializeWorldManager();
-    ~ASpInitializeWorldManager();
+    ~ASpInitializeWorldManager() override;
 
     // AActor interface
     void BeginPlay() override;

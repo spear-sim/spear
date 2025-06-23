@@ -11,10 +11,9 @@
 
 #include <boost/predef.h> // BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
 
-#include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Engine/Engine.h>               // GEngine
 #include <Engine/GameViewportClient.h>
-#include <Engine/World.h>                // FWorldDelegates, FActorSpawnParameters
+#include <Engine/World.h>                // FWorldDelegates
 #include <UObject/ObjectMacros.h>        // UENUM
 
 #include "SpCore/Assert.h"
@@ -27,8 +26,6 @@
 #include "SpServices/WorkQueue.h"
 
 #include "EngineService.generated.h"
-
-class UGameInstance;
 
 UENUM()
 enum class EFrameState
@@ -46,15 +43,15 @@ template <CEntryPointBinder TEntryPointBinder>
 class EngineService : public Service {
 public:
     EngineService() = delete;
-    EngineService(TEntryPointBinder* entry_point_binder)
+    EngineService(TEntryPointBinder* entry_point_binder) : Service("EngineService")
     {
         SP_ASSERT(entry_point_binder);
 
         entry_point_binder_ = entry_point_binder;
 
-        #if WITH_EDITOR
-            pie_started_handle_ = FWorldDelegates::OnPIEStarted.AddRaw(this, &EngineService::PIEStartedHandler);
-        #endif
+        //
+        // Entry points for managing the frame state.
+        //
 
         bindFuncToExecuteOnWorkerThread("engine_service", "begin_frame", [this]() -> void {
 
@@ -140,8 +137,20 @@ public:
                 "frame_state_: %s", Unreal::getStringFromEnumValue(frame_state).c_str());
         });
 
-        bindFuncToExecuteOnWorkerThread("engine_service", "is_initialized", [this]() -> bool {
-            return initialized_;
+        // Miscellaneous low-level entry points.
+
+        bindFuncToExecuteOnWorkerThread("engine_service", "ping", []() -> std::string {
+            return "ping";
+        });
+
+        bindFuncToExecuteOnWorkerThread("engine_service", "initialize", [this]() -> void {
+            std::lock_guard<std::mutex> lock(frame_state_mutex_);
+
+            SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::Error,
+                "frame_state_: %s", Unreal::getStringFromEnumValue(frame_state_.load()).c_str());
+
+            work_queue_.initialize();
+            frame_state_ = EFrameState::Idle;
         });
 
         bindFuncToExecuteOnWorkerThread("engine_service", "request_exit", []() -> void {
@@ -149,17 +158,8 @@ public:
             FGenericPlatformMisc::RequestExit(immediate_shutdown);
         });
 
-        // Entry points for miscellaneous functions that need to be accessed from multiple Python services.
-
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_byte_order", []() -> std::string {
-            SP_ASSERT(BOOST_ENDIAN_BIG_BYTE + BOOST_ENDIAN_LITTLE_BYTE == 1);
-            if (BOOST_ENDIAN_BIG_BYTE) {
-                return "big";
-            } else if (BOOST_ENDIAN_LITTLE_BYTE) {
-                return "little";
-            } else {
-                return "";
-            }
+        bindFuncToExecuteOnWorkerThread("engine_service", "with_editor", []() -> bool {
+            return WITH_EDITOR; // defined in an auto-generated header
         });
 
         // Entry points for miscellaneous functions that are accessible via GEngine.
@@ -171,15 +171,6 @@ public:
             GEngine->GameViewport->GetViewportSize(viewport_size); // GameViewport is a UPROPERTY but GetViewportSize(...) isn't a UFUNCTION
             return {viewport_size.X, viewport_size.Y};
         });
-    }
-
-    ~EngineService() override
-    {
-        #if WITH_EDITOR
-            FWorldDelegates::OnPIEStarted.Remove(pie_started_handle_);
-        #endif
-
-        pie_started_handle_.Reset();
     }
 
     void bindFuncToExecuteOnWorkerThread(const std::string& service_name, const std::string& func_name, const auto& func)
@@ -219,18 +210,6 @@ public:
     }
 
 protected:
-    void worldCleanup(UWorld* world, bool session_ended, bool cleanup_resources) override
-    {
-        initialized_ = false;
-        Service::worldCleanup(world, session_ended, cleanup_resources);
-    }
-
-    void worldBeginPlay() override
-    {
-        Service::worldBeginPlay();
-        initialized_ = true;
-    }
-
     void beginFrame() override
     {
         std::lock_guard<std::mutex> lock(frame_state_mutex_);
@@ -299,23 +278,6 @@ protected:
     }
 
 private:
-    #if WITH_EDITOR // defined in an auto-generated header
-        void PIEStartedHandler(UGameInstance* game_instance)
-        {
-            std::lock_guard<std::mutex> lock(frame_state_mutex_);
-
-            SP_LOG_CURRENT_FUNCTION();
-
-            // Reset error state if the user has just pressed play in the editor. We don't want to do this in
-            // the constructor, because that will only be called once per application lifetime. We also don't
-            // want to do this in worldBeginPlay(), because worldBeginPlay() will be called whenever a new
-            // map is loaded. This event handler will be called once per PIE session, which is exactly what
-            // we want.
-            work_queue_.initialize();
-            frame_state_ = EFrameState::Idle;
-        }
-    #endif
-
     template <typename TFunc>
     auto wrapFuncToExecuteInTryCatch(const std::string& long_func_name, const TFunc& func)
     {
@@ -362,13 +324,9 @@ private:
         };
     }
 
-    FDelegateHandle pie_started_handle_;
-
     TEntryPointBinder* entry_point_binder_ = nullptr;
 
     WorkQueue work_queue_;
-
-    std::atomic<bool> initialized_ = false;
     
     std::atomic<EFrameState> frame_state_ = EFrameState::Idle; // need std::atomic because not all frame_state_ reads are synchronized with frame_state_mutex_
     std::mutex frame_state_mutex_;                             // used to coordinate write-access to frame_state_

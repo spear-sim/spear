@@ -27,7 +27,7 @@ class SPCORE_API USpFuncComponent : public USceneComponent
     GENERATED_BODY()
 public:
     USpFuncComponent();
-    ~USpFuncComponent();
+    ~USpFuncComponent() override;
 
     // typically called by the owning actor or component to register/unregister an SpFunc
     void initialize();

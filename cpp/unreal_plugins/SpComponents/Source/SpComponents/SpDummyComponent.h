@@ -30,7 +30,7 @@ class SPCOMPONENTS_API USpDummyComponent : public USceneComponent
     GENERATED_BODY()
 public:
     USpDummyComponent();
-    ~USpDummyComponent();
+    ~USpDummyComponent() override;
 
     // UActorComponent interface
     void BeginPlay() override;

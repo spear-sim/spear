@@ -13,6 +13,9 @@
 #include <Components/PoseableMeshComponent.h>
 #include <Components/SkinnedMeshComponent.h> // EBoneSpaces
 #include <Components/StaticMeshComponent.h>
+#include <Containers/Array.h>
+#include <Containers/Map.h>
+#include <Containers/UnrealString.h>         // FString
 #include <Engine/StaticMeshActor.h>
 #include <Engine/World.h>                    // FActorSpawnParameters
 #include <GameFramework/Actor.h>

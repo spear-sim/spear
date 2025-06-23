@@ -35,6 +35,10 @@
 #include <UObject/UnrealType.h>             // FProperty
 #include <UObject/UObjectGlobals.h>         // NewObject
 
+#if WITH_EDITOR // defined in an auto-generated header
+    #include <Editor.h> // GEditor
+#endif
+
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
@@ -1007,8 +1011,8 @@ public:
     }
 
     //
-    // Helper functions for getting subsystems, world can't be const because we need to return it directly
-    // in some specializations
+    // Helper functions for getting subsystems, world can't be const because we may need to return it
+    // directly in some specializations
     //
 
     template <CSubsystemProvider TSubsystemProvider>
@@ -1029,13 +1033,6 @@ public:
         return local_player;
     }
 
-    template <>
-    UWorld* getSubsystemProvider<UWorld>(UWorld* world)
-    {
-        SP_ASSERT(world);
-        return world;
-    }
-
     //
     // Get engine subsystem, uclass can't be const because we need to pass it to GetEngineSubsystemBase(...)
     //
@@ -1052,6 +1049,25 @@ public:
         SP_ASSERT(GEngine);
         return GEngine->GetEngineSubsystemBase(uclass);
     }
+
+    //
+    // Get editor subsystem, uclass can't be const because we need to pass it to GetEngineSubsystemBase(...)
+    //
+
+#if WITH_EDITOR // defined in an auto-generated header
+    template <CSubsystem TSubsystem>
+    static TSubsystem* getEditorSubsystemByType()
+    {
+        SP_ASSERT(GEditor);
+        return GEditor->GetEditorSubsystem<TSubsystem>();
+    }
+
+    static USubsystem* getEditorSubsystemByClass(UClass* uclass)
+    {
+        SP_ASSERT(GEditor);
+        return GEditor->GetEditorSubsystemBase(uclass);
+    }
+#endif
 
     //
     // Get subsystem, world can't be const because we need to return it directly in some specializations, and

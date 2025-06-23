@@ -19,6 +19,11 @@
             "Name": "SpServices",
             "Type": "Runtime",
             "LoadingPhase": "PostDefault"
+        },
+        {
+            "Name": "SpServicesEditor",
+            "Type": "Editor",
+            "LoadingPhase": "PostDefault"
         }
     ],
     "Plugins": [

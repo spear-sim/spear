@@ -25,10 +25,11 @@ class EngineService():
 
         # try calling begin_frame()
         try:
-            self._rpc_client.call("engine_service.begin_frame")
+            self._call("engine_service.begin_frame")
         except Exception as e:
             spear.log("Exception: ", e)
-            self._frame_state = "idle"
+            spear.log("We might or might not be in a critical section, but there is nothing we can do to get out of it from here, so we need to give up...")
+            self._frame_state = "error"
             raise e
 
         assert self._frame_state == "request_begin_frame"
@@ -40,8 +41,8 @@ class EngineService():
         except Exception as e:
             spear.log("Exception: ", e)
             spear.log("Attempting to exit critical section...")
-            self._rpc_client.call("engine_service.execute_frame")
-            self._rpc_client.call("engine_service.end_frame")
+            self._call("engine_service.execute_frame")
+            self._call("engine_service.end_frame")
             self._frame_state = "idle"
             raise e
 
@@ -57,7 +58,7 @@ class EngineService():
 
         # try executing execute_frame()
         try:
-            self._rpc_client.call("engine_service.execute_frame")
+            self._call("engine_service.execute_frame")
         except Exception as e:
             spear.log("Exception: ", e)
             spear.log("We're currently in a critical section, but there is nothing we can do to get out of it from here, so we need to give up...")
@@ -82,7 +83,7 @@ class EngineService():
 
         # try executing end_frame()
         try:
-            self._rpc_client.call("engine_service.end_frame")
+            self._call("engine_service.end_frame")
         except Exception as e:
             spear.log("Exception: ", e)
             spear.log("We're currently in a critical section, but there is nothing we can do to get out of it from here, so we need to give up...")
@@ -92,17 +93,29 @@ class EngineService():
         assert self._frame_state == "request_end_frame"
         self._frame_state = "idle"
 
+    #
+    # Call functions
+    #
 
-    # This function is called by all other services.
-    def call(self, entry_point_name, *args):
-        if self._frame_state == "finished_executing_begin_frame":
-            spear.log('ERROR: Calling SPEAR functions in between "with begin_frame()" and "with end_frame()" code blocks is not supported.')
-            spear.log("Attempting to exit critical section...")
-            self._rpc_client.call("engine_service.execute_frame")
-            self._rpc_client.call("engine_service.end_frame")
-            self._frame_state = "idle"
+    def call_on_game_thread(self, entry_point_name, *args):
+        if self._frame_state not in ["executing_begin_frame", "executing_end_frame"]:
+            spear.log('ERROR: Calling entry points that execute on the game thread is only allowed in "with begin_frame()" and "with end_frame()" code blocks.')
+            spear.log('ERROR: self._frame_state == "' + self._frame_state + '").')
+
+            if self._frame_state == "finished_executing_begin_frame":
+                spear.log("ERROR: Attempting to exit critical section...")
+                self._call("engine_service.execute_frame")
+                self._call("engine_service.end_frame")
+                self._frame_state = "idle"
+
             assert False
 
+        return self._call(entry_point_name, *args)
+
+    def call_on_worker_thread(self, entry_point_name, *args):
+        return self._call(entry_point_name, *args)
+
+    def _call(self, entry_point_name, *args):
         if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
             spear.log("Calling:               ", entry_point_name, args)
 
@@ -113,15 +126,21 @@ class EngineService():
 
         return return_value
 
-    # This function is used in Instance.is_running() to determine if there is a valid simulation running.
-    def is_initialized(self):
-        return self.call("engine_service.is_initialized")
+    # Miscellaneous low-level entry points.
 
-    # This function is used in Instance.close() to close the Unreal application.
+    def ping(self):
+        return self.call_on_worker_thread("engine_service.ping")
+
+    def initialize(self):
+        return self.call_on_worker_thread("engine_service.initialize")
+
     def request_exit(self):
-        return self.call("engine_service.request_exit")
+        return self.call_on_worker_thread("engine_service.request_exit")
+
+    def with_editor(self):
+        return self.call_on_worker_thread("engine_service.with_editor")
 
     # Entry points for miscellaneous functions that are accessible via GEngine.
 
     def get_viewport_size(self):
-        return self.call("engine_service.get_viewport_size")
+        return self.call_on_game_thread("engine_service.get_viewport_size")

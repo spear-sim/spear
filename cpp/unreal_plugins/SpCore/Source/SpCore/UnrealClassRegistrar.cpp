@@ -43,6 +43,10 @@ FuncRegistrar<USubsystem*>                   g_get_engine_subsystem_by_type_func
 FuncRegistrar<USubsystem*, UWorld*>          g_get_subsystem_by_type_func_registrar;
 FuncRegistrar<USubsystem*, UWorld*, UClass*> g_get_subsystem_by_class_func_registrar;
 
+#if WITH_EDITOR
+    FuncRegistrar<USubsystem*> g_get_editor_subsystem_by_type_func_registrar;
+#endif
+
 //
 // Registrars for getting static classes using a class name instead of template parameters
 //
@@ -175,6 +179,16 @@ std::map<std::string, UStruct*> g_special_structs;         // map from platform-
 USubsystem* UnrealClassRegistrar::getEngineSubsystemByType(const std::string& class_name) {
     return g_get_engine_subsystem_by_type_func_registrar.call(class_name);
 }
+
+//
+// Get editor subsystem using a class name instead of template parameters
+//
+
+#if WITH_EDITOR // defined in an auto-generated header
+    USubsystem* UnrealClassRegistrar::getEditorSubsystemByType(const std::string& class_name) {
+        return g_get_editor_subsystem_by_type_func_registrar.call(class_name);
+    }
+#endif
 
 //
 // Get subsystem using a class name instead of template parameters

@@ -30,12 +30,12 @@ public:
         PassIdentifier = FMoviePipelinePassIdentifier("Spear");
     }
 
-    ~USpMoviePipelineDeferredPass()
+    ~USpMoviePipelineDeferredPass() override
     {
         SP_LOG_CURRENT_FUNCTION();        
     }
 
-#if WITH_EDITOR
+#if WITH_EDITOR // defined in an auto-generated header
     FText GetDisplayText() const override
     {
         return Unreal::toFText("Deferred Rendering (Specular=0, MaterialAO=1)");

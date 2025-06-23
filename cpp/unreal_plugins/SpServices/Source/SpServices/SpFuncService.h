@@ -26,7 +26,7 @@
 class SpFuncService : public Service {
 public:
     SpFuncService() = delete;
-    SpFuncService(CUnrealEntryPointBinder auto* unreal_entry_point_binder, SharedMemoryService* shared_memory_service)
+    SpFuncService(CUnrealEntryPointBinder auto* unreal_entry_point_binder, SharedMemoryService* shared_memory_service) : Service("SpFuncService")
     {
         SP_ASSERT(unreal_entry_point_binder);
         SP_ASSERT(shared_memory_service);
@@ -57,8 +57,6 @@ public:
             return sp_func_component->getSharedMemoryViews();
         });
     }
-
-    ~SpFuncService() = default;
 
 private:
     static USpFuncComponent* getSpFuncComponent(const UObject* uobject)

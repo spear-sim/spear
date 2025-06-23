@@ -36,7 +36,7 @@ class ASpDebugManager : public AActor
     GENERATED_BODY()
 public: 
     ASpDebugManager();
-    ~ASpDebugManager();
+    ~ASpDebugManager() override;
 
     // AActor interface
     void PostInitProperties() override;

@@ -46,21 +46,23 @@ enum class ESpPathFindingMode
 class NavigationService : public Service {
 public:
     NavigationService() = delete;
-    NavigationService(CUnrealEntryPointBinder auto* unreal_entry_point_binder, SharedMemoryService* shared_memory_service)
+    NavigationService(CUnrealEntryPointBinder auto* unreal_entry_point_binder, SharedMemoryService* shared_memory_service, Service::WorldFilter* world_filter) : Service("NavigationService", world_filter)
     {
         SP_ASSERT(unreal_entry_point_binder);
         SP_ASSERT(shared_memory_service);
 
         shared_memory_service_ = shared_memory_service;
+        
+        std::string service_name = getWorldTypeName() + ".navigation_service";
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("navigation_service", "get_nav_data_for_agent_name", 
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_nav_data_for_agent_name", 
             [this](uint64_t& navigation_system, std::string& agent_name) -> uint64_t {
                 UNavigationSystemV1* navigation_system_ptr = toPtr<UNavigationSystemV1>(navigation_system);
                 SP_ASSERT(navigation_system_ptr);
                 return toUInt64(navigation_system_ptr->GetNavDataForAgentName(Unreal::toFName(agent_name)));
             });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("navigation_service", "get_random_points",
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_random_points",
             [this](
                 uint64_t& navigation_data,
                 int& num_points,
@@ -112,7 +114,7 @@ public:
                 return toPackedArray(std::move(points), {-1, 3}, out_array, shared_memory_views, SpArraySharedMemoryUsageFlags::Arg | SpArraySharedMemoryUsageFlags::ReturnValue);
             });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("navigation_service", "get_random_reachable_points_in_radius",
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_random_reachable_points_in_radius",
             [this](
                 uint64_t& navigation_data,
                 int& num_points,
@@ -193,7 +195,7 @@ public:
                 return toPackedArray(std::move(points), {-1, 3}, out_array, shared_memory_views, SpArraySharedMemoryUsageFlags::Arg | SpArraySharedMemoryUsageFlags::ReturnValue);
             });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("navigation_service", "find_paths",
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_paths",
             [this](
                 uint64_t& navigation_system,
                 uint64_t& navigation_data,
@@ -315,8 +317,6 @@ public:
                 return return_values;
             });
     }
-
-    ~NavigationService() override = default;
 
 private:
     SharedMemoryService* shared_memory_service_ = nullptr;

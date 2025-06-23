@@ -65,8 +65,8 @@ component_descs = \
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--paks_dir", required=True)
-    parser.add_argument("--version_tag", required=True)
+    parser.add_argument("--paks_dir")
+    parser.add_argument("--version_tag")
     args = parser.parse_args()
 
     if sys.platform == "win32":
@@ -109,27 +109,28 @@ if __name__ == "__main__":
 
         spear.configure_system(config=config)
         instance = spear.Instance(config=config)
+        game = instance.get_game()
 
         # initialize actors and components
         with instance.begin_frame():
 
             # find functions
-            actor_static_class = instance.unreal_service.get_static_class(class_name="AActor")
-            set_actor_location_func = instance.unreal_service.find_function_by_name(uclass=actor_static_class, function_name="K2_SetActorLocation")
-            set_actor_rotation_func = instance.unreal_service.find_function_by_name(uclass=actor_static_class, function_name="K2_SetActorRotation")
+            actor_static_class = game.unreal_service.get_static_class(class_name="AActor")
+            set_actor_location_func = game.unreal_service.find_function_by_name(uclass=actor_static_class, function_name="K2_SetActorLocation")
+            set_actor_rotation_func = game.unreal_service.find_function_by_name(uclass=actor_static_class, function_name="K2_SetActorRotation")
 
-            sp_scene_capture_component_2d_static_class = instance.unreal_service.get_static_class(class_name="USpSceneCaptureComponent2D")
-            initialize_func = instance.unreal_service.find_function_by_name(uclass=sp_scene_capture_component_2d_static_class, function_name="Initialize")
-            terminate_func = instance.unreal_service.find_function_by_name(uclass=sp_scene_capture_component_2d_static_class, function_name="Terminate")
+            sp_scene_capture_component_2d_static_class = game.unreal_service.get_static_class(class_name="USpSceneCaptureComponent2D")
+            initialize_func = game.unreal_service.find_function_by_name(uclass=sp_scene_capture_component_2d_static_class, function_name="Initialize")
+            terminate_func = game.unreal_service.find_function_by_name(uclass=sp_scene_capture_component_2d_static_class, function_name="Terminate")
 
             # spawn camera sensor and get the final_tone_curve_hdr component
-            bp_camera_sensor_uclass = instance.unreal_service.load_object(class_name="UClass", outer=0, name="/SpComponents/Blueprints/BP_Camera_Sensor.BP_Camera_Sensor_C")
-            bp_camera_sensor_actor = instance.unreal_service.spawn_actor_from_class(uclass=bp_camera_sensor_uclass)
+            bp_camera_sensor_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/SpComponents/Blueprints/BP_Camera_Sensor.BP_Camera_Sensor_C")
+            bp_camera_sensor_actor = game.unreal_service.spawn_actor_from_class(uclass=bp_camera_sensor_uclass)
 
             # initialize components and get handles to their shared memory
             for component_desc in component_descs:
-                component_desc["component"] = instance.unreal_service.get_component_by_name(class_name="USceneComponent", actor=bp_camera_sensor_actor, component_name=component_desc["long_name"])
-                instance.unreal_service.call_function(uobject=component_desc["component"], ufunction=initialize_func)
+                component_desc["component"] = game.unreal_service.get_component_by_name(class_name="USceneComponent", actor=bp_camera_sensor_actor, component_name=component_desc["long_name"])
+                game.unreal_service.call_function(uobject=component_desc["component"], ufunction=initialize_func)
                 component_desc["shared_memory_handles"] = instance.sp_func_service.create_shared_memory_handles_for_object(uobject=component_desc["component"])
 
         with instance.end_frame():
@@ -140,12 +141,12 @@ if __name__ == "__main__":
             with instance.begin_frame():
 
                 # set camera pose
-                instance.unreal_service.call_function(
+                game.unreal_service.call_function(
                     uobject=bp_camera_sensor_actor,
                     ufunction=set_actor_location_func,
                     args={"NewLocation": {"X": camera_pose["location_x"], "Y": camera_pose["location_y"], "Z": camera_pose["location_z"]}})
 
-                instance.unreal_service.call_function(
+                game.unreal_service.call_function(
                     uobject=bp_camera_sensor_actor,
                     ufunction=set_actor_rotation_func,
                     args={"NewRotation": {"Pitch": camera_pose["rotation_pitch"], "Yaw": camera_pose["rotation_yaw"], "Roll": camera_pose["rotation_roll"]}})
@@ -193,8 +194,8 @@ if __name__ == "__main__":
         with instance.end_frame():
             for component_desc in component_descs:
                 instance.sp_func_service.destroy_shared_memory_handles_for_object(shared_memory_handles=component_desc["shared_memory_handles"])
-                instance.unreal_service.call_function(uobject=component_desc["component"], ufunction=terminate_func)
-            instance.unreal_service.destroy_actor(actor=bp_camera_sensor_actor)
+                game.unreal_service.call_function(uobject=component_desc["component"], ufunction=terminate_func)
+            game.unreal_service.destroy_actor(actor=bp_camera_sensor_actor)
 
         instance.close()
 

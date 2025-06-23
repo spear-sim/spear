@@ -19,6 +19,11 @@
             "Name": "SpCore",
             "Type": "Runtime",
             "LoadingPhase": "EarliestPossible"
+        },
+        {
+            "Name": "SpCoreEditor",
+            "Type": "Editor",
+            "LoadingPhase": "EarliestPossible"
         }
     ]
 }

@@ -28,7 +28,7 @@ class SPCOMPONENTS_API USpUserInputComponent : public USceneComponent
     GENERATED_BODY()
 public:
     USpUserInputComponent();
-    ~USpUserInputComponent();
+    ~USpUserInputComponent() override;
 
     // USceneComponent interface
     void TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override;

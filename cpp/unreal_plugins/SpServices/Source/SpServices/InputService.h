@@ -37,7 +37,7 @@ public:
 class InputService : public Service {
 public:
     InputService() = delete;
-    InputService(CUnrealEntryPointBinder auto* unreal_entry_point_binder)
+    InputService(CUnrealEntryPointBinder auto* unreal_entry_point_binder) : Service("InputService")
     {
         SP_ASSERT(unreal_entry_point_binder);
 
@@ -242,8 +242,6 @@ public:
                 }
             });
     }
-
-    ~InputService() override = default;
 
 private:
     UInputComponent* getInputComponent(uint64_t& actor)

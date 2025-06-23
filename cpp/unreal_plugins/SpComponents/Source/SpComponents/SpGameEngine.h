@@ -20,7 +20,7 @@ class USpGameEngine : public UGameEngine
     GENERATED_BODY()
 public:
     USpGameEngine();
-    ~USpGameEngine();
+    ~USpGameEngine() override;
 
     bool Exec(UWorld* world, const TCHAR* cmd, FOutputDevice& output_device) override;
 };

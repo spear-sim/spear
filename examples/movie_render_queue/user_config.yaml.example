@@ -3,9 +3,9 @@
 #
 
 SPEAR:
-  LAUNCH_MODE: "standalone"
-  STANDALONE_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
+  LAUNCH_MODE: "game"
   INSTANCE:
+    GAME_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
     COMMAND_LINE_ARGS:
       resx: 1024
       resy: 512

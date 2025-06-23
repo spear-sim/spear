@@ -18,7 +18,7 @@ class ASpPlayerController : public APlayerController
     GENERATED_BODY()
 public:
     ASpPlayerController();
-    ~ASpPlayerController();
+    ~ASpPlayerController() override;
 
     // APlayerController interface
     void BeginPlay() override;

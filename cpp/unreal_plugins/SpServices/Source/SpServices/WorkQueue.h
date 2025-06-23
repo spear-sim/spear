@@ -26,7 +26,7 @@ enum class WorkQueueErrorState
     Error   = 1
 };
 
-class WorkQueue {
+class SPSERVICES_API WorkQueue {
 
 public:
     WorkQueue() : io_context_(), executor_work_guard_(io_context_.get_executor()) {}

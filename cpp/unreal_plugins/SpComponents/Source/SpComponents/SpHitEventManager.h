@@ -51,7 +51,7 @@ class ASpHitEventManager : public AActor
     GENERATED_BODY()
 public: 
     ASpHitEventManager();
-    ~ASpHitEventManager();
+    ~ASpHitEventManager() override;
 
     // AActor interface
     void Tick(float delta_time) override;
