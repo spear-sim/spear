@@ -11,7 +11,7 @@ import os
 import pathlib
 import trimesh
 import spear
-import spear.pipeline
+import spear.pipeline_utils
 
 
 parser = argparse.ArgumentParser()
@@ -88,7 +88,7 @@ def draw_collision_geometry(actor_name, kinematic_tree, color):
         color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
     draw_collision_geometry_for_kinematic_tree_node(
         actor_name=actor_name,
-        transform_world_from_parent_node=spear.pipeline.identity_transform,
+        transform_world_from_parent_node=spear.pipeline_utils.identity_transform,
         kinematic_tree_node=kinematic_tree["root_node"],
         color=color,
         log_prefix_str="    ")
@@ -97,9 +97,9 @@ def draw_collision_geometry_for_kinematic_tree_node(actor_name, transform_world_
 
     spear.log(log_prefix_str, "Processing kinematic tree node: ", kinematic_tree_node["name"])
 
-    transform_parent_node_from_current_node = spear.pipeline.get_transform_from_transform_data(transform_data=kinematic_tree_node["transform_parent_node_from_current_node"])
-    transform_world_from_current_node = spear.pipeline.compose_transforms(transforms=[transform_world_from_parent_node, transform_parent_node_from_current_node])
-    M_world_from_current_node = spear.pipeline.get_matrix_from_transform(transform=transform_world_from_current_node)
+    transform_parent_node_from_current_node = spear.pipeline_utils.get_transform_from_transform_data(transform_data=kinematic_tree_node["transform_parent_node_from_current_node"])
+    transform_world_from_current_node = spear.pipeline_utils.compose_transforms(transforms=[transform_world_from_parent_node, transform_parent_node_from_current_node])
+    M_world_from_current_node = spear.pipeline_utils.get_matrix_from_transform(transform=transform_world_from_current_node)
 
     if args.color_mode == "unique_color_per_node":
         color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)

@@ -3,7 +3,7 @@
 #
 
 import os
-import spear.editor
+import spear
 import time
 import unreal
 

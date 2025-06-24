@@ -10,7 +10,7 @@ import os
 import pathlib
 import posixpath
 import spear
-import spear.pipeline
+import spear.pipeline_utils
 import xml.dom.minidom
 import xml.etree.ElementTree
 
@@ -98,7 +98,7 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
         kinematic_tree_node=kinematic_tree["root_node"],
         meshes_element=meshes_element,
         parent_element=bodies_element,
-        transform_world_from_parent_node=spear.pipeline.identity_transform,
+        transform_world_from_parent_node=spear.pipeline_utils.identity_transform,
         root_node=True,
         color=color,
         log_prefix_str="    ")
@@ -126,7 +126,7 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
 #
 # where R_wo and S_wo are the accumulated rotation and scale matrices that map points to world space from
 # object space, and l_wo is the accumulated location vector that maps points to world space from object
-# space. See spear.pipeline.compose_transforms(...) for a reference implementation.
+# space. See spear.pipeline_utils.compose_transforms(...) for a reference implementation.
 #
 # For illustrative purposes, we will assume here that we have a tree with a depth of 3, i.e., a tree with a
 # root node and some child nodes and some grandchild nodes. We will also assume that frames with numerically
@@ -203,8 +203,8 @@ def add_mujoco_elements_for_kinematic_tree_node(
     kinematic_tree_node_name = kinematic_tree_node["name"]
     spear.log(log_prefix_str, "Processing kinematic tree node: ", kinematic_tree_node_name)
 
-    transform_parent_node_from_current_node = spear.pipeline.get_transform_from_transform_data(transform_data=kinematic_tree_node["transform_parent_node_from_current_node"])
-    transform_world_from_current_node = spear.pipeline.compose_transforms(transforms=[transform_world_from_parent_node, transform_parent_node_from_current_node])
+    transform_parent_node_from_current_node = spear.pipeline_utils.get_transform_from_transform_data(transform_data=kinematic_tree_node["transform_parent_node_from_current_node"])
+    transform_world_from_current_node = spear.pipeline_utils.compose_transforms(transforms=[transform_world_from_parent_node, transform_parent_node_from_current_node])
 
     rotation_x_axis = transform_parent_node_from_current_node["rotation"][:,0].A1
     rotation_y_axis = transform_parent_node_from_current_node["rotation"][:,1].A1

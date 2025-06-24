@@ -6,7 +6,7 @@ import argparse
 import os
 import shutil
 import spear
-import spear.tools
+import spear.x
 import subprocess
 import sys
 
@@ -173,7 +173,7 @@ if __name__ == "__main__":
 
     # build SpearSim project
 
-    cook_maps = spear.tools.get_default_maps_to_cook()
+    cook_maps = spear.tool_utils.get_default_maps_to_cook()
     cook_maps_arg = ["-map=" + "+".join(cook_maps)]
 
     cmd = [

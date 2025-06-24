@@ -8,7 +8,7 @@ import os
 import pathlib
 import shutil
 import spear
-import spear.pipeline
+import spear.pipeline_utils
 import subprocess
 import sys
 
@@ -75,22 +75,22 @@ if __name__ == "__main__":
     # filesystem paths
     #
 
-    source_unreal_project_source_content_filesystem_path = spear.pipeline.get_filesystem_path_from_content_path(
+    source_unreal_project_source_content_filesystem_path = spear.pipeline_utils.get_filesystem_path_from_content_path(
         content_path=args.source_content_path,
         unreal_project_dir=source_unreal_project_dir,
         unreal_engine_dir=args.unreal_engine_dir)
 
-    temp_unreal_project_source_content_filesystem_path = spear.pipeline.get_filesystem_path_from_content_path(
+    temp_unreal_project_source_content_filesystem_path = spear.pipeline_utils.get_filesystem_path_from_content_path(
         content_path=args.source_content_path,
         unreal_project_dir=temp_unreal_project_dir,
         unreal_engine_dir=args.unreal_engine_dir)
 
-    temp_unreal_project_destination_content_filesystem_path = spear.pipeline.get_filesystem_path_from_content_path(
+    temp_unreal_project_destination_content_filesystem_path = spear.pipeline_utils.get_filesystem_path_from_content_path(
         content_path=args.destination_content_path,
         unreal_project_dir=temp_unreal_project_dir,
         unreal_engine_dir=args.unreal_engine_dir)
 
-    destination_unreal_project_destination_content_filesystem_path = spear.pipeline.get_filesystem_path_from_content_path(
+    destination_unreal_project_destination_content_filesystem_path = spear.pipeline_utils.get_filesystem_path_from_content_path(
         content_path=args.destination_content_path,
         unreal_project_dir=destination_unreal_project_dir,
         unreal_engine_dir=args.unreal_engine_dir)
