@@ -44,17 +44,17 @@ if __name__ == "__main__":
     # now that we have programmatically pressed play, we can access the live game
     game = instance.get_game()
 
-    # spawn object
+    # spawn object in the live game
     with instance.begin_frame():
         bp_axes_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/SpComponents/Blueprints/BP_Axes.BP_Axes_C")
         bp_axes = game.unreal_service.spawn_actor_from_class(uclass=bp_axes_uclass, location={"X": -10.0, "Y": 280.0, "Z": 50.0})
     with instance.end_frame():
         pass
 
-    # sleep for a few seconds
+    # sleep for a few seconds so we can see the newly spawned object in the live game
     time.sleep(5.0)
 
-    # the game will be invalidated as soon as we programmatically press stop, so we set game to None
+    # the game will be invalidated as soon as we programmatically press stop, so we set game to None here
     game = None
 
     # programmatically press stop in the editor by calling ULevelEditorSubsystem::EditorRequestEndPlay()

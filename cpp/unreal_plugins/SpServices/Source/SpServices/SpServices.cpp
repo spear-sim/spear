@@ -35,8 +35,10 @@
 #include "SpCore/Log.h"
 #include "SpCore/UnrealClassRegistrar.h"
 
-#include "SpServices/Rpclib.h"
 #include "SpServices/Service.h"
+
+// RpcService
+#include "SpServices/RpcService.h"
 
 // EngineService
 #include "SpServices/EngineService.h"
@@ -72,32 +74,19 @@ void SpServices::StartupModule()
 
     registerClasses();
 
-    // Create RPC server.
-    try {
-        int rpc_server_port = 30000;
-        if (Config::isInitialized()) {
-            rpc_server_port = Config::get<int>("SP_SERVICES.RPC_SERVER_PORT");
-        }        
-        rpc_server_ = std::make_unique<rpc::server>(rpc_server_port);
-        SP_ASSERT(rpc_server_);
-
-        int num_worker_threads = 1;
-        rpc_server_->async_run(num_worker_threads);
-
-    } catch (...) {
-        SP_LOG("ERROR: Couldn't launch RPC server. There might be another SPEAR executable running in the background. Check for other SPEAR executables, close them, and relaunch.");
-        std::rethrow_exception(std::current_exception());
-    }
-
     // Create world filters.
     editor_world_filter = std::make_unique<Service::EditorWorldFilter>();
     game_world_filter = std::make_unique<Service::GameWorldFilter>();
+
+    // Create the RPC server. The RPC server won't be launched until beginFrame() to give other services a
+    // chance to bind their entry points.
+    rpc_service = std::make_unique<RpcService>();
 
     // EngineService needs its own custom logic for binding its entry points, because they are intended to
     // run directly on the RPC server worker thread, whereas most other entry points are intended to run on
     // work queues maintained by EngineService. So we pass in the RPC server when constructing EngineService,
     // and we pass in EngineService when constructing all other services that need to bind entry points.
-    engine_service = std::make_unique<EngineService<rpc::server>>(rpc_server_.get());
+    engine_service = std::make_unique<EngineService<rpc::server>>(rpc_service->rpc_server.get());
 
     // Construct services that don't require a reference to EngineService.
     initialize_engine_service = std::make_unique<InitializeEngineService>();
@@ -137,14 +126,12 @@ void SpServices::ShutdownModule()
     SP_ASSERT(engine_service);
     engine_service->close();
 
-    // We need to shut down the RPC server before destroying our services. Otherwise, the RPC server might
-    // attempt to call a service's entry points after the service has been destroyed. Many of our services
-    // bind entry points that capture a pointer back to the service, so we need to make sure that the RPC
-    // server is destroyed before our services.
-    SP_ASSERT(rpc_server_);
-    rpc_server_->close_sessions();
-    rpc_server_->stop();
-    rpc_server_ = nullptr;
+    // We need to shut down the RPC server before destroying our other services. Otherwise, the RPC server
+    // might attempt to call a service's entry points after the service has been destroyed. Many of our
+    // services bind entry points that capture a pointer back to the service itself, so we need to make sure
+    // that these entry points are not called after the services that bound them have been destroyed.
+    SP_ASSERT(rpc_service);
+    rpc_service = nullptr;
 
     SP_ASSERT(initialize_game_world_service);
     SP_ASSERT(game_unreal_service);

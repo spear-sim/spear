@@ -255,7 +255,7 @@ class Instance():
                 # throwing when calling a server function. The RPC client will try to connect reconnect_limit
                 # times before returning from its constructor.
                 self._rpc_client = msgpackrpc.Client(
-                    msgpackrpc.Address("127.0.0.1", self._config.SP_SERVICES.RPC_SERVER_PORT),
+                    msgpackrpc.Address("127.0.0.1", self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT),
                     timeout=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS,
                     reconnect_limit=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
 
@@ -287,7 +287,7 @@ class Instance():
                     # before throwing when calling a server function. The RPC client will try to connect
                     # reconnect_limit times before returning from its constructor.
                     self._rpc_client = msgpackrpc.Client(
-                        msgpackrpc.Address("127.0.0.1", self._config.SP_SERVICES.RPC_SERVER_PORT), 
+                        msgpackrpc.Address("127.0.0.1", self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT), 
                         timeout=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS, 
                         reconnect_limit=self._config.SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_RECONNECT_LIMIT)
 

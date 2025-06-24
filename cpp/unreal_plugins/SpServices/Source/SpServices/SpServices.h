@@ -8,8 +8,10 @@
 
 #include <Modules/ModuleInterface.h>
 
-#include "SpServices/Rpclib.h"
 #include "SpServices/Service.h"
+
+// RpcService
+#include "SpServices/RpcService.h"
 
 // EngineService
 #include "SpServices/EngineService.h"
@@ -39,6 +41,9 @@ public:
     std::unique_ptr<Service::WorldFilter> editor_world_filter = nullptr;
     std::unique_ptr<Service::WorldFilter> game_world_filter = nullptr;
 
+    // RpcService
+    std::unique_ptr<RpcService> rpc_service = nullptr;
+
     // EngineService
     std::unique_ptr<EngineService<rpc::server>> engine_service = nullptr;
 
@@ -66,6 +71,4 @@ public:
 private:
     void registerClasses();
     void unregisterClasses();
-
-    std::unique_ptr<rpc::server> rpc_server_ = nullptr;
 };

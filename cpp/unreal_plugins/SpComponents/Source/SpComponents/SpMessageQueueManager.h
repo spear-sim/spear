@@ -79,6 +79,7 @@ public:
     FString PopMessageFromFrontOfQueue(FString queue_name)
     {
         std::deque<std::string>& queue = message_queues_.at(Unreal::toStdString(queue_name));
+        SP_ASSERT(!queue.empty());
         std::string str = queue.front();
         queue.pop_front();
         return Unreal::toFString(str);
@@ -88,11 +89,14 @@ public:
     FString PopMessageFromBackOfQueue(FString queue_name)
     {
         std::deque<std::string>& queue = message_queues_.at(Unreal::toStdString(queue_name));
-        std::string str = queue.front();
-        queue.pop_front();
+        SP_ASSERT(!queue.empty());
+        std::string str = queue.back();
+        queue.pop_back();
         return Unreal::toFString(str);
     };
 
 private:
+    // TMap<FString, TArray<...>> is not supported as a UPROPERTY type, so we declare a private
+    // member variable and provide accessor functions.
     std::map<std::string, std::deque<std::string>> message_queues_;
 };

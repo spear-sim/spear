@@ -11,7 +11,7 @@ def log(*args):
 
 def log_current_function():
     current_frame = inspect.currentframe()
-    print(_log_get_prefix(current_frame) + "Current function: " + _get_current_function_abbreviated(current_frame))
+    print(_log_get_prefix(current_frame) + _get_current_function_abbreviated(current_frame))
 
 def log_no_prefix(*args):
     print("".join([str(arg) for arg in args]))

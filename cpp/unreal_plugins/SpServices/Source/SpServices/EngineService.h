@@ -212,69 +212,77 @@ public:
 protected:
     void beginFrame() override
     {
-        std::lock_guard<std::mutex> lock(frame_state_mutex_);
+        Service::beginFrame();
 
-        SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame || frame_state_ == EFrameState::Error,
-            "frame_state_: %s", Unreal::getStringFromEnumValue(frame_state_.load()).c_str());
+        {
+            std::lock_guard<std::mutex> lock(frame_state_mutex_);
 
-        if (frame_state_ == EFrameState::RequestBeginFrame) {
+            SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame || frame_state_ == EFrameState::Error,
+                "frame_state_: %s", Unreal::getStringFromEnumValue(frame_state_.load()).c_str());
 
-            // Allow begin_frame() to finish executing.
-            frame_state_ = EFrameState::ExecutingBeginFrame;
-            frame_state_executing_begin_frame_promise_.set_value();
+            if (frame_state_ == EFrameState::RequestBeginFrame) {
 
-            try {
-                // Execute all pre-frame work and wait here until execute_frame() calls work_queue_.reset().
-                work_queue_.run();
+                // Allow begin_frame() to finish executing.
+                frame_state_ = EFrameState::ExecutingBeginFrame;
+                frame_state_executing_begin_frame_promise_.set_value();
 
-                // Set frame state.
-                frame_state_ = EFrameState::ExecutingFrame;
+                try {
+                    // Execute all pre-frame work and wait here until execute_frame() calls work_queue_.reset().
+                    work_queue_.run();
 
-            // In case of an exception, set the frame state to be in an error state and return.
-            } catch(const std::exception& e) {
-                SP_LOG("Caught exception when executing beginFrameHandler(): ", e.what());
-                frame_state_ = EFrameState::Error;
-                return;
-            } catch(...) {
-                SP_LOG("Caught unknown exception when executing beginFrameHandler().");
-                frame_state_ = EFrameState::Error;
-                return;
+                    // Set frame state.
+                    frame_state_ = EFrameState::ExecutingFrame;
+
+                // In case of an exception, set the frame state to be in an error state and return.
+                } catch(const std::exception& e) {
+                    SP_LOG("Caught exception when executing beginFrameHandler(): ", e.what());
+                    frame_state_ = EFrameState::Error;
+                    return;
+                } catch(...) {
+                    SP_LOG("Caught unknown exception when executing beginFrameHandler().");
+                    frame_state_ = EFrameState::Error;
+                    return;
+                }
             }
         }
     }
 
     void endFrame() override
     {
-        std::lock_guard<std::mutex> lock(frame_state_mutex_);
+        {
+            std::lock_guard<std::mutex> lock(frame_state_mutex_);
 
-        SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame || frame_state_ == EFrameState::ExecutingFrame || frame_state_ == EFrameState::Error,
-            "frame_state_: %s", Unreal::getStringFromEnumValue(frame_state_.load()).c_str());
+            SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::RequestBeginFrame || frame_state_ == EFrameState::ExecutingFrame || frame_state_ == EFrameState::Error,
+                "frame_state_: %s", Unreal::getStringFromEnumValue(frame_state_.load()).c_str());
 
-        if (frame_state_ == EFrameState::ExecutingFrame) {
+            if (frame_state_ == EFrameState::ExecutingFrame) {
 
-            // Allow execute_frame() to finish executing.
-            frame_state_ = EFrameState::ExecutingEndFrame;
-            frame_state_executing_end_frame_promise_.set_value();
+                // Allow execute_frame() to finish executing.
+                frame_state_ = EFrameState::ExecutingEndFrame;
+                frame_state_executing_end_frame_promise_.set_value();
 
-            try {
-                // Execute all post-frame work and wait here until end_frame() calls work_queue_.reset().
-                work_queue_.run();
+                try {
+                    // Execute all post-frame work and wait here until end_frame() calls work_queue_.reset().
+                    work_queue_.run();
 
-                // Allow end_frame() to finish executing.
-                frame_state_ = EFrameState::Idle;
-                frame_state_idle_promise_.set_value();
+                    // Allow end_frame() to finish executing.
+                    frame_state_ = EFrameState::Idle;
+                    frame_state_idle_promise_.set_value();
 
-            // In case of an exception, set the frame state to be in an error state and return.
-            } catch(const std::exception& e) {
-                SP_LOG("Caught exception when executing endFrameHandler(): ", e.what());
-                frame_state_ = EFrameState::Error;
-                return;
-            } catch(...) {
-                SP_LOG("Caught unknown exception when executing endFrameHandler().");
-                frame_state_ = EFrameState::Error;
-                return;
+                // In case of an exception, set the frame state to be in an error state and return.
+                } catch(const std::exception& e) {
+                    SP_LOG("Caught exception when executing endFrameHandler(): ", e.what());
+                    frame_state_ = EFrameState::Error;
+                    return;
+                } catch(...) {
+                    SP_LOG("Caught unknown exception when executing endFrameHandler().");
+                    frame_state_ = EFrameState::Error;
+                    return;
+                }
             }
         }
+
+        Service::endFrame();
     }
 
 private:

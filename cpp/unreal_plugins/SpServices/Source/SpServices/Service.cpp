@@ -47,10 +47,11 @@ Service::~Service()
 
 void Service::postWorldInitialization(UWorld* world, const UWorld::InitializationValues initialization_values)
 {
-    SP_ASSERT(world);
     SP_LOG_CURRENT_FUNCTION();
+    SP_ASSERT(world);
+    SP_ASSERT(world_filter_);
     SP_LOG("Service:      ", name_);
-    SP_LOG("World filter: ", world_filter_ ? world_filter_->getName() : "<nullptr>");
+    SP_LOG("World filter: ", world_filter_->getName());
     SP_LOG("World:        ", Unreal::toStdString(world->GetName()));
     SP_LOG("Caching world...");
     world_ = world;
@@ -59,10 +60,11 @@ void Service::postWorldInitialization(UWorld* world, const UWorld::Initializatio
 
 void Service::worldCleanup(UWorld* world, bool session_ended, bool cleanup_resources)
 {
-    SP_ASSERT(world);
     SP_LOG_CURRENT_FUNCTION();
+    SP_ASSERT(world);
+    SP_ASSERT(world_filter_);
     SP_LOG("Service:      ", name_);
-    SP_LOG("World filter: ", world_filter_ ? world_filter_->getName() : "<nullptr>");
+    SP_LOG("World filter: ", world_filter_->getName());
     SP_LOG("World:        ", Unreal::toStdString(world->GetName()));
     SP_LOG("Clearing cached world...");
     world->OnWorldBeginPlay.Remove(world_begin_play_handle_);
@@ -72,10 +74,11 @@ void Service::worldCleanup(UWorld* world, bool session_ended, bool cleanup_resou
 
 void Service::worldBeginPlay()
 {
-    SP_ASSERT(world_);
     SP_LOG_CURRENT_FUNCTION();
+    SP_ASSERT(world_);
+    SP_ASSERT(world_filter_);
     SP_LOG("Service:      ", name_);
-    SP_LOG("World filter: ", world_filter_ ? world_filter_->getName() : "<nullptr>");
+    SP_LOG("World filter: ", world_filter_->getName());
     SP_LOG("World:        ", Unreal::toStdString(world_->GetName()));
 }
 
