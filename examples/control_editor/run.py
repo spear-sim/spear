@@ -29,13 +29,14 @@ if __name__ == "__main__":
 
         # execute console commands
         editor.unreal_service.execute_console_command("stat fps")
-        editor.unreal_service.execute_console_command("py import unreal; unreal.log('Calling function: ULevelEditorSubsystem::EditorRequestBeginPlay()');")
+        editor.unreal_service.execute_console_command("py import unreal")
 
     with instance.end_frame():
         pass
 
     # programmatically press play in the editor by calling ULevelEditorSubsystem::EditorRequestBeginPlay()
     with instance.begin_frame():
+        editor.unreal_service.execute_console_command("py unreal.log('Calling function: ULevelEditorSubsystem::EditorRequestBeginPlay()')")
         editor.unreal_service.call_function(uobject=level_editor_subsystem, ufunction=editor_request_begin_play_func)
     with instance.end_frame():
         pass
@@ -74,7 +75,7 @@ if __name__ == "__main__":
         # create a queue named "take_screenshot" to facilitate communication between this Python script and take_screenshot.py
         editor.unreal_service.call_function(uobject=sp_message_queue_manager_default_object, ufunction=create_queue_func, args={"queue_name": "take_screenshot"})
 
-        # run take_high_res_screenshot.py
+        # run take_screenshot.py
         take_screenshot_py_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "take_screenshot.py"))
         editor.unreal_service.execute_console_command(f"py unreal.log('Executing Python file: {take_screenshot_py_file}');")
         editor.unreal_service.execute_console_command(f"py {take_screenshot_py_file}")

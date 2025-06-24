@@ -46,6 +46,8 @@ class Game():
 class Instance():
     def __init__(self, config):
 
+        spear.log_current_function()
+
         self._config = config
 
         # Request to launch the unreal instance and initialize the RPC client.
@@ -85,6 +87,7 @@ class Instance():
 
     def get_editor(self):
 
+        spear.log_current_function()
         assert self.engine_service.with_editor()
 
         # Wait until initialize_editor_world_service.is_initialized returns true.
@@ -102,6 +105,8 @@ class Instance():
         return self._editor
 
     def get_game(self):
+
+        spear.log_current_function()
 
         launch_mode = self._config.SPEAR.LAUNCH_MODE
         if self._config.SPEAR.LAUNCH_MODE == "none" and self.engine_service.with_editor():
@@ -150,6 +155,7 @@ class Instance():
 
     def _request_launch_unreal_instance(self):
 
+        spear.log_current_function()        
         spear.log("Requesting to launch Unreal instance...")
 
         if self._config.SPEAR.LAUNCH_MODE == "none":
@@ -235,6 +241,7 @@ class Instance():
 
     def _initialize_rpc_client(self):
 
+        spear.log_current_function()        
         spear.log("Initializing RPC client...")
 
         connected = False
@@ -318,6 +325,7 @@ class Instance():
 
     def _request_exit_unreal_instance(self):
 
+        spear.log_current_function()        
         spear.log("Requesting to exit Unreal instance...")
 
         if self._config.SPEAR.LAUNCH_MODE == "none":
@@ -346,6 +354,7 @@ class Instance():
 
     def _force_kill_unreal_instance(self):
 
+        spear.log_current_function()
         spear.log("Forcefully killing Unreal instance...")
         self._process.terminate()
         self._process.kill()
@@ -354,6 +363,7 @@ class Instance():
 
     def _close_rpc_client(self, verbose):
         if verbose:
+            spear.log_current_function()
             spear.log("Closing RPC client...")
         self._rpc_client.close()
         self._rpc_client._loop._ioloop.close()
@@ -366,6 +376,7 @@ class Instance():
 
     def _request_wait_for_func(self, func, launch_mode, max_time_seconds, sleep_time_seconds):
 
+        spear.log_current_function()        
         spear.log("Requesting to wait for function: " + str(func))
 
         if launch_mode == "none":
@@ -396,6 +407,7 @@ class Instance():
 
     def _request_warm_up(self, sleep_time_seconds, num_frames):
 
+        spear.log_current_function()        
         spear.log("Requesting to warm up...")
 
         if self._config.SPEAR.LAUNCH_MODE == "none":
