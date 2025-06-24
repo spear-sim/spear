@@ -16,7 +16,7 @@ blueprint_desc = \
     "component_descs":
     [
         {
-            "name": "origin",
+            "name": "origin_",
             "static_mesh_path": "/Engine/BasicShapes/Sphere.Sphere",
             "material_path": "/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial",
             "location": {"X": 0.0, "Y": 0.0, "Z": 0.0},
@@ -24,7 +24,7 @@ blueprint_desc = \
             "scale3d": {"X": 0.05, "Y": 0.05, "Z": 0.05}
         },
         {
-            "name": "x_axis",
+            "name": "x_axis_",
             "static_mesh_path": "/Engine/BasicShapes/Cylinder.Cylinder",
             "material_path": "/SpComponents/Materials/MI_BasicShapeMaterial_Inst_Red.MI_BasicShapeMaterial_Inst_Red",
             "location": {"X": 12.5, "Y": 0.0, "Z": 0.0},
@@ -32,7 +32,7 @@ blueprint_desc = \
             "scale3d": {"X": 0.025, "Y": 0.025, "Z": 0.25}
         },
         {
-            "name": "y_axis",
+            "name": "y_axis_",
             "static_mesh_path": "/Engine/BasicShapes/Cylinder.Cylinder",
             "material_path": "/SpComponents/Materials/MI_BasicShapeMaterial_Inst_Green.MI_BasicShapeMaterial_Inst_Green",
             "location": {"X": 0.0, "Y": 12.5, "Z": 0.0},
@@ -40,7 +40,7 @@ blueprint_desc = \
             "scale3d": {"X": 0.025, "Y": 0.025, "Z": 0.25}
         },
         {
-            "name": "z_axis",
+            "name": "z_axis_",
             "static_mesh_path": "/Engine/BasicShapes/Cylinder.Cylinder",
             "material_path": "/SpComponents/Materials/MI_BasicShapeMaterial_Inst_Blue.MI_BasicShapeMaterial_Inst_Blue",
             "location": {"X": 0.0, "Y": 0.0, "Z": 12.5},

@@ -72,5 +72,5 @@ public:
 
 private:
     UFUNCTION() // needs to be a UFUNCTION
-    void ActorHitHandler(AActor* SelfActor, AActor* OtherActor, FVector NormalImpulse, const FHitResult& HitResult);
+    void ActorHitHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result);
 };

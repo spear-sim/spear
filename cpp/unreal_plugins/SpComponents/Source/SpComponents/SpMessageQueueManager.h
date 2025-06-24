@@ -46,9 +46,21 @@ public:
     };
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
+    bool HasQueue(FString queue_name)
+    {
+        return Std::containsKey(message_queues_, Unreal::toStdString(queue_name));
+    };
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
     int GetQueueLength(FString queue_name)
     {
         return message_queues_.at(Unreal::toStdString(queue_name)).size();
+    };
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    FString GetMessage(FString queue_name, int i)
+    {
+        return Unreal::toFString(message_queues_.at(Unreal::toStdString(queue_name)).at(i));
     };
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")

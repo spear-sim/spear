@@ -33,4 +33,4 @@ def _get_current_line(current_frame):
 
 def _get_current_function_abbreviated(current_frame):
     outer_frames = inspect.getouterframes(current_frame)
-    return os.path.basename(outer_frames[1].function)
+    return outer_frames[1].function

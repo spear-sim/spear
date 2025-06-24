@@ -25,7 +25,7 @@ blueprint_desc = \
             "simulate_physics": True
         },
         {
-            "name": "camera_mesh",
+            "name": "camera_mesh_",
             "static_mesh_path": "/Engine/EditorMeshes/MatineeCam_SM.MatineeCam_SM",
             "material_path": "/Engine/EditorMaterials/MatineeCam_mat.MatineeCam_mat",
             "location": {"X": 0.0, "Y": 0.0, "Z": 35.0},
@@ -33,7 +33,7 @@ blueprint_desc = \
             "scale3d": {"X": 0.25, "Y": 0.25, "Z": 0.25}
         },
         {
-            "name": "x_axis",
+            "name": "x_axis_",
             "static_mesh_path": "/Engine/BasicShapes/Cylinder.Cylinder",
             "material_path": "/SpComponents/Materials/MI_BasicShapeMaterial_Inst_Red.MI_BasicShapeMaterial_Inst_Red",
             "location": {"X": 12.5, "Y": 0.0, "Z": 0.0},
@@ -42,7 +42,7 @@ blueprint_desc = \
             "collision_profile_name": "NoCollision"
         },
         {
-            "name": "y_axis",
+            "name": "y_axis_",
             "static_mesh_path": "/Engine/BasicShapes/Cylinder.Cylinder",
             "material_path": "/SpComponents/Materials/MI_BasicShapeMaterial_Inst_Green.MI_BasicShapeMaterial_Inst_Green",
             "location": {"X": 0.0, "Y": 12.5, "Z": 0.0},
@@ -51,7 +51,7 @@ blueprint_desc = \
             "collision_profile_name": "NoCollision"
         },
         {
-            "name": "z_axis",
+            "name": "z_axis_",
             "static_mesh_path": "/Engine/BasicShapes/Cylinder.Cylinder",
             "material_path": "/SpComponents/Materials/MI_BasicShapeMaterial_Inst_Blue.MI_BasicShapeMaterial_Inst_Blue",
             "location": {"X": 0.0, "Y": 0.0, "Z": 12.5},
@@ -63,7 +63,7 @@ blueprint_desc = \
     "sp_scene_capture_component_2d_descs":
     [
         {
-            "name": "final_tone_curve_hdr",
+            "name": "final_tone_curve_hdr_",
             "width": 512,
             "height": 512,
             "num_channels_per_pixel": 4,
