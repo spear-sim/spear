@@ -5,7 +5,6 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import os
-import pprint
 import spear
 import time
 
