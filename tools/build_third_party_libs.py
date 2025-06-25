@@ -307,6 +307,7 @@ if __name__ == "__main__":
             f"-DCMAKE_CXX_FLAGS='{cmake_cxx_flags}'",
             f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
             "-DYAML_CPP_BUILD_TESTS=OFF",
+            "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
             os.path.join("..", "..")]
 
         spear.log(f"Executing: {' '.join(cmd)}")
@@ -323,6 +324,7 @@ if __name__ == "__main__":
             f"-DCMAKE_CXX_FLAGS='{cmake_cxx_flags}'",
             f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
             "-DYAML_CPP_BUILD_TESTS=OFF",
+            "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
             os.path.join("..", "..")]
 
         spear.log(f"Executing: {' '.join(cmd)}")
@@ -339,6 +341,7 @@ if __name__ == "__main__":
             f"-DCMAKE_EXE_LINKER_FLAGS='-stdlib=libc++ -L{linux_libcpp_lib_dir} -lpthread'", # -lpthread needed on some Linux environments
             f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
             "-DYAML_CPP_BUILD_TESTS=OFF",
+            "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
             os.path.join("..", "..")]
 
         spear.log(f"Executing: {' '.join(cmd)}")
