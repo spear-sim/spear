@@ -25,7 +25,7 @@ class EngineService():
 
         # try calling begin_frame()
         try:
-            self._call("engine_service.begin_frame")
+            self.call_on_worker_thread("engine_service.begin_frame")
         except Exception as e:
             spear.log("Exception: ", e)
             spear.log("We might or might not be in a critical section, but there is nothing we can do to get out of it from here, so we need to give up...")
@@ -41,8 +41,8 @@ class EngineService():
         except Exception as e:
             spear.log("Exception: ", e)
             spear.log("Attempting to exit critical section...")
-            self._call("engine_service.execute_frame")
-            self._call("engine_service.end_frame")
+            self.call_on_worker_thread("engine_service.execute_frame")
+            self.call_on_worker_thread("engine_service.end_frame")
             self._frame_state = "idle"
             raise e
 
@@ -58,7 +58,7 @@ class EngineService():
 
         # try executing execute_frame()
         try:
-            self._call("engine_service.execute_frame")
+            self.call_on_worker_thread("engine_service.execute_frame")
         except Exception as e:
             spear.log("Exception: ", e)
             spear.log("We're currently in a critical section, but there is nothing we can do to get out of it from here, so we need to give up...")
@@ -74,7 +74,7 @@ class EngineService():
         except Exception as e:
             spear.log("Exception: ", e)
             spear.log("Attempting to exit critical section...")
-            self._rpc_client.call("engine_service.end_frame")
+            self._rpc_client.call_on_worker_thread("engine_service.end_frame")
             self._frame_state = "idle"
             raise e
 
@@ -83,7 +83,7 @@ class EngineService():
 
         # try executing end_frame()
         try:
-            self._call("engine_service.end_frame")
+            self.call_on_worker_thread("engine_service.end_frame")
         except Exception as e:
             spear.log("Exception: ", e)
             spear.log("We're currently in a critical section, but there is nothing we can do to get out of it from here, so we need to give up...")
