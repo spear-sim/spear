@@ -71,7 +71,7 @@ if __name__ == "__main__":
         pop_message_from_front_of_queue_func = editor.unreal_service.find_function_by_name(uclass=sp_message_queue_manager_static_class, function_name="PopMessageFromFrontOfQueue")
         sp_message_queue_manager_default_object = editor.unreal_service.get_default_object(uclass=sp_message_queue_manager_static_class, create_if_needed=False)
 
-        # create a queue named "take_screenshot" to facilitate communication between this Python script and take_screenshot.py
+        # create a message queue named "take_screenshot" to facilitate communication between this Python script and take_screenshot.py
         editor.unreal_service.call_function(uobject=sp_message_queue_manager_default_object, ufunction=create_queue_func, args={"queue_name": "take_screenshot"})
 
         # run take_screenshot.py
