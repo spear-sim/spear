@@ -80,25 +80,16 @@ SPEAR:
     INITIALIZE_RPC_CLIENT_MAX_TIME_SECONDS: 120.0
     INITIALIZE_RPC_CLIENT_SLEEP_TIME_SECONDS: 1.0
 
-    # Wait for these amounts of time after initializing the RPC client for various services to report that
-    # they are initialized.
-
-    INITIALIZE_EDITOR_WORLD_SERVICE_IS_INITIALIZED_MAX_TIME_SECONDS: 120.0
-    INITIALIZE_EDITOR_WORLD_SERVICE_IS_INITIALIZED_SLEEP_TIME_SECONDS: 1.0
-
-    INITIALIZE_GAME_WORLD_SERVICE_IS_INITIALIZED_MAX_TIME_SECONDS: 120.0
-    INITIALIZE_GAME_WORLD_SERVICE_IS_INITIALIZED_SLEEP_TIME_SECONDS: 1.0
-
     #
-    # When warming up the instance/editor/game, we choose to warm up for a minimum amount of time and a
-    # minimum number of frames as a conservative strategy to guarantee that the engine is fully initialized
-    # before we allow user Python code to interact with it.
+    # When warming up the instance, we choose to warm up for a minimum amount of time and a minimum number of
+    # frames as a conservative strategy to guarantee that the engine is fully initialized before we allow
+    # user Python code to interact with it.
     #
     # It is useful to warm up for a minimum amount of time because it can take a bit of time between when,
-    # e.g., engine_service.is_initialized returns True for the first time, and when {engine_service.begin_frame,
-    # engine_service.execute_frame, engine_service.end_frame} can start executing in a normal amount of time.
-    # This is because some systems are still loading during the game's first few frames. If this amount of
-    # time is set too low, then we need to set RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS to be overly conservative.
+    # e.g., engine_service.ping returns for the first time, and when {engine_service.begin_frame, engine_service.execute_frame,
+    # engine_service.end_frame} can start executing in a normal amount of time. This is because some systems
+    # are still loading during the game's first few frames. If this amount of time is set too low, then we
+    # need to set RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS to be overly conservative.
     #
     # Likewise, it is useful to warm up for a minumum number of frames to initialize various caches and
     # rendering features that leverage temporal coherence between frames. The number of warmup frames should
@@ -110,14 +101,22 @@ SPEAR:
     # leverage temporal coherence between frames.
     #
 
-    WARM_UP_INSTANCE_SLEEP_TIME_SECONDS: 5.0
-    WARM_UP_INSTANCE_NUM_FRAMES: 1
+    INSTANCE_WARM_UP_TIME_SECONDS: 1.0
+    INSTANCE_WARM_UP_NUM_FRAMES: 1
 
-    WARM_UP_EDITOR_SLEEP_TIME_SECONDS: 5.0
-    WARM_UP_EDITOR_NUM_FRAMES: 1
+    # When getting an Editor or Game reference, these parameters control how we wait for various services to
+    # report that they are initialized. These parameters have no effect if the user provides explicit
+    # overrides when calling instance.get_editor() or instance.get_game().
 
-    WARM_UP_GAME_SLEEP_TIME_SECONDS: 5.0
-    WARM_UP_GAME_NUM_FRAMES: 1
+    GET_EDITOR_WAIT_MAX_TIME_SECONDS: 120.0
+    GET_EDITOR_WAIT_SLEEP_TIME_SECONDS: 1.0
+    GET_EDITOR_WARM_UP_TIME_SECONDS: 5.0
+    GET_EDITOR_WARM_UP_NUM_FRAMES: 1
+
+    GET_GAME_WAIT_MAX_TIME_SECONDS: 120.0
+    GET_GAME_WAIT_SLEEP_TIME_SECONDS: 1.0
+    GET_GAME_WARM_UP_TIME_SECONDS: 5.0
+    GET_GAME_WARM_UP_NUM_FRAMES: 1
 
     # Sleep for this amount of time in-between checks to see if the Unreal instance has exited.
     REQUEST_EXIT_UNREAL_INSTANCE_SLEEP_TIME_SECONDS: 1.0

@@ -178,7 +178,8 @@ public:
                         if (found) {
                             break;
                         } else {
-                            SP_LOG("WARNING: ANavigationData::GetRandomReachablePointInRadius(...) couldn't find a reachable point on attempt ", j, ", retrying...");
+                            SP_LOG_CURRENT_FUNCTION();
+                            SP_LOG("    WARNING:         ANavigationData::GetRandomReachablePointInRadius(...) couldn't find a reachable point on attempt ", j, ", retrying...");
                             SP_LOG("    origin:          ", origin.X, " ", origin.Y, " ", origin.Z);
                             SP_LOG("    radius:          ", radius);
                             SP_LOG("    filter:          ", filter.Get());

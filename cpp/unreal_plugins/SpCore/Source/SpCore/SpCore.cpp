@@ -48,9 +48,9 @@ void SpCore::StartupModule()
 
     // Wait for keyboard input, which is useful when attempting to attach a debugger to the running executable.
     if (Config::isInitialized() && Config::get<bool>("SP_CORE.WAIT_FOR_KEYBOARD_INPUT_DURING_INITIALIZATION")) {
-        SP_LOG("Press any key to continue...");
+        SP_LOG("    Press any key to continue...");
         std::cin.get();
-        SP_LOG("Received keyboard input, continuing...");
+        SP_LOG("    Received keyboard input, continuing...");
     }
 
     registerClasses();

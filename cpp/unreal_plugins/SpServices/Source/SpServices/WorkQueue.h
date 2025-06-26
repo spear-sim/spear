@@ -81,7 +81,8 @@ private:
         using TReturn = std::invoke_result_t<TFunc, TArgs&...>;
 
         if (error_state_ == WorkQueueErrorState::Error) {
-            SP_LOG("Work queue is in an error state, returning immediately from func: ", func_name);
+            SP_LOG_CURRENT_FUNCTION();
+            SP_LOG("    Work queue is in an error state, returning immediately from func: ", func_name);
             return TReturn();
         }
 
@@ -130,12 +131,14 @@ private:
         // allow the game thread to proceed by calling reset(), and return a default-constructed value.
         } catch (const std::exception& e) {
             std::lock_guard<std::mutex> lock(mutex_);
-            SP_LOG("Caught exception when executing ", func_name, ": ", e.what());
+            SP_LOG_CURRENT_FUNCTION();
+            SP_LOG("    Caught exception when executing ", func_name, ": ", e.what());
             error_state_ = WorkQueueErrorState::Error;
             exception_ptr_ = std::current_exception();
         } catch (...) {
             std::lock_guard<std::mutex> lock(mutex_);
-            SP_LOG("Caught unknown exception when executing ", func_name, ".");
+            SP_LOG_CURRENT_FUNCTION();
+            SP_LOG("    Caught unknown exception when executing ", func_name, ".");
             error_state_ = WorkQueueErrorState::Error;
             exception_ptr_ = std::current_exception();
         }

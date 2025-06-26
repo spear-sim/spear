@@ -187,7 +187,8 @@ private:
         AActor* actor_ptr = toPtr<AActor>(actor);
         std::vector<UEnhancedInputComponent*> enhanced_input_components = Unreal::getComponentsByType<UEnhancedInputComponent>(actor_ptr);
         if (enhanced_input_components.size() != 1) {
-            SP_LOG("Couldn't find a unique UEnhancedInputComponent on actor ", Unreal::tryGetStableName(actor_ptr), ", giving up...");
+            SP_LOG_CURRENT_FUNCTION();
+            SP_LOG("    Couldn't find a unique UEnhancedInputComponent on actor ", Unreal::tryGetStableName(actor_ptr), ", giving up...");
             return nullptr;
         } else {
             return enhanced_input_components.at(0);

@@ -62,7 +62,8 @@ public:
         try {
             return Yaml::get<TValue>(g_config_node, key);
         } catch (...) {
-            SP_LOG("ERROR: Couldn't get value for key: ", key);
+            SP_LOG_CURRENT_FUNCTION();
+            SP_LOG("    ERROR: Couldn't get value for key: ", key);
             std::rethrow_exception(std::current_exception());
             return TValue();
         }
@@ -76,7 +77,8 @@ public:
         try {
             return Yaml::get<TValue>(g_config_node, keys);
         } catch (...) {
-            SP_LOG("ERROR: Couldn't get value for keys: [", Std::join(keys, ", "), "]");
+            SP_LOG_CURRENT_FUNCTION();
+            SP_LOG("    ERROR: Couldn't get value for keys: [", Std::join(keys, ", "), "]");
             std::rethrow_exception(std::current_exception());
             return TValue();
         }

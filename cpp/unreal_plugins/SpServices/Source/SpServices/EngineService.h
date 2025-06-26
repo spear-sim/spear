@@ -235,11 +235,13 @@ protected:
 
                 // In case of an exception, set the frame state to be in an error state and return.
                 } catch(const std::exception& e) {
-                    SP_LOG("Caught exception when executing beginFrameHandler(): ", e.what());
+                    SP_LOG_CURRENT_FUNCTION();
+                    SP_LOG("    Caught exception when executing beginFrameHandler(): ", e.what());
                     frame_state_ = EFrameState::Error;
                     return;
                 } catch(...) {
-                    SP_LOG("Caught unknown exception when executing beginFrameHandler().");
+                    SP_LOG_CURRENT_FUNCTION();
+                    SP_LOG("    Caught unknown exception when executing beginFrameHandler().");
                     frame_state_ = EFrameState::Error;
                     return;
                 }
@@ -271,11 +273,13 @@ protected:
 
                 // In case of an exception, set the frame state to be in an error state and return.
                 } catch(const std::exception& e) {
-                    SP_LOG("Caught exception when executing endFrameHandler(): ", e.what());
+                    SP_LOG_CURRENT_FUNCTION();
+                    SP_LOG("    Caught exception when executing endFrameHandler(): ", e.what());
                     frame_state_ = EFrameState::Error;
                     return;
                 } catch(...) {
-                    SP_LOG("Caught unknown exception when executing endFrameHandler().");
+                    SP_LOG_CURRENT_FUNCTION();
+                    SP_LOG("    Caught unknown exception when executing endFrameHandler().");
                     frame_state_ = EFrameState::Error;
                     return;
                 }
@@ -313,7 +317,8 @@ private:
                 return func(args...);
 
             } catch (const std::exception& e) {
-                SP_LOG("Caught exception when executing ", long_func_name, ": ", e.what());
+                SP_LOG_CURRENT_FUNCTION();
+                SP_LOG("    Caught exception when executing ", long_func_name, ": ", e.what());
                 work_queue_.reset();
                 {
                     std::lock_guard<std::mutex> lock(frame_state_mutex_);
@@ -321,7 +326,8 @@ private:
                 }
                 return TReturn();
             } catch(...) {
-                SP_LOG("Caught unknown exception when executing ", long_func_name, ".");
+                SP_LOG_CURRENT_FUNCTION();
+                SP_LOG("    Caught unknown exception when executing ", long_func_name, ".");
                 work_queue_.reset();
                 {
                     std::lock_guard<std::mutex> lock(frame_state_mutex_);

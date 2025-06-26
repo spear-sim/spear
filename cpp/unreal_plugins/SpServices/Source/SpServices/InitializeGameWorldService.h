@@ -34,6 +34,8 @@ public:
 protected:
     void worldBeginPlay() override
     {
+        SP_LOG_CURRENT_FUNCTION();
+
         Service::worldBeginPlay();
 
         //
@@ -43,9 +45,9 @@ protected:
         if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_GAME_WORLD_SERVICE.OVERRIDE_GAME_PAUSED")) {
             bool game_paused = Config::get<bool>("SP_SERVICES.INITIALIZE_GAME_WORLD_SERVICE.GAME_PAUSED");
 
-            SP_LOG("Overriding game paused...");
-            SP_LOG("Old game paused: ", UGameplayStatics::IsGamePaused(getWorld()));
-            SP_LOG("New game paused: ", game_paused);
+            SP_LOG("    Overriding game paused...");
+            SP_LOG("    Old game paused: ", UGameplayStatics::IsGamePaused(getWorld()));
+            SP_LOG("    New game paused: ", game_paused);
 
             UGameplayStatics::SetGamePaused(getWorld(), game_paused);
         }
@@ -57,9 +59,9 @@ protected:
         if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_GAME_WORLD_SERVICE.OVERRIDE_BENCHMARKING")) {
             bool benchmarking = Config::get<bool>("SP_SERVICES.INITIALIZE_GAME_WORLD_SERVICE.BENCHMARKING");
 
-            SP_LOG("Overriding benchmarking...");
-            SP_LOG("Old benchmarking: ", FApp::IsBenchmarking());
-            SP_LOG("New benchmarking: ", benchmarking);
+            SP_LOG("    Overriding benchmarking...");
+            SP_LOG("    Old benchmarking: ", FApp::IsBenchmarking());
+            SP_LOG("    New benchmarking: ", benchmarking);
 
             FApp::SetBenchmarking(benchmarking);
         }
@@ -71,9 +73,9 @@ protected:
         if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_GAME_WORLD_SERVICE.OVERRIDE_FIXED_DELTA_TIME")) {
             float fixed_delta_time = Config::get<float>("SP_SERVICES.INITIALIZE_GAME_WORLD_SERVICE.FIXED_DELTA_TIME");
 
-            SP_LOG("Overriding fixed delta time...");
-            SP_LOG("Old fixed delta time: ", FApp::GetFixedDeltaTime());
-            SP_LOG("New fixed delta time: ", fixed_delta_time);
+            SP_LOG("    Overriding fixed delta time...");
+            SP_LOG("    Old fixed delta time: ", FApp::GetFixedDeltaTime());
+            SP_LOG("    New fixed delta time: ", fixed_delta_time);
 
             FApp::SetFixedDeltaTime(fixed_delta_time);
         }
@@ -85,10 +87,10 @@ protected:
         if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_GAME_WORLD_SERVICE.OVERRIDE_PHYSICS_SETTINGS")) {
             std::string physics_settings_str = Config::get<std::string>("SP_SERVICES.INITIALIZE_GAME_WORLD_SERVICE.PHYSICS_SETTINGS_STRING");
 
-            SP_LOG("Overriding physics settings...");
-            SP_LOG("Old physics settings: ");
+            SP_LOG("    Overriding physics settings...");
+            SP_LOG("    Old physics settings: ");
             SP_LOG_NO_PREFIX(Unreal::getObjectPropertiesAsString(UPhysicsSettings::Get()));
-            SP_LOG("New physics settings: ");
+            SP_LOG("    New physics settings: ");
             SP_LOG_NO_PREFIX(physics_settings_str);
 
             Unreal::setObjectPropertiesFromString(UPhysicsSettings::Get(), physics_settings_str);
@@ -102,9 +104,9 @@ protected:
         if (FApp::IsBenchmarking() && physics_settings->bSubstepping) {
             double max_fixed_delta_time = physics_settings->MaxSubstepDeltaTime*physics_settings->MaxSubsteps;
 
-            SP_LOG("Validating physics settings...");
-            SP_LOG("Current fixed delta time:         ", FApp::GetFixedDeltaTime());
-            SP_LOG("Maximum allowed fixed delta time: ", max_fixed_delta_time);
+            SP_LOG("    Validating physics settings...");
+            SP_LOG("    Current fixed delta time:         ", FApp::GetFixedDeltaTime());
+            SP_LOG("    Maximum allowed fixed delta time: ", max_fixed_delta_time);
 
             SP_ASSERT(FApp::GetFixedDeltaTime() <= max_fixed_delta_time);
         }
@@ -116,10 +118,10 @@ protected:
         if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_GAME_WORLD_SERVICE.EXECUTE_CONSOLE_COMMANDS")) {
             std::vector<std::string> console_commands = Config::get<std::vector<std::string>>("SP_SERVICES.INITIALIZE_GAME_WORLD_SERVICE.CONSOLE_COMMANDS");
 
-            SP_LOG("Executing console commands...");
+            SP_LOG("    Executing console commands...");
             SP_ASSERT(GEngine);
             for (auto& cmd : console_commands) {
-                SP_LOG("Executing console command: ", cmd);
+                SP_LOG("    Executing console command: ", cmd);
                 GEngine->Exec(getWorld(), *Unreal::toFString(cmd));
             }
         }
@@ -140,14 +142,14 @@ protected:
         }
 
         if (force_skylight_update_) {
-            SP_LOG("Forcing skylight updates every frame for ", force_skylight_update_max_duration_seconds_, " seconds...");
+            SP_LOG("    Forcing skylight updates every frame for ", force_skylight_update_max_duration_seconds_, " seconds...");
 
             IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.SkylightUpdateEveryFrame"));
             force_skylight_update_previous_cvar_value_ = cvar->GetInt();
             cvar->Set(1);
 
-            SP_LOG("Old value of r.SkylightUpdateEveryFrame: ", force_skylight_update_previous_cvar_value_);
-            SP_LOG("New value of r.SkylightUpdateEveryFrame: 1");
+            SP_LOG("    Old value of r.SkylightUpdateEveryFrame: ", force_skylight_update_previous_cvar_value_);
+            SP_LOG("    New value of r.SkylightUpdateEveryFrame: 1");
         } else {
             initialized_ = true;
         }
@@ -155,10 +157,12 @@ protected:
 
     void worldCleanup(UWorld* world, bool session_ended, bool cleanup_resources) override
     {
+        SP_LOG_CURRENT_FUNCTION();
+
         initialized_ = false;
 
         if (force_skylight_update_) {
-            SP_LOG("Setting r.SkylightUpdateEveryFrame to ", force_skylight_update_previous_cvar_value_);
+            SP_LOG("    Setting r.SkylightUpdateEveryFrame to ", force_skylight_update_previous_cvar_value_);
 
             IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.SkylightUpdateEveryFrame"));
             cvar->Set(force_skylight_update_previous_cvar_value_);
@@ -184,7 +188,8 @@ protected:
             force_skylight_update_duration_seconds_ += getWorld()->GetDeltaSeconds();
 
             if (force_skylight_update_duration_seconds_ >= force_skylight_update_max_duration_seconds_) {
-                SP_LOG("Setting r.SkylightUpdateEveryFrame to ", force_skylight_update_previous_cvar_value_);
+                SP_LOG_CURRENT_FUNCTION();
+                SP_LOG("    Setting r.SkylightUpdateEveryFrame to ", force_skylight_update_previous_cvar_value_);
 
                 IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.SkylightUpdateEveryFrame"));
                 cvar->Set(force_skylight_update_previous_cvar_value_);

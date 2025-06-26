@@ -389,8 +389,9 @@ public:
         std::map<std::string, TReturnAsActor*> all_actors_map = toMap<TReturnAsActor>(findActorsByType<TActor>(world));
 
         if (Config::isInitialized() && Config::get<bool>("SP_CORE.PRINT_FIND_ACTOR_AND_GET_COMPONENT_DEBUG_INFO")) {
-            SP_LOG("Query names: ", Std::join(actor_names, ", "));
-            SP_LOG("Actor names: ", Std::join(Std::keys(all_actors_map), ", "));
+            SP_LOG_CURRENT_FUNCTION();
+            SP_LOG("    Query names: ", Std::join(actor_names, ", "));
+            SP_LOG("    Actor names: ", Std::join(Std::keys(all_actors_map), ", "));
         }
 
         if (return_null_if_not_found) {
@@ -564,8 +565,9 @@ public:
         std::map<std::string, TReturnAsComponent*> all_components_map = toMap<TReturnAsComponent>(getComponentsByType<TComponent>(actor, include_from_child_actors));
 
         if (Config::isInitialized() && Config::get<bool>("SP_CORE.PRINT_FIND_ACTOR_AND_GET_COMPONENT_DEBUG_INFO")) {
-            SP_LOG("Query names: ", Std::join(component_names, ", "));
-            SP_LOG("Component names: ", Std::join(Std::keys(all_components_map), ", "));
+            SP_LOG_CURRENT_FUNCTION();
+            SP_LOG("    Query names:     ", Std::join(component_names, ", "));
+            SP_LOG("    Component names: ", Std::join(Std::keys(all_components_map), ", "));
         }
 
         if (return_null_if_not_found) {
@@ -588,8 +590,9 @@ public:
         std::map<std::string, TReturnAsComponent*> all_components_map = toMap<TReturnAsComponent>(getComponentsByType<TComponent>(actor, include_from_child_actors));
 
         if (Config::isInitialized() && Config::get<bool>("SP_CORE.PRINT_FIND_ACTOR_AND_GET_COMPONENT_DEBUG_INFO")) {
-            SP_LOG("Query paths: ", Std::join(component_paths, ", "));
-            SP_LOG("Component paths: ", Std::join(Std::keys(all_components_map), ", "));
+            SP_LOG_CURRENT_FUNCTION();
+            SP_LOG("    Query paths:     ", Std::join(component_paths, ", "));
+            SP_LOG("    Component paths: ", Std::join(Std::keys(all_components_map), ", "));
         }
 
         for (auto& component_path : component_paths) {
@@ -796,8 +799,9 @@ public:
         std::map<std::string, TReturnAsSceneComponent*> all_components_map = toMap<TReturnAsSceneComponent>(getChildrenComponentsByType<TSceneComponent>(parent, include_all_descendants));
 
         if (Config::isInitialized() && Config::get<bool>("SP_CORE.PRINT_FIND_ACTOR_AND_GET_COMPONENT_QUERY_INFO")) {
-            SP_LOG("Query names: ", Std::join(children_component_names, ", "));
-            SP_LOG("Children component names: ", Std::join(Std::keys(all_components_map), ", "));
+            SP_LOG_CURRENT_FUNCTION();
+            SP_LOG("    Query names:              ", Std::join(children_component_names, ", "));
+            SP_LOG("    Children component names: ", Std::join(Std::keys(all_components_map), ", "));
         }
 
         if (return_null_if_not_found) {
@@ -1308,9 +1312,11 @@ private:
     static const TValue& getItem(const std::vector<TValue>& vector)
     {
         if (vector.size() == 0) {
-            SP_LOG("ERROR: Input vector is empty.");
+            SP_LOG_CURRENT_FUNCTION();
+            SP_LOG("    ERROR: Input vector is empty.");
         } else if (vector.size() > 1) {
-            SP_LOG("ERROR: Input vector has multiple entries: [", Std::join(Std::toVector<std::string>(vector | std::views::transform([](auto v) { return Std::toString(v); })), ", "), "]");
+            SP_LOG_CURRENT_FUNCTION();
+            SP_LOG("    ERROR: Input vector has multiple entries: [", Std::join(Std::toVector<std::string>(vector | std::views::transform([](auto v) { return Std::toString(v); })), ", "), "]");
         }        
         SP_ASSERT(vector.size() == 1);
         return vector.at(0);

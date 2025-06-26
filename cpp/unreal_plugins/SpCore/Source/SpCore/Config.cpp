@@ -27,7 +27,8 @@ YAML::Node g_config_node;
 
 void Config::initialize(const std::string& config_file)
 {
-    SP_LOG("Initializing config system from file: ", config_file);
+    SP_LOG_CURRENT_FUNCTION();
+    SP_LOG("    Initializing config system from file: ", config_file);
     g_config_node = YAML::LoadFile(config_file);
     s_initialized_ = true;
 }
@@ -38,14 +39,16 @@ void Config::requestInitialize()
     FString config_file;
     if (FParse::Value(FCommandLine::Get(), *Unreal::toFString("config_file="), config_file)) {
         std::string config_file_str = Unreal::toStdString(config_file);
-        SP_LOG("Found config file via the -config_file command-line argument...");
+        SP_LOG_CURRENT_FUNCTION();
+        SP_LOG("    Found config file via the -config_file command-line argument...");
         initialize(config_file_str);
     }
 }
 
 void Config::terminate()
 {
-    SP_LOG("Terminating config system...");
+    SP_LOG_CURRENT_FUNCTION();
+    SP_LOG("    Terminating config system...");
     g_config_node.reset();
     s_initialized_ = false;
 }

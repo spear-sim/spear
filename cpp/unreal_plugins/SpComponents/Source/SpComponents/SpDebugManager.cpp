@@ -49,13 +49,13 @@ ASpDebugManager::ASpDebugManager()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    SP_LOG("    this: ", this);
+    SP_LOG("    this:            ", this);
     SP_LOG("    SpFuncComponent: ", SpFuncComponent);
 
     SpFuncComponent = Unreal::createSceneComponentInsideOwnerConstructor<USpFuncComponent>(this, "sp_func_component");
     SP_ASSERT(SpFuncComponent);
 
-    SP_LOG("    this: ", this);
+    SP_LOG("    this:            ", this);
     SP_LOG("    SpFuncComponent: ", SpFuncComponent);
 
     if (HasAnyFlags(RF_ClassDefaultObject)) {
@@ -72,7 +72,7 @@ ASpDebugManager::~ASpDebugManager()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    SP_LOG("    this: ", this);
+    SP_LOG("    this:            ", this);
     SP_LOG("    SpFuncComponent: ", SpFuncComponent);
 }
 
@@ -86,7 +86,7 @@ void ASpDebugManager::PostInitProperties()
 
     AActor::PostInitProperties();
 
-    SP_LOG("    this: ", this);
+    SP_LOG("    this:            ", this);
     SP_LOG("    SpFuncComponent: ", SpFuncComponent);
 }
 
@@ -100,7 +100,7 @@ void ASpDebugManager::PostActorCreated()
 
     AActor::PostActorCreated();
 
-    SP_LOG("    this: ", this);
+    SP_LOG("    this:            ", this);
     SP_LOG("    SpFuncComponent: ", SpFuncComponent);
 
     initializeSpFunc();
@@ -116,7 +116,7 @@ void ASpDebugManager::PostLoad()
 
     AActor::PostLoad();
 
-    SP_LOG("    this: ", this);
+    SP_LOG("    this:            ", this);
     SP_LOG("    SpFuncComponent: ", SpFuncComponent);
 
     initializeSpFunc();
@@ -132,7 +132,7 @@ void ASpDebugManager::BeginDestroy()
 
     AActor::BeginDestroy();
 
-    SP_LOG("    this: ", this);
+    SP_LOG("    this:            ", this);
     SP_LOG("    SpFuncComponent: ", SpFuncComponent);
 
     terminateSpFunc();
@@ -150,7 +150,8 @@ void ASpDebugManager::SaveConfig()
 
 void ASpDebugManager::PrintDebugString()
 {
-    SP_LOG("DebugString: ", Unreal::toStdString(DebugString));
+    SP_LOG_CURRENT_FUNCTION();
+    SP_LOG("    DebugString: ", Unreal::toStdString(DebugString));
 }
 
 void ASpDebugManager::GetAndSetObjectProperties()
@@ -478,15 +479,15 @@ void ASpDebugManager::CallSpFunc()
     in_rotation.setObj(FRotator(9.0, 10.0, 11.0));
     std::string info = "Hello world";
 
-    SP_LOG("action[0]:        ", Std::at(action.getView(), 0));
-    SP_LOG("action[1]:        ", Std::at(action.getView(), 1));
-    SP_LOG("action[2]:        ", Std::at(action.getView(), 2));
-    SP_LOG("action_shared[0]: ", Std::at(action_shared.getView(), 0));
-    SP_LOG("action_shared[1]: ", Std::at(action_shared.getView(), 1));
-    SP_LOG("action_shared[2]: ", Std::at(action_shared.getView(), 2));
-    SP_LOG("in_location:      ", in_location.getObj().X, " ", in_location.getObj().Y, " ", in_location.getObj().Z);
-    SP_LOG("in_rotation:      ", in_rotation.getObj().Pitch, " ", in_rotation.getObj().Yaw, " ", in_rotation.getObj().Roll);
-    SP_LOG("info:             ", info);
+    SP_LOG("    action[0]:        ", Std::at(action.getView(), 0));
+    SP_LOG("    action[1]:        ", Std::at(action.getView(), 1));
+    SP_LOG("    action[2]:        ", Std::at(action.getView(), 2));
+    SP_LOG("    action_shared[0]: ", Std::at(action_shared.getView(), 0));
+    SP_LOG("    action_shared[1]: ", Std::at(action_shared.getView(), 1));
+    SP_LOG("    action_shared[2]: ", Std::at(action_shared.getView(), 2));
+    SP_LOG("    in_location:      ", in_location.getObj().X, " ", in_location.getObj().Y, " ", in_location.getObj().Z);
+    SP_LOG("    in_rotation:      ", in_rotation.getObj().Pitch, " ", in_rotation.getObj().Yaw, " ", in_rotation.getObj().Roll);
+    SP_LOG("    info:             ", info);
 
     // initialize data bundle from arg objects
     SpFuncDataBundle args;
@@ -507,15 +508,15 @@ void ASpDebugManager::CallSpFunc()
     SpArrayUtils::setViews({observation.getPtr(), observation_shared.getPtr()}, return_values.packed_arrays_);
     UnrealObjUtils::setObjectPropertiesFromStrings({out_location.getPtr(), out_rotation.getPtr()}, return_values.unreal_obj_strings_);
 
-    SP_LOG("observation[0]:        ", Std::at(observation.getView(), 0));
-    SP_LOG("observation[1]:        ", Std::at(observation.getView(), 1));
-    SP_LOG("observation[2]:        ", Std::at(observation.getView(), 2));
-    SP_LOG("observation_shared[0]: ", Std::at(observation_shared.getView(), 0));
-    SP_LOG("observation_shared[1]: ", Std::at(observation_shared.getView(), 1));
-    SP_LOG("observation_shared[2]: ", Std::at(observation_shared.getView(), 2));
-    SP_LOG("out_location:          ", out_location.getObj().X, " ", out_location.getObj().Y, " ", out_location.getObj().Z);
-    SP_LOG("out_rotation:          ", out_rotation.getObj().Pitch, " ", out_rotation.getObj().Yaw, " ", out_rotation.getObj().Roll);
-    SP_LOG("info:                  ", return_values.info_);
+    SP_LOG("    observation[0]:        ", Std::at(observation.getView(), 0));
+    SP_LOG("    observation[1]:        ", Std::at(observation.getView(), 1));
+    SP_LOG("    observation[2]:        ", Std::at(observation.getView(), 2));
+    SP_LOG("    observation_shared[0]: ", Std::at(observation_shared.getView(), 0));
+    SP_LOG("    observation_shared[1]: ", Std::at(observation_shared.getView(), 1));
+    SP_LOG("    observation_shared[2]: ", Std::at(observation_shared.getView(), 2));
+    SP_LOG("    out_location:          ", out_location.getObj().X, " ", out_location.getObj().Y, " ", out_location.getObj().Z);
+    SP_LOG("    out_rotation:          ", out_rotation.getObj().Pitch, " ", out_rotation.getObj().Yaw, " ", out_rotation.getObj().Roll);
+    SP_LOG("    info:                  ", return_values.info_);
 }
 
 void ASpDebugManager::CreateObjects()
@@ -577,18 +578,18 @@ void ASpDebugManager::ReadPixels()
     std::vector<AActor*> actors = Unreal::findActorsByName<AActor>(GetWorld(), {"Debug/BP_Camera_Sensor"});
     AActor* actor = actors.at(0);
     if (!actor) {
-        SP_LOG("Couldn't find Debug/BP_Camera_Sensor, giving up...");
+        SP_LOG("    Couldn't find Debug/BP_Camera_Sensor, giving up...");
         return;
     }
 
-    USpSceneCaptureComponent2D* sp_scene_capture_component_2d = Unreal::getComponentByName<USpSceneCaptureComponent2D>(actor, "DefaultSceneRoot.final_tone_curve_hdr");
+    USpSceneCaptureComponent2D* sp_scene_capture_component_2d = Unreal::getComponentByName<USpSceneCaptureComponent2D>(actor, "DefaultSceneRoot.final_tone_curve_hdr_");
     SP_ASSERT(sp_scene_capture_component_2d);
     if (!sp_scene_capture_component_2d->IsInitialized()) {
-        SP_LOG("Debug/BP_Camera_Sensor:DefaultSceneRoot.final_tone_curve_hdr isn't initialized, giving up...");
+        SP_LOG("    Debug/BP_Camera_Sensor:DefaultSceneRoot.final_tone_curve_hdr isn't initialized, giving up...");
         return;
     }
 
-    USpFuncComponent* sp_func_component = Unreal::getComponentByName<USpFuncComponent>(actor, "DefaultSceneRoot.final_tone_curve_hdr.sp_func_component");
+    USpFuncComponent* sp_func_component = Unreal::getComponentByName<USpFuncComponent>(actor, "DefaultSceneRoot.final_tone_curve_hdr_.sp_func_component");
     SP_ASSERT(sp_func_component);
 
     SpFuncDataBundle args;
@@ -598,30 +599,30 @@ void ASpDebugManager::ReadPixels()
     SpFuncDataBundle return_values = sp_func_component->callFunc("read_pixels", args);
     SpArrayUtils::validate(return_values.packed_arrays_, SpArraySharedMemoryUsageFlags::ReturnValue);
 
-    SP_LOG("return_values.packed_arrays_.at(\"data\").data_:                      ", Std::toStringFromPtr(return_values.packed_arrays_.at("data").data_.data()));
-    SP_LOG("return_values.packed_arrays_.at(\"data\").view_:                      ", Std::toStringFromPtr(return_values.packed_arrays_.at("data").view_));
-    SP_LOG("return_values.packed_arrays_.at(\"data\").data_source_:               ", Unreal::getEnumValue(return_values.packed_arrays_.at("data").data_source_));
-    SP_LOG("return_values.packed_arrays_.at(\"data\").data_type_:                 ", Unreal::getEnumValue(return_values.packed_arrays_.at("data").data_type_));
-    SP_LOG("return_values.packed_arrays_.at(\"data\").shared_memory_name_:        ", return_values.packed_arrays_.at("data").shared_memory_name_);
-    SP_LOG("return_values.packed_arrays_.at(\"data\").shared_memory_usage_flags_: ", Unreal::getEnumValue(return_values.packed_arrays_.at("data").shared_memory_usage_flags_));
+    SP_LOG("    return_values.packed_arrays_.at(\"data\").data_:                      ", Std::toStringFromPtr(return_values.packed_arrays_.at("data").data_.data()));
+    SP_LOG("    return_values.packed_arrays_.at(\"data\").view_:                      ", Std::toStringFromPtr(return_values.packed_arrays_.at("data").view_));
+    SP_LOG("    return_values.packed_arrays_.at(\"data\").data_source_:               ", Unreal::getEnumValue(return_values.packed_arrays_.at("data").data_source_));
+    SP_LOG("    return_values.packed_arrays_.at(\"data\").data_type_:                 ", Unreal::getEnumValue(return_values.packed_arrays_.at("data").data_type_));
+    SP_LOG("    return_values.packed_arrays_.at(\"data\").shared_memory_name_:        ", return_values.packed_arrays_.at("data").shared_memory_name_);
+    SP_LOG("    return_values.packed_arrays_.at(\"data\").shared_memory_usage_flags_: ", Unreal::getEnumValue(return_values.packed_arrays_.at("data").shared_memory_usage_flags_));
 
     for (int i = 0; i < return_values.packed_arrays_.at("data").shape_.size(); i++) {
-        SP_LOG("return_values.packed_arrays_.at(\"data\").shape_:                     ", return_values.packed_arrays_.at("data").shape_.at(i));
+        SP_LOG("    return_values.packed_arrays_.at(\"data\").shape_:                     ", return_values.packed_arrays_.at("data").shape_.at(i));
     }
 
     void* view_ptr = return_values.packed_arrays_.at("data").view_;
 
-    SP_LOG("view_ptr:    ", Std::toStringFromPtr(view_ptr));
-    SP_LOG("view_ptr[0]: ", (int)(((uint8_t*)view_ptr)[0]));
-    SP_LOG("view_ptr[1]: ", (int)(((uint8_t*)view_ptr)[1]));
-    SP_LOG("view_ptr[2]: ", (int)(((uint8_t*)view_ptr)[2]));
-    SP_LOG("view_ptr[3]: ", (int)(((uint8_t*)view_ptr)[3]));
+    SP_LOG("    view_ptr:    ", Std::toStringFromPtr(view_ptr));
+    SP_LOG("    view_ptr[0]: ", (int)(((uint8_t*)view_ptr)[0]));
+    SP_LOG("    view_ptr[1]: ", (int)(((uint8_t*)view_ptr)[1]));
+    SP_LOG("    view_ptr[2]: ", (int)(((uint8_t*)view_ptr)[2]));
+    SP_LOG("    view_ptr[3]: ", (int)(((uint8_t*)view_ptr)[3]));
 }
 
 FString ASpDebugManager::GetString(FString arg_0, bool arg_1, int arg_2, FVector arg_3)
 {
     SP_LOG_CURRENT_FUNCTION();
-    return FString("GetString return value.");
+    return FString("    GetString return value.");
 }
 
 FVector ASpDebugManager::GetVector(FString arg_0, bool arg_1, int arg_2, FVector& arg_3)
@@ -677,15 +678,15 @@ void ASpDebugManager::initializeSpFunc()
         SpArrayUtils::setViews({action.getPtr(), action_shared.getPtr()}, args.packed_arrays_);
         UnrealObjUtils::setObjectPropertiesFromStrings({in_location.getPtr(), in_rotation.getPtr()}, args.unreal_obj_strings_);
 
-        SP_LOG("action[0]:        ", Std::at(action.getView(), 0));
-        SP_LOG("action[1]:        ", Std::at(action.getView(), 1));
-        SP_LOG("action[2]:        ", Std::at(action.getView(), 2));
-        SP_LOG("action_shared[0]: ", Std::at(action_shared.getView(), 0));
-        SP_LOG("action_shared[1]: ", Std::at(action_shared.getView(), 1));
-        SP_LOG("action_shared[2]: ", Std::at(action_shared.getView(), 2));
-        SP_LOG("in_location:      ", in_location.getObj().X, " ", in_location.getObj().Y, " ", in_location.getObj().Z);
-        SP_LOG("in_rotation:      ", in_rotation.getObj().Pitch, " ", in_rotation.getObj().Yaw, " ", in_rotation.getObj().Roll);
-        SP_LOG("info:             ", args.info_);
+        SP_LOG("    action[0]:        ", Std::at(action.getView(), 0));
+        SP_LOG("    action[1]:        ", Std::at(action.getView(), 1));
+        SP_LOG("    action[2]:        ", Std::at(action.getView(), 2));
+        SP_LOG("    action_shared[0]: ", Std::at(action_shared.getView(), 0));
+        SP_LOG("    action_shared[1]: ", Std::at(action_shared.getView(), 1));
+        SP_LOG("    action_shared[2]: ", Std::at(action_shared.getView(), 2));
+        SP_LOG("    in_location:      ", in_location.getObj().X, " ", in_location.getObj().Y, " ", in_location.getObj().Z);
+        SP_LOG("    in_rotation:      ", in_rotation.getObj().Pitch, " ", in_rotation.getObj().Yaw, " ", in_rotation.getObj().Roll);
+        SP_LOG("    info:             ", args.info_);
 
         // define return value objects
         SpArray<double> observation("observation");
@@ -701,15 +702,15 @@ void ASpDebugManager::initializeSpFunc()
         out_rotation.setObj(FRotator(21.0, 22.0, 23.0));
         std::string info = "Success";
 
-        SP_LOG("observation[0]:        ", Std::at(observation.getView(), 0));
-        SP_LOG("observation[1]:        ", Std::at(observation.getView(), 1));
-        SP_LOG("observation[2]:        ", Std::at(observation.getView(), 2));
-        SP_LOG("observation_shared[0]: ", Std::at(observation_shared.getView(), 0));
-        SP_LOG("observation_shared[1]: ", Std::at(observation_shared.getView(), 1));
-        SP_LOG("observation_shared[2]: ", Std::at(observation_shared.getView(), 2));
-        SP_LOG("out_location:          ", out_location.getObj().X, " ", out_location.getObj().Y, " ", out_location.getObj().Z);
-        SP_LOG("out_rotation:          ", out_rotation.getObj().Pitch, " ", out_rotation.getObj().Yaw, " ", out_rotation.getObj().Roll);
-        SP_LOG("info:                  ", info);
+        SP_LOG("    observation[0]:        ", Std::at(observation.getView(), 0));
+        SP_LOG("    observation[1]:        ", Std::at(observation.getView(), 1));
+        SP_LOG("    observation[2]:        ", Std::at(observation.getView(), 2));
+        SP_LOG("    observation_shared[0]: ", Std::at(observation_shared.getView(), 0));
+        SP_LOG("    observation_shared[1]: ", Std::at(observation_shared.getView(), 1));
+        SP_LOG("    observation_shared[2]: ", Std::at(observation_shared.getView(), 2));
+        SP_LOG("    out_location:          ", out_location.getObj().X, " ", out_location.getObj().Y, " ", out_location.getObj().Z);
+        SP_LOG("    out_rotation:          ", out_rotation.getObj().Pitch, " ", out_rotation.getObj().Yaw, " ", out_rotation.getObj().Roll);
+        SP_LOG("    info:                  ", info);
 
         // initialize output data bundle from return value objects
         SpFuncDataBundle return_values;

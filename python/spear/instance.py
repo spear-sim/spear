@@ -49,6 +49,19 @@ class Instance():
         spear.log_current_function()
 
         self._config = config
+        self._rpc_client = None
+
+        spear.log("    Creating instance with launch mode: " + self._config.SPEAR.LAUNCH_MODE)
+        if self._config.SPEAR.LAUNCH_MODE == "none":
+            pass
+        elif self._config.SPEAR.LAUNCH_MODE == "editor":
+            spear.log("    Editor launch mode: " + self._config.SPEAR.INSTANCE.EDITOR_LAUNCH_MODE)
+            spear.log("    Editor executable:  " + self._config.SPEAR.INSTANCE.EDITOR_EXECUTABLE)
+            spear.log("    Editor uproject:    " + self._config.SPEAR.INSTANCE.EDITOR_UPROJECT)
+        elif self._config.SPEAR.LAUNCH_MODE == "game":
+            spear.log("    Game executable: " + self._config.SPEAR.INSTANCE.GAME_EXECUTABLE)
+        else:
+            assert False
 
         # Request to launch the unreal instance and initialize the RPC client.
         self._request_launch_unreal_instance()
@@ -73,65 +86,83 @@ class Instance():
         self._editor = Editor(entry_point_caller=self.engine_service, shared_memory_service=self.shared_memory_service)
         self._game = Game(entry_point_caller=self.engine_service, shared_memory_service=self.shared_memory_service)
 
-        # We need to explicitly initialize EngineService before calling begin_frame()
+        # We need to explicitly initialize EngineService before calling begin_frame() for the first time.
         self.engine_service.initialize()
 
         # Execute warm-up routine.
-        self._request_warm_up(
-            sleep_time_seconds=self._config.SPEAR.INSTANCE.WARM_UP_INSTANCE_SLEEP_TIME_SECONDS,
-            num_frames=self._config.SPEAR.INSTANCE.WARM_UP_INSTANCE_NUM_FRAMES)
+        self._request_warm_up_unreal_instance(
+            time_seconds=self._config.SPEAR.INSTANCE.INSTANCE_WARM_UP_TIME_SECONDS,
+            num_frames=self._config.SPEAR.INSTANCE.INSTANCE_WARM_UP_NUM_FRAMES)
+
 
     #
     # Public interface
     #
 
-    def get_editor(self):
+    def get_editor(self, wait=None, wait_max_time_seconds=0.0, wait_sleep_time_seconds=0.0, warm_up=None, warm_up_time_seconds=0.0, warm_up_num_frames=0):
 
         spear.log_current_function()
         assert self.engine_service.with_editor()
 
-        # Wait until initialize_editor_world_service.is_initialized returns true.
-        self._request_wait_for_func(
-            func=self._editor.initialize_editor_world_service.is_initialized,
-            launch_mode=self._config.SPEAR.LAUNCH_MODE,
-            max_time_seconds=self._config.SPEAR.INSTANCE.INITIALIZE_EDITOR_WORLD_SERVICE_IS_INITIALIZED_MAX_TIME_SECONDS,
-            sleep_time_seconds=self._config.SPEAR.INSTANCE.INITIALIZE_EDITOR_WORLD_SERVICE_IS_INITIALIZED_SLEEP_TIME_SECONDS)
+        if self._config.SPEAR.LAUNCH_MODE == "none":
+            if wait is None:
+                wait = False
+            if warm_up is None:
+                warm_up = False
+        elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
+            if wait is None:
+                wait = True
+                wait_max_time_seconds = self._config.SPEAR.INSTANCE.GET_EDITOR_WAIT_MAX_TIME_SECONDS
+                wait_sleep_time_seconds = self._config.SPEAR.INSTANCE.GET_EDITOR_WAIT_SLEEP_TIME_SECONDS
+            if warm_up is None:
+                warm_up = True
+                warm_up_time_seconds = self._config.SPEAR.INSTANCE.GET_EDITOR_WARM_UP_TIME_SECONDS
+                warm_up_num_frames = self._config.SPEAR.INSTANCE.GET_EDITOR_WARM_UP_NUM_FRAMES
+        else:
+            self._close_rpc_client(verbose=True)
+            assert False
 
-        # Warm up.
-        self._request_warm_up(
-            sleep_time_seconds=self._config.SPEAR.INSTANCE.WARM_UP_EDITOR_SLEEP_TIME_SECONDS,
-            num_frames=self._config.SPEAR.INSTANCE.WARM_UP_EDITOR_NUM_FRAMES)
+        self._wait_until(func=self._editor.initialize_editor_world_service.is_initialized, retry=wait, max_time_seconds=wait_max_time_seconds, sleep_time_seconds=wait_sleep_time_seconds)
+        self._warm_up_unreal_instance(time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames)
 
         return self._editor
 
-    def get_game(self):
+
+    def get_game(self, wait=None, wait_max_time_seconds=0.0, wait_sleep_time_seconds=0.0, warm_up=None, warm_up_time_seconds=0.0, warm_up_num_frames=0):
 
         spear.log_current_function()
 
-        launch_mode = self._config.SPEAR.LAUNCH_MODE
-        if self._config.SPEAR.LAUNCH_MODE == "none" and self.engine_service.with_editor():
-            launch_mode = "game"
-        assert launch_mode in ["none", "editor", "game"]
+        if self._config.SPEAR.LAUNCH_MODE == "none":
+            if wait is None:
+                wait = False
+            if warm_up is None:
+                warm_up = False
+        elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
+            if wait is None:
+                wait = True
+                wait_max_time_seconds = self._config.SPEAR.INSTANCE.GET_GAME_WAIT_MAX_TIME_SECONDS
+                wait_sleep_time_seconds = self._config.SPEAR.INSTANCE.GET_GAME_WAIT_SLEEP_TIME_SECONDS
+            if warm_up is None:
+                warm_up = True
+                warm_up_time_seconds = self._config.SPEAR.INSTANCE.GET_GAME_WARM_UP_TIME_SECONDS
+                warm_up_num_frames = self._config.SPEAR.INSTANCE.GET_GAME_WARM_UP_NUM_FRAMES
+        else:
+            self._close_rpc_client(verbose=True)
+            assert False
 
-        # Wait until initialize_game_world_service.is_initialized returns true.
-        self._request_wait_for_func(
-            func=self._game.initialize_game_world_service.is_initialized,
-            launch_mode=launch_mode,
-            max_time_seconds=self._config.SPEAR.INSTANCE.INITIALIZE_GAME_WORLD_SERVICE_IS_INITIALIZED_MAX_TIME_SECONDS,
-            sleep_time_seconds=self._config.SPEAR.INSTANCE.INITIALIZE_GAME_WORLD_SERVICE_IS_INITIALIZED_SLEEP_TIME_SECONDS)
-
-        # Warm up.
-        self._request_warm_up(
-            sleep_time_seconds=self._config.SPEAR.INSTANCE.WARM_UP_GAME_SLEEP_TIME_SECONDS,
-            num_frames=self._config.SPEAR.INSTANCE.WARM_UP_GAME_NUM_FRAMES)
+        self._wait_until(func=self._game.initialize_game_world_service.is_initialized, retry=wait, max_time_seconds=wait_max_time_seconds, sleep_time_seconds=wait_sleep_time_seconds)
+        self._warm_up_unreal_instance(time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames)
 
         return self._game
+
 
     def begin_frame(self):
         return self.engine_service.begin_frame()
 
+
     def end_frame(self):
         return self.engine_service.end_frame()
+
 
     def is_running(self):
         try:
@@ -141,6 +172,7 @@ class Instance():
             pass # no need to log exception because this case is expected when the instance is no longer running
         return False
 
+
     def close(self):
         # Note that in the constructor, we launch the Unreal instance first and then initialize the RPC
         # client. Normally, we would do things in the reverse order here. But if we close the client first,
@@ -149,6 +181,7 @@ class Instance():
         self._request_exit_unreal_instance()
         self._close_rpc_client(verbose=True)
 
+
     #
     # Initialization helper functions
     #
@@ -156,11 +189,10 @@ class Instance():
     def _request_launch_unreal_instance(self):
 
         spear.log_current_function()        
-        spear.log("Requesting to launch Unreal instance...")
+        spear.log("    Requesting to launch Unreal instance...")
 
         if self._config.SPEAR.LAUNCH_MODE == "none":
-            spear.log('SPEAR.LAUNCH_MODE == "none" so we assume that an Unreal instance has been launched externally.')
-            spear.log("Finished requesting to launch Unreal instance.")
+            pass
 
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
 
@@ -169,7 +201,7 @@ class Instance():
             temp_dir = os.path.realpath(os.path.join(self._config.SPEAR.INSTANCE.TEMP_DIR))
             temp_config_file = os.path.realpath(os.path.join(temp_dir, self._config.SPEAR.INSTANCE.TEMP_CONFIG_FILE))
 
-            spear.log("Writing temp config file: " + temp_config_file)
+            spear.log("    Writing temp config file: " + temp_config_file)
 
             os.makedirs(temp_dir, exist_ok=True)
             with open(temp_config_file, "w") as f:
@@ -215,13 +247,11 @@ class Instance():
                     launch_args.append("-{}={}".format(arg, value))
 
             launch_args.append("-config_file={}".format(temp_config_file))
-
             cmd = [launch_executable_internal] + launch_args
 
-            spear.log("Launching executable with the following command-line arguments:")
+            spear.log("    Launching executable with the following command-line arguments:")
             spear.log_no_prefix(" ".join(cmd))
-
-            spear.log("Launching executable with the following config values:")
+            spear.log("    Launching executable with the following config values:")
             spear.log_no_prefix(self._config)
 
             popen = subprocess.Popen(cmd)
@@ -230,22 +260,24 @@ class Instance():
             # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible status values
             status = self._process.status()
             if status not in expected_process_status_values:
-                spear.log("ERROR: Unrecognized process status: " + status)
-                spear.log("ERROR: Killing process " + str(self._process.pid) + "...")
+                spear.log("    ERROR: Unrecognized process status: " + status)
+                spear.log("    ERROR: Killing process " + str(self._process.pid) + "...")
                 self._force_kill_unreal_instance()
-                self._close_rpc_client(verbose=True)
                 assert False
 
         else:
             assert False
 
+        spear.log("    Finished requesting to launch Unreal instance.")
+
+
     def _initialize_rpc_client(self):
 
         spear.log_current_function()        
-        spear.log("Initializing RPC client...")
+        spear.log("    Initializing RPC client...")
 
         connected = False
-        
+
         # If we're connecting to a running instance, then we assume that the RPC server is already running
         # and only try to connect once.
         if self._config.SPEAR.LAUNCH_MODE == "none":
@@ -263,11 +295,9 @@ class Instance():
                 connected = self._rpc_client.call("engine_service.ping") == "ping"
 
             except Exception as e:
-                spear.log("Exception: ", e)
-                # The client may not clean up resources correctly in this case, so we clean things up
-                # explicitly. See https://github.com/msgpack-rpc/msgpack-rpc-python/issues/14 for more
-                # details.
+                spear.log("    Exception: ", e)
                 self._close_rpc_client(verbose=True)
+                assert False
 
         # otherwise try to connect repeatedly, since the RPC server might not have started yet
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
@@ -279,7 +309,7 @@ class Instance():
                 # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible values
                 status = self._process.status()
                 if status not in expected_process_status_values:
-                    spear.log("ERROR: Unrecognized process status: " + status)
+                    spear.log("    ERROR: Unrecognized process status: " + status)
                     break
 
                 try:
@@ -310,14 +340,76 @@ class Instance():
             assert False
 
         if not connected:
-            spear.log("ERROR: Couldn't connect to RPC server, giving up...")
-            if self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
-                # We were able to launch the Unreal instance, but we weren't able to connect to it, so we
-                # can't send a close command. Therefore, we need to force kill the instance.
-                self._force_kill_unreal_instance()
+            spear.log("    ERROR: Couldn't connect to RPC server, giving up...")
             assert False
 
-        spear.log("Finished initializing RPC client.")
+        spear.log("    Finished initializing RPC client.")
+
+
+    def _request_warm_up_unreal_instance(self, time_seconds, num_frames):
+
+        spear.log_current_function()
+        spear.log("    Requesting to warm up Unreal instance...")
+
+        if self._config.SPEAR.LAUNCH_MODE == "none":
+            pass
+
+        elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
+            self._warm_up_unreal_instance(time_seconds, num_frames)
+
+        else:
+            self._close_rpc_client(verbose=True)
+            assert False
+
+        spear.log("    Finished requesting to warm up Unreal instance.")
+
+
+    def _warm_up_unreal_instance(self, time_seconds, num_frames):
+
+        spear.log_current_function()        
+        spear.log("    Warming up Unreal instance for " + str(time_seconds) + " seconds and " + str(num_frames) + " frames...")
+
+        time.sleep(time_seconds)
+
+        # Execute at least one complete warmup frame to guarantee that we can receive valid observations. If
+        # we don't do this, it is possible that Unreal will return an initial visual observation of all
+        # zeros. We generally also want to execute more than one warmup frame to warm up various caches and
+        # rendering features that leverage temporal coherence between frames.
+        for i in range(num_frames):
+            with self.begin_frame():
+                pass
+            with self.end_frame():
+                pass
+
+        spear.log("    Finished warming up Unreal instance.")
+
+
+    def _wait_until(self, func, retry, max_time_seconds, sleep_time_seconds):
+
+        spear.log_current_function()
+        spear.log("    Waiting for function to return true: " + str(func))
+
+        if retry:
+            spear.log("    Waiting for " + str(max_time_seconds) + " seconds, retrying every " + str(sleep_time_seconds) + " seconds...")
+            success = func()
+            start_time_seconds = time.time()
+            elapsed_time_seconds = time.time() - start_time_seconds
+            while not success and elapsed_time_seconds < max_time_seconds:
+                success = func()
+                if success:
+                    break
+                time.sleep(sleep_time_seconds)
+                elapsed_time_seconds = time.time() - start_time_seconds
+        else:
+            spear.log("    Attempting to call function once...")
+            success = func()
+
+        if not success:
+            spear.log("    ERROR: Function never returned true, giving up...")
+            self._close_rpc_client(verbose=True)
+            assert False
+
+        spear.log("    Finished waiting for function.")
 
     #
     # Termination helper functions
@@ -326,11 +418,10 @@ class Instance():
     def _request_exit_unreal_instance(self):
 
         spear.log_current_function()        
-        spear.log("Requesting to exit Unreal instance...")
+        spear.log("    Requesting to exit Unreal instance...")
 
         if self._config.SPEAR.LAUNCH_MODE == "none":
-            spear.log('SPEAR.LAUNCH_MODE == "none" so we assume that the Unreal instance should remain open.')
-            spear.log("Finished requesting to exit Unreal instance.")
+            pass
 
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:        
             try:
@@ -347,89 +438,29 @@ class Instance():
                     status = self._process.status()
                 except psutil.NoSuchProcess:
                     break
-            spear.log("Finished exiting Unreal instance.")
 
         else:
+            self._close_rpc_client(verbose=True)
             assert False
 
-    def _force_kill_unreal_instance(self):
+        spear.log("    Finished requesting to exit Unreal instance.")
 
+
+    def _force_kill_unreal_instance(self):
         spear.log_current_function()
-        spear.log("Forcefully killing Unreal instance...")
+        spear.log("    Forcefully killing Unreal instance...")
         self._process.terminate()
         self._process.kill()
-        spear.log("Finished forcefully killing Unreal instance.")
+        spear.log("    Finished forcefully killing Unreal instance.")
 
 
     def _close_rpc_client(self, verbose):
         if verbose:
             spear.log_current_function()
-            spear.log("Closing RPC client...")
-        self._rpc_client.close()
-        self._rpc_client._loop._ioloop.close()
+            spear.log("    Closing RPC client " + str(self._rpc_client) + "...")
+        if self._rpc_client is not None:
+            self._rpc_client.close()
+            self._rpc_client._loop._ioloop.close()
+            self._rpc_client = None
         if verbose:
-            spear.log("Finished closing RPC client.")
-
-    #
-    # Warm-up helper functions
-    #
-
-    def _request_wait_for_func(self, func, launch_mode, max_time_seconds, sleep_time_seconds):
-
-        spear.log_current_function()        
-        spear.log("Requesting to wait for function: " + str(func))
-
-        if launch_mode == "none":
-            spear.log('SPEAR.LAUNCH_MODE == "none" so we assume that we only need to call func once.')
-            success = func()
-
-        elif launch_mode in ["editor", "game"]:
-            success = func()
-            start_time_seconds = time.time()
-            elapsed_time_seconds = time.time() - start_time_seconds
-            while not success and elapsed_time_seconds < max_time_seconds:
-                success = func()
-                if success:
-                    break
-                time.sleep(sleep_time_seconds)
-                elapsed_time_seconds = time.time() - start_time_seconds
-
-        else:
-            assert False
-
-        if not success:
-            spear.log("ERROR: Function never returned true, giving up...")
-            self._close_rpc_client(verbose=True)
-            assert False
-
-        spear.log("Finished waiting for function.")
-
-
-    def _request_warm_up(self, sleep_time_seconds, num_frames):
-
-        spear.log_current_function()        
-        spear.log("Requesting to warm up...")
-
-        if self._config.SPEAR.LAUNCH_MODE == "none":
-            spear.log('SPEAR.LAUNCH_MODE == "none" so we assume that the Unreal instance is already warmed up.')
-            spear.log("Finished requesting to warm up.")
-
-        elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
-            spear.log("Waiting for " + str(sleep_time_seconds) + " seconds before attempting to execute warm-up frames...")
-            time.sleep(sleep_time_seconds)
-
-            # Execute at least one complete warmup frame to guarantee that we can receive valid observations. If
-            # we don't do this, it is possible that Unreal will return an initial visual observation of all
-            # zeros. We generally also want to execute more than one warmup frame to warm up various caches and
-            # rendering features that leverage temporal coherence between frames.
-            spear.log("Executing " + str(num_frames) + " warm-up frames...")
-            for i in range(num_frames):
-                with self.begin_frame():
-                    pass
-                with self.end_frame():
-                    pass
-
-            spear.log("Finished warming up.")
-
-        else:
-            assert False
+            spear.log("    Finished closing RPC client.")

@@ -249,7 +249,8 @@ private:
         AActor* actor_ptr = toPtr<AActor>(actor);
         std::vector<UInputComponent*> input_components = Unreal::getComponentsByType<UInputComponent>(actor_ptr);
         if (input_components.size() != 1) {
-            SP_LOG("Couldn't find a unique UInputComponent on actor ", Unreal::tryGetStableName(actor_ptr), ", giving up...");
+            SP_LOG_CURRENT_FUNCTION();
+            SP_LOG("    Couldn't find a unique UInputComponent on actor ", Unreal::tryGetStableName(actor_ptr), ", giving up...");
             return nullptr;
         } else {
             return input_components.at(0);

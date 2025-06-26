@@ -48,10 +48,10 @@ public class SpTargetRulesTarget : TargetRules
             AdditionalCompilerArguments = "-fexperimental-library";
 
         } else if (targetInfo.Platform == UnrealTargetPlatform.IOS || targetInfo.Platform == UnrealTargetPlatform.TVOS) {
-            SP_LOG("NOTE: We only expect to see targetInfo.Platform == UnrealTargetPlatform.IOS or targetInfo.Platform == UnrealTargetPlatform.TVOS when we're on macOS and we're attempting to generate XCode project files. If we're not on macOS generating XCode project files, target.Platform == UnrealTargetPlatform.IOS and target.Platform == UnrealTargetPlatform.TVOS are unexpected.");
+            SP_LOG("    NOTE: We only expect to see targetInfo.Platform == UnrealTargetPlatform.IOS or targetInfo.Platform == UnrealTargetPlatform.TVOS when we're on macOS and we're attempting to generate XCode project files. If we're not on macOS generating XCode project files, target.Platform == UnrealTargetPlatform.IOS and target.Platform == UnrealTargetPlatform.TVOS are unexpected.");
 
         } else if (targetInfo.Platform == UnrealTargetPlatform.LinuxArm64) {
-            SP_LOG("NOTE: We only expect to see targetInfo.Platform == UnrealTargetPlatform.LinuxArm64 when we're on Linux and the editor is attempting to open a uproject for the first time. If the editor is not attempting to open a uproject for the first time on Linux, target.Platform == UnrealTargetPlatform.LinuxArm64 is unexpected.");
+            SP_LOG("    NOTE: We only expect to see targetInfo.Platform == UnrealTargetPlatform.LinuxArm64 when we're on Linux and the editor is attempting to open a uproject for the first time. If the editor is not attempting to open a uproject for the first time on Linux, target.Platform == UnrealTargetPlatform.LinuxArm64 is unexpected.");
 
         } else {
             throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + targetInfo.Platform);
