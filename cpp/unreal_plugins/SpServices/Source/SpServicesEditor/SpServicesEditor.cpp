@@ -27,11 +27,9 @@ void SpServicesEditor::StartupModule()
     // If we're cooking, then return early. In this case, there is no need to launch our services, and if
     // if we attempt to launch the RPC server while cooking, and the editor or game is already open, then we
     // will get an error because the port is in use.
-    #if WITH_EDITOR // defined in an auto-generated header
-        if (IsRunningCommandlet()) {
-            return;
-        }
-    #endif
+    if (IsRunningCommandlet()) {
+        return;
+    }
 
     SpServices* sp_services = FModuleManager::Get().GetModulePtr<SpServices>("SpServices");
     SP_ASSERT(sp_services);
@@ -44,11 +42,9 @@ void SpServicesEditor::ShutdownModule()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    #if WITH_EDITOR // defined in an auto-generated header
-        if (IsRunningCommandlet()) {
-            return;
-        }
-    #endif
+    if (IsRunningCommandlet()) {
+        return;
+    }
 
     SP_ASSERT(editor_unreal_service_editor);
     editor_unreal_service_editor = nullptr;

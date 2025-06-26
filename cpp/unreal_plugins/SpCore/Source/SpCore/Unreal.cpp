@@ -32,6 +32,7 @@
 #include <UObject/UnrealType.h>      // FArrayProperty, FBoolProperty, FByteProperty, FDoubleProperty, FInt8Property, FInt16Property, FInt64Property,
                                      // FFloatProperty, FIntProperty, FMapProperty, FProperty, FScriptArrayHelper, FScriptMapHelper, FScriptSetHelper,
                                      // FSetProperty, FStrProperty, FStructProperty, FUInt16Property, FUInt32Property, FUInt64Property, TFieldIterator
+
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/SpSpecialStructActor.h"
