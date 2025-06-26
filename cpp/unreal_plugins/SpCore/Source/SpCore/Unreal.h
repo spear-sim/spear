@@ -26,6 +26,7 @@
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>                   // int32, int64, SPCORE_API, TCHAR
 #include <Internationalization/Text.h>      // FText
+#include <Subsystems/EngineSubsystem.h>
 #include <Subsystems/Subsystem.h>
 #include <Templates/Casts.h>
 #include <UObject/Class.h>                  // EGetByNameFlags, EIncludeSuperFlag, UClass, UEnum, UStruct
@@ -34,10 +35,6 @@
 #include <UObject/ReflectedTypeAccessors.h> // StaticEnum
 #include <UObject/UnrealType.h>             // FProperty
 #include <UObject/UObjectGlobals.h>         // NewObject
-
-#if WITH_EDITOR // defined in an auto-generated header
-    #include <Editor.h> // GEditor
-#endif
 
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
@@ -112,6 +109,11 @@ template <typename TSubsystem>
 concept CSubsystem =
     CClass<TSubsystem> &&
     std::derived_from<TSubsystem, USubsystem>;
+
+template <typename TEngineSubsystem>
+concept CEngineSubsystem =
+    CSubsystem<TEngineSubsystem> &&
+    std::derived_from<TEngineSubsystem, UEngineSubsystem>;
 
 template <typename TSubsystemProvider>
 concept CSubsystemProvider =
@@ -1041,37 +1043,18 @@ public:
     // Get engine subsystem, uclass can't be const because we need to pass it to GetEngineSubsystemBase(...)
     //
 
-    template <CSubsystem TSubsystem>
-    static TSubsystem* getEngineSubsystemByType()
+    template <CEngineSubsystem TEngineSubsystem>
+    static TEngineSubsystem* getEngineSubsystemByType()
     {
         SP_ASSERT(GEngine);
-        return GEngine->GetEngineSubsystem<TSubsystem>();
+        return GEngine->GetEngineSubsystem<TEngineSubsystem>();
     }
 
-    static USubsystem* getEngineSubsystemByClass(UClass* uclass)
+    static UEngineSubsystem* getEngineSubsystemByClass(UClass* uclass)
     {
         SP_ASSERT(GEngine);
         return GEngine->GetEngineSubsystemBase(uclass);
     }
-
-    //
-    // Get editor subsystem, uclass can't be const because we need to pass it to GetEngineSubsystemBase(...)
-    //
-
-#if WITH_EDITOR // defined in an auto-generated header
-    template <CSubsystem TSubsystem>
-    static TSubsystem* getEditorSubsystemByType()
-    {
-        SP_ASSERT(GEditor);
-        return GEditor->GetEditorSubsystem<TSubsystem>();
-    }
-
-    static USubsystem* getEditorSubsystemByClass(UClass* uclass)
-    {
-        SP_ASSERT(GEditor);
-        return GEditor->GetEditorSubsystemBase(uclass);
-    }
-#endif
 
     //
     // Get subsystem, world can't be const because we need to return it directly in some specializations, and

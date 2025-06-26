@@ -27,6 +27,7 @@ class AActor;
 class FLinkerInstancingContext;
 class UActorComponent;
 class UClass;
+class UEngineSubsystem;
 class UObject;
 class UPackage;
 class UPackageMap;
@@ -49,13 +50,9 @@ struct FObjectInstancingGraph;
 // Registrars for getting subsystems using a class name instead of template parameters
 //
 
-extern SPCORE_API FuncRegistrar<USubsystem*>                   g_get_engine_subsystem_by_type_func_registrar;
+extern SPCORE_API FuncRegistrar<UEngineSubsystem*>             g_get_engine_subsystem_by_type_func_registrar;
 extern SPCORE_API FuncRegistrar<USubsystem*, UWorld*>          g_get_subsystem_by_type_func_registrar;
 extern SPCORE_API FuncRegistrar<USubsystem*, UWorld*, UClass*> g_get_subsystem_by_class_func_registrar;
-
-#if WITH_EDITOR // defined in an auto-generated header
-    extern SPCORE_API FuncRegistrar<USubsystem*> g_get_editor_subsystem_by_type_func_registrar;
-#endif
 
 //
 // Registrars for getting a static class or static struct using a class name instead of template parameters
@@ -192,15 +189,7 @@ public:
     // Get engine subsystem using a class name instead of template parameters
     //
 
-    static USubsystem* getEngineSubsystemByType(const std::string& class_name);
-
-    //
-    // Get engine subsystem using a class name instead of template parameters
-    //
-
-#if WITH_EDITOR // defined in an auto-generated header
-    static USubsystem* getEditorSubsystemByType(const std::string& class_name);
-#endif
+    static UEngineSubsystem* getEngineSubsystemByType(const std::string& class_name);
 
     //
     // Get subsystem using a class name instead of template parameters
@@ -361,33 +350,16 @@ public:
     // Register engine subsystem class
     //
 
-    template <CSubsystem TSubsystem>
+    template <CEngineSubsystem TEngineSubsystem>
     static void registerEngineSubsystemClass(const std::string& class_name)
     {
-        registerClassCommon<TSubsystem>(class_name);
+        registerClassCommon<TEngineSubsystem>(class_name);
 
         g_get_engine_subsystem_by_type_func_registrar.registerFunc(
-            class_name, []() -> USubsystem* {
-                return Unreal::getEngineSubsystemByType<TSubsystem>();
+            class_name, []() -> UEngineSubsystem* {
+                return Unreal::getEngineSubsystemByType<TEngineSubsystem>();
             });
     }
-
-    //
-    // Register editor subsystem class
-    //
-
-#if WITH_EDITOR // defined in an auto-generated header
-    template <CSubsystem TSubsystem>
-    static void registerEditorSubsystemClass(const std::string& class_name)
-    {
-        registerClassCommon<TSubsystem>(class_name);
-
-        g_get_editor_subsystem_by_type_func_registrar.registerFunc(
-            class_name, []() -> USubsystem* {
-                return Unreal::getEditorSubsystemByType<TSubsystem>();
-            });
-    }
-#endif
 
     //
     // Register subsystem provider class
@@ -905,23 +877,13 @@ public:
     // Unregister classes
     //
 
-    template <CSubsystem TSubsystem>
+    template <CEngineSubsystem TEngineSubsystem>
     static void unregisterEngineSubsystemClass(const std::string& class_name)
     {
-        unregisterClassCommon<TSubsystem>(class_name);
+        unregisterClassCommon<TEngineSubsystem>(class_name);
 
         g_get_engine_subsystem_by_type_func_registrar.unregisterFunc(class_name);
     }
-
-#if WITH_EDITOR // defined in an auto-generated header
-    template <CSubsystem TSubsystem>
-    static void unregisterEditorSubsystemClass(const std::string& class_name)
-    {
-        unregisterClassCommon<TSubsystem>(class_name);
-
-        g_get_editor_subsystem_by_type_func_registrar.unregisterFunc(class_name);
-    }
-#endif
 
     template <CSubsystemProvider TSubsystemProvider>
     static void unregisterSubsystemProviderClass(const std::string& class_name)
