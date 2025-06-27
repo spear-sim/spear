@@ -74,7 +74,7 @@ class EngineService():
         except Exception as e:
             spear.log("Exception: ", e)
             spear.log("Attempting to exit critical section...")
-            self._rpc_client.call_on_worker_thread("engine_service.end_frame")
+            self.call_on_worker_thread("engine_service.end_frame")
             self._frame_state = "idle"
             raise e
 
