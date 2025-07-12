@@ -80,7 +80,7 @@ pip install -e python
 
 If you're developing on Linux, you will need to install `gcc` if it isn't already installed on your system. `gcc` is required when installing one of our Python dependencies via `pip`.
 
-The Unreal Editor has its own Python environment, so we need to install the `spear` Python package into the Unreal Editor's Python environment in a separate step. We provide a command-line tool for this purpose.
+The Unreal Editor has its own Python environment, so you will need to install the `spear` Python package into the Unreal Editor's Python environment in a separate step. We provide a command-line tool for this purpose.
 
 ```console
 # install the spear Python package into the Unreal Editor's Python environment
