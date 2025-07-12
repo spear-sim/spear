@@ -22,10 +22,6 @@ If you find SPEAR useful in your research, please cite this repository as follow
 
 ## Getting Started
 
-### Minimum and recommended system specifications
-
-Minimum and recommended system specifications for the Unreal Engine are given [here](https://docs.unrealengine.com/5.2/en-US/hardware-and-software-specifications-for-unreal-engine).
-
 ### Documentation
 
 - Our [Getting Started](docs/getting_started.md) tutorial explains how to set up your development environment.

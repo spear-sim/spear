@@ -4,6 +4,10 @@
 
 We will assume that you are developing on a version of Windows, macOS, or Linux that is compatible with Unreal Engine 5.5. We will also assume that you're using Anaconda Python to manage your Python environment, and that you have Git and CMake installed.
 
+### Minimum and recommended system specifications
+
+Minimum and recommended system specifications for the Unreal Engine are given [here](https://docs.unrealengine.com/5.2/en-US/hardware-and-software-specifications-for-unreal-engine).
+
 ## Install the Unreal Engine
 
 We recommend installing the Unreal Engine version 5.5 via the Epic Games Launcher, rather than building it from source. We recommend installing to a path that does not contain spaces. You may need to disconnect from your VPN or proxy server when running the Epic Games Launcher. When you install the Unreal Engine, make sure to select _Editor symbols for debugging_ from the list of optional components.
