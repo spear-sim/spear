@@ -143,7 +143,7 @@ public:
         SP_ASSERT(client_);
 
         try {
-            return client_->call(func_name, args...).template as<TReturn>();
+            return client_->call(func_name, args...).template as<TReturn>(); // .template needed on macOS
         } catch (const std::exception& e) {
             if (Globals::s_verbose_exceptions_) {
                 std::cout << "[SPEAR | spear_ext.cpp] ERROR: Caught exception when calling \"" << func_name << "\": " << e.what() << std::endl;
