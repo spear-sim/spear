@@ -126,7 +126,7 @@ python tools/copy_engine_content.py --unreal_engine_dir path/to/UE_5.5
 
 ## Build the `SpearSim` executable
 
-We are now ready to build the `SpearSim` executable as follows.
+You are now ready to build the `SpearSim` executable as follows.
 
 ```console
 python tools/run_uat.py --unreal_engine_dir path/to/UE_5.5 -build -cook -stage -package -archive -pak
