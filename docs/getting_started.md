@@ -87,7 +87,7 @@ If you're developing on Linux, you will need to install `gcc` if it isn't alread
 The Unreal Editor has its own Python environment, so you will need to install the `spear` Python package into the Unreal Editor's Python environment in a separate step. We provide a command-line tool for this purpose.
 
 ```console
-# install the spear Python package into the Unreal Editor's Python environment
+# install the spear Python package into the Unreal Editor Python environment
 python tools/install_python_package_in_editor_env.py --unreal_engine_dir path/to/UE_5.5
 ```
 
