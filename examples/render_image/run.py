@@ -4,13 +4,19 @@
 
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
+import argparse
 import cv2
 import math
 import os
 import spear
+import time
 
 
 if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--benchmark", action="store_true")
+    args = parser.parse_args()
 
     # create instance
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
@@ -103,8 +109,43 @@ if __name__ == "__main__":
             uobject_shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
 
     # show rendered frame now that we're outside of with instance.end_frame()
-    cv2.imshow("final_tone_curve_hdr", return_values["arrays"]["data"])
-    cv2.waitKey(0)
+    if not args.benchmark:
+        cv2.imshow("final_tone_curve_hdr", return_values["arrays"]["data"])
+        cv2.waitKey(0)
+
+    # optional benchmarking
+    if args.benchmark:
+
+        # game.unreal_service.get_static_class(...)
+        num_steps = 100
+        start_time_seconds = time.time()
+
+        for i in range(num_steps):
+            with instance.begin_frame():
+                pass
+            with instance.end_frame():
+                actor_static_class = game.unreal_service.get_static_class(class_name="AActor")
+
+        end_time_seconds = time.time()
+        elapsed_time_seconds = end_time_seconds - start_time_seconds
+        spear.log("Average frame time for get_static_class(...): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
+
+        # instance.sp_func_service.call_function(...)
+        num_steps = 100
+        start_time_seconds = time.time()
+
+        for i in range(num_steps):
+            with instance.begin_frame():
+                pass
+            with instance.end_frame():
+                return_values = instance.sp_func_service.call_function(
+                    uobject=final_tone_curve_hdr_component,
+                    function_name="read_pixels",
+                    uobject_shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
+
+        end_time_seconds = time.time()
+        elapsed_time_seconds = end_time_seconds - start_time_seconds
+        spear.log("Average frame time for instance.sp_func_service.call_function(...): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
 
     # terminate actors and components
     with instance.begin_frame():
