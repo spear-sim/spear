@@ -20,7 +20,7 @@ Linux:   path/to/Linux_Unreal_Engine_5.5.1
 
 ## Install an appropriate compiler
 
-If you're developing on Windows or macOS, you will need to install a specific compiler that is compatible with Unreal Engine 5.5. If you're developing on Linux, the Unreal Engine ships with its own version of `clang` and `libc++`, so there is no need to install another compiler to build the `SpearSim` project in this repository, but you will need to install a compiler to build our third-party dependencies, as described below. We have verified that the following compilers behave as expected.
+If you're developing on Windows or macOS, you will need to install a specific compiler that is compatible with Unreal Engine 5.5. If you're developing on Linux, the Unreal Engine ships with its own version of `clang` and `libc++`, so there is no need to install another compiler to build the `SpearSim` project in this repository, but you will need to install an appropriate compiler to build our third-party dependencies as described below. We have verified that the following compilers behave as expected when building `SpearSim`.
 
 ```
 Windows: Visual Studio 2022
@@ -52,7 +52,7 @@ After executing these commands, you can use the _Developer PowerShell for VS 202
 
 ## Clone this repository including submodules
 
-The first step is to clone this repository including submodules. We have found that the _recurse submodules_ features in some Git applications don't always download submodules as expected. We therefore recommend using the following commands.
+The next step is to clone this repository including submodules. We have found that the _recurse submodules_ features in some Git applications don't always download submodules as expected. We therefore recommend using the following commands.
 
 ```console
 # clone repository
