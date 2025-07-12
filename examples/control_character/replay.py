@@ -73,7 +73,7 @@ if __name__ == "__main__":
 
             character = {}
 
-            transforms_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "character_poses", f"{character_desc["name"]}.csv"))
+            transforms_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "character_poses", f"{character_desc['name']}.csv"))
             character["data_frame"] = pd.read_csv(transforms_file)
 
             # there is no point specifying a location and rotation yet, because the spawned actor won't have a

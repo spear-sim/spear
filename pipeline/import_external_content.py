@@ -100,7 +100,7 @@ if __name__ == "__main__":
     #
 
     if os.path.exists(temp_unreal_project_dir):
-        spear.log(f"Directory exists, removing: {temp_unreal_project_dir}")
+        spear.log("Directory exists, removing: ", temp_unreal_project_dir)
         shutil.rmtree(temp_unreal_project_dir, ignore_errors=True)
 
     # If symlinks is true, symbolic links in the source tree are represented as symbolic links in the new
@@ -152,7 +152,7 @@ if __name__ == "__main__":
 
     # need shell=True to correctly handle the quotes in cmd
     cmd = f'"{unreal_editor_bin}" "{temp_uproject}" -run=pythonscript -script="{script} {script_args}"'
-    spear.log(f"Executing: {cmd}")
+    spear.log("Executing: ", cmd)
     subprocess.run(cmd, shell=True, check=True)
 
     assert not os.path.exists(temp_unreal_project_source_content_filesystem_path)
@@ -166,7 +166,7 @@ if __name__ == "__main__":
     # copying the file src points to.
     if os.path.isfile(temp_unreal_project_destination_content_filesystem_path):
         if os.path.exists(destination_unreal_project_destination_content_filesystem_path):
-            spear.log(f"File exists, removing: {destination_unreal_project_destination_content_filesystem_path}")
+            spear.log("File exists, removing: ", destination_unreal_project_destination_content_filesystem_path)
             os.remove(destination_unreal_project_destination_content_filesystem_path)
         spear.log(f"Copying file: {temp_unreal_project_destination_content_filesystem_path} -> {destination_unreal_project_destination_content_filesystem_path}")
         shutil.copyfile(temp_unreal_project_destination_content_filesystem_path, destination_unreal_project_destination_content_filesystem_path, follow_symlinks=True)
@@ -176,7 +176,7 @@ if __name__ == "__main__":
     # omitted, the contents and metadata of the linked files are copied to the new tree.
     elif os.path.isdir(temp_unreal_project_destination_content_filesystem_path):
         if os.path.exists(destination_unreal_project_destination_content_filesystem_path):
-            spear.log(f"Directory exists, removing: {destination_unreal_project_destination_content_filesystem_path}")
+            spear.log("Directory exists, removing: ", destination_unreal_project_destination_content_filesystem_path)
             shutil.rmtree(destination_unreal_project_destination_content_filesystem_path, ignore_errors=True)
         spear.log(f"Copying directory: {temp_unreal_project_destination_content_filesystem_path} -> {destination_unreal_project_destination_content_filesystem_path}")
         shutil.copytree(temp_unreal_project_destination_content_filesystem_path, destination_unreal_project_destination_content_filesystem_path, symlinks=False, ignore_dangling_symlinks=False)

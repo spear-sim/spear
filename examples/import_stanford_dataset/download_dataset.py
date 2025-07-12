@@ -42,7 +42,7 @@ if __name__ == '__main__':
     ply_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "ply"))
 
     if os.path.exists(download_dir):
-        spear.log(f"Directory exists, removing: {download_dir}")
+        spear.log("Directory exists, removing: ", download_dir)
         shutil.rmtree(download_dir, ignore_errors=True)
 
     os.makedirs(download_dir, exist_ok=True)

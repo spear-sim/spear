@@ -80,7 +80,7 @@ if __name__ == "__main__":
     if len(cook_maps) == 0:
         cook_maps_arg = []
     else:
-        cook_maps_arg = [f"-map={"+".join(cook_maps)}"]
+        cook_maps_arg = [f"-map={'+'.join(cook_maps)}"]
 
     # cook project, see https://docs.unrealengine.com/5.2/en-US/SharingAndReleasing/Deployment/Cooking for more details
     cmd = [
@@ -97,7 +97,7 @@ if __name__ == "__main__":
         "-nologtimes"] + \
         cook_dir_args + \
         cook_maps_arg
-    spear.log(f"Executing: {' '.join(cmd)}")
+    spear.log("Executing: ", " ".join(cmd))
     subprocess.run(cmd, check=True)
 
     # create manifest file
@@ -126,10 +126,10 @@ if __name__ == "__main__":
 
     # build pak file
     cmd = [unreal_pak_bin, pak_file, f'-create="{manifest_file}"', f"-platform={platform}", "-multiprocess", "-compressed"]
-    spear.log(f"Executing: {' '.join(cmd)}")
+    spear.log("Executing: ", " ".join(cmd))
     subprocess.run(cmd, check=True)
 
     assert os.path.exists(pak_file)
-    spear.log(f"Successfully built: {pak_file}")
+    spear.log("Successfully built: ", pak_file)
 
     spear.log("Done.")

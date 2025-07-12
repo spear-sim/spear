@@ -71,7 +71,7 @@ if __name__ == "__main__":
     # create output dir
     character_poses_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "character_poses"))
     if os.path.exists(character_poses_dir):
-        spear.log(f"Directory exists, removing: {character_poses_dir}")
+        spear.log("Directory exists, removing: ", character_poses_dir)
         shutil.rmtree(character_poses_dir, ignore_errors=True)
     os.makedirs(character_poses_dir, exist_ok=True)
 
@@ -231,7 +231,7 @@ if __name__ == "__main__":
 
     # save bone transforms in a separate CSV file for each character
     for character in characters:
-        transforms_file = os.path.realpath(os.path.join(character_poses_dir, f"{character["name"]}.csv"))
+        transforms_file = os.path.realpath(os.path.join(character_poses_dir, f"{character['name']}.csv"))
         character["data_frame"].to_csv(transforms_file, mode="w", index=False)
 
     spear.log("Done.")

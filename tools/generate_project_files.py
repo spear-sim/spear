@@ -37,7 +37,7 @@ if __name__ == "__main__":
     uproject = uprojects[0]
 
     cmd = f'{generate_project_files_script} -project="{uproject}" {generate_project_files_args}'
-    spear.log(f"Executing: {cmd}")
+    spear.log("Executing: ", cmd)
     subprocess.run(cmd, shell=True, check=True)
 
     spear.log("Done.")

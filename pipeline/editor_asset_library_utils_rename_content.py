@@ -56,7 +56,7 @@ if __name__ == "__main__":
         if unreal.EditorAssetLibrary.does_asset_exist(source_content_path):
             asset_data = asset_registry.get_asset_by_object_path(get_object_path_from_asset_path(asset_path=source_content_path))
             assert asset_data.is_redirector()
-            spear.log(f"Deleting redirector: {source_content_path}")
+            spear.log("Deleting redirector: ", source_content_path)
             unreal.EditorAssetLibrary.delete_asset(source_content_path)
 
         assert not unreal.EditorAssetLibrary.does_asset_exist(source_content_path)
@@ -71,7 +71,7 @@ if __name__ == "__main__":
         if unreal.EditorAssetLibrary.does_directory_exist(source_content_path):
             assert not unreal.EditorAssetLibrary.does_directory_have_assets(source_content_path)
             filesystem_path = spear.editor_utils.get_filesystem_path_from_content_path(content_path=source_content_path)
-            spear.log(f"Directory was not deleted, deleting via the filesystem: {filesystem_path}")
+            spear.log("Directory was not deleted, deleting via the filesystem: ", filesystem_path)
             shutil.rmtree(filesystem_path, ignore_errors=True)
             assert not os.path.exists(filesystem_path)
 

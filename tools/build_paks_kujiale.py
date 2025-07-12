@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
         if args.conda_script:
             if os.path.exists(args.conda_script):
-                spear.log(f"Found conda script at: ", args.conda_script)
+                spear.log("Found conda script at: ", args.conda_script)
                 conda_script = args.conda_script
             assert conda_script is not None
 
@@ -61,7 +61,7 @@ if __name__ == "__main__":
             conda_script = None
             for conda_script_candidate in conda_script_candidates:
                 if os.path.exists(conda_script_candidate):
-                    spear.log(f"Found conda script at: ", conda_script_candidate)
+                    spear.log("Found conda script at: ", conda_script_candidate)
                     conda_script = conda_script_candidate
                     break
             assert conda_script is not None
@@ -75,7 +75,7 @@ if __name__ == "__main__":
 
         if args.conda_script:
             if os.path.exists(args.conda_script):
-                spear.log(f"Found conda script at: ", args.conda_script)
+                spear.log("Found conda script at: ", args.conda_script)
                 conda_script = args.conda_script
             assert conda_script is not None
 
@@ -87,7 +87,7 @@ if __name__ == "__main__":
             conda_script = None
             for conda_script_candidate in conda_script_candidates:
                 if os.path.exists(conda_script_candidate):
-                    spear.log(f"Found conda script at: ", conda_script_candidate)
+                    spear.log("Found conda script at: ", conda_script_candidate)
                     conda_script = conda_script_candidate
                     break
             assert conda_script is not None
@@ -120,7 +120,7 @@ if __name__ == "__main__":
         f'--unreal_project_dir "{unreal_project_dir}" ' + \
         f'--unreal_project_content_dir "{content_dir}" ' + \
         f"--{update_action}"
-    spear.log(f"Executing: {cmd}")
+    spear.log("Executing: ", cmd)
     subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
 
     content_dir = "MSPresets"
@@ -133,7 +133,7 @@ if __name__ == "__main__":
         f'--unreal_project_dir "{unreal_project_dir}" ' + \
         f'--unreal_project_content_dir "{content_dir}" ' + \
         f"--{update_action}"
-    spear.log(f"Executing: {cmd}")
+    spear.log("Executing: ", cmd)
     subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
 
     #
@@ -176,7 +176,7 @@ if __name__ == "__main__":
         exclude_assets = []
         for exclude_pak_file in exclude_pak_files:
             cmd = [unreal_pak_bin, "-List", exclude_pak_file]
-            spear.log(f"Executing: {' '.join(cmd)}")
+            spear.log("Executing: ", ' '.join(cmd))
             ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
             for line in ps.stdout:
                 line_split = line.split('"')
@@ -200,7 +200,7 @@ if __name__ == "__main__":
             f'--exclude_assets_file "{exclude_assets_file}" ' + \
             f'--unreal_engine_dir "{args.unreal_engine_dir}" ' + \
             f'--unreal_project_dir "{unreal_project_dir}"'
-        spear.log(f"Executing: {cmd}")
+        spear.log("Executing: ", cmd)
         subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
 
     #
@@ -237,7 +237,7 @@ if __name__ == "__main__":
                 f'--unreal_project_dir "{unreal_project_dir}" ' + \
                 f'--unreal_project_content_dir "{content_dir}" ' + \
                 f"--{update_action}"
-            spear.log(f"Executing: {cmd}")
+            spear.log("Executing: ", cmd)
             subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
 
             # build pak
@@ -283,7 +283,7 @@ if __name__ == "__main__":
             exclude_assets = []
             for exclude_pak_file in exclude_pak_files:
                 cmd = [unreal_pak_bin, "-List", exclude_pak_file]
-                spear.log(f"Executing: {' '.join(cmd)}")
+                spear.log("Executing: ", ' '.join(cmd))
                 ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
                 for line in ps.stdout:
                     line_split = line.split('"')
@@ -308,7 +308,7 @@ if __name__ == "__main__":
                 f'--exclude_assets_file "{exclude_assets_file}" ' + \
                 f'--unreal_engine_dir "{args.unreal_engine_dir}" ' + \
                 f'--unreal_project_dir "{unreal_project_dir}"'
-            spear.log(f"Executing: {cmd}")
+            spear.log("Executing: ", cmd)
             subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
 
             # remove symlink
@@ -322,7 +322,7 @@ if __name__ == "__main__":
                 f'--unreal_project_dir "{unreal_project_dir}" ' + \
                 f'--unreal_project_content_dir "{content_dir}" ' + \
                 f"--{update_action}"
-            spear.log(f"Executing: {cmd}")
+            spear.log("Executing: ", cmd)
             subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
 
     #
@@ -339,7 +339,7 @@ if __name__ == "__main__":
         f'--unreal_project_dir "{unreal_project_dir}" ' + \
         f'--unreal_project_content_dir "{content_dir}" ' + \
         f"--{update_action}"
-    spear.log(f"Executing: {cmd}")
+    spear.log("Executing: ", cmd)
     subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
 
     content_dir = "MSPresets"
@@ -352,7 +352,7 @@ if __name__ == "__main__":
         f'--unreal_project_dir "{unreal_project_dir}" ' + \
         f'--unreal_project_content_dir "{content_dir}" ' + \
         f"--{update_action}"
-    spear.log(f"Executing: {cmd}")
+    spear.log("Executing: ", cmd)
     subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
 
     spear.log("Done.")

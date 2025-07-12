@@ -64,19 +64,19 @@ if __name__ == "__main__":
     # remove existing blueprint
     blueprint_path = posixpath.join(blueprint_desc["blueprint_path"], blueprint_desc["blueprint_name"])
     if unreal.EditorAssetLibrary.does_asset_exist(blueprint_path):
-        spear.log(f"Asset exists, removing: {blueprint_path}")
+        spear.log("Asset exists, removing: ", blueprint_path)
         success = unreal.EditorAssetLibrary.delete_asset(blueprint_path)
         assert success
 
     # create blueprint
-    spear.log(f"Creating blueprint: {blueprint_path}")
+    spear.log("Creating blueprint: ", blueprint_path)
     blueprint_asset, blueprint_subobject_descs = spear.editor_utils.create_blueprint(
         asset_name=blueprint_desc["blueprint_name"],
         package_path=blueprint_desc["blueprint_path"])
 
     # create SpStableNameComponent
     component_name = "sp_stable_name_component"
-    spear.log(f"Creating component: ", component_name)
+    spear.log("Creating component: ", component_name)
     sp_stable_name_component_desc = spear.editor_utils.add_new_subobject(
         blueprint_asset=blueprint_asset,
         parent_data_handle=blueprint_subobject_descs["root_component"]["data_handle"],
@@ -86,7 +86,7 @@ if __name__ == "__main__":
     # create StaticMeshComponents
     for component_desc in blueprint_desc["component_descs"]:
 
-        spear.log(f"Creating component: ", component_desc["name"])
+        spear.log("Creating component: ", component_desc["name"])
         static_mesh_component_desc = spear.editor_utils.add_new_subobject(
             blueprint_asset=blueprint_asset,
             parent_data_handle=blueprint_subobject_descs["root_component"]["data_handle"],
@@ -108,7 +108,7 @@ if __name__ == "__main__":
             new_scale3d=unreal.Vector(component_desc["scale3d"]["X"], component_desc["scale3d"]["Y"], component_desc["scale3d"]["Z"]))
 
     # save blueprint
-    spear.log(f"Saving blueprint: {blueprint_path}")
+    spear.log("Saving blueprint: ", blueprint_path)
     editor_asset_subsystem.save_loaded_asset(blueprint_asset)
 
     spear.log("Done.")

@@ -82,7 +82,7 @@ if __name__ == "__main__":
             "--sign",
             args.developer_id,
             file]
-        spear.log(f"Executing: {' '.join(cmd)}")
+        spear.log("Executing: ", ' '.join(cmd))
         subprocess.run(cmd, check=True)
 
     # Customizing the Notarization Workflow - create an archive (-c) in pkzip format (-k) and embed the parent directory name in the archive (-keepParent)
@@ -97,7 +97,7 @@ if __name__ == "__main__":
         "--keepParent",
         executable,
         notarization_zip]
-    spear.log(f"Executing: {' '.join(cmd)}")
+    spear.log("Executing: ", ' '.join(cmd))
     subprocess.run(cmd, check=True)
 
     # Customizing the Notarization Workflow - upload the archive for notarization
@@ -111,12 +111,12 @@ if __name__ == "__main__":
         "--team-id", args.apple_team_id,
         "--password", args.apple_password,
         "--wait"]
-    spear.log(f"Executing: {' '.join(cmd)}")
+    spear.log("Executing: ", ' '.join(cmd))
     ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
     status = ""
     submission_id = None
     for line in ps.stdout:
-        spear.log(f"{line}")
+        spear.log(line)
         if submission_id is None and "  id: " in line:
             submission_id = line.split("  id: ")[1].strip()
         if "  status: " in line:
@@ -137,7 +137,7 @@ if __name__ == "__main__":
         "--team-id", args.apple_team_id,
         "--password", args.apple_password,
         log_file]
-    spear.log(f"Executing: {' '.join(cmd)}")
+    spear.log("Executing: ", ' '.join(cmd))
     subprocess.run(cmd, check=True)
     spear.log(f"Log file associated with the notarization process has been successfully written to {log_file}.")
     spear.log("Printing the contents of this log file...")
@@ -153,7 +153,7 @@ if __name__ == "__main__":
         "stapler",
         "staple",
         executable]
-    spear.log(f"Executing: {' '.join(cmd)}")
+    spear.log("Executing: ", ' '.join(cmd))
     subprocess.run(cmd, check=True)
 
     spear.log(f"{executable} has been successfully signed.")

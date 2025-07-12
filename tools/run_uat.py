@@ -78,7 +78,7 @@ if __name__ == "__main__":
     if len(cook_maps) == 0:
         cook_maps_arg = []
     else:
-        cook_maps_arg = [f"-map={"+".join(cook_maps)}"]
+        cook_maps_arg = [f"-map={'+'.join(cook_maps)}"]
 
     # build project
     cmd = [
@@ -92,7 +92,7 @@ if __name__ == "__main__":
         unknown_args + \
         cook_dir_args + \
         cook_maps_arg
-    spear.log(f"Executing: {' '.join(cmd)}")
+    spear.log("Executing: ", ' '.join(cmd))
     subprocess.run(cmd, check=True)
 
     spear.log("Done.")

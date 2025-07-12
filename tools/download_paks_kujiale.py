@@ -95,7 +95,7 @@ if __name__ == '__main__':
         pak_path = os.path.realpath(os.path.join(paks_version_dir, pak_file))
 
         if os.path.exists(pak_path) and args.overwrite:
-            spear.log(f"File exists, removing: {pak_path}")
+            spear.log("File exists, removing: ", pak_path)
             os.remove(pak_path)
 
         if not os.path.exists(pak_path):
@@ -103,6 +103,6 @@ if __name__ == '__main__':
             wget.download(pak_url, out=pak_path)
             print() # wget doesn't seem to print a newline character when it is finished downloading
         else:
-            spear.log(f"File exists, skipping: {pak_path}")
+            spear.log("File exists, skipping: ", pak_path)
 
     spear.log("Done.")

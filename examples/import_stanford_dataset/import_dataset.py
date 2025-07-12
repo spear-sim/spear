@@ -55,7 +55,7 @@ if __name__ == "__main__":
     # create output dir
     csv_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "csv"))
     if os.path.exists(csv_dir):
-        spear.log(f"Directory exists, removing: {csv_dir}")
+        spear.log("Directory exists, removing: ", csv_dir)
         shutil.rmtree(csv_dir, ignore_errors=True)
     os.makedirs(csv_dir, exist_ok=True)
 
@@ -81,7 +81,7 @@ if __name__ == "__main__":
 
         # rename
         if unreal.EditorAssetLibrary.does_asset_exist(static_mesh_path):
-            spear.log(f"Asset exists, removing: {static_mesh_path}")
+            spear.log("Asset exists, removing: ", static_mesh_path)
             success = unreal.EditorAssetLibrary.delete_asset(static_mesh_path)
             assert success
 
@@ -100,12 +100,12 @@ if __name__ == "__main__":
         # remove existing blueprint
         blueprint_path = posixpath.join(mesh_desc["blueprint_path"], mesh_desc["blueprint_name"])
         if unreal.EditorAssetLibrary.does_asset_exist(blueprint_path):
-            spear.log(f"Asset exists, removing: {blueprint_path}")
+            spear.log("Asset exists, removing: ", blueprint_path)
             success = unreal.EditorAssetLibrary.delete_asset(blueprint_path)
             assert success
 
         # create blueprint
-        spear.log(f"Creating blueprint: {blueprint_path}")
+        spear.log("Creating blueprint: ", blueprint_path)
         blueprint_asset, blueprint_subobject_descs = spear.editor_utils.create_blueprint(
             asset_name=mesh_desc["blueprint_name"],
             package_path=mesh_desc["blueprint_path"],
@@ -119,10 +119,10 @@ if __name__ == "__main__":
 
         # we could add new components here by calling spear.editor_utils.add_new_subobject(...) but in this case it isn't necessary
 
-        static_mesh_path = posixpath.join(mesh_desc["static_mesh_path"], f"{mesh_desc["static_mesh_name"]}.{mesh_desc["static_mesh_name"]}")
+        static_mesh_path = posixpath.join(mesh_desc["static_mesh_path"], f"{mesh_desc['static_mesh_name']}.{mesh_desc['static_mesh_name']}")
         static_mesh = unreal.load_asset(static_mesh_path)
 
-        material_path = posixpath.join(mesh_desc["material_path"], f"{mesh_desc["material_name"]}.{mesh_desc["material_name"]}")
+        material_path = posixpath.join(mesh_desc["material_path"], f"{mesh_desc['material_name']}.{mesh_desc['material_name']}")
         material = unreal.load_asset(material_path)
 
         static_mesh_component.set_editor_property("static_mesh", static_mesh)
@@ -135,18 +135,18 @@ if __name__ == "__main__":
         pivot_offset = unreal.Vector(bounds_origin.x, bounds_origin.y, bounds_origin.z - bounds_half_extent.z)
         actor.set_editor_property("pivot_offset", pivot_offset)
 
-        spear.log(f"Saving blueprint: {blueprint_path}")
+        spear.log("Saving blueprint: ", blueprint_path)
         editor_asset_subsystem.save_loaded_asset(blueprint_asset)
 
     # create cook dirs file
     cook_dirs_file = os.path.realpath(os.path.join(csv_dir, "cook_dirs.csv"))
-    spear.log(f"Writing cook dirs file: {cook_dirs_file}")
+    spear.log("Writing cook dirs file: :", cook_dirs_file)
     df = pd.DataFrame(columns=["cook_dirs"], data={"cook_dirs": cook_dirs})
     df.to_csv(cook_dirs_file, index=False)
 
     # create include assets file
     include_assets_file = os.path.realpath(os.path.join(csv_dir, "include_assets.csv"))
-    spear.log(f"Writing include assets file: {include_assets_file}")
+    spear.log("Writing include assets file: ", include_assets_file)
     df = pd.DataFrame(columns=["include_assets"], data={"include_assets": include_assets})
     df.to_csv(include_assets_file, index=False)
 

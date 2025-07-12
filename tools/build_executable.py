@@ -21,7 +21,6 @@ if __name__ == "__main__":
     parser.add_argument("--skip_clone_github_repo", action="store_true")
     parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
     parser.add_argument("--conda_env", default="spear-env")
-    parser.add_argument("--num_parallel_jobs", default=1, type=int)
     args = parser.parse_args()
 
     assert os.path.exists(args.unreal_engine_dir)
@@ -51,7 +50,7 @@ if __name__ == "__main__":
 
         if args.conda_script:
             if os.path.exists(args.conda_script):
-                spear.log(f"Found conda script at: ", args.conda_script)
+                spear.log("Found conda script at: ", args.conda_script)
                 conda_script = args.conda_script
             assert conda_script is not None
 
@@ -66,7 +65,7 @@ if __name__ == "__main__":
             conda_script = None
             for conda_script_candidate in conda_script_candidates:
                 if os.path.exists(conda_script_candidate):
-                    spear.log(f"Found conda script at: ", conda_script_candidate)
+                    spear.log("Found conda script at: ", conda_script_candidate)
                     conda_script = conda_script_candidate
                     break
             assert conda_script is not None
@@ -82,7 +81,7 @@ if __name__ == "__main__":
 
         if args.conda_script:
             if os.path.exists(args.conda_script):
-                spear.log(f"Found conda script at: ", args.conda_script)
+                spear.log("Found conda script at: ", args.conda_script)
                 conda_script = args.conda_script
             assert conda_script is not None
 
@@ -94,7 +93,7 @@ if __name__ == "__main__":
             conda_script = None
             for conda_script_candidate in conda_script_candidates:
                 if os.path.exists(conda_script_candidate):
-                    spear.log(f"Found conda script at: ", conda_script_candidate)
+                    spear.log("Found conda script at: ", conda_script_candidate)
                     conda_script = conda_script_candidate
                     break
             assert conda_script is not None
@@ -112,19 +111,19 @@ if __name__ == "__main__":
     #     'path/to/previous/build/Some.uasset'. Attempt result was '../../../../../../path/to/previous/build/path/to/previous/build/Some', but the
     #     path contains illegal characters '.'
     if os.path.exists(unreal_tmp_dir):
-        spear.log(f"Unreal Engine cache directory exists, removing: {unreal_tmp_dir}")
+        spear.log("Unreal Engine cache directory exists, removing: ", unreal_tmp_dir)
         shutil.rmtree(unreal_tmp_dir, ignore_errors=True)
 
     if not args.skip_clone_github_repo:
 
         # remove our temporary repository directory to ensure a clean build
         if os.path.exists(repo_dir):
-            spear.log(f"Repository exists, removing: {repo_dir}")
+            spear.log("Repository exists, removing: ", repo_dir)
             shutil.rmtree(repo_dir, ignore_errors=True)
 
         # clone repo with submodules
         cmd = ["git", "clone", "--recurse-submodules", "https://github.com/spear-sim/spear", repo_dir]
-        spear.log(f"Executing: {' '.join(cmd)}")
+        spear.log("Executing: ", " ".join(cmd))
         subprocess.run(cmd, check=True)
 
         # reset to a specific commit ID
@@ -132,7 +131,7 @@ if __name__ == "__main__":
             cwd = os.getcwd()
             os.chdir(repo_dir)
             cmd = ["git", "reset", "--hard", args.commit_id]
-            spear.log(f"Executing: {' '.join(cmd)}")
+            spear.log("Executing: ", " ".join(cmd))
             subprocess.run(cmd, check=True)
             os.chdir(cwd)
 
@@ -143,9 +142,8 @@ if __name__ == "__main__":
             cmd_prefix + \
             "python " + \
             f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "build_third_party_libs.py"))}" ' + \
-            f"--third_party_dir  {third_party_dir} " + \
-            f"--num_parallel_jobs {args.num_parallel_jobs}"
-        spear.log(f"Executing: {cmd}")
+            f"--third_party_dir  {third_party_dir} "
+        spear.log("Executing: ", cmd)
         subprocess.run(cmd, shell=True, check=True)
 
     # copy starter content (we need shell=True because we want to run in a specific anaconda env,
@@ -157,7 +155,7 @@ if __name__ == "__main__":
         f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "copy_engine_content.py"))}" ' + \
         f'--unreal_engine_dir "{args.unreal_engine_dir}" ' + \
         f'--unreal_project_dir "{unreal_project_dir}"'
-    spear.log(f"Executing: {cmd}")
+    spear.log("Executing: ", cmd)
     subprocess.run(cmd, shell=True, check=True)
 
     # build SpearSim project
@@ -181,7 +179,7 @@ if __name__ == "__main__":
         f'-archivedirectory="{archive_dir}"',
         run_uat_platform_args] + \
         cook_maps_arg
-    spear.log(f"Executing: {' '.join(cmd)}")
+    spear.log("Executing: ", " ".join(cmd))
     subprocess.run(cmd, check=True)
 
     # We need to remove this temp dir (created by the Unreal build process) because it contains paths from the above build.
@@ -190,7 +188,7 @@ if __name__ == "__main__":
     #     'path/to/previous/build/Some.uasset'. Attempt result was '../../../../../../path/to/previous/build/path/to/previous/build/Some', but the
     #     path contains illegal characters '.'
     if os.path.exists(unreal_tmp_dir):
-        spear.log(f"Unreal Engine cache directory exists, removing: {unreal_tmp_dir}")
+        spear.log("Unreal Engine cache directory exists, removing: ", unreal_tmp_dir)
         shutil.rmtree(unreal_tmp_dir, ignore_errors=True)
 
     spear.log(f"Successfully built SpearSim at {archive_dir}")

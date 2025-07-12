@@ -34,7 +34,7 @@ if __name__ == "__main__":
         # disable WARNING: you are using pip version X.X.X; however, version Y.Y.Y is available.
         # disable WARNING: the script X is installed in path 'path/to/UE_5.2/Engine/Binaries/ThirdParty/Python3/...', which is not on PATH.
         cmd = [unreal_editor_python_bin, "-m", "pip", "install", "--disable-pip-version-check", "--no-warn-script-location", "-e", python_package_dir]
-        spear.log(f"Executing: {' '.join(cmd)}")
+        spear.log("Executing: ", ' '.join(cmd))
         subprocess.run(cmd, check=True)
 
     spear.log("Done.")

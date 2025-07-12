@@ -27,7 +27,7 @@ if __name__ == "__main__":
     # create output dir
     camera_poses_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "camera_poses"))
     if os.path.exists(camera_poses_dir):
-        spear.log(f"Directory exists, removing: {camera_poses_dir}")
+        spear.log("Directory exists, removing: ", camera_poses_dir)
         shutil.rmtree(camera_poses_dir, ignore_errors=True)
     os.makedirs(camera_poses_dir, exist_ok=True)
 
@@ -71,7 +71,7 @@ if __name__ == "__main__":
                 "rotation_roll":  roll_values})
 
         # write to a csv file
-        camera_poses_file = os.path.realpath(os.path.join(camera_poses_dir, f"{scene_desc["name"]}.csv"))
+        camera_poses_file = os.path.realpath(os.path.join(camera_poses_dir, f"{scene_desc['name']}.csv"))
         df.to_csv(camera_poses_file, index=False)
 
     with instance.end_frame():

@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
         if args.conda_script:
             if os.path.exists(args.conda_script):
-                spear.log(f"Found conda script at: ", args.conda_script)
+                spear.log("Found conda script at: ", args.conda_script)
                 conda_script = args.conda_script
             assert conda_script is not None
 
@@ -60,7 +60,7 @@ if __name__ == "__main__":
             conda_script = None
             for conda_script_candidate in conda_script_candidates:
                 if os.path.exists(conda_script_candidate):
-                    spear.log(f"Found conda script at: ", conda_script_candidate)
+                    spear.log("Found conda script at: ", conda_script_candidate)
                     conda_script = conda_script_candidate
                     break
             assert conda_script is not None
@@ -80,7 +80,7 @@ if __name__ == "__main__":
         assert len(linux_clang_paths) == 1
         linux_clang_path = linux_clang_paths[0]
 
-        spear.log(f"Found Unreal clang: {linux_clang_path}")
+        spear.log("Found Unreal clang: ", linux_clang_path)
 
         linux_clang_bin_dir      = os.path.realpath(os.path.join(linux_clang_path, "x86_64-unknown-linux-gnu", "bin"))
         linux_libcpp_include_dir = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "include", "c++", "v1"))
@@ -93,7 +93,7 @@ if __name__ == "__main__":
 
         if args.conda_script:
             if os.path.exists(args.conda_script):
-                spear.log(f"Found conda script at: ", args.conda_script)
+                spear.log("Found conda script at: ", args.conda_script)
                 conda_script = args.conda_script
             assert conda_script is not None
 
@@ -105,7 +105,7 @@ if __name__ == "__main__":
             conda_script = None
             for conda_script_candidate in conda_script_candidates:
                 if os.path.exists(conda_script_candidate):
-                    spear.log(f"Found conda script at: ", conda_script_candidate)
+                    spear.log("Found conda script at: ", conda_script_candidate)
                     conda_script = conda_script_candidate
                     break
             assert conda_script is not None
@@ -128,7 +128,7 @@ if __name__ == "__main__":
         f'-C cmake.define.CMAKE_CXX_COMPILER="{cxx_compiler}" ' + \
         f'-C cmake.define.CMAKE_CXX_FLAGS="{cmake_cxx_flags}" '
 
-    spear.log(f"Executing: {cmd}")
+    spear.log("Executing: ", cmd)
     subprocess.run(cmd, shell=True, check=True)
 
     spear.log("Successfully built and installed spear_ext Python extension module.")

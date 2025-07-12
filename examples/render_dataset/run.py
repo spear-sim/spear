@@ -47,13 +47,13 @@ if __name__ == "__main__":
     for component_desc in component_descs:
         component_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "images", scene_desc["name"], component_desc["name"]))
         if os.path.exists(component_dir):
-            spear.log(f"Directory exists, removing: {component_dir}")
+            spear.log("Directory exists, removing: ", component_dir)
             shutil.rmtree(component_dir, ignore_errors=True)
         os.makedirs(component_dir, exist_ok=True)
 
     # get camera poses
     camera_poses_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "camera_poses"))
-    camera_poses_file = os.path.realpath(os.path.join(camera_poses_dir, f"{scene_desc["name"]}.csv"))
+    camera_poses_file = os.path.realpath(os.path.join(camera_poses_dir, f"{scene_desc['name']}.csv"))
     df = pd.read_csv(camera_poses_file)
 
     # create instance

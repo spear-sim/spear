@@ -42,7 +42,7 @@ if __name__ == "__main__":
     for unreal_engine_dir, project_dir in content_dirs.items():
 
         if os.path.exists(project_dir):
-            spear.log(f"Directory exists, removing: {project_dir}")
+            spear.log("Directory exists, removing: ", project_dir)
             shutil.rmtree(project_dir)
 
         spear.log(f"Copying: {unreal_engine_dir} -> {project_dir}")
