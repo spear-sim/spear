@@ -36,8 +36,9 @@ Minimum and recommended system specifications for the Unreal Engine are given [h
 
 ## Licenses
 
-- The code in this repository is licensed under an [MIT License](LICENSE.txt), and the licenses for our third-party code dependencies are given [here](ACKNOWLEDGMENTS.txt).
+- The code in this repository is licensed under an [MIT License](LICENSE.txt).
 - The assets in this repository are licensed under a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0).
+- The licenses for our third-party code dependencies are given [here](ACKNOWLEDGMENTS.txt).
 
 ## Acknowledgements
 
