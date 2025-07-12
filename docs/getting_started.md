@@ -93,7 +93,7 @@ python tools/install_python_package_in_editor_env.py --unreal_engine_dir path/to
 
 ## Build third-party C++ libraries
 
-Our `SpearSim` project and our `spear_ext` Python extension module requires you to build several third-party C++ libraries. We provide a command-line tool for this purpose.
+Our `SpearSim` project and our `spear_ext` Python extension module each require you to build several third-party C++ libraries. We provide a command-line tool for this purpose.
 
 ```console
 # build third-party libraries (Windows and macOS)
