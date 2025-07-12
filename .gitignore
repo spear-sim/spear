@@ -1,5 +1,7 @@
 __pycache__
+
 .DS_Store
+.ipynb_checkpoints
 
 cpp/unreal_plugins/*/Binaries
 cpp/unreal_plugins/*/Intermediate
