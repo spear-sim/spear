@@ -43,12 +43,12 @@ struct sp_float16_t
 };
 
 template <>
-struct nanobind::detail::dtype_traits<sp_float16_t> {
+struct nanobind::detail::dtype_traits<sp_float16_t>
+{
     static constexpr dlpack::dtype value {
         static_cast<uint8_t>(dlpack::dtype_code::Float), // type code
         16,                                              // size in bits
-        1                                                // lanes (simd), usually set to 1
-    };
+        1};                                              // lanes (simd), usually set to 1
     static constexpr auto name = const_name("sp_float16_t");
 };
 

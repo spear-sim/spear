@@ -4,7 +4,7 @@
 
 #include "SpComponents/SpSceneCaptureComponent2D.h"
 
-#include <memory>  // std::make_unique
+#include <memory>  // std::align, std::make_unique
 #include <utility> // std::move
 
 #include <Components/SceneCaptureComponent2D.h>
@@ -52,6 +52,18 @@ void USpSceneCaptureComponent2D::Initialize()
         return;
     }
 
+    SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
+
+    if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::UInt8) {
+        scratchpad_color_.Reserve(Height*Width);
+    } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float16) {
+        scratchpad_float_16_color_.Reserve(Height*Width);
+    } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32) {
+        scratchpad_linear_color_.Reserve(Height*Width);
+    } else {
+        SP_ASSERT(false);
+    }
+
     auto texture_render_target_2d = NewObject<UTextureRenderTarget2D>(this);
     SP_ASSERT(texture_render_target_2d);
     texture_render_target_2d->RenderTargetFormat = TextureRenderTargetFormat;
@@ -69,7 +81,6 @@ void USpSceneCaptureComponent2D::Initialize()
 
     if (bUseSharedMemory) {
         SP_ASSERT(!shared_memory_region_);
-        SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
         int num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
         shared_memory_region_ = std::make_unique<SharedMemoryRegion>(num_bytes);
         SP_ASSERT(shared_memory_region_);
@@ -112,31 +123,45 @@ void USpSceneCaptureComponent2D::Initialize()
 
             // ReadPixels assumes 4 channels per pixel, 1 uint8 per channel
             if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::UInt8) {
-                TArray<FColor> pixels;
-                bool success = texture_render_target_resource->ReadPixels(pixels);
+
+                FColor* scratchpad_data_ptr = scratchpad_color_.GetData();
+                UpdateArrayDataPtr(scratchpad_color_, dest_ptr, num_bytes);
+
+                bool success = texture_render_target_resource->ReadPixels(scratchpad_color_);
                 SP_ASSERT(success);
-                std::memcpy(dest_ptr, &(pixels[0]), num_bytes);
+
+                UpdateArrayDataPtr(scratchpad_color_, scratchpad_data_ptr, num_bytes);
 
             // ReadFloat16Pixels assumes 4 channels per pixel, 1 float16 per channel
             } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float16) {
-                TArray<FFloat16Color> pixels;
+
                 ERangeCompressionMode compression_mode = ERangeCompressionMode::RCM_MinMax;
                 FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(compression_mode);
                 read_surface_flags.SetLinearToGamma(false);
-                bool success = texture_render_target_resource->ReadFloat16Pixels(pixels, read_surface_flags);
+
+                FFloat16Color* scratchpad_data_ptr = scratchpad_float_16_color_.GetData();
+                UpdateArrayDataPtr(scratchpad_float_16_color_, dest_ptr, num_bytes);
+
+                bool success = texture_render_target_resource->ReadFloat16Pixels(scratchpad_float_16_color_, read_surface_flags);
                 SP_ASSERT(success);
-                std::memcpy(dest_ptr, &(pixels[0]), num_bytes);
+
+                UpdateArrayDataPtr(scratchpad_float_16_color_, scratchpad_data_ptr, num_bytes);
 
             // ReadLinearColorPixels assumes 4 channels per pixel, 1 float32 per channel
             } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32) {
                 SP_ASSERT(BOOST_OS_WINDOWS, "ERROR: NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32 is only supported on Windows.");
-                TArray<FLinearColor> pixels;
+
                 ERangeCompressionMode compression_mode = ERangeCompressionMode::RCM_MinMax;
                 FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(compression_mode);
                 read_surface_flags.SetLinearToGamma(false);
-                bool success = texture_render_target_resource->ReadLinearColorPixels(pixels);
+
+                FLinearColor* scratchpad_data_ptr = scratchpad_linear_color_.GetData();
+                UpdateArrayDataPtr(scratchpad_linear_color_, dest_ptr, num_bytes);
+
+                bool success = texture_render_target_resource->ReadLinearColorPixels(scratchpad_linear_color_, read_surface_flags);
                 SP_ASSERT(success);
-                std::memcpy(dest_ptr, &(pixels[0]), num_bytes);
+
+                UpdateArrayDataPtr(scratchpad_linear_color_, scratchpad_data_ptr, num_bytes);
 
             } else {
                 SP_ASSERT(false);
