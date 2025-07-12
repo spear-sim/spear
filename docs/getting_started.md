@@ -100,7 +100,7 @@ sudo apt-get install g++ make
 python tools/build_third_party_libs.py --unreal_engine_dir path/to/UE_5.5
 ```
 
-If you're developing on Linux, you will need to install `g++` and `make` if they aren't already installed on your system. `g++` is required to build the Boost build tool, and `make` is required by CMake to build all third-party libraries other than Boost. Additionally, you must specify `--unreal_engine_dir`, because we use the version of `clang` and `libc++` that ships with the Unreal Engine to build our third-party libraries.
+If you're developing on Linux, you will need to install `g++` and `make` if they aren't already installed on your system. `g++` is required to build the Boost build tool, and `make` is required by CMake to build all third-party libraries other than Boost. Additionally, if you're developing on Linux, you must specify `--unreal_engine_dir`, because we use the version of `clang` and `libc++` that ships with the Unreal Engine to build our third-party libraries.
 
 ## Build and install the `spear_ext` Python extension module
 
