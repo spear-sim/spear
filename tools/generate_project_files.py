@@ -21,13 +21,13 @@ if __name__ == "__main__":
 
     if sys.platform == "win32":
         generate_project_files_script = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "Build.bat"))
-        generate_project_files_args = ["-projectfiles"]
+        generate_project_files_args = "-projectfiles"
     elif sys.platform == "darwin":
         generate_project_files_script = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "Mac", "GenerateProjectFiles.sh"))
-        generate_project_files_args = []
+        generate_project_files_args = ""
     elif sys.platform == "linux":
         generate_project_files_script = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "Linux", "GenerateProjectFiles.sh"))
-        generate_project_files_args = []
+        generate_project_files_args = ""
     else:
         assert False
 
@@ -36,9 +36,8 @@ if __name__ == "__main__":
     assert len(uprojects) == 1
     uproject = uprojects[0]
 
-    cmd = [generate_project_files_script, "-project=" + uproject]
-    cmd.extend(generate_project_files_args)
-    spear.log(f"Executing: {' '.join(cmd)}")
-    subprocess.run(cmd, check=True)
+    cmd = f'{generate_project_files_script} -project="{uproject}" {generate_project_files_args}'
+    spear.log(f"Executing: {cmd}")
+    subprocess.run(cmd, shell=True, check=True)
 
     spear.log("Done.")

@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include <memory> // std::unique_ptr
+#include <exception> // std::current_exception, std::rethrow_exception
+#include <memory>    // std::unique_ptr
 
 #include "SpServices/Rpclib.h"
 #include "SpServices/Service.h"
@@ -20,14 +21,15 @@ public:
         // first beginFrame() to give all other services a chance to bind their entry points. As long as all
         // services bind their entry points before the first beginFrame(), then all entry points on all
         // services will be available as soon as an RPC client connects.
+
+        int rpc_server_port = 30000;
+        if (Config::isInitialized()) {
+            rpc_server_port = Config::get<int>("SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT");
+        }
+
         try {
-            int rpc_server_port = 30000;
-            if (Config::isInitialized()) {
-                rpc_server_port = Config::get<int>("SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT");
-            }        
             rpc_server = std::make_unique<rpc::server>(rpc_server_port);
             SP_ASSERT(rpc_server);
-
         } catch (...) {
             SP_LOG("    ERROR: Couldn't create an RPC server. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables, or change SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT to a different unused port, and try launching again.");
             std::rethrow_exception(std::current_exception());

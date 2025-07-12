@@ -4,15 +4,9 @@ Our approach for importing and exporting assets is to formulate each task (e.g.,
 
 ## Assumptions
 
-In order to execute the pipelines in this document, we will assume that you have completed our [Getting Started](getting_started.md) and [Building SpearSim](building_spearsim.md) tutorials. We will also assume that you want to execute all pipelines for the `apartment_0000` scene only, and that you want all pipeline output to be generated in a top-level directory called `spear-pipeline`.
+In order to execute the pipelines in this document, we will assume that you have completed our [Getting Started](getting_started.md) tutorial. We will also assume that you want to execute all pipelines for the `apartment_0000` scene only, and that you want all pipeline output to be generated in a top-level directory called `spear-pipeline`.
 
 ## Accessing the Unreal Editor via Python
-
-In order to access the Unreal Editor via Python, you must first configure the editor's Python environment, even though you have already configured an Anaconda Python environment in our [Getting Started](getting_started.md) tutorial.
-
-```console
-python tools/configure_editor_python_env.py --unreal_engine_dir path/to/UE_5.5
-```
 
 Any pipeline stage that needs to access the Unreal Editor must be executed using our `run_editor_script.py` tool, which runs a user-specified program (specified by `--script`) from within the editor's Python environment. `run_editor_script.py` consumes `--script` and `--unreal_engine_dir`, and forwards all other arguments directly to the user's program. `--script` must be relative to `spear/pipeline` or absolute. Any path arguments that are forwarded to the user's program must be absolute.
 

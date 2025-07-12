@@ -15,7 +15,7 @@
 #include "SpCore/SpFuncDataBundle.h"
 #include "SpCore/Unreal.h"
 
-#include "SpServices/Msgpack.h"
+#include "SpServices/MsgpackUtils.h"
 #include "SpServices/Rpclib.h"
 
 //
@@ -24,23 +24,23 @@
 
 template <> // needed to receive a custom type as an arg
 struct clmdep_msgpack::adaptor::convert<SpArraySharedMemoryView> {
-    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpArraySharedMemoryView& shared_memory_view) const {
-        std::map<std::string, clmdep_msgpack::object> map = Msgpack::toMap(object);
+    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpArraySharedMemoryView& sp_shared_memory_view) const {
+        std::map<std::string, clmdep_msgpack::object> map = MsgpackUtils::toMap(object);
         SP_ASSERT(map.size() == 3);
-        shared_memory_view.id_ = Msgpack::to<std::string>(map.at("id"));
-        shared_memory_view.num_bytes_ = Msgpack::to<int>(map.at("num_bytes"));
-        shared_memory_view.usage_flags_ = Unreal::getCombinedEnumFlagValueFromStringsAs<SpArraySharedMemoryUsageFlags, ESpArraySharedMemoryUsageFlags>(Msgpack::to<std::vector<std::string>>(map.at("usage_flags")));
+        sp_shared_memory_view.id_          = MsgpackUtils::to<std::string>(map.at("id"));
+        sp_shared_memory_view.num_bytes_   = MsgpackUtils::to<uint64_t>(map.at("num_bytes"));
+        sp_shared_memory_view.usage_flags_ = Unreal::getCombinedEnumFlagValueFromStringsAs<SpArraySharedMemoryUsageFlags, ESpArraySharedMemoryUsageFlags>(MsgpackUtils::to<std::vector<std::string>>(map.at("usage_flags")));
         return object;
     }
 };
 
 template <> // needed to send a custom type as a return value
 struct clmdep_msgpack::adaptor::object_with_zone<SpArraySharedMemoryView> {
-    void operator()(clmdep_msgpack::object::with_zone& object, SpArraySharedMemoryView const& shared_memory_view) const {
-        Msgpack::toObject(object, {
-            {"id", clmdep_msgpack::object(shared_memory_view.id_, object.zone)},
-            {"num_bytes", clmdep_msgpack::object(shared_memory_view.num_bytes_, object.zone)},
-            {"usage_flags", clmdep_msgpack::object(Unreal::getStringsFromCombinedEnumFlagValueAs<ESpArraySharedMemoryUsageFlags>(shared_memory_view.usage_flags_), object.zone)}});
+    void operator()(clmdep_msgpack::object::with_zone& object, SpArraySharedMemoryView const& sp_shared_memory_view) const {
+        MsgpackUtils::toObject(object, {
+            {"id",          clmdep_msgpack::object(sp_shared_memory_view.id_, object.zone)},
+            {"num_bytes",   clmdep_msgpack::object(sp_shared_memory_view.num_bytes_, object.zone)},
+            {"usage_flags", clmdep_msgpack::object(Unreal::getStringsFromCombinedEnumFlagValueAs<ESpArraySharedMemoryUsageFlags>(sp_shared_memory_view.usage_flags_), object.zone)}});
     }
 };
 
@@ -50,27 +50,29 @@ struct clmdep_msgpack::adaptor::object_with_zone<SpArraySharedMemoryView> {
 
 template <> // needed to receive a custom type as an arg
 struct clmdep_msgpack::adaptor::convert<SpPackedArray> {
-    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpPackedArray& packed_array) const {
-        std::map<std::string, clmdep_msgpack::object> map = Msgpack::toMap(object);
+    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpPackedArray& sp_packed_array) const {
+        std::map<std::string, clmdep_msgpack::object> map = MsgpackUtils::toMap(object);
         SP_ASSERT(map.size() == 5);
-        packed_array.data_ = Msgpack::to<std::vector<uint8_t>>(map.at("data"));
-        packed_array.data_source_ = Unreal::getEnumValueFromStringAs<SpArrayDataSource, ESpArrayDataSource>(Msgpack::to<std::string>(map.at("data_source")));
-        packed_array.shape_ = Msgpack::to<std::vector<uint64_t>>(map.at("shape"));
-        packed_array.data_type_ = Unreal::getEnumValueFromStringAs<SpArrayDataType, ESpArrayShortDataType>(Msgpack::to<std::string>(map.at("data_type")));
-        packed_array.shared_memory_name_ = Msgpack::to<std::string>(map.at("shared_memory_name"));
+        sp_packed_array.data_               = MsgpackUtils::to<std::vector<uint8_t>>(map.at("data"));
+        sp_packed_array.data_source_        = Unreal::getEnumValueFromStringAs<SpArrayDataSource, ESpArrayDataSource>(MsgpackUtils::to<std::string>(map.at("data_source")));
+        sp_packed_array.shape_              = MsgpackUtils::to<std::vector<uint64_t>>(map.at("shape"));
+        sp_packed_array.data_type_          = Unreal::getEnumValueFromStringAs<SpArrayDataType, ESpArrayShortDataType>(MsgpackUtils::to<std::string>(map.at("data_type")));
+        sp_packed_array.shared_memory_name_ = MsgpackUtils::to<std::string>(map.at("shared_memory_name"));
+        SP_ASSERT(sp_packed_array.data_source_ == SpArrayDataSource::Internal || sp_packed_array.data_source_ == SpArrayDataSource::Shared);
         return object;
     }
 };
 
 template <> // needed to send a custom type as a return value
 struct clmdep_msgpack::adaptor::object_with_zone<SpPackedArray> {
-    void operator()(clmdep_msgpack::object::with_zone& object, SpPackedArray const& packed_array) const {
-        Msgpack::toObject(object, {
-            {"data", clmdep_msgpack::object(packed_array.data_, object.zone)},
-            {"data_source", clmdep_msgpack::object(Unreal::getStringFromEnumValueAs<ESpArrayDataSource>(packed_array.data_source_), object.zone)},
-            {"shape", clmdep_msgpack::object(packed_array.shape_, object.zone)},
-            {"data_type", clmdep_msgpack::object(Unreal::getStringFromEnumValueAs<ESpArrayShortDataType>(packed_array.data_type_), object.zone)},
-            {"shared_memory_name", clmdep_msgpack::object(packed_array.shared_memory_name_, object.zone)}});
+    void operator()(clmdep_msgpack::object::with_zone& object, SpPackedArray const& sp_packed_array) const {
+        SP_ASSERT(sp_packed_array.data_source_ == SpArrayDataSource::Internal || sp_packed_array.data_source_ == SpArrayDataSource::Shared);
+        MsgpackUtils::toObject(object, {
+            {"data",               clmdep_msgpack::object(sp_packed_array.data_, object.zone)},
+            {"data_source",        clmdep_msgpack::object(Unreal::getStringFromEnumValueAs<ESpArrayDataSource>(sp_packed_array.data_source_), object.zone)},
+            {"shape",              clmdep_msgpack::object(sp_packed_array.shape_, object.zone)},
+            {"data_type",          clmdep_msgpack::object(Unreal::getStringFromEnumValueAs<ESpArrayShortDataType>(sp_packed_array.data_type_), object.zone)},
+            {"shared_memory_name", clmdep_msgpack::object(sp_packed_array.shared_memory_name_, object.zone)}});
     }
 };
 
@@ -80,23 +82,23 @@ struct clmdep_msgpack::adaptor::object_with_zone<SpPackedArray> {
 
 template <> // needed to receive a custom type as an arg
 struct clmdep_msgpack::adaptor::convert<SpFuncDataBundle> {
-    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpFuncDataBundle& data_bundle) const {
-        std::map<std::string, clmdep_msgpack::object> map = Msgpack::toMap(object);
+    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpFuncDataBundle& sp_func_data_bundle) const {
+        std::map<std::string, clmdep_msgpack::object> map = MsgpackUtils::toMap(object);
         SP_ASSERT(map.size() == 3);
-        data_bundle.packed_arrays_ = Msgpack::to<std::map<std::string, SpPackedArray>>(map.at("packed_arrays"));
-        data_bundle.unreal_obj_strings_ = Msgpack::to<std::map<std::string, std::string>>(map.at("unreal_obj_strings"));
-        data_bundle.info_ = Msgpack::to<std::string>(map.at("info"));
+        sp_func_data_bundle.packed_arrays_      = MsgpackUtils::to<std::map<std::string, SpPackedArray>>(map.at("packed_arrays"));
+        sp_func_data_bundle.unreal_obj_strings_ = MsgpackUtils::to<std::map<std::string, std::string>>(map.at("unreal_obj_strings"));
+        sp_func_data_bundle.info_               = MsgpackUtils::to<std::string>(map.at("info"));
         return object;
     }
 };
 
 template <> // needed to send a custom type as a return value
 struct clmdep_msgpack::adaptor::object_with_zone<SpFuncDataBundle> {
-    void operator()(clmdep_msgpack::object::with_zone& object, SpFuncDataBundle const& data_bundle) const {
-        Msgpack::toObject(object, {
-            {"packed_arrays", clmdep_msgpack::object(data_bundle.packed_arrays_, object.zone)},
-            {"unreal_obj_strings", clmdep_msgpack::object(data_bundle.unreal_obj_strings_, object.zone)},
-            {"info", clmdep_msgpack::object(data_bundle.info_, object.zone)}});
+    void operator()(clmdep_msgpack::object::with_zone& object, SpFuncDataBundle const& sp_func_data_bundle) const {
+        MsgpackUtils::toObject(object, {
+            {"packed_arrays",      clmdep_msgpack::object(sp_func_data_bundle.packed_arrays_, object.zone)},
+            {"unreal_obj_strings", clmdep_msgpack::object(sp_func_data_bundle.unreal_obj_strings_, object.zone)},
+            {"info",               clmdep_msgpack::object(sp_func_data_bundle.info_, object.zone)}});
     }
 };
 
@@ -107,10 +109,10 @@ struct clmdep_msgpack::adaptor::object_with_zone<SpFuncDataBundle> {
 template <> // needed to receive a custom type as an arg
 struct clmdep_msgpack::adaptor::convert<Unreal::PropertyDesc> {
     clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, Unreal::PropertyDesc& property_desc) const {
-        std::map<std::string, clmdep_msgpack::object> map = Msgpack::toMap(object);
+        std::map<std::string, clmdep_msgpack::object> map = MsgpackUtils::toMap(object);
         SP_ASSERT(map.size() == 2);
-        property_desc.property_ = Msgpack::toPtr<FProperty>(map.at("property"));
-        property_desc.value_ptr_ = Msgpack::toPtr<void>(map.at("value_ptr"));
+        property_desc.property_  = MsgpackUtils::toPtr<FProperty>(map.at("property"));
+        property_desc.value_ptr_ = MsgpackUtils::toPtr<void>(map.at("value_ptr"));
         return object;
     }
 };
@@ -118,8 +120,8 @@ struct clmdep_msgpack::adaptor::convert<Unreal::PropertyDesc> {
 template <> // needed to send a custom type as a return value
 struct clmdep_msgpack::adaptor::object_with_zone<Unreal::PropertyDesc> {
     void operator()(clmdep_msgpack::object::with_zone& object, Unreal::PropertyDesc const& property_desc) const {
-        Msgpack::toObject(object, {
-            {"property", Msgpack::toObject(property_desc.property_, object.zone)},
-            {"value_ptr", Msgpack::toObject(property_desc.value_ptr_, object.zone)}});
+        MsgpackUtils::toObject(object, {
+            {"property",  MsgpackUtils::toObject(property_desc.property_, object.zone)},
+            {"value_ptr", MsgpackUtils::toObject(property_desc.value_ptr_, object.zone)}});
     }
 };

@@ -3,7 +3,7 @@
 #
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling==1.27"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
@@ -12,11 +12,10 @@ packages = ["spear"]
 [project]
 name = "spear-sim"
 version = "0.6.0"
-requires-python = ">=3.11"
+requires-python = "~=3.11"
 dependencies = [
     "coacd==1.0.0",
     "configobj==5.0.9",                       # required by mayavi but not automatically installed
-    "gym==0.23.0",
     "matplotlib==3.10.0",
     "mayavi==4.8.2; sys_platform != 'win32'", # install separately on Windows via "conda install -c conda-forge mayavi"
     "mujoco==3.1.3",

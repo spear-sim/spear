@@ -2,7 +2,7 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "SpCore/SharedMemoryRegion.h"
+#include "SpCore/SharedMemory.h"
 
 #include <stddef.h> // uint64_t
 
@@ -18,13 +18,42 @@
     #include <format>
 #endif
 
-SharedMemoryRegion::SharedMemoryRegion(int num_bytes) : SharedMemoryRegion(num_bytes, getUniqueId()) {}
+void SharedMemory::initialize(uint64_t initial_unique_id)
+{
+    s_current_unique_id_ = initial_unique_id;
+    s_initialized_ = true;
+}
+
+void SharedMemory::terminate()
+{
+    s_initialized_ = false;
+}
+
+uint64_t SharedMemory::getUniqueId()
+{
+    SP_ASSERT(s_initialized_);
+    return s_current_unique_id_++;
+}
+
+std::string SharedMemory::getUniqueIdString(uint64_t id)
+{
+    // TODO: remove platform-specific logic
+    #if BOOST_COMP_MSVC
+        return std::format("__SP_SMEM_{:#018x}__", id);
+    #elif BOOST_COMP_CLANG
+        return (boost::format("__SP_SMEM_0x%016x__")%id).str(); // must be 30 chars or less
+    #else
+        #error
+    #endif
+}
+
+SharedMemoryRegion::SharedMemoryRegion(int num_bytes) : SharedMemoryRegion(num_bytes, SharedMemory::getUniqueId()) {}
 
 SharedMemoryRegion::SharedMemoryRegion(int num_bytes, uint64_t id)
 {
     SP_ASSERT(num_bytes > 0);
 
-    id_ = getUniqueIdString(id);
+    id_ = SharedMemory::getUniqueIdString(id);
     num_bytes_ = num_bytes;
 
     SP_ASSERT(id_ != "");
@@ -61,22 +90,4 @@ SharedMemoryView SharedMemoryRegion::getView()
     view.num_bytes_ = num_bytes_;
     view.data_ = mapped_region_.get_address();
     return view;
-}
-
-uint64_t SharedMemoryRegion::getUniqueId()
-{
-    static uint64_t id = 1;
-    return id++;    
-}
-
-std::string SharedMemoryRegion::getUniqueIdString(uint64_t id)
-{
-    // TODO: remove platform-specific logic
-    #if BOOST_COMP_MSVC
-        return std::format("__SP_SMEM_{:#018x}__", id);
-    #elif BOOST_COMP_CLANG
-        return (boost::format("__SP_SMEM_0x%016x__")%id).str(); // must be 30 chars or less
-    #else
-        #error
-    #endif
 }

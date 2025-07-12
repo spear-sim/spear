@@ -33,16 +33,16 @@ def get_data_frame(transforms):
     data = []
     for transform_name, transform in transforms.items():
         cols = [
-            transform_name + "_translation_x",
-            transform_name + "_translation_y",
-            transform_name + "_translation_z",
-            transform_name + "_rotation_x",
-            transform_name + "_rotation_y",
-            transform_name + "_rotation_z",
-            transform_name + "_rotation_w",
-            transform_name + "_scale3D_x",
-            transform_name + "_scale3D_y",
-            transform_name + "_scale3D_z"]
+            f"{transform_name}_translation_x",
+            f"{transform_name}_translation_y",
+            f"{transform_name}_translation_z",
+            f"{transform_name}_rotation_x",
+            f"{transform_name}_rotation_y",
+            f"{transform_name}_rotation_z",
+            f"{transform_name}_rotation_w",
+            f"{transform_name}_scale3D_x",
+            f"{transform_name}_scale3D_y",
+            f"{transform_name}_scale3D_z"]
         columns.extend(cols)
         vals = [
             transform["translation"]["x"],
@@ -231,7 +231,7 @@ if __name__ == "__main__":
 
     # save bone transforms in a separate CSV file for each character
     for character in characters:
-        transforms_file = os.path.realpath(os.path.join(character_poses_dir, character["name"] + ".csv"))
+        transforms_file = os.path.realpath(os.path.join(character_poses_dir, f"{character["name"]}.csv"))
         character["data_frame"].to_csv(transforms_file, mode="w", index=False)
 
     spear.log("Done.")

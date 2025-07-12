@@ -67,7 +67,7 @@ if __name__ == "__main__":
     if args.cook_dirs_file is not None:
         cook_dirs.extend(pd.read_csv(args.cook_dirs_file)["cook_dirs"].tolist())
 
-    cook_dir_args = [ "-cookdir=" + os.path.join(args.unreal_project_dir, cook_dir) for cook_dir in cook_dirs ]
+    cook_dir_args = [ f'-cookdir="{os.path.join(args.unreal_project_dir, cook_dir)}"' for cook_dir in cook_dirs ]
 
     # assemble maps to cook
 
@@ -80,14 +80,14 @@ if __name__ == "__main__":
     if len(cook_maps) == 0:
         cook_maps_arg = []
     else:
-        cook_maps_arg = ["-map=" + "+".join(cook_maps)]
+        cook_maps_arg = [f"-map={"+".join(cook_maps)}"]
 
     # cook project, see https://docs.unrealengine.com/5.2/en-US/SharingAndReleasing/Deployment/Cooking for more details
     cmd = [
         unreal_editor_bin,
         uproject,
         "-run=Cook",
-        "-targetplatform=" + platform,
+        f"-targetplatform={platform}",
         "-unattended",                           # don't require any user input
         "-fileopenlog",                          # generate a log of which files are opened in which order
         "-ddc=InstalledDerivedDataBackendGraph", # use the default cache location for installed (i.e., not source) builds of the engine
@@ -112,7 +112,7 @@ if __name__ == "__main__":
         exclude_assets = pd.read_csv(args.exclude_assets_file)["exclude_assets"].tolist() # need tolist() so we can test for membership using "in" keyword below
 
     # create manifest file in output dir
-    manifest_file = os.path.splitext(pak_file)[0] + ".txt"
+    manifest_file = f"{os.path.splitext(pak_file)[0]}.txt"
     with open(manifest_file, "w") as f:
         for include_asset in include_assets:
             include_asset_path = os.path.realpath(os.path.join(unreal_project_cooked_dir, include_asset))
@@ -125,7 +125,7 @@ if __name__ == "__main__":
                     f.write(f'"{asset_path_posix}" "{mount_asset_path_posix}" "" \n')
 
     # build pak file
-    cmd = [unreal_pak_bin, pak_file, "-create=" + manifest_file, "-platform=" + platform, "-multiprocess", "-compressed"]
+    cmd = [unreal_pak_bin, pak_file, f'-create="{manifest_file}"', f"-platform={platform}", "-multiprocess", "-compressed"]
     spear.log(f"Executing: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
 

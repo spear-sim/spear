@@ -13,19 +13,13 @@ class SharedMemoryService():
         self._entry_point_caller = entry_point_caller
         self._shared_memory_handles = {}
 
-        unreal_instance_byte_order = self._entry_point_caller.call_on_worker_thread("shared_memory_service.get_byte_order")
-        if unreal_instance_byte_order == sys.byteorder:
-            self.unreal_instance_byte_order = "native"
-        else:
-            self.unreal_instance_byte_order = unreal_instance_byte_order
-
     #
     # High-level functions for managing shared memory regions.
     #
 
     def create_shared_memory_region(self, shared_memory_name, num_bytes, usage_flags):
         assert shared_memory_name not in self._shared_memory_handles.keys()
-        view = self._entry_point_caller.call_on_worker_thread("shared_memory_service.create_shared_memory_region", shared_memory_name, num_bytes, usage_flags)
+        view = self._entry_point_caller.call_on_worker_thread_and_get_return_value("SharedMemoryView", "shared_memory_service.create_shared_memory_region", shared_memory_name, num_bytes, usage_flags)
         handle = self._create_shared_memory_handle(shared_memory_name=shared_memory_name, shared_memory_view=view)
         self._shared_memory_handles[shared_memory_name] = handle
         return handle
@@ -55,19 +49,20 @@ class SharedMemoryService():
     #
 
     def get_shared_memory_handles_from_arrays(self, arrays, usage_flags=[]):
-        return { a.shared_memory_handle["name"]: a.shared_memory_handle for a in arrays if isinstance(a, spear.func_utils.Shared) and set(usage_flags) <= set(a.shared_memory_handle["view"]["usage_flags"]) }
+        return { a.shared_memory_handle["name"]: a.shared_memory_handle for a in arrays if isinstance(a, spear.func_utils.Shared) and set(usage_flags) <= set(a.shared_memory_handle["view"].usage_flags) }
 
     def get_shared_memory_names_from_packed_arrays(self, packed_arrays):
-        return [ v["shared_memory_name"] for k, v in packed_arrays.items() if v["data_source"] == "Shared" ]
+        return [ v.shared_memory_name for k, v in packed_arrays.items() if v.data_source == "Shared" ]
 
     def get_shared_memory_handles_from_dicts(self, shared_memory_names, shared_memory_handle_dicts):
         shared_memory_handles = {}
         for shared_memory_name in shared_memory_names:
             shared_memory_handle = None
-            for shared_memory_handles in shared_memory_handle_dicts:
-                if shared_memory_name in shared_memory_handles.keys():
+            for shared_memory_handle_dict in shared_memory_handle_dicts:
+                if shared_memory_name in shared_memory_handle_dict.keys():
                     assert shared_memory_handle is None
-                    shared_memory_handle = shared_memory_handles[shared_memory_name]
+                    shared_memory_handle = shared_memory_handle_dict[shared_memory_name]
+            assert shared_memory_handle is not None
             shared_memory_handles[shared_memory_name] = shared_memory_handle
         return shared_memory_handles
 
@@ -78,10 +73,10 @@ class SharedMemoryService():
 
     def _create_shared_memory_handle(self, shared_memory_name, shared_memory_view):
         if sys.platform == "win32":
-            handle = mmap.mmap(fileno=-1, length=shared_memory_view["num_bytes"], tagname=shared_memory_view["id"])
+            handle = mmap.mmap(fileno=-1, length=shared_memory_view.num_bytes, tagname=shared_memory_view.id)
             return {"name": shared_memory_name, "handle": handle, "buffer": handle, "view": shared_memory_view}
         elif sys.platform in ["darwin", "linux"]:
-            handle = multiprocessing.shared_memory.SharedMemory(name=shared_memory_view["id"])
+            handle = multiprocessing.shared_memory.SharedMemory(name=shared_memory_view.id)
             multiprocessing.resource_tracker.unregister(handle._name, "shared_memory") # prevent Python from destroying on exit
             return {"name": shared_memory_name, "handle": handle, "buffer": handle.buf, "view": shared_memory_view}
         else:

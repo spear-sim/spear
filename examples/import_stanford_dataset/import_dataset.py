@@ -7,7 +7,7 @@ import pandas as pd
 import posixpath
 import shutil
 import spear
-import spear.editor
+import spear.editor_utils
 import unreal
 
 
@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
         # create blueprint
         spear.log(f"Creating blueprint: {blueprint_path}")
-        blueprint_asset, blueprint_subobject_descs = spear.editor.create_blueprint(
+        blueprint_asset, blueprint_subobject_descs = spear.editor_utils.create_blueprint(
             asset_name=mesh_desc["blueprint_name"],
             package_path=mesh_desc["blueprint_path"],
             actor_class=unreal.StaticMeshActor)
@@ -117,12 +117,12 @@ if __name__ == "__main__":
         static_mesh_component = blueprint_subobject_descs["root_component"]["object"]
         assert isinstance(static_mesh_component, unreal.StaticMeshComponent)
 
-        # we could add new components here by calling spear.editor.add_new_subobject(...) but in this case it isn't necessary
+        # we could add new components here by calling spear.editor_utils.add_new_subobject(...) but in this case it isn't necessary
 
-        static_mesh_path = posixpath.join(mesh_desc["static_mesh_path"], mesh_desc["static_mesh_name"] + "." + mesh_desc["static_mesh_name"])
+        static_mesh_path = posixpath.join(mesh_desc["static_mesh_path"], f"{mesh_desc["static_mesh_name"]}.{mesh_desc["static_mesh_name"]}")
         static_mesh = unreal.load_asset(static_mesh_path)
 
-        material_path = posixpath.join(mesh_desc["material_path"], mesh_desc["material_name"] + "." + mesh_desc["material_name"])
+        material_path = posixpath.join(mesh_desc["material_path"], f"{mesh_desc["material_name"]}.{mesh_desc["material_name"]}")
         material = unreal.load_asset(material_path)
 
         static_mesh_component.set_editor_property("static_mesh", static_mesh)

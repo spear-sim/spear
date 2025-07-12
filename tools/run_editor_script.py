@@ -39,21 +39,21 @@ if __name__ == "__main__":
     render_offscreen_arg_string = ""
     if args.render_offscreen:
         assert args.launch_mode == "full"
-        render_offscreen_arg_string = " -renderoffscreen"
+        render_offscreen_arg_string = "-renderoffscreen"
 
     if args.launch_mode == "commandlet":
-        python_arg_string = " -run=pythonscript -script="
+        python_arg_string = "-run=pythonscript -script="
     elif args.launch_mode == "full":
-        python_arg_string = " -executepythonscript="
+        python_arg_string = "-executepythonscript="
     else:
         assert False
 
     unknown_arg_string = ""
     if len(unknown_args) > 0:
-        unknown_arg_string = " " + " ".join(unknown_args)
+        unknown_arg_string = " ".join(unknown_args)
 
     # need shell=True to correctly handle the quotes in cmd
-    cmd = '"' + unreal_editor_bin + '"' + " " + uproject + render_offscreen_arg_string + python_arg_string + '"' + args.script + unknown_arg_string + '"'
+    cmd = f'"{unreal_editor_bin}" "{uproject}" {render_offscreen_arg_string} {python_arg_string}"{args.script} {unknown_arg_string}"'
     spear.log(f"Executing: {cmd}")
     subprocess.run(cmd, shell=True, check=True)
 

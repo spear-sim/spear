@@ -9,7 +9,7 @@
 #include <mutex>  // std::lock_guard
 #include <string>
 
-#include <boost/predef.h> // BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
+#include <boost/predef.h> // BOOST_ENDIAN_BIG_BYTE, BOOST_ENDIAN_LITTLE_BYTE, BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
 
 #include <Engine/Engine.h>               // GEngine
 #include <Engine/GameViewportClient.h>
@@ -162,6 +162,17 @@ public:
             return WITH_EDITOR; // defined in an auto-generated header
         });
 
+        bindFuncToExecuteOnWorkerThread("engine_service", "get_byte_order", []() -> std::string {
+            SP_ASSERT(BOOST_ENDIAN_BIG_BYTE + BOOST_ENDIAN_LITTLE_BYTE == 1);
+            if (BOOST_ENDIAN_BIG_BYTE) {
+                return "big";
+            } else if (BOOST_ENDIAN_LITTLE_BYTE) {
+                return "little";
+            } else {
+                return "";
+            }
+        });
+
         // Entry points for miscellaneous functions that are accessible via GEngine.
 
         bindFuncToExecuteOnGameThread("engine_service", "get_viewport_size", [this]() -> std::vector<double> {
@@ -236,12 +247,12 @@ protected:
                 // In case of an exception, set the frame state to be in an error state and return.
                 } catch(const std::exception& e) {
                     SP_LOG_CURRENT_FUNCTION();
-                    SP_LOG("    Caught exception when executing beginFrameHandler(): ", e.what());
+                    SP_LOG("    ERROR: Caught exception when executing beginFrameHandler(): ", e.what());
                     frame_state_ = EFrameState::Error;
                     return;
                 } catch(...) {
                     SP_LOG_CURRENT_FUNCTION();
-                    SP_LOG("    Caught unknown exception when executing beginFrameHandler().");
+                    SP_LOG("    ERROR: Caught unknown exception when executing beginFrameHandler().");
                     frame_state_ = EFrameState::Error;
                     return;
                 }
@@ -274,12 +285,12 @@ protected:
                 // In case of an exception, set the frame state to be in an error state and return.
                 } catch(const std::exception& e) {
                     SP_LOG_CURRENT_FUNCTION();
-                    SP_LOG("    Caught exception when executing endFrameHandler(): ", e.what());
+                    SP_LOG("    ERROR: Caught exception when executing endFrameHandler(): ", e.what());
                     frame_state_ = EFrameState::Error;
                     return;
                 } catch(...) {
                     SP_LOG_CURRENT_FUNCTION();
-                    SP_LOG("    Caught unknown exception when executing endFrameHandler().");
+                    SP_LOG("    ERROR: Caught unknown exception when executing endFrameHandler().");
                     frame_state_ = EFrameState::Error;
                     return;
                 }
@@ -293,12 +304,12 @@ private:
     template <typename TFunc>
     auto wrapFuncToExecuteInTryCatch(const std::string& long_func_name, const TFunc& func)
     {
-        return wrapFuncToExecuteInTryCatchImpl(long_func_name, func, FuncInfo<TFunc>());
+        return wrapFuncToExecuteInTryCatchImpl(long_func_name, func, FuncInfoUtils::getFuncInfo<TFunc>());
     }
 
     template <typename TFunc, typename TReturn, typename... TArgs> requires
         CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs&...>
-    auto wrapFuncToExecuteInTryCatchImpl(const std::string& long_func_name, const TFunc& func, const FuncInfo<TReturn(*)(TArgs...)>& fi)
+    auto wrapFuncToExecuteInTryCatchImpl(const std::string& long_func_name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
     {
         // The lambda returned here is typically bound to a specific RPC entry point and called from a worker
         // thread by the RPC server.
@@ -318,7 +329,7 @@ private:
 
             } catch (const std::exception& e) {
                 SP_LOG_CURRENT_FUNCTION();
-                SP_LOG("    Caught exception when executing ", long_func_name, ": ", e.what());
+                SP_LOG("    ERROR: Caught exception when executing ", long_func_name, ": ", e.what());
                 work_queue_.reset();
                 {
                     std::lock_guard<std::mutex> lock(frame_state_mutex_);
@@ -327,7 +338,7 @@ private:
                 return TReturn();
             } catch(...) {
                 SP_LOG_CURRENT_FUNCTION();
-                SP_LOG("    Caught unknown exception when executing ", long_func_name, ".");
+                SP_LOG("    ERROR: Caught unknown exception when executing ", long_func_name, ".");
                 work_queue_.reset();
                 {
                     std::lock_guard<std::mutex> lock(frame_state_mutex_);

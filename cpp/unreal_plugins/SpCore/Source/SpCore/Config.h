@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <exception> // std::current_exception, std::rethrow_exception
 #include <string>
 #include <vector>
 

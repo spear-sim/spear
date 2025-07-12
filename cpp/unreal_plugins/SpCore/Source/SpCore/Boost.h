@@ -26,18 +26,11 @@
 
 // ------------------------------------------------------------------------------------------------------
 
-// On Windows, the <boost/asio.hpp> header eventually includes <winsock2.h>, which expects an OPTIONAL
-// macro to be defined. Under normal circumstances, this macro would have been defined by another Windows
-// header by the time <winsock2.h> uses it. But this macro interferes with our code, so we undefine it at the
-// end of "SpCore/Windows.h". And since headers are only expanded once per compilation unit, OPTIONAL will
-// not be redefined when <winsock2.h> includes the header that would normally define it. Therefore, our
-// strategy is to redefine it here, include <boost/asio.hpp>, and then undefine it. We use a similar strategy
-// to avoid errors related to other macros that are defined on Windows but conflict with <boost/asio.hpp>.
+// Avoid errors related to macros that are defined on Windows but conflict with <boost/asio.hpp>.
 
 #if BOOST_OS_WINDOWS
     #pragma push_macro("TRUE")
     #pragma push_macro("FALSE")
-    #pragma push_macro("OPTIONAL")
 
     #pragma push_macro("InterlockedCompareExchange")
     #pragma push_macro("InterlockedCompareExchangePointer")
@@ -48,7 +41,6 @@
 
     #undef TRUE
     #undef FALSE
-    #undef OPTIONAL
 
     #undef InterlockedDecrement
     #undef InterlockedExchange
@@ -59,7 +51,6 @@
 
     #define TRUE true
     #define FALSE false
-    #define OPTIONAL
 
     #define InterlockedCompareExchange _InterlockedCompareExchange
     #define InterlockedCompareExchangePointer _InterlockedCompareExchangePointer
@@ -76,7 +67,6 @@ SP_END_SUPPRESS_COMPILER_WARNINGS
 #if BOOST_OS_WINDOWS
     #pragma pop_macro("TRUE")
     #pragma pop_macro("FALSE")
-    #pragma pop_macro("OPTIONAL")
 
     #pragma pop_macro("InterlockedCompareExchange")
     #pragma pop_macro("InterlockedCompareExchangePointer")
@@ -90,6 +80,7 @@ SP_END_SUPPRESS_COMPILER_WARNINGS
 
 #include <boost/algorithm/string/case_conv.hpp> // boost::algorithm::to_lower_copy
 #include <boost/algorithm/string/join.hpp>      // boost::algorithm::join
+#include <boost/callable_traits.hpp>
 #include <boost/circular_buffer.hpp>
 #include <boost/current_function.hpp>           // BOOST_CURRENT_FUNCTION
 #include <boost/format.hpp>                     // TODO: remove when we can use std::format on all platforms

@@ -115,10 +115,10 @@ if __name__ == "__main__":
     cmd = \
         cmd_prefix + \
         "python " + \
-        f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'update_symlinks_for_external_content.py'))} " + \
-        f"--external_content_dir {os.path.realpath(os.path.join(args.external_content_dir, content_dir))} " + \
-        f"--unreal_project_dir {unreal_project_dir} " + \
-        f"--unreal_project_content_dir {content_dir} " + \
+        f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlinks_for_external_content.py"))}" ' + \
+        f'--external_content_dir "{os.path.realpath(os.path.join(args.external_content_dir, content_dir))}" ' + \
+        f'--unreal_project_dir "{unreal_project_dir}" ' + \
+        f'--unreal_project_content_dir "{content_dir}" ' + \
         f"--{update_action}"
     spear.log(f"Executing: {cmd}")
     subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
@@ -128,10 +128,10 @@ if __name__ == "__main__":
     cmd = \
         cmd_prefix + \
         "python " + \
-        f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'update_symlinks_for_external_content.py'))} " + \
-        f"--external_content_dir {os.path.realpath(os.path.join(args.external_content_dir, content_dir))} " + \
-        f"--unreal_project_dir {unreal_project_dir} " + \
-        f"--unreal_project_content_dir {content_dir} " + \
+        f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlinks_for_external_content.py"))}" ' + \
+        f'--external_content_dir "{os.path.realpath(os.path.join(args.external_content_dir, content_dir))}" ' + \
+        f'--unreal_project_dir "{unreal_project_dir}" ' + \
+        f'--unreal_project_content_dir "{content_dir}" ' + \
         f"--{update_action}"
     spear.log(f"Executing: {cmd}")
     subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
@@ -193,13 +193,13 @@ if __name__ == "__main__":
         cmd = \
             cmd_prefix + \
             "python " + \
-            f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'build_pak.py'))} " + \
-            f"--pak_file {pak_file} " + \
-            f"--cook_dirs_file {cook_dirs_file} " + \
-            f"--include_assets_file {include_assets_file} " + \
-            f"--exclude_assets_file {exclude_assets_file} " + \
-            f"--unreal_engine_dir {args.unreal_engine_dir} " + \
-            f"--unreal_project_dir {unreal_project_dir}"
+            f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'build_pak.py'))} ' + \
+            f'--pak_file "{pak_file}" ' + \
+            f'--cook_dirs_file "{cook_dirs_file}" ' + \
+            f'--include_assets_file "{include_assets_file}" ' + \
+            f'--exclude_assets_file "{exclude_assets_file}" ' + \
+            f'--unreal_engine_dir "{args.unreal_engine_dir}" ' + \
+            f'--unreal_project_dir "{unreal_project_dir}"'
         spear.log(f"Executing: {cmd}")
         subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
 
@@ -232,10 +232,10 @@ if __name__ == "__main__":
             cmd = \
                 cmd_prefix + \
                 "python " + \
-                f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'update_symlinks_for_external_content.py'))} " + \
-                f"--external_content_dir {os.path.realpath(os.path.join(args.external_content_dir, content_dir))} " + \
-                f"--unreal_project_dir {unreal_project_dir} " + \
-                f"--unreal_project_content_dir {content_dir} " + \
+                f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlinks_for_external_content.py"))}" ' + \
+                f'--external_content_dir "{os.path.realpath(os.path.join(args.external_content_dir, content_dir))}" ' + \
+                f'--unreal_project_dir "{unreal_project_dir}" ' + \
+                f'--unreal_project_content_dir "{content_dir}" ' + \
                 f"--{update_action}"
             spear.log(f"Executing: {cmd}")
             subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
@@ -300,14 +300,14 @@ if __name__ == "__main__":
             cmd = \
                 cmd_prefix + \
                 "python " + \
-                f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'build_pak.py'))} " + \
-                f"--pak_file {pak_file} " + \
-                f"--cook_dirs_file {cook_dirs_file} " + \
-                f"--cook_maps_file {cook_maps_file} " + \
-                f"--include_assets_file {include_assets_file} " + \
-                f"--exclude_assets_file {exclude_assets_file} " + \
-                f"--unreal_engine_dir {args.unreal_engine_dir} " + \
-                f"--unreal_project_dir {unreal_project_dir}"
+                f'{os.path.realpath(os.path.join(os.path.dirname(__file__), "build_pak.py"))} ' + \
+                f'--pak_file "{pak_file}" ' + \
+                f'--cook_dirs_file "{cook_dirs_file}" ' + \
+                f'--cook_maps_file "{cook_maps_file}" ' + \
+                f'--include_assets_file "{include_assets_file}" ' + \
+                f'--exclude_assets_file "{exclude_assets_file}" ' + \
+                f'--unreal_engine_dir "{args.unreal_engine_dir}" ' + \
+                f'--unreal_project_dir "{unreal_project_dir}"'
             spear.log(f"Executing: {cmd}")
             subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
 
@@ -317,10 +317,10 @@ if __name__ == "__main__":
             cmd = \
                 cmd_prefix + \
                 "python " + \
-                f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'update_symlinks_for_external_content.py'))} " + \
-                f"--external_content_dir {os.path.realpath(os.path.join(args.external_content_dir, content_dir))} " + \
-                f"--unreal_project_dir {unreal_project_dir} " + \
-                f"--unreal_project_content_dir {content_dir} " + \
+                f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlinks_for_external_content.py"))}" ' + \
+                f'--external_content_dir "{os.path.realpath(os.path.join(args.external_content_dir, content_dir))}" ' + \
+                f'--unreal_project_dir "{unreal_project_dir}" ' + \
+                f'--unreal_project_content_dir "{content_dir}" ' + \
                 f"--{update_action}"
             spear.log(f"Executing: {cmd}")
             subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
@@ -334,10 +334,10 @@ if __name__ == "__main__":
     cmd = \
         cmd_prefix + \
         "python " + \
-        f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'update_symlinks_for_external_content.py'))} " + \
-        f"--external_content_dir {os.path.realpath(os.path.join(args.external_content_dir, content_dir))} " + \
-        f"--unreal_project_dir {unreal_project_dir} " + \
-        f"--unreal_project_content_dir {content_dir} " + \
+        f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlinks_for_external_content.py"))}" ' + \
+        f'--external_content_dir "{os.path.realpath(os.path.join(args.external_content_dir, content_dir))}" ' + \
+        f'--unreal_project_dir "{unreal_project_dir}" ' + \
+        f'--unreal_project_content_dir "{content_dir}" ' + \
         f"--{update_action}"
     spear.log(f"Executing: {cmd}")
     subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
@@ -347,10 +347,10 @@ if __name__ == "__main__":
     cmd = \
         cmd_prefix + \
         "python " + \
-        f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'update_symlinks_for_external_content.py'))} " + \
-        f"--external_content_dir {os.path.realpath(os.path.join(args.external_content_dir, content_dir))} " + \
-        f"--unreal_project_dir {unreal_project_dir} " + \
-        f"--unreal_project_content_dir {content_dir} " + \
+        f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlinks_for_external_content.py"))}" ' + \
+        f'--external_content_dir "{os.path.realpath(os.path.join(args.external_content_dir, content_dir))}" ' + \
+        f'--unreal_project_dir "{unreal_project_dir}" ' + \
+        f'--unreal_project_content_dir "{content_dir}" ' + \
         f"--{update_action}"
     spear.log(f"Executing: {cmd}")
     subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env

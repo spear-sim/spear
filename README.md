@@ -28,8 +28,7 @@ Minimum and recommended system specifications for the Unreal Engine are given [h
 
 ### Documentation
 
-- Our [Getting Started](docs/getting_started.md) tutorial explains how to programmatically interact with SPEAR via Python.
-- Our [Building SpearSim](docs/building_spearsim.md) tutorial explains how to build our standalone `SpearSim` executable from source.
+- Our [Getting Started](docs/getting_started.md) tutorial explains how to set up your development environment.
 - Our [Running our Example Applications](docs/running_our_example_applications.md) tutorial explains how to run our example applications.
 - Our [Importing and Exporting Assets](docs/importing_and_exporting_assets.md) tutorial explains how to import and export assets.
 - Our [Coding Guidelines](docs/coding_guidelines.md) document describes our coding standard.
@@ -38,8 +37,8 @@ Minimum and recommended system specifications for the Unreal Engine are given [h
 ## Licenses
 
 - The code in this repository is licensed under an [MIT License](LICENSE.txt), and the licenses for our third-party code dependencies are given [here](ACKNOWLEDGMENTS.txt).
-- The assets in this repository are licensed under a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0), and the license for the `kujiale` scenes is given [here](LICENSE_KUJIALE.txt).
+- The assets in this repository are licensed under a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0).
 
 ## Acknowledgements
 
-From 2021 to 2024, SPEAR was developed with support from Intel.
+From 2021 to 2024, SPEAR was developed with support from Intel. Since 2024, SPEAR has been developed at Adobe Research.

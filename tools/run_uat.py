@@ -57,7 +57,7 @@ if __name__ == "__main__":
     assert len(uprojects) == 1
     uproject = uprojects[0]
     uproject_name = os.path.splitext(os.path.split(uproject)[1])[0]
-    archive_dir = os.path.realpath(os.path.join(unreal_project_dir, "Standalone-" + args.build_config))
+    archive_dir = os.path.realpath(os.path.join(unreal_project_dir, f"Standalone-{args.build_config}"))
 
     # assemble dirs to cook
 
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     if args.cook_dirs is not None:
         cook_dirs = args.cook_dirs
 
-    cook_dir_args = [ "-cookdir=" + os.path.join(unreal_project_dir, cook_dir) for cook_dir in cook_dirs ]
+    cook_dir_args = [ f'-cookdir="{os.path.join(unreal_project_dir, cook_dir)}"' for cook_dir in cook_dirs ]
 
     # assemble maps to cook
 
@@ -78,17 +78,17 @@ if __name__ == "__main__":
     if len(cook_maps) == 0:
         cook_maps_arg = []
     else:
-        cook_maps_arg = ["-map=" + "+".join(cook_maps)]
+        cook_maps_arg = [f"-map={"+".join(cook_maps)}"]
 
     # build project
     cmd = [
         run_uat_script,
         "BuildCookRun",
-        "-project=" + uproject,
-        "-target=" + uproject_name,
-        "-targetplatform=" + target_platform,
-        "-clientconfig=" + args.build_config,
-        "-archivedirectory=" + archive_dir] + \
+        f'-project="{uproject}"',
+        f"-target={uproject_name}",
+        f"-targetplatform={target_platform}",
+        f"-clientconfig={args.build_config}",
+        f'-archivedirectory="{archive_dir}"'] + \
         unknown_args + \
         cook_dir_args + \
         cook_maps_arg

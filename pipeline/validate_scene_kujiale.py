@@ -584,13 +584,13 @@ def get_debug_string_material(material):
     return material.get_path_name()
 
 def get_debug_string_component(component):
-    return ".".join([ c.get_name() for c in list(component.get_parent_components())[::-1] ]) + "." + component.get_name()
+    return f"{".".join([ c.get_name() for c in list(component.get_parent_components())[::-1] ])}.{component.get_name()}"
 
 def get_debug_string_type(type):
     return type.__name__
 
 def get_debug_string_actor(actor):
-    return str(actor.get_folder_path()) + posixpath.sep + actor.get_actor_label()
+    return f"{str(actor.get_folder_path())}{posixpath.sep}{actor.get_actor_label()}"
 
 
 if __name__ == "__main__":

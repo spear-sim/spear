@@ -6,7 +6,7 @@ import argparse
 import os
 import shutil
 import spear
-import spear.x
+import spear.tool_utils
 import subprocess
 import sys
 
@@ -142,22 +142,11 @@ if __name__ == "__main__":
         cmd = \
             cmd_prefix + \
             "python " + \
-            f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'build_third_party_libs.py'))} " + \
+            f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "build_third_party_libs.py"))}" ' + \
             f"--third_party_dir  {third_party_dir} " + \
             f"--num_parallel_jobs {args.num_parallel_jobs}"
         spear.log(f"Executing: {cmd}")
         subprocess.run(cmd, shell=True, check=True)
-
-    # create symbolic links (we need shell=True because we want to run in a specific anaconda env)
-    cmd = \
-        cmd_prefix + \
-        "python " + \
-        f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'create_project_symlinks.py'))} " + \
-        f"--unreal_project_dir {unreal_project_dir} " + \
-        f"--unreal_plugins_dir {unreal_plugins_dir} " + \
-        f"--third_party_dir {third_party_dir}"
-    spear.log(f"Executing: {cmd}")
-    subprocess.run(cmd, shell=True, check=True)
 
     # copy starter content (we need shell=True because we want to run in a specific anaconda env,
     # and we need to break up this string extra carefully so we can enclose unreal_engine_dir in
@@ -165,21 +154,21 @@ if __name__ == "__main__":
     cmd = \
         cmd_prefix + \
         "python " + \
-        f"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'copy_engine_content.py'))} " + \
+        f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "copy_engine_content.py"))}" ' + \
         f'--unreal_engine_dir "{args.unreal_engine_dir}" ' + \
-        f"--unreal_project_dir {unreal_project_dir}"
+        f'--unreal_project_dir "{unreal_project_dir}"'
     spear.log(f"Executing: {cmd}")
     subprocess.run(cmd, shell=True, check=True)
 
     # build SpearSim project
 
     cook_maps = spear.tool_utils.get_default_maps_to_cook()
-    cook_maps_arg = ["-map=" + "+".join(cook_maps)]
+    cook_maps_arg = [f"-map={"+".join(cook_maps)}"]
 
     cmd = [
         run_uat_script,
         "BuildCookRun",
-        "-project=" + os.path.realpath(os.path.join(unreal_project_dir, "SpearSim.uproject")),
+        f'-project="{os.path.realpath(os.path.join(unreal_project_dir, "SpearSim.uproject"))}"',
         "-target=SpearSim",
         "-build",   # build C++ executable
         "-cook",    # prepare cross-platform content for a specific platform (e.g., compile shaders)
@@ -187,9 +176,9 @@ if __name__ == "__main__":
         "-package", # prepare staged executable for distribution on a specific platform (e.g., runs otool and xcrun on macOS)
         "-archive", # copy staged executable to -archivedirectory (on some platforms this will also move directories around relative to the executable)
         "-pak",     # generate a pak file for cooked content and configure executable so it can load pak files
-        "-targetplatform=" + target_platform,
-        "-clientconfig=" + build_config,
-        "-archivedirectory=" + archive_dir,
+        f"-targetplatform={target_platform}",
+        f"-clientconfig={build_config}",
+        f'-archivedirectory="{archive_dir}"',
         run_uat_platform_args] + \
         cook_maps_arg
     spear.log(f"Executing: {' '.join(cmd)}")

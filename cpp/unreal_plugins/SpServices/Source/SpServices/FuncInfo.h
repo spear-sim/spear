@@ -4,11 +4,11 @@
 
 #pragma once
 
+#include <array>
 #include <concepts>    // std::same_as
 #include <type_traits> // std::invoke_result_t, std::is_invocable_v
 
-template <typename TFunc>
-concept CFuncIsCallableWithNoArgs = std::is_invocable_v<TFunc>;
+#include "SpCore/Boost.h"
 
 template <typename TFunc, typename... TArgs>
 concept CFuncIsCallableWithArgs = std::is_invocable_v<TFunc, TArgs...>;
@@ -16,17 +16,27 @@ concept CFuncIsCallableWithArgs = std::is_invocable_v<TFunc, TArgs...>;
 template <typename TFunc, typename TReturn, typename... TArgs>
 concept CFuncReturnsAndIsCallableWithArgs = std::same_as<TReturn, std::invoke_result_t<TFunc, TArgs...>>;
 
-template <typename TClass>
-struct FuncInfo : public FuncInfo<decltype(&TClass::operator())> {};
-
-template <typename TClass, typename TReturn, typename... TArgs>
-struct FuncInfo<TReturn(TClass::*)(TArgs...)> : public FuncInfo<TReturn(*)(TArgs...)> {};
-
-template <typename TClass, typename TReturn, typename... TArgs>
-struct FuncInfo<TReturn(TClass::*)(TArgs...) const> : public FuncInfo<TReturn(*)(TArgs...)> {};
-
-template <class T>
-struct FuncInfo<T&> : public FuncInfo<T> {};
-
 template <typename TReturn, typename... TArgs>
-struct FuncInfo<TReturn(*)(TArgs...)> {};
+class FuncInfo {};
+
+class FuncInfoUtils
+{
+public:
+    FuncInfoUtils() = delete;
+    ~FuncInfoUtils() = delete;
+
+    template <typename TFunc>
+    static auto getFuncInfo()
+    {
+        using TArgsTuple = boost::callable_traits::args_t<TFunc>;
+        using TReturn = boost::callable_traits::return_type_t<TFunc>; // can't use TReturn = std::invoke_result_t<TFunc, TArgs...> because we haven't deduced TArgs... yet
+
+        return getFuncInfoImpl<TReturn>(std::array<TArgsTuple, 0>());
+    }
+
+    template <typename TReturn, typename... TArgs>
+    static auto getFuncInfoImpl(std::array<std::tuple<TArgs...>, 0> array)
+    {
+        return FuncInfo<TReturn, TArgs...>();
+    }
+};

@@ -8,10 +8,5 @@
 #include <boost/predef.h> // BOOST_OS_WINDOWS
 
 #if BOOST_OS_WINDOWS
-    #pragma push_macro("OPTIONAL") // Defined by <windows.h>, conflicts with our code
-    #undef OPTIONAL
-
     #include <Windows/WindowsHWrapper.h>
-
-    #pragma pop_macro("OPTIONAL")
 #endif

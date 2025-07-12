@@ -17,18 +17,18 @@ def get_transforms(df, transform_names):
     for transform_name in transform_names:
         transform = {
             "translation": {
-                "x": df[transform_name + "_translation_x"],
-                "y": df[transform_name + "_translation_y"],
-                "z": df[transform_name + "_translation_z"]},
+                "x": df[f"{transform_name}_translation_x"],
+                "y": df[f"{transform_name}_translation_y"],
+                "z": df[f"{transform_name}_translation_z"]},
             "rotation": {
-                "x": df[transform_name + "_rotation_x"],
-                "y": df[transform_name + "_rotation_y"],
-                "z": df[transform_name + "_rotation_z"],
-                "w": df[transform_name + "_rotation_w"]},
+                "x": df[f"{transform_name}_rotation_x"],
+                "y": df[f"{transform_name}_rotation_y"],
+                "z": df[f"{transform_name}_rotation_z"],
+                "w": df[f"{transform_name}_rotation_w"]},
             "scale3D": {
-                "x": df[transform_name + "_scale3D_x"],
-                "y": df[transform_name + "_scale3D_y"],
-                "z": df[transform_name + "_scale3D_z"]}}
+                "x": df[f"{transform_name}_scale3D_x"],
+                "y": df[f"{transform_name}_scale3D_y"],
+                "z": df[f"{transform_name}_scale3D_z"]}}
         transforms[transform_name] = transform
     return transforms
 
@@ -73,7 +73,7 @@ if __name__ == "__main__":
 
             character = {}
 
-            transforms_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "character_poses", character_desc["name"] + ".csv"))        
+            transforms_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "character_poses", f"{character_desc["name"]}.csv"))
             character["data_frame"] = pd.read_csv(transforms_file)
 
             # there is no point specifying a location and rotation yet, because the spawned actor won't have a

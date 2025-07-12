@@ -58,7 +58,7 @@ def process_scene():
     unreal_metadata_dir = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "unreal_metadata"))
     actors_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "actors.json"))
     assert os.path.exists(unreal_metadata_dir)
-    spear.log("Reading JSON file: " + actors_json_file)
+    spear.log("Reading JSON file: ", actors_json_file)
     with open(actors_json_file, "r") as f:
         actors_json = json.load(f)
 
@@ -129,7 +129,7 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
                 # ...that are in the /Game/Scenes/<scene_id> directory.
                 if static_mesh_asset_path.parts[:4] == ("/", "Game", "Spear", "Scenes", args.scene_id):
 
-                    obj_path_suffix = os.path.join(*static_mesh_asset_path.parts[4:]) + ".obj"
+                    obj_path_suffix = f"{os.path.join(*static_mesh_asset_path.parts[4:])}.obj"
                     numerical_parity_obj_path = \
                         os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "unreal_geometry", "numerical_parity", obj_path_suffix))
                     spear.log(log_prefix_str, "Reading OBJ file: ", numerical_parity_obj_path)
@@ -156,7 +156,7 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
                 transform_world_from_parent_component=transform_world_from_current_component,
                 component_desc=child_component_desc,
                 color=color,
-                log_prefix_str=log_prefix_str+"    ")
+                log_prefix_str=f"{log_prefix_str}    ")
 
 
 if __name__ == "__main__":

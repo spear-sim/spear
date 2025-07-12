@@ -230,7 +230,7 @@ if __name__ == "__main__":
                 data = return_values["arrays"]["data"]
                 canvas[i * viewport_y : (i + 1) * viewport_y, j * viewport_x : (j + 1) * viewport_x] = data
 
-        filename = os.path.join(images_directory, "%04d.png" % frame_idx)
+        filename = os.path.join(images_directory, f"{frame_idx:04}.png")
         cv2.imwrite(filename, canvas)
         spear.log(filename)
 

@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
     # Call OpenLevel. It is recommended to call OpenLevel in a "with instance.end_frame()" block, rather than
     # in a "with instance.begin_frame()" block. Calling OpenLevel in a "with instance.begin_frame()" does
-    # work, but it requires the user to set the SPEAR.INSTANCE.RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS config
+    # work, but it requires the user to set the SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS config
     # parameter conservatively due to various implementation details in begin_frame() and end_frame().
 
     spear.log("Opening level: /Game/Spear/Scenes/debug_0000/Maps/debug_0000.debug_0000")

@@ -33,7 +33,7 @@ def post_tick_callback(delta_time):
 
         if sp_message_queue_manager_default_object.has_queue("take_screenshot"):
             spear.log("sp_message_queue_manager_default_object.push_message_to_back_of_queue(...)")
-            sp_message_queue_manager_default_object.push_message_to_back_of_queue("take_screenshot", "Screenshot saved to path: " + screenshot)
+            sp_message_queue_manager_default_object.push_message_to_back_of_queue("take_screenshot", f"Screenshot saved to path: {screenshot}")
 
 
 if __name__ == "__main__":

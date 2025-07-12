@@ -58,7 +58,7 @@ def generate_unreal_geometry(actor):
         # the mesh as soon as we're finished exporting from Unreal, and we swap the y and z coordinates back to
         # what they were originally.
 
-        obj_path_suffix = os.path.join(*static_mesh_asset_path.parts[4:]) + ".obj"
+        obj_path_suffix = f"{os.path.join(*static_mesh_asset_path.parts[4:])}.obj"
         raw_obj_path = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", editor_world_name, "unreal_geometry", "raw", obj_path_suffix))
 
         errors = []
@@ -114,6 +114,6 @@ if __name__ == "__main__":
 
     # TODO: enable script to process multiple scenes
     if args.scene_id is not None:
-        level_editor_subsystem.load_level(posixpath.join("/", "Game", "Spear", "Scenes", args.scene_id, "Maps", args.scene_id + "." + args.scene_id)
+        level_editor_subsystem.load_level(posixpath.join("/", "Game", "Spear", "Scenes", args.scene_id, "Maps", f"{args.scene_id}.{args.scene_id}")
 
     process_scene()

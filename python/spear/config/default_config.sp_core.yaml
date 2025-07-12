@@ -8,5 +8,11 @@ SP_CORE:
   # to the running executable.
   WAIT_FOR_KEYBOARD_INPUT_DURING_INITIALIZATION: False
 
+  # Initial ID to use when creating shared memory regions. Shared memory regions are assigned monotonically
+  # increasing IDs when they are created. If there are multiple instances running on the same machine, each
+  # instance needs a unique initial ID, such that no instance ever needs to use an ID that has is already
+  # being used by another instance.
+  SHARED_MEMORY_INITIAL_UNIQUE_ID: 0
+
   # Print info when searching for actors and components by name or by path.
   PRINT_FIND_ACTOR_AND_GET_COMPONENT_DEBUG_INFO: False

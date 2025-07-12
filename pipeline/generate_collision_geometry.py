@@ -28,7 +28,7 @@ def process_scene():
     kinematic_trees_dir = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "kinematic_trees"))
     kinematic_trees_actors_json_file = os.path.realpath(os.path.join(kinematic_trees_dir, "actors.json"))
     assert os.path.exists(kinematic_trees_dir)
-    spear.log("Reading JSON file: " + kinematic_trees_actors_json_file)
+    spear.log("Reading JSON file: ", kinematic_trees_actors_json_file)
     with open(kinematic_trees_actors_json_file, "r") as f:
         actors_json = json.load(f)
 
@@ -37,7 +37,7 @@ def process_scene():
 
     collision_geometry_dir = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "collision_geometry"))
     collision_geometry_actors_json_file = os.path.realpath(os.path.join(collision_geometry_dir, "actors.json"))
-    spear.log("Writing JSON file: " + collision_geometry_actors_json_file)
+    spear.log("Writing JSON file: ", collision_geometry_actors_json_file)
     os.makedirs(collision_geometry_dir, exist_ok=True)
     with open(collision_geometry_actors_json_file, "w") as f:
         json.dump(actors, f, indent=4, sort_keys=True)
@@ -96,7 +96,7 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
             static_mesh_asset_path = pathlib.PurePosixPath(static_mesh_component_desc["editor_properties"]["static_mesh"]["path"])
             assert static_mesh_asset_path.parts[:4] == ("/", "Game", "Scenes", args.scene_id)
 
-            obj_path_suffix = os.path.join(*static_mesh_asset_path.parts[4:]) + ".obj"
+            obj_path_suffix = f"{os.path.join(*static_mesh_asset_path.parts[4:])}.obj"
             numerical_parity_obj_path = \
                 os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "unreal_geometry", "numerical_parity", obj_path_suffix))
             spear.log(log_prefix_str, "Reading OBJ file: ", numerical_parity_obj_path)
@@ -151,7 +151,7 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
         kinematic_tree_node["children_nodes"][child_kinematic_tree_node_name]["node"] = generate_collision_geometry_for_kinematic_tree_node(
             actor_name=actor_name,
             kinematic_tree_node=child_kinematic_tree_node["node"],
-            log_prefix_str=log_prefix_str+"    ")
+            log_prefix_str=f"{log_prefix_str}    ")
 
     return kinematic_tree_node
 

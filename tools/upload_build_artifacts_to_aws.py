@@ -29,13 +29,13 @@ if __name__ == "__main__":
 
     if sys.platform == "win32":
         platform_name = "Win64"
-        paks_filter_string = args.version_tag + "-" + "Windows.pak"
+        paks_filter_string = f"{args.version_tag}-Windows.pak"
     elif sys.platform == "darwin":
         platform_name = "Mac"
-        paks_filter_string = args.version_tag + "-" + "Mac.pak"
+        paks_filter_string = f"{args.version_tag}-Mac.pak"
     elif sys.platform == "linux":
         platform_name = "Linux"
-        paks_filter_string = args.version_tag + "-" + "Linux.pak"
+        paks_filter_string = f"{args.version_tag}-Linux.pak"
     else:
         assert False
 

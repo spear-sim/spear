@@ -24,7 +24,7 @@ def get_object_path_from_asset_path(asset_path):
     asset_dir, asset_name = posixpath.split(asset_path)
     asset_name_tokens = asset_name.split(".")
     if len(asset_name_tokens) == 1:
-        return posixpath.join(asset_dir, asset_name_tokens[0] + "." + asset_name_tokens[0])
+        return posixpath.join(asset_dir, f"{asset_name_tokens[0]}.{asset_name_tokens[0]}")
     elif len(asset_name_tokens) == 2:
         assert asset_name_tokens[0].lower() == asset_name_tokens[1].lower()
         return asset_path

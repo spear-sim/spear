@@ -94,8 +94,8 @@ if __name__ == "__main__":
 
                 # call function for each actor
                 args = {
-                    "NewLocation": dict(zip(["X", "Y", "Z"], mj_bodies_xpos[unreal_actor_name + ":StaticMeshComponent0"])),
-                    "NewRotation": dict(zip(["Pitch", "Yaw", "Roll"], unreal_pyr_from_mujoco_quaternion(mj_bodies_xquat[unreal_actor_name + ":StaticMeshComponent0"]))),
+                    "NewLocation": dict(zip(["X", "Y", "Z"], mj_bodies_xpos[f"{unreal_actor_name}:StaticMeshComponent0"])),
+                    "NewRotation": dict(zip(["Pitch", "Yaw", "Roll"], unreal_pyr_from_mujoco_quaternion(mj_bodies_xquat[f"{unreal_actor_name}:StaticMeshComponent0"]))),
                     "bSweep":      False,
                     "bTeleport":   True}
                 spear_game.unreal_service.call_function(uobject=unreal_actor, ufunction=unreal_set_actor_location_and_rotation_func, args=args)

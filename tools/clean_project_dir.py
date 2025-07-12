@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
     # plugin files and directories
     is_valid_plugin_dir = lambda p: \
-        os.path.isdir(os.path.realpath(os.path.join(unreal_plugins_dir, p))) and os.path.exists(os.path.realpath(os.path.join(unreal_plugins_dir, p, p + ".uplugin")))
+        os.path.isdir(os.path.realpath(os.path.join(unreal_plugins_dir, p))) and os.path.exists(os.path.realpath(os.path.join(unreal_plugins_dir, p, f"{p}.uplugin")))
     plugins = [ p for p in sorted(os.listdir(unreal_plugins_dir)) if is_valid_plugin_dir(p) ]
 
     for plugin in plugins:

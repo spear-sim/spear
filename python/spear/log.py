@@ -21,7 +21,7 @@ def log_get_prefix():
     return _log_get_prefix(current_frame)
 
 def _log_get_prefix(current_frame):
-    return "[SPEAR | " + _get_current_file_abbreviated(current_frame) + ":" + _get_current_line(current_frame) + "] "
+    return f"[SPEAR | {_get_current_file_abbreviated(current_frame)}:{_get_current_line(current_frame)}] "
 
 def _get_current_file_abbreviated(current_frame):
     outer_frames = inspect.getouterframes(current_frame)

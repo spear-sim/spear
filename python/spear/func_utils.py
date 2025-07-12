@@ -8,6 +8,11 @@ import numpy as np
 import scipy
 import spear
 
+try:
+    import spear_ext # can't be installed in the UE Python environment because UE doesn't ship with CPython headers
+except:
+    pass
+
 
 # The Ptr and Shared classes are for internal use, and do not need to be instantiated directly by most users.
 class Ptr:
@@ -97,58 +102,65 @@ def to_shared(array, shared_memory_handle):
 
 
 # Convert a collection of NumPy arrays to a collection of packed arrays.
-def to_packed_arrays(arrays, byte_order=None, usage_flags=None):
+def to_packed_arrays(arrays, dest_byte_order, usage_flags=None):
     if isinstance(arrays, list):
-        return [ to_packed_array(array=a, byte_order=byte_order, usage_flags=usage_flags) for a in arrays ]
+        return [ to_packed_array(array=a, dest_byte_order=dest_byte_order, usage_flags=usage_flags) for a in arrays ]
     elif isinstance(arrays, dict):
-        return { k: to_packed_array(array=v, byte_order=byte_order, usage_flags=usage_flags) for k, v in arrays.items() }
+        return { k: to_packed_array(array=v, dest_byte_order=dest_byte_order, usage_flags=usage_flags) for k, v in arrays.items() }
     else:
         assert False
 
 # Convert a NumPy array to a packed array.
-def to_packed_array(array, byte_order=None, usage_flags=None):
+def to_packed_array(array, dest_byte_order, usage_flags=None):
     if isinstance(array, np.ndarray):
-        assert byte_order is not None
-        return {
-            "data": np.array(array, dtype=array.dtype.newbyteorder(byte_order)).data,
-            "data_source": "Internal",
-            "shape": array.shape,
-            "data_type": array.dtype.str.replace("<", "").replace(">", "").replace("|", ""),
-            "shared_memory_name": ""}
+        packed_array = spear_ext.PackedArray()
+        if dest_byte_order == "native":
+            packed_array.data = array
+        elif dest_byte_order in ["big", "little"]:
+            packed_array.data = np.array(array, dtype=array.dtype.newbyteorder(dest_byte_order))
+        else:
+            assert False
+        packed_array.data_source = "Internal"
+        packed_array.shape = array.shape
+        packed_array.shared_memory_name = ""
+        return packed_array
     elif isinstance(array, Shared):
         assert usage_flags is not None
-        assert set(usage_flags) <= set(array.shared_memory_handle["view"]["usage_flags"])
-        return {
-            "data": np.array([]).data,
-            "data_source": "Shared",
-            "shape": array.array.shape,
-            "data_type": array.array.dtype.str.replace("<", "").replace(">", "").replace("|", ""),
-            "shared_memory_name": array.shared_memory_handle["name"]}
+        assert set(usage_flags) <= set(array.shared_memory_handle["view"].usage_flags)
+        packed_array = spear_ext.PackedArray()
+        packed_array.data = np.array([], dtype=array.array.dtype)
+        packed_array.data_source = "Shared"
+        packed_array.shape = array.array.shape
+        packed_array.shared_memory_name = array.shared_memory_handle["name"]
+        return packed_array
     else:
         assert False
 
 
 # Convert a collection of packed arrays to a collection of NumPy arrays.
-def to_arrays(packed_arrays, byte_order=None, usage_flags=None, shared_memory_handles=None):
+def to_arrays(packed_arrays, src_byte_order, usage_flags=None, shared_memory_handles=None):
     if isinstance(packed_arrays, list):
-        return [ to_array(packed_array=p, byte_order=byte_order, usage_flags=usage_flags, shared_memory_handles=shared_memory_handles) for p in packed_arrays ]
+        return [ to_array(packed_array=p, src_byte_order=src_byte_order, usage_flags=usage_flags, shared_memory_handles=shared_memory_handles) for p in packed_arrays ]
     elif isinstance(packed_arrays, dict):
-        return { k: to_array(packed_array=v, byte_order=byte_order, usage_flags=usage_flags, shared_memory_handles=shared_memory_handles) for k, v in packed_arrays.items() }
+        return { k: to_array(packed_array=v, src_byte_order=src_byte_order, usage_flags=usage_flags, shared_memory_handles=shared_memory_handles) for k, v in packed_arrays.items() }
     else:
         assert False
 
 # Convert a packed array to a NumPy array.
-def to_array(packed_array, byte_order=None, usage_flags=None, shared_memory_handles=None):
-    if packed_array["data_source"] == "Internal":
-        assert byte_order is not None
-        dtype = np.dtype(packed_array["data_type"]).newbyteorder(byte_order)
-        return np.frombuffer(packed_array["data"], dtype=dtype, count=-1).reshape(packed_array["shape"])
-    elif packed_array["data_source"] == "Shared":
-        assert packed_array["shared_memory_name"] in shared_memory_handles
+def to_array(packed_array, src_byte_order, usage_flags=None, shared_memory_handles=None):
+    if packed_array.data_source == "Internal":
+        assert packed_array.data.shape == tuple(packed_array.shape)
+        if src_byte_order == "native":
+            return packed_array.data
+        elif src_byte_order in ["big", "little"]:
+            return np.frombuffer(packed_array.data.data, dtype=packed_array.data.dtype.newbyteorder(src_byte_order), count=-1).reshape(packed_array.shape)
+        else:
+            assert False
+    elif packed_array.data_source == "Shared":
+        assert packed_array.shared_memory_name in shared_memory_handles
         assert usage_flags is not None
-        assert set(usage_flags) <= set(shared_memory_handles[packed_array["shared_memory_name"]]["view"]["usage_flags"])
-        buffer = shared_memory_handles[packed_array["shared_memory_name"]]["buffer"]
-        return np.ndarray(shape=packed_array["shape"], dtype=np.dtype(packed_array["data_type"]), buffer=buffer)
+        assert set(usage_flags) <= set(shared_memory_handles[packed_array.shared_memory_name]["view"].usage_flags)
+        return np.ndarray(shape=packed_array.shape, dtype=packed_array.data.dtype, buffer=shared_memory_handles[packed_array.shared_memory_name]["buffer"])
     else:
         assert False
 

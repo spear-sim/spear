@@ -56,7 +56,7 @@ def process_scene():
 
     collision_geometry_dir = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "collision_geometry"))
     actors_json_file = os.path.realpath(os.path.join(collision_geometry_dir, "actors.json"))
-    spear.log("Reading JSON file: " + actors_json_file)
+    spear.log("Reading JSON file: ", actors_json_file)
     assert os.path.exists(collision_geometry_dir)
     with open(actors_json_file, "r") as f:
         actors_json = json.load(f)
@@ -73,17 +73,17 @@ def process_scene():
     os.makedirs(mujoco_scene_dir, exist_ok=True)
 
     meshes_mjcf_file = os.path.realpath(os.path.join(mujoco_scene_dir, "meshes.mjcf"))
-    spear.log("Writing MJCF file: " + meshes_mjcf_file)
+    spear.log("Writing MJCF file: ", meshes_mjcf_file)
     with open(meshes_mjcf_file, "w") as f:
         f.write(get_element_str(meshes_element))
 
     bodies_mjcf_file = os.path.realpath(os.path.join(mujoco_scene_dir, "bodies.mjcf"))
-    spear.log("Writing MJCF file: " + bodies_mjcf_file)
+    spear.log("Writing MJCF file: ", bodies_mjcf_file)
     with open(bodies_mjcf_file, "w") as f:
         f.write(get_element_str(bodies_element))
 
     main_mjcf_file = os.path.realpath(os.path.join(mujoco_scene_dir, "main.mjcf"))
-    spear.log("Writing MJCF file: " + main_mjcf_file)
+    spear.log("Writing MJCF file: ", main_mjcf_file)
     with open(main_mjcf_file, "w") as f:
         f.write(main_mjcf_str)
 
@@ -224,7 +224,7 @@ def add_mujoco_elements_for_kinematic_tree_node(
     else:
         assert False
 
-    body_name = actor_name + ":" + kinematic_tree_node_name
+    body_name = f"{actor_name}:{kinematic_tree_node_name}"
     body_element = xml.etree.ElementTree.SubElement(parent_element, "body", attrib={
         "name": body_name,
         "pos": get_mujoco_pos_str(transform_world_from_parent_node["scale"]*transform_parent_node_from_current_node["location"] + pos_offset),
@@ -263,9 +263,9 @@ def add_mujoco_elements_for_kinematic_tree_node(
             if args.color_mode == "unique_color_per_geom":
                 color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
 
-            part_name = actor_name + ":" + kinematic_tree_node_name + ":" + f"merge_id_{int(merge_id):04}" + ":" + f"part_id_{part_id:04}"
-            mesh_name = part_name + ":mesh"
-            geom_name = part_name + ":geom"
+            part_name = f"{actor_name}:{kinematic_tree_node_name}:merge_id_{int(merge_id):04}:part_id_{part_id:04}"
+            mesh_name = f"{part_name}:mesh"
+            geom_name = f"{part_name}:geom"
             mesh_element = xml.etree.ElementTree.SubElement(meshes_element, "mesh", attrib={
                 "file": part_id_obj_path,
                 "name": mesh_name,
@@ -295,7 +295,7 @@ def get_mujoco_pos_str(pos):
     return " ".join([ str(value) for value in pos.A1 ])
 
 def get_mujoco_xyaxes_str(rotation):
-    return " ".join([ str(value) for value in rotation[:,0].A1 ]) + " " + " ".join([ str(value) for value in rotation[:,1].A1 ])
+    return f"{" ".join([ str(value) for value in rotation[:,0].A1 ])} {" ".join([ str(value) for value in rotation[:,1].A1 ])}"
 
 def get_mujoco_scale_str(scale):
     return " ".join([ str(value) for value in np.diag(scale) ])

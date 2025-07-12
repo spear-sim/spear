@@ -5,7 +5,7 @@
 #pragma once
 
 #include <atomic>
-#include <exception>
+#include <exception>   // std::current_exception
 #include <future>
 #include <map>
 #include <mutex>       // std::lock_guard
@@ -19,12 +19,6 @@
 #include "SpCore/Log.h"
 
 #include "SpServices/FuncInfo.h"
-
-enum class WorkQueueErrorState
-{
-    NoError = 0,
-    Error   = 1
-};
 
 class SPSERVICES_API WorkQueue {
 
@@ -49,13 +43,20 @@ public:
     template <typename TFunc>
     static auto wrapFuncToExecuteInWorkQueueBlocking(WorkQueue& work_queue, const std::string& func_name, const TFunc& func)
     {
-        return wrapFuncToExecuteInWorkQueueBlockingImpl(work_queue, func_name, func, FuncInfo<TFunc>());
+        return wrapFuncToExecuteInWorkQueueBlockingImpl(work_queue, func_name, func, FuncInfoUtils::getFuncInfo<TFunc>());
     }
 
 private:
+
+    enum class ErrorState
+    {
+        NoError = 0,
+        Error   = 1
+    };
+
     template <typename TFunc, typename TReturn, typename... TArgs> requires
         CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs&...>
-    static auto wrapFuncToExecuteInWorkQueueBlockingImpl(WorkQueue& work_queue, const std::string& func_name, const TFunc& func, const FuncInfo<TReturn(*)(TArgs...)>& fi)
+    static auto wrapFuncToExecuteInWorkQueueBlockingImpl(WorkQueue& work_queue, const std::string& func_name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
     {
         // The lambda returned here is typically bound to a specific RPC entry point and called from a worker
         // thread by the RPC server.
@@ -80,9 +81,9 @@ private:
     {
         using TReturn = std::invoke_result_t<TFunc, TArgs&...>;
 
-        if (error_state_ == WorkQueueErrorState::Error) {
+        if (error_state_ == ErrorState::Error) {
             SP_LOG_CURRENT_FUNCTION();
-            SP_LOG("    Work queue is in an error state, returning immediately from func: ", func_name);
+            SP_LOG("    ERROR: Work queue is in an error state, returning immediately from func: ", func_name);
             return TReturn();
         }
 
@@ -132,14 +133,14 @@ private:
         } catch (const std::exception& e) {
             std::lock_guard<std::mutex> lock(mutex_);
             SP_LOG_CURRENT_FUNCTION();
-            SP_LOG("    Caught exception when executing ", func_name, ": ", e.what());
-            error_state_ = WorkQueueErrorState::Error;
+            SP_LOG("    ERROR: Caught exception when executing ", func_name, ": ", e.what());
+            error_state_ = ErrorState::Error;
             exception_ptr_ = std::current_exception();
         } catch (...) {
             std::lock_guard<std::mutex> lock(mutex_);
             SP_LOG_CURRENT_FUNCTION();
-            SP_LOG("    Caught unknown exception when executing ", func_name, ".");
-            error_state_ = WorkQueueErrorState::Error;
+            SP_LOG("    ERROR: Caught unknown exception when executing ", func_name, ".");
+            error_state_ = ErrorState::Error;
             exception_ptr_ = std::current_exception();
         }
 
@@ -163,6 +164,6 @@ private:
     boost::asio::io_context io_context_;
     boost::asio::executor_work_guard<boost::asio::io_context::executor_type> executor_work_guard_;
 
-    WorkQueueErrorState error_state_ = WorkQueueErrorState::NoError;
+    ErrorState error_state_ = ErrorState::NoError;
     std::exception_ptr exception_ptr_ = nullptr;
 };

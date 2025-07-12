@@ -55,7 +55,7 @@ def process_scene():
     kinematic_trees_dir = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "kinematic_trees"))
     actors_json_file = os.path.realpath(os.path.join(kinematic_trees_dir, "actors.json"))
     assert os.path.exists(kinematic_trees_dir)
-    spear.log("Reading JSON file: " + actors_json_file)
+    spear.log("Reading JSON file: ", actors_json_file)
     with open(actors_json_file, "r") as f:
         actors_json = json.load(f)
 
@@ -118,7 +118,7 @@ def draw_kinematic_tree_node(transform_world_from_parent_node, kinematic_tree_no
         static_mesh_asset_path = pathlib.PurePosixPath(static_mesh_component_desc["editor_properties"]["static_mesh"]["path"])
         assert static_mesh_asset_path.parts[:4] == ("/", "Game", "Spear", "Scenes", args.scene_id)
 
-        obj_path_suffix = os.path.join(*static_mesh_asset_path.parts[4:]) + ".obj"
+        obj_path_suffix = f"{os.path.join(*static_mesh_asset_path.parts[4:])}.obj"
         numerical_parity_obj_path = \
             os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "unreal_geometry", "numerical_parity", obj_path_suffix))
         spear.log(log_prefix_str, "Reading OBJ file: ", numerical_parity_obj_path)
@@ -145,7 +145,7 @@ def draw_kinematic_tree_node(transform_world_from_parent_node, kinematic_tree_no
             transform_world_from_parent_node=transform_world_from_current_node,
             kinematic_tree_node=child_kinematic_tree_node["node"],
             color=color,
-            log_prefix_str=log_prefix_str+"    ")
+            log_prefix_str=f"{log_prefix_str}    ")
 
 
 if __name__ == "__main__":

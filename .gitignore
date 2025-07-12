@@ -56,6 +56,8 @@ examples/render_grid/images
 
 examples/render_image_editor/screenshot.png
 
+python_ext/BUILD
+
 tmp
 
 tools/BUILD

@@ -13,4 +13,4 @@ SPEAR:
       resx: 512
       resy: 512
       # renderoffscreen: null
-    RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 10.0 # set this to longer than usual because it takes a few seconds to take a screenshot
+    CLIENT_INTERNAL_TIMEOUT_SECONDS: 10.0 # set this to longer than usual because it takes a few seconds to take a screenshot

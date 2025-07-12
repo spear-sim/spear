@@ -4,6 +4,9 @@
 
 __version__ = "v0.6.0"
 
+# submodules
+import spear.services
+
 # functions
 from spear.config import get_config
 from spear.func_utils import to_handle, to_matrix_from_rotator, to_ptr, to_shared, to_vector_from_array

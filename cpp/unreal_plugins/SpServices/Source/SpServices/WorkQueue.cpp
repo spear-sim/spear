@@ -12,7 +12,7 @@
 void WorkQueue::initialize()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    error_state_ = WorkQueueErrorState::NoError;
+    error_state_ = ErrorState::NoError;
 }
 
 void WorkQueue::run()
@@ -21,7 +21,7 @@ void WorkQueue::run()
     io_context_.run();
 
     // local copy of error state, needs to be outside of the lock's scope
-    WorkQueueErrorState error_state = WorkQueueErrorState::NoError;
+    ErrorState error_state = ErrorState::NoError;
     std::exception_ptr exception_ptr = nullptr;
 
     {
@@ -39,7 +39,7 @@ void WorkQueue::run()
     // if there is an error, it means there was an exception on the RPC worker thread, so rethrow now that
     // we're on the game thread so a higher-level system (e.g., EngineService) can put itself into an error
     // state
-    if (error_state == WorkQueueErrorState::Error) {
+    if (error_state == ErrorState::Error) {
         std::rethrow_exception(exception_ptr);
     }
 }

@@ -12,10 +12,27 @@
 
 #include "SpCore/Boost.h"
 
+class SharedMemory
+{
+public:
+    SharedMemory() = delete;
+    ~SharedMemory() = delete;
+
+    static void initialize(uint64_t initial_unique_id);
+    static void terminate();
+
+    static uint64_t getUniqueId();
+    static std::string getUniqueIdString(uint64_t unique_id);
+
+private:
+    inline static bool s_initialized_ = false;
+    inline static uint64_t s_current_unique_id_ = 0;
+};
+
 struct SharedMemoryView
 {
     std::string id_; // platform-dependent name used to access the shared memory resource from other processes
-    uint64_t num_bytes_ = -1;
+    uint64_t num_bytes_ = 0;
     void* data_ = nullptr;
 };
 
@@ -30,9 +47,6 @@ public:
     SharedMemoryView getView();
 
 private:
-    static uint64_t getUniqueId();
-    static std::string getUniqueIdString(uint64_t id);
-
     std::string id_;
     uint64_t num_bytes_ = 0;
     boost::interprocess::mapped_region mapped_region_;

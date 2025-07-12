@@ -90,7 +90,7 @@ if __name__ == '__main__':
     # construct url and download files
     for scene_id in scene_ids:
 
-        pak_file = scene_id + "-" + version_tag + "-" + platform + ".pak"
+        pak_file = f"{scene_id}-{version_tag}-{platform}.pak"
         pak_url  = posixpath.join(pak_url_prefix, version_tag, pak_file)
         pak_path = os.path.realpath(os.path.join(paks_version_dir, pak_file))
 

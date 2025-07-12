@@ -21,7 +21,7 @@
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
 #include "SpCore/Log.h"
-#include "SpCore/SharedMemoryRegion.h"
+#include "SpCore/SharedMemory.h"
 #include "SpCore/SpArray.h"
 #include "SpCore/SpFuncComponent.h"
 #include "SpCore/SpFuncDataBundle.h"

@@ -11,7 +11,7 @@
 #include <Engine/TextureRenderTarget2D.h> // ETextureRenderTargetFormat
 #include <HAL/Platform.h>                 // SPCOMPONENTS_API, uint32
 
-#include "SpCore/SharedMemoryRegion.h"
+#include "SpCore/SharedMemory.h"
 #include "SpCore/SpArray.h"
 #include "SpCore/SpFuncComponent.h"
 

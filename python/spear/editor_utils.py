@@ -75,7 +75,7 @@ def get_stable_name_for_actor(actor):
 
 def get_stable_name_for_component(component, include_stable_actor_name=False):
     if include_stable_actor_name:
-        actor_name_str = get_stable_name_for_actor(actor=component.get_owner()) + ":"
+        actor_name_str = f"{get_stable_name_for_actor(actor=component.get_owner())}:"
     else:
         actor_name_str = ""
 
@@ -201,14 +201,14 @@ def get_filesystem_path_from_content_path(content_path):
         else:
             content_file_tokens = content_path_tokens[-1].split(".")
             if len(content_file_tokens) == 1:
-                filesystem_paths = glob.glob(os.path.join(filesystem_base_dir, *content_path_tokens[2:-1], content_file_tokens[0] + ".*"))
+                filesystem_paths = glob.glob(os.path.join(filesystem_base_dir, *content_path_tokens[2:-1], f"{content_file_tokens[0]}.*"))
                 if len(filesystem_paths) == 1:
                     return filesystem_paths[0]
                 else:
                     return os.path.join(filesystem_base_dir, *content_path_tokens[2:])
             elif len(content_file_tokens) == 2:
                 assert content_file_tokens[0] == content_file_tokens[1]
-                filesystem_paths = glob.glob(os.path.join(filesystem_base_dir, *content_path_tokens[2:-1], content_file_tokens[0] + ".*"))
+                filesystem_paths = glob.glob(os.path.join(filesystem_base_dir, *content_path_tokens[2:-1], f"{content_file_tokens[0]}.*"))
                 if len(filesystem_paths) == 1:
                     return filesystem_paths[0]
                 else:

@@ -67,7 +67,7 @@ if __name__ == "__main__":
     source_unreal_project_dir = os.path.realpath(args.source_unreal_project_dir)
 
     temp_unreal_project_dir = os.path.realpath(os.path.join(args.temp_dir, reference_unreal_project_dir_name))
-    temp_uproject = os.path.realpath(os.path.join(temp_unreal_project_dir, reference_uproject_name + ".uproject"))
+    temp_uproject = os.path.realpath(os.path.join(temp_unreal_project_dir, f"{reference_uproject_name}.uproject"))
 
     destination_unreal_project_dir = os.path.realpath(args.destination_unreal_project_dir)
 
@@ -148,12 +148,10 @@ if __name__ == "__main__":
     # isn't any more convenient than calling the editor directly.
 
     script = os.path.realpath(os.path.join(os.path.dirname(__file__), "editor_asset_library_utils_rename_content.py"))
-    script_args = \
-        "--source_content_path " + args.source_content_path + " " + \
-        "--destination_content_path " + args.destination_content_path
+    script_args = f'--source_content_path "{args.source_content_path}" --destination_content_path "{args.destination_content_path}"'
 
     # need shell=True to correctly handle the quotes in cmd
-    cmd = unreal_editor_bin + " " + temp_uproject + ' -run=pythonscript -script="' + script + " " + script_args + '"'
+    cmd = f'"{unreal_editor_bin}" "{temp_uproject}" -run=pythonscript -script="{script} {script_args}"'
     spear.log(f"Executing: {cmd}")
     subprocess.run(cmd, shell=True, check=True)
 

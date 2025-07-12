@@ -11,10 +11,8 @@
 #include <utility> // std::move
 #include <vector>
 
-#include <boost/predef.h> // BOOST_ENDIAN_BIG_BYTE, BOOST_ENDIAN_LITTLE_BYTE
-
 #include "SpCore/Assert.h"
-#include "SpCore/SharedMemoryRegion.h"
+#include "SpCore/SharedMemory.h"
 #include "SpCore/SpArray.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
@@ -29,17 +27,6 @@ public:
     SharedMemoryService(CUnrealEntryPointBinder auto* unreal_entry_point_binder) : Service("SharedMemoryService")
     {
         SP_ASSERT(unreal_entry_point_binder);
-
-        unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("shared_memory_service", "get_byte_order", []() -> std::string {
-            SP_ASSERT(BOOST_ENDIAN_BIG_BYTE + BOOST_ENDIAN_LITTLE_BYTE == 1);
-            if (BOOST_ENDIAN_BIG_BYTE) {
-                return "big";
-            } else if (BOOST_ENDIAN_LITTLE_BYTE) {
-                return "little";
-            } else {
-                return "";
-            }
-        });
 
         unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("shared_memory_service", "create_shared_memory_region",
             [this](std::string& shared_memory_name, int& num_bytes, std::vector<std::string>& usage_flag_strings) -> SpArraySharedMemoryView {

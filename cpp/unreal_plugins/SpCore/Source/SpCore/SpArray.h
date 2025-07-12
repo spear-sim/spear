@@ -20,7 +20,7 @@
 #include <Math/Float16.h>
 
 #include "SpCore/Assert.h"
-#include "SpCore/SharedMemoryRegion.h"
+#include "SpCore/SharedMemory.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 

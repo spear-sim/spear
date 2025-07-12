@@ -9,4 +9,4 @@ SPEAR:
     COMMAND_LINE_ARGS:
       resx: 512
       resy: 512
-    RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 10.0 # set this to longer than usual because initializing the MuJoCo viewer can cause long stutters in Unreal executables on macOS
+    CLIENT_INTERNAL_TIMEOUT_SECONDS: 10.0 # set this to longer than usual because initializing the MuJoCo viewer can cause long stutters in Unreal executables on macOS

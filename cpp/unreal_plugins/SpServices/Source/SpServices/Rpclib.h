@@ -27,7 +27,7 @@
 #endif
 
 #include <rpc/config.h>
-#include <rpc/msgpack.hpp> // clmdep_msgpack, MSGPACK_ADD_ENUM
+#include <rpc/msgpack.hpp> // clmdep_msgpack
 #include <rpc/server.h>
 
 #if BOOST_OS_WINDOWS

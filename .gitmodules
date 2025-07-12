@@ -1,9 +1,6 @@
 [submodule "boost"]
 	path = third_party/boost
 	url = https://github.com/boostorg/boost
-[submodule "msgpack-rpc-python"]
-	path = third_party/msgpack-rpc-python
-	url = https://github.com/dvdhfnr/msgpack-rpc-python.git
 [submodule "rpclib"]
 	path = third_party/rpclib
 	url = https://github.com/rpclib/rpclib.git

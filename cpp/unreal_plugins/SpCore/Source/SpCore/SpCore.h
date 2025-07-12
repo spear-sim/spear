@@ -4,7 +4,11 @@
 
 #pragma once
 
+#include <memory> // std::unique_ptr
+
 #include <Modules/ModuleInterface.h>
+
+#include "SpCore/SharedMemory.h"
 
 class SpCore : public IModuleInterface
 {
@@ -15,4 +19,6 @@ public:
 private:
     void registerClasses();
     void unregisterClasses();
+
+    std::unique_ptr<SharedMemoryRegion> shared_memory_region_;
 };
