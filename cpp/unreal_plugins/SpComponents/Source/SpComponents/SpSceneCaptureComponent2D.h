@@ -72,14 +72,23 @@ public:
 private:
     template <typename T>
     static void UpdateArrayDataPtr(TArray<T>& array, void* data_ptr, int num_bytes) {
-        // The data_ptr region needs to be at least as big as the array's existing data region, otherwise
-        // the array may write past the end of the data_ptr region and not realize anything is wrong.
-        // Likewise, the array's existing data region must be at least as big as the data_ptr region,
-        // otherwise the array may resize itself and change its existing data region. So we enforce the
-        // constraint that the data_ptr region and the array's existing data region are the same size.
-        SP_ASSERT(num_bytes == array.GetAllocatedSize());
 
-        // Check that dest_ptr is sufficiently aligned for T.
+        SP_ASSERT(num_bytes % sizeof(T) == 0);
+        int num_elements = num_bytes / sizeof(T);
+
+        // We enforce the constraint that the array's existing data region must be at least as big as the
+        // data_ptr region, because we want to guarantee that the array will not resize itself if the user
+        // adds elements that would fit in the data_ptr region.
+
+        // That being said, the data_ptr region may be smaller than the array's existing data region because
+        // the array can reserve more space than was originally requested when calling array.Reserve(...).
+        // Therefore, after calling UpdateArrayDataPtr(...), the user must be careful not to add more
+        // elements to the array than would fit in the data_ptr region.
+
+        SP_ASSERT(num_elements <= array.Max(), "num_elements == %d, array.Max() == %d", num_elements, array.Max());
+        SP_ASSERT(num_bytes <= array.GetAllocatedSize(), "num_bytes == %d, array.GetAllocatedSize() == %d", num_bytes, array.GetAllocatedSize());
+
+        // Check that data_ptr is sufficiently aligned for T.
         size_t num_bytes_size_t = num_bytes;
         T* data_ptr_aligned = static_cast<T*>(std::align(alignof(T), num_bytes_size_t, data_ptr, num_bytes_size_t));
         SP_ASSERT(data_ptr_aligned);

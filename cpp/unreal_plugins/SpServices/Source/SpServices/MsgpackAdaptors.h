@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <stddef.h> // uint64_t
+#include <stddef.h> // uint16_t, uint64_t
 
 #include <map>
 #include <string>
@@ -26,10 +26,11 @@ template <> // needed to receive a custom type as an arg
 struct clmdep_msgpack::adaptor::convert<SpArraySharedMemoryView> {
     clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpArraySharedMemoryView& sp_shared_memory_view) const {
         std::map<std::string, clmdep_msgpack::object> map = MsgpackUtils::toMap(object);
-        SP_ASSERT(map.size() == 3);
-        sp_shared_memory_view.id_          = MsgpackUtils::to<std::string>(map.at("id"));
-        sp_shared_memory_view.num_bytes_   = MsgpackUtils::to<uint64_t>(map.at("num_bytes"));
-        sp_shared_memory_view.usage_flags_ = Unreal::getCombinedEnumFlagValueFromStringsAs<SpArraySharedMemoryUsageFlags, ESpArraySharedMemoryUsageFlags>(MsgpackUtils::to<std::vector<std::string>>(map.at("usage_flags")));
+        SP_ASSERT(map.size() == 4);
+        sp_shared_memory_view.id_           = MsgpackUtils::to<std::string>(map.at("id"));
+        sp_shared_memory_view.num_bytes_    = MsgpackUtils::to<uint64_t>(map.at("num_bytes"));
+        sp_shared_memory_view.offset_bytes_ = MsgpackUtils::to<uint16_t>(map.at("offset_bytes"));
+        sp_shared_memory_view.usage_flags_  = Unreal::getCombinedEnumFlagValueFromStringsAs<SpArraySharedMemoryUsageFlags, ESpArraySharedMemoryUsageFlags>(MsgpackUtils::to<std::vector<std::string>>(map.at("usage_flags")));
         return object;
     }
 };
@@ -38,9 +39,10 @@ template <> // needed to send a custom type as a return value
 struct clmdep_msgpack::adaptor::object_with_zone<SpArraySharedMemoryView> {
     void operator()(clmdep_msgpack::object::with_zone& object, SpArraySharedMemoryView const& sp_shared_memory_view) const {
         MsgpackUtils::toObject(object, {
-            {"id",          clmdep_msgpack::object(sp_shared_memory_view.id_, object.zone)},
-            {"num_bytes",   clmdep_msgpack::object(sp_shared_memory_view.num_bytes_, object.zone)},
-            {"usage_flags", clmdep_msgpack::object(Unreal::getStringsFromCombinedEnumFlagValueAs<ESpArraySharedMemoryUsageFlags>(sp_shared_memory_view.usage_flags_), object.zone)}});
+            {"id",           clmdep_msgpack::object(sp_shared_memory_view.id_, object.zone)},
+            {"num_bytes",    clmdep_msgpack::object(sp_shared_memory_view.num_bytes_, object.zone)},
+            {"offset_bytes", clmdep_msgpack::object(sp_shared_memory_view.offset_bytes_, object.zone)},
+            {"usage_flags",  clmdep_msgpack::object(Unreal::getStringsFromCombinedEnumFlagValueAs<ESpArraySharedMemoryUsageFlags>(sp_shared_memory_view.usage_flags_), object.zone)}});
     }
 };
 

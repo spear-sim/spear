@@ -100,21 +100,21 @@ SPEAR:
     # leverage temporal coherence between frames.
     #
 
-    INSTANCE_WARM_UP_TIME_SECONDS: 1.0
+    INSTANCE_WARM_UP_TIME_SECONDS: 5.0
     INSTANCE_WARM_UP_NUM_FRAMES: 1
 
     # When getting an Editor or Game reference, these parameters control how we wait for various services to
     # report that they are initialized. These parameters have no effect if the user provides explicit
     # overrides when calling instance.get_editor() or instance.get_game().
 
-    GET_EDITOR_WAIT_MAX_TIME_SECONDS: 120.0
+    GET_EDITOR_WAIT_MAX_TIME_SECONDS: 5.0
     GET_EDITOR_WAIT_SLEEP_TIME_SECONDS: 1.0
-    GET_EDITOR_WARM_UP_TIME_SECONDS: 5.0
+    GET_EDITOR_WARM_UP_TIME_SECONDS: 1.0
     GET_EDITOR_WARM_UP_NUM_FRAMES: 1
 
-    GET_GAME_WAIT_MAX_TIME_SECONDS: 120.0
+    GET_GAME_WAIT_MAX_TIME_SECONDS: 5.0
     GET_GAME_WAIT_SLEEP_TIME_SECONDS: 1.0
-    GET_GAME_WARM_UP_TIME_SECONDS: 5.0
+    GET_GAME_WARM_UP_TIME_SECONDS: 1.0
     GET_GAME_WARM_UP_NUM_FRAMES: 1
 
     # Sleep for this amount of time in-between checks to see if the Unreal instance has exited.

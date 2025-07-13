@@ -33,6 +33,7 @@ struct SharedMemoryView
 {
     std::string id_; // platform-dependent name used to access the shared memory resource from other processes
     uint64_t num_bytes_ = 0;
+    uint16_t offset_bytes_ = 0;
     void* data_ = nullptr;
 };
 
@@ -47,6 +48,8 @@ public:
     SharedMemoryView getView();
 
 private:
+    inline static constexpr int s_alignment_padding_bytes_ = 4096;
+
     std::string id_;
     uint64_t num_bytes_ = 0;
     boost::interprocess::mapped_region mapped_region_;

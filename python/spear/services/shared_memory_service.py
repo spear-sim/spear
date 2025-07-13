@@ -73,19 +73,23 @@ class SharedMemoryService():
 
     def _create_shared_memory_handle(self, shared_memory_name, shared_memory_view):
         if sys.platform == "win32":
-            handle = mmap.mmap(fileno=-1, length=shared_memory_view.num_bytes, tagname=shared_memory_view.id)
-            return {"name": shared_memory_name, "handle": handle, "buffer": handle, "view": shared_memory_view}
+            handle = mmap.mmap(fileno=-1, length=shared_memory_view.num_bytes + shared_memory_view.offset_bytes, tagname=shared_memory_view.id)
+            buffer = memoryview(handle)[shared_memory_view.offset_bytes:]
+            return {"name": shared_memory_name, "handle": handle, "buffer": buffer, "view": shared_memory_view}
         elif sys.platform in ["darwin", "linux"]:
             handle = multiprocessing.shared_memory.SharedMemory(name=shared_memory_view.id)
+            buffer = memoryview(handle.buf)[shared_memory_view.offset_bytes:]
             multiprocessing.resource_tracker.unregister(handle._name, "shared_memory") # prevent Python from destroying on exit
-            return {"name": shared_memory_name, "handle": handle, "buffer": handle.buf, "view": shared_memory_view}
+            return {"name": shared_memory_name, "handle": handle, "buffer": buffer, "view": shared_memory_view}
         else:
             assert False
 
     def _destroy_shared_memory_handle(self, shared_memory_handle):
         if sys.platform == "win32":
+            shared_memory_handle["buffer"].release()
             shared_memory_handle["handle"].close()
         elif sys.platform in ["darwin", "linux"]:
+            shared_memory_handle["buffer"].release()
             shared_memory_handle["handle"].close()
         else:
             assert False

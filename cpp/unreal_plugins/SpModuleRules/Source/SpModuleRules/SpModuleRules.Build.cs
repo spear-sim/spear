@@ -49,10 +49,13 @@ public class SpModuleRules : ModuleRules
         PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost")));
 
         if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Win64) {
+            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_filesystem-vc143-mt-x64-1_81.lib")));
             PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_unit_test_framework-vc143-mt-x64-1_81.lib")));
         } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Mac) {
+            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_filesystem.a")));
             PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_unit_test_framework.a")));
         } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Linux) {
+            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_filesystem.a")));
             PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_unit_test_framework.a")));
         } else {
             throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + readOnlyTargetRules.Platform);

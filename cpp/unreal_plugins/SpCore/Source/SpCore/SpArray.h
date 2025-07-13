@@ -192,6 +192,8 @@ struct SpArraySharedMemoryView : SharedMemoryView
 class SPCORE_API SpPackedArray
 {
 public:
+    inline static constexpr int s_alignment_padding_bytes_ = 4096;
+
     // typically called before calling an SpFunc to resolve pointers to shared memory
     void resolve();
     void resolve(const SpArraySharedMemoryView& shared_memory_view);

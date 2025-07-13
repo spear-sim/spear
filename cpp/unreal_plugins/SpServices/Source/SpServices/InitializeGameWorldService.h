@@ -152,6 +152,7 @@ protected:
             SP_LOG("    New value of r.SkylightUpdateEveryFrame: 1");
         } else {
             initialized_ = true;
+            SP_LOG("    Finished initializing.");
         }
     }
 
@@ -162,7 +163,7 @@ protected:
         initialized_ = false;
 
         if (force_skylight_update_) {
-            SP_LOG("    Setting r.SkylightUpdateEveryFrame to ", force_skylight_update_previous_cvar_value_);
+            SP_LOG("    Setting r.SkylightUpdateEveryFrame: ", force_skylight_update_previous_cvar_value_);
 
             IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.SkylightUpdateEveryFrame"));
             cvar->Set(force_skylight_update_previous_cvar_value_);
@@ -172,6 +173,8 @@ protected:
             force_skylight_update_previous_cvar_value_ = -1;
             force_skylight_update_duration_seconds_ = 0.0f;
         }
+
+        SP_LOG("    Finished cleaning up.");
 
         Service::worldCleanup(world, session_ended, cleanup_resources);
     }
@@ -189,7 +192,7 @@ protected:
 
             if (force_skylight_update_duration_seconds_ >= force_skylight_update_max_duration_seconds_) {
                 SP_LOG_CURRENT_FUNCTION();
-                SP_LOG("    Setting r.SkylightUpdateEveryFrame to ", force_skylight_update_previous_cvar_value_);
+                SP_LOG("    Setting r.SkylightUpdateEveryFrame: ", force_skylight_update_previous_cvar_value_);
 
                 IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.SkylightUpdateEveryFrame"));
                 cvar->Set(force_skylight_update_previous_cvar_value_);
@@ -200,6 +203,7 @@ protected:
                 force_skylight_update_duration_seconds_ = 0.0f;
 
                 initialized_ = true;
+                SP_LOG("    Finished initializing.");
             }
         }
     }

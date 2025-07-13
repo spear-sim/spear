@@ -56,9 +56,14 @@ if __name__ == "__main__":
         player_camera_manager_string = game.unreal_service.get_property_value(property_desc=player_camera_manager_desc)
         player_camera_manager = spear.to_handle(string=player_camera_manager_string)
 
-        viewport_size = instance.engine_service.get_viewport_size()
-        viewport_x = viewport_size[0]
-        viewport_y = viewport_size[1]
+        if args.benchmark:
+            viewport_x = config.SPEAR.INSTANCE.COMMAND_LINE_ARGS.resx
+            viewport_y = config.SPEAR.INSTANCE.COMMAND_LINE_ARGS.resy
+        else:
+            viewport_size = instance.engine_service.get_viewport_size()
+            viewport_x = viewport_size[0]
+            viewport_y = viewport_size[1]
+
         viewport_aspect_ratio = viewport_x/viewport_y # see Engine/Source/Editor/UnrealEd/Private/EditorViewportClient.cpp:2130 for evidence that Unreal's aspect ratio convention is x/y
 
         view_target_pov_desc = game.unreal_service.find_property_by_name_on_object(uobject=player_camera_manager, property_name="ViewTarget.POV")

@@ -25,13 +25,21 @@ public:
 protected:
     void postWorldInitialization(UWorld* world, const UWorld::InitializationValues initialization_values) override
     {
+        SP_LOG_CURRENT_FUNCTION();
+
         Service::postWorldInitialization(world, initialization_values);
+
         initialized_ = true;
+        SP_LOG("    Finished initializing.");
     }
 
     void worldCleanup(UWorld* world, bool session_ended, bool cleanup_resources) override
     {
+        SP_LOG_CURRENT_FUNCTION();
+
         initialized_ = false;
+        SP_LOG("    Finished cleaning up.");
+
         Service::worldCleanup(world, session_ended, cleanup_resources);
     }
 

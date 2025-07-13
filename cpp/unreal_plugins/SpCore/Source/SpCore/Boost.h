@@ -84,6 +84,8 @@ SP_END_SUPPRESS_COMPILER_WARNINGS
 #include <boost/circular_buffer.hpp>
 #include <boost/current_function.hpp>           // BOOST_CURRENT_FUNCTION
 #include <boost/format.hpp>                     // TODO: remove when we can use std::format on all platforms
+#include <boost/multiprecision/cpp_int.hpp>     // boost::multiprecision::int128_t
+#include <boost/process/environment.hpp>        // boost::this_process::get_id, boost::process::pid_t
 
 // ----------------------------------------------------------------------------------------------------------
 

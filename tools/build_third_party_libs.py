@@ -177,7 +177,7 @@ if __name__ == "__main__":
         spear.log("Executing: ", " ".join(cmd))
         subprocess.run(cmd, check=True)
 
-        cmd = f'b2 --with-test toolset={boost_toolset} --user-config="{user_config_file}" link=static cxxflags="{boost_cxx_flags}" {boost_verbose_build_flag}'
+        cmd = f'b2 --with-filesystem --with-test toolset={boost_toolset} --user-config="{user_config_file}" link=static cxxflags="{boost_cxx_flags}" {boost_verbose_build_flag}'
         spear.log("Executing: ", cmd)
         subprocess.run(cmd, shell=True, check=True) # need shell=True to handle cxxflags
 
@@ -191,7 +191,7 @@ if __name__ == "__main__":
         spear.log("Executing: ", " ".join(cmd))
         subprocess.run(cmd, check=True)
 
-        cmd = f'./b2 --with-test toolset={boost_toolset} --user-config="{user_config_file}" link=static architecture=arm+x86 cxxflags="{boost_cxx_flags}" {boost_verbose_build_flag}'
+        cmd = f'./b2 --with-filesystem --with-test toolset={boost_toolset} --user-config="{user_config_file}" link=static architecture=arm+x86 cxxflags="{boost_cxx_flags}" {boost_verbose_build_flag}'
         spear.log("Executing: ", cmd)
         subprocess.run(cmd, shell=True, check=True) # need shell=True to handle cxxflags
 
@@ -207,7 +207,7 @@ if __name__ == "__main__":
 
         # we don't include -fPIC in cxx_flags for consistency with cmake libraries below, where -fPIC is
         # added to the compilation process via the CMAKE_POSITION_INDEPENDENT_CODE variable
-        cmd = f'./b2 -a --with-test toolset={boost_toolset} --user-config="{user_config_file}" link=static cxxflags="{boost_cxx_flags} -fPIC" {boost_verbose_build_flag}'
+        cmd = f'./b2 -a --with-filesystem --with-test toolset={boost_toolset} --user-config="{user_config_file}" link=static cxxflags="{boost_cxx_flags} -fPIC" {boost_verbose_build_flag}'
         spear.log("Executing: ", cmd)
         subprocess.run(cmd, shell=True, check=True) # need shell=True to handle cxxflags
 

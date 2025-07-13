@@ -17,6 +17,7 @@
 #include <UObject/ObjectMacros.h>        // UENUM
 
 #include "SpCore/Assert.h"
+#include "SpCore/Boost.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
 
@@ -139,8 +140,23 @@ public:
 
         // Miscellaneous low-level entry points.
 
-        bindFuncToExecuteOnWorkerThread("engine_service", "ping", []() -> std::string {
-            return "ping";
+        bindFuncToExecuteOnWorkerThread("engine_service", "get_byte_order", []() -> std::string {
+            SP_ASSERT(BOOST_ENDIAN_BIG_BYTE + BOOST_ENDIAN_LITTLE_BYTE == 1);
+            if (BOOST_ENDIAN_BIG_BYTE) {
+                return "big";
+            } else if (BOOST_ENDIAN_LITTLE_BYTE) {
+                return "little";
+            } else {
+                return "";
+            }
+        });
+
+        bindFuncToExecuteOnWorkerThread("engine_service", "get_id", []() -> int64_t {            
+            return static_cast<int>(boost::this_process::get_id());
+        });
+
+        bindFuncToExecuteOnWorkerThread("engine_service", "get_with_editor", []() -> bool {
+            return WITH_EDITOR; // defined in an auto-generated header
         });
 
         bindFuncToExecuteOnWorkerThread("engine_service", "initialize", [this]() -> void {
@@ -153,24 +169,13 @@ public:
             frame_state_ = EFrameState::Idle;
         });
 
+        bindFuncToExecuteOnWorkerThread("engine_service", "ping", []() -> std::string {
+            return "ping";
+        });
+
         bindFuncToExecuteOnWorkerThread("engine_service", "request_exit", []() -> void {
             bool immediate_shutdown = false;
             FGenericPlatformMisc::RequestExit(immediate_shutdown);
-        });
-
-        bindFuncToExecuteOnWorkerThread("engine_service", "with_editor", []() -> bool {
-            return WITH_EDITOR; // defined in an auto-generated header
-        });
-
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_byte_order", []() -> std::string {
-            SP_ASSERT(BOOST_ENDIAN_BIG_BYTE + BOOST_ENDIAN_LITTLE_BYTE == 1);
-            if (BOOST_ENDIAN_BIG_BYTE) {
-                return "big";
-            } else if (BOOST_ENDIAN_LITTLE_BYTE) {
-                return "little";
-            } else {
-                return "";
-            }
         });
 
         // Entry points for miscellaneous functions that are accessible via GEngine.

@@ -171,6 +171,7 @@ struct SharedMemoryView
 {
     std::string id_;
     uint64_t num_bytes_ = 0;
+    uint64_t offset_bytes_ = 0;
     std::vector<std::string> usage_flags_ = {"DoNotUse"};
 };
 
@@ -252,6 +253,7 @@ NB_MODULE(spear_ext, module)
 
     // 0 args
     client_class.def("call_and_get_return_value_as_bool",                                &Client::call_and_get_return_value<bool>);
+    client_class.def("call_and_get_return_value_as_uint64",                              &Client::call_and_get_return_value<uint64_t>);
     client_class.def("call_and_get_return_value_as_string",                              &Client::call_and_get_return_value<std::string>);
     client_class.def("call_and_get_return_value_as_vector_of_uint64",                    &Client::call_and_get_return_value<std::vector<uint64_t>>);
     client_class.def("call_and_get_return_value_as_vector_of_double",                    &Client::call_and_get_return_value<std::vector<double>>);
@@ -341,9 +343,10 @@ NB_MODULE(spear_ext, module)
 
     auto shared_memory_view_class = nanobind::class_<SharedMemoryView>(module, "SharedMemoryView");
     shared_memory_view_class.def(nanobind::init<>());
-    shared_memory_view_class.def_rw("id",          &SharedMemoryView::id_);
-    shared_memory_view_class.def_rw("num_bytes",   &SharedMemoryView::num_bytes_);
-    shared_memory_view_class.def_rw("usage_flags", &SharedMemoryView::usage_flags_);
+    shared_memory_view_class.def_rw("id",           &SharedMemoryView::id_);
+    shared_memory_view_class.def_rw("num_bytes",    &SharedMemoryView::num_bytes_);
+    shared_memory_view_class.def_rw("offset_bytes", &SharedMemoryView::offset_bytes_);
+    shared_memory_view_class.def_rw("usage_flags",  &SharedMemoryView::usage_flags_);
 
     auto packed_array_class = nanobind::class_<PackedArray>(module, "PackedArray");
     packed_array_class.def(nanobind::init<>());
@@ -452,10 +455,11 @@ template <> // needed to send a custom type as an arg
 struct clmdep_msgpack::adaptor::pack<SharedMemoryView> {
     template <typename TStream>
     clmdep_msgpack::packer<TStream>& operator()(clmdep_msgpack::packer<TStream>& packer, SharedMemoryView const& shared_memory_view) const {
-        packer.pack_map(3);
-        packer.pack("id");          packer.pack(shared_memory_view.id_);
-        packer.pack("num_bytes");   packer.pack(shared_memory_view.num_bytes_);
-        packer.pack("usage_flags"); packer.pack(shared_memory_view.usage_flags_);
+        packer.pack_map(4);
+        packer.pack("id");           packer.pack(shared_memory_view.id_);
+        packer.pack("num_bytes");    packer.pack(shared_memory_view.num_bytes_);
+        packer.pack("offset_bytes"); packer.pack(shared_memory_view.offset_bytes_);
+        packer.pack("usage_flags");  packer.pack(shared_memory_view.usage_flags_);
         return packer;
     }
 };
@@ -464,10 +468,11 @@ template <> // needed to receive a custom type as a return value
 struct clmdep_msgpack::adaptor::convert<SharedMemoryView> {
     clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SharedMemoryView& shared_memory_view) const {
         std::map<std::string, clmdep_msgpack::object> map = MsgpackUtils::toMap(object);
-        SP_ASSERT(map.size() == 3);
-        shared_memory_view.id_          = MsgpackUtils::to<std::string>(map.at("id"));
-        shared_memory_view.num_bytes_   = MsgpackUtils::to<uint64_t>(map.at("num_bytes"));
-        shared_memory_view.usage_flags_ = MsgpackUtils::to<std::vector<std::string>>(map.at("usage_flags"));
+        SP_ASSERT(map.size() == 4);
+        shared_memory_view.id_           = MsgpackUtils::to<std::string>(map.at("id"));
+        shared_memory_view.num_bytes_    = MsgpackUtils::to<uint64_t>(map.at("num_bytes"));
+        shared_memory_view.offset_bytes_ = MsgpackUtils::to<uint16_t>(map.at("offset_bytes"));
+        shared_memory_view.usage_flags_  = MsgpackUtils::to<std::vector<std::string>>(map.at("usage_flags"));
         return object;
     }
 };

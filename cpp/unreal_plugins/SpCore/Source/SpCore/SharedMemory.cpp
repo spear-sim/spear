@@ -6,6 +6,8 @@
 
 #include <stddef.h> // uint64_t
 
+#include <memory> // std::align
+
 #include <string>
 
 #include <boost/predef.h> // BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
@@ -55,17 +57,18 @@ SharedMemoryRegion::SharedMemoryRegion(int num_bytes, uint64_t id)
 
     id_ = SharedMemory::getUniqueIdString(id);
     num_bytes_ = num_bytes;
-
     SP_ASSERT(id_ != "");
 
+    int num_bytes_internal = num_bytes_ + s_alignment_padding_bytes_;
+
     #if BOOST_OS_WINDOWS
-        boost::interprocess::windows_shared_memory windows_shared_memory(boost::interprocess::create_only, id_.c_str(), boost::interprocess::read_write, num_bytes_);
+        boost::interprocess::windows_shared_memory windows_shared_memory(boost::interprocess::create_only, id_.c_str(), boost::interprocess::read_write, num_bytes_internal);
         mapped_region_ = boost::interprocess::mapped_region(windows_shared_memory, boost::interprocess::read_write);
     #elif BOOST_OS_MACOS || BOOST_OS_LINUX
         std::string native_id = "/" + id_; // add leading slash when creating, but not when referencing from Python
         boost::interprocess::shared_memory_object::remove(native_id.c_str());
         boost::interprocess::shared_memory_object shared_memory_object(boost::interprocess::create_only, native_id.c_str(), boost::interprocess::read_write);
-        shared_memory_object.truncate(num_bytes_);
+        shared_memory_object.truncate(num_bytes_internal);
         mapped_region_ = boost::interprocess::mapped_region(shared_memory_object, boost::interprocess::read_write);
     #else
         #error
@@ -85,9 +88,27 @@ SharedMemoryRegion::~SharedMemoryRegion()
 
 SharedMemoryView SharedMemoryRegion::getView()
 {
+    int num_bytes_internal = num_bytes_ + s_alignment_padding_bytes_;
+
+    const void* const address_internal_const = mapped_region_.get_address();
+    SP_ASSERT(address_internal_const);
+
+    void* address_internal = const_cast<void*>(address_internal_const);
+    SP_ASSERT(address_internal);
+    size_t num_bytes_size_t = num_bytes_;
+    size_t num_bytes_internal_size_t = num_bytes_internal;
+    void* address_internal_aligned = std::align(s_alignment_padding_bytes_, num_bytes_size_t, address_internal, num_bytes_internal_size_t);
+    SP_ASSERT(address_internal_aligned);
+    SP_ASSERT(address_internal == address_internal_aligned);
+
+    boost::multiprecision::int128_t offset_bytes = static_cast<uint8_t*>(address_internal_aligned) - static_cast<const uint8_t* const>(address_internal_const);
+    SP_ASSERT(offset_bytes >= 0);
+    SP_ASSERT(offset_bytes <= s_alignment_padding_bytes_);
+
     SharedMemoryView view;
     view.id_ = id_;
     view.num_bytes_ = num_bytes_;
-    view.data_ = mapped_region_.get_address();
+    view.offset_bytes_ = static_cast<int16_t>(offset_bytes);
+    view.data_ = static_cast<uint8_t*>(mapped_region_.get_address()) + view.offset_bytes_;
     return view;
 }

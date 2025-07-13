@@ -108,12 +108,14 @@ void SpPackedArray::validate(SpArraySharedMemoryUsageFlags usage_flags) const
             SP_ASSERT(view_ == data_.data());
             SP_ASSERT(num_elements*SpArrayDataTypeUtils::getSizeOf(data_type_) == data_.size());
             SP_ASSERT(shared_memory_name_ == "");
+            SP_ASSERT(shared_memory_usage_flags_ == SpArraySharedMemoryUsageFlags::DoNotUse);
             break;
 
         case SpArrayDataSource::External:
             SP_ASSERT(data_.empty());
             SP_ASSERT(num_elements == 0 || view_); // if view_ is not set, then num_elements must be 0; if view_ is set, then num_elements can be anything
             SP_ASSERT(shared_memory_name_ == "");
+            SP_ASSERT(shared_memory_usage_flags_ == SpArraySharedMemoryUsageFlags::DoNotUse);
             break;
 
         case SpArrayDataSource::Shared:

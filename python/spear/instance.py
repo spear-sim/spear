@@ -106,7 +106,7 @@ class Instance():
     def get_editor(self, wait=None, wait_max_time_seconds=0.0, wait_sleep_time_seconds=0.0, warm_up=None, warm_up_time_seconds=0.0, warm_up_num_frames=0):
 
         spear.log_current_function()
-        assert self.engine_service.with_editor()
+        assert self.engine_service.get_with_editor()
 
         if self._config.SPEAR.LAUNCH_MODE == "none":
             if wait is None:
@@ -265,7 +265,7 @@ class Instance():
             status = self._process.status()
             if status not in expected_process_status_values:
                 spear.log("    ERROR: Unrecognized process status: ", status)
-                spear.log("    ERROR: Killing process ", self._process.pid, "...")
+                spear.log(f"    ERROR: Killing process {self._process.pid}...")
                 self._force_kill_unreal_instance()
                 assert False
 
@@ -349,6 +349,14 @@ class Instance():
             spear.log("    Connected to server.")
         else:
             spear.log("    ERROR: Couldn't connect to RPC server, giving up...")
+            assert False
+
+        # don't use self.services.engine_service because it hasn't been initialized yet
+        pid = self._client.call_and_get_return_value_as_uint64("engine_service.get_id")
+        if pid == self._process.pid:
+            spear.log("    Validated engine_service.get_id.")
+        else:            
+            spear.log(f"    ERROR: engine_service.get_id returned {pid} but the PID of the process we just launched is {self._process.pid}. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables and try launching again.")
             assert False
 
         spear.log("    Finished initializing RPC client.")

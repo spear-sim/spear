@@ -4,7 +4,7 @@
 
 #include "SpComponents/SpSceneCaptureComponent2D.h"
 
-#include <memory>  // std::align, std::make_unique
+#include <memory>  // std::align, std::make_unique, std::memcpy
 #include <utility> // std::move
 
 #include <Components/SceneCaptureComponent2D.h>
@@ -53,16 +53,7 @@ void USpSceneCaptureComponent2D::Initialize()
     }
 
     SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
-
-    if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::UInt8) {
-        scratchpad_color_.Reserve(Height*Width);
-    } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float16) {
-        scratchpad_float_16_color_.Reserve(Height*Width);
-    } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32) {
-        scratchpad_linear_color_.Reserve(Height*Width);
-    } else {
-        SP_ASSERT(false);
-    }
+    int num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
 
     auto texture_render_target_2d = NewObject<UTextureRenderTarget2D>(this);
     SP_ASSERT(texture_render_target_2d);
@@ -81,26 +72,37 @@ void USpSceneCaptureComponent2D::Initialize()
 
     if (bUseSharedMemory) {
         SP_ASSERT(!shared_memory_region_);
-        int num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
         shared_memory_region_ = std::make_unique<SharedMemoryRegion>(num_bytes);
         SP_ASSERT(shared_memory_region_);
         shared_memory_view_ = SpArraySharedMemoryView(shared_memory_region_->getView(), SpArraySharedMemoryUsageFlags::ReturnValue);
         SpFuncComponent->registerSharedMemoryView("smem:sp_scene_capture_component_2d", shared_memory_view_); // name needs to be unique per USpFuncComponent
     }
 
-    SpFuncComponent->registerFunc("read_pixels", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
+    if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::UInt8) {
+        scratchpad_color_.Reserve(Height*Width);
+        SP_ASSERT(Height*Width <= static_cast<int64_t>(scratchpad_color_.Max()), "Height == %d, Width == %d, Height*Width == %d, static_cast<int64_t>(scratchpad_color_.Max()) == %d", Height, Width, Height*Width, static_cast<int64_t>(scratchpad_color_.Max()));
+        SP_ASSERT(num_bytes <= scratchpad_color_.GetAllocatedSize(), "num_bytes == %d, scratchpad_color_.GetAllocatedSize() == %d", num_bytes, scratchpad_color_.GetAllocatedSize());
+    } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float16) {
+        scratchpad_float_16_color_.Reserve(Height*Width);
+        SP_ASSERT(Height*Width <= static_cast<int64_t>(scratchpad_float_16_color_.Max()), "Height == %d, Width == %d, Height*Width == %d, static_cast<int64_t>(scratchpad_float_16_color_.Max()) == %d", Height, Width, Height*Width, static_cast<int64_t>(scratchpad_float_16_color_.Max()));
+        SP_ASSERT(num_bytes <= scratchpad_float_16_color_.GetAllocatedSize(), "num_bytes == %d, scratchpad_float_16_color_.GetAllocatedSize() == %d", num_bytes, scratchpad_float_16_color_.GetAllocatedSize());
+    } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32) {
+        scratchpad_linear_color_.Reserve(Height*Width);
+        SP_ASSERT(Height*Width <= static_cast<int64_t>(scratchpad_linear_color_.Max()), "Height == %d, Width == %d, Height*Width == %d, static_cast<int64_t>(scratchpad_linear_color_.Max()) == %d", Height, Width, Height*Width, static_cast<int64_t>(scratchpad_linear_color_.Max()));
+        SP_ASSERT(num_bytes <= scratchpad_linear_color_.GetAllocatedSize(), "num_bytes == %d, scratchpad_linear_color_.GetAllocatedSize() == %d", num_bytes, scratchpad_linear_color_.GetAllocatedSize());
+    } else {
+        SP_ASSERT(false);
+    }
+
+    SpFuncComponent->registerFunc("read_pixels", [this, channel_data_type, num_bytes](SpFuncDataBundle& args) -> SpFuncDataBundle {
 
         SP_ASSERT(initialized_);
-
-        SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
-        int num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
 
         SpPackedArray packed_array;
         packed_array.shape_ = {Height, Width, NumChannelsPerPixel};
         packed_array.data_type_ = channel_data_type;
 
         void* dest_ptr = nullptr;
-
         if (bUseSharedMemory) {
             packed_array.view_ = shared_memory_view_.data_;
             packed_array.data_source_ = SpArrayDataSource::Shared;
@@ -109,10 +111,20 @@ void USpSceneCaptureComponent2D::Initialize()
             dest_ptr = shared_memory_view_.data_;
 
         } else {
-            packed_array.data_.resize(num_bytes);
+            packed_array.data_.reserve(num_bytes);
             packed_array.view_ = packed_array.data_.data();
             packed_array.data_source_ = SpArrayDataSource::Internal;
-            dest_ptr = packed_array.data_.data();
+
+            if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::UInt8) {
+                dest_ptr = scratchpad_color_.GetData();
+            } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float16) {
+                dest_ptr = scratchpad_float_16_color_.GetData();
+            } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32) {
+                SP_ASSERT(BOOST_OS_WINDOWS, "ERROR: NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32 is only supported on Windows.");
+                dest_ptr = scratchpad_linear_color_.GetData();
+            } else {
+                SP_ASSERT(false);
+            }
         }
         
         SP_ASSERT(dest_ptr);
@@ -132,6 +144,10 @@ void USpSceneCaptureComponent2D::Initialize()
 
                 UpdateArrayDataPtr(scratchpad_color_, scratchpad_data_ptr, num_bytes);
 
+                if (!bUseSharedMemory) {
+                    std::memcpy(packed_array.view_, dest_ptr, num_bytes); // need extra memcpy in this case because dest_ptr isn't necessarily aligned to FColor boundaries
+                }
+
             // ReadFloat16Pixels assumes 4 channels per pixel, 1 float16 per channel
             } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float16) {
 
@@ -146,6 +162,10 @@ void USpSceneCaptureComponent2D::Initialize()
                 SP_ASSERT(success);
 
                 UpdateArrayDataPtr(scratchpad_float_16_color_, scratchpad_data_ptr, num_bytes);
+
+                if (!bUseSharedMemory) {
+                    std::memcpy(packed_array.view_, dest_ptr, num_bytes); // need extra memcpy in this case because dest_ptr isn't necessarily aligned to FFloat16Color boundaries
+                }
 
             // ReadLinearColorPixels assumes 4 channels per pixel, 1 float32 per channel
             } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32) {
@@ -162,6 +182,10 @@ void USpSceneCaptureComponent2D::Initialize()
                 SP_ASSERT(success);
 
                 UpdateArrayDataPtr(scratchpad_linear_color_, scratchpad_data_ptr, num_bytes);
+
+                if (!bUseSharedMemory) {
+                    std::memcpy(packed_array.view_, dest_ptr, num_bytes); // need extra memcpy in this case because dest_ptr isn't necessarily aligned to FLinearColor boundaries
+                }
 
             } else {
                 SP_ASSERT(false);

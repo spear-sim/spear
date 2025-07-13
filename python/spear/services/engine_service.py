@@ -185,17 +185,11 @@ class EngineService():
 
     # Miscellaneous low-level entry points.
 
-    def ping(self):
-        return self.call_on_worker_thread_and_get_return_value("std::string", "engine_service.ping")
+    def get_id(self):
+        return self.call_on_worker_thread_and_get_return_value("bool", "engine_service.get_id")
 
-    def initialize(self):
-        self.call_on_worker_thread("engine_service.initialize")
-
-    def request_exit(self):
-        self.call_on_worker_thread("engine_service.request_exit")
-
-    def with_editor(self):
-        return self.call_on_worker_thread_and_get_return_value("bool", "engine_service.with_editor")
+    def get_with_editor(self):
+        return self.call_on_worker_thread_and_get_return_value("bool", "engine_service.get_with_editor")
 
     def get_byte_order(self):
         if self._byte_order is None:
@@ -205,6 +199,15 @@ class EngineService():
             else:
                 self._byte_order = unreal_instance_byte_order
         return self._byte_order
+
+    def initialize(self):
+        self.call_on_worker_thread("engine_service.initialize")
+
+    def ping(self):
+        return self.call_on_worker_thread_and_get_return_value("std::string", "engine_service.ping")
+
+    def request_exit(self):
+        self.call_on_worker_thread("engine_service.request_exit")
 
     # Entry points for miscellaneous functions that are accessible via GEngine.
 
