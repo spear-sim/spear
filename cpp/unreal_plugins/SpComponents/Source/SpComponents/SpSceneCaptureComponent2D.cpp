@@ -80,16 +80,16 @@ void USpSceneCaptureComponent2D::Initialize()
 
     if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::UInt8) {
         scratchpad_color_.Reserve(Height*Width);
-        SP_ASSERT(Height*Width <= static_cast<int64_t>(scratchpad_color_.Max()), "Height == %d, Width == %d, Height*Width == %d, static_cast<int64_t>(scratchpad_color_.Max()) == %lld", Height, Width, Height*Width, static_cast<int64_t>(scratchpad_color_.Max()));
-        SP_ASSERT(num_bytes <= scratchpad_color_.GetAllocatedSize(), "num_bytes == %d, scratchpad_color_.GetAllocatedSize() == %zu", num_bytes, scratchpad_color_.GetAllocatedSize());
+        SP_ASSERT(Height*Width <= static_cast<int64_t>(scratchpad_color_.Max()));
+        SP_ASSERT(num_bytes <= scratchpad_color_.GetAllocatedSize());
     } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float16) {
         scratchpad_float_16_color_.Reserve(Height*Width);
-        SP_ASSERT(Height*Width <= static_cast<int64_t>(scratchpad_float_16_color_.Max()), "Height == %d, Width == %d, Height*Width == %d, static_cast<int64_t>(scratchpad_float_16_color_.Max()) == %lld", Height, Width, Height*Width, static_cast<int64_t>(scratchpad_float_16_color_.Max()));
-        SP_ASSERT(num_bytes <= scratchpad_float_16_color_.GetAllocatedSize(), "num_bytes == %d, scratchpad_float_16_color_.GetAllocatedSize() == %zu", num_bytes, scratchpad_float_16_color_.GetAllocatedSize());
+        SP_ASSERT(Height*Width <= static_cast<int64_t>(scratchpad_float_16_color_.Max()));
+        SP_ASSERT(num_bytes <= scratchpad_float_16_color_.GetAllocatedSize());
     } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32) {
         scratchpad_linear_color_.Reserve(Height*Width);
-        SP_ASSERT(Height*Width <= static_cast<int64_t>(scratchpad_linear_color_.Max()), "Height == %d, Width == %d, Height*Width == %d, static_cast<int64_t>(scratchpad_linear_color_.Max()) == %lld", Height, Width, Height*Width, static_cast<int64_t>(scratchpad_linear_color_.Max()));
-        SP_ASSERT(num_bytes <= scratchpad_linear_color_.GetAllocatedSize(), "num_bytes == %d, scratchpad_linear_color_.GetAllocatedSize() == %zu", num_bytes, scratchpad_linear_color_.GetAllocatedSize());
+        SP_ASSERT(Height*Width <= static_cast<int64_t>(scratchpad_linear_color_.Max()));
+        SP_ASSERT(num_bytes <= scratchpad_linear_color_.GetAllocatedSize());
     } else {
         SP_ASSERT(false);
     }
