@@ -85,8 +85,8 @@ private:
         // Therefore, after calling UpdateArrayDataPtr(...), the user must be careful not to add more
         // elements to the array than would fit in the data_ptr region.
 
-        SP_ASSERT(num_elements <= array.Max(), "num_elements == %d, array.Max() == %d", num_elements, array.Max());
-        SP_ASSERT(num_bytes <= array.GetAllocatedSize(), "num_bytes == %d, array.GetAllocatedSize() == %d", num_bytes, array.GetAllocatedSize());
+        SP_ASSERT(num_elements <= static_cast<int64_t>(array.Max()), "num_elements == %d, static_cast<int64_t>(array.Max()) == %lld", num_elements, static_cast<int64_t>(array.Max()));
+        SP_ASSERT(num_bytes <= array.GetAllocatedSize(), "num_bytes == %d, array.GetAllocatedSize() == %zu", num_bytes, array.GetAllocatedSize());
 
         // Check that data_ptr is sufficiently aligned for T.
         size_t num_bytes_size_t = num_bytes;
