@@ -155,4 +155,7 @@ if __name__ == "__main__":
         game.unreal_service.call_function(uobject=final_tone_curve_hdr_component, ufunction=terminate_func)
         game.unreal_service.destroy_actor(actor=bp_camera_sensor_actor)
 
+    if args.benchmark:
+        instance.close()
+
     spear.log("Done.")
