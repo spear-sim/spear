@@ -102,7 +102,7 @@ SharedMemoryView SharedMemoryRegion::getView()
 
     boost::multiprecision::int128_t offset_bytes = static_cast<uint8_t*>(address_aligned) - static_cast<const uint8_t* const>(address);
     SP_ASSERT(offset_bytes >= 0);
-    SP_ASSERT(offset_bytes <= s_alignment_padding_bytes_);
+    SP_ASSERT(offset_bytes < s_alignment_padding_bytes_);
 
     SharedMemoryView view;
     view.id_ = id_;
