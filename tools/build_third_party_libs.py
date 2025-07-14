@@ -73,7 +73,7 @@ if __name__ == "__main__":
 
         platform_dir = "Mac"
 
-        common_cxx_flags = "-std=c++20 -stdlib=libc++ -mmacosx-version-min=10.14"
+        common_cxx_flags = "-std=c++20 -stdlib=libc++ -mmacosx-version-min=10.13"
         boost_cxx_flags = common_cxx_flags
         cmake_cxx_flags = common_cxx_flags
 
@@ -234,44 +234,44 @@ if __name__ == "__main__":
 
     if sys.platform == "win32":
 
-        cmd = [
-            "cmake",
-            f'"-DCMAKE_CXX_COMPILER={cxx_compiler}"',
-            f'"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}"',
-            f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
-            os.path.join("..", "..")]
+        cmd = \
+            "cmake " + \
+            f'"-DCMAKE_CXX_COMPILER={cxx_compiler}" ' + \
+            f'"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}" ' + \
+            f'"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}" ' + \
+            os.path.join("..", "..")
 
-        spear.log("Executing: ", " ".join(cmd))
-        subprocess.run(cmd, check=True)
+        spear.log("Executing: ", cmd)
+        subprocess.run(cmd, shell=True, check=True) # need shell=True to handle cxxflags
 
         cmd = ["cmake", "--build", ".", "--config", "Release"]
 
     elif sys.platform == "darwin":
 
-        cmd = [
-            "cmake",
-            f'"-DCMAKE_CXX_COMPILER={cxx_compiler}"',
-            "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64",
-            f'"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}"',
-            f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
-            os.path.join("..", "..")]
+        cmd = \
+            "cmake " + \
+            f'"-DCMAKE_CXX_COMPILER={cxx_compiler}" ' + \
+            '"-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" ' + \
+            f'"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}" ' + \
+            f'"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}" ' + \
+            os.path.join("..", "..")
 
-        spear.log("Executing: ", " ".join(cmd))
-        subprocess.run(cmd, check=True)
+        spear.log("Executing: ", cmd)
+        subprocess.run(cmd, shell=True, check=True) # need shell=True to handle cxxflags
 
         cmd = ["cmake", "--build", ".", "--config", "Release"]
 
     elif sys.platform == "linux":
-        cmd = [
-            "cmake",
-            f'"-DCMAKE_CXX_COMPILER={cxx_compiler}"',
-            "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
-            f'"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}"',
-            f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
-            os.path.join("..", "..")]
+        cmd = \
+            "cmake " + \
+            f'"-DCMAKE_CXX_COMPILER={cxx_compiler}" ' + \
+            '"-DCMAKE_POSITION_INDEPENDENT_CODE=ON" ' + \
+            f'"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}" ' + \
+            f'"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}" ' + \
+            os.path.join("..", "..")
 
-        spear.log("Executing: ", " ".join(cmd))
-        subprocess.run(cmd, check=True)
+        spear.log("Executing: ", cmd)
+        subprocess.run(cmd, shell=True, check=True) # need shell=True to handle cxxflags
 
         cmd = ["cmake", "--build", ".", "--config", "Release"]
 
@@ -300,51 +300,53 @@ if __name__ == "__main__":
 
     if sys.platform == "win32":
 
-        cmd = [
-            "cmake",
-            f'"-DCMAKE_CXX_COMPILER={cxx_compiler}"',
-            f'"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}"',
-            f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
-            "-DYAML_CPP_BUILD_TESTS=OFF",
-            "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
-            os.path.join("..", "..")]
+        cmd = \
+            "cmake " + \
+            f'"-DCMAKE_CXX_COMPILER={cxx_compiler}" ' + \
+            f'"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}" ' + \
+            f'"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}" ' + \
+            '"-DYAML_CPP_BUILD_TESTS=OFF" ' + \
+            '"-DCMAKE_POLICY_VERSION_MINIMUM=3.5" ' + \
+            os.path.join("..", "..")
 
-        spear.log("Executing: ", " ".join(cmd))
-        subprocess.run(cmd, check=True)
+        spear.log("Executing: ", cmd)
+        subprocess.run(cmd, shell=True, check=True) # need shell=True to handle cxxflags
 
         cmd = ["cmake", "--build", ".", "--config", "Release"]
 
     elif sys.platform == "darwin":
 
-        cmd = [
-            "cmake",
-            f'"-DCMAKE_CXX_COMPILER={cxx_compiler}"',
-            "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64",
-            f'"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}"',
-            f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
-            "-DYAML_CPP_BUILD_TESTS=OFF",
-            "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
-            os.path.join("..", "..")]
+        cmd = \
+            "cmake " + \
+            f'"-DCMAKE_CXX_COMPILER={cxx_compiler}" ' + \
+            '"-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" ' + \
+            f'"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}" ' + \
+            f'"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}" ' + \
+            '"-DYAML_CPP_BUILD_TESTS=OFF" ' + \
+            '"-DCMAKE_POLICY_VERSION_MINIMUM=3.5" ' + \
+            os.path.join("..", "..")
 
-        spear.log("Executing: ", " ".join(cmd))
-        subprocess.run(cmd, check=True)
+        spear.log("Executing: ", cmd)
+        subprocess.run(cmd, shell=True, check=True) # need shell=True to handle cxxflags
 
         cmd = ["cmake", "--build", ".", "--config", "Release"]
 
     elif sys.platform == "linux":
-        cmd = [
-            "cmake",
-            f'"-DCMAKE_CXX_COMPILER={cxx_compiler}"',
-            f"-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
-            f'"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}"',
-            f'"-DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++ -L\'{linux_libcpp_lib_dir}\' -lpthread"', # -lpthread needed on some Linux environments
-            f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
-            "-DYAML_CPP_BUILD_TESTS=OFF",
-            "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
-            os.path.join("..", "..")]
 
-        spear.log("Executing: ", " ".join(cmd))
-        subprocess.run(cmd, check=True)
+        # -lpthread needed on some Linux environments
+        cmd = \
+            "cmake " + \
+            f'"-DCMAKE_CXX_COMPILER={cxx_compiler}" ' + \
+            f'"-DCMAKE_POSITION_INDEPENDENT_CODE=ON" ' + \
+            f'"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}" ' + \
+            f'"-DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++ -L\'{linux_libcpp_lib_dir}\' -lpthread" ' + \
+            f'"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}" ' + \
+            '"-DYAML_CPP_BUILD_TESTS=OFF" ' + \
+            '"-DCMAKE_POLICY_VERSION_MINIMUM=3.5" ' + \
+            os.path.join("..", "..")
+
+        spear.log("Executing: ", cmd)
+        subprocess.run(cmd, shell=True, check=True) # need shell=True to handle cxxflags
 
         cmd = ["cmake", "--build", ".", "--config", "Release"]
 

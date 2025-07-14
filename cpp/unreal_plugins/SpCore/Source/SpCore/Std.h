@@ -198,6 +198,32 @@ public:
     }
 
     //
+    // std::vector functions
+    //
+
+    template <typename TValue, typename... TVectorTraits>
+    static void resizeUninitialized(std::vector<TValue, TVectorTraits...>& vector, int size)
+    {
+        using TVector = std::vector<TValue, TVectorTraits...>;
+        using TAllocator = typename TVector::allocator_type;
+
+        struct TValueNoDefaultInit
+        {
+            TValue value;
+            TValueNoDefaultInit() {}
+        };
+
+        using TVectorNoDefaultInit = std::vector<TValueNoDefaultInit, typename std::allocator_traits<TAllocator>::template rebind_alloc<TValueNoDefaultInit>>;
+
+        SP_ASSERT(sizeof(TValue) == sizeof(TValueNoDefaultInit));
+
+        TVectorNoDefaultInit* vector_no_default_init = reinterpret_cast<TVectorNoDefaultInit*>(&vector);
+        vector_no_default_init->resize(size);
+
+        SP_ASSERT(vector.size() == size);
+    }
+
+    //
     // Range (e.g., std::ranges::range) functions
     //
 
@@ -339,25 +365,6 @@ public:
             insert(map, at(keys, i), at(values, i));
         }
         return map;
-    }
-
-    template <typename TVector> requires
-        CVector<TVector>
-    static void resizeUninitialized(TVector& vector, int size)
-    {
-        struct ValueUninitialized
-        {
-            typename TVector::value_type value;
-            ValueUninitialized() {}
-        };
-        using TVectorUninitialized = std::vector<ValueUninitialized, typename std::allocator_traits<typename TVector::allocator_type>::template rebind_alloc<ValueUninitialized>>;
-
-        SP_ASSERT(sizeof(typename TVector::value_type) == sizeof(ValueUninitialized));
-
-        TVectorUninitialized* vector_uninitialized = reinterpret_cast<TVectorUninitialized*>(&vector);
-        vector_uninitialized->resize(size);
-
-        SP_ASSERT(vector.size() == size);
     }
 
     //
