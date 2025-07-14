@@ -90,7 +90,7 @@ struct SpPackedArrayAllocatorImpl
             return static_cast<TValue*>(_aligned_malloc(num_bytes_internal, g_alignment_padding_bytes));
         #else
             void* ptr = nullptr;
-            int error = posix_memalign(ptr, g_alignment_padding_bytes, num_bytes_internal);
+            int error = posix_memalign(&ptr, g_alignment_padding_bytes, num_bytes_internal);
             SP_ASSERT(!error);
             SP_ASSERT(ptr);
             return static_cast<TValue*>(ptr);
@@ -100,7 +100,11 @@ struct SpPackedArrayAllocatorImpl
     void deallocate(TValue* const ptr, std::size_t) const
     {
         SP_ASSERT(ptr);
-        _aligned_free(ptr);
+        #ifdef _MSC_VER
+            _aligned_free(ptr);
+        #else
+            free(ptr);
+        #endif
     }
 
     template <typename TOtherValue>
