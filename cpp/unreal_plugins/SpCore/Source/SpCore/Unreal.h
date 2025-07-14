@@ -8,6 +8,7 @@
 
 #include <concepts>    // std::derived_from
 #include <map>
+#include <memory>      // std::align
 #include <ranges>      // std::views::filter, std::views::transform
 #include <string>
 #include <type_traits> // std::remove_pointer_t, std::underlying_type_t
@@ -1228,6 +1229,45 @@ public:
         }
         return dest;
     }
+
+    template <typename TValue>
+    static void updateArrayDataPtr(TArray<TValue>& array, void* data_ptr, int num_bytes) {
+
+        SP_ASSERT(num_bytes % sizeof(TValue) == 0);
+        int num_elements = num_bytes / sizeof(TValue);
+
+        // We enforce the constraint that the array's existing data region must be at least as big as the
+        // data_ptr region, because we want to guarantee that the array will not resize itself if the user
+        // adds elements that would fit in the data_ptr region.
+
+        // That being said, the data_ptr region may be smaller than the array's existing data region because
+        // the array can reserve more space than was originally requested when calling array.Reserve(...).
+        // Therefore, after calling UpdateArrayDataPtr(...), the user must be careful not to add more
+        // elements to the array than would fit in the data_ptr region.
+
+        SP_ASSERT(num_elements <= static_cast<int64_t>(array.Max()));
+        SP_ASSERT(num_bytes <= array.GetAllocatedSize());
+
+        // Check that data_ptr is sufficiently aligned for TValue.
+        void* data_ptr_to_align = data_ptr;
+        size_t num_bytes_size_t = num_bytes;
+        TValue* data_ptr_aligned = static_cast<TValue*>(std::align(alignof(TValue), num_bytes_size_t, data_ptr_to_align, num_bytes_size_t));
+        SP_ASSERT(data_ptr_aligned);
+        SP_ASSERT(data_ptr_aligned == data_ptr_to_align);
+        SP_ASSERT(data_ptr_aligned == data_ptr);
+
+        // Get pointer to array object, interpret as a pointer-to-TValue*.
+        TValue** array_ptr = reinterpret_cast<TValue**>(&array);
+        SP_ASSERT(array_ptr);
+
+        // Check that the pointer to the array object, when interpreted as a pointer-to-TValue*, does indeed
+        // point to the array's underlying data.
+        SP_ASSERT(*array_ptr == array.GetData());
+
+        // Update the array's underlying data pointer.
+        *array_ptr = data_ptr_aligned;
+        SP_ASSERT(data_ptr_aligned == array.GetData());
+    };
 
     //
     // String functions

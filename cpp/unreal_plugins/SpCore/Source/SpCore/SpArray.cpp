@@ -73,7 +73,9 @@ void SpPackedArray::resolve()
     SP_ASSERT(!view_);
     SP_ASSERT(data_source_ == SpArrayDataSource::Internal);
     
-    view_ = data_.data();
+    if (!data_.empty()) {
+        view_ = data_.data();
+    }
 }
 
 void SpPackedArray::resolve(const SpArraySharedMemoryView& shared_memory_view)
@@ -82,15 +84,18 @@ void SpPackedArray::resolve(const SpArraySharedMemoryView& shared_memory_view)
     SP_ASSERT(!view_);
     SP_ASSERT(data_source_ == SpArrayDataSource::Shared);
 
-    // validate consistency of internal state and shared memory state
     uint64_t num_elements = 0;
     if (!shape_.empty()) {
         num_elements = std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<uint64_t>());
     }
-    SP_ASSERT(num_elements*SpArrayDataTypeUtils::getSizeOf(data_type_) <= shared_memory_view.num_bytes_);
+
+    // validate consistency of internal state and shared memory state
+    SP_ASSERT(num_elements * SpArrayDataTypeUtils::getSizeOf(data_type_) <= shared_memory_view.num_bytes_);
 
     // update internal state
-    view_ = shared_memory_view.data_;
+    if (num_elements > 0) {
+        view_ = shared_memory_view.data_;
+    }
     shared_memory_usage_flags_ = shared_memory_view.usage_flags_;
 }
 
@@ -105,24 +110,42 @@ void SpPackedArray::validate(SpArraySharedMemoryUsageFlags usage_flags) const
 
     switch (data_source_) {
         case SpArrayDataSource::Internal:
-            SP_ASSERT(view_ == data_.data());
             SP_ASSERT(num_elements*SpArrayDataTypeUtils::getSizeOf(data_type_) == data_.size());
             SP_ASSERT(shared_memory_name_ == "");
             SP_ASSERT(shared_memory_usage_flags_ == SpArraySharedMemoryUsageFlags::DoNotUse);
+
+            if (data_.empty()) {
+                SP_ASSERT(!view_);
+            } else {
+                SP_ASSERT(view_ == data_.data());
+            }
+
             break;
 
         case SpArrayDataSource::External:
             SP_ASSERT(data_.empty());
-            SP_ASSERT(num_elements == 0 || view_); // if view_ is not set, then num_elements must be 0; if view_ is set, then num_elements can be anything
             SP_ASSERT(shared_memory_name_ == "");
             SP_ASSERT(shared_memory_usage_flags_ == SpArraySharedMemoryUsageFlags::DoNotUse);
+
+            if (num_elements > 0) {
+                SP_ASSERT(!view_);
+            } else {
+                SP_ASSERT(view_);
+            }
+
             break;
 
         case SpArrayDataSource::Shared:
             SP_ASSERT(data_.empty());
-            SP_ASSERT(num_elements == 0 || view_); // if view_ is not set, then num_elements must be 0; if view_ is set, then num_elements can be anything
             SP_ASSERT(shared_memory_name_ != "");
             SP_ASSERT(shared_memory_usage_flags_ & usage_flags);
+
+            if (num_elements == 0) {
+                SP_ASSERT(!view_);
+            } else {
+                SP_ASSERT(view_);
+            }
+
             break;
 
         case SpArrayDataSource::Invalid:

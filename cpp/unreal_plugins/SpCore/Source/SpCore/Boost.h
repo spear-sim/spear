@@ -80,6 +80,7 @@ SP_END_SUPPRESS_COMPILER_WARNINGS
 
 #include <boost/algorithm/string/case_conv.hpp> // boost::algorithm::to_lower_copy
 #include <boost/algorithm/string/join.hpp>      // boost::algorithm::join
+#include <boost/align/aligned_allocator.hpp>
 #include <boost/callable_traits.hpp>
 #include <boost/circular_buffer.hpp>
 #include <boost/current_function.hpp>           // BOOST_CURRENT_FUNCTION

@@ -20,6 +20,7 @@
 #include <Math/Float16.h>
 
 #include "SpCore/Assert.h"
+#include "SpCore/Boost.h"
 #include "SpCore/SharedMemory.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
@@ -194,6 +195,8 @@ class SPCORE_API SpPackedArray
 public:
     inline static constexpr int s_alignment_padding_bytes_ = 4096;
 
+    using TAllocator = boost::alignment::aligned_allocator<uint8_t, s_alignment_padding_bytes_>;
+
     // typically called before calling an SpFunc to resolve pointers to shared memory
     void resolve();
     void resolve(const SpArraySharedMemoryView& shared_memory_view);
@@ -202,7 +205,7 @@ public:
     // after calling an SpFunc to validate that an SpPackedArray can be used as a return value
     void validate(SpArraySharedMemoryUsageFlags usage_flags) const;
 
-    std::vector<uint8_t> data_;
+    std::vector<uint8_t, TAllocator> data_;
     void* view_ = nullptr;
     SpArrayDataSource data_source_ = SpArrayDataSource::Invalid;
 
@@ -212,6 +215,8 @@ public:
     std::string shared_memory_name_;
     SpArraySharedMemoryUsageFlags shared_memory_usage_flags_ = SpArraySharedMemoryUsageFlags::DoNotUse;
 };
+
+using SpPackedArrayAllocator = boost::alignment::aligned_allocator<uint8_t, SpPackedArray::s_alignment_padding_bytes_>;
 
 //
 // SpArray represents a strongly typed array that can be instantiated to manipulate an arg or return value. A
@@ -292,7 +297,7 @@ public:
 
     // setDataSource(...) updates all internal state
 
-    void setDataSource(std::vector<uint8_t>&& src)
+    void setDataSource(std::vector<uint8_t, SpPackedArrayAllocator>&& src)
     {
         setDataSource(std::move(src), {-1});
     }
@@ -312,10 +317,14 @@ public:
     // when passing in a shape, the shape can include a single -1 as a wildcard, except when passing in a
     // void* or a SharedMemoryView
 
-    void setDataSource(std::vector<uint8_t>&& src, const std::vector<int64_t>& shape)
+    void setDataSource(std::vector<uint8_t, SpPackedArrayAllocator>&& src, const std::vector<int64_t>& shape)
     {
         data_ = std::move(src); // src value type is uint8_t, which matches data_, so we don't need to reinterpret
-        view_ = Std::reinterpretAsSpanOf<TValue>(data_);
+        if (data_.empty()) {
+            view_ = std::span<TValue>(static_cast<TValue*>(nullptr), 0);
+        } else {
+            view_ = Std::reinterpretAsSpanOf<TValue>(data_);
+        }
         data_source_ = SpArrayDataSource::Internal;
 
         shape_ = SpArrayShapeUtils::getShape(shape, view_.size());
@@ -326,8 +335,12 @@ public:
 
     void setDataSource(std::initializer_list<TValue> initializer_list, const std::vector<int64_t>& shape)
     {
-        data_ = Std::reinterpretAsVector<uint8_t, TValue>(initializer_list);
-        view_ = Std::reinterpretAsSpanOf<TValue>(data_);
+        data_ = Std::reinterpretAsVector<uint8_t, TValue, SpPackedArrayAllocator>(initializer_list);
+        if (data_.empty()) {
+            view_ = std::span<TValue>(static_cast<TValue*>(nullptr), 0);
+        } else {
+            view_ = Std::reinterpretAsSpanOf<TValue>(data_);
+        }
         data_source_ = SpArrayDataSource::Internal;
 
         shape_ = SpArrayShapeUtils::getShape(shape, view_.size());
@@ -340,8 +353,12 @@ public:
         CRangeValuesAreConvertibleTo<TRange, TValue>
     void setDataSource(TRange&& range, const std::vector<int64_t>& shape)
     {
-        data_ = Std::reinterpretAsVector<uint8_t, TValue>(std::forward<decltype(range)>(range));
-        view_ = Std::reinterpretAsSpanOf<TValue>(data_);
+        data_ = Std::reinterpretAsVector<uint8_t, TValue, SpPackedArrayAllocator>(std::forward<decltype(range)>(range));
+        if (data_.empty()) {
+            view_ = std::span<TValue>(static_cast<TValue*>(nullptr), 0);
+        } else {
+            view_ = Std::reinterpretAsSpanOf<TValue>(data_);
+        }
         data_source_ = SpArrayDataSource::Internal;
 
         shape_ = SpArrayShapeUtils::getShape(shape, view_.size());
@@ -358,7 +375,11 @@ public:
         }
 
         data_ = {};
-        view_ = std::span<TValue>(static_cast<TValue*>(data), num_elements);
+        if (num_elements == 0) {
+            view_ = std::span<TValue>(static_cast<TValue*>(nullptr), 0);
+        } else {
+            view_ = Std::reinterpretAsSpanOf<TValue>(data_);
+        }
         data_source_ = SpArrayDataSource::External;
 
         shape_ = shape;
@@ -376,7 +397,11 @@ public:
         SP_ASSERT(num_elements*sizeof(TValue) <= shared_memory_view.num_bytes_);
 
         data_ = {};
-        view_ = std::span<TValue>(static_cast<TValue*>(shared_memory_view.data_), num_elements);
+        if (num_elements == 0) {
+            view_ = std::span<TValue>(static_cast<TValue*>(nullptr), 0);
+        } else {
+            view_ = std::span<TValue>(static_cast<TValue*>(shared_memory_view.data_), num_elements);
+        }
         data_source_ = SpArrayDataSource::Shared;
 
         shape_ = shape;
@@ -417,7 +442,7 @@ public:
     }
 
 private:
-    std::vector<uint8_t> data_;
+    std::vector<uint8_t, SpPackedArrayAllocator> data_;
     std::span<TValue> view_;
     SpArrayDataSource data_source_ = SpArrayDataSource::Invalid;
 

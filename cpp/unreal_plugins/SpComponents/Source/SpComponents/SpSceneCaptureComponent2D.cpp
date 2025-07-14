@@ -25,6 +25,7 @@
 #include "SpCore/SpArray.h"
 #include "SpCore/SpFuncComponent.h"
 #include "SpCore/SpFuncDataBundle.h"
+#include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 
 USpSceneCaptureComponent2D::USpSceneCaptureComponent2D()
@@ -111,20 +112,10 @@ void USpSceneCaptureComponent2D::Initialize()
             dest_ptr = shared_memory_view_.data_;
 
         } else {
-            packed_array.data_.reserve(num_bytes);
+            Std::resizeUninitialized(packed_array.data_, num_bytes);
             packed_array.view_ = packed_array.data_.data();
             packed_array.data_source_ = SpArrayDataSource::Internal;
-
-            if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::UInt8) {
-                dest_ptr = scratchpad_color_.GetData();
-            } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float16) {
-                dest_ptr = scratchpad_float_16_color_.GetData();
-            } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32) {
-                SP_ASSERT(BOOST_OS_WINDOWS, "ERROR: NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32 is only supported on Windows.");
-                dest_ptr = scratchpad_linear_color_.GetData();
-            } else {
-                SP_ASSERT(false);
-            }
+            dest_ptr = packed_array.data_.data();
         }
         
         SP_ASSERT(dest_ptr);
@@ -137,16 +128,12 @@ void USpSceneCaptureComponent2D::Initialize()
             if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::UInt8) {
 
                 FColor* scratchpad_data_ptr = scratchpad_color_.GetData();
-                UpdateArrayDataPtr(scratchpad_color_, dest_ptr, num_bytes);
+                Unreal::updateArrayDataPtr(scratchpad_color_, dest_ptr, num_bytes);
 
                 bool success = texture_render_target_resource->ReadPixels(scratchpad_color_);
                 SP_ASSERT(success);
 
-                UpdateArrayDataPtr(scratchpad_color_, scratchpad_data_ptr, num_bytes);
-
-                if (!bUseSharedMemory) {
-                    std::memcpy(packed_array.view_, dest_ptr, num_bytes); // need extra memcpy in this case because dest_ptr isn't necessarily aligned to FColor boundaries
-                }
+                Unreal::updateArrayDataPtr(scratchpad_color_, scratchpad_data_ptr, num_bytes);
 
             // ReadFloat16Pixels assumes 4 channels per pixel, 1 float16 per channel
             } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float16) {
@@ -156,16 +143,12 @@ void USpSceneCaptureComponent2D::Initialize()
                 read_surface_flags.SetLinearToGamma(false);
 
                 FFloat16Color* scratchpad_data_ptr = scratchpad_float_16_color_.GetData();
-                UpdateArrayDataPtr(scratchpad_float_16_color_, dest_ptr, num_bytes);
+                Unreal::updateArrayDataPtr(scratchpad_float_16_color_, dest_ptr, num_bytes);
 
                 bool success = texture_render_target_resource->ReadFloat16Pixels(scratchpad_float_16_color_, read_surface_flags);
                 SP_ASSERT(success);
 
-                UpdateArrayDataPtr(scratchpad_float_16_color_, scratchpad_data_ptr, num_bytes);
-
-                if (!bUseSharedMemory) {
-                    std::memcpy(packed_array.view_, dest_ptr, num_bytes); // need extra memcpy in this case because dest_ptr isn't necessarily aligned to FFloat16Color boundaries
-                }
+                Unreal::updateArrayDataPtr(scratchpad_float_16_color_, scratchpad_data_ptr, num_bytes);
 
             // ReadLinearColorPixels assumes 4 channels per pixel, 1 float32 per channel
             } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32) {
@@ -176,16 +159,12 @@ void USpSceneCaptureComponent2D::Initialize()
                 read_surface_flags.SetLinearToGamma(false);
 
                 FLinearColor* scratchpad_data_ptr = scratchpad_linear_color_.GetData();
-                UpdateArrayDataPtr(scratchpad_linear_color_, dest_ptr, num_bytes);
+                Unreal::updateArrayDataPtr(scratchpad_linear_color_, dest_ptr, num_bytes);
 
                 bool success = texture_render_target_resource->ReadLinearColorPixels(scratchpad_linear_color_, read_surface_flags);
                 SP_ASSERT(success);
 
-                UpdateArrayDataPtr(scratchpad_linear_color_, scratchpad_data_ptr, num_bytes);
-
-                if (!bUseSharedMemory) {
-                    std::memcpy(packed_array.view_, dest_ptr, num_bytes); // need extra memcpy in this case because dest_ptr isn't necessarily aligned to FLinearColor boundaries
-                }
+                Unreal::updateArrayDataPtr(scratchpad_linear_color_, scratchpad_data_ptr, num_bytes);
 
             } else {
                 SP_ASSERT(false);
@@ -193,7 +172,8 @@ void USpSceneCaptureComponent2D::Initialize()
         }
 
         SpFuncDataBundle return_values;
-        return_values.packed_arrays_ = {{"data", std::move(packed_array)}};
+        Std::insert(return_values.packed_arrays_, "data", std::move(packed_array));
+
         return return_values;
     });
 

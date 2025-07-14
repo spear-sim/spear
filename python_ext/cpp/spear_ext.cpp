@@ -1,5 +1,11 @@
 #include <stdint.h> // int8_t, int16_t, int32_t, int64_t, uint8_t, uint16_t, uint32_t, uint64_t
 
+#ifdef _MSC_VER
+    #include <malloc.h> // _aligned_alloc
+#else
+    #include <stdlib.h> // posix_memalign
+#endif
+
 #include <exception>
 #include <iostream>
 #include <map>
@@ -51,6 +57,66 @@ struct nanobind::detail::dtype_traits<sp_float16_t>
         1};                                              // lanes (simd), usually set to 1
     static constexpr auto name = const_name("sp_float16_t");
 };
+
+//
+// Minimal aligned allocator
+//
+
+static constexpr int g_alignment_padding_bytes = 4096;
+
+template <typename TValue>
+struct SpPackedArrayAllocatorImpl
+{
+    using value_type = TValue;
+
+    SpPackedArrayAllocatorImpl() noexcept {};
+
+    template <typename TOtherValue>
+    SpPackedArrayAllocatorImpl(const SpPackedArrayAllocatorImpl<TOtherValue>&) noexcept {}
+
+    TValue* allocate(const std::size_t num_elements) const
+    {
+        SP_ASSERT(num_elements > 0);
+        int num_bytes = num_elements*sizeof(TValue);
+        int num_bytes_internal;
+        if (num_bytes % g_alignment_padding_bytes == 0) {
+            num_bytes_internal = num_bytes;
+        } else {
+            num_bytes_internal = num_bytes + g_alignment_padding_bytes - (num_bytes % g_alignment_padding_bytes);
+        }
+        SP_ASSERT(num_bytes_internal % g_alignment_padding_bytes == 0);
+
+        #ifdef _MSC_VER
+            return static_cast<TValue*>(_aligned_malloc(num_bytes_internal, g_alignment_padding_bytes));
+        #else
+            void* ptr = nullptr;
+            int error = posix_memalign(ptr, g_alignment_padding_bytes, num_bytes_internal);
+            SP_ASSERT(!error);
+            SP_ASSERT(ptr);
+            return static_cast<TValue*>(ptr);
+        #endif
+    }
+
+    void deallocate(TValue* const ptr, std::size_t) const
+    {
+        SP_ASSERT(ptr);
+        _aligned_free(ptr);
+    }
+
+    template <typename TOtherValue>
+    bool operator==(const SpPackedArrayAllocatorImpl<TOtherValue>&) const noexcept
+    {
+        return true;
+    }
+
+    template <typename TOtherValue>
+    bool operator!=(const SpPackedArrayAllocatorImpl<TOtherValue>&) const noexcept
+    {
+        return false;
+    }
+};
+
+using SpPackedArrayAllocator = SpPackedArrayAllocatorImpl<uint8_t>;
 
 //
 // Globals
@@ -502,7 +568,7 @@ struct clmdep_msgpack::adaptor::convert<PackedArray> {
         std::map<std::string, clmdep_msgpack::object> map = MsgpackUtils::toMap(object);
         SP_ASSERT(map.size() == 5);
 
-        std::vector<uint8_t> data = MsgpackUtils::to<std::vector<uint8_t>>(map.at("data"));
+        std::vector<uint8_t, SpPackedArrayAllocator> data = MsgpackUtils::to<std::vector<uint8_t, SpPackedArrayAllocator>>(map.at("data"));
         std::string data_source = MsgpackUtils::to<std::string>(map.at("data_source"));
         std::vector<size_t> shape = MsgpackUtils::to<std::vector<size_t>>(map.at("shape"));
         std::string data_type = MsgpackUtils::to<std::string>(map.at("data_type"));
@@ -524,14 +590,14 @@ struct clmdep_msgpack::adaptor::convert<PackedArray> {
         if (data_source == "Internal") {
 
             // construct an std::vector on the heap and move data into it
-            std::vector<uint8_t>* data_ptr = new std::vector<uint8_t>(std::move(data));
+            std::vector<uint8_t, SpPackedArrayAllocator>* data_ptr = new std::vector<uint8_t, SpPackedArrayAllocator>(std::move(data));
             if (Globals::s_verbose_allocations_) {
                 std::cout << "[SPEAR | spear_ext.cpp] Allocating std::vector<uint8_t> at memory location: " << data_ptr << std::endl;
             }
 
             // construct a capsule responsible for deleting the heap-allocated std::vector
             nanobind::capsule capsule = nanobind::capsule(data_ptr, [](void* ptr) noexcept -> void {
-                delete static_cast<std::vector<uint8_t>*>(ptr);
+                delete static_cast<std::vector<uint8_t, SpPackedArrayAllocator>*>(ptr);
                 if (Globals::s_verbose_allocations_) {
                     std::cout << "[SPEAR | spear_ext.cpp] Deleting std::vector<uint8_t> at memory location: " << ptr << std::endl;
                 }

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <memory> // std::align, std::unique_ptr
+#include <memory> // std::unique_ptr
 
 #include <Components/SceneCaptureComponent2D.h>
 #include <Containers/Array.h>
@@ -69,43 +69,6 @@ public:
     USpFuncComponent* SpFuncComponent = nullptr;
 
 private:
-    template <typename T>
-    static void UpdateArrayDataPtr(TArray<T>& array, void* data_ptr, int num_bytes) {
-
-        SP_ASSERT(num_bytes % sizeof(T) == 0);
-        int num_elements = num_bytes / sizeof(T);
-
-        // We enforce the constraint that the array's existing data region must be at least as big as the
-        // data_ptr region, because we want to guarantee that the array will not resize itself if the user
-        // adds elements that would fit in the data_ptr region.
-
-        // That being said, the data_ptr region may be smaller than the array's existing data region because
-        // the array can reserve more space than was originally requested when calling array.Reserve(...).
-        // Therefore, after calling UpdateArrayDataPtr(...), the user must be careful not to add more
-        // elements to the array than would fit in the data_ptr region.
-
-        SP_ASSERT(num_elements <= static_cast<int64_t>(array.Max()));
-        SP_ASSERT(num_bytes <= array.GetAllocatedSize());
-
-        // Check that data_ptr is sufficiently aligned for T.
-        size_t num_bytes_size_t = num_bytes;
-        T* data_ptr_aligned = static_cast<T*>(std::align(alignof(T), num_bytes_size_t, data_ptr, num_bytes_size_t));
-        SP_ASSERT(data_ptr_aligned);
-        SP_ASSERT(data_ptr == data_ptr_aligned);
-
-        // Get pointer to array object, interpret as a pointer-to-T*.
-        T** array_ptr = reinterpret_cast<T**>(&array);
-        SP_ASSERT(array_ptr);
-
-        // Check that the pointer to the array object, when interpreted as a pointer-to-T*, does indeed point
-        // to the array's underlying data.
-        SP_ASSERT(*array_ptr == array.GetData());
-
-        // Update the array's underlying data pointer.
-        *array_ptr = data_ptr_aligned;
-        SP_ASSERT(data_ptr_aligned == array.GetData());
-    };
-
     bool initialized_ = false;
     UMaterialInstanceDynamic* material_instance_dynamic_ = nullptr;
     std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;

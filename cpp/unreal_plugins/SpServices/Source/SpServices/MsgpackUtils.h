@@ -62,15 +62,15 @@ public:
         return clmdep_msgpack::object(reinterpret_cast<uint64_t>(ptr), zone);
     }
 
-    static void toObject(clmdep_msgpack::object::with_zone& object, const std::map<std::string, clmdep_msgpack::object>& objects)
+    static void toObject(clmdep_msgpack::object::with_zone& object_with_zone, const std::map<std::string, clmdep_msgpack::object>& objects)
     {
-        object.type = clmdep_msgpack::type::MAP;
-        object.via.map.size = objects.size();
-        object.via.map.ptr = static_cast<clmdep_msgpack::object_kv*>(object.zone.allocate_align(sizeof(clmdep_msgpack::object_kv)*object.via.map.size));
+        object_with_zone.type = clmdep_msgpack::type::MAP;
+        object_with_zone.via.map.size = objects.size();
+        object_with_zone.via.map.ptr = static_cast<clmdep_msgpack::object_kv*>(object_with_zone.zone.allocate_align(sizeof(clmdep_msgpack::object_kv)*object_with_zone.via.map.size));
         int i = 0;
         for (auto& [key, value] : objects) {
-            object.via.map.ptr[i].key = clmdep_msgpack::object(std::move(key), object.zone);
-            object.via.map.ptr[i].val = std::move(value);
+            object_with_zone.via.map.ptr[i].key = clmdep_msgpack::object(std::move(key), object_with_zone.zone);
+            object_with_zone.via.map.ptr[i].val = std::move(value);
             i++;
         }
     };
