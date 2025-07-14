@@ -40,6 +40,8 @@ USpSceneCaptureComponent2D::USpSceneCaptureComponent2D()
     // gets ticked
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.bTickEvenWhenPaused = true;
+
+    SetVisibility(false);
 }
 
 USpSceneCaptureComponent2D::~USpSceneCaptureComponent2D()
@@ -64,6 +66,8 @@ void USpSceneCaptureComponent2D::Initialize()
     bool clear_render_target = true;
     texture_render_target_2d->UpdateResourceImmediate(clear_render_target);
     TextureTarget = texture_render_target_2d;
+
+    SP_ASSERT(!IsVisible());
     SetVisibility(true);
 
     if (Material) {
