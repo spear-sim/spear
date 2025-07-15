@@ -119,7 +119,7 @@ if __name__ == "__main__":
     # spear_ext
     #
 
-    spear.log("Building and installing spear_ext Python extension module...")
+    spear.log("Building and installing the spear_ext Python extension module...")
 
     # we need shell=True because we want to run in a specific anaconda env
     cmd = \
@@ -131,5 +131,5 @@ if __name__ == "__main__":
     spear.log("Executing: ", cmd)
     subprocess.run(cmd, shell=True, check=True)
 
-    spear.log("Successfully built and installed spear_ext Python extension module.")
+    spear.log("Successfully built and installed the spear_ext Python extension module.")
     spear.log("Done.")
