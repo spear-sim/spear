@@ -5,6 +5,10 @@
 We will assume that you are developing on a version of Windows, macOS, or Linux that is compatible with Unreal Engine 5.5. We will also assume that you're using Anaconda Python to manage your Python environment, and that you have Git and CMake installed. If you have Anaconda Python installed, you can easily obtain Git and CMake by executing the following commands.
 
 ```console
+# create environment
+conda create --name spear-env python=3.11
+conda activate spear-env
+
 # install git
 conda install -c conda-forge git
 
