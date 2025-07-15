@@ -23,7 +23,7 @@
 // SpArraySharedMemoryView
 //
 
-template <> // needed to receive a custom type as an arg
+template <> // needed to receive a custom type as an arg from the client
 struct clmdep_msgpack::adaptor::convert<SpArraySharedMemoryView> {
     clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpArraySharedMemoryView& sp_shared_memory_view) const {
         std::map<std::string, clmdep_msgpack::object> map = MsgpackUtils::toMap(object);
@@ -36,7 +36,7 @@ struct clmdep_msgpack::adaptor::convert<SpArraySharedMemoryView> {
     }
 };
 
-template <> // needed to send a custom type as a return value
+template <> // needed to send a custom type as a return value to the client
 struct clmdep_msgpack::adaptor::object_with_zone<SpArraySharedMemoryView> {
     void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpArraySharedMemoryView const& sp_shared_memory_view) const {
         std::map<std::string, clmdep_msgpack::object> objects;
@@ -44,7 +44,7 @@ struct clmdep_msgpack::adaptor::object_with_zone<SpArraySharedMemoryView> {
         Std::insert(objects, "num_bytes",    clmdep_msgpack::object(sp_shared_memory_view.num_bytes_,    object_with_zone.zone));
         Std::insert(objects, "offset_bytes", clmdep_msgpack::object(sp_shared_memory_view.offset_bytes_, object_with_zone.zone));
         Std::insert(objects, "usage_flags",  clmdep_msgpack::object(Unreal::getStringsFromCombinedEnumFlagValueAs<ESpArraySharedMemoryUsageFlags>(sp_shared_memory_view.usage_flags_), object_with_zone.zone));
-        MsgpackUtils::toObject(object_with_zone, objects);
+        MsgpackUtils::toMsgpackObject(object_with_zone, objects);
     }
 };
 
@@ -52,7 +52,7 @@ struct clmdep_msgpack::adaptor::object_with_zone<SpArraySharedMemoryView> {
 // SpPackedArray
 //
 
-template <> // needed to receive a custom type as an arg
+template <> // needed to receive a custom type as an arg from the client
 struct clmdep_msgpack::adaptor::convert<SpPackedArray> {
     clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpPackedArray& sp_packed_array) const {
         std::map<std::string, clmdep_msgpack::object> map = MsgpackUtils::toMap(object);
@@ -67,7 +67,7 @@ struct clmdep_msgpack::adaptor::convert<SpPackedArray> {
     }
 };
 
-template <> // needed to send a custom type as a return value
+template <> // needed to send a custom type as a return value to the client
 struct clmdep_msgpack::adaptor::object_with_zone<SpPackedArray> {
     void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpPackedArray const& sp_packed_array) const {
         SP_ASSERT(sp_packed_array.data_source_ == SpArrayDataSource::Internal || sp_packed_array.data_source_ == SpArrayDataSource::Shared);
@@ -77,7 +77,7 @@ struct clmdep_msgpack::adaptor::object_with_zone<SpPackedArray> {
         Std::insert(objects, "shape",              clmdep_msgpack::object(sp_packed_array.shape_, object_with_zone.zone));
         Std::insert(objects, "data_type",          clmdep_msgpack::object(Unreal::getStringFromEnumValueAs<ESpArrayShortDataType>(sp_packed_array.data_type_), object_with_zone.zone));
         Std::insert(objects, "shared_memory_name", clmdep_msgpack::object(sp_packed_array.shared_memory_name_, object_with_zone.zone));
-        MsgpackUtils::toObject(object_with_zone, objects);
+        MsgpackUtils::toMsgpackObject(object_with_zone, objects);
     }
 };
 
@@ -85,7 +85,7 @@ struct clmdep_msgpack::adaptor::object_with_zone<SpPackedArray> {
 // SpFuncDataBundle
 //
 
-template <> // needed to receive a custom type as an arg
+template <> // needed to receive a custom type as an arg from the client
 struct clmdep_msgpack::adaptor::convert<SpFuncDataBundle> {
     clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpFuncDataBundle& sp_func_data_bundle) const {
         std::map<std::string, clmdep_msgpack::object> map = MsgpackUtils::toMap(object);
@@ -97,14 +97,14 @@ struct clmdep_msgpack::adaptor::convert<SpFuncDataBundle> {
     }
 };
 
-template <> // needed to send a custom type as a return value
+template <> // needed to send a custom type as a return value to the client
 struct clmdep_msgpack::adaptor::object_with_zone<SpFuncDataBundle> {
     void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpFuncDataBundle const& sp_func_data_bundle) const {
         std::map<std::string, clmdep_msgpack::object> objects;
         Std::insert(objects, "packed_arrays",      clmdep_msgpack::object(sp_func_data_bundle.packed_arrays_, object_with_zone.zone));
         Std::insert(objects, "unreal_obj_strings", clmdep_msgpack::object(sp_func_data_bundle.unreal_obj_strings_, object_with_zone.zone));
         Std::insert(objects, "info",               clmdep_msgpack::object(sp_func_data_bundle.info_, object_with_zone.zone));
-        MsgpackUtils::toObject(object_with_zone, objects);
+        MsgpackUtils::toMsgpackObject(object_with_zone, objects);
     }
 };
 
@@ -112,7 +112,7 @@ struct clmdep_msgpack::adaptor::object_with_zone<SpFuncDataBundle> {
 // Unreal::PropertyDesc
 //
 
-template <> // needed to receive a custom type as an arg
+template <> // needed to receive a custom type as an arg from the client
 struct clmdep_msgpack::adaptor::convert<Unreal::PropertyDesc> {
     clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, Unreal::PropertyDesc& property_desc) const {
         std::map<std::string, clmdep_msgpack::object> map = MsgpackUtils::toMap(object);
@@ -123,12 +123,12 @@ struct clmdep_msgpack::adaptor::convert<Unreal::PropertyDesc> {
     }
 };
 
-template <> // needed to send a custom type as a return value
+template <> // needed to send a custom type as a return value to the client
 struct clmdep_msgpack::adaptor::object_with_zone<Unreal::PropertyDesc> {
     void operator()(clmdep_msgpack::object::with_zone& object_with_zone, Unreal::PropertyDesc const& property_desc) const {
         std::map<std::string, clmdep_msgpack::object> objects;
-        Std::insert(objects, "property",  MsgpackUtils::toObject(property_desc.property_, object_with_zone.zone));
-        Std::insert(objects, "value_ptr", MsgpackUtils::toObject(property_desc.value_ptr_, object_with_zone.zone));
-        MsgpackUtils::toObject(object_with_zone, objects);
+        Std::insert(objects, "property",  MsgpackUtils::toMsgpackObject(property_desc.property_, object_with_zone.zone));
+        Std::insert(objects, "value_ptr", MsgpackUtils::toMsgpackObject(property_desc.value_ptr_, object_with_zone.zone));
+        MsgpackUtils::toMsgpackObject(object_with_zone, objects);
     }
 };

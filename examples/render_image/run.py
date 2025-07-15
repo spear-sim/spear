@@ -16,7 +16,10 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--benchmark", action="store_true")
+    parser.add_argument("--no_shared_memory", action="store_true")
     args = parser.parse_args()
+
+    shared_memory = not args.no_shared_memory
 
     # create instance
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
@@ -90,9 +93,17 @@ if __name__ == "__main__":
         game.unreal_service.set_property_value(property_desc=fov_angle_desc, property_value=fov_adjusted_degrees)
         game.unreal_service.set_property_value(property_desc=component_settings_desc, property_value=volume_settings)
 
+        if not shared_memory:
+            use_shared_memory_desc = game.unreal_service.find_property_by_name_on_object(uobject=final_tone_curve_hdr_component, property_name="bUseSharedMemory")
+            game.unreal_service.set_property_value(property_desc=use_shared_memory_desc, property_value=False)
+
         # now that the final_tone_curve_hdr component is fully configured, initialize it and get handles to its shared memory
         game.unreal_service.call_function(uobject=final_tone_curve_hdr_component, ufunction=initialize_func)
-        final_tone_curve_hdr_component_shared_memory_handles = instance.sp_func_service.create_shared_memory_handles_for_object(uobject=final_tone_curve_hdr_component)
+
+        if shared_memory:
+            final_tone_curve_hdr_component_shared_memory_handles = instance.sp_func_service.create_shared_memory_handles_for_object(uobject=final_tone_curve_hdr_component)
+        else:
+            final_tone_curve_hdr_component_shared_memory_handles = {}
 
     with instance.end_frame():
         pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing etc accumulate additional information across frames
@@ -156,7 +167,9 @@ if __name__ == "__main__":
     with instance.begin_frame():
         pass
     with instance.end_frame():
-        instance.sp_func_service.destroy_shared_memory_handles_for_object(shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
+        if shared_memory:
+            instance.sp_func_service.destroy_shared_memory_handles_for_object(shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
+
         game.unreal_service.call_function(uobject=final_tone_curve_hdr_component, ufunction=terminate_func)
         game.unreal_service.destroy_actor(actor=bp_camera_sensor_actor)
 

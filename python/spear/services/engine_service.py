@@ -114,6 +114,13 @@ class EngineService():
     def call_on_worker_thread_and_get_return_value(self, return_as, func_name, *args):
         return self._call_and_get_return_value(return_as, func_name, *args)
 
+    def call_on_game_thread_and_get_converted_return_value(self, return_as, func_name, *args):
+        self._validate_frame_state()
+        return self._call_and_get_converted_return_value(return_as, func_name, *args)
+
+    def call_on_worker_thread_and_get_converted_return_value(self, return_as, func_name, *args):
+        return self._call_and_get_converted_return_value(return_as, func_name, *args)
+
     def _validate_frame_state(self):
         if self._frame_state not in ["executing_begin_frame", "executing_end_frame"]:
             spear.log('ERROR: Calling entry points that execute on the game thread is only allowed in "with begin_frame()" and "with end_frame()" code blocks.')
@@ -164,16 +171,29 @@ class EngineService():
             return_value = self._client.call_and_get_return_value_as_map_of_string_to_string(func_name, *args)
         elif return_as == "std::map<std::string, SharedMemoryView>":
             return_value = self._client.call_and_get_return_value_as_map_of_string_to_shared_memory_view(func_name, *args)
-        elif return_as == "std::map<std::string, PackedArray>":
-            return_value = self._client.call_and_get_return_value_as_map_of_string_to_packed_array(func_name, *args)
         elif return_as == "SharedMemoryView":
             return_value = self._client.call_and_get_return_value_as_shared_memory_view(func_name, *args)
-        elif return_as == "PackedArray":
-            return_value = self._client.call_and_get_return_value_as_packed_array(func_name, *args)
-        elif return_as == "DataBundle":
-            return_value = self._client.call_and_get_return_value_as_data_bundle(func_name, *args)
         elif return_as == "PropertyDesc":
             return_value = self._client.call_and_get_return_value_as_property_desc(func_name, *args)
+        else:
+            spear.log("ERROR: Unrecognized return type when calling: ", func_name, args, " -> ", return_as)
+            assert False
+
+        if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
+            spear.log("Obtained return value: ", return_value)
+
+        return return_value
+
+    def _call_and_get_converted_return_value(self, return_as, func_name, *args):
+        if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
+            spear.log("Calling:               ", func_name, args, " -> ", return_as, " (converted)")
+
+        if return_as == "std::map<std::string, PackedArray>":
+            return_value = self._client.call_and_get_converted_return_value_as_map_of_string_to_packed_array(func_name, *args)
+        elif return_as == "PackedArray":
+            return_value = self._client.call_and_get_converted_return_value_as_packed_array(func_name, *args)
+        elif return_as == "DataBundle":
+            return_value = self._client.call_and_get_converted_return_value_as_data_bundle(func_name, *args)
         else:
             spear.log("ERROR: Unrecognized return type when calling: ", func_name, args, " -> ", return_as)
             assert False

@@ -21,7 +21,7 @@ class SpFuncService():
 
 
     def create_shared_memory_handles_for_object(self, uobject):
-        views = self._entry_point_caller.call_on_worker_thread_and_get_return_value("std::map<std::string, SharedMemoryView>", "sp_func_service.get_shared_memory_views", uobject)
+        views = self._entry_point_caller.call_on_game_thread_and_get_return_value("std::map<std::string, SharedMemoryView>", "sp_func_service.get_shared_memory_views", uobject)
         return self._shared_memory_service.create_shared_memory_handles(shared_memory_views=views)
 
     def destroy_shared_memory_handles_for_object(self, shared_memory_handles):
@@ -41,7 +41,7 @@ class SpFuncService():
         args_data_bundle.info = info
 
         # call function
-        return_values_data_bundle = self._entry_point_caller.call_on_worker_thread_and_get_return_value("DataBundle", "sp_func_service.call_function", uobject, function_name, args_data_bundle)
+        return_values_data_bundle = self._entry_point_caller.call_on_game_thread_and_get_converted_return_value("DataBundle", "sp_func_service.call_function", uobject, function_name, args_data_bundle)
 
         # get the shared memory handle for each return value
         arg_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_arrays(

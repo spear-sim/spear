@@ -22,7 +22,7 @@ public:
     ~MsgpackUtils() = delete;
 
     //
-    // functions for receiving custom types as args
+    // functions for receiving custom types as args from the client
     //
 
     template <typename T>
@@ -54,15 +54,15 @@ public:
     };
 
     //
-    // functions for sending custom types as return values
+    // functions for sending custom types as return values to the client
     //
 
-    static clmdep_msgpack::object toObject(const void* ptr, clmdep_msgpack::zone& zone) // use instead of clmdep_msgpack::object(ptr, zone) for pointers
+    static clmdep_msgpack::object toMsgpackObject(const void* ptr, clmdep_msgpack::zone& zone) // use instead of clmdep_msgpack::object(ptr, zone) for pointers
     {
         return clmdep_msgpack::object(reinterpret_cast<uint64_t>(ptr), zone);
     }
 
-    static void toObject(clmdep_msgpack::object::with_zone& object_with_zone, const std::map<std::string, clmdep_msgpack::object>& objects)
+    static void toMsgpackObject(clmdep_msgpack::object::with_zone& object_with_zone, const std::map<std::string, clmdep_msgpack::object>& objects)
     {
         object_with_zone.type = clmdep_msgpack::type::MAP;
         object_with_zone.via.map.size = objects.size();

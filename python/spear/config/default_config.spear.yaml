@@ -75,7 +75,8 @@ SPEAR:
     INITIALIZE_CLIENT_MAX_TIME_SECONDS: 120.0
     INITIALIZE_CLIENT_SLEEP_TIME_SECONDS: 1.0
 
-    # Verbose logging in the client
+    # Config options for the client
+    CLIENT_FORCE_ALIGNED_ARRAYS: False
     CLIENT_VERBOSE_EXCEPTIONS: True
     CLIENT_VERBOSE_ALLOCATIONS: False
 

@@ -216,6 +216,8 @@ public:
         using TVectorNoDefaultInit = std::vector<TValueNoDefaultInit, typename std::allocator_traits<TAllocator>::template rebind_alloc<TValueNoDefaultInit>>;
 
         SP_ASSERT(sizeof(TValue) == sizeof(TValueNoDefaultInit));
+        SP_ASSERT(sizeof(TValue[2]) == sizeof(TValueNoDefaultInit[2]));
+        SP_ASSERT(sizeof(TValue[4]) == sizeof(TValueNoDefaultInit[4]));
 
         TVectorNoDefaultInit* vector_no_default_init = reinterpret_cast<TVectorNoDefaultInit*>(&vector);
         vector_no_default_init->resize(size);

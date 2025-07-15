@@ -4,7 +4,7 @@
 
 #include "SpComponents/SpSceneCaptureComponent2D.h"
 
-#include <memory>  // std::align, std::make_unique, std::memcpy
+#include <memory>  // std::align, std::make_unique
 #include <utility> // std::move
 
 #include <Components/SceneCaptureComponent2D.h>

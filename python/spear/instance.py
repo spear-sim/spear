@@ -280,14 +280,16 @@ class Instance():
         spear.log_current_function()        
         spear.log("    Initializing client...")
 
+        spear_ext.Statics.force_return_aligned_arrays = self._config.SPEAR.INSTANCE.CLIENT_FORCE_RETURN_ALIGNED_ARRAYS
+        spear_ext.Statics.verbose_allocations = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_ALLOCATIONS
+
         connected = False
 
         # If we're connecting to a running instance, then we assume that the server is already running and
         # only try to connect once.
         if self._config.SPEAR.LAUNCH_MODE == "none":
 
-            spear_ext.Globals.verbose_exceptions = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_EXCEPTIONS
-            spear_ext.Globals.verbose_allocations = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_ALLOCATIONS
+            spear_ext.Statics.verbose_exceptions = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_EXCEPTIONS
 
             try:
                 # Once a connection has been established, the client will wait for timeout seconds before
@@ -307,8 +309,7 @@ class Instance():
         # otherwise try to connect repeatedly, since the server might not have started yet
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
 
-            spear_ext.Globals.verbose_exceptions = False
-            spear_ext.Globals.verbose_allocations = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_ALLOCATIONS
+            spear_ext.Statics.verbose_exceptions = False
 
             start_time_seconds = time.time()
             elapsed_time_seconds = time.time() - start_time_seconds
@@ -340,7 +341,7 @@ class Instance():
                 time.sleep(self._config.SPEAR.INSTANCE.INITIALIZE_CLIENT_SLEEP_TIME_SECONDS)
                 elapsed_time_seconds = time.time() - start_time_seconds
 
-            spear_ext.Globals.verbose_exceptions = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_EXCEPTIONS
+            spear_ext.Statics.verbose_exceptions = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_EXCEPTIONS
 
         else:
             assert False

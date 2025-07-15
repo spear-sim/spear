@@ -34,7 +34,7 @@ class NavigationService():
         out_packed_array = spear.func_utils.to_packed_array(array=out_array, usage_flags=["Arg", "ReturnValue"])
 
         # call function
-        return_value_packed_array = self._entry_point_caller.call_on_worker_thread_and_get_return_value(
+        return_value_packed_array = self._entry_point_caller.call_on_game_thread_and_get_converted_return_value(
             "PackedArray",
             f"{self._service_name}.get_random_points",
             navigation_data,
@@ -71,7 +71,7 @@ class NavigationService():
         out_packed_array = spear.func_utils.to_packed_array(array=out_array, usage_flags=["Arg", "ReturnValue"])
 
         # call function
-        return_value_packed_array = self._entry_point_caller.call_on_worker_thread_and_get_return_value(
+        return_value_packed_array = self._entry_point_caller.call_on_game_thread_and_get_converted_return_value(
             "PackedArray",
             f"{self._service_name}.get_random_reachable_points_in_radius",
             navigation_data,
@@ -115,7 +115,7 @@ class NavigationService():
         nav_agent_property_strings = spear.func_utils.to_json_strings(nav_agent_properties)
 
         # call function
-        return_value_packed_arrays = self._entry_point_caller.call_on_worker_thread_and_get_return_value(
+        return_value_packed_arrays = self._entry_point_caller.call_on_game_thread_and_get_converted_return_value(
             "std::map<std::string, PackedArray>",
             f"{self._service_name}.find_paths",
             navigation_system,
