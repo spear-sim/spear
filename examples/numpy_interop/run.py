@@ -68,6 +68,8 @@ if __name__ == "__main__":
             uobject_shared_memory_handles=sp_debug_manager_shared_memory_handles)
 
         spear.log("return_values: ", return_values)
+        spear.log('return_values["arrays"]["observation"].flags["ALIGNED"]:        ', return_values["arrays"]["observation"].flags["ALIGNED"])
+        spear.log('return_values["arrays"]["observation_shared"].flags["ALIGNED"]: ', return_values["arrays"]["observation_shared"].flags["ALIGNED"])
 
         # Destroy handles to the shared memory regions created by the Unreal object.
         instance.sp_func_service.destroy_shared_memory_handles_for_object(shared_memory_handles=sp_debug_manager_shared_memory_handles)

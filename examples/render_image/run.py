@@ -124,6 +124,10 @@ if __name__ == "__main__":
             function_name="read_pixels",
             uobject_shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
 
+    spear.log('return_values["arrays"]["data"]: ')
+    spear.log_no_prefix(return_values["arrays"]["data"])
+    spear.log('return_values["arrays"]["data"].flags["ALIGNED"]: ', return_values["arrays"]["data"].flags["ALIGNED"])
+
     # show rendered frame now that we're outside of with instance.end_frame()
     if not args.benchmark:
         cv2.imshow("final_tone_curve_hdr", return_values["arrays"]["data"])
