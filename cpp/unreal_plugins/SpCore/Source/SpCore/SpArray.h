@@ -185,7 +185,7 @@ struct SpArraySharedMemoryView : SharedMemoryView
 //
 // SpPackedArray represents an array that can be passed to or returned from an SpFunc. We represent the data
 // payload in each SpPackedArray as an std::vector<uint8_t>, regardless of its actual data type, because
-// vectors of uint8_t get converted to a more efficient MSGPACK representation than other types. This results
+// vectors of uint8_t get converted to a more efficient msgpack representation than other types. This results
 // in faster data movement. See the following link for details:
 //     https://github.com/msgpack/msgpack-c/wiki/v2_0_cpp_adaptor
 //

@@ -44,9 +44,9 @@ if __name__ == "__main__":
     with instance.begin_frame():
 
         # We could use get_static_class(...) here to obtain a handle to each UClass object below, as we do in
-        # our other examples. But for demonstration purposes, we are choosing to use use load_object(...)
-        # instead. Using load_object(...) can be useful when the Unreal type has not been registered ahead of
-        # time using the UnrealClassRegistrar system in our C++ code.
+        # our other examples. But for demonstration purposes, we are choosing to use load_object(...) instead.
+        # Using load_object(...) can be useful when the Unreal type has not been registered ahead of time
+        # using the UnrealClassRegistrar system in our C++ code.
 
         # find functions
         actor_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/Script/Engine.Actor")
