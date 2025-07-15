@@ -41,14 +41,14 @@ class SPCORE_API SharedMemoryRegion
 {
 public:
     SharedMemoryRegion() = delete;
-    SharedMemoryRegion(int num_bytes);
-    SharedMemoryRegion(int num_bytes, uint64_t id); // useful if the caller wants to manage the allocation of uint64_t IDs to shared memory regions
+    SharedMemoryRegion(uint64_t num_bytes);
+    SharedMemoryRegion(uint64_t num_bytes, uint64_t id); // useful if the caller wants to manage the allocation of uint64_t IDs to shared memory regions
     ~SharedMemoryRegion();
 
     SharedMemoryView getView();
 
 private:
-    inline static constexpr int s_alignment_padding_bytes_ = 4096;
+    inline static constexpr uint16_t s_alignment_padding_bytes_ = 4096;
 
     std::string id_;
     uint64_t num_bytes_ = 0;

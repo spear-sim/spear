@@ -46,18 +46,12 @@
 // Minimal sp_float16_t data type
 //
 
-struct sp_float16_t
-{
-    uint16_t data;
-};
-
+struct sp_float16_t { uint16_t data; };
 template <>
 struct nanobind::detail::dtype_traits<sp_float16_t>
 {
-    static constexpr dlpack::dtype value {
-        static_cast<uint8_t>(dlpack::dtype_code::Float), // type code
-        16,                                              // size in bits
-        1};                                              // lanes (simd), usually set to 1
+    //                                       type code,                                       size in bits, SIMD lanes (usually set to 1) 
+    static constexpr dlpack::dtype value = { static_cast<uint8_t>(dlpack::dtype_code::Float), 16,           1};
     static constexpr auto name = const_name("sp_float16_t");
 };
 
@@ -111,16 +105,10 @@ struct SpPackedArrayAllocatorImpl
     }
 
     template <typename TOtherValue>
-    bool operator==(const SpPackedArrayAllocatorImpl<TOtherValue>&) const noexcept
-    {
-        return true;
-    }
+    bool operator==(const SpPackedArrayAllocatorImpl<TOtherValue>&) const noexcept { return true; }
 
     template <typename TOtherValue>
-    bool operator!=(const SpPackedArrayAllocatorImpl<TOtherValue>&) const noexcept
-    {
-        return false;
-    }
+    bool operator!=(const SpPackedArrayAllocatorImpl<TOtherValue>&) const noexcept { return false; }
 };
 
 using SpPackedArrayAllocator = SpPackedArrayAllocatorImpl<uint8_t>;
@@ -172,36 +160,20 @@ public:
 
     nonstd::optional<int64_t> getTimeout() const
     {
-        std::cout << "[SPEAR | spear_ext.cpp] Client::getTimeout()" << std::endl;
         SP_ASSERT(client_);
         return client_->get_timeout();
     };
 
     void setTimeout(int64_t value)
     {
-        std::cout << "[SPEAR | spear_ext.cpp] Client::setTimeout(...)" << std::endl;
         SP_ASSERT(client_);
         client_->set_timeout(value);
     };
 
     void clearTimeout()
     {
-        std::cout << "[SPEAR | spear_ext.cpp] Client::clearTimeout()" << std::endl;
         SP_ASSERT(client_);
         client_->clear_timeout();
-    };
-
-    template <typename TDest, typename TSrc>
-    TDest convert(TSrc&& src, std::shared_ptr<clmdep_msgpack::object_handle> object_handle)
-    {
-        SP_ASSERT(false);
-        return TDest();
-    };
-
-    template <typename TDest, typename TSrc> requires std::same_as<TDest, TSrc>
-    TDest convert(TSrc&& src, std::shared_ptr<clmdep_msgpack::object_handle> object_handle)
-    {
-        return std::move(src);
     };
 
     template <typename... TArgs>
@@ -272,6 +244,19 @@ public:
     };
 
 private:
+    template <typename TDest, typename TSrc>
+    TDest convert(TSrc&& src, std::shared_ptr<clmdep_msgpack::object_handle> object_handle)
+    {
+        SP_ASSERT(false);
+        return TDest();
+    };
+
+    template <typename TDest, typename TSrc> requires std::same_as<TDest, TSrc>
+    TDest convert(TSrc&& src, std::shared_ptr<clmdep_msgpack::object_handle> object_handle)
+    {
+        return std::move(src);
+    };
+
     std::unique_ptr<rpc::client> client_ = nullptr;
 };
 
@@ -598,23 +583,6 @@ public:
         SP_ASSERT(false);
         return nanobind::dtype<nanobind::ndarray<>::Scalar>();
     };
-
-    static uint8_t getSizeOf(const std::string& data_type)
-    {
-        if (data_type == "u1") return 1;
-        if (data_type == "i1") return 1;
-        if (data_type == "u2") return 2;
-        if (data_type == "i2") return 2;
-        if (data_type == "u4") return 4;
-        if (data_type == "i4") return 4;
-        if (data_type == "u8") return 8;
-        if (data_type == "i8") return 8;
-        if (data_type == "f2") return 2;
-        if (data_type == "f4") return 4;
-        if (data_type == "f8") return 8;
-        SP_ASSERT(false);
-        return 0;
-    };
 };
 
 class Std
@@ -626,18 +594,13 @@ public:
     template <typename TValue, typename... TVectorTraits>
     static void resizeUninitialized(std::vector<TValue, TVectorTraits...>& vector, int size)
     {
+        struct TValueNoDefaultInit { TValue value; TValueNoDefaultInit() {} };
+
         using TVector = std::vector<TValue, TVectorTraits...>;
         using TAllocator = typename TVector::allocator_type;
-
-        struct TValueNoDefaultInit
-        {
-            TValue value;
-            TValueNoDefaultInit() {}
-        };
-
         using TVectorNoDefaultInit = std::vector<TValueNoDefaultInit, typename std::allocator_traits<TAllocator>::template rebind_alloc<TValueNoDefaultInit>>;
 
-        SP_ASSERT(sizeof(TValue) == sizeof(TValueNoDefaultInit));
+        SP_ASSERT(sizeof(TValue)    == sizeof(TValueNoDefaultInit));
         SP_ASSERT(sizeof(TValue[2]) == sizeof(TValueNoDefaultInit[2]));
         SP_ASSERT(sizeof(TValue[4]) == sizeof(TValueNoDefaultInit[4]));
 
@@ -712,7 +675,7 @@ struct clmdep_msgpack::adaptor::convert<PackedArrayView> {
     }
 };
 
-template <>
+template <> // needed to convert a custom view type, received as a return value from the server, into a custom type that be returned to Python
 PackedArray Client::convert<PackedArray>(PackedArrayView&& packed_array_view, std::shared_ptr<clmdep_msgpack::object_handle> object_handle)
 {
     PackedArray packed_array;
@@ -734,7 +697,7 @@ PackedArray Client::convert<PackedArray>(PackedArrayView&& packed_array_view, st
         struct Capsule
         {
             std::vector<uint8_t, SpPackedArrayAllocator> data_;
-            std::shared_ptr<clmdep_msgpack::object_handle> object_handle = nullptr;
+            std::shared_ptr<clmdep_msgpack::object_handle> object_handle_ = nullptr;
         };
 
         // Allocate a Capsule on the heap.
@@ -745,37 +708,36 @@ PackedArray Client::convert<PackedArray>(PackedArrayView&& packed_array_view, st
             std::cout << "[SPEAR | spear_ext.cpp] Allocating Capsule at memory location: " << capsule_ptr << std::endl;
         }
 
+        void* data_ptr = nullptr;
+
         // If we're forcing memory alignment, then copy the clmdep_msgpack::object_handle's internal data
         // buffer into the Capsule's internal data buffer, which is guaranteed to be aligned to very large
         // boundaries, and use the Capsule's internal data buffer as the persistent storage for our nanobind
         // array.
 
-        // If we're not forcing memory alignment, the assign to the Capsule's std::shared_ptr to indicate
-        // that we want to keep the clmdep_msgpack::object_handle alive, and use the clmdep_msgpack::object_handle's
-        // internal data buffer as the persistent storage for our nanobind array.
-
-        void* data_ptr = nullptr;
-
         if (Statics::s_force_return_aligned_arrays_) {
             Std::resizeUninitialized(capsule_ptr->data_, packed_array_view.view_.size());
             std::memcpy(capsule_ptr->data_.data(), packed_array_view.view_.data(), packed_array_view.view_.size());
             data_ptr = capsule_ptr->data_.data();
+
+        // If we're not forcing memory alignment, then assign to the Capsule's std::shared_ptr to indicate
+        // that we want to keep the clmdep_msgpack::object_handle alive, and use the clmdep_msgpack::object_handle's
+        // internal data buffer as the persistent storage for our nanobind array.
+
         } else {
-            capsule_ptr->object_handle = object_handle;
+            capsule_ptr->object_handle_ = object_handle;
             data_ptr = packed_array_view.view_.data();
         }
 
-        // Construct a nanobind capsule that is responsible for deleting our heap-allocated Capsule.
+        // Construct a nanobind capsule object that is responsible for deleting our heap-allocated Capsule.
+        // In the in the deletion callback, we assign to our Capsule's std::shared_ptr object to indicate
+        // that we don't need to keep the clmdep_msgpack::object_handle alive any more and clean up our
+        // heap-allocated Capsule.
+
         nanobind::capsule capsule = nanobind::capsule(capsule_ptr, [](void* ptr) noexcept -> void {
             Capsule* capsule_ptr = static_cast<Capsule*>(ptr);
-
-            // Assign to the Capsule's std::shared_ptr object to indicate that we don't need to keep the
-            // clmdep_msgpack::object_handle alive any more.
-            capsule_ptr->object_handle = nullptr;
-
-            // Clean up the heap-allocated Capsule.
+            capsule_ptr->object_handle_ = nullptr;
             delete capsule_ptr;
-
             if (Statics::s_verbose_allocations_) {
                 std::cout << "[SPEAR | spear_ext.cpp] Deleting Capsule at memory location: " << capsule_ptr << std::endl;
             }
@@ -814,7 +776,7 @@ PackedArray Client::convert<PackedArray>(PackedArrayView&& packed_array_view, st
 // std::map<std::string, PackedArray>
 //
 
-template <>
+template <> // needed to convert a custom view type, received as a return value from the server, into a custom type that be returned to Python
 std::map<std::string, PackedArray> Client::convert<std::map<std::string, PackedArray>>(std::map<std::string, PackedArrayView>&& packed_array_views, std::shared_ptr<clmdep_msgpack::object_handle> object_handle)
 {
     std::map<std::string, PackedArray> packed_arrays;
@@ -853,7 +815,7 @@ struct clmdep_msgpack::adaptor::convert<DataBundleView> {
     }
 };
 
-template <>
+template <> // needed to convert a custom view type, received as a return value from the server, into a custom type that be returned to Python
 DataBundle Client::convert<DataBundle>(DataBundleView&& data_bundle_view, std::shared_ptr<clmdep_msgpack::object_handle> object_handle)
 {
     DataBundle data_bundle;

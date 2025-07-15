@@ -56,7 +56,7 @@ void USpSceneCaptureComponent2D::Initialize()
     }
 
     SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
-    int num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
+    uint64_t num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
 
     auto texture_render_target_2d = NewObject<UTextureRenderTarget2D>(this);
     SP_ASSERT(texture_render_target_2d);

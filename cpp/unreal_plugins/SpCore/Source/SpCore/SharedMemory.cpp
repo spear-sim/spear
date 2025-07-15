@@ -49,9 +49,9 @@ std::string SharedMemory::getUniqueIdString(uint64_t id)
     #endif
 }
 
-SharedMemoryRegion::SharedMemoryRegion(int num_bytes) : SharedMemoryRegion(num_bytes, SharedMemory::getUniqueId()) {}
+SharedMemoryRegion::SharedMemoryRegion(uint64_t num_bytes) : SharedMemoryRegion(num_bytes, SharedMemory::getUniqueId()) {}
 
-SharedMemoryRegion::SharedMemoryRegion(int num_bytes, uint64_t id)
+SharedMemoryRegion::SharedMemoryRegion(uint64_t num_bytes, uint64_t id)
 {
     SP_ASSERT(num_bytes > 0);
 
@@ -59,7 +59,7 @@ SharedMemoryRegion::SharedMemoryRegion(int num_bytes, uint64_t id)
     num_bytes_ = num_bytes;
     SP_ASSERT(id_ != "");
 
-    int num_bytes_internal = num_bytes_ + s_alignment_padding_bytes_;
+    uint64_t num_bytes_internal = num_bytes_ + s_alignment_padding_bytes_;
 
     #if BOOST_OS_WINDOWS
         boost::interprocess::windows_shared_memory windows_shared_memory(boost::interprocess::create_only, id_.c_str(), boost::interprocess::read_write, num_bytes_internal);
@@ -88,7 +88,7 @@ SharedMemoryRegion::~SharedMemoryRegion()
 
 SharedMemoryView SharedMemoryRegion::getView()
 {
-    int num_bytes_internal = num_bytes_ + s_alignment_padding_bytes_;
+    uint64_t num_bytes_internal = num_bytes_ + s_alignment_padding_bytes_;
 
     const void* const address = mapped_region_.get_address();
     SP_ASSERT(address);

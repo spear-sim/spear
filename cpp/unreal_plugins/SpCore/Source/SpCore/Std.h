@@ -164,9 +164,21 @@ public:
     // std::string functions
     //
 
-    static bool contains(const std::string& string, const std::string& substring);
-    static std::vector<std::string> tokenize(const std::string& string, const std::string& separators);
-    static std::string toLower(const std::string& string);
+    static bool contains(const std::string& string, const std::string& substring)
+    {
+        return string.find(substring) != std::string::npos;
+    }
+
+    static std::vector<std::string> tokenize(const std::string& string, const std::string& separators)
+    {
+        boost::tokenizer<boost::char_separator<char>> tokenizer(string, boost::char_separator<char>(separators.c_str()));
+        return std::vector<std::string>(tokenizer.begin(), tokenizer.end());        
+    }
+
+    static std::string toLower(const std::string& string)
+    {
+        return boost::algorithm::to_lower_copy(string);        
+    }
 
     static std::string toString(const auto&... args)
     {
@@ -204,18 +216,13 @@ public:
     template <typename TValue, typename... TVectorTraits>
     static void resizeUninitialized(std::vector<TValue, TVectorTraits...>& vector, int size)
     {
+        struct TValueNoDefaultInit { TValue value; TValueNoDefaultInit() {} };
+
         using TVector = std::vector<TValue, TVectorTraits...>;
         using TAllocator = typename TVector::allocator_type;
-
-        struct TValueNoDefaultInit
-        {
-            TValue value;
-            TValueNoDefaultInit() {}
-        };
-
         using TVectorNoDefaultInit = std::vector<TValueNoDefaultInit, typename std::allocator_traits<TAllocator>::template rebind_alloc<TValueNoDefaultInit>>;
 
-        SP_ASSERT(sizeof(TValue) == sizeof(TValueNoDefaultInit));
+        SP_ASSERT(sizeof(TValue)    == sizeof(TValueNoDefaultInit));
         SP_ASSERT(sizeof(TValue[2]) == sizeof(TValueNoDefaultInit[2]));
         SP_ASSERT(sizeof(TValue[4]) == sizeof(TValueNoDefaultInit[4]));
 
@@ -592,7 +599,7 @@ public:
             uint64_t src_num_bytes = src_num_elements*sizeof(TSrcValue);
             SP_ASSERT(src_num_bytes % sizeof(TDestValue) == 0);
             uint64_t dest_num_elements = src_num_bytes / sizeof(TDestValue);
-            dest.resize(dest_num_elements);
+            resizeUninitialized(dest, dest_num_elements);
             std::memcpy(dest.data(), src_data, src_num_bytes);
         }
         return dest;

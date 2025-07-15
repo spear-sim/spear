@@ -23,7 +23,7 @@ if __name__ == "__main__":
         # In typical use cases, Python code is responsible for defining shared memory regions for passing
         # arguments to Unreal objects, and Unreal objects are responsible for defining shared memory regions
         # for passing return values to Python. The name "smem:action" needs to be unique across all Python
-        # code interacting with instance.sp_func_service.
+        # code interacting with instance.shared_memory_service.
         action_shared_memory_handle = instance.shared_memory_service.create_shared_memory_region(shared_memory_name="smem:action", num_bytes=1024, usage_flags=["Arg"])
 
         # Get the default ASpDebugManager object. In this example, we're calling a custom function on an
@@ -31,8 +31,8 @@ if __name__ == "__main__":
         sp_debug_manager_static_class = game.unreal_service.get_static_class(class_name="ASpDebugManager")
         sp_debug_manager_default_object = game.unreal_service.get_default_object(uclass=sp_debug_manager_static_class, create_if_needed=False)
 
-        # Create handles to any shared memory regions created by the Unreal object. instance.sp_func_service.call_function(...)
-        # will use these handles internally to access data returned via shared memory.
+        # Create handles to any shared memory regions created by the Unreal object. The instance.sp_func_service.call_function(...)
+        # function will use these handles internally to access data returned via shared memory.
         sp_debug_manager_shared_memory_handles = instance.sp_func_service.create_shared_memory_handles_for_object(uobject=sp_debug_manager_default_object)
 
         # Create a NumPy array.
