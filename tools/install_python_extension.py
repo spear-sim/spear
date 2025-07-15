@@ -131,5 +131,5 @@ if __name__ == "__main__":
     spear.log("Executing: ", cmd)
     subprocess.run(cmd, shell=True, check=True)
 
-    spear.log("Successfully built and installed the spear_ext Python extension module.")
+    spear.log("Successfully built and installed the spear_ext Python extension module.") 
     spear.log("Done.")
