@@ -252,12 +252,10 @@ public:
         SP_ASSERT(client_);
 
         try {
-
             std::shared_ptr<clmdep_msgpack::object_handle> object_handle = std::make_shared<clmdep_msgpack::object_handle>(client_->call(func_name, args...));
             TReturnSrc return_value_src = object_handle->template as<TReturnSrc>(); // .template needed on macOS
             TReturnDest return_value_dest = convert<TReturnDest>(std::move(return_value_src), object_handle);
             return return_value_dest;
-
         } catch (const std::exception& e) {
             if (Statics::s_verbose_exceptions_) {
                 std::cout << "[SPEAR | spear_ext.cpp] ERROR: Caught exception when calling \"" << func_name << "\": " << e.what() << std::endl;
