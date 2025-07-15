@@ -2,19 +2,7 @@
 
 ## Assumptions
 
-We will assume that you are developing on a version of Windows, macOS, or Linux that is compatible with Unreal Engine 5.5. We will also assume that you're using Anaconda Python to manage your Python environment, and that you have Git and CMake installed. If you have Anaconda Python installed, you can easily obtain Git and CMake by executing the following commands.
-
-```console
-# create environment
-conda create --name spear-env python=3.11
-conda activate spear-env
-
-# install git
-conda install -c conda-forge git
-
-# install cmake
-pip install cmake
-```
+We will assume that you are developing on a version of Windows, macOS, or Linux that is compatible with Unreal Engine 5.5. We will also assume that you're using Anaconda Python to manage your Python environment, and that you have Git and CMake installed.
 
 ### Minimum and recommended system specifications
 
@@ -36,7 +24,7 @@ Linux:   path/to/Linux_Unreal_Engine_5.5.1
 
 ## Install an appropriate compiler
 
-If you're developing on Windows or macOS, you will need to install a specific compiler that is compatible with Unreal Engine 5.5. If you're developing on Linux, the Unreal Engine ships with its own version of `clang` and `libc++`, so there is no need to install another compiler to build the `SpearSim` project in this repository, but you will need to install an appropriate compiler to build our third-party dependencies (described below). We have verified that the following compilers behave as expected when building `SpearSim`.
+If you're developing on Windows or macOS, you will need to install a specific compiler that is compatible with Unreal Engine 5.5. If you're developing on Linux, the Unreal Engine ships with its own version of `clang` and `libc++`, so there is no need to install another compiler to build the `SpearSim` project in this repository, but you will still need to install an appropriate compiler to build our third-party dependencies as described below. We have verified that the following compilers behave as expected when building `SpearSim`.
 
 ```
 Windows: Visual Studio 2022
@@ -65,6 +53,22 @@ Set-ExecutionPolicy -Scope LocalMachine -ExecutionPolicy Bypass
 ```
 
 After executing these commands, you can use the _Developer PowerShell for VS 2022_ profile in the Windows Terminal application, and it will be able to access Anaconda Python and the Visual Studio command-line tools.
+
+## Install Git and CMake
+
+If you have Anaconda installed, you can easily obtain Git and CMake by executing the following commands.
+
+```console
+# create environment
+conda create --name spear-env python=3.11
+conda activate spear-env
+
+# install git
+conda install -c conda-forge git
+
+# install cmake
+pip install cmake
+```
 
 ## Clone this repository including submodules
 
