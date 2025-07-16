@@ -271,7 +271,12 @@ class Instance():
 
             if sys.platform == "win32":
                 launch_executable_internal_template = os.path.realpath(os.path.join(launch_executable_dir_internal, f"{launch_executable_name_no_ext}*-Cmd.exe"))
-                launch_executable_internal_paths = glob.glob(launch_executable_internal_template)
+                if self._config.SPEAR.LAUNCH_MODE == "editor":
+                    launch_executable_internal_paths = [ p for p in glob.glob(launch_executable_internal_template) if not "-Win64-" in os.path.basename(p) ]
+                elif self._config.SPEAR.LAUNCH_MODE == "game":
+                    launch_executable_internal_paths = glob.glob(launch_executable_internal_template)
+                else:
+                    assert False
                 assert len(launch_executable_internal_paths) == 1
                 launch_executable_internal = launch_executable_internal_paths[0]
             elif sys.platform == "darwin":
