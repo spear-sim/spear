@@ -97,6 +97,7 @@ if __name__ == "__main__":
                 conda_script = args.conda_script
             assert conda_script is not None
 
+        else:
             # see https://docs.anaconda.com/anaconda/user-guide/faq
             conda_script_candidates = [
                 os.path.expanduser(os.path.join("~", "anaconda3", "etc", "profile.d", "conda.sh")),
