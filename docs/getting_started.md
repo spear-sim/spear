@@ -56,7 +56,7 @@ After executing these commands, you can use the _Developer PowerShell for VS 202
 
 ## Install Git and CMake
 
-If you have Anaconda installed, you can easily obtain Git and CMake by executing the following commands.
+If you have Anaconda installed, and you don't already have Git and CMake, you can easily obtain them by executing the following commands.
 
 ```console
 # create environment
