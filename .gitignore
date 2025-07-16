@@ -55,6 +55,7 @@ examples/render_dataset/camera_poses
 examples/render_dataset/images
 
 examples/render_grid/images
+examples/render_grid/movie.mp4
 
 examples/render_image_editor/screenshot.png
 
