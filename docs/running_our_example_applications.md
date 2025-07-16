@@ -9,7 +9,7 @@ We will assume that you have completed all the steps in our [Getting Started](do
 In typical use cases, you will need to configure the behavior of the `spear` Python package before you interact with it. In each of our example applications, we include a configuration file named `user_config.yaml.example` to use as a starting point. To run each example application, you must rename this file to `user_config.yaml` and modify the contents appropriately for your system. At a minimum, you will need to set the `SPEAR.INSTANCE.GAME_EXECUTABLE` parameter to the location of your `SpearSim` executable. Depending on your platform, the path to your executable should be formatted as follows.
 
 ```
-Windows: path/to/Windows/SpearSim.exe
+Windows: path\\to\\Windows\\SpearSim.exe
 macOS:   path/to/Mac/SpearSim.app
 Linux:   path/to/Linux/SpearSim.sh
 ```
