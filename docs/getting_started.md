@@ -155,7 +155,7 @@ python tools/run_uat.py --unreal_engine_dir path/to/UE_5.5 -build -cook -stage -
 This tool is a thin wrapper around Unreal's [RunUAT](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Deployment/BuildOperations) tool. Our tool consumes `--unreal_engine_dir`, provides Unreal's `RunUAT` tool with sensible default values for a few commonly used arguments, and otherwise forwards all arguments directly to `RunUAT`. This step will generate an executable at the following locations.
 
 ```
-Windows: cpp/unreal_projects/SpearSim/Standalone-Development/Windows/SpearSim.exe
+Windows: cpp\unreal_projects\SpearSim\Standalone-Development\Windows\SpearSim.exe
 macOS:   cpp/unreal_projects/SpearSim/Standalone-Development/Mac/SpearSim.app
 Linux:   cpp/unreal_projects/SpearSim/Standalone-Development/Linux/SpearSim.sh
 ```
@@ -188,7 +188,7 @@ When executing our command-line tool, you will need to specify a logical Unreal 
 You can also optionally specify an `--executable`. If you don't specify an `--executable`, our command-line tool will assume that you built an executable from source in the default location (described above). Depending on your platform, the path to your executable should be formatted as follows.
 
 ```
-Windows: path/to/Windows/SpearSim/Binaries/Win64/SpearSim-Cmd.exe
+Windows: path\to\Windows\SpearSim.exe
 macOS:   path/to/Mac/SpearSim.app
 Linux:   path/to/Linux/SpearSim.sh
 ```
