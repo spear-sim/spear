@@ -23,7 +23,7 @@ if __name__ == "__main__":
         executable = args.executable
     else:
         if sys.platform == "win32":
-            executable = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "Standalone-Development", "Windows", "SpearSim", "Binaries", "Win64", "SpearSim-Cmd.exe"))
+            executable = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "Standalone-Development", "Windows", "SpearSim.exe"))
         elif sys.platform == "darwin":
             executable = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "Standalone-Development", "Mac", "SpearSim.app"))
         elif sys.platform == "linux":
