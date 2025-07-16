@@ -214,7 +214,7 @@ public:
     //
 
     template <typename TValue, typename... TVectorTraits>
-    static void resizeUninitialized(std::vector<TValue, TVectorTraits...>& vector, int size)
+    static void resizeUninitialized(std::vector<TValue, TVectorTraits...>& vector, uint64_t size)
     {
         struct TValueNoDefaultInit { TValue value; TValueNoDefaultInit() {} };
 

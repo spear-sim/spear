@@ -2,6 +2,7 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
+import glob
 import os
 import psutil
 import spear
@@ -211,7 +212,10 @@ class Instance():
             with open(temp_config_file, "w") as f:
                 self._config.dump(stream=f, default_flow_style=False)
 
-            # set up launch executable and command-line arguments
+            # Find launch executable to launch. The correct executable to launch depends on the platform and
+            # whether we're launching a standalone game or editor. Also create a list of command-line
+            # arguments.
+
             launch_args = []
 
             if self._config.SPEAR.LAUNCH_MODE == "editor":
@@ -227,23 +231,70 @@ class Instance():
 
             assert os.path.exists(launch_executable)
 
-            launch_executable_name, launch_executable_ext = os.path.splitext(launch_executable)
+            launch_executable_dir, launch_executable_name = os.path.split(launch_executable)
+            launch_executable_name_no_ext, launch_executable_ext = os.path.splitext(launch_executable_name)
 
             if sys.platform == "win32":
-                assert launch_executable_name[-4:] == "-Cmd"
                 assert launch_executable_ext == ".exe"
-                launch_executable_internal = launch_executable
             elif sys.platform == "darwin":
                 assert launch_executable_ext == ".app"
-                launch_executable_internal = os.path.realpath(os.path.join(launch_executable, "Contents", "MacOS", os.path.basename(launch_executable_name)))
             elif sys.platform == "linux":
-                assert launch_executable_ext == ".sh"
-                launch_executable_internal = launch_executable
+                if self._config.SPEAR.LAUNCH_MODE == "editor":
+                    assert launch_executable_ext == ""
+                elif self._config.SPEAR.LAUNCH_MODE == "game":
+                    assert launch_executable_ext == ".sh"
+                else:
+                    assert False
             else:
                 assert False
 
-            assert os.path.exists(launch_executable_internal)
+            if self._config.SPEAR.LAUNCH_MODE == "editor":
+                if sys.platform == "win32":
+                    launch_executable_dir_internal = launch_executable_dir
+                elif sys.platform == "darwin":
+                    launch_executable_dir_internal = os.path.realpath(os.path.join(launch_executable, "Contents", "MacOS"))
+                elif sys.platform == "linux":
+                    launch_executable_dir_internal = launch_executable_dir
+                else:
+                    assert False
+            elif self._config.SPEAR.LAUNCH_MODE == "game":
+                if sys.platform == "win32":
+                    launch_executable_dir_internal = os.path.realpath(os.path.join(launch_executable_dir, launch_executable_name_no_ext, "Binaries", "Win64"))
+                elif sys.platform == "darwin":
+                    launch_executable_dir_internal = os.path.realpath(os.path.join(launch_executable, "Contents", "MacOS"))
+                elif sys.platform == "linux":
+                    launch_executable_dir_internal = os.path.realpath(os.path.join(launch_executable_dir, launch_executable_name_no_ext, "Binaries", "Linux"))
+                else:
+                    assert False
+            else:
+                assert False
 
+            if sys.platform == "win32":
+                launch_executable_internal_template = os.path.realpath(os.path.join(launch_executable_dir_internal, f"{launch_executable_name_no_ext}*-Cmd.exe"))
+                launch_executable_internal_paths = glob.glob(launch_executable_internal_template)
+                assert len(launch_executable_internal_paths) == 1
+                launch_executable_internal = launch_executable_internal_paths[0]
+            elif sys.platform == "darwin":
+                launch_executable_internal_template = os.path.realpath(os.path.join(launch_executable_dir_internal, f"{launch_executable_name_no_ext}*"))
+                launch_executable_internal_paths = glob.glob(launch_executable_internal_template)
+                assert len(launch_executable_internal_paths) == 1
+                launch_executable_internal = launch_executable_internal_paths[0]
+            elif sys.platform == "linux":
+                launch_executable_internal_template = os.path.realpath(os.path.join(launch_executable_dir_internal, f"{launch_executable_name_no_ext}*"))
+                if self._config.SPEAR.LAUNCH_MODE == "editor":
+                    launch_executable_internal_paths = [ p for p in glob.glob(launch_executable_internal_template) if (not "." in os.path.basename(p)) and (not "-" in os.path.basename(p)) ]
+                elif self._config.SPEAR.LAUNCH_MODE == "game":
+                    launch_executable_internal_paths = [ p for p in glob.glob(launch_executable_internal_template) if not "." in os.path.basename(p) ]
+                else:
+                    assert False
+                assert len(launch_executable_internal_paths) == 1
+                launch_executable_internal = launch_executable_internal_paths[0]
+            else:
+                assert False
+
+            spear.log("    Attempting to launch executable: ", launch_executable_internal)
+            assert os.path.exists(launch_executable_internal)
+  
             for arg, value in (self._config.SPEAR.INSTANCE.COMMAND_LINE_ARGS).items():
                 if value is None:
                     launch_args.append(f"-{arg}")
@@ -254,7 +305,9 @@ class Instance():
             cmd = [launch_executable_internal] + launch_args
 
             spear.log("    Launching executable with the following command-line arguments:")
-            spear.log_no_prefix(" ".join(cmd))
+            spear.log(f"        {launch_executable_internal}")
+            for launch_arg in launch_args:
+                spear.log(f"            {launch_arg}")
             spear.log("    Launching executable with the following config values:")
             spear.log_no_prefix(self._config)
 

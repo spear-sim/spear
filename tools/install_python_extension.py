@@ -88,8 +88,8 @@ if __name__ == "__main__":
 
         cxx_compiler = os.path.join(linux_clang_bin_dir, "clang++")
 
-        common_cxx_flags = f"-nostdinc++ -I\'{linux_libcpp_include_dir}\' -Wno-reserved-macro-identifier"
-        cmake_cxx_flags = f"-std=c++20 {common_cxx_flags}"
+        common_cxx_flags = f"-std=c++20 -nostdinc++ -I\'{linux_libcpp_include_dir}\' -Wno-reserved-macro-identifier -stdlib=libc++ -L\'{linux_libcpp_lib_dir}\' -lc++"
+        cmake_cxx_flags = f"{common_cxx_flags}"
 
         if args.conda_script:
             if os.path.exists(args.conda_script):
