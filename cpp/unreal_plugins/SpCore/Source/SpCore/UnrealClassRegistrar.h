@@ -848,7 +848,7 @@ public:
         std::string type_id_string = getTypeIdString<TSpecialStruct>();
         SP_ASSERT(!Std::containsKey(g_special_struct_names, type_id_string));
         SP_ASSERT(!Std::containsKey(g_special_structs, type_id_string));
-        Std::insert(g_special_struct_names, type_id_string, struct_name);
+        Std::insert(g_special_struct_names, std::move(type_id_string), struct_name);
     }
 
     template <typename TSpecialStruct> requires
@@ -861,7 +861,7 @@ public:
         std::string type_id_string = getTypeIdString<TSpecialStruct>();
         SP_ASSERT(!Std::containsKey(g_special_struct_names, type_id_string));
         SP_ASSERT(!Std::containsKey(g_special_structs, type_id_string));
-        Std::insert(g_special_structs, type_id_string, ustruct);
+        Std::insert(g_special_structs, std::move(type_id_string), ustruct);
     }
 
     template <typename TStruct>

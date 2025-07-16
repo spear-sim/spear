@@ -574,7 +574,7 @@ std::map<std::string, std::string> Unreal::callFunction(const UWorld* world, UOb
     std::vector<uint8_t> args_vector(num_bytes, initial_value);
 
     // Create PropertyDescs for the function's arguments and return value.
-    std::vector<PropertyDesc> property_descs;
+    std::map<std::string, PropertyDesc> property_descs;
     for (TFieldIterator<FProperty> itr(ufunction); itr; ++itr) {
         PropertyDesc property_desc;
         property_desc.property_ = *itr;
@@ -584,16 +584,16 @@ std::map<std::string, std::string> Unreal::callFunction(const UWorld* world, UOb
         property_desc.value_ptr_ = property_desc.property_->ContainerPtrToValuePtr<void>(args_vector.data());
         SP_ASSERT(property_desc.value_ptr_);
 
-        property_descs.push_back(std::move(property_desc));
+        std::string property_name = toStdString(property_desc.property_->GetName());
+
+        Std::insert(property_descs, std::move(property_name), std::move(property_desc));
     }
 
     // Input args must be a subset of the function's args.
-    auto property_names = Std::toVector<std::string>(property_descs | std::views::transform([](const auto& desc) { return toStdString(desc.property_->GetName()); }));
-    SP_ASSERT(Std::isSubsetOf(Std::keys(args), property_names));
+    SP_ASSERT(Std::isSubsetOf(Std::keys(args), Std::keys(property_descs)));
 
     // Set property values.
-    for (auto& property_desc : property_descs) {
-        std::string property_name = toStdString(property_desc.property_->GetName());
+    for (auto& [property_name, property_desc] : property_descs) {
 
         // If the current property name has been flagged by the caller as being the special world_context
         // arg, then set the property using the input world pointer instead of using a string in args, and
@@ -612,6 +612,7 @@ std::map<std::string, std::string> Unreal::callFunction(const UWorld* world, UOb
 
         // If the property name is in args, then set it using the string in args, and make sure the property
         // name was not also flagged by the caller as being the special world_context arg.
+
         if (Std::containsKey(args, property_name)) {
             SP_ASSERT(property_name != world_context);
             setPropertyValueFromString(property_desc, args.at(property_name));
@@ -623,9 +624,8 @@ std::map<std::string, std::string> Unreal::callFunction(const UWorld* world, UOb
 
     // Return all property values because they might have been modified by the function we called.
     std::map<std::string, std::string> return_values;
-    for (auto& property_desc : property_descs) {
-        std::string property_name = toStdString(property_desc.property_->GetName());
-        Std::insert(return_values, property_name, getPropertyValueAsString(property_desc));
+    for (auto& [property_name, property_desc] : property_descs) {
+        Std::insert(return_values, std::move(property_name), getPropertyValueAsString(property_desc));
     }
 
     return return_values;

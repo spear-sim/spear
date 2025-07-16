@@ -240,7 +240,7 @@ std::map<std::string, SpPackedArray> SpArrayUtils::moveToPackedArrays(const std:
     for (auto& [name, array] : arrays) {
         SpPackedArray packed_array;
         array->moveToPackedArray(packed_array);
-        Std::insert(packed_arrays, name, std::move(packed_array));
+        Std::insert(packed_arrays, std::move(name), std::move(packed_array));
     }
     return packed_arrays;
 }

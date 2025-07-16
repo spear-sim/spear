@@ -112,7 +112,7 @@ concept CMap =
         { map.end() } -> std::convertible_to<const typename TMap::iterator&>;
         { map.at(key) } -> std::convertible_to<const typename TMap::mapped_type&>;
         { map.contains(key) } -> std::same_as<bool>;
-        { map.insert({key, std::move(value)}) } -> std::convertible_to<const std::pair<typename TMap::iterator, bool>&>;
+        { map.insert({std::move(key), std::move(value)}) } -> std::convertible_to<const std::pair<typename TMap::iterator, bool>&>;
         { map.erase(key) } -> std::same_as<size_t>;
         { *itr } -> std::convertible_to<const typename TMap::value_type&>;
     };
@@ -418,13 +418,13 @@ public:
         return toVector<TValue>(keys | std::views::transform([&map, &def](const auto& key) { return containsKey(map, key) ? map.at(key) : def; }));
     }
 
-    // We use TValue&& because we want to preserve and forward the const-ness and rvalue-ness of value.
+    // We use TKey&& and TValue&& because we want to preserve and forward the const-ness and rvalue-ness of key and value.
     template <typename TMap, typename TKey, typename TValue> requires
         CMapKeysAreConvertibleFrom<TMap, TKey> &&
         CMapValuesAreConvertibleFrom<TMap, TValue>
-    static void insert(TMap& map, const TKey& key, TValue&& value)
+    static void insert(TMap& map, TKey&& key, TValue&& value)
     {
-        auto [itr, success] = map.insert({key, std::forward<decltype(value)>(value)});
+        auto [itr, success] = map.insert({std::forward<decltype(key)>(key), std::forward<decltype(value)>(value)});
         SP_ASSERT(success); // will only succeed if key wasn't already present
     }
 
@@ -432,12 +432,14 @@ public:
     // Only the value type of the initializer list can be inferred (e.g., the int type in std::initializer_list<int>),
     // and only when the initializer list passed to the templated function is non-empty. So this insert(...)
     // specialization is required handle situations where a caller passes in a non-empty initializer list.
+
+    // We use TKey&& because we want to preserve and forward the const-ness and rvalue-ness of key and value.
     template <typename TMap, typename TKey, typename TInitializerListValue> requires
         CMapKeysAreConvertibleFrom<TMap, TKey> &&
         CMapValuesAreConvertibleFromInitializerList<TMap, TInitializerListValue>
-    static void insert(TMap& map, const TKey& key, std::initializer_list<TInitializerListValue> initializer_list)
+    static void insert(TMap& map, TKey&& key, std::initializer_list<TInitializerListValue> initializer_list)
     {
-        auto [itr, success] = map.insert({key, initializer_list});
+        auto [itr, success] = map.insert({std::forward<decltype(key)>(key), initializer_list});
         SP_ASSERT(success); // will only succeed if key wasn't already present
     }
 
@@ -447,12 +449,13 @@ public:
 private:
     class EmptyInitializerList;
 public:
+    // We use TKey&& because we want to preserve and forward the const-ness and rvalue-ness of key and value.
     template <typename TMap, typename TKey> requires
         CMapKeysAreConvertibleFrom<TMap, TKey> &&
         CMapValuesAreConvertibleFromEmptyInitializerList<TMap>
-    static void insert(TMap& map, const TKey& key, std::initializer_list<EmptyInitializerList> initializer_list)
+    static void insert(TMap& map, TKey&& key, std::initializer_list<EmptyInitializerList> initializer_list)
     {
-        auto [itr, success] = map.insert({key, {}});
+        auto [itr, success] = map.insert({std::forward<decltype(key)>(key), {}});
         SP_ASSERT(success); // will only succeed if key wasn't already present
     }
 
