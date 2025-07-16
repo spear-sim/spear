@@ -43,5 +43,5 @@ We recommend browsing through our example applications to get a sense of what is
   - [`examples/render_dataset`](../examples/render_dataset) demonstrates how to generate random camera poses and render a collection of images.
   - [`examples/render_grid`](../examples/render_grid) demonstrates how to render from a multi-camera rig.
   - [`examples/render_image`](../examples/render_image) demonstrates how to spawn a camera sensor object and render an image.
-  - [`examples/render_image_editor`](../examples/render_image) demonstrates how to render an image using the Unreal Editor's built-in Python API.
+  - [`examples/render_image_editor`](../examples/render_image_editor) demonstrates how to render an image using the Unreal Editor's built-in Python API.
   - [`examples/sample_nav_mesh`](../examples/sample_nav_mesh) demonstrates how to sample points and shortest paths from Unreal's nav mesh system.
