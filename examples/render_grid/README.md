@@ -9,5 +9,5 @@ python run.py
 You should see a game window appear.  Several files named `{idx}.png` will be saved to an `images` directory. These can be combined into a video with `ffmpeg` as:
 
 ```console
-ffmpeg -i "images/%d.png" montage.mp4
+ffmpeg -i "images/%d.png" movie.mp4
 ```
