@@ -323,6 +323,19 @@ struct DataBundleView
 
 NB_MODULE(spear_ext, module)
 {
+    //
+    // Statics
+    //
+
+    auto statics_class = nanobind::class_<Statics>(module, "Statics");
+    statics_class.def_rw_static("force_return_aligned_arrays", &Statics::s_force_return_aligned_arrays_);
+    statics_class.def_rw_static("verbose_exceptions", &Statics::s_verbose_exceptions_);
+    statics_class.def_rw_static("verbose_allocations", &Statics::s_verbose_allocations_);
+
+    //
+    // Client
+    //
+
     auto client_class = nanobind::class_<Client>(module, "Client");
     client_class.def(nanobind::init<const std::string&, const uint16_t>());
 
@@ -497,15 +510,6 @@ NB_MODULE(spear_ext, module)
     property_desc_class.def(nanobind::init<>());
     property_desc_class.def_rw("property",  &PropertyDesc::property_);
     property_desc_class.def_rw("value_ptr", &PropertyDesc::value_ptr_);
-
-    //
-    // Statics
-    //
-
-    auto statics_class = nanobind::class_<Statics>(module, "Statics");
-    statics_class.def_rw_static("force_return_aligned_arrays", &Statics::s_force_return_aligned_arrays_);
-    statics_class.def_rw_static("verbose_exceptions", &Statics::s_verbose_exceptions_);
-    statics_class.def_rw_static("verbose_allocations", &Statics::s_verbose_allocations_);
 }
 
 //
