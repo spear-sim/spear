@@ -249,17 +249,12 @@ public:
     };
 
 private:
+    // needed to convert a custom view type, received as a return value from the server, into a custom type that be returned to Python (specialized below)
     template <typename TDest, typename TSrc>
     TDest convert(TSrc&& src, std::shared_ptr<clmdep_msgpack::object_handle> object_handle)
     {
         SP_ASSERT(false);
         return TDest();
-    };
-
-    template <typename TDest, typename TSrc> requires std::same_as<TDest, TSrc>
-    TDest convert(TSrc&& src, std::shared_ptr<clmdep_msgpack::object_handle> object_handle)
-    {
-        return std::move(src);
     };
 
     std::unique_ptr<rpc::client> client_ = nullptr;
