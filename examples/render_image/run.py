@@ -60,8 +60,8 @@ if __name__ == "__main__":
         player_camera_manager = spear.to_handle(string=player_camera_manager_string)
 
         if args.benchmark:
-            viewport_x = config.SPEAR.INSTANCE.COMMAND_LINE_ARGS.resx
-            viewport_y = config.SPEAR.INSTANCE.COMMAND_LINE_ARGS.resy
+            viewport_x = 1024
+            viewport_y = 1024
         else:
             viewport_size = instance.engine_service.get_viewport_size()
             viewport_x = viewport_size[0]
@@ -124,6 +124,7 @@ if __name__ == "__main__":
             function_name="read_pixels",
             uobject_shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
 
+    # show debug data now that we're outside of instance.end_frame()
     spear.log('return_values["arrays"]["data"]: ')
     spear.log_no_prefix(return_values["arrays"]["data"])
     spear.log('return_values["arrays"]["data"].flags["ALIGNED"]: ', return_values["arrays"]["data"].flags["ALIGNED"])
@@ -136,24 +137,51 @@ if __name__ == "__main__":
     # optional benchmarking
     if args.benchmark:
 
-        # game.unreal_service.get_static_class(...)
+        # instance._client.get_timeout()
+        num_steps = 100000
+        start_time_seconds = time.time()
+        for i in range(num_steps):
+            instance._client.get_timeout()
+        end_time_seconds = time.time()
+        elapsed_time_seconds = end_time_seconds - start_time_seconds
+        spear.log("Average time for instance._client.get_timeout(): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
+
+        # instance.engine_service.get_id()
+        num_steps = 1000
+        start_time_seconds = time.time()
+        for i in range(num_steps):
+            instance.engine_service.get_id()
+        end_time_seconds = time.time()
+        elapsed_time_seconds = end_time_seconds - start_time_seconds
+        spear.log("Average time for instance.engine_service.get_id(): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
+
+        # empty
         num_steps = 100
         start_time_seconds = time.time()
-
         for i in range(num_steps):
             with instance.begin_frame():
                 pass
             with instance.end_frame():
-                actor_static_class = game.unreal_service.get_static_class(class_name="AActor")
-
+                pass
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log("Average frame time for get_static_class(...): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
+        spear.log("Average frame time for empty with begin_frame() / with end_frame(): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
+
+        # game.unreal_service.get_static_class(...)
+        num_steps = 100
+        start_time_seconds = time.time()
+        for i in range(num_steps):
+            with instance.begin_frame():
+                pass
+            with instance.end_frame():
+                game.unreal_service.get_static_class(class_name="AActor")
+        end_time_seconds = time.time()
+        elapsed_time_seconds = end_time_seconds - start_time_seconds
+        spear.log("Average frame time for game.unreal_service.get_static_class(...): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
 
         # instance.sp_func_service.call_function(...)
         num_steps = 100
         start_time_seconds = time.time()
-
         for i in range(num_steps):
             with instance.begin_frame():
                 pass
@@ -162,7 +190,6 @@ if __name__ == "__main__":
                     uobject=final_tone_curve_hdr_component,
                     function_name="read_pixels",
                     uobject_shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
-
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
         spear.log("Average frame time for instance.sp_func_service.call_function(...): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))

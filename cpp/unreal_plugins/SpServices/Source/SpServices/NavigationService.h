@@ -65,7 +65,7 @@ public:
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_random_points",
             [this](
                 uint64_t& navigation_data,
-                int& num_points,
+                int32_t& num_points,
                 uint64_t& query_owner,
                 std::map<std::string, SpPackedArray>& packed_arrays,
                 SpPackedArray& out_array) -> SpPackedArray {
@@ -117,7 +117,7 @@ public:
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_random_reachable_points_in_radius",
             [this](
                 uint64_t& navigation_data,
-                int& num_points,
+                int32_t& num_points,
                 uint64_t& query_owner,
                 std::map<std::string, SpPackedArray>& packed_arrays,
                 SpPackedArray& out_array) -> SpPackedArray {
@@ -200,7 +200,7 @@ public:
             [this](
                 uint64_t& navigation_system,
                 uint64_t& navigation_data,
-                int& num_paths,
+                int32_t& num_paths,
                 uint64_t& nav_agent_interface,
                 std::map<std::string, SpPackedArray>& packed_arrays,
                 std::vector<std::string>& nav_agent_property_strings,

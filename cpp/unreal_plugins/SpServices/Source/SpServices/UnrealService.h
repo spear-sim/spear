@@ -1162,7 +1162,7 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "set_console_variable_value_from_int",
-            [this](uint64_t& cvar, int& val, std::vector<std::string>& set_by_strings) -> void {
+            [this](uint64_t& cvar, int32_t& val, std::vector<std::string>& set_by_strings) -> void {
                 SP_ASSERT(cvar);
                 toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings));
             });

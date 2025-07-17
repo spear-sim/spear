@@ -158,10 +158,15 @@ public:
         client_ = nullptr;
     };
 
-    nonstd::optional<int64_t> getTimeout() const
+    int64_t getTimeout() const
     {
         SP_ASSERT(client_);
-        return client_->get_timeout();
+        nonstd::optional<int64_t> timeout = client_->get_timeout();
+        if (timeout.has_value()) {
+            return *timeout;
+        } else {
+            return -1;
+        }
     };
 
     void setTimeout(int64_t value)
@@ -370,6 +375,7 @@ NB_MODULE(spear_ext, module)
 
     // 0 args
     client_class.def("call_and_get_return_value_as_bool",                                &Client::callAndGetReturnValue<bool>);
+    client_class.def("call_and_get_return_value_as_int64",                               &Client::callAndGetReturnValue<int64_t>);
     client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t>);
     client_class.def("call_and_get_return_value_as_string",                              &Client::callAndGetReturnValue<std::string>);
     client_class.def("call_and_get_return_value_as_vector_of_uint64",                    &Client::callAndGetReturnValue<std::vector<uint64_t>>);
@@ -459,10 +465,10 @@ NB_MODULE(spear_ext, module)
     client_class.def("call_and_get_converted_return_value_as_data_bundle",                   &Client::callAndGetConvertedReturnValue<DataBundle,  DataBundleView,                                                uint64_t, const std::string&, const DataBundle&>);
 
     // 5 args
-    client_class.def("call_and_get_converted_return_value_as_packed_array",                  &Client::callAndGetConvertedReturnValue<PackedArray, PackedArrayView,                                               uint64_t, int,                uint64_t,           const std::map<std::string, PackedArray>&, const PackedArray&>);
+    client_class.def("call_and_get_converted_return_value_as_packed_array",                  &Client::callAndGetConvertedReturnValue<PackedArray, PackedArrayView,                                               uint64_t, int32_t,            uint64_t,           const std::map<std::string, PackedArray>&, const PackedArray&>);
 
     // 7 args
-    client_class.def("call_and_get_converted_return_value_as_map_of_string_to_packed_array", &Client::callAndGetConvertedReturnValue<std::map<std::string, PackedArray>, std::map<std::string, PackedArrayView>, uint64_t, uint64_t,           int,                uint64_t,                                  const std::map<std::string, PackedArray>&, const std::vector<std::string>&,  const std::vector<std::string>&>);
+    client_class.def("call_and_get_converted_return_value_as_map_of_string_to_packed_array", &Client::callAndGetConvertedReturnValue<std::map<std::string, PackedArray>, std::map<std::string, PackedArrayView>, uint64_t, uint64_t,           int32_t,            uint64_t,                                  const std::map<std::string, PackedArray>&, const std::vector<std::string>&,  const std::vector<std::string>&>);
 
     //
     // Custom types

@@ -411,7 +411,7 @@ class Instance():
             assert False
 
         # don't use self.services.engine_service because it hasn't been initialized yet
-        pid = self._client.call_and_get_return_value_as_uint64("engine_service.get_id")
+        pid = self._client.call_and_get_return_value_as_int64("engine_service.get_id")
         if pid == self._process.pid:
             spear.log("    Validated engine_service.get_id.")
         else:            

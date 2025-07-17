@@ -155,6 +155,8 @@ class EngineService():
             return_value = self._client.call_and_get_return_value_as_int32(func_name, *args)
         elif return_as == "uint32_t":
             return_value = self._client.call_and_get_return_value_as_uint32(func_name, *args)
+        elif return_as == "int64_t":
+            return_value = self._client.call_and_get_return_value_as_int64(func_name, *args)
         elif return_as == "uint64_t":
             return_value = self._client.call_and_get_return_value_as_uint64(func_name, *args)
         elif return_as == "std::string":
@@ -206,7 +208,7 @@ class EngineService():
     # Miscellaneous low-level entry points.
 
     def get_id(self):
-        return self.call_on_worker_thread_and_get_return_value("bool", "engine_service.get_id")
+        return self.call_on_worker_thread_and_get_return_value("int64_t", "engine_service.get_id")
 
     def get_with_editor(self):
         return self.call_on_worker_thread_and_get_return_value("bool", "engine_service.get_with_editor")
