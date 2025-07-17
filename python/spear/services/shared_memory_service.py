@@ -5,7 +5,6 @@
 import mmap
 import multiprocessing.shared_memory
 import spear
-import spear.func_utils
 import sys
 
 class SharedMemoryService():
@@ -49,7 +48,7 @@ class SharedMemoryService():
     #
 
     def get_shared_memory_handles_from_arrays(self, arrays, usage_flags=[]):
-        return { a.shared_memory_handle["name"]: a.shared_memory_handle for a in arrays if isinstance(a, spear.func_utils.Shared) and set(usage_flags) <= set(a.shared_memory_handle["view"].usage_flags) }
+        return { a.shared_memory_handle["name"]: a.shared_memory_handle for a in arrays if isinstance(a, spear.utils.func_utils.Shared) and set(usage_flags) <= set(a.shared_memory_handle["view"].usage_flags) }
 
     def get_shared_memory_names_from_packed_arrays(self, packed_arrays):
         return [ v.shared_memory_name for k, v in packed_arrays.items() if v.data_source == "Shared" ]

@@ -2,7 +2,8 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-import spear.func_utils
+import spear
+
 
 class UnrealService():
     def __init__(self, entry_point_caller, namespace):
@@ -64,20 +65,20 @@ class UnrealService():
     #
 
     def get_properties_from_object(self, uobject):
-        return spear.func_utils.try_to_dict(
+        return spear.utils.func_utils.try_to_dict(
             json_string=self._entry_point_caller.call_on_game_thread_and_get_return_value(
                 "std::string", f"{self._service_name}.get_properties_as_string_from_object", uobject), default_value={})
 
     def get_properties_from_struct(self, value_ptr, ustruct):
-        return spear.func_utils.try_to_dict(
+        return spear.utils.func_utils.try_to_dict(
             json_string=self._entry_point_caller.call_on_game_thread_and_get_return_value(
                 "std::string", f"{self._service_name}.get_properties_as_string_from_struct", value_ptr, ustruct), default_value={})
 
     def set_properties_for_object(self, uobject, properties):
-        self._entry_point_caller.call_on_game_thread(f"{self._service_name}.set_properties_from_string_for_object", uobject, spear.func_utils.to_json_string(obj=properties))
+        self._entry_point_caller.call_on_game_thread(f"{self._service_name}.set_properties_from_string_for_object", uobject, spear.utils.func_utils.to_json_string(obj=properties))
 
     def set_properties_for_struct(self, value_ptr, ustruct, properties):
-        self._entry_point_caller.call_on_game_thread(f"{self._service_name}.set_properties_from_string_for_struct", value_ptr, ustruct, spear.func_utils.to_json_string(obj=properties))
+        self._entry_point_caller.call_on_game_thread(f"{self._service_name}.set_properties_from_string_for_struct", value_ptr, ustruct, spear.utils.func_utils.to_json_string(obj=properties))
 
     #
     # Find property
@@ -94,12 +95,12 @@ class UnrealService():
     #
 
     def get_property_value(self, property_desc):
-        return spear.func_utils.try_to_dict(
+        return spear.utils.func_utils.try_to_dict(
             json_string=self._entry_point_caller.call_on_game_thread_and_get_return_value(
                 "std::string", f"{self._service_name}.get_property_value_as_string", property_desc))
 
     def set_property_value(self, property_desc, property_value):
-        self._entry_point_caller.call_on_game_thread(f"{self._service_name}.set_property_value_from_string", property_desc, spear.func_utils.to_json_string(obj=property_value))
+        self._entry_point_caller.call_on_game_thread(f"{self._service_name}.set_property_value_from_string", property_desc, spear.utils.func_utils.to_json_string(obj=property_value))
 
     #
     # Find and call function
@@ -126,9 +127,9 @@ class UnrealService():
 
     # call an arbitrary function
     def call_function(self, uobject, ufunction, args={}, world_context="WorldContextObject"):
-        return spear.func_utils.try_to_dicts(
+        return spear.utils.func_utils.try_to_dicts(
             json_strings=self._entry_point_caller.call_on_game_thread_and_get_return_value(
-                "std::map<std::string, std::string>", f"{self._service_name}.call_function", uobject, ufunction, spear.func_utils.to_json_strings(objs=args), world_context))
+                "std::map<std::string, std::string>", f"{self._service_name}.call_function", uobject, ufunction, spear.utils.func_utils.to_json_strings(objs=args), world_context))
 
     #
     # Find actors unconditionally and return a list or dict
@@ -454,9 +455,9 @@ class UnrealService():
             "uint64_t",
             f"{self._service_name}.spawn_actor",
             class_name,
-            spear.func_utils.to_json_string(obj=location),
-            spear.func_utils.to_json_string(obj=rotation),
-            spear.func_utils.to_json_string(obj=spawn_parameters),
+            spear.utils.func_utils.to_json_string(obj=location),
+            spear.utils.func_utils.to_json_string(obj=rotation),
+            spear.utils.func_utils.to_json_string(obj=spawn_parameters),
             object_flags)
 
     def spawn_actor_from_class(self, uclass, location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Pitch": 0.0, "Yaw": 0.0, "Roll": 0.0}, spawn_parameters={}):
@@ -473,9 +474,9 @@ class UnrealService():
             "uint64_t",
             f"{self._service_name}.spawn_actor_from_class",
             uclass,
-            spear.func_utils.to_json_string(obj=location),
-            spear.func_utils.to_json_string(obj=rotation),
-            spear.func_utils.to_json_string(obj=spawn_parameters),
+            spear.utils.func_utils.to_json_string(obj=location),
+            spear.utils.func_utils.to_json_string(obj=rotation),
+            spear.utils.func_utils.to_json_string(obj=spawn_parameters),
             object_flags)
 
     #

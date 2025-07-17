@@ -6,11 +6,10 @@ import os
 import yacs.config
 
 # ordered from low-level to high-level
-spear_root_dir = os.path.dirname(os.path.realpath(__file__))
 default_config_files = [
-    os.path.realpath(os.path.join(spear_root_dir, "config", "default_config.sp_core.yaml")),
-    os.path.realpath(os.path.join(spear_root_dir, "config", "default_config.sp_services.yaml")),
-    os.path.realpath(os.path.join(spear_root_dir, "config", "default_config.spear.yaml")) ]
+    os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "config", "default_config.sp_core.yaml")),
+    os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "config", "default_config.sp_services.yaml")),
+    os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "config", "default_config.spear.yaml")) ]
 
 # This function returns a config object, obtained by loading and merging a list of config
 # files in the order they appear in the user_config_files input argument. This function is

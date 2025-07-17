@@ -7,11 +7,11 @@
 #include <filesystem>
 #include <iostream> // std::cout
 
+#include <boost/predef.h> // BOOST_COMP_MSVC, BOOST_COMP_CLANG
+
 #include <GenericPlatform/GenericPlatformMisc.h>
 #include <HAL/Platform.h> // TEXT
 #include <Modules/ModuleManager.h>
-
-#include "SpCore/Boost.h"
 
 // TODO: remove platform-specific include
 #if BOOST_COMP_MSVC

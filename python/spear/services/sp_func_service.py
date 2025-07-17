@@ -5,7 +5,7 @@
 import mmap
 import multiprocessing.shared_memory
 import numpy as np
-import spear.func_utils
+import spear
 import sys
 
 try:
@@ -32,11 +32,11 @@ class SpFuncService():
 
         # convert args to data bundle
         args_data_bundle = spear_ext.DataBundle()
-        args_data_bundle.packed_arrays = spear.func_utils.to_packed_arrays(
+        args_data_bundle.packed_arrays = spear.utils.func_utils.to_packed_arrays(
             arrays=arrays,
             dest_byte_order=self._entry_point_caller.get_byte_order(),
             usage_flags=["Arg"])
-        args_data_bundle.unreal_obj_strings = spear.func_utils.to_json_strings(
+        args_data_bundle.unreal_obj_strings = spear.utils.func_utils.to_json_strings(
             objs=unreal_objs)
         args_data_bundle.info = info
 
@@ -55,12 +55,12 @@ class SpFuncService():
 
         # convert data bundle to return values
         return_values = {
-            "arrays": spear.func_utils.to_arrays(
+            "arrays": spear.utils.func_utils.to_arrays(
                 packed_arrays=return_values_data_bundle.packed_arrays,
                 src_byte_order=self._entry_point_caller.get_byte_order(),
                 usage_flags=["ReturnValue"],
                 shared_memory_handles=return_value_shared_memory_handles),
-            "unreal_objs": spear.func_utils.try_to_dicts(
+            "unreal_objs": spear.utils.func_utils.try_to_dicts(
                 json_strings=return_values_data_bundle.unreal_obj_strings),
             "info": return_values_data_bundle.info}
 

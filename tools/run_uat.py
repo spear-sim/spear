@@ -6,7 +6,6 @@ import argparse
 import glob
 import os
 import spear
-import spear.tool_utils
 import subprocess
 import sys
 
@@ -71,7 +70,7 @@ if __name__ == "__main__":
 
     cook_maps = []
     if not args.skip_cook_default_maps:
-        cook_maps.extend(spear.tool_utils.get_default_maps_to_cook())
+        cook_maps.extend(spear.utils.tool_utils.get_default_maps_to_cook())
     if args.cook_maps is not None:
         cook_maps.extend(args.cook_maps)
 

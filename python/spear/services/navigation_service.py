@@ -3,7 +3,7 @@
 #
 
 import numpy as np
-import spear.func_utils
+import spear
 
 
 class NavigationService():
@@ -30,8 +30,8 @@ class NavigationService():
         queriers=np.array([], dtype=np.uint64),
         out_array=np.array([], dtype=np.float64)):
 
-        packed_arrays = spear.func_utils.to_packed_arrays(arrays={"filter_classes": filter_classes, "queriers": queriers}, usage_flags=["Arg"])
-        out_packed_array = spear.func_utils.to_packed_array(array=out_array, usage_flags=["Arg", "ReturnValue"])
+        packed_arrays = spear.utils.func_utils.to_packed_arrays(arrays={"filter_classes": filter_classes, "queriers": queriers}, usage_flags=["Arg"])
+        out_packed_array = spear.utils.func_utils.to_packed_array(array=out_array, usage_flags=["Arg", "ReturnValue"])
 
         # call function
         return_value_packed_array = self._entry_point_caller.call_on_game_thread_and_get_converted_return_value(
@@ -45,7 +45,7 @@ class NavigationService():
 
         # convert return value to a NumPy array
         return_value_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_arrays(arrays=[out_array], usage_flags=["Arg", "ReturnValue"])
-        return_value = spear.func_utils.to_array(packed_array=return_value_packed_array, usage_flags=["Arg", "ReturnValue"], shared_memory_handles=return_value_shared_memory_handles)
+        return_value = spear.utils.func_utils.to_array(packed_array=return_value_packed_array, usage_flags=["Arg", "ReturnValue"], shared_memory_handles=return_value_shared_memory_handles)
 
         return return_value
 
@@ -67,8 +67,8 @@ class NavigationService():
         if radius is not None:
             radii = np.array([radius], dtype=np.float32)
 
-        packed_arrays = spear.func_utils.to_packed_arrays(arrays={"origin_points": origin_points, "radii": radii, "filter_classes": filter_classes, "queriers": queriers}, usage_flags=["Arg"])
-        out_packed_array = spear.func_utils.to_packed_array(array=out_array, usage_flags=["Arg", "ReturnValue"])
+        packed_arrays = spear.utils.func_utils.to_packed_arrays(arrays={"origin_points": origin_points, "radii": radii, "filter_classes": filter_classes, "queriers": queriers}, usage_flags=["Arg"])
+        out_packed_array = spear.utils.func_utils.to_packed_array(array=out_array, usage_flags=["Arg", "ReturnValue"])
 
         # call function
         return_value_packed_array = self._entry_point_caller.call_on_game_thread_and_get_converted_return_value(
@@ -82,7 +82,7 @@ class NavigationService():
 
         # convert return value to a NumPy array
         return_value_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_arrays(arrays=[out_array], usage_flags=["Arg", "ReturnValue"])
-        return_value = spear.func_utils.to_array(packed_array=return_value_packed_array, usage_flags=["Arg", "ReturnValue"], shared_memory_handles=return_value_shared_memory_handles)
+        return_value = spear.utils.func_utils.to_array(packed_array=return_value_packed_array, usage_flags=["Arg", "ReturnValue"], shared_memory_handles=return_value_shared_memory_handles)
 
         return return_value
 
@@ -102,7 +102,7 @@ class NavigationService():
         nav_agent_properties=[],
         path_finding_mode_strings=[]):
 
-        packed_arrays = spear.func_utils.to_packed_arrays(
+        packed_arrays = spear.utils.func_utils.to_packed_arrays(
             arrays={
                 "start_points": start_points,
                 "end_points": end_points,
@@ -112,7 +112,7 @@ class NavigationService():
                 "require_navigable_end_locations": require_navigable_end_locations},
             usage_flags=["Arg"])
 
-        nav_agent_property_strings = spear.func_utils.to_json_strings(nav_agent_properties)
+        nav_agent_property_strings = spear.utils.func_utils.to_json_strings(nav_agent_properties)
 
         # call function
         return_value_packed_arrays = self._entry_point_caller.call_on_game_thread_and_get_converted_return_value(
@@ -127,7 +127,7 @@ class NavigationService():
             path_finding_mode_strings)
 
         # convert return values to NumPy arrays
-        return_values = spear.func_utils.to_arrays(packed_arrays=return_value_packed_arrays)
+        return_values = spear.utils.func_utils.to_arrays(packed_arrays=return_value_packed_arrays)
 
         # return paths as a list of NumPy arrays rather than as a points array and an indices array
         points = return_values["points"]

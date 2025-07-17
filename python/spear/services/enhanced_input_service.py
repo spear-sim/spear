@@ -2,7 +2,7 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-import spear.func_utils
+import spear
 
 
 class EnhancedInputService():
@@ -14,7 +14,7 @@ class EnhancedInputService():
             "enhanced_input_service.inject_input",
             enhanced_input_subsystem,
             input_action,
-            spear.func_utils.to_json_string(obj=input_action_value),
+            spear.utils.func_utils.to_json_string(obj=input_action_value),
             modifiers,
             triggers)
 
@@ -24,8 +24,8 @@ class EnhancedInputService():
             actor,
             input_action_name,
             trigger_event,
-            spear.func_utils.to_json_string(obj=input_action_value),
-            spear.func_utils.to_json_string(obj=input_action_instance),
+            spear.utils.func_utils.to_json_string(obj=input_action_value),
+            spear.utils.func_utils.to_json_string(obj=input_action_instance),
             modifiers,
             triggers)
 
@@ -33,6 +33,6 @@ class EnhancedInputService():
         self._entry_point_caller.call_on_game_thread(
             "enhanced_input_service.inject_debug_key_for_actor",
             actor,
-            spear.func_utils.to_json_string(obj=chord),
+            spear.utils.func_utils.to_json_string(obj=chord),
             key_event,
-            spear.func_utils.to_json_string(obj=input_action_value))
+            spear.utils.func_utils.to_json_string(obj=input_action_value))

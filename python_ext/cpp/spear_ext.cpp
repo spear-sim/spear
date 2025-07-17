@@ -1,3 +1,7 @@
+//
+// Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+//
+
 #include <stdint.h> // int8_t, int16_t, int32_t, int64_t, uint8_t, uint16_t, uint32_t, uint64_t, uintptr_t
 
 #ifdef _MSC_VER

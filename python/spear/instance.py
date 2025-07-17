@@ -10,21 +10,6 @@ import subprocess
 import sys
 import time
 
-# EngineService
-import spear.services.engine_service
-
-# services that require a reference to EngineService
-import spear.services.enhanced_input_service
-import spear.services.initialize_editor_world_service
-import spear.services.initialize_game_world_service
-import spear.services.input_service
-import spear.services.shared_memory_service
-import spear.services.unreal_service
-
-# services that require a reference to EngineService and SharedMemoryService
-import spear.services.navigation_service
-import spear.services.sp_func_service
-
 try:
     import spear_ext # can't be installed in the UE Python environment because UE doesn't ship with CPython headers
 except:
