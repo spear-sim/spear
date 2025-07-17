@@ -8,7 +8,7 @@
 
 #include <concepts>  // std::same_as
 #include <cstring>   // std::memcpy
-#include <exception>
+#include <exception> // std::terminate
 #include <iostream>
 #include <map>
 #include <memory>    // std::make_shared, std::make_unique, std::shared_ptr, std::unique_ptr
@@ -706,7 +706,7 @@ PackedArray Client::convert<PackedArray>(PackedArrayView&& packed_array_view, st
             std::shared_ptr<clmdep_msgpack::object_handle> object_handle_ = nullptr;
         };
 
-        // Allocate a Capsule on the heap.
+        // Allocate a Capsule on the heap. Deleted in the deletion callback below.
         Capsule* capsule_ptr = new Capsule();
         SP_ASSERT(capsule_ptr);
 
@@ -741,9 +741,14 @@ PackedArray Client::convert<PackedArray>(PackedArrayView&& packed_array_view, st
         // heap-allocated Capsule.
 
         nanobind::capsule capsule = nanobind::capsule(capsule_ptr, [](void* ptr) noexcept -> void {
+            if (!ptr) {
+                std::cout << "[SPEAR | spear_ext.cpp] ERROR: Unexpected nullptr in deletion callback for Capsule." << std::endl;
+                std::terminate(); // can't assert because of noexcept
+            }
             Capsule* capsule_ptr = static_cast<Capsule*>(ptr);
             capsule_ptr->object_handle_ = nullptr;
             delete capsule_ptr;
+            capsule_ptr = nullptr;
             if (Statics::s_verbose_allocations_) {
                 std::cout << "[SPEAR | spear_ext.cpp] Deleting Capsule at memory location: " << capsule_ptr << std::endl;
             }
