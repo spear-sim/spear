@@ -49,7 +49,7 @@ if __name__ == "__main__":
         platform_dir = "Win64"
 
         # optimize agressively for speed, enable exceptions with standard C++ stack unwinding and assume extern "C" code never throws, disable RTTI
-        common_cxx_flags = "/02 /std:c++20 /EHsc /GR-"
+        common_cxx_flags = "/O2 /EHsc /GR-"
         boost_cxx_flags = common_cxx_flags
         cmake_cxx_flags = common_cxx_flags
 
