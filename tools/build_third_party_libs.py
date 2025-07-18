@@ -48,7 +48,8 @@ if __name__ == "__main__":
 
         platform_dir = "Win64"
 
-        common_cxx_flags = "/std:c++20 /EHsc /GR-" # enable exceptions with standard C++ stack unwinding and assume extern "C" code never throws, disable RTTI
+        # optimize agressively for speed, enable exceptions with standard C++ stack unwinding and assume extern "C" code never throws, disable RTTI
+        common_cxx_flags = "/02 /std:c++20 /EHsc /GR-"
         boost_cxx_flags = common_cxx_flags
         cmake_cxx_flags = common_cxx_flags
 
@@ -73,7 +74,7 @@ if __name__ == "__main__":
 
         platform_dir = "Mac"
 
-        common_cxx_flags = "-std=c++20 -stdlib=libc++ -mmacosx-version-min=10.13"
+        common_cxx_flags = "-O3 -stdlib=libc++ -mmacosx-version-min=10.13"
         boost_cxx_flags = common_cxx_flags
         cmake_cxx_flags = common_cxx_flags
 
@@ -106,9 +107,9 @@ if __name__ == "__main__":
 
         platform_dir = "Linux"
 
-        common_cxx_flags = f'-nostdinc++ -I\'{linux_libcpp_include_dir}\' -Wno-reserved-macro-identifier'
-        boost_cxx_flags = f"-std=c++03 {common_cxx_flags}" # need to compile Boost against C++03 or older to avoid "error: undefined symbol: __isoc23_sscanf" when building the SpearSim Unreal project on Linux
-        cmake_cxx_flags = f"-std=c++20 {common_cxx_flags}"
+        common_cxx_flags = f'-O3 -nostdinc++ -I\'{linux_libcpp_include_dir}\' -Wno-reserved-macro-identifier'
+        boost_cxx_flags = common_cxx_flags
+        cmake_cxx_flags = common_cxx_flags
 
     else:
         assert False

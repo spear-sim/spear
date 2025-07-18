@@ -27,8 +27,9 @@ if __name__ == "__main__":
 
         assert args.cxx_compiler is None
 
+        # optimize agressively for speed, enable exceptions with standard C++ stack unwinding and assume extern "C" code never throws, disable RTTI
         cxx_compiler = "cl"
-        common_cxx_flags = "/std:c++20 /EHsc /GR-" # enable exceptions with standard C++ stack unwinding and assume extern "C" code never throws, disable RTTI
+        common_cxx_flags = "/std:c++20 /O2 /EHsc /GR-"
         cmake_cxx_flags = common_cxx_flags
 
         cmd_prefix = f"conda activate {args.conda_env} & "
@@ -40,7 +41,7 @@ if __name__ == "__main__":
         else:
             cxx_compiler = args.cxx_compiler
 
-        common_cxx_flags = f"-std=c++20 -stdlib=libc++ -mmacosx-version-min=10.14"
+        common_cxx_flags = f"-std=c++20 -O3 -stdlib=libc++ -mmacosx-version-min=10.14"
         cmake_cxx_flags = common_cxx_flags
 
         if args.conda_script:
@@ -88,7 +89,7 @@ if __name__ == "__main__":
 
         cxx_compiler = os.path.join(linux_clang_bin_dir, "clang++")
 
-        common_cxx_flags = f"-std=c++20 -nostdinc++ -I\'{linux_libcpp_include_dir}\' -Wno-reserved-macro-identifier -stdlib=libc++ -L\'{linux_libcpp_lib_dir}\' -lc++"
+        common_cxx_flags = f"-std=c++20 -O3 -nostdinc++ -I\'{linux_libcpp_include_dir}\' -Wno-reserved-macro-identifier -stdlib=libc++ -L\'{linux_libcpp_lib_dir}\' -lc++"
         cmake_cxx_flags = f"{common_cxx_flags}"
 
         if args.conda_script:

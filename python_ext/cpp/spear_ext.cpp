@@ -513,8 +513,35 @@ NB_MODULE(spear_ext, module)
 }
 
 //
-// Helper functions for implementing msgpack adaptors
+// Helper classes for implementing msgpack adaptors
 //
+ 
+class Std
+{
+public:
+    Std() = delete;
+    ~Std() = delete;
+
+    template <typename TValue, typename... TVectorTraits>
+    static void resizeUninitialized(std::vector<TValue, TVectorTraits...>& vector, int size)
+    {
+        struct TValueNoDefaultInit { TValue value; TValueNoDefaultInit() {} };
+
+        using TVector = std::vector<TValue, TVectorTraits...>;
+        using TAllocator = typename TVector::allocator_type;
+        using TVectorNoDefaultInit = std::vector<TValueNoDefaultInit, typename std::allocator_traits<TAllocator>::template rebind_alloc<TValueNoDefaultInit>>;
+
+        SP_ASSERT(sizeof(TValue)    == sizeof(TValueNoDefaultInit));
+        SP_ASSERT(sizeof(TValue[2]) == sizeof(TValueNoDefaultInit[2]));
+        SP_ASSERT(sizeof(TValue[4]) == sizeof(TValueNoDefaultInit[4]));
+
+        TVectorNoDefaultInit* vector_no_default_init = reinterpret_cast<TVectorNoDefaultInit*>(&vector);
+        vector_no_default_init->resize(size);
+
+        SP_ASSERT(vector.size() == size);
+    }
+};
+
 
 class MsgpackUtils
 {
@@ -592,32 +619,6 @@ public:
         SP_ASSERT(false);
         return nanobind::dtype<nanobind::ndarray<>::Scalar>();
     };
-};
-
-class Std
-{
-public:
-    Std() = delete;
-    ~Std() = delete;
-
-    template <typename TValue, typename... TVectorTraits>
-    static void resizeUninitialized(std::vector<TValue, TVectorTraits...>& vector, int size)
-    {
-        struct TValueNoDefaultInit { TValue value; TValueNoDefaultInit() {} };
-
-        using TVector = std::vector<TValue, TVectorTraits...>;
-        using TAllocator = typename TVector::allocator_type;
-        using TVectorNoDefaultInit = std::vector<TValueNoDefaultInit, typename std::allocator_traits<TAllocator>::template rebind_alloc<TValueNoDefaultInit>>;
-
-        SP_ASSERT(sizeof(TValue)    == sizeof(TValueNoDefaultInit));
-        SP_ASSERT(sizeof(TValue[2]) == sizeof(TValueNoDefaultInit[2]));
-        SP_ASSERT(sizeof(TValue[4]) == sizeof(TValueNoDefaultInit[4]));
-
-        TVectorNoDefaultInit* vector_no_default_init = reinterpret_cast<TVectorNoDefaultInit*>(&vector);
-        vector_no_default_init->resize(size);
-
-        SP_ASSERT(vector.size() == size);
-    }
 };
 
 //

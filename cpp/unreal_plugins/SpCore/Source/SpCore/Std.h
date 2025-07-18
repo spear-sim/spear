@@ -24,6 +24,8 @@
 #include <utility>     // std::forward, std::move
 #include <vector>
 
+#include <boost/predef.h> // BOOST_COMP_CLANG, BOOST_COMP_MSVC, BOOST_OS_LINUX
+
 #include <HAL/Platform.h> // SPCORE_API
 
 #include "SpCore/Assert.h"
@@ -32,6 +34,16 @@
 // TODO: remove platform-specific include
 #if BOOST_COMP_MSVC
     #include <format>
+#endif
+
+#if BOOST_OS_LINUX
+    #ifdef __cplusplus
+        #define SP_EXTERN_C extern "C"
+    #else
+        #define SP_EXTERN_C
+    #endif
+    SP_EXTERN_C SPCORE_API long int __isoc23_sscanf(const char *str, const char *format, ...);
+    SP_EXTERN_C SPCORE_API long int __isoc23_strtol(const char* str, char** endptr, int base);
 #endif
 
 // These operators are needed so an enum class can be used like an integer to represent bit flags. Note that

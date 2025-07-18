@@ -33,6 +33,7 @@
 #include "SpCore/AssertModuleLoaded.h"
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
+#include "SpCore/Std.h"
 #include "SpCore/UnrealClassRegistrar.h"
 
 #include "SpServices/Service.h"

@@ -10,9 +10,11 @@
 #include <string>   // std::string::operator<<
 #include <vector>
 
-#include <Containers/UnrealString.h> // FString::operator*
+#include <Containers/UnrealString.h> // FString
 #include <CoreGlobals.h>             // IsRunningCommandlet
 #include <HAL/Platform.h>            // TEXT
+#include <Misc/CommandLine.h>
+#include <Misc/Parse.h>
 #include <Logging/LogMacros.h>       // DECLARE_LOG_CATEGORY_EXTERN, DEFINE_LOG_CATEGORY, UE_LOG
 
 #include "SpCore/Assert.h"
@@ -39,7 +41,7 @@ void Log::logCurrentFunction(const std::filesystem::path& current_file, int curr
 void Log::logString(const std::string& str)
 {
     #if WITH_EDITOR // defined in an auto-generated header
-        if (IsRunningCommandlet()) {
+        if (IsRunningCommandlet() || FParse::Param(FCommandLine::Get(), *Unreal::toFString("game"))) {
             logStringToStdout(str); // editor mode via command-line (e.g., during cooking)
         } else {
             logStringToUnreal(str); // editor mode via GUI
