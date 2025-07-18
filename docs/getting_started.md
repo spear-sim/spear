@@ -76,7 +76,7 @@ The next step is to clone this repository including submodules. We have found th
 
 ```console
 # clone repository
-git clone https://github.com/spear-sim/spear path/to/spear --recurse-submodule
+git clone https://github.com/spear-sim/spear path/to/spear --recurse-submodules
 ```
 
 ## Install the `spear` Python package
