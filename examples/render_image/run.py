@@ -155,7 +155,7 @@ if __name__ == "__main__":
         elapsed_time_seconds = end_time_seconds - start_time_seconds
         spear.log("Average time for instance.engine_service.get_id(): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
 
-        # empty
+        # empty with instance.begin_frame() / with instance.end_frame()
         num_steps = 100
         start_time_seconds = time.time()
         for i in range(num_steps):
@@ -165,7 +165,7 @@ if __name__ == "__main__":
                 pass
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log("Average frame time for empty with begin_frame() / with end_frame(): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
+        spear.log("Average frame time for empty with instance.begin_frame() / with instance.end_frame(): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
 
         # game.unreal_service.get_static_class(...)
         num_steps = 100
