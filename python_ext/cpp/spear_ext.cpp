@@ -354,6 +354,7 @@ NB_MODULE(spear_ext, module)
     client_class.def("call", &Client::call<>);
 
     // 1 arg
+    client_class.def("call", &Client::call<bool>);
     client_class.def("call", &Client::call<uint64_t>);
     client_class.def("call", &Client::call<const std::string&>);
 

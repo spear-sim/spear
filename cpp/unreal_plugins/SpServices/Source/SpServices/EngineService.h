@@ -11,10 +11,12 @@
 
 #include <boost/predef.h> // BOOST_ENDIAN_BIG_BYTE, BOOST_ENDIAN_LITTLE_BYTE, BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
 
-#include <Engine/Engine.h>               // GEngine
+#include <CoreGlobals.h>          // IsRunningCommandlet
+#include <Engine/Engine.h>        // GEngine
 #include <Engine/GameViewportClient.h>
-#include <Engine/World.h>                // FWorldDelegates
-#include <UObject/ObjectMacros.h>        // UENUM
+#include <Engine/World.h>         // FWorldDelegates
+#include <Misc/CommandLine.h>
+#include <UObject/ObjectMacros.h> // UENUM
 
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
@@ -79,8 +81,7 @@ public:
                 frame_state_ = EFrameState::RequestBeginFrame;
             }
 
-            // Note that close() could execute here on the game thread, which will change the value of
-            // frame_state_.
+            // Note that close() could execute here on the game thread, which will change the value of frame_state_.
 
             if (frame_state_ == EFrameState::RequestBeginFrame) {
                 // Wait here until beginFrameHandler() or close() updates frame_state_ and calls frame_state_executing_begin_frame_promise_.set_value().
@@ -138,7 +139,27 @@ public:
                 "frame_state_: %s", Unreal::getStringFromEnumValue(frame_state).c_str());
         });
 
-        // Miscellaneous low-level entry points.
+        // Miscellaneous low-level entry points to support initializing a spear.Instance
+
+        bindFuncToExecuteOnWorkerThread("engine_service", "ping", []() -> std::string {
+            return "ping";
+        });
+
+        bindFuncToExecuteOnWorkerThread("engine_service", "get_id", []() -> int64_t {            
+            return static_cast<int>(boost::this_process::get_id());
+        });
+
+        // Miscellaneous low-level entry points to support initializing a spear.services.EngineService
+
+        bindFuncToExecuteOnWorkerThread("engine_service", "initialize", [this]() -> void {
+            std::lock_guard<std::mutex> lock(frame_state_mutex_);
+
+            SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::Error,
+                "frame_state_: %s", Unreal::getStringFromEnumValue(frame_state_.load()).c_str());
+
+            work_queue_.initialize();
+            frame_state_ = EFrameState::Idle;
+        });
 
         bindFuncToExecuteOnWorkerThread("engine_service", "get_byte_order", []() -> std::string {
             SP_ASSERT(BOOST_ENDIAN_BIG_BYTE + BOOST_ENDIAN_LITTLE_BYTE == 1);
@@ -151,34 +172,41 @@ public:
             }
         });
 
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_id", []() -> int64_t {            
-            return static_cast<int>(boost::this_process::get_id());
+        // Miscellaneous low-level entry points that interact with Unreal globals
+
+        // By calling IsRunningCommandlet() and FCommandLine::Get() below, we are accessing global variables
+        // from a worker thread that are set on the game thread, and these global variables are not protected
+        // by any synchronization primitive. At first glance, this seems like it would lead to undefined
+        // behavior, but in this case it does not, because all RPC server worker threads are created on the
+        // game thread after these global variables are set, and therefore there is a formal happens-before
+        // relationship between the write and subsequent reads.
+
+        // Calling FGenericPlatformMisc::RequestExit(false) is technically undefined behavior because there
+        // isn't a happens-before relationship when accessing the underlying global variable from multiple
+        // threads. But this undefined behavior is benign in practice, because as long as the game thread
+        // eventually sees the write from the worker thread, the overall system behavior is correct.
+
+        bindFuncToExecuteOnWorkerThread("engine_service", "is_with_editor", []() -> bool {
+            return WITH_EDITOR;
         });
 
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_with_editor", []() -> bool {
-            return WITH_EDITOR; // defined in an auto-generated header
+        bindFuncToExecuteOnWorkerThread("engine_service", "is_running_commandlet", []() -> bool {
+            #if WITH_EDITOR // defined in an auto-generated header
+                return IsRunningCommandlet();
+            #else
+                return false;
+            #endif
         });
 
-        bindFuncToExecuteOnWorkerThread("engine_service", "initialize", [this]() -> void {
-            std::lock_guard<std::mutex> lock(frame_state_mutex_);
-
-            SP_ASSERT(frame_state_ == EFrameState::Idle || frame_state_ == EFrameState::Error,
-                "frame_state_: %s", Unreal::getStringFromEnumValue(frame_state_.load()).c_str());
-
-            work_queue_.initialize();
-            frame_state_ = EFrameState::Idle;
+        bindFuncToExecuteOnWorkerThread("engine_service", "get_command_line", []() -> std::string {
+            return Unreal::toStdString(FCommandLine::Get());
         });
 
-        bindFuncToExecuteOnWorkerThread("engine_service", "ping", []() -> std::string {
-            return "ping";
-        });
-
-        bindFuncToExecuteOnWorkerThread("engine_service", "request_exit", []() -> void {
-            bool immediate_shutdown = false;
+        bindFuncToExecuteOnWorkerThread("engine_service", "request_exit", [](bool immediate_shutdown) -> void {
             FGenericPlatformMisc::RequestExit(immediate_shutdown);
         });
 
-        // Entry points for miscellaneous functions that are accessible via GEngine.
+        // Miscellaneous low-level entry points that interact with GEngine
 
         bindFuncToExecuteOnGameThread("engine_service", "get_viewport_size", [this]() -> std::vector<double> {
             SP_ASSERT(GEngine);

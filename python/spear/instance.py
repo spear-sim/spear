@@ -76,9 +76,6 @@ class Instance():
         self._editor = Editor(entry_point_caller=self.engine_service, shared_memory_service=self.shared_memory_service)
         self._game = Game(entry_point_caller=self.engine_service, shared_memory_service=self.shared_memory_service)
 
-        # We need to explicitly initialize EngineService before calling begin_frame() for the first time.
-        self.engine_service.initialize()
-
         # Execute warm-up routine.
         self._request_warm_up_unreal_instance(
             time_seconds=self._config.SPEAR.INSTANCE.INSTANCE_WARM_UP_TIME_SECONDS,
@@ -92,7 +89,7 @@ class Instance():
     def get_editor(self, wait=None, wait_max_time_seconds=0.0, wait_sleep_time_seconds=0.0, warm_up=None, warm_up_time_seconds=0.0, warm_up_num_frames=0):
 
         spear.log_current_function()
-        assert self.engine_service.get_with_editor()
+        assert self.engine_service.is_with_editor() and not self.engine_service.is_running_commandlet() and not " -game" in self.engine_service.get_command_line()
 
         if self._config.SPEAR.LAUNCH_MODE == "none":
             if wait is None:
@@ -485,7 +482,7 @@ class Instance():
 
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:        
             try:
-                self.engine_service.request_exit()
+                self.engine_service.request_exit(immediate_shutdown=False)
             except:
                 pass # no need to log exception because this case is expected when the instance is no longer running
             try:

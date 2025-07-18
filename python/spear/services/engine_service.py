@@ -13,6 +13,7 @@ class EngineService():
         self._frame_state = "idle"
         self._byte_order = None
 
+        self.initialize() # explicitly initialize before calling begin_frame() for the first time
         self.get_byte_order() # pre-cache byte order because it will be constant for the life of the client
 
     #
@@ -205,13 +206,18 @@ class EngineService():
 
         return return_value
 
-    # Miscellaneous low-level entry points.
+    # Miscellaneous low-level entry points to support initializing a spear.Instance
+
+    def ping(self):
+        return self.call_on_worker_thread_and_get_return_value("std::string", "engine_service.ping")
 
     def get_id(self):
         return self.call_on_worker_thread_and_get_return_value("int64_t", "engine_service.get_id")
 
-    def get_with_editor(self):
-        return self.call_on_worker_thread_and_get_return_value("bool", "engine_service.get_with_editor")
+    # Miscellaneous low-level entry points to support initializing a spear.services.EngineService
+
+    def initialize(self):
+        self.call_on_worker_thread("engine_service.initialize")
 
     def get_byte_order(self):
         if self._byte_order is None:
@@ -222,16 +228,21 @@ class EngineService():
                 self._byte_order = unreal_instance_byte_order
         return self._byte_order
 
-    def initialize(self):
-        self.call_on_worker_thread("engine_service.initialize")
+    # Miscellaneous low-level entry points that interact with Unreal globals
 
-    def ping(self):
-        return self.call_on_worker_thread_and_get_return_value("std::string", "engine_service.ping")
+    def is_with_editor(self):
+        return self.call_on_worker_thread_and_get_return_value("bool", "engine_service.is_with_editor")
 
-    def request_exit(self):
-        self.call_on_worker_thread("engine_service.request_exit")
+    def is_running_commandlet(self):
+        return self.call_on_worker_thread_and_get_return_value("bool", "engine_service.is_running_commandlet")
 
-    # Entry points for miscellaneous functions that are accessible via GEngine.
+    def get_command_line(self):
+        return self.call_on_worker_thread_and_get_return_value("std::string", "engine_service.get_command_line")
+
+    def request_exit(self, immediate_shutdown):
+        self.call_on_worker_thread("engine_service.request_exit", immediate_shutdown)
+
+    # Miscellaneous low-level entry points that interact with GEngine
 
     def get_viewport_size(self):
         return self.call_on_worker_thread_and_get_return_value("std::vector<double>", "engine_service.get_viewport_size")
