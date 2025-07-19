@@ -9,6 +9,10 @@ import posixpath
 import unreal
 
 
+asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
+subobject_data_subsystem = unreal.get_engine_subsystem(unreal.SubobjectDataSubsystem)
+
+
 #
 # Get actors and components
 #
