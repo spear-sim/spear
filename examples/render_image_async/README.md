@@ -5,7 +5,7 @@ In this example application, we demonstrate how to render images using the async
 ```console
 python run.py
 
-# run in benchmarking mode (optional)
+# benchmarking mode (optional)
 python run.py --benchmark
 ```
 
