@@ -57,7 +57,7 @@ public:
     // functions for sending custom types as return values to the client
     //
 
-    template <typename T> requires !std::is_pointer_v<T>
+    template <typename T> requires (!std::is_pointer_v<T>)
     static clmdep_msgpack::object toMsgpackObject(const T& value, clmdep_msgpack::object::with_zone& object_with_zone)
     {
         return clmdep_msgpack::object(value, object_with_zone.zone);
