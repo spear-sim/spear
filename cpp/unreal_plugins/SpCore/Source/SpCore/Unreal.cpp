@@ -69,7 +69,7 @@ UStruct* Unreal::findSpecialStructByName(const std::string& struct_name)
     SP_ASSERT(special_struct_actor_static_class);
     UObject* special_struct_actor_default_object = special_struct_actor_static_class->GetDefaultObject();
     SP_ASSERT(special_struct_actor_default_object);
-    PropertyDesc property_desc = findPropertyByName(special_struct_actor_default_object, struct_name + "_");
+    SpPropertyDesc property_desc = findPropertyByName(special_struct_actor_default_object, struct_name + "_");
     SP_ASSERT(property_desc.property_);
     SP_ASSERT(property_desc.property_->IsA(FStructProperty::StaticClass()));
     FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
@@ -116,23 +116,23 @@ void Unreal::setObjectPropertiesFromString(void* value_ptr, const UStruct* ustru
 
 //
 // Find property by name, get and set property values, uobject can't be const because we cast it to void*,
-// value_ptr can't be const because we assign to PropertyDesc::value_ptr_.
+// value_ptr can't be const because we assign to SpPropertyDesc::value_ptr_.
 //
 
-Unreal::PropertyDesc Unreal::findPropertyByName(UObject* uobject, const std::string& property_name)
+SpPropertyDesc Unreal::findPropertyByName(UObject* uobject, const std::string& property_name)
 {
     SP_ASSERT(uobject);
     return findPropertyByName(uobject, uobject->GetClass(), property_name);
 }
 
-Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* ustruct, const std::string& property_name)
+SpPropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* ustruct, const std::string& property_name)
 {
     SP_ASSERT(value_ptr);
     SP_ASSERT(ustruct);
 
     std::vector<std::string> property_names = Std::tokenize(property_name, ".");
 
-    PropertyDesc property_desc;
+    SpPropertyDesc property_desc;
     property_desc.value_ptr_ = value_ptr;
 
     for (int i = 0; i < property_names.size(); i++) {
@@ -175,7 +175,7 @@ Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* 
 
             bool found = false;
             for (int j = 0; j < map_helper.Num(); j++) {
-                PropertyDesc inner_key_property_desc;
+                SpPropertyDesc inner_key_property_desc;
                 inner_key_property_desc.property_ = map_property->KeyProp;
                 inner_key_property_desc.value_ptr_ = map_property->GetValueAddressAtIndex_Direct(map_property->KeyProp, property_desc.value_ptr_, j);
                 SP_ASSERT(inner_key_property_desc.value_ptr_);
@@ -211,7 +211,7 @@ Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* 
         // property refers to something with named properties (i.e., a struct or an object). In this case,
         // we need to update our ustruct pointer, and potentially our value_ptr if our current property
         // refers to an object. In contrast, if the current property name is the last name in our sequence,
-        // then there is nothing more to do, because we have already filled in our PropertyDesc object.
+        // then there is nothing more to do, because we have already filled in our SpPropertyDesc object.
 
         if (i < property_names.size() - 1) {
             if (property_desc.property_->IsA(FObjectProperty::StaticClass())) {
@@ -235,7 +235,7 @@ Unreal::PropertyDesc Unreal::findPropertyByName(void* value_ptr, const UStruct* 
     return property_desc;
 }
 
-std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& property_desc)
+std::string Unreal::getPropertyValueAsString(const SpPropertyDesc& property_desc)
 {
     SP_ASSERT(property_desc.property_);
     SP_ASSERT(property_desc.value_ptr_);
@@ -287,7 +287,7 @@ std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& propert
 
         std::vector<std::string> inner_strings;
         for (int i = 0; i < array_helper.Num(); i++) {
-            PropertyDesc inner_property_desc;
+            SpPropertyDesc inner_property_desc;
             inner_property_desc.property_ = inner_property;
             inner_property_desc.value_ptr_ = array_property->GetValueAddressAtIndex_Direct(inner_property, property_desc.value_ptr_, i);
             SP_ASSERT(inner_property_desc.value_ptr_);
@@ -307,7 +307,7 @@ std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& propert
 
         std::vector<std::string> inner_strings;
         for (int i = 0; i < set_helper.Num(); i++) {
-            PropertyDesc inner_property_desc;
+            SpPropertyDesc inner_property_desc;
             inner_property_desc.property_ = inner_property;
             inner_property_desc.value_ptr_ = set_property->GetValueAddressAtIndex_Direct(inner_property, property_desc.value_ptr_, i);
             SP_ASSERT(inner_property_desc.value_ptr_);
@@ -330,14 +330,14 @@ std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& propert
         std::vector<std::string> inner_key_strings;
         std::vector<std::string> inner_value_strings;
         for (int i = 0; i < map_helper.Num(); i++) {
-            PropertyDesc inner_key_property_desc;
+            SpPropertyDesc inner_key_property_desc;
             inner_key_property_desc.property_ = inner_key_property;
             inner_key_property_desc.value_ptr_ = map_property->GetValueAddressAtIndex_Direct(inner_key_property, property_desc.value_ptr_, i);
             SP_ASSERT(inner_key_property_desc.value_ptr_);
             std::string inner_key_string = getPropertyValueAsString(inner_key_property_desc);
             inner_key_strings.push_back(inner_key_string);
 
-            PropertyDesc inner_value_property_desc;
+            SpPropertyDesc inner_value_property_desc;
             inner_value_property_desc.property_ = inner_value_property;
             inner_value_property_desc.value_ptr_ = map_property->GetValueAddressAtIndex_Direct(inner_value_property, property_desc.value_ptr_, i);
             SP_ASSERT(inner_value_property_desc.value_ptr_);
@@ -370,7 +370,7 @@ std::string Unreal::getPropertyValueAsString(const Unreal::PropertyDesc& propert
     return string;
 }
 
-void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_desc, const std::string& string)
+void Unreal::setPropertyValueFromString(const SpPropertyDesc& property_desc, const std::string& string)
 {
     SP_ASSERT(property_desc.value_ptr_);
     SP_ASSERT(property_desc.property_);
@@ -390,7 +390,7 @@ void Unreal::setPropertyValueFromString(const Unreal::PropertyDesc& property_des
     setPropertyValueFromJsonValue(property_desc, json_value);
 }
 
-void Unreal::setPropertyValueFromJsonValue(const Unreal::PropertyDesc& property_desc, TSharedPtr<FJsonValue> json_value)
+void Unreal::setPropertyValueFromJsonValue(const SpPropertyDesc& property_desc, TSharedPtr<FJsonValue> json_value)
 {
     SP_ASSERT(property_desc.value_ptr_);
     SP_ASSERT(property_desc.property_);
@@ -444,7 +444,7 @@ void Unreal::setPropertyValueFromJsonValue(const Unreal::PropertyDesc& property_
             TSharedPtr<FJsonValue> inner_json_value = (*json_values)[i];
             SP_ASSERT(inner_json_value.IsValid());
 
-            PropertyDesc inner_property_desc;
+            SpPropertyDesc inner_property_desc;
             inner_property_desc.property_ = inner_property;
             inner_property_desc.value_ptr_ = array_property->GetValueAddressAtIndex_Direct(inner_property, property_desc.value_ptr_, i);
             SP_ASSERT(inner_property_desc.value_ptr_);
@@ -472,7 +472,7 @@ void Unreal::setPropertyValueFromJsonValue(const Unreal::PropertyDesc& property_
 
             int32 index = set_helper.AddDefaultValue_Invalid_NeedsRehash();
 
-            PropertyDesc inner_property_desc;
+            SpPropertyDesc inner_property_desc;
             inner_property_desc.property_ = inner_property;
             inner_property_desc.value_ptr_ = set_helper.GetElementPtr(index);
             SP_ASSERT(inner_property_desc.value_ptr_);
@@ -509,7 +509,7 @@ void Unreal::setPropertyValueFromJsonValue(const Unreal::PropertyDesc& property_
 
             int32 index = map_helper.AddDefaultValue_Invalid_NeedsRehash();
 
-            PropertyDesc inner_key_property_desc;
+            SpPropertyDesc inner_key_property_desc;
             inner_key_property_desc.property_ = inner_key_property;
             inner_key_property_desc.value_ptr_ = map_helper.GetKeyPtr(index);
             SP_ASSERT(inner_key_property_desc.value_ptr_);
@@ -519,7 +519,7 @@ void Unreal::setPropertyValueFromJsonValue(const Unreal::PropertyDesc& property_
             TSharedPtr<FJsonValue> inner_json_value = json_values[i];
             SP_ASSERT(inner_json_value.IsValid());
 
-            PropertyDesc inner_value_property_desc;
+            SpPropertyDesc inner_value_property_desc;
             inner_value_property_desc.property_ = inner_value_property;
             inner_value_property_desc.value_ptr_ = map_helper.GetValuePtr(index);
             SP_ASSERT(inner_value_property_desc.value_ptr_);
@@ -573,10 +573,10 @@ std::map<std::string, std::string> Unreal::callFunction(const UWorld* world, UOb
     uint8_t initial_value = 0;
     std::vector<uint8_t> args_vector(num_bytes, initial_value);
 
-    // Create PropertyDescs for the function's arguments and return value.
-    std::map<std::string, PropertyDesc> property_descs;
+    // Create SpPropertyDescs for the function's arguments and return value.
+    std::map<std::string, SpPropertyDesc> property_descs;
     for (TFieldIterator<FProperty> itr(ufunction); itr; ++itr) {
-        PropertyDesc property_desc;
+        SpPropertyDesc property_desc;
         property_desc.property_ = *itr;
         SP_ASSERT(property_desc.property_);
         SP_ASSERT(property_desc.property_->HasAnyPropertyFlags(EPropertyFlags::CPF_Parm));

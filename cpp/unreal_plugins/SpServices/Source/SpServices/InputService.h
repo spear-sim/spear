@@ -34,7 +34,8 @@ public:
     using APawn::SetupPlayerInputComponent; // equivalent to creating a public method that calls the protected method
 };
 
-class InputService : public Service {
+class InputService : public Service
+{
 public:
     InputService() = delete;
     InputService(CUnrealEntryPointBinder auto* unreal_entry_point_binder) : Service("InputService")

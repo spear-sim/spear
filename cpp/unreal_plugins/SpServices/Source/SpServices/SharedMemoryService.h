@@ -21,7 +21,8 @@
 #include "SpServices/MsgpackAdaptors.h"
 #include "SpServices/Service.h"
 
-class SharedMemoryService : public Service {
+class SharedMemoryService : public Service
+{
 public:
     SharedMemoryService() = delete;
     SharedMemoryService(CUnrealEntryPointBinder auto* unreal_entry_point_binder) : Service("SharedMemoryService")

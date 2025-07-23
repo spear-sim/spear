@@ -16,7 +16,7 @@
 
 #include "SpCore/FuncRegistrar.h"
 #include "SpCore/SpArray.h"
-#include "SpCore/SpFuncDataBundle.h"
+#include "SpCore/SpTypes.h"
 
 #include "SpFuncComponent.generated.h"
 

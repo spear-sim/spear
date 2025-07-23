@@ -1,0 +1,17 @@
+#
+# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+#
+
+SPEAR:
+  LAUNCH_MODE: "game"
+  INSTANCE:
+    GAME_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
+    COMMAND_LINE_ARGS:
+      resx: 512
+      resy: 512
+
+      # setting the game viewport to be small when we're rendering offscreen improves performance
+
+      # resx: 128
+      # resy: 128
+      # renderoffscreen: null

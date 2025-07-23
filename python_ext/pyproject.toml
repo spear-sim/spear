@@ -15,6 +15,8 @@ requires-python = "~=3.11"
 minimum-version = "build-system.requires" # protect the configuration against future changes in scikit-build-core
 build-dir = "BUILD/{wheel_tag}"           # setuptools-style build caching in a local directory
 wheel.py-api = "cp312"                    # build stable ABI wheels for CPython 3.12+
+build.verbose = true
+logging.level = "INFO"
 
 [tool.cibuildwheel]
 build-verbosity = 1                       # necessary to see build output from the actual compilation

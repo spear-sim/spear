@@ -5,12 +5,21 @@
 SP_SERVICES:
 
   #
-  # InputService
+  # RpcService
   #
 
-  # Print debug info when injecting input into InputService.
-  INPUT_SERVICE:
-    PRINT_INJECT_DEBUG_INFO: False
+  # Port for the RPC server.
+  RPC_SERVICE:
+    RPC_SERVER_PORT: 30000
+
+  #
+  # EngineService
+  #
+
+  # Print debug info in EngineService.
+  ENGINE_SERVICE:
+    PRINT_FRAME_DEBUG_INFO: False
+    PRINT_CALL_DEBUG_INFO: False
 
   #
   # EnhancedInputService
@@ -75,9 +84,17 @@ SP_SERVICES:
     FORCE_SKYLIGHT_UPDATE_MAX_DURATION_SECONDS: 1.0
 
   #
-  # RpcService
+  # InputService
   #
 
-  # Port for the RPC server.
-  RPC_SERVICE:
-    RPC_SERVER_PORT: 30000
+  # Print debug info when injecting input into InputService.
+  INPUT_SERVICE:
+    PRINT_INJECT_DEBUG_INFO: False
+
+  #
+  # WorkQueue
+  #
+
+  # Print debug info when executing scheduled functions.
+  WORK_QUEUE:
+    PRINT_CALL_DEBUG_INFO: False

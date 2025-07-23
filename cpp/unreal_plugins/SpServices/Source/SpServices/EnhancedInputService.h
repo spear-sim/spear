@@ -55,7 +55,8 @@ struct FSpInputActionInstance : public FInputActionInstance
     void setTriggers(const TArray<TObjectPtr<UInputTrigger>>& triggers) { Triggers = triggers; }
 };
 
-class EnhancedInputService : public Service {
+class EnhancedInputService : public Service
+{
 public:
     EnhancedInputService() = delete;
     EnhancedInputService(CUnrealEntryPointBinder auto* unreal_entry_point_binder) : Service("EnhancedInputService")
@@ -136,7 +137,7 @@ public:
 
                         // SourceAction is a private member variable on FSpInputActionInstance, but it is
                         // accessible through Unreal's property system, so we can still get and set it.
-                        Unreal::PropertyDesc property_desc = Unreal::findPropertyByName(
+                        SpPropertyDesc property_desc = Unreal::findPropertyByName(
                             &sp_input_action_instance, FSpInputActionInstance::StaticStruct(), "SourceAction");
                         Unreal::setPropertyValueFromString(property_desc, Std::toStringFromPtr(input_action));
 

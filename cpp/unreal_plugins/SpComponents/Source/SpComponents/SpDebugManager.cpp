@@ -30,7 +30,7 @@
 #include "SpCore/SharedMemory.h"
 #include "SpCore/SpArray.h"
 #include "SpCore/SpFuncComponent.h"
-#include "SpCore/SpFuncDataBundle.h"
+#include "SpCore/SpTypes.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealObj.h"
@@ -189,10 +189,10 @@ void ASpDebugManager::GetAndSetObjectProperties()
     SP_LOG(Unreal::getObjectPropertiesAsString(static_mesh_actor));
 
     // Find properties by fully qualified name (pointers like RootComponent are handled correctly)
-    Unreal::PropertyDesc root_component_property_desc = Unreal::findPropertyByName(static_mesh_actor, "RootComponent");
-    Unreal::PropertyDesc relative_location_property_desc = Unreal::findPropertyByName(static_mesh_actor, "RootComponent.RelativeLocation");
+    SpPropertyDesc root_component_property_desc = Unreal::findPropertyByName(static_mesh_actor, "RootComponent");
+    SpPropertyDesc relative_location_property_desc = Unreal::findPropertyByName(static_mesh_actor, "RootComponent.RelativeLocation");
 
-    // Get property value from PropertyDesc
+    // Get property value from SpPropertyDesc
     SP_LOG(Std::toStringFromPtr(static_mesh_actor->GetStaticMeshComponent()));
     SP_LOG(Unreal::getPropertyValueAsString(root_component_property_desc));
     SP_LOG(Unreal::getPropertyValueAsString(relative_location_property_desc));
@@ -218,20 +218,20 @@ void ASpDebugManager::GetAndSetObjectProperties()
     UActorComponent* static_mesh_component_from_registrar = UnrealClassRegistrar::getComponentByType("UStaticMeshComponent", static_mesh_actor);
     SP_ASSERT(static_mesh_component_from_registrar);
 
-    Unreal::PropertyDesc relative_location_property_desc_  = Unreal::findPropertyByName(static_mesh_component, "RelativeLocation");
-    Unreal::PropertyDesc relative_location_x_property_desc = Unreal::findPropertyByName(static_mesh_component, "RelativeLocation.X");
-    Unreal::PropertyDesc relative_location_y_property_desc = Unreal::findPropertyByName(static_mesh_component, "RelativeLocation.Y");
-    Unreal::PropertyDesc relative_location_z_property_desc = Unreal::findPropertyByName(static_mesh_component, "RelativeLocation.Z");
-    Unreal::PropertyDesc body_instance_property_desc       = Unreal::findPropertyByName(static_mesh_component, "BodyInstance");
-    Unreal::PropertyDesc com_nudge_property_desc           = Unreal::findPropertyByName(static_mesh_component, "BodyInstance.COMNudge");
-    Unreal::PropertyDesc com_nudge_x_property_desc         = Unreal::findPropertyByName(static_mesh_component, "BodyInstance.COMNudge.X");
-    Unreal::PropertyDesc com_nudge_y_property_desc         = Unreal::findPropertyByName(static_mesh_component, "BodyInstance.COMNudge.Y");
-    Unreal::PropertyDesc com_nudge_z_property_desc         = Unreal::findPropertyByName(static_mesh_component, "BodyInstance.COMNudge.Z");
-    Unreal::PropertyDesc com_nudge_property_desc_          = Unreal::findPropertyByName(static_mesh_component, "bodyinstance.comnudge"); // not case-sensitive
-    Unreal::PropertyDesc simulate_physics_property_desc    = Unreal::findPropertyByName(static_mesh_component, "BodyInstance.bSimulatePhysics");
-    Unreal::PropertyDesc component_velocity_property_desc  = Unreal::findPropertyByName(static_mesh_component, "ComponentVelocity"); // defined in base class
+    SpPropertyDesc relative_location_property_desc_  = Unreal::findPropertyByName(static_mesh_component, "RelativeLocation");
+    SpPropertyDesc relative_location_x_property_desc = Unreal::findPropertyByName(static_mesh_component, "RelativeLocation.X");
+    SpPropertyDesc relative_location_y_property_desc = Unreal::findPropertyByName(static_mesh_component, "RelativeLocation.Y");
+    SpPropertyDesc relative_location_z_property_desc = Unreal::findPropertyByName(static_mesh_component, "RelativeLocation.Z");
+    SpPropertyDesc body_instance_property_desc       = Unreal::findPropertyByName(static_mesh_component, "BodyInstance");
+    SpPropertyDesc com_nudge_property_desc           = Unreal::findPropertyByName(static_mesh_component, "BodyInstance.COMNudge");
+    SpPropertyDesc com_nudge_x_property_desc         = Unreal::findPropertyByName(static_mesh_component, "BodyInstance.COMNudge.X");
+    SpPropertyDesc com_nudge_y_property_desc         = Unreal::findPropertyByName(static_mesh_component, "BodyInstance.COMNudge.Y");
+    SpPropertyDesc com_nudge_z_property_desc         = Unreal::findPropertyByName(static_mesh_component, "BodyInstance.COMNudge.Z");
+    SpPropertyDesc com_nudge_property_desc_          = Unreal::findPropertyByName(static_mesh_component, "bodyinstance.comnudge"); // not case-sensitive
+    SpPropertyDesc simulate_physics_property_desc    = Unreal::findPropertyByName(static_mesh_component, "BodyInstance.bSimulatePhysics");
+    SpPropertyDesc component_velocity_property_desc  = Unreal::findPropertyByName(static_mesh_component, "ComponentVelocity"); // defined in base class
 
-    // Get property value from PropertyDesc
+    // Get property value from SpPropertyDesc
     SP_LOG(Unreal::getPropertyValueAsString(relative_location_property_desc_));
     SP_LOG(Unreal::getPropertyValueAsString(relative_location_x_property_desc));
     SP_LOG(Unreal::getPropertyValueAsString(relative_location_y_property_desc));
@@ -273,14 +273,14 @@ void ASpDebugManager::GetAndSetObjectProperties()
     SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
     SP_LOG();
 
-    // Set property value from PropertyDesc
+    // Set property value from SpPropertyDesc
     str = Std::toString("{", "\"x\": ", 1.1*i, ", \"y\": ", 2.2*i, ", \"z\": ", 3.3*i, "}");
     SP_LOG(Unreal::getPropertyValueAsString(relative_location_property_desc));
     Unreal::setPropertyValueFromString(relative_location_property_desc, str);
     SP_LOG(Unreal::getPropertyValueAsString(relative_location_property_desc));
     SP_LOG();
 
-    // Set property value from PropertyDesc
+    // Set property value from SpPropertyDesc
     str = "1.2345";
     SP_LOG(Unreal::getPropertyValueAsString(relative_location_z_property_desc));
     Unreal::setPropertyValueFromString(relative_location_z_property_desc, str);

@@ -10,7 +10,8 @@
 #include "SpServices/Rpclib.h"
 #include "SpServices/Service.h"
 
-class RpcService : public Service {
+class RpcService : public Service
+{
 public:
     RpcService() : Service("RpcService")
     {

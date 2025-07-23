@@ -77,8 +77,9 @@ SPEAR:
 
     # Config options for the client
     CLIENT_FORCE_RETURN_ALIGNED_ARRAYS: False
-    CLIENT_VERBOSE_EXCEPTIONS: True
+    CLIENT_VERBOSE_RPC_CALLS: False
     CLIENT_VERBOSE_ALLOCATIONS: False
+    CLIENT_VERBOSE_EXCEPTIONS: True
 
     #
     # When warming up the instance, we choose to warm up for a minimum amount of time and a minimum number of

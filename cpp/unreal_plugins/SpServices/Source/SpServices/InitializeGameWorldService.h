@@ -19,7 +19,8 @@
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/Service.h"
 
-class InitializeGameWorldService : public Service {
+class InitializeGameWorldService : public Service
+{
 public:
     InitializeGameWorldService() = delete;
     InitializeGameWorldService(CUnrealEntryPointBinder auto* unreal_entry_point_binder, Service::WorldFilter* world_filter) : Service("InitializeGameWorldService", world_filter)

@@ -28,9 +28,9 @@
 #include "SpArray.generated.h"
 
 //
-// each SpArray has a shape, and in some cases the shape can be specified with an array that includes a
+// Each SpArray has a shape, and in some cases the shape can be specified with an array that includes a
 // single -1 which acts as a wildcard, so we provide a function to compute the complete shape array, given an
-// incomplete shape array with a wildcard
+// incomplete shape array with a wildcard.
 //
 
 class SPCORE_API SpArrayShapeUtils
@@ -43,8 +43,8 @@ public:
 };
 
 //
-// each SpArray has a data type (uint8, float32, etc) and a data source (backed by an internal std::vector,
-// backed by an external pointer, backed by shared memory, etc)
+// Each SpArray has a data type (uint8, float32, etc) and a data source (backed by an internal std::vector,
+// backed by an external pointer, backed by shared memory, etc).
 //
 
 enum class SpArrayDataType
@@ -120,7 +120,7 @@ public:
     SpArrayDataTypeUtils() = delete;
     ~SpArrayDataTypeUtils() = delete;
 
-    template <typename TValue> static SpArrayDataType getDataType() { SP_ASSERT(false); return SpArrayDataType::Invalid; }
+    template <typename TValue> static SpArrayDataType getDataType() { SP_LOG_CURRENT_FUNCTION(); SP_ASSERT(false); return SpArrayDataType::Invalid; }
     template <> SpArrayDataType getDataType<uint8_t>()  { return SpArrayDataType::UInt8; }
     template <> SpArrayDataType getDataType<int8_t>()   { return SpArrayDataType::Int8; }
     template <> SpArrayDataType getDataType<uint16_t>() { return SpArrayDataType::UInt16; }

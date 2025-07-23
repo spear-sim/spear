@@ -4,6 +4,8 @@
 
 #include "SpCore/SpCore.h"
 
+#include <stddef.h> // uint64_t
+
 #include <iostream> // std::cin
 #include <memory>   // std::make_unique, std::unique_ptr
 

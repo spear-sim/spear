@@ -25,24 +25,7 @@ public:
     // functions for receiving custom types as args from the client
     //
 
-    template <typename T>
-    static T to(clmdep_msgpack::object const& object)
-    {
-        T t;
-        object.convert(t);
-        return t;
-    };
-
-    template <typename T>
-    static T* toPtr(clmdep_msgpack::object const& object)
-    {
-        SP_ASSERT(object.type == clmdep_msgpack::type::POSITIVE_INTEGER);
-        uint64_t ptr;
-        object.convert(ptr);
-        return reinterpret_cast<T*>(ptr);
-    };
-
-    static std::map<std::string, clmdep_msgpack::object> toMap(clmdep_msgpack::object const& object)
+    static std::map<std::string, clmdep_msgpack::object> toMapOfMsgpackObjects(clmdep_msgpack::object const& object)
     {
         SP_ASSERT(object.type == clmdep_msgpack::type::MAP);
         clmdep_msgpack::object_kv* object_kvs = static_cast<clmdep_msgpack::object_kv*>(object.via.map.ptr);
@@ -53,16 +36,40 @@ public:
         return objects;
     };
 
+    template <typename T>
+    static T to(clmdep_msgpack::object const& object)
+    {
+        T t;
+        object.convert(t);
+        return t;
+    };
+
+    template <typename T> requires std::is_pointer_v<T>
+    static T to(clmdep_msgpack::object const& object)
+    {
+        SP_ASSERT(object.type == clmdep_msgpack::type::POSITIVE_INTEGER);
+        uint64_t ptr;
+        object.convert(ptr);
+        return reinterpret_cast<T>(ptr);
+    };
+
     //
     // functions for sending custom types as return values to the client
     //
 
-    static clmdep_msgpack::object toMsgpackObject(const void* ptr, clmdep_msgpack::zone& zone) // use instead of clmdep_msgpack::object(ptr, zone) for pointers
+    template <typename T> requires !std::is_pointer_v<T>
+    static clmdep_msgpack::object toMsgpackObject(const T& value, clmdep_msgpack::object::with_zone& object_with_zone)
     {
-        return clmdep_msgpack::object(reinterpret_cast<uint64_t>(ptr), zone);
+        return clmdep_msgpack::object(value, object_with_zone.zone);
     }
 
-    static void toMsgpackObject(clmdep_msgpack::object::with_zone& object_with_zone, const std::map<std::string, clmdep_msgpack::object>& objects)
+    template <typename T> requires std::is_pointer_v<T>
+    static clmdep_msgpack::object toMsgpackObject(T ptr, clmdep_msgpack::object::with_zone& object_with_zone)
+    {
+        return clmdep_msgpack::object(reinterpret_cast<uint64_t>(ptr), object_with_zone.zone);
+    }
+
+    static void insertMapOfMsgpackObjects(clmdep_msgpack::object::with_zone& object_with_zone, const std::map<std::string, clmdep_msgpack::object>& objects)
     {
         object_with_zone.type = clmdep_msgpack::type::MAP;
         object_with_zone.via.map.size = objects.size();

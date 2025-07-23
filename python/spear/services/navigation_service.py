@@ -7,18 +7,31 @@ import spear
 
 
 class NavigationService():
-    def __init__(self, entry_point_caller, shared_memory_service, namespace):
+    def __init__(self, entry_point_caller, shared_memory_service, create_children=True):
+
         self._entry_point_caller = entry_point_caller
         self._shared_memory_service = shared_memory_service
-        self._service_name = f"{namespace}.navigation_service"
+
+        if create_children:
+            call_async_service_name = self._entry_point_caller.service_name + ".call_async"
+            call_async_entry_point_caller = spear.services.entry_point_caller.CallAsyncEntryPointCaller(service_name=call_async_service_name, engine_service=self._entry_point_caller.engine_service)
+            self.call_async = NavigationService(entry_point_caller=call_async_entry_point_caller, shared_memory_service=shared_memory_service, create_children=False)
+
+            send_async_service_name = self._entry_point_caller.service_name + ".send_async"
+            send_async_entry_point_caller = spear.services.entry_point_caller.SendAsyncEntryPointCaller(service_name=send_async_service_name, engine_service=self._entry_point_caller.engine_service)
+            self.send_async = NavigationService(entry_point_caller=send_async_entry_point_caller, shared_memory_service=shared_memory_service, create_children=False)
+
+            call_async_fast_service_name = self._entry_point_caller.service_name + ".call_async"
+            call_async_fast_entry_point_caller = spear.services.entry_point_caller.CallAsyncFastEntryPointCaller(service_name=call_async_fast_service_name, engine_service=self._entry_point_caller.engine_service)
+            self.call_async_fast = NavigationService(entry_point_caller=call_async_fast_entry_point_caller, shared_memory_service=shared_memory_service, create_children=False)
+
+            send_async_fast_service_name = self._entry_point_caller.service_name + ".send_async"
+            send_async_fast_entry_point_caller = spear.services.entry_point_caller.SendAsyncFastEntryPointCaller(service_name=send_async_service_name, engine_service=self._entry_point_caller.engine_service)
+            self.send_async_fast = NavigationService(entry_point_caller=send_async_fast_entry_point_caller, shared_memory_service=shared_memory_service, create_children=False)
 
 
     def get_nav_data_for_agent_name(self, navigation_system, agent_name):
-        return self._entry_point_caller.call_on_game_thread_and_get_return_value(
-            "uint64_t",
-            f"{self._service_name}.get_nav_data_for_agent_name",
-            navigation_system,
-            agent_name)
+        return self._entry_point_caller.call_on_game_thread("uint64_t", "get_nav_data_for_agent_name", None, navigation_system, agent_name)
 
 
     def get_random_points(
@@ -33,21 +46,21 @@ class NavigationService():
         packed_arrays = spear.utils.func_utils.to_packed_arrays(arrays={"filter_classes": filter_classes, "queriers": queriers}, usage_flags=["Arg"])
         out_packed_array = spear.utils.func_utils.to_packed_array(array=out_array, usage_flags=["Arg", "ReturnValue"])
 
-        # call function
-        return_value_packed_array = self._entry_point_caller.call_on_game_thread_and_get_converted_return_value(
+        # define convert func
+        def convert_func(result_packed_array, out_array=out_array):
+            result_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_arrays(arrays=[out_array], usage_flags=["Arg", "ReturnValue"])
+            result = spear.utils.func_utils.to_array(packed_array=result_packed_array, usage_flags=["Arg", "ReturnValue"], shared_memory_handles=result_shared_memory_handles)
+            return result
+
+        return self._entry_point_caller.call_on_game_thread(
             "PackedArray",
-            f"{self._service_name}.get_random_points",
+            "get_random_points",
+            convert_func,
             navigation_data,
             num_points,
             query_owner,
             packed_arrays,
             out_packed_array)
-
-        # convert return value to a NumPy array
-        return_value_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_arrays(arrays=[out_array], usage_flags=["Arg", "ReturnValue"])
-        return_value = spear.utils.func_utils.to_array(packed_array=return_value_packed_array, usage_flags=["Arg", "ReturnValue"], shared_memory_handles=return_value_shared_memory_handles)
-
-        return return_value
 
 
     def get_random_reachable_points_in_radius(
@@ -70,21 +83,21 @@ class NavigationService():
         packed_arrays = spear.utils.func_utils.to_packed_arrays(arrays={"origin_points": origin_points, "radii": radii, "filter_classes": filter_classes, "queriers": queriers}, usage_flags=["Arg"])
         out_packed_array = spear.utils.func_utils.to_packed_array(array=out_array, usage_flags=["Arg", "ReturnValue"])
 
-        # call function
-        return_value_packed_array = self._entry_point_caller.call_on_game_thread_and_get_converted_return_value(
+        # define convert func
+        def convert_func(result_packed_array, out_array=out_array):
+            result_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_arrays(arrays=[out_array], usage_flags=["Arg", "ReturnValue"])
+            result = spear.utils.func_utils.to_array(packed_array=result_packed_array, usage_flags=["Arg", "ReturnValue"], shared_memory_handles=result_shared_memory_handles)
+            return result
+
+        return self._entry_point_caller.call_on_game_thread(
             "PackedArray",
-            f"{self._service_name}.get_random_reachable_points_in_radius",
+            "get_random_reachable_points_in_radius",
+            convert_func,
             navigation_data,
             num_points,
             query_owner,
             packed_arrays,
             out_packed_array)
-
-        # convert return value to a NumPy array
-        return_value_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_arrays(arrays=[out_array], usage_flags=["Arg", "ReturnValue"])
-        return_value = spear.utils.func_utils.to_array(packed_array=return_value_packed_array, usage_flags=["Arg", "ReturnValue"], shared_memory_handles=return_value_shared_memory_handles)
-
-        return return_value
 
 
     def find_paths(
@@ -114,10 +127,24 @@ class NavigationService():
 
         nav_agent_property_strings = spear.utils.func_utils.to_json_strings(nav_agent_properties)
 
-        # call function
-        return_value_packed_arrays = self._entry_point_caller.call_on_game_thread_and_get_converted_return_value(
+        # define convert func
+        def convert_func(result_packed_arrays):
+            return_values = spear.utils.func_utils.to_arrays(packed_arrays=return_value_packed_arrays)
+
+            # return paths as a list of NumPy arrays rather than as a points array and an indices array
+            points = return_values["points"]
+            indices = return_values["indices"]
+            paths = []
+            for i in range(indices.shape[0] - 1):
+                paths.append(points[indices[i]:indices[i + 1]])
+            paths.append(points[indices[-1]:])
+
+            return paths
+
+        return self._entry_point_caller.call_on_game_thread(
             "std::map<std::string, PackedArray>",
-            f"{self._service_name}.find_paths",
+            "find_paths",
+            convert_func,
             navigation_system,
             navigation_data,
             num_paths,
@@ -125,16 +152,3 @@ class NavigationService():
             packed_arrays,
             nav_agent_property_strings,
             path_finding_mode_strings)
-
-        # convert return values to NumPy arrays
-        return_values = spear.utils.func_utils.to_arrays(packed_arrays=return_value_packed_arrays)
-
-        # return paths as a list of NumPy arrays rather than as a points array and an indices array
-        points = return_values["points"]
-        indices = return_values["indices"]
-        paths = []
-        for i in range(indices.shape[0] - 1):
-            paths.append(points[indices[i]:indices[i + 1]])
-        paths.append(points[indices[-1]:])
-
-        return paths

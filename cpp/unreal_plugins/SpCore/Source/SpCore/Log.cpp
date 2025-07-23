@@ -99,7 +99,7 @@ std::string Log::getCurrentFunctionAbbreviated(const std::string& current_functi
 
     // Iteratively simplify template expressions with "<...>". We do this iteratively, because regular expressions are not intended to handle
     // arbitrarily nested brackets.
-    std::regex template_expression_regex("<(([a-zA-Z0-9_:*&,. ])|(<\\.\\.\\.>))+>");
+    std::regex template_expression_regex("<(([a-zA-Z0-9_:*&,.{}() ])|(<\\.\\.\\.>))+>");
 
     // Keep iterating until the string doesn't change.
     std::string current_function_more_simplified;
@@ -112,16 +112,23 @@ std::string Log::getCurrentFunctionAbbreviated(const std::string& current_functi
     std::regex function_void_arguments_regex("\\(void\\)");
     current_function_simplified = std::regex_replace(current_function_simplified, function_void_arguments_regex, "()");
 
-    std::regex function_non_void_arguments_regex("\\((([a-zA-Z0-9_:*&,. ])|(<\\.\\.\\.>))+\\)");
+    std::regex function_non_void_arguments_regex("\\((([a-zA-Z0-9_:*&,.{}() ])|(<\\.\\.\\.>))+\\)");
     current_function_simplified = std::regex_replace(current_function_simplified, function_non_void_arguments_regex, "(...)");
 
-    // Return the token containing "(" and ")".
-    for (auto& token : Std::tokenize(current_function_simplified, "*& ")) {
-        if (Std::contains(token, "(") && Std::contains(token, ")")) {
-            return token;
+    // Either return the token ending in ::operator (indicating we're inside a lambda), or the token containing "(" and ")".
+    std::vector<std::string> tokens = Std::tokenize(current_function_simplified, "*& ");
+    for (int i = 0; i < tokens.size(); i++) {
+        std::string& current_token = tokens.at(i);
+        if (i < tokens.size() - 1) {
+            std::string& next_token = tokens.at(i + 1);
+            if (Std::endsWith(current_token, "::operator")) {
+                return current_token + " " + next_token;
+            }
+        } else if (Std::contains(current_token, "(") && Std::contains(current_token, ")")) {
+            return current_token;
         }
     }
 
-    SP_ASSERT(false);
-    return "";
+    // If our simplification strategy didn't work for some reason, then just return the input to facilitate further debugging.
+    return current_function;
 }

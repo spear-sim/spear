@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <functional> // std::function
 #include <map>
 #include <string>
 #include <vector>
@@ -845,7 +844,7 @@ public:
     {
         registerStructCommon<TSpecialStruct>(struct_name);
 
-        std::string type_id_string = getTypeIdString<TSpecialStruct>();
+        std::string type_id_string = Std::getTypeIdString<TSpecialStruct>();
         SP_ASSERT(!Std::containsKey(g_special_struct_names, type_id_string));
         SP_ASSERT(!Std::containsKey(g_special_structs, type_id_string));
         Std::insert(g_special_struct_names, std::move(type_id_string), struct_name);
@@ -858,7 +857,7 @@ public:
         registerStructCommon<TSpecialStruct>(struct_name);
 
         SP_ASSERT(ustruct);
-        std::string type_id_string = getTypeIdString<TSpecialStruct>();
+        std::string type_id_string = Std::getTypeIdString<TSpecialStruct>();
         SP_ASSERT(!Std::containsKey(g_special_struct_names, type_id_string));
         SP_ASSERT(!Std::containsKey(g_special_structs, type_id_string));
         Std::insert(g_special_structs, std::move(type_id_string), ustruct);
@@ -1025,7 +1024,7 @@ public:
     {
         unregisterStructCommon<TSpecialStruct>(struct_name);
 
-        std::string type_id_string = getTypeIdString<TSpecialStruct>();
+        std::string type_id_string = Std::getTypeIdString<TSpecialStruct>();
         SP_ASSERT(Std::containsKey(g_special_struct_names, type_id_string) || Std::containsKey(g_special_structs, type_id_string));
         if (Std::containsKey(g_special_struct_names, type_id_string)) {
             SP_ASSERT(!Std::containsKey(g_special_structs, type_id_string));
@@ -1060,7 +1059,7 @@ public:
         (!(CStruct<TSpecialStruct> || CClass<TSpecialStruct>))
     static UStruct* getStaticStruct()
     {
-        std::string type_id_string = getTypeIdString<TSpecialStruct>();
+        std::string type_id_string = Std::getTypeIdString<TSpecialStruct>();
         SP_ASSERT(Std::containsKey(g_special_struct_names, type_id_string) || Std::containsKey(g_special_structs, type_id_string));
         if (Std::containsKey(g_special_struct_names, type_id_string)) {
             SP_ASSERT(!Std::containsKey(g_special_structs, type_id_string));
@@ -1072,17 +1071,5 @@ public:
             return g_special_structs.at(type_id_string);
         }
         return nullptr;
-    }
-
-private:
-    template <typename T>
-    static const char* getTypeIdString()
-    {
-        // RTTI is not allowed in modules that define Unreal types, so we can't use typeid(T). We also can't use
-        // use boost::typeindex::type_id<T>, which is intended to emulate RTTI without actually enabling it, because
-        // this conflicts with some Unreal modules that explicitly enable RTTI. So we use BOOST_CURRENT_FUNCTION
-        // as a lightweight alternative because it will give us a unique string for each type, and that is the only
-        // type information we need here.
-        return BOOST_CURRENT_FUNCTION;
     }
 };

@@ -23,7 +23,8 @@
 #include "SpServices/Service.h"
 #include "SpServices/SharedMemoryService.h"
 
-class SpFuncService : public Service {
+class SpFuncService : public Service
+{
 public:
     SpFuncService() = delete;
     SpFuncService(CUnrealEntryPointBinder auto* unreal_entry_point_binder, SharedMemoryService* shared_memory_service) : Service("SpFuncService")

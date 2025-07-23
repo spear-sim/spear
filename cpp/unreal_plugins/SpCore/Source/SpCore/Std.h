@@ -20,7 +20,7 @@
                        // std::ranges::sized_range, std::ranges::size, std::views::keys, std::views::transform
 #include <type_traits> // std::underlying_type_t
 #include <span>
-#include <string>
+#include <string>      // std::equal
 #include <utility>     // std::forward, std::move
 #include <vector>
 
@@ -46,13 +46,12 @@
     SP_EXTERN_C SPCORE_API long int __isoc23_strtol(const char* str, char** endptr, int base);
 #endif
 
-// These operators are needed so an enum class can be used like an integer to represent bit flags. Note that
-// operator|| and operator! are needed for SP_ASSERT
+// These operators are needed so an enum class can be used like an integer to represent bit flags. Note that operator|| and operator! are needed for SP_ASSERT
 #define SP_DECLARE_ENUM_FLAG_OPERATORS(TEnum) \
-    static TEnum operator|(TEnum lhs, TEnum rhs) { return static_cast<TEnum>(static_cast<std::underlying_type_t<TEnum>>(lhs) | static_cast<std::underlying_type_t<TEnum>>(rhs)); }; \
-    static TEnum operator&(TEnum lhs, TEnum rhs) { return static_cast<TEnum>(static_cast<std::underlying_type_t<TEnum>>(lhs) & static_cast<std::underlying_type_t<TEnum>>(rhs)); }; \
-    static bool operator||(TEnum lhs, bool rhs) { return static_cast<std::underlying_type_t<TEnum>>(lhs) || rhs; };                                                                 \
-    static bool operator!(TEnum val) { return !static_cast<std::underlying_type_t<TEnum>>(val); };
+    static TEnum operator |(TEnum lhs, TEnum rhs) { return static_cast<TEnum>(static_cast<std::underlying_type_t<TEnum>>(lhs) | static_cast<std::underlying_type_t<TEnum>>(rhs)); }; \
+    static TEnum operator &(TEnum lhs, TEnum rhs) { return static_cast<TEnum>(static_cast<std::underlying_type_t<TEnum>>(lhs) & static_cast<std::underlying_type_t<TEnum>>(rhs)); }; \
+    static bool operator ||(TEnum lhs, bool rhs)  { return static_cast<std::underlying_type_t<TEnum>>(lhs) || rhs; };                                                                \
+    static bool operator !(TEnum val)             { return !static_cast<std::underlying_type_t<TEnum>>(val); };
 
 //
 // Helper concepts
@@ -172,6 +171,25 @@ public:
     Std() = delete;
     ~Std() = delete;
 
+    template <typename T>
+    static std::string getTypeIdString()
+    {
+        // RTTI is not allowed in modules that define Unreal types, so we can't use typeid(T). We also can't use
+        // use boost::typeindex::type_id<T>, which is intended to emulate RTTI without actually enabling it, because
+        // this conflicts with some Unreal modules that explicitly enable RTTI. So we use BOOST_CURRENT_FUNCTION
+        // as a lightweight alternative because it will give us a unique string for each type.
+        return BOOST_CURRENT_FUNCTION;
+    }
+
+    //
+    // enum class functions
+    //
+
+    template <typename TEnum> requires std::is_enum_v<TEnum>
+    static bool toBool(TEnum value) {
+        return static_cast<std::underlying_type_t<TEnum>>(value) != 0;
+    }
+
     //
     // std::string functions
     //
@@ -179,6 +197,16 @@ public:
     static bool contains(const std::string& string, const std::string& substring)
     {
         return string.find(substring) != std::string::npos;
+    }
+
+    static bool startsWith(const std::string& string, const std::string& prefix)
+    {
+        return std::equal(prefix.begin(), prefix.end(), string.begin());
+    }
+
+    static bool endsWith(const std::string& string, const std::string& suffix)
+    {
+        return std::equal(suffix.rbegin(), suffix.rend(), string.rbegin());
     }
 
     static std::vector<std::string> tokenize(const std::string& string, const std::string& separators)

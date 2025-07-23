@@ -10,17 +10,20 @@
     #include <stdlib.h> // posix_memalign
 #endif
 
-#include <concepts>  // std::same_as
-#include <cstring>   // std::memcpy
-#include <exception> // std::terminate
+#include <chrono> 
+#include <concepts>    // std::same_as
+#include <cstring>     // std::memcpy
+#include <exception>   // std::terminate
 #include <iostream>
 #include <map>
-#include <memory>    // std::make_shared, std::make_unique, std::shared_ptr, std::unique_ptr
+#include <memory>      // std::make_shared, std::make_unique, std::shared_ptr, std::unique_ptr
 #include <span>
 #include <sstream>
-#include <stdexcept> // std::runtime_error
+#include <stdexcept>   // std::runtime_error
 #include <string>
-#include <utility>   // std::move
+#include <thread>      // std::this_thread
+#include <type_traits> // std::is_void_v
+#include <utility>     // std::move
 #include <vector>
 
 #include <nanobind/nanobind.h>
@@ -47,7 +50,17 @@
     while (false)
 
 //
-// Minimal sp_float16_t data type
+// Minimal current function macro
+//
+
+#ifdef _MSC_VER
+    #define SP_CURRENT_FUNCTION __FUNCSIG__
+#else
+    #define SP_CURRENT_FUNCTION __PRETTY_FUNCTION__
+#endif
+
+//
+// Minimal 16-bit floating point data type
 //
 
 struct sp_float16_t { uint16_t data; };
@@ -124,8 +137,68 @@ using SpPackedArrayAllocator = SpPackedArrayAllocatorImpl<uint8_t>;
 struct Statics
 {
     inline static bool s_force_return_aligned_arrays_ = false;
+    inline static bool s_verbose_rpc_calls_ = false;
     inline static bool s_verbose_exceptions_ = true;
     inline static bool s_verbose_allocations_ = false;
+};
+
+//
+// Custom types
+//
+
+struct PropertyDesc
+{
+    uint64_t property_ = 0;
+    uint64_t value_ptr_ = 0;
+};
+
+struct SharedMemoryView
+{
+    std::string id_;
+    uint64_t num_bytes_ = 0;
+    uint64_t offset_bytes_ = 0;
+    std::vector<std::string> usage_flags_ = {"DoNotUse"};
+};
+
+struct PackedArray
+{
+    nanobind::ndarray<nanobind::numpy> data_;
+    std::string data_source_ = "Invalid";
+    std::vector<size_t> shape_;
+    std::string shared_memory_name_;
+};
+
+struct Future
+{
+    uint64_t future_ptr_ = 0;
+    std::string type_id_;
+};
+
+struct DataBundle
+{
+    std::map<std::string, PackedArray> packed_arrays_;
+    std::map<std::string, std::string> unreal_obj_strings_;
+    std::string info_;
+};
+
+//
+// View types
+//
+
+struct PackedArrayView
+{
+    std::span<uint8_t> view_;
+    std::string data_source_ = "Invalid";
+    std::vector<size_t> shape_;
+    std::string data_type_;
+    std::string shared_memory_name_;
+};
+
+struct DataBundleView
+{
+    std::map<std::string, PackedArrayView> packed_array_views_;
+    std::map<std::string, std::string> unreal_obj_strings_;
+    std::string info_;
 };
 
 //
@@ -185,136 +258,218 @@ public:
         client_->clear_timeout();
     };
 
-    template <typename... TArgs>
-    void call(const std::string& func_name, TArgs... args)
+    template <typename TReturn, typename... TArgs>
+    TReturn call(const std::string& func_name, TArgs... args)
     {
-        SP_ASSERT(client_);
+        if (Statics::s_verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] call<...>(...): " << func_name << std::endl; }
 
-        try {
+        return executeFuncInTryCatch(func_name, [this, &func_name, &args...]() -> TReturn {
+            clmdep_msgpack::object_handle object_handle = client_->call(func_name, args...);
+            return getReturnValue<TReturn>(std::move(object_handle));
+        });
+    };
+
+    template <typename... TArgs>
+    Future callAsync(const std::string& func_name, TArgs... args)
+    {
+        if (Statics::s_verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] callAsync(...): " << func_name << std::endl; }
+
+        return executeFuncInTryCatch(func_name, [this, &func_name, &args...]() -> Future {
+            clmdep_msgpack::object_handle object_handle = client_->call(func_name, args...);
+            return getReturnValue<Future>(std::move(object_handle));
+        });
+    };
+
+    template <typename... TArgs>
+    void sendAsync(const std::string& func_name, TArgs... args)
+    {
+        if (Statics::s_verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] sendAsync(...): " << func_name << std::endl; }
+
+        executeFuncInTryCatch(func_name, [this, &func_name, &args...]() -> void {
             client_->call(func_name, args...);
-        } catch (const std::exception& e) {
-            if (Statics::s_verbose_exceptions_) {
-                std::cout << "[SPEAR | spear_ext.cpp] ERROR: Caught exception when calling \"" << func_name << "\": " << e.what() << std::endl;
-            }
-            std::rethrow_exception(std::current_exception());
-        } catch (...) {
-            if (Statics::s_verbose_exceptions_) {
-                std::cout << "[SPEAR | spear_ext.cpp] ERROR: Caught unknown exception when calling \"" << func_name << "\"." << std::endl;
-            }
-            std::rethrow_exception(std::current_exception());
-        }
+        });
+    };
+
+    template <typename TReturn>
+    TReturn getFutureResult(const Future& future)
+    {
+        if (Statics::s_verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] getFutureResult<...>(...): " << future.future_ptr_ << std::endl; }
+
+        return executeFuncInTryCatch("getFutureResult<...>(...)", [this, &future]() -> TReturn {
+            clmdep_msgpack::object_handle object_handle = client_->call("engine_service.get_future_result_as_" + getTypeName<TReturn>(), future);
+            return getReturnValue<TReturn>(std::move(object_handle));
+        });
+    };
+
+    template <typename... TArgs>
+    uint64_t callAsyncFast(const std::string& func_name, TArgs... args)
+    {
+        if (Statics::s_verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] callAsyncFast(...): " << func_name << std::endl; }
+
+        return executeFuncInTryCatch(func_name, [this, &func_name, &args...]() -> uint64_t {
+            std::future<clmdep_msgpack::object_handle> std_future = client_->async_call(func_name, args...);
+            return createFutureFast(std::move(std_future));
+        });
+    };
+
+    template <typename... TArgs>
+    void sendAsyncFast(const std::string& func_name, TArgs... args)
+    {
+        if (Statics::s_verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] sendAsyncFast(...): " << func_name << std::endl; }
+
+        executeFuncInTryCatch(func_name, [this, &func_name, &args...]() -> void {
+            client_->send(func_name, args...);
+        });
+    };
+
+    template <typename TReturn>
+    TReturn getFutureResultFast(uint64_t future_handle)
+    {
+        if (Statics::s_verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] getFutureResultFast<...>(...): " << future_handle << std::endl; }
+
+        return destroyFutureFast<TReturn>(future_handle);
     };
 
     template <typename TReturn, typename... TArgs>
-    TReturn callAndGetReturnValue(const std::string& func_name, TArgs... args)
+    static void registerEntryPointSignature(nanobind::class_<Client>& client_class)
     {
-        SP_ASSERT(client_);
+        std::string return_type_name                      = getTypeName<TReturn>();
+        std::string call_as_return_type                   = "call_as_" + return_type_name;
+        std::string get_future_result_as_return_type      = "get_future_result_as_" + return_type_name;
+        std::string get_future_result_fast_as_return_type = "get_future_result_fast_as_" + return_type_name;
 
-        try {
-            return client_->call(func_name, args...).template as<TReturn>(); // .template needed on macOS
-        } catch (const std::exception& e) {
-            if (Statics::s_verbose_exceptions_) {
-                std::cout << "[SPEAR | spear_ext.cpp] ERROR: Caught exception when calling \"" << func_name << "\": " << e.what() << std::endl;
-            }
-            std::rethrow_exception(std::current_exception());
-            return TReturn();
-        } catch (...) {
-            if (Statics::s_verbose_exceptions_) {
-                std::cout << "[SPEAR | spear_ext.cpp] ERROR: Caught unknown exception when calling \"" << func_name << "\"." << std::endl;
-            }
-            std::rethrow_exception(std::current_exception());
-            return TReturn();
-        }
-    };
+        client_class.def(call_as_return_type.c_str(), &Client::call<TReturn, TArgs...>);
 
-    template <typename TReturnDest, typename TReturnSrc, typename... TArgs>
-    TReturnDest callAndGetConvertedReturnValue(const std::string& func_name, TArgs... args)
-    {
-        SP_ASSERT(client_);
+        client_class.def("call_async",                             &Client::callAsync<TArgs...>);
+        client_class.def("send_async",                             &Client::sendAsync<TArgs...>);
+        client_class.def(get_future_result_as_return_type.c_str(), &Client::getFutureResult<TReturn>);
 
-        try {
-            std::shared_ptr<clmdep_msgpack::object_handle> object_handle = std::make_shared<clmdep_msgpack::object_handle>(client_->call(func_name, args...));
-            TReturnSrc return_value_src = object_handle->template as<TReturnSrc>(); // .template needed on macOS
-            TReturnDest return_value_dest = convert<TReturnDest>(std::move(return_value_src), object_handle);
-            return return_value_dest;
-        } catch (const std::exception& e) {
-            if (Statics::s_verbose_exceptions_) {
-                std::cout << "[SPEAR | spear_ext.cpp] ERROR: Caught exception when calling \"" << func_name << "\": " << e.what() << std::endl;
-            }
-            std::rethrow_exception(std::current_exception());
-            return TReturnDest();
-        } catch (...) {
-            if (Statics::s_verbose_exceptions_) {
-                std::cout << "[SPEAR | spear_ext.cpp] ERROR: Caught unknown exception when calling \"" << func_name << "\"." << std::endl;
-            }
-            std::rethrow_exception(std::current_exception());
-            return TReturnDest();
-        }
+        client_class.def("call_async_fast",                             &Client::callAsyncFast<TArgs...>);
+        client_class.def("send_async_fast",                             &Client::sendAsyncFast<TArgs...>);
+        client_class.def(get_future_result_fast_as_return_type.c_str(), &Client::getFutureResultFast<TReturn>);
     };
 
 private:
-    // needed to convert a custom view type, received as a return value from the server, into a custom type that be returned to Python (specialized below)
-    template <typename TDest, typename TSrc>
-    TDest convert(TSrc&& src, std::shared_ptr<clmdep_msgpack::object_handle> object_handle)
+    template <typename TFunc>
+    auto executeFuncInTryCatch(const std::string& func_name, const TFunc& func)
     {
-        SP_ASSERT(false);
-        return TDest();
+        using TReturn = std::invoke_result_t<TFunc>;
+
+        SP_ASSERT(client_);
+
+        try {
+            if constexpr (std::is_void_v<TReturn>) {
+                if (Statics::s_verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] Executing function: " << func_name << std::endl; }
+
+                func();
+
+                if (Statics::s_verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] Finished executing function: " << func_name << std::endl; }
+
+            } else {
+                if (Statics::s_verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] Executing function: " << func_name << std::endl; }
+
+                TReturn return_value = func();
+
+                if (Statics::s_verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] Finished executing function: " << func_name << std::endl; }
+                return return_value;
+            }
+        } catch (const std::exception& e) {
+            if (Statics::s_verbose_exceptions_) { std::cout << "[SPEAR | spear_ext.cpp] ERROR: Caught exception when calling \"" << func_name << "\": " << e.what() << std::endl; }
+            std::rethrow_exception(std::current_exception());
+        } catch (...) {
+            if (Statics::s_verbose_exceptions_) { std::cout << "[SPEAR | spear_ext.cpp] ERROR: Caught unknown exception when calling \"" << func_name << "\"." << std::endl; }
+            std::rethrow_exception(std::current_exception());
+        }
+
+        return TReturn();
     };
 
+    template <typename TReturn> static std::string getTypeName() { std::cout << "[SPEAR | spear_ext.cpp] ERROR: Current function: " << SP_CURRENT_FUNCTION << std::endl; SP_ASSERT(false); return ""; }
+    template <> std::string getTypeName<void>                                    () { return "void";                                }
+    template <> std::string getTypeName<bool>                                    () { return "bool";                                }
+    template <> std::string getTypeName<float>                                   () { return "float";                               }
+    template <> std::string getTypeName<int64_t>                                 () { return "int64";                               }
+    template <> std::string getTypeName<uint64_t>                                () { return "uint64";                              }
+    template <> std::string getTypeName<std::string>                             () { return "string";                              }
+    template <> std::string getTypeName<std::vector<double>>                     () { return "vector_of_double";                    }
+    template <> std::string getTypeName<std::vector<uint64_t>>                   () { return "vector_of_uint64";                    }
+    template <> std::string getTypeName<std::vector<std::string>>                () { return "vector_of_string";                    }
+    template <> std::string getTypeName<std::map<std::string, uint64_t>>         () { return "map_of_string_to_uint64";             }
+    template <> std::string getTypeName<std::map<std::string, std::string>>      () { return "map_of_string_to_string";             }
+    template <> std::string getTypeName<std::map<std::string, SharedMemoryView>> () { return "map_of_string_to_shared_memory_view"; }
+    template <> std::string getTypeName<std::map<std::string, PackedArray>>      () { return "map_of_string_to_packed_array";       }
+    template <> std::string getTypeName<PropertyDesc>                            () { return "property_desc";                       }
+    template <> std::string getTypeName<SharedMemoryView>                        () { return "shared_memory_view";                  }
+    template <> std::string getTypeName<PackedArray>                             () { return "packed_array";                        }
+    template <> std::string getTypeName<Future>                                  () { return "future";                              }
+    template <> std::string getTypeName<DataBundle>                              () { return "data_bundle";                         }
+
+    template <typename TReturn> static TReturn getReturnValue(clmdep_msgpack::object_handle&& object_handle) { std::cout << "[SPEAR | spear_ext.cpp] ERROR: Current function: " << SP_CURRENT_FUNCTION << std::endl; SP_ASSERT(false); return TReturn(); }
+    template <> void                                    getReturnValue<void>                                    (clmdep_msgpack::object_handle&& object_handle) { return; }
+    template <> bool                                    getReturnValue<bool>                                    (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<bool>                                                                       (std::move(object_handle)); }
+    template <> float                                   getReturnValue<float>                                   (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<float>                                                                      (std::move(object_handle)); }
+    template <> int64_t                                 getReturnValue<int64_t>                                 (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<int64_t>                                                                    (std::move(object_handle)); }
+    template <> uint64_t                                getReturnValue<uint64_t>                                (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<uint64_t>                                                                   (std::move(object_handle)); }
+    template <> std::string                             getReturnValue<std::string>                             (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<std::string>                                                                (std::move(object_handle)); }
+    template <> std::vector<double>                     getReturnValue<std::vector<double>>                     (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<std::vector<double>>                                                        (std::move(object_handle)); }
+    template <> std::vector<uint64_t>                   getReturnValue<std::vector<uint64_t>>                   (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<std::vector<uint64_t>>                                                      (std::move(object_handle)); }
+    template <> std::vector<std::string>                getReturnValue<std::vector<std::string>>                (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<std::vector<std::string>>                                                   (std::move(object_handle)); }
+    template <> std::map<std::string, uint64_t>         getReturnValue<std::map<std::string, uint64_t>>         (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<std::map<std::string, uint64_t>>                                            (std::move(object_handle)); }
+    template <> std::map<std::string, std::string>      getReturnValue<std::map<std::string, std::string>>      (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<std::map<std::string, std::string>>                                         (std::move(object_handle)); }
+    template <> std::map<std::string, SharedMemoryView> getReturnValue<std::map<std::string, SharedMemoryView>> (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<std::map<std::string, SharedMemoryView>>                                    (std::move(object_handle)); }
+    template <> std::map<std::string, PackedArray>      getReturnValue<std::map<std::string, PackedArray>>      (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<std::map<std::string, PackedArray>, std::map<std::string, PackedArrayView>> (std::move(object_handle)); }
+    template <> PropertyDesc                            getReturnValue<PropertyDesc>                            (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<PropertyDesc>                                                               (std::move(object_handle)); }
+    template <> SharedMemoryView                        getReturnValue<SharedMemoryView>                        (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<SharedMemoryView>                                                           (std::move(object_handle)); }
+    template <> PackedArray                             getReturnValue<PackedArray>                             (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<PackedArray, PackedArrayView>                                               (std::move(object_handle)); }
+    template <> Future                                  getReturnValue<Future>                                  (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<Future>                                                                     (std::move(object_handle)); }
+    template <> DataBundle                              getReturnValue<DataBundle>                              (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<DataBundle, DataBundleView>                                                 (std::move(object_handle)); }
+
+    template <typename TReturn>
+    static TReturn getReturnValueImpl(clmdep_msgpack::object_handle&& object_handle)
+    {
+        return object_handle.template as<TReturn>(); // .template needed on macOS
+    };
+
+    template <typename TReturnDest, typename TReturnSrc>
+    static TReturnDest getReturnValueImpl(clmdep_msgpack::object_handle&& object_handle)
+    {
+        std::shared_ptr<clmdep_msgpack::object_handle> object_handle_ptr = std::make_shared<clmdep_msgpack::object_handle>(std::move(object_handle));
+        TReturnSrc return_value_src = object_handle_ptr->template as<TReturnSrc>(); // .template needed on macOS
+        return convert<TReturnDest>(std::move(return_value_src), object_handle_ptr);
+    };
+
+    uint64_t createFutureFast(std::future<clmdep_msgpack::object_handle>&& std_future)
+    {
+        std::future<clmdep_msgpack::object_handle>* std_future_ptr = new std::future<clmdep_msgpack::object_handle>(std::move(std_future));
+        SP_ASSERT(std_future_ptr);
+        if (Statics::s_verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] Allocated std::future<clmdep_msgpack::object_handle> object at memory location: " << std_future_ptr << std::endl; }
+        uint64_t future_handle = reinterpret_cast<uint64_t>(std_future_ptr);
+        return future_handle;
+    }
+
+    template <typename TReturn>
+    TReturn destroyFutureFast(uint64_t future_handle)
+    {
+        SP_ASSERT(future_handle);
+        std::future<clmdep_msgpack::object_handle>* std_future_ptr = reinterpret_cast<std::future<clmdep_msgpack::object_handle>*>(future_handle);
+        if (Statics::s_verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] Deleting std::future<clmdep_msgpack::object_handle> object at memory location: " << std_future_ptr << std::endl; }
+        clmdep_msgpack::object_handle object_handle = std_future_ptr->get();
+        if (Statics::s_verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] Obtained clmdep_msgpack::object_handle from std::future<clmdep_msgpack::object_handle>..." << std::endl; }
+        delete std_future_ptr;
+        std_future_ptr = nullptr;
+
+        Future future = object_handle.template as<Future>();
+        if (Statics::s_verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] Obtained Future from clmdep_msgpack::object_handle." << std::endl; }
+        std::string return_type_name = getTypeName<TReturn>();
+        std::string func_name = "engine_service.get_future_result_as_" + getTypeName<TReturn>();
+        if (Statics::s_verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] Preparing to call function to obtain future result: " << func_name << std::endl; }
+        return call<TReturn>(func_name, future);
+    }
+
+    // needed to convert a custom view type, received as a return value from the server, into a custom type that can be returned to Python (specialized below)
+    template <typename TDest, typename TSrc> static TDest convert(TSrc&& src, std::shared_ptr<clmdep_msgpack::object_handle> object_handle) { std::cout << "[SPEAR | spear_ext.cpp] ERROR: Current function: " << SP_CURRENT_FUNCTION << std::endl; SP_ASSERT(false); return TDest(); };
+
     std::unique_ptr<rpc::client> client_ = nullptr;
-};
-
-//
-// Custom types
-//
-
-struct SharedMemoryView
-{
-    std::string id_;
-    uint64_t num_bytes_ = 0;
-    uint64_t offset_bytes_ = 0;
-    std::vector<std::string> usage_flags_ = {"DoNotUse"};
-};
-
-struct PackedArray
-{
-    nanobind::ndarray<nanobind::numpy> data_;
-    std::string data_source_ = "Invalid";
-    std::vector<size_t> shape_;
-    std::string shared_memory_name_;
-};
-
-struct DataBundle
-{
-    std::map<std::string, PackedArray> packed_arrays_;
-    std::map<std::string, std::string> unreal_obj_strings_;
-    std::string info_;
-};
-
-struct PropertyDesc
-{
-    uint64_t property_ = 0;
-    uint64_t value_ptr_ = 0;
-};
-
-//
-// View types
-//
-
-struct PackedArrayView
-{
-    std::span<uint8_t> view_;
-    std::string data_source_ = "Invalid";
-    std::vector<size_t> shape_;
-    std::string data_type_;
-    std::string shared_memory_name_;
-};
-
-struct DataBundleView
-{
-    std::map<std::string, PackedArrayView> packed_array_views_;
-    std::map<std::string, std::string> unreal_obj_strings_;
-    std::string info_;
 };
 
 //
@@ -329,8 +484,9 @@ NB_MODULE(spear_ext, module)
 
     auto statics_class = nanobind::class_<Statics>(module, "Statics");
     statics_class.def_rw_static("force_return_aligned_arrays", &Statics::s_force_return_aligned_arrays_);
-    statics_class.def_rw_static("verbose_exceptions", &Statics::s_verbose_exceptions_);
+    statics_class.def_rw_static("verbose_rpc_calls", &Statics::s_verbose_rpc_calls_);
     statics_class.def_rw_static("verbose_allocations", &Statics::s_verbose_allocations_);
+    statics_class.def_rw_static("verbose_exceptions", &Statics::s_verbose_exceptions_);
 
     //
     // Client
@@ -347,145 +503,122 @@ NB_MODULE(spear_ext, module)
     client_class.def("clear_timeout", &Client::clearTimeout);
 
     //
-    // Specializations for Client::call(...)
+    // Specializations for Client::call(...), Client::callAsync(...), Client::sendAsync(...), and Client::getFutureResult(...)
     //
 
     // 0 args
-    client_class.def("call", &Client::call<>);
+    Client::registerEntryPointSignature<void>                                    (client_class);
+    Client::registerEntryPointSignature<bool>                                    (client_class);
+    Client::registerEntryPointSignature<int64_t>                                 (client_class);
+    Client::registerEntryPointSignature<uint64_t>                                (client_class);
+    Client::registerEntryPointSignature<std::string>                             (client_class);
+    Client::registerEntryPointSignature<std::vector<double>>                     (client_class);
+    Client::registerEntryPointSignature<std::vector<uint64_t>>                   (client_class);
+    Client::registerEntryPointSignature<std::map<std::string, uint64_t>>         (client_class);
 
-    // 1 arg
-    client_class.def("call", &Client::call<bool>);
-    client_class.def("call", &Client::call<uint64_t>);
-    client_class.def("call", &Client::call<const std::string&>);
-
-    // 2 args
-    client_class.def("call", &Client::call<uint64_t,            bool>);
-    client_class.def("call", &Client::call<uint64_t,            uint64_t>);
-    client_class.def("call", &Client::call<uint64_t,            const std::string&>);
-    client_class.def("call", &Client::call<const PropertyDesc&, const std::string&>);
-
-    // 3 args
-    client_class.def("call", &Client::call<uint64_t,            bool,                const std::vector<std::string>&>);
-    client_class.def("call", &Client::call<uint64_t,            int,                 const std::vector<std::string>&>);
-    client_class.def("call", &Client::call<uint64_t,            float,               const std::vector<std::string>&>);
-    client_class.def("call", &Client::call<uint64_t,            uint64_t,            const std::string&>);
-    client_class.def("call", &Client::call<uint64_t,            const std::string&,  float>);
-    client_class.def("call", &Client::call<uint64_t,            const std::string&,  const std::string&>);
-    client_class.def("call", &Client::call<uint64_t,            const std::string&,  const std::vector<std::string>&>);
-
-    // 4 args
-    client_class.def("call", &Client::call<uint64_t,            const std::string&,  const std::string&,               const std::string&>);
-
-    // 5 args
-    client_class.def("call", &Client::call<uint64_t,            uint64_t,            const std::string&,               const std::vector<uint64_t>&, const std::vector<uint64_t>&>);
-
-    // 7 args
-    client_class.def("call", &Client::call<uint64_t,            const std::string&,  const std::string&,               const std::string&,           const std::string&,            const std::vector<uint64_t>&, const std::vector<uint64_t>&>);
-
-    //
-    // Specializations for Client::callAndGetReturnValue(...)
-    //
-
-    // 0 args
-    client_class.def("call_and_get_return_value_as_bool",                                &Client::callAndGetReturnValue<bool>);
-    client_class.def("call_and_get_return_value_as_int64",                               &Client::callAndGetReturnValue<int64_t>);
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t>);
-    client_class.def("call_and_get_return_value_as_string",                              &Client::callAndGetReturnValue<std::string>);
-    client_class.def("call_and_get_return_value_as_vector_of_uint64",                    &Client::callAndGetReturnValue<std::vector<uint64_t>>);
-    client_class.def("call_and_get_return_value_as_vector_of_double",                    &Client::callAndGetReturnValue<std::vector<double>>);
-    client_class.def("call_and_get_return_value_as_map_of_string_to_uint64",             &Client::callAndGetReturnValue<std::map<std::string, uint64_t>>);
-
-    // 1 args
-    client_class.def("call_and_get_return_value_as_bool",                                &Client::callAndGetReturnValue<bool,                                    uint64_t>);
-    client_class.def("call_and_get_return_value_as_float",                               &Client::callAndGetReturnValue<float,                                   uint64_t>);
-    client_class.def("call_and_get_return_value_as_int32",                               &Client::callAndGetReturnValue<int32_t,                                 uint64_t>);
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                uint64_t>);
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                const std::string&>);
-    client_class.def("call_and_get_return_value_as_string",                              &Client::callAndGetReturnValue<std::string,                             uint64_t>);
-    client_class.def("call_and_get_return_value_as_string",                              &Client::callAndGetReturnValue<std::string,                             const PropertyDesc&>);
-    client_class.def("call_and_get_return_value_as_vector_of_string",                    &Client::callAndGetReturnValue<std::vector<uint64_t>,                   uint64_t>);
-    client_class.def("call_and_get_return_value_as_vector_of_uint64",                    &Client::callAndGetReturnValue<std::vector<uint64_t>,                   const std::string&>);
-    client_class.def("call_and_get_return_value_as_vector_of_string",                    &Client::callAndGetReturnValue<std::vector<std::string>,                uint64_t>);
-    client_class.def("call_and_get_return_value_as_map_of_string_to_uint64",             &Client::callAndGetReturnValue<std::map<std::string, uint64_t>,         uint64_t>);
-    client_class.def("call_and_get_return_value_as_map_of_string_to_uint64",             &Client::callAndGetReturnValue<std::map<std::string, uint64_t>,         const std::string&>);
-    client_class.def("call_and_get_return_value_as_map_of_string_to_shared_memory_view", &Client::callAndGetReturnValue<std::map<std::string, SharedMemoryView>, uint64_t>);
+    // 1 args 
+    Client::registerEntryPointSignature<void,                                    bool>                (client_class);
+    Client::registerEntryPointSignature<void,                                    uint64_t>            (client_class);
+    Client::registerEntryPointSignature<void,                                    const std::string&>  (client_class);
+    Client::registerEntryPointSignature<bool,                                    uint64_t>            (client_class);
+    Client::registerEntryPointSignature<float,                                   uint64_t>            (client_class);
+    Client::registerEntryPointSignature<int64_t,                                 uint64_t>            (client_class);
+    Client::registerEntryPointSignature<uint64_t,                                uint64_t>            (client_class);
+    Client::registerEntryPointSignature<uint64_t,                                const std::string&>  (client_class);
+    Client::registerEntryPointSignature<std::string,                             uint64_t>            (client_class);
+    Client::registerEntryPointSignature<std::string,                             const PropertyDesc&> (client_class);
+    Client::registerEntryPointSignature<std::vector<uint64_t>,                   uint64_t>            (client_class);
+    Client::registerEntryPointSignature<std::vector<uint64_t>,                   const std::string&>  (client_class);
+    Client::registerEntryPointSignature<std::vector<std::string>,                uint64_t>            (client_class);
+    Client::registerEntryPointSignature<std::map<std::string, uint64_t>,         uint64_t>            (client_class);
+    Client::registerEntryPointSignature<std::map<std::string, uint64_t>,         const std::string&>  (client_class);
+    Client::registerEntryPointSignature<std::map<std::string, SharedMemoryView>, uint64_t>            (client_class);
 
     // 2 args
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                uint64_t,             bool>);
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                uint64_t,             const std::string&>);
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                const std::string&,   uint64_t>);
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                const std::string&,   const std::string&>);
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                const std::string&,   const std::vector<std::string>&>);
-    client_class.def("call_and_get_return_value_as_string",                              &Client::callAndGetReturnValue<std::string,                             uint64_t,             bool>);
-    client_class.def("call_and_get_return_value_as_string",                              &Client::callAndGetReturnValue<std::string,                             uint64_t,             uint64_t>);
-    client_class.def("call_and_get_return_value_as_vector_of_uint64",                    &Client::callAndGetReturnValue<std::vector<uint64_t>,                   uint64_t,             bool>);
-    client_class.def("call_and_get_return_value_as_vector_of_uint64",                    &Client::callAndGetReturnValue<std::vector<uint64_t>,                   const std::string&,   const std::string&>);
-    client_class.def("call_and_get_return_value_as_vector_of_uint64",                    &Client::callAndGetReturnValue<std::vector<uint64_t>,                   const std::string&,   const std::vector<std::string>&>);
-    client_class.def("call_and_get_return_value_as_map_of_string_to_uint64",             &Client::callAndGetReturnValue<std::map<std::string, uint64_t>,         uint64_t,             bool>);
-    client_class.def("call_and_get_return_value_as_map_of_string_to_uint64",             &Client::callAndGetReturnValue<std::map<std::string, uint64_t>,         const std::string&,   const std::string&>);
-    client_class.def("call_and_get_return_value_as_map_of_string_to_uint64",             &Client::callAndGetReturnValue<std::map<std::string, uint64_t>,         const std::string&,   const std::vector<std::string>&>);
-    client_class.def("call_and_get_return_value_as_property_desc",                       &Client::callAndGetReturnValue<PropertyDesc,                            uint64_t,             const std::string&>);
+    Client::registerEntryPointSignature<void,                                    uint64_t,            bool>                            (client_class);
+    Client::registerEntryPointSignature<void,                                    uint64_t,            uint64_t>                        (client_class);
+    Client::registerEntryPointSignature<void,                                    uint64_t,            const std::string&>              (client_class);
+    Client::registerEntryPointSignature<void,                                    PropertyDesc,        const std::string&>              (client_class);
+    Client::registerEntryPointSignature<uint64_t,                                uint64_t,            bool>                            (client_class);
+    Client::registerEntryPointSignature<uint64_t,                                uint64_t,            const std::string&>              (client_class);
+    Client::registerEntryPointSignature<uint64_t,                                const std::string&,  uint64_t>                        (client_class);
+    Client::registerEntryPointSignature<uint64_t,                                const std::string&,  const std::string&>              (client_class);
+    Client::registerEntryPointSignature<uint64_t,                                const std::string&,  const std::vector<std::string>&> (client_class);
+    Client::registerEntryPointSignature<std::string,                             uint64_t,            bool>                            (client_class);
+    Client::registerEntryPointSignature<std::string,                             uint64_t,            uint64_t>                        (client_class);
+    Client::registerEntryPointSignature<std::vector<uint64_t>,                   uint64_t,            bool>                            (client_class);
+    Client::registerEntryPointSignature<std::vector<uint64_t>,                   const std::string&,  const std::string&>              (client_class);
+    Client::registerEntryPointSignature<std::vector<uint64_t>,                   const std::string&,  const std::vector<std::string>&> (client_class);
+    Client::registerEntryPointSignature<std::map<std::string, uint64_t>,         uint64_t,            bool>                            (client_class);
+    Client::registerEntryPointSignature<std::map<std::string, uint64_t>,         const std::string&,  const std::string&>              (client_class);
+    Client::registerEntryPointSignature<std::map<std::string, uint64_t>,         const std::string&,  const std::vector<std::string>&> (client_class);
+    Client::registerEntryPointSignature<PropertyDesc,                            uint64_t,            const std::string&>              (client_class);
 
     // 3 args
-    client_class.def("call_and_get_return_value_as_bool",                                &Client::callAndGetReturnValue<bool,                                    uint64_t,             bool,                             bool>);
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                uint64_t,             uint64_t,                         bool>);
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                uint64_t,             uint64_t,                         const std::string&>);
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                uint64_t,             const std::string&,               const std::string&>);
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                const std::string&,   uint64_t,                         bool>);
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                const std::string&,   uint64_t,                         const std::string&>);
-    client_class.def("call_and_get_return_value_as_vector_of_uint64",                    &Client::callAndGetReturnValue<std::vector<uint64_t>,                   uint64_t,             uint64_t,                         bool>);
-    client_class.def("call_and_get_return_value_as_vector_of_uint64",                    &Client::callAndGetReturnValue<std::vector<uint64_t>,                   const std::string&,   uint64_t,                         bool>);
-    client_class.def("call_and_get_return_value_as_vector_of_uint64",                    &Client::callAndGetReturnValue<std::vector<uint64_t>,                   const std::string&,   const std::vector<std::string>&,  bool>);
-    client_class.def("call_and_get_return_value_as_map_of_string_to_uint64",             &Client::callAndGetReturnValue<std::map<std::string, uint64_t>,         uint64_t,             uint64_t,                         bool>);
-    client_class.def("call_and_get_return_value_as_map_of_string_to_uint64",             &Client::callAndGetReturnValue<std::map<std::string, uint64_t>,         const std::string&,   uint64_t,                         bool>);
-    client_class.def("call_and_get_return_value_as_map_of_string_to_uint64",             &Client::callAndGetReturnValue<std::map<std::string, uint64_t>,         const std::string&,   const std::vector<std::string>&,  bool>);
-    client_class.def("call_and_get_return_value_as_shared_memory_view",                  &Client::callAndGetReturnValue<SharedMemoryView,                        const std::string&,   int,                              const std::vector<std::string>&>);
-    client_class.def("call_and_get_return_value_as_property_desc",                       &Client::callAndGetReturnValue<PropertyDesc,                            uint64_t,             uint64_t,                         const std::string&>);
+    Client::registerEntryPointSignature<void,                                    uint64_t,            bool,                            const std::vector<std::string>&>           (client_class);
+    Client::registerEntryPointSignature<void,                                    uint64_t,            int,                             const std::vector<std::string>&>           (client_class);
+    Client::registerEntryPointSignature<void,                                    uint64_t,            float,                           const std::vector<std::string>&>           (client_class);
+    Client::registerEntryPointSignature<void,                                    uint64_t,            uint64_t,                        const std::string&>                        (client_class);
+    Client::registerEntryPointSignature<void,                                    uint64_t,            const std::string&,              float>                                     (client_class);
+    Client::registerEntryPointSignature<void,                                    uint64_t,            const std::string&,              const std::string&>                        (client_class);
+    Client::registerEntryPointSignature<void,                                    uint64_t,            const std::string&,              const std::vector<std::string>&>           (client_class);
+    Client::registerEntryPointSignature<bool,                                    uint64_t,            bool,                            bool>                                      (client_class);
+    Client::registerEntryPointSignature<uint64_t,                                uint64_t,            uint64_t,                        bool>                                      (client_class);
+    Client::registerEntryPointSignature<uint64_t,                                uint64_t,            uint64_t,                        const std::string&>                        (client_class);
+    Client::registerEntryPointSignature<uint64_t,                                uint64_t,            const std::string&,              const std::string&>                        (client_class);
+    Client::registerEntryPointSignature<uint64_t,                                const std::string&,  uint64_t,                        bool>                                      (client_class);
+    Client::registerEntryPointSignature<uint64_t,                                const std::string&,  uint64_t,                        const std::string&>                        (client_class);
+    Client::registerEntryPointSignature<std::vector<uint64_t>,                   uint64_t,            uint64_t,                        bool>                                      (client_class);
+    Client::registerEntryPointSignature<std::vector<uint64_t>,                   const std::string&,  uint64_t,                        bool>                                      (client_class);
+    Client::registerEntryPointSignature<std::vector<uint64_t>,                   const std::string&,  const std::vector<std::string>&, bool>                                      (client_class);
+    Client::registerEntryPointSignature<std::map<std::string, uint64_t>,         uint64_t,            uint64_t,                        bool>                                      (client_class);
+    Client::registerEntryPointSignature<std::map<std::string, uint64_t>,         const std::string&,  uint64_t,                        bool>                                      (client_class);
+    Client::registerEntryPointSignature<std::map<std::string, uint64_t>,         const std::string&,  const std::vector<std::string>&, bool>                                      (client_class);
+    Client::registerEntryPointSignature<SharedMemoryView,                        const std::string&,  int,                             const std::vector<std::string>&>           (client_class);
+    Client::registerEntryPointSignature<PropertyDesc,                            uint64_t,            uint64_t,                        const std::string&>                        (client_class);
+    Client::registerEntryPointSignature<DataBundle,                              uint64_t,            const std::string&,              const DataBundle&>                         (client_class);
 
     // 4 args
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                uint64_t,             uint64_t,                         uint64_t,                                  const std::string&>);
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                const std::string&,   uint64_t,                         uint64_t,                                  const std::string&>);
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                const std::string&,   uint64_t,                         const std::string&,                        bool>);
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                const std::string&,   uint64_t,                         const std::vector<std::string>&,           bool>);
-    client_class.def("call_and_get_return_value_as_vector_of_uint64",                    &Client::callAndGetReturnValue<std::vector<uint64_t>,                   const std::string&,   uint64_t,                         const std::string&,                        bool>);
-    client_class.def("call_and_get_return_value_as_vector_of_uint64",                    &Client::callAndGetReturnValue<std::vector<uint64_t>,                   const std::string&,   uint64_t,                         const std::vector<std::string>&,           bool>);
-    client_class.def("call_and_get_return_value_as_map_of_string_to_uint64",             &Client::callAndGetReturnValue<std::map<std::string, uint64_t>,         const std::string&,   uint64_t,                         const std::string&,                        bool>);
-    client_class.def("call_and_get_return_value_as_map_of_string_to_uint64",             &Client::callAndGetReturnValue<std::map<std::string, uint64_t>,         const std::string&,   uint64_t,                         const std::vector<std::string>&,           bool>);
-    client_class.def("call_and_get_return_value_as_map_of_string_to_string",             &Client::callAndGetReturnValue<std::map<std::string, std::string>,      uint64_t,             uint64_t,                         const std::map<std::string, std::string>&, const std::string&>);
+    Client::registerEntryPointSignature<void,                                    uint64_t,            const std::string&,              const std::string&,                        const std::string&>                        (client_class);
+    Client::registerEntryPointSignature<uint64_t,                                uint64_t,            uint64_t,                        uint64_t,                                  const std::string&>                        (client_class);
+    Client::registerEntryPointSignature<uint64_t,                                const std::string&,  uint64_t,                        uint64_t,                                  const std::string&>                        (client_class);
+    Client::registerEntryPointSignature<uint64_t,                                const std::string&,  uint64_t,                        const std::string&,                        bool>                                      (client_class);
+    Client::registerEntryPointSignature<uint64_t,                                const std::string&,  uint64_t,                        const std::vector<std::string>&,           bool>                                      (client_class);
+    Client::registerEntryPointSignature<std::vector<uint64_t>,                   const std::string&,  uint64_t,                        const std::string&,                        bool>                                      (client_class);
+    Client::registerEntryPointSignature<std::vector<uint64_t>,                   const std::string&,  uint64_t,                        const std::vector<std::string>&,           bool>                                      (client_class);
+    Client::registerEntryPointSignature<std::map<std::string, uint64_t>,         const std::string&,  uint64_t,                        const std::string&,                        bool>                                      (client_class);
+    Client::registerEntryPointSignature<std::map<std::string, uint64_t>,         const std::string&,  uint64_t,                        const std::vector<std::string>&,           bool>                                      (client_class);
+    Client::registerEntryPointSignature<std::map<std::string, std::string>,      uint64_t,            uint64_t,                        const std::map<std::string, std::string>&, const std::string&>                        (client_class);
 
     // 5 args
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                uint64_t,             const std::string&,               const std::string&,                        const std::string&,                        const std::vector<std::string>&>);
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                const std::string&,   const std::string&,               const std::string&,                        const std::string&,                        const std::vector<std::string>&>);
-    client_class.def("call_and_get_return_value_as_vector_of_uint64",                    &Client::callAndGetReturnValue<std::vector<uint64_t>,                   const std::string&,   uint64_t,                         const std::vector<std::string>&,           bool,                                      bool>);
-    client_class.def("call_and_get_return_value_as_map_of_string_to_uint64",             &Client::callAndGetReturnValue<std::map<std::string, uint64_t>,         const std::string&,   uint64_t,                         const std::vector<std::string>&,           bool,                                      bool>);
+    Client::registerEntryPointSignature<void,                                    uint64_t,            uint64_t,                        const std::string&,                        const std::vector<uint64_t>&,              const std::vector<uint64_t>&>              (client_class);
+    Client::registerEntryPointSignature<uint64_t,                                uint64_t,            const std::string&,              const std::string&,                        const std::string&,                        const std::vector<std::string>&>           (client_class);
+    Client::registerEntryPointSignature<uint64_t,                                const std::string&,  const std::string&,              const std::string&,                        const std::string&,                        const std::vector<std::string>&>           (client_class);
+    Client::registerEntryPointSignature<std::vector<uint64_t>,                   const std::string&,  uint64_t,                        const std::vector<std::string>&,           bool,                                      bool>                                      (client_class);
+    Client::registerEntryPointSignature<std::map<std::string, uint64_t>,         const std::string&,  uint64_t,                        const std::vector<std::string>&,           bool,                                      bool>                                      (client_class);
+    Client::registerEntryPointSignature<PackedArray,                             uint64_t,            int64_t,                         uint64_t,                                  const std::map<std::string, PackedArray>&, const PackedArray&>                        (client_class);
 
     // 6 args
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                uint64_t,             uint64_t,                         const std::string&,                        const std::string&,                        const std::vector<std::string>&,           uint64_t>);
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                const std::string&,   uint64_t,                         const std::string&,                        const std::string&,                        const std::vector<std::string>&,           uint64_t>);
+    Client::registerEntryPointSignature<uint64_t,                                uint64_t,            uint64_t,                        const std::string&,                        const std::string&,                        const std::vector<std::string>&,           uint64_t>                        (client_class);
+    Client::registerEntryPointSignature<uint64_t,                                const std::string&,  uint64_t,                        const std::string&,                        const std::string&,                        const std::vector<std::string>&,           uint64_t>                        (client_class);
 
     // 7 args
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                const std::string&,   uint64_t,                         const std::string&,                        const std::string&,                        const std::vector<std::string>&,           uint64_t,                         uint64_t>);
+    Client::registerEntryPointSignature<void,                                    uint64_t,            const std::string&,              const std::string&,                        const std::string&,                        const std::string&,                        const std::vector<uint64_t>&,    const std::vector<uint64_t>&>    (client_class);
+    Client::registerEntryPointSignature<uint64_t,                                const std::string&,  uint64_t,                        const std::string&,                        const std::string&,                        const std::vector<std::string>&,           uint64_t,                        uint64_t>                        (client_class);
+    Client::registerEntryPointSignature<std::map<std::string, PackedArray>,      uint64_t,            uint64_t,                        int64_t,                                   uint64_t,                                  const std::map<std::string, PackedArray>&, const std::vector<std::string>&, const std::vector<std::string>&> (client_class);
 
     // 8 args
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                const std::string&,   uint64_t,                         const std::string&,                        const std::vector<std::string>&,           uint64_t,                                  bool,                             uint64_t,                         uint64_t>);
-    client_class.def("call_and_get_return_value_as_uint64",                              &Client::callAndGetReturnValue<uint64_t,                                uint64_t,             uint64_t,                         const std::string&,                        const std::string&,                        const std::vector<std::string>&,           uint64_t,                         bool,                             uint64_t>);
-
-    //
-    // Specializations for Client::callAndGetConvertedReturnValue(...)
-    //
-
-    // 3 args
-    client_class.def("call_and_get_converted_return_value_as_data_bundle",                   &Client::callAndGetConvertedReturnValue<DataBundle,  DataBundleView,                                                uint64_t, const std::string&, const DataBundle&>);
-
-    // 5 args
-    client_class.def("call_and_get_converted_return_value_as_packed_array",                  &Client::callAndGetConvertedReturnValue<PackedArray, PackedArrayView,                                               uint64_t, int32_t,            uint64_t,           const std::map<std::string, PackedArray>&, const PackedArray&>);
-
-    // 7 args
-    client_class.def("call_and_get_converted_return_value_as_map_of_string_to_packed_array", &Client::callAndGetConvertedReturnValue<std::map<std::string, PackedArray>, std::map<std::string, PackedArrayView>, uint64_t, uint64_t,           int32_t,            uint64_t,                                  const std::map<std::string, PackedArray>&, const std::vector<std::string>&,  const std::vector<std::string>&>);
+    Client::registerEntryPointSignature<uint64_t,                                const std::string&,  uint64_t,                        const std::string&,                        const std::vector<std::string>&,           uint64_t,                                  bool,                            uint64_t,                        uint64_t>       (client_class);
+    Client::registerEntryPointSignature<uint64_t,                                uint64_t,            uint64_t,                        const std::string&,                        const std::string&,                        const std::vector<std::string>&,           uint64_t,                        bool,                            uint64_t>       (client_class);
 
     //
     // Custom types
     //
+
+    auto property_desc_class = nanobind::class_<PropertyDesc>(module, "PropertyDesc");
+    property_desc_class.def(nanobind::init<>());
+    property_desc_class.def_rw("property",  &PropertyDesc::property_);
+    property_desc_class.def_rw("value_ptr", &PropertyDesc::value_ptr_);
 
     auto shared_memory_view_class = nanobind::class_<SharedMemoryView>(module, "SharedMemoryView");
     shared_memory_view_class.def(nanobind::init<>());
@@ -501,16 +634,16 @@ NB_MODULE(spear_ext, module)
     packed_array_class.def_rw("shape",              &PackedArray::shape_);
     packed_array_class.def_rw("shared_memory_name", &PackedArray::shared_memory_name_);
 
+    auto future_class = nanobind::class_<Future>(module, "Future");
+    future_class.def(nanobind::init<>());
+    future_class.def_rw("future_ptr", &Future::future_ptr_);
+    future_class.def_rw("type_id",    &Future::type_id_);
+
     auto data_bundle_class = nanobind::class_<DataBundle>(module, "DataBundle");
     data_bundle_class.def(nanobind::init<>());
     data_bundle_class.def_rw("packed_arrays",      &DataBundle::packed_arrays_, nanobind::rv_policy::reference);
     data_bundle_class.def_rw("unreal_obj_strings", &DataBundle::unreal_obj_strings_);
     data_bundle_class.def_rw("info",               &DataBundle::info_);
-
-    auto property_desc_class = nanobind::class_<PropertyDesc>(module, "PropertyDesc");
-    property_desc_class.def(nanobind::init<>());
-    property_desc_class.def_rw("property",  &PropertyDesc::property_);
-    property_desc_class.def_rw("value_ptr", &PropertyDesc::value_ptr_);
 }
 
 //
@@ -543,7 +676,6 @@ public:
     }
 };
 
-
 class MsgpackUtils
 {
 public:
@@ -554,15 +686,7 @@ public:
     // functions for receiving custom types as return values from the server
     //
 
-    template <typename T>
-    static T to(clmdep_msgpack::object const& object)
-    {
-        T t;
-        object.convert(t);
-        return t;
-    };
-
-    static std::map<std::string, clmdep_msgpack::object> toMap(clmdep_msgpack::object const& object)
+    static std::map<std::string, clmdep_msgpack::object> toMapOfMsgpackObjects(clmdep_msgpack::object const& object)
     {
         SP_ASSERT(object.type == clmdep_msgpack::type::MAP);
         clmdep_msgpack::object_kv* object_kvs = static_cast<clmdep_msgpack::object_kv*>(object.via.map.ptr);
@@ -574,7 +698,16 @@ public:
         return objects;
     };
 
-    static std::span<uint8_t> toSpan(clmdep_msgpack::object const& object)
+    template <typename T>
+    static T to(clmdep_msgpack::object const& object)
+    {
+        T t;
+        object.convert(t);
+        return t;
+    };
+
+    template <>
+    static std::span<uint8_t> to<std::span<uint8_t>>(clmdep_msgpack::object const& object)
     {
         SP_ASSERT(object.type == clmdep_msgpack::type::BIN);
         return std::span<uint8_t>(reinterpret_cast<uint8_t*>(const_cast<char*>(object.via.bin.ptr)), object.via.bin.size);
@@ -623,6 +756,32 @@ public:
 };
 
 //
+// PropertyDesc
+//
+
+template <> // needed to send a custom type as an arg to the server
+struct clmdep_msgpack::adaptor::pack<PropertyDesc> {
+    template <typename TStream>
+    clmdep_msgpack::packer<TStream>& operator()(clmdep_msgpack::packer<TStream>& packer, PropertyDesc const& property_desc) const {
+        packer.pack_map(2);
+        packer.pack("property");  packer.pack(property_desc.property_);
+        packer.pack("value_ptr"); packer.pack(property_desc.value_ptr_);
+        return packer;
+    }
+};
+
+template <> // needed to receive a custom type as a return value from the server
+struct clmdep_msgpack::adaptor::convert<PropertyDesc> {
+    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, PropertyDesc& property_desc) const {
+        std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
+        SP_ASSERT(objects.size() == 2);
+        property_desc.property_  = MsgpackUtils::to<uint64_t>(objects.at("property"));
+        property_desc.value_ptr_ = MsgpackUtils::to<uint64_t>(objects.at("value_ptr"));
+        return object;
+    }
+};
+
+//
 // SharedMemoryView
 //
 
@@ -642,12 +801,12 @@ struct clmdep_msgpack::adaptor::pack<SharedMemoryView> {
 template <> // needed to receive a custom type as a return value from the server
 struct clmdep_msgpack::adaptor::convert<SharedMemoryView> {
     clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SharedMemoryView& shared_memory_view) const {
-        std::map<std::string, clmdep_msgpack::object> map = MsgpackUtils::toMap(object);
-        SP_ASSERT(map.size() == 4);
-        shared_memory_view.id_           = MsgpackUtils::to<std::string>(map.at("id"));
-        shared_memory_view.num_bytes_    = MsgpackUtils::to<uint64_t>(map.at("num_bytes"));
-        shared_memory_view.offset_bytes_ = MsgpackUtils::to<uint16_t>(map.at("offset_bytes"));
-        shared_memory_view.usage_flags_  = MsgpackUtils::to<std::vector<std::string>>(map.at("usage_flags"));
+        std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
+        SP_ASSERT(objects.size() == 4);
+        shared_memory_view.id_           = MsgpackUtils::to<std::string>(objects.at("id"));
+        shared_memory_view.num_bytes_    = MsgpackUtils::to<uint64_t>(objects.at("num_bytes"));
+        shared_memory_view.offset_bytes_ = MsgpackUtils::to<uint16_t>(objects.at("offset_bytes"));
+        shared_memory_view.usage_flags_  = MsgpackUtils::to<std::vector<std::string>>(objects.at("usage_flags"));
         return object;
     }
 };
@@ -674,13 +833,13 @@ template <> // needed to receive a custom type as a return value from the server
 struct clmdep_msgpack::adaptor::convert<PackedArrayView> {
     clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, PackedArrayView& packed_array_view) const {
 
-        std::map<std::string, clmdep_msgpack::object> map = MsgpackUtils::toMap(object);
-        SP_ASSERT(map.size() == 5);
-        packed_array_view.view_               = MsgpackUtils::toSpan(map.at("data"));
-        packed_array_view.data_source_        = MsgpackUtils::to<std::string>(map.at("data_source"));
-        packed_array_view.shape_              = MsgpackUtils::to<std::vector<size_t>>(map.at("shape"));
-        packed_array_view.data_type_          = MsgpackUtils::to<std::string>(map.at("data_type"));
-        packed_array_view.shared_memory_name_ = MsgpackUtils::to<std::string>(map.at("shared_memory_name"));
+        std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
+        SP_ASSERT(objects.size() == 5);
+        packed_array_view.view_               = MsgpackUtils::to<std::span<uint8_t>>(objects.at("data"));
+        packed_array_view.data_source_        = MsgpackUtils::to<std::string>(objects.at("data_source"));
+        packed_array_view.shape_              = MsgpackUtils::to<std::vector<size_t>>(objects.at("shape"));
+        packed_array_view.data_type_          = MsgpackUtils::to<std::string>(objects.at("data_type"));
+        packed_array_view.shared_memory_name_ = MsgpackUtils::to<std::string>(objects.at("shared_memory_name"));
         SP_ASSERT(packed_array_view.data_source_ == "Internal" || packed_array_view.data_source_ == "Shared");
         return object;
     }
@@ -714,17 +873,14 @@ PackedArray Client::convert<PackedArray>(PackedArrayView&& packed_array_view, st
         // Allocate a Capsule on the heap. Deleted in the deletion callback below.
         Capsule* capsule_ptr = new Capsule();
         SP_ASSERT(capsule_ptr);
-
-        if (Statics::s_verbose_allocations_) {
-            std::cout << "[SPEAR | spear_ext.cpp] Allocating Capsule at memory location: " << capsule_ptr << std::endl;
-        }
+        if (Statics::s_verbose_allocations_) { std::cout << "[SPEAR | spear_ext.cpp] Allocated Capsule object at memory location: " << capsule_ptr << std::endl; }
 
         void* data_ptr = nullptr;
 
         // If we're forcing memory alignment, then copy the clmdep_msgpack::object_handle's internal data
         // buffer into the Capsule's internal data buffer, which is guaranteed to be aligned to very large
-        // boundaries, and use the Capsule's internal data buffer as the persistent storage for our nanobind
-        // array.
+        // boundaries, and use the Capsule's internal data buffer as the persistent storage for our
+        // nanobind array.
 
         if (Statics::s_force_return_aligned_arrays_) {
             Std::resizeUninitialized(capsule_ptr->data_, packed_array_view.view_.size());
@@ -751,12 +907,10 @@ PackedArray Client::convert<PackedArray>(PackedArrayView&& packed_array_view, st
                 std::terminate(); // can't assert because of noexcept
             }
             Capsule* capsule_ptr = static_cast<Capsule*>(ptr);
+            if (Statics::s_verbose_allocations_) { std::cout << "[SPEAR | spear_ext.cpp] Deleting Capsule object at memory location: " << capsule_ptr << std::endl; }
             capsule_ptr->object_handle_ = nullptr;
             delete capsule_ptr;
             capsule_ptr = nullptr;
-            if (Statics::s_verbose_allocations_) {
-                std::cout << "[SPEAR | spear_ext.cpp] Deleting Capsule at memory location: " << capsule_ptr << std::endl;
-            }
         });
 
         ndarray = nanobind::ndarray<nanobind::numpy>(
@@ -768,6 +922,7 @@ PackedArray Client::convert<PackedArray>(PackedArrayView&& packed_array_view, st
             DataTypeUtils::getDataType(packed_array_view.data_type_)); // dtype
 
     } else if (packed_array_view.data_source_ == "Shared") {
+
         ndarray = nanobind::ndarray<nanobind::numpy>(
             nullptr,                                                   // data_ptr
             0,                                                         // ndim
@@ -804,6 +959,32 @@ std::map<std::string, PackedArray> Client::convert<std::map<std::string, PackedA
 };
 
 //
+// Future
+//
+
+template <> // needed to send a custom type as an arg to the server
+struct clmdep_msgpack::adaptor::pack<Future> {
+    template <typename TStream>
+    clmdep_msgpack::packer<TStream>& operator()(clmdep_msgpack::packer<TStream>& packer, Future const& future) const {
+        packer.pack_map(2);
+        packer.pack("future_ptr"); packer.pack(future.future_ptr_);
+        packer.pack("type_id");    packer.pack(future.type_id_);
+        return packer;
+    }
+};
+
+template <> // needed to receive a custom type as a return value from the server
+struct clmdep_msgpack::adaptor::convert<Future> {
+    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, Future& future) const {
+        std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
+        SP_ASSERT(objects.size() == 2);
+        future.future_ptr_ = MsgpackUtils::to<uint64_t>(objects.at("future_ptr"));
+        future.type_id_    = MsgpackUtils::to<std::string>(objects.at("type_id"));
+        return object;
+    }
+};
+
+//
 // DataBundle
 //
 
@@ -822,11 +1003,11 @@ struct clmdep_msgpack::adaptor::pack<DataBundle> {
 template <> // needed to receive a custom type as a return value from the server
 struct clmdep_msgpack::adaptor::convert<DataBundleView> {
     clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, DataBundleView& data_bundle_view) const {
-        std::map<std::string, clmdep_msgpack::object> map = MsgpackUtils::toMap(object);
-        SP_ASSERT(map.size() == 3);
-        data_bundle_view.packed_array_views_ = MsgpackUtils::to<std::map<std::string, PackedArrayView>>(map.at("packed_arrays"));
-        data_bundle_view.unreal_obj_strings_ = MsgpackUtils::to<std::map<std::string, std::string>>(map.at("unreal_obj_strings"));
-        data_bundle_view.info_               = MsgpackUtils::to<std::string>(map.at("info"));
+        std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
+        SP_ASSERT(objects.size() == 3);
+        data_bundle_view.packed_array_views_ = MsgpackUtils::to<std::map<std::string, PackedArrayView>>(objects.at("packed_arrays"));
+        data_bundle_view.unreal_obj_strings_ = MsgpackUtils::to<std::map<std::string, std::string>>(objects.at("unreal_obj_strings"));
+        data_bundle_view.info_               = MsgpackUtils::to<std::string>(objects.at("info"));
         return object;
     }
 };
@@ -835,34 +1016,8 @@ template <> // needed to convert a custom view type, received as a return value 
 DataBundle Client::convert<DataBundle>(DataBundleView&& data_bundle_view, std::shared_ptr<clmdep_msgpack::object_handle> object_handle)
 {
     DataBundle data_bundle;
-    data_bundle.packed_arrays_ = convert<std::map<std::string, PackedArray>>(std::move(data_bundle_view.packed_array_views_), object_handle);
+    data_bundle.packed_arrays_      = convert<std::map<std::string, PackedArray>>(std::move(data_bundle_view.packed_array_views_), object_handle);
     data_bundle.unreal_obj_strings_ = std::move(data_bundle_view.unreal_obj_strings_);
-    data_bundle.info_ = std::move(data_bundle_view.info_);
+    data_bundle.info_               = std::move(data_bundle_view.info_);
     return data_bundle;
-};
-
-//
-// PropertyDesc
-//
-
-template <> // needed to send a custom type as an arg to the server
-struct clmdep_msgpack::adaptor::pack<PropertyDesc> {
-    template <typename TStream>
-    clmdep_msgpack::packer<TStream>& operator()(clmdep_msgpack::packer<TStream>& packer, PropertyDesc const& property_desc) const {
-        packer.pack_map(2);
-        packer.pack("property");  packer.pack(property_desc.property_);
-        packer.pack("value_ptr"); packer.pack(property_desc.value_ptr_);
-        return packer;
-    }
-};
-
-template <> // needed to receive a custom type as a return value from the server
-struct clmdep_msgpack::adaptor::convert<PropertyDesc> {
-    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, PropertyDesc& property_desc) const {
-        std::map<std::string, clmdep_msgpack::object> map = MsgpackUtils::toMap(object);
-        SP_ASSERT(map.size() == 2);
-        property_desc.property_  = MsgpackUtils::to<uint64_t>(map.at("property"));
-        property_desc.value_ptr_ = MsgpackUtils::to<uint64_t>(map.at("value_ptr"));
-        return object;
-    }
 };

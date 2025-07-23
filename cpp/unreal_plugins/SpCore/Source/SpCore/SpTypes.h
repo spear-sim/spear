@@ -4,9 +4,13 @@
 
 #pragma once
 
+#include <stddef.h> // int32_t, int64_t, uint64_t
+
 #include <map>
 #include <string>
+#include <vector>
 
+#include "SpCore/SharedMemory.h"
 #include "SpCore/SpArray.h"
 
 //
@@ -20,4 +24,15 @@ struct SpFuncDataBundle
     std::map<std::string, SpPackedArray> packed_arrays_;
     std::map<std::string, std::string> unreal_obj_strings_;
     std::string info_;
+};
+
+//
+// SpFuture is a weakly typed wrapper around an std::future<T>, with sufficient metadata to ensure that it is
+// being cast correctly when casting back to a particular type.
+//
+
+struct SpFuture
+{
+    void* future_ptr_ = nullptr;
+    std::string type_id_;
 };

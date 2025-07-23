@@ -239,7 +239,8 @@ struct FSpActorSpawnParameters
 // UnrealService is our service for interacting with the Unreal property system.
 //
 
-class UnrealService : public Service {
+class UnrealService : public Service
+{
 public:
     UnrealService() = delete;
     UnrealService(CUnrealEntryPointBinder auto* unreal_entry_point_binder, Service::WorldFilter* world_filter) : Service("UnrealService", world_filter)
@@ -351,12 +352,12 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_property_by_name_on_object",
-            [this](uint64_t& uobject, std::string& property_name) -> Unreal::PropertyDesc {
+            [this](uint64_t& uobject, std::string& property_name) -> SpPropertyDesc {
                 return Unreal::findPropertyByName(toPtr<UObject>(uobject), property_name);
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_property_by_name_on_struct",
-            [this](uint64_t& value_ptr, uint64_t& ustruct, std::string& property_name) -> Unreal::PropertyDesc {
+            [this](uint64_t& value_ptr, uint64_t& ustruct, std::string& property_name) -> SpPropertyDesc {
                 return Unreal::findPropertyByName(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), property_name);
             });
 
@@ -365,12 +366,12 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_property_value_as_string",
-            [this](Unreal::PropertyDesc& property_desc) -> std::string {
+            [this](SpPropertyDesc& property_desc) -> std::string {
                 return Unreal::getPropertyValueAsString(property_desc);
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "set_property_value_from_string",
-            [this](Unreal::PropertyDesc& property_desc, std::string& string) -> void {
+            [this](SpPropertyDesc& property_desc, std::string& string) -> void {
                 Unreal::setPropertyValueFromString(property_desc, string);
             });
 
@@ -1138,7 +1139,7 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_console_variable_value_as_int",
-            [this](uint64_t& cvar) -> int32_t {
+            [this](uint64_t& cvar) -> int64_t {
                 SP_ASSERT(cvar);
                 return toPtr<IConsoleVariable>(cvar)->GetInt();
             });

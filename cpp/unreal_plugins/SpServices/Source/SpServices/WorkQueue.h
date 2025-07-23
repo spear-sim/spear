@@ -4,106 +4,74 @@
 
 #pragma once
 
-#include <atomic>
-#include <exception>   // std::current_exception
 #include <future>
-#include <map>
 #include <mutex>       // std::lock_guard
 #include <string>
 #include <utility>     // std::forward, std::move
-#include <vector>
 #include <type_traits> // std::invoke_result_t
 
-#include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
-#include "SpCore/Log.h"
+#include "SpCore/Config.h"
 
-#include "SpServices/FuncInfo.h"
-
-class SPSERVICES_API WorkQueue {
-
+class SPSERVICES_API WorkQueue
+{
 public:
-    WorkQueue() : io_context_(), executor_work_guard_(io_context_.get_executor()) {}
+    WorkQueue() = delete;
+    WorkQueue(const std::string& name) : io_context_(), executor_work_guard_(io_context_.get_executor()) { name_ = name; }
 
-    // typically called from a worker thread in the "engine_service.initialize" entry point to reset the work
-    // queue's state, which is useful if the work queue is in an error state.
-    void initialize();
+    // Typically called from the game thread in EngineService::beginFrame(...) and EngineService::endFrame(...)
+    // to block the game thread indefinitely, while the WorkQueue waits for and executes incoming work.
 
-    // typically called from the game thread in EngineService::beginFrameHandler(...) and EngineService::endFrameHandler(...)
-    // to block the game thread indefinitely, while the WorkQueue waits for and executes incoming work
-    void run();
-
-    // typically called from an RPC worker thread in the "engine_service.execute_frame" and "engine_service.end_frame"
-    // entry points to instruct the WorkQueue that it can stop blocking, as soon as it is finished executing
-    // all of its scheduled work
-    void reset();
-
-    // typically called from the game thread in EngineService::bindFuncToExecuteOnGameThread(...) to get an
-    // outer func that executes a given inner func via a given WorkQueue
-    template <typename TFunc>
-    static auto wrapFuncToExecuteInWorkQueueBlocking(WorkQueue& work_queue, const std::string& func_name, const TFunc& func)
+    void run()
     {
-        return wrapFuncToExecuteInWorkQueueBlockingImpl(work_queue, func_name, func, FuncInfoUtils::getFuncInfo<TFunc>());
+        // run all scheduled work and wait for executor_work_guard_.reset() to be called
+        io_context_.run();
+
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+
+            // reinitialize io_context_ and executor_work_guard_ to prepare for the next call to run()
+            io_context_.restart();
+            new(&executor_work_guard_) boost::asio::executor_work_guard<boost::asio::io_context::executor_type>(io_context_.get_executor());
+        }
     }
 
-private:
+    // Typically called from the engine_service.execute_frame and engine_service.end_frame entry points to
+    // instruct the WorkQueue that it can stop blocking, as soon as it is finished executing all of its
+    // scheduled work.
 
-    enum class ErrorState
+    void reset()
     {
-        NoError = 0,
-        Error   = 1
-    };
-
-    template <typename TFunc, typename TReturn, typename... TArgs> requires
-        CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs&...>
-    static auto wrapFuncToExecuteInWorkQueueBlockingImpl(WorkQueue& work_queue, const std::string& func_name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
-    {
-        // The lambda returned here is typically bound to a specific RPC entry point and called from a worker
-        // thread by the RPC server.
-
-        // Note that we capture func_name and func by value because we want to guarantee that func is still
-        // accessible after this wrapFuncToExecuteInWorkQueueBlocking(...) function returns.
-
-        // Note also that we assume that the user's function always accepts all arguments by non-const
-        // reference. This will avoid unnecessary copying when we eventually call the user's function. We
-        // can't assume the user's function accepts arguments by const reference, because the user's function
-        // might want to modify the arguments, e.g., when a user function resolves pointers to shared memory
-        // for an input SpPackedArray& before forwarding it to an inner function.
-
-        return [&work_queue, func_name, func](TArgs&... args) -> TReturn {
-            return work_queue.scheduleAndExecuteFuncBlocking(func_name, func, args...);
-        };
+        // request io_context_.run() to stop executing once all of its scheduled work is finished
+        std::lock_guard<std::mutex> lock(mutex_);
+        executor_work_guard_.reset();
     }
+
+    // Typically called from a lambda that is bound to a specific RPC entry point and is called from the worker thread.
 
     template <typename TFunc, typename... TArgs> requires
         CFuncIsCallableWithArgs<TFunc, TArgs&...>
-    auto scheduleAndExecuteFuncBlocking(const std::string& func_name, const TFunc& func, TArgs&... args)
+    auto scheduleFunc(const std::string& func_name, const TFunc& func, TArgs&... args)
     {
         using TReturn = std::invoke_result_t<TFunc, TArgs&...>;
 
-        if (error_state_ == ErrorState::Error) {
-            SP_LOG_CURRENT_FUNCTION();
-            SP_LOG("    ERROR: Work queue is in an error state, returning immediately from func: ", func_name);
-            return TReturn();
-        }
-
-        // The lambda declared below is typically executed on the game thread when run() is called, i.e.,
-        // during EngineService::beginFrameHandler(...) or EngineService::endFrameHandler(...)
+        // This function is typically called from an RPC worker thread, but the lambda declared below is
+        // typically executed on the game thread when run() is called, i.e., during EngineService::beginFrameHandler(...)
+        // or EngineService::endFrameHandler(...)
 
         // Note that we capture func and args... by value because we want to guarantee that they are both
-        // still accessible after scheduleAndExecuteTaskBlocking(...) returns. Strictly speaking, this
-        // guarantee is not necessary for this blocking implementation, but we capture by value anyway for
-        // consistency with a non-blocking implementation.
+        // still accessible after scheduleAndExecuteTaskBlocking(...) returns.
 
         // Even in a non-blocking implementation, we could technically capture func by reference. This is
         // because, in practice, the lifetime of func corresponds to the lifetime of the lambda declared in
-        // wrapFuncToExecuteInWorkQueueBlockingImpl(...) above, which in turn corresponds to the the lifetime
-        // of the RPC server. Moreover, the lambda declared below only ever executes when run() is called,
-        // i.e., during EngineService::beginFrameHandler(...) or EngineService::endFrameHandler(...), and
-        // the RPC server (and therefore func) is guaranteed to be accessible inside these EngineService
-        // functions. So, even if we capture func by reference, it is guaranteed to be accessible whenever
-        // the lambda below is executed. However, the WorkQueue class should not depend on this high-level
-        // system behavior, so we insist on capturing func by value, even in a non-blocking implementation.
+        // EngineService::wrapFuncToExecuteInWorkQueueBlockingImpl(...) and other similar functions, which in
+        // turn corresponds to the the lifetime of the RPC server. Moreover, the lambda declared below only
+        // ever executes when run() is called, i.e., during EngineService::beginFrameHandler(...) or
+        // EngineService::endFrameHandler(...), and the RPC server (and therefore func) is guaranteed to be
+        // accessible inside these EngineService functions. So, even if we capture func by reference, it is
+        // guaranteed to be accessible whenever the lambda below is executed. However, this low-level
+        // WorkQueue class should not depend on this high-level system behavior, so we insist on capturing
+        // func by value, even in a non-blocking implementation.
 
         // Since we capture args... by value, it is deep-copied into the lambda object constructed below. But
         // the user's function accepts all arguments by non-const reference, so args... is not copied again
@@ -117,36 +85,49 @@ private:
         // force args... to be treated as a non-const member variable inside the lambda body.
 
         auto task = CopyConstructiblePackagedTask<TReturn>(
-            [func, args...]() mutable -> TReturn {
-                return func(args...);
+            [this, func_name, func, args...]() mutable -> TReturn {
+
+                // If TReturn is void, we cannot declare a variable of type TReturn, so we need some form of
+                // template specialization. Since templated functions cannot be partially specialized, we use
+                // if constexpr to achieve our desired specialization.
+
+                if constexpr (std::is_void_v<TReturn>) {
+
+                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.WORK_QUEUE.PRINT_CALL_DEBUG_INFO")) {
+                        SP_LOG("Executing function ", func_name, " on work queue ", getName(), "...");
+                    }
+
+                    func(args...);
+
+                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.WORK_QUEUE.PRINT_CALL_DEBUG_INFO")) {
+                        SP_LOG("Finished executing function ", func_name, " on work queue ", getName(), ".");
+                    }
+
+                } else {
+
+                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.WORK_QUEUE.PRINT_CALL_DEBUG_INFO")) {
+                        SP_LOG("Executing function ", func_name, " on work queue ", getName(), "...");
+                    }
+
+                    TReturn return_value = func(args...);
+
+                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.WORK_QUEUE.PRINT_CALL_DEBUG_INFO")) {
+                        SP_LOG("Finished executing function ", func_name, " on work queue ", getName(), ".");
+                    }
+
+                    return return_value;
+                }
             });
 
         std::future<TReturn> future = task.get_future(); // need to call get_future() before calling std::move(...)
         boost::asio::post(io_context_, std::move(task));
 
-        // Wait until the game thread is finished executing the lambda and return the result.
-        try {
-            return future.get();
-
-        // If we get this far, an exception has occurred, so we store the exception for later, set the error state,
-        // allow the game thread to proceed by calling reset(), and return a default-constructed value.
-        } catch (const std::exception& e) {
-            std::lock_guard<std::mutex> lock(mutex_);
-            SP_LOG_CURRENT_FUNCTION();
-            SP_LOG("    ERROR: Caught exception when executing ", func_name, ": ", e.what());
-            error_state_ = ErrorState::Error;
-            exception_ptr_ = std::current_exception();
-        } catch (...) {
-            std::lock_guard<std::mutex> lock(mutex_);
-            SP_LOG_CURRENT_FUNCTION();
-            SP_LOG("    ERROR: Caught unknown exception when executing ", func_name, ".");
-            error_state_ = ErrorState::Error;
-            exception_ptr_ = std::current_exception();
-        }
-
-        reset();
-        return TReturn();
+        return future;
     }
+
+    std::string getName() { return name_; }
+
+private:
 
     // The purpose of this class is to provide a copy-constructible type that derives from std::packaged_task.
     // This is necessary because boost::asio requires that task objects are copy-constructible, but std::packaged_task
@@ -159,11 +140,9 @@ private:
         CopyConstructiblePackagedTask(auto&& func) : std::packaged_task<TReturn()>(std::forward<decltype(func)>(func)) {};
     };
 
-    std::mutex mutex_;
+    std::string name_;
 
+    std::mutex mutex_;
     boost::asio::io_context io_context_;
     boost::asio::executor_work_guard<boost::asio::io_context::executor_type> executor_work_guard_;
-
-    ErrorState error_state_ = ErrorState::NoError;
-    std::exception_ptr exception_ptr_ = nullptr;
 };

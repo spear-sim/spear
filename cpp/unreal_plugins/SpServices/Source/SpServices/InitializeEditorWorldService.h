@@ -10,7 +10,8 @@
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/Service.h"
 
-class InitializeEditorWorldService : public Service {
+class InitializeEditorWorldService : public Service
+{
 public:
     InitializeEditorWorldService() = delete;
     InitializeEditorWorldService(CUnrealEntryPointBinder auto* unreal_entry_point_binder, Service::WorldFilter* world_filter) : Service("InitializeEditorWorldService", world_filter)

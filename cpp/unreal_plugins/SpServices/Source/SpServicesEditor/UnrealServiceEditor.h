@@ -16,7 +16,8 @@
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/Service.h"
 
-class UnrealServiceEditor : public Service {
+class UnrealServiceEditor : public Service
+{
 public:
     UnrealServiceEditor() = delete;
     UnrealServiceEditor(CUnrealEntryPointBinder auto* unreal_entry_point_binder, Service::WorldFilter* world_filter) : Service("UnrealServiceEditor", world_filter)

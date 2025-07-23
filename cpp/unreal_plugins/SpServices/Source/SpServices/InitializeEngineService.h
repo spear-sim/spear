@@ -17,7 +17,8 @@
 
 #include "SpServices/Service.h"
 
-class InitializeEngineService : public Service {
+class InitializeEngineService : public Service
+{
 public:
     InitializeEngineService() : Service("InitializeEngineService")
     {

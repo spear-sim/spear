@@ -19,18 +19,29 @@ except:
 expected_process_status_values = ["disk-sleep", "running", "sleeping", "stopped"] # stopped can happen when attaching to a debugger
 
 
-class Editor():
-    def __init__(self, entry_point_caller, shared_memory_service):
-        self.initialize_editor_world_service = spear.services.initialize_editor_world_service.InitializeEditorWorldService(namespace="editor", entry_point_caller=entry_point_caller)
-        self.unreal_service = spear.services.unreal_service.UnrealService(namespace="editor", entry_point_caller=entry_point_caller)
-        self.navigation_service = spear.services.navigation_service.NavigationService(namespace="editor", entry_point_caller=entry_point_caller, shared_memory_service=shared_memory_service)
+class CommonServices():
+    def __init__(self, namespace, engine_service, shared_memory_service):
 
+        self.unreal_service = spear.services.unreal_service.UnrealService(
+            entry_point_caller=spear.services.entry_point_caller.EntryPointCaller(service_name=f"{namespace}.unreal_service", engine_service=engine_service))
 
-class Game():
-    def __init__(self, entry_point_caller, shared_memory_service):
-        self.initialize_game_world_service = spear.services.initialize_game_world_service.InitializeGameWorldService(namespace="game", entry_point_caller=entry_point_caller)
-        self.unreal_service = spear.services.unreal_service.UnrealService(namespace="game", entry_point_caller=entry_point_caller)
-        self.navigation_service = spear.services.navigation_service.NavigationService(namespace="game", entry_point_caller=entry_point_caller, shared_memory_service=shared_memory_service)
+        self.navigation_service = spear.services.navigation_service.NavigationService(
+            entry_point_caller=spear.services.entry_point_caller.EntryPointCaller(service_name=f"{namespace}.navigation_service", engine_service=engine_service),
+            shared_memory_service=shared_memory_service)
+
+class EditorServices(CommonServices):
+    def __init__(self, namespace, engine_service, shared_memory_service):
+        super().__init__(namespace, engine_service, shared_memory_service)
+
+        self.initialize_editor_world_service = spear.services.initialize_world_service.InitializeWorldService(
+            entry_point_caller=spear.services.entry_point_caller.EntryPointCaller(service_name=f"{namespace}.initialize_editor_world_service", engine_service=engine_service))
+
+class GameServices(CommonServices):
+    def __init__(self, namespace, engine_service, shared_memory_service):
+        super().__init__(namespace, engine_service, shared_memory_service)
+
+        self.initialize_game_world_service = spear.services.initialize_world_service.InitializeWorldService(
+            entry_point_caller=spear.services.entry_point_caller.EntryPointCaller(service_name=f"{namespace}.initialize_game_world_service", engine_service=engine_service))
 
 
 class Instance():
@@ -65,16 +76,26 @@ class Instance():
         self.engine_service = spear.services.engine_service.EngineService(client=self._client, config=self._config)
 
         # Initialize services that require a reference to EngineService.
-        self.enhanced_input_service = spear.services.enhanced_input_service.EnhancedInputService(entry_point_caller=self.engine_service)
-        self.input_service = spear.services.input_service.InputService(entry_point_caller=self.engine_service)
-        self.shared_memory_service = spear.services.shared_memory_service.SharedMemoryService(entry_point_caller=self.engine_service)
+
+        self.enhanced_input_service = spear.services.enhanced_input_service.EnhancedInputService(
+            entry_point_caller=spear.services.entry_point_caller.EntryPointCaller(service_name="enhanced_input_service", engine_service=self.engine_service))
+
+        self.input_service = spear.services.input_service.InputService(
+            entry_point_caller=spear.services.entry_point_caller.EntryPointCaller(service_name="input_service", engine_service=self.engine_service))
+
+        self.shared_memory_service = spear.services.shared_memory_service.SharedMemoryService(
+            entry_point_caller=self.engine_service)
 
         # Initialize services that require a reference to EngineService and SharedMemoryService.
-        self.sp_func_service = spear.services.sp_func_service.SpFuncService(entry_point_caller=self.engine_service, shared_memory_service=self.shared_memory_service)
+
+        self.sp_func_service = spear.services.sp_func_service.SpFuncService(
+            entry_point_caller=spear.services.entry_point_caller.EntryPointCaller(service_name="sp_func_service", engine_service=self.engine_service),
+            shared_memory_service=self.shared_memory_service)
 
         # Initialize Editor and Game containers for world-specific services
-        self._editor = Editor(entry_point_caller=self.engine_service, shared_memory_service=self.shared_memory_service)
-        self._game = Game(entry_point_caller=self.engine_service, shared_memory_service=self.shared_memory_service)
+
+        self._editor = EditorServices(namespace="editor", engine_service=self.engine_service, shared_memory_service=self.shared_memory_service)
+        self._game = GameServices(namespace="game", engine_service=self.engine_service, shared_memory_service=self.shared_memory_service)
 
         # Execute warm-up routine.
         self._request_warm_up_unreal_instance(
@@ -321,6 +342,7 @@ class Instance():
         spear.log("    Initializing client...")
 
         spear_ext.Statics.force_return_aligned_arrays = self._config.SPEAR.INSTANCE.CLIENT_FORCE_RETURN_ALIGNED_ARRAYS
+        spear_ext.Statics.verbose_rpc_calls = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_RPC_CALLS
         spear_ext.Statics.verbose_allocations = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_ALLOCATIONS
 
         connected = False
@@ -339,7 +361,7 @@ class Instance():
                 self._client.set_timeout(int(self._config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS*1000))
 
                 # don't use self.services.engine_service because it hasn't been initialized yet
-                connected = self._client.call_and_get_return_value_as_string("engine_service.ping") == "ping"
+                connected = self._client.call_as_string("engine_service.ping") == "ping"
 
             except Exception as e:
                 spear.log("    Exception: ", e)
@@ -369,7 +391,7 @@ class Instance():
                     self._client.set_timeout(int(self._config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS*1000))
 
                     # don't use self.services.engine_service because it hasn't been initialized yet
-                    connected = self._client.call_and_get_return_value_as_string("engine_service.ping") == "ping"
+                    connected = self._client.call_as_string("engine_service.ping") == "ping"
                     break
 
                 except:
@@ -393,7 +415,7 @@ class Instance():
             assert False
 
         # don't use self.services.engine_service because it hasn't been initialized yet
-        pid = self._client.call_and_get_return_value_as_int64("engine_service.get_id")
+        pid = self._client.call_as_int64("engine_service.get_id")
         if pid == self._process.pid:
             spear.log("    Validated engine_service.get_id.")
         else:            
@@ -482,6 +504,7 @@ class Instance():
 
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:        
             try:
+                self.engine_service.close()
                 self.engine_service.request_exit(immediate_shutdown=False)
             except:
                 pass # no need to log exception because this case is expected when the instance is no longer running

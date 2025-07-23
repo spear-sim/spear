@@ -22,10 +22,12 @@
 #include "SpCore/SpArray.h"
 #include "SpCore/Unreal.h"
 
-class SPSERVICES_API Service {
+class SPSERVICES_API Service
+{
 public:
 
-    class WorldFilter {
+    class WorldFilter
+    {
     public:
         WorldFilter() = default;
         virtual ~WorldFilter() = default;
@@ -34,7 +36,8 @@ public:
         virtual bool isValid(UWorld* world) const = 0;
     };
 
-    class EditorWorldFilter : public WorldFilter {
+    class EditorWorldFilter : public WorldFilter
+    {
     public:
         EditorWorldFilter() = default;
         ~EditorWorldFilter() override = default;
@@ -53,7 +56,8 @@ public:
         }
     };
 
-    class GameWorldFilter : public WorldFilter {
+    class GameWorldFilter : public WorldFilter
+    {
     public:
         GameWorldFilter() = default;
         ~GameWorldFilter() override = default;

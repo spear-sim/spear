@@ -14,7 +14,8 @@ except:
     pass
 
 
-# The Ptr and Shared classes are for internal use, and do not need to be instantiated directly by most users.
+# These classes are for internal use, and do not need to be instantiated directly by most users.
+
 class Ptr:
     def __init__(self, handle):
         self._handle = handle
@@ -26,6 +27,20 @@ class Shared:
     def __init__(self, array, shared_memory_handle):
         self.array = array
         self.shared_memory_handle = shared_memory_handle
+
+class Future:
+    def __init__(self, future, return_as, get_future_result_func, convert_func):
+        self._future = future
+        self._return_as = return_as
+        self._get_future_result_func = get_future_result_func
+        self._convert_func = convert_func
+
+    def get(self):
+        result = self._get_future_result_func(return_as=self._return_as, future=self._future)
+        if self._convert_func is not None:
+            return self._convert_func(result)
+        else:
+            return result
 
 
 # Convert a collection of objects to a collection of JSON strings so they can be passed to a service.

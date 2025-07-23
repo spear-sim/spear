@@ -13,7 +13,7 @@
 #include "SpCore/FuncRegistrar.h"
 #include "SpCore/Log.h"
 #include "SpCore/SpArray.h"
-#include "SpCore/SpFuncDataBundle.h"
+#include "SpCore/SpTypes.h"
 #include "SpCore/Unreal.h"
 
 USpFuncComponent::USpFuncComponent()

@@ -4,6 +4,8 @@
 
 #include "SpComponents/SpSceneCaptureComponent2D.h"
 
+#include <stddef.h> // uint64_t
+
 #include <memory>  // std::align, std::make_unique
 #include <utility> // std::move
 
@@ -24,7 +26,7 @@
 #include "SpCore/SharedMemory.h"
 #include "SpCore/SpArray.h"
 #include "SpCore/SpFuncComponent.h"
-#include "SpCore/SpFuncDataBundle.h"
+#include "SpCore/SpTypes.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 

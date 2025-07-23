@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <stdint.h> // int32_t, int64_t
+#include <stdint.h> // int64_t
 
 #include <concepts>    // std::derived_from
 #include <map>
@@ -126,6 +126,18 @@ concept CSubsystemProvider =
     std::derived_from<std::remove_pointer_t<decltype(TSubsystemProvider().GetSubsystemBase(nullptr))>, USubsystem>;
 
 //
+// SpPropertyDesc encapsulates the data needed to get and set a UPROPERTY on a specific UObject. We need to
+// place this type here in stead of in SpTypes.h to avoid a circular include. SpTypes.h includes SpArray.h,
+// and SpArray.h includes Unreal.h, so Unreal.h can't include SpTypes.h.
+//
+
+struct SpPropertyDesc
+{
+    FProperty* property_ = nullptr;
+    void* value_ptr_ = nullptr;
+};
+
+//
 // General-purpose functions for working with Unreal objects.
 //
 
@@ -172,21 +184,15 @@ public:
 
     //
     // Find property by name, get and set property values, uobject can't be const because we cast it to
-    // (non-const) void*, value_ptr can't be const because we assign to PropertyDesc::value_ptr_.
+    // (non-const) void*, value_ptr can't be const because we assign to SpPropertyDesc::value_ptr_.
     //
 
-    struct PropertyDesc
-    {
-        FProperty* property_ = nullptr;
-        void* value_ptr_ = nullptr;
-    };
+    static SpPropertyDesc findPropertyByName(UObject* uobject, const std::string& property_name);
+    static SpPropertyDesc findPropertyByName(void* value_ptr, const UStruct* ustruct, const std::string& property_name);
 
-    static PropertyDesc findPropertyByName(UObject* uobject, const std::string& property_name);
-    static PropertyDesc findPropertyByName(void* value_ptr, const UStruct* ustruct, const std::string& property_name);
-
-    static std::string getPropertyValueAsString(const PropertyDesc& property_desc);
-    static void setPropertyValueFromString(const PropertyDesc& property_desc, const std::string& string);
-    static void setPropertyValueFromJsonValue(const PropertyDesc& property_desc, TSharedPtr<FJsonValue> json_value);
+    static std::string getPropertyValueAsString(const SpPropertyDesc& property_desc);
+    static void setPropertyValueFromString(const SpPropertyDesc& property_desc, const std::string& string);
+    static void setPropertyValueFromJsonValue(const SpPropertyDesc& property_desc, TSharedPtr<FJsonValue> json_value);
 
     //
     // Find function by name, call function, uobject can't be const because we call uobject->ProcessEvent(...)

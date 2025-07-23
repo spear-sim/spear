@@ -128,7 +128,7 @@ if __name__ == "__main__":
         cmd_prefix + \
         f'pip install -e "{os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "python_ext"))}" ' + \
         f'-C cmake.define.CMAKE_CXX_COMPILER="{cxx_compiler}" ' + \
-        f'-C cmake.define.CMAKE_CXX_FLAGS="{cmake_cxx_flags}" '
+        f'-C cmake.define.CMAKE_CXX_FLAGS="{cmake_cxx_flags}"'
 
     spear.log("Executing: ", cmd)
     subprocess.run(cmd, shell=True, check=True)

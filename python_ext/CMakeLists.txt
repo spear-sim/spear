@@ -48,7 +48,7 @@ include_directories(
 # Additional library paths
 if(WIN32)
     link_directories(
-        ${CMAKE_CURRENT_LIST_DIR}/../third_party/rpclib/BUILD/Win64)
+        ${CMAKE_CURRENT_LIST_DIR}/../third_party/rpclib/BUILD/Win64/Release)
 elseif(APPLE)
     link_directories(
         ${CMAKE_CURRENT_LIST_DIR}/../third_party/rpclib/BUILD/Mac)

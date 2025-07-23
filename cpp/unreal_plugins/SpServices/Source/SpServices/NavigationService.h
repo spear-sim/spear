@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <stdint.h> // uint8_t, uint64_t
+#include <stdint.h> // int64_t, uint8_t, uint64_t
 
 #include <map>
 #include <string>
@@ -43,7 +43,8 @@ enum class ESpPathFindingMode
     Hierarchical = Unreal::getConstEnumValue(EPathFindingMode::Type::Hierarchical)
 };
 
-class NavigationService : public Service {
+class NavigationService : public Service
+{
 public:
     NavigationService() = delete;
     NavigationService(CUnrealEntryPointBinder auto* unreal_entry_point_binder, SharedMemoryService* shared_memory_service, Service::WorldFilter* world_filter) : Service("NavigationService", world_filter)
@@ -65,7 +66,7 @@ public:
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_random_points",
             [this](
                 uint64_t& navigation_data,
-                int32_t& num_points,
+                int64_t& num_points,
                 uint64_t& query_owner,
                 std::map<std::string, SpPackedArray>& packed_arrays,
                 SpPackedArray& out_array) -> SpPackedArray {
@@ -117,7 +118,7 @@ public:
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_random_reachable_points_in_radius",
             [this](
                 uint64_t& navigation_data,
-                int32_t& num_points,
+                int64_t& num_points,
                 uint64_t& query_owner,
                 std::map<std::string, SpPackedArray>& packed_arrays,
                 SpPackedArray& out_array) -> SpPackedArray {
@@ -200,7 +201,7 @@ public:
             [this](
                 uint64_t& navigation_system,
                 uint64_t& navigation_data,
-                int32_t& num_paths,
+                int64_t& num_paths,
                 uint64_t& nav_agent_interface,
                 std::map<std::string, SpPackedArray>& packed_arrays,
                 std::vector<std::string>& nav_agent_property_strings,
