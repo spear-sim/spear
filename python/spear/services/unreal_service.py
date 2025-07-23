@@ -4,7 +4,6 @@
 
 import spear
 
-
 class UnrealService(spear.utils.func_utils.Service):
     def __init__(self, entry_point_caller, create_children=True):
 
@@ -13,7 +12,6 @@ class UnrealService(spear.utils.func_utils.Service):
 
     def create_child(self, entry_point_caller):
         return UnrealService(entry_point_caller=entry_point_caller, create_children=False)
-
 
     #
     # Get engine subsystem

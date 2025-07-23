@@ -14,7 +14,6 @@ try:
 except:
     pass
 
-
 class SpFuncService(spear.utils.func_utils.Service):
     def __init__(self, entry_point_caller, shared_memory_service, create_children=True):
 
@@ -25,15 +24,12 @@ class SpFuncService(spear.utils.func_utils.Service):
     def create_child(self, entry_point_caller):
         return SpFuncService(entry_point_caller=entry_point_caller, shared_memory_service=self._shared_memory_service, create_children=False)
 
-
     def create_shared_memory_handles_for_object(self, uobject):
         views = self._entry_point_caller.call_on_game_thread("std::map<std::string, SharedMemoryView>", "get_shared_memory_views", None, uobject)
         return self._shared_memory_service.create_shared_memory_handles(shared_memory_views=views)
 
-
     def destroy_shared_memory_handles_for_object(self, shared_memory_handles):
         self._shared_memory_service.destroy_shared_memory_handles(shared_memory_handles=shared_memory_handles)
-
 
     def call_function(self, uobject, function_name, arrays={}, unreal_objs={}, info="", uobject_shared_memory_handles={}):
 

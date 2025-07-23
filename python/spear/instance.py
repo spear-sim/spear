@@ -16,8 +16,16 @@ except:
     pass
 
 
+#
+# Global constants
+#
+
 expected_process_status_values = ["disk-sleep", "running", "sleeping", "stopped"] # stopped can happen when attaching to a debugger
 
+
+#
+# Helper classes
+#
 
 class CommonServices():
     def __init__(self, namespace, engine_service, shared_memory_service):
@@ -43,6 +51,9 @@ class GameServices(CommonServices):
         self.initialize_game_world_service = spear.services.initialize_world_service.InitializeWorldService(
             entry_point_caller=spear.utils.func_utils.EntryPointCaller(service_name=f"{namespace}.initialize_game_world_service", engine_service=engine_service))
 
+#
+# Instance
+#
 
 class Instance():
     def __init__(self, config):
@@ -491,7 +502,7 @@ class Instance():
         spear.log("    Finished waiting for function.")
 
     #
-    # Termination helper functions
+    # Shutdown helper functions
     #
 
     def _request_exit_unreal_instance(self):
