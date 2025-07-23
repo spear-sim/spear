@@ -59,6 +59,7 @@ if __name__ == "__main__":
         player_camera_manager_string = game.unreal_service.get_property_value(property_desc=player_camera_manager_desc)
         player_camera_manager = spear.to_handle(string=player_camera_manager_string)
 
+        # use 1080p resolution if benchmarking
         if args.benchmark:
             viewport_x = 1920
             viewport_y = 1080

@@ -5,8 +5,8 @@
 __version__ = "v0.6.0"
 
 # submodules
-import spear.services
 import spear.utils
+import spear.services
 
 # functions
 from spear.utils.config_utils import get_config

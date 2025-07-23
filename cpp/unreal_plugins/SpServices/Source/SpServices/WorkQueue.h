@@ -55,7 +55,7 @@ public:
     {
         using TReturn = std::invoke_result_t<TFunc, TArgs&...>;
 
-        // This function is typically called from an RPC worker thread, but the lambda declared below is
+        // This function is typically called from the worker thread, but the lambda declared below is
         // typically executed on the game thread when run() is called, i.e., during EngineService::beginFrameHandler(...)
         // or EngineService::endFrameHandler(...)
 

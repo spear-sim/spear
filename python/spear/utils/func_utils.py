@@ -42,6 +42,72 @@ class Future:
         else:
             return result
 
+# EntryPointCaller and each of its derived types encapsulates a strategy for calling EngineService functions.
+
+class EntryPointCaller():
+    def __init__(self, service_name, engine_service):
+        self.service_name = service_name
+        self.engine_service = engine_service
+
+    def call_on_game_thread(self, return_as, func_name, convert_func, *args):
+        long_func_name = self.service_name + "." + func_name
+        return_value = self.engine_service.call_on_game_thread(return_as, long_func_name, *args)
+        if convert_func is not None:
+            return convert_func(return_value)
+        else:
+            return return_value
+
+    def call_on_worker_thread(self, return_as, func_name, *args):
+        long_func_name = self.service_name + "." + func_name
+        return self.engine_service.call_on_worker_thread(return_as, long_func_name, *args)
+
+class CallAsyncEntryPointCaller(EntryPointCaller):
+    def call_on_game_thread(self, return_as, func_name, convert_func, *args):
+        long_func_name = self.service_name + "." + func_name
+        future = self.engine_service.call_async_on_game_thread(long_func_name, *args)
+        return Future(future=future, return_as=return_as, get_future_result_func=self.engine_service.get_future_result, convert_func=convert_func)
+
+class SendAsyncEntryPointCaller(EntryPointCaller):
+    def call_on_game_thread(self, return_as, func_name, convert_func, *args):
+        long_func_name = self.service_name + "." + func_name
+        self.engine_service.send_async_on_game_thread(long_func_name, *args)
+
+class CallAsyncFastEntryPointCaller(EntryPointCaller):
+    def call_on_game_thread(self, return_as, func_name, convert_func, *args):
+        long_func_name = self.service_name + "." + func_name
+        future = self.engine_service.call_async_fast_on_game_thread(long_func_name, *args)
+        return Future(future=future, return_as=return_as, get_future_result_func=self.engine_service.get_future_result_fast, convert_func=convert_func)
+
+class SendAsyncFastEntryPointCaller(EntryPointCaller):
+    def call_on_game_thread(self, return_as, func_name, convert_func, *args):
+        long_func_name = self.service_name + "." + func_name
+        self.engine_service.send_async_fast_on_game_thread(long_func_name, *args)
+
+# Service is a base class for services that define their own child services for calling EntryPointCaller functions.
+
+class Service():
+    def __init__(self, entry_point_caller, create_children=False):
+
+        if create_children:
+            call_async_service_name = entry_point_caller.service_name + ".call_async"
+            call_async_entry_point_caller = spear.utils.func_utils.CallAsyncEntryPointCaller(service_name=call_async_service_name, engine_service=entry_point_caller.engine_service)
+            self.call_async = self.create_child(entry_point_caller=call_async_entry_point_caller)
+
+            send_async_service_name = entry_point_caller.service_name + ".send_async"
+            send_async_entry_point_caller = spear.utils.func_utils.SendAsyncEntryPointCaller(service_name=send_async_service_name, engine_service=entry_point_caller.engine_service)
+            self.send_async = self.create_child(entry_point_caller=send_async_entry_point_caller)
+
+            call_async_fast_service_name = entry_point_caller.service_name + ".call_async"
+            call_async_fast_entry_point_caller = spear.utils.func_utils.CallAsyncFastEntryPointCaller(service_name=call_async_fast_service_name, engine_service=entry_point_caller.engine_service)
+            self.call_async_fast = self.create_child(entry_point_caller=call_async_fast_entry_point_caller)
+
+            send_async_fast_service_name = entry_point_caller.service_name + ".send_async"
+            send_async_fast_entry_point_caller = spear.utils.func_utils.SendAsyncFastEntryPointCaller(service_name=send_async_service_name, engine_service=entry_point_caller.engine_service)
+            self.send_async_fast = self.create_child(entry_point_caller=send_async_fast_entry_point_caller)
+
+    def create_child(self, entry_point_caller):
+        return None
+
 
 # Convert a collection of objects to a collection of JSON strings so they can be passed to a service.
 def to_json_strings(objs):

@@ -5,34 +5,18 @@
 import numpy as np
 import spear
 
-
-class NavigationService():
+class NavigationService(spear.utils.func_utils.Service):
     def __init__(self, entry_point_caller, shared_memory_service, create_children=True):
 
         self._entry_point_caller = entry_point_caller
         self._shared_memory_service = shared_memory_service
+        super().__init__(entry_point_caller, create_children) # do this after initializing local state
 
-        if create_children:
-            call_async_service_name = self._entry_point_caller.service_name + ".call_async"
-            call_async_entry_point_caller = spear.services.entry_point_caller.CallAsyncEntryPointCaller(service_name=call_async_service_name, engine_service=self._entry_point_caller.engine_service)
-            self.call_async = NavigationService(entry_point_caller=call_async_entry_point_caller, shared_memory_service=shared_memory_service, create_children=False)
-
-            send_async_service_name = self._entry_point_caller.service_name + ".send_async"
-            send_async_entry_point_caller = spear.services.entry_point_caller.SendAsyncEntryPointCaller(service_name=send_async_service_name, engine_service=self._entry_point_caller.engine_service)
-            self.send_async = NavigationService(entry_point_caller=send_async_entry_point_caller, shared_memory_service=shared_memory_service, create_children=False)
-
-            call_async_fast_service_name = self._entry_point_caller.service_name + ".call_async"
-            call_async_fast_entry_point_caller = spear.services.entry_point_caller.CallAsyncFastEntryPointCaller(service_name=call_async_fast_service_name, engine_service=self._entry_point_caller.engine_service)
-            self.call_async_fast = NavigationService(entry_point_caller=call_async_fast_entry_point_caller, shared_memory_service=shared_memory_service, create_children=False)
-
-            send_async_fast_service_name = self._entry_point_caller.service_name + ".send_async"
-            send_async_fast_entry_point_caller = spear.services.entry_point_caller.SendAsyncFastEntryPointCaller(service_name=send_async_service_name, engine_service=self._entry_point_caller.engine_service)
-            self.send_async_fast = NavigationService(entry_point_caller=send_async_fast_entry_point_caller, shared_memory_service=shared_memory_service, create_children=False)
-
+    def create_child(self, entry_point_caller):
+        return NavigationService(entry_point_caller=entry_point_caller, shared_memory_service=self._shared_memory_service, create_children=False)
 
     def get_nav_data_for_agent_name(self, navigation_system, agent_name):
         return self._entry_point_caller.call_on_game_thread("uint64_t", "get_nav_data_for_agent_name", None, navigation_system, agent_name)
-
 
     def get_random_points(
         self,
@@ -61,7 +45,6 @@ class NavigationService():
             query_owner,
             packed_arrays,
             out_packed_array)
-
 
     def get_random_reachable_points_in_radius(
         self,
@@ -98,7 +81,6 @@ class NavigationService():
             query_owner,
             packed_arrays,
             out_packed_array)
-
 
     def find_paths(
         self,

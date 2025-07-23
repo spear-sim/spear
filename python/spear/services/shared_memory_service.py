@@ -18,7 +18,7 @@ class SharedMemoryService():
 
     def create_shared_memory_region(self, shared_memory_name, num_bytes, usage_flags):
         assert shared_memory_name not in self._shared_memory_handles.keys()
-        view = self._entry_point_caller.call_on_worker_thread("SharedMemoryView", "shared_memory_service.create_shared_memory_region", None, shared_memory_name, num_bytes, usage_flags)
+        view = self._entry_point_caller.call_on_worker_thread("SharedMemoryView", "shared_memory_service.create_shared_memory_region", shared_memory_name, num_bytes, usage_flags)
         handle = self._create_shared_memory_handle(shared_memory_name=shared_memory_name, shared_memory_view=view)
         self._shared_memory_handles[shared_memory_name] = handle
         return handle
@@ -27,7 +27,7 @@ class SharedMemoryService():
         assert shared_memory_handle["name"] in self._shared_memory_handles.keys()
         self._destroy_shared_memory_handle(shared_memory_handle=shared_memory_handle)
         self._shared_memory_handles.pop(shared_memory_handle["name"])
-        self._entry_point_caller.call_on_worker_thread("void", "shared_memory_service.destroy_shared_memory_region", None, shared_memory_handle["name"])
+        self._entry_point_caller.call_on_worker_thread("void", "shared_memory_service.destroy_shared_memory_region", shared_memory_handle["name"])
 
     #
     # High-level functions for interacting with shared memory that is managed internally in C++.

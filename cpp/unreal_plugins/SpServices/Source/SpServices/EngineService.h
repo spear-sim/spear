@@ -48,17 +48,15 @@ public:
 
         bindFuncToExecuteOnWorkerThread("engine_service", "initialize", [this]() -> void {
 
-            // Reset request flags
-
+            // Reset request flags.
             request_begin_frame_ = false;
             request_close_ = false;
             request_error_ = false;
 
-            // Reset frame state
-
+            // Reset frame state.
             frame_state_ = FrameState::Idle;
 
-            // Reset promises and futures
+            // Reset promises and futures.
 
             {
                 std::lock_guard<std::mutex> lock(begin_frame_mutex_);
@@ -96,7 +94,7 @@ public:
             // the next frame of work.
             begin_frame_work_queue_ready_future_.get();
 
-            // Reset promise and future
+            // Reset promise and future.
 
             {
                 std::lock_guard<std::mutex> lock(begin_frame_mutex_);
@@ -110,8 +108,8 @@ public:
             }
 
             // Set current work queue.
-            SP_ASSERT(getCurrentWorkQueue() == nullptr);
-            setCurrentWorkQueue(&begin_frame_work_queue_);
+            SP_ASSERT(current_work_queue_ == nullptr);
+            current_work_queue_ = &begin_frame_work_queue_;
 
             // Indicate to the game thread that we will be queueing additional work.
             request_begin_frame_ = true;
@@ -131,7 +129,7 @@ public:
             // the next frame of work.
             end_frame_work_queue_ready_future_.get();
 
-            // Reset promise and future
+            // Reset promise and future.
 
             {
                 std::lock_guard<std::mutex> lock(end_frame_mutex_);
@@ -145,8 +143,8 @@ public:
             }
 
             // Set current work queue.
-            SP_ASSERT(getCurrentWorkQueue() == &begin_frame_work_queue_);
-            setCurrentWorkQueue(&end_frame_work_queue_);
+            SP_ASSERT(current_work_queue_ == &begin_frame_work_queue_);
+            current_work_queue_ = &end_frame_work_queue_;
 
             if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
                 SP_LOG("engine_service.execute_frame: Scheduling begin_frame_work_queue_.reset() on work queue...");
@@ -168,8 +166,8 @@ public:
                 return;
             }
 
-            SP_ASSERT(getCurrentWorkQueue() == &end_frame_work_queue_);
-            setCurrentWorkQueue(nullptr);
+            SP_ASSERT(current_work_queue_ == &end_frame_work_queue_);
+            current_work_queue_ = nullptr;
 
             if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
                 SP_LOG("engine_service.end_frame: Scheduling end_frame_work_queue_.reset() on work queue...");
@@ -433,14 +431,11 @@ private:
         Error               = 5
     };
 
-    // The lambdas returned by the functions below are typically bound to a specific RPC entry point and
-    // called from the worker thread by the RPC server.
-
-    // Note that we assume that the user's function always accepts all arguments by non-const reference.
-    // This will avoid unnecessary copying when we eventually call the user's function. We can't assume the
-    // user's function accepts arguments by const reference, because the user's function might want to modify
-    // the arguments, e.g., when a user function resolves pointers to shared memory for an input SpPackedArray&
-    // before forwarding it to an inner function.
+    // In the wrapFunc(...) functions below, we assume that the input function always accepts all arguments
+    // by non-const reference. This will avoid unnecessary copying when we eventually call the input function.
+    // We can't assume the input function accepts arguments by const reference, because the input function
+    /// might want to modify the arguments, e.g., when an input function resolves pointers to shared memory
+    // for an input SpPackedArray& before forwarding it to an inner function.
 
     // Typically called from the game thread in EngineService::bindFuncToExecuteOnWorkerThread(...) to get an
     // outer func that executes the given inner func in a try-catch block.
@@ -455,8 +450,10 @@ private:
         CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs&...>
     auto wrapFuncToExecuteInTryCatchImpl(const std::string& func_name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
     {
-        // Note that we capture long_func_name and func by value because we want to guarantee that func is still
-        // accessible after these wrapFunc(...) functions return.
+        // The lambda declared below is typically bound to a specific RPC entry point and called from the
+        // worker thread by the RPC server. Note that we capture func_name and func by value because we want
+        // to guarantee that func_name and func are still accessible after wrapFuncToExecuteInTryCatchImpl(...)
+        // returns.
 
         return [this, func_name, func](TArgs&... args) -> TReturn {
             return executeFuncInTryCatch(func_name, [&func_name, &func, &args...]() -> TReturn {
@@ -504,38 +501,40 @@ private:
         CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs&...>
     auto wrapFuncToExecuteInWorkQueueBlockingImpl(const std::string& func_name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
     {
-        // Note that we capture func_name and func by value because we want to guarantee that func is still
-        // accessible after these wrapFunc(...) functions return.
+        // The lambda declared below is typically bound to a specific RPC entry point and called from the
+        // worker thread by the RPC server. Note that we capture func_name and func by value because we want
+        // to guarantee that func_name and func are still accessible after wrapFuncToExecuteInWorkQueueBlockingImpl(...)
+        // returns.
 
         return [this, func_name, func](TArgs&... args) -> TReturn {
             return executeFuncInTryCatch(func_name, [this, &func_name, &func, &args...]() -> TReturn {
 
-                WorkQueue* work_queue = getCurrentWorkQueue();
-                if (!work_queue) {
+                if (!current_work_queue_) {
                     SP_LOG_CURRENT_FUNCTION();
-                    SP_LOG("    ERROR: Work queue is null when attempting to execute function: ", func_name);
+                    SP_LOG("    ERROR: Current work queue is null when attempting to execute function: ", func_name);
                 }
+                SP_ASSERT(current_work_queue_);
 
                 if constexpr (std::is_void_v<TReturn>) {
                     if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                        SP_LOG("Executing function ", func_name, " on work queue ", work_queue->getName(), " (blocking)...");
+                        SP_LOG("Executing function ", func_name, " on work queue ", current_work_queue_->getName(), " (blocking)...");
                     }
 
-                    work_queue->scheduleFunc(func_name, func, args...).get();
+                    current_work_queue_->scheduleFunc(func_name, func, args...).get();
 
                     if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                        SP_LOG("Finished executing function ", func_name, " on work queue ", work_queue->getName(), " (blocking).");
+                        SP_LOG("Finished executing function ", func_name, " on work queue ", current_work_queue_->getName(), " (blocking).");
                     }
 
                 } else {
                     if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                        SP_LOG("Executing function ", func_name, " on work queue ", work_queue->getName(), " (blocking)...");
+                        SP_LOG("Executing function ", func_name, " on work queue ", current_work_queue_->getName(), " (blocking)...");
                     }
 
-                    TReturn return_value = work_queue->scheduleFunc(func_name, func, args...).get();
+                    TReturn return_value = current_work_queue_->scheduleFunc(func_name, func, args...).get();
 
                     if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                        SP_LOG("Finished executing function ", func_name, " on work queue ", work_queue->getName(), " (blocking).");
+                        SP_LOG("Finished executing function ", func_name, " on work queue ", current_work_queue_->getName(), " (blocking).");
                     }
 
                     return return_value;
@@ -557,26 +556,28 @@ private:
         CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs&...>
     auto wrapFuncToExecuteInWorkQueueNonBlockingImpl(const std::string& func_name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
     {
-        // Note that we capture func_name and func by value because we want to guarantee that func is still
-        // accessible after these wrapFunc(...) functions return.
+        // The lambda declared below is typically bound to a specific RPC entry point and called from the
+        // worker thread by the RPC server. Note that we capture func_name and func by value because we want
+        // to guarantee that func_name and func are still accessible after wrapFuncToExecuteInWorkQueueNonBlockingImpl(...)
+        // returns.
 
         return [this, func_name, func](TArgs&... args) -> SpFuture {
             return executeFuncInTryCatch(func_name, [this, &func_name, &func, &args...]() -> SpFuture {
 
-                WorkQueue* work_queue = getCurrentWorkQueue();
-                if (!work_queue) {
+                if (!current_work_queue_) {
                     SP_LOG_CURRENT_FUNCTION();
-                    SP_LOG("    ERROR: Work queue is null when attempting to schedule function: ", func_name);
+                    SP_LOG("    ERROR: Current work queue is null when attempting to execute function: ", func_name);
                 }
+                SP_ASSERT(current_work_queue_);
 
                 if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                    SP_LOG("Scheduling function ", func_name, " on work queue ", work_queue->getName(), " (non-blocking)...");
+                    SP_LOG("Scheduling function ", func_name, " on work queue ", current_work_queue_->getName(), " (non-blocking)...");
                 }
 
-                SpFuture future = createFuture(work_queue->scheduleFunc(func_name, func, args...));
+                SpFuture future = createFuture(current_work_queue_->scheduleFunc(func_name, func, args...));
 
                 if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                    SP_LOG("Finished scheduling function ", func_name, " on work queue ", work_queue->getName(), " (non-blocking).");
+                    SP_LOG("Finished scheduling function ", func_name, " on work queue ", current_work_queue_->getName(), " (non-blocking).");
                 }
 
                 return future;
@@ -597,29 +598,34 @@ private:
         CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs&...>
     auto wrapFuncToExecuteInWorkQueueNonBlockingDiscardReturnValueImpl(const std::string& func_name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
     {
-        // Note that we capture func_name and func by value because we want to guarantee that func is
-        // still accessible after this wrapFuncToExecuteInWorkQueueBlockingImpl(...) function returns.
+        // The lambda declared below is typically bound to a specific RPC entry point and called from the
+        // worker thread by the RPC server. Note that we capture func_name and func by value because we want
+        // to guarantee that func_name and func are still accessible after wrapFuncToExecuteInWorkQueueNonBlockingDiscardReturnValueImpl(...)
+        // returns.
 
         return [this, func_name, func](TArgs&... args) -> void {
             executeFuncInTryCatch(func_name, [this, &func_name, &func, &args...]() -> void {
-                WorkQueue* work_queue = getCurrentWorkQueue();
-                if (!work_queue) {
+
+                if (!current_work_queue_) {
                     SP_LOG_CURRENT_FUNCTION();
-                    SP_LOG("    ERROR: Work queue is null when attempting to execute function: ", func_name);
+                    SP_LOG("    ERROR: Current work queue is null when attempting to execute function: ", func_name);
                 }
+                SP_ASSERT(current_work_queue_);
 
                 if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                    SP_LOG("Scheduling function ", func_name, " on work queue ", work_queue->getName(), " (non-blocking, disarding return value)...");
+                    SP_LOG("Scheduling function ", func_name, " on work queue ", current_work_queue_->getName(), " (non-blocking, disarding return value)...");
                 }
 
-                work_queue->scheduleFunc(func_name, func, args...);
+                current_work_queue_->scheduleFunc(func_name, func, args...);
 
                 if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                    SP_LOG("Finished scheduling function ", func_name, " on work queue ", work_queue->getName(), " (non-blocking, disarding return value)...");
+                    SP_LOG("Finished scheduling function ", func_name, " on work queue ", current_work_queue_->getName(), " (non-blocking, disarding return value)...");
                 }
             });
         };
     }
+
+    // Called from the worker thread and the game thread to execute a function in a try-catch block.
 
     template <typename TFunc>
     auto executeFuncInTryCatch(const std::string& func_name, const TFunc& func)
@@ -681,20 +687,12 @@ private:
         future_ptr = nullptr;
     }
 
-    WorkQueue* getCurrentWorkQueue()
-    {
-        return current_work_queue_;
-    }
-
-    void setCurrentWorkQueue(WorkQueue* work_queue)
-    {
-        current_work_queue_ = work_queue;
-    }
-
     TEntryPointBinder* entry_point_binder_ = nullptr;
 
     WorkQueue begin_frame_work_queue_ = WorkQueue("begin_frame_work_queue");
     WorkQueue end_frame_work_queue_ = WorkQueue("end_frame_work_queue");
+
+    // Only accessed on the worker thread.
     WorkQueue* current_work_queue_ = nullptr;
 
     // Written by the game thread in beginFrame(), endFrame(), and close(). Written by the worker thread in

@@ -7,4 +7,4 @@ class InitializeWorldService():
         self._entry_point_caller = entry_point_caller
 
     def is_initialized(self):
-        return self._entry_point_caller.call_on_worker_thread("bool", "is_initialized", None)
+        return self._entry_point_caller.call_on_worker_thread("bool", "is_initialized")

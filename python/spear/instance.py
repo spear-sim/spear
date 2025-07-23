@@ -23,10 +23,10 @@ class CommonServices():
     def __init__(self, namespace, engine_service, shared_memory_service):
 
         self.unreal_service = spear.services.unreal_service.UnrealService(
-            entry_point_caller=spear.services.entry_point_caller.EntryPointCaller(service_name=f"{namespace}.unreal_service", engine_service=engine_service))
+            entry_point_caller=spear.utils.func_utils.EntryPointCaller(service_name=f"{namespace}.unreal_service", engine_service=engine_service))
 
         self.navigation_service = spear.services.navigation_service.NavigationService(
-            entry_point_caller=spear.services.entry_point_caller.EntryPointCaller(service_name=f"{namespace}.navigation_service", engine_service=engine_service),
+            entry_point_caller=spear.utils.func_utils.EntryPointCaller(service_name=f"{namespace}.navigation_service", engine_service=engine_service),
             shared_memory_service=shared_memory_service)
 
 class EditorServices(CommonServices):
@@ -34,14 +34,14 @@ class EditorServices(CommonServices):
         super().__init__(namespace, engine_service, shared_memory_service)
 
         self.initialize_editor_world_service = spear.services.initialize_world_service.InitializeWorldService(
-            entry_point_caller=spear.services.entry_point_caller.EntryPointCaller(service_name=f"{namespace}.initialize_editor_world_service", engine_service=engine_service))
+            entry_point_caller=spear.utils.func_utils.EntryPointCaller(service_name=f"{namespace}.initialize_editor_world_service", engine_service=engine_service))
 
 class GameServices(CommonServices):
     def __init__(self, namespace, engine_service, shared_memory_service):
         super().__init__(namespace, engine_service, shared_memory_service)
 
         self.initialize_game_world_service = spear.services.initialize_world_service.InitializeWorldService(
-            entry_point_caller=spear.services.entry_point_caller.EntryPointCaller(service_name=f"{namespace}.initialize_game_world_service", engine_service=engine_service))
+            entry_point_caller=spear.utils.func_utils.EntryPointCaller(service_name=f"{namespace}.initialize_game_world_service", engine_service=engine_service))
 
 
 class Instance():
@@ -78,21 +78,21 @@ class Instance():
         # Initialize services that require a reference to EngineService.
 
         self.enhanced_input_service = spear.services.enhanced_input_service.EnhancedInputService(
-            entry_point_caller=spear.services.entry_point_caller.EntryPointCaller(service_name="enhanced_input_service", engine_service=self.engine_service))
+            entry_point_caller=spear.utils.func_utils.EntryPointCaller(service_name="enhanced_input_service", engine_service=self.engine_service))
 
         self.input_service = spear.services.input_service.InputService(
-            entry_point_caller=spear.services.entry_point_caller.EntryPointCaller(service_name="input_service", engine_service=self.engine_service))
+            entry_point_caller=spear.utils.func_utils.EntryPointCaller(service_name="input_service", engine_service=self.engine_service))
 
         self.shared_memory_service = spear.services.shared_memory_service.SharedMemoryService(
-            entry_point_caller=self.engine_service)
+            entry_point_caller=spear.utils.func_utils.EntryPointCaller(service_name="shared_memory_service", engine_service=self.engine_service))
 
         # Initialize services that require a reference to EngineService and SharedMemoryService.
 
         self.sp_func_service = spear.services.sp_func_service.SpFuncService(
-            entry_point_caller=spear.services.entry_point_caller.EntryPointCaller(service_name="sp_func_service", engine_service=self.engine_service),
+            entry_point_caller=spear.utils.func_utils.EntryPointCaller(service_name="sp_func_service", engine_service=self.engine_service),
             shared_memory_service=self.shared_memory_service)
 
-        # Initialize Editor and Game containers for world-specific services
+        # Initialize EditorServices and GameServices containers for world-specific services
 
         self._editor = EditorServices(namespace="editor", engine_service=self.engine_service, shared_memory_service=self.shared_memory_service)
         self._game = GameServices(namespace="game", engine_service=self.engine_service, shared_memory_service=self.shared_memory_service)

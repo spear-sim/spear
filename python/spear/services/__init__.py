@@ -5,9 +5,6 @@
 # EngineService
 import spear.services.engine_service
 
-# helper class that requires a reference to EngineService
-import spear.services.entry_point_caller
-
 # services that require a reference to EngineService
 import spear.services.enhanced_input_service
 import spear.services.initialize_world_service

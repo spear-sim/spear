@@ -15,28 +15,15 @@ except:
     pass
 
 
-class SpFuncService():
+class SpFuncService(spear.utils.func_utils.Service):
     def __init__(self, entry_point_caller, shared_memory_service, create_children=True):
 
         self._entry_point_caller = entry_point_caller
         self._shared_memory_service = shared_memory_service
+        super().__init__(entry_point_caller, create_children) # do this after initializing local state
 
-        if create_children:
-            call_async_service_name = self._entry_point_caller.service_name + ".call_async"
-            call_async_entry_point_caller = spear.services.entry_point_caller.CallAsyncEntryPointCaller(service_name=call_async_service_name, engine_service=self._entry_point_caller.engine_service)
-            self.call_async = SpFuncService(entry_point_caller=call_async_entry_point_caller, shared_memory_service=shared_memory_service, create_children=False)
-
-            send_async_service_name = self._entry_point_caller.service_name + ".send_async"
-            send_async_entry_point_caller = spear.services.entry_point_caller.SendAsyncEntryPointCaller(service_name=send_async_service_name, engine_service=self._entry_point_caller.engine_service)
-            self.send_async = SpFuncService(entry_point_caller=send_async_entry_point_caller, shared_memory_service=shared_memory_service, create_children=False)
-
-            call_async_fast_service_name = self._entry_point_caller.service_name + ".call_async"
-            call_async_fast_entry_point_caller = spear.services.entry_point_caller.CallAsyncFastEntryPointCaller(service_name=call_async_fast_service_name, engine_service=self._entry_point_caller.engine_service)
-            self.call_async_fast = SpFuncService(entry_point_caller=call_async_fast_entry_point_caller, shared_memory_service=shared_memory_service, create_children=False)
-
-            send_async_fast_service_name = self._entry_point_caller.service_name + ".send_async"
-            send_async_fast_entry_point_caller = spear.services.entry_point_caller.SendAsyncFastEntryPointCaller(service_name=send_async_service_name, engine_service=self._entry_point_caller.engine_service)
-            self.send_async_fast = SpFuncService(entry_point_caller=send_async_fast_entry_point_caller, shared_memory_service=shared_memory_service, create_children=False)
+    def create_child(self, entry_point_caller):
+        return SpFuncService(entry_point_caller=entry_point_caller, shared_memory_service=self._shared_memory_service, create_children=False)
 
 
     def create_shared_memory_handles_for_object(self, uobject):
