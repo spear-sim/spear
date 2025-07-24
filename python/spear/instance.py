@@ -3,6 +3,7 @@
 #
 
 import glob
+import inspect
 import os
 import psutil
 import spear
@@ -433,7 +434,25 @@ class Instance():
             spear.log(f"    ERROR: engine_service.get_id returned {pid} but the PID of the process we just launched is {self._process.pid}. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables and try launching again.")
             assert False
 
-        spear.log("    Finished initializing RPC client.")
+        if self._config.SPEAR.INSTANCE.PRINT_CALL_DEBUG_INFO:
+
+            spear.log("    Client has the following functions: ")
+
+            func_strings = set()
+            for name, member in inspect.getmembers(self._client):
+                if not name.startswith("__") or not name.endswith("__"):
+                    lines = member.__doc__.split("\n")
+                    for line in lines:
+                        tokens = line.split()
+                        tokens = [ t.removesuffix("self,") for t in tokens ]
+                        tokens = [ t.removeprefix("/") for t in tokens ]
+                        tokens = [ t for t in tokens if not t.startswith("arg") or not t.endswith(":") ]
+                        func_string = " ".join(tokens).replace("( ", "(").replace(", ) -> ", ") -> ")
+                        if func_string not in func_strings:
+                            func_strings.add(func_string)
+                            spear.log("        ", func_string)
+
+        spear.log("    Finished initializing client.")
 
 
     def _request_warm_up_unreal_instance(self, time_seconds, num_frames):

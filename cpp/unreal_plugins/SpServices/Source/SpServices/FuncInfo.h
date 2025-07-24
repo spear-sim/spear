@@ -31,11 +31,12 @@ public:
         using TArgsTuple = boost::callable_traits::args_t<TFunc>;
         using TReturn = boost::callable_traits::return_type_t<TFunc>; // can't use TReturn = std::invoke_result_t<TFunc, TArgs...> because we haven't deduced TArgs... yet
 
-        return getFuncInfoImpl<TReturn>(std::array<TArgsTuple, 0>());
+        return getFuncInfo<TReturn>(std::array<TArgsTuple, 0>());
     }
 
+private:
     template <typename TReturn, typename... TArgs>
-    static auto getFuncInfoImpl(std::array<std::tuple<TArgs...>, 0> array)
+    static auto getFuncInfo(std::array<std::tuple<TArgs...>, 0> array)
     {
         return FuncInfo<TReturn, TArgs...>();
     }

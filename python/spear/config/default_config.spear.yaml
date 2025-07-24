@@ -69,6 +69,9 @@ SPEAR:
     # server function before throwing an exception.
     CLIENT_INTERNAL_TIMEOUT_SECONDS: 1.0
 
+    # Print the client's functions during initialization.
+    PRINT_CALL_DEBUG_INFO: False
+
     # Wait for this amount of time when initializing the RPC client. This is useful because it can take a bit
     # of time between when an executable is invoked on the command-line, and when an RPC connection can be
     # established.

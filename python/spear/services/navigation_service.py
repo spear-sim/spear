@@ -18,6 +18,9 @@ class NavigationService(spear.utils.func_utils.Service):
     def get_nav_data_for_agent_name(self, navigation_system, agent_name):
         return self._entry_point_caller.call_on_game_thread("uint64_t", "get_nav_data_for_agent_name", None, navigation_system, agent_name)
 
+    # The caller must ensure that out_array remains valid until future.get() has been called for the future
+    # that might be returned by this function.
+
     def get_random_points(
         self,
         navigation_data,
@@ -45,6 +48,9 @@ class NavigationService(spear.utils.func_utils.Service):
             query_owner,
             packed_arrays,
             out_packed_array)
+
+    # The caller must ensure that out_array remains valid until future.get() has been called for the future
+    # that might be returned by this function.
 
     def get_random_reachable_points_in_radius(
         self,

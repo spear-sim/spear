@@ -47,7 +47,7 @@ class SharedMemoryService():
     # High-level helper functions for interacting with shared memory handles
     #
 
-    def get_shared_memory_handles_from_arrays(self, arrays, usage_flags=[]):
+    def get_shared_memory_handles_from_arrays(self, arrays, usage_flags):
         return { a.shared_memory_handle["name"]: a.shared_memory_handle for a in arrays if isinstance(a, spear.utils.func_utils.Shared) and set(usage_flags) <= set(a.shared_memory_handle["view"].usage_flags) }
 
     def get_shared_memory_names_from_packed_arrays(self, packed_arrays):

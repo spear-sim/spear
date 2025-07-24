@@ -6,7 +6,6 @@ import json
 import numbers
 import numpy as np
 import scipy
-import spear
 
 try:
     import spear_ext # can't be installed in the UE Python environment because UE doesn't ship with CPython headers
@@ -90,19 +89,19 @@ class Service():
 
         if create_children:
             call_async_service_name = entry_point_caller.service_name + ".call_async"
-            call_async_entry_point_caller = spear.utils.func_utils.CallAsyncEntryPointCaller(service_name=call_async_service_name, engine_service=entry_point_caller.engine_service)
+            call_async_entry_point_caller = CallAsyncEntryPointCaller(service_name=call_async_service_name, engine_service=entry_point_caller.engine_service)
             self.call_async = self.create_child(entry_point_caller=call_async_entry_point_caller)
 
             send_async_service_name = entry_point_caller.service_name + ".send_async"
-            send_async_entry_point_caller = spear.utils.func_utils.SendAsyncEntryPointCaller(service_name=send_async_service_name, engine_service=entry_point_caller.engine_service)
+            send_async_entry_point_caller = SendAsyncEntryPointCaller(service_name=send_async_service_name, engine_service=entry_point_caller.engine_service)
             self.send_async = self.create_child(entry_point_caller=send_async_entry_point_caller)
 
             call_async_fast_service_name = entry_point_caller.service_name + ".call_async"
-            call_async_fast_entry_point_caller = spear.utils.func_utils.CallAsyncFastEntryPointCaller(service_name=call_async_fast_service_name, engine_service=entry_point_caller.engine_service)
+            call_async_fast_entry_point_caller = CallAsyncFastEntryPointCaller(service_name=call_async_fast_service_name, engine_service=entry_point_caller.engine_service)
             self.call_async_fast = self.create_child(entry_point_caller=call_async_fast_entry_point_caller)
 
             send_async_fast_service_name = entry_point_caller.service_name + ".send_async"
-            send_async_fast_entry_point_caller = spear.utils.func_utils.SendAsyncFastEntryPointCaller(service_name=send_async_service_name, engine_service=entry_point_caller.engine_service)
+            send_async_fast_entry_point_caller = SendAsyncFastEntryPointCaller(service_name=send_async_service_name, engine_service=entry_point_caller.engine_service)
             self.send_async_fast = self.create_child(entry_point_caller=send_async_fast_entry_point_caller)
 
     def create_child(self, entry_point_caller):
@@ -182,17 +181,8 @@ def to_shared(array, shared_memory_handle):
     return Shared(array, shared_memory_handle)
 
 
-# Convert a collection of NumPy arrays to a collection of packed arrays.
-def to_packed_arrays(arrays, dest_byte_order, usage_flags=None):
-    if isinstance(arrays, list):
-        return [ to_packed_array(array=a, dest_byte_order=dest_byte_order, usage_flags=usage_flags) for a in arrays ]
-    elif isinstance(arrays, dict):
-        return { k: to_packed_array(array=v, dest_byte_order=dest_byte_order, usage_flags=usage_flags) for k, v in arrays.items() }
-    else:
-        assert False
-
 # Convert a NumPy array to a packed array.
-def to_packed_array(array, dest_byte_order, usage_flags=None):
+def to_packed_array(array, dest_byte_order, usage_flags):
     if isinstance(array, np.ndarray):
         packed_array = spear_ext.PackedArray()
         if dest_byte_order == "native":
@@ -217,18 +207,8 @@ def to_packed_array(array, dest_byte_order, usage_flags=None):
     else:
         assert False
 
-
-# Convert a collection of packed arrays to a collection of NumPy arrays.
-def to_arrays(packed_arrays, src_byte_order, usage_flags=None, shared_memory_handles=None):
-    if isinstance(packed_arrays, list):
-        return [ to_array(packed_array=p, src_byte_order=src_byte_order, usage_flags=usage_flags, shared_memory_handles=shared_memory_handles) for p in packed_arrays ]
-    elif isinstance(packed_arrays, dict):
-        return { k: to_array(packed_array=v, src_byte_order=src_byte_order, usage_flags=usage_flags, shared_memory_handles=shared_memory_handles) for k, v in packed_arrays.items() }
-    else:
-        assert False
-
 # Convert a packed array to a NumPy array.
-def to_array(packed_array, src_byte_order, usage_flags=None, shared_memory_handles=None):
+def to_array(packed_array, src_byte_order, usage_flags, shared_memory_handles):
     if packed_array.data_source == "Internal":
         assert packed_array.data.shape == tuple(packed_array.shape)
         if src_byte_order == "native":
@@ -238,12 +218,50 @@ def to_array(packed_array, src_byte_order, usage_flags=None, shared_memory_handl
         else:
             assert False
     elif packed_array.data_source == "Shared":
+        assert shared_memory_handles is not None
         assert packed_array.shared_memory_name in shared_memory_handles
         assert usage_flags is not None
         assert set(usage_flags) <= set(shared_memory_handles[packed_array.shared_memory_name]["view"].usage_flags)
         return np.ndarray(shape=packed_array.shape, dtype=packed_array.data.dtype, buffer=shared_memory_handles[packed_array.shared_memory_name]["buffer"])
     else:
         assert False
+
+
+# Convert a collection of NumPy arrays to a collection of packed arrays.
+def to_packed_arrays(arrays, dest_byte_order, usage_flags):
+    if isinstance(arrays, list):
+        return [ to_packed_array(array=a, dest_byte_order=dest_byte_order, usage_flags=usage_flags) for a in arrays ]
+    elif isinstance(arrays, dict):
+        return { k: to_packed_array(array=v, dest_byte_order=dest_byte_order, usage_flags=usage_flags) for k, v in arrays.items() }
+    else:
+        assert False
+
+# Convert a collection of packed arrays to a collection of NumPy arrays.
+def to_arrays(packed_arrays, src_byte_order, usage_flags, shared_memory_handles):
+    if isinstance(packed_arrays, list):
+        return [ to_array(packed_array=p, src_byte_order=src_byte_order, usage_flags=usage_flags, shared_memory_handles=shared_memory_handles) for p in packed_arrays ]
+    elif isinstance(packed_arrays, dict):
+        return { k: to_array(packed_array=v, src_byte_order=src_byte_order, usage_flags=usage_flags, shared_memory_handles=shared_memory_handles) for k, v in packed_arrays.items() }
+    else:
+        assert False
+
+
+# Convert a collection of arrays, unreal objects, and an info string to a data bundle.
+def to_data_bundle(dest_byte_order, usage_flags, arrays={}, unreal_objs={}, info=""):
+    assert dest_byte_order is not None
+    assert usage_flags is not None
+    data_bundle = spear_ext.DataBundle()
+    data_bundle.packed_arrays = to_packed_arrays(arrays=arrays, dest_byte_order=dest_byte_order, usage_flags=["Arg"])
+    data_bundle.unreal_obj_strings = to_json_strings(objs=unreal_objs)
+    data_bundle.info = info
+    return data_bundle
+
+# Convert a data bundle to a collection of arrays, unreal objects, and an info string.
+def to_data_bundle_dict(data_bundle, src_byte_order, usage_flags, shared_memory_handles):
+    return {
+        "arrays": to_arrays(packed_arrays=data_bundle.packed_arrays, src_byte_order=src_byte_order, usage_flags=["ReturnValue"], shared_memory_handles=shared_memory_handles),
+        "unreal_objs": try_to_dicts(json_strings=data_bundle.unreal_obj_strings),
+        "info": data_bundle.info}
 
 
 # Convert to a NumPy matrix from an Unreal rotator. See pipeline.py for more details on Unreal's Euler angle conventions.

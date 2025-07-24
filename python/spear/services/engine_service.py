@@ -221,6 +221,8 @@ class EngineService():
             return_value = self._client.call_as_bool(func_name, *args)
         elif return_as == "float":
             return_value = self._client.call_as_float(func_name, *args)
+        elif return_as == "int32_t":
+            return_value = self._client.call_as_int32(func_name, *args)
         elif return_as == "int64_t":
             return_value = self._client.call_as_int64(func_name, *args)
         elif return_as == "uint64_t":
@@ -288,6 +290,8 @@ class EngineService():
             return_value = self._client.get_future_result_as_bool(future)
         elif return_as == "float":
             return_value = self._client.get_future_result_as_float(future)
+        elif return_as == "int32_t":
+            return_value = self._client.get_future_result_as_int32(future)
         elif return_as == "int64_t":
             return_value = self._client.get_future_result_as_int64(future)
         elif return_as == "uint64_t":
@@ -355,6 +359,8 @@ class EngineService():
             return_value = self._client.get_future_result_fast_as_bool(future)
         elif return_as == "float":
             return_value = self._client.get_future_result_fast_as_float(future)
+        elif return_as == "int32_t":
+            return_value = self._client.get_future_result_fast_as_int32(future)
         elif return_as == "int64_t":
             return_value = self._client.get_future_result_fast_as_int64(future)
         elif return_as == "uint64_t":

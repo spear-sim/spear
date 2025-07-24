@@ -2,16 +2,7 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-import mmap
-import multiprocessing.shared_memory
-import numpy as np
 import spear
-import sys
-
-try:
-    import spear_ext # can't be installed in the UE Python environment because UE doesn't ship with CPython headers
-except:
-    pass
 
 class SpFuncService(spear.utils.func_utils.Service):
     def __init__(self, entry_point_caller, shared_memory_service, create_children=True):
@@ -30,51 +21,44 @@ class SpFuncService(spear.utils.func_utils.Service):
     def destroy_shared_memory_handles_for_object(self, shared_memory_handles):
         self._shared_memory_service.destroy_shared_memory_handles(shared_memory_handles=shared_memory_handles)
 
+    # The caller must ensure that arrays and uobject_shared_memory_handles remain valid until future.get()
+    # has been called for the future that might be returned by this function.
+
     def call_function(self, uobject, function_name, arrays={}, unreal_objs={}, info="", uobject_shared_memory_handles={}):
 
         # convert args to data bundle
-        args_data_bundle = spear_ext.DataBundle()
-        args_data_bundle.packed_arrays = spear.utils.func_utils.to_packed_arrays(
-            arrays=arrays,
+        args_data_bundle = spear.utils.func_utils.to_data_bundle(
             dest_byte_order=self._entry_point_caller.engine_service.get_byte_order(),
-            usage_flags=["Arg"])
-        args_data_bundle.unreal_obj_strings = spear.utils.func_utils.to_json_strings(
-            objs=unreal_objs)
-        args_data_bundle.info = info
-
-        # get the shared memory handle for each arg that uses shared memory and could be used as return value
-        arg_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_arrays(
+            usage_flags=["Arg"],
             arrays=arrays,
-            usage_flags=["ReturnValue"])
-
-        # arg_shared_memory_handles and uobject_shared_memory_handles are both dicts that map from a string
-        # to a handle, where a handle is itself a dict that maps from a string to various low-level buffer
-        # metadata objects. The caller must ensure that all of the underlying handles corresponding to arrays
-        # and uobject_shared_memory_handles remain valid until future.get() has been called for the future
-        # that might be returned by this function.
+            unreal_objs=unreal_objs,
+            info=info)
 
         # define convert func
         def convert_func(
             result_data_bundle,
-            arg_shared_memory_handles=arg_shared_memory_handles,
+            arrays=arrays,
             uobject_shared_memory_handles=uobject_shared_memory_handles):
 
+            # get the shared memory handle for each arg that uses shared memory and could be used as return value
+            arg_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_arrays(
+                arrays=arrays, usage_flags=["ReturnValue"])
+
+            # get the shared memory names for all of the return values
             result_shared_memory_names = self._shared_memory_service.get_shared_memory_names_from_packed_arrays(
                 packed_arrays=result_data_bundle.packed_arrays)
+
+            # get the shared memory handles for all return values
             result_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_dicts(
                 shared_memory_names=result_shared_memory_names,
                 shared_memory_handle_dicts=[arg_shared_memory_handles, uobject_shared_memory_handles])
 
             # convert data bundle to result
-            result = {
-                "arrays": spear.utils.func_utils.to_arrays(
-                    packed_arrays=result_data_bundle.packed_arrays,
-                    src_byte_order=self._entry_point_caller.engine_service.get_byte_order(),
-                    usage_flags=["ReturnValue"],
-                    shared_memory_handles=result_shared_memory_handles),
-                "unreal_objs": spear.utils.func_utils.try_to_dicts(
-                    json_strings=result_data_bundle.unreal_obj_strings),
-                "info": result_data_bundle.info}
+            result = spear.utils.func_utils.to_data_bundle_dict(
+                data_bundle=result_data_bundle,
+                src_byte_order=self._entry_point_caller.engine_service.get_byte_order(),
+                usage_flags=["ReturnValue"],
+                shared_memory_handles=result_shared_memory_handles)
 
             return result
 

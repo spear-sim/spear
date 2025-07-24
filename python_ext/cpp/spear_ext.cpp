@@ -388,6 +388,7 @@ private:
     template <> std::string getTypeName<void>                                    () { return "void";                                }
     template <> std::string getTypeName<bool>                                    () { return "bool";                                }
     template <> std::string getTypeName<float>                                   () { return "float";                               }
+    template <> std::string getTypeName<int32_t>                                 () { return "int32";                               }
     template <> std::string getTypeName<int64_t>                                 () { return "int64";                               }
     template <> std::string getTypeName<uint64_t>                                () { return "uint64";                              }
     template <> std::string getTypeName<std::string>                             () { return "string";                              }
@@ -408,6 +409,7 @@ private:
     template <> void                                    getReturnValue<void>                                    (clmdep_msgpack::object_handle&& object_handle) { return; }
     template <> bool                                    getReturnValue<bool>                                    (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<bool>                                                                       (std::move(object_handle)); }
     template <> float                                   getReturnValue<float>                                   (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<float>                                                                      (std::move(object_handle)); }
+    template <> int32_t                                 getReturnValue<int32_t>                                 (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<int32_t>                                                                    (std::move(object_handle)); }
     template <> int64_t                                 getReturnValue<int64_t>                                 (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<int64_t>                                                                    (std::move(object_handle)); }
     template <> uint64_t                                getReturnValue<uint64_t>                                (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<uint64_t>                                                                   (std::move(object_handle)); }
     template <> std::string                             getReturnValue<std::string>                             (clmdep_msgpack::object_handle&& object_handle) { return getReturnValueImpl<std::string>                                                                (std::move(object_handle)); }
@@ -466,7 +468,6 @@ private:
         return call<TReturn>(func_name, future);
     }
 
-    // needed to convert a custom view type, received as a return value from the server, into a custom type that can be returned to Python (specialized below)
     template <typename TDest, typename TSrc> static TDest convert(TSrc&& src, std::shared_ptr<clmdep_msgpack::object_handle> object_handle) { std::cout << "[SPEAR | spear_ext.cpp] ERROR: Current function: " << SP_CURRENT_FUNCTION << std::endl; SP_ASSERT(false); return TDest(); };
 
     std::unique_ptr<rpc::client> client_ = nullptr;
@@ -556,8 +557,8 @@ NB_MODULE(spear_ext, module)
 
     // 3 args
     Client::registerEntryPointSignature<void,                                    uint64_t,            bool,                            const std::vector<std::string>&>           (client_class);
-    Client::registerEntryPointSignature<void,                                    uint64_t,            int,                             const std::vector<std::string>&>           (client_class);
     Client::registerEntryPointSignature<void,                                    uint64_t,            float,                           const std::vector<std::string>&>           (client_class);
+    Client::registerEntryPointSignature<void,                                    uint64_t,            int32_t,                         const std::vector<std::string>&>           (client_class);
     Client::registerEntryPointSignature<void,                                    uint64_t,            uint64_t,                        const std::string&>                        (client_class);
     Client::registerEntryPointSignature<void,                                    uint64_t,            const std::string&,              float>                                     (client_class);
     Client::registerEntryPointSignature<void,                                    uint64_t,            const std::string&,              const std::string&>                        (client_class);
@@ -574,7 +575,7 @@ NB_MODULE(spear_ext, module)
     Client::registerEntryPointSignature<std::map<std::string, uint64_t>,         uint64_t,            uint64_t,                        bool>                                      (client_class);
     Client::registerEntryPointSignature<std::map<std::string, uint64_t>,         const std::string&,  uint64_t,                        bool>                                      (client_class);
     Client::registerEntryPointSignature<std::map<std::string, uint64_t>,         const std::string&,  const std::vector<std::string>&, bool>                                      (client_class);
-    Client::registerEntryPointSignature<SharedMemoryView,                        const std::string&,  int,                             const std::vector<std::string>&>           (client_class);
+    Client::registerEntryPointSignature<SharedMemoryView,                        const std::string&,  uint64_t,                        const std::vector<std::string>&>           (client_class);
     Client::registerEntryPointSignature<PropertyDesc,                            uint64_t,            uint64_t,                        const std::string&>                        (client_class);
     Client::registerEntryPointSignature<DataBundle,                              uint64_t,            const std::string&,              const DataBundle&>                         (client_class);
 

@@ -10,7 +10,9 @@
 #include <future>      // std::promise
 #include <mutex>       // std::lock_guard
 #include <string>
-#include <type_traits> // std::is_void_v
+#include <utility>     // std::pair
+#include <vector>
+#include <type_traits> // std::is_void_v, std::remove_cvref_t
 
 #include <boost/predef.h> // BOOST_ENDIAN_BIG_BYTE, BOOST_ENDIAN_LITTLE_BYTE, BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
 
@@ -260,6 +262,7 @@ public:
         bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_void",                                [this](SpFuture& future) -> void                                           { return destroyFuture<void>(future);                                           });
         bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_bool",                                [this](SpFuture& future) -> bool                                           { return destroyFuture<bool>(future);                                           });
         bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_float",                               [this](SpFuture& future) -> float                                          { return destroyFuture<float>(future);                                          });
+        bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_int32",                               [this](SpFuture& future) -> int32_t                                        { return destroyFuture<int32_t>(future);                                        });
         bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_int64",                               [this](SpFuture& future) -> int64_t                                        { return destroyFuture<int64_t>(future);                                        });
         bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_uint64",                              [this](SpFuture& future) -> uint64_t                                       { return destroyFuture<uint64_t>(future);                                       });
         bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_string",                              [this](SpFuture& future) -> std::string                                    { return destroyFuture<std::string>(future);                                    });
@@ -278,7 +281,12 @@ public:
     void bindFuncToExecuteOnWorkerThread(const std::string& service_name, const std::string& func_name, const auto& func)
     {
         std::string long_func_name = service_name + "." + func_name;
-        SP_LOG("Binding function to execute on the worker thread:                                    ", long_func_name);
+
+        if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
+            SP_LOG("Binding function to execute on the worker thread:");
+            printFuncSignature(long_func_name, func);
+        }
+
         entry_point_binder_->bind(long_func_name, wrapFuncToExecuteInTryCatch(long_func_name, func));
     }
 
@@ -292,19 +300,34 @@ public:
     {
         if (Std::toBool(bind_flags & UnrealEntryPointBindFlags::CallSync)) {
             std::string long_func_name = service_name + "." + func_name;
-            SP_LOG("Binding function to execute on the game thread (blocking):                           ", long_func_name);
+
+            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
+                SP_LOG("Binding function to execute on game thread (blocking):");
+                printFuncSignature(long_func_name, func);
+            }
+
             entry_point_binder_->bind(long_func_name, wrapFuncToExecuteInWorkQueueBlocking(long_func_name, func));
         }
 
         if (Std::toBool(bind_flags & UnrealEntryPointBindFlags::CallAsync)) {
             std::string long_func_name = service_name + ".call_async." + func_name;
-            SP_LOG("Binding function to execute on the game thread (non-blocking):                       ", long_func_name);
+
+            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
+                SP_LOG("Binding function to game thread (non-blocking):");
+                printFuncSignature(long_func_name, func);
+            }
+
             entry_point_binder_->bind(long_func_name, wrapFuncToExecuteInWorkQueueNonBlocking(long_func_name, func));
         }
 
         if (Std::toBool(bind_flags & UnrealEntryPointBindFlags::SendAsync)) {
             std::string long_func_name = service_name + ".send_async." + func_name;
-            SP_LOG("Binding function to execute on the game thread (non-blocking, discard return value): ", long_func_name);
+
+            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
+                SP_LOG("Binding function to game thread (non-blocking, discard return value):");
+                printFuncSignature(long_func_name, func);
+            }
+
             entry_point_binder_->bind(long_func_name, wrapFuncToExecuteInWorkQueueNonBlockingDiscardReturnValue(long_func_name, func));
         }
     }
@@ -443,16 +466,16 @@ private:
     template <typename TFunc>
     auto wrapFuncToExecuteInTryCatch(const std::string& func_name, const TFunc& func)
     {
-        return wrapFuncToExecuteInTryCatchImpl(func_name, func, FuncInfoUtils::getFuncInfo<TFunc>());
+        return wrapFuncToExecuteInTryCatch(func_name, func, FuncInfoUtils::getFuncInfo<TFunc>());
     }
 
     template <typename TFunc, typename TReturn, typename... TArgs> requires
         CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs&...>
-    auto wrapFuncToExecuteInTryCatchImpl(const std::string& func_name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
+    auto wrapFuncToExecuteInTryCatch(const std::string& func_name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
     {
         // The lambda declared below is typically bound to a specific RPC entry point and called from the
         // worker thread by the RPC server. Note that we capture func_name and func by value because we want
-        // to guarantee that func_name and func are still accessible after wrapFuncToExecuteInTryCatchImpl(...)
+        // to guarantee that func_name and func are still accessible after wrapFuncToExecuteInTryCatch(...)
         // returns.
 
         return [this, func_name, func](TArgs&... args) -> TReturn {
@@ -494,16 +517,16 @@ private:
     template <typename TFunc>
     auto wrapFuncToExecuteInWorkQueueBlocking(const std::string& func_name, const TFunc& func)
     {
-        return wrapFuncToExecuteInWorkQueueBlockingImpl(func_name, func, FuncInfoUtils::getFuncInfo<TFunc>());
+        return wrapFuncToExecuteInWorkQueueBlocking(func_name, func, FuncInfoUtils::getFuncInfo<TFunc>());
     }
     
     template <typename TFunc, typename TReturn, typename... TArgs> requires
         CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs&...>
-    auto wrapFuncToExecuteInWorkQueueBlockingImpl(const std::string& func_name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
+    auto wrapFuncToExecuteInWorkQueueBlocking(const std::string& func_name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
     {
         // The lambda declared below is typically bound to a specific RPC entry point and called from the
         // worker thread by the RPC server. Note that we capture func_name and func by value because we want
-        // to guarantee that func_name and func are still accessible after wrapFuncToExecuteInWorkQueueBlockingImpl(...)
+        // to guarantee that func_name and func are still accessible after wrapFuncToExecuteInWorkQueueBlocking(...)
         // returns.
 
         return [this, func_name, func](TArgs&... args) -> TReturn {
@@ -549,16 +572,16 @@ private:
     template <typename TFunc>
     auto wrapFuncToExecuteInWorkQueueNonBlocking(const std::string& func_name, const TFunc& func)
     {
-        return wrapFuncToExecuteInWorkQueueNonBlockingImpl(func_name, func, FuncInfoUtils::getFuncInfo<TFunc>());
+        return wrapFuncToExecuteInWorkQueueNonBlocking(func_name, func, FuncInfoUtils::getFuncInfo<TFunc>());
     }
     
     template <typename TFunc, typename TReturn, typename... TArgs> requires
         CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs&...>
-    auto wrapFuncToExecuteInWorkQueueNonBlockingImpl(const std::string& func_name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
+    auto wrapFuncToExecuteInWorkQueueNonBlocking(const std::string& func_name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
     {
         // The lambda declared below is typically bound to a specific RPC entry point and called from the
         // worker thread by the RPC server. Note that we capture func_name and func by value because we want
-        // to guarantee that func_name and func are still accessible after wrapFuncToExecuteInWorkQueueNonBlockingImpl(...)
+        // to guarantee that func_name and func are still accessible after wrapFuncToExecuteInWorkQueueNonBlocking(...)
         // returns.
 
         return [this, func_name, func](TArgs&... args) -> SpFuture {
@@ -591,16 +614,16 @@ private:
     template <typename TFunc>
     auto wrapFuncToExecuteInWorkQueueNonBlockingDiscardReturnValue(const std::string& func_name, const TFunc& func)
     {
-        return wrapFuncToExecuteInWorkQueueNonBlockingDiscardReturnValueImpl(func_name, func, FuncInfoUtils::getFuncInfo<TFunc>());
+        return wrapFuncToExecuteInWorkQueueNonBlockingDiscardReturnValue(func_name, func, FuncInfoUtils::getFuncInfo<TFunc>());
     }
     
     template <typename TFunc, typename TReturn, typename... TArgs> requires
         CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs&...>
-    auto wrapFuncToExecuteInWorkQueueNonBlockingDiscardReturnValueImpl(const std::string& func_name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
+    auto wrapFuncToExecuteInWorkQueueNonBlockingDiscardReturnValue(const std::string& func_name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
     {
         // The lambda declared below is typically bound to a specific RPC entry point and called from the
         // worker thread by the RPC server. Note that we capture func_name and func by value because we want
-        // to guarantee that func_name and func are still accessible after wrapFuncToExecuteInWorkQueueNonBlockingDiscardReturnValueImpl(...)
+        // to guarantee that func_name and func are still accessible after wrapFuncToExecuteInWorkQueueNonBlockingDiscardReturnValue(...)
         // returns.
 
         return [this, func_name, func](TArgs&... args) -> void {
@@ -654,8 +677,10 @@ private:
         return TReturn();
     }
 
+    // Functions for creating and destroying futures
+
     template <typename TReturn>
-    SpFuture createFuture(std::future<TReturn>&& std_future)
+    static SpFuture createFuture(std::future<TReturn>&& std_future)
     {
         SpFuture future;
         future.future_ptr_ = new std::future<TReturn>(std::move(std_future));
@@ -665,7 +690,7 @@ private:
     }
 
     template <typename TReturn>
-    TReturn destroyFuture(SpFuture& future)
+    static TReturn destroyFuture(SpFuture& future)
     {
         SP_ASSERT(future.future_ptr_);
         SP_ASSERT(future.type_id_ == Std::getTypeIdString<TReturn>());
@@ -677,7 +702,7 @@ private:
     }
 
     template <>
-    void destroyFuture<void>(SpFuture& future)
+    static void destroyFuture<void>(SpFuture& future)
     {
         SP_ASSERT(future.future_ptr_);
         SP_ASSERT(future.type_id_ == Std::getTypeIdString<void>());
@@ -686,6 +711,65 @@ private:
         delete future_ptr;
         future_ptr = nullptr;
     }
+
+    // Debug printing
+
+    template <typename TFunc>
+    static void printFuncSignature(const std::string& func_name, const TFunc& func)
+    {
+        return printFuncSignature(func_name, func, FuncInfoUtils::getFuncInfo<TFunc>());
+    }
+
+    template <typename TFunc, typename TReturn, typename... TArgs>
+    static void printFuncSignature(const std::string& func_name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
+    {
+        auto [return_value_string, arg_strings] = getFuncSignatureStrings<TReturn, TArgs...>();
+        if (arg_strings.empty()) {
+            SP_LOG("    ", func_name);
+            SP_LOG("        () -> ", return_value_string);
+        } else {
+            SP_LOG("    ", func_name);
+            SP_LOG("        (", Std::join(arg_strings, ", "), ") -> ", return_value_string);
+        }
+    }
+
+    template <typename TReturn, typename... TArgs>
+    static std::pair<std::string, std::vector<std::string>> getFuncSignatureStrings()
+    {
+        std::string return_value = getTypeString<TReturn>();
+        std::vector<std::string> args;
+        (args.push_back(getTypeString<TArgs>()), ...);
+        return std::make_pair(return_value, std::move(args));
+    }
+
+    template <typename T> static std::string getTypeString()
+    {
+        return getTypeNameString<std::remove_reference_t<T>>() + getTypeRefString<T>();
+    }
+
+    template <typename T> static std::string getTypeNameString() { SP_ASSERT(false); return ""; }
+    template <> std::string getTypeNameString<void>                                           () { return "void";                                           }
+    template <> std::string getTypeNameString<bool>                                           () { return "bool";                                           }
+    template <> std::string getTypeNameString<float>                                          () { return "float";                                          }
+    template <> std::string getTypeNameString<int32_t>                                        () { return "int32_t";                                        }
+    template <> std::string getTypeNameString<int64_t>                                        () { return "int64_t";                                        }
+    template <> std::string getTypeNameString<uint64_t>                                       () { return "uint64_t";                                       }
+    template <> std::string getTypeNameString<std::string>                                    () { return "std::string";                                    }
+    template <> std::string getTypeNameString<std::vector<double>>                            () { return "std::vector<double>";                            }
+    template <> std::string getTypeNameString<std::vector<uint64_t>>                          () { return "std::vector<uint64_t>";                          }
+    template <> std::string getTypeNameString<std::vector<std::string>>                       () { return "std::vector<std::string>";                       }
+    template <> std::string getTypeNameString<std::map<std::string, uint64_t>>                () { return "std::map<std::string, uint64_t>";                }
+    template <> std::string getTypeNameString<std::map<std::string, std::string>>             () { return "std::map<std::string, std::string>";             }
+    template <> std::string getTypeNameString<std::map<std::string, SpArraySharedMemoryView>> () { return "std::map<std::string, SpArraySharedMemoryView>"; }
+    template <> std::string getTypeNameString<std::map<std::string, SpPackedArray>>           () { return "std::map<std::string, SpPackedArray>";           }
+    template <> std::string getTypeNameString<SpPropertyDesc>                                 () { return "SpPropertyDesc";                                 }
+    template <> std::string getTypeNameString<SpArraySharedMemoryView>                        () { return "SpArraySharedMemoryView";                        }
+    template <> std::string getTypeNameString<SpPackedArray>                                  () { return "SpPackedArray";                                  }
+    template <> std::string getTypeNameString<SpFuture>                                       () { return "SpFuture";                                       }
+    template <> std::string getTypeNameString<SpFuncDataBundle>                               () { return "SpFuncDataBundle";                               }
+
+    template <typename T> requires std::is_reference_v<T> static std::string getTypeRefString() { return "&"; }
+    template <typename T> requires (!std::is_reference_v<T>) static std::string getTypeRefString() { return ""; }
 
     TEntryPointBinder* entry_point_binder_ = nullptr;
 

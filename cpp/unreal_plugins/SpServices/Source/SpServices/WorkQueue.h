@@ -64,14 +64,14 @@ public:
 
         // Even in a non-blocking implementation, we could technically capture func by reference. This is
         // because, in practice, the lifetime of func corresponds to the lifetime of the lambda declared in
-        // EngineService::wrapFuncToExecuteInWorkQueueBlockingImpl(...) and other similar functions, which in
+        // EngineService::wrapFuncToExecuteInWorkQueueBlocking(...) and other similar functions, which in
         // turn corresponds to the the lifetime of the RPC server. Moreover, the lambda declared below only
-        // ever executes when run() is called, i.e., during EngineService::beginFrameHandler(...) or
-        // EngineService::endFrameHandler(...), and the RPC server (and therefore func) is guaranteed to be
-        // accessible inside these EngineService functions. So, even if we capture func by reference, it is
-        // guaranteed to be accessible whenever the lambda below is executed. However, this low-level
-        // WorkQueue class should not depend on this high-level system behavior, so we insist on capturing
-        // func by value, even in a non-blocking implementation.
+        // ever executes when run() is called, i.e., during EngineService::beginFrame(...) or EngineService::endFrame(...),
+        // and the RPC server (and therefore func) is guaranteed to be accessible inside these EngineService
+        // functions. So, even if we capture func by reference, it is guaranteed to be accessible whenever
+        // the lambda below is executed. However, this low-level WorkQueue class should not depend on this
+        // high-level system behavior, so we insist on capturing func by value, even in a non-blocking
+        // implementation.
 
         // Since we capture args... by value, it is deep-copied into the lambda object constructed below. But
         // the user's function accepts all arguments by non-const reference, so args... is not copied again

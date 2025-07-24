@@ -30,7 +30,7 @@ public:
         SP_ASSERT(unreal_entry_point_binder);
 
         unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("shared_memory_service", "create_shared_memory_region",
-            [this](std::string& shared_memory_name, int& num_bytes, std::vector<std::string>& usage_flag_strings) -> SpArraySharedMemoryView {
+            [this](std::string& shared_memory_name, uint64_t& num_bytes, std::vector<std::string>& usage_flag_strings) -> SpArraySharedMemoryView {
                 std::lock_guard<std::mutex> lock(mutex_);
 
                 std::string name = shared_memory_name; // need to copy so we can pass to functions that expect a const ref
