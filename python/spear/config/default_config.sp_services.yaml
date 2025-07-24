@@ -18,8 +18,8 @@ SP_SERVICES:
 
   # Print debug info in EngineService.
   ENGINE_SERVICE:
-    PRINT_FRAME_DEBUG_INFO: False
     PRINT_CALL_DEBUG_INFO: False
+    PRINT_FRAME_DEBUG_INFO: False
 
   #
   # EnhancedInputService

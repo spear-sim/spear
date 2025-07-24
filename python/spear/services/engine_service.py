@@ -189,7 +189,10 @@ class EngineService():
         return self._get_future_result_fast(return_as=return_as, future=future)
 
     #
-    # Helper functions for managing frame state
+    # Helper functions for managing the server's frame state. Note that _begin_frame_impl() and _execute_frame_impl()
+    # both need to block to ensure that the client thread doesn't get too far ahead of the game thread, but _end_frame_impl()
+    # does not. So we can call the server using send_async_fast(...) in _end_frame_impl(), which avoids all
+    # blocking on the client thread.
     #
 
     def _begin_frame_impl(self):
@@ -199,7 +202,7 @@ class EngineService():
         self.call_on_worker_thread("void", "engine_service.execute_frame")
 
     def _end_frame_impl(self):
-        self.call_on_worker_thread("void", "engine_service.end_frame")
+        self.send_async_fast_on_worker_thread("engine_service.end_frame")
 
     #
     # Helper functions for calling entry points on the server
