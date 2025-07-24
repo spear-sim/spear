@@ -2,7 +2,6 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-import copy
 import mmap
 import multiprocessing.shared_memory
 import numpy as np
