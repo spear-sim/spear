@@ -16,6 +16,7 @@ requires-python = "~=3.11"
 dependencies = [
     "coacd==1.0.0",
     "configobj==5.0.9",                       # required by mayavi but not automatically installed
+    "jupyterlab==4.4.4",
     "matplotlib==3.10.0",
     "mayavi==4.8.2; sys_platform != 'win32'", # install separately on Windows via "conda install -c conda-forge mayavi"
     "mujoco==3.1.3",

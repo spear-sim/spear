@@ -50,13 +50,17 @@ public:
 
         bindFuncToExecuteOnWorkerThread("engine_service", "initialize", [this]() -> void {
 
+            // Reset frame state.
+            frame_state_ = FrameState::Idle;
+
             // Reset request flags.
             request_begin_frame_ = false;
             request_close_ = false;
             request_error_ = false;
 
-            // Reset frame state.
-            frame_state_ = FrameState::Idle;
+            // There is no need to lock because it is safe to access WorkQueue from multiple threads.
+            begin_frame_work_queue_.reset();
+            end_frame_work_queue_.reset();
 
             // Reset promises and futures.
 

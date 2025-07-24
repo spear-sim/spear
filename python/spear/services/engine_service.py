@@ -10,25 +10,24 @@ class EngineService():
     def __init__(self, client, config):
         self._client = client
         self._config = config
-        self._frame_state = "idle"
         self._byte_order = None
 
-        self.initialize() # explicitly initialize before calling begin_frame() for the first time
         self.get_byte_order() # cache byte order because it will be constant for the life of the client
+        self.initialize() # explicitly initialize before calling begin_frame() for the first time
 
     #
     # Functions for managing the server's frame state.
     #
 
     def initialize(self):
-        self._call("void", "engine_service.initialize")
+        self._frame_state = "idle"
+        self.call_on_worker_thread("void", "engine_service.initialize")
 
     def close(self):
-        self._call("void", "engine_service.close")
+        self.call_on_worker_thread("void", "engine_service.close")
 
     #
-    # These context managers are intended as exception-safe wrappers around the {begin_frame, execute_frame,
-    # end_frame} entry points in EngineService.
+    # These context managers are intended as exception-safe wrappers for managing the server's frame state.
     #
 
     @contextlib.contextmanager
@@ -37,70 +36,63 @@ class EngineService():
         assert self._frame_state == "idle"
         self._frame_state = "request_begin_frame"
 
-        # try calling begin_frame()
+        # try calling begin_frame_impl()
         try:
-            self._call("void", "engine_service.begin_frame")
+            self._begin_frame_impl()
         except Exception as e:
             spear.log("Exception: ", e)
-            spear.log("We might or might not be in a critical section, but there is nothing we can do to get out of it from here, so we need to give up...")
+            spear.log("ERROR: We might or might not be in a critical section, but we don't know how to get out of it from here. Giving up...")
             self._frame_state = "error"
             raise e
 
-        assert self._frame_state == "request_begin_frame"
-        self._frame_state = "executing_begin_frame"
-
         # try executing pre-frame work
         try:
+            assert self._frame_state == "request_begin_frame"
+            self._frame_state = "executing_begin_frame"
             yield
+            assert self._frame_state == "executing_begin_frame"
+            self._frame_state = "executing_frame"
         except Exception as e:
             spear.log("Exception: ", e)
-            spear.log("Attempting to exit critical section...")
-            self._call("void", "engine_service.execute_frame")
-            self._call("void", "engine_service.end_frame")
-            self._frame_state = "idle"
+            spear.log("ERROR: Attempting to exit critical section by calling engine_service.execute_frame and engine_service.end_frame...")
+            self._execute_frame_impl()
+            self._end_frame_impl()
+            self._frame_state = "error"
             raise e
 
-        assert self._frame_state == "executing_begin_frame"
-        self._frame_state = "finished_executing_begin_frame"
-
+        # try calling execute_frame_impl()
+        try:
+            self._execute_frame_impl()
+        except Exception as e:
+            spear.log("Exception: ", e)
+            spear.log("ERROR: We are in a critical section, but we don't know how to get out of it from here. Attempting to call engine_service.end_frame...")
+            self._end_frame_impl()
+            self._frame_state = "error"
+            raise e
 
     @contextlib.contextmanager
     def end_frame(self):
 
-        assert self._frame_state == "finished_executing_begin_frame"
-        self._frame_state = "executing_frame"
-
-        # try executing execute_frame()
+        # try executing post-frame work
         try:
-            self._call("void", "engine_service.execute_frame")
+            assert self._frame_state == "executing_frame"
+            self._frame_state = "executing_end_frame"
+            yield
+            assert self._frame_state == "executing_end_frame"
+            self._frame_state = "request_end_frame"
         except Exception as e:
             spear.log("Exception: ", e)
-            spear.log("We're currently in a critical section, but there is nothing we can do to get out of it from here, so we need to give up...")
+            spear.log("ERROR: Attempting to exit critical section by calling engine_service.end_frame...")
+            self._end_frame_impl()
             self._frame_state = "error"
             raise e
 
-        assert self._frame_state == "executing_frame"
-        self._frame_state = "executing_end_frame"
-
-        # try executing post-frame work
+        # try calling end_frame_impl()
         try:
-            yield
+            self._end_frame_impl()
         except Exception as e:
             spear.log("Exception: ", e)
-            spear.log("Attempting to exit critical section...")
-            self._call("void", "engine_service.end_frame")
-            self._frame_state = "idle"
-            raise e
-
-        assert self._frame_state == "executing_end_frame"
-        self._frame_state = "request_end_frame"
-
-        # try executing end_frame()
-        try:
-            self._call("void", "engine_service.end_frame")
-        except Exception as e:
-            spear.log("Exception: ", e)
-            spear.log("We're currently in a critical section, but there is nothing we can do to get out of it from here, so we need to give up...")
+            spear.log("ERROR: We might or might not be in a critical section, but we don't know how to get out of it from here. Giving up...")
             self._frame_state = "error"
             raise e
 
@@ -108,7 +100,51 @@ class EngineService():
         self._frame_state = "idle"
 
     #
-    # Call functions
+    # Miscellaneous low-level entry points to support initializing a spear.Instance
+    #
+
+    def ping(self):
+        return self.call_on_worker_thread("std::string", "engine_service.ping")
+
+    def get_id(self):
+        return self.call_on_worker_thread("int64_t", "engine_service.get_id")
+
+    #
+    # Miscellaneous low-level entry points to support initializing a spear.services.EngineService
+    #
+
+    def get_byte_order(self):
+        if self._byte_order is None:
+            byte_order = self.call_on_worker_thread("std::string", "engine_service.get_byte_order")
+            if byte_order == sys.byteorder:
+                self._byte_order = "native"
+            else:
+                self._byte_order = unreal_instance_byte_order
+        return self._byte_order
+
+    #
+    # Miscellaneous low-level entry points that interact with Unreal globals
+    #
+
+    def is_with_editor(self):
+        return self.call_on_worker_thread("bool", "engine_service.is_with_editor")
+
+    def is_running_commandlet(self):
+        return self.call_on_worker_thread("bool", "engine_service.is_running_commandlet")
+
+    def get_command_line(self):
+        return self.call_on_worker_thread("std::string", "engine_service.get_command_line")
+
+    def request_exit(self, immediate_shutdown):
+        self.call_on_worker_thread("void", "engine_service.request_exit", immediate_shutdown)
+
+    # Miscellaneous low-level entry points that interact with GEngine
+
+    def get_viewport_size(self):
+        return self.call_on_worker_thread("std::vector<double>", "engine_service.get_viewport_size")
+
+    #
+    # Functions for calling entry points on the server.
     #
 
     def call_on_game_thread(self, return_as, func_name, *args):
@@ -153,49 +189,20 @@ class EngineService():
         return self._get_future_result_fast(return_as=return_as, future=future)
 
     #
-    # Miscellaneous low-level entry points to support initializing a spear.Instance
+    # Helper functions for managing frame state
     #
 
-    def ping(self):
-        return self.call_on_worker_thread("std::string", "engine_service.ping")
+    def _begin_frame_impl(self):
+        self.call_on_worker_thread("void", "engine_service.begin_frame")
 
-    def get_id(self):
-        return self.call_on_worker_thread("int64_t", "engine_service.get_id")
+    def _execute_frame_impl(self):
+        self.call_on_worker_thread("void", "engine_service.execute_frame")
 
-    # Miscellaneous low-level entry points to support initializing a spear.services.EngineService
-
-    def get_byte_order(self):
-        if self._byte_order is None:
-            byte_order = self.call_on_worker_thread("std::string", "engine_service.get_byte_order")
-            if byte_order == sys.byteorder:
-                self._byte_order = "native"
-            else:
-                self._byte_order = unreal_instance_byte_order
-        return self._byte_order
+    def _end_frame_impl(self):
+        self.call_on_worker_thread("void", "engine_service.end_frame")
 
     #
-    # Miscellaneous low-level entry points that interact with Unreal globals
-    #
-
-    def is_with_editor(self):
-        return self.call_on_worker_thread("bool", "engine_service.is_with_editor")
-
-    def is_running_commandlet(self):
-        return self.call_on_worker_thread("bool", "engine_service.is_running_commandlet")
-
-    def get_command_line(self):
-        return self.call_on_worker_thread("std::string", "engine_service.get_command_line")
-
-    def request_exit(self, immediate_shutdown):
-        self.call_on_worker_thread("void", "engine_service.request_exit", immediate_shutdown)
-
-    # Miscellaneous low-level entry points that interact with GEngine
-
-    def get_viewport_size(self):
-        return self.call_on_worker_thread("std::vector<double>", "engine_service.get_viewport_size")
-
-    #
-    # Helper functions to call server functions
+    # Helper functions for calling entry points on the server
     #
 
     def _validate_frame_state_for_game_thread_work(self):
@@ -203,11 +210,10 @@ class EngineService():
             spear.log('ERROR: Calling entry points that execute on the game thread is only allowed in "with begin_frame()" and "with end_frame()" code blocks.')
             spear.log(f'ERROR: self._frame_state == "{self._frame_state}"')
 
-            if self._frame_state == "finished_executing_begin_frame":
-                spear.log("ERROR: Attempting to exit critical section...")
-                self._call("engine_service.execute_frame")
-                self._call("engine_service.end_frame")
-                self._frame_state = "idle"
+            if self._frame_state == "executing_frame":
+                spear.log("ERROR: Attempting to exit critical section by calling engine_service.end_frame...")
+                self._end_frame_impl()
+                self._frame_state = "error"
 
             assert False
 
