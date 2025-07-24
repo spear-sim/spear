@@ -14,7 +14,7 @@ class EngineService():
         self._byte_order = None
 
         self.initialize() # explicitly initialize before calling begin_frame() for the first time
-        self.get_byte_order() # pre-cache byte order because it will be constant for the life of the client
+        self.get_byte_order() # cache byte order because it will be constant for the life of the client
 
     #
     # Functions for managing the server's frame state.
