@@ -149,14 +149,14 @@ python tools/copy_engine_content.py --unreal_engine_dir path/to/UE_5.5
 You are now ready to build the `SpearSim` project as follows.
 
 ```console
+# minimal build required to open the SpearSim project inside the Unreal Editor (optional)
+python tools/run_uat.py --unreal_engine_dir path/to/UE_5.5 -build
+
 # build a standalone executable
 python tools/run_uat.py --unreal_engine_dir path/to/UE_5.5 -build -cook -stage -package -archive -pak
-
-# minimal build required to open SpearSim.uproject inside the Unreal Editor (optional)
-python tools/run_uat.py --unreal_engine_dir path/to/UE_5.5 -build
 ```
 
-Our `run_uat.py` tool is a thin wrapper around Unreal's [RunUAT](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Deployment/BuildOperations) tool. Our tool consumes `--unreal_engine_dir`, provides Unreal's `RunUAT` tool with sensible default values for a few commonly used arguments, and otherwise forwards all arguments directly to `RunUAT`. This step will generate an executable at the following locations.
+Our `run_uat.py` tool is a thin wrapper around Unreal's [`RunUAT`](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Deployment/BuildOperations) tool. Our tool consumes `--unreal_engine_dir`, provides Unreal's `RunUAT` tool with sensible default values for a few commonly used arguments, and otherwise forwards all arguments directly to `RunUAT`. This step will generate a standalone executable at the following locations.
 
 ```
 Windows: cpp\unreal_projects\SpearSim\Standalone-Development\Windows\SpearSim.exe
@@ -164,14 +164,16 @@ macOS:   cpp/unreal_projects/SpearSim/Standalone-Development/Mac/SpearSim.app
 Linux:   cpp/unreal_projects/SpearSim/Standalone-Development/Linux/SpearSim.sh
 ```
 
-### Helpful command-line options
+When building with our `run_uat.py` tool, you can optionally specify `--build_config Shipping` to build more a optimized standalone executable. In this case, the executable will be generated in `Standalone-Shipping` instead of `Standalone-Development`.
 
-- After you have done a complete `-build -cook -stage -package -archive -pak` once, you can replace `-build` with `-skipbuild`, `-cook` with `-skipcook`, and `-stage -package -archive` with `-skipstage -skippackage -skiparchive`, depending on what you're doing.
-- You only need to specify `-cook` if you have modified the project in the Unreal Editor.
-- You only need to `-stage -package -archive` if you want to update the standalone executable in `Standalone-Development`.
-- If you specify `-skipcook`, you can also specify `-nocompileeditor`, which saves time by not building binaries that are only required when cooking and loading the project in the Unreal Editor.
-- If you only want to propagate changes in `cpp/unreal_projects/SpearSim/Config` to the executable in `Standalone-Development`, you can specify `-skipbuild -skipcook`.
-- You can specify `--build_config Shipping` to build a more optimized executable. In this case, the executable will be generated in `Standalone-Shipping`.
+### Helpful `RunUAT` command-line options
+
+- If you want to rebuild after doing a build as described above, you can replace `-build` with `-skipbuild`, `-cook` with `-skipcook`, and `-stage -package -archive` with `-skipstage -skippackage -skiparchive`, depending on what you want to accomplish.
+- After specifying `-build` once, you only need to specify `-build` again if you have modified the C++ code or build configuration files.
+- After specifying `-cook` once, you only need to specify `-cook` again if you have modified the project in the Unreal Editor.
+- After specifying `-stage -package -archive` once, you only need to specify `-stage -package -archive` again if you want to update the standalone executable.
+- You can specify `-skipbuild -skipcook` if you only want to propagate changes in `cpp/unreal_projects/SpearSim/Config` to a standalone executable.
+- You can specify `-nocompileeditor` if you want to build the project but don't want to cook the project or load the project in the editor.
 - You can specify `-specifiedarchitecture=arm64+x86_64` to build a universal binary on macOS.
 - You can specify `-clean` to do a clean build.
 
@@ -189,12 +191,12 @@ When executing our command-line tool, you will need to specify a logical Unreal 
 /Game/Spear/Scenes/debug_0000/Maps/debug_0000
 ```
 
-You can also optionally specify an `--executable`. If you don't specify an `--executable`, our command-line tool will assume that you built an executable from source in the default location (described above). Depending on your platform, the path to your executable should be formatted as follows.
+You can also optionally specify an `--executable`. If you don't specify an `--executable`, our command-line tool will assume that you built an executable from source in the default location (described above). Depending on your platform, if you do provide an executable, the path to your executable should be formatted as follows.
 
 ```
-Windows: path\to\Windows\SpearSim.exe
-macOS:   path/to/Mac/SpearSim.app
-Linux:   path/to/Linux/SpearSim.sh
+Windows: path\to\Standalone-Development\Windows\SpearSim.exe
+macOS:   path/to/Standalone-Development/Mac/SpearSim.app
+Linux:   path/to/Standalone-Development/Linux/SpearSim.sh
 ```
 
 The following command-line arguments are optional.
