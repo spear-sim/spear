@@ -144,15 +144,19 @@ Our `SpearSim` project requires you to explicitly copy some content from your Un
 python tools/copy_engine_content.py --unreal_engine_dir path/to/UE_5.5
 ```
 
-## Build the `SpearSim` executable
+## Build the `SpearSim` project
 
-You are now ready to build the `SpearSim` executable as follows.
+You are now ready to build the `SpearSim` project as follows.
 
 ```console
+# build a standalone executable
 python tools/run_uat.py --unreal_engine_dir path/to/UE_5.5 -build -cook -stage -package -archive -pak
+
+# minimal build required to open SpearSim.uproject inside the Unreal Editor (optional)
+python tools/run_uat.py --unreal_engine_dir path/to/UE_5.5 -build
 ```
 
-This tool is a thin wrapper around Unreal's [RunUAT](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Deployment/BuildOperations) tool. Our tool consumes `--unreal_engine_dir`, provides Unreal's `RunUAT` tool with sensible default values for a few commonly used arguments, and otherwise forwards all arguments directly to `RunUAT`. This step will generate an executable at the following locations.
+Our `run_uat.py` tool is a thin wrapper around Unreal's [RunUAT](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Deployment/BuildOperations) tool. Our tool consumes `--unreal_engine_dir`, provides Unreal's `RunUAT` tool with sensible default values for a few commonly used arguments, and otherwise forwards all arguments directly to `RunUAT`. This step will generate an executable at the following locations.
 
 ```
 Windows: cpp\unreal_projects\SpearSim\Standalone-Development\Windows\SpearSim.exe
