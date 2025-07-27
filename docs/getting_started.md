@@ -171,7 +171,7 @@ When building with our `run_uat.py` tool, you can optionally specify `--build_co
 - If you want to rebuild after doing a build as described above, you can replace `-build` with `-skipbuild`, `-cook` with `-skipcook`, and `-stage -package -archive` with `-skipstage -skippackage -skiparchive`, depending on what you want to accomplish.
 - After specifying `-build` once, you only need to specify `-build` again if you have modified the C++ code or build configuration files.
 - After specifying `-cook` once, you only need to specify `-cook` again if you have modified the project in the Unreal Editor.
-- After specifying `-stage -package -archive` once, you only need to specify `-stage -package -archive` again if you want to update the standalone executable.
+- After specifying `-stage -package -archive` once, you only need to specify `-stage -package -archive` again if you want to update the standalone executable in `Standalone-Development` or `Standalone-Shipping`.
 - You can specify `-skipbuild -skipcook` if you only want to propagate changes in `cpp/unreal_projects/SpearSim/Config` to a standalone executable.
 - You can specify `-nocompileeditor` if you want to build the project but don't want to cook the project and don't want to load the project in the editor.
 - You can specify `-specifiedarchitecture=arm64+x86_64` to build a universal binary on macOS.
