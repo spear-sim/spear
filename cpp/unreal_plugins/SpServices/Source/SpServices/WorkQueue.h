@@ -19,6 +19,18 @@ public:
     WorkQueue() = delete;
     WorkQueue(const std::string& name) : io_context_(), executor_work_guard_(io_context_.get_executor()) { name_ = name; }
 
+    // Typically called from the worker thread from the engine_service.initialize entry point to initialize
+    // (or re-initialize) the work queue.
+
+    void initialize()
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+
+        // initialize io_context_ and executor_work_guard_
+        new(&io_context_) boost::asio::io_context();
+        new(&executor_work_guard_) boost::asio::executor_work_guard<boost::asio::io_context::executor_type>(io_context_.get_executor());
+    }
+
     // Typically called from the game thread in EngineService::beginFrame(...) and EngineService::endFrame(...)
     // to block the game thread indefinitely, while the WorkQueue waits for and executes incoming work.
 
@@ -42,8 +54,9 @@ public:
 
     void reset()
     {
-        // request io_context_.run() to stop executing once all of its scheduled work is finished
         std::lock_guard<std::mutex> lock(mutex_);
+
+        // request io_context_.run() to stop executing once all of its scheduled work is finished
         executor_work_guard_.reset();
     }
 

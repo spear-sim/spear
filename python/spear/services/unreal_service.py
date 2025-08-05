@@ -536,7 +536,7 @@ class UnrealService(spear.utils.func_utils.Service):
     #
 
     def destroy_component(self, component, promote_children=False):
-        return self._entry_point_caller.call_on_game_thread("destroy_component", None, component, promote_children)
+        return self._entry_point_caller.call_on_game_thread("void", "destroy_component", None, component, promote_children)
 
     #
     # Create new object
@@ -566,10 +566,10 @@ class UnrealService(spear.utils.func_utils.Service):
     #
 
     def add_object_to_root(self, uobject):
-        return self._entry_point_caller.call_on_game_thread("add_object_to_root", None, uobject)
+        return self._entry_point_caller.call_on_game_thread("void", "add_object_to_root", None, uobject)
 
     def remove_object_from_root(self, uobject):
-        return self._entry_point_caller.call_on_game_thread("remove_object_from_root", None, uobject)
+        return self._entry_point_caller.call_on_game_thread("void", "remove_object_from_root", None, uobject)
 
     #
     # Find, get, and set console variable
@@ -592,13 +592,13 @@ class UnrealService(spear.utils.func_utils.Service):
 
     def set_console_variable_value(self, cvar, value, set_by_flags=["ECVF_SetByCode"]):
         if isinstance(value, bool):
-            return self._entry_point_caller.call_on_game_thread("set_console_variable_value_from_bool", None, cvar, value, set_by_flags)
+            return self._entry_point_caller.call_on_game_thread("void", "set_console_variable_value_from_bool", None, cvar, value, set_by_flags)
         elif isinstance(value, int):
-            return self._entry_point_caller.call_on_game_thread("set_console_variable_value_from_int", None, cvar, value, set_by_flags)
+            return self._entry_point_caller.call_on_game_thread("void", "set_console_variable_value_from_int", None, cvar, value, set_by_flags)
         elif isinstance(value, float):
-            return self._entry_point_caller.call_on_game_thread("set_console_variable_value_from_float", None, cvar, value, set_by_flags)
+            return self._entry_point_caller.call_on_game_thread("void", "set_console_variable_value_from_float", None, cvar, value, set_by_flags)
         elif isinstance(value, str):
-            return self._entry_point_caller.call_on_game_thread("set_console_variable_value_from_string", None, cvar, value, set_by_flags)
+            return self._entry_point_caller.call_on_game_thread("void", "set_console_variable_value_from_string", None, cvar, value, set_by_flags)
         else:
             assert False
 
@@ -607,7 +607,7 @@ class UnrealService(spear.utils.func_utils.Service):
     #
 
     def execute_console_command(self, command):
-        return self._entry_point_caller.call_on_game_thread("execute_console_command", None, command)
+        return self._entry_point_caller.call_on_game_thread("void", "execute_console_command", None, command)
 
     #
     # Stable name helper functions

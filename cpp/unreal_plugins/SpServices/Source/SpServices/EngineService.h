@@ -59,8 +59,8 @@ public:
             request_error_ = false;
 
             // There is no need to lock because it is safe to access WorkQueue from multiple threads.
-            begin_frame_work_queue_.reset();
-            end_frame_work_queue_.reset();
+            begin_frame_work_queue_.initialize();
+            end_frame_work_queue_.initialize();
 
             // Reset promises and futures.
 
@@ -145,7 +145,7 @@ public:
             }
 
             if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("engine_service.begin_frame: Finished waiting.");
+                SP_LOG("engine_service.execute_frame: Finished waiting.");
             }
 
             // Set current work queue.
@@ -358,17 +358,17 @@ protected:
     {
         Service::beginFrame();
 
-        bool process_frame = request_begin_frame_;
+        bool handle_frame = request_begin_frame_;
 
         if (request_close_ || request_error_) {
-            process_frame = false;
+            handle_frame = false;
         }
 
         if (frame_state_ == FrameState::Closing) {
-            process_frame = false;
+            handle_frame = false;
         }
 
-        if (process_frame) {
+        if (handle_frame) {
 
             // Reset the request flag set by engine_service.begin_frame.
             request_begin_frame_ = false;
@@ -403,17 +403,17 @@ protected:
 
     void endFrame() override
     {
-        bool process_frame = frame_state_ == FrameState::ExecutingFrame;
+        bool handle_frame = frame_state_ == FrameState::ExecutingFrame;
 
         if (request_close_ || request_error_) {
-            process_frame = false;
+            handle_frame = false;
         }
 
         if (frame_state_ == FrameState::Closing) {
-            process_frame = false;
+            handle_frame = false;
         }
 
-        if (process_frame) {
+        if (handle_frame) {
 
             // Update frame state.
             frame_state_ = FrameState::ExecutingEndFrame;
@@ -422,7 +422,7 @@ protected:
                 SP_LOG("endFrame(): Executing end_frame_work_queue_...");
             }
 
-            // Execute all post-frame work and wait here until engine_service.end_frame calls work_queue_.reset().
+            // Execute all post-frame work and wait here until engine_service.end_frame calls end_frame_work_queue_.reset().
             executeFuncInTryCatch("end_frame_work_queue_.run()", [this]() -> void {
                 end_frame_work_queue_.run();
             });

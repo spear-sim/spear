@@ -426,13 +426,15 @@ class Instance():
             spear.log("    ERROR: Couldn't connect to RPC server, giving up...")
             assert False
 
-        # don't use self.services.engine_service because it hasn't been initialized yet
-        pid = self._client.call_as_int64("engine_service.get_id")
-        if pid == self._process.pid:
-            spear.log("    Validated engine_service.get_id.")
-        else:            
-            spear.log(f"    ERROR: engine_service.get_id returned {pid} but the PID of the process we just launched is {self._process.pid}. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables and try launching again.")
-            assert False
+        if self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
+
+            # don't use self.services.engine_service because it hasn't been initialized yet
+            pid = self._client.call_as_int64("engine_service.get_id")
+            if pid == self._process.pid:
+                spear.log("    Validated engine_service.get_id.")
+            else:            
+                spear.log(f"    ERROR: engine_service.get_id returned {pid} but the PID of the process we just launched is {self._process.pid}. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables and try launching again.")
+                assert False
 
         if self._config.SPEAR.INSTANCE.PRINT_CALL_DEBUG_INFO:
 
