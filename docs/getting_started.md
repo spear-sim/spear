@@ -6,7 +6,7 @@ We will assume that you are developing on a version of Windows, macOS, or Linux 
 
 ### Minimum and recommended system specifications
 
-Minimum and recommended system specifications for the Unreal Engine are given [here](https://docs.unrealengine.com/5.2/en-US/hardware-and-software-specifications-for-unreal-engine).
+Minimum and recommended system specifications for the Unreal Engine are given [here](https://dev.epicgames.com/documentation/en-us/unreal-engine/hardware-and-software-specifications-for-unreal-engine?application_version=5.5).
 
 ## Install the Unreal Engine
 
