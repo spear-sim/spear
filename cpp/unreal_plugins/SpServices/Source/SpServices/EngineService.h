@@ -58,7 +58,7 @@ public:
             request_close_ = false;
             request_error_ = false;
 
-            // There is no need to lock because it is safe to access WorkQueue from multiple threads.
+            // There is no need to lock because it is safe to access WorkQueue objects from multiple threads.
             begin_frame_work_queue_.initialize();
             end_frame_work_queue_.initialize();
 
@@ -81,7 +81,12 @@ public:
             }
         });
 
-        bindFuncToExecuteOnWorkerThread("engine_service", "close", [this]() -> void {
+        bindFuncToExecuteOnWorkerThread("engine_service", "terminate", [this]() -> void {
+
+            // There is no need to lock because it is safe to access WorkQueue objects from multiple threads.
+            begin_frame_work_queue_.terminate();
+            end_frame_work_queue_.terminate();
+
             // Indicate to the game thread that we want to close the application.
             request_close_ = true;
         });

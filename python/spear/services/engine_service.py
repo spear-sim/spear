@@ -23,8 +23,8 @@ class EngineService():
         self._frame_state = "idle"
         self.call_on_worker_thread("void", "engine_service.initialize")
 
-    def close(self):
-        self.call_on_worker_thread("void", "engine_service.close")
+    def terminate(self):
+        self.call_on_worker_thread("void", "engine_service.terminate")
 
     #
     # These context managers are intended as exception-safe wrappers for managing the server's frame state.

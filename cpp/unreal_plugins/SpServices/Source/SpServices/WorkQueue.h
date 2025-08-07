@@ -5,11 +5,13 @@
 #pragma once
 
 #include <future>
+#include <memory>      // std::make_unique, std::unique_ptr
 #include <mutex>       // std::lock_guard
 #include <string>
 #include <utility>     // std::forward, std::move
 #include <type_traits> // std::invoke_result_t
 
+#include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
 #include "SpCore/Config.h"
 
@@ -17,7 +19,7 @@ class SPSERVICES_API WorkQueue
 {
 public:
     WorkQueue() = delete;
-    WorkQueue(const std::string& name) : io_context_(), executor_work_guard_(io_context_.get_executor()) { name_ = name; }
+    WorkQueue(const std::string& name) { name_ = name; }
 
     // Typically called from the worker thread from the engine_service.initialize entry point to initialize
     // (or re-initialize) the work queue.
@@ -26,9 +28,21 @@ public:
     {
         std::lock_guard<std::mutex> lock(mutex_);
 
-        // initialize io_context_ and executor_work_guard_
-        new(&io_context_) boost::asio::io_context();
-        new(&executor_work_guard_) boost::asio::executor_work_guard<boost::asio::io_context::executor_type>(io_context_.get_executor());
+        io_context_ = std::make_unique<boost::asio::io_context>();
+        SP_ASSERT(io_context_);
+        executor_work_guard_ = std::make_unique<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>>(io_context_->get_executor());
+        SP_ASSERT(executor_work_guard_);
+    }
+
+    // Typically called from the worker thread from the engine_service.terminate entry point to shut down
+    // the work queue.
+
+    void terminate()
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+
+        executor_work_guard_ = nullptr;
+        io_context_ = nullptr;
     }
 
     // Typically called from the game thread in EngineService::beginFrame(...) and EngineService::endFrame(...)
@@ -36,15 +50,16 @@ public:
 
     void run()
     {
-        // run all scheduled work and wait for executor_work_guard_.reset() to be called
-        io_context_.run();
+        SP_ASSERT(io_context_);
+
+        // run all scheduled work and wait for executor_work_guard_->reset() to be called
+        io_context_->run();
 
         {
             std::lock_guard<std::mutex> lock(mutex_);
 
-            // reinitialize io_context_ and executor_work_guard_ to prepare for the next call to run()
-            io_context_.restart();
-            new(&executor_work_guard_) boost::asio::executor_work_guard<boost::asio::io_context::executor_type>(io_context_.get_executor());
+            io_context_->restart();
+            executor_work_guard_ = std::make_unique<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>>(io_context_->get_executor());
         }
     }
 
@@ -56,8 +71,10 @@ public:
     {
         std::lock_guard<std::mutex> lock(mutex_);
 
-        // request io_context_.run() to stop executing once all of its scheduled work is finished
-        executor_work_guard_.reset();
+        SP_ASSERT(executor_work_guard_);
+
+        // request io_context_->run() to stop executing once all of its scheduled work is finished
+        executor_work_guard_->reset();
     }
 
     // Typically called from a lambda that is bound to a specific RPC entry point and is called from the worker thread.
@@ -67,6 +84,8 @@ public:
     auto scheduleFunc(const std::string& func_name, const TFunc& func, TArgs&... args)
     {
         using TReturn = std::invoke_result_t<TFunc, TArgs&...>;
+
+        SP_ASSERT(io_context_);
 
         // This function is typically called from the worker thread, but the lambda declared below is
         // typically executed on the game thread when run() is called, i.e., during EngineService::beginFrameHandler(...)
@@ -133,7 +152,7 @@ public:
             });
 
         std::future<TReturn> future = task.get_future(); // need to call get_future() before calling std::move(...)
-        boost::asio::post(io_context_, std::move(task));
+        boost::asio::post(*io_context_, std::move(task));
 
         return future;
     }
@@ -156,6 +175,6 @@ private:
     std::string name_;
 
     std::mutex mutex_;
-    boost::asio::io_context io_context_;
-    boost::asio::executor_work_guard<boost::asio::io_context::executor_type> executor_work_guard_;
+    std::unique_ptr<boost::asio::io_context> io_context_ = nullptr;
+    std::unique_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> executor_work_guard_ = nullptr;
 };

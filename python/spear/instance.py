@@ -528,7 +528,7 @@ class Instance():
 
     def _request_exit_unreal_instance(self):
 
-        spear.log_current_function()        
+        spear.log_current_function()
         spear.log("    Requesting to exit Unreal instance...")
 
         if self._config.SPEAR.LAUNCH_MODE == "none":
@@ -536,7 +536,7 @@ class Instance():
 
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:        
             try:
-                self.engine_service.close()
+                self.engine_service.terminate()
                 self.engine_service.request_exit(immediate_shutdown=False)
             except:
                 pass # no need to log exception because this case is expected when the instance is no longer running
