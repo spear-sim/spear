@@ -15,12 +15,10 @@ cpp/unreal_projects/SpearSim/Build
 cpp/unreal_projects/SpearSim/Content/__ExternalActors__
 cpp/unreal_projects/SpearSim/Content/__ExternalObjects__
 cpp/unreal_projects/SpearSim/Content/Characters
-cpp/unreal_projects/SpearSim/Content/Kujiale/Scenes
+cpp/unreal_projects/SpearSim/Content/Kujiale
 cpp/unreal_projects/SpearSim/Content/LevelPrototyping
 cpp/unreal_projects/SpearSim/Content/Megascans
 cpp/unreal_projects/SpearSim/Content/MSPresets
-cpp/unreal_projects/SpearSim/Content/Scenes
-cpp/unreal_projects/SpearSim/Content/Spear/Scenes/warehouse_0000
 cpp/unreal_projects/SpearSim/Content/Stanford
 cpp/unreal_projects/SpearSim/Content/StarterContent
 cpp/unreal_projects/SpearSim/Content/ThirdPerson
