@@ -711,7 +711,7 @@ private:
     }
 
     template <>
-    static void destroyFuture<void>(SpFuture& future)
+    void destroyFuture<void>(SpFuture& future)
     {
         SP_ASSERT(future.future_ptr_);
         SP_ASSERT(future.type_id_ == Std::getTypeIdString<void>());
