@@ -751,7 +751,8 @@ private:
         return std::make_pair(return_value, std::move(args));
     }
 
-    template <typename T> static std::string getTypeString()
+    template <typename T>
+    static std::string getTypeString()
     {
         return getTypeNameString<std::remove_reference_t<T>>() + getTypeRefString<T>();
     }
