@@ -81,7 +81,8 @@ std::string Log::getCurrentFileAbbreviated(const std::filesystem::path& current_
 
 std::string Log::getCurrentFunctionAbbreviated(const std::string& current_function)
 {
-    // This function expects an input string in the format used by the BOOST_CURRENT_FUNCTION macro, which can vary depending on the compiler.
+    // This function expects an input string in the format used by the BOOST_CURRENT_FUNCTION macro, which
+    // can vary depending on the compiler.
     //
     // MSVC:
     //     __cdecl MyClass::MyClass(const class MyInputType1 &, const class MyInputType2 &, ...)
@@ -91,14 +92,15 @@ std::string Log::getCurrentFunctionAbbreviated(const std::string& current_functi
     //     MyClass::MyClass(const MyInputType1 &, const MyInputType2 &, ...)
     //     virtual MyReturnType MyClass::myFunction()
     //
-    // Due to this variability, the most robust strategy for obtaining a sensible abbreviated function name seems to be the following: replace
-    // all template expressions and function arguments with simplified strings, then tokenize, then return the token that contains "(" and ")".
+    // Due to this variability, the most robust strategy for obtaining a sensible abbreviated function name
+    // seems to be the following: replace all template expressions and function arguments with simplified
+    // strings, then tokenize, then return the token that contains "(" and ")".
     
     // Make a copy of the input string so we can simplify it in-place.
     std::string current_function_simplified = current_function;
 
-    // Iteratively simplify template expressions with "<...>". We do this iteratively, because regular expressions are not intended to handle
-    // arbitrarily nested brackets.
+    // Iteratively simplify template expressions with "<...>". We do this iteratively, because regular
+    // expressions are not intended to handle arbitrarily nested brackets.
     std::regex template_expression_regex("<(([a-zA-Z0-9_:*&,.{}() ])|(<\\.\\.\\.>))+>");
 
     // Keep iterating until the string doesn't change.
@@ -112,23 +114,28 @@ std::string Log::getCurrentFunctionAbbreviated(const std::string& current_functi
     std::regex function_void_arguments_regex("\\(void\\)");
     current_function_simplified = std::regex_replace(current_function_simplified, function_void_arguments_regex, "()");
 
-    std::regex function_non_void_arguments_regex("\\((([a-zA-Z0-9_:*&,.{}() ])|(<\\.\\.\\.>))+\\)");
+    std::regex function_non_void_arguments_regex("\\((([a-zA-Z0-9_:*&,.{} ])|(<\\.\\.\\.>))+\\)");
     current_function_simplified = std::regex_replace(current_function_simplified, function_non_void_arguments_regex, "(...)");
 
-    // Either return the token ending in ::operator (indicating we're inside a lambda), or the token containing "(" and ")".
+    // Either return the token ending in ::operator (indicating we're inside a lambda) and the following
+    // token, or the token containing "(" and ")".
     std::vector<std::string> tokens = Std::tokenize(current_function_simplified, "*& ");
     for (int i = 0; i < tokens.size(); i++) {
         std::string& current_token = tokens.at(i);
+
         if (i < tokens.size() - 1) {
             std::string& next_token = tokens.at(i + 1);
             if (Std::endsWith(current_token, "::operator")) {
                 return current_token + " " + next_token;
             }
-        } else if (Std::contains(current_token, "(") && Std::contains(current_token, ")")) {
+        }
+
+        if (Std::contains(current_token, "(") && Std::contains(current_token, ")")) {
             return current_token;
         }
     }
 
-    // If our simplification strategy didn't work for some reason, then just return the input to facilitate further debugging.
+    // If our simplification strategy didn't work for some reason, then just return the input to facilitate
+    // further debugging.
     return current_function;
 }

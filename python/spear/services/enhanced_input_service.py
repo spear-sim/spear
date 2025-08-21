@@ -16,7 +16,7 @@ class EnhancedInputService(spear.utils.func_utils.Service):
     def inject_input(self, enhanced_input_subsystem, input_action, input_action_value, modifiers=[], triggers=[]):
         return self._entry_point_caller.call_on_game_thread(
             "void",
-            "enhanced_input_service.inject_input",
+            "inject_input",
             None,
             enhanced_input_subsystem,
             input_action,
@@ -27,7 +27,7 @@ class EnhancedInputService(spear.utils.func_utils.Service):
     def inject_input_for_actor(self, actor, input_action_name, trigger_event, input_action_value, input_action_instance, modifiers=[], triggers=[]):
         return self._entry_point_caller.call_on_game_thread(
             "void",
-            "enhanced_input_service.inject_input_for_actor",
+            "inject_input_for_actor",
             None,
             actor,
             input_action_name,
@@ -40,7 +40,7 @@ class EnhancedInputService(spear.utils.func_utils.Service):
     def inject_debug_key_for_actor(self, actor, chord, key_event, input_action_value):
         return self._entry_point_caller.call_on_game_thread(
             "void",
-            "enhanced_input_service.inject_debug_key_for_actor",
+            "inject_debug_key_for_actor",
             None,
             actor,
             spear.utils.func_utils.to_json_string(obj=chord),

@@ -30,13 +30,25 @@ class NavigationService(spear.utils.func_utils.Service):
         queriers=np.array([], dtype=np.uint64),
         out_array=np.array([], dtype=np.float64)):
 
-        packed_arrays = spear.utils.func_utils.to_packed_arrays(arrays={"filter_classes": filter_classes, "queriers": queriers}, usage_flags=["Arg"])
-        out_packed_array = spear.utils.func_utils.to_packed_array(array=out_array, usage_flags=["Arg", "ReturnValue"])
+        packed_arrays = spear.utils.func_utils.to_packed_arrays(
+            arrays={"filter_classes": filter_classes, "queriers": queriers},
+            dest_byte_order=self._entry_point_caller.engine_service.get_byte_order(),
+            usage_flags=["Arg"])
+        out_packed_array = spear.utils.func_utils.to_packed_array(
+            array=out_array,
+            dest_byte_order=self._entry_point_caller.engine_service.get_byte_order(),
+            usage_flags=["Arg", "ReturnValue"])
 
         # define convert func
         def convert_func(result_packed_array, out_array=out_array):
-            result_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_arrays(arrays=[out_array], usage_flags=["Arg", "ReturnValue"])
-            result = spear.utils.func_utils.to_array(packed_array=result_packed_array, usage_flags=["Arg", "ReturnValue"], shared_memory_handles=result_shared_memory_handles)
+            result_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_arrays(
+                arrays=[out_array],
+                usage_flags=["Arg", "ReturnValue"])
+            result = spear.utils.func_utils.to_array(
+                packed_array=result_packed_array,
+                src_byte_order=self._entry_point_caller.engine_service.get_byte_order(),
+                usage_flags=["Arg", "ReturnValue"],
+                shared_memory_handles=result_shared_memory_handles)
             return result
 
         return self._entry_point_caller.call_on_game_thread(
@@ -69,13 +81,25 @@ class NavigationService(spear.utils.func_utils.Service):
         if radius is not None:
             radii = np.array([radius], dtype=np.float32)
 
-        packed_arrays = spear.utils.func_utils.to_packed_arrays(arrays={"origin_points": origin_points, "radii": radii, "filter_classes": filter_classes, "queriers": queriers}, usage_flags=["Arg"])
-        out_packed_array = spear.utils.func_utils.to_packed_array(array=out_array, usage_flags=["Arg", "ReturnValue"])
+        packed_arrays = spear.utils.func_utils.to_packed_arrays(
+            arrays={"origin_points": origin_points, "radii": radii, "filter_classes": filter_classes, "queriers": queriers},
+            dest_byte_order=self._entry_point_caller.engine_service.get_byte_order(),
+            usage_flags=["Arg"])
+        out_packed_array = spear.utils.func_utils.to_packed_array(
+            array=out_array,
+            dest_byte_order=self._entry_point_caller.engine_service.get_byte_order(),
+            usage_flags=["Arg", "ReturnValue"])
 
         # define convert func
         def convert_func(result_packed_array, out_array=out_array):
-            result_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_arrays(arrays=[out_array], usage_flags=["Arg", "ReturnValue"])
-            result = spear.utils.func_utils.to_array(packed_array=result_packed_array, usage_flags=["Arg", "ReturnValue"], shared_memory_handles=result_shared_memory_handles)
+            result_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_arrays(
+                arrays=[out_array],
+                usage_flags=["Arg", "ReturnValue"])
+            result = spear.utils.func_utils.to_array(
+                packed_array=result_packed_array,
+                src_byte_order=self._entry_point_caller.engine_service.get_byte_order(),
+                usage_flags=["Arg", "ReturnValue"],
+                shared_memory_handles=result_shared_memory_handles)
             return result
 
         return self._entry_point_caller.call_on_game_thread(
@@ -111,13 +135,18 @@ class NavigationService(spear.utils.func_utils.Service):
                 "queriers": queriers,
                 "cost_limits": cost_limits,
                 "require_navigable_end_locations": require_navigable_end_locations},
+            dest_byte_order=self._entry_point_caller.engine_service.get_byte_order(),
             usage_flags=["Arg"])
 
         nav_agent_property_strings = spear.utils.func_utils.to_json_strings(nav_agent_properties)
 
         # define convert func
         def convert_func(result_packed_arrays):
-            return_values = spear.utils.func_utils.to_arrays(packed_arrays=return_value_packed_arrays)
+            return_values = spear.utils.func_utils.to_arrays(
+                packed_arrays=result_packed_arrays,
+                src_byte_order=self._entry_point_caller.engine_service.get_byte_order(),
+                usage_flags=None,
+                shared_memory_handles=None)
 
             # return paths as a list of NumPy arrays rather than as a points array and an indices array
             points = return_values["points"]

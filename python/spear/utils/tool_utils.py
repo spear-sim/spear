@@ -3,9 +3,10 @@
 #
 
 #
-# Specifying multiple -cookdir arguments on the command-line doesn't work reliably, so we specify cook
-# directories in DefaultGame.ini, and we provide this function to return a default set of maps to cook. This
-# set is needed in several places, e.g., build_executable.py, build_paks.py, and run_uat.py.
+# Return a default set of maps to cook. This set is needed in several places, e.g., build_executable.py,
+# build_paks.py, and run_uat.py. We would like to specify directories to always cook in a similar way, but
+# specifying multiple -cookdir arguments on the command-line doesn't work reliably. So we specify cook
+# directories in DefaultGame.ini.
 #
 
 def get_default_maps_to_cook():
