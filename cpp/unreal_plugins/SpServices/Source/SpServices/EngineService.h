@@ -748,7 +748,7 @@ private:
         std::string return_value = getTypeString<TReturn>();
         std::vector<std::string> args;
         (args.push_back(getTypeString<TArgs>()), ...);
-        return std::make_pair(return_value, std::move(args));
+        return std::make_pair(std::move(return_value), std::move(args));
     }
 
     template <typename T>
