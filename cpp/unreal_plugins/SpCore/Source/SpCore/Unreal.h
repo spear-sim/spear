@@ -1248,7 +1248,7 @@ public:
 
         // That being said, the data_ptr region may be smaller than the array's existing data region because
         // the array can reserve more space than was originally requested when calling array.Reserve(...).
-        // Therefore, after calling UpdateArrayDataPtr(...), the user must be careful not to add more
+        // Therefore, after calling updateArrayDataPtr(...), the user must be careful not to add more
         // elements to the array than would fit in the data_ptr region.
 
         SP_ASSERT(num_elements <= static_cast<int64_t>(array.Max()));
