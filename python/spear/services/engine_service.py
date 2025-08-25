@@ -10,10 +10,9 @@ class EngineService():
     def __init__(self, client, config):
         self._client = client
         self._config = config
-        self._byte_order = None
 
-        self.get_byte_order() # cache byte order because it will be constant for the life of the client
-        self.initialize() # explicitly initialize before calling begin_frame() for the first time
+        self._frame_state = None
+        self._byte_order = None
 
     #
     # Functions for managing the server's frame state.
@@ -21,9 +20,20 @@ class EngineService():
 
     def initialize(self):
         self._frame_state = "idle"
-        self.call_on_worker_thread("void", "engine_service.initialize")
+        self.call_on_worker_thread("void", "engine_service.initialize") # explicitly initialize before calling begin_frame() for the first time
+
+        # cache byte order because it will be constant for the life of the client
+        byte_order = self.call_on_worker_thread("std::string", "engine_service.get_byte_order")
+        if byte_order == sys.byteorder:
+            self._byte_order = "native"
+        else:
+            self._byte_order = byte_order
+
 
     def terminate(self):
+        self._frame_state = None
+        self._byte_order = None
+
         self.call_on_worker_thread("void", "engine_service.terminate")
 
     #
@@ -114,12 +124,7 @@ class EngineService():
     #
 
     def get_byte_order(self):
-        if self._byte_order is None:
-            byte_order = self.call_on_worker_thread("std::string", "engine_service.get_byte_order")
-            if byte_order == sys.byteorder:
-                self._byte_order = "native"
-            else:
-                self._byte_order = unreal_instance_byte_order
+        assert self._byte_order is not None
         return self._byte_order
 
     #
@@ -152,6 +157,7 @@ class EngineService():
         return self._call(return_as, func_name, *args)
 
     def call_on_worker_thread(self, return_as, func_name, *args):
+        self._validate_frame_state_for_worker_thread_work()
         return self._call(return_as, func_name, *args)
 
     def call_async_on_game_thread(self, func_name, *args):
@@ -159,6 +165,7 @@ class EngineService():
         return self._call_async(func_name, *args)
 
     def call_async_on_worker_thread(self, func_name, *args):
+        self._validate_frame_state_for_worker_thread_work()
         return self._call_async(func_name, *args)
 
     def send_async_on_game_thread(self, func_name, *args):
@@ -166,9 +173,11 @@ class EngineService():
         self._send_async(func_name, *args)
 
     def send_async_on_worker_thread(self, func_name, *args):
+        self._validate_frame_state_for_worker_thread_work()
         self._send_async(func_name, *args)
 
     def get_future_result(self, return_as, future):
+        self._validate_frame_state_for_worker_thread_work()
         return self._get_future_result(return_as=return_as, future=future)
 
     def call_async_fast_on_game_thread(self, func_name, *args):
@@ -176,6 +185,7 @@ class EngineService():
         return self._call_async_fast(func_name, *args)
 
     def call_async_fast_on_worker_thread(self, func_name, *args):
+        self._validate_frame_state_for_worker_thread_work()
         return self._call_async_fast(func_name, *args)
 
     def send_async_fast_on_game_thread(self, func_name, *args):
@@ -183,9 +193,11 @@ class EngineService():
         self._send_async_fast(func_name, *args)
 
     def send_async_fast_on_worker_thread(self, func_name, *args):
+        self._validate_frame_state_for_worker_thread_work()
         self._send_async_fast(func_name, *args)
 
     def get_future_result_fast(self, return_as, future):
+        self._validate_frame_state_for_worker_thread_work()
         return self._get_future_result_fast(return_as=return_as, future=future)
 
     #
@@ -218,6 +230,11 @@ class EngineService():
                 self._end_frame_impl()
                 self._frame_state = "error"
 
+            assert False
+
+    def _validate_frame_state_for_worker_thread_work(self):
+        if self._frame_state not in ["idle", "request_begin_frame", "executing_begin_frame", "executing_frame", "executing_end_frame", "request_end_frame", "error"]:
+            spear.log("ERROR: Unexpected frame state: ", self._frame_state)
             assert False
 
     def _call(self, return_as, func_name, *args):

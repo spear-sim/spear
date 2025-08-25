@@ -86,6 +86,7 @@ class Instance():
         # going through the client directly. So we pass in the client directly when constructing
         # EngineService, and we pass in EngineService when constructing all other services.
         self.engine_service = spear.services.engine_service.EngineService(client=self._client, config=self._config)
+        self.engine_service.initialize() # EngineService must be explicitly initialized
 
         # Initialize services that require a reference to EngineService.
 
@@ -193,12 +194,19 @@ class Instance():
         return False
 
 
+    def flush(self):
+        with self.begin_frame():
+            pass
+        with self.end_frame():
+            pass
+
+
     def close(self):
         # Note that in the constructor, we launch the Unreal instance first and then initialize the client
-        # Normally, we would do things in the reverse order here. But if we close the client first, then we
-        # can't send a "request_exit" command to the Unreal instance to close it. So we request_exit the
-        # Unreal instance first, and then close the client afterwards.
-        self._request_exit_unreal_instance()
+        # Normally, we would do things in the reverse order here. But if we terminate the client first, then
+        # we can't call the "request_exit" and "terminate" entry points to close the Unreal instance. So we
+        # terminate the Unreal instance first, and then terminate the client afterwards.
+        self._request_terminate_unreal_instance()
         self._terminate_client(verbose=True)
 
 
@@ -371,9 +379,7 @@ class Instance():
                 spear.log("    Attempting to connect to server...")
                 self._client = spear_ext.Client("127.0.0.1", self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT)
                 self._client.set_timeout(int(self._config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS*1000))
-
-                # don't use self.services.engine_service because it hasn't been initialized yet
-                connected = self._client.call_as_string("engine_service.ping") == "ping"
+                connected = self._client.call_as_string("engine_service.ping") == "ping" # don't use self.engine_service because it hasn't been initialized yet
 
             except Exception as e:
                 spear.log("    Exception: ", e)
@@ -401,9 +407,7 @@ class Instance():
                     spear.log("    Attempting to connect to server...")
                     self._client = spear_ext.Client("127.0.0.1", self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT)
                     self._client.set_timeout(int(self._config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS*1000))
-
-                    # don't use self.services.engine_service because it hasn't been initialized yet
-                    connected = self._client.call_as_string("engine_service.ping") == "ping"
+                    connected = self._client.call_as_string("engine_service.ping") == "ping" # don't use self.engine_service because it hasn't been initialized yet
                     break
 
                 except:
@@ -424,17 +428,21 @@ class Instance():
             spear.log("    Connected to server.")
         else:
             spear.log("    ERROR: Couldn't connect to RPC server, giving up...")
+            self._terminate_client(verbose=True)
             assert False
 
-        if self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
-
-            # don't use self.services.engine_service because it hasn't been initialized yet
-            pid = self._client.call_as_int64("engine_service.get_id")
+        if self._config.SPEAR.LAUNCH_MODE == "none":
+            pass
+        elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
+            pid = self._client.call_as_int64("engine_service.get_id") # don't use self.engine_service because it hasn't been initialized yet
             if pid == self._process.pid:
-                spear.log("    Validated engine_service.get_id.")
+                spear.log("    Validated engine_service.get_id: ", pid)
             else:            
                 spear.log(f"    ERROR: engine_service.get_id returned {pid} but the PID of the process we just launched is {self._process.pid}. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables and try launching again.")
+                self._terminate_client(verbose=True)
                 assert False
+        else:
+            assert False
 
         if self._config.SPEAR.INSTANCE.PRINT_CALL_DEBUG_INFO:
 
@@ -464,10 +472,8 @@ class Instance():
 
         if self._config.SPEAR.LAUNCH_MODE == "none":
             pass
-
-        elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
+        if self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
             self._warm_up_unreal_instance(time_seconds, num_frames)
-
         else:
             self._terminate_client(verbose=True)
             assert False
@@ -487,10 +493,7 @@ class Instance():
         # zeros. We generally also want to execute more than one warmup frame to warm up various caches and
         # rendering features that leverage temporal coherence between frames.
         for i in range(num_frames):
-            with self.begin_frame():
-                pass
-            with self.end_frame():
-                pass
+            self.flush()
 
         spear.log("    Finished warming up Unreal instance.")
 
@@ -526,18 +529,18 @@ class Instance():
     # Shutdown helper functions
     #
 
-    def _request_exit_unreal_instance(self):
+    def _request_terminate_unreal_instance(self):
 
         spear.log_current_function()
-        spear.log("    Requesting to exit Unreal instance...")
+        spear.log("    Requesting to terminate Unreal instance...")
 
         if self._config.SPEAR.LAUNCH_MODE == "none":
             pass
-
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:        
             try:
-                self.engine_service.terminate()
+                self.flush()
                 self.engine_service.request_exit(immediate_shutdown=False)
+                self.engine_service.terminate() # EngineService must be explicitly terminated, needs to be the last entry point that gets called
             except:
                 pass # no need to log exception because this case is expected when the instance is no longer running
             try:
@@ -550,12 +553,11 @@ class Instance():
                     status = self._process.status()
                 except psutil.NoSuchProcess:
                     break
-
         else:
             self._terminate_client(verbose=True)
             assert False
 
-        spear.log("    Finished requesting to exit Unreal instance.")
+        spear.log("    Finished requesting to terminate Unreal instance.")
 
 
     def _force_kill_unreal_instance(self):
