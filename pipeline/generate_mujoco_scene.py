@@ -69,6 +69,7 @@ def process_scene():
         add_mujoco_elements(actor_name, actor_kinematic_tree, meshes_element, bodies_element, color)
 
     mujoco_scene_dir = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "mujoco_scene"))
+    spear.log("Creating directory if it does not already exist: ", mujoco_scene_dir)
     os.makedirs(mujoco_scene_dir, exist_ok=True)
 
     meshes_mjcf_file = os.path.realpath(os.path.join(mujoco_scene_dir, "meshes.mjcf"))
