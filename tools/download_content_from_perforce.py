@@ -39,7 +39,7 @@ if __name__ == '__main__':
     source_depot_name = args.p4_depot_name
     source_stream_name = args.p4_stream_name
     source_base_path = args.source_path
-    source_base_depot_stream_path = posixpath.join("//", source_depot_name, source_stream_name, source_base_path)
+    source_base_depot_stream_path = posixpath.join("//", source_depot_name, source_stream_name, f"{source_base_path}{revision_str}")
     destination_base_path = args.destination_path
 
     cmd = ["info"]
