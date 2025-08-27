@@ -472,7 +472,7 @@ class Instance():
 
         if self._config.SPEAR.LAUNCH_MODE == "none":
             pass
-        if self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
+        elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
             self._warm_up_unreal_instance(time_seconds, num_frames)
         else:
             self._terminate_client(verbose=True)
