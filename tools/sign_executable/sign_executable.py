@@ -49,6 +49,7 @@ if __name__ == "__main__":
     shutil.rmtree(output_dir, ignore_errors=True)
 
     # create the temp directory
+    spear.log("Creating directory if it does not already exist: ", args.temp_dir)
     os.makedirs(args.temp_dir, exist_ok=True)
 
     # create a copy of the executable in output_dir and use it throughout this file

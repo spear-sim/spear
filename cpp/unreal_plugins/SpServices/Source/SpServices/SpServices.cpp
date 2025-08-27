@@ -86,8 +86,10 @@ void SpServices::StartupModule()
     // EngineService needs its own custom logic for binding its entry points, because they are intended to
     // run directly on the RPC server worker thread, whereas most other entry points are intended to run on
     // work queues maintained by EngineService. So we pass in the RPC server when constructing EngineService,
-    // and we pass in EngineService when constructing all other services that need to bind entry points.
+    // and we pass in EngineService when constructing all other services that need to bind entry points. We
+    // need to call engine_service->startup() explicitly.
     engine_service = std::make_unique<EngineService<rpc::server>>(rpc_service->rpc_server.get());
+    engine_service->startup();
 
     // Construct services that don't require a reference to EngineService.
     initialize_engine_service = std::make_unique<InitializeEngineService>();
@@ -121,18 +123,10 @@ void SpServices::ShutdownModule()
         }
     #endif
 
-    // We need to call engine_service->close() before shutting down the RPC server, so engine_service has a
-    // chance to stop waiting on any futures that it might be waiting on. It will not be possible to shut
-    // down the RPC server gracefully if a live entry point is waiting on a future.
-    SP_ASSERT(engine_service);
-    engine_service->close();
-
-    // We need to shut down the RPC server before destroying our other services. Otherwise, the RPC server
-    // might attempt to call a service's entry points after the service has been destroyed. Many of our
-    // services bind entry points that capture a pointer back to the service itself, so we need to make sure
-    // that these entry points are not called after the services that bound them have been destroyed.
-    SP_ASSERT(rpc_service);
-    rpc_service = nullptr;
+    // The logic in EngineService guarantees that no other RPC server functions can ever get called after the
+    // engine_service.terminate entry point gets called, which should have already happened at this point. So
+    // it is ok to terminate our other services before terminating RpcService. This guarantee is necessary to
+    // enable other plugins to implement their own services.
 
     SP_ASSERT(initialize_game_world_service);
     SP_ASSERT(game_unreal_service);
@@ -159,8 +153,15 @@ void SpServices::ShutdownModule()
     SP_ASSERT(initialize_engine_service);
     initialize_engine_service = nullptr;
 
+    // We need to call engine_service->shutdown() before shutting down the RPC server, so engine_service has
+    // a chance to stop waiting on any futures that it might be waiting on. It will not be possible to shut
+    // down the RPC server gracefully if a live entry point is waiting on a future.
     SP_ASSERT(engine_service);
+    engine_service->shutdown();
     engine_service = nullptr;
+
+    SP_ASSERT(rpc_service);
+    rpc_service = nullptr;
 
     SP_ASSERT(editor_world_filter);
     SP_ASSERT(game_world_filter);
