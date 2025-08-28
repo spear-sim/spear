@@ -42,6 +42,14 @@ if __name__ == '__main__':
     source_base_depot_stream_path = posixpath.join("//", source_depot_name, source_stream_name, f"{source_base_path}{revision_str}")
     destination_base_path = args.destination_path
 
+    p4.connect()
+    info_results = p4.run_trust("-y")
+    p4.disconnect()
+
+    p4.connect()
+    info_results = p4.run_login()
+    p4.disconnect()
+
     cmd = ["info"]
     spear.log("Executing: ", " ".join(cmd))
     p4.connect()
@@ -82,7 +90,7 @@ if __name__ == '__main__':
 
         os.makedirs(destination_dir, exist_ok=True)
 
-        spear.log("Downloading:", source_full_path, "->", destination_path)
+        spear.log("Downloading: ", source_full_path, " -> ", destination_path)
         
         cmd = ["print", "-o", destination_path, source_full_path]
         spear.log("Executing: ", " ".join(cmd))
