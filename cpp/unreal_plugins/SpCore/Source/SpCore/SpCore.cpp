@@ -38,6 +38,7 @@
 #include <NavigationSystem.h>
 #include <UObject/Class.h>  // UClass
 #include <UObject/Object.h> // UObject
+#include "Kismet/KismetSystemLibrary.h"
 
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
@@ -111,6 +112,7 @@ void SpCore::registerClasses()
     UnrealClassRegistrar::registerComponentClass<UPoseableMeshComponent>("UPoseableMeshComponent");
     UnrealClassRegistrar::registerClass<UObject>("UObject");
     UnrealClassRegistrar::registerClass<UClass>("UClass");
+    UnrealClassRegistrar::registerClass<UKismetSystemLibrary>("UKismetSystemLibrary");
     UnrealClassRegistrar::registerClass<UGameplayStatics>("UGameplayStatics");
     UnrealClassRegistrar::registerClass<UGameUserSettings>("UGameUserSettings");
     UnrealClassRegistrar::registerClass<UMaterial>("UMaterial");
@@ -142,6 +144,7 @@ void SpCore::unregisterClasses()
     UnrealClassRegistrar::unregisterComponentClass<UPoseableMeshComponent>("UPoseableMeshComponent");
     UnrealClassRegistrar::unregisterClass<UObject>("UObject");
     UnrealClassRegistrar::unregisterClass<UClass>("UClass");
+    UnrealClassRegistrar::unregisterClass<UKismetSystemLibrary>("UKismetSystemLibrary");
     UnrealClassRegistrar::unregisterClass<UGameplayStatics>("UGameplayStatics");
     UnrealClassRegistrar::unregisterClass<UGameUserSettings>("UGameUserSettings");
     UnrealClassRegistrar::unregisterClass<UMaterial>("UMaterial");
