@@ -35,6 +35,7 @@ We recommend browsing through our example applications to get a sense of what is
   - [`examples/getting_started`](../examples/getting_started) demonstrates how to spawn an object and access object properties.
   - [`examples/getting_started_editor`](../examples/getting_started_editor) demonstrates how to spawn an object using the Unreal Editor's built-in Python API.
   - [`examples/getting_started_notebook`](../examples/getting_started_notebook) demonstrates how to interoperate with Jupyter notebooks.
+  - [`examples/import_mixamo_dataset`](../examples/import_mixamo_dataset) demonstrates how to import animation sequences.
   - [`examples/import_stanford_dataset`](../examples/import_stanford_dataset) demonstrates how to import custom objects.
   - [`examples/movie_render_queue`](../examples/movie_render_queue) demonstrates how to interact with Unreal's Movie Render Queue system.
   - [`examples/mujoco_interop`](../examples/mujoco_interop) demonstrates how to interoperate with the MuJoCo physics engine.
