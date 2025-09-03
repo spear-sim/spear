@@ -160,7 +160,7 @@ if __name__ == "__main__":
     # build SpearSim project
 
     cook_maps = spear.utils.tool_utils.get_default_maps_to_cook()
-    cook_maps_arg = [f"-map={"+".join(cook_maps)}"]
+    cook_maps_arg = [f"-map={'+'.join(cook_maps)}"]
 
     cmd = [
         run_uat_script,

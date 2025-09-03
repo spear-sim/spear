@@ -108,34 +108,30 @@ if __name__ == "__main__":
     os.makedirs(build_paks_dir, exist_ok=True)
 
     #
-    # create symlinks for Megascans and MSPresets
+    # create symlinks for common dirs
     #
 
-    content_dir = "Megascans"
-    update_action = "create"
-    cmd = \
-        cmd_prefix + \
-        "python " + \
-        f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlinks_for_external_content.py"))}" ' + \
-        f'--external_content_dir "{os.path.realpath(os.path.join(args.external_content_dir, content_dir))}" ' + \
-        f'--unreal_project_dir "{unreal_project_dir}" ' + \
-        f'--unreal_project_content_dir "{content_dir}" ' + \
-        f"--{update_action}"
-    spear.log("Executing: ", cmd)
-    subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
+    common_content_dirs = [
+        os.path.join("Kujiale", "Materials"),
+        os.path.join("Kujiale", "Meshes"),
+        os.path.join("Kujiale", "Objects"),
+        os.path.join("Kujiale", "Textures"),
+        "Megascans",
+        "MSPresets"]
 
-    content_dir = "MSPresets"
-    update_action = "create"
-    cmd = \
-        cmd_prefix + \
-        "python " + \
-        f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlinks_for_external_content.py"))}" ' + \
-        f'--external_content_dir "{os.path.realpath(os.path.join(args.external_content_dir, content_dir))}" ' + \
-        f'--unreal_project_dir "{unreal_project_dir}" ' + \
-        f'--unreal_project_content_dir "{content_dir}" ' + \
-        f"--{update_action}"
-    spear.log("Executing: ", cmd)
-    subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
+    for common_content_dir in common_content_dirs:
+
+        update_action = "create"
+        cmd = \
+            cmd_prefix + \
+            "python " + \
+            f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlinks_for_external_content.py"))}" ' + \
+            f'--external_content_dir "{os.path.realpath(os.path.join(args.external_content_dir, common_content_dir))}" ' + \
+            f'--unreal_project_dir "{unreal_project_dir}" ' + \
+            f'--unreal_project_content_dir "{common_content_dir}" ' + \
+            f"--{update_action}"
+        spear.log("Executing: ", cmd)
+        subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
 
     #
     # build common pak
@@ -148,10 +144,9 @@ if __name__ == "__main__":
         # Unreal project directory.
         cook_dirs_file = os.path.realpath(os.path.join(build_paks_dir, f"kujiale_common-{args.version_tag}-{platform}_cook_dirs.csv"))
         cook_dirs = [
-            os.path.join(unreal_project_dir, "Content", "Kujiale", "BluePrints"),        # TODO: move to Kujiale/Blueprints
             os.path.join(unreal_project_dir, "Content", "Kujiale", "Materials"),
             os.path.join(unreal_project_dir, "Content", "Kujiale", "Meshes"),
-            os.path.join(unreal_project_dir, "Content", "Kujiale", "PhysicalMaterials"), # TODO: move to Kujiale/PhysicsMaterials
+            os.path.join(unreal_project_dir, "Content", "Kujiale", "Objects"),
             os.path.join(unreal_project_dir, "Content", "Kujiale", "Textures"),
             os.path.join(unreal_project_dir, "Content", "Megascans"),
             os.path.join(unreal_project_dir, "Content", "MSPresets")]
@@ -162,10 +157,9 @@ if __name__ == "__main__":
         include_assets = [
             os.path.join("Engine", "Content", "**", "*.*"),
             os.path.join("Engine", "Plugins", "**", "*.*"),
-            os.path.join("SpearSim", "Content", "Kujiale", "BluePrints", "**", "*.*"),        # TODO: move to Kujiale/Blueprints
             os.path.join("SpearSim", "Content", "Kujiale", "Materials", "**", "*.*"),
             os.path.join("SpearSim", "Content", "Kujiale", "Meshes", "**", "*.*"),
-            os.path.join("SpearSim", "Content", "Kujiale", "PhysicalMaterials", "**", "*.*"), # TODO: move to Kujiale/PhysicsMaterials
+            os.path.join("SpearSim", "Content", "Kujiale", "Objects", "**", "*.*"),
             os.path.join("SpearSim", "Content", "Kujiale", "Textures", "**", "*.*"),
             os.path.join("SpearSim", "Content", "Megascans", "**", "*.*"),
             os.path.join("SpearSim", "Content", "MSPresets", "**", "*.*")]
@@ -194,7 +188,7 @@ if __name__ == "__main__":
         cmd = \
             cmd_prefix + \
             "python " + \
-            f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), 'build_pak.py'))} ' + \
+            f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "build_pak.py"))}" ' + \
             f'--pak_file "{pak_file}" ' + \
             f'--cook_dirs_file "{cook_dirs_file}" ' + \
             f'--include_assets_file "{include_assets_file}" ' + \
@@ -210,7 +204,7 @@ if __name__ == "__main__":
 
     if not args.skip_build_scene_paks:
 
-        external_content_scenes_dir = os.path.realpath(os.path.join(args.external_content_dir, "Scenes")) # TODO: move to Kujiale/Scenes
+        external_content_scenes_dir = os.path.realpath(os.path.join(args.external_content_dir, "Kujiale", "Scenes"))
         ignore_names = [".DS_Store"]
         candidate_scene_ids = [ os.path.basename(x) for x in sorted(os.listdir(external_content_scenes_dir)) if x not in ignore_names ]
 
@@ -227,16 +221,17 @@ if __name__ == "__main__":
 
         for scene_id in scene_ids:
 
+            scene_content_dir = os.path.join("Kujiale", "Scenes", scene_id)
+
             # create symlink
-            content_dir = os.path.join("Scenes", scene_id) # TODO: move to Kujiale/Scenes
             update_action = "create"
             cmd = \
                 cmd_prefix + \
                 "python " + \
                 f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlinks_for_external_content.py"))}" ' + \
-                f'--external_content_dir "{os.path.realpath(os.path.join(args.external_content_dir, content_dir))}" ' + \
+                f'--external_content_dir "{os.path.realpath(os.path.join(args.external_content_dir, scene_content_dir))}" ' + \
                 f'--unreal_project_dir "{unreal_project_dir}" ' + \
-                f'--unreal_project_content_dir "{content_dir}" ' + \
+                f'--unreal_project_content_dir "{scene_content_dir}" ' + \
                 f"--{update_action}"
             spear.log("Executing: ", cmd)
             subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
@@ -248,14 +243,13 @@ if __name__ == "__main__":
             # Unreal project directory.
             cook_dirs_file = os.path.realpath(os.path.join(build_paks_dir, f"{scene_id}-{args.version_tag}-{platform}_cook_dirs.csv"))
             cook_dirs = [
-                os.path.join(unreal_project_dir, "Content", "Kujiale", "BluePrints"),        # TODO: move to Kujiale/Blueprints
                 os.path.join(unreal_project_dir, "Content", "Kujiale", "Materials"),
                 os.path.join(unreal_project_dir, "Content", "Kujiale", "Meshes"),
-                os.path.join(unreal_project_dir, "Content", "Kujiale", "PhysicalMaterials"), # TODO: move to Kujiale/PhysicsMaterials
+                os.path.join(unreal_project_dir, "Content", "Kujiale", "Objects"),
+                os.path.join(unreal_project_dir, "Content", "Kujiale", "Scenes", scene_id),
                 os.path.join(unreal_project_dir, "Content", "Kujiale", "Textures"),
                 os.path.join(unreal_project_dir, "Content", "Megascans"),
-                os.path.join(unreal_project_dir, "Content", "MSPresets"),
-                os.path.join(unreal_project_dir, "Content", "Scenes", scene_id)]             # TODO: move to Kujiale/Scenes
+                os.path.join(unreal_project_dir, "Content", "MSPresets")]
             df = pd.DataFrame(columns=["cook_dirs"], data={"cook_dirs": cook_dirs})
             df.to_csv(cook_dirs_file, index=False)
 
@@ -268,14 +262,13 @@ if __name__ == "__main__":
             include_assets = [
                 os.path.join("Engine", "Content", "**", "*.*"),
                 os.path.join("Engine", "Plugins", "**", "*.*"),
-                os.path.join("SpearSim", "Content", "Kujiale", "BluePrints", "**", "*.*"),        # TODO: move to Kujiale/Blueprints
                 os.path.join("SpearSim", "Content", "Kujiale", "Materials", "**", "*.*"),
                 os.path.join("SpearSim", "Content", "Kujiale", "Meshes", "**", "*.*"),
-                os.path.join("SpearSim", "Content", "Kujiale", "PhysicalMaterials", "**", "*.*"), # TODO: move to Kujiale/PhysicsMaterials
+                os.path.join("SpearSim", "Content", "Kujiale", "Objects", "**", "*.*"),
+                os.path.join("SpearSim", "Content", "Kujiale", "Scenes", scene_id, "**", "*.*"),
                 os.path.join("SpearSim", "Content", "Kujiale", "Textures", "**", "*.*"),
                 os.path.join("SpearSim", "Content", "Megascans", "**", "*.*"),
-                os.path.join("SpearSim", "Content", "MSPresets", "**", "*.*"),
-                os.path.join("SpearSim", "Content", "Scenes", scene_id, "**", "*.*")]             # TODO: move to Kujiale/Scenes
+                os.path.join("SpearSim", "Content", "MSPresets", "**", "*.*")]
             df = pd.DataFrame(columns=["include_assets"], data={"include_assets": include_assets})
             df.to_csv(include_assets_file, index=False)
 
@@ -283,6 +276,7 @@ if __name__ == "__main__":
             exclude_pak_files = [default_pak, os.path.realpath(os.path.join(args.paks_dir, args.version_tag, f"kujiale_common-{args.version_tag}-{platform}.pak"))]
             exclude_assets = []
             for exclude_pak_file in exclude_pak_files:
+                assert os.path.exists(exclude_pak_file)
                 cmd = [unreal_pak_bin, "-List", exclude_pak_file]
                 spear.log("Executing: ", ' '.join(cmd))
                 ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
@@ -313,47 +307,34 @@ if __name__ == "__main__":
             subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
 
             # remove symlink
-            content_dir = os.path.join("Scenes", scene_id) # TODO: move to Kujiale/Scenes
             update_action = "remove"
             cmd = \
                 cmd_prefix + \
                 "python " + \
                 f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlinks_for_external_content.py"))}" ' + \
-                f'--external_content_dir "{os.path.realpath(os.path.join(args.external_content_dir, content_dir))}" ' + \
+                f'--external_content_dir "{os.path.realpath(os.path.join(args.external_content_dir, scene_content_dir))}" ' + \
                 f'--unreal_project_dir "{unreal_project_dir}" ' + \
-                f'--unreal_project_content_dir "{content_dir}" ' + \
+                f'--unreal_project_content_dir "{scene_content_dir}" ' + \
                 f"--{update_action}"
             spear.log("Executing: ", cmd)
             subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
 
     #
-    # remove symlinks for Megascans and MSPresets
+    # remove symlinks for common dirs
     #
 
-    content_dir = "Megascans"
-    update_action = "remove"
-    cmd = \
-        cmd_prefix + \
-        "python " + \
-        f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlinks_for_external_content.py"))}" ' + \
-        f'--external_content_dir "{os.path.realpath(os.path.join(args.external_content_dir, content_dir))}" ' + \
-        f'--unreal_project_dir "{unreal_project_dir}" ' + \
-        f'--unreal_project_content_dir "{content_dir}" ' + \
-        f"--{update_action}"
-    spear.log("Executing: ", cmd)
-    subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
+    for common_content_dir in common_content_dirs:
 
-    content_dir = "MSPresets"
-    update_action = "remove"
-    cmd = \
-        cmd_prefix + \
-        "python " + \
-        f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlinks_for_external_content.py"))}" ' + \
-        f'--external_content_dir "{os.path.realpath(os.path.join(args.external_content_dir, content_dir))}" ' + \
-        f'--unreal_project_dir "{unreal_project_dir}" ' + \
-        f'--unreal_project_content_dir "{content_dir}" ' + \
-        f"--{update_action}"
-    spear.log("Executing: ", cmd)
-    subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
+        update_action = "remove"
+        cmd = \
+            cmd_prefix + \
+            "python " + \
+            f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlinks_for_external_content.py"))}" ' + \
+            f'--external_content_dir "{os.path.realpath(os.path.join(args.external_content_dir, common_content_dir))}" ' + \
+            f'--unreal_project_dir "{unreal_project_dir}" ' + \
+            f'--unreal_project_content_dir "{common_content_dir}" ' + \
+            f"--{update_action}"
+        spear.log("Executing: ", cmd)
+        subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
 
     spear.log("Done.")
