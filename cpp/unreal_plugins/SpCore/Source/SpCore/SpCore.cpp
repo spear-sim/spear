@@ -30,6 +30,7 @@
 #include <GameFramework/GameUserSettings.h>
 #include <GameFramework/PlayerController.h>
 #include <Kismet/GameplayStatics.h>
+#include <Kismet/KismetSystemLibrary.h>
 #include <Materials/Material.h>
 #include <Materials/MaterialInterface.h>
 #include <Math/Rotator.h>
@@ -38,7 +39,6 @@
 #include <NavigationSystem.h>
 #include <UObject/Class.h>  // UClass
 #include <UObject/Object.h> // UObject
-#include "Kismet/KismetSystemLibrary.h"
 
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
