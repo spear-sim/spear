@@ -112,9 +112,9 @@ void SpCore::registerClasses()
     UnrealClassRegistrar::registerComponentClass<UPoseableMeshComponent>("UPoseableMeshComponent");
     UnrealClassRegistrar::registerClass<UObject>("UObject");
     UnrealClassRegistrar::registerClass<UClass>("UClass");
-    UnrealClassRegistrar::registerClass<UKismetSystemLibrary>("UKismetSystemLibrary");
     UnrealClassRegistrar::registerClass<UGameplayStatics>("UGameplayStatics");
     UnrealClassRegistrar::registerClass<UGameUserSettings>("UGameUserSettings");
+    UnrealClassRegistrar::registerClass<UKismetSystemLibrary>("UKismetSystemLibrary");
     UnrealClassRegistrar::registerClass<UMaterial>("UMaterial");
     UnrealClassRegistrar::registerClass<UMaterialInterface>("UMaterialInterface");
     UnrealClassRegistrar::registerClass<UNavigationSystemV1>("UNavigationSystemV1");
@@ -144,9 +144,9 @@ void SpCore::unregisterClasses()
     UnrealClassRegistrar::unregisterComponentClass<UPoseableMeshComponent>("UPoseableMeshComponent");
     UnrealClassRegistrar::unregisterClass<UObject>("UObject");
     UnrealClassRegistrar::unregisterClass<UClass>("UClass");
-    UnrealClassRegistrar::unregisterClass<UKismetSystemLibrary>("UKismetSystemLibrary");
     UnrealClassRegistrar::unregisterClass<UGameplayStatics>("UGameplayStatics");
     UnrealClassRegistrar::unregisterClass<UGameUserSettings>("UGameUserSettings");
+    UnrealClassRegistrar::unregisterClass<UKismetSystemLibrary>("UKismetSystemLibrary");
     UnrealClassRegistrar::unregisterClass<UMaterial>("UMaterial");
     UnrealClassRegistrar::unregisterClass<UMaterialInterface>("UMaterialInterface");
     UnrealClassRegistrar::unregisterClass<UNavigationSystemV1>("UNavigationSystemV1");

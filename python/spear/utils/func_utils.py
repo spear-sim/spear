@@ -284,20 +284,3 @@ def to_vector_from_array(array):
     else:
         assert False
     return {"X": array[0], "Y": array[1], "Z": array[2]}
-
-# Convert from object rotation to forward vector in unreal
-def rotation_to_forward_vector(pitch_deg, yaw_deg, roll_deg=None):
-
-    if roll_deg is not None:
-        raise Warning("roll is unused for the forward vector calculation")
-
-    # Convert to radians
-    pitch = math.radians(pitch_deg)
-    yaw = math.radians(yaw_deg)
-    # roll is unused for the forward vector in Unreal
-
-    x = math.cos(pitch) * math.cos(yaw)
-    y = math.cos(pitch) * math.sin(yaw)
-    z = math.sin(pitch)
-
-    return (x, y, z)
