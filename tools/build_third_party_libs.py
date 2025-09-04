@@ -229,7 +229,7 @@ if __name__ == "__main__":
         spear.log("Directory exists, removing: ", build_dir)
         shutil.rmtree(build_dir, ignore_errors=True)
 
-    spear.log("Creating directory and changing to working: ", build_dir)
+    spear.log("Creating directory if it does not already exist and changing to working: ", build_dir)
     os.makedirs(build_dir, exist_ok=True)
     os.chdir(build_dir)
 
@@ -295,7 +295,7 @@ if __name__ == "__main__":
         spear.log("Directory exists, removing: ", build_dir)
         shutil.rmtree(build_dir, ignore_errors=True)
 
-    spear.log("Creating directory and changing to working: ", build_dir)
+    spear.log("Creating directory if it does not already exist and changing to working: ", build_dir)
     os.makedirs(build_dir, exist_ok=True)
     os.chdir(build_dir)
 

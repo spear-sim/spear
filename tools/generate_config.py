@@ -23,6 +23,7 @@ if __name__ == "__main__":
 
     # dump config params into a new yaml file
     output_dir = os.path.realpath(os.path.dirname(args.output_file))
+    spear.log("Creating directory if it does not already exist: ", output_dir)
     os.makedirs(output_dir, exist_ok=True)
 
     with open(args.output_file, "w") as f:

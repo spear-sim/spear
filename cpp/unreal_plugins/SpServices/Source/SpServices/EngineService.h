@@ -55,7 +55,7 @@ public:
 
             // Reset request flags.
             request_begin_frame_ = false;
-            request_close_ = false;
+            request_terminate_ = false;
             request_error_ = false;
 
             // There is no need to lock because it is safe to access WorkQueue objects from multiple threads.
@@ -83,17 +83,20 @@ public:
 
         bindFuncToExecuteOnWorkerThread("engine_service", "terminate", [this]() -> void {
 
+            // Set the frame state to prevent calling any more entry points.
+            frame_state_ = FrameState::Terminating;
+
             // There is no need to lock because it is safe to access WorkQueue objects from multiple threads.
             begin_frame_work_queue_.terminate();
             end_frame_work_queue_.terminate();
 
-            // Indicate to the game thread that we want to close the application.
-            request_close_ = true;
+            // Indicate to the game thread that we want to terminate the application.
+            request_terminate_ = true;
         });
 
         bindFuncToExecuteOnWorkerThread("engine_service", "begin_frame", [this]() -> void {
 
-            if (request_close_ || request_error_) {
+            if (request_terminate_ || request_error_) {
                 return;
             }
 
@@ -128,7 +131,7 @@ public:
 
         bindFuncToExecuteOnWorkerThread("engine_service", "execute_frame", [this]() -> void {
 
-            if (request_close_ || request_error_) {
+            if (request_terminate_ || request_error_) {
                 return;
             }
 
@@ -173,7 +176,7 @@ public:
 
         bindFuncToExecuteOnWorkerThread("engine_service", "end_frame", [this]() -> void {
 
-            if (request_close_ || request_error_) {
+            if (request_terminate_ || request_error_) {
                 return;
             }
 
@@ -341,10 +344,12 @@ public:
         }
     }
 
-    void close()
-    {
-        frame_state_ = FrameState::Closing;
+    // Called on the game thread from SpServices::StartupModule() and SpServices::ShutdownModule()
 
+    void startup() {}
+
+    void shutdown()
+    {
         if (!begin_frame_work_queue_ready_promise_set_) {
             std::lock_guard lock(begin_frame_mutex_);
             begin_frame_work_queue_ready_promise_.set_value();
@@ -365,11 +370,11 @@ protected:
 
         bool handle_frame = request_begin_frame_;
 
-        if (request_close_ || request_error_) {
+        if (request_terminate_ || request_error_) {
             handle_frame = false;
         }
 
-        if (frame_state_ == FrameState::Closing) {
+        if (frame_state_ == FrameState::Terminating) {
             handle_frame = false;
         }
 
@@ -410,11 +415,11 @@ protected:
     {
         bool handle_frame = frame_state_ == FrameState::ExecutingFrame;
 
-        if (request_close_ || request_error_) {
+        if (request_terminate_ || request_error_) {
             handle_frame = false;
         }
 
-        if (frame_state_ == FrameState::Closing) {
+        if (frame_state_ == FrameState::Terminating) {
             handle_frame = false;
         }
 
@@ -459,7 +464,7 @@ private:
         ExecutingBeginFrame = 1,
         ExecutingFrame      = 2,
         ExecutingEndFrame   = 3,
-        Closing             = 4,
+        Terminating         = 4,
         Error               = 5
     };
 
@@ -488,6 +493,11 @@ private:
         // returns.
 
         return [this, func_name, func](TArgs&... args) -> TReturn {
+
+            if (frame_state_ == FrameState::Terminating) {
+                return TReturn();
+            }
+
             return executeFuncInTryCatch(func_name, [&func_name, &func, &args...]() -> TReturn {
                 if constexpr (std::is_void_v<TReturn>) {
 
@@ -789,7 +799,7 @@ private:
     // Only accessed on the worker thread.
     WorkQueue* current_work_queue_ = nullptr;
 
-    // Written by the game thread in beginFrame(), endFrame(), and close(). Written by the worker thread in
+    // Written by the game thread in beginFrame(), endFrame(), and terminate(). Written by the worker thread in
     // engine_service.initialize.
     std::atomic<FrameState> frame_state_ = FrameState::Idle;
 
@@ -798,11 +808,11 @@ private:
     // in beginFrame().
     std::atomic<bool> request_begin_frame_ = false;
 
-    // Written by the worker thread in engine_service.initialize and engine_service.close to indicate to the
-    // game thread that we want to close the application. Read by the worker thread in engine_service.begin_frame,
+    // Written by the worker thread in engine_service.initialize and engine_service.terminate to indicate to the
+    // game thread that we want to terminate the application. Read by the worker thread in engine_service.begin_frame,
     // engine_service.execute_frame, and engine_service.end_frame. Read by the game thread in beginFrame()
     // and endFrame().
-    std::atomic<bool> request_close_ = false;
+    std::atomic<bool> request_terminate_ = false;
 
     // Written by the worker thread in executeFuncInTryCatch(...) to indicate to the game thread that an
     // error has occurred. Read by the worker thread in engine_service.begin_frame, engine_service.execute_frame,
@@ -811,9 +821,9 @@ private:
 
     // These promises and futures are each initialized by the worker thread in engine_service.initialize, engine_service.begin_frame,
     // and engine_service.execute_frame. Subsequently, the promises are only ever set by the game thread in
-    // beginFrame(), endFrame(), and close(). The futures are only ever read on the worker thread in engine_service.begin_frame
+    // beginFrame(), endFrame(), and terminate(). The futures are only ever read on the worker thread in engine_service.begin_frame
     // and engine_service.execute_frame. Each bool variable is set by the game thread whenever the corresponding
-    // promise is set, and is read by the game thread in close() to avoid deadlocks when closing the
+    // promise is set, and is read by the game thread in terminate() to avoid deadlocks when terminate the
     // application. The mutexes are used to coordinate access to the promises, the futures, and the bools.
     std::mutex begin_frame_mutex_;
     std::mutex end_frame_mutex_;

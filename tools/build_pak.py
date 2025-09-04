@@ -102,6 +102,7 @@ if __name__ == "__main__":
     # create manifest file
     pak_file = os.path.realpath(os.path.join(args.pak_file))
     pak_dir = os.path.split(pak_file)[0]
+    spear.log("Creating directory if it does not already exist: ", pak_dir)
     os.makedirs(pak_dir, exist_ok=True)
 
     include_assets = pd.read_csv(args.include_assets_file)["include_assets"]

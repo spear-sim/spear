@@ -104,6 +104,7 @@ if __name__ == "__main__":
     #
 
     build_paks_dir = os.path.realpath(os.path.join(args.build_dir, "paks"))
+    spear.log("Creating directory if it does not already exist: ", build_paks_dir)
     os.makedirs(build_paks_dir, exist_ok=True)
 
     #
