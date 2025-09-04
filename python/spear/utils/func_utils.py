@@ -4,7 +4,6 @@
 
 import json
 import numbers
-import math
 import numpy as np
 import scipy
 

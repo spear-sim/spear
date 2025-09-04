@@ -9,4 +9,3 @@ import spear.utils.path_utils
 import spear.utils.pipeline_utils
 import spear.utils.system_utils
 import spear.utils.tool_utils
-import spear.utils.collision_utils
