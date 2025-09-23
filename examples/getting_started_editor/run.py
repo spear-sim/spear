@@ -19,17 +19,17 @@ if __name__ == "__main__":
     parser.add_argument("--save_level", action="store_true")
     args = parser.parse_args()
 
-    # Explicitly load "/SpComponents" into the asset registry, since it won't be loaded by default if we are
+    # Explicitly load "/SpContent" into the asset registry, since it won't be loaded by default if we are
     # running as a commandlet, i.e., when the editor is invoked from the command-line with "-run=pythonscript"
     # instead of "-executepythonscript".
-    asset_registry.scan_paths_synchronous(["/SpComponents"])
+    asset_registry.scan_paths_synchronous(["/SpContent"])
 
     # Explicitly load level, which is required if we're running as a commandlet.
     if args.load_level:
         level_editor_subsystem.load_level("/Game/Spear/Scenes/apartment_0000/Maps/apartment_0000")
 
     # spawn object
-    bp_axes_uclass = unreal.load_object(outer=None, name="/SpComponents/Blueprints/BP_Axes.BP_Axes_C")
+    bp_axes_uclass = unreal.load_object(outer=None, name="/SpContent/Blueprints/BP_Axes.BP_Axes_C")
     bp_axes = unreal.EditorLevelLibrary.spawn_actor_from_class(actor_class=bp_axes_uclass, location=unreal.Vector(-10.0, 280.0, 50.0))
     spear.log("bp_axes: ", bp_axes)
 

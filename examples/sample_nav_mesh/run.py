@@ -28,7 +28,7 @@ if __name__ == "__main__":
         set_actor_scale_3d_func = game.unreal_service.find_function_by_name(uclass=actor_static_class, function_name="SetActorScale3D")
 
         # get axes uclass so we can spawn it later
-        bp_axes_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/SpComponents/Blueprints/BP_Axes.BP_Axes_C")
+        bp_axes_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/SpContent/Blueprints/BP_Axes.BP_Axes_C")
 
         # since we're not using bp_axes_uclass in this frame, we need to explicitly prevent garbage collection
         game.unreal_service.add_object_to_root(uobject=bp_axes_uclass)

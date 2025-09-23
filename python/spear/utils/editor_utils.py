@@ -10,6 +10,7 @@ import unreal
 
 
 asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
+editor_actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 subobject_data_subsystem = unreal.get_engine_subsystem(unreal.SubobjectDataSubsystem)
 
 

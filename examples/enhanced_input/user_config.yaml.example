@@ -21,4 +21,4 @@ SP_SERVICES:
   # usual default pawn, but has been set up to respond to enhanced input events.
   INITIALIZE_ENGINE_SERVICE:
     OVERRIDE_GLOBAL_DEFAULT_GAME_MODE: True
-    GLOBAL_DEFAULT_GAME_MODE: "/SpComponents/Blueprints/BP_SpGameMode.BP_SpGameMode_C"
+    GLOBAL_DEFAULT_GAME_MODE: "/SpContent/Blueprints/BP_SpGameMode.BP_SpGameMode_C"

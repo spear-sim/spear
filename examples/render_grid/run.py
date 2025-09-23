@@ -57,7 +57,7 @@ if __name__ == "__main__":
         bp_camera_sensor_uclass = game.unreal_service.load_object(
             class_name="UClass",
             outer=0,
-            name="/SpComponents/Blueprints/BP_Camera_Sensor.BP_Camera_Sensor_C")
+            name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
 
         # we will control the pose of the camera rig with a single parent actor
         parent_actor = game.unreal_service.spawn_actor_from_class(uclass=actor_static_class)

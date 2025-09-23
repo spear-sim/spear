@@ -146,7 +146,7 @@ if __name__ == "__main__":
     # We could use run_editor_script.py here, but calling python scripts from other python scripts
     # isn't any more convenient than calling the editor directly.
 
-    script = os.path.realpath(os.path.join(os.path.dirname(__file__), "editor_asset_library_utils_rename_content.py"))
+    script = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "editor", "editor_asset_library_utils_rename_content.py"))
     script_args = f'--source_content_path "{args.source_content_path}" --destination_content_path "{args.destination_content_path}"'
 
     # need shell=True to correctly handle the quotes in cmd

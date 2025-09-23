@@ -93,7 +93,7 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
             M_current_node_from_current_component = spear.utils.pipeline_utils.get_matrix_from_transform(transform=transform_current_node_from_current_component)
 
             static_mesh_asset_path = pathlib.PurePosixPath(static_mesh_component_desc["editor_properties"]["static_mesh"]["path"])
-            assert static_mesh_asset_path.parts[:4] == ("/", "Game", "Scenes", args.scene_id)
+            assert static_mesh_asset_path.parts[:4] == ("/", "Game", "Spear", "Scenes", args.scene_id)
 
             obj_path_suffix = f"{os.path.join(*static_mesh_asset_path.parts[4:])}.obj"
             numerical_parity_obj_path = \

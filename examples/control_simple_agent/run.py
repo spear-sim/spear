@@ -43,7 +43,7 @@ if __name__ == "__main__":
         gameplay_statics = game.unreal_service.get_default_object(uclass=gameplay_statics_static_class, create_if_needed=False)
 
         # spawn object and get components
-        bp_sphere_agent_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/SpComponents/Blueprints/BP_Sphere_Agent.BP_Sphere_Agent_C")
+        bp_sphere_agent_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/SpContent/Blueprints/BP_SphereAgent.BP_SphereAgent_C")
         bp_sphere_agent_actor = game.unreal_service.spawn_actor_from_class(uclass=bp_sphere_agent_uclass, location={"X": -10.0, "Y": 280.0, "Z": 150.0})
         root_component = game.unreal_service.get_component_by_name(class_name="USceneComponent", actor=bp_sphere_agent_actor, component_name="DefaultSceneRoot")        
         final_tone_curve_hdr_component = game.unreal_service.get_component_by_name(class_name="USceneComponent", actor=bp_sphere_agent_actor, component_name="DefaultSceneRoot.final_tone_curve_hdr_")

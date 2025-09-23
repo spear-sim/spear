@@ -19,7 +19,7 @@ def unreal_pyr_from_mujoco_quaternion(mujoco_quaternion):
     # MuJoCo assumes quaternions are stored in scalar-first (wxyz) order, but scipy.spatial.transform.Rotation assumes scalar-last (xyzw) order
     scipy_quaternion = mujoco_quaternion[[1,2,3,0]]
 
-    # Unreal and scipy.spatial.transform.Rotation have different Euler angle conventions, see python/spear/pipeline.py for details
+    # Unreal and scipy.spatial.transform.Rotation have different Euler angle conventions, see python/spear/utils/pipeline_utils.py for details
     scipy_roll, scipy_pitch, scipy_yaw = scipy.spatial.transform.Rotation.from_quat(scipy_quaternion).as_euler("xyz")
     unreal_pitch = np.rad2deg(-scipy_pitch)
     unreal_yaw   = np.rad2deg(scipy_yaw)

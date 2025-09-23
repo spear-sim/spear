@@ -19,9 +19,9 @@ matrix_row_names = ["x", "y", "z", "w"]
 
 def compose_transform_with_component(transform_ancestor_from_parent_component, component_desc):
 
-    absolute_location = component_desc["editor_properties"]["absolute_location"] 
-    absolute_rotation = component_desc["editor_properties"]["absolute_rotation"] 
-    absolute_scale    = component_desc["editor_properties"]["absolute_scale"]    
+    absolute_location = component_desc["editor_properties"]["absolute_location"]
+    absolute_rotation = component_desc["editor_properties"]["absolute_rotation"]
+    absolute_scale    = component_desc["editor_properties"]["absolute_scale"]
 
     relative_location_x     = component_desc["editor_properties"]["relative_location"]["editor_properties"]["x"]
     relative_location_y     = component_desc["editor_properties"]["relative_location"]["editor_properties"]["y"]

@@ -25,7 +25,7 @@ if __name__ == "__main__":
         pprint.pprint(game.unreal_service.get_properties_from_object(uobject=enhanced_input_subsystem))
 
         # create UInputAction
-        input_action = game.unreal_service.load_object(class_name="UInputAction", outer=0, name="/SpComponents/Input/IA_InputAction.IA_InputAction")
+        input_action = game.unreal_service.load_object(class_name="UInputAction", outer=0, name="/SpContent/Input/IA_InputAction.IA_InputAction")
         spear.log("input_action: ", input_action)
         pprint.pprint(game.unreal_service.get_properties_from_object(uobject=input_action))
 

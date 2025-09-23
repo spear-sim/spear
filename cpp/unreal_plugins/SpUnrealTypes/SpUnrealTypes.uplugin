@@ -1,0 +1,43 @@
+{
+    "FileVersion": 3,
+    "Version": 1,
+    "VersionName": "1.0",
+    "FriendlyName": "SpUnrealTypes",
+    "Description": "WARNING: The loading phases for {SpUnrealTypes, SpCore} must be ordered as follows: LoadingPhase(SpCore) < LoadingPhase(SpUnrealTypes)",
+    "Category": "Other",
+    "CreatedBy": "",
+    "CreatedByURL": "",
+    "DocsURL": "",
+    "MarketplaceURL": "",
+    "SupportURL": "",
+    "CanContainContent": false,
+    "IsBetaVersion": true,
+    "IsExperimentalVersion": true,
+    "Installed": false,
+    "Modules": [
+        {
+            "Name": "SpUnrealTypes",
+            "Type": "Runtime",
+            "LoadingPhase": "PostDefault"
+        },
+        {
+            "Name": "SpUnrealTypesEditor",
+            "Type": "Editor",
+            "LoadingPhase": "PostDefault"
+        }
+    ],
+    "Plugins": [
+        {
+            "Name": "ChaosVehiclesPlugin",
+            "Enabled": true
+        },
+        {
+            "Name": "MovieRenderPipeline",
+            "Enabled": true
+        },
+        {
+            "Name": "SpCore",
+            "Enabled": true
+        }
+    ]
+}

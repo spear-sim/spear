@@ -7,7 +7,6 @@ import os
 import P4
 import pathlib
 import posixpath
-import spear
 
 
 if __name__ == '__main__':
@@ -43,15 +42,18 @@ if __name__ == '__main__':
     destination_base_path = args.destination_path
 
     p4.connect()
-    info_results = p4.run_trust("-y")
+    p4.run_trust("-y")
     p4.disconnect()
 
     p4.connect()
-    info_results = p4.run_login()
+    p4.run_login()
     p4.disconnect()
 
+    # We use print(...) here because we want to be able to run this script in situations where the spear
+    # module hasn't been installed.
+
     cmd = ["info"]
-    spear.log("Executing: ", " ".join(cmd))
+    print(f'[SPEAR | download_content_from_perforce.py] Executing: {" ".join(cmd)}')
     p4.connect()
     info_results = p4.run(*cmd)
     p4.disconnect()
@@ -60,12 +62,12 @@ if __name__ == '__main__':
         print(f"{k}: {v}")
 
     cmd = ["files", source_base_depot_stream_path]
-    spear.log("Executing: ", " ".join(cmd))
+    print(f'[SPEAR | download_content_from_perforce.py] Executing: {" ".join(cmd)}')
     p4.connect()
     files_results = p4.run(*cmd)
     p4.disconnect()
 
-    spear.log(f"Found {len(files_results)} files...")
+    print(f"[SPEAR | download_content_from_perforce.py] Found {len(files_results)} files...")
 
     for files_result in files_results:
 
@@ -90,12 +92,12 @@ if __name__ == '__main__':
 
         os.makedirs(destination_dir, exist_ok=True)
 
-        spear.log("Downloading: ", source_full_path, " -> ", destination_path)
+        print(f"[SPEAR | download_content_from_perforce.py] Downloading {source_full_path} -> {destination_path}")
         
         cmd = ["print", "-o", destination_path, source_full_path]
-        spear.log("Executing: ", " ".join(cmd))
+        print(f'[SPEAR | download_content_from_perforce.py] Executing: {" ".join(cmd)}')
         p4.connect()
         print_results = p4.run(*cmd)
         p4.disconnect()
 
-    spear.log("Done.")
+    print("[SPEAR | download_content_from_perforce.py] Done.")

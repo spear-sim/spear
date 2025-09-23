@@ -50,7 +50,7 @@ SP_SERVICES:
     #   GAME_DEFAULT_MAP: "/Game/Spear/Scenes/apartment_0000/Maps/apartment_0000.apartment_0000"
     #
     #   OVERRIDE_GLOBAL_DEFAULT_GAME_MODE: True
-    #   GLOBAL_DEFAULT_GAME_MODE: "/SpComponents/Blueprints/BP_SpGameMode.BP_SpGameMode_C"
+    #   GLOBAL_DEFAULT_GAME_MODE: "/SpContent/Blueprints/BP_SpGameMode.BP_SpGameMode_C"
     #
 
     OVERRIDE_GAME_DEFAULT_MAP: False

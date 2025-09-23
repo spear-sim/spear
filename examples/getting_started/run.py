@@ -25,7 +25,7 @@ if __name__ == "__main__":
         set_actor_scale_3d_func = game.unreal_service.find_function_by_name(uclass=actor_static_class, function_name="SetActorScale3D")
 
         # spawn object
-        bp_axes_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/SpComponents/Blueprints/BP_Axes.BP_Axes_C")
+        bp_axes_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/SpContent/Blueprints/BP_Axes.BP_Axes_C")
         bp_axes = game.unreal_service.spawn_actor_from_class(uclass=bp_axes_uclass, location={"X": -10.0, "Y": 280.0, "Z": 50.0})
 
         spear.log("bp_axes: ", bp_axes)
