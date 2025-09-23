@@ -22,7 +22,7 @@ physics_constraint_component_classes = ["PhysicsConstraintComponent"]
 def process_scene():
 
     unreal_metadata_dir = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "unreal_metadata"))
-    unreal_metadata_actors_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "actors.json"))
+    unreal_metadata_actors_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "scene.json"))
     assert os.path.exists(unreal_metadata_dir)
     spear.log("Reading JSON file: ", unreal_metadata_actors_json_file)
     with open(unreal_metadata_actors_json_file, "r") as f:
@@ -34,7 +34,7 @@ def process_scene():
     actors = { actor_name: actor_kinematic_tree for actor_name, actor_kinematic_tree in actors.items() if actor_kinematic_tree["root_node"] is not None }
 
     kinematic_trees_dir = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "kinematic_trees"))
-    kinematic_trees_actors_json_file = os.path.realpath(os.path.join(kinematic_trees_dir, "actors.json"))
+    kinematic_trees_actors_json_file = os.path.realpath(os.path.join(kinematic_trees_dir, "scene.json"))
     spear.log("Writing JSON file: ", kinematic_trees_actors_json_file)
     os.makedirs(kinematic_trees_dir, exist_ok=True)
     with open(kinematic_trees_actors_json_file, "w") as f:

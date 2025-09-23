@@ -25,7 +25,7 @@ physics_constraint_component_classes = ["PhysicsConstraintComponent"]
 def process_scene():
 
     kinematic_trees_dir = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "kinematic_trees"))
-    kinematic_trees_actors_json_file = os.path.realpath(os.path.join(kinematic_trees_dir, "actors.json"))
+    kinematic_trees_actors_json_file = os.path.realpath(os.path.join(kinematic_trees_dir, "scene.json"))
     assert os.path.exists(kinematic_trees_dir)
     spear.log("Reading JSON file: ", kinematic_trees_actors_json_file)
     with open(kinematic_trees_actors_json_file, "r") as f:
@@ -35,7 +35,7 @@ def process_scene():
     actors = { actor_name: generate_collision_geometry(actor_name, actor_kinematic_tree) for actor_name, actor_kinematic_tree in actors.items() }
 
     collision_geometry_dir = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "collision_geometry"))
-    collision_geometry_actors_json_file = os.path.realpath(os.path.join(collision_geometry_dir, "actors.json"))
+    collision_geometry_actors_json_file = os.path.realpath(os.path.join(collision_geometry_dir, "scene.json"))
     spear.log("Writing JSON file: ", collision_geometry_actors_json_file)
     os.makedirs(collision_geometry_dir, exist_ok=True)
     with open(collision_geometry_actors_json_file, "w") as f:

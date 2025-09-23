@@ -52,7 +52,7 @@ if args.visual_parity_with_unreal:
 def process_scene():
 
     kinematic_trees_dir = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "kinematic_trees"))
-    actors_json_file = os.path.realpath(os.path.join(kinematic_trees_dir, "actors.json"))
+    actors_json_file = os.path.realpath(os.path.join(kinematic_trees_dir, "scene.json"))
     assert os.path.exists(kinematic_trees_dir)
     spear.log("Reading JSON file: ", actors_json_file)
     with open(actors_json_file, "r") as f:
