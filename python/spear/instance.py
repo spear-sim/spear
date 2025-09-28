@@ -244,6 +244,7 @@ class Instance():
 
             if self._config.SPEAR.LAUNCH_MODE == "editor":
                 assert self._config.SPEAR.INSTANCE.EDITOR_LAUNCH_MODE in ["editor", "game"]
+                assert os.path.exists(self._config.SPEAR.INSTANCE.EDITOR_UPROJECT)
                 launch_executable = self._config.SPEAR.INSTANCE.EDITOR_EXECUTABLE
                 launch_args.append(self._config.SPEAR.INSTANCE.EDITOR_UPROJECT)
                 if self._config.SPEAR.INSTANCE.EDITOR_LAUNCH_MODE == "game":
