@@ -12,8 +12,6 @@ public class SpModuleRules : ModuleRules
 {
     public SpModuleRules(ReadOnlyTargetRules readOnlyTargetRules) : base(readOnlyTargetRules)
     {
-        SP_LOG_CURRENT_FUNCTION();
-
         // Disable precompiled headers entirely because they somehow force full rebuilds in UE 5.5.
         // Additionally, we prefer to avoid precompiled headers for easier debugging of compile errors, and
         // stricter enforcement of include-what-you-use.

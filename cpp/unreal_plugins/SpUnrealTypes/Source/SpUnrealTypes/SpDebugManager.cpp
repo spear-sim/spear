@@ -50,14 +50,8 @@ ASpDebugManager::ASpDebugManager()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    SP_LOG("    this:            ", this);
-    SP_LOG("    SpFuncComponent: ", SpFuncComponent);
-
     SpFuncComponent = Unreal::createSceneComponentInsideOwnerConstructor<USpFuncComponent>(this, "sp_func_component");
     SP_ASSERT(SpFuncComponent);
-
-    SP_LOG("    this:            ", this);
-    SP_LOG("    SpFuncComponent: ", SpFuncComponent);
 
     if (HasAnyFlags(RF_ClassDefaultObject)) {
         SP_LOG("    HasAnyFlags(RF_ClassDefaultObject)");
@@ -72,9 +66,6 @@ ASpDebugManager::ASpDebugManager()
 ASpDebugManager::~ASpDebugManager()
 {
     SP_LOG_CURRENT_FUNCTION();
-
-    SP_LOG("    this:            ", this);
-    SP_LOG("    SpFuncComponent: ", SpFuncComponent);
 }
 
 // CALLED for the CDO
@@ -86,9 +77,6 @@ void ASpDebugManager::PostInitProperties()
     SP_LOG_CURRENT_FUNCTION();
 
     AActor::PostInitProperties();
-
-    SP_LOG("    this:            ", this);
-    SP_LOG("    SpFuncComponent: ", SpFuncComponent);
 }
 
 // NOT CALLED for the CDO
@@ -100,10 +88,6 @@ void ASpDebugManager::PostActorCreated()
     SP_LOG_CURRENT_FUNCTION();
 
     AActor::PostActorCreated();
-
-    SP_LOG("    this:            ", this);
-    SP_LOG("    SpFuncComponent: ", SpFuncComponent);
-
     initializeSpFunc();
 }
 
@@ -116,10 +100,6 @@ void ASpDebugManager::PostLoad()
     SP_LOG_CURRENT_FUNCTION();
 
     AActor::PostLoad();
-
-    SP_LOG("    this:            ", this);
-    SP_LOG("    SpFuncComponent: ", SpFuncComponent);
-
     initializeSpFunc();
 }
 
@@ -132,10 +112,6 @@ void ASpDebugManager::BeginDestroy()
     SP_LOG_CURRENT_FUNCTION();
 
     AActor::BeginDestroy();
-
-    SP_LOG("    this:            ", this);
-    SP_LOG("    SpFuncComponent: ", SpFuncComponent);
-
     terminateSpFunc();
 }
 

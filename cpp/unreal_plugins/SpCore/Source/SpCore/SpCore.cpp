@@ -48,6 +48,7 @@
 #include <GameFramework/PlayerController.h>
 #include <GameFramework/PlayerStart.h>
 #include <Kismet/GameplayStatics.h>
+#include <Kismet/KismetSystemLibrary.h>
 #include <LevelSequence.h>
 #include <LevelSequenceActor.h>
 #include <Materials/Material.h>
@@ -161,6 +162,7 @@ void SpCore::registerClasses()
     UnrealClassRegistrar::registerClass<UClass>("UClass");
     UnrealClassRegistrar::registerClass<UGameplayStatics>("UGameplayStatics");
     UnrealClassRegistrar::registerClass<UGameUserSettings>("UGameUserSettings");
+    UnrealClassRegistrar::registerClass<UKismetSystemLibrary>("UKismetSystemLibrary");
     UnrealClassRegistrar::registerClass<ULevelSequence>("ULevelSequence");
     UnrealClassRegistrar::registerClass<UMaterial>("UMaterial");
     UnrealClassRegistrar::registerClass<UMaterialFunction>("UMaterialFunction");
@@ -220,6 +222,7 @@ void SpCore::unregisterClasses()
     UnrealClassRegistrar::unregisterClass<UClass>("UClass");
     UnrealClassRegistrar::unregisterClass<UGameplayStatics>("UGameplayStatics");
     UnrealClassRegistrar::unregisterClass<UGameUserSettings>("UGameUserSettings");
+    UnrealClassRegistrar::unregisterClass<UKismetSystemLibrary>("UKismetSystemLibrary");
     UnrealClassRegistrar::unregisterClass<ULevelSequence>("ULevelSequence");
     UnrealClassRegistrar::unregisterClass<UMaterial>("UMaterial");
     UnrealClassRegistrar::unregisterClass<UMaterialFunction>("UMaterialFunction");

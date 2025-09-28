@@ -27,9 +27,6 @@ class SPCORE_API USpStableNameComponent : public UActorComponent
 {
     GENERATED_BODY()
 public:
-    USpStableNameComponent();
-    ~USpStableNameComponent() override;
-
     #if WITH_EDITOR // defined in an auto-generated header
         // UActorComponent interface
         void OnComponentCreated() override;

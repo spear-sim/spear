@@ -11,6 +11,7 @@
 #include <GameMapsSettings.h>
 #include <GenericPlatform/GenericPlatformFile.h> // IPakFile
 #include <Misc/CoreDelegates.h>
+#include <UObject/UObjectGlobals.h>              // GetMutableDefault
 
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
@@ -77,5 +78,20 @@ public:
 
             UGameMapsSettings::SetGlobalDefaultGameMode(Unreal::toFString(global_default_game_mode));
         }
+
+        #if WITH_EDITORONLY_DATA // defined in an auto-generated header
+            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_EDITOR_STARTUP_MAP")) {
+                std::string editor_startup_map = Config::get<std::string>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.EDITOR_STARTUP_MAP");
+
+                UGameMapsSettings* game_maps_settings = GetMutableDefault<UGameMapsSettings>();
+                SP_ASSERT(game_maps_settings);
+
+                SP_LOG("    Overriding editor startup map...");
+                SP_LOG("    Old editor startup map: ", Unreal::toStdString(game_maps_settings->EditorStartupMap.GetLongPackageName()));
+                SP_LOG("    New editor startup map: ", editor_startup_map);
+
+                game_maps_settings->EditorStartupMap = Unreal::toFString(editor_startup_map);
+            }
+        #endif
     }
 };

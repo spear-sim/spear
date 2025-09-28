@@ -5,6 +5,7 @@
 
 import argparse
 import pandas as pd
+import posixpath
 import spear
 import spear.utils.editor_utils
 import unreal
@@ -32,6 +33,8 @@ if __name__ == "__main__":
         level_editor_subsystem.load_level(m)
 
         editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
+        assert editor_world_name == posixpath.basename(m)
+
         actors = spear.utils.editor_utils.find_actors()
         spear.log(f"Loaded map: {editor_world_name} (contains {len(actors)} actors)")
 

@@ -12,8 +12,6 @@ public class SpTargetRulesTarget : TargetRules
 {
     public SpTargetRulesTarget(TargetInfo targetInfo) : base(targetInfo)
     {
-        SP_LOG_CURRENT_FUNCTION();
-
         // We need to set this to something other than Game or Editor or Program in order to successfully
         // generate Visual Studio project files. Needs to be overridden in derived classes.
         Type = TargetType.Client;

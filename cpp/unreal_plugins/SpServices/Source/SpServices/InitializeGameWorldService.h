@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 
+#include <Engine/World.h> // UWorld::InitializationValues
 #include <Kismet/GameplayStatics.h>
 #include <Misc/App.h>
 #include <PhysicsEngine/PhysicsSettings.h>
@@ -34,6 +35,36 @@ public:
     }
 
 protected:
+    void postWorldInitialization(UWorld* world, const UWorld::InitializationValues initialization_values) override
+    {
+        SP_LOG_CURRENT_FUNCTION();
+
+        Service::postWorldInitialization(world, initialization_values);
+    }
+
+    void worldCleanup(UWorld* world, bool session_ended, bool cleanup_resources) override
+    {
+        SP_LOG_CURRENT_FUNCTION();
+
+        initialized_ = false;
+
+        if (force_skylight_update_) {
+            SP_LOG("    Setting r.SkylightUpdateEveryFrame: ", force_skylight_update_previous_cvar_value_);
+
+            IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.SkylightUpdateEveryFrame"));
+            cvar->Set(force_skylight_update_previous_cvar_value_);
+
+            force_skylight_update_ = false;
+            force_skylight_update_max_duration_seconds_ = -1.0f;
+            force_skylight_update_previous_cvar_value_ = -1;
+            force_skylight_update_duration_seconds_ = 0.0f;
+        }
+
+        SP_LOG("    Finished cleaning up.");
+
+        Service::worldCleanup(world, session_ended, cleanup_resources);
+    }
+
     void worldBeginPlay() override
     {
         SP_LOG_CURRENT_FUNCTION();
@@ -156,29 +187,6 @@ protected:
             initialized_ = true;
             SP_LOG("    Finished initializing.");
         }
-    }
-
-    void worldCleanup(UWorld* world, bool session_ended, bool cleanup_resources) override
-    {
-        SP_LOG_CURRENT_FUNCTION();
-
-        initialized_ = false;
-
-        if (force_skylight_update_) {
-            SP_LOG("    Setting r.SkylightUpdateEveryFrame: ", force_skylight_update_previous_cvar_value_);
-
-            IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.SkylightUpdateEveryFrame"));
-            cvar->Set(force_skylight_update_previous_cvar_value_);
-
-            force_skylight_update_ = false;
-            force_skylight_update_max_duration_seconds_ = -1.0f;
-            force_skylight_update_previous_cvar_value_ = -1;
-            force_skylight_update_duration_seconds_ = 0.0f;
-        }
-
-        SP_LOG("    Finished cleaning up.");
-
-        Service::worldCleanup(world, session_ended, cleanup_resources);
     }
 
     void beginFrame() override
