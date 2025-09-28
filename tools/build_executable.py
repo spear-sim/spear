@@ -37,7 +37,6 @@ if __name__ == "__main__":
         archive_dir           = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{args.build_config}"))
         run_uat_platform_args = ""
         unreal_tmp_dir        = ""
-        cmd_prefix            = f"conda activate {args.conda_env} & "
 
     elif sys.platform == "darwin":
         target_platform       = "Mac"
