@@ -1,4 +1,5 @@
 #
+# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
@@ -120,34 +121,31 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
             spear.log(log_prefix_str, "Component is a StaticMeshComponent.")
             static_mesh_desc = component_desc["editor_properties"]["static_mesh"]
 
-            # ...that refer to non-null StaticMesh assets...
+            # ...that refer to non-null StaticMesh assets.
             if static_mesh_desc is not None:
                 static_mesh_asset_path = pathlib.PurePosixPath(static_mesh_desc["path"])
                 spear.log(log_prefix_str, "StaticMesh asset path: ", static_mesh_asset_path)
     
-                # ...that are in the /Game/Scenes/<scene_id> directory.
-                if static_mesh_asset_path.parts[:4] == ("/", "Game", "Spear", "Scenes", args.scene_id):
+                obj_path_suffix = f"{os.path.join(*static_mesh_asset_path.parts[1:])}.obj"
+                numerical_parity_obj_path = \
+                    os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "unreal_geometry", "numerical_parity", obj_path_suffix))
+                spear.log(log_prefix_str, "Reading OBJ file: ", numerical_parity_obj_path)
 
-                    obj_path_suffix = f"{os.path.join(*static_mesh_asset_path.parts[4:])}.obj"
-                    numerical_parity_obj_path = \
-                        os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "unreal_geometry", "numerical_parity", obj_path_suffix))
-                    spear.log(log_prefix_str, "Reading OBJ file: ", numerical_parity_obj_path)
+                mesh = trimesh.load_mesh(numerical_parity_obj_path, process=False, validate=False)
+                V_current_component = np.matrix(np.c_[mesh.vertices, np.ones(mesh.vertices.shape[0])]).T
+                V_world = M_world_from_current_component*V_current_component
+                assert np.allclose(V_world[3,:], 1.0)
+                mesh.vertices = V_world.T.A[:,0:3]
 
-                    mesh = trimesh.load_mesh(numerical_parity_obj_path, process=False, validate=False)
-                    V_current_component = np.matrix(np.c_[mesh.vertices, np.ones(mesh.vertices.shape[0])]).T
-                    V_world = M_world_from_current_component*V_current_component
-                    assert np.allclose(V_world[3,:], 1.0)
-                    mesh.vertices = V_world.T.A[:,0:3]
+                if args.color_mode == "unique_color_per_component":
+                    color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
 
-                    if args.color_mode == "unique_color_per_component":
-                        color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
+                # Swap y and z coordinates to match the visual appearance of the Unreal editor.
+                if args.visual_parity_with_unreal:
+                    mesh.vertices = mesh.vertices[:,[0,2,1]]
 
-                    # Swap y and z coordinates to match the visual appearance of the Unreal editor.
-                    if args.visual_parity_with_unreal:
-                        mesh.vertices = mesh.vertices[:,[0,2,1]]
-
-                    mayavi.mlab.triangular_mesh(
-                        mesh.vertices[:,0], mesh.vertices[:,1], mesh.vertices[:,2], mesh.faces, representation="surface", color=color, opacity=mesh_opacity)
+                mayavi.mlab.triangular_mesh(
+                    mesh.vertices[:,0], mesh.vertices[:,1], mesh.vertices[:,2], mesh.faces, representation="surface", color=color, opacity=mesh_opacity)
 
         # Recurse for each child component.
         for child_component_desc in component_desc["children_components"].values():

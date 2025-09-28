@@ -1,4 +1,5 @@
 #
+# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
@@ -9,18 +10,19 @@ import pathlib
 import posixpath
 
 
-if __name__ == '__main__':
+parser = argparse.ArgumentParser()
+parser.add_argument("--p4_depot_name", required=True)
+parser.add_argument("--p4_stream_name", required=True)
+parser.add_argument("--source_path", required=True)
+parser.add_argument("--destination_path", required=True)
+parser.add_argument("--p4_port")
+parser.add_argument("--p4_user")
+parser.add_argument("--p4_password")
+parser.add_argument("--p4_revision")
+args = parser.parse_args()
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--p4_depot_name", required=True)
-    parser.add_argument("--p4_stream_name", required=True)
-    parser.add_argument("--source_path", required=True)
-    parser.add_argument("--destination_path", required=True)
-    parser.add_argument("--p4_port")
-    parser.add_argument("--p4_user")
-    parser.add_argument("--p4_password")
-    parser.add_argument("--p4_revision")
-    args = parser.parse_args()
+
+if __name__ == '__main__':
 
     p4 = P4.P4()
 

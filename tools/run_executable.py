@@ -1,4 +1,5 @@
 #
+# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
@@ -9,15 +10,16 @@ import sys
 import time
 
 
-if __name__ == "__main__":
+parser = argparse.ArgumentParser()
+parser.add_argument("--executable")
+parser.add_argument("--graphics_adaptor")
+parser.add_argument("--map")
+parser.add_argument("--vk_icd_filenames")
+parser.add_argument("--pak_files", nargs="*")
+args = parser.parse_args()
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--executable")
-    parser.add_argument("--graphics_adaptor")
-    parser.add_argument("--map")
-    parser.add_argument("--vk_icd_filenames")
-    parser.add_argument("--pak_files", nargs="*")
-    args = parser.parse_args()
+
+if __name__ == "__main__":
 
     if args.executable is not None:
         executable = args.executable

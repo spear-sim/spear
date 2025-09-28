@@ -1,4 +1,5 @@
 #
+# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
@@ -70,14 +71,14 @@ if __name__ == "__main__":
 
     # create blueprint
     spear.log("Creating blueprint: ", blueprint_path)
-    blueprint_asset, blueprint_subobject_descs = spear.utils.editor_utils.create_blueprint(
+    blueprint_asset, blueprint_subobject_descs = spear.utils.editor_utils.create_blueprint_asset(
         asset_name=blueprint_desc["blueprint_name"],
         package_path=blueprint_desc["blueprint_path"])
 
     # create SpStableNameComponent
     component_name = "sp_stable_name_component"
     spear.log("Creating component: ", component_name)
-    sp_stable_name_component_desc = spear.utils.editor_utils.add_new_subobject(
+    sp_stable_name_component_desc = spear.utils.editor_utils.add_new_subobject_to_blueprint_asset(
         blueprint_asset=blueprint_asset,
         parent_data_handle=blueprint_subobject_descs["root_component"]["data_handle"],
         subobject_name=component_name,
@@ -87,7 +88,7 @@ if __name__ == "__main__":
     for component_desc in blueprint_desc["component_descs"]:
 
         spear.log("Creating component: ", component_desc["name"])
-        static_mesh_component_desc = spear.utils.editor_utils.add_new_subobject(
+        static_mesh_component_desc = spear.utils.editor_utils.add_new_subobject_to_blueprint_asset(
             blueprint_asset=blueprint_asset,
             parent_data_handle=blueprint_subobject_descs["root_component"]["data_handle"],
             subobject_name=component_desc["name"],

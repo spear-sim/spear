@@ -1,4 +1,5 @@
 #
+# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
@@ -14,35 +15,50 @@ import subprocess
 import sys
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--build_config", required=True)
+parser.add_argument("--external_content_dir", required=True)
+parser.add_argument("--paks_dir", required=True)
+parser.add_argument("--unreal_engine_dir", required=True)
+parser.add_argument("--version_tag", required=True)
+parser.add_argument("--conda_script")
+parser.add_argument("--skip_build_common_pak", action="store_true")
+parser.add_argument("--skip_build_scene_paks", action="store_true")
+parser.add_argument("--scene_ids", nargs="*")
+parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
+parser.add_argument("--conda_env", default="spear-env")
+args = parser.parse_args()
+
+assert args.build_config in ["Debug", "DebugGame", "Development", "Shipping", "Test"]
+assert os.path.exists(args.external_content_dir)
+assert os.path.exists(args.unreal_engine_dir)
+assert os.path.exists(args.build_dir)
+
+
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--external_content_dir", required=True)
-    parser.add_argument("--paks_dir", required=True)
-    parser.add_argument("--unreal_engine_dir", required=True)
-    parser.add_argument("--version_tag", required=True)
-    parser.add_argument("--conda_script")
-    parser.add_argument("--skip_build_common_pak", action="store_true")
-    parser.add_argument("--skip_build_scene_paks", action="store_true")
-    parser.add_argument("--scene_ids", nargs="*")
-    parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
-    parser.add_argument("--conda_env", default="spear-env")
-    args = parser.parse_args()
-
-    assert os.path.exists(args.unreal_engine_dir)
-    assert os.path.exists(args.external_content_dir)
-    assert os.path.exists(args.build_dir)
-
     if sys.platform == "win32":
+
         platform       = "Windows"
         unreal_pak_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealPak.exe"))
-        default_pak    = os.path.realpath(os.path.join(args.build_dir, "SpearSim-Win64-Shipping", "Windows", "SpearSim", "Content", "Paks", "SpearSim-Windows.pak"))
+        default_pak    = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-Win64-{args.build_config}", "Windows", "SpearSim", "Content", "Paks", "SpearSim-Windows.pak"))
         cmd_prefix     = f"conda activate {args.conda_env} & "
 
     elif sys.platform == "darwin":
+
+        # TODO: Debug and Test builds only work when the engine is compiled from source, so I don't know the default name of the executable for these build configs
+        if args.build_config == "DebugGame":
+            executable_app = "SpearSim-Mac-DebugGame.app"
+        elif args.build_config == "Development":
+            executable_app = "SpearSim.app"
+        elif args.build_config == "Shipping":
+            executable_app = "SpearSim-Mac-Shipping.app"
+        else:
+            assert False
+
         platform       = "Mac"
         unreal_pak_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UnrealPak"))
-        default_pak    = os.path.realpath(os.path.join(args.build_dir, "SpearSim-Mac-Shipping-Unsigned", "Mac", "SpearSim-Mac-Shipping.app", "Contents", "UE", "SpearSim", "Content", "Paks", "SpearSim-Mac.pak"))
+        default_pak    = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-Mac-{args.build_config}-Unsigned", "Mac", executable_app, "Contents", "UE", "SpearSim", "Content", "Paks", "SpearSim-Mac.pak"))
 
         if args.conda_script:
             if os.path.exists(args.conda_script):
@@ -69,9 +85,10 @@ if __name__ == "__main__":
         cmd_prefix = f". {conda_script}; conda activate {args.conda_env}; "
 
     elif sys.platform == "linux":
+
         platform       = "Linux"
         unreal_pak_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UnrealPak"))
-        default_pak    = os.path.realpath(os.path.join(args.build_dir, "SpearSim-Linux-Shipping", "Linux", "SpearSim", "Content", "Paks", "SpearSim-Linux.pak"))
+        default_pak    = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-Linux-{args.build_config}", "Linux", "SpearSim", "Content", "Paks", "SpearSim-Linux.pak"))
 
         if args.conda_script:
             if os.path.exists(args.conda_script):

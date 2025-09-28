@@ -29,6 +29,7 @@ cpp/unreal_projects/SpearSim/DerivedDataCache
 cpp/unreal_projects/SpearSim/Intermediate
 cpp/unreal_projects/SpearSim/Makefile
 cpp/unreal_projects/SpearSim/Saved
+cpp/unreal_projects/SpearSim/Standalone-DebugGame
 cpp/unreal_projects/SpearSim/Standalone-Development
 cpp/unreal_projects/SpearSim/Standalone-Shipping
 cpp/unreal_projects/SpearSim/CMakeLists.txt

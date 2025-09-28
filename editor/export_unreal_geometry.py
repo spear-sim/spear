@@ -1,4 +1,5 @@
 #
+# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
@@ -19,34 +20,27 @@ asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
 unreal_editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
 level_editor_subsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
 
-editor_world_name = None
+editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
 
 
 def process_scene():
-
-    global editor_world_name
-
-    editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
     spear.log("Processing scene: ", editor_world_name)
 
     actors = spear.utils.editor_utils.find_actors()
-    actors = [ actor for actor in actors if actor.get_editor_property("root_component") is not None ]
+    actors = [ actor for actor in actors if actor.get_editor_property("relevant_for_level_bounds") ]
 
     for actor in actors:
-        spear.log("    Processing actor: ", spear.utils.editor_utils.get_stable_name_for_actor(actor=actor))
+        spear.log("    Processing actor: ", spear.utils.editor_utils.get_stable_name_for_actor(actor))
         generate_unreal_geometry(actor)
 
     spear.log("Done.")
 
 def generate_unreal_geometry(actor):
 
-    global editor_world_name
-
     static_mesh_components  = spear.utils.editor_utils.get_components(actor=actor, component_class=unreal.StaticMeshComponent)
     static_meshes           = [ static_mesh_component.get_editor_property("static_mesh") for static_mesh_component in static_mesh_components ]
     static_meshes           = [ static_mesh for static_mesh in static_meshes if static_mesh is not None ]
     static_mesh_asset_paths = [ pathlib.PurePosixPath(static_mesh.get_path_name()) for static_mesh in static_meshes ]
-    static_mesh_asset_paths = [ path for path in static_mesh_asset_paths if path.parts[:4] == ("/", "Game", "Spear", "Scenes", editor_world_name) ]
 
     for static_mesh_asset_path in static_mesh_asset_paths:
         spear.log("        Exporting asset: ", static_mesh_asset_path)
@@ -57,7 +51,7 @@ def generate_unreal_geometry(actor):
         # the mesh as soon as we're finished exporting from Unreal, and we swap the y and z coordinates back to
         # what they were originally.
 
-        obj_path_suffix = f"{os.path.join(*static_mesh_asset_path.parts[4:])}.obj"
+        obj_path_suffix = f"{os.path.join(*static_mesh_asset_path.parts[1:])}.obj"
         raw_obj_path = os.path.realpath(os.path.join(args.export_dir, "scenes", editor_world_name, "unreal_geometry", "raw", obj_path_suffix))
 
         errors = []
@@ -101,7 +95,7 @@ def generate_unreal_geometry(actor):
         mesh.faces = mesh.faces[:,[0,2,1]]
         mesh.visual = trimesh.visual.ColorVisuals()
 
-        obj_dir_suffix = os.path.join(*static_mesh_asset_path.parts[4:-1])
+        obj_dir_suffix = os.path.join(*static_mesh_asset_path.parts[1:-1])
         numerical_parity_obj_dir = os.path.realpath(os.path.join(args.export_dir, "scenes", editor_world_name, "unreal_geometry", "numerical_parity", obj_dir_suffix))
         numerical_parity_obj_path = os.path.realpath(os.path.join(args.export_dir, "scenes", editor_world_name, "unreal_geometry", "numerical_parity", obj_path_suffix))
         os.makedirs(numerical_parity_obj_dir, exist_ok=True)

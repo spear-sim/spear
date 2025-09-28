@@ -1,4 +1,5 @@
 //
+// Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
@@ -12,7 +13,6 @@
 
 // Unreal classes
 #include <Engine/LocalPlayer.h>
-#include <LevelSequence.h>
 
 // ChaosVehiclesPlugin classes
 #include <WheeledVehiclePawn.h>
@@ -209,7 +209,6 @@ void SpServices::registerClasses()
 
     // MovieRenderPipeline classes
     UnrealClassRegistrar::registerEngineSubsystemClass<UMoviePipelineQueueEngineSubsystem>("UMoviePipelineQueueEngineSubsystem");
-    UnrealClassRegistrar::registerClass<ULevelSequence>("ULevelSequence");
     UnrealClassRegistrar::registerClass<UMoviePipelineExecutorJob>("UMoviePipelineExecutorJob");
     UnrealClassRegistrar::registerClass<UMoviePipelinePrimaryConfig>("UMoviePipelinePrimaryConfig");
 }
@@ -248,7 +247,6 @@ void SpServices::unregisterClasses()
 
     // MovieRenderPipeline classes
     UnrealClassRegistrar::unregisterEngineSubsystemClass<UMoviePipelineQueueEngineSubsystem>("UMoviePipelineQueueEngineSubsystem");
-    UnrealClassRegistrar::unregisterClass<ULevelSequence>("ULevelSequence");
     UnrealClassRegistrar::unregisterClass<UMoviePipelineExecutorJob>("UMoviePipelineExecutorJob");
     UnrealClassRegistrar::unregisterClass<UMoviePipelinePrimaryConfig>("UMoviePipelinePrimaryConfig");
 }

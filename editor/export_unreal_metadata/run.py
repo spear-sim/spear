@@ -1,4 +1,5 @@
 #
+# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
@@ -19,13 +20,14 @@ args = parser.parse_args()
 unreal_editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
 level_editor_subsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
 
+editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
+
 editor_properties_csv_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "editor_properties.csv"))
 df_editor_properties = pd.read_csv(editor_properties_csv_file)
 
 
 def process_scene():
     
-    editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
     spear.log("Processing scene: " + editor_world_name)
 
     actors = spear.utils.editor_utils.find_actors()
@@ -77,7 +79,7 @@ def get_component_desc(component):
         "debug_info": {"str": str(component)},
         "editor_properties": get_editor_property_descs(component),
         "name": spear.utils.editor_utils.get_stable_name_for_component(component=component),
-        "post_process_info": {},
+        "pipeline_info": {},
         "unreal_name": component.get_name()}
 
     if isinstance(component, unreal.SceneComponent):
@@ -100,17 +102,17 @@ def get_editor_property_descs(uobject):
     # the CSV file by manually copying and pasting from the Unreal documentation.
 
     # Get all Python attributes, and all editor properties from our CSV file.
-    uobject_class_names = [uobject.__class__.__name__] + [ base_class.__name__ for base_class in uobject.__class__.__bases__[::-1] ] # base-to-derived order
-    editor_property_names = set(dir(uobject))
+    uobject_class_names = [ c.__name__ for c in uobject.__class__.mro() ] # derived-to-base order
+    editor_property_candidate_names = set(dir(uobject))
     for uobject_class_name in uobject_class_names:
-        editor_property_names = editor_property_names | set(df_editor_properties.loc[df_editor_properties["class"] == uobject_class_name]["editor_property"])
+        editor_property_candidate_names = editor_property_candidate_names | set(df_editor_properties.loc[df_editor_properties["class"] == uobject_class_name]["editor_property"])
 
-    # Guess-and-check all editor properties.
+    # Guess-and-check all editor property candidates.
     editor_property_descs = {}
-    for editor_property_name in editor_property_names:
+    for editor_property_candidate_name in editor_property_candidate_names:
         try:
-            editor_property = uobject.get_editor_property(editor_property_name)
-            editor_property_descs[editor_property_name] = get_editor_property_desc(editor_property)
+            editor_property = uobject.get_editor_property(editor_property_candidate_name)
+            editor_property_descs[editor_property_candidate_name] = get_editor_property_desc(editor_property)
         except:
             pass
 

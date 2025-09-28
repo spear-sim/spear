@@ -1,4 +1,5 @@
 #
+# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
@@ -17,16 +18,15 @@ import xml.etree.ElementTree
 parser = argparse.ArgumentParser()
 parser.add_argument("--pipeline_dir", required=True)
 parser.add_argument("--scene_id", required=True)
-parser.add_argument("--ignore_actors")
+parser.add_argument("--ignore_actors", nargs="*")
 parser.add_argument("--color_mode", default="unique_color_per_geom")
 args = parser.parse_args()
 
 assert args.color_mode in ["single_color", "unique_color_per_actor", "unique_color_per_body", "unique_color_per_merge_id", "unique_color_per_geom"]
 
+ignore_actors = []
 if args.ignore_actors is not None:
-    ignore_actors = args.ignore_actors.split(",")
-else:
-    ignore_actors = []
+    ignore_actors = args.ignore_actors
 
 np.random.seed(0)
 
@@ -211,11 +211,11 @@ def add_mujoco_elements_for_kinematic_tree_node(
     rotation_z_axis = transform_parent_node_from_current_node["rotation"][:,2].A1
     assert np.allclose(np.cross(rotation_x_axis, rotation_y_axis), rotation_z_axis)
 
-    # TODO: get static-vs-dynamic flag from the JSON data, use better heuristic for avoiding interpenetrations
-    if "Meshes/05_chair" not in actor_name:
-        body_type = "static"
-    else:
+    # TODO: get dynamic-vs-static flag from the JSON data, use better heuristic for avoiding interpenetrations
+    if "Meshes/05_chair" in actor_name:
         body_type = "dynamic"
+    else:
+        body_type = "static"
 
     if body_type == "static":
         pos_offset = np.matrix([0.0, 0.0, 0.0]).T
@@ -295,7 +295,7 @@ def get_mujoco_pos_str(pos):
     return " ".join([ str(value) for value in pos.A1 ])
 
 def get_mujoco_xyaxes_str(rotation):
-    return f"{" ".join([ str(value) for value in rotation[:,0].A1 ])} {" ".join([ str(value) for value in rotation[:,1].A1 ])}"
+    return f"{' '.join([ str(value) for value in rotation[:,0].A1 ])} {' '.join([ str(value) for value in rotation[:,1].A1 ])}"
 
 def get_mujoco_scale_str(scale):
     return " ".join([ str(value) for value in np.diag(scale) ])

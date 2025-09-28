@@ -1,4 +1,5 @@
 #
+# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
@@ -8,19 +9,20 @@ import pathlib
 import spear
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--external_content_dir", required=True)
+parser.add_argument("--unreal_project_content_dir", required=True)
+parser.add_argument("--create", action="store_true")
+parser.add_argument("--remove", action="store_true")
+parser.add_argument("--skip_create_directories", action="store_true")
+parser.add_argument("--skip_remove_directories", action="store_true")
+parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
+args = parser.parse_args()
+
+assert args.create + args.remove == 1
+
+
 if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--external_content_dir", required=True)
-    parser.add_argument("--unreal_project_content_dir", required=True)
-    parser.add_argument("--create", action="store_true")
-    parser.add_argument("--remove", action="store_true")
-    parser.add_argument("--skip_create_directories", action="store_true")
-    parser.add_argument("--skip_remove_directories", action="store_true")
-    parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
-    args = parser.parse_args()
-
-    assert args.create + args.remove == 1
 
     external_content_dir = os.path.realpath(args.external_content_dir)
 

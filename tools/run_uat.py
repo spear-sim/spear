@@ -1,4 +1,5 @@
 #
+# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
@@ -10,19 +11,20 @@ import subprocess
 import sys
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--unreal_engine_dir", required=True)
+parser.add_argument("--skip_cook_default_maps", action="store_true")
+parser.add_argument("--cook_dirs", nargs="*")
+parser.add_argument("--cook_maps", nargs="*")
+parser.add_argument("--build_config", default="Development")
+parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
+args, unknown_args = parser.parse_known_args() # get unknown args to pass to RunUAT
+
+assert os.path.exists(args.unreal_engine_dir)
+assert args.build_config in ["Debug", "DebugGame", "Development", "Shipping", "Test"]
+
+
 if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--unreal_engine_dir", required=True)
-    parser.add_argument("--skip_cook_default_maps", action="store_true")
-    parser.add_argument("--cook_dirs", nargs="*")
-    parser.add_argument("--cook_maps", nargs="*")
-    parser.add_argument("--build_config", default="Development")
-    parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
-    args, unknown_args = parser.parse_known_args() # get remaining args to pass to RunUAT
-
-    assert os.path.exists(args.unreal_engine_dir)
-    assert args.build_config in ["Debug", "DebugGame", "Development", "Shipping", "Test"]
 
     if sys.platform == "win32":
         run_uat_script = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.bat"))
@@ -58,7 +60,7 @@ if __name__ == "__main__":
     uproject_name = os.path.splitext(os.path.split(uproject)[1])[0]
     archive_dir = os.path.realpath(os.path.join(unreal_project_dir, f"Standalone-{args.build_config}"))
 
-    # assemble dirs to cook
+    # assemble dirs and maps to cook
 
     cook_dirs = []
     if args.cook_dirs is not None:

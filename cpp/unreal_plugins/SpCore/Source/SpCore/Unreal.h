@@ -1,4 +1,5 @@
 //
+// Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
@@ -226,21 +227,21 @@ public:
         std::derived_from<TNonSceneComponent, TReturnAsNonSceneComponent>
     static TReturnAsNonSceneComponent* createComponentInsideOwnerConstructor(AActor* owner, const std::string& component_name)
     {
-        return Cast<TReturnAsNonSceneComponent>(createComponentInsideOwnerConstructorByClass(TNonSceneComponent::StaticClass(), owner, component_name));
+        return Cast<TReturnAsNonSceneComponent>(createComponentInsideOwnerConstructorByClass(TNonSceneComponent::StaticClass(), owner, component_name)); // no RTTI available
     }
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
     static TReturnAsSceneComponent* createSceneComponentInsideOwnerConstructor(AActor* owner, const std::string& scene_component_name)
     {
-        return Cast<TReturnAsSceneComponent>(createSceneComponentInsideOwnerConstructorByClass(TSceneComponent::StaticClass(), owner, scene_component_name));
+        return Cast<TReturnAsSceneComponent>(createSceneComponentInsideOwnerConstructorByClass(TSceneComponent::StaticClass(), owner, scene_component_name)); // no RTTI available
     }
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
     static TReturnAsSceneComponent* createSceneComponentInsideOwnerConstructor(UObject* owner, USceneComponent* parent, const std::string& scene_component_name)
     {
-        return Cast<TReturnAsSceneComponent>(createSceneComponentInsideOwnerConstructorByClass(TSceneComponent::StaticClass(), owner, parent, scene_component_name));
+        return Cast<TReturnAsSceneComponent>(createSceneComponentInsideOwnerConstructorByClass(TSceneComponent::StaticClass(), owner, parent, scene_component_name)); // no RTTI available
     }
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
@@ -253,7 +254,7 @@ public:
     static UActorComponent* createComponentInsideOwnerConstructorByClass(UClass* component_class, AActor* owner, const std::string& component_name)
     {
         SP_ASSERT(owner);
-        UActorComponent* component = Cast<UActorComponent>(owner->CreateDefaultSubobject(toFName(component_name), component_class, component_class, true, false));
+        UActorComponent* component = Cast<UActorComponent>(owner->CreateDefaultSubobject(toFName(component_name), component_class, component_class, true, false)); // no RTTI available
         SP_ASSERT(component);
         return component;
     }
@@ -261,7 +262,7 @@ public:
     static USceneComponent* createSceneComponentInsideOwnerConstructorByClass(UClass* scene_component_class, AActor* owner, const std::string& scene_component_name)
     {
         SP_ASSERT(owner);
-        USceneComponent* scene_component = Cast<USceneComponent>(owner->CreateDefaultSubobject(toFName(scene_component_name), scene_component_class, scene_component_class, true, false));
+        USceneComponent* scene_component = Cast<USceneComponent>(owner->CreateDefaultSubobject(toFName(scene_component_name), scene_component_class, scene_component_class, true, false)); // no RTTI available
         SP_ASSERT(scene_component);
         owner->SetRootComponent(scene_component);
         return scene_component;
@@ -271,7 +272,7 @@ public:
     {
         SP_ASSERT(owner);
         SP_ASSERT(parent);
-        USceneComponent* scene_component = Cast<USceneComponent>(owner->CreateDefaultSubobject(toFName(scene_component_name), scene_component_class, scene_component_class, true, false));
+        USceneComponent* scene_component = Cast<USceneComponent>(owner->CreateDefaultSubobject(toFName(scene_component_name), scene_component_class, scene_component_class, true, false)); // no RTTI available
         SP_ASSERT(scene_component);
         scene_component->SetupAttachment(parent);
         return scene_component;
@@ -286,21 +287,21 @@ public:
         std::derived_from<TNonSceneComponent, TReturnAsNonSceneComponent>
     static TReturnAsNonSceneComponent* createComponentOutsideOwnerConstructor(AActor* owner, const std::string& component_name)
     {
-        return Cast<TReturnAsNonSceneComponent>(createComponentOutsideOwnerConstructorByClass(TNonSceneComponent::StaticClass(), owner, component_name));
+        return Cast<TReturnAsNonSceneComponent>(createComponentOutsideOwnerConstructorByClass(TNonSceneComponent::StaticClass(), owner, component_name)); // no RTTI available
     }
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
     static TReturnAsSceneComponent* createSceneComponentOutsideOwnerConstructor(AActor* owner, const std::string& scene_component_name)
     {
-        return Cast<TReturnAsSceneComponent>(createSceneComponentOutsideOwnerConstructorByClass(TSceneComponent::StaticClass(), owner, scene_component_name));
+        return Cast<TReturnAsSceneComponent>(createSceneComponentOutsideOwnerConstructorByClass(TSceneComponent::StaticClass(), owner, scene_component_name)); // no RTTI available
     }
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
     static TReturnAsSceneComponent* createSceneComponentOutsideOwnerConstructor(UObject* owner, USceneComponent* parent, const std::string& scene_component_name)
     {
-        return Cast<TReturnAsSceneComponent>(createSceneComponentOutsideOwnerConstructorByClass(TSceneComponent::StaticClass(), owner, parent, scene_component_name));
+        return Cast<TReturnAsSceneComponent>(createSceneComponentOutsideOwnerConstructorByClass(TSceneComponent::StaticClass(), owner, parent, scene_component_name)); // no RTTI available
     }
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
@@ -1308,7 +1309,7 @@ private:
         std::string component_path;
 
         if (path_tokens.size() == 1) {
-            actor = const_cast<TReturnAsActor*>(Cast<TReturnAsActor>(owner));
+            actor = const_cast<TReturnAsActor*>(Cast<TReturnAsActor>(owner)); // no RTTI available
             component_path = path_tokens.at(0);
         } else if (path_tokens.size() == 2) {
             actor = Unreal::findActorByName<TActor, TReturnAsActor>(world, path_tokens.at(0));

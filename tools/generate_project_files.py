@@ -1,4 +1,5 @@
 #
+# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
@@ -10,14 +11,15 @@ import subprocess
 import sys
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--unreal_engine_dir", required=True)
+parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
+args = parser.parse_args()
+
+assert os.path.exists(args.unreal_engine_dir)
+
+
 if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--unreal_engine_dir", required=True)
-    parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
-    args = parser.parse_args()
-
-    assert os.path.exists(args.unreal_engine_dir)
 
     if sys.platform == "win32":
         generate_project_files_script = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "Build.bat"))

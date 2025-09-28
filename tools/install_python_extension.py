@@ -1,4 +1,5 @@
 #
+# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
@@ -10,14 +11,15 @@ import subprocess
 import sys
 
 
-if __name__ == "__main__":
+parser = argparse.ArgumentParser()
+parser.add_argument("--conda_script")
+parser.add_argument("--cxx_compiler")
+parser.add_argument("--unreal_engine_dir") # only required on Linux
+parser.add_argument("--conda_env", default="spear-env")
+args = parser.parse_args()
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--conda_script")
-    parser.add_argument("--cxx_compiler")
-    parser.add_argument("--unreal_engine_dir") # only required on Linux
-    parser.add_argument("--conda_env", default="spear-env")
-    args = parser.parse_args()
+
+if __name__ == "__main__":
 
     #
     # define build variables

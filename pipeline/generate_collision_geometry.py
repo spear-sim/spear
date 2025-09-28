@@ -1,4 +1,5 @@
 #
+# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
@@ -93,9 +94,9 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
             M_current_node_from_current_component = spear.utils.pipeline_utils.get_matrix_from_transform(transform=transform_current_node_from_current_component)
 
             static_mesh_asset_path = pathlib.PurePosixPath(static_mesh_component_desc["editor_properties"]["static_mesh"]["path"])
-            assert static_mesh_asset_path.parts[:4] == ("/", "Game", "Spear", "Scenes", args.scene_id)
 
-            obj_path_suffix = f"{os.path.join(*static_mesh_asset_path.parts[4:])}.obj"
+            obj_path_suffix = f"{os.path.join(*static_mesh_asset_path.parts[1:])}.obj"
+
             numerical_parity_obj_path = \
                 os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "unreal_geometry", "numerical_parity", obj_path_suffix))
             spear.log(log_prefix_str, "Reading OBJ file: ", numerical_parity_obj_path)

@@ -1,4 +1,5 @@
 #
+# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
@@ -9,12 +10,13 @@ import spear
 import sys
 
 
-if __name__ == "__main__":
+parser = argparse.ArgumentParser()
+parser.add_argument("--version_tag", required=True)
+parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
+args = parser.parse_args()
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--version_tag", required=True)
-    parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
-    args = parser.parse_args()
+
+if __name__ == "__main__":
 
     if sys.platform == "win32":
         platform_name     = "Win64"

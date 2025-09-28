@@ -1,4 +1,5 @@
 #
+# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
@@ -108,7 +109,7 @@ class Service():
         return None
 
 
-# Convert a collection of objects to a collection of JSON strings so they can be passed to a service.
+# Convert to a collection of JSON strings from a collection of objects so they can be passed to a service.
 def to_json_strings(objs):
     if isinstance(objs, list):
         return [ to_json_string(obj=o) for o in objs ]
@@ -117,7 +118,7 @@ def to_json_strings(objs):
     else:
         assert False
 
-# Convert an object to a JSON string so it can be passed to a service.
+# Convert to a JSON string from an object so it can be passed to a service.
 def to_json_string(obj, stringify=True):
     if isinstance(obj, str):
         return obj
@@ -146,7 +147,7 @@ def to_json_string(obj, stringify=True):
         return json.dumps(obj)
 
 
-# Convert a collection of JSON strings returned by a service to a collection of dicts.
+# Convert to a collection of dicts from a collection of JSON strings returned by a service.
 def try_to_dicts(json_strings, default_value=None):
     if isinstance(json_strings, list):
         return [ try_to_dict(json_string=s, default_value=default_value) for s in json_strings ]
@@ -155,7 +156,7 @@ def try_to_dicts(json_strings, default_value=None):
     else:
         assert False
 
-# Convert a JSON string returned by a service to a dict.
+# Convert to a dict from a JSON string returned by a service.
 def try_to_dict(json_string, default_value=None):
     try:
         return json.loads(json_string)
@@ -166,22 +167,22 @@ def try_to_dict(json_string, default_value=None):
             return default_value
 
 
-# Convert a handle into a Ptr object that can be passed to a service.
+# Convert to a Ptr object that can be passed to a service from a handle.
 def to_ptr(handle):
     return Ptr(handle)
 
-# Convert a string returned by a service into a handle that can be passed a service.
+# Convert to a handle from a string returned by a service.
 def to_handle(string):
     assert string.startswith("0x")
     return int(string, 16)
 
 
-# Convert a NumPy array backed by shared memory to a Shared object that can be passed to a service.
+# Convert to a Shared object that can be passed to a service from a NumPy array backed by shared memory.
 def to_shared(array, shared_memory_handle):
     return Shared(array, shared_memory_handle)
 
 
-# Convert a NumPy array to a packed array.
+# Convert to a packed array from a NumPy array.
 def to_packed_array(array, dest_byte_order, usage_flags):
     if isinstance(array, np.ndarray):
         packed_array = spear_ext.PackedArray()
@@ -207,7 +208,7 @@ def to_packed_array(array, dest_byte_order, usage_flags):
     else:
         assert False
 
-# Convert a packed array to a NumPy array.
+# Convert to a NumPy array from a packed array.
 def to_array(packed_array, src_byte_order, usage_flags, shared_memory_handles):
     if packed_array.data_source == "Internal":
         assert packed_array.data.shape == tuple(packed_array.shape)
@@ -227,7 +228,7 @@ def to_array(packed_array, src_byte_order, usage_flags, shared_memory_handles):
         assert False
 
 
-# Convert a collection of NumPy arrays to a collection of packed arrays.
+# Convert to a collection of packed arrays from a collection of NumPy arrays.
 def to_packed_arrays(arrays, dest_byte_order, usage_flags):
     if isinstance(arrays, list):
         return [ to_packed_array(array=a, dest_byte_order=dest_byte_order, usage_flags=usage_flags) for a in arrays ]
@@ -236,7 +237,7 @@ def to_packed_arrays(arrays, dest_byte_order, usage_flags):
     else:
         assert False
 
-# Convert a collection of packed arrays to a collection of NumPy arrays.
+# Convert to a collection of NumPy arrays from a collection of packed arrays.
 def to_arrays(packed_arrays, src_byte_order, usage_flags, shared_memory_handles):
     if isinstance(packed_arrays, list):
         return [ to_array(packed_array=p, src_byte_order=src_byte_order, usage_flags=usage_flags, shared_memory_handles=shared_memory_handles) for p in packed_arrays ]
@@ -246,7 +247,7 @@ def to_arrays(packed_arrays, src_byte_order, usage_flags, shared_memory_handles)
         assert False
 
 
-# Convert a collection of arrays, unreal objects, and an info string to a data bundle.
+# Convert to a data bundle from {a collection of arrays, a collection of unreal objects, an info string}.
 def to_data_bundle(dest_byte_order, usage_flags, arrays={}, unreal_objs={}, info=""):
     assert dest_byte_order is not None
     assert usage_flags is not None
@@ -256,7 +257,7 @@ def to_data_bundle(dest_byte_order, usage_flags, arrays={}, unreal_objs={}, info
     data_bundle.info = info
     return data_bundle
 
-# Convert a data bundle to a collection of arrays, unreal objects, and an info string.
+# Convert to {a collection of arrays, a collection of unreal objects, an info string} from a data bundle.
 def to_data_bundle_dict(data_bundle, src_byte_order, usage_flags, shared_memory_handles):
     return {
         "arrays": to_arrays(packed_arrays=data_bundle.packed_arrays, src_byte_order=src_byte_order, usage_flags=["ReturnValue"], shared_memory_handles=shared_memory_handles),
@@ -264,7 +265,7 @@ def to_data_bundle_dict(data_bundle, src_byte_order, usage_flags, shared_memory_
         "info": data_bundle.info}
 
 
-# Convert to a NumPy matrix from an Unreal rotator. See pipeline.py for more details on Unreal's Euler angle conventions.
+# Convert to a NumPy matrix from an Unreal rotator. See utils/pipeline_utils.py for more details on Unreal's Euler angle conventions.
 def to_matrix_from_rotator(rotator):
     assert isinstance(rotator, dict)
     assert set(["roll", "pitch", "yaw"]) == set(rotator.keys())
@@ -273,7 +274,7 @@ def to_matrix_from_rotator(rotator):
     yaw   = np.deg2rad(rotator["yaw"])
     return np.matrix(scipy.spatial.transform.Rotation.from_euler("xyz", [roll, pitch, yaw]).as_matrix())
 
-# Convert from a NumPy array or matrix to an Unreal vector.
+# Convert to an Unreal vector from a NumPy array or matrix.
 def to_vector_from_array(array):
     if isinstance(array, np.matrix):
         assert array.shape == (3, 1)

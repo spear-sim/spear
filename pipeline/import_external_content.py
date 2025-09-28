@@ -1,4 +1,5 @@
 #
+# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
@@ -12,36 +13,37 @@ import subprocess
 import sys
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--destination_content_path", required=True)
+parser.add_argument("--source_content_path", required=True)
+parser.add_argument("--source_unreal_project_dir", required=True)
+parser.add_argument("--unreal_engine_dir", required=True)
+parser.add_argument("--destination_unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
+parser.add_argument("--temp_dir", default="tmp")
+args = parser.parse_args()
+
+assert os.path.exists(args.unreal_engine_dir)
+
+#
+# Our strategy for importing external content from a source project into a destination project,
+# potentially into a different location in the Content Browser, is to perform a renaming step in a
+# minimal temporary Unreal project. The reason for doing it this way is as follows. Performing bulk
+# renaming operations only seem to work reliably if the assets being renamed are not currently loaded.
+# So, bulk asset renaming will not work in the case where source assets are loaded by a source project's
+# project's default map, and we therefore do our renaming in a minimal temporary project.
+#
+# However, an important consequence of this design decision is that both the source and destination
+# content paths need to be valid in our minimal project. This prevents us from using content paths that
+# refer to plugin folders, even if the source path is valid in the source project and the destination
+# path is valid in the destination project, since these content paths will not be valid in our minimal
+# temporary project. Therefore, only "/Game" content paths are supported in this script.
+#
+
+assert pathlib.PurePosixPath(args.source_content_path).parts[1] == "Game"
+assert pathlib.PurePosixPath(args.destination_content_path).parts[1] == "Game"
+
+
 if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--destination_content_path", required=True)
-    parser.add_argument("--source_content_path", required=True)
-    parser.add_argument("--source_unreal_project_dir", required=True)
-    parser.add_argument("--unreal_engine_dir", required=True)
-    parser.add_argument("--destination_unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
-    parser.add_argument("--temp_dir", default="tmp")
-    args = parser.parse_args()
-
-    assert os.path.exists(args.unreal_engine_dir)
-
-    #
-    # Our strategy for importing external content from a source project into a destination project,
-    # potentially into a different location in the Content Browser, is to perform a renaming step in a
-    # minimal temporary Unreal project. The reason for doing it this way is as follows. Performing bulk
-    # renaming operations only seem to work reliably if the assets being renamed are not currently loaded.
-    # So, bulk asset renaming will not work in the case where source assets are loaded by a source project's
-    # project's default map, and we therefore do our renaming in a minimal temporary project.
-    #
-    # However, an important consequence of this design decision is that both the source and destination
-    # content paths need to be valid in our minimal project. This prevents us from using content paths that
-    # refer to plugin folders, even if the source path is valid in the source project and the destination
-    # path is valid in the destination project, since these content paths will not be valid in our minimal
-    # temporary project. Therefore, only "/Game" content paths are supported in this script.
-    #
-
-    assert pathlib.PurePosixPath(args.source_content_path).parts[1] == "Game"
-    assert pathlib.PurePosixPath(args.destination_content_path).parts[1] == "Game"
 
     if sys.platform == "win32":
         unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealEditor-Cmd.exe"))

@@ -1,4 +1,5 @@
 //
+// Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
@@ -18,6 +19,7 @@
 
 #include "SpUnrealTypes/SpPlayerController.h"
 #include "SpUnrealTypes/SpSpectatorPawn.h"
+#include "SpUnrealTypes/SpDebugCameraController.h"
 
 ASpGameMode::ASpGameMode()
 {
@@ -34,6 +36,8 @@ ASpGameMode::~ASpGameMode()
 
 void ASpGameMode::PostLogin(APlayerController* new_player)
 {
+    SP_LOG_CURRENT_FUNCTION();
+
     AGameModeBase::PostLogin(new_player);
 
     // Set the stable name for the DefaultPawnClass instance so we can find it later. We only do this if the
@@ -43,6 +47,11 @@ void ASpGameMode::PostLogin(APlayerController* new_player)
     if (pawn && Unreal::hasStableName(pawn)) {
         Unreal::setStableName(pawn, "__SP_DEFAULT_PAWN__");
     }
+
+    // Spawn custom debug camera.
+    FActorSpawnParameters actor_spawn_parameters;
+    actor_spawn_parameters.Instigator = new_player->GetInstigator();
+    sp_debug_camera_controller_ = GetWorld()->SpawnActor<ASpDebugCameraController>(actor_spawn_parameters);
 }
 
 void ASpGameMode::SpAddOnScreenDebugMessage(float display_time, FString message)
@@ -56,4 +65,24 @@ void ASpGameMode::SpAddOnScreenDebugMessage(float display_time, FString message)
     FColor color            = FColor::Yellow;
     std::string message_str = SP_LOG_GET_PREFIX() + Unreal::toStdString(message);
     GEngine->AddOnScreenDebugMessage(key, display_time, color, Unreal::toFString(message_str));
+}
+
+void ASpGameMode::SpToggleDebugCamera()
+{
+    APlayerController* player_controller = GetWorld()->GetFirstPlayerController();
+    SP_ASSERT(player_controller);
+
+    // currently enabled so disable
+    if (sp_debug_camera_controller_->OriginalPlayer && sp_debug_camera_controller_->OriginalControllerRef) {
+        SP_ASSERT(!player_controller->Player);
+        sp_debug_camera_controller_->OriginalPlayer->SwitchController(sp_debug_camera_controller_->OriginalControllerRef);
+        sp_debug_camera_controller_->OnDeactivate(sp_debug_camera_controller_->OriginalControllerRef);
+        SP_ASSERT(player_controller->Player);
+
+    // currently disabled (and the default debug camera is disabled) so enable
+    } else if (player_controller->Player) {
+        sp_debug_camera_controller_->OnActivate(player_controller);
+        player_controller->Player->SwitchController(sp_debug_camera_controller_);
+         SP_ASSERT(!player_controller->Player);
+    }
 }

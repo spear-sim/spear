@@ -1,4 +1,5 @@
 #
+# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
@@ -14,27 +15,28 @@ import subprocess
 import sys
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--include_assets_file", required=True)
+parser.add_argument("--pak_file", required=True)
+parser.add_argument("--unreal_engine_dir", required=True)
+parser.add_argument("--cook_dirs_file")
+parser.add_argument("--cook_maps_file")
+parser.add_argument("--exclude_assets_file")
+parser.add_argument("--skip_cook_default_maps", action="store_true")
+parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
+args = parser.parse_args()
+
+assert os.path.exists(args.unreal_engine_dir)
+assert os.path.exists(args.include_assets_file)
+
+if args.cook_dirs_file is not None:
+    assert os.path.exists(args.cook_dirs_file)
+
+if args.exclude_assets_file is not None:
+    assert os.path.exists(args.exclude_assets_file)
+
+        
 if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--include_assets_file", required=True)
-    parser.add_argument("--pak_file", required=True)
-    parser.add_argument("--unreal_engine_dir", required=True)
-    parser.add_argument("--cook_dirs_file")
-    parser.add_argument("--cook_maps_file")
-    parser.add_argument("--exclude_assets_file")
-    parser.add_argument("--skip_cook_default_maps", action="store_true")
-    parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
-    args = parser.parse_args()
-
-    assert os.path.exists(args.unreal_engine_dir)
-    assert os.path.exists(args.include_assets_file)
-
-    if args.cook_dirs_file is not None:
-        assert os.path.exists(args.cook_dirs_file)
-
-    if args.exclude_assets_file is not None:
-        assert os.path.exists(args.exclude_assets_file)
 
     if sys.platform == "win32":
         platform          = "Windows"

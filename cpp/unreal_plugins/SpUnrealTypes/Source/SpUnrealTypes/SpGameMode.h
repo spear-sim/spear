@@ -1,4 +1,5 @@
 //
+// Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
@@ -6,7 +7,11 @@
 
 #include <Containers/UnrealString.h> // FString
 #include <GameFramework/GameModeBase.h>
+#include <Templates/SubclassOf.h>
 #include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION
+#include <UObject/ObjectPtr.h>
+
+#include "SpUnrealTypes/SpDebugCameraController.h"
 
 #include "SpGameMode.generated.h"
 
@@ -30,11 +35,17 @@ public:
     ASpGameMode();
     ~ASpGameMode() override;
 
-    // AGameModeBase interface
+    // AGameMode interface
     void PostLogin(APlayerController* new_player) override;
 
 private:
     // Call this function by typing the following into the Unreal console: SpAddOnScreenDebugMessage 10.0 Hello World
     UFUNCTION(Exec)
     void SpAddOnScreenDebugMessage(float display_time, FString message);
+
+    // Toggle custom debug camera
+    UFUNCTION(Exec)
+    void SpToggleDebugCamera();
+
+    ASpDebugCameraController* sp_debug_camera_controller_ = nullptr;
 };

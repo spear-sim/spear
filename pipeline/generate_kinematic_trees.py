@@ -1,4 +1,5 @@
 #
+# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
@@ -28,8 +29,19 @@ def process_scene():
     with open(unreal_metadata_actors_json_file, "r") as f:
         actors_json = json.load(f)
 
+    # In editor/export_unreal_geometry.py, we only export geometry for actors for which relevant_for_level_bounds
+    # is True. We apply the same filter here to limit our kinematic tree scene representation to only include
+    # actors that have exported scene geometry.
+
     actors = actors_json
     actors = { actor_name: actor_desc for actor_name, actor_desc in actors.items() if actor_desc["root_component"] is not None }
+
+    for actor_name, actor_desc in actors.items():
+        if "relevant_for_level_bounds" not in actor_desc["editor_properties"].keys():
+            spear.log(actor_name)
+            assert False
+
+    actors = { actor_name: actor_desc for actor_name, actor_desc in actors.items() if actor_desc["editor_properties"]["relevant_for_level_bounds"] }
     actors = { actor_name: get_kinematic_tree(actor_desc) for actor_name, actor_desc in actors.items() }
     actors = { actor_name: actor_kinematic_tree for actor_name, actor_kinematic_tree in actors.items() if actor_kinematic_tree["root_node"] is not None }
 
@@ -83,23 +95,21 @@ def get_kinematic_tree_node(actor_name, component_desc, component_is_root_within
         # Only attempt to add geometry to the current node if the current component is a StaticMeshComponent...
         if component_desc["class"] in static_mesh_component_classes:
 
-            # ...that refers to a non-null StaticMesh asset...
+            # ...that refers to a non-null StaticMesh asset.
             static_mesh_desc = component_desc["editor_properties"]["static_mesh"]
             if static_mesh_desc is not None:
                 static_mesh_asset_path = pathlib.PurePosixPath(static_mesh_desc["path"])
     
-                # ...that is in the /Game/Spear/Scenes/<scene_id> directory.
-                if static_mesh_asset_path.parts[:5] == ("/", "Game", "Spear", "Scenes", args.scene_id):
-                    spear.log(log_prefix_str, "Component is a StaticMeshComponent with valid geometry.")
+                spear.log(log_prefix_str, "Component is a StaticMeshComponent with valid geometry.")
 
-                    has_valid_geometry = True
+                has_valid_geometry = True
 
-                    # The accumulated transform maps from the current component to the current node.
-                    component_desc["pipeline_info"]["generate_kinematic_trees"] = {}
-                    component_desc["pipeline_info"]["generate_kinematic_trees"]["transform_current_node_from_current_component"] = \
-                        spear.utils.pipeline_utils.get_transform_data_from_transform(transform=transform_node_from_current_component)
+                # The accumulated transform maps from the current component to the current node.
+                component_desc["pipeline_info"]["generate_kinematic_trees"] = {}
+                component_desc["pipeline_info"]["generate_kinematic_trees"]["transform_current_node_from_current_component"] = \
+                    spear.utils.pipeline_utils.get_transform_data_from_transform(transform=transform_node_from_current_component)
 
-                    kinematic_tree_node["static_mesh_components"][component_name] = component_desc
+                kinematic_tree_node["static_mesh_components"][component_name] = component_desc
 
         # Recurse for each child component.
         physics_constraint_components = component_desc["children_components"]

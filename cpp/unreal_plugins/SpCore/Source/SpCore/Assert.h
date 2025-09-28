@@ -1,4 +1,5 @@
 //
+// Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // Copyright(c) 2004 Gregory Pakosz. Licensed under the WTFPLv2 License <http://www.wtfpl.net>.
 //
