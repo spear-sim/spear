@@ -18,8 +18,6 @@ args, unknown_args = parser.parse_known_args() # get unknown args to pass to inn
 level_editor_subsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
 unreal_editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
 
-editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
-
 
 if __name__ == "__main__":
 
@@ -33,6 +31,7 @@ if __name__ == "__main__":
         spear.log("Loading map: ", m)
         level_editor_subsystem.load_level(m)
 
+        editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
         actors = spear.utils.editor_utils.find_actors()
         spear.log(f"Loaded map: {editor_world_name} (contains {len(actors)} actors)")
 
