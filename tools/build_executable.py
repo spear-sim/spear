@@ -34,7 +34,7 @@ if __name__ == "__main__":
     if sys.platform == "win32":
         target_platform       = "Win64"
         run_uat_script        = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.bat"))
-        archive_dir           = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{args.build_config}"))
+        archive_dir           = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{args.build_config}-Unsigned"))
         run_uat_platform_args = ""
         unreal_tmp_dir        = ""
 

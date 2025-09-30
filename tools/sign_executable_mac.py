@@ -49,16 +49,16 @@ if __name__ == "__main__":
 
     assert os.path.exists(input_dir)
 
-    # # make sure output_dir and notarize_dir are empty
-    # shutil.rmtree(notarize_dir, ignore_errors=True)
-    # shutil.rmtree(output_dir, ignore_errors=True)
+    # make sure output_dir and notarize_dir are empty
+    shutil.rmtree(notarize_dir, ignore_errors=True)
+    shutil.rmtree(output_dir, ignore_errors=True)
 
     # create the temp directory
     spear.log("Creating directory if it does not already exist: ", notarize_dir)
     os.makedirs(notarize_dir, exist_ok=True)
 
-    # # create a copy of the executable in output_dir and use it throughout this file
-    # shutil.copytree(input_dir, output_dir)
+    # create a copy of the executable in output_dir and use it throughout this file
+    shutil.copytree(input_dir, output_dir)
 
     # TODO: Debug and Test builds only work when the engine is compiled from source, so I don't know the default name of the executable for these build configs
     if args.build_config == "DebugGame":
@@ -99,7 +99,10 @@ if __name__ == "__main__":
 
     # Creating Distribution-Signed Code for Mac
     #     https://developer.apple.com/forums/thread/701514#701514021
-    for file in sign_files:
+    for sign_file in sign_files:
+
+        os.path.exists(sign_file)
+
         cmd = [
             "codesign",
             "--force",
@@ -110,7 +113,7 @@ if __name__ == "__main__":
             "--entitlements", args.entitlements_file,
             "--sign",
             args.apple_developer_id,
-            file]
+            sign_file]
         spear.log("Executing: ", ' '.join(cmd))
         subprocess.run(cmd, check=True)
 
@@ -121,10 +124,9 @@ if __name__ == "__main__":
             "--deep",
             "--strict",
             "--verbose",
-            file]
+            sign_file]
         spear.log("Executing: ", ' '.join(cmd))
         ps = subprocess.Popen(cmd, stderr=subprocess.PIPE, text=True) # need to use stderr instead of stdout
-
         valid_on_disk = None
         satisfies_designated_requirement = None
         for line in ps.stderr: # need to use stderr instead of stdout
@@ -166,7 +168,6 @@ if __name__ == "__main__":
         "--wait"]
     spear.log("Executing: ", ' '.join(cmd))
     ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
-
     submission_id = None
     status = None
     for line in ps.stdout:
@@ -177,8 +178,6 @@ if __name__ == "__main__":
             status = line.split("  status: ")[1].strip()
     ps.wait()
     ps.stdout.close()
-
-    # validate submission ID
     assert submission_id is not None
 
     # Fetching the Notary Log
@@ -200,7 +199,7 @@ if __name__ == "__main__":
     with open(log_file) as f:
         spear.log_no_prefix(json.dumps(json.load(f), indent=4))
 
-    # validate status
+    # validate status from previous cmd
     assert status == "Accepted"
 
     # Customizing the Notarization Workflow - staple the executable
