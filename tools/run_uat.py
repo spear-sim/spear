@@ -13,6 +13,7 @@ import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--unreal_engine_dir", required=True)
+parser.add_argument("--clean_archive_dir", action="store_true")
 parser.add_argument("--skip_cook_default_maps", action="store_true")
 parser.add_argument("--cook_dirs", nargs="*")
 parser.add_argument("--cook_maps", nargs="*")
@@ -60,7 +61,11 @@ if __name__ == "__main__":
     uproject_name = os.path.splitext(os.path.split(uproject)[1])[0]
     archive_dir = os.path.realpath(os.path.join(unreal_project_dir, f"Standalone-{args.build_config}"))
 
-    # assemble dirs and maps to cook
+    if args.clean_archive_dir and os.path.exists(archive_dir):
+        spear.log("Archive directory exists, removing: ", archive_dir)
+        shutil.rmtree(archive_dir, ignore_errors=True)
+
+    # assemble dirs to cook
 
     cook_dirs = []
     if args.cook_dirs is not None:

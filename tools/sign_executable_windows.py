@@ -23,7 +23,7 @@ parser.add_argument("--ssl_totp_secret", required=True)
 parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
 args = parser.parse_args()
 
-assert os.path.exists(args.code_sign_dir)
+assert os.path.exists(args.code_sign_tool_dir)
 assert os.path.exists(args.build_dir)
 assert args.build_config in ["Debug", "DebugGame", "Development", "Shipping", "Test"]
 
@@ -33,22 +33,28 @@ if __name__ == "__main__":
     input_dir = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-Win64-{args.build_config}-Unsigned"))
     output_dir = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-Win64-{args.build_config}"))
 
+    # TODO: Debug and Test builds only work when the engine is compiled from source, so I don't know the default name of the executable for these build configs
+    if args.build_config == "DebugGame":
+        executable_name = "SpearSim-Win64-DebugGame"
+    elif args.build_config == "Development":
+        executable_name = "SpearSim"
+    elif args.build_config == "Shipping":
+        executable_name = "SpearSim-Win64-Shipping"
+    else:
+        assert False
+
     assert os.path.exists(input_dir)
 
-    # make sure output_dir and staging_dir are empty
+    # make sure output_dir is empty
     shutil.rmtree(output_dir, ignore_errors=True)
-
-    # create the temp directory
-    spear.log("Creating directory if it does not already exist: ", staging_dir)
-    os.makedirs(staging_dir, exist_ok=True)
 
     # create a copy of the executable in output_dir and use it throughout this file
     shutil.copytree(input_dir, output_dir)
 
     # files that need to be codesigned
     sign_files = [
-        os.path.join("Windows", "SpearSim", "Binaries", "Win64", "Binaries", f"SpearSim-Win64-{args.build_config}.exe"),
-        os.path.join("Windows", "SpearSim", "Binaries", "Win64", "Binaries", f"SpearSim-Win64-{args.build_config}-Cmd.exe"),
+        os.path.join("Windows", "SpearSim", "Binaries", "Win64", f"{executable_name}.exe"),
+        os.path.join("Windows", "SpearSim", "Binaries", "Win64", f"{executable_name}-Cmd.exe"),
         os.path.join("Windows", "SpearSim.exe")]
 
     cwd = os.getcwd()
@@ -73,11 +79,13 @@ if __name__ == "__main__":
 
     for sign_file in sign_files:
 
+        spear.log("Signing file: ", sign_file)
+
         input_file = os.path.realpath(os.path.join(input_dir, sign_file))
         output_file = os.path.realpath(os.path.join(output_dir, sign_file))
-        output_dir = os.path.dirname(input_file)
-        os.path.exists(input_file)
-        os.path.exists(output_dir)
+        output_dir_internal = os.path.dirname(output_file)
+        assert os.path.exists(input_file)
+        assert os.path.exists(output_dir_internal)
 
         cmd = [
             "CodeSignTool.bat",
@@ -87,7 +95,7 @@ if __name__ == "__main__":
             f"-password={args.ssl_password}",
             f"-totp_secret={args.ssl_totp_secret}",
             f"-input_file_path={input_file}",
-            f"-output_dir_path={output_dir}"]
+            f"-output_dir_path={output_dir_internal}"]
         spear.log("Executing: ", ' '.join(cmd))
         ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
 
@@ -101,17 +109,17 @@ if __name__ == "__main__":
         assert signed
 
         # verify
-        cmd = ["signtool", "verify", "/pa", f"{output_file}"]
+        cmd = ["signtool", "verify", "/a", "/pa", "/all", "/v", f"{output_file}"]
         spear.log("Executing: ", ' '.join(cmd))
-        ps = subprocess.Popen(cmd, stderr=subprocess.PIPE, text=True) # need to use stderr instead of stdout
+        ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
 
         verified = None
-        for line in ps.stderr: # need to use stderr instead of stdout
+        for line in ps.stdout:
             spear.log_no_prefix(line)
-            if success is None and "Successfully verified: " in line:
+            if verified is None and "Successfully verified: " in line:
                 verified = True
         ps.wait()
-        ps.stderr.close() # need to use stderr instead of stdout
+        ps.stdout.close()
         assert verified
 
         spear.log(f"{output_file} has been successfully signed.")

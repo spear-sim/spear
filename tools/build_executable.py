@@ -57,16 +57,57 @@ if __name__ == "__main__":
 
     assert os.path.exists(run_uat_script)
 
+    if os.path.exists(archive_dir):
+        spear.log("Archive directory exists, removing: ", archive_dir)
+        shutil.rmtree(archive_dir, ignore_errors=True)
+
     # We need to remove this temp dir (created by the Unreal build process) because it contains paths from previous builds.
     # If we don't do this step, we will get many warnings during this build:
     #     Warning: Unable to generate long package name for path/to/previous/build/Some.uasset because FilenameToLongPackageName failed to convert
     #     'path/to/previous/build/Some.uasset'. Attempt result was '../../../../../../path/to/previous/build/path/to/previous/build/Some', but the
     #     path contains illegal characters '.'
+
     if os.path.exists(unreal_tmp_dir):
         spear.log("Unreal Engine cache directory exists, removing: ", unreal_tmp_dir)
         shutil.rmtree(unreal_tmp_dir, ignore_errors=True)
 
-    # assemble dirs and maps to cook
+    # Remove signatures from BootstrapPackagedGame-Win64-Shipping.exe because otherwise we won't be able to sign our own executable:
+    #    https://forums.unrealengine.com/t/why-does-windows-signtool-report-packaged-exe-as-invalid/367924/10
+
+    if sys.platform == "win32":
+
+        bootstrap_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "BootstrapPackagedGame-Win64-Shipping.exe"))
+        bootstrap_backup_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "BootstrapPackagedGame-Win64-Shipping.backup.exe"))
+
+        spear.log("Determining if file has any signatures: ", bootstrap_bin)
+
+        # verify
+        cmd = ["signtool", "verify", "/a", "/pa", "/all", "/v", bootstrap_bin]
+        spear.log("Executing: ", ' '.join(cmd))
+        ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
+
+        num_signatures = None
+        for line in ps.stdout:
+            spear.log_no_prefix(line)
+            if num_signatures is None and "Number of signatures successfully Verified: " in line:
+                num_signatures = int(line.split("Number of signatures successfully Verified: ")[1].strip())
+        ps.wait()
+        ps.stdout.close()
+        assert num_signatures is not None
+
+        if num_signatures > 0:
+            spear.log("File already has one ore more signatures, creating backup: ", bootstrap_backup_bin)
+            shutil.copy(bootstrap_bin, bootstrap_backup_bin)
+
+            spear.log("Removing all signatures from file: ", bootstrap_bin)
+            cmd = ["signtool", "remove", "/s", "/v", bootstrap_bin]
+            spear.log("Executing: ", ' '.join(cmd))
+            subprocess.run(cmd, check=True)
+            spear.log("Removed all signatures, proceeding...")
+        else:
+            spear.log("File has no signatures, proceeding...")
+
+    # assemble dirs to cook
 
     cook_dirs = []
     if args.cook_dirs is not None:
