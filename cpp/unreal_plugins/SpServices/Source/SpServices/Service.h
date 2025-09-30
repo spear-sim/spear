@@ -24,7 +24,7 @@
 #include "SpCore/SpArray.h"
 #include "SpCore/Unreal.h"
 
-class SPSERVICES_API Service
+class SPSERVICES_API Service // SPSERVICES_API is needed here because the SpServicesEditor module needs to link against this class 
 {
 public:
 
