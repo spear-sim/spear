@@ -19,7 +19,7 @@
 
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
-#include "SpCore/FuncRegistrar.h"
+#include "SpCore/FuncRegistry.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 
@@ -47,129 +47,129 @@ struct FObjectInstancingGraph;
 //
 
 //
-// Registrars for getting subsystems using a class name instead of template parameters
+// Registries for getting subsystems using a class name instead of template parameters
 //
 
-extern SPCORE_API FuncRegistrar<UEngineSubsystem*>             g_get_engine_subsystem_by_type_func_registrar;
-extern SPCORE_API FuncRegistrar<USubsystem*, UWorld*>          g_get_subsystem_by_type_func_registrar;
-extern SPCORE_API FuncRegistrar<USubsystem*, UWorld*, UClass*> g_get_subsystem_by_class_func_registrar;
+extern SPCORE_API FuncRegistry<UEngineSubsystem*>             g_get_engine_subsystem_by_type_func_registry;
+extern SPCORE_API FuncRegistry<USubsystem*, UWorld*>          g_get_subsystem_by_type_func_registry;
+extern SPCORE_API FuncRegistry<USubsystem*, UWorld*, UClass*> g_get_subsystem_by_class_func_registry;
 
 //
-// Registrars for getting a static class or static struct using a class name instead of template parameters
+// Registries for getting a static class or static struct using a class name instead of template parameters
 //
 
-extern SPCORE_API FuncRegistrar<UClass*> g_get_static_class_func_registrar;
-extern SPCORE_API FuncRegistrar<UStruct*> g_get_static_struct_func_registrar;
+extern SPCORE_API FuncRegistry<UClass*> g_get_static_class_func_registry;
+extern SPCORE_API FuncRegistry<UStruct*> g_get_static_struct_func_registry;
 
 //
-// Registrars for finding actors using a class name instead of template parameters
+// Registries for finding actors using a class name instead of template parameters
 //
 
-extern SPCORE_API FuncRegistrar<std::vector<AActor*>, const UWorld*, const std::vector<std::string>&, bool>           g_find_actors_by_name_func_registrar;
-extern SPCORE_API FuncRegistrar<std::vector<AActor*>, const UWorld*, const std::string&>                              g_find_actors_by_tag_func_registrar;
-extern SPCORE_API FuncRegistrar<std::vector<AActor*>, const UWorld*, const std::vector<std::string>&>                 g_find_actors_by_tag_any_func_registrar;
-extern SPCORE_API FuncRegistrar<std::vector<AActor*>, const UWorld*, const std::vector<std::string>&>                 g_find_actors_by_tag_all_func_registrar;
-extern SPCORE_API FuncRegistrar<std::vector<AActor*>, const UWorld*>                                                  g_find_actors_by_type_func_registrar;
+extern SPCORE_API FuncRegistry<std::vector<AActor*>, const UWorld*, const std::vector<std::string>&, bool>           g_find_actors_by_name_func_registry;
+extern SPCORE_API FuncRegistry<std::vector<AActor*>, const UWorld*, const std::string&>                              g_find_actors_by_tag_func_registry;
+extern SPCORE_API FuncRegistry<std::vector<AActor*>, const UWorld*, const std::vector<std::string>&>                 g_find_actors_by_tag_any_func_registry;
+extern SPCORE_API FuncRegistry<std::vector<AActor*>, const UWorld*, const std::vector<std::string>&>                 g_find_actors_by_tag_all_func_registry;
+extern SPCORE_API FuncRegistry<std::vector<AActor*>, const UWorld*>                                                  g_find_actors_by_type_func_registry;
 
-extern SPCORE_API FuncRegistrar<std::map<std::string, AActor*>, const UWorld*, const std::vector<std::string>&, bool> g_find_actors_by_name_as_map_func_registrar;
-extern SPCORE_API FuncRegistrar<std::map<std::string, AActor*>, const UWorld*, const std::string&>                    g_find_actors_by_tag_as_map_func_registrar;
-extern SPCORE_API FuncRegistrar<std::map<std::string, AActor*>, const UWorld*, const std::vector<std::string>&>       g_find_actors_by_tag_any_as_map_func_registrar;
-extern SPCORE_API FuncRegistrar<std::map<std::string, AActor*>, const UWorld*, const std::vector<std::string>&>       g_find_actors_by_tag_all_as_map_func_registrar;
-extern SPCORE_API FuncRegistrar<std::map<std::string, AActor*>, const UWorld*>                                        g_find_actors_by_type_as_map_func_registrar;
+extern SPCORE_API FuncRegistry<std::map<std::string, AActor*>, const UWorld*, const std::vector<std::string>&, bool> g_find_actors_by_name_as_map_func_registry;
+extern SPCORE_API FuncRegistry<std::map<std::string, AActor*>, const UWorld*, const std::string&>                    g_find_actors_by_tag_as_map_func_registry;
+extern SPCORE_API FuncRegistry<std::map<std::string, AActor*>, const UWorld*, const std::vector<std::string>&>       g_find_actors_by_tag_any_as_map_func_registry;
+extern SPCORE_API FuncRegistry<std::map<std::string, AActor*>, const UWorld*, const std::vector<std::string>&>       g_find_actors_by_tag_all_as_map_func_registry;
+extern SPCORE_API FuncRegistry<std::map<std::string, AActor*>, const UWorld*>                                        g_find_actors_by_type_as_map_func_registry;
 
-extern SPCORE_API FuncRegistrar<AActor*, const UWorld*, const std::string&>                                           g_find_actor_by_name_func_registrar;
-extern SPCORE_API FuncRegistrar<AActor*, const UWorld*, const std::string&>                                           g_find_actor_by_tag_func_registrar;
-extern SPCORE_API FuncRegistrar<AActor*, const UWorld*, const std::vector<std::string>&>                              g_find_actor_by_tag_any_func_registrar;
-extern SPCORE_API FuncRegistrar<AActor*, const UWorld*, const std::vector<std::string>&>                              g_find_actor_by_tag_all_func_registrar;
-extern SPCORE_API FuncRegistrar<AActor*, const UWorld*>                                                               g_find_actor_by_type_func_registrar;
-
-//
-// Registrars for getting components using a class name instead of template parameters
-//
-
-extern SPCORE_API FuncRegistrar<std::vector<UActorComponent*>, const AActor*, const std::vector<std::string>&, bool, bool>           g_get_components_by_name_func_registrar;
-extern SPCORE_API FuncRegistrar<std::vector<UActorComponent*>, const AActor*, const std::vector<std::string>&, bool, bool>           g_get_components_by_path_func_registrar;
-extern SPCORE_API FuncRegistrar<std::vector<UActorComponent*>, const AActor*, const std::string&, bool>                              g_get_components_by_tag_func_registrar;
-extern SPCORE_API FuncRegistrar<std::vector<UActorComponent*>, const AActor*, const std::vector<std::string>&, bool>                 g_get_components_by_tag_any_func_registrar;
-extern SPCORE_API FuncRegistrar<std::vector<UActorComponent*>, const AActor*, const std::vector<std::string>&, bool>                 g_get_components_by_tag_all_func_registrar;
-extern SPCORE_API FuncRegistrar<std::vector<UActorComponent*>, const AActor*, bool>                                                  g_get_components_by_type_func_registrar;
-
-extern SPCORE_API FuncRegistrar<std::map<std::string, UActorComponent*>, const AActor*, const std::vector<std::string>&, bool, bool> g_get_components_by_name_as_map_func_registrar;
-extern SPCORE_API FuncRegistrar<std::map<std::string, UActorComponent*>, const AActor*, const std::vector<std::string>&, bool, bool> g_get_components_by_path_as_map_func_registrar;
-extern SPCORE_API FuncRegistrar<std::map<std::string, UActorComponent*>, const AActor*, const std::string&, bool>                    g_get_components_by_tag_as_map_func_registrar;
-extern SPCORE_API FuncRegistrar<std::map<std::string, UActorComponent*>, const AActor*, const std::vector<std::string>&, bool>       g_get_components_by_tag_any_as_map_func_registrar;
-extern SPCORE_API FuncRegistrar<std::map<std::string, UActorComponent*>, const AActor*, const std::vector<std::string>&, bool>       g_get_components_by_tag_all_as_map_func_registrar;
-extern SPCORE_API FuncRegistrar<std::map<std::string, UActorComponent*>, const AActor*, bool>                                        g_get_components_by_type_as_map_func_registrar;
-
-extern SPCORE_API FuncRegistrar<UActorComponent*, const AActor*, const std::string&, bool>                                           g_get_component_by_name_func_registrar;
-extern SPCORE_API FuncRegistrar<UActorComponent*, const AActor*, const std::string&, bool>                                           g_get_component_by_path_func_registrar;
-extern SPCORE_API FuncRegistrar<UActorComponent*, const AActor*, const std::string&, bool>                                           g_get_component_by_tag_func_registrar;
-extern SPCORE_API FuncRegistrar<UActorComponent*, const AActor*, const std::vector<std::string>&, bool>                              g_get_component_by_tag_any_func_registrar;
-extern SPCORE_API FuncRegistrar<UActorComponent*, const AActor*, const std::vector<std::string>&, bool>                              g_get_component_by_tag_all_func_registrar;
-extern SPCORE_API FuncRegistrar<UActorComponent*, const AActor*, bool>                                                               g_get_component_by_type_func_registrar;
+extern SPCORE_API FuncRegistry<AActor*, const UWorld*, const std::string&>                                           g_find_actor_by_name_func_registry;
+extern SPCORE_API FuncRegistry<AActor*, const UWorld*, const std::string&>                                           g_find_actor_by_tag_func_registry;
+extern SPCORE_API FuncRegistry<AActor*, const UWorld*, const std::vector<std::string>&>                              g_find_actor_by_tag_any_func_registry;
+extern SPCORE_API FuncRegistry<AActor*, const UWorld*, const std::vector<std::string>&>                              g_find_actor_by_tag_all_func_registry;
+extern SPCORE_API FuncRegistry<AActor*, const UWorld*>                                                               g_find_actor_by_type_func_registry;
 
 //
-// Registrars for getting children components using a class name instead of template parameters
+// Registries for getting components using a class name instead of template parameters
 //
 
-extern SPCORE_API FuncRegistrar<std::vector<USceneComponent*>, const AActor*, const std::vector<std::string>&, bool, bool>           g_get_children_components_by_name_from_actor_func_registrar;
-extern SPCORE_API FuncRegistrar<std::vector<USceneComponent*>, const AActor*, const std::string&, bool>                              g_get_children_components_by_tag_from_actor_func_registrar;
-extern SPCORE_API FuncRegistrar<std::vector<USceneComponent*>, const AActor*, const std::vector<std::string>&, bool>                 g_get_children_components_by_tag_any_from_actor_func_registrar;
-extern SPCORE_API FuncRegistrar<std::vector<USceneComponent*>, const AActor*, const std::vector<std::string>&, bool>                 g_get_children_components_by_tag_all_from_actor_func_registrar;
-extern SPCORE_API FuncRegistrar<std::vector<USceneComponent*>, const AActor*, bool>                                                  g_get_children_components_by_type_from_actor_func_registrar;
+extern SPCORE_API FuncRegistry<std::vector<UActorComponent*>, const AActor*, const std::vector<std::string>&, bool, bool>           g_get_components_by_name_func_registry;
+extern SPCORE_API FuncRegistry<std::vector<UActorComponent*>, const AActor*, const std::vector<std::string>&, bool, bool>           g_get_components_by_path_func_registry;
+extern SPCORE_API FuncRegistry<std::vector<UActorComponent*>, const AActor*, const std::string&, bool>                              g_get_components_by_tag_func_registry;
+extern SPCORE_API FuncRegistry<std::vector<UActorComponent*>, const AActor*, const std::vector<std::string>&, bool>                 g_get_components_by_tag_any_func_registry;
+extern SPCORE_API FuncRegistry<std::vector<UActorComponent*>, const AActor*, const std::vector<std::string>&, bool>                 g_get_components_by_tag_all_func_registry;
+extern SPCORE_API FuncRegistry<std::vector<UActorComponent*>, const AActor*, bool>                                                  g_get_components_by_type_func_registry;
 
-extern SPCORE_API FuncRegistrar<std::map<std::string, USceneComponent*>, const AActor*, const std::vector<std::string>&, bool, bool> g_get_children_components_by_name_as_map_from_actor_func_registrar;
-extern SPCORE_API FuncRegistrar<std::map<std::string, USceneComponent*>, const AActor*, const std::string&, bool>                    g_get_children_components_by_tag_as_map_from_actor_func_registrar;
-extern SPCORE_API FuncRegistrar<std::map<std::string, USceneComponent*>, const AActor*, const std::vector<std::string>&, bool>       g_get_children_components_by_tag_any_as_map_from_actor_func_registrar;
-extern SPCORE_API FuncRegistrar<std::map<std::string, USceneComponent*>, const AActor*, const std::vector<std::string>&, bool>       g_get_children_components_by_tag_all_as_map_from_actor_func_registrar;
-extern SPCORE_API FuncRegistrar<std::map<std::string, USceneComponent*>, const AActor*, bool>                                        g_get_children_components_by_type_as_map_from_actor_func_registrar;
+extern SPCORE_API FuncRegistry<std::map<std::string, UActorComponent*>, const AActor*, const std::vector<std::string>&, bool, bool> g_get_components_by_name_as_map_func_registry;
+extern SPCORE_API FuncRegistry<std::map<std::string, UActorComponent*>, const AActor*, const std::vector<std::string>&, bool, bool> g_get_components_by_path_as_map_func_registry;
+extern SPCORE_API FuncRegistry<std::map<std::string, UActorComponent*>, const AActor*, const std::string&, bool>                    g_get_components_by_tag_as_map_func_registry;
+extern SPCORE_API FuncRegistry<std::map<std::string, UActorComponent*>, const AActor*, const std::vector<std::string>&, bool>       g_get_components_by_tag_any_as_map_func_registry;
+extern SPCORE_API FuncRegistry<std::map<std::string, UActorComponent*>, const AActor*, const std::vector<std::string>&, bool>       g_get_components_by_tag_all_as_map_func_registry;
+extern SPCORE_API FuncRegistry<std::map<std::string, UActorComponent*>, const AActor*, bool>                                        g_get_components_by_type_as_map_func_registry;
 
-extern SPCORE_API FuncRegistrar<USceneComponent*, const AActor*, const std::string&, bool>                                           g_get_child_component_by_name_from_actor_func_registrar;
-extern SPCORE_API FuncRegistrar<USceneComponent*, const AActor*, const std::string&, bool>                                           g_get_child_component_by_tag_from_actor_func_registrar;
-extern SPCORE_API FuncRegistrar<USceneComponent*, const AActor*, const std::vector<std::string>&, bool>                              g_get_child_component_by_tag_any_from_actor_func_registrar;
-extern SPCORE_API FuncRegistrar<USceneComponent*, const AActor*, const std::vector<std::string>&, bool>                              g_get_child_component_by_tag_all_from_actor_func_registrar;
-extern SPCORE_API FuncRegistrar<USceneComponent*, const AActor*, bool>                                                               g_get_child_component_by_type_from_actor_func_registrar;
-
-extern SPCORE_API FuncRegistrar<std::vector<USceneComponent*>, const USceneComponent*, const std::vector<std::string>&, bool, bool>           g_get_children_components_by_name_from_scene_component_func_registrar;
-extern SPCORE_API FuncRegistrar<std::vector<USceneComponent*>, const USceneComponent*, const std::string&, bool>                              g_get_children_components_by_tag_from_scene_component_func_registrar;
-extern SPCORE_API FuncRegistrar<std::vector<USceneComponent*>, const USceneComponent*, const std::vector<std::string>&, bool>                 g_get_children_components_by_tag_any_from_scene_component_func_registrar;
-extern SPCORE_API FuncRegistrar<std::vector<USceneComponent*>, const USceneComponent*, const std::vector<std::string>&, bool>                 g_get_children_components_by_tag_all_from_scene_component_func_registrar;
-extern SPCORE_API FuncRegistrar<std::vector<USceneComponent*>, const USceneComponent*, bool>                                                  g_get_children_components_by_type_from_scene_component_func_registrar;
-
-extern SPCORE_API FuncRegistrar<std::map<std::string, USceneComponent*>, const USceneComponent*, const std::vector<std::string>&, bool, bool> g_get_children_components_by_name_as_map_from_scene_component_func_registrar;
-extern SPCORE_API FuncRegistrar<std::map<std::string, USceneComponent*>, const USceneComponent*, const std::string&, bool>                    g_get_children_components_by_tag_as_map_from_scene_component_func_registrar;
-extern SPCORE_API FuncRegistrar<std::map<std::string, USceneComponent*>, const USceneComponent*, const std::vector<std::string>&, bool>       g_get_children_components_by_tag_any_as_map_from_scene_component_func_registrar;
-extern SPCORE_API FuncRegistrar<std::map<std::string, USceneComponent*>, const USceneComponent*, const std::vector<std::string>&, bool>       g_get_children_components_by_tag_all_as_map_from_scene_component_func_registrar;
-extern SPCORE_API FuncRegistrar<std::map<std::string, USceneComponent*>, const USceneComponent*, bool>                                        g_get_children_components_by_type_as_map_from_scene_component_func_registrar;
-
-extern SPCORE_API FuncRegistrar<USceneComponent*, const USceneComponent*, const std::string&, bool>                                           g_get_child_component_by_name_from_scene_component_func_registrar;
-extern SPCORE_API FuncRegistrar<USceneComponent*, const USceneComponent*, const std::string&, bool>                                           g_get_child_component_by_tag_from_scene_component_func_registrar;
-extern SPCORE_API FuncRegistrar<USceneComponent*, const USceneComponent*, const std::vector<std::string>&, bool>                              g_get_child_component_by_tag_any_from_scene_component_func_registrar;
-extern SPCORE_API FuncRegistrar<USceneComponent*, const USceneComponent*, const std::vector<std::string>&, bool>                              g_get_child_component_by_tag_all_from_scene_component_func_registrar;
-extern SPCORE_API FuncRegistrar<USceneComponent*, const USceneComponent*, bool>                                                               g_get_child_component_by_type_from_scene_component_func_registrar;
+extern SPCORE_API FuncRegistry<UActorComponent*, const AActor*, const std::string&, bool>                                           g_get_component_by_name_func_registry;
+extern SPCORE_API FuncRegistry<UActorComponent*, const AActor*, const std::string&, bool>                                           g_get_component_by_path_func_registry;
+extern SPCORE_API FuncRegistry<UActorComponent*, const AActor*, const std::string&, bool>                                           g_get_component_by_tag_func_registry;
+extern SPCORE_API FuncRegistry<UActorComponent*, const AActor*, const std::vector<std::string>&, bool>                              g_get_component_by_tag_any_func_registry;
+extern SPCORE_API FuncRegistry<UActorComponent*, const AActor*, const std::vector<std::string>&, bool>                              g_get_component_by_tag_all_func_registry;
+extern SPCORE_API FuncRegistry<UActorComponent*, const AActor*, bool>                                                               g_get_component_by_type_func_registry;
 
 //
-// Registrars for spawning actors using a class name instead of template parameters
+// Registries for getting children components using a class name instead of template parameters
 //
 
-extern SPCORE_API FuncRegistrar<AActor*, UWorld*, const FVector&, const FRotator&, const FActorSpawnParameters&> g_spawn_actor_func_registrar;
+extern SPCORE_API FuncRegistry<std::vector<USceneComponent*>, const AActor*, const std::vector<std::string>&, bool, bool>           g_get_children_components_by_name_from_actor_func_registry;
+extern SPCORE_API FuncRegistry<std::vector<USceneComponent*>, const AActor*, const std::string&, bool>                              g_get_children_components_by_tag_from_actor_func_registry;
+extern SPCORE_API FuncRegistry<std::vector<USceneComponent*>, const AActor*, const std::vector<std::string>&, bool>                 g_get_children_components_by_tag_any_from_actor_func_registry;
+extern SPCORE_API FuncRegistry<std::vector<USceneComponent*>, const AActor*, const std::vector<std::string>&, bool>                 g_get_children_components_by_tag_all_from_actor_func_registry;
+extern SPCORE_API FuncRegistry<std::vector<USceneComponent*>, const AActor*, bool>                                                  g_get_children_components_by_type_from_actor_func_registry;
+
+extern SPCORE_API FuncRegistry<std::map<std::string, USceneComponent*>, const AActor*, const std::vector<std::string>&, bool, bool> g_get_children_components_by_name_as_map_from_actor_func_registry;
+extern SPCORE_API FuncRegistry<std::map<std::string, USceneComponent*>, const AActor*, const std::string&, bool>                    g_get_children_components_by_tag_as_map_from_actor_func_registry;
+extern SPCORE_API FuncRegistry<std::map<std::string, USceneComponent*>, const AActor*, const std::vector<std::string>&, bool>       g_get_children_components_by_tag_any_as_map_from_actor_func_registry;
+extern SPCORE_API FuncRegistry<std::map<std::string, USceneComponent*>, const AActor*, const std::vector<std::string>&, bool>       g_get_children_components_by_tag_all_as_map_from_actor_func_registry;
+extern SPCORE_API FuncRegistry<std::map<std::string, USceneComponent*>, const AActor*, bool>                                        g_get_children_components_by_type_as_map_from_actor_func_registry;
+
+extern SPCORE_API FuncRegistry<USceneComponent*, const AActor*, const std::string&, bool>                                           g_get_child_component_by_name_from_actor_func_registry;
+extern SPCORE_API FuncRegistry<USceneComponent*, const AActor*, const std::string&, bool>                                           g_get_child_component_by_tag_from_actor_func_registry;
+extern SPCORE_API FuncRegistry<USceneComponent*, const AActor*, const std::vector<std::string>&, bool>                              g_get_child_component_by_tag_any_from_actor_func_registry;
+extern SPCORE_API FuncRegistry<USceneComponent*, const AActor*, const std::vector<std::string>&, bool>                              g_get_child_component_by_tag_all_from_actor_func_registry;
+extern SPCORE_API FuncRegistry<USceneComponent*, const AActor*, bool>                                                               g_get_child_component_by_type_from_actor_func_registry;
+
+extern SPCORE_API FuncRegistry<std::vector<USceneComponent*>, const USceneComponent*, const std::vector<std::string>&, bool, bool>           g_get_children_components_by_name_from_scene_component_func_registry;
+extern SPCORE_API FuncRegistry<std::vector<USceneComponent*>, const USceneComponent*, const std::string&, bool>                              g_get_children_components_by_tag_from_scene_component_func_registry;
+extern SPCORE_API FuncRegistry<std::vector<USceneComponent*>, const USceneComponent*, const std::vector<std::string>&, bool>                 g_get_children_components_by_tag_any_from_scene_component_func_registry;
+extern SPCORE_API FuncRegistry<std::vector<USceneComponent*>, const USceneComponent*, const std::vector<std::string>&, bool>                 g_get_children_components_by_tag_all_from_scene_component_func_registry;
+extern SPCORE_API FuncRegistry<std::vector<USceneComponent*>, const USceneComponent*, bool>                                                  g_get_children_components_by_type_from_scene_component_func_registry;
+
+extern SPCORE_API FuncRegistry<std::map<std::string, USceneComponent*>, const USceneComponent*, const std::vector<std::string>&, bool, bool> g_get_children_components_by_name_as_map_from_scene_component_func_registry;
+extern SPCORE_API FuncRegistry<std::map<std::string, USceneComponent*>, const USceneComponent*, const std::string&, bool>                    g_get_children_components_by_tag_as_map_from_scene_component_func_registry;
+extern SPCORE_API FuncRegistry<std::map<std::string, USceneComponent*>, const USceneComponent*, const std::vector<std::string>&, bool>       g_get_children_components_by_tag_any_as_map_from_scene_component_func_registry;
+extern SPCORE_API FuncRegistry<std::map<std::string, USceneComponent*>, const USceneComponent*, const std::vector<std::string>&, bool>       g_get_children_components_by_tag_all_as_map_from_scene_component_func_registry;
+extern SPCORE_API FuncRegistry<std::map<std::string, USceneComponent*>, const USceneComponent*, bool>                                        g_get_children_components_by_type_as_map_from_scene_component_func_registry;
+
+extern SPCORE_API FuncRegistry<USceneComponent*, const USceneComponent*, const std::string&, bool>                                           g_get_child_component_by_name_from_scene_component_func_registry;
+extern SPCORE_API FuncRegistry<USceneComponent*, const USceneComponent*, const std::string&, bool>                                           g_get_child_component_by_tag_from_scene_component_func_registry;
+extern SPCORE_API FuncRegistry<USceneComponent*, const USceneComponent*, const std::vector<std::string>&, bool>                              g_get_child_component_by_tag_any_from_scene_component_func_registry;
+extern SPCORE_API FuncRegistry<USceneComponent*, const USceneComponent*, const std::vector<std::string>&, bool>                              g_get_child_component_by_tag_all_from_scene_component_func_registry;
+extern SPCORE_API FuncRegistry<USceneComponent*, const USceneComponent*, bool>                                                               g_get_child_component_by_type_from_scene_component_func_registry;
 
 //
-// Registrars for creating components using a class name instead of template parameters
+// Registries for spawning actors using a class name instead of template parameters
 //
 
-extern SPCORE_API FuncRegistrar<UActorComponent*, AActor*, const std::string&>                    g_create_component_outside_owner_constructor_func_registrar;
-extern SPCORE_API FuncRegistrar<USceneComponent*, AActor*, const std::string&>                    g_create_scene_component_outside_owner_constructor_from_actor_func_registrar;
-extern SPCORE_API FuncRegistrar<USceneComponent*, UObject*, USceneComponent*, const std::string&> g_create_scene_component_outside_owner_constructor_from_object_func_registrar;
-extern SPCORE_API FuncRegistrar<USceneComponent*, USceneComponent*, const std::string&>           g_create_scene_component_outside_owner_constructor_from_component_func_registrar;
+extern SPCORE_API FuncRegistry<AActor*, UWorld*, const FVector&, const FRotator&, const FActorSpawnParameters&> g_spawn_actor_func_registry;
 
 //
-// Registrars for creating objects and classes using a class name instead of template parameters
+// Registries for creating components using a class name instead of template parameters
 //
 
-extern SPCORE_API FuncRegistrar<UObject*, UObject*, FName, EObjectFlags, UObject*, bool, FObjectInstancingGraph*, UPackage*>           g_new_object_func_registrar;
-extern SPCORE_API FuncRegistrar<UObject*, UObject*, const TCHAR*, const TCHAR*, uint32, UPackageMap*, const FLinkerInstancingContext*> g_load_object_func_registrar;
-extern SPCORE_API FuncRegistrar<UClass*, UObject*, const TCHAR*, const TCHAR*, uint32, UPackageMap*>                                   g_load_class_func_registrar;
+extern SPCORE_API FuncRegistry<UActorComponent*, AActor*, const std::string&>                    g_create_component_outside_owner_constructor_func_registry;
+extern SPCORE_API FuncRegistry<USceneComponent*, AActor*, const std::string&>                    g_create_scene_component_outside_owner_constructor_from_actor_func_registry;
+extern SPCORE_API FuncRegistry<USceneComponent*, UObject*, USceneComponent*, const std::string&> g_create_scene_component_outside_owner_constructor_from_object_func_registry;
+extern SPCORE_API FuncRegistry<USceneComponent*, USceneComponent*, const std::string&>           g_create_scene_component_outside_owner_constructor_from_component_func_registry;
+
+//
+// Registries for creating objects and classes using a class name instead of template parameters
+//
+
+extern SPCORE_API FuncRegistry<UObject*, UObject*, FName, EObjectFlags, UObject*, bool, FObjectInstancingGraph*, UPackage*>           g_new_object_func_registry;
+extern SPCORE_API FuncRegistry<UObject*, UObject*, const TCHAR*, const TCHAR*, uint32, UPackageMap*, const FLinkerInstancingContext*> g_load_object_func_registry;
+extern SPCORE_API FuncRegistry<UClass*, UObject*, const TCHAR*, const TCHAR*, uint32, UPackageMap*>                                   g_load_class_func_registry;
 
 //
 // These maps are necessary to support getStaticStruct<T>() for special struct types that don't have a
@@ -179,11 +179,11 @@ extern SPCORE_API FuncRegistrar<UClass*, UObject*, const TCHAR*, const TCHAR*, u
 extern SPCORE_API std::map<std::string, std::string> g_special_struct_names; // map from platform-dependent type name to user-facing name
 extern SPCORE_API std::map<std::string, UStruct*> g_special_structs;         // map from platform-dependent type name to UStruct*
 
-class SPCORE_API UnrealClassRegistrar
+class SPCORE_API UnrealClassRegistry
 {
 public:
-    UnrealClassRegistrar() = delete;
-    ~UnrealClassRegistrar() = delete;
+    UnrealClassRegistry() = delete;
+    ~UnrealClassRegistry() = delete;
 
     //
     // Get engine subsystem using a class name instead of template parameters
@@ -355,7 +355,7 @@ public:
     {
         registerClassCommon<TEngineSubsystem>(class_name);
 
-        g_get_engine_subsystem_by_type_func_registrar.registerFunc(
+        g_get_engine_subsystem_by_type_func_registry.registerFunc(
             class_name, []() -> UEngineSubsystem* {
                 return Unreal::getEngineSubsystemByType<TEngineSubsystem>();
             });
@@ -368,7 +368,7 @@ public:
     template <CSubsystemProvider TSubsystemProvider>
     static void registerSubsystemProviderClass(const std::string& class_name)
     {
-        g_get_subsystem_by_class_func_registrar.registerFunc(
+        g_get_subsystem_by_class_func_registry.registerFunc(
             class_name, [](UWorld* world, UClass* uclass) -> USubsystem* {
                 return Unreal::getSubsystemByClass<TSubsystemProvider>(world, uclass);
             });
@@ -383,7 +383,7 @@ public:
     {
         registerClassCommon<TSubsystem>(class_name);
 
-        g_get_subsystem_by_type_func_registrar.registerFunc(
+        g_get_subsystem_by_type_func_registry.registerFunc(
             class_name, [](UWorld* world) -> USubsystem* {
                 return Unreal::getSubsystemByType<TSubsystem, TSubsystemProvider>(world);
             });
@@ -402,7 +402,7 @@ public:
         // Spawn actor
         //
 
-        g_spawn_actor_func_registrar.registerFunc(
+        g_spawn_actor_func_registry.registerFunc(
             class_name, [](UWorld* world, const FVector& location, const FRotator& rotation, const FActorSpawnParameters& spawn_parameters) -> AActor* {
                 SP_ASSERT(world); return world->SpawnActor<TActor>(location, rotation, spawn_parameters); });
 
@@ -410,23 +410,23 @@ public:
         // Find actors by name or tag or type and return an std::vector
         //
 
-        g_find_actors_by_name_func_registrar.registerFunc(
+        g_find_actors_by_name_func_registry.registerFunc(
             class_name, [](const UWorld* world, const std::vector<std::string>& actor_names, bool return_null_if_not_found) -> std::vector<AActor*> {
                 return Unreal::findActorsByName<TActor, AActor>(world, actor_names, return_null_if_not_found); });
 
-        g_find_actors_by_tag_func_registrar.registerFunc(
+        g_find_actors_by_tag_func_registry.registerFunc(
             class_name, [](const UWorld* world, const std::string& tag) -> std::vector<AActor*> {
                 return Unreal::findActorsByTag<TActor, AActor>(world, tag); });
 
-        g_find_actors_by_tag_any_func_registrar.registerFunc(
+        g_find_actors_by_tag_any_func_registry.registerFunc(
             class_name, [](const UWorld* world, const std::vector<std::string>& tags) -> std::vector<AActor*> {
                 return Unreal::findActorsByTagAny<TActor, AActor>(world, tags); });
 
-        g_find_actors_by_tag_all_func_registrar.registerFunc(
+        g_find_actors_by_tag_all_func_registry.registerFunc(
             class_name, [](const UWorld* world, const std::vector<std::string>& tags) -> std::vector<AActor*> {
                 return Unreal::findActorsByTagAll<TActor, AActor>(world, tags); });
 
-        g_find_actors_by_type_func_registrar.registerFunc(
+        g_find_actors_by_type_func_registry.registerFunc(
             class_name, [](const UWorld* world) -> std::vector<AActor*> {
                 return Unreal::findActorsByType<TActor, AActor>(world); });
 
@@ -434,23 +434,23 @@ public:
         // Find actors by name or tag or type and return an std::map
         //
 
-        g_find_actors_by_name_as_map_func_registrar.registerFunc(
+        g_find_actors_by_name_as_map_func_registry.registerFunc(
             class_name, [](const UWorld* world, const std::vector<std::string>& actor_names, bool return_null_if_not_found) -> std::map<std::string, AActor*> {
                 return Unreal::findActorsByNameAsMap<TActor, AActor>(world, actor_names, return_null_if_not_found); });
 
-        g_find_actors_by_tag_as_map_func_registrar.registerFunc(
+        g_find_actors_by_tag_as_map_func_registry.registerFunc(
             class_name, [](const UWorld* world, const std::string& tag) -> std::map<std::string, AActor*> {
                 return Unreal::findActorsByTagAsMap<TActor, AActor>(world, tag); });
         
-        g_find_actors_by_tag_any_as_map_func_registrar.registerFunc(
+        g_find_actors_by_tag_any_as_map_func_registry.registerFunc(
             class_name, [](const UWorld* world, const std::vector<std::string>& tags) -> std::map<std::string, AActor*> {
                 return Unreal::findActorsByTagAnyAsMap<TActor, AActor>(world, tags); });
         
-        g_find_actors_by_tag_all_as_map_func_registrar.registerFunc(
+        g_find_actors_by_tag_all_as_map_func_registry.registerFunc(
             class_name, [](const UWorld* world, const std::vector<std::string>& tags) -> std::map<std::string, AActor*> {
                 return Unreal::findActorsByTagAllAsMap<TActor, AActor>(world, tags); });
         
-        g_find_actors_by_type_as_map_func_registrar.registerFunc(
+        g_find_actors_by_type_as_map_func_registry.registerFunc(
             class_name, [](const UWorld* world) -> std::map<std::string, AActor*> {
                 return Unreal::findActorsByTypeAsMap<TActor, AActor>(world); });
         
@@ -458,23 +458,23 @@ public:
         // Find actor by name or tag or type and return a pointer
         //
 
-        g_find_actor_by_name_func_registrar.registerFunc(
+        g_find_actor_by_name_func_registry.registerFunc(
             class_name, [](const UWorld* world, const std::string& actor_name) -> AActor* {
                 return Unreal::findActorByName<TActor, AActor>(world, actor_name); });
         
-        g_find_actor_by_tag_func_registrar.registerFunc(
+        g_find_actor_by_tag_func_registry.registerFunc(
             class_name, [](const UWorld* world, const std::string& tag) -> AActor* {
                 return Unreal::findActorByTag<TActor, AActor>(world, tag); });
         
-        g_find_actor_by_tag_any_func_registrar.registerFunc(
+        g_find_actor_by_tag_any_func_registry.registerFunc(
             class_name, [](const UWorld* world, const std::vector<std::string>& tags) -> AActor* {
                 return Unreal::findActorByTagAny<TActor, AActor>(world, tags); });
         
-        g_find_actor_by_tag_all_func_registrar.registerFunc(
+        g_find_actor_by_tag_all_func_registry.registerFunc(
             class_name, [](const UWorld* world, const std::vector<std::string>& tags) -> AActor* {
                 return Unreal::findActorByTagAll<TActor, AActor>(world, tags); });
         
-        g_find_actor_by_type_func_registrar.registerFunc(
+        g_find_actor_by_type_func_registry.registerFunc(
             class_name, [](const UWorld* world) -> AActor* {
                 return Unreal::findActorByType<TActor, AActor>(world); });
     }
@@ -492,7 +492,7 @@ public:
         // Create component
         //
 
-        g_create_component_outside_owner_constructor_func_registrar.registerFunc(
+        g_create_component_outside_owner_constructor_func_registry.registerFunc(
             class_name, [](AActor* owner, const std::string& component_name) -> UActorComponent* {
                 return Unreal::createComponentOutsideOwnerConstructor<TNonSceneComponent, UActorComponent>(owner, component_name); });
     }
@@ -506,15 +506,15 @@ public:
         // Create component
         //
 
-        g_create_scene_component_outside_owner_constructor_from_actor_func_registrar.registerFunc(
+        g_create_scene_component_outside_owner_constructor_from_actor_func_registry.registerFunc(
             class_name, [](AActor* owner, const std::string& scene_component_name) -> USceneComponent* {
                 return Unreal::createSceneComponentOutsideOwnerConstructor<TSceneComponent, USceneComponent>(owner, scene_component_name); });
 
-        g_create_scene_component_outside_owner_constructor_from_object_func_registrar.registerFunc(
+        g_create_scene_component_outside_owner_constructor_from_object_func_registry.registerFunc(
             class_name, [](UObject* owner, USceneComponent* parent, const std::string& scene_component_name) -> USceneComponent* {
                 return Unreal::createSceneComponentOutsideOwnerConstructor<TSceneComponent, USceneComponent>(owner, parent, scene_component_name); });
 
-        g_create_scene_component_outside_owner_constructor_from_component_func_registrar.registerFunc(
+        g_create_scene_component_outside_owner_constructor_from_component_func_registry.registerFunc(
             class_name, [](USceneComponent* owner, const std::string& scene_component_name) -> USceneComponent* {
                 return Unreal::createSceneComponentOutsideOwnerConstructor<TSceneComponent, USceneComponent>(owner, scene_component_name); });
 
@@ -522,23 +522,23 @@ public:
         // Get children components by name or tag or type from an AActor* and return an std::vector
         //
 
-        g_get_children_components_by_name_from_actor_func_registrar.registerFunc(
+        g_get_children_components_by_name_from_actor_func_registry.registerFunc(
             class_name, [](const AActor* parent, const std::vector<std::string>& children_component_names, bool include_all_descendants, bool return_null_if_not_found) -> std::vector<USceneComponent*> {
                 return Unreal::getChildrenComponentsByName<AActor, TSceneComponent, USceneComponent>(parent, children_component_names, include_all_descendants, return_null_if_not_found); });
 
-        g_get_children_components_by_tag_from_actor_func_registrar.registerFunc(
+        g_get_children_components_by_tag_from_actor_func_registry.registerFunc(
             class_name, [](const AActor* parent, const std::string& tag, bool include_all_descendants) -> std::vector<USceneComponent*> {
                 return Unreal::getChildrenComponentsByTag<AActor, TSceneComponent, USceneComponent>(parent, tag, include_all_descendants); });
 
-        g_get_children_components_by_tag_any_from_actor_func_registrar.registerFunc(
+        g_get_children_components_by_tag_any_from_actor_func_registry.registerFunc(
             class_name, [](const AActor* parent, const std::vector<std::string>& tags, bool include_all_descendants) -> std::vector<USceneComponent*> {
                 return Unreal::getChildrenComponentsByTagAny<AActor, TSceneComponent, USceneComponent>(parent, tags, include_all_descendants); });
 
-        g_get_children_components_by_tag_all_from_actor_func_registrar.registerFunc(
+        g_get_children_components_by_tag_all_from_actor_func_registry.registerFunc(
             class_name, [](const AActor* parent, const std::vector<std::string>& tags, bool include_all_descendants) -> std::vector<USceneComponent*> {
                 return Unreal::getChildrenComponentsByTagAll<AActor, TSceneComponent, USceneComponent>(parent, tags, include_all_descendants); });
 
-        g_get_children_components_by_type_from_actor_func_registrar.registerFunc(
+        g_get_children_components_by_type_from_actor_func_registry.registerFunc(
             class_name, [](const AActor* parent, bool include_all_descendants) -> std::vector<USceneComponent*> {
                 return Unreal::getChildrenComponentsByType<TSceneComponent, USceneComponent>(parent, include_all_descendants); });
 
@@ -546,27 +546,27 @@ public:
         // Get children components by name or tag or type from an AActor* and return an std::map
         //
 
-        g_get_children_components_by_name_as_map_from_actor_func_registrar.registerFunc(
+        g_get_children_components_by_name_as_map_from_actor_func_registry.registerFunc(
             class_name, [](const AActor* parent, const std::vector<std::string>& children_component_names, bool include_all_descendants, bool return_null_if_not_found) -> std::map<std::string, USceneComponent*> {
                 return Unreal::getChildrenComponentsByNameAsMap<AActor, TSceneComponent, USceneComponent>(parent, children_component_names, include_all_descendants, return_null_if_not_found);
             });
 
-        g_get_children_components_by_tag_as_map_from_actor_func_registrar.registerFunc(
+        g_get_children_components_by_tag_as_map_from_actor_func_registry.registerFunc(
             class_name, [](const AActor* parent, const std::string& tag, bool include_all_descendants) -> std::map<std::string, USceneComponent*> {
                 return Unreal::getChildrenComponentsByTagAsMap<AActor, TSceneComponent, USceneComponent>(parent, tag, include_all_descendants);
             });
 
-        g_get_children_components_by_tag_any_as_map_from_actor_func_registrar.registerFunc(
+        g_get_children_components_by_tag_any_as_map_from_actor_func_registry.registerFunc(
             class_name, [](const AActor* parent, const std::vector<std::string>& tags, bool include_all_descendants) -> std::map<std::string, USceneComponent*> {
                 return Unreal::getChildrenComponentsByTagAnyAsMap<AActor, TSceneComponent, USceneComponent>(parent, tags, include_all_descendants);
             });
 
-        g_get_children_components_by_tag_all_as_map_from_actor_func_registrar.registerFunc(
+        g_get_children_components_by_tag_all_as_map_from_actor_func_registry.registerFunc(
             class_name, [](const AActor* parent, const std::vector<std::string>& tags, bool include_all_descendants) -> std::map<std::string, USceneComponent*> {
                 return Unreal::getChildrenComponentsByTagAllAsMap<AActor, TSceneComponent, USceneComponent>(parent, tags, include_all_descendants);
             });
 
-        g_get_children_components_by_type_as_map_from_actor_func_registrar.registerFunc(
+        g_get_children_components_by_type_as_map_from_actor_func_registry.registerFunc(
             class_name, [](const AActor* parent, bool include_all_descendants) -> std::map<std::string, USceneComponent*> {
                 return Unreal::getChildrenComponentsByTypeAsMap<AActor, TSceneComponent, USceneComponent>(parent, include_all_descendants);
             });
@@ -575,27 +575,27 @@ public:
         // Get child component by name or tag or type from an AActor* and return a pointer
         //
 
-        g_get_child_component_by_name_from_actor_func_registrar.registerFunc(
+        g_get_child_component_by_name_from_actor_func_registry.registerFunc(
             class_name, [](const AActor* parent, const std::string& child_component_name, bool include_all_descendants) -> USceneComponent* {
                 return Unreal::getChildComponentByName<AActor, TSceneComponent, USceneComponent>(parent, child_component_name, include_all_descendants);
             });
 
-        g_get_child_component_by_tag_from_actor_func_registrar.registerFunc(
+        g_get_child_component_by_tag_from_actor_func_registry.registerFunc(
             class_name, [](const AActor* parent, const std::string& tag, bool include_all_descendants) -> USceneComponent* {
                 return Unreal::getChildComponentByTag<AActor, TSceneComponent, USceneComponent>(parent, tag, include_all_descendants);
             });
 
-        g_get_child_component_by_tag_any_from_actor_func_registrar.registerFunc(
+        g_get_child_component_by_tag_any_from_actor_func_registry.registerFunc(
             class_name, [](const AActor* parent, const std::vector<std::string>& tags, bool include_all_descendants) -> USceneComponent* {
                 return Unreal::getChildComponentByTagAny<AActor, TSceneComponent, USceneComponent>(parent, tags, include_all_descendants);
             });
 
-        g_get_child_component_by_tag_all_from_actor_func_registrar.registerFunc(
+        g_get_child_component_by_tag_all_from_actor_func_registry.registerFunc(
             class_name, [](const AActor* parent, const std::vector<std::string>& tags, bool include_all_descendants) -> USceneComponent* {
                 return Unreal::getChildComponentByTagAll<AActor, TSceneComponent, USceneComponent>(parent, tags, include_all_descendants);
             });
 
-        g_get_child_component_by_type_from_actor_func_registrar.registerFunc(
+        g_get_child_component_by_type_from_actor_func_registry.registerFunc(
             class_name, [](const AActor* parent, bool include_all_descendants) -> USceneComponent* {
                 return Unreal::getChildComponentByType<AActor, TSceneComponent, USceneComponent>(parent, include_all_descendants);
             });
@@ -604,23 +604,23 @@ public:
         // Get children components by name or tag or type from a USceneComponent* and return an std::vector
         //
 
-        g_get_children_components_by_name_from_scene_component_func_registrar.registerFunc(
+        g_get_children_components_by_name_from_scene_component_func_registry.registerFunc(
             class_name, [](const USceneComponent* parent, const std::vector<std::string>& children_component_names, bool include_all_descendants, bool return_null_if_not_found) -> std::vector<USceneComponent*> {
                 return Unreal::getChildrenComponentsByName<USceneComponent, TSceneComponent, USceneComponent>(parent, children_component_names, include_all_descendants, return_null_if_not_found); });
 
-        g_get_children_components_by_tag_from_scene_component_func_registrar.registerFunc(
+        g_get_children_components_by_tag_from_scene_component_func_registry.registerFunc(
             class_name, [](const USceneComponent* parent, const std::string& tag, bool include_all_descendants) -> std::vector<USceneComponent*> {
                 return Unreal::getChildrenComponentsByTag<USceneComponent, TSceneComponent, USceneComponent>(parent, tag, include_all_descendants); });
 
-        g_get_children_components_by_tag_any_from_scene_component_func_registrar.registerFunc(
+        g_get_children_components_by_tag_any_from_scene_component_func_registry.registerFunc(
             class_name, [](const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants) -> std::vector<USceneComponent*> {
                 return Unreal::getChildrenComponentsByTagAny<USceneComponent, TSceneComponent, USceneComponent>(parent, tags, include_all_descendants); });
 
-        g_get_children_components_by_tag_all_from_scene_component_func_registrar.registerFunc(
+        g_get_children_components_by_tag_all_from_scene_component_func_registry.registerFunc(
             class_name, [](const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants) -> std::vector<USceneComponent*> {
                 return Unreal::getChildrenComponentsByTagAll<USceneComponent, TSceneComponent, USceneComponent>(parent, tags, include_all_descendants); });
 
-        g_get_children_components_by_type_from_scene_component_func_registrar.registerFunc(
+        g_get_children_components_by_type_from_scene_component_func_registry.registerFunc(
             class_name, [](const USceneComponent* parent, bool include_all_descendants) -> std::vector<USceneComponent*> {
                 return Unreal::getChildrenComponentsByType<TSceneComponent, USceneComponent>(parent, include_all_descendants); });
 
@@ -628,27 +628,27 @@ public:
         // Get children components by name or tag or type from a USceneComponent* and return an std::map
         //
 
-        g_get_children_components_by_name_as_map_from_scene_component_func_registrar.registerFunc(
+        g_get_children_components_by_name_as_map_from_scene_component_func_registry.registerFunc(
             class_name, [](const USceneComponent* parent, const std::vector<std::string>& children_component_names, bool include_all_descendants, bool return_null_if_not_found) -> std::map<std::string, USceneComponent*> {
                 return Unreal::getChildrenComponentsByNameAsMap<USceneComponent, TSceneComponent, USceneComponent>(parent, children_component_names, include_all_descendants, return_null_if_not_found);
             });
 
-        g_get_children_components_by_tag_as_map_from_scene_component_func_registrar.registerFunc(
+        g_get_children_components_by_tag_as_map_from_scene_component_func_registry.registerFunc(
             class_name, [](const USceneComponent* parent, const std::string& tag, bool include_all_descendants) -> std::map<std::string, USceneComponent*> {
                 return Unreal::getChildrenComponentsByTagAsMap<USceneComponent, TSceneComponent, USceneComponent>(parent, tag, include_all_descendants);
             });
 
-        g_get_children_components_by_tag_any_as_map_from_scene_component_func_registrar.registerFunc(
+        g_get_children_components_by_tag_any_as_map_from_scene_component_func_registry.registerFunc(
             class_name, [](const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants) -> std::map<std::string, USceneComponent*> {
                 return Unreal::getChildrenComponentsByTagAnyAsMap<USceneComponent, TSceneComponent, USceneComponent>(parent, tags, include_all_descendants);
             });
 
-        g_get_children_components_by_tag_all_as_map_from_scene_component_func_registrar.registerFunc(
+        g_get_children_components_by_tag_all_as_map_from_scene_component_func_registry.registerFunc(
             class_name, [](const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants) -> std::map<std::string, USceneComponent*> {
                 return Unreal::getChildrenComponentsByTagAllAsMap<USceneComponent, TSceneComponent, USceneComponent>(parent, tags, include_all_descendants);
             });
 
-        g_get_children_components_by_type_as_map_from_scene_component_func_registrar.registerFunc(
+        g_get_children_components_by_type_as_map_from_scene_component_func_registry.registerFunc(
             class_name, [](const USceneComponent* parent, bool include_all_descendants) -> std::map<std::string, USceneComponent*> {
                 return Unreal::getChildrenComponentsByTypeAsMap<USceneComponent, TSceneComponent, USceneComponent>(parent, include_all_descendants);
             });
@@ -657,27 +657,27 @@ public:
         // Get child component by name or tag or type from a USceneComponent* and return a pointer
         //
 
-        g_get_child_component_by_name_from_scene_component_func_registrar.registerFunc(
+        g_get_child_component_by_name_from_scene_component_func_registry.registerFunc(
             class_name, [](const USceneComponent* parent, const std::string& child_component_name, bool include_all_descendants) -> USceneComponent* {
                 return Unreal::getChildComponentByName<USceneComponent, TSceneComponent, USceneComponent>(parent, child_component_name, include_all_descendants);
             });
 
-        g_get_child_component_by_tag_from_scene_component_func_registrar.registerFunc(
+        g_get_child_component_by_tag_from_scene_component_func_registry.registerFunc(
             class_name, [](const USceneComponent* parent, const std::string& tag, bool include_all_descendants) -> USceneComponent* {
                 return Unreal::getChildComponentByTag<USceneComponent, TSceneComponent, USceneComponent>(parent, tag, include_all_descendants);
             });
 
-        g_get_child_component_by_tag_any_from_scene_component_func_registrar.registerFunc(
+        g_get_child_component_by_tag_any_from_scene_component_func_registry.registerFunc(
             class_name, [](const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants) -> USceneComponent* {
                 return Unreal::getChildComponentByTagAny<USceneComponent, TSceneComponent, USceneComponent>(parent, tags, include_all_descendants);
             });
 
-        g_get_child_component_by_tag_all_from_scene_component_func_registrar.registerFunc(
+        g_get_child_component_by_tag_all_from_scene_component_func_registry.registerFunc(
             class_name, [](const USceneComponent* parent, const std::vector<std::string>& tags, bool include_all_descendants) -> USceneComponent* {
                 return Unreal::getChildComponentByTagAll<USceneComponent, TSceneComponent, USceneComponent>(parent, tags, include_all_descendants);
             });
 
-        g_get_child_component_by_type_from_scene_component_func_registrar.registerFunc(
+        g_get_child_component_by_type_from_scene_component_func_registry.registerFunc(
             class_name, [](const USceneComponent* parent, bool include_all_descendants) -> USceneComponent* {
                 return Unreal::getChildComponentByType<USceneComponent, TSceneComponent, USceneComponent>(parent, include_all_descendants);
             });
@@ -692,27 +692,27 @@ public:
         // Get components by name or tag or type and return an std::vector
         //
 
-        g_get_components_by_name_func_registrar.registerFunc(
+        g_get_components_by_name_func_registry.registerFunc(
             class_name, [](const AActor* actor, const std::vector<std::string>& component_names, bool include_from_child_actors, bool return_null_if_not_found) -> std::vector<UActorComponent*> {
                 return Unreal::getComponentsByName<TComponent, UActorComponent>(actor, component_names, include_from_child_actors, return_null_if_not_found); });
 
-        g_get_components_by_path_func_registrar.registerFunc(
+        g_get_components_by_path_func_registry.registerFunc(
             class_name, [](const AActor* actor, const std::vector<std::string>& component_paths, bool include_from_child_actors, bool return_null_if_not_found) -> std::vector<UActorComponent*> {
                 return Unreal::getComponentsByPath<TComponent, UActorComponent>(actor, component_paths, include_from_child_actors, return_null_if_not_found); });
 
-        g_get_components_by_tag_func_registrar.registerFunc(
+        g_get_components_by_tag_func_registry.registerFunc(
             class_name, [](const AActor* actor, const std::string& tag, bool include_from_child_actors) -> std::vector<UActorComponent*> {
                 return Unreal::getComponentsByTag<TComponent, UActorComponent>(actor, tag, include_from_child_actors); });
 
-        g_get_components_by_tag_any_func_registrar.registerFunc(
+        g_get_components_by_tag_any_func_registry.registerFunc(
             class_name, [](const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors) -> std::vector<UActorComponent*> {
                 return Unreal::getComponentsByTagAny<TComponent, UActorComponent>(actor, tags, include_from_child_actors); });
 
-        g_get_components_by_tag_all_func_registrar.registerFunc(
+        g_get_components_by_tag_all_func_registry.registerFunc(
             class_name, [](const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors) -> std::vector<UActorComponent*> {
                 return Unreal::getComponentsByTagAll<TComponent, UActorComponent>(actor, tags, include_from_child_actors); });
 
-        g_get_components_by_type_func_registrar.registerFunc(
+        g_get_components_by_type_func_registry.registerFunc(
             class_name, [](const AActor* actor, bool include_from_child_actors) -> std::vector<UActorComponent*> {
                 return Unreal::getComponentsByType<TComponent, UActorComponent>(actor, include_from_child_actors); });
 
@@ -720,27 +720,27 @@ public:
         // Get components by name or tag or type and return an std::map
         //
 
-        g_get_components_by_name_as_map_func_registrar.registerFunc(
+        g_get_components_by_name_as_map_func_registry.registerFunc(
             class_name, [](const AActor* actor, const std::vector<std::string>& component_names, bool include_from_child_actors, bool return_null_if_not_found) -> std::map<std::string, UActorComponent*> {
                 return Unreal::getComponentsByNameAsMap<TComponent, UActorComponent>(actor, component_names, include_from_child_actors, return_null_if_not_found); });
 
-        g_get_components_by_path_as_map_func_registrar.registerFunc(
+        g_get_components_by_path_as_map_func_registry.registerFunc(
             class_name, [](const AActor* actor, const std::vector<std::string>& component_paths, bool include_from_child_actors, bool return_null_if_not_found) -> std::map<std::string, UActorComponent*> {
                 return Unreal::getComponentsByPathAsMap<TComponent, UActorComponent>(actor, component_paths, include_from_child_actors, return_null_if_not_found); });
 
-        g_get_components_by_tag_as_map_func_registrar.registerFunc(
+        g_get_components_by_tag_as_map_func_registry.registerFunc(
             class_name, [](const AActor* actor, const std::string& tag, bool include_from_child_actors) -> std::map<std::string, UActorComponent*> {
                 return Unreal::getComponentsByTagAsMap<TComponent, UActorComponent>(actor, tag, include_from_child_actors); });
         
-        g_get_components_by_tag_any_as_map_func_registrar.registerFunc(
+        g_get_components_by_tag_any_as_map_func_registry.registerFunc(
             class_name, [](const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors) -> std::map<std::string, UActorComponent*> {
                 return Unreal::getComponentsByTagAnyAsMap<TComponent, UActorComponent>(actor, tags, include_from_child_actors); });
         
-        g_get_components_by_tag_all_as_map_func_registrar.registerFunc(
+        g_get_components_by_tag_all_as_map_func_registry.registerFunc(
             class_name, [](const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors) -> std::map<std::string, UActorComponent*> {
                 return Unreal::getComponentsByTagAllAsMap<TComponent, UActorComponent>(actor, tags, include_from_child_actors); });
         
-        g_get_components_by_type_as_map_func_registrar.registerFunc(
+        g_get_components_by_type_as_map_func_registry.registerFunc(
             class_name, [](const AActor* actor, bool include_from_child_actors) -> std::map<std::string, UActorComponent*> {
                 return Unreal::getComponentsByTypeAsMap<TComponent, UActorComponent>(actor, include_from_child_actors); });
 
@@ -748,29 +748,36 @@ public:
         // Get component by name or tag or type and return a pointer
         //
 
-        g_get_component_by_name_func_registrar.registerFunc(
+        g_get_component_by_name_func_registry.registerFunc(
             class_name, [](const AActor* actor, const std::string& component_name, bool include_from_child_actors) -> UActorComponent* {
                 return Unreal::getComponentByName<TComponent, UActorComponent>(actor, component_name, include_from_child_actors); });
 
-        g_get_component_by_path_func_registrar.registerFunc(
+        g_get_component_by_path_func_registry.registerFunc(
             class_name, [](const AActor* actor, const std::string& component_path, bool include_from_child_actors) -> UActorComponent* {
                 return Unreal::getComponentByPath<TComponent, UActorComponent>(actor, component_path, include_from_child_actors); });
         
-        g_get_component_by_tag_func_registrar.registerFunc(
+        g_get_component_by_tag_func_registry.registerFunc(
             class_name, [](const AActor* actor, const std::string& tag, bool include_from_child_actors) -> UActorComponent* {
                 return Unreal::getComponentByTag<TComponent, UActorComponent>(actor, tag, include_from_child_actors); });
         
-        g_get_component_by_tag_any_func_registrar.registerFunc(
+        g_get_component_by_tag_any_func_registry.registerFunc(
             class_name, [](const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors) -> UActorComponent* {
                 return Unreal::getComponentByTagAny<TComponent, UActorComponent>(actor, tags, include_from_child_actors); });
         
-        g_get_component_by_tag_all_func_registrar.registerFunc(
+        g_get_component_by_tag_all_func_registry.registerFunc(
             class_name, [](const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors) -> UActorComponent* {
                 return Unreal::getComponentByTagAll<TComponent, UActorComponent>(actor, tags, include_from_child_actors); });
         
-        g_get_component_by_type_func_registrar.registerFunc(
+        g_get_component_by_type_func_registry.registerFunc(
             class_name, [](const AActor* actor, bool include_from_child_actors) -> UActorComponent* {
                 return Unreal::getComponentByType<TComponent, UActorComponent>(actor, include_from_child_actors); });
+    }
+
+    template <CInterface TInterface>
+    static void registerInterface(const std::string& class_name)
+    {
+        registerClassCommon<TInterface>(class_name);
+        registerStructCommon<TInterface>(class_name);
     }
 
     template <CClass TClass>
@@ -783,32 +790,32 @@ public:
         // Create object
         //
 
-        g_new_object_func_registrar.registerFunc(
+        g_new_object_func_registry.registerFunc(
             class_name, [](UObject* outer, FName name, EObjectFlags flags, UObject* uobject_template, bool copy_transients_from_class_defaults, FObjectInstancingGraph* in_instance_graph, UPackage* external_package) -> UObject* {
                 return NewObject<UObject>(outer, TClass::StaticClass(), name, flags, uobject_template, copy_transients_from_class_defaults, in_instance_graph, external_package);
             });
 
-        g_load_object_func_registrar.registerFunc(
+        g_load_object_func_registry.registerFunc(
             class_name, [](UObject* outer, const TCHAR* name, const TCHAR* filename, uint32 load_flags, UPackageMap* sandbox, const FLinkerInstancingContext* instancing_context) -> UObject* {
                 return LoadObject<TClass>(outer, name, filename, load_flags, sandbox, instancing_context);
             });
 
-        g_load_class_func_registrar.registerFunc(
+        g_load_class_func_registry.registerFunc(
             class_name, [](UObject* outer, const TCHAR* name, const TCHAR* filename, uint32 load_flags, UPackageMap* sandbox) -> UClass* {
                 return LoadClass<TClass>(outer, name, filename, load_flags, sandbox);
             });
     }
 
-    template <CClass TClass>
+    template <typename TClass>
     static void registerClassCommon(const std::string& class_name)
     {
         //
         // Get static class
         //
 
-        g_get_static_class_func_registrar.registerFunc(
+        g_get_static_class_func_registry.registerFunc(
             class_name, []() -> UClass* {
-                return TClass::StaticClass();
+                return Unreal::getStaticClass<TClass>();
             });
     }
 
@@ -829,9 +836,9 @@ public:
     // before calling getStaticStruct<T>(). If the type is registered by UStruct*, then there are no other
     // requirements. If the type is registered by name, then getStaticStruct<T>() will call Unreal::findSpecialStructByName(...)
     // internally to find the appropriate UStruct*. For a type to be visible to Unreal::findSpecialStructByName(...),
-    // the ASpecialStructActor class must define a UPROPERTY of type T that is named according to a
-    // particular naming convention. When a type no longer needs to be visible to getStaticStruct<T>(), it
-    // should be unregistered by calling UnrealClassRegistrar::unregisterSpecialStruct<T>().
+    // the USpecialStructs class must define a UPROPERTY of type T that is named according to a particular
+    // naming convention. When a type no longer needs to be visible to getStaticStruct<T>(), it should be
+    // unregistered by calling UnrealClassRegistry::unregisterSpecialStruct<T>().
     // 
     // Registering special structs by name is more convenient because it doesn't require the caller to obtain
     // a valid UStruct*, but it requires ASpecialStructActor to have defined the appropriate UPROPERTY. On
@@ -867,7 +874,7 @@ public:
     template <typename TStruct>
     static void registerStructCommon(const std::string& struct_name)
     {
-        g_get_static_struct_func_registrar.registerFunc(
+        g_get_static_struct_func_registry.registerFunc(
             struct_name, []() -> UStruct* {
                 return getStaticStruct<TStruct>();
             });
@@ -882,13 +889,13 @@ public:
     {
         unregisterClassCommon<TEngineSubsystem>(class_name);
 
-        g_get_engine_subsystem_by_type_func_registrar.unregisterFunc(class_name);
+        g_get_engine_subsystem_by_type_func_registry.unregisterFunc(class_name);
     }
 
     template <CSubsystemProvider TSubsystemProvider>
     static void unregisterSubsystemProviderClass(const std::string& class_name)
     {
-        g_get_subsystem_by_class_func_registrar.unregisterFunc(class_name);
+        g_get_subsystem_by_class_func_registry.unregisterFunc(class_name);
     }
 
     template <CSubsystem TSubsystem, CSubsystemProvider TSubsystemProvider>
@@ -896,7 +903,7 @@ public:
     {
         unregisterClassCommon<TSubsystem>(class_name);
 
-        g_get_subsystem_by_type_func_registrar.unregisterFunc(class_name);
+        g_get_subsystem_by_type_func_registry.unregisterFunc(class_name);
     }
 
     template <CActor TActor>
@@ -904,23 +911,25 @@ public:
     {
         unregisterClassCommon<TActor>(class_name);
 
-        g_spawn_actor_func_registrar.unregisterFunc(class_name);
+        g_spawn_actor_func_registry.unregisterFunc(class_name);
 
-        g_find_actors_by_name_func_registrar.unregisterFunc(class_name);
-        g_find_actors_by_tag_func_registrar.unregisterFunc(class_name);
-        g_find_actors_by_tag_any_func_registrar.unregisterFunc(class_name);
-        g_find_actors_by_tag_all_func_registrar.unregisterFunc(class_name);
-        g_find_actors_by_type_func_registrar.unregisterFunc(class_name);
-        g_find_actors_by_name_as_map_func_registrar.unregisterFunc(class_name);
-        g_find_actors_by_tag_as_map_func_registrar.unregisterFunc(class_name);
-        g_find_actors_by_tag_any_as_map_func_registrar.unregisterFunc(class_name);
-        g_find_actors_by_tag_all_as_map_func_registrar.unregisterFunc(class_name);
-        g_find_actors_by_type_as_map_func_registrar.unregisterFunc(class_name);
-        g_find_actor_by_name_func_registrar.unregisterFunc(class_name);
-        g_find_actor_by_tag_func_registrar.unregisterFunc(class_name);
-        g_find_actor_by_tag_any_func_registrar.unregisterFunc(class_name);
-        g_find_actor_by_tag_all_func_registrar.unregisterFunc(class_name);
-        g_find_actor_by_type_func_registrar.unregisterFunc(class_name);
+        g_find_actors_by_name_func_registry.unregisterFunc(class_name);
+        g_find_actors_by_tag_func_registry.unregisterFunc(class_name);
+        g_find_actors_by_tag_any_func_registry.unregisterFunc(class_name);
+        g_find_actors_by_tag_all_func_registry.unregisterFunc(class_name);
+        g_find_actors_by_type_func_registry.unregisterFunc(class_name);
+
+        g_find_actors_by_name_as_map_func_registry.unregisterFunc(class_name);
+        g_find_actors_by_tag_as_map_func_registry.unregisterFunc(class_name);
+        g_find_actors_by_tag_any_as_map_func_registry.unregisterFunc(class_name);
+        g_find_actors_by_tag_all_as_map_func_registry.unregisterFunc(class_name);
+        g_find_actors_by_type_as_map_func_registry.unregisterFunc(class_name);
+
+        g_find_actor_by_name_func_registry.unregisterFunc(class_name);
+        g_find_actor_by_tag_func_registry.unregisterFunc(class_name);
+        g_find_actor_by_tag_any_func_registry.unregisterFunc(class_name);
+        g_find_actor_by_tag_all_func_registry.unregisterFunc(class_name);
+        g_find_actor_by_type_func_registry.unregisterFunc(class_name);
     }
 
     template <CNonSceneComponent TNonSceneComponent>
@@ -928,7 +937,7 @@ public:
     {
         unregisterComponentClassCommon<TNonSceneComponent>(class_name);
 
-        g_create_component_outside_owner_constructor_func_registrar.unregisterFunc(class_name);
+        g_create_component_outside_owner_constructor_func_registry.unregisterFunc(class_name);
     }
 
     template <CSceneComponent TSceneComponent>
@@ -936,41 +945,45 @@ public:
     {
         unregisterComponentClassCommon<TSceneComponent>(class_name);
 
-        g_create_scene_component_outside_owner_constructor_from_actor_func_registrar.unregisterFunc(class_name);
-        g_create_scene_component_outside_owner_constructor_from_object_func_registrar.unregisterFunc(class_name);
-        g_create_scene_component_outside_owner_constructor_from_component_func_registrar.unregisterFunc(class_name);
+        g_create_scene_component_outside_owner_constructor_from_actor_func_registry.unregisterFunc(class_name);
+        g_create_scene_component_outside_owner_constructor_from_object_func_registry.unregisterFunc(class_name);
+        g_create_scene_component_outside_owner_constructor_from_component_func_registry.unregisterFunc(class_name);
 
-        g_get_children_components_by_name_from_actor_func_registrar.unregisterFunc(class_name);
-        g_get_children_components_by_tag_from_actor_func_registrar.unregisterFunc(class_name);
-        g_get_children_components_by_tag_any_from_actor_func_registrar.unregisterFunc(class_name);
-        g_get_children_components_by_tag_all_from_actor_func_registrar.unregisterFunc(class_name);
-        g_get_children_components_by_type_from_actor_func_registrar.unregisterFunc(class_name);
-        g_get_children_components_by_name_as_map_from_actor_func_registrar.unregisterFunc(class_name);
-        g_get_children_components_by_tag_as_map_from_actor_func_registrar.unregisterFunc(class_name);
-        g_get_children_components_by_tag_any_as_map_from_actor_func_registrar.unregisterFunc(class_name);
-        g_get_children_components_by_tag_all_as_map_from_actor_func_registrar.unregisterFunc(class_name);
-        g_get_children_components_by_type_as_map_from_actor_func_registrar.unregisterFunc(class_name);
-        g_get_child_component_by_name_from_actor_func_registrar.unregisterFunc(class_name);
-        g_get_child_component_by_tag_from_actor_func_registrar.unregisterFunc(class_name);
-        g_get_child_component_by_tag_any_from_actor_func_registrar.unregisterFunc(class_name);
-        g_get_child_component_by_tag_all_from_actor_func_registrar.unregisterFunc(class_name);
-        g_get_child_component_by_type_from_actor_func_registrar.unregisterFunc(class_name);
+        g_get_children_components_by_name_from_actor_func_registry.unregisterFunc(class_name);
+        g_get_children_components_by_tag_from_actor_func_registry.unregisterFunc(class_name);
+        g_get_children_components_by_tag_any_from_actor_func_registry.unregisterFunc(class_name);
+        g_get_children_components_by_tag_all_from_actor_func_registry.unregisterFunc(class_name);
+        g_get_children_components_by_type_from_actor_func_registry.unregisterFunc(class_name);
 
-        g_get_children_components_by_name_from_scene_component_func_registrar.unregisterFunc(class_name);
-        g_get_children_components_by_tag_from_scene_component_func_registrar.unregisterFunc(class_name);
-        g_get_children_components_by_tag_any_from_scene_component_func_registrar.unregisterFunc(class_name);
-        g_get_children_components_by_tag_all_from_scene_component_func_registrar.unregisterFunc(class_name);
-        g_get_children_components_by_type_from_scene_component_func_registrar.unregisterFunc(class_name);
-        g_get_children_components_by_name_as_map_from_scene_component_func_registrar.unregisterFunc(class_name);
-        g_get_children_components_by_tag_as_map_from_scene_component_func_registrar.unregisterFunc(class_name);
-        g_get_children_components_by_tag_any_as_map_from_scene_component_func_registrar.unregisterFunc(class_name);
-        g_get_children_components_by_tag_all_as_map_from_scene_component_func_registrar.unregisterFunc(class_name);
-        g_get_children_components_by_type_as_map_from_scene_component_func_registrar.unregisterFunc(class_name);
-        g_get_child_component_by_name_from_scene_component_func_registrar.unregisterFunc(class_name);
-        g_get_child_component_by_tag_from_scene_component_func_registrar.unregisterFunc(class_name);
-        g_get_child_component_by_tag_any_from_scene_component_func_registrar.unregisterFunc(class_name);
-        g_get_child_component_by_tag_all_from_scene_component_func_registrar.unregisterFunc(class_name);
-        g_get_child_component_by_type_from_scene_component_func_registrar.unregisterFunc(class_name);
+        g_get_children_components_by_name_as_map_from_actor_func_registry.unregisterFunc(class_name);
+        g_get_children_components_by_tag_as_map_from_actor_func_registry.unregisterFunc(class_name);
+        g_get_children_components_by_tag_any_as_map_from_actor_func_registry.unregisterFunc(class_name);
+        g_get_children_components_by_tag_all_as_map_from_actor_func_registry.unregisterFunc(class_name);
+        g_get_children_components_by_type_as_map_from_actor_func_registry.unregisterFunc(class_name);
+
+        g_get_child_component_by_name_from_actor_func_registry.unregisterFunc(class_name);
+        g_get_child_component_by_tag_from_actor_func_registry.unregisterFunc(class_name);
+        g_get_child_component_by_tag_any_from_actor_func_registry.unregisterFunc(class_name);
+        g_get_child_component_by_tag_all_from_actor_func_registry.unregisterFunc(class_name);
+        g_get_child_component_by_type_from_actor_func_registry.unregisterFunc(class_name);
+
+        g_get_children_components_by_name_from_scene_component_func_registry.unregisterFunc(class_name);
+        g_get_children_components_by_tag_from_scene_component_func_registry.unregisterFunc(class_name);
+        g_get_children_components_by_tag_any_from_scene_component_func_registry.unregisterFunc(class_name);
+        g_get_children_components_by_tag_all_from_scene_component_func_registry.unregisterFunc(class_name);
+        g_get_children_components_by_type_from_scene_component_func_registry.unregisterFunc(class_name);
+
+        g_get_children_components_by_name_as_map_from_scene_component_func_registry.unregisterFunc(class_name);
+        g_get_children_components_by_tag_as_map_from_scene_component_func_registry.unregisterFunc(class_name);
+        g_get_children_components_by_tag_any_as_map_from_scene_component_func_registry.unregisterFunc(class_name);
+        g_get_children_components_by_tag_all_as_map_from_scene_component_func_registry.unregisterFunc(class_name);
+        g_get_children_components_by_type_as_map_from_scene_component_func_registry.unregisterFunc(class_name);
+
+        g_get_child_component_by_name_from_scene_component_func_registry.unregisterFunc(class_name);
+        g_get_child_component_by_tag_from_scene_component_func_registry.unregisterFunc(class_name);
+        g_get_child_component_by_tag_any_from_scene_component_func_registry.unregisterFunc(class_name);
+        g_get_child_component_by_tag_all_from_scene_component_func_registry.unregisterFunc(class_name);
+        g_get_child_component_by_type_from_scene_component_func_registry.unregisterFunc(class_name);
     }
 
     template <CComponent TComponent>
@@ -978,24 +991,33 @@ public:
     {
         unregisterClassCommon<TComponent>(class_name);
 
-        g_get_components_by_name_func_registrar.unregisterFunc(class_name);
-        g_get_components_by_path_func_registrar.unregisterFunc(class_name);
-        g_get_components_by_tag_func_registrar.unregisterFunc(class_name);
-        g_get_components_by_tag_any_func_registrar.unregisterFunc(class_name);
-        g_get_components_by_tag_all_func_registrar.unregisterFunc(class_name);
-        g_get_components_by_type_func_registrar.unregisterFunc(class_name);
-        g_get_components_by_name_as_map_func_registrar.unregisterFunc(class_name);
-        g_get_components_by_path_as_map_func_registrar.unregisterFunc(class_name);
-        g_get_components_by_tag_as_map_func_registrar.unregisterFunc(class_name);
-        g_get_components_by_tag_any_as_map_func_registrar.unregisterFunc(class_name);
-        g_get_components_by_tag_all_as_map_func_registrar.unregisterFunc(class_name);
-        g_get_components_by_type_as_map_func_registrar.unregisterFunc(class_name);
-        g_get_component_by_name_func_registrar.unregisterFunc(class_name);
-        g_get_component_by_path_func_registrar.unregisterFunc(class_name);
-        g_get_component_by_tag_func_registrar.unregisterFunc(class_name);
-        g_get_component_by_tag_any_func_registrar.unregisterFunc(class_name);
-        g_get_component_by_tag_all_func_registrar.unregisterFunc(class_name);
-        g_get_component_by_type_func_registrar.unregisterFunc(class_name);
+        g_get_components_by_name_func_registry.unregisterFunc(class_name);
+        g_get_components_by_path_func_registry.unregisterFunc(class_name);
+        g_get_components_by_tag_func_registry.unregisterFunc(class_name);
+        g_get_components_by_tag_any_func_registry.unregisterFunc(class_name);
+        g_get_components_by_tag_all_func_registry.unregisterFunc(class_name);
+        g_get_components_by_type_func_registry.unregisterFunc(class_name);
+
+        g_get_components_by_name_as_map_func_registry.unregisterFunc(class_name);
+        g_get_components_by_path_as_map_func_registry.unregisterFunc(class_name);
+        g_get_components_by_tag_as_map_func_registry.unregisterFunc(class_name);
+        g_get_components_by_tag_any_as_map_func_registry.unregisterFunc(class_name);
+        g_get_components_by_tag_all_as_map_func_registry.unregisterFunc(class_name);
+        g_get_components_by_type_as_map_func_registry.unregisterFunc(class_name);
+
+        g_get_component_by_name_func_registry.unregisterFunc(class_name);
+        g_get_component_by_path_func_registry.unregisterFunc(class_name);
+        g_get_component_by_tag_func_registry.unregisterFunc(class_name);
+        g_get_component_by_tag_any_func_registry.unregisterFunc(class_name);
+        g_get_component_by_tag_all_func_registry.unregisterFunc(class_name);
+        g_get_component_by_type_func_registry.unregisterFunc(class_name);
+    }
+
+    template <CInterface TInterface>
+    static void unregisterInterface(const std::string& class_name)
+    {
+        unregisterClassCommon<TInterface>(class_name);
+        unregisterStructCommon<TInterface>(class_name);
     }
 
     template <CClass TClass>
@@ -1003,14 +1025,15 @@ public:
     {
         unregisterClassCommon<TClass>(class_name);
 
-        g_new_object_func_registrar.unregisterFunc(class_name);
-        g_load_object_func_registrar.unregisterFunc(class_name);
+        g_new_object_func_registry.unregisterFunc(class_name);
+        g_load_object_func_registry.unregisterFunc(class_name);
+        g_load_class_func_registry.unregisterFunc(class_name);
     }
 
-    template <CClass TClass>
+    template <typename TClass>
     static void unregisterClassCommon(const std::string& class_name)
     {
-        g_get_static_class_func_registrar.unregisterFunc(class_name);
+        g_get_static_class_func_registry.unregisterFunc(class_name);
     }
 
     template <CStruct TStruct>
@@ -1040,24 +1063,24 @@ public:
     template <typename TStruct>
     static void unregisterStructCommon(const std::string& struct_name)
     {
-        g_get_static_struct_func_registrar.unregisterFunc(struct_name);
+        g_get_static_struct_func_registry.unregisterFunc(struct_name);
     }
 
     //
     // Templated helper functions for getting static structs, can't be private because it is used by UnrealObj,
     // and can't be in the Unreal namespace because the special struct implementation depends on a map of
-    // types maintained by UnrealClassRegistrar.
+    // types maintained by UnrealClassRegistry.
     //
 
-    template <typename TStructOrClass> requires
-        CStruct<TStructOrClass> || CClass<TStructOrClass>
+    template <typename TStructOrClassOrInterface> requires
+        CStruct<TStructOrClassOrInterface> || CClass<TStructOrClassOrInterface> || CInterface<TStructOrClassOrInterface>
     static UStruct* getStaticStruct()
     {
-        return Unreal::getStaticStruct<TStructOrClass>();
+        return Unreal::getStaticStruct<TStructOrClassOrInterface>();
     }
 
     template <typename TSpecialStruct> requires
-        (!(CStruct<TSpecialStruct> || CClass<TSpecialStruct>))
+        (!(CStruct<TSpecialStruct> || CClass<TSpecialStruct> || CInterface<TSpecialStruct>))
     static UStruct* getStaticStruct()
     {
         std::string type_id_string = Std::getTypeIdString<TSpecialStruct>();

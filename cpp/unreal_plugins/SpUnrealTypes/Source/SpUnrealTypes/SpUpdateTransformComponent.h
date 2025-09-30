@@ -10,7 +10,6 @@
 #include <Engine/EngineBaseTypes.h>  // ELevelTick
 #include <Engine/EngineTypes.h>      // ETeleportType
 #include <Engine/HitResult.h>
-#include <HAL/Platform.h>            // SPUNREALTYPES_API
 
 #include "SpUpdateTransformComponent.generated.h"
 
@@ -19,7 +18,7 @@ struct FActorComponentTickFunction;
 
 // We need meta=(BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
 UCLASS(ClassGroup="SPEAR", HideCategories=(Rendering, Tags, Activation, Cooking, Physics, LOD, AssetUserData, Collision), meta=(BlueprintSpawnableComponent))
-class SPUNREALTYPES_API USpUpdateTransformComponent : public UActorComponent
+class USpUpdateTransformComponent : public UActorComponent
 {
     GENERATED_BODY()
 public:

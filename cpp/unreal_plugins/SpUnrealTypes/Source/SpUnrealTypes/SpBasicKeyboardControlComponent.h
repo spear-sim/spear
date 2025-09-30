@@ -9,7 +9,6 @@
 #include <Components/SceneComponent.h>
 #include <Containers/UnrealString.h> // FString
 #include <Engine/EngineTypes.h>      // EEndPlayReason
-#include <HAL/Platform.h>            // SPUNREALTYPES_API
 
 #include "SpUnrealTypes/SpUserInputComponent.h"
 
@@ -19,7 +18,7 @@ struct FActorComponentTickFunction;
 
 // We need meta=(BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
 UCLASS(ClassGroup="SPEAR", HideCategories=(Rendering, Tags, Activation, Cooking, Physics, LOD, AssetUserData, Collision), meta=(BlueprintSpawnableComponent))
-class SPUNREALTYPES_API USpBasicKeyboardControlComponent : public USceneComponent
+class USpBasicKeyboardControlComponent : public USceneComponent
 {
     GENERATED_BODY()
 public:

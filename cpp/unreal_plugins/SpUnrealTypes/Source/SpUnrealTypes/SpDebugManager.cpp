@@ -35,7 +35,7 @@
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealObj.h"
-#include "SpCore/UnrealClassRegistrar.h"
+#include "SpCore/UnrealClassRegistry.h"
 #include "SpCore/Yaml.h"
 #include "SpCore/YamlCpp.h"
 
@@ -125,7 +125,7 @@ void ASpDebugManager::SaveConfig()
     AActor::SaveConfig();
 }
 
-void ASpDebugManager::PrintDebugString()
+void ASpDebugManager::PrintDebugString() const
 {
     SP_LOG_CURRENT_FUNCTION();
     SP_LOG("    DebugString: ", Unreal::toStdString(DebugString));
@@ -146,7 +146,7 @@ void ASpDebugManager::GetAndSetObjectProperties()
     SP_ASSERT(static_mesh_actor);
 
     // Get actor from registrar
-    AActor* static_mesh_actor_from_registrar = UnrealClassRegistrar::findActorByName("AStaticMeshActor", world, "Debug/SM_Prop_04");
+    AActor* static_mesh_actor_from_registrar = UnrealClassRegistry::findActorByName("AStaticMeshActor", world, "Debug/SM_Prop_04");
     SP_ASSERT(static_mesh_actor_from_registrar);
     SP_LOG(static_mesh_actor_from_registrar);
 
@@ -192,7 +192,7 @@ void ASpDebugManager::GetAndSetObjectProperties()
     SP_LOG(scene_component);
 
     // Get component from registrar
-    UActorComponent* static_mesh_component_from_registrar = UnrealClassRegistrar::getComponentByType("UStaticMeshComponent", static_mesh_actor);
+    UActorComponent* static_mesh_component_from_registrar = UnrealClassRegistry::getComponentByType("UStaticMeshComponent", static_mesh_actor);
     SP_ASSERT(static_mesh_component_from_registrar);
 
     SpPropertyDesc relative_location_property_desc_  = Unreal::findPropertyByName(static_mesh_component, "RelativeLocation");
@@ -227,13 +227,13 @@ void ASpDebugManager::GetAndSetObjectProperties()
 
     // Get property values from void* and UStruct*
     value_ptr = &(static_mesh_component->BodyInstance);
-    ustruct = UnrealClassRegistrar::getStaticStruct<FBodyInstance>();
+    ustruct = UnrealClassRegistry::getStaticStruct<FBodyInstance>();
     SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
     SP_LOG();
 
     // Get property values from void* and UStruct*
     value_ptr = relative_location_property_desc.value_ptr_;
-    ustruct = UnrealClassRegistrar::getStaticStruct<FVector>();
+    ustruct = UnrealClassRegistry::getStaticStruct<FVector>();
     SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
     SP_LOG();
 
@@ -244,7 +244,7 @@ void ASpDebugManager::GetAndSetObjectProperties()
     // Set property value from void* and UStruct*
     str = Std::toString("{", "\"x\": ", 12.3*i, ", \"y\": ", 45.6*i, "}");
     value_ptr = &vec;
-    ustruct = UnrealClassRegistrar::getStaticStruct<FVector>();
+    ustruct = UnrealClassRegistry::getStaticStruct<FVector>();
     SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
     Unreal::setObjectPropertiesFromString(value_ptr, ustruct, str);
     SP_LOG(Unreal::getObjectPropertiesAsString(value_ptr, ustruct));
@@ -360,22 +360,22 @@ void ASpDebugManager::CallFunctions()
     std::map<std::string, std::string> return_values;
     std::string vec_str = Std::toString("{", "\"x\": ", 1.1*i, ", \"y\": ", 2.2*i, ", \"z\": ", 3.3*i, "}");
 
-    args = {{"arg_0", "Hello World"}, {"arg_1", "true"}, {"arg_2", "12345"}, {"arg_3", vec_str}};
+    args = {{"Arg0", "Hello World"}, {"Arg1", "true"}, {"Arg2", "12345"}, {"Arg3", vec_str}};
     ufunction = Unreal::findFunctionByName(this->GetClass(), "GetString");
     SP_ASSERT(ufunction);
     return_values = Unreal::callFunction(GetWorld(), this, ufunction, args);
     SP_LOG(return_values.at("ReturnValue"));
 
-    args = {{"arg_0", "Hello World"}, {"arg_1", "true"}, {"arg_2", "12345"}, {"arg_3", vec_str}};
+    args = {{"Arg0", "Hello World"}, {"Arg1", "true"}, {"Arg2", "12345"}, {"Arg3", vec_str}};
     ufunction = Unreal::findFunctionByName(this->GetClass(), "GetVector");
     SP_ASSERT(ufunction);
     return_values = Unreal::callFunction(GetWorld(), this, ufunction, args);
-    SP_LOG(return_values.at("arg_3")); // arg_3 is modified by GetVector(...)
+    SP_LOG(return_values.at("Arg3")); // Arg3 is modified by GetVector(...)
     SP_LOG(return_values.at("ReturnValue"));
 
     // Pointers can be passed into functions by converting them to strings, and static functions can be
     // called by passing in the class' default object when calling callFunction(...).
-    args = {{"world_context_object", Std::toStringFromPtr(GetWorld())}, {"arg_0", "Hello World"}, {"arg_1", "true"}};
+    args = {{"world_context_object", Std::toStringFromPtr(GetWorld())}, {"Arg0", "Hello World"}, {"Arg1", "true"}};
     ufunction = Unreal::findFunctionByName(this->GetClass(), "GetWorldContextObject");
     SP_ASSERT(ufunction);
     return_values = Unreal::callFunction(GetWorld(), this->GetClass()->GetDefaultObject(), ufunction, args);
@@ -385,8 +385,8 @@ void ASpDebugManager::CallFunctions()
     ufunction = Unreal::findFunctionByName(this->GetClass(), "UpdateData");
     SP_ASSERT(ufunction);
     return_values = Unreal::callFunction(GetWorld(), this->GetClass()->GetDefaultObject(), ufunction, args);
-    SP_LOG(return_values.at("map_from_string_to_vector"));
-    SP_LOG(return_values.at("array_of_vectors"));
+    SP_LOG(return_values.at("InMapFromStringToVector"));
+    SP_LOG(return_values.at("InArrayOfVectors"));
 
     UWorld* world = GetWorld(); 
     SP_ASSERT(world);
@@ -437,7 +437,7 @@ void ASpDebugManager::CallFunctions()
     i++;
 }
 
-void ASpDebugManager::CallSpFunc()
+void ASpDebugManager::CallSpFunc() const
 {
     USpFuncComponent* sp_func_component = Unreal::getComponentByType<USpFuncComponent>(this);
     SP_ASSERT(sp_func_component);
@@ -500,7 +500,7 @@ void ASpDebugManager::CreateObjects()
 {
     static int i = 1;
 
-    UClass* uclass = UnrealClassRegistrar::getStaticClass("UGameplayStatics");
+    UClass* uclass = UnrealClassRegistry::getStaticClass("UGameplayStatics");
     SP_ASSERT(uclass);
 
     std::string in_vec_string = Std::toString("{", "\"x\": ", 1.1*i, ", \"y\": ", 2.2*i, ", \"z\": ", 3.3*i, "}");
@@ -528,7 +528,7 @@ void ASpDebugManager::CreateObjects()
     }
 
     FActorSpawnParameters spawn_parameters;
-    AActor* actor = UnrealClassRegistrar::spawnActor("AStaticMeshActor", GetWorld(), location.getObj(), rotation.getObj(), spawn_parameters);
+    AActor* actor = UnrealClassRegistry::spawnActor("AStaticMeshActor", GetWorld(), location.getObj(), rotation.getObj(), spawn_parameters);
     SP_ASSERT(actor);
 
     i++;
@@ -596,33 +596,33 @@ void ASpDebugManager::ReadPixels()
     SP_LOG("    view_ptr[3]: ", (int)(((uint8_t*)view_ptr)[3]));
 }
 
-FString ASpDebugManager::GetString(FString arg_0, bool arg_1, int arg_2, FVector arg_3)
+FString ASpDebugManager::GetString(FString Arg0, bool Arg1, int Arg2, FVector Arg3) const
 {
     SP_LOG_CURRENT_FUNCTION();
     return FString("    GetString return value.");
 }
 
-FVector ASpDebugManager::GetVector(FString arg_0, bool arg_1, int arg_2, FVector& arg_3)
+FVector ASpDebugManager::GetVector(FString Arg0, bool Arg1, int Arg2, FVector& Arg3) const
 {
     SP_LOG_CURRENT_FUNCTION();
-    arg_3 = FVector(1.11, 2.22, 3.33);
+    Arg3 = FVector(1.11, 2.22, 3.33);
     return FVector(9.87, 6.54, 3.21);
 }
 
-UObject* ASpDebugManager::GetWorldContextObject(const UObject* world_context_object, FString arg_0, bool arg_1)
+UObject* ASpDebugManager::GetWorldContextObject(const UObject* WorldContextObject, FString Arg0, bool Arg1)
 {
     SP_LOG_CURRENT_FUNCTION();
-    return const_cast<UObject*>(world_context_object);
+    return const_cast<UObject*>(WorldContextObject);
 }
 
-void ASpDebugManager::UpdateData(TMap<FString, FVector>& map_from_string_to_vector, TArray<FVector>& array_of_vectors)
+void ASpDebugManager::UpdateData(TMap<FString, FVector>& InMapFromStringToVector, TArray<FVector>& InArrayOfVectors)
 {
     SP_LOG_CURRENT_FUNCTION();
     FVector vec(1.23, 4.56, 7.89);
-    map_from_string_to_vector.Add(Unreal::toFString("Hello"), 1.0*vec);
-    map_from_string_to_vector.Add(Unreal::toFString("World"), 2.0*vec);
-    array_of_vectors.Add(FVector(1.0, 2.0, 3.0));
-    array_of_vectors.Add(FVector(4.0, 5.0, 6.0));
+    InMapFromStringToVector.Add(Unreal::toFString("Hello"), 1.0*vec);
+    InMapFromStringToVector.Add(Unreal::toFString("World"), 2.0*vec);
+    InArrayOfVectors.Add(FVector(1.0, 2.0, 3.0));
+    InArrayOfVectors.Add(FVector(4.0, 5.0, 6.0));
 }
 
 void ASpDebugManager::initializeSpFunc()

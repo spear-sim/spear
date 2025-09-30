@@ -132,11 +132,25 @@ class EngineService():
     # Miscellaneous low-level entry points that interact with Unreal globals
     #
 
+    def get_engine(self):
+        return self.call_on_worker_thread("uint64_t", "engine_service.get_engine")
+
     def is_with_editor(self):
         return self.call_on_worker_thread("bool", "engine_service.is_with_editor")
 
     def is_running_commandlet(self):
         return self.call_on_worker_thread("bool", "engine_service.is_running_commandlet")
+
+    def is_async_loading(self):
+        return self.call_on_game_thread("bool", "engine_service.is_async_loading")
+
+    #
+    # Miscellaneous low-level entry points that interact with Unreal singleton structs and are needed in the
+    # implementation of spear.Instance. We could implement UCLASSES and UFUNCTIONS to access the low-level
+    # Unreal structs, but then we would be limited to accessing them on the game thread. Providing access
+    # through these entry points enables access on the worker thread, which simplifies the implmeentation of
+    # spear.Instance.
+    #
 
     def get_command_line(self):
         return self.call_on_worker_thread("std::string", "engine_service.get_command_line")
@@ -144,7 +158,9 @@ class EngineService():
     def request_exit(self, immediate_shutdown):
         self.call_on_worker_thread("void", "engine_service.request_exit", immediate_shutdown)
 
+    #
     # Miscellaneous low-level entry points that interact with GEngine
+    #
 
     def get_viewport_size(self):
         return self.call_on_worker_thread("std::vector<double>", "engine_service.get_viewport_size")

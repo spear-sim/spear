@@ -16,7 +16,7 @@
 #include "SpCore/Boost.h"
 #include "SpCore/Config.h"
 
-class SPSERVICES_API WorkQueue
+class WorkQueue
 {
 public:
     WorkQueue() = delete;
@@ -158,7 +158,7 @@ public:
         return future;
     }
 
-    std::string getName() { return name_; }
+    std::string getName() const { return name_; }
 
 private:
 

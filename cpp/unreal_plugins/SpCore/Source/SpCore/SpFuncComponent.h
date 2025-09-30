@@ -15,7 +15,7 @@
 #include <HAL/Platform.h>            // SPCORE_API
 #include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UPROPERTY
 
-#include "SpCore/FuncRegistrar.h"
+#include "SpCore/FuncRegistry.h"
 #include "SpCore/SpArray.h"
 #include "SpCore/SpTypes.h"
 
@@ -27,9 +27,6 @@ class SPCORE_API USpFuncComponent : public USceneComponent
 {
     GENERATED_BODY()
 public:
-    USpFuncComponent();
-    ~USpFuncComponent() override;
-
     // typically called by the owning actor or component to register/unregister an SpFunc
     void initialize();
     void terminate();
@@ -49,6 +46,6 @@ private:
     UPROPERTY(VisibleAnywhere, Category="SPEAR");
     TArray<FString> SharedMemoryViewNames;
 
-    FuncRegistrar<SpFuncDataBundle, SpFuncDataBundle&> funcs_;
+    FuncRegistry<SpFuncDataBundle, SpFuncDataBundle&> funcs_;
     std::map<std::string, SpArraySharedMemoryView> shared_memory_views_;
 };

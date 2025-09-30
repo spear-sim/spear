@@ -21,7 +21,7 @@
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
-#include "SpCore/UnrealClassRegistrar.h"
+#include "SpCore/UnrealClassRegistry.h"
 
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/Service.h"
@@ -107,7 +107,7 @@ public:
                 EInputEvent key_event = Unreal::getEnumValueFromString<EInputEvent>(key_event_string);
                 ETouchIndex::Type finger_index = Unreal::getEnumValueFromString<ETouchIndex::Type>(finger_index_string);
                 FVector location;
-                Unreal::setObjectPropertiesFromString(&location, UnrealClassRegistrar::getStaticStruct<FVector>(), location_string);
+                Unreal::setObjectPropertiesFromString(&location, UnrealClassRegistry::getStaticStruct<FVector>(), location_string);
 
                 for (auto& touch_binding : input_component->TouchBindings) {
 
@@ -177,7 +177,7 @@ public:
                 }
 
                 FVector vector_axis_value;
-                Unreal::setObjectPropertiesFromString(&vector_axis_value, UnrealClassRegistrar::getStaticStruct<FVector>(), vector_axis_value_string);
+                Unreal::setObjectPropertiesFromString(&vector_axis_value, UnrealClassRegistry::getStaticStruct<FVector>(), vector_axis_value_string);
 
                 for (auto& vector_axis_binding : input_component->VectorAxisBindings) {
 
@@ -185,7 +185,7 @@ public:
                         SP_LOG(Unreal::toStdString(vector_axis_binding.AxisKey.GetDisplayName()));
                         SP_LOG(Unreal::toStdString(vector_axis_binding.AxisKey.GetFName()));
                         SP_LOG(Unreal::toStdString(vector_axis_binding.AxisKey.ToString()));
-                        SP_LOG(Unreal::getObjectPropertiesAsString(&(vector_axis_binding.AxisValue), UnrealClassRegistrar::getStaticStruct<FVector>()));
+                        SP_LOG(Unreal::getObjectPropertiesAsString(&(vector_axis_binding.AxisValue), UnrealClassRegistry::getStaticStruct<FVector>()));
                         SP_LOG();
                     }
 
@@ -246,7 +246,7 @@ public:
     }
 
 private:
-    UInputComponent* getInputComponent(uint64_t& actor)
+    static UInputComponent* getInputComponent(uint64_t& actor)
     {
         AActor* actor_ptr = toPtr<AActor>(actor);
         std::vector<UInputComponent*> input_components = Unreal::getComponentsByType<UInputComponent>(actor_ptr);

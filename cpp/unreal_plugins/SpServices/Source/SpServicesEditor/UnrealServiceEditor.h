@@ -9,10 +9,10 @@
 
 #include <string>
 
-#include "SpCore/UnrealClassRegistrar.h"
+#include "SpCore/UnrealClassRegistry.h"
 
 #include "SpCoreEditor/UnrealEditor.h"
-#include "SpCoreEditor/UnrealClassRegistrarEditor.h"
+#include "SpCoreEditor/UnrealClassRegistryEditor.h"
 
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/Service.h"
@@ -31,12 +31,12 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_editor_subsystem_by_type",
             [this](std::string& class_name) -> uint64_t {
-                return toUInt64(UnrealClassRegistrarEditor::getEditorSubsystemByType(class_name));
+                return toUInt64(UnrealClassRegistryEditor::getEditorSubsystemByType(class_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_editor_subsystem_by_class",
             [this](uint64_t& uclass) -> uint64_t {
-                return toUInt64(UnrealEditor::getEditorSubsystemByClass(toPtr<UClass>(uclass))); // UnrealClassRegistrarEditor not needed because UnrealEditor::getEditorSubsystemBase(...) has no template parameters
+                return toUInt64(UnrealEditor::getEditorSubsystemByClass(toPtr<UClass>(uclass))); // UnrealClassRegistryEditor not needed because UnrealEditor::getEditorSubsystemBase(...) has no template parameters
             });
     }
 };

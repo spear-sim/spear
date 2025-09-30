@@ -9,8 +9,8 @@
 
 #include <HAL/Platform.h> // SPCOREEDITOR_API
 
-#include "SpCore/FuncRegistrar.h"
-#include "SpCore/UnrealClassRegistrar.h"
+#include "SpCore/FuncRegistry.h"
+#include "SpCore/UnrealClassRegistry.h"
 
 #include "SpCoreEditor/UnrealEditor.h"
 
@@ -26,16 +26,16 @@ class UEditorSubsystem;
 //
 
 //
-// Registrars for getting subsystems using a class name instead of template parameters
+// Registrys for getting subsystems using a class name instead of template parameters
 //
 
-extern SPCOREEDITOR_API FuncRegistrar<UEditorSubsystem*> g_get_editor_subsystem_by_type_func_registrar;
+extern SPCOREEDITOR_API FuncRegistry<UEditorSubsystem*> g_get_editor_subsystem_by_type_func_registrar;
 
-class SPCOREEDITOR_API UnrealClassRegistrarEditor
+class SPCOREEDITOR_API UnrealClassRegistryEditor
 {
 public:
-    UnrealClassRegistrarEditor() = delete;
-    ~UnrealClassRegistrarEditor() = delete;
+    UnrealClassRegistryEditor() = delete;
+    ~UnrealClassRegistryEditor() = delete;
 
     //
     // Get editor subsystem using a class name instead of template parameters
@@ -50,7 +50,7 @@ public:
     template <CEditorSubsystem TEditorSubsystem>
     static void registerEditorSubsystemClass(const std::string& class_name)
     {
-        UnrealClassRegistrar::registerClassCommon<TEditorSubsystem>(class_name);
+        UnrealClassRegistry::registerClassCommon<TEditorSubsystem>(class_name);
 
         g_get_editor_subsystem_by_type_func_registrar.registerFunc(
             class_name, []() -> UEditorSubsystem* {
@@ -65,7 +65,7 @@ public:
     template <CEditorSubsystem TEditorSubsystem>
     static void unregisterEditorSubsystemClass(const std::string& class_name)
     {
-        UnrealClassRegistrar::unregisterClassCommon<TEditorSubsystem>(class_name);
+        UnrealClassRegistry::unregisterClassCommon<TEditorSubsystem>(class_name);
 
         g_get_editor_subsystem_by_type_func_registrar.unregisterFunc(class_name);
     }

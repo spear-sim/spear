@@ -36,41 +36,26 @@
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
-#include "SpCore/SpSpecialStructActor.h"
+#include "SpCore/SpSpecialStructs.h"
 #include "SpCore/SpStableNameComponent.h"
 #include "SpCore/Std.h"
 
-class UClass;
 class USceneComponent;
-class UStruct;
 class UWorld;
 
 //
-// Helper function for structs
-//
-
-std::string Unreal::getStaticStructName(const UStruct* ustruct)
-{
-    SP_ASSERT(Unreal::toStdString(UObject::StaticClass()->GetPrefixCPP()) + Unreal::toStdString(UObject::StaticClass()->GetName()) == "UObject");
-    return Unreal::toStdString(ustruct->GetPrefixCPP()) + Unreal::toStdString(ustruct->GetName());
-}
-
-//
-// Find special struct by name. For this function to behave as expected, ASpSpecialStructActor must have a
+// Find special struct by name. For this function to behave as expected, USpSpecialStructs must have a
 // UPROPERTY defined on it named TypeName_ of type TypeName.
 //
 
 UStruct* Unreal::findSpecialStructByName(const std::string& struct_name)
 {
-    // We only need ASpSpecialStructActor's property metadata here, so we can use the default object. This
-    // makes it so this function is usable even in levels that don't have an ASpSpecialStructActor in them,
-    // and avoids the need to do a findActor operation.
-
-    UClass* special_struct_actor_static_class = ASpSpecialStructActor::StaticClass();
-    SP_ASSERT(special_struct_actor_static_class);
-    UObject* special_struct_actor_default_object = special_struct_actor_static_class->GetDefaultObject();
-    SP_ASSERT(special_struct_actor_default_object);
-    SpPropertyDesc property_desc = findPropertyByName(special_struct_actor_default_object, struct_name + "_");
+    // We only need USpSpecialStructs' property metadata here, so we can use the default object.
+    UClass* special_structs_static_class = USpSpecialStructs::StaticClass();
+    SP_ASSERT(special_structs_static_class);
+    UObject* special_structs_default_object = special_structs_static_class->GetDefaultObject();
+    SP_ASSERT(special_structs_default_object);
+    SpPropertyDesc property_desc = findPropertyByName(special_structs_default_object, struct_name + "_");
     SP_ASSERT(property_desc.property_);
     SP_ASSERT(property_desc.property_->IsA(FStructProperty::StaticClass()));
     FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
@@ -362,6 +347,14 @@ std::string Unreal::getPropertyValueAsString(const SpPropertyDesc& property_desc
         UObject* uobject = object_property->GetObjectPropertyValue(property_desc.value_ptr_);
         string = Std::toStringFromPtr(uobject);
 
+    } else if (property_desc.property_->IsA(FInterfaceProperty::StaticClass())) {
+
+        FInterfaceProperty* interface_property = static_cast<FInterfaceProperty*>(property_desc.property_);
+        FScriptInterface* script_interface = interface_property->GetPropertyValuePtr(property_desc.value_ptr_);
+        SP_ASSERT(script_interface);
+        UObject* uobject = script_interface->GetObject();
+        string = Std::toStringFromPtr(uobject);
+
     } else {
 
         SP_LOG(toStdString(property_desc.property_->GetName()), " is an unsupported type: ", toStdString(property_desc.property_->GetClass()->GetName()));
@@ -541,6 +534,21 @@ void Unreal::setPropertyValueFromJsonValue(const SpPropertyDesc& property_desc, 
 
         UObject* uobject = Std::toPtrFromString<UObject>(toStdString(fstring));
         object_property->SetObjectPropertyValue(property_desc.value_ptr_, uobject);
+
+    } else if (property_desc.property_->IsA(FInterfaceProperty::StaticClass())) {
+
+        FInterfaceProperty* interface_property = static_cast<FInterfaceProperty*>(property_desc.property_);
+
+        bool success = false;
+        FString fstring;
+        success = json_value.Get()->TryGetString(fstring);
+        SP_ASSERT(success);
+
+        UObject* uobject = Std::toPtrFromString<UObject>(toStdString(fstring));
+
+        FScriptInterface* script_interface = interface_property->GetPropertyValuePtr(property_desc.value_ptr_);
+        SP_ASSERT(script_interface);
+        script_interface->SetObject(uobject);
 
     } else {
 
@@ -937,8 +945,8 @@ std::string Unreal::getQuoteStringForProperty(const FProperty* property)
     // a well-formed JSON string. Likewise, if our property is an {array, set, map, struct}, then we expect
     // an input string to already be a well-formed JSON string, and again we do not need to add any quotes.
     //
-    // On the other hand, if our property is a {enum, string, name, object}, then we expect an input string
-    // to contain a string with no quotes because this is the formatting convention of getPropertyValueFromString(...),
+    // On the other hand, if our property is a {enum, string, name, object, interface}, then we expect an
+    // input string to contain a string with no quotes because this is the formatting convention of getPropertyValueFromString(...),
     // and in this case we need to add quotes to construct a well-formed JSON string.
     //
     // If our property is an enum byte, treat it like a string. If it is a non-enum byte, treat it like
@@ -946,10 +954,11 @@ std::string Unreal::getQuoteStringForProperty(const FProperty* property)
 
     std::string quote_string;
 
-    if (property->IsA(FEnumProperty::StaticClass()) ||
-        property->IsA(FStrProperty::StaticClass())  ||
-        property->IsA(FNameProperty::StaticClass()) ||
-        property->IsA(FObjectProperty::StaticClass())) {
+    if (property->IsA(FEnumProperty::StaticClass())   ||
+        property->IsA(FStrProperty::StaticClass())    ||
+        property->IsA(FNameProperty::StaticClass())   ||
+        property->IsA(FObjectProperty::StaticClass()) ||
+        property->IsA(FInterfaceProperty::StaticClass())) {
         quote_string = "\"";
     } else if (property->IsA(FByteProperty::StaticClass())) {
         const FByteProperty* byte_property = static_cast<const FByteProperty*>(property);

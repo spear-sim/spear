@@ -5,27 +5,23 @@
 
 #pragma once
 
-#include <GameFramework/Actor.h>
 #include <Math/Rotator.h>
 #include <Math/Transform.h>
 #include <Math/Vector.h>
+#include <Math/Vector2D.h>
+#include <UObject/Object.h> // UObject
 
 #include "SpCore/Log.h"
 
-#include "SpSpecialStructActor.generated.h"
+#include "SpSpecialStructs.generated.h"
 
 UCLASS()
-class ASpSpecialStructActor : public AActor
+class USpSpecialStructs : public UObject
 {
     GENERATED_BODY()
-public:
-    ASpSpecialStructActor() { SP_LOG_CURRENT_FUNCTION(); }
-    ~ASpSpecialStructActor() override { SP_LOG_CURRENT_FUNCTION(); }
 
+// The UPROPERTIES below are required to support the Unreal::findSpecialStructByName(...) interface.
 private:
-
-    // The UPROPERTIES below are required to support the Unreal::findSpecialStructByName(...) interface.
-
     UPROPERTY()
     FRotator FRotator_;
 
@@ -34,4 +30,7 @@ private:
 
     UPROPERTY()
     FVector FVector_;
+
+    UPROPERTY()
+    FVector2D FVector2D_;
 };

@@ -9,14 +9,21 @@
 
 #include "SpCore/AssertModuleLoaded.h"
 #include "SpCore/Log.h"
-#include "SpCore/UnrealClassRegistrar.h"
+#include "SpCore/UnrealClassRegistry.h"
 
 // SpUnrealTypes classes
+#include "SpUnrealTypes/SpAssetCompilingManager.h"
 #include "SpUnrealTypes/SpBasicKeyboardControlComponent.h"
+#include "SpUnrealTypes/SpDebugCameraController.h"
+#include "SpUnrealTypes/SpDebugCameraHUD.h"
 #include "SpUnrealTypes/SpDebugManager.h"
 #include "SpUnrealTypes/SpDummyComponent.h"
+#include "SpUnrealTypes/SpGameMode.h"
+#include "SpUnrealTypes/SpGameEngine.h"
+#include "SpUnrealTypes/SpGameViewportClient.h"
 #include "SpUnrealTypes/SpHitEventManager.h"
 #include "SpUnrealTypes/SpInitializeWorldManager.h"
+#include "SpUnrealTypes/SpLevelStreaming.h"
 #include "SpUnrealTypes/SpMessageQueueManager.h"
 #include "SpUnrealTypes/SpPauseManager.h"
 #include "SpUnrealTypes/SpPlayerController.h"
@@ -24,6 +31,7 @@
 #include "SpUnrealTypes/SpSpectatorPawn.h"
 #include "SpUnrealTypes/SpUpdateTransformComponent.h"
 #include "SpUnrealTypes/SpUserInputComponent.h"
+#include "SpUnrealTypes/SpWorld.h"
 
 void SpUnrealTypes::StartupModule()
 {
@@ -44,38 +52,54 @@ void SpUnrealTypes::ShutdownModule()
 // But we make an exception here (i.e., we do the operations in the same order) to make it easier and less
 // error-prone to register classes.
 
-void SpUnrealTypes::registerClasses()
+void SpUnrealTypes::registerClasses() const
 {
     // SpUnrealTypes classes
-    UnrealClassRegistrar::registerActorClass<ASpDebugManager>("ASpDebugManager");
-    UnrealClassRegistrar::registerActorClass<ASpHitEventManager>("ASpHitEventManager");
-    UnrealClassRegistrar::registerActorClass<ASpInitializeWorldManager>("ASpInitializeWorldManager");
-    UnrealClassRegistrar::registerActorClass<ASpMessageQueueManager>("ASpMessageQueueManager");
-    UnrealClassRegistrar::registerActorClass<ASpPauseManager>("ASpPauseManager");
-    UnrealClassRegistrar::registerActorClass<ASpPlayerController>("ASpPlayerController");
-    UnrealClassRegistrar::registerActorClass<ASpSpectatorPawn>("ASpSpectatorPawn");
-    UnrealClassRegistrar::registerComponentClass<USpBasicKeyboardControlComponent>("USpBasicKeyboardControlComponent");
-    UnrealClassRegistrar::registerComponentClass<USpDummyComponent>("USpDummyComponent");
-    UnrealClassRegistrar::registerComponentClass<USpSceneCaptureComponent2D>("USpSceneCaptureComponent2D");
-    UnrealClassRegistrar::registerComponentClass<USpUpdateTransformComponent>("USpUpdateTransformComponent");
-    UnrealClassRegistrar::registerComponentClass<USpUserInputComponent>("USpUserInputComponent");
+    UnrealClassRegistry::registerActorClass<ASpDebugCameraController>("ASpDebugCameraController");
+    UnrealClassRegistry::registerActorClass<ASpDebugCameraHUD>("ASpDebugCameraHUD");
+    UnrealClassRegistry::registerActorClass<ASpDebugManager>("ASpDebugManager");
+    UnrealClassRegistry::registerActorClass<ASpGameMode>("ASpGameMode");
+    UnrealClassRegistry::registerActorClass<ASpHitEventManager>("ASpHitEventManager");
+    UnrealClassRegistry::registerActorClass<ASpInitializeWorldManager>("ASpInitializeWorldManager");
+    UnrealClassRegistry::registerActorClass<ASpPauseManager>("ASpPauseManager");
+    UnrealClassRegistry::registerActorClass<ASpPlayerController>("ASpPlayerController");
+    UnrealClassRegistry::registerActorClass<ASpSpectatorPawn>("ASpSpectatorPawn");
+    UnrealClassRegistry::registerComponentClass<USpBasicKeyboardControlComponent>("USpBasicKeyboardControlComponent");
+    UnrealClassRegistry::registerComponentClass<USpDummyComponent>("USpDummyComponent");
+    UnrealClassRegistry::registerComponentClass<USpSceneCaptureComponent2D>("USpSceneCaptureComponent2D");
+    UnrealClassRegistry::registerComponentClass<USpUpdateTransformComponent>("USpUpdateTransformComponent");
+    UnrealClassRegistry::registerComponentClass<USpUserInputComponent>("USpUserInputComponent");
+    UnrealClassRegistry::registerClass<USpAssetCompilingManager>("USpAssetCompilingManager");
+    UnrealClassRegistry::registerClass<USpGameEngine>("USpGameEngine");
+    UnrealClassRegistry::registerClass<USpGameViewportClient>("USpGameViewportClient");
+    UnrealClassRegistry::registerClass<USpLevelStreaming>("USpLevelStreaming");
+    UnrealClassRegistry::registerClass<USpMessageQueueManager>("USpMessageQueueManager");
+    UnrealClassRegistry::registerClass<USpWorld>("USpWorld");
 }
 
-void SpUnrealTypes::unregisterClasses()
+void SpUnrealTypes::unregisterClasses() const
 {
     // SpUnrealTypes classes
-    UnrealClassRegistrar::unregisterActorClass<ASpDebugManager>("ASpDebugManager");
-    UnrealClassRegistrar::unregisterActorClass<ASpHitEventManager>("ASpHitEventManager");
-    UnrealClassRegistrar::unregisterActorClass<ASpInitializeWorldManager>("ASpInitializeWorldManager");
-    UnrealClassRegistrar::unregisterActorClass<ASpMessageQueueManager>("ASpMessageQueueManager");
-    UnrealClassRegistrar::unregisterActorClass<ASpPauseManager>("ASpPauseManager");
-    UnrealClassRegistrar::unregisterActorClass<ASpPlayerController>("ASpPlayerController");
-    UnrealClassRegistrar::unregisterActorClass<ASpSpectatorPawn>("ASpSpectatorPawn");
-    UnrealClassRegistrar::unregisterComponentClass<USpBasicKeyboardControlComponent>("USpBasicKeyboardControlComponent");
-    UnrealClassRegistrar::unregisterComponentClass<USpDummyComponent>("USpDummyComponent");
-    UnrealClassRegistrar::unregisterComponentClass<USpSceneCaptureComponent2D>("USpSceneCaptureComponent2D");
-    UnrealClassRegistrar::unregisterComponentClass<USpUpdateTransformComponent>("USpUpdateTransformComponent");
-    UnrealClassRegistrar::unregisterComponentClass<USpUserInputComponent>("USpUserInputComponent");
+    UnrealClassRegistry::unregisterActorClass<ASpDebugCameraController>("ASpDebugCameraController");
+    UnrealClassRegistry::unregisterActorClass<ASpDebugCameraHUD>("ASpDebugCameraHUD");
+    UnrealClassRegistry::unregisterActorClass<ASpDebugManager>("ASpDebugManager");
+    UnrealClassRegistry::unregisterActorClass<ASpGameMode>("ASpGameMode");
+    UnrealClassRegistry::unregisterActorClass<ASpHitEventManager>("ASpHitEventManager");
+    UnrealClassRegistry::unregisterActorClass<ASpInitializeWorldManager>("ASpInitializeWorldManager");
+    UnrealClassRegistry::unregisterActorClass<ASpPauseManager>("ASpPauseManager");
+    UnrealClassRegistry::unregisterActorClass<ASpPlayerController>("ASpPlayerController");
+    UnrealClassRegistry::unregisterActorClass<ASpSpectatorPawn>("ASpSpectatorPawn");
+    UnrealClassRegistry::unregisterComponentClass<USpBasicKeyboardControlComponent>("USpBasicKeyboardControlComponent");
+    UnrealClassRegistry::unregisterComponentClass<USpDummyComponent>("USpDummyComponent");
+    UnrealClassRegistry::unregisterComponentClass<USpSceneCaptureComponent2D>("USpSceneCaptureComponent2D");
+    UnrealClassRegistry::unregisterComponentClass<USpUpdateTransformComponent>("USpUpdateTransformComponent");
+    UnrealClassRegistry::unregisterComponentClass<USpUserInputComponent>("USpUserInputComponent");
+    UnrealClassRegistry::unregisterClass<USpAssetCompilingManager>("USpAssetCompilingManager");
+    UnrealClassRegistry::unregisterClass<USpGameEngine>("USpGameEngine");
+    UnrealClassRegistry::unregisterClass<USpGameViewportClient>("USpGameViewportClient");
+    UnrealClassRegistry::unregisterClass<USpLevelStreaming>("USpLevelStreaming");
+    UnrealClassRegistry::unregisterClass<USpMessageQueueManager>("USpMessageQueueManager");
+    UnrealClassRegistry::unregisterClass<USpWorld>("USpWorld");
 }
 
 // use IMPLEMENT_GAME_MODULE if module implements Unreal classes, use IMPLEMENT_MODULE otherwise

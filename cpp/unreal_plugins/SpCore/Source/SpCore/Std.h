@@ -267,7 +267,7 @@ public:
         SP_ASSERT(sizeof(TValue[2]) == sizeof(TValueNoDefaultInit[2]));
         SP_ASSERT(sizeof(TValue[4]) == sizeof(TValueNoDefaultInit[4]));
 
-        TVectorNoDefaultInit* vector_no_default_init = reinterpret_cast<TVectorNoDefaultInit*>(&vector);
+        TVectorNoDefaultInit* vector_no_default_init = reinterpret_cast<TVectorNoDefaultInit*>(&vector); // technically undefined behavior but benign in practice
         vector_no_default_init->resize(size);
 
         SP_ASSERT(vector.size() == size);

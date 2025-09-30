@@ -5,8 +5,13 @@
 
 #pragma once
 
+#include <string>
+
 #include <Editor/UnrealEdEngine.h>
 #include <HAL/Platform.h> // TCHAR
+
+#include "SpCore/Log.h"
+#include "SpCore/Unreal.h"
 
 #include "SpUnrealEdEngine.generated.h"
 
@@ -25,8 +30,13 @@ class USpUnrealEdEngine : public UUnrealEdEngine
 {
     GENERATED_BODY()
 public:
-    USpUnrealEdEngine();
-    ~USpUnrealEdEngine() override;
+    USpUnrealEdEngine() { SP_LOG_CURRENT_FUNCTION(); }
+    ~USpUnrealEdEngine() override { SP_LOG_CURRENT_FUNCTION(); }
 
-    bool Exec(UWorld* world, const TCHAR* cmd, FOutputDevice& output_device) override;
+    bool Exec(UWorld* world, const TCHAR* cmd, FOutputDevice& output_device) override
+    {
+        std::string cmd_str = Unreal::toStdString(cmd);
+        SP_LOG(cmd_str);
+        return UUnrealEdEngine::Exec(world, cmd, output_device);
+    }
 };

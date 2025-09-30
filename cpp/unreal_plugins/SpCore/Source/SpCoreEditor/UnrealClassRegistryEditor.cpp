@@ -3,11 +3,11 @@
 // Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "SpCoreEditor/UnrealClassRegistrarEditor.h"
+#include "SpCoreEditor/UnrealClassRegistryEditor.h"
 
 #include <string>
 
-#include "SpCore/FuncRegistrar.h"
+#include "SpCore/FuncRegistry.h"
 
 class UEditorSubsystem;
 
@@ -21,15 +21,15 @@ class UEditorSubsystem;
 //
 
 //
-// Registrars for getting subsystems using a class name instead of template parameters
+// Registrys for getting subsystems using a class name instead of template parameters
 //
 
-FuncRegistrar<UEditorSubsystem*> g_get_editor_subsystem_by_type_func_registrar;
+FuncRegistry<UEditorSubsystem*> g_get_editor_subsystem_by_type_func_registrar;
 
 //
 // Get editor subsystem using a class name instead of template parameters
 //
 
-UEditorSubsystem* UnrealClassRegistrarEditor::getEditorSubsystemByType(const std::string& class_name) {
+UEditorSubsystem* UnrealClassRegistryEditor::getEditorSubsystemByType(const std::string& class_name) {
     return g_get_editor_subsystem_by_type_func_registrar.call(class_name);
 }

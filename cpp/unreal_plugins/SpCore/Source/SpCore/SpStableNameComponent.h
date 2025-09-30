@@ -8,9 +8,9 @@
 #include <Components/ActorComponent.h>
 #include <Containers/UnrealString.h>     // FString
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
-#include <GameFramework/Actor.h>
 #include <HAL/Platform.h>                // SPCORE_API
 #include <UObject/NameTypes.h>           // FName
+#include <UObject/Object.h>              // UObject
 #include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS
 
 #include "SpStableNameComponent.generated.h"
@@ -41,17 +41,17 @@ public:
 };
 
 //
-// The ASpStableNameManager default object listens to UI events in the editor and keeps USpStableNameComponents
+// The USpStableNameManager default object listens to UI events in the editor and keeps USpStableNameComponents
 // up-to-date.
 //
 
 UCLASS()
-class ASpStableNameManager : public AActor
+class USpStableNameManager : public UObject
 {
     GENERATED_BODY()
 public: 
-    ASpStableNameManager();
-    ~ASpStableNameManager() override;
+    USpStableNameManager();
+    ~USpStableNameManager() override;
 
 #if WITH_EDITOR // defined in an auto-generated header
     private:

@@ -184,7 +184,7 @@ public:
     }
 
 private:
-    UEnhancedInputComponent* getEnhancedInputComponent(uint64_t& actor)
+    static UEnhancedInputComponent* getEnhancedInputComponent(uint64_t& actor)
     {
         AActor* actor_ptr = toPtr<AActor>(actor);
         std::vector<UEnhancedInputComponent*> enhanced_input_components = Unreal::getComponentsByType<UEnhancedInputComponent>(actor_ptr);

@@ -18,8 +18,8 @@ public:
     void ShutdownModule() override;
 
 private:
-    void registerClasses();
-    void unregisterClasses();
+    void registerClasses() const;
+    void unregisterClasses() const;
 
     std::unique_ptr<SharedMemoryRegion> shared_memory_region_;
 };

@@ -41,7 +41,7 @@ public:
 private:
     // Call this function by typing the following into the Unreal console: SpAddOnScreenDebugMessage 10.0 Hello World
     UFUNCTION(Exec)
-    void SpAddOnScreenDebugMessage(float display_time, FString message);
+    void SpAddOnScreenDebugMessage(float DisplayTime, FString Message) const;
 
     // Toggle custom debug camera
     UFUNCTION(Exec)

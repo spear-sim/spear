@@ -51,6 +51,10 @@ template <typename TObject>
 concept CObject =
     std::derived_from<TObject, UObject>;
 
+template <typename TObject>
+concept CNonObject =
+    !std::derived_from<TObject, UObject>;
+
 // In the CStruct and CClass concepts below, there does not seem to be a clean way to encode the desired
 // std::derived_from<...> relationships directly in the requires(...) { ... } statement of each concept. This
 // is because, e.g., the type TStruct is implicitly passed as the first template parameter to std::derived_from<...>,
@@ -78,6 +82,14 @@ concept CClass =
         { TClass::StaticClass() }; // can't use std::same_as<UClass*> because the type of the returned pointer might be derived from UClass
     } &&
     std::derived_from<std::remove_pointer_t<decltype(TClass::StaticClass())>, UClass>;
+
+template <typename TInterface>
+concept CInterface =
+    CNonObject<TInterface> &&
+    requires(TInterface interface) {
+        { TInterface::UClassType::StaticClass() }; // can't use std::same_as<UClass*> because the type of the returned pointer might be derived from UClass
+    } &&
+    std::derived_from<std::remove_pointer_t<decltype(TInterface::UClassType::StaticClass())>, UClass>;
 
 template <typename TComponent>
 concept CComponent =
@@ -149,14 +161,8 @@ public:
     ~Unreal() = delete;
 
     //
-    // Helper function for structs
+    // Helper function for static structs and classes
     //
-
-    template <CClass TClass>
-    static UStruct* getStaticStruct()
-    {
-        return TClass::StaticClass();
-    }
 
     template <CStruct TStruct>
     static UStruct* getStaticStruct()
@@ -164,11 +170,33 @@ public:
         return TStruct::StaticStruct();
     }
 
-    static std::string getStaticStructName(const UStruct* ustruct);
+    template <CClass TClass>
+    static UStruct* getStaticStruct()
+    {
+        return TClass::StaticClass();
+    }
+
+    template <CInterface TInterface>
+    static UStruct* getStaticStruct()
+    {
+        return TInterface::UClassType::StaticClass();
+    }
+
+    template <CClass TClass>
+    static UClass* getStaticClass()
+    {
+        return TClass::StaticClass();
+    }
+
+    template <CInterface TInterface>
+    static UClass* getStaticClass()
+    {
+        return TInterface::UClassType::StaticClass();
+    }
 
     //
-    // Find special struct by name. For this function to behave as expected, ASpSpecialStructActor must have
-    // a UPROPERTY defined on it named TypeName_ of type TypeName.
+    // Find special struct by name. For this function to behave as expected, USpSpecialStructs must have a
+    // UPROPERTY defined on it named TypeName_ of type TypeName.
     //
 
     static UStruct* findSpecialStructByName(const std::string& struct_name);

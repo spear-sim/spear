@@ -8,7 +8,6 @@
 #include <Components/SceneComponent.h>
 #include <Engine/EngineBaseTypes.h>  // ELevelTick
 #include <Engine/EngineTypes.h>      // EEndPlayReason
-#include <HAL/Platform.h>            // SPUNREALTYPES_API
 
 #include "SpCore/SpFuncComponent.h"
 
@@ -26,7 +25,7 @@ struct FActorComponentTickFunction;
 
 // We need meta=(BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
 UCLASS(ClassGroup="SPEAR", HideCategories=(Rendering, Tags, Activation, Cooking, Physics, LOD, AssetUserData, Collision), meta=(BlueprintSpawnableComponent))
-class SPUNREALTYPES_API USpDummyComponent : public USceneComponent
+class USpDummyComponent : public USceneComponent
 {
     GENERATED_BODY()
 public:
@@ -39,7 +38,7 @@ public:
     void TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override;
 
     UFUNCTION()
-    void HelloWorld();
+    void HelloWorld() const;
 
     // Required for custom debug keyboard commands
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")

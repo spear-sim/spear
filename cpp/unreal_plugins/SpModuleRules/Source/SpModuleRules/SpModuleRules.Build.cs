@@ -35,8 +35,8 @@ public class SpModuleRules : ModuleRules
         UndefinedIdentifierWarningLevel = WarningLevel.Warning;
 
         PublicDependencyModuleNames.AddRange(new string[] {
-            "Chaos", "ChaosVehiclesCore", "Core", "CoreUObject", "Engine", "EngineSettings", "InputCore", "Json", "JsonUtilities", "LevelSequence",
-            "NavigationSystem", "PhysicsCore", "RenderCore", "RHI", "Slate", "XmlParser"});
+            "AssetRegistry", "Chaos", "ChaosVehiclesCore", "Core", "CoreUObject", "Engine", "EngineSettings", "InputCore", "Json", "JsonUtilities",
+            "LevelSequence", "NavigationSystem", "PhysicsCore", "RenderCore", "RHI", "Slate"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         string thirdPartyDir = Path.GetFullPath(Path.Combine(ModuleDirectory, "..", "..", "..", "..", "..", "third_party"));

@@ -64,8 +64,8 @@ if __name__ == "__main__":
         pass
 
     with instance.begin_frame():
-        # find ASpMessageQueueManager functions and default object
-        sp_message_queue_manager_static_class = editor.unreal_service.get_static_class(class_name="ASpMessageQueueManager")
+        # find USpMessageQueueManager functions and default object
+        sp_message_queue_manager_static_class = editor.unreal_service.get_static_class(class_name="USpMessageQueueManager")
         create_queue_func = editor.unreal_service.find_function_by_name(uclass=sp_message_queue_manager_static_class, function_name="CreateQueue")
         destroy_queue_func = editor.unreal_service.find_function_by_name(uclass=sp_message_queue_manager_static_class, function_name="DestroyQueue")
         get_queue_length_func = editor.unreal_service.find_function_by_name(uclass=sp_message_queue_manager_static_class, function_name="GetQueueLength")
@@ -73,7 +73,7 @@ if __name__ == "__main__":
         sp_message_queue_manager_default_object = editor.unreal_service.get_default_object(uclass=sp_message_queue_manager_static_class, create_if_needed=False)
 
         # create a message queue named "take_screenshot" to facilitate communication between this Python script and take_screenshot.py
-        editor.unreal_service.call_function(uobject=sp_message_queue_manager_default_object, ufunction=create_queue_func, args={"queue_name": "take_screenshot"})
+        editor.unreal_service.call_function(uobject=sp_message_queue_manager_default_object, ufunction=create_queue_func, args={"QueueName": "take_screenshot"})
 
         # run take_screenshot.py
         take_screenshot_py_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "take_screenshot.py"))
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     take_screenshot_executing = True
     while take_screenshot_executing:
         with instance.begin_frame():
-            return_values = editor.unreal_service.call_function(uobject=sp_message_queue_manager_default_object, ufunction=get_queue_length_func, args={"queue_name": "take_screenshot"})
+            return_values = editor.unreal_service.call_function(uobject=sp_message_queue_manager_default_object, ufunction=get_queue_length_func, args={"QueueName": "take_screenshot"})
             queue_length = return_values["ReturnValue"]
             take_screenshot_executing = queue_length == 0
         with instance.end_frame():
@@ -101,11 +101,11 @@ if __name__ == "__main__":
         editor.unreal_service.execute_console_command("stat fps")
 
         # retrieve message pushed by take_screenshot.py
-        return_values = editor.unreal_service.call_function(uobject=sp_message_queue_manager_default_object, ufunction=pop_message_from_front_of_queue_func, args={"queue_name": "take_screenshot"})
+        return_values = editor.unreal_service.call_function(uobject=sp_message_queue_manager_default_object, ufunction=pop_message_from_front_of_queue_func, args={"QueueName": "take_screenshot"})
         message = return_values["ReturnValue"]
 
         # destroy named queue
-        editor.unreal_service.call_function(uobject=sp_message_queue_manager_default_object, ufunction=destroy_queue_func, args={"queue_name": "take_screenshot"})
+        editor.unreal_service.call_function(uobject=sp_message_queue_manager_default_object, ufunction=destroy_queue_func, args={"QueueName": "take_screenshot"})
 
     with instance.end_frame():
         pass

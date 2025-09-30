@@ -20,9 +20,6 @@
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 
-static std::map<AActor*, bool> s_record_debug_info_map_;
-static TArray<FActorHitEventDesc> s_actor_hit_event_descs_;
-
 ASpHitEventManager::ASpHitEventManager()
 {
     SP_LOG_CURRENT_FUNCTION();
@@ -40,52 +37,52 @@ ASpHitEventManager::~ASpHitEventManager()
 void ASpHitEventManager::Tick(float delta_time)
 {
     AActor::Tick(delta_time);
-    s_actor_hit_event_descs_.Empty();
+    actor_hit_event_descs_.Empty();
 }
 
 void ASpHitEventManager::SubscribeToActor(AActor* Actor, bool bRecordDebugInfo)
 {
     SP_ASSERT(Actor);
 
-    if (Std::containsKey(s_record_debug_info_map_, Actor)) {
+    if (Std::containsKey(record_debug_info_for_actors_, Actor)) {
         UnsubscribeFromActor(Actor);
     }
 
-    Actor->OnActorHit.AddDynamic(Cast<ASpHitEventManager>(ASpHitEventManager::StaticClass()->GetDefaultObject()), &ASpHitEventManager::ActorHitHandler); // no RTTI available
-    Std::insert(s_record_debug_info_map_, Actor, bRecordDebugInfo);
+    Actor->OnActorHit.AddDynamic(this, &ASpHitEventManager::ActorHitHandler);
+    Std::insert(record_debug_info_for_actors_, Actor, bRecordDebugInfo);
 }
 
 void ASpHitEventManager::UnsubscribeFromActor(AActor* Actor)
 {
     SP_ASSERT(Actor);
 
-    Actor->OnActorHit.RemoveDynamic(Cast<ASpHitEventManager>(ASpHitEventManager::StaticClass()->GetDefaultObject()), &ASpHitEventManager::ActorHitHandler); // no RTTI available
-    Std::remove(s_record_debug_info_map_, Actor);
+    Actor->OnActorHit.RemoveDynamic(this, &ASpHitEventManager::ActorHitHandler);
+    Std::remove(record_debug_info_for_actors_, Actor);
 }
 
 TArray<FActorHitEventDesc> ASpHitEventManager::GetHitEventDescs()
 {
-    return s_actor_hit_event_descs_;
+    return actor_hit_event_descs_;
 }
 
-void ASpHitEventManager::ActorHitHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result)
+void ASpHitEventManager::ActorHitHandler(AActor* SelfActor, AActor* OtherActor, FVector NormalImpulse, const FHitResult& HitResult)
 {
-    SP_ASSERT(self_actor);
-    SP_ASSERT(other_actor);
-    SP_ASSERT(Std::containsKey(s_record_debug_info_map_, self_actor));
+    SP_ASSERT(SelfActor);
+    SP_ASSERT(OtherActor);
+    SP_ASSERT(Std::containsKey(record_debug_info_for_actors_, SelfActor));
 
     FActorHitEventDesc actor_hit_event_desc;
-    actor_hit_event_desc.SelfActor = reinterpret_cast<uint64>(self_actor);
-    actor_hit_event_desc.OtherActor = reinterpret_cast<uint64>(other_actor);
-    actor_hit_event_desc.NormalImpulse = normal_impulse;
-    actor_hit_event_desc.HitResult = hit_result;
+    actor_hit_event_desc.SelfActor = reinterpret_cast<uint64>(SelfActor);
+    actor_hit_event_desc.OtherActor = reinterpret_cast<uint64>(OtherActor);
+    actor_hit_event_desc.NormalImpulse = NormalImpulse;
+    actor_hit_event_desc.HitResult = HitResult;
 
-    if (s_record_debug_info_map_.at(self_actor)) {
-        actor_hit_event_desc.SelfActorPtr = Unreal::toFString(Std::toStringFromPtr(self_actor));
-        actor_hit_event_desc.SelfActorPropertiesString = Unreal::toFString(Unreal::getObjectPropertiesAsString(self_actor));
-        actor_hit_event_desc.OtherActorPtr = Unreal::toFString(Std::toStringFromPtr(other_actor));
-        actor_hit_event_desc.OtherActorPropertiesString = Unreal::toFString(Unreal::getObjectPropertiesAsString(other_actor));
+    if (record_debug_info_for_actors_.at(SelfActor)) {
+        actor_hit_event_desc.SelfActorPtr = Unreal::toFString(Std::toStringFromPtr(SelfActor));
+        actor_hit_event_desc.SelfActorPropertiesString = Unreal::toFString(Unreal::getObjectPropertiesAsString(SelfActor));
+        actor_hit_event_desc.OtherActorPtr = Unreal::toFString(Std::toStringFromPtr(OtherActor));
+        actor_hit_event_desc.OtherActorPropertiesString = Unreal::toFString(Unreal::getObjectPropertiesAsString(OtherActor));
     }
 
-    s_actor_hit_event_descs_.Add(actor_hit_event_desc);
+    actor_hit_event_descs_.Add(actor_hit_event_desc);
 }

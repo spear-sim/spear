@@ -23,7 +23,7 @@
 #include "SpCore/SpArray.h"
 #include "SpCore/Unreal.h"
 
-class SPSERVICES_API Service
+class Service
 {
 public:
 

@@ -17,9 +17,9 @@
 
 #include <boost/predef.h> // BOOST_ENDIAN_BIG_BYTE, BOOST_ENDIAN_LITTLE_BYTE, BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
 
-#include <CoreGlobals.h>   // IsRunningCommandlet
+#include <CoreGlobals.h>   // IsAsyncLoading, IsRunningCommandlet
 #include <Engine/Engine.h> // GEngine
-#include <Engine/GameViewportClient.h>
+#include <GenericPlatform/GenericPlatformMisc.h>
 #include <Misc/CommandLine.h>
 
 #include "SpCore/Assert.h"
@@ -223,20 +223,28 @@ public:
             }
         });
 
-        // Miscellaneous low-level entry points that interact with Unreal globals
-
+        //
         // By calling IsRunningCommandlet() and FCommandLine::Get() below, we are accessing global variables
         // from the worker thread that are set on the game thread, and these global variables are not protected
         // by any synchronization primitive. At first glance, this seems like it would lead to undefined
         // behavior, but in this case it does not, because all RPC server worker threads are created on the
         // game thread after these global variables are set, and therefore there is a formal happens-before
         // relationship between the write operation and subsequent read operations.
+        //
+        // Calling FGenericPlatformMisc::RequestExit(false) from the worker thread is technically undefined
+        // behavior because there isn't a happens-before relationship when accessing Unreal's underlying
+        // global variable from multiple threads. But this undefined behavior is benign in practice, because
+        // as long as the write operation from the worker thread is eventually visible on the game thread,
+        // the overall system behavior is correct.
+        //
 
-        // Calling FGenericPlatformMisc::RequestExit(false) is technically undefined behavior because there
-        // isn't a happens-before relationship when accessing Unreal's underlying global variable from
-        // multiple threads. But this undefined behavior is benign in practice, because as long as the write
-        // operation from the worker thread is eventually visible on the game thread, the overall system
-        // behavior is correct.
+        //
+        // Miscellaneous low-level entry points that interact with Unreal globals
+        //
+
+        bindFuncToExecuteOnWorkerThread("engine_service", "get_engine", []() -> uint64_t {
+            return toUInt64(GEngine);
+        });
 
         bindFuncToExecuteOnWorkerThread("engine_service", "is_with_editor", []() -> bool {
             return WITH_EDITOR;
@@ -250,22 +258,24 @@ public:
             #endif
         });
 
+        bindFuncToExecuteOnGameThread("engine_service", "is_async_loading", []() -> bool {
+            return IsAsyncLoading(); // must be called on game thread
+        });
+
+        //
+        // Miscellaneous low-level entry points that interact with Unreal singleton structs and are needed in
+        // the implementation of spear.Instance. We could implement UCLASSES and UFUNCTIONS to access the
+        // low-level Unreal structs, but then we would be limited to accessing them on the game thread.
+        // Providing access through these entry points enables access on the worker thread, which simplifies
+        // the implmeentation of spear.Instance.
+        //
+
         bindFuncToExecuteOnWorkerThread("engine_service", "get_command_line", []() -> std::string {
             return Unreal::toStdString(FCommandLine::Get());
         });
 
         bindFuncToExecuteOnWorkerThread("engine_service", "request_exit", [](bool immediate_shutdown) -> void {
             FGenericPlatformMisc::RequestExit(immediate_shutdown);
-        });
-
-        // Miscellaneous low-level entry points that interact with GEngine
-
-        bindFuncToExecuteOnGameThread("engine_service", "get_viewport_size", [this]() -> std::vector<double> {
-            SP_ASSERT(GEngine);
-            SP_ASSERT(GEngine->GameViewport);
-            FVector2D viewport_size;
-            GEngine->GameViewport->GetViewportSize(viewport_size); // GameViewport is a UPROPERTY but GetViewportSize(...) isn't a UFUNCTION
-            return {viewport_size.X, viewport_size.Y};
         });
 
         //
@@ -347,7 +357,7 @@ public:
 
     // Called on the game thread from SpServices::StartupModule() and SpServices::ShutdownModule()
 
-    void startup() {}
+    void startup() const {}
 
     void shutdown()
     {
@@ -552,9 +562,14 @@ private:
         return [this, func_name, func](TArgs&... args) -> TReturn {
             return executeFuncInTryCatch(func_name, [this, &func_name, &func, &args...]() -> TReturn {
 
+                if (request_error_) {
+                    SP_LOG("ERROR: In an error state when attempting to execute ", func_name, " returning a default-constructed return value...");
+                    return TReturn();
+                }
+
                 if (!current_work_queue_) {
                     SP_LOG_CURRENT_FUNCTION();
-                    SP_LOG("    ERROR: Current work queue is null when attempting to execute function: ", func_name);
+                    SP_LOG("ERROR: Current work queue is null when attempting to execute function: ", func_name);
                 }
                 SP_ASSERT(current_work_queue_);
 
@@ -607,9 +622,14 @@ private:
         return [this, func_name, func](TArgs&... args) -> SpFuture {
             return executeFuncInTryCatch(func_name, [this, &func_name, &func, &args...]() -> SpFuture {
 
+                if (request_error_) {
+                    SP_LOG("ERROR: In an error state when attempting to execute ", func_name, " returning a default-constructed SpFuture...");
+                    return SpFuture();
+                }
+
                 if (!current_work_queue_) {
                     SP_LOG_CURRENT_FUNCTION();
-                    SP_LOG("    ERROR: Current work queue is null when attempting to execute function: ", func_name);
+                    SP_LOG("ERROR: Current work queue is null when attempting to execute function: ", func_name);
                 }
                 SP_ASSERT(current_work_queue_);
 
@@ -649,9 +669,14 @@ private:
         return [this, func_name, func](TArgs&... args) -> void {
             executeFuncInTryCatch(func_name, [this, &func_name, &func, &args...]() -> void {
 
+                if (request_error_) {
+                    SP_LOG("ERROR: In an error state when attempting to execute ", func_name, " returning...");
+                    return;
+                }
+
                 if (!current_work_queue_) {
                     SP_LOG_CURRENT_FUNCTION();
-                    SP_LOG("    ERROR: Current work queue is null when attempting to execute function: ", func_name);
+                    SP_LOG("ERROR: Current work queue is null when attempting to execute function: ", func_name);
                 }
                 SP_ASSERT(current_work_queue_);
 
@@ -679,20 +704,16 @@ private:
             return func();
         } catch (const std::exception& e) {
             SP_LOG_CURRENT_FUNCTION();
-            SP_LOG("    ERROR: Caught exception when executing ", func_name, ": ", e.what());
+            SP_LOG("ERROR: Caught exception when executing ", func_name, ": ", e.what());
         } catch (...) {
             SP_LOG_CURRENT_FUNCTION();
-            SP_LOG("    ERROR: Caught unknown exception when executing ", func_name, ".");
+            SP_LOG("ERROR: Caught unknown exception when executing ", func_name, ".");
         }
 
         // If we get this far, an exception has occurred, so set the error state, reset the work
         // queue to allow the game thread to proceed, and return a default-constructed object.
 
         request_error_ = true;
-
-        // There is no need to lock because it is safe to access WorkQueue from multiple threads.
-        begin_frame_work_queue_.reset();
-        end_frame_work_queue_.reset();
 
         return TReturn();
     }
@@ -712,24 +733,31 @@ private:
     template <typename TReturn>
     static TReturn destroyFuture(SpFuture& future)
     {
-        SP_ASSERT(future.future_ptr_);
-        SP_ASSERT(future.type_id_ == Std::getTypeIdString<TReturn>());
-        std::future<TReturn>* future_ptr = static_cast<std::future<TReturn>*>(future.future_ptr_);
-        TReturn result = future_ptr->get();
-        delete future_ptr;
-        future_ptr = nullptr;
-        return result;
+        if (future.future_ptr_) {
+            SP_ASSERT(future.type_id_ == Std::getTypeIdString<TReturn>());
+            std::future<TReturn>* future_ptr = static_cast<std::future<TReturn>*>(future.future_ptr_);
+            TReturn result = future_ptr->get();
+            delete future_ptr;
+            future_ptr = nullptr;
+            return result;
+        } else {
+            SP_LOG("ERROR: Attempting to destroy a default-constructed SpFuture, returning a default-constructed return value...");
+            return TReturn();
+        }
     }
 
     template <>
     void destroyFuture<void>(SpFuture& future)
     {
-        SP_ASSERT(future.future_ptr_);
-        SP_ASSERT(future.type_id_ == Std::getTypeIdString<void>());
-        std::future<void>* future_ptr = static_cast<std::future<void>*>(future.future_ptr_);
-        future_ptr->get();
-        delete future_ptr;
-        future_ptr = nullptr;
+        if (future.future_ptr_) {
+            SP_ASSERT(future.type_id_ == Std::getTypeIdString<void>());
+            std::future<void>* future_ptr = static_cast<std::future<void>*>(future.future_ptr_);
+            future_ptr->get();
+            delete future_ptr;
+            future_ptr = nullptr;
+        } else {
+            SP_LOG("ERROR: Attempting to destroy a default-constructed SpFuture, returning...");
+        }
     }
 
     // Debug printing

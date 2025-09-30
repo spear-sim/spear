@@ -11,21 +11,11 @@
 
 #include <Containers/Array.h>
 
-#include "SpCore/FuncRegistrar.h"
+#include "SpCore/FuncRegistry.h"
 #include "SpCore/Log.h"
 #include "SpCore/SpArray.h"
 #include "SpCore/SpTypes.h"
 #include "SpCore/Unreal.h"
-
-USpFuncComponent::USpFuncComponent()
-{
-    SP_LOG_CURRENT_FUNCTION();
-}
-
-USpFuncComponent::~USpFuncComponent()
-{
-    SP_LOG_CURRENT_FUNCTION();
-}
 
 void USpFuncComponent::initialize()
 {

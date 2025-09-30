@@ -293,8 +293,8 @@ public:
 
     // SpArray interface
 
-    const std::span<TValue>& getView() { return view_; }
-    const std::vector<uint64_t>& getShape() { return shape_; }
+    const std::span<TValue>& getView() const { return view_; }
+    const std::vector<uint64_t>& getShape() const { return shape_; }
 
     // setDataSource(...) updates all internal state
 
@@ -498,7 +498,7 @@ public:
 
     // SpArrayView interface
 
-    const std::span<const TValue>& getView() { return view_; }
+    const std::span<const TValue>& getView() const { return view_; }
 
 private:
     std::span<const TValue> view_;

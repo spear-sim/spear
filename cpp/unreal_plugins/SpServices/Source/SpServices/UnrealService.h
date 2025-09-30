@@ -31,7 +31,7 @@
 
 #include "SpCore/Assert.h"
 #include "SpCore/Unreal.h"
-#include "SpCore/UnrealClassRegistrar.h"
+#include "SpCore/UnrealClassRegistry.h"
 
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/MsgpackAdaptors.h"
@@ -256,12 +256,12 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_engine_subsystem_by_type",
             [this](std::string& class_name) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getEngineSubsystemByType(class_name));
+                return toUInt64(UnrealClassRegistry::getEngineSubsystemByType(class_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_engine_subsystem_by_class",
             [this](uint64_t& uclass) -> uint64_t {
-                return toUInt64(Unreal::getEngineSubsystemByClass(toPtr<UClass>(uclass))); // UnrealClassRegistrar not needed because Unreal::getEngineSubsystemBase(...) has no template parameters
+                return toUInt64(Unreal::getEngineSubsystemByClass(toPtr<UClass>(uclass))); // UnrealClassRegistry not needed because Unreal::getEngineSubsystemBase(...) has no template parameters
             });
 
         //
@@ -286,12 +286,12 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_subsystem_by_type",
             [this](std::string& class_name) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getSubsystemByType(class_name, getWorld()));
+                return toUInt64(UnrealClassRegistry::getSubsystemByType(class_name, getWorld()));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_subsystem_by_class",
             [this](std::string& class_name, uint64_t& uclass) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getSubsystemByClass(class_name, getWorld(), toPtr<UClass>(uclass)));
+                return toUInt64(UnrealClassRegistry::getSubsystemByClass(class_name, getWorld(), toPtr<UClass>(uclass)));
             });
 
         //
@@ -300,7 +300,7 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_static_class",
             [this](std::string& class_name) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getStaticClass(class_name));
+                return toUInt64(UnrealClassRegistry::getStaticClass(class_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_default_object",
@@ -321,7 +321,7 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_static_struct",
             [this](std::string& struct_name) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getStaticStruct(struct_name));
+                return toUInt64(UnrealClassRegistry::getStaticStruct(struct_name));
             });
 
         //
@@ -439,27 +439,27 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_actors_by_name",
             [this](std::string& class_name, std::vector<std::string>& actor_names, bool& return_null_if_not_found) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::findActorsByName(class_name, getWorld(), actor_names, return_null_if_not_found));
+                return toUInt64(UnrealClassRegistry::findActorsByName(class_name, getWorld(), actor_names, return_null_if_not_found));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_actors_by_tag",
             [this](std::string& class_name, std::string& tag) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::findActorsByTag(class_name, getWorld(), tag));
+                return toUInt64(UnrealClassRegistry::findActorsByTag(class_name, getWorld(), tag));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_actors_by_tag_any",
             [this](std::string& class_name, std::vector<std::string>& tags) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::findActorsByTagAny(class_name, getWorld(), tags));
+                return toUInt64(UnrealClassRegistry::findActorsByTagAny(class_name, getWorld(), tags));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_actors_by_tag_all",
             [this](std::string& class_name, std::vector<std::string>& tags) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::findActorsByTagAll(class_name, getWorld(), tags));
+                return toUInt64(UnrealClassRegistry::findActorsByTagAll(class_name, getWorld(), tags));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_actors_by_type",
             [this](std::string& class_name) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::findActorsByType(class_name, getWorld()));
+                return toUInt64(UnrealClassRegistry::findActorsByType(class_name, getWorld()));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_actors_by_class",
@@ -473,27 +473,27 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_actors_by_name_as_map",
             [this](std::string& class_name, std::vector<std::string>& actor_names, bool& return_null_if_not_found) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::findActorsByNameAsMap(class_name, getWorld(), actor_names, return_null_if_not_found));
+                return toUInt64(UnrealClassRegistry::findActorsByNameAsMap(class_name, getWorld(), actor_names, return_null_if_not_found));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_actors_by_tag_as_map",
             [this](std::string& class_name, std::string& tag) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::findActorsByTagAsMap(class_name, getWorld(), tag));
+                return toUInt64(UnrealClassRegistry::findActorsByTagAsMap(class_name, getWorld(), tag));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_actors_by_tag_any_as_map",
             [this](std::string& class_name, std::vector<std::string>& tags) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::findActorsByTagAnyAsMap(class_name, getWorld(), tags));
+                return toUInt64(UnrealClassRegistry::findActorsByTagAnyAsMap(class_name, getWorld(), tags));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_actors_by_tag_all_as_map",
             [this](std::string& class_name, std::vector<std::string>& tags) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::findActorsByTagAllAsMap(class_name, getWorld(), tags));
+                return toUInt64(UnrealClassRegistry::findActorsByTagAllAsMap(class_name, getWorld(), tags));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_actors_by_type_as_map",
             [this](std::string& class_name) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::findActorsByTypeAsMap(class_name, getWorld()));
+                return toUInt64(UnrealClassRegistry::findActorsByTypeAsMap(class_name, getWorld()));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_actors_by_class_as_map",
@@ -507,27 +507,27 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_actor_by_name",
             [this](std::string& class_name, std::string& actor_name) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::findActorByName(class_name, getWorld(), actor_name));
+                return toUInt64(UnrealClassRegistry::findActorByName(class_name, getWorld(), actor_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_actor_by_tag",
             [this](std::string& class_name, std::string& tag) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::findActorByTag(class_name, getWorld(), tag));
+                return toUInt64(UnrealClassRegistry::findActorByTag(class_name, getWorld(), tag));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_actor_by_tag_any",
             [this](std::string& class_name, std::vector<std::string>& tags) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::findActorByTagAny(class_name, getWorld(), tags));
+                return toUInt64(UnrealClassRegistry::findActorByTagAny(class_name, getWorld(), tags));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_actor_by_tag_all",
             [this](std::string& class_name, std::vector<std::string>& tags) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::findActorByTagAll(class_name, getWorld(), tags));
+                return toUInt64(UnrealClassRegistry::findActorByTagAll(class_name, getWorld(), tags));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_actor_by_type",
             [this](std::string& class_name) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::findActorByType(class_name, getWorld()));
+                return toUInt64(UnrealClassRegistry::findActorByType(class_name, getWorld()));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_actor_by_class",
@@ -541,32 +541,32 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_components_by_name",
             [this](std::string& class_name, uint64_t& actor, std::vector<std::string>& component_names, bool& include_from_child_actors, bool& return_null_if_not_found) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getComponentsByName(class_name, toPtr<AActor>(actor), component_names, include_from_child_actors, return_null_if_not_found));
+                return toUInt64(UnrealClassRegistry::getComponentsByName(class_name, toPtr<AActor>(actor), component_names, include_from_child_actors, return_null_if_not_found));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_components_by_path",
             [this](std::string& class_name, uint64_t& actor, std::vector<std::string>& component_paths, bool& include_from_child_actors, bool& return_null_if_not_found) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getComponentsByPath(class_name, toPtr<AActor>(actor), component_paths, include_from_child_actors, return_null_if_not_found));
+                return toUInt64(UnrealClassRegistry::getComponentsByPath(class_name, toPtr<AActor>(actor), component_paths, include_from_child_actors, return_null_if_not_found));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_components_by_tag",
             [this](std::string& class_name, uint64_t& actor, std::string& tag, bool& include_from_child_actors) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getComponentsByTag(class_name, toPtr<AActor>(actor), tag, include_from_child_actors));
+                return toUInt64(UnrealClassRegistry::getComponentsByTag(class_name, toPtr<AActor>(actor), tag, include_from_child_actors));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_components_by_tag_any",
             [this](std::string& class_name, uint64_t& actor, std::vector<std::string>& tags, bool& include_from_child_actors) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getComponentsByTagAny(class_name, toPtr<AActor>(actor), tags, include_from_child_actors));
+                return toUInt64(UnrealClassRegistry::getComponentsByTagAny(class_name, toPtr<AActor>(actor), tags, include_from_child_actors));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_components_by_tag_all",
             [this](std::string& class_name, uint64_t& actor, std::vector<std::string>& tags, bool& include_from_child_actors) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getComponentsByTagAll(class_name, toPtr<AActor>(actor), tags, include_from_child_actors));
+                return toUInt64(UnrealClassRegistry::getComponentsByTagAll(class_name, toPtr<AActor>(actor), tags, include_from_child_actors));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_components_by_type",
             [this](std::string& class_name, uint64_t& actor, bool& include_from_child_actors) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getComponentsByType(class_name, toPtr<AActor>(actor), include_from_child_actors));
+                return toUInt64(UnrealClassRegistry::getComponentsByType(class_name, toPtr<AActor>(actor), include_from_child_actors));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_components_by_class",
@@ -580,32 +580,32 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_components_by_name_as_map",
             [this](std::string& class_name, uint64_t& actor, std::vector<std::string>& component_names, bool& include_from_child_actors, bool& return_null_if_not_found) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getComponentsByNameAsMap(class_name, toPtr<AActor>(actor), component_names, include_from_child_actors, return_null_if_not_found));
+                return toUInt64(UnrealClassRegistry::getComponentsByNameAsMap(class_name, toPtr<AActor>(actor), component_names, include_from_child_actors, return_null_if_not_found));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_components_by_path_as_map",
             [this](std::string& class_name, uint64_t& actor, std::vector<std::string>& component_paths, bool& include_from_child_actors, bool& return_null_if_not_found) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getComponentsByPathAsMap(class_name, toPtr<AActor>(actor), component_paths, include_from_child_actors, return_null_if_not_found));
+                return toUInt64(UnrealClassRegistry::getComponentsByPathAsMap(class_name, toPtr<AActor>(actor), component_paths, include_from_child_actors, return_null_if_not_found));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_components_by_tag_as_map",
             [this](std::string& class_name, uint64_t& actor, std::string& tag, bool& include_from_child_actors) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getComponentsByTagAsMap(class_name, toPtr<AActor>(actor), tag, include_from_child_actors));
+                return toUInt64(UnrealClassRegistry::getComponentsByTagAsMap(class_name, toPtr<AActor>(actor), tag, include_from_child_actors));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_components_by_tag_any_as_map",
             [this](std::string& class_name, uint64_t& actor, std::vector<std::string>& tags, bool& include_from_child_actors) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getComponentsByTagAnyAsMap(class_name, toPtr<AActor>(actor), tags, include_from_child_actors));
+                return toUInt64(UnrealClassRegistry::getComponentsByTagAnyAsMap(class_name, toPtr<AActor>(actor), tags, include_from_child_actors));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_components_by_tag_all_as_map",
             [this](std::string& class_name, uint64_t& actor, std::vector<std::string>& tags, bool& include_from_child_actors) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getComponentsByTagAllAsMap(class_name, toPtr<AActor>(actor), tags, include_from_child_actors));
+                return toUInt64(UnrealClassRegistry::getComponentsByTagAllAsMap(class_name, toPtr<AActor>(actor), tags, include_from_child_actors));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_components_by_type_as_map",
             [this](std::string& class_name, uint64_t& actor, bool& include_from_child_actors) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getComponentsByTypeAsMap(class_name, toPtr<AActor>(actor), include_from_child_actors));
+                return toUInt64(UnrealClassRegistry::getComponentsByTypeAsMap(class_name, toPtr<AActor>(actor), include_from_child_actors));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_components_by_class_as_map",
@@ -619,32 +619,32 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_component_by_name",
             [this](std::string& class_name, uint64_t& actor, std::string& component_name, bool& include_from_child_actors) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getComponentByName(class_name, toPtr<AActor>(actor), component_name, include_from_child_actors));
+                return toUInt64(UnrealClassRegistry::getComponentByName(class_name, toPtr<AActor>(actor), component_name, include_from_child_actors));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_component_by_path",
             [this](std::string& class_name, uint64_t& actor, std::string& component_path, bool& include_from_child_actors) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getComponentByPath(class_name, toPtr<AActor>(actor), component_path, include_from_child_actors));
+                return toUInt64(UnrealClassRegistry::getComponentByPath(class_name, toPtr<AActor>(actor), component_path, include_from_child_actors));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_component_by_tag",
             [this](std::string& class_name, uint64_t& actor, std::string& tag, bool& include_from_child_actors) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getComponentByTag(class_name, toPtr<AActor>(actor), tag, include_from_child_actors));
+                return toUInt64(UnrealClassRegistry::getComponentByTag(class_name, toPtr<AActor>(actor), tag, include_from_child_actors));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_component_by_tag_any",
             [this](std::string& class_name, uint64_t& actor, std::vector<std::string>& tags, bool& include_from_child_actors) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getComponentByTagAny(class_name, toPtr<AActor>(actor), tags, include_from_child_actors));
+                return toUInt64(UnrealClassRegistry::getComponentByTagAny(class_name, toPtr<AActor>(actor), tags, include_from_child_actors));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_component_by_tag_all",
             [this](std::string& class_name, uint64_t& actor, std::vector<std::string>& tags, bool& include_from_child_actors) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getComponentByTagAll(class_name, toPtr<AActor>(actor), tags, include_from_child_actors));
+                return toUInt64(UnrealClassRegistry::getComponentByTagAll(class_name, toPtr<AActor>(actor), tags, include_from_child_actors));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_component_by_type",
             [this](std::string& class_name, uint64_t& actor, bool& include_from_child_actors) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getComponentByType(class_name, toPtr<AActor>(actor), include_from_child_actors));
+                return toUInt64(UnrealClassRegistry::getComponentByType(class_name, toPtr<AActor>(actor), include_from_child_actors));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_component_by_class",
@@ -658,27 +658,27 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_name_from_actor",
             [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& children_component_names, bool& include_all_descendants, bool& return_null_if_not_found) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByName(class_name, toPtr<AActor>(parent), children_component_names, include_all_descendants, return_null_if_not_found));
+                return toUInt64(UnrealClassRegistry::getChildrenComponentsByName(class_name, toPtr<AActor>(parent), children_component_names, include_all_descendants, return_null_if_not_found));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_tag_from_actor",
             [this](std::string& class_name, uint64_t& parent, std::string& tag, bool& include_all_descendants) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByTag(class_name, toPtr<AActor>(parent), tag, include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildrenComponentsByTag(class_name, toPtr<AActor>(parent), tag, include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_tag_any_from_actor",
             [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& tags, bool& include_all_descendants) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByTagAny(class_name, toPtr<AActor>(parent), tags, include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildrenComponentsByTagAny(class_name, toPtr<AActor>(parent), tags, include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_tag_all_from_actor",
             [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& tags, bool& include_all_descendants) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByTagAll(class_name, toPtr<AActor>(parent), tags, include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildrenComponentsByTagAll(class_name, toPtr<AActor>(parent), tags, include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_type_from_actor",
             [this](std::string& class_name, uint64_t& parent, bool& include_all_descendants) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByType(class_name, toPtr<AActor>(parent), include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildrenComponentsByType(class_name, toPtr<AActor>(parent), include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_class_from_actor",
@@ -692,27 +692,27 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_name_as_map_from_actor",
             [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& children_component_names, bool& include_all_descendants, bool& return_null_if_not_found) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByNameAsMap(class_name, toPtr<AActor>(parent), children_component_names, include_all_descendants, return_null_if_not_found));
+                return toUInt64(UnrealClassRegistry::getChildrenComponentsByNameAsMap(class_name, toPtr<AActor>(parent), children_component_names, include_all_descendants, return_null_if_not_found));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_tag_as_map_from_actor",
             [this](std::string& class_name, uint64_t& parent, std::string& tag, bool& include_all_descendants) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByTagAsMap(class_name, toPtr<AActor>(parent), tag, include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildrenComponentsByTagAsMap(class_name, toPtr<AActor>(parent), tag, include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_tag_any_as_map_from_actor",
             [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& tags, bool& include_all_descendants) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByTagAnyAsMap(class_name, toPtr<AActor>(parent), tags, include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildrenComponentsByTagAnyAsMap(class_name, toPtr<AActor>(parent), tags, include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_tag_all_as_map_from_actor",
             [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& tags, bool& include_all_descendants) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByTagAllAsMap(class_name, toPtr<AActor>(parent), tags, include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildrenComponentsByTagAllAsMap(class_name, toPtr<AActor>(parent), tags, include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_type_as_map_from_actor",
             [this](std::string& class_name, uint64_t& parent, bool& include_all_descendants) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByTypeAsMap(class_name, toPtr<AActor>(parent), include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildrenComponentsByTypeAsMap(class_name, toPtr<AActor>(parent), include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_class_as_map_from_actor",
@@ -726,27 +726,27 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_child_component_by_name_from_actor",
             [this](std::string& class_name, uint64_t& parent, std::string& child_component_name, bool& include_all_descendants) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getChildComponentByName(class_name, toPtr<AActor>(parent), child_component_name, include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildComponentByName(class_name, toPtr<AActor>(parent), child_component_name, include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_child_component_by_tag_from_actor",
             [this](std::string& class_name, uint64_t& parent, std::string& tag, bool& include_all_descendants) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getChildComponentByTag(class_name, toPtr<AActor>(parent), tag, include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildComponentByTag(class_name, toPtr<AActor>(parent), tag, include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_child_component_by_tag_any_from_actor",
             [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& tags, bool& include_all_descendants) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getChildComponentByTagAny(class_name, toPtr<AActor>(parent), tags, include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildComponentByTagAny(class_name, toPtr<AActor>(parent), tags, include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_child_component_by_tag_all_from_actor",
             [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& tags, bool& include_all_descendants) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getChildComponentByTagAll(class_name, toPtr<AActor>(parent), tags, include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildComponentByTagAll(class_name, toPtr<AActor>(parent), tags, include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_child_component_by_type_from_actor",
             [this](std::string& class_name, uint64_t& parent, bool& include_all_descendants) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getChildComponentByType(class_name, toPtr<AActor>(parent), include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildComponentByType(class_name, toPtr<AActor>(parent), include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_child_component_by_class_from_actor",
@@ -760,27 +760,27 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_name_from_scene_component",
             [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& children_component_names, bool& include_all_descendants, bool& return_null_if_not_found) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByName(class_name, toPtr<USceneComponent>(parent), children_component_names, include_all_descendants, return_null_if_not_found));
+                return toUInt64(UnrealClassRegistry::getChildrenComponentsByName(class_name, toPtr<USceneComponent>(parent), children_component_names, include_all_descendants, return_null_if_not_found));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_tag_from_scene_component",
             [this](std::string& class_name, uint64_t& parent, std::string& tag, bool& include_all_descendants) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByTag(class_name, toPtr<USceneComponent>(parent), tag, include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildrenComponentsByTag(class_name, toPtr<USceneComponent>(parent), tag, include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_tag_any_from_scene_component",
             [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& tags, bool& include_all_descendants) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByTagAny(class_name, toPtr<USceneComponent>(parent), tags, include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildrenComponentsByTagAny(class_name, toPtr<USceneComponent>(parent), tags, include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_tag_all_from_scene_component",
             [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& tags, bool& include_all_descendants) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByTagAll(class_name, toPtr<USceneComponent>(parent), tags, include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildrenComponentsByTagAll(class_name, toPtr<USceneComponent>(parent), tags, include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_type_from_scene_component",
             [this](std::string& class_name, uint64_t& parent, bool& include_all_descendants) -> std::vector<uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByType(class_name, toPtr<USceneComponent>(parent), include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildrenComponentsByType(class_name, toPtr<USceneComponent>(parent), include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_class_from_scene_component",
@@ -794,27 +794,27 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_name_as_map_from_scene_component",
             [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& children_component_names, bool& include_all_descendants, bool& return_null_if_not_found) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByNameAsMap(class_name, toPtr<USceneComponent>(parent), children_component_names, include_all_descendants, return_null_if_not_found));
+                return toUInt64(UnrealClassRegistry::getChildrenComponentsByNameAsMap(class_name, toPtr<USceneComponent>(parent), children_component_names, include_all_descendants, return_null_if_not_found));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_tag_as_map_from_scene_component",
             [this](std::string& class_name, uint64_t& parent, std::string& tag, bool& include_all_descendants) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByTagAsMap(class_name, toPtr<USceneComponent>(parent), tag, include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildrenComponentsByTagAsMap(class_name, toPtr<USceneComponent>(parent), tag, include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_tag_any_as_map_from_scene_component",
             [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& tags, bool& include_all_descendants) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByTagAnyAsMap(class_name, toPtr<USceneComponent>(parent), tags, include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildrenComponentsByTagAnyAsMap(class_name, toPtr<USceneComponent>(parent), tags, include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_tag_all_as_map_from_scene_component",
             [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& tags, bool& include_all_descendants) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByTagAllAsMap(class_name, toPtr<USceneComponent>(parent), tags, include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildrenComponentsByTagAllAsMap(class_name, toPtr<USceneComponent>(parent), tags, include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_type_as_map_from_scene_component",
             [this](std::string& class_name, uint64_t& parent, bool& include_all_descendants) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealClassRegistrar::getChildrenComponentsByTypeAsMap(class_name, toPtr<USceneComponent>(parent), include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildrenComponentsByTypeAsMap(class_name, toPtr<USceneComponent>(parent), include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_by_class_as_map_from_scene_component",
@@ -828,27 +828,27 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_child_component_by_name_from_scene_component",
             [this](std::string& class_name, uint64_t& parent, std::string& child_component_name, bool& include_all_descendants) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getChildComponentByName(class_name, toPtr<USceneComponent>(parent), child_component_name, include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildComponentByName(class_name, toPtr<USceneComponent>(parent), child_component_name, include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_child_component_by_tag_from_scene_component",
             [this](std::string& class_name, uint64_t& parent, std::string& tag, bool& include_all_descendants) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getChildComponentByTag(class_name, toPtr<USceneComponent>(parent), tag, include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildComponentByTag(class_name, toPtr<USceneComponent>(parent), tag, include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_child_component_by_tag_any_from_scene_component",
             [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& tags, bool& include_all_descendants) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getChildComponentByTagAny(class_name, toPtr<USceneComponent>(parent), tags, include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildComponentByTagAny(class_name, toPtr<USceneComponent>(parent), tags, include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_child_component_by_tag_all_from_scene_component",
             [this](std::string& class_name, uint64_t& parent, std::vector<std::string>& tags, bool& include_all_descendants) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getChildComponentByTagAll(class_name, toPtr<USceneComponent>(parent), tags, include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildComponentByTagAll(class_name, toPtr<USceneComponent>(parent), tags, include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_child_component_by_type_from_scene_component",
             [this](std::string& class_name, uint64_t& parent, bool& include_all_descendants) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::getChildComponentByType(class_name, toPtr<USceneComponent>(parent), include_all_descendants));
+                return toUInt64(UnrealClassRegistry::getChildComponentByType(class_name, toPtr<USceneComponent>(parent), include_all_descendants));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_child_component_by_class_from_scene_component",
@@ -867,8 +867,8 @@ public:
                 FRotator rotation;
                 FSpActorSpawnParameters sp_actor_spawn_parameters;
 
-                Unreal::setObjectPropertiesFromString(&location, UnrealClassRegistrar::getStaticStruct<FVector>(), location_string);
-                Unreal::setObjectPropertiesFromString(&rotation, UnrealClassRegistrar::getStaticStruct<FRotator>(), rotation_string);
+                Unreal::setObjectPropertiesFromString(&location, UnrealClassRegistry::getStaticStruct<FVector>(), location_string);
+                Unreal::setObjectPropertiesFromString(&rotation, UnrealClassRegistry::getStaticStruct<FRotator>(), rotation_string);
                 Unreal::setObjectPropertiesFromString(&sp_actor_spawn_parameters, FSpActorSpawnParameters::StaticStruct(), spawn_parameters_string);
 
                 FActorSpawnParameters actor_spawn_parameters;
@@ -886,7 +886,7 @@ public:
                 actor_spawn_parameters.NameMode = Unreal::getEnumValueAs<FActorSpawnParameters::ESpawnActorNameMode>(sp_actor_spawn_parameters.NameMode);
                 actor_spawn_parameters.ObjectFlags = Unreal::getCombinedEnumFlagValueFromStringsAs<EObjectFlags, ESpObjectFlags>(object_flag_strings);
 
-                return toUInt64(UnrealClassRegistrar::spawnActor(class_name, getWorld(), location, rotation, actor_spawn_parameters));
+                return toUInt64(UnrealClassRegistry::spawnActor(class_name, getWorld(), location, rotation, actor_spawn_parameters));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "spawn_actor_from_class",
@@ -896,8 +896,8 @@ public:
                 FRotator rotation;
                 FSpActorSpawnParameters sp_actor_spawn_parameters;
 
-                Unreal::setObjectPropertiesFromString(&location, UnrealClassRegistrar::getStaticStruct<FVector>(), location_string);
-                Unreal::setObjectPropertiesFromString(&rotation, UnrealClassRegistrar::getStaticStruct<FRotator>(), rotation_string);
+                Unreal::setObjectPropertiesFromString(&location, UnrealClassRegistry::getStaticStruct<FVector>(), location_string);
+                Unreal::setObjectPropertiesFromString(&rotation, UnrealClassRegistry::getStaticStruct<FRotator>(), rotation_string);
                 Unreal::setObjectPropertiesFromString(&sp_actor_spawn_parameters, FSpActorSpawnParameters::StaticStruct(), spawn_parameters_string);
 
                 FActorSpawnParameters actor_spawn_parameters;
@@ -935,22 +935,22 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "create_component_outside_owner_constructor", 
             [this](std::string& class_name, uint64_t& owner, std::string& component_name) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::createComponentOutsideOwnerConstructor(class_name, toPtr<AActor>(owner), component_name));
+                return toUInt64(UnrealClassRegistry::createComponentOutsideOwnerConstructor(class_name, toPtr<AActor>(owner), component_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "create_scene_component_outside_owner_constructor_from_actor",
             [this](std::string& class_name, uint64_t& owner, std::string& scene_component_name) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::createSceneComponentOutsideOwnerConstructor(class_name, toPtr<AActor>(owner), scene_component_name));
+                return toUInt64(UnrealClassRegistry::createSceneComponentOutsideOwnerConstructor(class_name, toPtr<AActor>(owner), scene_component_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "create_scene_component_outside_owner_constructor_from_object",
             [this](std::string& class_name, uint64_t& owner, uint64_t& parent, std::string& scene_component_name) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::createSceneComponentOutsideOwnerConstructor(class_name, toPtr<UObject>(owner), toPtr<USceneComponent>(parent), scene_component_name));
+                return toUInt64(UnrealClassRegistry::createSceneComponentOutsideOwnerConstructor(class_name, toPtr<UObject>(owner), toPtr<USceneComponent>(parent), scene_component_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "create_scene_component_outside_owner_constructor_from_component",
             [this](std::string& class_name, uint64_t& owner, std::string& scene_component_name) -> uint64_t {
-                return toUInt64(UnrealClassRegistrar::createSceneComponentOutsideOwnerConstructor(class_name, toPtr<USceneComponent>(owner), scene_component_name));
+                return toUInt64(UnrealClassRegistry::createSceneComponentOutsideOwnerConstructor(class_name, toPtr<USceneComponent>(owner), scene_component_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "create_component_outside_owner_constructor_by_class",
@@ -1009,7 +1009,7 @@ public:
                 }
 
                 return toUInt64(
-                    UnrealClassRegistrar::newObject(
+                    UnrealClassRegistry::newObject(
                         class_name,
                         outer_ptr,
                         fname,
@@ -1035,7 +1035,7 @@ public:
                 uint64_t& instancing_context) -> uint64_t {
 
                 return toUInt64(
-                    UnrealClassRegistrar::loadObject(
+                    UnrealClassRegistry::loadObject(
                         class_name,
                         toPtr<UObject>(outer),
                         *Unreal::toFString(name),
@@ -1055,7 +1055,7 @@ public:
                 uint64_t& sandbox) -> uint64_t {
 
                 return toUInt64(
-                    UnrealClassRegistrar::loadClass(
+                    UnrealClassRegistry::loadClass(
                         class_name,
                         toPtr<UObject>(outer),
                         *Unreal::toFString(name),

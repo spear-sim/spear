@@ -54,7 +54,7 @@ void ASpGameMode::PostLogin(APlayerController* new_player)
     sp_debug_camera_controller_ = GetWorld()->SpawnActor<ASpDebugCameraController>(actor_spawn_parameters);
 }
 
-void ASpGameMode::SpAddOnScreenDebugMessage(float display_time, FString message)
+void ASpGameMode::SpAddOnScreenDebugMessage(float DisplayTime, FString Message) const
 {
     SP_ASSERT(GEngine);
 
@@ -63,8 +63,8 @@ void ASpGameMode::SpAddOnScreenDebugMessage(float display_time, FString message)
     // methods only execute when the game is running anyway.
     uint64 key              = -1;
     FColor color            = FColor::Yellow;
-    std::string message_str = SP_LOG_GET_PREFIX() + Unreal::toStdString(message);
-    GEngine->AddOnScreenDebugMessage(key, display_time, color, Unreal::toFString(message_str));
+    std::string message_str = SP_LOG_GET_PREFIX() + Unreal::toStdString(Message);
+    GEngine->AddOnScreenDebugMessage(key, DisplayTime, color, Unreal::toFString(message_str));
 }
 
 void ASpGameMode::SpToggleDebugCamera()

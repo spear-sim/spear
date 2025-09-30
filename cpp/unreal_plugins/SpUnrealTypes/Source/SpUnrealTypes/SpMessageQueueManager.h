@@ -10,7 +10,7 @@
 #include <deque>
 
 #include <Containers/UnrealString.h> // FString
-#include <GameFramework/Actor.h>
+#include <UObject/Object.h>          // UObject
 #include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UPROPERTY
 
 #include "SpCore/Log.h"
@@ -20,66 +20,56 @@
 #include "SpMessageQueueManager.generated.h"
 
 UCLASS()
-class ASpMessageQueueManager : public AActor
+class USpMessageQueueManager : public UObject
 {
     GENERATED_BODY()
 public: 
-    ASpMessageQueueManager()
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    void CreateQueue(FString QueueName)
     {
-        SP_LOG_CURRENT_FUNCTION();
-    };
-
-    ~ASpMessageQueueManager() override
-    {
-        SP_LOG_CURRENT_FUNCTION();
+        Std::insert(message_queues_, Unreal::toStdString(QueueName), {});
     };
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    void CreateQueue(FString queue_name)
+    void DestroyQueue(FString QueueName)
     {
-        Std::insert(message_queues_, Unreal::toStdString(queue_name), {});
+        Std::remove(message_queues_, Unreal::toStdString(QueueName));
     };
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    void DestroyQueue(FString queue_name)
+    bool HasQueue(FString QueueName) const
     {
-        Std::remove(message_queues_, Unreal::toStdString(queue_name));
+        return Std::containsKey(message_queues_, Unreal::toStdString(QueueName));
     };
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    bool HasQueue(FString queue_name)
+    int GetQueueLength(FString QueueName) const
     {
-        return Std::containsKey(message_queues_, Unreal::toStdString(queue_name));
+        return message_queues_.at(Unreal::toStdString(QueueName)).size();
     };
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    int GetQueueLength(FString queue_name)
+    FString GetMessage(FString QueueName, int Num) const
     {
-        return message_queues_.at(Unreal::toStdString(queue_name)).size();
+        return Unreal::toFString(message_queues_.at(Unreal::toStdString(QueueName)).at(Num));
     };
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    FString GetMessage(FString queue_name, int i)
+    void PushMessageToFrontOfQueue(FString QueueName, FString Message)
     {
-        return Unreal::toFString(message_queues_.at(Unreal::toStdString(queue_name)).at(i));
+        message_queues_.at(Unreal::toStdString(QueueName)).push_front(Unreal::toStdString(Message));
     };
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    void PushMessageToFrontOfQueue(FString queue_name, FString message)
+    void PushMessageToBackOfQueue(FString QueueName, FString Message)
     {
-        message_queues_.at(Unreal::toStdString(queue_name)).push_front(Unreal::toStdString(message));
+        message_queues_.at(Unreal::toStdString(QueueName)).push_back(Unreal::toStdString(Message));
     };
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    void PushMessageToBackOfQueue(FString queue_name, FString message)
+    FString PopMessageFromFrontOfQueue(FString QueueName)
     {
-        message_queues_.at(Unreal::toStdString(queue_name)).push_back(Unreal::toStdString(message));
-    };
-
-    UFUNCTION(BlueprintCallable, Category="SPEAR")
-    FString PopMessageFromFrontOfQueue(FString queue_name)
-    {
-        std::deque<std::string>& queue = message_queues_.at(Unreal::toStdString(queue_name));
+        std::deque<std::string>& queue = message_queues_.at(Unreal::toStdString(QueueName));
         SP_ASSERT(!queue.empty());
         std::string str = queue.front();
         queue.pop_front();
@@ -87,9 +77,9 @@ public:
     };
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    FString PopMessageFromBackOfQueue(FString queue_name)
+    FString PopMessageFromBackOfQueue(FString QueueName)
     {
-        std::deque<std::string>& queue = message_queues_.at(Unreal::toStdString(queue_name));
+        std::deque<std::string>& queue = message_queues_.at(Unreal::toStdString(QueueName));
         SP_ASSERT(!queue.empty());
         std::string str = queue.back();
         queue.pop_back();

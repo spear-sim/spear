@@ -11,7 +11,7 @@
 #include <Containers/Array.h>
 #include <Containers/EnumAsByte.h>
 #include <Engine/TextureRenderTarget2D.h> // ETextureRenderTargetFormat
-#include <HAL/Platform.h>                 // SPUNREALTYPES_API, uint32
+#include <HAL/Platform.h>                 // uint32
 #include <Math/Color.h>                   // FColor, FLinearColor
 #include <Math/Float16Color.h>
 #include <TextureResource.h>              // FTextureRenderTargetResource
@@ -27,7 +27,7 @@ class UMaterialInstanceDynamic;
 
 // We need meta=(BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
 UCLASS(ClassGroup="SPEAR", HideCategories=(Rendering, Tags, Activation, Cooking, Physics, LOD, AssetUserData, Collision), meta=(BlueprintSpawnableComponent))
-class SPUNREALTYPES_API USpSceneCaptureComponent2D : public USceneCaptureComponent2D
+class USpSceneCaptureComponent2D : public USceneCaptureComponent2D
 {
     GENERATED_BODY()
 public:

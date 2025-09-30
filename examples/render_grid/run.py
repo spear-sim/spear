@@ -34,6 +34,7 @@ if __name__ == "__main__":
 
     # initialize actors and components
     with instance.begin_frame():
+
         # find functions
         actor_static_class = game.unreal_service.get_static_class(class_name="AActor")
         set_actor_location_func = game.unreal_service.find_function_by_name(uclass=actor_static_class, function_name="K2_SetActorLocation")
@@ -42,17 +43,16 @@ if __name__ == "__main__":
         gameplay_statics_static_class = game.unreal_service.get_static_class(class_name="UGameplayStatics")
         get_player_controller_func = game.unreal_service.find_function_by_name(uclass=gameplay_statics_static_class, function_name="GetPlayerController")
 
+        sp_game_viewport_client_static_class = game.unreal_service.get_static_class(class_name="USpGameViewportClient")
+        get_viewport_size_func = game.unreal_service.find_function_by_name(uclass=sp_game_viewport_client_static_class, function_name="GetViewportSize")
+
         sp_scene_capture_component_2d_static_class = game.unreal_service.get_static_class(class_name="USpSceneCaptureComponent2D")
+        initialize_func = game.unreal_service.find_function_by_name(uclass=sp_scene_capture_component_2d_static_class, function_name="Initialize")
+        finalize_func = game.unreal_service.find_function_by_name(uclass=sp_scene_capture_component_2d_static_class, function_name="Terminate")
 
-        initialize_func = game.unreal_service.find_function_by_name(
-            uclass=sp_scene_capture_component_2d_static_class,
-            function_name="Initialize")
-
-        finalize_func = game.unreal_service.find_function_by_name(
-            uclass=sp_scene_capture_component_2d_static_class,
-            function_name="Terminate")
-
+        # get default objects
         gameplay_statics_default_object = game.unreal_service.get_default_object(uclass=gameplay_statics_static_class, create_if_needed=False)
+        sp_game_viewport_client_default_object = game.unreal_service.get_default_object(uclass=sp_game_viewport_client_static_class, create_if_needed=False)
 
         bp_camera_sensor_uclass = game.unreal_service.load_object(
             class_name="UClass",
@@ -127,10 +127,15 @@ if __name__ == "__main__":
         player_camera_manager_string = game.unreal_service.get_property_value(property_desc=player_camera_manager_desc)
         player_camera_manager = spear.to_handle(string=player_camera_manager_string)
 
-        viewport_size = instance.engine_service.get_viewport_size()
-        viewport_x = viewport_size[0]
-        viewport_y = viewport_size[1]
-        viewport_aspect_ratio = viewport_x / viewport_y
+        engine = instance.engine_service.get_engine()
+        game_viewport_client_property_desc = game.unreal_service.find_property_by_name_on_object(uobject=engine, property_name="GameViewport")
+        game_viewport_client_string = game.unreal_service.get_property_value(property_desc=game_viewport_client_property_desc)
+        game_viewport_client = spear.to_handle(string=game_viewport_client_string)
+        return_values = game.unreal_service.call_function(uobject=sp_game_viewport_client_default_object, ufunction=get_viewport_size_func, args={"GameViewportClient": game_viewport_client})
+        viewport_size_x = return_values["ViewportSize"]["x"]
+        viewport_size_y = return_values["ViewportSize"]["y"]
+        viewport_aspect_ratio = viewport_size_x/viewport_size_y # see Engine/Source/Editor/UnrealEd/Private/EditorViewportClient.cpp:2130 for evidence that Unreal's aspect ratio convention is x/y
+
         view_target_pov_desc = game.unreal_service.find_property_by_name_on_object(uobject=player_camera_manager, property_name="ViewTarget.POV")
         view_target_pov = game.unreal_service.get_property_value(property_desc=view_target_pov_desc)
 
@@ -168,8 +173,8 @@ if __name__ == "__main__":
             component_settings_desc = game.unreal_service.find_property_by_name_on_object(
                 uobject=final_tone_curve_hdr_component,
                 property_name="PostProcessSettings")
-            game.unreal_service.set_property_value(property_desc=width_desc, property_value=viewport_x)
-            game.unreal_service.set_property_value(property_desc=height_desc, property_value=viewport_y)
+            game.unreal_service.set_property_value(property_desc=width_desc, property_value=viewport_size_x)
+            game.unreal_service.set_property_value(property_desc=height_desc, property_value=viewport_size_y)
             game.unreal_service.set_property_value(property_desc=fov_angle_desc, property_value=fov_adjusted_degrees)
             game.unreal_service.set_property_value(property_desc=component_settings_desc, property_value=volume_settings)
 
@@ -215,9 +220,9 @@ if __name__ == "__main__":
 
         with instance.end_frame():
             # build a montage of the rendered frames
-            viewport_y = int(viewport_y)
-            viewport_x = int(viewport_x)
-            canvas = np.zeros((viewport_y * rows, viewport_x * cols, 4), dtype=np.uint8)
+            viewport_size_y = int(viewport_size_y)
+            viewport_size_x = int(viewport_size_x)
+            canvas = np.zeros((viewport_size_y * rows, viewport_size_x * cols, 4), dtype=np.uint8)
             for idx, (final_tone_curve_hdr_component_shared_memory_handles, final_tone_curve_hdr_component) in \
                 enumerate(zip(final_tone_curve_hdr_component_shared_memory_handles_list, final_tone_curve_hdr_components)):
 
@@ -228,7 +233,7 @@ if __name__ == "__main__":
                     function_name="read_pixels",
                     uobject_shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
                 data = return_values["arrays"]["data"]
-                canvas[i * viewport_y : (i + 1) * viewport_y, j * viewport_x : (j + 1) * viewport_x] = data
+                canvas[i * viewport_size_y : (i + 1) * viewport_size_y, j * viewport_size_x : (j + 1) * viewport_size_x] = data
 
         filename = os.path.join(images_directory, f"{frame_idx:04}.png")
         cv2.imwrite(filename, canvas)

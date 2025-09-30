@@ -14,6 +14,6 @@ public:
     void ShutdownModule() override;
 
 private:
-    void registerClasses();
-    void unregisterClasses();
+    void registerClasses() const;
+    void unregisterClasses() const;
 };

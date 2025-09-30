@@ -8,6 +8,9 @@
 #include <Engine/GameEngine.h>
 #include <HAL/Platform.h> // TCHAR
 
+#include "SpCore/Log.h"
+#include "SpCore/Unreal.h"
+
 #include "SpGameEngine.generated.h"
 
 class FOutputDevice;
@@ -20,8 +23,10 @@ class USpGameEngine : public UGameEngine
 {
     GENERATED_BODY()
 public:
-    USpGameEngine();
-    ~USpGameEngine() override;
-
-    bool Exec(UWorld* world, const TCHAR* cmd, FOutputDevice& output_device) override;
+    bool Exec(UWorld* world, const TCHAR* cmd, FOutputDevice& output_device) override
+    {
+        std::string cmd_str = Unreal::toStdString(cmd);
+        SP_LOG(cmd_str);
+        return UGameEngine::Exec(world, cmd, output_device);
+    }
 };

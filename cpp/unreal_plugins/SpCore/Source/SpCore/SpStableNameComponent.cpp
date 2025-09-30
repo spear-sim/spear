@@ -54,20 +54,20 @@
 #endif
 
 //
-// ASpStableNameManager
+// USpStableNameManager
 //
 
-ASpStableNameManager::ASpStableNameManager()
+USpStableNameManager::USpStableNameManager()
 {
     SP_LOG_CURRENT_FUNCTION();
 
     #if WITH_EDITOR // defined in an auto-generated header
-        post_engine_init_handle_ = FCoreDelegates::OnPostEngineInit.AddUObject(this, &ASpStableNameManager::postEngineInitHandler);
-        engine_pre_exit_handle_ = FCoreDelegates::OnEnginePreExit.AddUObject(this, &ASpStableNameManager::enginePreExitHandler);
+        post_engine_init_handle_ = FCoreDelegates::OnPostEngineInit.AddUObject(this, &USpStableNameManager::postEngineInitHandler);
+        engine_pre_exit_handle_ = FCoreDelegates::OnEnginePreExit.AddUObject(this, &USpStableNameManager::enginePreExitHandler);
     #endif
 }
 
-ASpStableNameManager::~ASpStableNameManager()
+USpStableNameManager::~USpStableNameManager()
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -81,16 +81,16 @@ ASpStableNameManager::~ASpStableNameManager()
 }
 
 #if WITH_EDITOR // defined in an auto-generated header
-    void ASpStableNameManager::postEngineInitHandler()
+    void USpStableNameManager::postEngineInitHandler()
     {
         SP_LOG_CURRENT_FUNCTION();
         SP_ASSERT(GEngine);
         
-        actor_label_changed_handle_ = FCoreDelegates::OnActorLabelChanged.AddUObject(this, &ASpStableNameManager::actorLabelChangedHandler);
-        level_actor_folder_changed_handle_ = GEngine->OnLevelActorFolderChanged().AddUObject(this, &ASpStableNameManager::levelActorFolderChangedHandler);    
+        actor_label_changed_handle_ = FCoreDelegates::OnActorLabelChanged.AddUObject(this, &USpStableNameManager::actorLabelChangedHandler);
+        level_actor_folder_changed_handle_ = GEngine->OnLevelActorFolderChanged().AddUObject(this, &USpStableNameManager::levelActorFolderChangedHandler);    
     }
 
-    void ASpStableNameManager::enginePreExitHandler()
+    void USpStableNameManager::enginePreExitHandler()
     {
         SP_LOG_CURRENT_FUNCTION();
         SP_ASSERT(GEngine);
@@ -102,13 +102,13 @@ ASpStableNameManager::~ASpStableNameManager()
         actor_label_changed_handle_.Reset();
     }
 
-    void ASpStableNameManager::actorLabelChangedHandler(AActor* actor)
+    void USpStableNameManager::actorLabelChangedHandler(AActor* actor)
     {
         SP_ASSERT(actor);
         Unreal::requestUpdateStableName(actor);
     }
 
-    void ASpStableNameManager::levelActorFolderChangedHandler(const AActor* actor, FName name)
+    void USpStableNameManager::levelActorFolderChangedHandler(const AActor* actor, FName name)
     {
         SP_ASSERT(actor);
         Unreal::requestUpdateStableName(actor);

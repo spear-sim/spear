@@ -14,7 +14,7 @@
 #include "SpCore/AssertModuleLoaded.h"
 #include "SpCore/Log.h"
 
-#include "SpCoreEditor/UnrealClassRegistrarEditor.h"
+#include "SpCoreEditor/UnrealClassRegistryEditor.h"
 
 void SpCoreEditor::StartupModule()
 {
@@ -35,18 +35,18 @@ void SpCoreEditor::ShutdownModule()
 // But we make an exception here (i.e., we do the operations in the same order) to make it easier and less
 // error-prone to register classes.
 
-void SpCoreEditor::registerClasses()
+void SpCoreEditor::registerClasses() const
 {
     // Unreal classes
-    UnrealClassRegistrarEditor::registerEditorSubsystemClass<ULevelEditorSubsystem>("ULevelEditorSubsystem");
-    UnrealClassRegistrarEditor::registerEditorSubsystemClass<UUnrealEditorSubsystem>("UUnrealEditorSubsystem");
+    UnrealClassRegistryEditor::registerEditorSubsystemClass<ULevelEditorSubsystem>("ULevelEditorSubsystem");
+    UnrealClassRegistryEditor::registerEditorSubsystemClass<UUnrealEditorSubsystem>("UUnrealEditorSubsystem");
 }
 
-void SpCoreEditor::unregisterClasses()
+void SpCoreEditor::unregisterClasses() const
 {
     // Unreal classes
-    UnrealClassRegistrarEditor::unregisterEditorSubsystemClass<ULevelEditorSubsystem>("ULevelEditorSubsystem");
-    UnrealClassRegistrarEditor::unregisterEditorSubsystemClass<UUnrealEditorSubsystem>("UUnrealEditorSubsystem");
+    UnrealClassRegistryEditor::unregisterEditorSubsystemClass<ULevelEditorSubsystem>("ULevelEditorSubsystem");
+    UnrealClassRegistryEditor::unregisterEditorSubsystemClass<UUnrealEditorSubsystem>("UUnrealEditorSubsystem");
 }
 
 // use IMPLEMENT_GAME_MODULE if module implements Unreal classes, use IMPLEMENT_MODULE otherwise

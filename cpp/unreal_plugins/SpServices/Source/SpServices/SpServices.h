@@ -70,6 +70,6 @@ public:
     std::unique_ptr<NavigationService> game_navigation_service = nullptr;
 
 private:
-    void registerClasses();
-    void unregisterClasses();
+    void registerClasses() const;
+    void unregisterClasses() const;
 };

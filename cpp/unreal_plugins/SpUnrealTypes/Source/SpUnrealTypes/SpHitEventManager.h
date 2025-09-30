@@ -15,8 +15,6 @@
 #include <Math/Vector.h>
 #include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
-#include "SpCore/SpStableNameComponent.h"
-
 #include "SpHitEventManager.generated.h"
 
 class USpStableNameComponent;
@@ -63,15 +61,18 @@ public:
     // UFUNCTION.
 
     UFUNCTION()
-    static void SubscribeToActor(AActor* Actor, bool bRecordDebugInfo);
+    void SubscribeToActor(AActor* Actor, bool bRecordDebugInfo);
 
     UFUNCTION()
-    static void UnsubscribeFromActor(AActor* Actor);
+    void UnsubscribeFromActor(AActor* Actor);
 
     UFUNCTION()
-    static TArray<FActorHitEventDesc> GetHitEventDescs();
+    TArray<FActorHitEventDesc> GetHitEventDescs();
 
 private:
     UFUNCTION() // needs to be a UFUNCTION
-    void ActorHitHandler(AActor* self_actor, AActor* other_actor, FVector normal_impulse, const FHitResult& hit_result);
+    void ActorHitHandler(AActor* SelfActor, AActor* OtherActor, FVector NormalImpulse, const FHitResult& HitResult);
+
+    std::map<AActor*, bool> record_debug_info_for_actors_;
+    TArray<FActorHitEventDesc> actor_hit_event_descs_;
 };

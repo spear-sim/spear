@@ -52,7 +52,7 @@ private:
     void SaveConfig();
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void PrintDebugString();
+    void PrintDebugString() const;
     UPROPERTY(EditAnywhere, Config, Category="SPEAR", DisplayName="My debug string")
     FString DebugString;
 
@@ -63,7 +63,7 @@ private:
     void CallFunctions();
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void CallSpFunc();
+    void CallSpFunc() const;
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void CreateObjects();
@@ -75,16 +75,16 @@ private:
     void ReadPixels();
 
     UFUNCTION()
-    FString GetString(FString arg_0, bool arg_1, int arg_2, FVector arg_3);
+    FString GetString(FString Arg0, bool Arg1, int Arg2, FVector Arg3) const;
 
     UFUNCTION()
-    FVector GetVector(FString arg_0, bool arg_1, int arg_2, FVector& arg_3);
+    FVector GetVector(FString Arg0, bool Arg1, int Arg2, FVector& Arg3) const;
 
     UFUNCTION()
-    static UObject* GetWorldContextObject(const UObject* world_context_object, FString arg_0, bool arg_1);
+    static UObject* GetWorldContextObject(const UObject* WorldContextObject, FString Arg0, bool Arg1);
 
     UFUNCTION()
-    static void UpdateData(TMap<FString, FVector>& map_from_string_to_vector, TArray<FVector>& array_of_vectors);
+    static void UpdateData(TMap<FString, FVector>& InMapFromStringToVector, TArray<FVector>& InArrayOfVectors);
 
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
     USpFuncComponent* SpFuncComponent = nullptr;

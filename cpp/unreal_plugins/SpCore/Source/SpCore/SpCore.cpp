@@ -13,6 +13,7 @@
 #include <Modules/ModuleManager.h> // FDefaultGameModuleImpl, FDefaultModuleImpl, IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
 
 // Unreal classes
+#include <AssetRegistry/IAssetRegistry.h>
 #include <Camera/CameraComponent.h>
 #include <Camera/PlayerCameraManager.h>
 #include <Components/ActorComponent.h>
@@ -35,6 +36,7 @@
 #include <Components/StaticMeshComponent.h>
 #include <Components/VolumetricCloudComponent.h> // AVolumetricCloud
 #include <Engine/ExponentialHeightFog.h>
+#include <Engine/LevelStreaming.h>
 #include <Engine/LocalPlayer.h>
 #include <Engine/PostProcessVolume.h>
 #include <Engine/StaticMesh.h>
@@ -71,7 +73,7 @@
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
 #include "SpCore/SharedMemory.h"
-#include "SpCore/UnrealClassRegistrar.h"
+#include "SpCore/UnrealClassRegistry.h"
 
 void SpCore::StartupModule()
 {
@@ -104,6 +106,8 @@ void SpCore::StartupModule()
         SP_LOG("    ERROR: Couldn't create a shared memory region. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables, or change SP_CORE.SHARED_MEMORY_INITIAL_UNIQUE_ID to an unused ID, and try launching again.");
         std::rethrow_exception(std::current_exception());
     }
+
+    SP_LOG_CURRENT_FUNCTION(); // useful to see that StartupModule() finishes executing
 }
 
 void SpCore::ShutdownModule()
@@ -115,130 +119,138 @@ void SpCore::ShutdownModule()
     unregisterClasses();
     SharedMemory::terminate();
     Config::terminate();
+
+    SP_LOG_CURRENT_FUNCTION();  // useful to see that ShutdownModule() finishes executing
 }
 
 // Normally we would do the operations in registerClasses() and unregisterClasses(...) in the opposite order.
 // But we make an exception here (i.e., we do the operations in the same order) to make it easier and less
 // error-prone to register classes.
 
-void SpCore::registerClasses()
+void SpCore::registerClasses() const
 {
     // Unreal classes
-    UnrealClassRegistrar::registerSubsystemProviderClass<ULocalPlayer>("ULocalPlayer");
-    UnrealClassRegistrar::registerActorClass<AActor>("AActor");
-    UnrealClassRegistrar::registerActorClass<AExponentialHeightFog>("AExponentialHeightFog");
-    UnrealClassRegistrar::registerActorClass<ALevelSequenceActor>("ALevelSequenceActor");
-    UnrealClassRegistrar::registerActorClass<ANavMeshBoundsVolume>("ANavMeshBoundsVolume");
-    UnrealClassRegistrar::registerActorClass<ANavModifierVolume>("ANavModifierVolume");
-    UnrealClassRegistrar::registerActorClass<APlayerCameraManager>("APlayerCameraManager");
-    UnrealClassRegistrar::registerActorClass<APlayerController>("APlayerController");
-    UnrealClassRegistrar::registerActorClass<APostProcessVolume>("APostProcessVolume");
-    UnrealClassRegistrar::registerActorClass<ARecastNavMesh>("ARecastNavMesh");
-    UnrealClassRegistrar::registerActorClass<ASkyAtmosphere>("ASkyAtmosphere");
-    UnrealClassRegistrar::registerActorClass<AStaticMeshActor>("AStaticMeshActor");
-    UnrealClassRegistrar::registerActorClass<AVolumetricCloud>("AVolumetricCloud");
-    UnrealClassRegistrar::registerComponentClass<UActorComponent>("UActorComponent");
-    UnrealClassRegistrar::registerComponentClass<UBrushComponent>("UBrushComponent");
-    UnrealClassRegistrar::registerComponentClass<UCameraComponent>("UCameraComponent");
-    UnrealClassRegistrar::registerComponentClass<UCapsuleComponent>("UCapsuleComponent");
-    UnrealClassRegistrar::registerComponentClass<UCharacterMovementComponent>("UCharacterMovementComponent");
-    UnrealClassRegistrar::registerComponentClass<UDirectionalLightComponent>("UDirectionalLightComponent");
-    UnrealClassRegistrar::registerComponentClass<UExponentialHeightFogComponent>("UExponentialHeightFogComponent");
-    UnrealClassRegistrar::registerComponentClass<ULightComponent>("ULightComponent");
-    UnrealClassRegistrar::registerComponentClass<ULightComponentBase>("ULightComponentBase");
-    UnrealClassRegistrar::registerComponentClass<ULocalLightComponent>("ULocalLightComponent");
-    UnrealClassRegistrar::registerComponentClass<UPhysicsConstraintComponent>("UPhysicsConstraintComponent");
-    UnrealClassRegistrar::registerComponentClass<UPointLightComponent>("UPointLightComponent");
-    UnrealClassRegistrar::registerComponentClass<UPoseableMeshComponent>("UPoseableMeshComponent");
-    UnrealClassRegistrar::registerComponentClass<UPrimitiveComponent>("UPrimitiveComponent");
-    UnrealClassRegistrar::registerComponentClass<USceneComponent>("USceneComponent");
-    UnrealClassRegistrar::registerComponentClass<USkeletalMeshComponent>("USkeletalMeshComponent");
-    UnrealClassRegistrar::registerComponentClass<USkyAtmosphereComponent>("USkyAtmosphereComponent");
-    UnrealClassRegistrar::registerComponentClass<USkyLightComponent>("USkyLightComponent");
-    UnrealClassRegistrar::registerComponentClass<USpotLightComponent>("USpotLightComponent");
-    UnrealClassRegistrar::registerComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
-    UnrealClassRegistrar::registerComponentClass<URectLightComponent>("URectLightComponent");
-    UnrealClassRegistrar::registerComponentClass<UVolumetricCloudComponent>("UVolumetricCloudComponent");
-    UnrealClassRegistrar::registerClass<UClass>("UClass");
-    UnrealClassRegistrar::registerClass<UGameplayStatics>("UGameplayStatics");
-    UnrealClassRegistrar::registerClass<UGameUserSettings>("UGameUserSettings");
-    UnrealClassRegistrar::registerClass<UKismetSystemLibrary>("UKismetSystemLibrary");
-    UnrealClassRegistrar::registerClass<ULevelSequence>("ULevelSequence");
-    UnrealClassRegistrar::registerClass<UMaterial>("UMaterial");
-    UnrealClassRegistrar::registerClass<UMaterialFunction>("UMaterialFunction");
-    UnrealClassRegistrar::registerClass<UMaterialInstance>("UMaterialInstance");
-    UnrealClassRegistrar::registerClass<UMaterialInstanceConstant>("UMaterialInstanceConstant");
-    UnrealClassRegistrar::registerClass<UMaterialInstanceDynamic>("UMaterialInstanceDynamic");
-    UnrealClassRegistrar::registerClass<UMaterialInterface>("UMaterialInterface");
-    UnrealClassRegistrar::registerClass<UNavigationSystemV1>("UNavigationSystemV1");
-    UnrealClassRegistrar::registerClass<UObject>("UObject");
-    UnrealClassRegistrar::registerClass<UStaticMesh>("UStaticMesh");
-    UnrealClassRegistrar::registerClass<UTexture>("UTexture");
-    UnrealClassRegistrar::registerClass<UTexture2D>("UTexture2D");
-    UnrealClassRegistrar::registerClass<UTextureRenderTarget2D>("UTextureRenderTarget2D");
-    UnrealClassRegistrar::registerSpecialStruct<FRotator>("FRotator");
-    UnrealClassRegistrar::registerSpecialStruct<FTransform>("FTransform");
-    UnrealClassRegistrar::registerSpecialStruct<FVector>("FVector");
+    UnrealClassRegistry::registerSubsystemProviderClass<ULocalPlayer>("ULocalPlayer");
+    UnrealClassRegistry::registerActorClass<AActor>("AActor");
+    UnrealClassRegistry::registerActorClass<AExponentialHeightFog>("AExponentialHeightFog");
+    UnrealClassRegistry::registerActorClass<ALevelSequenceActor>("ALevelSequenceActor");
+    UnrealClassRegistry::registerActorClass<ANavMeshBoundsVolume>("ANavMeshBoundsVolume");
+    UnrealClassRegistry::registerActorClass<ANavModifierVolume>("ANavModifierVolume");
+    UnrealClassRegistry::registerActorClass<APlayerCameraManager>("APlayerCameraManager");
+    UnrealClassRegistry::registerActorClass<APlayerController>("APlayerController");
+    UnrealClassRegistry::registerActorClass<APostProcessVolume>("APostProcessVolume");
+    UnrealClassRegistry::registerActorClass<ARecastNavMesh>("ARecastNavMesh");
+    UnrealClassRegistry::registerActorClass<ASkyAtmosphere>("ASkyAtmosphere");
+    UnrealClassRegistry::registerActorClass<AStaticMeshActor>("AStaticMeshActor");
+    UnrealClassRegistry::registerActorClass<AVolumetricCloud>("AVolumetricCloud");
+    UnrealClassRegistry::registerComponentClass<UActorComponent>("UActorComponent");
+    UnrealClassRegistry::registerComponentClass<UBrushComponent>("UBrushComponent");
+    UnrealClassRegistry::registerComponentClass<UCameraComponent>("UCameraComponent");
+    UnrealClassRegistry::registerComponentClass<UCapsuleComponent>("UCapsuleComponent");
+    UnrealClassRegistry::registerComponentClass<UCharacterMovementComponent>("UCharacterMovementComponent");
+    UnrealClassRegistry::registerComponentClass<UDirectionalLightComponent>("UDirectionalLightComponent");
+    UnrealClassRegistry::registerComponentClass<UExponentialHeightFogComponent>("UExponentialHeightFogComponent");
+    UnrealClassRegistry::registerComponentClass<ULightComponent>("ULightComponent");
+    UnrealClassRegistry::registerComponentClass<ULightComponentBase>("ULightComponentBase");
+    UnrealClassRegistry::registerComponentClass<ULocalLightComponent>("ULocalLightComponent");
+    UnrealClassRegistry::registerComponentClass<UPhysicsConstraintComponent>("UPhysicsConstraintComponent");
+    UnrealClassRegistry::registerComponentClass<UPointLightComponent>("UPointLightComponent");
+    UnrealClassRegistry::registerComponentClass<UPoseableMeshComponent>("UPoseableMeshComponent");
+    UnrealClassRegistry::registerComponentClass<UPrimitiveComponent>("UPrimitiveComponent");
+    UnrealClassRegistry::registerComponentClass<USceneComponent>("USceneComponent");
+    UnrealClassRegistry::registerComponentClass<USkeletalMeshComponent>("USkeletalMeshComponent");
+    UnrealClassRegistry::registerComponentClass<USkyAtmosphereComponent>("USkyAtmosphereComponent");
+    UnrealClassRegistry::registerComponentClass<USkyLightComponent>("USkyLightComponent");
+    UnrealClassRegistry::registerComponentClass<USpotLightComponent>("USpotLightComponent");
+    UnrealClassRegistry::registerComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
+    UnrealClassRegistry::registerComponentClass<URectLightComponent>("URectLightComponent");
+    UnrealClassRegistry::registerComponentClass<UVolumetricCloudComponent>("UVolumetricCloudComponent");
+    UnrealClassRegistry::registerInterface<IAssetRegistry>("IAssetRegistry");
+    UnrealClassRegistry::registerClass<UClass>("UClass");
+    UnrealClassRegistry::registerClass<UGameplayStatics>("UGameplayStatics");
+    UnrealClassRegistry::registerClass<UGameUserSettings>("UGameUserSettings");
+    UnrealClassRegistry::registerClass<UKismetSystemLibrary>("UKismetSystemLibrary");
+    UnrealClassRegistry::registerClass<ULevelSequence>("ULevelSequence");
+    UnrealClassRegistry::registerClass<ULevelStreaming>("ULevelStreaming");
+    UnrealClassRegistry::registerClass<UMaterial>("UMaterial");
+    UnrealClassRegistry::registerClass<UMaterialFunction>("UMaterialFunction");
+    UnrealClassRegistry::registerClass<UMaterialInstance>("UMaterialInstance");
+    UnrealClassRegistry::registerClass<UMaterialInstanceConstant>("UMaterialInstanceConstant");
+    UnrealClassRegistry::registerClass<UMaterialInstanceDynamic>("UMaterialInstanceDynamic");
+    UnrealClassRegistry::registerClass<UMaterialInterface>("UMaterialInterface");
+    UnrealClassRegistry::registerClass<UNavigationSystemV1>("UNavigationSystemV1");
+    UnrealClassRegistry::registerClass<UObject>("UObject");
+    UnrealClassRegistry::registerClass<UStaticMesh>("UStaticMesh");
+    UnrealClassRegistry::registerClass<UTexture>("UTexture");
+    UnrealClassRegistry::registerClass<UTexture2D>("UTexture2D");
+    UnrealClassRegistry::registerClass<UTextureRenderTarget2D>("UTextureRenderTarget2D");
+    UnrealClassRegistry::registerSpecialStruct<FRotator>("FRotator");
+    UnrealClassRegistry::registerSpecialStruct<FTransform>("FTransform");
+    UnrealClassRegistry::registerSpecialStruct<FVector>("FVector");
+    UnrealClassRegistry::registerSpecialStruct<FVector2D>("FVector2D");
 }
 
-void SpCore::unregisterClasses()
+void SpCore::unregisterClasses() const
 {
     // Unreal classes
-    UnrealClassRegistrar::unregisterSubsystemProviderClass<ULocalPlayer>("ULocalPlayer");
-    UnrealClassRegistrar::unregisterActorClass<AActor>("AActor");
-    UnrealClassRegistrar::unregisterActorClass<AExponentialHeightFog>("AExponentialHeightFog");
-    UnrealClassRegistrar::unregisterActorClass<ALevelSequenceActor>("ALevelSequenceActor");
-    UnrealClassRegistrar::unregisterActorClass<ANavMeshBoundsVolume>("ANavMeshBoundsVolume");
-    UnrealClassRegistrar::unregisterActorClass<ANavModifierVolume>("ANavModifierVolume");
-    UnrealClassRegistrar::unregisterActorClass<APlayerCameraManager>("APlayerCameraManager");
-    UnrealClassRegistrar::unregisterActorClass<APlayerController>("APlayerController");
-    UnrealClassRegistrar::unregisterActorClass<APostProcessVolume>("APostProcessVolume");
-    UnrealClassRegistrar::unregisterActorClass<ARecastNavMesh>("ARecastNavMesh");
-    UnrealClassRegistrar::unregisterActorClass<ASkyAtmosphere>("ASkyAtmosphere");
-    UnrealClassRegistrar::unregisterActorClass<AStaticMeshActor>("AStaticMeshActor");
-    UnrealClassRegistrar::unregisterActorClass<AVolumetricCloud>("AVolumetricCloud");
-    UnrealClassRegistrar::unregisterComponentClass<UActorComponent>("UActorComponent");
-    UnrealClassRegistrar::unregisterComponentClass<UBrushComponent>("UBrushComponent");
-    UnrealClassRegistrar::unregisterComponentClass<UCameraComponent>("UCameraComponent");
-    UnrealClassRegistrar::unregisterComponentClass<UCapsuleComponent>("UCapsuleComponent");
-    UnrealClassRegistrar::unregisterComponentClass<UCharacterMovementComponent>("UCharacterMovementComponent");
-    UnrealClassRegistrar::unregisterComponentClass<UDirectionalLightComponent>("UDirectionalLightComponent");
-    UnrealClassRegistrar::unregisterComponentClass<UExponentialHeightFogComponent>("UExponentialHeightFogComponent");
-    UnrealClassRegistrar::unregisterComponentClass<ULightComponent>("ULightComponent");
-    UnrealClassRegistrar::unregisterComponentClass<ULightComponentBase>("ULightComponentBase");
-    UnrealClassRegistrar::unregisterComponentClass<ULocalLightComponent>("ULocalLightComponent");
-    UnrealClassRegistrar::unregisterComponentClass<UPhysicsConstraintComponent>("UPhysicsConstraintComponent");
-    UnrealClassRegistrar::unregisterComponentClass<UPointLightComponent>("UPointLightComponent");
-    UnrealClassRegistrar::unregisterComponentClass<UPoseableMeshComponent>("UPoseableMeshComponent");
-    UnrealClassRegistrar::unregisterComponentClass<UPrimitiveComponent>("UPrimitiveComponent");
-    UnrealClassRegistrar::unregisterComponentClass<USceneComponent>("USceneComponent");
-    UnrealClassRegistrar::unregisterComponentClass<USkeletalMeshComponent>("USkeletalMeshComponent");
-    UnrealClassRegistrar::unregisterComponentClass<USkyAtmosphereComponent>("USkyAtmosphereComponent");
-    UnrealClassRegistrar::unregisterComponentClass<USkyLightComponent>("USkyLightComponent");
-    UnrealClassRegistrar::unregisterComponentClass<USpotLightComponent>("USpotLightComponent");
-    UnrealClassRegistrar::unregisterComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
-    UnrealClassRegistrar::unregisterComponentClass<URectLightComponent>("URectLightComponent");
-    UnrealClassRegistrar::unregisterComponentClass<UVolumetricCloudComponent>("UVolumetricCloudComponent");
-    UnrealClassRegistrar::unregisterClass<UClass>("UClass");
-    UnrealClassRegistrar::unregisterClass<UGameplayStatics>("UGameplayStatics");
-    UnrealClassRegistrar::unregisterClass<UGameUserSettings>("UGameUserSettings");
-    UnrealClassRegistrar::unregisterClass<UKismetSystemLibrary>("UKismetSystemLibrary");
-    UnrealClassRegistrar::unregisterClass<ULevelSequence>("ULevelSequence");
-    UnrealClassRegistrar::unregisterClass<UMaterial>("UMaterial");
-    UnrealClassRegistrar::unregisterClass<UMaterialFunction>("UMaterialFunction");
-    UnrealClassRegistrar::unregisterClass<UMaterialInstance>("UMaterialInstance");
-    UnrealClassRegistrar::unregisterClass<UMaterialInstanceConstant>("UMaterialInstanceConstant");
-    UnrealClassRegistrar::unregisterClass<UMaterialInstanceDynamic>("UMaterialInstanceDynamic");
-    UnrealClassRegistrar::unregisterClass<UMaterialInterface>("UMaterialInterface");
-    UnrealClassRegistrar::unregisterClass<UNavigationSystemV1>("UNavigationSystemV1");
-    UnrealClassRegistrar::unregisterClass<UObject>("UObject");
-    UnrealClassRegistrar::unregisterClass<UStaticMesh>("UStaticMesh");
-    UnrealClassRegistrar::unregisterClass<UTexture>("UTexture");
-    UnrealClassRegistrar::unregisterClass<UTexture2D>("UTexture2D");
-    UnrealClassRegistrar::unregisterClass<UTextureRenderTarget2D>("UTextureRenderTarget2D");
-    UnrealClassRegistrar::unregisterSpecialStruct<FRotator>("FRotator");
-    UnrealClassRegistrar::unregisterSpecialStruct<FTransform>("FTransform");
-    UnrealClassRegistrar::unregisterSpecialStruct<FVector>("FVector");
+    UnrealClassRegistry::unregisterSubsystemProviderClass<ULocalPlayer>("ULocalPlayer");
+    UnrealClassRegistry::unregisterActorClass<AActor>("AActor");
+    UnrealClassRegistry::unregisterActorClass<AExponentialHeightFog>("AExponentialHeightFog");
+    UnrealClassRegistry::unregisterActorClass<ALevelSequenceActor>("ALevelSequenceActor");
+    UnrealClassRegistry::unregisterActorClass<ANavMeshBoundsVolume>("ANavMeshBoundsVolume");
+    UnrealClassRegistry::unregisterActorClass<ANavModifierVolume>("ANavModifierVolume");
+    UnrealClassRegistry::unregisterActorClass<APlayerCameraManager>("APlayerCameraManager");
+    UnrealClassRegistry::unregisterActorClass<APlayerController>("APlayerController");
+    UnrealClassRegistry::unregisterActorClass<APostProcessVolume>("APostProcessVolume");
+    UnrealClassRegistry::unregisterActorClass<ARecastNavMesh>("ARecastNavMesh");
+    UnrealClassRegistry::unregisterActorClass<ASkyAtmosphere>("ASkyAtmosphere");
+    UnrealClassRegistry::unregisterActorClass<AStaticMeshActor>("AStaticMeshActor");
+    UnrealClassRegistry::unregisterActorClass<AVolumetricCloud>("AVolumetricCloud");
+    UnrealClassRegistry::unregisterComponentClass<UActorComponent>("UActorComponent");
+    UnrealClassRegistry::unregisterComponentClass<UBrushComponent>("UBrushComponent");
+    UnrealClassRegistry::unregisterComponentClass<UCameraComponent>("UCameraComponent");
+    UnrealClassRegistry::unregisterComponentClass<UCapsuleComponent>("UCapsuleComponent");
+    UnrealClassRegistry::unregisterComponentClass<UCharacterMovementComponent>("UCharacterMovementComponent");
+    UnrealClassRegistry::unregisterComponentClass<UDirectionalLightComponent>("UDirectionalLightComponent");
+    UnrealClassRegistry::unregisterComponentClass<UExponentialHeightFogComponent>("UExponentialHeightFogComponent");
+    UnrealClassRegistry::unregisterComponentClass<ULightComponent>("ULightComponent");
+    UnrealClassRegistry::unregisterComponentClass<ULightComponentBase>("ULightComponentBase");
+    UnrealClassRegistry::unregisterComponentClass<ULocalLightComponent>("ULocalLightComponent");
+    UnrealClassRegistry::unregisterComponentClass<UPhysicsConstraintComponent>("UPhysicsConstraintComponent");
+    UnrealClassRegistry::unregisterComponentClass<UPointLightComponent>("UPointLightComponent");
+    UnrealClassRegistry::unregisterComponentClass<UPoseableMeshComponent>("UPoseableMeshComponent");
+    UnrealClassRegistry::unregisterComponentClass<UPrimitiveComponent>("UPrimitiveComponent");
+    UnrealClassRegistry::unregisterComponentClass<USceneComponent>("USceneComponent");
+    UnrealClassRegistry::unregisterComponentClass<USkeletalMeshComponent>("USkeletalMeshComponent");
+    UnrealClassRegistry::unregisterComponentClass<USkyAtmosphereComponent>("USkyAtmosphereComponent");
+    UnrealClassRegistry::unregisterComponentClass<USkyLightComponent>("USkyLightComponent");
+    UnrealClassRegistry::unregisterComponentClass<USpotLightComponent>("USpotLightComponent");
+    UnrealClassRegistry::unregisterComponentClass<UStaticMeshComponent>("UStaticMeshComponent");
+    UnrealClassRegistry::unregisterComponentClass<URectLightComponent>("URectLightComponent");
+    UnrealClassRegistry::unregisterComponentClass<UVolumetricCloudComponent>("UVolumetricCloudComponent");
+    UnrealClassRegistry::unregisterInterface<IAssetRegistry>("IAssetRegistry");
+    UnrealClassRegistry::unregisterClass<UClass>("UClass");
+    UnrealClassRegistry::unregisterClass<UGameplayStatics>("UGameplayStatics");
+    UnrealClassRegistry::unregisterClass<UGameUserSettings>("UGameUserSettings");
+    UnrealClassRegistry::unregisterClass<UKismetSystemLibrary>("UKismetSystemLibrary");
+    UnrealClassRegistry::unregisterClass<ULevelSequence>("ULevelSequence");
+    UnrealClassRegistry::unregisterClass<ULevelStreaming>("ULevelStreaming");
+    UnrealClassRegistry::unregisterClass<UMaterial>("UMaterial");
+    UnrealClassRegistry::unregisterClass<UMaterialFunction>("UMaterialFunction");
+    UnrealClassRegistry::unregisterClass<UMaterialInstance>("UMaterialInstance");
+    UnrealClassRegistry::unregisterClass<UMaterialInstanceConstant>("UMaterialInstanceConstant");
+    UnrealClassRegistry::unregisterClass<UMaterialInstanceDynamic>("UMaterialInstanceDynamic");
+    UnrealClassRegistry::unregisterClass<UMaterialInterface>("UMaterialInterface");
+    UnrealClassRegistry::unregisterClass<UNavigationSystemV1>("UNavigationSystemV1");
+    UnrealClassRegistry::unregisterClass<UObject>("UObject");
+    UnrealClassRegistry::unregisterClass<UStaticMesh>("UStaticMesh");
+    UnrealClassRegistry::unregisterClass<UTexture>("UTexture");
+    UnrealClassRegistry::unregisterClass<UTexture2D>("UTexture2D");
+    UnrealClassRegistry::unregisterClass<UTextureRenderTarget2D>("UTextureRenderTarget2D");
+    UnrealClassRegistry::unregisterSpecialStruct<FRotator>("FRotator");
+    UnrealClassRegistry::unregisterSpecialStruct<FTransform>("FTransform");
+    UnrealClassRegistry::unregisterSpecialStruct<FVector>("FVector");
+    UnrealClassRegistry::unregisterSpecialStruct<FVector2D>("FVector2D");
 }
 
 // use IMPLEMENT_GAME_MODULE if module implements Unreal classes, use IMPLEMENT_MODULE otherwise
