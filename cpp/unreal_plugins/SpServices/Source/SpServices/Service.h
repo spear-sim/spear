@@ -16,6 +16,7 @@
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Engine/Engine.h>               // GEngine
 #include <Engine/World.h>                // UWorld::InitializationValues
+#include <HAL/Platform.h>                // SPSERVICES_API
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
@@ -23,7 +24,7 @@
 #include "SpCore/SpArray.h"
 #include "SpCore/Unreal.h"
 
-class Service
+class SPSERVICES_API Service
 {
 public:
 
