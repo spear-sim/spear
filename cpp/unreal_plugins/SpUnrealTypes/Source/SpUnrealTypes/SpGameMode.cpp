@@ -10,8 +10,12 @@
 #include <GameFramework/GameModeBase.h>
 #include <GameFramework/Pawn.h>
 #include <GameFramework/PlayerController.h>
-#include <HAL/Platform.h>            // uint64
+#include <HAL/Platform.h>            // int32, uint64
+#include <Kismet/GameplayStatics.h>
+
 #include <Math/Color.h>
+#include <Math/ColorList.h>
+#include <Misc/CoreDelegates.h>
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
@@ -20,6 +24,8 @@
 #include "SpUnrealTypes/SpPlayerController.h"
 #include "SpUnrealTypes/SpSpectatorPawn.h"
 #include "SpUnrealTypes/SpDebugCameraController.h"
+
+class IPakFile;
 
 ASpGameMode::ASpGameMode()
 {
@@ -54,17 +60,27 @@ void ASpGameMode::PostLogin(APlayerController* new_player)
     sp_debug_camera_controller_ = GetWorld()->SpawnActor<ASpDebugCameraController>(actor_spawn_parameters);
 }
 
-void ASpGameMode::SpAddOnScreenDebugMessage(float DisplayTime, FString Message) const
+void ASpGameMode::SpAddOnScreenDebugMessage(uint64 Key, float TimeToDisplay, const FString& DisplayColor, const FString& DebugMessage) const
 {
     SP_ASSERT(GEngine);
 
     // Note that GEngine->AddOnScreenDebugMessage(...) is only available when the game is running, either in
     // standalone mode or in play-in-editor mode. But in practice this is not an issue, because UFUNTION(Exec)
     // methods only execute when the game is running anyway.
-    uint64 key              = -1;
-    FColor color            = FColor::Yellow;
-    std::string message_str = SP_LOG_GET_PREFIX() + Unreal::toStdString(Message);
-    GEngine->AddOnScreenDebugMessage(key, DisplayTime, color, Unreal::toFString(message_str));
+    std::string display_color_str = Unreal::toStdString(DisplayColor.ToLower());
+    std::string debug_message_str = SP_LOG_GET_PREFIX() + Unreal::toStdString(DebugMessage);
+    GEngine->AddOnScreenDebugMessage(Key, TimeToDisplay, GColorList.GetFColorByName(*Unreal::toFString(display_color_str)), Unreal::toFString(debug_message_str));
+}
+
+void ASpGameMode::SpMountPak(const FString& PakFile, int32 PakOrder) const
+{
+    IPakFile* pak_file = FCoreDelegates::MountPak.Execute(PakFile, PakOrder);
+    SP_ASSERT(pak_file);
+}
+
+void ASpGameMode::SpOpenLevel(const FString& LevelName) const
+{
+    UGameplayStatics::OpenLevel(GetWorld(), Unreal::toFName(Unreal::toStdString(LevelName)));
 }
 
 void ASpGameMode::SpToggleDebugCamera()

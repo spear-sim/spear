@@ -199,7 +199,7 @@ public:
         });
 
         //
-        // Miscellaneous low-level entry points to support initializing a spear.Instance
+        // Miscellaneous low-level entry points to support spear.Instance but do not interact with Unreal.
         //
 
         bindFuncToExecuteOnWorkerThread("engine_service", "ping", []() -> std::string {
@@ -209,8 +209,6 @@ public:
         bindFuncToExecuteOnWorkerThread("engine_service", "get_id", []() -> int64_t {
             return static_cast<int>(boost::this_process::get_id());
         });
-
-        // Miscellaneous low-level entry points to support initializing a spear.services.EngineService
 
         bindFuncToExecuteOnWorkerThread("engine_service", "get_byte_order", []() -> std::string {
             SP_ASSERT(BOOST_ENDIAN_BIG_BYTE + BOOST_ENDIAN_LITTLE_BYTE == 1);
@@ -223,6 +221,9 @@ public:
             }
         });
 
+        //
+        // Miscellaneous low-level entry points that interact with Unreal globals and can be called from the
+        // worker thread.
         //
         // By calling IsRunningCommandlet() and FCommandLine::Get() below, we are accessing global variables
         // from the worker thread that are set on the game thread, and these global variables are not protected
@@ -237,9 +238,10 @@ public:
         // as long as the write operation from the worker thread is eventually visible on the game thread,
         // the overall system behavior is correct.
         //
-
-        //
-        // Miscellaneous low-level entry points that interact with Unreal globals
+        // Note that We could implement UCLASSES and UFUNCTIONS to access FCommandLine, FGenericPlatformMisc,
+        // etc, but then we would be limited to accessing them on the game thread. Providing access through
+        // the entry points below enables access from the worker thread, which simplifies the implmeentation
+        // of spear.Instance.
         //
 
         bindFuncToExecuteOnWorkerThread("engine_service", "get_engine", []() -> uint64_t {
@@ -258,24 +260,21 @@ public:
             #endif
         });
 
-        bindFuncToExecuteOnGameThread("engine_service", "is_async_loading", []() -> bool {
-            return IsAsyncLoading(); // must be called on game thread
-        });
-
-        //
-        // Miscellaneous low-level entry points that interact with Unreal singleton structs and are needed in
-        // the implementation of spear.Instance. We could implement UCLASSES and UFUNCTIONS to access the
-        // low-level Unreal structs, but then we would be limited to accessing them on the game thread.
-        // Providing access through these entry points enables access on the worker thread, which simplifies
-        // the implmeentation of spear.Instance.
-        //
-
         bindFuncToExecuteOnWorkerThread("engine_service", "get_command_line", []() -> std::string {
             return Unreal::toStdString(FCommandLine::Get());
         });
 
         bindFuncToExecuteOnWorkerThread("engine_service", "request_exit", [](bool immediate_shutdown) -> void {
             FGenericPlatformMisc::RequestExit(immediate_shutdown);
+        });
+
+        //
+        // Miscellaneous low-level entry points that interact with Unreal globals and must be called from the
+        // game thread.
+        //
+
+        bindFuncToExecuteOnGameThread("engine_service", "is_async_loading", []() -> bool {
+            return IsAsyncLoading();
         });
 
         //

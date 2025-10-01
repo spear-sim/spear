@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <HAL/Platform.h>            // int32
 #include <Containers/UnrealString.h> // FString
 #include <GameFramework/GameModeBase.h>
 #include <Templates/SubclassOf.h>
@@ -39,11 +40,15 @@ public:
     void PostLogin(APlayerController* new_player) override;
 
 private:
-    // Call this function by typing the following into the Unreal console: SpAddOnScreenDebugMessage 10.0 Hello World
     UFUNCTION(Exec)
-    void SpAddOnScreenDebugMessage(float DisplayTime, FString Message) const;
+    void SpAddOnScreenDebugMessage(uint64 Key, float TimeToDisplay, const FString& DisplayColor, const FString& DebugMessage) const;
 
-    // Toggle custom debug camera
+    UFUNCTION(Exec)
+    void SpMountPak(const FString& PakFile, int32 PakOrder) const;
+
+    UFUNCTION(Exec)
+    void SpOpenLevel(const FString& LevelName) const;
+
     UFUNCTION(Exec)
     void SpToggleDebugCamera();
 
