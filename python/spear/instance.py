@@ -202,12 +202,17 @@ class Instance():
             pass
 
 
-    def close(self):
+    def close(self, force=False):
+
         # Note that in the constructor, we launch the Unreal instance first and then initialize the client
         # Normally, we would do things in the reverse order here. But if we terminate the client first, then
         # we can't call the "request_exit" and "terminate" entry points to close the Unreal instance. So we
         # terminate the Unreal instance first, and then terminate the client afterwards.
-        self._request_terminate_unreal_instance()
+
+        if force:
+            self._force_kill_unreal_instance()
+        else:
+            self._request_terminate_unreal_instance()
         self._terminate_client(verbose=True)
 
 

@@ -10,3 +10,69 @@ SPEAR:
     COMMAND_LINE_ARGS:
       resx: 512
       resy: 512
+
+SP_SERVICES:
+  INITIALIZE_ENGINE_SERVICE:
+
+    # Unreal's JSON update rules are such that the entire SupportedAgents array must be specified even though
+    # we are only overriding AgentRadius and AgentHeight.
+
+    OVERRIDE_NAVIGATION_SYSTEM_DEFAULT_OBJECT: True
+    NAVIGATION_SYSTEM_DEFAULT_OBJECT_STRING: '''
+    {
+      "SupportedAgents":
+      [
+        {
+          "Name": "Default",
+          "Color":
+          {
+              "b": 0,
+              "g": 75,
+              "r": 38,
+              "a": 164
+          },
+          "DefaultQueryExtent":
+          {
+              "x": 50,
+              "y": 50,
+              "z": 250
+          },
+          "NavDataClass": "/Script/NavigationSystem.RecastNavMesh",
+          "AgentRadius": 30,
+          "AgentHeight": 180,
+          "AgentStepHeight": -1,
+          "NavWalkingSearchHeightScale": 0.5,
+          "PreferredNavData": "/Script/NavigationSystem.RecastNavMesh",
+          "bCanCrouch": false,
+          "bCanJump": false,
+          "bCanWalk": false,
+          "bCanSwim": false,
+          "bCanFly": false
+        }
+      ]
+    }
+    '''
+
+    OVERRIDE_RECAST_NAV_MESH_DEFAULT_OBJECT: True
+    RECAST_NAV_MESH_DEFAULT_OBJECT_STRING: '''
+    {
+      "NavMeshResolutionParams":
+      [
+        {
+          "CellSize": 1.0,
+          "CellHeight": 1.0,
+          "AgentMaxStepHeight": 10.0
+        },
+        {
+          "CellSize": 1.0,
+          "CellHeight": 1.0,
+          "AgentMaxStepHeight": 10.0
+        },
+        {
+          "CellSize": 1.0,
+          "CellHeight": 1.0,
+          "AgentMaxStepHeight": 10.0
+        }
+      ]
+    }
+    '''

@@ -16,10 +16,12 @@ import time
 parser = argparse.ArgumentParser()
 parser.add_argument("--maps_file", required=True)
 parser.add_argument("--script")
+parser.add_argument("--user_config_file")
 parser.add_argument("--wait_for_assets", action="store_true")
-parser.add_argument("--force_kill_unreal_instance", action="store_true")
-parser.add_argument("--user_config_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml")))
+parser.add_argument("--when_finished", default="force_kill") # iterating over scenes seems to cause Unreal to hang when shutting down, so we force kill by default here
 args, unknown_args = parser.parse_known_args() # get unknown args to pass to inner script
+
+assert args.when_finished in ["keep_open", "close", "force_close"]
 
 
 if __name__ == "__main__":
@@ -32,7 +34,10 @@ if __name__ == "__main__":
     if len(maps) > 0:
 
         # get config
-        config = spear.get_config(user_config_files=[args.user_config_file])
+        user_config_files = [os.path.realpath(os.path.join(os.path.dirname(__file__), "config.yaml"))]
+        if args.user_config_file is not None:
+            user_config_files.append(args.user_config_file)
+        config = spear.get_config(user_config_files=user_config_files)
 
         # modify config params
         config.defrost()
@@ -208,11 +213,9 @@ if __name__ == "__main__":
         # system, which can cause the editor to hang after iterating over scenes.
         time.sleep(1.0)
 
-        if args.force_kill_unreal_instance:
-            spear.log("Iterating over scenes seems to cause the Unreal Editor not to shut down cleanly, force killing...")
-            instance._force_kill_unreal_instance()
-            instance._terminate_client(verbose=True)
-        else:
+        if args.when_finished == "close":
             instance.close()
+        elif args.when_finished == "force_close":
+            instance.close(force=True)
 
     spear.log("Done.")

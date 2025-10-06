@@ -11,7 +11,5 @@ SPEAR:
     EDITOR_UPROJECT: "/Users/miroberts/code/github/spear/cpp/unreal_projects/SpearSim/SpearSim.uproject"
     EDITOR_LAUNCH_MODE: "editor"
     COMMAND_LINE_ARGS:
-      resx: 512
-      resy: 512
       # renderoffscreen: null
     CLIENT_INTERNAL_TIMEOUT_SECONDS: 1000.0 # set this to longer than usual because it can takes a while to execute editor scripts

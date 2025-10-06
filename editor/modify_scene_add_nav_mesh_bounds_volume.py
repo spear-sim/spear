@@ -63,7 +63,7 @@ if __name__ == "__main__":
         if scene_has_valid_geometry:
             spear.log("    Scene has valid scene geometry, spawning unreal.NavMeshBoundsVolume...")
 
-            assert spear.utils.editor_utils.find_actor("Navigation/NavMeshBoundsVolume") is None
+            assert spear.utils.editor_utils.find_actor(stable_name="Navigation/NavMeshBoundsVolume") is None
 
             scale_units_per_unreal_unit = 1.0/100.0
             nav_mesh_bounds_location = (scene_bounds_min + scene_bounds_max)/2.0

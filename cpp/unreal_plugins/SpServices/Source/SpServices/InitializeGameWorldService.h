@@ -9,10 +9,10 @@
 #include <string>
 #include <vector>
 
-#include <Engine/World.h> // UWorld::InitializationValues
+#include <Engine/Engine.h>       // GEngine
+#include <Engine/World.h>        // UWorld::InitializationValues
+#include <HAL/IConsoleManager.h> // IConsoleVariable
 #include <Kismet/GameplayStatics.h>
-#include <Misc/App.h>
-#include <PhysicsEngine/PhysicsSettings.h>
 
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
@@ -83,65 +83,6 @@ protected:
             SP_LOG("    New game paused: ", game_paused);
 
             UGameplayStatics::SetGamePaused(getWorld(), game_paused);
-        }
-
-        //
-        // Override benchmarking
-        //
-
-        if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_GAME_WORLD_SERVICE.OVERRIDE_BENCHMARKING")) {
-            bool benchmarking = Config::get<bool>("SP_SERVICES.INITIALIZE_GAME_WORLD_SERVICE.BENCHMARKING");
-
-            SP_LOG("    Overriding benchmarking...");
-            SP_LOG("    Old benchmarking: ", FApp::IsBenchmarking());
-            SP_LOG("    New benchmarking: ", benchmarking);
-
-            FApp::SetBenchmarking(benchmarking);
-        }
-
-        //
-        // Override fixed delta time
-        //
-
-        if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_GAME_WORLD_SERVICE.OVERRIDE_FIXED_DELTA_TIME")) {
-            float fixed_delta_time = Config::get<float>("SP_SERVICES.INITIALIZE_GAME_WORLD_SERVICE.FIXED_DELTA_TIME");
-
-            SP_LOG("    Overriding fixed delta time...");
-            SP_LOG("    Old fixed delta time: ", FApp::GetFixedDeltaTime());
-            SP_LOG("    New fixed delta time: ", fixed_delta_time);
-
-            FApp::SetFixedDeltaTime(fixed_delta_time);
-        }
-
-        //
-        // Override physics settings
-        //
-
-        if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_GAME_WORLD_SERVICE.OVERRIDE_PHYSICS_SETTINGS")) {
-            std::string physics_settings_str = Config::get<std::string>("SP_SERVICES.INITIALIZE_GAME_WORLD_SERVICE.PHYSICS_SETTINGS_STRING");
-
-            SP_LOG("    Overriding physics settings...");
-            SP_LOG("    Old physics settings: ");
-            SP_LOG_NO_PREFIX(Unreal::getObjectPropertiesAsString(UPhysicsSettings::Get()));
-            SP_LOG("    New physics settings: ");
-            SP_LOG_NO_PREFIX(physics_settings_str);
-
-            Unreal::setObjectPropertiesFromString(UPhysicsSettings::Get(), physics_settings_str);
-        }
-
-        //
-        // Validate physics settings
-        //
-
-        UPhysicsSettings* physics_settings = UPhysicsSettings::Get();
-        if (FApp::IsBenchmarking() && physics_settings->bSubstepping) {
-            double max_fixed_delta_time = physics_settings->MaxSubstepDeltaTime*physics_settings->MaxSubsteps;
-
-            SP_LOG("    Validating physics settings...");
-            SP_LOG("    Current fixed delta time:         ", FApp::GetFixedDeltaTime());
-            SP_LOG("    Maximum allowed fixed delta time: ", max_fixed_delta_time);
-
-            SP_ASSERT(FApp::GetFixedDeltaTime() <= max_fixed_delta_time);
         }
 
         //

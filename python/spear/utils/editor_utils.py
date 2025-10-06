@@ -27,8 +27,8 @@ def find_actors(actor_class=unreal.Actor):
         actors = [ a for a in actors if isinstance(a, actor_class) ]
     return actors
 
-def find_actor(name):
-    actors = [ actor for actor in find_actors() if get_stable_name_for_actor(actor=actor) == name ]
+def find_actor(stable_name):
+    actors = [ actor for actor in find_actors() if get_stable_name_for_actor(actor=actor) == stable_name ]
     if len(actors) == 1:
         return actors[0]
     else:
@@ -73,7 +73,7 @@ def get_stable_name_for_actor(actor):
     if folder_path.is_none():
         return actor.get_actor_label()
     else:
-        return str(folder_path) + posixpath.sep + actor.get_actor_label()
+        return posixpath.join(str(folder_path), actor.get_actor_label())
 
 def get_stable_name_for_component(component, include_stable_actor_name=False):
     if include_stable_actor_name:

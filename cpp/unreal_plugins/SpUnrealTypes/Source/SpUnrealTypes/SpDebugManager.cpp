@@ -159,10 +159,10 @@ void ASpDebugManager::GetAndSetObjectProperties()
     // Get and set object properties from UObject*
     SP_LOG(Unreal::getObjectPropertiesAsString(static_mesh_actor));
 
-    Unreal::setObjectPropertiesFromString(static_mesh_actor, "{\"bHidden\": true }"); // partial updates are allowed
+    Unreal::setObjectPropertiesFromString(static_mesh_actor, "{\"bHidden\": true}"); // partial updates are allowed
     SP_LOG(Unreal::getObjectPropertiesAsString(static_mesh_actor));
 
-    Unreal::setObjectPropertiesFromString(static_mesh_actor, "{\"bHidden\": false }");
+    Unreal::setObjectPropertiesFromString(static_mesh_actor, "{\"bHidden\": false}");
     SP_LOG(Unreal::getObjectPropertiesAsString(static_mesh_actor));
 
     // Find properties by fully qualified name (pointers like RootComponent are handled correctly)

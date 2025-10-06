@@ -42,6 +42,8 @@ SP_SERVICES:
     PAK_FILES: []
 
     #
+    # Override default game map settings.
+    #
     # For each of the config strings below, if the corresponding override parameter is set to True, then the
     # string will override the corresponding config parameter in the [/Script/EngineSettings.GameMapsSettings]
     # section of cpp/unreal_projects/SpearSim/Config/DefaultEngine.ini. The strings below must be formatted in
@@ -66,6 +68,27 @@ SP_SERVICES:
     OVERRIDE_GLOBAL_DEFAULT_GAME_MODE: False
     GLOBAL_DEFAULT_GAME_MODE: ""
 
+    # Override benchmarking and fixed delta time.
+
+    OVERRIDE_BENCHMARKING: True
+    BENCHMARKING: True
+
+    OVERRIDE_FIXED_DELTA_TIME: True
+    FIXED_DELTA_TIME: 0.033333 # 1.0/30.0
+
+    # Override physics settings.
+
+    OVERRIDE_PHYSICS_SETTINGS: False
+    PHYSICS_SETTINGS_STRING: '''{}'''
+
+    # Override navigation settings.
+
+    OVERRIDE_NAVIGATION_SYSTEM_DEFAULT_OBJECT: False
+    NAVIGATION_SYSTEM_DEFAULT_OBJECT_STRING: '''{}'''
+
+    OVERRIDE_RECAST_NAV_MESH_DEFAULT_OBJECT: False
+    RECAST_NAV_MESH_DEFAULT_OBJECT_STRING: '''{}'''
+
   #
   # InitializeGameWorldService
   #
@@ -74,15 +97,6 @@ SP_SERVICES:
 
     OVERRIDE_GAME_PAUSED: True
     GAME_PAUSED: True
-
-    OVERRIDE_BENCHMARKING: True
-    BENCHMARKING: True
-
-    OVERRIDE_FIXED_DELTA_TIME: True
-    FIXED_DELTA_TIME: 0.033333 # 1.0/30.0
-
-    OVERRIDE_PHYSICS_SETTINGS: False
-    PHYSICS_SETTINGS_STRING: ""
 
     EXECUTE_CONSOLE_COMMANDS: False
     CONSOLE_COMMANDS: []

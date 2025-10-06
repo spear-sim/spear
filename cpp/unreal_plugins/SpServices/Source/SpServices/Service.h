@@ -17,6 +17,7 @@
 #include <Engine/Engine.h>               // GEngine
 #include <Engine/World.h>                // UWorld::InitializationValues
 #include <HAL/Platform.h>                // SPSERVICES_API
+#include <Misc/CoreDelegates.h>
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
@@ -79,16 +80,71 @@ public:
     };
 
     Service() = delete;
-    Service(std::string name);
-    Service(std::string name, WorldFilter* world_filter);
-    virtual ~Service();
+
+    Service(const std::string& name)
+    {
+        name_ = name;
+
+        post_engine_init_handle_ = FCoreDelegates::OnPostEngineInit.AddRaw(this, &Service::postEngineInitHandler);
+        engine_pre_exit_handle_ = FCoreDelegates::OnEnginePreExit.AddRaw(this, &Service::enginePreExitHandler);
+        post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &Service::postWorldInitializationHandler);
+        world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &Service::worldCleanupHandler);
+        begin_frame_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &Service::beginFrameHandler);
+        end_frame_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &Service::endFrameHandler);
+    }
+
+    Service(const std::string& name, WorldFilter* world_filter) : Service(name)
+    {
+        world_filter_ = world_filter;
+    }
+
+    virtual ~Service()
+    {
+        world_filter_ = nullptr;
+
+        FCoreDelegates::OnPostEngineInit.Remove(post_engine_init_handle_);
+        FCoreDelegates::OnEnginePreExit.Remove(engine_pre_exit_handle_);
+        FWorldDelegates::OnPostWorldInitialization.Remove(post_world_initialization_handle_);
+        FWorldDelegates::OnWorldCleanup.Remove(world_cleanup_handle_);
+        FCoreDelegates::OnBeginFrame.Remove(begin_frame_handle_);
+        FCoreDelegates::OnEndFrame.Remove(end_frame_handle_);
+
+        end_frame_handle_.Reset();
+        begin_frame_handle_.Reset();
+        world_cleanup_handle_.Reset();
+        post_world_initialization_handle_.Reset();
+    }
+
 
 protected:
-    virtual void postWorldInitialization(UWorld* world, const UWorld::InitializationValues initialization_values);
-    virtual void worldCleanup(UWorld* world, bool session_ended, bool cleanup_resources);
-    virtual void worldBeginPlay();
-    virtual void beginFrame();
-    virtual void endFrame();
+    virtual void postEngineInit() {}
+    virtual void enginePreExit() {}
+
+    virtual void postWorldInitialization(UWorld* world, const UWorld::InitializationValues initialization_values)
+    {
+        SP_ASSERT(world);
+        SP_ASSERT(world_filter_);
+        world_ = world;
+        world_begin_play_handle_ = world->OnWorldBeginPlay.AddRaw(this, &Service::worldBeginPlayHandler);
+    }
+
+    virtual void worldCleanup(UWorld* world, bool session_ended, bool cleanup_resources)
+    {
+        SP_ASSERT(world);
+        SP_ASSERT(world_filter_);
+        world->OnWorldBeginPlay.Remove(world_begin_play_handle_);
+        world_begin_play_handle_.Reset();
+        world_ = nullptr;
+    }
+
+    virtual void worldBeginPlay()
+    {
+        SP_ASSERT(world_);
+        SP_ASSERT(world_filter_);
+    }
+
+    virtual void beginFrame() {}
+    virtual void endFrame() {}
 
     UWorld* getWorld() const
     {
@@ -172,20 +228,55 @@ protected:
     }
 
 private:
-    void postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values);
-    void worldCleanupHandler(UWorld* world, bool session_ended, bool cleanup_resources);
-    void worldBeginPlayHandler();
-    void beginFrameHandler();
-    void endFrameHandler();
+    void postEngineInitHandler()
+    {
+        postEngineInit();
+    }
+
+    void enginePreExitHandler()
+    {
+        enginePreExit();
+    }
+
+    void postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values)
+    {
+        if (world_filter_ && world_filter_->isValid(world)) {
+            postWorldInitialization(world, initialization_values);
+        }
+    }
+
+    void worldCleanupHandler(UWorld* world, bool session_ended, bool cleanup_resources)
+    {
+        if (world == world_) {
+            worldCleanup(world, session_ended, cleanup_resources);
+        }
+    }
+
+    void worldBeginPlayHandler()
+    {
+        worldBeginPlay();
+    }
+
+    void beginFrameHandler()
+    {
+        beginFrame();
+    }
+
+    void endFrameHandler()
+    {
+        endFrame();
+    }
 
     std::string name_;
     WorldFilter* world_filter_ = nullptr;
 
+    FDelegateHandle post_engine_init_handle_;
+    FDelegateHandle engine_pre_exit_handle_;
+    FDelegateHandle begin_frame_handle_;
+    FDelegateHandle end_frame_handle_;
     FDelegateHandle post_world_initialization_handle_;
     FDelegateHandle world_cleanup_handle_;
     FDelegateHandle world_begin_play_handle_;
-    FDelegateHandle begin_frame_handle_;
-    FDelegateHandle end_frame_handle_;
 
     UWorld* world_ = nullptr;
 };
