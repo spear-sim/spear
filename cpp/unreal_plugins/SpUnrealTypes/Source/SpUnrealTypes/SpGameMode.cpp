@@ -5,20 +5,26 @@
 
 #include "SpUnrealTypes/SpGameMode.h"
 
+#include <string>
+
 #include <Containers/UnrealString.h> // FString
 #include <Engine/Engine.h>           // GEngine
+#include <Engine/LevelStreamingDynamic.h>
+#include <Engine/World.h>            // FActorSpawnParameters
 #include <GameFramework/GameModeBase.h>
 #include <GameFramework/Pawn.h>
 #include <GameFramework/PlayerController.h>
 #include <HAL/Platform.h>            // int32, uint64
 #include <Kismet/GameplayStatics.h>
-
 #include <Math/Color.h>
 #include <Math/ColorList.h>
+#include <Math/Rotator.h>
+#include <Math/Vector.h>
 #include <Misc/CoreDelegates.h>
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
+#include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 
 #include "SpUnrealTypes/SpPlayerController.h"
@@ -46,6 +52,8 @@ void ASpGameMode::PostLogin(APlayerController* new_player)
 
     AGameModeBase::PostLogin(new_player);
 
+    SP_ASSERT(GetWorld());
+
     // Set the stable name for the DefaultPawnClass instance so we can find it later. We only do this if the
     // pawn is non-null (it is possible for pawn to be null if we press "Simulate" in the editor), and if the
     // pawn has a USpStableNameComponent.
@@ -72,10 +80,25 @@ void ASpGameMode::SpAddOnScreenDebugMessage(uint64 Key, float TimeToDisplay, con
     GEngine->AddOnScreenDebugMessage(Key, TimeToDisplay, GColorList.GetFColorByName(*Unreal::toFString(display_color_str)), Unreal::toFString(debug_message_str));
 }
 
-void ASpGameMode::SpMountPak(const FString& PakFile, int32 PakOrder) const
+void ASpGameMode::SpMountPak(const FString& PakFile) const
 {
-    IPakFile* pak_file = FCoreDelegates::MountPak.Execute(PakFile, PakOrder);
-    SP_ASSERT(pak_file);
+    if (FCoreDelegates::MountPak.IsBound()) {
+        int32 pak_order = 0;
+        IPakFile* pak_file = FCoreDelegates::MountPak.Execute(PakFile, pak_order);
+        SP_ASSERT(pak_file);
+    } else {
+        SP_LOG("WARNING: FCoreDelegates::MountPak delegate is not bound.");
+    }
+}
+
+void ASpGameMode::SpUnmountPak(const FString& PakFile) const
+{
+    if (FCoreDelegates::OnUnmountPak.IsBound()) {
+        bool success = FCoreDelegates::OnUnmountPak.Execute(PakFile);
+        SP_ASSERT(success);
+    } else {
+        SP_LOG("WARNING: FCoreDelegates::OnUnmountPak delegate is not bound.");        
+    }
 }
 
 void ASpGameMode::SpOpenLevel(const FString& LevelName) const
@@ -83,8 +106,58 @@ void ASpGameMode::SpOpenLevel(const FString& LevelName) const
     UGameplayStatics::OpenLevel(GetWorld(), Unreal::toFName(Unreal::toStdString(LevelName)));
 }
 
+void ASpGameMode::SpLoadStreamLevel(const FString& LevelName) const
+{
+    SP_ASSERT(GetWorld());
+    bool make_visible_after_load = true;
+    bool should_block_on_load = true;
+    UGameplayStatics::LoadStreamLevel(GetWorld(), Unreal::toFName(Unreal::toStdString(LevelName)), make_visible_after_load, should_block_on_load, FLatentActionInfo());
+}
+
+void ASpGameMode::SpUnloadStreamLevel(const FString& LevelName) const
+{
+    SP_ASSERT(GetWorld());
+    bool should_block_on_unload = true;
+    UGameplayStatics::UnloadStreamLevel(GetWorld(), Unreal::toFName(Unreal::toStdString(LevelName)), FLatentActionInfo(), should_block_on_unload);
+}
+
+void ASpGameMode::SpLoadLevelInstance(const FString& LevelName)
+{
+    SP_ASSERT(GetWorld());
+    std::string level_name = Unreal::toStdString(LevelName);
+
+    bool success = false;
+    ULevelStreamingDynamic* level_streaming_dynamic = ULevelStreamingDynamic::LoadLevelInstance(GetWorld(), LevelName, FVector::ZeroVector, FRotator::ZeroRotator, success);
+    if (success) {
+        SP_ASSERT(level_streaming_dynamic);
+        Std::insert(level_streaming_dynamics_, level_name, level_streaming_dynamic);
+    } else {
+        SP_ASSERT(!level_streaming_dynamic);
+        SP_LOG("WARNING: Load unsuccessful: ", level_name);
+    }
+}
+
+void ASpGameMode::SpUnloadLevelInstance(const FString& LevelName)
+{
+    SP_ASSERT(GetWorld());
+    std::string level_name = Unreal::toStdString(LevelName);
+
+    if (!Std::containsKey(level_streaming_dynamics_, level_name)) {
+        SP_LOG("WARNING: Unload unsuccessful: ", level_name);
+        return;
+    }
+
+    bool success = false;
+    ULevelStreamingDynamic* level_streaming_dynamic = level_streaming_dynamics_.at(level_name);
+    SP_ASSERT(level_streaming_dynamic);
+    level_streaming_dynamic->SetIsRequestingUnloadAndRemoval(true);
+    Std::remove(level_streaming_dynamics_, level_name);
+}
+
 void ASpGameMode::SpToggleDebugCamera()
 {
+    SP_ASSERT(GetWorld());
+
     APlayerController* player_controller = GetWorld()->GetFirstPlayerController();
     SP_ASSERT(player_controller);
 

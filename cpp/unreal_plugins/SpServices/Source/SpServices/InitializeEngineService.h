@@ -160,6 +160,23 @@ public:
         }
     }
 
+    ~InitializeEngineService()
+    {
+        SP_LOG_CURRENT_FUNCTION();
+
+        if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.MOUNT_PAK_FILES") && FCoreDelegates::OnUnmountPak.IsBound()) {
+            std::vector<std::string> pak_files = Config::get<std::vector<std::string>>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.PAK_FILES");
+            int32 pak_order = 0;
+
+            SP_LOG("    Unmounting PAK files...");
+            for (auto& pak_file : pak_files) {
+                SP_LOG("    Unmounting PAK file: ", pak_file);
+                bool success = FCoreDelegates::OnUnmountPak.Execute(Unreal::toFString(pak_file));
+                SP_ASSERT(success);
+            }
+        }
+    }
+
 protected:
     void postEngineInit()
     {

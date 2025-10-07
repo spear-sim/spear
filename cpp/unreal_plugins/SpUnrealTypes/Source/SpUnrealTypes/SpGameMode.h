@@ -5,7 +5,10 @@
 
 #pragma once
 
-#include <HAL/Platform.h>            // int32
+#include <map>
+#include <string>
+
+#include <HAL/Platform.h>            // uint64
 #include <Containers/UnrealString.h> // FString
 #include <GameFramework/GameModeBase.h>
 #include <Templates/SubclassOf.h>
@@ -17,6 +20,7 @@
 #include "SpGameMode.generated.h"
 
 class APlayerController;
+class ULevelStreamingDynamic;
 
 // This class has two distinct responsibilities. First, it is responsible for setting AGameModeBase::DefaultPawnClass
 // and AGameModeBase::PlayerControllerClass. We need to set these classes in a game mode so we can implement
@@ -44,13 +48,29 @@ private:
     void SpAddOnScreenDebugMessage(uint64 Key, float TimeToDisplay, const FString& DisplayColor, const FString& DebugMessage) const;
 
     UFUNCTION(Exec)
-    void SpMountPak(const FString& PakFile, int32 PakOrder) const;
+    void SpMountPak(const FString& PakFile) const;
+
+    UFUNCTION(Exec)
+    void SpUnmountPak(const FString& PakFile) const;
 
     UFUNCTION(Exec)
     void SpOpenLevel(const FString& LevelName) const;
 
     UFUNCTION(Exec)
+    void SpLoadStreamLevel(const FString& LevelName) const;
+
+    UFUNCTION(Exec)
+    void SpUnloadStreamLevel(const FString& LevelName) const;
+
+    UFUNCTION(Exec)
+    void SpLoadLevelInstance(const FString& LevelName);
+
+    UFUNCTION(Exec)
+    void SpUnloadLevelInstance(const FString& LevelName);
+
+    UFUNCTION(Exec)
     void SpToggleDebugCamera();
 
+    std::map<std::string, ULevelStreamingDynamic*> level_streaming_dynamics_;
     ASpDebugCameraController* sp_debug_camera_controller_ = nullptr;
 };
