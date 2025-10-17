@@ -34,11 +34,11 @@ if __name__ == "__main__":
     # work, but it requires the user to set the SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS config
     # parameter conservatively due to various implementation details in begin_frame() and end_frame().
 
-    spear.log("Opening level: /Game/Spear/Scenes/debug_0000/Maps/debug_0000.debug_0000")
+    spear.log("Opening level: /Game/SPEAR/Scenes/debug_0000/Maps/debug_0000.debug_0000")
     with instance.begin_frame():
         pass
     with instance.end_frame():
-        args = {"LevelName": "/Game/Spear/Scenes/debug_0000/Maps/debug_0000.debug_0000", "bAbsolute": True, "Options": ""}
+        args = {"LevelName": "/Game/SPEAR/Scenes/debug_0000/Maps/debug_0000.debug_0000", "bAbsolute": True, "Options": ""}
         game.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=open_level_func, args=args)
 
     # Calling OpenLevel invalidates the old game object, so get a new one here. This call will block until
@@ -56,11 +56,11 @@ if __name__ == "__main__":
     time.sleep(5.0)
 
     # call OpenLevel again
-    spear.log("Opening level: /Game/Spear/Scenes/apartment_0000/Maps/apartment_0000.apartment_0000")
+    spear.log("Opening level: /Game/SPEAR/Scenes/apartment_0000/Maps/apartment_0000.apartment_0000")
     with instance.begin_frame():
         pass
     with instance.end_frame():
-        args = {"LevelName": "/Game/Spear/Scenes/apartment_0000/Maps/apartment_0000.apartment_0000", "bAbsolute": True, "Options": ""}
+        args = {"LevelName": "/Game/SPEAR/Scenes/apartment_0000/Maps/apartment_0000.apartment_0000", "bAbsolute": True, "Options": ""}
         game.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=open_level_func, args=args)
 
     # get a new game object again

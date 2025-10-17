@@ -68,18 +68,18 @@ if __name__ == "__main__":
         for animation_dataset_raw_anim_file in animation_dataset_raw_anim_files:
 
             anim_content_dir = replace_chars(animation_dataset_raw_anim_dir, invalid_chars_map)
-            anim_content_name = os.path.splitext(animation_dataset_raw_anim_file)[0].replace("-", "_").replace(" ", "_")
+            anim_content_name = replace_chars(os.path.splitext(animation_dataset_raw_anim_file)[0], invalid_chars_map)
             anim_content_path = posixpath.join(args.animation_dataset_content_base_dir, anim_content_dir, anim_content_name)
 
-            if args.skip_if_exists and unreal.EditorAssetLibrary.does_directory_exist(anim_content_path):
+            if args.skip_if_exists and unreal.EditorAssetLibrary.does_directory_exist(directory_path=anim_content_path):
                 spear.log("Directory exists, skipping: ", anim_content_path)
                 continue
 
-            if unreal.EditorAssetLibrary.does_directory_exist(anim_content_path):
+            if unreal.EditorAssetLibrary.does_directory_exist(directory_path=anim_content_path):
                 spear.log("Directory exists, removing: ", anim_content_path)
-                success = unreal.EditorAssetLibrary.delete_directory(anim_content_path)
+                success = unreal.EditorAssetLibrary.delete_directory(directory_path=anim_content_path)
                 assert success
-                success = unreal.EditorAssetLibrary.make_directory(anim_content_path)
+                success = unreal.EditorAssetLibrary.make_directory(directory_path=anim_content_path)
                 assert success
             else:
                 spear.log("Directory doesn't exist: ", anim_content_path)
@@ -89,35 +89,35 @@ if __name__ == "__main__":
             spear.log(f"Importing {animation_dataset_raw_anim_path} to {anim_content_path}...")
 
             asset_import_task = unreal.AssetImportTask()
-            asset_import_task.set_editor_property("async_", False)
-            asset_import_task.set_editor_property("automated", True)
-            asset_import_task.set_editor_property("destination_path", anim_content_path)
-            asset_import_task.set_editor_property("filename", animation_dataset_raw_anim_path)
-            asset_import_task.set_editor_property("replace_existing", True)
-            asset_import_task.set_editor_property("replace_existing_settings", True)
-            asset_import_task.set_editor_property("save", True)
+            asset_import_task.set_editor_property(name="async_", value=False)
+            asset_import_task.set_editor_property(name="automated", value=True)
+            asset_import_task.set_editor_property(name="destination_path", value=anim_content_path)
+            asset_import_task.set_editor_property(name="filename", value=animation_dataset_raw_anim_path)
+            asset_import_task.set_editor_property(name="replace_existing", value=True)
+            asset_import_task.set_editor_property(name="replace_existing_settings", value=True)
+            asset_import_task.set_editor_property(name="save", value=True)
 
-            asset_tools.import_asset_tasks([asset_import_task])
+            asset_tools.import_asset_tasks(import_tasks=[asset_import_task])
 
-            asset_paths = unreal.EditorAssetLibrary.list_assets(anim_content_path)
-            assert unreal.EditorAssetLibrary.does_directory_exist(anim_content_path)
+            asset_paths = unreal.EditorAssetLibrary.list_assets(directory_path=anim_content_path)
+            assert unreal.EditorAssetLibrary.does_directory_exist(directory_path=anim_content_path)
 
             spear.log(f"Imported assets: ")
             for asset_path in asset_paths:
                 spear.log("    ", asset_path)
 
-            assert unreal.EditorAssetLibrary.does_directory_exist(anim_content_path)
+            assert unreal.EditorAssetLibrary.does_directory_exist(directory_path=anim_content_path)
 
             # create a blueprint for each AnimSequence asset, and configure it to match the actor that would
             # be created by manually dragging the AnimSequence asset into the editor viewport
 
             for asset_path in asset_paths:
-                asset_data = unreal.EditorAssetLibrary.find_asset_data(asset_path)
+                asset_data = unreal.EditorAssetLibrary.find_asset_data(asset_path=asset_path)
 
-                if asset_data.get_editor_property("asset_class_path").get_editor_property("asset_name") == "AnimSequence":
+                if asset_data.get_editor_property(name="asset_class_path").get_editor_property(name="asset_name") == "AnimSequence":
 
-                    anim_sequence_dir = str(asset_data.get_editor_property("package_path"))
-                    anim_sequence_name = str(asset_data.get_editor_property("asset_name"))
+                    anim_sequence_dir = str(asset_data.get_editor_property(name="package_path"))
+                    anim_sequence_name = str(asset_data.get_editor_property(name="asset_name"))
                     anim_sequence_path = posixpath.join(anim_sequence_dir, f"{anim_sequence_name}.{anim_sequence_name}")
                     spear.log(f"Creating blueprint for AnimSequence: ", anim_sequence_path)
 
@@ -126,34 +126,33 @@ if __name__ == "__main__":
                     blueprint_path = posixpath.join(blueprint_dir, blueprint_name)
 
                     # remove existing blueprint
-                    if unreal.EditorAssetLibrary.does_asset_exist(blueprint_path):
+                    if unreal.EditorAssetLibrary.does_asset_exist(asset_path=blueprint_path):
                         spear.log("Asset exists, removing: ", blueprint_path)
-                        success = unreal.EditorAssetLibrary.delete_asset(blueprint_path)
+                        success = unreal.EditorAssetLibrary.delete_asset(asset_path_to_delete=blueprint_path)
                         assert success
 
                     # create blueprint
                     spear.log("Creating blueprint: ", blueprint_path)
-                    blueprint_asset, blueprint_subobject_descs = spear.utils.editor_utils.create_blueprint(
+                    blueprint_asset = spear.utils.editor_utils.create_blueprint_asset(
                         asset_name=blueprint_name,
-                        package_path=blueprint_dir,
-                        actor_class=unreal.SkeletalMeshActor)
+                        package_dir=blueprint_dir,
+                        parent_class=unreal.SkeletalMeshActor)
 
-                    actor = blueprint_subobject_descs["actor"]["object"]
-                    assert isinstance(actor, unreal.SkeletalMeshActor)
+                    blueprint_subobject_descs = spear.utils.editor_utils.get_subobject_descs_for_blueprint_asset(blueprint_asset=blueprint_asset)
+                    assert len(blueprint_subobject_descs) == 2
+                    assert isinstance(blueprint_subobject_descs[0]["object"], unreal.SkeletalMeshActor)     # the 0th entry always refers to the actor itself
+                    assert isinstance(blueprint_subobject_descs[1]["object"], unreal.SkeletalMeshComponent) # the 1st entry always refers to the actor's root component
 
-                    skeletal_mesh_component = blueprint_subobject_descs["root_component"]["object"]
-                    assert isinstance(skeletal_mesh_component, unreal.SkeletalMeshComponent)
-
+                    actor = blueprint_subobject_descs[0]["object"]
+                    skeletal_mesh_component = blueprint_subobject_descs[1]["object"]
                     skeletal_mesh_path = posixpath.join(anim_sequence_dir, f"{anim_content_name}.{anim_content_name}")
-                    skeletal_mesh = unreal.load_asset(skeletal_mesh_path)
-
-                    anim_sequence = unreal.load_asset(anim_sequence_path)
-
-                    skeletal_mesh_component.set_animation_mode(unreal.AnimationMode.ANIMATION_SINGLE_NODE) # use animation asset
-                    skeletal_mesh_component.set_skeletal_mesh_asset(skeletal_mesh)
-                    skeletal_mesh_component.set_editor_property("animation_data", unreal.SingleAnimationPlayData(anim_sequence))
+                    skeletal_mesh = unreal.load_asset(name=skeletal_mesh_path)
+                    anim_sequence = unreal.load_asset(name=anim_sequence_path)
+                    skeletal_mesh_component.set_animation_mode(animation_mode=unreal.AnimationMode.ANIMATION_SINGLE_NODE) # use animation asset
+                    skeletal_mesh_component.set_skeletal_mesh_asset(new_mesh=skeletal_mesh)
+                    skeletal_mesh_component.set_editor_property(name="animation_data", value=unreal.SingleAnimationPlayData(anim_to_play=anim_sequence))
 
                     spear.log("Saving blueprint: ", blueprint_path)
-                    editor_asset_subsystem.save_loaded_asset(blueprint_asset)
+                    editor_asset_subsystem.save_loaded_asset(asset_to_save=blueprint_asset)
 
     spear.log("Done.")

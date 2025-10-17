@@ -50,18 +50,18 @@ def get_actor_desc(actor):
         components_in_hierarchy = [actor.root_component] + list(actor.root_component.get_children_components(include_all_descendants=True))
     else:
         components_in_hierarchy = []
-    components_in_hierarchy_names = [ spear.utils.editor_utils.get_stable_name_for_component(c) for c in components_in_hierarchy ]
+    components_in_hierarchy_names = [ spear.utils.editor_utils.get_stable_name_for_component(component=c) for c in components_in_hierarchy ]
 
     other_components = actor.get_components_by_class(unreal.ActorComponent)
-    other_components = [ c for c in other_components if spear.utils.editor_utils.get_stable_name_for_component(c) not in components_in_hierarchy_names ]
+    other_components = [ c for c in other_components if spear.utils.editor_utils.get_stable_name_for_component(component=c) not in components_in_hierarchy_names ]
 
     return {
         "class": actor.__class__.__name__,
         "debug_info": {"str": str(actor)},
         "editor_properties": get_editor_property_descs(actor),
         "name": actor_name,
-        "other_components": { spear.utils.editor_utils.get_stable_name_for_component(c): get_component_desc(c) for c in other_components },
-        "root_component": get_component_desc(actor.get_editor_property("root_component"))}
+        "other_components": { spear.utils.editor_utils.get_stable_name_for_component(component=c): get_component_desc(c) for c in other_components },
+        "root_component": get_component_desc(component=actor.get_editor_property("root_component"))}
 
 def get_component_desc(component):
 
@@ -69,7 +69,7 @@ def get_component_desc(component):
         return None
 
     if "get_children_components" in dir(component):
-        children_components = { spear.utils.editor_utils.get_stable_name_for_component(c): get_component_desc(c) for c in component.get_children_components(include_all_descendants=False) }
+        children_components = { spear.utils.editor_utils.get_stable_name_for_component(component=c): get_component_desc(c) for c in component.get_children_components(include_all_descendants=False) }
     else:
         children_components = None
 
@@ -111,7 +111,7 @@ def get_editor_property_descs(uobject):
     editor_property_descs = {}
     for editor_property_candidate_name in editor_property_candidate_names:
         try:
-            editor_property = uobject.get_editor_property(editor_property_candidate_name)
+            editor_property = uobject.get_editor_property(name=editor_property_candidate_name)
             editor_property_descs[editor_property_candidate_name] = get_editor_property_desc(editor_property)
         except:
             pass

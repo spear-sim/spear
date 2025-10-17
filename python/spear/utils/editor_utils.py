@@ -48,7 +48,7 @@ def get_components(actor, component_class=unreal.ActorComponent):
 
     # add any components that are not in the main hierarchy, use component_names to make sure we're not
     # adding any components redundantly
-    candidate_components = actor.get_components_by_class(component_class)
+    candidate_components = actor.get_components_by_class(component_class=component_class)
     candidate_components = [ c for c in candidate_components if get_stable_name_for_component(component=c) not in component_names ]
     candidate_components = [ c for c in candidate_components if isinstance(c, component_class) ]
     components = components + candidate_components
@@ -59,7 +59,7 @@ def get_components(actor, component_class=unreal.ActorComponent):
 def get_component(stable_name, actor=None):
     if actor is None:
         stable_actor_name, stable_component_name = stable_name.split(":")
-        actor = find_actor(stable_actor_name)
+        actor = find_actor(stable_name=stable_actor_name)
     else:
         stable_component_name = stable_name
     components = [ c for c in get_components(actor=actor) if get_stable_name_for_component(component=c) == stable_component_name ]
@@ -93,87 +93,39 @@ def get_stable_name_for_component(component, include_stable_actor_name=False):
 # Create blueprint asset
 #
 
-def create_blueprint_asset(asset_name, package_path, actor_class=unreal.Actor, root_component_class=None, root_component_name=None):
+def create_blueprint_asset(asset_name, package_dir, parent_class):
 
     blueprint_factory = unreal.BlueprintFactory()
-    blueprint_factory.set_editor_property("parent_class", actor_class)
+    blueprint_factory.set_editor_property("parent_class", parent_class)
 
     # asset_class should be set to None when creating a new blueprint asset
-    blueprint_asset = asset_tools.create_asset(asset_name=asset_name, package_path=package_path, asset_class=None, factory=blueprint_factory)
+    blueprint_asset = asset_tools.create_asset(asset_name=asset_name, package_path=package_dir, asset_class=None, factory=blueprint_factory)
     assert isinstance(blueprint_asset, unreal.Blueprint)
 
-    blueprint_subobject_data_handles = subobject_data_subsystem.k2_gather_subobject_data_for_blueprint(blueprint_asset)
-    blueprint_subobject_descs = get_subobject_descs(blueprint_subobject_data_handles)
-    assert len(blueprint_subobject_descs) == 2
-    assert isinstance(blueprint_subobject_descs[0]["object"], actor_class)
-
-    if root_component_class is not None:
-        subobject_data_subsystem.detach_subobject(
-            owner_handle=blueprint_subobject_descs[0]["data_handle"],
-            child_to_remove=blueprint_subobject_descs[1]["data_handle"])
-
-        num_deleted = subobject_data_subsystem.delete_subobject(
-            context_handle=blueprint_subobject_descs[0]["data_handle"],
-            subobject_to_delete=blueprint_subobject_descs[1]["data_handle"],
-            bp_context=blueprint_asset)
-        assert num_deleted == 1
-
-        root_component_suboject_desc = add_new_subobject_to_blueprint_asset(
-            blueprint_asset=blueprint_asset,
-            parent_data_handle=blueprint_subobject_descs[0]["data_handle"],
-            subobject_name=root_component_name,
-            subobject_class=root_component_class)
-
-        subobject_data_subsystem.attach_subobject(
-            owner_handle=blueprint_subobject_descs[0]["data_handle"],
-            child_to_add_handle=root_component_suboject_desc["data_handle"])
-
-        blueprint_subobject_data_handles = subobject_data_subsystem.k2_gather_subobject_data_for_blueprint(blueprint_asset)
-        blueprint_subobject_descs = get_subobject_descs(blueprint_subobject_data_handles)
-        assert len(blueprint_subobject_descs) == 2
-        assert isinstance(blueprint_subobject_descs[0]["object"], actor_class)
-        assert isinstance(blueprint_subobject_descs[1]["object"], root_component_class)
-
-    if root_component_name is not None:
-        subobject_data_subsystem.rename_subobject(blueprint_subobject_descs[1]["data_handle"], unreal.Text(root_component_name))
-
-    blueprint_subobject_descs = {"actor": blueprint_subobject_descs[0], "root_component": blueprint_subobject_descs[1]}
-
-    return blueprint_asset, blueprint_subobject_descs
+    return blueprint_asset
 
 
 #
 # Add new subobject
 #
 
-def add_new_subobject_to_actor(actor, parent_data_handle, subobject_name, subobject_class):
-
-    add_new_subobject_params = unreal.AddNewSubobjectParams(
-        parent_handle=parent_data_handle,
-        new_class=subobject_class,
-        blueprint_context=None)
-
-    return add_new_subobject(subobject_name=subobject_name, subobject_class=subobject_class, add_new_subobject_params=add_new_subobject_params)
+def add_new_subobject_to_instance(parent_data_handle, subobject_name, subobject_class):
+    add_new_subobject_params = unreal.AddNewSubobjectParams(parent_handle=parent_data_handle, new_class=subobject_class, blueprint_context=None)
+    return add_new_subobject_using_params(add_new_subobject_params=add_new_subobject_params, subobject_name=subobject_name, subobject_class=subobject_class)
 
 def add_new_subobject_to_blueprint_asset(blueprint_asset, parent_data_handle, subobject_name, subobject_class):
+    add_new_subobject_params = unreal.AddNewSubobjectParams(parent_handle=parent_data_handle, new_class=subobject_class, blueprint_context=blueprint_asset)
+    return add_new_subobject_using_params(add_new_subobject_params=add_new_subobject_params, subobject_name=subobject_name, subobject_class=subobject_class)
 
-    add_new_subobject_params = unreal.AddNewSubobjectParams(
-        parent_handle=parent_data_handle,
-        new_class=subobject_class,
-        blueprint_context=blueprint_asset)
-
-    return add_new_subobject(subobject_name=subobject_name, subobject_class=subobject_class, add_new_subobject_params=add_new_subobject_params)
-
-def add_new_subobject(subobject_name, subobject_class, add_new_subobject_params):
-
-    subobject_data_handle, fail_reason = subobject_data_subsystem.add_new_subobject(add_new_subobject_params)
+def add_new_subobject_using_params(add_new_subobject_params, subobject_name, subobject_class):
+    subobject_data_handle, fail_reason = subobject_data_subsystem.add_new_subobject(params=add_new_subobject_params)
     assert fail_reason.is_empty()
-    subobject_data = unreal.SubobjectDataBlueprintFunctionLibrary.get_data(subobject_data_handle)
-    assert unreal.SubobjectDataBlueprintFunctionLibrary.is_valid(subobject_data)
-    subobject_object = unreal.SubobjectDataBlueprintFunctionLibrary.get_object(subobject_data)
+    subobject_data = unreal.SubobjectDataBlueprintFunctionLibrary.get_data(data_handle=subobject_data_handle)
+    assert unreal.SubobjectDataBlueprintFunctionLibrary.is_valid(data=subobject_data)
+    subobject_object = unreal.SubobjectDataBlueprintFunctionLibrary.get_object(data=subobject_data)
     assert isinstance(subobject_object, subobject_class)
-    subobject_data_subsystem.rename_subobject(subobject_data_handle, unreal.Text(subobject_name))
-
+    success = subobject_data_subsystem.rename_subobject(handle=subobject_data_handle, new_name=unreal.Text(subobject_name))
+    assert success
     return {"data_handle": subobject_data_handle, "data": subobject_data, "object": subobject_object}
 
 
@@ -181,19 +133,23 @@ def add_new_subobject(subobject_name, subobject_class, add_new_subobject_params)
 # Get subobject descs
 #
 
-def get_subobject_descs(subobject_data_handles):
-    if isinstance(subobject_data_handles, unreal.Array):
-        return [ get_subobject_desc(h) for h in subobject_data_handles ]
-    elif isinstance(subobject_data_handles, dict):
-        return { k: get_subobject_desc(subobject_data_handle=v) for k, v in subobject_data_handles.items() }
-    else:
-        assert False
+def get_subobject_descs_for_instance(instance):
+    subobject_data_handles = subobject_data_subsystem.k2_gather_subobject_data_for_instance(instance)
+    return get_subobject_descs_for_data_handles(subobject_data_handles)
 
-def get_subobject_desc(subobject_data_handle):
-    assert unreal.SubobjectDataBlueprintFunctionLibrary.is_handle_valid(subobject_data_handle)
-    subobject_data = unreal.SubobjectDataBlueprintFunctionLibrary.get_data(subobject_data_handle)
-    assert unreal.SubobjectDataBlueprintFunctionLibrary.is_valid(subobject_data)
-    subobject_object = unreal.SubobjectDataBlueprintFunctionLibrary.get_object(subobject_data)
+def get_subobject_descs_for_blueprint_asset(blueprint_asset):
+    subobject_data_handles = subobject_data_subsystem.k2_gather_subobject_data_for_blueprint(blueprint_asset)
+    return get_subobject_descs_for_data_handles(subobject_data_handles)
+
+def get_subobject_descs_for_data_handles(subobject_data_handles):
+    assert isinstance(subobject_data_handles, unreal.Array)
+    return [ get_subobject_desc_for_data_handle(h) for h in subobject_data_handles ]
+
+def get_subobject_desc_for_data_handle(subobject_data_handle):
+    assert unreal.SubobjectDataBlueprintFunctionLibrary.is_handle_valid(data_handle=subobject_data_handle)
+    subobject_data = unreal.SubobjectDataBlueprintFunctionLibrary.get_data(data_handle=subobject_data_handle)
+    assert unreal.SubobjectDataBlueprintFunctionLibrary.is_valid(data=subobject_data)
+    subobject_object = unreal.SubobjectDataBlueprintFunctionLibrary.get_object(data=subobject_data)
     return {"data_handle": subobject_data_handle, "data": subobject_data, "object": subobject_object}
 
 
@@ -212,10 +168,8 @@ def get_filesystem_path_from_content_path(content_path):
     elif content_root == "Engine":
         filesystem_base_dir = unreal.Paths.engine_content_dir()
     else:
-        plugin_manager = unreal.PluginManager.get()
-        plugin = plugin_manager.find_plugin(content_root)
-        assert plugin is not None
-        filesystem_base_dir = plugin.get_content_dir()
+        filesystem_base_dir = unreal.PluginBlueprintLibrary.get_plugin_content_dir(plugin_name=content_root)
+        assert filesystem_base_dir is not None
 
     if len(content_path_tokens) == 2:
         return filesystem_base_dir

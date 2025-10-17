@@ -28,7 +28,7 @@ public:
     USpMoviePipelineDeferredPass() : UMoviePipelineDeferredPassBase()
     {
         SP_LOG_CURRENT_FUNCTION();        
-        PassIdentifier = FMoviePipelinePassIdentifier("Spear");
+        PassIdentifier = FMoviePipelinePassIdentifier("SPEAR");
     }
 
     ~USpMoviePipelineDeferredPass() override

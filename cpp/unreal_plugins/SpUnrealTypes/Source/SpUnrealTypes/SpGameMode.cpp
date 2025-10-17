@@ -101,11 +101,6 @@ void ASpGameMode::SpUnmountPak(const FString& PakFile) const
     }
 }
 
-void ASpGameMode::SpOpenLevel(const FString& LevelName) const
-{
-    UGameplayStatics::OpenLevel(GetWorld(), Unreal::toFName(Unreal::toStdString(LevelName)));
-}
-
 void ASpGameMode::SpLoadStreamLevel(const FString& LevelName) const
 {
     SP_ASSERT(GetWorld());
@@ -125,14 +120,16 @@ void ASpGameMode::SpLoadLevelInstance(const FString& LevelName)
 {
     SP_ASSERT(GetWorld());
     std::string level_name = Unreal::toStdString(LevelName);
+    SP_LOG("Loading: ", level_name);
 
     bool success = false;
-    ULevelStreamingDynamic* level_streaming_dynamic = ULevelStreamingDynamic::LoadLevelInstance(GetWorld(), LevelName, FVector::ZeroVector, FRotator::ZeroRotator, success);
+    ULevelStreamingDynamic* level_instance = ULevelStreamingDynamic::LoadLevelInstance(GetWorld(), LevelName, FVector::ZeroVector, FRotator::ZeroRotator, success);
+
     if (success) {
-        SP_ASSERT(level_streaming_dynamic);
-        Std::insert(level_streaming_dynamics_, level_name, level_streaming_dynamic);
+        SP_ASSERT(level_instance);
+        Std::insert(level_instances_, level_name, level_instance);
     } else {
-        SP_ASSERT(!level_streaming_dynamic);
+        SP_ASSERT(!level_instance);
         SP_LOG("WARNING: Load unsuccessful: ", level_name);
     }
 }
@@ -141,17 +138,23 @@ void ASpGameMode::SpUnloadLevelInstance(const FString& LevelName)
 {
     SP_ASSERT(GetWorld());
     std::string level_name = Unreal::toStdString(LevelName);
+    SP_LOG("Unloading: ", level_name);
 
-    if (!Std::containsKey(level_streaming_dynamics_, level_name)) {
+    if (!Std::containsKey(level_instances_, level_name)) {
         SP_LOG("WARNING: Unload unsuccessful: ", level_name);
         return;
     }
 
     bool success = false;
-    ULevelStreamingDynamic* level_streaming_dynamic = level_streaming_dynamics_.at(level_name);
-    SP_ASSERT(level_streaming_dynamic);
-    level_streaming_dynamic->SetIsRequestingUnloadAndRemoval(true);
-    Std::remove(level_streaming_dynamics_, level_name);
+    ULevelStreamingDynamic* level_instance = level_instances_.at(level_name);
+    SP_ASSERT(level_instance);
+    level_instance->SetIsRequestingUnloadAndRemoval(true);
+    Std::remove(level_instances_, level_name);
+}
+
+void ASpGameMode::SpOpenLevel(const FString& LevelName) const
+{
+    UGameplayStatics::OpenLevel(GetWorld(), Unreal::toFName(Unreal::toStdString(LevelName)));
 }
 
 void ASpGameMode::SpToggleDebugCamera()

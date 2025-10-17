@@ -27,10 +27,10 @@ def process_scene():
     spear.log("Processing scene: ", editor_world_name)
 
     actors = spear.utils.editor_utils.find_actors()
-    actors = [ actor for actor in actors if actor.get_editor_property("relevant_for_level_bounds") ]
+    actors = [ actor for actor in actors if actor.get_editor_property(name="relevant_for_level_bounds") ]
 
     for actor in actors:
-        spear.log("    Processing actor: ", spear.utils.editor_utils.get_stable_name_for_actor(actor))
+        spear.log("    Processing actor: ", spear.utils.editor_utils.get_stable_name_for_actor(actor=actor))
         generate_unreal_geometry(actor)
 
     spear.log("Done.")
@@ -38,7 +38,7 @@ def process_scene():
 def generate_unreal_geometry(actor):
 
     static_mesh_components  = spear.utils.editor_utils.get_components(actor=actor, component_class=unreal.StaticMeshComponent)
-    static_meshes           = [ static_mesh_component.get_editor_property("static_mesh") for static_mesh_component in static_mesh_components ]
+    static_meshes           = [ static_mesh_component.get_editor_property(name="static_mesh") for static_mesh_component in static_mesh_components ]
     static_meshes           = [ static_mesh for static_mesh in static_meshes if static_mesh is not None ]
     static_mesh_asset_paths = [ pathlib.PurePosixPath(static_mesh.get_path_name()) for static_mesh in static_meshes ]
 
@@ -56,33 +56,33 @@ def generate_unreal_geometry(actor):
 
         errors = []
         asset_export_task = unreal.AssetExportTask()
-        asset_export_task.set_editor_property("automated", True)
-        asset_export_task.set_editor_property("errors", errors)
-        asset_export_task.set_editor_property("exporter", None)            
-        asset_export_task.set_editor_property("filename", raw_obj_path)
-        asset_export_task.set_editor_property("ignore_object_list", [])
-        asset_export_task.set_editor_property("object", asset_registry.get_asset_by_object_path(str(static_mesh_asset_path)).get_asset())
-        asset_export_task.set_editor_property("options", None)
-        asset_export_task.set_editor_property("prompt", False)
-        asset_export_task.set_editor_property("replace_identical", True)
-        asset_export_task.set_editor_property("selected", False)
-        asset_export_task.set_editor_property("use_file_archive", False)
-        asset_export_task.set_editor_property("write_empty_files", False)
+        asset_export_task.set_editor_property(name="automated", value=True)
+        asset_export_task.set_editor_property(name="errors", value=errors)
+        asset_export_task.set_editor_property(name="exporter", value=None)            
+        asset_export_task.set_editor_property(name="filename", value=raw_obj_path)
+        asset_export_task.set_editor_property(name="ignore_object_list", value=[])
+        asset_export_task.set_editor_property(name="object", value=asset_registry.get_asset_by_object_path(object_path=str(static_mesh_asset_path)).get_asset())
+        asset_export_task.set_editor_property(name="options", value=None)
+        asset_export_task.set_editor_property(name="prompt", value=False)
+        asset_export_task.set_editor_property(name="replace_identical", value=True)
+        asset_export_task.set_editor_property(name="selected", value=False)
+        asset_export_task.set_editor_property(name="use_file_archive", value=False)
+        asset_export_task.set_editor_property(name="write_empty_files", value=False)
 
-        spear.log("            automated:          ", asset_export_task.get_editor_property("automated"))
-        spear.log("            errors:             ", asset_export_task.get_editor_property("errors"))
-        spear.log("            exporter:           ", asset_export_task.get_editor_property("exporter"))
-        spear.log("            filename:           ", asset_export_task.get_editor_property("filename"))
-        spear.log("            ignore_object_list: ", asset_export_task.get_editor_property("ignore_object_list"))
-        spear.log("            object:             ", asset_export_task.get_editor_property("object"))
-        spear.log("            options:            ", asset_export_task.get_editor_property("options"))
-        spear.log("            prompt:             ", asset_export_task.get_editor_property("prompt"))
-        spear.log("            replace_identical:  ", asset_export_task.get_editor_property("replace_identical"))
-        spear.log("            selected:           ", asset_export_task.get_editor_property("selected"))
-        spear.log("            use_file_archive:   ", asset_export_task.get_editor_property("use_file_archive"))
-        spear.log("            write_empty_files:  ", asset_export_task.get_editor_property("write_empty_files"))
+        spear.log("            automated:          ", asset_export_task.get_editor_property(name="automated"))
+        spear.log("            errors:             ", asset_export_task.get_editor_property(name="errors"))
+        spear.log("            exporter:           ", asset_export_task.get_editor_property(name="exporter"))
+        spear.log("            filename:           ", asset_export_task.get_editor_property(name="filename"))
+        spear.log("            ignore_object_list: ", asset_export_task.get_editor_property(name="ignore_object_list"))
+        spear.log("            object:             ", asset_export_task.get_editor_property(name="object"))
+        spear.log("            options:            ", asset_export_task.get_editor_property(name="options"))
+        spear.log("            prompt:             ", asset_export_task.get_editor_property(name="prompt"))
+        spear.log("            replace_identical:  ", asset_export_task.get_editor_property(name="replace_identical"))
+        spear.log("            selected:           ", asset_export_task.get_editor_property(name="selected"))
+        spear.log("            use_file_archive:   ", asset_export_task.get_editor_property(name="use_file_archive"))
+        spear.log("            write_empty_files:  ", asset_export_task.get_editor_property(name="write_empty_files"))
 
-        unreal.Exporter.run_asset_export_task(asset_export_task)
+        unreal.Exporter.run_asset_export_task(task=asset_export_task)
         if len(errors) > 0:
             spear.log(errors)
             assert False

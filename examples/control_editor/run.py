@@ -28,15 +28,15 @@ if __name__ == "__main__":
         level_editor_subsystem = editor.unreal_service.get_editor_subsystem_by_type(class_name="ULevelEditorSubsystem")
 
         # execute console commands
-        editor.unreal_service.execute_console_command("stat fps")
-        editor.unreal_service.execute_console_command("py import unreal")
+        editor.unreal_service.execute_console_command(command="stat fps")
+        editor.unreal_service.execute_console_command(command="py import unreal")
 
     with instance.end_frame():
         pass
 
     # programmatically press play in the editor by calling ULevelEditorSubsystem::EditorRequestBeginPlay()
     with instance.begin_frame():
-        editor.unreal_service.execute_console_command("py unreal.log('Calling function: ULevelEditorSubsystem::EditorRequestBeginPlay()')")
+        editor.unreal_service.execute_console_command(command="py unreal.log('Calling function: ULevelEditorSubsystem::EditorRequestBeginPlay()')")
         editor.unreal_service.call_function(uobject=level_editor_subsystem, ufunction=editor_request_begin_play_func)
     with instance.end_frame():
         pass
@@ -77,8 +77,8 @@ if __name__ == "__main__":
 
         # run take_screenshot.py
         take_screenshot_py_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "take_screenshot.py"))
-        editor.unreal_service.execute_console_command(f"py unreal.log('Executing Python file: {take_screenshot_py_file}');")
-        editor.unreal_service.execute_console_command(f"py {take_screenshot_py_file}")
+        editor.unreal_service.execute_console_command(command=f"py unreal.log('Executing Python file: {take_screenshot_py_file}');")
+        editor.unreal_service.execute_console_command(command=f"py {take_screenshot_py_file}")
 
     with instance.end_frame():
         pass
@@ -98,7 +98,7 @@ if __name__ == "__main__":
 
     with instance.begin_frame():
         # execute console command
-        editor.unreal_service.execute_console_command("stat fps")
+        editor.unreal_service.execute_console_command(command="stat fps")
 
         # retrieve message pushed by take_screenshot.py
         return_values = editor.unreal_service.call_function(uobject=sp_message_queue_manager_default_object, ufunction=pop_message_from_front_of_queue_func, args={"QueueName": "take_screenshot"})

@@ -15,24 +15,25 @@
 
 #include <Components/ActorComponent.h>
 #include <Containers/Array.h>
-#include <Containers/StringConv.h>   // TCHAR_TO_UTF8, UTF8_TO_TCHAR
-#include <Containers/UnrealString.h> // FString::operator*
+#include <Containers/StringConv.h>     // TCHAR_TO_UTF8, UTF8_TO_TCHAR
+#include <Containers/UnrealString.h>   // FString::operator*
 #include <Dom/JsonObject.h>
 #include <Dom/JsonValue.h>
 #include <GameFramework/Actor.h>
-#include <HAL/Platform.h>            // TCHAR, uint16
+#include <HAL/Platform.h>              // TCHAR, uint16
+#include <Internationalization/Text.h> // FText
 #include <JsonObjectConverter.h>
 #include <Serialization/JsonReader.h>
 #include <Serialization/JsonSerializer.h>
 #include <Templates/Casts.h>
-#include <Templates/SharedPointer.h> // TSharedPtr, TSharedRef
-#include <UObject/Class.h>           // EIncludeSuperFlag, UClass, UStruct
-#include <UObject/NameTypes.h>       // FName
-#include <UObject/Object.h>          // UObject
-#include <UObject/ObjectMacros.h>    // EPropertyFlags
-#include <UObject/UnrealType.h>      // FArrayProperty, FBoolProperty, FByteProperty, FDoubleProperty, FInt8Property, FInt16Property, FInt64Property,
-                                     // FFloatProperty, FIntProperty, FMapProperty, FProperty, FScriptArrayHelper, FScriptMapHelper, FScriptSetHelper,
-                                     // FSetProperty, FStrProperty, FStructProperty, FUInt16Property, FUInt32Property, FUInt64Property, TFieldIterator
+#include <Templates/SharedPointer.h>   // TSharedPtr, TSharedRef
+#include <UObject/Class.h>             // EIncludeSuperFlag, UClass, UStruct
+#include <UObject/NameTypes.h>         // FName
+#include <UObject/Object.h>            // UObject
+#include <UObject/ObjectMacros.h>      // EPropertyFlags
+#include <UObject/UnrealType.h>        // FArrayProperty, FBoolProperty, FByteProperty, FDoubleProperty, FInt8Property, FInt16Property, FInt64Property,
+                                       // FFloatProperty, FIntProperty, FMapProperty, FProperty, FScriptArrayHelper, FScriptMapHelper, FScriptSetHelper,
+                                       // FSetProperty, FStrProperty, FStructProperty, FUInt16Property, FUInt32Property, FUInt64Property, TFieldIterator
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"

@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
     for m in maps:
         spear.log("Loading map: ", m)
-        level_editor_subsystem.load_level(m)
+        level_editor_subsystem.load_level(asset_path=m)
 
         editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
         assert editor_world_name == posixpath.basename(m)
@@ -41,6 +41,6 @@ if __name__ == "__main__":
         if args.script is not None:
             cmd = f"py {args.script} {unknown_arg_string}".strip()
             spear.log("Executing command: ", cmd)
-            unreal.SystemLibrary.execute_console_command(unreal_editor_subsystem.get_editor_world(), cmd)
+            unreal.SystemLibrary.execute_console_command(world_context_object=unreal_editor_subsystem.get_editor_world(), command=cmd)
 
     spear.log("Done.")

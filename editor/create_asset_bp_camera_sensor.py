@@ -13,7 +13,7 @@ import unreal
 blueprint_desc = \
 {
     "blueprint_name": "BP_CameraSensor",
-    "blueprint_path": "/SpContent/Blueprints",
+    "blueprint_dir": "/SpContent/Blueprints",
     "component_descs":
     [
         {
@@ -129,27 +129,34 @@ if __name__ == "__main__":
     # Explicitly load "/SpContent" into the asset registry, since it won't be loaded by default if we are
     # running as a commandlet, i.e., when the editor is invoked from the command-line with -run=pythonscript
     # as opposed to -ExecutePythonScript.
-    asset_registry.scan_paths_synchronous(["/SpContent"])
+    asset_registry.scan_paths_synchronous(paths=["/SpContent"])
 
     # remove existing blueprint
-    blueprint_path = posixpath.join(blueprint_desc["blueprint_path"], blueprint_desc["blueprint_name"])
-    if unreal.EditorAssetLibrary.does_asset_exist(blueprint_path):
+    blueprint_path = posixpath.join(blueprint_desc["blueprint_dir"], blueprint_desc["blueprint_name"])
+    if unreal.EditorAssetLibrary.does_asset_exist(asset_path=blueprint_path):
         spear.log("Asset exists, removing: ", blueprint_path)
-        success = unreal.EditorAssetLibrary.delete_asset(blueprint_path)
+        success = unreal.EditorAssetLibrary.delete_asset(asset_path_to_delete=blueprint_path)
         assert success
 
     # create blueprint
     spear.log("Creating blueprint: ", blueprint_path)
-    blueprint_asset, blueprint_subobject_descs = spear.utils.editor_utils.create_blueprint_asset(
+    blueprint_asset = spear.utils.editor_utils.create_blueprint_asset(
         asset_name=blueprint_desc["blueprint_name"],
-        package_path=blueprint_desc["blueprint_path"])
+        package_dir=blueprint_desc["blueprint_dir"],
+        parent_class=unreal.Actor)
+
+    blueprint_subobject_descs = spear.utils.editor_utils.get_subobject_descs_for_blueprint_asset(blueprint_asset=blueprint_asset)
+    assert len(blueprint_subobject_descs) == 2
+    assert isinstance(blueprint_subobject_descs[0]["object"], unreal.Actor)          # the 0th entry always refers to the actor itself
+    assert isinstance(blueprint_subobject_descs[1]["object"], unreal.SceneComponent) # the 1st entry always refers to the actor's root component
 
     # create SpStableNameComponent
     component_name = "sp_stable_name_component_"
     spear.log("Creating component: ", component_name)
+    parent_data_handle = blueprint_subobject_descs[0]["data_handle"] # actor
     sp_stable_name_component_desc = spear.utils.editor_utils.add_new_subobject_to_blueprint_asset(
         blueprint_asset=blueprint_asset,
-        parent_data_handle=blueprint_subobject_descs["root_component"]["data_handle"],
+        parent_data_handle=parent_data_handle,
         subobject_name=component_name,
         subobject_class=unreal.SpStableNameComponent)
 
@@ -157,9 +164,10 @@ if __name__ == "__main__":
     for component_desc in blueprint_desc["component_descs"]:
 
         spear.log("Creating component: ", component_desc["name"])
+        parent_data_handle = blueprint_subobject_descs[1]["data_handle"] # root component
         sp_scene_capture_component_2d_desc = spear.utils.editor_utils.add_new_subobject_to_blueprint_asset(
             blueprint_asset=blueprint_asset,
-            parent_data_handle=blueprint_subobject_descs["root_component"]["data_handle"],
+            parent_data_handle=parent_data_handle,
             subobject_name=component_desc["name"],
             subobject_class=unreal.SpSceneCaptureComponent2D)
 
@@ -167,43 +175,43 @@ if __name__ == "__main__":
 
         # SpSceneCaptureComponent2D properties (required)
 
-        sp_scene_capture_component_2d.set_editor_property("width", component_desc["width"])
-        sp_scene_capture_component_2d.set_editor_property("height", component_desc["height"])
-        sp_scene_capture_component_2d.set_editor_property("num_channels_per_pixel", component_desc["num_channels_per_pixel"])
-        sp_scene_capture_component_2d.set_editor_property("channel_data_type", component_desc["channel_data_type"])
-        sp_scene_capture_component_2d.set_editor_property("texture_render_target_format", component_desc["texture_render_target_format"])
-        sp_scene_capture_component_2d.set_editor_property("capture_source", component_desc["capture_source"])
+        sp_scene_capture_component_2d.set_editor_property(name="width", value=component_desc["width"])
+        sp_scene_capture_component_2d.set_editor_property(name="height", value=component_desc["height"])
+        sp_scene_capture_component_2d.set_editor_property(name="num_channels_per_pixel", value=component_desc["num_channels_per_pixel"])
+        sp_scene_capture_component_2d.set_editor_property(name="channel_data_type", value=component_desc["channel_data_type"])
+        sp_scene_capture_component_2d.set_editor_property(name="texture_render_target_format", value=component_desc["texture_render_target_format"])
+        sp_scene_capture_component_2d.set_editor_property(name="capture_source", value=component_desc["capture_source"])
 
         # SpSceneCaptureComponent2D properties (optional)
 
         if "material_path" in component_desc:
-            material = unreal.load_asset(component_desc["material_path"])
-            sp_scene_capture_component_2d.set_editor_property("material", material)
+            material = unreal.load_asset(name=component_desc["material_path"])
+            sp_scene_capture_component_2d.set_editor_property(name="material", value=material)
 
         # SceneCaptureComponent2D properties (optional)
 
         if "fov_angle" in component_desc:
-            sp_scene_capture_component_2d.set_editor_property("fov_angle", component_desc["fov_angle"])
+            sp_scene_capture_component_2d.set_editor_property(name="fov_angle", value=component_desc["fov_angle"])
 
         # SceneCaptureComponent properties (optional)
 
         if "show_flag_settings" in component_desc:
-            sp_scene_capture_component_2d.set_editor_property("show_flag_settings", component_desc["show_flag_settings"])
+            sp_scene_capture_component_2d.set_editor_property(name="show_flag_settings", value=component_desc["show_flag_settings"])
 
         # PostProcessingSettings properties (optional)
 
         if "dynamic_global_illumination_method" in component_desc:
-            post_process_settings = sp_scene_capture_component_2d.get_editor_property("post_process_settings")
-            post_process_settings.set_editor_property("override_dynamic_global_illumination_method", True)
-            post_process_settings.set_editor_property("dynamic_global_illumination_method", component_desc["dynamic_global_illumination_method"])
+            post_process_settings = sp_scene_capture_component_2d.get_editor_property(name="post_process_settings")
+            post_process_settings.set_editor_property(name="override_dynamic_global_illumination_method", value=True)
+            post_process_settings.set_editor_property(name="dynamic_global_illumination_method", value=component_desc["dynamic_global_illumination_method"])
 
         if "reflection_method" in component_desc:
-            post_process_settings = sp_scene_capture_component_2d.get_editor_property("post_process_settings")
-            post_process_settings.set_editor_property("override_reflection_method", True)
-            post_process_settings.set_editor_property("reflection_method", component_desc["reflection_method"])
+            post_process_settings = sp_scene_capture_component_2d.get_editor_property(name="post_process_settings")
+            post_process_settings.set_editor_property(name="override_reflection_method", value=True)
+            post_process_settings.set_editor_property(name="reflection_method", value=component_desc["reflection_method"])
 
     # save blueprint
     spear.log("Saving blueprint: ", blueprint_path)
-    editor_asset_subsystem.save_loaded_asset(blueprint_asset)
+    editor_asset_subsystem.save_loaded_asset(asset_to_save=blueprint_asset)
 
     spear.log("Done.")

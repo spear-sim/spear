@@ -38,6 +38,10 @@
         {
             "Name": "SpCore",
             "Enabled": true
+        },
+        {
+            "Name": "SequencerScripting",
+            "Enabled": true
         }
     ]
 }

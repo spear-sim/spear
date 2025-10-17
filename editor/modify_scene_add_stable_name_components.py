@@ -27,12 +27,11 @@ if __name__ == "__main__":
     scene_modified = False
 
     for actor in spear.utils.editor_utils.find_actors():
-        spear.log("    Processing actor: ", spear.utils.editor_utils.get_stable_name_for_actor(actor))
+        spear.log("    Processing actor: ", spear.utils.editor_utils.get_stable_name_for_actor(actor=actor))
 
-        actor_subobject_data_handles = subobject_data_subsystem.k2_gather_subobject_data_for_instance(actor)
-        actor_subobject_descs = spear.utils.editor_utils.get_subobject_descs(actor_subobject_data_handles)
+        actor_subobject_descs = spear.utils.editor_utils.get_subobject_descs_for_instance(instance=actor)
         assert len(actor_subobject_descs) >= 1
-        assert isinstance(actor_subobject_descs[0]["object"], unreal.Actor)
+        assert isinstance(actor_subobject_descs[0]["object"], unreal.Actor) # the 0th entry always refers to the actor itself
 
         actor_has_stable_name_component = False
         for actor_subobject_desc in actor_subobject_descs:
@@ -44,15 +43,8 @@ if __name__ == "__main__":
         if not actor_has_stable_name_component:
             spear.log("        Creating unreal.SpStableNameComponent...")
 
-            if len(actor_subobject_descs) == 0:
-                assert False
-            elif len(actor_subobject_descs) == 1:
-                parent_data_handle = actor_subobject_descs[0]["data_handle"] # the 0th entry always refers to the actor itself
-            else:
-                parent_data_handle = actor_subobject_descs[1]["data_handle"] # the 1st entry always refers to the actor's root component
-
-            sp_stable_name_component_desc = spear.utils.editor_utils.add_new_subobject_to_actor(
-                actor=actor,
+            parent_data_handle = actor_subobject_descs[0]["data_handle"] # actor
+            sp_stable_name_component_desc = spear.utils.editor_utils.add_new_subobject_to_instance(
                 parent_data_handle=parent_data_handle,
                 subobject_name="sp_stable_name_component",
                 subobject_class=unreal.SpStableNameComponent)

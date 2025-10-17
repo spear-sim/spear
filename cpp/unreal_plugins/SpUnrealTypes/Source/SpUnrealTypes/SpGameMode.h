@@ -54,9 +54,6 @@ private:
     void SpUnmountPak(const FString& PakFile) const;
 
     UFUNCTION(Exec)
-    void SpOpenLevel(const FString& LevelName) const;
-
-    UFUNCTION(Exec)
     void SpLoadStreamLevel(const FString& LevelName) const;
 
     UFUNCTION(Exec)
@@ -69,8 +66,11 @@ private:
     void SpUnloadLevelInstance(const FString& LevelName);
 
     UFUNCTION(Exec)
+    void SpOpenLevel(const FString& LevelName) const;
+
+    UFUNCTION(Exec)
     void SpToggleDebugCamera();
 
-    std::map<std::string, ULevelStreamingDynamic*> level_streaming_dynamics_;
+    std::map<std::string, ULevelStreamingDynamic*> level_instances_;
     ASpDebugCameraController* sp_debug_camera_controller_ = nullptr;
 };

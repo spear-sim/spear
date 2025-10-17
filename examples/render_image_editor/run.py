@@ -10,5 +10,5 @@ import unreal
 
 if __name__ == "__main__":
 
-    unreal.AutomationLibrary.take_high_res_screenshot(1024, 1024, os.path.realpath(os.path.join(os.path.dirname(__file__), "screenshot.png")))
+    unreal.AutomationLibrary.take_high_res_screenshot(res_x=1024, res_y=1024, filename=os.path.realpath(os.path.join(os.path.dirname(__file__), "screenshot.png")))
     spear.log("Done.")

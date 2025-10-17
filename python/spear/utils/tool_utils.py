@@ -12,9 +12,9 @@
 
 def get_default_maps_to_cook():
     return [
-        "apartment_0000",           # /Game/Spear/Scenes/apartment_0000/Maps/apartment_0000
-        "debug_0000",               # /Game/Spear/Scenes/debug_0000/Maps/debug_0000
-        "debug_0001",               # /Game/Spear/Scenes/debug_0001/Maps/debug_0001
+        "apartment_0000",           # /Game/SPEAR/Scenes/apartment_0000/Maps/apartment_0000
+        "debug_0000",               # /Game/SPEAR/Scenes/debug_0000/Maps/debug_0000
+        "debug_0001",               # /Game/SPEAR/Scenes/debug_0001/Maps/debug_0001
         "Advanced_Lighting",        # /Game/StarterContent/Maps/Advanced_Lighting
         "Minimal_Default",          # /Game/StarterContent/Maps/Minimal_Default
         "StarterMap",               # /Game/StarterContent/Maps/StarterMap

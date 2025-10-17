@@ -26,15 +26,15 @@ def post_tick_callback(delta_time):
 
         spear.log("unreal.AutomationLibrary.take_high_res_screenshot(...)")
         screenshot = os.path.realpath(os.path.join(os.path.dirname(file), "screenshot.png"))
-        unreal.AutomationLibrary.take_high_res_screenshot(1024, 1024, screenshot)
+        unreal.AutomationLibrary.take_high_res_screenshot(res_x=1024, res_y=1024, filename=screenshot)
 
         # send message to outer Python script if a message queue named "take_screenshot" is available
         spear.log("unreal.get_default_object(...)")
         sp_message_queue_manager_default_object = unreal.get_default_object(unreal.SpMessageQueueManager)
 
-        if sp_message_queue_manager_default_object.has_queue("take_screenshot"):
+        if sp_message_queue_manager_default_object.has_queue(queue_name="take_screenshot"):
             spear.log("sp_message_queue_manager_default_object.push_message_to_back_of_queue(...)")
-            sp_message_queue_manager_default_object.push_message_to_back_of_queue("take_screenshot", f"Screenshot saved to path: {screenshot}")
+            sp_message_queue_manager_default_object.push_message_to_back_of_queue(queue_name="take_screenshot", message=f"Screenshot saved to path: {screenshot}")
 
 
 if __name__ == "__main__":

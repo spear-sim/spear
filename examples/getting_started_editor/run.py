@@ -23,15 +23,15 @@ if __name__ == "__main__":
     # Explicitly load "/SpContent" into the asset registry, since it won't be loaded by default if we are
     # running as a commandlet, i.e., when the editor is invoked from the command-line with "-run=pythonscript"
     # instead of "-executepythonscript".
-    asset_registry.scan_paths_synchronous(["/SpContent"])
+    asset_registry.scan_paths_synchronous(paths=["/SpContent"])
 
     # Explicitly load level, which is required if we're running as a commandlet.
     if args.load_level:
-        level_editor_subsystem.load_level("/Game/Spear/Scenes/apartment_0000/Maps/apartment_0000")
+        level_editor_subsystem.load_level(asset_path="/Game/SPEAR/Scenes/apartment_0000/Maps/apartment_0000")
 
     # spawn object
-    bp_axes_uclass = unreal.load_object(outer=None, name="/SpContent/Blueprints/BP_Axes.BP_Axes_C")
-    bp_axes = unreal.EditorLevelLibrary.spawn_actor_from_class(actor_class=bp_axes_uclass, location=unreal.Vector(-10.0, 280.0, 50.0))
+    bp_axes_class = unreal.EditorAssetLibrary.load_blueprint_class(asset_path="/SpContent/Blueprints/BP_Axes.BP_Axes")
+    bp_axes = unreal.EditorLevelLibrary.spawn_actor_from_class(actor_class=bp_axes_class, location=unreal.Vector(x=-10.0, y=280.0, z=50.0))
     spear.log("bp_axes: ", bp_axes)
 
     # get scale
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     spear.log("scale_3d: ", scale_3d.get_editor_property("x"), ", ", scale_3d.get_editor_property("y"), ", ", scale_3d.get_editor_property("z"))
 
     # set scale and get it again to verify that it updated
-    bp_axes.set_actor_scale3d(unreal.Vector(4.0, 4.0, 4.0))
+    bp_axes.set_actor_scale3d(unreal.Vector(x=4.0, y=4.0, z=4.0))
     scale_3d = bp_axes.get_actor_scale3d()
     spear.log("scale_3d: ", scale_3d.get_editor_property("x"), ", ", scale_3d.get_editor_property("y"), ", ", scale_3d.get_editor_property("z"))
 

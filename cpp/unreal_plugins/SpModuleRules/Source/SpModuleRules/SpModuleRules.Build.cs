@@ -4,7 +4,7 @@
 //
 
 using System;                          // Console, Exception
-using System.IO;                       // Directory, FileSystemInfo, Path 
+using System.IO;                       // Path
 using System.Runtime.CompilerServices; // CallerFilePath, CallerLineNumber, CallerMemberName
 using UnrealBuildTool;                 // ModuleRules, ReadOnlyTargetRules
 

@@ -14,6 +14,7 @@
 // SpUnrealTypes classes
 #include "SpUnrealTypes/SpAssetCompilingManager.h"
 #include "SpUnrealTypes/SpBasicKeyboardControlComponent.h"
+#include "SpUnrealTypes/SpCoreDelegates.h"
 #include "SpUnrealTypes/SpDebugCameraController.h"
 #include "SpUnrealTypes/SpDebugCameraHUD.h"
 #include "SpUnrealTypes/SpDebugManager.h"
@@ -70,6 +71,7 @@ void SpUnrealTypes::registerClasses() const
     UnrealClassRegistry::registerComponentClass<USpUpdateTransformComponent>("USpUpdateTransformComponent");
     UnrealClassRegistry::registerComponentClass<USpUserInputComponent>("USpUserInputComponent");
     UnrealClassRegistry::registerClass<USpAssetCompilingManager>("USpAssetCompilingManager");
+    UnrealClassRegistry::registerClass<USpCoreDelegates>("USpCoreDelegates");
     UnrealClassRegistry::registerClass<USpGameEngine>("USpGameEngine");
     UnrealClassRegistry::registerClass<USpGameViewportClient>("USpGameViewportClient");
     UnrealClassRegistry::registerClass<USpLevelStreaming>("USpLevelStreaming");
@@ -95,6 +97,7 @@ void SpUnrealTypes::unregisterClasses() const
     UnrealClassRegistry::unregisterComponentClass<USpUpdateTransformComponent>("USpUpdateTransformComponent");
     UnrealClassRegistry::unregisterComponentClass<USpUserInputComponent>("USpUserInputComponent");
     UnrealClassRegistry::unregisterClass<USpAssetCompilingManager>("USpAssetCompilingManager");
+    UnrealClassRegistry::unregisterClass<USpCoreDelegates>("USpCoreDelegates");
     UnrealClassRegistry::unregisterClass<USpGameEngine>("USpGameEngine");
     UnrealClassRegistry::unregisterClass<USpGameViewportClient>("USpGameViewportClient");
     UnrealClassRegistry::unregisterClass<USpLevelStreaming>("USpLevelStreaming");

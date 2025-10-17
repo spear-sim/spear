@@ -12,6 +12,9 @@
 #include "SpCore/UnrealClassRegistry.h"
 
 // SpUnrealTypesEditor classes
+#include "SpUnrealTypesEditor/SpBlueprintEditorUtils.h"
+#include "SpUnrealTypesEditor/SpMovieSceneEventUtils.h"
+#include "SpUnrealTypesEditor/SpMovieSceneSequenceEditor.h"
 #include "SpUnrealTypesEditor/SpUnrealEdEngine.h"
 
 void SpUnrealTypesEditor::StartupModule()
@@ -36,12 +39,18 @@ void SpUnrealTypesEditor::ShutdownModule()
 void SpUnrealTypesEditor::registerClasses() const
 {
     // SpUnrealTypes classes
+    UnrealClassRegistry::registerClass<USpBlueprintEditorUtils>("USpBlueprintEditorUtils");
+    UnrealClassRegistry::registerClass<USpBlueprintEditorUtils>("USpMovieSceneEventUtils");
+    UnrealClassRegistry::registerClass<USpBlueprintEditorUtils>("USpMovieSceneSequenceEditor");
     UnrealClassRegistry::registerClass<USpUnrealEdEngine>("USpUnrealEdEngine");
 }
 
 void SpUnrealTypesEditor::unregisterClasses() const
 {
     // SpUnrealTypes classes
+    UnrealClassRegistry::unregisterClass<USpBlueprintEditorUtils>("USpBlueprintEditorUtils");
+    UnrealClassRegistry::unregisterClass<USpBlueprintEditorUtils>("USpMovieSceneEventUtils");
+    UnrealClassRegistry::unregisterClass<USpBlueprintEditorUtils>("USpMovieSceneSequenceEditor");
     UnrealClassRegistry::unregisterClass<USpUnrealEdEngine>("USpUnrealEdEngine");
 }
 

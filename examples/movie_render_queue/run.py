@@ -36,7 +36,7 @@ if __name__ == "__main__":
         set_configuration_func = game.unreal_service.find_function_by_name(uclass=movie_pipeline_executor_job_static_class, function_name="SetConfiguration")
 
         # load level sequence
-        level_sequence = game.unreal_service.load_object(class_name="ULevelSequence", outer=0, name="/Game/Spear/Scenes/apartment_0000/Cinematic/LS_DebugLevelSequence.LS_DebugLevelSequence")
+        level_sequence = game.unreal_service.load_object(class_name="ULevelSequence", outer=0, name="/Game/SPEAR/Scenes/apartment_0000/Cinematic/LS_DebugLevelSequence.LS_DebugLevelSequence")
         spear.log("level_sequence: ", level_sequence)
         pprint.pprint(game.unreal_service.get_properties_from_object(uobject=level_sequence))
 
@@ -47,7 +47,7 @@ if __name__ == "__main__":
         pprint.pprint(game.unreal_service.get_properties_from_object(uobject=movie_pipeline_executor_job))
 
         # load configuration
-        movie_pipeline_primary_config = game.unreal_service.load_object(class_name="UMoviePipelinePrimaryConfig", outer=0, name="/Game/Spear/Common/Cinematic/MPPC_DebugMoviePipelinePrimaryConfig.MPPC_DebugMoviePipelinePrimaryConfig")
+        movie_pipeline_primary_config = game.unreal_service.load_object(class_name="UMoviePipelinePrimaryConfig", outer=0, name="/Game/SPEAR/Common/Cinematic/MPPC_DebugMoviePipelinePrimaryConfig.MPPC_DebugMoviePipelinePrimaryConfig")
         spear.log("movie_pipeline_primary_config: ", movie_pipeline_primary_config)
         pprint.pprint(game.unreal_service.get_properties_from_object(uobject=movie_pipeline_primary_config))
 
@@ -59,7 +59,7 @@ if __name__ == "__main__":
         # ray_tracing_enable_cvar = game.unreal_service.find_console_variable_by_name(console_variable_name="r.RayTracing.Enable")
         # ray_tracing_enable_cvar_value = game.unreal_service.get_console_variable_value_as_int(cvar=ray_tracing_enable_cvar)
         # game.unreal_service.set_console_variable_value(cvar=ray_tracing_enable_cvar, value=1)
-        # movie_pipeline_primary_config = game.unreal_service.load_object(class_name="UMoviePipelinePrimaryConfig", outer=0, name="/Game/Spear/Common/Cinematic/MPPC_DebugMoviePipelinePrimaryConfigPathTracer.MPPC_DebugMoviePipelinePrimaryConfigPathTracer")
+        # movie_pipeline_primary_config = game.unreal_service.load_object(class_name="UMoviePipelinePrimaryConfig", outer=0, name="/Game/SPEAR/Common/Cinematic/MPPC_DebugMoviePipelinePrimaryConfigPathTracer.MPPC_DebugMoviePipelinePrimaryConfigPathTracer")
         # spear.log("movie_pipeline_primary_config: ", movie_pipeline_primary_config)
         # pprint.pprint(game.unreal_service.get_properties_from_object(uobject=movie_pipeline_primary_config))
 
