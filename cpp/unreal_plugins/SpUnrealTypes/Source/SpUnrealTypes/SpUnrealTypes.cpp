@@ -19,13 +19,15 @@
 #include "SpUnrealTypes/SpDebugCameraHUD.h"
 #include "SpUnrealTypes/SpDebugManager.h"
 #include "SpUnrealTypes/SpDummyComponent.h"
-#include "SpUnrealTypes/SpGameMode.h"
 #include "SpUnrealTypes/SpGameEngine.h"
+#include "SpUnrealTypes/SpGameMode.h"
 #include "SpUnrealTypes/SpGameViewportClient.h"
 #include "SpUnrealTypes/SpHitEventManager.h"
 #include "SpUnrealTypes/SpInitializeWorldManager.h"
+#include "SpUnrealTypes/SpLevelSequence.h"
 #include "SpUnrealTypes/SpLevelStreaming.h"
 #include "SpUnrealTypes/SpMessageQueueManager.h"
+#include "SpUnrealTypes/SpNavigationData.h"
 #include "SpUnrealTypes/SpPauseManager.h"
 #include "SpUnrealTypes/SpPlayerController.h"
 #include "SpUnrealTypes/SpSceneCaptureComponent2D.h"
@@ -74,8 +76,10 @@ void SpUnrealTypes::registerClasses() const
     UnrealClassRegistry::registerClass<USpCoreDelegates>("USpCoreDelegates");
     UnrealClassRegistry::registerClass<USpGameEngine>("USpGameEngine");
     UnrealClassRegistry::registerClass<USpGameViewportClient>("USpGameViewportClient");
+    UnrealClassRegistry::registerClass<USpLevelSequence>("USpLevelSequence");
     UnrealClassRegistry::registerClass<USpLevelStreaming>("USpLevelStreaming");
     UnrealClassRegistry::registerClass<USpMessageQueueManager>("USpMessageQueueManager");
+    UnrealClassRegistry::registerClass<USpNavigationData>("USpNavigationData");
     UnrealClassRegistry::registerClass<USpWorld>("USpWorld");
 }
 
@@ -100,8 +104,10 @@ void SpUnrealTypes::unregisterClasses() const
     UnrealClassRegistry::unregisterClass<USpCoreDelegates>("USpCoreDelegates");
     UnrealClassRegistry::unregisterClass<USpGameEngine>("USpGameEngine");
     UnrealClassRegistry::unregisterClass<USpGameViewportClient>("USpGameViewportClient");
+    UnrealClassRegistry::unregisterClass<USpLevelSequence>("USpLevelSequence");
     UnrealClassRegistry::unregisterClass<USpLevelStreaming>("USpLevelStreaming");
     UnrealClassRegistry::unregisterClass<USpMessageQueueManager>("USpMessageQueueManager");
+    UnrealClassRegistry::unregisterClass<USpNavigationData>("USpNavigationData");
     UnrealClassRegistry::unregisterClass<USpWorld>("USpWorld");
 }
 

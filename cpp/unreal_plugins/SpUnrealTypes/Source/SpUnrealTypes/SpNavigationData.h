@@ -8,7 +8,6 @@
 #include <AI/Navigation/NavigationTypes.h> // FNavDataConfig, FNavLocation
 #include <NavFilters/NavigationQueryFilter.h>
 #include <NavigationData.h>
-#include <GameFramework/Actor.h>
 #include <Math/Vector.h>
 #include <Templates/SubclassOf.h>
 #include <UObject/Object.h>                // UObject
@@ -18,7 +17,7 @@
 #include "SpNavigationData.generated.h"
 
 UCLASS()
-class ASpNavigationData : public AActor
+class USpNavigationData : public UObject
 {
     GENERATED_BODY()
 public: 

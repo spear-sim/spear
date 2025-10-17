@@ -40,8 +40,8 @@ void SpUnrealTypesEditor::registerClasses() const
 {
     // SpUnrealTypes classes
     UnrealClassRegistry::registerClass<USpBlueprintEditorUtils>("USpBlueprintEditorUtils");
-    UnrealClassRegistry::registerClass<USpBlueprintEditorUtils>("USpMovieSceneEventUtils");
-    UnrealClassRegistry::registerClass<USpBlueprintEditorUtils>("USpMovieSceneSequenceEditor");
+    UnrealClassRegistry::registerClass<USpMovieSceneEventUtils>("USpMovieSceneEventUtils");
+    UnrealClassRegistry::registerClass<USpMovieSceneSequenceEditor>("USpMovieSceneSequenceEditor");
     UnrealClassRegistry::registerClass<USpUnrealEdEngine>("USpUnrealEdEngine");
 }
 
@@ -49,8 +49,8 @@ void SpUnrealTypesEditor::unregisterClasses() const
 {
     // SpUnrealTypes classes
     UnrealClassRegistry::unregisterClass<USpBlueprintEditorUtils>("USpBlueprintEditorUtils");
-    UnrealClassRegistry::unregisterClass<USpBlueprintEditorUtils>("USpMovieSceneEventUtils");
-    UnrealClassRegistry::unregisterClass<USpBlueprintEditorUtils>("USpMovieSceneSequenceEditor");
+    UnrealClassRegistry::unregisterClass<USpMovieSceneEventUtils>("USpMovieSceneEventUtils");
+    UnrealClassRegistry::unregisterClass<USpMovieSceneSequenceEditor>("USpMovieSceneSequenceEditor");
     UnrealClassRegistry::unregisterClass<USpUnrealEdEngine>("USpUnrealEdEngine");
 }
 
