@@ -6,7 +6,6 @@
 #include "SpUnrealTypes/SpBasicKeyboardControlComponent.h"
 
 #include <string>
-#include <vector>
 
 #include <Components/SceneComponent.h>
 #include <Engine/EngineBaseTypes.h> // ELevelTick

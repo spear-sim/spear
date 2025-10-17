@@ -14,7 +14,7 @@
 #include <Engine/EngineBaseTypes.h>    // ELevelTick
 #include <GameFramework/PlayerInput.h> // FInputAxisKeyMapping
 #include <UObject/NameTypes.h>         // FName
-#include <UObject/ObjectMacros.h>      // GENERATED_BODY, UCLASS
+#include <UObject/ObjectMacros.h>      // GENERATED_BODY, UCLASS, UPROPERTY
 
 #include "SpUserInputComponent.generated.h"
 

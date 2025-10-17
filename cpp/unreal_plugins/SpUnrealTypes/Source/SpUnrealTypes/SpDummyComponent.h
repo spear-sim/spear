@@ -5,11 +5,16 @@
 
 #pragma once
 
+#include <string>
+
 #include <Components/SceneComponent.h>
 #include <Engine/EngineBaseTypes.h>  // ELevelTick
-#include <Engine/EngineTypes.h>      // EEndPlayReason
+#include <Engine/EngineTypes.h>      // EEndPlayReason, ETickingGroup
 
+#include "SpCore/Log.h"
 #include "SpCore/SpFuncComponent.h"
+#include "SpCore/SpTypes.h"
+#include "SpCore/Unreal.h"
 
 #include "SpUnrealTypes/SpUserInputComponent.h"
 
@@ -29,16 +34,69 @@ class USpDummyComponent : public USceneComponent
 {
     GENERATED_BODY()
 public:
-    USpDummyComponent();
-    ~USpDummyComponent() override;
+    USpDummyComponent()
+    {
+        SP_LOG_CURRENT_FUNCTION();
+
+        PrimaryComponentTick.bCanEverTick = true;
+        PrimaryComponentTick.bTickEvenWhenPaused = false;
+        PrimaryComponentTick.TickGroup = ETickingGroup::TG_PrePhysics;
+
+        SpFuncComponent = Unreal::createSceneComponentInsideOwnerConstructor<USpFuncComponent>(this, "sp_func_component");
+        SP_ASSERT(SpFuncComponent);
+
+        SpUserInputComponent = Unreal::createSceneComponentInsideOwnerConstructor<USpUserInputComponent>(this, "sp_user_input_component");
+        SP_ASSERT(SpUserInputComponent);
+    }
+
+    ~USpDummyComponent() override
+    {
+        SP_LOG_CURRENT_FUNCTION();
+    }
 
     // UActorComponent interface
-    void BeginPlay() override;
-    void EndPlay(const EEndPlayReason::Type end_play_reason) override;
-    void TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override;
+    void BeginPlay() override
+    {
+        SP_LOG_CURRENT_FUNCTION();
+
+        UActorComponent::BeginPlay();
+
+        SpUserInputComponent->subscribeToUserInputs({"One"});
+        SpUserInputComponent->setHandleUserInputFunc([this](const std::string& key, float axis_value) -> void {
+            SP_LOG(key, axis_value);
+        });
+
+        SpFuncComponent->registerFunc("hello_world", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
+            SP_LOG_CURRENT_FUNCTION();
+            SpFuncDataBundle return_values;
+            return return_values;
+        });
+    }
+
+    void EndPlay(const EEndPlayReason::Type end_play_reason) override
+    {
+        SP_LOG_CURRENT_FUNCTION();
+
+        SpFuncComponent->unregisterFunc("hello_world");
+
+        SpUserInputComponent->setHandleUserInputFunc(nullptr);
+        SpUserInputComponent->unsubscribeFromUserInputs({"One"});
+
+        UActorComponent::EndPlay(end_play_reason);
+    }
+
+    void TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override
+    {
+        SP_LOG_CURRENT_FUNCTION();
+
+        USceneComponent::TickComponent(delta_time, level_tick, this_tick_function);        
+    }
 
     UFUNCTION()
-    void HelloWorld() const;
+    void HelloWorld() const
+    {
+        SP_LOG_CURRENT_FUNCTION();
+    }
 
     // Required for custom debug keyboard commands
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
