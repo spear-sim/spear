@@ -21,5 +21,9 @@ class USpWorld : public UObject
     GENERATED_BODY()
 public: 
     UFUNCTION()
-    static TArray<ULevelStreaming*> GetStreamingLevels(UWorld* World) { SP_ASSERT(World); return World->GetStreamingLevels(); }
+    static TArray<ULevelStreaming*> GetStreamingLevels(UWorld* World)
+    {
+        SP_ASSERT(World);
+        return World->GetStreamingLevels();
+    }
 };

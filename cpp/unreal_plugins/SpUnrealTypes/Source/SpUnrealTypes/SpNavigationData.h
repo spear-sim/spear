@@ -22,8 +22,16 @@ class USpNavigationData : public UObject
     GENERATED_BODY()
 public: 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FNavDataConfig GetConfig(const ANavigationData* NavigationData) { SP_ASSERT(NavigationData); return NavigationData->GetConfig(); }
+    static FNavDataConfig GetConfig(const ANavigationData* NavigationData)
+    {
+        SP_ASSERT(NavigationData);
+        return NavigationData->GetConfig();
+    }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FVector GetRandomPoint(ANavigationData* NavigationData, TSubclassOf<UNavigationQueryFilter> FilterClass = NULL) { SP_ASSERT(NavigationData); return NavigationData->GetRandomPoint(UNavigationQueryFilter::GetQueryFilter(*NavigationData, nullptr, FilterClass)).Location; }
+    static FVector GetRandomPoint(ANavigationData* NavigationData, TSubclassOf<UNavigationQueryFilter> FilterClass = NULL)
+    {
+        SP_ASSERT(NavigationData);
+        return NavigationData->GetRandomPoint(UNavigationQueryFilter::GetQueryFilter(*NavigationData, nullptr, FilterClass)).Location;
+    }
 };

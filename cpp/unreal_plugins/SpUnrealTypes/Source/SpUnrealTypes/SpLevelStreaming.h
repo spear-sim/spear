@@ -18,5 +18,9 @@ class USpLevelStreaming : public UObject
     GENERATED_BODY()
 public: 
     UFUNCTION()
-    static bool ShouldBeVisible(ULevelStreaming* LevelStreaming) { SP_ASSERT(LevelStreaming); return LevelStreaming->ShouldBeVisible(); }
+    static bool ShouldBeVisible(ULevelStreaming* LevelStreaming)
+    {
+        SP_ASSERT(LevelStreaming);
+        return LevelStreaming->ShouldBeVisible();
+    }
 };

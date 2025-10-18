@@ -20,6 +20,10 @@ class USpLevelSequence : public UObject
 public:
     #if WITH_EDITOR
         UFUNCTION(BlueprintCallable, Category="SPEAR")    
-        static UBlueprint* GetDirectorBlueprint(ULevelSequence* LevelSequence) { SP_ASSERT(LevelSequence); return LevelSequence->GetDirectorBlueprint(); }
+        static UBlueprint* GetDirectorBlueprint(ULevelSequence* LevelSequence)
+        {
+            SP_ASSERT(LevelSequence);
+            return LevelSequence->GetDirectorBlueprint();
+        }
     #endif
 };

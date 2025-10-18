@@ -18,5 +18,9 @@ class USpGameViewportClient : public UObject
     GENERATED_BODY()
 public: 
     UFUNCTION()
-    static void GetViewportSize(UGameViewportClient* GameViewportClient, FVector2D& ViewportSize) { SP_ASSERT(GameViewportClient); return GameViewportClient->GetViewportSize(ViewportSize); }
+    static void GetViewportSize(UGameViewportClient* GameViewportClient, FVector2D& ViewportSize)
+    {
+        SP_ASSERT(GameViewportClient);
+        return GameViewportClient->GetViewportSize(ViewportSize);
+    }
 };
