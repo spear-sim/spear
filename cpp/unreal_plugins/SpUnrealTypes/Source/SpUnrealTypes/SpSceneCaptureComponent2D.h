@@ -10,6 +10,8 @@
 #include <Components/SceneCaptureComponent2D.h>
 #include <Containers/Array.h>
 #include <Containers/EnumAsByte.h>
+#include <Engine/EngineBaseTypes.h>       // ELevelTick
+#include <Engine/EngineTypes.h>           // EEndPlayReason
 #include <Engine/TextureRenderTarget2D.h> // ETextureRenderTargetFormat
 #include <HAL/Platform.h>                 // uint32
 #include <Math/Color.h>                   // FColor, FLinearColor
@@ -24,6 +26,7 @@
 
 class UMaterial;
 class UMaterialInstanceDynamic;
+struct FActorComponentTickFunction;
 
 // We need meta=(BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
 UCLASS(ClassGroup="SPEAR", HideCategories=(Activation, AssetUserData, Collision, Cooking, LOD, Navigation, Physics, Rendering, Tags), meta=(BlueprintSpawnableComponent))
@@ -34,11 +37,15 @@ public:
     USpSceneCaptureComponent2D();
     ~USpSceneCaptureComponent2D() override;
 
+    // UActorComponent interface
+    void BeginPlay() override;
+    void EndPlay(const EEndPlayReason::Type end_play_reason) override;
+
     UFUNCTION(CallInEditor, Category="SPEAR")
     void Initialize();
     UFUNCTION(CallInEditor, Category="SPEAR")
     void Terminate();
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(Category="SPEAR")
     bool IsInitialized();
 
     UPROPERTY(EditAnywhere, Category="SPEAR")
@@ -66,11 +73,14 @@ public:
     UPROPERTY(EditAnywhere, Category="SPEAR")
     bool bReadPixelData = true;
 
+private:
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
+    bool bIsInitialized = false;
+
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
     USpFuncComponent* SpFuncComponent = nullptr;
 
-private:
-    bool initialized_ = false;
+    bool is_initialized_ = false;
     UMaterialInstanceDynamic* material_instance_dynamic_ = nullptr;
     std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
     SpArraySharedMemoryView shared_memory_view_;

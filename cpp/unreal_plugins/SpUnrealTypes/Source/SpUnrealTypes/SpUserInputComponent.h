@@ -30,7 +30,7 @@ public:
     USpUserInputComponent();
     ~USpUserInputComponent() override;
 
-    // USceneComponent interface
+    // UActorComponent interface
     void TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override;
 
     // Must be called between BeginPlay() and EndPlay(), because GetWorld() needs to be valid.

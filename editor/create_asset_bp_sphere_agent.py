@@ -244,6 +244,9 @@ if __name__ == "__main__":
             post_process_settings.set_editor_property("override_reflection_method", True)
             post_process_settings.set_editor_property("reflection_method", component_desc["reflection_method"])
 
+    # compile blueprint
+    unreal.BlueprintEditorLibrary.compile_blueprint(blueprint=blueprint_asset)
+
     # save blueprint
     spear.log("Saving blueprint: ", blueprint_path)
     editor_asset_subsystem.save_loaded_asset(blueprint_asset)

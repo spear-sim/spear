@@ -53,8 +53,8 @@ public:
 
         bool isValid(UWorld* world) const override
         {
-            SP_ASSERT(GEngine);
             SP_ASSERT(world);
+            SP_ASSERT(GEngine);
             return world->IsEditorWorld() && !world->IsGameWorld() && !world->IsPreviewWorld() && GEngine->GetWorldContextFromWorld(world);
         }
     };
@@ -73,8 +73,8 @@ public:
 
         bool isValid(UWorld* world) const override
         {
-            SP_ASSERT(GEngine);
             SP_ASSERT(world);
+            SP_ASSERT(GEngine);
             return world->IsGameWorld() && !world->IsPreviewWorld() && GEngine->GetWorldContextFromWorld(world);
         }
     };
@@ -109,12 +109,13 @@ public:
         FCoreDelegates::OnBeginFrame.Remove(begin_frame_handle_);
         FCoreDelegates::OnEndFrame.Remove(end_frame_handle_);
 
-        end_frame_handle_.Reset();
-        begin_frame_handle_.Reset();
-        world_cleanup_handle_.Reset();
+        post_engine_init_handle_.Reset();
+        engine_pre_exit_handle_.Reset();
         post_world_initialization_handle_.Reset();
+        world_cleanup_handle_.Reset();
+        begin_frame_handle_.Reset();
+        end_frame_handle_.Reset();
     }
-
 
 protected:
     virtual void postEngineInit() {}

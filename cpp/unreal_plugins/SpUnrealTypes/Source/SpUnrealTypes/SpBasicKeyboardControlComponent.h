@@ -14,8 +14,6 @@
 
 #include "SpBasicKeyboardControlComponent.generated.h"
 
-struct FActorComponentTickFunction;
-
 // We need meta=(BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
 UCLASS(ClassGroup="SPEAR", HideCategories=(Activation, AssetUserData, Collision, Cooking, LOD, Navigation, Physics, Rendering, Tags), meta=(BlueprintSpawnableComponent))
 class USpBasicKeyboardControlComponent : public USceneComponent

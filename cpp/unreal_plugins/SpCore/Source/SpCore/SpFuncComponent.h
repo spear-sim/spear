@@ -27,9 +27,13 @@ class SPCORE_API USpFuncComponent : public USceneComponent
 {
     GENERATED_BODY()
 public:
+    // UActorComponent interface
+    void OnComponentCreated() override;
+    void PostLoad() override;
+    void BeginPlay() override;
+    void EndPlay(const EEndPlayReason::Type end_play_reason) override;
+
     // typically called by the owning actor or component to register/unregister an SpFunc
-    void initialize();
-    void terminate();
     void registerSharedMemoryView(const std::string& shared_memory_name, const SpArraySharedMemoryView& shared_memory_view);
     void unregisterSharedMemoryView(const std::string& shared_memory_name);
     void registerFunc(const std::string& func_name, const std::function<SpFuncDataBundle(SpFuncDataBundle&)>& func);
@@ -40,6 +44,9 @@ public:
     SpFuncDataBundle callFunc(const std::string& func_name, SpFuncDataBundle& args) const;
 
 private:
+    UPROPERTY(VisibleAnywhere, Category="SPEAR");
+    FString SpFuncComponentPtr;
+
     UPROPERTY(VisibleAnywhere, Category="SPEAR");
     TArray<FString> FuncNames;
 

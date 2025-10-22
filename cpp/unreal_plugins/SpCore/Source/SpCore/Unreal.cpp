@@ -709,6 +709,16 @@ std::string Unreal::tryGetStableName(const AActor* actor)
     if (hasStableName(actor)) {
         return Unreal::getStableName(actor);
     } else {
+        #if WITH_EDITOR // defined in an auto-generated header
+            if (!actor->HasAnyFlags(RF_Transient)) {
+                FName folder_path = actor->GetFolderPath();
+                if (folder_path.IsNone()) {
+                    return Unreal::toStdString(actor->GetActorLabel());
+                } else {
+                    return Unreal::toStdString(folder_path) + "/" + Unreal::toStdString(actor->GetActorLabel());
+                }
+            }
+        #endif
         return Unreal::toStdString(actor->GetName());
     }
 }

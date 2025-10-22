@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <stddef.h>    // size_t
-#include <stdint.h>    // uint64_t
+#include <stddef.h> // size_t
+#include <stdint.h> // uint64_t
 
 #include <algorithm>   // std::ranges::all_of, std::ranges::any_of, std::ranges::find, std::ranges::copy, std::ranges::equal, std::ranges::sort,
                        // std::ranges::set_intersection, std::ranges::unique
@@ -21,6 +21,7 @@
                        // std::ranges::sized_range, std::ranges::size, std::views::keys, std::views::transform
 #include <type_traits> // std::underlying_type_t
 #include <span>
+#include <set>
 #include <string>      // std::equal
 #include <utility>     // std::forward, std::move
 #include <vector>
@@ -68,7 +69,7 @@ concept CConvertibleFrom = std::convertible_to<TSrc, TDest>;
 template <typename TRange, typename TValue>
 concept CRangeValuesAreConvertibleTo =
     std::ranges::range<TRange> &&
-    requires(TRange range) {
+    requires (TRange range) {
         { *(std::ranges::begin(range)) } -> std::convertible_to<const TValue&>;
         { *(std::ranges::end(range)) } -> std::convertible_to<const TValue&>;
     };
@@ -112,19 +113,19 @@ concept CVectorValuesAreConvertibleFromVector =
 template <typename TMap>
 concept CMap =
     std::ranges::range<TMap> &&
-    requires(TMap map) {
+    requires (TMap map) {
         typename TMap::iterator;
-        typename TMap::value_type;
         typename TMap::key_type;
         typename TMap::mapped_type;
+        typename TMap::value_type;
     } &&
     std::convertible_to<typename TMap::value_type, std::pair<typename TMap::key_type, typename TMap::mapped_type>> &&
-    requires(TMap map, typename TMap::iterator itr, typename TMap::key_type key, typename TMap::mapped_type value) {
+    requires (TMap map, typename TMap::iterator itr, typename TMap::key_type key, typename TMap::mapped_type value) {
         { map.begin() } -> std::convertible_to<const typename TMap::iterator&>;
         { map.end() } -> std::convertible_to<const typename TMap::iterator&>;
         { map.at(key) } -> std::convertible_to<const typename TMap::mapped_type&>;
         { map.contains(key) } -> std::same_as<bool>;
-        { map.insert({std::move(key), std::move(value)}) } -> std::convertible_to<const std::pair<typename TMap::iterator, bool>&>;
+        { map.insert({std::move(key), std::move(value)}) } -> std::convertible_to<const std::pair<typename TMap::iterator, bool>&>; // std::move is needed otherwise CMap<std::map> will be false
         { map.erase(key) } -> std::same_as<size_t>;
         { *itr } -> std::convertible_to<const typename TMap::value_type&>;
     };
@@ -147,14 +148,14 @@ concept CMapValuesAreConvertibleFrom =
 template <typename TDestMap, typename TSrcValue>
 concept CMapValuesAreConvertibleFromInitializerList =
     CMap<TDestMap> &&
-    requires(TDestMap dest_map, typename TDestMap::key_type key, std::initializer_list<TSrcValue> src_initializer_list) {
+    requires (TDestMap dest_map, typename TDestMap::key_type key, std::initializer_list<TSrcValue> src_initializer_list) {
         { dest_map.insert({key, src_initializer_list}) } -> std::convertible_to<const std::pair<typename TDestMap::iterator, bool>&>;
     };
 
 template <typename TDestMap>
 concept CMapValuesAreConvertibleFromEmptyInitializerList =
     CMap<TDestMap> &&
-    requires(TDestMap dest_map, typename TDestMap::key_type key) {
+    requires (TDestMap dest_map, typename TDestMap::key_type key) {
         { dest_map.insert({key, {}}) } -> std::convertible_to<const std::pair<typename TDestMap::iterator, bool>&>;
     };
 
@@ -162,9 +163,45 @@ template <typename TDestMap, typename TSrcMap>
 concept CMapKeysAndValuesAreConvertibleFromMap =
     CMap<TDestMap> &&
     CMap<TSrcMap> &&
-    requires(TDestMap dest_map, TSrcMap src_map) {
+    requires (TDestMap dest_map, TSrcMap src_map) {
         { dest_map.insert(src_map.begin(), src_map.end()) } -> std::same_as<void>;
     };
+
+//
+// Set (e.g., std::set) concepts
+//
+
+template <typename TSet>
+concept CSet =
+    std::ranges::range<TSet> &&
+    requires (TSet map) {
+        typename TSet::iterator;
+        typename TSet::key_type;
+        typename TSet::value_type;
+    } &&
+    requires (TSet set, typename TSet::iterator itr, typename TSet::key_type key) {
+        { set.begin() } -> std::convertible_to<const typename TSet::iterator&>;
+        { set.end() } -> std::convertible_to<const typename TSet::iterator&>;
+        { set.find(key) } -> std::convertible_to<const typename TSet::iterator&>;
+        { set.contains(key) } -> std::same_as<bool>;
+        { set.insert(key) } -> std::convertible_to<const std::pair<typename TSet::iterator, bool>&>;
+        { set.erase(key) } -> std::same_as<size_t>;
+        { *itr } -> std::convertible_to<const typename TSet::value_type&>;
+    };
+
+template <typename TDestSet, typename TSrcKey>
+concept CSetKeysAreConvertibleFrom =
+    CSet<TDestSet> &&
+    CConvertibleFrom<typename TDestSet::key_type, TSrcKey>;
+
+template <typename TDestSet, typename TSrcVectorKeys>
+concept CSetKeysAreConvertibleFromVector =
+    CSet<TDestSet> &&
+    CConvertibleFrom<typename TDestSet::key_type, typename TSrcVectorKeys::value_type>;
+
+//
+// std utility functions
+//
 
 class SPCORE_API Std
 {
@@ -306,6 +343,14 @@ public:
         SP_ASSERT(allUnique(keys));
 
         return std::map<TKey, TValue>(pairs.begin(), pairs.end());
+    }
+
+    // TODO: replace with std::ranges::to<std::map> in C++23
+    template <typename TKey, typename TRange> requires
+        CRangeValuesAreConvertibleTo<TRange, TKey>
+    static std::set<TKey> toSet(TRange&& range)
+    {
+        return std::set<TKey>(std::ranges::begin(range), std::ranges::end(range));
     }
 
     template <typename TRange> requires
@@ -564,6 +609,37 @@ public:
             values.push_back(value);
         }
         return std::make_pair(std::move(keys), std::move(values));
+    }
+
+    //
+    // Set (e.g., std::set) functions
+    //
+
+    template <typename TSet, typename TKey> requires
+        CSetKeysAreConvertibleFrom<TSet, TKey>
+    static auto remove(TSet& set, const TKey& key)
+    {
+        SP_ASSERT(set.contains(key));
+        set.erase(key);
+    }
+
+    template <typename TSet, typename TVectorKeys> requires
+        CSetKeysAreConvertibleFromVector<TSet, TVectorKeys> &&
+        CVector<TVectorKeys>
+    static void remove(TSet& set, const TVectorKeys& keys)
+    {
+        for (auto& key : keys) {
+            remove(set, key);
+        }
+    }
+
+    template <typename TSet> requires
+        CSet<TSet>
+    static auto keys(TSet& set)
+    {
+        using TKey = typename TSet::key_type;
+
+        return toVector<TKey>(set);
     }
 
     //

@@ -44,6 +44,7 @@ USpSceneCaptureComponent2D::USpSceneCaptureComponent2D()
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.bTickEvenWhenPaused = true;
 
+    // disable rendering to texture
     SetVisibility(false);
 }
 
@@ -52,9 +53,25 @@ USpSceneCaptureComponent2D::~USpSceneCaptureComponent2D()
     SP_LOG_CURRENT_FUNCTION();
 }
 
+void USpSceneCaptureComponent2D::BeginPlay()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    USceneCaptureComponent2D::BeginPlay();
+    bIsInitialized = false;
+}
+
+void USpSceneCaptureComponent2D::EndPlay(const EEndPlayReason::Type end_play_reason)
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    Terminate();
+    USceneCaptureComponent2D::EndPlay(end_play_reason);
+}
+
 void USpSceneCaptureComponent2D::Initialize()
 {
-    if (initialized_) {
+    if (IsInitialized()) {
         return;
     }
 
@@ -70,7 +87,7 @@ void USpSceneCaptureComponent2D::Initialize()
     texture_render_target_2d->UpdateResourceImmediate(clear_render_target);
     TextureTarget = texture_render_target_2d;
 
-    SP_ASSERT(!IsVisible());
+    // enable rendering to texture
     SetVisibility(true);
 
     if (Material) {
@@ -104,7 +121,7 @@ void USpSceneCaptureComponent2D::Initialize()
 
     SpFuncComponent->registerFunc("read_pixels", [this, channel_data_type, num_bytes](SpFuncDataBundle& args) -> SpFuncDataBundle {
 
-        SP_ASSERT(initialized_);
+        SP_ASSERT(is_initialized_);
 
         SpPackedArray packed_array;
         packed_array.shape_ = {Height, Width, NumChannelsPerPixel};
@@ -184,16 +201,18 @@ void USpSceneCaptureComponent2D::Initialize()
         return return_values;
     });
 
-    initialized_ = true;
+    is_initialized_ = true;
+    bIsInitialized = true;
 }
 
 void USpSceneCaptureComponent2D::Terminate()
 {
-    if (!initialized_) {
+    if (!IsInitialized()) {
         return;
     }
 
-    initialized_ = false;
+    bIsInitialized = false;
+    is_initialized_ = false;
 
     SpFuncComponent->unregisterFunc("read_pixels");
 
@@ -216,5 +235,5 @@ void USpSceneCaptureComponent2D::Terminate()
 
 bool USpSceneCaptureComponent2D::IsInitialized()
 {
-    return initialized_;
+    return is_initialized_;
 }

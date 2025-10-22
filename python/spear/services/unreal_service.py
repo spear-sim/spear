@@ -537,7 +537,7 @@ class UnrealService(spear.utils.func_utils.Service):
     #
 
     def destroy_component(self, component, promote_children=False):
-        return self._entry_point_caller.call_on_game_thread("void", "destroy_component", None, component, promote_children)
+        return self._entry_point_caller.call_on_game_thread("void", "destroy_component_outside_owner_constructor", None, component, promote_children)
 
     #
     # Create new object

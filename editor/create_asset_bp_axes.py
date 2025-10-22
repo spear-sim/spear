@@ -117,6 +117,9 @@ if __name__ == "__main__":
         static_mesh_component.set_relative_scale3d(
             new_scale3d=unreal.Vector(x=component_desc["scale3d"]["x"], y=component_desc["scale3d"]["y"], z=component_desc["scale3d"]["z"]))
 
+    # compile blueprint
+    unreal.BlueprintEditorLibrary.compile_blueprint(blueprint=blueprint_asset)
+
     # save blueprint
     spear.log("Saving blueprint: ", blueprint_path)
     editor_asset_subsystem.save_loaded_asset(asset_to_save=blueprint_asset)

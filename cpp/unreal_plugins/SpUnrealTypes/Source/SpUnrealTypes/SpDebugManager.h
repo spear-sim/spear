@@ -12,6 +12,7 @@
 #include <Containers/Set.h>
 #include <Containers/UnrealString.h>     // FString
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
+#include <Engine/EngineTypes.h>          // EEndPlayReason
 #include <GameFramework/Actor.h>
 #include <Math/Vector.h>
 #include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
@@ -43,18 +44,19 @@ public:
     void PostInitProperties() override;
     void PostActorCreated() override;
     void PostLoad() override;
+    void BeginPlay() override;
+    void EndPlay(const EEndPlayReason::Type end_play_reason) override;
     void BeginDestroy() override;
 
 private:
     UFUNCTION(CallInEditor, Category="SPEAR")
     void LoadConfig();
+
     UFUNCTION(CallInEditor, Category="SPEAR")
     void SaveConfig();
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void PrintDebugString() const;
-    UPROPERTY(EditAnywhere, Config, Category="SPEAR", DisplayName="My debug string")
-    FString DebugString;
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void GetAndSetObjectProperties();
@@ -89,6 +91,9 @@ private:
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
     USpFuncComponent* SpFuncComponent = nullptr;
 
+    UPROPERTY(EditAnywhere, Config, Category="SPEAR", DisplayName="My debug string")
+    FString DebugString;
+
     UPROPERTY()
     FString MyString;
 
@@ -121,6 +126,8 @@ private:
 
     void initializeSpFunc();
     void terminateSpFunc();
+
+    bool is_game_world_ = false;
 
     std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
     SpArraySharedMemoryView shared_memory_view_;

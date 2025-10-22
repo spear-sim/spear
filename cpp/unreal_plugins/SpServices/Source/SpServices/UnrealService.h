@@ -977,10 +977,10 @@ public:
         // Destroy component
         //
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "destroy_component",
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "destroy_component_outside_owner_constructor",
             [this](uint64_t& component, bool& promote_children) -> void {
                 SP_ASSERT(component);
-                toPtr<UActorComponent>(component)->DestroyComponent(promote_children);
+                Unreal::destroyComponentOutsideOwnerConstructor(toPtr<UActorComponent>(component), promote_children);
             });
 
         //

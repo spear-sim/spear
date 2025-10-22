@@ -64,13 +64,13 @@ concept CNonObject =
 
 template <typename TEnum>
 concept CEnum =
-    requires() {
+    requires () {
         { StaticEnum<TEnum>() } -> std::same_as<UEnum*>;
     };
 
 template <typename TStruct>
 concept CStruct =
-    requires() {
+    requires () {
         { TStruct::StaticStruct() }; // can't use std::same_as<UStruct*> because the type of the returned pointer might be derived from UStruct
     } &&
     std::derived_from<std::remove_pointer_t<decltype(TStruct::StaticStruct())>, UStruct>;
@@ -78,7 +78,7 @@ concept CStruct =
 template <typename TClass>
 concept CClass =
     CObject<TClass> &&
-    requires() {
+    requires () {
         { TClass::StaticClass() }; // can't use std::same_as<UClass*> because the type of the returned pointer might be derived from UClass
     } &&
     std::derived_from<std::remove_pointer_t<decltype(TClass::StaticClass())>, UClass>;
@@ -86,7 +86,7 @@ concept CClass =
 template <typename TInterface>
 concept CInterface =
     CNonObject<TInterface> &&
-    requires(TInterface interface) {
+    requires (TInterface interface) {
         { TInterface::UClassType::StaticClass() }; // can't use std::same_as<UClass*> because the type of the returned pointer might be derived from UClass
     } &&
     std::derived_from<std::remove_pointer_t<decltype(TInterface::UClassType::StaticClass())>, UClass>;
@@ -132,7 +132,7 @@ concept CEngineSubsystem =
 template <typename TSubsystemProvider>
 concept CSubsystemProvider =
     CClass<TSubsystemProvider> &&
-    requires(TSubsystemProvider subsystem_provider, UClass* uclass) {
+    requires (TSubsystemProvider subsystem_provider, UClass* uclass) {
         { subsystem_provider.template GetSubsystem<USubsystem>() } -> std::same_as<USubsystem*>;
         { subsystem_provider.GetSubsystemBase(nullptr) }; // can't use std::same_as<USubsystem*> because the type of the returned pointer might be derived from USubsystem
     } &&
@@ -234,6 +234,8 @@ public:
 
     //
     // Helper functions to create components.
+    //
+
     //
     // If we are inside the constructor of an owner AActor (either directly or indirectly via the constructor
     // of a child component), then we must call CreateDefaultSubobject.
@@ -372,6 +374,15 @@ public:
     static USceneComponent* createSceneComponentOutsideOwnerConstructorByClass(UClass* scene_component_class, USceneComponent* owner, const std::string& scene_component_name)
     {
         return createSceneComponentOutsideOwnerConstructorByClass(scene_component_class, owner, owner, scene_component_name);
+    }
+
+    //
+    // Helper function to destroy components.
+    //
+
+    static void destroyComponentOutsideOwnerConstructor(UActorComponent* component, bool promote_children = false)
+    {
+        component->DestroyComponent(promote_children);
     }
 
     // 

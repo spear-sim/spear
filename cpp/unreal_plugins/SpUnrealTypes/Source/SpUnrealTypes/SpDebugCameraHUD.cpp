@@ -49,6 +49,7 @@ void ASpDebugCameraHUD::PostRender()
                     AActor* actor = component->GetOwner();
                     SP_ASSERT(actor);
 
+                    SP_ASSERT(GEngine);
                     UFont* font = GEngine->GetMediumFont();
                     FFontRenderInfo font_render_info = Canvas->CreateFontRenderInfo(false, true);
 
