@@ -100,8 +100,8 @@ void ASpProxyComponentManager::Tick(float delta_time)
     }
 
     if (IsInitialized()) {
-        findAndUnregisterAllProxyComponents(actors);
         findAndRegisterAllProxyComponents(actors);
+        findAndUnregisterAllProxyComponents(actors);
     }
 }
 
@@ -159,8 +159,8 @@ void ASpProxyComponentManager::update()
 {
     std::vector<AActor*> actors = Unreal::findActors(GetWorld());
     unregisterProxyComponents(Std::keys(name_to_proxy_component_desc_map_));
-    findAndUnregisterAllProxyComponents(actors);
     findAndRegisterAllProxyComponents(actors);
+    findAndUnregisterAllProxyComponents(actors);
 }
 
 uint32_t ASpProxyComponentManager::getId(uint32_t initial_guess_id, const std::set<uint32_t>& already_allocated_ids, uint32_t max_id)

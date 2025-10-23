@@ -91,8 +91,8 @@ protected:
     virtual void terminate();
     virtual void update();
     virtual void findAndDestroyAllProxyComponents(const std::vector<AActor*>& actors) {};
-    virtual void findAndUnregisterAllProxyComponents(const std::vector<AActor*>& actors) {};
     virtual void findAndRegisterAllProxyComponents(const std::vector<AActor*>& actors) {};
+    virtual void findAndUnregisterAllProxyComponents(const std::vector<AActor*>& actors) {};
     virtual void unregisterProxyComponents(const std::vector<std::string>& component_names) {};
 
     template <CComponent TComponent>
@@ -109,6 +109,25 @@ protected:
             SP_LOG("Destroying component: ", getLongComponentName(GetWorld(), proxy_component));
             destroyComponent(proxy_component);
         }
+    }
+
+    template <typename TComponent, typename TProxyComponentRegistry> requires
+        CProxyComponentRegistryCanUnregister<TProxyComponentRegistry> && CProxyComponentRegistryCanRegister<TProxyComponentRegistry, TComponent>
+    void findAndRegisterProxyComponentsImpl(const std::vector<AActor*>& actors, TProxyComponentRegistry* proxy_component_registry)
+    {
+        // Find all non-proxy components of type TComponent.
+        std::map<std::string, TComponent*> non_proxy_components = Std::toMap<std::string, TComponent*>(
+            getComponents<TComponent>(actors) |
+            std::views::filter([](auto component) { return !Std::contains(Unreal::toStdString(component->GetName()), "SP_PROXY_COMPONENT"); }) |
+            std::views::transform([this](auto component) { return std::make_pair(getLongComponentName(GetWorld(), component), component); }));
+
+        // Find components to register, i.e., present in the world, of type TComponent, but not registered.
+        std::map<std::string, TComponent*> components_to_register = Std::toMap<std::string, TComponent*>(
+            non_proxy_components |
+            std::views::filter([this](auto& pair) { auto& [name, component] = pair; return !Std::containsKey(name_to_proxy_component_desc_map_, name); }));
+
+        // Register components.
+        registerComponentsImpl<TComponent>(components_to_register, proxy_component_registry);
     }
 
     template <typename TComponent, typename TProxyComponentRegistry> requires
@@ -134,54 +153,6 @@ protected:
     }
 
     template <typename TComponent, typename TProxyComponentRegistry> requires
-        CProxyComponentRegistryCanUnregister<TProxyComponentRegistry> && CProxyComponentRegistryCanRegister<TProxyComponentRegistry, TComponent>
-    void findAndRegisterProxyComponentsImpl(const std::vector<AActor*>& actors, TProxyComponentRegistry* proxy_component_registry)
-    {
-        // Find all non-proxy components of type TComponent.
-        std::map<std::string, TComponent*> non_proxy_components = Std::toMap<std::string, TComponent*>(
-            getComponents<TComponent>(actors) |
-            std::views::filter([](auto component) { return !Std::contains(Unreal::toStdString(component->GetName()), "SP_PROXY_COMPONENT"); }) |
-            std::views::transform([this](auto component) { return std::make_pair(getLongComponentName(GetWorld(), component), component); }));
-
-        // Find components to register, i.e., present in the world, of type TComponent, but not registered.
-        std::map<std::string, TComponent*> components_to_register = Std::toMap<std::string, TComponent*>(
-            non_proxy_components |
-            std::views::filter([this](auto& pair) { auto& [name, component] = pair; return !Std::containsKey(name_to_proxy_component_desc_map_, name); }));
-
-        // Register components.
-        registerComponentsImpl<TComponent>(components_to_register, proxy_component_registry);
-    }
-
-    template <typename TProxyComponentRegistry> requires
-        CProxyComponentRegistryCanUnregister<TProxyComponentRegistry>
-    void unregisterProxyComponentsImpl(const std::vector<std::string>& component_names, TProxyComponentRegistry* proxy_component_registry)
-    {
-        for (auto& name : component_names) {
-            SP_LOG("Unregistering component: ", name);
-
-            ProxyComponentDesc proxy_component_desc = name_to_proxy_component_desc_map_.at(name);
-            uint32_t proxy_component_desc_id = proxy_component_desc.id_;
-
-            SP_ASSERT(proxy_component_desc_ids_.contains(proxy_component_desc_id));
-            SP_ASSERT(Std::containsKey(name_to_proxy_component_desc_map_, name));
-
-            SP_ASSERT(proxy_component_registry);
-            proxy_component_registry->unregisterProxyComponent(proxy_component_desc.user_data_);
-
-            destroyComponent(proxy_component_desc.proxy_component_);
-
-            // update our initial guess for the next time we need to register
-            proxy_component_desc_id_initial_guess_ = std::min(proxy_component_desc_id, proxy_component_desc_id_initial_guess_);
-
-            Std::remove(proxy_component_desc_ids_, proxy_component_desc_id);
-            Std::remove(name_to_proxy_component_desc_map_, name);
-
-            RegisteredProxyComponentDescIds.Remove(proxy_component_desc_id);
-            RegisteredProxyComponentDescNames.Remove(Unreal::toFString(name));
-        }
-    }
-
-    template <typename TComponent, typename TProxyComponentRegistry> requires
         CProxyComponentRegistryCanRegister<TProxyComponentRegistry, TComponent>
     void registerComponentsImpl(const std::map<std::string, TComponent*>& components, TProxyComponentRegistry* proxy_component_registry)
     {
@@ -189,8 +160,8 @@ protected:
             if (shouldRegisterComponent(proxy_component_registry, component)) {
                 SP_LOG("Registering component: ", name);
 
-                uint32_t proxy_component_desc_id = getId(proxy_component_desc_id_initial_guess_, proxy_component_desc_ids_);
-                proxy_component_desc_id_initial_guess_++;
+                uint32_t proxy_component_desc_id = getId(ProxyComponentDescIdInitialGuess, proxy_component_desc_ids_);
+                ProxyComponentDescIdInitialGuess = proxy_component_desc_id + 1;
 
                 std::string proxy_component_name = getProxyComponentName(proxy_component_desc_id);
 
@@ -219,6 +190,32 @@ protected:
         }
     }
 
+    template <typename TProxyComponentRegistry> requires
+        CProxyComponentRegistryCanUnregister<TProxyComponentRegistry>
+    void unregisterProxyComponentsImpl(const std::vector<std::string>& component_names, TProxyComponentRegistry* proxy_component_registry)
+    {
+        for (auto& name : component_names) {
+            SP_LOG("Unregistering component: ", name);
+
+            ProxyComponentDesc proxy_component_desc = name_to_proxy_component_desc_map_.at(name);
+            uint32_t proxy_component_desc_id = proxy_component_desc.id_;
+
+            SP_ASSERT(proxy_component_desc_ids_.contains(proxy_component_desc_id));
+            SP_ASSERT(Std::containsKey(name_to_proxy_component_desc_map_, name));
+
+            SP_ASSERT(proxy_component_registry);
+            proxy_component_registry->unregisterProxyComponent(proxy_component_desc.user_data_);
+
+            destroyComponent(proxy_component_desc.proxy_component_);
+
+            Std::remove(proxy_component_desc_ids_, proxy_component_desc_id);
+            Std::remove(name_to_proxy_component_desc_map_, name);
+
+            RegisteredProxyComponentDescIds.Remove(proxy_component_desc_id);
+            RegisteredProxyComponentDescNames.Remove(Unreal::toFString(name));
+        }
+    }
+
 private:
     template <typename TComponent, typename TProxyComponentRegistry> requires
         CProxyComponentRegistryShouldRegister<TProxyComponentRegistry, TComponent>
@@ -239,6 +236,9 @@ protected:
 private:
     UPROPERTY(VisibleAnywhere, Category="SPEAR");
     bool bIsInitialized = false;
+
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
+    uint32 ProxyComponentDescIdInitialGuess = 1;
 
     UPROPERTY(VisibleAnywhere, Category="SPEAR");
     TArray<uint32> RegisteredProxyComponentDescIds;
@@ -261,11 +261,6 @@ private:
         return components;
     }
 
-    static void destroyComponent(UActorComponent* component)
-    {
-        Unreal::destroyComponentOutsideOwnerConstructor(component);
-    }
-
     template <CNonSceneComponent TNonSceneComponent>
     static TNonSceneComponent* createComponent(UObject* owner, TNonSceneComponent* component, const std::string& name)
     {
@@ -278,13 +273,16 @@ private:
         return Unreal::createSceneComponentOutsideOwnerConstructor<TSceneComponent>(owner, component, name);
     }
 
+    static void destroyComponent(UActorComponent* component)
+    {
+        Unreal::destroyComponentOutsideOwnerConstructor(component);
+    }
+
     static std::string getLongComponentName(const UWorld* world, const UActorComponent* component);
 
     bool request_reinitialize_ = false;
     bool is_initialized_ = false;
 
     std::map<std::string, ProxyComponentDesc> name_to_proxy_component_desc_map_;
-
-    uint32_t proxy_component_desc_id_initial_guess_ = 1;
     std::set<uint32_t> proxy_component_desc_ids_;
 };

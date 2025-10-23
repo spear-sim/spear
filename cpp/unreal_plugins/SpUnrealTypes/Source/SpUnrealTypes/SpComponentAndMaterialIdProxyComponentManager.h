@@ -15,10 +15,11 @@
 
 #include <Components/SkeletalMeshComponent.h>
 #include <Components/StaticMeshComponent.h>
+#include <Engine/EngineBaseTypes.h>    // ELevelTick
 #include <Materials/MaterialInstanceDynamic.h>
 #include <Materials/MaterialInterface.h>
 #include <Math/Color.h>
-#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
+#include <UObject/ObjectMacros.h>      // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
@@ -31,6 +32,7 @@
 
 class UActorComponent;
 class UMaterialInterface;
+struct FActorComponentTickFunction;
 
 UCLASS(ClassGroup="SPEAR", Config=Spear, HideCategories=(Actor, Collision, Cooking, DataLayers, HLOD, Input, LevelInstance, Navigation, Networking, Physics, Rendering, Replication, WorldPartition))
 class ASpComponentAndMaterialIdProxyComponentManager : public ASpProxyComponentManager
@@ -71,16 +73,16 @@ protected:
         findAndDestroyProxyComponentsImpl<USkeletalMeshComponent>(actors);
     }
 
-    void findAndUnregisterAllProxyComponents(const std::vector<AActor*>& actors) override
-    {
-        findAndUnregisterProxyComponentsImpl<UStaticMeshComponent>(actors, this);
-        findAndUnregisterProxyComponentsImpl<USkeletalMeshComponent>(actors, this);
-    }
-
     void findAndRegisterAllProxyComponents(const std::vector<AActor*>& actors) override
     {
         findAndRegisterProxyComponentsImpl<UStaticMeshComponent>(actors, this);
         findAndRegisterProxyComponentsImpl<USkeletalMeshComponent>(actors, this);
+    }
+
+    void findAndUnregisterAllProxyComponents(const std::vector<AActor*>& actors) override
+    {
+        findAndUnregisterProxyComponentsImpl<UStaticMeshComponent>(actors, this);
+        findAndUnregisterProxyComponentsImpl<USkeletalMeshComponent>(actors, this);
     }
 
     void unregisterProxyComponents(const std::vector<std::string>& component_names) override
@@ -94,6 +96,15 @@ public:
     {
         std::set<uint32_t>* component_and_material_desc_ids = createSet();
 
+        bool new_visibility;
+        bool propagate_to_children;
+
+        // set visibility to false
+        new_visibility = false;
+        propagate_to_children = true;
+        proxy_component->SetVisibility(new_visibility, propagate_to_children);
+
+        // configure component
         proxy_component->SetStaticMesh(component->GetStaticMesh());
 
         for (int i = 0; i < component->GetNumMaterials(); i++) {
@@ -103,6 +114,21 @@ public:
             proxy_component->SetMaterial(i, material_instance_dynamic);
             component_and_material_desc_ids->insert(component_and_material_desc_id);
         }
+
+        // mark as dirty
+        proxy_component->MarkRenderTransformDirty();
+        proxy_component->MarkRenderStateDirty();
+
+        // tick
+        float delta_time = 0.0f;
+        ELevelTick level_tick = ELevelTick::LEVELTICK_All;
+        FActorComponentTickFunction* this_tick_function = nullptr;
+        proxy_component->TickComponent(delta_time, level_tick, this_tick_function);
+
+        // set visibility to true
+        new_visibility = true;
+        propagate_to_children = true;
+        proxy_component->SetVisibility(new_visibility, propagate_to_children);
 
         return component_and_material_desc_ids;
     }
@@ -118,6 +144,15 @@ public:
     {
         std::set<uint32_t>* component_and_material_desc_ids = createSet();
 
+        bool new_visibility;
+        bool propagate_to_children;
+
+        // set visibility to false
+        new_visibility = false;
+        propagate_to_children = true;
+        proxy_component->SetVisibility(new_visibility, propagate_to_children);
+
+        // configure component
         proxy_component->SetSkeletalMesh(component->GetSkeletalMeshAsset());
         proxy_component->SetLeaderPoseComponent(component);
 
@@ -128,6 +163,23 @@ public:
             proxy_component->SetMaterial(i, material_instance_dynamic);
             component_and_material_desc_ids->insert(component_and_material_desc_id);
         }
+
+        // mark as dirty
+        proxy_component->RefreshBoneTransforms();
+        proxy_component->InvalidateCachedBounds();
+        proxy_component->MarkRenderTransformDirty();
+        proxy_component->MarkRenderDynamicDataDirty();
+
+        // tick
+        float delta_time = 0.0f;
+        ELevelTick level_tick = ELevelTick::LEVELTICK_All;
+        FActorComponentTickFunction* this_tick_function = nullptr;
+        proxy_component->TickComponent(delta_time, level_tick, this_tick_function);
+
+        // set visibility to true
+        new_visibility = true;
+        propagate_to_children = true;
+        proxy_component->SetVisibility(new_visibility, propagate_to_children);
 
         return component_and_material_desc_ids;
     }
@@ -157,7 +209,7 @@ private:
     uint32_t registerComponentAndMaterial(USceneComponent* component, UMaterialInterface* material)
     {
         uint32_t component_and_material_desc_id = getId(component_and_material_desc_id_initial_guess_, component_and_material_desc_ids_);
-        component_and_material_desc_id_initial_guess_++;
+        component_and_material_desc_id_initial_guess_ = component_and_material_desc_id + 1;
 
         SP_ASSERT(!component_and_material_desc_ids_.contains(component_and_material_desc_id));
         SP_ASSERT(!Std::containsKey(id_to_component_and_material_desc_map_, component_and_material_desc_id));
@@ -175,7 +227,6 @@ private:
 
     void unregisterComponentAndMaterial(uint32_t component_and_material_desc_id)
     {
-        component_and_material_desc_id_initial_guess_ = std::min(component_and_material_desc_id, component_and_material_desc_id_initial_guess_);
         Std::remove(component_and_material_desc_ids_, component_and_material_desc_id);
         Std::remove(id_to_component_and_material_desc_map_, component_and_material_desc_id);
     }
