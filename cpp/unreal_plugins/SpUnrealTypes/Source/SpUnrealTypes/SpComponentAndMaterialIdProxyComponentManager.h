@@ -69,14 +69,12 @@ protected:
 
     void findAndDestroyAllProxyComponentTypes(const std::vector<AActor*>& actors) override
     {
-        ASpProxyComponentManager::findAndDestroyAllProxyComponentTypes(actors);
         ASpProxyComponentManager::findAndDestroyProxyComponents<UStaticMeshComponent>(actors);
         ASpProxyComponentManager::findAndDestroyProxyComponents<USkeletalMeshComponent>(actors);
     }
 
     void findAndRegisterAllProxyComponentTypes(const std::vector<AActor*>& actors) override
     {
-        ASpProxyComponentManager::findAndRegisterAllProxyComponentTypes(actors);
         ASpProxyComponentManager::findAndRegisterProxyComponents<UStaticMeshComponent>(actors, this);
         ASpProxyComponentManager::findAndRegisterProxyComponents<USkeletalMeshComponent>(actors, this);
     }
@@ -85,13 +83,11 @@ protected:
     {
         ASpProxyComponentManager::findAndUnregisterProxyComponents<UStaticMeshComponent>(actors, this);
         ASpProxyComponentManager::findAndUnregisterProxyComponents<USkeletalMeshComponent>(actors, this);
-        ASpProxyComponentManager::findAndUnregisterAllProxyComponentTypes(actors);
     }
 
     void unregisterProxyComponents(const std::vector<std::string>& component_names) override
     {
         ASpProxyComponentManager::unregisterProxyComponents(component_names, this);
-        ASpProxyComponentManager::unregisterProxyComponents(component_names);
     }
 
 public:
