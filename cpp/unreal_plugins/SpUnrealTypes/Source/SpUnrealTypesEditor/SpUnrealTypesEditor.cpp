@@ -39,19 +39,19 @@ void SpUnrealTypesEditor::ShutdownModule()
 void SpUnrealTypesEditor::registerClasses() const
 {
     // SpUnrealTypes classes
-    UnrealClassRegistry::registerClass<USpBlueprintEditorUtils>("USpBlueprintEditorUtils");
-    UnrealClassRegistry::registerClass<USpMovieSceneEventUtils>("USpMovieSceneEventUtils");
-    UnrealClassRegistry::registerClass<USpMovieSceneSequenceEditor>("USpMovieSceneSequenceEditor");
-    UnrealClassRegistry::registerClass<USpUnrealEdEngine>("USpUnrealEdEngine");
+    SP_REGISTER_CLASS(USpBlueprintEditorUtils);
+    SP_REGISTER_CLASS(USpMovieSceneEventUtils);
+    SP_REGISTER_CLASS(USpMovieSceneSequenceEditor);
+    SP_REGISTER_CLASS(USpUnrealEdEngine);
 }
 
 void SpUnrealTypesEditor::unregisterClasses() const
 {
     // SpUnrealTypes classes
-    UnrealClassRegistry::unregisterClass<USpBlueprintEditorUtils>("USpBlueprintEditorUtils");
-    UnrealClassRegistry::unregisterClass<USpMovieSceneEventUtils>("USpMovieSceneEventUtils");
-    UnrealClassRegistry::unregisterClass<USpMovieSceneSequenceEditor>("USpMovieSceneSequenceEditor");
-    UnrealClassRegistry::unregisterClass<USpUnrealEdEngine>("USpUnrealEdEngine");
+    SP_UNREGISTER_CLASS(USpBlueprintEditorUtils);
+    SP_UNREGISTER_CLASS(USpMovieSceneEventUtils);
+    SP_UNREGISTER_CLASS(USpMovieSceneSequenceEditor);
+    SP_UNREGISTER_CLASS(USpUnrealEdEngine);
 }
 
 // use IMPLEMENT_GAME_MODULE if module implements Unreal classes, use IMPLEMENT_MODULE otherwise

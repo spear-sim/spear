@@ -178,77 +178,77 @@ void SpServices::ShutdownModule()
 void SpServices::registerClasses() const
 {
     // ChaosVehiclesPlugin classes
-    UnrealClassRegistry::registerActorClass<AWheeledVehiclePawn>("AWheeledVehiclePawn");
-    UnrealClassRegistry::registerComponentClass<UChaosVehicleMovementComponent>("UChaosVehicleMovementComponent");
+    SP_REGISTER_ACTOR_CLASS(AWheeledVehiclePawn);
+    SP_REGISTER_COMPONENT_CLASS(UChaosVehicleMovementComponent);
 
     // EnhancedInput classes
-    UnrealClassRegistry::registerSubsystemClass<UEnhancedInputLocalPlayerSubsystem, ULocalPlayer>("UEnhancedInputLocalPlayerSubsystem");
-    UnrealClassRegistry::registerClass<UInputAction>("UInputAction");
-    UnrealClassRegistry::registerClass<UInputModifierDeadZone>("UInputModifierDeadZone");
-    UnrealClassRegistry::registerClass<UInputModifierFOVScaling>("UInputModifierFOVScaling");
-    UnrealClassRegistry::registerClass<UInputModifierNegate>("UInputModifierNegate");
-    UnrealClassRegistry::registerClass<UInputModifierResponseCurveExponential>("UInputModifierResponseCurveExponential");
-    UnrealClassRegistry::registerClass<UInputModifierResponseCurveUser>("UInputModifierResponseCurveUser");
-    UnrealClassRegistry::registerClass<UInputModifierScalar>("UInputModifierScalar");
-    UnrealClassRegistry::registerClass<UInputModifierScaleByDeltaTime>("UInputModifierScaleByDeltaTime");
-    UnrealClassRegistry::registerClass<UInputModifierSmooth>("UInputModifierSmooth");
-    UnrealClassRegistry::registerClass<UInputModifierSmoothDelta>("UInputModifierSmoothDelta");
-    UnrealClassRegistry::registerClass<UInputModifierSwizzleAxis>("UInputModifierSwizzleAxis");
-    UnrealClassRegistry::registerClass<UInputModifierToWorldSpace>("UInputModifierToWorldSpace");
-    UnrealClassRegistry::registerClass<UInputTriggerCombo>("UInputTriggerCombo");
-    UnrealClassRegistry::registerClass<UInputTriggerChordAction>("UInputTriggerChordAction");
-    UnrealClassRegistry::registerClass<UInputTriggerChordBlocker>("UInputTriggerChordBlocker");
-    UnrealClassRegistry::registerClass<UInputTriggerDown>("UInputTriggerDown");
-    UnrealClassRegistry::registerClass<UInputTriggerHold>("UInputTriggerHold");
-    UnrealClassRegistry::registerClass<UInputTriggerHoldAndRelease>("UInputTriggerHoldAndRelease");
-    UnrealClassRegistry::registerClass<UInputTriggerPressed>("UInputTriggerPressed");
-    UnrealClassRegistry::registerClass<UInputTriggerPulse>("UInputTriggerPulse");
-    UnrealClassRegistry::registerClass<UInputTriggerReleased>("UInputTriggerReleased");
-    UnrealClassRegistry::registerClass<UInputTriggerTap>("UInputTriggerTap");
-    UnrealClassRegistry::registerClass<UInputTriggerTimedBase>("UInputTriggerTimedBase");
+    SP_REGISTER_SUBSYSTEM_CLASS(UEnhancedInputLocalPlayerSubsystem, ULocalPlayer);
+    SP_REGISTER_CLASS(UInputAction);
+    SP_REGISTER_CLASS(UInputModifierDeadZone);
+    SP_REGISTER_CLASS(UInputModifierFOVScaling);
+    SP_REGISTER_CLASS(UInputModifierNegate);
+    SP_REGISTER_CLASS(UInputModifierResponseCurveExponential);
+    SP_REGISTER_CLASS(UInputModifierResponseCurveUser);
+    SP_REGISTER_CLASS(UInputModifierScalar);
+    SP_REGISTER_CLASS(UInputModifierScaleByDeltaTime);
+    SP_REGISTER_CLASS(UInputModifierSmooth);
+    SP_REGISTER_CLASS(UInputModifierSmoothDelta);
+    SP_REGISTER_CLASS(UInputModifierSwizzleAxis);
+    SP_REGISTER_CLASS(UInputModifierToWorldSpace);
+    SP_REGISTER_CLASS(UInputTriggerCombo);
+    SP_REGISTER_CLASS(UInputTriggerChordAction);
+    SP_REGISTER_CLASS(UInputTriggerChordBlocker);
+    SP_REGISTER_CLASS(UInputTriggerDown);
+    SP_REGISTER_CLASS(UInputTriggerHold);
+    SP_REGISTER_CLASS(UInputTriggerHoldAndRelease);
+    SP_REGISTER_CLASS(UInputTriggerPressed);
+    SP_REGISTER_CLASS(UInputTriggerPulse);
+    SP_REGISTER_CLASS(UInputTriggerReleased);
+    SP_REGISTER_CLASS(UInputTriggerTap);
+    SP_REGISTER_CLASS(UInputTriggerTimedBase);
 
     // MovieRenderPipeline classes
-    UnrealClassRegistry::registerEngineSubsystemClass<UMoviePipelineQueueEngineSubsystem>("UMoviePipelineQueueEngineSubsystem");
-    UnrealClassRegistry::registerClass<UMoviePipelineExecutorJob>("UMoviePipelineExecutorJob");
-    UnrealClassRegistry::registerClass<UMoviePipelinePrimaryConfig>("UMoviePipelinePrimaryConfig");
+    SP_REGISTER_ENGINE_SUBSYSTEM_CLASS(UMoviePipelineQueueEngineSubsystem);
+    SP_REGISTER_CLASS(UMoviePipelineExecutorJob);
+    SP_REGISTER_CLASS(UMoviePipelinePrimaryConfig);
 }
 
 void SpServices::unregisterClasses() const
 {
     // ChaosVehiclesPlugin classes
-    UnrealClassRegistry::unregisterActorClass<AWheeledVehiclePawn>("AWheeledVehiclePawn");
-    UnrealClassRegistry::unregisterComponentClass<UChaosVehicleMovementComponent>("UChaosVehicleMovementComponent");
+    SP_UNREGISTER_ACTOR_CLASS(AWheeledVehiclePawn);
+    SP_UNREGISTER_COMPONENT_CLASS(UChaosVehicleMovementComponent);
 
     // EnhancedInput classes
-    UnrealClassRegistry::unregisterSubsystemClass<UEnhancedInputLocalPlayerSubsystem, ULocalPlayer>("UEnhancedInputLocalPlayerSubsystem");
-    UnrealClassRegistry::unregisterClass<UInputAction>("UInputAction");
-    UnrealClassRegistry::unregisterClass<UInputModifierDeadZone>("UInputModifierDeadZone");
-    UnrealClassRegistry::unregisterClass<UInputModifierFOVScaling>("UInputModifierFOVScaling");
-    UnrealClassRegistry::unregisterClass<UInputModifierNegate>("UInputModifierNegate");
-    UnrealClassRegistry::unregisterClass<UInputModifierResponseCurveExponential>("UInputModifierResponseCurveExponential");
-    UnrealClassRegistry::unregisterClass<UInputModifierResponseCurveUser>("UInputModifierResponseCurveUser");
-    UnrealClassRegistry::unregisterClass<UInputModifierScalar>("UInputModifierScalar");
-    UnrealClassRegistry::unregisterClass<UInputModifierScaleByDeltaTime>("UInputModifierScaleByDeltaTime");
-    UnrealClassRegistry::unregisterClass<UInputModifierSmooth>("UInputModifierSmooth");
-    UnrealClassRegistry::unregisterClass<UInputModifierSmoothDelta>("UInputModifierSmoothDelta");
-    UnrealClassRegistry::unregisterClass<UInputModifierSwizzleAxis>("UInputModifierSwizzleAxis");
-    UnrealClassRegistry::unregisterClass<UInputModifierToWorldSpace>("UInputModifierToWorldSpace");
-    UnrealClassRegistry::unregisterClass<UInputTriggerCombo>("UInputTriggerCombo");
-    UnrealClassRegistry::unregisterClass<UInputTriggerChordAction>("UInputTriggerChordAction");
-    UnrealClassRegistry::unregisterClass<UInputTriggerChordBlocker>("UInputTriggerChordBlocker");
-    UnrealClassRegistry::unregisterClass<UInputTriggerDown>("UInputTriggerDown");
-    UnrealClassRegistry::unregisterClass<UInputTriggerHold>("UInputTriggerHold");
-    UnrealClassRegistry::unregisterClass<UInputTriggerHoldAndRelease>("UInputTriggerHoldAndRelease");
-    UnrealClassRegistry::unregisterClass<UInputTriggerPressed>("UInputTriggerPressed");
-    UnrealClassRegistry::unregisterClass<UInputTriggerPulse>("UInputTriggerPulse");
-    UnrealClassRegistry::unregisterClass<UInputTriggerReleased>("UInputTriggerReleased");
-    UnrealClassRegistry::unregisterClass<UInputTriggerTap>("UInputTriggerTap");
-    UnrealClassRegistry::unregisterClass<UInputTriggerTimedBase>("UInputTriggerTimedBase");
+    SP_UNREGISTER_SUBSYSTEM_CLASS(UEnhancedInputLocalPlayerSubsystem, ULocalPlayer);
+    SP_UNREGISTER_CLASS(UInputAction);
+    SP_UNREGISTER_CLASS(UInputModifierDeadZone);
+    SP_UNREGISTER_CLASS(UInputModifierFOVScaling);
+    SP_UNREGISTER_CLASS(UInputModifierNegate);
+    SP_UNREGISTER_CLASS(UInputModifierResponseCurveExponential);
+    SP_UNREGISTER_CLASS(UInputModifierResponseCurveUser);
+    SP_UNREGISTER_CLASS(UInputModifierScalar);
+    SP_UNREGISTER_CLASS(UInputModifierScaleByDeltaTime);
+    SP_UNREGISTER_CLASS(UInputModifierSmooth);
+    SP_UNREGISTER_CLASS(UInputModifierSmoothDelta);
+    SP_UNREGISTER_CLASS(UInputModifierSwizzleAxis);
+    SP_UNREGISTER_CLASS(UInputModifierToWorldSpace);
+    SP_UNREGISTER_CLASS(UInputTriggerCombo);
+    SP_UNREGISTER_CLASS(UInputTriggerChordAction);
+    SP_UNREGISTER_CLASS(UInputTriggerChordBlocker);
+    SP_UNREGISTER_CLASS(UInputTriggerDown);
+    SP_UNREGISTER_CLASS(UInputTriggerHold);
+    SP_UNREGISTER_CLASS(UInputTriggerHoldAndRelease);
+    SP_UNREGISTER_CLASS(UInputTriggerPressed);
+    SP_UNREGISTER_CLASS(UInputTriggerPulse);
+    SP_UNREGISTER_CLASS(UInputTriggerReleased);
+    SP_UNREGISTER_CLASS(UInputTriggerTap);
+    SP_UNREGISTER_CLASS(UInputTriggerTimedBase);
 
     // MovieRenderPipeline classes
-    UnrealClassRegistry::unregisterEngineSubsystemClass<UMoviePipelineQueueEngineSubsystem>("UMoviePipelineQueueEngineSubsystem");
-    UnrealClassRegistry::unregisterClass<UMoviePipelineExecutorJob>("UMoviePipelineExecutorJob");
-    UnrealClassRegistry::unregisterClass<UMoviePipelinePrimaryConfig>("UMoviePipelinePrimaryConfig");
+    SP_UNREGISTER_ENGINE_SUBSYSTEM_CLASS(UMoviePipelineQueueEngineSubsystem);
+    SP_UNREGISTER_CLASS(UMoviePipelineExecutorJob);
+    SP_UNREGISTER_CLASS(UMoviePipelinePrimaryConfig);
 }
 
 // use IMPLEMENT_GAME_MODULE if module implements Unreal classes, use IMPLEMENT_MODULE otherwise

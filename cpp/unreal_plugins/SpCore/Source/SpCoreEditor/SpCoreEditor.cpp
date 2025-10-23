@@ -38,15 +38,15 @@ void SpCoreEditor::ShutdownModule()
 void SpCoreEditor::registerClasses() const
 {
     // Unreal classes
-    UnrealClassRegistryEditor::registerEditorSubsystemClass<ULevelEditorSubsystem>("ULevelEditorSubsystem");
-    UnrealClassRegistryEditor::registerEditorSubsystemClass<UUnrealEditorSubsystem>("UUnrealEditorSubsystem");
+    SP_REGISTER_EDITOR_SUBSYSTEM_CLASS(ULevelEditorSubsystem);
+    SP_REGISTER_EDITOR_SUBSYSTEM_CLASS(UUnrealEditorSubsystem);
 }
 
 void SpCoreEditor::unregisterClasses() const
 {
     // Unreal classes
-    UnrealClassRegistryEditor::unregisterEditorSubsystemClass<ULevelEditorSubsystem>("ULevelEditorSubsystem");
-    UnrealClassRegistryEditor::unregisterEditorSubsystemClass<UUnrealEditorSubsystem>("UUnrealEditorSubsystem");
+    SP_UNREGISTER_EDITOR_SUBSYSTEM_CLASS(ULevelEditorSubsystem);
+    SP_UNREGISTER_EDITOR_SUBSYSTEM_CLASS(UUnrealEditorSubsystem);
 }
 
 // use IMPLEMENT_GAME_MODULE if module implements Unreal classes, use IMPLEMENT_MODULE otherwise

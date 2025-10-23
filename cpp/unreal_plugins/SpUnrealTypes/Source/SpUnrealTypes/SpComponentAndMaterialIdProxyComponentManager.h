@@ -67,30 +67,40 @@ protected:
         ASpProxyComponentManager::terminate();
     }
 
-    void findAndDestroyAllProxyComponents(const std::vector<AActor*>& actors) override
+    void findAndDestroyAllProxyComponentTypes(const std::vector<AActor*>& actors) override
     {
-        findAndDestroyProxyComponentsImpl<UStaticMeshComponent>(actors);
-        findAndDestroyProxyComponentsImpl<USkeletalMeshComponent>(actors);
+        ASpProxyComponentManager::findAndDestroyAllProxyComponentTypes(actors);
+        ASpProxyComponentManager::findAndDestroyProxyComponents<UStaticMeshComponent>(actors);
+        ASpProxyComponentManager::findAndDestroyProxyComponents<USkeletalMeshComponent>(actors);
     }
 
-    void findAndRegisterAllProxyComponents(const std::vector<AActor*>& actors) override
+    void findAndRegisterAllProxyComponentTypes(const std::vector<AActor*>& actors) override
     {
-        findAndRegisterProxyComponentsImpl<UStaticMeshComponent>(actors, this);
-        findAndRegisterProxyComponentsImpl<USkeletalMeshComponent>(actors, this);
+        ASpProxyComponentManager::findAndRegisterAllProxyComponentTypes(actors);
+        ASpProxyComponentManager::findAndRegisterProxyComponents<UStaticMeshComponent>(actors, this);
+        ASpProxyComponentManager::findAndRegisterProxyComponents<USkeletalMeshComponent>(actors, this);
     }
 
-    void findAndUnregisterAllProxyComponents(const std::vector<AActor*>& actors) override
+    void findAndUnregisterAllProxyComponentTypes(const std::vector<AActor*>& actors) override
     {
-        findAndUnregisterProxyComponentsImpl<UStaticMeshComponent>(actors, this);
-        findAndUnregisterProxyComponentsImpl<USkeletalMeshComponent>(actors, this);
+        ASpProxyComponentManager::findAndUnregisterProxyComponents<UStaticMeshComponent>(actors, this);
+        ASpProxyComponentManager::findAndUnregisterProxyComponents<USkeletalMeshComponent>(actors, this);
+        ASpProxyComponentManager::findAndUnregisterAllProxyComponentTypes(actors);
     }
 
     void unregisterProxyComponents(const std::vector<std::string>& component_names) override
     {
-        unregisterProxyComponentsImpl(component_names, this);
+        ASpProxyComponentManager::unregisterProxyComponents(component_names, this);
+        ASpProxyComponentManager::unregisterProxyComponents(component_names);
     }
 
 public:
+    // CProxyComponentRegistryShouldRegister compile-time interface for filtering UStaticMeshComponent (optional)
+    bool shouldRegisterProxyComponent(UStaticMeshComponent* component)
+    {
+        return true;
+    }
+
     // CProxyComponentRegistryCanRegister compile-time interface for registering UStaticMeshComponent
     void* registerProxyComponent(UStaticMeshComponent* proxy_component, UStaticMeshComponent* component)
     {
@@ -131,12 +141,6 @@ public:
         proxy_component->SetVisibility(new_visibility, propagate_to_children);
 
         return component_and_material_desc_ids;
-    }
-
-    // CProxyComponentRegistryShouldRegister compile-time interface for filtering UStaticMeshComponent (optional)
-    bool shouldRegisterProxyComponent(UStaticMeshComponent* component)
-    {
-        return true;
     }
 
     // CProxyComponentRegistryCanRegister compile-time interface for registering USkeletalMeshComponent

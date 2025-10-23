@@ -38,6 +38,30 @@ struct FActorSpawnParameters;
 struct FObjectInstancingGraph;
 
 //
+// Helper macros to avoid repetitive boilerplate code at call sites.
+//
+
+#define SP_REGISTER_ENGINE_SUBSYSTEM_CLASS(engine_subsystem_class_name)                    UnrealClassRegistry::registerEngineSubsystemClass<engine_subsystem_class_name>(#engine_subsystem_class_name)
+#define SP_REGISTER_SUBSYSTEM_PROVIDER_CLASS(subsystem_provider_class_name)                UnrealClassRegistry::registerSubsystemProviderClass<subsystem_provider_class_name>(#subsystem_provider_class_name)
+#define SP_REGISTER_SUBSYSTEM_CLASS(subsystem_class_name, subsystem_provider_class_name)   UnrealClassRegistry::registerSubsystemClass<subsystem_class_name, subsystem_provider_class_name>(#subsystem_class_name)
+#define SP_REGISTER_ACTOR_CLASS(actor_class_name)                                          UnrealClassRegistry::registerActorClass<actor_class_name>(#actor_class_name)
+#define SP_REGISTER_COMPONENT_CLASS(component_class_name)                                  UnrealClassRegistry::registerComponentClass<component_class_name>(#component_class_name)
+#define SP_REGISTER_INTERFACE_CLASS(interface_class_name)                                  UnrealClassRegistry::registerInterface<interface_class_name>(#interface_class_name)
+#define SP_REGISTER_CLASS(class_name)                                                      UnrealClassRegistry::registerClass<class_name>(#class_name)
+#define SP_REGISTER_SPECIAL(struct_name)                                                   UnrealClassRegistry::registerStruct<struct_name>(#struct_name)
+#define SP_REGISTER_SPECIAL_STRUCT(special_struct_name)                                    UnrealClassRegistry::registerSpecialStruct<special_struct_name>(#special_struct_name)
+
+#define SP_UNREGISTER_ENGINE_SUBSYSTEM_CLASS(engine_subsystem_class_name)                  UnrealClassRegistry::unregisterEngineSubsystemClass<engine_subsystem_class_name>(#engine_subsystem_class_name)
+#define SP_UNREGISTER_SUBSYSTEM_PROVIDER_CLASS(subsystem_provider_class_name)              UnrealClassRegistry::unregisterSubsystemProviderClass<subsystem_provider_class_name>(#subsystem_provider_class_name)
+#define SP_UNREGISTER_SUBSYSTEM_CLASS(subsystem_class_name, subsystem_provider_class_name) UnrealClassRegistry::unregisterSubsystemClass<subsystem_class_name, subsystem_provider_class_name>(#subsystem_class_name)
+#define SP_UNREGISTER_ACTOR_CLASS(actor_class_name)                                        UnrealClassRegistry::unregisterActorClass<actor_class_name>(#actor_class_name)
+#define SP_UNREGISTER_COMPONENT_CLASS(component_class_name)                                UnrealClassRegistry::unregisterComponentClass<component_class_name>(#component_class_name)
+#define SP_UNREGISTER_INTERFACE_CLASS(interface_class_name)                                UnrealClassRegistry::unregisterInterface<interface_class_name>(#interface_class_name)
+#define SP_UNREGISTER_CLASS(class_name)                                                    UnrealClassRegistry::unregisterClass<class_name>(#class_name)
+#define SP_UNREGISTER_SPECIAL(struct_name)                                                 UnrealClassRegistry::unregisterStruct<struct_name>(#struct_name)
+#define SP_UNREGISTER_SPECIAL_STRUCT(special_struct_name)                                  UnrealClassRegistry::unregisterSpecialStruct<special_struct_name>(#special_struct_name)
+
+//
 // We need the variables below to be globals because they are referenced in templated code. This requirement
 // arises because templated code gets compiled at each call site. If a call site is in a different module
 // (i.e., outside of SpCore), and it references a static variable, then the module will get its own local
@@ -777,14 +801,12 @@ public:
     static void registerInterface(const std::string& class_name)
     {
         registerClassCommon<TInterface>(class_name);
-        registerStructCommon<TInterface>(class_name);
     }
 
     template <CClass TClass>
     static void registerClass(const std::string& class_name)
     {
         registerClassCommon<TClass>(class_name);
-        registerStructCommon<TClass>(class_name);
 
         //
         // Create object
@@ -809,6 +831,8 @@ public:
     template <typename TClass>
     static void registerClassCommon(const std::string& class_name)
     {
+        registerStructCommon<TClass>(class_name);
+
         //
         // Get static class
         //
@@ -1017,7 +1041,6 @@ public:
     static void unregisterInterface(const std::string& class_name)
     {
         unregisterClassCommon<TInterface>(class_name);
-        unregisterStructCommon<TInterface>(class_name);
     }
 
     template <CClass TClass>
@@ -1033,6 +1056,8 @@ public:
     template <typename TClass>
     static void unregisterClassCommon(const std::string& class_name)
     {
+        unregisterStructCommon<TClass>(class_name);
+
         g_get_static_class_func_registry.unregisterFunc(class_name);
     }
 
@@ -1094,6 +1119,7 @@ public:
             SP_ASSERT(!Std::containsKey(g_special_struct_names, type_id_string));
             return g_special_structs.at(type_id_string);
         }
+        SP_ASSERT(false);
         return nullptr;
     }
 };

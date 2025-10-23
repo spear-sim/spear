@@ -90,13 +90,14 @@ protected:
     virtual void initialize();
     virtual void terminate();
     virtual void update();
-    virtual void findAndDestroyAllProxyComponents(const std::vector<AActor*>& actors) {};
-    virtual void findAndRegisterAllProxyComponents(const std::vector<AActor*>& actors) {};
-    virtual void findAndUnregisterAllProxyComponents(const std::vector<AActor*>& actors) {};
+
+    virtual void findAndDestroyAllProxyComponentTypes(const std::vector<AActor*>& actors) {};
+    virtual void findAndRegisterAllProxyComponentTypes(const std::vector<AActor*>& actors) {};
+    virtual void findAndUnregisterAllProxyComponentTypes(const std::vector<AActor*>& actors) {};
     virtual void unregisterProxyComponents(const std::vector<std::string>& component_names) {};
 
     template <CComponent TComponent>
-    void findAndDestroyProxyComponentsImpl(const std::vector<AActor*>& actors)
+    void findAndDestroyProxyComponents(const std::vector<AActor*>& actors)
     {
         // Find all proxy components of type TComponent that belong to this manager.
         std::vector<TComponent*> proxy_components = Std::toVector<TComponent*>(
@@ -113,7 +114,7 @@ protected:
 
     template <typename TComponent, typename TProxyComponentRegistry> requires
         CProxyComponentRegistryCanUnregister<TProxyComponentRegistry> && CProxyComponentRegistryCanRegister<TProxyComponentRegistry, TComponent>
-    void findAndRegisterProxyComponentsImpl(const std::vector<AActor*>& actors, TProxyComponentRegistry* proxy_component_registry)
+    void findAndRegisterProxyComponents(const std::vector<AActor*>& actors, TProxyComponentRegistry* proxy_component_registry)
     {
         // Find all non-proxy components of type TComponent.
         std::map<std::string, TComponent*> non_proxy_components = Std::toMap<std::string, TComponent*>(
@@ -127,12 +128,12 @@ protected:
             std::views::filter([this](auto& pair) { auto& [name, component] = pair; return !Std::containsKey(name_to_proxy_component_desc_map_, name); }));
 
         // Register components.
-        registerComponentsImpl<TComponent>(components_to_register, proxy_component_registry);
+        registerComponents<TComponent>(components_to_register, proxy_component_registry);
     }
 
     template <typename TComponent, typename TProxyComponentRegistry> requires
         CProxyComponentRegistryCanUnregister<TProxyComponentRegistry> && CProxyComponentRegistryCanRegister<TProxyComponentRegistry, TComponent>
-    void findAndUnregisterProxyComponentsImpl(const std::vector<AActor*>& actors, TProxyComponentRegistry* proxy_component_registry)
+    void findAndUnregisterProxyComponents(const std::vector<AActor*>& actors, TProxyComponentRegistry* proxy_component_registry)
     {
         // Find all non-proxy components of type TComponent.
         std::map<std::string, TComponent*> non_proxy_components = Std::toMap<std::string, TComponent*>(
@@ -149,12 +150,12 @@ protected:
 
         // Unregister components. Do this before registering so we can recycle IDs from the unregistered
         // components.
-        unregisterProxyComponentsImpl(proxy_components_to_unregister, proxy_component_registry);
+        unregisterProxyComponents(proxy_components_to_unregister, proxy_component_registry);
     }
 
     template <typename TComponent, typename TProxyComponentRegistry> requires
         CProxyComponentRegistryCanRegister<TProxyComponentRegistry, TComponent>
-    void registerComponentsImpl(const std::map<std::string, TComponent*>& components, TProxyComponentRegistry* proxy_component_registry)
+    void registerComponents(const std::map<std::string, TComponent*>& components, TProxyComponentRegistry* proxy_component_registry)
     {
         for (auto& [name, component] : components) {
             if (shouldRegisterComponent(proxy_component_registry, component)) {
@@ -192,7 +193,7 @@ protected:
 
     template <typename TProxyComponentRegistry> requires
         CProxyComponentRegistryCanUnregister<TProxyComponentRegistry>
-    void unregisterProxyComponentsImpl(const std::vector<std::string>& component_names, TProxyComponentRegistry* proxy_component_registry)
+    void unregisterProxyComponents(const std::vector<std::string>& component_names, TProxyComponentRegistry* proxy_component_registry)
     {
         for (auto& name : component_names) {
             SP_LOG("Unregistering component: ", name);

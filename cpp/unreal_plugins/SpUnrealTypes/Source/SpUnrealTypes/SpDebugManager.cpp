@@ -634,53 +634,53 @@ void ASpDebugManager::ReadPixels()
 void ASpDebugManager::PrintDebugInfo()
 {
     AStaticMeshActor* static_mesh_actor = Unreal::findActorByName<AStaticMeshActor>(GetWorld(), "Debug/SM_Prop_04");
-    SP_ASSERT(static_mesh_actor);
-
     SP_LOG("Printing debug info for actor: ", Unreal::tryGetStableName(static_mesh_actor));
 
     SP_LOG("Non-scene components: ");
     std::map<std::string, UActorComponent*> components = Unreal::getComponentsAsMap(static_mesh_actor);
     for (auto& [name, component] : components) {
-        if (!component->IsA(USceneComponent::StaticClass()))
-        SP_LOG("    ", name, " (", Unreal::toStdString(component->GetClass()->GetPrefixCPP()) + Unreal::toStdString(component->GetClass()->GetName()) + ")");
+        if (!component->IsA(USceneComponent::StaticClass())) {
+            SP_LOG("    ", name, " (", Unreal::getCppTypeAsString(component->GetClass()), + ")");
+        }
     }
 
     SP_LOG("Scene components: ");
     USceneComponent* root_component = static_mesh_actor->GetRootComponent();
     if (root_component) {
-        SP_LOG("    ", Unreal::getStableName(root_component), " (", Unreal::toStdString(root_component->GetClass()->GetPrefixCPP()) + Unreal::toStdString(root_component->GetClass()->GetName()) + ")");
+        SP_LOG("    ", Unreal::getStableName(root_component), " (", Unreal::getCppTypeAsString(root_component->GetClass()) + ")");
         std::map<std::string, USceneComponent*> scene_components = Unreal::getChildrenComponentsAsMap(root_component);
         for (auto& [name, scene_component] : scene_components) {
-            SP_LOG("    ", name, " (", Unreal::toStdString(scene_component->GetClass()->GetPrefixCPP()) + Unreal::toStdString(scene_component->GetClass()->GetName()) + ")");
+            SP_LOG("    ", name, " (", Unreal::getCppTypeAsString(scene_component->GetClass()) + ")");
         }
     }
 
-    UStruct* ustruct = static_mesh_actor->GetClass();
+    UClass* uclass = static_mesh_actor->GetClass();
+    SP_ASSERT(uclass);
 
-    SP_LOG("Metaclass: ", Unreal::toStdString(ustruct->GetClass()->GetPrefixCPP()) + Unreal::toStdString(ustruct->GetClass()->GetName()));
-    SP_LOG("C++ type: ", Unreal::toStdString(ustruct->GetPrefixCPP()) + Unreal::toStdString(ustruct->GetName()));
+    SP_LOG("Meta type: ", Unreal::getCppTypeAsString(uclass->GetClass()));
+    SP_LOG("Target type: ", Unreal::getCppTypeAsString(uclass));
 
     SP_LOG("C++ type hierarchy: ");
-    for (UStruct* current_ustruct = ustruct; current_ustruct; current_ustruct = current_ustruct->GetSuperStruct()) {
-        SP_LOG("    ", Unreal::toStdString(current_ustruct->GetPrefixCPP()) + Unreal::toStdString(current_ustruct->GetName()));
+    for (UClass* current_uclass = uclass; current_uclass; current_uclass = current_uclass->GetSuperClass()) {
+        SP_LOG("    ", Unreal::getCppTypeAsString(current_uclass->GetClass()));
     }
 
     SP_LOG("Properties: ");
-    for (UStruct* current_ustruct = ustruct; current_ustruct; current_ustruct = current_ustruct->GetSuperStruct()) {
-        SP_LOG("    Properties for type: ", Unreal::toStdString(current_ustruct->GetPrefixCPP()) + Unreal::toStdString(current_ustruct->GetName()));
-        for (TFieldIterator<FProperty> itr(current_ustruct, EFieldIteratorFlags::ExcludeSuper); itr; ++itr) {
+    for (UClass* current_uclass = uclass; current_uclass; current_uclass = current_uclass->GetSuperClass()) {
+        SP_LOG("    Properties for type: ", Unreal::toStdString(current_uclass->GetPrefixCPP()) + Unreal::toStdString(current_uclass->GetName()));
+        for (TFieldIterator<FProperty> itr(current_uclass, EFieldIteratorFlags::ExcludeSuper); itr; ++itr) {
             FProperty* property = *itr;
             SP_LOG("        Property: ", Unreal::toStdString(property->GetName()), " (", Unreal::toStdString(property->GetCPPType()), ")");
         }
     }
 
     SP_LOG("Functions: ");
-    for (UStruct* current_ustruct = ustruct; current_ustruct; current_ustruct = current_ustruct->GetSuperStruct()) {
-        SP_LOG("    Functions for type: ", Unreal::toStdString(current_ustruct->GetPrefixCPP()) + Unreal::toStdString(current_ustruct->GetName()));
-        for (TFieldIterator<UFunction> itr(current_ustruct, EFieldIteratorFlags::ExcludeSuper); itr; ++itr) {
-            UFunction* function = *itr;
-            SP_LOG("        Function: ", Unreal::toStdString(function->GetName()));
-            for (TFieldIterator<FProperty> itr(function); itr; ++itr) {
+    for (UClass* current_uclass = uclass; current_uclass; current_uclass = current_uclass->GetSuperClass()) {
+        SP_LOG("    Functions for type: ", Unreal::toStdString(current_uclass->GetPrefixCPP()) + Unreal::toStdString(current_uclass->GetName()));
+        for (TFieldIterator<UFunction> itr(current_uclass, EFieldIteratorFlags::ExcludeSuper); itr; ++itr) {
+            UFunction* ufunction = *itr;
+            SP_LOG("        Function: ", Unreal::toStdString(ufunction->GetName()));
+            for (TFieldIterator<FProperty> itr(ufunction); itr; ++itr) {
                 FProperty* property = *itr;
                 SP_ASSERT(property->HasAnyPropertyFlags(EPropertyFlags::CPF_Parm));
                 if (!property->HasAnyPropertyFlags(EPropertyFlags::CPF_ReturnParm)) {

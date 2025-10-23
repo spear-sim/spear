@@ -827,8 +827,9 @@ private:
     // Only accessed on the worker thread.
     WorkQueue* current_work_queue_ = nullptr;
 
-    // Written by the game thread in beginFrame(), endFrame(), and terminate(). Written by the worker thread in
-    // engine_service.initialize.
+    // Written and read by the game thread in beginFrame() and endFrame(). Written by the worker thread in engine_service.initialize
+    // and engine_service.terminate. Read by the worker thread in the lambda returned by wrapFuncToExecuteInTryCatch(...),
+    // which is used when executing all entry points on the worker thread.
     std::atomic<FrameState> frame_state_ = FrameState::Idle;
 
     // Written by the worker thread in engine_service.initialize and engine_service.begin_frame to indicate
@@ -836,22 +837,24 @@ private:
     // in beginFrame().
     std::atomic<bool> request_begin_frame_ = false;
 
-    // Written by the worker thread in engine_service.initialize and engine_service.terminate to indicate to the
-    // game thread that we want to terminate the application. Read by the worker thread in engine_service.begin_frame,
+    // Written by the worker thread in engine_service.initialize and engine_service.terminate to indicate to
+    // the game thread that we want to terminate the application. Read by the worker thread in engine_service.begin_frame,
     // engine_service.execute_frame, and engine_service.end_frame. Read by the game thread in beginFrame()
     // and endFrame().
     std::atomic<bool> request_terminate_ = false;
 
-    // Written by the worker thread in executeFuncInTryCatch(...) to indicate to the game thread that an
-    // error has occurred. Read by the worker thread in engine_service.begin_frame, engine_service.execute_frame,
-    // and engine_service.end_frame. Read by the game thread in beginFrame() and endFrame().
+    // Written by the worker thread in engine_service.initialize. Written by the worker thread and the game
+    // thread in executeFuncInTryCatch(...) to indicate to the game thread that an error has occurred. Read
+    // by the worker thread in engine_service.begin_frame, engine_service.execute_frame, and engine_service.end_frame.
+    // Read by the game thread in beginFrame(), endFrame(), and the lambdas returned by the wrapFuncToExecuteInWorkQueue(...)
+    // methods.
     std::atomic<bool> request_error_ = false;
 
     // These promises and futures are each initialized by the worker thread in engine_service.initialize, engine_service.begin_frame,
     // and engine_service.execute_frame. Subsequently, the promises are only ever set by the game thread in
     // beginFrame(), endFrame(), and terminate(). The futures are only ever read on the worker thread in engine_service.begin_frame
     // and engine_service.execute_frame. Each bool variable is set by the game thread whenever the corresponding
-    // promise is set, and is read by the game thread in terminate() to avoid deadlocks when terminate the
+    // promise is set, and is read by the game thread in shutdown() to avoid deadlocks when shutting down the
     // application. The mutexes are used to coordinate access to the promises, the futures, and the bools.
     std::mutex begin_frame_mutex_;
     std::mutex end_frame_mutex_;

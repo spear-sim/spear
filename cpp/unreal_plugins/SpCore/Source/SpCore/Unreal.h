@@ -194,6 +194,19 @@ public:
         return TInterface::UClassType::StaticClass();
     }
 
+    template <typename TStructOrClassOrInterface> requires
+         CStruct<TStructOrClassOrInterface> || CClass<TStructOrClassOrInterface> || CInterface<TStructOrClassOrInterface>
+    static std::string getCppTypeAsString()
+    {
+        UStruct* ustruct = getStaticStruct<TStructOrClassOrInterface>();
+        return Unreal::toStdString(ustruct->GetPrefixCPP()) + Unreal::toStdString(ustruct->GetName());
+    }
+
+    static std::string getCppTypeAsString(UStruct* ustruct)
+    {
+        return Unreal::toStdString(ustruct->GetPrefixCPP()) + Unreal::toStdString(ustruct->GetName());
+    }
+
     //
     // Find special struct by name. For this function to behave as expected, USpSpecialStructs must have a
     // UPROPERTY defined on it named TypeName_ of type TypeName.

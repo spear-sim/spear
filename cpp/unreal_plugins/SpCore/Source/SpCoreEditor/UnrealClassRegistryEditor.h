@@ -17,6 +17,13 @@
 class UEditorSubsystem;
 
 //
+// Helper macros to avoid repetitive boilerplate code at call sites.
+//
+
+#define SP_REGISTER_EDITOR_SUBSYSTEM_CLASS(editor_subsystem_class_name)   UnrealClassRegistryEditor::registerEditorSubsystemClass<editor_subsystem_class_name>(#editor_subsystem_class_name);
+#define SP_UNREGISTER_EDITOR_SUBSYSTEM_CLASS(editor_subsystem_class_name) UnrealClassRegistryEditor::unregisterEditorSubsystemClass<editor_subsystem_class_name>(#editor_subsystem_class_name);
+
+//
 // We need the variables below to be globals because they are referenced in templated code. This requirement
 // arises because templated code gets compiled at each call site. If a call site is in a different module
 // (i.e., outside of SpCore), and it references a static variable, then the module will get its own local
