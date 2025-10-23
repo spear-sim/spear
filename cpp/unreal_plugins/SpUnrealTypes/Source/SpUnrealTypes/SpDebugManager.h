@@ -76,6 +76,9 @@ private:
     UFUNCTION(CallInEditor, Category="SPEAR")
     void ReadPixels();
 
+    UFUNCTION(CallInEditor, Category="SPEAR")
+    void PrintDebugInfo();
+
     UFUNCTION()
     FString GetString(FString Arg0, bool Arg1, int Arg2, FVector Arg3) const;
 

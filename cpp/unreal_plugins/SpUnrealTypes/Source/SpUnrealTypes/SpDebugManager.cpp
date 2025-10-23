@@ -631,6 +631,68 @@ void ASpDebugManager::ReadPixels()
     SP_LOG("    view_ptr[3]: ", (int)(((uint8_t*)view_ptr)[3]));
 }
 
+void ASpDebugManager::PrintDebugInfo()
+{
+    AStaticMeshActor* static_mesh_actor = Unreal::findActorByName<AStaticMeshActor>(GetWorld(), "Debug/SM_Prop_04");
+    SP_ASSERT(static_mesh_actor);
+
+    SP_LOG("Printing debug info for actor: ", Unreal::tryGetStableName(static_mesh_actor));
+
+    SP_LOG("Non-scene components: ");
+    std::map<std::string, UActorComponent*> components = Unreal::getComponentsAsMap(static_mesh_actor);
+    for (auto& [name, component] : components) {
+        if (!component->IsA(USceneComponent::StaticClass()))
+        SP_LOG("    ", name, " (", Unreal::toStdString(component->GetClass()->GetPrefixCPP()) + Unreal::toStdString(component->GetClass()->GetName()) + ")");
+    }
+
+    SP_LOG("Scene components: ");
+    USceneComponent* root_component = static_mesh_actor->GetRootComponent();
+    if (root_component) {
+        SP_LOG("    ", Unreal::getStableName(root_component), " (", Unreal::toStdString(root_component->GetClass()->GetPrefixCPP()) + Unreal::toStdString(root_component->GetClass()->GetName()) + ")");
+        std::map<std::string, USceneComponent*> scene_components = Unreal::getChildrenComponentsAsMap(root_component);
+        for (auto& [name, scene_component] : scene_components) {
+            SP_LOG("    ", name, " (", Unreal::toStdString(scene_component->GetClass()->GetPrefixCPP()) + Unreal::toStdString(scene_component->GetClass()->GetName()) + ")");
+        }
+    }
+
+    UStruct* ustruct = static_mesh_actor->GetClass();
+
+    SP_LOG("Metaclass: ", Unreal::toStdString(ustruct->GetClass()->GetPrefixCPP()) + Unreal::toStdString(ustruct->GetClass()->GetName()));
+    SP_LOG("C++ type: ", Unreal::toStdString(ustruct->GetPrefixCPP()) + Unreal::toStdString(ustruct->GetName()));
+
+    SP_LOG("C++ type hierarchy: ");
+    for (UStruct* current_ustruct = ustruct; current_ustruct; current_ustruct = current_ustruct->GetSuperStruct()) {
+        SP_LOG("    ", Unreal::toStdString(current_ustruct->GetPrefixCPP()) + Unreal::toStdString(current_ustruct->GetName()));
+    }
+
+    SP_LOG("Properties: ");
+    for (UStruct* current_ustruct = ustruct; current_ustruct; current_ustruct = current_ustruct->GetSuperStruct()) {
+        SP_LOG("    Properties for type: ", Unreal::toStdString(current_ustruct->GetPrefixCPP()) + Unreal::toStdString(current_ustruct->GetName()));
+        for (TFieldIterator<FProperty> itr(current_ustruct, EFieldIteratorFlags::ExcludeSuper); itr; ++itr) {
+            FProperty* property = *itr;
+            SP_LOG("        Property: ", Unreal::toStdString(property->GetName()), " (", Unreal::toStdString(property->GetCPPType()), ")");
+        }
+    }
+
+    SP_LOG("Functions: ");
+    for (UStruct* current_ustruct = ustruct; current_ustruct; current_ustruct = current_ustruct->GetSuperStruct()) {
+        SP_LOG("    Functions for type: ", Unreal::toStdString(current_ustruct->GetPrefixCPP()) + Unreal::toStdString(current_ustruct->GetName()));
+        for (TFieldIterator<UFunction> itr(current_ustruct, EFieldIteratorFlags::ExcludeSuper); itr; ++itr) {
+            UFunction* function = *itr;
+            SP_LOG("        Function: ", Unreal::toStdString(function->GetName()));
+            for (TFieldIterator<FProperty> itr(function); itr; ++itr) {
+                FProperty* property = *itr;
+                SP_ASSERT(property->HasAnyPropertyFlags(EPropertyFlags::CPF_Parm));
+                if (!property->HasAnyPropertyFlags(EPropertyFlags::CPF_ReturnParm)) {
+                    SP_LOG("            Argument: ", Unreal::toStdString(property->GetName()), " (", Unreal::toStdString(property->GetCPPType()), ")");
+                } else {
+                    SP_LOG("            Return value: ", Unreal::toStdString(property->GetName()), " (", Unreal::toStdString(property->GetCPPType()), ")");
+                }
+            }
+        }
+    }
+}
+
 FString ASpDebugManager::GetString(FString Arg0, bool Arg1, int Arg2, FVector Arg3) const
 {
     SP_LOG_CURRENT_FUNCTION();
