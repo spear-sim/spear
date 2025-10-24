@@ -33,7 +33,7 @@ void ASpDebugCameraHUD::PostRender()
 
                 bool trace_complex = true;
                 #if !(UE_BUILD_SHIPPING || UE_BUILD_TEST) // defined by the Unreal Build Tool
-                    IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("g.DebugCameraTraceComplex"));
+                    IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr("g.DebugCameraTraceComplex"));
                     SP_ASSERT(cvar);
                     trace_complex = cvar->GetBool();
                 #endif

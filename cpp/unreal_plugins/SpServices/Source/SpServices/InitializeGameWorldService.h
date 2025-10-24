@@ -51,9 +51,9 @@ protected:
         if (force_skylight_update_) {
             SP_LOG("    Setting r.SkylightUpdateEveryFrame: ", force_skylight_update_previous_cvar_value_);
 
-            IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.SkylightUpdateEveryFrame"));
+            IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr("r.SkylightUpdateEveryFrame"));
+            SP_ASSERT(cvar);
             cvar->Set(force_skylight_update_previous_cvar_value_);
-
             force_skylight_update_ = false;
             force_skylight_update_max_duration_seconds_ = -1.0f;
             force_skylight_update_previous_cvar_value_ = -1;
@@ -96,7 +96,7 @@ protected:
             SP_ASSERT(GEngine);
             for (auto& cmd : console_commands) {
                 SP_LOG("    Executing console command: ", cmd);
-                GEngine->Exec(getWorld(), *Unreal::toFString(cmd));
+                GEngine->Exec(getWorld(), Unreal::toTCharPtr(cmd));
             }
         }
 
@@ -118,7 +118,8 @@ protected:
         if (force_skylight_update_) {
             SP_LOG("    Forcing skylight updates every frame for ", force_skylight_update_max_duration_seconds_, " seconds...");
 
-            IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.SkylightUpdateEveryFrame"));
+            IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr("r.SkylightUpdateEveryFrame"));
+            SP_ASSERT(cvar);
             force_skylight_update_previous_cvar_value_ = cvar->GetInt();
             cvar->Set(1);
 
@@ -145,9 +146,9 @@ protected:
                 SP_LOG_CURRENT_FUNCTION();
                 SP_LOG("    Setting r.SkylightUpdateEveryFrame: ", force_skylight_update_previous_cvar_value_);
 
-                IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.SkylightUpdateEveryFrame"));
+                IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr("r.SkylightUpdateEveryFrame"));
+                SP_ASSERT(cvar);
                 cvar->Set(force_skylight_update_previous_cvar_value_);
-
                 force_skylight_update_ = false;
                 force_skylight_update_max_duration_seconds_ = -1.0f;
                 force_skylight_update_previous_cvar_value_ = -1;

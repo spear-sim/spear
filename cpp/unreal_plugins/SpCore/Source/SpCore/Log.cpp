@@ -42,7 +42,7 @@ void Log::logCurrentFunction(const std::filesystem::path& current_file, int curr
 void Log::logString(const std::string& str)
 {
     #if WITH_EDITOR // defined in an auto-generated header
-        if (IsRunningCommandlet() || FParse::Param(FCommandLine::Get(), *Unreal::toFString("game"))) {
+        if (IsRunningCommandlet() || FParse::Param(FCommandLine::Get(), Unreal::toTCharPtr("game"))) {
             logStringToStdout(str); // editor mode via command-line (e.g., during cooking)
         } else {
             logStringToUnreal(str); // editor mode via GUI
@@ -59,7 +59,11 @@ void Log::logStringToStdout(const std::string& str)
 
 void Log::logStringToUnreal(const std::string& str)
 {
-    // We need to use TEXT() instead of *Unreal::toFString() because the * operator doesn't return a const pointer
+    // We need to use TEXT(...) and *Unreal::toFString(...) because if we use Unreal::toTCharPtr(...) we will
+    // fail static assertions and get errors in the UE_LOG macro:
+    //     error: static assertion failed due to requirement 'std::is_const_v<Unreal::TCharPtr>': Formatting string must be a const TCHAR array.
+    //     error: static assertion failed due to requirement 'TIsArrayOrRefOfTypeByPredicate<Unreal::TCharPtr, TIsCharEncodingCompatibleWithTCHAR>::Value': Formatting string must be a TCHAR array.
+    //     error: cannot pass object of non-trivial type 'Unreal::TCharPtr' through variadic function; call will abort at runtime [-Wnon-pod-varargs]
     UE_LOG(LogSpear, Log, TEXT("%s"), *Unreal::toFString(str));
 }
 

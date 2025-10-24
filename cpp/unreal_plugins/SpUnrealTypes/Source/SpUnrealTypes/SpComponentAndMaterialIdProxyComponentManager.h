@@ -58,7 +58,7 @@ protected:
     void initialize() override
     {
         ASpProxyComponentManager::initialize();
-        Material = LoadObject<UMaterialInterface>(nullptr, *Unreal::toFString("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
+        Material = LoadObject<UMaterialInterface>(nullptr, Unreal::toTCharPtr("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial"));
     };
 
     void terminate() override

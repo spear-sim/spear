@@ -1038,8 +1038,8 @@ public:
                     UnrealClassRegistry::loadObject(
                         class_name,
                         toPtr<UObject>(outer),
-                        *Unreal::toFString(name),
-                        *Unreal::toFString(filename),
+                        Unreal::toTCharPtr(name),
+                        Unreal::toTCharPtr(filename),
                         Unreal::getCombinedEnumFlagValueFromStringsAs<ELoadFlags, ESpLoadFlags>(load_flag_strings),
                         toPtr<UPackageMap>(sandbox),
                         toPtr<FLinkerInstancingContext>(instancing_context)));
@@ -1058,8 +1058,8 @@ public:
                     UnrealClassRegistry::loadClass(
                         class_name,
                         toPtr<UObject>(outer),
-                        *Unreal::toFString(name),
-                        *Unreal::toFString(filename),
+                        Unreal::toTCharPtr(name),
+                        Unreal::toTCharPtr(filename),
                         Unreal::getCombinedEnumFlagValueFromStringsAs<ELoadFlags, ESpLoadFlags>(load_flag_strings),
                         toPtr<UPackageMap>(sandbox)));
             });
@@ -1079,8 +1079,8 @@ public:
                     StaticLoadObject(
                         toPtr<UClass>(uclass),
                         toPtr<UClass>(in_outer),
-                        *Unreal::toFString(name),
-                        *Unreal::toFString(filename),
+                        Unreal::toTCharPtr(name),
+                        Unreal::toTCharPtr(filename),
                         Unreal::getCombinedEnumFlagValueFromStringsAs<ELoadFlags, ESpLoadFlags>(load_flag_strings),
                         toPtr<UPackageMap>(sandbox),
                         allow_object_reconciliation,
@@ -1100,8 +1100,8 @@ public:
                     StaticLoadClass(
                         toPtr<UClass>(uclass),
                         toPtr<UClass>(in_outer),
-                        *Unreal::toFString(name),
-                        *Unreal::toFString(filename),
+                        Unreal::toTCharPtr(name),
+                        Unreal::toTCharPtr(filename),
                         Unreal::getCombinedEnumFlagValueFromStringsAs<ELoadFlags, ESpLoadFlags>(load_flag_strings),
                         toPtr<UPackageMap>(sandbox)));
             });
@@ -1130,7 +1130,7 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_console_variable_by_name",
             [this](std::string& cvar_name) -> uint64_t {
-                return toUInt64(IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString(cvar_name)));
+                return toUInt64(IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr(cvar_name)));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_console_variable_value_as_bool",
@@ -1178,7 +1178,7 @@ public:
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "set_console_variable_value_from_string",
             [this](uint64_t& cvar, std::string& val, std::vector<std::string>& set_by_strings) -> void {
                 SP_ASSERT(cvar);
-                toPtr<IConsoleVariable>(cvar)->Set(*Unreal::toFString(val), Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings));
+                toPtr<IConsoleVariable>(cvar)->Set(Unreal::toTCharPtr(val), Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings));
             });
 
         //
@@ -1188,7 +1188,7 @@ public:
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "execute_console_command",
             [this](std::string& command) -> void {
                 SP_ASSERT(GEngine);
-                GEngine->Exec(getWorld(), *Unreal::toFString(command));
+                GEngine->Exec(getWorld(), Unreal::toTCharPtr(command));
             });
 
         //

@@ -57,7 +57,7 @@ public:
 
     void RenderSample_GameThreadImpl(const FMoviePipelineRenderPassMetrics& in_sample_state) override
     {
-        IConsoleVariable* material_ao_cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.Lumen.ScreenProbeGather.MaterialAO"));
+        IConsoleVariable* material_ao_cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr("r.Lumen.ScreenProbeGather.MaterialAO"));
         SP_ASSERT(material_ao_cvar);
         int material_ao_cvar_value = material_ao_cvar->GetInt();
         material_ao_cvar->Set(0);

@@ -77,7 +77,7 @@ void ASpGameMode::SpAddOnScreenDebugMessage(uint64 Key, float TimeToDisplay, con
     // methods only execute when the game is running anyway.
     std::string display_color_str = Unreal::toStdString(DisplayColor.ToLower());
     std::string debug_message_str = SP_LOG_GET_PREFIX() + Unreal::toStdString(DebugMessage);
-    GEngine->AddOnScreenDebugMessage(Key, TimeToDisplay, GColorList.GetFColorByName(*Unreal::toFString(display_color_str)), Unreal::toFString(debug_message_str));
+    GEngine->AddOnScreenDebugMessage(Key, TimeToDisplay, GColorList.GetFColorByName(Unreal::toTCharPtr(display_color_str)), Unreal::toFString(debug_message_str));
 }
 
 void ASpGameMode::SpMountPak(const FString& PakFile) const

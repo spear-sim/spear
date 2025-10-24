@@ -129,7 +129,7 @@ void ASpInitializeWorldManager::BeginPlay()
         SP_LOG("    Executing console commands...");
         SP_ASSERT(GEngine);
         for (auto& cmd : console_commands) {
-            GEngine->Exec(GetWorld(), *Unreal::toFString(cmd));
+            GEngine->Exec(GetWorld(), Unreal::toTCharPtr(cmd));
         }
     }
 
@@ -146,7 +146,9 @@ void ASpInitializeWorldManager::BeginPlay()
 
         SP_LOG("    Forcing skylight updates every frame for ", ForceSkylightUpdateMaxDurationSeconds, " seconds...");
 
-        IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.SkylightUpdateEveryFrame"));
+        IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr("r.SkylightUpdateEveryFrame"));
+        SP_ASSERT(cvar);
+
         force_skylight_update_previous_cvar_value_ = cvar->GetInt();
         cvar->Set(1);
 
@@ -162,7 +164,8 @@ void ASpInitializeWorldManager::EndPlay(const EEndPlayReason::Type end_play_reas
     if (force_skylight_update_) {
         SP_LOG("    Setting r.SkylightUpdateEveryFrame to ", force_skylight_update_previous_cvar_value_);
 
-        IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.SkylightUpdateEveryFrame"));
+        IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr("r.SkylightUpdateEveryFrame"));
+        SP_ASSERT(cvar);
         cvar->Set(force_skylight_update_previous_cvar_value_);
 
         force_skylight_update_ = false;
@@ -193,7 +196,8 @@ void ASpInitializeWorldManager::Tick(float delta_time)
             SP_LOG_CURRENT_FUNCTION();
             SP_LOG("    Setting r.SkylightUpdateEveryFrame to ", force_skylight_update_previous_cvar_value_);
 
-            IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(*Unreal::toFString("r.SkylightUpdateEveryFrame"));
+            IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr("r.SkylightUpdateEveryFrame"));
+            SP_ASSERT(cvar);
             cvar->Set(force_skylight_update_previous_cvar_value_);
 
             force_skylight_update_ = false;

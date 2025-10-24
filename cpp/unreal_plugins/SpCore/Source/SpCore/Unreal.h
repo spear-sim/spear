@@ -1338,8 +1338,17 @@ public:
     static std::string toStdString(const TCHAR* str);
 
     static FName toFName(const std::string& str);
-    static FText toFText(const std::string& str);
     static FString toFString(const std::string& str);
+    static FText toFText(const std::string& str);
+
+    struct TCharPtr
+    {
+        TCharPtr() = delete;
+        TCharPtr(const std::string& str) { str_ = toFString(str); }
+        operator const TCHAR*() const { return *str_; }
+        FString str_;
+    };
+    static Unreal::TCharPtr toTCharPtr(const std::string& str);
 
 private:
 

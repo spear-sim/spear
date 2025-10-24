@@ -822,14 +822,19 @@ FName Unreal::toFName(const std::string& str)
     return FName(str.c_str());
 }
 
+FString Unreal::toFString(const std::string& str)
+{
+    return FString(UTF8_TO_TCHAR(str.c_str()));
+}
+
 FText Unreal::toFText(const std::string& str)
 {
     return FText::FromString(toFString(str));
 }
 
-FString Unreal::toFString(const std::string& str)
+Unreal::TCharPtr Unreal::toTCharPtr(const std::string& str)
 {
-    return FString(UTF8_TO_TCHAR(str.c_str()));
+    return TCharPtr(str);
 }
 
 //

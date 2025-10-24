@@ -38,7 +38,7 @@ void Config::requestInitialize()
 {
     // if a config file is provided via the -config_file=path/to/config.yaml command-line argument, then load it
     FString config_file;
-    if (FParse::Value(FCommandLine::Get(), *Unreal::toFString("config_file="), config_file)) {
+    if (FParse::Value(FCommandLine::Get(), Unreal::toTCharPtr("config_file="), config_file)) {
         std::string config_file_str = Unreal::toStdString(config_file);
         SP_LOG_CURRENT_FUNCTION();
         SP_LOG("    Found config file via the -config_file command-line argument...");
