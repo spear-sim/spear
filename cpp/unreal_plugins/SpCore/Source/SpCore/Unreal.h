@@ -1345,7 +1345,7 @@ public:
     {
         TCharPtr() = delete;
         TCharPtr(const std::string& str) { str_ = toFString(str); }
-        operator const TCHAR*() const { return *str_; }
+        operator const TCHAR* () const { return *str_; }
         FString str_;
     };
     static Unreal::TCharPtr toTCharPtr(const std::string& str);
