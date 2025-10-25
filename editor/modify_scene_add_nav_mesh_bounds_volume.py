@@ -82,7 +82,7 @@ if __name__ == "__main__":
                 nav_mesh_bounds_volume_subobject_descs = spear.utils.editor_utils.get_subobject_descs_for_instance(nav_mesh_bounds_volume)
                 assert len(nav_mesh_bounds_volume_subobject_descs) == 2
                 assert isinstance(nav_mesh_bounds_volume_subobject_descs[0]["object"], unreal.Actor)          # the 0th entry always refers to the actor itself
-                assert isinstance(nav_mesh_bounds_volume_subobject_descs[1]["object"], unreal.BrushComponent) # the 1st entry always refers to the actor's root component
+                assert isinstance(nav_mesh_bounds_volume_subobject_descs[1]["object"], unreal.BrushComponent) # the 1st entry must be the root component in this case because there are only 2 entries
 
                 parent_data_handle = nav_mesh_bounds_volume_subobject_descs[0]["data_handle"] # actor
                 sp_stable_name_component_desc = spear.utils.editor_utils.add_new_subobject_to_instance(

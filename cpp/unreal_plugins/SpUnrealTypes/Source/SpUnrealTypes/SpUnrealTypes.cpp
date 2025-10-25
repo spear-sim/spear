@@ -12,6 +12,7 @@
 #include "SpCore/UnrealClassRegistry.h"
 
 // SpUnrealTypes classes
+#include "SpUnrealTypes/SpActorHitManager.h"
 #include "SpUnrealTypes/SpAssetCompilingManager.h"
 #include "SpUnrealTypes/SpBasicKeyboardControlComponent.h"
 #include "SpUnrealTypes/SpCoreDelegates.h"
@@ -22,7 +23,6 @@
 #include "SpUnrealTypes/SpGameEngine.h"
 #include "SpUnrealTypes/SpGameMode.h"
 #include "SpUnrealTypes/SpGameViewportClient.h"
-#include "SpUnrealTypes/SpHitEventManager.h"
 #include "SpUnrealTypes/SpInitializeWorldManager.h"
 #include "SpUnrealTypes/SpLevelSequence.h"
 #include "SpUnrealTypes/SpLevelStreaming.h"
@@ -59,11 +59,11 @@ void SpUnrealTypes::registerClasses() const
 {
     // SpUnrealTypes classes
 
+    SP_REGISTER_ACTOR_CLASS(ASpActorHitManager);
     SP_REGISTER_ACTOR_CLASS(ASpDebugCameraController);
     SP_REGISTER_ACTOR_CLASS(ASpDebugCameraHUD);
     SP_REGISTER_ACTOR_CLASS(ASpDebugManager);
     SP_REGISTER_ACTOR_CLASS(ASpGameMode);
-    SP_REGISTER_ACTOR_CLASS(ASpHitEventManager);
     SP_REGISTER_ACTOR_CLASS(ASpInitializeWorldManager);
     SP_REGISTER_ACTOR_CLASS(ASpPauseManager);
     SP_REGISTER_ACTOR_CLASS(ASpPlayerController);
@@ -90,11 +90,11 @@ void SpUnrealTypes::unregisterClasses() const
 {
     // SpUnrealTypes classes
 
+    SP_UNREGISTER_ACTOR_CLASS(ASpActorHitManager);
     SP_UNREGISTER_ACTOR_CLASS(ASpDebugCameraController);
     SP_UNREGISTER_ACTOR_CLASS(ASpDebugCameraHUD);
     SP_UNREGISTER_ACTOR_CLASS(ASpDebugManager);
     SP_UNREGISTER_ACTOR_CLASS(ASpGameMode);
-    SP_UNREGISTER_ACTOR_CLASS(ASpHitEventManager);
     SP_UNREGISTER_ACTOR_CLASS(ASpInitializeWorldManager);
     SP_UNREGISTER_ACTOR_CLASS(ASpPauseManager);
     SP_UNREGISTER_ACTOR_CLASS(ASpPlayerController);

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <map>
+#include <vector>
 
 #include <Containers/Array.h>
 #include <Containers/UnrealString.h> // FString
@@ -15,12 +15,12 @@
 #include <Math/Vector.h>
 #include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
-#include "SpHitEventManager.generated.h"
+#include "SpActorHitManager.generated.h"
 
 class USpStableNameComponent;
 
 USTRUCT()
-struct FActorHitEventDesc
+struct FActorHitDesc
 {
     GENERATED_BODY()
 
@@ -35,44 +35,46 @@ struct FActorHitEventDesc
 
     // Optional debug info
     UPROPERTY()
-    FString SelfActorPtr;
+    FString SelfActorPtrString;
     UPROPERTY()
     FString SelfActorPropertiesString;
     UPROPERTY()
-    FString OtherActorPtr;
+    FString OtherActorPtrString;
     UPROPERTY()
     FString OtherActorPropertiesString;
 };
 
 UCLASS()
-class ASpHitEventManager : public AActor
+class ASpActorHitManager : public AActor
 {
     GENERATED_BODY()
 public: 
-    ASpHitEventManager();
-    ~ASpHitEventManager() override;
+    ASpActorHitManager();
+    ~ASpActorHitManager() override;
 
     // AActor interface
     void Tick(float delta_time) override;
 
-    // Interface for subscribing to, unsubscribing from, and getting actor hit events. Part of this interface
-    // (ActorHitHandler) must be implemented as a UFUNCTION. We choose to implement the rest of the interface
-    // directly in this actor so we can keep the entire interface in one place in the code, near the required
-    // UFUNCTION.
-
     UFUNCTION()
-    void SubscribeToActor(AActor* Actor, bool bRecordDebugInfo);
+    void SubscribeToActor(AActor* Actor);
 
     UFUNCTION()
     void UnsubscribeFromActor(AActor* Actor);
 
     UFUNCTION()
-    TArray<FActorHitEventDesc> GetHitEventDescs();
+    TArray<FActorHitDesc> GetActorHitDescs(bool bIncludeDebugInfo);
 
 private:
     UFUNCTION() // needs to be a UFUNCTION
     void ActorHitHandler(AActor* SelfActor, AActor* OtherActor, FVector NormalImpulse, const FHitResult& HitResult);
 
-    std::map<AActor*, bool> record_debug_info_for_actors_;
-    TArray<FActorHitEventDesc> actor_hit_event_descs_;
+    struct ActorHitDesc
+    {
+        AActor* self_actor_ = nullptr;
+        AActor* other_actor_ = nullptr;
+        FVector normal_impulse_ = FVector::ZeroVector;
+        FHitResult hit_result_;
+    };
+
+    std::vector<ActorHitDesc> actor_hit_descs_;
 };

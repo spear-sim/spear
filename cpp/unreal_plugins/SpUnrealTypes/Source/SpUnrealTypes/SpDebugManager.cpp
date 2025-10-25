@@ -41,7 +41,7 @@
 #include "SpCore/Yaml.h"
 #include "SpCore/YamlCpp.h"
 
-#include "SpUnrealTypes/SpHitEventManager.h"
+#include "SpUnrealTypes/SpActorHitManager.h"
 #include "SpUnrealTypes/SpSceneCaptureComponent2D.h"
 
 // CALLED for the CDO
@@ -462,9 +462,9 @@ void ASpDebugManager::CallFunctions()
     return_values = Unreal::callFunction(GetWorld(), static_mesh_component, ufunction, args);
     SP_LOG(return_values.at("SweepHitResult"));
 
-    UObject* uobject = ASpHitEventManager::StaticClass()->GetDefaultObject();
+    UObject* uobject = ASpActorHitManager::StaticClass()->GetDefaultObject();
     SP_ASSERT(uobject);
-    ufunction = Unreal::findFunctionByName(uobject->GetClass(), "GetHitEventDescs");
+    ufunction = Unreal::findFunctionByName(uobject->GetClass(), "GetActorHitDescs");
     SP_ASSERT(ufunction);
     return_values = Unreal::callFunction(GetWorld(), uobject, ufunction);
     SP_LOG(return_values.at("ReturnValue"));
@@ -576,11 +576,25 @@ void ASpDebugManager::SubscribeToActorHitEvents()
     AStaticMeshActor* static_mesh_actor = Unreal::findActorByName<AStaticMeshActor>(GetWorld(), "Debug/SM_Prop_04");
     SP_ASSERT(static_mesh_actor);
 
-    UObject* hit_event_manager = ASpHitEventManager::StaticClass()->GetDefaultObject();
-    SP_ASSERT(hit_event_manager);
+    UObject* sp_actor_hit_manager = ASpActorHitManager::StaticClass()->GetDefaultObject();
+    SP_ASSERT(sp_actor_hit_manager);
 
-    UFunction* ufunction = Unreal::findFunctionByName(hit_event_manager->GetClass(), "SubscribeToActor");
-    Unreal::callFunction(GetWorld(), hit_event_manager, ufunction, {{"Actor", Std::toStringFromPtr(static_mesh_actor)}, {"bRecordDebugInfo", "true"}});
+    UFunction* ufunction = Unreal::findFunctionByName(sp_actor_hit_manager->GetClass(), "SubscribeToActor");
+    Unreal::callFunction(GetWorld(), sp_actor_hit_manager, ufunction, {{"Actor", Std::toStringFromPtr(static_mesh_actor)}});
+}
+
+void ASpDebugManager::UnsubscribeFromActorHitEvents()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    AStaticMeshActor* static_mesh_actor = Unreal::findActorByName<AStaticMeshActor>(GetWorld(), "Debug/SM_Prop_04");
+    SP_ASSERT(static_mesh_actor);
+
+    UObject* sp_actor_hit_manager = ASpActorHitManager::StaticClass()->GetDefaultObject();
+    SP_ASSERT(sp_actor_hit_manager);
+
+    UFunction* ufunction = Unreal::findFunctionByName(sp_actor_hit_manager->GetClass(), "UnsubscribeFromActor");
+    Unreal::callFunction(GetWorld(), sp_actor_hit_manager, ufunction, {{"Actor", Std::toStringFromPtr(static_mesh_actor)}});
 }
 
 void ASpDebugManager::ReadPixels()

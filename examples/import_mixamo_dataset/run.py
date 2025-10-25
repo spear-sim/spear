@@ -21,15 +21,15 @@ if __name__ == "__main__":
 
         # spawn Crouch To Stand animation
         location = {"X": 425.0, "Y": 275.0, "Z": 25.0}
-        bp_human_path = "/Game/Mixamo/Crouch_To_Stand/Crouch_To_Stand/BP_Crouch_To_Stand_Anim.BP_Crouch_To_Stand_Anim_C"
-        bp_human_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name=bp_human_path)
-        bp_human = game.unreal_service.spawn_actor_from_class(uclass=bp_human_uclass, location=location)
+        bp_mixamo_path = "/Game/Mixamo/Crouch_To_Stand/Crouch_To_Stand/BP_Crouch_To_Stand_Anim.BP_Crouch_To_Stand_Anim_C"
+        bp_mixamo_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name=bp_mixamo_path)
+        bp_mixamo = game.unreal_service.spawn_actor_from_class(uclass=bp_mixamo_uclass, location=location)
 
         # spawn Jump animation
         location = {"X": 225.0, "Y": 475.0, "Z": 30.0}
-        bp_human_path = "/Game/Mixamo/Jump/Jump/BP_Jump_Anim.BP_Jump_Anim_C"
-        bp_human_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name=bp_human_path)
-        bp_human = game.unreal_service.spawn_actor_from_class(uclass=bp_human_uclass, location=location)
+        bp_mixamo_path = "/Game/Mixamo/Jump/Jump/BP_Jump_Anim.BP_Jump_Anim_C"
+        bp_mixamo_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name=bp_mixamo_path)
+        bp_mixamo = game.unreal_service.spawn_actor_from_class(uclass=bp_mixamo_uclass, location=location)
 
     with instance.end_frame():
         pass

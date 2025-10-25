@@ -114,6 +114,7 @@ def add_new_subobject_to_instance(parent_data_handle, subobject_name, subobject_
     return add_new_subobject_using_params(add_new_subobject_params=add_new_subobject_params, subobject_name=subobject_name, subobject_class=subobject_class)
 
 def add_new_subobject_to_blueprint_asset(blueprint_asset, parent_data_handle, subobject_name, subobject_class):
+    assert isinstance(blueprint_asset, unreal.Blueprint)
     add_new_subobject_params = unreal.AddNewSubobjectParams(parent_handle=parent_data_handle, new_class=subobject_class, blueprint_context=blueprint_asset)
     return add_new_subobject_using_params(add_new_subobject_params=add_new_subobject_params, subobject_name=subobject_name, subobject_class=subobject_class)
 
@@ -134,10 +135,12 @@ def add_new_subobject_using_params(add_new_subobject_params, subobject_name, sub
 #
 
 def get_subobject_descs_for_instance(instance):
+    assert isinstance(instance, unreal.Object)
     subobject_data_handles = subobject_data_subsystem.k2_gather_subobject_data_for_instance(instance)
     return get_subobject_descs_for_data_handles(subobject_data_handles)
 
 def get_subobject_descs_for_blueprint_asset(blueprint_asset):
+    assert isinstance(blueprint_asset, unreal.Blueprint)
     subobject_data_handles = subobject_data_subsystem.k2_gather_subobject_data_for_blueprint(blueprint_asset)
     return get_subobject_descs_for_data_handles(subobject_data_handles)
 

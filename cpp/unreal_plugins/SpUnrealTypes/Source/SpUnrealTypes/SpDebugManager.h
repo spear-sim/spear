@@ -74,6 +74,9 @@ private:
     void SubscribeToActorHitEvents();
 
     UFUNCTION(CallInEditor, Category="SPEAR")
+    void UnsubscribeFromActorHitEvents();
+
+    UFUNCTION(CallInEditor, Category="SPEAR")
     void ReadPixels();
 
     UFUNCTION(CallInEditor, Category="SPEAR")

@@ -109,7 +109,7 @@ if __name__ == "__main__":
     blueprint_subobject_descs = spear.utils.editor_utils.get_subobject_descs_for_blueprint_asset(blueprint_asset=blueprint_asset)
     assert len(blueprint_subobject_descs) == 2
     assert isinstance(blueprint_subobject_descs[0]["object"], unreal.Actor)          # the 0th entry always refers to the actor itself
-    assert isinstance(blueprint_subobject_descs[1]["object"], unreal.SceneComponent) # the 1st entry always refers to the actor's root component
+    assert isinstance(blueprint_subobject_descs[1]["object"], unreal.SceneComponent) # the 1st entry must be the root component in this case because there are only 2 entries
 
     # create SpStableNameComponent
     component_name = "sp_stable_name_component_"
@@ -221,7 +221,7 @@ if __name__ == "__main__":
         # SpSceneCaptureComponent2D properties (optional)
 
         if "material_path" in component_desc:
-            material = unreal.load_asset(component_desc["material_path"])
+            material = unreal.load_asset(name=component_desc["material_path"])
             sp_scene_capture_component_2d.set_editor_property("material", material)
 
         if "fov_angle" in component_desc:
