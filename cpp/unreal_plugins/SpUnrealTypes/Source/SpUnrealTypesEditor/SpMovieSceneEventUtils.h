@@ -11,6 +11,7 @@
 #include <HAL/Platform.h> // int32
 #include <K2Node.h>
 #include <K2Node_CustomEvent.h>
+#include <Kismet/BlueprintFunctionLibrary.h>
 #include <MovieSceneEventUtils.h>
 #include <Sections/MovieSceneEventRepeaterSection.h>
 #include <Sections/MovieSceneEventTriggerSection.h>
@@ -25,7 +26,7 @@
 class UBlueprint;
 
 UCLASS()
-class USpMovieSceneEventUtils : public UObject
+class USpMovieSceneEventUtils : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public:

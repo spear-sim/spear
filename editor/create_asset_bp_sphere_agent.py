@@ -3,7 +3,6 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-import argparse
 import posixpath
 import spear
 import spear.utils.editor_utils
@@ -17,7 +16,7 @@ blueprint_desc = \
     "static_mesh_component_descs":
     [
         {
-            "name": "sphere_", # use underscore to avoid FName conflict
+            "name": "sphere_",
             "static_mesh_path": "/Engine/BasicShapes/Sphere.Sphere",
             "material_path": "/Game/StarterContent/Materials/M_Ceramic_Tile_Checker.M_Ceramic_Tile_Checker",
             "location": {"x": 0.0, "y": 0.0, "z": 0.0},
@@ -68,14 +67,15 @@ blueprint_desc = \
             "width": 512,
             "height": 512,
             "num_channels_per_pixel": 4,
+            "fov_angle": 90.0,
             "channel_data_type": unreal.SpArrayDataType.U_INT8,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
             "location": {"x": 0.0, "y": 0.0, "z": 45.0},
             "rotation": {"pitch": 0.0, "yaw": 0.0, "roll": 0.0},
-            "fov_angle": 90.0,
             "dynamic_global_illumination_method": unreal.DynamicGlobalIlluminationMethod.LUMEN,
             "reflection_method": unreal.ReflectionMethod.LUMEN,
+            "primitive_render_mode": unreal.SceneCapturePrimitiveRenderMode.PRM_RENDER_SCENE_PRIMITIVES,
             "show_flag_settings": [unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=True)],
         },
     ]

@@ -10,6 +10,7 @@
 #include <Components/SceneComponent.h>
 #include <Engine/EngineBaseTypes.h>  // ELevelTick
 #include <Engine/EngineTypes.h>      // EEndPlayReason, ETickingGroup
+#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
 #include "SpCore/Log.h"
 #include "SpCore/SpFuncComponent.h"
@@ -59,7 +60,7 @@ public:
     {
         SP_LOG_CURRENT_FUNCTION();
 
-        UActorComponent::BeginPlay();
+        USceneComponent::BeginPlay();
 
         SpUserInputComponent->subscribeToUserInputs({"One"});
         SpUserInputComponent->setHandleUserInputFunc([this](const std::string& key, float axis_value) -> void {
@@ -82,7 +83,7 @@ public:
         SpUserInputComponent->setHandleUserInputFunc(nullptr);
         SpUserInputComponent->unsubscribeFromUserInputs({"One"});
 
-        UActorComponent::EndPlay(end_play_reason);
+        USceneComponent::EndPlay(end_play_reason);
     }
 
     void TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override
@@ -99,10 +100,10 @@ public:
     }
 
     // Required for custom debug keyboard commands
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
     USpUserInputComponent* SpUserInputComponent = nullptr;
 
     // Required for custom SpFuncs
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
     USpFuncComponent* SpFuncComponent = nullptr;
 };

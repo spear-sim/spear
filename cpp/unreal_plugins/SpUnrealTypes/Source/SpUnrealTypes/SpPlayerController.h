@@ -7,7 +7,7 @@
 
 #include <Engine/EngineTypes.h>   // EEndPlayReason
 #include <GameFramework/PlayerController.h>
-#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UPROPERTY
 
 #include "SpPlayerController.generated.h"
 
@@ -25,7 +25,7 @@ public:
     void BeginPlay() override;
     void EndPlay(const EEndPlayReason::Type end_play_reason) override;
 
-public:
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+private:
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
     USpUserInputComponent* SpUserInputComponent = nullptr;
 };

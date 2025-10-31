@@ -46,7 +46,7 @@ if __name__ == "__main__":
         # spawn camera sensor and get the final_tone_curve_hdr component
         bp_camera_sensor_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
         bp_camera_sensor_actor = game.unreal_service.spawn_actor_from_class(uclass=bp_camera_sensor_uclass)
-        final_tone_curve_hdr_component = game.unreal_service.get_component_by_name(class_name="USceneComponent", actor=bp_camera_sensor_actor, component_name="DefaultSceneRoot.final_tone_curve_hdr_")
+        final_tone_curve_hdr_component = game.unreal_service.get_component_by_name(class_name="USpSceneCaptureComponent2D", actor=bp_camera_sensor_actor, component_name="DefaultSceneRoot.final_tone_curve_hdr_")
 
         # configure the final_tone_curve_hdr component to match the viewport (width, height, FOV, post-processing settings, etc)
 
@@ -61,7 +61,7 @@ if __name__ == "__main__":
         game_viewport_client_property_desc = game.unreal_service.find_property_by_name_on_object(uobject=engine, property_name="GameViewport")
         game_viewport_client_string = game.unreal_service.get_property_value(property_desc=game_viewport_client_property_desc)
         game_viewport_client = spear.to_handle(string=game_viewport_client_string)
-        return_values = game.unreal_service.call_function(uobject=sp_game_viewport_client_default_object, ufunction=get_viewport_size_func, args={"GameViewportClient": game_viewport_client})
+        return_values = game.unreal_service.call_function(uobject=sp_game_viewport_client_default_object, ufunction=get_viewport_size_func, args={"GameViewportClient": spear.to_ptr(game_viewport_client)})
         viewport_size_x = return_values["ViewportSize"]["x"]
         viewport_size_y = return_values["ViewportSize"]["y"]
         viewport_aspect_ratio = viewport_size_x/viewport_size_y # see Engine/Source/Editor/UnrealEd/Private/EditorViewportClient.cpp:2130 for evidence that Unreal's aspect ratio convention is x/y
@@ -85,8 +85,8 @@ if __name__ == "__main__":
         height_desc = game.unreal_service.find_property_by_name_on_object(uobject=final_tone_curve_hdr_component, property_name="Height")
         fov_angle_desc = game.unreal_service.find_property_by_name_on_object(uobject=final_tone_curve_hdr_component, property_name="FOVAngle")
         component_settings_desc = game.unreal_service.find_property_by_name_on_object(uobject=final_tone_curve_hdr_component, property_name="PostProcessSettings")
-        game.unreal_service.set_property_value(property_desc=width_desc, property_value=viewport_x)
-        game.unreal_service.set_property_value(property_desc=height_desc, property_value=viewport_y)
+        game.unreal_service.set_property_value(property_desc=width_desc, property_value=viewport_size_x)
+        game.unreal_service.set_property_value(property_desc=height_desc, property_value=viewport_size_y)
         game.unreal_service.set_property_value(property_desc=fov_angle_desc, property_value=fov_adjusted_degrees)
         game.unreal_service.set_property_value(property_desc=component_settings_desc, property_value=volume_settings)
 
@@ -99,10 +99,7 @@ if __name__ == "__main__":
 
     # # let temporal anti-aliasing etc accumulate additional information across multiple frames
     # for i in range(1):
-    #     with instance.begin_frame():
-    #         pass
-    #     with instance.end_frame():
-    #         pass
+    #     instance.flush()
 
     # get rendered frame
     with instance.begin_frame():

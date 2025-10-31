@@ -9,6 +9,7 @@
 #include <Components/SceneComponent.h>
 #include <Containers/UnrealString.h> // FString
 #include <Engine/EngineTypes.h>      // EEndPlayReason
+#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UPROPERTY
 
 #include "SpUnrealTypes/SpUserInputComponent.h"
 
@@ -30,23 +31,23 @@ public:
     // Specifies a component (whose path is AddRotationComponentPath) to add a rotation to.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     FString AddRotationComponentPath;
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
     FString AddRotationComponent;
 
     // Specifies a component (whose path is AddForceTargetComponentPath) to apply a force to, optionally mapping
     // the force vector into world-space from the component-space of another component (whose path is AddForceRotationComponentPath).
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     FString AddForceTargetComponentPath;
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
     FString AddForceTargetComponent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     FString AddForceRotationComponentPath;
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
     FString AddForceRotationComponent;
 
     // Required for custom debug keyboard commands.
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
     USpUserInputComponent* SpUserInputComponent = nullptr;
 
 private:

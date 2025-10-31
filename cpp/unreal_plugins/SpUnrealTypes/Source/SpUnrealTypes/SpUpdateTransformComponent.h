@@ -11,6 +11,7 @@
 #include <Engine/EngineBaseTypes.h>  // ELevelTick, ETickingGroup
 #include <Engine/EngineTypes.h>      // ETeleportType
 #include <Engine/HitResult.h>
+#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UPROPERTY
 
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"

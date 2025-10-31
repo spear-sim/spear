@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <Kismet/BlueprintFunctionLibrary.h>
 #include <LevelSequence.h>
 
 #include "SpCore/Assert.h"
@@ -14,7 +15,7 @@
 class UBlueprint;
 
 UCLASS()
-class USpLevelSequence : public UObject
+class USpLevelSequence : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public:

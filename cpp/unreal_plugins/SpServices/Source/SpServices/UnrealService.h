@@ -26,8 +26,9 @@
 #include <UObject/Object.h>              // UObject
 #include <UObject/ObjectMacros.h>        // EObjectFlags, ELoadFlags
 #include <UObject/NameTypes.h>           // FName
+#include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS, UENUM, UFUNCTION, UPROPERTY
 #include <UObject/Package.h>
-#include <UObject/UObjectGlobals.h>      // GetTransientPackage
+#include <UObject/UObjectGlobals.h>      // GetTransientPackage, StaticLoadClass, StaticLoadObject
 
 #include "SpCore/Assert.h"
 #include "SpCore/Unreal.h"

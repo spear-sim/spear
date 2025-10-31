@@ -260,36 +260,34 @@ public:
     void EndPlay(const EEndPlayReason::Type end_play_reason) override;
     void Tick(float delta_time) override;
 
-private:
-
     // Initialize config system
 
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bInitializeConfigSystem = false;
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     FString ConfigFile;
 
-    bool initialize_config_system_ = false;
-
     // Override game paused
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bOverrideGamePaused = false;
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool GamePaused = false;
 
     // Override benchmarking
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bOverrideBenchmarking = false;
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool Benchmarking = false;
 
     // Override fixed delta time
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bOverrideFixedDeltaTime = false;
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     double FixedDeltaTime = 1.0/30.0; // Engine/Source/Runtime/Core/Private/Misc/App.cpp
 
-    // Override physics settings
+    // Override physics settings. Note that FSpPhysicsSettings isn't compatible with BlueprintReadWrite so we
+    // can't edit using the built-in editor-only Python API.
+
     UPROPERTY(EditAnywhere, Category="SPEAR")
     bool bOverridePhysicsSettings = false;
     UPROPERTY(EditAnywhere, Category="SPEAR")
@@ -299,9 +297,9 @@ private:
     // config parameter in default_config.sp_components.yaml, becasue because we always want this default
     // behavior, even when the config system isn't loaded.
 
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bForceSkylightUpdate = false;
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     float ForceSkylightUpdateMaxDurationSeconds = 1.0f;
 
     bool force_skylight_update_ = false;
@@ -309,8 +307,11 @@ private:
     float force_skylight_update_duration_seconds_ = 0.0f;
 
     // Execute console commands
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bExecuteConsoleCommands = false;
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     TArray<FString> ConsoleCommands;
+
+private:
+    bool initialized_config_system_ = false;
 };

@@ -11,7 +11,7 @@
 
 #include <Containers/UnrealString.h> // FString
 #include <UObject/Object.h>          // UObject
-#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UPROPERTY
+#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"

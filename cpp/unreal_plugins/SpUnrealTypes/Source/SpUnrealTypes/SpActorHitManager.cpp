@@ -56,19 +56,19 @@ TArray<FActorHitDesc> ASpActorHitManager::GetActorHitDescs(bool bIncludeDebugInf
 {
     TArray<FActorHitDesc> actor_hit_descs;
 
-    for (auto& hit_desc : actor_hit_descs_) {
+    for (auto& desc : actor_hit_descs_) {
         FActorHitDesc actor_hit_desc;
 
-        actor_hit_desc.SelfActor     = reinterpret_cast<uint64>(hit_desc.self_actor_);
-        actor_hit_desc.OtherActor    = reinterpret_cast<uint64>(hit_desc.other_actor_);
-        actor_hit_desc.NormalImpulse = hit_desc.normal_impulse_;
-        actor_hit_desc.HitResult     = hit_desc.hit_result_;
+        actor_hit_desc.SelfActor     = reinterpret_cast<uint64>(desc.self_actor_);
+        actor_hit_desc.OtherActor    = reinterpret_cast<uint64>(desc.other_actor_);
+        actor_hit_desc.NormalImpulse = desc.normal_impulse_;
+        actor_hit_desc.HitResult     = desc.hit_result_;
 
         if (bIncludeDebugInfo) {
-            actor_hit_desc.SelfActorPtrString         = Unreal::toFString(Std::toStringFromPtr(hit_desc.self_actor_));
-            actor_hit_desc.SelfActorPropertiesString  = Unreal::toFString(Unreal::getObjectPropertiesAsString(hit_desc.self_actor_));
-            actor_hit_desc.OtherActorPtrString        = Unreal::toFString(Std::toStringFromPtr(hit_desc.other_actor_));
-            actor_hit_desc.OtherActorPropertiesString = Unreal::toFString(Unreal::getObjectPropertiesAsString(hit_desc.other_actor_));
+            actor_hit_desc.SelfActorPtrString         = Unreal::toFString(Std::toStringFromPtr(desc.self_actor_));
+            actor_hit_desc.SelfActorPropertiesString  = Unreal::toFString(Unreal::getObjectPropertiesAsString(desc.self_actor_));
+            actor_hit_desc.OtherActorPtrString        = Unreal::toFString(Std::toStringFromPtr(desc.other_actor_));
+            actor_hit_desc.OtherActorPropertiesString = Unreal::toFString(Unreal::getObjectPropertiesAsString(desc.other_actor_));
         }
 
         actor_hit_descs.Add(actor_hit_desc);

@@ -7,7 +7,7 @@
 
 #include <Containers/Array.h>
 #include <Engine/World.h>
-#include <UObject/Object.h> // UObject
+#include <Kismet/BlueprintFunctionLibrary.h>
 
 #include "SpCore/Assert.h"
 
@@ -16,7 +16,7 @@
 class ULevelStreaming;
 
 UCLASS()
-class USpWorld : public UObject
+class USpWorld : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public: 

@@ -20,6 +20,7 @@
 #include <InputModifiers.h>          // UInputModifier
 #include <InputTriggers.h>           // ETriggerEvent, UInputTrigger
 #include <Math/Vector.h>
+#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UPROPERTY, USTRUCT
 #include <UObject/ObjectPtr.h>
 
 #include "SpCore/Assert.h"

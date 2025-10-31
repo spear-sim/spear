@@ -15,7 +15,7 @@
 #include <Engine/EngineTypes.h>          // EEndPlayReason
 #include <GameFramework/Actor.h>
 #include <Math/Vector.h>
-#include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
+#include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS, UENUM, UFUNCTION, UPROPERTY
 
 #include "SpCore/SharedMemory.h"
 #include "SpCore/SpArray.h"
@@ -47,6 +47,9 @@ public:
     void BeginPlay() override;
     void EndPlay(const EEndPlayReason::Type end_play_reason) override;
     void BeginDestroy() override;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Config, Category="SPEAR", DisplayName="My debug string")
+    FString DebugString;
 
 private:
     UFUNCTION(CallInEditor, Category="SPEAR")
@@ -96,9 +99,6 @@ private:
 
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
     USpFuncComponent* SpFuncComponent = nullptr;
-
-    UPROPERTY(EditAnywhere, Config, Category="SPEAR", DisplayName="My debug string")
-    FString DebugString;
 
     UPROPERTY()
     FString MyString;

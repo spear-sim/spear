@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <UObject/Object.h> // UObject
+#include <Kismet/BlueprintFunctionLibrary.h>
 #include <UObject/Package.h>
 
 #include "SpCore/Assert.h"
@@ -13,7 +13,7 @@
 #include "SpPackage.generated.h"
 
 UCLASS()
-class USpPackage : public UObject
+class USpPackage : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public: 

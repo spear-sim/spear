@@ -13,6 +13,7 @@
 #include <Engine/LevelStreamingDynamic.h>
 #include <LevelSequenceDirector.h>
 #include <LevelSequencePlayer.h>
+#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"

@@ -14,12 +14,16 @@
 #include <Containers/Array.h>
 #include <Materials/Material.h>
 #include <Materials/MaterialInstanceDynamic.h>
-#include <Math/Color.h>             // FColor, FLinearColor
+#include <Math/Color.h>              // FColor, FLinearColor
 #include <Math/Float16Color.h>
-#include <RHIDefinitions.h>         // ERangeCompressionMode
-#include <RHITypes.h>               // FReadSurfaceDataFlags
-#include <TextureResource.h>        // FTextureRenderTargetResource
-#include <UObject/UObjectGlobals.h> // NewObject
+#include <RHIDefinitions.h>          // ERangeCompressionMode
+#include <RHITypes.h>                // FReadSurfaceDataFlags
+#include <SceneView.h>               // FSceneViewFamily
+#include <SceneManagement.h>         // FSceneViewStateInterface
+#include <SceneViewExtension.h>      // FAutoRegister, FSceneViewExtensionBase, FSceneViewExtensions
+#include <TextureResource.h>         // FTextureRenderTargetResource
+#include <Templates/SharedPointer.h> // TSharedPtr
+#include <UObject/UObjectGlobals.h>  // NewObject
 
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
@@ -30,6 +34,102 @@
 #include "SpCore/SpTypes.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+
+#include "SpUnrealTypes/SpPrimitiveProxyComponentManager.h"
+
+FSpSceneViewExtensionBase::FSpSceneViewExtensionBase(const FAutoRegister& auto_register, USpSceneCaptureComponent2D* component) : FSceneViewExtensionBase(auto_register)
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    SP_ASSERT(component);
+    component_ = component;
+}
+
+void FSpSceneViewExtensionBase::SetupViewFamily(FSceneViewFamily& in_view_family)
+{
+    if (shouldHandleViewFamily(&in_view_family)) {
+        setupViewFamily(in_view_family);
+    }
+}
+
+void FSpSceneViewExtensionBase::SetupView(FSceneViewFamily& in_view_family, FSceneView& in_view)
+{
+    if (shouldHandleView(&in_view_family, &in_view)) {
+        setupView(in_view_family, in_view);
+    }
+}
+
+void FSpSceneViewExtensionBase::BeginRenderViewFamily(FSceneViewFamily& in_view_family)
+{
+    if (shouldHandleViewFamily(&in_view_family)) {
+        beginRenderViewFamily(in_view_family);
+    }
+}
+
+bool FSpSceneViewExtensionBase::shouldHandleViewFamily(const FSceneViewFamily* view_family) const
+{
+    SP_ASSERT(view_family);
+    for (int i = 0; i < view_family->Views.Num(); i++) {
+        const FSceneView* view = view_family->Views[i];
+        if (shouldHandleView(view_family, view)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool FSpSceneViewExtensionBase::shouldHandleView(const FSceneViewFamily* view_family, const FSceneView* view) const
+{
+    SP_ASSERT(component_);
+    SP_ASSERT(view_family);
+    SP_ASSERT(view);
+
+    FSceneViewStateInterface* view_state = view->State;
+    if (!view_state) {
+        return false;
+    }
+
+    int32 view_state_key = view->State->GetViewKey();
+
+    for (int32 i = 0; i < component_->getNumViewStates(); i++) {
+        FSceneViewStateInterface* component_view_state = component_->GetViewState(i);
+        if (component_view_state) {
+            int32 component_view_state_key = component_view_state->GetViewKey();
+            if (component_view_state_key > 0 && view_state_key > 0) { // compare keys if they're both valid
+                if (component_view_state_key == view_state_key) {
+                    return true;
+                }
+            } else { // otherwise compare pointers as a fallback to handle the case where one or both keys haven't been initialized yet
+                if (component_view_state == view_state) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+FSpSceneViewExtension::FSpSceneViewExtension(const FAutoRegister& auto_register, USpSceneCaptureComponent2D* component) : FSpSceneViewExtensionBase(auto_register, component)
+{
+    SP_LOG_CURRENT_FUNCTION();
+}
+
+void FSpSceneViewExtension::setupView(FSceneViewFamily& view_family, FSceneView& view)
+{
+    const TArray<FEngineShowFlagsSetting>& engine_show_flag_settings = getComponent()->GetShowFlagSettings();
+
+    for (auto& engine_show_flag_setting : engine_show_flag_settings) {
+        if (Unreal::toStdString(engine_show_flag_setting.ShowFlagName) == "LightingOnlyOverride" && engine_show_flag_setting.Enabled) {
+            view.DiffuseOverrideParameter = FVector4f(GEngine->LightingOnlyBrightness.R, GEngine->LightingOnlyBrightness.G, GEngine->LightingOnlyBrightness.B, 0.0f);
+            view.SpecularOverrideParameter = FVector4f(0.0f, 0.0f, 0.0f, 0.0f);
+        }
+
+        if (Unreal::toStdString(engine_show_flag_setting.ShowFlagName) == "Specular" && !engine_show_flag_setting.Enabled) {
+            view.SpecularOverrideParameter = FVector4f(0.0f, 0.0f, 0.0f, 0.0f);
+        }
+    }
+}
 
 USpSceneCaptureComponent2D::USpSceneCaptureComponent2D()
 {
@@ -44,7 +144,11 @@ USpSceneCaptureComponent2D::USpSceneCaptureComponent2D()
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.bTickEvenWhenPaused = true;
 
-    // disable rendering to texture
+    // ensure that the underlying view state data is stable across frames so FSpSceneViewExtension can match
+    // view state data to this component
+    bAlwaysPersistRenderingState = true;
+
+    // disable rendering to texture until we're initialized
     SetVisibility(false);
 }
 
@@ -75,25 +179,53 @@ void USpSceneCaptureComponent2D::Initialize()
         return;
     }
 
-    SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
-    uint64_t num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
-
-    auto texture_render_target_2d = NewObject<UTextureRenderTarget2D>(this);
-    SP_ASSERT(texture_render_target_2d);
-    texture_render_target_2d->RenderTargetFormat = TextureRenderTargetFormat;
-    texture_render_target_2d->ClearColor = FLinearColor(255, 0, 255); // bright pink
-    texture_render_target_2d->InitAutoFormat(Width, Height);
+    TextureTarget = NewObject<UTextureRenderTarget2D>(this);
+    SP_ASSERT(TextureTarget);
+    TextureTarget->RenderTargetFormat = TextureRenderTargetFormat;
+    TextureTarget->ClearColor = FLinearColor(255, 0, 255); // bright pink
+    TextureTarget->InitAutoFormat(Width, Height);
     bool clear_render_target = true;
-    texture_render_target_2d->UpdateResourceImmediate(clear_render_target);
-    TextureTarget = texture_render_target_2d;
-
-    // enable rendering to texture
-    SetVisibility(true);
+    TextureTarget->UpdateResourceImmediate(clear_render_target);
 
     if (Material) {
         material_instance_dynamic_ = UMaterialInstanceDynamic::Create(Material, this);
         PostProcessSettings.AddBlendable(material_instance_dynamic_, 1.0f);
     }
+
+    if (bHideProxyComponentManagers) {
+        PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_RenderScenePrimitives; // use HiddenActors list
+        std::vector<ASpPrimitiveProxyComponentManager*> primitive_proxy_component_managers = Unreal::findActorsByType<ASpPrimitiveProxyComponentManager>(GetWorld());
+        for (auto primitive_proxy_component_manager : primitive_proxy_component_managers) {
+            HiddenActors.Add(primitive_proxy_component_manager);
+        }
+    }
+
+    if (AllowedProxyComponentModalities.Num() > 0) {
+        HiddenActors.Empty(); // clear HiddenActors because all actors will be hidden by default
+        PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_UseShowOnlyList; // use ShowOnlyActors list
+
+        std::vector<std::string> allowed_modalities = Std::toVector<std::string>(
+            Unreal::toStdVector(AllowedProxyComponentModalities) |
+            std::views::transform([](auto str) { return Unreal::toStdString(str); }));
+
+        std::vector<ASpPrimitiveProxyComponentManager*> primitive_proxy_component_managers = Std::toVector<ASpPrimitiveProxyComponentManager*>(
+            Unreal::findActorsByType<ASpPrimitiveProxyComponentManager>(GetWorld()) |
+            std::views::filter([&allowed_modalities](auto manager) { return Std::contains(allowed_modalities, manager->getModalityName()); }));
+
+        for (auto primitive_proxy_component_manager : primitive_proxy_component_managers) {
+            ShowOnlyActors.Add(primitive_proxy_component_manager);
+        }
+    }
+
+    if (bUseSceneViewExtension) {
+        scene_view_extension_ = FSceneViewExtensions::NewExtension<FSpSceneViewExtension>(this);
+    }
+
+    // enable rendering to texture
+    SetVisibility(true);
+
+    SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
+    uint64_t num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
 
     if (bUseSharedMemory) {
         SP_ASSERT(!shared_memory_region_);
@@ -121,7 +253,7 @@ void USpSceneCaptureComponent2D::Initialize()
 
     SpFuncComponent->registerFunc("read_pixels", [this, channel_data_type, num_bytes](SpFuncDataBundle& args) -> SpFuncDataBundle {
 
-        SP_ASSERT(is_initialized_);
+        SP_ASSERT(IsInitialized());
 
         SpPackedArray packed_array;
         packed_array.shape_ = {Height, Width, NumChannelsPerPixel};
@@ -216,21 +348,25 @@ void USpSceneCaptureComponent2D::Terminate()
 
     SpFuncComponent->unregisterFunc("read_pixels");
 
-    if (bUseSharedMemory) {
-        SP_ASSERT(shared_memory_region_);
+    if (shared_memory_region_) {
         SpFuncComponent->unregisterSharedMemoryView("smem:sp_scene_capture_component_2d");
         shared_memory_view_ = SpArraySharedMemoryView();
         shared_memory_region_ = nullptr;
     }
 
-    if (Material) {
-        SP_ASSERT(material_instance_dynamic_);
+    SetVisibility(false);
+    bAlwaysPersistRenderingState = false;
+
+    scene_view_extension_ = nullptr;
+
+    ShowOnlyActors.Empty();
+    HiddenActors.Empty();
+
+    if (material_instance_dynamic_) {
         PostProcessSettings.RemoveBlendable(material_instance_dynamic_);
     }
 
     TextureTarget = nullptr;
-
-    SetVisibility(false);
 }
 
 bool USpSceneCaptureComponent2D::IsInitialized()

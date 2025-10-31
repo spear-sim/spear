@@ -5,18 +5,19 @@
 
 #pragma once
 
+#include <Kismet/BlueprintFunctionLibrary.h>
 #include <Math/Rotator.h>
 #include <Math/Transform.h>
 #include <Math/Vector.h>
 #include <Math/Vector2D.h>
-#include <UObject/Object.h> // UObject
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UPROPERTY
 
 #include "SpCore/Log.h"
 
 #include "SpSpecialStructs.generated.h"
 
 UCLASS()
-class USpSpecialStructs : public UObject
+class USpSpecialStructs : public UBlueprintFunctionLibrary // to make it apparent to readers that this class is not supposed to be instantiated directly
 {
     GENERATED_BODY()
 

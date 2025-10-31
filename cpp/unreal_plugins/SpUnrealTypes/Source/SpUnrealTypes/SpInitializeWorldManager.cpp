@@ -50,7 +50,7 @@ void ASpInitializeWorldManager::BeginPlay()
         if (!Config::isInitialized() && std::filesystem::exists(config_file)) {
             SP_LOG("    Initializing config system...");
             Config::initialize(config_file);
-            initialize_config_system_ = true;
+            initialized_config_system_ = true;
         }
     }
 
@@ -173,9 +173,9 @@ void ASpInitializeWorldManager::EndPlay(const EEndPlayReason::Type end_play_reas
         force_skylight_update_duration_seconds_ = 0.0f;
     }
 
-    if (initialize_config_system_) {
+    if (initialized_config_system_) {
         SP_LOG("    Terminating config system...");
-        initialize_config_system_ = false;
+        initialized_config_system_ = false;
         Config::terminate();
     }
 

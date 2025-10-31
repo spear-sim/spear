@@ -7,13 +7,13 @@
 
 #include <stdint.h> // int64_t
 
-#include <concepts>    // std::derived_from
+#include <concepts>    // std::constructible_from, std::derived_from
 #include <map>
 #include <memory>      // std::align
 #include <ranges>      // std::views::filter, std::views::transform
 #include <string>
 #include <type_traits> // std::remove_pointer_t, std::underlying_type_t
-#include <utility>     // std::make_pair
+#include <utility>     // std::make_pair, std::pair
 #include <vector>
 
 #include <Components/ActorComponent.h>
@@ -1345,10 +1345,20 @@ public:
     {
         TCharPtr() = delete;
         TCharPtr(const std::string& str) { str_ = toFString(str); }
+        TCharPtr(const FString& str) { str_ = str; }
+        TCharPtr(const char* str) { str_ = str; }
+
         operator const TCHAR* () const { return *str_; }
+
         FString str_;
     };
-    static Unreal::TCharPtr toTCharPtr(const std::string& str);
+
+    template <typename TStr> requires
+        std::constructible_from<TCharPtr, TStr>
+    static Unreal::TCharPtr toTCharPtr(TStr&& str)
+    {
+        return TCharPtr(std::forward<decltype(str)>(str));
+    }
 
 private:
 

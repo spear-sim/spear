@@ -65,15 +65,15 @@ void USpBasicKeyboardControlComponent::BeginPlay()
     SpUserInputComponent->subscribeToUserInputs({"One", "Two", "Three", "Four"});
     SpUserInputComponent->setHandleUserInputFunc([this](const std::string& key, float axis_value) -> void {
         if (key == "One" && add_rotation_component_) {
-            add_rotation_component_->AddRelativeRotation(FRotator(0.0, -2.0, 0.0));
+            add_rotation_component_->AddRelativeRotation(FRotator(0.0, -2.0, 0.0)); // TODO: could be a UPROPERTY
         }
 
         if (key == "Two" && add_rotation_component_) {
-            add_rotation_component_->AddRelativeRotation(FRotator(0.0, 2.0, 0.0));
+            add_rotation_component_->AddRelativeRotation(FRotator(0.0, 2.0, 0.0)); // TODO: could be a UPROPERTY
         }
 
         if (key == "Three" && add_force_target_component_) {
-            FVector force = FVector(-1000.0, 0.0, 0.0);
+            FVector force = FVector(-1000.0, 0.0, 0.0); // TODO: could be a UPROPERTY
             if (add_force_rotation_component_) {
                 force = add_force_rotation_component_->K2_GetComponentRotation().RotateVector(force);
             }
@@ -81,7 +81,7 @@ void USpBasicKeyboardControlComponent::BeginPlay()
         }
 
         if (key == "Four" && add_force_target_component_) {
-            FVector force = FVector(1000.0, 0.0, 0.0);
+            FVector force = FVector(1000.0, 0.0, 0.0); // TODO: could be a UPROPERTY
             if (add_force_rotation_component_) {
                 force = add_force_rotation_component_->K2_GetComponentRotation().RotateVector(force);
             }

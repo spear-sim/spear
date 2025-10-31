@@ -11,7 +11,7 @@
 #include <HAL/Platform.h>                // SPCORE_API
 #include <UObject/NameTypes.h>           // FName
 #include <UObject/Object.h>              // UObject
-#include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS
+#include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS, UPROPERTY
 
 #include "SpStableNameComponent.generated.h"
 

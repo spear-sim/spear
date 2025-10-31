@@ -6,12 +6,12 @@
 #pragma once
 
 #include <AssetCompilingManager.h>
-#include <UObject/Object.h> // UObject
+#include <Kismet/BlueprintFunctionLibrary.h>
 
 #include "SpAssetCompilingManager.generated.h"
 
 UCLASS()
-class USpAssetCompilingManager : public UObject
+class USpAssetCompilingManager : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public: 

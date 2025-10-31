@@ -6,6 +6,7 @@
 #pragma once
 
 #include <Engine/GameViewportClient.h>
+#include <Kismet/BlueprintFunctionLibrary.h>
 #include <Math/Vector2D.h>
 
 #include "SpCore/Assert.h"
@@ -13,7 +14,7 @@
 #include "SpGameViewportClient.generated.h"
 
 UCLASS()
-class USpGameViewportClient : public UObject
+class USpGameViewportClient : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public: 

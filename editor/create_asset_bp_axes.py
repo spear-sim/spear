@@ -3,7 +3,6 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-import argparse
 import posixpath
 import spear
 import spear.utils.editor_utils

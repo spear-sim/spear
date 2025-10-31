@@ -8,7 +8,7 @@
 #include <chrono>
 
 #include <GameFramework/SpectatorPawn.h>
-#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UPROPERTY
 
 #include "SpCore/Boost.h"
 
@@ -33,7 +33,7 @@ private:
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
     USpStableNameComponent* SpStableNameComponent = nullptr;
 
-    UPROPERTY(EditAnywhere, Category="SPEAR")
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
     USpectatorPawnMovement* SpectatorPawnMovement = nullptr;
 
     boost::circular_buffer<double> previous_time_deltas_;

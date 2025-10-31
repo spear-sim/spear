@@ -8,12 +8,12 @@
 #include <Containers/UnrealString.h> // FString
 #include <HAL/Platform.h>            // int32, uint64
 #include <Misc/CoreDelegates.h>
-#include <UObject/Object.h>          // UObject
+#include <Kismet/BlueprintFunctionLibrary.h>
 
 #include "SpCoreDelegates.generated.h"
 
 UCLASS()
-class USpCoreDelegates : public UObject
+class USpCoreDelegates : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public: 

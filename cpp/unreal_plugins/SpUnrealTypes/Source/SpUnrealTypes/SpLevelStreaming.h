@@ -6,14 +6,14 @@
 #pragma once
 
 #include <Engine/LevelStreaming.h>
-#include <UObject/Object.h> // UObject
+#include <Kismet/BlueprintFunctionLibrary.h>
 
 #include "SpCore/Assert.h"
 
 #include "SpLevelStreaming.generated.h"
 
 UCLASS()
-class USpLevelStreaming : public UObject
+class USpLevelStreaming : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public: 

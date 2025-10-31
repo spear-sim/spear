@@ -62,7 +62,7 @@ public:
     void UnsubscribeFromActor(AActor* Actor);
 
     UFUNCTION()
-    TArray<FActorHitDesc> GetActorHitDescs(bool bIncludeDebugInfo);
+    TArray<FActorHitDesc> GetActorHitDescs(bool bIncludeDebugInfo = false);
 
 private:
     UFUNCTION() // needs to be a UFUNCTION

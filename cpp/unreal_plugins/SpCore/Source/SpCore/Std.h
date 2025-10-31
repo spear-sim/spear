@@ -23,7 +23,7 @@
 #include <span>
 #include <set>
 #include <string>      // std::equal
-#include <utility>     // std::forward, std::move
+#include <utility>     // std::forward, std::make_pair, std::move, std::pair
 #include <vector>
 
 #include <boost/predef.h> // BOOST_COMP_CLANG, BOOST_COMP_MSVC, BOOST_OS_LINUX

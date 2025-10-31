@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <Kismet/BlueprintFunctionLibrary.h>
 #include <Kismet2/BlueprintEditorUtils.h>
 
 #include "SpBlueprintEditorUtils.generated.h"
@@ -12,7 +13,7 @@
 class UBlueprint;
 
 UCLASS()
-class USpBlueprintEditorUtils : public UObject
+class USpBlueprintEditorUtils : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public:

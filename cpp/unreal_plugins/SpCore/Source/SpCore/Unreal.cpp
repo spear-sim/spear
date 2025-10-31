@@ -599,6 +599,13 @@ std::map<std::string, std::string> Unreal::callFunction(const UWorld* world, UOb
         Std::insert(property_descs, std::move(property_name), std::move(property_desc));
     }
 
+    // Explicitly initialize if an arg or return value requires it.
+    for (auto& [property_name, property_desc] : property_descs) {
+        if (!property_desc.property_->HasAnyPropertyFlags(EPropertyFlags::CPF_ZeroConstructor)) {
+            property_desc.property_->InitializeValue_InContainer(args_vector.data());
+        }
+    }
+
     // Input args must be a subset of the function's args.
     SP_ASSERT(Std::isSubsetOf(Std::keys(args), Std::keys(property_descs)));
 
@@ -635,7 +642,14 @@ std::map<std::string, std::string> Unreal::callFunction(const UWorld* world, UOb
     // Return all property values because they might have been modified by the function we called.
     std::map<std::string, std::string> return_values;
     for (auto& [property_name, property_desc] : property_descs) {
-        Std::insert(return_values, std::move(property_name), getPropertyValueAsString(property_desc));
+        Std::insert(return_values, property_name, getPropertyValueAsString(property_desc));
+    }
+
+    // Explicitly destroy if an arg or return value requires it.
+    for (auto& [property_name, property_desc] : property_descs) {
+        if (!property_desc.property_->HasAnyPropertyFlags(EPropertyFlags::CPF_ZeroConstructor)) {
+            property_desc.property_->DestroyValue_InContainer(args_vector.data());
+        }
     }
 
     return return_values;
@@ -830,11 +844,6 @@ FString Unreal::toFString(const std::string& str)
 FText Unreal::toFText(const std::string& str)
 {
     return FText::FromString(toFString(str));
-}
-
-Unreal::TCharPtr Unreal::toTCharPtr(const std::string& str)
-{
-    return TCharPtr(str);
 }
 
 //

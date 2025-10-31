@@ -6,18 +6,18 @@
 #pragma once
 
 #include <AI/Navigation/NavigationTypes.h> // FNavDataConfig, FNavLocation
+#include <Kismet/BlueprintFunctionLibrary.h>
 #include <NavFilters/NavigationQueryFilter.h>
 #include <NavigationData.h>
 #include <Math/Vector.h>
 #include <Templates/SubclassOf.h>
-#include <UObject/Object.h>                // UObject
 
 #include "SpCore/Assert.h"
 
 #include "SpNavigationData.generated.h"
 
 UCLASS()
-class USpNavigationData : public UObject
+class USpNavigationData : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public: 

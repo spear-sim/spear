@@ -100,8 +100,8 @@ void ASpProxyComponentManager::Tick(float delta_time)
     }
 
     if (IsInitialized()) {
-        findAndRegisterAllProxyComponentTypes(actors);
         findAndUnregisterAllProxyComponentTypes(actors);
+        findAndRegisterAllProxyComponentTypes(actors);
     }
 }
 
@@ -159,8 +159,8 @@ void ASpProxyComponentManager::update()
 {
     std::vector<AActor*> actors = Unreal::findActors(GetWorld());
     unregisterProxyComponents(Std::keys(name_to_proxy_component_desc_map_));
-    findAndRegisterAllProxyComponentTypes(actors);
     findAndUnregisterAllProxyComponentTypes(actors);
+    findAndRegisterAllProxyComponentTypes(actors);
 }
 
 uint32_t ASpProxyComponentManager::getId(uint32_t initial_guess_id, const std::set<uint32_t>& already_allocated_ids, uint32_t max_id)
@@ -227,5 +227,5 @@ std::string ASpProxyComponentManager::getLongComponentName(const UWorld* world, 
     bool actor_must_have_stable_name = false;
     std::string actor_and_component_name = Unreal::getStableName(component, include_actor_name, actor_must_have_stable_name);
 
-    return world_type + "://" + actor_and_component_name;
+    return world_type + "://" + actor_and_component_name + ":" + Std::toString(component->GetUniqueID()) + ":" + Std::toStringFromPtr(component);
 }

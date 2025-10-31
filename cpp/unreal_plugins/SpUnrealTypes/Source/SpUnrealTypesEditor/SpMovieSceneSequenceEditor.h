@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <Kismet/BlueprintFunctionLibrary.h>
 #include <MovieSceneSequence.h>
 #include <MovieSceneSequenceEditor.h>
 
@@ -15,7 +16,7 @@
 class UBlueprint;
 
 UCLASS()
-class USpMovieSceneSequenceEditor : public UObject
+class USpMovieSceneSequenceEditor : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public:

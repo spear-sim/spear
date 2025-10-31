@@ -3,12 +3,176 @@
 # Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-import argparse
 import posixpath
 import spear
 import spear.utils.editor_utils
 import unreal
 
+
+width = 512
+height = 512
+fov_angle = 90.0
+spatial_supersampling_factor = 2
+
+engine_show_flag_settings = {}
+
+#
+# final_tone_curve_hdr
+#
+
+engine_show_flag_settings["final_tone_curve_hdr"] = []
+engine_show_flag_settings["final_tone_curve_hdr"] = engine_show_flag_settings["final_tone_curve_hdr"] + \
+[
+    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=True)
+]
+
+#
+# Without anti-aliasing
+#
+
+engine_show_flag_settings["without_lighting"] = []
+
+# FEngineShowFlags::DisableAdvancedFeatures()
+# Excluded:
+#     unreal.EngineShowFlagsSetting(show_flag_name="PostProcessMaterial", enabled=False)
+
+engine_show_flag_settings["without_lighting"] = engine_show_flag_settings["without_lighting"] + \
+[
+    unreal.EngineShowFlagsSetting(show_flag_name="LensFlares", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="OnScreenDebug", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="EyeAdaptation", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ColorGrading", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="CameraImperfections", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="DepthOfField", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Vignette", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Grain", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="SeparateTranslucency", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ScreenPercentage", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ScreenSpaceReflections", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="AmbientOcclusion", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="IndirectLightingCache", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LightShafts", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="HighResScreenshotMask", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="HMDDistortion", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="StereoRendering", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="DistanceFieldAO", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="VolumetricFog", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="VolumetricLightmap", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LumenGlobalIllumination", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LumenReflections", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="MegaLights", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="VirtualShadowMapPersistentData", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ShaderPrint", enabled=False)
+]
+
+# UMoviePipelineObjectIdRenderPass::GetViewShowFlags(...)
+# Excluded:
+#     unreal.EngineShowFlagsSetting(show_flag_name="PostProcessing", enabled=False)
+#     unreal.EngineShowFlagsSetting(show_flag_name="PostProcessMaterial", enabled=False)
+
+engine_show_flag_settings["without_lighting"] = engine_show_flag_settings["without_lighting"] + \
+[
+    unreal.EngineShowFlagsSetting(show_flag_name="ScreenPercentage", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="HitProxies", enabled=False)
+]
+
+# disable "General Show Flags" that are visible in the editor UI for scene capture components
+engine_show_flag_settings["without_lighting"] = engine_show_flag_settings["without_lighting"] + \
+[
+    unreal.EngineShowFlagsSetting(show_flag_name="AntiAliasing", enabled=False)
+]
+
+# disable "Advanced Show Flags" that are visible in the editor UI for scene capture components
+engine_show_flag_settings["without_lighting"] = engine_show_flag_settings["without_lighting"] + \
+[
+    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False)
+]
+
+# disable "Light Types Show Flags" that are visible in the editor UI for scene capture components
+engine_show_flag_settings["without_lighting"] = engine_show_flag_settings["without_lighting"] + \
+[
+    unreal.EngineShowFlagsSetting(show_flag_name="SkyLighting", enabled=False)
+]
+
+# disable "Lighting Components Show Flags" that are visible in the editor UI for scene capture components
+engine_show_flag_settings["without_lighting"] = engine_show_flag_settings["without_lighting"] + \
+[
+    unreal.EngineShowFlagsSetting(show_flag_name="AmbientOcclusion", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="DynamicShadows", enabled=False)
+]
+
+# disable "Lighting Features Show Flags" that are visible in the editor UI for scene capture components
+engine_show_flag_settings["without_lighting"] = engine_show_flag_settings["without_lighting"] + \
+[
+    unreal.EngineShowFlagsSetting(show_flag_name="AmbientCubemap", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="DistanceFieldAO", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LightFunctions", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LightShafts", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ReflectionEnvironment", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ScreenSpaceReflections", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="TexturedLightProfiles", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="VolumetricFog", enabled=False)
+]
+
+# disable "Post Processing Show Flags" that are visible in the editor UI for scene capture components
+engine_show_flag_settings["without_lighting"] = engine_show_flag_settings["without_lighting"] + \
+[
+    unreal.EngineShowFlagsSetting(show_flag_name="Bloom", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="EyeAdaptation", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LocalExposure", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="MotionBlur", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ToneCurve", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Tonemapper", enabled=False)
+]
+
+# disable "Hidden Show Flags" that are visible in the editor UI for scene capture components
+engine_show_flag_settings["without_lighting"] = engine_show_flag_settings["without_lighting"] + \
+[
+    unreal.EngineShowFlagsSetting(show_flag_name="Lighting", enabled=False)
+]
+
+#
+# We intentially disable temporal antialiasing below. Otherwise, e.g., /SpContent/Materials/PPM_DiffuseColor
+# will be jittered across frames but not actually anti-aliased on any particular frame. On the other hand,
+# /SpContent/Materials/PPM_PostProcessInput2 won't be jittered across frames but will be anti-aliased on each
+# frame. This means we can't, e.g., divide PPM_PostProcessInput2 by PPM_DiffuseColor to estimate irradiance.
+# So we choose to disable temporal antialiasing, and implement our own anti-aliasing strategy with spatial
+# supersampling, similar to the strategy used in the MPPC_DefaultConfigWithLighting movie render queue config
+# we're attempting to replicate here.
+#
+
+#
+# With lighting
+#
+
+engine_show_flag_settings["with_lighting"] = []
+engine_show_flag_settings["with_lighting"] = engine_show_flag_settings["with_lighting"] + \
+[
+    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False)
+]
+
+#
+# With lighting (diffuse only)
+#
+
+engine_show_flag_settings["with_lighting_diffuse_only"] = []
+engine_show_flag_settings["with_lighting_diffuse_only"] = engine_show_flag_settings["with_lighting_diffuse_only"] + \
+[
+    unreal.EngineShowFlagsSetting(show_flag_name="Specular", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False)
+]
+
+#
+# Lighting only
+#
+
+engine_show_flag_settings["lighting_only"] = []
+engine_show_flag_settings["lighting_only"] = engine_show_flag_settings["lighting_only"] + \
+[
+    unreal.EngineShowFlagsSetting(show_flag_name="LightingOnlyOverride", enabled=True),
+    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False)
+]
 
 blueprint_desc = \
 {
@@ -17,106 +181,214 @@ blueprint_desc = \
     "component_descs":
     [
         {
-            "name": "ambient_occlusion_",
-            "width": 512,
-            "height": 512,
-            "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
-            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
-            "material_path": "/SpContent/Materials/PPM_AmbientOcclusion.PPM_AmbientOcclusion",
-            "fov_angle": 90.0,
-        },
-        {
-            "name": "depth_",
-            "width": 512,
-            "height": 512,
-            "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
-            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
-            "material_path": "/SpContent/Materials/PPM_Depth.PPM_Depth",
-            "fov_angle": 90.0,
-        },
-        {
-            "name": "diffuse_color_",
-            "width": 512,
-            "height": 512,
-            "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
-            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
-            "material_path": "/SpContent/Materials/PPM_DiffuseColor.PPM_DiffuseColor",
-            "fov_angle": 90.0,
-        },
-        {
             "name": "final_tone_curve_hdr_",
-            "width": 512,
-            "height": 512,
+            "width": width,
+            "height": height,
+            "fov_angle": fov_angle,
             "num_channels_per_pixel": 4,
             "channel_data_type": unreal.SpArrayDataType.U_INT8,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
-            "fov_angle": 90.0,
             "dynamic_global_illumination_method": unreal.DynamicGlobalIlluminationMethod.LUMEN,
             "reflection_method": unreal.ReflectionMethod.LUMEN,
-            "show_flag_settings": [unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=True)]
+            "show_flag_settings": engine_show_flag_settings["final_tone_curve_hdr"]
         },
         {
-            "name": "metallic_",
-            "width": 512,
-            "height": 512,
-            "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
-            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
-            "material_path": "/SpContent/Materials/PPM_Metallic.PPM_Metallic",
-            "fov_angle": 90.0,
-        },
-        {
-            "name": "normal_",
-            "width": 512,
-            "height": 512,
-            "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
-            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
-            "material_path": "/SpContent/Materials/PPM_Normal.PPM_Normal",
-            "fov_angle": 90.0,
-        },
-        {
-            "name": "roughness_",
-            "width": 512,
-            "height": 512,
-            "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
-            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
-            "material_path": "/SpContent/Materials/PPM_Roughness.PPM_Roughness",
-            "fov_angle": 90.0,
-        },
-        {
-            "name": "segmentation_",
-            "width": 512,
-            "height": 512,
+            "name": "custom_stencil_",
+            "width": width,
+            "height": height,
+            "fov_angle": fov_angle,
             "num_channels_per_pixel": 4,
             "channel_data_type": unreal.SpArrayDataType.U_INT8,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8,
-            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
-            "material_path": "/SpContent/Materials/PPM_Segmentation.PPM_Segmentation",
-            "fov_angle": 90.0,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpContent/Materials/PPM_CustomStencil",
+            "show_flag_settings": engine_show_flag_settings["without_lighting"]
         },
         {
-            "name": "specular_color_",
-            "width": 512,
-            "height": 512,
+            "name": "material_ao_",
+            "width": width,
+            "height": height,
+            "fov_angle": fov_angle,
             "num_channels_per_pixel": 4,
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
-            "material_path": "/SpContent/Materials/PPM_SpecularColor.PPM_SpecularColor",
-            "fov_angle": 90.0,
+            "material_path": "/SpContent/Materials/PPM_MaterialAO",
+            "show_flag_settings": engine_show_flag_settings["without_lighting"]
         },
+        {
+            "name": "metallic_",
+            "width": width,
+            "height": height,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpContent/Materials/PPM_Metallic",
+            "show_flag_settings": engine_show_flag_settings["without_lighting"]
+        },
+        {
+            "name": "roughness_",
+            "width": width,
+            "height": height,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpContent/Materials/PPM_Roughness",
+            "show_flag_settings": engine_show_flag_settings["without_lighting"]
+        },
+        {
+            "name": "scene_depth_",
+            "width": width,
+            "height": height,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpContent/Materials/PPM_SceneDepth",
+            "show_flag_settings": engine_show_flag_settings["without_lighting"]
+        },
+        {
+            "name": "sp_camera_normal_",
+            "width": width,
+            "height": height,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpContent/Materials/PPM_SpCameraNormal",
+            "show_flag_settings": engine_show_flag_settings["without_lighting"]
+        },
+        {
+            "name": "sp_depth_meters_",
+            "width": width,
+            "height": height,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpContent/Materials/PPM_SpDepthMeters",
+            "show_flag_settings": engine_show_flag_settings["without_lighting"]
+        },
+        {
+            "name": "sp_world_position_",
+            "width": width,
+            "height": height,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpContent/Materials/PPM_SpWorldPosition",
+            "show_flag_settings": engine_show_flag_settings["without_lighting"]
+        },
+        {
+            "name": "object_ids_",
+            "width": width,
+            "height": height,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.U_INT8,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpContent/Materials/PPM_PostProcessInput2",
+            "allowed_proxy_component_modalities": ["object_ids"],
+            "show_flag_settings": engine_show_flag_settings["without_lighting"]
+        },
+        {
+            "name": "world_normal_",
+            "width": width,
+            "height": height,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpContent/Materials/PPM_WorldNormal",
+            "show_flag_settings": engine_show_flag_settings["without_lighting"]
+        },
+        {
+            "name": "diffuse_color_",
+            "width": width*spatial_supersampling_factor,
+            "height": height*spatial_supersampling_factor,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpContent/Materials/PPM_DiffuseColor",
+            "dynamic_global_illumination_method": unreal.DynamicGlobalIlluminationMethod.LUMEN,
+            "reflection_method": unreal.ReflectionMethod.LUMEN,
+            "show_flag_settings": engine_show_flag_settings["with_lighting_diffuse_only"]
+        },
+        {
+            "name": "diffuse_only_post_process_input_2_",
+            "width": width*spatial_supersampling_factor,
+            "height": height*spatial_supersampling_factor,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpContent/Materials/PPM_PostProcessInput2",
+            "dynamic_global_illumination_method": unreal.DynamicGlobalIlluminationMethod.LUMEN,
+            "reflection_method": unreal.ReflectionMethod.LUMEN,
+            "show_flag_settings": engine_show_flag_settings["with_lighting_diffuse_only"],
+            "use_scene_view_extension": True
+        },
+        {
+            "name": "diffuse_and_specular_post_process_input_2_",
+            "width": width*spatial_supersampling_factor,
+            "height": height*spatial_supersampling_factor,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpContent/Materials/PPM_PostProcessInput2",
+            "dynamic_global_illumination_method": unreal.DynamicGlobalIlluminationMethod.LUMEN,
+            "reflection_method": unreal.ReflectionMethod.LUMEN,
+            "show_flag_settings": engine_show_flag_settings["with_lighting"]
+        },
+        {
+            "name": "lighting_only_diffuse_color_",
+            "width": width*spatial_supersampling_factor,
+            "height": height*spatial_supersampling_factor,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpContent/Materials/PPM_DiffuseColor",
+            "allowed_primitive_proxy_component_modalities": ["lighting_only"],
+            "dynamic_global_illumination_method": unreal.DynamicGlobalIlluminationMethod.LUMEN,
+            "reflection_method": unreal.ReflectionMethod.LUMEN,
+            "show_flag_settings": engine_show_flag_settings["lighting_only"],
+            "use_scene_view_extension": True
+        },
+        {
+            "name": "lighting_only_post_process_input_2_",
+            "width": width*spatial_supersampling_factor,
+            "height": height*spatial_supersampling_factor,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpContent/Materials/PPM_PostProcessInput2",
+            "allowed_primitive_proxy_component_modalities": ["lighting_only"],
+            "dynamic_global_illumination_method": unreal.DynamicGlobalIlluminationMethod.LUMEN,
+            "reflection_method": unreal.ReflectionMethod.LUMEN,
+            "show_flag_settings": engine_show_flag_settings["lighting_only"],
+            "use_scene_view_extension": True
+        }
     ]
 }
 
@@ -188,10 +460,16 @@ if __name__ == "__main__":
             material = unreal.load_asset(name=component_desc["material_path"])
             sp_scene_capture_component_2d.set_editor_property(name="material", value=material)
 
+        if "use_scene_view_extension" in component_desc:
+            sp_scene_capture_component_2d.set_editor_property(name="use_scene_view_extension", value=component_desc["use_scene_view_extension"])
+
         # SceneCaptureComponent2D properties (optional)
 
         if "fov_angle" in component_desc:
             sp_scene_capture_component_2d.set_editor_property(name="fov_angle", value=component_desc["fov_angle"])
+
+        if "allowed_proxy_component_modalities" in component_desc:
+            sp_scene_capture_component_2d.set_editor_property(name="allowed_proxy_component_modalities", value=component_desc["allowed_proxy_component_modalities"])
 
         # SceneCaptureComponent properties (optional)
 

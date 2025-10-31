@@ -17,8 +17,10 @@
 #include <utility>    // std::move
 #include <vector>
 
-#include <HAL/Platform.h> // SPCORE_API
+#include <HAL/Platform.h>         // SPCORE_API
 #include <Math/Float16.h>
+#include <Misc/EnumClassFlags.h>  // ENUM_CLASS_FLAGS
+#include <UObject/ObjectMacros.h> // UENUM
 
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
