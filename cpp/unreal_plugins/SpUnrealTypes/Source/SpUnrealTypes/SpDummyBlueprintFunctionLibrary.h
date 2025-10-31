@@ -24,8 +24,8 @@ class USpDummyBlueprintFunctionLibrary : public UBlueprintFunctionLibrary
 public: 
 
     // The BlueprintCallable decoration is not required for this function to be visible to the SPEAR Python
-    // API, but it will make it so the function is visible to Unreal's built-in Python API and in Unreal's
-    // blueprint editor.
+    // API, but it will make it so the function is also visible to Unreal's built-in Python API (which is
+    // only available inside the editor) and Unreal's blueprint editor.
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static FString HelloWorld()
     {
