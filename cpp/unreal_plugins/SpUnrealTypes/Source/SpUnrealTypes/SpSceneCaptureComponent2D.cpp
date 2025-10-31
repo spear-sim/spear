@@ -144,8 +144,8 @@ USpSceneCaptureComponent2D::USpSceneCaptureComponent2D()
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.bTickEvenWhenPaused = true;
 
-    // ensure that the underlying view state data is stable across frames so FSpSceneViewExtension can match
-    // view state data to this component
+    // ensure that the underlying view state data is stable across frames so FSpSceneViewExtensionBase can
+    // match view state data to this component
     bAlwaysPersistRenderingState = true;
 
     // disable rendering to texture until we're initialized
