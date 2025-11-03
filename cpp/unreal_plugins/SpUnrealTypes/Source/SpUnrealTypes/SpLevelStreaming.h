@@ -17,7 +17,7 @@ class USpLevelStreaming : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public: 
-    UFUNCTION()
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
     static bool ShouldBeVisible(ULevelStreaming* LevelStreaming)
     {
         SP_ASSERT(LevelStreaming);

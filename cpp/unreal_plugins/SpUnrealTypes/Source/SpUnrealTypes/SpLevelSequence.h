@@ -20,7 +20,7 @@ class USpLevelSequence : public UBlueprintFunctionLibrary
     GENERATED_BODY()
 public:
     #if WITH_EDITOR
-        UFUNCTION(BlueprintCallable, Category="SPEAR")    
+        UFUNCTION(BlueprintCallable, Category="SPEAR")
         static UBlueprint* GetDirectorBlueprint(ULevelSequence* LevelSequence)
         {
             SP_ASSERT(LevelSequence);
