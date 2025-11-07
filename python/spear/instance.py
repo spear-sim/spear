@@ -5,6 +5,7 @@
 
 import glob
 import inspect
+import itertools
 import os
 import psutil
 import spear
@@ -12,10 +13,8 @@ import subprocess
 import sys
 import time
 
-try:
+if not spear.__is_ue_python__:
     import spear_ext # can't be installed in the UE Python environment because UE doesn't ship with CPython headers
-except:
-    pass
 
 
 #
@@ -33,10 +32,10 @@ class CommonServices():
     def __init__(self, namespace, engine_service, shared_memory_service):
 
         self.unreal_service = spear.services.unreal_service.UnrealService(
-            entry_point_caller=spear.utils.func_utils.EntryPointCaller(service_name=f"{namespace}.unreal_service", engine_service=engine_service))
+            entry_point_caller=spear.utils.func_utils.CallSyncEntryPointCaller(service_name=f"{namespace}.unreal_service", engine_service=engine_service))
 
         self.navigation_service = spear.services.navigation_service.NavigationService(
-            entry_point_caller=spear.utils.func_utils.EntryPointCaller(service_name=f"{namespace}.navigation_service", engine_service=engine_service),
+            entry_point_caller=spear.utils.func_utils.CallSyncEntryPointCaller(service_name=f"{namespace}.navigation_service", engine_service=engine_service),
             shared_memory_service=shared_memory_service)
 
 class EditorServices(CommonServices):
@@ -44,14 +43,14 @@ class EditorServices(CommonServices):
         super().__init__(namespace, engine_service, shared_memory_service)
 
         self.initialize_editor_world_service = spear.services.initialize_world_service.InitializeWorldService(
-            entry_point_caller=spear.utils.func_utils.EntryPointCaller(service_name=f"{namespace}.initialize_editor_world_service", engine_service=engine_service))
+            entry_point_caller=spear.utils.func_utils.CallSyncEntryPointCaller(service_name=f"{namespace}.initialize_editor_world_service", engine_service=engine_service))
 
 class GameServices(CommonServices):
     def __init__(self, namespace, engine_service, shared_memory_service):
         super().__init__(namespace, engine_service, shared_memory_service)
 
         self.initialize_game_world_service = spear.services.initialize_world_service.InitializeWorldService(
-            entry_point_caller=spear.utils.func_utils.EntryPointCaller(service_name=f"{namespace}.initialize_game_world_service", engine_service=engine_service))
+            entry_point_caller=spear.utils.func_utils.CallSyncEntryPointCaller(service_name=f"{namespace}.initialize_game_world_service", engine_service=engine_service))
 
 #
 # Instance
@@ -80,30 +79,34 @@ class Instance():
         # Request to launch the unreal instance and initialize the client.
         self._request_launch_unreal_instance()
         self._initialize_client()
+        self._validate_client_and_server_entry_points()
 
-        # EngineService needs its own custom logic for interacting directly with the client, because
-        # EngineService implements the context managers returned by begin_frame() and end_frame().
-        # Additionally, all other services call entry points through EngineService.call(), rather than
-        # going through the client directly. So we pass in the client directly when constructing
-        # EngineService, and we pass in EngineService when constructing all other services.
-        self.engine_service = spear.services.engine_service.EngineService(client=self._client, config=self._config)
+        # EngineService needs its own custom logic for interacting directly with the client, because EngineService
+        # implements the context managers returned by begin_frame() and end_frame(). Additionally, all other
+        # services call entry points through EngineService.call(), rather than going going through the client
+        # directly. So we pass in the client directly when constructing EngineService, and we pass in EngineService
+        # when constructing all other services.
+        self.engine_service = spear.services.engine_service.EngineService(
+            entry_point_caller=spear.utils.func_utils.CallSyncEntryPointCaller(service_name="engine_service", engine_service=None),
+            client=self._client,
+            config=self._config)
         self.engine_service.initialize() # EngineService must be explicitly initialized
 
         # Initialize services that require a reference to EngineService.
 
         self.enhanced_input_service = spear.services.enhanced_input_service.EnhancedInputService(
-            entry_point_caller=spear.utils.func_utils.EntryPointCaller(service_name="enhanced_input_service", engine_service=self.engine_service))
+            entry_point_caller=spear.utils.func_utils.CallSyncEntryPointCaller(service_name="enhanced_input_service", engine_service=self.engine_service))
 
         self.input_service = spear.services.input_service.InputService(
-            entry_point_caller=spear.utils.func_utils.EntryPointCaller(service_name="input_service", engine_service=self.engine_service))
+            entry_point_caller=spear.utils.func_utils.CallSyncEntryPointCaller(service_name="input_service", engine_service=self.engine_service))
 
         self.shared_memory_service = spear.services.shared_memory_service.SharedMemoryService(
-            entry_point_caller=spear.utils.func_utils.EntryPointCaller(service_name="shared_memory_service", engine_service=self.engine_service))
+            entry_point_caller=spear.utils.func_utils.CallSyncEntryPointCaller(service_name="shared_memory_service", engine_service=self.engine_service))
 
         # Initialize services that require a reference to EngineService and SharedMemoryService.
 
         self.sp_func_service = spear.services.sp_func_service.SpFuncService(
-            entry_point_caller=spear.utils.func_utils.EntryPointCaller(service_name="sp_func_service", engine_service=self.engine_service),
+            entry_point_caller=spear.utils.func_utils.CallSyncEntryPointCaller(service_name="sp_func_service", engine_service=self.engine_service),
             shared_memory_service=self.shared_memory_service)
 
         # Initialize EditorServices and GameServices containers for world-specific services
@@ -368,17 +371,11 @@ class Instance():
         spear.log_current_function()        
         spear.log("    Initializing client...")
 
-        spear_ext.Statics.force_return_aligned_arrays = self._config.SPEAR.INSTANCE.CLIENT_FORCE_RETURN_ALIGNED_ARRAYS
-        spear_ext.Statics.verbose_rpc_calls = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_RPC_CALLS
-        spear_ext.Statics.verbose_allocations = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_ALLOCATIONS
-
         connected = False
 
         # If we're connecting to a running instance, then we assume that the server is already running and
         # only try to connect once.
         if self._config.SPEAR.LAUNCH_MODE == "none":
-
-            spear_ext.Statics.verbose_exceptions = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_EXCEPTIONS
 
             try:
                 # Once a connection has been established, the client will wait for timeout seconds before
@@ -386,7 +383,7 @@ class Instance():
                 spear.log("    Attempting to connect to server...")
                 self._client = spear_ext.Client("127.0.0.1", self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT)
                 self._client.set_timeout(int(self._config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS*1000))
-                connected = self._client.call_as_string("engine_service.ping") == "ping" # don't use self.engine_service because it hasn't been initialized yet
+                connected = self._client._call_sync_on_worker_thread_as_string("engine_service.call_sync_on_worker_thread.ping") == "ping" # self.engine_service hasn't been initialized yet
 
             except Exception as e:
                 spear.log("    Exception: ", e)
@@ -395,8 +392,6 @@ class Instance():
 
         # otherwise try to connect repeatedly, since the server might not have started yet
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
-
-            spear_ext.Statics.verbose_exceptions = False
 
             start_time_seconds = time.time()
             elapsed_time_seconds = time.time() - start_time_seconds
@@ -414,7 +409,7 @@ class Instance():
                     spear.log("    Attempting to connect to server...")
                     self._client = spear_ext.Client("127.0.0.1", self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT)
                     self._client.set_timeout(int(self._config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS*1000))
-                    connected = self._client.call_as_string("engine_service.ping") == "ping" # don't use self.engine_service because it hasn't been initialized yet
+                    connected = self._client._call_sync_on_worker_thread_as_string("engine_service.call_sync_on_worker_thread.ping") == "ping" # self.engine_service hasn't been initialized yet
                     break
 
                 except:
@@ -425,8 +420,6 @@ class Instance():
 
                 time.sleep(self._config.SPEAR.INSTANCE.INITIALIZE_CLIENT_SLEEP_TIME_SECONDS)
                 elapsed_time_seconds = time.time() - start_time_seconds
-
-            spear_ext.Statics.verbose_exceptions = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_EXCEPTIONS
 
         else:
             assert False
@@ -441,7 +434,7 @@ class Instance():
         if self._config.SPEAR.LAUNCH_MODE == "none":
             pass
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
-            pid = self._client.call_as_int64("engine_service.get_id") # don't use self.engine_service because it hasn't been initialized yet
+            pid = self._client._call_sync_on_worker_thread_as_int64("engine_service.call_sync_on_worker_thread.get_id") # self.engine_service hasn't been initialized yet
             if pid == self._process.pid:
                 spear.log("    Validated engine_service.get_id: ", pid)
             else:            
@@ -451,25 +444,104 @@ class Instance():
         else:
             assert False
 
-        if self._config.SPEAR.INSTANCE.PRINT_CALL_DEBUG_INFO:
-
-            spear.log("    Client has the following functions: ")
-
-            func_strings = set()
-            for name, member in inspect.getmembers(self._client):
-                if not name.startswith("__") or not name.endswith("__"):
-                    lines = member.__doc__.split("\n")
-                    for line in lines:
-                        tokens = line.split()
-                        tokens = [ t.removesuffix("self,") for t in tokens ]
-                        tokens = [ t.removeprefix("/") for t in tokens ]
-                        tokens = [ t for t in tokens if not t.startswith("arg") or not t.endswith(":") ]
-                        func_string = " ".join(tokens).replace("( ", "(").replace(", ) -> ", ") -> ")
-                        if func_string not in func_strings:
-                            func_strings.add(func_string)
-                            spear.log("        ", func_string)
+        self._client.force_return_aligned_arrays = self._config.SPEAR.INSTANCE.CLIENT_FORCE_RETURN_ALIGNED_ARRAYS
+        self._client.verbose_rpc_calls = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_RPC_CALLS
+        self._client.verbose_allocations = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_ALLOCATIONS
+        self._client.verbose_exceptions = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_EXCEPTIONS
 
         spear.log("    Finished initializing client.")
+
+
+    def _validate_client_and_server_entry_points(self):
+
+        spear.log_current_function()        
+        spear.log("    Validating client and server entry points...")
+
+        # Validate func signature type descs.
+
+        client_signature_type_descs = spear_ext.Client.get_entry_point_signature_type_descs()
+        server_signature_type_descs = self._client._call_sync_on_worker_thread_as_vector_of_func_signature_type_desc("engine_service.call_sync_on_worker_thread.get_entry_point_signature_type_descs")
+
+        valid = True
+        for c, s in itertools.zip_longest(client_signature_type_descs, server_signature_type_descs):
+            if c.type_names != s.type_names or c.const_strings != s.const_strings or c.ref_strings != s.ref_strings:
+                valid = False
+                spear.log(f"    ERROR: Mismatch between registered data types on the client and server.")
+                spear.log(f"    ERROR:     Type names:")
+                spear.log(f"    ERROR:         Client: {c.type_names}")
+                spear.log(f"    ERROR:         Server: {s.type_names}")
+                spear.log(f"    ERROR:     Const strings:")
+                spear.log(f"    ERROR:         Client: {c.const_strings}")
+                spear.log(f"    ERROR:         Server: {c.const_strings}")
+                spear.log(f"    ERROR:     Ref Strings:")
+                spear.log(f"    ERROR:         Client: {c.ref_strings}")
+                spear.log(f"    ERROR:         Server: {c.ref_strings}")
+
+        assert valid
+
+        def get_func_signature_string(func_signature):
+            if len(func_signature) == 0:
+                assert False
+            elif len(func_signature) == 1:
+                func_signature_string = func_signature[0].type_names["python_ext"]
+            else:
+                return_value_string = func_signature[0].type_names["python_ext"]
+                args_string = ', '.join([ desc.const_strings['python_ext'] + desc.type_names['python_ext'] + desc.ref_strings['python_ext'] for desc in func_signature[1:] ])
+                func_signature_string = return_value_string + ", " + args_string
+            return func_signature_string
+
+        def validate_entry_points(registry_name, client_signature_descs, server_signature_descs, get_client_func_name):
+
+            valid = True
+
+            # Search for server entry points that can't be called from the client.
+            for s in server_signature_descs:
+                found = False
+                func_signature_string = get_func_signature_string(func_signature=s.func_signature)
+
+                for c in client_signature_descs:
+                    if c.name == get_client_func_name(s.func_signature) and c.func_signature_id == s.func_signature_id:
+                        if found:
+                            spear.log(f"    ERROR: Server entry point callable from multiple client functions: ", s.name)
+                            spear.log(f"    ERROR:     Function signature ({len(s.func_signature) - 1} args): <{func_signature_string}>")
+                            valid = False
+                        found = True
+
+                if not found:
+                    valid = False
+                    spear.log(f"    ERROR: Server entry point not callable from client: ", s.name)
+                    spear.log(f"    ERROR:     Function signature ({len(s.func_signature) - 1} args): <{func_signature_string}>")
+
+            # Search for client entry points that don't correspond to any server entry point.
+            for c in client_signature_descs:
+                found = False
+                func_signature_string = get_func_signature_string(c.func_signature)
+
+                for s in server_signature_descs:
+                    if s.func_signature_id == c.func_signature_id:
+                        found = True
+                        break
+
+                if not found:
+                    valid = False
+                    spear.log(f"    ERROR: Client entry point does not correspond to any server entry point: {c.name} (registry_name={registry_name})")
+                    spear.log(f"    ERROR:     Function signature ({len(c.func_signature) - 1} args): <{func_signature_string}>")
+
+            return valid
+
+        client_signature_descs = spear_ext.Client.get_entry_point_signature_descs()
+        server_signature_descs = self._client._call_sync_on_worker_thread_as_map_of_string_to_vector_of_func_signature_desc("engine_service.call_sync_on_worker_thread.get_entry_point_signature_descs")
+
+        valid = \
+            validate_entry_points("call_sync_on_worker_thread",       client_signature_descs["call_sync_on_worker_thread"],       server_signature_descs["call_sync_on_worker_thread"],       lambda s: "_call_sync_on_worker_thread_as_" + s[0].type_names["entry_point"]) and \
+            validate_entry_points("call_sync_on_game_thread",         client_signature_descs["call_sync_on_game_thread"],         server_signature_descs["call_sync_on_game_thread"],         lambda s: "_call_sync_on_game_thread_as_" + s[0].type_names["entry_point"]) and \
+            validate_entry_points("call_async_on_game_thread",        client_signature_descs["call_async_on_game_thread"],        server_signature_descs["call_async_on_game_thread"],        lambda s: "_call_async_on_game_thread") and \
+            validate_entry_points("send_async_on_game_thread",        client_signature_descs["send_async_on_game_thread"],        server_signature_descs["send_async_on_game_thread"],        lambda s: "_send_async_on_game_thread") and \
+            validate_entry_points("get_future_result_on_game_thread", client_signature_descs["get_future_result_on_game_thread"], server_signature_descs["get_future_result_on_game_thread"], lambda s: "_get_future_result_on_game_thread_as_" + s[0].type_names["entry_point"])
+
+        assert valid
+
+        spear.log("    Finished validating client and server entry points.")
 
 
     def _request_warm_up_unreal_instance(self, time_seconds, num_frames):

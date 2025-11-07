@@ -5,9 +5,10 @@
 
 #pragma once
 
+#include <stddef.h> // size_t
 #include <stdint.h> // int64_t
 
-#include <concepts>    // std::constructible_from, std::derived_from
+#include <concepts>    // std::constructible_from, std::derived_from, std::same_as
 #include <map>
 #include <memory>      // std::align
 #include <ranges>      // std::views::filter, std::views::transform
@@ -31,12 +32,15 @@
 #include <Subsystems/EngineSubsystem.h>
 #include <Subsystems/Subsystem.h>
 #include <Templates/Casts.h>
-#include <UObject/Class.h>                  // EGetByNameFlags, EIncludeSuperFlag, UClass, UEnum, UStruct
+#include <UObject/Class.h>                  // EGetByNameFlags, EIncludeSuperFlag, UClass, UEnum, UScriptStruct, UStruct
 #include <UObject/NameTypes.h>              // FName
 #include <UObject/Object.h>                 // UObject
+#include <UObject/ObjectMacros.h>           // EPropertyFlags
 #include <UObject/ReflectedTypeAccessors.h> // StaticEnum
-#include <UObject/UnrealType.h>             // FProperty
+#include <UObject/Script.h>                 // EFunctionFlags
+#include <UObject/UnrealType.h>             // EFieldIterationFlags, FProperty
 #include <UObject/UObjectGlobals.h>         // NewObject
+#include <UObject/UObjectIterator.h>
 
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
@@ -115,9 +119,23 @@ template <typename TStableNameObject>
 concept CStableNameObject =
     CActor<TStableNameObject> || CComponent<TStableNameObject>;
 
+template <typename TNameObject>
+concept CNameObject =
+    !CStableNameObject<TNameObject> &&
+    (requires (TNameObject name_object) {
+        { name_object.GetName() } -> std::same_as<FName>;
+    } ||
+    requires (TNameObject name_object) {
+        { name_object.GetName() } -> std::same_as<FString>;
+    });
+
 template <typename TParent>
 concept CParent =
     CActor<TParent> || CSceneComponent<TParent>;
+
+template <typename TPropertyContainer>
+concept CPropertyContainer =
+    std::derived_from<TPropertyContainer, UStruct> || std::derived_from<TPropertyContainer, UFunction>;
 
 template <typename TSubsystem>
 concept CSubsystem =
@@ -139,9 +157,7 @@ concept CSubsystemProvider =
     std::derived_from<std::remove_pointer_t<decltype(TSubsystemProvider().GetSubsystemBase(nullptr))>, USubsystem>;
 
 //
-// SpPropertyDesc encapsulates the data needed to get and set a UPROPERTY on a specific UObject. We need to
-// place this type here in stead of in SpTypes.h to avoid a circular include. SpTypes.h includes SpArray.h,
-// and SpArray.h includes Unreal.h, so Unreal.h can't include SpTypes.h.
+// SpPropertyDesc encapsulates the data needed to get and set a UPROPERTY on a specific UObject.
 //
 
 struct SpPropertyDesc
@@ -182,6 +198,25 @@ public:
         return TInterface::UClassType::StaticClass();
     }
 
+    static std::vector<UScriptStruct*> findStaticStructs()
+    {
+        return Unreal::findObjects<UScriptStruct>();
+    }
+
+    static std::map<std::string, UScriptStruct*> findStaticStructsAsMap(bool use_cpp_type_as_key = true)
+    {
+        std::map<std::string, UScriptStruct*> script_structs_map;
+        std::vector<UScriptStruct*> script_structs = findStaticStructs();
+        if (use_cpp_type_as_key) {
+            script_structs_map = Std::toMap<std::string, UScriptStruct*>(
+                script_structs |
+                std::views::transform([](auto script_struct) { return std::make_pair(Unreal::getCppTypeAsString(script_struct), script_struct); }));
+        } else {
+            script_structs_map = toMap(script_structs);
+        }
+        return script_structs_map;
+    }
+
     template <CClass TClass>
     static UClass* getStaticClass()
     {
@@ -194,17 +229,58 @@ public:
         return TInterface::UClassType::StaticClass();
     }
 
+    static std::vector<UClass*> getDerivedClasses(UClass* uclass, bool recursive)
+    {
+        TArray<UClass*> derived_uclasses;
+        GetDerivedClasses(uclass, derived_uclasses, recursive);
+        return Unreal::toStdVector(derived_uclasses);
+    }
+
+    static std::map<std::string, UClass*> getDerivedClassesAsMap(UClass* uclass, bool recursive = true, bool use_cpp_type_as_key = true)
+    {
+        std::map<std::string, UClass*> uclasses_map;
+        std::vector<UClass*> uclasses = Unreal::getDerivedClasses(uclass, recursive);
+        if (use_cpp_type_as_key) {
+            uclasses_map = Std::toMap<std::string, UClass*>(
+                uclasses |
+                std::views::transform([](auto uclass) { return std::make_pair(Unreal::getCppTypeAsString(uclass), uclass); }));
+        } else {
+            uclasses_map = toMap(uclasses);
+        }
+        return uclasses_map;
+    }
+
     template <typename TStructOrClassOrInterface> requires
          CStruct<TStructOrClassOrInterface> || CClass<TStructOrClassOrInterface> || CInterface<TStructOrClassOrInterface>
     static std::string getCppTypeAsString()
     {
         UStruct* ustruct = getStaticStruct<TStructOrClassOrInterface>();
-        return Unreal::toStdString(ustruct->GetPrefixCPP()) + Unreal::toStdString(ustruct->GetName());
+        return getCppTypeAsString(ustruct);
     }
 
     static std::string getCppTypeAsString(UStruct* ustruct)
     {
         return Unreal::toStdString(ustruct->GetPrefixCPP()) + Unreal::toStdString(ustruct->GetName());
+    }
+
+    static std::string getCppTypeAsString(FProperty* property)
+    {
+        return Unreal::toStdString(property->GetCPPType());
+    }
+
+    //
+    // Helper function for finding objects
+    //
+
+    template <CObject TObject>
+    static std::vector<TObject*> findObjects()
+    {
+        std::vector<TObject*> objects;
+        for (TObjectIterator<TObject> itr; itr; ++itr) {
+            TObject* object = *itr;
+            objects.push_back(object);
+        }
+        return objects;
     }
 
     //
@@ -213,6 +289,56 @@ public:
     //
 
     static UStruct* findSpecialStructByName(const std::string& struct_name);
+
+    //
+    // Get property metadata
+    //
+
+    template <CPropertyContainer TPropertyContainer>
+    static std::vector<FProperty*> findProperties(const TPropertyContainer* property_container, EFieldIterationFlags field_iteration_flags = EFieldIterationFlags::Default)
+    {
+        SP_ASSERT(property_container);
+        std::vector<FProperty*> properties;
+        for (TFieldIterator<FProperty> itr(property_container, field_iteration_flags); itr; ++itr) {
+            FProperty* property = *itr;
+            properties.push_back(property);
+        }
+        return properties;
+    }
+
+    template <CPropertyContainer TPropertyContainer>
+    static std::vector<FProperty*> findPropertiesByFlagsAny(const TPropertyContainer* property_container, EPropertyFlags property_flags, EFieldIterationFlags field_iteration_flags = EFieldIterationFlags::Default)
+    {
+        return Std::toVector<FProperty*>(
+            findProperties(property_container, field_iteration_flags) |
+            std::views::filter([property_flags](auto property) { return property->HasAnyPropertyFlags(property_flags); }));
+    }
+
+    template <CPropertyContainer TPropertyContainer>
+    static std::vector<FProperty*> findPropertiesByFlagsAll(const TPropertyContainer* property_container, EPropertyFlags property_flags, EFieldIterationFlags field_iteration_flags = EFieldIterationFlags::Default)
+    {
+        return Std::toVector<FProperty*>(
+            findProperties(property_container, field_iteration_flags) |
+            std::views::filter([property_flags](auto property) { return property->HasAllPropertyFlags(property_flags); }));
+    }
+
+    template <CPropertyContainer TPropertyContainer>
+    static std::map<std::string, FProperty*> findPropertiesAsMap(const TPropertyContainer* property_container, EFieldIterationFlags field_iteration_flags = EFieldIterationFlags::Default)
+    {
+        return toMap(findProperties(property_container, field_iteration_flags));
+    }
+
+    template <CPropertyContainer TPropertyContainer>
+    static std::map<std::string, FProperty*> findPropertiesByFlagsAnyAsMap(const TPropertyContainer* property_container, EPropertyFlags property_flags, EFieldIterationFlags field_iteration_flags = EFieldIterationFlags::Default)
+    {
+        return toMap(findPropertiesByFlagsAny(property_container, property_flags, field_iteration_flags));
+    }
+
+    template <CPropertyContainer TPropertyContainer>
+    static std::map<std::string, FProperty*> findPropertiesByFlagsAllAsMap(const TPropertyContainer* property_container, EPropertyFlags property_flags, EFieldIterationFlags field_iteration_flags = EFieldIterationFlags::Default)
+    {
+        return toMap(findPropertiesByFlagsAll(property_container, property_flags, field_iteration_flags));
+    }
 
     //
     // Get and set object properties, uobject can't be const because we cast it to void*
@@ -237,11 +363,17 @@ public:
     static void setPropertyValueFromJsonValue(const SpPropertyDesc& property_desc, TSharedPtr<FJsonValue> json_value);
 
     //
-    // Find function by name, call function, uobject can't be const because we call uobject->ProcessEvent(...)
-    // which is non-const, ufunction can't be const because we call because we pass it to uobject->ProcessEvent(...)
-    // which expects non-const
+    // Get functions, find function by name, call function. Note that uobject can't be const because we call
+    // uobject->ProcessEvent(...) which is non-const; and ufunction can't be const because we pass it to uobject->ProcessEvent(...)
+    // which expects non-const.
     //
 
+    static std::vector<UFunction*> findFunctions(const UClass* uclass, EFieldIterationFlags field_iteration_flags = EFieldIterationFlags::Default);
+    static std::vector<UFunction*> findFunctionsByFlagsAny(const UClass* uclass, EFunctionFlags function_flags, EFieldIterationFlags field_iteration_flags = EFieldIterationFlags::Default);
+    static std::vector<UFunction*> findFunctionsByFlagsAll(const UClass* uclass, EFunctionFlags function_flags, EFieldIterationFlags field_iteration_flags = EFieldIterationFlags::Default);
+    static std::map<std::string, UFunction*> findFunctionsAsMap(const UClass* uclass, EFieldIterationFlags field_iteration_flags = EFieldIterationFlags::Default);
+    static std::map<std::string, UFunction*> findFunctionsByFlagsAnyAsMap(const UClass* uclass, EFunctionFlags function_flags, EFieldIterationFlags field_iteration_flags = EFieldIterationFlags::Default);
+    static std::map<std::string, UFunction*> findFunctionsByFlagsAllAsMap(const UClass* uclass, EFunctionFlags function_flags, EFieldIterationFlags field_iteration_flags = EFieldIterationFlags::Default);
     static UFunction* findFunctionByName(const UClass* uclass, const std::string& function_name, EIncludeSuperFlag::Type include_super_flag = EIncludeSuperFlag::IncludeSuper);
     static std::map<std::string, std::string> callFunction(const UWorld* world, UObject* uobject, UFunction* ufunction, const std::map<std::string, std::string>& args = {}, const std::string& world_context = "WorldContextObject");
 
@@ -416,8 +548,17 @@ public:
     // Get children components unconditionally and return an std::vector or an std::map
     //
 
-    static std::vector<USceneComponent*> getChildrenComponents(const USceneComponent* parent, bool include_all_descendants = true);
-    static std::map<std::string, USceneComponent*> getChildrenComponentsAsMap(const USceneComponent* parent, bool include_all_descendants = true);
+    template <CParent TParent>
+    static std::vector<USceneComponent*> getChildrenComponents(const TParent* parent, bool include_all_descendants = true)
+    {
+        return getChildrenComponentsByType<USceneComponent>(parent, include_all_descendants);
+    }
+
+    template <CParent TParent>
+    static std::map<std::string, USceneComponent*> getChildrenComponentsAsMap(const TParent* parent, bool include_all_descendants = true)
+    {
+        return toMap<USceneComponent>(getChildrenComponents(parent, include_all_descendants));
+    }
 
     //
     // Find actor and component and return both
@@ -1357,13 +1498,13 @@ public:
         std::constructible_from<TCharPtr, TStr>
     static Unreal::TCharPtr toTCharPtr(TStr&& str)
     {
-        return TCharPtr(std::forward<decltype(str)>(str));
+        return TCharPtr(std::forward<TStr>(str));
     }
 
 private:
 
     //
-    // Helper functions for finding actors and getting components
+    // Helper functions for finding actors and getting components and getting properties
     //
 
     template <CActor TActor = AActor, CComponent TComponent = UActorComponent, CActor TReturnAsActor = TActor, CComponent TReturnAsComponent = TComponent> requires
@@ -1407,6 +1548,15 @@ private:
             objects |
             std::views::filter([](auto object) { return hasStableName(object); }) |
             std::views::transform([](auto object) { return std::make_pair(getStableName(object), static_cast<TReturnAsStableNameObject*>(object)); }));
+    }
+
+    template <typename TNameObject> requires
+        CNameObject<TNameObject>
+    static std::map<std::string, TNameObject*> toMap(const std::vector<TNameObject*>& name_objects)
+    {
+        return Std::toMap<std::string, TNameObject*>(
+            name_objects |
+            std::views::transform([](auto name_object) { return std::make_pair(Unreal::toStdString(name_object->GetName()), name_object); }));
     }
 
     template <typename TValue>

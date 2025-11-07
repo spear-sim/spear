@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <stddef.h> // uint32_t
+#include <stdint.h> // uint32_t
 
 #include <map>
 #include <ranges>     // std::views::filter, std::views::transform

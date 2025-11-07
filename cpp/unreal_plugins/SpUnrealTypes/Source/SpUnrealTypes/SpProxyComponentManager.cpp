@@ -5,7 +5,7 @@
 
 #include "SpUnrealTypes/SpProxyComponentManager.h"
 
-#include <stddef.h> // uint32_t
+#include <stdint.h> // uint32_t
 
 #include <map>
 #include <set>

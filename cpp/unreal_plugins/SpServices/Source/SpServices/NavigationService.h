@@ -31,7 +31,6 @@
 #include "SpCore/UnrealObj.h"
 
 #include "SpServices/EntryPointBinder.h"
-#include "SpServices/MsgpackAdaptors.h"
 #include "SpServices/Service.h"
 #include "SpServices/SharedMemoryService.h"
 

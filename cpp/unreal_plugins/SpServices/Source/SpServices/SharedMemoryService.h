@@ -19,7 +19,6 @@
 #include "SpCore/Unreal.h"
 
 #include "SpServices/EntryPointBinder.h"
-#include "SpServices/MsgpackAdaptors.h"
 #include "SpServices/Service.h"
 
 class SharedMemoryService : public Service

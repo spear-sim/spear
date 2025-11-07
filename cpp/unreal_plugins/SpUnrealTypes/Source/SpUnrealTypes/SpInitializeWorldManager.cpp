@@ -124,7 +124,7 @@ void ASpInitializeWorldManager::BeginPlay()
     //
 
     if (bExecuteConsoleCommands) {
-        std::vector<std::string> console_commands = Std::toVector<std::string>(Unreal::toStdVector(ConsoleCommands) | std::views::transform([](auto cmd) { return Unreal::toStdString(cmd); }));
+        std::vector<std::string> console_commands = Std::toVector<std::string>(Unreal::toStdVector(ConsoleCommands) | std::views::transform([](auto& cmd) { return Unreal::toStdString(cmd); }));
 
         SP_LOG("    Executing console commands...");
         SP_ASSERT(GEngine);

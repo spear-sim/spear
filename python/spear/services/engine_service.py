@@ -7,35 +7,68 @@ import contextlib
 import spear
 import sys
 
-class EngineService():
-    def __init__(self, client, config):
+class EngineService(spear.utils.func_utils.Service):
+    def __init__(self, entry_point_caller, client, config, is_top_level_service=True, create_children_services=True):
+        self._entry_point_caller = entry_point_caller
+        entry_point_caller.engine_service = self # need to assign the entry_point_caller.engine_service once we have a valid self reference
+
         self._client = client
         self._config = config
 
         self._frame_state = None
         self._byte_order = None
 
+        super().__init__(
+            is_top_level_service=is_top_level_service,
+            create_children_services=create_children_services,
+            entry_point_caller=entry_point_caller) # do this after initializing local state
+
+
+    def create_child_service(self, entry_point_caller):
+        assert self.is_top_level_service() # this function should only be called from the top-level service
+        return EngineService(entry_point_caller=entry_point_caller, client=self._client, config=self._config, is_top_level_service=False, create_children_services=False)
+
     #
     # Functions for managing the server's frame state.
     #
 
     def initialize(self):
-        self._frame_state = "idle"
-        self.call_on_worker_thread("void", "engine_service.initialize") # explicitly initialize before calling begin_frame() for the first time
+        assert self.is_top_level_service() # this function should only be called from the top-level service
 
-        # cache byte order because it will be constant for the life of the client
-        byte_order = self.call_on_worker_thread("std::string", "engine_service.get_byte_order")
+        self._frame_state = "idle"
+
+        # explicitly initialize before calling begin_frame() for the first time
+        self._call_impl(
+            "void",
+            "_call_sync_on_worker_thread_as_void",
+            "engine_service.call_sync_on_worker_thread.initialize")
+
+        # cache byte order because it will be constant for the life of the server
+        byte_order = self._call_impl(
+            "string",
+            "_call_sync_on_worker_thread_as_string",
+            "engine_service.call_sync_on_worker_thread.get_byte_order")
         if byte_order == sys.byteorder:
             self._byte_order = "native"
         else:
             self._byte_order = byte_order
 
+        # cache function signatures because they will be constant for the life of the server
+        server_signature_descs = self._call_impl(
+            "map_of_string_to_vector_of_func_signature_desc",
+            "_call_sync_on_worker_thread_as_map_of_string_to_vector_of_func_signature_desc",
+            "engine_service.call_sync_on_worker_thread.get_entry_point_signature_descs")
+        self._server_signature_descs = { registry_name: { desc.name: desc for desc in descs } for registry_name, descs in server_signature_descs.items() }
 
     def terminate(self):
-        self._frame_state = None
-        self._byte_order = None
+        assert self.is_top_level_service() # this function should only be called from the top-level service
 
-        self.call_on_worker_thread("void", "engine_service.terminate")
+        self._frame_state = None
+
+        self._call_impl(
+            "void",
+            "_call_sync_on_worker_thread_as_void",
+            "engine_service.call_sync_on_worker_thread.terminate")
 
     #
     # These context managers are intended as exception-safe wrappers for managing the server's frame state.
@@ -43,7 +76,7 @@ class EngineService():
 
     @contextlib.contextmanager
     def begin_frame(self):
-
+        assert self.is_top_level_service() # user should only call this function on the top-level service
         assert self._frame_state == "idle"
         self._frame_state = "request_begin_frame"
 
@@ -86,6 +119,7 @@ class EngineService():
 
         # try executing post-frame work
         try:
+            assert self.is_top_level_service() # user should only call this function on the top-level service
             assert self._frame_state == "executing_frame"
             self._frame_state = "executing_end_frame"
             yield
@@ -111,38 +145,39 @@ class EngineService():
         self._frame_state = "idle"
 
     #
+    # Helper functions to support initializing a spear.Instance
+    #
+
+    def get_byte_order(self):
+        assert self.is_top_level_service()
+        assert self._byte_order is not None
+        return self._byte_order
+
+    #
     # Miscellaneous low-level entry points to support initializing a spear.Instance
     #
 
     def ping(self):
-        return self.call_on_worker_thread("std::string", "engine_service.ping")
+        return self._entry_point_caller.call_on_worker_thread("ping", None)
 
     def get_id(self):
-        return self.call_on_worker_thread("int64_t", "engine_service.get_id")
-
-    #
-    # Miscellaneous low-level entry points to support initializing a spear.services.EngineService
-    #
-
-    def get_byte_order(self):
-        assert self._byte_order is not None
-        return self._byte_order
+        return self._entry_point_caller.call_on_worker_thread("get_id", None)
 
     #
     # Miscellaneous low-level entry points that interact with Unreal globals
     #
 
     def get_engine(self):
-        return self.call_on_worker_thread("uint64_t", "engine_service.get_engine")
+        return self._entry_point_caller.call_on_worker_thread("get_engine", None)
 
     def is_with_editor(self):
-        return self.call_on_worker_thread("bool", "engine_service.is_with_editor")
+        return self._entry_point_caller.call_on_worker_thread("is_with_editor", None)
 
     def is_running_commandlet(self):
-        return self.call_on_worker_thread("bool", "engine_service.is_running_commandlet")
+        return self._entry_point_caller.call_on_worker_thread("is_running_commandlet", None)
 
     def is_async_loading(self):
-        return self.call_on_game_thread("bool", "engine_service.is_async_loading")
+        return self._entry_point_caller.call_on_game_thread("is_async_loading", None)
 
     #
     # Miscellaneous low-level entry points that interact with Unreal singleton structs and are needed in the
@@ -153,69 +188,17 @@ class EngineService():
     #
 
     def get_command_line(self):
-        return self.call_on_worker_thread("std::string", "engine_service.get_command_line")
+        return self._entry_point_caller.call_on_worker_thread("get_command_line", None)
 
     def request_exit(self, immediate_shutdown):
-        self.call_on_worker_thread("void", "engine_service.request_exit", immediate_shutdown)
+        self._entry_point_caller.call_on_worker_thread("request_exit", None, immediate_shutdown)
 
     #
     # Miscellaneous low-level entry points that interact with GEngine
     #
 
     def get_viewport_size(self):
-        return self.call_on_worker_thread("std::vector<double>", "engine_service.get_viewport_size")
-
-    #
-    # Functions for calling entry points on the server.
-    #
-
-    def call_on_game_thread(self, return_as, func_name, *args):
-        self._validate_frame_state_for_game_thread_work()
-        return self._call(return_as, func_name, *args)
-
-    def call_on_worker_thread(self, return_as, func_name, *args):
-        self._validate_frame_state_for_worker_thread_work()
-        return self._call(return_as, func_name, *args)
-
-    def call_async_on_game_thread(self, func_name, *args):
-        self._validate_frame_state_for_game_thread_work()
-        return self._call_async(func_name, *args)
-
-    def call_async_on_worker_thread(self, func_name, *args):
-        self._validate_frame_state_for_worker_thread_work()
-        return self._call_async(func_name, *args)
-
-    def send_async_on_game_thread(self, func_name, *args):
-        self._validate_frame_state_for_game_thread_work()
-        self._send_async(func_name, *args)
-
-    def send_async_on_worker_thread(self, func_name, *args):
-        self._validate_frame_state_for_worker_thread_work()
-        self._send_async(func_name, *args)
-
-    def get_future_result(self, return_as, future):
-        self._validate_frame_state_for_worker_thread_work()
-        return self._get_future_result(return_as=return_as, future=future)
-
-    def call_async_fast_on_game_thread(self, func_name, *args):
-        self._validate_frame_state_for_game_thread_work()
-        return self._call_async_fast(func_name, *args)
-
-    def call_async_fast_on_worker_thread(self, func_name, *args):
-        self._validate_frame_state_for_worker_thread_work()
-        return self._call_async_fast(func_name, *args)
-
-    def send_async_fast_on_game_thread(self, func_name, *args):
-        self._validate_frame_state_for_game_thread_work()
-        self._send_async_fast(func_name, *args)
-
-    def send_async_fast_on_worker_thread(self, func_name, *args):
-        self._validate_frame_state_for_worker_thread_work()
-        self._send_async_fast(func_name, *args)
-
-    def get_future_result_fast(self, return_as, future):
-        self._validate_frame_state_for_worker_thread_work()
-        return self._get_future_result_fast(return_as=return_as, future=future)
+        return self._entry_point_caller.call_on_worker_thread("get_viewport_size", None)
 
     #
     # Helper functions for managing the server's frame state. Note that _begin_frame_impl() and _execute_frame_impl()
@@ -225,17 +208,108 @@ class EngineService():
     #
 
     def _begin_frame_impl(self):
-        self.call_on_worker_thread("void", "engine_service.begin_frame")
+        assert self.is_top_level_service() # this function should only be called from the top-level service
+        self.call_sync_on_worker_thread("engine_service.call_sync_on_worker_thread.begin_frame")
 
     def _execute_frame_impl(self):
-        self.call_on_worker_thread("void", "engine_service.execute_frame")
+        assert self.is_top_level_service() # this function should only be called from the top-level service
+        self.call_sync_on_worker_thread("engine_service.call_sync_on_worker_thread.execute_frame")
 
     def _end_frame_impl(self):
-        self.send_async_fast_on_worker_thread("engine_service.end_frame")
+        assert self.is_top_level_service() # this function should only be called from the top-level service
+        self.send_async_fast_on_worker_thread("engine_service.call_sync_on_worker_thread.end_frame")
+
+    #
+    # Functions for calling entry points on the server.
+    #
+
+    # worker thread
+
+    def call_sync_on_worker_thread(self, func_name, *args):
+        self._validate_frame_state_for_worker_thread_work()
+        return_as = self._server_signature_descs["call_sync_on_worker_thread"][func_name].func_signature[0].type_names["entry_point"]
+        call_func_name = "_call_sync_on_worker_thread_as_" + return_as
+        return self._call_impl(return_as, call_func_name, func_name, *args)
+
+    def call_async_fast_on_worker_thread(self, func_name, *args):
+        self._validate_frame_state_for_worker_thread_work()
+        return_as = self._server_signature_descs["call_sync_on_worker_thread"][func_name].func_signature[0].type_names["entry_point"]
+        assert return_as == "future"
+        call_func_name = "_call_async_fast_on_worker_thread"
+        return self._call_impl(return_as, call_func_name, func_name, *args)
+
+    def send_async_fast_on_worker_thread(self, func_name, *args):
+        self._validate_frame_state_for_worker_thread_work()
+        return_as = self._server_signature_descs["call_sync_on_worker_thread"][func_name].func_signature[0].type_names["entry_point"]
+        assert return_as == "void"
+        call_func_name = "_send_async_fast_on_worker_thread"
+        return self._call_impl(return_as, call_func_name, func_name, *args)
+
+    def get_future_result_fast_on_worker_thread(self, future):
+        self._validate_frame_state_for_worker_thread_work()
+        return_as = future._return_as
+        func_name = future._func_name
+        get_future_result_func_name = "_get_future_result_fast_on_worker_thread_as_" + return_as
+        return self._get_future_result_impl(return_as, get_future_result_func_name, future._future, func_name)
+
+    # game thread
+
+    def call_sync_on_game_thread(self, func_name, *args):
+        self._validate_frame_state_for_game_thread_work()
+        return_as = self._server_signature_descs["call_sync_on_game_thread"][func_name].func_signature[0].type_names["entry_point"]
+        call_func_name = "_call_sync_on_game_thread_as_" + return_as
+        return self._call_impl(return_as, call_func_name, func_name, *args)
+
+    def call_async_on_game_thread(self, func_name, *args):
+        self._validate_frame_state_for_game_thread_work()
+        return_as = self._server_signature_descs["call_async_on_game_thread"][func_name].func_signature[0].type_names["entry_point"]
+        assert return_as == "future"
+        call_func_name = "_call_async_on_game_thread"
+        return self._call_impl(return_as, call_func_name, func_name, *args)
+
+    def send_async_on_game_thread(self, func_name, *args):
+        self._validate_frame_state_for_game_thread_work()
+        return_as = self._server_signature_descs["send_sync_on_game_thread"][func_name].func_signature[0].type_names["entry_point"]
+        assert return_as == "void"
+        call_func_name = "_send_async_on_game_thread"
+        return self._call_impl(return_as, call_func_name, func_name, *args)
+
+    def get_future_result_on_game_thread(self, future):
+        self._validate_frame_state_for_worker_thread_work()
+        return_as = future._return_as
+        func_name = future._func_name
+        get_future_result_func_name = "_get_future_result_on_game_thread_as_" + return_as
+        return self._get_future_result_impl(return_as, get_future_result_func_name, future._future, func_name)
+
+    def call_async_fast_on_game_thread(self, func_name, *args):
+        self._validate_frame_state_for_game_thread_work()
+        return_as = self._server_signature_descs["call_async_on_game_thread"][func_name].func_signature[0].type_names["entry_point"]
+        assert return_as == "future"
+        call_func_name = "_call_async_fast_on_game_thread"
+        return self._call_impl(return_as, call_func_name, func_name, *args)
+
+    def send_async_fast_on_game_thread(self, func_name, *args):
+        self._validate_frame_state_for_game_thread_work()
+        return_as = self._server_signature_descs["send_sync_on_game_thread"][func_name].func_signature[0].type_names["entry_point"]
+        assert return_as == "void"
+        call_func_name = "_send_async_fast_on_game_thread"
+        return self._call_impl(return_as, call_func_name, func_name, *args)
+
+    def get_future_result_fast_on_game_thread(self, future):
+        self._validate_frame_state_for_worker_thread_work()
+        return_as = future._return_as
+        func_name = future._func_name
+        get_future_result_func_name = "_get_future_result_fast_on_game_thread_as_" + return_as
+        return self._get_future_result_impl(return_as, get_future_result_func_name, future._future, func_name)
 
     #
     # Helper functions for calling entry points on the server
     #
+
+    def _validate_frame_state_for_worker_thread_work(self):
+        if self._frame_state not in ["idle", "request_begin_frame", "executing_begin_frame", "executing_frame", "executing_end_frame", "request_end_frame", "error"]:
+            spear.log("ERROR: Unexpected frame state: ", self._frame_state)
+            assert False
 
     def _validate_frame_state_for_game_thread_work(self):
         if self._frame_state not in ["executing_begin_frame", "executing_end_frame"]:
@@ -249,192 +323,48 @@ class EngineService():
 
             assert False
 
-    def _validate_frame_state_for_worker_thread_work(self):
-        if self._frame_state not in ["idle", "request_begin_frame", "executing_begin_frame", "executing_frame", "executing_end_frame", "request_end_frame", "error"]:
-            spear.log("ERROR: Unexpected frame state: ", self._frame_state)
-            assert False
+    def _call_impl(self, return_as, call_func_name, func_name, *args):
 
-    def _call(self, return_as, func_name, *args):
         if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
-            spear.log("Calling: ", func_name, args, " -> ", return_as)
+            spear.log(f"Calling: {func_name} : {args} -> {return_as} via {call_func_name}")
 
-        if return_as == "void":
-            return_value = self._client.call_as_void(func_name, *args)
-        elif return_as == "bool":
-            return_value = self._client.call_as_bool(func_name, *args)
-        elif return_as == "float":
-            return_value = self._client.call_as_float(func_name, *args)
-        elif return_as == "int32_t":
-            return_value = self._client.call_as_int32(func_name, *args)
-        elif return_as == "int64_t":
-            return_value = self._client.call_as_int64(func_name, *args)
-        elif return_as == "uint64_t":
-            return_value = self._client.call_as_uint64(func_name, *args)
-        elif return_as == "std::string":
-            return_value = self._client.call_as_string(func_name, *args)
-        elif return_as == "std::vector<uint64_t>":
-            return_value = self._client.call_as_vector_of_uint64(func_name, *args)
-        elif return_as == "std::vector<double>":
-            return_value = self._client.call_as_vector_of_double(func_name, *args)
-        elif return_as == "std::vector<std::string>":
-            return_value = self._client.call_as_vector_of_string(func_name, *args)
-        elif return_as == "std::map<std::string, uint64_t>":
-            return_value = self._client.call_as_map_of_string_to_uint64(func_name, *args)
-        elif return_as == "std::map<std::string, std::string>":
-            return_value = self._client.call_as_map_of_string_to_string(func_name, *args)
-        elif return_as == "std::map<std::string, SharedMemoryView>":
-            return_value = self._client.call_as_map_of_string_to_shared_memory_view(func_name, *args)
-        elif return_as == "std::map<std::string, PackedArray>":
-            return_value = self._client.call_as_map_of_string_to_packed_array(func_name, *args)
-        elif return_as == "PropertyDesc":
-            return_value = self._client.call_as_property_desc(func_name, *args)
-        elif return_as == "SharedMemoryView":
-            return_value = self._client.call_as_shared_memory_view(func_name, *args)
-        elif return_as == "PackedArray":
-            return_value = self._client.call_as_packed_array(func_name, *args)
-        elif return_as == "DataBundle":
-            return_value = self._client.call_as_data_bundle(func_name, *args)
-        else:
-            spear.log("ERROR: Unrecognized return type when calling: ", func_name, args, " -> ", return_as)
+        call_func = getattr(self._client, call_func_name, None)
+        if call_func is None:
+            spear.log(f"ERROR: Couldn't find client entry point {call_func_name} when attempting to call {func_name} : {args} -> {return_as}")
             assert False
+        if not callable(call_func):
+            spear.log(f"ERROR: Attribute {call_func_name} is not callable when attempting to call {func_name} : {args} -> {return_as}")
+            assert False
+
+        try:
+            return_value = call_func(func_name, *args)
+        except Exception:
+            spear.log(f"ERROR: When calling {func_name} : {args} -> {return_as} via {call_func_name}")
+            raise
 
         if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
             spear.log("Obtained return value: ", return_value)
 
         return return_value
 
-    def _call_async(self, func_name, *args):
-        if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
-            spear.log("Calling asynchronously: ", func_name, args, " -> Future")
-
-        future = self._client.call_async(func_name, *args)
+    def _get_future_result_impl(self, return_as, get_future_result_func_name, future, func_name):
 
         if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
-            spear.log("Obtained future: ", future)
+            spear.log(f"Calling: {get_future_result_func_name} : () -> {return_as} for {func_name}")
 
-        return future
-
-    def _send_async(self, func_name, *args):
-        if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
-            spear.log("Sending message asynchronously: ", func_name, args)
-
-        self._client.send_async(func_name, *args)
-
-        if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
-            spear.log("No return value.")
-
-    def _get_future_result(self, return_as, future):
-        if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
-            spear.log("Getting result for future: ", future, " -> ", return_as)
-
-        if return_as == "void":
-            return_value = self._client.get_future_result_as_void(future)
-        if return_as == "bool":
-            return_value = self._client.get_future_result_as_bool(future)
-        elif return_as == "float":
-            return_value = self._client.get_future_result_as_float(future)
-        elif return_as == "int32_t":
-            return_value = self._client.get_future_result_as_int32(future)
-        elif return_as == "int64_t":
-            return_value = self._client.get_future_result_as_int64(future)
-        elif return_as == "uint64_t":
-            return_value = self._client.get_future_result_as_uint64(future)
-        elif return_as == "std::string":
-            return_value = self._client.get_future_result_as_string(future)
-        elif return_as == "std::vector<uint64_t>":
-            return_value = self._client.get_future_result_as_vector_of_uint64(future)
-        elif return_as == "std::vector<double>":
-            return_value = self._client.get_future_result_as_vector_of_double(future)
-        elif return_as == "std::vector<std::string>":
-            return_value = self._client.get_future_result_as_vector_of_string(future)
-        elif return_as == "std::map<std::string, uint64_t>":
-            return_value = self._client.get_future_result_as_map_of_string_to_uint64(future)
-        elif return_as == "std::map<std::string, std::string>":
-            return_value = self._client.get_future_result_as_map_of_string_to_string(future)
-        elif return_as == "std::map<std::string, SharedMemoryView>":
-            return_value = self._client.get_future_result_as_map_of_string_to_shared_memory_view(future)
-        elif return_as == "std::map<std::string, PackedArray>":
-            return_value = self._client.get_future_result_as_map_of_string_to_packed_array(future)
-        elif return_as == "PropertyDesc":
-            return_value = self._client.get_future_result_as_property_desc(future)
-        elif return_as == "SharedMemoryView":
-            return_value = self._client.get_future_result_as_shared_memory_view(future)
-        elif return_as == "PackedArray":
-            return_value = self._client.get_future_result_as_packed_array(future)
-        elif return_as == "DataBundle":
-            return_value = self._client.get_future_result_as_data_bundle(future)
-        else:
-            spear.log("ERROR: Unrecognized return type when getting result for future: ", future, " -> ", return_as)
+        get_future_result_func = getattr(self._client, get_future_result_func_name, None)
+        if get_future_result_func is None:
+            spear.log(f"ERROR: Couldn't find client entry point {get_future_result_func_name} when attempting to get future result {return_as} for {func_name}")
+            assert False
+        if not callable(get_future_result_func):
+            spear.log(f"ERROR: Attribute {get_future_result_func_name} is not callable when attempting to get future result {return_as} for {func_name}")
             assert False
 
-        if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
-            spear.log("Obtained return value: ", return_value)
-
-        return return_value
-
-    def _call_async_fast(self, func_name, *args):
-        if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
-            spear.log("Calling asynchronously (fast): ", func_name, args, " -> Future")
-
-        future = self._client.call_async_fast(func_name, *args)
-
-        if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
-            spear.log("Obtained future: ", future)
-
-        return future
-
-    def _send_async_fast(self, func_name, *args):
-        if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
-            spear.log("Sending message asynchronously (fast): ", func_name, args)
-
-        self._client.send_async_fast(func_name, *args)
-
-        if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
-            spear.log("No return value.")
-
-    def _get_future_result_fast(self, return_as, future):
-        if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
-            spear.log("Getting result for future (fast): ", future, " -> ", return_as)
-
-        if return_as == "void":
-            return_value = self._client.get_future_result_fast_as_void(future)
-        if return_as == "bool":
-            return_value = self._client.get_future_result_fast_as_bool(future)
-        elif return_as == "float":
-            return_value = self._client.get_future_result_fast_as_float(future)
-        elif return_as == "int32_t":
-            return_value = self._client.get_future_result_fast_as_int32(future)
-        elif return_as == "int64_t":
-            return_value = self._client.get_future_result_fast_as_int64(future)
-        elif return_as == "uint64_t":
-            return_value = self._client.get_future_result_fast_as_uint64(future)
-        elif return_as == "std::string":
-            return_value = self._client.get_future_result_fast_as_string(future)
-        elif return_as == "std::vector<uint64_t>":
-            return_value = self._client.get_future_result_fast_as_vector_of_uint64(future)
-        elif return_as == "std::vector<double>":
-            return_value = self._client.get_future_result_fast_as_vector_of_double(future)
-        elif return_as == "std::vector<std::string>":
-            return_value = self._client.get_future_result_fast_as_vector_of_string(future)
-        elif return_as == "std::map<std::string, uint64_t>":
-            return_value = self._client.get_future_result_fast_as_map_of_string_to_uint64(future)
-        elif return_as == "std::map<std::string, std::string>":
-            return_value = self._client.get_future_result_fast_as_map_of_string_to_string(future)
-        elif return_as == "std::map<std::string, SharedMemoryView>":
-            return_value = self._client.get_future_result_fast_as_map_of_string_to_shared_memory_view(future)
-        elif return_as == "std::map<std::string, PackedArray>":
-            return_value = self._client.get_future_result_fast_as_map_of_string_to_packed_array(future)
-        elif return_as == "PropertyDesc":
-            return_value = self._client.get_future_result_fast_as_property_desc(future)
-        elif return_as == "SharedMemoryView":
-            return_value = self._client.get_future_result_fast_as_shared_memory_view(future)
-        elif return_as == "PackedArray":
-            return_value = self._client.get_future_result_fast_as_packed_array(future)
-        elif return_as == "DataBundle":
-            return_value = self._client.get_future_result_fast_as_data_bundle(future)
-        else:
-            spear.log("ERROR: Unrecognized return type when getting result for future: ", future, " -> ", return_as)
-            assert False
+        try:
+            return_value = get_future_result_func(future)
+        except Exception:
+            spear.log(f"ERROR: When calling {get_future_result_func_name} : () -> {return_as} for {func_name}")
+            raise
 
         if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
             spear.log("Obtained return value: ", return_value)

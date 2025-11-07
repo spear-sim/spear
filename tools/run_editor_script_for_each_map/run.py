@@ -34,7 +34,7 @@ if __name__ == "__main__":
     if len(maps) > 0:
 
         # get config
-        user_config_files = [os.path.realpath(os.path.join(os.path.dirname(__file__), "config.yaml"))]
+        user_config_files = [os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))]
         if args.user_config_file is not None:
             user_config_files.append(args.user_config_file)
         config = spear.get_config(user_config_files=user_config_files)

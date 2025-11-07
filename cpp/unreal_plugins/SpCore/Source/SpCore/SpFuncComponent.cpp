@@ -14,7 +14,6 @@
 #include "SpCore/FuncRegistry.h"
 #include "SpCore/Log.h"
 #include "SpCore/SpArray.h"
-#include "SpCore/SpTypes.h"
 #include "SpCore/Unreal.h"
 
 void USpFuncComponent::OnComponentCreated()

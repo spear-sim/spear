@@ -168,6 +168,7 @@ enum class SpArraySharedMemoryUsageFlags
 };
 SP_DECLARE_ENUM_FLAG_OPERATORS(SpArraySharedMemoryUsageFlags);
 
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
 UENUM(Flags)
 enum class ESpArraySharedMemoryUsageFlags
 {
@@ -284,7 +285,7 @@ public:
         }
 
         data_ = std::move(packed_array.data_);
-        view_ = std::span<TValue>(static_cast<TValue*>(packed_array.view_), num_elements);
+        view_ = std::span<TValue>(static_cast<TValue*>(packed_array.view_), num_elements); // technically undefined behavior unless memory starts its lifetime as TValue but benign
         data_source_ = packed_array.data_source_;
 
         shape_ = std::move(packed_array.shape_);
@@ -314,7 +315,7 @@ public:
         CRangeValuesAreConvertibleTo<TRange, TValue>
     void setDataSource(TRange&& range)
     {
-        setDataSource(std::forward<decltype(range)>(range), {-1});
+        setDataSource(std::forward<TRange>(range), {-1});
     }
 
     // when passing in a shape, the shape can include a single -1 as a wildcard, except when passing in a
@@ -356,7 +357,7 @@ public:
         CRangeValuesAreConvertibleTo<TRange, TValue>
     void setDataSource(TRange&& range, const std::vector<int64_t>& shape)
     {
-        data_ = Std::reinterpretAsVector<uint8_t, TValue, SpPackedArrayAllocator>(std::forward<decltype(range)>(range));
+        data_ = Std::reinterpretAsVector<uint8_t, TValue, SpPackedArrayAllocator>(std::forward<TRange>(range));
         if (data_.empty()) {
             view_ = std::span<TValue>(static_cast<TValue*>(nullptr), 0);
         } else {
@@ -445,8 +446,15 @@ public:
     }
 
 private:
+
+    // Technically this pattern is undefined behavior, but it is benign in practice. The undefined behavior
+    // arises because technically a block of raw memory needs to start its lifetime as a raw heap allocation
+    // of type TValue, in order for a pointer to that block of memory to be safely reinterpreted as a pointer
+    // to a TValue. See std::start_lifetime_as_array<TValue> in C++23.
+
     std::vector<uint8_t, SpPackedArrayAllocator> data_;
     std::span<TValue> view_;
+
     SpArrayDataSource data_source_ = SpArrayDataSource::Invalid;
 
     std::vector<uint64_t> shape_;

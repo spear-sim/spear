@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <stddef.h> // uint32_t
+#include <stdint.h> // uint32_t
 
 #include <map>
 #include <set>
@@ -72,7 +72,7 @@ public:
     {
         TArray<FComponentAndMaterialDesc> component_and_material_descs;
 
-        for (auto [id, desc] : id_to_component_and_material_desc_map_) {
+        for (auto& [id, desc] : id_to_component_and_material_desc_map_) {
             FComponentAndMaterialDesc component_and_material_desc;
             component_and_material_desc.Id = id;
             component_and_material_desc.Component = reinterpret_cast<uint64>(desc.component_);

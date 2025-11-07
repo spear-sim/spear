@@ -83,7 +83,10 @@ private:
     void ReadPixels();
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void PrintDebugInfo();
+    void PrintActorDebugInfo();
+
+    UFUNCTION(CallInEditor, Category="SPEAR")
+    void PrintAllClassesDebugInfo();
 
     UFUNCTION()
     FString GetString(FString Arg0, bool Arg1, int Arg2, FVector Arg3) const;

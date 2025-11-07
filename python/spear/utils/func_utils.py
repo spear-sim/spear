@@ -7,11 +7,10 @@ import json
 import numbers
 import numpy as np
 import scipy
+import spear
 
-try:
+if not spear.__is_ue_python__:
     import spear_ext # can't be installed in the UE Python environment because UE doesn't ship with CPython headers
-except:
-    pass
 
 
 # These classes are for internal use, and do not need to be instantiated directly by most users.
@@ -29,14 +28,15 @@ class Shared:
         self.shared_memory_handle = shared_memory_handle
 
 class Future:
-    def __init__(self, future, return_as, get_future_result_func, convert_func):
+    def __init__(self, future, get_future_result_func, convert_func, return_as, func_name):
         self._future = future
-        self._return_as = return_as
         self._get_future_result_func = get_future_result_func
         self._convert_func = convert_func
+        self._return_as = return_as
+        self._func_name = func_name
 
     def get(self):
-        result = self._get_future_result_func(return_as=self._return_as, future=self._future)
+        result = self._get_future_result_func(future=self)
         if self._convert_func is not None:
             return self._convert_func(result)
         else:
@@ -49,64 +49,101 @@ class EntryPointCaller():
         self.service_name = service_name
         self.engine_service = engine_service
 
-    def call_on_game_thread(self, return_as, func_name, convert_func, *args):
-        long_func_name = self.service_name + "." + func_name
-        return_value = self.engine_service.call_on_game_thread(return_as, long_func_name, *args)
+    def call_on_worker_thread(self, func_name, convert_func, *args):
+        assert False
+
+    def call_on_game_thread(self, func_name, convert_func, *args):
+        assert False
+
+class CallSyncEntryPointCaller(EntryPointCaller):
+    def call_on_worker_thread(self, func_name, convert_func, *args):
+        long_func_name = self.service_name + ".call_sync_on_worker_thread." + func_name
+        return_value = self.engine_service.call_sync_on_worker_thread(long_func_name, *args)
         if convert_func is not None:
             return convert_func(return_value)
         else:
             return return_value
 
-    def call_on_worker_thread(self, return_as, func_name, *args):
-        long_func_name = self.service_name + "." + func_name
-        return self.engine_service.call_on_worker_thread(return_as, long_func_name, *args)
+    def call_on_game_thread(self, func_name, convert_func, *args):
+        long_func_name = self.service_name + ".call_sync_on_game_thread." + func_name
+        return_value = self.engine_service.call_sync_on_game_thread(long_func_name, *args)
+        if convert_func is not None:
+            return convert_func(return_value)
+        else:
+            return return_value
 
 class CallAsyncEntryPointCaller(EntryPointCaller):
-    def call_on_game_thread(self, return_as, func_name, convert_func, *args):
-        long_func_name = self.service_name + "." + func_name
+    def call_on_worker_thread(self, func_name, convert_func, *args):
+        assert False
+
+    def call_on_game_thread(self, func_name, convert_func, *args):
+        long_func_name = self.service_name + ".call_async_on_game_thread." + func_name
+        sync_long_func_name = self.service_name + ".call_sync_on_game_thread." + func_name
+        return_as = self.engine_service._server_signature_descs["call_sync_on_game_thread"][sync_long_func_name].func_signature[0].type_names["entry_point"]
         future = self.engine_service.call_async_on_game_thread(long_func_name, *args)
-        return Future(future=future, return_as=return_as, get_future_result_func=self.engine_service.get_future_result, convert_func=convert_func)
+        return Future(future=future, get_future_result_func=self.engine_service.get_future_result_on_game_thread, convert_func=convert_func, return_as=return_as, func_name=long_func_name)
 
 class SendAsyncEntryPointCaller(EntryPointCaller):
-    def call_on_game_thread(self, return_as, func_name, convert_func, *args):
-        long_func_name = self.service_name + "." + func_name
-        self.engine_service.send_async_on_game_thread(long_func_name, *args)
+    def call_on_worker_thread(self, func_name, convert_func, *args):
+        assert False
+
+    def call_on_game_thread(self, func_name, convert_func, *args):
+        long_func_name = self.service_name + ".send_async_on_game_thread." + func_name
+        return self.engine_service.send_async_on_game_thread(long_func_name, *args)
 
 class CallAsyncFastEntryPointCaller(EntryPointCaller):
-    def call_on_game_thread(self, return_as, func_name, convert_func, *args):
-        long_func_name = self.service_name + "." + func_name
+    def call_on_worker_thread(self, func_name, convert_func, *args):
+        long_func_name = self.service_name + ".call_sync_on_worker_thread." + func_name
+        sync_long_func_name = long_func_name
+        return_as = self.engine_service._server_signature_descs["call_sync_on_worker_thread"][sync_long_func_name].func_signature[0].type_names["entry_point"]
+        future = self.engine_service.call_async_fast_on_worker_thread(long_func_name, *args)
+        return Future(future=future, get_future_result_func=self.engine_service.get_future_result_fast_on_worker_thread, convert_func=convert_func, return_as=return_as, func_name=long_func_name)
+
+    def call_on_game_thread(self, func_name, convert_func, *args):
+        long_func_name = self.service_name + ".call_sync_on_worker_thread." + func_name
+        sync_long_func_name = long_func_name
+        return_as = self.engine_service._server_signature_descs["call_sync_on_worker_thread"][sync_long_func_name].func_signature[0].type_names["entry_point"]
         future = self.engine_service.call_async_fast_on_game_thread(long_func_name, *args)
-        return Future(future=future, return_as=return_as, get_future_result_func=self.engine_service.get_future_result_fast, convert_func=convert_func)
+        return Future(future=future, get_future_result_func=self.engine_service.get_future_result_fast_on_game_thread, convert_func=convert_func, return_as=return_as, func_name=long_func_name)
 
 class SendAsyncFastEntryPointCaller(EntryPointCaller):
-    def call_on_game_thread(self, return_as, func_name, convert_func, *args):
-        long_func_name = self.service_name + "." + func_name
-        self.engine_service.send_async_fast_on_game_thread(long_func_name, *args)
+    def call_on_worker_thread(self, func_name, convert_func, *args):
+        long_func_name = self.service_name + ".call_sync_on_worker_thread." + func_name
+        return self.engine_service.send_async_fast_on_game_thread(long_func_name, *args)
+
+    def call_on_game_thread(self, func_name, convert_func, *args):
+        long_func_name = self.service_name + ".send_async_fast_on_game_thread." + func_name
+        return self.engine_service.send_async_fast_on_game_thread(long_func_name, *args)
 
 # Service is a base class for services that define their own child services for calling EntryPointCaller functions.
 
 class Service():
-    def __init__(self, entry_point_caller, create_children=False):
+    def __init__(self, is_top_level_service=True, create_children_services=False, entry_point_caller=None):
+        if not is_top_level_service:
+            assert not create_children_services # it is only allowed to create children services from the top-level service
 
-        if create_children:
-            call_async_service_name = entry_point_caller.service_name + ".call_async"
-            call_async_entry_point_caller = CallAsyncEntryPointCaller(service_name=call_async_service_name, engine_service=entry_point_caller.engine_service)
-            self.call_async = self.create_child(entry_point_caller=call_async_entry_point_caller)
+        self._is_top_level_service = is_top_level_service
 
-            send_async_service_name = entry_point_caller.service_name + ".send_async"
-            send_async_entry_point_caller = SendAsyncEntryPointCaller(service_name=send_async_service_name, engine_service=entry_point_caller.engine_service)
-            self.send_async = self.create_child(entry_point_caller=send_async_entry_point_caller)
+        if create_children_services:
+            assert entry_point_caller is not None
 
-            call_async_fast_service_name = entry_point_caller.service_name + ".call_async"
-            call_async_fast_entry_point_caller = CallAsyncFastEntryPointCaller(service_name=call_async_fast_service_name, engine_service=entry_point_caller.engine_service)
-            self.call_async_fast = self.create_child(entry_point_caller=call_async_fast_entry_point_caller)
+            call_async_entry_point_caller = CallAsyncEntryPointCaller(service_name=entry_point_caller.service_name, engine_service=entry_point_caller.engine_service)
+            self.call_async = self.create_child_service(entry_point_caller=call_async_entry_point_caller)
 
-            send_async_fast_service_name = entry_point_caller.service_name + ".send_async"
-            send_async_fast_entry_point_caller = SendAsyncFastEntryPointCaller(service_name=send_async_service_name, engine_service=entry_point_caller.engine_service)
-            self.send_async_fast = self.create_child(entry_point_caller=send_async_fast_entry_point_caller)
+            send_async_entry_point_caller = SendAsyncEntryPointCaller(service_name=entry_point_caller.service_name, engine_service=entry_point_caller.engine_service)
+            self.send_async = self.create_child_service(entry_point_caller=send_async_entry_point_caller)
 
-    def create_child(self, entry_point_caller):
-        return None
+            call_async_fast_entry_point_caller = CallAsyncFastEntryPointCaller(service_name=entry_point_caller.service_name, engine_service=entry_point_caller.engine_service)
+            self.call_async_fast = self.create_child_service(entry_point_caller=call_async_fast_entry_point_caller)
+
+            send_async_fast_entry_point_caller = SendAsyncFastEntryPointCaller(service_name=entry_point_caller.service_name, engine_service=entry_point_caller.engine_service)
+            self.send_async_fast = self.create_child_service(entry_point_caller=send_async_fast_entry_point_caller)
+
+    def create_child_service(self, entry_point_caller):
+        assert False # if a derived class passes create_children_services=True into the base constructor, then the derived class must override create_child_service(...)
+
+    def is_top_level_service(self):
+        return self._is_top_level_service
 
 
 # Convert to a collection of JSON strings from a collection of objects so they can be passed to a service.

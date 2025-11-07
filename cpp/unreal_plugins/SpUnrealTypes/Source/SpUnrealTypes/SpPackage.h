@@ -28,6 +28,6 @@ public:
     static void SetDirtyFlag(UPackage* Package, bool bIsDirty)
     {
         SP_ASSERT(Package);
-        return Package->SetDirtyFlag(bIsDirty);
+        Package->SetDirtyFlag(bIsDirty);
     }
 };

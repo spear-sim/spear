@@ -31,9 +31,11 @@
 #include <UObject/NameTypes.h>         // FName
 #include <UObject/Object.h>            // UObject
 #include <UObject/ObjectMacros.h>      // EPropertyFlags
-#include <UObject/UnrealType.h>        // FArrayProperty, FBoolProperty, FByteProperty, FDoubleProperty, FInt8Property, FInt16Property, FInt64Property,
-                                       // FFloatProperty, FIntProperty, FMapProperty, FProperty, FScriptArrayHelper, FScriptMapHelper, FScriptSetHelper,
-                                       // FSetProperty, FStrProperty, FStructProperty, FUInt16Property, FUInt32Property, FUInt64Property, TFieldIterator
+#include <UObject/Script.h>            // EFunctionFlags
+#include <UObject/UnrealType.h>        // EFieldIterationFlags, FArrayProperty, FBoolProperty, FByteProperty, FDoubleProperty, FInt8Property, FInt16Property,
+                                       // FInt64Property, FFloatProperty, FIntProperty, FMapProperty, FProperty, FScriptArrayHelper, FScriptMapHelper,
+                                       // FScriptSetHelper, FSetProperty, FStrProperty, FStructProperty, FUInt16Property, FUInt32Property, FUInt64Property,
+                                       // TFieldIterator
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
@@ -253,7 +255,8 @@ std::string Unreal::getPropertyValueAsString(const SpPropertyDesc& property_desc
         property_desc.property_->IsA(FStrProperty::StaticClass())    ||
         property_desc.property_->IsA(FNameProperty::StaticClass())   ||
         property_desc.property_->IsA(FByteProperty::StaticClass())   ||
-        property_desc.property_->IsA(FEnumProperty::StaticClass())) {
+        property_desc.property_->IsA(FEnumProperty::StaticClass())   ||
+        property_desc.property_->IsA(FSoftObjectProperty::StaticClass())) {
 
         TSharedPtr<FJsonValue> json_value = FJsonObjectConverter::UPropertyToJsonValue(property_desc.property_, property_desc.value_ptr_);
         SP_ASSERT(json_value.IsValid());
@@ -414,7 +417,8 @@ void Unreal::setPropertyValueFromJsonValue(const SpPropertyDesc& property_desc, 
         property_desc.property_->IsA(FNameProperty::StaticClass())   ||
         property_desc.property_->IsA(FByteProperty::StaticClass())   ||
         property_desc.property_->IsA(FEnumProperty::StaticClass())   ||
-        property_desc.property_->IsA(FStructProperty::StaticClass())) {
+        property_desc.property_->IsA(FStructProperty::StaticClass()) ||
+        property_desc.property_->IsA(FSoftObjectProperty::StaticClass())) {
 
         bool success = false;
         success = FJsonObjectConverter::JsonValueToUProperty(json_value, property_desc.property_, property_desc.value_ptr_);
@@ -559,10 +563,50 @@ void Unreal::setPropertyValueFromJsonValue(const SpPropertyDesc& property_desc, 
 }
 
 //
-// Find function by name, call function, world can't be const because we cast it to void*, uobject can't be
-// const because we call uobject->ProcessEvent(...) which is non-const, ufunction can't be const because we
-// call because we pass it to uobject->ProcessEvent(...) which expects non-const
+// Get functions, find function by name, call function. Note that uobject can't be const because we call
+// uobject->ProcessEvent(...) which is non-const; and ufunction can't be const because we pass it to uobject->ProcessEvent(...)
+// which expects non-const.
 //
+
+std::vector<UFunction*> Unreal::findFunctions(const UClass* uclass, EFieldIterationFlags field_iteration_flags)
+{
+    SP_ASSERT(uclass);
+    std::vector<UFunction*> ufunctions;
+    for (TFieldIterator<UFunction> itr(uclass, field_iteration_flags); itr; ++itr) {
+        UFunction* ufunction = *itr;
+        ufunctions.push_back(ufunction);
+    }
+    return ufunctions;
+}
+
+std::vector<UFunction*> Unreal::findFunctionsByFlagsAny(const UClass* uclass, EFunctionFlags function_flags, EFieldIterationFlags field_iteration_flags)
+{
+    return Std::toVector<UFunction*>(
+        findFunctions(uclass, field_iteration_flags) |
+        std::views::filter([function_flags](auto function) { return function->HasAnyFunctionFlags(function_flags); }));
+}
+
+std::vector<UFunction*> Unreal::findFunctionsByFlagsAll(const UClass* uclass, EFunctionFlags function_flags, EFieldIterationFlags field_iteration_flags)
+{
+    return Std::toVector<UFunction*>(
+        findFunctions(uclass, field_iteration_flags) |
+        std::views::filter([function_flags](auto function) { return function->HasAllFunctionFlags(function_flags); }));    
+}
+
+std::map<std::string, UFunction*> Unreal::findFunctionsAsMap(const UClass* uclass, EFieldIterationFlags field_iteration_flags)
+{
+    return toMap(findFunctions(uclass, field_iteration_flags));
+}
+
+std::map<std::string, UFunction*> Unreal::findFunctionsByFlagsAnyAsMap(const UClass* uclass, EFunctionFlags function_flags, EFieldIterationFlags field_iteration_flags)
+{
+    return toMap(findFunctionsByFlagsAny(uclass, function_flags, field_iteration_flags));
+}
+
+std::map<std::string, UFunction*> Unreal::findFunctionsByFlagsAllAsMap(const UClass* uclass, EFunctionFlags function_flags, EFieldIterationFlags field_iteration_flags)
+{
+    return toMap(findFunctionsByFlagsAll(uclass, function_flags, field_iteration_flags));
+}
 
 UFunction* Unreal::findFunctionByName(const UClass* uclass, const std::string& function_name, EIncludeSuperFlag::Type include_super_flag)
 {
@@ -681,25 +725,6 @@ std::vector<UActorComponent*> Unreal::getComponents(const AActor* actor)
 std::map<std::string, UActorComponent*> Unreal::getComponentsAsMap(const AActor* actor)
 {
     return toMap<UActorComponent>(getComponents(actor));
-}
-
-// 
-// Get children components unconditionally and return an std::vector or an std::map
-//
-
-std::vector<USceneComponent*> Unreal::getChildrenComponents(const USceneComponent* parent, bool include_all_descendants)
-{
-    SP_ASSERT(parent);
-    TArray<USceneComponent*> children_tarray;
-    parent->GetChildrenComponents(include_all_descendants, children_tarray);
-    std::vector<USceneComponent*> children = toStdVector(children_tarray);
-    SP_ASSERT(!Std::contains(children, nullptr));
-    return children;
-}
-
-std::map<std::string, USceneComponent*> Unreal::getChildrenComponentsAsMap(const USceneComponent* parent, bool include_all_descendants)
-{
-    return toMap<USceneComponent>(getChildrenComponents(parent, include_all_descendants));
 }
 
 //
@@ -970,20 +995,22 @@ std::string Unreal::getQuoteStringForProperty(const FProperty* property)
     // a well-formed JSON string. Likewise, if our property is an {array, set, map, struct}, then we expect
     // an input string to already be a well-formed JSON string, and again we do not need to add any quotes.
     //
-    // On the other hand, if our property is a {enum, string, name, object, interface}, then we expect an
-    // input string to contain a string with no quotes because this is the formatting convention of getPropertyValueFromString(...),
-    // and in this case we need to add quotes to construct a well-formed JSON string.
+    // On the other hand, if our property is a {enum, string, name, object, interface, soft reference}, then
+    // we expect an input string to contain a string with no quotes because this is the formatting convention
+    // of getPropertyValueFromString(...), and in this case we need to add quotes to construct a well-formed
+    // JSON string.
     //
     // If our property is an enum byte, treat it like a string. If it is a non-enum byte, treat it like
     // an int.
 
     std::string quote_string;
 
-    if (property->IsA(FEnumProperty::StaticClass())   ||
-        property->IsA(FStrProperty::StaticClass())    ||
-        property->IsA(FNameProperty::StaticClass())   ||
-        property->IsA(FObjectProperty::StaticClass()) ||
-        property->IsA(FInterfaceProperty::StaticClass())) {
+    if (property->IsA(FEnumProperty::StaticClass())      ||
+        property->IsA(FStrProperty::StaticClass())       ||
+        property->IsA(FNameProperty::StaticClass())      ||
+        property->IsA(FObjectProperty::StaticClass())    ||
+        property->IsA(FInterfaceProperty::StaticClass()) ||
+        property->IsA(FSoftObjectProperty::StaticClass())) {
         quote_string = "\"";
     } else if (property->IsA(FByteProperty::StaticClass())) {
         const FByteProperty* byte_property = static_cast<const FByteProperty*>(property);

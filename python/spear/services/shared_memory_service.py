@@ -8,10 +8,11 @@ import multiprocessing.shared_memory
 import spear
 import sys
 
-class SharedMemoryService():
+class SharedMemoryService(spear.utils.func_utils.Service):
     def __init__(self, entry_point_caller):
         self._entry_point_caller = entry_point_caller
         self._shared_memory_handles = {}
+        super().__init__()
 
     #
     # High-level functions for managing shared memory regions.
@@ -19,16 +20,17 @@ class SharedMemoryService():
 
     def create_shared_memory_region(self, shared_memory_name, num_bytes, usage_flags):
         assert shared_memory_name not in self._shared_memory_handles.keys()
-        view = self._entry_point_caller.call_on_worker_thread("SharedMemoryView", "create_shared_memory_region", shared_memory_name, num_bytes, usage_flags)
+        view = self._entry_point_caller.call_on_worker_thread("create_shared_memory_region", None, shared_memory_name, num_bytes, usage_flags)
         handle = self._create_shared_memory_handle(shared_memory_name=shared_memory_name, shared_memory_view=view)
         self._shared_memory_handles[shared_memory_name] = handle
         return handle
 
     def destroy_shared_memory_region(self, shared_memory_handle):
+        assert self.is_top_level_service() # user should only call this function on the top-level service
         assert shared_memory_handle["name"] in self._shared_memory_handles.keys()
         self._destroy_shared_memory_handle(shared_memory_handle=shared_memory_handle)
         self._shared_memory_handles.pop(shared_memory_handle["name"])
-        self._entry_point_caller.call_on_worker_thread("void", "destroy_shared_memory_region", shared_memory_handle["name"])
+        self._entry_point_caller.call_on_worker_thread("destroy_shared_memory_region", None, shared_memory_handle["name"])
 
     #
     # High-level functions for interacting with shared memory that is managed internally in C++.

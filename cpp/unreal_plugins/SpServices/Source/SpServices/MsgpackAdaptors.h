@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <stddef.h> // uint16_t, uint64_t
+#include <stdint.h> // uint16_t, uint64_t
 
 #include <map>
 #include <string>
@@ -13,64 +13,13 @@
 
 #include "SpCore/Assert.h"
 #include "SpCore/SpArray.h"
-#include "SpCore/SpTypes.h"
+#include "SpCore/SpFuncComponent.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 
 #include "SpServices/MsgpackUtils.h"
 #include "SpServices/Rpclib.h"
-
-//
-// SpCore/SpTypes.h
-//
-
-// SpFuncDataBundle
-
-template <> // needed to receive a custom type as an arg from the client
-struct clmdep_msgpack::adaptor::convert<SpFuncDataBundle> {
-    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpFuncDataBundle& sp_func_data_bundle) const {
-        std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
-        SP_ASSERT(objects.size() == 3);
-        sp_func_data_bundle.packed_arrays_      = MsgpackUtils::to<std::map<std::string, SpPackedArray>>(objects.at("packed_arrays"));
-        sp_func_data_bundle.unreal_obj_strings_ = MsgpackUtils::to<std::map<std::string, std::string>>(objects.at("unreal_obj_strings"));
-        sp_func_data_bundle.info_               = MsgpackUtils::to<std::string>(objects.at("info"));
-        return object;
-    }
-};
-
-template <> // needed to send a custom type as a return value to the client
-struct clmdep_msgpack::adaptor::object_with_zone<SpFuncDataBundle> {
-    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpFuncDataBundle const& sp_func_data_bundle) const {
-        std::map<std::string, clmdep_msgpack::object> objects;
-        Std::insert(objects, "packed_arrays",      MsgpackUtils::toMsgpackObject(sp_func_data_bundle.packed_arrays_,      object_with_zone));
-        Std::insert(objects, "unreal_obj_strings", MsgpackUtils::toMsgpackObject(sp_func_data_bundle.unreal_obj_strings_, object_with_zone));
-        Std::insert(objects, "info",               MsgpackUtils::toMsgpackObject(sp_func_data_bundle.info_,               object_with_zone));
-        MsgpackUtils::insertMapOfMsgpackObjects(object_with_zone, objects);
-    }
-};
-
-// SpFuture
-
-template <> // needed to receive a custom type as an arg from the client
-struct clmdep_msgpack::adaptor::convert<SpFuture> {
-    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpFuture& future) const {
-        std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
-        SP_ASSERT(objects.size() == 2);
-        future.future_ptr_ = MsgpackUtils::to<void*>(objects.at("future_ptr"));
-        future.type_id_    = MsgpackUtils::to<std::string>(objects.at("type_id"));
-        return object;
-    }
-};
-
-template <> // needed to send a custom type as a return value to the client
-struct clmdep_msgpack::adaptor::object_with_zone<SpFuture> {
-    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpFuture const& future) const {
-        std::map<std::string, clmdep_msgpack::object> objects;
-        Std::insert(objects, "future_ptr", MsgpackUtils::toMsgpackObject(future.future_ptr_, object_with_zone));
-        Std::insert(objects, "type_id",    MsgpackUtils::toMsgpackObject(future.type_id_,    object_with_zone));
-        MsgpackUtils::insertMapOfMsgpackObjects(object_with_zone, objects);
-    }
-};
+#include "SpServices/SpTypes.h"
 
 //
 // SpCore/SpArray.h
@@ -135,6 +84,35 @@ struct clmdep_msgpack::adaptor::object_with_zone<SpArraySharedMemoryView> {
 };
 
 //
+// SpCore/SpFuncComponent.h
+//
+
+// SpFuncDataBundle
+
+template <> // needed to receive a custom type as an arg from the client
+struct clmdep_msgpack::adaptor::convert<SpFuncDataBundle> {
+    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpFuncDataBundle& sp_func_data_bundle) const {
+        std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
+        SP_ASSERT(objects.size() == 3);
+        sp_func_data_bundle.packed_arrays_      = MsgpackUtils::to<std::map<std::string, SpPackedArray>>(objects.at("packed_arrays"));
+        sp_func_data_bundle.unreal_obj_strings_ = MsgpackUtils::to<std::map<std::string, std::string>>(objects.at("unreal_obj_strings"));
+        sp_func_data_bundle.info_               = MsgpackUtils::to<std::string>(objects.at("info"));
+        return object;
+    }
+};
+
+template <> // needed to send a custom type as a return value to the client
+struct clmdep_msgpack::adaptor::object_with_zone<SpFuncDataBundle> {
+    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpFuncDataBundle const& sp_func_data_bundle) const {
+        std::map<std::string, clmdep_msgpack::object> objects;
+        Std::insert(objects, "packed_arrays",      MsgpackUtils::toMsgpackObject(sp_func_data_bundle.packed_arrays_,      object_with_zone));
+        Std::insert(objects, "unreal_obj_strings", MsgpackUtils::toMsgpackObject(sp_func_data_bundle.unreal_obj_strings_, object_with_zone));
+        Std::insert(objects, "info",               MsgpackUtils::toMsgpackObject(sp_func_data_bundle.info_,               object_with_zone));
+        MsgpackUtils::insertMapOfMsgpackObjects(object_with_zone, objects);
+    }
+};
+
+//
 // SpCore/Unreal.h
 //
 
@@ -142,21 +120,98 @@ struct clmdep_msgpack::adaptor::object_with_zone<SpArraySharedMemoryView> {
 
 template <> // needed to receive a custom type as an arg from the client
 struct clmdep_msgpack::adaptor::convert<SpPropertyDesc> {
-    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpPropertyDesc& property_desc) const {
+    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpPropertyDesc& sp_property_desc) const {
         std::map<std::string, clmdep_msgpack::object> map = MsgpackUtils::toMapOfMsgpackObjects(object);
         SP_ASSERT(map.size() == 2);
-        property_desc.property_  = MsgpackUtils::to<FProperty*>(map.at("property"));
-        property_desc.value_ptr_ = MsgpackUtils::to<void*>(map.at("value_ptr"));
+        sp_property_desc.property_  = MsgpackUtils::to<FProperty*>(map.at("property"));
+        sp_property_desc.value_ptr_ = MsgpackUtils::to<void*>(map.at("value_ptr"));
         return object;
     }
 };
 
 template <> // needed to send a custom type as a return value to the client
 struct clmdep_msgpack::adaptor::object_with_zone<SpPropertyDesc> {
-    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpPropertyDesc const& property_desc) const {
+    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpPropertyDesc const& sp_property_desc) const {
         std::map<std::string, clmdep_msgpack::object> objects;
-        Std::insert(objects, "property",  MsgpackUtils::toMsgpackObject(property_desc.property_,  object_with_zone));
-        Std::insert(objects, "value_ptr", MsgpackUtils::toMsgpackObject(property_desc.value_ptr_, object_with_zone));
+        Std::insert(objects, "property",  MsgpackUtils::toMsgpackObject(sp_property_desc.property_,  object_with_zone));
+        Std::insert(objects, "value_ptr", MsgpackUtils::toMsgpackObject(sp_property_desc.value_ptr_, object_with_zone));
+        MsgpackUtils::insertMapOfMsgpackObjects(object_with_zone, objects);
+    }
+};
+
+//
+// SpServices/SpTypes.h
+//
+
+// SpFuncSignatureTypeDesc
+
+template <> // needed to receive a custom type as an arg from the client
+struct clmdep_msgpack::adaptor::convert<SpFuncSignatureTypeDesc> {
+    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpFuncSignatureTypeDesc& sp_func_signature_type_desc) const {
+        std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
+        SP_ASSERT(objects.size() == 3);
+        sp_func_signature_type_desc.type_names_    = MsgpackUtils::to<std::map<std::string, std::string>>(objects.at("type_names"));
+        sp_func_signature_type_desc.const_strings_ = MsgpackUtils::to<std::map<std::string, std::string>>(objects.at("const_strings"));
+        sp_func_signature_type_desc.ref_strings_   = MsgpackUtils::to<std::map<std::string, std::string>>(objects.at("ref_strings"));
+        return object;
+    }
+};
+
+template <> // needed to send a custom type as a return value to the client
+struct clmdep_msgpack::adaptor::object_with_zone<SpFuncSignatureTypeDesc> {
+    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpFuncSignatureTypeDesc const& sp_func_signature_type_desc) const {
+        std::map<std::string, clmdep_msgpack::object> objects;
+        Std::insert(objects, "type_names",    MsgpackUtils::toMsgpackObject(sp_func_signature_type_desc.type_names_,    object_with_zone));
+        Std::insert(objects, "const_strings", MsgpackUtils::toMsgpackObject(sp_func_signature_type_desc.const_strings_, object_with_zone));
+        Std::insert(objects, "ref_strings",   MsgpackUtils::toMsgpackObject(sp_func_signature_type_desc.ref_strings_,   object_with_zone));
+        MsgpackUtils::insertMapOfMsgpackObjects(object_with_zone, objects);
+    }
+};
+
+// SpFuncSignatureDesc
+
+template <> // needed to receive a custom type as an arg from the client
+struct clmdep_msgpack::adaptor::convert<SpFuncSignatureDesc> {
+    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpFuncSignatureDesc& sp_func_signature_desc) const {
+        std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
+        SP_ASSERT(objects.size() == 3);
+        sp_func_signature_desc.name_              = MsgpackUtils::to<std::string>(objects.at("name"));
+        sp_func_signature_desc.func_signature_    = MsgpackUtils::to<std::vector<SpFuncSignatureTypeDesc>>(objects.at("func_signature"));
+        sp_func_signature_desc.func_signature_id_ = MsgpackUtils::to<std::vector<int>>(objects.at("func_signature_id"));
+        return object;
+    }
+};
+
+template <> // needed to send a custom type as a return value to the client
+struct clmdep_msgpack::adaptor::object_with_zone<SpFuncSignatureDesc> {
+    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpFuncSignatureDesc const& sp_func_signature_desc) const {
+        std::map<std::string, clmdep_msgpack::object> objects;
+        Std::insert(objects, "name",              MsgpackUtils::toMsgpackObject(sp_func_signature_desc.name_,              object_with_zone));
+        Std::insert(objects, "func_signature",    MsgpackUtils::toMsgpackObject(sp_func_signature_desc.func_signature_,    object_with_zone));
+        Std::insert(objects, "func_signature_id", MsgpackUtils::toMsgpackObject(sp_func_signature_desc.func_signature_id_, object_with_zone));
+        MsgpackUtils::insertMapOfMsgpackObjects(object_with_zone, objects);
+    }
+};
+
+// SpFuture
+
+template <> // needed to receive a custom type as an arg from the client
+struct clmdep_msgpack::adaptor::convert<SpFuture> {
+    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpFuture& future) const {
+        std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
+        SP_ASSERT(objects.size() == 2);
+        future.future_ptr_ = MsgpackUtils::to<void*>(objects.at("future_ptr"));
+        future.type_id_    = MsgpackUtils::to<std::string>(objects.at("type_id"));
+        return object;
+    }
+};
+
+template <> // needed to send a custom type as a return value to the client
+struct clmdep_msgpack::adaptor::object_with_zone<SpFuture> {
+    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpFuture const& future) const {
+        std::map<std::string, clmdep_msgpack::object> objects;
+        Std::insert(objects, "future_ptr", MsgpackUtils::toMsgpackObject(future.future_ptr_, object_with_zone));
+        Std::insert(objects, "type_id",    MsgpackUtils::toMsgpackObject(future.type_id_,    object_with_zone));
         MsgpackUtils::insertMapOfMsgpackObjects(object_with_zone, objects);
     }
 };

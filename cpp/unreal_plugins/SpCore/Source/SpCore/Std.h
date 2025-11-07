@@ -19,7 +19,7 @@
 #include <memory>      // std::allocator_traits
 #include <ranges>      // std::ranges::begin, std::ranges::contiguous_range, std::ranges::data, std::ranges::end, std::ranges::range,
                        // std::ranges::sized_range, std::ranges::size, std::views::keys, std::views::transform
-#include <type_traits> // std::underlying_type_t
+#include <type_traits> // std::remove_cvref_t, std::underlying_type_t
 #include <span>
 #include <set>
 #include <string>      // std::equal
@@ -258,9 +258,10 @@ public:
         return boost::algorithm::to_lower_copy(string);        
     }
 
-    static std::string toString(const auto&... args)
+    template <typename... TArgs>
+    static std::string toString(TArgs&&... args)
     {
-        return (... + boost::lexical_cast<std::string>(args));
+        return (... + boost::lexical_cast<std::string>(std::forward<TArgs>(args)));
     }
 
     static std::string toString()
@@ -318,7 +319,7 @@ public:
         CRangeValuesAreConvertibleTo<TRange, std::string>
     static std::string join(TRange&& range, const std::string& delim)
     {
-        return boost::algorithm::join(std::forward<decltype(range)>(range), delim);
+        return boost::algorithm::join(std::forward<TRange>(range), delim);
     }
 
     // TODO: replace with std::ranges::to<std::vector> in C++23
@@ -327,7 +328,7 @@ public:
     static std::vector<TValue> toVector(TRange&& range)
     {
         std::vector<TValue> vector;
-        std::ranges::copy(std::forward<decltype(range)>(range), std::back_inserter(vector));
+        std::ranges::copy(std::forward<TRange>(range), std::back_inserter(vector));
         return vector;
     }
 
@@ -336,7 +337,7 @@ public:
         CRangeValuesAreConvertibleTo<TRange, std::pair<TKey, TValue>>
     static std::map<TKey, TValue> toMap(TRange&& range)
     {
-        std::vector<std::pair<TKey, TValue>> pairs = toVector<std::pair<TKey, TValue>>(std::forward<decltype(range)>(range));
+        std::vector<std::pair<TKey, TValue>> pairs = toVector<std::pair<TKey, TValue>>(std::forward<TRange>(range));
 
         // assert if there are duplicate keys
         std::vector<TKey> keys = toVector<TKey>(pairs | std::views::transform([](const auto& pair) { const auto& [key, value] = pair; return key; }));
@@ -357,14 +358,14 @@ public:
         CRangeValuesAreConvertibleTo<TRange, bool>
     static bool all(TRange&& range)
     {
-        return std::ranges::all_of(std::forward<decltype(range)>(range), [](auto val) { return val; });
+        return std::ranges::all_of(std::forward<TRange>(range), [](auto val) { return val; });
     }
 
     template <typename TRange> requires
         CRangeValuesAreConvertibleTo<TRange, bool>
     static bool any(TRange&& range)
     {
-        return std::ranges::any_of(std::forward<decltype(range)>(range), [](auto val) { return val; });
+        return std::ranges::any_of(std::forward<TRange>(range), [](auto val) { return val; });
     }
 
     //
@@ -412,7 +413,15 @@ public:
 
     template <typename TVector> requires
         CVector<TVector>
-    static auto at(const TVector& vector, int index) // TODO:: replace with vector.at() in C++26
+    static const auto& at(const TVector& vector, int index) // TODO:: replace with vector.at() in C++26
+    {
+        SP_ASSERT(index < vector.size());
+        return vector[index];
+    }
+
+    template <typename TVector> requires
+        CVector<TVector>
+    static auto& at(TVector& vector, int index) // TODO:: replace with vector.at() in C++26
     {
         SP_ASSERT(index < vector.size());
         return vector[index];
@@ -510,7 +519,7 @@ public:
         CMapValuesAreConvertibleFrom<TMap, TValue>
     static void insert(TMap& map, TKey&& key, TValue&& value)
     {
-        auto [itr, success] = map.insert({std::forward<decltype(key)>(key), std::forward<decltype(value)>(value)});
+        auto [itr, success] = map.insert({std::forward<TKey>(key), std::forward<TValue>(value)});
         SP_ASSERT(success); // will only succeed if key wasn't already present
     }
 
@@ -525,7 +534,7 @@ public:
         CMapValuesAreConvertibleFromInitializerList<TMap, TInitializerListValue>
     static void insert(TMap& map, TKey&& key, std::initializer_list<TInitializerListValue> initializer_list)
     {
-        auto [itr, success] = map.insert({std::forward<decltype(key)>(key), initializer_list});
+        auto [itr, success] = map.insert({std::forward<TKey>(key), initializer_list});
         SP_ASSERT(success); // will only succeed if key wasn't already present
     }
 
@@ -541,7 +550,7 @@ public:
         CMapValuesAreConvertibleFromEmptyInitializerList<TMap>
     static void insert(TMap& map, TKey&& key, std::initializer_list<EmptyInitializerList> initializer_list)
     {
-        auto [itr, success] = map.insert({std::forward<decltype(key)>(key), {}});
+        auto [itr, success] = map.insert({std::forward<TKey>(key), {}});
         SP_ASSERT(success); // will only succeed if key wasn't already present
     }
 
@@ -617,7 +626,7 @@ public:
 
     template <typename TSet, typename TKey> requires
         CSetKeysAreConvertibleFrom<TSet, TKey>
-    static auto remove(TSet& set, const TKey& key)
+    static void remove(TSet& set, const TKey& key)
     {
         SP_ASSERT(set.contains(key));
         set.erase(key);
@@ -649,7 +658,7 @@ public:
     // We use TSrcVector&& because want to preserve and forward the const-ness and rvalue-ness of src. We do
     // this to enforce the constraint that if TSrcVector is const, then TDestValue also needs to be const.
     template <typename TDestValue, typename TSrcVector> requires
-        CVector<std::remove_const_t<std::remove_reference_t<TSrcVector>>> &&
+        CVector<std::remove_cvref_t<TSrcVector>> &&
         (!std::is_const_v<TSrcVector> || std::is_const_v<TDestValue>)
     static std::span<TDestValue> reinterpretAsSpanOf(TSrcVector&& src)
     {
@@ -666,7 +675,7 @@ public:
             uint64_t src_num_bytes = src_num_elements*sizeof(TSrcValue);
             SP_ASSERT(src_num_bytes % sizeof(TDestValue) == 0);
             uint64_t dest_num_elements = src_num_bytes / sizeof(TDestValue);
-            dest = std::span<TDestValue>(reinterpret_cast<TDestValue*>(src_data), dest_num_elements);
+            dest = std::span<TDestValue>(reinterpret_cast<TDestValue*>(src_data), dest_num_elements); // technically undefined behavior unless memory starts its lifetime as TValue but benign
         }
         return dest;
     }

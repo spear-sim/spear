@@ -17,9 +17,18 @@
 
 #include "SpCore/FuncRegistry.h"
 #include "SpCore/SpArray.h"
-#include "SpCore/SpTypes.h"
 
 #include "SpFuncComponent.generated.h"
+
+// SpFuncDataBundle is intended as a high-level helper struct that can be used as the argument to, and the
+// return value from, an SpFunc. We choose to make this a struct so it will be easier to add fields if
+// necessary, without needing to explicitly update the signature of every SpFunc.
+struct SpFuncDataBundle
+{
+    std::map<std::string, SpPackedArray> packed_arrays_;
+    std::map<std::string, std::string> unreal_obj_strings_;
+    std::string info_;
+};
 
 // We need meta=(BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
 UCLASS(ClassGroup="SPEAR", HideCategories=(Activation, AssetUserData, Collision, Cooking, LOD, Navigation, Physics, Rendering, Tags), meta=(BlueprintSpawnableComponent))

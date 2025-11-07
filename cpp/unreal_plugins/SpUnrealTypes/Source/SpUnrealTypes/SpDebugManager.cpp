@@ -7,8 +7,10 @@
 
 #include <stdint.h> // uint8_t
 
+#include <map>
 #include <memory> // std::make_unique
 #include <ranges> // std::views::transform
+#include <vector>
 
 #include <Components/ActorComponent.h>
 #include <Components/PoseableMeshComponent.h>
@@ -25,15 +27,17 @@
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 #include <PhysicsEngine/BodyInstance.h>
-#include <UObject/Class.h>                   // UClass
+#include <UObject/Class.h>                   // UClass, UScriptStruct
 #include <UObject/Object.h>                  // UObject
+#include <UObject/ObjectMacros.h>            // EPropertyFlags
+#include <UObject/Script.h>                  // EFunctionFlags
+#include <UObject/UnrealType.h>              // FProperty
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/SharedMemory.h"
 #include "SpCore/SpArray.h"
 #include "SpCore/SpFuncComponent.h"
-#include "SpCore/SpTypes.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealObj.h"
@@ -152,22 +156,28 @@ void ASpDebugManager::BeginDestroy()
 
 void ASpDebugManager::LoadConfig()
 {
+    SP_LOG_CURRENT_FUNCTION();
+
     AActor::LoadConfig();
 }
 
 void ASpDebugManager::SaveConfig()
 {
+    SP_LOG_CURRENT_FUNCTION();
+
     AActor::SaveConfig();
 }
 
 void ASpDebugManager::PrintDebugString() const
 {
     SP_LOG_CURRENT_FUNCTION();
-    SP_LOG("    DebugString: ", Unreal::toStdString(DebugString));
+    SP_LOG("DebugString: ", Unreal::toStdString(DebugString));
 }
 
 void ASpDebugManager::GetAndSetObjectProperties()
 {
+    SP_LOG_CURRENT_FUNCTION();
+
     UWorld* world = GetWorld();
     SP_ASSERT(world);
 
@@ -388,6 +398,8 @@ void ASpDebugManager::GetAndSetObjectProperties()
 
 void ASpDebugManager::CallFunctions()
 {
+    SP_LOG_CURRENT_FUNCTION();
+
     static int i = 1;
 
     UFunction* ufunction = nullptr;
@@ -474,6 +486,8 @@ void ASpDebugManager::CallFunctions()
 
 void ASpDebugManager::CallSpFunc() const
 {
+    SP_LOG_CURRENT_FUNCTION();
+
     USpFuncComponent* sp_func_component = Unreal::getComponentByType<USpFuncComponent>(this);
     SP_ASSERT(sp_func_component);
 
@@ -645,66 +659,190 @@ void ASpDebugManager::ReadPixels()
     SP_LOG("    view_ptr[3]: ", (int)(((uint8_t*)view_ptr)[3]));
 }
 
-void ASpDebugManager::PrintDebugInfo()
+void ASpDebugManager::PrintActorDebugInfo()
 {
-    AStaticMeshActor* static_mesh_actor = Unreal::findActorByName<AStaticMeshActor>(GetWorld(), "Debug/SM_Prop_04");
-    SP_LOG("Printing debug info for actor: ", Unreal::tryGetStableName(static_mesh_actor));
+    SP_LOG_CURRENT_FUNCTION();
 
-    SP_LOG("Non-scene components: ");
+    AStaticMeshActor* static_mesh_actor = Unreal::findActorByName<AStaticMeshActor>(GetWorld(), "Debug/SM_Prop_04");
+    SP_LOG("    Printing debug info for actor: ", Unreal::getStableName(static_mesh_actor));
+
+    SP_LOG("    Non-scene components: ");
     std::map<std::string, UActorComponent*> components = Unreal::getComponentsAsMap(static_mesh_actor);
     for (auto& [name, component] : components) {
         if (!component->IsA(USceneComponent::StaticClass())) {
-            SP_LOG("    ", name, " (", Unreal::getCppTypeAsString(component->GetClass()), + ")");
+            SP_LOG("        ", name, " (", Unreal::getCppTypeAsString(component->GetClass()), + ")");
         }
     }
 
-    SP_LOG("Scene components: ");
+    SP_LOG("    Scene components: ");
     USceneComponent* root_component = static_mesh_actor->GetRootComponent();
     if (root_component) {
-        SP_LOG("    ", Unreal::getStableName(root_component), " (", Unreal::getCppTypeAsString(root_component->GetClass()) + ")");
+        SP_LOG("        ", Unreal::getStableName(root_component), " (", Unreal::getCppTypeAsString(root_component->GetClass()) + ")");
         std::map<std::string, USceneComponent*> scene_components = Unreal::getChildrenComponentsAsMap(root_component);
         for (auto& [name, scene_component] : scene_components) {
-            SP_LOG("    ", name, " (", Unreal::getCppTypeAsString(scene_component->GetClass()) + ")");
+            SP_LOG("        ", name, " (", Unreal::getCppTypeAsString(scene_component->GetClass()) + ")");
         }
     }
 
     UClass* uclass = static_mesh_actor->GetClass();
     SP_ASSERT(uclass);
 
-    SP_LOG("Meta type: ", Unreal::getCppTypeAsString(uclass->GetClass()));
-    SP_LOG("Target type: ", Unreal::getCppTypeAsString(uclass));
+    SP_LOG("    Meta type: ", Unreal::getCppTypeAsString(uclass->GetClass()));
+    SP_LOG("    Target type: ", Unreal::getCppTypeAsString(uclass));
 
-    SP_LOG("C++ type hierarchy: ");
+    SP_LOG("    C++ type hierarchy: ");
     for (UClass* current_uclass = uclass; current_uclass; current_uclass = current_uclass->GetSuperClass()) {
-        SP_LOG("    ", Unreal::getCppTypeAsString(current_uclass->GetClass()));
+        SP_LOG("        ", Unreal::getCppTypeAsString(current_uclass));
     }
 
-    SP_LOG("Properties: ");
+    SP_LOG("    Functions: ");
     for (UClass* current_uclass = uclass; current_uclass; current_uclass = current_uclass->GetSuperClass()) {
-        SP_LOG("    Properties for type: ", Unreal::toStdString(current_uclass->GetPrefixCPP()) + Unreal::toStdString(current_uclass->GetName()));
-        for (TFieldIterator<FProperty> itr(current_uclass, EFieldIteratorFlags::ExcludeSuper); itr; ++itr) {
-            FProperty* property = *itr;
-            SP_LOG("        Property: ", Unreal::toStdString(property->GetName()), " (", Unreal::toStdString(property->GetCPPType()), ")");
-        }
-    }
-
-    SP_LOG("Functions: ");
-    for (UClass* current_uclass = uclass; current_uclass; current_uclass = current_uclass->GetSuperClass()) {
-        SP_LOG("    Functions for type: ", Unreal::toStdString(current_uclass->GetPrefixCPP()) + Unreal::toStdString(current_uclass->GetName()));
-        for (TFieldIterator<UFunction> itr(current_uclass, EFieldIteratorFlags::ExcludeSuper); itr; ++itr) {
-            UFunction* ufunction = *itr;
-            SP_LOG("        Function: ", Unreal::toStdString(ufunction->GetName()));
-            for (TFieldIterator<FProperty> itr(ufunction); itr; ++itr) {
-                FProperty* property = *itr;
+        SP_LOG("        Functions for type: ", Unreal::getCppTypeAsString(current_uclass));
+        std::map<std::string, UFunction*> ufunctions = Unreal::findFunctionsAsMap(current_uclass, EFieldIterationFlags::IncludeDeprecated); // exclude base classes
+        for (auto& [ufunction_name, ufunction] : ufunctions) {
+            SP_LOG("            Function: ", ufunction_name);
+            std::map<std::string, FProperty*> properties = Unreal::findPropertiesAsMap(ufunction);
+            for (auto& [property_name, property] : properties) {
                 SP_ASSERT(property->HasAnyPropertyFlags(EPropertyFlags::CPF_Parm));
                 if (!property->HasAnyPropertyFlags(EPropertyFlags::CPF_ReturnParm)) {
-                    SP_LOG("            Argument: ", Unreal::toStdString(property->GetName()), " (", Unreal::toStdString(property->GetCPPType()), ")");
-                } else {
-                    SP_LOG("            Return value: ", Unreal::toStdString(property->GetName()), " (", Unreal::toStdString(property->GetCPPType()), ")");
+                    SP_LOG("                Argument: ", property_name, " (", Unreal::getCppTypeAsString(property), ")");
+                }
+            }
+            for (auto& [property_name, property] : properties) {
+                SP_ASSERT(property->HasAnyPropertyFlags(EPropertyFlags::CPF_Parm));
+                if (property->HasAnyPropertyFlags(EPropertyFlags::CPF_ReturnParm)) {
+                    SP_LOG("                Return value: ", property_name, " (", Unreal::getCppTypeAsString(property), ")");
                 }
             }
         }
     }
+
+    SP_LOG("    Properties: ");
+    for (UClass* current_uclass = uclass; current_uclass; current_uclass = current_uclass->GetSuperClass()) {
+        SP_LOG("        Properties for type: ", Unreal::getCppTypeAsString(current_uclass));
+        std::map<std::string, FProperty*> properties = Unreal::findPropertiesAsMap(current_uclass, EFieldIterationFlags::IncludeDeprecated); // exclude base classes
+        for (auto& [name, property] : properties) {
+            SP_LOG("            Property: ", name, " (", Unreal::getCppTypeAsString(property), ")");
+        }
+    }
+}
+
+void ASpDebugManager::PrintAllClassesDebugInfo()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    UClass* uobject_static_class = nullptr;
+    int num_functions = -1;
+    int num_properties = -1;
+    int total_num_functions = -1;
+    int total_num_properties = -1;
+    std::map<std::string, UClass*> uclasses;
+    std::map<std::string, UScriptStruct*> ustructs;
+
+    SP_LOG("Counting the number of functions and properties exposed to the Unreal Engine reflection system...");
+
+    total_num_functions = 0;
+    total_num_properties = 0;
+    uclasses = {};
+
+    uobject_static_class = UObject::StaticClass();
+    SP_LOG("    Meta type: ", Unreal::getCppTypeAsString(uobject_static_class->GetClass()));
+    SP_LOG("    Target type: ", Unreal::getCppTypeAsString(uobject_static_class));
+
+    num_functions = Unreal::findFunctions(uobject_static_class, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
+    num_properties = Unreal::findProperties(uobject_static_class, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
+    SP_LOG("    Class: UObject (", num_functions, " functions, ", num_properties, " properties)");
+    total_num_functions += num_functions;
+    total_num_properties += num_properties;
+
+    uclasses = Unreal::getDerivedClassesAsMap(uobject_static_class);
+    SP_LOG("    Number of classes that derive from UObject: ", uclasses.size());
+
+    for (auto& [uclass_name, uclass] : uclasses) {
+        int num_functions = Unreal::findFunctions(uclass, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
+        int num_properties = Unreal::findProperties(uclass, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
+        SP_LOG("        Class: ", uclass_name, " (", num_functions, " functions, ", num_properties, " properties)");
+        total_num_functions += num_functions;
+        total_num_properties += num_properties;
+    }
+
+    ustructs = Unreal::findStaticStructsAsMap();
+    SP_LOG("    Number of structs that are outside the UObject class hierarchy: ", ustructs.size());
+
+    for (auto& [ustruct_name, ustruct] : ustructs) {
+        int num_properties = Unreal::findProperties(ustruct, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
+        SP_LOG("        Struct: ", ustruct_name, " (", num_properties, " properties)");
+        total_num_properties += num_properties;
+    }
+
+    SP_LOG("    Total function count: ", total_num_functions);
+    SP_LOG("    Total property count: ", total_num_properties);
+
+    SP_LOG("Counting the number of functions and properties exposed to Unreal's editor-only Python library...");
+
+    total_num_functions = 0;
+    total_num_properties = 0;
+    uclasses = {};
+
+    uobject_static_class = UObject::StaticClass();
+    SP_LOG("    Meta type: ", Unreal::getCppTypeAsString(uobject_static_class->GetClass()));
+    SP_LOG("    Target type: ", Unreal::getCppTypeAsString(uobject_static_class));
+
+    EFunctionFlags function_flags = EFunctionFlags::FUNC_BlueprintCallable | EFunctionFlags::FUNC_BlueprintPure;
+    EPropertyFlags property_flags = EPropertyFlags::CPF_BlueprintVisible | EPropertyFlags::CPF_BlueprintReadOnly | EPropertyFlags::CPF_BlueprintAssignable | EPropertyFlags::CPF_Edit;
+
+    num_functions = Unreal::findFunctionsByFlagsAny(uobject_static_class, function_flags, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
+    num_properties = Unreal::findPropertiesByFlagsAny(uobject_static_class, property_flags, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
+    SP_LOG("    Class: UObject (", num_functions, " functions, ", num_properties, " properties)");
+    total_num_functions += num_functions;
+    total_num_properties += num_properties;
+
+    uclasses = Unreal::getDerivedClassesAsMap(uobject_static_class);
+    SP_LOG("    Number of classes that derive from UObject: ", uclasses.size());
+
+    for (auto& [uclass_name, uclass] : uclasses) {
+        int num_functions = Unreal::findFunctionsByFlagsAny(uclass, function_flags, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
+        int num_properties = Unreal::findPropertiesByFlagsAny(uclass, property_flags, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
+        // SP_LOG("        Class: ", uclass_name, " (", num_functions, " functions, ", num_properties, " properties)");
+        total_num_functions += num_functions;
+        total_num_properties += num_properties;
+    }
+
+    ustructs = Unreal::findStaticStructsAsMap();
+    SP_LOG("    Number of structs that are outside the UObject class hierarchy: ", ustructs.size());
+
+    for (auto& [ustruct_name, ustruct] : ustructs) {
+        int num_properties = Unreal::findPropertiesByFlagsAny(ustruct, property_flags, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
+        // SP_LOG("        Struct: ", ustruct_name, " (", num_properties, " properties)");
+        total_num_properties += num_properties;
+    }
+
+    SP_LOG("    Total function count: ", total_num_functions);
+    SP_LOG("    Total property count: ", total_num_properties);
+
+    SP_LOG("Counting the number of functions available through the AActor class...");
+
+    total_num_functions = 0;
+    uclasses = {};
+
+    uobject_static_class = AActor::StaticClass();
+    SP_LOG("    Meta type: ", Unreal::getCppTypeAsString(uobject_static_class->GetClass()));
+    SP_LOG("    Target type: ", Unreal::getCppTypeAsString(uobject_static_class));
+
+    num_functions = Unreal::findFunctions(uobject_static_class, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
+    SP_LOG("    Class: AActor (", num_functions, " functions)");
+    total_num_functions += num_functions;
+
+    uclasses = Unreal::getDerivedClassesAsMap(uobject_static_class);
+    SP_LOG("        Number of classes that derive from AActor: ", uclasses.size());
+
+    for (auto& [uclass_name, uclass] : uclasses) {
+        int num_functions = Unreal::findFunctions(uclass, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
+        // SP_LOG("            Class: ", uclass_name, " (", num_functions, " functions, ", num_properties, " properties)");
+        total_num_functions += num_functions;
+    }
+
+    SP_LOG("    Total function count: ", total_num_functions);
 }
 
 FString ASpDebugManager::GetString(FString Arg0, bool Arg1, int Arg2, FVector Arg3) const

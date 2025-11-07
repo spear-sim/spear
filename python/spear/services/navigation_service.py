@@ -7,17 +7,23 @@ import numpy as np
 import spear
 
 class NavigationService(spear.utils.func_utils.Service):
-    def __init__(self, entry_point_caller, shared_memory_service, create_children=True):
-
+    def __init__(self, entry_point_caller, shared_memory_service, is_top_level_service=True, create_children_services=True):
         self._entry_point_caller = entry_point_caller
         self._shared_memory_service = shared_memory_service
-        super().__init__(entry_point_caller, create_children) # do this after initializing local state
 
-    def create_child(self, entry_point_caller):
-        return NavigationService(entry_point_caller=entry_point_caller, shared_memory_service=self._shared_memory_service, create_children=False)
+        super().__init__(
+            is_top_level_service=is_top_level_service,
+            create_children_services=create_children_services,
+            entry_point_caller=entry_point_caller) # do this after initializing local state
+
+
+    def create_child_service(self, entry_point_caller):
+        assert self.is_top_level_service() # this function should only be called from the top-level service
+        return NavigationService(entry_point_caller=entry_point_caller, shared_memory_service=self._shared_memory_service, is_top_level_service=False, create_children_services=False)
+
 
     def get_nav_data_for_agent_name(self, navigation_system, agent_name):
-        return self._entry_point_caller.call_on_game_thread("uint64_t", "get_nav_data_for_agent_name", None, navigation_system, agent_name)
+        return self._entry_point_caller.call_on_game_thread("get_nav_data_for_agent_name", None, navigation_system, agent_name)
 
     # The caller must ensure that out_array remains valid until future.get() has been called for the future
     # that might be returned by this function.
@@ -53,7 +59,6 @@ class NavigationService(spear.utils.func_utils.Service):
             return result
 
         return self._entry_point_caller.call_on_game_thread(
-            "PackedArray",
             "get_random_points",
             convert_func,
             navigation_data,
@@ -104,7 +109,6 @@ class NavigationService(spear.utils.func_utils.Service):
             return result
 
         return self._entry_point_caller.call_on_game_thread(
-            "PackedArray",
             "get_random_reachable_points_in_radius",
             convert_func,
             navigation_data,
@@ -160,7 +164,6 @@ class NavigationService(spear.utils.func_utils.Service):
             return paths
 
         return self._entry_point_caller.call_on_game_thread(
-            "std::map<std::string, PackedArray>",
             "find_paths",
             convert_func,
             navigation_system,

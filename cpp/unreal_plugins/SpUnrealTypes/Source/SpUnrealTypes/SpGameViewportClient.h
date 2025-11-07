@@ -22,6 +22,6 @@ public:
     static void GetViewportSize(UGameViewportClient* GameViewportClient, FVector2D& ViewportSize)
     {
         SP_ASSERT(GameViewportClient);
-        return GameViewportClient->GetViewportSize(ViewportSize);
+        GameViewportClient->GetViewportSize(ViewportSize);
     }
 };

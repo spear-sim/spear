@@ -41,25 +41,25 @@ struct FObjectInstancingGraph;
 // Helper macros to avoid repetitive boilerplate code at call sites.
 //
 
-#define SP_REGISTER_ENGINE_SUBSYSTEM_CLASS(engine_subsystem_class_name)                    UnrealClassRegistry::registerEngineSubsystemClass<engine_subsystem_class_name>(#engine_subsystem_class_name)
-#define SP_REGISTER_SUBSYSTEM_PROVIDER_CLASS(subsystem_provider_class_name)                UnrealClassRegistry::registerSubsystemProviderClass<subsystem_provider_class_name>(#subsystem_provider_class_name)
-#define SP_REGISTER_SUBSYSTEM_CLASS(subsystem_class_name, subsystem_provider_class_name)   UnrealClassRegistry::registerSubsystemClass<subsystem_class_name, subsystem_provider_class_name>(#subsystem_class_name)
-#define SP_REGISTER_ACTOR_CLASS(actor_class_name)                                          UnrealClassRegistry::registerActorClass<actor_class_name>(#actor_class_name)
-#define SP_REGISTER_COMPONENT_CLASS(component_class_name)                                  UnrealClassRegistry::registerComponentClass<component_class_name>(#component_class_name)
-#define SP_REGISTER_INTERFACE_CLASS(interface_class_name)                                  UnrealClassRegistry::registerInterface<interface_class_name>(#interface_class_name)
-#define SP_REGISTER_CLASS(class_name)                                                      UnrealClassRegistry::registerClass<class_name>(#class_name)
-#define SP_REGISTER_SPECIAL(struct_name)                                                   UnrealClassRegistry::registerStruct<struct_name>(#struct_name)
-#define SP_REGISTER_SPECIAL_STRUCT(special_struct_name)                                    UnrealClassRegistry::registerSpecialStruct<special_struct_name>(#special_struct_name)
+#define SP_REGISTER_ENGINE_SUBSYSTEM_CLASS(engine_subsystem_class_)                UnrealClassRegistry::registerEngineSubsystemClass<engine_subsystem_class_>(#engine_subsystem_class_)
+#define SP_REGISTER_SUBSYSTEM_PROVIDER_CLASS(subsystem_provider_class_)            UnrealClassRegistry::registerSubsystemProviderClass<subsystem_provider_class_>(#subsystem_provider_class_)
+#define SP_REGISTER_SUBSYSTEM_CLASS(subsystem_class_, subsystem_provider_class_)   UnrealClassRegistry::registerSubsystemClass<subsystem_class_, subsystem_provider_class_>(#subsystem_class_)
+#define SP_REGISTER_ACTOR_CLASS(actor_class_)                                      UnrealClassRegistry::registerActorClass<actor_class_>(#actor_class_)
+#define SP_REGISTER_COMPONENT_CLASS(component_class_)                              UnrealClassRegistry::registerComponentClass<component_class_>(#component_class_)
+#define SP_REGISTER_INTERFACE_CLASS(interface_class_)                              UnrealClassRegistry::registerInterface<interface_class_>(#interface_class_)
+#define SP_REGISTER_CLASS(class_)                                                  UnrealClassRegistry::registerClass<class_>(#class_)
+#define SP_REGISTER_STRUCT(struct_)                                                UnrealClassRegistry::registerStruct<struct_>(#struct_)
+#define SP_REGISTER_SPECIAL_STRUCT(special_struct_)                                UnrealClassRegistry::registerSpecialStruct<special_struct_>(#special_struct_)
 
-#define SP_UNREGISTER_ENGINE_SUBSYSTEM_CLASS(engine_subsystem_class_name)                  UnrealClassRegistry::unregisterEngineSubsystemClass<engine_subsystem_class_name>(#engine_subsystem_class_name)
-#define SP_UNREGISTER_SUBSYSTEM_PROVIDER_CLASS(subsystem_provider_class_name)              UnrealClassRegistry::unregisterSubsystemProviderClass<subsystem_provider_class_name>(#subsystem_provider_class_name)
-#define SP_UNREGISTER_SUBSYSTEM_CLASS(subsystem_class_name, subsystem_provider_class_name) UnrealClassRegistry::unregisterSubsystemClass<subsystem_class_name, subsystem_provider_class_name>(#subsystem_class_name)
-#define SP_UNREGISTER_ACTOR_CLASS(actor_class_name)                                        UnrealClassRegistry::unregisterActorClass<actor_class_name>(#actor_class_name)
-#define SP_UNREGISTER_COMPONENT_CLASS(component_class_name)                                UnrealClassRegistry::unregisterComponentClass<component_class_name>(#component_class_name)
-#define SP_UNREGISTER_INTERFACE_CLASS(interface_class_name)                                UnrealClassRegistry::unregisterInterface<interface_class_name>(#interface_class_name)
-#define SP_UNREGISTER_CLASS(class_name)                                                    UnrealClassRegistry::unregisterClass<class_name>(#class_name)
-#define SP_UNREGISTER_SPECIAL(struct_name)                                                 UnrealClassRegistry::unregisterStruct<struct_name>(#struct_name)
-#define SP_UNREGISTER_SPECIAL_STRUCT(special_struct_name)                                  UnrealClassRegistry::unregisterSpecialStruct<special_struct_name>(#special_struct_name)
+#define SP_UNREGISTER_ENGINE_SUBSYSTEM_CLASS(engine_subsystem_class_)              UnrealClassRegistry::unregisterEngineSubsystemClass<engine_subsystem_class_>(#engine_subsystem_class_)
+#define SP_UNREGISTER_SUBSYSTEM_PROVIDER_CLASS(subsystem_provider_class_)          UnrealClassRegistry::unregisterSubsystemProviderClass<subsystem_provider_class_>(#subsystem_provider_class_)
+#define SP_UNREGISTER_SUBSYSTEM_CLASS(subsystem_class_, subsystem_provider_class_) UnrealClassRegistry::unregisterSubsystemClass<subsystem_class_, subsystem_provider_class_>(#subsystem_class_)
+#define SP_UNREGISTER_ACTOR_CLASS(actor_class_)                                    UnrealClassRegistry::unregisterActorClass<actor_class_>(#actor_class_)
+#define SP_UNREGISTER_COMPONENT_CLASS(component_class_)                            UnrealClassRegistry::unregisterComponentClass<component_class_>(#component_class_)
+#define SP_UNREGISTER_INTERFACE_CLASS(interface_class_)                            UnrealClassRegistry::unregisterInterface<interface_class_>(#interface_class_)
+#define SP_UNREGISTER_CLASS(class_)                                                UnrealClassRegistry::unregisterClass<class_>(#class_)
+#define SP_UNREGISTER_STRUCT(struct_)                                              UnrealClassRegistry::unregisterStruct<struct_>(#struct_)
+#define SP_UNREGISTER_SPECIAL_STRUCT(special_struct_)                              UnrealClassRegistry::unregisterSpecialStruct<special_struct_>(#special_struct_)
 
 //
 // We need the variables below to be globals because they are referenced in templated code. This requirement

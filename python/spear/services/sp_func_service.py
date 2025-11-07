@@ -6,21 +6,30 @@
 import spear
 
 class SpFuncService(spear.utils.func_utils.Service):
-    def __init__(self, entry_point_caller, shared_memory_service, create_children=True):
-
+    def __init__(self, entry_point_caller, shared_memory_service, is_top_level_service=True, create_children_services=True):
         self._entry_point_caller = entry_point_caller
         self._shared_memory_service = shared_memory_service
-        super().__init__(entry_point_caller, create_children) # do this after initializing local state
 
-    def create_child(self, entry_point_caller):
-        return SpFuncService(entry_point_caller=entry_point_caller, shared_memory_service=self._shared_memory_service, create_children=False)
+        super().__init__(
+            is_top_level_service=is_top_level_service,
+            create_children_services=create_children_services,
+            entry_point_caller=entry_point_caller) # do this after initializing local state
+
+
+    def create_child_service(self, entry_point_caller):
+        assert self.is_top_level_service() # this function should only be called from the top-level service
+        return SpFuncService(entry_point_caller=entry_point_caller, shared_memory_service=self._shared_memory_service, is_top_level_service=False, create_children_services=False)
+
 
     def create_shared_memory_handles_for_object(self, uobject):
-        views = self._entry_point_caller.call_on_game_thread("std::map<std::string, SharedMemoryView>", "get_shared_memory_views", None, uobject)
+        assert self.is_top_level_service() # user should only call this function on the top-level service
+        views = self._entry_point_caller.call_on_game_thread("get_shared_memory_views", None, uobject)
         return self._shared_memory_service.create_shared_memory_handles(shared_memory_views=views)
 
     def destroy_shared_memory_handles_for_object(self, shared_memory_handles):
+        assert self.is_top_level_service() # user should only call this function on the top-level service
         self._shared_memory_service.destroy_shared_memory_handles(shared_memory_handles=shared_memory_handles)
+
 
     # The caller must ensure that arrays and uobject_shared_memory_handles remain valid until future.get()
     # has been called for the future that might be returned by this function.
@@ -64,7 +73,6 @@ class SpFuncService(spear.utils.func_utils.Service):
             return result
 
         return self._entry_point_caller.call_on_game_thread(
-            "DataBundle",
             "call_function",
             convert_func,
             uobject,

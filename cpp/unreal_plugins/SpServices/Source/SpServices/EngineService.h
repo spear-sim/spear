@@ -5,15 +5,16 @@
 
 #pragma once
 
-#include <stddef.h> // int64_t, uint64_t
+#include <stdint.h> // int64_t, uint64_t
 
 #include <atomic>
 #include <future>      // std::promise
 #include <mutex>       // std::lock_guard
+#include <ranges>      // std::views::transform
 #include <string>
-#include <utility>     // std::pair
+#include <utility>     // std::make_pair, std::pair
 #include <vector>
-#include <type_traits> // std::is_void_v, std::remove_cvref_t
+#include <type_traits> // std::is_void_v
 
 #include <boost/predef.h> // BOOST_ENDIAN_BIG_BYTE, BOOST_ENDIAN_LITTLE_BYTE, BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
 
@@ -26,12 +27,15 @@
 #include "SpCore/Boost.h"
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
-#include "SpCore/SpTypes.h"
+#include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/FuncInfo.h"
+#include "SpServices/FuncSignatureRegistry.h"
+#include "SpServices/MsgpackAdaptors.h" // needed in this file because this is where we're calling bind(...) on the RPC server
 #include "SpServices/Service.h"
+#include "SpServices/SpTypes.h"
 #include "SpServices/WorkQueue.h"
 
 template <CEntryPointBinder TEntryPointBinder>
@@ -42,6 +46,13 @@ public:
     EngineService(TEntryPointBinder* entry_point_binder) : Service("EngineService")
     {
         SP_ASSERT(entry_point_binder);
+
+        entry_point_signature_registries_["call_sync_on_worker_thread"] = FuncSignatureRegistry();
+
+        entry_point_signature_registries_["call_sync_on_game_thread"]         = FuncSignatureRegistry();
+        entry_point_signature_registries_["call_async_on_game_thread"]        = FuncSignatureRegistry();
+        entry_point_signature_registries_["send_async_on_game_thread"]        = FuncSignatureRegistry();
+        entry_point_signature_registries_["get_future_result_on_game_thread"] = FuncSignatureRegistry();
 
         entry_point_binder_ = entry_point_binder;
 
@@ -199,7 +210,7 @@ public:
         });
 
         //
-        // Miscellaneous low-level entry points to support spear.Instance but do not interact with Unreal.
+        // Miscellaneous low-level entry points to support spear.Instance and do not interact with Unreal.
         //
 
         bindFuncToExecuteOnWorkerThread("engine_service", "ping", []() -> std::string {
@@ -219,6 +230,19 @@ public:
             } else {
                 return "";
             }
+        });
+
+        bindFuncToExecuteOnWorkerThread("engine_service", "get_entry_point_signature_type_descs", [this]() -> std::vector<SpFuncSignatureTypeDesc> {
+            return FuncSignatureRegistry::getFuncSignatureTypeDescs();
+        });
+
+        bindFuncToExecuteOnWorkerThread("engine_service", "get_entry_point_signature_descs", [this]() -> std::map<std::string, std::vector<SpFuncSignatureDesc>> {
+            return Std::toMap<std::string, std::vector<SpFuncSignatureDesc>>(
+                entry_point_signature_registries_ |
+                std::views::transform([](auto& pair) {
+                    auto& [entry_point_registry_name, entry_point_registry] = pair;
+                    return std::make_pair(entry_point_registry_name, entry_point_registry.getFuncSignatureDescs());
+                }));
         });
 
         //
@@ -276,80 +300,74 @@ public:
         bindFuncToExecuteOnGameThread("engine_service", "is_async_loading", []() -> bool {
             return IsAsyncLoading();
         });
-
-        //
-        // Entry points to get a result from a future.
-        //
-
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_void",                                [this](SpFuture& future) -> void                                           { return destroyFuture<void>(future);                                           });
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_bool",                                [this](SpFuture& future) -> bool                                           { return destroyFuture<bool>(future);                                           });
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_float",                               [this](SpFuture& future) -> float                                          { return destroyFuture<float>(future);                                          });
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_int32",                               [this](SpFuture& future) -> int32_t                                        { return destroyFuture<int32_t>(future);                                        });
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_int64",                               [this](SpFuture& future) -> int64_t                                        { return destroyFuture<int64_t>(future);                                        });
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_uint64",                              [this](SpFuture& future) -> uint64_t                                       { return destroyFuture<uint64_t>(future);                                       });
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_string",                              [this](SpFuture& future) -> std::string                                    { return destroyFuture<std::string>(future);                                    });
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_vector_of_double",                    [this](SpFuture& future) -> std::vector<double>                            { return destroyFuture<std::vector<double>>(future);                            });
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_vector_of_uint64",                    [this](SpFuture& future) -> std::vector<uint64_t>                          { return destroyFuture<std::vector<uint64_t>>(future);                          });
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_vector_of_string",                    [this](SpFuture& future) -> std::vector<std::string>                       { return destroyFuture<std::vector<std::string>>(future);                       });
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_map_of_string_to_uint64",             [this](SpFuture& future) -> std::map<std::string, uint64_t>                { return destroyFuture<std::map<std::string, uint64_t>>(future);                });
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_map_of_string_to_shared_memory_view", [this](SpFuture& future) -> std::map<std::string, SpArraySharedMemoryView> { return destroyFuture<std::map<std::string, SpArraySharedMemoryView>>(future); });
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_map_of_string_to_packed_array",       [this](SpFuture& future) -> std::map<std::string, SpPackedArray>           { return destroyFuture<std::map<std::string, SpPackedArray>>(future);           });
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_property_desc",                       [this](SpFuture& future) -> SpPropertyDesc                                 { return destroyFuture<SpPropertyDesc>(future);                                 });
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_shared_memory_view",                  [this](SpFuture& future) -> SpArraySharedMemoryView                        { return destroyFuture<SpArraySharedMemoryView>(future);                        });
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_packed_array",                        [this](SpFuture& future) -> SpPackedArray                                  { return destroyFuture<SpPackedArray>(future);                                  });
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_future_result_as_data_bundle",                         [this](SpFuture& future) -> SpFuncDataBundle                               { return destroyFuture<SpFuncDataBundle>(future);                               });
     }
 
-    void bindFuncToExecuteOnWorkerThread(const std::string& service_name, const std::string& func_name, const auto& func)
+    template <typename TFunc>
+    void bindFuncToExecuteOnWorkerThread(const std::string& service_name, const std::string& func_name, const TFunc& func)
     {
-        std::string long_func_name = service_name + "." + func_name;
+        std::string long_func_name = service_name + ".call_sync_on_worker_thread." + func_name;
+        FuncSignatureRegistry& entry_point_registry = entry_point_signature_registries_.at("call_sync_on_worker_thread");
 
-        if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-            SP_LOG("Binding function to execute on the worker thread:");
-            printFuncSignature(long_func_name, func);
-        }
-
+        SP_ASSERT(!entry_point_registry.isFuncSignatureRegistered(long_func_name, func));
+        entry_point_registry.registerFuncSignature(long_func_name, func);
         entry_point_binder_->bind(long_func_name, wrapFuncToExecuteInTryCatch(long_func_name, func));
     }
 
-    void bindFuncToExecuteOnGameThread(const std::string& service_name, const std::string& func_name, const auto& func)
+    template <typename TFunc>
+    void bindFuncToExecuteOnGameThread(const std::string& service_name, const std::string& func_name, const TFunc& func)
     {
         UnrealEntryPointBindFlags bind_flags = UnrealEntryPointBindFlags::CallSync | UnrealEntryPointBindFlags::CallAsync | UnrealEntryPointBindFlags::SendAsync;
         bindFuncToExecuteOnGameThread(service_name, func_name, bind_flags, func);
     }
 
-    void bindFuncToExecuteOnGameThread(const std::string& service_name, const std::string& func_name, UnrealEntryPointBindFlags bind_flags, const auto& func)
+    template <typename TFunc>
+    void bindFuncToExecuteOnGameThread(const std::string& service_name, const std::string& func_name, UnrealEntryPointBindFlags bind_flags, const TFunc& func)
+    {
+        bindFuncToExecuteOnGameThread(service_name, func_name, bind_flags, func, FuncInfoUtils::getFuncInfo<TFunc>());
+    }
+
+    template <typename TFunc, typename TReturn, typename... TArgs>
+    void bindFuncToExecuteOnGameThread(const std::string& service_name, const std::string& func_name, UnrealEntryPointBindFlags bind_flags, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
     {
         if (Std::toBool(bind_flags & UnrealEntryPointBindFlags::CallSync)) {
-            std::string long_func_name = service_name + "." + func_name;
+            std::string long_func_name = service_name + ".call_sync_on_game_thread." + func_name;
+            FuncSignatureRegistry& entry_point_registry = entry_point_signature_registries_.at("call_sync_on_game_thread");
 
-            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                SP_LOG("Binding function to execute on game thread (blocking):");
-                printFuncSignature(long_func_name, func);
-            }
-
+            SP_ASSERT((!entry_point_registry.isFuncSignatureRegistered<TReturn, TArgs...>(long_func_name))); // extra parentheses needed because of comma
+            entry_point_registry.registerFuncSignature<TReturn, TArgs...>(long_func_name);
             entry_point_binder_->bind(long_func_name, wrapFuncToExecuteInWorkQueueBlocking(long_func_name, func));
         }
 
         if (Std::toBool(bind_flags & UnrealEntryPointBindFlags::CallAsync)) {
-            std::string long_func_name = service_name + ".call_async." + func_name;
+            std::string long_func_name = service_name + ".call_async_on_game_thread." + func_name;
+            FuncSignatureRegistry& entry_point_registry = entry_point_signature_registries_.at("call_async_on_game_thread");
 
-            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                SP_LOG("Binding function to game thread (non-blocking):");
-                printFuncSignature(long_func_name, func);
+            SP_ASSERT((!entry_point_registry.isFuncSignatureRegistered<SpFuture, TArgs...>(long_func_name))); // extra parentheses needed because of comma
+            entry_point_registry.registerFuncSignature<SpFuture, TArgs...>(long_func_name);
+            entry_point_binder_->bind(long_func_name, wrapFuncToExecuteInWorkQueueNonBlocking(long_func_name, func)); // bound function will call createFuture
+
+            {
+                // if we're binding a call_async function, then we also need to bind a corresponding
+                // engine_service.get_future_result_as_return_type function if we haven't already
+
+                std::string long_func_name = "engine_service.get_future_result_on_game_thread_as_" + FuncSignatureRegistry::getFuncSignatureTypeDesc<TReturn>().type_names_.at("entry_point");
+                FuncSignatureRegistry& entry_point_registry = entry_point_signature_registries_.at("get_future_result_on_game_thread");
+
+                if (!entry_point_registry.isFuncSignatureRegistered<TReturn, SpFuture&>(long_func_name)) {
+                    entry_point_registry.registerFuncSignature<TReturn, SpFuture&>(long_func_name);
+                    entry_point_binder_->bind(long_func_name, wrapFuncToExecuteInTryCatch(long_func_name, [this](SpFuture& future) -> TReturn { // bound function will call destroyFuture
+                        return destroyFuture<TReturn>(future);
+                    }));
+                }
             }
-
-            entry_point_binder_->bind(long_func_name, wrapFuncToExecuteInWorkQueueNonBlocking(long_func_name, func));
         }
 
         if (Std::toBool(bind_flags & UnrealEntryPointBindFlags::SendAsync)) {
-            std::string long_func_name = service_name + ".send_async." + func_name;
+            std::string long_func_name = service_name + ".send_async_on_game_thread_." + func_name;
+            FuncSignatureRegistry& entry_point_registry = entry_point_signature_registries_.at("send_async_on_game_thread");
 
-            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                SP_LOG("Binding function to game thread (non-blocking, discard return value):");
-                printFuncSignature(long_func_name, func);
-            }
-
+            SP_ASSERT((!entry_point_registry.isFuncSignatureRegistered<void, TArgs...>(long_func_name))); // extra parentheses needed because of comma
+            entry_point_registry.registerFuncSignature<void, TArgs...>(long_func_name);
             entry_point_binder_->bind(long_func_name, wrapFuncToExecuteInWorkQueueNonBlockingDiscardReturnValue(long_func_name, func));
         }
     }
@@ -759,66 +777,7 @@ private:
         }
     }
 
-    // Debug printing
-
-    template <typename TFunc>
-    static void printFuncSignature(const std::string& func_name, const TFunc& func)
-    {
-        return printFuncSignature(func_name, func, FuncInfoUtils::getFuncInfo<TFunc>());
-    }
-
-    template <typename TFunc, typename TReturn, typename... TArgs>
-    static void printFuncSignature(const std::string& func_name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
-    {
-        auto [return_value_string, arg_strings] = getFuncSignatureStrings<TReturn, TArgs...>();
-        if (arg_strings.empty()) {
-            SP_LOG("    ", func_name);
-            SP_LOG("        () -> ", return_value_string);
-        } else {
-            SP_LOG("    ", func_name);
-            SP_LOG("        (", Std::join(arg_strings, ", "), ") -> ", return_value_string);
-        }
-    }
-
-    template <typename TReturn, typename... TArgs>
-    static std::pair<std::string, std::vector<std::string>> getFuncSignatureStrings()
-    {
-        std::string return_value = getTypeString<TReturn>();
-        std::vector<std::string> args;
-        (args.push_back(getTypeString<TArgs>()), ...);
-        return std::make_pair(std::move(return_value), std::move(args));
-    }
-
-    template <typename T>
-    static std::string getTypeString()
-    {
-        return getTypeNameString<std::remove_reference_t<T>>() + getTypeRefString<T>();
-    }
-
-    template <typename T> static std::string getTypeNameString() { SP_ASSERT(false); return ""; }
-    template <> std::string getTypeNameString<void>                                           () { return "void";                                           }
-    template <> std::string getTypeNameString<bool>                                           () { return "bool";                                           }
-    template <> std::string getTypeNameString<float>                                          () { return "float";                                          }
-    template <> std::string getTypeNameString<int32_t>                                        () { return "int32_t";                                        }
-    template <> std::string getTypeNameString<int64_t>                                        () { return "int64_t";                                        }
-    template <> std::string getTypeNameString<uint64_t>                                       () { return "uint64_t";                                       }
-    template <> std::string getTypeNameString<std::string>                                    () { return "std::string";                                    }
-    template <> std::string getTypeNameString<std::vector<double>>                            () { return "std::vector<double>";                            }
-    template <> std::string getTypeNameString<std::vector<uint64_t>>                          () { return "std::vector<uint64_t>";                          }
-    template <> std::string getTypeNameString<std::vector<std::string>>                       () { return "std::vector<std::string>";                       }
-    template <> std::string getTypeNameString<std::map<std::string, uint64_t>>                () { return "std::map<std::string, uint64_t>";                }
-    template <> std::string getTypeNameString<std::map<std::string, std::string>>             () { return "std::map<std::string, std::string>";             }
-    template <> std::string getTypeNameString<std::map<std::string, SpArraySharedMemoryView>> () { return "std::map<std::string, SpArraySharedMemoryView>"; }
-    template <> std::string getTypeNameString<std::map<std::string, SpPackedArray>>           () { return "std::map<std::string, SpPackedArray>";           }
-    template <> std::string getTypeNameString<SpPropertyDesc>                                 () { return "SpPropertyDesc";                                 }
-    template <> std::string getTypeNameString<SpArraySharedMemoryView>                        () { return "SpArraySharedMemoryView";                        }
-    template <> std::string getTypeNameString<SpPackedArray>                                  () { return "SpPackedArray";                                  }
-    template <> std::string getTypeNameString<SpFuture>                                       () { return "SpFuture";                                       }
-    template <> std::string getTypeNameString<SpFuncDataBundle>                               () { return "SpFuncDataBundle";                               }
-
-    template <typename T> requires std::is_reference_v<T> static std::string getTypeRefString() { return "&"; }
-    template <typename T> requires (!std::is_reference_v<T>) static std::string getTypeRefString() { return ""; }
-
+    std::map<std::string, FuncSignatureRegistry> entry_point_signature_registries_;
     TEntryPointBinder* entry_point_binder_ = nullptr;
 
     WorkQueue begin_frame_work_queue_ = WorkQueue("begin_frame_work_queue");

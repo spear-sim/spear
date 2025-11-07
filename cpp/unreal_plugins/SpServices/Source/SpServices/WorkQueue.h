@@ -170,7 +170,7 @@ private:
     template <typename TReturn>
     struct CopyConstructiblePackagedTask : std::packaged_task<TReturn()>
     {
-        CopyConstructiblePackagedTask(auto&& func) : std::packaged_task<TReturn()>(std::forward<decltype(func)>(func)) {};
+        using std::packaged_task<TReturn()>::packaged_task; // forwards all constructors
     };
 
     std::string name_;

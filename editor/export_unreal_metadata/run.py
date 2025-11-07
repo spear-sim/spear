@@ -46,8 +46,10 @@ def get_actor_desc(actor):
     actor_name = spear.utils.editor_utils.get_stable_name_for_actor(actor=actor)
     spear.log("Processing actor: ", actor_name)
 
-    if actor.root_component is not None:
-        components_in_hierarchy = [actor.root_component] + list(actor.root_component.get_children_components(include_all_descendants=True))
+    root_component = actor.get_editor_property("root_component")
+    
+    if root_component is not None:
+        components_in_hierarchy = [root_component] + list(root_component.get_children_components(include_all_descendants=True))
     else:
         components_in_hierarchy = []
     components_in_hierarchy_names = [ spear.utils.editor_utils.get_stable_name_for_component(component=c) for c in components_in_hierarchy ]
@@ -61,7 +63,7 @@ def get_actor_desc(actor):
         "editor_properties": get_editor_property_descs(actor),
         "name": actor_name,
         "other_components": { spear.utils.editor_utils.get_stable_name_for_component(component=c): get_component_desc(c) for c in other_components },
-        "root_component": get_component_desc(component=actor.get_editor_property("root_component"))}
+        "root_component": get_component_desc(component=root_component)}
 
 def get_component_desc(component):
 

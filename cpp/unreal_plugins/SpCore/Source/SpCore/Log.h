@@ -34,15 +34,17 @@ public:
     Log() = delete;
     ~Log() = delete;
 
-    static void log(const std::filesystem::path& current_file, int current_line, auto&&... args)
+    template <typename... TArgs>
+    static void log(const std::filesystem::path& current_file, int current_line, TArgs&&... args)
     {
-        std::string str = getPrefix(current_file, current_line) + Std::toString(std::forward<decltype(args)>(args)...);        
+        std::string str = getPrefix(current_file, current_line) + Std::toString(std::forward<TArgs>(args)...);  
         logString(str);
     }
 
-    static void logNoPrefix(auto&&... args)
+    template <typename... TArgs>
+    static void logNoPrefix(TArgs&&... args)
     {
-        std::string str = Std::toString(std::forward<decltype(args)>(args)...);
+        std::string str = Std::toString(std::forward<TArgs>(args)...);
         logString(str);
     }
 

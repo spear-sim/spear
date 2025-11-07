@@ -5,7 +5,7 @@
 
 #include "SpUnrealTypes/SpSceneCaptureComponent2D.h"
 
-#include <stddef.h> // uint64_t
+#include <stdint.h> // uint64_t
 
 #include <memory>  // std::align, std::make_unique
 #include <utility> // std::move
@@ -31,7 +31,6 @@
 #include "SpCore/SharedMemory.h"
 #include "SpCore/SpArray.h"
 #include "SpCore/SpFuncComponent.h"
-#include "SpCore/SpTypes.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 
@@ -206,7 +205,7 @@ void USpSceneCaptureComponent2D::Initialize()
 
         std::vector<std::string> allowed_modalities = Std::toVector<std::string>(
             Unreal::toStdVector(AllowedProxyComponentModalities) |
-            std::views::transform([](auto str) { return Unreal::toStdString(str); }));
+            std::views::transform([](auto& str) { return Unreal::toStdString(str); }));
 
         std::vector<ASpPrimitiveProxyComponentManager*> primitive_proxy_component_managers = Std::toVector<ASpPrimitiveProxyComponentManager*>(
             Unreal::findActorsByType<ASpPrimitiveProxyComponentManager>(GetWorld()) |
@@ -254,9 +253,12 @@ void USpSceneCaptureComponent2D::Initialize()
     SpFuncComponent->registerFunc("read_pixels", [this, channel_data_type, num_bytes](SpFuncDataBundle& args) -> SpFuncDataBundle {
 
         SP_ASSERT(IsInitialized());
+        SP_ASSERT(Height >= 0);
+        SP_ASSERT(Width >= 0);
+        SP_ASSERT(NumChannelsPerPixel == 4);
 
         SpPackedArray packed_array;
-        packed_array.shape_ = {Height, Width, NumChannelsPerPixel};
+        packed_array.shape_ = {static_cast<uint64_t>(Height), static_cast<uint64_t>(Width), static_cast<uint64_t>(NumChannelsPerPixel)}; // explicit cast needed on Windows
         packed_array.data_type_ = channel_data_type;
 
         void* dest_ptr = nullptr;

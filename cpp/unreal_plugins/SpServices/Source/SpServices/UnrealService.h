@@ -19,6 +19,7 @@
 #include <Engine/World.h>                // FActorSpawnParameters
 #include <GameFramework/Actor.h>         // ESpawnActorScaleMethod
 #include <HAL/IConsoleManager.h>         // EConsoleVariableFlags, IConsoleVariable
+#include <HAL/Platform.h>                // uint64
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 #include <Misc/EnumClassFlags.h>         // ENUM_CLASS_FLAGS
@@ -26,16 +27,17 @@
 #include <UObject/Object.h>              // UObject
 #include <UObject/ObjectMacros.h>        // EObjectFlags, ELoadFlags
 #include <UObject/NameTypes.h>           // FName
-#include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS, UENUM, UFUNCTION, UPROPERTY
+#include <UObject/ObjectMacros.h>        // EPropertyFlags, GENERATED_BODY, UCLASS, UENUM, UFUNCTION, UPROPERTY
 #include <UObject/Package.h>
+#include <UObject/Script.h>              // EFunctionFlags
 #include <UObject/UObjectGlobals.h>      // GetTransientPackage, StaticLoadClass, StaticLoadObject
+#include <UObject/UnrealType.h>          // EFieldIterationFlags
 
 #include "SpCore/Assert.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealClassRegistry.h"
 
 #include "SpServices/EntryPointBinder.h"
-#include "SpServices/MsgpackAdaptors.h"
 #include "SpServices/Service.h"
 
 #include "UnrealService.generated.h"
@@ -51,12 +53,156 @@ class UStruct;
 class USceneComponent;
 struct FObjectInstancingGraph;
 
+//
 // Each USTRUCT below is intended to be a wrapper for a particular UENUM type. Wrapping enums in structs like
 // this helps us take advantage of the Unreal property system to pass enums to and from Python as human-
 // readable strings. Additionally, we make use of these enum structs to combine strings enum strings as
 // though they were bit flags. Unfortunately, we can't abbreviate these declarations using higher-level
-// macros, any more than they already are, because then they wouldn't interact correctly with the Unreal
+// macros any more than they already are, because then they wouldn't interact correctly with the Unreal
 // build system.
+//
+
+//
+// This enum corresponds to EPropertyFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectMacros.h
+//
+
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
+UENUM(Flags)
+enum class ESpPropertyFlags : uint64
+{
+    CPF_None                           = Unreal::getConstEnumValue(EPropertyFlags::CPF_None),
+    CPF_Edit                           = Unreal::getConstEnumValue(EPropertyFlags::CPF_Edit),
+    CPF_ConstParm                      = Unreal::getConstEnumValue(EPropertyFlags::CPF_ConstParm),
+    CPF_BlueprintVisible               = Unreal::getConstEnumValue(EPropertyFlags::CPF_BlueprintVisible),
+    CPF_ExportObject                   = Unreal::getConstEnumValue(EPropertyFlags::CPF_ExportObject),
+    CPF_BlueprintReadOnly              = Unreal::getConstEnumValue(EPropertyFlags::CPF_BlueprintReadOnly),
+    CPF_Net                            = Unreal::getConstEnumValue(EPropertyFlags::CPF_Net),
+    CPF_EditFixedSize                  = Unreal::getConstEnumValue(EPropertyFlags::CPF_EditFixedSize),
+    CPF_Parm                           = Unreal::getConstEnumValue(EPropertyFlags::CPF_Parm),
+    CPF_OutParm                        = Unreal::getConstEnumValue(EPropertyFlags::CPF_OutParm),
+    CPF_ZeroConstructor                = Unreal::getConstEnumValue(EPropertyFlags::CPF_ZeroConstructor),
+    CPF_ReturnParm                     = Unreal::getConstEnumValue(EPropertyFlags::CPF_ReturnParm),
+    CPF_DisableEditOnTemplate          = Unreal::getConstEnumValue(EPropertyFlags::CPF_DisableEditOnTemplate),
+    CPF_NonNullable                    = Unreal::getConstEnumValue(EPropertyFlags::CPF_NonNullable),
+    CPF_Transient                      = Unreal::getConstEnumValue(EPropertyFlags::CPF_Transient),
+    CPF_Config                         = Unreal::getConstEnumValue(EPropertyFlags::CPF_Config),
+    CPF_RequiredParm                   = Unreal::getConstEnumValue(EPropertyFlags::CPF_RequiredParm),
+    CPF_DisableEditOnInstance          = Unreal::getConstEnumValue(EPropertyFlags::CPF_DisableEditOnInstance),
+    CPF_EditConst                      = Unreal::getConstEnumValue(EPropertyFlags::CPF_EditConst),
+    CPF_GlobalConfig                   = Unreal::getConstEnumValue(EPropertyFlags::CPF_GlobalConfig),
+    CPF_InstancedReference             = Unreal::getConstEnumValue(EPropertyFlags::CPF_InstancedReference),
+    CPF_DuplicateTransient             = Unreal::getConstEnumValue(EPropertyFlags::CPF_DuplicateTransient),
+    CPF_SaveGame                       = Unreal::getConstEnumValue(EPropertyFlags::CPF_SaveGame),
+    CPF_NoClear                        = Unreal::getConstEnumValue(EPropertyFlags::CPF_NoClear),
+    CPF_ReferenceParm                  = Unreal::getConstEnumValue(EPropertyFlags::CPF_ReferenceParm),
+    CPF_BlueprintAssignable            = Unreal::getConstEnumValue(EPropertyFlags::CPF_BlueprintAssignable),
+    CPF_Deprecated                     = Unreal::getConstEnumValue(EPropertyFlags::CPF_Deprecated),
+    CPF_IsPlainOldData                 = Unreal::getConstEnumValue(EPropertyFlags::CPF_IsPlainOldData),
+    CPF_RepSkip                        = Unreal::getConstEnumValue(EPropertyFlags::CPF_RepSkip),
+    CPF_RepNotify                      = Unreal::getConstEnumValue(EPropertyFlags::CPF_RepNotify),
+    CPF_Interp                         = Unreal::getConstEnumValue(EPropertyFlags::CPF_Interp),
+    CPF_NonTransactional               = Unreal::getConstEnumValue(EPropertyFlags::CPF_NonTransactional),
+    CPF_EditorOnly                     = Unreal::getConstEnumValue(EPropertyFlags::CPF_EditorOnly),
+    CPF_NoDestructor                   = Unreal::getConstEnumValue(EPropertyFlags::CPF_NoDestructor),
+    CPF_AutoWeak                       = Unreal::getConstEnumValue(EPropertyFlags::CPF_AutoWeak),
+    CPF_ContainsInstancedReference     = Unreal::getConstEnumValue(EPropertyFlags::CPF_ContainsInstancedReference),
+    CPF_AssetRegistrySearchable        = Unreal::getConstEnumValue(EPropertyFlags::CPF_AssetRegistrySearchable),
+    CPF_SimpleDisplay                  = Unreal::getConstEnumValue(EPropertyFlags::CPF_SimpleDisplay),
+    CPF_AdvancedDisplay                = Unreal::getConstEnumValue(EPropertyFlags::CPF_AdvancedDisplay),
+    CPF_Protected                      = Unreal::getConstEnumValue(EPropertyFlags::CPF_Protected),
+    CPF_BlueprintCallable              = Unreal::getConstEnumValue(EPropertyFlags::CPF_BlueprintCallable),
+    CPF_BlueprintAuthorityOnly         = Unreal::getConstEnumValue(EPropertyFlags::CPF_BlueprintAuthorityOnly),
+    CPF_TextExportTransient            = Unreal::getConstEnumValue(EPropertyFlags::CPF_TextExportTransient),
+    CPF_NonPIEDuplicateTransient       = Unreal::getConstEnumValue(EPropertyFlags::CPF_NonPIEDuplicateTransient),
+    CPF_ExposeOnSpawn                  = Unreal::getConstEnumValue(EPropertyFlags::CPF_ExposeOnSpawn),
+    CPF_PersistentInstance             = Unreal::getConstEnumValue(EPropertyFlags::CPF_PersistentInstance),
+    CPF_UObjectWrapper                 = Unreal::getConstEnumValue(EPropertyFlags::CPF_UObjectWrapper),
+    CPF_HasGetValueTypeHash            = Unreal::getConstEnumValue(EPropertyFlags::CPF_HasGetValueTypeHash),
+    CPF_NativeAccessSpecifierPublic    = Unreal::getConstEnumValue(EPropertyFlags::CPF_NativeAccessSpecifierPublic),
+    CPF_NativeAccessSpecifierProtected = Unreal::getConstEnumValue(EPropertyFlags::CPF_NativeAccessSpecifierProtected),
+    CPF_NativeAccessSpecifierPrivate   = Unreal::getConstEnumValue(EPropertyFlags::CPF_NativeAccessSpecifierPrivate),
+    CPF_SkipSerialization              = Unreal::getConstEnumValue(EPropertyFlags::CPF_SkipSerialization),
+    CPF_TObjectPtr                     = Unreal::getConstEnumValue(EPropertyFlags::CPF_TObjectPtr),
+    CPF_ExperimentalOverridableLogic   = Unreal::getConstEnumValue(EPropertyFlags::CPF_ExperimentalOverridableLogic),
+    CPF_ExperimentalAlwaysOverriden    = Unreal::getConstEnumValue(EPropertyFlags::CPF_ExperimentalAlwaysOverriden),
+    CPF_ExperimentalNeverOverriden     = Unreal::getConstEnumValue(EPropertyFlags::CPF_ExperimentalNeverOverriden),
+    CPF_AllowSelfReference             = Unreal::getConstEnumValue(EPropertyFlags::CPF_AllowSelfReference),
+
+    // These enum values are actually defined by macros so we need to handle them differently
+    CPF_NativeAccessSpecifiers_        = CPF_NativeAccessSpecifiers,
+    CPF_ParmFlags_                     = CPF_ParmFlags,
+    CPF_PropagateToArrayInner_         = CPF_PropagateToArrayInner,
+    CPF_PropagateToOptionalInner_      = CPF_PropagateToOptionalInner,
+    CPF_PropagateToMapValue_           = CPF_PropagateToMapValue,
+    CPF_PropagateToMapKey_             = CPF_PropagateToMapKey,
+    CPF_PropagateToSetElement_         = CPF_PropagateToSetElement,
+    CPF_InterfaceClearMask_            = CPF_InterfaceClearMask,
+    CPF_DevelopmentAssets_             = CPF_DevelopmentAssets,
+    CPF_ComputedFlags_                 = CPF_ComputedFlags,
+    CPF_TObjectPtrWrapper_             = CPF_TObjectPtrWrapper,
+    CPF_AllFlags_                      = CPF_AllFlags
+};
+ENUM_CLASS_FLAGS(ESpPropertyFlags); // required if combining values using bitwise operations
+
+//
+// This enum corresponds to EFieldIterationFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/UnrealType.h
+//
+
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
+UENUM(Flags)
+enum class ESpFieldIterationFlags
+{
+    None              = Unreal::getConstEnumValue(EFieldIterationFlags::None),
+    IncludeSuper      = Unreal::getConstEnumValue(EFieldIterationFlags::IncludeSuper),
+    IncludeDeprecated = Unreal::getConstEnumValue(EFieldIterationFlags::IncludeDeprecated),
+    IncludeInterfaces = Unreal::getConstEnumValue(EFieldIterationFlags::IncludeInterfaces),
+    IncludeAll        = Unreal::getConstEnumValue(EFieldIterationFlags::IncludeAll),
+    Default           = Unreal::getConstEnumValue(EFieldIterationFlags::Default)
+};
+ENUM_CLASS_FLAGS(ESpFieldIterationFlags); // required if combining values using bitwise operations
+
+//
+// This enum corresponds to EFunctionFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/Script.h
+//
+
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
+UENUM(Flags)
+enum class ESpFunctionFlags : uint32
+{
+    FUNC_None                   = Unreal::getConstEnumValue(EFunctionFlags::FUNC_None),
+    FUNC_Final                  = Unreal::getConstEnumValue(EFunctionFlags::FUNC_Final),
+    FUNC_RequiredAPI            = Unreal::getConstEnumValue(EFunctionFlags::FUNC_RequiredAPI),
+    FUNC_BlueprintAuthorityOnly = Unreal::getConstEnumValue(EFunctionFlags::FUNC_BlueprintAuthorityOnly),
+    FUNC_BlueprintCosmetic      = Unreal::getConstEnumValue(EFunctionFlags::FUNC_BlueprintCosmetic),
+    FUNC_Net                    = Unreal::getConstEnumValue(EFunctionFlags::FUNC_Net),
+    FUNC_NetReliable            = Unreal::getConstEnumValue(EFunctionFlags::FUNC_NetReliable),
+    FUNC_NetRequest             = Unreal::getConstEnumValue(EFunctionFlags::FUNC_NetRequest),
+    FUNC_Exec                   = Unreal::getConstEnumValue(EFunctionFlags::FUNC_Exec),
+    FUNC_Native                 = Unreal::getConstEnumValue(EFunctionFlags::FUNC_Native),
+    FUNC_Event                  = Unreal::getConstEnumValue(EFunctionFlags::FUNC_Event),
+    FUNC_NetResponse            = Unreal::getConstEnumValue(EFunctionFlags::FUNC_NetResponse),
+    FUNC_Static                 = Unreal::getConstEnumValue(EFunctionFlags::FUNC_Static),
+    FUNC_NetMulticast           = Unreal::getConstEnumValue(EFunctionFlags::FUNC_NetMulticast),
+    FUNC_UbergraphFunction      = Unreal::getConstEnumValue(EFunctionFlags::FUNC_UbergraphFunction),
+    FUNC_MulticastDelegate      = Unreal::getConstEnumValue(EFunctionFlags::FUNC_MulticastDelegate),
+    FUNC_Public                 = Unreal::getConstEnumValue(EFunctionFlags::FUNC_Public),
+    FUNC_Private                = Unreal::getConstEnumValue(EFunctionFlags::FUNC_Private),
+    FUNC_Protected              = Unreal::getConstEnumValue(EFunctionFlags::FUNC_Protected),
+    FUNC_Delegate               = Unreal::getConstEnumValue(EFunctionFlags::FUNC_Delegate),
+    FUNC_NetServer              = Unreal::getConstEnumValue(EFunctionFlags::FUNC_NetServer),
+    FUNC_HasOutParms            = Unreal::getConstEnumValue(EFunctionFlags::FUNC_HasOutParms),
+    FUNC_HasDefaults            = Unreal::getConstEnumValue(EFunctionFlags::FUNC_HasDefaults),
+    FUNC_NetClient              = Unreal::getConstEnumValue(EFunctionFlags::FUNC_NetClient),
+    FUNC_DLLImport              = Unreal::getConstEnumValue(EFunctionFlags::FUNC_DLLImport),
+    FUNC_BlueprintCallable      = Unreal::getConstEnumValue(EFunctionFlags::FUNC_BlueprintCallable),
+    FUNC_BlueprintEvent         = Unreal::getConstEnumValue(EFunctionFlags::FUNC_BlueprintEvent),
+    FUNC_BlueprintPure          = Unreal::getConstEnumValue(EFunctionFlags::FUNC_BlueprintPure),
+    FUNC_EditorOnly             = Unreal::getConstEnumValue(EFunctionFlags::FUNC_EditorOnly),
+    FUNC_Const                  = Unreal::getConstEnumValue(EFunctionFlags::FUNC_Const),
+    FUNC_NetValidate            = Unreal::getConstEnumValue(EFunctionFlags::FUNC_NetValidate),
+    FUNC_AllFlags               = Unreal::getConstEnumValue(EFunctionFlags::FUNC_AllFlags)
+};
+ENUM_CLASS_FLAGS(ESpFunctionFlags); // required if combining values using bitwise operations
 
 //
 // This enum corresponds to EIncludeSuperFlag::Type declared in Engine/Source/Runtime/CoreUObject/Public/UObject/Class.h
@@ -73,6 +219,7 @@ enum class ESpIncludeSuperFlag
 // This enum corresponds to EObjectFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectMacros.h
 //
 
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
 UENUM(Flags)
 enum class ESpObjectFlags
 {
@@ -113,6 +260,7 @@ ENUM_CLASS_FLAGS(ESpObjectFlags); // required if combining values using bitwise 
 // This enum corresponds to ELoadFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectMacros.h
 //
 
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
 UENUM(Flags)
 enum class ESpLoadFlags
 {
@@ -144,6 +292,7 @@ ENUM_CLASS_FLAGS(ESpLoadFlags); // required if combining values using bitwise op
 // This enum corresponds to EConsoleVariableFlags declared in Engine/Source/Runtime/Core/Public/HAL/IConsoleManager.h
 //
 
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
 UENUM(Flags)
 enum class ESpConsoleVariableFlags
 {
@@ -296,18 +445,45 @@ public:
             });
 
         //
-        // Get UClass from class name, get default object from UClass, get UClass from object
+        // Helper function for static structs and classes
         //
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_static_struct",
+            [this](std::string& struct_name) -> uint64_t {
+                return toUInt64(UnrealClassRegistry::getStaticStruct(struct_name));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_static_structs",
+            [this]() -> std::vector<uint64_t> {
+                return toUInt64(Unreal::findStaticStructs());
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_static_structs_as_map",
+            [this](bool& use_cpp_type_as_key) -> std::map<std::string, uint64_t> {
+                return toUInt64(Unreal::findStaticStructsAsMap(use_cpp_type_as_key));
+            });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_static_class",
             [this](std::string& class_name) -> uint64_t {
                 return toUInt64(UnrealClassRegistry::getStaticClass(class_name));
             });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_default_object",
-            [this](uint64_t& uclass, bool& create_if_needed) -> uint64_t {
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_super_class",
+            [this](uint64_t& uclass) -> uint64_t {
                 SP_ASSERT(uclass);
-                return toUInt64(toPtr<UClass>(uclass)->GetDefaultObject(create_if_needed));
+                return toUInt64(toPtr<UClass>(uclass)->GetSuperClass());
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_derived_classes",
+            [this](uint64_t& uclass, bool& recursive) -> std::vector<uint64_t> {
+                SP_ASSERT(uclass);
+                return toUInt64(Unreal::getDerivedClasses(toPtr<UClass>(uclass), recursive));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_derived_classes_as_map",
+            [this](uint64_t& uclass, bool& recursive, bool& use_cpp_type_as_key) -> std::map<std::string, uint64_t> {
+                SP_ASSERT(uclass);
+                return toUInt64(Unreal::getDerivedClassesAsMap(toPtr<UClass>(uclass), recursive, use_cpp_type_as_key));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_class",
@@ -316,13 +492,130 @@ public:
                 return toUInt64(toPtr<UObject>(uobject)->GetClass());
             });
 
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_default_object",
+            [this](uint64_t& uclass, bool& create_if_needed) -> uint64_t {
+                SP_ASSERT(uclass);
+                return toUInt64(toPtr<UClass>(uclass)->GetDefaultObject(create_if_needed));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_cpp_type_for_struct_as_string",
+            [this](uint64_t& ustruct) -> std::string {
+                return Unreal::getCppTypeAsString(toPtr<UStruct>(ustruct));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_cpp_type_for_property_as_string",
+            [this](uint64_t& property) -> std::string {
+                return Unreal::getCppTypeAsString(toPtr<FProperty>(property));
+            });
+
         //
-        // Get static struct
+        // Get property metadata for classes
         //
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_static_struct",
-            [this](std::string& struct_name) -> uint64_t {
-                return toUInt64(UnrealClassRegistry::getStaticStruct(struct_name));
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_properties_for_struct",
+            [this](uint64_t& ustruct, std::vector<std::string>& field_iteration_flag_strings) -> std::vector<uint64_t> {
+                return toUInt64(Unreal::findProperties(
+                    toPtr<UStruct>(ustruct),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_properties_for_struct_by_flags_any",
+            [this](uint64_t& ustruct, std::vector<std::string>& property_flag_strings, std::vector<std::string>& field_iteration_flag_strings) -> std::vector<uint64_t> {
+                return toUInt64(Unreal::findPropertiesByFlagsAny(
+                    toPtr<UStruct>(ustruct),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(property_flag_strings),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_properties_for_struct_by_flags_all",
+            [this](uint64_t& ustruct, std::vector<std::string>& property_flag_strings, std::vector<std::string>& field_iteration_flag_strings) -> std::vector<uint64_t> {
+                return toUInt64(Unreal::findPropertiesByFlagsAll(
+                    toPtr<UStruct>(ustruct),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(property_flag_strings),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_properties_for_struct_as_map",
+            [this](uint64_t& ustruct, std::vector<std::string>& field_iteration_flag_strings) -> std::map<std::string, uint64_t> {
+                return toUInt64(Unreal::findPropertiesAsMap(
+                    toPtr<UStruct>(ustruct),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_properties_for_struct_by_flags_any_as_map",
+            [this](uint64_t& ustruct, std::vector<std::string>& property_flag_strings, std::vector<std::string>& field_iteration_flag_strings) -> std::map<std::string, uint64_t> {
+                return toUInt64(Unreal::findPropertiesByFlagsAnyAsMap(
+                    toPtr<UStruct>(ustruct),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(property_flag_strings),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_properties_for_struct_by_flags_all_as_map",
+            [this](uint64_t& ustruct, std::vector<std::string>& property_flag_strings, std::vector<std::string>& field_iteration_flag_strings) -> std::map<std::string, uint64_t> {
+                return toUInt64(Unreal::findPropertiesByFlagsAllAsMap(
+                    toPtr<UStruct>(ustruct),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(property_flag_strings),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        //
+        // Get property metadata for functions
+        //
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_properties_for_function",
+            [this](uint64_t& ufunction, std::vector<std::string>& field_iteration_flag_strings) -> std::vector<uint64_t> {
+                return toUInt64(Unreal::findProperties(
+                    toPtr<UFunction>(ufunction),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_properties_for_function_by_flags_any",
+            [this](uint64_t& ufunction, std::vector<std::string>& property_flag_strings, std::vector<std::string>& field_iteration_flag_strings) -> std::vector<uint64_t> {
+                return toUInt64(Unreal::findPropertiesByFlagsAny(
+                    toPtr<UFunction>(ufunction),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(property_flag_strings),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_properties_for_function_by_flags_all",
+            [this](uint64_t& ufunction, std::vector<std::string>& property_flag_strings, std::vector<std::string>& field_iteration_flag_strings) -> std::vector<uint64_t> {
+                return toUInt64(Unreal::findPropertiesByFlagsAll(
+                    toPtr<UFunction>(ufunction),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(property_flag_strings),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_properties_for_function_as_map",
+            [this](uint64_t& ufunction, std::vector<std::string>& field_iteration_flag_strings) -> std::map<std::string, uint64_t> {
+                return toUInt64(Unreal::findPropertiesAsMap(
+                    toPtr<UFunction>(ufunction),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_properties_for_function_by_flags_any_as_map",
+            [this](uint64_t& ufunction, std::vector<std::string>& property_flag_strings, std::vector<std::string>& field_iteration_flag_strings) -> std::map<std::string, uint64_t> {
+                return toUInt64(Unreal::findPropertiesByFlagsAnyAsMap(
+                    toPtr<UFunction>(ufunction),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(property_flag_strings),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_properties_for_function_by_flags_all_as_map",
+            [this](uint64_t& ufunction, std::vector<std::string>& property_flag_strings, std::vector<std::string>& field_iteration_flag_strings) -> std::map<std::string, uint64_t> {
+                return toUInt64(Unreal::findPropertiesByFlagsAllAsMap(
+                    toPtr<UFunction>(ufunction),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(property_flag_strings),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        //
+        // Helper functions for property metadata
+        //
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_property_flags",
+            [this](uint64_t& property) -> std::vector<std::string> {
+                SP_ASSERT(property);
+                return Unreal::getStringsFromCombinedEnumFlagValueAs<ESpPropertyFlags>(toPtr<FProperty>(property)->GetPropertyFlags());
             });
 
         //
@@ -378,18 +671,79 @@ public:
             });
 
         //
-        // Find and call function
+        // Find and call functions
         //
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_functions",
+            [this](uint64_t& uclass, std::vector<std::string>& field_iteration_strings) -> std::vector<uint64_t> {
+                return toUInt64(
+                    Unreal::findFunctions(
+                        toPtr<UClass>(uclass),
+                        Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_functions_by_flags_any",
+            [this](uint64_t& uclass, std::vector<std::string>& function_flags, std::vector<std::string>& field_iteration_strings) -> std::vector<uint64_t> {
+                return toUInt64(
+                    Unreal::findFunctionsByFlagsAny(
+                        toPtr<UClass>(uclass),
+                        Unreal::getCombinedEnumFlagValueFromStringsAs<EFunctionFlags, ESpFunctionFlags>(function_flags),
+                        Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_functions_by_flags_all",
+            [this](uint64_t& uclass, std::vector<std::string>& function_flags, std::vector<std::string>& field_iteration_strings) -> std::vector<uint64_t> {
+                return toUInt64(
+                    Unreal::findFunctionsByFlagsAll(
+                        toPtr<UClass>(uclass),
+                        Unreal::getCombinedEnumFlagValueFromStringsAs<EFunctionFlags, ESpFunctionFlags>(function_flags),
+                        Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_functions_as_map",
+            [this](uint64_t& uclass, std::vector<std::string>& field_iteration_strings) -> std::map<std::string, uint64_t> {
+                return toUInt64(
+                    Unreal::findFunctionsAsMap(
+                        toPtr<UClass>(uclass),
+                        Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_functions_by_flags_any_as_map",
+            [this](uint64_t& uclass, std::vector<std::string>& function_flags, std::vector<std::string>& field_iteration_strings) -> std::map<std::string, uint64_t> {
+                return toUInt64(
+                    Unreal::findFunctionsByFlagsAnyAsMap(
+                        toPtr<UClass>(uclass),
+                        Unreal::getCombinedEnumFlagValueFromStringsAs<EFunctionFlags, ESpFunctionFlags>(function_flags),
+                        Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_functions_by_flags_all_as_map",
+            [this](uint64_t& uclass, std::vector<std::string>& function_flags, std::vector<std::string>& field_iteration_strings) -> std::map<std::string, uint64_t> {
+                return toUInt64(
+                    Unreal::findFunctionsByFlagsAllAsMap(
+                        toPtr<UClass>(uclass),
+                        Unreal::getCombinedEnumFlagValueFromStringsAs<EFunctionFlags, ESpFunctionFlags>(function_flags),
+                        Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_strings)));
+            });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_function_by_name",
             [this](uint64_t& uclass, std::string& function_name, std::string& include_super_flag_string) -> uint64_t {
-                return toUInt64(Unreal::findFunctionByName(
-                    toPtr<UClass>(uclass), function_name, Unreal::getEnumValueFromStringAs<EIncludeSuperFlag::Type, ESpIncludeSuperFlag>(include_super_flag_string)));
+                return toUInt64(
+                    Unreal::findFunctionByName(
+                        toPtr<UClass>(uclass),
+                        function_name,
+                        Unreal::getEnumValueFromStringAs<EIncludeSuperFlag::Type, ESpIncludeSuperFlag>(include_super_flag_string)));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "call_function",
             [this](uint64_t& uobject, uint64_t& ufunction, std::map<std::string, std::string>& args, std::string& world_context) -> std::map<std::string, std::string> {
                 return Unreal::callFunction(getWorld(), toPtr<UObject>(uobject), toPtr<UFunction>(ufunction), args, world_context);
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_function_flags",
+            [this](uint64_t& ufunction) -> std::vector<std::string> {
+                SP_ASSERT(ufunction);
+                return Unreal::getStringsFromCombinedEnumFlagValueAs<ESpFunctionFlags>(toPtr<UFunction>(ufunction)->FunctionFlags);
             });
 
         //
@@ -424,12 +778,22 @@ public:
         // Get children components unconditionally and return an std::vector or std::map
         //
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components",
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_from_actor",
+            [this](uint64_t& parent, bool& include_all_descendants) -> std::vector<uint64_t> {
+                return toUInt64(Unreal::getChildrenComponents(toPtr<AActor>(parent), include_all_descendants));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_from_actor_as_map",
+            [this](uint64_t& parent, bool& include_all_descendants) -> std::map<std::string, uint64_t> {
+                return toUInt64(Unreal::getChildrenComponentsAsMap(toPtr<AActor>(parent), include_all_descendants));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_from_scene_component",
             [this](uint64_t& parent, bool& include_all_descendants) -> std::vector<uint64_t> {
                 return toUInt64(Unreal::getChildrenComponents(toPtr<USceneComponent>(parent), include_all_descendants));
             });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_as_map",
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_children_components_from_scene_component_as_map",
             [this](uint64_t& parent, bool& include_all_descendants) -> std::map<std::string, uint64_t> {
                 return toUInt64(Unreal::getChildrenComponentsAsMap(toPtr<USceneComponent>(parent), include_all_descendants));
             });
@@ -1201,6 +1565,9 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_stable_name_for_actor",
             [this](uint64_t& actor) -> std::string { return Unreal::getStableName(toPtr<AActor>(actor)); });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "try_get_stable_name_for_actor",
+            [this](uint64_t& actor) -> std::string { return Unreal::tryGetStableName(toPtr<AActor>(actor)); });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_stable_name_for_component",
             [this](uint64_t& actor_component, bool& include_actor_name) -> std::string { return Unreal::getStableName(toPtr<UActorComponent>(actor_component), include_actor_name); });

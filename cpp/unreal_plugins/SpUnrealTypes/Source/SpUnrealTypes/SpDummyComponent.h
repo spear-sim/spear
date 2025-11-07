@@ -14,7 +14,6 @@
 
 #include "SpCore/Log.h"
 #include "SpCore/SpFuncComponent.h"
-#include "SpCore/SpTypes.h"
 #include "SpCore/Unreal.h"
 
 #include "SpUnrealTypes/SpUserInputComponent.h"

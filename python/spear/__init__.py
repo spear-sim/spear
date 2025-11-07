@@ -5,6 +5,12 @@
 
 __version__ = "v0.6.0"
 
+try:
+    import unreal
+    __is_ue_python__ = True
+except:
+    __is_ue_python__ = False
+
 # submodules
 import spear.utils
 import spear.services

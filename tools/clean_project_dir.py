@@ -11,12 +11,16 @@ import sys
 
 if __name__ == "__main__":
 
-    unreal_project_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim"))
-    unreal_plugins_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_plugins"))
+    project_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..")) 
+    unreal_project_dir = os.path.realpath(os.path.join(project_dir, "cpp", "unreal_projects", "SpearSim"))
+    unreal_plugins_dir = os.path.realpath(os.path.join(project_dir, "cpp", "unreal_plugins"))
+    assert os.path.exists(project_dir)
     assert os.path.exists(unreal_project_dir)
+    assert os.path.exists(unreal_plugins_dir)
 
     # entire directories to be removed
     dirs = [
+        os.path.realpath(os.path.join(project_dir, "python_ext", "BUILD")),
         os.path.realpath(os.path.join(unreal_project_dir, "Binaries")),
         os.path.realpath(os.path.join(unreal_project_dir, "DerivedDataCache")),
         os.path.realpath(os.path.join(unreal_project_dir, "Intermediate")),

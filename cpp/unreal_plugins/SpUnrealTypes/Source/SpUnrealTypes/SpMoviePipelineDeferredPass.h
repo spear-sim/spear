@@ -59,7 +59,7 @@ public:
     {
         UMoviePipelineDeferredPassBase::GetViewShowFlags(out_show_flag, out_view_mode_index);
 
-        for (auto engine_show_flag_setting : EngineShowFlagSettings) {
+        for (auto& engine_show_flag_setting : EngineShowFlagSettings) {
             int32 index = out_show_flag.FindIndexByName(Unreal::toTCharPtr(engine_show_flag_setting.ShowFlagName));
             SP_ASSERT(index != -1);
             out_show_flag.SetSingleFlag(index, engine_show_flag_setting.Enabled);

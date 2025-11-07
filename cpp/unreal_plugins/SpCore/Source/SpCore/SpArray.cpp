@@ -5,11 +5,11 @@
 
 #include "SpCore/SpArray.h"
 
-#include <stddef.h> // int64_t, uint64_t
+#include <stdint.h> // int64_t, uint64_t
 
 #include <initializer_list>
 #include <map>
-#include <ranges>  // std::views::filter
+#include <ranges>  // std::views::filter, std::views::transform
 #include <string>
 #include <utility> // std::make_pair, std::move
 #include <vector>

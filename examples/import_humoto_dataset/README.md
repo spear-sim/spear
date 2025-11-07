@@ -17,7 +17,7 @@ humoto_dataset
 With this directory structure in place, you can import the animation sequences into Unreal as follows.
 
 ```console
-# import mixamo dataset
+# import humoto dataset
 python ../../tools/run_editor_script.py --script /absolute/path/to/spear/examples/import_animation_dataset/import_dataset.py --unreal_engine_dir path/to/UE_5.5 --launch_mode full --render_offscreen --filesystem_base_dir /absolute/path/to/humoto_dataset --content_base_dir /Game/Humoto
 ```
 

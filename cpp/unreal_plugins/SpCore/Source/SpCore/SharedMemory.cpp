@@ -5,7 +5,8 @@
 
 #include "SpCore/SharedMemory.h"
 
-#include <stddef.h> // uint64_t
+#include <stddef.h> // size_t
+#include <stdint.h> // uint64_t
 
 #include <memory> // std::align
 
