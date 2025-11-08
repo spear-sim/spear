@@ -1444,10 +1444,12 @@ public:
         // is allowed to internally allocate more than num_elements worth of space.
         //
         // After calling updateArrayDataPtr(...), the user must be careful not to add more than num_elements
-        // elements to array. If the user adds too many elements, array will write past the end of the data_ptr
-        // region, and eventually trigger a resize operation, in which case it will no longer be backed by
-        // the user's data_ptr region at all. Both of these outcomes is undesirable, and therefore the user
-        // must be careful not to add more than num_elements to array.
+        // elements to array. If the user adds too many elements, there is nothing to prevent array from
+        // writing past the end of the data_ptr region, because as far as array is concerned, it may have
+        // enough reserved space to do so safely. Eventually, adding too many elements will trigger a resize
+        // operation, in which case the array will no longer be corrupting heap memory, but it will also no
+        // longer be backed by the user's data_ptr region. All of these situations are undesirable, and
+        // therefore the user must be careful not to add more than num_elements to array.
         //
 
         SP_ASSERT(array.Max() >= 0);
