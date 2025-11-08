@@ -1443,12 +1443,13 @@ public:
         // However, we don't test for exact equality because the array's existing data region can be larger
         // than the data_ptr region, even if the user attempts to reserve exactly num_btyes of space in array.
         // This is because calling array.Reserve(num_elements) is allowed to internally allocate more than
-        // num_elements worth of space. As a consequence, after this function returns, it may be possible to
-        // add more than num_elements elements to array, which would unsafely write data past the end of the
-        // data_ptr region. The user must therefore be careful not to add more elements to array than would
-        // fit in the data_ptr region they specify when calling this function.
+        // num_elements worth of space. As a consequence, after updateArrayDataPtr(...) returns, array may
+        // not prevent the user from adding more than num_elements elements to array, which would unsafely
+        // write data past the end of the data_ptr region. The user must therefore be careful not to add more
+        // elements to array than would fit in the data_ptr region they specify when calling this function.
 
-        SP_ASSERT(num_elements <= static_cast<int64_t>(array.Max()));
+        SP_ASSERT(array.Max() >= 0);
+        SP_ASSERT(num_elements <= static_cast<uint64_t>(array.Max()));
         SP_ASSERT(num_bytes <= array.GetAllocatedSize());
         SP_ASSERT(Std::isPtrSufficientlyAlignedFor<TValue>(data_ptr));
 

@@ -339,26 +339,24 @@ public:
         }
 
         if (Std::toBool(bind_flags & UnrealEntryPointBindFlags::CallAsync)) {
-            std::string long_func_name = service_name + ".call_async_on_game_thread." + func_name;
-            FuncSignatureRegistry& entry_point_registry = entry_point_signature_registries_.at("call_async_on_game_thread");
+            std::string call_async_long_func_name = service_name + ".call_async_on_game_thread." + func_name;
+            FuncSignatureRegistry& call_async_entry_point_registry = entry_point_signature_registries_.at("call_async_on_game_thread");
 
-            SP_ASSERT((!entry_point_registry.isFuncSignatureRegistered<SpFuture, TArgs...>(long_func_name))); // extra parentheses needed because of comma
-            entry_point_registry.registerFuncSignature<SpFuture, TArgs...>(long_func_name);
-            entry_point_binder_->bind(long_func_name, wrapFuncToExecuteInWorkQueueNonBlocking(long_func_name, func)); // bound function will call createFuture
+            SP_ASSERT((!call_async_entry_point_registry.isFuncSignatureRegistered<SpFuture, TArgs...>(call_async_long_func_name))); // extra parentheses needed because of comma
+            call_async_entry_point_registry.registerFuncSignature<SpFuture, TArgs...>(call_async_long_func_name);
+            entry_point_binder_->bind(call_async_long_func_name, wrapFuncToExecuteInWorkQueueNonBlocking(call_async_long_func_name, func)); // bound function calls createFuture
 
-            {
-                // if we're binding a call_async function, then we also need to bind a corresponding
-                // engine_service.get_future_result_as_return_type function if we haven't already
+            // if we're binding a call_async function, then we also need to bind a corresponding
+            // engine_service.get_future_result_as_return_type function if we haven't already
 
-                std::string long_func_name = "engine_service.get_future_result_on_game_thread_as_" + FuncSignatureRegistry::getFuncSignatureTypeDesc<TReturn>().type_names_.at("entry_point");
-                FuncSignatureRegistry& entry_point_registry = entry_point_signature_registries_.at("get_future_result_on_game_thread");
+            std::string get_future_result_long_func_name = "engine_service.get_future_result_on_game_thread_as_" + FuncSignatureRegistry::getFuncSignatureTypeDesc<TReturn>().type_names_.at("entry_point");
+            FuncSignatureRegistry& get_future_result_entry_point_registry = entry_point_signature_registries_.at("get_future_result_on_game_thread");
 
-                if (!entry_point_registry.isFuncSignatureRegistered<TReturn, SpFuture&>(long_func_name)) {
-                    entry_point_registry.registerFuncSignature<TReturn, SpFuture&>(long_func_name);
-                    entry_point_binder_->bind(long_func_name, wrapFuncToExecuteInTryCatch(long_func_name, [this](SpFuture& future) -> TReturn { // bound function will call destroyFuture
-                        return destroyFuture<TReturn>(future);
-                    }));
-                }
+            if (!get_future_result_entry_point_registry.isFuncSignatureRegistered<TReturn, SpFuture&>(get_future_result_long_func_name)) {
+                get_future_result_entry_point_registry.registerFuncSignature<TReturn, SpFuture&>(get_future_result_long_func_name);
+                entry_point_binder_->bind(get_future_result_long_func_name, wrapFuncToExecuteInTryCatch(get_future_result_long_func_name, [this](SpFuture& future) -> TReturn {
+                    return destroyFuture<TReturn>(future); // bound function calls destroyFuture
+                }));
             }
         }
 

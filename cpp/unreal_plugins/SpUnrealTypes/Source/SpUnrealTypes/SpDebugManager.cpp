@@ -759,8 +759,8 @@ void ASpDebugManager::PrintAllClassesDebugInfo() const
     SP_LOG("    Number of classes that derive from UObject: ", uclasses.size());
 
     for (auto& [uclass_name, uclass] : uclasses) {
-        int num_functions = Unreal::findFunctions(uclass, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
-        int num_properties = Unreal::findProperties(uclass, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
+        num_functions = Unreal::findFunctions(uclass, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
+        num_properties = Unreal::findProperties(uclass, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
         SP_LOG("        Class: ", uclass_name, " (", num_functions, " functions, ", num_properties, " properties)");
         total_num_functions += num_functions;
         total_num_properties += num_properties;
@@ -770,7 +770,7 @@ void ASpDebugManager::PrintAllClassesDebugInfo() const
     SP_LOG("    Number of structs that are outside the UObject class hierarchy: ", ustructs.size());
 
     for (auto& [ustruct_name, ustruct] : ustructs) {
-        int num_properties = Unreal::findProperties(ustruct, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
+        num_properties = Unreal::findProperties(ustruct, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
         SP_LOG("        Struct: ", ustruct_name, " (", num_properties, " properties)");
         total_num_properties += num_properties;
     }
@@ -801,8 +801,8 @@ void ASpDebugManager::PrintAllClassesDebugInfo() const
     SP_LOG("    Number of classes that derive from UObject: ", uclasses.size());
 
     for (auto& [uclass_name, uclass] : uclasses) {
-        int num_functions = Unreal::findFunctionsByFlagsAny(uclass, function_flags, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
-        int num_properties = Unreal::findPropertiesByFlagsAny(uclass, property_flags, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
+        num_functions = Unreal::findFunctionsByFlagsAny(uclass, function_flags, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
+        num_properties = Unreal::findPropertiesByFlagsAny(uclass, property_flags, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
         // SP_LOG("        Class: ", uclass_name, " (", num_functions, " functions, ", num_properties, " properties)");
         total_num_functions += num_functions;
         total_num_properties += num_properties;
@@ -812,7 +812,7 @@ void ASpDebugManager::PrintAllClassesDebugInfo() const
     SP_LOG("    Number of structs that are outside the UObject class hierarchy: ", ustructs.size());
 
     for (auto& [ustruct_name, ustruct] : ustructs) {
-        int num_properties = Unreal::findPropertiesByFlagsAny(ustruct, property_flags, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
+        num_properties = Unreal::findPropertiesByFlagsAny(ustruct, property_flags, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
         // SP_LOG("        Struct: ", ustruct_name, " (", num_properties, " properties)");
         total_num_properties += num_properties;
     }
@@ -837,7 +837,7 @@ void ASpDebugManager::PrintAllClassesDebugInfo() const
     SP_LOG("        Number of classes that derive from AActor: ", uclasses.size());
 
     for (auto& [uclass_name, uclass] : uclasses) {
-        int num_functions = Unreal::findFunctions(uclass, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
+        num_functions = Unreal::findFunctions(uclass, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
         // SP_LOG("            Class: ", uclass_name, " (", num_functions, " functions, ", num_properties, " properties)");
         total_num_functions += num_functions;
     }
