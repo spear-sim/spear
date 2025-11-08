@@ -8,6 +8,7 @@
 #include <stdint.h> // uint64_t
 
 #include <string>
+#include <utility> // std::move
 #include <vector>
 
 #include <Containers/Array.h>
@@ -82,8 +83,8 @@ public:
                 enhanced_input_subsystem_ptr->InjectInputForAction(
                     toPtr<UInputAction>(input_action),
                     input_action_value,
-                    Unreal::toTArray(toPtr<UInputModifier>(modifiers)),
-                    Unreal::toTArray(toPtr<UInputTrigger>(triggers)));
+                    Unreal::toTArray(toPtr<UInputModifier>(std::move(modifiers))),
+                    Unreal::toTArray(toPtr<UInputTrigger>(std::move(triggers))));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("enhanced_input_service", "inject_input_for_actor",
@@ -103,8 +104,8 @@ public:
 
                 ETriggerEvent trigger_event = Unreal::getEnumValueFromString<ETriggerEvent>(trigger_event_string);
 
-                TArray<TObjectPtr<UInputModifier>> modifiers_tarray = Unreal::toTArrayOf<TObjectPtr<UInputModifier>>(toPtr<UInputModifier>(modifiers));
-                TArray<TObjectPtr<UInputTrigger>> triggers_tarray = Unreal::toTArrayOf<TObjectPtr<UInputTrigger>>(toPtr<UInputTrigger>(triggers));
+                TArray<TObjectPtr<UInputModifier>> modifiers_tarray = Unreal::toTArrayOf<TObjectPtr<UInputModifier>>(toPtr<UInputModifier>(std::move(modifiers)));
+                TArray<TObjectPtr<UInputTrigger>> triggers_tarray = Unreal::toTArrayOf<TObjectPtr<UInputTrigger>>(toPtr<UInputTrigger>(std::move(triggers)));
 
                 FSpInputActionValue sp_input_action_value;
                 Unreal::setObjectPropertiesFromString(&sp_input_action_value, FSpInputActionValue::StaticStruct(), input_action_value_string);

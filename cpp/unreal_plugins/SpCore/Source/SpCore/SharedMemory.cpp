@@ -5,11 +5,11 @@
 
 #include "SpCore/SharedMemory.h"
 
-#include <stddef.h> // size_t
+#include <stddef.h> // ptrdiff_t, size_t
 #include <stdint.h> // uint64_t
 
+#include <limits> // std::numeric_limits
 #include <memory> // std::align
-
 #include <string>
 
 #include <boost/predef.h> // BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
@@ -56,12 +56,13 @@ SharedMemoryRegion::SharedMemoryRegion(uint64_t num_bytes) : SharedMemoryRegion(
 SharedMemoryRegion::SharedMemoryRegion(uint64_t num_bytes, uint64_t id)
 {
     SP_ASSERT(num_bytes > 0);
+    SP_ASSERT(num_bytes <= std::numeric_limits<uint64_t>::max() - (s_alignment_bytes_ - 1));
 
     id_ = SharedMemory::getUniqueIdString(id);
     num_bytes_ = num_bytes;
     SP_ASSERT(id_ != "");
 
-    uint64_t num_bytes_internal = num_bytes_ + s_alignment_padding_bytes_;
+    uint64_t num_bytes_internal = num_bytes_ + s_alignment_bytes_ - 1;
 
     #if BOOST_OS_WINDOWS
         boost::interprocess::windows_shared_memory windows_shared_memory(boost::interprocess::create_only, id_.c_str(), boost::interprocess::read_write, num_bytes_internal);
@@ -90,7 +91,7 @@ SharedMemoryRegion::~SharedMemoryRegion()
 
 SharedMemoryView SharedMemoryRegion::getView()
 {
-    uint64_t num_bytes_internal = num_bytes_ + s_alignment_padding_bytes_;
+    uint64_t num_bytes_internal = num_bytes_ + s_alignment_bytes_ - 1;
 
     const void* const address = mapped_region_.get_address();
     SP_ASSERT(address);
@@ -98,13 +99,13 @@ SharedMemoryView SharedMemoryRegion::getView()
     void* address_to_align = const_cast<void*>(address);
     size_t num_bytes_size_t = num_bytes_;
     size_t num_bytes_internal_size_t = num_bytes_internal;
-    void* address_aligned = std::align(s_alignment_padding_bytes_, num_bytes_size_t, address_to_align, num_bytes_internal_size_t);
+    void* address_aligned = std::align(s_alignment_bytes_, num_bytes_size_t, address_to_align, num_bytes_internal_size_t);
     SP_ASSERT(address_aligned);
     SP_ASSERT(address_aligned == address_to_align);
 
-    boost::multiprecision::int128_t offset_bytes = static_cast<uint8_t*>(address_aligned) - static_cast<const uint8_t* const>(address);
+    std::ptrdiff_t offset_bytes = static_cast<uint8_t*>(address_aligned) - static_cast<const uint8_t* const>(address);
     SP_ASSERT(offset_bytes >= 0);
-    SP_ASSERT(offset_bytes < s_alignment_padding_bytes_);
+    SP_ASSERT(offset_bytes < s_alignment_bytes_);
 
     SharedMemoryView view;
     view.id_ = id_;

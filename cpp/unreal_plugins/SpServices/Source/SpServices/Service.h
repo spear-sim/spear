@@ -166,9 +166,9 @@ protected:
     }
 
     template <typename TValue>
-    static std::vector<uint64_t> toUInt64(const std::vector<TValue>& src)
+    static std::vector<uint64_t> toUInt64(std::vector<TValue>&& src)
     {
-        return Std::reinterpretAsVectorOf<uint64_t>(src);
+        return Std::reinterpretAsVectorOf<uint64_t>(std::move(src));
     }
 
     template <typename TKey, typename TValue>
@@ -184,9 +184,9 @@ protected:
     }
 
     template <typename TPtr>
-    static std::vector<TPtr*> toPtr(const std::vector<uint64_t>& src)
+    static std::vector<TPtr*> toPtr(std::vector<uint64_t>&& src)
     {
-        return Std::reinterpretAsVectorOf<TPtr*>(src);
+        return Std::reinterpretAsVectorOf<TPtr*>(std::move(src));
     }
 
     template <typename TKey, typename TPtr>
@@ -197,35 +197,40 @@ protected:
 
     template <typename TValue>
     static SpPackedArray toPackedArray(
-        const std::vector<TValue>& data,
+        std::vector<TValue>&& data,
         const std::vector<int64_t>& shape,
-        SpPackedArray& packed_array,
+        SpPackedArray& out_packed_array,
         const std::map<std::string, SpArraySharedMemoryView>& shared_memory_views,
         SpArraySharedMemoryUsageFlags usage_flags)
     {
         SpArray<TValue> array;
 
-        if (packed_array.data_source_ == SpArrayDataSource::Internal) {
-            array.setDataSource(data, shape); // set the data source of array to data
+        // If an internal SpPackedArray was passed into a service entry as an out argument, then there is no
+        // way to store information in it that will be visible to the client, so return a new internal SpPackedArray.
 
-        } else if (packed_array.data_source_ == SpArrayDataSource::Shared) {
+        if (out_packed_array.data_source_ == SpArrayDataSource::Internal) {
+            array.setDataSource(std::move(data), shape); // set the data source of array to data
 
-            // resolve packed_array's references to shared memory and validate that packed_array is consistent with usage_flags
-            SpArrayUtils::resolve(packed_array, shared_memory_views);
-            packed_array.validate(usage_flags);
+        // If a shared SpPackedArray was passed into a service entry as an out argument, then update array to
+        // point to the user's shared memory, update the shared memory, and then return a new shared SpPackedArray.
 
-            // set the data source of array to the shared memory that is backing packed_array, and update array's data values to data
-            array.setDataSource(shared_memory_views.at(packed_array.shared_memory_name_), SpArrayShapeUtils::getShape(shape, data.size()), packed_array.shared_memory_name_);
-            array.setDataValues(data);
+        } else if (out_packed_array.data_source_ == SpArrayDataSource::Shared) {
+
+            // Resolve out_packed_array's references to shared memory and validate that out_packed_array is
+            // consistent with usage_flags.
+            SpArrayUtils::resolve(out_packed_array, shared_memory_views);
+            out_packed_array.validate(usage_flags);
+
+            // Set the data source of array to the shared memory that is backing out_packed_array, and update
+            // array's data values.
+            array.setDataSource(shared_memory_views.at(out_packed_array.shared_memory_name_), SpArrayShapeUtils::getShape(shape, data.size()), out_packed_array.shared_memory_name_);
+            array.setDataValues(data); // no move necessary because we're doing a memcpy into shared memory
 
         } else {
             SP_ASSERT(false);
         }
 
-        SpPackedArray return_value;
-        array.moveToPackedArray(return_value);
-
-        return return_value;
+        return array.moveToPackedArray();
     }
 
 private:

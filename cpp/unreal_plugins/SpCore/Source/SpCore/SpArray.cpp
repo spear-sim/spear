@@ -23,7 +23,7 @@
 
 std::vector<uint64_t> SpArrayShapeUtils::getShape(const std::vector<int64_t>& shape, uint64_t num_elements)
 {
-    SP_ASSERT(Std::toVector<uint64_t>(shape | std::views::filter([](auto s) { return s < -1; })).size() == 0); // must contain no entries less than -1
+    SP_ASSERT(Std::toVector<uint64_t>(shape | std::views::filter([](auto s) { return s < -1; })).size() == 0);  // must contain no entries less than -1
     SP_ASSERT(Std::toVector<uint64_t>(shape | std::views::filter([](auto s) { return s == -1; })).size() <= 1); // must contain at most one -1
 
     // If shape is {}, then 0 is the only value for num_elements that matches shape, and we should return {}.
@@ -34,6 +34,9 @@ std::vector<uint64_t> SpArrayShapeUtils::getShape(const std::vector<int64_t>& sh
 
     // If shape doesn't contain a wildcard, then return shape.
     if (!Std::contains(shape, -1)) {
+        // We could use a faster variant here that accepts &&, but shape is nearly always very small, and we
+        // we don't want to change the getShape(...) interface to accept &&, because that could create
+        // confusion for users.
         return Std::reinterpretAsVectorOf<uint64_t>(shape);
     }
 
@@ -239,9 +242,7 @@ std::map<std::string, SpPackedArray> SpArrayUtils::moveToPackedArrays(const std:
     // input is a map from names to SpArray pointers, output is a map from names to SpPackedArrays
     std::map<std::string, SpPackedArray> packed_arrays;
     for (auto& [name, array] : arrays) {
-        SpPackedArray packed_array;
-        array->moveToPackedArray(packed_array);
-        Std::insert(packed_arrays, std::move(name), std::move(packed_array));
+        Std::insert(packed_arrays, std::move(name), array->moveToPackedArray());
     }
     return packed_arrays;
 }
@@ -250,26 +251,26 @@ std::map<std::string, SpPackedArray> SpArrayUtils::moveToPackedArrays(const std:
 // typically called from inside an SpFunc to get args, and after calling an SpFunc to get return values
 //
 
-void SpArrayUtils::moveFromPackedArrays(std::initializer_list<SpArrayBase*> arrays, std::map<std::string, SpPackedArray>& packed_arrays)
+void SpArrayUtils::moveFromPackedArrays(std::initializer_list<SpArrayBase*> arrays, std::map<std::string, SpPackedArray>&& packed_arrays)
 {
     // convert from initializer_list to vector
-    moveFromPackedArrays(Std::toVector<SpArrayBase*>(arrays), packed_arrays);
+    moveFromPackedArrays(Std::toVector<SpArrayBase*>(arrays), std::move(packed_arrays));
 }
 
-void SpArrayUtils::moveFromPackedArrays(const std::vector<SpArrayBase*>& arrays, std::map<std::string, SpPackedArray>& packed_arrays)
+void SpArrayUtils::moveFromPackedArrays(const std::vector<SpArrayBase*>& arrays, std::map<std::string, SpPackedArray>&& packed_arrays)
 {
     // convert from vector to map
     SP_ASSERT(!Std::contains(arrays, nullptr));
     auto array_map = Std::toMap<std::string, SpArrayBase*>(
         arrays | std::views::transform([](auto array) { return std::make_pair(array->getName(), array); }));
-    moveFromPackedArrays(array_map, packed_arrays);
+    moveFromPackedArrays(array_map, std::move(packed_arrays));
 }
 
-void SpArrayUtils::moveFromPackedArrays(const std::map<std::string, SpArrayBase*>& arrays, std::map<std::string, SpPackedArray>& packed_arrays)
+void SpArrayUtils::moveFromPackedArrays(const std::map<std::string, SpArrayBase*>& arrays, std::map<std::string, SpPackedArray>&& packed_arrays)
 {
     for (auto& [name, array] : arrays) {
         SP_ASSERT(Std::containsKey(packed_arrays, name));
-        array->moveFromPackedArray(packed_arrays.at(name));
+        array->moveFromPackedArray(std::move(packed_arrays.at(name)));
     }
 }
 

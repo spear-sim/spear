@@ -49,7 +49,7 @@ public:
     SharedMemoryView getView();
 
 private:
-    inline static constexpr uint16_t s_alignment_padding_bytes_ = 4096;
+    inline static constexpr uint16_t s_alignment_bytes_ = 4096;
 
     std::string id_;
     uint64_t num_bytes_ = 0;

@@ -6,7 +6,7 @@
 #pragma once
 
 #include <stddef.h> // size_t
-#include <stdint.h> // int64_t
+#include <stdint.h> // int64_t, uint64_t
 
 #include <concepts>    // std::constructible_from, std::derived_from, std::same_as
 #include <map>
@@ -1394,8 +1394,8 @@ public:
     static std::vector<TValue> toStdVector(const TArray<TValue>& src)
     {
         std::vector<TValue> dest;
-        for (auto& data : src) {
-            dest.push_back(data);
+        for (auto& s : src) {
+            dest.push_back(s);
         }
         return dest;
     }
@@ -1404,8 +1404,8 @@ public:
     static std::vector<TDestValue> toStdVectorOf(const TArray<TSrcValue>& src)
     {
         std::vector<TDestValue> dest;
-        for (auto& data : src) {
-            dest.push_back(data);
+        for (auto& s : src) {
+            dest.push_back(s);
         }
         return dest;
     }
@@ -1414,8 +1414,8 @@ public:
     static TArray<TValue> toTArray(const std::vector<TValue>& src)
     {
         TArray<TValue> dest;
-        for (auto& data : src) {
-            dest.Add(data);
+        for (auto& s : src) {
+            dest.Add(s);
         }
         return dest;
     }
@@ -1424,49 +1424,49 @@ public:
     static TArray<TDestValue> toTArrayOf(const std::vector<TValue>& src)
     {
         TArray<TDestValue> dest;
-        for (auto& data : src) {
-            dest.Add(data);
+        for (auto& s : src) {
+            dest.Add(s);
         }
         return dest;
     }
 
     template <typename TValue>
-    static void updateArrayDataPtr(TArray<TValue>& array, void* data_ptr, int num_bytes) {
+    static TValue* updateArrayDataPtr(TArray<TValue>& array, void* data_ptr, uint64_t num_bytes) {
 
         SP_ASSERT(num_bytes % sizeof(TValue) == 0);
-        int num_elements = num_bytes / sizeof(TValue);
+        uint64_t num_elements = num_bytes / sizeof(TValue);
 
         // We enforce the constraint that the array's existing data region must be at least as big as the
         // data_ptr region, because we want to guarantee that the array will not resize itself if the user
         // adds elements that would fit in the data_ptr region.
 
-        // That being said, the data_ptr region may be smaller than the array's existing data region because
-        // the array can reserve more space than was originally requested when calling array.Reserve(...).
-        // Therefore, after calling updateArrayDataPtr(...), the user must be careful not to add more
-        // elements to the array than would fit in the data_ptr region.
+        // However, we don't test for exact equality because the array's existing data region can be larger
+        // than the data_ptr region, even if the user attempts to reserve exactly num_btyes of space in array.
+        // This is because calling array.Reserve(num_elements) is allowed to internally allocate more than
+        // num_elements worth of space. As a consequence, after this function returns, it may be possible to
+        // add more than num_elements elements to array, which would unsafely write data past the end of the
+        // data_ptr region. The user must therefore be careful not to add more elements to array than would
+        // fit in the data_ptr region they specify when calling this function.
 
         SP_ASSERT(num_elements <= static_cast<int64_t>(array.Max()));
         SP_ASSERT(num_bytes <= array.GetAllocatedSize());
-
-        // Check that data_ptr is sufficiently aligned for TValue.
-        void* data_ptr_to_align = data_ptr;
-        size_t num_bytes_size_t = num_bytes;
-        TValue* data_ptr_aligned = static_cast<TValue*>(std::align(alignof(TValue), num_bytes_size_t, data_ptr_to_align, num_bytes_size_t));
-        SP_ASSERT(data_ptr_aligned);
-        SP_ASSERT(data_ptr_aligned == data_ptr_to_align);
-        SP_ASSERT(data_ptr_aligned == data_ptr);
+        SP_ASSERT(Std::isPtrSufficientlyAlignedFor<TValue>(data_ptr));
 
         // Get pointer to array object, interpret as a pointer-to-TValue*.
         TValue** array_ptr = reinterpret_cast<TValue**>(&array);
         SP_ASSERT(array_ptr);
+
+        TValue* array_data_ptr = array.GetData();
 
         // Check that the pointer to the array object, when interpreted as a pointer-to-TValue*, does indeed
         // point to the array's underlying data.
         SP_ASSERT(*array_ptr == array.GetData());
 
         // Update the array's underlying data pointer.
-        *array_ptr = data_ptr_aligned;
-        SP_ASSERT(data_ptr_aligned == array.GetData());
+        *array_ptr = static_cast<TValue*>(data_ptr);
+        SP_ASSERT(data_ptr == array.GetData());
+
+        return array_data_ptr;
     };
 
     //

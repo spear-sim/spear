@@ -100,7 +100,7 @@ void SpCore::StartupModule()
 
     // Try to create a shared memory region so we can provide a meaningful error message if it fails.
     try {
-        int num_bytes = 1;
+        uint64_t num_bytes = 1;
         shared_memory_region_ = std::make_unique<SharedMemoryRegion>(num_bytes);
     } catch (...) {
         SP_LOG("    ERROR: Couldn't create a shared memory region. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables, or change SP_CORE.SHARED_MEMORY_INITIAL_UNIQUE_ID to an unused ID, and try launching again.");

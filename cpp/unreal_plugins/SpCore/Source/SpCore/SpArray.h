@@ -194,12 +194,12 @@ struct SpArraySharedMemoryView : SharedMemoryView
 //     https://github.com/msgpack/msgpack-c/wiki/v2_0_cpp_adaptor
 //
 
+using SpPackedArrayAllocator = SpAlignedAllocator<uint8_t, 4096>;
+
 class SPCORE_API SpPackedArray
 {
 public:
     inline static constexpr int s_alignment_padding_bytes_ = 4096;
-
-    using TAllocator = boost::alignment::aligned_allocator<uint8_t, s_alignment_padding_bytes_>;
 
     // typically called before calling an SpFunc to resolve pointers to shared memory
     void resolve();
@@ -209,7 +209,7 @@ public:
     // after calling an SpFunc to validate that an SpPackedArray can be used as a return value
     void validate(SpArraySharedMemoryUsageFlags usage_flags) const;
 
-    std::vector<uint8_t, TAllocator> data_;
+    std::vector<uint8_t, SpPackedArrayAllocator> data_;
     void* view_ = nullptr;
     SpArrayDataSource data_source_ = SpArrayDataSource::Invalid;
 
@@ -219,8 +219,6 @@ public:
     std::string shared_memory_name_;
     SpArraySharedMemoryUsageFlags shared_memory_usage_flags_ = SpArraySharedMemoryUsageFlags::DoNotUse;
 };
-
-using SpPackedArrayAllocator = boost::alignment::aligned_allocator<uint8_t, SpPackedArray::s_alignment_padding_bytes_>;
 
 //
 // SpArray represents a strongly typed array that can be instantiated to manipulate an arg or return value. A
@@ -236,10 +234,10 @@ public:
     virtual ~SpArrayBase() {};
 
     // typically called before calling an SpFunc to set args, and from inside an SpFunc to set return values
-    virtual void moveToPackedArray(SpPackedArray& packed_array) = 0;
+    virtual SpPackedArray moveToPackedArray() = 0;
 
     // typically called inside an SpFunc to get args, and after calling an SpFunc to get return values
-    virtual void moveFromPackedArray(SpPackedArray& packed_array) = 0;
+    virtual void moveFromPackedArray(SpPackedArray&& packed_array) = 0;
 
     std::string getName() const { SP_ASSERT(name_ != ""); return name_; };
     SpArrayBase* getPtr() { return this; };
@@ -258,9 +256,11 @@ public:
     // SpArrayBase interface
 
     // typically called before calling an SpFunc to set args, and from inside an SpFunc to set return values
-    void moveToPackedArray(SpPackedArray& packed_array) override
+    SpPackedArray moveToPackedArray() override
     {
         SP_ASSERT(data_source_ != SpArrayDataSource::Invalid);
+
+        SpPackedArray packed_array;
 
         packed_array.data_ = std::move(data_);
         packed_array.view_ = view_.data();
@@ -271,10 +271,12 @@ public:
 
         packed_array.shared_memory_name_ = std::move(shared_memory_name_);
         packed_array.shared_memory_usage_flags_ = shared_memory_usage_flags_;
+
+        return packed_array;
     }
 
     // typically called inside an SpFunc to get args, and after calling an SpFunc to get return values
-    void moveFromPackedArray(SpPackedArray& packed_array) override
+    void moveFromPackedArray(SpPackedArray&& packed_array) override
     {
         SP_ASSERT(packed_array.data_source_ != SpArrayDataSource::Invalid);
         SP_ASSERT(packed_array.data_type_ == SpArrayDataTypeUtils::getDataType<TValue>());
@@ -339,7 +341,7 @@ public:
 
     void setDataSource(std::initializer_list<TValue> initializer_list, const std::vector<int64_t>& shape)
     {
-        data_ = Std::reinterpretAsVector<uint8_t, TValue, SpPackedArrayAllocator>(initializer_list);
+        data_ = Std::reinterpretAsVector<uint8_t, SpPackedArrayAllocator, TValue>(initializer_list);
         if (data_.empty()) {
             view_ = std::span<TValue>(static_cast<TValue*>(nullptr), 0);
         } else {
@@ -357,7 +359,7 @@ public:
         CRangeValuesAreConvertibleTo<TRange, TValue>
     void setDataSource(TRange&& range, const std::vector<int64_t>& shape)
     {
-        data_ = Std::reinterpretAsVector<uint8_t, TValue, SpPackedArrayAllocator>(std::forward<TRange>(range));
+        data_ = Std::reinterpretAsVector<uint8_t, SpPackedArrayAllocator, TValue>(std::forward<TRange>(range));
         if (data_.empty()) {
             view_ = std::span<TValue>(static_cast<TValue*>(nullptr), 0);
         } else {
@@ -540,9 +542,9 @@ public:
     static std::map<std::string, SpPackedArray> moveToPackedArrays(const std::map<std::string, SpArrayBase*>& arrays);
 
     // typically called from inside an SpFunc to get args, and after calling an SpFunc to get return values
-    static void moveFromPackedArrays(std::initializer_list<SpArrayBase*> arrays, std::map<std::string, SpPackedArray>& packed_arrays);
-    static void moveFromPackedArrays(const std::vector<SpArrayBase*>& arrays, std::map<std::string, SpPackedArray>& packed_arrays);
-    static void moveFromPackedArrays(const std::map<std::string, SpArrayBase*>& arrays, std::map<std::string, SpPackedArray>& packed_arrays);
+    static void moveFromPackedArrays(std::initializer_list<SpArrayBase*> arrays, std::map<std::string, SpPackedArray>&& packed_arrays);
+    static void moveFromPackedArrays(const std::vector<SpArrayBase*>& arrays, std::map<std::string, SpPackedArray>&& packed_arrays);
+    static void moveFromPackedArrays(const std::map<std::string, SpArrayBase*>& arrays, std::map<std::string, SpPackedArray>&& packed_arrays);
 
     // typically called from inside an SpFunc to get args, and after calling an SpFunc to get return values
     static void setViews(std::initializer_list<SpArrayViewBase*> views, const std::map<std::string, SpPackedArray>& packed_arrays);

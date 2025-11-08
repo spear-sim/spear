@@ -285,12 +285,9 @@ void USpSceneCaptureComponent2D::Initialize()
             // ReadPixels assumes 4 channels per pixel, 1 uint8 per channel
             if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::UInt8) {
 
-                FColor* scratchpad_data_ptr = scratchpad_color_.GetData();
-                Unreal::updateArrayDataPtr(scratchpad_color_, dest_ptr, num_bytes);
-
+                FColor* scratchpad_data_ptr = Unreal::updateArrayDataPtr(scratchpad_color_, dest_ptr, num_bytes);
                 bool success = texture_render_target_resource->ReadPixels(scratchpad_color_);
                 SP_ASSERT(success);
-
                 Unreal::updateArrayDataPtr(scratchpad_color_, scratchpad_data_ptr, num_bytes);
 
             // ReadFloat16Pixels assumes 4 channels per pixel, 1 float16 per channel
@@ -300,12 +297,9 @@ void USpSceneCaptureComponent2D::Initialize()
                 FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(compression_mode);
                 read_surface_flags.SetLinearToGamma(false);
 
-                FFloat16Color* scratchpad_data_ptr = scratchpad_float_16_color_.GetData();
-                Unreal::updateArrayDataPtr(scratchpad_float_16_color_, dest_ptr, num_bytes);
-
+                FFloat16Color* scratchpad_data_ptr = Unreal::updateArrayDataPtr(scratchpad_float_16_color_, dest_ptr, num_bytes);
                 bool success = texture_render_target_resource->ReadFloat16Pixels(scratchpad_float_16_color_, read_surface_flags);
                 SP_ASSERT(success);
-
                 Unreal::updateArrayDataPtr(scratchpad_float_16_color_, scratchpad_data_ptr, num_bytes);
 
             // ReadLinearColorPixels assumes 4 channels per pixel, 1 float32 per channel
@@ -316,12 +310,9 @@ void USpSceneCaptureComponent2D::Initialize()
                 FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(compression_mode);
                 read_surface_flags.SetLinearToGamma(false);
 
-                FLinearColor* scratchpad_data_ptr = scratchpad_linear_color_.GetData();
-                Unreal::updateArrayDataPtr(scratchpad_linear_color_, dest_ptr, num_bytes);
-
+                FLinearColor* scratchpad_data_ptr = Unreal::updateArrayDataPtr(scratchpad_linear_color_, dest_ptr, num_bytes);
                 bool success = texture_render_target_resource->ReadLinearColorPixels(scratchpad_linear_color_, read_surface_flags);
                 SP_ASSERT(success);
-
                 Unreal::updateArrayDataPtr(scratchpad_linear_color_, scratchpad_data_ptr, num_bytes);
 
             } else {

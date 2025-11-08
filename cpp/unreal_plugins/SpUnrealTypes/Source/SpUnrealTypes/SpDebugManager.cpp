@@ -5,7 +5,7 @@
 
 #include "SpUnrealTypes/SpDebugManager.h"
 
-#include <stdint.h> // uint8_t
+#include <stdint.h> // uint8_t, uint64_t
 
 #include <map>
 #include <memory> // std::make_unique
@@ -422,7 +422,7 @@ void ASpDebugManager::CallFunctions()
 
     // Pointers can be passed into functions by converting them to strings, and static functions can be
     // called by passing in the class' default object when calling callFunction(...).
-    args = {{"world_context_object", Std::toStringFromPtr(GetWorld())}, {"Arg0", "Hello World"}, {"Arg1", "true"}};
+    args = {{"Arg0", "Hello World"}, {"Arg1", "true"}};
     ufunction = Unreal::findFunctionByName(this->GetClass(), "GetWorldContextObject");
     SP_ASSERT(ufunction);
     return_values = Unreal::callFunction(GetWorld(), this->GetClass()->GetDefaultObject(), ufunction, args);
@@ -545,7 +545,7 @@ void ASpDebugManager::CallSpFunc() const
     SP_LOG("    info:                  ", return_values.info_);
 }
 
-void ASpDebugManager::CreateObjects()
+void ASpDebugManager::CreateObjects() const
 {
     static int i = 1;
 
@@ -583,7 +583,7 @@ void ASpDebugManager::CreateObjects()
     i++;
 }
 
-void ASpDebugManager::SubscribeToActorHitEvents()
+void ASpDebugManager::SubscribeToActorHitEvents() const
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -597,7 +597,7 @@ void ASpDebugManager::SubscribeToActorHitEvents()
     Unreal::callFunction(GetWorld(), sp_actor_hit_manager, ufunction, {{"Actor", Std::toStringFromPtr(static_mesh_actor)}});
 }
 
-void ASpDebugManager::UnsubscribeFromActorHitEvents()
+void ASpDebugManager::UnsubscribeFromActorHitEvents() const
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -611,7 +611,7 @@ void ASpDebugManager::UnsubscribeFromActorHitEvents()
     Unreal::callFunction(GetWorld(), sp_actor_hit_manager, ufunction, {{"Actor", Std::toStringFromPtr(static_mesh_actor)}});
 }
 
-void ASpDebugManager::ReadPixels()
+void ASpDebugManager::ReadPixels() const
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -659,7 +659,7 @@ void ASpDebugManager::ReadPixels()
     SP_LOG("    view_ptr[3]: ", (int)(((uint8_t*)view_ptr)[3]));
 }
 
-void ASpDebugManager::PrintActorDebugInfo()
+void ASpDebugManager::PrintActorDebugInfo() const
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -727,7 +727,7 @@ void ASpDebugManager::PrintActorDebugInfo()
     }
 }
 
-void ASpDebugManager::PrintAllClassesDebugInfo()
+void ASpDebugManager::PrintAllClassesDebugInfo() const
 {
     SP_LOG_CURRENT_FUNCTION();
 
@@ -845,6 +845,25 @@ void ASpDebugManager::PrintAllClassesDebugInfo()
     SP_LOG("    Total function count: ", total_num_functions);
 }
 
+void ASpDebugManager::TestReinterpretAsVectorOf() const
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    std::vector<uint8_t, SpAlignedAllocator<uint8_t, 32>> src = {1, 0, 0, 0, 2, 0, 0, 0};
+    src.reserve(12);
+
+    std::vector<int, SpAlignedAllocator<int, 32>> dest = Std::reinterpretAsVectorOf<int>(std::move(src));
+
+    SP_LOG(dest.size());
+    SP_LOG(dest.capacity());
+
+    SP_LOG();
+
+    for (auto d : dest) {
+        SP_LOG(d);
+    }
+}
+
 FString ASpDebugManager::GetString(FString Arg0, bool Arg1, int Arg2, FVector Arg3) const
 {
     SP_LOG_CURRENT_FUNCTION();
@@ -879,7 +898,7 @@ void ASpDebugManager::initializeSpFunc()
     SP_ASSERT(SpFuncComponent);
     SP_ASSERT(!shared_memory_region_);
 
-    int shared_memory_num_bytes = 1024;
+    uint64_t shared_memory_num_bytes = 1024;
     shared_memory_region_ = std::make_unique<SharedMemoryRegion>(shared_memory_num_bytes);
     SP_ASSERT(shared_memory_region_);
 

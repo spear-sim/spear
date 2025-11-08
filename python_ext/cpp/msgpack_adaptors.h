@@ -8,13 +8,8 @@
 #include <stddef.h> // size_t
 #include <stdint.h> // int8_t, int16_t, int32_t, int64_t, uint8_t, uint16_t, uint32_t, uint64_t
 
-#ifdef _MSC_VER
-    #include <malloc.h> // _aligned_malloc
-#else
-    #include <stdlib.h> // posix_memalign
-#endif
-
 #include <map>
+#include <new> // std::align_val_t
 #include <span>
 #include <string>
 #include <vector>
@@ -46,59 +41,44 @@ struct nanobind::detail::dtype_traits<sp_float16_t>
 // Minimal aligned allocator
 //
 
-static constexpr int g_alignment_padding_bytes = 4096;
-
-template <typename TValue>
-struct SpPackedArrayAllocatorImpl
+template <typename TValue, size_t TAlignmentNumBytes>
+struct SpAlignedAllocator
 {
     using value_type = TValue;
 
-    SpPackedArrayAllocatorImpl() noexcept {};
+    static_assert((TAlignmentNumBytes & (TAlignmentNumBytes - 1)) == 0); // TAlignmentNumBytes must be a power of two
+    static_assert(TAlignmentNumBytes % alignof(TValue) == 0);            // TAlignmentNumBytes must be a multiple of alignof(TValue)
 
     template <typename TOtherValue>
-    SpPackedArrayAllocatorImpl(const SpPackedArrayAllocatorImpl<TOtherValue>&) noexcept {}
+    struct rebind { using other = SpAlignedAllocator<TOtherValue, TAlignmentNumBytes>; };
+
+    SpAlignedAllocator() noexcept {};
+
+    template <typename TOtherValue, size_t TOtherAlignmentNumBytes>
+    SpAlignedAllocator(const SpAlignedAllocator<TOtherValue, TOtherAlignmentNumBytes>&) noexcept {}
 
     TValue* allocate(const size_t num_elements) const
     {
         SP_ASSERT(num_elements > 0);
-        int num_bytes = num_elements*sizeof(TValue);
-        int num_bytes_internal;
-        if (num_bytes % g_alignment_padding_bytes == 0) {
-            num_bytes_internal = num_bytes;
-        } else {
-            num_bytes_internal = num_bytes + g_alignment_padding_bytes - (num_bytes % g_alignment_padding_bytes);
-        }
-        SP_ASSERT(num_bytes_internal % g_alignment_padding_bytes == 0);
-
-        #ifdef _MSC_VER
-            return static_cast<TValue*>(_aligned_malloc(num_bytes_internal, g_alignment_padding_bytes));
-        #else
-            void* ptr = nullptr;
-            int error = posix_memalign(&ptr, g_alignment_padding_bytes, num_bytes_internal);
-            SP_ASSERT(!error);
-            SP_ASSERT(ptr);
-            return static_cast<TValue*>(ptr);
-        #endif
+        size_t num_bytes = num_elements*sizeof(TValue);
+        TValue* ptr = static_cast<TValue*>(::operator new(num_bytes, std::align_val_t{TAlignmentNumBytes}));
+        SP_ASSERT(ptr);
+        SP_ASSERT(Std::isPtrSufficientlyAligned(ptr, TAlignmentNumBytes));
+        return ptr;
     }
 
     void deallocate(TValue* const ptr, size_t) const
     {
         SP_ASSERT(ptr);
-        #ifdef _MSC_VER
-            _aligned_free(ptr);
-        #else
-            free(ptr);
-        #endif
+        ::operator delete(ptr, std::align_val_t{TAlignmentNumBytes});
     }
 
-    template <typename TOtherValue>
-    bool operator==(const SpPackedArrayAllocatorImpl<TOtherValue>&) const noexcept { return true; }
+    template <typename TOtherValue, size_t TOtherAlignmentNumBytes>
+    bool operator==(const SpAlignedAllocator<TOtherValue, TOtherAlignmentNumBytes>&) const noexcept { return TAlignmentNumBytes == TOtherAlignmentNumBytes; }
 
-    template <typename TOtherValue>
-    bool operator!=(const SpPackedArrayAllocatorImpl<TOtherValue>&) const noexcept { return false; }
+    template <typename TOtherValue, size_t TOtherAlignmentNumBytes>
+    bool operator!=(const SpAlignedAllocator<TOtherValue, TOtherAlignmentNumBytes>&) const noexcept { return TAlignmentNumBytes != TOtherAlignmentNumBytes; }
 };
-
-using SpPackedArrayAllocator = SpPackedArrayAllocatorImpl<uint8_t>;
 
 //
 // Helper functions for implementing adaptors
@@ -258,7 +238,7 @@ PackedArray FuncSignatureRegistry::convert<PackedArray>(const Client* client, Pa
 
         struct Capsule
         {
-            std::vector<uint8_t, SpPackedArrayAllocator> data_;
+            std::vector<uint8_t, SpAlignedAllocator<uint8_t, 4096>> data_;
             std::shared_ptr<clmdep_msgpack::object_handle> object_handle_ = nullptr;
         };
 

@@ -71,22 +71,25 @@ private:
     void CallSpFunc() const;
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void CreateObjects();
+    void CreateObjects() const;
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void SubscribeToActorHitEvents();
+    void SubscribeToActorHitEvents() const;
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void UnsubscribeFromActorHitEvents();
+    void UnsubscribeFromActorHitEvents() const;
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void ReadPixels();
+    void ReadPixels() const;
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void PrintActorDebugInfo();
+    void PrintActorDebugInfo() const;
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void PrintAllClassesDebugInfo();
+    void PrintAllClassesDebugInfo() const;
+
+    UFUNCTION(CallInEditor, Category="SPEAR")
+    void TestReinterpretAsVectorOf() const;
 
     UFUNCTION()
     FString GetString(FString Arg0, bool Arg1, int Arg2, FVector Arg3) const;

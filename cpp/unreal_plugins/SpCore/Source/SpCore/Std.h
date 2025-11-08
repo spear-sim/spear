@@ -203,6 +203,9 @@ concept CSetKeysAreConvertibleFromVector =
 // std utility functions
 //
 
+template <typename TValue, size_t TNumBytes>
+using SpAlignedAllocator = boost::alignment::aligned_allocator<TValue, TNumBytes>;
+
 class SPCORE_API Std
 {
 public:
@@ -655,6 +658,19 @@ public:
     // Functions for safely reinterpreting ranges, vectors, and initializer lists
     //
 
+    template <typename TValue>
+    static bool isPtrSufficientlyAlignedFor(void* ptr)
+    {
+        return isPtrSufficientlyAligned(ptr, alignof(TValue));
+    }
+
+    static bool isPtrSufficientlyAligned(void* ptr, size_t alignment_num_bytes)
+    {
+        return reinterpret_cast<std::uintptr_t>(ptr) % alignment_num_bytes == 0;
+    }
+
+    // Reinterpret as span
+
     // We use TSrcVector&& because want to preserve and forward the const-ness and rvalue-ness of src. We do
     // this to enforce the constraint that if TSrcVector is const, then TDestValue also needs to be const.
     template <typename TDestValue, typename TSrcVector> requires
@@ -680,11 +696,84 @@ public:
         return dest;
     }
 
-    template <typename TDestValue, typename... TDestAllocator, typename TSrcVector> requires
-        CVector<TSrcVector>
-    static std::vector<TDestValue, TDestAllocator...> reinterpretAsVectorOf(const TSrcVector& src)
+    // Reinterpret as vector
+
+    template <typename TDestValue, typename TSrcValue, typename... TSrcTraits>
+    static auto reinterpretAsVectorOf(std::vector<TSrcValue, TSrcTraits...>&& src)
     {
-        return reinterpretAsVector<TDestValue, TDestAllocator...>(src.data(), src.size());
+        using TSrcVector = std::vector<TSrcValue, TSrcTraits...>;
+        using TSrcAllocator = typename TSrcVector::allocator_type;
+        using TDestVector = std::vector<TDestValue, typename std::allocator_traits<TSrcAllocator>::template rebind_alloc<TDestValue>>;
+
+        TDestVector dest;
+
+        // check to make sure that calling delete[] on src and dest data pointers won't invoke any destructors
+        SP_ASSERT(std::is_trivially_constructible<TSrcValue>());
+        SP_ASSERT(std::is_trivially_constructible<TDestValue>());
+
+        // check that the size of std::vector is the size of exactly 3 pointers stored contiguously
+        SP_ASSERT(sizeof(std::vector<TSrcValue>)  == 3*sizeof(TSrcValue*));
+        SP_ASSERT(sizeof(std::vector<TDestValue>) == 3*sizeof(TDestValue*));
+
+        TSrcValue** src_ptr = reinterpret_cast<TSrcValue**>(&src);
+        TDestValue** dest_ptr = reinterpret_cast<TDestValue**>(&dest);
+
+        TSrcValue* src_begin_ptr    = *(src_ptr + 0);
+        TSrcValue* src_end_ptr      = *(src_ptr + 1);
+        TSrcValue* src_capacity_ptr = *(src_ptr + 2);
+
+        TDestValue* dest_begin_ptr    = *(dest_ptr + 0);
+        TDestValue* dest_end_ptr      = *(dest_ptr + 1);
+        TDestValue* dest_capacity_ptr = *(dest_ptr + 2);
+
+        // check to make sure that we're interpreting the layouts of src and dest correctly
+
+        SP_ASSERT(src_begin_ptr    == src.data());
+        SP_ASSERT(src_end_ptr      == src_begin_ptr  + src.size());
+        SP_ASSERT(src_capacity_ptr == src_begin_ptr  + src.capacity());
+
+        SP_ASSERT(dest_begin_ptr    == dest.data());
+        SP_ASSERT(dest_end_ptr      == dest_begin_ptr + dest.size());
+        SP_ASSERT(dest_capacity_ptr == dest_begin_ptr + dest.capacity());
+
+        // check to make sure each pointer is sufficiently aligned for its swapped type
+
+        SP_ASSERT(isPtrSufficientlyAlignedFor<TDestValue>(src_begin_ptr));
+        SP_ASSERT(isPtrSufficientlyAlignedFor<TDestValue>(src_end_ptr));
+        SP_ASSERT(isPtrSufficientlyAlignedFor<TDestValue>(src_capacity_ptr));
+
+        SP_ASSERT(isPtrSufficientlyAlignedFor<TSrcValue>(dest_begin_ptr));
+        SP_ASSERT(isPtrSufficientlyAlignedFor<TSrcValue>(dest_end_ptr));
+        SP_ASSERT(isPtrSufficientlyAlignedFor<TSrcValue>(dest_capacity_ptr));
+
+        // swap pointers
+
+        *(src_ptr + 0) = reinterpret_cast<TSrcValue*>(dest_begin_ptr);
+        *(src_ptr + 1) = reinterpret_cast<TSrcValue*>(dest_end_ptr);
+        *(src_ptr + 2) = reinterpret_cast<TSrcValue*>(dest_capacity_ptr);
+
+        *(dest_ptr + 0) = reinterpret_cast<TDestValue*>(src_begin_ptr);
+        *(dest_ptr + 1) = reinterpret_cast<TDestValue*>(src_end_ptr);
+        *(dest_ptr + 2) = reinterpret_cast<TDestValue*>(src_capacity_ptr);
+
+        SP_ASSERT(dest_begin_ptr == reinterpret_cast<TDestValue*>(src.data()));
+        SP_ASSERT(src_begin_ptr  == reinterpret_cast<TSrcValue*>(dest.data()));
+
+        return dest;
+    }
+
+    template <typename TDestValue, typename TSrcVector> requires
+        CVector<TSrcVector>
+    static std::vector<TDestValue> reinterpretAsVectorOf(const TSrcVector& src)
+    {
+        return reinterpretAsVector<TDestValue>(src.data(), src.size());
+    }
+
+    template <typename TDestValue, typename TDestAllocator, typename TSrcVector> requires
+        CVector<TSrcVector>
+    static std::vector<TDestValue, TDestAllocator> reinterpretAsVectorOf(const TSrcVector& src)
+    {
+        return reinterpretAsVector<TDestValue, TDestAllocator>(src.data(), src.size());
     }
 
     // Don't infer TSrcValue from the input in the functions below, because we want to force the user to
@@ -695,13 +784,30 @@ public:
     // e.g., an std::vector, where the user would have already specified its value type somewhere in their
     // code.
 
-    template <typename TDestValue, typename TSrcValue, typename... TDestAllocator, typename TRange> requires
+    template <typename TDestValue, typename TSrcValue, typename TRange> requires
         CRangeValuesAreConvertibleTo<TRange, TSrcValue>
-    static std::vector<TDestValue, TDestAllocator...> reinterpretAsVector(TRange&& range)
+    static std::vector<TDestValue> reinterpretAsVector(TRange&& range)
     {
+        return reinterpretAsVector<std::vector<TDestValue>, TSrcValue>(std::forward<TRange>(range));
+    }
+
+    template <typename TDestValue, typename TDestAllocator, typename TSrcValue, typename TRange> requires
+        CRangeValuesAreConvertibleTo<TRange, TSrcValue>
+    static std::vector<TDestValue, TDestAllocator> reinterpretAsVector(TRange&& range)
+    {
+        return reinterpretAsVector<std::vector<TDestValue, TDestAllocator>, TSrcValue>(std::forward<TRange>(range));
+    }
+
+    template <typename TDestVector, typename TSrcValue, typename TRange> requires
+        CVector<TDestVector> &&
+        CRangeValuesAreConvertibleTo<TRange, TSrcValue>
+    static TDestVector reinterpretAsVector(TRange&& range)
+    {
+        using TDestValue = TDestVector::value_type;
+
         SP_ASSERT(sizeof(TSrcValue) % sizeof(TDestValue) == 0);
         int num_dest_elements_per_src_element = sizeof(TSrcValue) / sizeof(TDestValue);
-        std::vector<TDestValue, TDestAllocator...> dest;
+        TDestVector dest;
         for (auto range_value : range) {
             dest.resize(dest.size() + num_dest_elements_per_src_element);
             TDestValue* dest_ptr = &(dest.at(dest.size() - num_dest_elements_per_src_element)); // get ptr after resize because data might have moved
@@ -712,18 +818,41 @@ public:
         return dest;
     }
 
-    template <typename TDestValue, typename TSrcValue, typename... TDestAllocator, typename TSrcInitializerListValue> requires
+    template <typename TDestValue, typename TSrcValue, typename TSrcInitializerListValue> requires
         std::same_as<TSrcValue, TSrcInitializerListValue>
-    static std::vector<TDestValue, TDestAllocator...> reinterpretAsVector(std::initializer_list<TSrcInitializerListValue> src)
+    static std::vector<TDestValue> reinterpretAsVector(std::initializer_list<TSrcInitializerListValue> src)
     {
-        return reinterpretAsVector<TDestValue, TDestAllocator...>(std::ranges::data(src), std::ranges::size(src));
+        return reinterpretAsVector<std::vector<TDestValue>>(std::ranges::data(src), std::ranges::size(src));
     }
 
-    // We can infer TSrcValue here because there is no potential for ambiguity.
-    template <typename TDestValue, typename... TDestAllocator, typename TSrcValue>
-    static std::vector<TDestValue, TDestAllocator...> reinterpretAsVector(const TSrcValue* src_data, uint64_t src_num_elements)
+    template <typename TDestValue, typename TDestAllocator, typename TSrcValue, typename TSrcInitializerListValue> requires
+        std::same_as<TSrcValue, TSrcInitializerListValue>
+    static std::vector<TDestValue, TDestAllocator> reinterpretAsVector(std::initializer_list<TSrcInitializerListValue> src)
     {
-        std::vector<TDestValue, TDestAllocator...> dest;
+        return reinterpretAsVector<std::vector<TDestValue, TDestAllocator>>(std::ranges::data(src), std::ranges::size(src));
+    }
+
+    // We can infer TSrcValue below because there is no potential for ambiguity.
+
+    template <typename TDestValue, typename TSrcValue>
+    static std::vector<TDestValue> reinterpretAsVector(const TSrcValue* src_data, uint64_t src_num_elements)
+    {
+        return reinterpretAsVector<std::vector<TDestValue>>(src_data, src_num_elements);
+    }
+
+    template <typename TDestValue, typename TDestAllocator, typename TSrcValue>
+    static std::vector<TDestValue, TDestAllocator> reinterpretAsVector(const TSrcValue* src_data, uint64_t src_num_elements)
+    {
+        return reinterpretAsVector<std::vector<TDestValue, TDestAllocator>>(src_data, src_num_elements);
+    }
+
+    template <typename TDestVector, typename TSrcValue> requires
+        CVector<TDestVector>
+    static TDestVector reinterpretAsVector(const TSrcValue* src_data, uint64_t src_num_elements)
+    {
+        using TDestValue = TDestVector::value_type;
+
+        TDestVector dest;
         if (src_num_elements > 0) {
             uint64_t src_num_bytes = src_num_elements*sizeof(TSrcValue);
             SP_ASSERT(src_num_bytes % sizeof(TDestValue) == 0);

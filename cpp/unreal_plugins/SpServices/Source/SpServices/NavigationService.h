@@ -69,7 +69,7 @@ public:
                 int64_t& num_points,
                 uint64_t& query_owner,
                 std::map<std::string, SpPackedArray>& packed_arrays,
-                SpPackedArray& out_array) -> SpPackedArray {
+                SpPackedArray& out_packed_array) -> SpPackedArray {
 
                 SP_ASSERT(packed_arrays.at("filter_classes").shape_.size() == 1);
                 SP_ASSERT(packed_arrays.at("filter_classes").shape_.at(0) == 0 || packed_arrays.at("filter_classes").shape_.at(0) == 1 || packed_arrays.at("filter_classes").shape_.at(0) == num_points);
@@ -86,7 +86,7 @@ public:
                 SpArray<uint64_t> queriers("queriers");
                 SpArrayUtils::resolve(packed_arrays, shared_memory_views);
                 SpArrayUtils::validate(packed_arrays, SpArraySharedMemoryUsageFlags::Arg);
-                SpArrayUtils::moveFromPackedArrays({filter_classes.getPtr(), queriers.getPtr()}, packed_arrays);
+                SpArrayUtils::moveFromPackedArrays({filter_classes.getPtr(), queriers.getPtr()}, std::move(packed_arrays));
 
                 UClass* filter_class = nullptr;
                 UObject* querier     = nullptr;
@@ -112,7 +112,7 @@ public:
                     points.push_back(point.Z);
                 }
 
-                return toPackedArray(std::move(points), {-1, 3}, out_array, shared_memory_views, SpArraySharedMemoryUsageFlags::Arg | SpArraySharedMemoryUsageFlags::ReturnValue);
+                return toPackedArray(std::move(points), {-1, 3}, out_packed_array, shared_memory_views, SpArraySharedMemoryUsageFlags::Arg | SpArraySharedMemoryUsageFlags::ReturnValue);
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_random_reachable_points_in_radius",
@@ -121,7 +121,7 @@ public:
                 int64_t& num_points,
                 uint64_t& query_owner,
                 std::map<std::string, SpPackedArray>& packed_arrays,
-                SpPackedArray& out_array) -> SpPackedArray {
+                SpPackedArray& out_packed_array) -> SpPackedArray {
 
                 SP_ASSERT(packed_arrays.at("origin_points").shape_.size() == 2);
                 SP_ASSERT(packed_arrays.at("origin_points").shape_.at(0) == 1 || packed_arrays.at("origin_points").shape_.at(0) == num_points);
@@ -145,7 +145,7 @@ public:
                 SpArray<uint64_t> queriers("queriers");
                 SpArrayUtils::resolve(packed_arrays, shared_memory_views);
                 SpArrayUtils::validate(packed_arrays, SpArraySharedMemoryUsageFlags::Arg);
-                SpArrayUtils::moveFromPackedArrays({origin_points.getPtr(), radii.getPtr(), filter_classes.getPtr(), queriers.getPtr()}, packed_arrays);
+                SpArrayUtils::moveFromPackedArrays({origin_points.getPtr(), radii.getPtr(), filter_classes.getPtr(), queriers.getPtr()}, std::move(packed_arrays));
 
                 FVector origin       = FVector::ZeroVector;
                 float radius         = -1.0f;
@@ -194,7 +194,7 @@ public:
                     points.push_back(nav_location.Location.Z);
                 }
 
-                return toPackedArray(std::move(points), {-1, 3}, out_array, shared_memory_views, SpArraySharedMemoryUsageFlags::Arg | SpArraySharedMemoryUsageFlags::ReturnValue);
+                return toPackedArray(std::move(points), {-1, 3}, out_packed_array, shared_memory_views, SpArraySharedMemoryUsageFlags::Arg | SpArraySharedMemoryUsageFlags::ReturnValue);
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "find_paths",
@@ -240,7 +240,7 @@ public:
                 SpArray<uint8_t> require_navigable_end_locations("require_navigable_end_locations");
                 SpArrayUtils::resolve(packed_arrays, shared_memory_views);
                 SpArrayUtils::validate(packed_arrays, SpArraySharedMemoryUsageFlags::Arg);
-                SpArrayUtils::moveFromPackedArrays({start_points.getPtr(), end_points.getPtr(), filter_classes.getPtr(), queriers.getPtr(), cost_limits.getPtr(), require_navigable_end_locations.getPtr()}, packed_arrays);
+                SpArrayUtils::moveFromPackedArrays({start_points.getPtr(), end_points.getPtr(), filter_classes.getPtr(), queriers.getPtr(), cost_limits.getPtr(), require_navigable_end_locations.getPtr()}, std::move(packed_arrays));
 
                 UnrealObj<FNavAgentProperties> nav_agent_properties;
 

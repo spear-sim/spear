@@ -119,12 +119,6 @@ SP_END_SUPPRESS_COMPILER_WARNINGS
 // ----------------------------------------------------------------------------------------------------------
 
 SP_BEGIN_SUPPRESS_COMPILER_WARNINGS
-    #include <boost/multiprecision/cpp_int.hpp> // boost::multiprecision::int128_t
-SP_END_SUPPRESS_COMPILER_WARNINGS
-
-// ----------------------------------------------------------------------------------------------------------
-
-SP_BEGIN_SUPPRESS_COMPILER_WARNINGS
     #include <boost/process/environment.hpp>  // boost::this_process::get_id, boost::process::pid_t
 SP_END_SUPPRESS_COMPILER_WARNINGS
 

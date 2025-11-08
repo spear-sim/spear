@@ -120,4 +120,9 @@ public:
 
         SP_ASSERT(vector.size() == size);
     }
+
+    static bool isPtrSufficientlyAligned(void* ptr, size_t alignment_num_bytes)
+    {
+        return reinterpret_cast<std::uintptr_t>(ptr) % alignment_num_bytes == 0;
+    }
 };
