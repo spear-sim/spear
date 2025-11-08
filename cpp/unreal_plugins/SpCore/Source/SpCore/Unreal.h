@@ -1436,17 +1436,19 @@ public:
         SP_ASSERT(num_bytes % sizeof(TValue) == 0);
         uint64_t num_elements = num_bytes / sizeof(TValue);
 
-        // We enforce the constraint that the array's existing data region must be at least as big as the
-        // data_ptr region, because we want to guarantee that the array will not resize itself if the user
-        // adds elements that would fit in the data_ptr region.
-
-        // However, we don't test for exact equality because the array's existing data region can be larger
-        // than the data_ptr region, even if the user attempts to reserve exactly num_btyes of space in array.
-        // This is because calling array.Reserve(num_elements) is allowed to internally allocate more than
-        // num_elements worth of space. As a consequence, after updateArrayDataPtr(...) returns, array may
-        // not prevent the user from adding more than num_elements elements to array, which would unsafely
-        // write data past the end of the data_ptr region. The user must therefore be careful not to add more
-        // elements to array than would fit in the data_ptr region they specify when calling this function.
+        //
+        // We enforce the constraint that array's existing data region must be at least as big as the data_ptr
+        // region, because we want to guarantee that array will not resize itself if the user adds elements
+        // that would fit in the data_ptr region. However, we don't test for exact equality between the size
+        // of the array's data region and the data_ptr data region. This is because calling array.Reserve(num_elements)
+        // is allowed to internally allocate more than num_elements worth of space.
+        //
+        // After calling updateArrayDataPtr(...), the user must be careful not to add more than num_elements
+        // elements to array. If the user adds too many elements, array will write past the end of the data_ptr
+        // region, and eventually trigger a resize operation, in which case it will no longer be backed by
+        // the user's data_ptr region at all. Both of these outcomes is undesirable, and therefore the user
+        // must be careful not to add more than num_elements to array.
+        //
 
         SP_ASSERT(array.Max() >= 0);
         SP_ASSERT(num_elements <= static_cast<uint64_t>(array.Max()));
