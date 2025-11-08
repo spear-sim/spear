@@ -43,7 +43,6 @@ if __name__ == "__main__":
     os.makedirs(archive_dir, exist_ok=True)
 
     spear.log("Creating archive: ", archive_file)
-
     shutil.make_archive(base_name=archive_file, format="zip", root_dir=archive_contents_root_dir, verbose=1)
     assert os.path.exists(f"{archive_file}.zip")
 
