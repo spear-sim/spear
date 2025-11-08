@@ -729,8 +729,8 @@ public:
         // check to make sure that we're interpreting the layouts of src and dest correctly
 
         SP_ASSERT(src_begin_ptr    == src.data());
-        SP_ASSERT(src_end_ptr      == src_begin_ptr  + src.size());
-        SP_ASSERT(src_capacity_ptr == src_begin_ptr  + src.capacity());
+        SP_ASSERT(src_end_ptr      == src_begin_ptr + src.size());
+        SP_ASSERT(src_capacity_ptr == src_begin_ptr + src.capacity());
 
         SP_ASSERT(dest_begin_ptr    == dest.data());
         SP_ASSERT(dest_end_ptr      == dest_begin_ptr + dest.size());
