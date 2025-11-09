@@ -1385,6 +1385,39 @@ public:
                         toPtr<UPackage>(external_package)));
             });
 
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "new_object_from_class",
+            [this](
+                uint64_t& outer,
+                uint64_t& uclass,
+                std::string& name,
+                std::vector<std::string>& object_flag_strings,
+                uint64_t& uobject_template,
+                bool& copy_transients_from_class_defaults,
+                uint64_t& in_instance_graph,
+                uint64_t& external_package) -> uint64_t {
+
+                UObject* outer_ptr = toPtr<UObject>(outer);
+                if (!outer_ptr) {
+                    outer_ptr = GetTransientPackage();
+                }
+
+                FName fname = NAME_None;
+                if (name != "") {
+                    fname = Unreal::toFName(name);
+                }
+
+                return toUInt64(
+                    NewObject<UObject>(
+                        outer_ptr,
+                        toPtr<UClass>(uclass),
+                        fname,
+                        Unreal::getCombinedEnumFlagValueFromStringsAs<EObjectFlags, ESpObjectFlags>(object_flag_strings),
+                        toPtr<UObject>(uobject_template),
+                        copy_transients_from_class_defaults,
+                        toPtr<FObjectInstancingGraph>(in_instance_graph),
+                        toPtr<UPackage>(external_package)));
+            });
+
         //
         // Load object and class
         //

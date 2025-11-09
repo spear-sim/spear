@@ -637,6 +637,9 @@ class UnrealService(spear.utils.func_utils.Service):
     def new_object(self, class_name, outer=0, name="", object_flags=["RF_NoFlags"], template=0, copy_transients_from_class_defaults=False, in_instance_graph=0, external_package=0):
         return self._entry_point_caller.call_on_game_thread("new_object", None, class_name, outer, name, object_flags, template, copy_transients_from_class_defaults, in_instance_graph, external_package)
 
+    def new_object_from_class(self, outer=0, uclass, name="", object_flags=["RF_NoFlags"], template=0, copy_transients_from_class_defaults=False, in_instance_graph=0, external_package=0):
+        return self._entry_point_caller.call_on_game_thread("new_object", None, class_name, outer, name, object_flags, template, copy_transients_from_class_defaults, in_instance_graph, external_package)
+
     #
     # Load object and class
     #
