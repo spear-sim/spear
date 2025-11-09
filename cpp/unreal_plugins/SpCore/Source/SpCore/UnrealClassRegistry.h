@@ -11,7 +11,7 @@
 #include <vector>
 
 #include <Engine/World.h>
-#include <HAL/Platform.h> // SPCORE_API, uint32
+#include <HAL/Platform.h>           // SPCORE_API, uint32
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 #include <UObject/NameTypes.h>      // FName

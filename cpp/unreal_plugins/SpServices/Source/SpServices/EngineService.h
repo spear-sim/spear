@@ -264,7 +264,7 @@ public:
         //
         // Note that We could implement UCLASSES and UFUNCTIONS to access FCommandLine, FGenericPlatformMisc,
         // etc, but then we would be limited to accessing them on the game thread. Providing access through
-        // the entry points below enables access from the worker thread, which simplifies the implmeentation
+        // the entry points below enables access from the worker thread, which simplifies the implementation
         // of spear.Instance.
         //
 
