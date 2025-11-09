@@ -860,6 +860,7 @@ void ASpDebugManager::TestReinterpretAsVectorOf() const
     }
     SP_LOG();
 
+    // this fast variant requires dest to have the same allocator type (SpAlignedAllocator<..., 32>) as src
     std::vector<int, SpAlignedAllocator<int, 32>> src_as_int = Std::reinterpretAsVectorOf<int>(std::move(src));
 
     SP_LOG("src_as_int.size():     ", src_as_int.size());
@@ -870,7 +871,8 @@ void ASpDebugManager::TestReinterpretAsVectorOf() const
     }
     SP_LOG();
 
-    std::vector<uint8_t> src_as_int_as_uint8 = Std::reinterpretAsVector<uint8_t, int>(std::views::all(src_as_int));
+    // in this case, we need to specify an allocator because otherwise std::vector<uint8_t> might be misaligned for storing int
+    std::vector<uint8_t, SpAlignedAllocator<uint8_t, 32>> src_as_int_as_uint8 = Std::reinterpretAsVector<uint8_t, SpAlignedAllocator<uint8_t, 32>, int>(std::views::all(src_as_int));
 
     SP_LOG("src_as_int_as_uint8.size():     ", src_as_int_as_uint8.size());
     SP_LOG("src_as_int_as_uint8.capacity(): ", src_as_int_as_uint8.capacity());
@@ -880,6 +882,7 @@ void ASpDebugManager::TestReinterpretAsVectorOf() const
     }
     SP_LOG();
 
+    // in this case, we do not need to specify an allocator because std::vector<int> will always be correctly aligned for storing uint8_t
     std::vector<int> src_as_int_as_uint8_as_int = Std::reinterpretAsVector<int, uint8_t>(std::views::all(src_as_int_as_uint8));
 
     SP_LOG("src_as_int_as_uint8_as_int.size():     ", src_as_int_as_uint8_as_int.size());

@@ -686,12 +686,14 @@ public:
         (!std::is_const_v<TSrcValue> || std::is_const_v<TDestValue>)
     static std::span<TDestValue> reinterpretAsSpan(TSrcValue* src_data, uint64_t src_num_elements)
     {
+        SP_ASSERT(isPtrSufficientlyAlignedFor<TDestValue>(src_data));
+
         std::span<TDestValue> dest;
         if (src_num_elements > 0) {
             uint64_t src_num_bytes = src_num_elements*sizeof(TSrcValue);
             SP_ASSERT(src_num_bytes % sizeof(TDestValue) == 0);
             uint64_t dest_num_elements = src_num_bytes / sizeof(TDestValue);
-            dest = std::span<TDestValue>(reinterpret_cast<TDestValue*>(src_data), dest_num_elements); // technically undefined behavior unless memory starts its lifetime as TValue but benign
+            dest = std::span<TDestValue>(reinterpret_cast<TDestValue*>(src_data), dest_num_elements); // technically undefined behavior unless memory starts its lifetime as TDestValue but benign
         }
         return dest;
     }
@@ -766,14 +768,14 @@ public:
         CVector<TSrcVector>
     static std::vector<TDestValue> reinterpretAsVectorOf(const TSrcVector& src)
     {
-        return reinterpretAsVector<TDestValue>(src.data(), src.size());
+        return reinterpretAsVectorImpl<std::vector<TDestValue>>(src.data(), src.size());
     }
 
     template <typename TDestValue, typename TDestAllocator, typename TSrcVector> requires
         CVector<TSrcVector>
     static std::vector<TDestValue, TDestAllocator> reinterpretAsVectorOf(const TSrcVector& src)
     {
-        return reinterpretAsVector<TDestValue, TDestAllocator>(src.data(), src.size());
+        return reinterpretAsVectorImpl<std::vector<TDestValue, TDestAllocator>>(src.data(), src.size());
     }
 
     // Don't infer TSrcValue from the input in the functions below, because we want to force the user to
@@ -788,73 +790,28 @@ public:
         CRangeValuesAreConvertibleTo<TRange, TSrcValue>
     static std::vector<TDestValue> reinterpretAsVector(TRange&& range)
     {
-        return reinterpretAsVector<std::vector<TDestValue>, TSrcValue>(std::forward<TRange>(range));
+        return reinterpretAsVectorImpl<std::vector<TDestValue>, TSrcValue>(std::forward<TRange>(range));
     }
 
     template <typename TDestValue, typename TDestAllocator, typename TSrcValue, typename TRange> requires
         CRangeValuesAreConvertibleTo<TRange, TSrcValue>
     static std::vector<TDestValue, TDestAllocator> reinterpretAsVector(TRange&& range)
     {
-        return reinterpretAsVector<std::vector<TDestValue, TDestAllocator>, TSrcValue>(std::forward<TRange>(range));
-    }
-
-    template <typename TDestVector, typename TSrcValue, typename TRange> requires
-        CVector<TDestVector> &&
-        CRangeValuesAreConvertibleTo<TRange, TSrcValue>
-    static TDestVector reinterpretAsVector(TRange&& range)
-    {
-        using TDestValue = TDestVector::value_type;
-
-        TDestVector dest;
-
-        // if sizeof(TSrcValue) is bigger than or equal to sizeof(TDestValue), then we need to resize dest every iteration
-        if (sizeof(TSrcValue) >= sizeof(TDestValue)) {
-            SP_ASSERT(sizeof(TSrcValue) % sizeof(TDestValue) == 0);
-            int num_dest_elements_per_src_element = sizeof(TSrcValue) / sizeof(TDestValue);
-            for (auto range_value : range) {
-                dest.resize(dest.size() + num_dest_elements_per_src_element);
-                TDestValue* dest_ptr = &(dest.at(dest.size() - num_dest_elements_per_src_element)); // get ptr after resize because data might have moved
-                SP_ASSERT(dest_ptr);
-                TSrcValue* src_ptr = reinterpret_cast<TSrcValue*>(dest_ptr);
-                *src_ptr = range_value;
-            }
-
-        // if sizeof(TSrcValue) is smaller than sizeof(TDestValue), then we need to skip iterations between resize operations
-        } else {
-            SP_ASSERT(sizeof(TDestValue) % sizeof(TSrcValue) == 0);
-            int num_src_elements_per_dest_element = sizeof(TDestValue) / sizeof(TSrcValue);
-            int src_index_within_dest_element = 0;
-            for (auto range_value : range) {
-                if (src_index_within_dest_element == 0) {
-                    dest.resize(dest.size() + 1);
-                }
-                TDestValue* dest_ptr = &(dest.at(dest.size() - 1)); // get ptr after resize because data might have moved
-                SP_ASSERT(dest_ptr);
-                TSrcValue* src_ptr = reinterpret_cast<TSrcValue*>(dest_ptr) + src_index_within_dest_element;
-                *src_ptr = range_value;
-                src_index_within_dest_element += 1;
-                if (src_index_within_dest_element == num_src_elements_per_dest_element) {
-                    src_index_within_dest_element = 0;
-                }
-            }
-            SP_ASSERT(src_index_within_dest_element == 0);
-        }
-
-        return dest;
+        return reinterpretAsVectorImpl<std::vector<TDestValue, TDestAllocator>, TSrcValue>(std::forward<TRange>(range));
     }
 
     template <typename TDestValue, typename TSrcValue, typename TSrcInitializerListValue> requires
         std::same_as<TSrcValue, TSrcInitializerListValue>
     static std::vector<TDestValue> reinterpretAsVector(std::initializer_list<TSrcInitializerListValue> src)
     {
-        return reinterpretAsVector<std::vector<TDestValue>>(std::ranges::data(src), std::ranges::size(src));
+        return reinterpretAsVectorImpl<std::vector<TDestValue>>(std::ranges::data(src), std::ranges::size(src));
     }
 
     template <typename TDestValue, typename TDestAllocator, typename TSrcValue, typename TSrcInitializerListValue> requires
         std::same_as<TSrcValue, TSrcInitializerListValue>
     static std::vector<TDestValue, TDestAllocator> reinterpretAsVector(std::initializer_list<TSrcInitializerListValue> src)
     {
-        return reinterpretAsVector<std::vector<TDestValue, TDestAllocator>>(std::ranges::data(src), std::ranges::size(src));
+        return reinterpretAsVectorImpl<std::vector<TDestValue, TDestAllocator>>(std::ranges::data(src), std::ranges::size(src));
     }
 
     // We can infer TSrcValue below because there is no potential for ambiguity.
@@ -862,18 +819,65 @@ public:
     template <typename TDestValue, typename TSrcValue>
     static std::vector<TDestValue> reinterpretAsVector(const TSrcValue* src_data, uint64_t src_num_elements)
     {
-        return reinterpretAsVector<std::vector<TDestValue>>(src_data, src_num_elements);
+        return reinterpretAsVectorImpl<std::vector<TDestValue>>(src_data, src_num_elements);
     }
 
     template <typename TDestValue, typename TDestAllocator, typename TSrcValue>
     static std::vector<TDestValue, TDestAllocator> reinterpretAsVector(const TSrcValue* src_data, uint64_t src_num_elements)
     {
-        return reinterpretAsVector<std::vector<TDestValue, TDestAllocator>>(src_data, src_num_elements);
+        return reinterpretAsVectorImpl<std::vector<TDestValue, TDestAllocator>>(src_data, src_num_elements);
+    }
+
+    // Low-level helpers
+
+    template <typename TDestVector, typename TSrcValue, typename TRange> requires
+        CVector<TDestVector> &&
+        CRangeValuesAreConvertibleTo<TRange, TSrcValue>
+    static TDestVector reinterpretAsVectorImpl(TRange&& range)
+    {
+        using TDestValue = TDestVector::value_type;
+
+        TDestVector dest;
+
+        size_t num_src_elements_per_resize;
+        size_t num_dest_elements_per_resize;
+        if (sizeof(TSrcValue) < sizeof(TDestValue)) {
+            SP_ASSERT(sizeof(TDestValue) % sizeof(TSrcValue) == 0);
+            num_src_elements_per_resize  = sizeof(TDestValue) / sizeof(TSrcValue);
+            num_dest_elements_per_resize = 1;
+        } else if (sizeof(TSrcValue) == sizeof(TDestValue)) {
+            num_src_elements_per_resize  = 1;
+            num_dest_elements_per_resize = 1;
+        } else {
+            SP_ASSERT(sizeof(TSrcValue) % sizeof(TDestValue) == 0);
+            num_src_elements_per_resize  = 1;
+            num_dest_elements_per_resize = sizeof(TSrcValue) / sizeof(TDestValue);
+        }
+
+        size_t src_index_within_dest_element = 0;
+        for (auto& range_value : range) {
+            if (src_index_within_dest_element == 0) {
+                resizeUninitialized(dest, dest.size() + num_dest_elements_per_resize);
+            }
+            TDestValue* dest_ptr = &(dest.at(dest.size() - num_dest_elements_per_resize)); // get ptr after resize because data might have moved
+            SP_ASSERT(dest_ptr);
+            SP_ASSERT(isPtrSufficientlyAlignedFor<TDestValue>(dest_ptr));
+            TSrcValue* src_ptr = reinterpret_cast<TSrcValue*>(dest_ptr) + src_index_within_dest_element;
+            SP_ASSERT(isPtrSufficientlyAlignedFor<TSrcValue>(src_ptr));
+            *src_ptr = range_value;
+            src_index_within_dest_element += 1;
+            if (src_index_within_dest_element == num_src_elements_per_resize) {
+                src_index_within_dest_element = 0;
+            }
+        }
+        SP_ASSERT(src_index_within_dest_element == 0);
+
+        return dest;
     }
 
     template <typename TDestVector, typename TSrcValue> requires
         CVector<TDestVector>
-    static TDestVector reinterpretAsVector(const TSrcValue* src_data, uint64_t src_num_elements)
+    static TDestVector reinterpretAsVectorImpl(const TSrcValue* src_data, uint64_t src_num_elements)
     {
         using TDestValue = TDestVector::value_type;
 
