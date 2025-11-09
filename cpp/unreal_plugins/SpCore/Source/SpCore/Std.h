@@ -805,16 +805,41 @@ public:
     {
         using TDestValue = TDestVector::value_type;
 
-        SP_ASSERT(sizeof(TSrcValue) % sizeof(TDestValue) == 0);
-        int num_dest_elements_per_src_element = sizeof(TSrcValue) / sizeof(TDestValue);
         TDestVector dest;
-        for (auto range_value : range) {
-            dest.resize(dest.size() + num_dest_elements_per_src_element);
-            TDestValue* dest_ptr = &(dest.at(dest.size() - num_dest_elements_per_src_element)); // get ptr after resize because data might have moved
-            SP_ASSERT(dest_ptr);
-            TSrcValue* src_ptr = reinterpret_cast<TSrcValue*>(dest_ptr);
-            *src_ptr = range_value;
+
+        // if sizeof(TSrcValue) is bigger than or equal to sizeof(TDestValue), then we need to resize dest every iteration
+        if (sizeof(TSrcValue) >= sizeof(TDestValue)) {
+            SP_ASSERT(sizeof(TSrcValue) % sizeof(TDestValue) == 0);
+            int num_dest_elements_per_src_element = sizeof(TSrcValue) / sizeof(TDestValue);
+            for (auto range_value : range) {
+                dest.resize(dest.size() + num_dest_elements_per_src_element);
+                TDestValue* dest_ptr = &(dest.at(dest.size() - num_dest_elements_per_src_element)); // get ptr after resize because data might have moved
+                SP_ASSERT(dest_ptr);
+                TSrcValue* src_ptr = reinterpret_cast<TSrcValue*>(dest_ptr);
+                *src_ptr = range_value;
+            }
+
+        // if sizeof(TSrcValue) is smaller than sizeof(TDestValue), then we need to skip iterations between resize operations
+        } else {
+            SP_ASSERT(sizeof(TDestValue) % sizeof(TSrcValue) == 0);
+            int num_src_elements_per_dest_element = sizeof(TDestValue) / sizeof(TSrcValue);
+            int src_index_within_dest_element = 0;
+            for (auto range_value : range) {
+                if (src_index_within_dest_element == 0) {
+                    dest.resize(dest.size() + 1);
+                }
+                TDestValue* dest_ptr = &(dest.at(dest.size() - 1)); // get ptr after resize because data might have moved
+                SP_ASSERT(dest_ptr);
+                TSrcValue* src_ptr = reinterpret_cast<TSrcValue*>(dest_ptr) + src_index_within_dest_element;
+                *src_ptr = range_value;
+                src_index_within_dest_element += 1;
+                if (src_index_within_dest_element == num_src_elements_per_dest_element) {
+                    src_index_within_dest_element = 0;
+                }
+            }
+            SP_ASSERT(src_index_within_dest_element == 0);
         }
+
         return dest;
     }
 

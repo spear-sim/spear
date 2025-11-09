@@ -9,7 +9,7 @@
 
 #include <map>
 #include <memory> // std::make_unique
-#include <ranges> // std::views::transform
+#include <ranges> // std::views::all, std::views::transform
 #include <vector>
 
 #include <Components/ActorComponent.h>
@@ -852,16 +852,43 @@ void ASpDebugManager::TestReinterpretAsVectorOf() const
     std::vector<uint8_t, SpAlignedAllocator<uint8_t, 32>> src = {1, 0, 0, 0, 2, 0, 0, 0};
     src.reserve(12);
 
-    std::vector<int, SpAlignedAllocator<int, 32>> dest = Std::reinterpretAsVectorOf<int>(std::move(src));
-
-    SP_LOG(dest.size());
-    SP_LOG(dest.capacity());
-
+    SP_LOG("src.size():     ", src.size());
+    SP_LOG("src.capacity(): ", src.capacity());
+    SP_LOG("src:");
+    for (auto s : src) {
+        SP_LOG(static_cast<int>(s));
+    }
     SP_LOG();
 
-    for (auto d : dest) {
-        SP_LOG(d);
+    std::vector<int, SpAlignedAllocator<int, 32>> src_as_int = Std::reinterpretAsVectorOf<int>(std::move(src));
+
+    SP_LOG("src_as_int.size():     ", src_as_int.size());
+    SP_LOG("src_as_int.capacity(): ", src_as_int.capacity());
+    SP_LOG("src_as_int:");
+    for (auto s : src_as_int) {
+        SP_LOG(static_cast<int>(s));
     }
+    SP_LOG();
+
+    std::vector<uint8_t> src_as_int_as_uint8 = Std::reinterpretAsVector<uint8_t, int>(std::views::all(src_as_int));
+
+    SP_LOG("src_as_int_as_uint8.size():     ", src_as_int_as_uint8.size());
+    SP_LOG("src_as_int_as_uint8.capacity(): ", src_as_int_as_uint8.capacity());
+    SP_LOG("src_as_int_as_uint8:");
+    for (auto s : src_as_int_as_uint8) {
+        SP_LOG(static_cast<int>(s));
+    }
+    SP_LOG();
+
+    std::vector<int> src_as_int_as_uint8_as_int = Std::reinterpretAsVector<int, uint8_t>(std::views::all(src_as_int_as_uint8));
+
+    SP_LOG("src_as_int_as_uint8_as_int.size():     ", src_as_int_as_uint8_as_int.size());
+    SP_LOG("src_as_int_as_uint8_as_int.capacity(): ", src_as_int_as_uint8_as_int.capacity());
+    SP_LOG("src_as_int_as_uint8_as_int:");
+    for (auto s : src_as_int_as_uint8_as_int) {
+        SP_LOG(static_cast<int>(s));
+    }
+    SP_LOG();
 }
 
 FString ASpDebugManager::GetString(FString Arg0, bool Arg1, int Arg2, FVector Arg3) const

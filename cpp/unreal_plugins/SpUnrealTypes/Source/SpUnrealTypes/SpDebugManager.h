@@ -53,19 +53,19 @@ public:
 
 private:
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void LoadConfig();
+    void LoadConfig(); // can't be const
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void SaveConfig();
+    void SaveConfig(); // can't be const
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void PrintDebugString() const;
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void GetAndSetObjectProperties();
+    void GetAndSetObjectProperties(); // can't be const
 
     UFUNCTION(CallInEditor, Category="SPEAR")
-    void CallFunctions();
+    void CallFunctions(); // can't be const
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void CallSpFunc() const;
