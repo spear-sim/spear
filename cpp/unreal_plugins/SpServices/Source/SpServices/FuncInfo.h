@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <array>
 #include <concepts>    // std::same_as
 #include <type_traits> // std::invoke_result_t, std::is_invocable_v
 
@@ -20,6 +19,16 @@ concept CFuncReturnsAndIsCallableWithArgs = std::same_as<TReturn, std::invoke_re
 template <typename TReturn, typename... TArgs>
 class FuncInfo {};
 
+template <typename TReturn, typename TArgsTuple>
+class FuncInfoHelper;
+
+template <typename TReturn, typename... TArgs>
+class FuncInfoHelper<TReturn, std::tuple<TArgs...>>
+{
+public:
+    using TFuncInfo = FuncInfo<TReturn, TArgs...>;
+};
+
 class FuncInfoUtils
 {
 public:
@@ -29,16 +38,12 @@ public:
     template <typename TFunc>
     static auto getFuncInfo()
     {
+        using TReturn = boost::callable_traits::return_type_t<TFunc>;
         using TArgsTuple = boost::callable_traits::args_t<TFunc>;
-        using TReturn = boost::callable_traits::return_type_t<TFunc>; // can't use TReturn = std::invoke_result_t<TFunc, TArgs...> because we haven't deduced TArgs... yet
+        using TFuncInfo = typename FuncInfoHelper<TReturn, TArgsTuple>::TFuncInfo;
 
-        return getFuncInfo<TReturn>(std::array<TArgsTuple, 0>());
-    }
+        SP_ASSERT(boost::callable_traits::is_callable_v<TFunc>);
 
-private:
-    template <typename TReturn, typename... TArgs>
-    static auto getFuncInfo(std::array<std::tuple<TArgs...>, 0> array)
-    {
-        return FuncInfo<TReturn, TArgs...>();
+        return TFuncInfo();
     }
 };
