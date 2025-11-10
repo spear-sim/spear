@@ -831,6 +831,8 @@ public:
         return reinterpretAsVectorImpl<std::vector<TDestValue, TDestAllocator>>(src_data, src_num_elements);
     }
 
+private:
+
     // Low-level helpers that require TDestVector (e.g., std::vector<int>) instead of TDestValue (e.g., int)
     // as a template parameter.
 
