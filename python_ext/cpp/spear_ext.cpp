@@ -178,8 +178,9 @@ NB_MODULE(spear_ext, module)
     Client::registerGameThreadEntryPointSignature<std::map<std::string, PackedArray>,      uint64_t,            uint64_t,                        int64_t,                                   uint64_t,                                  const std::map<std::string, PackedArray>&, const std::vector<std::string>&, const std::vector<std::string>&> (client_class);
 
     // 8 args
-    Client::registerGameThreadEntryPointSignature<uint64_t,                                const std::string&,  uint64_t,                        const std::string&,                        const std::vector<std::string>&,           uint64_t,                                  bool,                            uint64_t,                        uint64_t>       (client_class);
     Client::registerGameThreadEntryPointSignature<uint64_t,                                uint64_t,            uint64_t,                        const std::string&,                        const std::string&,                        const std::vector<std::string>&,           uint64_t,                        bool,                            uint64_t>       (client_class);
+    Client::registerGameThreadEntryPointSignature<uint64_t,                                uint64_t,            uint64_t,                        const std::string&,                        const std::vector<std::string>&,           uint64_t,                                  bool,                            uint64_t,                        uint64_t>       (client_class);
+    Client::registerGameThreadEntryPointSignature<uint64_t,                                const std::string&,  uint64_t,                        const std::string&,                        const std::vector<std::string>&,           uint64_t,                                  bool,                            uint64_t,                        uint64_t>       (client_class);
 
     //
     // Custom types

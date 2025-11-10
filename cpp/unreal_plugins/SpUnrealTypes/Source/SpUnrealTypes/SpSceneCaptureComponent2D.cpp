@@ -147,8 +147,7 @@ USpSceneCaptureComponent2D::USpSceneCaptureComponent2D()
     // match view state data to this component
     bAlwaysPersistRenderingState = true;
 
-    // disable rendering to texture until we're initialized
-    SetVisibility(false);
+    SetVisibility(false); // disable rendering to texture
 }
 
 USpSceneCaptureComponent2D::~USpSceneCaptureComponent2D()
@@ -220,8 +219,7 @@ void USpSceneCaptureComponent2D::Initialize()
         scene_view_extension_ = FSceneViewExtensions::NewExtension<FSpSceneViewExtension>(this);
     }
 
-    // enable rendering to texture
-    SetVisibility(true);
+    SetVisibility(true); // enable rendering to texture
 
     SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
     uint64_t num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
@@ -268,7 +266,6 @@ void USpSceneCaptureComponent2D::Initialize()
             packed_array.shared_memory_name_ = "smem:sp_scene_capture_component_2d";
             packed_array.shared_memory_usage_flags_ = shared_memory_view_.usage_flags_;
             dest_ptr = shared_memory_view_.data_;
-
         } else {
             Std::resizeUninitialized(packed_array.data_, num_bytes);
             packed_array.view_ = packed_array.data_.data();
@@ -285,10 +282,9 @@ void USpSceneCaptureComponent2D::Initialize()
             // ReadPixels assumes 4 channels per pixel, 1 uint8 per channel
             if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::UInt8) {
 
-                FColor* scratchpad_data_ptr = Unreal::updateArrayDataPtr(scratchpad_color_, dest_ptr, num_bytes);
+                Unreal::UpdateArrayDataPtrScope scope(scratchpad_color_, dest_ptr, num_bytes);
                 bool success = texture_render_target_resource->ReadPixels(scratchpad_color_);
                 SP_ASSERT(success);
-                Unreal::updateArrayDataPtr(scratchpad_color_, scratchpad_data_ptr, num_bytes);
 
             // ReadFloat16Pixels assumes 4 channels per pixel, 1 float16 per channel
             } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float16) {
@@ -297,10 +293,9 @@ void USpSceneCaptureComponent2D::Initialize()
                 FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(compression_mode);
                 read_surface_flags.SetLinearToGamma(false);
 
-                FFloat16Color* scratchpad_data_ptr = Unreal::updateArrayDataPtr(scratchpad_float_16_color_, dest_ptr, num_bytes);
+                Unreal::UpdateArrayDataPtrScope scope(scratchpad_float_16_color_, dest_ptr, num_bytes);
                 bool success = texture_render_target_resource->ReadFloat16Pixels(scratchpad_float_16_color_, read_surface_flags);
                 SP_ASSERT(success);
-                Unreal::updateArrayDataPtr(scratchpad_float_16_color_, scratchpad_data_ptr, num_bytes);
 
             // ReadLinearColorPixels assumes 4 channels per pixel, 1 float32 per channel
             } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32) {
@@ -310,10 +305,9 @@ void USpSceneCaptureComponent2D::Initialize()
                 FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(compression_mode);
                 read_surface_flags.SetLinearToGamma(false);
 
-                FLinearColor* scratchpad_data_ptr = Unreal::updateArrayDataPtr(scratchpad_linear_color_, dest_ptr, num_bytes);
+                Unreal::UpdateArrayDataPtrScope scope(scratchpad_linear_color_, dest_ptr, num_bytes);
                 bool success = texture_render_target_resource->ReadLinearColorPixels(scratchpad_linear_color_, read_surface_flags);
                 SP_ASSERT(success);
-                Unreal::updateArrayDataPtr(scratchpad_linear_color_, scratchpad_data_ptr, num_bytes);
 
             } else {
                 SP_ASSERT(false);
@@ -347,7 +341,7 @@ void USpSceneCaptureComponent2D::Terminate()
         shared_memory_region_ = nullptr;
     }
 
-    SetVisibility(false);
+    SetVisibility(false); // disable rendering to texture
     bAlwaysPersistRenderingState = false;
 
     scene_view_extension_ = nullptr;

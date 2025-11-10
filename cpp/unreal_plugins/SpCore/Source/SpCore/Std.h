@@ -298,18 +298,19 @@ public:
     template <typename TValue, typename... TVectorTraits>
     static void resizeUninitialized(std::vector<TValue, TVectorTraits...>& vector, uint64_t size)
     {
-        struct TValueNoDefaultInit { TValue value; TValueNoDefaultInit() {} };
+        // This function is unsafe because it relies on undefined behavior when invoking vector_no_default_init->resize().
+
+        struct alignas(alignof(TValue)) TValueNoDefaultInit { uint8_t value[sizeof(TValue)]; TValueNoDefaultInit() {} };
 
         using TVector = std::vector<TValue, TVectorTraits...>;
         using TAllocator = typename TVector::allocator_type;
         using TVectorNoDefaultInit = std::vector<TValueNoDefaultInit, typename std::allocator_traits<TAllocator>::template rebind_alloc<TValueNoDefaultInit>>;
 
-        SP_ASSERT(sizeof(TValue)    == sizeof(TValueNoDefaultInit));
-        SP_ASSERT(sizeof(TValue[2]) == sizeof(TValueNoDefaultInit[2]));
-        SP_ASSERT(sizeof(TValue[4]) == sizeof(TValueNoDefaultInit[4]));
+        SP_ASSERT(sizeof(TValue) == sizeof(TValueNoDefaultInit));
+        SP_ASSERT(alignof(TValue) == alignof(TValueNoDefaultInit));
 
-        TVectorNoDefaultInit* vector_no_default_init = reinterpret_cast<TVectorNoDefaultInit*>(&vector); // technically undefined behavior but benign in practice
-        vector_no_default_init->resize(size);
+        TVectorNoDefaultInit* vector_no_default_init = reinterpret_cast<TVectorNoDefaultInit*>(&vector);
+        vector_no_default_init->resize(size); // undefined behavior
 
         SP_ASSERT(vector.size() == size);
     }
@@ -655,7 +656,7 @@ public:
     }
 
     //
-    // Functions for safely reinterpreting ranges, vectors, and initializer lists
+    // Functions for (as safely as possible) reinterpreting ranges, vectors, and initializer lists
     //
 
     template <typename TValue>
@@ -693,7 +694,7 @@ public:
             uint64_t src_num_bytes = src_num_elements*sizeof(TSrcValue);
             SP_ASSERT(src_num_bytes % sizeof(TDestValue) == 0);
             uint64_t dest_num_elements = src_num_bytes / sizeof(TDestValue);
-            dest = std::span<TDestValue>(reinterpret_cast<TDestValue*>(src_data), dest_num_elements); // technically undefined behavior unless memory starts its lifetime as TDestValue but benign
+            dest = std::span<TDestValue>(reinterpret_cast<TDestValue*>(src_data), dest_num_elements); // undefined behavior when dest is accessed
         }
         return dest;
     }
@@ -703,6 +704,8 @@ public:
     template <typename TDestValue, typename TSrcValue, typename... TSrcTraits>
     static auto reinterpretAsVectorOf(std::vector<TSrcValue, TSrcTraits...>&& src)
     {
+        // This function is unsafe because it relies on undefined behavior and the private memory layout of std::vector.
+
         using TSrcVector = std::vector<TSrcValue, TSrcTraits...>;
         using TSrcAllocator = typename TSrcVector::allocator_type;
         using TDestVector = std::vector<TDestValue, typename std::allocator_traits<TSrcAllocator>::template rebind_alloc<TDestValue>>;
@@ -720,13 +723,13 @@ public:
         TSrcValue** src_ptr = reinterpret_cast<TSrcValue**>(&src);
         TDestValue** dest_ptr = reinterpret_cast<TDestValue**>(&dest);
 
-        TSrcValue* src_begin_ptr    = *(src_ptr + 0);
-        TSrcValue* src_end_ptr      = *(src_ptr + 1);
-        TSrcValue* src_capacity_ptr = *(src_ptr + 2);
+        TSrcValue* src_begin_ptr    = *(src_ptr + 0);    // undefined behavior
+        TSrcValue* src_end_ptr      = *(src_ptr + 1);    // undefined behavior
+        TSrcValue* src_capacity_ptr = *(src_ptr + 2);    // undefined behavior
 
-        TDestValue* dest_begin_ptr    = *(dest_ptr + 0);
-        TDestValue* dest_end_ptr      = *(dest_ptr + 1);
-        TDestValue* dest_capacity_ptr = *(dest_ptr + 2);
+        TDestValue* dest_begin_ptr    = *(dest_ptr + 0); // undefined behavior
+        TDestValue* dest_end_ptr      = *(dest_ptr + 1); // undefined behavior
+        TDestValue* dest_capacity_ptr = *(dest_ptr + 2); // undefined behavior
 
         // check to make sure that we're interpreting the layouts of src and dest correctly
 
@@ -750,13 +753,13 @@ public:
 
         // swap pointers
 
-        *(src_ptr + 0) = reinterpret_cast<TSrcValue*>(dest_begin_ptr);
-        *(src_ptr + 1) = reinterpret_cast<TSrcValue*>(dest_end_ptr);
-        *(src_ptr + 2) = reinterpret_cast<TSrcValue*>(dest_capacity_ptr);
+        *(src_ptr + 0) = reinterpret_cast<TSrcValue*>(dest_begin_ptr);     // undefined behavior
+        *(src_ptr + 1) = reinterpret_cast<TSrcValue*>(dest_end_ptr);       // undefined behavior
+        *(src_ptr + 2) = reinterpret_cast<TSrcValue*>(dest_capacity_ptr);  // undefined behavior
 
-        *(dest_ptr + 0) = reinterpret_cast<TDestValue*>(src_begin_ptr);
-        *(dest_ptr + 1) = reinterpret_cast<TDestValue*>(src_end_ptr);
-        *(dest_ptr + 2) = reinterpret_cast<TDestValue*>(src_capacity_ptr);
+        *(dest_ptr + 0) = reinterpret_cast<TDestValue*>(src_begin_ptr);    // undefined behavior
+        *(dest_ptr + 1) = reinterpret_cast<TDestValue*>(src_end_ptr);      // undefined behavior
+        *(dest_ptr + 2) = reinterpret_cast<TDestValue*>(src_capacity_ptr); // undefined behavior
 
         SP_ASSERT(dest_begin_ptr == reinterpret_cast<TDestValue*>(src.data()));
         SP_ASSERT(src_begin_ptr  == reinterpret_cast<TSrcValue*>(dest.data()));
@@ -828,13 +831,16 @@ public:
         return reinterpretAsVectorImpl<std::vector<TDestValue, TDestAllocator>>(src_data, src_num_elements);
     }
 
-    // Low-level helpers
+    // Low-level helpers that require TDestVector (e.g., std::vector<int>) instead of TDestValue (e.g., int)
+    // as a template parameter.
 
     template <typename TDestVector, typename TSrcValue, typename TRange> requires
         CVector<TDestVector> &&
         CRangeValuesAreConvertibleTo<TRange, TSrcValue>
     static TDestVector reinterpretAsVectorImpl(TRange&& range)
     {
+        // This function is unsafe because it relies on undefined behavior.
+
         using TDestValue = TDestVector::value_type;
 
         TDestVector dest;
@@ -864,7 +870,7 @@ public:
             SP_ASSERT(isPtrSufficientlyAlignedFor<TDestValue>(dest_ptr));
             TSrcValue* src_ptr = reinterpret_cast<TSrcValue*>(dest_ptr) + src_index_within_dest_element;
             SP_ASSERT(isPtrSufficientlyAlignedFor<TSrcValue>(src_ptr));
-            *src_ptr = range_value;
+            *src_ptr = range_value;                                                        // undefined behavior
             src_index_within_dest_element += 1;
             if (src_index_within_dest_element == num_src_elements_per_resize) {
                 src_index_within_dest_element = 0;

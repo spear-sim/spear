@@ -849,7 +849,26 @@ void ASpDebugManager::TestReinterpretAsVectorOf() const
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    std::vector<uint8_t, SpAlignedAllocator<uint8_t, 32>> src = {1, 0, 0, 0, 2, 0, 0, 0};
+    std::vector<uint8_t, SpAlignedAllocator<uint8_t, 32>> src;
+    SP_LOG("src.size():     ", src.size());
+    SP_LOG("src.capacity(): ", src.capacity());
+    SP_LOG("src:");
+    for (auto s : src) {
+        SP_LOG(static_cast<int>(s));
+    }
+    SP_LOG();
+
+    Std::resizeUninitialized(src, 8);
+
+    SP_LOG("src.size():     ", src.size());
+    SP_LOG("src.capacity(): ", src.capacity());
+    SP_LOG("src:");
+    for (auto s : src) {
+        SP_LOG(static_cast<int>(s));
+    }
+    SP_LOG();
+
+    src = {1, 0, 0, 0, 2, 0, 0, 0};
     src.reserve(12);
 
     SP_LOG("src.size():     ", src.size());

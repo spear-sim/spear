@@ -287,7 +287,7 @@ public:
         }
 
         data_ = std::move(packed_array.data_);
-        view_ = std::span<TValue>(static_cast<TValue*>(packed_array.view_), num_elements); // technically undefined behavior unless memory starts its lifetime as TValue but benign
+        view_ = std::span<TValue>(static_cast<TValue*>(packed_array.view_), num_elements); // undefined behavior
         data_source_ = packed_array.data_source_;
 
         shape_ = std::move(packed_array.shape_);
@@ -448,12 +448,6 @@ public:
     }
 
 private:
-
-    // Technically this pattern is undefined behavior, but it is benign in practice. The undefined behavior
-    // arises because technically a block of raw memory needs to start its lifetime as a raw heap allocation
-    // of type TValue, in order for a pointer to that block of memory to be safely reinterpreted as a pointer
-    // to a TValue. See std::start_lifetime_as_array<TValue> in C++23.
-
     std::vector<uint8_t, SpPackedArrayAllocator> data_;
     std::span<TValue> view_;
 
