@@ -9,8 +9,8 @@ import numpy as np
 import scipy
 import spear
 
-if not spear.__is_ue_python__:
-    import spear_ext # can't be installed in the UE Python environment because UE doesn't ship with CPython headers
+if spear.__can_import_spear_ext__:
+    import spear_ext
 
 
 # These classes are for internal use, and do not need to be instantiated directly by most users.

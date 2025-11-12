@@ -5,11 +5,17 @@
 
 __version__ = "v0.6.0"
 
+# Sometimes spear_ext is unavailable. For example, it can't be installed in the UE Python environment because
+# UE doesn't ship with CPython headers. Additionally, the build script that installs spear_ext depends on the
+# spear package for logging, so spear_ext will also be unavailable the first time this build script runs. So
+# spear_ext needs to be conditionally imported, and we provide a spear.__can_import_spear_ext__ variable that
+# can be used for this purpose.
+
 try:
-    import unreal
-    __is_ue_python__ = True
+    import spear_ext
+    __can_import_spear_ext__ = True
 except:
-    __is_ue_python__ = False
+    __can_import_spear_ext__ = False
 
 # submodules
 import spear.utils

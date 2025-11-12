@@ -13,8 +13,8 @@ import subprocess
 import sys
 import time
 
-if not spear.__is_ue_python__:
-    import spear_ext # can't be installed in the UE Python environment because UE doesn't ship with CPython headers
+if spear.__can_import_spear_ext__:
+    import spear_ext
 
 
 #
