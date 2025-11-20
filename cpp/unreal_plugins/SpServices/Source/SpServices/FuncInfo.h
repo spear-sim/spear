@@ -42,8 +42,6 @@ public:
         using TArgsTuple = boost::callable_traits::args_t<TFunc>;
         using TFuncInfo = typename FuncInfoHelper<TReturn, TArgsTuple>::TFuncInfo;
 
-        SP_ASSERT(boost::callable_traits::is_callable_v<TFunc>);
-
         return TFuncInfo();
     }
 };
