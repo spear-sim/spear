@@ -27,7 +27,7 @@ public class SpTargetRulesTarget : TargetRules
             // are visible in the terminal.
             bBuildAdditionalConsoleApp = true;
 
-            // Sometimes useful for debugging
+            // Sometimes useful for debugging:
             // bOverrideBuildEnvironment = true;
             // AdditionalCompilerArguments = "/showIncludes";
 
@@ -38,13 +38,19 @@ public class SpTargetRulesTarget : TargetRules
             bOverrideBuildEnvironment = true;
             AdditionalLinkerArguments = " -Wl,-no_warn_duplicate_libraries";
 
+            // Sometimes useful for debugging:
+            // AdditionalCompilerArguments = "-###";
+
         } else if (targetInfo.Platform == UnrealTargetPlatform.Linux) {
 
             // The "-fexperimental-library" flag is required to enable support for std::ranges on Linux. This
-            // is because UE 5.5 builds using Clang 16 on Linux, but std::ranges are not fully supported in
-            // Clang 16 without this additional flag.
+            // is because UE 5.5 builds using Clang 18 on Linux, but std::ranges are not fully supported in
+            // Clang 18 without this additional flag.
             bOverrideBuildEnvironment = true;
             AdditionalCompilerArguments = "-fexperimental-library";
+
+            // Sometimes useful for debugging:
+            // AdditionalCompilerArguments = "-fexperimental-library -###";
 
         } else if (targetInfo.Platform == UnrealTargetPlatform.IOS || targetInfo.Platform == UnrealTargetPlatform.TVOS) {
             SP_LOG("    NOTE: We only expect to see targetInfo.Platform == UnrealTargetPlatform.IOS or targetInfo.Platform == UnrealTargetPlatform.TVOS when we're on macOS and we're attempting to generate XCode project files. If we're not on macOS generating XCode project files, target.Platform == UnrealTargetPlatform.IOS and target.Platform == UnrealTargetPlatform.TVOS are unexpected.");

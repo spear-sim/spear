@@ -91,7 +91,12 @@ if __name__ == "__main__":
 
         cxx_compiler = os.path.join(linux_clang_bin_dir, "clang++")
 
-        common_cxx_flags = f"-std=c++20 -O3 -fexperimental-library -nostdinc++ -I\'{linux_libcpp_include_dir}\' -Wno-reserved-macro-identifier -stdlib=libc++ -L\'{linux_libcpp_lib_dir}\' -lc++"
+        # Don't use -fexperimental-library here, because this will attempt to link against a libc++ library
+        # that doesn't ship with UE. Instead, enable the _LIBCPP_ENABLE_EXPERIMENTAL macro directly, which is
+        # sufficient to enable std::ranges, but won't attempt to link against the missing library. This
+        # low-level build customization is not necessary when building our Unreal plugins, because the Unreal
+        # Build Tool handles this automatically.
+        common_cxx_flags = f"-std=c++20 -O3 -D_LIBCPP_ENABLE_EXPERIMENTAL -nostdinc++ -I\'{linux_libcpp_include_dir}\' -Wno-reserved-macro-identifier -stdlib=libc++ -L\'{linux_libcpp_lib_dir}\' -lc++"
         cmake_cxx_flags = f"{common_cxx_flags}"
 
         if args.conda_script:
