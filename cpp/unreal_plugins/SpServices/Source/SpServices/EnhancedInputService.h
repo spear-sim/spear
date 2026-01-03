@@ -28,6 +28,7 @@
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
+#include "SpCore/UnrealUtils.h"
 
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/Service.h"
@@ -77,7 +78,7 @@ public:
                 UEnhancedInputLocalPlayerSubsystem* enhanced_input_subsystem_ptr = toPtr<UEnhancedInputLocalPlayerSubsystem>(enhanced_input_subsystem);
 
                 FSpInputActionValue sp_input_action_value;
-                Unreal::setObjectPropertiesFromString(&sp_input_action_value, FSpInputActionValue::StaticStruct(), input_action_value_string);
+                UnrealUtils::setObjectPropertiesFromString(&sp_input_action_value, FSpInputActionValue::StaticStruct(), input_action_value_string);
                 FInputActionValue input_action_value(sp_input_action_value.ValueType, sp_input_action_value.Value);
 
                 enhanced_input_subsystem_ptr->InjectInputForAction(
@@ -108,21 +109,21 @@ public:
                 TArray<TObjectPtr<UInputTrigger>> triggers_tarray = Unreal::toTArrayOf<TObjectPtr<UInputTrigger>>(toPtr<UInputTrigger>(std::move(triggers)));
 
                 FSpInputActionValue sp_input_action_value;
-                Unreal::setObjectPropertiesFromString(&sp_input_action_value, FSpInputActionValue::StaticStruct(), input_action_value_string);
+                UnrealUtils::setObjectPropertiesFromString(&sp_input_action_value, FSpInputActionValue::StaticStruct(), input_action_value_string);
                 FInputActionValue input_action_value(sp_input_action_value.ValueType, sp_input_action_value.Value);
 
                 FSpInputActionInstance sp_input_action_instance;
-                Unreal::setObjectPropertiesFromString(&sp_input_action_instance, FSpInputActionInstance::StaticStruct(), input_action_instance_string);
+                UnrealUtils::setObjectPropertiesFromString(&sp_input_action_instance, FSpInputActionInstance::StaticStruct(), input_action_instance_string);
 
                 // The internal FInputActionValue in FInputActionInstance isn't exposed to the property
                 // system, so we handle it separately using this set function.
                 sp_input_action_instance.setInputActionValue(input_action_value);
 
                 // setObjectPropertiesFromString(...) can't be used to set pointers, so we handle modifiers
-                // and triggers separately. We could use Unreal::setPropertyValueFromString(...) to do this,
-                // but instead we choose to do it directly through these set functions that we define on our
-                // FSpInputActionInstance class, which derives from FInputActionInstance to access protected
-                // member variables.
+                // and triggers separately. We could use UnrealUtils::setPropertyValueFromString(...) to do
+                // this, but instead we choose to do it directly through these set functions that we define
+                // on our FSpInputActionInstance class, which derives from FInputActionInstance to access
+                // protected member variables.
                 sp_input_action_instance.setModifiers(modifiers_tarray);
                 sp_input_action_instance.setTriggers(triggers_tarray);
 
@@ -140,9 +141,9 @@ public:
 
                         // SourceAction is a private member variable on FSpInputActionInstance, but it is
                         // accessible through Unreal's property system, so we can still get and set it.
-                        SpPropertyDesc property_desc = Unreal::findPropertyByName(
+                        SpPropertyDesc property_desc = UnrealUtils::findPropertyByName(
                             &sp_input_action_instance, FSpInputActionInstance::StaticStruct(), "SourceAction");
-                        Unreal::setPropertyValueFromString(property_desc, Std::toStringFromPtr(input_action));
+                        UnrealUtils::setPropertyValueFromString(property_desc, Std::toStringFromPtr(input_action));
 
                         event_binding->Execute(sp_input_action_instance);
                     }
@@ -162,18 +163,18 @@ public:
                 }
 
                 FInputChord chord;
-                Unreal::setObjectPropertiesFromString(&chord, FInputChord::StaticStruct(), chord_string);
+                UnrealUtils::setObjectPropertiesFromString(&chord, FInputChord::StaticStruct(), chord_string);
 
                 EInputEvent key_event = Unreal::getEnumValueFromString<EInputEvent>(key_event_string);
 
                 FSpInputActionValue sp_input_action_value;
-                Unreal::setObjectPropertiesFromString(&sp_input_action_value, FSpInputActionValue::StaticStruct(), input_action_value_string);
+                UnrealUtils::setObjectPropertiesFromString(&sp_input_action_value, FSpInputActionValue::StaticStruct(), input_action_value_string);
                 FInputActionValue input_action_value(sp_input_action_value.ValueType, sp_input_action_value.Value);
 
                 for (const auto& debug_key_binding : enhanced_input_component->GetDebugKeyBindings()) {
 
                     if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENHANCED_INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
-                        SP_LOG(Unreal::getObjectPropertiesAsString(&(debug_key_binding->Chord), FInputChord::StaticStruct()));
+                        SP_LOG(UnrealUtils::getObjectPropertiesAsString(&(debug_key_binding->Chord), FInputChord::StaticStruct()));
                         SP_LOG(Unreal::getStringFromEnumValue(debug_key_binding->KeyEvent.GetValue()));
                         SP_LOG();
                     }
@@ -189,10 +190,10 @@ private:
     static UEnhancedInputComponent* getEnhancedInputComponent(uint64_t& actor)
     {
         AActor* actor_ptr = toPtr<AActor>(actor);
-        std::vector<UEnhancedInputComponent*> enhanced_input_components = Unreal::getComponentsByType<UEnhancedInputComponent>(actor_ptr);
+        std::vector<UEnhancedInputComponent*> enhanced_input_components = UnrealUtils::getComponentsByType<UEnhancedInputComponent>(actor_ptr);
         if (enhanced_input_components.size() != 1) {
             SP_LOG_CURRENT_FUNCTION();
-            SP_LOG("    Couldn't find a unique UEnhancedInputComponent on actor ", Unreal::tryGetStableName(actor_ptr), ", giving up...");
+            SP_LOG("    Couldn't find a unique UEnhancedInputComponent on actor ", UnrealUtils::tryGetStableName(actor_ptr), ", giving up...");
             return nullptr;
         } else {
             return enhanced_input_components.at(0);

@@ -20,6 +20,7 @@
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+#include "SpCore/UnrealUtils.h"
 
 ASpInitializeWorldManager::ASpInitializeWorldManager()
 {
@@ -93,15 +94,15 @@ void ASpInitializeWorldManager::BeginPlay()
     //
 
     if (bOverridePhysicsSettings) {
-        std::string physics_settings_str = Unreal::getObjectPropertiesAsString(&PhysicsSettings, FSpPhysicsSettings::StaticStruct());
+        std::string physics_settings_str = UnrealUtils::getObjectPropertiesAsString(&PhysicsSettings, FSpPhysicsSettings::StaticStruct());
 
         SP_LOG("    Overriding physics settings...");
         SP_LOG("    Old physics settings: ");
-        SP_LOG_NO_PREFIX(Unreal::getObjectPropertiesAsString(UPhysicsSettings::Get()));
+        SP_LOG_NO_PREFIX(UnrealUtils::getObjectPropertiesAsString(UPhysicsSettings::Get()));
         SP_LOG("    New physics settings: ");
         SP_LOG_NO_PREFIX(physics_settings_str);
 
-        Unreal::setObjectPropertiesFromString(UPhysicsSettings::Get(), physics_settings_str);
+        UnrealUtils::setObjectPropertiesFromString(UPhysicsSettings::Get(), physics_settings_str);
     }
 
     //

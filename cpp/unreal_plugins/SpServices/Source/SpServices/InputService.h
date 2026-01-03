@@ -21,7 +21,7 @@
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
-#include "SpCore/UnrealClassRegistry.h"
+#include "SpCore/UnrealUtils.h"
 
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/Service.h"
@@ -79,13 +79,13 @@ public:
                 }
 
                 FInputChord chord;
-                Unreal::setObjectPropertiesFromString(&chord, FInputChord::StaticStruct(), chord_string);
+                UnrealUtils::setObjectPropertiesFromString(&chord, FInputChord::StaticStruct(), chord_string);
                 EInputEvent key_event = Unreal::getEnumValueFromString<EInputEvent>(key_event_string);
 
                 for (auto& key_binding : input_component->KeyBindings) {
 
                     if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
-                        SP_LOG(Unreal::getObjectPropertiesAsString(&(key_binding.Chord), FInputChord::StaticStruct()));
+                        SP_LOG(UnrealUtils::getObjectPropertiesAsString(&(key_binding.Chord), FInputChord::StaticStruct()));
                         SP_LOG(Unreal::getStringFromEnumValue(key_binding.KeyEvent.GetValue()));
                         SP_LOG();
                     }
@@ -107,7 +107,7 @@ public:
                 EInputEvent key_event = Unreal::getEnumValueFromString<EInputEvent>(key_event_string);
                 ETouchIndex::Type finger_index = Unreal::getEnumValueFromString<ETouchIndex::Type>(finger_index_string);
                 FVector location;
-                Unreal::setObjectPropertiesFromString(&location, UnrealClassRegistry::getStaticStruct<FVector>(), location_string);
+                UnrealUtils::setObjectPropertiesFromString(&location, Unreal::getStaticStruct<FVector>(), location_string);
 
                 for (auto& touch_binding : input_component->TouchBindings) {
 
@@ -177,7 +177,7 @@ public:
                 }
 
                 FVector vector_axis_value;
-                Unreal::setObjectPropertiesFromString(&vector_axis_value, UnrealClassRegistry::getStaticStruct<FVector>(), vector_axis_value_string);
+                UnrealUtils::setObjectPropertiesFromString(&vector_axis_value, Unreal::getStaticStruct<FVector>(), vector_axis_value_string);
 
                 for (auto& vector_axis_binding : input_component->VectorAxisBindings) {
 
@@ -185,7 +185,7 @@ public:
                         SP_LOG(Unreal::toStdString(vector_axis_binding.AxisKey.GetDisplayName()));
                         SP_LOG(Unreal::toStdString(vector_axis_binding.AxisKey.GetFName()));
                         SP_LOG(Unreal::toStdString(vector_axis_binding.AxisKey.ToString()));
-                        SP_LOG(Unreal::getObjectPropertiesAsString(&(vector_axis_binding.AxisValue), UnrealClassRegistry::getStaticStruct<FVector>()));
+                        SP_LOG(UnrealUtils::getObjectPropertiesAsString(&(vector_axis_binding.AxisValue), Unreal::getStaticStruct<FVector>()));
                         SP_LOG();
                     }
 
@@ -249,10 +249,10 @@ private:
     static UInputComponent* getInputComponent(uint64_t& actor)
     {
         AActor* actor_ptr = toPtr<AActor>(actor);
-        std::vector<UInputComponent*> input_components = Unreal::getComponentsByType<UInputComponent>(actor_ptr);
+        std::vector<UInputComponent*> input_components = UnrealUtils::getComponentsByType<UInputComponent>(actor_ptr);
         if (input_components.size() != 1) {
             SP_LOG_CURRENT_FUNCTION();
-            SP_LOG("    Couldn't find a unique UInputComponent on actor ", Unreal::tryGetStableName(actor_ptr), ", giving up...");
+            SP_LOG("    Couldn't find a unique UInputComponent on actor ", UnrealUtils::tryGetStableName(actor_ptr), ", giving up...");
             return nullptr;
         } else {
             return input_components.at(0);

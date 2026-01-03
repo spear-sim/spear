@@ -19,7 +19,8 @@
 #include <memory>      // std::allocator_traits
 #include <ranges>      // std::ranges::begin, std::ranges::contiguous_range, std::ranges::data, std::ranges::end, std::ranges::range,
                        // std::ranges::sized_range, std::ranges::size, std::views::keys, std::views::transform
-#include <type_traits> // std::remove_cvref_t, std::underlying_type_t
+#include <type_traits> // std::is_empty, std::is_trivially_constructible, std::is_trivially_copyable, std::is_trivially_destructible, std::remove_cvref_t,
+                       // std::underlying_type_t
 #include <span>
 #include <set>
 #include <string>      // std::equal
@@ -300,7 +301,7 @@ public:
     {
         // This function is unsafe because it relies on undefined behavior when invoking vector_no_default_init->resize().
 
-        struct alignas(alignof(TValue)) TValueNoDefaultInit { uint8_t value[sizeof(TValue)]; TValueNoDefaultInit() {} };
+        struct alignas(alignof(TValue)) TValueNoDefaultInit { uint8_t value[sizeof(TValue)]; TValueNoDefaultInit() = default; };
 
         using TVector = std::vector<TValue, TVectorTraits...>;
         using TAllocator = typename TVector::allocator_type;
@@ -308,6 +309,10 @@ public:
 
         SP_ASSERT(sizeof(TValue) == sizeof(TValueNoDefaultInit));
         SP_ASSERT(alignof(TValue) == alignof(TValueNoDefaultInit));
+
+        // check to make sure the allocator is stateless and can be used to deallocate memory from a different instance 
+        SP_ASSERT(std::is_empty<TAllocator>());
+        SP_ASSERT(std::allocator_traits<TAllocator>::is_always_equal::value);
 
         TVectorNoDefaultInit* vector_no_default_init = reinterpret_cast<TVectorNoDefaultInit*>(&vector);
         vector_no_default_init->resize(size); // undefined behavior
@@ -457,6 +462,22 @@ public:
         auto [begin, end] = std::ranges::unique(values);
         values.erase(begin, end);
         return values;
+    }
+
+    template <typename TVector> requires
+        CVector<TVector>
+    static auto count(const TVector& src)
+    {
+        using TValue = typename TVector::value_type;
+
+        std::map<TValue, uint64_t> counts;
+        for (auto& s : src) {
+            if (!Std::containsKey(counts, s)) {
+                Std::insert(counts, s, 0);
+            }
+            counts.at(s) += 1;
+        }
+        return counts;
     }
 
     template <typename TVectorKeys, typename TVectorValues> requires
@@ -660,12 +681,12 @@ public:
     //
 
     template <typename TValue>
-    static bool isPtrSufficientlyAlignedFor(void* ptr)
+    static bool isPtrSufficientlyAlignedFor(const void* ptr)
     {
         return isPtrSufficientlyAligned(ptr, alignof(TValue));
     }
 
-    static bool isPtrSufficientlyAligned(void* ptr, size_t alignment_num_bytes)
+    static bool isPtrSufficientlyAligned(const void* ptr, size_t alignment_num_bytes)
     {
         return reinterpret_cast<std::uintptr_t>(ptr) % alignment_num_bytes == 0;
     }
@@ -676,7 +697,7 @@ public:
     // this to enforce the constraint that if TSrcVector is const, then TDestValue also needs to be const.
     template <typename TDestValue, typename TSrcVector> requires
         CVector<std::remove_cvref_t<TSrcVector>> &&
-        (!std::is_const_v<TSrcVector> || std::is_const_v<TDestValue>)
+        (!std::is_const_v<std::remove_cvref_t<TSrcVector>> || std::is_const_v<TDestValue>)
     static std::span<TDestValue> reinterpretAsSpanOf(TSrcVector&& src)
     {
         return reinterpretAsSpan<TDestValue>(src.data(), src.size());
@@ -687,6 +708,8 @@ public:
         (!std::is_const_v<TSrcValue> || std::is_const_v<TDestValue>)
     static std::span<TDestValue> reinterpretAsSpan(TSrcValue* src_data, uint64_t src_num_elements)
     {
+        // This function is unsafe because accessing the returned std::span relies on undefined behavior.
+
         SP_ASSERT(isPtrSufficientlyAlignedFor<TDestValue>(src_data));
 
         std::span<TDestValue> dest;
@@ -712,15 +735,26 @@ public:
 
         TDestVector dest;
 
-        // check to make sure that calling delete[] on src and dest data pointers won't invoke any destructors
+        // check to make sure we're operating on plain data types, e.g., so calling deallocate(...) on src
+        // and dest data pointers won't attempt to invoke any destructors, etc
+
         SP_ASSERT(std::is_trivially_constructible<TSrcValue>());
+        SP_ASSERT(std::is_trivially_destructible<TSrcValue>());
+        SP_ASSERT(std::is_trivially_copyable<TSrcValue>());
+
         SP_ASSERT(std::is_trivially_constructible<TDestValue>());
+        SP_ASSERT(std::is_trivially_destructible<TDestValue>());
+        SP_ASSERT(std::is_trivially_copyable<TDestValue>());
+
+        // check to make sure the allocator for src is stateless and can be used to deallocate memory from a different instance 
+        SP_ASSERT(std::is_empty<TSrcAllocator>());
+        SP_ASSERT(std::allocator_traits<TSrcAllocator>::is_always_equal::value);
 
         // check that the size of std::vector is the size of exactly 3 pointers stored contiguously
         SP_ASSERT(sizeof(std::vector<TSrcValue>)  == 3*sizeof(TSrcValue*));
         SP_ASSERT(sizeof(std::vector<TDestValue>) == 3*sizeof(TDestValue*));
 
-        TSrcValue** src_ptr = reinterpret_cast<TSrcValue**>(&src);
+        TSrcValue** src_ptr   = reinterpret_cast<TSrcValue**>(&src);
         TDestValue** dest_ptr = reinterpret_cast<TDestValue**>(&dest);
 
         TSrcValue* src_begin_ptr    = *(src_ptr + 0);    // undefined behavior
@@ -740,6 +774,10 @@ public:
         SP_ASSERT(dest_begin_ptr    == dest.data());
         SP_ASSERT(dest_end_ptr      == dest_begin_ptr + dest.size());
         SP_ASSERT(dest_capacity_ptr == dest_begin_ptr + dest.capacity());
+
+        // check to make sure the src byte range would fit an integer number of TDestValue
+        SP_ASSERT(((src_end_ptr      - src_begin_ptr) * sizeof(TSrcValue)) % sizeof(TDestValue) == 0);
+        SP_ASSERT(((src_capacity_ptr - src_begin_ptr) * sizeof(TSrcValue)) % sizeof(TDestValue) == 0);
 
         // check to make sure each pointer is sufficiently aligned for its swapped type
 
@@ -781,7 +819,7 @@ public:
         return reinterpretAsVectorImpl<std::vector<TDestValue, TDestAllocator>>(src.data(), src.size());
     }
 
-    // Don't infer TSrcValue from the input in the functions below, because we want to force the user to
+    // We don't infer TSrcValue from the input in the functions below, because we want to force the user to
     // explicitly specify the intended value type of the input somewhere. If we allow the value type of
     // the input to be inferred automatically, we create a situation where, e.g., the user wants to create
     // an initializer list of floats, but accidentally creates an initializer list of doubles. We don't need
@@ -843,7 +881,7 @@ private:
     {
         // This function is unsafe because it relies on undefined behavior.
 
-        using TDestValue = TDestVector::value_type;
+        using TDestValue = typename TDestVector::value_type;
 
         TDestVector dest;
 
@@ -887,7 +925,7 @@ private:
         CVector<TDestVector>
     static TDestVector reinterpretAsVectorImpl(const TSrcValue* src_data, uint64_t src_num_elements)
     {
-        using TDestValue = TDestVector::value_type;
+        using TDestValue = typename TDestVector::value_type;
 
         TDestVector dest;
         if (src_num_elements > 0) {

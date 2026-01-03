@@ -5,7 +5,8 @@
 
 #include "SpUnrealTypes/SpDebugCameraController.h"
 
-#include <Engine/World.h> // FActorSpawnParameters
+#include <Engine/World.h>         // FActorSpawnParameters
+#include <UObject/ObjectMacros.h> // EObjectFlags
 
 #include "SpCore/Log.h"
 
@@ -39,7 +40,7 @@ void ASpDebugCameraController::PostInitializeComponents()
     actor_spawn_parameters.Owner = this;
     actor_spawn_parameters.Instigator = GetInstigator();
     actor_spawn_parameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-    actor_spawn_parameters.ObjectFlags |= RF_Transient; // we never want these to save into a map
+    actor_spawn_parameters.ObjectFlags |= EObjectFlags::RF_Transient; // we never want these to save into a map
     MyHUD = GetWorld()->SpawnActor<ASpDebugCameraHUD>(actor_spawn_parameters);
 
     ChangeState(NAME_Inactive);

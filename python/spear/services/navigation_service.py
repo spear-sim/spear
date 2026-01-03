@@ -6,24 +6,34 @@
 import numpy as np
 import spear
 
-class NavigationService(spear.utils.func_utils.Service):
-    def __init__(self, entry_point_caller, shared_memory_service, is_top_level_service=True, create_children_services=True):
-        self._entry_point_caller = entry_point_caller
+
+class NavigationService(spear.Service):
+    def __init__(self, entry_point_caller, shared_memory_service, sp_func_service, unreal_service, config, parent_service=None, create_children_services=True):
+        assert shared_memory_service.is_top_level_service()
+        assert sp_func_service.is_top_level_service()
+        assert unreal_service.is_top_level_service()
+
         self._shared_memory_service = shared_memory_service
 
+        # do this after initializing local state
         super().__init__(
-            is_top_level_service=is_top_level_service,
-            create_children_services=create_children_services,
-            entry_point_caller=entry_point_caller) # do this after initializing local state
+            entry_point_caller=entry_point_caller,
+            sp_func_service=sp_func_service,
+            unreal_service=unreal_service,
+            config=config,
+            parent_service=parent_service,
+            create_children_services=create_children_services)
 
-
-    def create_child_service(self, entry_point_caller):
+    def create_child_service(self, entry_point_caller, sp_func_service=None, unreal_service=None, config=None):
         assert self.is_top_level_service() # this function should only be called from the top-level service
-        return NavigationService(entry_point_caller=entry_point_caller, shared_memory_service=self._shared_memory_service, is_top_level_service=False, create_children_services=False)
-
-
-    def get_nav_data_for_agent_name(self, navigation_system, agent_name):
-        return self._entry_point_caller.call_on_game_thread("get_nav_data_for_agent_name", None, navigation_system, agent_name)
+        return NavigationService(
+            entry_point_caller=entry_point_caller,
+            shared_memory_service=self._shared_memory_service,
+            sp_func_service=sp_func_service,
+            unreal_service=unreal_service,
+            config=config,
+            parent_service=self,
+            create_children_services=False)
 
     # The caller must ensure that out_array remains valid until future.get() has been called for the future
     # that might be returned by this function.
@@ -33,17 +43,28 @@ class NavigationService(spear.utils.func_utils.Service):
         navigation_data,
         num_points,
         query_owner=0,
-        filter_classes=np.array([], dtype=np.uint64),
-        queriers=np.array([], dtype=np.uint64),
-        out_array=np.array([], dtype=np.float64)):
+        filter_classes=None,
+        queriers=None,
+        out_array=None):
 
-        packed_arrays = spear.utils.func_utils.to_packed_arrays(
+        if filter_classes is None:
+            filter_classes = np.array([], dtype=np.uint64)
+        if queriers is None:
+            queriers = np.array([], dtype=np.uint64)
+        if out_array is None:
+            out_array = np.array([], dtype=np.float64)
+
+        navigation_data = spear.to_handle(obj=navigation_data)
+        query_owner = spear.to_handle(obj=query_owner)
+        queriers = spear.to_handle(obj=queriers)
+
+        packed_arrays = spear.to_packed_arrays(
             arrays={"filter_classes": filter_classes, "queriers": queriers},
-            dest_byte_order=self._entry_point_caller.engine_service.get_byte_order(),
+            dest_byte_order=self.entry_point_caller.engine_service.get_byte_order(),
             usage_flags=["Arg"])
-        out_packed_array = spear.utils.func_utils.to_packed_array(
+        out_packed_array = spear.to_packed_array(
             array=out_array,
-            dest_byte_order=self._entry_point_caller.engine_service.get_byte_order(),
+            dest_byte_order=self.entry_point_caller.engine_service.get_byte_order(),
             usage_flags=["Arg", "ReturnValue"])
 
         # define convert func
@@ -51,14 +72,14 @@ class NavigationService(spear.utils.func_utils.Service):
             result_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_arrays(
                 arrays=[out_array],
                 usage_flags=["Arg", "ReturnValue"])
-            result = spear.utils.func_utils.to_array(
+            result = spear.to_array(
                 packed_array=result_packed_array,
-                src_byte_order=self._entry_point_caller.engine_service.get_byte_order(),
+                src_byte_order=self.entry_point_caller.engine_service.get_byte_order(),
                 usage_flags=["Arg", "ReturnValue"],
                 shared_memory_handles=result_shared_memory_handles)
             return result
 
-        return self._entry_point_caller.call_on_game_thread(
+        return self.entry_point_caller.call_on_game_thread(
             "get_random_points",
             convert_func,
             navigation_data,
@@ -78,22 +99,33 @@ class NavigationService(spear.utils.func_utils.Service):
         query_owner=0,
         radii=None,
         radius=None,
-        filter_classes=np.array([], dtype=np.uint64),
-        queriers=np.array([], dtype=np.uint64),
-        out_array=np.array([], dtype=np.float64)):
+        filter_classes=None,
+        queriers=None,
+        out_array=None):
+
+        if filter_classes is None:
+            filter_classes = np.array([], dtype=np.uint64)
+        if queriers is None:
+            queriers = np.array([], dtype=np.uint64)
+        if out_array is None:
+            out_array = np.array([], dtype=np.float64)
 
         assert (radii is not None) + (radius is not None) == 1
+
+        navigation_data = spear.to_handle(obj=navigation_data)
+        query_owner = spear.to_handle(obj=query_owner)
+        queriers = spear.to_handle(obj=queriers)
 
         if radius is not None:
             radii = np.array([radius], dtype=np.float32)
 
-        packed_arrays = spear.utils.func_utils.to_packed_arrays(
+        packed_arrays = spear.to_packed_arrays(
             arrays={"origin_points": origin_points, "radii": radii, "filter_classes": filter_classes, "queriers": queriers},
-            dest_byte_order=self._entry_point_caller.engine_service.get_byte_order(),
+            dest_byte_order=self.entry_point_caller.engine_service.get_byte_order(),
             usage_flags=["Arg"])
-        out_packed_array = spear.utils.func_utils.to_packed_array(
+        out_packed_array = spear.to_packed_array(
             array=out_array,
-            dest_byte_order=self._entry_point_caller.engine_service.get_byte_order(),
+            dest_byte_order=self.entry_point_caller.engine_service.get_byte_order(),
             usage_flags=["Arg", "ReturnValue"])
 
         # define convert func
@@ -101,14 +133,14 @@ class NavigationService(spear.utils.func_utils.Service):
             result_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_arrays(
                 arrays=[out_array],
                 usage_flags=["Arg", "ReturnValue"])
-            result = spear.utils.func_utils.to_array(
+            result = spear.to_array(
                 packed_array=result_packed_array,
-                src_byte_order=self._entry_point_caller.engine_service.get_byte_order(),
+                src_byte_order=self.entry_point_caller.engine_service.get_byte_order(),
                 usage_flags=["Arg", "ReturnValue"],
                 shared_memory_handles=result_shared_memory_handles)
             return result
 
-        return self._entry_point_caller.call_on_game_thread(
+        return self.entry_point_caller.call_on_game_thread(
             "get_random_reachable_points_in_radius",
             convert_func,
             navigation_data,
@@ -125,14 +157,32 @@ class NavigationService(spear.utils.func_utils.Service):
         start_points,
         end_points,
         nav_agent_interface=0,
-        filter_classes=np.array([], dtype=np.uint64),
-        queriers=np.array([], dtype=np.uint64),
-        cost_limits=np.array([], dtype=np.float64),
-        require_navigable_end_locations=np.array([], dtype=np.uint8),
-        nav_agent_properties=[],
-        path_finding_mode_strings=[]):
+        filter_classes=None,
+        queriers=None,
+        cost_limits=None,
+        require_navigable_end_locations=None,
+        nav_agent_properties=None,
+        path_finding_mode_strings=None):
 
-        packed_arrays = spear.utils.func_utils.to_packed_arrays(
+        if filter_classes is None:
+            filter_classes = np.array([], dtype=np.uint64)
+        if queriers is None:
+            queriers = np.array([], dtype=np.uint64)
+        if cost_limits is None:
+            cost_limits = np.array([], dtype=np.float64)
+        if require_navigable_end_locations is None:
+            require_navigable_end_locations = np.array([], dtype=np.uint8)
+        if nav_agent_properties is None:
+            nav_agent_properties = []
+        if path_finding_mode_strings is None:
+            path_finding_mode_strings = []
+
+        navigation_system = spear.to_handle(obj=navigation_system)
+        navigation_data = spear.to_handle(obj=navigation_data)
+        nav_agent_interface = spear.to_handle(obj=nav_agent_interface)
+        queriers = spear.to_handle(obj=queriers)
+
+        packed_arrays = spear.to_packed_arrays(
             arrays={
                 "start_points": start_points,
                 "end_points": end_points,
@@ -140,16 +190,16 @@ class NavigationService(spear.utils.func_utils.Service):
                 "queriers": queriers,
                 "cost_limits": cost_limits,
                 "require_navigable_end_locations": require_navigable_end_locations},
-            dest_byte_order=self._entry_point_caller.engine_service.get_byte_order(),
+            dest_byte_order=self.entry_point_caller.engine_service.get_byte_order(),
             usage_flags=["Arg"])
 
-        nav_agent_property_strings = spear.utils.func_utils.to_json_strings(nav_agent_properties)
+        nav_agent_property_strings = spear.to_json_strings(nav_agent_properties)
 
         # define convert func
         def convert_func(result_packed_arrays):
-            return_values = spear.utils.func_utils.to_arrays(
+            return_values = spear.to_arrays(
                 packed_arrays=result_packed_arrays,
-                src_byte_order=self._entry_point_caller.engine_service.get_byte_order(),
+                src_byte_order=self.entry_point_caller.engine_service.get_byte_order(),
                 usage_flags=None,
                 shared_memory_handles=None)
 
@@ -163,7 +213,7 @@ class NavigationService(spear.utils.func_utils.Service):
 
             return paths
 
-        return self._entry_point_caller.call_on_game_thread(
+        return self.entry_point_caller.call_on_game_thread(
             "find_paths",
             convert_func,
             navigation_system,

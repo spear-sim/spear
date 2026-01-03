@@ -19,5 +19,5 @@ public:
     void ShutdownModule() override;
 
     // Editor world services
-    std::unique_ptr<UnrealServiceEditor> editor_unreal_service_editor = nullptr;
+    std::unique_ptr<UnrealServiceEditor> editor_unreal_service_editor_ = nullptr;
 };

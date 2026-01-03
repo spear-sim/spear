@@ -11,9 +11,9 @@ import sys
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--build_config", required=True)
-parser.add_argument("--version_tag", required=True)
-parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
+parser.add_argument("--build-config", required=True)
+parser.add_argument("--version-tag", required=True)
+parser.add_argument("--build-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
 args = parser.parse_args()
 
 

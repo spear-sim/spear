@@ -14,7 +14,7 @@ We recommend installing the Unreal Engine version 5.5 via the Epic Games Launche
 
 If you're developing on Linux, you will need to download the Unreal Engine from [here](https://www.unrealengine.com/en-US/linux).
 
-Several of our command-line tools require an `--unreal_engine_dir` argument. This argument must point to the top-level directory where you installed the Unreal Engine. Depending on your platform, the default install location will be as follows. However, as noted above, we recommend installing the Unreal Engine to a path that doesn't contain spaces. If you're developing on Linux, you must specify the path to the top-level directory where you unzipped the `Linux_Unreal_Engine_5.5.4.zip` file linked above.
+Several of our command-line tools require an `--unreal-engine-dir` argument. This argument must point to the top-level directory where you installed the Unreal Engine. Depending on your platform, the default install location will be as follows. However, as noted above, we recommend installing the Unreal Engine to a path that doesn't contain spaces. If you're developing on Linux, you must specify the path to the top-level directory where you unzipped the `Linux_Unreal_Engine_5.5.4.zip` file linked above.
 
 ```
 Windows: C:\Program Files\Epic Games\UE_5.5
@@ -104,7 +104,7 @@ The Unreal Editor has its own Python environment, so you will need to install th
 
 ```console
 # install the spear Python package into the Unreal Editor Python environment
-python tools/install_python_package_in_editor_env.py --unreal_engine_dir path/to/UE_5.5
+python tools/install_python_package_in_editor_env.py --unreal-engine-dir path/to/UE_5.5
 ```
 
 ## Build third-party C++ libraries
@@ -117,10 +117,10 @@ python tools/build_third_party_libs.py
 
 # build third-party libraries (Linux)
 sudo apt-get install g++ make
-python tools/build_third_party_libs.py --unreal_engine_dir path/to/UE_5.5
+python tools/build_third_party_libs.py --unreal-engine-dir path/to/UE_5.5
 ```
 
-If you're developing on Linux, you will need to install `g++` and `make` if they aren't already installed on your system. `g++` is required to build the Boost build tool, and `make` is required by CMake to build all third-party libraries other than Boost. Additionally, if you're developing on Linux, you must specify `--unreal_engine_dir`, because we use the version of `clang` and `libc++` that ships with the Unreal Engine to build our third-party libraries.
+If you're developing on Linux, you will need to install `g++` and `make` if they aren't already installed on your system. `g++` is required to build the Boost build tool, and `make` is required by CMake to build all third-party libraries other than Boost. Additionally, if you're developing on Linux, you must specify `--unreal-engine-dir`, because we use the version of `clang` and `libc++` that ships with the Unreal Engine to build our third-party libraries.
 
 ## Build and install the `spear_ext` Python extension module
 
@@ -131,17 +131,17 @@ Most of the functionality in our `spear` Python package requires you to build an
 python tools/install_python_extension.py
 
 # build and install the spear_ext Python extension module (Linux)
-python tools/install_python_extension.py --unreal_engine_dir path/to/UE_5.5
+python tools/install_python_extension.py --unreal-engine-dir path/to/UE_5.5
 ```
 
-If you're developing on Linux, you must specify `--unreal_engine_dir`, because we use the version of `clang` and `libc++` that ships with the Unreal Engine to build our extension module.
+If you're developing on Linux, you must specify `--unreal-engine-dir`, because we use the version of `clang` and `libc++` that ships with the Unreal Engine to build our extension module.
 
 ## Copy content from the Unreal Engine
 
 Our `SpearSim` project requires you to explicitly copy some content from your Unreal Engine installation to the project directory. We provide a command-line tool for this purpose.
 
 ```console
-python tools/copy_engine_content.py --unreal_engine_dir path/to/UE_5.5
+python tools/copy_engine_content.py --unreal-engine-dir path/to/UE_5.5
 ```
 
 ## Build the `SpearSim` project
@@ -150,13 +150,13 @@ You are now ready to build the `SpearSim` project as follows.
 
 ```console
 # minimal build required to open the SpearSim project inside the Unreal Editor (optional)
-python tools/run_uat.py --unreal_engine_dir path/to/UE_5.5 -build
+python tools/run_uat.py --unreal-engine-dir path/to/UE_5.5 -build
 
 # build a standalone executable
-python tools/run_uat.py --unreal_engine_dir path/to/UE_5.5 -build -cook -stage -package -archive -pak
+python tools/run_uat.py --unreal-engine-dir path/to/UE_5.5 -build -cook -stage -package -archive -pak
 ```
 
-Our `run_uat.py` tool is a thin wrapper around Unreal's [`RunUAT`](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Deployment/BuildOperations) tool. Our tool consumes `--unreal_engine_dir`, provides Unreal's `RunUAT` tool with sensible default values for a few commonly used arguments, and otherwise forwards all arguments directly to `RunUAT`. This step will generate a standalone executable at the following locations.
+Our `run_uat.py` tool is a thin wrapper around Unreal's [`RunUAT`](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Deployment/BuildOperations) tool. Our tool consumes `--unreal-engine-dir`, provides Unreal's `RunUAT` tool with sensible default values for a few commonly used arguments, and otherwise forwards all arguments directly to `RunUAT`. This step will generate a standalone executable at the following locations.
 
 ```
 Windows: cpp\unreal_projects\SpearSim\Standalone-Development\Windows\SpearSim.exe
@@ -164,7 +164,7 @@ macOS:   cpp/unreal_projects/SpearSim/Standalone-Development/Mac/SpearSim.app
 Linux:   cpp/unreal_projects/SpearSim/Standalone-Development/Linux/SpearSim.sh
 ```
 
-When building with our `run_uat.py` tool, you can optionally specify `--build_config Shipping` to build more a optimized standalone executable. In this case, the executable will be generated in `Standalone-Shipping` instead of `Standalone-Development`.
+When building with our `run_uat.py` tool, you can optionally specify `--build-config Shipping` to build more a optimized standalone executable. In this case, the executable will be generated in `Standalone-Shipping` instead of `Standalone-Development`.
 
 ### Helpful `RunUAT` command-line options
 
@@ -201,8 +201,8 @@ Linux:   path/to/Standalone-Development/Linux/SpearSim.sh
 
 The following command-line arguments are optional.
 
-  - `--pak_files` is a comma-separated list of PAK files to load during startup. It is necessary to specify additional PAK files when specifying a `--map` that isn't included with our `SpearSim` executable.
-  - `--vk_icd_filenames` only has an effect on Linux, and is used to force the Vulkan runtime to load a vendor-specific GPU driver. Our `run_executable.py` script will set the `VK_ICD_FILENAMES` environment variable to whatever is passed into `--vk_icd_filenames`. This argument may or may not be necessary, depending on your specific hardware setup. If you have already set the `VK_ICD_FILENAMES` environment variable before invoking `run_executable.py`, you do not need to specify `--vk_icd_filenames`. If you have an NVIDIA GPU, you probably need to specify `--vk_icd_filenames /usr/share/vulkan/icd.d/nvidia_icd.json`.
+  - `--pak-files` is a comma-separated list of PAK files to load during startup. It is necessary to specify additional PAK files when specifying a `--map` that isn't included with our `SpearSim` executable.
+  - `--vk-icd-filenames` only has an effect on Linux, and is used to force the Vulkan runtime to load a vendor-specific GPU driver. Our `run_executable.py` script will set the `VK_ICD_FILENAMES` environment variable to whatever is passed into `--vk-icd-filenames`. This argument may or may not be necessary, depending on your specific hardware setup. If you have already set the `VK_ICD_FILENAMES` environment variable before invoking `run_executable.py`, you do not need to specify `--vk-icd-filenames`. If you have an NVIDIA GPU, you probably need to specify `--vk-icd-filenames /usr/share/vulkan/icd.d/nvidia_icd.json`.
 
 ## Programmatically interact with SPEAR via Python
 

@@ -16,14 +16,14 @@ import sys
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--include_assets_file", required=True)
-parser.add_argument("--pak_file", required=True)
-parser.add_argument("--unreal_engine_dir", required=True)
-parser.add_argument("--cook_dirs_file")
-parser.add_argument("--cook_maps_file")
-parser.add_argument("--exclude_assets_file")
-parser.add_argument("--skip_cook_default_maps", action="store_true")
-parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
+parser.add_argument("--include-assets-file", required=True)
+parser.add_argument("--pak-file", required=True)
+parser.add_argument("--unreal-engine-dir", required=True)
+parser.add_argument("--cook-dirs-file")
+parser.add_argument("--cook-maps-file")
+parser.add_argument("--exclude-assets-file")
+parser.add_argument("--skip-cook-default-maps", action="store_true")
+parser.add_argument("--unreal-project-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
 args = parser.parse_args()
 
 assert os.path.exists(args.unreal_engine_dir)
@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
     cook_dirs = []
     if args.cook_dirs_file is not None:
-        cook_dirs.extend(pd.read_csv(args.cook_dirs_file)["cook_dirs"].tolist())
+        cook_dirs.extend(pd.read_csv(args.cook_dirs_file, comment="#")["cook_dirs"].tolist())
 
     cook_dir_args = [ f'-cookdir="{os.path.join(args.unreal_project_dir, cook_dir)}"' for cook_dir in cook_dirs ]
 
@@ -76,7 +76,7 @@ if __name__ == "__main__":
     if not args.skip_cook_default_maps:
         cook_maps.extend(spear.utils.tool_utils.get_default_maps_to_cook())
     if args.cook_maps_file is not None:
-        cook_maps.extend(pd.read_csv(args.cook_maps_file)["cook_maps"].tolist())
+        cook_maps.extend(pd.read_csv(args.cook_maps_file, comment="#")["cook_maps"].tolist())
 
     if len(cook_maps) == 0:
         cook_maps_arg = []
@@ -107,11 +107,11 @@ if __name__ == "__main__":
     spear.log("Creating directory if it does not already exist: ", pak_dir)
     os.makedirs(pak_dir, exist_ok=True)
 
-    include_assets = pd.read_csv(args.include_assets_file)["include_assets"]
+    include_assets = pd.read_csv(args.include_assets_file, comment="#")["include_assets"]
 
     exclude_assets = []
     if args.exclude_assets_file is not None:
-        exclude_assets = pd.read_csv(args.exclude_assets_file)["exclude_assets"].tolist() # need tolist() so we can test for membership using "in" keyword below
+        exclude_assets = pd.read_csv(args.exclude_assets_file, comment="#")["exclude_assets"].tolist() # need tolist() so we can test for membership using "in" keyword below
 
     # create manifest file in output dir
     manifest_file = f"{os.path.splitext(pak_file)[0]}.txt"

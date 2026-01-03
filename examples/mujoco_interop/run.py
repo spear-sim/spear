@@ -32,7 +32,7 @@ def unreal_pyr_from_mujoco_quaternion(mujoco_quaternion):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mjcf_file", required=True)
+    parser.add_argument("--mjcf-file", required=True)
     args = parser.parse_args()
 
     # create SPEAR instance
@@ -43,14 +43,8 @@ if __name__ == "__main__":
 
     # get Unreal actors and functions
     with spear_instance.begin_frame():
-
         unreal_actors = spear_game.unreal_service.find_actors_as_dict()
         unreal_actors = { unreal_actor_name: unreal_actor for unreal_actor_name, unreal_actor in unreal_actors.items() if unreal_actor_name.startswith(name_prefix) }
-
-        unreal_actor_static_class = spear_game.unreal_service.get_static_class(class_name="AActor")
-        unreal_set_actor_location_and_rotation_func = spear_game.unreal_service.find_function_by_name(
-            uclass=unreal_actor_static_class, function_name="K2_SetActorLocationAndRotation")
-
     with spear_instance.end_frame():
         pass
 
@@ -92,15 +86,11 @@ if __name__ == "__main__":
         # set updated poses in SPEAR
         with spear_instance.begin_frame():
             for unreal_actor_name, unreal_actor in unreal_actors.items():
-
-                # call function for each actor
-                args = {
-                    "NewLocation": dict(zip(["X", "Y", "Z"], mj_bodies_xpos[f"{unreal_actor_name}:StaticMeshComponent0"])),
-                    "NewRotation": dict(zip(["Pitch", "Yaw", "Roll"], unreal_pyr_from_mujoco_quaternion(mj_bodies_xquat[f"{unreal_actor_name}:StaticMeshComponent0"]))),
-                    "bSweep":      False,
-                    "bTeleport":   True}
-                spear_game.unreal_service.call_function(uobject=unreal_actor, ufunction=unreal_set_actor_location_and_rotation_func, args=args)
-
+                unreal_actor.K2_SetActorLocationAndRotation(
+                    NewLocation=dict(zip(["X", "Y", "Z"], mj_bodies_xpos[f"{unreal_actor_name}:StaticMeshComponent0"])),
+                    NewRotation=dict(zip(["Pitch", "Yaw", "Roll"], unreal_pyr_from_mujoco_quaternion(mj_bodies_xquat[f"{unreal_actor_name}:StaticMeshComponent0"]))),
+                    bSweep=False,
+                    bTeleport=True)
         with spear_instance.end_frame():
             pass
 

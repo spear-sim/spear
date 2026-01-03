@@ -19,7 +19,6 @@
 #include <NavigationSystemTypes.h>         // EPathFindingMode, FPathFindingQuery, FSharedConstNavQueryFilter
 #include <NavFilters/NavigationQueryFilter.h>
 #include <NavMesh/RecastNavMesh.h>
-#include <Templates/Casts.h>
 #include <UObject/Class.h>                 // UClass
 #include <UObject/Object.h>                // UObject
 
@@ -29,6 +28,7 @@
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealObj.h"
+#include "SpCore/UnrealUtils.h"
 
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/Service.h"
@@ -55,13 +55,6 @@ public:
         shared_memory_service_ = shared_memory_service;
         
         std::string service_name = getWorldTypeName() + ".navigation_service";
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_nav_data_for_agent_name", 
-            [this](uint64_t& navigation_system, std::string& agent_name) -> uint64_t {
-                UNavigationSystemV1* navigation_system_ptr = toPtr<UNavigationSystemV1>(navigation_system);
-                SP_ASSERT(navigation_system_ptr);
-                return toUInt64(navigation_system_ptr->GetNavDataForAgentName(Unreal::toFName(agent_name)));
-            });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_random_points",
             [this](
@@ -258,7 +251,7 @@ public:
                 if (queriers.getShape().at(0)                        == 1) { querier                        = toPtr<UObject>(Std::at(queriers.getView(), 0)); }
                 if (cost_limits.getShape().at(0)                     == 1) { cost_limit                     = Std::at(cost_limits.getView(), 0); }
                 if (require_navigable_end_locations.getShape().at(0) == 1) { require_navigable_end_location = Std::at(require_navigable_end_locations.getView(), 0) != 0; }
-                if (nav_agent_property_strings.size()                == 1) { Unreal::setObjectPropertiesFromString(nav_agent_properties.getValuePtr(), nav_agent_properties.getStaticStruct(), nav_agent_property_strings.at(0)); }
+                if (nav_agent_property_strings.size()                == 1) { UnrealUtils::setObjectPropertiesFromString(nav_agent_properties.getValuePtr(), nav_agent_properties.getStaticStruct(), nav_agent_property_strings.at(0)); }
                 if (path_finding_mode_strings.size()                 == 1) { path_finding_mode              = Unreal::getEnumValueFromStringAs<EPathFindingMode::Type, ESpPathFindingMode>(path_finding_mode_strings.at(0)); }
 
                 FSharedConstNavQueryFilter filter = UNavigationQueryFilter::GetQueryFilter(*navigation_data_ptr, querier, filter_class);
@@ -274,7 +267,7 @@ public:
                     if (queriers.getShape().at(0)                        == num_paths) { querier                        = toPtr<UObject>(Std::at(queriers.getView(), i)); }
                     if (cost_limits.getShape().at(0)                     == num_paths) { cost_limit                     = Std::at(cost_limits.getView(), i); }
                     if (require_navigable_end_locations.getShape().at(0) == num_paths) { require_navigable_end_location = Std::at(require_navigable_end_locations.getView(), i) != 0; }
-                    if (nav_agent_property_strings.size()                == num_paths) { Unreal::setObjectPropertiesFromString(nav_agent_properties.getValuePtr(), nav_agent_properties.getStaticStruct(), nav_agent_property_strings.at(i)); }
+                    if (nav_agent_property_strings.size()                == num_paths) { UnrealUtils::setObjectPropertiesFromString(nav_agent_properties.getValuePtr(), nav_agent_properties.getStaticStruct(), nav_agent_property_strings.at(i)); }
                     if (path_finding_mode_strings.size()                 == num_paths) { path_finding_mode              = Unreal::getEnumValueFromStringAs<EPathFindingMode::Type, ESpPathFindingMode>(path_finding_mode_strings.at(i)); }
 
                     if (filter_classes.getShape().size() == num_paths || queriers.getShape().size() == num_paths) {

@@ -15,6 +15,7 @@
 #include "SpCore/Log.h"
 #include "SpCore/SpFuncComponent.h"
 #include "SpCore/Unreal.h"
+#include "SpCore/UnrealUtils.h"
 
 #include "SpUnrealTypes/SpUserInputComponent.h"
 
@@ -42,10 +43,10 @@ public:
         PrimaryComponentTick.bTickEvenWhenPaused = false;
         PrimaryComponentTick.TickGroup = ETickingGroup::TG_PrePhysics;
 
-        SpFuncComponent = Unreal::createSceneComponentInsideOwnerConstructor<USpFuncComponent>(this, "sp_func_component");
+        SpFuncComponent = UnrealUtils::createSceneComponentInsideOwnerConstructor<USpFuncComponent>(this, "sp_func_component");
         SP_ASSERT(SpFuncComponent);
 
-        SpUserInputComponent = Unreal::createSceneComponentInsideOwnerConstructor<USpUserInputComponent>(this, "sp_user_input_component");
+        SpUserInputComponent = UnrealUtils::createSceneComponentInsideOwnerConstructor<USpUserInputComponent>(this, "sp_user_input_component");
         SP_ASSERT(SpUserInputComponent);
     }
 
@@ -92,7 +93,7 @@ public:
         USceneComponent::TickComponent(delta_time, level_tick, this_tick_function);        
     }
 
-    UFUNCTION()
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
     void HelloWorld() const
     {
         SP_LOG_CURRENT_FUNCTION();

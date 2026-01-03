@@ -16,8 +16,8 @@ level_editor_subsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--load_level", action="store_true")
-    parser.add_argument("--save_level", action="store_true")
+    parser.add_argument("--load-level", action="store_true")
+    parser.add_argument("--save-level", action="store_true")
     args = parser.parse_args()
 
     # Explicitly load "/SpContent" into the asset registry, since it won't be loaded by default if we are
@@ -30,7 +30,7 @@ if __name__ == "__main__":
         level_editor_subsystem.load_level(asset_path="/Game/SPEAR/Scenes/apartment_0000/Maps/apartment_0000")
 
     # spawn object
-    bp_axes_class = unreal.EditorAssetLibrary.load_blueprint_class(asset_path="/SpContent/Blueprints/BP_Axes.BP_Axes")
+    bp_axes_class = unreal.EditorAssetLibrary.load_blueprint_class(asset_path="/SpContent/Blueprints/BP_Axes")
     bp_axes = unreal.EditorLevelLibrary.spawn_actor_from_class(actor_class=bp_axes_class, location=unreal.Vector(x=-10.0, y=280.0, z=50.0))
     spear.log("bp_axes: ", bp_axes)
 
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     scale_3d = bp_axes.get_actor_scale3d()
     spear.log("scale_3d: ", scale_3d.get_editor_property("x"), ", ", scale_3d.get_editor_property("y"), ", ", scale_3d.get_editor_property("z"))
 
-    # set scale and get it again to verify that it updated
+    # set scale and get it again to verify that it has been updated
     bp_axes.set_actor_scale3d(unreal.Vector(x=4.0, y=4.0, z=4.0))
     scale_3d = bp_axes.get_actor_scale3d()
     spear.log("scale_3d: ", scale_3d.get_editor_property("x"), ", ", scale_3d.get_editor_property("y"), ", ", scale_3d.get_editor_property("z"))

@@ -24,35 +24,29 @@ if __name__ == "__main__":
 
     with instance.begin_frame():
 
-        # find GetActorScale3D and SetActorScale3D functions
-        actor_static_class = game.unreal_service.get_static_class(class_name="AActor")
-        set_actor_scale_3d_func = game.unreal_service.find_function_by_name(uclass=actor_static_class, function_name="SetActorScale3D")
-
         # get axes uclass so we can spawn it later
-        bp_axes_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/SpContent/Blueprints/BP_Axes.BP_Axes_C")
+        bp_axes_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_Axes.BP_Axes_C")
 
         # since we're not using bp_axes_uclass in this frame, we need to explicitly prevent garbage collection
         game.unreal_service.add_object_to_root(uobject=bp_axes_uclass)
 
         # get navigation system
-        navigation_system_v1_static_class = game.unreal_service.get_static_class(class_name="UNavigationSystemV1")
-        get_navigation_system_func = game.unreal_service.find_function_by_name(uclass=navigation_system_v1_static_class, function_name="GetNavigationSystem")
-        navigation_system_v1_default_object = game.unreal_service.get_default_object(uclass=navigation_system_v1_static_class, create_if_needed=False)
-        return_values = game.unreal_service.call_function(uobject=navigation_system_v1_default_object, ufunction=get_navigation_system_func)
-        navigation_system = spear.to_handle(string=return_values["ReturnValue"])
-        spear.log("navigation_system_v1_static_class: ", navigation_system_v1_static_class)
-        spear.log("navigation_system_v1_default_object: ", navigation_system_v1_default_object)
-        spear.log("navigation_system: ", navigation_system)
-        pprint.pprint(game.unreal_service.get_properties_from_object(uobject=navigation_system))
+        navigation_system_v1 = game.get_unreal_object(uclass="UNavigationSystemV1")
+        sp_navigation_system_v1 = game.get_unreal_object(uclass="USpNavigationSystemV1")
+        navigation_system = navigation_system_v1.GetNavigationSystem()
+        supports_rebuilding = navigation_system.bSupportRebuilding.get()                                   # get bSupportRebuilding flag
+        navigation_system.bSupportRebuilding = True                                                        # needs to be set at runtime to force a rebuild
+        sp_navigation_system_v1.Build(NavigationSystem=navigation_system)                                  # force a rebuild
+        sp_navigation_system_v1.AddNavigationBuildLock(NavigationSystem=navigation_system, Flags="Custom") # prevent nav mesh from updating from now on
+        navigation_system.bSupportRebuilding = supports_rebuilding                                         # restore bSupportRebuilding flag
 
         # get navigation data
-        navigation_data = game.navigation_service.get_nav_data_for_agent_name(navigation_system=navigation_system, agent_name="Default")
+        navigation_data = sp_navigation_system_v1.GetNavDataForAgentName(NavigationSystem=navigation_system, AgentName="Default")
         spear.log("navigation_data: ", navigation_data)
-        pprint.pprint(game.unreal_service.get_properties_from_object(uobject=navigation_data))
+        pprint.pprint(navigation_data.get_properties())
 
         # sample random points
-        points = game.navigation_service.get_random_points(
-            navigation_data=navigation_data, num_points=num_points)
+        points = game.navigation_service.get_random_points(navigation_data=navigation_data, num_points=num_points)
         spear.log("points: ")
         spear.log_no_prefix(points)
 
@@ -71,7 +65,9 @@ if __name__ == "__main__":
         # will still return a NumPy array, but the returned array will be backed by the same memory as the
         # input array
         points = game.navigation_service.get_random_points(
-            navigation_data=navigation_data, num_points=num_points, out_array=spear.to_shared(array=shared, shared_memory_handle=shared_memory_handle))
+            navigation_data=navigation_data,
+            num_points=num_points,
+            out_array=spear.to_shared(array=shared, shared_memory_handle=shared_memory_handle))
         spear.log("points: ")
         spear.log_no_prefix(points)
         spear.log("shared: ")
@@ -83,8 +79,8 @@ if __name__ == "__main__":
     # spawn axes
     for i in range(num_points):
         with instance.begin_frame():
-            bp_axes = game.unreal_service.spawn_actor_from_class(uclass=bp_axes_uclass, location={"X": points[i,0], "Y": points[i,1], "Z": points[i,2]})
-            game.unreal_service.call_function(uobject=bp_axes, ufunction=set_actor_scale_3d_func, args={"NewScale3D": {"X": 0.75, "Y": 0.75, "Z": 0.75}})
+            bp_axes = game.unreal_service.spawn_actor(uclass=bp_axes_uclass, location={"X": points[i,0], "Y": points[i,1], "Z": points[i,2]})
+            bp_axes.SetActorScale3D(NewScale3D={"X": 0.75, "Y": 0.75, "Z": 0.75})
         with instance.end_frame():
             pass
 
@@ -96,7 +92,11 @@ if __name__ == "__main__":
         spear.log_no_prefix(points)
 
         reachable_points = game.navigation_service.get_random_reachable_points_in_radius(
-            navigation_data=navigation_data, num_points=num_points, origin_points=points, radius=100.0, out_array=spear.to_shared(array=shared, shared_memory_handle=shared_memory_handle))
+            navigation_data=navigation_data,
+            num_points=num_points,
+            origin_points=points,
+            radius=100.0,
+            out_array=spear.to_shared(array=shared, shared_memory_handle=shared_memory_handle))
         spear.log("reachable_points: ")
         spear.log_no_prefix(reachable_points)
 
@@ -106,25 +106,33 @@ if __name__ == "__main__":
     # spawn axes
     for i in range(num_points):
         with instance.begin_frame():
-            bp_axes = game.unreal_service.spawn_actor_from_class(uclass=bp_axes_uclass, location={"X": reachable_points[i,0], "Y": reachable_points[i,1], "Z": reachable_points[i,2]})
-            game.unreal_service.call_function(uobject=bp_axes, ufunction=set_actor_scale_3d_func, args={"NewScale3D": {"X": 0.75, "Y": 0.75, "Z": 0.75}})
+            bp_axes = game.unreal_service.spawn_actor(uclass=bp_axes_uclass, location={"X": reachable_points[i,0], "Y": reachable_points[i,1], "Z": reachable_points[i,2]})
+            bp_axes.SetActorScale3D(NewScale3D={"X": 0.75, "Y": 0.75, "Z": 0.75})
         with instance.end_frame():
             pass
 
     # find paths
     with instance.begin_frame():
         start_points = game.navigation_service.get_random_points(
-            navigation_data=navigation_data, num_points=1)
+            navigation_data=navigation_data,
+            num_points=1)
         spear.log("start_points: ")
         spear.log_no_prefix(start_points)
 
         end_points = game.navigation_service.get_random_reachable_points_in_radius(
-            navigation_data=navigation_data, num_points=1, origin_points=start_points, radius=2000.0)
+            navigation_data=navigation_data,
+            num_points=1,
+            origin_points=start_points,
+            radius=2000.0)
         spear.log("end_points: ")
         spear.log_no_prefix(end_points)
 
         paths = game.navigation_service.find_paths(
-            navigation_system=navigation_system, navigation_data=navigation_data, num_paths=1, start_points=start_points, end_points=end_points)
+            navigation_system=navigation_system,
+            navigation_data=navigation_data,
+            num_paths=1,
+            start_points=start_points,
+            end_points=end_points)
         spear.log("paths: ")
         for p in paths:
             spear.log_no_prefix(p)

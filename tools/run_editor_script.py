@@ -12,12 +12,12 @@ import sys
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--unreal_engine_dir", required=True)
-parser.add_argument("--maps_file")
+parser.add_argument("--unreal-engine-dir", required=True)
+parser.add_argument("--maps-file")
 parser.add_argument("--script")
-parser.add_argument("--render_offscreen", action="store_true")
-parser.add_argument("--launch_mode", default="commandlet")
-parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
+parser.add_argument("--render-offscreen", action="store_true")
+parser.add_argument("--launch-mode", default="commandlet")
+parser.add_argument("--unreal-project-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
 args, unknown_args = parser.parse_known_args() # get unknown args to pass to inner script
 
 assert args.script is not None or args.maps_file is not None

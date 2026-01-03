@@ -12,12 +12,12 @@ import sys
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--build_config", required=True)
-parser.add_argument("--unreal_engine_dir", required=True)
-parser.add_argument("--skip_cook_default_maps", action="store_true")
-parser.add_argument("--cook_dirs", nargs="*")
-parser.add_argument("--cook_maps", nargs="*")
-parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
+parser.add_argument("--build-config", required=True)
+parser.add_argument("--unreal-engine-dir", required=True)
+parser.add_argument("--skip-cook-default-maps", action="store_true")
+parser.add_argument("--cook-dirs", nargs="*")
+parser.add_argument("--cook-maps", nargs="*")
+parser.add_argument("--build-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
 args, unknown_args = parser.parse_known_args() # get unknown args to pass to RunUAT
 
 assert args.build_config in ["Debug", "DebugGame", "Development", "Shipping", "Test"]

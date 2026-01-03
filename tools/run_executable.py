@@ -12,10 +12,10 @@ import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--executable")
-parser.add_argument("--graphics_adaptor")
+parser.add_argument("--graphics-adaptor")
 parser.add_argument("--map")
-parser.add_argument("--vk_icd_filenames")
-parser.add_argument("--pak_files", nargs="*")
+parser.add_argument("--vk-icd-filenames")
+parser.add_argument("--pak-files", nargs="*")
 args = parser.parse_args()
 
 

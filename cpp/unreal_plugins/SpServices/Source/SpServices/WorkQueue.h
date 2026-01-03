@@ -29,6 +29,11 @@ public:
     {
         std::lock_guard<std::mutex> lock(mutex_);
 
+        // Reset these unique pointers like we do in terminate() in case the work queue wasn't shut down correctly,
+        // e.g., if there was an error in the user's Python code.
+        executor_work_guard_ = nullptr;
+        io_context_ = nullptr;
+
         io_context_ = std::make_unique<boost::asio::io_context>();
         SP_ASSERT(io_context_);
         executor_work_guard_ = std::make_unique<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>>(io_context_->get_executor());

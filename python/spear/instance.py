@@ -28,29 +28,65 @@ expected_process_status_values = ["disk-sleep", "running", "sleeping", "stopped"
 # Helper classes
 #
 
-class CommonServices():
-    def __init__(self, namespace, engine_service, shared_memory_service):
+class WorldScopedServices():
+    def __init__(self, namespace, engine_service, engine_globals_service, shared_memory_service, sp_func_service, config):
 
-        self.unreal_service = spear.services.unreal_service.UnrealService(
-            entry_point_caller=spear.utils.func_utils.CallSyncEntryPointCaller(service_name=f"{namespace}.unreal_service", engine_service=engine_service))
+        # needed internally in get_unreal_object(...)
+        self._sp_func_service = sp_func_service
+        self._config = config
 
-        self.navigation_service = spear.services.navigation_service.NavigationService(
-            entry_point_caller=spear.utils.func_utils.CallSyncEntryPointCaller(service_name=f"{namespace}.navigation_service", engine_service=engine_service),
-            shared_memory_service=shared_memory_service)
+        self.unreal_service = spear.UnrealService(
+            entry_point_caller=spear.CallSyncEntryPointCaller(service_name=f"{namespace}.unreal_service", engine_service=engine_service),
+            sp_func_service=self._sp_func_service,
+            config=self._config)
 
-class EditorServices(CommonServices):
-    def __init__(self, namespace, engine_service, shared_memory_service):
-        super().__init__(namespace, engine_service, shared_memory_service)
+        self.navigation_service = spear.NavigationService(
+            entry_point_caller=spear.CallSyncEntryPointCaller(service_name=f"{namespace}.navigation_service", engine_service=engine_service),
+            shared_memory_service=shared_memory_service,
+            sp_func_service=self._sp_func_service,
+            unreal_service=self.unreal_service,
+            config=self._config)
 
-        self.initialize_editor_world_service = spear.services.initialize_world_service.InitializeWorldService(
-            entry_point_caller=spear.utils.func_utils.CallSyncEntryPointCaller(service_name=f"{namespace}.initialize_editor_world_service", engine_service=engine_service))
+        self.engine_globals_service = spear.EngineGlobalsServiceWrapper(
+            service=engine_globals_service,
+            sp_func_service=self._sp_func_service,
+            unreal_service=self.unreal_service,
+            config=self._config)
 
-class GameServices(CommonServices):
-    def __init__(self, namespace, engine_service, shared_memory_service):
-        super().__init__(namespace, engine_service, shared_memory_service)
+    def get_unreal_object(self, uobject=None, uclass=None, with_sp_funcs=False):
+        return spear.UnrealObject(
+            unreal_service=self.unreal_service,
+            sp_func_service=self._sp_func_service,
+            config=self._config,
+            uobject=uobject,
+            uclass=uclass,
+            with_sp_funcs=with_sp_funcs)
 
-        self.initialize_game_world_service = spear.services.initialize_world_service.InitializeWorldService(
-            entry_point_caller=spear.utils.func_utils.CallSyncEntryPointCaller(service_name=f"{namespace}.initialize_game_world_service", engine_service=engine_service))
+class EditorScopedServices(WorldScopedServices):
+    def __init__(self, namespace, engine_service, engine_globals_service, shared_memory_service, sp_func_service, config):
+        super().__init__(
+            namespace=namespace,
+            engine_service=engine_service,
+            engine_globals_service=engine_globals_service,
+            shared_memory_service=shared_memory_service,
+            sp_func_service=sp_func_service,
+            config=config)
+
+        self.initialize_editor_world_service = spear.InitializeWorldService(
+            entry_point_caller=spear.CallSyncEntryPointCaller(service_name=f"{namespace}.initialize_editor_world_service", engine_service=engine_service))
+
+class GameScopedServices(WorldScopedServices):
+    def __init__(self, namespace, engine_service, engine_globals_service, shared_memory_service, sp_func_service, config):
+        super().__init__(
+            namespace=namespace,
+            engine_service=engine_service,
+            engine_globals_service=engine_globals_service,
+            shared_memory_service=shared_memory_service,
+            sp_func_service=sp_func_service,
+            config=config)
+
+        self.initialize_game_world_service = spear.InitializeWorldService(
+            entry_point_caller=spear.CallSyncEntryPointCaller(service_name=f"{namespace}.initialize_game_world_service", engine_service=engine_service))
 
 #
 # Instance
@@ -79,46 +115,39 @@ class Instance():
         # Request to launch the unreal instance and initialize the client.
         self._request_launch_unreal_instance()
         self._initialize_client()
+
+        self._engine_service = spear.EngineService(client=self._client, config=self._config)
+        self._engine_service.initialize()
+
+        # Now that EngineService is initialized, we can validate our client and server entry points.
         self._validate_client_and_server_entry_points()
 
-        # EngineService needs its own custom logic for interacting directly with the client, because EngineService
-        # implements the context managers returned by begin_frame() and end_frame(). Additionally, all other
-        # services call entry points through EngineService.call(), rather than going going through the client
-        # directly. So we pass in the client directly when constructing EngineService, and we pass in EngineService
-        # when constructing all other services.
-        self.engine_service = spear.services.engine_service.EngineService(
-            entry_point_caller=spear.utils.func_utils.CallSyncEntryPointCaller(service_name="engine_service", engine_service=None),
-            client=self._client,
-            config=self._config)
-        self.engine_service.initialize() # EngineService must be explicitly initialized
-
         # Initialize services that require a reference to EngineService.
-
-        self.enhanced_input_service = spear.services.enhanced_input_service.EnhancedInputService(
-            entry_point_caller=spear.utils.func_utils.CallSyncEntryPointCaller(service_name="enhanced_input_service", engine_service=self.engine_service))
-
-        self.input_service = spear.services.input_service.InputService(
-            entry_point_caller=spear.utils.func_utils.CallSyncEntryPointCaller(service_name="input_service", engine_service=self.engine_service))
-
-        self.shared_memory_service = spear.services.shared_memory_service.SharedMemoryService(
-            entry_point_caller=spear.utils.func_utils.CallSyncEntryPointCaller(service_name="shared_memory_service", engine_service=self.engine_service))
+        self.engine_globals_service = spear.EngineGlobalsService(entry_point_caller=spear.CallSyncEntryPointCaller(service_name="engine_globals_service", engine_service=self._engine_service))
+        self.enhanced_input_service = spear.EnhancedInputService(entry_point_caller=spear.CallSyncEntryPointCaller(service_name="enhanced_input_service", engine_service=self._engine_service))
+        self.input_service = spear.InputService(entry_point_caller=spear.CallSyncEntryPointCaller(service_name="input_service", engine_service=self._engine_service))
+        self.shared_memory_service = spear.SharedMemoryService(entry_point_caller=spear.CallSyncEntryPointCaller(service_name="shared_memory_service", engine_service=self._engine_service))
 
         # Initialize services that require a reference to EngineService and SharedMemoryService.
+        self.sp_func_service = spear.SpFuncService(entry_point_caller=spear.CallSyncEntryPointCaller(service_name="sp_func_service", engine_service=self._engine_service), shared_memory_service=self.shared_memory_service)
 
-        self.sp_func_service = spear.services.sp_func_service.SpFuncService(
-            entry_point_caller=spear.utils.func_utils.CallSyncEntryPointCaller(service_name="sp_func_service", engine_service=self.engine_service),
-            shared_memory_service=self.shared_memory_service)
+        # Initialize EditorScopedServices and GameScopedServices.
 
-        # Initialize EditorServices and GameServices containers for world-specific services
+        self._editor = EditorScopedServices(
+            namespace="editor",
+            engine_service=self._engine_service,
+            engine_globals_service=self.engine_globals_service,
+            shared_memory_service=self.shared_memory_service,
+            sp_func_service=self.sp_func_service,
+            config=self._config)
 
-        self._editor = EditorServices(namespace="editor", engine_service=self.engine_service, shared_memory_service=self.shared_memory_service)
-        self._game = GameServices(namespace="game", engine_service=self.engine_service, shared_memory_service=self.shared_memory_service)
-
-        # Execute warm-up routine.
-        self._request_warm_up_unreal_instance(
-            time_seconds=self._config.SPEAR.INSTANCE.INSTANCE_WARM_UP_TIME_SECONDS,
-            num_frames=self._config.SPEAR.INSTANCE.INSTANCE_WARM_UP_NUM_FRAMES)
-
+        self._game = GameScopedServices(
+            namespace="game",
+            engine_service=self._engine_service,
+            engine_globals_service=self.engine_globals_service,
+            shared_memory_service=self.shared_memory_service,
+            sp_func_service=self.sp_func_service,
+            config=self._config)
 
     #
     # Public interface
@@ -127,28 +156,33 @@ class Instance():
     def get_editor(self, wait=None, wait_max_time_seconds=0.0, wait_sleep_time_seconds=0.0, warm_up=None, warm_up_time_seconds=0.0, warm_up_num_frames=0):
 
         spear.log_current_function()
-        assert self.engine_service.is_with_editor() and not self.engine_service.is_running_commandlet() and not " -game" in self.engine_service.get_command_line()
+        assert self.engine_globals_service.is_with_editor() and not self.engine_globals_service.is_running_commandlet() and not " -game " in self.engine_globals_service.get_command_line()
 
-        if self._config.SPEAR.LAUNCH_MODE == "none":
-            if wait is None:
-                wait = False
-            if warm_up is None:
-                warm_up = False
-        elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
-            if wait is None:
-                wait = True
-                wait_max_time_seconds = self._config.SPEAR.INSTANCE.GET_EDITOR_WAIT_MAX_TIME_SECONDS
-                wait_sleep_time_seconds = self._config.SPEAR.INSTANCE.GET_EDITOR_WAIT_SLEEP_TIME_SECONDS
-            if warm_up is None:
-                warm_up = True
-                warm_up_time_seconds = self._config.SPEAR.INSTANCE.GET_EDITOR_WARM_UP_TIME_SECONDS
-                warm_up_num_frames = self._config.SPEAR.INSTANCE.GET_EDITOR_WARM_UP_NUM_FRAMES
+        if wait is None:
+            retry = True
+            wait_max_time_seconds = self._config.SPEAR.INSTANCE.GET_EDITOR_WAIT_MAX_TIME_SECONDS
+            wait_sleep_time_seconds = self._config.SPEAR.INSTANCE.GET_EDITOR_WAIT_SLEEP_TIME_SECONDS
         else:
-            self._terminate_client(verbose=True)
-            assert False
+            retry = wait
+        if warm_up is None:
+            warm_up = True
+            warm_up_time_seconds = self._config.SPEAR.INSTANCE.GET_EDITOR_WARM_UP_TIME_SECONDS
+            warm_up_num_frames = self._config.SPEAR.INSTANCE.GET_EDITOR_WARM_UP_NUM_FRAMES
 
-        self._wait_until(func=self._editor.initialize_editor_world_service.is_initialized, retry=wait, max_time_seconds=wait_max_time_seconds, sleep_time_seconds=wait_sleep_time_seconds)
-        self._warm_up_unreal_instance(time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames)
+        # even if we're not waiting, we still want to guarantee that the editor is ready, so we call _wait_until(...) unconditionally
+        self._wait_until(func=self._editor.initialize_editor_world_service.is_initialized, retry=retry, max_time_seconds=wait_max_time_seconds, sleep_time_seconds=wait_sleep_time_seconds)
+
+        # only warm up if necessary
+        if warm_up:
+            self._request_warm_up_unreal_instance(time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames)
+
+        # UnrealService must be explicitly initialized but only after we're finished warming up
+        spear.log("    Initializing editor-scoped services...")
+        with self.begin_frame():
+            self._editor.unreal_service.initialize()
+        with self.end_frame():
+            pass
+        spear.log("    Finished initializing editor-scoped services.")
 
         return self._editor
 
@@ -157,45 +191,62 @@ class Instance():
 
         spear.log_current_function()
 
-        if self._config.SPEAR.LAUNCH_MODE == "none":
-            if wait is None:
-                wait = False
-            if warm_up is None:
-                warm_up = False
-        elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
-            if wait is None:
-                wait = True
-                wait_max_time_seconds = self._config.SPEAR.INSTANCE.GET_GAME_WAIT_MAX_TIME_SECONDS
-                wait_sleep_time_seconds = self._config.SPEAR.INSTANCE.GET_GAME_WAIT_SLEEP_TIME_SECONDS
-            if warm_up is None:
-                warm_up = True
-                warm_up_time_seconds = self._config.SPEAR.INSTANCE.GET_GAME_WARM_UP_TIME_SECONDS
-                warm_up_num_frames = self._config.SPEAR.INSTANCE.GET_GAME_WARM_UP_NUM_FRAMES
+        if wait is None:
+            retry = True
+            wait_max_time_seconds = self._config.SPEAR.INSTANCE.GET_GAME_WAIT_MAX_TIME_SECONDS
+            wait_sleep_time_seconds = self._config.SPEAR.INSTANCE.GET_GAME_WAIT_SLEEP_TIME_SECONDS
         else:
-            self._terminate_client(verbose=True)
-            assert False
+            retry = wait
+        if warm_up is None:
+            warm_up = True
+            warm_up_time_seconds = self._config.SPEAR.INSTANCE.GET_GAME_WARM_UP_TIME_SECONDS
+            warm_up_num_frames = self._config.SPEAR.INSTANCE.GET_GAME_WARM_UP_NUM_FRAMES
 
-        self._wait_until(func=self._game.initialize_game_world_service.is_initialized, retry=wait, max_time_seconds=wait_max_time_seconds, sleep_time_seconds=wait_sleep_time_seconds)
-        self._warm_up_unreal_instance(time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames)
+        # even if we're not waiting, we still want to guarantee that the game is ready, so we call _wait_until(...) unconditionally
+        self._wait_until(func=self._game.initialize_game_world_service.is_initialized, retry=retry, max_time_seconds=wait_max_time_seconds, sleep_time_seconds=wait_sleep_time_seconds)
+
+        # only warm up if necessary
+        if warm_up:
+            self._request_warm_up_unreal_instance(time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames)
+
+        # UnrealService must be explicitly initialized but only after we're finished warming up
+        spear.log("    Initializing game-scoped services...")
+        with self.begin_frame():
+            self._game.unreal_service.initialize()
+        with self.end_frame():
+            pass
+        spear.log("    Finished initializing game-scoped services.")
 
         return self._game
 
 
     def begin_frame(self):
-        return self.engine_service.begin_frame()
+        return self._engine_service.begin_frame()
 
 
     def end_frame(self):
-        return self.engine_service.end_frame()
+        return self._engine_service.end_frame()
 
 
     def is_running(self):
         try:
-            connected = self.engine_service.ping() == "ping"
+            connected = self.engine_globals_service.ping() == "ping"
             return connected
         except:
             pass # no need to log exception because this case is expected when the instance is no longer running
         return False
+
+
+    # most users should not need to call this function because get_game(...) and get_editor(...) will warm up by default
+    def warm_up(self, warm_up=None, warm_up_time_seconds=0.0, warm_up_num_frames=0):
+        spear.log_current_function()
+        if warm_up is None:
+            warm_up = True
+            warm_up_time_seconds = self._config.SPEAR.INSTANCE.INSTANCE_WARM_UP_TIME_SECONDS
+            warm_up_num_frames = self._config.SPEAR.INSTANCE.INSTANCE_WARM_UP_NUM_FRAMES
+
+        assert warm_up
+        self._request_warm_up_unreal_instance(time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames)
 
 
     def flush(self):
@@ -207,6 +258,8 @@ class Instance():
 
     def close(self, force=False):
 
+        spear.log_current_function()
+
         # Note that in the constructor, we launch the Unreal instance first and then initialize the client
         # Normally, we would do things in the reverse order here. But if we terminate the client first, then
         # we can't call the "request_exit" and "terminate" entry points to close the Unreal instance. So we
@@ -216,7 +269,7 @@ class Instance():
             self._force_kill_unreal_instance()
         else:
             self._request_terminate_unreal_instance()
-        self._terminate_client(verbose=True)
+        self._terminate_client(verbose=True, log_prefix="    ")
 
 
     #
@@ -225,8 +278,8 @@ class Instance():
 
     def _request_launch_unreal_instance(self):
 
-        spear.log_current_function()        
-        spear.log("    Requesting to launch Unreal instance...")
+        spear.log_current_function(prefix="    ")
+        spear.log("        Requesting to launch Unreal instance...")
 
         if self._config.SPEAR.LAUNCH_MODE == "none":
             pass
@@ -238,7 +291,7 @@ class Instance():
             temp_dir = os.path.realpath(os.path.join(self._config.SPEAR.INSTANCE.TEMP_DIR))
             temp_config_file = os.path.realpath(os.path.join(temp_dir, self._config.SPEAR.INSTANCE.TEMP_CONFIG_FILE))
 
-            spear.log("    Writing temp config file: ", temp_config_file)
+            spear.log("        Writing temp config file: ", temp_config_file)
 
             os.makedirs(temp_dir, exist_ok=True)
             with open(temp_config_file, "w") as f:
@@ -330,7 +383,7 @@ class Instance():
             else:
                 assert False
 
-            spear.log("    Attempting to launch executable: ", launch_executable_internal)
+            spear.log("        Attempting to launch executable: ", launch_executable_internal)
             assert os.path.exists(launch_executable_internal)
   
             for arg, value in (self._config.SPEAR.INSTANCE.COMMAND_LINE_ARGS).items():
@@ -342,11 +395,11 @@ class Instance():
             launch_args.append(f"-config_file={temp_config_file}")
             cmd = [launch_executable_internal] + launch_args
 
-            spear.log("    Launching executable with the following command-line arguments:")
-            spear.log(f"        {launch_executable_internal}")
+            spear.log("        Launching executable with the following command-line arguments:")
+            spear.log(f"            {launch_executable_internal}")
             for launch_arg in launch_args:
-                spear.log(f"            {launch_arg}")
-            spear.log("    Launching executable with the following config values:")
+                spear.log(f"                {launch_arg}")
+            spear.log("        Launching executable with the following config values:")
             spear.log_no_prefix(self._config)
 
             popen = subprocess.Popen(cmd)
@@ -355,21 +408,21 @@ class Instance():
             # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible status values
             status = self._process.status()
             if status not in expected_process_status_values:
-                spear.log("    ERROR: Unrecognized process status: ", status)
-                spear.log(f"    ERROR: Killing process {self._process.pid}...")
+                spear.log("        ERROR: Unrecognized process status: ", status)
+                spear.log(f"        ERROR: Killing process {self._process.pid}...")
                 self._force_kill_unreal_instance()
                 assert False
 
         else:
             assert False
 
-        spear.log("    Finished requesting to launch Unreal instance.")
+        spear.log("        Finished requesting to launch Unreal instance.")
 
 
     def _initialize_client(self):
 
-        spear.log_current_function()        
-        spear.log("    Initializing client...")
+        spear.log_current_function(prefix="    ")        
+        spear.log("        Initializing client...")
 
         connected = False
 
@@ -380,14 +433,14 @@ class Instance():
             try:
                 # Once a connection has been established, the client will wait for timeout seconds before
                 # throwing when calling a server function.
-                spear.log("    Attempting to connect to server...")
+                spear.log("        Attempting to connect to server...")
                 self._client = spear_ext.Client("127.0.0.1", self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT)
                 self._client.set_timeout(int(self._config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS*1000))
-                connected = self._client._call_sync_on_worker_thread_as_string("engine_service.call_sync_on_worker_thread.ping") == "ping" # self.engine_service hasn't been initialized yet
+                connected = self._client._call_sync_on_worker_thread_as_string("engine_globals_service.call_sync_on_worker_thread.ping") == "ping" # self._engine_service hasn't been initialized yet
 
             except Exception as e:
-                spear.log("    Exception: ", e)
-                self._terminate_client(verbose=True)
+                spear.log("        Exception: ", e)
+                self._terminate_client(verbose=True, log_prefix="        ")
                 assert False
 
         # otherwise try to connect repeatedly, since the server might not have started yet
@@ -400,16 +453,16 @@ class Instance():
                 # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible values
                 status = self._process.status()
                 if status not in expected_process_status_values:
-                    spear.log("    ERROR: Unrecognized process status: ", status)
+                    spear.log("        ERROR: Unrecognized process status: ", status)
                     break
 
                 try:
                     # Once a connection has been established, the client will wait for timeout seconds before
                     # throwing when calling a server function.
-                    spear.log("    Attempting to connect to server...")
+                    spear.log("        Attempting to connect to server...")
                     self._client = spear_ext.Client("127.0.0.1", self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT)
                     self._client.set_timeout(int(self._config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS*1000))
-                    connected = self._client._call_sync_on_worker_thread_as_string("engine_service.call_sync_on_worker_thread.ping") == "ping" # self.engine_service hasn't been initialized yet
+                    connected = self._client._call_sync_on_worker_thread_as_string("engine_globals_service.call_sync_on_worker_thread.ping") == "ping" # self._engine_service hasn't been initialized yet
                     break
 
                 except:
@@ -425,21 +478,21 @@ class Instance():
             assert False
 
         if connected:
-            spear.log("    Connected to server.")
+            spear.log("        Connected to server.")
         else:
-            spear.log("    ERROR: Couldn't connect to RPC server, giving up...")
-            self._terminate_client(verbose=True)
+            spear.log("        ERROR: Couldn't connect to RPC server, giving up...")
+            self._terminate_client(verbose=True, log_prefix="        ")
             assert False
 
         if self._config.SPEAR.LAUNCH_MODE == "none":
             pass
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
-            pid = self._client._call_sync_on_worker_thread_as_int64("engine_service.call_sync_on_worker_thread.get_id") # self.engine_service hasn't been initialized yet
+            pid = self._client._call_sync_on_worker_thread_as_int64("engine_globals_service.call_sync_on_worker_thread.get_id") # self._engine_service hasn't been initialized yet
             if pid == self._process.pid:
-                spear.log("    Validated engine_service.get_id: ", pid)
+                spear.log("        Validated engine_globals_service.call_sync_on_worker_thread.get_id: ", pid)
             else:            
-                spear.log(f"    ERROR: engine_service.get_id returned {pid} but the PID of the process we just launched is {self._process.pid}. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables and try launching again.")
-                self._terminate_client(verbose=True)
+                spear.log(f"        ERROR: engine_globals_service.call_sync_on_worker_thread.get_id returned {pid} but the PID of the process we just launched is {self._process.pid}. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables and try launching again.")
+                self._terminate_client(verbose=True, log_prefix="        ")
                 assert False
         else:
             assert False
@@ -449,33 +502,33 @@ class Instance():
         self._client.verbose_allocations = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_ALLOCATIONS
         self._client.verbose_exceptions = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_EXCEPTIONS
 
-        spear.log("    Finished initializing client.")
+        spear.log("        Finished initializing client.")
 
 
     def _validate_client_and_server_entry_points(self):
 
-        spear.log_current_function()        
-        spear.log("    Validating client and server entry points...")
+        spear.log_current_function(prefix="    ")        
+        spear.log("        Validating client and server entry points...")
 
         # Validate func signature type descs.
 
         client_signature_type_descs = spear_ext.Client.get_entry_point_signature_type_descs()
-        server_signature_type_descs = self._client._call_sync_on_worker_thread_as_vector_of_func_signature_type_desc("engine_service.call_sync_on_worker_thread.get_entry_point_signature_type_descs")
+        server_signature_type_descs = self._engine_service.get_server_signature_type_descs()
 
         valid = True
         for c, s in itertools.zip_longest(client_signature_type_descs, server_signature_type_descs):
             if c.type_names != s.type_names or c.const_strings != s.const_strings or c.ref_strings != s.ref_strings:
                 valid = False
-                spear.log(f"    ERROR: Mismatch between registered data types on the client and server.")
-                spear.log(f"    ERROR:     Type names:")
-                spear.log(f"    ERROR:         Client: {c.type_names}")
-                spear.log(f"    ERROR:         Server: {s.type_names}")
-                spear.log(f"    ERROR:     Const strings:")
-                spear.log(f"    ERROR:         Client: {c.const_strings}")
-                spear.log(f"    ERROR:         Server: {c.const_strings}")
-                spear.log(f"    ERROR:     Ref Strings:")
-                spear.log(f"    ERROR:         Client: {c.ref_strings}")
-                spear.log(f"    ERROR:         Server: {c.ref_strings}")
+                spear.log(f"        ERROR: Mismatch between registered data types on the client and server.")
+                spear.log(f"        ERROR:     Type names:")
+                spear.log(f"        ERROR:         Client: {c.type_names}")
+                spear.log(f"        ERROR:         Server: {s.type_names}")
+                spear.log(f"        ERROR:     Const strings:")
+                spear.log(f"        ERROR:         Client: {c.const_strings}")
+                spear.log(f"        ERROR:         Server: {c.const_strings}")
+                spear.log(f"        ERROR:     Ref Strings:")
+                spear.log(f"        ERROR:         Client: {c.ref_strings}")
+                spear.log(f"        ERROR:         Server: {c.ref_strings}")
 
         assert valid
 
@@ -502,15 +555,15 @@ class Instance():
                 for c in client_signature_descs:
                     if c.name == get_client_func_name(s.func_signature) and c.func_signature_id == s.func_signature_id:
                         if found:
-                            spear.log(f"    ERROR: Server entry point callable from multiple client functions: ", s.name)
-                            spear.log(f"    ERROR:     Function signature ({len(s.func_signature) - 1} args): <{func_signature_string}>")
+                            spear.log(f"        ERROR: Server entry point callable from multiple client functions: ", s.name)
+                            spear.log(f"        ERROR:     Function signature ({len(s.func_signature) - 1} args): <{func_signature_string}>")
                             valid = False
                         found = True
 
                 if not found:
                     valid = False
-                    spear.log(f"    ERROR: Server entry point not callable from client: ", s.name)
-                    spear.log(f"    ERROR:     Function signature ({len(s.func_signature) - 1} args): <{func_signature_string}>")
+                    spear.log(f"        ERROR: Server entry point not callable from client: ", s.name)
+                    spear.log(f"        ERROR:     Function signature ({len(s.func_signature) - 1} args): <{func_signature_string}>")
 
             # Search for client entry points that don't correspond to any server entry point.
             for c in client_signature_descs:
@@ -524,66 +577,33 @@ class Instance():
 
                 if not found:
                     valid = False
-                    spear.log(f"    ERROR: Client entry point does not correspond to any server entry point: {c.name} (registry_name={registry_name})")
-                    spear.log(f"    ERROR:     Function signature ({len(c.func_signature) - 1} args): <{func_signature_string}>")
+                    spear.log(f"        ERROR: Client entry point does not correspond to any server entry point: {c.name} (registry_name={registry_name})")
+                    spear.log(f"        ERROR:     Function signature ({len(c.func_signature) - 1} args): <{func_signature_string}>")
 
             return valid
 
         client_signature_descs = spear_ext.Client.get_entry_point_signature_descs()
-        server_signature_descs = self._client._call_sync_on_worker_thread_as_map_of_string_to_vector_of_func_signature_desc("engine_service.call_sync_on_worker_thread.get_entry_point_signature_descs")
+        server_signature_descs = { registry_name: descs.values() for registry_name, descs in self._engine_service.get_server_signature_descs().items() }
 
         valid = \
-            validate_entry_points("call_sync_on_worker_thread",       client_signature_descs["call_sync_on_worker_thread"],       server_signature_descs["call_sync_on_worker_thread"],       lambda s: "_call_sync_on_worker_thread_as_" + s[0].type_names["entry_point"]) and \
-            validate_entry_points("call_sync_on_game_thread",         client_signature_descs["call_sync_on_game_thread"],         server_signature_descs["call_sync_on_game_thread"],         lambda s: "_call_sync_on_game_thread_as_" + s[0].type_names["entry_point"]) and \
-            validate_entry_points("call_async_on_game_thread",        client_signature_descs["call_async_on_game_thread"],        server_signature_descs["call_async_on_game_thread"],        lambda s: "_call_async_on_game_thread") and \
-            validate_entry_points("send_async_on_game_thread",        client_signature_descs["send_async_on_game_thread"],        server_signature_descs["send_async_on_game_thread"],        lambda s: "_send_async_on_game_thread") and \
-            validate_entry_points("get_future_result_on_game_thread", client_signature_descs["get_future_result_on_game_thread"], server_signature_descs["get_future_result_on_game_thread"], lambda s: "_get_future_result_on_game_thread_as_" + s[0].type_names["entry_point"])
+            validate_entry_points("call_sync_on_worker_thread",         client_signature_descs["call_sync_on_worker_thread"],         server_signature_descs["call_sync_on_worker_thread"],         lambda s: "_call_sync_on_worker_thread_as_" + s[0].type_names["entry_point"]) and \
+            validate_entry_points("call_sync_on_game_thread",           client_signature_descs["call_sync_on_game_thread"],           server_signature_descs["call_sync_on_game_thread"],           lambda s: "_call_sync_on_game_thread_as_" + s[0].type_names["entry_point"]) and \
+            validate_entry_points("call_async_on_game_thread",          client_signature_descs["call_async_on_game_thread"],          server_signature_descs["call_async_on_game_thread"],          lambda s: "_call_async_on_game_thread") and \
+            validate_entry_points("send_async_on_game_thread",          client_signature_descs["send_async_on_game_thread"],          server_signature_descs["send_async_on_game_thread"],          lambda s: "_send_async_on_game_thread") and \
+            validate_entry_points("get_future_result_from_game_thread", client_signature_descs["get_future_result_from_game_thread"], server_signature_descs["get_future_result_from_game_thread"], lambda s: "_get_future_result_from_game_thread_as_" + s[0].type_names["entry_point"])
 
         assert valid
 
-        spear.log("    Finished validating client and server entry points.")
-
-
-    def _request_warm_up_unreal_instance(self, time_seconds, num_frames):
-
-        spear.log_current_function()
-        spear.log("    Requesting to warm up Unreal instance...")
-
-        if self._config.SPEAR.LAUNCH_MODE == "none":
-            pass
-        elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
-            self._warm_up_unreal_instance(time_seconds, num_frames)
-        else:
-            self._terminate_client(verbose=True)
-            assert False
-
-        spear.log("    Finished requesting to warm up Unreal instance.")
-
-
-    def _warm_up_unreal_instance(self, time_seconds, num_frames):
-
-        spear.log_current_function()        
-        spear.log("    Warming up Unreal instance for ", time_seconds, " seconds and ", num_frames, " frames...")
-
-        time.sleep(time_seconds)
-
-        # Execute at least one complete warmup frame to guarantee that we can receive valid observations. If
-        # we don't do this, it is possible that Unreal will return an initial visual observation of all
-        # zeros. We generally also want to execute more than one warmup frame to warm up various caches and
-        # rendering features that leverage temporal coherence between frames.
-        for i in range(num_frames):
-            self.flush()
-
-        spear.log("    Finished warming up Unreal instance.")
+        spear.log("        Finished validating client and server entry points.")
 
 
     def _wait_until(self, func, retry, max_time_seconds, sleep_time_seconds):
 
-        spear.log_current_function()
-        spear.log("    Waiting for function to return true: ", str(func))
+        spear.log_current_function(prefix="    ")
+        spear.log("        Waiting for function to return true: ", str(func))
 
         if retry:
-            spear.log("    Waiting for ", max_time_seconds, " seconds, retrying every ", sleep_time_seconds, " seconds...")
+            spear.log("        Waiting for up to ", max_time_seconds, " seconds, retrying every ", sleep_time_seconds, " seconds...")
             success = func()
             start_time_seconds = time.time()
             elapsed_time_seconds = time.time() - start_time_seconds
@@ -594,15 +614,46 @@ class Instance():
                 time.sleep(sleep_time_seconds)
                 elapsed_time_seconds = time.time() - start_time_seconds
         else:
-            spear.log("    Attempting to call function once...")
+            spear.log("        Attempting to call function once...")
             success = func()
 
         if not success:
-            spear.log("    ERROR: Function never returned true, giving up...")
-            self._terminate_client(verbose=True)
+            spear.log("        ERROR: Function never returned true, giving up...")
+            self._terminate_client(verbose=True, log_prefix="        ")
             assert False
 
-        spear.log("    Finished waiting for function.")
+        spear.log("        Finished waiting for function to return true.")
+
+
+    def _request_warm_up_unreal_instance(self, time_seconds, num_frames):
+
+        spear.log_current_function(prefix="    ")
+        spear.log("        Requesting to warm up Unreal instance...")
+
+        if self._config.SPEAR.LAUNCH_MODE == "none":
+            pass
+        elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
+            self._warm_up_unreal_instance(time_seconds, num_frames)
+        else:
+            self._terminate_client(verbose=True, log_prefix="        ")
+            assert False
+
+        spear.log("        Finished requesting to warm up Unreal instance.")
+
+
+    def _warm_up_unreal_instance(self, time_seconds, num_frames):
+
+        spear.log_current_function(prefix="        ")
+        spear.log("            Warming up Unreal instance for ", time_seconds, " seconds and ", num_frames, " frames...")
+
+        if time_seconds > 0.0:
+            time.sleep(time_seconds)
+
+        for i in range(num_frames):
+            self.flush()
+
+        spear.log("            Finished warming up Unreal instance.")
+
 
     #
     # Shutdown helper functions
@@ -610,16 +661,16 @@ class Instance():
 
     def _request_terminate_unreal_instance(self):
 
-        spear.log_current_function()
-        spear.log("    Requesting to terminate Unreal instance...")
+        spear.log_current_function(prefix="    ")
+        spear.log("        Requesting to terminate Unreal instance...")
 
         if self._config.SPEAR.LAUNCH_MODE == "none":
             pass
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:        
             try:
                 self.flush()
-                self.engine_service.request_exit(immediate_shutdown=False)
-                self.engine_service.terminate() # EngineService must be explicitly terminated, needs to be the last entry point that gets called
+                self.engine_globals_service.request_exit(immediate_shutdown=False)
+                self._engine_service.terminate() # EngineService must be explicitly terminated, needs to be the last entry point that gets called
             except:
                 pass # no need to log exception because this case is expected when the instance is no longer running
             try:
@@ -633,26 +684,30 @@ class Instance():
                 except psutil.NoSuchProcess:
                     break
         else:
-            self._terminate_client(verbose=True)
+            self._terminate_client(verbose=True, log_prefix="        ")
             assert False
 
-        spear.log("    Finished requesting to terminate Unreal instance.")
+        spear.log("        Finished requesting to terminate Unreal instance.")
 
 
     def _force_kill_unreal_instance(self):
-        spear.log_current_function()
-        spear.log("    Forcefully killing Unreal instance...")
+        spear.log_current_function(prefix="    ")
+        spear.log("        Forcefully killing Unreal instance...")
         self._process.terminate()
         self._process.kill()
-        spear.log("    Finished forcefully killing Unreal instance.")
+        spear.log("        Finished forcefully killing Unreal instance.")
 
 
-    def _terminate_client(self, verbose):
+    def _terminate_client(self, verbose, log_prefix=""):
         if verbose:
-            spear.log_current_function()
-            spear.log("    Terminating client ", self._client, "...")
+            spear.log_current_function(prefix=log_prefix)
+            spear.log(f"{log_prefix}    Terminating client: {self._client}")
         if self._client is not None:
             self._client.terminate()
             self._client = None
         if verbose:
-            spear.log("    Finished terminating client.")
+            spear.log(f"{log_prefix}    Finished terminating client.")
+
+
+    def __repr__(self):
+        return f"Instance(_client={self._client})"

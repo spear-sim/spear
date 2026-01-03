@@ -15,11 +15,11 @@ import spear
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--pipeline_dir", required=True)
-parser.add_argument("--scene_id", required=True)
-parser.add_argument("--visual_parity_with_unreal", action="store_true")
-parser.add_argument("--ignore_actors", nargs="*")
-parser.add_argument("--color_mode", default="unique_color_per_component")
+parser.add_argument("--pipeline-dir", required=True)
+parser.add_argument("--scene-id", required=True)
+parser.add_argument("--visual-parity-with-unreal", action="store_true")
+parser.add_argument("--ignore-actors", nargs="*")
+parser.add_argument("--color-mode", default="unique_color_per_component")
 args = parser.parse_args()
 
 assert args.color_mode in ["single_color", "unique_color_per_actor", "unique_color_per_component"]

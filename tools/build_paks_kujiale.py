@@ -16,17 +16,17 @@ import sys
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--build_config", required=True)
-parser.add_argument("--external_content_dir", required=True)
-parser.add_argument("--paks_dir", required=True)
-parser.add_argument("--unreal_engine_dir", required=True)
-parser.add_argument("--version_tag", required=True)
-parser.add_argument("--conda_script")
-parser.add_argument("--skip_build_common_pak", action="store_true")
-parser.add_argument("--skip_build_scene_paks", action="store_true")
-parser.add_argument("--scene_ids", nargs="*")
-parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
-parser.add_argument("--conda_env", default="spear-env")
+parser.add_argument("--build-config", required=True)
+parser.add_argument("--external-content-dir", required=True)
+parser.add_argument("--paks-dir", required=True)
+parser.add_argument("--unreal-engine-dir", required=True)
+parser.add_argument("--version-tag", required=True)
+parser.add_argument("--conda-script")
+parser.add_argument("--skip-build-common-pak", action="store_true")
+parser.add_argument("--skip-build-scene-paks", action="store_true")
+parser.add_argument("--scene-ids", nargs="*")
+parser.add_argument("--build-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
+parser.add_argument("--conda-env", default="spear-env")
 args = parser.parse_args()
 
 assert args.build_config in ["Debug", "DebugGame", "Development", "Shipping", "Test"]
@@ -143,9 +143,9 @@ if __name__ == "__main__":
             cmd_prefix + \
             "python " + \
             f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlinks_for_external_content.py"))}" ' + \
-            f'--external_content_dir "{os.path.realpath(os.path.join(args.external_content_dir, common_content_dir))}" ' + \
-            f'--unreal_project_dir "{unreal_project_dir}" ' + \
-            f'--unreal_project_content_dir "{common_content_dir}" ' + \
+            f'--external-content-dir "{os.path.realpath(os.path.join(args.external_content_dir, common_content_dir))}" ' + \
+            f'--unreal-project-dir "{unreal_project_dir}" ' + \
+            f'--unreal-project-content-dir "{common_content_dir}" ' + \
             f"--{update_action}"
         spear.log("Executing: ", cmd)
         subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
@@ -206,12 +206,12 @@ if __name__ == "__main__":
             cmd_prefix + \
             "python " + \
             f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "build_pak.py"))}" ' + \
-            f'--pak_file "{pak_file}" ' + \
-            f'--cook_dirs_file "{cook_dirs_file}" ' + \
-            f'--include_assets_file "{include_assets_file}" ' + \
-            f'--exclude_assets_file "{exclude_assets_file}" ' + \
-            f'--unreal_engine_dir "{args.unreal_engine_dir}" ' + \
-            f'--unreal_project_dir "{unreal_project_dir}"'
+            f'--pak-file "{pak_file}" ' + \
+            f'--cook-dirs-file "{cook_dirs_file}" ' + \
+            f'--include-assets-file "{include_assets_file}" ' + \
+            f'--exclude-assets-file "{exclude_assets_file}" ' + \
+            f'--unreal-engine-dir "{args.unreal_engine_dir}" ' + \
+            f'--unreal-project-dir "{unreal_project_dir}"'
         spear.log("Executing: ", cmd)
         subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
 
@@ -246,9 +246,9 @@ if __name__ == "__main__":
                 cmd_prefix + \
                 "python " + \
                 f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlinks_for_external_content.py"))}" ' + \
-                f'--external_content_dir "{os.path.realpath(os.path.join(args.external_content_dir, scene_content_dir))}" ' + \
-                f'--unreal_project_dir "{unreal_project_dir}" ' + \
-                f'--unreal_project_content_dir "{scene_content_dir}" ' + \
+                f'--external-content-dir "{os.path.realpath(os.path.join(args.external_content_dir, scene_content_dir))}" ' + \
+                f'--unreal-project-dir "{unreal_project_dir}" ' + \
+                f'--unreal-project-content-dir "{scene_content_dir}" ' + \
                 f"--{update_action}"
             spear.log("Executing: ", cmd)
             subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
@@ -313,13 +313,13 @@ if __name__ == "__main__":
                 cmd_prefix + \
                 "python " + \
                 f'{os.path.realpath(os.path.join(os.path.dirname(__file__), "build_pak.py"))} ' + \
-                f'--pak_file "{pak_file}" ' + \
-                f'--cook_dirs_file "{cook_dirs_file}" ' + \
-                f'--cook_maps_file "{cook_maps_file}" ' + \
-                f'--include_assets_file "{include_assets_file}" ' + \
-                f'--exclude_assets_file "{exclude_assets_file}" ' + \
-                f'--unreal_engine_dir "{args.unreal_engine_dir}" ' + \
-                f'--unreal_project_dir "{unreal_project_dir}"'
+                f'--pak-file "{pak_file}" ' + \
+                f'--cook-dirs-file "{cook_dirs_file}" ' + \
+                f'--cook-maps-file "{cook_maps_file}" ' + \
+                f'--include-assets-file "{include_assets_file}" ' + \
+                f'--exclude-assets-file "{exclude_assets_file}" ' + \
+                f'--unreal-engine-dir "{args.unreal_engine_dir}" ' + \
+                f'--unreal-project-dir "{unreal_project_dir}"'
             spear.log("Executing: ", cmd)
             subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
 
@@ -329,9 +329,9 @@ if __name__ == "__main__":
                 cmd_prefix + \
                 "python " + \
                 f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlinks_for_external_content.py"))}" ' + \
-                f'--external_content_dir "{os.path.realpath(os.path.join(args.external_content_dir, scene_content_dir))}" ' + \
-                f'--unreal_project_dir "{unreal_project_dir}" ' + \
-                f'--unreal_project_content_dir "{scene_content_dir}" ' + \
+                f'--external-content-dir "{os.path.realpath(os.path.join(args.external_content_dir, scene_content_dir))}" ' + \
+                f'--unreal-project-dir "{unreal_project_dir}" ' + \
+                f'--unreal-project-content-dir "{scene_content_dir}" ' + \
                 f"--{update_action}"
             spear.log("Executing: ", cmd)
             subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
@@ -347,9 +347,9 @@ if __name__ == "__main__":
             cmd_prefix + \
             "python " + \
             f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlinks_for_external_content.py"))}" ' + \
-            f'--external_content_dir "{os.path.realpath(os.path.join(args.external_content_dir, common_content_dir))}" ' + \
-            f'--unreal_project_dir "{unreal_project_dir}" ' + \
-            f'--unreal_project_content_dir "{common_content_dir}" ' + \
+            f'--external-content-dir "{os.path.realpath(os.path.join(args.external_content_dir, common_content_dir))}" ' + \
+            f'--unreal-project-dir "{unreal_project_dir}" ' + \
+            f'--unreal-project-content-dir "{common_content_dir}" ' + \
             f"--{update_action}"
         spear.log("Executing: ", cmd)
         subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env

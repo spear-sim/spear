@@ -12,10 +12,10 @@ import sys
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--conda_script")
-parser.add_argument("--cxx_compiler")
-parser.add_argument("--unreal_engine_dir") # only required on Linux
-parser.add_argument("--conda_env", default="spear-env")
+parser.add_argument("--conda-script")
+parser.add_argument("--cxx-compiler")
+parser.add_argument("--unreal-engine-dir") # only required on Linux
+parser.add_argument("--conda-env", default="spear-env")
 args = parser.parse_args()
 
 

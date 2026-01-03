@@ -21,6 +21,7 @@ if __name__ == "__main__":
     # entire directories to be removed
     dirs = [
         os.path.realpath(os.path.join(project_dir, "python_ext", "BUILD")),
+        os.path.realpath(os.path.join(project_dir, "tools", "BUILD")),
         os.path.realpath(os.path.join(unreal_project_dir, "Binaries")),
         os.path.realpath(os.path.join(unreal_project_dir, "DerivedDataCache")),
         os.path.realpath(os.path.join(unreal_project_dir, "Intermediate")),

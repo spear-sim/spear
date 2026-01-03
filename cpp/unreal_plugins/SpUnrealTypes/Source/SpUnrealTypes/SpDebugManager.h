@@ -53,6 +53,12 @@ public:
 
 private:
     UFUNCTION(CallInEditor, Category="SPEAR")
+    void Initialize(); // can't be const
+
+    UFUNCTION(CallInEditor, Category="SPEAR")
+    void Terminate(); // can't be const
+
+    UFUNCTION(CallInEditor, Category="SPEAR")
     void LoadConfig(); // can't be const
 
     UFUNCTION(CallInEditor, Category="SPEAR")
@@ -81,6 +87,9 @@ private:
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void ReadPixels() const;
+
+    UFUNCTION(CallInEditor, Category="SPEAR")
+    void PrintLevelDebugInfo() const;
 
     UFUNCTION(CallInEditor, Category="SPEAR")
     void PrintActorDebugInfo() const;
@@ -135,11 +144,6 @@ private:
 
     UPROPERTY()
     TSet<FString> SetOfStrings;
-
-    void initializeSpFunc();
-    void terminateSpFunc();
-
-    bool is_game_world_ = false;
 
     std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
     SpArraySharedMemoryView shared_memory_view_;

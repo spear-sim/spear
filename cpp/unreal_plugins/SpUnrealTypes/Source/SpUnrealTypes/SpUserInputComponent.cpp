@@ -19,6 +19,7 @@
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+#include "SpCore/UnrealUtils.h"
 
 USpUserInputComponent::USpUserInputComponent()
 {
@@ -105,5 +106,5 @@ std::string USpUserInputComponent::getUniqueAxisNameFromUserInputName(const std:
 
     bool include_actor_name = true;
     bool actor_must_have_stable_name = false;
-    return Unreal::getStableName(this, include_actor_name, actor_must_have_stable_name) + ":axis:" + user_input_name;
+    return UnrealUtils::getStableName(this, include_actor_name, actor_must_have_stable_name) + ":axis:" + user_input_name;
 }

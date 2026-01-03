@@ -36,7 +36,7 @@ void SpServicesEditor::StartupModule()
     SP_ASSERT(sp_services);
 
     // Create editor world services.
-    editor_unreal_service_editor = std::make_unique<UnrealServiceEditor>(sp_services->engine_service.get(), sp_services->editor_world_filter.get());
+    editor_unreal_service_editor_ = std::make_unique<UnrealServiceEditor>(sp_services->engine_service_.get(), sp_services->editor_world_filter_.get());
 }
 
 void SpServicesEditor::ShutdownModule()
@@ -47,8 +47,8 @@ void SpServicesEditor::ShutdownModule()
         return;
     }
 
-    SP_ASSERT(editor_unreal_service_editor);
-    editor_unreal_service_editor = nullptr;
+    SP_ASSERT(editor_unreal_service_editor_);
+    editor_unreal_service_editor_ = nullptr;
 }
 
 // use IMPLEMENT_GAME_MODULE if module implements Unreal classes, use IMPLEMENT_MODULE otherwise

@@ -15,15 +15,17 @@
 #include <boost/predef.h> // BOOST_COMP_CLANG, BOOST_COMP_MSVC
 
 #include <GameFramework/Actor.h>
-#include <Engine/Engine.h>      // GEngine
-#include <Engine/EngineTypes.h> // EEndPlayReason
+#include <Engine/Engine.h>        // GEngine
+#include <Engine/EngineTypes.h>   // EEndPlayReason
 #include <Engine/World.h>
+#include <UObject/ObjectMacros.h> // EObjectFlags
 
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+#include "Spcore/UnrealUtils.h"
 
 // TODO: remove platform-specific include
 #if BOOST_COMP_MSVC
@@ -74,7 +76,7 @@ void ASpProxyComponentManager::Tick(float delta_time)
 {
     AActor::Tick(delta_time);
 
-    std::vector<AActor*> actors = Unreal::findActors(GetWorld());
+    std::vector<AActor*> actors = UnrealUtils::findActors(GetWorld());
 
     //
     // We must take care to handle the case where an ASpProxyComponentManager actor in the editor world has
@@ -157,7 +159,7 @@ void ASpProxyComponentManager::terminate()
 
 void ASpProxyComponentManager::update()
 {
-    std::vector<AActor*> actors = Unreal::findActors(GetWorld());
+    std::vector<AActor*> actors = UnrealUtils::findActors(GetWorld());
     unregisterProxyComponents(Std::keys(name_to_proxy_component_desc_map_));
     findAndUnregisterAllProxyComponentTypes(actors);
     findAndRegisterAllProxyComponentTypes(actors);
@@ -189,7 +191,7 @@ uint32_t ASpProxyComponentManager::getId(uint32_t initial_guess_id, const std::s
 std::string ASpProxyComponentManager::getManagerName() const
 {
     #if WITH_EDITOR // defined in an auto-generated header
-        if (!HasAnyFlags(RF_Transient)) {
+        if (!HasAnyFlags(EObjectFlags::RF_Transient)) {
             return Unreal::toStdString(GetActorLabel());
         }
     #endif
@@ -225,7 +227,7 @@ std::string ASpProxyComponentManager::getLongComponentName(const UWorld* world, 
 
     bool include_actor_name = true;
     bool actor_must_have_stable_name = false;
-    std::string actor_and_component_name = Unreal::getStableName(component, include_actor_name, actor_must_have_stable_name);
+    std::string actor_and_component_name = UnrealUtils::getStableName(component, include_actor_name, actor_must_have_stable_name);
 
     return world_type + "://" + actor_and_component_name + ":" + Std::toString(component->GetUniqueID()) + ":" + Std::toStringFromPtr(component);
 }

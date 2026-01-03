@@ -8,24 +8,15 @@
 #include <stdint.h> // int64_t, uint64_t
 
 #include <atomic>
+#include <exception>   // std::exception
 #include <future>      // std::promise
+#include <map>
 #include <mutex>       // std::lock_guard
-#include <ranges>      // std::views::transform
 #include <string>
-#include <utility>     // std::make_pair, std::move, std::pair
-#include <vector>
-#include <type_traits> // std::is_void_v
-
-#include <boost/predef.h> // BOOST_ENDIAN_BIG_BYTE, BOOST_ENDIAN_LITTLE_BYTE, BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
-
-#include <CoreGlobals.h>   // IsAsyncLoading, IsRunningCommandlet
-#include <Engine/Engine.h> // GEngine
-#include <GenericPlatform/GenericPlatformMisc.h>
-#include <Misc/CommandLine.h>
+#include <utility>     // std::make_pair, std::move
+#include <type_traits> // std::invoke_result_t, std::is_void_v
 
 #include "SpCore/Assert.h"
-#include "SpCore/Boost.h"
-#include "SpCore/Config.h"
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
@@ -33,7 +24,6 @@
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/FuncInfo.h"
 #include "SpServices/FuncSignatureRegistry.h"
-#include "SpServices/MsgpackAdaptors.h" // needed in this file because this is where we're calling bind(...) on the RPC server
 #include "SpServices/Service.h"
 #include "SpServices/SpTypes.h"
 #include "SpServices/WorkQueue.h"
@@ -49,15 +39,15 @@ public:
 
         entry_point_signature_registries_["call_sync_on_worker_thread"] = FuncSignatureRegistry();
 
-        entry_point_signature_registries_["call_sync_on_game_thread"]         = FuncSignatureRegistry();
-        entry_point_signature_registries_["call_async_on_game_thread"]        = FuncSignatureRegistry();
-        entry_point_signature_registries_["send_async_on_game_thread"]        = FuncSignatureRegistry();
-        entry_point_signature_registries_["get_future_result_on_game_thread"] = FuncSignatureRegistry();
+        entry_point_signature_registries_["call_sync_on_game_thread"]           = FuncSignatureRegistry();
+        entry_point_signature_registries_["call_async_on_game_thread"]          = FuncSignatureRegistry();
+        entry_point_signature_registries_["send_async_on_game_thread"]          = FuncSignatureRegistry();
+        entry_point_signature_registries_["get_future_result_from_game_thread"] = FuncSignatureRegistry();
 
         entry_point_binder_ = entry_point_binder;
 
         //
-        // Entry points for managing the frame state.
+        // Entry points for initializing and terminating the frame state.
         //
 
         bindFuncToExecuteOnWorkerThread("engine_service", "initialize", [this]() -> void {
@@ -106,10 +96,31 @@ public:
             request_terminate_ = true;
         });
 
-        bindFuncToExecuteOnWorkerThread("engine_service", "begin_frame", [this]() -> void {
+        //
+        // Entry points for validating entry points.
+        //
+
+        bindFuncToExecuteOnWorkerThread("engine_service", "get_entry_point_signature_type_descs", [this]() -> std::vector<SpFuncSignatureTypeDesc> {
+            return FuncSignatureRegistry::getFuncSignatureTypeDescs();
+        });
+
+        bindFuncToExecuteOnWorkerThread("engine_service", "get_entry_point_signature_descs", [this]() -> std::map<std::string, std::vector<SpFuncSignatureDesc>> {
+            return Std::toMap<std::string, std::vector<SpFuncSignatureDesc>>(
+                entry_point_signature_registries_ |
+                std::views::transform([](auto& pair) {
+                    auto& [entry_point_registry_name, entry_point_registry] = pair;
+                    return std::make_pair(entry_point_registry_name, entry_point_registry.getFuncSignatureDescs());
+                }));
+        });
+
+        //
+        // Entry points for managing the frame state.
+        //
+
+        bindFuncToExecuteOnWorkerThread("engine_service", "begin_frame", [this]() -> bool {
 
             if (request_terminate_ || request_error_) {
-                return;
+                return false;
             }
 
             if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
@@ -139,13 +150,11 @@ public:
 
             // Indicate to the game thread that we will be queueing additional work.
             request_begin_frame_ = true;
+
+            return true;
         });
 
-        bindFuncToExecuteOnWorkerThread("engine_service", "execute_frame", [this]() -> void {
-
-            if (request_terminate_ || request_error_) {
-                return;
-            }
+        bindFuncToExecuteOnWorkerThread("engine_service", "execute_frame", [this]() -> bool {
 
             if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
                 SP_LOG("engine_service.execute_frame: Waiting for endFrame() to finish executing...");
@@ -184,13 +193,11 @@ public:
             if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
                 SP_LOG("engine_service.execute_frame: Finished scheduling begin_frame_work_queue_.reset().");
             }
+
+            return !request_error_;
         });
 
-        bindFuncToExecuteOnWorkerThread("engine_service", "end_frame", [this]() -> void {
-
-            if (request_terminate_ || request_error_) {
-                return;
-            }
+        bindFuncToExecuteOnWorkerThread("engine_service", "end_frame", [this]() -> bool {
 
             SP_ASSERT(current_work_queue_ == &end_frame_work_queue_);
             current_work_queue_ = nullptr;
@@ -207,98 +214,8 @@ public:
             if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
                 SP_LOG("engine_service.end_frame: Finished scheduling end_frame_work_queue_.reset().");
             }
-        });
 
-        //
-        // Miscellaneous low-level entry points to support spear.Instance and do not interact with Unreal.
-        //
-
-        bindFuncToExecuteOnWorkerThread("engine_service", "ping", []() -> std::string {
-            return "ping";
-        });
-
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_id", []() -> int64_t {
-            return static_cast<int>(boost::this_process::get_id());
-        });
-
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_byte_order", []() -> std::string {
-            SP_ASSERT(BOOST_ENDIAN_BIG_BYTE + BOOST_ENDIAN_LITTLE_BYTE == 1);
-            if (BOOST_ENDIAN_BIG_BYTE) {
-                return "big";
-            } else if (BOOST_ENDIAN_LITTLE_BYTE) {
-                return "little";
-            } else {
-                return "";
-            }
-        });
-
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_entry_point_signature_type_descs", [this]() -> std::vector<SpFuncSignatureTypeDesc> {
-            return FuncSignatureRegistry::getFuncSignatureTypeDescs();
-        });
-
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_entry_point_signature_descs", [this]() -> std::map<std::string, std::vector<SpFuncSignatureDesc>> {
-            return Std::toMap<std::string, std::vector<SpFuncSignatureDesc>>(
-                entry_point_signature_registries_ |
-                std::views::transform([](auto& pair) {
-                    auto& [entry_point_registry_name, entry_point_registry] = pair;
-                    return std::make_pair(entry_point_registry_name, entry_point_registry.getFuncSignatureDescs());
-                }));
-        });
-
-        //
-        // Miscellaneous low-level entry points that interact with Unreal globals and can be called from the
-        // worker thread.
-        //
-        // By calling IsRunningCommandlet() and FCommandLine::Get() below, we are accessing global variables
-        // from the worker thread that are set on the game thread, and these global variables are not protected
-        // by any synchronization primitive. At first glance, this seems like it would lead to undefined
-        // behavior, but in this case it does not, because all RPC server worker threads are created on the
-        // game thread after these global variables are set, and therefore there is a formal happens-before
-        // relationship between the write operation and subsequent read operations.
-        //
-        // Calling FGenericPlatformMisc::RequestExit(false) from the worker thread is technically undefined
-        // behavior because there isn't a happens-before relationship when accessing Unreal's underlying
-        // global variable from multiple threads. But this undefined behavior is benign in practice, because
-        // as long as the write operation from the worker thread is eventually visible on the game thread,
-        // the overall system behavior is correct.
-        //
-        // Note that We could implement UCLASSES and UFUNCTIONS to access FCommandLine, FGenericPlatformMisc,
-        // etc, but then we would be limited to accessing them on the game thread. Providing access through
-        // the entry points below enables access from the worker thread, which simplifies the implementation
-        // of spear.Instance.
-        //
-
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_engine", []() -> uint64_t {
-            return toUInt64(GEngine);
-        });
-
-        bindFuncToExecuteOnWorkerThread("engine_service", "is_with_editor", []() -> bool {
-            return WITH_EDITOR;
-        });
-
-        bindFuncToExecuteOnWorkerThread("engine_service", "is_running_commandlet", []() -> bool {
-            #if WITH_EDITOR // defined in an auto-generated header
-                return IsRunningCommandlet();
-            #else
-                return false;
-            #endif
-        });
-
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_command_line", []() -> std::string {
-            return Unreal::toStdString(FCommandLine::Get());
-        });
-
-        bindFuncToExecuteOnWorkerThread("engine_service", "request_exit", [](bool immediate_shutdown) -> void {
-            FGenericPlatformMisc::RequestExit(immediate_shutdown);
-        });
-
-        //
-        // Miscellaneous low-level entry points that interact with Unreal globals and must be called from the
-        // game thread.
-        //
-
-        bindFuncToExecuteOnGameThread("engine_service", "is_async_loading", []() -> bool {
-            return IsAsyncLoading();
+            return !request_error_;
         });
     }
 
@@ -349,8 +266,8 @@ public:
             // if we're binding a call_async function, then we also need to bind a corresponding
             // engine_service.get_future_result_as_return_type function if we haven't already
 
-            std::string get_future_result_long_func_name = "engine_service.get_future_result_on_game_thread_as_" + FuncSignatureRegistry::getFuncSignatureTypeDesc<TReturn>().type_names_.at("entry_point");
-            FuncSignatureRegistry& get_future_result_entry_point_registry = entry_point_signature_registries_.at("get_future_result_on_game_thread");
+            std::string get_future_result_long_func_name = "engine_service.get_future_result_from_game_thread_as_" + FuncSignatureRegistry::getFuncSignatureTypeDesc<TReturn>().type_names_.at("entry_point");
+            FuncSignatureRegistry& get_future_result_entry_point_registry = entry_point_signature_registries_.at("get_future_result_from_game_thread");
 
             if (!get_future_result_entry_point_registry.isFuncSignatureRegistered<TReturn, SpFuture&>(get_future_result_long_func_name)) {
                 get_future_result_entry_point_registry.registerFuncSignature<TReturn, SpFuture&>(get_future_result_long_func_name);
@@ -361,7 +278,7 @@ public:
         }
 
         if (Std::toBool(bind_flags & UnrealEntryPointBindFlags::SendAsync)) {
-            std::string long_func_name = service_name + ".send_async_on_game_thread_." + func_name;
+            std::string long_func_name = service_name + ".send_async_on_game_thread." + func_name;
             FuncSignatureRegistry& entry_point_registry = entry_point_signature_registries_.at("send_async_on_game_thread");
 
             SP_ASSERT((!entry_point_registry.isFuncSignatureRegistered<void, TArgs...>(long_func_name))); // extra parentheses needed because of comma

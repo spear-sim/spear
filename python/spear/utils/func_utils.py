@@ -13,7 +13,230 @@ if spear.__can_import_spear_ext__:
     import spear_ext
 
 
+#
+# ServiceBase is a low-level base class for Services and ServiceWrappers
+#
+
+class ServiceBase():
+    def __init__(self, sp_func_service=None, unreal_service=None, config=None):
+
+        # need to be extra careful to avoid naming conflicts here
+
+        if sp_func_service is not None:
+            self._private_sp_func_service = sp_func_service.get_top_level_service()
+        else:
+            self._private_sp_func_service = None
+
+        if unreal_service is not None:
+            self._private_unreal_service = unreal_service.get_top_level_service()
+        else:
+            self._private_unreal_service = None
+
+        if config is not None:
+            self._private_config = config
+        else:
+            self._private_config = None
+
+    def to_handle_or_unreal_object(self, obj, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
+        assert self._private_sp_func_service is not None
+        assert self._private_unreal_service is not None
+        assert self._private_config is not None
+        return spear.to_handle_or_unreal_object(
+            obj=obj,
+            unreal_service=self._private_unreal_service,
+            sp_func_service=self._private_sp_func_service,
+            config=self._private_config,
+            as_handle=as_handle,
+            as_unreal_object=as_unreal_object,
+            with_sp_funcs=with_sp_funcs)
+
+#
+# A Service represents a collection of RPC entry points.
+#
+
+class Service(ServiceBase):
+    def __init__(self, entry_point_caller, sp_func_service=None, unreal_service=None, config=None, parent_service=None, create_children_services=False):
+        super().__init__(sp_func_service=sp_func_service, unreal_service=unreal_service, config=config)
+
+        if parent_service is not None:
+            assert not create_children_services # it is only allowed to create children services from the top-level service
+
+        self.entry_point_caller = entry_point_caller
+        self._parent_service = parent_service
+
+        if create_children_services:
+            assert entry_point_caller is not None
+
+            call_async_entry_point_caller = CallAsyncEntryPointCaller(service_name=entry_point_caller._service_name, engine_service=entry_point_caller.engine_service)
+            self.call_async = self.create_child_service(entry_point_caller=call_async_entry_point_caller, sp_func_service=sp_func_service, unreal_service=unreal_service, config=config)
+
+            send_async_entry_point_caller = SendAsyncEntryPointCaller(service_name=entry_point_caller._service_name, engine_service=entry_point_caller.engine_service)
+            self.send_async = self.create_child_service(entry_point_caller=send_async_entry_point_caller, sp_func_service=sp_func_service, unreal_service=unreal_service, config=config)
+
+            call_async_fast_entry_point_caller = CallAsyncFastEntryPointCaller(service_name=entry_point_caller._service_name, engine_service=entry_point_caller.engine_service)
+            self.call_async_fast = self.create_child_service(entry_point_caller=call_async_fast_entry_point_caller, sp_func_service=sp_func_service, unreal_service=unreal_service, config=config)
+
+            send_async_fast_entry_point_caller = SendAsyncFastEntryPointCaller(service_name=entry_point_caller._service_name, engine_service=entry_point_caller.engine_service)
+            self.send_async_fast = self.create_child_service(entry_point_caller=send_async_fast_entry_point_caller, sp_func_service=sp_func_service, unreal_service=unreal_service, config=config)
+
+    def create_child_service(self, entry_point_caller, sp_func_service=None, unreal_service=None, config=None):
+        assert False # if a derived class passes create_children_services=True into the base constructor, then the derived class must override create_child_service(...)
+
+    def is_top_level_service(self):
+        return self._parent_service is None
+
+    def get_top_level_service(self):
+        service = self
+        while service._parent_service is not None:
+            service = service._parent_service
+        return service
+
+#
+# A ServiceWrapper wraps a low-level service and provides additional game-or-editor-scoped functionality,
+# especially the ability to return UnrealObjects.
+#
+
+class ServiceWrapper(ServiceBase):
+    def __init__(self, service, sp_func_service, unreal_service, config, parent_service_wrapper=None, create_children_service_wrappers=True):
+        super().__init__(sp_func_service=sp_func_service, unreal_service=unreal_service, config=config)
+
+        assert sp_func_service.is_top_level_service()
+        assert unreal_service.is_top_level_service()
+
+        if parent_service_wrapper is None:
+            assert service.is_top_level_service() # the top-level service should be passed in when creating the top-level wrapper
+        if parent_service_wrapper is not None:
+            assert not create_children_service_wrappers # it is only allowed to create children services from the top-level service
+
+        self.service = service
+        self.sp_func_service = sp_func_service
+        self.unreal_service = unreal_service
+        self.config = config
+        self._parent_service_wrapper = parent_service_wrapper
+
+        if create_children_service_wrappers:
+            assert hasattr(service, "call_async")
+            assert hasattr(service, "send_async")
+            assert hasattr(service, "call_async_fast")
+            assert hasattr(service, "send_async_fast")
+
+            self.call_async = self.create_child_service_wrapper(service=service.call_async)
+            self.send_async = self.create_child_service_wrapper(service=service.send_async)
+            self.call_async_fast = self.create_child_service_wrapper(service=service.call_async_fast)
+            self.send_async_fast = self.create_child_service_wrapper(service=service.send_async_fast)
+
+    def create_child_service_wrapper(self, service):
+        assert False
+
+    def is_top_level_service_wrapper(self):
+        return self._parent_service_wrapper is None
+
+
+#
+# Each type that derives from EntryPointCaller encapsulates a particular strategy for calling EngineService functions.
+#
+
+class EntryPointCaller():
+    def __init__(self, service_name, engine_service):
+        self.engine_service = engine_service
+        self._service_name = service_name
+
+    def call_on_worker_thread(self, func_name, convert_func, *args):
+        assert False
+
+    def call_on_game_thread(self, func_name, convert_func, *args):
+        assert False
+
+    def get(self, obj):
+        assert False
+
+    def _get_return_as_string_for_worker_thread(self, func_name):
+        long_func_name = f"{self._service_name}.call_sync_on_worker_thread.{func_name}"
+        return self.engine_service.get_server_signature_descs()["call_sync_on_worker_thread"][long_func_name].func_signature[0].type_names["entry_point"]
+
+    def _get_return_as_string_for_game_thread(self, func_name):
+        long_func_name = f"{self._service_name}.call_sync_on_game_thread.{func_name}"
+        return self.engine_service.get_server_signature_descs()["call_sync_on_game_thread"][long_func_name].func_signature[0].type_names["entry_point"]
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(_service_name={self._service_name})"
+
+class CallSyncEntryPointCaller(EntryPointCaller):
+    def call_on_worker_thread(self, func_name, convert_func, *args):
+        long_func_name = f"{self._service_name}.call_sync_on_worker_thread.{func_name}"
+        return_value = self.engine_service.call_sync_on_worker_thread(long_func_name, *args)
+        if convert_func is not None:
+            return convert_func(return_value)
+        else:
+            return return_value
+
+    def call_on_game_thread(self, func_name, convert_func, *args):
+        long_func_name = f"{self._service_name}.call_sync_on_game_thread.{func_name}"
+        return_value = self.engine_service.call_sync_on_game_thread(long_func_name, *args)
+        if convert_func is not None:
+            return convert_func(return_value)
+        else:
+            return return_value
+
+    def get(self, obj):
+        spear.log_current_function()
+        return obj
+
+class CallAsyncEntryPointCaller(EntryPointCaller):
+    def call_on_worker_thread(self, func_name, convert_func, *args):
+        assert False # worker thread entry points always execute synchronously unless we're using the fast path, so we should never be here
+
+    def call_on_game_thread(self, func_name, convert_func, *args):
+        long_func_name = f"{self._service_name}.call_async_on_game_thread.{func_name}"
+        return_as = self._get_return_as_string_for_game_thread(func_name)
+        future = self.engine_service.call_async_on_game_thread(long_func_name, *args) # non-fast path returns spear_ext.Future
+        get_future_result_func = self.engine_service.get_future_result_from_game_thread
+        return Future(future=future, get_future_result_func=get_future_result_func, convert_func=convert_func, return_as=return_as, func_name=long_func_name)
+
+    def get(self, obj):
+        spear.log_current_function()
+        return Future(future=None, get_future_result_func=lambda future: obj, convert_func=None, return_as=None, func_name=None)
+
+class SendAsyncEntryPointCaller(EntryPointCaller):
+    def call_on_worker_thread(self, func_name, convert_func, *args):
+        assert False # worker thread entry points always execute synchronously unless we're using the fast path, so we should never be here
+
+    def call_on_game_thread(self, func_name, convert_func, *args):
+        long_func_name = f"{self._service_name}.send_async_on_game_thread.{func_name}"
+        self.engine_service.send_async_on_game_thread(long_func_name, *args)
+
+class CallAsyncFastEntryPointCaller(EntryPointCaller):
+    def call_on_worker_thread(self, func_name, convert_func, *args):
+        long_func_name = f"{self._service_name}.call_sync_on_worker_thread.{func_name}" # fast path calls call_sync variant for worker thread entry points
+        return_as = self._get_return_as_string_for_worker_thread(func_name)
+        future = self.engine_service.call_async_fast_on_worker_thread(long_func_name, *args) # fast path returns integer
+        get_future_result_func = self.engine_service.get_future_result_fast_from_worker_thread
+        return Future(future=future, get_future_result_func=get_future_result_func, convert_func=convert_func, return_as=return_as, func_name=long_func_name)
+
+    def call_on_game_thread(self, func_name, convert_func, *args):
+        long_func_name = f"{self._service_name}.call_async_on_game_thread.{func_name}" # fast path calls call_async variant for game thread entry points
+        return_as = self._get_return_as_string_for_game_thread(func_name)
+        future = self.engine_service.call_async_fast_on_game_thread(long_func_name, *args) # fast path returns integer
+        get_future_result_func = self.engine_service.get_future_result_fast_from_game_thread
+        return Future(future=future, get_future_result_func=get_future_result_func, convert_func=convert_func, return_as=return_as, func_name=long_func_name)
+
+    def get(self, obj):
+        spear.log_current_function()
+        return Future(future=None, get_future_result_func=lambda future: obj, convert_func=None, return_as=None, func_name=None)
+
+class SendAsyncFastEntryPointCaller(EntryPointCaller):
+    def call_on_worker_thread(self, func_name, convert_func, *args):
+        long_func_name = f"{self._service_name}.call_sync_on_worker_thread.{func_name}" # fast path calls call_sync variant for worker thread entry points
+        self.engine_service.send_async_fast_on_worker_thread(long_func_name, *args)
+
+    def call_on_game_thread(self, func_name, convert_func, *args):
+        long_func_name = f"{self._service_name}.send_async_on_game_thread.{func_name}" # fast path calls send_async variant for game thread entry points
+        self.engine_service.send_async_fast_on_game_thread(long_func_name, *args)
+
+
+#
 # These classes are for internal use, and do not need to be instantiated directly by most users.
+#
 
 class Ptr:
     def __init__(self, handle):
@@ -22,128 +245,140 @@ class Ptr:
     def to_string(self):
         return f"{self._handle:#0{18}x}"
 
+    def __repr__(self):
+        return f"Ptr(_handle={self._handle})"
+
 class Shared:
     def __init__(self, array, shared_memory_handle):
-        self.array = array
-        self.shared_memory_handle = shared_memory_handle
+        self._array = array
+        self._shared_memory_handle = shared_memory_handle
+
+    def __repr__(self):
+        return f"Shared(_array={self._array}, _shared_memory_handle={self._shared_memory_handle})"
+
+class PropertyValue:
+    def __init__(self, value, type_id):
+        self.value = value
+        self.type_id = type_id
+
+    def __repr__(self):
+        return f"PropertyValue(value={self.value}, type_id={self.type_id})"
 
 class Future:
     def __init__(self, future, get_future_result_func, convert_func, return_as, func_name):
-        self._future = future
+        self.future = future
+        self.convert_func = convert_func
         self._get_future_result_func = get_future_result_func
-        self._convert_func = convert_func
         self._return_as = return_as
         self._func_name = func_name
 
     def get(self):
         result = self._get_future_result_func(future=self)
-        if self._convert_func is not None:
-            return self._convert_func(result)
+        if self.convert_func is not None:
+            return self.convert_func(result)
         else:
             return result
 
-# EntryPointCaller and each of its derived types encapsulates a strategy for calling EngineService functions.
+    def __repr__(self):
+        return f'Future(future={self.future}, convert_func={self.convert_func is not None}, _return_as="{self._return_as}", _func_name="{self._func_name}")'
 
-class EntryPointCaller():
-    def __init__(self, service_name, engine_service):
-        self.service_name = service_name
-        self.engine_service = engine_service
 
-    def call_on_worker_thread(self, func_name, convert_func, *args):
-        assert False
+#
+# Conversion functions
+#
 
-    def call_on_game_thread(self, func_name, convert_func, *args):
-        assert False
+# Convert to handle or UnrealObject
+def to_handle_or_unreal_object(obj, unreal_service, sp_func_service, config, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
+    if as_handle is not None:
+        assert as_unreal_object is None
+        assert with_sp_funcs is None
+        return to_handle(obj=obj)
+    else:
+        return to_unreal_object(
+            obj=obj,
+            unreal_service=unreal_service,
+            sp_func_service=sp_func_service,
+            config=config,
+            as_unreal_object=as_unreal_object,
+            with_sp_funcs=with_sp_funcs)
 
-class CallSyncEntryPointCaller(EntryPointCaller):
-    def call_on_worker_thread(self, func_name, convert_func, *args):
-        long_func_name = self.service_name + ".call_sync_on_worker_thread." + func_name
-        return_value = self.engine_service.call_sync_on_worker_thread(long_func_name, *args)
-        if convert_func is not None:
-            return convert_func(return_value)
+# Convert to UnrealObject
+def to_unreal_object(obj, unreal_service, sp_func_service, config, as_unreal_object=None, with_sp_funcs=None, uclass=None, resolve_uclass=True):
+    if as_unreal_object is None:
+        as_unreal_object = True
+    if with_sp_funcs is None:
+        with_sp_funcs = False
+    if resolve_uclass:
+        if isinstance(as_unreal_object, bool):
+            assert as_unreal_object
+            uclass = None
+        elif isinstance(as_unreal_object, numbers.Integral):
+            assert as_unreal_object != 0
+            uclass = as_unreal_object
+        elif isinstance(as_unreal_object, str):
+            assert as_unreal_object != ""
+            uclass = as_unreal_object
         else:
-            return return_value
-
-    def call_on_game_thread(self, func_name, convert_func, *args):
-        long_func_name = self.service_name + ".call_sync_on_game_thread." + func_name
-        return_value = self.engine_service.call_sync_on_game_thread(long_func_name, *args)
-        if convert_func is not None:
-            return convert_func(return_value)
-        else:
-            return return_value
-
-class CallAsyncEntryPointCaller(EntryPointCaller):
-    def call_on_worker_thread(self, func_name, convert_func, *args):
+            assert False
+    if isinstance(obj, bool):
+        assert False
+    elif isinstance(obj, numbers.Integral):
+        return spear.UnrealObject(
+            unreal_service=unreal_service,
+            sp_func_service=sp_func_service,
+            config=config,
+            uobject=obj,
+            uclass=uclass,
+            with_sp_funcs=with_sp_funcs)
+    elif isinstance(obj, list):
+        return [ to_unreal_object(obj=o, unreal_service=unreal_service, sp_func_service=sp_func_service, config=config, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs, uclass=uclass, resolve_uclass=False) for o in obj ]
+    elif isinstance(obj, dict):
+        return { k: to_unreal_object(obj=v, unreal_service=unreal_service, sp_func_service=sp_func_service, config=config, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs, uclass=uclass, resolve_uclass=False) for k, v in obj.items() }
+    elif isinstance(obj, spear.Future):
+        def convert_func(o, inner_convert_func=obj.convert_func, unreal_service=unreal_service, sp_func_service=sp_func_service, config=config, with_sp_funcs=with_sp_funcs, uclass=uclass):
+            if inner_convert_func is not None:
+                o = inner_convert_func(o)
+            return to_unreal_object(
+                obj=o,
+                unreal_service=unreal_service,
+                sp_func_service=sp_func_service,
+                config=config,
+                as_unreal_object=as_unreal_object,
+                with_sp_funcs=with_sp_funcs,
+                uclass=uclass,
+                resolve_uclass=False)
+        obj.convert_func = convert_func
+        return obj
+    else:
         assert False
 
-    def call_on_game_thread(self, func_name, convert_func, *args):
-        long_func_name = self.service_name + ".call_async_on_game_thread." + func_name
-        sync_long_func_name = self.service_name + ".call_sync_on_game_thread." + func_name
-        return_as = self.engine_service._server_signature_descs["call_sync_on_game_thread"][sync_long_func_name].func_signature[0].type_names["entry_point"]
-        future = self.engine_service.call_async_on_game_thread(long_func_name, *args)
-        return Future(future=future, get_future_result_func=self.engine_service.get_future_result_on_game_thread, convert_func=convert_func, return_as=return_as, func_name=long_func_name)
-
-class SendAsyncEntryPointCaller(EntryPointCaller):
-    def call_on_worker_thread(self, func_name, convert_func, *args):
+# Convert to handle
+def to_handle(obj):
+    if isinstance(obj, bool):
         assert False
-
-    def call_on_game_thread(self, func_name, convert_func, *args):
-        long_func_name = self.service_name + ".send_async_on_game_thread." + func_name
-        return self.engine_service.send_async_on_game_thread(long_func_name, *args)
-
-class CallAsyncFastEntryPointCaller(EntryPointCaller):
-    def call_on_worker_thread(self, func_name, convert_func, *args):
-        long_func_name = self.service_name + ".call_sync_on_worker_thread." + func_name
-        sync_long_func_name = long_func_name
-        return_as = self.engine_service._server_signature_descs["call_sync_on_worker_thread"][sync_long_func_name].func_signature[0].type_names["entry_point"]
-        future = self.engine_service.call_async_fast_on_worker_thread(long_func_name, *args)
-        return Future(future=future, get_future_result_func=self.engine_service.get_future_result_fast_on_worker_thread, convert_func=convert_func, return_as=return_as, func_name=long_func_name)
-
-    def call_on_game_thread(self, func_name, convert_func, *args):
-        long_func_name = self.service_name + ".call_sync_on_worker_thread." + func_name
-        sync_long_func_name = long_func_name
-        return_as = self.engine_service._server_signature_descs["call_sync_on_worker_thread"][sync_long_func_name].func_signature[0].type_names["entry_point"]
-        future = self.engine_service.call_async_fast_on_game_thread(long_func_name, *args)
-        return Future(future=future, get_future_result_func=self.engine_service.get_future_result_fast_on_game_thread, convert_func=convert_func, return_as=return_as, func_name=long_func_name)
-
-class SendAsyncFastEntryPointCaller(EntryPointCaller):
-    def call_on_worker_thread(self, func_name, convert_func, *args):
-        long_func_name = self.service_name + ".call_sync_on_worker_thread." + func_name
-        return self.engine_service.send_async_fast_on_game_thread(long_func_name, *args)
-
-    def call_on_game_thread(self, func_name, convert_func, *args):
-        long_func_name = self.service_name + ".send_async_fast_on_game_thread." + func_name
-        return self.engine_service.send_async_fast_on_game_thread(long_func_name, *args)
-
-# Service is a base class for services that define their own child services for calling EntryPointCaller functions.
-
-class Service():
-    def __init__(self, is_top_level_service=True, create_children_services=False, entry_point_caller=None):
-        if not is_top_level_service:
-            assert not create_children_services # it is only allowed to create children services from the top-level service
-
-        self._is_top_level_service = is_top_level_service
-
-        if create_children_services:
-            assert entry_point_caller is not None
-
-            call_async_entry_point_caller = CallAsyncEntryPointCaller(service_name=entry_point_caller.service_name, engine_service=entry_point_caller.engine_service)
-            self.call_async = self.create_child_service(entry_point_caller=call_async_entry_point_caller)
-
-            send_async_entry_point_caller = SendAsyncEntryPointCaller(service_name=entry_point_caller.service_name, engine_service=entry_point_caller.engine_service)
-            self.send_async = self.create_child_service(entry_point_caller=send_async_entry_point_caller)
-
-            call_async_fast_entry_point_caller = CallAsyncFastEntryPointCaller(service_name=entry_point_caller.service_name, engine_service=entry_point_caller.engine_service)
-            self.call_async_fast = self.create_child_service(entry_point_caller=call_async_fast_entry_point_caller)
-
-            send_async_fast_entry_point_caller = SendAsyncFastEntryPointCaller(service_name=entry_point_caller.service_name, engine_service=entry_point_caller.engine_service)
-            self.send_async_fast = self.create_child_service(entry_point_caller=send_async_fast_entry_point_caller)
-
-    def create_child_service(self, entry_point_caller):
-        assert False # if a derived class passes create_children_services=True into the base constructor, then the derived class must override create_child_service(...)
-
-    def is_top_level_service(self):
-        return self._is_top_level_service
+    elif isinstance(obj, numbers.Integral):
+        return obj
+    elif isinstance(obj, str):
+        assert obj.startswith("0x")
+        return int(obj, 16)
+    elif isinstance(obj, spear.UnrealObject):
+        return obj.uobject
+    elif isinstance(obj, np.ndarray):
+        assert obj.dtype == np.uint64
+        return obj
+    elif isinstance(obj, list):
+        return [ to_handle(obj=o) for o in obj ]
+    elif isinstance(obj, dict):
+        return { k: to_handle(obj=v) for k, v in obj.items() }
+    elif isinstance(obj, spear.Future):
+        def convert_func(o, inner_convert_func=obj.convert_func):
+            if inner_convert_func is not None:
+                o = inner_convert_func(o)
+            return to_handle(obj=o)
+        obj.convert_func = convert_func
+        return obj
+    else:
+        assert False
 
 
 # Convert to a collection of JSON strings from a collection of objects so they can be passed to a service.
@@ -161,18 +396,24 @@ def to_json_string(obj, stringify=True):
         return obj
     elif isinstance(obj, Ptr):
         return obj.to_string()
-    elif isinstance(obj, numbers.Number) or isinstance(obj, list) or isinstance(obj, dict):
+    elif isinstance(obj, spear.UnrealObject):
+        return to_ptr(handle=obj.uobject).to_string()
+    elif isinstance(obj, bool) or isinstance(obj, numbers.Number) or isinstance(obj, list) or isinstance(obj, dict):
         if stringify:
-            if isinstance(obj, numbers.Number):
+            if isinstance(obj, bool):
                 return json.dumps(obj)
-            if isinstance(obj, list):
+            elif isinstance(obj, numbers.Number):
+                return json.dumps(obj)
+            elif isinstance(obj, list):
                 return json.dumps([ to_json_string(obj=o, stringify=False) for o in obj ])
             elif isinstance(obj, dict):
                 return json.dumps({ to_json_string(obj=k, stringify=True): to_json_string(obj=v, stringify=False) for k, v in obj.items() })
             else:
                 assert False
         else:
-            if isinstance(obj, numbers.Number):
+            if isinstance(obj, bool):
+                return obj
+            elif isinstance(obj, numbers.Number):
                 return obj
             elif isinstance(obj, list):
                 return [ to_json_string(obj=o, stringify=False) for o in obj ]
@@ -208,11 +449,6 @@ def try_to_dict(json_string, default_value=None):
 def to_ptr(handle):
     return Ptr(handle)
 
-# Convert to a handle from a string returned by a service.
-def to_handle(string):
-    assert string.startswith("0x")
-    return int(string, 16)
-
 
 # Convert to a Shared object that can be passed to a service from a NumPy array backed by shared memory.
 def to_shared(array, shared_memory_handle):
@@ -235,12 +471,12 @@ def to_packed_array(array, dest_byte_order, usage_flags):
         return packed_array
     elif isinstance(array, Shared):
         assert usage_flags is not None
-        assert set(usage_flags) <= set(array.shared_memory_handle["view"].usage_flags)
+        assert set(usage_flags) <= set(array._shared_memory_handle["view"].usage_flags)
         packed_array = spear_ext.PackedArray()
-        packed_array.data = np.array([], dtype=array.array.dtype)
+        packed_array.data = np.array([], dtype=array._array.dtype)
         packed_array.data_source = "Shared"
-        packed_array.shape = array.array.shape
-        packed_array.shared_memory_name = array.shared_memory_handle["name"]
+        packed_array.shape = array._array.shape
+        packed_array.shared_memory_name = array._shared_memory_handle["name"]
         return packed_array
     else:
         assert False
@@ -285,7 +521,11 @@ def to_arrays(packed_arrays, src_byte_order, usage_flags, shared_memory_handles)
 
 
 # Convert to a data bundle from {a collection of arrays, a collection of unreal objects, an info string}.
-def to_data_bundle(dest_byte_order, usage_flags, arrays={}, unreal_objs={}, info=""):
+def to_data_bundle(dest_byte_order, usage_flags, arrays=None, unreal_objs=None, info=""):
+    if arrays is None:
+        arrays = {}
+    if unreal_objs is None:
+        unreal_objs = {}
     assert dest_byte_order is not None
     assert usage_flags is not None
     data_bundle = spear_ext.DataBundle()
@@ -303,16 +543,21 @@ def to_data_bundle_dict(data_bundle, src_byte_order, usage_flags, shared_memory_
 
 
 # Convert to a NumPy matrix from an Unreal rotator. See utils/pipeline_utils.py for more details on Unreal's Euler angle conventions.
-def to_matrix_from_rotator(rotator):
+def to_numpy_matrix_from_rotator(rotator, as_matrix=None):
     assert isinstance(rotator, dict)
+    rotator = { k.lower(): v for k, v in rotator.items() }
     assert set(["roll", "pitch", "yaw"]) == set(rotator.keys())
     roll  = np.deg2rad(-rotator["roll"])
     pitch = np.deg2rad(-rotator["pitch"])
     yaw   = np.deg2rad(rotator["yaw"])
-    return np.matrix(scipy.spatial.transform.Rotation.from_euler("xyz", [roll, pitch, yaw]).as_matrix())
+    if as_matrix is None:
+        return np.array(scipy.spatial.transform.Rotation.from_euler("xyz", [roll, pitch, yaw]).as_matrix())
+    else:
+        assert as_matrix
+        return np.matrix(scipy.spatial.transform.Rotation.from_euler("xyz", [roll, pitch, yaw]).as_matrix())
 
-# Convert to an Unreal vector from a NumPy array or matrix.
-def to_vector_from_array(array):
+# Convert to an Unreal vector from a NumPy array or matrix and vice versa.
+def to_vector_from_numpy_array(array):
     if isinstance(array, np.matrix):
         assert array.shape == (3, 1)
         array = array.A1
@@ -321,3 +566,14 @@ def to_vector_from_array(array):
     else:
         assert False
     return {"X": array[0], "Y": array[1], "Z": array[2]}
+
+# Convert to a NumPy array from an Unreal vector.
+def to_numpy_array_from_vector(vector, as_matrix=None):
+    assert isinstance(vector, dict)
+    vector = { k.lower(): v for k, v in vector.items() }
+    assert set(["x", "y", "z"]) == set(vector.keys())
+    if as_matrix is None:
+        return np.array([vector["x"], vector["y"], vector["z"]])
+    else:
+        assert as_matrix
+        return np.matrix([vector["x"], vector["y"], vector["z"]]).T

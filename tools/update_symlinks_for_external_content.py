@@ -10,13 +10,13 @@ import spear
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--external_content_dir", required=True)
-parser.add_argument("--unreal_project_content_dir", required=True)
+parser.add_argument("--external-content-dir", required=True)
+parser.add_argument("--unreal-project-content-dir", required=True)
 parser.add_argument("--create", action="store_true")
 parser.add_argument("--remove", action="store_true")
-parser.add_argument("--skip_create_directories", action="store_true")
-parser.add_argument("--skip_remove_directories", action="store_true")
-parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
+parser.add_argument("--skip-create-directories", action="store_true")
+parser.add_argument("--skip-remove-directories", action="store_true")
+parser.add_argument("--unreal-project-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
 args = parser.parse_args()
 
 assert args.create + args.remove == 1
@@ -57,8 +57,8 @@ if __name__ == "__main__":
     # directories than were created by --create, but we only ever remove empty directories, so we don't think
     # it is especially harmful if this happens occasionally. In other words, we think our heuristic is worth
     # implementing, since it will make it so --create and --remove exactly undo each others' side-effects in
-    # nearly all typical use cases. If this behavior is undesired, the user can pass in --skip_create_directories
-    # and --skip_remove_directories, and implement their own logic for creating and removing directories in a
+    # nearly all typical use cases. If this behavior is undesired, the user can pass in --skip-create-directories
+    # and --skip-remove-directories, and implement their own logic for creating and removing directories in a
     # separate script.
 
     if args.remove and not args.skip_remove_directories:

@@ -7,46 +7,18 @@
 
 #include <Modules/ModuleManager.h> // FDefaultGameModuleImpl, FDefaultModuleImpl, IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
 
-// Unreal classes
-#include <LevelEditorSubsystem.h>
-#include <Subsystems/UnrealEditorSubsystem.h>
-
 #include "SpCore/AssertModuleLoaded.h"
 #include "SpCore/Log.h"
-
-#include "SpCoreEditor/UnrealClassRegistryEditor.h"
 
 void SpCoreEditor::StartupModule()
 {
     SP_ASSERT_MODULE_LOADED("SpCore");
     SP_LOG_CURRENT_FUNCTION();
-
-    registerClasses();
 }
 
 void SpCoreEditor::ShutdownModule()
 {
     SP_LOG_CURRENT_FUNCTION();
-
-    unregisterClasses();
-}
-
-// Normally we would do the operations in registerClasses() and unregisterClasses(...) in the opposite order.
-// But we make an exception here (i.e., we do the operations in the same order) to make it easier and less
-// error-prone to register classes.
-
-void SpCoreEditor::registerClasses() const
-{
-    // Unreal classes
-    SP_REGISTER_EDITOR_SUBSYSTEM_CLASS(ULevelEditorSubsystem);
-    SP_REGISTER_EDITOR_SUBSYSTEM_CLASS(UUnrealEditorSubsystem);
-}
-
-void SpCoreEditor::unregisterClasses() const
-{
-    // Unreal classes
-    SP_UNREGISTER_EDITOR_SUBSYSTEM_CLASS(ULevelEditorSubsystem);
-    SP_UNREGISTER_EDITOR_SUBSYSTEM_CLASS(UUnrealEditorSubsystem);
 }
 
 // use IMPLEMENT_GAME_MODULE if module implements Unreal classes, use IMPLEMENT_MODULE otherwise

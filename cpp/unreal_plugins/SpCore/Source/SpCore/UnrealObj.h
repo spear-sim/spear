@@ -15,7 +15,6 @@
 #include "SpCore/Assert.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
-#include "SpCore/UnrealClassRegistry.h"
 
 class UStruct;
 
@@ -44,7 +43,7 @@ public:
     UnrealObj(const std::string& name) : UnrealObjBase(name) {}; // use when storing in an std::vector
 
     void* getValuePtr() override { return &obj_; }
-    UStruct* getStaticStruct() const override { return UnrealClassRegistry::getStaticStruct<TObj>(); }
+    UStruct* getStaticStruct() const override { return Unreal::getStaticStruct<TObj>(); }
 
     const TObj& getObj() const { return obj_; }
     void setObj(const TObj& obj) { obj_ = obj; }

@@ -22,34 +22,24 @@ if __name__ == "__main__":
     with instance.begin_frame():
 
         # get UMoviePipelineQueueEngineSubsystem
-        movie_pipeline_queue_engine_subsystem = game.unreal_service.get_engine_subsystem_by_type(class_name="UMoviePipelineQueueEngineSubsystem")
+        movie_pipeline_queue_engine_subsystem = game.unreal_service.get_engine_subsystem(uclass="UMoviePipelineQueueEngineSubsystem")
         spear.log("movie_pipeline_queue_engine_subsystem: ", movie_pipeline_queue_engine_subsystem)
-        pprint.pprint(game.unreal_service.get_properties_from_object(uobject=movie_pipeline_queue_engine_subsystem))
-
-        # find rendering functions
-        movie_pipeline_queue_engine_subsystem_static_class = game.unreal_service.get_static_class(class_name="UMoviePipelineQueueEngineSubsystem")
-        allocate_job_func = game.unreal_service.find_function_by_name(uclass=movie_pipeline_queue_engine_subsystem_static_class, function_name="AllocateJob")
-        render_job_func = game.unreal_service.find_function_by_name(uclass=movie_pipeline_queue_engine_subsystem_static_class, function_name="RenderJob")
-        is_rendering_func = game.unreal_service.find_function_by_name(uclass=movie_pipeline_queue_engine_subsystem_static_class, function_name="IsRendering")
-
-        movie_pipeline_executor_job_static_class = game.unreal_service.get_static_class(class_name="UMoviePipelineExecutorJob")
-        set_configuration_func = game.unreal_service.find_function_by_name(uclass=movie_pipeline_executor_job_static_class, function_name="SetConfiguration")
+        pprint.pprint(movie_pipeline_queue_engine_subsystem.get_properties())
 
         # load level sequence
-        level_sequence = game.unreal_service.load_object(class_name="ULevelSequence", outer=0, name="/Game/SPEAR/Scenes/apartment_0000/Cinematic/LS_DebugLevelSequence.LS_DebugLevelSequence")
+        level_sequence = game.unreal_service.load_object(uclass="ULevelSequence", name="/Game/SPEAR/Scenes/apartment_0000/Cinematic/LS_DebugLevelSequence.LS_DebugLevelSequence")
         spear.log("level_sequence: ", level_sequence)
-        pprint.pprint(game.unreal_service.get_properties_from_object(uobject=level_sequence))
-
-        # allocate job
-        return_values = game.unreal_service.call_function(uobject=movie_pipeline_queue_engine_subsystem, ufunction=allocate_job_func, args={"InSequence": spear.to_ptr(level_sequence)})
-        movie_pipeline_executor_job = spear.to_handle(string=return_values["ReturnValue"])
-        spear.log("movie_pipeline_executor_job: ", movie_pipeline_executor_job)
-        pprint.pprint(game.unreal_service.get_properties_from_object(uobject=movie_pipeline_executor_job))
+        pprint.pprint(level_sequence.get_properties())
 
         # load configuration
-        movie_pipeline_primary_config = game.unreal_service.load_object(class_name="UMoviePipelinePrimaryConfig", outer=0, name="/Game/SPEAR/Common/Cinematic/MPPC_DebugMoviePipelinePrimaryConfig.MPPC_DebugMoviePipelinePrimaryConfig")
+        movie_pipeline_primary_config = game.unreal_service.load_object(uclass="UMoviePipelinePrimaryConfig", name="/SpContent/Cinematic/MPPC_DefaultConfigWithLighting.MPPC_DefaultConfigWithLighting")
         spear.log("movie_pipeline_primary_config: ", movie_pipeline_primary_config)
-        pprint.pprint(game.unreal_service.get_properties_from_object(uobject=movie_pipeline_primary_config))
+        pprint.pprint(movie_pipeline_primary_config.get_properties())
+
+        # allocate job
+        movie_pipeline_executor_job = movie_pipeline_queue_engine_subsystem.AllocateJob(InSequence=level_sequence)
+        spear.log("movie_pipeline_executor_job: ", movie_pipeline_executor_job)
+        pprint.pprint(movie_pipeline_executor_job.get_properties())
 
         #
         # On Windows, it is possible to access Unreal's path tracer if the UMoviePipelinePrimaryConfig object
@@ -59,15 +49,15 @@ if __name__ == "__main__":
         # ray_tracing_enable_cvar = game.unreal_service.find_console_variable_by_name(console_variable_name="r.RayTracing.Enable")
         # ray_tracing_enable_cvar_value = game.unreal_service.get_console_variable_value_as_int(cvar=ray_tracing_enable_cvar)
         # game.unreal_service.set_console_variable_value(cvar=ray_tracing_enable_cvar, value=1)
-        # movie_pipeline_primary_config = game.unreal_service.load_object(class_name="UMoviePipelinePrimaryConfig", outer=0, name="/Game/SPEAR/Common/Cinematic/MPPC_DebugMoviePipelinePrimaryConfigPathTracer.MPPC_DebugMoviePipelinePrimaryConfigPathTracer")
+        # movie_pipeline_primary_config = game.unreal_service.load_object(uclass="UMoviePipelinePrimaryConfig", name="/SpContent/Cinematic/MPPC_DefaultConfigWithPathTracer.MPPC_DefaultConfigWithPathTracer")
         # spear.log("movie_pipeline_primary_config: ", movie_pipeline_primary_config)
         # pprint.pprint(game.unreal_service.get_properties_from_object(uobject=movie_pipeline_primary_config))
 
         # set job's configuration
-        game.unreal_service.call_function(uobject=movie_pipeline_executor_job, ufunction=set_configuration_func, args={"InPreset": spear.to_ptr(movie_pipeline_primary_config)})
+        movie_pipeline_executor_job.SetConfiguration(InPreset=movie_pipeline_primary_config)
 
         # render job
-        game.unreal_service.call_function(uobject=movie_pipeline_queue_engine_subsystem, ufunction=render_job_func, args={"InJob": spear.to_ptr(movie_pipeline_executor_job)})
+        movie_pipeline_queue_engine_subsystem.RenderJob(InJob=movie_pipeline_executor_job)
 
     with instance.end_frame():
         pass
@@ -77,8 +67,7 @@ if __name__ == "__main__":
     while is_rendering:
         time.sleep(1.0)
         with instance.begin_frame():
-            return_values = game.unreal_service.call_function(uobject=movie_pipeline_queue_engine_subsystem, ufunction=is_rendering_func)
-            is_rendering = return_values["ReturnValue"]
+            is_rendering = movie_pipeline_queue_engine_subsystem.IsRendering()
             spear.log("is_rendering: ", is_rendering)
         with instance.end_frame():
             pass

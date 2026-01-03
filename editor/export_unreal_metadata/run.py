@@ -14,7 +14,7 @@ import unreal
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--export_dir", required=True)
+parser.add_argument("--export-dir", required=True)
 args = parser.parse_args()
 
 unreal_editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
@@ -23,7 +23,7 @@ level_editor_subsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem
 editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
 
 editor_properties_csv_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "editor_properties.csv"))
-df_editor_properties = pd.read_csv(editor_properties_csv_file)
+df_editor_properties = pd.read_csv(editor_properties_csv_file, comment="#")
 
 
 def process_scene():

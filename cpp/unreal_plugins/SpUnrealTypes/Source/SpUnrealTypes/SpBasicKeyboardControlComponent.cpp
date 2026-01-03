@@ -16,6 +16,7 @@
 #include "SpCore/Std.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
+#include "SpCore/UnrealUtils.h"
 
 #include "SpUnrealTypes/SpUserInputComponent.h"
 
@@ -29,7 +30,7 @@ USpBasicKeyboardControlComponent::USpBasicKeyboardControlComponent()
     PrimaryComponentTick.bTickEvenWhenPaused = false;
     PrimaryComponentTick.TickGroup = ETickingGroup::TG_PrePhysics;
 
-    SpUserInputComponent = Unreal::createSceneComponentInsideOwnerConstructor<USpUserInputComponent>(this, "sp_user_input_component");
+    SpUserInputComponent = UnrealUtils::createSceneComponentInsideOwnerConstructor<USpUserInputComponent>(this, "sp_user_input_component");
     SP_ASSERT(SpUserInputComponent);
 }
 
@@ -45,21 +46,21 @@ void USpBasicKeyboardControlComponent::BeginPlay()
     UActorComponent::BeginPlay();
 
     if (!AddRotationComponentPath.IsEmpty()) {
-        auto [_, add_rotation_component] = Unreal::findActorAndComponentByPath<AActor, USceneComponent>(GetWorld(), GetOwner(), Unreal::toStdString(AddRotationComponentPath));
+        auto [_, add_rotation_component] = UnrealUtils::findActorAndComponentByPath<AActor, USceneComponent>(GetWorld(), GetOwner(), Unreal::toStdString(AddRotationComponentPath));
         add_rotation_component_ = add_rotation_component;
-        AddRotationComponent = Unreal::toFString(Unreal::getStableName(add_rotation_component_));
+        AddRotationComponent = Unreal::toFString(UnrealUtils::getStableName(add_rotation_component_));
     }
 
     if (!AddForceTargetComponentPath.IsEmpty()) {
-        auto [_, add_force_target_component] = Unreal::findActorAndComponentByPath<AActor, UPrimitiveComponent>(GetWorld(), GetOwner(), Unreal::toStdString(AddForceTargetComponentPath));
+        auto [_, add_force_target_component] = UnrealUtils::findActorAndComponentByPath<AActor, UPrimitiveComponent>(GetWorld(), GetOwner(), Unreal::toStdString(AddForceTargetComponentPath));
         add_force_target_component_ = add_force_target_component;
-        AddForceTargetComponent = Unreal::toFString(Unreal::getStableName(add_force_target_component_));
+        AddForceTargetComponent = Unreal::toFString(UnrealUtils::getStableName(add_force_target_component_));
     }
 
     if (!AddForceRotationComponentPath.IsEmpty()) {
-        auto [_, add_force_rotation_component] = Unreal::findActorAndComponentByPath<AActor, USceneComponent>(GetWorld(), GetOwner(), Unreal::toStdString(AddForceRotationComponentPath));
+        auto [_, add_force_rotation_component] = UnrealUtils::findActorAndComponentByPath<AActor, USceneComponent>(GetWorld(), GetOwner(), Unreal::toStdString(AddForceRotationComponentPath));
         add_force_rotation_component_ = add_force_rotation_component;
-        AddForceRotationComponent = Unreal::toFString(Unreal::getStableName(add_force_rotation_component_));
+        AddForceRotationComponent = Unreal::toFString(UnrealUtils::getStableName(add_force_rotation_component_));
     }
 
     SpUserInputComponent->subscribeToUserInputs({"One", "Two", "Three", "Four"});

@@ -116,7 +116,7 @@ public:
 
         return executeFuncInTryCatch("getFutureResult<...>(...)", [this, &future]() -> TReturn {
             std::string return_type_name = FuncSignatureRegistry::getFuncSignatureTypeDesc<TReturn>().type_names_.at("entry_point");
-            clmdep_msgpack::object_handle object_handle = client_->call("engine_service.get_future_result_on_game_thread_as_" + return_type_name, future);
+            clmdep_msgpack::object_handle object_handle = client_->call("engine_service.get_future_result_from_game_thread_as_" + return_type_name, future);
             return FuncSignatureRegistry::getReturnValue<TReturn>(this, std::move(object_handle));
         });
     };
@@ -143,11 +143,19 @@ public:
     };
 
     template <typename TReturn>
-    TReturn getFutureResultFast(uint64_t future_handle)
+    TReturn getFutureResultFastFromWorkerThread(uint64_t future_handle)
     {
-        if (verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] getFutureResultFast<...>(...): " << future_handle << std::endl; }
+        if (verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] getFutureResultFastFromWorkerThread<...>(...): " << future_handle << std::endl; }
 
-        return destroyFutureFast<TReturn>(future_handle);
+        return destroyFutureFastFromWorkerThread<TReturn>(future_handle);
+    };
+
+    template <typename TReturn>
+    TReturn getFutureResultFastFromGameThread(uint64_t future_handle)
+    {
+        if (verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] getFutureResultFastFromGameThread<...>(...): " << future_handle << std::endl; }
+
+        return destroyFutureFastFromGameThread<TReturn>(future_handle);
     };
 
     static std::vector<FuncSignatureTypeDesc> getEntryPointSignatureTypeDescs()
@@ -169,18 +177,18 @@ public:
     {
         s_entry_point_signature_registries_.clear();
 
-        s_entry_point_signature_registries_["call_sync_on_worker_thread"]              = FuncSignatureRegistry();
-        s_entry_point_signature_registries_["call_async_fast_on_worker_thread"]        = FuncSignatureRegistry();
-        s_entry_point_signature_registries_["send_async_fast_on_worker_thread"]        = FuncSignatureRegistry();
-        s_entry_point_signature_registries_["get_future_result_fast_on_worker_thread"] = FuncSignatureRegistry();
+        s_entry_point_signature_registries_["call_sync_on_worker_thread"]                = FuncSignatureRegistry();
+        s_entry_point_signature_registries_["call_async_fast_on_worker_thread"]          = FuncSignatureRegistry();
+        s_entry_point_signature_registries_["send_async_fast_on_worker_thread"]          = FuncSignatureRegistry();
+        s_entry_point_signature_registries_["get_future_result_fast_from_worker_thread"] = FuncSignatureRegistry();
 
-        s_entry_point_signature_registries_["call_sync_on_game_thread"]              = FuncSignatureRegistry();
-        s_entry_point_signature_registries_["call_async_on_game_thread"]             = FuncSignatureRegistry();
-        s_entry_point_signature_registries_["send_async_on_game_thread"]             = FuncSignatureRegistry();
-        s_entry_point_signature_registries_["get_future_result_on_game_thread"]      = FuncSignatureRegistry();
-        s_entry_point_signature_registries_["call_async_fast_on_game_thread"]        = FuncSignatureRegistry();
-        s_entry_point_signature_registries_["send_async_fast_on_game_thread"]        = FuncSignatureRegistry();
-        s_entry_point_signature_registries_["get_future_result_fast_on_game_thread"] = FuncSignatureRegistry();
+        s_entry_point_signature_registries_["call_sync_on_game_thread"]                = FuncSignatureRegistry();
+        s_entry_point_signature_registries_["call_async_on_game_thread"]               = FuncSignatureRegistry();
+        s_entry_point_signature_registries_["send_async_on_game_thread"]               = FuncSignatureRegistry();
+        s_entry_point_signature_registries_["get_future_result_from_game_thread"]      = FuncSignatureRegistry();
+        s_entry_point_signature_registries_["call_async_fast_on_game_thread"]          = FuncSignatureRegistry();
+        s_entry_point_signature_registries_["send_async_fast_on_game_thread"]          = FuncSignatureRegistry();
+        s_entry_point_signature_registries_["get_future_result_fast_from_game_thread"] = FuncSignatureRegistry();
     };
 
     template <typename TReturn, typename... TArgs>
@@ -189,10 +197,10 @@ public:
         FuncSignatureTypeDesc return_type_desc = FuncSignatureRegistry::getFuncSignatureTypeDesc<TReturn>();
         std::string return_type_name = return_type_desc.type_names_.at("entry_point");
 
-        requestRegisterEntryPointSignature<TReturn, TArgs...>(client_class, "call_sync_on_worker_thread",              "_call_sync_on_worker_thread_as_" + return_type_name,              &Client::callSync<TReturn, TArgs...>);
-        requestRegisterEntryPointSignature<Future,  TArgs...>(client_class, "call_async_fast_on_worker_thread",        "_call_async_fast_on_worker_thread",                               &Client::callAsyncFast<TArgs...>);
-        requestRegisterEntryPointSignature<void,    TArgs...>(client_class, "send_async_fast_on_worker_thread",        "_send_async_fast_on_worker_thread",                               &Client::sendAsyncFast<TArgs...>);
-        requestRegisterEntryPointSignature<TReturn, Future>  (client_class, "get_future_result_fast_on_worker_thread", "_get_future_result_fast_on_worker_thread_as_" + return_type_name, &Client::getFutureResultFast<TReturn>);
+        requestRegisterEntryPointSignature<TReturn,  TArgs...>(client_class, "call_sync_on_worker_thread",                "_call_sync_on_worker_thread_as_" + return_type_name,                &Client::callSync<TReturn, TArgs...>);
+        requestRegisterEntryPointSignature<uint64_t, TArgs...>(client_class, "call_async_fast_on_worker_thread",          "_call_async_fast_on_worker_thread",                                 &Client::callAsyncFast<TArgs...>);
+        requestRegisterEntryPointSignature<void,     TArgs...>(client_class, "send_async_fast_on_worker_thread",          "_send_async_fast_on_worker_thread",                                 &Client::sendAsyncFast<TArgs...>);
+        requestRegisterEntryPointSignature<TReturn,  uint64_t>(client_class, "get_future_result_fast_from_worker_thread", "_get_future_result_fast_from_worker_thread_as_" + return_type_name, &Client::getFutureResultFastFromWorkerThread<TReturn>);
     };
 
     template <typename TReturn, typename... TArgs>
@@ -201,13 +209,13 @@ public:
         FuncSignatureTypeDesc return_type_desc = FuncSignatureRegistry::getFuncSignatureTypeDesc<TReturn>();
         std::string return_type_name = return_type_desc.type_names_.at("entry_point");
 
-        requestRegisterEntryPointSignature<TReturn, TArgs...>(client_class, "call_sync_on_game_thread",              "_call_sync_on_game_thread_as_" + return_type_name,              &Client::callSync<TReturn, TArgs...>);
-        requestRegisterEntryPointSignature<Future,  TArgs...>(client_class, "call_async_on_game_thread",             "_call_async_on_game_thread",                                    &Client::callAsync<TArgs...>);
-        requestRegisterEntryPointSignature<void,    TArgs...>(client_class, "send_async_on_game_thread",             "_send_async_on_game_thread",                                    &Client::sendAsync<TArgs...>);
-        requestRegisterEntryPointSignature<TReturn, Future>  (client_class, "get_future_result_on_game_thread",      "_get_future_result_on_game_thread_as_" + return_type_name,      &Client::getFutureResult<TReturn>);
-        requestRegisterEntryPointSignature<Future,  TArgs...>(client_class, "call_async_fast_on_game_thread",        "_call_async_fast_on_game_thread",                               &Client::callAsyncFast<TArgs...>);
-        requestRegisterEntryPointSignature<void,    TArgs...>(client_class, "send_async_fast_on_game_thread",        "_send_async_fast_on_game_thread",                               &Client::sendAsyncFast<TArgs...>);
-        requestRegisterEntryPointSignature<TReturn, Future>  (client_class, "get_future_result_fast_on_game_thread", "_get_future_result_fast_on_game_thread_as_" + return_type_name, &Client::getFutureResultFast<TReturn>);
+        requestRegisterEntryPointSignature<TReturn,  TArgs...>(client_class, "call_sync_on_game_thread",                "_call_sync_on_game_thread_as_" + return_type_name,                &Client::callSync<TReturn, TArgs...>);
+        requestRegisterEntryPointSignature<Future,   TArgs...>(client_class, "call_async_on_game_thread",               "_call_async_on_game_thread",                                      &Client::callAsync<TArgs...>);
+        requestRegisterEntryPointSignature<void,     TArgs...>(client_class, "send_async_on_game_thread",               "_send_async_on_game_thread",                                      &Client::sendAsync<TArgs...>);
+        requestRegisterEntryPointSignature<TReturn,  Future>  (client_class, "get_future_result_from_game_thread",      "_get_future_result_from_game_thread_as_" + return_type_name,      &Client::getFutureResult<TReturn>);
+        requestRegisterEntryPointSignature<uint64_t, TArgs...>(client_class, "call_async_fast_on_game_thread",          "_call_async_fast_on_game_thread",                                 &Client::callAsyncFast<TArgs...>);
+        requestRegisterEntryPointSignature<void,     TArgs...>(client_class, "send_async_fast_on_game_thread",          "_send_async_fast_on_game_thread",                                 &Client::sendAsyncFast<TArgs...>);
+        requestRegisterEntryPointSignature<TReturn,  uint64_t>(client_class, "get_future_result_fast_from_game_thread", "_get_future_result_fast_from_game_thread_as_" + return_type_name, &Client::getFutureResultFastFromGameThread<TReturn>);
     };
 
     bool force_return_aligned_arrays_ = false;
@@ -226,16 +234,12 @@ private:
         try {
             if constexpr (std::is_void_v<TReturn>) {
                 if (verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] Executing function: " << func_name << std::endl; }
-
                 func();
-
                 if (verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] Finished executing function: " << func_name << std::endl; }
 
             } else {
                 if (verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] Executing function: " << func_name << std::endl; }
-
                 TReturn return_value = func();
-
                 if (verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] Finished executing function: " << func_name << std::endl; }
                 return return_value;
             }
@@ -260,7 +264,7 @@ private:
     }
 
     template <typename TReturn>
-    TReturn destroyFutureFast(uint64_t future_handle)
+    TReturn destroyFutureFastFromWorkerThread(uint64_t future_handle)
     {
         SP_ASSERT(future_handle);
         std::future<clmdep_msgpack::object_handle>* std_future_ptr = reinterpret_cast<std::future<clmdep_msgpack::object_handle>*>(future_handle);
@@ -270,10 +274,25 @@ private:
         delete std_future_ptr;
         std_future_ptr = nullptr;
 
-        Future future = object_handle.template as<Future>();
+        return FuncSignatureRegistry::getReturnValue<TReturn>(this, std::move(object_handle));
+    }
+
+    template <typename TReturn>
+    TReturn destroyFutureFastFromGameThread(uint64_t future_handle)
+    {
+        SP_ASSERT(future_handle);
+        std::future<clmdep_msgpack::object_handle>* std_future_ptr = reinterpret_cast<std::future<clmdep_msgpack::object_handle>*>(future_handle);
+        if (verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] Deleting std::future<clmdep_msgpack::object_handle> object at memory location: " << std_future_ptr << std::endl; }
+        clmdep_msgpack::object_handle object_handle = std_future_ptr->get();
+        if (verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] Obtained clmdep_msgpack::object_handle from std::future<clmdep_msgpack::object_handle>..." << std::endl; }
+        delete std_future_ptr;
+        std_future_ptr = nullptr;
+
+        Future future = FuncSignatureRegistry::getReturnValue<Future>(this, std::move(object_handle));
+
         if (verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] Obtained Future from clmdep_msgpack::object_handle." << std::endl; }
         std::string return_type_name = FuncSignatureRegistry::getFuncSignatureTypeDesc<TReturn>().type_names_.at("entry_point");
-        std::string func_name = "engine_service.get_future_result_as_" + return_type_name;
+        std::string func_name = "engine_service.get_future_result_from_game_thread_as_" + return_type_name;
         if (verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] Preparing to call function to obtain future result: " << func_name << std::endl; }
         return callSync<TReturn>(func_name, future);
     }

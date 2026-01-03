@@ -223,7 +223,7 @@ protected:
 
             // Set the data source of array to the shared memory that is backing out_packed_array, and update
             // array's data values.
-            array.setDataSource(shared_memory_views.at(out_packed_array.shared_memory_name_), SpArrayShapeUtils::getShape(shape, data.size()), out_packed_array.shared_memory_name_);
+            array.setDataSource(shared_memory_views.at(out_packed_array.shared_memory_name_), SpArrayShapeUtils::getShape(shape, data.size()));
             array.setDataValues(data); // no move necessary because we're doing a memcpy into shared memory
 
         } else {

@@ -21,8 +21,9 @@
 
 // Our usual SP_ASSERT macro uses some helper functions that are defined in the SpCore module. So if we tried
 // to use SP_ASSERT to confirm that SpCore was loaded, but it wasn't loaded, we would be invoking undefined
-// behavior. We therefore need a special assert macro that avoids all module functions.
+// behavior. We therefore need a special assert macro that avoids all SpCore module functions.
 
+// TODO: remove platform-specific logic
 #if BOOST_COMP_MSVC
     #define SP_ASSERT_MODULE_LOADED_IMPL(module_name, current_file, current_line) \
         if (!FModuleManager::Get().IsModuleLoaded(module_name)) {                                                                          \

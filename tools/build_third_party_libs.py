@@ -13,12 +13,12 @@ import sys
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--boost_toolset")
-parser.add_argument("--boost_toolset_version")
-parser.add_argument("--cxx_compiler")
-parser.add_argument("--unreal_engine_dir") # only required on Linux
+parser.add_argument("--boost-toolset")
+parser.add_argument("--boost-toolset-version")
+parser.add_argument("--cxx-compiler")
+parser.add_argument("--unreal-engine-dir") # only required on Linux
 parser.add_argument("--verbose", action="store_true")
-parser.add_argument("--third_party_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "third_party")))
+parser.add_argument("--third-party-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "third_party")))
 args = parser.parse_args()
 
 assert os.path.exists(args.third_party_dir)

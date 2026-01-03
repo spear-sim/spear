@@ -18,11 +18,9 @@ if __name__ == "__main__":
     instance = spear.Instance(config=config)
     game = instance.get_game()
     
-    # find UGameplayStatics default object and OpenLevel function
+    # get UGameplayStatics
     with instance.begin_frame():
-        gameplay_statics_static_class = game.unreal_service.get_static_class(class_name="UGameplayStatics")
-        open_level_func = game.unreal_service.find_function_by_name(uclass=gameplay_statics_static_class, function_name="OpenLevel")
-        gameplay_statics_default_object = game.unreal_service.get_default_object(uclass=gameplay_statics_static_class, create_if_needed=False)
+        gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
     with instance.end_frame():
         pass
 
@@ -38,8 +36,7 @@ if __name__ == "__main__":
     with instance.begin_frame():
         pass
     with instance.end_frame():
-        args = {"LevelName": "/Game/SPEAR/Scenes/debug_0000/Maps/debug_0000.debug_0000", "bAbsolute": True, "Options": ""}
-        game.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=open_level_func, args=args)
+        gameplay_statics.OpenLevel(LevelName="/Game/SPEAR/Scenes/debug_0000/Maps/debug_0000.debug_0000", bAbsolute=True, Options="")
 
     # Calling OpenLevel invalidates the old game object, so get a new one here. This call will block until
     # the new game object is ready.
@@ -47,8 +44,8 @@ if __name__ == "__main__":
 
     # spawn object
     with instance.begin_frame():
-        bp_axes_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/SpContent/Blueprints/BP_Axes.BP_Axes_C")
-        bp_axes = game.unreal_service.spawn_actor_from_class(uclass=bp_axes_uclass, location={"X": -10.0, "Y": 280.0, "Z": 50.0})
+        bp_axes_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_Axes.BP_Axes_C")
+        bp_axes = game.unreal_service.spawn_actor(uclass=bp_axes_uclass, location={"X": -10.0, "Y": 280.0, "Z": 50.0})
     with instance.end_frame():
         pass
 
@@ -60,8 +57,7 @@ if __name__ == "__main__":
     with instance.begin_frame():
         pass
     with instance.end_frame():
-        args = {"LevelName": "/Game/SPEAR/Scenes/apartment_0000/Maps/apartment_0000.apartment_0000", "bAbsolute": True, "Options": ""}
-        game.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=open_level_func, args=args)
+        gameplay_statics.OpenLevel(LevelName="/Game/SPEAR/Scenes/apartment_0000/Maps/apartment_0000.apartment_0000", bAbsolute=True, Options="")
 
     # get a new game object again
     game = instance.get_game(wait=True, wait_max_time_seconds=10.0, wait_sleep_time_seconds=1.0, warm_up=True, warm_up_time_seconds=5.0, warm_up_num_frames=1)

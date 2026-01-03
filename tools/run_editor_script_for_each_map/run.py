@@ -14,11 +14,11 @@ import time
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--maps_file", required=True)
+parser.add_argument("--maps-file", required=True)
 parser.add_argument("--script")
-parser.add_argument("--user_config_file")
-parser.add_argument("--wait_for_assets", action="store_true")
-parser.add_argument("--when_finished", default="force_kill") # iterating over scenes seems to cause Unreal to hang when shutting down, so we force kill by default here
+parser.add_argument("--user-config-file")
+parser.add_argument("--wait-for-assets", action="store_true")
+parser.add_argument("--when-finished", default="force_close") # iterating over scenes seems to cause Unreal to hang when shutting down, so we force close by default here
 args, unknown_args = parser.parse_known_args() # get unknown args to pass to inner script
 
 assert args.when_finished in ["keep_open", "close", "force_close"]
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     if len(unknown_args) > 0:
         unknown_arg_string = " ".join(unknown_args)
 
-    maps = pd.read_csv(args.maps_file)["maps"].tolist()
+    maps = pd.read_csv(args.maps_file, comment="#")["maps"].tolist()
     if len(maps) > 0:
 
         # get config
@@ -52,58 +52,21 @@ if __name__ == "__main__":
 
         with instance.begin_frame():
     
-            # find functions and objects
-
-            # The UAssetRegistryHelpers class can't be registered like other classes because it doesn't
-            # expose its StaticClass() method in a way that is accessible from other modules. So we obtain
-            # its static class using load_object(...) instead, which can be useful in cases where a class
-            # isn't registered with our UnrealClassRegistry system ahead of time.
-
-            asset_registry_helpers_uclass = editor.unreal_service.load_object(class_name="UClass", outer=0, name="/Script/AssetRegistry.AssetRegistryHelpers")
-            get_asset_registry_func = editor.unreal_service.find_function_by_name(uclass=asset_registry_helpers_uclass, function_name="GetAssetRegistry")
-
-            # Use get_static_class(...) for our other classes.
-
-            asset_registry_static_class = editor.unreal_service.get_static_class(class_name="IAssetRegistry")
-            is_loading_assets_func = editor.unreal_service.find_function_by_name(uclass=asset_registry_static_class, function_name="IsLoadingAssets")
-
-            kismet_system_library_static_class = editor.unreal_service.get_static_class(class_name="UKismetSystemLibrary")
-            get_object_name_func = editor.unreal_service.find_function_by_name(uclass=kismet_system_library_static_class, function_name="GetObjectName")
-
-            level_editor_subsystem_static_class = editor.unreal_service.get_static_class(class_name="ULevelEditorSubsystem")
-            load_level_func = editor.unreal_service.find_function_by_name(uclass=level_editor_subsystem_static_class, function_name="LoadLevel")
-
-            level_streaming_static_class = editor.unreal_service.get_static_class(class_name="ULevelStreaming")
-            is_level_loaded_func = editor.unreal_service.find_function_by_name(uclass=level_streaming_static_class, function_name="IsLevelLoaded")
-            is_level_visible_func = editor.unreal_service.find_function_by_name(uclass=level_streaming_static_class, function_name="IsLevelVisible")
-
-            sp_asset_compiling_manager_static_class = editor.unreal_service.get_static_class(class_name="USpAssetCompilingManager")
-            get_num_remaining_assets_func = editor.unreal_service.find_function_by_name(uclass=sp_asset_compiling_manager_static_class, function_name="GetNumRemainingAssets")
-
-            sp_level_streaming_static_class = editor.unreal_service.get_static_class(class_name="USpLevelStreaming")
-            should_be_visible_func = editor.unreal_service.find_function_by_name(uclass=sp_level_streaming_static_class, function_name="ShouldBeVisible")
-
-            sp_world_static_class = editor.unreal_service.get_static_class(class_name="USpWorld")
-            get_streaming_levels_func = editor.unreal_service.find_function_by_name(uclass=sp_world_static_class, function_name="GetStreamingLevels")
-
-            unreal_editor_subsystem_static_class = editor.unreal_service.get_static_class(class_name="UUnrealEditorSubsystem")
-            get_editor_world_func = editor.unreal_service.find_function_by_name(uclass=unreal_editor_subsystem_static_class, function_name="GetEditorWorld")
-
             # get default objects
-            asset_registry_helpers_default_object = editor.unreal_service.get_default_object(uclass=asset_registry_helpers_uclass, create_if_needed=False)
-            kismet_system_library_default_object = editor.unreal_service.get_default_object(uclass=kismet_system_library_static_class, create_if_needed=False)
-            sp_asset_compiling_manager_default_object = editor.unreal_service.get_default_object(uclass=sp_asset_compiling_manager_static_class, create_if_needed=False)
-            sp_level_streaming_default_object = editor.unreal_service.get_default_object(uclass=sp_level_streaming_static_class, create_if_needed=False)
-            sp_world_default_object = editor.unreal_service.get_default_object(uclass=sp_world_static_class, create_if_needed=False)
+            asset_registry_helpers = editor.get_unreal_object(uclass="UAssetRegistryHelpers")
+            kismet_system_library = editor.get_unreal_object(uclass="UKismetSystemLibrary")
+            navigation_system_v1 = editor.get_unreal_object(uclass="UNavigationSystemV1")
+            sp_asset_compiling_manager = editor.get_unreal_object(uclass="USpAssetCompilingManager")
+            sp_level_streaming = editor.get_unreal_object(uclass="USpLevelStreaming")
+            sp_navigation_system_v1 = editor.get_unreal_object(uclass="USpNavigationSystemV1")
+            sp_world = editor.get_unreal_object(uclass="USpWorld")
 
             # get subsystems
-            level_editor_subsystem = editor.unreal_service.get_editor_subsystem_by_type(class_name="ULevelEditorSubsystem")
-            unreal_editor_subsystem = editor.unreal_service.get_editor_subsystem_by_type(class_name="UUnrealEditorSubsystem")
+            level_editor_subsystem = editor.unreal_service.get_editor_subsystem(uclass="ULevelEditorSubsystem")
+            unreal_editor_subsystem = editor.unreal_service.get_editor_subsystem(uclass="UUnrealEditorSubsystem")
 
             # get asset registry
-            return_values = editor.unreal_service.call_function(uobject=asset_registry_helpers_default_object, ufunction=get_asset_registry_func)
-            asset_registry_string = return_values["ReturnValue"]
-            asset_registry = spear.to_handle(string=asset_registry_string)
+            asset_registry = asset_registry_helpers.GetAssetRegistry()
 
         with instance.end_frame():
             pass
@@ -121,10 +84,8 @@ if __name__ == "__main__":
 
                 with instance.begin_frame():
                     pass
-
                 with instance.end_frame():
-                    func_args = {"AssetPath": m}
-                    editor.unreal_service.call_function(uobject=level_editor_subsystem, ufunction=load_level_func, args=func_args)
+                    level_editor_subsystem.LoadLevel(AssetPath=m)
 
                 # Calling LoadLevel invalidates the old editor object, so get a new one here. This call will block
                 # until the new editor object is ready.
@@ -132,15 +93,10 @@ if __name__ == "__main__":
                 editor = instance.get_editor(wait=True, wait_max_time_seconds=1000.0, wait_sleep_time_seconds=1.0, warm_up=True, warm_up_time_seconds=5.0, warm_up_num_frames=1)
 
             # Make sure the requested map was actually loaded.
-
             with instance.begin_frame():
-                return_values = editor.unreal_service.call_function(uobject=unreal_editor_subsystem, ufunction=get_editor_world_func)
-                editor_world_string = return_values["ReturnValue"]
-                editor_world = spear.to_handle(string=editor_world_string)
-                func_args = {"Object": spear.to_ptr(handle=editor_world)}
-                return_values = editor.unreal_service.call_function(uobject=kismet_system_library_default_object, ufunction=get_object_name_func, args=func_args)
-                editor_world_name = return_values["ReturnValue"]
-
+                editor_world = unreal_editor_subsystem.GetEditorWorld()
+                editor_world_name = kismet_system_library.GetObjectName(Object=editor_world)
+                streaming_levels = sp_world.GetStreamingLevels(World=editor_world, as_unreal_object=True) # return type is "TArray" with no inner type, so we need as_unreal_object=True
             with instance.end_frame():
                 pass
 
@@ -150,48 +106,41 @@ if __name__ == "__main__":
 
             if args.wait_for_assets:
 
+                # we need to get the navigation system every time we load a new level
+                with instance.begin_frame():
+                    navigation_system = navigation_system_v1.GetNavigationSystem()
+                with instance.end_frame():
+                    pass
+                                       
                 editor_idle = False
                 while not editor_idle:
 
                     with instance.begin_frame():
-                        return_values = editor.unreal_service.call_function(uobject=sp_asset_compiling_manager_default_object, ufunction=get_num_remaining_assets_func)
-                        num_remaining_assets = return_values["ReturnValue"]
+                        is_async_loading = instance.engine_globals_service.is_async_loading()
 
-                        is_async_loading = instance.engine_service.is_async_loading()
-
-                        func_args = {"World": spear.to_ptr(handle=editor_world)}
-                        return_values = editor.unreal_service.call_function(uobject=sp_world_default_object, ufunction=get_streaming_levels_func, args=func_args)
+                        is_loading_assets = asset_registry.IsLoadingAssets()
+                        num_remaining_assets = sp_asset_compiling_manager.GetNumRemainingAssets()
+                        num_remaining_build_tasks = sp_navigation_system_v1.GetNumRemainingBuildTasks(NavigationSystem=navigation_system)
 
                         are_streaming_levels_loading = False
-                        streaming_levels = [ spear.to_handle(string=string) for string in return_values["ReturnValue"] ]
                         for streaming_level in streaming_levels:
-                            func_args = {"Object": spear.to_ptr(handle=streaming_level)}
-                            return_values = editor.unreal_service.call_function(uobject=kismet_system_library_default_object, ufunction=get_object_name_func, args=func_args)
-                            streaming_level_name = return_values["ReturnValue"]
+                            streaming_level_name = kismet_system_library.GetObjectName(Object=streaming_level)
 
-                            return_values = editor.unreal_service.call_function(uobject=streaming_level, ufunction=is_level_loaded_func)
-                            is_level_loaded = return_values["ReturnValue"]
-
-                            return_values = editor.unreal_service.call_function(uobject=sp_level_streaming_default_object, ufunction=should_be_visible_func, args={"LevelStreaming": spear.to_ptr(streaming_level)})
-                            should_be_visible = return_values["ReturnValue"]
-
-                            return_values = editor.unreal_service.call_function(uobject=streaming_level, ufunction=is_level_visible_func)
-                            is_level_visible = return_values["ReturnValue"]
+                            is_level_loaded = streaming_level.IsLevelLoaded()
+                            is_level_visible = streaming_level.IsLevelVisible()
+                            should_be_visible = sp_level_streaming.ShouldBeVisible(LevelStreaming=streaming_level)
 
                             spear.log(f"Streaming level: {streaming_level_name} (is_level_loaded={is_level_loaded}, should_be_visible={should_be_visible}, is_level_visible={is_level_visible}")
 
                             if not is_level_loaded:
-                                are_streaming_levels_loading = True
+                                are_streaming_levels_loading = True # if the level isn't loaded, then we're still loading
 
                             if should_be_visible and not is_level_visible:
-                                are_streaming_levels_loading = True
+                                are_streaming_levels_loading = True # if the level should be visible but it isn't, then we're still loading
 
-                        return_values = editor.unreal_service.call_function(uobject=asset_registry, ufunction=is_loading_assets_func)
-                        is_loading_assets = return_values["ReturnValue"]
+                        editor_idle = not is_async_loading and not is_loading_assets and num_remaining_assets == 0 and num_remaining_build_tasks == 0 and not are_streaming_levels_loading
 
-                        editor_idle = num_remaining_assets == 0 and not is_async_loading and not are_streaming_levels_loading and not is_loading_assets
-
-                        spear.log(f"num_remaining_assets={num_remaining_assets}, is_async_loading={is_async_loading}, are_streaming_levels_loading={are_streaming_levels_loading}, is_loading_assets={is_loading_assets}")
+                        spear.log(f"editor_idle={editor_idle} (is_async_loading={is_async_loading}, is_loading_assets={is_loading_assets}, num_remaining_assets={num_remaining_assets}, num_remaining_build_tasks={num_remaining_build_tasks}, are_streaming_levels_loading={are_streaming_levels_loading})")
 
                     with instance.end_frame():
                         pass

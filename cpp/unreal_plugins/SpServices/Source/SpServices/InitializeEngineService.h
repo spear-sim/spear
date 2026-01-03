@@ -21,6 +21,7 @@
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
+#include "SpCore/UnrealUtils.h"
 
 #include "SpServices/Service.h"
 
@@ -140,12 +141,12 @@ public:
 
             SP_LOG("    Overriding physics settings...");
             SP_LOG("    Old physics settings: ");
-            SP_LOG_NO_PREFIX(Unreal::getObjectPropertiesAsString(physics_settings));
+            SP_LOG_NO_PREFIX(UnrealUtils::getObjectPropertiesAsString(physics_settings));
 
-            Unreal::setObjectPropertiesFromString(physics_settings, physics_settings_str);
+            UnrealUtils::setObjectPropertiesFromString(physics_settings, physics_settings_str);
 
             SP_LOG("    New physics settings: ");
-            SP_LOG_NO_PREFIX(Unreal::getObjectPropertiesAsString(physics_settings));
+            SP_LOG_NO_PREFIX(UnrealUtils::getObjectPropertiesAsString(physics_settings));
 
             // validate
             if (FApp::IsBenchmarking() && physics_settings->bSubstepping) {
@@ -198,18 +199,18 @@ protected:
             if (GEngine->NavigationSystemClass.Get()) {
                 navigation_system_default_object = GetMutableDefault<UNavigationSystemBase>(GEngine->NavigationSystemClass.Get());
             } else {
-                GetMutableDefault<UNavigationSystemBase>();
+                navigation_system_default_object = GetMutableDefault<UNavigationSystemBase>();
             }
             SP_ASSERT(navigation_system_default_object);
 
             SP_LOG("    Overriding navigation system default object...");
             SP_LOG("    Old navigation system default object: ");
-            SP_LOG_NO_PREFIX(Unreal::getObjectPropertiesAsString(navigation_system_default_object));
+            SP_LOG_NO_PREFIX(UnrealUtils::getObjectPropertiesAsString(navigation_system_default_object));
 
-            Unreal::setObjectPropertiesFromString(navigation_system_default_object, navigation_system_default_object_str);
+            UnrealUtils::setObjectPropertiesFromString(navigation_system_default_object, navigation_system_default_object_str);
 
             SP_LOG("    New navigation system default object: ");
-            SP_LOG_NO_PREFIX(Unreal::getObjectPropertiesAsString(navigation_system_default_object));
+            SP_LOG_NO_PREFIX(UnrealUtils::getObjectPropertiesAsString(navigation_system_default_object));
         }
 
         if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_RECAST_NAV_MESH_DEFAULT_OBJECT")) {
@@ -219,12 +220,12 @@ protected:
 
             SP_LOG("    Overriding ARecastNavMesh default object...");
             SP_LOG("    Old ARecastNavMesh default object: ");
-            SP_LOG_NO_PREFIX(Unreal::getObjectPropertiesAsString(recast_nav_mesh_default_object));
+            SP_LOG_NO_PREFIX(UnrealUtils::getObjectPropertiesAsString(recast_nav_mesh_default_object));
 
-            Unreal::setObjectPropertiesFromString(recast_nav_mesh_default_object, recast_nav_mesh_default_object_str);
+            UnrealUtils::setObjectPropertiesFromString(recast_nav_mesh_default_object, recast_nav_mesh_default_object_str);
 
             SP_LOG("    New ARecastNavMesh default object: ");
-            SP_LOG_NO_PREFIX(Unreal::getObjectPropertiesAsString(recast_nav_mesh_default_object));
+            SP_LOG_NO_PREFIX(UnrealUtils::getObjectPropertiesAsString(recast_nav_mesh_default_object));
         }
     }
 };

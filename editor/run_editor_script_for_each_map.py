@@ -12,7 +12,7 @@ import unreal
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--maps_file", required=True)
+parser.add_argument("--maps-file", required=True)
 parser.add_argument("--script")
 args, unknown_args = parser.parse_known_args() # get unknown args to pass to inner script
 
@@ -26,7 +26,7 @@ if __name__ == "__main__":
     if len(unknown_args) > 0:
         unknown_arg_string = " ".join(unknown_args)
 
-    maps = pd.read_csv(args.maps_file)["maps"].tolist()
+    maps = pd.read_csv(args.maps_file, comment="#")["maps"].tolist()
 
     for m in maps:
         spear.log("Loading map: ", m)

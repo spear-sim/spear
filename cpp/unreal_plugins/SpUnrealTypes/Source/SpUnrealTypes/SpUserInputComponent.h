@@ -41,13 +41,13 @@ public:
     void setHandleUserInputFunc(const std::function<void(const std::string&, float)>& handle_user_input_func);
 
     // USpUserInputComponents need to be enabled explicitly to avoid a single key press unexpectedly doing multiple things.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR");
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bHandleUserInput = false;
 
 private:
     std::string getUniqueAxisNameFromUserInputName(const std::string& user_input_name) const;
 
-    UPROPERTY(VisibleAnywhere, Category="SPEAR");
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
     TArray<FString> SubscribedToUserInputs;
 
     struct UserInputDesc

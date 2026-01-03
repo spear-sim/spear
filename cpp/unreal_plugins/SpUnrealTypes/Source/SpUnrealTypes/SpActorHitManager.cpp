@@ -16,9 +16,10 @@
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
-#include "SpCore/SpStableNameComponent.h"
+#include "SpCore/SpStableNameManager.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+#include "SpCore/UnrealUtils.h"
 
 ASpActorHitManager::ASpActorHitManager()
 {
@@ -66,9 +67,9 @@ TArray<FActorHitDesc> ASpActorHitManager::GetActorHitDescs(bool bIncludeDebugInf
 
         if (bIncludeDebugInfo) {
             actor_hit_desc.SelfActorPtrString         = Unreal::toFString(Std::toStringFromPtr(desc.self_actor_));
-            actor_hit_desc.SelfActorPropertiesString  = Unreal::toFString(Unreal::getObjectPropertiesAsString(desc.self_actor_));
+            actor_hit_desc.SelfActorPropertiesString  = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.self_actor_));
             actor_hit_desc.OtherActorPtrString        = Unreal::toFString(Std::toStringFromPtr(desc.other_actor_));
-            actor_hit_desc.OtherActorPropertiesString = Unreal::toFString(Unreal::getObjectPropertiesAsString(desc.other_actor_));
+            actor_hit_desc.OtherActorPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.other_actor_));
         }
 
         actor_hit_descs.Add(actor_hit_desc);

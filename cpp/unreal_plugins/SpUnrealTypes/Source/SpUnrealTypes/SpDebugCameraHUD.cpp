@@ -15,8 +15,10 @@
 #include <Engine/EngineTypes.h> // FFontRenderInfo
 #include <Engine/Font.h>
 #include <GameFramework/Actor.h>
+#include <Templates/Casts.h>
 
 #include "SpCore/Unreal.h"
+#include "SpCore/UnrealUtils.h"
 
 #include "SpUnrealTypes/SpDebugCameraController.h"
 
@@ -66,14 +68,14 @@ void ASpDebugCameraHUD::PostRender()
 
                     y += y_single_line;
 
-                    if (Unreal::hasStableName(actor)) {
-                        Canvas->DrawText(font, Unreal::toFString("Actor (stable Name): " + Unreal::getStableName(actor)), x, y, 1.0f, 1.0f, font_render_info);
+                    if (UnrealUtils::hasStableName(actor)) {
+                        Canvas->DrawText(font, Unreal::toFString("Actor (stable Name): " + UnrealUtils::getStableName(actor)), x, y, 1.0f, 1.0f, font_render_info);
                     } else {
                         Canvas->DrawText(font, Unreal::toFString("Actor doesn't have a stable name."), x, y, 1.0f, 1.0f, font_render_info);                        
                     }
 
                     y += y_single_line;
-                    Canvas->DrawText(font, Unreal::toFString("Component (stable name): " + Unreal::getStableName(component)), x, y, 1.0f, 1.0f, font_render_info);
+                    Canvas->DrawText(font, Unreal::toFString("Component (stable name): " + UnrealUtils::getStableName(component)), x, y, 1.0f, 1.0f, font_render_info);
                 }
             }
         }

@@ -23,6 +23,13 @@ struct PropertyDesc
 {
     uint64_t property_ = 0;
     uint64_t value_ptr_ = 0;
+    std::string type_id_;
+};
+
+struct PropertyValue
+{
+    std::string value_;
+    std::string type_id_;
 };
 
 struct SharedMemoryView
@@ -30,6 +37,7 @@ struct SharedMemoryView
     std::string id_;
     uint64_t num_bytes_ = 0;
     uint64_t offset_bytes_ = 0;
+    std::string name_ = "smem:invalid";
     std::vector<std::string> usage_flags_ = {"DoNotUse"};
 };
 
@@ -66,6 +74,13 @@ struct Future
 {
     uint64_t future_ptr_ = 0;
     std::string type_id_;
+};
+
+struct StaticStructDesc
+{
+    uint64_t static_struct_ = 0;
+    std::string name_;
+    std::map<std::string, uint64_t> ufunctions_;
 };
 
 //

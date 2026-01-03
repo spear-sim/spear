@@ -33,6 +33,8 @@
 #include "SpCore/SpFuncComponent.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+#include "SpCore/UnrealArrayUpdateDataPtrScope.h"
+#include "SpCore/UnrealUtils.h"
 
 #include "SpUnrealTypes/SpPrimitiveProxyComponentManager.h"
 
@@ -134,7 +136,7 @@ USpSceneCaptureComponent2D::USpSceneCaptureComponent2D()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    SpFuncComponent = Unreal::createSceneComponentInsideOwnerConstructor<USpFuncComponent>(this, "sp_func_component");
+    SpFuncComponent = UnrealUtils::createSceneComponentInsideOwnerConstructor<USpFuncComponent>(this, "sp_func_component");
     SP_ASSERT(SpFuncComponent);
 
     // we want to be able to capture the scene even when the game is paused; note that we don't set
@@ -192,7 +194,7 @@ void USpSceneCaptureComponent2D::Initialize()
 
     if (bHideProxyComponentManagers) {
         PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_RenderScenePrimitives; // use HiddenActors list
-        std::vector<ASpPrimitiveProxyComponentManager*> primitive_proxy_component_managers = Unreal::findActorsByType<ASpPrimitiveProxyComponentManager>(GetWorld());
+        std::vector<ASpPrimitiveProxyComponentManager*> primitive_proxy_component_managers = UnrealUtils::findActorsByType<ASpPrimitiveProxyComponentManager>(GetWorld());
         for (auto primitive_proxy_component_manager : primitive_proxy_component_managers) {
             HiddenActors.Add(primitive_proxy_component_manager);
         }
@@ -207,7 +209,7 @@ void USpSceneCaptureComponent2D::Initialize()
             std::views::transform([](auto& str) { return Unreal::toStdString(str); }));
 
         std::vector<ASpPrimitiveProxyComponentManager*> primitive_proxy_component_managers = Std::toVector<ASpPrimitiveProxyComponentManager*>(
-            Unreal::findActorsByType<ASpPrimitiveProxyComponentManager>(GetWorld()) |
+            UnrealUtils::findActorsByType<ASpPrimitiveProxyComponentManager>(GetWorld()) |
             std::views::filter([&allowed_modalities](auto manager) { return Std::contains(allowed_modalities, manager->getModalityName()); }));
 
         for (auto primitive_proxy_component_manager : primitive_proxy_component_managers) {
@@ -228,8 +230,8 @@ void USpSceneCaptureComponent2D::Initialize()
         SP_ASSERT(!shared_memory_region_);
         shared_memory_region_ = std::make_unique<SharedMemoryRegion>(num_bytes);
         SP_ASSERT(shared_memory_region_);
-        shared_memory_view_ = SpArraySharedMemoryView(shared_memory_region_->getView(), SpArraySharedMemoryUsageFlags::ReturnValue);
-        SpFuncComponent->registerSharedMemoryView("smem:sp_scene_capture_component_2d", shared_memory_view_); // name needs to be unique per USpFuncComponent
+        shared_memory_view_ = SpArraySharedMemoryView(shared_memory_region_->getView(), "smem:sp_scene_capture_component_2d", SpArraySharedMemoryUsageFlags::ReturnValue);
+        SpFuncComponent->registerSharedMemoryView(shared_memory_view_); // name needs to be unique per USpFuncComponent
     }
 
     if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::UInt8) {
@@ -263,7 +265,7 @@ void USpSceneCaptureComponent2D::Initialize()
         if (bUseSharedMemory) {
             packed_array.view_ = shared_memory_view_.data_;
             packed_array.data_source_ = SpArrayDataSource::Shared;
-            packed_array.shared_memory_name_ = "smem:sp_scene_capture_component_2d";
+            packed_array.shared_memory_name_ = shared_memory_view_.name_;
             packed_array.shared_memory_usage_flags_ = shared_memory_view_.usage_flags_;
             dest_ptr = shared_memory_view_.data_;
         } else {
@@ -282,7 +284,7 @@ void USpSceneCaptureComponent2D::Initialize()
             // ReadPixels assumes 4 channels per pixel, 1 uint8 per channel
             if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::UInt8) {
 
-                Unreal::UpdateArrayDataPtrScope scope(scratchpad_color_, dest_ptr, num_bytes);
+                UnrealArrayUpdateDataPtrScope scope(scratchpad_color_, dest_ptr, num_bytes);
                 bool success = texture_render_target_resource->ReadPixels(scratchpad_color_);
                 SP_ASSERT(success);
 
@@ -293,7 +295,7 @@ void USpSceneCaptureComponent2D::Initialize()
                 FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(compression_mode);
                 read_surface_flags.SetLinearToGamma(false);
 
-                Unreal::UpdateArrayDataPtrScope scope(scratchpad_float_16_color_, dest_ptr, num_bytes);
+                UnrealArrayUpdateDataPtrScope scope(scratchpad_float_16_color_, dest_ptr, num_bytes);
                 bool success = texture_render_target_resource->ReadFloat16Pixels(scratchpad_float_16_color_, read_surface_flags);
                 SP_ASSERT(success);
 
@@ -305,7 +307,7 @@ void USpSceneCaptureComponent2D::Initialize()
                 FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(compression_mode);
                 read_surface_flags.SetLinearToGamma(false);
 
-                Unreal::UpdateArrayDataPtrScope scope(scratchpad_linear_color_, dest_ptr, num_bytes);
+                UnrealArrayUpdateDataPtrScope scope(scratchpad_linear_color_, dest_ptr, num_bytes);
                 bool success = texture_render_target_resource->ReadLinearColorPixels(scratchpad_linear_color_, read_surface_flags);
                 SP_ASSERT(success);
 
@@ -336,7 +338,7 @@ void USpSceneCaptureComponent2D::Terminate()
     SpFuncComponent->unregisterFunc("read_pixels");
 
     if (shared_memory_region_) {
-        SpFuncComponent->unregisterSharedMemoryView("smem:sp_scene_capture_component_2d");
+        SpFuncComponent->unregisterSharedMemoryView(shared_memory_view_);
         shared_memory_view_ = SpArraySharedMemoryView();
         shared_memory_region_ = nullptr;
     }

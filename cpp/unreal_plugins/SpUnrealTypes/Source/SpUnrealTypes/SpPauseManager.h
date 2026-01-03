@@ -51,7 +51,7 @@ private:
     // implemented by interacting directly with UGameplayStatics, and is therefore guaranteed to be correctly
     // synchronized with the engine-level state.
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void ToggleGamePaused()
     {
         UWorld* world = GetWorld();

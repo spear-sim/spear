@@ -14,6 +14,7 @@
 #include "SpCore/Boost.h"
 #include "SpCore/Std.h"
 
+//
 // In some situations, the output from UE_LOG is not available, e.g., running on a cluster through an RL framework like RLLib.
 // In other situations, the output from std::cout is not available, e.g., running in the editor or debugging in Visual Studio.
 // It is therefore desirable to have a logging system that writes to both locations. We provide the following SP_LOG macros
@@ -21,6 +22,8 @@
 // BOOST_CURRENT_FUNCTION, similar to our assert implementation. In future, we could make the logging targets more configurable,
 // but for now, we simply write to UE_LOG if we're in the editor (i.e., if WITH_EDITOR evaluates to true and IsRunningCommandlet()
 // returns false) and std::cout otherwise.
+//
+
 #define SP_LOG(...)               Log::log(__FILE__, __LINE__ __VA_OPT__(,) __VA_ARGS__)
 #define SP_LOG_CURRENT_FUNCTION() Log::logCurrentFunction(__FILE__, __LINE__, BOOST_CURRENT_FUNCTION)
 #define SP_LOG_NO_PREFIX(...)     Log::logNoPrefix(__VA_ARGS__)

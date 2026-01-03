@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--benchmark", action="store_true")
-    parser.add_argument("--no_shared_memory", action="store_true")
+    parser.add_argument("--no-shared-memory", action="store_true")
     args = parser.parse_args()
 
     shared_memory = not args.no_shared_memory
@@ -31,106 +31,68 @@ if __name__ == "__main__":
     # initialize actors and components
     with instance.begin_frame():
 
-        # find functions
-        actor_static_class = game.unreal_service.get_static_class(class_name="AActor")
-        set_actor_location_func = game.unreal_service.find_function_by_name(uclass=actor_static_class, function_name="K2_SetActorLocation")
-        set_actor_rotation_func = game.unreal_service.find_function_by_name(uclass=actor_static_class, function_name="K2_SetActorRotation")
-
-        gameplay_statics_static_class = game.unreal_service.get_static_class(class_name="UGameplayStatics")
-        get_player_controller_func = game.unreal_service.find_function_by_name(uclass=gameplay_statics_static_class, function_name="GetPlayerController")
-
-        sp_game_viewport_client_static_class = game.unreal_service.get_static_class(class_name="USpGameViewportClient")
-        get_viewport_size_func = game.unreal_service.find_function_by_name(uclass=sp_game_viewport_client_static_class, function_name="GetViewportSize")
-
-        sp_scene_capture_component_2d_static_class = game.unreal_service.get_static_class(class_name="USpSceneCaptureComponent2D")
-        initialize_func = game.unreal_service.find_function_by_name(uclass=sp_scene_capture_component_2d_static_class, function_name="Initialize")
-        terminate_func = game.unreal_service.find_function_by_name(uclass=sp_scene_capture_component_2d_static_class, function_name="Terminate")
-
-        # get default objects
-        gameplay_statics_default_object = game.unreal_service.get_default_object(uclass=gameplay_statics_static_class, create_if_needed=False)
-        sp_game_viewport_client_default_object = game.unreal_service.get_default_object(uclass=sp_game_viewport_client_static_class, create_if_needed=False)
-
         # spawn camera sensor and get the final_tone_curve_hdr component
-        bp_camera_sensor_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
-        bp_camera_sensor_actor = game.unreal_service.spawn_actor_from_class(uclass=bp_camera_sensor_uclass)
-        final_tone_curve_hdr_component = game.unreal_service.get_component_by_name(class_name="USceneComponent", actor=bp_camera_sensor_actor, component_name="DefaultSceneRoot.final_tone_curve_hdr_")
+        bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
+        bp_camera_sensor = game.unreal_service.spawn_actor(uclass=bp_camera_sensor_uclass)
+        final_tone_curve_hdr_component = game.unreal_service.get_component_by_name(actor=bp_camera_sensor, component_name="DefaultSceneRoot.final_tone_curve_hdr_", uclass="USpSceneCaptureComponent2D")
 
         # configure the final_tone_curve_hdr component to match the viewport (width, height, FOV, post-processing settings, etc)
+        
+        engine = game.engine_globals_service.get_engine()
+        game_viewport_client = engine.GameViewport.get()
 
-        post_process_volume = game.unreal_service.find_actor_by_type(class_name="APostProcessVolume")
-        return_values = game.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=get_player_controller_func, args={"PlayerIndex": 0})
-        player_controller = spear.to_handle(string=return_values["ReturnValue"])
-        player_camera_manager_desc = game.unreal_service.find_property_by_name_on_object(uobject=player_controller, property_name="PlayerCameraManager")
-        player_camera_manager_string = game.unreal_service.get_property_value(property_desc=player_camera_manager_desc)
-        player_camera_manager = spear.to_handle(string=player_camera_manager_string)
+        gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
+        player_controller = gameplay_statics.GetPlayerController(PlayerIndex=0)
+        player_camera_manager = player_controller.PlayerCameraManager.get()
+        view_target_pov = player_camera_manager.ViewTarget.POV.get()
 
-        # use 1080p resolution if benchmarking
+        post_process_volume = game.unreal_service.find_actor_by_class(uclass="APostProcessVolume")
+        post_process_volume_settings = post_process_volume.Settings.get()
+
+        # GetViewportSize(...) modifies arguments in-place, so we need as_dict=True so all arguments get returned
+        sp_game_viewport = game.get_unreal_object(uclass="USpGameViewportClient")
+        return_values = sp_game_viewport.GetViewportSize(GameViewportClient=game_viewport_client, as_dict=True)
+
         if args.benchmark:
             viewport_size_x = 1920
             viewport_size_y = 1080
         else:
-            engine = instance.engine_service.get_engine()
-            game_viewport_client_property_desc = game.unreal_service.find_property_by_name_on_object(uobject=engine, property_name="GameViewport")
-            game_viewport_client_string = game.unreal_service.get_property_value(property_desc=game_viewport_client_property_desc)
-            game_viewport_client = spear.to_handle(string=game_viewport_client_string)
-            return_values = game.unreal_service.call_function(uobject=sp_game_viewport_client_default_object, ufunction=get_viewport_size_func, args={"GameViewportClient": game_viewport_client})
             viewport_size_x = return_values["ViewportSize"]["x"]
             viewport_size_y = return_values["ViewportSize"]["y"]
 
         viewport_aspect_ratio = viewport_size_x/viewport_size_y # see Engine/Source/Editor/UnrealEd/Private/EditorViewportClient.cpp:2130 for evidence that Unreal's aspect ratio convention is x/y
-
-        view_target_pov_desc = game.unreal_service.find_property_by_name_on_object(uobject=player_camera_manager, property_name="ViewTarget.POV")
-        view_target_pov = game.unreal_service.get_property_value(property_desc=view_target_pov_desc)
-
         fov = view_target_pov["fOV"]*math.pi/180.0 # this adjustment is necessary to compute an FOV value that matches the game viewport
         half_fov = fov/2.0
         half_fov_adjusted = math.atan(math.tan(half_fov)*viewport_aspect_ratio/view_target_pov["aspectRatio"])
         fov_adjusted = half_fov_adjusted*2.0
         fov_adjusted_degrees = fov_adjusted*180.0/math.pi
 
-        volume_settings_desc = game.unreal_service.find_property_by_name_on_object(uobject=post_process_volume, property_name="Settings")
-        volume_settings = game.unreal_service.get_property_value(property_desc=volume_settings_desc)
+        bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
+        bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
 
-        game.unreal_service.call_function(uobject=bp_camera_sensor_actor, ufunction=set_actor_location_func, args={"NewLocation": view_target_pov["location"]})
-        game.unreal_service.call_function(uobject=bp_camera_sensor_actor, ufunction=set_actor_rotation_func, args={"NewRotation": view_target_pov["rotation"]})
-
-        width_desc = game.unreal_service.find_property_by_name_on_object(uobject=final_tone_curve_hdr_component, property_name="Width")
-        height_desc = game.unreal_service.find_property_by_name_on_object(uobject=final_tone_curve_hdr_component, property_name="Height")
-        fov_angle_desc = game.unreal_service.find_property_by_name_on_object(uobject=final_tone_curve_hdr_component, property_name="FOVAngle")
-        component_settings_desc = game.unreal_service.find_property_by_name_on_object(uobject=final_tone_curve_hdr_component, property_name="PostProcessSettings")
-        game.unreal_service.set_property_value(property_desc=width_desc, property_value=viewport_size_x)
-        game.unreal_service.set_property_value(property_desc=height_desc, property_value=viewport_size_y)
-        game.unreal_service.set_property_value(property_desc=fov_angle_desc, property_value=fov_adjusted_degrees)
-        game.unreal_service.set_property_value(property_desc=component_settings_desc, property_value=volume_settings)
+        final_tone_curve_hdr_component.Width = viewport_size_x
+        final_tone_curve_hdr_component.Height = viewport_size_y
+        final_tone_curve_hdr_component.FOVAngle = fov_adjusted_degrees
+        final_tone_curve_hdr_component.PostProcessSettings = post_process_volume_settings
 
         if not shared_memory:
-            use_shared_memory_desc = game.unreal_service.find_property_by_name_on_object(uobject=final_tone_curve_hdr_component, property_name="bUseSharedMemory")
-            game.unreal_service.set_property_value(property_desc=use_shared_memory_desc, property_value=False)
+            final_tone_curve_hdr_component.bUseSharedMemory = False
 
-        # now that the final_tone_curve_hdr component is fully configured, initialize it and get handles to its shared memory
-        game.unreal_service.call_function(uobject=final_tone_curve_hdr_component, ufunction=initialize_func)
+        final_tone_curve_hdr_component.Initialize()
 
-        if shared_memory:
-            final_tone_curve_hdr_component_shared_memory_handles = instance.sp_func_service.create_shared_memory_handles_for_object(uobject=final_tone_curve_hdr_component)
-        else:
-            final_tone_curve_hdr_component_shared_memory_handles = {}
+        # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
+        final_tone_curve_hdr_component.initialize_sp_funcs()
 
     with instance.end_frame():
         pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing etc accumulate additional information across frames
 
     # # let temporal anti-aliasing etc accumulate additional information across multiple frames
     # for i in range(1):
-    #     with instance.begin_frame():
-    #         pass
-    #     with instance.end_frame():
-    #         pass
+    #     instance.flush()
 
     # get rendered frame using call_async API
     with instance.begin_frame():
-        future = instance.sp_func_service.call_async.call_function(
-            uobject=final_tone_curve_hdr_component,
-            function_name="read_pixels",
-            uobject_shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
+        future = final_tone_curve_hdr_component.call_async.read_pixels()
     with instance.end_frame():
         return_values = future.get()
 
@@ -156,14 +118,14 @@ if __name__ == "__main__":
         elapsed_time_seconds = end_time_seconds - start_time_seconds
         spear.log("Average time for instance._client.get_timeout(): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
 
-        # instance.engine_service.get_id()
+        # instance.engine_globals_service.get_id()
         num_steps = 1000
         start_time_seconds = time.time()
         for i in range(num_steps):
-            instance.engine_service.get_id()
+            instance.engine_globals_service.get_id()
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log("Average time for instance.engine_service.get_id(): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
+        spear.log("Average time for instance.engine_globals_service.get_id(): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
 
         # empty with instance.begin_frame() / with instance.end_frame()
         num_steps = 100
@@ -177,29 +139,29 @@ if __name__ == "__main__":
         elapsed_time_seconds = end_time_seconds - start_time_seconds
         spear.log("Average frame time for empty with instance.begin_frame() / with instance.end_frame(): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
 
-        # game.unreal_service.get_static_class(...)
+        # game.unreal_service.get_default_object(...)
         num_steps = 100
         start_time_seconds = time.time()
         for i in range(num_steps):
             with instance.begin_frame():
                 pass
             with instance.end_frame():
-                return_value = game.unreal_service.get_static_class(class_name="AActor")
+                return_value = game.unreal_service.get_default_object(uclass="AActor")
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log("Average frame time for game.unreal_service.get_static_class(...): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
+        spear.log("Average frame time for game.unreal_service.get_default_object(...): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
 
-        # game.unreal_service.call_async.get_static_class(...)
+        # game.unreal_service.call_async.get_default_object(...)
         num_steps = 100
         start_time_seconds = time.time()
         for i in range(num_steps):
             with instance.begin_frame():
-                future = game.unreal_service.call_async.get_static_class(class_name="AActor")
+                future = game.unreal_service.call_async.get_default_object(uclass="AActor")
             with instance.end_frame():
                 return_value = future.get()
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log("Average frame time for game.unreal_service.call_async.get_static_class(...): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
+        spear.log("Average frame time for game.unreal_service.call_async.get_default_object(...): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
 
         # instance.sp_func_service.call_function(...)
         num_steps = 100
@@ -208,10 +170,7 @@ if __name__ == "__main__":
             with instance.begin_frame():
                 pass
             with instance.end_frame():
-                return_values = instance.sp_func_service.call_function(
-                    uobject=final_tone_curve_hdr_component,
-                    function_name="read_pixels",
-                    uobject_shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
+                return_values = final_tone_curve_hdr_component.read_pixels()
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
         spear.log("Average frame time for instance.sp_func_service.call_function(...): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
@@ -221,10 +180,7 @@ if __name__ == "__main__":
         start_time_seconds = time.time()
         for i in range(num_steps):
             with instance.begin_frame():
-                future = instance.sp_func_service.call_async.call_function(
-                    uobject=final_tone_curve_hdr_component,
-                    function_name="read_pixels",
-                    uobject_shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
+                future = final_tone_curve_hdr_component.call_async.read_pixels()
             with instance.end_frame():
                 return_values = future.get()
         end_time_seconds = time.time()
@@ -235,10 +191,9 @@ if __name__ == "__main__":
     with instance.begin_frame():
         pass
     with instance.end_frame():
-        if shared_memory:
-            instance.sp_func_service.destroy_shared_memory_handles_for_object(shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
-        game.unreal_service.call_function(uobject=final_tone_curve_hdr_component, ufunction=terminate_func)
-        game.unreal_service.destroy_actor(actor=bp_camera_sensor_actor)
+        final_tone_curve_hdr_component.terminate_sp_funcs()
+        final_tone_curve_hdr_component.Terminate()
+        game.unreal_service.destroy_actor(actor=bp_camera_sensor)
 
     if args.benchmark:
         instance.close()

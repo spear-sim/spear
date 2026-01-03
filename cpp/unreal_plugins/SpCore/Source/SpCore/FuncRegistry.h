@@ -8,15 +8,19 @@
 #include <functional> // std::function
 #include <string>
 #include <map>
+#include <vector>
 
 #include "SpCore/Assert.h"
 #include "SpCore/Std.h"
 
 //
 // A FuncRegistry<TReturn, TArgs...> is a templated type that allows a caller to call native C++ functions
-// by name. The user is responsible for registering each function that may be called through a particular
-// FuncRegistry object. For example, a typical user-specified function might call the new operator on a
-// derived type and return a base class pointer.
+// by name. It is especially useful in situations where a user wants to dispatch to a templated function
+// based on a string that is only available at runtime.
+// 
+// The user is responsible for registering each function that may be called through a particular FuncRegistry
+// object. For example, a typical user-specified function might call the new operator on a derived type and
+// return a base class pointer.
 // 
 // All functions that are registered with a registry must have the same signature, taking as input TArgs...
 // and returning as output TReturn.
@@ -43,6 +47,10 @@
 //     void* my_ptr = new_registry.call("float", 10); // create an array of 10 floats
 //     delete_registrar.call("float", my_ptr);        // destroy the array
 //
+// If we registered other names like "int" and "double" similarly, then we would be able to allocate and
+// de-allocate arrays of different types, which would typically require calling a templated function, based
+// on a string that is only available at runtime.
+//
 
 template <typename TReturn, typename... TArgs>
 class FuncRegistry
@@ -59,6 +67,11 @@ public:
     { 
         SP_ASSERT(name != "");
         Std::remove(funcs_, name);
+    }
+
+    std::vector<std::string> getFuncNames() const
+    {
+        return Std::keys(funcs_);
     }
 
     TReturn call(const std::string& name, TArgs... args) const

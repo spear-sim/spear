@@ -15,6 +15,7 @@
 
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
+#include "SpCore/UnrealUtils.h"
 
 #include "SpUpdateTransformComponent.generated.h"
 
@@ -48,15 +49,15 @@ public:
         UActorComponent::BeginPlay();
 
         if (!SourceComponentPath.IsEmpty()) {
-            auto [_, src_component] = Unreal::findActorAndComponentByPath<AActor, USceneComponent>(GetWorld(), GetOwner(), Unreal::toStdString(SourceComponentPath));
+            auto [_, src_component] = UnrealUtils::findActorAndComponentByPath<AActor, USceneComponent>(GetWorld(), GetOwner(), Unreal::toStdString(SourceComponentPath));
             src_component_ = src_component;
-            SourceComponent = Unreal::toFString(Unreal::getStableName(src_component_));
+            SourceComponent = Unreal::toFString(UnrealUtils::getStableName(src_component_));
         }
 
         if (!DestinationComponentPath.IsEmpty()) {
-            auto [_, dest_component] = Unreal::findActorAndComponentByPath<AActor, USceneComponent>(GetWorld(), GetOwner(), Unreal::toStdString(DestinationComponentPath));
+            auto [_, dest_component] = UnrealUtils::findActorAndComponentByPath<AActor, USceneComponent>(GetWorld(), GetOwner(), Unreal::toStdString(DestinationComponentPath));
             dest_component_ = dest_component;
-            DestinationComponent = Unreal::toFString(Unreal::getStableName(dest_component_));
+            DestinationComponent = Unreal::toFString(UnrealUtils::getStableName(dest_component_));
         }
     }
 

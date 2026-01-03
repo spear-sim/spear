@@ -14,8 +14,8 @@ import unreal
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--source_content_path", required=True)
-parser.add_argument("--destination_content_path", required=True)
+parser.add_argument("--source-content-path", required=True)
+parser.add_argument("--destination-content-path", required=True)
 args = parser.parse_args()
 
 asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()

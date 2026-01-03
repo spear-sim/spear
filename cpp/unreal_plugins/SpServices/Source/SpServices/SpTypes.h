@@ -8,6 +8,10 @@
 #include <map>
 #include <string>
 
+class FProperty;
+class UFunction;
+class UStruct;
+
 //
 // SpFuncSignatureTypeDesc and SpFuncSignatureDesc are helper structs for tracking the function signatures
 // of RPC entry points.
@@ -36,4 +40,15 @@ struct SpFuture
 {
     void* future_ptr_ = nullptr;
     std::string type_id_;
+};
+
+//
+// SpStaticStructDesc is a helper struct that stores reflection metadata for Unreal types.
+//
+
+struct SpStaticStructDesc
+{
+    UStruct* static_struct_ = nullptr;
+    std::string name_;
+    std::map<std::string, UFunction*> ufunctions_;
 };

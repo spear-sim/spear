@@ -11,14 +11,14 @@ import posixpath
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--p4_depot_name", required=True)
-parser.add_argument("--p4_stream_name", required=True)
-parser.add_argument("--source_path", required=True)
-parser.add_argument("--destination_path", required=True)
-parser.add_argument("--p4_port")
-parser.add_argument("--p4_user")
-parser.add_argument("--p4_password")
-parser.add_argument("--p4_revision")
+parser.add_argument("--p4-depot-name", required=True)
+parser.add_argument("--p4-stream-name", required=True)
+parser.add_argument("--source-path", required=True)
+parser.add_argument("--destination-path", required=True)
+parser.add_argument("--p4-port")
+parser.add_argument("--p4-user")
+parser.add_argument("--p4-password")
+parser.add_argument("--p4-revision")
 args = parser.parse_args()
 
 

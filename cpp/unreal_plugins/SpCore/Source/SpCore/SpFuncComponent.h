@@ -8,6 +8,7 @@
 #include <functional>  // std::function
 #include <map>
 #include <string>
+#include <vector>
 
 #include <Components/SceneComponent.h>
 #include <Containers/UnrealString.h> // FString
@@ -43,23 +44,24 @@ public:
     void EndPlay(const EEndPlayReason::Type end_play_reason) override;
 
     // typically called by the owning actor or component to register/unregister an SpFunc
-    void registerSharedMemoryView(const std::string& shared_memory_name, const SpArraySharedMemoryView& shared_memory_view);
-    void unregisterSharedMemoryView(const std::string& shared_memory_name);
+    void registerSharedMemoryView(const SpArraySharedMemoryView& shared_memory_view);
+    void unregisterSharedMemoryView(const SpArraySharedMemoryView& shared_memory_view);
     void registerFunc(const std::string& func_name, const std::function<SpFuncDataBundle(SpFuncDataBundle&)>& func);
     void unregisterFunc(const std::string& func_name);
 
     // typically called by code that wants to call an SpFunc
+    std::vector<std::string> getFuncNames() const;
     std::map<std::string, SpArraySharedMemoryView> getSharedMemoryViews() const;
     SpFuncDataBundle callFunc(const std::string& func_name, SpFuncDataBundle& args) const;
 
 private:
-    UPROPERTY(VisibleAnywhere, Category="SPEAR");
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
     FString SpFuncComponentPtr;
 
-    UPROPERTY(VisibleAnywhere, Category="SPEAR");
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
     TArray<FString> FuncNames;
 
-    UPROPERTY(VisibleAnywhere, Category="SPEAR");
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
     TArray<FString> SharedMemoryViewNames;
 
     FuncRegistry<SpFuncDataBundle, SpFuncDataBundle&> funcs_;

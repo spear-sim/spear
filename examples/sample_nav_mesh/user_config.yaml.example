@@ -26,23 +26,23 @@ SP_SERVICES:
           "Name": "Default",
           "Color":
           {
-              "b": 0,
-              "g": 75,
-              "r": 38,
-              "a": 164
+              "B": 0,
+              "G": 75,
+              "R": 38,
+              "A": 164
           },
           "DefaultQueryExtent":
           {
-              "x": 50,
-              "y": 50,
-              "z": 250
+              "X": 50,
+              "Y": 50,
+              "Z": 250
           },
           "NavDataClass": "/Script/NavigationSystem.RecastNavMesh",
-          "AgentRadius": 30,
+          "AgentRadius": 80,
           "AgentHeight": 180,
-          "AgentStepHeight": -1,
+          "AgentStepHeight": 10.0,
           "NavWalkingSearchHeightScale": 0.5,
-          "PreferredNavData": "/Script/NavigationSystem.RecastNavMesh",
+          "PreferredNavData": "None",
           "bCanCrouch": false,
           "bCanJump": false,
           "bCanWalk": false,
@@ -56,6 +56,36 @@ SP_SERVICES:
     OVERRIDE_RECAST_NAV_MESH_DEFAULT_OBJECT: True
     RECAST_NAV_MESH_DEFAULT_OBJECT_STRING: '''
     {
+      "AgentRadius": 80,
+      "AgentHeight": 180,
+      "NavDataConfig":
+      {
+        "Name": "Default",
+        "Color":
+        {
+          "B": 0,
+          "G": 75,
+          "R": 38,
+          "A": 164
+        },
+        "DefaultQueryExtent":
+        {
+          "X": 50,
+          "Y": 50,
+          "Z": 250
+        },
+        "NavDataClass": "/Script/NavigationSystem.RecastNavMesh",
+        "AgentRadius": 80,
+        "AgentHeight": 180,
+        "AgentStepHeight": 10.0,
+        "NavWalkingSearchHeightScale": 0.5,
+        "PreferredNavData": "None",
+        "bCanCrouch": false,
+        "bCanJump": false,
+        "bCanWalk": false,
+        "bCanSwim": false,
+        "bCanFly": false
+      },
       "NavMeshResolutionParams":
       [
         {
@@ -73,6 +103,7 @@ SP_SERVICES:
           "CellHeight": 1.0,
           "AgentMaxStepHeight": 10.0
         }
-      ]
+      ],
+      "RuntimeGeneration": "Dynamic"
     }
     '''

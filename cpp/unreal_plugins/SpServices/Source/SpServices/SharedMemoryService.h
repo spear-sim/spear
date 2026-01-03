@@ -43,7 +43,7 @@ public:
                 Std::insert(shared_memory_regions_, shared_memory_name, std::move(shared_memory_region));
 
                 SpArraySharedMemoryUsageFlags usage_flags = Unreal::getCombinedEnumFlagValueFromStringsAs<SpArraySharedMemoryUsageFlags, ESpArraySharedMemoryUsageFlags>(usage_flag_strings);
-                SpArraySharedMemoryView shared_memory_view = SpArraySharedMemoryView(view, usage_flags);
+                SpArraySharedMemoryView shared_memory_view = SpArraySharedMemoryView(view, shared_memory_name, usage_flags);
                 Std::insert(shared_memory_views_, shared_memory_name, shared_memory_view);
 
                 return shared_memory_view;

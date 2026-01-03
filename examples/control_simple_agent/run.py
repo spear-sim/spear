@@ -25,29 +25,14 @@ if __name__ == "__main__":
     # initialize actors and components
     with instance.begin_frame():
 
-        # find functions
-        gameplay_statics_static_class = game.unreal_service.get_static_class(class_name="UGameplayStatics")
-        set_game_paused_func = game.unreal_service.find_function_by_name(uclass=gameplay_statics_static_class, function_name="SetGamePaused")
-
-        scene_component_static_class = game.unreal_service.get_static_class(class_name="USceneComponent")
-        add_relative_rotation_func = game.unreal_service.find_function_by_name(uclass=scene_component_static_class, function_name="K2_AddRelativeRotation")
-        get_component_rotation_func = game.unreal_service.find_function_by_name(uclass=scene_component_static_class, function_name="K2_GetComponentRotation")
-
-        primitive_component_static_class = game.unreal_service.get_static_class(class_name="UPrimitiveComponent")
-        add_force_func = game.unreal_service.find_function_by_name(uclass=primitive_component_static_class, function_name="AddForce")
-
-        sp_scene_capture_component_2d_static_class = game.unreal_service.get_static_class(class_name="USpSceneCaptureComponent2D")
-        initialize_func = game.unreal_service.find_function_by_name(uclass=sp_scene_capture_component_2d_static_class, function_name="Initialize")
-        terminate_func = game.unreal_service.find_function_by_name(uclass=sp_scene_capture_component_2d_static_class, function_name="Terminate")
-
-        # get UGameplayStatics default object
-        gameplay_statics = game.unreal_service.get_default_object(uclass=gameplay_statics_static_class, create_if_needed=False)
+        # get UGameplayStatics
+        gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
 
         # spawn object and get components
-        bp_sphere_agent_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/SpContent/Blueprints/BP_SphereAgent.BP_SphereAgent_C")
-        bp_sphere_agent_actor = game.unreal_service.spawn_actor_from_class(uclass=bp_sphere_agent_uclass, location={"X": -10.0, "Y": 280.0, "Z": 150.0})
-        root_component = game.unreal_service.get_component_by_name(class_name="USceneComponent", actor=bp_sphere_agent_actor, component_name="DefaultSceneRoot")        
-        final_tone_curve_hdr_component = game.unreal_service.get_component_by_name(class_name="USceneComponent", actor=bp_sphere_agent_actor, component_name="DefaultSceneRoot.final_tone_curve_hdr_")
+        bp_sphere_agent_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_SphereAgent.BP_SphereAgent_C")
+        bp_sphere_agent = game.unreal_service.spawn_actor(uclass=bp_sphere_agent_uclass, location={"X": -10.0, "Y": 280.0, "Z": 150.0})
+        root_component = game.unreal_service.get_component_by_name(actor=bp_sphere_agent, component_name="DefaultSceneRoot", uclass="USceneComponent")
+        final_tone_curve_hdr_component = game.unreal_service.get_component_by_name(actor=bp_sphere_agent, component_name="DefaultSceneRoot.final_tone_curve_hdr_", uclass="USceneComponent")
 
         #
         # We get the sphere component "by path" (instead of "by name") because this particular component gets
@@ -58,17 +43,17 @@ if __name__ == "__main__":
         #
         # At this point in the code, we are certain that the relocation operation has already happened, so we
         # could just search by name using the name "sphere_". But this would be confusing. And we have a
-        # dedicated C++ function for searching by path, which is helpful, e.g., inside BeginPlay() functions,
-        # since in this case it isn't clear if a relocation operation has happened yet. We choose to use this
-        # functionality here, so we can search for the component using it's original path, as a matter of
-        # readability.
+        # dedicated C++ function for searching by path, which is helpful, e.g., inside an actor's BeginPlay()
+        # method, since in BeginPlay() it isn't clear if a relocation operation has happened yet. As a matter
+        # of readability, we choose to search by path here, so we can search for the component using it's
+        # original path.
         #
 
-        sphere_component = game.unreal_service.get_component_by_path(class_name="USceneComponent", actor=bp_sphere_agent_actor, component_path="DefaultSceneRoot.sphere_")
+        sphere_component = game.unreal_service.get_component_by_path(actor=bp_sphere_agent, component_path="DefaultSceneRoot.sphere_", uclass="USceneComponent")
 
-        # initialize final_tone_curve_hdr_component and get handles to its shared memory
-        game.unreal_service.call_function(uobject=final_tone_curve_hdr_component, ufunction=initialize_func)
-        final_tone_curve_hdr_component_shared_memory_handles = instance.sp_func_service.create_shared_memory_handles_for_object(uobject=final_tone_curve_hdr_component)
+        # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
+        final_tone_curve_hdr_component.Initialize()
+        final_tone_curve_hdr_component.initialize_sp_funcs()
 
         # show FPS
         game.unreal_service.execute_console_command("stat fps")
@@ -83,29 +68,26 @@ if __name__ == "__main__":
         with instance.begin_frame():
 
             # unpause
-            game.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": False})
+            gameplay_statics.SetGamePaused(bPaused=False)
 
             # add rotation
-            game.unreal_service.call_function(uobject=root_component, ufunction=add_relative_rotation_func, args={"DeltaRotation": {"Pitch": 0.0, "Yaw": 1.0, "Roll": 0.0}})
+            root_component.K2_AddRelativeRotation(DeltaRotation={"Pitch": 0.0, "Yaw": 1.0, "Roll": 0.0})
 
             # add force
-            return_values = game.unreal_service.call_function(uobject=root_component, ufunction=get_component_rotation_func)
-            M_world_from_component = spear.to_matrix_from_rotator(rotator=return_values["ReturnValue"])
+            rotator = root_component.K2_GetComponentRotation()
+            R_world_from_component = spear.to_numpy_matrix_from_rotator(rotator=rotator, as_matrix=True)
             force_component = np.matrix([1000.0, 0.0, 0.0]).T
-            force_world = M_world_from_component*force_component
-            game.unreal_service.call_function(uobject=sphere_component, ufunction=add_force_func, args={"Force": spear.to_vector_from_array(array=force_world)})
+            force_world = R_world_from_component*force_component
+            sphere_component.AddForce(Force=spear.to_vector_from_numpy_array(array=force_world))
 
         # get observation
         with instance.end_frame():
 
             # read pixels
-            return_values = instance.sp_func_service.call_function(
-                uobject=final_tone_curve_hdr_component,
-                function_name="read_pixels",
-                uobject_shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
+            return_values = final_tone_curve_hdr_component.read_pixels()
 
             # pause
-            game.unreal_service.call_function(uobject=gameplay_statics, ufunction=set_game_paused_func, args={"bPaused": True})
+            gameplay_statics.SetGamePaused(bPaused=True)
 
         # show image in an OpenCV window
         cv2.imshow("final_tone_curve_hdr", return_values["arrays"]["data"])
@@ -115,9 +97,9 @@ if __name__ == "__main__":
     with instance.begin_frame():
         pass
     with instance.end_frame():
-        instance.sp_func_service.destroy_shared_memory_handles_for_object(shared_memory_handles=final_tone_curve_hdr_component_shared_memory_handles)
-        game.unreal_service.call_function(uobject=final_tone_curve_hdr_component, ufunction=terminate_func)
-        game.unreal_service.destroy_actor(actor=bp_sphere_agent_actor)
+        final_tone_curve_hdr_component.terminate_sp_funcs()
+        final_tone_curve_hdr_component.Terminate()
+        game.unreal_service.destroy_actor(actor=bp_sphere_agent)
 
     # close OpenCV window
     cv2.destroyAllWindows()

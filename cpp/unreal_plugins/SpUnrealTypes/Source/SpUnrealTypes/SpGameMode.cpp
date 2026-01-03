@@ -26,6 +26,7 @@
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+#include "SpCore/UnrealUtils.h"
 
 #include "SpUnrealTypes/SpDebugCameraController.h"
 #include "SpUnrealTypes/SpPlayerController.h"
@@ -58,8 +59,8 @@ void ASpGameMode::PostLogin(APlayerController* new_player)
     // pawn is non-null (it is possible for pawn to be null if we press "Simulate" in the editor), and if the
     // pawn has a USpStableNameComponent.
     APawn* pawn = new_player->GetPawn();
-    if (pawn && Unreal::hasStableName(pawn)) {
-        Unreal::setStableName(pawn, "__SP_DEFAULT_PAWN__");
+    if (pawn && UnrealUtils::hasStableName(pawn)) {
+        UnrealUtils::setStableName(pawn, "__SP_DEFAULT_PAWN__");
     }
 
     // Spawn custom debug camera.

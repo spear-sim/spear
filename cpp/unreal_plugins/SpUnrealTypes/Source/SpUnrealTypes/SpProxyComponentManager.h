@@ -24,6 +24,7 @@
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+#include "SpCore/UnrealUtils.h"
 
 #include "SpProxyComponentManager.generated.h"
 
@@ -46,7 +47,7 @@ concept CProxyComponentRegistryForComponent =
         { proxy_component_registry.registerProxyComponent(component, component) } -> std::same_as<void*>;
     };
 
-UCLASS(ClassGroup="SPEAR", Config=Spear, HideCategories=(Actor, Collision, Cooking, DataLayers, HLOD, Input, LevelInstance, Navigation, Networking, Physics, Rendering, Replication, WorldPartition))
+UCLASS(ClassGroup="SPEAR", HideCategories=(Actor, Collision, Cooking, DataLayers, HLOD, Input, LevelInstance, Navigation, Networking, Physics, Rendering, Replication, WorldPartition))
 class ASpProxyComponentManager : public AActor
 {
     GENERATED_BODY()
@@ -61,14 +62,14 @@ public:
     void Tick(float delta_time) override;
     bool ShouldTickIfViewportsOnly() const override;
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void Initialize();
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void Terminate();
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void Update();
 
-    UFUNCTION(Category="SPEAR")
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
     bool IsInitialized() const;
 
 protected:
@@ -235,16 +236,16 @@ private:
         void* user_data_ = nullptr;
     };
 
-    UPROPERTY(VisibleAnywhere, Category="SPEAR");
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
     bool bIsInitialized = false;
 
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
     uint32 ProxyComponentDescIdInitialGuess = 1;
 
-    UPROPERTY(VisibleAnywhere, Category="SPEAR");
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
     TArray<uint32> RegisteredProxyComponentDescIds;
 
-    UPROPERTY(VisibleAnywhere, Category="SPEAR");
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
     TArray<FString> RegisteredProxyComponentDescNames;
 
     std::string getManagerName() const;
@@ -256,7 +257,7 @@ private:
         std::vector<TComponent*> components;
         for (auto actor : actors) {
             SP_ASSERT(actor);
-            std::vector<TComponent*> components_for_actor = Unreal::getComponentsByType<TComponent>(actor);
+            std::vector<TComponent*> components_for_actor = UnrealUtils::getComponentsByType<TComponent>(actor);
             components.insert(components.end(), components_for_actor.begin(), components_for_actor.end());
         }
         return components;
@@ -265,18 +266,18 @@ private:
     template <CNonSceneComponent TNonSceneComponent>
     static TNonSceneComponent* createComponent(UObject* owner, TNonSceneComponent* component, const std::string& name)
     {
-        return Unreal::createComponentOutsideOwnerConstructor<TNonSceneComponent>(owner, name);
+        return UnrealUtils::createComponentOutsideOwnerConstructor<TNonSceneComponent>(owner, name);
     }
 
     template <CSceneComponent TSceneComponent>
     static TSceneComponent* createComponent(UObject* owner, TSceneComponent* component, const std::string& name)
     {
-        return Unreal::createSceneComponentOutsideOwnerConstructor<TSceneComponent>(owner, component, name);
+        return UnrealUtils::createSceneComponentOutsideOwnerConstructor<TSceneComponent>(owner, component, name);
     }
 
     static void destroyComponent(UActorComponent* component)
     {
-        Unreal::destroyComponentOutsideOwnerConstructor(component);
+        UnrealUtils::destroyComponentOutsideOwnerConstructor(component);
     }
 
     static std::string getLongComponentName(const UWorld* world, const UActorComponent* component);

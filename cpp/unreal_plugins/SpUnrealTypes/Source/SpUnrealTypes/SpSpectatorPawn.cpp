@@ -20,8 +20,8 @@
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
 #include "SpCore/Log.h"
-#include "SpCore/SpStableNameComponent.h"
-#include "SpCore/Unreal.h"
+#include "SpCore/SpStableNameManager.h"
+#include "SpCore/UnrealUtils.h"
 
 ASpSpectatorPawn::ASpSpectatorPawn()
 {
@@ -40,7 +40,7 @@ ASpSpectatorPawn::ASpSpectatorPawn()
     PrimaryActorTick.bTickEvenWhenPaused = true;
     PrimaryActorTick.TickGroup = ETickingGroup::TG_PrePhysics;
 
-    SpStableNameComponent = Unreal::createComponentInsideOwnerConstructor<USpStableNameComponent>(this, "sp_stable_name_component");
+    SpStableNameComponent = UnrealUtils::createComponentInsideOwnerConstructor<USpStableNameComponent>(this, "sp_stable_name_component");
     SP_ASSERT(SpStableNameComponent);
 
     SpectatorPawnMovement = Cast<USpectatorPawnMovement>(GetMovementComponent()); // no RTTI available, so use Cast instead of dynamic_cast

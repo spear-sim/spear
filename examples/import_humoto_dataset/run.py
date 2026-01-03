@@ -22,14 +22,14 @@ if __name__ == "__main__":
         # spawn checking_floor_lamp_with_right_hand_suit animation
         location = {"X": 425.0, "Y": 275.0, "Z": 25.0}
         bp_humoto_path = "/Game/Humoto/checking_floor_lamp_with_right_hand_suit/checking_floor_lamp_with_right_hand_suit/FbxScene_checking_floor_lamp_with_right_hand_suit.FbxScene_checking_floor_lamp_with_right_hand_suit_C"
-        bp_humoto_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name=bp_humoto_path)
-        bp_humoto = game.unreal_service.spawn_actor_from_class(uclass=bp_humoto_uclass, location=location)
+        bp_humoto_uclass = game.unreal_service.load_class(uclass="AActor", name=bp_humoto_path)
+        bp_humoto = game.unreal_service.spawn_actor(uclass=bp_humoto_uclass, location=location)
 
         # spawn drinking_from_mug1_and_talking_suit animation
         location = {"X": 225.0, "Y": 475.0, "Z": 30.0}
         bp_humoto_path = "/Game/Humoto/drinking_from_mug1_and_talking_suit/drinking_from_mug1_and_talking_suit/FbxScene_drinking_from_mug1_and_talking_suit.FbxScene_drinking_from_mug1_and_talking_suit_C"
-        bp_humoto_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name=bp_humoto_path)
-        bp_humoto = game.unreal_service.spawn_actor_from_class(uclass=bp_humoto_uclass, location=location)
+        bp_humoto_uclass = game.unreal_service.load_class(uclass="AActor", name=bp_humoto_path)
+        bp_humoto = game.unreal_service.spawn_actor(uclass=bp_humoto_uclass, location=location)
 
     with instance.end_frame():
         pass

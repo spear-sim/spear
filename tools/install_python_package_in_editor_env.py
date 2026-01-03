@@ -11,7 +11,7 @@ import sys
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--unreal_engine_dir", required=True)
+parser.add_argument("--unreal-engine-dir", required=True)
 args = parser.parse_args()
 
 assert os.path.exists(args.unreal_engine_dir)

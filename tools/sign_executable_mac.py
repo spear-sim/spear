@@ -27,13 +27,13 @@ import sys
 assert sys.platform == "darwin"
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--apple_developer_id", required=True)
-parser.add_argument("--apple_id", required=True)
-parser.add_argument("--apple_password", required=True)
-parser.add_argument("--apple_team_id", required=True)
-parser.add_argument("--build_config", required=True)
-parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
-parser.add_argument("--entitlements_file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "Build", "Mac", "Resources", "entitlements.plist")))
+parser.add_argument("--apple-developer-id", required=True)
+parser.add_argument("--apple-id", required=True)
+parser.add_argument("--apple-password", required=True)
+parser.add_argument("--apple-team-id", required=True)
+parser.add_argument("--build-config", required=True)
+parser.add_argument("--build-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
+parser.add_argument("--entitlements-file", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim", "Build", "Mac", "Resources", "entitlements.plist")))
 args = parser.parse_args()
 
 assert os.path.exists(args.build_dir)

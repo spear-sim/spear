@@ -14,7 +14,7 @@
 
 #include "SpCore/Assert.h"
 #include "SpCore/Std.h"
-#include "SpCore/Unreal.h"
+#include "SpCore/UnrealUtils.h"
 
 std::map<std::string, std::string> UnrealObjUtils::getObjectPropertiesAsStrings(std::initializer_list<UnrealObjBase*> unreal_objs)
 {
@@ -39,7 +39,7 @@ std::map<std::string, std::string> UnrealObjUtils::getObjectPropertiesAsStrings(
         std::views::transform([](auto& pair) {
             auto& [name, unreal_obj] = pair;
             SP_ASSERT(unreal_obj);
-            return std::make_pair(name, Unreal::getObjectPropertiesAsString(unreal_obj->getValuePtr(), unreal_obj->getStaticStruct()));
+            return std::make_pair(name, UnrealUtils::getObjectPropertiesAsString(unreal_obj->getValuePtr(), unreal_obj->getStaticStruct()));
         }));
 }
 
@@ -63,6 +63,6 @@ void UnrealObjUtils::setObjectPropertiesFromStrings(const std::map<std::string, 
     for (auto& [name, unreal_obj] : unreal_objs) {
         SP_ASSERT(unreal_obj);
         SP_ASSERT(Std::containsKey(strings, name));
-        Unreal::setObjectPropertiesFromString(unreal_obj->getValuePtr(), unreal_obj->getStaticStruct(), strings.at(name));
+        UnrealUtils::setObjectPropertiesFromString(unreal_obj->getValuePtr(), unreal_obj->getStaticStruct(), strings.at(name));
     }
 }

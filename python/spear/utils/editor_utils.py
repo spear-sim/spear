@@ -205,11 +205,15 @@ def get_filesystem_path_from_content_path(content_path):
 #
 
 # Convert to a NumPy array from an unreal vector.
-def to_array_from_vector(vector):
-    return np.array([vector.get_editor_property("x"), vector.get_editor_property("y"), vector.get_editor_property("z")])
+def to_numpy_array_from_vector(vector, as_matrix=None):
+    if as_matrix is None:
+        return np.array([vector.get_editor_property("x"), vector.get_editor_property("y"), vector.get_editor_property("z")])
+    else:
+        assert as_matrix
+        return np.matrix([vector.get_editor_property("x"), vector.get_editor_property("y"), vector.get_editor_property("z")]).T
 
 # Convert to an Unreal vector from a NumPy array or matrix.
-def to_vector_from_array(array):
+def to_vector_from_numpy_array(array):
     if isinstance(array, np.matrix):
         assert array.shape == (3, 1)
         array = array.A1

@@ -28,6 +28,7 @@
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+#include "SpCore/UnrealUtils.h"
 
 #include "SpUnrealTypes/SpProxyComponentManager.h"
 
@@ -61,7 +62,7 @@ struct FComponentAndMaterialDesc
 };
 
 // Don't instantiate ASpPrimitiveProxyComponentManager directly, use the derived classes below instead
-UCLASS(ClassGroup="SPEAR", Config=Spear, HideCategories=(Actor, Collision, Cooking, DataLayers, HLOD, Input, LevelInstance, Navigation, Networking, Physics, Rendering, Replication, WorldPartition))
+UCLASS(ClassGroup="SPEAR", HideCategories=(Actor, Collision, Cooking, DataLayers, HLOD, Input, LevelInstance, Navigation, Networking, Physics, Rendering, Replication, WorldPartition))
 class ASpPrimitiveProxyComponentManager : public ASpProxyComponentManager
 {
     GENERATED_BODY()
@@ -80,9 +81,9 @@ public:
 
             if (bIncludeDebugInfo) {
                 component_and_material_desc.ComponentPtrString = Unreal::toFString(Std::toStringFromPtr(desc.component_));
-                component_and_material_desc.ComponentPropertiesString = Unreal::toFString(Unreal::getObjectPropertiesAsString(desc.component_));
+                component_and_material_desc.ComponentPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.component_));
                 component_and_material_desc.MaterialPtrString = Unreal::toFString(Std::toStringFromPtr(desc.material_));
-                component_and_material_desc.MaterialPropertiesString = Unreal::toFString(Unreal::getObjectPropertiesAsString(desc.material_));
+                component_and_material_desc.MaterialPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.material_));
             }
 
             component_and_material_descs.Add(component_and_material_desc);
@@ -183,7 +184,7 @@ public:
         for (int i = 0; i < component->GetNumMaterials(); i++) {
             if (shouldRegisterProxyComponentAndMaterial(component, component->GetMaterial(i))) {
                 uint32_t component_and_material_desc_id = registerComponentAndMaterial(component, component->GetMaterial(i));
-                SP_LOG("Registering component and material: ", Unreal::getStableName(component), " (material slot = ", i, ", ID = ", component_and_material_desc_id, ")");
+                SP_LOG("Registering component and material: ", UnrealUtils::getStableName(component), " (material slot = ", i, ", ID = ", component_and_material_desc_id, ")");
                 UMaterialInterface* material = createMaterial(component_and_material_desc_id, component, component->GetMaterial(i));
                 SP_ASSERT(material);
                 proxy_component->SetMaterial(i, material);
@@ -243,7 +244,7 @@ public:
         for (int i = 0; i < component->GetNumMaterials(); i++) {
             if (shouldRegisterProxyComponentAndMaterial(component, component->GetMaterial(i))) {
                 uint32_t component_and_material_desc_id = registerComponentAndMaterial(component, component->GetMaterial(i));
-                SP_LOG("Registering component and material: ", Unreal::getStableName(component), " (material slot = ", i, ", ID = ", component_and_material_desc_id, ")");
+                SP_LOG("Registering component and material: ", UnrealUtils::getStableName(component), " (material slot = ", i, ", ID = ", component_and_material_desc_id, ")");
                 UMaterialInterface* material = createMaterial(component_and_material_desc_id, component, component->GetMaterial(i));
                 SP_ASSERT(material);
                 proxy_component->SetMaterial(i, material);
@@ -279,7 +280,7 @@ public:
 
         for (auto component_and_material_desc_id : component_registration_user_data->component_and_material_desc_ids_) {
             ComponentAndMaterialDesc component_and_material_desc = id_to_component_and_material_desc_map_.at(component_and_material_desc_id);
-            SP_LOG("Unregistering component and material: ", Unreal::getStableName(component_and_material_desc.component_), " (ID = ", component_and_material_desc_id, ")");
+            SP_LOG("Unregistering component and material: ", UnrealUtils::getStableName(component_and_material_desc.component_), " (ID = ", component_and_material_desc_id, ")");
             unregisterComponentAndMaterial(component_and_material_desc_id);
         }
 
@@ -353,7 +354,7 @@ private:
 };
 
 
-UCLASS(ClassGroup="SPEAR", Config=Spear, HideCategories=(Actor, Collision, Cooking, DataLayers, HLOD, Input, LevelInstance, Navigation, Networking, Physics, Rendering, Replication, WorldPartition))
+UCLASS(ClassGroup="SPEAR", HideCategories=(Actor, Collision, Cooking, DataLayers, HLOD, Input, LevelInstance, Navigation, Networking, Physics, Rendering, Replication, WorldPartition))
 class ASpObjectIdsProxyComponentManager : public ASpPrimitiveProxyComponentManager
 {
     GENERATED_BODY()
@@ -413,7 +414,7 @@ private:
     }
 };
 
-UCLASS(ClassGroup="SPEAR", Config=Spear, HideCategories=(Actor, Collision, Cooking, DataLayers, HLOD, Input, LevelInstance, Navigation, Networking, Physics, Rendering, Replication, WorldPartition))
+UCLASS(ClassGroup="SPEAR", HideCategories=(Actor, Collision, Cooking, DataLayers, HLOD, Input, LevelInstance, Navigation, Networking, Physics, Rendering, Replication, WorldPartition))
 class ASpObjectIdsVisualizerProxyComponentManager : public ASpObjectIdsProxyComponentManager
 {
     GENERATED_BODY()

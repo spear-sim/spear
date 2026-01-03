@@ -8,6 +8,9 @@
 #include <exception> // std::current_exception, std::rethrow_exception
 #include <memory>    // std::unique_ptr
 
+#include "SpCore/Config.h"
+
+#include "SpServices/MsgpackAdaptors.h" // needed whenever we include MsgpackUtils.h or Rpclib.h but we can't include it directly from either of these files
 #include "SpServices/Rpclib.h"
 #include "SpServices/Service.h"
 
@@ -30,8 +33,8 @@ public:
         }
 
         try {
-            rpc_server = std::make_unique<rpc::server>(rpc_server_port);
-            SP_ASSERT(rpc_server);
+            rpc_server_ = std::make_unique<rpc::server>(rpc_server_port);
+            SP_ASSERT(rpc_server_);
         } catch (...) {
             SP_LOG("    ERROR: Couldn't create an RPC server. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables, or change SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT to a different unused port, and try launching again.");
             std::rethrow_exception(std::current_exception());
@@ -48,13 +51,13 @@ public:
         // Many of our services bind entry points that capture a pointer back to the service itself, so we
         // need to make sure that these entry points are not called after the services that bound them have
         // been destroyed.
-        SP_ASSERT(rpc_server);
-        rpc_server->close_sessions();
-        rpc_server->stop();
-        rpc_server = nullptr;
+        SP_ASSERT(rpc_server_);
+        rpc_server_->close_sessions();
+        rpc_server_->stop();
+        rpc_server_ = nullptr;
     }
 
-    std::unique_ptr<rpc::server> rpc_server = nullptr;
+    std::unique_ptr<rpc::server> rpc_server_ = nullptr;
 
 protected:
     void beginFrame() override
@@ -66,7 +69,7 @@ protected:
             SP_LOG_CURRENT_FUNCTION();
             SP_LOG("    Launching RPC server...");
             int num_worker_threads = 1;
-            rpc_server->async_run(num_worker_threads);
+            rpc_server_->async_run(num_worker_threads);
             initialized_ = true;
         }
     }

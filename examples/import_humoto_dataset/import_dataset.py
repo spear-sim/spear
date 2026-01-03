@@ -50,11 +50,11 @@ def replace_chars(string, replace_chars_map):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--filesystem_base_dir", required=True)
-    parser.add_argument("--content_base_dir", required=True)
-    parser.add_argument("--begin_index", type=int)
-    parser.add_argument("--num_indices", type=int)
-    parser.add_argument("--skip_if_exists", action="store_true")
+    parser.add_argument("--filesystem-base-dir", required=True)
+    parser.add_argument("--content-base-dir", required=True)
+    parser.add_argument("--begin-index", type=int)
+    parser.add_argument("--num-indices", type=int)
+    parser.add_argument("--skip-if-exists", action="store_true")
     args = parser.parse_args()
 
     # get dirty state because we will need to restore it later
@@ -95,7 +95,7 @@ if __name__ == "__main__":
             fbx_content_subdir = truncate_from_middle(string=replace_chars(string=filesystem_sub_dir, replace_chars_map=replace_chars_map), max_length=max_content_dir_length)
             fbx_content_name = truncate_from_middle(string=replace_chars(string=os.path.splitext(fbx_file)[0], replace_chars_map=replace_chars_map), max_length=max_content_dir_length)
             fbx_content_dir = posixpath.join(args.content_base_dir, fbx_content_subdir, fbx_content_name)
-            blueprint_content_path = posixpath.join(fbx_content_dir, "FbxScene_" + os.path.splitext(fbx_file)[0] + "." + "FbxScene_" + os.path.splitext(fbx_file)[0])
+            blueprint_content_path = posixpath.join(fbx_content_dir, "FbxScene_" + os.path.splitext(fbx_file)[0])
 
             spear.log(f"    Blueprint path ({len(blueprint_content_path)} chars): {blueprint_content_path}")
             assert len(blueprint_content_path) <= max_content_path_length
@@ -147,7 +147,7 @@ if __name__ == "__main__":
                 spear.log("            ", asset_path)
 
             # # get the blueprint's CDO
-            # blueprint_class = unreal.EditorAssetLibrary.load_blueprint_class(asset_path=final_blueprint_content_path)
+            # blueprint_class = unreal.EditorAssetLibrary.load_blueprint_class(asset_path=blueprint_content_path)
             # assert isinstance(blueprint_class, unreal.BlueprintGeneratedClass)
             # blueprint_default_object = unreal.get_default_object(blueprint_class)
             # assert isinstance(blueprint_default_object, unreal.Actor)

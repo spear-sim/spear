@@ -77,11 +77,11 @@ public:
     void BeginPlay() override;
     void EndPlay(const EEndPlayReason::Type end_play_reason) override;
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void Initialize();
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void Terminate();
-    UFUNCTION(Category="SPEAR")
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
     bool IsInitialized();
 
     // BlueprintReadWrite is incompatible with uint32 so we use int32

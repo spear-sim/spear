@@ -17,7 +17,7 @@
 #include "SpCore/Assert.h"
 #include "SpCore/SpArray.h"
 #include "SpCore/SpFuncComponent.h"
-#include "SpCore/Unreal.h"
+#include "SpCore/UnrealUtils.h"
 
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/Service.h"
@@ -34,10 +34,37 @@ public:
 
         shared_memory_service_ = shared_memory_service;
 
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("sp_func_service", "has_functions", [this](uint64_t& uobject) -> bool {
+
+            UObject* uobject_ptr = toPtr<UObject>(uobject);
+            USpFuncComponent* sp_func_component = getSpFuncComponent(uobject_ptr);
+
+            return sp_func_component && !sp_func_component->getFuncNames().empty();
+        });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("sp_func_service", "get_function_names", [this](uint64_t& uobject) -> std::vector<std::string> {
+
+            UObject* uobject_ptr = toPtr<UObject>(uobject);
+            USpFuncComponent* sp_func_component = getSpFuncComponent(uobject_ptr);
+            SP_ASSERT(sp_func_component);
+
+            return sp_func_component->getFuncNames();
+        });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("sp_func_service", "get_shared_memory_views", [this](uint64_t& uobject) -> std::map<std::string, SpArraySharedMemoryView> {
+
+            UObject* uobject_ptr = toPtr<UObject>(uobject);
+            USpFuncComponent* sp_func_component = getSpFuncComponent(uobject_ptr);
+            SP_ASSERT(sp_func_component);
+
+            return sp_func_component->getSharedMemoryViews();
+        });
+
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("sp_func_service", "call_function", [this](uint64_t& uobject, std::string& function_name, SpFuncDataBundle& args) -> SpFuncDataBundle {
 
             UObject* uobject_ptr = toPtr<UObject>(uobject);
             USpFuncComponent* sp_func_component = getSpFuncComponent(uobject_ptr);
+            SP_ASSERT(sp_func_component);
 
             // resolve references to shared memory
             SpArrayUtils::resolve(args.packed_arrays_, shared_memory_service_->getSharedMemoryViews());
@@ -49,14 +76,6 @@ public:
 
             return return_values;
         });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("sp_func_service", "get_shared_memory_views", [this](uint64_t& uobject) -> std::map<std::string, SpArraySharedMemoryView> {
-
-            UObject* uobject_ptr = toPtr<UObject>(uobject);
-            USpFuncComponent* sp_func_component = getSpFuncComponent(uobject_ptr);
-            
-            return sp_func_component->getSharedMemoryViews();
-        });
     }
 
 private:
@@ -64,21 +83,23 @@ private:
     {
         SP_ASSERT(uobject);
 
-        USpFuncComponent* sp_func_component = nullptr;
+        std::vector<USpFuncComponent*> sp_func_components;
         if (uobject->IsA(AActor::StaticClass())) {
             AActor* actor = const_cast<AActor*>(static_cast<const AActor*>(uobject));
             bool include_all_descendants = false;
-            sp_func_component = Unreal::getChildComponentByType<AActor, USpFuncComponent>(actor, include_all_descendants);
+            sp_func_components = UnrealUtils::getChildrenComponentsByType<USpFuncComponent>(actor, include_all_descendants);
         } else if (uobject->IsA(USceneComponent::StaticClass())) {
             USceneComponent* component = const_cast<USceneComponent*>(static_cast<const USceneComponent*>(uobject));
             bool include_all_descendants = false;
-            sp_func_component = Unreal::getChildComponentByType<USceneComponent, USpFuncComponent>(component, include_all_descendants);
-        } else {
-            SP_ASSERT(false);
+            sp_func_components = UnrealUtils::getChildrenComponentsByType<USpFuncComponent>(component, include_all_descendants);
         }
-        SP_ASSERT(sp_func_component);
 
-        return sp_func_component;
+        if (sp_func_components.empty()) {
+            return nullptr;
+        } else {
+            SP_ASSERT(sp_func_components.size() == 1);
+            return Std::at(sp_func_components, 0);
+        }
     }
 
     SharedMemoryService* shared_memory_service_ = nullptr;

@@ -10,9 +10,9 @@ def log(*args):
     current_frame = inspect.currentframe()
     print(_log_get_prefix(current_frame) + "".join([str(arg) for arg in args]))
 
-def log_current_function():
+def log_current_function(prefix=""):
     current_frame = inspect.currentframe()
-    print(_log_get_prefix(current_frame) + _get_current_function_abbreviated(current_frame))
+    print(_log_get_prefix(current_frame) + prefix + _get_current_function_abbreviated(current_frame))
 
 def log_no_prefix(*args):
     print("".join([str(arg) for arg in args]))

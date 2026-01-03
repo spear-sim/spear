@@ -24,6 +24,7 @@
 
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
+#include "SpCore/Log.h"
 #include "SpCore/SharedMemory.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
@@ -156,8 +157,9 @@ public:
 };
 
 //
-// SpArraySharedMemoryView is similar to a SharedMemoryView, but with an extra member variable that can be
-// specified by the system that owns the shared memory to indicate how the shared memory should be used.
+// SpArraySharedMemoryView is similar to a SharedMemoryView, but with extra members variables that can be
+// specified by the system that owns the shared memory to indicate how the shared memory should be used, and
+// a public name that other systems should use to access the memory.
 //
 
 enum class SpArraySharedMemoryUsageFlags
@@ -181,8 +183,13 @@ ENUM_CLASS_FLAGS(ESpArraySharedMemoryUsageFlags); // required if combining value
 struct SpArraySharedMemoryView : SharedMemoryView
 {
     SpArraySharedMemoryView() = default;
-    SpArraySharedMemoryView(const SharedMemoryView& view, SpArraySharedMemoryUsageFlags usage_flags) : SharedMemoryView(view) { usage_flags_ = usage_flags; }
+    SpArraySharedMemoryView(const SharedMemoryView& view, const std::string& name, SpArraySharedMemoryUsageFlags usage_flags) : SharedMemoryView(view)
+    {
+        name_ = name;
+        usage_flags_ = usage_flags;
+    }
 
+    std::string name_ = "smem:invalid";
     SpArraySharedMemoryUsageFlags usage_flags_ = SpArraySharedMemoryUsageFlags::DoNotUse;
 };
 
@@ -394,7 +401,7 @@ public:
         shared_memory_usage_flags_ = SpArraySharedMemoryUsageFlags::DoNotUse;
     }
 
-    void setDataSource(const SpArraySharedMemoryView& shared_memory_view, const std::vector<uint64_t>& shape, const std::string& shared_memory_name)
+    void setDataSource(const SpArraySharedMemoryView& shared_memory_view, const std::vector<uint64_t>& shape)
     {
         uint64_t num_elements = 0;
         if (!shape.empty()) {
@@ -412,7 +419,7 @@ public:
 
         shape_ = shape;
 
-        shared_memory_name_ = shared_memory_name;
+        shared_memory_name_ = shared_memory_view.name_;
         shared_memory_usage_flags_ = shared_memory_view.usage_flags_;
     }
 

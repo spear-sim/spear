@@ -11,6 +11,7 @@
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
+#include "SpCore/UnrealUtils.h"
 
 #include "SpUnrealTypes/SpUserInputComponent.h"
 
@@ -26,7 +27,7 @@ ASpPlayerController::ASpPlayerController()
     // is worth it.
     bShowMouseCursor = true;
 
-    SpUserInputComponent = Unreal::createSceneComponentInsideOwnerConstructor<USpUserInputComponent>(this, "sp_user_input_component");
+    SpUserInputComponent = UnrealUtils::createSceneComponentInsideOwnerConstructor<USpUserInputComponent>(this, "sp_user_input_component");
     SP_ASSERT(SpUserInputComponent);
 
     SpUserInputComponent->bHandleUserInput = true; // SpUserInputComponents need to be explicitly enabled

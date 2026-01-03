@@ -78,39 +78,23 @@ if __name__ == "__main__":
 
     with instance.begin_frame():
 
-        # We could use get_static_class(...) here to obtain a handle to each UClass object below, as we do in
-        # our other examples. But for demonstration purposes, we are choosing to use use load_object(...)
-        # instead. Using load_object(...) can be useful when the Unreal type has not been registered ahead of
-        # time using the UnrealClassRegistrar system in our C++ code.
-
-        # find functions
-        gameplay_statics_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/Script/Engine.GameplayStatics")
-        set_game_paused_func = game.unreal_service.find_function_by_name(uclass=gameplay_statics_uclass, function_name="SetGamePaused")
-
-        actor_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/Script/Engine.Actor")
-        create_input_component_func = game.unreal_service.find_function_by_name(uclass=actor_uclass, function_name="CreateInputComponent")
-
-        character_movement_component_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/Script/Engine.CharacterMovementComponent")
-        set_movement_mode_func = game.unreal_service.find_function_by_name(uclass=character_movement_component_uclass, function_name="SetMovementMode")
-
-        skeletal_mesh_component_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/Script/Engine.SkeletalMeshComponent")
-        get_bone_name_func = game.unreal_service.find_function_by_name(uclass=skeletal_mesh_component_uclass, function_name="GetBoneName")
-        get_bone_transform_func = game.unreal_service.find_function_by_name(uclass=skeletal_mesh_component_uclass, function_name="GetBoneTransform")
-        get_num_bones_func = game.unreal_service.find_function_by_name(uclass=skeletal_mesh_component_uclass, function_name="GetNumBones")
-        set_skeletal_mesh_asset_func = game.unreal_service.find_function_by_name(uclass=skeletal_mesh_component_uclass, function_name="SetSkeletalMeshAsset")
-
-        enhanced_input_component_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/Script/EnhancedInput.EnhancedInputComponent")
-
-        # get UGameplayStatics default object
-        gameplay_statics_default_object = game.unreal_service.get_default_object(uclass=gameplay_statics_uclass, create_if_needed=False)
-
         #
         # initialize characters
         #
 
-        # load classes and objects
-        bp_character_uclass = game.unreal_service.load_object(class_name="UClass", outer=0, name="/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.BP_ThirdPersonCharacter_C")
-        manny_simple_uobject = game.unreal_service.load_object(class_name="UObject", outer=0, name="/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple")
+        # Load classes. For Blueprint types, we need to use load_class(...), because these types don't have
+        # a class name that is visible to the Unreal property system before they are loaded. In contrast, for
+        # C++ types, we can use the slightly less verbose get_static_class(...), because C++ types have a
+        # class name that is visible to the Unreal property system, and can be located using that name.
+
+        bp_character_uclass = game.unreal_service.load_class(uclass="AActor", name="/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.BP_ThirdPersonCharacter_C")
+        enhanced_input_component_uclass = game.unreal_service.get_static_class(uclass="UEnhancedInputComponent")
+
+        # get UGameplayStatics
+        gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
+
+        # load objects
+        manny_simple = game.unreal_service.load_object(uclass="UObject", name="/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple")
 
         characters = []
         for character_desc in character_descs:
@@ -122,43 +106,28 @@ if __name__ == "__main__":
             character["move_input_action_value"] = character_desc["move_input_action_value"]
 
             # spawn character and get handles to components
-            character["actor"] = game.unreal_service.spawn_actor_from_class(
+            character["actor"] = game.unreal_service.spawn_actor(
                 uclass=bp_character_uclass,
                 location=character_desc["location"],
                 rotation=character_desc["rotation"],
                 spawn_parameters={"Name": character_desc["name"], "SpawnCollisionHandlingOverride": "AlwaysSpawn"})
-            character["movement_component"] = game.unreal_service.get_component_by_class(actor=character["actor"], uclass=character_movement_component_uclass)
-            character["skeletal_mesh_component"] = game.unreal_service.get_component_by_class(actor=character["actor"], uclass=skeletal_mesh_component_uclass)
+            character["movement_component"] = game.unreal_service.get_component_by_class(actor=character["actor"], uclass="UCharacterMovementComponent")
+            character["skeletal_mesh_component"] = game.unreal_service.get_component_by_class(actor=character["actor"], uclass="USkeletalMeshComponent")
 
             # configure character to be controlled without possessing
-            game.unreal_service.set_properties_for_object(uobject=character["movement_component"], properties={"bRunPhysicsWithNoController": True})
-            game.unreal_service.call_function(uobject=character["movement_component"], ufunction=set_movement_mode_func, args={"NewMovementMode": "MOVE_Walking"})
+            character["movement_component"].set_properties(properties={"bRunPhysicsWithNoController": True})
+            character["movement_component"].SetMovementMode(NewMovementMode="MOVE_Walking")
 
             # initialize input component
-            game.unreal_service.call_function(
-                uobject=character["actor"],
-                ufunction=create_input_component_func,
-                args={"InputComponentToCreate": spear.to_ptr(handle=enhanced_input_component_uclass)})
+            character["actor"].CreateInputComponent(InputComponentToCreate=spear.to_ptr(handle=enhanced_input_component_uclass))
             character["input_component"] = game.unreal_service.get_component_by_class(actor=character["actor"], uclass=enhanced_input_component_uclass)
             instance.input_service.setup_player_input_component(actor=character["actor"], input_component=character["input_component"])
 
             # update skeletal mesh
-            game.unreal_service.call_function(
-                uobject=character["skeletal_mesh_component"],
-                ufunction=set_skeletal_mesh_asset_func,
-                args={"NewMesh": spear.to_ptr(handle=manny_simple_uobject)})
+            character["skeletal_mesh_component"].SetSkeletalMeshAsset(NewMesh=manny_simple)
 
             # get bone names
-            character["bone_names"] = []
-            return_values = game.unreal_service.call_function(uobject=character["skeletal_mesh_component"], ufunction=get_num_bones_func)
-            skeletal_mesh_component_num_bones = return_values["ReturnValue"]
-            for i in range(skeletal_mesh_component_num_bones):
-                return_values = game.unreal_service.call_function(
-                    uobject=character["skeletal_mesh_component"],
-                    ufunction=get_bone_name_func,
-                    args={"BoneIndex": i})
-                bone_name = return_values["ReturnValue"]
-                character["bone_names"].append(bone_name)
+            character["bone_names"] = [ character["skeletal_mesh_component"].GetBoneName(BoneIndex=i) for i in range(character["skeletal_mesh_component"].GetNumBones()) ]
 
             # initialize data frame for storing bone transforms
             character["data_frame"] = pd.DataFrame()
@@ -168,10 +137,9 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass
 
+    # jump
     with instance.begin_frame():
-        game.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
-
-        # jump
+        gameplay_statics.SetGamePaused(bPaused=False)
         for character in characters:
             instance.enhanced_input_service.inject_input_for_actor(
                 actor=character["actor"],
@@ -180,27 +148,18 @@ if __name__ == "__main__":
                 input_action_value={},
                 input_action_instance={})
 
+    # record bone transforms
     with instance.end_frame():
-
-        # record bone transforms
         for character in characters:
-            transforms = {}
-            for i, bone_name in enumerate(character["bone_names"]):
-                return_values = game.unreal_service.call_function(
-                    uobject=character["skeletal_mesh_component"],
-                    ufunction=get_bone_transform_func,
-                    args={"InBoneName": bone_name, "TransformSpace": "RTS_World"})
-                transforms[bone_name] = return_values["ReturnValue"]
+            transforms = { bone_name: character["skeletal_mesh_component"].GetBoneTransform(InBoneName=bone_name, TransformSpace="RTS_World") for bone_name in character["bone_names"] }
             character["data_frame"] = pd.concat([character["data_frame"], get_data_frame(transforms)])
+        gameplay_statics.SetGamePaused(bPaused=True)
 
-        game.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
-
-    for _ in range(200):
+    for _ in range(100):
         
+        # move
         with instance.begin_frame():
-            game.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
-
-            # move
+            gameplay_statics.SetGamePaused(bPaused=False)
             for character in characters:
                 instance.enhanced_input_service.inject_input_for_actor(
                     actor=character["actor"],
@@ -209,24 +168,16 @@ if __name__ == "__main__":
                     input_action_value=character["move_input_action_value"],
                     input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
+        # record bone transforms
         with instance.end_frame():
-
-            # record bone transforms
             for character in characters:
-                transforms = {}
-                for i, bone_name in enumerate(character["bone_names"]):
-                    return_values = game.unreal_service.call_function(
-                        uobject=character["skeletal_mesh_component"],
-                        ufunction=get_bone_transform_func,
-                        args={"InBoneName": bone_name, "TransformSpace": "RTS_World"})
-                    transforms[bone_name] = return_values["ReturnValue"]
+                transforms = { bone_name: character["skeletal_mesh_component"].GetBoneTransform(InBoneName=bone_name, TransformSpace="RTS_World") for bone_name in character["bone_names"] }
                 character["data_frame"] = pd.concat([character["data_frame"], get_data_frame(transforms)])
-
-            game.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": True})
+            gameplay_statics.SetGamePaused(bPaused=True)
 
     # unpause now that we're finished recording
     with instance.begin_frame():
-        game.unreal_service.call_function(uobject=gameplay_statics_default_object, ufunction=set_game_paused_func, args={"bPaused": False})
+        gameplay_statics.SetGamePaused(bPaused=False)
     with instance.end_frame():
         pass
 

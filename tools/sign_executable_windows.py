@@ -15,12 +15,12 @@ import sys
 assert sys.platform == "win32"
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--build_config", required=True)
-parser.add_argument("--code_sign_tool_dir", required=True)
-parser.add_argument("--ssl_username", required=True)
-parser.add_argument("--ssl_password", required=True)
-parser.add_argument("--ssl_totp_secret", required=True)
-parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
+parser.add_argument("--build-config", required=True)
+parser.add_argument("--code-sign-tool-dir", required=True)
+parser.add_argument("--ssl-username", required=True)
+parser.add_argument("--ssl-password", required=True)
+parser.add_argument("--ssl-totp-secret", required=True)
+parser.add_argument("--build-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
 args = parser.parse_args()
 
 assert os.path.exists(args.code_sign_tool_dir)

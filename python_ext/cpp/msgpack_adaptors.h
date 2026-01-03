@@ -133,9 +133,10 @@ template <> // needed to send a custom type as an arg to the server
 struct clmdep_msgpack::adaptor::pack<PropertyDesc> {
     template <typename TStream>
     clmdep_msgpack::packer<TStream>& operator()(clmdep_msgpack::packer<TStream>& packer, PropertyDesc const& property_desc) const {
-        packer.pack_map(2);
+        packer.pack_map(3);
         packer.pack("property");  packer.pack(property_desc.property_);
         packer.pack("value_ptr"); packer.pack(property_desc.value_ptr_);
+        packer.pack("type_id");   packer.pack(property_desc.type_id_);
         return packer;
     }
 };
@@ -144,9 +145,36 @@ template <> // needed to receive a custom type as a return value from the server
 struct clmdep_msgpack::adaptor::convert<PropertyDesc> {
     clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, PropertyDesc& property_desc) const {
         std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
-        SP_ASSERT(objects.size() == 2);
+        SP_ASSERT(objects.size() == 3);
         property_desc.property_  = MsgpackUtils::to<uint64_t>(objects.at("property"));
         property_desc.value_ptr_ = MsgpackUtils::to<uint64_t>(objects.at("value_ptr"));
+        property_desc.type_id_   = MsgpackUtils::to<std::string>(objects.at("type_id"));
+        return object;
+    }
+};
+
+//
+// PropertyValue
+//
+
+template <> // needed to send a custom type as an arg to the server
+struct clmdep_msgpack::adaptor::pack<PropertyValue> {
+    template <typename TStream>
+    clmdep_msgpack::packer<TStream>& operator()(clmdep_msgpack::packer<TStream>& packer, PropertyValue const& property_value) const {
+        packer.pack_map(2);
+        packer.pack("value");   packer.pack(property_value.value_);
+        packer.pack("type_id"); packer.pack(property_value.type_id_);
+        return packer;
+    }
+};
+
+template <> // needed to receive a custom type as a return value from the server
+struct clmdep_msgpack::adaptor::convert<PropertyValue> {
+    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, PropertyValue& property_value) const {
+        std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
+        SP_ASSERT(objects.size() == 2);
+        property_value.value_   = MsgpackUtils::to<std::string>(objects.at("value"));
+        property_value.type_id_ = MsgpackUtils::to<std::string>(objects.at("type_id"));
         return object;
     }
 };
@@ -159,10 +187,11 @@ template <> // needed to send a custom type as an arg to the server
 struct clmdep_msgpack::adaptor::pack<SharedMemoryView> {
     template <typename TStream>
     clmdep_msgpack::packer<TStream>& operator()(clmdep_msgpack::packer<TStream>& packer, SharedMemoryView const& shared_memory_view) const {
-        packer.pack_map(4);
+        packer.pack_map(5);
         packer.pack("id");           packer.pack(shared_memory_view.id_);
         packer.pack("num_bytes");    packer.pack(shared_memory_view.num_bytes_);
         packer.pack("offset_bytes"); packer.pack(shared_memory_view.offset_bytes_);
+        packer.pack("name");         packer.pack(shared_memory_view.name_);
         packer.pack("usage_flags");  packer.pack(shared_memory_view.usage_flags_);
         return packer;
     }
@@ -172,10 +201,11 @@ template <> // needed to receive a custom type as a return value from the server
 struct clmdep_msgpack::adaptor::convert<SharedMemoryView> {
     clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SharedMemoryView& shared_memory_view) const {
         std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
-        SP_ASSERT(objects.size() == 4);
+        SP_ASSERT(objects.size() == 5);
         shared_memory_view.id_           = MsgpackUtils::to<std::string>(objects.at("id"));
         shared_memory_view.num_bytes_    = MsgpackUtils::to<uint64_t>(objects.at("num_bytes"));
         shared_memory_view.offset_bytes_ = MsgpackUtils::to<uint16_t>(objects.at("offset_bytes"));
+        shared_memory_view.name_         = MsgpackUtils::to<std::string>(objects.at("name"));
         shared_memory_view.usage_flags_  = MsgpackUtils::to<std::vector<std::string>>(objects.at("usage_flags"));
         return object;
     }
@@ -450,6 +480,34 @@ struct clmdep_msgpack::adaptor::convert<Future> {
         SP_ASSERT(objects.size() == 2);
         future.future_ptr_ = MsgpackUtils::to<uint64_t>(objects.at("future_ptr"));
         future.type_id_    = MsgpackUtils::to<std::string>(objects.at("type_id"));
+        return object;
+    }
+};
+
+//
+// StaticStructDesc
+//
+
+template <> // needed to send a custom type as an arg to the server
+struct clmdep_msgpack::adaptor::pack<StaticStructDesc> {
+    template <typename TStream>
+    clmdep_msgpack::packer<TStream>& operator()(clmdep_msgpack::packer<TStream>& packer, StaticStructDesc const& static_struct_desc) const {
+        packer.pack_map(3);
+        packer.pack("static_struct"); packer.pack(static_struct_desc.static_struct_);
+        packer.pack("name");          packer.pack(static_struct_desc.name_);
+        packer.pack("ufunctions");    packer.pack(static_struct_desc.ufunctions_);
+        return packer;
+    }
+};
+
+template <> // needed to receive a custom type as a return value from the server
+struct clmdep_msgpack::adaptor::convert<StaticStructDesc> {
+    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, StaticStructDesc& static_struct_desc) const {
+        std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
+        SP_ASSERT(objects.size() == 3);
+        static_struct_desc.static_struct_ = MsgpackUtils::to<uint64_t>(objects.at("static_struct"));
+        static_struct_desc.name_          = MsgpackUtils::to<std::string>(objects.at("name"));
+        static_struct_desc.ufunctions_    = MsgpackUtils::to<std::map<std::string, uint64_t>>(objects.at("ufunctions"));
         return object;
     }
 };

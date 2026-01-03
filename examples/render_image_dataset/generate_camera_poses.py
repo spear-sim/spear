@@ -42,13 +42,10 @@ if __name__ == "__main__":
 
     with instance.begin_frame():
 
-        # get navigation system and navigation data
-        navigation_system_v1_static_class = game.unreal_service.get_static_class(class_name="UNavigationSystemV1")
-        get_navigation_system_func = game.unreal_service.find_function_by_name(uclass=navigation_system_v1_static_class, function_name="GetNavigationSystem")
-        navigation_system_v1_default_object = game.unreal_service.get_default_object(uclass=navigation_system_v1_static_class, create_if_needed=False)
-        return_values = game.unreal_service.call_function(uobject=navigation_system_v1_default_object, ufunction=get_navigation_system_func)
-        navigation_system = spear.to_handle(string=return_values["ReturnValue"])
-        navigation_data = game.navigation_service.get_nav_data_for_agent_name(navigation_system=navigation_system, agent_name="Default")
+        navigation_system_v1 = game.get_unreal_object(uclass="UNavigationSystemV1")
+        sp_navigation_system_v1 = game.get_unreal_object(uclass="USpNavigationSystemV1")
+        navigation_system = navigation_system_v1.GetNavigationSystem()
+        navigation_data = sp_navigation_system_v1.GetNavDataForAgentName(NavigationSystem=navigation_system, AgentName="Default")
 
         # sample random points
         points = game.navigation_service.get_random_points(navigation_data=navigation_data, num_points=num_camera_poses_per_scene)

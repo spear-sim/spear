@@ -13,7 +13,7 @@ import unreal
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--export_dir", required=True)
+parser.add_argument("--export-dir", required=True)
 args = parser.parse_args()
 
 asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()

@@ -4,15 +4,15 @@
 #
 
 # EngineService
-import spear.services.engine_service
+from . import engine_service
 
 # services that require a reference to EngineService
-import spear.services.enhanced_input_service
-import spear.services.initialize_world_service
-import spear.services.input_service
-import spear.services.shared_memory_service
-import spear.services.unreal_service
+from . import enhanced_input_service
+from . import initialize_world_service
+from . import input_service
+from . import shared_memory_service
+from . import unreal_service
 
 # services that require a reference to EngineService and SharedMemoryService
-import spear.services.navigation_service
-import spear.services.sp_func_service
+from . import navigation_service
+from . import sp_func_service

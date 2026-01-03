@@ -86,22 +86,28 @@ public:
                 SP_ASSERT(cvar);
                 float previous_cvar_value = cvar->GetFloat();
                 previous_cvar_values.push_back(std::make_pair(cvar_entry.Name, previous_cvar_value));
-                SP_LOG(Unreal::toStdString(PassIdentifier.Name), ": setting console variable ", Unreal::toStdString(cvar_entry.Name), " to value ", cvar_entry.Value, " (previous value ", previous_cvar_value, ")");
+                if (bVerbose) {
+                    SP_LOG(Unreal::toStdString(PassIdentifier.Name), ": setting console variable ", Unreal::toStdString(cvar_entry.Name), " to value ", cvar_entry.Value, " (previous value ", previous_cvar_value, ")");
+                }
                 cvar->Set(cvar_entry.Value, EConsoleVariableFlags::ECVF_SetByConsole); // EConsoleVariableFlags::ECVF_SetByConsole is highest-priority
             }
         }
 
         for (auto& cmd : PreRenderConsoleCommands) {
-            SP_LOG("Execucting console command: ", Unreal::toStdString(cmd));
             SP_ASSERT(GEngine);
+            if (bVerbose) {
+                SP_LOG("Execucting console command: ", Unreal::toStdString(cmd));
+            }
             GEngine->Exec(GetWorld(), Unreal::toTCharPtr(cmd));
         }
 
         UMoviePipelineDeferredPassBase::RenderSample_GameThreadImpl(in_sample_state);
 
         for (auto& cmd : PostRenderConsoleCommands) {
-            SP_LOG("Execucting console command: ", Unreal::toStdString(cmd));
             SP_ASSERT(GEngine);
+            if (bVerbose) {
+                SP_LOG("Execucting console command: ", Unreal::toStdString(cmd));
+            }
             GEngine->Exec(GetWorld(), Unreal::toTCharPtr(cmd));
         }
 
@@ -110,7 +116,9 @@ public:
             const auto& [cvar_name, cvar_value] = Std::at(previous_cvar_values, i);
             IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr(cvar_name)); 
             SP_ASSERT(cvar);
-            SP_LOG(Unreal::toStdString(PassIdentifier.Name), ": restoring console variable ", Unreal::toStdString(cvar_name), " to value ", cvar_value);
+            if (bVerbose) {
+                SP_LOG(Unreal::toStdString(PassIdentifier.Name), ": restoring console variable ", Unreal::toStdString(cvar_name), " to value ", cvar_value);
+            }
             cvar->Set(cvar_value, EConsoleVariableFlags::ECVF_SetByConsole); // EConsoleVariableFlags::ECVF_SetByConsole is highest-priority
         }
     }
@@ -134,6 +142,10 @@ public:
     TArray<FString> PreRenderConsoleCommands;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     TArray<FString> PostRenderConsoleCommands;
+
+    // Enable debug printing
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bVerbose = false;
 };
 
 // Define some extra passes because each distinct type will only show up once in the MPPC editor

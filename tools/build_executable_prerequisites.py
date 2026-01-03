@@ -12,14 +12,14 @@ import sys
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--unreal_engine_dir", required=True)
-parser.add_argument("--commit_id")
-parser.add_argument("--conda_script")
-parser.add_argument("--skip_clone_github_repo", action="store_true")
-parser.add_argument("--skip_build_third_party_libs", action="store_true")
-parser.add_argument("--skip_copy_engine_content", action="store_true")
-parser.add_argument("--build_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
-parser.add_argument("--conda_env", default="spear-env")
+parser.add_argument("--unreal-engine-dir", required=True)
+parser.add_argument("--commit-id")
+parser.add_argument("--conda-script")
+parser.add_argument("--skip-clone-github-repo", action="store_true")
+parser.add_argument("--skip-build-third-party-libs", action="store_true")
+parser.add_argument("--skip-copy-engine-content", action="store_true")
+parser.add_argument("--build-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
+parser.add_argument("--conda-env", default="spear-env")
 args = parser.parse_args()
 
 
@@ -116,7 +116,7 @@ if __name__ == "__main__":
             cmd_prefix + \
             "python " + \
             f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "build_third_party_libs.py"))}" ' + \
-            f"--third_party_dir  {third_party_dir} "
+            f"--third-party-dir  {third_party_dir} "
         spear.log("Executing: ", cmd)
         subprocess.run(cmd, shell=True, check=True)
 
@@ -129,8 +129,8 @@ if __name__ == "__main__":
             cmd_prefix + \
             "python " + \
             f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "copy_engine_content.py"))}" ' + \
-            f'--unreal_engine_dir "{args.unreal_engine_dir}" ' + \
-            f'--unreal_project_dir "{unreal_project_dir}"'
+            f'--unreal-engine-dir "{args.unreal_engine_dir}" ' + \
+            f'--unreal-project-dir "{unreal_project_dir}"'
         spear.log("Executing: ", cmd)
         subprocess.run(cmd, shell=True, check=True)
 

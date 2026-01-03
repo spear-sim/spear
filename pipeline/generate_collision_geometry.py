@@ -14,8 +14,8 @@ import trimesh
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--pipeline_dir", required=True)
-parser.add_argument("--scene_id", required=True)
+parser.add_argument("--pipeline-dir", required=True)
+parser.add_argument("--scene-id", required=True)
 args = parser.parse_args()
 
 scene_component_classes = ["SceneComponent", "StaticMeshComponent"]

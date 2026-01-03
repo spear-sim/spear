@@ -20,7 +20,7 @@ class USpWorld : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public: 
-    UFUNCTION()
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
     static TArray<ULevelStreaming*> GetStreamingLevels(UWorld* World)
     {
         SP_ASSERT(World);

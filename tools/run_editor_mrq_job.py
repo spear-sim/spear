@@ -12,11 +12,11 @@ import sys
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--level_sequence", required=True)
+parser.add_argument("--level-sequence", required=True)
 parser.add_argument("--map", required=True)
-parser.add_argument("--mrq_config", required=True)
-parser.add_argument("--unreal_engine_dir", required=True)
-parser.add_argument("--unreal_project_dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
+parser.add_argument("--mrq-config", required=True)
+parser.add_argument("--unreal-engine-dir", required=True)
+parser.add_argument("--unreal-project-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
 args, unknown_args = parser.parse_known_args() # get unknown args to pass to the editor
 
 assert os.path.exists(args.unreal_engine_dir)

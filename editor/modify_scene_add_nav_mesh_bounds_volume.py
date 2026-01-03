@@ -12,7 +12,7 @@ import unreal
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--save", action="store_true")
-parser.add_argument("--skip_add_stable_name_component", action="store_true")
+parser.add_argument("--skip-add-stable-name-component", action="store_true")
 args = parser.parse_args()
 
 editor_actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
@@ -52,8 +52,8 @@ if __name__ == "__main__":
                 scene_has_valid_geometry = True
 
                 origin_ue, half_extent_ue, sphere_radius = unreal.SystemLibrary.get_component_bounds(component=component)
-                origin = spear.utils.editor_utils.to_array_from_vector(vector=origin_ue)
-                half_extent = spear.utils.editor_utils.to_array_from_vector(vector=half_extent_ue)
+                origin = spear.utils.editor_utils.to_numpy_array_from_vector(vector=origin_ue)
+                half_extent = spear.utils.editor_utils.to_numpy_array_from_vector(vector=half_extent_ue)
 
                 spear.log(f"        {spear.utils.editor_utils.get_stable_name_for_component(component=component)} (origin={origin}, half_extent={half_extent}, sphere_radius={sphere_radius})")
 
@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
             nav_mesh_bounds_volume = editor_actor_subsystem.spawn_actor_from_class(
                 actor_class=unreal.NavMeshBoundsVolume,
-                location=spear.utils.editor_utils.to_vector_from_array(array=nav_mesh_bounds_location))
+                location=spear.utils.editor_utils.to_vector_from_numpy_array(array=nav_mesh_bounds_location))
             nav_mesh_bounds_volume.set_folder_path(new_folder_path="Navigation")
             nav_mesh_bounds_volume.set_actor_label(new_actor_label="NavMeshBoundsVolume")
             nav_mesh_bounds_volume.set_actor_scale3d(new_scale3d=nav_mesh_bounds_scale)
