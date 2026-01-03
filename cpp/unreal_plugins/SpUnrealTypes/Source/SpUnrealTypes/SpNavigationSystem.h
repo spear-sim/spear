@@ -5,9 +5,11 @@
 
 #pragma once
 
-#include <HAL/Platform.h>     // int32, uint8
+#include <AI/Navigation/NavigationTypes.h> // FNavDataConfig
+#include <HAL/Platform.h>                  // int32, uint8
 #include <Kismet/BlueprintFunctionLibrary.h>
-#include <NavigationSystem.h> // ENavigationBuildLock
+#include <NavigationSystem.h>              // ELockRemovalRebuildAction, ENavigationBuildLock
+#include <UObject/NameTypes.h>             // FName
 
 #include "SpCore/Assert.h"
 #include "SpCore/Unreal.h"
@@ -42,7 +44,9 @@ class USpNavigationSystemV1 : public UBlueprintFunctionLibrary
     GENERATED_BODY()
 public:
 
+    //
     // Update lock state
+    //
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static void AddNavigationBuildLock(UNavigationSystemV1* NavigationSystem, ESpNavigationBuildLock Flags)
@@ -68,7 +72,9 @@ public:
         NavigationSystem->SetNavigationOctreeLock(bLock);
     }
 
+    //
     // Query lock state
+    //
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static bool IsNavigationBuildingLocked(UNavigationSystemV1* NavigationSystem, ESpNavigationBuildLock Flags = ESpNavigationBuildLock::All)
@@ -92,7 +98,9 @@ public:
         return NavigationSystem->IsNavigationOctreeLocked();
     }
 
+    //
     // Build
+    //
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static void Build(UNavigationSystemV1* NavigationSystem)
@@ -129,7 +137,9 @@ public:
         return NavigationSystem->GetNumRunningBuildTasks();
     }
 
+    //
     // Get NavDataConfig objects
+    //
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static FNavDataConfig GetDefaultSupportedAgentConfig(UNavigationSystemV1* NavigationSystem)
@@ -145,7 +155,9 @@ public:
         return NavigationSystem->GetSupportedAgents();
     }
 
+    //
     // Get ANavigationData objects
+    //
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static ANavigationData* GetNavDataForAgentName(UNavigationSystemV1* NavigationSystem, FName AgentName)

@@ -180,21 +180,9 @@ std::string ASpStableNameManager::getStableIdString(const AActor* actor)
             folder_path_string = Unreal::toStdString(folder_path) + "/";
         }
 
-        std::vector<std::string> attach_parent_labels;
-        std::string attach_parent_labels_string = "";
-        AActor* current_attach_parent = actor->GetAttachParentActor();
-        while (current_attach_parent) {
-            attach_parent_labels.push_back(Unreal::toStdString(current_attach_parent->GetActorLabel()));
-            current_attach_parent = current_attach_parent->GetAttachParentActor();
-        }
-        if (!attach_parent_labels.empty()) {
-            std::ranges::reverse(attach_parent_labels);
-            attach_parent_labels_string = Std::join(attach_parent_labels, ":") + ":";
-        }
-
         std::string label_string = Unreal::toStdString(actor->GetActorLabel());
 
-        return folder_path_string + attach_parent_labels_string + label_string;
+        return folder_path_string + label_string;
     }
 #endif
 
@@ -270,8 +258,6 @@ USpStableNameEventHandler::~USpStableNameEventHandler()
         
         actor_label_changed_handle_ = FCoreDelegates::OnActorLabelChanged.AddUObject(this, &USpStableNameEventHandler::actorLabelChangedHandler);
 
-        object_property_changed_handle_ = FCoreUObjectDelegates::OnObjectPropertyChanged.AddUObject(this, &USpStableNameEventHandler::objectPropertyChangedHandler);
-
         level_added_to_world_handle_     = FWorldDelegates::LevelAddedToWorld.AddUObject(this, &USpStableNameEventHandler::levelAddedToWorldHandler);
         level_removed_from_world_handle_ = FWorldDelegates::LevelRemovedFromWorld.AddUObject(this, &USpStableNameEventHandler::levelRemovedFromWorldHandler);
 
@@ -297,9 +283,6 @@ USpStableNameEventHandler::~USpStableNameEventHandler()
         level_added_to_world_handle_.Reset();
         level_removed_from_world_handle_.Reset();
 
-        FCoreUObjectDelegates::OnObjectPropertyChanged.Remove(object_property_changed_handle_);
-        object_property_changed_handle_.Reset();
-
         FCoreDelegates::OnActorLabelChanged.Remove(actor_label_changed_handle_);
         actor_label_changed_handle_.Reset();
     }
@@ -308,25 +291,6 @@ USpStableNameEventHandler::~USpStableNameEventHandler()
     {
         SP_ASSERT(actor);
         UnrealUtils::requestUpdateStableName(actor);
-    }
-
-    void USpStableNameEventHandler::objectPropertyChangedHandler(UObject* object, FPropertyChangedEvent& event)
-    {
-        AActor* actor = Cast<AActor>(object);
-        if (!actor) {
-            return;
-        }
-
-        FName property_name = NAME_None;
-        if (event.MemberProperty) {
-            property_name = event.MemberProperty->GetFName();
-        }
-
-        if (property_name == Unreal::toFName("RootComponent") ||
-            property_name == Unreal::toFName("AttachParent") ||
-            property_name == Unreal::toFName("AttachChildren")) {
-            UnrealUtils::requestAddStableNameActor(actor);
-        }
     }
 
     void USpStableNameEventHandler::levelAddedToWorldHandler(ULevel* level, UWorld* world)

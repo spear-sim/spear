@@ -42,10 +42,14 @@ if __name__ == "__main__":
     # the new game object is ready.
     game = instance.get_game(wait=True, wait_max_time_seconds=10.0, wait_sleep_time_seconds=1.0, warm_up=True, warm_up_time_seconds=5.0, warm_up_num_frames=1)
 
-    # spawn object
     with instance.begin_frame():
+        # spawn object
         bp_axes_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_Axes.BP_Axes_C")
         bp_axes = game.unreal_service.spawn_actor(uclass=bp_axes_uclass, location={"X": -10.0, "Y": 280.0, "Z": 50.0})
+
+        # confirm that we can find objects by name, even in in a level where actors don't have USpStableNameComponents
+        player_start = game.unreal_service.find_actor_by_name(uclass="APlayerStart", actor_name="Settings/PlayerStart")
+        spear.log("player_start:", player_start)
     with instance.end_frame():
         pass
 
