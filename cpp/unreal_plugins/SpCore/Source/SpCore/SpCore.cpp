@@ -66,7 +66,7 @@ void SpCore::ShutdownModule()
     SharedMemory::terminate();
     Config::terminate();
 
-    SP_LOG_CURRENT_FUNCTION();  // useful to see that ShutdownModule() finishes executing
+    SP_LOG_CURRENT_FUNCTION(); // useful to see that ShutdownModule() finishes executing
 }
 
 // Normally we would do the operations in registerClasses() and unregisterClasses(...) in the opposite order.

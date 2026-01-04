@@ -59,10 +59,10 @@ if __name__ == "__main__":
     config.freeze()
 
     # configure system based on config settings
-    spear.configure_system(config)
+    spear.configure_system(config=config)
 
     # launch the executable
-    instance = spear.Instance(config)
+    instance = spear.Instance(config=config)
     while instance.is_running():
         time.sleep(1.0)
     instance.close()

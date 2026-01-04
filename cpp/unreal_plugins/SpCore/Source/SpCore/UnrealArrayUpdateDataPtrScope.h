@@ -18,14 +18,17 @@
 // will not resize itself if the user adds elements that would fit in the user's data region. However, we
 // don't test for exact equality between the size of the array's data region and the data_ptr data region.
 // This is because calling array.Reserve(num_elements) is allowed to internally allocate more than num_elements
-// worth of space.
+// worth of space. In other words, the array's existing data region might be larger than the user's data
+// region, regardless of how its size is set.
 //
-// The user must therefore be careful not to add more than num_elements elements to array, because if the
-// user adds too many elements, there is nothing to prevent array from writing past the end of the user's
-// data region. This is because, as far as array is concerned, if it has internally allocated more than num_elements
-// worth of space, then it has enough space to perform the user's requested add operations safely. Eventually,
-// if the user adds too many elements elements, it will trigger a resize operation, in which case the array
-// will no longer be corrupting heap memory, but it will also no longer be backed by the user's data region.
+// Therefore, after UnrealArrayUpdateDataPtrScope has replaced the array's original internal data pointer
+// with the user's data pointer, the user must be careful not to add more than num_elements elements to array,
+// because if the user adds too many elements, there is nothing to prevent array from writing past the end of
+// the user's data region. This is because, as far as array is concerned, if it has internally allocated more
+// than num_elements worth of space, then it has enough space to perform the user's requested add operations
+// safely. Eventually, if the user adds too many elements, it will trigger a resize operation, in which case
+// the array will no longer be corrupting heap memory, but it will also no longer be backed by the user's
+// data region.
 // 
 // So, to avoid corrupting heap memory, and to guarantee that array only writes data to the user's intended
 // data region, the user must not add more than num_elements to array when inside an UnrealArrayUpdatePtrScope.
