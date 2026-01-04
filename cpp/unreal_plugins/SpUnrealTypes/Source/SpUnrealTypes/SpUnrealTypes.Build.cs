@@ -19,7 +19,7 @@ public class SpUnrealTypes : SpModuleRules
         // to modules where the plugins are actually used.
         //
 
-        PublicDependencyModuleNames.AddRange(new string[] {"ChaosVehicles", "MovieRenderPipelineCore", "MovieRenderPipelineRenderPasses", "SpCore"});
+        PublicDependencyModuleNames.AddRange(new string[] {"MovieRenderPipelineCore", "MovieRenderPipelineRenderPasses", "SpCore"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }

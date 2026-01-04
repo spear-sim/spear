@@ -14,11 +14,12 @@
     "IsBetaVersion": true,
     "IsExperimentalVersion": true,
     "Installed": false,
-    "Modules": [
+    "Modules":
+    [
         {
             "Name": "SpModuleRules",
             "Type": "Runtime",
-            "LoadingPhase": "EarliestPossible"
+            "LoadingPhase": "Default"
         }
     ]
 }

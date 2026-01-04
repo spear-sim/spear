@@ -12,8 +12,7 @@ public class SpUnrealTypesEditor : SpModuleRules
     {
         SP_LOG_CURRENT_FUNCTION();
 
-        PublicDependencyModuleNames.AddRange(new string[] {
-            "BlueprintGraph", "Kismet", "MovieScene", "MovieSceneTools", "MovieSceneTracks", "Sequencer", "SequencerScripting", "SpCore", "UnrealEd"});
+        PublicDependencyModuleNames.AddRange(new string[] {"MovieScene", "MovieSceneTools", "MovieSceneTracks", "Sequencer", "SequencerScripting", "SpCore", "UnrealEd"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         // Needed to expose a private header in SequencerScripting

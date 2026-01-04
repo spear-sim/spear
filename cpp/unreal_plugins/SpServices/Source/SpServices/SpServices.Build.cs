@@ -19,7 +19,7 @@ public class SpServices : SpModuleRules
         // to modules where the plugins are actually used.
         //
 
-        PublicDependencyModuleNames.AddRange(new string[] {"ChaosVehicles", "EnhancedInput", "MovieRenderPipelineCore", "SpCore"});
+        PublicDependencyModuleNames.AddRange(new string[] {"EnhancedInput", "SpCore"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }

@@ -3,14 +3,20 @@
     "EngineAssociation": "5.5",
     "Category": "",
     "Description": "",
-    "Modules": [
+    "Modules":
+    [
         {
             "Name": "SpearSim",
             "Type": "Runtime",
             "LoadingPhase": "Default"
         }
     ],
-    "Plugins": [
+    "Plugins":
+    [
+        {
+            "Name": "ChaosVehiclesPlugin",
+            "Enabled":  true
+        },
         {
             "Name": "EditorScriptingUtilities",
             "Enabled": true
@@ -36,7 +42,8 @@
             "Enabled": true
         }
     ],
-    "AdditionalPluginDirectories": [
+    "AdditionalPluginDirectories":
+    [
         "../../unreal_plugins"
     ]
 }

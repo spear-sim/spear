@@ -13,7 +13,6 @@
 #include <GameFramework/SpectatorPawn.h>
 #include <GameFramework/SpectatorPawnMovement.h>
 #include <GenericPlatform/GenericPlatformMisc.h>
-#include <Kismet/GameplayStatics.h>
 #include <Misc/App.h>
 #include <Templates/Casts.h>
 

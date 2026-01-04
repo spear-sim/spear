@@ -3,7 +3,7 @@
     "Version": 1,
     "VersionName": "1.0",
     "FriendlyName": "SpServices",
-    "Description": "WARNING: The loading phases for {SpCore, SpServices} must be ordered as follows: LoadingPhase(SpCore) < LoadingPhase(SpServices)",
+    "Description": "",
     "Category": "Other",
     "CreatedBy": "",
     "CreatedByURL": "",
@@ -14,29 +14,32 @@
     "IsBetaVersion": true,
     "IsExperimentalVersion": true,
     "Installed": false,
-    "Modules": [
+    "Modules":
+    [
         {
             "Name": "SpServices",
             "Type": "Runtime",
-            "LoadingPhase": "PostDefault"
+            "LoadingPhase": "Default",
+            "AdditionalDependencies":
+            [
+                "SpCore"
+            ]
         },
         {
             "Name": "SpServicesEditor",
             "Type": "Editor",
-            "LoadingPhase": "PostDefault"
+            "LoadingPhase": "Default",
+            "AdditionalDependencies":
+            [
+                "SpCore",
+                "SpServices"
+            ]
         }
     ],
-    "Plugins": [
-        {
-            "Name": "ChaosVehiclesPlugin",
-            "Enabled":  true
-        },
+    "Plugins":
+    [
         {
             "Name": "EnhancedInput",
-            "Enabled":  true
-        },
-        {
-            "Name": "MovieRenderPipeline",
             "Enabled":  true
         },
         {

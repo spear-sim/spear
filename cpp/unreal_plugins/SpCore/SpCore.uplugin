@@ -14,7 +14,8 @@
     "IsBetaVersion": true,
     "IsExperimentalVersion": true,
     "Installed": false,
-    "Modules": [
+    "Modules":
+    [
         {
             "Name": "SpCore",
             "Type": "Runtime",
@@ -23,7 +24,11 @@
         {
             "Name": "SpCoreEditor",
             "Type": "Editor",
-            "LoadingPhase": "EarliestPossible"
+            "LoadingPhase": "EarliestPossible",
+            "AdditionalDependencies":
+            [
+                "SpCore"
+            ]
         }
     ]
 }

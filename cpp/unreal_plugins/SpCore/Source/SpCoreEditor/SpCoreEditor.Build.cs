@@ -11,7 +11,7 @@ public class SpCoreEditor : SpModuleRules
     {
         SP_LOG_CURRENT_FUNCTION();
 
-        PublicDependencyModuleNames.AddRange(new string[] {"EditorSubsystem", "LevelEditor", "SpCore", "UnrealEd"});
+        PublicDependencyModuleNames.AddRange(new string[] {"EditorSubsystem", "SpCore", "UnrealEd"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }
