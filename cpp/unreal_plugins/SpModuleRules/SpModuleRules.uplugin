@@ -20,6 +20,15 @@
             "Name": "SpModuleRules",
             "Type": "Runtime",
             "LoadingPhase": "Default"
+        },
+        {
+            "Name": "SpModuleRulesEditor",
+            "Type": "Editor",
+            "LoadingPhase": "Default",
+            "AdditionalDependencies":
+            [
+                "SpModuleRules"
+            ]
         }
     ]
 }

@@ -31,7 +31,8 @@
             "LoadingPhase": "Default",
             "AdditionalDependencies":
             [
-                "SpCore"
+                "SpCore",
+                "SpUnrealTypes"
             ]
         }
     ],

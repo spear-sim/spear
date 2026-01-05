@@ -5,13 +5,13 @@
 
 using UnrealBuildTool; // ReadOnlyTargetRules
 
-public class SpCoreEditor : SpModuleRules
+public class SpCoreEditor : SpModuleRulesEditor
 {
     public SpCoreEditor(ReadOnlyTargetRules target) : base(target)
     {
         SP_LOG_CURRENT_FUNCTION();
 
-        PublicDependencyModuleNames.AddRange(new string[] {"EditorSubsystem", "SpCore", "UnrealEd"});
+        PublicDependencyModuleNames.AddRange(new string[] {"SpCore"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }

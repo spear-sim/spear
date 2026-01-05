@@ -8,7 +8,11 @@
         {
             "Name": "SpearSim",
             "Type": "Runtime",
-            "LoadingPhase": "Default"
+            "LoadingPhase": "Default",
+            "AdditionalDependencies":
+            [
+                "SpCore"
+            ]
         }
     ],
     "Plugins":
@@ -40,6 +44,10 @@
         {
             "Name": "PythonScriptPlugin",
             "Enabled": true
+        },
+        {
+            "Name": "SpCore",
+            "Enabled":  true
         }
     ],
     "AdditionalPluginDirectories":
