@@ -32,11 +32,13 @@ We recommend browsing through our example applications to get a sense of what is
   - [`examples/control_editor`](../examples/control_editor) demonstrates how to control the Unreal Editor and a play-in-editor simulation.
   - [`examples/control_simple_agent`](../examples/control_simple_agent) demonstrates how to control a simple agent and obtain egocentric visual observations.
   - [`examples/enhanced_input`](../examples/enhanced_input) demonstrates how to interact with Unreal's Enhanced Input system.
+  - [`examples/get_class_info`](../examples/get_class_info) demonstrates how to interact with Unreal's runtime reflection system.
   - [`examples/getting_started`](../examples/getting_started) demonstrates how to spawn an object and access object properties.
   - [`examples/getting_started_editor`](../examples/getting_started_editor) demonstrates how to spawn an object using the Unreal Editor's built-in Python API.
   - [`examples/getting_started_notebook`](../examples/getting_started_notebook) demonstrates how to interoperate with Jupyter notebooks.
-  - [`examples/import_mixamo_dataset`](../examples/import_mixamo_dataset) demonstrates how to import animation sequences.
-  - [`examples/import_stanford_dataset`](../examples/import_stanford_dataset) demonstrates how to import custom objects.
+  - [`examples/import_humoto_dataset`](../examples/import_humoto_dataset) demonstrates how to import animation sequences from the Humoto dataset.
+  - [`examples/import_mixamo_dataset`](../examples/import_mixamo_dataset) demonstrates how to import animation sequences from Mixamo.
+  - [`examples/import_stanford_dataset`](../examples/import_stanford_dataset) demonstrates how to import custom objects from the Stanford 3D Scanning Repository.
   - [`examples/movie_render_queue`](../examples/movie_render_queue) demonstrates how to interact with Unreal's Movie Render Queue system.
   - [`examples/mujoco_interop`](../examples/mujoco_interop) demonstrates how to interoperate with the MuJoCo physics engine.
   - [`examples/numpy_interop`](../examples/numpy_interop) demonstrates how to efficiently pass NumPy  MuJoCo physics engine.
