@@ -41,11 +41,11 @@ We recommend browsing through our example applications to get a sense of what is
   - [`examples/import_stanford_dataset`](../examples/import_stanford_dataset) demonstrates how to import custom objects from the Stanford 3D Scanning Repository.
   - [`examples/movie_render_queue`](../examples/movie_render_queue) demonstrates how to interact with Unreal's Movie Render Queue system.
   - [`examples/mujoco_interop`](../examples/mujoco_interop) demonstrates how to interoperate with the MuJoCo physics engine.
-  - [`examples/numpy_interop`](../examples/numpy_interop) demonstrates how to efficiently pass NumPy  MuJoCo physics engine.
+  - [`examples/numpy_interop`](../examples/numpy_interop) demonstrates how to efficiently pass NumPy arrays to and from Unreal entities.
   - [`examples/open_level`](../examples/open_level) demonstrates how to dynamically change levels.
-  - [`examples/render_dataset`](../examples/render_dataset) demonstrates how to generate random camera poses and render a collection of images.
-  - [`examples/render_grid`](../examples/render_grid) demonstrates how to render from a multi-camera rig.
   - [`examples/render_image`](../examples/render_image) demonstrates how to spawn a camera sensor object and render an image.
   - [`examples/render_image_async`](../examples/render_image_async) demonstrates how to render an image using the asynchronous API available in SPEAR.
+  - [`examples/render_image_dataset`](../examples/render_image_dataset) demonstrates how to generate random camera poses and render a collection of images.
   - [`examples/render_image_editor`](../examples/render_image_editor) demonstrates how to render an image using the Unreal Editor's built-in Python API.
+  - [`examples/render_image_multi_view`](../examples/render_image_multi_view) demonstrates how to render from a multi-view camera rig.
   - [`examples/sample_nav_mesh`](../examples/sample_nav_mesh) demonstrates how to sample points and shortest paths from Unreal's nav mesh system.
