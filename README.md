@@ -25,5 +25,3 @@ If you find SPEAR useful in your research, please cite this repository as follow
 - Our [Getting Started](docs/getting_started.md) tutorial explains how to set up your development environment.
 - Our [Running our Example Applications](docs/running_our_example_applications.md) tutorial explains how to run our example applications.
 - Our [Importing and Exporting Assets](docs/importing_and_exporting_assets.md) tutorial explains how to import and export assets.
-- Our [Coding Guidelines](docs/coding_guidelines.md) document describes our coding standard.
-- Our [Contribution Guidelines](CONTRIBUTING.md) document contains information on how to contribute effectively.
