@@ -1,5 +1,7 @@
 ![teaser](https://github.com/user-attachments/assets/88210f82-7436-407c-906d-cf4c2bff74de)
 
+_Figure: SPEAR includes a camera entity that can render a superset of the data modalities available in the Hypersim dataset directly into user NumPy arrays at 55 fps at 1080p resolution. The SPEAR camera entity can render photorealistic beauty images that closely match an Unreal application's viewport (top), fine-grained 24-bit entity IDs that can be used for both material segmentation and object segmentation tasks (middle), and a non-Lambertian intrinsic image decomposition consisting of diffuse reflectance, diffuse illumination, and a non-diffuse residual term._
+
 # SPEAR: A Simulator for Photorealistic Embodied AI Research
 
 Interactive simulators have become powerful tools for training embodied agents and generating synthetic visual data, but existing simulators suffer from limited generality, expressiveness, and performance. We address these limitations by introducing _SPEAR: A Simulator for Photorealistic Embodied AI Research_.
@@ -77,9 +79,9 @@ instance.close()
 spear.log("Done.")
 ```
 
-Here is a view of an Unreal scene before (left) and after (right) running the program above, demonstrating that the `BP_Axes` entity was spawned as expected.
-
 ![before_after](https://github.com/user-attachments/assets/d1a6b42e-45d1-460a-82f0-86dd3a679554)
+
+_Figure: An Unreal scene before (left) and after (right) running the example program above, demonstrating that the `BP_Axes` entity is spawned as expected after running the program._
 
 ## Exposing Functions and Variables
 
