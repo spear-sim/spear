@@ -20,7 +20,7 @@ The code and assets in this repository are released under an [MIT License](LICEN
 import pprint
 import spear
 
-# create an instance representing a UE application
+# create an instance representing a UE application  
 config = spear.get_config(user_config_files=["user_config.yaml"])
 spear.configure_system(config=config)
 instance = spear.Instance(config=config)
@@ -68,9 +68,13 @@ instance.close()
 spear.log("Done.")
 ```
 
+Here is a view of an Unreal scene before (left) and after (right) running the program above.
+
+![before_after](https://github.com/user-attachments/assets/d1a6b42e-45d1-460a-82f0-86dd3a679554)
+
 ## Exposing Functions and Variables
 
-SPEAR can call any function and access any variable that is exposed to Unreal's visual scripting system. New functions and variables can be exposed simply by adding `UFUNCTION()` and `UPROPERTY()` annotations to a C++ header in an Unreal project or plugin as follows. No additional registration steps or code boilerplate is required.
+SPEAR can call any function and access any variable that is exposed to Unreal's visual scripting system. New functions and variables can be exposed simply by adding `UFUNCTION(...)` and `UPROPERTY(...)` annotations to a C++ header in an Unreal project or plugin as follows. No additional registration steps or code boilerplate is required.
 
 ```cpp
 // MyBlueprintFunctionLibrary.h
@@ -87,9 +91,10 @@ class UMyBlueprintFunctionLibrary : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public:
-    UFUNCTION()
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
     static FString MyFunction(const FString& UserString) { return FString::Printf(TEXT("UserString is %s"), *UserString); }
-    UPROPERTY()
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     uint32 MyProperty = 42;
 };
 ```
