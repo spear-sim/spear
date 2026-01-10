@@ -27,6 +27,28 @@ M_hypersim_camera_from_unreal_camera = np.array([[  0, 1, 0],
 foreground_actor_name      = "Meshes/05_chair/LivingRoom_Chair_02"
 foreground_actor_proxy_ids = None
 
+semantic_instance_categories = [
+    # "Meshes/01_wall",
+    # "Meshes/02_floor",
+    "Meshes/03_cabinet",
+    "Meshes/05_chair",
+    "Meshes/06_sofa",
+    "Meshes/07_table",
+    "Meshes/08_door",
+    "Meshes/09_window",
+    "Meshes/10_bookshelf",
+    "Meshes/11_picture",
+    "Meshes/16_curtain",
+    "Meshes/18_pillow",
+    "Meshes/19_mirror",
+    "Meshes/20_floormat",
+    # "Meshes/22_ceiling",
+    "Meshes/34_sink",
+    "Meshes/35_lamp",
+    "Meshes/38_otherstructure",
+    "Meshes/40_otherprop"
+]
+
 component_descs = \
 [
     {
@@ -192,12 +214,13 @@ if __name__ == "__main__":
 
         # find actors and components
         actors = game.unreal_service.find_actors_as_dict()
-        actor_uobjects = np.array([-1] + [ actors[k].uobject for k in sorted(actors.keys()) ])
+        semantic_instances = { name: actor for name, actor in actors.items() if any([ name.startswith(c) for c in semantic_instance_categories ]) }
+        semantic_instance_uobjects = np.array([-1] + [ semantic_instances[k].uobject for k in sorted(semantic_instances.keys()) ])
 
         # get proxy ID maps
         proxy_id_to_component_map = { desc["id"]: game.get_unreal_object(uobject=desc["component"]) for desc in component_and_material_descs }
         proxy_id_to_actor_map = { proxy_id: component.GetOwner() for proxy_id, component in proxy_id_to_component_map.items() }
-        proxy_id_to_semantic_instance_id_map = { proxy_id: int(np.where(actor_uobjects == actor.uobject)[0][0]) for proxy_id, actor in proxy_id_to_actor_map.items() }
+        proxy_id_to_semantic_instance_id_map = { proxy_id: int(np.where(actor.uobject == semantic_instance_uobjects)[0][0]) for proxy_id, actor in proxy_id_to_actor_map.items() if len(np.where(actor.uobject == semantic_instance_uobjects)[0]) > 0 }
         proxy_id_to_actor_name_map = { proxy_id: game.unreal_service.get_stable_name_for_actor(actor=actor) for proxy_id, actor in proxy_id_to_actor_map.items() if game.unreal_service.has_stable_name(actor=actor) }
         proxy_id_to_semantic_id_map = { proxy_id: int(re.search(r"Meshes/(\d+)_", stable_name).group(1)) for proxy_id, stable_name in proxy_id_to_actor_name_map.items() if re.search(r"Meshes/(\d+)_", stable_name) is not None }
 
@@ -293,9 +316,9 @@ if __name__ == "__main__":
     semantic_colors = np.vstack([[0,0,0], df[["semantic_color_r", "semantic_color_g", "semantic_color_b"]].to_numpy()]).astype(dtype=np.uint8)
 
     # generate colors for semantic instance IDs
-    num_semantic_instances = len(actor_uobjects)
+    num_semantic_instances = len(semantic_instance_uobjects)
     semantic_instance_colors = np.zeros((num_semantic_instances, 3), dtype=np.uint8)
-    for i in range(1, len(actor_uobjects)):
+    for i in range(1, num_semantic_instances):
         semantic_instance_colors[i] = np.round(np.array(colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0))*255.0).astype(np.uint8)
 
     # save an image for each component using the component's visualizer function

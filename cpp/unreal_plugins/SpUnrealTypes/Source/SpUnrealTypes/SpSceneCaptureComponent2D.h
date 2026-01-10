@@ -139,7 +139,7 @@ public:
     bool bReadPixelData = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bHideProxyComponentManagers = true;
+    bool bHidePrimitiveProxyComponentManagers = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     TArray<FString> AllowedProxyComponentModalities;

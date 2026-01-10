@@ -209,7 +209,7 @@ void USpSceneCaptureComponent2D::Initialize()
         PostProcessSettings.AddBlendable(material_instance_dynamic_, 1.0f);
     }
 
-    if (bHideProxyComponentManagers) {
+    if (bHidePrimitiveProxyComponentManagers) {
         PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_RenderScenePrimitives; // use HiddenActors list
         std::vector<ASpPrimitiveProxyComponentManager*> primitive_proxy_component_managers = UnrealUtils::findActorsByType<ASpPrimitiveProxyComponentManager>(GetWorld());
         for (auto primitive_proxy_component_manager : primitive_proxy_component_managers) {
