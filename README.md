@@ -95,8 +95,9 @@ This function and variable can be accessed through SPEAR as follows.
 ```python
 with instance.begin_frame():
 
-    # get the default object for the UMyBlueprintFunctionLibrary class, which can can be used to call
-    # static C++ functions and access static C++ variables on the UMyBlueprintFunctionLibrary class
+    # get the default object for the UMyBlueprintFunctionLibrary class, which can can be used
+    # to call static C++ functions and access static C++ variables on the UMyBlueprintFunctionLibrary
+    # class
     my_blueprint_function_library = game.get_unreal_object(uclass="UMyBlueprintFunctionLibrary")
 
     # returns "UserString is Hello world"
