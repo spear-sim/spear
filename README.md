@@ -66,7 +66,7 @@ spear.log("Done.")
 
 ## Exposing Functions and Variables
 
-SPEAR can call any function and access any variable that is exposed to Unreal's visual scripting system. Exposing functions and variables can be achieved simply by adding `UFUNCTION()` and `UPROPERTY()` annotations to a C++ header in an Unreal project or plugin as follows.
+SPEAR can call any function and access any variable that is exposed to Unreal's visual scripting system. Exposing new functions and variables can be achieved simply by adding `UFUNCTION()` and `UPROPERTY()` annotations to a C++ header in an Unreal project or plugin as follows.
 
 ```cpp
 // MyBlueprintFunctionLibrary.h
