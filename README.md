@@ -6,7 +6,7 @@ Interactive simulators have become powerful tools for training embodied agents a
 
 At its core, SPEAR is a Python library that can connect to, and programmatically control, any Unreal Engine (UE) application via a set of modular UE C++ plugins. In contrast to existing Python libraries for accessing the Unreal Engine, SPEAR offers several novel features that are useful in embodied AI, robotics, and computer vision applications.
 
-1. SPEAR can call any C++ function, and can access any C++ variable, on any game entity, and any game subsystem, provided the function or variable has been exposed to Unreal's visual scripting language. There are over 13K functions and over 44K variables that are already exposed in this way in the UE codebase, and new functions and variables can be exposed by adding a single-line annotation next to a function or variable in a C++ header.
+1. SPEAR can call any C++ function, and can access any C++ variable, on any game entity, and any game subsystem, provided the function or variable has been exposed to Unreal's visual scripting language. There are over 13K functions and over 44K variables that are already exposed in this way in the UE codebase, and it is trivial to expose new functions and variables by adding a single-line annotation next to a function or variable in a C++ header (see example below).
 2. SPEAR provides fast NumPy interoperability, e.g., SPEAR can copy rendered images from the GPU directly into a user's NumPy array at 55 fps at 1080p resolution without requiring any intermediate data copying.
 3. SPEAR includes a camera entity that can render a strict superset of the data modalities available in the Hypersim dataset (see image above), including fine-grained 24-bit entity IDs that can be used for material segmentation and object segmentation tasks.
 4. SPEAR can programmatically control standalone games, live simulations running inside the Unreal Editor, Unreal's path tracer, and the Unreal Editor itself, all through a clean, unified, and Pythonic interface.
@@ -90,7 +90,7 @@ public:
 };
 ```
 
-This function and variable can be accessed through SPEAR as follows.
+This function and variable can be accessed through SPEAR as follows. No other registration steps or code boilerplate is required.
 
 ```python
 with instance.begin_frame():
