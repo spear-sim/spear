@@ -1,6 +1,6 @@
 ![teaser](https://github.com/user-attachments/assets/88210f82-7436-407c-906d-cf4c2bff74de)
 
-_Figure: SPEAR includes a camera entity that can render a superset of the data modalities available in the Hypersim dataset directly into user NumPy arrays at 55 fps at 1080p resolution. The SPEAR camera entity can render photorealistic beauty images that closely match an Unreal application's viewport (top), fine-grained 24-bit entity IDs that can be used for both material segmentation and object segmentation tasks (middle), and a non-Lambertian intrinsic image decomposition consisting of diffuse reflectance, diffuse illumination, and a non-diffuse residual term._
+_Figure: SPEAR includes a camera entity that can render a superset of the data modalities available in the Hypersim dataset directly into user NumPy arrays at 55 fps at 1080p resolution. The SPEAR camera entity can render photorealistic beauty images that closely match an Unreal application's viewport (top row), fine-grained 24-bit entity IDs that can be used for both material segmentation and object segmentation tasks (middle row), and a non-Lambertian intrinsic image decomposition consisting of diffuse reflectance, diffuse illumination, and a non-diffuse residual term (bottom row)._
 
 # SPEAR: A Simulator for Photorealistic Embodied AI Research
 
