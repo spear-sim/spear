@@ -20,13 +20,14 @@ The code and assets in this repository are released under an [MIT License](LICEN
 import pprint
 import spear
 
-# create instance
+# create an instance representing a UE application
 config = spear.get_config(user_config_files=["user_config.yaml"])
 spear.configure_system(config=config)
 instance = spear.Instance(config=config)
 game = instance.get_game()
 
-# the code in an instance.begin_frame() block executes at the start of a single UE frame
+# the code in a single instance.begin_frame() block executes sequentially at the
+# beginning of a single UE frame
 with instance.begin_frame():
 
     # spawn object
@@ -66,7 +67,7 @@ spear.log("Done.")
 
 ## Exposing Functions and Variables
 
-SPEAR can call any function and access any variable that is exposed to Unreal's visual scripting system. Exposing new functions and variables can be achieved simply by adding `UFUNCTION()` and `UPROPERTY()` annotations to a C++ header in an Unreal project or plugin as follows. No other registration steps or code boilerplate is required.
+SPEAR can call any function and access any variable that is exposed to Unreal's visual scripting system. New functions and variables can be exposed simply by adding `UFUNCTION()` and `UPROPERTY()` annotations to a C++ header in an Unreal project or plugin as follows. No other registration steps or code boilerplate is required.
 
 ```cpp
 // MyBlueprintFunctionLibrary.h
@@ -86,7 +87,7 @@ public:
     UFUNCTION()
     static FString MyFunction(const FString& UserString) { return FString::Printf(TEXT("UserString is %s"), *UserString); }
     UPROPERTY()
-    static uint32 MyProperty = 42;
+    uint32 MyProperty = 42;
 };
 ```
 
@@ -96,17 +97,17 @@ This function and variable can be accessed through SPEAR as follows.
 with instance.begin_frame():
 
     # get the default object for the UMyBlueprintFunctionLibrary class, which can can be used
-    # to call static C++ functions and access static C++ variables
+    # to call static C++ functions and access C++ variables
     my_blueprint_function_library = game.get_unreal_object(uclass="UMyBlueprintFunctionLibrary")
 
     # returns "UserString is Hello world"
-    return_string = my_blueprint_function_library.MyFunction(UserString="Hello World")
+    return_value = my_blueprint_function_library.MyFunction(UserString="Hello World")
 
     # returns 42
-    my_int = my_blueprint_function_library.MyProperty.get()
+    my_property = my_blueprint_function_library.MyProperty.get()
 
-    # MyInt is now 42
-    my_blueprint_function_library.MyProperty = 0
+    # MyProperty is now 43
+    my_blueprint_function_library.MyProperty = 43
 
 with instance.end_frame():
     pass
