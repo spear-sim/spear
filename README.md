@@ -29,9 +29,11 @@ spear.configure_system(config=config)
 instance = spear.Instance(config=config)
 game = instance.get_game()
 
-# each instance.begin_frame() block executes sequentially at the beginning of a single UE
-# frame; this programming model enables UE work to be executed deterministically in a single
-# frame even when there are data dependencies among work items
+# the code in each instance.begin_frame() block executes sequentially at the beginning of
+# a single UE frame; as soon as each Python function returns, its side effects on the UE
+# application are complete and immediately observable; this programming model enables UE
+# work to be executed deterministically in a single frame, even when there are complex data
+# dependencies among work items
 with instance.begin_frame():
 
     # spawn object
@@ -62,7 +64,11 @@ with instance.begin_frame():
     spear.log("root_component.get_properties():")
     pprint.pprint(root_component.get_properties())
 
-# each instance.end_frame() block executes at the end of the same UE frame as above
+# each instance.begin_frame() block must be paired with a corresponding instance.end_frame()
+# block; the code in the end_frame() block executes in the same UE frame as the begin_frame()
+# block, except it executes at the end of the frame instead of the beginning; this is useful,
+# e.g., in embodied AI applications, where it is desirable to input a control action at the
+# beginning of a simulation frame and collect an observation at the end of the same frame
 with instance.end_frame():
     pass
 
