@@ -54,6 +54,8 @@ examples/import_stanford_dataset/stanford
 examples/render_image_dataset/camera_poses
 examples/render_image_dataset/images
 
+examples/render_image_hypersim/images
+
 examples/render_image_multi_view/images
 examples/render_image_multi_view/movie.mp4
 

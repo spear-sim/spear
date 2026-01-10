@@ -1,6 +1,6 @@
 #
-# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+# Copyright (c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+# Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
@@ -58,11 +58,11 @@ if __name__ == "__main__":
         spear.log("info:        ", info)
 
         # Call the SpFunc named "hello_world" on our Unreal object.
-        return_values = sp_debug_manager.hello_world(arrays=arrays, unreal_objs=unreal_objs, info=info)
+        data_bundle = sp_debug_manager.hello_world(arrays=arrays, unreal_objs=unreal_objs, info=info)
 
-        spear.log("return_values: ", return_values)
-        spear.log('return_values["arrays"]["observation"].flags["ALIGNED"]:        ', return_values["arrays"]["observation"].flags["ALIGNED"])
-        spear.log('return_values["arrays"]["observation_shared"].flags["ALIGNED"]: ', return_values["arrays"]["observation_shared"].flags["ALIGNED"])
+        spear.log("data_bundle: ", data_bundle)
+        spear.log('data_bundle["arrays"]["observation"].flags["ALIGNED"]:        ', data_bundle["arrays"]["observation"].flags["ALIGNED"])
+        spear.log('data_bundle["arrays"]["observation_shared"].flags["ALIGNED"]: ', data_bundle["arrays"]["observation_shared"].flags["ALIGNED"])
 
         sp_debug_manager.terminate_sp_funcs()
         sp_debug_manager.Terminate()

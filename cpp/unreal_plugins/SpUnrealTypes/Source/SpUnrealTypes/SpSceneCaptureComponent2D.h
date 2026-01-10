@@ -1,6 +1,6 @@
 //
-// Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-// Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+// Copyright (c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+// Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
 #pragma once
@@ -98,9 +98,36 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     ESpArrayDataType ChannelDataType = ESpArrayDataType::UInt8;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bOverrideSetLinearToGamma = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bSetLinearToGamma = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bOverrideTextureRenderTargetFormat = false;
+
     // TEnumAsByte avoids: "Error: You cannot use the raw enum name as a type for member variables, instead use TEnumAsByte or a C++11 enum class with an explicit underlying type."
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     TEnumAsByte<ETextureRenderTargetFormat> TextureRenderTargetFormat = ETextureRenderTargetFormat::RTF_RGBA8_SRGB;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bOverrideTextureRenderTargetSRGB = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bTextureRenderTargetSRGB = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bOverrideTextureRenderTargetForceLinearGamma = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bTextureRenderTargetForceLinearGamma = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bOverrideTextureRenderTargetGamma = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    float TextureRenderTargetGamma = 0.0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     UMaterial* Material = nullptr;

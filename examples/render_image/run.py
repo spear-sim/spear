@@ -1,6 +1,6 @@
 #
-# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+# Copyright (c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+# Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
@@ -68,22 +68,22 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing etc accumulate additional information across frames
 
-    # # let temporal anti-aliasing etc accumulate additional information across multiple frames
-    # for i in range(1):
-    #     instance.flush()
+    # let temporal anti-aliasing etc accumulate additional information across multiple frames, and can fix occasional render-to-texture initialization issues on macOS
+    for i in range(1):
+        instance.flush()
 
     # get rendered frame
     with instance.begin_frame():
         pass
     with instance.end_frame():
-        return_values = final_tone_curve_hdr_component.read_pixels()
+        data_bundle = final_tone_curve_hdr_component.read_pixels()
 
     # show debug data now that we're outside of instance.end_frame()
-    spear.log('return_values["arrays"]["data"]: ')
-    spear.log_no_prefix(return_values["arrays"]["data"])
+    spear.log('data_bundle["arrays"]["data"]: ')
+    spear.log_no_prefix(data_bundle["arrays"]["data"])
 
     # show rendered frame now that we're outside of with instance.end_frame()
-    cv2.imshow("final_tone_curve_hdr", return_values["arrays"]["data"])
+    cv2.imshow("final_tone_curve_hdr", data_bundle["arrays"]["data"])
     cv2.waitKey(0)
 
     # terminate actors and components

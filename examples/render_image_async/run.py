@@ -1,6 +1,6 @@
 #
-# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+# Copyright (c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+# Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
@@ -86,24 +86,24 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing etc accumulate additional information across frames
 
-    # # let temporal anti-aliasing etc accumulate additional information across multiple frames
-    # for i in range(1):
-    #     instance.flush()
+    # let temporal anti-aliasing etc accumulate additional information across multiple frames, and can fix occasional render-to-texture initialization issues on macOS
+    for i in range(1):
+        instance.flush()
 
     # get rendered frame using call_async API
     with instance.begin_frame():
         future = final_tone_curve_hdr_component.call_async.read_pixels()
     with instance.end_frame():
-        return_values = future.get()
+        data_bundle = future.get()
 
     # show debug data now that we're outside of instance.end_frame()
-    spear.log('return_values["arrays"]["data"]: ')
-    spear.log_no_prefix(return_values["arrays"]["data"])
-    spear.log('return_values["arrays"]["data"].flags["ALIGNED"]: ', return_values["arrays"]["data"].flags["ALIGNED"])
+    spear.log('data_bundle["arrays"]["data"]: ')
+    spear.log_no_prefix(data_bundle["arrays"]["data"])
+    spear.log('data_bundle["arrays"]["data"].flags["ALIGNED"]: ', data_bundle["arrays"]["data"].flags["ALIGNED"])
 
     # show rendered frame now that we're outside of with instance.end_frame()
     if not args.benchmark:
-        cv2.imshow("final_tone_curve_hdr", return_values["arrays"]["data"])
+        cv2.imshow("final_tone_curve_hdr", data_bundle["arrays"]["data"])
         cv2.waitKey(0)
 
     # optional benchmarking
@@ -116,7 +116,7 @@ if __name__ == "__main__":
             instance._client.get_timeout()
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log("Average time for instance._client.get_timeout(): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
+        spear.log(f"Average time for instance._client.get_timeout(): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
 
         # instance.engine_globals_service.get_id()
         num_steps = 1000
@@ -125,7 +125,7 @@ if __name__ == "__main__":
             instance.engine_globals_service.get_id()
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log("Average time for instance.engine_globals_service.get_id(): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
+        spear.log(f"Average time for instance.engine_globals_service.get_id(): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
 
         # empty with instance.begin_frame() / with instance.end_frame()
         num_steps = 100
@@ -137,7 +137,7 @@ if __name__ == "__main__":
                 pass
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log("Average frame time for empty with instance.begin_frame() / with instance.end_frame(): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
+        spear.log(f"Average frame time for empty with instance.begin_frame() / with instance.end_frame(): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
 
         # game.unreal_service.get_default_object(...)
         num_steps = 100
@@ -149,7 +149,7 @@ if __name__ == "__main__":
                 return_value = game.unreal_service.get_default_object(uclass="AActor")
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log("Average frame time for game.unreal_service.get_default_object(...): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
+        spear.log(f"Average frame time for game.unreal_service.get_default_object(...): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
 
         # game.unreal_service.call_async.get_default_object(...)
         num_steps = 100
@@ -161,7 +161,7 @@ if __name__ == "__main__":
                 return_value = future.get()
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log("Average frame time for game.unreal_service.call_async.get_default_object(...): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
+        spear.log(f"Average frame time for game.unreal_service.call_async.get_default_object(...): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
 
         # instance.sp_func_service.call_function(...)
         num_steps = 100
@@ -170,10 +170,10 @@ if __name__ == "__main__":
             with instance.begin_frame():
                 pass
             with instance.end_frame():
-                return_values = final_tone_curve_hdr_component.read_pixels()
+                data_bundle = final_tone_curve_hdr_component.read_pixels()
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log("Average frame time for instance.sp_func_service.call_function(...): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
+        spear.log(f"Average frame time for instance.sp_func_service.call_function(...): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
 
         # instance.sp_func_service.call_async.call_function(...)
         num_steps = 100
@@ -182,10 +182,10 @@ if __name__ == "__main__":
             with instance.begin_frame():
                 future = final_tone_curve_hdr_component.call_async.read_pixels()
             with instance.end_frame():
-                return_values = future.get()
+                data_bundle = future.get()
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log("Average frame time for instance.sp_func_service.call_async.call_function(...): %0.4f ms (%0.4f fps)" % ((elapsed_time_seconds / num_steps)*1000.0, num_steps / elapsed_time_seconds))
+        spear.log(f"Average frame time for instance.sp_func_service.call_async.call_function(...): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
 
     # terminate actors and components
     with instance.begin_frame():

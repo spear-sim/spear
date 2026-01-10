@@ -1,6 +1,6 @@
 //
-// Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-// Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+// Copyright (c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+// Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
 #include "SpUnrealTypes/SpProxyComponentManager.h"
@@ -55,10 +55,14 @@ void ASpProxyComponentManager::BeginPlay()
 
     AActor::BeginPlay();
 
+    // If bIsInitialized is true here, it means we're in the editor, the user called Initialize(), then the
+    // user pressed play to initiate a PIE session. In this case, we need to defer initialization to Tick(...)
+    // because some actors in the PIE session might not be initialized yet.
     if (bIsInitialized) {
         request_reinitialize_ = true;
     }
 
+    // From now on, assume we're not initialized until we have a chance to initialize in Tick(...)
     bIsInitialized = false;
     RegisteredProxyComponentDescIds.Empty();
     RegisteredProxyComponentDescNames.Empty();
@@ -75,8 +79,6 @@ void ASpProxyComponentManager::EndPlay(const EEndPlayReason::Type end_play_reaso
 void ASpProxyComponentManager::Tick(float delta_time)
 {
     AActor::Tick(delta_time);
-
-    std::vector<AActor*> actors = UnrealUtils::findActors(GetWorld());
 
     //
     // We must take care to handle the case where an ASpProxyComponentManager actor in the editor world has
@@ -97,13 +99,14 @@ void ASpProxyComponentManager::Tick(float delta_time)
 
     if (request_reinitialize_) {
         request_reinitialize_ = false;
-        findAndDestroyAllProxyComponentTypes(actors);
-        initialize();
-    }
-
-    if (IsInitialized()) {
-        findAndUnregisterAllProxyComponentTypes(actors);
-        findAndRegisterAllProxyComponentTypes(actors);
+        initializeImpl();
+        std::vector<AActor*> actors = UnrealUtils::findActors(GetWorld());
+        requestDestroyProxyComponentsForAllTypes(actors);
+        requestCreateAndRegisterProxyComponentsForAllTypes(actors);
+    } else if (IsInitialized()) {
+        std::vector<AActor*> actors = UnrealUtils::findActors(GetWorld());
+        requestUnregisterAndDestroyProxyComponentsForAllTypes(actors);
+        requestCreateAndRegisterProxyComponentsForAllTypes(actors);
     }
 }
 
@@ -118,7 +121,9 @@ void ASpProxyComponentManager::Initialize()
         return;
     }
 
-    initialize();
+    initializeImpl();
+    std::vector<AActor*> actors = UnrealUtils::findActors(GetWorld());
+    requestCreateAndRegisterProxyComponentsForAllTypes(actors);
 }
 
 void ASpProxyComponentManager::Terminate()
@@ -127,7 +132,8 @@ void ASpProxyComponentManager::Terminate()
         return;
     }
 
-    terminate();
+    terminateImpl();
+    unregisterAndDestroyProxyComponents(Std::keys(name_to_proxy_component_desc_map_));
 }
 
 void ASpProxyComponentManager::Update()
@@ -136,7 +142,10 @@ void ASpProxyComponentManager::Update()
         return;
     }
 
-    update();
+    unregisterAndDestroyProxyComponents(Std::keys(name_to_proxy_component_desc_map_));
+
+    std::vector<AActor*> actors = UnrealUtils::findActors(GetWorld());
+    requestCreateAndRegisterProxyComponentsForAllTypes(actors);
 }
 
 bool ASpProxyComponentManager::IsInitialized() const
@@ -144,25 +153,16 @@ bool ASpProxyComponentManager::IsInitialized() const
     return is_initialized_;
 }
 
-void ASpProxyComponentManager::initialize()
+void ASpProxyComponentManager::initializeImpl()
 {
     is_initialized_ = true;
     bIsInitialized = true;
 }
 
-void ASpProxyComponentManager::terminate()
+void ASpProxyComponentManager::terminateImpl()
 {
     is_initialized_ = false;
     bIsInitialized = false;
-    unregisterProxyComponents(Std::keys(name_to_proxy_component_desc_map_));
-}
-
-void ASpProxyComponentManager::update()
-{
-    std::vector<AActor*> actors = UnrealUtils::findActors(GetWorld());
-    unregisterProxyComponents(Std::keys(name_to_proxy_component_desc_map_));
-    findAndUnregisterAllProxyComponentTypes(actors);
-    findAndRegisterAllProxyComponentTypes(actors);
 }
 
 uint32_t ASpProxyComponentManager::getId(uint32_t initial_guess_id, const std::set<uint32_t>& already_allocated_ids, uint32_t max_id)

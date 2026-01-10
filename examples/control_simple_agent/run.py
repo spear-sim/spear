@@ -1,6 +1,6 @@
 #
-# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+# Copyright (c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+# Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
@@ -61,6 +61,10 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass
 
+    # let temporal anti-aliasing etc accumulate additional information across multiple frames, and can fix occasional render-to-texture initialization issues on macOS
+    for i in range(1):
+        instance.flush()
+
     # take a few steps
     for i in range(num_steps):
 
@@ -84,13 +88,13 @@ if __name__ == "__main__":
         with instance.end_frame():
 
             # read pixels
-            return_values = final_tone_curve_hdr_component.read_pixels()
+            data_bundle = final_tone_curve_hdr_component.read_pixels()
 
             # pause
             gameplay_statics.SetGamePaused(bPaused=True)
 
         # show image in an OpenCV window
-        cv2.imshow("final_tone_curve_hdr", return_values["arrays"]["data"])
+        cv2.imshow("final_tone_curve_hdr", data_bundle["arrays"]["data"])
         cv2.waitKey(0)
 
     # terminate actors and components

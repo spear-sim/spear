@@ -28,9 +28,9 @@ if __name__ == "__main__":
     instance = spear.Instance(config=config)
     game = instance.get_game()
 
-    images_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "images")
-    if not os.path.exists(images_directory):
-        os.makedirs(images_directory)
+    images_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "images")
+    if not os.path.exists(images_dir):
+        os.makedirs(images_dir)
 
     # initialize actors and components
     with instance.begin_frame():
@@ -64,6 +64,10 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass
 
+    # let temporal anti-aliasing etc accumulate additional information across multiple frames, and can fix occasional render-to-texture initialization issues on macOS
+    for i in range(1):
+        instance.flush()
+
     for f in range(num_frames):
         with instance.begin_frame():
 
@@ -82,13 +86,13 @@ if __name__ == "__main__":
                 component = components[component_name]
                 i = int(c % num_cols)
                 j = int(c / num_cols)
-                return_values = component.read_pixels()
-                data = return_values["arrays"]["data"]
+                data_bundle = component.read_pixels()
+                data = data_bundle["arrays"]["data"]
                 canvas[component_height*j : component_height*(j+1), component_width*i : component_width*(i+1)] = data
 
-        filename = os.path.join(images_directory, f"{f:04}.png")
-        spear.log("Saving image: ", filename)
-        cv2.imwrite(filename, canvas)
+        image_file = os.path.join(images_dir, f"{f:04}.png")
+        spear.log("Saving image: ", image_file)
+        cv2.imwrite(image_file, canvas)
 
     with instance.begin_frame():
         pass

@@ -1,6 +1,6 @@
 //
-// Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-// Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+// Copyright (c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+// Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
 #pragma once
@@ -93,39 +93,39 @@ public:
     }
 
     // ASpProxyComponentManager interface
-    void findAndDestroyAllProxyComponentTypes(const std::vector<AActor*>& actors) override
+    void requestDestroyProxyComponentsForAllTypes(const std::vector<AActor*>& actors) override
     {
-        ASpProxyComponentManager::findAndDestroyProxyComponents<UStaticMeshComponent>(actors);
-        ASpProxyComponentManager::findAndDestroyProxyComponents<USkeletalMeshComponent>(actors);
+        ASpProxyComponentManager::requestDestroyProxyComponents<UStaticMeshComponent>(actors);
+        ASpProxyComponentManager::requestDestroyProxyComponents<USkeletalMeshComponent>(actors);
     }
 
-    void findAndRegisterAllProxyComponentTypes(const std::vector<AActor*>& actors) override
+    void requestCreateAndRegisterProxyComponentsForAllTypes(const std::vector<AActor*>& actors) override
     {
-        ASpProxyComponentManager::findAndRegisterProxyComponents<UStaticMeshComponent>(actors, this);
-        ASpProxyComponentManager::findAndRegisterProxyComponents<USkeletalMeshComponent>(actors, this);
+        ASpProxyComponentManager::requestCreateAndRegisterProxyComponents<UStaticMeshComponent>(actors, this);
+        ASpProxyComponentManager::requestCreateAndRegisterProxyComponents<USkeletalMeshComponent>(actors, this);
     }
 
-    void findAndUnregisterAllProxyComponentTypes(const std::vector<AActor*>& actors) override
+    void requestUnregisterAndDestroyProxyComponentsForAllTypes(const std::vector<AActor*>& actors) override
     {
-        ASpProxyComponentManager::findAndUnregisterProxyComponents<UStaticMeshComponent>(actors, this);
-        ASpProxyComponentManager::findAndUnregisterProxyComponents<USkeletalMeshComponent>(actors, this);
+        ASpProxyComponentManager::requestUnregisterAndDestroyProxyComponents<UStaticMeshComponent>(actors, this);
+        ASpProxyComponentManager::requestUnregisterAndDestroyProxyComponents<USkeletalMeshComponent>(actors, this);
     }
 
-    void unregisterProxyComponents(const std::vector<std::string>& component_names) override
+    void unregisterAndDestroyProxyComponents(const std::vector<std::string>& component_names) override
     {
-        ASpProxyComponentManager::unregisterProxyComponents(component_names, this);
+        ASpProxyComponentManager::unregisterAndDestroyProxyComponents(component_names, this);
     }
 
-    void initialize() override
+    void initializeImpl() override
     {
-        ASpProxyComponentManager::initialize();
+        ASpProxyComponentManager::initializeImpl();
         InvisibleMaterial = LoadObject<UMaterialInterface>(nullptr, Unreal::toTCharPtr("/SpContent/Materials/M_Invisible.M_Invisible"));
     };
 
-    void terminate() override
+    void terminateImpl() override
     {
         InvisibleMaterial = nullptr;
-        ASpProxyComponentManager::terminate();
+        ASpProxyComponentManager::terminateImpl();
     }
 
     // CProxyComponentRegistryShouldRegister compile-time interface for deciding to register a USceneCompoennt
@@ -373,16 +373,16 @@ public:
 
 protected:
     // ASpProxyComponentManager interface
-    void initialize() override
+    void initializeImpl() override
     {
-        ASpPrimitiveProxyComponentManager::initialize();
+        ASpPrimitiveProxyComponentManager::initializeImpl();
         EmissiveMaterial = LoadObject<UMaterialInterface>(nullptr, Unreal::toTCharPtr("/SpContent/Materials/M_Emissive.M_Emissive"));
     };
 
-    void terminate() override
+    void terminateImpl() override
     {
         EmissiveMaterial = nullptr;
-        ASpPrimitiveProxyComponentManager::terminate();
+        ASpPrimitiveProxyComponentManager::terminateImpl();
     }
 
     // ASpPrimitiveProxyComponentManager interface
@@ -394,7 +394,7 @@ protected:
         SP_ASSERT(EmissiveMaterial);
         UMaterialInstanceDynamic* new_material = UMaterialInstanceDynamic::Create(EmissiveMaterial, this);
         SP_ASSERT(new_material);
-        FColor color = getColor(id);
+        FLinearColor color = getLinearColor(id);
         new_material->SetVectorParameterValue("EmissiveColor", color);
         return new_material;
     }
@@ -403,14 +403,14 @@ private:
     UPROPERTY()
     UMaterialInterface* EmissiveMaterial = nullptr;
 
-    static FColor getColor(uint32_t id)
+    static FLinearColor getLinearColor(uint32_t id)
     {
         SP_ASSERT(id > 0 && id <= 0xffffff);
-        uint8_t r = static_cast<uint8_t>((id >> 16) & 0xff);
-        uint8_t g = static_cast<uint8_t>((id >>  8) & 0xff);
-        uint8_t b = static_cast<uint8_t>((id >>  0) & 0xff);
-        uint8_t a = 0xff;
-        return FColor(r, g, b, a);
+        float r = static_cast<float>((id >> 16) & 0xff) / 255.0f;
+        float g = static_cast<float>((id >>  8) & 0xff) / 255.0f;
+        float b = static_cast<float>((id >>  0) & 0xff) / 255.0f;
+        float a = 1.0f;
+        return FLinearColor(r, g, b, a);
     }
 };
 
@@ -431,16 +431,16 @@ public:
 
 protected:
     // ASpProxyComponentManager interface
-    void initialize() override
+    void initializeImpl() override
     {
-        ASpPrimitiveProxyComponentManager::initialize();
+        ASpPrimitiveProxyComponentManager::initializeImpl();
         DiffuseMaterial = LoadObject<UMaterialInterface>(nullptr, Unreal::toTCharPtr("/SpContent/Materials/M_Diffuse.M_Diffuse"));
     };
 
-    void terminate() override
+    void terminateImpl() override
     {
         DiffuseMaterial = nullptr;
-        ASpPrimitiveProxyComponentManager::terminate();
+        ASpPrimitiveProxyComponentManager::terminateImpl();
     }
 
     // ASpPrimitiveProxyComponentManager interface

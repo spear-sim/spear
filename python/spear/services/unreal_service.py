@@ -1,6 +1,6 @@
 #
-# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+# Copyright (c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+# Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
 import numbers
@@ -403,14 +403,14 @@ class UnrealService(spear.Service):
     # output. Suppose that you already have a handle that you would like to pass as input to the function,
     # that you obtained from another UnrealService function, e.g.,
     #
-    #     actor_handle = unreal_service.find_actor_by_name(...)
+    #     arg_handle = unreal_service.find_actor_by_name(..., as_handle=True)
     #
     # You would invoke your desired function as follows. After executing this code, return_value_handle will
     # be in the correct form to pass into other functions in unreal_service.
     # 
-    #     args = {"Actor": spear.to_ptr(handle=actor_handle)}
-    #     return_values = unreal_service.call_function(uobject=uobject, ufunction=ufunction, args=args)
-    #     return_value_handle = spear.to_handle(string=return_values["ReturnValue"])
+    #     args = {"Actor": spear.to_ptr(handle=arg_handle)}
+    #     data_bundle = unreal_service.call_function(uobject=uobject, ufunction=ufunction, args=args)
+    #     return_handle = spear.to_handle(string=data_bundle["ReturnValue"])
     #
 
     def call_function(self, uobject=None, uclass=None, ufunction=None, args=None, world_context_object="WorldContextObject"):
@@ -422,11 +422,12 @@ class UnrealService(spear.Service):
 
         uobject = spear.to_handle(obj=uobject)
         uclass = self.to_uclass(uclass=uclass)
-        # ufunction = self.to_ufunction(uclass=uclass, ufunction=ufunction)
         args = spear.to_json_strings(objs=args)
 
         if uobject != 0:
-            uclass = 0
+            assert uclass == 0
+        if uclass != 0:
+            assert uobject == 0
 
         convert_func = lambda result: { k: spear.PropertyValue(value=spear.try_to_dict(v.value), type_id=v.type_id) for k, v in result.items() }
         return self.entry_point_caller.call_on_game_thread("call_function", convert_func, uobject, uclass, ufunction, args, world_context_object)
@@ -1137,14 +1138,3 @@ class UnrealService(spear.Service):
             return self.get_top_level_service().static_class_descs_by_name[uclass].static_struct
         else:
             assert False
-
-    # def to_ufunction(self, uclass, ufunction):
-    #     uclass = self.to_uclass(uclass=uclass)
-    #     if isinstance(ufunction, bool):
-    #         assert False
-    #     elif isinstance(ufunction, numbers.Integral):
-    #         return ufunction
-    #     elif isinstance(ufunction, str):
-    #         return self.get_top_level_service().static_class_descs_by_handle[uclass].ufunctions[ufunction]
-    #     else:
-    #         assert False

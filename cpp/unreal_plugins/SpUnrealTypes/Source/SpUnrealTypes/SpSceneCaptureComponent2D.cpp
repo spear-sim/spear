@@ -1,6 +1,6 @@
 //
-// Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-// Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+// Copyright (c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+// Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
 #include "SpUnrealTypes/SpSceneCaptureComponent2D.h"
@@ -181,9 +181,26 @@ void USpSceneCaptureComponent2D::Initialize()
 
     TextureTarget = NewObject<UTextureRenderTarget2D>(this);
     SP_ASSERT(TextureTarget);
-    TextureTarget->RenderTargetFormat = TextureRenderTargetFormat;
-    TextureTarget->ClearColor = FLinearColor(255, 0, 255); // bright pink
+    TextureTarget->ClearColor = FLinearColor(1.0f, 0.0f, 1.0f, 1.0f); // bright pink
+
+    if (bOverrideTextureRenderTargetFormat) {
+        TextureTarget->RenderTargetFormat = TextureRenderTargetFormat;
+    }
+
     TextureTarget->InitAutoFormat(Width, Height);
+
+    if (bOverrideTextureRenderTargetSRGB) {
+        TextureTarget->SRGB = bTextureRenderTargetSRGB;
+    }
+
+    if (bOverrideTextureRenderTargetForceLinearGamma) {
+        TextureTarget->bForceLinearGamma = bTextureRenderTargetForceLinearGamma;
+    }
+
+    if (bOverrideTextureRenderTargetGamma) {
+        TextureTarget->TargetGamma = TextureRenderTargetGamma;
+    }
+
     bool clear_render_target = true;
     TextureTarget->UpdateResourceImmediate(clear_render_target);
 
@@ -284,15 +301,20 @@ void USpSceneCaptureComponent2D::Initialize()
             // ReadPixels assumes 4 channels per pixel, 1 uint8 per channel
             if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::UInt8) {
 
+                FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(ERangeCompressionMode::RCM_UNorm);
+                if (bOverrideSetLinearToGamma) {
+                    read_surface_flags.SetLinearToGamma(bSetLinearToGamma);
+                }
+
                 UnrealArrayUpdateDataPtrScope scope(scratchpad_color_, dest_ptr, num_bytes);
-                bool success = texture_render_target_resource->ReadPixels(scratchpad_color_);
+                bool success = texture_render_target_resource->ReadPixels(scratchpad_color_, read_surface_flags);
                 SP_ASSERT(success);
 
             // ReadFloat16Pixels assumes 4 channels per pixel, 1 float16 per channel
             } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float16) {
 
-                ERangeCompressionMode compression_mode = ERangeCompressionMode::RCM_MinMax;
-                FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(compression_mode);
+                // we never want to change floating point values when reading
+                FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(ERangeCompressionMode::RCM_MinMax);
                 read_surface_flags.SetLinearToGamma(false);
 
                 UnrealArrayUpdateDataPtrScope scope(scratchpad_float_16_color_, dest_ptr, num_bytes);
@@ -303,8 +325,8 @@ void USpSceneCaptureComponent2D::Initialize()
             } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32) {
                 SP_ASSERT(BOOST_OS_WINDOWS, "ERROR: NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32 is only supported on Windows.");
 
-                ERangeCompressionMode compression_mode = ERangeCompressionMode::RCM_MinMax;
-                FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(compression_mode);
+                // we never want to change floating point values when reading
+                FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(ERangeCompressionMode::RCM_MinMax);
                 read_surface_flags.SetLinearToGamma(false);
 
                 UnrealArrayUpdateDataPtrScope scope(scratchpad_linear_color_, dest_ptr, num_bytes);

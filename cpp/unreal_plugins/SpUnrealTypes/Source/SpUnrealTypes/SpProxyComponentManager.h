@@ -1,6 +1,6 @@
 //
-// Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-// Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+// Copyright (c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+// Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
 #pragma once
@@ -73,34 +73,18 @@ public:
     bool IsInitialized() const;
 
 protected:
-    virtual void initialize();
-    virtual void terminate();
-    virtual void update();
+    virtual void initializeImpl();
+    virtual void terminateImpl();
 
-    virtual void findAndDestroyAllProxyComponentTypes(const std::vector<AActor*>& actors) {};
-    virtual void findAndRegisterAllProxyComponentTypes(const std::vector<AActor*>& actors) {};
-    virtual void findAndUnregisterAllProxyComponentTypes(const std::vector<AActor*>& actors) {};
-    virtual void unregisterProxyComponents(const std::vector<std::string>& component_names) {};
+    virtual void requestCreateAndRegisterProxyComponentsForAllTypes(const std::vector<AActor*>& actors) {};
+    virtual void requestUnregisterAndDestroyProxyComponentsForAllTypes(const std::vector<AActor*>& actors) {};
+    virtual void requestDestroyProxyComponentsForAllTypes(const std::vector<AActor*>& actors) {};
 
-    template <CComponent TComponent>
-    void findAndDestroyProxyComponents(const std::vector<AActor*>& actors)
-    {
-        // Find all proxy components of type TComponent that belong to this manager.
-        std::vector<TComponent*> proxy_components = Std::toVector<TComponent*>(
-            getComponents<TComponent>(actors) |
-            std::views::filter([](auto component) { return Std::contains(Unreal::toStdString(component->GetName()), "SP_PROXY_COMPONENT"); }) |
-            std::views::filter([this](auto component) { return Std::contains(Unreal::toStdString(component->GetName()), getManagerName()); }));
-
-        // Destroy proxy components.
-        for (auto proxy_component : proxy_components) {
-            SP_LOG("Destroying component: ", getLongComponentName(GetWorld(), proxy_component));
-            destroyComponent(proxy_component);
-        }
-    }
+    virtual void unregisterAndDestroyProxyComponents(const std::vector<std::string>& component_names) {};
 
     template <typename TComponent, typename TProxyComponentRegistry> requires
         CProxyComponentRegistryForComponent<TProxyComponentRegistry, TComponent>
-    void findAndRegisterProxyComponents(const std::vector<AActor*>& actors, TProxyComponentRegistry* proxy_component_registry)
+    void requestCreateAndRegisterProxyComponents(const std::vector<AActor*>& actors, TProxyComponentRegistry* proxy_component_registry)
     {
         SP_ASSERT(proxy_component_registry);
 
@@ -110,64 +94,24 @@ protected:
             std::views::filter([](auto component) { return !Std::contains(Unreal::toStdString(component->GetName()), "SP_PROXY_COMPONENT"); }) |
             std::views::transform([this](auto component) { return std::make_pair(getLongComponentName(GetWorld(), component), component); }));
 
-        // Find components to register: present in the world, of type TComponent, proxy_component_registry
-        // thinks it should be registered, and not yet registered.
-        std::map<std::string, TComponent*> components_to_register = Std::toMap<std::string, TComponent*>(
+        // Find components to create and register: present in the world, of type TComponent, proxy_component_registry thinks it should be registered, and not yet registered.
+        std::map<std::string, TComponent*> components_to_create_and_register = Std::toMap<std::string, TComponent*>(
             non_proxy_components |
             std::views::filter([proxy_component_registry](auto& pair) { auto& [name, component] = pair; return proxy_component_registry->shouldRegisterProxyComponent(component); }) |
             std::views::filter([this](auto& pair) { auto& [name, component] = pair; return !Std::containsKey(name_to_proxy_component_desc_map_, name); }));
 
-        // Register components.
-        registerComponents<TComponent>(components_to_register, proxy_component_registry);
+        // Create and register proxy components.
+        createAndRegisterProxyComponents(components_to_create_and_register, proxy_component_registry);
     }
 
     template <typename TComponent, typename TProxyComponentRegistry> requires
         CProxyComponentRegistryForComponent<TProxyComponentRegistry, TComponent>
-    void findAndUnregisterProxyComponents(const std::vector<AActor*>& actors, TProxyComponentRegistry* proxy_component_registry)
-    {
-        SP_ASSERT(proxy_component_registry);
-
-        // Find all non-proxy components of type TComponent.
-        std::map<std::string, TComponent*> non_proxy_components = Std::toMap<std::string, TComponent*>(
-            getComponents<TComponent>(actors) |
-            std::views::filter([](auto component) { return !Std::contains(Unreal::toStdString(component->GetName()), "SP_PROXY_COMPONENT"); }) |
-            std::views::transform([this](auto component) { return std::make_pair(getLongComponentName(GetWorld(), component), component); }));
-
-        std::vector<std::string> proxy_components_to_unregister;
-
-        // Find components to unregister: registered, of type TComponent, and not present in the world.
-        proxy_components_to_unregister = Std::toVector<std::string>(
-            name_to_proxy_component_desc_map_ |
-            std::views::filter([](auto& pair) { auto& [name, proxy_component_desc] = pair; return proxy_component_desc.proxy_component_->IsA(TComponent::StaticClass()); }) |
-            std::views::filter([&non_proxy_components](auto& pair) { auto& [name, proxy_component_desc] = pair; return !Std::containsKey(non_proxy_components, name); }) |
-            std::views::transform([this](auto& pair) { auto& [name, proxy_component_desc] = pair; return name; }));
-
-        // Unregister components.
-        unregisterProxyComponents(proxy_components_to_unregister, proxy_component_registry);
-
-        // Find components to unregister: registered, of type TComponent, and proxy_component_registry thinks
-        // it should be unregistered.
-        proxy_components_to_unregister = Std::toVector<std::string>(
-            name_to_proxy_component_desc_map_ |
-            std::views::filter([proxy_component_registry](auto& pair) {
-                auto& [name, proxy_component_desc] = pair;
-                return proxy_component_registry->shouldUnregisterProxyComponent(static_cast<TComponent*>(proxy_component_desc.component_), proxy_component_desc.user_data_); }) |
-            std::views::transform([this](auto& pair) {
-                auto& [name, proxy_component_desc] = pair;
-                return name; }));
-
-        // Unregister components.
-        unregisterProxyComponents(proxy_components_to_unregister, proxy_component_registry);
-    }
-
-    template <typename TComponent, typename TProxyComponentRegistry> requires
-        CProxyComponentRegistryForComponent<TProxyComponentRegistry, TComponent>
-    void registerComponents(const std::map<std::string, TComponent*>& components, TProxyComponentRegistry* proxy_component_registry)
+    void createAndRegisterProxyComponents(const std::map<std::string, TComponent*>& components, TProxyComponentRegistry* proxy_component_registry)
     {
         SP_ASSERT(proxy_component_registry);
 
         for (auto& [name, component] : components) {
-            SP_LOG("Registering component: ", name);
+            SP_LOG("Creating component: ", name);
 
             uint32_t proxy_component_desc_id = getId(ProxyComponentDescIdInitialGuess, proxy_component_desc_ids_);
             ProxyComponentDescIdInitialGuess = proxy_component_desc_id + 1;
@@ -180,6 +124,7 @@ protected:
             TComponent* proxy_component = createComponent<TComponent>(this, component, proxy_component_name);
             SP_ASSERT(proxy_component);
 
+            SP_LOG("Registering component: ", name);
             void* user_data = proxy_component_registry->registerProxyComponent(proxy_component, component);
 
             ProxyComponentDesc proxy_component_desc;
@@ -197,9 +142,47 @@ protected:
         }
     }
 
+    template <typename TComponent, typename TProxyComponentRegistry> requires
+        CProxyComponentRegistryForComponent<TProxyComponentRegistry, TComponent>
+    void requestUnregisterAndDestroyProxyComponents(const std::vector<AActor*>& actors, TProxyComponentRegistry* proxy_component_registry)
+    {
+        SP_ASSERT(proxy_component_registry);
+
+        std::vector<std::string> proxy_components_to_unregister_and_destroy;
+
+        // Find all non-proxy components of type TComponent.
+        std::map<std::string, TComponent*> non_proxy_components = Std::toMap<std::string, TComponent*>(
+            getComponents<TComponent>(actors) |
+            std::views::filter([](auto component) { return !Std::contains(Unreal::toStdString(component->GetName()), "SP_PROXY_COMPONENT"); }) |
+            std::views::transform([this](auto component) { return std::make_pair(getLongComponentName(GetWorld(), component), component); }));
+
+        // Find components to unregister and destroy: registered, of type TComponent, and not present in the world.
+        proxy_components_to_unregister_and_destroy = Std::toVector<std::string>(
+            name_to_proxy_component_desc_map_ |
+            std::views::filter([](auto& pair) { auto& [name, proxy_component_desc] = pair; return proxy_component_desc.proxy_component_->IsA(TComponent::StaticClass()); }) |
+            std::views::filter([&non_proxy_components](auto& pair) { auto& [name, proxy_component_desc] = pair; return !Std::containsKey(non_proxy_components, name); }) |
+            std::views::transform([this](auto& pair) { auto& [name, proxy_component_desc] = pair; return name; }));
+
+        // Unregister and destroy components.
+        unregisterAndDestroyProxyComponents(proxy_components_to_unregister_and_destroy, proxy_component_registry);
+
+        // Find components to unregister: registered, of type TComponent, and proxy_component_registry thinks it should be unregistered.
+        proxy_components_to_unregister_and_destroy = Std::toVector<std::string>(
+            name_to_proxy_component_desc_map_ |
+            std::views::filter([proxy_component_registry](auto& pair) {
+                auto& [name, proxy_component_desc] = pair;
+                return proxy_component_registry->shouldUnregisterProxyComponent(static_cast<TComponent*>(proxy_component_desc.component_), proxy_component_desc.user_data_); }) |
+            std::views::transform([this](auto& pair) {
+                auto& [name, proxy_component_desc] = pair;
+                return name; }));
+
+        // Unregister and destroy components.
+        unregisterAndDestroyProxyComponents(proxy_components_to_unregister_and_destroy, proxy_component_registry);
+    }
+
     template <typename TProxyComponentRegistry> requires
         CProxyComponentRegistry<TProxyComponentRegistry>
-    void unregisterProxyComponents(const std::vector<std::string>& component_names, TProxyComponentRegistry* proxy_component_registry)
+    void unregisterAndDestroyProxyComponents(const std::vector<std::string>& component_names, TProxyComponentRegistry* proxy_component_registry)
     {
         SP_ASSERT(proxy_component_registry);
 
@@ -214,6 +197,7 @@ protected:
 
             proxy_component_registry->unregisterProxyComponent(proxy_component_desc.user_data_);
 
+            SP_LOG("Destroying component: ", name);
             destroyComponent(proxy_component_desc.proxy_component_);
 
             Std::remove(proxy_component_desc_ids_, proxy_component_desc_id);
@@ -221,6 +205,29 @@ protected:
 
             RegisteredProxyComponentDescIds.Remove(proxy_component_desc_id);
             RegisteredProxyComponentDescNames.Remove(Unreal::toFString(name));
+        }
+    }
+
+    template <CComponent TComponent>
+    void requestDestroyProxyComponents(const std::vector<AActor*>& actors)
+    {
+        // Find all proxy components of type TComponent that belong to this manager.
+        std::vector<TComponent*> proxy_components = Std::toVector<TComponent*>(
+            getComponents<TComponent>(actors) |
+            std::views::filter([](auto component) { return Std::contains(Unreal::toStdString(component->GetName()), "SP_PROXY_COMPONENT"); }) |
+            std::views::filter([this](auto component) { return Std::contains(Unreal::toStdString(component->GetName()), getManagerName()); }));
+
+        // Destroy proxy components.
+        destroyProxyComponents(proxy_components);
+    }
+
+    template <CComponent TComponent>
+    void destroyProxyComponents(const std::vector<TComponent*>& components)
+    {
+        // Destroy proxy components.
+        for (auto component : components) {
+            SP_LOG("Destroying component: ", getLongComponentName(GetWorld(), component));
+            destroyComponent(component);
         }
     }
 

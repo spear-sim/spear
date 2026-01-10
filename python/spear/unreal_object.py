@@ -1,6 +1,6 @@
 #
-# Copyright(c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-# Copyright(c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+# Copyright (c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+# Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
 import spear
@@ -264,7 +264,7 @@ class UnrealObject:
                         spear.log(f"    kwargs:           {kwargs}")
                     assert len(args) == 0
                     ufunction = self._static_class_desc.ufunctions[attr_name]
-                    result = self._unreal_service.call_function(uobject=self.uobject, uclass=self.uclass, ufunction=ufunction, args=kwargs, world_context_object=world_context_object)
+                    result = self._unreal_service.call_function(uobject=self.uobject, uclass=0, ufunction=ufunction, args=kwargs, world_context_object=world_context_object)
                     if as_raw_dict is not None:
                         assert as_dict is None
                         assert as_value is None
