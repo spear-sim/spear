@@ -4,7 +4,7 @@ _Figure: SPEAR includes a camera entity that can render a superset of the data m
 
 # SPEAR: A Simulator for Photorealistic Embodied AI Research
 
-Interactive simulators have become powerful tools for training embodied agents and generating synthetic visual data, but existing simulators suffer from limited generality, expressiveness, and performance. We address these limitations by introducing _SPEAR: A Simulator for Photorealistic Embodied AI Research_.
+Interactive simulators have become powerful tools for training embodied agents and generating synthetic visual data, but existing photorealistic simulators suffer from limited generality, expressiveness, and performance. We address these limitations by introducing _SPEAR: A Simulator for Photorealistic Embodied AI Research_.
 
 At its core, SPEAR is a Python library that can connect to, and programmatically control, any Unreal Engine (UE) application via a set of modular UE C++ plugins. In contrast to existing Python libraries for accessing the Unreal Engine, SPEAR offers several novel features that are useful in embodied AI, robotics, and computer vision applications.
 
