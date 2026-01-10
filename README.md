@@ -8,8 +8,8 @@ At its core, SPEAR is a Python library that can connect to, and programmatically
 
 - SPEAR can call any C++ function, and can access any C++ variable, on any game entity, and any game subsystem, provided the function or variable has been exposed to Unreal's visual scripting language. There are over 13K functions and over 44K variables that are already exposed in this way in the UE codebase, and it is trivial to expose new functions and variables by adding a single-line annotation next to a function or variable in a C++ header (see example below).
 - SPEAR provides efficient zero-copy NumPy interoperability, e.g., SPEAR can copy rendered images from the GPU directly into a user's NumPy array at 55 fps at 1080p resolution without requiring any intermediate data copying.
-- SPEAR includes a camera entity that can render a strict superset of the data modalities available in the Hypersim dataset (see image above), including fine-grained 24-bit entity IDs that can be used for both material segmentation and object segmentation tasks.
-- SPEAR can programmatically control standalone shipping games, live simulations running inside the Unreal Editor, Unreal's path tracer, and the Unreal Editor itself, all through a clean, unified, and Pythonic interface.
+- SPEAR includes a camera entity that can render a superset of the data modalities available in the Hypersim dataset (see image above), including fine-grained 24-bit entity IDs that can be used for both material segmentation and object segmentation tasks.
+- SPEAR can programmatically control standalone shipping games that are already running, live simulations running inside the Unreal Editor, Unreal's path tracer, and the Unreal Editor itself, all through a clean, unified, and Pythonic interface.
 - The SPEAR Python library can be used in any Python environment, even on a remote machine, and does not need to be invoked from inside the Unreal Editor.
 
 The code and assets in this repository are released under an [MIT License](LICENSE.txt) and a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0) respectively.
@@ -26,8 +26,8 @@ spear.configure_system(config=config)
 instance = spear.Instance(config=config)
 game = instance.get_game()
 
-# the code in a single instance.begin_frame() block executes sequentially at the
-# beginning of a single UE frame
+# the code in a single instance.begin_frame() block executes sequentially at the beginning
+# of a single UE frame
 with instance.begin_frame():
 
     # spawn object
@@ -62,12 +62,15 @@ with instance.begin_frame():
 with instance.end_frame():
     pass
 
+# close the instance (optional)
+instance.close()
+
 spear.log("Done.")
 ```
 
 ## Exposing Functions and Variables
 
-SPEAR can call any function and access any variable that is exposed to Unreal's visual scripting system. New functions and variables can be exposed simply by adding `UFUNCTION()` and `UPROPERTY()` annotations to a C++ header in an Unreal project or plugin as follows. No other registration steps or code boilerplate is required.
+SPEAR can call any function and access any variable that is exposed to Unreal's visual scripting system. New functions and variables can be exposed simply by adding `UFUNCTION()` and `UPROPERTY()` annotations to a C++ header in an Unreal project or plugin as follows. No additional registration steps or code boilerplate is required.
 
 ```cpp
 // MyBlueprintFunctionLibrary.h
