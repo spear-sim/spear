@@ -9,7 +9,7 @@ At its core, SPEAR is a Python library that can connect to, and programmatically
 1. SPEAR can call any C++ function, and can access any C++ variable, on any game entity, and any game subsystem, provided the function or variable has been exposed to Unreal's visual scripting language. There are over 13K functions and over 44K variables that are already exposed in this way in the UE codebase, and new functions and variables can be exposed by adding a single-line annotation next to a function or variable in a C++ header.
 2. SPEAR provides fast NumPy interoperability, e.g., SPEAR can copy rendered images from the GPU directly into a user's NumPy array at 55 fps at 1080p resolution without requiring any intermediate data copying.
 3. SPEAR includes a camera entity that can render a strict superset of the data modalities available in the Hypersim dataset (see image above), including fine-grained 24-bit entity IDs that can be used for material segmentation and object segmentation tasks.
-4. SPEAR can control standalone games, live simulations running inside the Unreal Editor, and the Unreal Editor itself, all through a clean, unified, and Pythonic interface.
+4. SPEAR can programmatically control standalone games, live simulations running inside the Unreal Editor, Unreal's path tracer, and the Unreal Editor itself, all through a clean, unified, and Pythonic interface.
 5. The SPEAR Python library can be used in any Python environment, even on a remote machine, and does not need to be invoked from inside the Unreal Editor.
 
 The code and assets in this repository are released under an [MIT License](LICENSE.txt) and a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0) respectively.
@@ -64,6 +64,60 @@ with instance.end_frame():
 spear.log("Done.")
 ```
 
+## Exposing Functions and Variables
+
+SPEAR can call any function and access any variable that is exposed to Unreal's visual scripting system. Exposing functions and variables can be achieved simply by adding `UFUNCTION()` and `UPROPERTY()` annotations to a C++ header in an Unreal project or plugin as follows.
+
+```cpp
+// MyBlueprintFunctionLibrary.h
+
+#pragma once
+
+#include "Containers/UnrealString.h"              // FString
+#include "HAL/Platform.h"                         // TEXT
+#include "Kismet/BlueprintFunctionLibrary.h"      // UBlueprintFunctionLibrary
+#include "MyBlueprintFunctionLibrary.generated.h" // required by Unreal
+
+UCLASS()
+class UMyBlueprintFunctionLibrary : public UBlueprintFunctionLibrary
+{
+    GENERATED_BODY()
+public:
+    UFUNCTION()
+    static FString HelloWorld(const FString& UserString) { return FString::Printf(TEXT("UserString is %s"), *UserString); }
+    UPROPERTY()
+    static uint32 MyInt = 42;
+};
+```
+
+This function and variable can be accessed through SPEAR as follows.
+
+```python
+with instance.begin_frame():
+
+    # get the default object for the UMyBlueprintFunctionLibrary class, which can can be used to call
+    # static C++ functions and access static C++ variables on the UMyBlueprintFunctionLibrary class
+    my_blueprint_function_library = game.get_unreal_object(uclass="UMyBlueprintFunctionLibrary")
+
+    # returns "UserString is Hello world!"
+    return_string = my_blueprint_function_library.HelloWorld(UserString="Hello World!")
+
+    # returns 42
+    my_int = my_blueprint_function_library.MyInt.get()
+
+    # MyInt is now 42
+    my_blueprint_function_library.MyInt = 0
+
+with instance.end_frame():
+    pass
+```
+
+## Further Documentation
+
+- Our [Getting Started](docs/getting_started.md) tutorial explains how to set up your development environment.
+- Our [Running our Example Applications](docs/running_our_example_applications.md) tutorial explains how to run our example applications.
+- Our [Importing and Exporting Assets](docs/importing_and_exporting_assets.md) tutorial explains how to import and export assets.
+
 ## Citation
 
 If you find SPEAR useful in your research, please cite this repository as follows:
@@ -77,9 +131,3 @@ If you find SPEAR useful in your research, please cite this repository as follow
     howpublished = {\url{http://github.com/spear-sim/spear}}
 }
 ```
-
-## Documentation
-
-- Our [Getting Started](docs/getting_started.md) tutorial explains how to set up your development environment.
-- Our [Running our Example Applications](docs/running_our_example_applications.md) tutorial explains how to run our example applications.
-- Our [Importing and Exporting Assets](docs/importing_and_exporting_assets.md) tutorial explains how to import and export assets.
