@@ -1,4 +1,4 @@
-![teaser](https://github.com/spear-sim/spear/assets/2341965/6db5ff27-4d12-4097-8f7e-e31bd479844e)
+![teaser](https://github.com/user-attachments/assets/88210f82-7436-407c-906d-cf4c2bff74de)
 
 # SPEAR: A Simulator for Photorealistic Embodied AI Research
 
