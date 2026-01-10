@@ -13,7 +13,7 @@ At its core, SPEAR is a Python library that can connect to, and programmatically
 - SPEAR includes a camera entity that can render a superset of the data modalities available in the Hypersim dataset (see image above), including fine-grained 24-bit entity IDs that can be used for both material segmentation and object segmentation tasks.
 - SPEAR can programmatically control standalone shipping games that are already running, live simulations running inside the Unreal Editor, Unreal's path tracer, and the Unreal Editor itself, all through a clean, unified, and Pythonic interface.
 - SPEAR gives users precise control over how their UE work is executed across UE frames, while also allowing users to execute complex graphs of UE work (i.e., with arbitrary data dependencies among work items) deterministically within a single frame.
-- The SPEAR Python library can be used in any Python environment, even on a remote machine, and does not need to be invoked from inside the Unreal Editor.
+- SPEAR can be used in any Python environment, even on a remote machine, and does not need to be invoked from inside the Unreal Editor.
 
 The code and assets in this repository are released under an [MIT License](LICENSE.txt) and a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0) respectively.
 
