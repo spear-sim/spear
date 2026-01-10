@@ -19,6 +19,8 @@ The code and assets in this repository are released under an [MIT License](LICEN
 
 ## A Simple SPEAR Program
 
+We demonstrate the SPEAR programming model with a simple example program that spawns an object, prints some debug information about the object, and adjusts its size. We can see the effect of running this program in the figure below.
+
 ```python
 import pprint
 import spear
@@ -110,7 +112,7 @@ public:
 };
 ```
 
-After the `UFUNCTION(...)` and `UPROPERTY(...)` annotations have been added to the C++ header above, `MyFunction` and `MyProperty` can be accessed in Python as follows.
+After the `UFUNCTION(...)` and `UPROPERTY(...)` annotations have been added to the C++ header above, `MyFunction` and `MyProperty` can be accessed in Python using SPEAR as follows.
 
 ```python
 with instance.begin_frame():
