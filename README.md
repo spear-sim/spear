@@ -57,7 +57,7 @@ with instance.begin_frame():
     spear.log("root_component.get_properties():")
     pprint.pprint(root_component.get_properties())
 
-# the code in an instance.end_frame() block executes at the end of the same frame as the block above
+# the code in an instance.end_frame() block executes at the end of the same UE frame as above
 with instance.end_frame():
     pass
 
