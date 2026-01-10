@@ -84,9 +84,9 @@ class UMyBlueprintFunctionLibrary : public UBlueprintFunctionLibrary
     GENERATED_BODY()
 public:
     UFUNCTION()
-    static FString HelloWorld(const FString& UserString) { return FString::Printf(TEXT("UserString is %s"), *UserString); }
+    static FString MyFunction(const FString& UserString) { return FString::Printf(TEXT("UserString is %s"), *UserString); }
     UPROPERTY()
-    static uint32 MyInt = 42;
+    static uint32 MyProperty = 42;
 };
 ```
 
@@ -99,14 +99,14 @@ with instance.begin_frame():
     # static C++ functions and access static C++ variables on the UMyBlueprintFunctionLibrary class
     my_blueprint_function_library = game.get_unreal_object(uclass="UMyBlueprintFunctionLibrary")
 
-    # returns "UserString is Hello world!"
-    return_string = my_blueprint_function_library.HelloWorld(UserString="Hello World!")
+    # returns "UserString is Hello world"
+    return_string = my_blueprint_function_library.MyFunction(UserString="Hello World")
 
     # returns 42
-    my_int = my_blueprint_function_library.MyInt.get()
+    my_int = my_blueprint_function_library.MyProperty.get()
 
     # MyInt is now 42
-    my_blueprint_function_library.MyInt = 0
+    my_blueprint_function_library.MyProperty = 0
 
 with instance.end_frame():
     pass
