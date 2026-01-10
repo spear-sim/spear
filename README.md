@@ -22,8 +22,7 @@ import pprint
 import spear
 
 # create an instance representing a UE application; this will either launch a new UE
-# application or connect to an existing one depending on how user_config.yaml is
-# configured
+# application or connect to an existing one depending on how user_config.yaml is defined
 config = spear.get_config(user_config_files=["user_config.yaml"])
 spear.configure_system(config=config)
 instance = spear.Instance(config=config)
