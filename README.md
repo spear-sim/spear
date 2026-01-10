@@ -2,13 +2,13 @@
 
 # SPEAR: A Simulator for Photorealistic Embodied AI Research
 
-Interactive simulators are becoming powerful tools for training embodied agents and generating synthetic visual data, but existing simulators suffer from limited generality, expressiveness, and performance. We address these limitations by introducing _SPEAR: A Simulator for Photorealistic Embodied AI Research_.
+Interactive simulators have become powerful tools for training embodied agents and generating synthetic visual data, but existing simulators suffer from limited generality, expressiveness, and performance. We address these limitations by introducing _SPEAR: A Simulator for Photorealistic Embodied AI Research_.
 
-At its core, SPEAR is a Python library that can connect to, and programmatically control, any Unreal Engine (UE) application via a set of modular UE C++ plugins. In contrast to existing Python libraries for accessing the Unreal Engine, SPEAR offers several novel features that are useful in embodied AI, robotics, and computer vision training pipelines.
+At its core, SPEAR is a Python library that can connect to, and programmatically control, any Unreal Engine (UE) application via a set of modular UE C++ plugins. In contrast to existing Python libraries for accessing the Unreal Engine, SPEAR offers several novel features that are useful in embodied AI, robotics, and computer vision applications.
 
-1. SPEAR can call any C++ function, and can access any C++ variable, on any game entity, and any engine subsystem, in the entire Unreal Engine codebase, provided the function or variable has been exposed to Unreal's visual scripting language. There are over 13K functions such functions and over 44K such variables in the UE codebase, and new functions and variables can be exposed by adding a single-line annotation next to a function or variable declaration in a C++ header.
-2. SPEAR provides fast NumPy interoperability, e.g., SPEAR can copy rendered images directly from the GPU into a user's NumPy array at 55 fps at 1080p resolution without requiring any intermediate data copying.
-3. SPEAR includes a camera sensor entity that can render a strict superset of the data modalities available in the Hypersim (see image above), including fine-grained 24-bit entity IDs that can be used for material segmentation and object segmentation tasks.
+1. SPEAR can call any C++ function, and can access any C++ variable, on any game entity, and any game subsystem, provided the function or variable has been exposed to Unreal's visual scripting language. There are over 13K functions and over 44K variables that are already exposed in this way in the UE codebase, and new functions and variables can be exposed by adding a single-line annotation next to a function or variable in a C++ header.
+2. SPEAR provides fast NumPy interoperability, e.g., SPEAR can copy rendered images from the GPU directly into a user's NumPy array at 55 fps at 1080p resolution without requiring any intermediate data copying.
+3. SPEAR includes a camera entity that can render a strict superset of the data modalities available in the Hypersim dataset (see image above), including fine-grained 24-bit entity IDs that can be used for material segmentation and object segmentation tasks.
 4. SPEAR can control standalone games, live simulations running inside the Unreal Editor, and the Unreal Editor itself, all through a clean, unified, and Pythonic interface.
 5. The SPEAR Python library can be used in any Python environment, even on a remote machine, and does not need to be invoked from inside the Unreal Editor.
 
@@ -26,6 +26,7 @@ spear.configure_system(config=config)
 instance = spear.Instance(config=config)
 game = instance.get_game()
 
+# the code in an instance.begin_frame() block will execute sequentially at the beginning of a single Unreal frame
 with instance.begin_frame():
 
     # spawn object
@@ -35,28 +36,28 @@ with instance.begin_frame():
     # print all available functions and properties and other debug info for bp_axes
     bp_axes.print_debug_info()
 
-    # get all object properties as nested Python dictionaries
+    # get all object properties for bp_axes as nested Python dictionaries
     spear.log("bp_axes.get_properties():")
     pprint.pprint(bp_axes.get_properties())
 
-    # get scale
+    # get scale by calling the AActor::GetActorScale3D C++ function
     scale = bp_axes.GetActorScale3D()
     spear.log("scale: ", scale)
 
-    # set scale and get it again to verify that it has been updated
+    # set scale by calling the AActor::SetActorScale3D C++ function
     bp_axes.SetActorScale3D(NewScale3D={"X": 4.0, "Y": 4.0, "Z": 4.0})
-    scale = bp_axes.GetActorScale3D()
-    spear.log("scale: ", scale)
 
-    # get the RootComponent property on bp_axes as a Python object
+    # get the RootComponent property on bp_axes as a Python object with its own callable functions
     root_component = bp_axes.RootComponent.get()
 
     # print all available functions and properties and other debug info for root_component
     root_component.print_debug_info()
 
+    # get all object properties for root_component as nested Python dictionaries
     spear.log("root_component.get_properties():")
     pprint.pprint(root_component.get_properties())
 
+# the code in an instance.end_frame() block will execute sequentially at the end of the same frame as the block above
 with instance.end_frame():
     pass
 
