@@ -26,7 +26,7 @@ spear.configure_system(config=config)
 instance = spear.Instance(config=config)
 game = instance.get_game()
 
-# the code in an instance.begin_frame() block will execute sequentially at the beginning of a single Unreal frame
+# the code in an instance.begin_frame() block executes at the start of a single UE frame
 with instance.begin_frame():
 
     # spawn object
@@ -57,7 +57,7 @@ with instance.begin_frame():
     spear.log("root_component.get_properties():")
     pprint.pprint(root_component.get_properties())
 
-# the code in an instance.end_frame() block will execute sequentially at the end of the same frame as the block above
+# the code in an instance.end_frame() block executes at the end of the same frame as the block above
 with instance.end_frame():
     pass
 
