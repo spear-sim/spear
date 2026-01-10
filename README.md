@@ -47,7 +47,7 @@ with instance.begin_frame():
     # set scale by calling the AActor::SetActorScale3D C++ function
     bp_axes.SetActorScale3D(NewScale3D={"X": 4.0, "Y": 4.0, "Z": 4.0})
 
-    # get the RootComponent property on bp_axes as a Python object with its own callable functions
+    # get the RootComponent property on bp_axes as a Python object with its own functions
     root_component = bp_axes.RootComponent.get()
 
     # print all available functions and properties and other debug info for root_component
