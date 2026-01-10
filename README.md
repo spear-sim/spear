@@ -83,9 +83,9 @@ spear.log("Done.")
 
 _Figure: An Unreal scene before (left) and after (right) running the example program above, demonstrating that the `BP_Axes` entity is spawned as expected after running the program._
 
-## Exposing Functions and Variables
+## Exposing New Functions and Variables to SPEAR
 
-SPEAR can call any function and access any variable that is exposed to Unreal's visual scripting language (Blueprints). New functions and variables can be exposed simply by adding `UFUNCTION(...)` and `UPROPERTY(...)` annotations to a C++ header in an Unreal project or plugin as follows. No additional registration steps or code boilerplate is required.
+SPEAR can call any function and access any variable that is exposed to Unreal's visual scripting language (i.e., Blueprints). New functions and variables can be exposed to Blueprints simply by adding `UFUNCTION(...)` and `UPROPERTY(...)` annotations to a C++ header in an Unreal project or plugin as follows. No additional registration steps or code boilerplate is required.
 
 ```cpp
 // MyBlueprintFunctionLibrary.h
@@ -110,7 +110,7 @@ public:
 };
 ```
 
-This function and variable can be accessed through SPEAR as follows.
+After the `UFUNCTION(...)` and `UPROPERTY(...)` annotations have been added to the C++ header above, `MyFunction` and `MyProperty` can be accessed in Python as follows.
 
 ```python
 with instance.begin_frame():
