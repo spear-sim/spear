@@ -104,10 +104,10 @@ class UMyBlueprintFunctionLibrary : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public:
-    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    UFUNCTION(BlueprintCallable)
     static FString MyFunction(const FString& UserString) { return FString::Printf(TEXT("UserString is %s"), *UserString); }
 
-    UPROPERTY(BlueprintReadWrite, Category="SPEAR")
+    UPROPERTY(BlueprintReadWrite)
     uint32 MyProperty = 42;
 };
 ```
