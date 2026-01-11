@@ -9,8 +9,8 @@ Interactive simulators have become powerful tools for training embodied agents a
 At its core, SPEAR is a Python library that can connect to, and programmatically control, any Unreal Engine (UE) application via a set of modular UE C++ plugins. In contrast to existing Python libraries for accessing the Unreal Engine, SPEAR offers several novel features that are useful in embodied AI, robotics, and computer vision applications.
 
 - SPEAR can call any C++ function, and can access any C++ variable, on any game entity, and any game subsystem, provided the function or variable has been exposed to Unreal's visual scripting system, referred to in the UE ecosystem as the _Blueprint System_ or simply as _Blueprints_. There are over 13K functions and over 44K variables that are already exposed to Blueprints (and are therefore accessible in SPEAR) in the UE codebase, and it is trivial to expose new functions and variables by adding a single-line annotation next to a function or variable in a C++ header (see example below).
-- SPEAR provides efficient zero-copy NumPy interoperability, e.g., SPEAR can copy 1080p photorealistic beauty images (see image above) from the GPU directly into a user's NumPy array at 55 frames per second without requiring any intermediate data copying.
-- SPEAR includes a camera entity that can render a superset of the ground truth modalities available in the Hypersim dataset (see image above), including fine-grained 24-bit entity IDs that can be used for both material segmentation and object segmentation tasks, and a non-Lambertian intrinsic image decomposition consisting of diffuse reflectance, diffuse illumination, and a non-diffuse residual term.
+- SPEAR provides efficient zero-copy NumPy interoperability, e.g., SPEAR can copy 1080p photorealistic beauty images (see figure above) from the GPU directly into a user's NumPy array at 55 frames per second without requiring any intermediate data copying.
+- SPEAR includes a camera entity that can render a superset of the ground truth modalities available in the Hypersim dataset (see figure above), including fine-grained 24-bit entity IDs that can be used for both material segmentation and object segmentation tasks, and a non-Lambertian intrinsic image decomposition consisting of diffuse reflectance, diffuse illumination, and a non-diffuse residual term.
 - SPEAR can programmatically control standalone shipping games that are already running, live simulations running inside the Unreal Editor, Unreal's path tracer, and the Unreal Editor itself, all through a clean, unified, and Pythonic interface.
 - SPEAR gives users precise control over how their UE work is executed across UE frames, while also allowing users to execute complex work graphs (i.e., with arbitrary data dependencies among work items) deterministically within a single frame.
 - SPEAR can be used in any Python environment, even on a remote machine, and does not need to be invoked from inside the Unreal Editor.
@@ -134,7 +134,7 @@ with instance.end_frame():
     pass
 ```
 
-This design makes it trivial for a user to expose custom C++ functionality to SPEAR without needing to modify SPEAR code, since the user's custom C++ functionality can be defined in their own projects and plugins.
+This extensibility model makes it trivial for a user to expose custom C++ functionality to SPEAR without needing to modify SPEAR code, since the user's custom C++ functionality can be defined in their own projects and plugins.
 
 ## More Documentation
 
