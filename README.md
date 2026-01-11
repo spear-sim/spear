@@ -126,7 +126,7 @@ with instance.begin_frame():
     # returns 42
     my_property = my_blueprint_function_library.MyProperty.get()
 
-    # MyProperty is now 43
+    # set MyProperty to 43
     my_blueprint_function_library.MyProperty = 43
 
 with instance.end_frame():
