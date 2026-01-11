@@ -120,7 +120,7 @@ with instance.begin_frame():
     # get the default object for the UMyBlueprintFunctionLibrary class
     my_blueprint_function_library = game.get_unreal_object(uclass="UMyBlueprintFunctionLibrary")
 
-    # returns "UserString is Hello world"
+    # returns "UserString is Hello World"
     return_value = my_blueprint_function_library.MyFunction(UserString="Hello World")
 
     # returns 42
