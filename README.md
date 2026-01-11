@@ -8,7 +8,7 @@ Interactive simulators have become powerful tools for training embodied agents a
 
 At its core, SPEAR is a Python library that can connect to, and programmatically control, any Unreal Engine (UE) application via a set of modular UE C++ plugins. In contrast to existing Python libraries for accessing the Unreal Engine, SPEAR offers several novel features that are useful in embodied AI, robotics, and computer vision applications.
 
-- SPEAR can call any C++ function, and can access any C++ variable, on any game entity, and any game subsystem, provided the function or variable has been exposed to Unreal's visual scripting language (known in the UE ecosystem as _Blueprints_). There are over 13K functions and over 44K variables that are already exposed to Blueprints (and are therefore accessible in SPEAR) in the UE codebase, and it is trivial to expose new functions and variables by adding a single-line annotation next to a function or variable in a C++ header (see example below).
+- SPEAR can call any C++ function, and can access any C++ variable, on any game entity, and any game subsystem, provided the function or variable has been exposed to Unreal's visual scripting system, referred to in the UE ecosystem as the _Blueprint System_ or simply as _Blueprints_. There are over 13K functions and over 44K variables that are already exposed to Blueprints (and are therefore accessible in SPEAR) in the UE codebase, and it is trivial to expose new functions and variables by adding a single-line annotation next to a function or variable in a C++ header (see example below).
 - SPEAR provides efficient zero-copy NumPy interoperability, e.g., SPEAR can copy 1080p photorealistic beauty images (see image above) from the GPU directly into a user's NumPy array at 55 frames per second without requiring any intermediate data copying.
 - SPEAR includes a camera entity that can render a superset of the data modalities available in the Hypersim dataset (see image above), including fine-grained 24-bit entity IDs that can be used for both material segmentation and object segmentation tasks, and a non-Lambertian intrinsic image decomposition consisting of diffuse reflectance, diffuse illumination, and a non-diffuse residual term.
 - SPEAR can programmatically control standalone shipping games that are already running, live simulations running inside the Unreal Editor, Unreal's path tracer, and the Unreal Editor itself, all through a clean, unified, and Pythonic interface.
@@ -87,7 +87,7 @@ _Figure: An Unreal scene before (left) and after (right) running the example pro
 
 ## Exposing New Functions and Variables to SPEAR
 
-SPEAR can call any function and access any variable that is exposed to Unreal's visual scripting language (i.e., Blueprints). New functions and variables can be exposed to Blueprints simply by adding `UFUNCTION(...)` and `UPROPERTY(...)` annotations to a C++ header in an Unreal project or plugin as follows. No additional registration steps or code boilerplate is required.
+SPEAR can call any function and access any variable that is exposed to Unreal's visual scripting system (i.e., Blueprints). New functions and variables can be exposed to Blueprints simply by adding `UFUNCTION(...)` and `UPROPERTY(...)` annotations to a C++ header in any Unreal project or plugin as follows. No additional registration steps or code boilerplate is required.
 
 ```cpp
 // MyBlueprintFunctionLibrary.h
@@ -133,6 +133,8 @@ with instance.begin_frame():
 with instance.end_frame():
     pass
 ```
+
+This design makes it trivial for a user to expose custom C++ functionality to SPEAR without needing to modify SPEAR code, since the user's custom C++ functionality can be defined in their own projects and plugins.
 
 ## More Documentation
 
