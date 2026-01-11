@@ -62,8 +62,8 @@ if __name__ == "__main__":
     # each instance.begin_frame() block must be paired with a corresponding instance.end_frame() block; the
     # code in the end_frame() block executes in the same UE frame as the begin_frame() block, except it
     # executes at the end of the frame instead of the beginning; this is useful, e.g., in embodied AI
-    # applications, where it is desirable to input a control action at the beginning of a simulation frame
-    # and collect an observation at the end of the same frame
+    # applications, where it is desirable to provide a control action at the beginning of a simulation frame
+    # and retrieve an observation at the end of the same frame
     with instance.end_frame():
         pass
 
