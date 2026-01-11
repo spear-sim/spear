@@ -107,7 +107,7 @@ public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static FString MyFunction(const FString& UserString) { return FString::Printf(TEXT("UserString is %s"), *UserString); }
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    UPROPERTY(BlueprintReadWrite, Category="SPEAR")
     uint32 MyProperty = 42;
 };
 ```
