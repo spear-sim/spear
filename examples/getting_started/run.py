@@ -51,9 +51,6 @@ if __name__ == "__main__":
         # get the RootComponent property on bp_axes as a Python object with its own functions
         root_component = bp_axes.RootComponent.get()
 
-        # print all available functions and properties and other debug info for root_component
-        root_component.print_debug_info()
-
         # get all object properties for root_component as nested Python dictionaries
         spear.log("root_component: ", root_component)
         spear.log("root_component.get_properties():")
