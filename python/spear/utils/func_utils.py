@@ -447,12 +447,12 @@ def try_to_dict(json_string, default_value=None):
 
 # Convert to a Ptr object that can be passed to a service from a handle.
 def to_ptr(handle):
-    return Ptr(handle)
+    return Ptr(handle=handle)
 
 
 # Convert to a Shared object that can be passed to a service from a NumPy array backed by shared memory.
 def to_shared(array, shared_memory_handle):
-    return Shared(array, shared_memory_handle)
+    return Shared(array=array, shared_memory_handle=shared_memory_handle)
 
 
 # Convert to a packed array from a NumPy array.

@@ -53,45 +53,44 @@ private:
 
     void initialize()
     {
-        SP_ASSERT(GetWorld());
-        SP_ASSERT(Player);
+        if (Player && GetWorld()) {
+            Player->OnStop.AddDynamic(this, &USpLevelSequenceDirector::StopHandler);
+            Player->OnFinished.AddDynamic(this, &USpLevelSequenceDirector::FinishedHandler);
 
-        Player->OnStop.AddDynamic(this, &USpLevelSequenceDirector::StopHandler);
-        Player->OnFinished.AddDynamic(this, &USpLevelSequenceDirector::FinishedHandler);
+            for (auto& level_instance_path : LevelInstancePaths) {
+                std::string level_instance_path_str = Unreal::toStdString(level_instance_path);
+                SP_LOG("Loading: ", level_instance_path_str);
 
-        for (auto& level_instance_path : LevelInstancePaths) {
-            std::string level_instance_path_str = Unreal::toStdString(level_instance_path);
-            SP_LOG("Loading: ", level_instance_path_str);
-
-            bool success = false;
-            ULevelStreamingDynamic* level_instance = ULevelStreamingDynamic::LoadLevelInstance(GetWorld(), level_instance_path, FVector::ZeroVector, FRotator::ZeroRotator, success);
-            if (success) {
-                SP_ASSERT(level_instance);
-                Std::insert(level_instances_, level_instance_path_str, level_instance);
-            } else {
-                SP_ASSERT(!level_instance);
-                SP_LOG("WARNING: Load unsuccessful: ", level_instance_path_str);
+                bool success = false;
+                ULevelStreamingDynamic* level_instance = ULevelStreamingDynamic::LoadLevelInstance(GetWorld(), level_instance_path, FVector::ZeroVector, FRotator::ZeroRotator, success);
+                if (success) {
+                    SP_ASSERT(level_instance);
+                    Std::insert(level_instances_, level_instance_path_str, level_instance);
+                } else {
+                    SP_ASSERT(!level_instance);
+                    SP_LOG("WARNING: Load unsuccessful: ", level_instance_path_str);
+                }
             }
         }
     }
 
     void terminate()
     {
-        SP_ASSERT(Player);
+        if (Player && GetWorld()) {
+            for (auto& level_instance_path : LevelInstancePaths) {
+                std::string level_instance_path_str = Unreal::toStdString(level_instance_path);
+                SP_LOG("Unloading: ", level_instance_path_str);
 
-        for (auto& level_instance_path : LevelInstancePaths) {
-            std::string level_instance_path_str = Unreal::toStdString(level_instance_path);
-            SP_LOG("Unloading: ", level_instance_path_str);
+                bool success = false;
+                ULevelStreamingDynamic* level_instance = level_instances_.at(level_instance_path_str);
+                SP_ASSERT(level_instance);
+                level_instance->SetIsRequestingUnloadAndRemoval(true);
+                Std::remove(level_instances_, level_instance_path_str);
+            }
 
-            bool success = false;
-            ULevelStreamingDynamic* level_instance = level_instances_.at(level_instance_path_str);
-            SP_ASSERT(level_instance);
-            level_instance->SetIsRequestingUnloadAndRemoval(true);
-            Std::remove(level_instances_, level_instance_path_str);
+            Player->OnStop.RemoveDynamic(this, &USpLevelSequenceDirector::StopHandler);
+            Player->OnFinished.RemoveDynamic(this, &USpLevelSequenceDirector::FinishedHandler);
         }
-
-        Player->OnStop.RemoveDynamic(this, &USpLevelSequenceDirector::StopHandler);
-        Player->OnFinished.RemoveDynamic(this, &USpLevelSequenceDirector::FinishedHandler);
     }
 
     std::map<std::string, ULevelStreamingDynamic*> level_instances_;

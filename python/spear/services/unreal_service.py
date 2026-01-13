@@ -37,9 +37,6 @@ class UnrealService(spear.Service):
         self._static_struct_descs = self.get_static_struct_descs()
         self._static_class_descs = self.get_static_class_descs()
 
-        # self.static_struct_descs_by_handle = { desc.static_struct: desc for desc in self._static_struct_descs }
-        # self.static_class_descs_by_handle = { desc.static_struct: desc for desc in self._static_class_descs }
-
         self.static_struct_descs_by_name = { desc.name: desc for desc in self._static_struct_descs }
         self.static_class_descs_by_name = { desc.name: desc for desc in self._static_class_descs }
 
