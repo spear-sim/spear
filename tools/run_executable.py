@@ -11,6 +11,7 @@ import time
 
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--config-file")
 parser.add_argument("--executable")
 parser.add_argument("--graphics-adaptor")
 parser.add_argument("--map")
@@ -33,14 +34,22 @@ if __name__ == "__main__":
         else:
             assert False
 
+    if args.config_file is not None:
+        user_config_files = [os.path.realpath(os.path.join(os.path.dirname(__file__), args.config_file))]
+    else:
+        user_config_files = []
+
     # load config
-    config = spear.get_config()
+    config = spear.get_config(user_config_files=user_config_files)
 
     # modify config params
     config.defrost()
 
     config.SPEAR.LAUNCH_MODE = "game"
     config.SPEAR.INSTANCE.GAME_EXECUTABLE = executable
+
+    if args.graphics_adaptor is not None:
+        config.SPEAR.INSTANCE.COMMAND_LINE_ARGS.graphics_adaptor = args.graphics_adaptor
 
     if args.map is not None:
         config.SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_GAME_DEFAULT_MAP = True
@@ -52,9 +61,6 @@ if __name__ == "__main__":
 
     if args.vk_icd_filenames is not None:
         config.SPEAR.ENVIRONMENT_VARS.VK_ICD_FILENAMES = args.vk_icd_filenames
-
-    if args.graphics_adaptor is not None:
-        config.SPEAR.INSTANCE.COMMAND_LINE_ARGS.graphics_adaptor = args.graphics_adaptor
 
     config.freeze()
 

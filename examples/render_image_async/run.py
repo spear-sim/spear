@@ -13,12 +13,13 @@ import spear
 import time
 
 
-if __name__ == "__main__":
+parser = argparse.ArgumentParser()
+parser.add_argument("--benchmark", action="store_true")
+parser.add_argument("--no-shared-memory", action="store_true")
+args = parser.parse_args()
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--benchmark", action="store_true")
-    parser.add_argument("--no-shared-memory", action="store_true")
-    args = parser.parse_args()
+
+if __name__ == "__main__":
 
     shared_memory = not args.no_shared_memory
 
@@ -46,8 +47,12 @@ if __name__ == "__main__":
         player_camera_manager = player_controller.PlayerCameraManager.get()
         view_target_pov = player_camera_manager.ViewTarget.POV.get()
 
-        post_process_volume = game.unreal_service.find_actor_by_class(uclass="APostProcessVolume")
-        post_process_volume_settings = post_process_volume.Settings.get()
+        post_process_volume_settings = None
+        post_process_volumes = game.unreal_service.find_actors_by_class(uclass="APostProcessVolume")
+        if len(post_process_volumes) == 1:
+            post_process_volume = post_process_volumes[0]
+            spear.log("Found unique post-process volume: ", post_process_volume)
+            post_process_volume_settings = post_process_volume.Settings.get()
 
         # GetViewportSize(...) modifies arguments in-place, so we need as_dict=True so all arguments get returned
         sp_game_viewport = game.get_unreal_object(uclass="USpGameViewportClient")
@@ -73,7 +78,8 @@ if __name__ == "__main__":
         final_tone_curve_hdr_component.Width = viewport_size_x
         final_tone_curve_hdr_component.Height = viewport_size_y
         final_tone_curve_hdr_component.FOVAngle = fov_adjusted_degrees
-        final_tone_curve_hdr_component.PostProcessSettings = post_process_volume_settings
+        if post_process_volume_settings is not None:
+            final_tone_curve_hdr_component.PostProcessSettings = post_process_volume_settings
 
         if not shared_memory:
             final_tone_curve_hdr_component.bUseSharedMemory = False
@@ -97,8 +103,6 @@ if __name__ == "__main__":
         data_bundle = future.get()
 
     # show debug data now that we're outside of instance.end_frame()
-    spear.log('data_bundle["arrays"]["data"]: ')
-    spear.log_no_prefix(data_bundle["arrays"]["data"])
     spear.log('data_bundle["arrays"]["data"].flags["ALIGNED"]: ', data_bundle["arrays"]["data"].flags["ALIGNED"])
 
     # show rendered frame now that we're outside of with instance.end_frame()

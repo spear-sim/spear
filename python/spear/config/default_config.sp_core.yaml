@@ -15,5 +15,11 @@ SP_CORE:
   # being used by another instance.
   SHARED_MEMORY_INITIAL_UNIQUE_ID: 0
 
-  # Print info when searching for actors and components by name or by path.
-  PRINT_FIND_ACTOR_AND_GET_COMPONENT_DEBUG_INFO: False
+  # We allow the user to override the ini values in the project Config directory. These overrides must happen
+  # very early in the application lifecycle because they can affect the initialization of engine systems that
+  # can't be changed at runtime, e.g., which graphics API to use, etc.
+  EDITOR_INI_CONFIG_VALUES: {}
+  ENGINE_INI_CONFIG_VALUES: {}
+  GAME_INI_CONFIG_VALUES: {}
+  GAME_USER_SETTINGS_INI_CONFIG_VALUES: {}
+  INPUT_INI_CONFIG_VALUES: {}

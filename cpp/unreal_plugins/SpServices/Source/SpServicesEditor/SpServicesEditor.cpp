@@ -22,6 +22,7 @@
 void SpServicesEditor::StartupModule()
 {
     SP_ASSERT_MODULE_LOADED("SpCore");
+    SP_ASSERT_MODULE_LOADED("SpCoreEditor");
     SP_ASSERT_MODULE_LOADED("SpServices");
     SP_LOG_CURRENT_FUNCTION();
 

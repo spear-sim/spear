@@ -10,6 +10,7 @@
 #include <concepts>    // std::constructible_from, std::derived_from, std::same_as
 #include <map>
 #include <string>
+#include <ranges>      // std::views::transform
 #include <type_traits> // std::remove_pointer_t, std::underlying_type_t
 #include <utility>     // std::forward
 #include <vector>
@@ -344,8 +345,17 @@ public:
     // Get object tags
     //
 
-    static std::vector<std::string> getTags(const AActor* actor);
-    static std::vector<std::string> getTags(const UActorComponent* component);
+    static std::vector<std::string> getTags(const AActor* actor)
+    {
+        SP_ASSERT(actor);
+        return Std::toVector<std::string>(toStdVector(actor->Tags) | std::views::transform([](const auto& tag) { return toStdString(tag); }));
+    }
+
+    static std::vector<std::string> getTags(const UActorComponent* component)
+    {
+        SP_ASSERT(component);
+        return Std::toVector<std::string>(toStdVector(component->ComponentTags) | std::views::transform([](const auto& tag) { return toStdString(tag); }));
+    }
 
     //
     // Helper functions for working with enums
@@ -503,14 +513,41 @@ public:
     // String functions
     //
 
-    static std::string toStdString(const FName& str);
-    static std::string toStdString(const FString& str);
-    static std::string toStdString(const FText& str);
-    static std::string toStdString(const TCHAR* str);
+    static std::string toStdString(const FName& str)
+    {
+        return toStdString(str.ToString()); // str.ToString() converts FName to FString
+    }
 
-    static FName toFName(const std::string& str);
-    static FString toFString(const std::string& str);
-    static FText toFText(const std::string& str);
+    static std::string toStdString(const FString& str)
+    {
+        return std::string(TCHAR_TO_UTF8(*str)); // the * operator for FString returns a pointer to the underlying TCHAR array
+    }
+
+    static std::string toStdString(const FText& str)
+    {
+        return toStdString(str.ToString()); // str.ToString() converts FText to FString
+    }
+
+    static std::string toStdString(const TCHAR* str)
+    {
+        SP_ASSERT(str);
+        return std::string(TCHAR_TO_UTF8(str));
+    }
+
+    static FName toFName(const std::string& str)
+    {
+        return FName(str.c_str());
+    }
+
+    static FString toFString(const std::string& str)
+    {
+        return FString(UTF8_TO_TCHAR(str.c_str()));
+    }
+
+    static FText toFText(const std::string& str)
+    {
+        return FText::FromString(toFString(str));
+    }
 
     struct TCharPtr
     {

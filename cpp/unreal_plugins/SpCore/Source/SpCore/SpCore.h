@@ -6,8 +6,10 @@
 #pragma once
 
 #include <memory> // std::unique_ptr
+#include <string>
 
 #include <Modules/ModuleInterface.h>
+#include <Containers/UnrealString.h> // FString>
 
 #include "SpCore/SharedMemory.h"
 
@@ -18,6 +20,14 @@ public:
     void ShutdownModule() override;
 
 private:
+    void requestWaitForKeyboardInput() const;
+
+    void initializeSharedMemory();
+    void terminateSharedMemory();
+
+    void initializeIniConfigs() const;
+    void initializeIniConfig(const FString& ini_config_filename, const std::string& ini_config_name, const std::string& sp_config_key) const;
+
     void registerClasses() const;
     void unregisterClasses() const;
 

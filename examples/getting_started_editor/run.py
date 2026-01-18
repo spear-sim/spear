@@ -8,17 +8,17 @@ import spear
 import unreal
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--load-level", action="store_true")
+parser.add_argument("--save-level", action="store_true")
+args = parser.parse_args()
+
 asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
 editor_actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 level_editor_subsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
 
 
 if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--load-level", action="store_true")
-    parser.add_argument("--save-level", action="store_true")
-    args = parser.parse_args()
 
     # Explicitly load "/SpContent" into the asset registry, since it won't be loaded by default if we are
     # running as a commandlet, i.e., when the editor is invoked from the command-line with "-run=pythonscript"

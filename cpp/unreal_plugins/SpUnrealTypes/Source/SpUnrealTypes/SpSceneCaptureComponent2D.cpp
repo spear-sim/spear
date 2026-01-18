@@ -145,10 +145,6 @@ USpSceneCaptureComponent2D::USpSceneCaptureComponent2D()
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.bTickEvenWhenPaused = true;
 
-    // ensure that the underlying view state data is stable across frames so FSpSceneViewExtensionBase can
-    // match view state data to this component
-    bAlwaysPersistRenderingState = true;
-
     SetVisibility(false); // disable rendering to texture
 }
 
@@ -233,6 +229,10 @@ void USpSceneCaptureComponent2D::Initialize()
             ShowOnlyActors.Add(primitive_proxy_component_manager);
         }
     }
+
+    // ensure that the underlying view state data is stable across frames so FSpSceneViewExtensionBase can
+    // match view state data to this component
+    bAlwaysPersistRenderingState = true;
 
     if (bUseSceneViewExtension) {
         scene_view_extension_ = FSceneViewExtensions::NewExtension<FSpSceneViewExtension>(this);
@@ -365,8 +365,8 @@ void USpSceneCaptureComponent2D::Terminate()
         shared_memory_region_ = nullptr;
     }
 
-    SetVisibility(false); // disable rendering to texture
     bAlwaysPersistRenderingState = false;
+    SetVisibility(false); // disable rendering to texture
 
     scene_view_extension_ = nullptr;
 

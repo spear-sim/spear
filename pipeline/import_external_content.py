@@ -19,7 +19,7 @@ parser.add_argument("--source-content-path", required=True)
 parser.add_argument("--source-unreal-project-dir", required=True)
 parser.add_argument("--unreal-engine-dir", required=True)
 parser.add_argument("--destination-unreal-project-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
-parser.add_argument("--temp-dir", default="tmp")
+parser.add_argument("--temp-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "tmp")))
 args = parser.parse_args()
 
 assert os.path.exists(args.unreal_engine_dir)

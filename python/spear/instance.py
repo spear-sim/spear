@@ -363,6 +363,10 @@ class Instance():
                     launch_executable_internal_paths = glob.glob(launch_executable_internal_template)
                 else:
                     assert False
+                spear.log(launch_executable_name_no_ext)
+                spear.log(launch_executable_dir_internal)
+                spear.log(launch_executable_internal_template)
+                spear.log(launch_executable_internal_paths)
                 assert len(launch_executable_internal_paths) == 1
                 launch_executable_internal = launch_executable_internal_paths[0]
             elif sys.platform == "darwin":
@@ -392,7 +396,7 @@ class Instance():
                 else:
                     launch_args.append(f"-{arg}={value}")
 
-            launch_args.append(f"-config_file={temp_config_file}")
+            launch_args.append(f"-sp-config-file={temp_config_file}")
             cmd = [launch_executable_internal] + launch_args
 
             spear.log("        Launching executable with the following command-line arguments:")
@@ -493,6 +497,7 @@ class Instance():
             else:            
                 spear.log(f"        ERROR: engine_globals_service.call_sync_on_worker_thread.get_id returned {pid} but the PID of the process we just launched is {self._process.pid}. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables and try launching again.")
                 self._terminate_client(verbose=True, log_prefix="        ")
+                self._force_kill_unreal_instance()
                 assert False
         else:
             assert False

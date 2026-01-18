@@ -11,6 +11,14 @@ import spear.utils.editor_utils
 import unreal
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--filesystem-base-dir", required=True)
+parser.add_argument("--content-base-dir", required=True)
+parser.add_argument("--begin-index", type=int)
+parser.add_argument("--num-indices", type=int)
+parser.add_argument("--skip-if-exists", action="store_true")
+args = parser.parse_args()
+
 asset_editor_subsystem = unreal.get_editor_subsystem(unreal.AssetEditorSubsystem)
 asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
 editor_asset_subsystem = unreal.get_editor_subsystem(unreal.EditorAssetSubsystem)
@@ -48,14 +56,6 @@ def replace_chars(string, replace_chars_map):
 
 
 if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--filesystem-base-dir", required=True)
-    parser.add_argument("--content-base-dir", required=True)
-    parser.add_argument("--begin-index", type=int)
-    parser.add_argument("--num-indices", type=int)
-    parser.add_argument("--skip-if-exists", action="store_true")
-    args = parser.parse_args()
 
     # get dirty state because we will need to restore it later
     is_editor_world_dirty = unreal.SpPackage.is_dirty(package=editor_world.get_outer())

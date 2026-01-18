@@ -44,8 +44,12 @@ if __name__ == "__main__":
         bp_multi_view_camera_sensor.K2_SetActorLocation(NewLocation=camera_location)
         bp_multi_view_camera_sensor.K2_SetActorRotation(NewRotation=camera_rotator)
 
-        post_process_volume = game.unreal_service.find_actor_by_class(uclass="APostProcessVolume")
-        post_process_volume_settings = post_process_volume.Settings.get()
+        post_process_volume_settings = None
+        post_process_volumes = game.unreal_service.find_actors_by_class(uclass="APostProcessVolume")
+        if len(post_process_volumes) == 1:
+            post_process_volume = post_process_volumes[0]
+            spear.log("Found unique post-process volume: ", post_process_volume)
+            post_process_volume_settings = post_process_volume.Settings.get()
 
         # configure components
         component_names = sorted(components.keys())
@@ -57,7 +61,8 @@ if __name__ == "__main__":
             else:
                 assert component.Width.get() == component_width
                 assert component.Height.get() == component_height
-            component.PostProcessSettings = post_process_volume_settings
+            if post_process_volume_settings is not None:
+                component.PostProcessSettings = post_process_volume_settings
             component.Initialize()
             component.initialize_sp_funcs()
 

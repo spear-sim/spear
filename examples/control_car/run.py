@@ -33,7 +33,7 @@ if __name__ == "__main__":
         # car = game.unreal_service.spawn_actor(
         #     uclass=bp_car_uclass,
         #     location={"X": -2500.0, "Y": -9330.0, "Z": 20.0},
-        #     rotation={"Roll": 0.0, "Pitch": 0.0, "Yaw": 0.0},
+        #     rotation={"Pitch": 0.0, "Yaw": 0.0, "Roll": 0.0},
         #     spawn_parameters={"Name": "Agent", "SpawnCollisionHandlingOverride": "AlwaysSpawn"})
         #
 

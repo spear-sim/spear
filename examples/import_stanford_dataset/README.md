@@ -7,7 +7,7 @@ In this example application, we demonstrate how to import custom objects from th
 python download_dataset.py
 
 # create symlink within the SpearSim project named Stanford
-python ../../tools/update_symlinks_for_external_content.py --create --external-content-dir stanford --unreal-project-content-dir Stanford
+python ../../tools/update_symlink_for_external_content.py --create --external-content-dir stanford --unreal-project-content-dir Stanford
 
 # import mesh data into the Stanford directory and generate list of assets to include within PAK file
 python ../../tools/run_editor_script.py --script /absolute/path/to/spear/examples/import_stanford_dataset/import_dataset.py --unreal-engine-dir path/to/UE_5.5
@@ -16,7 +16,7 @@ python ../../tools/run_editor_script.py --script /absolute/path/to/spear/example
 python ../../tools/build_pak.py --pak-file pak/stanford.pak --cook-dirs-file csv/cook_dirs.csv --include-assets-file csv/include_assets.csv --unreal-engine-dir path/to/UE_5.5
 
 # remove Stanford symlink to restore the SpearSim project to its original state
-python ../../tools/update_symlinks_for_external_content.py --remove --external-content-dir stanford --unreal-project-content-dir Stanford
+python ../../tools/update_symlink_for_external_content.py --remove --external-content-dir stanford --unreal-project-content-dir Stanford
 ```
 
 Once you have built a PAK file, you can run this example as follows.

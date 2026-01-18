@@ -10,8 +10,7 @@
 
 #include "SpCore/Config.h"
 
-#include "SpServices/MsgpackAdaptors.h" // needed whenever we include MsgpackUtils.h or Rpclib.h but we can't include it directly from either of these files
-#include "SpServices/Rpclib.h"
+#include "SpServices/MsgpackRpc.h"
 #include "SpServices/Service.h"
 
 class RpcService : public Service

@@ -42,7 +42,11 @@ examples/*/user_config.yaml
 
 examples/control_character/character_poses
 
+examples/control_city_sample/images
+
 examples/control_editor/screenshot.png
+
+examples/control_stackobot/images
 
 examples/import_stanford_dataset/csv
 examples/import_stanford_dataset/download

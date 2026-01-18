@@ -11,16 +11,17 @@ import subprocess
 import sys
 
 
-if __name__ == "__main__":
+parser = argparse.ArgumentParser()
+parser.add_argument("--aws-path-prefix", required=True)
+parser.add_argument("--version-tag", required=True)
+parser.add_argument("--paks-dir")
+parser.add_argument("--upload-executable", action="store_true")
+parser.add_argument("--upload-paks", action="store_true")
+parser.add_argument("--build-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
+args = parser.parse_args()
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--aws-path-prefix", required=True)
-    parser.add_argument("--version-tag", required=True)
-    parser.add_argument("--paks-dir")
-    parser.add_argument("--upload-executable", action="store_true")
-    parser.add_argument("--upload-paks", action="store_true")
-    parser.add_argument("--build-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
-    args = parser.parse_args()
+
+if __name__ == "__main__":
 
     if args.upload_executable:
         assert os.path.exists(args.build_dir)

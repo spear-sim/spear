@@ -12,6 +12,10 @@ import scipy
 import spear
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--mjcf-file", required=True)
+args = parser.parse_args()
+
 name_prefix = "Meshes/05_chair"
 
 
@@ -30,10 +34,6 @@ def unreal_pyr_from_mujoco_quaternion(mujoco_quaternion):
 
 
 if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--mjcf-file", required=True)
-    args = parser.parse_args()
 
     # create SPEAR instance
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])

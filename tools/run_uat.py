@@ -13,12 +13,12 @@ import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--unreal-engine-dir", required=True)
+parser.add_argument("--unreal-project-dir")
 parser.add_argument("--clean-archive-dir", action="store_true")
 parser.add_argument("--skip-cook-default-maps", action="store_true")
 parser.add_argument("--cook-dirs", nargs="*")
 parser.add_argument("--cook-maps", nargs="*")
 parser.add_argument("--build-config", default="Development")
-parser.add_argument("--unreal-project-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
 args, unknown_args = parser.parse_known_args() # get unknown args to pass to RunUAT
 
 assert os.path.exists(args.unreal_engine_dir)
@@ -54,7 +54,11 @@ if __name__ == "__main__":
                 spear.log(f"    sudo chown {current_user} {config_dir}")
                 assert False
 
-    unreal_project_dir = os.path.realpath(args.unreal_project_dir)
+    if args.unreal_project_dir is None:
+        unreal_project_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim"))
+    else:
+        unreal_project_dir = os.path.realpath(args.unreal_project_dir)
+
     uprojects = glob.glob(os.path.realpath(os.path.join(unreal_project_dir, "*.uproject")))
     assert len(uprojects) == 1
     uproject = uprojects[0]
@@ -76,7 +80,7 @@ if __name__ == "__main__":
     # assemble maps to cook
 
     cook_maps = []
-    if not args.skip_cook_default_maps:
+    if args.unreal_project_dir is None and not args.skip_cook_default_maps:
         cook_maps.extend(spear.utils.tool_utils.get_default_maps_to_cook())
     if args.cook_maps is not None:
         cook_maps.extend(args.cook_maps)

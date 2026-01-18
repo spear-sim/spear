@@ -10,6 +10,8 @@
 #include <iostream> // std::cin
 #include <memory>   // std::make_unique, std::unique_ptr
 
+#include <CoreGlobals.h>           // GConfig, GEditorIni, GEngineIni, GGameIni, GGameUserSettingsIni, GInputIni
+#include <Misc/ConfigCacheIni.h>   // GConfig
 #include <Modules/ModuleManager.h> // FDefaultGameModuleImpl, FDefaultModuleImpl, IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
 
 // Unreal classes to register
@@ -19,6 +21,7 @@
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
 #include "SpCore/SharedMemory.h"
+#include "SpCore/Unreal.h"
 #include "SpCore/UnrealClassRegistry.h"
 
 void SpCore::StartupModule()
@@ -27,22 +30,45 @@ void SpCore::StartupModule()
 
     Config::requestInitialize();
 
+    requestWaitForKeyboardInput();
+    initializeSharedMemory();
+    initializeIniConfigs();
+
+    registerClasses();
+
+    SP_LOG_CURRENT_FUNCTION();
+}
+
+void SpCore::ShutdownModule()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    unregisterClasses();
+
+    terminateSharedMemory();
+
+    Config::terminate();
+
+    SP_LOG_CURRENT_FUNCTION();
+}
+
+void SpCore::requestWaitForKeyboardInput() const
+{
     // Wait for keyboard input, which is useful when attempting to attach a debugger to the running executable.
     if (Config::isInitialized() && Config::get<bool>("SP_CORE.WAIT_FOR_KEYBOARD_INPUT_DURING_INITIALIZATION")) {
         SP_LOG("    Press any key to continue...");
         std::cin.get();
         SP_LOG("    Received keyboard input, continuing...");
     }
+}
 
-    // Initialize shared memory system
+void SpCore::initializeSharedMemory()
+{
     uint64_t shared_memory_initial_unique_id = 0;
     if (Config::isInitialized()) {
         shared_memory_initial_unique_id = Config::get<unsigned int>("SP_CORE.SHARED_MEMORY_INITIAL_UNIQUE_ID");
     }
     SharedMemory::initialize(shared_memory_initial_unique_id);
-
-    // Register Unreal classes to be accessible from Python
-    registerClasses();
 
     // Try to create a shared memory region so we can provide a meaningful error message if it fails.
     try {
@@ -52,21 +78,35 @@ void SpCore::StartupModule()
         SP_LOG("    ERROR: Couldn't create a shared memory region. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables, or change SP_CORE.SHARED_MEMORY_INITIAL_UNIQUE_ID to an unused ID, and try launching again.");
         std::rethrow_exception(std::current_exception());
     }
-
-    SP_LOG_CURRENT_FUNCTION(); // useful to see that StartupModule() finishes executing
 }
 
-void SpCore::ShutdownModule()
+void SpCore::terminateSharedMemory()
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     shared_memory_region_ = nullptr;
-
-    unregisterClasses();
     SharedMemory::terminate();
-    Config::terminate();
+}
 
-    SP_LOG_CURRENT_FUNCTION(); // useful to see that ShutdownModule() finishes executing
+void SpCore::initializeIniConfigs() const
+{
+    if (Config::isInitialized()) {
+        initializeIniConfig(GEditorIni,           "GEditorIni",           "SP_CORE.EDITOR_INI_CONFIG_VALUES");
+        initializeIniConfig(GEngineIni,           "GEngineIni",           "SP_CORE.ENGINE_INI_CONFIG_VALUES");
+        initializeIniConfig(GGameIni,             "GGameIni",             "SP_CORE.GAME_INI_CONFIG_VALUES");
+        initializeIniConfig(GGameUserSettingsIni, "GGameUserSettingsIni", "SP_CORE.GAME_USER_SETTINGS_INI_CONFIG_VALUES");
+        initializeIniConfig(GInputIni,            "GInputIni",            "SP_CORE.INPUT_INI_CONFIG_VALUES");
+    }
+}
+
+void SpCore::initializeIniConfig(const FString& ini_config_filename, const std::string& ini_config_name, const std::string& sp_config_key) const
+{
+    SP_ASSERT(Config::isInitialized());
+    std::map<std::string, std::map<std::string, std::string>> ini_config_values = Config::get<std::map<std::string, std::map<std::string, std::string>>>(sp_config_key);
+    for (auto& [ini_config_section_name, ini_config_section_values] : ini_config_values) {
+        for (auto& [ini_config_key, ini_config_value] : ini_config_section_values) {
+            SP_LOG("Setting ", ini_config_name, " (", Unreal::toStdString(ini_config_filename), ") value: [", ini_config_section_name, "] ", ini_config_key, " = ", ini_config_value);
+            GConfig->SetString(Unreal::toTCharPtr(ini_config_section_name), Unreal::toTCharPtr(ini_config_key), Unreal::toTCharPtr(ini_config_value), ini_config_filename);
+        }
+    }
 }
 
 // Normally we would do the operations in registerClasses() and unregisterClasses(...) in the opposite order.

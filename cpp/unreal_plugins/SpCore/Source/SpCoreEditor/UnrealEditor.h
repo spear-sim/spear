@@ -7,13 +7,14 @@
 
 #include <concepts> // std::derived_from
 
-#include <Editor.h>        // GEditor
+#include <Editor.h>       // GEditor
 #include <EditorSubsystem.h>
-#include <HAL/Platform.h>  // SPCOREEDITOR_API
-#include <UObject/Class.h> // UClass
+#include <HAL/Platform.h> // SPCOREEDITOR_API
 
 #include "SpCore/Assert.h"
 #include "SpCore/Unreal.h"
+
+class UClass;
 
 //
 // Concepts for Unreal objects
@@ -35,7 +36,7 @@ public:
     ~UnrealEditor() = delete;
 
     //
-    // Get editor subsystem, uclass can't be const because we need to pass it to GetEngineSubsystemBase(...)
+    // Get editor subsystem, uclass can't be const because we need to pass it to GetEditorSubsystemBase(...)
     //
 
     template <CEditorSubsystem TEditorSubsystem>
@@ -45,9 +46,5 @@ public:
         return GEditor->GetEditorSubsystem<TEditorSubsystem>();
     }
 
-    static UEditorSubsystem* getEditorSubsystemByClass(UClass* uclass)
-    {
-        SP_ASSERT(GEditor);
-        return GEditor->GetEditorSubsystemBase(uclass);
-    }
+    static UEditorSubsystem* getEditorSubsystemByClass(UClass* uclass);
 };

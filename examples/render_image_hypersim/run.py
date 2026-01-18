@@ -19,6 +19,10 @@ import shutil
 import spear
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--teaser", action="store_true")
+args = parser.parse_args()
+
 R_camera_from_world = None
 M_hypersim_camera_from_unreal_camera = np.array([[  0, 1, 0],
                                                  [  0, 0, 1],
@@ -183,10 +187,6 @@ def tone_map_hypersim(img, mask, as_tuple=None):
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--teaser", action="store_true")
-    args = parser.parse_args()
-
     # create output dir
     images_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "images"))
     if os.path.exists(images_dir):
@@ -253,8 +253,12 @@ if __name__ == "__main__":
         R_world_from_camera = spear.to_numpy_matrix_from_rotator(rotator=view_target_pov["rotation"], as_matrix=True)
         R_camera_from_world = R_world_from_camera.T.A
 
-        post_process_volume = game.unreal_service.find_actor_by_class(uclass="APostProcessVolume")
-        post_process_volume_settings = post_process_volume.Settings.get()
+        post_process_volume_settings = None
+        post_process_volumes = game.unreal_service.find_actors_by_class(uclass="APostProcessVolume")
+        if len(post_process_volumes) == 1:
+            post_process_volume = post_process_volumes[0]
+            spear.log("Found unique post-process volume: ", post_process_volume)
+            post_process_volume_settings = post_process_volume.Settings.get()
 
         # GetViewportSize(...) modifies arguments in-place, so we need as_dict=True so all arguments get returned
         sp_game_viewport = game.get_unreal_object(uclass="USpGameViewportClient")
@@ -282,7 +286,8 @@ if __name__ == "__main__":
             component_desc["component"].Height = viewport_size_y*component_desc["spatial_supersampling_factor"]
             component_desc["component"].FOVAngle = fov_adjusted_degrees
 
-        final_tone_curve_hdr_component.PostProcessSettings = post_process_volume_settings
+        if post_process_volume_settings is not None:
+            final_tone_curve_hdr_component.PostProcessSettings = post_process_volume_settings
 
         # need to call Initialize() after spawning our ASpObjectIdsProxyComponentManager instance
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()

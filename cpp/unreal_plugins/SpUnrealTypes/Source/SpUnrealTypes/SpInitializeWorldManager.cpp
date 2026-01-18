@@ -63,7 +63,6 @@ void ASpInitializeWorldManager::BeginPlay()
         SP_LOG("    Overriding game paused...");
         SP_LOG("    Old game paused: ", UGameplayStatics::IsGamePaused(GetWorld()));
         SP_LOG("    New game paused: ", GamePaused);
-
         UGameplayStatics::SetGamePaused(GetWorld(), GamePaused);
     }
 

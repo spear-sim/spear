@@ -36,12 +36,12 @@ void Config::initialize(const std::string& config_file)
 
 void Config::requestInitialize()
 {
-    // if a config file is provided via the -config_file=path/to/config.yaml command-line argument, then load it
+    // if a config file is provided via the -sp-config-file=path/to/config.yaml command-line argument, then load it
     FString config_file;
-    if (FParse::Value(FCommandLine::Get(), Unreal::toTCharPtr("config_file="), config_file)) {
+    if (FParse::Value(FCommandLine::Get(), Unreal::toTCharPtr("-sp-config-file="), config_file)) {
         std::string config_file_str = Unreal::toStdString(config_file);
         SP_LOG_CURRENT_FUNCTION();
-        SP_LOG("    Found config file via the -config_file command-line argument...");
+        SP_LOG("    Found config file via the -sp-config-file command-line argument...");
         initialize(config_file_str);
     }
 }

@@ -15,6 +15,9 @@
 #include "SpCore/AssertModuleLoaded.h"
 #include "SpCore/Log.h"
 
+#include "SpServices/MsgpackRpc.h"
+
+// Service
 #include "SpServices/Service.h"
 
 // RpcService
