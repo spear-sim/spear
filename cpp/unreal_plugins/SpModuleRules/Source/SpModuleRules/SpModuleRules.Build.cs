@@ -42,7 +42,7 @@ public class SpModuleRules : ModuleRules
         string thirdPartyDir = Path.GetFullPath(Path.Combine(ModuleDirectory, "..", "..", "..", "..", "..", "third_party"));
 
         //
-        // Boost
+        // boost
         //
 
         PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost")));

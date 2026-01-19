@@ -188,7 +188,7 @@ if __name__ == "__main__":
         exclude_assets = []
         for exclude_pak_file in exclude_pak_files:
             cmd = [unreal_pak_bin, "-List", exclude_pak_file]
-            spear.log("Executing: ", ' '.join(cmd))
+            spear.log("Executing: ", " ".join(cmd))
             ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
             for line in ps.stdout:
                 line_split = line.split('"')
@@ -295,7 +295,7 @@ if __name__ == "__main__":
             for exclude_pak_file in exclude_pak_files:
                 assert os.path.exists(exclude_pak_file)
                 cmd = [unreal_pak_bin, "-List", exclude_pak_file]
-                spear.log("Executing: ", ' '.join(cmd))
+                spear.log("Executing: ", " ".join(cmd))
                 ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
                 for line in ps.stdout:
                     line_split = line.split('"')

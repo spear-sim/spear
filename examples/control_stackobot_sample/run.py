@@ -19,7 +19,7 @@ parser.add_argument("--skip-save-images", action="store_true")
 parser.add_argument("--skip-read-pixels", action="store_true")
 args = parser.parse_args()
 
-num_frames_per_trajectory_segment = 50
+num_frames_per_trajectory_segment = 30
 
 component_descs = \
 [
@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     # create output dirs
     if not args.skip_read_pixels and not args.skip_save_images:
-        images_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "images", "car"))
+        images_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "images"))
         if os.path.exists(images_dir):
             spear.log("Directory exists, removing: ", images_dir)
             shutil.rmtree(images_dir, ignore_errors=True)
@@ -65,31 +65,11 @@ if __name__ == "__main__":
         # get UGameplayStatics
         gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
 
-        # get UCitySampleBlueprintLibrary
-        city_sample_blueprint_library = game.get_unreal_object(uclass="UCitySampleBlueprintLibrary")
-
         # get player controller
         player_controller = gameplay_statics.GetPlayerController(PlayerIndex=0)
 
         # get character
         character = player_controller.K2_GetPawn()
-        character_transform = character.GetTransform()
-
-        # spawn car and possess
-
-        return_values = city_sample_blueprint_library.FindNearestLaneLocationByName(InPoint=character_transform, LaneName="Vehicle", Radius=10000.0, as_dict=True)
-        success = return_values["ReturnValue"]
-        car_transform = return_values["OutPoint"]
-        assert success
-
-        bp_car_uclass = game.unreal_service.load_class(uclass="AActor", name="/Game/Vehicle/vehCar_vehicle03/BP_vehCar_vehicle03_Sandbox.BP_vehCar_vehicle03_Sandbox_C")
-        bp_car = game.unreal_service.spawn_actor(
-            uclass=bp_car_uclass,
-            location=car_transform["translation"],
-            rotation=car_transform["rotation"],
-            spawn_parameters={"SpawnCollisionHandlingOverride": "AlwaysSpawn"})
-
-        player_controller.Possess(InPawn=bp_car)
 
         # spawn camera sensor
         bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
@@ -113,6 +93,13 @@ if __name__ == "__main__":
         player_camera_manager = player_controller.PlayerCameraManager.get()
         view_target_pov = player_camera_manager.ViewTarget.POV.get()
 
+        post_process_volume_settings = None
+        post_process_volumes = game.unreal_service.find_actors_by_class(uclass="APostProcessVolume")
+        if len(post_process_volumes) == 1:
+            post_process_volume = post_process_volumes[0]
+            spear.log("Found unique post-process volume.")
+            post_process_volume_settings = post_process_volume.Settings.get()
+
         viewport_size_x = 1280
         viewport_size_y = 720
 
@@ -130,6 +117,8 @@ if __name__ == "__main__":
             component_desc["component"].Width = viewport_size_x*component_desc["spatial_supersampling_factor"]
             component_desc["component"].Height = viewport_size_y*component_desc["spatial_supersampling_factor"]
             component_desc["component"].FOVAngle = fov_adjusted_degrees
+            if post_process_volume_settings is not None:
+                component_desc["component"].PostProcessSettings = post_process_volume_settings
 
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
         for component_desc in component_descs:
@@ -140,10 +129,10 @@ if __name__ == "__main__":
         pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing etc accumulate additional information across frames
 
     #
-    # execute warm-up frames to give us a chance to teleport to the spawned car
+    # execute warm-up frames to give Unreal's default auto-exposure settings a chance to settle down
     #
 
-    for _ in range(200):
+    for _ in range(30):
         instance.flush()
 
     #
@@ -153,81 +142,11 @@ if __name__ == "__main__":
     frame_index = 0
 
     #
-    # set throttle
+    # stand still
     #
 
     with instance.begin_frame():
         gameplay_statics.SetGamePaused(bPaused=False)
-
-        # inject input
-        instance.enhanced_input_service.inject_input_for_actor(
-            actor=bp_car,
-            input_action_name="IA_VH_Throttle",
-            trigger_event="Triggered",
-            input_action_value={"ValueType": "Axis1D", "Value": {"X": 10.0, "Y": 0.0, "Z": 0.0}},
-            input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
-
-    with instance.end_frame():
-
-        # read pixels from camera sensor
-        if not args.skip_read_pixels:
-            for component_desc in component_descs:
-                data_bundle = component_desc["component"].read_pixels()
-                component_desc["data"] = data_bundle["arrays"]["data"]
-
-        gameplay_statics.SetGamePaused(bPaused=True)
-
-    if not args.skip_read_pixels and not args.skip_save_images:
-        save_image(images_dir=images_dir, frame_index=frame_index)
-        frame_index = frame_index + 1
-
-    #
-    # drive forwards
-    #
-
-    for i in range(num_frames_per_trajectory_segment):
-        with instance.begin_frame():
-            gameplay_statics.SetGamePaused(bPaused=False)
-
-            # set camera pose
-            view_target_pov = player_camera_manager.ViewTarget.POV.get()
-            bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
-            bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
-
-        with instance.end_frame():
-
-            # read pixels from camera sensor
-            if not args.skip_read_pixels:
-                for component_desc in component_descs:
-                    data_bundle = component_desc["component"].read_pixels()
-                    component_desc["data"] = data_bundle["arrays"]["data"]
-
-            gameplay_statics.SetGamePaused(bPaused=True)
-
-        # save an image for each component using the component's visualizer function
-        for component_desc in component_descs:
-            data = component_desc["data"]
-            image_file = os.path.realpath(os.path.join(images_dir, component_desc["name"], f"{frame_index:04d}.png"))
-            image = component_desc["visualize_func"](data=data)
-            spear.log("Saving image: ", image_file)
-            plt.imsave(image_file, image)
-
-        frame_index = frame_index + 1
-
-    #
-    # unset throttle
-    #
-
-    with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
-
-        # inject input
-        instance.enhanced_input_service.inject_input_for_actor(
-            actor=bp_car,
-            input_action_name="IA_VH_Throttle",
-            trigger_event="Triggered",
-            input_action_value={"ValueType": "Axis1D", "Value": {"X": 0.0, "Y": 0.0, "Z": 0.0}},
-            input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
         # set camera pose
         view_target_pov = player_camera_manager.ViewTarget.POV.get()
@@ -249,10 +168,166 @@ if __name__ == "__main__":
         frame_index = frame_index + 1
 
     #
-    # coast forwards
+    # jump
+    #
+
+    with instance.begin_frame():
+        gameplay_statics.SetGamePaused(bPaused=False)
+
+        # set camera pose
+        view_target_pov = player_camera_manager.ViewTarget.POV.get()
+        bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
+        bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
+
+        # inject input
+        instance.enhanced_input_service.inject_input_for_actor(
+            actor=character,
+            input_action_name="IA_Jump",
+            trigger_event="Started",
+            input_action_value={"ValueType": "Boolean", "Value": {"X": 1.0, "Y": 0.0, "Z": 0.0}},
+            input_action_instance={"TriggerEvent": "Started", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
+
+    with instance.end_frame():
+
+        # read pixels from camera sensor
+        if not args.skip_read_pixels:
+            for component_desc in component_descs:
+                data_bundle = component_desc["component"].read_pixels()
+                component_desc["data"] = data_bundle["arrays"]["data"]
+
+        gameplay_statics.SetGamePaused(bPaused=True)
+
+    if not args.skip_read_pixels and not args.skip_save_images:
+        save_image(images_dir=images_dir, frame_index=frame_index)
+        frame_index = frame_index + 1
+
+    #
+    # coast upwards
     #
 
     for i in range(num_frames_per_trajectory_segment):
+        with instance.begin_frame():
+            gameplay_statics.SetGamePaused(bPaused=False)
+
+            # set camera pose
+            view_target_pov = player_camera_manager.ViewTarget.POV.get()
+            bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
+            bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
+
+        with instance.end_frame():
+
+            # read pixels from camera sensor
+            if not args.skip_read_pixels:
+                for component_desc in component_descs:
+                    data_bundle = component_desc["component"].read_pixels()
+                    component_desc["data"] = data_bundle["arrays"]["data"]
+
+            gameplay_statics.SetGamePaused(bPaused=True)
+
+        if not args.skip_read_pixels and not args.skip_save_images:
+            save_image(images_dir=images_dir, frame_index=frame_index)
+            frame_index = frame_index + 1
+
+    #
+    # use jetpack
+    #
+
+    with instance.begin_frame():
+        gameplay_statics.SetGamePaused(bPaused=False)
+
+        # set camera pose
+        view_target_pov = player_camera_manager.ViewTarget.POV.get()
+        bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
+        bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
+
+        # inject input
+        instance.enhanced_input_service.inject_input_for_actor(
+            actor=character,
+            input_action_name="IA_Jump",
+            trigger_event="Started",
+            input_action_value={"ValueType": "Boolean", "Value": {"X": 1.0, "Y": 0.0, "Z": 0.0}},
+            input_action_instance={"TriggerEvent": "Started", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
+
+    with instance.end_frame():
+
+        # read pixels from camera sensor
+        if not args.skip_read_pixels:
+            for component_desc in component_descs:
+                data_bundle = component_desc["component"].read_pixels()
+                component_desc["data"] = data_bundle["arrays"]["data"]
+
+        gameplay_statics.SetGamePaused(bPaused=True)
+
+    if not args.skip_read_pixels and not args.skip_save_images:
+        save_image(images_dir=images_dir, frame_index=frame_index)
+        frame_index = frame_index + 1
+
+    #
+    # keep using jetpack
+    #
+
+    for i in range(int(0.5*num_frames_per_trajectory_segment)):
+        with instance.begin_frame():
+            gameplay_statics.SetGamePaused(bPaused=False)
+
+            # set camera pose
+            view_target_pov = player_camera_manager.ViewTarget.POV.get()
+            bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
+            bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
+
+        with instance.end_frame():
+
+            # read pixels from camera sensor
+            if not args.skip_read_pixels:
+                for component_desc in component_descs:
+                    data_bundle = component_desc["component"].read_pixels()
+                    component_desc["data"] = data_bundle["arrays"]["data"]
+
+            gameplay_statics.SetGamePaused(bPaused=True)
+
+        if not args.skip_read_pixels and not args.skip_save_images:
+            save_image(images_dir=images_dir, frame_index=frame_index)
+            frame_index = frame_index + 1
+
+    #
+    # stop using jetpack
+    #
+
+    with instance.begin_frame():
+        gameplay_statics.SetGamePaused(bPaused=False)
+
+        # set camera pose
+        view_target_pov = player_camera_manager.ViewTarget.POV.get()
+        bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
+        bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
+
+        # inject input
+        instance.enhanced_input_service.inject_input_for_actor(
+            actor=character,
+            input_action_name="IA_Jump",
+            trigger_event="Completed",
+            input_action_value={"ValueType": "Boolean", "Value": {"X": 1.0, "Y": 0.0, "Z": 0.0}},
+            input_action_instance={"TriggerEvent": "Started", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
+
+    with instance.end_frame():
+
+        # read pixels from camera sensor
+        if not args.skip_read_pixels:
+            for component_desc in component_descs:
+                data_bundle = component_desc["component"].read_pixels()
+                component_desc["data"] = data_bundle["arrays"]["data"]
+
+        gameplay_statics.SetGamePaused(bPaused=True)
+
+    if not args.skip_read_pixels and not args.skip_save_images:
+        save_image(images_dir=images_dir, frame_index=frame_index)
+        frame_index = frame_index + 1
+
+    #
+    # coast down
+    #
+
+    for i in range(int(2*num_frames_per_trajectory_segment)):
         with instance.begin_frame():
             gameplay_statics.SetGamePaused(bPaused=False)
 

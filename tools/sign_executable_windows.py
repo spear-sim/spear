@@ -96,7 +96,7 @@ if __name__ == "__main__":
             f"-totp_secret={args.ssl_totp_secret}",
             f"-input_file_path={input_file}",
             f"-output_dir_path={output_dir_internal}"]
-        spear.log("Executing: ", ' '.join(cmd))
+        spear.log("Executing: ", " ".join(cmd))
         ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
 
         signed = None
@@ -110,7 +110,7 @@ if __name__ == "__main__":
 
         # verify
         cmd = ["signtool", "verify", "/a", "/pa", "/all", "/v", f"{output_file}"]
-        spear.log("Executing: ", ' '.join(cmd))
+        spear.log("Executing: ", " ".join(cmd))
         ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
 
         verified = None

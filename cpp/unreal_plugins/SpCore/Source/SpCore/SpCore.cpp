@@ -17,6 +17,7 @@
 // Unreal classes to register
 #include <AssetRegistry/IAssetRegistry.h>
 #include <Engine/LocalPlayer.h>
+#include <Engine/World.h>
 
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
@@ -116,12 +117,14 @@ void SpCore::initializeIniConfig(const FString& ini_config_filename, const std::
 void SpCore::registerClasses() const
 {
     SP_REGISTER_SUBSYSTEM_PROVIDER_CLASS(ULocalPlayer);
+    SP_REGISTER_SUBSYSTEM_PROVIDER_CLASS(UWorld);
     SP_REGISTER_INTERFACE_CLASS(IAssetRegistry);
 }
 
 void SpCore::unregisterClasses() const
 {
     SP_UNREGISTER_SUBSYSTEM_PROVIDER_CLASS(ULocalPlayer);
+    SP_UNREGISTER_SUBSYSTEM_PROVIDER_CLASS(UWorld);
     SP_UNREGISTER_INTERFACE_CLASS(IAssetRegistry);
 }
 

@@ -15,10 +15,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--unreal-engine-dir", required=True)
 parser.add_argument("--build-target")
 parser.add_argument("--unreal-project-dir")
-parser.add_argument("--clean-archive-dir", action="store_true")
-parser.add_argument("--skip-cook-default-maps", action="store_true")
-parser.add_argument("--cook-dirs", nargs="*")
-parser.add_argument("--cook-maps", nargs="*")
 parser.add_argument("--build-config", default="Development")
 args, unknown_args = parser.parse_known_args() # get unknown args to pass to RunUAT
 
@@ -29,13 +25,13 @@ assert args.build_config in ["Debug", "DebugGame", "Development", "Shipping", "T
 if __name__ == "__main__":
 
     if sys.platform == "win32":
-        run_uat_script = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.bat"))
+        build_script = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "Build.bat"))
         target_platform = "Win64"
     elif sys.platform == "darwin":
-        run_uat_script = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh"))
+        build_script = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "Build.sh"))
         target_platform = "Mac"
     elif sys.platform == "linux":
-        run_uat_script = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh"))
+        build_script = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "Build.sh"))
         target_platform = "Linux"
     else:
         assert False
@@ -71,44 +67,15 @@ if __name__ == "__main__":
     else:
         build_target = args.build_target
 
-    if args.clean_archive_dir and os.path.exists(archive_dir):
-        spear.log("Archive directory exists, removing: ", archive_dir)
-        shutil.rmtree(archive_dir, ignore_errors=True)
-
-    # assemble dirs to cook
-
-    cook_dirs = []
-    if args.cook_dirs is not None:
-        cook_dirs = args.cook_dirs
-
-    cook_dir_args = [ f'-cookdir="{os.path.join(unreal_project_dir, cook_dir)}"' for cook_dir in cook_dirs ]
-
-    # assemble maps to cook
-
-    cook_maps = []
-    if args.unreal_project_dir is None and not args.skip_cook_default_maps:
-        cook_maps.extend(spear.utils.tool_utils.get_default_maps_to_cook())
-    if args.cook_maps is not None:
-        cook_maps.extend(args.cook_maps)
-
-    if len(cook_maps) == 0:
-        cook_maps_arg = []
-    else:
-        cook_maps_arg = [f"-map={'+'.join(cook_maps)}"]
-
     # build project
-    cmd = [
-        run_uat_script,
-        "BuildCookRun",
-        f'-project="{uproject}"',
-        f"-target={build_target}",
-        f"-targetplatform={target_platform}",
-        f"-clientconfig={args.build_config}",
-        f'-archivedirectory="{archive_dir}"'] + \
-        unknown_args + \
-        cook_dir_args + \
-        cook_maps_arg
-    spear.log("Executing: ", " ".join(cmd))
-    subprocess.run(cmd, check=True)
+    cmd = \
+        f'"{build_script}" ' + \
+        f"{build_target} " + \
+        f"{target_platform} " + \
+        f"{args.build_config} " + \
+        f'"{uproject}"' + \
+        " ".join(unknown_args)
+    spear.log("Executing: ", cmd)
+    subprocess.run(cmd, shell=True, check=True) # need shell=True to correctly handle the quotes in cmd
 
     spear.log("Done.")

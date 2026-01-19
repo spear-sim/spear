@@ -46,6 +46,10 @@ examples/control_city_sample/images
 
 examples/control_editor/screenshot.png
 
+examples/control_electric_dreams_sample/images
+
+examples/control_game_animation_sample/images
+
 examples/control_stackobot/images
 
 examples/import_stanford_dataset/csv
@@ -64,6 +68,8 @@ examples/render_image_multi_view/images
 examples/render_image_multi_view/movie.mp4
 
 examples/render_image_editor/screenshot.png
+
+examples/control_stackobot_sample/images
 
 python_ext/BUILD
 

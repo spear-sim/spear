@@ -43,6 +43,10 @@
             "Enabled": true
         },
         {
+            "Name": "PCG",
+            "Enabled": true
+        },        
+        {
             "Name": "SequencerScripting",
             "Enabled": true
         },

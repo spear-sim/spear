@@ -63,8 +63,8 @@ if __name__ == "__main__":
         final_tone_curve_hdr_component.Width = viewport_size_x
         final_tone_curve_hdr_component.Height = viewport_size_y
         final_tone_curve_hdr_component.FOVAngle = fov_adjusted_degrees
-        if post_process_volume_settings is not None:
-            final_tone_curve_hdr_component.PostProcessSettings = post_process_volume_settings
+        # if post_process_volume_settings is not None:
+        #     final_tone_curve_hdr_component.PostProcessSettings = post_process_volume_settings
         final_tone_curve_hdr_component.Initialize()
 
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
@@ -75,7 +75,7 @@ if __name__ == "__main__":
 
     # let temporal anti-aliasing etc accumulate additional information across multiple frames, and
     # inserting an extra frame can fix occasional render-to-texture initialization issues on macOS
-    for i in range(1):
+    for i in range(100):
         instance.flush()
 
     # get rendered frame

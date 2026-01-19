@@ -307,6 +307,13 @@ public:
         return local_player;
     }
 
+    template <>
+    UWorld* getSubsystemProvider<UWorld>(UWorld* world)
+    {
+        SP_ASSERT(world);
+        return world;
+    }
+
     //
     // Get engine subsystem, uclass can't be const because we need to pass it to GetEngineSubsystemBase(...)
     //

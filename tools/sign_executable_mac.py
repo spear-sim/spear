@@ -107,12 +107,12 @@ if __name__ == "__main__":
 
         # sign
         cmd = ["codesign", "--force", "--timestamp", "--verbose", "--options", "runtime", "--entitlements", args.entitlements_file, "--sign", args.apple_developer_id, sign_file]
-        spear.log("Executing: ", ' '.join(cmd))
+        spear.log("Executing: ", " ".join(cmd))
         subprocess.run(cmd, check=True)
 
         # verify
         cmd = ["codesign", "--verify", "--deep", "--strict", "--verbose", sign_file]
-        spear.log("Executing: ", ' '.join(cmd))
+        spear.log("Executing: ", " ".join(cmd))
         ps = subprocess.Popen(cmd, stderr=subprocess.PIPE, text=True) # need to use stderr instead of stdout
         valid_on_disk = None
         satisfies_designated_requirement = None
@@ -134,13 +134,13 @@ if __name__ == "__main__":
     cmd = ["ditto", "-c", "-k", "--sequesterRsrc", "--keepParent",
         executable_app_path,
         notarization_zip]
-    spear.log("Executing: ", ' '.join(cmd))
+    spear.log("Executing: ", " ".join(cmd))
     subprocess.run(cmd, check=True)
 
     # Customizing the Notarization Workflow - upload the archive for notarization
     #     https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow
     cmd = ["xcrun", "notarytool", "submit", notarization_zip, "--apple-id", args.apple_id, "--team-id", args.apple_team_id, "--password", args.apple_password, "--wait"]
-    spear.log("Executing: ", ' '.join(cmd))
+    spear.log("Executing: ", " ".join(cmd))
     ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
     submission_id = None
     status = None
@@ -158,7 +158,7 @@ if __name__ == "__main__":
     #     https://developer.apple.com/forums/thread/705839
     log_file = os.path.realpath(os.path.join(notarize_dir, "log.json"))
     cmd = ["xcrun", "notarytool", "log", submission_id, "--apple-id", args.apple_id, "--team-id", args.apple_team_id, "--password", args.apple_password, log_file]
-    spear.log("Executing: ", ' '.join(cmd))
+    spear.log("Executing: ", " ".join(cmd))
     subprocess.run(cmd, check=True)
     spear.log(f"Log file associated with the notarization process has been successfully written to {log_file}.")
     spear.log("Printing the contents of this log file...")
@@ -171,7 +171,7 @@ if __name__ == "__main__":
     # Customizing the Notarization Workflow - staple the executable
     #     https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow
     cmd = ["xcrun", "stapler", "staple", executable_app_path]
-    spear.log("Executing: ", ' '.join(cmd))
+    spear.log("Executing: ", " ".join(cmd))
     ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
 
     worked = None
@@ -185,7 +185,7 @@ if __name__ == "__main__":
 
     # verify
     cmd = ["spctl", "--assess", "--type", "execute", "--verbose", executable_app_path]
-    spear.log("Executing: ", ' '.join(cmd))
+    spear.log("Executing: ", " ".join(cmd))
     ps = subprocess.Popen(cmd, stderr=subprocess.PIPE, text=True) # need to use stderr instead of stdout
 
     accepted = None

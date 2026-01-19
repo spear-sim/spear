@@ -83,7 +83,7 @@ if __name__ == "__main__":
 
         # verify
         cmd = ["signtool", "verify", "/a", "/pa", "/all", "/v", bootstrap_bin]
-        spear.log("Executing: ", ' '.join(cmd))
+        spear.log("Executing: ", " ".join(cmd))
         ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
 
         num_signatures = None
@@ -101,7 +101,7 @@ if __name__ == "__main__":
 
             spear.log("Removing all signatures from file: ", bootstrap_bin)
             cmd = ["signtool", "remove", "/s", "/v", bootstrap_bin]
-            spear.log("Executing: ", ' '.join(cmd))
+            spear.log("Executing: ", " ".join(cmd))
             subprocess.run(cmd, check=True)
             spear.log("Removed all signatures, proceeding...")
         else:
