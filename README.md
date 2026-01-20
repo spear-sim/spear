@@ -20,8 +20,6 @@ _Figure: It is also straightforward to use SPEAR to interact with Unreal's Proce
 
 _Figure: SPEAR includes an easily customizable multi-view camera entity that can render a scene from multiple views at exactly the same time. Here, we render synchronized multi-view images from the `Metahumans` sample project available from Epic Games._
 
-This repository includes all the necessary code to reproduce each figure above in a simple self-contained example program in our `examples` directory.
-
 ## Abstract
 
 Interactive simulators have become powerful tools for training embodied agents and generating synthetic visual data, but existing photorealistic simulators suffer from limited generality, expressiveness, and performance. We address these limitations by introducing _SPEAR: A Simulator for Photorealistic Embodied AI Research_.
