@@ -1,3 +1,5 @@
+# SPEAR: A Simulator for Photorealistic Embodied AI Research
+
 ![control_samples](https://github.com/user-attachments/assets/ea378a71-8ea6-45f2-86b0-ef18a05fb219)
 
 _Figure: The SPEAR Python library can call any C++ function, and can access any C++ variable, on any game entity, and any game subsystem, provided the function or variable has been exposed to Unreal's visual scripting system, i.e., Blueprints. We demonstrate this unique capability by controlling 4 embodied agents, each with a distinct action space, in sample projects that are available from Epic Games. Controlling these agents (i.e., a person from `CitySample` shown in the top left, a car from `CitySample` shown in the top right, a flying robot from `StackOBot` shown in the bottom right, and a person with parkour skills from `GameAnimationSample` shown in the bottom right) using SPEAR only requires adding a single line to each project definition file. Otherwise the projects can remain completely unmodified. We provide all the necessary code to control each agent and render each image above in this repository._
@@ -16,9 +18,9 @@ _Figure: It is also straightforward to interact with Unreal's Procedural Content
 
 ![metahumans](https://github.com/user-attachments/assets/9b57b1cb-f89a-4dce-bd82-d7fedf0cdc0c)
 
-_Figure: SPEAR includes an easily customizable multi-view camera entity that can render a scene from multiple views at exactly the same time. Here, we render multi-view images from the `Metahumans` sample project available from Epic Games._
+_Figure: SPEAR includes an easily customizable multi-view camera entity that can render a scene from multiple views at exactly the same time. Here, we render synchronized multi-view images from the `Metahumans` sample project available from Epic Games._
 
-# SPEAR: A Simulator for Photorealistic Embodied AI Research
+## Abstract
 
 Interactive simulators have become powerful tools for training embodied agents and generating synthetic visual data, but existing photorealistic simulators suffer from limited generality, expressiveness, and performance. We address these limitations by introducing _SPEAR: A Simulator for Photorealistic Embodied AI Research_.
 
