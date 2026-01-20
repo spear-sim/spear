@@ -204,15 +204,9 @@ if __name__ == "__main__":
 
             gameplay_statics.SetGamePaused(bPaused=True)
 
-        # save an image for each component using the component's visualizer function
-        for component_desc in component_descs:
-            data = component_desc["data"]
-            image_file = os.path.realpath(os.path.join(images_dir, component_desc["name"], f"{frame_index:04d}.png"))
-            image = component_desc["visualize_func"](data=data)
-            spear.log("Saving image: ", image_file)
-            plt.imsave(image_file, image)
-
-        frame_index = frame_index + 1
+        if not args.skip_read_pixels and not args.skip_save_images:
+            save_images(images_dir=images_dir, frame_index=frame_index)
+            frame_index = frame_index + 1
 
     #
     # unset throttle
