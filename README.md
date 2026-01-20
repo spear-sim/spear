@@ -2,11 +2,11 @@
 
 ![control_samples](https://github.com/user-attachments/assets/ea378a71-8ea6-45f2-86b0-ef18a05fb219)
 
-_Figure: The SPEAR Python library can call any C++ function, and can access any C++ variable, on any game entity, and any game subsystem, provided the function or variable has been exposed to Unreal's visual scripting system, i.e., Blueprints. We demonstrate this unique capability by controlling 4 embodied agents, each with a distinct action space, in sample projects that are available from Epic Games. Controlling these agents (i.e., a person from `CitySample` shown in the top left, a car from `CitySample` shown in the top right, a flying robot from `StackOBot` shown in the bottom right, and a person with parkour skills from `GameAnimationSample` shown in the bottom right) using SPEAR only requires adding a single line to each project definition file. Otherwise the projects can remain completely unmodified. We provide all the necessary code to control each agent and render each image above in this repository._
+_Figure: The SPEAR Python library can call any C++ function, and can access any C++ variable, on any game entity, and any game subsystem, provided the function or variable has been exposed to Unreal's visual scripting system, i.e., Blueprints. We demonstrate this unique capability by controlling 4 embodied agents, each with a distinct action space, in sample projects that are available from Epic Games. Controlling these agents (i.e., a person from `CitySample` shown in the top left, a car from `CitySample` shown in the top right, a flying robot from `StackOBot` shown in the bottom right, and a person with parkour skills from `GameAnimationSample` shown in the bottom right) using SPEAR only requires adding a single line to each project definition file. Otherwise the projects can remain completely unmodified._
 
 ![hypersim](https://github.com/user-attachments/assets/88210f82-7436-407c-906d-cf4c2bff74de)
 
-_Figure: SPEAR includes a camera entity that can render a superset of the ground truth modalities available in the Hypersim dataset, and can render 1080p photorealistic beauty images (top) directly into a user's NumPy array at 55 frames per second. The SPEAR camera can also render fine-grained 24-bit entity IDs that can be used for both material segmentation and object segmentation tasks (middle row), and a non-Lambertian intrinsic image decomposition consisting of diffuse reflectance, diffuse illumination, and a non-diffuse residual term (bottom row). We provide all the necessary code to control each agent and render each image above in this repository._
+_Figure: SPEAR includes a camera entity that can render a superset of the ground truth modalities available in the Hypersim dataset, and can render 1080p photorealistic beauty images (top) directly into a user's NumPy array at 55 frames per second. The SPEAR camera can also render fine-grained 24-bit entity IDs that can be used for both material segmentation and object segmentation tasks (middle row), and a non-Lambertian intrinsic image decomposition consisting of diffuse reflectance, diffuse illumination, and a non-diffuse residual term (bottom row)._
 
 ![time_of_day](https://github.com/user-attachments/assets/9370572f-df34-4973-86bc-9ebcf5d54bec)
 
@@ -19,6 +19,8 @@ _Figure: It is also straightforward to interact with Unreal's Procedural Content
 ![metahumans](https://github.com/user-attachments/assets/9b57b1cb-f89a-4dce-bd82-d7fedf0cdc0c)
 
 _Figure: SPEAR includes an easily customizable multi-view camera entity that can render a scene from multiple views at exactly the same time. Here, we render synchronized multi-view images from the `Metahumans` sample project available from Epic Games._
+
+This repository includes all the necessary code to reproduce each figure below as a self-contained example program.
 
 ## Abstract
 
