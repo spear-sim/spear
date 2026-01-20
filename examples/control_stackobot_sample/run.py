@@ -32,7 +32,7 @@ component_descs = \
 ]
 
 # save an image for each component using the component's visualizer function
-def save_image(images_dir, frame_index):
+def save_images(images_dir, frame_index):
     assert not args.skip_save_images
     for component_desc in component_descs:
         data = component_desc["data"]
@@ -164,7 +164,7 @@ if __name__ == "__main__":
         gameplay_statics.SetGamePaused(bPaused=True)
 
     if not args.skip_read_pixels and not args.skip_save_images:
-        save_image(images_dir=images_dir, frame_index=frame_index)
+        save_images(images_dir=images_dir, frame_index=frame_index)
         frame_index = frame_index + 1
 
     #
@@ -198,7 +198,7 @@ if __name__ == "__main__":
         gameplay_statics.SetGamePaused(bPaused=True)
 
     if not args.skip_read_pixels and not args.skip_save_images:
-        save_image(images_dir=images_dir, frame_index=frame_index)
+        save_images(images_dir=images_dir, frame_index=frame_index)
         frame_index = frame_index + 1
 
     #
@@ -225,7 +225,7 @@ if __name__ == "__main__":
             gameplay_statics.SetGamePaused(bPaused=True)
 
         if not args.skip_read_pixels and not args.skip_save_images:
-            save_image(images_dir=images_dir, frame_index=frame_index)
+            save_images(images_dir=images_dir, frame_index=frame_index)
             frame_index = frame_index + 1
 
     #
@@ -259,7 +259,7 @@ if __name__ == "__main__":
         gameplay_statics.SetGamePaused(bPaused=True)
 
     if not args.skip_read_pixels and not args.skip_save_images:
-        save_image(images_dir=images_dir, frame_index=frame_index)
+        save_images(images_dir=images_dir, frame_index=frame_index)
         frame_index = frame_index + 1
 
     #
@@ -286,7 +286,7 @@ if __name__ == "__main__":
             gameplay_statics.SetGamePaused(bPaused=True)
 
         if not args.skip_read_pixels and not args.skip_save_images:
-            save_image(images_dir=images_dir, frame_index=frame_index)
+            save_images(images_dir=images_dir, frame_index=frame_index)
             frame_index = frame_index + 1
 
     #
@@ -320,7 +320,7 @@ if __name__ == "__main__":
         gameplay_statics.SetGamePaused(bPaused=True)
 
     if not args.skip_read_pixels and not args.skip_save_images:
-        save_image(images_dir=images_dir, frame_index=frame_index)
+        save_images(images_dir=images_dir, frame_index=frame_index)
         frame_index = frame_index + 1
 
     #
@@ -347,7 +347,7 @@ if __name__ == "__main__":
             gameplay_statics.SetGamePaused(bPaused=True)
 
         if not args.skip_read_pixels and not args.skip_save_images:
-            save_image(images_dir=images_dir, frame_index=frame_index)
+            save_images(images_dir=images_dir, frame_index=frame_index)
             frame_index = frame_index + 1
 
     #

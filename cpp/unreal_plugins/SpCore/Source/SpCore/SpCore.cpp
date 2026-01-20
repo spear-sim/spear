@@ -10,9 +10,11 @@
 #include <iostream> // std::cin
 #include <memory>   // std::make_unique, std::unique_ptr
 
-#include <CoreGlobals.h>           // GConfig, GEditorIni, GEngineIni, GGameIni, GGameUserSettingsIni, GInputIni
-#include <Misc/ConfigCacheIni.h>   // GConfig
-#include <Modules/ModuleManager.h> // FDefaultGameModuleImpl, FDefaultModuleImpl, IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
+#include <CoreGlobals.h>                 // GConfig, GEditorIni, GEngineIni, GGameIni, GGameUserSettingsIni, GInputIni
+#include <Delegates/IDelegateInstance.h> // FDelegateHandle
+#include <Misc/ConfigCacheIni.h>         // GConfig
+#include <Misc/CoreDelegates.h>
+#include <Modules/ModuleManager.h>       // FDefaultGameModuleImpl, FDefaultModuleImpl, IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
 
 // Unreal classes to register
 #include <AssetRegistry/IAssetRegistry.h>
@@ -31,11 +33,12 @@ void SpCore::StartupModule()
 
     Config::requestInitialize();
 
-    requestWaitForKeyboardInput();
-    initializeSharedMemory();
-    initializeIniConfigs();
-
+    requestWaitForKeyboardInput(); // no need to undo
+    initializeIniConfigs();        // no need to undo
     registerClasses();
+
+    post_engine_init_handle_ = FCoreDelegates::OnPostEngineInit.AddRaw(this, &SpCore::postEngineInitHandler);
+    engine_pre_exit_handle_  = FCoreDelegates::OnEnginePreExit.AddRaw(this, &SpCore::enginePreExitHandler);
 
     SP_LOG_CURRENT_FUNCTION();
 }
@@ -44,10 +47,12 @@ void SpCore::ShutdownModule()
 {
     SP_LOG_CURRENT_FUNCTION();
 
+    FCoreDelegates::OnEnginePreExit.Remove(engine_pre_exit_handle_);
+    FCoreDelegates::OnPostEngineInit.Remove(post_engine_init_handle_);
+    engine_pre_exit_handle_.Reset();
+    post_engine_init_handle_.Reset();
+
     unregisterClasses();
-
-    terminateSharedMemory();
-
     Config::terminate();
 
     SP_LOG_CURRENT_FUNCTION();
@@ -61,30 +66,6 @@ void SpCore::requestWaitForKeyboardInput() const
         std::cin.get();
         SP_LOG("    Received keyboard input, continuing...");
     }
-}
-
-void SpCore::initializeSharedMemory()
-{
-    uint64_t shared_memory_initial_unique_id = 0;
-    if (Config::isInitialized()) {
-        shared_memory_initial_unique_id = Config::get<unsigned int>("SP_CORE.SHARED_MEMORY_INITIAL_UNIQUE_ID");
-    }
-    SharedMemory::initialize(shared_memory_initial_unique_id);
-
-    // Try to create a shared memory region so we can provide a meaningful error message if it fails.
-    try {
-        uint64_t num_bytes = 1;
-        shared_memory_region_ = std::make_unique<SharedMemoryRegion>(num_bytes);
-    } catch (...) {
-        SP_LOG("    ERROR: Couldn't create a shared memory region. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables, or change SP_CORE.SHARED_MEMORY_INITIAL_UNIQUE_ID to an unused ID, and try launching again.");
-        std::rethrow_exception(std::current_exception());
-    }
-}
-
-void SpCore::terminateSharedMemory()
-{
-    shared_memory_region_ = nullptr;
-    SharedMemory::terminate();
 }
 
 void SpCore::initializeIniConfigs() const
@@ -126,6 +107,34 @@ void SpCore::unregisterClasses() const
     SP_UNREGISTER_SUBSYSTEM_PROVIDER_CLASS(ULocalPlayer);
     SP_UNREGISTER_SUBSYSTEM_PROVIDER_CLASS(UWorld);
     SP_UNREGISTER_INTERFACE_CLASS(IAssetRegistry);
+}
+
+void SpCore::postEngineInitHandler()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    uint64_t shared_memory_initial_unique_id = 0;
+    if (Config::isInitialized()) {
+        shared_memory_initial_unique_id = Config::get<unsigned int>("SP_CORE.SHARED_MEMORY_INITIAL_UNIQUE_ID");
+    }
+    SharedMemory::initialize(shared_memory_initial_unique_id);
+
+    // Try to create a shared memory region so we can provide a meaningful error message if it fails.
+    try {
+        uint64_t num_bytes = 1;
+        shared_memory_region_ = std::make_unique<SharedMemoryRegion>(num_bytes);
+    } catch (...) {
+        SP_LOG("    ERROR: Couldn't create a shared memory region. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables, or change SP_CORE.SHARED_MEMORY_INITIAL_UNIQUE_ID to an unused ID, and try launching again.");
+        std::rethrow_exception(std::current_exception());
+    }
+}
+
+void SpCore::enginePreExitHandler()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    shared_memory_region_ = nullptr;
+    SharedMemory::terminate();
 }
 
 // use IMPLEMENT_GAME_MODULE if module implements Unreal classes, use IMPLEMENT_MODULE otherwise

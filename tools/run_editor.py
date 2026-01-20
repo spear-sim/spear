@@ -77,8 +77,5 @@ if __name__ == "__main__":
 
     # launch the executable
     instance = spear.Instance(config=config)
-    while instance.is_running():
-        time.sleep(1.0)
-    instance.close()
 
     spear.log("Done.")

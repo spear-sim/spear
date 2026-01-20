@@ -36,7 +36,7 @@ if __name__ == "__main__":
     with instance.begin_frame():
 
         # spawn camera sensor and get its components
-        bp_multi_view_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_MultiViewCameraSensor.BP_MultiViewCameraSensor_C")
+        bp_multi_view_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_MultiViewCameraSensor_33.BP_MultiViewCameraSensor_33_C")
         bp_multi_view_camera_sensor = game.unreal_service.spawn_actor(uclass=bp_multi_view_camera_sensor_uclass)
         components = game.unreal_service.get_components_by_class_as_dict(actor=bp_multi_view_camera_sensor, uclass="USpSceneCaptureComponent2D")
         assert len(components) == num_rows*num_cols

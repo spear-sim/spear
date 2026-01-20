@@ -30,8 +30,6 @@ class InitializeEngineService : public Service
 public:
     InitializeEngineService() : Service("InitializeEngineService")
     {
-        SP_LOG_CURRENT_FUNCTION();
-
         // Mount PAK files. PAK files in default locations are mounted before SpCore::StartupModule(), so
         // there is no danger of attempting to mount PAK files too early. See the function below for guidance
         // on how to set pak_order in Engine/Source/Runtime/PakFile/Private/IPlatformFilePak.cpp.
@@ -163,8 +161,6 @@ public:
 
     ~InitializeEngineService()
     {
-        SP_LOG_CURRENT_FUNCTION();
-
         if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.MOUNT_PAK_FILES") && FCoreDelegates::OnUnmountPak.IsBound()) {
             std::vector<std::string> pak_files = Config::get<std::vector<std::string>>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.PAK_FILES");
             int32 pak_order = 0;

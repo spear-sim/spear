@@ -50,7 +50,9 @@ examples/control_electric_dreams_sample/images
 
 examples/control_game_animation_sample/images
 
-examples/control_stackobot/images
+examples/control_metahumans_sample/images/
+
+examples/control_stackobot_sample/images
 
 examples/import_stanford_dataset/csv
 examples/import_stanford_dataset/download

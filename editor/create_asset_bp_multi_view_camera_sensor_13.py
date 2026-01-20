@@ -11,13 +11,12 @@ import unreal
 
 blueprint_desc = \
 {
-    "blueprint_name": "BP_MultiViewCameraSensor",
+    "blueprint_name": "BP_MultiViewCameraSensor_13",
     "blueprint_dir": "/SpContent/Blueprints"
 }
 
-component_desc = \
+component_common_desc = \
 {
-    "name": "final_tone_curve_hdr_",
     "width": 640,
     "height": 360,
     "fov_angle": 90.0,
@@ -30,17 +29,11 @@ component_desc = \
     "reflection_method": unreal.ReflectionMethod.LUMEN
 }
 
-component_locations = \
+component_descs = \
 [
-    unreal.Vector(0, -40, -40),
-    unreal.Vector(0,   0, -40),
-    unreal.Vector(0, +40, -40),
-    unreal.Vector(0, -40,   0),
-    unreal.Vector(0,   0,   0),
-    unreal.Vector(0, +40,   0),
-    unreal.Vector(0, -40, +40),
-    unreal.Vector(0,   0, +40),
-    unreal.Vector(0, +40, +40)
+    { "name": "final_tone_curve_hdr_00_", "location": unreal.Vector(x=20, y=-140, z=0), "rotation": unreal.Rotator(pitch=0, yaw=40, roll=0) },
+    { "name": "final_tone_curve_hdr_01_", "location": unreal.Vector(x=0,  y=0,    z=0), "rotation": unreal.Rotator(pitch=0, yaw=0,  roll=0) },
+    { "name": "final_tone_curve_hdr_02_", "location": unreal.Vector(x=20, y=+140, z=0), "rotation": unreal.Rotator(pitch=0, yaw=-40, roll=0) }
 ]
 
 asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
@@ -84,9 +77,9 @@ if __name__ == "__main__":
         subobject_class=unreal.SpStableNameComponent)
 
     # create SpSceneCaptureComponent2Ds
-    for i, component_location in enumerate(component_locations):
+    for i, component_desc in enumerate(component_descs):
 
-        component_name = f"{component_desc['name']}{i}_"
+        component_name = component_desc["name"]
         spear.log("Creating component: ", component_name)
         parent_data_handle = blueprint_subobject_descs[1]["data_handle"] # root component
         sp_scene_capture_component_2d_desc = spear.utils.editor_utils.add_new_subobject_to_blueprint_asset(
@@ -99,24 +92,25 @@ if __name__ == "__main__":
 
         # SpSceneCaptureComponent2D properties
 
-        sp_scene_capture_component_2d.set_editor_property(name="relative_location", value=component_location)
+        sp_scene_capture_component_2d.set_editor_property(name="relative_location", value=component_desc["location"])
+        sp_scene_capture_component_2d.set_editor_property(name="relative_rotation", value=component_desc["rotation"])
 
-        sp_scene_capture_component_2d.set_editor_property(name="width", value=component_desc["width"])
-        sp_scene_capture_component_2d.set_editor_property(name="height", value=component_desc["height"])
-        sp_scene_capture_component_2d.set_editor_property(name="fov_angle", value=component_desc["fov_angle"])
-        sp_scene_capture_component_2d.set_editor_property(name="num_channels_per_pixel", value=component_desc["num_channels_per_pixel"])
-        sp_scene_capture_component_2d.set_editor_property(name="channel_data_type", value=component_desc["channel_data_type"])
-        sp_scene_capture_component_2d.set_editor_property(name="texture_render_target_format", value=component_desc["texture_render_target_format"])
-        sp_scene_capture_component_2d.set_editor_property(name="capture_source", value=component_desc["capture_source"])
-        sp_scene_capture_component_2d.set_editor_property(name="show_flag_settings", value=component_desc["show_flag_settings"])
+        sp_scene_capture_component_2d.set_editor_property(name="width", value=component_common_desc["width"])
+        sp_scene_capture_component_2d.set_editor_property(name="height", value=component_common_desc["height"])
+        sp_scene_capture_component_2d.set_editor_property(name="fov_angle", value=component_common_desc["fov_angle"])
+        sp_scene_capture_component_2d.set_editor_property(name="num_channels_per_pixel", value=component_common_desc["num_channels_per_pixel"])
+        sp_scene_capture_component_2d.set_editor_property(name="channel_data_type", value=component_common_desc["channel_data_type"])
+        sp_scene_capture_component_2d.set_editor_property(name="texture_render_target_format", value=component_common_desc["texture_render_target_format"])
+        sp_scene_capture_component_2d.set_editor_property(name="capture_source", value=component_common_desc["capture_source"])
+        sp_scene_capture_component_2d.set_editor_property(name="show_flag_settings", value=component_common_desc["show_flag_settings"])
 
         # PostProcessingSettings properties
 
         post_process_settings = sp_scene_capture_component_2d.get_editor_property(name="post_process_settings")
         post_process_settings.set_editor_property(name="override_dynamic_global_illumination_method", value=True)
-        post_process_settings.set_editor_property(name="dynamic_global_illumination_method", value=component_desc["dynamic_global_illumination_method"])
+        post_process_settings.set_editor_property(name="dynamic_global_illumination_method", value=component_common_desc["dynamic_global_illumination_method"])
         post_process_settings.set_editor_property(name="override_reflection_method", value=True)
-        post_process_settings.set_editor_property(name="reflection_method", value=component_desc["reflection_method"])
+        post_process_settings.set_editor_property(name="reflection_method", value=component_common_desc["reflection_method"])
 
     # compile blueprint
     unreal.BlueprintEditorLibrary.compile_blueprint(blueprint=blueprint_asset)
