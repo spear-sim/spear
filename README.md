@@ -8,7 +8,7 @@ _Figure: SPEAR includes a camera entity that can render a superset of the ground
 
 ![time_of_day](https://github.com/user-attachments/assets/9370572f-df34-4973-86bc-9ebcf5d54bec)
 
-_Figure: By calling existing Blueprint-visible functions through SPEAR, it is straightforward to control the lighting in any scene. Here, we programmatically control the lighting to simulate time-of-day changes in the `ElectricDreamsEnv` sample project available from Epic Games._
+_Figure: By calling existing Blueprint-visible functions through SPEAR, it is straightforward to control the lighting in any scene. Here, we programmatically control the lighting to simulate time-of-day changes in the `ElectricDreams` sample project available from Epic Games._
 
 # SPEAR: A Simulator for Photorealistic Embodied AI Research
 
