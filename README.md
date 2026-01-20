@@ -2,11 +2,11 @@
 
 _Figure: The SPEAR Python library can call any C++ function, and can access any C++ variable, on any game entity, and any game subsystem, provided the function or variable has been exposed to Unreal's visual scripting system, i.e., Blueprints. We demonstrate this unique capability by controlling 4 embodied agents, each with a distinct action space, in sample projects that are freely available from Epic Games. Controlling these agents (i.e., a person from `CitySample` shown in the top left, a car from `CitySample` shown in the top right, a flying robot from `StackOBot` shown in the bottom right, and a person with parkour skills from `GameAnimationSample` shown in the bottom right) using SPEAR only requires adding a single line to each project definition file. Otherwise the projects can remain completely unmodified. We provide all the necessary code to control each agent and render each image above in this repository._
 
-![teaser](https://github.com/user-attachments/assets/88210f82-7436-407c-906d-cf4c2bff74de)
+![hypersim](https://github.com/user-attachments/assets/88210f82-7436-407c-906d-cf4c2bff74de)
 
 _Figure: SPEAR includes a camera entity that can render a superset of the ground truth modalities available in the Hypersim dataset, and can render 1080p photorealistic beauty images (top) directly into a user's NumPy array at 55 frames per second. The SPEAR camera can also render fine-grained 24-bit entity IDs that can be used for both material segmentation and object segmentation tasks (middle row), and a non-Lambertian intrinsic image decomposition consisting of diffuse reflectance, diffuse illumination, and a non-diffuse residual term (bottom row). We provide all the necessary code to control each agent and render each image above in this repository._
 
-![time_of_day](https://github.com/user-attachments/assets/44da1cd5-f5b5-451a-9884-3fccbc170b31)
+![time_of_day](https://github.com/user-attachments/assets/9370572f-df34-4973-86bc-9ebcf5d54bec)
 
 _Figure: By calling existing Blueprint-visible functions through SPEAR, it is straightforward to control the lighting in any scene. Here, we programmatically control the lighting to simulate time-of-day changes in the `ElectricDreamsEnv` sample project available from Epic Games._
 
