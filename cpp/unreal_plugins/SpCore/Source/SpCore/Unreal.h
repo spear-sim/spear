@@ -229,7 +229,7 @@ public:
             if (uclass->HasAnyClassFlags(EClassFlags::CLASS_Native)) {
                 str = getCppTypeAsString(ustruct);
             } else {
-                str = getBlueprintTypeAsString(ustruct);                
+                str = getBlueprintTypeAsString(ustruct);
             }
         } else {
             SP_ASSERT(false);

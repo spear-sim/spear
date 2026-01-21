@@ -128,7 +128,7 @@ public:
 
         FDelegateHandle actor_label_changed_handle_;
 
-        FDelegateHandle level_added_to_world_handle_;    
+        FDelegateHandle level_added_to_world_handle_;
         FDelegateHandle level_removed_from_world_handle_;
 
         FDelegateHandle level_actor_added_handle_;

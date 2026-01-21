@@ -71,7 +71,7 @@ void ASpDebugCameraHUD::PostRender()
                     if (UnrealUtils::hasStableName(actor)) {
                         Canvas->DrawText(font, Unreal::toFString("Actor (stable Name): " + UnrealUtils::getStableName(actor)), x, y, 1.0f, 1.0f, font_render_info);
                     } else {
-                        Canvas->DrawText(font, Unreal::toFString("Actor doesn't have a stable name."), x, y, 1.0f, 1.0f, font_render_info);                        
+                        Canvas->DrawText(font, Unreal::toFString("Actor doesn't have a stable name."), x, y, 1.0f, 1.0f, font_render_info);
                     }
 
                     y += y_single_line;

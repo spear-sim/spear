@@ -254,12 +254,12 @@ public:
     static std::vector<std::string> tokenize(const std::string& string, const std::string& separators)
     {
         boost::tokenizer<boost::char_separator<char>> tokenizer(string, boost::char_separator<char>(separators.c_str()));
-        return std::vector<std::string>(tokenizer.begin(), tokenizer.end());        
+        return std::vector<std::string>(tokenizer.begin(), tokenizer.end());
     }
 
     static std::string toLower(const std::string& string)
     {
-        return boost::algorithm::to_lower_copy(string);        
+        return boost::algorithm::to_lower_copy(string);
     }
 
     template <typename... TArgs>

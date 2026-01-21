@@ -300,7 +300,7 @@ public:
         shape_ = std::move(packed_array.shape_);
 
         shared_memory_name_ = std::move(packed_array.shared_memory_name_);
-        shared_memory_usage_flags_ = packed_array.shared_memory_usage_flags_;        
+        shared_memory_usage_flags_ = packed_array.shared_memory_usage_flags_;
     }
 
     // SpArray interface

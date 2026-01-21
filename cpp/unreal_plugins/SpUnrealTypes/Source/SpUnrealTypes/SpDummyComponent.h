@@ -90,7 +90,7 @@ public:
     {
         SP_LOG_CURRENT_FUNCTION();
 
-        USceneComponent::TickComponent(delta_time, level_tick, this_tick_function);        
+        USceneComponent::TickComponent(delta_time, level_tick, this_tick_function);
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")

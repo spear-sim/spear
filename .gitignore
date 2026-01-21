@@ -15,6 +15,7 @@ cpp/unreal_projects/SpearSim/Build
 cpp/unreal_projects/SpearSim/Content/__ExternalActors__
 cpp/unreal_projects/SpearSim/Content/__ExternalObjects__
 cpp/unreal_projects/SpearSim/Content/Characters
+cpp/unreal_projects/SpearSim/Content/Humoto
 cpp/unreal_projects/SpearSim/Content/Kujiale
 cpp/unreal_projects/SpearSim/Content/LevelPrototyping
 cpp/unreal_projects/SpearSim/Content/Megascans
@@ -50,7 +51,7 @@ examples/control_electric_dreams_sample/images
 
 examples/control_game_animation_sample/images
 
-examples/control_metahumans_sample/images/
+examples/control_metahumans_sample/images
 
 examples/control_stackobot_sample/images
 

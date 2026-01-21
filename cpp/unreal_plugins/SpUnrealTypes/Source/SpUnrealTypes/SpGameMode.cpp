@@ -98,7 +98,7 @@ void ASpGameMode::SpUnmountPak(const FString& PakFile) const
         bool success = FCoreDelegates::OnUnmountPak.Execute(PakFile);
         SP_ASSERT(success);
     } else {
-        SP_LOG("WARNING: FCoreDelegates::OnUnmountPak delegate is not bound.");        
+        SP_LOG("WARNING: FCoreDelegates::OnUnmountPak delegate is not bound.");
     }
 }
 

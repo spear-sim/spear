@@ -14,10 +14,10 @@
 #include <CoreGlobals.h>   // IsAsyncLoading, IsRunningCommandlet
 #include <Engine/Engine.h> // GEngine
 #include <GenericPlatform/GenericPlatformMisc.h>
+#include <HAL/PlatformProcess.h>
 #include <Misc/CommandLine.h>
 
 #include "SpCore/Assert.h"
-#include "SpCore/Boost.h"
 #include "SpCore/Unreal.h"
 
 #include "SpServices/EntryPointBinder.h"
@@ -39,8 +39,8 @@ public:
             return "ping";
         });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("engine_globals_service", "get_id", []() -> int64_t {
-            return static_cast<int>(boost::this_process::get_id());
+        unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("engine_globals_service", "get_current_process_id", []() -> int64_t {
+            return static_cast<int>(FPlatformProcess::GetCurrentProcessId());
         });
 
         unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("engine_globals_service", "get_byte_order", []() -> std::string {
@@ -77,6 +77,10 @@ public:
         // of spear.Instance.
         //
 
+        unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("engine_globals_service", "get_command_line", []() -> std::string {
+            return Unreal::toStdString(FCommandLine::Get());
+        });
+
         unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("engine_globals_service", "get_engine", []() -> uint64_t {
             return toUInt64(GEngine);
         });
@@ -91,10 +95,6 @@ public:
             #else
                 return false;
             #endif
-        });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("engine_globals_service", "get_command_line", []() -> std::string {
-            return Unreal::toStdString(FCommandLine::Get());
         });
 
         unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("engine_globals_service", "request_exit", [](bool immediate_shutdown) -> void {

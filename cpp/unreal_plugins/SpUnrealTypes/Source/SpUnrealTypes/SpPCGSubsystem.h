@@ -21,13 +21,13 @@ public:
     bool IsInitialized(UPCGSubsystem* PCGSubsystem)
     {
         SP_ASSERT(PCGSubsystem);
-        return PCGSubsystem->IsInitialized();            
+        return PCGSubsystem->IsInitialized();
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     void FlushCache(UPCGSubsystem* PCGSubsystem)
     {
         SP_ASSERT(PCGSubsystem);
-        return PCGSubsystem->FlushCache();            
+        return PCGSubsystem->FlushCache();
     }
 };

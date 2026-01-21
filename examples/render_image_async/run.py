@@ -122,14 +122,14 @@ if __name__ == "__main__":
         elapsed_time_seconds = end_time_seconds - start_time_seconds
         spear.log(f"Average time for instance._client.get_timeout(): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
 
-        # instance.engine_globals_service.get_id()
+        # instance.engine_globals_service.get_current_process_id()
         num_steps = 1000
         start_time_seconds = time.time()
         for i in range(num_steps):
-            instance.engine_globals_service.get_id()
+            instance.engine_globals_service.get_current_process_id()
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log(f"Average time for instance.engine_globals_service.get_id(): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
+        spear.log(f"Average time for instance.engine_globals_service.get_current_process_id(): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
 
         # empty with instance.begin_frame() / with instance.end_frame()
         num_steps = 100

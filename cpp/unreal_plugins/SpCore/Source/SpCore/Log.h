@@ -40,7 +40,7 @@ public:
     template <typename... TArgs>
     static void log(const std::filesystem::path& current_file, int current_line, TArgs&&... args)
     {
-        std::string str = getPrefix(current_file, current_line) + Std::toString(std::forward<TArgs>(args)...);  
+        std::string str = getPrefix(current_file, current_line) + Std::toString(std::forward<TArgs>(args)...);
         logString(str);
     }
 

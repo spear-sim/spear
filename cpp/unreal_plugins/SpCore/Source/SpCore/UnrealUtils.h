@@ -1357,7 +1357,7 @@ private:
         if (get_component_by_path) {
             component = getComponentByPath<TComponent, TReturnAsComponent>(actor, component_path);
         } else {
-            component = getComponentByName<TComponent, TReturnAsComponent>(actor, component_path);            
+            component = getComponentByName<TComponent, TReturnAsComponent>(actor, component_path);
         }
 
         pair.first = actor;

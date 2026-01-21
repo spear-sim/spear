@@ -363,10 +363,6 @@ class Instance():
                     launch_executable_internal_paths = glob.glob(launch_executable_internal_template)
                 else:
                     assert False
-                spear.log(launch_executable_name_no_ext)
-                spear.log(launch_executable_dir_internal)
-                spear.log(launch_executable_internal_template)
-                spear.log(launch_executable_internal_paths)
                 assert len(launch_executable_internal_paths) == 1
                 launch_executable_internal = launch_executable_internal_paths[0]
             elif sys.platform == "darwin":
@@ -491,11 +487,11 @@ class Instance():
         if self._config.SPEAR.LAUNCH_MODE == "none":
             pass
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
-            pid = self._client._call_sync_on_worker_thread_as_int64("engine_globals_service.call_sync_on_worker_thread.get_id") # self._engine_service hasn't been initialized yet
+            pid = self._client._call_sync_on_worker_thread_as_int64("engine_globals_service.call_sync_on_worker_thread.get_current_process_id") # self._engine_service hasn't been initialized yet
             if pid == self._process.pid:
-                spear.log("        Validated engine_globals_service.call_sync_on_worker_thread.get_id: ", pid)
+                spear.log("        Validated engine_globals_service.call_sync_on_worker_thread.get_current_process_id: ", pid)
             else:            
-                spear.log(f"        ERROR: engine_globals_service.call_sync_on_worker_thread.get_id returned {pid} but the PID of the process we just launched is {self._process.pid}. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables and try launching again.")
+                spear.log(f"        ERROR: engine_globals_service.call_sync_on_worker_thread.get_current_process_id returned {pid} but the PID of the process we just launched is {self._process.pid}. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables and try launching again.")
                 self._terminate_client(verbose=True, log_prefix="        ")
                 self._force_kill_unreal_instance()
                 assert False

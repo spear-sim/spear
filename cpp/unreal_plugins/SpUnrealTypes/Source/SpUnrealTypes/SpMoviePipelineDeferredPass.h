@@ -39,13 +39,13 @@ class USpMoviePipelineDeferredPass : public UMoviePipelineDeferredPassBase
 public:
     USpMoviePipelineDeferredPass()
     {
-        SP_LOG_CURRENT_FUNCTION();        
+        SP_LOG_CURRENT_FUNCTION();
         PassIdentifier = FMoviePipelinePassIdentifier("SPEAR");
     }
 
     ~USpMoviePipelineDeferredPass() override
     {
-        SP_LOG_CURRENT_FUNCTION();        
+        SP_LOG_CURRENT_FUNCTION();
     }
 
 #if WITH_EDITOR // defined in an auto-generated header

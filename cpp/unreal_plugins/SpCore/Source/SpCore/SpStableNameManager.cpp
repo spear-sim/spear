@@ -163,7 +163,7 @@ std::string ASpStableNameManager::getStableIdString(const AActor* actor)
         non_pie_asset_path_string = asset_path_string;
     } else {
         FString pie_prefix = UWorld::BuildPIEPackagePrefix(actor->GetOutermost()->GetPIEInstanceID());
-        non_pie_asset_path_string = UWorld::StripPIEPrefixFromPackageName(asset_path_string, pie_prefix);        
+        non_pie_asset_path_string = UWorld::StripPIEPrefixFromPackageName(asset_path_string, pie_prefix);
     }
 
     return Unreal::toStdString(non_pie_asset_path_string + ":" + sub_path_string);

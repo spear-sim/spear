@@ -39,18 +39,25 @@ class EngineGlobalsService(spear.Service):
         return EngineGlobalsService(entry_point_caller=entry_point_caller, parent_service=self, create_children_services=False)
 
     #
-    # Miscellaneous low-level entry points to support initializing a spear.Instance
+    # Miscellaneous low-level entry points to support spear.Instance and do not interact with Unreal.
     #
 
     def ping(self):
         return self.entry_point_caller.call_on_worker_thread("ping", None)
 
-    def get_id(self):
-        return self.entry_point_caller.call_on_worker_thread("get_id", None)
+    def get_current_process_id(self):
+        return self.entry_point_caller.call_on_worker_thread("get_current_process_id", None)
+
+    # The "get_byte_order" entry point is cached internally by EngineService and made available through
+    # EngineService.get_byte_order(), so we don't expose it here.
 
     #
-    # Miscellaneous low-level entry points that interact with Unreal globals
+    # Miscellaneous low-level entry points that interact with Unreal globals and can be called from the
+    # worker thread.
     #
+
+    def get_command_line(self):
+        return self.entry_point_caller.call_on_worker_thread("get_command_line", None)
 
     def get_engine(self):
         return self.entry_point_caller.call_on_worker_thread("get_engine", None)
@@ -61,19 +68,13 @@ class EngineGlobalsService(spear.Service):
     def is_running_commandlet(self):
         return self.entry_point_caller.call_on_worker_thread("is_running_commandlet", None)
 
-    def is_async_loading(self):
-        return self.entry_point_caller.call_on_game_thread("is_async_loading", None)
-
-    #
-    # Miscellaneous low-level entry points that interact with Unreal singleton structs and are needed in the
-    # implementation of spear.Instance. We could implement UCLASSES and UFUNCTIONS to access the low-level
-    # Unreal structs, but then we would be limited to accessing them on the game thread. Providing access
-    # through these entry points enables access on the worker thread, which simplifies the implmeentation of
-    # spear.Instance.
-    #
-
-    def get_command_line(self):
-        return self.entry_point_caller.call_on_worker_thread("get_command_line", None)
-
     def request_exit(self, immediate_shutdown):
         self.entry_point_caller.call_on_worker_thread("request_exit", None, immediate_shutdown)
+
+    #
+    # Miscellaneous low-level entry points that interact with Unreal globals and must be called from the
+    # game thread.
+    #
+
+    def is_async_loading(self):
+        return self.entry_point_caller.call_on_game_thread("is_async_loading", None)

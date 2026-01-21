@@ -121,7 +121,7 @@ std::vector<UFunction*> UnrealUtils::findFunctionsByFlagsAll(const UClass* uclas
 {
     return Std::toVector<UFunction*>(
         findFunctions(uclass, field_iteration_flags) |
-        std::views::filter([function_flags](auto function) { return function->HasAllFunctionFlags(function_flags); }));    
+        std::views::filter([function_flags](auto function) { return function->HasAllFunctionFlags(function_flags); }));
 }
 
 std::map<std::string, UFunction*> UnrealUtils::findFunctionsByNameAsMap(const UClass* uclass, const std::string& function_name, EFieldIterationFlags field_iteration_flags)
@@ -921,7 +921,7 @@ std::string UnrealUtils::getStableName(const UActorComponent* component, bool in
         if (actor_must_have_stable_name) {
             component_name = getStableName(actor) + ":" + component_name;
         } else {
-            component_name = tryGetStableName(actor) + ":" + component_name;            
+            component_name = tryGetStableName(actor) + ":" + component_name;
         }
     }
 
