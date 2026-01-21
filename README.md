@@ -10,7 +10,7 @@ _Figure: SPEAR includes a customizable camera entity that can render a superset 
 
 ![time_of_day](https://github.com/user-attachments/assets/9370572f-df34-4973-86bc-9ebcf5d54bec)
 
-_Figure: By calling existing Unreal functions that are available through SPEAR, it is straightforward to control the lighting in any scene. Here, we programmatically control the lighting to simulate time-of-day changes in the `ElectricDreams` sample project available from Epic Games._
+_Figure: By calling existing Unreal functions that are available through SPEAR's general-purpose Python API, it is straightforward to control the lighting in any scene. Here, we programmatically control the lighting to simulate time-of-day changes in the `ElectricDreams` sample project available from Epic Games._
 
 ![pcg](https://github.com/user-attachments/assets/f545b1e5-c344-42e7-8ab9-8d6de36842b2)
 
