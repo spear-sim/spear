@@ -14,7 +14,7 @@ _Figure: By calling existing Unreal functions that are available through SPEAR's
 
 ![pcg](https://github.com/user-attachments/assets/f545b1e5-c344-42e7-8ab9-8d6de36842b2)
 
-_Figure: It is also straightforward to use SPEAR to programmatically interact with Unreal's Procedural Content Generation (PCG) system for dynamically generating scene geometry. Here, we horizontally translate a PCG entity (the big rock structure in the approximate center of each image) across the scene from left to right in the `ElectricDreams` sample project via a short Python program. Notice how the main rock structure harmonizes with the rest of the scene in a convincing way (e.g., water and ground level adjusting around the main rock, logs appearing and connecting with nearby structures), even when it is being driven by simple programmatic control._
+_Figure: It is also straightforward to use SPEAR to programmatically interact with Unreal's Procedural Content Generation (PCG) system for dynamically generating scene geometry. Here, we horizontally translate a PCG entity (the big rock structure in the approximate center of each image) across the scene from left to right in the `ElectricDreams` sample project via a short Python program. Notice how the main rock structure harmonizes with the rest of the scene in a convincing way (e.g., the water and ground adjusts around the main rock, logs appear and connect with nearby structures), even when it is being driven by simple programmatic control._
 
 ![metahumans](https://github.com/user-attachments/assets/9b57b1cb-f89a-4dce-bd82-d7fedf0cdc0c)
 
