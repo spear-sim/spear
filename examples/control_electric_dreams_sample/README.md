@@ -10,7 +10,7 @@ python ../../tools/install_plugins_in_external_project.py --external-project-dir
 python ../../tools/run_build.py --unreal-engine-dir path/to/UE_5.5 --unreal-project-dir path/to/ElectricDreamsEnv --build-target ElectricDreamsSampleEditor -build
 ```
 
-In the Unreal Editor, open the `Levels/PCG/ElectricDreams_PCGCloseRange` map and wait for the map to fully load. Then press play in the editor and wait for the Unreal simulation to launch and warm up. Once the simulation is fully loaded and warmed up, we are ready to control the project via SPEAR.
+Next, we open the Unreal Editor, open the `Levels/PCG/ElectricDreams_PCGCloseRange` map, and wait for the map to fully load. Then press play in the editor and wait for the Unreal simulation to launch and warm up. Once the simulation is fully loaded and warmed up, we are ready to control the project via SPEAR.
 
 ```console
 # control light
