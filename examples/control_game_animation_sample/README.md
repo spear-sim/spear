@@ -10,7 +10,7 @@ python ../../tools/install_plugins_in_external_project.py --external-project-dir
 python ../../tools/run_uat.py --unreal-engine-dir path/to/UE_5.5 --unreal-project-dir path/to/GameAnimationSample -build
 ```
 
-Our next step is to launch the Unreal Editor via the command-line, which is necessary to override some of the project settings in `GameAnimationSample`. Alternatively, we could override these settings by editing the files in the `CitySample/Config` directly, but we choose to launch the editor via the command-line so we can avoid modifying the project any more than necessary.
+Our next step is to launch the Unreal Editor via the command-line, which is necessary to override some of the project settings in `GameAnimationSample`. Alternatively, we could override these settings by editing the files in the `GameAnimationSample/Config` directly, but we choose to launch the editor via the command-line so we can avoid modifying the project any more than necessary.
 
 ```console
 python ../../run_editor.py --unreal-engine-dir path/to/UE_5.5 --unreal-project-dir path/to/GameAnimationSample --config-file user_config.yaml
