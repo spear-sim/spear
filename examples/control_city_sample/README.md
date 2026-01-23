@@ -2,7 +2,7 @@
 
 In this example application, we demonstrate how to control the `CitySample` project, which is a freely available sample project from Epic Games.
 
-In a pre-processing step, we need to install the SPEAR plugins in `CitySample` by adding an `AdditionalPluginDirectories` entry to `CitySample.uproject`. We could do this by editing the project directly, but here we use one of our command-line tools for convenience. We must also build the project, which will build the SPEAR plugin binaries and copy them into the project directory.
+In a pre-processing step, we need to install the SPEAR plugins in `CitySample` by adding an `AdditionalPluginDirectories` entry to `CitySample.uproject`. We could do this by editing the `uproject` file directly, but here we use one of our command-line tools for convenience. We must also build the project, which will build the SPEAR plugin binaries and copy them into the project directory.
 
 ```console
 python ../../tools/install_plugins_in_external_project.py --external-project-dir path/to/CitySample
