@@ -16,7 +16,7 @@ Our next step is to launch the Unreal Editor via the command-line, which is nece
 python ../../run_editor.py --unreal-engine-dir path/to/UE_5.5 --unreal-project-dir path/to/CitySample --config-file user_config.yaml
 ```
 
-Finally, in the Unreal Editor, we open the `Map/Small_City_LVL` map and wait for the map to fully load. Then we press play in the editor and wait for the Unreal simulation to launch and warm up. This step can take a long time (e.g., up to 15 minutes). Once the simulation is fully loaded and warmed up, we are ready to launch our SPEAR programs.
+Finally, in the Unreal Editor, we open the `Map/Small_City_LVL` map and wait for the map to fully load. Then we press play in the editor and wait for the Unreal simulation to load and warm up. This step can take a long time (e.g., up to 15 minutes). Once the simulation is fully loaded and warmed up, we are ready to launch our SPEAR programs.
 
 ```console
 # control the default CitySample character
