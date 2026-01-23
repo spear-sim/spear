@@ -16,7 +16,7 @@ Our next step is to launch the Unreal Editor via the command-line, which is nece
 python ../../run_editor.py --unreal-engine-dir path/to/UE_5.5 --unreal-project-dir path/to/MetaHumans
 ```
 
-Finally, in the Unreal Editor, we wait for the default map to fully load. Then we press play in the editor and wait for the Unreal simulation to launch and warm up. Once the simulation is fully loaded and warmed up, we are ready to launch our SPEAR programs.
+Finally, in the Unreal Editor, we wait for the default map to fully load. Then we press play in the editor and wait for the Unreal simulation to load and warm up. Once the simulation is fully loaded and warmed up, we are ready to launch our SPEAR programs.
 
 ```console
 python run.py
