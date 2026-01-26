@@ -1,8 +1,8 @@
-# Control the `ElectricDreamsEnv` Project
+# Control the `ElectricDreams` Project
 
-In this example application, we demonstrate how to control the `ElectricDreamsEnv` project, which is a freely available sample project from Epic Games.
+In this example application, we demonstrate how to control the `ElectricDreams` project, which is a freely available sample project from Epic Games.
 
-In a pre-processing step, we need to install the SPEAR plugins in `ElectricDreamsEnv` by adding an `AdditionalPluginDirectories` entry to `ElectricDreamsEnv.uproject`. We could do this by editing the `uproject` file directly, but here we use one of our command-line tools for convenience. We must also build the project, which will build the SPEAR plugin binaries and copy them into the project directory.
+In a pre-processing step, we need to install the SPEAR plugins in `ElectricDreams` by adding an `AdditionalPluginDirectories` entry to `ElectricDreamsEnv.uproject`. We could do this by editing the `uproject` file directly, but here we use one of our command-line tools for convenience. We must also build the project, which will build the SPEAR plugin binaries and copy them into the project directory.
 
 ```console
 python ../../tools/install_plugins_in_external_project.py --external-project-dir path/to/ElectricDreamsEnv
