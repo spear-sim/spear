@@ -40,7 +40,7 @@ If you're developing on Windows, you will need to run our build steps in a termi
 - Your terminal must be able to access Anaconda Python, `cmake`, and the Visual Studio command-line tools.
 - You will need to run our build steps from within the Anaconda environment where the `spear` package is installed.
 
-There are multiple possible ways to satisfy these requirements. One possibility is to use the _Developer PowerShell for VS 2022_ profile in the Windows Terminal application to run our build steps. This profile will be installed to the Terminal application when you install Visual Studio. Additionally, you can configure PowerShell to access your Anaconda environment by opening an Anaconda PowerShell prompt with administrator privileges (located in your Start menu after you install Anaconda) and executing the following commands.
+There are multiple possible ways to satisfy these requirements. One possibility is to use the _Developer PowerShell for VS 2022_ profile in the _Terminal_ application to run our build steps. This profile will be installed to the _Terminal_ application when you install Visual Studio. Additionally, you can configure your profile to access your Anaconda environment by opening an _Anaconda PowerShell Prompt_ with administrator privileges (located in your Start menu after you install Anaconda) and executing the following commands.
 
 ```console
 # This step will add a block of PowerShell code to C:\Users\username\Documents\WindowsPowerShell\profile.ps1
@@ -52,7 +52,9 @@ conda init powershell
 Set-ExecutionPolicy -Scope LocalMachine -ExecutionPolicy Bypass
 ```
 
-After executing these commands, you can use the _Developer PowerShell for VS 2022_ profile in the Windows Terminal application, and it will be able to access Anaconda Python and the Visual Studio command-line tools.
+After executing these commands, you will be able to use the _Developer PowerShell for VS 2022_ profile in the _Terminal_ application, and it will be able to access Anaconda Python and the Visual Studio command-line tools.
+
+Confusingly, there is also a legacy application on Windows called _Windows PowerShell_ (blue icon) that provides a similar command-line interface to _Terminal_ (black icon). We have found that _Windows PowerShell_ can make the build environment appear as 32-bit instead of 64-bit, which can cause subtle problems for several of our build steps. So our recommended setup is to use an appropriately configured _Developer PowerShell for VS 2022_ profile in the _Terminal_ application (black icon) specifically.
 
 ## Install Git and CMake
 
