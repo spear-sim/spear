@@ -26,4 +26,4 @@ python control_character.py
 python control_character.py
 ```
 
-You should see the default CitySample character start walking, or a car start driving, depending on which SPEAR program you run. Additionally, an `images` directory of rendered images will begin to populate.
+You should see the default `CitySample` character start walking, or a car start driving, depending on which SPEAR program you run. Additionally, an `images` directory of rendered images will begin to populate.
