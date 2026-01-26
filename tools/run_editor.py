@@ -13,10 +13,10 @@ import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--unreal-engine-dir", required=True)
-parser.add_argument("--config-file")
 parser.add_argument("--graphics-adaptor")
 parser.add_argument("--map")
 parser.add_argument("--vk-icd-filenames")
+parser.add_argument("--config-files", nargs="*")
 parser.add_argument("--editor-launch-mode", default="editor")
 parser.add_argument("--temp-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "tmp")))
 parser.add_argument("--unreal-project-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
@@ -41,8 +41,8 @@ if __name__ == "__main__":
     assert len(uprojects) == 1
     uproject = uprojects[0]
 
-    if args.config_file is not None:
-        user_config_files = [os.path.realpath(os.path.join(os.path.dirname(__file__), args.config_file))]
+    if args.config_files is not None:
+        user_config_files = [ os.path.realpath(os.path.join(os.path.dirname(__file__), config_file)) for config_file in args.config_files ]
     else:
         user_config_files = []
 

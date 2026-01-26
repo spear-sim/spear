@@ -11,11 +11,11 @@ import time
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--config-file")
 parser.add_argument("--executable")
 parser.add_argument("--graphics-adaptor")
 parser.add_argument("--map")
 parser.add_argument("--vk-icd-filenames")
+parser.add_argument("--config-files", nargs="*")
 parser.add_argument("--pak-files", nargs="*")
 args = parser.parse_args()
 
@@ -34,8 +34,8 @@ if __name__ == "__main__":
         else:
             assert False
 
-    if args.config_file is not None:
-        user_config_files = [os.path.realpath(os.path.join(os.path.dirname(__file__), args.config_file))]
+    if args.config_files is not None:
+        user_config_files = [ os.path.realpath(os.path.join(os.path.dirname(__file__), config_file)) for config_file in args.config_files ]
     else:
         user_config_files = []
 
