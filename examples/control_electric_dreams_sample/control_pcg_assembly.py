@@ -19,9 +19,9 @@ parser.add_argument("--skip-save-images", action="store_true")
 parser.add_argument("--skip-read-pixels", action="store_true")
 args = parser.parse_args()
 
-num_frames = 201
+num_frames = 11
 num_frames_for_drone_update = 15
-num_frames_for_pcg_update = 100
+num_frames_for_pcg_update = 60
 
 location_start = np.array([93130.0, -4690.0, 1660.0])
 location_end = np.array([87070.0, -3860.0, 1660.0])
@@ -237,6 +237,8 @@ if __name__ == "__main__":
 
             location = t*location_end + (1 - t)*location_start
             rotator_pyr = t*rotator_pyr_end + (1 - t)*rotator_pyr_start
+
+            spear.log(f"Set PCG assembly location and rotation: {location}, {rotator_pyr}")
 
             # set PCG assembly pose
             bp_pcg_large_assembly.K2_SetActorLocation(NewLocation=spear.to_vector_from_numpy_array(array=location))

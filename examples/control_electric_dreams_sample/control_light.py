@@ -182,7 +182,9 @@ if __name__ == "__main__":
             gameplay_statics.SetGamePaused(bPaused=False)
 
             # set light direction
-            light.K2_SetActorRotation(NewRotation={"Pitch": float(i), "Yaw": 25.0, "Roll": -130.0})
+            rotation = {"Pitch": float(i), "Yaw": 25.0, "Roll": -130.0}
+            spear.log("Set light direction: ", rotation)
+            light.K2_SetActorRotation(NewRotation=rotation)
 
         with instance.end_frame():
             # read pixels from camera sensor
@@ -198,7 +200,7 @@ if __name__ == "__main__":
             frame_index = frame_index + 1
 
         # give cached lighting data structures and auto-exposure etc a chance to update
-        for _ in range(25):
+        for _ in range(3):
             with instance.begin_frame():
                 gameplay_statics.SetGamePaused(bPaused=False)
             with instance.end_frame():

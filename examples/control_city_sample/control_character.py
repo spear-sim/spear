@@ -139,13 +139,20 @@ if __name__ == "__main__":
             bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
             bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
 
+            action_name = "IA_FC_Move"
+            action_trigger_event = "Triggered"
+            action_value_type = "Axis2D"
+            action_value = {"X": -1.0, "Y": 0.0, "Z": 0.0}
+
+            spear.log(f'Injecting action: "{action_name}" ({action_value_type}, {action_trigger_event}, {action_value})')
+
             # inject input
             instance.enhanced_input_service.inject_input_for_actor(
                 actor=character,
-                input_action_name="IA_FC_Move",
-                trigger_event="Triggered",
-                input_action_value={"ValueType": "Axis2D", "Value": {"X": -1.0, "Y": 0.0, "Z": 0.0}},
-                input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
+                input_action_name=action_name,
+                trigger_event=action_trigger_event,
+                input_action_value={"ValueType": action_value_type, "Value": action_value},
+                input_action_instance={"TriggerEvent": action_trigger_event, "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
         with instance.end_frame():
 

@@ -82,14 +82,14 @@ if __name__ == "__main__":
         car_transform = return_values["OutPoint"]
         assert success
 
-        bp_car_uclass = game.unreal_service.load_class(uclass="AActor", name="/Game/Vehicle/vehCar_vehicle03/BP_vehCar_vehicle03_Sandbox.BP_vehCar_vehicle03_Sandbox_C")
-        bp_car = game.unreal_service.spawn_actor(
-            uclass=bp_car_uclass,
+        car_uclass = game.unreal_service.load_class(uclass="AActor", name="/Game/Vehicle/vehCar_vehicle03/BP_vehCar_vehicle03_Sandbox.BP_vehCar_vehicle03_Sandbox_C")
+        car = game.unreal_service.spawn_actor(
+            uclass=car_uclass,
             location=car_transform["translation"],
             rotation=car_transform["rotation"],
             spawn_parameters={"SpawnCollisionHandlingOverride": "AlwaysSpawn"})
 
-        player_controller.Possess(InPawn=bp_car)
+        player_controller.Possess(InPawn=car)
 
         # spawn camera sensor
         bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
@@ -139,11 +139,13 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing etc accumulate additional information across frames
 
+    spear.log("Warming up...")
+
     #
     # execute warm-up frames to give us a chance to teleport to the spawned car
     #
 
-    for _ in range(200):
+    for _ in range(num_frames_per_trajectory_segment):
         instance.flush()
 
     #
@@ -159,13 +161,20 @@ if __name__ == "__main__":
     with instance.begin_frame():
         gameplay_statics.SetGamePaused(bPaused=False)
 
+        action_name = "IA_VH_Throttle"
+        action_trigger_event = "Triggered"
+        action_value_type = "Axis1D"
+        action_value = {"X": 10.0, "Y": 0.0, "Z": 0.0}
+
+        spear.log(f'Injecting action: "{action_name}" ({action_value_type}, {action_trigger_event}, {action_value})')
+
         # inject input
         instance.enhanced_input_service.inject_input_for_actor(
-            actor=bp_car,
-            input_action_name="IA_VH_Throttle",
-            trigger_event="Triggered",
-            input_action_value={"ValueType": "Axis1D", "Value": {"X": 10.0, "Y": 0.0, "Z": 0.0}},
-            input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
+            actor=car,
+            input_action_name=action_name,
+            trigger_event=action_trigger_event,
+            input_action_value={"ValueType": action_value_type, "Value": action_value},
+            input_action_instance={"TriggerEvent": action_trigger_event, "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
     with instance.end_frame():
 
@@ -215,13 +224,20 @@ if __name__ == "__main__":
     with instance.begin_frame():
         gameplay_statics.SetGamePaused(bPaused=False)
 
+        action_name = "IA_VH_Throttle"
+        action_trigger_event = "Triggered"
+        action_value_type = "Axis1D"
+        action_value = {"X": 0.0, "Y": 0.0, "Z": 0.0}
+
+        spear.log(f'Injecting action: "{action_name}" ({action_value_type}, {action_trigger_event}, {action_value})')
+
         # inject input
         instance.enhanced_input_service.inject_input_for_actor(
-            actor=bp_car,
-            input_action_name="IA_VH_Throttle",
-            trigger_event="Triggered",
-            input_action_value={"ValueType": "Axis1D", "Value": {"X": 0.0, "Y": 0.0, "Z": 0.0}},
-            input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
+            actor=car,
+            input_action_name=action_name,
+            trigger_event=action_trigger_event,
+            input_action_value={"ValueType": action_value_type, "Value": action_value},
+            input_action_instance={"TriggerEvent": action_trigger_event, "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
         # set camera pose
         view_target_pov = player_camera_manager.ViewTarget.POV.get()
@@ -243,12 +259,27 @@ if __name__ == "__main__":
         frame_index = frame_index + 1
 
     #
-    # coast forwards
+    # brake
     #
 
-    for i in range(num_frames_per_trajectory_segment):
+    for i in range(20):
         with instance.begin_frame():
             gameplay_statics.SetGamePaused(bPaused=False)
+
+            action_name = "IA_VH_Brake"
+            action_trigger_event = "Triggered"
+            action_value_type = "Axis1D"
+            action_value = {"X": 1.0, "Y": 0.0, "Z": 0.0}
+
+            spear.log(f'Injecting action: "{action_name}" ({action_value_type}, {action_trigger_event}, {action_value})')
+
+            # inject input
+            instance.enhanced_input_service.inject_input_for_actor(
+                actor=car,
+                input_action_name=action_name,
+                trigger_event=action_trigger_event,
+                input_action_value={"ValueType": action_value_type, "Value": action_value},
+                input_action_instance={"TriggerEvent": action_trigger_event, "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
             # set camera pose
             view_target_pov = player_camera_manager.ViewTarget.POV.get()
@@ -268,6 +299,47 @@ if __name__ == "__main__":
         if not args.skip_read_pixels and not args.skip_save_images:
             save_images(images_dir=images_dir, frame_index=frame_index)
             frame_index = frame_index + 1
+
+    #
+    # unset brake
+    #
+
+    with instance.begin_frame():
+        gameplay_statics.SetGamePaused(bPaused=False)
+
+        action_name = "IA_VH_Brake"
+        action_trigger_event = "Triggered"
+        action_value_type = "Axis1D"
+        action_value = {"X": 0.0, "Y": 0.0, "Z": 0.0}
+
+        spear.log(f'Injecting action: "{action_name}" ({action_value_type}, {action_trigger_event}, {action_value})')
+
+        # inject input
+        instance.enhanced_input_service.inject_input_for_actor(
+            actor=car,
+            input_action_name=action_name,
+            trigger_event=action_trigger_event,
+            input_action_value={"ValueType": action_value_type, "Value": action_value},
+            input_action_instance={"TriggerEvent": action_trigger_event, "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
+
+        # set camera pose
+        view_target_pov = player_camera_manager.ViewTarget.POV.get()
+        bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
+        bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
+
+    with instance.end_frame():
+
+        # read pixels from camera sensor
+        if not args.skip_read_pixels:
+            for component_desc in component_descs:
+                data_bundle = component_desc["component"].read_pixels()
+                component_desc["data"] = data_bundle["arrays"]["data"]
+
+        gameplay_statics.SetGamePaused(bPaused=True)
+
+    if not args.skip_read_pixels and not args.skip_save_images:
+        save_images(images_dir=images_dir, frame_index=frame_index)
+        frame_index = frame_index + 1
 
     #
     # unpause now that we're finished controlling the character

@@ -152,7 +152,7 @@ if __name__ == "__main__":
 
         # get game mode
         game_mode = gameplay_statics.GetGameMode()
-        game_mode.print_debug_info()
+        # game_mode.print_debug_info()
 
         # get navigation data
         navigation_system = navigation_system_v1.GetNavigationSystem()
@@ -175,13 +175,25 @@ if __name__ == "__main__":
         cursor.bVisible = False
 
         # add resources so we have enough resources to build
-        game_mode.call(function_name="Add Resource", args={"Resource": "Food",  "Value": 1000})
-        game_mode.call(function_name="Add Resource", args={"Resource": "Wood",  "Value": 1000})
-        game_mode.call(function_name="Add Resource", args={"Resource": "Stone", "Value": 1000})
+
+        resource = {"Resource": "Food",  "Value": 1000}
+        spear.log("Add resource: ", resource)
+        game_mode.call(function_name="Add Resource", args=resource)
+
+        resource = {"Resource": "Wood",  "Value": 1000}
+        spear.log("Add resource: ", resource)
+        game_mode.call(function_name="Add Resource", args=resource)
+
+        resource = {"Resource": "Stone",  "Value": 1000}
+        spear.log("Add resource: ", resource)
+        game_mode.call(function_name="Add Resource", args=resource)
 
         # spawn villagers
         for _ in range(num_villagers_to_spawn):
+            spear.log("Spawn villager.")
             game_mode.call(function_name="Spawn Villager")
+
+        spear.log("Begin build.")
 
         # begin build
         player.call(function_name="Switch Build Mode", args={"Switch To Build Mode?": True})
@@ -230,6 +242,8 @@ if __name__ == "__main__":
             spear.log("Couldn't find a location to spawn the build target object. Giving up...")
             assert False
 
+        spear.log("End build.")
+
         # end build
         player.set_property_value(property_name="Can Drop", property_value=can_spawn)
         player.call(function_name="Spawn Build Target")
@@ -249,11 +263,14 @@ if __name__ == "__main__":
         build_target = build_targets[0]
 
         # assign villager to build target
-        for villager in villagers:
+        for i, villager in enumerate(villagers):
+            spear.log(f"Assigning villager {i} to build building.")
             villager.Action(NewParam=build_target)
 
     with instance.end_frame():
         pass
+
+    spear.log(f"Rendering images...")
 
     #
     # initialize frame counter

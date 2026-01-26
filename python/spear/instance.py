@@ -601,7 +601,16 @@ class Instance():
     def _wait_until(self, func, retry, max_time_seconds, sleep_time_seconds):
 
         spear.log_current_function(prefix="    ")
-        spear.log("        Waiting for function to return true: ", str(func))
+
+        func_name = ""
+        if hasattr(func, "__qualname__"):
+            func_name = func.__qualname__
+        elif hasattr(func, "__name__"):
+            func_name = func.__name__
+        else:
+            func_name = type(func).__name__
+
+        spear.log("        Waiting for function to return true: ", func_name)
 
         if retry:
             spear.log("        Waiting for up to ", max_time_seconds, " seconds, retrying every ", sleep_time_seconds, " seconds...")
