@@ -295,14 +295,14 @@ USpStableNameEventHandler::~USpStableNameEventHandler()
 
     void USpStableNameEventHandler::levelAddedToWorldHandler(ULevel* level, UWorld* world)
     {
-        SP_ASSERT(level);
+        // level can be null
         SP_ASSERT(world);
         UnrealUtils::requestUpdateAllStableNameActors(world);
     }
 
     void USpStableNameEventHandler::levelRemovedFromWorldHandler(ULevel* level, UWorld* world)
     {
-        SP_ASSERT(level);
+        // level can be null
         SP_ASSERT(world);
         UnrealUtils::requestUpdateAllStableNameActors(world);
     }

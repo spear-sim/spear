@@ -62,10 +62,7 @@ class SpFuncService(spear.Service):
             info=info)
 
         # define convert func
-        def convert_func(
-            result_data_bundle,
-            arrays=arrays,
-            uobject_shared_memory_handles=uobject_shared_memory_handles):
+        def convert_func(result_data_bundle):
 
             # get the shared memory handle for each arg that uses shared memory and could be used as return value
             arg_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_arrays(

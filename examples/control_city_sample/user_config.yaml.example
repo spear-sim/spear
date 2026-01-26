@@ -21,7 +21,8 @@ SP_SERVICES:
         "bSubstepping": true,
         "MaxSubstepDeltaTime": 0.006666,
         "MaxSubsteps": 10
-    }'''
+    }
+    '''
 
   INITIALIZE_GAME_WORLD_SERVICE:
     OVERRIDE_GAME_PAUSED: True

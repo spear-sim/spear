@@ -42,36 +42,25 @@ examples/*/tmp
 examples/*/user_config.yaml
 
 examples/control_character/character_poses
-
 examples/control_city_sample/images
-
+examples/control_cropout_sample/images
 examples/control_editor/screenshot.png
-
 examples/control_electric_dreams_sample/images
-
 examples/control_game_animation_sample/images
-
 examples/control_metahumans_sample/images
-
 examples/control_stackobot_sample/images
-
 examples/import_stanford_dataset/csv
 examples/import_stanford_dataset/download
 examples/import_stanford_dataset/gltf
 examples/import_stanford_dataset/pak
 examples/import_stanford_dataset/ply
 examples/import_stanford_dataset/stanford
-
 examples/render_image_dataset/camera_poses
 examples/render_image_dataset/images
-
 examples/render_image_hypersim/images
-
 examples/render_image_multi_view/images
 examples/render_image_multi_view/movie.mp4
-
 examples/render_image_editor/screenshot.png
-
 examples/control_stackobot_sample/images
 
 python_ext/BUILD

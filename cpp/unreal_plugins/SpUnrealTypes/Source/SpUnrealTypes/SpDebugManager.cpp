@@ -772,15 +772,23 @@ void ASpDebugManager::PrintActorDebugInfo() const
             SP_LOG("            Function: ", ufunction_name);
             std::map<std::string, FProperty*> properties = UnrealUtils::findPropertiesAsMap(ufunction);
             for (auto& [property_name, property] : properties) {
-                SP_ASSERT(property->HasAnyPropertyFlags(EPropertyFlags::CPF_Parm));
-                if (!property->HasAnyPropertyFlags(EPropertyFlags::CPF_ReturnParm)) {
+                if (property->HasAnyPropertyFlags(EPropertyFlags::CPF_Parm) && !property->HasAnyPropertyFlags(EPropertyFlags::CPF_ReturnParm)) {
                     SP_LOG("                Argument: ", property_name, " (", Unreal::getCppTypeAsString(property), ")");
                 }
             }
             for (auto& [property_name, property] : properties) {
-                SP_ASSERT(property->HasAnyPropertyFlags(EPropertyFlags::CPF_Parm));
-                if (property->HasAnyPropertyFlags(EPropertyFlags::CPF_ReturnParm)) {
+                if (property->HasAnyPropertyFlags(EPropertyFlags::CPF_Parm) && property->HasAnyPropertyFlags(EPropertyFlags::CPF_ReturnParm)) {
                     SP_LOG("                Return value: ", property_name, " (", Unreal::getCppTypeAsString(property), ")");
+                }
+            }
+            for (auto& [property_name, property] : properties) {
+                if (!property->HasAnyPropertyFlags(EPropertyFlags::CPF_Parm) && !property->HasAnyPropertyFlags(EPropertyFlags::CPF_ReturnParm)) {
+                    SP_LOG("                Other property: ", property_name, " (", Unreal::getCppTypeAsString(property), ")");
+                }
+            }
+            for (auto& [property_name, property] : properties) {
+                if (!property->HasAnyPropertyFlags(EPropertyFlags::CPF_Parm) && property->HasAnyPropertyFlags(EPropertyFlags::CPF_ReturnParm)) {
+                    SP_ASSERT(false);
                 }
             }
         }

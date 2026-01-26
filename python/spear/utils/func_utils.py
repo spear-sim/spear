@@ -37,6 +37,22 @@ class ServiceBase():
         else:
             self._private_config = None
 
+    def to_handle_or_unreal_struct(self, obj, as_handle=None, as_unreal_struct=None):
+        assert self._private_unreal_service is not None
+        return spear.to_handle_or_unreal_struct(
+            obj=obj,
+            unreal_service=self._private_unreal_service,
+            as_handle=as_handle,
+            as_unreal_struct=as_unreal_struct)
+
+    def to_handle_or_unreal_class(self, obj, as_handle=None, as_unreal_class=None):
+        assert self._private_unreal_service is not None
+        return spear.to_handle_or_unreal_class(
+            obj=obj,
+            unreal_service=self._private_unreal_service,
+            as_handle=as_handle,
+            as_unreal_class=as_unreal_class)
+
     def to_handle_or_unreal_object(self, obj, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         assert self._private_sp_func_service is not None
         assert self._private_unreal_service is not None
@@ -179,7 +195,6 @@ class CallSyncEntryPointCaller(EntryPointCaller):
             return return_value
 
     def get(self, obj):
-        spear.log_current_function()
         return obj
 
 class CallAsyncEntryPointCaller(EntryPointCaller):
@@ -287,6 +302,22 @@ class Future:
 # Conversion functions
 #
 
+# Convert to handle or UnrealStruct
+def to_handle_or_unreal_struct(obj, unreal_service, as_handle=None, as_unreal_struct=None):
+    if as_handle is not None:
+        assert as_unreal_struct is None
+        return to_handle(obj=obj)
+    else:
+        return to_unreal_struct(obj=obj, unreal_service=unreal_service)
+
+# Convert to handle or UnrealClass
+def to_handle_or_unreal_class(obj, unreal_service, as_handle=None, as_unreal_class=None):
+    if as_handle is not None:
+        assert as_unreal_class is None
+        return to_handle(obj=obj)
+    else:
+        return to_unreal_class(obj=obj, unreal_service=unreal_service)
+
 # Convert to handle or UnrealObject
 def to_handle_or_unreal_object(obj, unreal_service, sp_func_service, config, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
     if as_handle is not None:
@@ -294,59 +325,51 @@ def to_handle_or_unreal_object(obj, unreal_service, sp_func_service, config, as_
         assert with_sp_funcs is None
         return to_handle(obj=obj)
     else:
-        return to_unreal_object(
-            obj=obj,
-            unreal_service=unreal_service,
-            sp_func_service=sp_func_service,
-            config=config,
-            as_unreal_object=as_unreal_object,
-            with_sp_funcs=with_sp_funcs)
+        return to_unreal_object(obj=obj, unreal_service=unreal_service, sp_func_service=sp_func_service, config=config, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
+
+# Convert to UnrealStruct
+def to_unreal_struct(obj, unreal_service):
+    return to_unreal_type(obj=obj, create_func=lambda obj: spear.UnrealStruct(unreal_service=unreal_service, ustruct=obj))
+
+# Convert to UnrealClass
+def to_unreal_class(obj, unreal_service):
+    return to_unreal_type(obj=obj, create_func=lambda obj: spear.UnrealClass(unreal_service=unreal_service, uclass=obj))
 
 # Convert to UnrealObject
-def to_unreal_object(obj, unreal_service, sp_func_service, config, as_unreal_object=None, with_sp_funcs=None, uclass=None, resolve_uclass=True):
+def to_unreal_object(obj, unreal_service, sp_func_service, config, as_unreal_object=None, with_sp_funcs=None):
     if as_unreal_object is None:
         as_unreal_object = True
     if with_sp_funcs is None:
         with_sp_funcs = False
-    if resolve_uclass:
-        if isinstance(as_unreal_object, bool):
-            assert as_unreal_object
-            uclass = None
-        elif isinstance(as_unreal_object, numbers.Integral):
-            assert as_unreal_object != 0
-            uclass = as_unreal_object
-        elif isinstance(as_unreal_object, str):
-            assert as_unreal_object != ""
-            uclass = as_unreal_object
-        else:
-            assert False
+    if isinstance(as_unreal_object, bool):
+        assert as_unreal_object
+        uclass = None
+    elif isinstance(as_unreal_object, numbers.Integral):
+        assert as_unreal_object != 0
+        uclass = as_unreal_object
+    elif isinstance(as_unreal_object, str):
+        assert as_unreal_object != ""
+        uclass = as_unreal_object
+    else:
+        assert False
+    return to_unreal_type(obj=obj, create_func=lambda obj: spear.UnrealObject(unreal_service=unreal_service, sp_func_service=sp_func_service, config=config, uobject=obj, uclass=uclass, with_sp_funcs=with_sp_funcs))
+
+# Convert to UnrealStruct or UnrealClass
+def to_unreal_type(obj, create_func):
     if isinstance(obj, bool):
         assert False
     elif isinstance(obj, numbers.Integral):
-        return spear.UnrealObject(
-            unreal_service=unreal_service,
-            sp_func_service=sp_func_service,
-            config=config,
-            uobject=obj,
-            uclass=uclass,
-            with_sp_funcs=with_sp_funcs)
+        return create_func(obj=obj)
     elif isinstance(obj, list):
-        return [ to_unreal_object(obj=o, unreal_service=unreal_service, sp_func_service=sp_func_service, config=config, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs, uclass=uclass, resolve_uclass=False) for o in obj ]
+        return [ to_unreal_type(obj=o, create_func=create_func) for o in obj ]
     elif isinstance(obj, dict):
-        return { k: to_unreal_object(obj=v, unreal_service=unreal_service, sp_func_service=sp_func_service, config=config, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs, uclass=uclass, resolve_uclass=False) for k, v in obj.items() }
+        return { k: to_unreal_type(obj=v, create_func=create_func) for k, v in obj.items() }
     elif isinstance(obj, spear.Future):
-        def convert_func(o, inner_convert_func=obj.convert_func, unreal_service=unreal_service, sp_func_service=sp_func_service, config=config, with_sp_funcs=with_sp_funcs, uclass=uclass):
+        inner_convert_func = obj.convert_func
+        def convert_func(o):
             if inner_convert_func is not None:
                 o = inner_convert_func(o)
-            return to_unreal_object(
-                obj=o,
-                unreal_service=unreal_service,
-                sp_func_service=sp_func_service,
-                config=config,
-                as_unreal_object=as_unreal_object,
-                with_sp_funcs=with_sp_funcs,
-                uclass=uclass,
-                resolve_uclass=False)
+            return to_unreal_type(obj=o, create_func=create_func)
         obj.convert_func = convert_func
         return obj
     else:
@@ -361,6 +384,10 @@ def to_handle(obj):
     elif isinstance(obj, str):
         assert obj.startswith("0x")
         return int(obj, 16)
+    elif isinstance(obj, spear.UnrealStruct):
+        return obj.ustruct
+    elif isinstance(obj, spear.UnrealClass):
+        return obj.uclass
     elif isinstance(obj, spear.UnrealObject):
         return obj.uobject
     elif isinstance(obj, np.ndarray):
@@ -371,7 +398,8 @@ def to_handle(obj):
     elif isinstance(obj, dict):
         return { k: to_handle(obj=v) for k, v in obj.items() }
     elif isinstance(obj, spear.Future):
-        def convert_func(o, inner_convert_func=obj.convert_func):
+        inner_convert_func = obj.convert_func
+        def convert_func(o):
             if inner_convert_func is not None:
                 o = inner_convert_func(o)
             return to_handle(obj=o)
@@ -396,6 +424,10 @@ def to_json_string(obj, stringify=True):
         return obj
     elif isinstance(obj, Ptr):
         return obj.to_string()
+    elif isinstance(obj, spear.UnrealStruct):
+        return to_ptr(handle=obj.ustruct).to_string()
+    elif isinstance(obj, spear.UnrealClass):
+        return to_ptr(handle=obj.uclass).to_string()
     elif isinstance(obj, spear.UnrealObject):
         return to_ptr(handle=obj.uobject).to_string()
     elif isinstance(obj, bool) or isinstance(obj, numbers.Number) or isinstance(obj, list) or isinstance(obj, dict):

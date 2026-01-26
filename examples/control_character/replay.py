@@ -45,7 +45,7 @@ if __name__ == "__main__":
     with instance.begin_frame():
 
         # load objects
-        manny_simple = game.unreal_service.load_object(uclass="UObject", name="/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple")
+        manny_simple = game.unreal_service.load_object(uclass="USkeletalMesh", name="/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple")
 
         characters = []
         for character_desc in character_descs:
@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
             # there is no point specifying a location and rotation yet, because the spawned actor won't have a
             # root scene component, so we will need to set its location later
-            character["actor"] = game.unreal_service.spawn_actor(uclass="AActor", spawn_parameters={"Name": character_desc["name"], "SpawnCollisionHandlingOverride": "AlwaysSpawn"})
+            character["actor"] = game.unreal_service.spawn_actor(uclass="AActor", spawn_parameters={"SpawnCollisionHandlingOverride": "AlwaysSpawn"})
 
             # create UPoseableMeshComponent and setup skeletal mesh
             character["poseable_mesh_component"] = game.unreal_service.create_scene_component_for_actor(uclass="UPoseableMeshComponent", owner=character["actor"], scene_component_name="poseable_mesh_component")

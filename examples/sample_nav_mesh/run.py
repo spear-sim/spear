@@ -77,9 +77,9 @@ if __name__ == "__main__":
         pass
 
     # spawn axes
-    for i in range(num_points):
+    for point in points:
         with instance.begin_frame():
-            bp_axes = game.unreal_service.spawn_actor(uclass=bp_axes_uclass, location={"X": points[i,0], "Y": points[i,1], "Z": points[i,2]})
+            bp_axes = game.unreal_service.spawn_actor(uclass=bp_axes_uclass, location=spear.to_vector_from_numpy_array(array=point))
             bp_axes.SetActorScale3D(NewScale3D={"X": 0.75, "Y": 0.75, "Z": 0.75})
         with instance.end_frame():
             pass
@@ -104,9 +104,9 @@ if __name__ == "__main__":
         pass
 
     # spawn axes
-    for i in range(num_points):
+    for reachable_point in reachable_points:
         with instance.begin_frame():
-            bp_axes = game.unreal_service.spawn_actor(uclass=bp_axes_uclass, location={"X": reachable_points[i,0], "Y": reachable_points[i,1], "Z": reachable_points[i,2]})
+            bp_axes = game.unreal_service.spawn_actor(uclass=bp_axes_uclass, location=spear.to_vector_from_numpy_array(array=reachable_point))
             bp_axes.SetActorScale3D(NewScale3D={"X": 0.75, "Y": 0.75, "Z": 0.75})
         with instance.end_frame():
             pass

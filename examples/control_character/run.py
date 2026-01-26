@@ -94,7 +94,7 @@ if __name__ == "__main__":
         gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
 
         # load objects
-        manny_simple = game.unreal_service.load_object(uclass="UObject", name="/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple")
+        manny_simple = game.unreal_service.load_object(uclass="USkeletalMesh", name="/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple")
 
         characters = []
         for character_desc in character_descs:
@@ -105,21 +105,21 @@ if __name__ == "__main__":
             character["name"] = character_desc["name"]
             character["move_input_action_value"] = character_desc["move_input_action_value"]
 
-            # spawn character and get handles to components
+            # spawn character and get components
             character["actor"] = game.unreal_service.spawn_actor(
                 uclass=bp_character_uclass,
                 location=character_desc["location"],
                 rotation=character_desc["rotation"],
-                spawn_parameters={"Name": character_desc["name"], "SpawnCollisionHandlingOverride": "AlwaysSpawn"})
+                spawn_parameters={"SpawnCollisionHandlingOverride": "AlwaysSpawn"})
             character["movement_component"] = game.unreal_service.get_component_by_class(actor=character["actor"], uclass="UCharacterMovementComponent")
             character["skeletal_mesh_component"] = game.unreal_service.get_component_by_class(actor=character["actor"], uclass="USkeletalMeshComponent")
 
             # configure character to be controlled without possessing
-            character["movement_component"].set_properties(properties={"bRunPhysicsWithNoController": True})
+            character["movement_component"].bRunPhysicsWithNoController = True
             character["movement_component"].SetMovementMode(NewMovementMode="MOVE_Walking")
 
             # initialize input component
-            character["actor"].CreateInputComponent(InputComponentToCreate=spear.to_ptr(handle=enhanced_input_component_uclass))
+            character["actor"].CreateInputComponent(InputComponentToCreate=enhanced_input_component_uclass)
             character["input_component"] = game.unreal_service.get_component_by_class(actor=character["actor"], uclass=enhanced_input_component_uclass)
             instance.input_service.setup_player_input_component(actor=character["actor"], input_component=character["input_component"])
 

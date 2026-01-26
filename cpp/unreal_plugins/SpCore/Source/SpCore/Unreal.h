@@ -259,6 +259,10 @@ public:
             SP_ASSERT(false);
         }
         std::string str = toStdString(ustruct->GetPrefixCPP()) + toStdString(ustruct->GetName());
+
+        str.erase(0, str.find_first_not_of(" ")); // strip leading white space
+        str.erase(str.find_last_not_of(" ") + 1); // strip trailing white space
+
         SP_ASSERT(str != "");
         return str;
     }
@@ -266,6 +270,10 @@ public:
     static std::string getCppTypeAsString(FProperty* property)
     {
         std::string str = toStdString(property->GetCPPType());
+
+        str.erase(0, str.find_first_not_of(" ")); // strip leading white space
+        str.erase(str.find_last_not_of(" ") + 1); // strip trailing white space
+
         SP_ASSERT(str != "");
         return str;
     }
@@ -284,6 +292,10 @@ public:
             SP_ASSERT(false);
         }
         std::string str = toStdString(ustruct->GetName());
+
+        str.erase(0, str.find_first_not_of(" ")); // strip leading white space
+        str.erase(str.find_last_not_of(" ") + 1); // strip trailing white space
+
         SP_ASSERT(str != "");
         return str;
     }

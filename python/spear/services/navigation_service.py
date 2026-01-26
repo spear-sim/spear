@@ -68,7 +68,7 @@ class NavigationService(spear.Service):
             usage_flags=["Arg", "ReturnValue"])
 
         # define convert func
-        def convert_func(result_packed_array, out_array=out_array):
+        def convert_func(result_packed_array):
             result_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_arrays(
                 arrays=[out_array],
                 usage_flags=["Arg", "ReturnValue"])
@@ -129,7 +129,7 @@ class NavigationService(spear.Service):
             usage_flags=["Arg", "ReturnValue"])
 
         # define convert func
-        def convert_func(result_packed_array, out_array=out_array):
+        def convert_func(result_packed_array):
             result_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_arrays(
                 arrays=[out_array],
                 usage_flags=["Arg", "ReturnValue"])

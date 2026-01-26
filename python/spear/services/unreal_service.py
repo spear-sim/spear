@@ -34,6 +34,7 @@ class UnrealService(spear.Service):
 
     def initialize(self):
         assert self.is_top_level_service() # this function should only be called on the top-level service
+
         self._static_struct_descs = self.get_static_struct_descs()
         self._static_class_descs = self.get_static_class_descs()
 
@@ -47,13 +48,15 @@ class UnrealService(spear.Service):
     def get_static_struct_descs(self):
         return self.entry_point_caller.call_on_game_thread("get_static_struct_descs", None)
 
-    def get_static_struct_desc(self, uclass):
-        return self.entry_point_caller.call_on_game_thread("get_static_struct_desc", None, uclass)
+    def get_static_struct_desc(self, ustruct, as_handle=None, as_unreal_struct=None):
+        ustruct = self.to_ustruct(ustruct=ustruct)
+        return self.entry_point_caller.call_on_game_thread("get_static_struct_desc", None, ustruct)
 
     def get_static_class_descs(self):
         return self.entry_point_caller.call_on_game_thread("get_static_class_descs", None)
 
-    def get_static_class_desc(self, uclass):
+    def get_static_class_desc(self, uclass, as_handle=None, as_unreal_class=None):
+        uclass = self.to_uclass(uclass=uclass)
         return self.entry_point_caller.call_on_game_thread("get_static_class_desc", None, uclass)
 
     #
@@ -87,48 +90,61 @@ class UnrealService(spear.Service):
     # Functions for static structs and classes and interfaces
     #
 
-    def get_static_struct(self, ustruct):
-        spear.log(ustruct)
-        ustruct = self.to_ustruct(ustruct=ustruct)
-        return self.entry_point_caller.get(obj=ustruct)
+    def get_static_struct(self, ustruct, as_handle=None, as_unreal_struct=None):
+        ustruct = self.to_ustruct(ustruct=ustruct) # if ustruct is a string, it must be in our cached dict
+        result = self.entry_point_caller.get(obj=ustruct)
+        return self.to_handle_or_unreal_struct(obj=result, as_handle=as_handle, as_unreal_struct=as_unreal_struct)
 
-    def find_static_structs(self):
-        return self.entry_point_caller.call_on_game_thread("find_static_structs", None)
+    def find_static_structs(self, as_handle=None, as_unreal_struct=None):
+        result = self.entry_point_caller.call_on_game_thread("find_static_structs", None)
+        return self.to_handle_or_unreal_struct(obj=result, as_handle=as_handle, as_unreal_struct=as_unreal_struct)
 
-    def find_static_structs_as_dict(self):
-        return self.entry_point_caller.call_on_game_thread("find_static_structs_as_map", None)
+    def find_static_structs_as_dict(self, as_handle=None, as_unreal_struct=None):
+        result = self.entry_point_caller.call_on_game_thread("find_static_structs_as_map", None)
+        return self.to_handle_or_unreal_struct(obj=result, as_handle=as_handle, as_unreal_struct=as_unreal_struct)
 
-    def find_static_classes(self):
-        return self.entry_point_caller.call_on_game_thread("find_static_classes", None)
+    def find_static_classes(self, as_handle=None, as_unreal_class=None):
+        result = self.entry_point_caller.call_on_game_thread("find_static_classes", None)
+        return self.to_handle_or_unreal_class(obj=result, as_handle=as_handle, as_unreal_class=as_unreal_class)
 
-    def find_static_classes_as_dict(self):
-        return self.entry_point_caller.call_on_game_thread("find_static_classes_as_map", None)
+    def find_static_classes_as_dict(self, as_handle=None, as_unreal_class=None):
+        result = self.entry_point_caller.call_on_game_thread("find_static_classes_as_map", None)
+        return self.to_handle_or_unreal_class(obj=result, as_handle=as_handle, as_unreal_class=as_unreal_class)
 
-    def get_derived_classes(self, uclass, recursive=True):
+    def get_derived_classes(self, uclass, recursive=True, as_handle=None, as_unreal_class=None):
         uclass = self.to_uclass(uclass=uclass)
-        return self.entry_point_caller.call_on_game_thread("get_derived_classes", None, uclass, recursive)
+        result = self.entry_point_caller.call_on_game_thread("get_derived_classes", None, uclass, recursive)
+        return self.to_handle_or_unreal_class(obj=result, as_handle=as_handle, as_unreal_class=as_unreal_class)
 
-    def get_derived_classes_as_dict(self, uclass, recursive=True):
+    def get_derived_classes_as_dict(self, uclass, recursive=True, as_handle=None, as_unreal_class=None):
         uclass = self.to_uclass(uclass=uclass)
-        return self.entry_point_caller.call_on_game_thread("get_derived_classes_as_map", None, uclass, recursive)
+        result = self.entry_point_caller.call_on_game_thread("get_derived_classes_as_map", None, uclass, recursive)
+        return self.to_handle_or_unreal_class(obj=result, as_handle=as_handle, as_unreal_class=as_unreal_class)
 
-    def get_static_class(self, uclass):
+    def get_static_class(self, uclass, as_handle=None, as_unreal_class=None):
         if isinstance(uclass, bool):
             assert False
         if isinstance(uclass, numbers.Integral):
-            return self.entry_point_caller.get(obj=uclass)
+            uclass = self.to_uclass(uclass=uclass)
+            result = self.entry_point_caller.get(obj=uclass)
+            return self.to_handle_or_unreal_class(obj=result, as_handle=as_handle, as_unreal_class=as_unreal_class)
         elif isinstance(uclass, str):
+            # uclass might not be in our cached dict if it is an interface
             if uclass in self.get_top_level_service().static_class_descs_by_name:
                 uclass = self.to_uclass(uclass=uclass)
-                return self.entry_point_caller.get(obj=uclass)
+                result = self.entry_point_caller.get(obj=uclass)
+                return self.to_handle_or_unreal_class(obj=result, as_handle=as_handle, as_unreal_class=as_unreal_class)
             else:
-                return self.entry_point_caller.call_on_game_thread("get_static_class", None, uclass)
+                # the get_static_class entry point takes a string
+                result = self.entry_point_caller.call_on_game_thread("get_static_class", None, uclass)
+                return self.to_handle_or_unreal_class(obj=result, as_handle=as_handle, as_unreal_class=as_unreal_class)
         else:
             assert False
 
-    def get_super_class(self, uclass):
+    def get_super_class(self, uclass, as_handle=None, as_unreal_class=None):
         uclass = self.to_uclass(uclass=uclass)
-        return self.entry_point_caller.call_on_game_thread("get_super_class", None, uclass)
+        result = self.entry_point_caller.call_on_game_thread("get_super_class", None, uclass)
+        return self.to_handle_or_unreal_class(obj=result, as_handle=as_handle, as_unreal_class=as_unreal_class)
 
     def get_class_flags(self, uclass):
         uclass = self.to_uclass(uclass=uclass)
@@ -139,9 +155,10 @@ class UnrealService(spear.Service):
         result = self.entry_point_caller.call_on_game_thread("get_default_object", None, uclass, create_if_needed)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
-    def get_class(self, uobject):
+    def get_class(self, uobject, as_handle=None, as_unreal_class=None):
         uobject = spear.to_handle(obj=uobject)
-        return self.entry_point_caller.call_on_game_thread("get_class", None, uobject)
+        result = self.entry_point_caller.call_on_game_thread("get_class", None, uobject)
+        return self.to_handle_or_unreal_class(obj=result, as_handle=as_handle, as_unreal_class=as_unreal_class)
 
     #
     # Functions for getting C++ types as strings
@@ -518,18 +535,19 @@ class UnrealService(spear.Service):
         uclass = self.to_uclass(uclass=uclass)
         in_outer = spear.to_handle(obj=in_outer)
 
-        # it is not supported to construct an UnrealObject using a UClass instance as the backing UObject
+        # it is not supported to construct an UnrealObject using a UClass instance as the backing UObject, even though UClass instances are technically UObjects
         if uclass == self.to_uclass(uclass="UClass"):
             assert as_handle
 
         result = self.entry_point_caller.call_on_game_thread("static_load_object", None, uclass, in_outer, name, filename, load_flags, sandbox, allow_object_reconciliation, instancing_context)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
-    def static_load_class(self, uclass, in_outer, name="", filename="", load_flags=None, sandbox=0):
+    def static_load_class(self, uclass, in_outer, name="", filename="", load_flags=None, sandbox=0, as_handle=None, as_unreal_class=None):
         load_flags = load_flags if load_flags is not None else ["LOAD_None"]
         uclass = self.to_uclass(uclass=uclass)
         in_outer = spear.to_handle(obj=in_outer)
-        return self.entry_point_caller.call_on_game_thread("static_load_class", None, uclass, in_outer, name, filename, load_flags, sandbox)
+        result = self.entry_point_caller.call_on_game_thread("static_load_class", None, uclass, in_outer, name, filename, load_flags, sandbox)
+        return self.to_handle_or_unreal_class(obj=result, as_handle=as_handle, as_unreal_class=as_unreal_class)
 
     #
     # Enable and disable garbage collection for uobject
@@ -1123,6 +1141,8 @@ class UnrealService(spear.Service):
             return ustruct
         elif isinstance(ustruct, str):
             return self.get_top_level_service().static_struct_descs_by_name[ustruct].static_struct
+        elif isinstance(ustruct, spear.UnrealStruct):
+            return ustruct.ustruct
         else:
             assert False
 
@@ -1133,5 +1153,7 @@ class UnrealService(spear.Service):
             return uclass
         elif isinstance(uclass, str):
             return self.get_top_level_service().static_class_descs_by_name[uclass].static_struct
+        elif isinstance(uclass, spear.UnrealClass):
+            return uclass.uclass
         else:
             assert False

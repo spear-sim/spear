@@ -526,7 +526,7 @@ public:
                     static_struct_desc.name_ = Unreal::getTypeAsString(static_class);
 
                     // leave map of ufunctions blank when getting all static class descs as a performance optimization
-                    // static_struct_desc.ufunctions_ = UnrealUtils::findFunctionsAsMap(static_class, EFieldIterationFlags::IncludeAll);
+                    // static_struct_desc.ufunctions_ = UnrealUtils::findFunctionsAsMap(static_class, EFieldIterationFlags::Default);
 
                     static_struct_descs.push_back(std::move(static_struct_desc));
                 }
@@ -557,7 +557,7 @@ public:
                 static_struct_desc.name_ = Unreal::getTypeAsString(uclass_ptr);
 
                 // don't leave map of ufunctions blank when getting a specific static class desc
-                static_struct_desc.ufunctions_ = UnrealUtils::findFunctionsAsMap(uclass_ptr, EFieldIterationFlags::IncludeAll);
+                static_struct_desc.ufunctions_ = UnrealUtils::findFunctionsAsMap(uclass_ptr, EFieldIterationFlags::Default);
 
                 return static_struct_desc;
             });

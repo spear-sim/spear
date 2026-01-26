@@ -11,7 +11,7 @@ import spear
 
 if __name__ == "__main__":
 
-    # create game
+    # create instance
     config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
@@ -34,7 +34,7 @@ if __name__ == "__main__":
         #     uclass=bp_car_uclass,
         #     location={"X": -2500.0, "Y": -9330.0, "Z": 20.0},
         #     rotation={"Pitch": 0.0, "Yaw": 0.0, "Roll": 0.0},
-        #     spawn_parameters={"Name": "Agent", "SpawnCollisionHandlingOverride": "AlwaysSpawn"})
+        #     spawn_parameters={"SpawnCollisionHandlingOverride": "AlwaysSpawn"})
         #
 
         #

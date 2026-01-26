@@ -172,19 +172,20 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
     // Create SpPropertyDescs for the function's arguments and return value.
     std::map<std::string, SpPropertyDesc> property_descs;
     for (TFieldIterator<FProperty> itr(ufunction); itr; ++itr) {
-        SpPropertyDesc property_desc;
-        property_desc.property_ = *itr;
-        SP_ASSERT(property_desc.property_);
-        property_desc.type_id_ = Unreal::getCppTypeAsString(property_desc.property_);
-        SP_ASSERT(property_desc.type_id_ != "");
-        property_desc.value_ptr_ = property_desc.property_->ContainerPtrToValuePtr<void>(args_vector.data());
-        SP_ASSERT(property_desc.value_ptr_);
+        FProperty* property = *itr;
 
-        // make sure the property is a function param
-        SP_ASSERT(property_desc.property_->HasAnyPropertyFlags(EPropertyFlags::CPF_Parm));
+        if (property->HasAnyPropertyFlags(EPropertyFlags::CPF_Parm)) {
+            SpPropertyDesc property_desc;
+            property_desc.property_ = property;
+            SP_ASSERT(property_desc.property_);
+            property_desc.type_id_ = Unreal::getCppTypeAsString(property_desc.property_);
+            SP_ASSERT(property_desc.type_id_ != "");
+            property_desc.value_ptr_ = property_desc.property_->ContainerPtrToValuePtr<void>(args_vector.data());
+            SP_ASSERT(property_desc.value_ptr_);
 
-        std::string property_name = Unreal::toStdString(property_desc.property_->GetName());
-        Std::insert(property_descs, std::move(property_name), std::move(property_desc));
+            std::string property_name = Unreal::toStdString(property_desc.property_->GetName());
+            Std::insert(property_descs, std::move(property_name), std::move(property_desc));
+        }
     }
 
     // Explicitly initialize if an arg or return value requires it.
