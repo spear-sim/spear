@@ -18,7 +18,7 @@ _Figure: It is also straightforward to use SPEAR to programmatically interact wi
 
 ![metahumans](https://github.com/user-attachments/assets/9b57b1cb-f89a-4dce-bd82-d7fedf0cdc0c)
 
-_Figure: SPEAR includes a customizable multi-view camera entity that can render a scene from multiple views at exactly the same time in the Unreal simulation. Here, we render synchronized images in Epic Games' `Metahumans` sample project._
+_Figure: SPEAR includes a customizable multi-view camera entity that can render a scene from multiple views at the same time in an Unreal simulation. Here, we render synchronized images in Epic Games' `Metahumans` sample project._
 
 ## Abstract
 
