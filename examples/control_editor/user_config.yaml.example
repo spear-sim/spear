@@ -7,7 +7,7 @@ SPEAR:
   LAUNCH_MODE: "editor"
 
   INSTANCE:
-    EDITOR_EXECUTABLE: "/Users/Shared/Epic_Games/UE_5.5/Engine/Binaries/Mac/UnrealEditor.app"
+    EDITOR_EXECUTABLE: "/Users/Shared/Epic_Games/UE_5.7/Engine/Binaries/Mac/UnrealEditor.app"
     EDITOR_UPROJECT: "/Users/mroberts/code/github/spear/cpp/unreal_projects/SpearSim/SpearSim.uproject"
     EDITOR_LAUNCH_MODE: "editor"
     CLIENT_INTERNAL_TIMEOUT_SECONDS: 10.0 # set this to longer than usual because it takes a few seconds to take a screenshot

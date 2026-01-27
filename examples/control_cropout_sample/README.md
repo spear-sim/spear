@@ -7,7 +7,7 @@ In a pre-processing step, we need to install the SPEAR plugins in `CropoutSample
 ```console
 python ../../tools/install_plugins_in_external_project.py --external-project-dir path/to/CropoutSampleProject
 
-python ../../tools/run_uat.py --unreal-engine-dir path/to/UE_5.5 --unreal-project-dir path/to/CropoutSampleProject -build
+python ../../tools/run_uat.py --unreal-engine-dir path/to/UE_5.7 --unreal-project-dir path/to/CropoutSampleProject -build
 ```
 
 Next, we open the Unreal Editor and wait for the default map to fully load. Then we press play in the editor and wait for the Unreal simulation to load and warm up. Once the simulation is fully loaded and warmed up, we are ready to control the project via SPEAR.

@@ -14,17 +14,17 @@ We recommend installing the Unreal Engine version 5.7 via the Epic Games Launche
 
 If you're developing on Linux, you will need to download the Unreal Engine from [here](https://www.unrealengine.com/en-US/linux).
 
-Several of our command-line tools require an `--unreal-engine-dir` argument. This argument must point to the top-level directory where you installed the Unreal Engine. Depending on your platform, the default install location will be as follows. However, as noted above, we recommend installing the Unreal Engine to a path that doesn't contain spaces. If you're developing on Linux, you must specify the path to the top-level directory where you unzipped the `Linux_Unreal_Engine_5.5.4.zip` file linked above.
+Several of our command-line tools require an `--unreal-engine-dir` argument. This argument must point to the top-level directory where you installed the Unreal Engine. Depending on your platform, the default install location will be as follows. However, as noted above, we recommend installing the Unreal Engine to a path that doesn't contain spaces. If you're developing on Linux, you must specify the path to the top-level directory where you unzipped the `Linux_Unreal_Engine_5.7.2.zip` file linked above.
 
 ```
-Windows: C:\Program Files\Epic Games\UE_5.5
-macOS:   /Users/Shared/Epic Games/UE_5.5
-Linux:   path/to/Linux_Unreal_Engine_5.5.4
+Windows: C:\Program Files\Epic Games\UE_5.7
+macOS:   /Users/Shared/Epic Games/UE_5.7
+Linux:   path/to/Linux_Unreal_Engine_5.7.2
 ```
 
 ## Install an appropriate compiler
 
-If you're developing on Windows or macOS, you will need to install a specific compiler that is compatible with Unreal Engine 5.5. If you're developing on Linux, the Unreal Engine ships with its own version of `clang` and `libc++`, so there is no need to install another compiler to build the `SpearSim` project in this repository, but you will still need to install an appropriate compiler to build our third-party dependencies as described below. We have verified that the following compilers behave as expected when building `SpearSim`.
+If you're developing on Windows or macOS, you will need to install a specific compiler that is compatible with Unreal Engine 5.7. If you're developing on Linux, the Unreal Engine ships with its own version of `clang` and `libc++`, so there is no need to install another compiler to build the `SpearSim` project in this repository, but you will still need to install an appropriate compiler to build our third-party dependencies as described below. We have verified that the following compilers behave as expected when building `SpearSim`.
 
 ```
 Windows: Visual Studio 2022
@@ -106,7 +106,7 @@ The Unreal Editor has its own Python environment, so you will need to install th
 
 ```console
 # install the spear Python package into the Unreal Editor Python environment
-python tools/install_python_package_in_editor_env.py --unreal-engine-dir path/to/UE_5.5
+python tools/install_python_package_in_editor_env.py --unreal-engine-dir path/to/UE_5.7
 ```
 
 ## Build third-party C++ libraries
@@ -119,7 +119,7 @@ python tools/build_third_party_libs.py
 
 # build third-party libraries (Linux)
 sudo apt-get install g++ make
-python tools/build_third_party_libs.py --unreal-engine-dir path/to/UE_5.5
+python tools/build_third_party_libs.py --unreal-engine-dir path/to/UE_5.7
 ```
 
 If you're developing on Linux, you will need to install `g++` and `make` if they aren't already installed on your system. `g++` is required to build the Boost build tool, and `make` is required by CMake to build all third-party libraries other than Boost. Additionally, if you're developing on Linux, you must specify `--unreal-engine-dir`, because we use the version of `clang` and `libc++` that ships with the Unreal Engine to build our third-party libraries.
@@ -133,7 +133,7 @@ Most of the functionality in our `spear` Python package requires you to build an
 python tools/install_python_extension.py
 
 # build and install the spear_ext Python extension module (Linux)
-python tools/install_python_extension.py --unreal-engine-dir path/to/UE_5.5
+python tools/install_python_extension.py --unreal-engine-dir path/to/UE_5.7
 ```
 
 If you're developing on Linux, you must specify `--unreal-engine-dir`, because we use the version of `clang` and `libc++` that ships with the Unreal Engine to build our extension module.
@@ -143,7 +143,7 @@ If you're developing on Linux, you must specify `--unreal-engine-dir`, because w
 Our `SpearSim` project requires you to explicitly copy some content from your Unreal Engine installation to the project directory. We provide a command-line tool for this purpose.
 
 ```console
-python tools/copy_engine_content.py --unreal-engine-dir path/to/UE_5.5
+python tools/copy_engine_content.py --unreal-engine-dir path/to/UE_5.7
 ```
 
 ## Build the `SpearSim` project
@@ -152,10 +152,10 @@ You are now ready to build the `SpearSim` project as follows.
 
 ```console
 # minimal build required to open the SpearSim project inside the Unreal Editor (optional)
-python tools/run_uat.py --unreal-engine-dir path/to/UE_5.5 -build
+python tools/run_uat.py --unreal-engine-dir path/to/UE_5.7 -build
 
 # build a standalone executable
-python tools/run_uat.py --unreal-engine-dir path/to/UE_5.5 -build -cook -stage -package -archive -pak
+python tools/run_uat.py --unreal-engine-dir path/to/UE_5.7 -build -cook -stage -package -archive -pak
 ```
 
 Our `run_uat.py` tool is a thin wrapper around Unreal's [`RunUAT`](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Deployment/BuildOperations) tool. Our tool consumes `--unreal-engine-dir`, provides Unreal's `RunUAT` tool with sensible default values for a few commonly used arguments, and otherwise forwards all arguments directly to `RunUAT`. This step will generate a standalone executable at the following locations.

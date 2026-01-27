@@ -7,13 +7,13 @@ In a pre-processing step, we need to install the SPEAR plugins in `StackOBot` by
 ```console
 python ../../tools/install_plugins_in_external_project.py --external-project-dir path/to/StackOBot
 
-python ../../tools/run_build.py --unreal-engine-dir path/to/UE_5.5 --unreal-project-dir path/to/ElectricDreamsEnv --build-target ElectricDreamsSampleEditor -build
+python ../../tools/run_build.py --unreal-engine-dir path/to/UE_5.7 --unreal-project-dir path/to/ElectricDreamsEnv --build-target ElectricDreamsSampleEditor -build
 ```
 
 Our next step is to launch the Unreal Editor via the command-line, which is necessary to override some of the project settings in `StackOBot`. Alternatively, we could override these settings by editing the files in the `StackOBot/Config` directly, but we choose to launch the editor via the command-line so we can avoid modifying the project any more than necessary.
 
 ```console
-python ../../run_editor.py --unreal-engine-dir path/to/UE_5.5 --unreal-project-dir path/to/StackOBot --config-files user_config.yaml
+python ../../run_editor.py --unreal-engine-dir path/to/UE_5.7 --unreal-project-dir path/to/StackOBot --config-files user_config.yaml
 ```
 
 Finally, in the Unreal Editor, we wait for the default map to fully load. Then we press play in the editor and wait for the Unreal simulation to load and warm up. Once the simulation is fully loaded and warmed up, we are ready to launch our SPEAR programs.
