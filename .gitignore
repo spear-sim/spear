@@ -61,7 +61,6 @@ examples/render_image_hypersim/images
 examples/render_image_multi_view/images
 examples/render_image_multi_view/movie.mp4
 examples/render_image_editor/screenshot.png
-examples/control_stackobot_sample/images
 
 python_ext/BUILD
 
