@@ -213,6 +213,6 @@ The following command-line arguments are optional.
   - `--pak-files` is a list of PAK files to load during startup. It is necessary to specify an additional PAK file if you specify a `--map` that isn't packaged with our `SpearSim` executable.
   - `--vk-icd-filenames` only has an effect on Linux, and is used to force the Vulkan runtime to load a vendor-specific GPU driver. Our `run_executable.py` script will set the `VK_ICD_FILENAMES` environment variable to whatever is passed into `--vk-icd-filenames`. This argument may or may not be necessary, depending on your specific hardware setup. If you have already set the `VK_ICD_FILENAMES` environment variable before invoking `run_executable.py`, you do not need to specify `--vk-icd-filenames`. If you have an NVIDIA GPU, you probably need to specify `--vk-icd-filenames /usr/share/vulkan/icd.d/nvidia_icd.json`.
 
-## Programmatically interact with SPEAR via Python
+## Programmatically interact with `SpearSim` via Python
 
 We provide several example applications that demonstrate how to programmatically interact with SPEAR via Python. In order to run our example applications, you will need to follow the steps in our [Running our Example Applications](running_our_example_applications.md) tutorial.
