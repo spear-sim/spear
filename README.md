@@ -102,7 +102,7 @@ _Figure: An Unreal scene before (left) and after (right) running the example pro
 
 ## Exposing New Functions and Variables to SPEAR
 
-SPEAR can call any function and access any variable that is exposed to Unreal's visual scripting system, i.e., Blueprints. New functions and variables can be exposed to Blueprints (and therefore to SPEAR) simply by adding `UFUNCTION(...)` and `UPROPERTY(...)` annotations to a C++ header in any Unreal project or plugin as follows. No additional registration steps or code boilerplate is required.
+SPEAR can call any function and access any variable that is exposed to Unreal's visual scripting system, i.e., Blueprints. New C++ functions and variables can be exposed to Blueprints (and therefore to SPEAR) simply by adding `UFUNCTION(...)` and `UPROPERTY(...)` annotations to a C++ header in any Unreal project or plugin as follows. No additional registration steps or code boilerplate is required.
 
 ```cpp
 // MyBlueprintFunctionLibrary.h
