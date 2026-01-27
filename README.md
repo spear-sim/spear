@@ -10,7 +10,7 @@ _Figure: SPEAR includes a customizable camera entity that can render a superset 
 
 ![time_of_day](https://github.com/user-attachments/assets/9370572f-df34-4973-86bc-9ebcf5d54bec)
 
-_Figure: By calling existing Unreal Engine C++ functions that are available through SPEAR's general-purpose Python API, it is straightforward to control the lighting in any scene. Here, we programmatically control the lighting to simulate time-of-day changes in the `ElectricDreams` sample project that is freely available from Epic Games._
+_Figure: By calling existing Unreal Engine C++ functions that are available through SPEAR's general-purpose Python API, it is straightforward to control the lighting in any scene. Here, we programmatically control the lighting to simulate time-of-day changes in Epic Games' `ElectricDreams` sample project._
 
 ![pcg](https://github.com/user-attachments/assets/f545b1e5-c344-42e7-8ab9-8d6de36842b2)
 
@@ -18,7 +18,7 @@ _Figure: It is also straightforward to use SPEAR to programmatically interact wi
 
 ![metahumans](https://github.com/user-attachments/assets/9b57b1cb-f89a-4dce-bd82-d7fedf0cdc0c)
 
-_Figure: SPEAR includes a customizable multi-view camera entity that can render a scene from multiple views at exactly the same time in the Unreal simulation. Here, we render synchronized images from the `Metahumans` sample project that is freely available from Epic Games._
+_Figure: SPEAR includes a customizable multi-view camera entity that can render a scene from multiple views at exactly the same time in the Unreal simulation. Here, we render synchronized images in Epic Games' `Metahumans` sample project._
 
 ## Abstract
 
