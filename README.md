@@ -148,7 +148,7 @@ with instance.end_frame():
     pass
 ```
 
-This extensibility model makes it trivial for a user to expose custom C++ functionality to SPEAR without needing to modify SPEAR code, since the user's custom C++ functionality can be defined in their own projects and plugins.
+This extensibility model makes it trivial for a user to expose custom C++ functionality to SPEAR without needing to modify SPEAR code, since the user's custom functionality can be defined in their own projects and plugins.
 
 ## More Documentation
 
