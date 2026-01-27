@@ -127,7 +127,7 @@ public:
 };
 ```
 
-After the `UFUNCTION(...)` and `UPROPERTY(...)` annotations have been added to the C++ header above, `MyFunction` and `MyProperty` can be accessed in Python using SPEAR as follows.
+After the `UFUNCTION(...)` and `UPROPERTY(...)` annotations have been added to the C++ header above, `MyFunction` and `MyProperty` can be accessed from Python via SPEAR as follows.
 
 ```python
 with instance.begin_frame():
