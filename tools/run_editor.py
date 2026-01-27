@@ -7,8 +7,8 @@ import argparse
 import glob
 import os
 import spear
-import subprocess
 import sys
+import time
 
 
 parser = argparse.ArgumentParser()
@@ -66,5 +66,8 @@ if __name__ == "__main__":
 
     # launch the executable
     instance = spear.Instance(config=config)
+    while instance.is_running():
+        time.sleep(1.0)
+    instance.close(force=True)
 
     spear.log("Done.")
