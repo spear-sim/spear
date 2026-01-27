@@ -703,8 +703,13 @@ class Instance():
     def _force_kill_unreal_instance(self):
         spear.log_current_function(prefix="    ")
         spear.log("        Forcefully killing Unreal instance...")
-        self._process.terminate()
-        self._process.kill()
+        try:
+            self._process.terminate()
+            self._process.kill()
+        except psutil.NoSuchProcess:
+            spear.log("        Process already terminated.")
+        except Exception as e:
+            spear.log("        Exception: ", e)
         spear.log("        Finished forcefully killing Unreal instance.")
 
 

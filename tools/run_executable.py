@@ -15,6 +15,8 @@ parser.add_argument("--executable")
 parser.add_argument("--graphics-adaptor")
 parser.add_argument("--map")
 parser.add_argument("--vk-icd-filenames")
+parser.add_argument("--skip-override-benchmarking", action="store_true")
+parser.add_argument("--skip-override-game-paused", action="store_true")
 parser.add_argument("--config-files", nargs="*")
 parser.add_argument("--pak-files", nargs="*")
 args = parser.parse_args()
@@ -43,10 +45,19 @@ if __name__ == "__main__":
     config = spear.get_config(user_config_files=user_config_files)
 
     # modify config params
+
     config.defrost()
 
     config.SPEAR.LAUNCH_MODE = "game"
     config.SPEAR.INSTANCE.GAME_EXECUTABLE = executable
+
+    if not args.skip_override_benchmarking:
+        config.SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_BENCHMARKING = True
+        config.SP_SERVICES.INITIALIZE_ENGINE_SERVICE.BENCHMARKING = False
+
+    if not args.skip_override_game_paused:
+        config.SP_SERVICES.INITIALIZE_GAME_WORLD_SERVICE.OVERIDE_GAME_PAUSED = True
+        config.SP_SERVICES.INITIALIZE_GAME_WORLD_SERVICE.GAME_PAUSED = False
 
     if args.graphics_adaptor is not None:
         config.SPEAR.INSTANCE.COMMAND_LINE_ARGS.graphics_adaptor = args.graphics_adaptor
@@ -71,6 +82,6 @@ if __name__ == "__main__":
     instance = spear.Instance(config=config)
     while instance.is_running():
         time.sleep(1.0)
-    instance.close()
+    instance.close(force=True)
 
     spear.log("Done.")

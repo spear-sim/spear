@@ -13,12 +13,9 @@ import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--unreal-engine-dir", required=True)
-parser.add_argument("--graphics-adaptor")
 parser.add_argument("--map")
-parser.add_argument("--vk-icd-filenames")
 parser.add_argument("--config-files", nargs="*")
 parser.add_argument("--editor-launch-mode", default="editor")
-parser.add_argument("--temp-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "tmp")))
 parser.add_argument("--unreal-project-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
 args, unknown_args = parser.parse_known_args() # get unknown args to pass to editor
 
@@ -50,9 +47,7 @@ if __name__ == "__main__":
     config = spear.get_config(user_config_files=user_config_files)
 
     # modify config params
-    config.defrost()
 
-    # modify config params
     config.defrost()
 
     config.SPEAR.LAUNCH_MODE = "editor"
@@ -60,15 +55,9 @@ if __name__ == "__main__":
     config.SPEAR.INSTANCE.EDITOR_UPROJECT = uproject
     config.SPEAR.INSTANCE.EDITOR_LAUNCH_MODE = args.editor_launch_mode
 
-    if args.graphics_adaptor is not None:
-        config.SPEAR.INSTANCE.COMMAND_LINE_ARGS.graphics_adaptor = args.graphics_adaptor
-
     if args.map is not None:
         config.SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_EDITOR_STARTUP_MAP = True
         config.SP_SERVICES.INITIALIZE_ENGINE_SERVICE.EDITOR_STARTUP_MAP = args.map
-
-    if args.vk_icd_filenames is not None:
-        config.SPEAR.ENVIRONMENT_VARS.VK_ICD_FILENAMES = args.vk_icd_filenames
 
     config.freeze()
 
