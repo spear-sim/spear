@@ -20,7 +20,7 @@ SP_SERVICES:
     BENCHMARKING: True
 
     OVERRIDE_FIXED_DELTA_TIME: True
-    FIXED_DELTA_TIME: 0.01 # extra small delta time so we can see fine-grained character animation
+    FIXED_DELTA_TIME: 0.01 # extra small delta time so we can see fine-grained character motion
 
   INITIALIZE_GAME_WORLD_SERVICE:
     OVERRIDE_GAME_PAUSED: True
