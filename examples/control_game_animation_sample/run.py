@@ -133,10 +133,10 @@ if __name__ == "__main__":
         pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing etc accumulate additional information across frames
 
     #
-    # execute warm-up frames to give us a chance to teleport to the spawned car
+    # execute warm-up frames to give us a chance to teleport to the spawned character
     #
 
-    for _ in range(60):
+    for _ in range(120):
         instance.flush()
 
     #
@@ -175,7 +175,7 @@ if __name__ == "__main__":
     # run
     #
 
-    for i in range(40):
+    for i in range(80):
         with instance.begin_frame():
             gameplay_statics.SetGamePaused(bPaused=False)
 
@@ -258,7 +258,7 @@ if __name__ == "__main__":
     # run
     #
 
-    for i in range(37):
+    for i in range(74):
         with instance.begin_frame():
             gameplay_statics.SetGamePaused(bPaused=False)
 
@@ -341,7 +341,7 @@ if __name__ == "__main__":
     # coast
     #
 
-    for i in range(90):
+    for i in range(180):
         with instance.begin_frame():
             gameplay_statics.SetGamePaused(bPaused=False)
 
