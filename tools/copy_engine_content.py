@@ -20,31 +20,36 @@ assert os.path.exists(args.unreal_project_dir)
 
 if __name__ == "__main__":
 
+    def realpath(*args):
+        return os.path.realpath(os.path.join(*args))
+
     content_dirs = {
-        os.path.realpath(os.path.join(args.unreal_engine_dir, "Templates", "TP_ThirdPersonBP", "Content", "__ExternalActors__", "ThirdPerson")): \
-            os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "__ExternalActors__", "ThirdPerson")),
-        os.path.realpath(os.path.join(args.unreal_engine_dir, "Templates", "TP_ThirdPersonBP", "Content", "__ExternalObjects__", "ThirdPerson")): \
-            os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "__ExternalObjects__", "ThirdPerson")),
-        os.path.realpath(os.path.join(args.unreal_engine_dir, "Templates", "TemplateResources", "High", "Characters", "Content", "Mannequins")): \
-            os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "Characters", "Mannequins")),
-        os.path.realpath(os.path.join(args.unreal_engine_dir, "Templates", "TemplateResources", "High", "LevelPrototyping", "Content")): \
-            os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "LevelPrototyping")),
-        os.path.realpath(os.path.join(args.unreal_engine_dir, "Samples", "StarterContent", "Content", "StarterContent")): \
-            os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "StarterContent")),
-        os.path.realpath(os.path.join(args.unreal_engine_dir, "Templates", "TP_ThirdPersonBP", "Content", "ThirdPerson")): \
-            os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "ThirdPerson")),
-        os.path.realpath(os.path.join(args.unreal_engine_dir, "Templates", "TemplateResources", "Standard", "Vehicles", "Content")): \
-            os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "Vehicles")),
-        os.path.realpath(os.path.join(args.unreal_engine_dir, "Templates", "TP_VehicleAdvBP", "Content", "VehicleTemplate")): \
-            os.path.realpath(os.path.join(args.unreal_project_dir, "Content", "VehicleTemplate"))}
+        realpath(args.unreal_engine_dir, "Templates", "TemplateResources", "High", "Characters", "Content"):       realpath(args.unreal_project_dir, "Content", "Characters"),
+        realpath(args.unreal_engine_dir, "Templates", "TemplateResources", "High", "Input", "Content"):            realpath(args.unreal_project_dir, "Content", "Input"),
+        realpath(args.unreal_engine_dir, "Templates", "TemplateResources", "High", "LevelPrototyping", "Content"): realpath(args.unreal_project_dir, "Content", "LevelPrototyping"),
+        realpath(args.unreal_engine_dir, "Templates", "TemplateResources", "Standard", "Vehicles", "Content"):     realpath(args.unreal_project_dir, "Content", "Vehicles"),
+
+        realpath(args.unreal_engine_dir, "Templates", "TP_FirstPersonBP", "Content", "FirstPerson"):               realpath(args.unreal_project_dir, "Content", "FirstPerson"),
+        realpath(args.unreal_engine_dir, "Templates", "TP_FirstPersonBP", "Content", "__ExternalActors__"):        realpath(args.unreal_project_dir, "Content", "__ExternalActors__"),
+        realpath(args.unreal_engine_dir, "Templates", "TP_FirstPersonBP", "Content", "__ExternalObjects__"):       realpath(args.unreal_project_dir, "Content", "__ExternalObjects__"),
+
+        realpath(args.unreal_engine_dir, "Templates", "TP_ThirdPersonBP", "Content", "ThirdPerson"):               realpath(args.unreal_project_dir, "Content", "ThirdPerson"),
+        realpath(args.unreal_engine_dir, "Templates", "TP_ThirdPersonBP", "Content", "__ExternalActors__"):        realpath(args.unreal_project_dir, "Content", "__ExternalActors__"),
+        realpath(args.unreal_engine_dir, "Templates", "TP_ThirdPersonBP", "Content", "__ExternalObjects__"):       realpath(args.unreal_project_dir, "Content", "__ExternalObjects__"),
+
+        # realpath(args.unreal_engine_dir, "Templates", "TP_UEIntro_BP", "Content", "DemoTemplate"):                 realpath(args.unreal_project_dir, "Content", "DemoTemplate"), /Game/DemoTemplate/_Core/Lvl_IntroRoom doesn't work in standalone builds
+
+        realpath(args.unreal_engine_dir, "Templates", "TP_VehicleAdvBP", "Content", "VehicleTemplate"):            realpath(args.unreal_project_dir, "Content", "VehicleTemplate"),
+        realpath(args.unreal_engine_dir, "Templates", "TP_VehicleAdvBP", "Content", "__ExternalActors__"):         realpath(args.unreal_project_dir, "Content", "__ExternalActors__"),
+        realpath(args.unreal_engine_dir, "Templates", "TP_VehicleAdvBP", "Content", "__ExternalObjects__"):        realpath(args.unreal_project_dir, "Content", "__ExternalObjects__")}
 
     for unreal_engine_dir, project_dir in content_dirs.items():
-
         if os.path.exists(project_dir):
             spear.log("Directory exists, removing: ", project_dir)
             shutil.rmtree(project_dir)
 
+    for unreal_engine_dir, project_dir in content_dirs.items():
         spear.log(f"Copying: {unreal_engine_dir} -> {project_dir}")
-        shutil.copytree(unreal_engine_dir, project_dir)
+        shutil.copytree(unreal_engine_dir, project_dir, dirs_exist_ok=True)
 
     spear.log("Done.")

@@ -12,12 +12,8 @@
 
 def get_default_maps_to_cook():
     return [
-        "apartment_0000",           # /Game/SPEAR/Scenes/apartment_0000/Maps/apartment_0000
-        "debug_0000",               # /Game/SPEAR/Scenes/debug_0000/Maps/debug_0000
-        "debug_0001",               # /Game/SPEAR/Scenes/debug_0001/Maps/debug_0001
-        "Advanced_Lighting",        # /Game/StarterContent/Maps/Advanced_Lighting
-        "Minimal_Default",          # /Game/StarterContent/Maps/Minimal_Default
-        "StarterMap",               # /Game/StarterContent/Maps/StarterMap
-        "ThirdPersonMap",           # /Game/ThirdPerson/Maps/ThirdPersonMap
-        "VehicleExampleMap",        # /Game/VehicleTemplate/Maps/VehicleExampleMap
-        "VehicleOffroadExampleMap"] # /Game/VehicleTemplate/Maps/VehicleOffroadExampleMap
+        "apartment_0000",   # /Game/SPEAR/Scenes/apartment_0000/Maps/apartment_0000
+        "Lvl_FirstPerson",  # /Game/FirstPerson
+        # "Lvl_IntroRoom",    # /Game/DemoTemplate/_Core/Lvl_IntroRoom doesn't work in standalone builds
+        "Lvl_ThirdPerson",  # /Game/ThirdPerson
+        "Lvl_VehicleBasic"] # /Game/VehicleTemplate/Maps

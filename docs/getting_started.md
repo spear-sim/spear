@@ -31,7 +31,7 @@ Windows: Visual Studio 2022
 macOS:   XCode 16
 ```
 
-If you're developing on Windows, make sure to select _Desktop development with C++_ and _.NET desktop development_ from the _Workloads_ menu when installing Visual Studio, and also make sure to select _MSVC v143 - VS2022 C++ x64/x86 build tools (v14.36-17.6)_ from the _Individual Components_ menu.
+If you're developing on Windows, make sure to select _Desktop development with C++_ and _.NET desktop development_ from the _Workloads_ menu when installing Visual Studio, and also make sure to select _MSVC v143 - VS2022 C++ x64/x86 build tools (v14.44-17.14)_ from the _Individual Components_ menu.
 
 ## Configure your terminal
 
@@ -179,18 +179,25 @@ When building with our `run_uat.py` tool, you can optionally specify `--build-co
 - You can specify `-specifiedarchitecture=arm64+x86_64` to build a universal binary on macOS.
 - You can specify `-clean` to do a clean build.
 
-## Navigate around a specific scene
+## Launch the `SpearSim` executable and navigate around specific scenes
 
-At this point, you can use our `run_executable.py` command-line tool to navigate around a specific scene. For example, if you wanted to navigate through our `debug_0000` scene, you would use the following command.
+You can immediately start navigating around our default `apartment_0000` scene using the keyboard and mouse by double-clicking on the `SpearSim` executable you built in the previous section.
+
+By default, we also package the `Lvl_FirstPerson`, `Lvl_ThirdPerson`, `Lvl_VehicleBasic` debug scenes that ship with the Unreal Engine with our executable. If you did not specify `--build-config Shipping` above, then you can open these (and other) scenes directly from inside the `SpearSim` executable by pressing the tilde key `~` to open the Unreal console and typing `Open MapName` where `MapName` is the name of the map (e.g., `apartment_0000`, `Lvl_ThirdPerson`, etc). If you have a compatible PAK file containing another scene, it is possible to open that scene, but you must first mount the PAK file by typing `SpMountPak path/to/pak`. If you no longer need a PAK file mounted, you can unmount it by typing `SpMountPak path/to/pak`. Note that the availability of Unreal console commands is determined by the loaded map, and our `SpMountPak` and `SpUnmountPak` commands are not available in the Unreal Engine debug scenes.
+
+Alternatively, you can open a specific scene with the following command-line tool, which also works for `--build-config Shipping` builds.
 
 ```console
-python tools/run_executable.py --map /Game/Spear/Scenes/debug_0000/Maps/debug_0000
+python tools/run_executable.py --map logical/path/to/map
 ```
 
-When executing our command-line tool, you will need to specify a logical Unreal path to the `--map` you want to navigate around, e.g.,
+The logical path to the `--map` should be formatted as follows.
 
 ```
-/Game/Spear/Scenes/debug_0000/Maps/debug_0000
+/Game/SPEAR/Scenes/apartment_0000/Maps/apartment_0000
+/Game/FirstPerson/Lvl_FirstPerson
+/Game/ThirdPerson/Lvl_ThirdPerson
+/Game/VehicleTemplate/Maps/Lvl_VehicleBasic
 ```
 
 You can also optionally specify an `--executable`. If you don't specify an `--executable`, our command-line tool will assume that you built an executable from source in the default location (described above). Depending on your platform, if you do provide an executable, the path to your executable should be formatted as follows.
@@ -203,7 +210,7 @@ Linux:   path/to/Standalone-Development/Linux/SpearSim.sh
 
 The following command-line arguments are optional.
 
-  - `--pak-files` is a comma-separated list of PAK files to load during startup. It is necessary to specify additional PAK files when specifying a `--map` that isn't included with our `SpearSim` executable.
+  - `--pak-files` is a list of PAK files to load during startup. It is necessary to specify an additional PAK file if you specify a `--map` that isn't packaged with our `SpearSim` executable.
   - `--vk-icd-filenames` only has an effect on Linux, and is used to force the Vulkan runtime to load a vendor-specific GPU driver. Our `run_executable.py` script will set the `VK_ICD_FILENAMES` environment variable to whatever is passed into `--vk-icd-filenames`. This argument may or may not be necessary, depending on your specific hardware setup. If you have already set the `VK_ICD_FILENAMES` environment variable before invoking `run_executable.py`, you do not need to specify `--vk-icd-filenames`. If you have an NVIDIA GPU, you probably need to specify `--vk-icd-filenames /usr/share/vulkan/icd.d/nvidia_icd.json`.
 
 ## Programmatically interact with SPEAR via Python

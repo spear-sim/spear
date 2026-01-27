@@ -32,11 +32,11 @@ if __name__ == "__main__":
     # work, but it requires the user to set the SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS config
     # parameter conservatively due to various implementation details in begin_frame() and end_frame().
 
-    spear.log("Opening level: /Game/SPEAR/Scenes/debug_0000/Maps/debug_0000.debug_0000")
+    spear.log("Opening level: /Game/ThirdPerson/Lvl_ThirdPerson.Lvl_ThirdPerson")
     with instance.begin_frame():
         pass
     with instance.end_frame():
-        gameplay_statics.OpenLevel(LevelName="/Game/SPEAR/Scenes/debug_0000/Maps/debug_0000.debug_0000", bAbsolute=True, Options="")
+        gameplay_statics.OpenLevel(LevelName="/Game/ThirdPerson/Lvl_ThirdPerson.Lvl_ThirdPerson", bAbsolute=True, Options="")
 
     # Calling OpenLevel invalidates the old game object, so get a new one here. This call will block until
     # the new game object is ready.

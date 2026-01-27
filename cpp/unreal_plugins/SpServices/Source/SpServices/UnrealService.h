@@ -322,7 +322,7 @@ enum class ESpObjectFlags
     RF_TagGarbageTemp               = Unreal::getConstEnumValue(EObjectFlags::RF_TagGarbageTemp),
     RF_NeedInitialization           = Unreal::getConstEnumValue(EObjectFlags::RF_NeedInitialization),
     RF_NeedLoad                     = Unreal::getConstEnumValue(EObjectFlags::RF_NeedLoad),
-    RF_KeepForCooker                = Unreal::getConstEnumValue(EObjectFlags::RF_KeepForCooker),
+    // RF_KeepForCooker                = Unreal::getConstEnumValue(EObjectFlags::RF_KeepForCooker), deprecated in UE 5.6
     RF_NeedPostLoad                 = Unreal::getConstEnumValue(EObjectFlags::RF_NeedPostLoad),
     RF_NeedPostLoadSubobjects       = Unreal::getConstEnumValue(EObjectFlags::RF_NeedPostLoadSubobjects),
     RF_NewerVersionExists           = Unreal::getConstEnumValue(EObjectFlags::RF_NewerVersionExists),
@@ -337,8 +337,11 @@ enum class ESpObjectFlags
     RF_DuplicateTransient           = Unreal::getConstEnumValue(EObjectFlags::RF_DuplicateTransient),
     RF_StrongRefOnFrame             = Unreal::getConstEnumValue(EObjectFlags::RF_StrongRefOnFrame),
     RF_NonPIEDuplicateTransient     = Unreal::getConstEnumValue(EObjectFlags::RF_NonPIEDuplicateTransient),
+    RF_ImmutableDefaultObject       = Unreal::getConstEnumValue(EObjectFlags::RF_ImmutableDefaultObject),
     RF_WillBeLoaded                 = Unreal::getConstEnumValue(EObjectFlags::RF_WillBeLoaded),
     RF_HasExternalPackage           = Unreal::getConstEnumValue(EObjectFlags::RF_HasExternalPackage),
+    RF_MigratingAsset               = Unreal::getConstEnumValue(EObjectFlags::RF_MigratingAsset),
+    RF_MirroredGarbage              = Unreal::getConstEnumValue(EObjectFlags::RF_MirroredGarbage),
     RF_AllocatedInSharedPage        = Unreal::getConstEnumValue(EObjectFlags::RF_AllocatedInSharedPage)
 };
 ENUM_CLASS_FLAGS(ESpObjectFlags); // required if combining values using bitwise operations
@@ -1061,8 +1064,8 @@ public:
                     StaticLoadObject(
                         toPtr<UClass>(uclass),
                         toPtr<UObject>(in_outer),
-                        Unreal::toTCharPtr(name),
-                        Unreal::toTCharPtr(filename),
+                        Unreal::toFString(name),
+                        Unreal::toFString(filename),
                         Unreal::getCombinedEnumFlagValueFromStringsAs<ELoadFlags, ESpLoadFlags>(load_flag_strings),
                         toPtr<UPackageMap>(sandbox),
                         allow_object_reconciliation,
@@ -1082,8 +1085,8 @@ public:
                     StaticLoadClass(
                         toPtr<UClass>(uclass),
                         toPtr<UObject>(in_outer),
-                        Unreal::toTCharPtr(name),
-                        Unreal::toTCharPtr(filename),
+                        Unreal::toFString(name),
+                        Unreal::toFString(filename),
                         Unreal::getCombinedEnumFlagValueFromStringsAs<ELoadFlags, ESpLoadFlags>(load_flag_strings),
                         toPtr<UPackageMap>(sandbox)));
             });

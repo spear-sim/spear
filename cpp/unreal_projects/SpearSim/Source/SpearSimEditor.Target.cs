@@ -11,7 +11,7 @@ public class SpearSimEditorTarget : SpTargetRulesTarget
     {
         SP_LOG_CURRENT_FUNCTION();
 
-        // Added to projects by default in UE 5.5.
+        // Added to projects by default in UE 5.7.
         Type = TargetType.Editor;
     }
 }

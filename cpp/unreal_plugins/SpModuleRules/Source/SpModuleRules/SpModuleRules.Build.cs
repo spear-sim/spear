@@ -32,7 +32,7 @@ public class SpModuleRules : ModuleRules
         // Required for:
         //     ... > SpCore/Std.h    > boost/tokenizer.hpp > ... > boost/exception/exception.h
         //     ... > SpCore/Rpclib.h > rpc/msgpack.hpp     > ... > rpc/msgpack/predef/other/endian.h
-        UndefinedIdentifierWarningLevel = WarningLevel.Warning;
+        CppCompileWarningSettings.UndefinedIdentifierWarningLevel = WarningLevel.Warning;
 
         PublicDependencyModuleNames.AddRange(new string[] {
             "AssetRegistry", "Chaos", "Core", "CoreUObject", "Engine", "EngineSettings", "InputCore", "Json", "JsonUtilities", "LevelSequence",
@@ -48,8 +48,8 @@ public class SpModuleRules : ModuleRules
         PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost")));
 
         if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Win64) {
-            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_filesystem-vc143-mt-x64-1_81.lib")));
-            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_unit_test_framework-vc143-mt-x64-1_81.lib")));
+            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_filesystem-vc143-mt-x64-1_90.lib")));
+            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_unit_test_framework-vc143-mt-x64-1_90.lib")));
         } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Mac) {
             PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_filesystem.a")));
             PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_unit_test_framework.a")));

@@ -15,7 +15,9 @@ cpp/unreal_projects/SpearSim/Build
 cpp/unreal_projects/SpearSim/Content/__ExternalActors__
 cpp/unreal_projects/SpearSim/Content/__ExternalObjects__
 cpp/unreal_projects/SpearSim/Content/Characters
+cpp/unreal_projects/SpearSim/Content/FirstPerson
 cpp/unreal_projects/SpearSim/Content/Humoto
+cpp/unreal_projects/SpearSim/Content/Input
 cpp/unreal_projects/SpearSim/Content/Kujiale
 cpp/unreal_projects/SpearSim/Content/LevelPrototyping
 cpp/unreal_projects/SpearSim/Content/Megascans

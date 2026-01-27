@@ -14,7 +14,7 @@ SPEAR:
 SP_SERVICES:
   INITIALIZE_ENGINE_SERVICE:
     OVERRIDE_GAME_DEFAULT_MAP: True
-    GAME_DEFAULT_MAP: "/Game/VehicleTemplate/Maps/VehicleExampleMap"
+    GAME_DEFAULT_MAP: "/Game/VehicleTemplate/Maps/Lvl_VehicleBasic"
 
     OVERRIDE_BENCHMARKING: True
     BENCHMARKING: True

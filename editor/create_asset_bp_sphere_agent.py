@@ -18,7 +18,7 @@ blueprint_desc = \
         {
             "name": "sphere_",
             "static_mesh_path": "/Engine/BasicShapes/Sphere.Sphere",
-            "material_path": "/Game/StarterContent/Materials/M_Ceramic_Tile_Checker.M_Ceramic_Tile_Checker",
+            "material_path": "/Engine/EngineMaterials/WorldGridMaterial.WorldGridMaterial",
             "location": {"x": 0.0, "y": 0.0, "z": 0.0},
             "rotation": {"pitch": 0.0, "yaw": 0.0, "roll": 0.0},
             "scale3d": {"x": 0.4, "y": 0.4, "z": 0.4},

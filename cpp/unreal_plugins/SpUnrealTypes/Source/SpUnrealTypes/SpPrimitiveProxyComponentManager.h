@@ -119,7 +119,7 @@ public:
     void initializeImpl() override
     {
         ASpProxyComponentManager::initializeImpl();
-        InvisibleMaterial = LoadObject<UMaterialInterface>(nullptr, Unreal::toTCharPtr("/SpContent/Materials/M_Invisible.M_Invisible"));
+        InvisibleMaterial = LoadObject<UMaterialInterface>(nullptr, Unreal::toFString("/SpContent/Materials/M_Invisible.M_Invisible"));
     };
 
     void terminateImpl() override
@@ -376,7 +376,7 @@ protected:
     void initializeImpl() override
     {
         ASpPrimitiveProxyComponentManager::initializeImpl();
-        EmissiveMaterial = LoadObject<UMaterialInterface>(nullptr, Unreal::toTCharPtr("/SpContent/Materials/M_Emissive.M_Emissive"));
+        EmissiveMaterial = LoadObject<UMaterialInterface>(nullptr, Unreal::toFString("/SpContent/Materials/M_Emissive.M_Emissive"));
     };
 
     void terminateImpl() override
@@ -434,7 +434,7 @@ protected:
     void initializeImpl() override
     {
         ASpPrimitiveProxyComponentManager::initializeImpl();
-        DiffuseMaterial = LoadObject<UMaterialInterface>(nullptr, Unreal::toTCharPtr("/SpContent/Materials/M_Diffuse.M_Diffuse"));
+        DiffuseMaterial = LoadObject<UMaterialInterface>(nullptr, Unreal::toFString("/SpContent/Materials/M_Diffuse.M_Diffuse"));
     };
 
     void terminateImpl() override

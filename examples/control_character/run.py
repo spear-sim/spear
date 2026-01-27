@@ -16,13 +16,13 @@ character_descs = \
 [ 
     {
         "name": "character_0",
-        "location": {"X": 900.0, "Y": 950.0, "Z": 100.0},
+        "location": {"X": 0.0, "Y": -100.0, "Z": 303.0},
         "rotation": {"Pitch": 0.0, "Yaw": 0.0, "Roll": 0.0},
         "move_input_action_value": {"ValueType": "Axis2D", "Value": {"X": -1.0, "Y": 1.0, "Z": 0.0}}
     },
     {
         "name": "character_1",
-        "location": {"X": 900.0, "Y": 1250.0, "Z": 100.0},
+        "location": {"X": 0.0, "Y": 100.0, "Z": 303.0},
         "rotation": {"Pitch": 0.0, "Yaw": 0.0, "Roll": 0.0},
         "move_input_action_value": {"ValueType": "Axis2D", "Value": {"X": 1.0, "Y": 1.0, "Z": 0.0}}
     }

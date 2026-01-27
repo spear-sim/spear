@@ -14,7 +14,7 @@ SPEAR:
 SP_SERVICES:
   INITIALIZE_ENGINE_SERVICE:
     OVERRIDE_GAME_DEFAULT_MAP: True
-    GAME_DEFAULT_MAP: "/Game/ThirdPerson/Maps/ThirdPersonMap"
+    GAME_DEFAULT_MAP: "/Game/ThirdPerson/Lvl_ThirdPerson"
 
     OVERRIDE_BENCHMARKING: True
     BENCHMARKING: True
