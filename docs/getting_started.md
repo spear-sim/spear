@@ -4,7 +4,7 @@
 
 We will assume that you are developing on a version of Windows, macOS, or Linux that is compatible with Unreal Engine 5.7. We will also assume that you're using Anaconda Python to manage your Python environment, and that you have Git and CMake installed.
 
-### Minimum and recommended system specifications
+## Minimum and recommended system specifications
 
 Minimum and recommended system specifications for the Unreal Engine are given [here](https://dev.epicgames.com/documentation/en-us/unreal-engine/hardware-and-software-specifications-for-unreal-engine?application_version=5.7).
 
