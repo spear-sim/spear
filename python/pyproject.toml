@@ -12,7 +12,7 @@ packages = ["spear"]
 
 [project]
 name = "spear-sim"
-version = "0.6.0"
+version = "1.0.0"
 requires-python = "~=3.11"
 dependencies = [
     "coacd==1.0.0",

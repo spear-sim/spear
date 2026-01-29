@@ -3,7 +3,7 @@
 # Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-__version__ = "v0.6.0"
+__version__ = "v1.0.0"
 
 #
 # Sometimes spear_ext is unavailable. For example, it can't be installed in the UE Python environment because
