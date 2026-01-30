@@ -92,23 +92,35 @@ class EngineService():
 
     @contextlib.contextmanager
     def begin_frame(self):
-        assert self._frame_state == "idle"
-        self._frame_state = "request_begin_frame"
+        assert self._frame_state == "idle" or self._frame_state == "request_begin_next_frame"
 
         success = False
 
-        # try calling begin_frame_impl()
-        try:
-            success = self._begin_frame_impl()
-        except Exception as e:
-            spear.log("Exception: ", e)
-            spear.log("ERROR: We might or might not be in a critical section, but we don't know how to get out of it from here. Giving up...")
-            self._frame_state = "error"
-            raise e
+        # if we're currently in the idle state, we need to call begin_frame_impl()
+        if self._frame_state == "idle":        
+            self._frame_state = "request_begin_frame"
 
-        if not success:
-            spear.log("ERROR: Server error state detected when calling _begin_frame_impl(), but we do not appear to be in a critical section.")
-            self._frame_state = "error"
+            # try calling begin_frame_impl()
+            try:
+                success = self._begin_frame_impl()
+            except Exception as e:
+                spear.log("Exception: ", e)
+                spear.log("ERROR: We might or might not be in a critical section, but we don't know how to get out of it from here. Giving up...")
+                self._frame_state = "error"
+                raise e
+
+            if not success:
+                spear.log("ERROR: Server error state detected when calling _begin_frame_impl(), but we do not appear to be in a critical section.")
+                self._frame_state = "error"
+                assert False
+
+        # if we're currently in the request_begin_next_frame state, it means that the user previously called
+        # end_frame(single_step=True), in which case we have effectively already called begin_frame_impl() as
+        # part of our previous call to end_frame_impl_single_step(), so we do not call it again here
+        elif self._frame_state == "request_begin_next_frame":
+            self._frame_state = "request_begin_frame"
+
+        else:
             assert False
 
         # try executing pre-frame work
@@ -143,7 +155,7 @@ class EngineService():
             assert False
 
     @contextlib.contextmanager
-    def end_frame(self):
+    def end_frame(self, single_step=False):
 
         # try executing post-frame work
         try:
@@ -159,9 +171,14 @@ class EngineService():
             self._frame_state = "error"
             raise e
 
+        success = True
+
         # try calling end_frame_impl()
         try:
-            self._end_frame_impl()
+            if single_step:
+                success = self._end_frame_impl_single_step()
+            else:
+                self._end_frame_impl()
         except Exception as e:
             spear.log("Exception: ", e)
             spear.log("ERROR: We might or might not be in a critical section, but we don't know how to get out of it from here. Giving up...")
@@ -169,7 +186,16 @@ class EngineService():
             raise e
 
         assert self._frame_state == "request_end_frame"
-        self._frame_state = "idle"
+
+        if not success:
+            spear.log("ERROR: Server error state detected when calling _end_frame_impl_single_step(), but we do not appear to be in a critical section.")
+            self._frame_state = "error"
+            assert False
+
+        if single_step:
+            self._frame_state = "request_begin_next_frame"
+        else:
+            self._frame_state = "idle"
 
     #
     # Helper functions for managing the server's frame state. Note that _begin_frame_impl() and _execute_frame_impl()
@@ -189,7 +215,12 @@ class EngineService():
         return self.call_sync_on_worker_thread("engine_service.call_sync_on_worker_thread.execute_frame")
 
     def _end_frame_impl(self):
-        self.send_async_fast_on_worker_thread("engine_service.call_sync_on_worker_thread.end_frame")
+        single_step = False
+        self.send_async_fast_on_worker_thread("engine_service.call_sync_on_worker_thread.end_frame", single_step)
+
+    def _end_frame_impl_single_step(self):
+        single_step = True
+        return self.call_sync_on_worker_thread("engine_service.call_sync_on_worker_thread.end_frame", single_step)
 
     #
     # Functions for calling entry points on the server.

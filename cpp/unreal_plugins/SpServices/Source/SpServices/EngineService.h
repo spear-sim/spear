@@ -182,37 +182,69 @@ public:
             current_work_queue_ = &end_frame_work_queue_;
 
             if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("engine_service.execute_frame: Scheduling begin_frame_work_queue_.reset() on work queue...");
+                SP_LOG("engine_service.execute_frame: Scheduling engine_service.execute_frame.begin_frame_work_queue_reset on work queue begin_frame_work_queue_...");
             }
 
             // Allow beginFrame() to finish executing.
-            begin_frame_work_queue_.scheduleFunc("begin_frame_work_queue_.reset()", [this]() -> void {
+            begin_frame_work_queue_.scheduleFunc("engine_service.execute_frame.begin_frame_work_queue_reset", [this]() -> void {
                 begin_frame_work_queue_.reset();
             });
 
             if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("engine_service.execute_frame: Finished scheduling begin_frame_work_queue_.reset().");
+                SP_LOG("engine_service.execute_frame: Finished scheduling engine_service.execute_frame.begin_frame_work_queue_reset.");
             }
 
             return !request_error_;
         });
 
-        bindFuncToExecuteOnWorkerThread("engine_service", "end_frame", [this]() -> bool {
+        bindFuncToExecuteOnWorkerThread("engine_service", "end_frame", [this](bool single_step) -> bool {
 
             SP_ASSERT(current_work_queue_ == &end_frame_work_queue_);
             current_work_queue_ = nullptr;
 
+            // Allow endFrame() to finish executing.
+
             if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("engine_service.end_frame: Scheduling end_frame_work_queue_.reset() on work queue...");
+                SP_LOG("engine_service.end_frame: Scheduling engine_service.end_frame.end_frame_work_queue_reset on work queue end_frame_work_queue_...");
             }
 
-            // Allow endFrame() to finish executing.
-            end_frame_work_queue_.scheduleFunc("end_frame_work_queue_.reset()", [this]() -> void {
+            end_frame_work_queue_.scheduleFunc("engine_service.end_frame.end_frame_work_queue_reset", [this, single_step]() -> void {
+                if (single_step && !request_terminate_ && !request_error_) {
+                    request_begin_frame_ = true; // if we're in single-step mode, indicate to the game thread that we will be queueing additional work
+                }
                 end_frame_work_queue_.reset();
             });
 
             if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("engine_service.end_frame: Finished scheduling end_frame_work_queue_.reset().");
+                SP_LOG("engine_service.end_frame: Finished scheduling engine_service.end_frame.end_frame_work_queue_reset.");
+            }
+
+            // If we're in single-step mode, then wait until beginFrame() has finished executing before we return.
+            if (single_step) {
+                if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
+                    SP_LOG("engine_service.end_frame: Waiting for beginFrame() to finish executing...");
+                }
+
+                // Wait until beginFrame() has finished executing before we allow the user to start queueing
+                // the next frame of work.
+                begin_frame_work_queue_ready_future_.get();
+
+                // Reset promise and future.
+
+                {
+                    std::lock_guard<std::mutex> lock(begin_frame_mutex_);
+                    begin_frame_work_queue_ready_promise_ = std::promise<void>();
+                    begin_frame_work_queue_ready_future_  = begin_frame_work_queue_ready_promise_.get_future();
+                    begin_frame_work_queue_ready_promise_set_ = false;
+                }
+
+                if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
+                    SP_LOG("engine_service.end_frame: Finished waiting.");
+                }
+
+                // Set current work queue.
+                SP_ASSERT(current_work_queue_ == nullptr);
+                current_work_queue_ = &begin_frame_work_queue_;
             }
 
             return !request_error_;
@@ -344,7 +376,7 @@ protected:
 
             frame_state_ = FrameState::ExecutingFrame;
 
-            // Allow engine_service.begin_frame to finish executing.
+            // Allow engine_service.begin_frame (or engine_service.end_frame if we're in single-step mode) to finish executing.
 
             {
                 std::lock_guard<std::mutex> lock(begin_frame_mutex_);
@@ -706,9 +738,9 @@ private:
     // which is used when executing all entry points on the worker thread.
     std::atomic<FrameState> frame_state_ = FrameState::Idle;
 
-    // Written by the worker thread in engine_service.initialize and engine_service.begin_frame to indicate
-    // to the game thread that we want to begin queueing a batch of work. Written and read by the game thread
-    // in beginFrame().
+    // Written by the worker thread in engine_service.initialize, engine_service.begin_frame and engine_service.end_frame
+    // (if in single-step mode) to indicate to the game thread that we want to begin queueing a batch of work.
+    // Written and read by the game thread in beginFrame().
     std::atomic<bool> request_begin_frame_ = false;
 
     // Written by the worker thread in engine_service.initialize and engine_service.terminate to indicate to
@@ -725,11 +757,13 @@ private:
     std::atomic<bool> request_error_ = false;
 
     // These promises and futures are each initialized by the worker thread in engine_service.initialize, engine_service.begin_frame,
-    // and engine_service.execute_frame. Subsequently, the promises are only ever set by the game thread in
-    // beginFrame(), endFrame(), and terminate(). The futures are only ever read on the worker thread in engine_service.begin_frame
-    // and engine_service.execute_frame. Each bool variable is set by the game thread whenever the corresponding
-    // promise is set, and is read by the game thread in shutdown() to avoid deadlocks when shutting down the
-    // application. The mutexes are used to coordinate access to the promises, the futures, and the bools.
+    // engine_service.execute_frame, and engine_service.end_frame (if in single-step mode). Subsequently,
+    // the promises are only ever set by the game thread in beginFrame(), endFrame(), and terminate(). The
+    // futures are only ever read on the worker thread in engine_service.begin_frame, engine_service.execute_frame,
+    // and engine_service.end_frame (if in single-step mode). Each bool variable is set by the game thread
+    // whenever the corresponding promise is set, and is read by the game thread in shutdown() to avoid
+    // deadlocks when shutting down the application. The mutexes are used to coordinate access to the
+    // promises, the futures, and the bools.
     std::mutex begin_frame_mutex_;
     std::mutex end_frame_mutex_;
     std::promise<void> begin_frame_work_queue_ready_promise_;
