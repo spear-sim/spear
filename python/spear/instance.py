@@ -224,8 +224,8 @@ class Instance():
         return self._engine_service.begin_frame()
 
 
-    def end_frame(self):
-        return self._engine_service.end_frame()
+    def end_frame(self, single_step=False):
+        return self._engine_service.end_frame(single_step=single_step)
 
 
     def is_running(self):
@@ -249,10 +249,10 @@ class Instance():
         self._request_warm_up_unreal_instance(time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames)
 
 
-    def flush(self):
+    def flush(self, single_step=False):
         with self.begin_frame():
             pass
-        with self.end_frame():
+        with self.end_frame(single_step=single_step):
             pass
 
 

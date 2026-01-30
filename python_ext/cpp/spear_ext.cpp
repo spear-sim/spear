@@ -68,6 +68,7 @@ NB_MODULE(spear_ext, module)
     // 1 args
     Client::registerWorkerThreadEntryPointSignature<void,             bool>               (client_class);
     Client::registerWorkerThreadEntryPointSignature<void,             const std::string&> (client_class);
+    Client::registerWorkerThreadEntryPointSignature<bool,             bool>               (client_class);
 
     // 3 args
     Client::registerWorkerThreadEntryPointSignature<SharedMemoryView, const std::string&,  uint64_t,       const std::vector<std::string>&>(client_class);
