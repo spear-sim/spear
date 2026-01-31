@@ -25,7 +25,7 @@
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
-#include "Spcore/UnrealUtils.h"
+#include "SpCore/UnrealUtils.h"
 
 // TODO: remove platform-specific include
 #if BOOST_COMP_MSVC
