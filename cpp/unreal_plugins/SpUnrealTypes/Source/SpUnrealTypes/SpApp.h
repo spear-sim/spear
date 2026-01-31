@@ -22,7 +22,7 @@ public:
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static bool SetBenchmarking(bool bVal)
+    static void SetBenchmarking(bool bVal)
     {
         FApp::SetBenchmarking(bVal);
     }
