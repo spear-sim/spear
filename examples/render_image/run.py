@@ -75,7 +75,7 @@ if __name__ == "__main__":
 
     # let temporal anti-aliasing etc accumulate additional information across multiple frames, and
     # inserting an extra frame can fix occasional render-to-texture initialization issues on macOS
-    for i in range(100):
+    for i in range(1):
         instance.flush()
 
     # get rendered frame
