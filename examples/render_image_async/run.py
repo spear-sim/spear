@@ -191,6 +191,20 @@ if __name__ == "__main__":
         elapsed_time_seconds = end_time_seconds - start_time_seconds
         spear.log(f"Average frame time for instance.sp_func_service.call_async.call_function(...): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
 
+        # instance.sp_func_service.call_async.call_function(...)
+        num_steps = 100
+        start_time_seconds = time.time()
+        for i in range(num_steps):
+            with instance.begin_frame():
+                future = final_tone_curve_hdr_component.call_async.read_pixels()
+            with instance.end_frame(single_step=True):
+                data_bundle = future.get()
+        end_time_seconds = time.time()
+        elapsed_time_seconds = end_time_seconds - start_time_seconds
+        spear.log(f"Average frame time for instance.sp_func_service.call_async.call_function(...) (single-step): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
+
+    input("Press any key to continue...")
+
     # terminate actors and components
     with instance.begin_frame():
         pass
