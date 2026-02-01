@@ -138,6 +138,9 @@ class EngineService():
             self._frame_state = "error"
             raise e
 
+    @contextlib.contextmanager
+    def end_frame(self, single_step=False):
+
         # try calling execute_frame_impl()
         try:
             success = self._execute_frame_impl()
@@ -153,9 +156,6 @@ class EngineService():
             self._end_frame_impl()
             self._frame_state = "error"
             assert False
-
-    @contextlib.contextmanager
-    def end_frame(self, single_step=False):
 
         # try executing post-frame work
         try:

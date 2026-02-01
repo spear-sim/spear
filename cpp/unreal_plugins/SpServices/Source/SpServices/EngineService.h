@@ -7,16 +7,21 @@
 
 #include <stdint.h> // int64_t, uint64_t
 
+#include <algorithm>   // std::swap
+#include <array>
 #include <atomic>
-#include <exception>   // std::exception
+#include <exception>
 #include <future>      // std::promise
 #include <map>
 #include <mutex>       // std::lock_guard
+#include <ranges>      // std::views::transform
 #include <string>
-#include <utility>     // std::make_pair, std::move
+#include <utility>     // std::make_pair, std::move, std::pair
 #include <type_traits> // std::invoke_result_t, std::is_void_v
+#include <vector>
 
 #include "SpCore/Assert.h"
+#include "SpCore/Boost.h"
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
@@ -56,30 +61,30 @@ public:
             frame_state_ = FrameState::Idle;
 
             // Reset request flags.
-            request_begin_frame_ = false;
             request_terminate_ = false;
             request_error_ = false;
 
+            // Reset state for queue management.
+
+            begin_frame_writable_by_wt_ = 0;
+            begin_frame_being_drained_by_gt_ = 2;
+
+            end_frame_writable_by_wt_ = 1;
+            end_frame_being_drained_by_gt_ = 3;
+
             // There is no need to lock because it is safe to access WorkQueue objects from multiple threads.
-            begin_frame_work_queue_.initialize();
-            end_frame_work_queue_.initialize();
-
-            // Reset promises and futures.
-
-            {
-                std::lock_guard<std::mutex> lock(begin_frame_mutex_);
-                begin_frame_work_queue_ready_promise_ = std::promise<void>();
-                begin_frame_work_queue_ready_future_  = begin_frame_work_queue_ready_promise_.get_future();
-                begin_frame_work_queue_ready_promise_.set_value();
-                begin_frame_work_queue_ready_promise_set_ = true;
+            for (int i = 0; i < 4; i++) {
+                work_queues_.at(i).initialize();
             }
 
             {
-                std::lock_guard<std::mutex> lock(end_frame_mutex_);
-                end_frame_work_queue_ready_promise_ = std::promise<void>();
-                end_frame_work_queue_ready_future_  = end_frame_work_queue_ready_promise_.get_future();
-                end_frame_work_queue_ready_promise_.set_value();
-                end_frame_work_queue_ready_promise_set_ = true;
+                std::lock_guard<std::mutex> lock(mutex_);
+                for (int i = 0; i < 4; i++) {
+                    work_queue_ready_promises_.at(i) = std::promise<void>();
+                    work_queue_ready_futures_.at(i) = work_queue_ready_promises_.at(i).get_future();
+                    work_queue_ready_promises_.at(i).set_value();
+                    work_queue_ready_promises_set_.at(i) = true;
+                }
             }
         });
 
@@ -89,8 +94,9 @@ public:
             frame_state_ = FrameState::Terminating;
 
             // There is no need to lock because it is safe to access WorkQueue objects from multiple threads.
-            begin_frame_work_queue_.terminate();
-            end_frame_work_queue_.terminate();
+            for (int i = 0; i < 4; i++) {
+                work_queues_.at(i).terminate();
+            }
 
             // Indicate to the game thread that we want to terminate the application.
             request_terminate_ = true;
@@ -119,7 +125,9 @@ public:
 
         bindFuncToExecuteOnWorkerThread("engine_service", "begin_frame", [this]() -> bool {
 
-            if (request_terminate_ || request_error_) {
+            SP_ASSERT(!request_terminate_);
+
+            if (request_error_) {
                 return false;
             }
 
@@ -127,127 +135,181 @@ public:
                 SP_LOG("engine_service.begin_frame: Waiting for beginFrame() to finish executing...");
             }
 
-            // Wait until beginFrame() has finished executing before we allow the user to start queueing
-            // the next frame of work.
-            begin_frame_work_queue_ready_future_.get();
-
-            // Reset promise and future.
-
-            {
-                std::lock_guard<std::mutex> lock(begin_frame_mutex_);
-                begin_frame_work_queue_ready_promise_ = std::promise<void>();
-                begin_frame_work_queue_ready_future_  = begin_frame_work_queue_ready_promise_.get_future();
-                begin_frame_work_queue_ready_promise_set_ = false;
-            }
+            // Wait until beginFrame() on frame i-2 has finished executing before we allow the user to start
+            // queuing work on the queue for frame i.
+            work_queue_ready_futures_.at(begin_frame_being_drained_by_gt_).get();
 
             if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
                 SP_LOG("engine_service.begin_frame: Finished waiting.");
             }
 
+            // Reset promise and future and swap read/write indices.
+
+            {
+                std::lock_guard<std::mutex> lock(mutex_);
+
+                // Now that the being-drained-by-gt queue is empty, it can become the new writable-by-wt queue. 
+                std::swap(begin_frame_being_drained_by_gt_, begin_frame_writable_by_wt_);
+
+                work_queue_ready_promises_.at(begin_frame_writable_by_wt_) = std::promise<void>();
+                work_queue_ready_futures_.at(begin_frame_writable_by_wt_) = work_queue_ready_promises_.at(begin_frame_writable_by_wt_).get_future();
+                work_queue_ready_promises_set_.at(begin_frame_writable_by_wt_) = false;
+
+                // Signal to the game thread that we will be queuing additional BeginFrame work.
+                SP_ASSERT(!work_queue_fifo_.full());
+                SP_ASSERT(work_queue_fifo_.empty() || work_queue_fifo_.back().second == QueueType::EndFrame);
+                work_queue_fifo_.push_back(std::make_pair(begin_frame_writable_by_wt_, QueueType::BeginFrame));
+            }
+
             // Set current work queue.
             SP_ASSERT(current_work_queue_ == nullptr);
-            current_work_queue_ = &begin_frame_work_queue_;
+            current_work_queue_ = &work_queues_.at(begin_frame_writable_by_wt_);
 
-            // Indicate to the game thread that we will be queueing additional work.
-            request_begin_frame_ = true;
-
-            return true;
+            return true; // return value should be interpreted as "inside critical section", not whether or not we're in an error state
         });
 
         bindFuncToExecuteOnWorkerThread("engine_service", "execute_frame", [this]() -> bool {
+
+            SP_ASSERT(!request_terminate_);
 
             if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
                 SP_LOG("engine_service.execute_frame: Waiting for endFrame() to finish executing...");
             }
 
-            // Wait until endFrame() has finished executing before we allow the user to start queueing
-            // the next frame of work.
-            end_frame_work_queue_ready_future_.get();
-
-            // Reset promise and future.
-
-            {
-                std::lock_guard<std::mutex> lock(end_frame_mutex_);
-                end_frame_work_queue_ready_promise_ = std::promise<void>();
-                end_frame_work_queue_ready_future_  = end_frame_work_queue_ready_promise_.get_future();
-                end_frame_work_queue_ready_promise_set_ = false;
-            }
+            // Wait until endFrame() on frame i-2 has finished executing before we allow the user to start
+            // queuing work on the end_frame queue for frame i.
+            work_queue_ready_futures_.at(end_frame_being_drained_by_gt_).get();
 
             if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
                 SP_LOG("engine_service.execute_frame: Finished waiting.");
             }
 
-            // Set current work queue.
-            SP_ASSERT(current_work_queue_ == &begin_frame_work_queue_);
-            current_work_queue_ = &end_frame_work_queue_;
+            // Reset promise and future and swap read/write indices.
 
-            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("engine_service.execute_frame: Scheduling engine_service.execute_frame.begin_frame_work_queue_reset on work queue begin_frame_work_queue_...");
+            {
+                std::lock_guard<std::mutex> lock(mutex_);
+
+                // Now that the being-drained-by-gt queue is empty, it can become the new writable-by-wt queue. 
+                std::swap(end_frame_being_drained_by_gt_, end_frame_writable_by_wt_);
+
+                work_queue_ready_promises_.at(end_frame_writable_by_wt_) = std::promise<void>();
+                work_queue_ready_futures_.at(end_frame_writable_by_wt_)  = work_queue_ready_promises_.at(end_frame_writable_by_wt_).get_future();
+                work_queue_ready_promises_set_.at(end_frame_writable_by_wt_) = false;
+
+                // Signal to the game thread that we will be queuing additional EndFrame work.
+                SP_ASSERT(!work_queue_fifo_.full());
+                SP_ASSERT(work_queue_fifo_.empty() || work_queue_fifo_.back().second == QueueType::BeginFrame);
+                work_queue_fifo_.push_back(std::make_pair(end_frame_writable_by_wt_, QueueType::EndFrame));
             }
 
+            // Set current work queue.
+            SP_ASSERT(current_work_queue_ == &(work_queues_.at(begin_frame_writable_by_wt_)));
+            current_work_queue_ = &(work_queues_.at(end_frame_writable_by_wt_));
+
             // Allow beginFrame() to finish executing.
-            begin_frame_work_queue_.scheduleFunc("engine_service.execute_frame.begin_frame_work_queue_reset", [this]() -> void {
-                begin_frame_work_queue_.reset();
+
+            std::string queue_name = work_queues_.at(begin_frame_writable_by_wt_).getName();
+            std::string func_name = "engine_service.execute_frame." + queue_name + ".reset";
+
+            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
+                SP_LOG("engine_service.execute_frame: Scheduling ", func_name, " on work queue ", queue_name);
+            }
+
+            int writable_by_gt = begin_frame_writable_by_wt_;
+            work_queues_.at(writable_by_gt).scheduleFunc(func_name, [this, writable_by_gt]() -> void {
+                work_queues_.at(writable_by_gt).reset();
             });
 
             if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("engine_service.execute_frame: Finished scheduling engine_service.execute_frame.begin_frame_work_queue_reset.");
+                SP_LOG("engine_service.execute_frame: Finished scheduling ", func_name);
             }
 
-            return !request_error_;
+            return !request_error_; // return value should be interpreted as error state
         });
 
         bindFuncToExecuteOnWorkerThread("engine_service", "end_frame", [this](bool single_step) -> bool {
 
-            SP_ASSERT(current_work_queue_ == &end_frame_work_queue_);
-            current_work_queue_ = nullptr;
+            SP_ASSERT(!request_terminate_);
 
-            // Allow endFrame() to finish executing.
+            bool request_begin_frame = !request_error_;
 
-            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("engine_service.end_frame: Scheduling engine_service.end_frame.end_frame_work_queue_reset on work queue end_frame_work_queue_...");
-            }
-
-            end_frame_work_queue_.scheduleFunc("engine_service.end_frame.end_frame_work_queue_reset", [this, single_step]() -> void {
-                if (single_step && !request_terminate_ && !request_error_) {
-                    request_begin_frame_ = true; // if we're in single-step mode, indicate to the game thread that we will be queueing additional work
-                }
-                end_frame_work_queue_.reset();
-            });
-
-            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("engine_service.end_frame: Finished scheduling engine_service.end_frame.end_frame_work_queue_reset.");
-            }
-
-            // If we're in single-step mode, then wait until beginFrame() has finished executing before we return.
             if (single_step) {
+
+                //
+                // The code below is intentionally nearly identical to the implementation in execute_frame,
+                // but with some minor differences. See comments below.
+                //
+
                 if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                    SP_LOG("engine_service.end_frame: Waiting for beginFrame() to finish executing...");
+                    SP_LOG("engine_service.end_frame (single-step): Waiting for beginFrame() to finish executing...");
                 }
 
-                // Wait until beginFrame() has finished executing before we allow the user to start queueing
-                // the next frame of work.
-                begin_frame_work_queue_ready_future_.get();
+                // Wait until beginFrame() on frame i-2 has finished executing before we allow the user to start
+                // queuing work on the queue for frame i.
+                work_queue_ready_futures_.at(begin_frame_being_drained_by_gt_).get();
 
-                // Reset promise and future.
+                if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
+                    SP_LOG("engine_service.end_frame (single-step): Finished waiting.");
+                }
+
+                // Reset promise and future and swap read/write indices.
 
                 {
-                    std::lock_guard<std::mutex> lock(begin_frame_mutex_);
-                    begin_frame_work_queue_ready_promise_ = std::promise<void>();
-                    begin_frame_work_queue_ready_future_  = begin_frame_work_queue_ready_promise_.get_future();
-                    begin_frame_work_queue_ready_promise_set_ = false;
-                }
+                    std::lock_guard<std::mutex> lock(mutex_);
 
-                if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                    SP_LOG("engine_service.end_frame: Finished waiting.");
+                    // Now that the being-drained-by-gt queue is empty, it can become the new writable-by-wt queue. 
+                    std::swap(begin_frame_being_drained_by_gt_, begin_frame_writable_by_wt_);
+
+                    work_queue_ready_promises_.at(begin_frame_writable_by_wt_) = std::promise<void>();
+                    work_queue_ready_futures_.at(begin_frame_writable_by_wt_) = work_queue_ready_promises_.at(begin_frame_writable_by_wt_).get_future();
+                    work_queue_ready_promises_set_.at(begin_frame_writable_by_wt_) = false;
+
+                    // If we're not in an error state according to our local copy of the error state, then
+                    // signal to the game thread that we will be queuing additional work.
+                    if (request_begin_frame) {
+                        SP_ASSERT(!work_queue_fifo_.full());
+                        work_queue_fifo_.push_back(std::make_pair(begin_frame_writable_by_wt_, QueueType::BeginFrame));
+                    }
                 }
 
                 // Set current work queue.
-                SP_ASSERT(current_work_queue_ == nullptr);
-                current_work_queue_ = &begin_frame_work_queue_;
+                SP_ASSERT(current_work_queue_ == &(work_queues_.at(end_frame_writable_by_wt_)));
+                if (request_begin_frame) {
+                    current_work_queue_ = &work_queues_.at(begin_frame_writable_by_wt_);
+                } else {
+                    current_work_queue_ = nullptr;
+                }
+
+            } else {
+
+                // Set current work queue.
+                SP_ASSERT(current_work_queue_ == &(work_queues_.at(end_frame_writable_by_wt_)));
+                current_work_queue_ = nullptr;
             }
 
-            return !request_error_;
+            // Allow endFrame() to finish executing.
+
+            std::string queue_name = work_queues_.at(end_frame_writable_by_wt_).getName();
+            std::string func_name = "engine_service.end_frame." + queue_name + ".reset";
+
+            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
+                SP_LOG("engine_service.end_frame: Scheduling ", func_name, " on work queue ", queue_name);
+            }
+
+            int writable_by_gt = end_frame_writable_by_wt_;
+            work_queues_.at(writable_by_gt).scheduleFunc(func_name, [this, writable_by_gt]() -> void {
+                work_queues_.at(writable_by_gt).reset();
+            });
+
+            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
+                SP_LOG("engine_service.end_frame: Finished scheduling ", func_name);
+            }
+
+            if (single_step) {
+                return request_begin_frame; // return value should be interpreted as "inside critical section", not whether or not we're in an error state
+            } else {
+                return !request_error_; // return value should be interpreted as error state
+            }
         });
     }
 
@@ -325,16 +387,14 @@ public:
 
     void shutdown()
     {
-        if (!begin_frame_work_queue_ready_promise_set_) {
-            std::lock_guard lock(begin_frame_mutex_);
-            begin_frame_work_queue_ready_promise_.set_value();
-            begin_frame_work_queue_ready_promise_set_ = true;
-        }
-
-        if (!end_frame_work_queue_ready_promise_set_) {
-            std::lock_guard lock(end_frame_mutex_);
-            end_frame_work_queue_ready_promise_.set_value();
-            end_frame_work_queue_ready_promise_set_ = true;
+        {
+            std::lock_guard lock(mutex_);
+            for (int i = 0; i < 4; i++) {
+                if (!work_queue_ready_promises_set_.at(i)) {
+                    work_queue_ready_promises_.at(i).set_value();
+                    work_queue_ready_promises_set_.at(i) = true;
+                }
+            }
         }
     }
 
@@ -343,7 +403,22 @@ protected:
     {
         Service::beginFrame();
 
-        bool handle_frame = request_begin_frame_;
+        bool handle_frame = false;
+        int readable_by_gt = -1;
+
+        // Only handle the frame if the front of our FIFO is a queue of type BeginFrame.
+
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            if (work_queue_fifo_.size() > 0) {
+                auto [queue_id, queue_type] = work_queue_fifo_.front(); // returns front without removing
+                if (queue_type == QueueType::BeginFrame) {
+                    handle_frame = true;
+                    readable_by_gt = queue_id;
+                    work_queue_fifo_.pop_front(); // removes front without returning
+                }
+            }
+        }
 
         if (request_terminate_ || request_error_) {
             handle_frame = false;
@@ -355,23 +430,24 @@ protected:
 
         if (handle_frame) {
 
-            // Reset the request flag set by engine_service.begin_frame.
-            request_begin_frame_ = false;
-
             // Update frame state.
             frame_state_ = FrameState::ExecutingBeginFrame;
 
+            std::string queue_name = work_queues_.at(readable_by_gt).getName();
+            std::string func_name = queue_name + ".run";
+
             if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("beginFrame(): Executing begin_frame_work_queue_...");
+                SP_LOG("beginFrame(): Executing ", queue_name, "...");
             }
 
-            // Execute all pre-frame work and wait here until engine_service.execute_frame calls begin_frame_work_queue_.reset().
-            executeFuncInTryCatch("begin_frame_work_queue_.run()", [this]() -> void {
-                begin_frame_work_queue_.run();
+            // Execute all pre-frame work and wait here until engine_service.execute_frame queues a call to
+            // reset() and the call executes.
+            executeFuncInTryCatch(func_name, [this, readable_by_gt]() -> void {
+                work_queues_.at(readable_by_gt).run();
             });
 
             if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("beginFrame(): Finished executing begin_frame_work_queue_.");
+                SP_LOG("beginFrame(): Finished executing ", queue_name, ".");
             }
 
             frame_state_ = FrameState::ExecutingFrame;
@@ -379,16 +455,31 @@ protected:
             // Allow engine_service.begin_frame (or engine_service.end_frame if we're in single-step mode) to finish executing.
 
             {
-                std::lock_guard<std::mutex> lock(begin_frame_mutex_);
-                begin_frame_work_queue_ready_promise_.set_value();
-                begin_frame_work_queue_ready_promise_set_ = true;
+                std::lock_guard<std::mutex> lock(mutex_);
+                work_queue_ready_promises_.at(readable_by_gt).set_value();
+                work_queue_ready_promises_set_.at(readable_by_gt) = true;
             }
         }
     }
 
     void endFrame() override
     {
-        bool handle_frame = frame_state_ == FrameState::ExecutingFrame;
+        bool handle_frame = false;
+        int readable_by_gt = -1;
+
+        // Only handle the frame if the front of our FIFO is a queue of type EndFrame.
+
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            if (work_queue_fifo_.size() > 0) {
+                auto [queue_id, queue_type] = work_queue_fifo_.front(); // returns front without removing
+                if (queue_type == QueueType::EndFrame) {
+                    handle_frame = true;
+                    readable_by_gt = queue_id;
+                    work_queue_fifo_.pop_front(); // removes front without returning
+                }
+            }
+        }
 
         if (request_terminate_ || request_error_) {
             handle_frame = false;
@@ -403,17 +494,21 @@ protected:
             // Update frame state.
             frame_state_ = FrameState::ExecutingEndFrame;
 
+            std::string queue_name = work_queues_.at(readable_by_gt).getName();
+            std::string func_name = queue_name + ".run";
+
             if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("endFrame(): Executing end_frame_work_queue_...");
+                SP_LOG("endFrame(): Executing ", queue_name, "...");
             }
 
-            // Execute all post-frame work and wait here until engine_service.end_frame calls end_frame_work_queue_.reset().
-            executeFuncInTryCatch("end_frame_work_queue_.run()", [this]() -> void {
-                end_frame_work_queue_.run();
+            // Execute all post-frame work and wait here until engine_service.end_frame queues a call to
+            // reset() and the call executes.
+            executeFuncInTryCatch(func_name, [this, readable_by_gt]() -> void {
+                work_queues_.at(readable_by_gt).run();
             });
 
             if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("endFrame(): Finished executing end_frame_work_queue_.");
+                SP_LOG("endFrame(): Finished executing ", queue_name, ".");
             }
 
             // Update frame state.
@@ -422,9 +517,9 @@ protected:
             // Allow engine_service.execute_frame to finish executing.
 
             {
-                std::lock_guard<std::mutex> lock(end_frame_mutex_);
-                end_frame_work_queue_ready_promise_.set_value();
-                end_frame_work_queue_ready_promise_set_ = true;
+                std::lock_guard<std::mutex> lock(mutex_);
+                work_queue_ready_promises_.at(readable_by_gt).set_value();
+                work_queue_ready_promises_set_.at(readable_by_gt) = true;
             }
         }
 
@@ -432,6 +527,12 @@ protected:
     }
 
 private:
+
+    enum class QueueType
+    {
+        BeginFrame = 0,
+        EndFrame   = 1
+    };
 
     enum class FrameState
     {
@@ -727,8 +828,16 @@ private:
     std::map<std::string, FuncSignatureRegistry> entry_point_signature_registries_;
     TEntryPointBinder* entry_point_binder_ = nullptr;
 
-    WorkQueue begin_frame_work_queue_ = WorkQueue("begin_frame_work_queue");
-    WorkQueue end_frame_work_queue_ = WorkQueue("end_frame_work_queue");
+    // Work queues. Safe to access on multiple threads.
+    std::array<WorkQueue, 4> work_queues_ = {WorkQueue("begin_frame_work_queue_A"), WorkQueue("end_frame_work_queue_A"), WorkQueue("begin_frame_work_queue_B"), WorkQueue("end_frame_work_queue_B")};
+
+    // Only accessed on the worker thread.
+    int begin_frame_writable_by_wt_ = 0;
+    int begin_frame_being_drained_by_gt_ = 2;
+
+    // Only accessed on the worker thread.
+    int end_frame_writable_by_wt_ = 1;
+    int end_frame_being_drained_by_gt_ = 3;
 
     // Only accessed on the worker thread.
     WorkQueue* current_work_queue_ = nullptr;
@@ -737,11 +846,6 @@ private:
     // and engine_service.terminate. Read by the worker thread in the lambda returned by wrapFuncToExecuteInTryCatch(...),
     // which is used when executing all entry points on the worker thread.
     std::atomic<FrameState> frame_state_ = FrameState::Idle;
-
-    // Written by the worker thread in engine_service.initialize, engine_service.begin_frame and engine_service.end_frame
-    // (if in single-step mode) to indicate to the game thread that we want to begin queueing a batch of work.
-    // Written and read by the game thread in beginFrame().
-    std::atomic<bool> request_begin_frame_ = false;
 
     // Written by the worker thread in engine_service.initialize and engine_service.terminate to indicate to
     // the game thread that we want to terminate the application. Read by the worker thread in engine_service.begin_frame,
@@ -756,20 +860,23 @@ private:
     // methods.
     std::atomic<bool> request_error_ = false;
 
+    // The mutex is used to coordinate access to the FIFOs, promises, futures, bools defined below.
+    std::mutex mutex_;
+
+    // These FIFOs are written to by the worker thread in engine_service.begin_frame, engine_service.execute_frame,
+    // and in a lambda that is scheduled on the game thread in engine_service.end_frame (if in single-step mode).
+    // They are drained by the game thread in beginFrame() and endFrame().
+    boost::circular_buffer<std::pair<int, QueueType>> work_queue_fifo_ = boost::circular_buffer<std::pair<int, QueueType>>(4);
+
     // These promises and futures are each initialized by the worker thread in engine_service.initialize, engine_service.begin_frame,
     // engine_service.execute_frame, and engine_service.end_frame (if in single-step mode). Subsequently,
     // the promises are only ever set by the game thread in beginFrame(), endFrame(), and terminate(). The
     // futures are only ever read on the worker thread in engine_service.begin_frame, engine_service.execute_frame,
     // and engine_service.end_frame (if in single-step mode). Each bool variable is set by the game thread
     // whenever the corresponding promise is set, and is read by the game thread in shutdown() to avoid
-    // deadlocks when shutting down the application. The mutexes are used to coordinate access to the
-    // promises, the futures, and the bools.
-    std::mutex begin_frame_mutex_;
-    std::mutex end_frame_mutex_;
-    std::promise<void> begin_frame_work_queue_ready_promise_;
-    std::promise<void> end_frame_work_queue_ready_promise_;
-    std::future<void> begin_frame_work_queue_ready_future_;
-    std::future<void> end_frame_work_queue_ready_future_;
-    std::atomic<bool> begin_frame_work_queue_ready_promise_set_ = false;
-    std::atomic<bool> end_frame_work_queue_ready_promise_set_ = false;
+    // deadlocks when shutting down the application.
+
+    std::array<std::promise<void>, 4> work_queue_ready_promises_;
+    std::array<std::future<void>, 4> work_queue_ready_futures_;
+    std::array<std::atomic<bool>, 4> work_queue_ready_promises_set_ = {false, false, false, false};
 };
