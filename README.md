@@ -40,7 +40,6 @@ The code and assets in this repository are released under an [MIT License](LICEN
 We demonstrate the SPEAR programming model with a simple example program that spawns an object, prints some debug information about the object, and adjusts its size. We can see the effect of running this program in the figure below.
 
 ```python
-import pprint
 import spear
 
 # create an instance representing a UE application; this will either launch a new UE
