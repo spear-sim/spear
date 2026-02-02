@@ -7,8 +7,10 @@ cpp/unreal_plugins/*/Binaries
 cpp/unreal_plugins/*/Intermediate
 cpp/unreal_plugins/*/ThirdParty
 
+cpp/unreal_projects/SpearSim/.ignore
 cpp/unreal_projects/SpearSim/.vs
 cpp/unreal_projects/SpearSim/.vsconfig
+cpp/unreal_projects/SpearSim/.vscode
 cpp/unreal_projects/SpearSim/Backup
 cpp/unreal_projects/SpearSim/Binaries
 cpp/unreal_projects/SpearSim/Build
@@ -37,6 +39,7 @@ cpp/unreal_projects/SpearSim/Standalone-Development
 cpp/unreal_projects/SpearSim/Standalone-Shipping
 cpp/unreal_projects/SpearSim/CMakeLists.txt
 cpp/unreal_projects/SpearSim/SpearSim.sln
+cpp/unreal_projects/SpearSim/SpearSim.code-workspace
 cpp/unreal_projects/SpearSim/SpearSim (Mac).xcworkspace
 cpp/unreal_projects/SpearSim/UpgradeLog.htm
 
