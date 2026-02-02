@@ -200,6 +200,7 @@ if __name__ == "__main__":
             with instance.end_frame(single_step=True):
                 data_bundle = future.get()
         end_time_seconds = time.time()
+        instance.flush() # needed after the last call to instance.end_frame(single_step=True)
         elapsed_time_seconds = end_time_seconds - start_time_seconds
         spear.log(f"Average frame time for instance.sp_func_service.call_async.call_function(...) (single-step): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
 

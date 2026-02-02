@@ -175,10 +175,7 @@ class EngineService():
 
         # try calling end_frame_impl()
         try:
-            if single_step:
-                success = self._end_frame_impl_single_step()
-            else:
-                self._end_frame_impl()
+            success = self._end_frame_impl(single_step=single_step)
         except Exception as e:
             spear.log("Exception: ", e)
             spear.log("ERROR: We might or might not be in a critical section, but we don't know how to get out of it from here. Giving up...")
@@ -198,14 +195,7 @@ class EngineService():
             self._frame_state = "idle"
 
     #
-    # Helper functions for managing the server's frame state. Note that _begin_frame_impl() and _execute_frame_impl()
-    # both need to block to ensure that the client thread doesn't get too far ahead of the game thread, but _end_frame_impl()
-    # does not. So we can call the server using send_async_fast(...) in _end_frame_impl(), which avoids all
-    # blocking on the client thread. As a side-effect of this strategy, we can't propagate the return value
-    # of the "end_frame" entry point, which indicates if the server is in an error state. User Python code
-    # will therefore only be made aware of a server-side error during its next call to the "begin_frame"
-    # entry point, rather than its previous call to the "end_frame" entry point. But we willingly make this
-    # tradeoff in exchange for performance. 
+    # Helper functions for managing the server's frame state.
     #
 
     def _begin_frame_impl(self):
@@ -214,12 +204,7 @@ class EngineService():
     def _execute_frame_impl(self):
         return self.call_sync_on_worker_thread("engine_service.call_sync_on_worker_thread.execute_frame")
 
-    def _end_frame_impl(self):
-        single_step = False
-        self.send_async_fast_on_worker_thread("engine_service.call_sync_on_worker_thread.end_frame", single_step)
-
-    def _end_frame_impl_single_step(self):
-        single_step = True
+    def _end_frame_impl(self, single_step):
         return self.call_sync_on_worker_thread("engine_service.call_sync_on_worker_thread.end_frame", single_step)
 
     #
