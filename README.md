@@ -27,7 +27,7 @@ Interactive simulators have become powerful tools for training embodied agents a
 At its core, SPEAR is a Python library that can connect to, and programmatically control, any Unreal Engine (UE) application via a set of modular UE C++ plugins. In contrast to existing Python libraries for accessing the Unreal Engine, SPEAR offers several novel features that are useful in embodied AI, robotics, and computer vision applications.
 
 - SPEAR can call any C++ function, and can access any C++ variable, on any game entity, and any game subsystem, provided the function or variable has been exposed to Unreal's visual scripting system, referred to in the UE ecosystem as the _Blueprint System_ or simply as _Blueprints_. There are over 13K functions and over 44K variables that are already exposed to Blueprints (and are therefore accessible in SPEAR) in the UE codebase, and it is trivial to expose new functions and variables by adding a single-line annotation next to a function or variable in a C++ header (see example below).
-- SPEAR provides efficient zero-copy NumPy interoperability, e.g., SPEAR can copy 1080p photorealistic beauty images (see figure above) from the GPU directly into a user's NumPy array at 55 frames per second without requiring any intermediate data copying.
+- SPEAR provides efficient zero-copy NumPy interoperability, e.g., SPEAR can copy 1080p photorealistic beauty images (see figure above) from the GPU directly into a user's NumPy array at 50 frames per second without requiring any intermediate data copying.
 - SPEAR includes a camera entity that can render a superset of the ground truth modalities available in the Hypersim dataset (see figure above), including fine-grained 24-bit entity IDs that can be used for both material segmentation and object segmentation tasks, and a non-Lambertian intrinsic image decomposition consisting of diffuse reflectance, diffuse illumination, and a non-diffuse residual term.
 - SPEAR can programmatically control standalone shipping games that are already running, live simulations running inside the Unreal Editor, Unreal's path tracer, and the Unreal Editor itself, all through a unified Pythonic interface.
 - SPEAR gives users precise control over how their UE work is executed across UE frames, while also allowing users to execute complex work graphs (i.e., with arbitrary data dependencies among work items) deterministically within a single frame.
@@ -61,26 +61,11 @@ with instance.begin_frame():
     bp_axes_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_Axes.BP_Axes_C")
     bp_axes = game.unreal_service.spawn_actor(uclass=bp_axes_uclass, location={"X": -10.0, "Y": 280.0, "Z": 50.0})
 
-    # print all available functions and properties and other debug info for bp_axes
-    bp_axes.print_debug_info()
-
-    # get all object properties for bp_axes as nested Python dictionaries
-    spear.log("bp_axes.get_properties():")
-    pprint.pprint(bp_axes.get_properties())
-
-    # get scale by calling the AActor::GetActorScale3D C++ function
-    scale = bp_axes.GetActorScale3D()
-    spear.log("scale: ", scale)
-
     # set scale by calling the AActor::SetActorScale3D C++ function
     bp_axes.SetActorScale3D(NewScale3D={"X": 4.0, "Y": 4.0, "Z": 4.0})
 
-    # get the RootComponent property on bp_axes as a Python object with its own functions
+    # get the AActor::RootComponent property on bp_axes as a Python object with its own functions
     root_component = bp_axes.RootComponent.get()
-
-    # get all object properties for root_component as nested Python dictionaries
-    spear.log("root_component.get_properties():")
-    pprint.pprint(root_component.get_properties())
 
 # each instance.begin_frame() block must be paired with a corresponding instance.end_frame()
 # block; the code in the end_frame() block executes in the same UE frame as the begin_frame()

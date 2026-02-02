@@ -48,7 +48,7 @@ if __name__ == "__main__":
         scale = bp_axes.GetActorScale3D()
         spear.log("scale: ", scale)
 
-        # get the RootComponent property on bp_axes as a Python object with its own functions
+        # get the AActor::RootComponent property on bp_axes as a Python object with its own functions
         root_component = bp_axes.RootComponent.get()
 
         # get all object properties for root_component as nested Python dictionaries
