@@ -102,14 +102,6 @@ if __name__ == "__main__":
     with instance.end_frame():
         data_bundle = future.get()
 
-    # show debug data now that we're outside of instance.end_frame()
-    spear.log('data_bundle["arrays"]["data"].flags["ALIGNED"]: ', data_bundle["arrays"]["data"].flags["ALIGNED"])
-
-    # show rendered frame now that we're outside of with instance.end_frame()
-    if not args.benchmark:
-        cv2.imshow("final_tone_curve_hdr", data_bundle["arrays"]["data"])
-        cv2.waitKey(0)
-
     # optional benchmarking
     if args.benchmark:
 
@@ -206,6 +198,13 @@ if __name__ == "__main__":
 
     input("Press any key to continue...")
 
+    # show debug data now that we're outside of instance.end_frame()
+    spear.log('data_bundle["arrays"]["data"].flags["ALIGNED"]: ', data_bundle["arrays"]["data"].flags["ALIGNED"])
+
+    # show rendered frame now that we're outside of with instance.end_frame()
+    cv2.imshow("final_tone_curve_hdr", data_bundle["arrays"]["data"])
+    cv2.waitKey(0)
+
     # terminate actors and components
     with instance.begin_frame():
         pass
@@ -218,3 +217,4 @@ if __name__ == "__main__":
         instance.close()
 
     spear.log("Done.")
+
