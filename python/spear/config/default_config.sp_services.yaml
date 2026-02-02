@@ -19,6 +19,7 @@ SP_SERVICES:
 
   # Print debug info in EngineService.
   ENGINE_SERVICE:
+    DOUBLE_BUFFERED_WORK_QUEUES: True
     PRINT_CALL_DEBUG_INFO: False
     PRINT_FRAME_DEBUG_INFO: False
 

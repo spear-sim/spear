@@ -66,11 +66,22 @@ public:
 
             // Reset state for queue management.
 
-            begin_frame_writable_by_wt_ = 0;
-            begin_frame_being_drained_by_gt_ = 2;
+            bool double_buffered_work_queues = true;
+            if (Config::isInitialized()) {
+                double_buffered_work_queues = Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.DOUBLE_BUFFERED_WORK_QUEUES");
+            }
 
-            end_frame_writable_by_wt_ = 1;
-            end_frame_being_drained_by_gt_ = 3;
+            if (double_buffered_work_queues) {
+                begin_frame_writable_by_wt_      = 0;
+                end_frame_writable_by_wt_        = 1;
+                begin_frame_being_drained_by_gt_ = 2;
+                end_frame_being_drained_by_gt_   = 3;
+            } else {
+                begin_frame_writable_by_wt_      = 0;
+                end_frame_writable_by_wt_        = 1;
+                begin_frame_being_drained_by_gt_ = 0;
+                end_frame_being_drained_by_gt_   = 1;
+            }
 
             // There is no need to lock because it is safe to access WorkQueue objects from multiple threads.
             for (int i = 0; i < 4; i++) {

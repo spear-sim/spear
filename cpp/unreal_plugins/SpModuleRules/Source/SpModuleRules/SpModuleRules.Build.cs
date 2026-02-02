@@ -39,58 +39,64 @@ public class SpModuleRules : ModuleRules
             "NavigationSystem", "PhysicsCore", "RenderCore", "RHI", "Slate"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
-        string thirdPartyDir = Path.GetFullPath(Path.Combine(ModuleDirectory, "..", "..", "..", "..", "..", "third_party"));
+        // Only add library dependencies if we're in a derived SpModuleRules class. This avoids build issues
+        // on Linux where the SpModuleRules dummy plugin is trying to link against Boost but isn't set up
+        // correctly, which can happen in UE 5.7.
+        if (GetType().Name != "SpModuleRules" && GetType().Name != "SpModuleRulesEditor") {
 
-        //
-        // boost
-        //
+            string thirdPartyDir = Path.GetFullPath(Path.Combine(ModuleDirectory, "..", "..", "..", "..", "..", "third_party"));
 
-        PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost")));
+            //
+            // boost
+            //
 
-        if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Win64) {
-            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_filesystem-vc143-mt-x64-1_90.lib")));
-            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_unit_test_framework-vc143-mt-x64-1_90.lib")));
-        } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Mac) {
-            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_filesystem.a")));
-            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_unit_test_framework.a")));
-        } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Linux) {
-            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_filesystem.a")));
-            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_unit_test_framework.a")));
-        } else {
-            throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + readOnlyTargetRules.Platform);
-        }
+            PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost")));
 
-        //
-        // rpclib
-        //
+            if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Win64) {
+                PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_filesystem-vc143-mt-x64-1_90.lib")));
+                PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_unit_test_framework-vc143-mt-x64-1_90.lib")));
+            } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Mac) {
+                PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_filesystem.a")));
+                PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_unit_test_framework.a")));
+            } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Linux) {
+                PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_filesystem.a")));
+                PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_unit_test_framework.a")));
+            } else {
+                throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + readOnlyTargetRules.Platform);
+            }
 
-        PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "rpclib", "include")));
+            //
+            // rpclib
+            //
 
-        if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Win64) {
-            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "rpclib", "BUILD", "Win64", "Release", "rpc.lib")));
-        } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Mac) {
-            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "rpclib", "BUILD", "Mac", "librpc.a")));
-        } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Linux) {
-            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "rpclib", "BUILD", "Linux", "librpc.a")));
-        } else {
-            throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + readOnlyTargetRules.Platform);
-        }
+            PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "rpclib", "include")));
 
-        //
-        // yaml-cpp
-        //
+            if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Win64) {
+                PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "rpclib", "BUILD", "Win64", "Release", "rpc.lib")));
+            } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Mac) {
+                PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "rpclib", "BUILD", "Mac", "librpc.a")));
+            } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Linux) {
+                PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "rpclib", "BUILD", "Linux", "librpc.a")));
+            } else {
+                throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + readOnlyTargetRules.Platform);
+            }
 
-        PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "yaml-cpp", "include")));
+            //
+            // yaml-cpp
+            //
 
-        if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Win64) {
-            PublicDefinitions.Add("YAML_CPP_STATIC_DEFINE");
-            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "yaml-cpp", "BUILD", "Win64", "Release", "yaml-cpp.lib")));
-        } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Mac) {
-            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "yaml-cpp", "BUILD", "Mac", "libyaml-cpp.a")));
-        } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Linux) {
-            PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "yaml-cpp", "BUILD", "Linux", "libyaml-cpp.a")));
-        } else {
-            throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + readOnlyTargetRules.Platform);
+            PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "yaml-cpp", "include")));
+
+            if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Win64) {
+                PublicDefinitions.Add("YAML_CPP_STATIC_DEFINE");
+                PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "yaml-cpp", "BUILD", "Win64", "Release", "yaml-cpp.lib")));
+            } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Mac) {
+                PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "yaml-cpp", "BUILD", "Mac", "libyaml-cpp.a")));
+            } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Linux) {
+                PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "yaml-cpp", "BUILD", "Linux", "libyaml-cpp.a")));
+            } else {
+                throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + readOnlyTargetRules.Platform);
+            }
         }
     }
 
