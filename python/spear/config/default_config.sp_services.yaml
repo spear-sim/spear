@@ -17,9 +17,13 @@ SP_SERVICES:
   # EngineService
   #
 
-  # Print debug info in EngineService.
   ENGINE_SERVICE:
-    DOUBLE_BUFFERED_WORK_QUEUES: True
+    # If set to true, we allow the RPC worker thread to queue work for frame i+2 when the game thread is
+    # executing frame i. If set to false, we only allow the RPC worker thread to queue work for frame i+1
+    # when the game thread is executing frame i.
+    DOUBLE_BUFFERED_WORK_QUEUES: False
+
+    # Print debug info in EngineService.
     PRINT_CALL_DEBUG_INFO: False
     PRINT_FRAME_DEBUG_INFO: False
 
