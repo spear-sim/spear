@@ -518,7 +518,7 @@ class UnrealService(spear.Service):
             as_unreal_object=as_unreal_object,
             with_sp_funcs=with_sp_funcs) # no need to convert result because we're delegating to another service function
 
-    def load_class(self, uclass, outer=0, name="", filename="", load_flags=None, sandbox=0):
+    def load_class(self, uclass, outer=0, name="", filename="", load_flags=None, sandbox=0, as_handle=None, as_unreal_class=None):
         load_flags = load_flags if load_flags is not None else ["LOAD_None"]
         uclass = self.to_uclass(uclass=uclass)
         outer = spear.to_handle(obj=outer)
@@ -528,7 +528,9 @@ class UnrealService(spear.Service):
             name=name,
             filename=filename,
             load_flags=load_flags,
-            sandbox=sandbox) # no need to convert result because we're delegating to another service function
+            sandbox=sandbox,
+            as_handle=as_handle,
+            as_unreal_class=as_unreal_class) # no need to convert result because we're delegating to another service function
 
     def static_load_object(self, uclass, in_outer, name="", filename="", load_flags=None, sandbox=0, allow_object_reconciliation=True, instancing_context=0, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         load_flags = load_flags if load_flags is not None else ["LOAD_None"]

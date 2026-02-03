@@ -204,7 +204,7 @@ class EngineService():
     def _execute_frame_impl(self):
         return self.call_sync_on_worker_thread("engine_service.call_sync_on_worker_thread.execute_frame")
 
-    def _end_frame_impl(self, single_step):
+    def _end_frame_impl(self, single_step=False):
         return self.call_sync_on_worker_thread("engine_service.call_sync_on_worker_thread.end_frame", single_step)
 
     #

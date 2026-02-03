@@ -66,7 +66,7 @@ public:
 
             // Reset state for queue management.
 
-            bool double_buffered_work_queues = true;
+            bool double_buffered_work_queues = false;
             if (Config::isInitialized()) {
                 double_buffered_work_queues = Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.DOUBLE_BUFFERED_WORK_QUEUES");
             }
@@ -146,8 +146,8 @@ public:
                 SP_LOG("engine_service.begin_frame: Waiting for beginFrame() to finish executing...");
             }
 
-            // Wait until beginFrame() on frame i-2 has finished executing before we allow the user to start
-            // queuing work on the queue for frame i.
+            // Wait until beginFrame() on frame i-1 (or i-2 if we're in double-buffered mode) has finished
+            // executing before we allow the user to start queuing work on the queue for frame i.
             work_queue_ready_futures_.at(begin_frame_being_drained_by_gt_).get();
 
             if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
@@ -187,8 +187,8 @@ public:
                 SP_LOG("engine_service.execute_frame: Waiting for endFrame() to finish executing...");
             }
 
-            // Wait until endFrame() on frame i-2 has finished executing before we allow the user to start
-            // queuing work on the end_frame queue for frame i.
+            // Wait until endFrame() on frame i-1 (or i-2 if we're in double-buffered mode) has finished
+            // executing before we allow the user to start queuing work on the end_frame queue for frame i.
             work_queue_ready_futures_.at(end_frame_being_drained_by_gt_).get();
 
             if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
@@ -874,9 +874,9 @@ private:
     // The mutex is used to coordinate access to the FIFOs, promises, futures, bools defined below.
     std::mutex mutex_;
 
-    // These FIFOs are written to by the worker thread in engine_service.begin_frame, engine_service.execute_frame,
+    // This FIFO is written to by the worker thread in engine_service.begin_frame, engine_service.execute_frame,
     // and in a lambda that is scheduled on the game thread in engine_service.end_frame (if in single-step mode).
-    // They are drained by the game thread in beginFrame() and endFrame().
+    // The FIFO is drained by the game thread in beginFrame() and endFrame().
     boost::circular_buffer<std::pair<int, QueueType>> work_queue_fifo_ = boost::circular_buffer<std::pair<int, QueueType>>(4);
 
     // These promises and futures are each initialized by the worker thread in engine_service.initialize, engine_service.begin_frame,

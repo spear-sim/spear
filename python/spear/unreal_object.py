@@ -456,21 +456,20 @@ class UnrealObject:
                 assert with_sp_funcs is None
                 return spear.to_handle(obj=obj.value)
             elif as_unreal_struct is not None:
-                assert as_unreal_struct is None
                 assert as_unreal_class is None
                 assert as_unreal_object is None
                 assert with_sp_funcs is None
                 handle = spear.to_handle(obj=obj.value)
                 return spear.to_unreal_struct(
-                    unreal_service=self._unreal_service.get_top_level_service(),
-                    ustruct=handle)
+                    obj=handle,
+                    unreal_service=self._unreal_service.get_top_level_service())
             elif as_unreal_class is not None:
                 assert as_unreal_object is None
                 assert with_sp_funcs is None
                 handle = spear.to_handle(obj=obj.value)
                 return spear.to_unreal_class(
-                    unreal_service=self._unreal_service.get_top_level_service(),
-                    uclass=handle)
+                    obj=handle,
+                    unreal_service=self._unreal_service.get_top_level_service())
             elif as_unreal_object is not None:
                 handle = spear.to_handle(obj=obj.value)
                 return spear.to_unreal_object(
@@ -483,11 +482,13 @@ class UnrealObject:
             elif self._is_ustruct_pointer_or_container(type_id=obj.type_id):
                 handle = spear.to_handle(obj=obj.value)
                 return spear.to_unreal_struct(
-                    ustruct=handle)
+                    obj=handle,
+                    unreal_service=self._unreal_service.get_top_level_service())
             elif self._is_uclass_pointer_or_container(type_id=obj.type_id):
                 handle = spear.to_handle(obj=obj.value)
                 return spear.to_unreal_class(
-                    uclass=handle)
+                    obj=handle,
+                    unreal_service=self._unreal_service.get_top_level_service())
             elif self._is_uobject_pointer_or_container(type_id=obj.type_id):
                 handle = spear.to_handle(obj=obj.value)
                 return spear.to_unreal_object(
@@ -504,7 +505,14 @@ class UnrealObject:
             def convert_func(o):
                 if inner_convert_func is not None:
                     o = inner_convert_func(o)
-                return self._try_to_handle_or_unreal_type(obj=o)
+                return self._try_to_handle_or_unreal_type(
+                    obj=o,
+                    as_value=as_value,
+                    as_handle=as_handle,
+                    as_unreal_struct=as_unreal_struct,
+                    as_unreal_class=as_unreal_class,
+                    as_unreal_object=as_unreal_object,
+                    with_sp_funcs=with_sp_funcs)
             obj.convert_func = convert_func
             return obj
         else:
@@ -590,11 +598,11 @@ class UnrealStruct:
     def print_debug_info(self, prefix=""):
         type_string = self._unreal_service.get_type_for_struct_as_string(ustruct=self.ustruct)
         meta_uclass = self._unreal_service.get_class(uobject=self.ustruct)
-        meta_type_string = self._unreal_service.get_type_for_class_as_string(uclass=meta_uclass)
+        meta_class_string = self._unreal_service.get_type_for_class_as_string(uclass=meta_uclass)
 
         spear.log(f"{prefix}Printing debug info: {self}")
-        spear.log(f"{prefix}    Type: {self._unreal_service.get_type_for_struct_as_string(uclass=self.uclass)}")
-        spear.log(f"{prefix}    Meta type: {self._unreal_service.get_type_for_class_as_string(uclass=meta_uclass)}")
+        spear.log(f"{prefix}    Type: {self._unreal_service.get_type_for_struct_as_string(uclass=self.ustruct)}")
+        spear.log(f"{prefix}    Meta type: {meta_class_string}")
 
         spear.log(f"{prefix}    Properties for type: {type_string}")
         props = self._unreal_service.find_properties_for_struct_as_dict(ustruct=self.ustruct)
@@ -612,11 +620,11 @@ class UnrealClass:
     def print_debug_info(self, prefix=""):
         type_string = self._unreal_service.get_type_for_class_as_string(uclass=self.uclass)
         meta_uclass = self._unreal_service.get_class(uobject=self.uclass)
-        meta_type_string = self._unreal_service.get_type_for_class_as_string(uclass=meta_uclass)
+        meta_class_string = self._unreal_service.get_type_for_class_as_string(uclass=meta_uclass)
 
         spear.log(f"{prefix}Printing debug info: {self}")
         spear.log(f"{prefix}    Class: {type_string}")
-        spear.log(f"{prefix}    Meta class: {meta_type_string}")
+        spear.log(f"{prefix}    Meta class: {meta_class_string}")
 
         spear.log(f"{prefix}    Class hierarchy:")
         current_uclass = self.uclass
