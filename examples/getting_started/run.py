@@ -56,12 +56,18 @@ if __name__ == "__main__":
         spear.log("root_component.get_properties():")
         pprint.pprint(root_component.get_properties())
 
+        # use our async API to issue a non-blocking call to the USceneComponent::K2_GetComponentLocation C++ function
+        future = root_component.call_async.K2_GetComponentLocation()
+
     # each instance.begin_frame() block must be paired with a corresponding instance.end_frame() block; the
     # code in the end_frame() block executes in the same UE frame as the begin_frame() block, except it
     # executes at the end of the frame instead of the beginning; this is useful, e.g., in embodied AI
     # applications, where it is desirable to provide a control action at the beginning of a simulation frame
     # and retrieve an observation at the end of the same frame
     with instance.end_frame():
-        pass
+
+        # get the result from our previous non-blocking call
+        location = future.get()
+        spear.log("location: ", location)
 
     spear.log("Done.")
