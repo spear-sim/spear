@@ -31,6 +31,7 @@ if __name__ == "__main__":
         unknown_arg_string = " ".join(unknown_args)
 
     maps = pd.read_csv(args.maps_file, comment="#")["maps"].tolist()
+
     if len(maps) > 0:
 
         # get config
@@ -66,7 +67,9 @@ if __name__ == "__main__":
             unreal_editor_subsystem = editor.unreal_service.get_editor_subsystem(uclass="UUnrealEditorSubsystem")
 
             # get asset registry
-            asset_registry = asset_registry_helpers.GetAssetRegistry()
+            asset_registry_handle = asset_registry_helpers.GetAssetRegistry(as_handle=True)
+            asset_registry_uclass = editor.unreal_service.get_static_class(uclass="IAssetRegistry")
+            asset_registry = editor.get_unreal_object(uobject=asset_registry_handle, uclass=asset_registry_uclass)
 
         with instance.end_frame():
             pass
