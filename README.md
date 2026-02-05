@@ -109,7 +109,9 @@ class UMyBlueprintFunctionLibrary : public UBlueprintFunctionLibrary
     GENERATED_BODY()
 public:
     UFUNCTION(BlueprintCallable)
-    static FString MyFunction(const FString& UserString) { return FString::Printf(TEXT("UserString is %s"), *UserString); }
+    static FString MyFunction(const FVector& Vec) {
+        return FString::Printf(TEXT("Vec is [%.1f %.1f %.1f]"), Vec[0], Vec[1], Vec[2]);
+    }
 
     UPROPERTY(BlueprintReadWrite)
     uint32 MyProperty = 42;
@@ -124,8 +126,8 @@ with instance.begin_frame():
     # get the default object for the UMyBlueprintFunctionLibrary class
     my_blueprint_function_library = game.get_unreal_object(uclass="UMyBlueprintFunctionLibrary")
 
-    # returns "UserString is Hello World"
-    return_value = my_blueprint_function_library.MyFunction(UserString="Hello World")
+    # returns "Vector is [1.0 2.0 3.0]"
+    return_value = my_blueprint_function_library.MyFunction(Vec={"x": 1.0, "y": 2.0, "z": 3.0})
 
     # returns 42
     my_property = my_blueprint_function_library.MyProperty.get()
