@@ -9,6 +9,7 @@ import numpy as np
 import os
 import pathlib
 import scipy
+import spear
 
 identity_transform = {"location": np.matrix(np.zeros(3)).T, "rotation": np.matrix(np.identity(3)), "scale": np.matrix(np.identity(3))}
 matrix_column_names = ["x_plane","y_plane","z_plane", "w_plane"]
@@ -251,23 +252,35 @@ def get_matrix_data_from_matrix(matrix):
 # Function for getting a physical filesystem path from a logical content path.
 #
 
-def get_filesystem_path_from_content_path(content_path, unreal_project_dir, unreal_engine_dir):
+def get_filesystem_path_from_content_path(content_path, unreal_project_dir=None, unreal_engine_dir=None, follow_symlinks=False):
+
+    if follow_symlinks:
+        path_func = lambda path: os.path.realpath(path)
+    else:
+        path_func = lambda path: path
 
     content_path_tokens = pathlib.PurePosixPath(content_path).parts
     assert len(content_path_tokens) >= 2
     content_root = content_path_tokens[1]
 
     if content_root == "Game":
+        assert unreal_project_dir is not None
         filesystem_base_dir = os.path.join(unreal_project_dir, "Content")
+
     elif content_root == "Engine":
+        assert unreal_engine_dir is not None
         filesystem_base_dir = os.path.join(unreal_engine_dir, "Engine", "Content")
+
     else:
+        assert unreal_engine_dir is not None
+        assert unreal_project_dir is not None
+
         plugins_dirs = [
             os.path.join(unreal_project_dir, "Plugins"),
             os.path.join(unreal_engine_dir, "Engine", "Plugins"),
             os.path.join(unreal_engine_dir, "Engine", "Experimental")]
 
-        uprojects = glob.glob(os.path.realpath(os.path.join(unreal_project_dir, "*.uproject")))
+        uprojects = glob.glob(path_func(os.path.join(unreal_project_dir, "*.uproject")))
         assert len(uprojects) == 1
         uproject = uprojects[0]
         uproject_dict = {}
@@ -278,38 +291,38 @@ def get_filesystem_path_from_content_path(content_path, unreal_project_dir, unre
                 if os.path.isabs(additional_plugins_dir):
                     plugins_dirs.append(additional_plugins_dir)
                 else:
-                    plugins_dirs.append(os.path.realpath(os.path.join(unreal_project_dir, additional_plugins_dir)))
+                    plugins_dirs.append(path_func(os.path.join(unreal_project_dir, additional_plugins_dir)))
 
         found_plugin = False
         for plugins_dir in plugins_dirs:
-            plugin_dir = os.path.realpath(os.path.join(plugins_dir, content_root))
+            plugin_dir = path_func(os.path.join(plugins_dir, content_root))
             if os.path.exists(plugin_dir):
-                filesystem_base_dir = os.path.realpath(os.path.join(plugin_dir, "Content"))
+                filesystem_base_dir = path_func(os.path.join(plugin_dir, "Content"))
                 found_plugin = True
                 break
         assert found_plugin
+
+    # try to follow Unreal's rules for resolving asset paths
 
     if len(content_path_tokens) == 2:
         return filesystem_base_dir
     else:
         content_sub_path = os.path.join(*content_path_tokens[2:])
-        filesystem_path = os.path.realpath(os.path.join(filesystem_base_dir, content_sub_path))
+        filesystem_path = path_func(os.path.join(filesystem_base_dir, content_sub_path))
         if os.path.exists(filesystem_path) and os.path.isdir(filesystem_path):
+            return filesystem_path
+        elif os.path.islink(filesystem_path) and os.path.exists(os.path.realpath(filesystem_path)):
+            spear.log("hello")
             return filesystem_path
         else:
             content_file_tokens = content_path_tokens[-1].split(".")
-            if len(content_file_tokens) == 1:
-                filesystem_paths = glob.glob(os.path.realpath(os.path.join(filesystem_base_dir, *content_path_tokens[2:-1], f"{content_file_tokens[0]}.*")))
+            if len(content_file_tokens) in [1, 2]:
+                if len(content_file_tokens) == 2:
+                    assert content_file_tokens[0] == content_file_tokens[1]
+                filesystem_paths = glob.glob(path_func(os.path.join(filesystem_base_dir, *content_path_tokens[2:-1], f"{content_file_tokens[0]}.*")))
                 if len(filesystem_paths) == 1:
                     return filesystem_paths[0]
                 else:
-                    return os.path.realpath(os.path.join(filesystem_base_dir, *content_path_tokens[2:]))
-            elif len(content_file_tokens) == 2:
-                assert content_file_tokens[0] == content_file_tokens[1]
-                filesystem_paths = glob.glob(os.path.realpath(os.path.join(filesystem_base_dir, *content_path_tokens[2:-1], f"{content_file_tokens[0]}.*")))
-                if len(filesystem_paths) == 1:
-                    return filesystem_paths[0]
-                else:
-                    return os.path.realpath(os.path.join(filesystem_base_dir, *content_path_tokens[2:]))
+                    return path_func(os.path.join(filesystem_base_dir, *content_path_tokens[2:]))
             else:
                 assert False
