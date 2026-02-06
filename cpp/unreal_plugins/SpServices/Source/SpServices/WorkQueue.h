@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <future>
+#include <future>      // std::packaged_task
 #include <memory>      // std::make_shared, std::make_unique, std::unique_ptr
 #include <mutex>       // std::lock_guard
 #include <string>
@@ -128,7 +128,7 @@ public:
         // anonymous lambda class for the lambda declared below, and therefore as a non-const variable in the
         // lambda body itself.
 
-        auto inner_task_ptr = std::make_shared<std::packaged_task<TReturn()>>(
+        std::shared_ptr<std::packaged_task<TReturn()>> inner_task_ptr = std::make_shared<std::packaged_task<TReturn()>>(
             [this, func_name, func, args...]() mutable -> TReturn {
 
                 // If TReturn is void, we cannot declare a variable of type TReturn, so we need some form of
@@ -165,9 +165,9 @@ public:
 
         std::future<TReturn> future = inner_task_ptr->get_future();
 
-        // boost::asio::post(...) requires submitted tasks to be copy-constructible, but std::packaged_task
-        // objects are not copy-constructible, so we need to submit our task via the following
-        // copy-constructible wrapper.
+        // Note that boost::asio::post(...) requires submitted tasks to be copy-constructible, but
+        // std::packaged_task objects are not copy-constructible, so we need to submit our task via the
+        // following copy-constructible wrapper.
 
         auto outer_task = [inner_task_ptr]() -> void {
             (*inner_task_ptr)();
