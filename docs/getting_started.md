@@ -54,7 +54,7 @@ Set-ExecutionPolicy -Scope LocalMachine -ExecutionPolicy Bypass
 
 After executing these commands, you will be able to use the _Developer PowerShell for VS 2022_ profile in the _Terminal_ application, and it will be able to access Anaconda Python and the Visual Studio command-line tools.
 
-Confusingly, there is also a legacy application on Windows called _Windows PowerShell_ (blue icon) that provides a similar command-line interface to _Terminal_ (black icon). We have found that _Windows PowerShell_ can make the build environment appear as 32-bit instead of 64-bit, which can cause subtle problems for several of our build steps. So our recommended setup is to use an appropriately configured _Developer PowerShell for VS 2022_ profile in the _Terminal_ application (black icon) specifically. We provide a command-line tool to check that your terminal is correctly configured to run our build steps.
+Confusingly, there is also a legacy application on Windows called _Windows PowerShell_ (blue icon) that provides a similar command-line interface to _Terminal_ (black icon). We have found that _Windows PowerShell_ can make the build environment appear as 32-bit instead of 64-bit, which can cause subtle problems for several of our build steps. So our recommended setup is to use an appropriately configured _Developer PowerShell for VS 2022_ profile in the _Terminal_ application (black icon) specifically. With this nuance in mind, we provide a command-line tool to check that your terminal is correctly configured.
 
 ```console
 # check that terminal is correctly configured (Windows)
