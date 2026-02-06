@@ -14,6 +14,16 @@ import sys
 
 assert sys.platform == "win32"
 
+cxx_compiler = "cl"
+cxx_compiler_path = shutil.which(cxx_compiler)
+if cxx_compiler_path is None:
+    spear.log("ERROR: Can't find the Visual Studio command-line tools. All SPEAR build steps must run in a terminal where the Visual Studio command-line tools are visible. Giving up...")
+    assert False
+if cxx_compiler_path.lower().endswith("hostx86\\x86\\cl.exe") or cxx_compiler_path.lower().endswith("hostx86\\x64\\cl.exe"):
+    spear.log("ERROR: 32-bit terminal detected. All SPEAR build steps must run in a 64-bit terminal. Giving up...")
+    spear.log("ERROR: Compiler path:", cxx_compiler_path)
+    assert False
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--build-config", required=True)
 parser.add_argument("--code-sign-tool-dir", required=True)

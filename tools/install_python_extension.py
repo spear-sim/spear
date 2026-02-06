@@ -6,6 +6,7 @@
 import argparse
 import glob
 import os
+import shutil
 import spear
 import subprocess
 import sys
@@ -29,8 +30,17 @@ if __name__ == "__main__":
 
         assert args.cxx_compiler is None
 
-        # optimize agressively for speed, enable exceptions with standard C++ stack unwinding and assume extern "C" code never throws, disable RTTI
         cxx_compiler = "cl"
+        cxx_compiler_path = shutil.which(cxx_compiler)
+        if cxx_compiler_path is None:
+            spear.log("ERROR: Can't find the Visual Studio command-line tools. All SPEAR build steps must run in a terminal where the Visual Studio command-line tools are visible. Giving up...")
+            assert False
+        if cxx_compiler_path.lower().endswith("hostx86\\x86\\cl.exe") or cxx_compiler_path.lower().endswith("hostx86\\x64\\cl.exe"):
+            spear.log("ERROR: 32-bit terminal detected. All SPEAR build steps must run in a 64-bit terminal. Giving up...")
+            spear.log("ERROR: Compiler path:", cxx_compiler_path)
+            assert False
+
+        # optimize agressively for speed, enable exceptions with standard C++ stack unwinding and assume extern "C" code never throws, disable RTTI
         common_cxx_flags = "/std:c++20 /O2 /EHsc /GR-"
         cmake_cxx_flags = common_cxx_flags
 

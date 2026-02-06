@@ -34,6 +34,16 @@ if __name__ == "__main__":
         target_platform = "Win64"
         cmd_prefix      = f"conda activate {args.conda_env} & "
 
+        cxx_compiler = "cl"
+        cxx_compiler_path = shutil.which(cxx_compiler)
+        if cxx_compiler_path is None:
+            spear.log("ERROR: Can't find the Visual Studio command-line tools. All SPEAR build steps must run in a terminal where the Visual Studio command-line tools are visible. Giving up...")
+            assert False
+        if cxx_compiler_path.lower().endswith("hostx86\\x86\\cl.exe") or cxx_compiler_path.lower().endswith("hostx86\\x64\\cl.exe"):
+            spear.log("ERROR: 32-bit terminal detected. All SPEAR build steps must run in a 64-bit terminal. Giving up...")
+            spear.log("ERROR: Compiler path:", cxx_compiler_path)
+            assert False
+
     elif sys.platform == "darwin":
         target_platform = "Mac"
 

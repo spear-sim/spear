@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <future>
-#include <memory>      // std::make_unique, std::unique_ptr
+#include <future>      // std::packaged_task
+#include <memory>      // std::make_shared, std::make_unique, std::unique_ptr
 #include <mutex>       // std::lock_guard
 #include <string>
 #include <utility>     // std::forward, std::move
@@ -128,7 +128,7 @@ public:
         // anonymous lambda class for the lambda declared below, and therefore as a non-const variable in the
         // lambda body itself.
 
-        auto task = CopyConstructiblePackagedTask<TReturn>(
+        std::shared_ptr<std::packaged_task<TReturn()>> inner_task_ptr = std::make_shared<std::packaged_task<TReturn()>>(
             [this, func_name, func, args...]() mutable -> TReturn {
 
                 // If TReturn is void, we cannot declare a variable of type TReturn, so we need some form of
@@ -163,8 +163,17 @@ public:
                 }
             });
 
-        std::future<TReturn> future = task.get_future(); // need to call get_future() before calling std::move(...)
-        boost::asio::post(*io_context_, std::move(task));
+        std::future<TReturn> future = inner_task_ptr->get_future();
+
+        // Note that boost::asio::post(...) requires submitted tasks to be copy-constructible, but
+        // std::packaged_task objects are not copy-constructible, so we need to submit our task via the
+        // following copy-constructible wrapper.
+
+        auto outer_task = [inner_task_ptr]() -> void {
+            (*inner_task_ptr)();
+        };
+
+        boost::asio::post(*io_context_, std::move(outer_task));
 
         return future;
     }
@@ -172,18 +181,6 @@ public:
     std::string getName() const { return name_; }
 
 private:
-
-    // The purpose of this class is to provide a copy-constructible type that derives from std::packaged_task.
-    // This is necessary because boost::asio requires that task objects are copy-constructible, but std::packaged_task
-    // is not copy-constructible.
-
-    // We use auto&& because we want to preserve and forward the const-ness and rvalue-ness of func.
-    template <typename TReturn>
-    struct CopyConstructiblePackagedTask : std::packaged_task<TReturn()>
-    {
-        using std::packaged_task<TReturn()>::packaged_task; // forwards all constructors
-    };
-
     std::string name_;
 
     std::mutex mutex_;
