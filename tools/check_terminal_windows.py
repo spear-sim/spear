@@ -15,4 +15,4 @@ if cxx_compiler_path.lower().endswith("hostx86\\x86\\cl.exe") or cxx_compiler_pa
     print("[SPEAR | check_terminal_windows.py] ERROR: Compiler path:", cxx_compiler_path)
     assert False
 
-print("[SPEAR | check_terminal_windows.py] Terminal is correctly initialized.")
+print("[SPEAR | check_terminal_windows.py] Terminal is correctly configured.")
