@@ -31,7 +31,7 @@ Windows: Visual Studio 2022
 macOS:   XCode 16
 ```
 
-If you're developing on Windows, make sure to select _Desktop development with C++_ from the _Workloads_ menu when installing Visual Studio, and also make sure to select _MSVC v143 - VS2022 C++ x64/x86 build tools (v14.44-17.14)_ from the _Individual Components_ menu.
+If you're developing on Windows, make sure to select _Desktop development with C++_ and _Game development with C++_ from the _Workloads_ tab when installing Visual Studio, and also make sure to select _MSVC v143 - VS2022 C++ x64/x86 build tools (v14.44-17.14)_ from the _Individual Components_ tab.
 
 ## Configure your terminal
 
