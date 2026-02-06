@@ -126,7 +126,7 @@ with instance.begin_frame():
     # get the default object for the UMyBlueprintFunctionLibrary class
     my_blueprint_function_library = game.get_unreal_object(uclass="UMyBlueprintFunctionLibrary")
 
-    # returns "Vector is [1.0 2.0 3.0]"
+    # returns "Vec is [1.0 2.0 3.0]"
     return_value = my_blueprint_function_library.MyFunction(Vec={"x": 1.0, "y": 2.0, "z": 3.0})
 
     # returns 42
