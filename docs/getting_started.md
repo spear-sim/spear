@@ -63,7 +63,7 @@ python tools/check_terminal_windows.py
 
 ## Install Git and CMake
 
-If you have Anaconda installed, but you don't already have Git and CMake, you can easily obtain them by executing the following commands.
+If you have Anaconda installed, but you don't already have Git and CMake, you can easily obtain them by executing the following command.
 
 ```console
 # create environment
