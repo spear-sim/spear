@@ -40,7 +40,7 @@ If you're developing on Windows, you will need to run our build steps in a termi
 - Your terminal must be able to access Anaconda Python, `cmake`, and the Visual Studio command-line tools.
 - You will need to run our build steps from within the Anaconda environment where the `spear` package is installed.
 
-There are multiple possible ways to satisfy these requirements. One possibility is to use the _Developer PowerShell for VS 2022_ profile in the _Terminal_ application to run our build steps. This profile will be installed to the _Terminal_ application when you install Visual Studio. Additionally, you can configure your profile to access your Anaconda environment by opening an _Anaconda PowerShell Prompt_ with administrator privileges (located in your Start menu after you install Anaconda) and executing the following commands.
+There are multiple possible ways to satisfy these requirements. One possibility is to use the _Developer PowerShell for VS 2022_ profile in the _Terminal_ application to run our build steps. This profile will be installed to the _Terminal_ application when you install Visual Studio. Additionally, you can configure your profile to access your Anaconda environment by opening an _Anaconda PowerShell Prompt_ with administrator privileges (located in your Start Menu after you install Anaconda) and executing the following commands.
 
 ```console
 # This step will add a block of PowerShell code to C:\Users\username\Documents\WindowsPowerShell\profile.ps1
