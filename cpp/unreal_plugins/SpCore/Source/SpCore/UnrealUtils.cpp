@@ -165,9 +165,15 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
     SP_ASSERT(ufunction);
 
     // Create buffer to store all args and the return value.
-    uint16 num_bytes = ufunction->ParmsSize;
+    uint32 num_bytes = ufunction->ParmsSize;
     uint8_t initial_value = 0;
-    std::vector<uint8_t> args_vector(num_bytes, initial_value);
+    std::vector<uint8_t, SpAlignedAllocator<uint8_t, 4096>> args_vector(num_bytes, initial_value);
+    SP_ASSERT(ufunction->GetMinAlignment() <= 4096);
+    SP_ASSERT(4096 % ufunction->GetMinAlignment() == 0);
+    SP_ASSERT(Std::isPtrSufficientlyAlignedFor(args_vector.data(), 4096));
+
+    // Explicitly initialize args.
+    ufunction->InitializeStruct(args_vector.data());
 
     // Create SpPropertyDescs for the function's arguments and return value.
     std::map<std::string, SpPropertyDesc> property_descs;
@@ -185,13 +191,6 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
 
             std::string property_name = Unreal::toStdString(property_desc.property_->GetName());
             Std::insert(property_descs, std::move(property_name), std::move(property_desc));
-        }
-    }
-
-    // Explicitly initialize if an arg or return value requires it.
-    for (auto& [property_name, property_desc] : property_descs) {
-        if (!property_desc.property_->HasAnyPropertyFlags(EPropertyFlags::CPF_ZeroConstructor)) {
-            property_desc.property_->InitializeValue_InContainer(args_vector.data());
         }
     }
 
@@ -234,12 +233,8 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
         Std::insert(return_values, property_name, getPropertyValueAsString(property_desc));
     }
 
-    // Explicitly destroy if an arg or return value requires it.
-    for (auto& [property_name, property_desc] : property_descs) {
-        if (!property_desc.property_->HasAnyPropertyFlags(EPropertyFlags::CPF_ZeroConstructor)) {
-            property_desc.property_->DestroyValue_InContainer(args_vector.data());
-        }
-    }
+    // Explicitly destroy args.
+    ufunction->DestroyStruct(args_vector.data());
 
     return return_values;
 }

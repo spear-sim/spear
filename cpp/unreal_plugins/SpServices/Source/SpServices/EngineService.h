@@ -114,7 +114,7 @@ public:
         });
 
         //
-        // Entry points for validating entry points.
+        // Entry points for validating other entry points.
         //
 
         bindFuncToExecuteOnWorkerThread("engine_service", "get_entry_point_signature_type_descs", [this]() -> std::vector<SpFuncSignatureTypeDesc> {
