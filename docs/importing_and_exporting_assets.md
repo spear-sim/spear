@@ -8,15 +8,12 @@ In order to execute the pipeline in this document, we will assume that you have 
 
 ## Installing additional Python dependencies
 
-In order to execute the pipeline in this document, you will need to install several optional Python dependencies.
+In order to execute the pipeline in this document, you will need to install several additional Python dependencies. Installing [Mayavi](https://docs.enthought.com/mayavi/mayavi) is only necessary if you want to use our optional debug visualization tools.
 
 ```console
+# install dependencies to execute our pipeline
 pip install -e "python[pipeline]"
-```
 
-In order to use our optional debug visualization tools, you will need to install [Mayavi](https://docs.enthought.com/mayavi/mayavi) separately.
-
-```console
 # install mayavi (optional)
 conda install -c conda-forge mayavi=4.8.2
 ```
@@ -34,7 +31,7 @@ python tools/run_editor_script.py --unreal-engine-dir path/to/UE_5.5 --launch-mo
 # generate Unreal geometry
 python tools/run_editor_script.py --unreal-engine-dir path/to/UE_5.5 --launch-mode full --render-offscreen --script export_unreal_geometry/run.py --export-dir path/to/spear-pipeline/scenes/apartment_0000
 
-# visualize Unreal geometry (ignoring the ceiling actor is optional but makes the scene easier to visualize)
+# visualize Unreal geometry (optional)
 python pipeline/visualize_unreal_geometry.py --export-dir path/to/spear-pipeline/scenes/apartment_0000 --visual-parity-with-unreal --ignore-actors Meshes/22_ceiling/Ceiling
 
 # generate a compact kinematic tree scene representation
