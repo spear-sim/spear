@@ -24,6 +24,8 @@ Any pipeline stage that needs to access the Unreal Editor using the editor's bui
 
 ## Exporting to MuJoCo
 
+When executing this pipeline, specifying the optional `--visual-parity-with-unreal` flag will modify the positions and orientations of meshes to maintain visual parity with the Unreal viewport.
+
 ```console
 # generate Unreal metadata
 python tools/run_editor_script.py --unreal-engine-dir path/to/UE_5.5 --launch-mode full --render-offscreen --script export_unreal_metadata/run.py --export-dir path/to/spear-pipeline/scenes/apartment_0000
@@ -46,8 +48,8 @@ python pipeline/generate_collision_geometry.py --export-dir path/to/spear-pipeli
 # visualize the collision geometry (optional)
 python pipeline/visualize_collision_geometry.py --export-dir path/to/spear-pipeline/scenes/apartment_0000
 
-# generate a MuJoCo scene (ignoring the ceiling actor is optional but makes the scene easier to visualize)
-python pipeline/generate_mujoco_scene.py --export-dir path/to/spear-pipeline/scenes/apartment_0000 --ignore-actors Meshes/22_ceiling/Ceiling
+# generate a MuJoCo scene
+python pipeline/generate_mujoco_scene.py --export-dir path/to/spear-pipeline/scenes/apartment_0000 --visual-parity-with-unreal --ignore-actors Meshes/22_ceiling/Ceiling
 
 # interactively browse the MuJoCo scene using the default MuJoCo viewer (optional)
 python -m mujoco.viewer --mjcf=path/to/spear-pipeline/scenes/apartment_0000/mujoco_scene/main.mjcf
