@@ -95,9 +95,6 @@ The next step is to install the `spear` Python package as follows.
 conda create --name spear-env python=3.11
 conda activate spear-env
 
-# install mayavi separately from other Python dependencies (Windows only)
-conda install -c conda-forge mayavi=4.8.2
-
 # install gcc (Linux only)
 sudo apt-get install gcc
 
