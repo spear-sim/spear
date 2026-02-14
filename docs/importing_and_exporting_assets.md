@@ -49,7 +49,7 @@ python pipeline/generate_collision_geometry.py --export-dir path/to/spear-pipeli
 python pipeline/visualize_collision_geometry.py --export-dir path/to/spear-pipeline/scenes/apartment_0000
 
 # generate a MuJoCo scene
-python pipeline/generate_mujoco_scene.py --export-dir path/to/spear-pipeline/scenes/apartment_0000 --visual-parity-with-unreal --ignore-actors Meshes/22_ceiling/Ceiling --color-mode unique_color_per_body
+python pipeline/generate_mujoco_scene.py --export-dir path/to/spear-pipeline/scenes/apartment_0000 --mujoco-model-name apartment_0000 --visual-parity-with-unreal --ignore-actors Meshes/22_ceiling/Ceiling --color-mode unique_color_per_body
 
 # interactively browse the MuJoCo scene using the default MuJoCo viewer (optional)
 python -m mujoco.viewer --mjcf=path/to/spear-pipeline/scenes/apartment_0000/mujoco_scene/main.mjcf
