@@ -12,7 +12,7 @@ python ../../tools/update_symlink_for_external_content.py --create --external-co
 # import mesh data into the Stanford directory and generate list of assets to include within PAK file
 python ../../tools/run_editor_script.py --script /absolute/path/to/spear/examples/import_stanford_dataset/import_dataset.py --unreal-engine-dir path/to/UE_5.5
 
-# build PAK file containing the assets within the Stanford directory
+# build PAK file containing the Stanford assets
 python ../../tools/build_pak.py --pak-file pak/stanford.pak --cook-dirs-file csv/cook_dirs.csv --include-assets-file csv/include_assets.csv --unreal-engine-dir path/to/UE_5.5
 
 # remove Stanford symlink to restore the SpearSim project to its original state
