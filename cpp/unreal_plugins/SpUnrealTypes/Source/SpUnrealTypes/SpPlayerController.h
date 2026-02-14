@@ -5,9 +5,10 @@
 
 #pragma once
 
-#include <Engine/EngineTypes.h>   // EEndPlayReason
+#include <Delegates/IDelegateInstance.h> // FDelegateHandle
+#include <Engine/EngineTypes.h>          // EEndPlayReason
 #include <GameFramework/PlayerController.h>
-#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UPROPERTY
+#include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS, UPROPERTY
 
 #include "SpPlayerController.generated.h"
 
@@ -26,6 +27,10 @@ public:
     void EndPlay(const EEndPlayReason::Type end_play_reason) override;
 
 private:
+    void applicationActivationStateChangedHandler(bool active);
+
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
     USpUserInputComponent* SpUserInputComponent = nullptr;
+
+    FDelegateHandle application_activation_state_changed_handle_;
 };

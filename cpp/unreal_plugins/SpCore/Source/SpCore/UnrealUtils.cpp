@@ -170,10 +170,12 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
     std::vector<uint8_t, SpAlignedAllocator<uint8_t, 4096>> args_vector(num_bytes, initial_value);
     SP_ASSERT(ufunction->GetMinAlignment() <= 4096);
     SP_ASSERT(4096 % ufunction->GetMinAlignment() == 0);
-    SP_ASSERT(Std::isPtrSufficientlyAlignedFor(args_vector.data(), 4096));
+    SP_ASSERT(Std::isPtrSufficientlyAligned(args_vector.data(), 4096));
 
     // Explicitly initialize args.
-    ufunction->InitializeStruct(args_vector.data());
+    if (num_bytes > 0) {
+        ufunction->InitializeStruct(args_vector.data());
+    }
 
     // Create SpPropertyDescs for the function's arguments and return value.
     std::map<std::string, SpPropertyDesc> property_descs;
@@ -234,7 +236,9 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
     }
 
     // Explicitly destroy args.
-    ufunction->DestroyStruct(args_vector.data());
+    if (num_bytes > 0) {
+        ufunction->DestroyStruct(args_vector.data());
+    }
 
     return return_values;
 }

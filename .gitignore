@@ -58,6 +58,8 @@ examples/import_stanford_dataset/gltf
 examples/import_stanford_dataset/pak
 examples/import_stanford_dataset/ply
 examples/import_stanford_dataset/stanford
+examples/mujoco_interop/images
+examples/render_image/image.png
 examples/render_image_dataset/camera_poses
 examples/render_image_dataset/images
 examples/render_image_hypersim/images

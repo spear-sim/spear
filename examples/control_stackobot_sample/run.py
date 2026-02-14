@@ -104,9 +104,9 @@ if __name__ == "__main__":
         viewport_size_y = 720
 
         viewport_aspect_ratio = viewport_size_x/viewport_size_y # see Engine/Source/Editor/UnrealEd/Private/EditorViewportClient.cpp:2130 for evidence that Unreal's aspect ratio convention is x/y
-        fov = view_target_pov["fOV"]*math.pi/180.0 # this adjustment is necessary to compute an FOV value that matches the game viewport
+        fov = view_target_pov["fOV"]*math.pi/180.0
         half_fov = fov/2.0
-        half_fov_adjusted = math.atan(math.tan(half_fov)*viewport_aspect_ratio/view_target_pov["aspectRatio"])
+        half_fov_adjusted = math.atan(math.tan(half_fov)*viewport_aspect_ratio/view_target_pov["aspectRatio"]) # this adjustment is necessary to compute an FOV value that matches the game viewport
         fov_adjusted = half_fov_adjusted*2.0
         fov_adjusted_degrees = fov_adjusted*180.0/math.pi
 

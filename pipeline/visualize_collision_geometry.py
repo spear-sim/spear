@@ -15,8 +15,7 @@ import spear
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--pipeline-dir", required=True)
-parser.add_argument("--scene-id", required=True)
+parser.add_argument("--export-dir", required=True)
 parser.add_argument("--visual-parity-with-unreal", action="store_true")
 parser.add_argument("--ignore-actors", nargs="*")
 parser.add_argument("--color-mode", default="unique_color_per_part_id")
@@ -52,7 +51,7 @@ if args.visual_parity_with_unreal:
 
 def process_scene():
 
-    collision_geometry_dir = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "collision_geometry"))
+    collision_geometry_dir = os.path.realpath(os.path.join(args.export_dir, "collision_geometry"))
     actors_json_file = os.path.realpath(os.path.join(collision_geometry_dir, "scene.json"))
     spear.log("Reading JSON file: ", actors_json_file)
     assert os.path.exists(collision_geometry_dir)
@@ -114,9 +113,7 @@ def draw_collision_geometry_for_kinematic_tree_node(actor_name, transform_world_
         convex_decomposition_strategy = "coacd"
 
         merge_id_obj_dir = os.path.realpath(os.path.join(
-            args.pipeline_dir,
-            "scenes",
-            args.scene_id,
+            args.export_dir,
             "collision_geometry",
             convex_decomposition_strategy,
             actor_name.replace("/", "."),

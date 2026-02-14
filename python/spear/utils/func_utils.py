@@ -588,6 +588,25 @@ def to_numpy_matrix_from_rotator(rotator, as_matrix=None):
         assert as_matrix
         return np.matrix(scipy.spatial.transform.Rotation.from_euler("xyz", [roll, pitch, yaw]).as_matrix())
 
+# Convert to an Unreal rotator from a NumPy matrix.
+def to_rotator_from_numpy_matrix(matrix):
+    if isinstance(matrix, np.ndarray) or isinstance(matrix, np.matrix):
+        assert matrix.shape == (3,3)
+    else:
+        assert False
+    scipy_roll, scipy_pitch, scipy_yaw = scipy.spatial.transform.Rotation.from_matrix(matrix).as_euler("xyz")
+    roll  = np.rad2deg(-scipy_roll)
+    pitch = np.rad2deg(-scipy_pitch)
+    yaw   = np.rad2deg(scipy_yaw)
+    return {"Roll": roll, "Pitch": pitch, "Yaw": yaw}
+
+# Convert to an Unreal rotator from a NumPy array.
+def to_numpy_array_from_rotator(rotator):
+    assert isinstance(rotator, dict)
+    rotator = { k.lower(): v for k, v in rotator.items() }
+    assert set(["roll", "pitch", "yaw"]) == set(rotator.keys())
+    return np.array([rotator["pitch"], rotator["yaw"], rotator["roll"]])
+
 # Convert to an Unreal rotator from a NumPy array.
 def to_rotator_from_numpy_array(array_pyr):
     if isinstance(array_pyr, np.ndarray):

@@ -5,10 +5,17 @@
 
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
+import argparse
 import cv2
 import math
+import matplotlib.pyplot as plt
 import os
 import spear
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--save-image", action="store_true")
+args = parser.parse_args()
 
 
 if __name__ == "__main__":
@@ -51,9 +58,9 @@ if __name__ == "__main__":
         viewport_size_x = return_values["ViewportSize"]["x"]
         viewport_size_y = return_values["ViewportSize"]["y"]
         viewport_aspect_ratio = viewport_size_x/viewport_size_y # see Engine/Source/Editor/UnrealEd/Private/EditorViewportClient.cpp:2130 for evidence that Unreal's aspect ratio convention is x/y
-        fov = view_target_pov["fOV"]*math.pi/180.0 # this adjustment is necessary to compute an FOV value that matches the game viewport
+        fov = view_target_pov["fOV"]*math.pi/180.0
         half_fov = fov/2.0
-        half_fov_adjusted = math.atan(math.tan(half_fov)*viewport_aspect_ratio/view_target_pov["aspectRatio"])
+        half_fov_adjusted = math.atan(math.tan(half_fov)*viewport_aspect_ratio/view_target_pov["aspectRatio"]) # this adjustment is necessary to compute an FOV value that matches the game viewport
         fov_adjusted = half_fov_adjusted*2.0
         fov_adjusted_degrees = fov_adjusted*180.0/math.pi
 
@@ -87,6 +94,12 @@ if __name__ == "__main__":
     # show rendered frame now that we're outside of with instance.end_frame()
     cv2.imshow("final_tone_curve_hdr", data_bundle["arrays"]["data"])
     cv2.waitKey(0)
+
+    # save image
+    image = data_bundle["arrays"]["data"][:,:,[2,1,0]]
+    image_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "image.png"))
+    spear.log("Saving image: ", image_file)
+    plt.imsave(image_file, image)
 
     # terminate actors and components
     with instance.begin_frame():

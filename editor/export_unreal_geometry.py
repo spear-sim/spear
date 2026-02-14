@@ -52,7 +52,7 @@ def generate_unreal_geometry(actor):
         # what they were originally.
 
         obj_path_suffix = f"{os.path.join(*static_mesh_asset_path.parts[1:])}.obj"
-        raw_obj_path = os.path.realpath(os.path.join(args.export_dir, "scenes", editor_world_name, "unreal_geometry", "raw", obj_path_suffix))
+        raw_obj_path = os.path.realpath(os.path.join(args.export_dir, "unreal_geometry", "raw", obj_path_suffix))
 
         errors = []
         asset_export_task = unreal.AssetExportTask()
