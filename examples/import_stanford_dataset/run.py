@@ -33,12 +33,12 @@ if __name__ == "__main__":
         bp_happy.SetActorScale3D(NewScale3D={"X": 4.0, "Y": 4.0, "Z": 4.0})
         bp_dragon.SetActorScale3D(NewScale3D={"X": 4.0, "Y": 4.0, "Z": 4.0})
 
-        # make the HDRI backdrop a bit brighter for a paper figure
-        hdri_backdrop = game.unreal_service.find_actor_by_name(actor_name="Rendering/HDRIBackdrop", uclass="AActor")
-        skylight = hdri_backdrop.Skylight.get()
-        skylight_old_intensity = skylight.Intensity.get()
-        skylight_new_intensity = skylight_old_intensity + 2.5
-        skylight.SetIntensity(NewIntensity=skylight_new_intensity)
+        # # make the HDRI backdrop a bit brighter for a paper figure
+        # hdri_backdrop = game.unreal_service.find_actor_by_name(actor_name="Rendering/HDRIBackdrop", uclass="AActor")
+        # skylight = hdri_backdrop.Skylight.get()
+        # skylight_old_intensity = skylight.Intensity.get()
+        # skylight_new_intensity = skylight_old_intensity + 2.5
+        # skylight.SetIntensity(NewIntensity=skylight_new_intensity)
 
     with instance.end_frame():
         pass
