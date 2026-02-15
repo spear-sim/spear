@@ -18,7 +18,7 @@ With this directory structure in place, you can import the animation sequences i
 
 ```console
 # import mixamo dataset
-python ../../tools/run_editor_script.py --script /absolute/path/to/spear/examples/import_mixamo_dataset/import_dataset.py --unreal-engine-dir path/to/UE_5.7 --launch-mode full --render-offscreen --filesystem-base-dir /absolute/path/to/mixamo_dataset --content-base-dir /Game/Mixamo
+python ../../tools/run_editor_script.py --unreal-engine-dir path/to/UE_5.7 --launch-mode full --render-offscreen --script /absolute/path/to/spear/examples/import_mixamo_dataset/import_dataset.py --filesystem-base-dir /absolute/path/to/mixamo_dataset --content-base-dir /Game/Mixamo
 ```
 
 The `user_config.yaml.example` file in this example sets `SPEAR.LAUNCH_MODE` to `"none"`, which means the example is intended to run directly within a live game session in the Unreal Editor. If you launch the editor and press the play button, you can run spawn the previously imported animation sequences within the live game session as follows.
