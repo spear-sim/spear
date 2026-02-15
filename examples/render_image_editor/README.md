@@ -9,7 +9,7 @@ In this example editor script, we demonstrate how to how to render an image. If 
 Alternatively, you can run this script from the command-line as follows.
 
 ```console
-python ../../tools/run_editor_script.py --script /absolute/path/to/spear/examples/render_image_editor/run.py --unreal-engine-dir path/to/UE_5.5 --launch-mode full --render-offscreen
+python ../../tools/run_editor_script.py --unreal-engine-dir path/to/UE_5.5 --launch-mode full --render-offscreen --script /absolute/path/to/spear/examples/render_image_editor/run.py
 ```
 
 After running this script, you should see an image saved in the same directory as this `README` file.
