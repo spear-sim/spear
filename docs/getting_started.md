@@ -187,7 +187,7 @@ You can immediately start navigating around our default `apartment_0000` scene u
 
 By default, we also package the `{Lvl_FirstPerson, Lvl_ThirdPerson, Lvl_VehicleBasic}` debug scenes that ship with the Unreal Engine with our executable. If you did not specify `--build-config Shipping` above, then you can open these (and other) scenes directly from inside the `SpearSim` executable by pressing the tilde key `~` to open the Unreal console and typing `Open MapName`, where `MapName` is the name of a map with no path (e.g., `Lvl_FirstPerson`).
 
-If you have a compatible PAK file containing another scene, it is possible to open that scene, but you must first mount the PAK file by typing `SpMountPak path/to/pak`. If you no longer need a PAK file mounted, you can unmount it by typing `SpMountPak path/to/pak` in the Unreal console. Note that the availability of Unreal console commands is determined by the loaded map, and our `SpMountPak` and `SpUnmountPak` commands are not available in the Unreal Engine debug scenes.
+If you have a compatible PAK file containing another scene, it is possible to open that scene, but you must first mount the PAK file by typing `SpMountPak path/to/pak`. If you no longer need a PAK file mounted, you can unmount it by typing `SpUnmountPak path/to/pak` in the Unreal console. Note that the availability of Unreal console commands is determined by the loaded map, and our `SpMountPak` and `SpUnmountPak` commands are not available in the Unreal Engine debug scenes.
 
 Alternatively, you can open a specific scene with the following command-line tool, which also works for `--build-config Shipping` builds.
 
@@ -195,7 +195,7 @@ Alternatively, you can open a specific scene with the following command-line too
 python tools/run_executable.py --map logical/path/to/map
 ```
 
-The logical path to the `--map` should be specified as a full path, e.g.,
+When using this command-line tool, the logical path to the `--map` should be specified as a full path, e.g.,
 
 ```
 /Game/SPEAR/Scenes/apartment_0000/Maps/apartment_0000
