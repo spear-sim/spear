@@ -54,9 +54,9 @@ if __name__ == "__main__":
             editor_script_args_string = f"{args.script} {unknown_arg_string}".strip()
     else:
         if args.script is None:
-            editor_script_args_string = f"run_editor_script_for_each_map.py --maps_file {args.maps_file}".strip()
+            editor_script_args_string = f"run_editor_script_for_each_map.py --maps-file {args.maps_file}".strip()
         else:
-            editor_script_args_string = f"run_editor_script_for_each_map.py --maps_file {args.maps_file} --script {args.script} {unknown_arg_string}".strip()
+            editor_script_args_string = f"run_editor_script_for_each_map.py --maps-file {args.maps_file} --script {args.script} {unknown_arg_string}".strip()
 
     render_offscreen_arg_string = ""
     if args.render_offscreen:

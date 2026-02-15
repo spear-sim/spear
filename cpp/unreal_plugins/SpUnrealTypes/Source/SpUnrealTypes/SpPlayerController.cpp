@@ -5,7 +5,9 @@
 
 #include "SpUnrealTypes/SpPlayerController.h"
 
-#include <Engine/EngineTypes.h> // EEndPlayReason
+#include <Delegates/IDelegateInstance.h> // FDelegateHandle
+#include <Engine/EngineTypes.h>          // EEndPlayReason
+#include <Framework/Application/SlateApplication.h>
 #include <GenericPlatform/GenericPlatformMisc.h>
 
 #include "SpCore/Assert.h"
@@ -49,6 +51,9 @@ void ASpPlayerController::BeginPlay()
     // Need to set this to true to avoid blurry visual artifacts in the editor when the game is paused.
     GetWorld()->bIsCameraMoveableWhenPaused = true;
 
+    // Prevent keyboard input from affecting the controller when the application is not in focus.
+    application_activation_state_changed_handle_ = FSlateApplication::Get().OnApplicationActivationStateChanged().AddUObject(this, &ASpPlayerController::applicationActivationStateChangedHandler);
+
     SpUserInputComponent->subscribeToUserInputs({"Escape"});
     SpUserInputComponent->setHandleUserInputFunc([](const std::string& key, float axis_value) -> void {
         bool force = false;
@@ -63,5 +68,15 @@ void ASpPlayerController::EndPlay(const EEndPlayReason::Type end_play_reason)
     SpUserInputComponent->setHandleUserInputFunc(nullptr);
     SpUserInputComponent->unsubscribeFromUserInputs({"Escape"});
 
+    // Restore keyboard behavior.
+    FSlateApplication::Get().OnApplicationActivationStateChanged().Remove(application_activation_state_changed_handle_);
+    application_activation_state_changed_handle_.Reset();
+
     APlayerController::EndPlay(end_play_reason);
+}
+
+void ASpPlayerController::applicationActivationStateChangedHandler(bool active)
+{
+    SetIgnoreMoveInput(!active);
+    SetIgnoreLookInput(!active);
 }

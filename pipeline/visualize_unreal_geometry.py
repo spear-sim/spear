@@ -15,8 +15,7 @@ import spear
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--pipeline-dir", required=True)
-parser.add_argument("--scene-id", required=True)
+parser.add_argument("--export-dir", required=True)
 parser.add_argument("--visual-parity-with-unreal", action="store_true")
 parser.add_argument("--ignore-actors", nargs="*")
 parser.add_argument("--color-mode", default="unique_color_per_component")
@@ -40,6 +39,7 @@ c_x_axis = (1.0,  0.0,  0.0)
 c_y_axis = (0.0,  1.0,  0.0)
 c_z_axis = (0.0,  0.0,  1.0)
 
+# Set axes to be be 1 meter, or 100 Unreal units.
 origin_world = np.array([[0.0,   0.0,   0.0]])
 x_axis_world = np.array([[100.0, 0.0,   0.0]])
 y_axis_world = np.array([[0.0,   100.0, 0.0]])
@@ -55,7 +55,7 @@ if args.visual_parity_with_unreal:
 
 def process_scene():
 
-    unreal_metadata_dir = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "unreal_metadata"))
+    unreal_metadata_dir = os.path.realpath(os.path.join(args.export_dir, "unreal_metadata"))
     actors_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "scene.json"))
     assert os.path.exists(unreal_metadata_dir)
     spear.log("Reading JSON file: ", actors_json_file)
@@ -75,8 +75,9 @@ def process_scene():
                          mode="arrow", scale_factor=origin_scale_factor, color=c_z_axis)
 
     actors = actors_json
-    actors = { actor_name: actor_desc for actor_name, actor_desc in actors.items() if actor_desc["root_component"] is not None }
     actors = { actor_name: actor_desc for actor_name, actor_desc in actors.items() if actor_name not in ignore_actors }
+    actors = { actor_name: actor_desc for actor_name, actor_desc in actors.items() if actor_desc["editor_properties"]["relevant_for_level_bounds"] }
+    actors = { actor_name: actor_desc for actor_name, actor_desc in actors.items() if actor_desc["root_component"] is not None }
 
     color = (0.75, 0.75, 0.75)
 
@@ -127,8 +128,7 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
                 spear.log(log_prefix_str, "StaticMesh asset path: ", static_mesh_asset_path)
     
                 obj_path_suffix = f"{os.path.join(*static_mesh_asset_path.parts[1:])}.obj"
-                numerical_parity_obj_path = \
-                    os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "unreal_geometry", "numerical_parity", obj_path_suffix))
+                numerical_parity_obj_path = os.path.realpath(os.path.join(args.export_dir, "unreal_geometry", "numerical_parity", obj_path_suffix))
                 spear.log(log_prefix_str, "Reading OBJ file: ", numerical_parity_obj_path)
 
                 mesh = trimesh.load_mesh(numerical_parity_obj_path, process=False, validate=False)

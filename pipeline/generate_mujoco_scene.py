@@ -16,8 +16,9 @@ import xml.etree.ElementTree
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--pipeline-dir", required=True)
-parser.add_argument("--scene-id", required=True)
+parser.add_argument("--export-dir", required=True)
+parser.add_argument("--mujoco-model-name", required=True)
+parser.add_argument("--visual-parity-with-unreal", action="store_true")
 parser.add_argument("--ignore-actors", nargs="*")
 parser.add_argument("--color-mode", default="unique_color_per_geom")
 args = parser.parse_args()
@@ -28,7 +29,7 @@ ignore_actors = []
 if args.ignore_actors is not None:
     ignore_actors = args.ignore_actors
 
-np.random.seed(0)
+np.random.seed(1) # seed=1 produces better colors than seed=0 for a paper figure
 
 main_mjcf_str = \
 """<mujoco model="{0}">
@@ -47,13 +48,16 @@ main_mjcf_str = \
         <include file="bodies.mjcf"/>
     </worldbody>
 
+    <visual>
+        <global offwidth="1920" offheight="1080"/>
+    </visual>
 </mujoco>
-""".format(args.scene_id)
+""".format(args.mujoco_model_name)
 
 
 def process_scene():
 
-    collision_geometry_dir = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "collision_geometry"))
+    collision_geometry_dir = os.path.realpath(os.path.join(args.export_dir, "collision_geometry"))
     actors_json_file = os.path.realpath(os.path.join(collision_geometry_dir, "scene.json"))
     spear.log("Reading JSON file: ", actors_json_file)
     assert os.path.exists(collision_geometry_dir)
@@ -68,7 +72,7 @@ def process_scene():
     for actor_name, actor_kinematic_tree in actors.items():
         add_mujoco_elements(actor_name, actor_kinematic_tree, meshes_element, bodies_element, color)
 
-    mujoco_scene_dir = os.path.realpath(os.path.join(args.pipeline_dir, "scenes", args.scene_id, "mujoco_scene"))
+    mujoco_scene_dir = os.path.realpath(os.path.join(args.export_dir, "mujoco_scene"))
     spear.log("Creating directory if it does not already exist: ", mujoco_scene_dir)
     os.makedirs(mujoco_scene_dir, exist_ok=True)
 
@@ -211,24 +215,35 @@ def add_mujoco_elements_for_kinematic_tree_node(
     rotation_z_axis = transform_parent_node_from_current_node["rotation"][:,2].A1
     assert np.allclose(np.cross(rotation_x_axis, rotation_y_axis), rotation_z_axis)
 
-    # TODO: get dynamic-vs-static flag from the JSON data, use better heuristic for avoiding interpenetrations
+    # HACK: get dynamic-vs-static flag from the JSON data
+
     if "Meshes/05_chair" in actor_name:
         body_type = "dynamic"
     else:
         body_type = "static"
 
-    if body_type == "static":
-        pos_offset = np.matrix([0.0, 0.0, 0.0]).T
-    elif body_type == "dynamic":
-        pos_offset = np.matrix([0.0, 0.0, 20.0]).T
-    else:
-        assert False
+    # HACK: use better approach for avoiding interpenetrations
+
+    pos_offset = np.matrix([0.0, 0.0, 0.0]).T
+
+    if actor_name == "Meshes/02_floor/Floor":
+        pos_offset = np.matrix([0.0, 0.0, -14.0]).T
+    if actor_name == "Meshes/05_chair/Round_Table_Chair_03":
+        pos_offset = np.matrix([5.0, -5.0, 0.0]).T
+
+    pos = transform_world_from_parent_node["scale"]*transform_parent_node_from_current_node["location"] + pos_offset
+    rot = transform_parent_node_from_current_node["rotation"]
+
+    # negate y-axis to maintain visual parity with Unreal
+    if args.visual_parity_with_unreal:
+        pos = np.diag([1,-1,1])*pos
+        rot = np.diag([1,-1,1])*rot*np.diag([1,-1,1])
 
     body_name = f"{actor_name}:{kinematic_tree_node_name}"
     body_element = xml.etree.ElementTree.SubElement(parent_element, "body", attrib={
         "name": body_name,
-        "pos": get_mujoco_pos_str(transform_world_from_parent_node["scale"]*transform_parent_node_from_current_node["location"] + pos_offset),
-        "xyaxes": get_mujoco_xyaxes_str(transform_parent_node_from_current_node["rotation"])})
+        "pos": get_mujoco_pos_str(pos),
+        "xyaxes": get_mujoco_xyaxes_str(rot)})
 
     if body_type == "dynamic" and root_node:
         xml.etree.ElementTree.SubElement(body_element, "freejoint")
@@ -263,13 +278,19 @@ def add_mujoco_elements_for_kinematic_tree_node(
             if args.color_mode == "unique_color_per_geom":
                 color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
 
+            scale = transform_world_from_current_node["scale"]
+
+            # negate y-axis to maintain visual parity with Unreal
+            if args.visual_parity_with_unreal:
+                scale = np.diag([1,-1,1])*scale
+
             part_name = f"{actor_name}:{kinematic_tree_node_name}:merge_id_{int(merge_id):04}:part_id_{part_id:04}"
             mesh_name = f"{part_name}:mesh"
             geom_name = f"{part_name}:geom"
             mesh_element = xml.etree.ElementTree.SubElement(meshes_element, "mesh", attrib={
                 "file": part_id_obj_path,
                 "name": mesh_name,
-                "scale": get_mujoco_scale_str(transform_world_from_current_node["scale"])})
+                "scale": get_mujoco_scale_str(scale)})
             geom_element = xml.etree.ElementTree.SubElement(body_element, "geom", attrib={
                 "mesh": mesh_name,
                 "name": geom_name,

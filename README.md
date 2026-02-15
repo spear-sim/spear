@@ -110,7 +110,7 @@ class UMyBlueprintFunctionLibrary : public UBlueprintFunctionLibrary
 public:
     UFUNCTION(BlueprintCallable)
     static FString MyFunction(const FVector& Vec) {
-        return FString::Printf(TEXT("Vec is [%.1f %.1f %.1f]"), Vec[0], Vec[1], Vec[2]);
+        return FString::Printf(TEXT("Vec is [%.1f %.1f %.1f]"), Vec.X, Vec.Y, Vec.Z);
     }
 
     UPROPERTY(BlueprintReadWrite)
@@ -127,7 +127,7 @@ with instance.begin_frame():
     my_blueprint_function_library = game.get_unreal_object(uclass="UMyBlueprintFunctionLibrary")
 
     # returns "Vec is [1.0 2.0 3.0]"
-    return_value = my_blueprint_function_library.MyFunction(Vec={"x": 1.0, "y": 2.0, "z": 3.0})
+    return_value = my_blueprint_function_library.MyFunction(Vec={"X": 1.0, "Y": 2.0, "Z": 3.0})
 
     # returns 42
     my_property = my_blueprint_function_library.MyProperty.get()
