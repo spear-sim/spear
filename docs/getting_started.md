@@ -185,7 +185,7 @@ When building with our `run_uat.py` tool, you can optionally specify `--build-co
 
 You can immediately start navigating around our default `apartment_0000` scene using the keyboard and mouse by double-clicking on the `SpearSim` executable you built in the previous section.
 
-By default, we also package the `{ThirdPersonMap, VehicleExampleMap, VehicleOffroadExampleMap}` debug scenes that ship with the Unreal Engine with our executable, as well our own debug scenes `{debug_0000, debug_0001}`. If you did not specify `--build-config Shipping` above, then you can open these (and other) scenes directly from inside the `SpearSim` executable by pressing the tilde key `~` to open the Unreal console and typing `Open MapName`, where `MapName` is the name of a map with no path (e.g., `ThirdPersonMap`).
+By default, we also package the `{Advanced_Lighting, MinimalDefault, StarterMap, ThirdPersonMap, VehicleExampleMap, VehicleOffroadExampleMap}` debug scenes that ship with the Unreal Engine with our executable, as well our own debug scenes `{debug_0000, debug_0001}`. If you did not specify `--build-config Shipping` above, then you can open these (and other) scenes directly from inside the `SpearSim` executable by pressing the tilde key `~` to open the Unreal console and typing `Open MapName`, where `MapName` is the name of a map with no path (e.g., `ThirdPersonMap`).
 
 If you have a compatible PAK file containing another scene, it is possible to open that scene, but you must first mount the PAK file by typing `SpMountPak path/to/pak`. If you no longer need a PAK file mounted, you can unmount it by typing `SpUnmountPak path/to/pak` in the Unreal console. Note that the availability of Unreal console commands is determined by the loaded map, and our `SpMountPak` and `SpUnmountPak` commands are not available in the Unreal Engine debug scenes.
 
@@ -201,6 +201,9 @@ When using this command-line tool, the logical path to the `--map` should be spe
 /Game/SPEAR/Scenes/apartment_0000/Maps/apartment_0000
 /Game/SPEAR/Scenes/debug_0000/Maps/debug_0000
 /Game/SPEAR/Scenes/debug_0001/Maps/debug_0001
+/Game/StarterContent/Maps/Advanced_Lighting
+/Game/StarterContent/Maps/Minimal_Default
+/Game/StarterContent/Maps/StarterMap
 /Game/ThirdPerson/Maps/ThirdPersonMap
 /Game/VehicleTemplate/Maps/VehicleExampleMap
 /Game/VehicleTemplate/Maps/VehicleOffroadExampleMap
