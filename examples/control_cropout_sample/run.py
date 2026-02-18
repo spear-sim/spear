@@ -74,7 +74,7 @@ if __name__ == "__main__":
         # get player controller
         player_controller = gameplay_statics.GetPlayerController(PlayerIndex=0)
 
-        # get character
+        # get player
         player = player_controller.K2_GetPawn()
 
         # spawn camera sensor
