@@ -1,0 +1,19 @@
+# Control the `HillsideSample` Project
+
+In this example application, we demonstrate how to control the `HillsideSample` project, which is a freely available sample project from Epic Games.
+
+In a pre-processing step, we need to install the SPEAR plugins in `HillsideSample` by adding an `AdditionalPluginDirectories` entry to `HillsideSampleProject.uproject`. We could do this by editing the `uproject` file directly, but here we use one of our command-line tools for convenience. We must also build the project, which will build the SPEAR plugin binaries and copy them into the project directory.
+
+```console
+python ../../tools/install_plugins_in_external_project.py --external-project-dir path/to/HillsideSampleProject
+
+python ../../tools/run_uat.py --unreal-engine-dir path/to/UE_5.5 --unreal-project-dir path/to/HillsideSampleProject -build
+```
+
+Next, we open the Unreal Editor and wait for the default map to fully load. Then we press play in the editor and wait for the Unreal simulation to load and warm up. Note that this project doesn't load its default lighting configuration by default after we press play, so we expect the viewport to be very dark. We will load the default lighting configuration programmatically in our `run.py` script below. Once the simulation is fully loaded and warmed up, we are ready to control the project via SPEAR.
+
+```console
+python run.py
+```
+
+You should see the scene's default lighting configuration turn on, the viewport camera should move to be above a road, and traffic should appear on the road. Additionally, an `images` directory of rendered images will begin to populate.
