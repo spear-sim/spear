@@ -13,7 +13,7 @@ import spear
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--external-project-dir")
+parser.add_argument("--external-project-dir", required=True)
 args = parser.parse_args()
 
 
@@ -28,6 +28,8 @@ if __name__ == "__main__":
     #
     # update uproject
     #
+
+    spear.log("Reading uproject file: ", uproject)
 
     uproject_dict = {}
     with open(uproject) as f:
@@ -49,11 +51,11 @@ if __name__ == "__main__":
                 found = True
                 break
         if not found:
-            spear.log("Adding to AdditionalPluginDirectories: ", target_plugins_dir)
+            spear.log("Adding to AdditionalPluginDirectories entry: ", target_plugins_dir)
             uproject_dict["AdditionalPluginDirectories"].append(target_plugins_dir)
             save = True
     else:
-        spear.log("Creating AdditionalPluginDirectories and adding: ", target_plugins_dir)
+        spear.log("Creating AdditionalPluginDirectories entry and adding: ", target_plugins_dir)
         uproject_dict["AdditionalPluginDirectories"] = [target_plugins_dir]
         save = True
 
