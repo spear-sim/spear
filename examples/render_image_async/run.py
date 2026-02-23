@@ -8,6 +8,7 @@
 import argparse
 import cv2
 import math
+import matplotlib.pyplot as plt
 import os
 import spear
 import time
@@ -204,6 +205,12 @@ if __name__ == "__main__":
     # show rendered frame now that we're outside of with instance.end_frame()
     cv2.imshow("final_tone_curve_hdr", data_bundle["arrays"]["data"])
     cv2.waitKey(0)
+
+    # save image
+    image = data_bundle["arrays"]["data"][:,:,[2,1,0]]
+    image_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "image.png"))
+    spear.log("Saving image: ", image_file)
+    plt.imsave(image_file, image)
 
     # terminate actors and components
     with instance.begin_frame():
