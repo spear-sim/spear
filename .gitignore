@@ -52,6 +52,7 @@ examples/control_cropout_sample/images
 examples/control_editor/screenshot.png
 examples/control_electric_dreams_sample/images
 examples/control_game_animation_sample/images
+examples/control_game_animation_sample_57/images
 examples/control_hillside_sample/images
 examples/control_metahumans_sample/images
 examples/control_stackobot_sample/images
@@ -63,6 +64,7 @@ examples/import_stanford_dataset/ply
 examples/import_stanford_dataset/stanford
 examples/mujoco_interop/images
 examples/render_image/image.png
+examples/render_image_async/image.png
 examples/render_image_dataset/camera_poses
 examples/render_image_dataset/images
 examples/render_image_hypersim/images
