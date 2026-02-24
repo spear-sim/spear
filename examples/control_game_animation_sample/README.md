@@ -22,4 +22,4 @@ Finally, in the Unreal Editor, we wait for the default map to fully load. Then w
 python run.py
 ```
 
-You should see a GameAnimationSample character start running and jumping. Additionally, an `images` directory of rendered images will begin to populate.
+You should see a `GameAnimationSample` character start running and jumping. Additionally, an `images` directory of rendered images will begin to populate.
