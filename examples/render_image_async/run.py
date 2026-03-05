@@ -224,4 +224,3 @@ if __name__ == "__main__":
         instance.close()
 
     spear.log("Done.")
-
