@@ -187,4 +187,13 @@ if __name__ == "__main__":
             save_images(images_dir=images_dir, frame_index=frame_index)
             frame_index = frame_index + 1
 
+    # terminate actors and components
+    with instance.begin_frame():
+        pass
+    with instance.end_frame():
+        for component_desc in component_descs:
+            component_desc["component"].terminate_sp_funcs()
+            component_desc["component"].Terminate()
+        game.unreal_service.destroy_actor(actor=bp_camera_sensor)
+
     spear.log("Done.")
