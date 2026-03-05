@@ -280,12 +280,12 @@ if __name__ == "__main__":
                         data_bundle = component_desc["component"].read_pixels()
                         component_desc["data"] = data_bundle["arrays"]["data"]
 
-        # save images
+        # save UE images
         if args.save_images:
             if ue_step_index % num_ue_steps_per_frame == 0:
                 save_images(images_dir=images_dir, frame_index=frame_index)
-                frame_index = frame_index + 1
 
+        # save MuJoCo images
         if args.save_images:
             if ue_step_index % num_ue_steps_per_frame == 0:
                 mj_renderer.update_scene(data=mj_data, camera=mj_viewer.cam)
@@ -294,6 +294,11 @@ if __name__ == "__main__":
                 image = mj_render
                 spear.log("Saving image: ", image_file)
                 plt.imsave(image_file, image)
+
+        # increment counters
+        if args.save_images:
+            if ue_step_index % num_ue_steps_per_frame == 0:
+                frame_index = frame_index + 1
 
         ue_step_index = ue_step_index + 1
 
