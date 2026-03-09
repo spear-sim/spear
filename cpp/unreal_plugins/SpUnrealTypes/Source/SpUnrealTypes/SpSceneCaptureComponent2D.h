@@ -5,11 +5,13 @@
 
 #pragma once
 
+#include <chrono>
 #include <memory> // std::unique_ptr
 
 #include <Components/SceneCaptureComponent2D.h>
 #include <Containers/Array.h>
 #include <Containers/EnumAsByte.h>
+#include <Delegates/IDelegateInstance.h>  // FDelegateHandle
 #include <Engine/EngineBaseTypes.h>       // ELevelTick
 #include <Engine/EngineTypes.h>           // EEndPlayReason
 #include <Engine/TextureRenderTarget2D.h> // ETextureRenderTargetFormat
@@ -23,6 +25,7 @@
 #include <TextureResource.h>              // FTextureRenderTargetResource
 #include <UObject/ObjectMacros.h>         // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
+#include "SpCore/Boost.h"
 #include "SpCore/SharedMemory.h"
 #include "SpCore/SpArray.h"
 #include "SpCore/SpFuncComponent.h"
@@ -83,6 +86,8 @@ public:
     void Terminate();
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     bool IsInitialized();
+
+    int32 getNumViewStates() { return ViewStates.Num(); }
 
     // BlueprintReadWrite is incompatible with uint32 so we use int32
 
@@ -147,10 +152,21 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bUseSceneViewExtension = false;
 
-public:
-    int32 getNumViewStates() { return ViewStates.Num(); }
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bPrintFrameTime = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bPrintFrameTimeEveryFrame = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bReadPixelsEveryFrame = false;
 
 private:
+    void beginFrameHandler();
+
+    SpPackedArray readPixels();
+    void updateFrameTime();
+
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
     bool bIsInitialized = false;
 
@@ -164,7 +180,14 @@ private:
     SpArraySharedMemoryView shared_memory_view_;
 
     // Scratchpad arrays for efficiently reading pixel data.
-    TArray<FColor>        scratchpad_color_;
-    TArray<FFloat16Color> scratchpad_float_16_color_;
-    TArray<FLinearColor>  scratchpad_linear_color_;
+    TArray<FColor>        scratchpad_array_color_;
+    TArray<FFloat16Color> scratchpad_array_float_16_color_;
+    TArray<FLinearColor>  scratchpad_array_linear_color_;
+
+    // Additional state for measuring "standalone" and "standalone + extra work" frame rates.
+    FDelegateHandle begin_frame_handle_;
+    SpPackedArray scratchpad_packed_array_;
+    boost::circular_buffer<double> previous_time_deltas_;
+    std::chrono::time_point<std::chrono::high_resolution_clock> previous_time_point_;
+    int frame_index_ = 0;
 };

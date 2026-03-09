@@ -17,6 +17,8 @@ import time
 parser = argparse.ArgumentParser()
 parser.add_argument("--benchmark", action="store_true")
 parser.add_argument("--no-shared-memory", action="store_true")
+parser.add_argument("--print-frame-time-every-frame", action="store_true")
+parser.add_argument("--read-pixels-every-frame", action="store_true")
 args = parser.parse_args()
 
 
@@ -85,9 +87,14 @@ if __name__ == "__main__":
         if not shared_memory:
             final_tone_curve_hdr_component.bUseSharedMemory = False
 
-        final_tone_curve_hdr_component.Initialize()
+        # update state for measuring "standalone" and "standalone + extra work" frame rates
+        if args.print_frame_time_every_frame:
+            final_tone_curve_hdr_component.bPrintFrameTimeEveryFrame = True
+        if args.read_pixels_every_frame:
+            final_tone_curve_hdr_component.bReadPixelsEveryFrame = True
 
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
+        final_tone_curve_hdr_component.Initialize()
         final_tone_curve_hdr_component.initialize_sp_funcs()
 
     with instance.end_frame():
@@ -105,6 +112,33 @@ if __name__ == "__main__":
 
     # optional benchmarking
     if args.benchmark:
+
+        # update state for measuring "standalone" and "standalone + extra work" frame rates
+
+        if args.print_frame_time_every_frame and not args.read_pixels_every_frame:
+            with instance.begin_frame():
+                # if we're not reading pixels every frame, turn rendering off so we're only measuring "standalone" performance
+                final_tone_curve_hdr_component.SetVisibility(bNewVisibility=False)
+            with instance.end_frame():
+                pass
+
+        if args.print_frame_time_every_frame or args.read_pixels_every_frame:
+            time.sleep(30.0) # sleep for a few seconds so we can benchmark "standalone" and "standalone + extra work" frame rates
+
+            with instance.begin_frame():
+                final_tone_curve_hdr_component.terminate_sp_funcs()
+                final_tone_curve_hdr_component.Terminate()
+
+                # now that we're finished measuring "standalone" and "standalone + extra work", turn this extra functionality off
+                if args.print_frame_time_every_frame:
+                    final_tone_curve_hdr_component.bPrintFrameTimeEveryFrame = False
+                if args.read_pixels_every_frame:
+                    final_tone_curve_hdr_component.bReadPixelsEveryFrame = False
+
+                final_tone_curve_hdr_component.Initialize()
+                final_tone_curve_hdr_component.initialize_sp_funcs()
+            with instance.end_frame():
+                pass
 
         # instance._client.get_timeout()
         num_steps = 100000
