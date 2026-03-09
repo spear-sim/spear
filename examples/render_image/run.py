@@ -67,9 +67,9 @@ if __name__ == "__main__":
         final_tone_curve_hdr_component.FOVAngle = fov_adjusted_degrees
         # if post_process_volume_settings is not None:
         #     final_tone_curve_hdr_component.PostProcessSettings = post_process_volume_settings
-        final_tone_curve_hdr_component.Initialize()
 
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
+        final_tone_curve_hdr_component.Initialize()
         final_tone_curve_hdr_component.initialize_sp_funcs()
 
     with instance.end_frame():

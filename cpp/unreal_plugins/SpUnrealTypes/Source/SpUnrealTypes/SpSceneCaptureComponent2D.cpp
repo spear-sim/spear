@@ -7,23 +7,25 @@
 
 #include <stdint.h> // uint64_t
 
+#include <chrono>
 #include <memory>  // std::align, std::make_unique
 #include <utility> // std::move
 
 #include <Components/SceneCaptureComponent2D.h>
 #include <Containers/Array.h>
+#include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Materials/Material.h>
 #include <Materials/MaterialInstanceDynamic.h>
-#include <Math/Color.h>              // FColor, FLinearColor
+#include <Math/Color.h>                  // FColor, FLinearColor
 #include <Math/Float16Color.h>
-#include <RHIDefinitions.h>          // ERangeCompressionMode
-#include <RHITypes.h>                // FReadSurfaceDataFlags
-#include <SceneView.h>               // FSceneViewFamily
-#include <SceneManagement.h>         // FSceneViewStateInterface
-#include <SceneViewExtension.h>      // FAutoRegister, FSceneViewExtensionBase, FSceneViewExtensions
-#include <TextureResource.h>         // FTextureRenderTargetResource
-#include <Templates/SharedPointer.h> // TSharedPtr
-#include <UObject/UObjectGlobals.h>  // NewObject
+#include <RHIDefinitions.h>              // ERangeCompressionMode
+#include <RHITypes.h>                    // FReadSurfaceDataFlags
+#include <SceneView.h>                   // FSceneViewFamily
+#include <SceneManagement.h>             // FSceneViewStateInterface
+#include <SceneViewExtension.h>          // FAutoRegister, FSceneViewExtensionBase, FSceneViewExtensions
+#include <TextureResource.h>             // FTextureRenderTargetResource
+#include <Templates/SharedPointer.h>     // TSharedPtr
+#include <UObject/UObjectGlobals.h>      // NewObject
 
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
@@ -238,7 +240,18 @@ void USpSceneCaptureComponent2D::Initialize()
         scene_view_extension_ = FSceneViewExtensions::NewExtension<FSpSceneViewExtension>(this);
     }
 
-    SetVisibility(true); // enable rendering to texture
+    // initialize state for measuring "standalone" and "standalone + extra work" frame rates
+
+    if (bPrintFrameTimeEveryFrame || bReadPixelsEveryFrame) {
+        begin_frame_handle_ = FCoreDelegates::OnBeginFrame.AddUObject(this, &USpSceneCaptureComponent2D::beginFrameHandler);
+    }
+
+    if (bPrintFrameTimeEveryFrame) {
+        int num_samples = 100;
+        previous_time_deltas_.set_capacity(num_samples);
+    }
+
+    // allocate memory
 
     SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
     uint64_t num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
@@ -252,100 +265,33 @@ void USpSceneCaptureComponent2D::Initialize()
     }
 
     if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::UInt8) {
-        scratchpad_color_.Reserve(Height*Width);
-        SP_ASSERT(Height*Width <= static_cast<int64_t>(scratchpad_color_.Max()));
-        SP_ASSERT(num_bytes <= scratchpad_color_.GetAllocatedSize());
+        scratchpad_array_color_.Reserve(Height*Width);
+        SP_ASSERT(Height*Width <= static_cast<int64_t>(scratchpad_array_color_.Max()));
+        SP_ASSERT(num_bytes <= scratchpad_array_color_.GetAllocatedSize());
     } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float16) {
-        scratchpad_float_16_color_.Reserve(Height*Width);
-        SP_ASSERT(Height*Width <= static_cast<int64_t>(scratchpad_float_16_color_.Max()));
-        SP_ASSERT(num_bytes <= scratchpad_float_16_color_.GetAllocatedSize());
+        scratchpad_array_float_16_color_.Reserve(Height*Width);
+        SP_ASSERT(Height*Width <= static_cast<int64_t>(scratchpad_array_float_16_color_.Max()));
+        SP_ASSERT(num_bytes <= scratchpad_array_float_16_color_.GetAllocatedSize());
     } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32) {
-        scratchpad_linear_color_.Reserve(Height*Width);
-        SP_ASSERT(Height*Width <= static_cast<int64_t>(scratchpad_linear_color_.Max()));
-        SP_ASSERT(num_bytes <= scratchpad_linear_color_.GetAllocatedSize());
+        scratchpad_array_linear_color_.Reserve(Height*Width);
+        SP_ASSERT(Height*Width <= static_cast<int64_t>(scratchpad_array_linear_color_.Max()));
+        SP_ASSERT(num_bytes <= scratchpad_array_linear_color_.GetAllocatedSize());
     } else {
         SP_ASSERT(false);
     }
 
-    SpFuncComponent->registerFunc("read_pixels", [this, channel_data_type, num_bytes](SpFuncDataBundle& args) -> SpFuncDataBundle {
-
-        SP_ASSERT(IsInitialized());
-        SP_ASSERT(Height >= 0);
-        SP_ASSERT(Width >= 0);
-        SP_ASSERT(NumChannelsPerPixel == 4);
-
-        SpPackedArray packed_array;
-        packed_array.shape_ = {static_cast<uint64_t>(Height), static_cast<uint64_t>(Width), static_cast<uint64_t>(NumChannelsPerPixel)}; // explicit cast needed on Windows
-        packed_array.data_type_ = channel_data_type;
-
-        void* dest_ptr = nullptr;
-        if (bUseSharedMemory) {
-            packed_array.view_ = shared_memory_view_.data_;
-            packed_array.data_source_ = SpArrayDataSource::Shared;
-            packed_array.shared_memory_name_ = shared_memory_view_.name_;
-            packed_array.shared_memory_usage_flags_ = shared_memory_view_.usage_flags_;
-            dest_ptr = shared_memory_view_.data_;
-        } else {
-            Std::resizeUninitialized(packed_array.data_, num_bytes);
-            packed_array.view_ = packed_array.data_.data();
-            packed_array.data_source_ = SpArrayDataSource::Internal;
-            dest_ptr = packed_array.data_.data();
-        }
-        
-        SP_ASSERT(dest_ptr);
-
-        if (bReadPixelData) {
-            FTextureRenderTargetResource* texture_render_target_resource = TextureTarget->GameThread_GetRenderTargetResource();
-            SP_ASSERT(texture_render_target_resource);
-
-            // ReadPixels assumes 4 channels per pixel, 1 uint8 per channel
-            if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::UInt8) {
-
-                FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(ERangeCompressionMode::RCM_UNorm);
-                if (bOverrideSetLinearToGamma) {
-                    read_surface_flags.SetLinearToGamma(bSetLinearToGamma);
-                }
-
-                UnrealArrayUpdateDataPtrScope scope(scratchpad_color_, dest_ptr, num_bytes);
-                bool success = texture_render_target_resource->ReadPixels(scratchpad_color_, read_surface_flags);
-                SP_ASSERT(success);
-
-            // ReadFloat16Pixels assumes 4 channels per pixel, 1 float16 per channel
-            } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float16) {
-
-                // we never want to change floating point values when reading
-                FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(ERangeCompressionMode::RCM_MinMax);
-                read_surface_flags.SetLinearToGamma(false);
-
-                UnrealArrayUpdateDataPtrScope scope(scratchpad_float_16_color_, dest_ptr, num_bytes);
-                bool success = texture_render_target_resource->ReadFloat16Pixels(scratchpad_float_16_color_, read_surface_flags);
-                SP_ASSERT(success);
-
-            // ReadLinearColorPixels assumes 4 channels per pixel, 1 float32 per channel
-            } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32) {
-                SP_ASSERT(BOOST_OS_WINDOWS, "ERROR: NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32 is only supported on Windows.");
-
-                // we never want to change floating point values when reading
-                FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(ERangeCompressionMode::RCM_MinMax);
-                read_surface_flags.SetLinearToGamma(false);
-
-                UnrealArrayUpdateDataPtrScope scope(scratchpad_linear_color_, dest_ptr, num_bytes);
-                bool success = texture_render_target_resource->ReadLinearColorPixels(scratchpad_linear_color_, read_surface_flags);
-                SP_ASSERT(success);
-
-            } else {
-                SP_ASSERT(false);
-            }
-        }
-
+    // register SpFunc
+    SpFuncComponent->registerFunc("read_pixels", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
         SpFuncDataBundle return_values;
+        SpPackedArray packed_array = readPixels();
         Std::insert(return_values.packed_arrays_, "data", std::move(packed_array));
-
         return return_values;
     });
 
     is_initialized_ = true;
     bIsInitialized = true;
+
+    SetVisibility(true); // enable rendering to texture
 }
 
 void USpSceneCaptureComponent2D::Terminate()
@@ -354,20 +300,29 @@ void USpSceneCaptureComponent2D::Terminate()
         return;
     }
 
-    bIsInitialized = false;
-    is_initialized_ = false;
+    SetVisibility(false); // disable rendering to texture
 
+    is_initialized_ = false;
+    bIsInitialized = false;
+
+    // unregister SpFunc
     SpFuncComponent->unregisterFunc("read_pixels");
 
+    // deallocate memory
     if (shared_memory_region_) {
         SpFuncComponent->unregisterSharedMemoryView(shared_memory_view_);
         shared_memory_view_ = SpArraySharedMemoryView();
         shared_memory_region_ = nullptr;
     }
 
-    bAlwaysPersistRenderingState = false;
-    SetVisibility(false); // disable rendering to texture
+    // remove callbacks
 
+    if (bPrintFrameTimeEveryFrame || bReadPixelsEveryFrame) {
+        FCoreDelegates::OnBeginFrame.Remove(begin_frame_handle_);
+        begin_frame_handle_.Reset();
+    }
+
+    bAlwaysPersistRenderingState = false;
     scene_view_extension_ = nullptr;
 
     ShowOnlyActors.Empty();
@@ -383,4 +338,109 @@ void USpSceneCaptureComponent2D::Terminate()
 bool USpSceneCaptureComponent2D::IsInitialized()
 {
     return is_initialized_;
+}
+
+void USpSceneCaptureComponent2D::beginFrameHandler()
+{
+    if (bPrintFrameTimeEveryFrame) {
+        updateFrameTime();
+    }
+
+    if (bReadPixelsEveryFrame) {
+        scratchpad_packed_array_ = readPixels(); // assign to a scratchpad to make sure readPixels() doesn't get optimized out
+    }
+}
+
+SpPackedArray USpSceneCaptureComponent2D::readPixels()
+{
+    SP_ASSERT(IsInitialized());
+    SP_ASSERT(Height >= 0);
+    SP_ASSERT(Width >= 0);
+    SP_ASSERT(NumChannelsPerPixel == 4);
+
+    SpPackedArray packed_array;
+
+    SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
+    uint64_t num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
+
+    packed_array.shape_ = {static_cast<uint64_t>(Height), static_cast<uint64_t>(Width), static_cast<uint64_t>(NumChannelsPerPixel)}; // explicit cast needed on Windows
+    packed_array.data_type_ = channel_data_type;
+
+    void* dest_ptr = nullptr;
+    if (bUseSharedMemory) {
+        packed_array.view_ = shared_memory_view_.data_;
+        packed_array.data_source_ = SpArrayDataSource::Shared;
+        packed_array.shared_memory_name_ = shared_memory_view_.name_;
+        packed_array.shared_memory_usage_flags_ = shared_memory_view_.usage_flags_;
+        dest_ptr = shared_memory_view_.data_;
+    } else {
+        Std::resizeUninitialized(packed_array.data_, num_bytes);
+        packed_array.view_ = packed_array.data_.data();
+        packed_array.data_source_ = SpArrayDataSource::Internal;
+        dest_ptr = packed_array.data_.data();
+    }
+    
+    SP_ASSERT(dest_ptr);
+
+    if (bReadPixelData) {
+        FTextureRenderTargetResource* texture_render_target_resource = TextureTarget->GameThread_GetRenderTargetResource();
+        SP_ASSERT(texture_render_target_resource);
+
+        // ReadPixels assumes 4 channels per pixel, 1 uint8 per channel
+        if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::UInt8) {
+
+            FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(ERangeCompressionMode::RCM_UNorm);
+            if (bOverrideSetLinearToGamma) {
+                read_surface_flags.SetLinearToGamma(bSetLinearToGamma);
+            }
+
+            UnrealArrayUpdateDataPtrScope scope(scratchpad_array_color_, dest_ptr, num_bytes);
+            bool success = texture_render_target_resource->ReadPixels(scratchpad_array_color_, read_surface_flags);
+            SP_ASSERT(success);
+
+        // ReadFloat16Pixels assumes 4 channels per pixel, 1 float16 per channel
+        } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float16) {
+
+            // we never want to change floating point values when reading
+            FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(ERangeCompressionMode::RCM_MinMax);
+            read_surface_flags.SetLinearToGamma(false);
+
+            UnrealArrayUpdateDataPtrScope scope(scratchpad_array_float_16_color_, dest_ptr, num_bytes);
+            bool success = texture_render_target_resource->ReadFloat16Pixels(scratchpad_array_float_16_color_, read_surface_flags);
+            SP_ASSERT(success);
+
+        // ReadLinearColorPixels assumes 4 channels per pixel, 1 float32 per channel
+        } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32) {
+            SP_ASSERT(BOOST_OS_WINDOWS, "ERROR: NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32 is only supported on Windows.");
+
+            // we never want to change floating point values when reading
+            FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(ERangeCompressionMode::RCM_MinMax);
+            read_surface_flags.SetLinearToGamma(false);
+
+            UnrealArrayUpdateDataPtrScope scope(scratchpad_array_linear_color_, dest_ptr, num_bytes);
+            bool success = texture_render_target_resource->ReadLinearColorPixels(scratchpad_array_linear_color_, read_surface_flags);
+            SP_ASSERT(success);
+
+        } else {
+            SP_ASSERT(false);
+        }
+    }
+
+    return packed_array;
+}
+
+void USpSceneCaptureComponent2D::updateFrameTime()
+{
+    std::chrono::time_point current_time_point = std::chrono::high_resolution_clock::now();
+    double time_delta_seconds = std::chrono::duration<double>(current_time_point - previous_time_point_).count();
+    previous_time_deltas_.push_back(time_delta_seconds);
+    previous_time_point_ = current_time_point;
+
+    frame_index_++;
+    int num_samples_per_print_statement = 100;
+    if (frame_index_ % num_samples_per_print_statement == 0) {
+        double time_delta_average_seconds = std::accumulate(previous_time_deltas_.begin(), previous_time_deltas_.end(), 0.0) / previous_time_deltas_.size();
+        SP_LOG("Time delta (milliseconds): ", 1000.0*time_delta_average_seconds, " (", 1.0/time_delta_average_seconds, " frames per second)");
+        frame_index_ = 0;
+    }
 }

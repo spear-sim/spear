@@ -243,6 +243,9 @@ private:
         void* user_data_ = nullptr;
     };
 
+    std::string getManagerName() const;
+    std::string getProxyComponentName(uint32_t id) const;
+
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
     bool bIsInitialized = false;
 
@@ -254,9 +257,6 @@ private:
 
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
     TArray<FString> RegisteredProxyComponentDescNames;
-
-    std::string getManagerName() const;
-    std::string getProxyComponentName(uint32_t id) const;
 
     template <CComponent TComponent>
     static std::vector<TComponent*> getComponents(const std::vector<AActor*>& actors)
