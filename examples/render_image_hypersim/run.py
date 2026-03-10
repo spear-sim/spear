@@ -57,24 +57,10 @@ semantic_instance_categories = [
 ]
 
 def get_object_ids_uint8_as_rgba(object_ids_uint8):
-    if sys.platform == "win32":
-        return object_ids_uint8[:,:,[2,1,0,3]].copy() # even though we specify RGBA as our object ID texture format, it gets returned from the GPU as BGRA on Windows
-    elif sys.platform == "darwin":
-        return object_ids_uint8
-    elif sys.platform == "linux":
-        return object_ids_uint8
-    else:
-        assert False
+    return object_ids_uint8[:,:,[2,1,0,3]].copy() # even though we specify RGBA as our object ID texture format, it gets returned from the GPU as BGRA
 
 def get_object_ids_uint8_as_bgra(object_ids_uint8):
-    if sys.platform == "win32":
-        return object_ids_uint8 # even though we specify RGBA as our texture format as our object ID texture format, it gets returned from the GPU as BGRA on Windows
-    elif sys.platform == "darwin":
-        return object_ids_uint8[:,:,[2,1,0,3]].copy()
-    elif sys.platform == "linux":
-        return object_ids_uint8[:,:,[2,1,0,3]].copy()
-    else:
-        assert False
+    return object_ids_uint8 # even though we specify RGBA as our object ID texture format, it gets returned from the GPU as BGRA
 
 def get_object_ids_float16_as_rgba(object_ids_float16):
     return np.round(object_ids_float16*255.0).astype(np.uint8)
