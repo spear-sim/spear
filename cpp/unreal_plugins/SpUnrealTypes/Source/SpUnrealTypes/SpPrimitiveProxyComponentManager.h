@@ -44,7 +44,7 @@ struct FComponentAndMaterialDesc
     GENERATED_BODY()
 
     UPROPERTY()
-    uint32 Id = 0;
+    uint32 ComponentAndMaterialId = 0;
     UPROPERTY()
     uint64 Component = 0;
     UPROPERTY()
@@ -52,9 +52,13 @@ struct FComponentAndMaterialDesc
 
     // Optional debug info
     UPROPERTY()
+    FString ComponentName;
+    UPROPERTY()
     FString ComponentPtrString;
     UPROPERTY()
     FString ComponentPropertiesString;
+    UPROPERTY()
+    FString MaterialName;
     UPROPERTY()
     FString MaterialPtrString;
     UPROPERTY()
@@ -75,13 +79,15 @@ public:
 
         for (auto& [id, desc] : id_to_component_and_material_desc_map_) {
             FComponentAndMaterialDesc component_and_material_desc;
-            component_and_material_desc.Id = id;
+            component_and_material_desc.ComponentAndMaterialId = id;
             component_and_material_desc.Component = reinterpret_cast<uint64>(desc.component_);
             component_and_material_desc.Material = reinterpret_cast<uint64>(desc.material_);
 
             if (bIncludeDebugInfo) {
+                component_and_material_desc.ComponentName = Unreal::toFString(UnrealUtils::getStableName(desc.component_));
                 component_and_material_desc.ComponentPtrString = Unreal::toFString(Std::toStringFromPtr(desc.component_));
                 component_and_material_desc.ComponentPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.component_));
+                component_and_material_desc.MaterialName = desc.material_->GetName();
                 component_and_material_desc.MaterialPtrString = Unreal::toFString(Std::toStringFromPtr(desc.material_));
                 component_and_material_desc.MaterialPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.material_));
             }
