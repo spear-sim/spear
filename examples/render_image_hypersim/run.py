@@ -24,7 +24,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--teaser", action="store_true")
 args = parser.parse_args()
 
-np.random.seed(0)
+np.random.seed(7)
 
 R_camera_from_world = None
 M_hypersim_camera_from_unreal_camera = np.array([[  0, 1, 0],
@@ -32,6 +32,7 @@ M_hypersim_camera_from_unreal_camera = np.array([[  0, 1, 0],
                                                  [ -1, 0, 0]], dtype=np.float32)
 
 foreground_actor_name      = "Meshes/05_chair/LivingRoom_Chair_02"
+# foreground_actor_name      = "Meshes/40_otherprop/Vase_03"
 foreground_actor_proxy_ids = None
 
 semantic_instance_categories = [
