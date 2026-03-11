@@ -20,10 +20,10 @@ asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
 unreal_editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
 level_editor_subsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
 
-editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
-
 
 def process_scene():
+    
+    editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
     spear.log("Processing scene: ", editor_world_name)
 
     actors = spear.utils.editor_utils.find_actors()
@@ -96,8 +96,8 @@ def generate_unreal_geometry(actor):
         mesh.visual = trimesh.visual.ColorVisuals()
 
         obj_dir_suffix = os.path.join(*static_mesh_asset_path.parts[1:-1])
-        numerical_parity_obj_dir = os.path.realpath(os.path.join(args.export_dir, "scenes", editor_world_name, "unreal_geometry", "numerical_parity", obj_dir_suffix))
-        numerical_parity_obj_path = os.path.realpath(os.path.join(args.export_dir, "scenes", editor_world_name, "unreal_geometry", "numerical_parity", obj_path_suffix))
+        numerical_parity_obj_dir = os.path.realpath(os.path.join(args.export_dir, "unreal_geometry", "numerical_parity", obj_dir_suffix))
+        numerical_parity_obj_path = os.path.realpath(os.path.join(args.export_dir, "unreal_geometry", "numerical_parity", obj_path_suffix))
         os.makedirs(numerical_parity_obj_dir, exist_ok=True)
         with open(numerical_parity_obj_path, "w"):
             mesh.export(numerical_parity_obj_path, "obj")

@@ -169,7 +169,7 @@ if __name__ == "__main__":
     mj_model.vis.headlight.ambient = [0.4, 0.4, 0.4]
 
     # launch MuJoCo viewer
-    mj_viewer = mujoco.viewer.launch_passive(mj_model, mj_data)
+    mj_viewer = mujoco.viewer.launch_passive(mj_model, mj_data, show_right_ui=False)
 
     # initialize MuJoCo camera (not needed when launching the viewer through the command-line, but needed when using launch_passive)
 

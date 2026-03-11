@@ -347,7 +347,7 @@ void USpSceneCaptureComponent2D::beginFrameHandler()
     }
 
     if (bReadPixelsEveryFrame) {
-        scratchpad_packed_array_ = readPixels(); // assign to a scratchpad to make sure readPixels() doesn't get optimized out
+        scratchpad_packed_array_ = readPixels(); // assign to a scratchpad to make sure the call to readPixels() doesn't get optimized out
     }
 }
 

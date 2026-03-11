@@ -31,7 +31,7 @@ When executing this pipeline, specifying the optional `--visual-parity-with-unre
 python tools/run_editor_script.py --unreal-engine-dir path/to/UE_5.7 --launch-mode full --render-offscreen --script export_unreal_metadata/run.py --export-dir path/to/spear-pipeline/scenes/apartment_0000
 
 # generate Unreal geometry
-python tools/run_editor_script.py --unreal-engine-dir path/to/UE_5.7 --launch-mode full --render-offscreen --script export_unreal_geometry/run.py --export-dir path/to/spear-pipeline/scenes/apartment_0000
+python tools/run_editor_script.py --unreal-engine-dir path/to/UE_5.7 --launch-mode full --render-offscreen --script export_unreal_geometry.py --export-dir path/to/spear-pipeline/scenes/apartment_0000
 
 # visualize Unreal geometry (optional)
 python pipeline/visualize_unreal_geometry.py --export-dir path/to/spear-pipeline/scenes/apartment_0000 --visual-parity-with-unreal --ignore-actors Meshes/22_ceiling/Ceiling

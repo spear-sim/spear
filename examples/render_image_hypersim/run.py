@@ -17,11 +17,14 @@ import PIL
 import re
 import shutil
 import spear
+import sys
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--teaser", action="store_true")
 args = parser.parse_args()
+
+np.random.seed(7)
 
 R_camera_from_world = None
 M_hypersim_camera_from_unreal_camera = np.array([[  0, 1, 0],
@@ -29,6 +32,7 @@ M_hypersim_camera_from_unreal_camera = np.array([[  0, 1, 0],
                                                  [ -1, 0, 0]], dtype=np.float32)
 
 foreground_actor_name      = "Meshes/05_chair/LivingRoom_Chair_02"
+# foreground_actor_name      = "Meshes/40_otherprop/Vase_03"
 foreground_actor_proxy_ids = None
 
 semantic_instance_categories = [
@@ -52,6 +56,26 @@ semantic_instance_categories = [
     "Meshes/38_otherstructure",
     "Meshes/40_otherprop"
 ]
+
+def get_object_ids_uint8_as_rgba(object_ids_uint8):
+    return object_ids_uint8[:,:,[2,1,0,3]].copy() # even though we specify RGBA as our object ID texture format, it gets returned from the GPU as BGRA
+
+def get_object_ids_uint8_as_bgra(object_ids_uint8):
+    return object_ids_uint8 # even though we specify RGBA as our object ID texture format, it gets returned from the GPU as BGRA
+
+def get_object_ids_float16_as_rgba(object_ids_float16):
+    return np.round(object_ids_float16*255.0).astype(np.uint8)
+
+def get_object_ids_float16_as_bgra(object_ids_float16):
+    return np.round(object_ids_float16[:,:,[2,1,0,3]].copy()*255.0).astype(np.uint8)
+
+def get_object_ids_uint8_as_uint32(object_ids_uint8):
+    object_ids_bgra = get_object_ids_uint8_as_bgra(object_ids_uint8)
+    return object_ids_bgra.view(np.uint32).reshape(object_ids_uint8.shape[:2]) & 0x00ffffff
+
+def get_object_ids_float16_as_uint32(object_ids_float16):
+    object_ids_bgra = get_object_ids_float16_as_bgra(object_ids_float16)
+    return object_ids_bgra.view(np.uint32).reshape(object_ids_float16.shape[:2]) & 0x00ffffff
 
 component_descs = \
 [
@@ -98,10 +122,16 @@ component_descs = \
         "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]]/100.0, 0.0, 1.0)
     },
     {
-        "name": "object_ids",
-        "long_name": "DefaultSceneRoot.object_ids_",
+        "name": "object_ids_uint8",
+        "long_name": "DefaultSceneRoot.object_ids_uint8_",
         "spatial_supersampling_factor": 1,
-        "visualize_func": lambda data : np.isin(data.view(np.uint32).reshape(data.shape[:2]) & 0x00ffffff, foreground_actor_proxy_ids)*255 # reinterpret little-endian BGRA as uint32 and set A=0x00
+        "visualize_func": lambda data : get_object_ids_uint8_as_rgba(data)
+    },
+    {
+        "name": "object_ids_float16",
+        "long_name": "DefaultSceneRoot.object_ids_float16_",
+        "spatial_supersampling_factor": 1,
+        "visualize_func": lambda data : get_object_ids_float16_as_rgba(data)
     },
     {
         "name": "diffuse_color",
@@ -208,21 +238,29 @@ if __name__ == "__main__":
         sp_object_ids_proxy_component_manager.Initialize()
         component_and_material_descs = sp_object_ids_proxy_component_manager.GetComponentAndMaterialDescs()
 
-        # force refreshing all object IDs to make sure that a different set of uint8 IDs will be rendered correctly
-        # for i in range(100):
-        #     sp_object_ids_proxy_component_manager.Update()
-
         # find actors and components
         actors = game.unreal_service.find_actors_as_dict()
         semantic_instances = { name: actor for name, actor in actors.items() if any([ name.startswith(c) for c in semantic_instance_categories ]) }
         semantic_instance_uobjects = np.array([-1] + [ semantic_instances[k].uobject for k in sorted(semantic_instances.keys()) ])
 
+        # find semantic instances
+        actor_uobjects = game.unreal_service.find_actors_as_dict(as_handle=True)
+        actor_name_to_semantic_instance_uobject_map = { actor_name: actor_uobject for actor_name, actor_uobject in actor_uobjects.items() if any([ actor_name.startswith(c) for c in semantic_instance_categories ]) }
+        semantic_instance_uobjects = np.array([-1] + sorted(actor_name_to_semantic_instance_uobject_map.values()))
+
+        # find materials
+        material_uobjects = np.unique([-1] + sorted([ desc["material"] for desc in component_and_material_descs ]))
+
         # get proxy ID maps
-        proxy_id_to_component_map = { desc["id"]: game.get_unreal_object(uobject=desc["component"]) for desc in component_and_material_descs }
-        proxy_id_to_actor_map = { proxy_id: component.GetOwner() for proxy_id, component in proxy_id_to_component_map.items() }
-        proxy_id_to_semantic_instance_id_map = { proxy_id: int(np.where(actor.uobject == semantic_instance_uobjects)[0][0]) for proxy_id, actor in proxy_id_to_actor_map.items() if len(np.where(actor.uobject == semantic_instance_uobjects)[0]) > 0 }
-        proxy_id_to_actor_name_map = { proxy_id: game.unreal_service.get_stable_name_for_actor(actor=actor) for proxy_id, actor in proxy_id_to_actor_map.items() if game.unreal_service.has_stable_name(actor=actor) }
+        proxy_id_to_component_map = { desc["componentAndMaterialId"]: game.get_unreal_object(uobject=desc["component"]) for desc in component_and_material_descs }
+        proxy_id_to_material_uobject_map = { desc["componentAndMaterialId"]: desc["material"] for desc in component_and_material_descs }
+
+        # get derived maps
+        proxy_id_to_actor_uobject_map = { proxy_id: component.GetOwner(as_handle=True) for proxy_id, component in proxy_id_to_component_map.items() }
+        proxy_id_to_semantic_instance_id_map = { proxy_id: int(np.where(actor_uobject == semantic_instance_uobjects)[0][0]) for proxy_id, actor_uobject in proxy_id_to_actor_uobject_map.items() if len(np.where(actor_uobject == semantic_instance_uobjects)[0]) > 0 }
+        proxy_id_to_actor_name_map = { proxy_id: game.unreal_service.get_stable_name_for_actor(actor=actor_uobject) for proxy_id, actor_uobject in proxy_id_to_actor_uobject_map.items() if game.unreal_service.has_stable_name(actor=actor_uobject) }
         proxy_id_to_semantic_id_map = { proxy_id: int(re.search(r"Meshes/(\d+)_", stable_name).group(1)) for proxy_id, stable_name in proxy_id_to_actor_name_map.items() if re.search(r"Meshes/(\d+)_", stable_name) is not None }
+        proxy_id_to_material_id_map = { proxy_id: np.where(material_uobject == material_uobjects)[0][0] for proxy_id, material_uobject in proxy_id_to_material_uobject_map.items() }
 
         # spawn camera sensor
         bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
@@ -312,7 +350,6 @@ if __name__ == "__main__":
             component_desc["data"] = data_bundle["arrays"]["data"]
 
     # get proxy IDs for foreground actor
-    foreground_actor = actors[foreground_actor_name]
     foreground_actor_proxy_ids = np.array([ proxy_id for proxy_id, actor_name in proxy_id_to_actor_name_map.items() if actor_name == foreground_actor_name ])
     spear.log("foreground_actor_proxy_ids: ", foreground_actor_proxy_ids)
 
@@ -327,6 +364,12 @@ if __name__ == "__main__":
     for i in range(1, num_semantic_instances):
         semantic_instance_colors[i] = np.round(np.array(colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0))*255.0).astype(np.uint8)
 
+    # generate colors for materials
+    num_materials = len(material_uobjects)
+    material_colors = np.zeros((num_materials, 3), dtype=np.uint8)
+    for i in range(1, num_materials):
+        material_colors[i] = np.round(np.array(colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0))*255.0).astype(np.uint8)
+
     # save an image for each component using the component's visualizer function
     for component_desc in component_descs:
         data = component_desc["data"]
@@ -338,8 +381,16 @@ if __name__ == "__main__":
     # create component desc map for saving more advanced derived images
     component_desc_map = { desc["name"]: desc for desc in component_descs }
 
+    # proxy IDs
+    proxy_ids = get_object_ids_uint8_as_uint32(component_desc_map["object_ids_uint8"]["data"])
+
+    # foreground
+    foreground = np.isin(proxy_ids, foreground_actor_proxy_ids)*255
+    image_file = os.path.realpath(os.path.join(images_dir, "foreground.png"))
+    spear.log("Saving image: ", image_file)
+    plt.imsave(image_file, foreground)
+
     # semantic
-    proxy_ids = component_desc_map["object_ids"]["data"].view(np.uint32).reshape(component_desc_map["object_ids"]["data"].shape[:2]) & 0x00ffffff
     semantic_ids = np.zeros_like(proxy_ids)
     for proxy_id, semantic_id in proxy_id_to_semantic_id_map.items():
         semantic_ids[proxy_id == proxy_ids] = semantic_id
@@ -349,7 +400,6 @@ if __name__ == "__main__":
     plt.imsave(image_file, semantic)
 
     # semantic instance
-    proxy_ids = component_desc_map["object_ids"]["data"].view(np.uint32).reshape(component_desc_map["object_ids"]["data"].shape[:2]) & 0x00ffffff
     semantic_instance_ids = np.zeros_like(proxy_ids)
     for proxy_id, semantic_instance_id in proxy_id_to_semantic_instance_id_map.items():
         semantic_instance_ids[proxy_id == proxy_ids] = semantic_instance_id
@@ -357,6 +407,15 @@ if __name__ == "__main__":
     image_file = os.path.realpath(os.path.join(images_dir, "semantic_instance.png"))
     spear.log("Saving image: ", image_file)
     plt.imsave(image_file, semantic_instance)
+
+    # material
+    material_ids = np.zeros_like(proxy_ids)
+    for proxy_id, material_id in proxy_id_to_material_id_map.items():
+        material_ids[proxy_id == proxy_ids] = material_id
+    material = material_colors[material_ids]
+    image_file = os.path.realpath(os.path.join(images_dir, "material.png"))
+    spear.log("Saving image: ", image_file)
+    plt.imsave(image_file, material)
 
     # diffuse_reflectance
     gamma = 1.0/2.2
@@ -373,7 +432,6 @@ if __name__ == "__main__":
 
     # diffuse_illumination
     spatial_supersampling_factor = component_desc_map["lighting_only_diffuse_color"]["spatial_supersampling_factor"]
-    proxy_ids = component_desc_map["object_ids"]["data"].view(np.uint32).reshape(component_desc_map["object_ids"]["data"].shape[:2]) & 0x00ffffff
     mask = proxy_ids != 0
     mask = np.repeat(np.repeat(mask, spatial_supersampling_factor, axis=0), spatial_supersampling_factor, axis=1)
     lighting_only_diffuse_color = component_desc_map["lighting_only_diffuse_color"]["data"][:,:,[0,1,2]].astype(np.float32)
@@ -389,7 +447,6 @@ if __name__ == "__main__":
 
     # diffuse_and_specular
     spatial_supersampling_factor = component_desc_map["diffuse_color"]["spatial_supersampling_factor"]
-    proxy_ids = component_desc_map["object_ids"]["data"].view(np.uint32).reshape(component_desc_map["object_ids"]["data"].shape[:2]) & 0x00ffffff
     mask = proxy_ids != 0
     mask = np.repeat(np.repeat(mask, spatial_supersampling_factor, axis=0), spatial_supersampling_factor, axis=1)
     diffuse_and_specular = component_desc_map["diffuse_and_specular_post_process_input_2"]["data"][:,:,[0,1,2]].astype(np.float32)
