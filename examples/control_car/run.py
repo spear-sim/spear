@@ -17,6 +17,8 @@ if __name__ == "__main__":
     instance = spear.Instance(config=config)
     game = instance.get_game()
 
+    # we use single_step=True throughout because it smooths out the motion blur on the offroad vehicle wheels
+
     with instance.begin_frame():
 
         # get UGameplayStatics
@@ -52,7 +54,7 @@ if __name__ == "__main__":
         # chaos_vehicle_movement_component = game.unreal_service.get_component_by_class(actor=car, uclass="UChaosVehicleMovementComponent")
         #
 
-    with instance.end_frame():
+    with instance.end_frame(single_step=True):
         pass
 
     # set throttle to 1.0 (value will persist across frames until reset)
@@ -65,21 +67,28 @@ if __name__ == "__main__":
         # chaos_vehicle_movement_component.SetThrottleInput(Throttle=1.0)
         #
 
+        action_name = "IA_Throttle"
+        action_trigger_event = "Triggered"
+        action_value_type = "Axis1D"
+        action_value = {"X": 1.0, "Y": 0.0, "Z": 0.0}
+
+        spear.log(f'Injecting action: "{action_name}" ({action_value_type}, {action_trigger_event}, {action_value})')
+
         instance.enhanced_input_service.inject_input_for_actor(
             actor=car,
-            input_action_name="IA_Throttle",
-            trigger_event="Triggered",
-            input_action_value={"ValueType": "Axis1D", "Value": {"X": 1.0, "Y": 0.0, "Z": 0.0}},
-            input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
+            input_action_name=action_name,
+            trigger_event=action_trigger_event,
+            input_action_value={"ValueType": action_value_type, "Value": action_value},
+            input_action_instance={"TriggerEvent": action_trigger_event, "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
-    with instance.end_frame():
+    with instance.end_frame(single_step=True):
         gameplay_statics.SetGamePaused(bPaused=True)
 
     # drive for multiple frames
     for _ in range(100):
         with instance.begin_frame():
             gameplay_statics.SetGamePaused(bPaused=False)
-        with instance.end_frame():
+        with instance.end_frame(single_step=True):
             gameplay_statics.SetGamePaused(bPaused=True)
 
     # set steering to 1.0 (value will persist across frames until reset)
@@ -89,107 +98,96 @@ if __name__ == "__main__":
         #
         # If we wanted to control the car by calling its UFUNCTIONS directly, we could do so as follows:
         #
-        # chaos_vehicle_movement_component.SetThrottleInput(Throttle=1.0)
+        # chaos_vehicle_movement_component.SetSteeringInput(Steering=1.0)
         #
+
+        action_name = "IA_Steering"
+        action_trigger_event = "Triggered"
+        action_value_type = "Axis1D"
+        action_value = {"X": 1.0, "Y": 0.0, "Z": 0.0}
+
+        spear.log(f'Injecting action: "{action_name}" ({action_value_type}, {action_trigger_event}, {action_value})')
 
         instance.enhanced_input_service.inject_input_for_actor(
             actor=car,
-            input_action_name="IA_Steering",
-            trigger_event="Triggered",
-            input_action_value={"ValueType": "Axis1D", "Value": {"X": 1.0, "Y": 0.0, "Z": 0.0}},
-            input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
+            input_action_name=action_name,
+            trigger_event=action_trigger_event,
+            input_action_value={"ValueType": action_value_type, "Value": action_value},
+            input_action_instance={"TriggerEvent": action_trigger_event, "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
-    with instance.end_frame():
+    with instance.end_frame(single_step=True):
         gameplay_statics.SetGamePaused(bPaused=True)
 
     # drive for multiple frames
-    for _ in range(100):
+    for _ in range(50):
         with instance.begin_frame():
             gameplay_statics.SetGamePaused(bPaused=False)
-        with instance.end_frame():
+        with instance.end_frame(single_step=True):
             gameplay_statics.SetGamePaused(bPaused=True)
-
-    # reset
-    with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
-        instance.enhanced_input_service.inject_input_for_actor(
-            actor=car,
-            input_action_name="IA_Reset",
-            trigger_event="Triggered",
-            input_action_value={},
-            input_action_instance={})
-
-    with instance.end_frame():
-        gameplay_statics.SetGamePaused(bPaused=True)
 
     # set throttle to 1.0 and steering to -1.0 (values will persist across frames until reset)
     with instance.begin_frame():
         gameplay_statics.SetGamePaused(bPaused=False)
 
-        #
-        # If we wanted to control the car by calling its UFUNCTIONS directly, we could do so as follows:
-        #
-        # chaos_vehicle_movement_component.SetThrottleInput(Throttle=1.0)
-        # chaos_vehicle_movement_component.SetSteeringInput(Steering=1.0)
-        #
+        action_name = "IA_Steering"
+        action_trigger_event = "Triggered"
+        action_value_type = "Axis1D"
+        action_value = {"X": -1.0, "Y": 0.0, "Z": 0.0}
+
+        spear.log(f'Injecting action: "{action_name}" ({action_value_type}, {action_trigger_event}, {action_value})')
 
         instance.enhanced_input_service.inject_input_for_actor(
             actor=car,
-            input_action_name="IA_Throttle",
-            trigger_event="Triggered",
-            input_action_value={"ValueType": "Axis1D", "Value": {"X": 1.0, "Y": 0.0, "Z": 0.0}},
-            input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
+            input_action_name=action_name,
+            trigger_event=action_trigger_event,
+            input_action_value={"ValueType": action_value_type, "Value": action_value},
+            input_action_instance={"TriggerEvent": action_trigger_event, "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
-        instance.enhanced_input_service.inject_input_for_actor(
-            actor=car,
-            input_action_name="IA_Steering",
-            trigger_event="Triggered",
-            input_action_value={"ValueType": "Axis1D", "Value": {"X": -1.0, "Y": 0.0, "Z": 0.0}},
-            input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
-
-    with instance.end_frame():
+    with instance.end_frame(single_step=True):
         gameplay_statics.SetGamePaused(bPaused=True)
 
     # drive for multiple frames
-    for _ in range(100):
+    for _ in range(50):
         with instance.begin_frame():
             gameplay_statics.SetGamePaused(bPaused=False)
-        with instance.end_frame():
+        with instance.end_frame(single_step=True):
             gameplay_statics.SetGamePaused(bPaused=True)
 
     # set throttle to 0.0 (value will persist across frames until reset)
     with instance.begin_frame():
         gameplay_statics.SetGamePaused(bPaused=False)
 
-        #
-        # If we wanted to control the car by calling its UFUNCTIONS directly, we would do so as follows:
-        #
-        # chaos_vehicle_movement_component.SetThrottleInput(Throttle=1.0)
-        #
+        action_name = "IA_Throttle"
+        action_trigger_event = "Triggered"
+        action_value_type = "Axis1D"
+        action_value = {"X": 0.0, "Y": 0.0, "Z": 0.0}
+
+        spear.log(f'Injecting action: "{action_name}" ({action_value_type}, {action_trigger_event}, {action_value})')
 
         instance.enhanced_input_service.inject_input_for_actor(
             actor=car,
-            input_action_name="IA_Throttle",
-            trigger_event="Triggered",
-            input_action_value={"ValueType": "Axis1D", "Value": {"X": 0.0, "Y": 0.0, "Z": 0.0}},
-            input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
+            input_action_name=action_name,
+            trigger_event=action_trigger_event,
+            input_action_value={"ValueType": action_value_type, "Value": action_value},
+            input_action_instance={"TriggerEvent": action_trigger_event, "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
-    with instance.end_frame():
+    with instance.end_frame(single_step=True):
         gameplay_statics.SetGamePaused(bPaused=True)
 
     # drive for multiple frames
     for _ in range(100):
         with instance.begin_frame():
             gameplay_statics.SetGamePaused(bPaused=False)
-        with instance.end_frame():
+        with instance.end_frame(single_step=True):
             gameplay_statics.SetGamePaused(bPaused=True)
 
     # unpause now that we're finished controlling the car
     with instance.begin_frame():
         gameplay_statics.SetGamePaused(bPaused=False)
-    with instance.end_frame():
+    with instance.end_frame(single_step=True):
         pass
 
+    instance.flush()
     instance.close()
 
     spear.log("Done.")
