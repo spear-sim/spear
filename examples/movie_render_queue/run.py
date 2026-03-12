@@ -51,7 +51,7 @@ if __name__ == "__main__":
         # game.unreal_service.set_console_variable_value(cvar=ray_tracing_enable_cvar, value=1)
         # movie_pipeline_primary_config = game.unreal_service.load_object(uclass="UMoviePipelinePrimaryConfig", name="/SpContent/Cinematic/MPPC_DefaultConfigWithPathTracer.MPPC_DefaultConfigWithPathTracer")
         # spear.log("movie_pipeline_primary_config: ", movie_pipeline_primary_config)
-        # pprint.pprint(game.unreal_service.get_properties_from_object(uobject=movie_pipeline_primary_config))
+        # pprint.pprint(movie_pipeline_primary_config.get_properties())
 
         # set job's configuration
         movie_pipeline_executor_job.SetConfiguration(InPreset=movie_pipeline_primary_config)
@@ -81,5 +81,7 @@ if __name__ == "__main__":
     #     game.unreal_service.set_console_variable_value(cvar=ray_tracing_enable_cvar, value=ray_tracing_enable_cvar_value)
     # with instance.end_frame():
     #     pass
+
+    instance.close()
 
     spear.log("Done.")

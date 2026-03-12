@@ -104,6 +104,12 @@ component_descs = \
         "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
     },
     {
+        "name": "specular_for_lighting",
+        "long_name": "DefaultSceneRoot.specular_for_lighting_",
+        "spatial_supersampling_factor": 1,
+        "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
+    },
+    {
         "name": "sp_camera_normal",
         "long_name": "DefaultSceneRoot.world_normal_",
         "spatial_supersampling_factor": 1,

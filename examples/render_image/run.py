@@ -13,6 +13,11 @@ import os
 import spear
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--teaser", action="store_true")
+args = parser.parse_args()
+
+
 if __name__ == "__main__":
 
     # create instance
@@ -50,8 +55,13 @@ if __name__ == "__main__":
         sp_game_viewport = game.get_unreal_object(uclass="USpGameViewportClient")
         return_values = sp_game_viewport.GetViewportSize(GameViewportClient=game_viewport_client, as_dict=True)
 
-        viewport_size_x = return_values["ViewportSize"]["x"]
-        viewport_size_y = return_values["ViewportSize"]["y"]
+        if args.teaser:
+            viewport_size_x = 1920
+            viewport_size_y = 1080
+        else:
+            viewport_size_x = return_values["ViewportSize"]["x"]
+            viewport_size_y = return_values["ViewportSize"]["y"]
+
         viewport_aspect_ratio = viewport_size_x/viewport_size_y # see Engine/Source/Editor/UnrealEd/Private/EditorViewportClient.cpp:2130 for evidence that Unreal's aspect ratio convention is x/y
         fov = view_target_pov["fOV"]*math.pi/180.0
         half_fov = fov/2.0
