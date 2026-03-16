@@ -150,6 +150,6 @@ If you find SPEAR useful in your research, please cite this repository as follow
                     AND German Ros AND Rui Tang AND Stefan Leutenegger AND Yannick
                     Hold-Geoffroy AND Kalyan Sunkavalli AND Vladlen Koltun},
     title        = {{SPEAR}: {A} Simulator for Photorealistic Embodied {AI} Research},
-    howpublished = {\url{http://github.com/spear-sim/spear}}
+    howpublished = {\url{https://github.com/spear-sim/spear}}
 }
 ```
