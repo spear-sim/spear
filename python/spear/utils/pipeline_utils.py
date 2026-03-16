@@ -130,9 +130,6 @@ def compose_transforms(transforms):
         R_current = transform["rotation"]
         S_current = transform["scale"]
 
-        eps = 0.000001
-        assert np.all(np.diag(S_current) > eps)
-
         # This formulation for accumulating {location, rotation, scale} through the component hierarchy is not
         # immediately obvious to me, but it matches the behavior of USceneComponent and FTransform, see:
         #     Engine/Source/Runtime/Engine/Private/Components/SceneComponent.cpp
