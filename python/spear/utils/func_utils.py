@@ -595,9 +595,9 @@ def to_rotator_from_numpy_matrix(matrix):
     else:
         assert False
     scipy_roll, scipy_pitch, scipy_yaw = scipy.spatial.transform.Rotation.from_matrix(matrix).as_euler("xyz")
-    roll  = np.rad2deg(-scipy_roll)
-    pitch = np.rad2deg(-scipy_pitch)
-    yaw   = np.rad2deg(scipy_yaw)
+    roll  = float(np.rad2deg(-scipy_roll))
+    pitch = float(np.rad2deg(-scipy_pitch))
+    yaw   = float(np.rad2deg(scipy_yaw))
     return {"Roll": roll, "Pitch": pitch, "Yaw": yaw}
 
 # Convert to an Unreal rotator from a NumPy array.
@@ -613,7 +613,7 @@ def to_rotator_from_numpy_array(array_pyr):
         assert array_pyr.shape == (3,)
     else:
         assert False
-    return {"Pitch": array_pyr[0], "Yaw": array_pyr[1], "Roll": array_pyr[2]}
+    return {"Pitch": float(array_pyr[0]), "Yaw": float(array_pyr[1]), "Roll": float(array_pyr[2])}
 
 # Convert to an Unreal vector from a NumPy array or matrix and vice versa.
 def to_vector_from_numpy_array(array):
@@ -624,7 +624,7 @@ def to_vector_from_numpy_array(array):
         assert array.shape == (3,)
     else:
         assert False
-    return {"X": array[0], "Y": array[1], "Z": array[2]}
+    return {"X": float(array[0]), "Y": float(array[1]), "Z": float(array[2])}
 
 # Convert to a NumPy array from an Unreal vector.
 def to_numpy_array_from_vector(vector, as_matrix=None):

@@ -601,7 +601,7 @@ class UnrealStruct:
         meta_class_string = self._unreal_service.get_type_for_class_as_string(uclass=meta_uclass)
 
         spear.log(f"{prefix}Printing debug info: {self}")
-        spear.log(f"{prefix}    Type: {self._unreal_service.get_type_for_struct_as_string(uclass=self.ustruct)}")
+        spear.log(f"{prefix}    Type: {self._unreal_service.get_type_for_struct_as_string(ustruct=self.ustruct)}")
         spear.log(f"{prefix}    Meta type: {meta_class_string}")
 
         spear.log(f"{prefix}    Properties for type: {type_string}")

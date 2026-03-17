@@ -1,12 +1,15 @@
 __pycache__
 
-.cursor_tmp
 .DS_Store
 .ipynb_checkpoints
+.uasset
+.umap
 
 cpp/unreal_plugins/*/Binaries
 cpp/unreal_plugins/*/Intermediate
 cpp/unreal_plugins/*/ThirdParty
+
+cpp/unreal_projects/DefaultProject/Content
 
 cpp/unreal_projects/SpearSim/.vs
 cpp/unreal_projects/SpearSim/.vsconfig
@@ -14,20 +17,7 @@ cpp/unreal_projects/SpearSim/.vscode
 cpp/unreal_projects/SpearSim/Backup
 cpp/unreal_projects/SpearSim/Binaries
 cpp/unreal_projects/SpearSim/Build
-cpp/unreal_projects/SpearSim/Content/__ExternalActors__
-cpp/unreal_projects/SpearSim/Content/__ExternalObjects__
-cpp/unreal_projects/SpearSim/Content/Characters
-cpp/unreal_projects/SpearSim/Content/Humoto
-cpp/unreal_projects/SpearSim/Content/Kujiale
-cpp/unreal_projects/SpearSim/Content/LevelPrototyping
-cpp/unreal_projects/SpearSim/Content/Megascans
-cpp/unreal_projects/SpearSim/Content/Mixamo
-cpp/unreal_projects/SpearSim/Content/MSPresets
-cpp/unreal_projects/SpearSim/Content/Stanford
-cpp/unreal_projects/SpearSim/Content/StarterContent
-cpp/unreal_projects/SpearSim/Content/ThirdPerson
-cpp/unreal_projects/SpearSim/Content/Vehicles
-cpp/unreal_projects/SpearSim/Content/VehicleTemplate
+cpp/unreal_projects/SpearSim/Content
 cpp/unreal_projects/SpearSim/DerivedDataCache
 cpp/unreal_projects/SpearSim/Intermediate
 cpp/unreal_projects/SpearSim/Makefile
@@ -70,6 +60,8 @@ examples/render_image_multi_view/movie.mp4
 examples/render_image_editor/screenshot.png
 
 python_ext/BUILD
+
+third_party
 
 tmp
 
