@@ -24,7 +24,7 @@ file = __file__
 def script():
 
     instance = spear.Instance()
-    game = instance.get_game()
+    game = yield from instance.get_game_in_editor_script()
 
     # initialize actors and components
     with instance.begin_frame():
@@ -89,7 +89,7 @@ def script():
     # let temporal anti-aliasing etc accumulate additional information across multiple frames, and
     # inserting an extra frame can fix occasional render-to-texture initialization issues on macOS
     for i in range(1):
-        yield from instance.flush_in_editor()
+        yield from instance.flush_in_editor_script()
 
     # get rendered frame
     with instance.begin_frame():

@@ -193,7 +193,7 @@ class NavigationService(spear.Service):
             dest_byte_order=self.entry_point_caller.engine_service.get_byte_order(),
             usage_flags=["Arg"])
 
-        nav_agent_property_strings = spear.to_json_strings(nav_agent_properties)
+        nav_agent_property_strings = spear.to_json_strings(objs=nav_agent_properties)
 
         # define convert func
         def convert_func(result_packed_arrays):
