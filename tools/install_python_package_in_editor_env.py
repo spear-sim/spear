@@ -29,7 +29,8 @@ if __name__ == "__main__":
         assert False
 
     python_package_dirs = [
-        os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "python"))]
+        os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "python")),
+        os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "python[editor]"))]
 
     for python_package_dir in python_package_dirs:
         # see https://dev.epicgames.com/community/learning/tutorials/lJly/python-install-modules-with-pip-unreal-engine-5-tutorial for more details

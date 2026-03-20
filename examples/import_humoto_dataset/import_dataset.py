@@ -7,7 +7,6 @@ import argparse
 import os
 import posixpath
 import spear
-import spear.utils.editor_utils
 import unreal
 
 
@@ -161,11 +160,11 @@ if __name__ == "__main__":
             # remove the spawned actor from the current level because it spawns automatically
             for actor in unreal.EditorLevelLibrary.get_all_level_actors():
                 if actor.get_class() == blueprint_asset.generated_class():
-                    spear.log("        Destroying actor: ", spear.utils.editor_utils.get_stable_name_for_actor(actor))
+                    spear.log("        Destroying actor: ", spear.editor.get_stable_name_for_actor(actor=actor))
                     unreal.EditorLevelLibrary.destroy_actor(actor)
 
             # modify the skeletal mesh components in the imported blueprint
-            blueprint_subobject_descs = spear.utils.editor_utils.get_subobject_descs_for_blueprint_asset(blueprint_asset=blueprint_asset)
+            blueprint_subobject_descs = spear.editor.get_subobject_descs_for_blueprint_asset(blueprint_asset=blueprint_asset)
             assert len(blueprint_subobject_descs) >= 2
             assert isinstance(blueprint_subobject_descs[0]["object"], unreal.Actor) # the 0th entry always refers to the actor itself
 

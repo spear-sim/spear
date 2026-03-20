@@ -5,7 +5,6 @@
 
 import argparse
 import spear
-import spear.utils.editor_utils
 import unreal
 
 
@@ -26,10 +25,10 @@ if __name__ == "__main__":
 
     scene_modified = False
 
-    for actor in spear.utils.editor_utils.find_actors():
-        spear.log("    Processing actor: ", spear.utils.editor_utils.get_stable_name_for_actor(actor=actor))
+    for actor in spear.editor.find_actors():
+        spear.log("    Processing actor: ", spear.editor.get_stable_name_for_actor(actor=actor))
 
-        actor_subobject_descs = spear.utils.editor_utils.get_subobject_descs_for_instance(instance=actor)
+        actor_subobject_descs = spear.editor.get_subobject_descs_for_instance(instance=actor)
         assert len(actor_subobject_descs) >= 1
         assert isinstance(actor_subobject_descs[0]["object"], unreal.Actor) # the 0th entry always refers to the actor itself
 
@@ -44,7 +43,7 @@ if __name__ == "__main__":
             spear.log("        Creating unreal.SpStableNameComponent...")
 
             parent_data_handle = actor_subobject_descs[0]["data_handle"] # actor
-            sp_stable_name_component_desc = spear.utils.editor_utils.add_new_subobject_to_instance(
+            sp_stable_name_component_desc = spear.editor.add_new_subobject_to_instance(
                 parent_data_handle=parent_data_handle,
                 subobject_name="sp_stable_name_component",
                 subobject_class=unreal.SpStableNameComponent)

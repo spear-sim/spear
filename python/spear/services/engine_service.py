@@ -7,6 +7,9 @@ import contextlib
 import spear
 import sys
 
+if spear.__can_import_unreal__:
+    import unreal
+
 
 class EngineService():
     def __init__(self, client, config):
@@ -15,6 +18,7 @@ class EngineService():
         self._config = config
 
         self._frame_state = None
+        self._editor_transaction_state = None
         self._byte_order = None
         self._server_signature_descs = None
 
@@ -24,33 +28,34 @@ class EngineService():
         # we use _call_impl(...) here because call_sync_on_worker_thread(...) assumes we're already initialized
 
         self._frame_state = "idle"
+        self._editor_transaction_state = "idle"
 
         # explicitly initialize before calling begin_frame() for the first time
 
         self._call_impl(
             "void",
-            "_call_sync_on_worker_thread_as_void",
+            "call_sync_on_worker_thread_as_void",
             "engine_service.call_sync_on_worker_thread.initialize")
 
         # cache data that will be constant for the life of the server
 
         server_signature_type_descs = self._call_impl(
             "vector_of_func_signature_type_desc",
-            "_call_sync_on_worker_thread_as_vector_of_func_signature_type_desc",
+            "call_sync_on_worker_thread_as_vector_of_func_signature_type_desc",
             "engine_service.call_sync_on_worker_thread.get_entry_point_signature_type_descs")
 
         self._server_signature_type_descs = server_signature_type_descs
 
         server_signature_descs = self._call_impl(
             "map_of_string_to_vector_of_func_signature_desc",
-            "_call_sync_on_worker_thread_as_map_of_string_to_vector_of_func_signature_desc",
+            "call_sync_on_worker_thread_as_map_of_string_to_vector_of_func_signature_desc",
             "engine_service.call_sync_on_worker_thread.get_entry_point_signature_descs")
 
         self._server_signature_descs = { registry_name: { desc.name: desc for desc in descs } for registry_name, descs in server_signature_descs.items() }
 
         byte_order = self._call_impl(
             "string",
-            "_call_sync_on_worker_thread_as_string",
+            "call_sync_on_worker_thread_as_string",
             "engine_globals_service.call_sync_on_worker_thread.get_byte_order")
 
         if byte_order == sys.byteorder:
@@ -64,10 +69,11 @@ class EngineService():
         # we use _call_impl(...) here for symmetry with initialize()
 
         self._frame_state = None
+        self._editor_transaction_state = None
 
         self._call_impl(
             "void",
-            "_call_sync_on_worker_thread_as_void",
+            "call_sync_on_worker_thread_as_void",
             "engine_service.call_sync_on_worker_thread.terminate")
 
     #
@@ -92,12 +98,20 @@ class EngineService():
 
     @contextlib.contextmanager
     def begin_frame(self):
+        if spear.__can_import_unreal__:
+            assert self._frame_state == "idle" or self._frame_state == "request_begin_next_frame"
+            self._frame_state = "executing_begin_frame"
+            yield
+            assert self._frame_state == "executing_begin_frame"
+            self._frame_state = "executing_frame"
+            return
+
         assert self._frame_state == "idle" or self._frame_state == "request_begin_next_frame"
 
         success = False
 
         # if we're currently in the idle state, we need to call begin_frame_impl()
-        if self._frame_state == "idle":        
+        if self._frame_state == "idle":
             self._frame_state = "request_begin_frame"
 
             # try calling begin_frame_impl()
@@ -107,7 +121,7 @@ class EngineService():
                 spear.log("Exception: ", e)
                 spear.log("ERROR: We might or might not be in a critical section, but we don't know how to get out of it from here. Giving up...")
                 self._frame_state = "error"
-                raise e
+                raise
 
             if not success:
                 spear.log("ERROR: Server error state detected when calling _begin_frame_impl(), but we do not appear to be in a critical section.")
@@ -136,10 +150,22 @@ class EngineService():
             self._execute_frame_impl() # ignore return value because we already know we need to call _execute_frame_impl() and _end_frame_impl()
             self._end_frame_impl()
             self._frame_state = "error"
-            raise e
+            raise
 
     @contextlib.contextmanager
     def end_frame(self, single_step=False):
+        if spear.__can_import_unreal__:
+            assert self._frame_state == "executing_frame"
+            self._frame_state = "executing_end_frame"
+            yield
+            assert self._frame_state == "executing_end_frame"
+            if single_step:
+                self._frame_state = "request_begin_next_frame"
+            else:
+                self._frame_state = "idle"
+            return
+
+        success = False
 
         # try calling execute_frame_impl()
         try:
@@ -149,7 +175,7 @@ class EngineService():
             spear.log("ERROR: We are in a critical section, but we don't know how to get out of it from here. Attempting to call _end_frame_impl()...")
             self._end_frame_impl()
             self._frame_state = "error"
-            raise e
+            raise
 
         if not success:
             spear.log("ERROR: Server error state detected when calling _execute_frame_impl(). Attempting to exit critical section by calling _end_frame_impl()...")
@@ -169,9 +195,9 @@ class EngineService():
             spear.log("ERROR: Attempting to exit critical section by calling _end_frame_impl()...")
             self._end_frame_impl()
             self._frame_state = "error"
-            raise e
+            raise
 
-        success = True
+        success = False
 
         # try calling end_frame_impl()
         try:
@@ -180,7 +206,7 @@ class EngineService():
             spear.log("Exception: ", e)
             spear.log("ERROR: We might or might not be in a critical section, but we don't know how to get out of it from here. Giving up...")
             self._frame_state = "error"
-            raise e
+            raise
 
         assert self._frame_state == "request_end_frame"
 
@@ -193,6 +219,59 @@ class EngineService():
             self._frame_state = "request_begin_next_frame"
         else:
             self._frame_state = "idle"
+
+    @contextlib.contextmanager
+    def editor_transaction(self):
+        assert spear.__can_import_unreal__
+        assert self._editor_transaction_state == "idle"
+        self._editor_transaction_state = "request_editor_transaction"
+
+        success = False
+
+        try:
+            success = self._begin_editor_transaction_impl()
+        except Exception as e:
+            spear.log("Exception: ", e)
+            self._editor_transaction_state = "error"
+            raise
+
+        if not success:
+            spear.log("ERROR: Server error state detected when calling _begin_editor_transaction_impl().")
+            self._editor_transaction_state = "error"
+            assert False
+
+        try:
+            assert self._editor_transaction_state == "request_editor_transaction"
+            self._editor_transaction_state = "executing_editor_transaction"
+            yield
+            assert self._editor_transaction_state == "executing_editor_transaction"
+            self._editor_transaction_state = "executing_editor_post_transaction"
+        except Exception as e:
+            spear.log("Exception: ", e)
+            self._editor_transaction_state = "error"
+            raise
+
+        success = False
+
+        try:
+            success = self._end_editor_transaction_impl()
+        except Exception as e:
+            spear.log("Exception: ", e)
+            self._editor_transaction_state = "error"
+            raise
+
+        assert self._editor_transaction_state == "executing_editor_post_transaction"
+
+        if not success:
+            spear.log("ERROR: Server error state detected when calling _end_editor_transaction_impl().")
+            self._editor_transaction_state = "error"
+            assert False
+
+        unreal.SpEngineService.execute_editor_post_transaction()
+
+        assert self._editor_transaction_state == "executing_editor_post_transaction"
+        self._editor_transaction_state = "idle"
+
 
     #
     # Helper functions for managing the server's frame state.
@@ -207,6 +286,12 @@ class EngineService():
     def _end_frame_impl(self, single_step=False):
         return self.call_sync_on_worker_thread("engine_service.call_sync_on_worker_thread.end_frame", single_step)
 
+    def _begin_editor_transaction_impl(self):
+        return self.call_sync_on_worker_thread("engine_service.call_sync_on_worker_thread.begin_editor_transaction")
+
+    def _end_editor_transaction_impl(self):
+        return self.call_sync_on_worker_thread("engine_service.call_sync_on_worker_thread.end_editor_transaction")
+
     #
     # Functions for calling entry points on the server.
     #
@@ -215,75 +300,97 @@ class EngineService():
 
     def call_sync_on_worker_thread(self, func_name, *args):
         self._validate_frame_state_for_worker_thread_work()
+        if spear.__can_import_unreal__:
+            self._validate_editor_transaction_state_for_worker_thread_work()
         return_as = self._server_signature_descs["call_sync_on_worker_thread"][func_name].func_signature[0].type_names["entry_point"]
-        call_func_name = "_call_sync_on_worker_thread_as_" + return_as
+        call_func_name = "call_sync_on_worker_thread_as_" + return_as
         return self._call_impl(return_as, call_func_name, func_name, *args)
 
     def call_async_fast_on_worker_thread(self, func_name, *args):
         self._validate_frame_state_for_worker_thread_work()
+        if spear.__can_import_unreal__:
+            self._validate_editor_transaction_state_for_worker_thread_work()
         return_as = "uint64"
-        call_func_name = "_call_async_fast_on_worker_thread"
+        call_func_name = "call_async_fast_on_worker_thread"
         return self._call_impl(return_as, call_func_name, func_name, *args)
 
     def send_async_fast_on_worker_thread(self, func_name, *args):
         self._validate_frame_state_for_worker_thread_work()
+        if spear.__can_import_unreal__:
+            self._validate_editor_transaction_state_for_worker_thread_work()
         return_as = "void"
-        call_func_name = "_send_async_fast_on_worker_thread"
+        call_func_name = "send_async_fast_on_worker_thread"
         self._call_impl(return_as, call_func_name, func_name, *args)
 
     def get_future_result_fast_from_worker_thread(self, future):
         self._validate_frame_state_for_worker_thread_work()
+        if spear.__can_import_unreal__:
+            self._validate_editor_transaction_state_for_worker_thread_work()
         return_as = future._return_as
         func_name = future._func_name
-        get_future_result_func_name = "_get_future_result_fast_from_worker_thread_as_" + return_as
+        get_future_result_func_name = "get_future_result_fast_from_worker_thread_as_" + return_as
         return self._get_future_result_impl(return_as, get_future_result_func_name, future.future, func_name)
 
     # game thread
 
     def call_sync_on_game_thread(self, func_name, *args):
         self._validate_frame_state_for_game_thread_work()
+        if spear.__can_import_unreal__:
+            self._validate_editor_transaction_state_for_game_thread_work()
         return_as = self._server_signature_descs["call_sync_on_game_thread"][func_name].func_signature[0].type_names["entry_point"]
-        call_func_name = "_call_sync_on_game_thread_as_" + return_as
+        call_func_name = "call_sync_on_game_thread_as_" + return_as
         return self._call_impl(return_as, call_func_name, func_name, *args)
 
     def call_async_on_game_thread(self, func_name, *args):
         self._validate_frame_state_for_game_thread_work() # need the server's current work queue to be in a well-defined state
+        if spear.__can_import_unreal__:
+            self._validate_editor_transaction_state_for_game_thread_work()
         return_as = self._server_signature_descs["call_async_on_game_thread"][func_name].func_signature[0].type_names["entry_point"]
         assert return_as == "future"
-        call_func_name = "_call_async_on_game_thread"
+        call_func_name = "call_async_on_game_thread"
         return self._call_impl(return_as, call_func_name, func_name, *args)
 
     def send_async_on_game_thread(self, func_name, *args):
         self._validate_frame_state_for_game_thread_work() # need the server's current work queue to be in a well-defined state
+        if spear.__can_import_unreal__:
+            self._validate_editor_transaction_state_for_game_thread_work()
         return_as = self._server_signature_descs["send_async_on_game_thread"][func_name].func_signature[0].type_names["entry_point"]
         assert return_as == "void"
-        call_func_name = "_send_async_on_game_thread"
+        call_func_name = "send_async_on_game_thread"
         self._call_impl(return_as, call_func_name, func_name, *args)
 
     def get_future_result_from_game_thread(self, future):
         self._validate_frame_state_for_worker_thread_work() # only need to execute work on a worker thread
+        if spear.__can_import_unreal__:
+            self._validate_editor_transaction_state_for_worker_thread_work()
         return_as = future._return_as
         func_name = future._func_name
-        get_future_result_func_name = "_get_future_result_from_game_thread_as_" + return_as
+        get_future_result_func_name = "get_future_result_from_game_thread_as_" + return_as
         return self._get_future_result_impl(return_as, get_future_result_func_name, future.future, func_name)
 
     def call_async_fast_on_game_thread(self, func_name, *args):
         self._validate_frame_state_for_game_thread_work() # need the server's current work queue to be in a well-defined state
+        if spear.__can_import_unreal__:
+            self._validate_editor_transaction_state_for_game_thread_work()
         return_as = "uint64"
-        call_func_name = "_call_async_fast_on_game_thread"
+        call_func_name = "call_async_fast_on_game_thread"
         return self._call_impl(return_as, call_func_name, func_name, *args)
 
     def send_async_fast_on_game_thread(self, func_name, *args):
         self._validate_frame_state_for_game_thread_work() # need the server's current work queue to be in a well-defined state
+        if spear.__can_import_unreal__:
+            self._validate_editor_transaction_state_for_game_thread_work()
         return_as = "void"
-        call_func_name = "_send_async_fast_on_game_thread"
+        call_func_name = "send_async_fast_on_game_thread"
         self._call_impl(return_as, call_func_name, func_name, *args)
 
     def get_future_result_fast_from_game_thread(self, future):
         self._validate_frame_state_for_worker_thread_work() # only need to execute work on a worker thread
+        if spear.__can_import_unreal__:
+            self._validate_editor_transaction_state_for_worker_thread_work()
         return_as = future._return_as
         func_name = future._func_name
-        get_future_result_func_name = "_get_future_result_fast_from_game_thread_as_" + return_as
+        get_future_result_func_name = "get_future_result_fast_from_game_thread_as_" + return_as
         return self._get_future_result_impl(return_as, get_future_result_func_name, future.future, func_name)
 
     #
@@ -291,13 +398,13 @@ class EngineService():
     #
 
     def _validate_frame_state_for_worker_thread_work(self):
-        if self._frame_state not in ["idle", "request_begin_frame", "executing_begin_frame", "executing_frame", "executing_end_frame", "request_end_frame", "error"]:
+        if self._frame_state not in ["idle", "request_begin_frame", "executing_begin_frame", "executing_frame", "executing_end_frame", "request_end_frame"]:
             spear.log("ERROR: Unexpected frame state: ", self._frame_state)
             assert False
 
     def _validate_frame_state_for_game_thread_work(self):
         if self._frame_state not in ["executing_begin_frame", "executing_end_frame"]:
-            spear.log('ERROR: Calling entry points that execute on the game thread is only allowed in "with begin_frame()" and "with end_frame()" code blocks.')
+            spear.log('ERROR: Entry points that execute on the game thread are only allowed in "with begin_frame()" or "with end_frame()" code blocks.')
             spear.log(f'ERROR: self._frame_state == "{self._frame_state}"')
 
             if self._frame_state == "executing_frame":
@@ -305,6 +412,17 @@ class EngineService():
                 self._end_frame_impl()
                 self._frame_state = "error"
 
+            assert False
+
+    def _validate_editor_transaction_state_for_worker_thread_work(self):
+        if self._editor_transaction_state not in ["idle", "request_editor_transaction", "executing_editor_transaction", "executing_editor_post_transaction"]:
+            spear.log("ERROR: Unexpected editor transaction state: ", self._editor_transaction_state)
+            assert False
+
+    def _validate_editor_transaction_state_for_game_thread_work(self):
+        if self._editor_transaction_state not in ["executing_editor_transaction"]:
+            spear.log('ERROR: Entry points that execute on the game thread are only allowed in "with editor_transaction()" code blocks.')
+            spear.log(f'ERROR: self._editor_transaction_state == "{self._editor_transaction_state}"')
             assert False
 
     def _call_impl(self, return_as, call_func_name, func_name, *args):

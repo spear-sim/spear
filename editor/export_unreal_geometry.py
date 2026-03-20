@@ -7,7 +7,6 @@ import argparse
 import os
 import pathlib
 import spear
-import spear.utils.editor_utils
 import trimesh
 import unreal
 
@@ -26,18 +25,18 @@ def process_scene():
     editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
     spear.log("Processing scene: ", editor_world_name)
 
-    actors = spear.utils.editor_utils.find_actors()
+    actors = spear.editor.find_actors()
     actors = [ actor for actor in actors if actor.get_editor_property(name="relevant_for_level_bounds") ]
 
     for actor in actors:
-        spear.log("    Processing actor: ", spear.utils.editor_utils.get_stable_name_for_actor(actor=actor))
+        spear.log("    Processing actor: ", spear.editor.get_stable_name_for_actor(actor=actor))
         generate_unreal_geometry(actor)
 
     spear.log("Done.")
 
 def generate_unreal_geometry(actor):
 
-    static_mesh_components  = spear.utils.editor_utils.get_components(actor=actor, component_class=unreal.StaticMeshComponent)
+    static_mesh_components  = spear.editor.get_components(actor=actor, component_class=unreal.StaticMeshComponent)
     static_meshes           = [ static_mesh_component.get_editor_property(name="static_mesh") for static_mesh_component in static_mesh_components ]
     static_meshes           = [ static_mesh for static_mesh in static_meshes if static_mesh is not None ]
     static_mesh_asset_paths = [ pathlib.PurePosixPath(static_mesh.get_path_name()) for static_mesh in static_meshes ]

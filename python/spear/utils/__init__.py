@@ -4,9 +4,13 @@
 #
 
 from . import config_utils
-# can't import editor_utils by default because the unreal module is only available in the Unreal Editor and is needed in function signatures
 from . import func_utils
 from . import path_utils
 from . import pipeline_utils
 from . import system_utils
 from . import tool_utils
+
+try:
+    from . import editor_utils
+except ImportError:
+    pass
