@@ -32,24 +32,24 @@ if __name__ == "__main__":
 
             for static_mesh_component in static_mesh_components:
                 local_bounds = static_mesh_component.GetLocalBounds(Min={"X": 0.0, "Y": 0.0, "Z": 0.0}, Max={"X": 0.0, "Y": 0.0, "Z": 0.0}, as_dict=True)
-                local_min = spear.to_numpy_array_from_vector(local_bounds["Min"], as_matrix=True)
-                local_max = spear.to_numpy_array_from_vector(local_bounds["Max"], as_matrix=True)
+                local_min = spear.to_numpy_array_from_vector(vector=local_bounds["Min"], as_matrix=True)
+                local_max = spear.to_numpy_array_from_vector(vector=local_bounds["Max"], as_matrix=True)
                 local_center = (local_min + local_max)/2.0
                 local_extent = (local_max - local_min)/2.0
 
-                component_location = spear.to_numpy_array_from_vector(static_mesh_component.K2_GetComponentLocation(), as_matrix=True)
-                component_rotation = spear.to_numpy_matrix_from_rotator(static_mesh_component.K2_GetComponentRotation(), as_matrix=True)
-                component_scale = np.matrix(np.diag(spear.to_numpy_array_from_vector(static_mesh_component.K2_GetComponentScale())))
+                component_location = spear.to_numpy_array_from_vector(vector=static_mesh_component.K2_GetComponentLocation(), as_matrix=True)
+                component_rotation = spear.to_numpy_matrix_from_rotator(rotator=static_mesh_component.K2_GetComponentRotation(), as_matrix=True)
+                component_scale = np.matrix(np.diag(spear.to_numpy_array_from_vector(vector=static_mesh_component.K2_GetComponentScale())))
 
                 world_center = component_location + component_rotation*component_scale*local_center
                 world_extent = np.abs(component_scale*local_extent)
 
                 rgb = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
                 kismet_system_library.DrawDebugBox(
-                    Center=spear.to_vector_from_numpy_array(world_center),
-                    Extent=spear.to_vector_from_numpy_array(world_extent),
+                    Center=spear.to_vector_from_numpy_array(array=world_center),
+                    Extent=spear.to_vector_from_numpy_array(array=world_extent),
                     LineColor={"R": rgb[0], "G": rgb[1], "B": rgb[2], "A": 1.0},
-                    Rotation=spear.to_rotator_from_numpy_matrix(component_rotation),
+                    Rotation=spear.to_rotator_from_numpy_matrix(matrix=component_rotation),
                     Duration=60.0,
                     Thickness=2.0)
 

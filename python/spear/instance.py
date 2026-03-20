@@ -187,6 +187,38 @@ class Instance():
     def get_editor(self, wait=None, wait_max_time_seconds=0.0, wait_sleep_time_seconds=0.0, warm_up=None, warm_up_time_seconds=0.0, warm_up_num_frames=0):
 
         spear.log_current_function()
+        warm_up, warm_up_time_seconds, warm_up_num_frames = self._get_editor_impl(wait=wait, wait_max_time_seconds=wait_max_time_seconds, wait_sleep_time_seconds=wait_sleep_time_seconds, warm_up=warm_up, warm_up_time_seconds=warm_up_time_seconds, warm_up_num_frames=warm_up_num_frames)
+        if warm_up:
+            self._warm_up_unreal_instance(time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames)
+
+        spear.log("    Initializing editor-scoped services...")
+        with self.begin_frame():
+            self._editor.unreal_service.initialize()
+        with self.end_frame():
+            pass
+        spear.log("    Finished initializing editor-scoped services.")
+
+        return self._editor
+
+    def get_editor_in_editor_script(self, wait=None, wait_max_time_seconds=0.0, wait_sleep_time_seconds=0.0, warm_up=None, warm_up_time_seconds=0.0, warm_up_num_frames=0):
+
+        spear.log_current_function()
+        warm_up, warm_up_time_seconds, warm_up_num_frames = self._get_editor_impl(wait=wait, wait_max_time_seconds=wait_max_time_seconds, wait_sleep_time_seconds=wait_sleep_time_seconds, warm_up=warm_up, warm_up_time_seconds=warm_up_time_seconds, warm_up_num_frames=warm_up_num_frames)
+        if warm_up:
+            yield from self._warm_up_unreal_instance_in_editor_script(time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames)
+
+        spear.log("    Initializing editor-scoped services...")
+        with self.begin_frame():
+            self._editor.unreal_service.initialize()
+        yield
+        with self.end_frame():
+            pass
+        yield
+        spear.log("    Finished initializing editor-scoped services.")
+        return self._editor
+
+    def _get_editor_impl(self, wait, wait_max_time_seconds, wait_sleep_time_seconds, warm_up, warm_up_time_seconds, warm_up_num_frames):
+
         assert self.engine_globals_service.is_with_editor() and not self.engine_globals_service.is_running_commandlet() and not " -game " in self.engine_globals_service.get_command_line()
 
         if wait is None:
@@ -203,24 +235,42 @@ class Instance():
         # even if we're not waiting, we still want to guarantee that the editor is ready, so we call _wait_until(...) unconditionally
         self._wait_until(func=self._editor.initialize_editor_world_service.is_initialized, retry=retry, max_time_seconds=wait_max_time_seconds, sleep_time_seconds=wait_sleep_time_seconds)
 
-        # only warm up if necessary
-        if warm_up:
-            self._request_warm_up_unreal_instance(time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames)
-
-        # UnrealService must be explicitly initialized but only after we're finished warming up
-        spear.log("    Initializing editor-scoped services...")
-        with self.begin_frame():
-            self._editor.unreal_service.initialize()
-        with self.end_frame():
-            pass
-        spear.log("    Finished initializing editor-scoped services.")
-
-        return self._editor
-
+        return warm_up, warm_up_time_seconds, warm_up_num_frames
 
     def get_game(self, wait=None, wait_max_time_seconds=0.0, wait_sleep_time_seconds=0.0, warm_up=None, warm_up_time_seconds=0.0, warm_up_num_frames=0):
 
         spear.log_current_function()
+        warm_up, warm_up_time_seconds, warm_up_num_frames = self._get_game_impl(wait=wait, wait_max_time_seconds=wait_max_time_seconds, wait_sleep_time_seconds=wait_sleep_time_seconds, warm_up=warm_up, warm_up_time_seconds=warm_up_time_seconds, warm_up_num_frames=warm_up_num_frames)
+        if warm_up:
+            self._warm_up_unreal_instance(time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames)
+
+        spear.log("    Initializing game-scoped services...")
+        with self.begin_frame():
+            self._game.unreal_service.initialize()
+        with self.end_frame():
+            pass
+        spear.log("    Finished initializing game-scoped services.")
+
+        return self._game
+
+    def get_game_in_editor_script(self, wait=None, wait_max_time_seconds=0.0, wait_sleep_time_seconds=0.0, warm_up=None, warm_up_time_seconds=0.0, warm_up_num_frames=0):
+
+        spear.log_current_function()
+        warm_up, warm_up_time_seconds, warm_up_num_frames = self._get_game_impl(wait=wait, wait_max_time_seconds=wait_max_time_seconds, wait_sleep_time_seconds=wait_sleep_time_seconds, warm_up=warm_up, warm_up_time_seconds=warm_up_time_seconds, warm_up_num_frames=warm_up_num_frames)
+        if warm_up:
+            yield from self._warm_up_unreal_instance_in_editor_script(time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames)
+
+        spear.log("    Initializing game-scoped services...")
+        with self.begin_frame():
+            self._game.unreal_service.initialize()
+        yield
+        with self.end_frame():
+            pass
+        yield
+        spear.log("    Finished initializing game-scoped services.")
+        return self._game
+
+    def _get_game_impl(self, wait, wait_max_time_seconds, wait_sleep_time_seconds, warm_up, warm_up_time_seconds, warm_up_num_frames):
 
         if wait is None:
             retry = True
@@ -236,24 +286,11 @@ class Instance():
         # even if we're not waiting, we still want to guarantee that the game is ready, so we call _wait_until(...) unconditionally
         self._wait_until(func=self._game.initialize_game_world_service.is_initialized, retry=retry, max_time_seconds=wait_max_time_seconds, sleep_time_seconds=wait_sleep_time_seconds)
 
-        # only warm up if necessary
-        if warm_up:
-            self._request_warm_up_unreal_instance(time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames)
-
-        # UnrealService must be explicitly initialized but only after we're finished warming up
-        spear.log("    Initializing game-scoped services...")
-        with self.begin_frame():
-            self._game.unreal_service.initialize()
-        with self.end_frame():
-            pass
-        spear.log("    Finished initializing game-scoped services.")
-
-        return self._game
+        return warm_up, warm_up_time_seconds, warm_up_num_frames
 
 
     def begin_frame(self):
         return self._engine_service.begin_frame()
-
 
     def end_frame(self, single_step=False):
         return self._engine_service.end_frame(single_step=single_step)
@@ -275,9 +312,17 @@ class Instance():
             warm_up = True
             warm_up_time_seconds = self._config.SPEAR.INSTANCE.INSTANCE_WARM_UP_TIME_SECONDS
             warm_up_num_frames = self._config.SPEAR.INSTANCE.INSTANCE_WARM_UP_NUM_FRAMES
-
         assert warm_up
-        self._request_warm_up_unreal_instance(time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames)
+        self._warm_up_unreal_instance(time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames)
+
+    def warm_up_in_editor_script(self, warm_up=None, warm_up_time_seconds=0.0, warm_up_num_frames=0):
+        spear.log_current_function()
+        if warm_up is None:
+            warm_up = True
+            warm_up_time_seconds = self._config.SPEAR.INSTANCE.INSTANCE_WARM_UP_TIME_SECONDS
+            warm_up_num_frames = self._config.SPEAR.INSTANCE.INSTANCE_WARM_UP_NUM_FRAMES
+        assert warm_up
+        yield from self._warm_up_unreal_instance_in_editor_script(time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames)
 
 
     def flush(self, single_step=False):
@@ -286,14 +331,14 @@ class Instance():
         with self.end_frame(single_step=single_step):
             pass
 
-
-    def flush_in_editor(self):
+    def flush_in_editor_script(self, single_step=False):
         with self.begin_frame():
             pass
         yield
-        with self.end_frame():
+        with self.end_frame(single_step=single_step):
             pass
         yield
+
 
     def close(self, force=False):
 
@@ -692,26 +737,10 @@ class Instance():
         spear.log("        Finished waiting for function to return true.")
 
 
-    def _request_warm_up_unreal_instance(self, time_seconds, num_frames):
-
-        spear.log_current_function(prefix="    ")
-        spear.log("        Requesting to warm up Unreal instance...")
-
-        if spear.__can_import_unreal__ or self._config.SPEAR.LAUNCH_MODE == "none":
-            pass
-        elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
-            self._warm_up_unreal_instance(time_seconds, num_frames)
-        else:
-            self._terminate_client(verbose=True, log_prefix="        ")
-            assert False
-
-        spear.log("        Finished requesting to warm up Unreal instance.")
-
-
     def _warm_up_unreal_instance(self, time_seconds, num_frames):
 
-        spear.log_current_function(prefix="        ")
-        spear.log("            Warming up Unreal instance for ", time_seconds, " seconds and ", num_frames, " frames...")
+        spear.log_current_function(prefix="    ")
+        spear.log("        Warming up Unreal instance for ", time_seconds, " seconds and ", num_frames, " frames...")
 
         if time_seconds > 0.0:
             time.sleep(time_seconds)
@@ -719,7 +748,20 @@ class Instance():
         for i in range(num_frames):
             self.flush()
 
-        spear.log("            Finished warming up Unreal instance.")
+        spear.log("        Finished warming up Unreal instance.")
+
+    def _warm_up_unreal_instance_in_editor_script(self, time_seconds, num_frames):
+
+        spear.log_current_function(prefix="    ")
+        spear.log("        Warming up Unreal instance for ", time_seconds, " seconds and ", num_frames, " frames...")
+
+        if time_seconds > 0.0:
+            time.sleep(time_seconds)
+
+        for i in range(num_frames):
+            yield from self.flush_in_editor_script()
+
+        spear.log("        Finished warming up Unreal instance.")
 
 
     #

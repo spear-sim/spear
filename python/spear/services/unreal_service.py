@@ -443,7 +443,7 @@ class UnrealService(spear.Service):
         if uclass != 0:
             assert uobject == 0
 
-        convert_func = lambda result: { k: spear.PropertyValue(value=spear.try_to_dict(v.value), type_id=v.type_id) for k, v in result.items() }
+        convert_func = lambda result: { k: spear.PropertyValue(value=spear.try_to_dict(json_string=v.value), type_id=v.type_id) for k, v in result.items() }
         return self.entry_point_caller.call_on_game_thread("call_function", convert_func, uobject, uclass, ufunction, args, world_context_object)
 
     #
