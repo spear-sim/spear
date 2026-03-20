@@ -8,6 +8,21 @@ import multiprocessing.shared_memory
 import spear
 import sys
 
+
+# Disable the multiprocessing.resource_tracker when running inside the editor
+if spear.__can_import_unreal__:
+    spear.log("Globally disbling the multiprocessing.resource_tracker because it doesn't interact cleanly with the Unreal Editor Python environment...")
+    import multiprocessing.resource_tracker
+    _multiprocessing_resource_tracker_register_func_original = multiprocessing.resource_tracker.register
+    def _multiprocessing_resource_tracker_register_func_noop(name, rtype):
+        spear.log("Intercepted call to multiprocessing.resource_tracker.register: ", name, rtype)
+        if rtype == "shared_memory":
+            return
+        else:
+            return multiprocessing_resource_tracker_register_func_original(name, rtype)
+    multiprocessing.resource_tracker.register = _multiprocessing_resource_tracker_register_func_noop
+
+
 class SharedMemoryService(spear.Service):
     def __init__(self, entry_point_caller):
 
@@ -83,7 +98,8 @@ class SharedMemoryService(spear.Service):
         elif sys.platform in ["darwin", "linux"]:
             handle = multiprocessing.shared_memory.SharedMemory(name=shared_memory_view.id)
             buffer = memoryview(handle.buf)[shared_memory_view.offset_bytes:]
-            multiprocessing.resource_tracker.unregister(handle._name, "shared_memory") # prevent Python from destroying on exit
+            if not spear.__can_import_unreal__:
+                multiprocessing.resource_tracker.unregister(handle._name, "shared_memory") # prevent Python from destroying on exit
             return {"name": shared_memory_name, "handle": handle, "buffer": buffer, "view": shared_memory_view}
         else:
             assert False

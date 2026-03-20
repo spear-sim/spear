@@ -8,7 +8,7 @@ SPEAR:
   #   - "none" connects to an already running instance, which can be either the editor or a game executable
   #   - "editor" launches the editor
   #   - "game" launches a game executable
-  LAUNCH_MODE: ""
+  LAUNCH_MODE: "none"
 
   # ENVIRONMENT_VARS are added to Python's os.environ dict when calling spear.configure_system(...). This can
   # be useful to set various graphics driver environment variables. For example, a user can set the VK_ICD_FILENAMES
@@ -70,9 +70,6 @@ SPEAR:
     # server function before throwing an exception.
     CLIENT_INTERNAL_TIMEOUT_SECONDS: 2.0
 
-    # Print the client's functions during initialization.
-    PRINT_CALL_DEBUG_INFO: False
-
     # Wait for this amount of time when initializing the RPC client. This is useful because it can take a bit
     # of time between when an executable is invoked on the command-line, and when an RPC connection can be
     # established.
@@ -84,6 +81,11 @@ SPEAR:
     CLIENT_VERBOSE_RPC_CALLS: False
     CLIENT_VERBOSE_ALLOCATIONS: False
     CLIENT_VERBOSE_EXCEPTIONS: True
+
+    # The RPC client will try this number of reconnection attempts internally before returning from its
+    # constructor. We set this to 1, and implement our own reconnection logic, to avoid flooding the console
+    # with warning messages.
+    EDITOR_CLIENT_INTERNAL_RECONNECT_LIMIT: 1
 
     #
     # When getting an editor or game reference or calling instance.warm_up(...), we choose to warm up for a

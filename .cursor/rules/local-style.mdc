@@ -1,0 +1,23 @@
+---
+description: Follow existing local code style and minimal-diff edits
+alwaysApply: true
+---
+
+# Local Style First
+
+- Treat nearby code as the canonical style; match naming, spacing, casing, and call patterns in the file being edited.
+- Prefer minimal diffs: change only what is needed for the requested behavior.
+- Prefer simple, direct code over extra helpers or temporary variables unless they improve clarity.
+- Keep logging/noise low; do not add extra debug output unless requested.
+- Prefer single-line calls when they comfortably fit and remain readable.
+- Omit explicit default arguments when behavior is unchanged.
+- Prefer division by `2.0` over multiplication by `0.5`.
+- When working with transforms in this repo, prefer `to_numpy_array_from_vector(..., as_matrix=True)` and matrix multiplication style.
+- For transform setup variables, use ordering `location`, then `rotation`, then `scale` when practical.
+- For per-axis scaling in matrix code paths, prefer a diagonal scale matrix (e.g., `np.diag(...)`) and matrix multiplication.
+- Avoid redundant conversion chains (e.g., `as_matrix=True` followed immediately by `.A1`).
+- Prefer direct `*` operations over `np.multiply(...)` for NumPy arrays.
+- When using `np.matrix`, prefer `*` for matrix multiplication instead of `@`.
+- When calling Unreal UFUNCTIONs, use keyword argument names with exact Unreal casing.
+- For `as_dict=True` Unreal returns, access keys exactly as named in the call/UE signature.
+- If unsure between two styles, follow the dominant pattern already present in the touched file.

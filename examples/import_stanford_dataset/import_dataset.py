@@ -8,7 +8,6 @@ import pandas as pd
 import posixpath
 import shutil
 import spear
-import spear.utils.editor_utils
 import unreal
 
 
@@ -107,17 +106,17 @@ if __name__ == "__main__":
 
         # create blueprint
         spear.log("Creating blueprint: ", blueprint_path)
-        blueprint_asset = spear.utils.editor_utils.create_blueprint_asset(
+        blueprint_asset = spear.editor.create_blueprint_asset(
             asset_name=mesh_desc["blueprint_name"],
             package_dir=mesh_desc["blueprint_dir"],
             parent_class=unreal.StaticMeshActor)
 
-        blueprint_subobject_descs = spear.utils.editor_utils.get_subobject_descs_for_blueprint_asset(blueprint_asset=blueprint_asset)
+        blueprint_subobject_descs = spear.editor.get_subobject_descs_for_blueprint_asset(blueprint_asset=blueprint_asset)
         assert len(blueprint_subobject_descs) == 2
         assert isinstance(blueprint_subobject_descs[0]["object"], unreal.StaticMeshActor)     # the 0th entry always refers to the actor itself
         assert isinstance(blueprint_subobject_descs[1]["object"], unreal.StaticMeshComponent) # the 1st entry always refers to the actor's root component
 
-        # we could add new components here by calling spear.utils.editor_utils.add_new_subobject(...) but in this case it isn't necessary
+        # we could add new components here by calling spear.editor.add_new_subobject(...) but in this case it isn't necessary
 
         actor = blueprint_subobject_descs[0]["object"]
         static_mesh_component = blueprint_subobject_descs[1]["object"]

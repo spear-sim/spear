@@ -9,8 +9,8 @@ import numpy as np
 import scipy
 import spear
 
-if spear.__can_import_spear_ext__:
-    import spear_ext
+if spear.__can_import_unreal__:
+    import unreal
 
 
 #
@@ -83,16 +83,27 @@ class Service(ServiceBase):
         if create_children_services:
             assert entry_point_caller is not None
 
-            call_async_entry_point_caller = CallAsyncEntryPointCaller(service_name=entry_point_caller._service_name, engine_service=entry_point_caller.engine_service)
+            if spear.__can_import_unreal__:
+                call_async_entry_point_caller_type = EditorCallAsyncEntryPointCaller
+                send_async_entry_point_caller_type = EditorSendAsyncEntryPointCaller
+                call_async_fast_entry_point_caller_type = EditorCallAsyncFastEntryPointCaller
+                send_async_fast_entry_point_caller_type = EditorSendAsyncFastEntryPointCaller
+            else:
+                call_async_entry_point_caller_type = CallAsyncEntryPointCaller
+                send_async_entry_point_caller_type = SendAsyncEntryPointCaller
+                call_async_fast_entry_point_caller_type = CallAsyncFastEntryPointCaller
+                send_async_fast_entry_point_caller_type = SendAsyncFastEntryPointCaller
+
+            call_async_entry_point_caller = call_async_entry_point_caller_type(service_name=entry_point_caller._service_name, engine_service=entry_point_caller.engine_service)
             self.call_async = self.create_child_service(entry_point_caller=call_async_entry_point_caller, sp_func_service=sp_func_service, unreal_service=unreal_service, config=config)
 
-            send_async_entry_point_caller = SendAsyncEntryPointCaller(service_name=entry_point_caller._service_name, engine_service=entry_point_caller.engine_service)
+            send_async_entry_point_caller = send_async_entry_point_caller_type(service_name=entry_point_caller._service_name, engine_service=entry_point_caller.engine_service)
             self.send_async = self.create_child_service(entry_point_caller=send_async_entry_point_caller, sp_func_service=sp_func_service, unreal_service=unreal_service, config=config)
 
-            call_async_fast_entry_point_caller = CallAsyncFastEntryPointCaller(service_name=entry_point_caller._service_name, engine_service=entry_point_caller.engine_service)
+            call_async_fast_entry_point_caller = call_async_fast_entry_point_caller_type(service_name=entry_point_caller._service_name, engine_service=entry_point_caller.engine_service)
             self.call_async_fast = self.create_child_service(entry_point_caller=call_async_fast_entry_point_caller, sp_func_service=sp_func_service, unreal_service=unreal_service, config=config)
 
-            send_async_fast_entry_point_caller = SendAsyncFastEntryPointCaller(service_name=entry_point_caller._service_name, engine_service=entry_point_caller.engine_service)
+            send_async_fast_entry_point_caller = send_async_fast_entry_point_caller_type(service_name=entry_point_caller._service_name, engine_service=entry_point_caller.engine_service)
             self.send_async_fast = self.create_child_service(entry_point_caller=send_async_fast_entry_point_caller, sp_func_service=sp_func_service, unreal_service=unreal_service, config=config)
 
     def create_child_service(self, entry_point_caller, sp_func_service=None, unreal_service=None, config=None):
@@ -204,12 +215,11 @@ class CallAsyncEntryPointCaller(EntryPointCaller):
     def call_on_game_thread(self, func_name, convert_func, *args):
         long_func_name = f"{self._service_name}.call_async_on_game_thread.{func_name}"
         return_as = self._get_return_as_string_for_game_thread(func_name)
-        future = self.engine_service.call_async_on_game_thread(long_func_name, *args) # non-fast path returns spear_ext.Future
+        future = self.engine_service.call_async_on_game_thread(long_func_name, *args) # non-fast path returns spear.Future
         get_future_result_func = self.engine_service.get_future_result_from_game_thread
         return Future(future=future, get_future_result_func=get_future_result_func, convert_func=convert_func, return_as=return_as, func_name=long_func_name)
 
     def get(self, obj):
-        spear.log_current_function()
         return Future(future=None, get_future_result_func=lambda future: obj, convert_func=None, return_as=None, func_name=None)
 
 class SendAsyncEntryPointCaller(EntryPointCaller):
@@ -219,6 +229,9 @@ class SendAsyncEntryPointCaller(EntryPointCaller):
     def call_on_game_thread(self, func_name, convert_func, *args):
         long_func_name = f"{self._service_name}.send_async_on_game_thread.{func_name}"
         self.engine_service.send_async_on_game_thread(long_func_name, *args)
+
+    def get(self, obj):
+        return None
 
 class CallAsyncFastEntryPointCaller(EntryPointCaller):
     def call_on_worker_thread(self, func_name, convert_func, *args):
@@ -236,7 +249,6 @@ class CallAsyncFastEntryPointCaller(EntryPointCaller):
         return Future(future=future, get_future_result_func=get_future_result_func, convert_func=convert_func, return_as=return_as, func_name=long_func_name)
 
     def get(self, obj):
-        spear.log_current_function()
         return Future(future=None, get_future_result_func=lambda future: obj, convert_func=None, return_as=None, func_name=None)
 
 class SendAsyncFastEntryPointCaller(EntryPointCaller):
@@ -248,6 +260,74 @@ class SendAsyncFastEntryPointCaller(EntryPointCaller):
         long_func_name = f"{self._service_name}.send_async_on_game_thread.{func_name}" # fast path calls send_async variant for game thread entry points
         self.engine_service.send_async_fast_on_game_thread(long_func_name, *args)
 
+    def get(self, obj):
+        return None
+
+class EditorEntryPointCaller(EntryPointCaller):
+    def call_on_worker_thread(self, func_name, convert_func, *args):
+        long_func_name = f"{self._service_name}.call_sync_on_worker_thread.{func_name}"
+        return_value = self.engine_service.call_sync_on_worker_thread(long_func_name, *args)
+        if convert_func is not None:
+            return convert_func(return_value)
+        else:
+            return return_value
+
+    def call_on_game_thread(self, func_name, convert_func, *args):
+        long_func_name = f"{self._service_name}.call_async_on_game_thread.{func_name}"
+        return_as = self._get_return_as_string_for_game_thread(func_name)
+
+        with self.engine_service.editor_transaction():
+            future = self.engine_service.call_async_on_game_thread(long_func_name, *args) # non-fast path returns spear.Future
+
+        get_future_result_func = self.engine_service.get_future_result_from_game_thread
+        return Future(future=future, get_future_result_func=get_future_result_func, convert_func=convert_func, return_as=return_as, func_name=long_func_name).get()
+
+    def get(self, obj):
+        return obj
+
+class EditorCallAsyncEntryPointCaller(EditorEntryPointCaller):
+    def call_on_worker_thread(self, func_name, convert_func, *args):
+        assert False # worker thread entry points always execute synchronously unless we're using the fast path, so we should never be here
+
+    def call_on_game_thread(self, func_name, convert_func, *args):
+        call_on_game_thread_func = super().call_on_game_thread
+        return Future(future=None, get_future_result_func=lambda future: call_on_game_thread_func(func_name, convert_func, *args), convert_func=None, return_as=None, func_name=None)
+
+    def get(self, obj):
+        return Future(future=None, get_future_result_func=lambda future: obj, convert_func=None, return_as=None, func_name=None)
+
+class EditorSendAsyncEntryPointCaller(EditorEntryPointCaller):
+    def call_on_worker_thread(self, func_name, convert_func, *args):
+        assert False # worker thread entry points always execute synchronously unless we're using the fast path, so we should never be here
+
+    def call_on_game_thread(self, func_name, convert_func, *args):
+        super().call_on_game_thread(func_name, None, *args)
+
+    def get(self, obj):
+        return None
+
+class EditorCallAsyncFastEntryPointCaller(EditorEntryPointCaller):
+    def call_on_worker_thread(self, func_name, convert_func, *args):
+        long_func_name = f"{self._service_name}.call_sync_on_worker_thread.{func_name}" # fast path calls call_sync variant for worker thread entry points
+        return Future(future=None, get_future_result_func=lambda future: self.engine_service.call_sync_on_worker_thread(long_func_name, *args), convert_func=convert_func, return_as=None, func_name=long_func_name)
+
+    def call_on_game_thread(self, func_name, convert_func, *args):
+        call_on_game_thread_func = super().call_on_game_thread
+        return Future(future=None, get_future_result_func=lambda future: call_on_game_thread_func(func_name, convert_func, *args), convert_func=None, return_as=None, func_name=None)
+
+    def get(self, obj):
+        return Future(future=None, get_future_result_func=lambda future: obj, convert_func=None, return_as=None, func_name=None)
+
+class EditorSendAsyncFastEntryPointCaller(EditorEntryPointCaller):
+    def call_on_worker_thread(self, func_name, convert_func, *args):
+        long_func_name = f"{self._service_name}.call_sync_on_worker_thread.{func_name}" # fast path calls call_sync variant for worker thread entry points
+        self.engine_service.call_sync_on_worker_thread(long_func_name, *args)
+
+    def call_on_game_thread(self, func_name, convert_func, *args):
+        super().call_on_game_thread(func_name, None, *args)
+
+    def get(self, obj):
+        return None
 
 #
 # These classes are for internal use, and do not need to be instantiated directly by most users.
@@ -405,6 +485,8 @@ def to_handle(obj):
             return to_handle(obj=o)
         obj.convert_func = convert_func
         return obj
+    elif spear.__can_import_unreal__ and isinstance(obj, unreal.Object):
+        return unreal.SpFuncUtils.to_handle_from_object(object=obj)
     else:
         assert False
 
@@ -453,6 +535,8 @@ def to_json_string(obj, stringify=True):
                 return { to_json_string(obj=k, stringify=True): to_json_string(obj=v, stringify=False) for k, v in obj.items() }
             else:
                 assert False
+    elif spear.__can_import_unreal__ and isinstance(obj, unreal.Object):
+        return unreal.SpFuncUtils.to_string_from_object(object=obj)
     else:
         return json.dumps(obj)
 
@@ -490,7 +574,7 @@ def to_shared(array, shared_memory_handle):
 # Convert to a packed array from a NumPy array.
 def to_packed_array(array, dest_byte_order, usage_flags):
     if isinstance(array, np.ndarray):
-        packed_array = spear_ext.PackedArray()
+        packed_array = spear.PackedArray()
         if dest_byte_order == "native":
             packed_array.data = array
         elif dest_byte_order in ["big", "little"]:
@@ -504,7 +588,7 @@ def to_packed_array(array, dest_byte_order, usage_flags):
     elif isinstance(array, Shared):
         assert usage_flags is not None
         assert set(usage_flags) <= set(array._shared_memory_handle["view"].usage_flags)
-        packed_array = spear_ext.PackedArray()
+        packed_array = spear.PackedArray()
         packed_array.data = np.array([], dtype=array._array.dtype)
         packed_array.data_source = "Shared"
         packed_array.shape = array._array.shape
@@ -560,8 +644,8 @@ def to_data_bundle(dest_byte_order, usage_flags, arrays=None, unreal_objs=None, 
         unreal_objs = {}
     assert dest_byte_order is not None
     assert usage_flags is not None
-    data_bundle = spear_ext.DataBundle()
-    data_bundle.packed_arrays = to_packed_arrays(arrays=arrays, dest_byte_order=dest_byte_order, usage_flags=["Arg"])
+    data_bundle = spear.DataBundle()
+    data_bundle.packed_arrays = to_packed_arrays(arrays=arrays, dest_byte_order=dest_byte_order, usage_flags=usage_flags)
     data_bundle.unreal_obj_strings = to_json_strings(objs=unreal_objs)
     data_bundle.info = info
     return data_bundle
@@ -569,7 +653,7 @@ def to_data_bundle(dest_byte_order, usage_flags, arrays=None, unreal_objs=None, 
 # Convert to {a collection of arrays, a collection of unreal objects, an info string} from a data bundle.
 def to_data_bundle_dict(data_bundle, src_byte_order, usage_flags, shared_memory_handles):
     return {
-        "arrays": to_arrays(packed_arrays=data_bundle.packed_arrays, src_byte_order=src_byte_order, usage_flags=["ReturnValue"], shared_memory_handles=shared_memory_handles),
+        "arrays": to_arrays(packed_arrays=data_bundle.packed_arrays, src_byte_order=src_byte_order, usage_flags=usage_flags, shared_memory_handles=shared_memory_handles),
         "unreal_objs": try_to_dicts(json_strings=data_bundle.unreal_obj_strings),
         "info": data_bundle.info}
 
@@ -595,12 +679,12 @@ def to_rotator_from_numpy_matrix(matrix):
     else:
         assert False
     scipy_roll, scipy_pitch, scipy_yaw = scipy.spatial.transform.Rotation.from_matrix(matrix).as_euler("xyz")
-    roll  = np.rad2deg(-scipy_roll)
-    pitch = np.rad2deg(-scipy_pitch)
-    yaw   = np.rad2deg(scipy_yaw)
+    roll  = float(np.rad2deg(-scipy_roll))
+    pitch = float(np.rad2deg(-scipy_pitch))
+    yaw   = float(np.rad2deg(scipy_yaw))
     return {"Roll": roll, "Pitch": pitch, "Yaw": yaw}
 
-# Convert to an Unreal rotator from a NumPy array.
+# Convert to a NumPy array from an Unreal rotator.
 def to_numpy_array_from_rotator(rotator):
     assert isinstance(rotator, dict)
     rotator = { k.lower(): v for k, v in rotator.items() }
@@ -613,7 +697,7 @@ def to_rotator_from_numpy_array(array_pyr):
         assert array_pyr.shape == (3,)
     else:
         assert False
-    return {"Pitch": array_pyr[0], "Yaw": array_pyr[1], "Roll": array_pyr[2]}
+    return {"Pitch": float(array_pyr[0]), "Yaw": float(array_pyr[1]), "Roll": float(array_pyr[2])}
 
 # Convert to an Unreal vector from a NumPy array or matrix and vice versa.
 def to_vector_from_numpy_array(array):
@@ -624,7 +708,7 @@ def to_vector_from_numpy_array(array):
         assert array.shape == (3,)
     else:
         assert False
-    return {"X": array[0], "Y": array[1], "Z": array[2]}
+    return {"X": float(array[0]), "Y": float(array[1]), "Z": float(array[2])}
 
 # Convert to a NumPy array from an Unreal vector.
 def to_numpy_array_from_vector(vector, as_matrix=None):

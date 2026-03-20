@@ -197,10 +197,10 @@ public:
         FuncSignatureTypeDesc return_type_desc = FuncSignatureRegistry::getFuncSignatureTypeDesc<TReturn>();
         std::string return_type_name = return_type_desc.type_names_.at("entry_point");
 
-        requestRegisterEntryPointSignature<TReturn,  TArgs...>(client_class, "call_sync_on_worker_thread",                "_call_sync_on_worker_thread_as_" + return_type_name,                &Client::callSync<TReturn, TArgs...>);
-        requestRegisterEntryPointSignature<uint64_t, TArgs...>(client_class, "call_async_fast_on_worker_thread",          "_call_async_fast_on_worker_thread",                                 &Client::callAsyncFast<TArgs...>);
-        requestRegisterEntryPointSignature<void,     TArgs...>(client_class, "send_async_fast_on_worker_thread",          "_send_async_fast_on_worker_thread",                                 &Client::sendAsyncFast<TArgs...>);
-        requestRegisterEntryPointSignature<TReturn,  uint64_t>(client_class, "get_future_result_fast_from_worker_thread", "_get_future_result_fast_from_worker_thread_as_" + return_type_name, &Client::getFutureResultFastFromWorkerThread<TReturn>);
+        requestRegisterEntryPointSignature<TReturn,  TArgs...>(client_class, "call_sync_on_worker_thread",                "call_sync_on_worker_thread_as_" + return_type_name,                &Client::callSync<TReturn, TArgs...>);
+        requestRegisterEntryPointSignature<uint64_t, TArgs...>(client_class, "call_async_fast_on_worker_thread",          "call_async_fast_on_worker_thread",                                 &Client::callAsyncFast<TArgs...>);
+        requestRegisterEntryPointSignature<void,     TArgs...>(client_class, "send_async_fast_on_worker_thread",          "send_async_fast_on_worker_thread",                                 &Client::sendAsyncFast<TArgs...>);
+        requestRegisterEntryPointSignature<TReturn,  uint64_t>(client_class, "get_future_result_fast_from_worker_thread", "get_future_result_fast_from_worker_thread_as_" + return_type_name, &Client::getFutureResultFastFromWorkerThread<TReturn>);
     };
 
     template <typename TReturn, typename... TArgs>
@@ -209,13 +209,13 @@ public:
         FuncSignatureTypeDesc return_type_desc = FuncSignatureRegistry::getFuncSignatureTypeDesc<TReturn>();
         std::string return_type_name = return_type_desc.type_names_.at("entry_point");
 
-        requestRegisterEntryPointSignature<TReturn,  TArgs...>(client_class, "call_sync_on_game_thread",                "_call_sync_on_game_thread_as_" + return_type_name,                &Client::callSync<TReturn, TArgs...>);
-        requestRegisterEntryPointSignature<Future,   TArgs...>(client_class, "call_async_on_game_thread",               "_call_async_on_game_thread",                                      &Client::callAsync<TArgs...>);
-        requestRegisterEntryPointSignature<void,     TArgs...>(client_class, "send_async_on_game_thread",               "_send_async_on_game_thread",                                      &Client::sendAsync<TArgs...>);
-        requestRegisterEntryPointSignature<TReturn,  Future>  (client_class, "get_future_result_from_game_thread",      "_get_future_result_from_game_thread_as_" + return_type_name,      &Client::getFutureResult<TReturn>);
-        requestRegisterEntryPointSignature<uint64_t, TArgs...>(client_class, "call_async_fast_on_game_thread",          "_call_async_fast_on_game_thread",                                 &Client::callAsyncFast<TArgs...>);
-        requestRegisterEntryPointSignature<void,     TArgs...>(client_class, "send_async_fast_on_game_thread",          "_send_async_fast_on_game_thread",                                 &Client::sendAsyncFast<TArgs...>);
-        requestRegisterEntryPointSignature<TReturn,  uint64_t>(client_class, "get_future_result_fast_from_game_thread", "_get_future_result_fast_from_game_thread_as_" + return_type_name, &Client::getFutureResultFastFromGameThread<TReturn>);
+        requestRegisterEntryPointSignature<TReturn,  TArgs...>(client_class, "call_sync_on_game_thread",                "call_sync_on_game_thread_as_" + return_type_name,                &Client::callSync<TReturn, TArgs...>);
+        requestRegisterEntryPointSignature<Future,   TArgs...>(client_class, "call_async_on_game_thread",               "call_async_on_game_thread",                                      &Client::callAsync<TArgs...>);
+        requestRegisterEntryPointSignature<void,     TArgs...>(client_class, "send_async_on_game_thread",               "send_async_on_game_thread",                                      &Client::sendAsync<TArgs...>);
+        requestRegisterEntryPointSignature<TReturn,  Future>  (client_class, "get_future_result_from_game_thread",      "get_future_result_from_game_thread_as_" + return_type_name,      &Client::getFutureResult<TReturn>);
+        requestRegisterEntryPointSignature<uint64_t, TArgs...>(client_class, "call_async_fast_on_game_thread",          "call_async_fast_on_game_thread",                                 &Client::callAsyncFast<TArgs...>);
+        requestRegisterEntryPointSignature<void,     TArgs...>(client_class, "send_async_fast_on_game_thread",          "send_async_fast_on_game_thread",                                 &Client::sendAsyncFast<TArgs...>);
+        requestRegisterEntryPointSignature<TReturn,  uint64_t>(client_class, "get_future_result_fast_from_game_thread", "get_future_result_fast_from_game_thread_as_" + return_type_name, &Client::getFutureResultFastFromGameThread<TReturn>);
     };
 
     bool force_return_aligned_arrays_ = false;

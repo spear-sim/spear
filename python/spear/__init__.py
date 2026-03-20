@@ -20,6 +20,22 @@ except ImportError:
     __can_import_spear_ext__ = False
 
 #
+# We define similar variables for other modules that are not always be available.
+#
+
+try:
+    import msgpackrpc
+    __can_import_msgpackrpc__ = True
+except ImportError:
+    __can_import_msgpackrpc__ = False
+
+try:
+    import unreal
+    __can_import_unreal__ = True
+except ImportError:
+    __can_import_unreal__ = False
+
+#
 # utils
 #
 
@@ -32,7 +48,16 @@ from .utils.func_utils import to_numpy_array_from_rotator, to_numpy_array_from_v
 from .utils.log_utils import log, log_current_function, log_get_prefix, log_no_prefix
 from .utils.system_utils import configure_system
 
-from .utils.func_utils import CallSyncEntryPointCaller, Future, PropertyValue, Service, ServiceWrapper, Shared
+from .utils.func_utils import CallSyncEntryPointCaller, EditorEntryPointCaller, Future, PropertyValue, Service, ServiceWrapper, Shared
+
+if __can_import_spear_ext__:
+    assert not __can_import_unreal__
+    from spear_ext import DataBundle, PackedArray
+
+if __can_import_unreal__:
+    assert not __can_import_spear_ext__
+    from .utils import editor_utils as editor
+    from .utils.editor_utils import DataBundle, PackedArray
 
 #
 # services

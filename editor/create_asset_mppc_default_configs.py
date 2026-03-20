@@ -6,7 +6,6 @@
 import os
 import posixpath
 import spear
-import spear.utils.editor_utils
 import unreal
 
 

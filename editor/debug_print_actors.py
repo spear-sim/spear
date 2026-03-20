@@ -4,7 +4,6 @@
 #
 
 import spear
-import spear.utils.editor_utils
 import unreal
 
 
@@ -17,9 +16,9 @@ if __name__ == "__main__":
 
     spear.log("Processing scene: ", editor_world_name)
 
-    actors = spear.utils.editor_utils.find_actors()
+    actors = spear.editor.find_actors()
     for actor in actors:
-        spear.log(f"    {spear.utils.editor_utils.get_stable_name_for_actor(actor=actor)}")
-        components = spear.utils.editor_utils.get_components(actor=actor)
+        spear.log(f"    {spear.editor.get_stable_name_for_actor(actor=actor)}")
+        components = spear.editor.get_components(actor=actor)
         for component in components:
-            spear.log(f"        {spear.utils.editor_utils.get_stable_name_for_component(component=component)}")
+            spear.log(f"        {spear.editor.get_stable_name_for_component(component=component)}")

@@ -295,7 +295,7 @@ class UnrealService(spear.Service):
     def get_properties_for_class(self, value_ptr, uclass):
         uclass = self.to_uclass(uclass=uclass)
         convert_func = lambda result: spear.try_to_dict(json_string=result, default_value={})
-        return self.entry_point_caller.call_on_game_thread("get_properties_for_struct_as_string", convert_func, value_ptr, ustruct)
+        return self.entry_point_caller.call_on_game_thread("get_properties_for_struct_as_string", convert_func, value_ptr, uclass)
 
     def set_properties_for_object(self, uobject, properties):
         uobject = spear.to_handle(obj=uobject)
@@ -409,7 +409,7 @@ class UnrealService(spear.Service):
         return self.entry_point_caller.call_on_game_thread("find_function_by_name", None, uclass, function_name, field_iteration_flags)
 
     def get_function_flags(self, ufunction):
-        return self.entry_point_caller.call_on_game_thread("get_function_flags", ufunction)
+        return self.entry_point_caller.call_on_game_thread("get_function_flags", None, ufunction)
 
     #
     # Interface for calling functions. When using this interface, pointers must be handled specially. For

@@ -21,7 +21,29 @@ class USpFuncUtils : public UBlueprintFunctionLibrary
     GENERATED_BODY()
 public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static UObject* ToObject(FString String)
+    static int64 ToHandleFromObject(UObject* Object)
+    {
+        SP_ASSERT(Object);
+        return reinterpret_cast<int64>(Object);
+    }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    static UObject* ToObjectFromHandle(int64 Handle)
+    {
+        UObject* uobject = reinterpret_cast<UObject*>(Handle);
+        SP_ASSERT(uobject);
+        return uobject;
+    }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    static FString ToStringFromObject(UObject* Object)
+    {
+        SP_ASSERT(Object);
+        return Unreal::toFString(Std::toStringFromPtr(Object));
+    }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    static UObject* ToObjectFromString(FString String)
     {
         UObject* uobject = Std::toPtrFromString<UObject>(Unreal::toStdString(String));
         SP_ASSERT(uobject);

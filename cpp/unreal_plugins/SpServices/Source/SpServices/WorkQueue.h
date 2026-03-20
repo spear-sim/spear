@@ -83,6 +83,13 @@ public:
         executor_work_guard_->reset();
     }
 
+    std::size_t pollOne()
+    {
+        SP_ASSERT(io_context_);
+
+        return io_context_->poll_one();
+    }
+
     // Typically called from a lambda that is bound to a specific RPC entry point and is called from the worker thread.
 
     template <typename TFunc, typename... TArgs> requires

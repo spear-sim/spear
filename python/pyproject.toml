@@ -23,6 +23,9 @@ dependencies = [
     "yacs==0.1.8"]
 
 [project.optional-dependencies]
+editor = [
+    "msgpack-rpc-python==0.4.1",
+    "opencv-python==4.10.0.84"]
 examples = [
     "jupyterlab==4.4.4",
     "matplotlib==3.10.0",

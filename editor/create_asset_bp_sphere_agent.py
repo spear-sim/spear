@@ -5,7 +5,6 @@
 
 import posixpath
 import spear
-import spear.utils.editor_utils
 import unreal
 
 
@@ -101,12 +100,12 @@ if __name__ == "__main__":
 
     # create blueprint
     spear.log("Creating blueprint: ", blueprint_path)
-    blueprint_asset = spear.utils.editor_utils.create_blueprint_asset(
+    blueprint_asset = spear.editor.create_blueprint_asset(
         asset_name=blueprint_desc["blueprint_name"],
         package_dir=blueprint_desc["blueprint_dir"],
         parent_class=unreal.Actor)
 
-    blueprint_subobject_descs = spear.utils.editor_utils.get_subobject_descs_for_blueprint_asset(blueprint_asset=blueprint_asset)
+    blueprint_subobject_descs = spear.editor.get_subobject_descs_for_blueprint_asset(blueprint_asset=blueprint_asset)
     assert len(blueprint_subobject_descs) == 2
     assert isinstance(blueprint_subobject_descs[0]["object"], unreal.Actor)          # the 0th entry always refers to the actor itself
     assert isinstance(blueprint_subobject_descs[1]["object"], unreal.SceneComponent) # the 1st entry must be the root component in this case because there are only 2 entries
@@ -115,7 +114,7 @@ if __name__ == "__main__":
     component_name = "sp_stable_name_component_"
     spear.log("Creating component: ", component_name)
     parent_data_handle = blueprint_subobject_descs[0]["data_handle"] # actor
-    sp_stable_name_component_desc = spear.utils.editor_utils.add_new_subobject_to_blueprint_asset(
+    sp_stable_name_component_desc = spear.editor.add_new_subobject_to_blueprint_asset(
         blueprint_asset=blueprint_asset,
         parent_data_handle=parent_data_handle,
         subobject_name=component_name,
@@ -125,7 +124,7 @@ if __name__ == "__main__":
     component_name = "sp_update_transform_component_"
     spear.log("Creating component: ", component_name)
     parent_data_handle = blueprint_subobject_descs[0]["data_handle"] # actor
-    sp_update_transform_component_desc = spear.utils.editor_utils.add_new_subobject_to_blueprint_asset(
+    sp_update_transform_component_desc = spear.editor.add_new_subobject_to_blueprint_asset(
         blueprint_asset=blueprint_asset,
         parent_data_handle=parent_data_handle,
         subobject_name=component_name,
@@ -140,7 +139,7 @@ if __name__ == "__main__":
     component_name = "sp_basic_keyboard_control_component_"
     spear.log("Creating component: ", component_name)
     parent_data_handle = blueprint_subobject_descs[1]["data_handle"] # root component
-    sp_basic_keyboard_control_component_desc = spear.utils.editor_utils.add_new_subobject_to_blueprint_asset(
+    sp_basic_keyboard_control_component_desc = spear.editor.add_new_subobject_to_blueprint_asset(
         blueprint_asset=blueprint_asset,
         parent_data_handle=parent_data_handle,
         subobject_name=component_name,
@@ -162,7 +161,7 @@ if __name__ == "__main__":
 
         spear.log("Creating component: ", component_desc["name"])
         parent_data_handle = blueprint_subobject_descs[1]["data_handle"] # root component
-        static_mesh_component_desc = spear.utils.editor_utils.add_new_subobject_to_blueprint_asset(
+        static_mesh_component_desc = spear.editor.add_new_subobject_to_blueprint_asset(
             blueprint_asset=blueprint_asset,
             parent_data_handle=parent_data_handle,
             subobject_name=component_desc["name"],
@@ -196,7 +195,7 @@ if __name__ == "__main__":
 
         spear.log("Creating component: ", component_desc["name"])
         parent_data_handle = blueprint_subobject_descs[1]["data_handle"] # root component
-        sp_scene_capture_component_2d_desc = spear.utils.editor_utils.add_new_subobject_to_blueprint_asset(
+        sp_scene_capture_component_2d_desc = spear.editor.add_new_subobject_to_blueprint_asset(
             blueprint_asset=blueprint_asset,
             parent_data_handle=parent_data_handle,
             subobject_name=component_desc["name"],

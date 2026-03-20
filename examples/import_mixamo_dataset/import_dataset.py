@@ -7,7 +7,6 @@ import argparse
 import os
 import posixpath
 import spear
-import spear.utils.editor_utils
 import unreal
 
 
@@ -149,12 +148,12 @@ if __name__ == "__main__":
 
                     # create blueprint
                     spear.log("            Creating blueprint: ", blueprint_path)
-                    blueprint_asset = spear.utils.editor_utils.create_blueprint_asset(
+                    blueprint_asset = spear.editor.create_blueprint_asset(
                         asset_name=blueprint_name,
                         package_dir=blueprint_dir,
                         parent_class=unreal.SkeletalMeshActor)
 
-                    blueprint_subobject_descs = spear.utils.editor_utils.get_subobject_descs_for_blueprint_asset(blueprint_asset=blueprint_asset)
+                    blueprint_subobject_descs = spear.editor.get_subobject_descs_for_blueprint_asset(blueprint_asset=blueprint_asset)
                     assert len(blueprint_subobject_descs) == 2
                     assert isinstance(blueprint_subobject_descs[0]["object"], unreal.SkeletalMeshActor)     # the 0th entry always refers to the actor itself
                     assert isinstance(blueprint_subobject_descs[1]["object"], unreal.SkeletalMeshComponent) # the 1st entry always refers to the actor's root component
