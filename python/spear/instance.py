@@ -88,7 +88,7 @@ class Instance():
 
         # Initialize EditorScopedServices and GameScopedServices.
 
-        self._editor = EditorScopedServices(
+        self._editor = Instance.EditorScopedServices(
             namespace="editor",
             engine_service=self._engine_service,
             engine_globals_service=self.engine_globals_service,
@@ -96,13 +96,104 @@ class Instance():
             sp_func_service=self.sp_func_service,
             config=self._config)
 
-        self._game = GameScopedServices(
+        self._game = Instance.GameScopedServices(
             namespace="game",
             engine_service=self._engine_service,
             engine_globals_service=self.engine_globals_service,
             shared_memory_service=self.shared_memory_service,
             sp_func_service=self.sp_func_service,
             config=self._config)
+
+
+    class WorldScopedServices():
+        def __init__(self, namespace, engine_service, engine_globals_service, shared_memory_service, sp_func_service, config):
+
+            # needed internally in get_unreal_object(...)
+            self._sp_func_service = sp_func_service
+            self._config = config
+
+            if spear.__can_import_unreal__:
+                entry_point_caller_type = spear.EditorEntryPointCaller
+            else:
+                entry_point_caller_type = spear.CallSyncEntryPointCaller
+
+            # Initialize services that require a reference to EngineService, SpFuncService.
+
+            self.unreal_service = spear.UnrealService(
+                entry_point_caller=entry_point_caller_type(service_name=f"{namespace}.unreal_service", engine_service=engine_service),
+                sp_func_service=self._sp_func_service,
+                config=self._config)
+
+            # Initialize services that require a reference to EngineService, SpFuncService, UnrealService.
+
+            self.navigation_service = spear.NavigationService(
+                entry_point_caller=entry_point_caller_type(service_name=f"{namespace}.navigation_service", engine_service=engine_service),
+                shared_memory_service=shared_memory_service,
+                sp_func_service=self._sp_func_service,
+                unreal_service=self.unreal_service,
+                config=self._config)
+
+            self.engine_globals_service = spear.EngineGlobalsServiceWrapper(
+                service=engine_globals_service,
+                sp_func_service=self._sp_func_service,
+                unreal_service=self.unreal_service,
+                config=self._config)
+
+            if self.engine_globals_service.service.is_with_editor():
+                self.editor_python_service = spear.EditorPythonService(
+                    entry_point_caller=entry_point_caller_type(service_name=f"{namespace}.editor_python_service", engine_service=engine_service),
+                    sp_func_service=self._sp_func_service,
+                    unreal_service=self.unreal_service,
+                    config=self._config)
+
+        def get_unreal_object(self, uobject=None, uclass=None, with_sp_funcs=False):
+            return spear.UnrealObject(
+                unreal_service=self.unreal_service,
+                sp_func_service=self._sp_func_service,
+                config=self._config,
+                uobject=uobject,
+                uclass=uclass,
+                with_sp_funcs=with_sp_funcs)
+
+    class EditorScopedServices(WorldScopedServices):
+        def __init__(self, namespace, engine_service, engine_globals_service, shared_memory_service, sp_func_service, config):
+            super().__init__(
+                namespace=namespace,
+                engine_service=engine_service,
+                engine_globals_service=engine_globals_service,
+                shared_memory_service=shared_memory_service,
+                sp_func_service=sp_func_service,
+                config=config)
+
+            if spear.__can_import_unreal__:
+                entry_point_caller_type = spear.EditorEntryPointCaller
+            else:
+                entry_point_caller_type = spear.CallSyncEntryPointCaller
+
+            # Initialize services that require a reference to EngineService.
+
+            self.initialize_editor_world_service = spear.InitializeWorldService(
+                entry_point_caller=entry_point_caller_type(service_name=f"{namespace}.initialize_editor_world_service", engine_service=engine_service))
+
+    class GameScopedServices(WorldScopedServices):
+        def __init__(self, namespace, engine_service, engine_globals_service, shared_memory_service, sp_func_service, config):
+            super().__init__(
+                namespace=namespace,
+                engine_service=engine_service,
+                engine_globals_service=engine_globals_service,
+                shared_memory_service=shared_memory_service,
+                sp_func_service=sp_func_service,
+                config=config)
+
+            if spear.__can_import_unreal__:
+                entry_point_caller_type = spear.EditorEntryPointCaller
+            else:
+                entry_point_caller_type = spear.CallSyncEntryPointCaller
+
+            # Initialize services that require a reference to EngineService.
+
+            self.initialize_game_world_service = spear.InitializeWorldService(
+                entry_point_caller=entry_point_caller_type(service_name=f"{namespace}.initialize_game_world_service", engine_service=engine_service))
 
 
     #
@@ -779,98 +870,3 @@ class Instance():
 
     def __repr__(self):
         return f"Instance(_client={self._client})"
-
-
-#
-# Helper classes
-#
-
-class WorldScopedServices():
-    def __init__(self, namespace, engine_service, engine_globals_service, shared_memory_service, sp_func_service, config):
-
-        # needed internally in get_unreal_object(...)
-        self._sp_func_service = sp_func_service
-        self._config = config
-
-        if spear.__can_import_unreal__:
-            entry_point_caller_type = spear.EditorEntryPointCaller
-        else:
-            entry_point_caller_type = spear.CallSyncEntryPointCaller
-
-        # Initialize services that require a reference to EngineService, SpFuncService.
-
-        self.unreal_service = spear.UnrealService(
-            entry_point_caller=entry_point_caller_type(service_name=f"{namespace}.unreal_service", engine_service=engine_service),
-            sp_func_service=self._sp_func_service,
-            config=self._config)
-
-        # Initialize services that require a reference to EngineService, SpFuncService, UnrealService.
-
-        self.navigation_service = spear.NavigationService(
-            entry_point_caller=entry_point_caller_type(service_name=f"{namespace}.navigation_service", engine_service=engine_service),
-            shared_memory_service=shared_memory_service,
-            sp_func_service=self._sp_func_service,
-            unreal_service=self.unreal_service,
-            config=self._config)
-
-        self.engine_globals_service = spear.EngineGlobalsServiceWrapper(
-            service=engine_globals_service,
-            sp_func_service=self._sp_func_service,
-            unreal_service=self.unreal_service,
-            config=self._config)
-
-        if self.engine_globals_service.service.is_with_editor():
-            self.editor_python_service = spear.EditorPythonService(
-                entry_point_caller=entry_point_caller_type(service_name=f"{namespace}.editor_python_service", engine_service=engine_service),
-                sp_func_service=self._sp_func_service,
-                unreal_service=self.unreal_service,
-                config=self._config)
-
-    def get_unreal_object(self, uobject=None, uclass=None, with_sp_funcs=False):
-        return spear.UnrealObject(
-            unreal_service=self.unreal_service,
-            sp_func_service=self._sp_func_service,
-            config=self._config,
-            uobject=uobject,
-            uclass=uclass,
-            with_sp_funcs=with_sp_funcs)
-
-class EditorScopedServices(WorldScopedServices):
-    def __init__(self, namespace, engine_service, engine_globals_service, shared_memory_service, sp_func_service, config):
-        super().__init__(
-            namespace=namespace,
-            engine_service=engine_service,
-            engine_globals_service=engine_globals_service,
-            shared_memory_service=shared_memory_service,
-            sp_func_service=sp_func_service,
-            config=config)
-
-        if spear.__can_import_unreal__:
-            entry_point_caller_type = spear.EditorEntryPointCaller
-        else:
-            entry_point_caller_type = spear.CallSyncEntryPointCaller
-
-        # Initialize services that require a reference to EngineService.
-
-        self.initialize_editor_world_service = spear.InitializeWorldService(
-            entry_point_caller=entry_point_caller_type(service_name=f"{namespace}.initialize_editor_world_service", engine_service=engine_service))
-
-class GameScopedServices(WorldScopedServices):
-    def __init__(self, namespace, engine_service, engine_globals_service, shared_memory_service, sp_func_service, config):
-        super().__init__(
-            namespace=namespace,
-            engine_service=engine_service,
-            engine_globals_service=engine_globals_service,
-            shared_memory_service=shared_memory_service,
-            sp_func_service=sp_func_service,
-            config=config)
-
-        if spear.__can_import_unreal__:
-            entry_point_caller_type = spear.EditorEntryPointCaller
-        else:
-            entry_point_caller_type = spear.CallSyncEntryPointCaller
-
-        # Initialize services that require a reference to EngineService.
-
-        self.initialize_game_world_service = spear.InitializeWorldService(
-            entry_point_caller=entry_point_caller_type(service_name=f"{namespace}.initialize_game_world_service", engine_service=engine_service))
