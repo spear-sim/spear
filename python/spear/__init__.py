@@ -45,7 +45,8 @@ from .utils.config_utils import get_config
 from .utils.func_utils import to_array, to_arrays, to_data_bundle, to_data_bundle_dict, try_to_dict, try_to_dicts, to_json_string, to_json_strings, to_packed_array, to_packed_arrays, to_ptr, to_shared
 from .utils.func_utils import to_handle_or_unreal_struct, to_handle_or_unreal_class, to_handle_or_unreal_object, to_handle, to_unreal_struct, to_unreal_class, to_unreal_object
 from .utils.func_utils import to_numpy_array_from_rotator, to_numpy_array_from_vector, to_numpy_matrix_from_rotator, to_rotator_from_numpy_array, to_rotator_from_numpy_matrix, to_vector_from_numpy_array
-from .utils.log_utils import log, log_current_function, log_get_prefix, log_no_prefix
+from .utils.func_utils import from_script_result, to_script_expr
+from .utils.log_utils import log, log_current_function, log_get_prefix, log_no_prefix, register_log_func, unregister_log_func
 from .utils.system_utils import configure_system
 
 from .utils.func_utils import CallSyncEntryPointCaller, EditorEntryPointCaller, Future, PropertyValue, Service, ServiceWrapper, Shared
@@ -65,6 +66,7 @@ if __can_import_unreal__:
 
 from . import services
 
+from .services.editor_python_service import EditorPythonService
 from .services.engine_service import EngineService
 from .services.engine_globals_service import EngineGlobalsService, EngineGlobalsServiceWrapper
 from .services.enhanced_input_service import EnhancedInputService

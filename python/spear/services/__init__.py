@@ -7,12 +7,18 @@
 from . import engine_service
 
 # services that require a reference to EngineService
+from . import engine_globals_service
 from . import enhanced_input_service
 from . import initialize_world_service
 from . import input_service
 from . import shared_memory_service
+
+# services that require a reference to EngineService, SharedMemoryService
+from . import sp_func_service
+
+# services that require a reference to EngineService, SpFuncService
+from . import navigation_service
 from . import unreal_service
 
-# services that require a reference to EngineService and SharedMemoryService
-from . import navigation_service
-from . import sp_func_service
+# services that require a reference to EngineService, SpFuncService, UnrealService
+from . import editor_python_service

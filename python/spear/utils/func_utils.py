@@ -329,6 +329,7 @@ class EditorSendAsyncFastEntryPointCaller(EditorEntryPointCaller):
     def get(self, obj):
         return None
 
+
 #
 # These classes are for internal use, and do not need to be instantiated directly by most users.
 #
@@ -379,7 +380,7 @@ class Future:
 
 
 #
-# Conversion functions
+# Conversion functions for Unreal types
 #
 
 # Convert to handle or UnrealStruct
@@ -440,6 +441,9 @@ def to_unreal_type(obj, create_func):
         assert False
     elif isinstance(obj, numbers.Integral):
         return create_func(obj=obj)
+    elif isinstance(obj, str):
+        assert obj.startswith("0x")
+        return create_func(obj=obj)
     elif isinstance(obj, list):
         return [ to_unreal_type(obj=o, create_func=create_func) for o in obj ]
     elif isinstance(obj, dict):
@@ -491,6 +495,10 @@ def to_handle(obj):
         assert False
 
 
+#
+# Conversion functions for calling functions
+#
+
 # Convert to a collection of JSON strings from a collection of objects so they can be passed to a service.
 def to_json_strings(objs):
     if isinstance(objs, list):
@@ -540,7 +548,6 @@ def to_json_string(obj, stringify=True):
     else:
         return json.dumps(obj)
 
-
 # Convert to a collection of dicts from a collection of JSON strings returned by a service.
 def try_to_dicts(json_strings, default_value=None):
     if isinstance(json_strings, list):
@@ -560,16 +567,13 @@ def try_to_dict(json_string, default_value=None):
         else:
             return default_value
 
-
 # Convert to a Ptr object that can be passed to a service from a handle.
 def to_ptr(handle):
     return Ptr(handle=handle)
 
-
 # Convert to a Shared object that can be passed to a service from a NumPy array backed by shared memory.
 def to_shared(array, shared_memory_handle):
     return Shared(array=array, shared_memory_handle=shared_memory_handle)
-
 
 # Convert to a packed array from a NumPy array.
 def to_packed_array(array, dest_byte_order, usage_flags):
@@ -616,7 +620,6 @@ def to_array(packed_array, src_byte_order, usage_flags, shared_memory_handles):
     else:
         assert False
 
-
 # Convert to a collection of packed arrays from a collection of NumPy arrays.
 def to_packed_arrays(arrays, dest_byte_order, usage_flags):
     if isinstance(arrays, list):
@@ -634,7 +637,6 @@ def to_arrays(packed_arrays, src_byte_order, usage_flags, shared_memory_handles)
         return { k: to_array(packed_array=v, src_byte_order=src_byte_order, usage_flags=usage_flags, shared_memory_handles=shared_memory_handles) for k, v in packed_arrays.items() }
     else:
         assert False
-
 
 # Convert to a data bundle from {a collection of arrays, a collection of unreal objects, an info string}.
 def to_data_bundle(dest_byte_order, usage_flags, arrays=None, unreal_objs=None, info=""):
@@ -657,6 +659,10 @@ def to_data_bundle_dict(data_bundle, src_byte_order, usage_flags, shared_memory_
         "unreal_objs": try_to_dicts(json_strings=data_bundle.unreal_obj_strings),
         "info": data_bundle.info}
 
+
+#
+# Conversion functions for NumPy types
+#
 
 # Convert to a NumPy matrix from an Unreal rotator. See utils/pipeline_utils.py for more details on Unreal's Euler angle conventions.
 def to_numpy_matrix_from_rotator(rotator, as_matrix=None):
@@ -720,3 +726,118 @@ def to_numpy_array_from_vector(vector, as_matrix=None):
     else:
         assert as_matrix
         return np.matrix([vector["x"], vector["y"], vector["z"]]).T
+
+
+#
+# Conversion functions for interoperability between SPEAR Python and Editor Python
+#
+
+# Encode a SPEAR Python object into a script expression string.
+def to_script_expr(obj, struct_type=None):
+    return f"spear.editor.from_script_expr(script_expr_dict={_to_script_expr_dict(obj=obj, struct_type=struct_type)})"
+
+def _to_script_expr_dict(obj, struct_type=None):
+    result = { "type_string": _to_script_expr_type_string(obj=obj, struct_type=struct_type), "value": _to_script_expr_value(obj=obj, struct_type=struct_type) }
+    if struct_type is not None:
+        result["struct_type"] = struct_type
+    return result
+
+def _to_script_expr_type_string(obj, struct_type=None):
+    if isinstance(obj, list):
+        return "list"
+    elif isinstance(obj, dict):
+        if struct_type is None:
+            return "dict"
+        else:
+            return "StructInstance"
+    elif isinstance(obj, np.matrix):
+        return "numpy.matrix"
+    elif isinstance(obj, np.ndarray):
+        return "numpy.ndarray"
+    elif isinstance(obj, spear.UnrealObject):
+        return "UnrealObject"
+    elif isinstance(obj, spear.UnrealClass):
+        return "UnrealClass"
+    elif isinstance(obj, spear.UnrealStruct):
+        return "UnrealStruct"
+    elif type(obj).__module__ == "builtins":
+        return type(obj).__qualname__
+    else:
+        return f"{type(obj).__module__}.{type(obj).__qualname__}"
+
+def _to_script_expr_value(obj, struct_type=None):
+    if isinstance(obj, list):
+        return [ _to_script_expr_dict(obj=item) for item in obj ]
+    elif isinstance(obj, dict):
+        return { k: _to_script_expr_dict(obj=v) for k, v in obj.items() }
+    elif isinstance(obj, np.ndarray):
+        return { "shape": list(obj.shape), "dtype": str(obj.dtype), "data": obj.tolist() }
+    elif isinstance(obj, spear.UnrealObject):
+        return to_handle(obj=obj)
+    elif isinstance(obj, spear.UnrealClass):
+        return to_handle(obj=obj)
+    elif isinstance(obj, spear.UnrealStruct):
+        return to_handle(obj=obj)
+    else:
+        return obj
+
+# Decode a script result dict into a SPEAR Python object.
+def from_script_result(script_result, unreal_service=None, sp_func_service=None, config=None, as_handle=None, as_unreal_struct=None, as_unreal_class=None, as_unreal_object=None, with_sp_funcs=None):
+    type_string = script_result["type_string"]
+    value = script_result["value"]
+    if type_string == "list":
+        assert as_handle is None
+        assert as_unreal_struct is None
+        assert as_unreal_class is None
+        assert as_unreal_object is None
+        assert with_sp_funcs is None
+        return [ from_script_result(script_result=elem, unreal_service=unreal_service, sp_func_service=sp_func_service, config=config) for elem in value ]
+    elif type_string == "dict":
+        assert as_handle is None
+        assert as_unreal_struct is None
+        assert as_unreal_class is None
+        assert as_unreal_object is None
+        assert with_sp_funcs is None
+        return { k: from_script_result(script_result=v, unreal_service=unreal_service, sp_func_service=sp_func_service, config=config) for k, v in value.items() }
+    elif type_string == "numpy.matrix":
+        assert as_handle is None
+        assert as_unreal_struct is None
+        assert as_unreal_class is None
+        assert as_unreal_object is None
+        assert with_sp_funcs is None
+        return np.matrix(np.array(value["data"], dtype=np.dtype(value["dtype"])).reshape(value["shape"]))
+    elif type_string == "numpy.ndarray":
+        assert as_handle is None
+        assert as_unreal_struct is None
+        assert as_unreal_class is None
+        assert as_unreal_object is None
+        assert with_sp_funcs is None
+        return np.array(value["data"], dtype=np.dtype(value["dtype"])).reshape(value["shape"])
+    elif type_string == "UnrealObject":
+        assert as_unreal_struct is None
+        assert as_unreal_class is None
+        return to_handle_or_unreal_object(obj=value, unreal_service=unreal_service, sp_func_service=sp_func_service, config=config, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
+    elif type_string == "UnrealClass":
+        assert as_unreal_struct is None
+        assert as_unreal_object is None
+        assert with_sp_funcs is None
+        return to_handle_or_unreal_class(obj=value, unreal_service=unreal_service, as_handle=as_handle, as_unreal_class=as_unreal_class)
+    elif type_string == "UnrealStruct":
+        assert as_unreal_class is None
+        assert as_unreal_object is None
+        assert with_sp_funcs is None
+        return to_handle_or_unreal_struct(obj=value, unreal_service=unreal_service, as_handle=as_handle, as_unreal_struct=as_unreal_struct)
+    elif type_string == "StructInstance":
+        assert as_handle is None
+        assert as_unreal_struct is None
+        assert as_unreal_class is None
+        assert as_unreal_object is None
+        assert with_sp_funcs is None
+        return value
+    else:
+        assert as_handle is None
+        assert as_unreal_struct is None
+        assert as_unreal_class is None
+        assert as_unreal_object is None
+        assert with_sp_funcs is None
+        return value
