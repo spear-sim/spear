@@ -88,8 +88,6 @@ public:
 
     void TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override
     {
-        SP_LOG_CURRENT_FUNCTION();
-
         USceneComponent::TickComponent(delta_time, level_tick, this_tick_function);
     }
 
