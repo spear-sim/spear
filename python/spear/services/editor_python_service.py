@@ -189,9 +189,9 @@ class EditorPythonService(spear.Service):
             execution_scope="Public",
             as_handle=as_handle, as_unreal_struct=as_unreal_struct, as_unreal_class=as_unreal_class, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
-    def set(self, name, value):
+    def set(self, name, value, struct_type=None):
         return self.execute_statement(
-            statement=f"{name} = {spear.to_script_expr(value)}",
+            statement=f"{name} = {spear.to_script_expr(value, struct_type=struct_type)}",
             execution_scope="Public")
 
     #
