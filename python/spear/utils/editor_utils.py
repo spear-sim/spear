@@ -192,9 +192,9 @@ def from_script_expr(script_expr_dict):
     elif type_string == "UnrealStruct":
         return unreal.SpFuncUtils.to_object_from_handle(handle=value)
     elif type_string == "StructInstance":
-        struct_type = script_expr_dict["struct_type"]
-        assert struct_type.startswith("unreal.")
-        struct_class = getattr(unreal, struct_type.split(".", 1)[1])
+        struct_type_string = script_expr_dict["struct_type_string"]
+        assert struct_type_string.startswith("unreal.")
+        struct_class = getattr(unreal, struct_type_string.split(".", 1)[1])
         decoded_value = { k: from_script_expr(script_expr_dict=v) for k, v in value.items() }
         export_text = unreal.SpFuncUtils.get_struct_properties_as_export_text_from_json_string(script_struct=struct_class.static_struct(), properties_string=json.dumps(decoded_value))
         result = struct_class()

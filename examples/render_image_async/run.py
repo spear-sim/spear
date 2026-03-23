@@ -16,6 +16,7 @@ import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--benchmark", action="store_true")
+parser.add_argument("--double-buffered-readback", action="store_true")
 parser.add_argument("--no-shared-memory", action="store_true")
 parser.add_argument("--print-frame-time-every-frame", action="store_true")
 parser.add_argument("--read-pixels-every-frame", action="store_true")
@@ -87,6 +88,9 @@ if __name__ == "__main__":
         if not shared_memory:
             final_tone_curve_hdr_component.bUseSharedMemory = False
 
+        if args.double_buffered_readback:
+            final_tone_curve_hdr_component.bUseDoubleBufferedReadback = True
+
         # update state for measuring "standalone" and "standalone + extra work" frame rates
         if args.print_frame_time_every_frame:
             final_tone_curve_hdr_component.bPrintFrameTimeEveryFrame = True
@@ -104,8 +108,16 @@ if __name__ == "__main__":
     for i in range(1):
         instance.flush()
 
-    # get rendered frame using call_async API
+    # get rendered frame
+    if args.double_buffered_readback:
+        with instance.begin_frame():
+            final_tone_curve_hdr_component.enqueue_copy()
+        with instance.end_frame():
+            pass
+
     with instance.begin_frame():
+        if args.double_buffered_readback:
+            final_tone_curve_hdr_component.enqueue_copy()
         future = final_tone_curve_hdr_component.call_async.read_pixels()
     with instance.end_frame():
         data_bundle = future.get()
@@ -199,24 +211,20 @@ if __name__ == "__main__":
         start_time_seconds = time.time()
         for i in range(num_steps):
             with instance.begin_frame():
-                pass
+                if args.double_buffered_readback:
+                    final_tone_curve_hdr_component.enqueue_copy()
             with instance.end_frame():
                 data_bundle = final_tone_curve_hdr_component.read_pixels()
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
         spear.log(f"Average frame time for instance.sp_func_service.call_function(...): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
 
-        # instance.sp_func_service.call_async.call_function(...)
-        num_steps = 100
-        start_time_seconds = time.time()
-        for i in range(num_steps):
+        # prime the scratchpad before async benchmarks where read_pixels comes before enqueue_copy
+        if args.double_buffered_readback:
             with instance.begin_frame():
-                future = final_tone_curve_hdr_component.call_async.read_pixels()
+                final_tone_curve_hdr_component.enqueue_copy()
             with instance.end_frame():
-                data_bundle = future.get()
-        end_time_seconds = time.time()
-        elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log(f"Average frame time for instance.sp_func_service.call_async.call_function(...): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
+                pass
 
         # instance.sp_func_service.call_async.call_function(...)
         num_steps = 100
@@ -224,6 +232,22 @@ if __name__ == "__main__":
         for i in range(num_steps):
             with instance.begin_frame():
                 future = final_tone_curve_hdr_component.call_async.read_pixels()
+                if args.double_buffered_readback:
+                    final_tone_curve_hdr_component.call_async.enqueue_copy()
+            with instance.end_frame():
+                data_bundle = future.get()
+        end_time_seconds = time.time()
+        elapsed_time_seconds = end_time_seconds - start_time_seconds
+        spear.log(f"Average frame time for instance.sp_func_service.call_async.call_function(...): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
+
+        # instance.sp_func_service.call_async.call_function(...) (single-step)
+        num_steps = 100
+        start_time_seconds = time.time()
+        for i in range(num_steps):
+            with instance.begin_frame():
+                future = final_tone_curve_hdr_component.call_async.read_pixels()
+                if args.double_buffered_readback:
+                    final_tone_curve_hdr_component.call_async.enqueue_copy()
             with instance.end_frame(single_step=True):
                 data_bundle = future.get()
         end_time_seconds = time.time()

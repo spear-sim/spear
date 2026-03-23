@@ -191,9 +191,9 @@ if __name__ == "__main__":
         spear.log("Expecting np.ndarray:   ", type(result), " ", result)
         np.testing.assert_array_equal(result, arr*2)
 
-        # pass a SPEAR-side dict as an Unreal struct using spear.to_script_expr with struct_type
+        # pass a SPEAR-side dict as an Unreal struct using spear.to_script_struct_expr
         vec_dict = {"X": 10.0, "Y": 20.0, "Z": 30.0}
-        result = editor.editor_python_service.evaluate_expression(expression=f"{spear.to_script_expr(obj=vec_dict, struct_type='unreal.Vector')}.get_editor_property('x')")
+        result = editor.editor_python_service.evaluate_expression(expression=f"{spear.to_script_struct_expr(value=vec_dict, type_string='unreal.Vector')}.get_editor_property('x')")
         spear.log("Expecting float:        ", type(result), " ", result)
         assert result == 10.0
 

@@ -378,6 +378,14 @@ class Future:
     def __repr__(self):
         return f'Future(future={self.future}, convert_func={self.convert_func is not None}, _return_as="{self._return_as}", _func_name="{self._func_name}")'
 
+class ScriptStruct:
+    def __init__(self, value, type_string):
+        self.value = value
+        self.type_string = type_string
+
+    def __repr__(self):
+        return f'ScriptStruct(value={self.value}, type_string="{self.type_string}")'
+
 
 #
 # Conversion functions for Unreal types
@@ -733,23 +741,20 @@ def to_numpy_array_from_vector(vector, as_matrix=None):
 #
 
 # Encode a SPEAR Python object into a script expression string.
-def to_script_expr(obj, struct_type=None):
-    return f"spear.editor.from_script_expr(script_expr_dict={_to_script_expr_dict(obj=obj, struct_type=struct_type)})"
+def to_script_expr(obj):
+    return f"spear.editor.from_script_expr(script_expr_dict={_to_script_expr_dict(obj=obj)})"
 
-def _to_script_expr_dict(obj, struct_type=None):
-    result = { "type_string": _to_script_expr_type_string(obj=obj, struct_type=struct_type), "value": _to_script_expr_value(obj=obj, struct_type=struct_type) }
-    if struct_type is not None:
-        result["struct_type"] = struct_type
-    return result
+def _to_script_expr_dict(obj):
+    if isinstance(obj, ScriptStruct):
+        return { "type_string": "StructInstance", "value": { k: _to_script_expr_dict(obj=v) for k, v in obj.value.items() }, "struct_type_string": obj.type_string }
+    else:
+        return { "type_string": _to_script_expr_type_string(obj=obj), "value": _to_script_expr_value(obj=obj) }
 
-def _to_script_expr_type_string(obj, struct_type=None):
+def _to_script_expr_type_string(obj):
     if isinstance(obj, list):
         return "list"
     elif isinstance(obj, dict):
-        if struct_type is None:
-            return "dict"
-        else:
-            return "StructInstance"
+        return "dict"
     elif isinstance(obj, np.matrix):
         return "numpy.matrix"
     elif isinstance(obj, np.ndarray):
@@ -765,7 +770,7 @@ def _to_script_expr_type_string(obj, struct_type=None):
     else:
         return f"{type(obj).__module__}.{type(obj).__qualname__}"
 
-def _to_script_expr_value(obj, struct_type=None):
+def _to_script_expr_value(obj):
     if isinstance(obj, list):
         return [ _to_script_expr_dict(obj=item) for item in obj ]
     elif isinstance(obj, dict):
@@ -780,6 +785,13 @@ def _to_script_expr_value(obj, struct_type=None):
         return to_handle(obj=obj)
     else:
         return obj
+
+def to_script_struct(value, type_string):
+    return ScriptStruct(value=value, type_string=type_string)
+
+def to_script_struct_expr(value, type_string):
+    assert isinstance(value, dict)
+    return to_script_expr(to_script_struct(value=value, type_string=type_string))
 
 # Decode a script result dict into a SPEAR Python object.
 def from_script_result(script_result, unreal_service=None, sp_func_service=None, config=None, as_handle=None, as_unreal_struct=None, as_unreal_class=None, as_unreal_object=None, with_sp_funcs=None):
