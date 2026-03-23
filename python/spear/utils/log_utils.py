@@ -6,9 +6,20 @@
 import inspect
 import os
 
+_log_funcs = []
+
+def register_log_func(func):
+    _log_funcs.append(func)
+
+def unregister_log_func(func):
+    _log_funcs.remove(func)
+
 def log(*args):
     current_frame = inspect.currentframe()
-    print(_log_get_prefix(current_frame) + "".join([str(arg) for arg in args]))
+    message = _log_get_prefix(current_frame) + "".join([str(arg) for arg in args])
+    print(message)
+    for func in _log_funcs:
+        func(message)
 
 def log_current_function(prefix=""):
     current_frame = inspect.currentframe()

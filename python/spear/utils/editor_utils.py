@@ -6,6 +6,7 @@
 import cv2
 import functools
 import glob
+import json
 import msgpackrpc
 import numpy as np
 import os
@@ -13,9 +14,9 @@ import pathlib
 import posixpath
 import subprocess
 import sys
+import traceback
 import unreal
 import spear
-
 
 
 #
@@ -30,12 +31,38 @@ def script(func):
         return runner
     return wrapper
 
-
 class ScriptRunner:
+
+    _initialized = False
+
+    # Token state. Tokens are created by SPEAR before launching a script and used to track completion,
+    # exceptions, and log messages. ScriptRunner.__init__ claims the pending token (if any) so that
+    # stop() can mark it complete when the generator finishes or raises.
+    _tokens = {}
+    _exceptions = {}
+    _log_messages = {}
+    _active_token = None  # token of the ScriptRunner currently inside _advance(), used by _log_func
+    _pending_token = None # token waiting to be claimed by the next ScriptRunner.__init__
+    _next_token_id = 0
+
+    # Delta time state, updated by tick callbacks.
+    _current_delta_time = 0.0
+
+    @staticmethod
+    def initialize():
+        if ScriptRunner._initialized:
+            return
+        ScriptRunner._initialized = True
+        spear.register_log_func(func=ScriptRunner._log_func)
+
     def __init__(self, generator):
+        ScriptRunner.initialize()
         assert generator is not None
         self._generator = generator
         self._running = False
+        self._advancing = False
+        self._token = ScriptRunner._pending_token  # claim the pending token (if any) for this instance
+        ScriptRunner._pending_token = None
         self._pre_tick_handle = unreal.register_slate_pre_tick_callback(self._pre_tick)
         self._post_tick_handle = unreal.register_slate_post_tick_callback(self._post_tick)
 
@@ -45,23 +72,181 @@ class ScriptRunner:
 
     def stop(self):
         self._running = False
+        if self._token is not None:
+            ScriptRunner._tokens[self._token] = True
         unreal.unregister_slate_pre_tick_callback(self._pre_tick_handle)
         unreal.unregister_slate_post_tick_callback(self._post_tick_handle)
         spear.log("Finished executing editor script.")
 
     def _pre_tick(self, delta_time):
         assert self._running
+        ScriptRunner._current_delta_time = delta_time
         self._advance()
 
     def _post_tick(self, delta_time):
         assert self._running
+        ScriptRunner._current_delta_time = delta_time
         self._advance()
 
     def _advance(self):
+        if self._advancing:  # guard against re-entrancy from Unreal functions that pump the message loop
+            return
+        self._advancing = True
+        prev_active_token = ScriptRunner._active_token
+        ScriptRunner._active_token = self._token
         try:
             next(self._generator)
         except StopIteration:
             self.stop()
+        except Exception:
+            if self._token is not None:
+                ScriptRunner._exceptions[self._token] = traceback.format_exc()
+            self.stop()
+        finally:
+            ScriptRunner._active_token = prev_active_token
+            self._advancing = False
+
+    # Called by SPEAR before launching a script. Allocates a new token and initializes its state.
+    @staticmethod
+    def create_token():
+        token = str(ScriptRunner._next_token_id)
+        ScriptRunner._next_token_id += 1
+        ScriptRunner._tokens[token] = False
+        ScriptRunner._exceptions[token] = None
+        ScriptRunner._log_messages[token] = []
+        return token
+
+    # Called by SPEAR before launching a script. Places the token in the pending slot so that the
+    # next ScriptRunner.__init__ can claim it.
+    @staticmethod
+    def set_pending_token(token):
+        ScriptRunner._pending_token = token
+
+    # Called by SPEAR after launching a script. If the token is still in the pending slot, no
+    # ScriptRunner was created and the script ran synchronously.
+    @staticmethod
+    def get_pending_token():
+        return ScriptRunner._pending_token
+
+    # Called by SPEAR after launching a script to clear the pending slot if the script ran
+    # synchronously (i.e., get_pending_token() returned the same token).
+    @staticmethod
+    def clear_pending_token():
+        ScriptRunner._pending_token = None
+
+    # Called by SPEAR during the busy-wait loop to check if the script has finished.
+    @staticmethod
+    def is_complete(token):
+        return ScriptRunner._tokens[token]
+
+    # Called by SPEAR after the script has finished. Returns the exception traceback string
+    # (or None) and clears the stored exception.
+    @staticmethod
+    def clear_exception(token):
+        exception = ScriptRunner._exceptions[token]
+        ScriptRunner._exceptions[token] = None
+        return exception
+
+    # Called by SPEAR during the busy-wait loop and after the script has finished. Returns
+    # buffered log messages and clears the buffer.
+    @staticmethod
+    def clear_log_messages(token):
+        log_messages = ScriptRunner._log_messages[token]
+        ScriptRunner._log_messages[token] = []
+        return log_messages
+
+    # Called by tick callbacks to get the most recent delta time.
+    @staticmethod
+    def get_delta_time():
+        return ScriptRunner._current_delta_time
+
+    @staticmethod
+    def _log_func(message):
+        if ScriptRunner._active_token is not None and ScriptRunner._active_token in ScriptRunner._log_messages:
+            ScriptRunner._log_messages[ScriptRunner._active_token].append(message)
+
+def get_script_delta_time():
+    return ScriptRunner.get_delta_time()
+
+
+#
+# Interoperability between SPEAR Python and Editor Python
+#
+
+# Decode a {type_string, value} script expression dict into an Editor Python object.
+def from_script_expr(script_expr_dict):
+    type_string = script_expr_dict["type_string"]
+    value = script_expr_dict["value"]
+    if type_string == "list":
+        return [ from_script_expr(script_expr_dict=elem) for elem in value ]
+    elif type_string == "dict":
+        return { k: from_script_expr(script_expr_dict=v) for k, v in value.items() }
+    elif type_string == "numpy.matrix":
+        return np.matrix(np.array(value["data"], dtype=np.dtype(value["dtype"])).reshape(value["shape"]))
+    elif type_string == "numpy.ndarray":
+        return np.array(value["data"], dtype=np.dtype(value["dtype"])).reshape(value["shape"])
+    elif type_string == "UnrealObject":
+        return unreal.SpFuncUtils.to_object_from_handle(handle=value)
+    elif type_string == "UnrealClass":
+        return unreal.SpFuncUtils.to_object_from_handle(handle=value)
+    elif type_string == "UnrealStruct":
+        return unreal.SpFuncUtils.to_object_from_handle(handle=value)
+    elif type_string == "StructInstance":
+        struct_type = script_expr_dict["struct_type"]
+        assert struct_type.startswith("unreal.")
+        struct_class = getattr(unreal, struct_type.split(".", 1)[1])
+        decoded_value = { k: from_script_expr(script_expr_dict=v) for k, v in value.items() }
+        export_text = unreal.SpFuncUtils.get_struct_properties_as_export_text_from_json_string(script_struct=struct_class.static_struct(), properties_string=json.dumps(decoded_value))
+        result = struct_class()
+        result.import_text(content=export_text)
+        return result
+    else:
+        return value
+
+# Encode an Editor Python object into a script result string.
+def to_script_result(obj):
+    result = _to_script_result_dict(obj=obj)
+    return json.dumps(result)
+
+def _to_script_result_dict(obj):
+    return { "type_string": _to_script_result_type_string(obj=obj), "value": _to_script_result_value(obj=obj) }
+
+def _to_script_result_type_string(obj):
+    if isinstance(obj, list):
+        return "list"
+    elif isinstance(obj, dict):
+        return "dict"
+    elif isinstance(obj, np.matrix):
+        return "numpy.matrix"
+    elif isinstance(obj, np.ndarray):
+        return "numpy.ndarray"
+    elif isinstance(obj, unreal.ScriptStruct):
+        return "UnrealStruct"
+    elif isinstance(obj, unreal.Class):
+        return "UnrealClass"
+    elif isinstance(obj, unreal.Object):
+        return "UnrealObject"
+    elif isinstance(obj, unreal.StructBase):
+        return "StructInstance"
+    elif type(obj).__module__ == "builtins":
+        return type(obj).__qualname__
+    else:
+        return f"{type(obj).__module__}.{type(obj).__qualname__}"
+
+def _to_script_result_value(obj):
+    if isinstance(obj, list):
+        return [ _to_script_result_dict(obj=item) for item in obj ]
+    elif isinstance(obj, dict):
+        return { k: _to_script_result_dict(obj=v) for k, v in obj.items() }
+    elif isinstance(obj, np.ndarray):
+        return { "shape": list(obj.shape), "dtype": str(obj.dtype), "data": obj.tolist() }
+    elif isinstance(obj, unreal.StructBase):
+        return json.loads(unreal.SpFuncUtils.get_struct_properties_as_json_string_from_export_text(script_struct=type(obj).static_struct(), export_text=obj.export_text()))
+    elif isinstance(obj, unreal.Object):
+        return unreal.SpFuncUtils.to_handle_from_object(object=obj)
+    else:
+        return obj
+
 
 #
 # Client
