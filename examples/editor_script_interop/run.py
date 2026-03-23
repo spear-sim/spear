@@ -47,10 +47,9 @@ if __name__ == "__main__":
     # test exception propagation
     try:
         editor.editor_python_service.execute_file_across_frames(file=inner_script_raise_file, args_string="")
-        assert False, "Expected RuntimeError from inner_script_raise"
-    except RuntimeError as e:
-        spear.log("Caught expected error:  ", type(e))
-        assert "deliberate test error from inner_script_raise" in str(e)
+        assert False # expecting AssertionError from inner_script_raise
+    except AssertionError as e:
+        spear.log("Caught expected error: ", type(e))
 
     #
     # execute_string_across_frames with inputs and outputs

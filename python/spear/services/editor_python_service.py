@@ -114,7 +114,8 @@ class EditorPythonService(spear.Service):
             pass
 
         if exception_text is not None:
-            raise RuntimeError(f"EXCEPTION (Unreal Editor): {exception_text}")
+            spear.log("EXCEPTION (Unreal Editor): ", exception_text)
+            assert False
 
         return result
 
@@ -173,7 +174,8 @@ class EditorPythonService(spear.Service):
         yield
 
         if exception_text is not None:
-            raise RuntimeError(f"EXCEPTION (Unreal Editor): {exception_text}")
+            spear.log("EXCEPTION (Unreal Editor): ", exception_text)
+            assert False
 
         return result
 
