@@ -19,13 +19,15 @@ alwaysApply: true
 - Prefer direct `*` operations over `np.multiply(...)` for NumPy arrays.
 - When using `np.matrix`, prefer `*` for matrix multiplication instead of `@`.
 - When calling Unreal UFUNCTIONs, use keyword argument names with exact Unreal casing.
-- When calling `spear.*` functions, always use keyword arguments (except variadic helpers like `entry_point_caller.call_on_game_thread`).
+- When calling `spear.*` functions, always use keyword arguments, even for single-argument calls (except variadic helpers like `entry_point_caller.call_on_game_thread`).
 - For `as_dict=True` Unreal returns, access keys exactly as named in the call/UE signature.
+- Prefer `if-return-else-return` over `if-return-return` (always use explicit `else` for the alternate branch).
 - In Python type-dispatch if-else chains, place the most general/catch-all branches last.
 - In `__init__.py` files, keep imports alphabetical per line, grouped by category.
 - Use `os.path.realpath(os.path.join(...))` for constructing file paths.
 - When running a subprocess, always log the command before executing it.
 - When writing a file (e.g., an image), log the output path.
+- In C++ files, organize includes in groups separated by blank lines, in this order: (1) self-header (.cpp only, first), (2) C standard library (`<stdint.h>`), (3) C++ standard library (`<array>`, `<chrono>`, `<memory>`), (4) Unreal Engine headers (`<Components/...>`, `<RHI...>`), (5) SPEAR headers (`"SpCore/..."`, `"SpServices/..."`), (6) local module headers (`"SpUnrealTypes/..."`), (7) generated header (`"*.generated.h"`, header files only, very last). Sort alphabetically by full include path (case-insensitive) within each group. Inline comments on includes listing non-obvious symbol names should be sorted alphabetically, and aligned within each group to one space after the longest `#include` line in that group.
 - In C++ headers, preserve and update comments documenting thread-access patterns on member variables.
 - When adding an `_in_editor_script` generator variant of an existing method, use `yield` only as pause points (after each `begin_frame`/`end_frame` context block) and `return` for the value; use `yield from` to delegate to sub-generators. Factor shared setup into a single `_impl` helper that returns resolved parameters rather than duplicating the impl for regular and generator variants.
 - If unsure between two styles, follow the dominant pattern already present in the touched file.

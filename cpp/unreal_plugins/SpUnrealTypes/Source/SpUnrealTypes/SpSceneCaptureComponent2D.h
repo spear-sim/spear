@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <array>
+#include <atomic>
 #include <chrono>
 #include <memory> // std::unique_ptr
 
@@ -18,6 +20,7 @@
 #include <HAL/Platform.h>                 // int32, uint32
 #include <Math/Color.h>                   // FColor, FLinearColor
 #include <Math/Float16Color.h>
+#include <RHIGPUReadback.h>               // FRHIGPUTextureReadback
 #include <SceneView.h>                    // FSceneViewFamily
 #include <SceneViewExtension.h>           // FAutoRegister, FSceneViewExtensionBase, FSceneViewExtensions
 #include <Templates/SharedPointer.h>      // TSharedPtr
@@ -144,6 +147,12 @@ public:
     bool bReadPixelData = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bUseDoubleBufferedReadback = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bPrintDoubleBufferedSpinWaitInfo = true;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bHidePrimitiveProxyComponentManagers = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
@@ -165,6 +174,9 @@ private:
     void beginFrameHandler();
 
     SpPackedArray readPixels();
+    void enqueueCopy();
+    SpPackedArray readPixelsSingleBuffered();
+    SpPackedArray readPixelsDoubleBuffered();
     void updateFrameTime();
 
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
@@ -183,6 +195,13 @@ private:
     TArray<FColor>        scratchpad_array_color_;
     TArray<FFloat16Color> scratchpad_array_float_16_color_;
     TArray<FLinearColor>  scratchpad_array_linear_color_;
+
+    // State for double-buffered readback.
+    static const int NUM_READBACK_BUFFERS = 2;
+    std::array<std::unique_ptr<FRHIGPUTextureReadback>, NUM_READBACK_BUFFERS> readback_buffers_;
+    boost::circular_buffer<int> readback_pending_;
+    int readback_enqueue_index_ = 0;
+    std::atomic<bool> readback_scratchpad_ready_ = false;
 
     // Additional state for measuring "standalone" and "standalone + extra work" frame rates.
     FDelegateHandle begin_frame_handle_;
