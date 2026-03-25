@@ -251,7 +251,7 @@ void USpSceneCaptureComponent2D::Initialize()
     // match view state data to this component
     bAlwaysPersistRenderingState = true;
 
-    if (bUseSceneViewExtension || bUseDoubleBufferedReadback) {
+    if (bUseSceneViewExtension || BufferingMode != ESpBufferingMode::SingleBuffered) {
         scene_view_extension_ = FSceneViewExtensions::NewExtension<FSpSceneViewExtension>(this);
     }
 
@@ -299,9 +299,15 @@ void USpSceneCaptureComponent2D::Initialize()
         SP_ASSERT(false);
     }
 
-    // allocate readback buffer for double-buffered readback
-    if (bUseDoubleBufferedReadback) {
-        readback_buffer_ = std::make_unique<FRHIGPUTextureReadback>(TEXT("SpReadback"));
+    // allocate readback buffers
+    if (BufferingMode == ESpBufferingMode::DoubleBuffered) {
+        readback_buffers_.at(0) = std::make_unique<FRHIGPUTextureReadback>(TEXT("rhi_gpu_texture_readback_A"));
+        readback_pending_ = false;
+    } else if (BufferingMode == ESpBufferingMode::TripleBuffered) {
+        readback_buffers_.at(0) = std::make_unique<FRHIGPUTextureReadback>(TEXT("rhi_gpu_texture_readback_A"));
+        readback_buffers_.at(1) = std::make_unique<FRHIGPUTextureReadback>(TEXT("rhi_gpu_texture_readback_B"));
+        readback_enqueue_index_ = 0;
+        readback_primed_ = false;
         readback_pending_ = false;
     }
 
@@ -309,18 +315,29 @@ void USpSceneCaptureComponent2D::Initialize()
     SpFuncComponent->registerFunc("read_pixels", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
         SpFuncDataBundle return_values;
         SpPackedArray packed_array;
-        if (bUseDoubleBufferedReadback) {
-            packed_array = readPixelsDoubleBuffered();
-        } else {
+        if (BufferingMode == ESpBufferingMode::SingleBuffered) {
             packed_array = readPixelsSingleBuffered();
+        } else if (BufferingMode == ESpBufferingMode::DoubleBuffered) {
+            packed_array = readPixelsDoubleBuffered();
+        } else if (BufferingMode == ESpBufferingMode::TripleBuffered) {
+            packed_array = readPixelsTripleBuffered();
+        } else {
+            SP_ASSERT(false);
         }
         Std::insert(return_values.packed_arrays_, "data", std::move(packed_array));
         return return_values;
     });
 
     SpFuncComponent->registerFunc("enqueue_copy", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
+        SP_ASSERT(BufferingMode != ESpBufferingMode::SingleBuffered);
         SP_ASSERT(!bReadPixelsEveryFrame);
-        enqueueCopyPixelsFromGPUToStaging();
+        if (BufferingMode == ESpBufferingMode::DoubleBuffered) {
+            enqueueCopyPixelsFromGPUToStaging();
+        } else if (BufferingMode == ESpBufferingMode::TripleBuffered) {
+            enqueueCopyPixelsTripleBuffered();
+        } else {
+            SP_ASSERT(false);
+        }
         return SpFuncDataBundle();
     });
 
@@ -345,9 +362,12 @@ void USpSceneCaptureComponent2D::Terminate()
     SpFuncComponent->unregisterFunc("read_pixels");
     SpFuncComponent->unregisterFunc("enqueue_copy");
 
-    // deallocate readback buffer
+    // deallocate readback buffers
     readback_pending_ = false;
-    readback_buffer_.reset();
+    readback_primed_ = false;
+    readback_enqueue_index_ = 0;
+    readback_buffers_.at(0).reset();
+    readback_buffers_.at(1).reset();
 
     // deallocate memory
     if (shared_memory_region_) {
@@ -403,7 +423,7 @@ void USpSceneCaptureComponent2D::endFrameHandler()
 void USpSceneCaptureComponent2D::enqueueCopyPixelsFromGPUToStaging()
 {
     SP_ASSERT(IsInitialized());
-    SP_ASSERT(bUseDoubleBufferedReadback);
+    SP_ASSERT(BufferingMode == ESpBufferingMode::DoubleBuffered);
     SP_ASSERT(!bReadPixelsEveryFrame);
 
     readback_pending_ = true;
@@ -419,23 +439,66 @@ void USpSceneCaptureComponent2D::enqueueCopyPixelsFromGPUToStaging()
     }
 }
 
+void USpSceneCaptureComponent2D::enqueueCopyPixelsTripleBuffered()
+{
+    SP_ASSERT(IsInitialized());
+    SP_ASSERT(BufferingMode == ESpBufferingMode::TripleBuffered);
+    SP_ASSERT(!bReadPixelsEveryFrame);
+
+    int prev_index = (readback_enqueue_index_ + 1) % 2;
+    int current_index = readback_enqueue_index_;
+    bool has_previous = readback_primed_;
+
+    if (has_previous) {
+        readback_pending_ = true;
+    }
+
+    if (bReadPixelData) {
+        FTextureRenderTargetResource* render_target_resource = TextureTarget->GameThread_GetRenderTargetResource();
+        SP_ASSERT(render_target_resource);
+
+        FRHIGPUTextureReadback* prev_readback = has_previous ? readback_buffers_.at(prev_index).get() : nullptr;
+        FRHIGPUTextureReadback* current_readback = readback_buffers_.at(current_index).get();
+        SP_ASSERT(current_readback);
+
+        ENQUEUE_RENDER_COMMAND(SpEnqueueCopyPixelsTripleBuffered)(
+            [this, prev_readback, current_readback, render_target_resource](FRHICommandListImmediate& rhi_command_list_immediate) {
+                if (prev_readback) {
+                    copyPixelsFromStagingToCPU_RenderThread(prev_readback);
+                }
+                current_readback->EnqueueCopy(rhi_command_list_immediate, render_target_resource->GetRenderTargetTexture());
+                rhi_command_list_immediate.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
+                if (prev_readback) {
+                    readback_pending_ = false;
+                }
+            });
+    } else {
+        if (has_previous) {
+            readback_pending_ = false;
+        }
+    }
+
+    readback_enqueue_index_ = (readback_enqueue_index_ + 1) % 2;
+    readback_primed_ = true;
+}
+
 void USpSceneCaptureComponent2D::enqueueCopyPixelsFromGPUToStaging_RenderThread(FRHICommandListImmediate& rhi_command_list_immediate, FTextureRenderTargetResource* render_target_resource)
 {
-    SP_ASSERT(readback_buffer_);
-    readback_buffer_->EnqueueCopy(rhi_command_list_immediate, render_target_resource->GetRenderTargetTexture());
+    SP_ASSERT(readback_buffers_.at(0));
+    readback_buffers_.at(0)->EnqueueCopy(rhi_command_list_immediate, render_target_resource->GetRenderTargetTexture());
     rhi_command_list_immediate.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
 }
 
-void USpSceneCaptureComponent2D::copyPixelsFromStagingToCPU_RenderThread()
+void USpSceneCaptureComponent2D::copyPixelsFromStagingToCPU_RenderThread(FRHIGPUTextureReadback* readback)
 {
-    SP_ASSERT(readback_buffer_);
+    SP_ASSERT(readback);
 
     int64_t spin_wait_iterations = 0;
-    while (!readback_buffer_->IsReady()) {
+    while (!readback->IsReady()) {
         spin_wait_iterations++;
     }
-    if (bPrintDoubleBufferedSpinWaitInfo && spin_wait_iterations > 0) {
-        SP_LOG("WARNING: Double-buffered readback spin-waited for ", spin_wait_iterations, " iterations in copyPixelsFromStagingToCPU_RenderThread().");
+    if (bPrintReadbackSpinWaitInfo && spin_wait_iterations > 0) {
+        SP_LOG("WARNING: Readback spin-waited for ", spin_wait_iterations, " iterations in copyPixelsFromStagingToCPU_RenderThread(...).");
     }
 
     SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
@@ -460,7 +523,7 @@ void USpSceneCaptureComponent2D::copyPixelsFromStagingToCPU_RenderThread()
     SP_ASSERT(dest_ptr);
 
     int32 row_pitch_in_pixels = 0;
-    void* src_ptr = readback_buffer_->Lock(row_pitch_in_pixels);
+    void* src_ptr = readback->Lock(row_pitch_in_pixels);
     SP_ASSERT(src_ptr);
     SP_ASSERT(row_pitch_in_pixels >= Width);
 
@@ -476,17 +539,21 @@ void USpSceneCaptureComponent2D::copyPixelsFromStagingToCPU_RenderThread()
         }
     }
 
-    readback_buffer_->Unlock();
+    readback->Unlock();
 }
 
 void USpSceneCaptureComponent2D::postRender_RenderThread()
 {
+    if (BufferingMode != ESpBufferingMode::DoubleBuffered) {
+        return;
+    }
+
     if (!readback_pending_) {
         return;
     }
 
     if (bReadPixelData) {
-        copyPixelsFromStagingToCPU_RenderThread();
+        copyPixelsFromStagingToCPU_RenderThread(readback_buffers_.at(0).get());
     }
 
     readback_pending_ = false;
@@ -571,9 +638,21 @@ SpPackedArray USpSceneCaptureComponent2D::readPixelsSingleBuffered()
 
 SpPackedArray USpSceneCaptureComponent2D::readPixelsDoubleBuffered()
 {
-    SP_ASSERT(IsInitialized());
-    SP_ASSERT(bUseDoubleBufferedReadback);
+    SP_ASSERT(BufferingMode == ESpBufferingMode::DoubleBuffered);
     SP_ASSERT(!bReadPixelsEveryFrame);
+    return readPixelsBufferedImpl();
+}
+
+SpPackedArray USpSceneCaptureComponent2D::readPixelsTripleBuffered()
+{
+    SP_ASSERT(BufferingMode == ESpBufferingMode::TripleBuffered);
+    SP_ASSERT(!bReadPixelsEveryFrame);
+    return readPixelsBufferedImpl();
+}
+
+SpPackedArray USpSceneCaptureComponent2D::readPixelsBufferedImpl()
+{
+    SP_ASSERT(IsInitialized());
     SP_ASSERT(Height >= 0);
     SP_ASSERT(Width >= 0);
     SP_ASSERT(NumChannelsPerPixel == 4);
@@ -582,8 +661,8 @@ SpPackedArray USpSceneCaptureComponent2D::readPixelsDoubleBuffered()
     while (readback_pending_) {
         spin_wait_iterations++;
     }
-    if (bPrintDoubleBufferedSpinWaitInfo && spin_wait_iterations > 0) {
-        SP_LOG("WARNING: Double-buffered readback spin-waited for ", spin_wait_iterations, " iterations in readPixelsDoubleBuffered().");
+    if (bPrintReadbackSpinWaitInfo && spin_wait_iterations > 0) {
+        SP_LOG("WARNING: Readback spin-waited for ", spin_wait_iterations, " iterations in readPixelsBufferedImpl().");
     }
 
     SpPackedArray packed_array;

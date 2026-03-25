@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <memory> // std::unique_ptr
@@ -70,6 +71,14 @@ public:
 protected:
     void setupView(FSceneViewFamily& view_family, FSceneView& view) override;
     void postRenderViewFamily_RenderThread(FSceneViewFamily& view_family) override;
+};
+
+UENUM()
+enum class ESpBufferingMode : uint8
+{
+    SingleBuffered = 0,
+    DoubleBuffered = 1,
+    TripleBuffered = 2
 };
 
 // We need meta=(BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
@@ -152,10 +161,10 @@ public:
     bool bReadPixelData = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bUseDoubleBufferedReadback = false;
+    ESpBufferingMode BufferingMode = ESpBufferingMode::SingleBuffered;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bPrintDoubleBufferedSpinWaitInfo = true;
+    bool bPrintReadbackSpinWaitInfo = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bHidePrimitiveProxyComponentManagers = true;
@@ -179,13 +188,21 @@ private:
     void beginFrameHandler();
     void endFrameHandler();
 
+    // single-buffered mode
     SpPackedArray readPixelsSingleBuffered();
 
+    // double-buffered mode
     void enqueueCopyPixelsFromGPUToStaging();
     SpPackedArray readPixelsDoubleBuffered();
 
+    // triple-buffered mode
+    void enqueueCopyPixelsTripleBuffered();
+    SpPackedArray readPixelsTripleBuffered();
+
+    // double-buffered and triple-buffered mode
+    SpPackedArray readPixelsBufferedImpl();
     void enqueueCopyPixelsFromGPUToStaging_RenderThread(FRHICommandListImmediate& rhi_command_list_immediate, FTextureRenderTargetResource* render_target_resource);
-    void copyPixelsFromStagingToCPU_RenderThread();
+    void copyPixelsFromStagingToCPU_RenderThread(FRHIGPUTextureReadback* readback);
 
     void updateFrameTime();
 
@@ -206,9 +223,11 @@ private:
     TArray<FFloat16Color> scratchpad_array_float_16_color_;
     TArray<FLinearColor>  scratchpad_array_linear_color_;
 
-    // State for double-buffered readback.
-    std::unique_ptr<FRHIGPUTextureReadback> readback_buffer_;
-    std::atomic<bool> readback_pending_ = false; // GT writes true in enqueueCopyPixelsFromGPUToStaging, RT writes false in postRender_RenderThread
+    // State for buffered readback (DoubleBuffered uses index 0 only, TripleBuffered alternates 0/1).
+    std::array<std::unique_ptr<FRHIGPUTextureReadback>, 2> readback_buffers_;
+    int readback_enqueue_index_ = 0;              // GT-only: used by TripleBuffered to alternate buffers
+    bool readback_primed_ = false;                // GT-only: one-way latch, true after first enqueueCopyPixelsTripleBuffered call
+    std::atomic<bool> readback_pending_ = false;  // GT writes true in enqueueCopyPixelsFromGPUToStaging/enqueueCopyPixelsTripleBuffered, RT writes false in postRender_RenderThread/enqueueCopyPixelsTripleBuffered
 
     // Additional state for measuring "standalone" and "standalone + extra work" frame rates.
     FDelegateHandle begin_frame_handle_;
