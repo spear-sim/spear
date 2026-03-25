@@ -325,19 +325,21 @@ class Instance():
 
         return warm_up, warm_up_time_seconds, warm_up_num_frames
 
-    def flush(self, single_step=False):
-        with self.begin_frame():
-            pass
-        with self.end_frame(single_step=single_step):
-            pass
+    def flush(self, num_frames=1, single_step=False):
+        for i in range(num_frames):
+            with self.begin_frame():
+                pass
+            with self.end_frame(single_step=single_step):
+                pass
 
-    def flush_in_editor_script(self, single_step=False):
-        with self.begin_frame():
-            pass
-        yield
-        with self.end_frame(single_step=single_step):
-            pass
-        yield
+    def flush_in_editor_script(self, num_frames=1, single_step=False):
+        for i in range(num_frames):
+            with self.begin_frame():
+                pass
+            yield
+            with self.end_frame(single_step=single_step):
+                pass
+            yield
 
     # most users should not need to call this function because get_game(...) and get_editor(...) will warm up by default
     def warm_up(self, warm_up=None, warm_up_time_seconds=0.0, warm_up_num_frames=0):
@@ -785,8 +787,7 @@ class Instance():
         if time_seconds > 0.0:
             time.sleep(time_seconds)
 
-        for i in range(num_frames):
-            self.flush()
+        self.flush(num_frames=num_frames)
 
         spear.log("        Finished warming up Unreal instance.")
 
@@ -798,8 +799,7 @@ class Instance():
         if time_seconds > 0.0:
             time.sleep(time_seconds)
 
-        for i in range(num_frames):
-            yield from self.flush_in_editor_script()
+        yield from self.flush_in_editor_script(num_frames=num_frames)
 
         spear.log("        Finished warming up Unreal instance.")
 

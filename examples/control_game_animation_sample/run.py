@@ -136,8 +136,7 @@ if __name__ == "__main__":
     # execute warm-up frames to give us a chance to teleport to the spawned character
     #
 
-    for _ in range(120):
-        instance.flush()
+    instance.flush(num_frames=120)
 
     #
     # initialize frame counter

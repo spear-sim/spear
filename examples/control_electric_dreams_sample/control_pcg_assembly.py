@@ -218,8 +218,7 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass
 
-    for _ in range(175 - num_frames_for_pcg_update - num_frames_for_drone_update):
-        instance.flush()
+    instance.flush(num_frames=175 - num_frames_for_pcg_update - num_frames_for_drone_update)
 
     #
     # initialize frame counter

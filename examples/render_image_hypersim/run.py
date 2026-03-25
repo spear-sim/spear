@@ -343,9 +343,8 @@ if __name__ == "__main__":
         pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing etc accumulate additional information across frames
 
     # let temporal anti-aliasing etc accumulate additional information across multiple frames, and
-    # inserting an extra frame can fix occasional render-to-texture initialization issues on macOS
-    for i in range(1):
-        instance.flush()
+    # inserting an extra frame or two can fix occasional render-to-texture initialization issues
+    instance.flush(num_frames=2)
 
     # get rendered frame
     with instance.begin_frame():
