@@ -14,7 +14,6 @@
 #include <Containers/Array.h>
 #include <Containers/EnumAsByte.h>
 #include <Delegates/IDelegateInstance.h>  // FDelegateHandle
-#include <Engine/EngineBaseTypes.h>       // ELevelTick
 #include <Engine/EngineTypes.h>           // EEndPlayReason
 #include <Engine/TextureRenderTarget2D.h> // ETextureRenderTargetFormat
 #include <HAL/Platform.h>                 // int32, uint32
@@ -35,9 +34,10 @@
 
 #include "SpSceneCaptureComponent2D.generated.h"
 
+class FRDGBuilder;
+class FRHICommandListImmediate;
 class UMaterial;
 class UMaterialInstanceDynamic;
-struct FActorComponentTickFunction;
 
 class FSpSceneViewExtensionBase : public FSceneViewExtensionBase
 {
@@ -47,11 +47,13 @@ public:
     void SetupViewFamily(FSceneViewFamily& in_view_family) override;
     void SetupView(FSceneViewFamily& in_view_family, FSceneView& in_view) override;
     void BeginRenderViewFamily(FSceneViewFamily& in_view_family) override;
+    void PostRenderViewFamily_RenderThread(FRDGBuilder& graph_builder, FSceneViewFamily& in_view_family) override;
 
 protected:
     virtual void setupViewFamily(FSceneViewFamily& view_family) {};
     virtual void setupView(FSceneViewFamily& view_family, FSceneView& view) {};
     virtual void beginRenderViewFamily(FSceneViewFamily& view_family) {};
+    virtual void postRenderViewFamily_RenderThread(FSceneViewFamily& view_family) {};
 
     USpSceneCaptureComponent2D* getComponent() { SP_ASSERT(component_); return component_; };
 
@@ -68,6 +70,15 @@ public:
     FSpSceneViewExtension(const FAutoRegister& auto_register, USpSceneCaptureComponent2D* component);
 protected:
     void setupView(FSceneViewFamily& view_family, FSceneView& view) override;
+    void postRenderViewFamily_RenderThread(FSceneViewFamily& view_family) override;
+};
+
+UENUM()
+enum class ESpBufferingMode : uint8
+{
+    SingleBuffered = 0,
+    DoubleBuffered = 1,
+    TripleBuffered = 2
 };
 
 // We need meta=(BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
@@ -89,6 +100,9 @@ public:
     void Terminate();
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     bool IsInitialized();
+
+    // called from FSpSceneViewExtension::postRenderViewFamily_RenderThread to do post-render work on the render thread
+    void postRender_RenderThread();
 
     int32 getNumViewStates() { return ViewStates.Num(); }
 
@@ -147,10 +161,10 @@ public:
     bool bReadPixelData = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bUseDoubleBufferedReadback = false;
+    ESpBufferingMode BufferingMode = ESpBufferingMode::SingleBuffered;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bPrintDoubleBufferedSpinWaitInfo = true;
+    bool bPrintReadbackSpinWaitInfo = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bHidePrimitiveProxyComponentManagers = true;
@@ -172,11 +186,24 @@ public:
 
 private:
     void beginFrameHandler();
+    void endFrameHandler();
 
-    SpPackedArray readPixels();
-    void enqueueCopy();
+    // single-buffered mode
     SpPackedArray readPixelsSingleBuffered();
+
+    // double-buffered mode
+    void enqueueCopyPixelsFromGPUToStaging();
     SpPackedArray readPixelsDoubleBuffered();
+
+    // triple-buffered mode
+    void enqueueCopyPixelsTripleBuffered();
+    SpPackedArray readPixelsTripleBuffered();
+
+    // double-buffered and triple-buffered mode
+    SpPackedArray readPixelsBufferedImpl();
+    void enqueueCopyPixelsFromGPUToStaging_RenderThread(FRHICommandListImmediate& rhi_command_list_immediate, FTextureRenderTargetResource* render_target_resource);
+    void copyPixelsFromStagingToCPU_RenderThread(FRHIGPUTextureReadback* readback);
+
     void updateFrameTime();
 
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
@@ -196,15 +223,15 @@ private:
     TArray<FFloat16Color> scratchpad_array_float_16_color_;
     TArray<FLinearColor>  scratchpad_array_linear_color_;
 
-    // State for double-buffered readback.
-    static const int NUM_READBACK_BUFFERS = 2;
-    std::array<std::unique_ptr<FRHIGPUTextureReadback>, NUM_READBACK_BUFFERS> readback_buffers_;
-    boost::circular_buffer<int> readback_pending_;
-    int readback_enqueue_index_ = 0;
-    std::atomic<bool> readback_scratchpad_ready_ = false;
+    // State for buffered readback (DoubleBuffered uses index 0 only, TripleBuffered alternates 0/1).
+    std::array<std::unique_ptr<FRHIGPUTextureReadback>, 2> readback_buffers_;
+    int readback_enqueue_index_ = 0;              // GT-only: used by TripleBuffered to alternate buffers
+    bool readback_primed_ = false;                // GT-only: one-way latch, true after first enqueueCopyPixelsTripleBuffered call
+    std::atomic<bool> readback_pending_ = false;  // GT writes true in enqueueCopyPixelsFromGPUToStaging/enqueueCopyPixelsTripleBuffered, RT writes false in postRender_RenderThread/enqueueCopyPixelsTripleBuffered
 
     // Additional state for measuring "standalone" and "standalone + extra work" frame rates.
     FDelegateHandle begin_frame_handle_;
+    FDelegateHandle end_frame_handle_;
     SpPackedArray scratchpad_packed_array_;
     boost::circular_buffer<double> previous_time_deltas_;
     std::chrono::time_point<std::chrono::high_resolution_clock> previous_time_point_;

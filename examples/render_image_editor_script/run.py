@@ -11,6 +11,7 @@ import math
 import matplotlib.pyplot as plt
 import os
 import spear
+import unreal # not needed but useful to demonstrate that we're running inside the editor
 
 
 parser = argparse.ArgumentParser()
