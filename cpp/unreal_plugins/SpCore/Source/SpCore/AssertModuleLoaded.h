@@ -11,7 +11,6 @@
 #include <boost/predef.h> // BOOST_COMP_MSVC, BOOST_COMP_CLANG
 
 #include <GenericPlatform/GenericPlatformMisc.h>
-#include <HAL/Platform.h> // TEXT
 #include <Modules/ModuleManager.h>
 
 // TODO: remove platform-specific include
