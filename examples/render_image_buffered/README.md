@@ -1,4 +1,4 @@
-# Render an Image (Buffered Readback Modes)
+# Render an Image (Using Buffered Readback Modes)
 
 In this example application, we demonstrate the latency characteristics of each buffering mode (single-buffered, double-buffered, triple-buffered) by spawning objects one per frame and verifying the object count in the returned pixels. You can run this example as follows.
 
