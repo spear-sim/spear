@@ -123,8 +123,7 @@ if __name__ == "__main__":
     # execute warm-up frames to give Unreal's default auto-exposure settings a chance to settle down
     #
 
-    for _ in range(30):
-        instance.flush()
+    instance.flush(num_frames=30)
 
     #
     # walk forwards

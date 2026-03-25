@@ -145,8 +145,7 @@ if __name__ == "__main__":
     # execute warm-up frames to give us a chance to teleport to the spawned car
     #
 
-    for _ in range(num_frames_per_trajectory_segment):
-        instance.flush()
+    instance.flush(num_frames=num_frames_per_trajectory_segment)
 
     #
     # initialize frame counter

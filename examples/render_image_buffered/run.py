@@ -112,8 +112,7 @@ if __name__ == "__main__":
     with instance.end_frame(single_step=True):
         pass
 
-    for i in range(1):
-        instance.flush()
+    instance.flush(num_frames=2) # two flush frames are occasionally needed on Windows
 
     spawn_y_positions = [200.0, 260.0, 320.0]
 

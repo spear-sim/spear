@@ -70,9 +70,8 @@ if __name__ == "__main__":
         pass
 
     # let temporal anti-aliasing etc accumulate additional information across multiple frames, and
-    # inserting an extra frame can fix occasional render-to-texture initialization issues on macOS
-    for i in range(1):
-        instance.flush()
+    # inserting an extra frame or two can fix occasional render-to-texture initialization issues
+    instance.flush(num_frames=2)
 
     for f in range(num_frames):
         with instance.begin_frame():
