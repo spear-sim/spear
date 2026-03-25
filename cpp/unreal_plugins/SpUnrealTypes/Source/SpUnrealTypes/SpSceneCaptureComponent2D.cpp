@@ -301,11 +301,11 @@ void USpSceneCaptureComponent2D::Initialize()
 
     // allocate readback buffers
     if (BufferingMode == ESpBufferingMode::DoubleBuffered) {
-        readback_buffers_.at(0) = std::make_unique<FRHIGPUTextureReadback>(Unreal::toTCharPtr("rhi_gpu_texture_readback_A"));
+        readback_buffers_.at(0) = std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A"));
         readback_pending_ = false;
     } else if (BufferingMode == ESpBufferingMode::TripleBuffered) {
-        readback_buffers_.at(0) = std::make_unique<FRHIGPUTextureReadback>(Unreal::toTCharPtr("rhi_gpu_texture_readback_A"));
-        readback_buffers_.at(1) = std::make_unique<FRHIGPUTextureReadback>(Unreal::toTCharPtr("rhi_gpu_texture_readback_B"));
+        readback_buffers_.at(0) = std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A"));
+        readback_buffers_.at(1) = std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_B"));
         readback_enqueue_index_ = 0;
         readback_primed_ = false;
         readback_pending_ = false;
