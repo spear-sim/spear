@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <array>
 #include <atomic>
 #include <chrono>
 #include <memory> // std::unique_ptr
@@ -14,7 +13,6 @@
 #include <Containers/Array.h>
 #include <Containers/EnumAsByte.h>
 #include <Delegates/IDelegateInstance.h>  // FDelegateHandle
-#include <Engine/EngineBaseTypes.h>       // ELevelTick
 #include <Engine/EngineTypes.h>           // EEndPlayReason
 #include <Engine/TextureRenderTarget2D.h> // ETextureRenderTargetFormat
 #include <HAL/Platform.h>                 // int32, uint32
@@ -35,9 +33,10 @@
 
 #include "SpSceneCaptureComponent2D.generated.h"
 
+class FRDGBuilder;
+class FRHICommandListImmediate;
 class UMaterial;
 class UMaterialInstanceDynamic;
-struct FActorComponentTickFunction;
 
 class FSpSceneViewExtensionBase : public FSceneViewExtensionBase
 {
@@ -47,11 +46,13 @@ public:
     void SetupViewFamily(FSceneViewFamily& in_view_family) override;
     void SetupView(FSceneViewFamily& in_view_family, FSceneView& in_view) override;
     void BeginRenderViewFamily(FSceneViewFamily& in_view_family) override;
+    void PostRenderViewFamily_RenderThread(FRDGBuilder& graph_builder, FSceneViewFamily& in_view_family) override;
 
 protected:
     virtual void setupViewFamily(FSceneViewFamily& view_family) {};
     virtual void setupView(FSceneViewFamily& view_family, FSceneView& view) {};
     virtual void beginRenderViewFamily(FSceneViewFamily& view_family) {};
+    virtual void postRenderViewFamily_RenderThread(FSceneViewFamily& view_family) {};
 
     USpSceneCaptureComponent2D* getComponent() { SP_ASSERT(component_); return component_; };
 
@@ -68,6 +69,7 @@ public:
     FSpSceneViewExtension(const FAutoRegister& auto_register, USpSceneCaptureComponent2D* component);
 protected:
     void setupView(FSceneViewFamily& view_family, FSceneView& view) override;
+    void postRenderViewFamily_RenderThread(FSceneViewFamily& view_family) override;
 };
 
 // We need meta=(BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
@@ -89,6 +91,9 @@ public:
     void Terminate();
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     bool IsInitialized();
+
+    // called from FSpSceneViewExtension::postRenderViewFamily_RenderThread to do post-render work on the render thread
+    void postRender_RenderThread();
 
     int32 getNumViewStates() { return ViewStates.Num(); }
 
@@ -172,11 +177,16 @@ public:
 
 private:
     void beginFrameHandler();
+    void endFrameHandler();
 
-    SpPackedArray readPixels();
-    void enqueueCopy();
     SpPackedArray readPixelsSingleBuffered();
+
+    void enqueueCopyPixelsFromGPUToStaging();
     SpPackedArray readPixelsDoubleBuffered();
+
+    void enqueueCopyPixelsFromGPUToStaging_RenderThread(FRHICommandListImmediate& rhi_command_list_immediate, FTextureRenderTargetResource* render_target_resource);
+    void copyPixelsFromStagingToCPU_RenderThread();
+
     void updateFrameTime();
 
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
@@ -197,14 +207,12 @@ private:
     TArray<FLinearColor>  scratchpad_array_linear_color_;
 
     // State for double-buffered readback.
-    static const int NUM_READBACK_BUFFERS = 2;
-    std::array<std::unique_ptr<FRHIGPUTextureReadback>, NUM_READBACK_BUFFERS> readback_buffers_;
-    boost::circular_buffer<int> readback_pending_;
-    int readback_enqueue_index_ = 0;
-    std::atomic<bool> readback_scratchpad_ready_ = false;
+    std::unique_ptr<FRHIGPUTextureReadback> readback_buffer_;
+    std::atomic<bool> readback_pending_ = false; // GT writes true in enqueueCopyPixelsFromGPUToStaging, RT writes false in postRender_RenderThread
 
     // Additional state for measuring "standalone" and "standalone + extra work" frame rates.
     FDelegateHandle begin_frame_handle_;
+    FDelegateHandle end_frame_handle_;
     SpPackedArray scratchpad_packed_array_;
     boost::circular_buffer<double> previous_time_deltas_;
     std::chrono::time_point<std::chrono::high_resolution_clock> previous_time_point_;
