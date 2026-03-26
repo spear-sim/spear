@@ -9,6 +9,7 @@
 #include <atomic>
 #include <chrono>
 #include <memory> // std::unique_ptr
+#include <vector>
 
 #include <Components/SceneCaptureComponent2D.h>
 #include <Containers/Array.h>
@@ -17,8 +18,6 @@
 #include <Engine/EngineTypes.h>           // EEndPlayReason
 #include <Engine/TextureRenderTarget2D.h> // ETextureRenderTargetFormat
 #include <HAL/Platform.h>                 // int32, uint32
-#include <Math/Color.h>                   // FColor, FLinearColor
-#include <Math/Float16Color.h>
 #include <RHIGPUReadback.h>               // FRHIGPUTextureReadback
 #include <SceneView.h>                    // FSceneViewFamily
 #include <SceneViewExtension.h>           // FAutoRegister, FSceneViewExtensionBase, FSceneViewExtensions
@@ -31,6 +30,7 @@
 #include "SpCore/SharedMemory.h"
 #include "SpCore/SpArray.h"
 #include "SpCore/SpFuncComponent.h"
+#include "SpCore/Std.h"
 
 #include "SpSceneCaptureComponent2D.generated.h"
 
@@ -121,12 +121,6 @@ public:
     ESpArrayDataType ChannelDataType = ESpArrayDataType::UInt8;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bOverrideSetLinearToGamma = false;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bSetLinearToGamma = false;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bOverrideTextureRenderTargetFormat = false;
 
     // TEnumAsByte avoids: "Error: You cannot use the raw enum name as a type for member variables, instead use TEnumAsByte or a C++11 enum class with an explicit underlying type."
@@ -185,6 +179,7 @@ public:
     bool bReadPixelsEveryFrame = false;
 
 private:
+    // callbacks
     void beginFrameHandler();
     void endFrameHandler();
 
@@ -192,18 +187,22 @@ private:
     SpPackedArray readPixelsSingleBuffered();
 
     // double-buffered mode
-    void enqueueCopyPixelsFromGPUToStaging();
+    void enqueueCopyPixelsDoubleBuffered();
     SpPackedArray readPixelsDoubleBuffered();
 
     // triple-buffered mode
     void enqueueCopyPixelsTripleBuffered();
     SpPackedArray readPixelsTripleBuffered();
 
-    // double-buffered and triple-buffered mode
-    SpPackedArray readPixelsBufferedImpl();
-    void enqueueCopyPixelsFromGPUToStaging_RenderThread(FRHICommandListImmediate& rhi_command_list_immediate, FTextureRenderTargetResource* render_target_resource);
-    void copyPixelsFromStagingToCPU_RenderThread(FRHIGPUTextureReadback* readback);
+    // game thread helpers
+    SpPackedArray getPackedArray();
+    SpPackedArray readPixelsImpl();
 
+    // render thread helpers
+    void enqueueCopyPixelsFromGPUToStagingAndImmediateFlush_RenderThread(FRHIGPUTextureReadback* readback, FRHICommandListImmediate& rhi_command_list_immediate, FTextureRenderTargetResource* render_target_resource);
+    void copyPixelsFromStagingToCPU_RenderThread(FRHIGPUTextureReadback* readback, void* dest_ptr);
+
+    // miscellaneous helpers
     void updateFrameTime();
 
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
@@ -218,16 +217,14 @@ private:
     std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
     SpArraySharedMemoryView shared_memory_view_;
 
-    // Scratchpad arrays for efficiently reading pixel data.
-    TArray<FColor>        scratchpad_array_color_;
-    TArray<FFloat16Color> scratchpad_array_float_16_color_;
-    TArray<FLinearColor>  scratchpad_array_linear_color_;
+    // Scratchpad buffer for staging-to-CPU pixel data (only allocated when !bUseSharedMemory).
+    std::vector<uint8_t, SpAlignedAllocator<uint8_t, 4096>> scratchpad_;
 
-    // State for buffered readback (DoubleBuffered uses index 0 only, TripleBuffered alternates 0/1).
+    // State for buffered readback (SingleBuffered and DoubleBuffered use index 0 only, TripleBuffered alternates uses both in an alternating fashion).
     std::array<std::unique_ptr<FRHIGPUTextureReadback>, 2> readback_buffers_;
     int readback_enqueue_index_ = 0;              // GT-only: used by TripleBuffered to alternate buffers
     bool readback_primed_ = false;                // GT-only: one-way latch, true after first enqueueCopyPixelsTripleBuffered call
-    std::atomic<bool> readback_pending_ = false;  // GT writes true in enqueueCopyPixelsFromGPUToStaging/enqueueCopyPixelsTripleBuffered, RT writes false in postRender_RenderThread/enqueueCopyPixelsTripleBuffered
+    std::atomic<int> readback_pending_ = 0;       // GT increments in enqueueCopyPixelsDoubleBuffered/enqueueCopyPixelsTripleBuffered, RT decrements in postRender_RenderThread/enqueueCopyPixelsTripleBuffered
 
     // Additional state for measuring "standalone" and "standalone + extra work" frame rates.
     FDelegateHandle begin_frame_handle_;

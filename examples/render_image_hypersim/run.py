@@ -80,34 +80,70 @@ def get_object_ids_float16_as_uint32(object_ids_float16):
 component_descs = \
 [
     {
+        "name": "diffuse_and_specular_post_process_input_2",
+        "long_name": "DefaultSceneRoot.diffuse_and_specular_post_process_input_2_",
+        "spatial_supersampling_factor": 2,
+        "visualize_func": lambda data : np.clip(2.0*data[:,:,[0,1,2]], 0.0, 1.0)
+    },
+    {
+        "name": "diffuse_color",
+        "long_name": "DefaultSceneRoot.diffuse_color_",
+        "spatial_supersampling_factor": 2,
+        "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
+    },
+    {
+        "name": "diffuse_only_post_process_input_2",
+        "long_name": "DefaultSceneRoot.diffuse_only_post_process_input_2_",
+        "spatial_supersampling_factor": 2,
+        "visualize_func": lambda data : np.clip(2.0*data[:,:,[0,1,2]], 0.0, 1.0)
+    },
+    {
         "name": "final_tone_curve_hdr",
         "long_name": "DefaultSceneRoot.final_tone_curve_hdr_",
         "spatial_supersampling_factor": 1,
         "visualize_func": lambda data : data[:,:,[2,1,0]] # BGRA to RGB
     },
     {
+        "name": "lighting_only_diffuse_color",
+        "long_name": "DefaultSceneRoot.lighting_only_diffuse_color_",
+        "spatial_supersampling_factor": 2,
+        "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
+    },
+    {
+        "name": "lighting_only_post_process_input_2",
+        "long_name": "DefaultSceneRoot.lighting_only_post_process_input_2_",
+        "spatial_supersampling_factor": 2,
+        "visualize_func": lambda data : np.clip(2.0*data[:,:,[0,1,2]], 0.0, 1.0)
+    },
+    {
         "name": "material_ao",
         "long_name": "DefaultSceneRoot.material_ao_",
         "spatial_supersampling_factor": 1,
-        "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
+        "visualize_func": lambda data : np.clip(data[:,:,[0,0,0]], 0.0, 1.0)
     },
     {
         "name": "metallic",
         "long_name": "DefaultSceneRoot.metallic_",
         "spatial_supersampling_factor": 1,
-        "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
+        "visualize_func": lambda data : np.clip(data[:,:,[0,0,0]], 0.0, 1.0)
+    },
+    {
+        "name": "object_ids_float16",
+        "long_name": "DefaultSceneRoot.object_ids_float16_",
+        "spatial_supersampling_factor": 1,
+        "visualize_func": lambda data : get_object_ids_float16_as_rgba(data)
+    },
+    {
+        "name": "object_ids_uint8",
+        "long_name": "DefaultSceneRoot.object_ids_uint8_",
+        "spatial_supersampling_factor": 1,
+        "visualize_func": lambda data : get_object_ids_uint8_as_rgba(data)
     },
     {
         "name": "roughness",
         "long_name": "DefaultSceneRoot.roughness_",
         "spatial_supersampling_factor": 1,
-        "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
-    },
-    {
-        "name": "specular_for_lighting",
-        "long_name": "DefaultSceneRoot.specular_for_lighting_",
-        "spatial_supersampling_factor": 1,
-        "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
+        "visualize_func": lambda data : np.clip(data[:,:,[0,0,0]], 0.0, 1.0)
     },
     {
         "name": "sp_camera_normal",
@@ -128,46 +164,10 @@ component_descs = \
         "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]]/100.0, 0.0, 1.0)
     },
     {
-        "name": "object_ids_uint8",
-        "long_name": "DefaultSceneRoot.object_ids_uint8_",
+        "name": "specular_for_lighting",
+        "long_name": "DefaultSceneRoot.specular_for_lighting_",
         "spatial_supersampling_factor": 1,
-        "visualize_func": lambda data : get_object_ids_uint8_as_rgba(data)
-    },
-    {
-        "name": "object_ids_float16",
-        "long_name": "DefaultSceneRoot.object_ids_float16_",
-        "spatial_supersampling_factor": 1,
-        "visualize_func": lambda data : get_object_ids_float16_as_rgba(data)
-    },
-    {
-        "name": "diffuse_color",
-        "long_name": "DefaultSceneRoot.diffuse_color_",
-        "spatial_supersampling_factor": 2,
-        "visualize_func": lambda data : np.clip(data, 0.0, 1.0)
-    },
-    {
-        "name": "diffuse_only_post_process_input_2",
-        "long_name": "DefaultSceneRoot.diffuse_only_post_process_input_2_",
-        "spatial_supersampling_factor": 2,
-        "visualize_func": lambda data : np.clip(2.0*data, 0.0, 1.0)
-    },
-    {
-        "name": "diffuse_and_specular_post_process_input_2",
-        "long_name": "DefaultSceneRoot.diffuse_and_specular_post_process_input_2_",
-        "spatial_supersampling_factor": 2,
-        "visualize_func": lambda data : np.clip(2.0*data, 0.0, 1.0)
-    },
-    {
-        "name": "lighting_only_diffuse_color",
-        "long_name": "DefaultSceneRoot.lighting_only_diffuse_color_",
-        "spatial_supersampling_factor": 2,
-        "visualize_func": lambda data : np.clip(data, 0.0, 1.0)
-    },
-    {
-        "name": "lighting_only_post_process_input_2",
-        "long_name": "DefaultSceneRoot.lighting_only_post_process_input_2_",
-        "spatial_supersampling_factor": 2,
-        "visualize_func": lambda data : np.clip(2.0*data, 0.0, 1.0)
+        "visualize_func": lambda data : np.clip(data[:,:,[0,0,0]], 0.0, 1.0)
     }
 ]
 
