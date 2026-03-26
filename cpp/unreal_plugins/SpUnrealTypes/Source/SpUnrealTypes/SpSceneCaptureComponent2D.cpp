@@ -9,7 +9,7 @@
 
 #include <chrono>
 #include <cstring> // std::memcpy
-#include <memory>  // std::align, std::make_unique
+#include <memory>  // std::make_unique
 #include <utility> // std::move
 
 #include <Components/SceneCaptureComponent2D.h>
@@ -17,12 +17,9 @@
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Materials/Material.h>
 #include <Materials/MaterialInstanceDynamic.h>
-#include <Math/Color.h>                  // FColor, FLinearColor
-#include <Math/Float16Color.h>
-#include <RenderingThread.h>             // ENQUEUE_RENDER_COMMAND
+#include <Math/Color.h>                  // FLinearColor
+#include <RenderingThread.h>             // ENQUEUE_RENDER_COMMAND, FlushRenderingCommands
 #include <RHICommandList.h>              // EImmediateFlushType, FRHICommandListImmediate
-#include <RHIDefinitions.h>              // ERangeCompressionMode
-#include <RHITypes.h>                    // FReadSurfaceDataFlags
 #include <SceneManagement.h>             // FSceneViewStateInterface
 #include <SceneView.h>                   // FSceneViewFamily
 #include <SceneViewExtension.h>          // FAutoRegister, FSceneViewExtensionBase, FSceneViewExtensions
@@ -38,7 +35,6 @@
 #include "SpCore/SpFuncComponent.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
-#include "SpCore/UnrealArrayUpdateDataPtrScope.h"
 #include "SpCore/UnrealUtils.h"
 
 #include "SpUnrealTypes/SpPrimitiveProxyComponentManager.h"
@@ -257,7 +253,7 @@ void USpSceneCaptureComponent2D::Initialize()
 
     // initialize state for measuring "standalone" and "standalone + extra work" frame rates
 
-    if (bPrintFrameTimeEveryFrame) {
+    if (bPrintFrameTimeEveryFrame || bReadPixelsEveryFrame) {
         begin_frame_handle_ = FCoreDelegates::OnBeginFrame.AddUObject(this, &USpSceneCaptureComponent2D::beginFrameHandler);
     }
 
@@ -283,35 +279,40 @@ void USpSceneCaptureComponent2D::Initialize()
         SpFuncComponent->registerSharedMemoryView(shared_memory_view_); // name needs to be unique per USpFuncComponent
     }
 
-    if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::UInt8) {
-        scratchpad_array_color_.Reserve(Height*Width);
-        SP_ASSERT(Height*Width <= static_cast<int64_t>(scratchpad_array_color_.Max()));
-        SP_ASSERT(num_bytes <= scratchpad_array_color_.GetAllocatedSize());
-    } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float16) {
-        scratchpad_array_float_16_color_.Reserve(Height*Width);
-        SP_ASSERT(Height*Width <= static_cast<int64_t>(scratchpad_array_float_16_color_.Max()));
-        SP_ASSERT(num_bytes <= scratchpad_array_float_16_color_.GetAllocatedSize());
-    } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32) {
-        scratchpad_array_linear_color_.Reserve(Height*Width);
-        SP_ASSERT(Height*Width <= static_cast<int64_t>(scratchpad_array_linear_color_.Max()));
-        SP_ASSERT(num_bytes <= scratchpad_array_linear_color_.GetAllocatedSize());
-    } else {
-        SP_ASSERT(false);
+    if (!bUseSharedMemory) {
+        scratchpad_.resize(num_bytes);
     }
 
     // allocate readback buffers
-    if (BufferingMode == ESpBufferingMode::DoubleBuffered) {
+    if (BufferingMode == ESpBufferingMode::SingleBuffered) {
         readback_buffers_.at(0) = std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A"));
-        readback_pending_ = false;
+    } else if (BufferingMode == ESpBufferingMode::DoubleBuffered) {
+        readback_buffers_.at(0) = std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A"));
+        readback_enqueue_index_ = 0;
+        readback_primed_ = false;
+        readback_pending_ = 0;
     } else if (BufferingMode == ESpBufferingMode::TripleBuffered) {
         readback_buffers_.at(0) = std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A"));
         readback_buffers_.at(1) = std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_B"));
         readback_enqueue_index_ = 0;
         readback_primed_ = false;
-        readback_pending_ = false;
+        readback_pending_ = 0;
     }
 
     // register SpFuncs
+
+    SpFuncComponent->registerFunc("enqueue_copy", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
+        SP_ASSERT(!bReadPixelsEveryFrame);
+        if (BufferingMode == ESpBufferingMode::DoubleBuffered) {
+            enqueueCopyPixelsDoubleBuffered();
+        } else if (BufferingMode == ESpBufferingMode::TripleBuffered) {
+            enqueueCopyPixelsTripleBuffered();
+        } else {
+            SP_ASSERT(false);
+        }
+        return SpFuncDataBundle();
+    });
+
     SpFuncComponent->registerFunc("read_pixels", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
         SpFuncDataBundle return_values;
         SpPackedArray packed_array;
@@ -326,19 +327,6 @@ void USpSceneCaptureComponent2D::Initialize()
         }
         Std::insert(return_values.packed_arrays_, "data", std::move(packed_array));
         return return_values;
-    });
-
-    SpFuncComponent->registerFunc("enqueue_copy", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
-        SP_ASSERT(BufferingMode != ESpBufferingMode::SingleBuffered);
-        SP_ASSERT(!bReadPixelsEveryFrame);
-        if (BufferingMode == ESpBufferingMode::DoubleBuffered) {
-            enqueueCopyPixelsFromGPUToStaging();
-        } else if (BufferingMode == ESpBufferingMode::TripleBuffered) {
-            enqueueCopyPixelsTripleBuffered();
-        } else {
-            SP_ASSERT(false);
-        }
-        return SpFuncDataBundle();
     });
 
     is_initialized_ = true;
@@ -359,17 +347,18 @@ void USpSceneCaptureComponent2D::Terminate()
     bIsInitialized = false;
 
     // unregister SpFuncs
-    SpFuncComponent->unregisterFunc("read_pixels");
     SpFuncComponent->unregisterFunc("enqueue_copy");
+    SpFuncComponent->unregisterFunc("read_pixels");
 
     // deallocate readback buffers
-    readback_pending_ = false;
+    readback_pending_ = 0;
     readback_primed_ = false;
     readback_enqueue_index_ = 0;
     readback_buffers_.at(0).reset();
     readback_buffers_.at(1).reset();
 
     // deallocate memory
+    scratchpad_.clear();
     if (shared_memory_region_) {
         SpFuncComponent->unregisterSharedMemoryView(shared_memory_view_);
         shared_memory_view_ = SpArraySharedMemoryView();
@@ -378,7 +367,7 @@ void USpSceneCaptureComponent2D::Terminate()
 
     // remove callbacks
 
-    if (bPrintFrameTimeEveryFrame) {
+    if (bPrintFrameTimeEveryFrame || bReadPixelsEveryFrame) {
         FCoreDelegates::OnBeginFrame.Remove(begin_frame_handle_);
         begin_frame_handle_.Reset();
     }
@@ -406,92 +395,248 @@ bool USpSceneCaptureComponent2D::IsInitialized()
     return is_initialized_;
 }
 
+void USpSceneCaptureComponent2D::postRender_RenderThread()
+{
+    if (BufferingMode != ESpBufferingMode::DoubleBuffered) {
+        return;
+    }
+
+    if (readback_pending_ <= 0) {
+        return;
+    }
+
+    if (bReadPixelData) {
+        void* dest_ptr = nullptr;
+        if (bUseSharedMemory) {
+            dest_ptr = shared_memory_view_.data_;
+        } else {
+            dest_ptr = scratchpad_.data();
+        }
+        copyPixelsFromStagingToCPU_RenderThread(readback_buffers_.at(0).get(), dest_ptr);
+        readback_pending_--; // incremented in enqueueCopyPixelsDoubleBuffered()
+    }
+}
+
+//  
+// callbacks
+//
+
 void USpSceneCaptureComponent2D::beginFrameHandler()
 {
     if (bPrintFrameTimeEveryFrame) {
         updateFrameTime();
+    }
+
+    if (bReadPixelsEveryFrame) {
+        if (BufferingMode == ESpBufferingMode::DoubleBuffered) {
+            enqueueCopyPixelsDoubleBuffered();
+        } else if (BufferingMode == ESpBufferingMode::TripleBuffered) {
+            enqueueCopyPixelsTripleBuffered();
+        }
     }
 }
 
 void USpSceneCaptureComponent2D::endFrameHandler()
 {
     if (bReadPixelsEveryFrame) {
-        scratchpad_packed_array_ = readPixelsSingleBuffered();
+        if (BufferingMode == ESpBufferingMode::SingleBuffered) {
+            scratchpad_packed_array_ = readPixelsSingleBuffered();
+        } else if (BufferingMode == ESpBufferingMode::DoubleBuffered) {
+            scratchpad_packed_array_ = readPixelsDoubleBuffered();
+        } else if (BufferingMode == ESpBufferingMode::TripleBuffered) {
+            scratchpad_packed_array_ = readPixelsTripleBuffered();
+        }
     }
 }
 
-void USpSceneCaptureComponent2D::enqueueCopyPixelsFromGPUToStaging()
-{
-    SP_ASSERT(IsInitialized());
-    SP_ASSERT(BufferingMode == ESpBufferingMode::DoubleBuffered);
-    SP_ASSERT(!bReadPixelsEveryFrame);
+//
+// single-buffered mode
+//
 
-    readback_pending_ = true;
+SpPackedArray USpSceneCaptureComponent2D::readPixelsSingleBuffered()
+{
+    SP_ASSERT(BufferingMode == ESpBufferingMode::SingleBuffered);
+    SP_ASSERT(IsInitialized());
+
+    SpPackedArray packed_array = getPackedArray();
 
     if (bReadPixelData) {
         FTextureRenderTargetResource* render_target_resource = TextureTarget->GameThread_GetRenderTargetResource();
         SP_ASSERT(render_target_resource);
 
+        FRHIGPUTextureReadback* readback = readback_buffers_.at(0).get();
+        SP_ASSERT(readback);
+
+        void* dest_ptr = packed_array.view_;
+        SP_ASSERT(dest_ptr);
+
+        ENQUEUE_RENDER_COMMAND(SpReadPixelsSingleBuffered)(
+            [this, readback, render_target_resource, dest_ptr](FRHICommandListImmediate& command_list) {
+                enqueueCopyPixelsFromGPUToStagingAndImmediateFlush_RenderThread(readback, command_list, render_target_resource);
+                copyPixelsFromStagingToCPU_RenderThread(readback, dest_ptr);
+            });
+
+        FlushRenderingCommands();
+    }
+
+    return packed_array;
+}
+
+//
+// double-buffered mode
+//
+
+void USpSceneCaptureComponent2D::enqueueCopyPixelsDoubleBuffered()
+{
+    SP_ASSERT(BufferingMode == ESpBufferingMode::DoubleBuffered);
+    SP_ASSERT(IsInitialized());
+
+    if (bReadPixelData) {
+        readback_pending_++; // decremented in postRender_RenderThread()
+
+        FTextureRenderTargetResource* render_target_resource = TextureTarget->GameThread_GetRenderTargetResource();
+        SP_ASSERT(render_target_resource);
+
+        FRHIGPUTextureReadback* readback = readback_buffers_.at(0).get(); // always use index 0 for DoubleBuffered
+        SP_ASSERT(readback);
+
         ENQUEUE_RENDER_COMMAND(SpEnqueueCopyPixelsFromGPUToStaging)(
-            [this, render_target_resource](FRHICommandListImmediate& rhi_command_list_immediate) {
-                enqueueCopyPixelsFromGPUToStaging_RenderThread(rhi_command_list_immediate, render_target_resource);
+            [this, readback, render_target_resource](FRHICommandListImmediate& rhi_command_list_immediate) {
+                enqueueCopyPixelsFromGPUToStagingAndImmediateFlush_RenderThread(readback, rhi_command_list_immediate, render_target_resource);
             });
     }
 }
+
+SpPackedArray USpSceneCaptureComponent2D::readPixelsDoubleBuffered()
+{
+    SP_ASSERT(BufferingMode == ESpBufferingMode::DoubleBuffered);
+    return readPixelsImpl();
+}
+
+//
+// triple-buffered mode
+//
 
 void USpSceneCaptureComponent2D::enqueueCopyPixelsTripleBuffered()
 {
-    SP_ASSERT(IsInitialized());
     SP_ASSERT(BufferingMode == ESpBufferingMode::TripleBuffered);
-    SP_ASSERT(!bReadPixelsEveryFrame);
-
-    int prev_index = (readback_enqueue_index_ + 1) % 2;
-    int current_index = readback_enqueue_index_;
-    bool has_previous = readback_primed_;
-
-    if (has_previous) {
-        readback_pending_ = true;
-    }
+    SP_ASSERT(IsInitialized());
 
     if (bReadPixelData) {
-        FTextureRenderTargetResource* render_target_resource = TextureTarget->GameThread_GetRenderTargetResource();
-        SP_ASSERT(render_target_resource);
+        int prev_index = (readback_enqueue_index_ + 1) % 2;
+        int current_index = readback_enqueue_index_;
 
-        FRHIGPUTextureReadback* prev_readback = has_previous ? readback_buffers_.at(prev_index).get() : nullptr;
+        FRHIGPUTextureReadback* prev_readback = nullptr;
         FRHIGPUTextureReadback* current_readback = readback_buffers_.at(current_index).get();
         SP_ASSERT(current_readback);
 
+        if (readback_primed_) {
+            readback_pending_++; // decremented in SpEnqueueCopyPixelsTripleBuffered command below
+            prev_readback = readback_buffers_.at(prev_index).get();
+        }
+
+        FTextureRenderTargetResource* render_target_resource = TextureTarget->GameThread_GetRenderTargetResource();
+        SP_ASSERT(render_target_resource);
+
+        void* dest_ptr = nullptr;
+        if (bUseSharedMemory) {
+            dest_ptr = shared_memory_view_.data_;
+        } else {
+            dest_ptr = scratchpad_.data();
+        }
+
         ENQUEUE_RENDER_COMMAND(SpEnqueueCopyPixelsTripleBuffered)(
-            [this, prev_readback, current_readback, render_target_resource](FRHICommandListImmediate& rhi_command_list_immediate) {
+            [this, prev_readback, current_readback, render_target_resource, dest_ptr](FRHICommandListImmediate& command_list) {
+                enqueueCopyPixelsFromGPUToStagingAndImmediateFlush_RenderThread(current_readback, command_list, render_target_resource);
                 if (prev_readback) {
-                    copyPixelsFromStagingToCPU_RenderThread(prev_readback);
-                }
-                current_readback->EnqueueCopy(rhi_command_list_immediate, render_target_resource->GetRenderTargetTexture());
-                rhi_command_list_immediate.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
-                if (prev_readback) {
-                    readback_pending_ = false;
+                    copyPixelsFromStagingToCPU_RenderThread(prev_readback, dest_ptr);
+                    readback_pending_--; // incremented in enqueueCopyPixelsTripleBuffered() above
                 }
             });
-    } else {
-        if (has_previous) {
-            readback_pending_ = false;
+
+        readback_enqueue_index_ = (readback_enqueue_index_ + 1) % 2;
+        readback_primed_ = true;
+    }
+}
+
+SpPackedArray USpSceneCaptureComponent2D::readPixelsTripleBuffered()
+{
+    SP_ASSERT(BufferingMode == ESpBufferingMode::TripleBuffered);
+    return readPixelsImpl();
+}
+
+//
+// game thread helpers
+//
+
+SpPackedArray USpSceneCaptureComponent2D::readPixelsImpl()
+{
+    SP_ASSERT(IsInitialized());
+
+    if (bReadPixelData) {
+        SP_ASSERT(readback_pending_ >= 0);
+        int64_t spin_wait_iterations = 0;
+        while (readback_pending_ > 0) {
+            spin_wait_iterations++;
+        }
+        if (bPrintReadbackSpinWaitInfo && spin_wait_iterations > 0) {
+            SP_LOG("WARNING: Readback spin-waited for ", spin_wait_iterations, " iterations in readPixelsImpl().");
         }
     }
 
-    readback_enqueue_index_ = (readback_enqueue_index_ + 1) % 2;
-    readback_primed_ = true;
+    SpPackedArray packed_array = getPackedArray();
+
+    if (!bUseSharedMemory && bReadPixelData) {
+        SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
+        uint64_t num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
+        std::memcpy(packed_array.data_.data(), scratchpad_.data(), num_bytes);
+    }
+
+    return packed_array;
 }
 
-void USpSceneCaptureComponent2D::enqueueCopyPixelsFromGPUToStaging_RenderThread(FRHICommandListImmediate& rhi_command_list_immediate, FTextureRenderTargetResource* render_target_resource)
+SpPackedArray USpSceneCaptureComponent2D::getPackedArray()
 {
-    SP_ASSERT(readback_buffers_.at(0));
-    readback_buffers_.at(0)->EnqueueCopy(rhi_command_list_immediate, render_target_resource->GetRenderTargetTexture());
-    rhi_command_list_immediate.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
+    SP_ASSERT(IsInitialized());
+    SP_ASSERT(Height >= 0);
+    SP_ASSERT(Width >= 0);
+
+    SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
+    uint64_t num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
+
+    SpPackedArray packed_array;
+    packed_array.shape_ = {static_cast<uint64_t>(Height), static_cast<uint64_t>(Width), static_cast<uint64_t>(NumChannelsPerPixel)}; // explicit cast needed on Windows
+    packed_array.data_type_ = channel_data_type;
+
+    if (bUseSharedMemory) {
+        packed_array.view_ = shared_memory_view_.data_;
+        packed_array.data_source_ = SpArrayDataSource::Shared;
+        packed_array.shared_memory_name_ = shared_memory_view_.name_;
+        packed_array.shared_memory_usage_flags_ = shared_memory_view_.usage_flags_;
+    } else {
+        Std::resizeUninitialized(packed_array.data_, num_bytes);
+        packed_array.view_ = packed_array.data_.data();
+        packed_array.data_source_ = SpArrayDataSource::Internal;
+    }
+
+    return packed_array;
 }
 
-void USpSceneCaptureComponent2D::copyPixelsFromStagingToCPU_RenderThread(FRHIGPUTextureReadback* readback)
+//
+// render thread helpers
+//
+
+void USpSceneCaptureComponent2D::enqueueCopyPixelsFromGPUToStagingAndImmediateFlush_RenderThread(FRHIGPUTextureReadback* readback, FRHICommandListImmediate& command_list, FTextureRenderTargetResource* render_target_resource)
 {
     SP_ASSERT(readback);
+    readback->EnqueueCopy(command_list, render_target_resource->GetRenderTargetTexture());
+    command_list.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
+}
+
+void USpSceneCaptureComponent2D::copyPixelsFromStagingToCPU_RenderThread(FRHIGPUTextureReadback* readback, void* dest_ptr)
+{
+    SP_ASSERT(readback);
+    SP_ASSERT(dest_ptr);
 
     int64_t spin_wait_iterations = 0;
     while (!readback->IsReady()) {
@@ -505,22 +650,6 @@ void USpSceneCaptureComponent2D::copyPixelsFromStagingToCPU_RenderThread(FRHIGPU
     uint64_t num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
     int32_t bytes_per_pixel = NumChannelsPerPixel * SpArrayDataTypeUtils::getSizeOf(channel_data_type);
     int32_t row_bytes = Width * bytes_per_pixel;
-
-    void* dest_ptr = nullptr;
-    if (bUseSharedMemory) {
-        dest_ptr = shared_memory_view_.data_;
-    } else {
-        if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::UInt8) {
-            dest_ptr = scratchpad_array_color_.GetData();
-        } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float16) {
-            dest_ptr = scratchpad_array_float_16_color_.GetData();
-        } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32) {
-            dest_ptr = scratchpad_array_linear_color_.GetData();
-        } else {
-            SP_ASSERT(false);
-        }
-    }
-    SP_ASSERT(dest_ptr);
 
     int32 row_pitch_in_pixels = 0;
     void* src_ptr = readback->Lock(row_pitch_in_pixels);
@@ -542,163 +671,9 @@ void USpSceneCaptureComponent2D::copyPixelsFromStagingToCPU_RenderThread(FRHIGPU
     readback->Unlock();
 }
 
-void USpSceneCaptureComponent2D::postRender_RenderThread()
-{
-    if (BufferingMode != ESpBufferingMode::DoubleBuffered) {
-        return;
-    }
-
-    if (!readback_pending_) {
-        return;
-    }
-
-    if (bReadPixelData) {
-        copyPixelsFromStagingToCPU_RenderThread(readback_buffers_.at(0).get());
-    }
-
-    readback_pending_ = false;
-}
-
-SpPackedArray USpSceneCaptureComponent2D::readPixelsSingleBuffered()
-{
-    SP_ASSERT(IsInitialized());
-    SP_ASSERT(Height >= 0);
-    SP_ASSERT(Width >= 0);
-    SP_ASSERT(NumChannelsPerPixel == 4);
-
-    SpPackedArray packed_array;
-
-    SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
-    uint64_t num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
-
-    packed_array.shape_ = {static_cast<uint64_t>(Height), static_cast<uint64_t>(Width), static_cast<uint64_t>(NumChannelsPerPixel)}; // explicit cast needed on Windows
-    packed_array.data_type_ = channel_data_type;
-
-    void* dest_ptr = nullptr;
-    if (bUseSharedMemory) {
-        packed_array.view_ = shared_memory_view_.data_;
-        packed_array.data_source_ = SpArrayDataSource::Shared;
-        packed_array.shared_memory_name_ = shared_memory_view_.name_;
-        packed_array.shared_memory_usage_flags_ = shared_memory_view_.usage_flags_;
-        dest_ptr = shared_memory_view_.data_;
-    } else {
-        Std::resizeUninitialized(packed_array.data_, num_bytes);
-        packed_array.view_ = packed_array.data_.data();
-        packed_array.data_source_ = SpArrayDataSource::Internal;
-        dest_ptr = packed_array.data_.data();
-    }
-    SP_ASSERT(dest_ptr);
-
-    if (bReadPixelData) {
-        FTextureRenderTargetResource* texture_render_target_resource = TextureTarget->GameThread_GetRenderTargetResource();
-        SP_ASSERT(texture_render_target_resource);
-
-        // ReadPixels assumes 4 channels per pixel, 1 uint8 per channel
-        if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::UInt8) {
-
-            FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(ERangeCompressionMode::RCM_UNorm);
-            if (bOverrideSetLinearToGamma) {
-                read_surface_flags.SetLinearToGamma(bSetLinearToGamma);
-            }
-
-            UnrealArrayUpdateDataPtrScope scope(scratchpad_array_color_, dest_ptr, num_bytes);
-            bool success = texture_render_target_resource->ReadPixels(scratchpad_array_color_, read_surface_flags);
-            SP_ASSERT(success);
-
-        // ReadFloat16Pixels assumes 4 channels per pixel, 1 float16 per channel
-        } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float16) {
-
-            // we never want to change floating point values when reading
-            FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(ERangeCompressionMode::RCM_MinMax);
-            read_surface_flags.SetLinearToGamma(false);
-
-            UnrealArrayUpdateDataPtrScope scope(scratchpad_array_float_16_color_, dest_ptr, num_bytes);
-            bool success = texture_render_target_resource->ReadFloat16Pixels(scratchpad_array_float_16_color_, read_surface_flags);
-            SP_ASSERT(success);
-
-        // ReadLinearColorPixels assumes 4 channels per pixel, 1 float32 per channel
-        } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32) {
-            SP_ASSERT(BOOST_OS_WINDOWS, "ERROR: NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32 is only supported on Windows.");
-
-            // we never want to change floating point values when reading
-            FReadSurfaceDataFlags read_surface_flags = FReadSurfaceDataFlags(ERangeCompressionMode::RCM_MinMax);
-            read_surface_flags.SetLinearToGamma(false);
-
-            UnrealArrayUpdateDataPtrScope scope(scratchpad_array_linear_color_, dest_ptr, num_bytes);
-            bool success = texture_render_target_resource->ReadLinearColorPixels(scratchpad_array_linear_color_, read_surface_flags);
-            SP_ASSERT(success);
-
-        } else {
-            SP_ASSERT(false);
-        }
-    }
-
-    return packed_array;
-}
-
-SpPackedArray USpSceneCaptureComponent2D::readPixelsDoubleBuffered()
-{
-    SP_ASSERT(BufferingMode == ESpBufferingMode::DoubleBuffered);
-    SP_ASSERT(!bReadPixelsEveryFrame);
-    return readPixelsBufferedImpl();
-}
-
-SpPackedArray USpSceneCaptureComponent2D::readPixelsTripleBuffered()
-{
-    SP_ASSERT(BufferingMode == ESpBufferingMode::TripleBuffered);
-    SP_ASSERT(!bReadPixelsEveryFrame);
-    return readPixelsBufferedImpl();
-}
-
-SpPackedArray USpSceneCaptureComponent2D::readPixelsBufferedImpl()
-{
-    SP_ASSERT(IsInitialized());
-    SP_ASSERT(Height >= 0);
-    SP_ASSERT(Width >= 0);
-    SP_ASSERT(NumChannelsPerPixel == 4);
-
-    int64_t spin_wait_iterations = 0;
-    while (readback_pending_) {
-        spin_wait_iterations++;
-    }
-    if (bPrintReadbackSpinWaitInfo && spin_wait_iterations > 0) {
-        SP_LOG("WARNING: Readback spin-waited for ", spin_wait_iterations, " iterations in readPixelsBufferedImpl().");
-    }
-
-    SpPackedArray packed_array;
-
-    SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
-    uint64_t num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
-
-    packed_array.shape_ = {static_cast<uint64_t>(Height), static_cast<uint64_t>(Width), static_cast<uint64_t>(NumChannelsPerPixel)}; // explicit cast needed on Windows
-    packed_array.data_type_ = channel_data_type;
-
-    if (bUseSharedMemory) {
-        packed_array.view_ = shared_memory_view_.data_;
-        packed_array.data_source_ = SpArrayDataSource::Shared;
-        packed_array.shared_memory_name_ = shared_memory_view_.name_;
-        packed_array.shared_memory_usage_flags_ = shared_memory_view_.usage_flags_;
-    } else {
-        Std::resizeUninitialized(packed_array.data_, num_bytes);
-        packed_array.view_ = packed_array.data_.data();
-        packed_array.data_source_ = SpArrayDataSource::Internal;
-        if (bReadPixelData) {
-            void* scratchpad_ptr = nullptr;
-            if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::UInt8) {
-                scratchpad_ptr = scratchpad_array_color_.GetData();
-            } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float16) {
-                scratchpad_ptr = scratchpad_array_float_16_color_.GetData();
-            } else if (NumChannelsPerPixel == 4 && channel_data_type == SpArrayDataType::Float32) {
-                scratchpad_ptr = scratchpad_array_linear_color_.GetData();
-            } else {
-                SP_ASSERT(false);
-            }
-            std::memcpy(packed_array.data_.data(), scratchpad_ptr, num_bytes);
-        }
-    }
-
-    return packed_array;
-}
+//
+// miscellaneous helpers
+//
 
 void USpSceneCaptureComponent2D::updateFrameTime()
 {

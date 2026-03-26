@@ -256,15 +256,13 @@ blueprint_desc = \
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
-            "num_channels_per_pixel": 4,
+            "num_channels_per_pixel": 1,
             "channel_data_type": unreal.SpArrayDataType.U_INT8,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
-            "override_set_linear_to_gamma": True,
-            "set_linear_to_gamma": False,
             "material_path": "/SpContent/Materials/PPM_CustomStencil",
             "show_flag_settings": engine_show_flag_settings["without_lighting"],
             "override_texture_render_target_format": True,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R8
         },
         {
             "name": "diffuse_and_specular_post_process_input_2_",
@@ -349,26 +347,26 @@ blueprint_desc = \
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
-            "num_channels_per_pixel": 4,
+            "num_channels_per_pixel": 1,
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_MaterialAO",
             "show_flag_settings": engine_show_flag_settings["without_lighting"],
             "override_texture_render_target_format": True,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R16F
         },
         {
             "name": "metallic_",
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
-            "num_channels_per_pixel": 4,
+            "num_channels_per_pixel": 1,
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_Metallic",
             "show_flag_settings": engine_show_flag_settings["without_lighting"],
             "override_texture_render_target_format": True,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R16F
         },
         {
             "name": "object_ids_uint8_",
@@ -378,8 +376,6 @@ blueprint_desc = \
             "num_channels_per_pixel": 4,
             "channel_data_type": unreal.SpArrayDataType.U_INT8,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
-            "override_set_linear_to_gamma": True,
-            "set_linear_to_gamma": False,
             "show_flag_settings": engine_show_flag_settings["object_ids"],
             "allowed_proxy_component_modalities": ["object_ids"],
             "override_texture_render_target_format": True,
@@ -409,26 +405,26 @@ blueprint_desc = \
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
-            "num_channels_per_pixel": 4,
+            "num_channels_per_pixel": 1,
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_Roughness",
             "show_flag_settings": engine_show_flag_settings["without_lighting"],
             "override_texture_render_target_format": True,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R16F
         },
         {
             "name": "scene_depth_",
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
-            "num_channels_per_pixel": 4,
+            "num_channels_per_pixel": 1,
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_SceneDepth",
             "show_flag_settings": engine_show_flag_settings["without_lighting"],
             "override_texture_render_target_format": True,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R16F
         },
         {
             "name": "sp_camera_normal_",
@@ -448,13 +444,13 @@ blueprint_desc = \
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
-            "num_channels_per_pixel": 4,
+            "num_channels_per_pixel": 1,
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_SpDepthMeters",
             "show_flag_settings": engine_show_flag_settings["without_lighting"],
             "override_texture_render_target_format": True,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R16F
         },
         {
             "name": "sp_world_position_",
@@ -474,13 +470,13 @@ blueprint_desc = \
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
-            "num_channels_per_pixel": 4,
+            "num_channels_per_pixel": 1,
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_SpecularForLighting",
             "show_flag_settings": engine_show_flag_settings["without_lighting"],
             "override_texture_render_target_format": True,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R16F
         },
         {
             "name": "world_normal_",
@@ -560,10 +556,6 @@ if __name__ == "__main__":
         sp_scene_capture_component_2d.set_editor_property(name="capture_source", value=component_desc["capture_source"])
 
         # SpSceneCaptureComponent2D properties (optional)
-
-        if "override_set_linear_to_gamma" in component_desc:
-            sp_scene_capture_component_2d.set_editor_property(name="override_set_linear_to_gamma", value=component_desc["override_set_linear_to_gamma"])
-            sp_scene_capture_component_2d.set_editor_property(name="set_linear_to_gamma", value=component_desc["set_linear_to_gamma"])
 
         if "material_path" in component_desc:
             material = unreal.load_asset(name=component_desc["material_path"])
