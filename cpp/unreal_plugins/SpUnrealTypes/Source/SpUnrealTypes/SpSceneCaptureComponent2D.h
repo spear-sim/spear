@@ -195,8 +195,8 @@ private:
     SpPackedArray readPixelsTripleBuffered();
 
     // game thread helpers
-    SpPackedArray getPackedArray();
     SpPackedArray readPixelsImpl();
+    SpPackedArray getPackedArray();
 
     // render thread helpers
     void enqueueCopyPixelsFromGPUToStagingAndImmediateFlush_RenderThread(FRHIGPUTextureReadback* readback, FRHICommandListImmediate& rhi_command_list_immediate, FTextureRenderTargetResource* render_target_resource);
@@ -224,7 +224,7 @@ private:
     std::array<std::unique_ptr<FRHIGPUTextureReadback>, 2> readback_buffers_;
     int readback_enqueue_index_ = 0;              // GT-only: used by TripleBuffered to alternate buffers
     bool readback_primed_ = false;                // GT-only: one-way latch, true after first enqueueCopyPixelsTripleBuffered call
-    std::atomic<int> readback_pending_ = 0;       // GT increments in enqueueCopyPixelsDoubleBuffered/enqueueCopyPixelsTripleBuffered, RT decrements in postRender_RenderThread/enqueueCopyPixelsTripleBuffered
+    std::atomic<int> num_readbacks_pending_ = 0;  // GT increments in enqueueCopyPixelsDoubleBuffered/enqueueCopyPixelsTripleBuffered, RT decrements in postRender_RenderThread/enqueueCopyPixelsTripleBuffered
 
     // Additional state for measuring "standalone" and "standalone + extra work" frame rates.
     FDelegateHandle begin_frame_handle_;

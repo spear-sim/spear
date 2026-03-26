@@ -290,13 +290,13 @@ void USpSceneCaptureComponent2D::Initialize()
         readback_buffers_.at(0) = std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A"));
         readback_enqueue_index_ = 0;
         readback_primed_ = false;
-        readback_pending_ = 0;
+        num_readbacks_pending_ = 0;
     } else if (BufferingMode == ESpBufferingMode::TripleBuffered) {
         readback_buffers_.at(0) = std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A"));
         readback_buffers_.at(1) = std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_B"));
         readback_enqueue_index_ = 0;
         readback_primed_ = false;
-        readback_pending_ = 0;
+        num_readbacks_pending_ = 0;
     }
 
     // register SpFuncs
@@ -351,7 +351,7 @@ void USpSceneCaptureComponent2D::Terminate()
     SpFuncComponent->unregisterFunc("read_pixels");
 
     // deallocate readback buffers
-    readback_pending_ = 0;
+    num_readbacks_pending_ = 0;
     readback_primed_ = false;
     readback_enqueue_index_ = 0;
     readback_buffers_.at(0).reset();
@@ -401,7 +401,9 @@ void USpSceneCaptureComponent2D::postRender_RenderThread()
         return;
     }
 
-    if (readback_pending_ <= 0) {
+    SP_ASSERT(num_readbacks_pending_ >= 0);
+
+    if (num_readbacks_pending_ == 0) {
         return;
     }
 
@@ -412,8 +414,9 @@ void USpSceneCaptureComponent2D::postRender_RenderThread()
         } else {
             dest_ptr = scratchpad_.data();
         }
-        copyPixelsFromStagingToCPU_RenderThread(readback_buffers_.at(0).get(), dest_ptr);
-        readback_pending_--; // incremented in enqueueCopyPixelsDoubleBuffered()
+        copyPixelsFromStagingToCPU_RenderThread(readback_buffers_.at(0).get(), dest_ptr); // always use index 0 for DoubleBuffered
+        num_readbacks_pending_--;
+        SP_ASSERT(num_readbacks_pending_ >= 0);
     }
 }
 
@@ -464,7 +467,7 @@ SpPackedArray USpSceneCaptureComponent2D::readPixelsSingleBuffered()
         FTextureRenderTargetResource* render_target_resource = TextureTarget->GameThread_GetRenderTargetResource();
         SP_ASSERT(render_target_resource);
 
-        FRHIGPUTextureReadback* readback = readback_buffers_.at(0).get();
+        FRHIGPUTextureReadback* readback = readback_buffers_.at(0).get(); // always use index 0 for SingleBuffered
         SP_ASSERT(readback);
 
         void* dest_ptr = packed_array.view_;
@@ -492,7 +495,8 @@ void USpSceneCaptureComponent2D::enqueueCopyPixelsDoubleBuffered()
     SP_ASSERT(IsInitialized());
 
     if (bReadPixelData) {
-        readback_pending_++; // decremented in postRender_RenderThread()
+        SP_ASSERT(num_readbacks_pending_ >= 0);
+        num_readbacks_pending_++; // decremented in postRender_RenderThread()
 
         FTextureRenderTargetResource* render_target_resource = TextureTarget->GameThread_GetRenderTargetResource();
         SP_ASSERT(render_target_resource);
@@ -531,7 +535,8 @@ void USpSceneCaptureComponent2D::enqueueCopyPixelsTripleBuffered()
         SP_ASSERT(current_readback);
 
         if (readback_primed_) {
-            readback_pending_++; // decremented in SpEnqueueCopyPixelsTripleBuffered command below
+            SP_ASSERT(num_readbacks_pending_ >= 0);
+            num_readbacks_pending_++; // decremented in SpEnqueueCopyPixelsTripleBuffered command below
             prev_readback = readback_buffers_.at(prev_index).get();
         }
 
@@ -550,7 +555,8 @@ void USpSceneCaptureComponent2D::enqueueCopyPixelsTripleBuffered()
                 enqueueCopyPixelsFromGPUToStagingAndImmediateFlush_RenderThread(current_readback, command_list, render_target_resource);
                 if (prev_readback) {
                     copyPixelsFromStagingToCPU_RenderThread(prev_readback, dest_ptr);
-                    readback_pending_--; // incremented in enqueueCopyPixelsTripleBuffered() above
+                    num_readbacks_pending_--;
+                    SP_ASSERT(num_readbacks_pending_ >= 0);
                 }
             });
 
@@ -574,9 +580,9 @@ SpPackedArray USpSceneCaptureComponent2D::readPixelsImpl()
     SP_ASSERT(IsInitialized());
 
     if (bReadPixelData) {
-        SP_ASSERT(readback_pending_ >= 0);
+        SP_ASSERT(num_readbacks_pending_ >= 0);
         int64_t spin_wait_iterations = 0;
-        while (readback_pending_ > 0) {
+        while (num_readbacks_pending_ > 0) {
             spin_wait_iterations++;
         }
         if (bPrintReadbackSpinWaitInfo && spin_wait_iterations > 0) {
