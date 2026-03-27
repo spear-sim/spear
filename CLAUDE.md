@@ -1,8 +1,3 @@
----
-description: Follow existing local code style and minimal-diff edits
-alwaysApply: true
----
-
 # Style Guide Sync
 
 `CLAUDE.md` and `.cursor/rules/local-style.mdc` are the two style guides for this repo and must always be kept in sync. Any change to one must be reflected in the other.

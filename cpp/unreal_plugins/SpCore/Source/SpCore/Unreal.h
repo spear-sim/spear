@@ -9,8 +9,8 @@
 
 #include <concepts>    // std::constructible_from, std::derived_from, std::same_as
 #include <map>
-#include <string>
 #include <ranges>      // std::views::transform
+#include <string>
 #include <type_traits> // std::remove_pointer_t, std::underlying_type_t
 #include <utility>     // std::forward
 #include <vector>

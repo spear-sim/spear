@@ -16,8 +16,8 @@
 #include <mutex>       // std::lock_guard
 #include <ranges>      // std::views::transform
 #include <string>
-#include <utility>     // std::make_pair, std::move, std::pair
 #include <type_traits> // std::invoke_result_t, std::is_void_v
+#include <utility>     // std::make_pair, std::move, std::pair
 #include <vector>
 
 #include "SpCore/Assert.h"

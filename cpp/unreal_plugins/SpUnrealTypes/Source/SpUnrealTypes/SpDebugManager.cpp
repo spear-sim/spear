@@ -19,9 +19,9 @@
 #include <Containers/Array.h>
 #include <Containers/Map.h>
 #include <Containers/UnrealString.h>         // FString
-#include <Engine/StaticMeshActor.h>
 #include <Engine/Engine.h>                   // GEngine
 #include <Engine/EngineTypes.h>              // EEndPlayReason
+#include <Engine/StaticMeshActor.h>
 #include <Engine/World.h>                    // FActorSpawnParameters
 #include <GameFramework/Actor.h>
 #include <Math/Rotator.h>

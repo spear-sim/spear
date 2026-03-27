@@ -8,9 +8,9 @@
 #include <memory> // std::unique_ptr
 #include <string>
 
-#include <Modules/ModuleInterface.h>
-#include <Containers/UnrealString.h>     // FString>
+#include <Containers/UnrealString.h>     // FString
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
+#include <Modules/ModuleInterface.h>
 
 #include "SpCore/SharedMemory.h"
 

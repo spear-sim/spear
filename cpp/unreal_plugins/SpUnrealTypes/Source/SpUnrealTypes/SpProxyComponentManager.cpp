@@ -14,10 +14,10 @@
 
 #include <boost/predef.h> // BOOST_COMP_CLANG, BOOST_COMP_MSVC
 
-#include <GameFramework/Actor.h>
 #include <Engine/Engine.h>        // GEngine
 #include <Engine/EngineTypes.h>   // EEndPlayReason
 #include <Engine/World.h>
+#include <GameFramework/Actor.h>
 #include <UObject/ObjectMacros.h> // EObjectFlags
 
 #include "SpCore/Assert.h"

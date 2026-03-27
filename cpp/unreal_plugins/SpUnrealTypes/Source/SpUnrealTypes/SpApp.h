@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <Misc/App.h>
 #include <Kismet/BlueprintFunctionLibrary.h>
+#include <Misc/App.h>
 
 #include "SpApp.generated.h"
 

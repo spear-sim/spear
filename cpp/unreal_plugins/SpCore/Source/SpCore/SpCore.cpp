@@ -7,8 +7,10 @@
 
 #include <stdint.h> // uint64_t
 
-#include <iostream> // std::cin
-#include <memory>   // std::make_unique, std::unique_ptr
+#include <exception> // std::current_exception, std::rethrow_exception
+#include <iostream>  // std::cin
+#include <map>
+#include <memory>    // std::make_unique, std::unique_ptr
 
 #include <CoreGlobals.h>                 // GConfig, GEditorIni, GEngineIni, GGameIni, GGameUserSettingsIni, GInputIni
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle

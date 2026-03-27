@@ -13,8 +13,8 @@
 #include <string>
 #include <vector>
 
+#include <Containers/Array.h>
 #include <Containers/UnrealString.h> // FString
-#include <Containers/Array.h> 
 #include <Engine/EngineTypes.h>      // EEndPlayReason
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>            // uint32

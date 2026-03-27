@@ -14,8 +14,8 @@
 #include <Containers/UnrealString.h>          // FString
 #include <Engine/Engine.h>                    // GEngine
 #include <Engine/EngineBaseTypes.h>           // EViewModeIndex
-#include <HAL/Platform.h>                     // int32
 #include <HAL/IConsoleManager.h>              // EConsoleVariableFlags, IConsoleVariable
+#include <HAL/Platform.h>                     // int32
 #include <Internationalization/Text.h>        // FText
 #include <Misc/DefaultValueHelper.h>
 #include <MoviePipelineDeferredPasses.h>
@@ -27,7 +27,7 @@
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
-#include <SpCore/Std.h>
+#include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 
 #include "SpMoviePipelineDeferredPass.generated.h"

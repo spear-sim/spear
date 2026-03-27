@@ -11,8 +11,8 @@
 #include <vector>
 
 #include <Components/SceneComponent.h>
+#include <Containers/Array.h>
 #include <Containers/UnrealString.h> // FString
-#include <Containers/Array.h> 
 #include <HAL/Platform.h>            // SPCORE_API
 #include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UPROPERTY
 

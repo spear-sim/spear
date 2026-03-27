@@ -24,13 +24,11 @@
 #include <Math/Vector.h>
 #include <Misc/EnumClassFlags.h>         // ENUM_CLASS_FLAGS
 #include <StructUtils/UserDefinedStruct.h>
-#include <UObject/Class.h>               // EIncludeSuperFlag, UClass
-#include <UObject/Object.h>              // UObject
-#include <UObject/ObjectMacros.h>        // EObjectFlags, ELoadFlags
+#include <UObject/Class.h>               // EIncludeSuperFlag, EStructFlags, UClass, UScriptStruct
 #include <UObject/NameTypes.h>           // FName
-#include <UObject/ObjectMacros.h>        // EPropertyFlags, GENERATED_BODY, UCLASS, UENUM, UFUNCTION, UPROPERTY
+#include <UObject/Object.h>              // UObject
+#include <UObject/ObjectMacros.h>        // ELoadFlags, EObjectFlags, EPropertyFlags, GENERATED_BODY, UCLASS, UENUM, UFUNCTION, UPROPERTY
 #include <UObject/Package.h>
-#include <UObject/Class.h>               // EStructFlags, UScriptStruct
 #include <UObject/Script.h>              // EFunctionFlags
 #include <UObject/UObjectGlobals.h>      // GetTransientPackage, StaticLoadClass, StaticLoadObject
 #include <UObject/UnrealType.h>          // EFieldIterationFlags

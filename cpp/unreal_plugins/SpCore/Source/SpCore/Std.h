@@ -19,11 +19,11 @@
 #include <memory>      // std::allocator_traits
 #include <ranges>      // std::ranges::begin, std::ranges::contiguous_range, std::ranges::data, std::ranges::end, std::ranges::range,
                        // std::ranges::sized_range, std::ranges::size, std::views::keys, std::views::transform
+#include <set>
+#include <span>
+#include <string>      // std::equal
 #include <type_traits> // std::is_empty, std::is_trivially_constructible, std::is_trivially_copyable, std::is_trivially_destructible, std::remove_cvref_t,
                        // std::underlying_type_t
-#include <span>
-#include <set>
-#include <string>      // std::equal
 #include <utility>     // std::forward, std::make_pair, std::move, std::pair
 #include <vector>
 

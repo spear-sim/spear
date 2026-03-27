@@ -8,9 +8,9 @@
 #include <map>
 #include <string>
 
-#include <HAL/Platform.h>            // uint64
 #include <Containers/UnrealString.h> // FString
 #include <GameFramework/GameModeBase.h>
+#include <HAL/Platform.h>            // uint64
 #include <Templates/SubclassOf.h>
 #include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION
 #include <UObject/ObjectPtr.h>

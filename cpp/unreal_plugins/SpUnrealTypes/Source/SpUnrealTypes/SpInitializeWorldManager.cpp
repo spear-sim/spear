@@ -12,6 +12,7 @@
 #include <Engine/Engine.h>      // GEngine
 #include <Engine/EngineTypes.h> // EEndPlayReason
 #include <GameFramework/Actor.h>
+#include <HAL/IConsoleManager.h>
 #include <Kismet/GameplayStatics.h>
 #include <Misc/App.h>
 #include <PhysicsEngine/PhysicsSettings.h>

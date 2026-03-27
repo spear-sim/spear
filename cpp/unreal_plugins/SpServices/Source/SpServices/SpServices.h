@@ -9,6 +9,7 @@
 
 #include <Modules/ModuleInterface.h>
 
+// Service
 #include "SpServices/Service.h"
 
 // RpcService

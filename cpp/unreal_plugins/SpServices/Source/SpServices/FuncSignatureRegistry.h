@@ -11,8 +11,8 @@
 #include <vector>
 
 #include "SpCore/Assert.h"
-#include "SpCore/SpFuncComponent.h"
 #include "SpCore/SpArray.h"
+#include "SpCore/SpFuncComponent.h"
 #include "SpCore/Std.h"
 #include "SpCore/UnrealUtils.h"
 
