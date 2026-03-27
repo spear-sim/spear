@@ -23,7 +23,7 @@ class ASpSpectatorPawn : public ASpectatorPawn
     GENERATED_BODY()
 public:
     ASpSpectatorPawn();
-    ~ASpSpectatorPawn() override;
+    ~ASpSpectatorPawn() = default;
 
     // ASpectatorPawn interface
     void BeginPlay() override;

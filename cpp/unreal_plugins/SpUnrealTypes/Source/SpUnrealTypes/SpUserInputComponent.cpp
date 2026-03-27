@@ -16,23 +16,15 @@
 #include <GameFramework/PlayerInput.h>
 
 #include "SpCore/Assert.h"
-#include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealUtils.h"
 
 USpUserInputComponent::USpUserInputComponent()
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.bTickEvenWhenPaused = false;
     PrimaryComponentTick.TickGroup = ETickingGroup::TG_PrePhysics;
-}
-
-USpUserInputComponent::~USpUserInputComponent()
-{
-    SP_LOG_CURRENT_FUNCTION();
 }
 
 void USpUserInputComponent::TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function)

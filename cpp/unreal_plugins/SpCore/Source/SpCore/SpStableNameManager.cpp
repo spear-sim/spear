@@ -5,7 +5,6 @@
 
 #include "SpCore/SpStableNameManager.h"
 
-#include <algorithm> // std::ranges::reverse
 #include <string>
 #include <vector>
 
@@ -24,8 +23,6 @@
 #include <UObject/UObjectGlobals.h>      // FCoreUObjectDelegates
 
 #include "SpCore/Assert.h"
-#include "SpCore/Log.h"
-#include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealUtils.h"
 
@@ -230,8 +227,6 @@ void USpStableNameComponent::setStableName(const std::string& stable_name)
 
 USpStableNameEventHandler::USpStableNameEventHandler()
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     #if WITH_EDITOR // defined in an auto-generated header
         post_engine_init_handle_ = FCoreDelegates::OnPostEngineInit.AddUObject(this, &USpStableNameEventHandler::postEngineInitHandler);
         engine_pre_exit_handle_  = FCoreDelegates::OnEnginePreExit.AddUObject(this, &USpStableNameEventHandler::enginePreExitHandler);
@@ -240,8 +235,6 @@ USpStableNameEventHandler::USpStableNameEventHandler()
 
 USpStableNameEventHandler::~USpStableNameEventHandler()
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     #if WITH_EDITOR // defined in an auto-generated header
         FCoreDelegates::OnEnginePreExit.Remove(engine_pre_exit_handle_);
         FCoreDelegates::OnPostEngineInit.Remove(post_engine_init_handle_);
@@ -253,7 +246,6 @@ USpStableNameEventHandler::~USpStableNameEventHandler()
 #if WITH_EDITOR // defined in an auto-generated header
     void USpStableNameEventHandler::postEngineInitHandler()
     {
-        SP_LOG_CURRENT_FUNCTION();
         SP_ASSERT(GEngine);
         
         actor_label_changed_handle_ = FCoreDelegates::OnActorLabelChanged.AddUObject(this, &USpStableNameEventHandler::actorLabelChangedHandler);
@@ -268,7 +260,6 @@ USpStableNameEventHandler::~USpStableNameEventHandler()
 
     void USpStableNameEventHandler::enginePreExitHandler()
     {
-        SP_LOG_CURRENT_FUNCTION();
         SP_ASSERT(GEngine);
 
         GEngine->OnLevelActorAdded().Remove(level_actor_added_handle_);

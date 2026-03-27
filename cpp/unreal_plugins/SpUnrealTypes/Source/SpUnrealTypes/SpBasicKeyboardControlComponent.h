@@ -22,7 +22,7 @@ class USpBasicKeyboardControlComponent : public USceneComponent
     GENERATED_BODY()
 public:
     USpBasicKeyboardControlComponent();
-    ~USpBasicKeyboardControlComponent() override;
+    ~USpBasicKeyboardControlComponent() = default;
 
     // UActorComponent interface
     void BeginPlay() override;
