@@ -50,7 +50,7 @@ class ASpActorHitManager : public AActor
     GENERATED_BODY()
 public: 
     ASpActorHitManager();
-    ~ASpActorHitManager() override;
+    ~ASpActorHitManager() = default;
 
     // AActor interface
     void Tick(float delta_time) override;

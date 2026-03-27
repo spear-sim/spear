@@ -18,14 +18,11 @@
 
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
-#include "SpCore/Log.h"
 #include "SpCore/SpStableNameManager.h"
 #include "SpCore/UnrealUtils.h"
 
 ASpSpectatorPawn::ASpSpectatorPawn()
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     // Disable collision so the user can fly through walls by default.
     SetActorEnableCollision(false);
 
@@ -51,15 +48,8 @@ ASpSpectatorPawn::ASpSpectatorPawn()
     SpectatorPawnMovement->bIgnoreTimeDilation = true;
 }
 
-ASpSpectatorPawn::~ASpSpectatorPawn()
-{
-    SP_LOG_CURRENT_FUNCTION();
-}
-
 void ASpSpectatorPawn::BeginPlay()
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     ASpectatorPawn::BeginPlay();
 
     int num_samples = 200;

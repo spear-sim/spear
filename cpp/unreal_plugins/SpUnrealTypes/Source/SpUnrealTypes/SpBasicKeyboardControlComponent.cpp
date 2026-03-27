@@ -13,8 +13,7 @@
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 
-#include "SpCore/Std.h"
-#include "SpCore/Log.h"
+#include "SpCore/Assert.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealUtils.h"
 
@@ -24,8 +23,6 @@ struct FActorComponentTickFunction;
 
 USpBasicKeyboardControlComponent::USpBasicKeyboardControlComponent()
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     PrimaryComponentTick.bCanEverTick = true;
     PrimaryComponentTick.bTickEvenWhenPaused = false;
     PrimaryComponentTick.TickGroup = ETickingGroup::TG_PrePhysics;
@@ -34,15 +31,8 @@ USpBasicKeyboardControlComponent::USpBasicKeyboardControlComponent()
     SP_ASSERT(SpUserInputComponent);
 }
 
-USpBasicKeyboardControlComponent::~USpBasicKeyboardControlComponent()
-{
-    SP_LOG_CURRENT_FUNCTION();
-}
-
 void USpBasicKeyboardControlComponent::BeginPlay()
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     UActorComponent::BeginPlay();
 
     if (!AddRotationComponentPath.IsEmpty()) {
@@ -93,8 +83,6 @@ void USpBasicKeyboardControlComponent::BeginPlay()
 
 void USpBasicKeyboardControlComponent::EndPlay(const EEndPlayReason::Type end_play_reason)
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     SpUserInputComponent->setHandleUserInputFunc(nullptr);
     SpUserInputComponent->unsubscribeFromUserInputs({"One", "Two", "Three", "Four"});
 

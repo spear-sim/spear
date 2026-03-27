@@ -5,8 +5,6 @@
 
 #include "SpUnrealTypes/SpActorHitManager.h"
 
-#include <map>
-
 #include <Containers/Array.h>
 #include <Engine/EngineBaseTypes.h> // ETickingGroup
 #include <Engine/HitResult.h>
@@ -15,24 +13,15 @@
 #include <Templates/Casts.h>
 
 #include "SpCore/Assert.h"
-#include "SpCore/Log.h"
-#include "SpCore/SpStableNameManager.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealUtils.h"
 
 ASpActorHitManager::ASpActorHitManager()
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.bTickEvenWhenPaused = false;
     PrimaryActorTick.TickGroup = ETickingGroup::TG_PrePhysics;
-}
-
-ASpActorHitManager::~ASpActorHitManager()
-{
-    SP_LOG_CURRENT_FUNCTION();
 }
 
 void ASpActorHitManager::Tick(float delta_time)

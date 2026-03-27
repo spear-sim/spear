@@ -26,6 +26,7 @@
 #include <TextureResource.h>              // FTextureRenderTargetResource
 #include <UObject/ObjectMacros.h>         // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
+#include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
 #include "SpCore/SharedMemory.h"
 #include "SpCore/SpArray.h"
@@ -88,7 +89,7 @@ class USpSceneCaptureComponent2D : public USceneCaptureComponent2D
     GENERATED_BODY()
 public:
     USpSceneCaptureComponent2D();
-    ~USpSceneCaptureComponent2D() override;
+    ~USpSceneCaptureComponent2D() = default;
 
     // UActorComponent interface
     void BeginPlay() override;

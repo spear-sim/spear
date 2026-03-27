@@ -28,7 +28,7 @@ class USpUserInputComponent : public USceneComponent
     GENERATED_BODY()
 public:
     USpUserInputComponent();
-    ~USpUserInputComponent() override;
+    ~USpUserInputComponent() = default;
 
     // UActorComponent interface
     void TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override;

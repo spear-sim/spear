@@ -54,7 +54,7 @@
 // CALLED for an existing PIE-world object, when pressing play (SpFuncComponent is set to nullptr initially, and then is set to a new USpFuncComponent* not owned by any other actor)
 ASpDebugManager::ASpDebugManager()
 {
-    SP_LOG_CURRENT_FUNCTION();
+    // SP_LOG_CURRENT_FUNCTION();
 
     SpFuncComponent = UnrealUtils::createSceneComponentInsideOwnerConstructor<USpFuncComponent>(this, "sp_func_component");
     SP_ASSERT(SpFuncComponent);
@@ -66,7 +66,7 @@ ASpDebugManager::ASpDebugManager()
 // CALLED for an existing PIE-world object, when pressing stop
 ASpDebugManager::~ASpDebugManager()
 {
-    SP_LOG_CURRENT_FUNCTION();
+    // SP_LOG_CURRENT_FUNCTION();
 }
 
 // CALLED for the CDO
@@ -75,7 +75,7 @@ ASpDebugManager::~ASpDebugManager()
 // CALLED for an existing PIE-world object, when pressing play (SpFuncComponent is set to the USpFuncComponent* owned by the CDO in this function)
 void ASpDebugManager::PostInitProperties()
 {
-    SP_LOG_CURRENT_FUNCTION();
+    // SP_LOG_CURRENT_FUNCTION();
 
     AActor::PostInitProperties();
 }
@@ -86,7 +86,7 @@ void ASpDebugManager::PostInitProperties()
 // NOT CALLED for an existing PIE-world object, when pressing play
 void ASpDebugManager::PostActorCreated()
 {
-    SP_LOG_CURRENT_FUNCTION();
+    // SP_LOG_CURRENT_FUNCTION();
 
     AActor::PostActorCreated();
 }
@@ -97,7 +97,7 @@ void ASpDebugManager::PostActorCreated()
 // CALLED for an existing PIE-world object, when pressing play (SpFuncComponent is set to the new USpFuncComponent* from the constructor in this function)
 void ASpDebugManager::PostLoad()
 {
-    SP_LOG_CURRENT_FUNCTION();
+    // SP_LOG_CURRENT_FUNCTION();
 
     AActor::PostLoad();
 }
@@ -108,7 +108,7 @@ void ASpDebugManager::PostLoad()
 // CALLED for an existing PIE-world object, when pressing play (SpFuncComponent is set to the new USpFuncComponent* from the constructor in this function)
 void ASpDebugManager::BeginPlay()
 {
-    SP_LOG_CURRENT_FUNCTION();
+    // SP_LOG_CURRENT_FUNCTION();
 
     AActor::BeginPlay();
 }
@@ -119,7 +119,7 @@ void ASpDebugManager::BeginPlay()
 // CALLED for an existing PIE-world object, when pressing stop (SpFuncComponent is set to the new USpFuncComponent* from the constructor in this function)
 void ASpDebugManager::EndPlay(const EEndPlayReason::Type end_play_reason)
 {
-    SP_LOG_CURRENT_FUNCTION();
+    // SP_LOG_CURRENT_FUNCTION();
 
     AActor::EndPlay(end_play_reason);
 }
@@ -130,7 +130,7 @@ void ASpDebugManager::EndPlay(const EEndPlayReason::Type end_play_reason)
 // CALLED for an existing PIE-world object, when pressing stop (SpFuncComponent is set to the new USpFuncComponent* from the constructor in this function)
 void ASpDebugManager::BeginDestroy()
 {
-    SP_LOG_CURRENT_FUNCTION();
+    // SP_LOG_CURRENT_FUNCTION();
 
     AActor::BeginDestroy();
 }

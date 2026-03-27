@@ -10,6 +10,7 @@
 #include <chrono>
 #include <cstring> // std::memcpy
 #include <memory>  // std::make_unique
+#include <numeric> // std::accumulate
 #include <utility> // std::move
 
 #include <Components/SceneCaptureComponent2D.h>
@@ -41,8 +42,6 @@
 
 FSpSceneViewExtensionBase::FSpSceneViewExtensionBase(const FAutoRegister& auto_register, USpSceneCaptureComponent2D* component) : FSceneViewExtensionBase(auto_register)
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     SP_ASSERT(component);
     component_ = component;
 }
@@ -119,10 +118,7 @@ bool FSpSceneViewExtensionBase::shouldHandleView(const FSceneViewFamily* view_fa
     return false;
 }
 
-FSpSceneViewExtension::FSpSceneViewExtension(const FAutoRegister& auto_register, USpSceneCaptureComponent2D* component) : FSpSceneViewExtensionBase(auto_register, component)
-{
-    SP_LOG_CURRENT_FUNCTION();
-}
+FSpSceneViewExtension::FSpSceneViewExtension(const FAutoRegister& auto_register, USpSceneCaptureComponent2D* component) : FSpSceneViewExtensionBase(auto_register, component) {}
 
 void FSpSceneViewExtension::setupView(FSceneViewFamily& view_family, FSceneView& view)
 {
@@ -147,8 +143,6 @@ void FSpSceneViewExtension::postRenderViewFamily_RenderThread(FSceneViewFamily& 
 
 USpSceneCaptureComponent2D::USpSceneCaptureComponent2D()
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     SpFuncComponent = UnrealUtils::createSceneComponentInsideOwnerConstructor<USpFuncComponent>(this, "sp_func_component");
     SP_ASSERT(SpFuncComponent);
 
@@ -161,23 +155,14 @@ USpSceneCaptureComponent2D::USpSceneCaptureComponent2D()
     SetVisibility(false); // disable rendering to texture
 }
 
-USpSceneCaptureComponent2D::~USpSceneCaptureComponent2D()
-{
-    SP_LOG_CURRENT_FUNCTION();
-}
-
 void USpSceneCaptureComponent2D::BeginPlay()
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     USceneCaptureComponent2D::BeginPlay();
     bIsInitialized = false;
 }
 
 void USpSceneCaptureComponent2D::EndPlay(const EEndPlayReason::Type end_play_reason)
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     Terminate();
     USceneCaptureComponent2D::EndPlay(end_play_reason);
 }

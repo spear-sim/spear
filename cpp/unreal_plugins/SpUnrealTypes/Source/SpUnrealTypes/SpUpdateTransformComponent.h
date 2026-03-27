@@ -13,7 +13,6 @@
 #include <Engine/HitResult.h>
 #include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UPROPERTY
 
-#include "SpCore/Log.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealUtils.h"
 
@@ -29,23 +28,16 @@ class USpUpdateTransformComponent : public UActorComponent
 public:
     USpUpdateTransformComponent()
     {
-        SP_LOG_CURRENT_FUNCTION();
-
         PrimaryComponentTick.bCanEverTick = true;
         PrimaryComponentTick.bTickEvenWhenPaused = false;
         PrimaryComponentTick.TickGroup = ETickingGroup::TG_PostPhysics;
     }
 
-    ~USpUpdateTransformComponent() override
-    {
-        SP_LOG_CURRENT_FUNCTION();
-    }
+    ~USpUpdateTransformComponent() = default;
 
     // UActorComponent interface
     void BeginPlay() override
     {
-        SP_LOG_CURRENT_FUNCTION();
-
         UActorComponent::BeginPlay();
 
         if (!SourceComponentPath.IsEmpty()) {

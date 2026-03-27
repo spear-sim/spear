@@ -12,31 +12,26 @@
 
 #include <Containers/Array.h>
 
+#include "SpCore/Assert.h"
 #include "SpCore/FuncRegistry.h"
-#include "SpCore/Log.h"
 #include "SpCore/SpArray.h"
+#include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 
 void USpFuncComponent::OnComponentCreated()
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     UActorComponent::OnComponentCreated();
     SpFuncComponentPtr = Unreal::toFString(Std::toStringFromPtr(this));
 }
 
 void USpFuncComponent::PostLoad()
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     UActorComponent::PostLoad();
     SpFuncComponentPtr = Unreal::toFString(Std::toStringFromPtr(this));
 }
 
 void USpFuncComponent::BeginPlay()
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     UActorComponent::BeginPlay();
     FuncNames.Empty();
     SharedMemoryViewNames.Empty();
@@ -44,8 +39,6 @@ void USpFuncComponent::BeginPlay()
 
 void USpFuncComponent::EndPlay(const EEndPlayReason::Type end_play_reason)
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     UActorComponent::EndPlay(end_play_reason);
 }
 
