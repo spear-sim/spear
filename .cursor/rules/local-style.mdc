@@ -7,6 +7,8 @@ alwaysApply: true
 
 `CLAUDE.md` and `.cursor/rules/local-style.mdc` are the two style guides for this repo and must always be kept in sync. Any change to one must be reflected in the other.
 
+`.claudeignore` and `.cursorignore` are the two AI tool ignore files for this repo and must always be kept in sync with each other. Any change to one must be reflected in the other. These are separate from `.gitignore` and should not be synchronized with it.
+
 # Local Style First
 
 - Treat nearby code as the canonical style; match naming, spacing, casing, and call patterns in the file being edited.
