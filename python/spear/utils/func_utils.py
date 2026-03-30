@@ -751,7 +751,9 @@ def _to_script_expr_dict(obj):
         return { "type_string": _to_script_expr_type_string(obj=obj), "value": _to_script_expr_value(obj=obj) }
 
 def _to_script_expr_type_string(obj):
-    if isinstance(obj, list):
+    if isinstance(obj, tuple):
+        return "tuple"
+    elif isinstance(obj, list):
         return "list"
     elif isinstance(obj, dict):
         return "dict"
@@ -771,7 +773,9 @@ def _to_script_expr_type_string(obj):
         return f"{type(obj).__module__}.{type(obj).__qualname__}"
 
 def _to_script_expr_value(obj):
-    if isinstance(obj, list):
+    if isinstance(obj, tuple):
+        return [ _to_script_expr_dict(obj=item) for item in obj ]
+    elif isinstance(obj, list):
         return [ _to_script_expr_dict(obj=item) for item in obj ]
     elif isinstance(obj, dict):
         return { k: _to_script_expr_dict(obj=v) for k, v in obj.items() }
@@ -797,7 +801,14 @@ def to_script_struct_expr(value, type_string):
 def from_script_result(script_result, unreal_service=None, sp_func_service=None, config=None, as_handle=None, as_unreal_struct=None, as_unreal_class=None, as_unreal_object=None, with_sp_funcs=None):
     type_string = script_result["type_string"]
     value = script_result["value"]
-    if type_string == "list":
+    if type_string == "tuple":
+        assert as_handle is None
+        assert as_unreal_struct is None
+        assert as_unreal_class is None
+        assert as_unreal_object is None
+        assert with_sp_funcs is None
+        return tuple( from_script_result(script_result=elem, unreal_service=unreal_service, sp_func_service=sp_func_service, config=config) for elem in value )
+    elif type_string == "list":
         assert as_handle is None
         assert as_unreal_struct is None
         assert as_unreal_class is None

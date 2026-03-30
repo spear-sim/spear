@@ -618,6 +618,10 @@ class UnrealService(spear.Service):
         actor = spear.to_handle(obj=actor)
         return self.entry_point_caller.call_on_game_thread("try_get_stable_name_for_actor", None, actor)
 
+    def set_stable_name_for_actor(self, actor, stable_name):
+        actor = spear.to_handle(obj=actor)
+        self.entry_point_caller.call_on_game_thread("set_stable_name_for_actor", None, actor, stable_name)
+
     def get_stable_name_for_component(self, component, include_actor_name=False):
         component = spear.to_handle(obj=component)
         return self.entry_point_caller.call_on_game_thread("get_stable_name_for_component", None, component, include_actor_name)

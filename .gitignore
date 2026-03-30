@@ -1,5 +1,6 @@
 __pycache__
 
+.claude/settings.local.json
 .cursor_tmp
 .DS_Store
 .ipynb_checkpoints

@@ -21,4 +21,4 @@ from . import navigation_service
 from . import unreal_service
 
 # services that require a reference to EngineService, SpFuncService, UnrealService
-from . import editor_python_service
+from . import python_service

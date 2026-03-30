@@ -15,7 +15,9 @@ name = "spear-sim"
 version = "1.0.0"
 requires-python = "~=3.11"
 dependencies = [
+    "mcp==1.26.0",
     "numpy==2.0.2",
+    "opencv-python==4.10.0.84",
     "p4python==2025.1.2767466",
     "pandas==2.2.3",
     "psutil==5.9.0",
@@ -24,12 +26,10 @@ dependencies = [
 
 [project.optional-dependencies]
 editor = [
-    "msgpack-rpc-python==0.4.1",
-    "opencv-python==4.10.0.84"]
+    "msgpack-rpc-python==0.4.1"]
 examples = [
     "jupyterlab==4.4.4",
     "matplotlib==3.10.0",
-    "opencv-python==4.10.0.84",
     "wget==3.2"]
 pipeline = [
     "coacd==1.0.0",

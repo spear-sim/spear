@@ -243,6 +243,9 @@ if __name__ == "__main__":
         sp_object_ids_proxy_component_manager = game.unreal_service.spawn_actor(uclass="ASpObjectIdsProxyComponentManager")
         sp_object_ids_proxy_component_manager.Initialize()
         component_and_material_descs = sp_object_ids_proxy_component_manager.GetComponentAndMaterialDescs()
+        for desc in component_and_material_descs:
+            desc["component"] = spear.to_handle(obj=desc["component"])
+            desc["material"] = spear.to_handle(obj=desc["material"])
 
         # find actors and components
         actors = game.unreal_service.find_actors_as_dict()

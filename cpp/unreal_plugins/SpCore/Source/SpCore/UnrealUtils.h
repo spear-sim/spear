@@ -1328,6 +1328,7 @@ private:
     static std::string getArrayPropertyValueAsFormattedString(const FProperty* property, const std::vector<std::string>& strings);
     static std::string getMapPropertyValueAsFormattedString(const FProperty* key_property, const std::vector<std::string>& key_strings, const FProperty* value_property, const std::vector<std::string>& value_strings);
     static std::string getQuoteStringForProperty(const FProperty* property);
+    static std::string getJsonString(const std::string& input);
 
     //
     // Helper functions for finding actors and getting components and getting properties

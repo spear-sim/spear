@@ -29,6 +29,7 @@
 #include "SpProxyComponentManager.generated.h"
 
 class UActorComponent;
+class USpStableNameComponent;
 class UWorld;
 
 template <typename TProxyComponentRegistry>
@@ -245,6 +246,9 @@ private:
 
     std::string getManagerName() const;
     std::string getProxyComponentName(uint32_t id) const;
+
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
+    USpStableNameComponent* SpStableNameComponent = nullptr;
 
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
     bool bIsInitialized = false;
