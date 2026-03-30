@@ -50,7 +50,9 @@ _exec_namespace = {}
 @_mcp.tool()
 def get_status():
     _ensure_initialized()
-    return "\n".join(_get_status_lines())
+    lines = _get_status_lines()
+    lines.append("Read docs/agents.md and docs/agents_mcp_usage.md for detailed guidance.")
+    return "\n".join(lines)
 
 
 @_mcp.tool()
