@@ -7,7 +7,7 @@ import json
 import spear
 
 
-class EditorPythonService(spear.Service):
+class PythonService(spear.Service):
     def __init__(self, entry_point_caller, sp_func_service, unreal_service, config, parent_service=None, create_children_services=True):
         assert sp_func_service.is_top_level_service()
         assert unreal_service.is_top_level_service()
@@ -25,7 +25,7 @@ class EditorPythonService(spear.Service):
 
     def create_child_service(self, entry_point_caller, sp_func_service=None, unreal_service=None, config=None):
         assert self.is_top_level_service()
-        return EditorPythonService(
+        return PythonService(
             entry_point_caller=entry_point_caller,
             sp_func_service=sp_func_service,
             unreal_service=unreal_service,
@@ -115,7 +115,7 @@ class EditorPythonService(spear.Service):
 
         if exception_text is not None:
             spear.log("EXCEPTION (Unreal Editor): ", exception_text)
-            assert False
+            raise RuntimeError(exception_text)
 
         return result
 
@@ -175,7 +175,7 @@ class EditorPythonService(spear.Service):
 
         if exception_text is not None:
             spear.log("EXCEPTION (Unreal Editor): ", exception_text)
-            assert False
+            raise RuntimeError(exception_text)
 
         return result
 
@@ -223,7 +223,7 @@ class EditorPythonService(spear.Service):
                 spear.log(f"{log_output['type'].upper()} (Unreal Editor): {log_output['output'].strip()}")
             if not result["ReturnValue"]:
                 spear.log("ERROR (Unreal Editor): ", result["CommandResult"])
-                assert False
+                raise RuntimeError(result["CommandResult"])
 
             if outputs is None:
                 return None
@@ -250,7 +250,7 @@ class EditorPythonService(spear.Service):
                 spear.log(f"{log_output['type'].upper()} (Unreal Editor): {log_output['output'].strip()}")
             if not result["ReturnValue"]:
                 spear.log("ERROR (Unreal Editor): ", result["CommandResult"])
-                assert False
+                raise RuntimeError(result["CommandResult"])
 
         return self._get_result(result=result, process_result_func=process_result)
 
@@ -274,8 +274,7 @@ class EditorPythonService(spear.Service):
                 return result
             else:
                 spear.log("ERROR (Unreal Editor): ", result["CommandResult"])
-                assert False
-                return None
+                raise RuntimeError(result["CommandResult"])
 
         return self._get_result(result=result, process_result_func=process_result)
 

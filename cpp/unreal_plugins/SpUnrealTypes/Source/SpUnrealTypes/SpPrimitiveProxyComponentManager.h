@@ -42,26 +42,22 @@ USTRUCT(BlueprintType)
 struct FComponentAndMaterialDesc
 {
     GENERATED_BODY()
-
-    UPROPERTY()
-    uint32 ComponentAndMaterialId = 0;
-    UPROPERTY()
-    uint64 Component = 0;
-    UPROPERTY()
-    uint64 Material = 0;
+public:
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    int64 ComponentAndMaterialId = 0;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    FString Component;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    FString Material;
 
     // Optional debug info
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString ComponentName;
-    UPROPERTY()
-    FString ComponentPtrString;
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString ComponentPropertiesString;
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString MaterialName;
-    UPROPERTY()
-    FString MaterialPtrString;
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString MaterialPropertiesString;
 };
 
@@ -70,7 +66,6 @@ UCLASS(ClassGroup="SPEAR", HideCategories=(Actor, Collision, Cooking, DataLayers
 class ASpPrimitiveProxyComponentManager : public ASpProxyComponentManager
 {
     GENERATED_BODY()
-
 public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     TArray<FComponentAndMaterialDesc> GetComponentAndMaterialDescs(bool bIncludeDebugInfo = false)
@@ -80,15 +75,13 @@ public:
         for (auto& [id, desc] : id_to_component_and_material_desc_map_) {
             FComponentAndMaterialDesc component_and_material_desc;
             component_and_material_desc.ComponentAndMaterialId = id;
-            component_and_material_desc.Component = reinterpret_cast<uint64>(desc.component_);
-            component_and_material_desc.Material = reinterpret_cast<uint64>(desc.material_);
+            component_and_material_desc.Component = Unreal::toFString(Std::toStringFromPtr(desc.component_));
+            component_and_material_desc.Material = Unreal::toFString(Std::toStringFromPtr(desc.material_));
 
             if (bIncludeDebugInfo) {
                 component_and_material_desc.ComponentName = Unreal::toFString(UnrealUtils::getStableName(desc.component_));
-                component_and_material_desc.ComponentPtrString = Unreal::toFString(Std::toStringFromPtr(desc.component_));
                 component_and_material_desc.ComponentPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.component_));
                 component_and_material_desc.MaterialName = desc.material_->GetName();
-                component_and_material_desc.MaterialPtrString = Unreal::toFString(Std::toStringFromPtr(desc.material_));
                 component_and_material_desc.MaterialPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.material_));
             }
 

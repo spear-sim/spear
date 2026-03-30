@@ -139,13 +139,6 @@ class Instance():
                 unreal_service=self.unreal_service,
                 config=self._config)
 
-            if self.engine_globals_service.service.is_with_editor():
-                self.editor_python_service = spear.EditorPythonService(
-                    entry_point_caller=entry_point_caller_type(service_name=f"{namespace}.editor_python_service", engine_service=engine_service),
-                    sp_func_service=self._sp_func_service,
-                    unreal_service=self.unreal_service,
-                    config=self._config)
-
         def get_unreal_object(self, uobject=None, uclass=None, with_sp_funcs=False):
             return spear.UnrealObject(
                 unreal_service=self.unreal_service,
@@ -174,6 +167,14 @@ class Instance():
 
             self.initialize_editor_world_service = spear.InitializeWorldService(
                 entry_point_caller=entry_point_caller_type(service_name=f"{namespace}.initialize_editor_world_service", engine_service=engine_service))
+
+            # Initialize services that require a reference to EngineService, SpFuncService, UnrealService.
+
+            self.python_service = spear.PythonService(
+                entry_point_caller=entry_point_caller_type(service_name=f"{namespace}.python_service", engine_service=engine_service),
+                sp_func_service=self._sp_func_service,
+                unreal_service=self.unreal_service,
+                config=self._config)
 
     class GameScopedServices(WorldScopedServices):
         def __init__(self, namespace, engine_service, engine_globals_service, shared_memory_service, sp_func_service, config):
@@ -213,8 +214,7 @@ class Instance():
         spear.log("    Initializing editor-scoped services...")
         with self.begin_frame():
             self._editor.unreal_service.initialize()
-            if self.engine_globals_service.is_with_editor():
-                self._editor.editor_python_service.initialize()
+            self._editor.python_service.initialize()
         with self.end_frame():
             pass
         spear.log("    Finished initializing editor-scoped services.")
@@ -231,8 +231,7 @@ class Instance():
         spear.log("    Initializing editor-scoped services...")
         with self.begin_frame():
             self._editor.unreal_service.initialize()
-            if self.engine_globals_service.is_with_editor():
-                self._editor.editor_python_service.initialize()
+            self._editor.python_service.initialize()
         yield
         with self.end_frame():
             pass
@@ -275,8 +274,6 @@ class Instance():
         spear.log("    Initializing game-scoped services...")
         with self.begin_frame():
             self._game.unreal_service.initialize()
-            if self.engine_globals_service.is_with_editor():
-                self._game.editor_python_service.initialize()
         with self.end_frame():
             pass
         spear.log("    Finished initializing game-scoped services.")
@@ -293,8 +290,6 @@ class Instance():
         spear.log("    Initializing game-scoped services...")
         with self.begin_frame():
             self._game.unreal_service.initialize()
-            if self.engine_globals_service.is_with_editor():
-                self._game.editor_python_service.initialize()
         yield
         with self.end_frame():
             pass

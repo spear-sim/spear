@@ -12,9 +12,9 @@
 
 #include <Components/InputComponent.h>
 #include <Engine/EngineBaseTypes.h> // EInputEvent
-#include <InputCoreTypes.h>         // ETouchType
 #include <Framework/Commands/InputChord.h>
 #include <GameFramework/Pawn.h>
+#include <InputCoreTypes.h>         // ETouchType
 #include <Math/Vector.h>
 
 #include "SpCore/Assert.h"

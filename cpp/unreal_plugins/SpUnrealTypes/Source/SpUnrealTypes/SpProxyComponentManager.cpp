@@ -14,15 +14,16 @@
 
 #include <boost/predef.h> // BOOST_COMP_CLANG, BOOST_COMP_MSVC
 
-#include <GameFramework/Actor.h>
 #include <Engine/Engine.h>        // GEngine
 #include <Engine/EngineTypes.h>   // EEndPlayReason
 #include <Engine/World.h>
+#include <GameFramework/Actor.h>
 #include <UObject/ObjectMacros.h> // EObjectFlags
 
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
 #include "SpCore/Log.h"
+#include "SpCore/SpStableNameManager.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealUtils.h"
@@ -42,6 +43,9 @@ ASpProxyComponentManager::ASpProxyComponentManager()
     PrimaryActorTick.bCanEverTick = true;
     PrimaryActorTick.bTickEvenWhenPaused = true;
     PrimaryActorTick.TickGroup = ETickingGroup::TG_PrePhysics;
+
+    SpStableNameComponent = UnrealUtils::createComponentInsideOwnerConstructor<USpStableNameComponent>(this, "sp_stable_name_component");
+    SP_ASSERT(SpStableNameComponent);
 }
 
 ASpProxyComponentManager::~ASpProxyComponentManager()

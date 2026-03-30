@@ -13,8 +13,8 @@
 #include <string>
 #include <vector>
 
+#include <Containers/Array.h>
 #include <Containers/UnrealString.h> // FString
-#include <Containers/Array.h> 
 #include <Engine/EngineTypes.h>      // EEndPlayReason
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>            // uint32
@@ -29,6 +29,7 @@
 #include "SpProxyComponentManager.generated.h"
 
 class UActorComponent;
+class USpStableNameComponent;
 class UWorld;
 
 template <typename TProxyComponentRegistry>
@@ -245,6 +246,9 @@ private:
 
     std::string getManagerName() const;
     std::string getProxyComponentName(uint32_t id) const;
+
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
+    USpStableNameComponent* SpStableNameComponent = nullptr;
 
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
     bool bIsInitialized = false;

@@ -7,9 +7,9 @@
 
 #include <AI/Navigation/NavigationTypes.h> // FNavDataConfig, FNavLocation
 #include <Kismet/BlueprintFunctionLibrary.h>
+#include <Math/Vector.h>
 #include <NavFilters/NavigationQueryFilter.h>
 #include <NavigationData.h>
-#include <Math/Vector.h>
 #include <Templates/SubclassOf.h>
 
 #include "SpCore/Assert.h"

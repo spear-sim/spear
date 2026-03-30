@@ -24,13 +24,11 @@
 #include <Math/Vector.h>
 #include <Misc/EnumClassFlags.h>         // ENUM_CLASS_FLAGS
 #include <StructUtils/UserDefinedStruct.h>
-#include <UObject/Class.h>               // EIncludeSuperFlag, UClass
-#include <UObject/Object.h>              // UObject
-#include <UObject/ObjectMacros.h>        // EObjectFlags, ELoadFlags
+#include <UObject/Class.h>               // EIncludeSuperFlag, EStructFlags, UClass, UScriptStruct
 #include <UObject/NameTypes.h>           // FName
-#include <UObject/ObjectMacros.h>        // EPropertyFlags, GENERATED_BODY, UCLASS, UENUM, UFUNCTION, UPROPERTY
+#include <UObject/Object.h>              // UObject
+#include <UObject/ObjectMacros.h>        // ELoadFlags, EObjectFlags, EPropertyFlags, GENERATED_BODY, UCLASS, UENUM, UFUNCTION, UPROPERTY
 #include <UObject/Package.h>
-#include <UObject/Class.h>               // EStructFlags, UScriptStruct
 #include <UObject/Script.h>              // EFunctionFlags
 #include <UObject/UObjectGlobals.h>      // GetTransientPackage, StaticLoadClass, StaticLoadObject
 #include <UObject/UnrealType.h>          // EFieldIterationFlags
@@ -1188,6 +1186,9 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "try_get_stable_name_for_actor",
             [this](uint64_t& actor) -> std::string { return UnrealUtils::tryGetStableName(toPtr<AActor>(actor)); });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "set_stable_name_for_actor",
+            [this](uint64_t& actor, std::string& stable_name) -> void { UnrealUtils::setStableName(toPtr<AActor>(actor), stable_name); });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_stable_name_for_component",
             [this](uint64_t& actor_component, bool& include_actor_name) -> std::string { return UnrealUtils::getStableName(toPtr<UActorComponent>(actor_component), include_actor_name); });

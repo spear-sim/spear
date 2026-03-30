@@ -9,12 +9,14 @@
 #include <memory>      // std::make_shared, std::make_unique, std::unique_ptr
 #include <mutex>       // std::lock_guard
 #include <string>
-#include <utility>     // std::forward, std::move
 #include <type_traits> // std::invoke_result_t
+#include <utility>     // std::forward, std::move
 
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
 #include "SpCore/Config.h"
+
+#include "SpServices/FuncInfo.h"
 
 class WorkQueue
 {

@@ -15,9 +15,9 @@
 #include <GameFramework/WorldSettings.h>   // FBroadphaseSettings
 #include <HAL/Platform.h>                  // int32
 #include <Math/UnrealMathUtility.h>        // UE_SMALL_NUMBER
-#include <UObject/ObjectMacros.h>          // GENERATED_BODY, UCLASS, UPROPERTY, USTRUCT
 #include <PhysicsEngine/PhysicsSettings.h> // ESettingsDOF, ESettingsLockedAxis, FChaosPhysicsSettings, FPhysicalSurfaceName, FPhysicsPredictionSettings
 #include <PhysicsSettingsEnums.h>          // EFrictionCombineMode
+#include <UObject/ObjectMacros.h>          // GENERATED_BODY, UCLASS, UPROPERTY, USTRUCT
 
 #include "SpInitializeWorldManager.generated.h"
 

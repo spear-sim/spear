@@ -270,15 +270,16 @@ void USpSceneCaptureComponent2D::Initialize()
 
     // allocate readback buffers
     if (BufferingMode == ESpBufferingMode::SingleBuffered) {
-        readback_buffers_.at(0) = std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A"));
+        readback_buffers_ = { std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A")), nullptr };
     } else if (BufferingMode == ESpBufferingMode::DoubleBuffered) {
-        readback_buffers_.at(0) = std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A"));
+        readback_buffers_ = { std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A")), nullptr };
         readback_enqueue_index_ = 0;
         readback_primed_ = false;
         num_readbacks_pending_ = 0;
     } else if (BufferingMode == ESpBufferingMode::TripleBuffered) {
-        readback_buffers_.at(0) = std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A"));
-        readback_buffers_.at(1) = std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_B"));
+        readback_buffers_ = {
+            std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A")),
+            std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_B")) };
         readback_enqueue_index_ = 0;
         readback_primed_ = false;
         num_readbacks_pending_ = 0;
@@ -339,8 +340,7 @@ void USpSceneCaptureComponent2D::Terminate()
     num_readbacks_pending_ = 0;
     readback_primed_ = false;
     readback_enqueue_index_ = 0;
-    readback_buffers_.at(0).reset();
-    readback_buffers_.at(1).reset();
+    readback_buffers_ = { nullptr, nullptr };
 
     // deallocate memory
     scratchpad_.clear();

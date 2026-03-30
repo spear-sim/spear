@@ -177,7 +177,9 @@ def get_script_delta_time():
 def from_script_expr(script_expr_dict):
     type_string = script_expr_dict["type_string"]
     value = script_expr_dict["value"]
-    if type_string == "list":
+    if type_string == "tuple":
+        return tuple( from_script_expr(script_expr_dict=elem) for elem in value )
+    elif type_string == "list":
         return [ from_script_expr(script_expr_dict=elem) for elem in value ]
     elif type_string == "dict":
         return { k: from_script_expr(script_expr_dict=v) for k, v in value.items() }
@@ -212,7 +214,9 @@ def _to_script_result_dict(obj):
     return { "type_string": _to_script_result_type_string(obj=obj), "value": _to_script_result_value(obj=obj) }
 
 def _to_script_result_type_string(obj):
-    if isinstance(obj, list):
+    if isinstance(obj, tuple):
+        return "tuple"
+    elif isinstance(obj, list):
         return "list"
     elif isinstance(obj, dict):
         return "dict"
@@ -234,7 +238,9 @@ def _to_script_result_type_string(obj):
         return f"{type(obj).__module__}.{type(obj).__qualname__}"
 
 def _to_script_result_value(obj):
-    if isinstance(obj, list):
+    if isinstance(obj, tuple):
+        return [ _to_script_result_dict(obj=item) for item in obj ]
+    elif isinstance(obj, list):
         return [ _to_script_result_dict(obj=item) for item in obj ]
     elif isinstance(obj, dict):
         return { k: _to_script_result_dict(obj=v) for k, v in obj.items() }

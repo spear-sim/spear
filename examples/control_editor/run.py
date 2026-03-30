@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
     # programmatically press play in the editor
     with instance.begin_frame():
-        editor.editor_python_service.execute_statement(statement="unreal.log('Calling function: ULevelEditorSubsystem::EditorRequestBeginPlay()')")
+        editor.python_service.execute_statement(statement="unreal.log('Calling function: ULevelEditorSubsystem::EditorRequestBeginPlay()')")
         level_editor_subsystem.EditorRequestBeginPlay()
     with instance.end_frame():
         pass
@@ -56,14 +56,14 @@ if __name__ == "__main__":
 
     # programmatically press stop in the editor
     with instance.begin_frame():
-        editor.editor_python_service.execute_statement(statement="unreal.log('Calling function: ULevelEditorSubsystem::EditorRequestEndPlay()')")
+        editor.python_service.execute_statement(statement="unreal.log('Calling function: ULevelEditorSubsystem::EditorRequestEndPlay()')")
         level_editor_subsystem.EditorRequestEndPlay()
     with instance.end_frame():
         pass
 
     # run take_screenshot.py and wait for it to finish
     take_screenshot_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "take_screenshot.py"))
-    editor.editor_python_service.execute_file_across_frames(file=take_screenshot_file, args_string="")
+    editor.python_service.execute_file_across_frames(file=take_screenshot_file, args_string="")
 
     with instance.begin_frame():
         editor.unreal_service.execute_console_command(command="stat fps")

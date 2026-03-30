@@ -14,9 +14,9 @@
 #include <Containers/UnrealString.h> // FString
 #include <CoreGlobals.h>             // IsRunningCommandlet
 #include <HAL/Platform.h>            // TEXT
+#include <Logging/LogMacros.h>       // DECLARE_LOG_CATEGORY_EXTERN, DEFINE_LOG_CATEGORY, UE_LOG
 #include <Misc/CommandLine.h>
 #include <Misc/Parse.h>
-#include <Logging/LogMacros.h>       // DECLARE_LOG_CATEGORY_EXTERN, DEFINE_LOG_CATEGORY, UE_LOG
 
 #include "SpCore/Assert.h"
 #include "SpCore/Std.h"

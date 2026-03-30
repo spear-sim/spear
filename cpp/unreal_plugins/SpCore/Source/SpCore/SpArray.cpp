@@ -7,11 +7,13 @@
 
 #include <stdint.h> // int64_t, uint64_t
 
+#include <functional> // std::multiplies
 #include <initializer_list>
 #include <map>
-#include <ranges>  // std::views::filter, std::views::transform
+#include <numeric>    // std::accumulate
+#include <ranges>     // std::views::filter, std::views::transform
 #include <string>
-#include <utility> // std::make_pair, std::move
+#include <utility>    // std::make_pair, std::move
 #include <vector>
 
 #include "SpCore/Assert.h"

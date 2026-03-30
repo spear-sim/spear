@@ -6,8 +6,8 @@
 #pragma once
 
 #include <functional> // std::function
-#include <string>
 #include <map>
+#include <string>
 #include <vector>
 
 #include "SpCore/Assert.h"

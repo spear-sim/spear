@@ -19,9 +19,9 @@
 #include <Containers/Array.h>
 #include <Containers/Map.h>
 #include <Containers/UnrealString.h>         // FString
-#include <Engine/StaticMeshActor.h>
 #include <Engine/Engine.h>                   // GEngine
 #include <Engine/EngineTypes.h>              // EEndPlayReason
+#include <Engine/StaticMeshActor.h>
 #include <Engine/World.h>                    // FActorSpawnParameters
 #include <GameFramework/Actor.h>
 #include <Math/Rotator.h>
@@ -457,10 +457,31 @@ void ASpDebugManager::CallFunctions()
 
     static int i = 1;
 
+    UWorld* world = GetWorld(); 
+    SP_ASSERT(world);
+
+    AStaticMeshActor* static_mesh_actor = UnrealUtils::findActorByName<AStaticMeshActor>(GetWorld(), "Debug/SM_Prop_04");
+    SP_ASSERT(static_mesh_actor);
+
+    UStaticMeshComponent* static_mesh_component = UnrealUtils::getComponentByType<UStaticMeshComponent>(static_mesh_actor);
+    SP_ASSERT(static_mesh_component);
+
+    FVector location;
     UFunction* ufunction = nullptr;
     std::map<std::string, std::string> args;
     std::map<std::string, SpPropertyValue> return_values;
     std::string vec_str = Std::toString("{", "\"x\": ", 1.1*i, ", \"y\": ", 2.2*i, ", \"z\": ", 3.3*i, "}");
+
+    location = static_mesh_actor->K2_GetActorLocation();
+    SP_LOG("location.X: ", location.X, ", location.Y: ", location.Y, ", location.Z: ", location.Z);
+
+    location = static_mesh_actor->GetActorLocation();
+    SP_LOG("location.X: ", location.X, ", location.Y: ", location.Y, ", location.Z: ", location.Z);
+
+    ufunction = UnrealUtils::findFunctionByName(static_mesh_actor->GetClass(), "K2_GetActorLocation");
+    return_values = UnrealUtils::callFunction(GetWorld(), static_mesh_actor, ufunction, {});
+    SP_LOG("return_values.at(\"ReturnValue\").value_: ", return_values.at("ReturnValue").value_);
+    SP_LOG("return_values.at(\"ReturnValue\").type_id_: ", return_values.at("ReturnValue").type_id_);
 
     args = {{"Arg0", "Hello World"}, {"Arg1", "true"}, {"Arg2", "12345"}, {"Arg3", vec_str}};
     ufunction = UnrealUtils::findFunctionByName(this->GetClass(), "GetString");
@@ -489,15 +510,6 @@ void ASpDebugManager::CallFunctions()
     return_values = UnrealUtils::callFunction(GetWorld(), this->GetClass()->GetDefaultObject(), ufunction, args);
     SP_LOG(return_values.at("InMapFromStringToVector").value_);
     SP_LOG(return_values.at("InArrayOfVectors").value_);
-
-    UWorld* world = GetWorld(); 
-    SP_ASSERT(world);
-
-    AStaticMeshActor* static_mesh_actor = UnrealUtils::findActorByName<AStaticMeshActor>(world, "Debug/SM_Prop_04");
-    SP_ASSERT(static_mesh_actor);
-
-    UStaticMeshComponent* static_mesh_component = UnrealUtils::getComponentByType<UStaticMeshComponent>(static_mesh_actor);
-    SP_ASSERT(static_mesh_component);
 
     //
     // Since partial updates are allowed throughout our setObjectPropertiesFromString(...) and

@@ -14,26 +14,28 @@
 #include <Components/ActorComponent.h>
 #include <Components/SceneComponent.h>
 #include <Containers/Array.h>
-#include <Containers/UnrealString.h>    // FString::operator*
+#include <Containers/UnrealString.h>  // FString::operator*
+#include <CoreGlobals.h>              // GAllowActorScriptExecutionInEditor
 #include <Dom/JsonObject.h>
 #include <Dom/JsonValue.h>
 #include <GameFramework/Actor.h>
-#include <HAL/Platform.h>               // TCHAR, uint16
+#include <HAL/Platform.h>             // TCHAR, uint16
 #include <JsonObjectConverter.h>
 #include <Serialization/JsonReader.h>
 #include <Serialization/JsonSerializer.h>
 #include <Templates/Casts.h>
-#include <Templates/SharedPointer.h>    // TSharedPtr, TSharedRef
-#include <UObject/Class.h>              // EIncludeSuperFlag, UClass, UScriptStruct, UStruct
-#include <UObject/NameTypes.h>          // FName
-#include <UObject/Object.h>             // UObject
-#include <UObject/Script.h>             // EFunctionFlags
-#include <UObject/ScriptInterface.h>    // FScriptInterface
-#include <UObject/UnrealType.h>         // EFieldIterationFlags, FArrayProperty, FBoolProperty, FByteProperty, FDoubleProperty, FInt8Property, FInt16Property,
-                                        // FInt64Property, FFloatProperty, FIntProperty, FMapProperty, FProperty, FScriptArrayHelper, FScriptMapHelper,
-                                        // FScriptSetHelper, FSetProperty, FStrProperty, FStructProperty, FUInt16Property, FUInt32Property, FUInt64Property,
-                                        // TFieldIterator
-#include <UObject/UObjectHash.h>        // GetDerivedClasses
+#include <Templates/SharedPointer.h>  // TSharedPtr, TSharedRef
+#include <Templates/UnrealTemplate.h> // TGuardValue
+#include <UObject/Class.h>            // EIncludeSuperFlag, UClass, UScriptStruct, UStruct
+#include <UObject/NameTypes.h>        // FName
+#include <UObject/Object.h>           // UObject
+#include <UObject/Script.h>           // EFunctionFlags
+#include <UObject/ScriptInterface.h>  // FScriptInterface
+#include <UObject/UnrealType.h>       // EFieldIterationFlags, FArrayProperty, FBoolProperty, FByteProperty, FDoubleProperty, FInt8Property, FInt16Property,
+                                      // FInt64Property, FFloatProperty, FIntProperty, FMapProperty, FProperty, FScriptArrayHelper, FScriptMapHelper,
+                                      // FScriptSetHelper, FSetProperty, FStrProperty, FStructProperty, FUInt16Property, FUInt32Property, FUInt64Property,
+                                      // TFieldIterator
+#include <UObject/UObjectHash.h>      // GetDerivedClasses
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
@@ -226,8 +228,14 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
         }
     }
 
-    // Call function.
-    uobject->ProcessEvent(ufunction, args_vector.data());
+    // Call function. We need to set GAllowActorScriptExecutionInEditor to true because AActor::ProcessEvent
+    // blocks calls on non-CDO actor instances in the editor unless this flag is set or the function has
+    // CallInEditor metadata.
+
+    {
+        TGuardValue<bool> guard_value(GAllowActorScriptExecutionInEditor, true);
+        uobject->ProcessEvent(ufunction, args_vector.data());
+    }
 
     // Return all property values because they might have been modified by the function we called.
     std::map<std::string, SpPropertyValue> return_values;
@@ -643,9 +651,20 @@ void UnrealUtils::setPropertyValueFromString(const SpPropertyDesc& property_desc
 
     std::string quote_string = getQuoteStringForProperty(property_desc.property_);
 
+    std::string json_string;
+    if (property_desc.property_->IsA(FStrProperty::StaticClass())) {
+        json_string = getJsonString(string);
+    } else if (!quote_string.empty()) {
+        std::string special_chars = "\"\\\n\r\t\b\f";
+        SP_ASSERT(!Std::any(special_chars | std::views::transform([&string](char c) { return Std::contains(string, std::string(1, c)); })));
+        json_string = string;
+    } else {
+        json_string = string;
+    }
+
     bool success = false;
 
-    TSharedRef<TJsonReader<>> json_reader = TJsonReaderFactory<>::Create(Unreal::toFString("{ \"dummy\": " + quote_string + string + quote_string + " }"));
+    TSharedRef<TJsonReader<>> json_reader = TJsonReaderFactory<>::Create(Unreal::toFString("{ \"dummy\": " + quote_string + json_string + quote_string + " }"));
     TSharedPtr<FJsonObject> json_object;
     success = FJsonSerializer::Deserialize(json_reader, json_object);
     SP_ASSERT(success);
@@ -1155,4 +1174,23 @@ std::string UnrealUtils::getQuoteStringForProperty(const FProperty* property)
     }
 
     return quote_string;
+}
+
+std::string UnrealUtils::getJsonString(const std::string& input)
+{
+    std::string output;
+    output.reserve(input.size());
+    for (char c : input) {
+        switch (c) {
+            case '"':  output += "\\\""; break;
+            case '\\': output += "\\\\"; break;
+            case '\b': output += "\\b";  break;
+            case '\f': output += "\\f";  break;
+            case '\n': output += "\\n";  break;
+            case '\r': output += "\\r";  break;
+            case '\t': output += "\\t";  break;
+            default:   output += c;      break;
+        }
+    }
+    return output;
 }

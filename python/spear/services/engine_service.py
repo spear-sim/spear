@@ -143,7 +143,6 @@ class EngineService():
             self._frame_state = "executing_begin_frame"
             yield
             assert self._frame_state == "executing_begin_frame"
-            self._frame_state = "executing_frame"
         except Exception as e:
             spear.log("Exception: ", e)
             spear.log("ERROR: Attempting to exit critical section by calling _execute_frame_impl() and _end_frame_impl()...")
@@ -151,19 +150,6 @@ class EngineService():
             self._end_frame_impl()
             self._frame_state = "error"
             raise
-
-    @contextlib.contextmanager
-    def end_frame(self, single_step=False):
-        if spear.__can_import_unreal__:
-            assert self._frame_state == "executing_frame"
-            self._frame_state = "executing_end_frame"
-            yield
-            assert self._frame_state == "executing_end_frame"
-            if single_step:
-                self._frame_state = "request_begin_next_frame"
-            else:
-                self._frame_state = "idle"
-            return
 
         success = False
 
@@ -182,6 +168,21 @@ class EngineService():
             self._end_frame_impl()
             self._frame_state = "error"
             assert False
+
+        self._frame_state = "executing_frame"
+
+    @contextlib.contextmanager
+    def end_frame(self, single_step=False):
+        if spear.__can_import_unreal__:
+            assert self._frame_state == "executing_frame"
+            self._frame_state = "executing_end_frame"
+            yield
+            assert self._frame_state == "executing_end_frame"
+            if single_step:
+                self._frame_state = "request_begin_next_frame"
+            else:
+                self._frame_state = "idle"
+            return
 
         # try executing post-frame work
         try:

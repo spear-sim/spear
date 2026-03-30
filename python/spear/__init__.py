@@ -66,13 +66,13 @@ if __can_import_unreal__:
 
 from . import services
 
-from .services.editor_python_service import EditorPythonService
 from .services.engine_service import EngineService
 from .services.engine_globals_service import EngineGlobalsService, EngineGlobalsServiceWrapper
 from .services.enhanced_input_service import EnhancedInputService
 from .services.initialize_world_service import InitializeWorldService
 from .services.input_service import InputService
 from .services.navigation_service import NavigationService
+from .services.python_service import PythonService
 from .services.shared_memory_service import SharedMemoryService
 from .services.sp_func_service import SpFuncService
 from .services.unreal_service import UnrealService

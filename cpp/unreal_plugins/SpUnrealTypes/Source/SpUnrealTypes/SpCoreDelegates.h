@@ -7,8 +7,8 @@
 
 #include <Containers/UnrealString.h> // FString
 #include <HAL/Platform.h>            // int32, uint64
-#include <Misc/CoreDelegates.h>
 #include <Kismet/BlueprintFunctionLibrary.h>
+#include <Misc/CoreDelegates.h>
 
 #include "SpCoreDelegates.generated.h"
 
