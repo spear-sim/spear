@@ -20,7 +20,7 @@
 #include <Materials/MaterialInstanceDynamic.h>
 #include <Math/Color.h>                  // FLinearColor
 #include <RenderingThread.h>             // ENQUEUE_RENDER_COMMAND, FlushRenderingCommands
-#include <RHICommandList.h>              // EImmediateFlushType, FRHICommandListImmediate
+#include <RHICommandList.h>              // EImmediateFlushType, ERHIAccess, FRHICommandListImmediate, FRHITexture, FRHITransitionInfo
 #include <SceneManagement.h>             // FSceneViewStateInterface
 #include <SceneView.h>                   // FSceneViewFamily
 #include <SceneViewExtension.h>          // FAutoRegister, FSceneViewExtensionBase, FSceneViewExtensions
@@ -620,7 +620,10 @@ SpPackedArray USpSceneCaptureComponent2D::getPackedArray()
 void USpSceneCaptureComponent2D::enqueueCopyPixelsFromGPUToStagingAndImmediateFlush_RenderThread(FRHIGPUTextureReadback* readback, FRHICommandListImmediate& command_list, FTextureRenderTargetResource* render_target_resource)
 {
     SP_ASSERT(readback);
-    readback->EnqueueCopy(command_list, render_target_resource->GetRenderTargetTexture());
+    FRHITexture* src_texture = render_target_resource->GetRenderTargetTexture();
+    command_list.Transition(FRHITransitionInfo(src_texture, ERHIAccess::Unknown, ERHIAccess::CopySrc));
+    readback->EnqueueCopy(command_list, src_texture);
+    command_list.Transition(FRHITransitionInfo(src_texture, ERHIAccess::CopySrc, ERHIAccess::SRVMask));
     command_list.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
 }
 
