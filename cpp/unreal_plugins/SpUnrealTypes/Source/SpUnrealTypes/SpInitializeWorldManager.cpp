@@ -119,60 +119,11 @@ void ASpInitializeWorldManager::BeginPlay()
 
         SP_ASSERT(FApp::GetFixedDeltaTime() <= max_fixed_delta_time);
     }
-
-    //
-    // Execute console commands
-    //
-
-    if (bExecuteConsoleCommands) {
-        std::vector<std::string> console_commands = Std::toVector<std::string>(Unreal::toStdVector(ConsoleCommands) | std::views::transform([](auto& cmd) { return Unreal::toStdString(cmd); }));
-
-        SP_LOG("    Executing console commands...");
-        SP_ASSERT(GEngine);
-        for (auto& cmd : console_commands) {
-            GEngine->Exec(GetWorld(), Unreal::toTCharPtr(cmd));
-        }
-    }
-
-    //
-    // Force skylight update. This is necessary to work around an intermittent bug where the apartment scene
-    // sometimes appears too dark in standalone macOS builds.
-    //
-
-    if (bForceSkylightUpdate) {
-
-        force_skylight_update_ = true;
-        force_skylight_update_previous_cvar_value_ = -1;
-        force_skylight_update_duration_seconds_ = 0.0f;
-
-        SP_LOG("    Forcing skylight updates every frame for ", ForceSkylightUpdateMaxDurationSeconds, " seconds...");
-
-        IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr("r.SkylightUpdateEveryFrame"));
-        SP_ASSERT(cvar);
-
-        force_skylight_update_previous_cvar_value_ = cvar->GetInt();
-        cvar->Set(1);
-
-        SP_LOG("    Old value of r.SkylightUpdateEveryFrame: ", force_skylight_update_previous_cvar_value_);
-        SP_LOG("    New value of r.SkylightUpdateEveryFrame: 1");
-    }
 }
 
 void ASpInitializeWorldManager::EndPlay(const EEndPlayReason::Type end_play_reason)
 {
     SP_LOG_CURRENT_FUNCTION();
-
-    if (force_skylight_update_) {
-        SP_LOG("    Setting r.SkylightUpdateEveryFrame to ", force_skylight_update_previous_cvar_value_);
-
-        IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr("r.SkylightUpdateEveryFrame"));
-        SP_ASSERT(cvar);
-        cvar->Set(force_skylight_update_previous_cvar_value_);
-
-        force_skylight_update_ = false;
-        force_skylight_update_previous_cvar_value_ = -1;
-        force_skylight_update_duration_seconds_ = 0.0f;
-    }
 
     if (initialized_config_system_) {
         SP_LOG("    Terminating config system...");
@@ -181,29 +132,4 @@ void ASpInitializeWorldManager::EndPlay(const EEndPlayReason::Type end_play_reas
     }
 
     AActor::EndPlay(end_play_reason);
-}
-
-void ASpInitializeWorldManager::Tick(float delta_time)
-{
-    AActor::Tick(delta_time);
-
-    // Force skylight update. We need to keep the r.SkylightUpdateEveryFrame console variable switched on for
-    // several frames to work around an intermittent bug where the apartment scene sometimes appears too dark
-    // in standalone macOS builds.
-    if (force_skylight_update_) {
-        force_skylight_update_duration_seconds_ += delta_time;
-
-        if (force_skylight_update_duration_seconds_ >= ForceSkylightUpdateMaxDurationSeconds) {
-            SP_LOG_CURRENT_FUNCTION();
-            SP_LOG("    Setting r.SkylightUpdateEveryFrame to ", force_skylight_update_previous_cvar_value_);
-
-            IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr("r.SkylightUpdateEveryFrame"));
-            SP_ASSERT(cvar);
-            cvar->Set(force_skylight_update_previous_cvar_value_);
-
-            force_skylight_update_ = false;
-            force_skylight_update_previous_cvar_value_ = -1;
-            force_skylight_update_duration_seconds_ = 0.0f;
-        }
-    }
 }

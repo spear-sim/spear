@@ -7,11 +7,13 @@
 from . import engine_service
 
 # services that require a reference to EngineService
+from . import debug_service
 from . import engine_globals_service
 from . import enhanced_input_service
 from . import initialize_world_service
 from . import input_service
 from . import shared_memory_service
+from . import world_registry_service
 
 # services that require a reference to EngineService, SharedMemoryService
 from . import sp_func_service

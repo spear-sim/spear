@@ -28,7 +28,7 @@
 class InitializeEngineService : public Service
 {
 public:
-    InitializeEngineService() : Service("InitializeEngineService")
+    InitializeEngineService()
     {
         // Mount PAK files. PAK files in default locations are mounted before SpCore::StartupModule(), so
         // there is no danger of attempting to mount PAK files too early. See the function below for guidance

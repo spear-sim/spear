@@ -16,7 +16,7 @@
 class RpcService : public Service
 {
 public:
-    RpcService() : Service("RpcService")
+    RpcService()
     {
         SP_LOG_CURRENT_FUNCTION();
         SP_LOG("    Creating RPC server...");

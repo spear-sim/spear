@@ -30,13 +30,13 @@
 #include "SpServices/InitializeEngineService.h"
 
 // Services that require a reference to EngineService
+#include "SpServices/DebugService.h"
 #include "SpServices/EngineGlobalsService.h"
 #include "SpServices/EnhancedInputService.h"
-#include "SpServices/InitializeEditorWorldService.h"
-#include "SpServices/InitializeGameWorldService.h"
 #include "SpServices/InputService.h"
 #include "SpServices/SharedMemoryService.h"
 #include "SpServices/UnrealService.h"
+#include "SpServices/WorldRegistryService.h"
 
 // Services that require a reference to EngineService and SharedMemoryService
 #include "SpServices/NavigationService.h"
@@ -56,10 +56,6 @@ void SpServices::StartupModule()
         }
     #endif
 
-    // Create world filters.
-    editor_world_filter_ = std::make_unique<Service::EditorWorldFilter>();
-    game_world_filter_ = std::make_unique<Service::GameWorldFilter>();
-
     // Create the RPC server. The RPC server won't be launched until beginFrame() to give other services a
     // chance to bind their entry points.
     rpc_service_ = std::make_unique<RpcService>();
@@ -76,23 +72,17 @@ void SpServices::StartupModule()
     initialize_engine_service_ = std::make_unique<InitializeEngineService>();
 
     // Construct services that require a reference to EngineService.
+    debug_service_ = std::make_unique<DebugService>(engine_service_.get());
     engine_globals_service_ = std::make_unique<EngineGlobalsService>(engine_service_.get());
     enhanced_input_service_ = std::make_unique<EnhancedInputService>(engine_service_.get());
     input_service_ = std::make_unique<InputService>(engine_service_.get());
     shared_memory_service_ = std::make_unique<SharedMemoryService>(engine_service_.get());
+    unreal_service_ = std::make_unique<UnrealService>(engine_service_.get());
+    world_registry_service_ = std::make_unique<WorldRegistryService>(engine_service_.get());
 
     // Construct services that require a reference to EngineService and SharedMemoryService.
+    navigation_service_ = std::make_unique<NavigationService>(engine_service_.get(), shared_memory_service_.get());
     sp_func_service_ = std::make_unique<SpFuncService>(engine_service_.get(), shared_memory_service_.get());
-
-    // Create editor world services.
-    initialize_editor_world_service_ = std::make_unique<InitializeEditorWorldService>(engine_service_.get(), editor_world_filter_.get());
-    editor_unreal_service_ = std::make_unique<UnrealService>(engine_service_.get(), editor_world_filter_.get());
-    editor_navigation_service_ = std::make_unique<NavigationService>(engine_service_.get(), shared_memory_service_.get(), editor_world_filter_.get());
-
-    // Create game world services.
-    initialize_game_world_service_ = std::make_unique<InitializeGameWorldService>(engine_service_.get(), game_world_filter_.get());
-    game_unreal_service_ = std::make_unique<UnrealService>(engine_service_.get(), game_world_filter_.get());
-    game_navigation_service_ = std::make_unique<NavigationService>(engine_service_.get(), shared_memory_service_.get(), game_world_filter_.get());
 }
 
 void SpServices::ShutdownModule()
@@ -110,29 +100,25 @@ void SpServices::ShutdownModule()
     // it is ok to terminate our other services before terminating RpcService. This guarantee is necessary to
     // enable other plugins to implement their own services.
 
-    SP_ASSERT(initialize_game_world_service_);
-    SP_ASSERT(game_unreal_service_);
-    SP_ASSERT(game_navigation_service_);
-    initialize_game_world_service_ = nullptr;
-    game_unreal_service_ = nullptr;
-    game_navigation_service_ = nullptr;
-
-    SP_ASSERT(initialize_editor_world_service_);
-    initialize_editor_world_service_ = nullptr;
-    editor_unreal_service_ = nullptr;
-    editor_navigation_service_ = nullptr;
-
     SP_ASSERT(sp_func_service_);
+    SP_ASSERT(navigation_service_);
     sp_func_service_ = nullptr;
+    navigation_service_ = nullptr;
 
+    SP_ASSERT(debug_service_);
     SP_ASSERT(engine_globals_service_);
     SP_ASSERT(enhanced_input_service_);
     SP_ASSERT(input_service_);
     SP_ASSERT(shared_memory_service_);
+    SP_ASSERT(unreal_service_);
+    SP_ASSERT(world_registry_service_);
+    debug_service_ = nullptr;
     engine_globals_service_ = nullptr;
     enhanced_input_service_ = nullptr;
     input_service_ = nullptr;
     shared_memory_service_ = nullptr;
+    unreal_service_ = nullptr;
+    world_registry_service_ = nullptr;
 
     SP_ASSERT(initialize_engine_service_);
     initialize_engine_service_ = nullptr;
@@ -146,11 +132,6 @@ void SpServices::ShutdownModule()
 
     SP_ASSERT(rpc_service_);
     rpc_service_ = nullptr;
-
-    SP_ASSERT(editor_world_filter_);
-    SP_ASSERT(game_world_filter_);
-    editor_world_filter_ = nullptr;
-    game_world_filter_ = nullptr;
 }
 
 // use IMPLEMENT_GAME_MODULE if module implements Unreal classes, use IMPLEMENT_MODULE otherwise

@@ -38,16 +38,16 @@ class EngineService : public Service
 {
 public:
     EngineService() = delete;
-    EngineService(TEntryPointBinder* entry_point_binder) : Service("EngineService")
+    EngineService(TEntryPointBinder* entry_point_binder)
     {
         SP_ASSERT(entry_point_binder);
 
-        entry_point_signature_registries_["call_sync_on_worker_thread"] = FuncSignatureRegistry();
+        Std::insert(entry_point_signature_registries_, "call_sync_on_worker_thread", FuncSignatureRegistry());
 
-        entry_point_signature_registries_["call_sync_on_game_thread"]           = FuncSignatureRegistry();
-        entry_point_signature_registries_["call_async_on_game_thread"]          = FuncSignatureRegistry();
-        entry_point_signature_registries_["send_async_on_game_thread"]          = FuncSignatureRegistry();
-        entry_point_signature_registries_["get_future_result_from_game_thread"] = FuncSignatureRegistry();
+        Std::insert(entry_point_signature_registries_, "call_sync_on_game_thread",           FuncSignatureRegistry());
+        Std::insert(entry_point_signature_registries_, "call_async_on_game_thread",          FuncSignatureRegistry());
+        Std::insert(entry_point_signature_registries_, "send_async_on_game_thread",          FuncSignatureRegistry());
+        Std::insert(entry_point_signature_registries_, "get_future_result_from_game_thread", FuncSignatureRegistry());
 
         entry_point_binder_ = entry_point_binder;
 
@@ -65,6 +65,11 @@ public:
             request_error_ = false;
 
             // Reset state for queue management.
+
+            {
+                std::lock_guard<std::mutex> lock(batched_work_queue_mutex_);
+                batched_work_queue_fifo_.clear();
+            }
 
             current_queuing_modes_.clear();
             current_batched_work_queues_.clear();
@@ -366,6 +371,8 @@ public:
             current_incremental_work_queues_.pop_back();
             return true;
         });
+
+        bindFuncToExecuteOnGameThread("engine_service", "flush", []() -> void {});
     }
 
     template <typename TFunc>

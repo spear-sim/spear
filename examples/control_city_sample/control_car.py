@@ -110,8 +110,7 @@ if __name__ == "__main__":
 
         # configure components to match the viewport (width, height, FOV, post-processing settings, etc)
         
-        player_camera_manager = player_controller.PlayerCameraManager.get()
-        view_target_pov = player_camera_manager.ViewTarget.POV.get()
+        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
 
         viewport_size_x = 1280
         viewport_size_y = 720
@@ -145,7 +144,7 @@ if __name__ == "__main__":
     # execute warm-up frames to give us a chance to teleport to the spawned car
     #
 
-    instance.flush(num_frames=num_frames_per_trajectory_segment)
+    instance.step(num_frames=num_frames_per_trajectory_segment)
 
     #
     # initialize frame counter
@@ -198,7 +197,7 @@ if __name__ == "__main__":
             gameplay_statics.SetGamePaused(bPaused=False)
 
             # set camera pose
-            view_target_pov = player_camera_manager.ViewTarget.POV.get()
+            view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
             bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
             bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
 
@@ -239,7 +238,7 @@ if __name__ == "__main__":
             input_action_instance={"TriggerEvent": action_trigger_event, "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
         # set camera pose
-        view_target_pov = player_camera_manager.ViewTarget.POV.get()
+        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
         bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
         bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
 
@@ -281,7 +280,7 @@ if __name__ == "__main__":
                 input_action_instance={"TriggerEvent": action_trigger_event, "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
             # set camera pose
-            view_target_pov = player_camera_manager.ViewTarget.POV.get()
+            view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
             bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
             bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
 
@@ -322,7 +321,7 @@ if __name__ == "__main__":
             input_action_instance={"TriggerEvent": action_trigger_event, "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
         # set camera pose
-        view_target_pov = player_camera_manager.ViewTarget.POV.get()
+        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
         bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
         bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
 

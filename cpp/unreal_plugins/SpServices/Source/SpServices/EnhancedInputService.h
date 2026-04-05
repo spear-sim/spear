@@ -63,7 +63,7 @@ class EnhancedInputService : public Service
 {
 public:
     EnhancedInputService() = delete;
-    EnhancedInputService(CUnrealEntryPointBinder auto* unreal_entry_point_binder) : Service("EnhancedInputService")
+    EnhancedInputService(CUnrealEntryPointBinder auto* unreal_entry_point_binder)
     {
         SP_ASSERT(unreal_entry_point_binder);
 

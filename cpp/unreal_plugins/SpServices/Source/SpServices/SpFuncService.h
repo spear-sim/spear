@@ -27,7 +27,7 @@ class SpFuncService : public Service
 {
 public:
     SpFuncService() = delete;
-    SpFuncService(CUnrealEntryPointBinder auto* unreal_entry_point_binder, SharedMemoryService* shared_memory_service) : Service("SpFuncService")
+    SpFuncService(CUnrealEntryPointBinder auto* unreal_entry_point_binder, SharedMemoryService* shared_memory_service)
     {
         SP_ASSERT(unreal_entry_point_binder);
         SP_ASSERT(shared_memory_service);

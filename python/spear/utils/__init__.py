@@ -5,7 +5,6 @@
 
 from . import config_utils
 from . import func_utils
-from . import path_utils
 from . import pipeline_utils
 from . import system_utils
 from . import tool_utils

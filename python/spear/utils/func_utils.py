@@ -14,65 +14,28 @@ if spear.__can_import_unreal__:
 
 
 #
-# ServiceBase is a low-level base class for Services and ServiceWrappers
-#
-
-class ServiceBase():
-    def __init__(self, sp_func_service=None, unreal_service=None, config=None):
-
-        # need to be extra careful to avoid naming conflicts here
-
-        if sp_func_service is not None:
-            self._private_sp_func_service = sp_func_service.get_top_level_service()
-        else:
-            self._private_sp_func_service = None
-
-        if unreal_service is not None:
-            self._private_unreal_service = unreal_service.get_top_level_service()
-        else:
-            self._private_unreal_service = None
-
-        if config is not None:
-            self._private_config = config
-        else:
-            self._private_config = None
-
-    def to_handle_or_unreal_struct(self, obj, as_handle=None, as_unreal_struct=None):
-        assert self._private_unreal_service is not None
-        return spear.to_handle_or_unreal_struct(
-            obj=obj,
-            unreal_service=self._private_unreal_service,
-            as_handle=as_handle,
-            as_unreal_struct=as_unreal_struct)
-
-    def to_handle_or_unreal_class(self, obj, as_handle=None, as_unreal_class=None):
-        assert self._private_unreal_service is not None
-        return spear.to_handle_or_unreal_class(
-            obj=obj,
-            unreal_service=self._private_unreal_service,
-            as_handle=as_handle,
-            as_unreal_class=as_unreal_class)
-
-    def to_handle_or_unreal_object(self, obj, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
-        assert self._private_sp_func_service is not None
-        assert self._private_unreal_service is not None
-        assert self._private_config is not None
-        return spear.to_handle_or_unreal_object(
-            obj=obj,
-            unreal_service=self._private_unreal_service,
-            sp_func_service=self._private_sp_func_service,
-            config=self._private_config,
-            as_handle=as_handle,
-            as_unreal_object=as_unreal_object,
-            with_sp_funcs=with_sp_funcs)
-
-#
 # A Service represents a collection of RPC entry points.
 #
 
-class Service(ServiceBase):
+class Service():
     def __init__(self, entry_point_caller, sp_func_service=None, unreal_service=None, config=None, parent_service=None, create_children_services=False):
-        super().__init__(sp_func_service=sp_func_service, unreal_service=unreal_service, config=config)
+
+        self._world = None
+
+        if sp_func_service is not None:
+            self.sp_func_service = sp_func_service.get_top_level_service()
+        else:
+            self.sp_func_service = None
+
+        if unreal_service is not None:
+            self.unreal_service = unreal_service.get_top_level_service()
+        else:
+            self.unreal_service = None
+
+        if config is not None:
+            self.config = config
+        else:
+            self.config = None
 
         if parent_service is not None:
             assert not create_children_services # it is only allowed to create children services from the top-level service
@@ -118,45 +81,41 @@ class Service(ServiceBase):
             service = service._parent_service
         return service
 
-#
-# A ServiceWrapper wraps a low-level service and provides additional game-or-editor-scoped functionality,
-# especially the ability to return UnrealObjects.
-#
+    def get_world(self):
+        return self.get_top_level_service()._world
 
-class ServiceWrapper(ServiceBase):
-    def __init__(self, service, sp_func_service, unreal_service, config, parent_service_wrapper=None, create_children_service_wrappers=True):
-        super().__init__(sp_func_service=sp_func_service, unreal_service=unreal_service, config=config)
+    def set_world(self, world):
+        assert self.is_top_level_service()
+        self._world = world
 
-        assert sp_func_service.is_top_level_service()
-        assert unreal_service.is_top_level_service()
+    def to_handle_or_unreal_struct(self, obj, as_handle=None, as_unreal_struct=None):
+        assert self.unreal_service is not None
+        return spear.to_handle_or_unreal_struct(
+            obj=obj,
+            unreal_service=self.unreal_service,
+            as_handle=as_handle,
+            as_unreal_struct=as_unreal_struct)
 
-        if parent_service_wrapper is None:
-            assert service.is_top_level_service() # the top-level service should be passed in when creating the top-level wrapper
-        if parent_service_wrapper is not None:
-            assert not create_children_service_wrappers # it is only allowed to create children services from the top-level service
+    def to_handle_or_unreal_class(self, obj, as_handle=None, as_unreal_class=None):
+        assert self.unreal_service is not None
+        return spear.to_handle_or_unreal_class(
+            obj=obj,
+            unreal_service=self.unreal_service,
+            as_handle=as_handle,
+            as_unreal_class=as_unreal_class)
 
-        self.service = service
-        self.sp_func_service = sp_func_service
-        self.unreal_service = unreal_service
-        self.config = config
-        self._parent_service_wrapper = parent_service_wrapper
-
-        if create_children_service_wrappers:
-            assert hasattr(service, "call_async")
-            assert hasattr(service, "send_async")
-            assert hasattr(service, "call_async_fast")
-            assert hasattr(service, "send_async_fast")
-
-            self.call_async = self.create_child_service_wrapper(service=service.call_async)
-            self.send_async = self.create_child_service_wrapper(service=service.send_async)
-            self.call_async_fast = self.create_child_service_wrapper(service=service.call_async_fast)
-            self.send_async_fast = self.create_child_service_wrapper(service=service.send_async_fast)
-
-    def create_child_service_wrapper(self, service):
-        assert False
-
-    def is_top_level_service_wrapper(self):
-        return self._parent_service_wrapper is None
+    def to_handle_or_unreal_object(self, obj, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
+        assert self.sp_func_service is not None
+        assert self.unreal_service is not None
+        assert self.config is not None
+        return spear.to_handle_or_unreal_object(
+            obj=obj,
+            unreal_service=self.unreal_service,
+            sp_func_service=self.sp_func_service,
+            config=self.config,
+            as_handle=as_handle,
+            as_unreal_object=as_unreal_object,
+            with_sp_funcs=with_sp_funcs)
 
 
 #
@@ -672,6 +631,53 @@ def to_data_bundle_dict(data_bundle, src_byte_order, usage_flags, shared_memory_
 # Conversion functions for NumPy types
 #
 
+# quaternions
+
+# Convert to a NumPy array from an Unreal quaternion. Unreal's FQuat constructor takes (X, Y, Z, W) order.
+def to_numpy_array_from_quat(quat):
+    assert isinstance(quat, dict)
+    quat = { k.lower(): v for k, v in quat.items() }
+    assert set(["x", "y", "z", "w"]) == set(quat.keys())
+    return np.array([quat["x"], quat["y"], quat["z"], quat["w"]])
+
+# Convert to a NumPy rotation matrix from an Unreal quaternion (x, y, z, w). Unreal quaternions use scalar-last
+# order, which matches scipy.spatial.transform.Rotation.from_quat(...).
+def to_numpy_matrix_from_quat(quat, as_matrix=None):
+    assert isinstance(quat, dict)
+    quat = { k.lower(): v for k, v in quat.items() }
+    assert set(["x", "y", "z", "w"]) == set(quat.keys())
+    if as_matrix is None:
+        return np.array(scipy.spatial.transform.Rotation.from_quat([quat["x"], quat["y"], quat["z"], quat["w"]]).as_matrix())
+    else:
+        assert as_matrix
+        return np.matrix(scipy.spatial.transform.Rotation.from_quat([quat["x"], quat["y"], quat["z"], quat["w"]]).as_matrix())
+
+# Convert to an Unreal quaternion from a NumPy array in (X, Y, Z, W) order.
+def to_quat_from_numpy_array(array_xyzw):
+    if isinstance(array_xyzw, np.ndarray):
+        assert array_xyzw.shape == (4,)
+    else:
+        assert False
+    return {"X": float(array_xyzw[0]), "Y": float(array_xyzw[1]), "Z": float(array_xyzw[2]), "W": float(array_xyzw[3])}
+
+# Convert to an Unreal quaternion (x, y, z, w) from a NumPy rotation matrix.
+def to_quat_from_numpy_matrix(matrix):
+    if isinstance(matrix, np.ndarray) or isinstance(matrix, np.matrix):
+        assert matrix.shape == (3, 3)
+    else:
+        assert False
+    x, y, z, w = scipy.spatial.transform.Rotation.from_matrix(matrix).as_quat()
+    return {"X": float(x), "Y": float(y), "Z": float(z), "W": float(w)}
+
+# rotators
+
+# Convert to a NumPy array from an Unreal rotator.
+def to_numpy_array_from_rotator(rotator):
+    assert isinstance(rotator, dict)
+    rotator = { k.lower(): v for k, v in rotator.items() }
+    assert set(["roll", "pitch", "yaw"]) == set(rotator.keys())
+    return np.array([rotator["pitch"], rotator["yaw"], rotator["roll"]])
+
 # Convert to a NumPy matrix from an Unreal rotator. See utils/pipeline_utils.py for more details on Unreal's Euler angle conventions.
 def to_numpy_matrix_from_rotator(rotator, as_matrix=None):
     assert isinstance(rotator, dict)
@@ -686,6 +692,14 @@ def to_numpy_matrix_from_rotator(rotator, as_matrix=None):
         assert as_matrix
         return np.matrix(scipy.spatial.transform.Rotation.from_euler("xyz", [roll, pitch, yaw]).as_matrix())
 
+# Convert to an Unreal rotator from a NumPy array.
+def to_rotator_from_numpy_array(array_pyr):
+    if isinstance(array_pyr, np.ndarray):
+        assert array_pyr.shape == (3,)
+    else:
+        assert False
+    return {"Pitch": float(array_pyr[0]), "Yaw": float(array_pyr[1]), "Roll": float(array_pyr[2])}
+
 # Convert to an Unreal rotator from a NumPy matrix.
 def to_rotator_from_numpy_matrix(matrix):
     if isinstance(matrix, np.ndarray) or isinstance(matrix, np.matrix):
@@ -698,31 +712,7 @@ def to_rotator_from_numpy_matrix(matrix):
     yaw   = float(np.rad2deg(scipy_yaw))
     return {"Roll": roll, "Pitch": pitch, "Yaw": yaw}
 
-# Convert to a NumPy array from an Unreal rotator.
-def to_numpy_array_from_rotator(rotator):
-    assert isinstance(rotator, dict)
-    rotator = { k.lower(): v for k, v in rotator.items() }
-    assert set(["roll", "pitch", "yaw"]) == set(rotator.keys())
-    return np.array([rotator["pitch"], rotator["yaw"], rotator["roll"]])
-
-# Convert to an Unreal rotator from a NumPy array.
-def to_rotator_from_numpy_array(array_pyr):
-    if isinstance(array_pyr, np.ndarray):
-        assert array_pyr.shape == (3,)
-    else:
-        assert False
-    return {"Pitch": float(array_pyr[0]), "Yaw": float(array_pyr[1]), "Roll": float(array_pyr[2])}
-
-# Convert to an Unreal vector from a NumPy array or matrix and vice versa.
-def to_vector_from_numpy_array(array):
-    if isinstance(array, np.matrix):
-        assert array.shape == (3, 1)
-        array = array.A1
-    elif isinstance(array, np.ndarray):
-        assert array.shape == (3,)
-    else:
-        assert False
-    return {"X": float(array[0]), "Y": float(array[1]), "Z": float(array[2])}
+# vectors
 
 # Convert to a NumPy array from an Unreal vector.
 def to_numpy_array_from_vector(vector, as_matrix=None):
@@ -734,6 +724,17 @@ def to_numpy_array_from_vector(vector, as_matrix=None):
     else:
         assert as_matrix
         return np.matrix([vector["x"], vector["y"], vector["z"]]).T
+
+# Convert to an Unreal vector from a NumPy array or matrix and vice versa.
+def to_vector_from_numpy_array(array):
+    if isinstance(array, np.matrix):
+        assert array.shape == (3, 1)
+        array = array.A1
+    elif isinstance(array, np.ndarray):
+        assert array.shape == (3,)
+    else:
+        assert False
+    return {"X": float(array[0]), "Y": float(array[1]), "Z": float(array[2])}
 
 
 #

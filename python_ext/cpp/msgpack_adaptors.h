@@ -154,19 +154,8 @@ struct clmdep_msgpack::adaptor::convert<PropertyDesc> {
 };
 
 //
-// PropertyValue
+// PropertyValue (never sent as an arg to the server)
 //
-
-template <> // needed to send a custom type as an arg to the server
-struct clmdep_msgpack::adaptor::pack<PropertyValue> {
-    template <typename TStream>
-    clmdep_msgpack::packer<TStream>& operator()(clmdep_msgpack::packer<TStream>& packer, PropertyValue const& property_value) const {
-        packer.pack_map(2);
-        packer.pack("value");   packer.pack(property_value.value_);
-        packer.pack("type_id"); packer.pack(property_value.type_id_);
-        return packer;
-    }
-};
 
 template <> // needed to receive a custom type as a return value from the server
 struct clmdep_msgpack::adaptor::convert<PropertyValue> {
@@ -180,22 +169,8 @@ struct clmdep_msgpack::adaptor::convert<PropertyValue> {
 };
 
 //
-// SharedMemoryView
+// SharedMemoryView (never sent as an arg to the server)
 //
-
-template <> // needed to send a custom type as an arg to the server
-struct clmdep_msgpack::adaptor::pack<SharedMemoryView> {
-    template <typename TStream>
-    clmdep_msgpack::packer<TStream>& operator()(clmdep_msgpack::packer<TStream>& packer, SharedMemoryView const& shared_memory_view) const {
-        packer.pack_map(5);
-        packer.pack("id");           packer.pack(shared_memory_view.id_);
-        packer.pack("num_bytes");    packer.pack(shared_memory_view.num_bytes_);
-        packer.pack("offset_bytes"); packer.pack(shared_memory_view.offset_bytes_);
-        packer.pack("name");         packer.pack(shared_memory_view.name_);
-        packer.pack("usage_flags");  packer.pack(shared_memory_view.usage_flags_);
-        return packer;
-    }
-};
 
 template <> // needed to receive a custom type as a return value from the server
 struct clmdep_msgpack::adaptor::convert<SharedMemoryView> {
@@ -403,20 +378,26 @@ DataBundle FuncSignatureRegistry::convert<DataBundle>(const Client* client, Data
 };
 
 //
-// FuncSignatureTypeDesc
+// WorldDesc
 //
 
-template <> // needed to send a custom type as an arg to the server
-struct clmdep_msgpack::adaptor::pack<FuncSignatureTypeDesc> {
-    template <typename TStream>
-    clmdep_msgpack::packer<TStream>& operator()(clmdep_msgpack::packer<TStream>& packer, FuncSignatureTypeDesc const& func_signature_type_desc) const {
-        packer.pack_map(3);
-        packer.pack("type_names");    packer.pack(func_signature_type_desc.type_names_);
-        packer.pack("const_strings"); packer.pack(func_signature_type_desc.const_strings_);
-        packer.pack("ref_strings");   packer.pack(func_signature_type_desc.ref_strings_);
-        return packer;
+template <> // needed to receive a custom type as a return value from the server
+struct clmdep_msgpack::adaptor::convert<WorldDesc> {
+    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, WorldDesc& world_desc) const {
+        std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
+        SP_ASSERT(objects.size() == 5);
+        world_desc.world_           = MsgpackUtils::to<uint64_t>(objects.at("world"));
+        world_desc.world_id_        = MsgpackUtils::to<int64_t>(objects.at("world_id"));
+        world_desc.is_editor_world_ = MsgpackUtils::to<bool>(objects.at("is_editor_world"));
+        world_desc.is_game_world_   = MsgpackUtils::to<bool>(objects.at("is_game_world"));
+        world_desc.is_playing_      = MsgpackUtils::to<bool>(objects.at("is_playing"));
+        return object;
     }
 };
+
+//
+// FuncSignatureTypeDesc (never sent as an arg to the server)
+//
 
 template <> // needed to receive a custom type as a return value from the server
 struct clmdep_msgpack::adaptor::convert<FuncSignatureTypeDesc> {
@@ -431,20 +412,8 @@ struct clmdep_msgpack::adaptor::convert<FuncSignatureTypeDesc> {
 };
 
 //
-// FuncSignatureDesc
+// FuncSignatureDesc (never sent as an arg to the server)
 //
-
-template <> // needed to send a custom type as an arg to the server
-struct clmdep_msgpack::adaptor::pack<FuncSignatureDesc> {
-    template <typename TStream>
-    clmdep_msgpack::packer<TStream>& operator()(clmdep_msgpack::packer<TStream>& packer, FuncSignatureDesc const& func_signature_desc) const {
-        packer.pack_map(3);
-        packer.pack("name");              packer.pack(func_signature_desc.name_);
-        packer.pack("func_signature");    packer.pack(func_signature_desc.func_signature_);
-        packer.pack("func_signature_id"); packer.pack(func_signature_desc.func_signature_id_);
-        return packer;
-    }
-};
 
 template <> // needed to receive a custom type as a return value from the server
 struct clmdep_msgpack::adaptor::convert<FuncSignatureDesc> {
@@ -485,20 +454,8 @@ struct clmdep_msgpack::adaptor::convert<Future> {
 };
 
 //
-// StaticStructDesc
+// StaticStructDesc (never sent as an arg to the server)
 //
-
-template <> // needed to send a custom type as an arg to the server
-struct clmdep_msgpack::adaptor::pack<StaticStructDesc> {
-    template <typename TStream>
-    clmdep_msgpack::packer<TStream>& operator()(clmdep_msgpack::packer<TStream>& packer, StaticStructDesc const& static_struct_desc) const {
-        packer.pack_map(3);
-        packer.pack("static_struct"); packer.pack(static_struct_desc.static_struct_);
-        packer.pack("name");          packer.pack(static_struct_desc.name_);
-        packer.pack("ufunctions");    packer.pack(static_struct_desc.ufunctions_);
-        return packer;
-    }
-};
 
 template <> // needed to receive a custom type as a return value from the server
 struct clmdep_msgpack::adaptor::convert<StaticStructDesc> {

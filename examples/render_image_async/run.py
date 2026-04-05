@@ -53,13 +53,12 @@ if __name__ == "__main__":
 
         # configure the final_tone_curve_hdr component to match the viewport (width, height, FOV, post-processing settings, etc)
         
-        engine = game.engine_globals_service.get_engine()
+        engine = instance.engine_globals_service.get_engine()
         game_viewport_client = engine.GameViewport.get()
 
         gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
         player_controller = gameplay_statics.GetPlayerController(PlayerIndex=0)
-        player_camera_manager = player_controller.PlayerCameraManager.get()
-        view_target_pov = player_camera_manager.ViewTarget.POV.get()
+        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
 
         post_process_volume_settings = None
         post_process_volumes = game.unreal_service.find_actors_by_class(uclass="APostProcessVolume")
@@ -121,7 +120,7 @@ if __name__ == "__main__":
 
     # let temporal anti-aliasing etc accumulate additional information across multiple frames, and
     # inserting an extra frame or two can fix occasional render-to-texture initialization issues
-    instance.flush(num_frames=2)
+    instance.step(num_frames=2)
 
     # get rendered frame
     if buffered_readback:
@@ -280,7 +279,7 @@ if __name__ == "__main__":
                 with instance.end_frame(single_step=True):
                     pass
         end_time_seconds = time.time()
-        instance.flush() # needed after the last call to instance.end_frame(single_step=True)
+        instance.step() # needed after the last call to instance.end_frame(single_step=True)
         elapsed_time_seconds = end_time_seconds - start_time_seconds
         spear.log(f"Average frame time for instance.sp_func_service.call_function(...) (single-step): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
 
@@ -335,7 +334,7 @@ if __name__ == "__main__":
                 with instance.end_frame(single_step=True):
                     data_bundle = future.get()
         end_time_seconds = time.time()
-        instance.flush() # needed after the last call to instance.end_frame(single_step=True)
+        instance.step() # needed after the last call to instance.end_frame(single_step=True)
         elapsed_time_seconds = end_time_seconds - start_time_seconds
         spear.log(f"Average frame time for instance.sp_func_service.call_async.call_function(...) (single-step): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
 

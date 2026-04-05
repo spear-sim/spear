@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
     # let temporal anti-aliasing etc accumulate additional information across multiple frames, and
     # inserting an extra frame or two can fix occasional render-to-texture initialization issues
-    instance.flush(num_frames=2)
+    instance.step(num_frames=2)
 
     for camera_pose in df.to_records():
 
@@ -108,7 +108,7 @@ if __name__ == "__main__":
         #     pass
 
         # for i in range(1):
-        #     instance.flush()
+        #     instance.step()
 
         # with instance.begin_frame():
         #     pass

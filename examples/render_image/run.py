@@ -36,13 +36,12 @@ if __name__ == "__main__":
 
         # configure the final_tone_curve_hdr component to match the viewport (width, height, FOV, post-processing settings, etc)
         
-        engine = game.engine_globals_service.get_engine()
+        engine = instance.engine_globals_service.get_engine()
         game_viewport_client = engine.GameViewport.get()
 
         gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
         player_controller = gameplay_statics.GetPlayerController(PlayerIndex=0)
-        player_camera_manager = player_controller.PlayerCameraManager.get()
-        view_target_pov = player_camera_manager.ViewTarget.POV.get()
+        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
 
         post_process_volume_settings = None
         post_process_volumes = game.unreal_service.find_actors_by_class(uclass="APostProcessVolume")
@@ -87,7 +86,7 @@ if __name__ == "__main__":
 
     # let temporal anti-aliasing etc accumulate additional information across multiple frames, and
     # inserting an extra frame or two can fix occasional render-to-texture initialization issues
-    instance.flush(num_frames=2)
+    instance.step(num_frames=2)
 
     # get rendered frame
     with instance.begin_frame():

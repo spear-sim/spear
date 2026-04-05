@@ -29,7 +29,7 @@ class SharedMemoryService(spear.Service):
         self._shared_memory_handles = {}
 
         # do this after initializing local state
-        super().__init__(entry_point_caller=entry_point_caller, parent_service=None, create_children_services=False)
+        super().__init__(entry_point_caller=entry_point_caller)
 
     #
     # High-level functions for managing shared memory regions.

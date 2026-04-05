@@ -118,8 +118,7 @@ if __name__ == "__main__":
 
         # configure components to match the viewport (width, height, FOV, post-processing settings, etc)
         
-        player_camera_manager = player_controller.PlayerCameraManager.get()
-        view_target_pov = player_camera_manager.ViewTarget.POV.get()
+        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
 
         viewport_size_x = 1280
         viewport_size_y = 720
@@ -145,7 +144,7 @@ if __name__ == "__main__":
         pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing etc accumulate additional information across frames
 
     with instance.begin_frame():
-        view_target_pov = player_camera_manager.ViewTarget.POV.get()
+        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
         bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
         bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
     with instance.end_frame():
@@ -155,7 +154,7 @@ if __name__ == "__main__":
     # execute warm-up frames to give Unreal's default auto-exposure settings a chance to settle down
     #
 
-    instance.flush(num_frames=90)
+    instance.step(num_frames=90)
 
     #
     # render image

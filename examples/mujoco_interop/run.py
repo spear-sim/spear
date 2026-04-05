@@ -63,14 +63,7 @@ def to_unreal_rotator_from_mujoco_quaternion(mj_quaternion):
     if args.visual_parity_with_unreal:
         scipy_rotation_matrix = np.diag([1,-1,1])*np.matrix(scipy_rotation_matrix)*np.diag([1,-1,1])
 
-    # Unreal and scipy.spatial.transform.Rotation have different Euler angle conventions, see python/spear/utils/pipeline_utils.py for details
-    scipy_roll, scipy_pitch, scipy_yaw = scipy.spatial.transform.Rotation.from_matrix(scipy_rotation_matrix).as_euler("xyz")
-
-    ue_pitch = np.rad2deg(-scipy_pitch)
-    ue_yaw   = np.rad2deg(scipy_yaw)
-    ue_roll  = np.rad2deg(-scipy_roll)
-
-    return {"Roll": ue_roll, "Pitch": ue_pitch, "Yaw": ue_yaw}
+    return spear.to_rotator_from_numpy_matrix(matrix=scipy_rotation_matrix)
 
 
 if __name__ == "__main__":
@@ -126,8 +119,7 @@ if __name__ == "__main__":
 
         # configure components to match the viewport (width, height, FOV, post-processing settings, etc)
         
-        player_camera_manager = player_controller.PlayerCameraManager.get()
-        view_target_pov = player_camera_manager.ViewTarget.POV.get()
+        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
 
         viewport_size_x = 1280
         viewport_size_y = 720

@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
     cook_maps = []
     if not args.skip_cook_default_maps:
-        cook_maps.extend(spear.utils.tool_utils.get_default_maps_to_cook())
+        cook_maps.extend(spear.tools.get_default_maps_to_cook())
     if args.cook_maps_file is not None:
         cook_maps.extend(pd.read_csv(args.cook_maps_file, comment="#")["cook_maps"].tolist())
 

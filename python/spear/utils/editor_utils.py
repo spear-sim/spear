@@ -398,6 +398,9 @@ class Client:
         elif return_as == "map_of_string_to_packed_array":
             obj = self._to_dict(obj)
             return { k: self._to_packed_array_return_value(v) for k, v in obj.items() }
+        elif return_as == "map_of_string_to_world_desc":
+            obj = self._to_dict(obj)
+            return { k: WorldDesc(world=v["world"], world_id=v["world_id"], is_editor_world=v["is_editor_world"], is_game_world=v["is_game_world"], is_playing=v["is_playing"]) for k, v in obj.items() }
         elif return_as == "map_of_string_to_vector_of_func_signature_desc":
             obj = self._to_dict(obj)
             return { k: [ FuncSignatureDesc(name=self._to_str(v["name"]), func_signature=[ FuncSignatureTypeDesc(type_names=self._to_str(s["type_names"]), const_strings=self._to_str(s["const_strings"]), ref_strings=self._to_str(s["ref_strings"])) for s in v["func_signature"] ], func_signature_id=v["func_signature_id"]) for v in values ] for k, values in obj.items() }
@@ -422,6 +425,9 @@ class Client:
         elif return_as == "static_struct_desc":
             obj = self._to_dict(obj)
             return StaticStructDesc(static_struct=obj["static_struct"], name=self._to_str(obj["name"]), ufunctions=self._to_str(obj["ufunctions"]))
+        elif return_as == "world_desc":
+            obj = self._to_dict(obj)
+            return WorldDesc(world=obj["world"], world_id=obj["world_id"], is_editor_world=obj["is_editor_world"], is_game_world=obj["is_game_world"], is_playing=obj["is_playing"])
         else:
             assert False
 
@@ -553,6 +559,17 @@ class StaticStructDesc(ClientStruct):
 
     def __repr__(self):
         return f"spear.StaticStructDesc(name='{self.name}', static_struct={self.static_struct}, ufunctions={len(self.ufunctions)})"
+
+class WorldDesc(ClientStruct):
+    def __init__(self, world=0, world_id=-1, is_editor_world=False, is_game_world=False, is_playing=False):
+        self.world = world
+        self.world_id = world_id
+        self.is_editor_world = is_editor_world
+        self.is_game_world = is_game_world
+        self.is_playing = is_playing
+
+    def __repr__(self):
+        return f"spear.WorldDesc(world={self.world}, world_id={self.world_id}, is_editor_world={self.is_editor_world}, is_game_world={self.is_game_world}, is_playing={self.is_playing})"
 
 
 #

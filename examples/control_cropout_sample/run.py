@@ -96,8 +96,7 @@ if __name__ == "__main__":
 
         # configure components to match the viewport (width, height, FOV, post-processing settings, etc)
         
-        player_camera_manager = player_controller.PlayerCameraManager.get()
-        view_target_pov = player_camera_manager.ViewTarget.POV.get()
+        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
 
         viewport_size_x = 1280
         viewport_size_y = 720
@@ -129,7 +128,7 @@ if __name__ == "__main__":
     # execute warm-up frames to give Unreal's default auto-exposure settings a chance to settle down
     #
 
-    instance.flush(num_frames=30)
+    instance.step(num_frames=30)
 
     #
     # execute game logic
@@ -283,7 +282,7 @@ if __name__ == "__main__":
 
     for i in range(num_frames):
         with instance.begin_frame():
-            view_target_pov = player_camera_manager.ViewTarget.POV.get()
+            view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
 
             fov = view_target_pov["fOV"]*math.pi/180.0
             half_fov = fov/2.0

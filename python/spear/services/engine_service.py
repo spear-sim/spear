@@ -20,61 +20,49 @@ class EngineService():
         self._frame_state = None
         self._editor_transaction_state = None
         self._byte_order = None
+        self._server_signature_type_descs = None
         self._server_signature_descs = None
 
     def initialize(self):
-        assert self._frame_state is None
-
-        # we use _call_impl(...) here because call_sync_on_worker_thread(...) assumes we're already initialized
+        assert self._frame_state is None or self._frame_state == "idle" or self._frame_state == "error"
+        assert self._editor_transaction_state is None or self._editor_transaction_state == "idle" or self._editor_transaction_state == "error"
 
         self._frame_state = "idle"
         self._editor_transaction_state = "idle"
 
         # explicitly initialize before calling begin_frame() for the first time
 
-        self._call_impl(
-            "void",
-            "call_sync_on_worker_thread_as_void",
-            "engine_service.call_sync_on_worker_thread.initialize")
+        # we use _call_impl(...) here because call_sync_on_worker_thread(...) assumes we're already initialized
+        self._call_impl("void", "call_sync_on_worker_thread_as_void", "engine_service.call_sync_on_worker_thread.initialize")
 
         # cache data that will be constant for the life of the server
 
-        server_signature_type_descs = self._call_impl(
-            "vector_of_func_signature_type_desc",
-            "call_sync_on_worker_thread_as_vector_of_func_signature_type_desc",
-            "engine_service.call_sync_on_worker_thread.get_entry_point_signature_type_descs")
+        if self._server_signature_type_descs is None:
+            server_signature_type_descs = self._call_impl(
+                "vector_of_func_signature_type_desc",
+                "call_sync_on_worker_thread_as_vector_of_func_signature_type_desc",
+                "engine_service.call_sync_on_worker_thread.get_entry_point_signature_type_descs")
+            self._server_signature_type_descs = server_signature_type_descs
 
-        self._server_signature_type_descs = server_signature_type_descs
+        if self._server_signature_descs is None:
+            server_signature_descs = self._call_impl(
+                "map_of_string_to_vector_of_func_signature_desc",
+                "call_sync_on_worker_thread_as_map_of_string_to_vector_of_func_signature_desc",
+                "engine_service.call_sync_on_worker_thread.get_entry_point_signature_descs")
+            self._server_signature_descs = { registry_name: { desc.name: desc for desc in descs } for registry_name, descs in server_signature_descs.items() }
 
-        server_signature_descs = self._call_impl(
-            "map_of_string_to_vector_of_func_signature_desc",
-            "call_sync_on_worker_thread_as_map_of_string_to_vector_of_func_signature_desc",
-            "engine_service.call_sync_on_worker_thread.get_entry_point_signature_descs")
-
-        self._server_signature_descs = { registry_name: { desc.name: desc for desc in descs } for registry_name, descs in server_signature_descs.items() }
-
-        byte_order = self._call_impl(
-            "string",
-            "call_sync_on_worker_thread_as_string",
-            "engine_globals_service.call_sync_on_worker_thread.get_byte_order")
-
-        if byte_order == sys.byteorder:
-            self._byte_order = "native"
-        else:
-            self._byte_order = byte_order
+        if self._byte_order is None:
+            byte_order = self._call_impl("string", "call_sync_on_worker_thread_as_string", "engine_globals_service.call_sync_on_worker_thread.get_byte_order")
+            if byte_order == sys.byteorder:
+                self._byte_order = "native"
+            else:
+                self._byte_order = byte_order
 
     def terminate(self):
         assert self._frame_state is not None
-
-        # we use _call_impl(...) here for symmetry with initialize()
-
         self._frame_state = None
         self._editor_transaction_state = None
-
-        self._call_impl(
-            "void",
-            "call_sync_on_worker_thread_as_void",
-            "engine_service.call_sync_on_worker_thread.terminate")
+        self._call_impl("void", "call_sync_on_worker_thread_as_void", "engine_service.call_sync_on_worker_thread.terminate") # we use _call_impl(...) here for symmetry with initialize()
 
     #
     # Helper functions to support initializing a spear.Instance
@@ -292,6 +280,9 @@ class EngineService():
 
     def _end_editor_transaction_impl(self):
         return self.call_sync_on_worker_thread("engine_service.call_sync_on_worker_thread.end_editor_transaction")
+
+    def flush(self):
+        self.call_sync_on_game_thread("engine_service.call_sync_on_game_thread.flush")
 
     #
     # Functions for calling entry points on the server.

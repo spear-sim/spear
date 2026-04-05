@@ -25,7 +25,7 @@ class SharedMemoryService : public Service
 {
 public:
     SharedMemoryService() = delete;
-    SharedMemoryService(CUnrealEntryPointBinder auto* unreal_entry_point_binder) : Service("SharedMemoryService")
+    SharedMemoryService(CUnrealEntryPointBinder auto* unreal_entry_point_binder)
     {
         SP_ASSERT(unreal_entry_point_binder);
 

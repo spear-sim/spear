@@ -37,9 +37,9 @@ class PythonService(spear.Service):
         assert self.is_top_level_service()
 
         self._python_script_library = spear.UnrealObject(
-            unreal_service=self._private_unreal_service,
-            sp_func_service=self._private_sp_func_service,
-            config=self._private_config,
+            unreal_service=self.unreal_service,
+            sp_func_service=self.sp_func_service,
+            config=self.config,
             uclass="UPythonScriptLibrary")
 
         assert self._python_script_library.IsPythonAvailable()
@@ -267,9 +267,9 @@ class PythonService(spear.Service):
                 script_result = json.loads(ast.literal_eval(result["CommandResult"])) # CommandResult has extra single quotes so we remove using ast.literal_eval
                 result = spear.from_script_result(
                     script_result=script_result,
-                    unreal_service=self._private_unreal_service,
-                    sp_func_service=self._private_sp_func_service,
-                    config=self._private_config,
+                    unreal_service=self.unreal_service,
+                    sp_func_service=self.sp_func_service,
+                    config=self.config,
                     as_handle=as_handle, as_unreal_struct=as_unreal_struct, as_unreal_class=as_unreal_class, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
                 return result
             else:

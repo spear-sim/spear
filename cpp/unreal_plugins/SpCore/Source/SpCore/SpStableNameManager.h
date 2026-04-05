@@ -25,7 +25,7 @@ class UWorld;
 struct FPropertyChangedEvent;
 
 //
-// If an ASpStableNameComponent is place in a level, then all the actors in that level can be found using
+// If an ASpStableNameManager is placed in a level, then all the actors in that level can be found using
 // their names and paths as shown in the Unreal Editor Outliner view, even in standalone shipping builds,
 // using UnrealUtils::findActorByName(...) and similar functions.
 //
