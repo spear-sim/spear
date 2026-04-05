@@ -39,7 +39,7 @@ class InputService : public Service
 {
 public:
     InputService() = delete;
-    InputService(CUnrealEntryPointBinder auto* unreal_entry_point_binder) : Service("InputService")
+    InputService(CUnrealEntryPointBinder auto* unreal_entry_point_binder)
     {
         SP_ASSERT(unreal_entry_point_binder);
 

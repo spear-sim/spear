@@ -11,7 +11,7 @@ import sys
 
 # Disable the multiprocessing.resource_tracker when running inside the editor
 if spear.__can_import_unreal__:
-    spear.log("Globally disbling the multiprocessing.resource_tracker because it doesn't interact cleanly with the Unreal Editor Python environment...")
+    spear.log("Globally disabling the multiprocessing.resource_tracker because it doesn't interact cleanly with the Unreal Editor Python environment...")
     import multiprocessing.resource_tracker
     _multiprocessing_resource_tracker_register_func_original = multiprocessing.resource_tracker.register
     def _multiprocessing_resource_tracker_register_func_noop(name, rtype):
@@ -29,7 +29,7 @@ class SharedMemoryService(spear.Service):
         self._shared_memory_handles = {}
 
         # do this after initializing local state
-        super().__init__(entry_point_caller=entry_point_caller, parent_service=None, create_children_services=False)
+        super().__init__(entry_point_caller=entry_point_caller)
 
     #
     # High-level functions for managing shared memory regions.

@@ -258,7 +258,6 @@ public:
     // AActor interface
     void BeginPlay() override;
     void EndPlay(const EEndPlayReason::Type end_play_reason) override;
-    void Tick(float delta_time) override;
 
     // Initialize config system
 

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "spear": {
+      "command": "/opt/miniconda3/envs/spear-env/bin/python",
+      "args": [
+        "tools/run_mcp_server.py"
+      ],
+      "cwd": "/Users/miroberts/code/github/spear"
+    }
+  }
+}

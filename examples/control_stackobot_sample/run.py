@@ -90,8 +90,7 @@ if __name__ == "__main__":
 
         # configure components to match the viewport (width, height, FOV, post-processing settings, etc)
         
-        player_camera_manager = player_controller.PlayerCameraManager.get()
-        view_target_pov = player_camera_manager.ViewTarget.POV.get()
+        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
 
         post_process_volume_settings = None
         post_process_volumes = game.unreal_service.find_actors_by_class(uclass="APostProcessVolume")
@@ -132,7 +131,7 @@ if __name__ == "__main__":
     # execute warm-up frames to give Unreal's default auto-exposure settings a chance to settle down
     #
 
-    instance.flush(num_frames=30)
+    instance.step(num_frames=30)
 
     #
     # initialize frame counter
@@ -148,7 +147,7 @@ if __name__ == "__main__":
         gameplay_statics.SetGamePaused(bPaused=False)
 
         # set camera pose
-        view_target_pov = player_camera_manager.ViewTarget.POV.get()
+        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
         bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
         bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
 
@@ -174,7 +173,7 @@ if __name__ == "__main__":
         gameplay_statics.SetGamePaused(bPaused=False)
 
         # set camera pose
-        view_target_pov = player_camera_manager.ViewTarget.POV.get()
+        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
         bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
         bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
 
@@ -216,7 +215,7 @@ if __name__ == "__main__":
             gameplay_statics.SetGamePaused(bPaused=False)
 
             # set camera pose
-            view_target_pov = player_camera_manager.ViewTarget.POV.get()
+            view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
             bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
             bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
 
@@ -242,7 +241,7 @@ if __name__ == "__main__":
         gameplay_statics.SetGamePaused(bPaused=False)
 
         # set camera pose
-        view_target_pov = player_camera_manager.ViewTarget.POV.get()
+        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
         bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
         bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
 
@@ -284,7 +283,7 @@ if __name__ == "__main__":
             gameplay_statics.SetGamePaused(bPaused=False)
 
             # set camera pose
-            view_target_pov = player_camera_manager.ViewTarget.POV.get()
+            view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
             bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
             bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
 
@@ -310,7 +309,7 @@ if __name__ == "__main__":
         gameplay_statics.SetGamePaused(bPaused=False)
 
         # set camera pose
-        view_target_pov = player_camera_manager.ViewTarget.POV.get()
+        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
         bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
         bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
 
@@ -352,7 +351,7 @@ if __name__ == "__main__":
             gameplay_statics.SetGamePaused(bPaused=False)
 
             # set camera pose
-            view_target_pov = player_camera_manager.ViewTarget.POV.get()
+            view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
             bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
             bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
 

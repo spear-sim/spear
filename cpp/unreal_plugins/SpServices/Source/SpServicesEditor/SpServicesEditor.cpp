@@ -39,7 +39,7 @@ void SpServicesEditor::StartupModule()
     SP_ASSERT(sp_services);
 
     // Create editor world services.
-    editor_unreal_service_editor_ = std::make_unique<UnrealServiceEditor>(sp_services->engine_service_.get(), sp_services->editor_world_filter_.get());
+    editor_unreal_service_editor_ = std::make_unique<UnrealServiceEditor>(sp_services->engine_service_.get());
 }
 
 void SpServicesEditor::ShutdownModule()

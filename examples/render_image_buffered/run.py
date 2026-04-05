@@ -55,13 +55,12 @@ if __name__ == "__main__":
         bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
         bp_axes_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_Axes.BP_Axes_C")
 
-        engine = game.engine_globals_service.get_engine()
+        engine = instance.engine_globals_service.get_engine()
         game_viewport_client = engine.GameViewport.get()
 
         gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
         player_controller = gameplay_statics.GetPlayerController(PlayerIndex=0)
-        player_camera_manager = player_controller.PlayerCameraManager.get()
-        view_target_pov = player_camera_manager.ViewTarget.POV.get()
+        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
 
         post_process_volume_settings = None
         post_process_volumes = game.unreal_service.find_actors_by_class(uclass="APostProcessVolume")
@@ -112,7 +111,7 @@ if __name__ == "__main__":
     with instance.end_frame(single_step=True):
         pass
 
-    instance.flush(num_frames=2) # two flush frames are occasionally needed on Windows
+    instance.step(num_frames=2) # two flush frames are occasionally needed on Windows
 
     spawn_y_positions = [200.0, 260.0, 320.0]
 
@@ -251,6 +250,6 @@ if __name__ == "__main__":
         terminate_camera(game=game, bp_camera_sensor=db_camera, component=db_component)
         terminate_camera(game=game, bp_camera_sensor=tb_camera, component=tb_component)
 
-    instance.flush() # needed after the last call to instance.end_frame(single_step=True)
+    instance.step() # needed after the last call to instance.end_frame(single_step=True)
 
     spear.log("Done.")

@@ -25,6 +25,7 @@
 class FProperty;
 class UFunction;
 class UStruct;
+class UWorld;
 
 //
 // SpCore/SpArray.h
@@ -61,21 +62,7 @@ struct clmdep_msgpack::adaptor::object_with_zone<SpPackedArray> {
     }
 };
 
-// SpArraySharedMemoryView
-
-template <> // needed to receive a custom type as an arg from the client
-struct clmdep_msgpack::adaptor::convert<SpArraySharedMemoryView> {
-    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpArraySharedMemoryView& sp_shared_memory_view) const {
-        std::map<std::string, clmdep_msgpack::object> map = MsgpackUtils::toMapOfMsgpackObjects(object);
-        SP_ASSERT(map.size() == 5);
-        sp_shared_memory_view.id_           = MsgpackUtils::to<std::string>(map.at("id"));
-        sp_shared_memory_view.num_bytes_    = MsgpackUtils::to<uint64_t>(map.at("num_bytes"));
-        sp_shared_memory_view.offset_bytes_ = MsgpackUtils::to<uint16_t>(map.at("offset_bytes"));
-        sp_shared_memory_view.name_         = MsgpackUtils::to<std::string>(map.at("name"));
-        sp_shared_memory_view.usage_flags_  = Unreal::getCombinedEnumFlagValueFromStringsAs<SpArraySharedMemoryUsageFlags, ESpArraySharedMemoryUsageFlags>(MsgpackUtils::to<std::vector<std::string>>(map.at("usage_flags")));
-        return object;
-    }
-};
+// SpArraySharedMemoryView (never received as an arg from the client)
 
 template <> // needed to send a custom type as a return value to the client
 struct clmdep_msgpack::adaptor::object_with_zone<SpArraySharedMemoryView> {
@@ -148,18 +135,7 @@ struct clmdep_msgpack::adaptor::object_with_zone<SpPropertyDesc> {
     }
 };
 
-// SpPropertyValue
-
-template <> // needed to receive a custom type as an arg from the client
-struct clmdep_msgpack::adaptor::convert<SpPropertyValue> {
-    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpPropertyValue& sp_property_value) const {
-        std::map<std::string, clmdep_msgpack::object> map = MsgpackUtils::toMapOfMsgpackObjects(object);
-        SP_ASSERT(map.size() == 2);
-        sp_property_value.value_   = MsgpackUtils::to<std::string>(map.at("value"));
-        sp_property_value.type_id_ = MsgpackUtils::to<std::string>(map.at("type_id"));
-        return object;
-    }
-};
+// SpPropertyValue (never received as an arg from the client)
 
 template <> // needed to send a custom type as a return value to the client
 struct clmdep_msgpack::adaptor::object_with_zone<SpPropertyValue> {
@@ -175,19 +151,7 @@ struct clmdep_msgpack::adaptor::object_with_zone<SpPropertyValue> {
 // SpServices/SpTypes.h
 //
 
-// SpFuncSignatureTypeDesc
-
-template <> // needed to receive a custom type as an arg from the client
-struct clmdep_msgpack::adaptor::convert<SpFuncSignatureTypeDesc> {
-    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpFuncSignatureTypeDesc& sp_func_signature_type_desc) const {
-        std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
-        SP_ASSERT(objects.size() == 3);
-        sp_func_signature_type_desc.type_names_    = MsgpackUtils::to<std::map<std::string, std::string>>(objects.at("type_names"));
-        sp_func_signature_type_desc.const_strings_ = MsgpackUtils::to<std::map<std::string, std::string>>(objects.at("const_strings"));
-        sp_func_signature_type_desc.ref_strings_   = MsgpackUtils::to<std::map<std::string, std::string>>(objects.at("ref_strings"));
-        return object;
-    }
-};
+// SpFuncSignatureTypeDesc (never received as an arg from the client)
 
 template <> // needed to send a custom type as a return value to the client
 struct clmdep_msgpack::adaptor::object_with_zone<SpFuncSignatureTypeDesc> {
@@ -200,19 +164,7 @@ struct clmdep_msgpack::adaptor::object_with_zone<SpFuncSignatureTypeDesc> {
     }
 };
 
-// SpFuncSignatureDesc
-
-template <> // needed to receive a custom type as an arg from the client
-struct clmdep_msgpack::adaptor::convert<SpFuncSignatureDesc> {
-    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpFuncSignatureDesc& sp_func_signature_desc) const {
-        std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
-        SP_ASSERT(objects.size() == 3);
-        sp_func_signature_desc.name_              = MsgpackUtils::to<std::string>(objects.at("name"));
-        sp_func_signature_desc.func_signature_    = MsgpackUtils::to<std::vector<SpFuncSignatureTypeDesc>>(objects.at("func_signature"));
-        sp_func_signature_desc.func_signature_id_ = MsgpackUtils::to<std::vector<int>>(objects.at("func_signature_id"));
-        return object;
-    }
-};
+// SpFuncSignatureDesc (never received as an arg from the client)
 
 template <> // needed to send a custom type as a return value to the client
 struct clmdep_msgpack::adaptor::object_with_zone<SpFuncSignatureDesc> {
@@ -248,19 +200,7 @@ struct clmdep_msgpack::adaptor::object_with_zone<SpFuture> {
     }
 };
 
-// SpStaticStructDesc
-
-template <> // needed to receive a custom type as an arg from the client
-struct clmdep_msgpack::adaptor::convert<SpStaticStructDesc> {
-    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpStaticStructDesc& static_struct_desc) const {
-        std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
-        SP_ASSERT(objects.size() == 3);
-        static_struct_desc.static_struct_ = MsgpackUtils::to<UStruct*>(objects.at("static_struct"));
-        static_struct_desc.name_          = MsgpackUtils::to<std::string>(objects.at("name"));
-        static_struct_desc.ufunctions_    = MsgpackUtils::toMap<UFunction*>(MsgpackUtils::toMapOfMsgpackObjects(objects.at("ufunctions")));
-        return object;
-    }
-};
+// SpStaticStructDesc (never received as an arg from the client)
 
 template <> // needed to send a custom type as a return value to the client
 struct clmdep_msgpack::adaptor::object_with_zone<SpStaticStructDesc> {
@@ -269,6 +209,21 @@ struct clmdep_msgpack::adaptor::object_with_zone<SpStaticStructDesc> {
         Std::insert(objects, "static_struct", MsgpackUtils::toMsgpackObject(static_struct_desc.static_struct_, object_with_zone));
         Std::insert(objects, "name",          MsgpackUtils::toMsgpackObject(static_struct_desc.name_,          object_with_zone));
         Std::insert(objects, "ufunctions",    MsgpackUtils::toMapMsgpackObject(static_struct_desc.ufunctions_, object_with_zone));
+        MsgpackUtils::setMsgpackObjectToMap(object_with_zone, objects);
+    }
+};
+
+// SpWorldDesc
+
+template <> // needed to send a custom type as a return value to the client
+struct clmdep_msgpack::adaptor::object_with_zone<SpWorldDesc> {
+    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpWorldDesc const& sp_world_desc) const {
+        std::map<std::string, clmdep_msgpack::object> objects;
+        Std::insert(objects, "world",            MsgpackUtils::toMsgpackObject(reinterpret_cast<uint64_t>(sp_world_desc.world_), object_with_zone));
+        Std::insert(objects, "world_id",         MsgpackUtils::toMsgpackObject(sp_world_desc.world_id_,                         object_with_zone));
+        Std::insert(objects, "is_editor_world",  MsgpackUtils::toMsgpackObject(sp_world_desc.is_editor_world_,                  object_with_zone));
+        Std::insert(objects, "is_game_world",    MsgpackUtils::toMsgpackObject(sp_world_desc.is_game_world_,                    object_with_zone));
+        Std::insert(objects, "is_playing",       MsgpackUtils::toMsgpackObject(sp_world_desc.is_playing_,                       object_with_zone));
         MsgpackUtils::setMsgpackObjectToMap(object_with_zone, objects);
     }
 };

@@ -32,7 +32,9 @@ class FuncSignatureRegistry
 
     //
     // If a type appears as an argument or a return value anywhere in our RPC interface, it needs to be
-    // listed here, and this list needs to match the one in python_ext/cpp/func_signature_registry.h.
+    // listed here, and these lists need to match the ones in:
+    //     python_ext/cpp/func_signature_registry.h
+    //     python/spear/utils/editor_utils.py
     //
 
     template <typename T> static int getTypeId() { SP_ASSERT(false); return -1; }
@@ -49,20 +51,22 @@ class FuncSignatureRegistry
     /* 10 */ template <> int getTypeId<std::vector<SpStaticStructDesc>>                         () { return 10; }
     /* 11 */ template <> int getTypeId<std::map<std::string, uint64_t>>                         () { return 11; }
     /* 12 */ template <> int getTypeId<std::map<std::string, std::string>>                      () { return 12; }
-    /* 13 */ template <> int getTypeId<std::map<std::string, SpPropertyValue>>                  () { return 13; }
-    /* 14 */ template <> int getTypeId<std::map<std::string, SpArraySharedMemoryView>>          () { return 14; }
-    /* 15 */ template <> int getTypeId<std::map<std::string, SpPackedArray>>                    () { return 15; }
-    /* 16 */ template <> int getTypeId<std::map<std::string, std::vector<SpFuncSignatureDesc>>> () { return 16; }
-    /* 17 */ template <> int getTypeId<SpPropertyDesc>                                          () { return 17; }
-    /* 18 */ template <> int getTypeId<SpPropertyValue>                                         () { return 18; }
-    /* 19 */ template <> int getTypeId<SpArraySharedMemoryView>                                 () { return 19; }
-    /* 20 */ template <> int getTypeId<SpPackedArray>                                           () { return 20; }
-    /* 21 */ template <> int getTypeId<SpFuncDataBundle>                                        () { return 21; }
-    /* 22 */ template <> int getTypeId<SpFuture>                                                () { return 22; }
-    /* 23 */ template <> int getTypeId<SpStaticStructDesc>                                      () { return 23; }
+    /* 13 */ template <> int getTypeId<std::map<std::string, std::vector<SpFuncSignatureDesc>>> () { return 13; }
+    /* 14 */ template <> int getTypeId<std::map<std::string, SpPropertyValue>>                  () { return 14; }
+    /* 15 */ template <> int getTypeId<std::map<std::string, SpArraySharedMemoryView>>          () { return 15; }
+    /* 16 */ template <> int getTypeId<std::map<std::string, SpPackedArray>>                    () { return 16; }
+    /* 17 */ template <> int getTypeId<std::map<std::string, SpWorldDesc>>                      () { return 17; }
+    /* 18 */ template <> int getTypeId<SpPropertyDesc>                                          () { return 18; }
+    /* 19 */ template <> int getTypeId<SpPropertyValue>                                         () { return 19; }
+    /* 20 */ template <> int getTypeId<SpArraySharedMemoryView>                                 () { return 20; }
+    /* 21 */ template <> int getTypeId<SpPackedArray>                                           () { return 21; }
+    /* 22 */ template <> int getTypeId<SpFuncDataBundle>                                        () { return 22; }
+    /* 23 */ template <> int getTypeId<SpFuture>                                                () { return 23; }
+    /* 24 */ template <> int getTypeId<SpStaticStructDesc>                                      () { return 24; }
+    /* 25 */ template <> int getTypeId<SpWorldDesc>                                             () { return 25; }
 
     inline static std::vector<SpFuncSignatureTypeDesc> s_func_signature_type_descs_ = {
-        //       type names,                                                                                                                                                   const strings,              ref strings
+        //                   type names,                                                                                                                                       const strings,              ref strings
         /*  0 */ getTypeDesc({{"python_ext", "void"},                                                      {"entry_point", "void"}},                                           {{"python_ext", ""}},       {{"python_ext", ""}}),
         /*  1 */ getTypeDesc({{"python_ext", "bool"},                                                      {"entry_point", "bool"}},                                           {{"python_ext", ""}},       {{"python_ext", ""}}),
         /*  2 */ getTypeDesc({{"python_ext", "float"},                                                     {"entry_point", "float"}},                                          {{"python_ext", ""}},       {{"python_ext", ""}}),
@@ -76,17 +80,19 @@ class FuncSignatureRegistry
         /* 10 */ getTypeDesc({{"python_ext", "std::vector<StaticStructDesc>"},                             {"entry_point", "vector_of_static_struct_desc"}},                   {{"python_ext", "const "}}, {{"python_ext", "&"}}),
         /* 11 */ getTypeDesc({{"python_ext", "std::map<std::string, uint64_t>"},                           {"entry_point", "map_of_string_to_uint64"}},                        {{"python_ext", "const "}}, {{"python_ext", "&"}}),
         /* 12 */ getTypeDesc({{"python_ext", "std::map<std::string, std::string>"},                        {"entry_point", "map_of_string_to_string"}},                        {{"python_ext", "const "}}, {{"python_ext", "&"}}),
-        /* 13 */ getTypeDesc({{"python_ext", "std::map<std::string, PropertyValue>"},                      {"entry_point", "map_of_string_to_property_value"}},                {{"python_ext", "const "}}, {{"python_ext", "&"}}),
-        /* 14 */ getTypeDesc({{"python_ext", "std::map<std::string, SharedMemoryView>"},                   {"entry_point", "map_of_string_to_shared_memory_view"}},            {{"python_ext", "const "}}, {{"python_ext", "&"}}),
-        /* 15 */ getTypeDesc({{"python_ext", "std::map<std::string, PackedArray>"},                        {"entry_point", "map_of_string_to_packed_array"}},                  {{"python_ext", "const "}}, {{"python_ext", "&"}}),
-        /* 16 */ getTypeDesc({{"python_ext", "std::map<std::string, std::vector<FuncSignatureTypeDesc>>"}, {"entry_point", "map_of_string_to_vector_of_func_signature_desc"}}, {{"python_ext", "const "}}, {{"python_ext", "&"}}),
-        /* 17 */ getTypeDesc({{"python_ext", "PropertyDesc"},                                              {"entry_point", "property_desc"}},                                  {{"python_ext", "const "}}, {{"python_ext", "&"}}),
-        /* 18 */ getTypeDesc({{"python_ext", "PropertyValue"},                                             {"entry_point", "property_value"}},                                 {{"python_ext", "const "}}, {{"python_ext", "&"}}),
-        /* 19 */ getTypeDesc({{"python_ext", "SharedMemoryView"},                                          {"entry_point", "shared_memory_view"}},                             {{"python_ext", "const "}}, {{"python_ext", "&"}}),
-        /* 20 */ getTypeDesc({{"python_ext", "PackedArray"},                                               {"entry_point", "packed_array"}},                                   {{"python_ext", "const "}}, {{"python_ext", "&"}}),
-        /* 21 */ getTypeDesc({{"python_ext", "DataBundle"},                                                {"entry_point", "data_bundle"}},                                    {{"python_ext", "const "}}, {{"python_ext", "&"}}),
-        /* 22 */ getTypeDesc({{"python_ext", "Future"},                                                    {"entry_point", "future"}},                                         {{"python_ext", "const "}}, {{"python_ext", "&"}}),
-        /* 23 */ getTypeDesc({{"python_ext", "StaticStructDesc"},                                          {"entry_point", "static_struct_desc"}},                             {{"python_ext", "const "}}, {{"python_ext", "&"}})};
+        /* 13 */ getTypeDesc({{"python_ext", "std::map<std::string, std::vector<FuncSignatureTypeDesc>>"}, {"entry_point", "map_of_string_to_vector_of_func_signature_desc"}}, {{"python_ext", "const "}}, {{"python_ext", "&"}}),
+        /* 14 */ getTypeDesc({{"python_ext", "std::map<std::string, PropertyValue>"},                      {"entry_point", "map_of_string_to_property_value"}},                {{"python_ext", "const "}}, {{"python_ext", "&"}}),
+        /* 15 */ getTypeDesc({{"python_ext", "std::map<std::string, SharedMemoryView>"},                   {"entry_point", "map_of_string_to_shared_memory_view"}},            {{"python_ext", "const "}}, {{"python_ext", "&"}}),
+        /* 16 */ getTypeDesc({{"python_ext", "std::map<std::string, PackedArray>"},                        {"entry_point", "map_of_string_to_packed_array"}},                  {{"python_ext", "const "}}, {{"python_ext", "&"}}),
+        /* 17 */ getTypeDesc({{"python_ext", "std::map<std::string, WorldDesc>"},                          {"entry_point", "map_of_string_to_world_desc"}},                    {{"python_ext", "const "}}, {{"python_ext", "&"}}),
+        /* 18 */ getTypeDesc({{"python_ext", "PropertyDesc"},                                              {"entry_point", "property_desc"}},                                  {{"python_ext", "const "}}, {{"python_ext", "&"}}),
+        /* 19 */ getTypeDesc({{"python_ext", "PropertyValue"},                                             {"entry_point", "property_value"}},                                 {{"python_ext", "const "}}, {{"python_ext", "&"}}),
+        /* 20 */ getTypeDesc({{"python_ext", "SharedMemoryView"},                                          {"entry_point", "shared_memory_view"}},                             {{"python_ext", "const "}}, {{"python_ext", "&"}}),
+        /* 21 */ getTypeDesc({{"python_ext", "PackedArray"},                                               {"entry_point", "packed_array"}},                                   {{"python_ext", "const "}}, {{"python_ext", "&"}}),
+        /* 22 */ getTypeDesc({{"python_ext", "DataBundle"},                                                {"entry_point", "data_bundle"}},                                    {{"python_ext", "const "}}, {{"python_ext", "&"}}),
+        /* 23 */ getTypeDesc({{"python_ext", "Future"},                                                    {"entry_point", "future"}},                                         {{"python_ext", "const "}}, {{"python_ext", "&"}}),
+        /* 24 */ getTypeDesc({{"python_ext", "StaticStructDesc"},                                          {"entry_point", "static_struct_desc"}},                             {{"python_ext", "const "}}, {{"python_ext", "&"}}),
+        /* 25 */ getTypeDesc({{"python_ext", "WorldDesc"},                                                 {"entry_point", "world_desc"}},                                     {{"python_ext", "const "}}, {{"python_ext", "&"}})};
 
 public:
     template <typename TFunc>

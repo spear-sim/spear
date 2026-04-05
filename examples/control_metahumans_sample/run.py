@@ -69,9 +69,6 @@ if __name__ == "__main__":
             for component_name in component_names:
                 os.makedirs(os.path.realpath(os.path.join(images_dir, component_name)), exist_ok=True)
 
-        # get player camera manager
-        player_camera_manager = player_controller.PlayerCameraManager.get()
-
         # configure components to match the viewport
         viewport_size_x = 1280
         viewport_size_y = 720
@@ -105,7 +102,7 @@ if __name__ == "__main__":
 
     # set camera pose and configure components to match the viewport
     with instance.begin_frame():
-        view_target_pov = player_camera_manager.ViewTarget.POV.get()
+        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
 
         bp_multi_view_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
         bp_multi_view_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])

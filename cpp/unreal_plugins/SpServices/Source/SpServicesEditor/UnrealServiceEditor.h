@@ -18,15 +18,13 @@ class UnrealServiceEditor : public Service
 {
 public:
     UnrealServiceEditor() = delete;
-    UnrealServiceEditor(CUnrealEntryPointBinder auto* unreal_entry_point_binder, Service::WorldFilter* world_filter) : Service("UnrealServiceEditor", world_filter)
+    UnrealServiceEditor(CUnrealEntryPointBinder auto* unreal_entry_point_binder)
     {
-        std::string service_name = getWorldTypeName() + ".unreal_service";
-
         //
         // Get editor subsystem, !WITH_EDITOR implementations in SpServices/UnrealService.h
         //
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread(service_name, "get_editor_subsystem_by_class",
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_editor_subsystem_by_class",
             [this](uint64_t& uclass) -> uint64_t {
                 return toUInt64(UnrealEditor::getEditorSubsystemByClass(toPtr<UClass>(uclass)));
             });

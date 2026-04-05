@@ -129,8 +129,7 @@ if __name__ == "__main__":
 
         # configure components to match the viewport (width, height, FOV, post-processing settings, etc)
         
-        player_camera_manager = player_controller.PlayerCameraManager.get()
-        view_target_pov = player_camera_manager.ViewTarget.POV.get()
+        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
 
         viewport_size_x = 1280
         viewport_size_y = 720
@@ -184,7 +183,7 @@ if __name__ == "__main__":
             gameplay_statics.SetGamePaused(bPaused=False)
 
             # set camera pose
-            view_target_pov = player_camera_manager.ViewTarget.POV.get()
+            view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
             bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
             bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
 
@@ -203,7 +202,7 @@ if __name__ == "__main__":
     for _ in range(num_frames_for_pcg_update):
         with instance.begin_frame():
             gameplay_statics.SetGamePaused(bPaused=False)
-            view_target_pov = player_camera_manager.ViewTarget.POV.get()
+            view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
             bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
             bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
         with instance.end_frame():
@@ -212,13 +211,13 @@ if __name__ == "__main__":
     # set camera pose
     with instance.begin_frame():
         gameplay_statics.SetGamePaused(bPaused=False)
-        view_target_pov = player_camera_manager.ViewTarget.POV.get()
+        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
         bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
         bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
     with instance.end_frame():
         pass
 
-    instance.flush(num_frames=175 - num_frames_for_pcg_update - num_frames_for_drone_update)
+    instance.step(num_frames=175 - num_frames_for_pcg_update - num_frames_for_drone_update)
 
     #
     # initialize frame counter

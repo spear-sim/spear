@@ -187,7 +187,7 @@ if __name__ == "__main__":
     with instance.end_frame(single_step=True):
         pass
 
-    instance.flush()
+    instance.step()
     instance.close()
 
     spear.log("Done.")

@@ -9,9 +9,12 @@
 #include <string>
 #include <vector>
 
+#include <Delegates/IDelegateInstance.h> // FDelegateHandle
+
 class FProperty;
 class UFunction;
 class UStruct;
+class UWorld;
 
 //
 // SpFuncSignatureTypeDesc and SpFuncSignatureDesc are helper structs for tracking the function signatures
@@ -52,4 +55,18 @@ struct SpStaticStructDesc
     UStruct* static_struct_ = nullptr;
     std::string name_;
     std::map<std::string, UFunction*> ufunctions_;
+};
+
+//
+// SpWorldDesc stores the state of a tracked UWorld.
+//
+
+struct SpWorldDesc
+{
+    UWorld* world_ = nullptr;
+    int64_t world_id_ = -1;
+    bool is_editor_world_ = false;
+    bool is_game_world_ = false;
+    bool is_playing_ = false;
+    FDelegateHandle world_begin_play_handle_;
 };

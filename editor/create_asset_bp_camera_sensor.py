@@ -132,12 +132,14 @@ engine_show_flag_settings["without_lighting"] = engine_show_flag_settings["witho
 ]
 
 #
-# Object IDs (same as without_lighting except we also disable PostProcessing and PostProcessMaterial)
+# Object IDs (same as without_lighting except we also disable:
+#     Atmosphere, PostProcessing, PostProcessMaterial
 #
 
 engine_show_flag_settings["object_ids"] = []
 engine_show_flag_settings["object_ids"] = engine_show_flag_settings["object_ids"] + \
 [
+    unreal.EngineShowFlagsSetting(show_flag_name="Atmosphere", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="PostProcessing", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="PostProcessMaterial", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="LensFlares", enabled=False),

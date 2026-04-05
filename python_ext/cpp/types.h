@@ -83,6 +83,15 @@ struct StaticStructDesc
     std::map<std::string, uint64_t> ufunctions_;
 };
 
+struct WorldDesc
+{
+    uint64_t world_ = 0;
+    int64_t world_id_ = -1;
+    bool is_editor_world_ = false;
+    bool is_game_world_ = false;
+    bool is_playing_ = false;
+};
+
 //
 // View types
 //

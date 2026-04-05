@@ -42,9 +42,9 @@ if __name__ == "__main__":
         os.makedirs(unreal_project_content_base_dir, exist_ok=True)
 
     # remove existing symlink
-    if spear.utils.path_utils.path_exists(unreal_project_content_dir):
+    if spear.tools.path_exists(unreal_project_content_dir):
         spear.log("File or directory or symlink exists, removing: ", unreal_project_content_dir)
-        spear.utils.path_utils.remove_path(unreal_project_content_dir)
+        spear.tools.remove_path(unreal_project_content_dir)
 
     # create new symlink
     if args.create:

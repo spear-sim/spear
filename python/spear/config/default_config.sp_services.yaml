@@ -95,27 +95,24 @@ SP_SERVICES:
     RECAST_NAV_MESH_DEFAULT_OBJECT_STRING: '''{}'''
 
   #
-  # InitializeGameWorldService
-  #
-
-  INITIALIZE_GAME_WORLD_SERVICE:
-
-    OVERRIDE_GAME_PAUSED: True
-    GAME_PAUSED: True
-
-    EXECUTE_CONSOLE_COMMANDS: False
-    CONSOLE_COMMANDS: []
-
-    FORCE_SKYLIGHT_UPDATE: True
-    FORCE_SKYLIGHT_UPDATE_MAX_DURATION_SECONDS: 1.0
-
-  #
   # InputService
   #
 
   # Print debug info when injecting input into InputService.
   INPUT_SERVICE:
     PRINT_INJECT_DEBUG_INFO: False
+
+  #
+  # WorldRegistryService
+  #
+
+  WORLD_REGISTRY_SERVICE:
+
+    OVERRIDE_GAME_PAUSED: True
+    GAME_PAUSED: True
+
+    FORCE_SKYLIGHT_UPDATE: True
+    FORCE_SKYLIGHT_UPDATE_MAX_DURATION_SECONDS: 1.0
 
   #
   # WorkQueue

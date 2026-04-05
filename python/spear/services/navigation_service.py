@@ -220,6 +220,7 @@ class NavigationService(spear.Service):
             navigation_data,
             num_paths,
             nav_agent_interface,
+            self.get_world(),
             packed_arrays,
             nav_agent_property_strings,
             path_finding_mode_strings)

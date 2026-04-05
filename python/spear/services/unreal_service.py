@@ -8,8 +8,14 @@ import spear
 
 
 class UnrealService(spear.Service):
+
     def __init__(self, entry_point_caller, sp_func_service, config, parent_service=None, create_children_services=True):
         assert sp_func_service.is_top_level_service()
+
+        self._static_struct_descs_by_name = None
+        self._static_class_descs_by_name = None
+        self._static_struct_descs = None
+        self._static_class_descs = None
 
         # do this after initializing local state
         super().__init__(
@@ -21,7 +27,7 @@ class UnrealService(spear.Service):
             create_children_services=create_children_services)
 
         # we need to account for the fact that we passed unreal_service=None above
-        self._private_unreal_service = self.get_top_level_service()
+        self.unreal_service = self.get_top_level_service()
 
     def create_child_service(self, entry_point_caller, sp_func_service=None, unreal_service=None, config=None):
         assert self.is_top_level_service() # this function should only be called from the top-level service
@@ -32,28 +38,37 @@ class UnrealService(spear.Service):
             parent_service=self,
             create_children_services=False)
 
-    def initialize(self):
+    def initialize(self, unreal_service=None):
         assert self.is_top_level_service() # this function should only be called on the top-level service
 
-        self._static_struct_descs = self.get_static_struct_descs()
-        self._static_class_descs = self.get_static_class_descs()
+        # cache data that will be constant for the life of the server, using data from an already initialized
+        # UnrealService instance if available
 
-        self.static_struct_descs_by_name = { desc.name: desc for desc in self._static_struct_descs }
-        self.static_class_descs_by_name = { desc.name: desc for desc in self._static_class_descs }
+        if unreal_service is None:
+            if self._static_struct_descs is None:
+                self._static_struct_descs = self.entry_point_caller.call_on_game_thread("get_static_struct_descs", None)
+            if self._static_class_descs is None:
+                self._static_class_descs = self.entry_point_caller.call_on_game_thread("get_static_class_descs", None)
+            if self._static_struct_descs_by_name is None:
+                self._static_struct_descs_by_name = { desc.name: desc for desc in self._static_struct_descs }
+            if self._static_class_descs_by_name is None:
+                self._static_class_descs_by_name = { desc.name: desc for desc in self._static_class_descs }
+        else:
+            self._static_struct_descs = unreal_service.get_static_struct_descs()
+            self._static_class_descs = unreal_service.get_static_class_descs()
+            self._static_struct_descs_by_name = unreal_service.get_static_struct_descs_by_name()
+            self._static_class_descs_by_name = unreal_service.get_static_class_descs_by_name()
+
+    def terminate(self):
+        pass
 
     #
     # Get static struct descs
     #
 
-    def get_static_struct_descs(self):
-        return self.entry_point_caller.call_on_game_thread("get_static_struct_descs", None)
-
     def get_static_struct_desc(self, ustruct, as_handle=None, as_unreal_struct=None):
         ustruct = self.to_ustruct(ustruct=ustruct)
         return self.entry_point_caller.call_on_game_thread("get_static_struct_desc", None, ustruct)
-
-    def get_static_class_descs(self):
-        return self.entry_point_caller.call_on_game_thread("get_static_class_descs", None)
 
     def get_static_class_desc(self, uclass, as_handle=None, as_unreal_class=None):
         uclass = self.to_uclass(uclass=uclass)
@@ -83,7 +98,7 @@ class UnrealService(spear.Service):
 
     def get_subsystem(self, subsystem_provider_class_name, subsystem_uclass, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         subsystem_uclass = self.to_uclass(uclass=subsystem_uclass)
-        result = self.entry_point_caller.call_on_game_thread("get_subsystem_by_class", None, subsystem_provider_class_name, subsystem_uclass)
+        result = self.entry_point_caller.call_on_game_thread("get_subsystem_by_class", None, subsystem_provider_class_name, self.get_world(), subsystem_uclass)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     #
@@ -130,7 +145,7 @@ class UnrealService(spear.Service):
             return self.to_handle_or_unreal_class(obj=result, as_handle=as_handle, as_unreal_class=as_unreal_class)
         elif isinstance(uclass, str):
             # uclass might not be in our cached dict if it is an interface
-            if uclass in self.get_top_level_service().static_class_descs_by_name:
+            if uclass in self.get_static_class_descs_by_name():
                 uclass = self.to_uclass(uclass=uclass)
                 result = self.entry_point_caller.get(obj=uclass)
                 return self.to_handle_or_unreal_class(obj=result, as_handle=as_handle, as_unreal_class=as_unreal_class)
@@ -444,7 +459,7 @@ class UnrealService(spear.Service):
             assert uobject == 0
 
         convert_func = lambda result: { k: spear.PropertyValue(value=spear.try_to_dict(json_string=v.value), type_id=v.type_id) for k, v in result.items() }
-        return self.entry_point_caller.call_on_game_thread("call_function", convert_func, uobject, uclass, ufunction, args, world_context_object)
+        return self.entry_point_caller.call_on_game_thread("call_function", convert_func, self.get_world(), uobject, uclass, ufunction, args, world_context_object)
 
     #
     # Spawn actor
@@ -470,7 +485,7 @@ class UnrealService(spear.Service):
 
         spawn_parameters = spear.to_json_string(obj=spawn_parameters)
 
-        result = self.entry_point_caller.call_on_game_thread("spawn_actor", None, uclass, location, rotation, spawn_parameters, object_flags)
+        result = self.entry_point_caller.call_on_game_thread("spawn_actor", None, self.get_world(), uclass, location, rotation, spawn_parameters, object_flags)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     #
@@ -600,7 +615,7 @@ class UnrealService(spear.Service):
     #
 
     def execute_console_command(self, command):
-        return self.entry_point_caller.call_on_game_thread("execute_console_command", None, command)
+        return self.entry_point_caller.call_on_game_thread("execute_console_command", None, self.get_world(), command)
 
     #
     # Stable name helper functions
@@ -643,11 +658,11 @@ class UnrealService(spear.Service):
     #
 
     def find_actors(self, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
-        result = self.entry_point_caller.call_on_game_thread("find_actors", None)
+        result = self.entry_point_caller.call_on_game_thread("find_actors", None, self.get_world())
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     def find_actors_as_dict(self, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
-        result = self.entry_point_caller.call_on_game_thread("find_actors_as_map", None)
+        result = self.entry_point_caller.call_on_game_thread("find_actors_as_map", None, self.get_world())
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     #
@@ -694,27 +709,27 @@ class UnrealService(spear.Service):
 
     def find_actors_by_name(self, actor_name, uclass, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         uclass = self.to_uclass(uclass=uclass)
-        result = self.entry_point_caller.call_on_game_thread("find_actors_by_name", None, uclass, actor_name)
+        result = self.entry_point_caller.call_on_game_thread("find_actors_by_name", None, uclass, self.get_world(), actor_name)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     def find_actors_by_tag(self, tag, uclass, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         uclass = self.to_uclass(uclass=uclass)
-        result = self.entry_point_caller.call_on_game_thread("find_actors_by_tag", None, uclass, tag)
+        result = self.entry_point_caller.call_on_game_thread("find_actors_by_tag", None, uclass, self.get_world(), tag)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     def find_actors_by_tags_any(self, tags, uclass, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         uclass = self.to_uclass(uclass=uclass)
-        result = self.entry_point_caller.call_on_game_thread("find_actors_by_tags_any", None, uclass, tags)
+        result = self.entry_point_caller.call_on_game_thread("find_actors_by_tags_any", None, uclass, self.get_world(), tags)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     def find_actors_by_tags_all(self, tags, uclass, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         uclass = self.to_uclass(uclass=uclass)
-        result = self.entry_point_caller.call_on_game_thread("find_actors_by_tags_all", None, uclass, tags)
+        result = self.entry_point_caller.call_on_game_thread("find_actors_by_tags_all", None, uclass, self.get_world(), tags)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     def find_actors_by_class(self, uclass, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         uclass = self.to_uclass(uclass=uclass)
-        result = self.entry_point_caller.call_on_game_thread("find_actors_by_class", None, uclass)
+        result = self.entry_point_caller.call_on_game_thread("find_actors_by_class", None, uclass, self.get_world())
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     #
@@ -723,27 +738,27 @@ class UnrealService(spear.Service):
 
     def find_actors_by_name_as_dict(self, actor_name, uclass, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         uclass = self.to_uclass(uclass=uclass)
-        result = self.entry_point_caller.call_on_game_thread("find_actors_by_name_as_map", None, uclass, actor_name)
+        result = self.entry_point_caller.call_on_game_thread("find_actors_by_name_as_map", None, uclass, self.get_world(), actor_name)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     def find_actors_by_tag_as_dict(self, tag, uclass, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         uclass = self.to_uclass(uclass=uclass)
-        result = self.entry_point_caller.call_on_game_thread("find_actors_by_tag_as_map", None, uclass, tag)
+        result = self.entry_point_caller.call_on_game_thread("find_actors_by_tag_as_map", None, uclass, self.get_world(), tag)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     def find_actors_by_tags_any_as_dict(self, tags, uclass, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         uclass = self.to_uclass(uclass=uclass)
-        result = self.entry_point_caller.call_on_game_thread("find_actors_by_tags_any_as_map", None, uclass, tags)
+        result = self.entry_point_caller.call_on_game_thread("find_actors_by_tags_any_as_map", None, uclass, self.get_world(), tags)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     def find_actors_by_tags_all_as_dict(self, tags, uclass, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         uclass = self.to_uclass(uclass=uclass)
-        result = self.entry_point_caller.call_on_game_thread("find_actors_by_tags_all_as_map", None, uclass, tags)
+        result = self.entry_point_caller.call_on_game_thread("find_actors_by_tags_all_as_map", None, uclass, self.get_world(), tags)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     def find_actors_by_class_as_dict(self, uclass, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         uclass = self.to_uclass(uclass=uclass)
-        result = self.entry_point_caller.call_on_game_thread("find_actors_by_class_as_map", None, uclass)
+        result = self.entry_point_caller.call_on_game_thread("find_actors_by_class_as_map", None, uclass, self.get_world())
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     #
@@ -752,27 +767,27 @@ class UnrealService(spear.Service):
 
     def find_actor_by_name(self, actor_name, uclass, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         uclass = self.to_uclass(uclass=uclass)
-        result = self.entry_point_caller.call_on_game_thread("find_actor_by_name", None, uclass, actor_name)
+        result = self.entry_point_caller.call_on_game_thread("find_actor_by_name", None, uclass, self.get_world(), actor_name)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     def find_actor_by_tag(self, tag, uclass, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         uclass = self.to_uclass(uclass=uclass)
-        result = self.entry_point_caller.call_on_game_thread("find_actor_by_tag", None, uclass, tag)
+        result = self.entry_point_caller.call_on_game_thread("find_actor_by_tag", None, uclass, self.get_world(), tag)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     def find_actor_by_tags_any(self, tags, uclass, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         uclass = self.to_uclass(uclass=uclass)
-        result = self.entry_point_caller.call_on_game_thread("find_actor_by_tags_any", None, uclass, tags)
+        result = self.entry_point_caller.call_on_game_thread("find_actor_by_tags_any", None, uclass, self.get_world(), tags)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     def find_actor_by_tags_all(self, tags, uclass, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         uclass = self.to_uclass(uclass=uclass)
-        result = self.entry_point_caller.call_on_game_thread("find_actor_by_tags_all", None, uclass, tags)
+        result = self.entry_point_caller.call_on_game_thread("find_actor_by_tags_all", None, uclass, self.get_world(), tags)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     def find_actor_by_class(self, uclass, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         uclass = self.to_uclass(uclass=uclass)
-        result = self.entry_point_caller.call_on_game_thread("find_actor_by_class", None, uclass)
+        result = self.entry_point_caller.call_on_game_thread("find_actor_by_class", None, uclass, self.get_world())
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     #
@@ -1146,7 +1161,7 @@ class UnrealService(spear.Service):
         elif isinstance(ustruct, numbers.Integral):
             return ustruct
         elif isinstance(ustruct, str):
-            return self.get_top_level_service().static_struct_descs_by_name[ustruct].static_struct
+            return self.get_static_struct_descs_by_name()[ustruct].static_struct
         elif isinstance(ustruct, spear.UnrealStruct):
             return ustruct.ustruct
         else:
@@ -1158,8 +1173,20 @@ class UnrealService(spear.Service):
         elif isinstance(uclass, numbers.Integral):
             return uclass
         elif isinstance(uclass, str):
-            return self.get_top_level_service().static_class_descs_by_name[uclass].static_struct
+            return self.get_static_class_descs_by_name()[uclass].static_struct
         elif isinstance(uclass, spear.UnrealClass):
             return uclass.uclass
         else:
             assert False
+
+    def get_static_struct_descs(self):
+        return self.get_top_level_service()._static_struct_descs
+
+    def get_static_class_descs(self):
+        return self.get_top_level_service()._static_class_descs
+
+    def get_static_struct_descs_by_name(self):
+        return self.get_top_level_service()._static_struct_descs_by_name
+
+    def get_static_class_descs_by_name(self):
+        return self.get_top_level_service()._static_class_descs_by_name

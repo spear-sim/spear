@@ -7,7 +7,7 @@
 
 #include <Editor.h>              // GEditor
 #include <Kismet/BlueprintFunctionLibrary.h>
-#include <LevelEditorViewport.h> // FLevelEditorViewportClient
+#include <LevelEditorViewport.h> // FLevelEditorViewportClient, GCurrentLevelEditingViewportClient
 
 #include "SpCore/Assert.h"
 
@@ -41,6 +41,12 @@ struct FSpLevelViewportClientDesc
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FIntPoint ViewportSize = FIntPoint::ZeroValue;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    bool bIsCurrentLevelEditing = false;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    bool bIsActive = false;
 };
 
 UCLASS()
@@ -57,6 +63,8 @@ public:
         for (FLevelEditorViewportClient* level_editor_viewport_client : GEditor->GetLevelViewportClients()) {
             SP_ASSERT(level_editor_viewport_client);
             SP_ASSERT(level_editor_viewport_client->Viewport);
+            SP_ASSERT(GEditor->GetActiveViewport());
+            SP_ASSERT(GEditor->GetActiveViewport()->GetClient());
 
             FSpLevelViewportClientDesc desc;
             desc.bIsPerspective = level_editor_viewport_client->IsPerspective();
@@ -67,7 +75,8 @@ public:
             desc.AspectRatio = level_editor_viewport_client->AspectRatio;
             desc.OrthoZoom = level_editor_viewport_client->GetOrthoZoom();
             desc.ViewportSize = level_editor_viewport_client->Viewport->GetSizeXY();
-
+            desc.bIsCurrentLevelEditing = level_editor_viewport_client == GCurrentLevelEditingViewportClient;
+            desc.bIsActive = level_editor_viewport_client == GEditor->GetActiveViewport()->GetClient();
             level_viewport_client_descs.Add(desc);
         }
 
