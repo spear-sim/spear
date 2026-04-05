@@ -65,7 +65,7 @@ void SpServices::StartupModule()
     // work queues maintained by EngineService. So we pass in the RPC server when constructing EngineService,
     // and we pass in EngineService when constructing all other services that need to bind entry points. We
     // need to call engine_service_->startup() explicitly.
-    engine_service_ = std::make_unique<EngineService<rpc::server>>(rpc_service_->rpc_server_.get());
+    engine_service_ = std::make_unique<EngineService<RpcServer>>(rpc_service_->rpc_server_.get());
     engine_service_->startup();
 
     // Construct services that don't require a reference to EngineService.

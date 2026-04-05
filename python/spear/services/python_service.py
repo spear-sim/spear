@@ -52,8 +52,6 @@ class PythonService(spear.Service):
         # wire up async variants so child services route through the appropriate async UnrealObject
         self.call_async._python_script_library = self._python_script_library.call_async
         self.send_async._python_script_library = self._python_script_library.send_async
-        self.call_async_fast._python_script_library = self._python_script_library.call_async_fast
-        self.send_async_fast._python_script_library = self._python_script_library.send_async_fast
 
     #
     # Functions for executing long-running editor scripts that span multiple frames.

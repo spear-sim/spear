@@ -5,12 +5,15 @@
 
 #pragma once
 
+#include <stdint.h> // uint16_t
+
 #include <exception> // std::current_exception, std::rethrow_exception
+#include <limits>    // std::numeric_limits
 #include <memory>    // std::unique_ptr
 
 #include "SpCore/Config.h"
 
-#include "SpServices/MsgpackRpc.h"
+#include "SpServices/RpcServer.h"
 #include "SpServices/Service.h"
 
 class RpcService : public Service
@@ -31,11 +34,13 @@ public:
             rpc_server_port = Config::get<int>("SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT");
         }
 
+        SP_ASSERT(rpc_server_port >= 0 && rpc_server_port <= std::numeric_limits<uint16_t>::max());
+
         try {
-            rpc_server_ = std::make_unique<rpc::server>(rpc_server_port);
+            rpc_server_ = std::make_unique<RpcServer>(static_cast<uint16_t>(rpc_server_port));
             SP_ASSERT(rpc_server_);
         } catch (...) {
-            SP_LOG("    ERROR: Couldn't create an RPC server. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables, or change SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT to a different unused port, and try launching again.");
+            SP_LOG("    ERROR: Couldn't create an RPC server. The Unreal Editor might be open already, or there might be another SPEAR executable running in the background. Close the Unreal Editor and other SPEAR executables, or change SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT to a different unused port, and try launching again.");
             std::rethrow_exception(std::current_exception());
         }
     }
@@ -51,12 +56,12 @@ public:
         // need to make sure that these entry points are not called after the services that bound them have
         // been destroyed.
         SP_ASSERT(rpc_server_);
-        rpc_server_->close_sessions();
+        rpc_server_->closeSessions();
         rpc_server_->stop();
         rpc_server_ = nullptr;
     }
 
-    std::unique_ptr<rpc::server> rpc_server_ = nullptr;
+    std::unique_ptr<RpcServer> rpc_server_ = nullptr;
 
 protected:
     void beginFrame() override
@@ -67,8 +72,7 @@ protected:
         if (!initialized_) {
             SP_LOG_CURRENT_FUNCTION();
             SP_LOG("    Launching RPC server...");
-            int num_worker_threads = 1;
-            rpc_server_->async_run(num_worker_threads);
+            rpc_server_->asyncRun();
             initialized_ = true;
         }
     }

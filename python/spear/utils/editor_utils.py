@@ -273,7 +273,6 @@ _to_data_type = {
 
 _to_dtype = {v: k for k, v in _to_data_type.items()}
 
-
 class Client:
     def __init__(self, address, port, timeout, reconnect_limit):
         assert spear.__can_import_msgpackrpc__
@@ -283,11 +282,17 @@ class Client:
             timeout=timeout,
             reconnect_limit=reconnect_limit)
 
-    def initialize(self, address, port):
-        assert False
+    def initialize(self):
+        result = self._client.call("engine_service.call_sync_on_worker_thread.get_entry_point_signature_descs")
+        entry_point_signature_descs = self._to_return_values(obj=result, return_as="map_of_string_to_vector_of_func_signature_desc")
+        self.entry_point_signature_descs = {}
+        for registry_name, descs in entry_point_signature_descs.items():
+            for desc in descs:
+                self.entry_point_signature_descs[desc.name] = desc
 
     def terminate(self):
         self._client.close()
+        self.entry_point_signature_descs = {}
 
     def get_timeout(self):
         assert False
@@ -298,58 +303,20 @@ class Client:
     def clear_timeout(self):
         assert False
 
-    def __getattr__(self, name):
-        if name.startswith("call_sync_on_worker_thread_as_"):
-            return_as = name.removeprefix("call_sync_on_worker_thread_as_")
-            return lambda func_name, *args: self._call_impl(name, func_name, return_as, *args)
-        elif name.startswith("call_sync_on_game_thread_as_"):
-            return_as = name.removeprefix("call_sync_on_game_thread_as_")
-            return lambda func_name, *args: self._call_impl(name, func_name, return_as, *args)
-        elif name.startswith("get_future_result_from_game_thread_as_"):
-            return_as = name.removeprefix("get_future_result_from_game_thread_as_")
-            return lambda future: self._call_impl(name, f"engine_service.get_future_result_from_game_thread_as_{return_as}", return_as, future)
-        elif name.startswith("call_async_fast_") or name.startswith("send_async_fast_") or name.startswith("get_future_result_fast_"):
-            assert False
-        else:
-            assert False
+    def ping(self):
+        result = self._client.call("engine_globals_service.call_sync_on_worker_thread.ping")
+        return self._to_str(obj=result)
 
-    def call_async_on_game_thread(self, func_name, *args):
-        return self._call_impl("call_async_on_game_thread", func_name, "future", *args)
-
-    def send_async_on_game_thread(self, func_name, *args):
-        return self._call_impl("send_async_on_game_thread", func_name, "void", *args)
-
-    def call_async_fast_on_worker_thread(self, func_name, *args):
-        assert False
-
-    def send_async_fast_on_worker_thread(self, func_name, *args):
-        assert False
-
-    def get_future_result_fast_from_worker_thread_as_uint64(self, future):
-        assert False
-
-    def call_async_fast_on_game_thread(self, func_name, *args):
-        assert False
-
-    def send_async_fast_on_game_thread(self, func_name, *args):
-        assert False
-
-    def get_future_result_fast_from_game_thread_as_uint64(self, future):
-        assert False
-
-    @staticmethod
-    def get_entry_point_signature_type_descs():
-        assert False
-
-    @staticmethod
-    def get_entry_point_signature_descs():
-        assert False
-
-    def _call_impl(self, method_name, func_name, return_as, *args):
+    def call(self, func_name, *args):
+        desc = self.entry_point_signature_descs[func_name]
+        return_as = desc.func_signature[0].type_names["entry_point"]
         if self.verbose_rpc_calls:
-            spear.log(f"[spear.editor.Client] Calling {method_name} -> {func_name}")
-        result = self._client.call(func_name, *[ self._to_args(arg) for arg in args ])
-        return self._to_return_values(obj=result, return_as=return_as)
+            spear.log(f"Calling: {func_name} : {args} -> {return_as}")
+        result = self._client.call(func_name, *[self._to_args(arg) for arg in args])
+        return_value = self._to_return_values(obj=result, return_as=return_as)
+        if self.verbose_rpc_calls:
+            spear.log(f"Obtained return value: {return_value}")
+        return return_value
 
     def _to_args(self, obj):
         if isinstance(obj, str):
@@ -377,6 +344,11 @@ class Client:
         else:
             assert False
         return {"data": data, "data_source": packed_array.data_source, "shape": packed_array.shape, "data_type": data_type, "shared_memory_name": packed_array.shared_memory_name}
+
+    #
+    # The return_as strings used in _to_return_values(...) need to match the "entry_point" values in:
+    #     cpp/unreal_plugins/SpServices/Source/SpServices/FuncSignatureRegistry.h
+    #
 
     def _to_return_values(self, obj, return_as):
         if return_as in ["void", "bool", "float", "int32", "int64", "uint64", "vector_of_uint64"]:

@@ -44,7 +44,7 @@ public:
     std::unique_ptr<RpcService> rpc_service_ = nullptr;
 
     // EngineService
-    std::unique_ptr<EngineService<rpc::server>> engine_service_ = nullptr;
+    std::unique_ptr<EngineService<RpcServer>> engine_service_ = nullptr;
 
     // Services that don't require a reference to EngineService
     std::unique_ptr<InitializeEngineService> initialize_engine_service_ = nullptr;

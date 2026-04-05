@@ -5,7 +5,6 @@
 
 import glob
 import inspect
-import itertools
 import os
 import psutil
 import spear
@@ -64,10 +63,6 @@ class Instance():
         # Initialize EngineService.
         self._engine_service = spear.EngineService(client=self._client, config=self._config)
         self._engine_service.initialize() # must be initialized immediately
-
-        # Now that EngineService is initialized, we can validate our client and server entry points.
-        if spear.__can_import_spear_ext__:
-            self._validate_client_and_server_entry_points()
 
         if spear.__can_import_unreal__:
             entry_point_caller_type = spear.EditorEntryPointCaller
@@ -725,7 +720,7 @@ class Instance():
                         port=self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT,
                         timeout=float(self._config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS),
                         reconnect_limit=int(self._config.SPEAR.INSTANCE.EDITOR_CLIENT_INTERNAL_RECONNECT_LIMIT))
-                connected = self._client.call_sync_on_worker_thread_as_string("engine_globals_service.call_sync_on_worker_thread.ping") == "ping" # self._engine_service hasn't been initialized yet
+                connected = self._client.ping() == "ping"
             except Exception as e:
                 spear.log("        Exception: ", e)
                 self._terminate_client(verbose=True, log_prefix="        ")
@@ -757,7 +752,7 @@ class Instance():
                             port=self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT,
                             timeout=float(self._config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS),
                             reconnect_limit=int(self._config.SPEAR.INSTANCE.EDITOR_CLIENT_INTERNAL_RECONNECT_LIMIT))
-                    connected = self._client.call_sync_on_worker_thread_as_string("engine_globals_service.call_sync_on_worker_thread.ping") == "ping" # self._engine_service hasn't been initialized yet
+                    connected = self._client.ping() == "ping"
                     break
 
                 except:
@@ -779,10 +774,12 @@ class Instance():
             self._terminate_client(verbose=True, log_prefix="        ")
             assert False
 
+        self._client.initialize() # self._engine_service hasn't been initialized yet
+
         if spear.__can_import_unreal__ or self._config.SPEAR.LAUNCH_MODE == "none":
             pass
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
-            pid = self._client.call_sync_on_worker_thread_as_int64("engine_globals_service.call_sync_on_worker_thread.get_current_process_id") # self._engine_service hasn't been initialized yet
+            pid = self._client.call("engine_globals_service.call_sync_on_worker_thread.get_current_process_id") # self._engine_service hasn't been initialized yet
             if pid == self._process.pid:
                 spear.log("        Validated engine_globals_service.call_sync_on_worker_thread.get_current_process_id: ", pid)
             else:            
@@ -799,100 +796,6 @@ class Instance():
         self._client.verbose_exceptions = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_EXCEPTIONS
 
         spear.log("        Finished initializing client.")
-
-
-    def _validate_client_and_server_entry_points(self):
-
-        assert spear.__can_import_spear_ext__
-
-        spear.log_current_function(prefix="    ")        
-        spear.log("        Validating client and server entry points...")
-
-        # Validate func signature type descs.
-
-        client_signature_type_descs = spear_ext.Client.get_entry_point_signature_type_descs()
-        server_signature_type_descs = self._engine_service.get_server_signature_type_descs()
-
-        valid = True
-        for c, s in itertools.zip_longest(client_signature_type_descs, server_signature_type_descs):
-            if c.type_names != s.type_names or c.const_strings != s.const_strings or c.ref_strings != s.ref_strings:
-                valid = False
-                spear.log(f"        ERROR: Mismatch between registered data types on the client and server.")
-                spear.log(f"        ERROR:     Type names:")
-                spear.log(f"        ERROR:         Client: {c.type_names}")
-                spear.log(f"        ERROR:         Server: {s.type_names}")
-                spear.log(f"        ERROR:     Const strings:")
-                spear.log(f"        ERROR:         Client: {c.const_strings}")
-                spear.log(f"        ERROR:         Server: {c.const_strings}")
-                spear.log(f"        ERROR:     Ref Strings:")
-                spear.log(f"        ERROR:         Client: {c.ref_strings}")
-                spear.log(f"        ERROR:         Server: {c.ref_strings}")
-
-        assert valid
-
-        def __get_func_signature_string(func_signature):
-            if len(func_signature) == 0:
-                assert False
-            elif len(func_signature) == 1:
-                func_signature_string = func_signature[0].type_names["python_ext"]
-            else:
-                return_value_string = func_signature[0].type_names["python_ext"]
-                args_string = ', '.join([ desc.const_strings['python_ext'] + desc.type_names['python_ext'] + desc.ref_strings['python_ext'] for desc in func_signature[1:] ])
-                func_signature_string = return_value_string + ", " + args_string
-            return func_signature_string
-
-        def __validate_entry_points(registry_name, client_signature_descs, server_signature_descs, get_client_func_name):
-
-            valid = True
-
-            # Search for server entry points that can't be called from the client.
-            for s in server_signature_descs:
-                found = False
-                func_signature_string = __get_func_signature_string(func_signature=s.func_signature)
-
-                for c in client_signature_descs:
-                    if c.name == get_client_func_name(s.func_signature) and c.func_signature_id == s.func_signature_id:
-                        if found:
-                            spear.log(f"        ERROR: Server entry point callable from multiple client functions: ", s.name)
-                            spear.log(f"        ERROR:     Function signature ({len(s.func_signature) - 1} args): <{func_signature_string}>")
-                            valid = False
-                        found = True
-
-                if not found:
-                    valid = False
-                    spear.log(f"        ERROR: Server entry point not callable from client: ", s.name)
-                    spear.log(f"        ERROR:     Function signature ({len(s.func_signature) - 1} args): <{func_signature_string}>")
-
-            # Search for client entry points that don't correspond to any server entry point.
-            for c in client_signature_descs:
-                found = False
-                func_signature_string = __get_func_signature_string(c.func_signature)
-
-                for s in server_signature_descs:
-                    if s.func_signature_id == c.func_signature_id:
-                        found = True
-                        break
-
-                if not found:
-                    valid = False
-                    spear.log(f"        ERROR: Client entry point does not correspond to any server entry point: {c.name} (registry_name={registry_name})")
-                    spear.log(f"        ERROR:     Function signature ({len(c.func_signature) - 1} args): <{func_signature_string}>")
-
-            return valid
-
-        client_signature_descs = spear_ext.Client.get_entry_point_signature_descs()
-        server_signature_descs = { registry_name: descs.values() for registry_name, descs in self._engine_service.get_server_signature_descs().items() }
-
-        valid = \
-            __validate_entry_points("call_sync_on_worker_thread",         client_signature_descs["call_sync_on_worker_thread"],         server_signature_descs["call_sync_on_worker_thread"],         lambda s: "call_sync_on_worker_thread_as_" + s[0].type_names["entry_point"]) and \
-            __validate_entry_points("call_sync_on_game_thread",           client_signature_descs["call_sync_on_game_thread"],           server_signature_descs["call_sync_on_game_thread"],           lambda s: "call_sync_on_game_thread_as_" + s[0].type_names["entry_point"]) and \
-            __validate_entry_points("call_async_on_game_thread",          client_signature_descs["call_async_on_game_thread"],          server_signature_descs["call_async_on_game_thread"],          lambda s: "call_async_on_game_thread") and \
-            __validate_entry_points("send_async_on_game_thread",          client_signature_descs["send_async_on_game_thread"],          server_signature_descs["send_async_on_game_thread"],          lambda s: "send_async_on_game_thread") and \
-            __validate_entry_points("get_future_result_from_game_thread", client_signature_descs["get_future_result_from_game_thread"], server_signature_descs["get_future_result_from_game_thread"], lambda s: "get_future_result_from_game_thread_as_" + s[0].type_names["entry_point"])
-
-        assert valid
-
-        spear.log("        Finished validating client and server entry points.")
 
 
     def _get_wait_until_info(self, wait, max_time_seconds, sleep_time_seconds, default_max_time_seconds, default_sleep_time_seconds):

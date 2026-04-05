@@ -8,10 +8,13 @@
 #include <map>
 #include <mutex> // std::lock_guard
 #include <string>
+#include <vector>
 
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Engine/World.h>                // UWorld::InitializationValues
+#include <HAL/IConsoleManager.h>         // IConsoleVariable
 #include <Kismet/GameplayStatics.h>
+#include <Misc/App.h>                    // FApp::GetDeltaTime
 
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
@@ -96,11 +99,23 @@ private:
         std::lock_guard<std::mutex> lock(mutex_);
 
         std::string name = Unreal::toStdString(world->GetPathName());
+
         if (Std::containsKey(world_descs_, name)) {
             SpWorldDesc& desc = world_descs_.at(name);
             world->OnWorldBeginPlay.Remove(desc.world_begin_play_handle_);
             desc.world_begin_play_handle_.Reset();
             Std::remove(world_descs_, name);
+        }
+
+        //
+        // If we're the last world to get cleaned up, then restore the skylight CVar.
+        //
+
+        if (Std::containsKey(skylight_state_, name)) {
+            Std::remove(skylight_state_, name);
+            if (skylight_state_.empty()) {
+                restoreSkylightCVar();
+            }
         }
     }
 
@@ -127,11 +142,85 @@ private:
 
             UGameplayStatics::SetGamePaused(desc.world_, game_paused);
         }
+
+        //
+        // Force skylight update for game worlds. This is necessary to work around an intermittent bug where
+        // some scenes sometimes appear too dark in standalone macOS builds.
+        //
+
+        if (desc.is_game_world_) {
+            bool force_skylight_update = true;
+            float max_duration_seconds = 1.0f;
+
+            if (Config::isInitialized()) {
+                force_skylight_update = Config::get<bool>("SP_SERVICES.WORLD_REGISTRY_SERVICE.FORCE_SKYLIGHT_UPDATE");
+                max_duration_seconds = Config::get<float>("SP_SERVICES.WORLD_REGISTRY_SERVICE.FORCE_SKYLIGHT_UPDATE_MAX_DURATION_SECONDS");
+            }
+
+            if (force_skylight_update) {
+                if (skylight_state_.empty()) {
+                    SP_LOG("    Forcing skylight updates every frame for ", max_duration_seconds, " seconds...");
+                    setSkylightCVar();
+                }
+                Std::insert(skylight_state_, name, max_duration_seconds);
+            }
+        }
+    }
+
+    void beginFrame() override
+    {
+        Service::beginFrame();
+
+        //
+        // Track how long we've been updating the skylight.
+        //
+
+        if (!skylight_state_.empty()) {
+            float delta_seconds = FApp::GetDeltaTime();
+
+            std::vector<std::string> completed;
+            for (auto& [name, remaining] : skylight_state_) {
+                remaining -= delta_seconds;
+                if (remaining <= 0.0f) {
+                    completed.push_back(name);
+                }
+            }
+
+            for (const auto& name : completed) {
+                Std::remove(skylight_state_, name);
+            }
+
+            if (skylight_state_.empty()) {
+                restoreSkylightCVar();
+            }
+        }
+    }
+
+    void setSkylightCVar()
+    {
+        IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr("r.SkylightUpdateEveryFrame"));
+        SP_ASSERT(cvar);
+        skylight_previous_cvar_value_ = cvar->GetInt();
+        cvar->Set(1);
+        SP_LOG("    Old value of r.SkylightUpdateEveryFrame: ", skylight_previous_cvar_value_);
+        SP_LOG("    New value of r.SkylightUpdateEveryFrame: 1");
+    }
+
+    void restoreSkylightCVar()
+    {
+        IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr("r.SkylightUpdateEveryFrame"));
+        SP_ASSERT(cvar);
+        cvar->Set(skylight_previous_cvar_value_);
+        SP_LOG("    Setting r.SkylightUpdateEveryFrame: ", skylight_previous_cvar_value_);
     }
 
     std::mutex mutex_;
     int64_t current_world_id_ = 1;
     std::map<std::string, SpWorldDesc> world_descs_;
+
+    // per-world remaining seconds for skylight update; cvar restored when map goes empty
+    int skylight_previous_cvar_value_ = -1;
+    std::map<std::string, float> skylight_state_;
 
     FDelegateHandle post_world_initialization_handle_;
     FDelegateHandle world_cleanup_handle_;

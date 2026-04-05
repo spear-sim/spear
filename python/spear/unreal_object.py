@@ -66,24 +66,6 @@ class UnrealObject:
                 static_class_desc=self._static_class_desc,
                 is_top_level=False)
 
-            self.call_async_fast = UnrealObject(
-                unreal_service=self._unreal_service.call_async_fast,
-                sp_func_service=self._sp_func_service.call_async_fast,
-                config=self._config,
-                uobject=self.uobject,
-                uclass=self.uclass,
-                static_class_desc=self._static_class_desc,
-                is_top_level=False)
-
-            self.send_async_fast = UnrealObject(
-                unreal_service=self._unreal_service.send_async_fast,
-                sp_func_service=self._sp_func_service.send_async_fast,
-                config=self._config,
-                uobject=self.uobject,
-                uclass=self.uclass,
-                static_class_desc=self._static_class_desc,
-                is_top_level=False)
-
         else:
             self.uobject = uobject
             self.uclass = uclass
@@ -111,8 +93,6 @@ class UnrealObject:
 
         self.call_async._set_sp_funcs(sp_func_names=self._sp_func_names, sp_func_shared_memory_handles=self._sp_func_shared_memory_handles)
         self.send_async._set_sp_funcs(sp_func_names=self._sp_func_names, sp_func_shared_memory_handles=self._sp_func_shared_memory_handles)
-        self.call_async_fast._set_sp_funcs(sp_func_names=self._sp_func_names, sp_func_shared_memory_handles=self._sp_func_shared_memory_handles)
-        self.send_async_fast._set_sp_funcs(sp_func_names=self._sp_func_names, sp_func_shared_memory_handles=self._sp_func_shared_memory_handles)
 
         self._initialized_sp_funcs = True
 
@@ -123,8 +103,6 @@ class UnrealObject:
 
         self.call_async._unset_sp_funcs()
         self.send_async._unset_sp_funcs()
-        self.call_async_fast._unset_sp_funcs()
-        self.send_async_fast._unset_sp_funcs()
 
         if self._sp_func_shared_memory_handles is not None:
             self._sp_func_service.destroy_shared_memory_handles_for_object(shared_memory_handles=self._sp_func_shared_memory_handles)
@@ -376,7 +354,7 @@ class UnrealObject:
             is_top_level=self._is_top_level)
 
     def __setattr__(self, attr_name, attr_value):
-        if attr_name.startswith("_") or attr_name in ["uobject", "uclass", "property_name", "call_async", "send_async", "call_async_fast", "send_async_fast"]:
+        if attr_name.startswith("_") or attr_name in ["uobject", "uclass", "property_name", "call_async", "send_async"]:
             super().__setattr__(attr_name, attr_value)
         else:
             assert self.uobject != 0

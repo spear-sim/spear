@@ -49,25 +49,15 @@ class Service():
             if spear.__can_import_unreal__:
                 call_async_entry_point_caller_type = EditorCallAsyncEntryPointCaller
                 send_async_entry_point_caller_type = EditorSendAsyncEntryPointCaller
-                call_async_fast_entry_point_caller_type = EditorCallAsyncFastEntryPointCaller
-                send_async_fast_entry_point_caller_type = EditorSendAsyncFastEntryPointCaller
             else:
                 call_async_entry_point_caller_type = CallAsyncEntryPointCaller
                 send_async_entry_point_caller_type = SendAsyncEntryPointCaller
-                call_async_fast_entry_point_caller_type = CallAsyncFastEntryPointCaller
-                send_async_fast_entry_point_caller_type = SendAsyncFastEntryPointCaller
 
             call_async_entry_point_caller = call_async_entry_point_caller_type(service_name=entry_point_caller._service_name, engine_service=entry_point_caller.engine_service)
             self.call_async = self.create_child_service(entry_point_caller=call_async_entry_point_caller, sp_func_service=sp_func_service, unreal_service=unreal_service, config=config)
 
             send_async_entry_point_caller = send_async_entry_point_caller_type(service_name=entry_point_caller._service_name, engine_service=entry_point_caller.engine_service)
             self.send_async = self.create_child_service(entry_point_caller=send_async_entry_point_caller, sp_func_service=sp_func_service, unreal_service=unreal_service, config=config)
-
-            call_async_fast_entry_point_caller = call_async_fast_entry_point_caller_type(service_name=entry_point_caller._service_name, engine_service=entry_point_caller.engine_service)
-            self.call_async_fast = self.create_child_service(entry_point_caller=call_async_fast_entry_point_caller, sp_func_service=sp_func_service, unreal_service=unreal_service, config=config)
-
-            send_async_fast_entry_point_caller = send_async_fast_entry_point_caller_type(service_name=entry_point_caller._service_name, engine_service=entry_point_caller.engine_service)
-            self.send_async_fast = self.create_child_service(entry_point_caller=send_async_fast_entry_point_caller, sp_func_service=sp_func_service, unreal_service=unreal_service, config=config)
 
     def create_child_service(self, entry_point_caller, sp_func_service=None, unreal_service=None, config=None):
         assert False # if a derived class passes create_children_services=True into the base constructor, then the derived class must override create_child_service(...)
@@ -136,21 +126,13 @@ class EntryPointCaller():
     def get(self, obj):
         assert False
 
-    def _get_return_as_string_for_worker_thread(self, func_name):
-        long_func_name = f"{self._service_name}.call_sync_on_worker_thread.{func_name}"
-        return self.engine_service.get_server_signature_descs()["call_sync_on_worker_thread"][long_func_name].func_signature[0].type_names["entry_point"]
-
-    def _get_return_as_string_for_game_thread(self, func_name):
-        long_func_name = f"{self._service_name}.call_sync_on_game_thread.{func_name}"
-        return self.engine_service.get_server_signature_descs()["call_sync_on_game_thread"][long_func_name].func_signature[0].type_names["entry_point"]
-
     def __repr__(self):
         return f"{self.__class__.__name__}(_service_name={self._service_name})"
 
 class CallSyncEntryPointCaller(EntryPointCaller):
     def call_on_worker_thread(self, func_name, convert_func, *args):
         long_func_name = f"{self._service_name}.call_sync_on_worker_thread.{func_name}"
-        return_value = self.engine_service.call_sync_on_worker_thread(long_func_name, *args)
+        return_value = self.engine_service.call_on_worker_thread(long_func_name, *args)
         if convert_func is not None:
             return convert_func(return_value)
         else:
@@ -158,7 +140,7 @@ class CallSyncEntryPointCaller(EntryPointCaller):
 
     def call_on_game_thread(self, func_name, convert_func, *args):
         long_func_name = f"{self._service_name}.call_sync_on_game_thread.{func_name}"
-        return_value = self.engine_service.call_sync_on_game_thread(long_func_name, *args)
+        return_value = self.engine_service.call_on_game_thread(long_func_name, *args)
         if convert_func is not None:
             return convert_func(return_value)
         else:
@@ -169,55 +151,26 @@ class CallSyncEntryPointCaller(EntryPointCaller):
 
 class CallAsyncEntryPointCaller(EntryPointCaller):
     def call_on_worker_thread(self, func_name, convert_func, *args):
-        assert False # worker thread entry points always execute synchronously unless we're using the fast path, so we should never be here
+        assert False # worker thread entry points always execute synchronously, so we should never be here
 
     def call_on_game_thread(self, func_name, convert_func, *args):
         long_func_name = f"{self._service_name}.call_async_on_game_thread.{func_name}"
-        return_as = self._get_return_as_string_for_game_thread(func_name)
-        future = self.engine_service.call_async_on_game_thread(long_func_name, *args) # non-fast path returns spear.Future
-        get_future_result_func = self.engine_service.get_future_result_from_game_thread
-        return Future(future=future, get_future_result_func=get_future_result_func, convert_func=convert_func, return_as=return_as, func_name=long_func_name)
+        sync_func_name = f"{self._service_name}.call_sync_on_game_thread.{func_name}"
+        return_as = self.engine_service.entry_point_signature_descs[sync_func_name].func_signature[0].type_names["entry_point"]
+        future = self.engine_service.call_on_game_thread(long_func_name, *args)
+        get_future_result_func = lambda future: self.engine_service.get_future_result_from_game_thread(future=future.future, return_as=return_as)
+        return Future(future=future, get_future_result_func=get_future_result_func, convert_func=convert_func, return_as=return_as)
 
     def get(self, obj):
-        return Future(future=None, get_future_result_func=lambda future: obj, convert_func=None, return_as=None, func_name=None)
+        return Future(future=None, get_future_result_func=lambda future: obj, convert_func=None, return_as=None)
 
 class SendAsyncEntryPointCaller(EntryPointCaller):
     def call_on_worker_thread(self, func_name, convert_func, *args):
-        assert False # worker thread entry points always execute synchronously unless we're using the fast path, so we should never be here
+        assert False # worker thread entry points always execute synchronously, so we should never be here
 
     def call_on_game_thread(self, func_name, convert_func, *args):
         long_func_name = f"{self._service_name}.send_async_on_game_thread.{func_name}"
-        self.engine_service.send_async_on_game_thread(long_func_name, *args)
-
-    def get(self, obj):
-        return None
-
-class CallAsyncFastEntryPointCaller(EntryPointCaller):
-    def call_on_worker_thread(self, func_name, convert_func, *args):
-        long_func_name = f"{self._service_name}.call_sync_on_worker_thread.{func_name}" # fast path calls call_sync variant for worker thread entry points
-        return_as = self._get_return_as_string_for_worker_thread(func_name)
-        future = self.engine_service.call_async_fast_on_worker_thread(long_func_name, *args) # fast path returns integer
-        get_future_result_func = self.engine_service.get_future_result_fast_from_worker_thread
-        return Future(future=future, get_future_result_func=get_future_result_func, convert_func=convert_func, return_as=return_as, func_name=long_func_name)
-
-    def call_on_game_thread(self, func_name, convert_func, *args):
-        long_func_name = f"{self._service_name}.call_async_on_game_thread.{func_name}" # fast path calls call_async variant for game thread entry points
-        return_as = self._get_return_as_string_for_game_thread(func_name)
-        future = self.engine_service.call_async_fast_on_game_thread(long_func_name, *args) # fast path returns integer
-        get_future_result_func = self.engine_service.get_future_result_fast_from_game_thread
-        return Future(future=future, get_future_result_func=get_future_result_func, convert_func=convert_func, return_as=return_as, func_name=long_func_name)
-
-    def get(self, obj):
-        return Future(future=None, get_future_result_func=lambda future: obj, convert_func=None, return_as=None, func_name=None)
-
-class SendAsyncFastEntryPointCaller(EntryPointCaller):
-    def call_on_worker_thread(self, func_name, convert_func, *args):
-        long_func_name = f"{self._service_name}.call_sync_on_worker_thread.{func_name}" # fast path calls call_sync variant for worker thread entry points
-        self.engine_service.send_async_fast_on_worker_thread(long_func_name, *args)
-
-    def call_on_game_thread(self, func_name, convert_func, *args):
-        long_func_name = f"{self._service_name}.send_async_on_game_thread.{func_name}" # fast path calls send_async variant for game thread entry points
-        self.engine_service.send_async_fast_on_game_thread(long_func_name, *args)
+        self.engine_service.call_on_game_thread(long_func_name, *args)
 
     def get(self, obj):
         return None
@@ -225,7 +178,7 @@ class SendAsyncFastEntryPointCaller(EntryPointCaller):
 class EditorEntryPointCaller(EntryPointCaller):
     def call_on_worker_thread(self, func_name, convert_func, *args):
         long_func_name = f"{self._service_name}.call_sync_on_worker_thread.{func_name}"
-        return_value = self.engine_service.call_sync_on_worker_thread(long_func_name, *args)
+        return_value = self.engine_service.call_on_worker_thread(long_func_name, *args)
         if convert_func is not None:
             return convert_func(return_value)
         else:
@@ -233,54 +186,35 @@ class EditorEntryPointCaller(EntryPointCaller):
 
     def call_on_game_thread(self, func_name, convert_func, *args):
         long_func_name = f"{self._service_name}.call_async_on_game_thread.{func_name}"
-        return_as = self._get_return_as_string_for_game_thread(func_name)
+        sync_func_name = f"{self._service_name}.call_sync_on_game_thread.{func_name}"
+        return_as = self.engine_service.entry_point_signature_descs[sync_func_name].func_signature[0].type_names["entry_point"]
 
         with self.engine_service.editor_transaction():
-            future = self.engine_service.call_async_on_game_thread(long_func_name, *args) # non-fast path returns spear.Future
+            future = self.engine_service.call_on_game_thread(long_func_name, *args)
 
-        get_future_result_func = self.engine_service.get_future_result_from_game_thread
-        return Future(future=future, get_future_result_func=get_future_result_func, convert_func=convert_func, return_as=return_as, func_name=long_func_name).get()
+        return_value = self.engine_service.get_future_result_from_game_thread(future=future, return_as=return_as)
+        if convert_func is not None:
+            return convert_func(return_value)
+        else:
+            return return_value
 
     def get(self, obj):
         return obj
 
 class EditorCallAsyncEntryPointCaller(EditorEntryPointCaller):
     def call_on_worker_thread(self, func_name, convert_func, *args):
-        assert False # worker thread entry points always execute synchronously unless we're using the fast path, so we should never be here
+        assert False # worker thread entry points always execute synchronously, so we should never be here
 
     def call_on_game_thread(self, func_name, convert_func, *args):
         call_on_game_thread_func = super().call_on_game_thread
-        return Future(future=None, get_future_result_func=lambda future: call_on_game_thread_func(func_name, convert_func, *args), convert_func=None, return_as=None, func_name=None)
+        return Future(future=None, get_future_result_func=lambda future: call_on_game_thread_func(func_name, convert_func, *args), convert_func=None, return_as=None)
 
     def get(self, obj):
-        return Future(future=None, get_future_result_func=lambda future: obj, convert_func=None, return_as=None, func_name=None)
+        return Future(future=None, get_future_result_func=lambda future: obj, convert_func=None, return_as=None)
 
 class EditorSendAsyncEntryPointCaller(EditorEntryPointCaller):
     def call_on_worker_thread(self, func_name, convert_func, *args):
-        assert False # worker thread entry points always execute synchronously unless we're using the fast path, so we should never be here
-
-    def call_on_game_thread(self, func_name, convert_func, *args):
-        super().call_on_game_thread(func_name, None, *args)
-
-    def get(self, obj):
-        return None
-
-class EditorCallAsyncFastEntryPointCaller(EditorEntryPointCaller):
-    def call_on_worker_thread(self, func_name, convert_func, *args):
-        long_func_name = f"{self._service_name}.call_sync_on_worker_thread.{func_name}" # fast path calls call_sync variant for worker thread entry points
-        return Future(future=None, get_future_result_func=lambda future: self.engine_service.call_sync_on_worker_thread(long_func_name, *args), convert_func=convert_func, return_as=None, func_name=long_func_name)
-
-    def call_on_game_thread(self, func_name, convert_func, *args):
-        call_on_game_thread_func = super().call_on_game_thread
-        return Future(future=None, get_future_result_func=lambda future: call_on_game_thread_func(func_name, convert_func, *args), convert_func=None, return_as=None, func_name=None)
-
-    def get(self, obj):
-        return Future(future=None, get_future_result_func=lambda future: obj, convert_func=None, return_as=None, func_name=None)
-
-class EditorSendAsyncFastEntryPointCaller(EditorEntryPointCaller):
-    def call_on_worker_thread(self, func_name, convert_func, *args):
-        long_func_name = f"{self._service_name}.call_sync_on_worker_thread.{func_name}" # fast path calls call_sync variant for worker thread entry points
-        self.engine_service.call_sync_on_worker_thread(long_func_name, *args)
+        assert False # worker thread entry points always execute synchronously, so we should never be here
 
     def call_on_game_thread(self, func_name, convert_func, *args):
         super().call_on_game_thread(func_name, None, *args)
@@ -320,12 +254,11 @@ class PropertyValue:
         return f"PropertyValue(value={self.value}, type_id={self.type_id})"
 
 class Future:
-    def __init__(self, future, get_future_result_func, convert_func, return_as, func_name):
+    def __init__(self, future, get_future_result_func, convert_func, return_as):
         self.future = future
         self.convert_func = convert_func
         self._get_future_result_func = get_future_result_func
         self._return_as = return_as
-        self._func_name = func_name
 
     def get(self):
         result = self._get_future_result_func(future=self)
@@ -335,7 +268,7 @@ class Future:
             return result
 
     def __repr__(self):
-        return f'Future(future={self.future}, convert_func={self.convert_func is not None}, _return_as="{self._return_as}", _func_name="{self._func_name}")'
+        return f'Future(future={self.future}, convert_func={self.convert_func is not None}, _return_as="{self._return_as}")'
 
 class ScriptStruct:
     def __init__(self, value, type_string):

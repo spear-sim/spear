@@ -22,6 +22,7 @@
 #include "client.h"
 #include "func_signature_registry.h"
 #include "msgpack_utils.h"
+#include "std.h"
 #include "types.h"
 
 //
@@ -141,6 +142,18 @@ struct clmdep_msgpack::adaptor::pack<PropertyDesc> {
     }
 };
 
+template <> // needed to send a custom type as an arg to the server
+struct clmdep_msgpack::adaptor::object_with_zone<PropertyDesc> {
+    void operator()(clmdep_msgpack::object::with_zone& o, const PropertyDesc& v) const {
+        o.type = clmdep_msgpack::type::MAP;
+        o.via.map.size = 3;
+        o.via.map.ptr = static_cast<clmdep_msgpack::object_kv*>(o.zone.allocate_align(sizeof(clmdep_msgpack::object_kv) * 3, MSGPACK_ZONE_ALIGNOF(clmdep_msgpack::object_kv)));
+        o.via.map.ptr[0].key = clmdep_msgpack::object("property",  o.zone); o.via.map.ptr[0].val = clmdep_msgpack::object(v.property_,  o.zone);
+        o.via.map.ptr[1].key = clmdep_msgpack::object("value_ptr", o.zone); o.via.map.ptr[1].val = clmdep_msgpack::object(v.value_ptr_, o.zone);
+        o.via.map.ptr[2].key = clmdep_msgpack::object("type_id",   o.zone); o.via.map.ptr[2].val = clmdep_msgpack::object(v.type_id_,   o.zone);
+    }
+};
+
 template <> // needed to receive a custom type as a return value from the server
 struct clmdep_msgpack::adaptor::convert<PropertyDesc> {
     clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, PropertyDesc& property_desc) const {
@@ -201,6 +214,20 @@ struct clmdep_msgpack::adaptor::pack<PackedArray> {
         packer.pack("data_type");          packer.pack(DataTypeUtils::getDataType(packed_array.data_.dtype()));
         packer.pack("shared_memory_name"); packer.pack(packed_array.shared_memory_name_);
         return packer;
+    }
+};
+
+template <> // needed to send a custom type as an arg to the server
+struct clmdep_msgpack::adaptor::object_with_zone<PackedArray> {
+    void operator()(clmdep_msgpack::object::with_zone& o, const PackedArray& v) const {
+        o.type = clmdep_msgpack::type::MAP;
+        o.via.map.size = 5;
+        o.via.map.ptr = static_cast<clmdep_msgpack::object_kv*>(o.zone.allocate_align(sizeof(clmdep_msgpack::object_kv) * 5, MSGPACK_ZONE_ALIGNOF(clmdep_msgpack::object_kv)));
+        o.via.map.ptr[0].key = clmdep_msgpack::object("data",               o.zone); o.via.map.ptr[0].val.type = clmdep_msgpack::type::BIN; o.via.map.ptr[0].val.via.bin.ptr = static_cast<const char*>(v.data_.data()); o.via.map.ptr[0].val.via.bin.size = static_cast<uint32_t>(v.data_.nbytes());
+        o.via.map.ptr[1].key = clmdep_msgpack::object("data_source",        o.zone); o.via.map.ptr[1].val = clmdep_msgpack::object(v.data_source_,                       o.zone);
+        o.via.map.ptr[2].key = clmdep_msgpack::object("shape",              o.zone); o.via.map.ptr[2].val = clmdep_msgpack::object(v.shape_,                              o.zone);
+        o.via.map.ptr[3].key = clmdep_msgpack::object("data_type",          o.zone); o.via.map.ptr[3].val = clmdep_msgpack::object(DataTypeUtils::getDataType(v.data_.dtype()), o.zone);
+        o.via.map.ptr[4].key = clmdep_msgpack::object("shared_memory_name", o.zone); o.via.map.ptr[4].val = clmdep_msgpack::object(v.shared_memory_name_,                o.zone);
     }
 };
 
@@ -355,6 +382,18 @@ struct clmdep_msgpack::adaptor::pack<DataBundle> {
     }
 };
 
+template <> // needed to send a custom type as an arg to the server via dynamic dispatch
+struct clmdep_msgpack::adaptor::object_with_zone<DataBundle> {
+    void operator()(clmdep_msgpack::object::with_zone& o, const DataBundle& v) const {
+        o.type = clmdep_msgpack::type::MAP;
+        o.via.map.size = 3;
+        o.via.map.ptr = static_cast<clmdep_msgpack::object_kv*>(o.zone.allocate_align(sizeof(clmdep_msgpack::object_kv) * 3, MSGPACK_ZONE_ALIGNOF(clmdep_msgpack::object_kv)));
+        o.via.map.ptr[0].key = clmdep_msgpack::object("packed_arrays",      o.zone); o.via.map.ptr[0].val = clmdep_msgpack::object(v.packed_arrays_,      o.zone);
+        o.via.map.ptr[1].key = clmdep_msgpack::object("unreal_obj_strings", o.zone); o.via.map.ptr[1].val = clmdep_msgpack::object(v.unreal_obj_strings_, o.zone);
+        o.via.map.ptr[2].key = clmdep_msgpack::object("info",               o.zone); o.via.map.ptr[2].val = clmdep_msgpack::object(v.info_,               o.zone);
+    }
+};
+
 template <> // needed to receive a custom type as a return value from the server
 struct clmdep_msgpack::adaptor::convert<DataBundleView> {
     clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, DataBundleView& data_bundle_view) const {
@@ -378,7 +417,7 @@ DataBundle FuncSignatureRegistry::convert<DataBundle>(const Client* client, Data
 };
 
 //
-// WorldDesc
+// WorldDesc (never sent as an arg to the server)
 //
 
 template <> // needed to receive a custom type as a return value from the server
@@ -439,6 +478,17 @@ struct clmdep_msgpack::adaptor::pack<Future> {
         packer.pack("future_ptr"); packer.pack(future.future_ptr_);
         packer.pack("type_id");    packer.pack(future.type_id_);
         return packer;
+    }
+};
+
+template <> // needed to send a custom type as an arg to the server via dynamic dispatch
+struct clmdep_msgpack::adaptor::object_with_zone<Future> {
+    void operator()(clmdep_msgpack::object::with_zone& o, const Future& v) const {
+        o.type = clmdep_msgpack::type::MAP;
+        o.via.map.size = 2;
+        o.via.map.ptr = static_cast<clmdep_msgpack::object_kv*>(o.zone.allocate_align(sizeof(clmdep_msgpack::object_kv) * 2, MSGPACK_ZONE_ALIGNOF(clmdep_msgpack::object_kv)));
+        o.via.map.ptr[0].key = clmdep_msgpack::object("future_ptr", o.zone); o.via.map.ptr[0].val = clmdep_msgpack::object(v.future_ptr_, o.zone);
+        o.via.map.ptr[1].key = clmdep_msgpack::object("type_id",    o.zone); o.via.map.ptr[1].val = clmdep_msgpack::object(v.type_id_,    o.zone);
     }
 };
 

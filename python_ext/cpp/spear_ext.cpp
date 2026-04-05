@@ -3,12 +3,6 @@
 // Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include <stdint.h> // int64_t, uint64_t
-
-#include <map>
-#include <string>
-#include <vector>
-
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/map.h>
 #include <nanobind/stl/string.h>
@@ -36,139 +30,15 @@ NB_MODULE(spear_ext, module)
     client_class.def("set_timeout",   &Client::setTimeout);
     client_class.def("clear_timeout", &Client::clearTimeout);
 
-    client_class.def_static("get_entry_point_signature_type_descs", &Client::getEntryPointSignatureTypeDescs);
-    client_class.def_static("get_entry_point_signature_descs",      &Client::getEntryPointSignatureDescs);
+    client_class.def("ping",                            &Client::ping);
+    client_class.def("get_entry_point_signature_descs", &Client::getEntryPointSignatureDescs);
+
+    client_class.def("call", &Client::call);
 
     client_class.def_rw("force_return_aligned_arrays", &Client::force_return_aligned_arrays_);
     client_class.def_rw("verbose_rpc_calls",           &Client::verbose_rpc_calls_);
     client_class.def_rw("verbose_allocations",         &Client::verbose_allocations_);
     client_class.def_rw("verbose_exceptions",          &Client::verbose_exceptions_);
-
-    // specializations for callSync, callAsync, callAsyncFast, sendAsync, sendAsyncFast, getFutureResult, getFutureResultFastFromWorkerThread, getFutureResultFastFromGameThread
-
-    Client::initializeEntryPointSignatures();
-
-    // Unfortunately, we need to register each individual entry point signature below, which is somewhat
-    // cumbersome. It is easy for this list of signatures to get out of sync with the entry points that are
-    // bound on the server, but as long as we register these two entry points below, then we will be able to
-    // detect any other function signature mismatches that arise between the client and server.
-
-    Client::registerWorkerThreadEntryPointSignature<std::vector<FuncSignatureTypeDesc>>                    (client_class);
-    Client::registerWorkerThreadEntryPointSignature<std::map<std::string, std::vector<FuncSignatureDesc>>> (client_class);
-
-    // worker thread entry points
-
-    // 0 args
-    Client::registerWorkerThreadEntryPointSignature<void>                             (client_class);
-    Client::registerWorkerThreadEntryPointSignature<bool>                             (client_class);
-    Client::registerWorkerThreadEntryPointSignature<int64_t>                          (client_class);
-    Client::registerWorkerThreadEntryPointSignature<uint64_t>                         (client_class);
-    Client::registerWorkerThreadEntryPointSignature<std::string>                      (client_class);
-    Client::registerWorkerThreadEntryPointSignature<std::map<std::string, WorldDesc>> (client_class);
-
-    // 1 args
-    Client::registerWorkerThreadEntryPointSignature<void,                              bool>               (client_class);
-    Client::registerWorkerThreadEntryPointSignature<void,                              const std::string&> (client_class);
-    Client::registerWorkerThreadEntryPointSignature<bool,                              bool>               (client_class);
-
-    // 3 args
-    Client::registerWorkerThreadEntryPointSignature<SharedMemoryView,                  const std::string&,  uint64_t,      const std::vector<std::string>&> (client_class);
-
-    // game thread entry points
-
-    // 0 args
-    Client::registerGameThreadEntryPointSignature<void>                                      (client_class);
-    Client::registerGameThreadEntryPointSignature<bool>                                      (client_class);
-    Client::registerGameThreadEntryPointSignature<std::vector<uint64_t>>                  (client_class);
-    Client::registerGameThreadEntryPointSignature<std::vector<StaticStructDesc>>          (client_class);
-    Client::registerGameThreadEntryPointSignature<std::map<std::string, uint64_t>>        (client_class);
-
-    // 1 args 
-    Client::registerGameThreadEntryPointSignature<void,                                    uint64_t>            (client_class);
-    Client::registerGameThreadEntryPointSignature<bool,                                    uint64_t>            (client_class);
-    Client::registerGameThreadEntryPointSignature<float,                                   uint64_t>            (client_class);
-    Client::registerGameThreadEntryPointSignature<int64_t,                                 uint64_t>            (client_class);
-    Client::registerGameThreadEntryPointSignature<uint64_t,                                uint64_t>            (client_class);
-    Client::registerGameThreadEntryPointSignature<uint64_t,                                const std::string&>  (client_class);
-    Client::registerGameThreadEntryPointSignature<std::string,                             uint64_t>            (client_class);
-    Client::registerGameThreadEntryPointSignature<std::vector<uint64_t>,                   uint64_t>            (client_class);
-    Client::registerGameThreadEntryPointSignature<std::vector<std::string>,                uint64_t>            (client_class);
-    Client::registerGameThreadEntryPointSignature<std::map<std::string, uint64_t>,         uint64_t>            (client_class);
-    Client::registerGameThreadEntryPointSignature<std::map<std::string, SharedMemoryView>, uint64_t>            (client_class);
-    Client::registerGameThreadEntryPointSignature<PropertyValue,                           const PropertyDesc&> (client_class);
-    Client::registerGameThreadEntryPointSignature<StaticStructDesc,                        uint64_t>            (client_class);
-
-    // 2 args
-    Client::registerGameThreadEntryPointSignature<void,                                    uint64_t,             bool>                            (client_class);
-    Client::registerGameThreadEntryPointSignature<void,                                    uint64_t,             uint64_t>                        (client_class);
-    Client::registerGameThreadEntryPointSignature<void,                                    uint64_t,             const std::string&>              (client_class);
-    Client::registerGameThreadEntryPointSignature<void,                                    PropertyDesc,         const std::string&>              (client_class);
-    Client::registerGameThreadEntryPointSignature<uint64_t,                                uint64_t,             bool>                            (client_class);
-    Client::registerGameThreadEntryPointSignature<uint64_t,                                uint64_t,             uint64_t>                        (client_class);
-    Client::registerGameThreadEntryPointSignature<std::string,                             uint64_t,             bool>                            (client_class);
-    Client::registerGameThreadEntryPointSignature<std::string,                             uint64_t,             uint64_t>                        (client_class);
-    Client::registerGameThreadEntryPointSignature<std::vector<uint64_t>,                   uint64_t,             bool>                            (client_class);
-    Client::registerGameThreadEntryPointSignature<std::vector<uint64_t>,                   uint64_t,             uint64_t>                        (client_class);
-    Client::registerGameThreadEntryPointSignature<std::vector<uint64_t>,                   uint64_t,             const std::vector<std::string>&> (client_class);
-    Client::registerGameThreadEntryPointSignature<std::map<std::string, uint64_t>,         uint64_t,             bool>                            (client_class);
-    Client::registerGameThreadEntryPointSignature<std::map<std::string, uint64_t>,         uint64_t,             uint64_t>                        (client_class);
-    Client::registerGameThreadEntryPointSignature<std::map<std::string, uint64_t>,         uint64_t,             const std::vector<std::string>&> (client_class);
-    Client::registerGameThreadEntryPointSignature<PropertyDesc,                            uint64_t,             const std::string&>              (client_class);
-    Client::registerGameThreadEntryPointSignature<PropertyValue,                           uint64_t,             const std::string&>              (client_class);
-
-    // 3 args
-    Client::registerGameThreadEntryPointSignature<void,                                    uint64_t,             bool,                             const std::vector<std::string>&>           (client_class);
-    Client::registerGameThreadEntryPointSignature<void,                                    uint64_t,             float,                            const std::vector<std::string>&>           (client_class);
-    Client::registerGameThreadEntryPointSignature<void,                                    uint64_t,             int32_t,                          const std::vector<std::string>&>           (client_class);
-    Client::registerGameThreadEntryPointSignature<void,                                    uint64_t,             uint64_t,                         const std::string&>                        (client_class);
-    Client::registerGameThreadEntryPointSignature<void,                                    uint64_t,             const std::string&,               float>                                     (client_class);
-    Client::registerGameThreadEntryPointSignature<void,                                    uint64_t,             const std::string&,               const std::string&>                        (client_class);
-    Client::registerGameThreadEntryPointSignature<void,                                    uint64_t,             const std::string&,               const std::vector<std::string>&>           (client_class);
-    Client::registerGameThreadEntryPointSignature<bool,                                    uint64_t,             bool,                             bool>                                      (client_class);
-    Client::registerGameThreadEntryPointSignature<uint64_t,                                uint64_t,             uint64_t,                         bool>                                      (client_class);
-    Client::registerGameThreadEntryPointSignature<uint64_t,                                uint64_t,             uint64_t,                         const std::string&>                        (client_class);
-    Client::registerGameThreadEntryPointSignature<uint64_t,                                uint64_t,             uint64_t,                         const std::vector<std::string>&>           (client_class);
-    Client::registerGameThreadEntryPointSignature<uint64_t,                                uint64_t,             const std::string&,               const std::vector<std::string>&>           (client_class);
-    Client::registerGameThreadEntryPointSignature<uint64_t,                                const std::string&,   uint64_t,                         uint64_t>                                  (client_class);
-    Client::registerGameThreadEntryPointSignature<std::vector<uint64_t>,                   uint64_t,             uint64_t,                         bool>                                      (client_class);
-    Client::registerGameThreadEntryPointSignature<std::vector<uint64_t>,                   uint64_t,             uint64_t,                         const std::string&>                        (client_class);
-    Client::registerGameThreadEntryPointSignature<std::vector<uint64_t>,                   uint64_t,             uint64_t,                         const std::vector<std::string>&>           (client_class);
-    Client::registerGameThreadEntryPointSignature<std::vector<uint64_t>,                   uint64_t,             const std::vector<std::string>&,  const std::vector<std::string>&>           (client_class);
-    Client::registerGameThreadEntryPointSignature<std::map<std::string, uint64_t>,         uint64_t,             uint64_t,                         bool>                                      (client_class);
-    Client::registerGameThreadEntryPointSignature<std::map<std::string, uint64_t>,         uint64_t,             uint64_t,                         const std::string&>                        (client_class);
-    Client::registerGameThreadEntryPointSignature<std::map<std::string, uint64_t>,         uint64_t,             uint64_t,                         const std::vector<std::string>&>           (client_class);
-    Client::registerGameThreadEntryPointSignature<std::map<std::string, uint64_t>,         uint64_t,             const std::vector<std::string>&,  const std::vector<std::string>&>           (client_class);
-    Client::registerGameThreadEntryPointSignature<PropertyDesc,                            uint64_t,             uint64_t,                         const std::string&>                        (client_class);
-    Client::registerGameThreadEntryPointSignature<PropertyValue,                           uint64_t,             uint64_t,                         const std::string&>                        (client_class);
-    Client::registerGameThreadEntryPointSignature<DataBundle,                              uint64_t,             const std::string&,               const DataBundle&>                         (client_class);
-
-    // 4 args
-    Client::registerGameThreadEntryPointSignature<void,                                    uint64_t,             uint64_t,                         const std::string&,                         const std::string&>                        (client_class);
-    Client::registerGameThreadEntryPointSignature<void,                                    uint64_t,             const std::string&,               const std::string&,                         const std::string&>                        (client_class);
-    Client::registerGameThreadEntryPointSignature<uint64_t,                                uint64_t,             uint64_t,                         uint64_t,                                   const std::string&>                        (client_class);
-    Client::registerGameThreadEntryPointSignature<uint64_t,                                uint64_t,             uint64_t,                         const std::string&,                         bool>                                      (client_class);
-    Client::registerGameThreadEntryPointSignature<uint64_t,                                uint64_t,             uint64_t,                         const std::vector<std::string>&,            bool>                                      (client_class);
-    Client::registerGameThreadEntryPointSignature<std::vector<uint64_t>,                   uint64_t,             uint64_t,                         const std::string&,                         bool>                                      (client_class);
-    Client::registerGameThreadEntryPointSignature<std::vector<uint64_t>,                   uint64_t,             uint64_t,                         const std::vector<std::string>&,            bool>                                      (client_class);
-    Client::registerGameThreadEntryPointSignature<std::map<std::string, uint64_t>,         uint64_t,             uint64_t,                         const std::string&,                         bool>                                      (client_class);
-    Client::registerGameThreadEntryPointSignature<std::map<std::string, uint64_t>,         uint64_t,             uint64_t,                         const std::vector<std::string>&,            bool>                                      (client_class);
-
-    // 5 args
-    Client::registerGameThreadEntryPointSignature<void,                                    uint64_t,             uint64_t,                         const std::string&,                         const std::vector<uint64_t>&,               const std::vector<uint64_t>&>              (client_class);
-    Client::registerGameThreadEntryPointSignature<PackedArray,                             uint64_t,             int64_t,                          uint64_t,                                   const std::map<std::string, PackedArray>&,  const PackedArray&>                        (client_class);
-
-    // 6 args
-    Client::registerGameThreadEntryPointSignature<uint64_t,                                uint64_t,             uint64_t,                         const std::string&,                         const std::string&,                         const std::string&,                         const std::vector<std::string>&>             (client_class);
-    Client::registerGameThreadEntryPointSignature<uint64_t,                                uint64_t,             uint64_t,                         const std::string&,                         const std::string&,                         const std::vector<std::string>&,            uint64_t>                                    (client_class);
-    Client::registerGameThreadEntryPointSignature<std::map<std::string, PropertyValue>,    uint64_t,             uint64_t,                         uint64_t,                                   uint64_t,                                   const std::map<std::string, std::string>&,  const std::string&>                          (client_class);
-
-    // 7 args
-    Client::registerGameThreadEntryPointSignature<void,                                    uint64_t,             const std::string&,               const std::string&,                         const std::string&,                         const std::string&,                         const std::vector<uint64_t>&,     const std::vector<uint64_t>&>    (client_class);
-
-    // 8 args
-    Client::registerGameThreadEntryPointSignature<uint64_t,                                uint64_t,             uint64_t,                         const std::string&,                         const std::string&,                         const std::vector<std::string>&,            uint64_t,                                   bool,                             uint64_t>                        (client_class);
-    Client::registerGameThreadEntryPointSignature<uint64_t,                                uint64_t,             uint64_t,                         const std::string&,                         const std::vector<std::string>&,            uint64_t,                                   bool,                             uint64_t,                         uint64_t>                        (client_class);
-    Client::registerGameThreadEntryPointSignature<std::map<std::string, PackedArray>,      uint64_t,             uint64_t,                         int64_t,                                    uint64_t,                                   uint64_t,                                   const std::map<std::string, PackedArray>&,  const std::vector<std::string>&,  const std::vector<std::string>&> (client_class);
 
     //
     // Custom types

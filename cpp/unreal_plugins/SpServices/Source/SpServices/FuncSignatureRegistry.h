@@ -32,7 +32,9 @@ class FuncSignatureRegistry
 
     //
     // If a type appears as an argument or a return value anywhere in our RPC interface, it needs to be
-    // listed here, and this list needs to match the one in python_ext/cpp/func_signature_registry.h.
+    // listed here, and these lists need to match the ones in:
+    //     python_ext/cpp/func_signature_registry.h
+    //     python/spear/utils/editor_utils.py
     //
 
     template <typename T> static int getTypeId() { SP_ASSERT(false); return -1; }
@@ -64,7 +66,7 @@ class FuncSignatureRegistry
     /* 25 */ template <> int getTypeId<SpWorldDesc>                                             () { return 25; }
 
     inline static std::vector<SpFuncSignatureTypeDesc> s_func_signature_type_descs_ = {
-        //       type names,                                                                                                                                                   const strings,              ref strings
+        //                   type names,                                                                                                                                       const strings,              ref strings
         /*  0 */ getTypeDesc({{"python_ext", "void"},                                                      {"entry_point", "void"}},                                           {{"python_ext", ""}},       {{"python_ext", ""}}),
         /*  1 */ getTypeDesc({{"python_ext", "bool"},                                                      {"entry_point", "bool"}},                                           {{"python_ext", ""}},       {{"python_ext", ""}}),
         /*  2 */ getTypeDesc({{"python_ext", "float"},                                                     {"entry_point", "float"}},                                          {{"python_ext", ""}},       {{"python_ext", ""}}),
