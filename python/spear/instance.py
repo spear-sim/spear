@@ -952,7 +952,7 @@ class Instance():
             pass
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:        
             try:
-                self.flush()
+                self.step()
                 self.engine_globals_service.request_exit(immediate_shutdown=False)
                 self._engine_service.terminate() # EngineService must be explicitly terminated, needs to be the last entry point that gets called
             except:
