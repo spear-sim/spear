@@ -163,12 +163,15 @@ void ASpDebugManager::Initialize()
             SpArrayUtils::setViews({action.getPtr(), action_shared.getPtr()}, args.packed_arrays_);
             UnrealObjUtils::setObjectPropertiesFromStrings({in_location.getPtr(), in_rotation.getPtr()}, args.unreal_obj_strings_);
 
-            SP_LOG("    action[0]:        ", Std::at(action.getView(), 0));
-            SP_LOG("    action[1]:        ", Std::at(action.getView(), 1));
-            SP_LOG("    action[2]:        ", Std::at(action.getView(), 2));
-            SP_LOG("    action_shared[0]: ", Std::at(action_shared.getView(), 0));
-            SP_LOG("    action_shared[1]: ", Std::at(action_shared.getView(), 1));
-            SP_LOG("    action_shared[2]: ", Std::at(action_shared.getView(), 2));
+            std::span<double> action_view        = action.getView();
+            std::span<double> action_shared_view = action_shared.getView();
+
+            SP_LOG("    action[0]:        ", Std::at(action_view, 0));
+            SP_LOG("    action[1]:        ", Std::at(action_view, 1));
+            SP_LOG("    action[2]:        ", Std::at(action_view, 2));
+            SP_LOG("    action_shared[0]: ", Std::at(action_shared_view, 0));
+            SP_LOG("    action_shared[1]: ", Std::at(action_shared_view, 1));
+            SP_LOG("    action_shared[2]: ", Std::at(action_shared_view, 2));
             SP_LOG("    in_location:      ", in_location.getObj().X, " ", in_location.getObj().Y, " ", in_location.getObj().Z);
             SP_LOG("    in_rotation:      ", in_rotation.getObj().Pitch, " ", in_rotation.getObj().Yaw, " ", in_rotation.getObj().Roll);
             SP_LOG("    info:             ", args.info_);
@@ -187,12 +190,15 @@ void ASpDebugManager::Initialize()
             out_rotation.setObj(FRotator(21.0, 22.0, 23.0));
             std::string info = "Success";
 
-            SP_LOG("    observation[0]:        ", Std::at(observation.getView(), 0));
-            SP_LOG("    observation[1]:        ", Std::at(observation.getView(), 1));
-            SP_LOG("    observation[2]:        ", Std::at(observation.getView(), 2));
-            SP_LOG("    observation_shared[0]: ", Std::at(observation_shared.getView(), 0));
-            SP_LOG("    observation_shared[1]: ", Std::at(observation_shared.getView(), 1));
-            SP_LOG("    observation_shared[2]: ", Std::at(observation_shared.getView(), 2));
+            std::span<double> observation_view        = observation.getView();
+            std::span<double> observation_shared_view = observation_shared.getView();
+
+            SP_LOG("    observation[0]:        ", Std::at(observation_view, 0));
+            SP_LOG("    observation[1]:        ", Std::at(observation_view, 1));
+            SP_LOG("    observation[2]:        ", Std::at(observation_view, 2));
+            SP_LOG("    observation_shared[0]: ", Std::at(observation_shared_view, 0));
+            SP_LOG("    observation_shared[1]: ", Std::at(observation_shared_view, 1));
+            SP_LOG("    observation_shared[2]: ", Std::at(observation_shared_view, 2));
             SP_LOG("    out_location:          ", out_location.getObj().X, " ", out_location.getObj().Y, " ", out_location.getObj().Z);
             SP_LOG("    out_rotation:          ", out_rotation.getObj().Pitch, " ", out_rotation.getObj().Yaw, " ", out_rotation.getObj().Roll);
             SP_LOG("    info:                  ", info);
@@ -573,12 +579,15 @@ void ASpDebugManager::CallSpFunc() const
         in_rotation.setObj(FRotator(9.0, 10.0, 11.0));
         std::string info = "Hello world";
 
-        SP_LOG("    action[0]:        ", Std::at(action.getView(), 0));
-        SP_LOG("    action[1]:        ", Std::at(action.getView(), 1));
-        SP_LOG("    action[2]:        ", Std::at(action.getView(), 2));
-        SP_LOG("    action_shared[0]: ", Std::at(action_shared.getView(), 0));
-        SP_LOG("    action_shared[1]: ", Std::at(action_shared.getView(), 1));
-        SP_LOG("    action_shared[2]: ", Std::at(action_shared.getView(), 2));
+        std::span<double> action_view        = action.getView();
+        std::span<double> action_shared_view = action_shared.getView();
+
+        SP_LOG("    action[0]:        ", Std::at(action_view, 0));
+        SP_LOG("    action[1]:        ", Std::at(action_view, 1));
+        SP_LOG("    action[2]:        ", Std::at(action_view, 2));
+        SP_LOG("    action_shared[0]: ", Std::at(action_shared_view, 0));
+        SP_LOG("    action_shared[1]: ", Std::at(action_shared_view, 1));
+        SP_LOG("    action_shared[2]: ", Std::at(action_shared_view, 2));
         SP_LOG("    in_location:      ", in_location.getObj().X, " ", in_location.getObj().Y, " ", in_location.getObj().Z);
         SP_LOG("    in_rotation:      ", in_rotation.getObj().Pitch, " ", in_rotation.getObj().Yaw, " ", in_rotation.getObj().Roll);
         SP_LOG("    info:             ", info);
@@ -602,12 +611,15 @@ void ASpDebugManager::CallSpFunc() const
         SpArrayUtils::setViews({observation.getPtr(), observation_shared.getPtr()}, return_values.packed_arrays_);
         UnrealObjUtils::setObjectPropertiesFromStrings({out_location.getPtr(), out_rotation.getPtr()}, return_values.unreal_obj_strings_);
 
-        SP_LOG("    observation[0]:        ", Std::at(observation.getView(), 0));
-        SP_LOG("    observation[1]:        ", Std::at(observation.getView(), 1));
-        SP_LOG("    observation[2]:        ", Std::at(observation.getView(), 2));
-        SP_LOG("    observation_shared[0]: ", Std::at(observation_shared.getView(), 0));
-        SP_LOG("    observation_shared[1]: ", Std::at(observation_shared.getView(), 1));
-        SP_LOG("    observation_shared[2]: ", Std::at(observation_shared.getView(), 2));
+        std::span<double> observation_view        = observation.getView();
+        std::span<double> observation_shared_view = observation_shared.getView();
+
+        SP_LOG("    observation[0]:        ", Std::at(observation_view, 0));
+        SP_LOG("    observation[1]:        ", Std::at(observation_view, 1));
+        SP_LOG("    observation[2]:        ", Std::at(observation_view, 2));
+        SP_LOG("    observation_shared[0]: ", Std::at(observation_shared_view, 0));
+        SP_LOG("    observation_shared[1]: ", Std::at(observation_shared_view, 1));
+        SP_LOG("    observation_shared[2]: ", Std::at(observation_shared_view, 2));
         SP_LOG("    out_location:          ", out_location.getObj().X, " ", out_location.getObj().Y, " ", out_location.getObj().Z);
         SP_LOG("    out_rotation:          ", out_rotation.getObj().Pitch, " ", out_rotation.getObj().Yaw, " ", out_rotation.getObj().Roll);
         SP_LOG("    info:                  ", return_values.info_);
