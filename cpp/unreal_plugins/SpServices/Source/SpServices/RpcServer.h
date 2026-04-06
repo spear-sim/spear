@@ -33,8 +33,8 @@ public:
     RpcServer(uint16_t port) : server_(port)
     {
         server_.bind("rpc_server.call", [this](const std::string& func_name, const clmdep_msgpack::object& args) -> clmdep_msgpack::object {
-            scratchpad_ = funcs_.call(func_name, args);
-            return scratchpad_.get();
+            object_handle_ = funcs_.call(func_name, args);
+            return object_handle_.get(); // need to keep the zone alive until rpclib serializes each response
         });
     }
 
@@ -45,13 +45,9 @@ public:
         bindImpl(name, func, FuncInfoUtils::getFuncInfo<TFunc>());
     }
 
-    void asyncRun() { server_.async_run(1); }
-    void stop() { server_.stop(); }
-    void closeSessions() { server_.close_sessions(); }
-
 private:
     template <typename TFunc, typename TReturn, typename... TArgs>
-    void bindImpl(const std::string& name, const TFunc& func, const FuncInfo<TReturn, TArgs...>&)
+    void bindImpl(const std::string& name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
     {
         funcs_.registerFunc(name, [func](const clmdep_msgpack::object& args) -> clmdep_msgpack::object_handle {
             std::tuple<std::remove_cvref_t<TArgs>...> args_unpacked_tuple;
@@ -68,7 +64,13 @@ private:
         });
     }
 
+public:
+    void asyncRun() { server_.async_run(1); } // we intentionally only support a single RPC worker thread
+    void stop() { server_.stop(); }
+    void closeSessions() { server_.close_sessions(); }
+
+private:
     rpc::server server_;
     FuncRegistry<clmdep_msgpack::object_handle, const clmdep_msgpack::object&> funcs_;
-    clmdep_msgpack::object_handle scratchpad_; // keeps the zone alive until rpclib serializes the response
+    clmdep_msgpack::object_handle object_handle_; // need to keep the zone alive until rpclib serializes each response
 };
