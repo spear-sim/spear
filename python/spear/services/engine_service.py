@@ -72,7 +72,27 @@ class EngineService():
             self._frame_state = "executing_frame"
             return
 
-        assert self._frame_state == "idle" or self._frame_state == "request_begin_next_frame"
+        if spear.__can_import_spear_ext__:
+            if self._frame_state in ["idle", "request_begin_next_frame"]:
+                pass
+            elif self._frame_state in ("executing_begin_frame", "request_begin_frame"):
+                spear.log("Unexpected frame state: ", self._frame_state)
+                spear.log("ERROR: Attempting to exit critical section by calling _execute_frame_impl and _end_frame_impl()...")
+                self._execute_frame_impl()
+                self._end_frame_impl()
+                assert False
+            elif self._frame_state in ("executing_frame", "executing_end_frame", "request_end_frame"):
+                spear.log("Unexpected frame state: ", self._frame_state)
+                spear.log("ERROR: Attempting to exit critical section by calling _execute_frame_impl and _end_frame_impl()...")
+                self._end_frame_impl()
+                assert False
+            elif self._frame_state == "error":
+                spear.log("Unexpected frame state: ", self._frame_state)
+                assert False
+            else:
+                spear.log(f"ERROR: Don't know how to recover from frame state '{self._frame_state}'")
+                assert False
+            self._frame_state = "idle"
 
         success = False
 
