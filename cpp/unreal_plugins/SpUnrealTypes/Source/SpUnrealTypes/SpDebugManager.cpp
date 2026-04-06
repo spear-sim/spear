@@ -163,8 +163,8 @@ void ASpDebugManager::Initialize()
             SpArrayUtils::setViews({action.getPtr(), action_shared.getPtr()}, args.packed_arrays_);
             UnrealObjUtils::setObjectPropertiesFromStrings({in_location.getPtr(), in_rotation.getPtr()}, args.unreal_obj_strings_);
 
-            std::span<double> action_view        = action.getView();
-            std::span<double> action_shared_view = action_shared.getView();
+            std::span<const double> action_view        = action.getView();
+            std::span<const double> action_shared_view = action_shared.getView();
 
             SP_LOG("    action[0]:        ", Std::at(action_view, 0));
             SP_LOG("    action[1]:        ", Std::at(action_view, 1));
@@ -611,8 +611,8 @@ void ASpDebugManager::CallSpFunc() const
         SpArrayUtils::setViews({observation.getPtr(), observation_shared.getPtr()}, return_values.packed_arrays_);
         UnrealObjUtils::setObjectPropertiesFromStrings({out_location.getPtr(), out_rotation.getPtr()}, return_values.unreal_obj_strings_);
 
-        std::span<double> observation_view        = observation.getView();
-        std::span<double> observation_shared_view = observation_shared.getView();
+        std::span<const double> observation_view        = observation.getView();
+        std::span<const double> observation_shared_view = observation_shared.getView();
 
         SP_LOG("    observation[0]:        ", Std::at(observation_view, 0));
         SP_LOG("    observation[1]:        ", Std::at(observation_view, 1));
