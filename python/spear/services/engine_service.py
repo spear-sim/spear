@@ -35,7 +35,7 @@ class EngineService():
         # cache data that will be constant for the life of the server
 
         if self.entry_point_signature_descs is None:
-            self.entry_point_signature_descs = dict(self._client.get_entry_point_signature_descs())
+            self.entry_point_signature_descs = self._client.get_entry_point_signature_descs()
 
         if self._byte_order is None:
             byte_order = self._client.call("engine_globals_service.call_sync_on_worker_thread.get_byte_order")
