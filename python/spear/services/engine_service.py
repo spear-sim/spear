@@ -92,7 +92,6 @@ class EngineService():
             else:
                 spear.log(f"ERROR: Don't know how to recover from frame state '{self._frame_state}'")
                 assert False
-            self._frame_state = "idle"
 
         success = False
 
