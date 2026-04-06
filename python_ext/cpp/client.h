@@ -105,7 +105,8 @@ public:
         clmdep_msgpack::object args_msgpack_array;
         args_msgpack_array.type = clmdep_msgpack::type::ARRAY;
         args_msgpack_array.via.array.size = static_cast<uint32_t>(args.size());
-        args_msgpack_array.via.array.ptr = static_cast<clmdep_msgpack::object*>(zone.allocate_align(sizeof(clmdep_msgpack::object) * args.size(), MSGPACK_ZONE_ALIGNOF(clmdep_msgpack::object)));
+        args_msgpack_array.via.array.ptr = static_cast<clmdep_msgpack::object*>(
+            zone.allocate_align(sizeof(clmdep_msgpack::object) * args.size(), MSGPACK_ZONE_ALIGNOF(clmdep_msgpack::object)));
 
         for (size_t i = 0; i < args.size(); i++) {
             args_msgpack_array.via.array.ptr[i] = FuncSignatureRegistry::getArg(zone, desc.func_signature_id_[i + 1], args[i]);
