@@ -562,6 +562,11 @@ def _terminate_actors(world_desc):
 
 def _log_instance_status():
 
+    _log(f"Instance: {'not ' if _instance is None else ''}available.")
+
+    if _instance is None:
+        return
+
     frame_state = _instance._engine_service._frame_state
     if frame_state != "idle":
         _log(f'ERROR: Unexpected frame state: "{frame_state}".')
