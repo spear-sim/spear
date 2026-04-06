@@ -123,7 +123,7 @@ public:
     bool verbose_allocations_         = false;
     bool verbose_exceptions_          = false; // owner should set to true once a connection to the server is established
 
-    const std::map<std::string, FuncSignatureDesc>& getEntryPointSignatureDescs() const
+    std::map<std::string, FuncSignatureDesc> getEntryPointSignatureDescs() const
     {
         return entry_point_signature_descs_;
     }
