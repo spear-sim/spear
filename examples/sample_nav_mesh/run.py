@@ -43,7 +43,7 @@ if __name__ == "__main__":
         # get navigation data
         navigation_data = sp_navigation_system_v1.GetNavDataForAgentName(NavigationSystem=navigation_system, AgentName="Default")
         spear.log("navigation_data: ", navigation_data)
-        pprint.pprint(navigation_data.get_properties())
+        pprint.pprint(navigation_data.get_properties(), depth=1)
 
         # sample random points
         points = game.navigation_service.get_random_points(navigation_data=navigation_data, num_points=num_points)

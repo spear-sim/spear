@@ -38,7 +38,7 @@
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealUtils.h"
 
-#include "SpUnrealTypes/SpPrimitiveProxyComponentManager.h"
+#include "SpUnrealTypes/SpMeshProxyComponentManager.h"
 
 FSpSceneViewExtensionBase::FSpSceneViewExtensionBase(const FAutoRegister& auto_register, USpSceneCaptureComponent2D* component) : FSceneViewExtensionBase(auto_register)
 {
@@ -203,28 +203,15 @@ void USpSceneCaptureComponent2D::Initialize()
         PostProcessSettings.AddBlendable(material_instance_dynamic_, 1.0f);
     }
 
-    if (bHidePrimitiveProxyComponentManagers) {
-        PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_RenderScenePrimitives; // use HiddenActors list
-        std::vector<ASpPrimitiveProxyComponentManager*> primitive_proxy_component_managers = UnrealUtils::findActorsByType<ASpPrimitiveProxyComponentManager>(GetWorld());
-        for (auto primitive_proxy_component_manager : primitive_proxy_component_managers) {
-            HiddenActors.Add(primitive_proxy_component_manager);
+    if (MeshProxyComponentManagerClass) {
+        PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_UseShowOnlyList;
+        for (auto manager : UnrealUtils::findActorsByClass<ASpMeshProxyComponentManager>(MeshProxyComponentManagerClass, GetWorld())) {
+            ShowOnlyActors.Add(manager);
         }
-    }
-
-    if (AllowedProxyComponentModalities.Num() > 0) {
-        HiddenActors.Empty(); // clear HiddenActors because all actors will be hidden by default
-        PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_UseShowOnlyList; // use ShowOnlyActors list
-
-        std::vector<std::string> allowed_modalities = Std::toVector<std::string>(
-            Unreal::toStdVector(AllowedProxyComponentModalities) |
-            std::views::transform([](auto& str) { return Unreal::toStdString(str); }));
-
-        std::vector<ASpPrimitiveProxyComponentManager*> primitive_proxy_component_managers = Std::toVector<ASpPrimitiveProxyComponentManager*>(
-            UnrealUtils::findActorsByType<ASpPrimitiveProxyComponentManager>(GetWorld()) |
-            std::views::filter([&allowed_modalities](auto manager) { return Std::contains(allowed_modalities, manager->getModalityName()); }));
-
-        for (auto primitive_proxy_component_manager : primitive_proxy_component_managers) {
-            ShowOnlyActors.Add(primitive_proxy_component_manager);
+    } else {
+        PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_RenderScenePrimitives;
+        for (auto manager : UnrealUtils::findActorsByType<ASpMeshProxyComponentManager>(GetWorld())) {
+            HiddenActors.Add(manager);
         }
     }
 

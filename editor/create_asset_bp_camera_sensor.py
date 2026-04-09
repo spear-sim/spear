@@ -379,7 +379,7 @@ blueprint_desc = \
             "channel_data_type": unreal.SpArrayDataType.U_INT8,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "show_flag_settings": engine_show_flag_settings["object_ids"],
-            "allowed_proxy_component_modalities": ["object_ids"],
+            "mesh_proxy_component_manager_class": unreal.SpObjectIdsProxyComponentManager,
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8,
             "override_texture_render_target_srgb": True,
@@ -398,7 +398,7 @@ blueprint_desc = \
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "show_flag_settings": engine_show_flag_settings["object_ids"],
-            "allowed_proxy_component_modalities": ["object_ids"],
+            "mesh_proxy_component_manager_class": unreal.SpObjectIdsProxyComponentManager,
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
         },
@@ -589,8 +589,8 @@ if __name__ == "__main__":
         if "fov_angle" in component_desc:
             sp_scene_capture_component_2d.set_editor_property(name="fov_angle", value=component_desc["fov_angle"])
 
-        if "allowed_proxy_component_modalities" in component_desc:
-            sp_scene_capture_component_2d.set_editor_property(name="allowed_proxy_component_modalities", value=component_desc["allowed_proxy_component_modalities"])
+        if "mesh_proxy_component_manager_class" in component_desc:
+            sp_scene_capture_component_2d.set_editor_property(name="mesh_proxy_component_manager_class", value=component_desc["mesh_proxy_component_manager_class"])
 
         # SceneCaptureComponent properties (optional)
 

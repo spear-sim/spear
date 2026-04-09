@@ -55,6 +55,7 @@ from .utils.func_utils import CallSyncEntryPointCaller, EditorEntryPointCaller, 
 
 # import entire utils files into child namespaces
 from .utils import pipeline_utils as pipeline
+from .utils import rendering_utils as rendering
 from .utils import tool_utils as tools
 
 # conditional imports
@@ -80,6 +81,7 @@ from .services.initialize_world_service import InitializeWorldService
 from .services.input_service import InputService
 from .services.navigation_service import NavigationService
 from .services.python_service import PythonService
+from .services.segmentation_service import SegmentationService
 from .services.shared_memory_service import SharedMemoryService
 from .services.sp_func_service import SpFuncService
 from .services.unreal_service import UnrealService
