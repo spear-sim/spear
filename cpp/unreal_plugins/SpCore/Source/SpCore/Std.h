@@ -651,6 +651,14 @@ public:
 
     template <typename TSet, typename TKey> requires
         CSetKeysAreConvertibleFrom<TSet, TKey>
+    static void insert(TSet& set, TKey&& key)
+    {
+        auto [itr, success] = set.insert(std::forward<TKey>(key));
+        SP_ASSERT(success); // will only succeed if key wasn't already present
+    }
+
+    template <typename TSet, typename TKey> requires
+        CSetKeysAreConvertibleFrom<TSet, TKey>
     static void remove(TSet& set, const TKey& key)
     {
         SP_ASSERT(set.contains(key));

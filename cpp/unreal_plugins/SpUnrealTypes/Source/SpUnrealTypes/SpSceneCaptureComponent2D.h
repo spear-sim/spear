@@ -33,6 +33,8 @@
 #include "SpCore/SpFuncComponent.h"
 #include "SpCore/Std.h"
 
+#include "SpUnrealTypes/SpMeshProxyComponentManager.h"
+
 #include "SpSceneCaptureComponent2D.generated.h"
 
 class FRDGBuilder;
@@ -162,10 +164,7 @@ public:
     bool bPrintReadbackSpinWaitInfo = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bHidePrimitiveProxyComponentManagers = true;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    TArray<FString> AllowedProxyComponentModalities;
+    TSubclassOf<ASpMeshProxyComponentManager> MeshProxyComponentManagerClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bUseSceneViewExtension = false;

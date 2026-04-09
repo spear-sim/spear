@@ -166,6 +166,12 @@ class Instance():
                 unreal_service=self.unreal_service,
                 config=self._config)
 
+            self.segmentation_service = spear.SegmentationService(
+                entry_point_caller=entry_point_caller_type(service_name=f"segmentation_service", engine_service=engine_service),
+                sp_func_service=self._sp_func_service,
+                unreal_service=self.unreal_service,
+                config=self._config)
+
         def get_unreal_object(self, uobject=None, uclass=None, with_sp_funcs=False):
             return spear.UnrealObject(
                 unreal_service=self.unreal_service,
@@ -189,6 +195,7 @@ class Instance():
         def _set_world_impl(self, world):
             self.unreal_service.set_world(world=world)
             self.navigation_service.set_world(world=world)
+            self.segmentation_service.set_world(world=world)
 
     class EditorWorldScopedServices(WorldScopedServices):
         def __init__(self, engine_service, shared_memory_service, world_registry_service, sp_func_service, config):

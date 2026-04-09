@@ -8,34 +8,19 @@ import spear
 
 
 class PythonService(spear.Service):
-    def __init__(self, entry_point_caller, sp_func_service, unreal_service, config, parent_service=None, create_children_services=True):
+    def __init__(self, entry_point_caller, sp_func_service, unreal_service, config):
         assert sp_func_service.is_top_level_service()
         assert unreal_service.is_top_level_service()
 
-        # do this after initializing local state
         super().__init__(
             entry_point_caller=entry_point_caller,
             sp_func_service=sp_func_service,
             unreal_service=unreal_service,
-            config=config,
-            parent_service=parent_service,
-            create_children_services=create_children_services)
+            config=config)
 
         self._python_script_library = None
 
-    def create_child_service(self, entry_point_caller, sp_func_service=None, unreal_service=None, config=None):
-        assert self.is_top_level_service()
-        return PythonService(
-            entry_point_caller=entry_point_caller,
-            sp_func_service=sp_func_service,
-            unreal_service=unreal_service,
-            config=config,
-            parent_service=self,
-            create_children_services=False)
-
     def initialize(self):
-        assert self.is_top_level_service()
-
         self._python_script_library = spear.UnrealObject(
             unreal_service=self.unreal_service,
             sp_func_service=self.sp_func_service,

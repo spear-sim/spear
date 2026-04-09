@@ -139,13 +139,13 @@ def get_object_desc(editor_property):
         return {
             "class": editor_property.__class__.__name__,
             "debug_info": {"str": str(editor_property)},
-            "name": get_long_name_for_actor(actor=editor_property)}
+            "long_name": get_long_name_for_actor(actor=editor_property)}
 
     elif isinstance(editor_property, unreal.ActorComponent):
         return {
             "class": editor_property.__class__.__name__,
             "debug_info": {"str": str(editor_property)},
-            "name": spear.editor.get_stable_name_for_component(component=editor_property)}
+            "stable_name": spear.editor.get_stable_name_for_component(component=editor_property)}
 
     # Otherwise, if the editor property is a StaticMesh, then recurse via get_object_descs(...).
     elif isinstance(editor_property, unreal.StaticMesh):
