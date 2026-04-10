@@ -35,14 +35,16 @@ class UActorComponent;
 class UWorld;
 
 //
-// ProxyComponentManager<TDerivedProxyComponentManager, TDerivedProxyComponentData> is a CRTP base class that manages the lifecycle of proxy components.
+// ProxyComponentManager<TDerivedProxyComponentManager, TDerivedProxyComponentData> is a CRTP base class that
+// manages the lifecycle of proxy components. It is not possible to enforce this contract using a concept in
+// our current CRTP design, so we can only enforce using a comment.
 //
 // TDerivedProxyComponentManager must provide:
 //   TDerivedProxyComponentData* registerProxyComponent(TComponent* proxy_component, TComponent* component)
 //   void invalidateProxyComponent(TDerivedProxyComponentData* derived_proxy_component_data)
 //   void unregisterProxyComponent(TDerivedProxyComponentData* derived_proxy_component_data)
-//   bool shouldRegisterProxyComponent(USceneComponent* component)
-//   bool shouldUnregisterProxyComponent(USceneComponent* proxy_component, TDerivedProxyComponentData* derived_proxy_component_data)
+//   bool shouldRegisterProxyComponent(TComponent* component)
+//   bool shouldUnregisterProxyComponent(TComponent* proxy_component, TDerivedProxyComponentData* derived_proxy_component_data)
 //   UWorld* getWorld()
 //   AActor* getOwner()
 //
@@ -50,6 +52,7 @@ class UWorld;
 template <typename TDerivedProxyComponentManager, typename TDerivedProxyComponentData>
 class ProxyComponentManager
 {
+
 public:
 
     struct ProxyComponentDesc
@@ -80,7 +83,7 @@ public:
             std::views::filter([](auto component) { return !Std::contains(Unreal::toStdString(component->GetName()), "SP_PROXY_COMPONENT"); }) |
             std::views::transform([this](auto component) { return std::make_pair(getLongComponentName(getPtr()->getWorld(), component), component); }));
 
-        // Find components to create and register: present in the world, of type TComponent, derived thinks it should be registered, and not yet registered.
+        // Find components to create and register: present in the world, of type TComponent, TDerivedProxyComponentManager thinks it should be registered, and not yet registered.
         std::map<std::string, TComponent*> components_to_create_and_register = Std::toMap<std::string, TComponent*>(
             non_proxy_components |
             std::views::filter([this](auto& pair) { auto& [name, component] = pair; return getPtr()->shouldRegisterProxyComponent(component); }) |
@@ -129,7 +132,7 @@ public:
         // Mark as unregistered and destroy components.
         markAsUnregisteredAndDestroyProxyComponentsImpl(proxy_components_to_mark_as_unregistered_and_destroy);
 
-        // Find components to mark as unregistered and destroy: registered, not already marked, of type TComponent, and derived thinks it should be unregistered.
+        // Find components to mark as unregistered and destroy: registered, not already marked, of type TComponent, and TDerivedProxyComponentManager thinks it should be unregistered.
         proxy_components_to_mark_as_unregistered_and_destroy = Std::toVector<std::string>(
             name_to_proxy_component_desc_map_ |
             std::views::filter([](auto& pair) { auto& [name, proxy_component_desc] = pair; return !proxy_component_desc.mark_as_unregistered_; }) |

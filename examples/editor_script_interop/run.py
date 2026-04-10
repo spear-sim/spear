@@ -56,7 +56,7 @@ if __name__ == "__main__":
     #
 
     result = editor.python_service.execute_string_across_frames(
-        string="eaf_output = eaf_input * 5",
+        string="eaf_output = eaf_input*5",
         execution_scope="Public",
         inputs={"eaf_input": 10},
         outputs=["eaf_output"])
@@ -94,7 +94,7 @@ if __name__ == "__main__":
 
         # execute a string with inputs and outputs (list form)
         result = editor.python_service.execute_string(
-            string="es_output = es_input * 3",
+            string="es_output = es_input*3",
             execution_scope="Public",
             inputs={"es_input": 7},
             outputs=["es_output"])
@@ -193,7 +193,7 @@ if __name__ == "__main__":
 
         # pass a SPEAR-side dict as an Unreal struct using spear.to_script_struct_expr
         vec_dict = {"X": 10.0, "Y": 20.0, "Z": 30.0}
-        result = editor.python_service.evaluate_expression(expression=f"{spear.to_script_struct_expr(value=vec_dict, type_string='unreal.Vector')}.get_editor_property('x')")
+        result = editor.python_service.evaluate_expression(expression=f"{spear.to_script_struct_expr(value=vec_dict, type_string='unreal.Vector')}.get_editor_property(name='x')")
         spear.log("Expecting float:        ", type(result), " ", result)
         assert result == 10.0
 

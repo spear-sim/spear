@@ -44,7 +44,7 @@ def get_actor_desc(actor):
     actor_name = get_long_name_for_actor(actor=actor)
     spear.log("Processing actor: ", actor_name)
 
-    root_component = actor.get_editor_property("root_component")
+    root_component = actor.get_editor_property(name="root_component")
     
     if root_component is not None:
         components_in_hierarchy = [root_component] + list(root_component.get_children_components(include_all_descendants=True))

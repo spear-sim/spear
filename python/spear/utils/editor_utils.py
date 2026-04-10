@@ -110,7 +110,7 @@ class ScriptRunner:
     @staticmethod
     def create_token():
         token = str(ScriptRunner._next_token_id)
-        ScriptRunner._next_token_id += 1
+        ScriptRunner._next_token_id = ScriptRunner._next_token_id + 1
         ScriptRunner._tokens[token] = False
         ScriptRunner._exceptions[token] = None
         ScriptRunner._log_messages[token] = []
@@ -633,7 +633,7 @@ def get_stable_name_for_component(component, include_stable_actor_name=False):
 def create_blueprint_asset(asset_name, package_dir, parent_class):
 
     blueprint_factory = unreal.BlueprintFactory()
-    blueprint_factory.set_editor_property("parent_class", parent_class)
+    blueprint_factory.set_editor_property(name="parent_class", value=parent_class)
 
     # asset_class should be set to None when creating a new blueprint asset
     blueprint_asset = asset_tools.create_asset(asset_name=asset_name, package_path=package_dir, asset_class=None, factory=blueprint_factory)
@@ -690,7 +690,7 @@ def get_subobject_desc_for_data_handle(subobject_data_handle):
     subobject_data = unreal.SubobjectDataBlueprintFunctionLibrary.get_data(data_handle=subobject_data_handle)
     assert unreal.SubobjectDataBlueprintFunctionLibrary.is_valid(data=subobject_data)
     subobject_object = unreal.SubobjectDataBlueprintFunctionLibrary.get_object(data=subobject_data)
-    return {"data_handle": subobject_data_handle, "data": subobject_data, "object": subobject_object}
+    return {"data_handle": subobject_data_handle, "data": subobject_data, "object": subobject_object, "name": subobject_object.get_name().removesuffix("_GEN_VARIABLE")}
 
 
 #
@@ -744,10 +744,10 @@ def get_filesystem_path_from_content_path(content_path):
 # Convert to a NumPy array from an unreal vector.
 def to_numpy_array_from_vector(vector, as_matrix=None):
     if as_matrix is None:
-        return np.array([vector.get_editor_property("x"), vector.get_editor_property("y"), vector.get_editor_property("z")])
+        return np.array([vector.get_editor_property(name="x"), vector.get_editor_property(name="y"), vector.get_editor_property(name="z")])
     else:
         assert as_matrix
-        return np.matrix([vector.get_editor_property("x"), vector.get_editor_property("y"), vector.get_editor_property("z")]).T
+        return np.matrix([vector.get_editor_property(name="x"), vector.get_editor_property(name="y"), vector.get_editor_property(name="z")]).T
 
 # Convert to an Unreal vector from a NumPy array or matrix.
 def to_vector_from_numpy_array(array):

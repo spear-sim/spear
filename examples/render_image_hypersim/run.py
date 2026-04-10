@@ -33,7 +33,7 @@ M_hypersim_camera_from_unreal_camera = np.array([[  0, 1, 0],
                                                  [ -1, 0, 0]], dtype=np.float32)
 
 # foreground_actor_name = "Meshes/05_chair/LivingRoom_Chair_02"
-foreground_actor_name = "Meshes/40_otherprop/Vase_03"
+# foreground_actor_name = "Meshes/40_otherprop/Vase_03"
 foreground_actor_name = "Meshes/35_lamp/Ceiling_LivingRoom_Lights"
 
 semantic_instance_categories = [
@@ -63,7 +63,7 @@ component_descs = \
         "name": "diffuse_and_specular_post_process_input_2",
         "long_name": "DefaultSceneRoot.diffuse_and_specular_post_process_input_2_",
         "spatial_supersampling_factor": 2,
-        "visualize_func": lambda data : np.clip(2.0*data[:,:,[0,1,2]], 0.0, 1.0)
+        "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
     },
     {
         "name": "diffuse_color",
@@ -75,7 +75,7 @@ component_descs = \
         "name": "diffuse_only_post_process_input_2",
         "long_name": "DefaultSceneRoot.diffuse_only_post_process_input_2_",
         "spatial_supersampling_factor": 2,
-        "visualize_func": lambda data : np.clip(2.0*data[:,:,[0,1,2]], 0.0, 1.0)
+        "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
     },
     {
         "name": "final_tone_curve_hdr",
@@ -93,7 +93,7 @@ component_descs = \
         "name": "lighting_only_post_process_input_2",
         "long_name": "DefaultSceneRoot.lighting_only_post_process_input_2_",
         "spatial_supersampling_factor": 2,
-        "visualize_func": lambda data : np.clip(2.0*data[:,:,[0,1,2]], 0.0, 1.0)
+        "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
     },
     {
         "name": "material_ao",
@@ -106,18 +106,6 @@ component_descs = \
         "long_name": "DefaultSceneRoot.metallic_",
         "spatial_supersampling_factor": 1,
         "visualize_func": lambda data : np.clip(data[:,:,[0,0,0]], 0.0, 1.0)
-    },
-    {
-        "name": "object_ids_float16",
-        "long_name": "DefaultSceneRoot.object_ids_float16_",
-        "spatial_supersampling_factor": 1,
-        "visualize_func": lambda data : spear.rendering.get_object_ids_float16_as_rgba(data)
-    },
-    {
-        "name": "object_ids_uint8",
-        "long_name": "DefaultSceneRoot.object_ids_uint8_",
-        "spatial_supersampling_factor": 1,
-        "visualize_func": lambda data : spear.rendering.get_object_ids_uint8_as_rgba(data)
     },
     {
         "name": "roughness",
@@ -138,6 +126,30 @@ component_descs = \
         "visualize_func": lambda data : np.clip((data[:,:,0] - np.min(data[:,:,0])) / np.minimum((np.max(data[:,:,0]) - np.min(data[:,:,0])), 7.5), 0.0, 1.0) # normalize to max depth of 7.5 meters
     },
     {
+        "name": "sp_object_ids_float16",
+        "long_name": "DefaultSceneRoot.sp_object_ids_float16_",
+        "spatial_supersampling_factor": 1,
+        "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
+    },
+    {
+        "name": "sp_object_ids_uint8",
+        "long_name": "DefaultSceneRoot.sp_object_ids_uint8_",
+        "spatial_supersampling_factor": 1,
+        "visualize_func": lambda data : data[:,:,[2,1,0]] # BGRA to RGB
+    },
+    {
+        "name": "sp_unlit_float16",
+        "long_name": "DefaultSceneRoot.sp_unlit_float16_",
+        "spatial_supersampling_factor": 1,
+        "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
+    },
+    {
+        "name": "sp_unlit_uint8",
+        "long_name": "DefaultSceneRoot.sp_unlit_uint8_",
+        "spatial_supersampling_factor": 1,
+        "visualize_func": lambda data : data[:,:,[2,1,0]] # BGRA to RGB
+    },
+    {
         "name": "sp_world_position",
         "long_name": "DefaultSceneRoot.sp_world_position_",
         "spatial_supersampling_factor": 1,
@@ -150,7 +162,6 @@ component_descs = \
         "visualize_func": lambda data : np.clip(data[:,:,[0,0,0]], 0.0, 1.0)
     }
 ]
-
 
 
 if __name__ == "__main__":
@@ -262,10 +273,8 @@ if __name__ == "__main__":
         # create component desc map for easier bookkeeping later
         component_desc_map = { desc["name"]: desc for desc in component_descs }
 
-        spear.log("Getting segmentation data...")
-        object_ids_uint8_image = component_desc_map["object_ids_uint8"]["data"]
-        proxy_id_image, proxy_id_descs = game.segmentation_service.get_segmentation_data(object_ids_uint8_image=object_ids_uint8_image)
-        spear.log("Finished getting segmentation data.")
+        object_ids_bgra_uint8_image = component_desc_map["sp_object_ids_uint8"]["data"]
+        proxy_id_image, proxy_id_descs = game.segmentation_service.get_segmentation_data(object_ids_bgra_uint8_image=object_ids_bgra_uint8_image)
 
     # get actor names and handles
     actor_names = [ proxy_id_desc["actorName"] for proxy_id_desc in proxy_id_descs ]
@@ -432,6 +441,8 @@ if __name__ == "__main__":
             component_desc["component"].terminate_sp_funcs()
             component_desc["component"].Terminate()
         game.unreal_service.destroy_actor(actor=bp_camera_sensor)
+
+        # terminate segmentation service
         game.segmentation_service.terminate()
 
     spear.log("Done.")

@@ -6,26 +6,13 @@
 import numpy as np
 import spear
 
+def get_object_ids_bgra_uint8_as_uint32(object_ids_bgra_uint8):
+    return object_ids_bgra_uint8.view(np.uint32).reshape(object_ids_bgra_uint8.shape[:2]) & 0x00ffffff
 
-def get_object_ids_uint8_as_rgba(object_ids_uint8):
-    return object_ids_uint8[:,:,[2,1,0,3]].copy() # even though we specify RGBA as our object ID texture format, it gets returned from the GPU as BGRA
-
-def get_object_ids_uint8_as_bgra(object_ids_uint8):
-    return object_ids_uint8 # even though we specify RGBA as our object ID texture format, it gets returned from the GPU as BGRA
-
-def get_object_ids_uint8_as_uint32(object_ids_uint8):
-    object_ids_bgra = get_object_ids_uint8_as_bgra(object_ids_uint8)
-    return object_ids_bgra.view(np.uint32).reshape(object_ids_uint8.shape[:2]) & 0x00ffffff
-
-def get_object_ids_float16_as_rgba(object_ids_float16):
-    return np.round(object_ids_float16*255.0).astype(np.uint8)
-
-def get_object_ids_float16_as_bgra(object_ids_float16):
-    return np.round(object_ids_float16[:,:,[2,1,0,3]].copy()*255.0).astype(np.uint8)
-
-def get_object_ids_float16_as_uint32(object_ids_float16):
-    object_ids_bgra = get_object_ids_float16_as_bgra(object_ids_float16)
-    return object_ids_bgra.view(np.uint32).reshape(object_ids_float16.shape[:2]) & 0x00ffffff
+def get_object_ids_rgba_float16_as_uint32(object_ids_rgba_float16):
+    object_ids_bgra_float16 = object_ids_rgba_float16[:,:,[2,1,0,3]]
+    object_ids_bgra_uint8 = np.round(object_ids_bgra_float16*255.0).astype(np.uint8)
+    return get_object_ids_bgra_uint8_as_uint32(object_ids_bgra_uint8=object_ids_bgra_uint8)
 
 def tone_map_hypersim(image, mask, as_dict=None):
 

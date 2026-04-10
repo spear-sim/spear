@@ -87,8 +87,9 @@ public:
 
 //
 // ASpMeshProxyComponentManager holds a MeshProxyComponentManager* and dispatches the
-// ASpProxyComponentManager virtual hooks into it. Derived classes set the pointer via
-// setMeshProxyComponentManager() and implement IMeshProxyComponentManager.
+// ASpProxyComponentManager virtual hooks into it. Derived classes own a concrete
+// MeshProxyComponentManager subclass and set the pointer via setMeshProxyComponentManager()
+// in initializeImpl().
 //
 
 UCLASS(Abstract, ClassGroup="SPEAR", HideCategories=(Actor, Collision, Cooking, DataLayers, HLOD, Input, LevelInstance, Navigation, Networking, Physics, Rendering, Replication, WorldPartition))
@@ -201,65 +202,29 @@ private:
 
 
 UCLASS(ClassGroup="SPEAR", HideCategories=(Actor, Collision, Cooking, DataLayers, HLOD, Input, LevelInstance, Navigation, Networking, Physics, Rendering, Replication, WorldPartition))
-class ASpObjectIdsProxyComponentManager : public ASpMeshProxyComponentManager, public IMeshProxyComponentManager
+class ASpObjectIdsProxyComponentManager : public ASpMeshProxyComponentManager
 {
     GENERATED_BODY()
-
-public:
-    ASpObjectIdsProxyComponentManager()
-    {
-        setMeshProxyComponentManager(&mesh_proxy_component_manager_);
-    }
-
-    void BeginPlay() override
-    {
-        SP_LOG_CURRENT_FUNCTION();
-        ASpMeshProxyComponentManager::BeginPlay();
-        EmissiveMaterial = nullptr;
-    }
 
 protected:
     void initializeImpl() override
     {
+        setMeshProxyComponentManager(&object_ids_mesh_proxy_component_manager_);
+
+        object_ids_mesh_proxy_component_manager_.initialize();
         ASpMeshProxyComponentManager::initializeImpl();
-        EmissiveMaterial = LoadObject<UMaterialInterface>(nullptr, Unreal::toTCharPtr("/SpContent/Materials/M_Emissive.M_Emissive"));
     }
 
     void terminateImpl() override
     {
-        EmissiveMaterial = nullptr;
         ASpMeshProxyComponentManager::terminateImpl();
+        object_ids_mesh_proxy_component_manager_.terminate();
+
+        setMeshProxyComponentManager(nullptr);
     }
-
-    // IMeshProxyComponentManager interface
-
-    UMaterialInterface* createMaterialForProxyComponentMaterialSlot(uint32_t id, USceneComponent* component, UMaterialInterface* material) override
-    {
-        SP_ASSERT(EmissiveMaterial);
-        UMaterialInstanceDynamic* new_material = UMaterialInstanceDynamic::Create(EmissiveMaterial, this);
-        SP_ASSERT(new_material);
-        FLinearColor color = getLinearColorImpl(id);
-        new_material->SetVectorParameterValue("EmissiveColor", color);
-        return new_material;
-    }
-
-    bool shouldProxyComponentBeHiddenInViewport(USceneComponent* component) const override { return true; }
 
 private:
-    MeshProxyComponentManager mesh_proxy_component_manager_ = MeshProxyComponentManager(this, this);
-
-    UPROPERTY()
-    UMaterialInterface* EmissiveMaterial = nullptr;
-
-    static FLinearColor getLinearColorImpl(uint32_t id)
-    {
-        SP_ASSERT(id > 0 && id <= 0xffffff);
-        float r = static_cast<float>((id >> 16) & 0xff) / 255.0f;
-        float g = static_cast<float>((id >>  8) & 0xff) / 255.0f;
-        float b = static_cast<float>((id >>  0) & 0xff) / 255.0f;
-        float a = 1.0f;
-        return FLinearColor(r, g, b, a);
-    }
+    ObjectIdsMeshProxyComponentManager object_ids_mesh_proxy_component_manager_ = ObjectIdsMeshProxyComponentManager(this);
 };
 
 
@@ -268,44 +233,23 @@ class ASpObjectIdsVisualizerProxyComponentManager : public ASpObjectIdsProxyComp
 {
     GENERATED_BODY()
 
-public:
-    void BeginPlay() override
-    {
-        SP_LOG_CURRENT_FUNCTION();
-        ASpMeshProxyComponentManager::BeginPlay();
-        DiffuseMaterial = nullptr;
-    }
-
 protected:
     void initializeImpl() override
     {
+        setMeshProxyComponentManager(&object_ids_visualizer_mesh_proxy_component_manager_);
+
+        object_ids_visualizer_mesh_proxy_component_manager_.initialize();
         ASpMeshProxyComponentManager::initializeImpl();
-        DiffuseMaterial = LoadObject<UMaterialInterface>(nullptr, Unreal::toTCharPtr("/SpContent/Materials/M_Diffuse.M_Diffuse"));
     }
 
     void terminateImpl() override
     {
-        DiffuseMaterial = nullptr;
+        object_ids_visualizer_mesh_proxy_component_manager_.terminate();
         ASpMeshProxyComponentManager::terminateImpl();
+
+        setMeshProxyComponentManager(nullptr);
     }
-
-    // IMeshProxyComponentManager interface
-
-    UMaterialInterface* createMaterialForProxyComponentMaterialSlot(uint32_t id, USceneComponent* component, UMaterialInterface* material) override
-    {
-        SP_ASSERT(DiffuseMaterial);
-        UMaterialInstanceDynamic* new_material = UMaterialInstanceDynamic::Create(DiffuseMaterial, this);
-        SP_ASSERT(new_material);
-        FColor color = getColorImpl(id);
-        new_material->SetVectorParameterValue("BaseColor", color);
-        return new_material;
-    }
-
-    bool shouldProxyComponentBeHiddenInViewport(USceneComponent* component) const override { return false; }
 
 private:
-    UPROPERTY()
-    UMaterialInterface* DiffuseMaterial = nullptr;
-
-    static FColor getColorImpl(uint32_t id) { return FColor::MakeRandomColor(); }
+    ObjectIdsVisualizerMeshProxyComponentManager object_ids_visualizer_mesh_proxy_component_manager_ = ObjectIdsVisualizerMeshProxyComponentManager(this);
 };

@@ -43,7 +43,7 @@ void ASpDebugCameraHUD::PostRender()
                 FCollisionQueryParams collision_query_params = FCollisionQueryParams(NAME_None, FCollisionQueryParams::GetUnknownStatId(), trace_complex, this);
                 collision_query_params.bReturnPhysicalMaterial = true;
                 FHitResult hit_result;
-                bool hit = GetWorld()->LineTraceSingleByChannel(hit_result, camera_location, camera_rotation.Vector() * 100000.0f + camera_location, ECC_Visibility, collision_query_params);
+                bool hit = GetWorld()->LineTraceSingleByChannel(hit_result, camera_location, camera_rotation.Vector()*100000.0f + camera_location, ECC_Visibility, collision_query_params);
 
                 if (hit) {
                     UActorComponent* component = hit_result.Component.Get();

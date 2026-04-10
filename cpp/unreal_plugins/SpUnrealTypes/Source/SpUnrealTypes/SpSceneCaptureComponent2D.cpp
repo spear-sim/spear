@@ -208,7 +208,7 @@ void USpSceneCaptureComponent2D::Initialize()
         for (auto manager : UnrealUtils::findActorsByClass<ASpMeshProxyComponentManager>(MeshProxyComponentManagerClass, GetWorld())) {
             ShowOnlyActors.Add(manager);
         }
-    } else {
+    } else if (bHideMeshProxyComponentManagers) {
         PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_RenderScenePrimitives;
         for (auto manager : UnrealUtils::findActorsByType<ASpMeshProxyComponentManager>(GetWorld())) {
             HiddenActors.Add(manager);
@@ -629,15 +629,15 @@ void USpSceneCaptureComponent2D::copyPixelsFromStagingToCPU_RenderThread(FRHIGPU
 
     SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
     uint64_t num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
-    int32_t bytes_per_pixel = NumChannelsPerPixel * SpArrayDataTypeUtils::getSizeOf(channel_data_type);
-    int32_t row_bytes = Width * bytes_per_pixel;
+    int32_t bytes_per_pixel = NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
+    int32_t row_bytes = Width*bytes_per_pixel;
 
     int32 row_pitch_in_pixels = 0;
     void* src_ptr = readback->Lock(row_pitch_in_pixels);
     SP_ASSERT(src_ptr);
     SP_ASSERT(row_pitch_in_pixels >= Width);
 
-    int32_t src_row_pitch_bytes = row_pitch_in_pixels * bytes_per_pixel;
+    int32_t src_row_pitch_bytes = row_pitch_in_pixels*bytes_per_pixel;
 
     if (src_row_pitch_bytes == row_bytes) {
         std::memcpy(dest_ptr, src_ptr, num_bytes);
@@ -645,7 +645,7 @@ void USpSceneCaptureComponent2D::copyPixelsFromStagingToCPU_RenderThread(FRHIGPU
         uint8_t* src = static_cast<uint8_t*>(src_ptr);
         uint8_t* dst = static_cast<uint8_t*>(dest_ptr);
         for (int32_t y = 0; y < Height; y++) {
-            std::memcpy(dst + y * row_bytes, src + y * src_row_pitch_bytes, row_bytes);
+            std::memcpy(dst + y*row_bytes, src + y*src_row_pitch_bytes, row_bytes);
         }
     }
 

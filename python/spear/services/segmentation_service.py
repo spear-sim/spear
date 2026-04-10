@@ -75,8 +75,15 @@ class SegmentationService(spear.Service):
 
         return descs
 
-    def get_segmentation_data(self, object_ids_uint8_image, include_debug_info=False, mesh_proxy_geometry_descs=None, as_raw=None, as_global=None, as_visible=None):
+    def get_segmentation_data(self, object_ids_bgra_uint8_image=None, object_ids_rgba_float16_image=None, include_debug_info=False, mesh_proxy_geometry_descs=None, as_raw=None, as_global=None, as_visible=None):
         assert self.proxy_component_manager is not None
+
+        if object_ids_bgra_uint8_image is not None:
+            assert object_ids_rgba_float16_image is None
+        elif object_ids_rgba_float16_image is not None:
+            assert object_ids_bgra_uint8_image is None
+        else:
+            assert False
 
         if as_raw is not None:
             assert as_global is None
@@ -88,7 +95,12 @@ class SegmentationService(spear.Service):
             as_visible = True
 
         # decode raw segmentation image to raw IDs
-        raw_id_image = spear.rendering.get_object_ids_uint8_as_uint32(object_ids_uint8_image)
+        if object_ids_bgra_uint8_image is not None:
+            raw_id_image = spear.rendering.get_object_ids_bgra_uint8_as_uint32(object_ids_bgra_uint8=object_ids_bgra_uint8_image)
+        elif object_ids_rgba_float16_image is not None:
+            raw_id_image = spear.rendering.get_object_ids_rgba_float16_as_uint32(object_ids_rgba_float16=object_ids_rgba_float16_image)
+        else:
+            assert False
 
         # get global descs or use caller-provided descs
         if mesh_proxy_geometry_descs is not None:
@@ -106,6 +118,10 @@ class SegmentationService(spear.Service):
 
         # get visible raw IDs in the image and their inverse mapping
         visible_raw_ids, visible_raw_ids_inverse = np.unique(raw_id_image, return_inverse=True)
+
+        if not np.all(np.isin(visible_raw_ids, global_raw_ids)):
+            spear.log("visible_raw_ids: ", visible_raw_ids)
+            spear.log("global_raw_ids: ", global_raw_ids)
 
         # verify all visible raw IDs are known to the manager
         assert np.all(np.isin(visible_raw_ids, global_raw_ids))

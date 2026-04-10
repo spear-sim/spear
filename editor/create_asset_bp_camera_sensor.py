@@ -132,12 +132,12 @@ engine_show_flag_settings["without_lighting"] = engine_show_flag_settings["witho
 ]
 
 #
-# Object IDs (same as without_lighting except we also disable:
+# None (same as without_lighting except we also disable:
 #     Atmosphere, PostProcessing, PostProcessMaterial
 #
 
-engine_show_flag_settings["object_ids"] = []
-engine_show_flag_settings["object_ids"] = engine_show_flag_settings["object_ids"] + \
+engine_show_flag_settings["none"] = []
+engine_show_flag_settings["none"] = engine_show_flag_settings["none"] + \
 [
     unreal.EngineShowFlagsSetting(show_flag_name="Atmosphere", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="PostProcessing", enabled=False),
@@ -279,7 +279,7 @@ blueprint_desc = \
             "reflection_method": unreal.ReflectionMethod.LUMEN,
             "show_flag_settings": engine_show_flag_settings["with_lighting"],
             "override_texture_render_target_format": True,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
         },
         {
             "name": "diffuse_color_",
@@ -371,38 +371,6 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R16F
         },
         {
-            "name": "object_ids_uint8_",
-            "width": width,
-            "height": height,
-            "fov_angle": fov_angle,
-            "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpArrayDataType.U_INT8,
-            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
-            "show_flag_settings": engine_show_flag_settings["object_ids"],
-            "mesh_proxy_component_manager_class": unreal.SpObjectIdsProxyComponentManager,
-            "override_texture_render_target_format": True,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8,
-            "override_texture_render_target_srgb": True,
-            "texture_render_target_srgb": False,
-            "override_texture_render_target_force_linear_gamma": True,
-            "texture_render_target_force_linear_gamma": True,
-            "override_texture_render_target_gamma": True,
-            "texture_render_target_gamma": 1.0
-        },
-        {
-            "name": "object_ids_float16_",
-            "width": width,
-            "height": height,
-            "fov_angle": fov_angle,
-            "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
-            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
-            "show_flag_settings": engine_show_flag_settings["object_ids"],
-            "mesh_proxy_component_manager_class": unreal.SpObjectIdsProxyComponentManager,
-            "override_texture_render_target_format": True,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
-        },
-        {
             "name": "roughness_",
             "width": width,
             "height": height,
@@ -453,6 +421,68 @@ blueprint_desc = \
             "show_flag_settings": engine_show_flag_settings["without_lighting"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R16F
+        },
+        {
+            "name": "sp_object_ids_float16_",
+            "width": width,
+            "height": height,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "show_flag_settings": engine_show_flag_settings["none"],
+            "mesh_proxy_component_manager_class": unreal.SpObjectIdsProxyComponentManager,
+            "override_texture_render_target_format": True,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
+        },
+        {
+            "name": "sp_object_ids_uint8_",
+            "width": width,
+            "height": height,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.U_INT8,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "show_flag_settings": engine_show_flag_settings["none"],
+            "mesh_proxy_component_manager_class": unreal.SpObjectIdsProxyComponentManager,
+            "override_texture_render_target_format": True,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8,
+            "override_texture_render_target_srgb": True,
+            "texture_render_target_srgb": False,
+            "override_texture_render_target_force_linear_gamma": True,
+            "texture_render_target_force_linear_gamma": True,
+            "override_texture_render_target_gamma": True,
+            "texture_render_target_gamma": 1.0
+        },
+        {
+            "name": "sp_unlit_float16_",
+            "width": width,
+            "height": height,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "capture_source": unreal.SceneCaptureSource.SCS_SCENE_COLOR_HDR, # needed to access negative values when there is no post-processing material
+            "show_flag_settings": engine_show_flag_settings["none"],
+            "override_texture_render_target_format": True,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
+        },
+        {
+            "name": "sp_unlit_uint8_",
+            "width": width,
+            "height": height,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.U_INT8,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "show_flag_settings": engine_show_flag_settings["none"],
+            "override_texture_render_target_format": True,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8,
+            "override_texture_render_target_srgb": True,
+            "texture_render_target_srgb": False,
+            "override_texture_render_target_force_linear_gamma": True,
+            "texture_render_target_force_linear_gamma": True,
+            "override_texture_render_target_gamma": True,
+            "texture_render_target_gamma": 1.0
         },
         {
             "name": "sp_world_position_",

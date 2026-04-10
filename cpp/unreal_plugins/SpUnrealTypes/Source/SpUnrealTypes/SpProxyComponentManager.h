@@ -136,8 +136,8 @@ public:
             return;
         }
 
-        terminateImpl();
         unregisterAllProxyComponents();
+        terminateImpl();
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")

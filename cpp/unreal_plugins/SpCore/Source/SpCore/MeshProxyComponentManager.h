@@ -13,34 +13,22 @@
 
 #include <Components/SkeletalMeshComponent.h>
 #include <Components/StaticMeshComponent.h>
-#include <Engine/EngineBaseTypes.h> // ELevelTick
+#include <Engine/EngineBaseTypes.h>    // ELevelTick
+#include <Materials/MaterialInstanceDynamic.h>
 #include <Materials/MaterialInterface.h>
+#include <Math/Color.h>
+#include <UObject/StrongObjectPtr.h>   // TStrongObjectPtr
+#include <UObject/UObjectGlobals.h>    // LoadObject
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/ProxyComponentManager.h"
 #include "SpCore/Std.h"
+#include "SpCore/Unreal.h"
 #include "SpCore/UnrealUtils.h"
 
 class USceneComponent;
 struct FActorComponentTickFunction;
-
-//
-// IMeshProxyComponentManager is a pure virtual interface that MeshProxyComponentManager calls
-// to decide what materials to assign to proxy geometry.
-//
-
-struct IMeshProxyComponentManager
-{
-    virtual bool shouldProxyComponentBeHiddenInViewport(USceneComponent* component) const = 0;
-    virtual UMaterialInterface* createMaterialForProxyComponentMaterialSlot(uint32_t id, USceneComponent* component, UMaterialInterface* material) = 0;
-};
-
-//
-// MeshProxyComponentManager inherits ProxyComponentManager<MeshProxyComponentManager> (CRTP) and owns
-// per-material-slot proxy geometry bookkeeping. It takes an IMeshProxyComponentManager* at construction
-// for callbacks that vary per modality.
-//
 
 struct MeshProxyComponentData
 {
@@ -55,19 +43,31 @@ struct MeshProxyGeometryDesc
     UMaterialInterface* material_ = nullptr;
 };
 
+//
+// MeshProxyComponentManager inherits ProxyComponentManager<MeshProxyComponentManager, MeshProxyComponentData>
+// (CRTP) and owns per-material-slot proxy geometry bookkeeping. Derived classes (e.g.,
+// ObjectIdsMeshProxyComponentManager) override the virtual methods to customize material creation.
+//
+
 class MeshProxyComponentManager : public ProxyComponentManager<MeshProxyComponentManager, MeshProxyComponentData>
 {
 public:
     MeshProxyComponentManager() = delete;
-
-    MeshProxyComponentManager(IMeshProxyComponentManager* mesh_proxy_component_manager, AActor* owner)
+    MeshProxyComponentManager(AActor* owner)
     {
-        mesh_proxy_component_manager_ = mesh_proxy_component_manager;
         owner_ = owner;
     }
 
     //
-    // ProxyComponentManager<MeshProxyComponentManager> CRTP interface
+    // Accessing proxy geometry. This function is called from an owning AActor when returning proxy geometry
+    // to user Python code.
+    //
+
+    const std::map<uint32_t, MeshProxyGeometryDesc>& getMeshProxyGeometryDescs() const { return id_to_mesh_proxy_geometry_desc_map_; }
+
+    //
+    // ProxyComponentManager<MeshProxyComponentManager, MeshProxyComponentData> CRTP interface. These
+    // functions are called from the ProxyComponentManager<...> base class.
     //
 
     bool shouldRegisterProxyComponent(USceneComponent* component)
@@ -108,7 +108,7 @@ public:
         // configure component
         proxy_component->SetStaticMesh(component->GetStaticMesh());
 
-        if (mesh_proxy_component_manager_->shouldProxyComponentBeHiddenInViewport(component)) {
+        if (shouldProxyComponentBeHiddenInViewport(component)) {
             proxy_component->SetVisibleInSceneCaptureOnly(true);
             proxy_component->bCastDynamicShadow = true;
             proxy_component->bCastStaticShadow = false;
@@ -123,7 +123,7 @@ public:
         for (int i = 0; i < component->GetNumMaterials(); i++) {
             uint32_t mesh_proxy_geometry_desc_id = registerMeshProxyGeometryImpl(component, component->GetMaterial(i));
             SP_LOG("Registering proxy geometry: ", UnrealUtils::getStableName(component), " (material slot = ", i, ", ID = ", mesh_proxy_geometry_desc_id, ")");
-            UMaterialInterface* material = mesh_proxy_component_manager_->createMaterialForProxyComponentMaterialSlot(mesh_proxy_geometry_desc_id, component, component->GetMaterial(i));
+            UMaterialInterface* material = createMaterialForProxyComponentMaterialSlot(mesh_proxy_geometry_desc_id, component, component->GetMaterial(i));
             SP_ASSERT(material);
             proxy_component->SetMaterial(i, material);
             Std::insert(mesh_proxy_component_data->mesh_proxy_geometry_desc_ids_, mesh_proxy_geometry_desc_id);
@@ -163,7 +163,7 @@ public:
         proxy_component->SetSkeletalMesh(component->GetSkeletalMeshAsset());
         proxy_component->SetLeaderPoseComponent(component);
 
-        if (mesh_proxy_component_manager_->shouldProxyComponentBeHiddenInViewport(component)) {
+        if (shouldProxyComponentBeHiddenInViewport(component)) {
             proxy_component->SetVisibleInSceneCaptureOnly(true);
             proxy_component->bCastDynamicShadow = true;
             proxy_component->bCastStaticShadow = false;
@@ -178,7 +178,7 @@ public:
         for (int i = 0; i < component->GetNumMaterials(); i++) {
             uint32_t mesh_proxy_geometry_desc_id = registerMeshProxyGeometryImpl(component, component->GetMaterial(i));
             SP_LOG("Registering proxy geometry: ", UnrealUtils::getStableName(component), " (material slot = ", i, ", ID = ", mesh_proxy_geometry_desc_id, ")");
-            UMaterialInterface* material = mesh_proxy_component_manager_->createMaterialForProxyComponentMaterialSlot(mesh_proxy_geometry_desc_id, component, component->GetMaterial(i));
+            UMaterialInterface* material = createMaterialForProxyComponentMaterialSlot(mesh_proxy_geometry_desc_id, component, component->GetMaterial(i));
             SP_ASSERT(material);
             proxy_component->SetMaterial(i, material);
             Std::insert(mesh_proxy_component_data->mesh_proxy_geometry_desc_ids_, mesh_proxy_geometry_desc_id);
@@ -230,10 +230,11 @@ public:
     AActor* getOwner() { return owner_; }
 
     //
-    // Geometry accessors
+    // Virtual methods for derived classes to override. These functions are called internally in registerProxyComponent(...)
     //
 
-    const std::map<uint32_t, MeshProxyGeometryDesc>& getMeshProxyGeometryDescs() const { return id_to_mesh_proxy_geometry_desc_map_; }
+    virtual bool shouldProxyComponentBeHiddenInViewport(USceneComponent* component) const = 0;
+    virtual UMaterialInterface* createMaterialForProxyComponentMaterialSlot(uint32_t id, USceneComponent* component, UMaterialInterface* material) = 0;
 
 private:
     uint32_t registerMeshProxyGeometryImpl(USceneComponent* component, UMaterialInterface* material)
@@ -278,10 +279,85 @@ private:
         delete mesh_proxy_component_data;
     }
 
-    IMeshProxyComponentManager* mesh_proxy_component_manager_ = nullptr;
     AActor* owner_ = nullptr;
 
     std::map<uint32_t, MeshProxyGeometryDesc> id_to_mesh_proxy_geometry_desc_map_;
     std::set<uint32_t> mesh_proxy_geometry_desc_ids_;
     uint32_t mesh_proxy_geometry_desc_id_initial_guess_ = 1;
+};
+
+
+class ObjectIdsMeshProxyComponentManager : public MeshProxyComponentManager
+{
+public:
+    ObjectIdsMeshProxyComponentManager(AActor* owner) : MeshProxyComponentManager(owner) {}
+
+    void initialize()
+    {
+        emissive_material_ = TStrongObjectPtr<UMaterialInterface>(LoadObject<UMaterialInterface>(nullptr, Unreal::toTCharPtr("/SpContent/Materials/M_Emissive.M_Emissive")));
+        SP_ASSERT(emissive_material_.Get());
+    }
+
+    void terminate()
+    {
+        emissive_material_.Reset();
+    }
+
+    UMaterialInterface* createMaterialForProxyComponentMaterialSlot(uint32_t id, USceneComponent* component, UMaterialInterface* material) override
+    {
+        SP_ASSERT(emissive_material_.Get());
+        UMaterialInstanceDynamic* new_material = UMaterialInstanceDynamic::Create(emissive_material_.Get(), getOwner());
+        SP_ASSERT(new_material);
+        FLinearColor color = getLinearColorImpl(id);
+        new_material->SetVectorParameterValue("EmissiveColor", color);
+        return new_material;
+    }
+
+    bool shouldProxyComponentBeHiddenInViewport(USceneComponent* component) const override { return true; }
+
+private:
+    TStrongObjectPtr<UMaterialInterface> emissive_material_;
+
+    static FLinearColor getLinearColorImpl(uint32_t id)
+    {
+        SP_ASSERT(id > 0 && id <= 0xffffff);
+        float r = static_cast<float>((id >> 16) & 0xff) / 255.0f;
+        float g = static_cast<float>((id >>  8) & 0xff) / 255.0f;
+        float b = static_cast<float>((id >>  0) & 0xff) / 255.0f;
+        float a = 1.0f;
+        return FLinearColor(r, g, b, a);
+    }
+};
+
+
+class ObjectIdsVisualizerMeshProxyComponentManager : public MeshProxyComponentManager
+{
+public:
+    ObjectIdsVisualizerMeshProxyComponentManager(AActor* owner) : MeshProxyComponentManager(owner) {}
+
+    void initialize()
+    {
+        diffuse_material_ = TStrongObjectPtr<UMaterialInterface>(LoadObject<UMaterialInterface>(nullptr, Unreal::toTCharPtr("/SpContent/Materials/M_Diffuse.M_Diffuse")));
+        SP_ASSERT(diffuse_material_.Get());
+    }
+
+    void terminate()
+    {
+        diffuse_material_.Reset();
+    }
+
+    UMaterialInterface* createMaterialForProxyComponentMaterialSlot(uint32_t id, USceneComponent* component, UMaterialInterface* material) override
+    {
+        SP_ASSERT(diffuse_material_.Get());
+        UMaterialInstanceDynamic* new_material = UMaterialInstanceDynamic::Create(diffuse_material_.Get(), getOwner());
+        SP_ASSERT(new_material);
+        FColor color = FColor::MakeRandomColor();
+        new_material->SetVectorParameterValue("BaseColor", color);
+        return new_material;
+    }
+
+    bool shouldProxyComponentBeHiddenInViewport(USceneComponent* component) const override { return false; }
+
+private:
+    TStrongObjectPtr<UMaterialInterface> diffuse_material_;
 };

@@ -73,10 +73,10 @@ if __name__ == "__main__":
         viewport_size_x = return_values["ViewportSize"]["x"]
         viewport_size_y = return_values["ViewportSize"]["y"]
         viewport_aspect_ratio = viewport_size_x / viewport_size_y
-        fov = view_target_pov["fOV"] * math.pi / 180.0
+        fov = view_target_pov["fOV"]*math.pi / 180.0
         half_fov = fov / 2.0
-        half_fov_adjusted = math.atan(math.tan(half_fov) * viewport_aspect_ratio / view_target_pov["aspectRatio"])
-        fov_adjusted_degrees = half_fov_adjusted * 2.0 * 180.0 / math.pi
+        half_fov_adjusted = math.atan(math.tan(half_fov)*viewport_aspect_ratio / view_target_pov["aspectRatio"])
+        fov_adjusted_degrees = half_fov_adjusted*2.0*180.0 / math.pi
 
         location = view_target_pov["location"]
         rotation = view_target_pov["rotation"]
