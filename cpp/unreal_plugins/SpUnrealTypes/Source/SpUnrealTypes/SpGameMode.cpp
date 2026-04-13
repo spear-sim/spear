@@ -59,7 +59,7 @@ void ASpGameMode::PostLogin(APlayerController* new_player)
     // pawn is non-null (it is possible for pawn to be null if we press "Simulate" in the editor), and if the
     // pawn has a USpStableNameComponent.
     APawn* pawn = new_player->GetPawn();
-    if (pawn && UnrealUtils::hasStableName(pawn)) {
+    if (pawn) {
         UnrealUtils::setStableName(pawn, "__SP_DEFAULT_PAWN__");
     }
 

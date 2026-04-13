@@ -81,6 +81,7 @@ from .services.initialize_world_service import InitializeWorldService
 from .services.input_service import InputService
 from .services.navigation_service import NavigationService
 from .services.python_service import PythonService
+from .services.rendering_service import RenderingService, GameRenderingService, EditorRenderingService
 from .services.segmentation_service import SegmentationService
 from .services.shared_memory_service import SharedMemoryService
 from .services.sp_func_service import SpFuncService

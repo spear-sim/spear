@@ -42,13 +42,6 @@ public:
     {
         SP_ASSERT(entry_point_binder);
 
-        Std::insert(entry_point_signature_registries_, "call_sync_on_worker_thread", FuncSignatureRegistry());
-
-        Std::insert(entry_point_signature_registries_, "call_sync_on_game_thread",           FuncSignatureRegistry());
-        Std::insert(entry_point_signature_registries_, "call_async_on_game_thread",          FuncSignatureRegistry());
-        Std::insert(entry_point_signature_registries_, "send_async_on_game_thread",          FuncSignatureRegistry());
-        Std::insert(entry_point_signature_registries_, "get_future_result_from_game_thread", FuncSignatureRegistry());
-
         entry_point_binder_ = entry_point_binder;
 
         //
@@ -134,17 +127,12 @@ public:
         // Entry points for querying other entry points.
         //
 
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_entry_point_signature_type_descs", [this]() -> std::vector<SpFuncSignatureTypeDesc> {
-            return FuncSignatureRegistry::getFuncSignatureTypeDescs();
+        bindFuncToExecuteOnWorkerThread("engine_service", "get_entry_point_signature_type_names", [this]() -> std::vector<std::string> {
+            return FuncSignatureRegistry::getTypeNames();
         });
 
-        bindFuncToExecuteOnWorkerThread("engine_service", "get_entry_point_signature_descs", [this]() -> std::map<std::string, std::vector<SpFuncSignatureDesc>> {
-            return Std::toMap<std::string, std::vector<SpFuncSignatureDesc>>(
-                entry_point_signature_registries_ |
-                std::views::transform([](auto& pair) {
-                    auto& [entry_point_registry_name, entry_point_registry] = pair;
-                    return std::make_pair(entry_point_registry_name, entry_point_registry.getFuncSignatureDescs());
-                }));
+        bindFuncToExecuteOnWorkerThread("engine_service", "get_entry_point_signature_descs", [this]() -> std::map<std::string, SpFuncSignatureDesc> {
+            return func_signature_registry_.getFuncSignatureDescs();
         });
 
         //
@@ -379,10 +367,8 @@ public:
     void bindFuncToExecuteOnWorkerThread(const std::string& service_name, const std::string& func_name, const TFunc& func)
     {
         std::string long_func_name = service_name + ".call_sync_on_worker_thread." + func_name;
-        FuncSignatureRegistry& entry_point_registry = entry_point_signature_registries_.at("call_sync_on_worker_thread");
-
-        SP_ASSERT(!entry_point_registry.isFuncSignatureRegistered(long_func_name, func));
-        entry_point_registry.registerFuncSignature(long_func_name, func);
+        SP_ASSERT(!func_signature_registry_.isFuncSignatureRegistered(long_func_name));
+        func_signature_registry_.registerFuncSignature(long_func_name, func);
         entry_point_binder_->bind(long_func_name, wrapFuncToExecuteInTryCatch(long_func_name, func));
     }
 
@@ -404,29 +390,26 @@ public:
     {
         if (Std::toBool(bind_flags & UnrealEntryPointBindFlags::CallSync)) {
             std::string long_func_name = service_name + ".call_sync_on_game_thread." + func_name;
-            FuncSignatureRegistry& entry_point_registry = entry_point_signature_registries_.at("call_sync_on_game_thread");
 
-            SP_ASSERT((!entry_point_registry.isFuncSignatureRegistered<TReturn, TArgs...>(long_func_name))); // extra parentheses needed because of comma
-            entry_point_registry.registerFuncSignature<TReturn, TArgs...>(long_func_name);
+            SP_ASSERT(!func_signature_registry_.isFuncSignatureRegistered(long_func_name));
+            func_signature_registry_.registerFuncSignature<TReturn, TArgs...>(long_func_name);
             entry_point_binder_->bind(long_func_name, wrapFuncToExecuteInWorkQueueBlocking(long_func_name, func));
         }
 
         if (Std::toBool(bind_flags & UnrealEntryPointBindFlags::CallAsync)) {
             std::string call_async_long_func_name = service_name + ".call_async_on_game_thread." + func_name;
-            FuncSignatureRegistry& call_async_entry_point_registry = entry_point_signature_registries_.at("call_async_on_game_thread");
 
-            SP_ASSERT((!call_async_entry_point_registry.isFuncSignatureRegistered<SpFuture, TArgs...>(call_async_long_func_name))); // extra parentheses needed because of comma
-            call_async_entry_point_registry.registerFuncSignature<SpFuture, TArgs...>(call_async_long_func_name);
+            SP_ASSERT(!func_signature_registry_.isFuncSignatureRegistered(call_async_long_func_name));
+            func_signature_registry_.registerFuncSignature<SpFuture, TArgs...>(call_async_long_func_name);
             entry_point_binder_->bind(call_async_long_func_name, wrapFuncToExecuteInWorkQueueNonBlocking(call_async_long_func_name, func)); // bound function calls createFuture
 
             // if we're binding a call_async function, then we also need to bind a corresponding
             // engine_service.get_future_result_as_return_type function if we haven't already
 
-            std::string get_future_result_long_func_name = "engine_service.get_future_result_from_game_thread_as_" + FuncSignatureRegistry::getFuncSignatureTypeDesc<TReturn>().type_names_.at("entry_point");
-            FuncSignatureRegistry& get_future_result_entry_point_registry = entry_point_signature_registries_.at("get_future_result_from_game_thread");
+            std::string get_future_result_long_func_name = "engine_service.get_future_result_from_game_thread_as_" + FuncSignatureRegistry::getTypeName<TReturn>();
 
-            if (!get_future_result_entry_point_registry.isFuncSignatureRegistered<TReturn, SpFuture&>(get_future_result_long_func_name)) {
-                get_future_result_entry_point_registry.registerFuncSignature<TReturn, SpFuture&>(get_future_result_long_func_name);
+            if (!func_signature_registry_.isFuncSignatureRegistered(get_future_result_long_func_name)) {
+                func_signature_registry_.registerFuncSignature<TReturn, SpFuture&>(get_future_result_long_func_name);
                 entry_point_binder_->bind(get_future_result_long_func_name, wrapFuncToExecuteInTryCatch(get_future_result_long_func_name, [this](SpFuture& future) -> TReturn {
                     return destroyFuture<TReturn>(future); // bound function calls destroyFuture
                 }));
@@ -435,10 +418,9 @@ public:
 
         if (Std::toBool(bind_flags & UnrealEntryPointBindFlags::SendAsync)) {
             std::string long_func_name = service_name + ".send_async_on_game_thread." + func_name;
-            FuncSignatureRegistry& entry_point_registry = entry_point_signature_registries_.at("send_async_on_game_thread");
 
-            SP_ASSERT((!entry_point_registry.isFuncSignatureRegistered<void, TArgs...>(long_func_name))); // extra parentheses needed because of comma
-            entry_point_registry.registerFuncSignature<void, TArgs...>(long_func_name);
+            SP_ASSERT(!func_signature_registry_.isFuncSignatureRegistered(long_func_name));
+            func_signature_registry_.registerFuncSignature<void, TArgs...>(long_func_name);
             entry_point_binder_->bind(long_func_name, wrapFuncToExecuteInWorkQueueNonBlockingDiscardReturnValue(long_func_name, func));
         }
     }
@@ -956,7 +938,7 @@ private:
         }
     }
 
-    std::map<std::string, FuncSignatureRegistry> entry_point_signature_registries_;
+    FuncSignatureRegistry func_signature_registry_;
     TEntryPointBinder* entry_point_binder_ = nullptr;
 
     // Batched work queue state.

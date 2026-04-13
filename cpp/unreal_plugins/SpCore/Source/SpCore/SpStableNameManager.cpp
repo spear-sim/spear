@@ -8,19 +8,15 @@
 #include <string>
 #include <vector>
 
-#include <Components/ActorComponent.h>
+#include <Containers/UnrealString.h>     // FString
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Engine/Engine.h>               // GEngine
-#include <Engine/World.h>                // FWorldDelegates
+#include <Engine/World.h>
 #include <GameFramework/Actor.h>
 #include <Misc/CoreDelegates.h>
-#include <Templates/Casts.h>
 #include <UObject/NameTypes.h>           // FName
-#include <UObject/ObjectMacros.h>        // EObjectFlags
 #include <UObject/Package.h>
 #include <UObject/SoftObjectPath.h>
-#include <UObject/UnrealType.h>          // FProperty, FPropertyChangedEvent
-#include <UObject/UObjectGlobals.h>      // FCoreUObjectDelegates
 
 #include "SpCore/Assert.h"
 #include "SpCore/Unreal.h"
@@ -30,11 +26,37 @@
 // ASpStableNameManager
 //
 
+void ASpStableNameManager::BeginPlay()
+{
+    AActor::BeginPlay();
+
+    UWorld* world = GetWorld();
+    if (!world) {
+        return;
+    }
+
+    SP_ASSERT(!s_worlds_with_stable_name_manager_.contains(world));
+    Std::insert(s_worlds_with_stable_name_manager_, world);
+}
+
+void ASpStableNameManager::EndPlay(const EEndPlayReason::Type end_play_reason)
+{
+    AActor::EndPlay(end_play_reason);
+
+    UWorld* world = GetWorld();
+    if (!world) {
+        return;
+    }
+
+    SP_ASSERT(s_worlds_with_stable_name_manager_.contains(world));
+    Std::remove(s_worlds_with_stable_name_manager_, world);
+}
+
 #if WITH_EDITOR // defined in an auto-generated header
     void ASpStableNameManager::PostActorCreated()
     {
         AActor::PostActorCreated();
-        requestUpdateAllActors();
+        requestAddOrUpdateAllActors();
     }
 #endif
 
@@ -73,23 +95,77 @@ void ASpStableNameManager::setStableName(const AActor* actor, const std::string&
 }
 
 #if WITH_EDITOR // defined in an auto-generated header
-    void ASpStableNameManager::requestAddActor(AActor* actor)
+    void ASpStableNameManager::requestAddOrUpdateAllActors()
+    {
+        UWorld* world = GetWorld();
+        if (!world) {
+            return;
+        }
+
+        if (world->IsEditorWorld() && !world->IsPreviewWorld() && !world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
+            StableNames.Empty();
+            std::vector<AActor*> actors = UnrealUtils::findActors(GetWorld());
+            for (auto actor : actors) {
+                if (actor != this) {
+                    requestAddOrUpdateActor(actor);
+                }
+            }
+        }
+    }
+
+    void ASpStableNameManager::requestAddOrUpdateActor(AActor* actor)
     {
         SP_ASSERT(actor);
 
-        if (actor->HasAnyFlags(EObjectFlags::RF_Transient) ||
-            actor->GetWorld() != GetWorld() ||
-            actor->IsA(ASpStableNameManager::StaticClass()) ||
-            !actor->IsListedInSceneOutliner()) {
-                return;
-            }
+        UWorld* world = GetWorld();
+        if (!world) {
+            return;
+        }
 
-        FString id = Unreal::toFString(getStableIdString(actor));
-        FString stable_name = Unreal::toFString(getStableNameEditorOnly(actor));
-        if (StableNames.Contains(id)) {
-            StableNames[id] = stable_name;
-        } else {
+        SP_ASSERT(world == actor->GetWorld());
+
+        if (world->IsEditorWorld() && !world->IsPreviewWorld() && !world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
+            FString id = Unreal::toFString(getStableIdString(actor));
+            FString stable_name = Unreal::toFString(UnrealUtils::resolveStableName(actor));
+            if (StableNames.Contains(id)) {
+                StableNames[id] = stable_name;
+            } else {
+                StableNames.Add(id, stable_name);
+            }
+        }
+    }
+
+    void ASpStableNameManager::requestAddActor(AActor* actor)
+    {
+        UWorld* world = GetWorld();
+        if (!world) {
+            return;
+        }
+
+        SP_ASSERT(world == actor->GetWorld());
+
+        if (world->IsEditorWorld() && !world->IsPreviewWorld() && !world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
+            FString id = Unreal::toFString(getStableIdString(actor));
+            FString stable_name = Unreal::toFString(UnrealUtils::resolveStableName(actor));
+            SP_ASSERT(!StableNames.Contains(id));
             StableNames.Add(id, stable_name);
+        }
+    }
+
+    void ASpStableNameManager::requestUpdateActor(AActor* actor)
+    {
+        UWorld* world = GetWorld();
+        if (!world) {
+            return;
+        }
+
+        SP_ASSERT(world == actor->GetWorld());
+
+        if (world->IsEditorWorld() && !world->IsPreviewWorld() && !world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
+            FString id = Unreal::toFString(getStableIdString(actor));
+            FString stable_name = Unreal::toFString(UnrealUtils::resolveStableName(actor));
+            SP_ASSERT(StableNames.Contains(id));
+            StableNames[id] = stable_name;
         }
     }
 
@@ -97,91 +173,46 @@ void ASpStableNameManager::setStableName(const AActor* actor, const std::string&
     {
         SP_ASSERT(actor);
 
-        if (actor->HasAnyFlags(EObjectFlags::RF_Transient) ||
-            actor->GetWorld() != GetWorld() ||
-            actor->IsA(ASpStableNameManager::StaticClass()) ||
-            !actor->IsListedInSceneOutliner()) {
-                return;
-            }
-
-        // it is not guaranteed that the actor is contained in StableNames, e.g., if the user adds multiple ASpStableNameManager actors
-        FString id = Unreal::toFString(getStableIdString(actor));
-        if (StableNames.Contains(id)) {
-            StableNames.Remove(id);
-        }
-    }
-
-    void ASpStableNameManager::requestUpdateActor(AActor* actor)
-    {
-        if (actor->HasAnyFlags(EObjectFlags::RF_Transient) ||
-            actor->GetWorld() != GetWorld() ||
-            actor->IsA(ASpStableNameManager::StaticClass()) ||
-            !actor->IsListedInSceneOutliner()) {
-                return;
-            }
-
-        FString id = Unreal::toFString(getStableIdString(actor));
-        FString stable_name = Unreal::toFString(getStableNameEditorOnly(actor));
-        if (StableNames.Contains(id)) {
-            StableNames[id] = stable_name;
-        } else {
-            StableNames.Add(id, stable_name);
-        }
-    }
-
-    void ASpStableNameManager::requestUpdateAllActors()
-    {
         UWorld* world = GetWorld();
         if (!world) {
             return;
         }
 
-        StableNames.Empty();
-        std::vector<AActor*> actors = UnrealUtils::findActors(GetWorld());
-        for (auto actor : actors) {
-            if (actor != this) {
-                requestAddActor(actor);
-            }
+        SP_ASSERT(world == actor->GetWorld());
+
+        if (world->IsEditorWorld() && !world->IsPreviewWorld() && !world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
+            FString id = Unreal::toFString(getStableIdString(actor));
+            SP_ASSERT(StableNames.Contains(id));
+            StableNames.Remove(id);
         }
     }
+
 #endif
 
 std::string ASpStableNameManager::getStableIdString(const AActor* actor)
 {
     SP_ASSERT(actor);
-    SP_ASSERT(actor->GetOutermost());
+
+    UWorld* world = actor->GetWorld();
+    SP_ASSERT(world);
+    SP_ASSERT(!world->IsPreviewWorld());
+    SP_ASSERT(GEngine->GetWorldContextFromWorld(world));
 
     FSoftObjectPath soft_object_path = FSoftObjectPath(actor);
 
     FString asset_path_string = soft_object_path.GetAssetPathString();
     FString sub_path_string = soft_object_path.GetSubPathString();
     FString non_pie_asset_path_string;
-    if (actor->GetOutermost()->GetPIEInstanceID() == -1) {
-        non_pie_asset_path_string = asset_path_string;
-    } else {
+
+    if (world->IsEditorWorld() && world->IsGameWorld()) {
         FString pie_prefix = UWorld::BuildPIEPackagePrefix(actor->GetOutermost()->GetPIEInstanceID());
         non_pie_asset_path_string = UWorld::StripPIEPrefixFromPackageName(asset_path_string, pie_prefix);
+    } else {
+        non_pie_asset_path_string = asset_path_string;
     }
 
     return Unreal::toStdString(non_pie_asset_path_string + ":" + sub_path_string);
 }
-
-#if WITH_EDITOR // defined in an auto-generated header
-    std::string ASpStableNameManager::getStableNameEditorOnly(const AActor* actor)
-    {
-        SP_ASSERT(actor);
-
-        FName folder_path = actor->GetFolderPath();
-        std::string folder_path_string = "";
-        if (!folder_path.IsNone()) {
-            folder_path_string = Unreal::toStdString(folder_path) + "/";
-        }
-
-        std::string label_string = Unreal::toStdString(actor->GetActorLabel());
-
-        return folder_path_string + label_string;
-    }
-#endif
 
 //
 // USpStableNameComponent
@@ -213,10 +244,13 @@ void USpStableNameComponent::setStableName(const std::string& stable_name)
             return;
         }
 
-        // This method will not update the stable name of any actor spawned at runtime. Any such actor
-        // needs to update its stable name via Unreal::setStableName(...).
-        if (!actor->HasAnyFlags(EObjectFlags::RF_Transient)) {
-            StableName = Unreal::toFString(ASpStableNameManager::getStableNameEditorOnly(actor));
+        UWorld* world = GetWorld();
+        if (!world) {
+            return;
+        }
+
+        if (world->IsEditorWorld() && !world->IsPreviewWorld() && !world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
+            StableName = Unreal::toFString(UnrealUtils::resolveStableName(actor));
         }
     }
 #endif
@@ -288,14 +322,14 @@ USpStableNameEventHandler::~USpStableNameEventHandler()
     {
         // level can be null
         SP_ASSERT(world);
-        UnrealUtils::requestUpdateAllStableNameActors(world);
+        UnrealUtils::requestAddOrUpdateAllStableNameActors(world);
     }
 
     void USpStableNameEventHandler::levelRemovedFromWorldHandler(ULevel* level, UWorld* world)
     {
         // level can be null
         SP_ASSERT(world);
-        UnrealUtils::requestUpdateAllStableNameActors(world);
+        UnrealUtils::requestAddOrUpdateAllStableNameActors(world);
     }
 
     void USpStableNameEventHandler::levelActorAddedHandler(AActor* actor)

@@ -37,8 +37,8 @@ struct SharedMemoryView
     std::string id_;
     uint64_t num_bytes_ = 0;
     uint64_t offset_bytes_ = 0;
-    std::string name_ = "smem:invalid";
     std::vector<std::string> usage_flags_ = {"DoNotUse"};
+    std::string name_ = "smem:invalid";
 };
 
 struct PackedArray
@@ -56,18 +56,11 @@ struct DataBundle
     std::string info_;
 };
 
-struct FuncSignatureTypeDesc
-{
-    std::map<std::string, std::string> type_names_;
-    std::map<std::string, std::string> const_strings_;
-    std::map<std::string, std::string> ref_strings_;
-};
-
 struct FuncSignatureDesc
 {
     std::string name_;
-    std::vector<FuncSignatureTypeDesc> func_signature_;
-    std::vector<int> func_signature_id_;
+    std::vector<int> type_ids_;
+    std::vector<std::string> type_names_;
 };
 
 struct Future
@@ -76,11 +69,27 @@ struct Future
     std::string type_id_;
 };
 
+struct FunctionDesc
+{
+    uint64_t function_ = 0;
+    std::string function_name_;
+    uint64_t static_class_ = 0;
+    std::string static_class_name_;
+};
+
 struct StaticStructDesc
 {
     uint64_t static_struct_ = 0;
     std::string name_;
-    std::map<std::string, uint64_t> ufunctions_;
+};
+
+struct StaticClassDesc
+{
+    uint64_t static_class_ = 0;
+    std::string name_;
+    std::vector<uint64_t> derived_classes_;
+    std::vector<std::string> derived_class_names_;
+    std::map<std::string, FunctionDesc> function_descs_;
 };
 
 struct WorldDesc
@@ -101,8 +110,8 @@ struct PackedArrayView
     std::span<uint8_t> view_;
     std::string data_source_ = "Invalid";
     std::vector<size_t> shape_;
-    std::string data_type_;
     std::string shared_memory_name_;
+    std::string data_type_;
 };
 
 struct DataBundleView

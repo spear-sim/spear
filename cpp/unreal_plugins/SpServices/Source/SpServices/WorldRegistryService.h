@@ -19,6 +19,7 @@
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
+#include "SpCore/SpStableNameManager.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 
@@ -35,6 +36,8 @@ public:
         SP_ASSERT(unreal_entry_point_binder);
 
         post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &WorldRegistryService::postWorldInitializationHandler);
+        world_initialized_actors_handle_ = FWorldDelegates::OnWorldInitializedActors.AddRaw(this, &WorldRegistryService::worldInitializedActorsHandler);
+        world_begin_tear_down_handle_ = FWorldDelegates::OnWorldBeginTearDown.AddRaw(this, &WorldRegistryService::worldBeginTearDownHandler);
         world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &WorldRegistryService::worldCleanupHandler);
 
         unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("world_registry_service", "get_world_descs", [this]() -> std::map<std::string, SpWorldDesc> {
@@ -60,9 +63,13 @@ public:
     ~WorldRegistryService() override
     {
         FWorldDelegates::OnPostWorldInitialization.Remove(post_world_initialization_handle_);
+        FWorldDelegates::OnWorldInitializedActors.Remove(world_initialized_actors_handle_);
+        FWorldDelegates::OnWorldBeginTearDown.Remove(world_begin_tear_down_handle_);
         FWorldDelegates::OnWorldCleanup.Remove(world_cleanup_handle_);
 
         post_world_initialization_handle_.Reset();
+        world_initialized_actors_handle_.Reset();
+        world_begin_tear_down_handle_.Reset();
         world_cleanup_handle_.Reset();
     }
 
@@ -91,6 +98,41 @@ private:
 
             Std::insert(world_descs_, name, desc);
         }
+    }
+
+    void worldInitializedActorsHandler(const FActorsInitializedParams& params)
+    {
+        UWorld* world = params.World;
+        SP_ASSERT(world);
+
+        bool spawn_stable_name_manager = true;
+        if (Config::isInitialized()) {
+            spawn_stable_name_manager = Config::get<bool>("SP_SERVICES.WORLD_REGISTRY_SERVICE.SPAWN_SP_STABLE_NAME_MANAGER");
+        }
+
+        // We spawn a ASpStableNameManager if:
+        //   - the config system is uninitialized or it is initialized and the flag tells us we can spawn; AND
+        //   - we're not in a preview world and not in a short-lived temporary world (e.g., during application startup); AND
+        //   - we're in a PIE game world or a standalone game world; AND
+        //   - there isn't already a ASpStableNameManager in the world.
+
+        if (spawn_stable_name_manager) {
+            if (!world->IsPreviewWorld() && GEngine->GetWorldContextFromWorld(world)) {
+                SP_ASSERT(world->IsEditorWorld() || world->IsGameWorld());
+                if (world->IsGameWorld()) {
+                    std::vector<ASpStableNameManager*> sp_stable_name_managers = UnrealUtils::findActorsByType<ASpStableNameManager>(world);
+                    if (sp_stable_name_managers.empty()) {
+                        AActor* sp_stable_name_manager = world->SpawnActor<ASpStableNameManager>();
+                        UnrealUtils::setStableName(sp_stable_name_manager, "__SP_STABLE_NAME_MANAGER__");
+                    }
+                }
+            }
+        }
+    }
+
+    void worldBeginTearDownHandler(UWorld* world)
+    {
+        SP_ASSERT(world);
     }
 
     void worldCleanupHandler(UWorld* world, bool session_ended, bool cleanup_resources)
@@ -223,5 +265,7 @@ private:
     std::map<std::string, float> skylight_state_;
 
     FDelegateHandle post_world_initialization_handle_;
+    FDelegateHandle world_initialized_actors_handle_;
+    FDelegateHandle world_begin_tear_down_handle_;
     FDelegateHandle world_cleanup_handle_;
 };

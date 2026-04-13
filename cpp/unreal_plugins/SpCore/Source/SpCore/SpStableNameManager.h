@@ -5,13 +5,13 @@
 
 #pragma once
 
+#include <set>
 #include <string>
 
 #include <Components/ActorComponent.h>
 #include <Containers/Map.h>
 #include <Containers/UnrealString.h>     // FString
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
-#include <Engine/World.h>
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>                // SPCORE_API
 #include <UObject/NameTypes.h>           // FName
@@ -22,7 +22,6 @@
 
 class ULevel;
 class UWorld;
-struct FPropertyChangedEvent;
 
 //
 // If an ASpStableNameManager is placed in a level, then all the actors in that level can be found using
@@ -31,10 +30,14 @@ struct FPropertyChangedEvent;
 //
 
 UCLASS(ClassGroup="SPEAR", HideCategories=(Actor, Collision, Cooking, DataLayers, HLOD, Input, LevelInstance, Navigation, Networking, Physics, Rendering, Replication, WorldPartition))
-class ASpStableNameManager : public AActor
+class SPCORE_API ASpStableNameManager : public AActor
 {
     GENERATED_BODY()
 public:
+    // AActor interface
+    void BeginPlay() override;
+    void EndPlay(const EEndPlayReason::Type end_play_reason) override;
+
     #if WITH_EDITOR // defined in an auto-generated header
         // AActor interface
         void PostActorCreated() override;
@@ -48,22 +51,20 @@ public:
     void setStableName(const AActor* actor, const std::string& stable_name);
 
     #if WITH_EDITOR // defined in an auto-generated header
-        // Interface for updating StableNames
+        void requestAddOrUpdateAllActors();
+        void requestAddOrUpdateActor(AActor* actor);
         void requestAddActor(AActor* actor);
         void requestRemoveActor(AActor* actor);
         void requestUpdateActor(AActor* actor);
-        void requestUpdateAllActors();
-    #endif
-
-    static std::string getStableIdString(const AActor* actor);
-
-    #if WITH_EDITOR // defined in an auto-generated header
-        static std::string getStableNameEditorOnly(const AActor* actor);
     #endif
 
 private:
+    static std::string getStableIdString(const AActor* actor);
+
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
     TMap<FString, FString> StableNames;
+
+    inline static std::set<UWorld*> s_worlds_with_stable_name_manager_;
 };
 
 //
@@ -87,7 +88,6 @@ public:
     void setStableName(const std::string& stable_name);
 
     #if WITH_EDITOR // defined in an auto-generated header
-        // Interface for updating StableName
         void requestUpdate();
     #endif
 

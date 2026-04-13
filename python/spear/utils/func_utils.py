@@ -78,6 +78,18 @@ class Service():
         assert self.is_top_level_service()
         self._world = world
 
+    def get_unreal_object(self, uobject=None, uclass=None, with_sp_funcs=False):
+        assert self.unreal_service is not None
+        assert self.unreal_service is not None
+        assert self.config is not None
+        return spear.UnrealObject(
+            unreal_service=self.unreal_service,
+            sp_func_service=self.sp_func_service,
+            config=self.config,
+            uobject=uobject,
+            uclass=uclass,
+            with_sp_funcs=with_sp_funcs)
+
     def to_handle_or_unreal_struct(self, obj, as_handle=None, as_unreal_struct=None):
         assert self.unreal_service is not None
         return spear.to_handle_or_unreal_struct(
@@ -156,7 +168,7 @@ class CallAsyncEntryPointCaller(EntryPointCaller):
     def call_on_game_thread(self, func_name, convert_func, *args):
         long_func_name = f"{self._service_name}.call_async_on_game_thread.{func_name}"
         sync_func_name = f"{self._service_name}.call_sync_on_game_thread.{func_name}"
-        return_as = self.engine_service.entry_point_signature_descs[sync_func_name].func_signature[0].type_names["entry_point"]
+        return_as = self.engine_service.entry_point_signature_descs[sync_func_name].type_names[0]
         future = self.engine_service.call_on_game_thread(long_func_name, *args)
         get_future_result_func = lambda future: self.engine_service.get_future_result_from_game_thread(future=future.future, return_as=return_as)
         return Future(future=future, get_future_result_func=get_future_result_func, convert_func=convert_func, return_as=return_as)
@@ -187,7 +199,7 @@ class EditorEntryPointCaller(EntryPointCaller):
     def call_on_game_thread(self, func_name, convert_func, *args):
         long_func_name = f"{self._service_name}.call_async_on_game_thread.{func_name}"
         sync_func_name = f"{self._service_name}.call_sync_on_game_thread.{func_name}"
-        return_as = self.engine_service.entry_point_signature_descs[sync_func_name].func_signature[0].type_names["entry_point"]
+        return_as = self.engine_service.entry_point_signature_descs[sync_func_name].type_names[0]
 
         with self.engine_service.editor_transaction():
             future = self.engine_service.call_on_game_thread(long_func_name, *args)

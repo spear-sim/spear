@@ -9,24 +9,15 @@
 # unambiguously identifies which frame's pixels are being returned.
 
 import cv2
-import math
 import os
 import spear
 
 
-def initialize_camera(game, bp_camera_sensor_uclass, location, rotation, fov_adjusted_degrees, post_process_volume_settings, buffering_mode):
+def initialize_camera(game, bp_camera_sensor_uclass, viewport_info, buffering_mode):
 
     bp_camera_sensor = game.unreal_service.spawn_actor(uclass=bp_camera_sensor_uclass)
     component = game.unreal_service.get_component_by_name(actor=bp_camera_sensor, component_name="DefaultSceneRoot.final_tone_curve_hdr_", uclass="USpSceneCaptureComponent2D")
-
-    bp_camera_sensor.K2_SetActorLocation(NewLocation=location)
-    bp_camera_sensor.K2_SetActorRotation(NewRotation=rotation)
-
-    component.Width = 512
-    component.Height = 512
-    component.FOVAngle = fov_adjusted_degrees
-    if post_process_volume_settings is not None:
-        component.PostProcessSettings = post_process_volume_settings
+    game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=component, viewport_info=viewport_info, widths=512, heights=512)
 
     if buffering_mode is not None:
         component.BufferingMode = buffering_mode
@@ -54,59 +45,11 @@ if __name__ == "__main__":
 
         bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
         bp_axes_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_Axes.BP_Axes_C")
+        viewport_info = game.rendering_service.get_current_viewport_info()
 
-        engine = instance.engine_globals_service.get_engine()
-        game_viewport_client = engine.GameViewport.get()
-
-        gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
-        player_controller = gameplay_statics.GetPlayerController(PlayerIndex=0)
-        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
-
-        post_process_volume_settings = None
-        post_process_volumes = game.unreal_service.find_actors_by_class(uclass="APostProcessVolume")
-        if len(post_process_volumes) == 1:
-            post_process_volume_settings = post_process_volumes[0].Settings.get()
-
-        sp_game_viewport = game.get_unreal_object(uclass="USpGameViewportClient")
-        return_values = sp_game_viewport.GetViewportSize(GameViewportClient=game_viewport_client, as_dict=True)
-
-        viewport_size_x = return_values["ViewportSize"]["x"]
-        viewport_size_y = return_values["ViewportSize"]["y"]
-        viewport_aspect_ratio = viewport_size_x / viewport_size_y
-        fov = view_target_pov["fOV"]*math.pi / 180.0
-        half_fov = fov / 2.0
-        half_fov_adjusted = math.atan(math.tan(half_fov)*viewport_aspect_ratio / view_target_pov["aspectRatio"])
-        fov_adjusted_degrees = half_fov_adjusted*2.0*180.0 / math.pi
-
-        location = view_target_pov["location"]
-        rotation = view_target_pov["rotation"]
-
-        sb_camera, sb_component = initialize_camera(
-            game=game,
-            bp_camera_sensor_uclass=bp_camera_sensor_uclass,
-            location=location,
-            rotation=rotation,
-            fov_adjusted_degrees=fov_adjusted_degrees,
-            post_process_volume_settings=post_process_volume_settings,
-            buffering_mode="SingleBuffered")
-
-        db_camera, db_component = initialize_camera(
-            game=game,
-            bp_camera_sensor_uclass=bp_camera_sensor_uclass,
-            location=location,
-            rotation=rotation,
-            fov_adjusted_degrees=fov_adjusted_degrees,
-            post_process_volume_settings=post_process_volume_settings,
-            buffering_mode="DoubleBuffered")
-
-        tb_camera, tb_component = initialize_camera(
-            game=game,
-            bp_camera_sensor_uclass=bp_camera_sensor_uclass,
-            location=location,
-            rotation=rotation,
-            fov_adjusted_degrees=fov_adjusted_degrees,
-            post_process_volume_settings=post_process_volume_settings,
-            buffering_mode="TripleBuffered")
+        sb_camera, sb_component = initialize_camera(game=game, bp_camera_sensor_uclass=bp_camera_sensor_uclass, viewport_info=viewport_info, buffering_mode="SingleBuffered")
+        db_camera, db_component = initialize_camera(game=game, bp_camera_sensor_uclass=bp_camera_sensor_uclass, viewport_info=viewport_info, buffering_mode="DoubleBuffered")
+        tb_camera, tb_component = initialize_camera(game=game, bp_camera_sensor_uclass=bp_camera_sensor_uclass, viewport_info=viewport_info, buffering_mode="TripleBuffered")
 
     with instance.end_frame(single_step=True):
         pass
@@ -116,7 +59,7 @@ if __name__ == "__main__":
     spawn_y_positions = [200.0, 260.0, 320.0]
 
     #
-    # SINGLE-BUFFERED: spawn one object per frame, read pixels each frame (0 frames of latency)
+    # single-buffered: spawn one object per frame, read pixels each frame (0 frames of latency)
     #
 
     sb_objects = []
@@ -141,7 +84,7 @@ if __name__ == "__main__":
         pass
 
     #
-    # DOUBLE-BUFFERED: spawn one object per frame, enqueue_copy + read pixels each frame (1 frame of latency)
+    # double-buffered: spawn one object per frame, enqueue_copy + read pixels each frame (1 frame of latency)
     #
 
     # priming frame
@@ -183,7 +126,7 @@ if __name__ == "__main__":
         pass
 
     #
-    # TRIPLE-BUFFERED: spawn one object per frame, enqueue_copy + read pixels each frame (2 frames of latency)
+    # triple-buffered: spawn one object per frame, enqueue_copy + read pixels each frame (2 frames of latency)
     #
 
     # priming frame 1

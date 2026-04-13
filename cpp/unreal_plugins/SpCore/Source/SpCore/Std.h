@@ -387,7 +387,7 @@ public:
     {
         using TValue = typename TVector::value_type;
         
-        return Std::reinterpretAsSpanOf<TValue>(vector);
+        return reinterpretAsSpanOf<TValue>(vector);
     }
 
     template <typename TVector> requires
@@ -396,7 +396,7 @@ public:
     {
         using TValue = typename TVector::value_type;
 
-        return Std::reinterpretAsSpanOf<const TValue>(vector);
+        return reinterpretAsSpanOf<const TValue>(vector);
     }
 
     template <typename TVector, typename TValue> requires
@@ -472,8 +472,8 @@ public:
 
         std::map<TValue, uint64_t> counts;
         for (auto& s : src) {
-            if (!Std::containsKey(counts, s)) {
-                Std::insert(counts, s, 0);
+            if (!containsKey(counts, s)) {
+                insert(counts, s, 0);
             }
             counts.at(s) += 1;
         }

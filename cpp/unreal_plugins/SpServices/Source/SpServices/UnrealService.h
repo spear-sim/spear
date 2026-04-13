@@ -510,24 +510,31 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_static_class_descs",
-            [this]() -> std::vector<SpStaticStructDesc> {
+            [this]() -> std::vector<SpStaticClassDesc> {
 
-                std::vector<SpStaticStructDesc> static_struct_descs;
+                std::vector<SpStaticClassDesc> static_class_descs;
                 std::vector<UClass*> static_classes = UnrealUtils::findStaticStructsByType<UClass>();
 
                 for (auto static_class : static_classes) {
                     SP_ASSERT(static_class);
-                    SpStaticStructDesc static_struct_desc;
-                    static_struct_desc.static_struct_ = static_class;
-                    static_struct_desc.name_ = Unreal::getTypeAsString(static_class);
+                    SpStaticClassDesc static_class_desc;
+                    static_class_desc.static_class_ = static_class;
+                    static_class_desc.name_ = Unreal::getTypeAsString(static_class);
 
-                    // leave map of ufunctions blank when getting all static class descs as a performance optimization
-                    // static_struct_desc.ufunctions_ = UnrealUtils::findFunctionsAsMap(static_class, EFieldIterationFlags::Default);
+                    // populate derived-to-base class chain (includes the class itself)
+                    UClass* current_static_class = static_class;
+                    while (current_static_class) {
+                        static_class_desc.derived_classes_.push_back(current_static_class);
+                        static_class_desc.derived_class_names_.push_back(Unreal::getTypeAsString(current_static_class));
+                        current_static_class = current_static_class->GetSuperClass();
+                    }
 
-                    static_struct_descs.push_back(std::move(static_struct_desc));
+                    // leave function_descs_ blank as a performance optimization
+
+                    static_class_descs.push_back(std::move(static_class_desc));
                 }
 
-                return static_struct_descs;
+                return static_class_descs;
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_static_struct_desc",
@@ -545,17 +552,38 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_static_class_desc",
-            [this](uint64_t& uclass) -> SpStaticStructDesc {
+            [this](uint64_t& uclass) -> SpStaticClassDesc {
                 SP_ASSERT(uclass);
                 UClass* uclass_ptr = toPtr<UClass>(uclass);
-                SpStaticStructDesc static_struct_desc;
-                static_struct_desc.static_struct_ = uclass_ptr;
-                static_struct_desc.name_ = Unreal::getTypeAsString(uclass_ptr);
 
-                // don't leave map of ufunctions blank when getting a specific static class desc
-                static_struct_desc.ufunctions_ = UnrealUtils::findFunctionsAsMap(uclass_ptr, EFieldIterationFlags::Default);
+                SpStaticClassDesc static_class_desc;
+                static_class_desc.static_class_ = uclass_ptr;
+                static_class_desc.name_ = Unreal::getTypeAsString(uclass_ptr);
 
-                return static_struct_desc;
+                // populate derived-to-base class chain (includes the class itself)
+                UClass* current_static_class = uclass_ptr;
+                while (current_static_class) {
+                    static_class_desc.derived_classes_.push_back(current_static_class);
+                    static_class_desc.derived_class_names_.push_back(Unreal::getTypeAsString(current_static_class));
+                    current_static_class = current_static_class->GetSuperClass();
+                }
+
+                // populate function descs with fully qualified names
+                std::vector<UFunction*> ufunctions = UnrealUtils::findFunctions(uclass_ptr);
+                for (auto ufunction : ufunctions) {
+                    SP_ASSERT(ufunction);
+                    SpFunctionDesc function_desc;
+                    function_desc.function_ = ufunction;
+                    function_desc.function_name_ = Unreal::toStdString(ufunction->GetName());
+                    UStruct* outer = Cast<UStruct>(ufunction->GetOuter());
+                    SP_ASSERT(outer);
+                    function_desc.static_class_ = Cast<UClass>(outer);
+                    function_desc.static_class_name_ = Unreal::getTypeAsString(outer);
+                    std::string qualified_name = function_desc.static_class_name_ + "::" + function_desc.function_name_;
+                    Std::insert(static_class_desc.function_descs_, std::move(qualified_name), std::move(function_desc));
+                }
+
+                return static_class_desc;
             });
 
         //
@@ -674,192 +702,6 @@ public:
             });
 
         //
-        // Get property metadata for classes
-        //
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_properties_for_struct",
-            [this](uint64_t& ustruct, std::vector<std::string>& field_iteration_flag_strings) -> std::vector<uint64_t> {
-                return toUInt64(UnrealUtils::findProperties(
-                    toPtr<UStruct>(ustruct),
-                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
-            });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_properties_for_struct_by_flags_any",
-            [this](uint64_t& ustruct, std::vector<std::string>& property_flag_strings, std::vector<std::string>& field_iteration_flag_strings) -> std::vector<uint64_t> {
-                return toUInt64(UnrealUtils::findPropertiesByFlagsAny(
-                    toPtr<UStruct>(ustruct),
-                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(property_flag_strings),
-                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
-            });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_properties_for_struct_by_flags_all",
-            [this](uint64_t& ustruct, std::vector<std::string>& property_flag_strings, std::vector<std::string>& field_iteration_flag_strings) -> std::vector<uint64_t> {
-                return toUInt64(UnrealUtils::findPropertiesByFlagsAll(
-                    toPtr<UStruct>(ustruct),
-                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(property_flag_strings),
-                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
-            });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_properties_for_struct_as_map",
-            [this](uint64_t& ustruct, std::vector<std::string>& field_iteration_flag_strings) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::findPropertiesAsMap(
-                    toPtr<UStruct>(ustruct),
-                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
-            });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_properties_for_struct_by_flags_any_as_map",
-            [this](uint64_t& ustruct, std::vector<std::string>& property_flag_strings, std::vector<std::string>& field_iteration_flag_strings) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::findPropertiesByFlagsAnyAsMap(
-                    toPtr<UStruct>(ustruct),
-                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(property_flag_strings),
-                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
-            });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_properties_for_struct_by_flags_all_as_map",
-            [this](uint64_t& ustruct, std::vector<std::string>& property_flag_strings, std::vector<std::string>& field_iteration_flag_strings) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::findPropertiesByFlagsAllAsMap(
-                    toPtr<UStruct>(ustruct),
-                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(property_flag_strings),
-                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
-            });
-
-        //
-        // Get property metadata for functions
-        //
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_properties_for_function",
-            [this](uint64_t& ufunction, std::vector<std::string>& field_iteration_flag_strings) -> std::vector<uint64_t> {
-                return toUInt64(UnrealUtils::findProperties(
-                    toPtr<UFunction>(ufunction),
-                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
-            });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_properties_for_function_by_flags_any",
-            [this](uint64_t& ufunction, std::vector<std::string>& property_flag_strings, std::vector<std::string>& field_iteration_flag_strings) -> std::vector<uint64_t> {
-                return toUInt64(UnrealUtils::findPropertiesByFlagsAny(
-                    toPtr<UFunction>(ufunction),
-                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(property_flag_strings),
-                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
-            });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_properties_for_function_by_flags_all",
-            [this](uint64_t& ufunction, std::vector<std::string>& property_flag_strings, std::vector<std::string>& field_iteration_flag_strings) -> std::vector<uint64_t> {
-                return toUInt64(UnrealUtils::findPropertiesByFlagsAll(
-                    toPtr<UFunction>(ufunction),
-                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(property_flag_strings),
-                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
-            });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_properties_for_function_as_map",
-            [this](uint64_t& ufunction, std::vector<std::string>& field_iteration_flag_strings) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::findPropertiesAsMap(
-                    toPtr<UFunction>(ufunction),
-                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
-            });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_properties_for_function_by_flags_any_as_map",
-            [this](uint64_t& ufunction, std::vector<std::string>& property_flag_strings, std::vector<std::string>& field_iteration_flag_strings) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::findPropertiesByFlagsAnyAsMap(
-                    toPtr<UFunction>(ufunction),
-                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(property_flag_strings),
-                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
-            });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_properties_for_function_by_flags_all_as_map",
-            [this](uint64_t& ufunction, std::vector<std::string>& property_flag_strings, std::vector<std::string>& field_iteration_flag_strings) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::findPropertiesByFlagsAllAsMap(
-                    toPtr<UFunction>(ufunction),
-                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(property_flag_strings),
-                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
-            });
-
-        //
-        // Helper functions for property metadata
-        //
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_property_flags",
-            [this](uint64_t& property) -> std::vector<std::string> {
-                SP_ASSERT(property);
-                return Unreal::getStringsFromCombinedEnumFlagValueAs<ESpPropertyFlags>(toPtr<FProperty>(property)->GetPropertyFlags());
-            });
-
-        //
-        // Get and set object properties
-        //
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_properties_for_object_as_string",
-            [this](uint64_t& uobject) -> std::string {
-                return UnrealUtils::getObjectPropertiesAsString(toPtr<UObject>(uobject));
-            });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_properties_for_struct_as_string",
-            [this](uint64_t& value_ptr, uint64_t& ustruct) -> std::string {
-                return UnrealUtils::getObjectPropertiesAsString(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct));
-            });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_properties_for_object_from_string",
-            [this](uint64_t& uobject, std::string& properties_string) -> void {
-                UnrealUtils::setObjectPropertiesFromString(toPtr<UObject>(uobject), properties_string);
-            });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_properties_for_struct_from_string",
-            [this](uint64_t& value_ptr, uint64_t& ustruct, std::string& properties_string) -> void {
-                UnrealUtils::setObjectPropertiesFromString(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), properties_string);
-            });
-
-        //
-        // Get and set individual object property values using property descs
-        //
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_property_desc_for_object",
-            [this](uint64_t& uobject, std::string& property_name) -> SpPropertyDesc {
-                return UnrealUtils::findPropertyByName(toPtr<UObject>(uobject), property_name);
-            });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_property_desc_for_struct",
-            [this](uint64_t& value_ptr, uint64_t& ustruct, std::string& property_name) -> SpPropertyDesc {
-                return UnrealUtils::findPropertyByName(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), property_name);
-            });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_property_value_for_desc_as_string",
-            [this](SpPropertyDesc& property_desc) -> SpPropertyValue {
-                return UnrealUtils::getPropertyValueAsString(property_desc);
-            });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_property_value_for_desc_from_string",
-            [this](SpPropertyDesc& property_desc, std::string& property_value_string) -> void {
-                UnrealUtils::setPropertyValueFromString(property_desc, property_value_string);
-            });
-
-        //
-        // Get and set individual object property values
-        //
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_property_value_for_object_as_string",
-            [this](uint64_t& uobject, std::string& property_name) -> SpPropertyValue {
-                SpPropertyDesc property_desc = UnrealUtils::findPropertyByName(toPtr<UObject>(uobject), property_name);
-                return UnrealUtils::getPropertyValueAsString(property_desc);
-            });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_property_value_for_struct_as_string",
-            [this](uint64_t& value_ptr, uint64_t& ustruct, std::string& property_name) -> SpPropertyValue {
-                SpPropertyDesc property_desc = UnrealUtils::findPropertyByName(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), property_name);
-                return UnrealUtils::getPropertyValueAsString(property_desc);
-            });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_property_value_for_object_from_string",
-            [this](uint64_t& uobject, std::string& property_name, std::string& property_value_string) -> void {
-                SpPropertyDesc property_desc = UnrealUtils::findPropertyByName(toPtr<UObject>(uobject), property_name);
-                UnrealUtils::setPropertyValueFromString(property_desc, property_value_string);
-            });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_property_value_for_struct_from_string",
-            [this](uint64_t& value_ptr, uint64_t& ustruct, std::string& property_name, std::string& property_value_string) -> void {
-                SpPropertyDesc property_desc = UnrealUtils::findPropertyByName(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), property_name);
-                UnrealUtils::setPropertyValueFromString(property_desc, property_value_string);
-            });
-
-        //
         // Find functions and get function flags
         //
 
@@ -868,6 +710,23 @@ public:
                 return toUInt64(
                     UnrealUtils::findFunctions(
                         toPtr<UClass>(uclass),
+                        Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_functions_as_map",
+            [this](uint64_t& uclass, std::vector<std::string>& field_iteration_strings) -> std::map<std::string, uint64_t> {
+                return toUInt64(
+                    UnrealUtils::findFunctionsAsMap(
+                        toPtr<UClass>(uclass),
+                        Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_functions_by_name",
+            [this](uint64_t& uclass, std::string& function_name, std::vector<std::string>& field_iteration_strings) -> std::vector<uint64_t> {
+                return toUInt64(
+                    UnrealUtils::findFunctionsByName(
+                        toPtr<UClass>(uclass),
+                        function_name,
                         Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_strings)));
             });
 
@@ -889,11 +748,12 @@ public:
                         Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_strings)));
             });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_functions_as_map",
-            [this](uint64_t& uclass, std::vector<std::string>& field_iteration_strings) -> std::map<std::string, uint64_t> {
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_functions_by_name_as_map",
+            [this](uint64_t& uclass, std::string& function_name, std::vector<std::string>& field_iteration_strings) -> std::map<std::string, uint64_t> {
                 return toUInt64(
-                    UnrealUtils::findFunctionsAsMap(
+                    UnrealUtils::findFunctionsByNameAsMap(
                         toPtr<UClass>(uclass),
+                        function_name,
                         Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_strings)));
             });
 
@@ -921,6 +781,24 @@ public:
                     UnrealUtils::findFunctionByName(
                         toPtr<UClass>(uclass),
                         function_name,
+                        Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_function_by_flags_any",
+            [this](uint64_t& uclass, std::vector<std::string>& function_flags, std::vector<std::string>& field_iteration_strings) -> uint64_t {
+                return toUInt64(
+                    UnrealUtils::findFunctionByFlagsAny(
+                        toPtr<UClass>(uclass),
+                        Unreal::getCombinedEnumFlagValueFromStringsAs<EFunctionFlags, ESpFunctionFlags>(function_flags),
+                        Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_function_by_flags_all",
+            [this](uint64_t& uclass, std::vector<std::string>& function_flags, std::vector<std::string>& field_iteration_strings) -> uint64_t {
+                return toUInt64(
+                    UnrealUtils::findFunctionByFlagsAll(
+                        toPtr<UClass>(uclass),
+                        Unreal::getCombinedEnumFlagValueFromStringsAs<EFunctionFlags, ESpFunctionFlags>(function_flags),
                         Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_strings)));
             });
 
@@ -957,6 +835,184 @@ public:
                 }
 
                 return UnrealUtils::callFunction(toPtr<UWorld>(world), uobject_ptr, ufunction_ptr, args, world_context);
+            });
+
+        //
+        // Find properties and get property flags
+        //
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_properties",
+            [this](uint64_t& ustruct, std::vector<std::string>& field_iteration_flag_strings) -> std::vector<uint64_t> {
+                return toUInt64(UnrealUtils::findProperties(
+                    toPtr<UStruct>(ustruct),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_properties_as_map",
+            [this](uint64_t& ustruct, std::vector<std::string>& field_iteration_flag_strings) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::findPropertiesAsMap(
+                    toPtr<UStruct>(ustruct),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_properties_by_name",
+            [this](uint64_t& ustruct, std::string& property_name, std::vector<std::string>& field_iteration_flag_strings) -> std::vector<uint64_t> {
+                return toUInt64(UnrealUtils::findPropertiesByName(
+                    toPtr<UStruct>(ustruct),
+                    property_name,
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_properties_by_flags_any",
+            [this](uint64_t& ustruct, std::vector<std::string>& property_flag_strings, std::vector<std::string>& field_iteration_flag_strings) -> std::vector<uint64_t> {
+                return toUInt64(UnrealUtils::findPropertiesByFlagsAny(
+                    toPtr<UStruct>(ustruct),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(property_flag_strings),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_properties_by_flags_all",
+            [this](uint64_t& ustruct, std::vector<std::string>& property_flag_strings, std::vector<std::string>& field_iteration_flag_strings) -> std::vector<uint64_t> {
+                return toUInt64(UnrealUtils::findPropertiesByFlagsAll(
+                    toPtr<UStruct>(ustruct),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(property_flag_strings),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_properties_by_name_as_map",
+            [this](uint64_t& ustruct, std::string& property_name, std::vector<std::string>& field_iteration_flag_strings) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::findPropertiesByNameAsMap(
+                    toPtr<UStruct>(ustruct),
+                    property_name,
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_properties_by_flags_any_as_map",
+            [this](uint64_t& ustruct, std::vector<std::string>& property_flag_strings, std::vector<std::string>& field_iteration_flag_strings) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::findPropertiesByFlagsAnyAsMap(
+                    toPtr<UStruct>(ustruct),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(property_flag_strings),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_properties_by_flags_all_as_map",
+            [this](uint64_t& ustruct, std::vector<std::string>& property_flag_strings, std::vector<std::string>& field_iteration_flag_strings) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::findPropertiesByFlagsAllAsMap(
+                    toPtr<UStruct>(ustruct),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(property_flag_strings),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_property_by_name",
+            [this](uint64_t& ustruct, std::string& property_name, std::vector<std::string>& field_iteration_flag_strings) -> uint64_t {
+                return toUInt64(UnrealUtils::findPropertyByName(
+                    toPtr<UStruct>(ustruct),
+                    property_name,
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_property_by_flags_any",
+            [this](uint64_t& ustruct, std::vector<std::string>& property_flag_strings, std::vector<std::string>& field_iteration_flag_strings) -> uint64_t {
+                return toUInt64(UnrealUtils::findPropertyByFlagsAny(
+                    toPtr<UStruct>(ustruct),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(property_flag_strings),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_property_by_flags_all",
+            [this](uint64_t& ustruct, std::vector<std::string>& property_flag_strings, std::vector<std::string>& field_iteration_flag_strings) -> uint64_t {
+                return toUInt64(UnrealUtils::findPropertyByFlagsAll(
+                    toPtr<UStruct>(ustruct),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(property_flag_strings),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EFieldIterationFlags, ESpFieldIterationFlags>(field_iteration_flag_strings)));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_property_flags",
+            [this](uint64_t& property) -> std::vector<std::string> {
+                SP_ASSERT(property);
+                return Unreal::getStringsFromCombinedEnumFlagValueAs<ESpPropertyFlags>(toPtr<FProperty>(property)->GetPropertyFlags());
+            });
+
+        //
+        // Get and set multiple properties
+        //
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_properties_for_object_as_string",
+            [this](uint64_t& uobject) -> std::string {
+                return UnrealUtils::getObjectPropertiesAsString(toPtr<UObject>(uobject));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_properties_for_struct_as_string",
+            [this](uint64_t& value_ptr, uint64_t& ustruct) -> std::string {
+                return UnrealUtils::getObjectPropertiesAsString(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_properties_for_object_from_string",
+            [this](uint64_t& uobject, std::string& properties_string) -> void {
+                UnrealUtils::setObjectPropertiesFromString(toPtr<UObject>(uobject), properties_string);
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_properties_for_struct_from_string",
+            [this](uint64_t& value_ptr, uint64_t& ustruct, std::string& properties_string) -> void {
+                UnrealUtils::setObjectPropertiesFromString(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), properties_string);
+            });
+
+        //
+        // Get and set individual properties
+        //
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "resolve_property_for_object",
+            [this](uint64_t& uobject, uint64_t& property) -> SpPropertyDesc {
+                return UnrealUtils::resolveProperty(toPtr<UObject>(uobject), toPtr<FProperty>(property));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "resolve_property_for_object_from_string",
+            [this](uint64_t& uobject, std::string& property_name) -> SpPropertyDesc {
+                return UnrealUtils::resolveProperty(toPtr<UObject>(uobject), property_name);
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "resolve_property_for_struct",
+            [this](uint64_t& value_ptr, uint64_t& ustruct, uint64_t& property) -> SpPropertyDesc {
+                return UnrealUtils::resolveProperty(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), toPtr<FProperty>(property));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "resolve_property_for_struct_from_string",
+            [this](uint64_t& value_ptr, uint64_t& ustruct, std::string& property_name) -> SpPropertyDesc {
+                return UnrealUtils::resolveProperty(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), property_name);
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_property_value_as_string",
+            [this](SpPropertyDesc& property_desc) -> SpPropertyValue {
+                return UnrealUtils::getPropertyValueAsString(property_desc);
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_property_value_for_object_as_string",
+            [this](uint64_t& uobject, std::string& property_name) -> SpPropertyValue {
+                SpPropertyDesc property_desc = UnrealUtils::resolveProperty(toPtr<UObject>(uobject), property_name);
+                return UnrealUtils::getPropertyValueAsString(property_desc);
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_property_value_for_struct_as_string",
+            [this](uint64_t& value_ptr, uint64_t& ustruct, std::string& property_name) -> SpPropertyValue {
+                SpPropertyDesc property_desc = UnrealUtils::resolveProperty(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), property_name);
+                return UnrealUtils::getPropertyValueAsString(property_desc);
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_property_value_from_string",
+            [this](SpPropertyDesc& property_desc, std::string& property_value_string) -> void {
+                UnrealUtils::setPropertyValueFromString(property_desc, property_value_string);
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_property_value_for_object_from_string",
+            [this](uint64_t& uobject, std::string& property_name, std::string& property_value_string) -> void {
+                SpPropertyDesc property_desc = UnrealUtils::resolveProperty(toPtr<UObject>(uobject), property_name);
+                UnrealUtils::setPropertyValueFromString(property_desc, property_value_string);
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_property_value_for_struct_from_string",
+            [this](uint64_t& value_ptr, uint64_t& ustruct, std::string& property_name, std::string& property_value_string) -> void {
+                SpPropertyDesc property_desc = UnrealUtils::resolveProperty(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), property_name);
+                UnrealUtils::setPropertyValueFromString(property_desc, property_value_string);
             });
 
         //
@@ -1175,20 +1231,16 @@ public:
         // Stable name helper functions
         //
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "has_stable_name",
-            [this](uint64_t& actor) -> bool { return UnrealUtils::hasStableName(toPtr<AActor>(actor)); });
-
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_stable_name_for_actor",
-            [this](uint64_t& actor) -> std::string { return UnrealUtils::getStableName(toPtr<AActor>(actor)); });
-
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "try_get_stable_name_for_actor",
-            [this](uint64_t& actor) -> std::string { return UnrealUtils::tryGetStableName(toPtr<AActor>(actor)); });
+            [this](uint64_t& actor, bool& include_unreal_name) -> std::string { return UnrealUtils::getStableName(toPtr<AActor>(actor), include_unreal_name); });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_stable_name_for_actor",
             [this](uint64_t& actor, std::string& stable_name) -> void { UnrealUtils::setStableName(toPtr<AActor>(actor), stable_name); });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_stable_name_for_component",
-            [this](uint64_t& actor_component, bool& include_actor_name) -> std::string { return UnrealUtils::getStableName(toPtr<UActorComponent>(actor_component), include_actor_name); });
+            [this](uint64_t& actor_component, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::string {
+                return UnrealUtils::getStableName(toPtr<UActorComponent>(actor_component), include_actor_stable_name, include_actor_unreal_name);
+            });
 
         //
         // Get actor and component tags
@@ -1210,8 +1262,8 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_actors_as_map",
-            [this](uint64_t& world) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::findActorsAsMap(toPtr<UWorld>(world)));
+            [this](uint64_t& world, bool& include_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::findActorsAsMap(toPtr<UWorld>(world), include_unreal_name));
             });
 
         //
@@ -1224,8 +1276,8 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_components_as_map",
-            [this](uint64_t& actor) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::getComponentsAsMap(toPtr<AActor>(actor)));
+            [this](uint64_t& actor, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::getComponentsAsMap(toPtr<AActor>(actor), include_actor_stable_name, include_actor_unreal_name));
             });
 
         //
@@ -1238,8 +1290,8 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_actor_as_map",
-            [this](uint64_t& parent, bool& include_all_descendants) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::getChildrenComponentsAsMap(toPtr<AActor>(parent), include_all_descendants));
+            [this](uint64_t& parent, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::getChildrenComponentsAsMap(toPtr<AActor>(parent), include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_scene_component",
@@ -1248,8 +1300,8 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_scene_component_as_map",
-            [this](uint64_t& parent, bool& include_all_descendants) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::getChildrenComponentsAsMap(toPtr<USceneComponent>(parent), include_all_descendants));
+            [this](uint64_t& parent, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::getChildrenComponentsAsMap(toPtr<USceneComponent>(parent), include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
             });
 
         //
@@ -1286,28 +1338,28 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_actors_by_name_as_map",
-            [this](uint64_t& uclass, uint64_t& world, std::string& actor_name) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::findActorsByNameAsMap(toPtr<UClass>(uclass), toPtr<UWorld>(world), actor_name));
+            [this](uint64_t& uclass, uint64_t& world, std::string& actor_name, bool& include_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::findActorsByNameAsMap(toPtr<UClass>(uclass), toPtr<UWorld>(world), actor_name, include_unreal_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_actors_by_tag_as_map",
-            [this](uint64_t& uclass, uint64_t& world, std::string& tag) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::findActorsByTagAsMap(toPtr<UClass>(uclass), toPtr<UWorld>(world), tag));
+            [this](uint64_t& uclass, uint64_t& world, std::string& tag, bool& include_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::findActorsByTagAsMap(toPtr<UClass>(uclass), toPtr<UWorld>(world), tag, include_unreal_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_actors_by_tags_any_as_map",
-            [this](uint64_t& uclass, uint64_t& world, std::vector<std::string>& tags) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::findActorsByTagsAnyAsMap(toPtr<UClass>(uclass), toPtr<UWorld>(world), tags));
+            [this](uint64_t& uclass, uint64_t& world, std::vector<std::string>& tags, bool& include_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::findActorsByTagsAnyAsMap(toPtr<UClass>(uclass), toPtr<UWorld>(world), tags, include_unreal_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_actors_by_tags_all_as_map",
-            [this](uint64_t& uclass, uint64_t& world, std::vector<std::string>& tags) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::findActorsByTagsAllAsMap(toPtr<UClass>(uclass), toPtr<UWorld>(world), tags));
+            [this](uint64_t& uclass, uint64_t& world, std::vector<std::string>& tags, bool& include_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::findActorsByTagsAllAsMap(toPtr<UClass>(uclass), toPtr<UWorld>(world), tags, include_unreal_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_actors_by_class_as_map",
-            [this](uint64_t& uclass, uint64_t& world) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::findActorsByClassAsMap(toPtr<UClass>(uclass), toPtr<UWorld>(world)));
+            [this](uint64_t& uclass, uint64_t& world, bool& include_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::findActorsByClassAsMap(toPtr<UClass>(uclass), toPtr<UWorld>(world), include_unreal_name));
             });
 
         //
@@ -1378,33 +1430,33 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_components_by_name_as_map",
-            [this](uint64_t& uclass, uint64_t& actor, std::string& component_name, bool& include_from_child_actors) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::getComponentsByNameAsMap(toPtr<UClass>(uclass), toPtr<AActor>(actor), component_name, include_from_child_actors));
+            [this](uint64_t& uclass, uint64_t& actor, std::string& component_name, bool& include_from_child_actors, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::getComponentsByNameAsMap(toPtr<UClass>(uclass), toPtr<AActor>(actor), component_name, include_from_child_actors, include_actor_stable_name, include_actor_unreal_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_components_by_path_as_map",
-            [this](uint64_t& uclass, uint64_t& actor, std::string& component_path, bool& include_from_child_actors) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::getComponentsByPathAsMap(toPtr<UClass>(uclass), toPtr<AActor>(actor), component_path, include_from_child_actors));
+            [this](uint64_t& uclass, uint64_t& actor, std::string& component_path, bool& include_from_child_actors, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::getComponentsByPathAsMap(toPtr<UClass>(uclass), toPtr<AActor>(actor), component_path, include_from_child_actors, include_actor_stable_name, include_actor_unreal_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_components_by_tag_as_map",
-            [this](uint64_t& uclass, uint64_t& actor, std::string& tag, bool& include_from_child_actors) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::getComponentsByTagAsMap(toPtr<UClass>(uclass), toPtr<AActor>(actor), tag, include_from_child_actors));
+            [this](uint64_t& uclass, uint64_t& actor, std::string& tag, bool& include_from_child_actors, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::getComponentsByTagAsMap(toPtr<UClass>(uclass), toPtr<AActor>(actor), tag, include_from_child_actors, include_actor_stable_name, include_actor_unreal_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_components_by_tags_any_as_map",
-            [this](uint64_t& uclass, uint64_t& actor, std::vector<std::string>& tags, bool& include_from_child_actors) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::getComponentsByTagsAnyAsMap(toPtr<UClass>(uclass), toPtr<AActor>(actor), tags, include_from_child_actors));
+            [this](uint64_t& uclass, uint64_t& actor, std::vector<std::string>& tags, bool& include_from_child_actors, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::getComponentsByTagsAnyAsMap(toPtr<UClass>(uclass), toPtr<AActor>(actor), tags, include_from_child_actors, include_actor_stable_name, include_actor_unreal_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_components_by_tags_all_as_map",
-            [this](uint64_t& uclass, uint64_t& actor, std::vector<std::string>& tags, bool& include_from_child_actors) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::getComponentsByTagsAllAsMap(toPtr<UClass>(uclass), toPtr<AActor>(actor), tags, include_from_child_actors));
+            [this](uint64_t& uclass, uint64_t& actor, std::vector<std::string>& tags, bool& include_from_child_actors, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::getComponentsByTagsAllAsMap(toPtr<UClass>(uclass), toPtr<AActor>(actor), tags, include_from_child_actors, include_actor_stable_name, include_actor_unreal_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_components_by_class_as_map",
-            [this](uint64_t& uclass, uint64_t& actor, bool& include_from_child_actors) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::getComponentsByClassAsMap(toPtr<UClass>(uclass), toPtr<AActor>(actor), include_from_child_actors));
+            [this](uint64_t& uclass, uint64_t& actor, bool& include_from_child_actors, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::getComponentsByClassAsMap(toPtr<UClass>(uclass), toPtr<AActor>(actor), include_from_child_actors, include_actor_stable_name, include_actor_unreal_name));
             });
 
         //
@@ -1475,28 +1527,28 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_actor_by_name_as_map",
-            [this](uint64_t& uclass, uint64_t& parent, std::string& child_component_name, bool& include_all_descendants) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::getChildrenComponentsByNameAsMap(toPtr<UClass>(uclass), toPtr<AActor>(parent), child_component_name, include_all_descendants));
+            [this](uint64_t& uclass, uint64_t& parent, std::string& child_component_name, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::getChildrenComponentsByNameAsMap(toPtr<UClass>(uclass), toPtr<AActor>(parent), child_component_name, include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_actor_by_tag_as_map",
-            [this](uint64_t& uclass, uint64_t& parent, std::string& tag, bool& include_all_descendants) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::getChildrenComponentsByTagAsMap(toPtr<UClass>(uclass), toPtr<AActor>(parent), tag, include_all_descendants));
+            [this](uint64_t& uclass, uint64_t& parent, std::string& tag, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::getChildrenComponentsByTagAsMap(toPtr<UClass>(uclass), toPtr<AActor>(parent), tag, include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_actor_by_tags_any_as_map",
-            [this](uint64_t& uclass, uint64_t& parent, std::vector<std::string>& tags, bool& include_all_descendants) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::getChildrenComponentsByTagsAnyAsMap(toPtr<UClass>(uclass), toPtr<AActor>(parent), tags, include_all_descendants));
+            [this](uint64_t& uclass, uint64_t& parent, std::vector<std::string>& tags, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::getChildrenComponentsByTagsAnyAsMap(toPtr<UClass>(uclass), toPtr<AActor>(parent), tags, include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_actor_by_tags_all_as_map",
-            [this](uint64_t& uclass, uint64_t& parent, std::vector<std::string>& tags, bool& include_all_descendants) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::getChildrenComponentsByTagsAllAsMap(toPtr<UClass>(uclass), toPtr<AActor>(parent), tags, include_all_descendants));
+            [this](uint64_t& uclass, uint64_t& parent, std::vector<std::string>& tags, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::getChildrenComponentsByTagsAllAsMap(toPtr<UClass>(uclass), toPtr<AActor>(parent), tags, include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_actor_by_class_as_map",
-            [this](uint64_t& uclass, uint64_t& parent, bool& include_all_descendants) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::getChildrenComponentsByClassAsMap(toPtr<UClass>(uclass), toPtr<AActor>(parent), include_all_descendants));
+            [this](uint64_t& uclass, uint64_t& parent, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::getChildrenComponentsByClassAsMap(toPtr<UClass>(uclass), toPtr<AActor>(parent), include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
             });
 
         //
@@ -1562,28 +1614,28 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_scene_component_by_name_as_map",
-            [this](uint64_t& uclass, uint64_t& parent, std::string& child_component_name, bool& include_all_descendants) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::getChildrenComponentsByNameAsMap(toPtr<UClass>(uclass), toPtr<USceneComponent>(parent), child_component_name, include_all_descendants));
+            [this](uint64_t& uclass, uint64_t& parent, std::string& child_component_name, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::getChildrenComponentsByNameAsMap(toPtr<UClass>(uclass), toPtr<USceneComponent>(parent), child_component_name, include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_scene_component_by_tag_as_map",
-            [this](uint64_t& uclass, uint64_t& parent, std::string& tag, bool& include_all_descendants) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::getChildrenComponentsByTagAsMap(toPtr<UClass>(uclass), toPtr<USceneComponent>(parent), tag, include_all_descendants));
+            [this](uint64_t& uclass, uint64_t& parent, std::string& tag, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::getChildrenComponentsByTagAsMap(toPtr<UClass>(uclass), toPtr<USceneComponent>(parent), tag, include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_scene_component_by_tags_any_as_map",
-            [this](uint64_t& uclass, uint64_t& parent, std::vector<std::string>& tags, bool& include_all_descendants) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::getChildrenComponentsByTagsAnyAsMap(toPtr<UClass>(uclass), toPtr<USceneComponent>(parent), tags, include_all_descendants));
+            [this](uint64_t& uclass, uint64_t& parent, std::vector<std::string>& tags, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::getChildrenComponentsByTagsAnyAsMap(toPtr<UClass>(uclass), toPtr<USceneComponent>(parent), tags, include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_scene_component_by_tags_all_as_map",
-            [this](uint64_t& uclass, uint64_t& parent, std::vector<std::string>& tags, bool& include_all_descendants) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::getChildrenComponentsByTagsAllAsMap(toPtr<UClass>(uclass), toPtr<USceneComponent>(parent), tags, include_all_descendants));
+            [this](uint64_t& uclass, uint64_t& parent, std::vector<std::string>& tags, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::getChildrenComponentsByTagsAllAsMap(toPtr<UClass>(uclass), toPtr<USceneComponent>(parent), tags, include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_scene_component_by_class_as_map",
-            [this](uint64_t& uclass, uint64_t& parent, bool& include_all_descendants) -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::getChildrenComponentsByClassAsMap(toPtr<UClass>(uclass), toPtr<USceneComponent>(parent), include_all_descendants));
+            [this](uint64_t& uclass, uint64_t& parent, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::getChildrenComponentsByClassAsMap(toPtr<UClass>(uclass), toPtr<USceneComponent>(parent), include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
             });
 
         //

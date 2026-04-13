@@ -11,7 +11,7 @@ import spear
 #
 
 class UnrealObject:
-    def __init__(self, unreal_service, sp_func_service, config, uobject=None, uclass=None, static_class_desc=None, property_name="", is_top_level=True, with_sp_funcs=False):
+    def __init__(self, unreal_service, sp_func_service, config, uobject=None, uclass=None, derived_state=None, property_name="", is_top_level=True, with_sp_funcs=False):
 
         if is_top_level:
             assert unreal_service.is_top_level_service()
@@ -38,7 +38,7 @@ class UnrealObject:
                 self.uobject = self._unreal_service.get_default_object(uclass=self.uclass, create_if_needed=False, as_handle=True)
             elif uobject is not None and uclass is None:
                 self.uobject = spear.to_handle(obj=uobject)
-                self.uclass = self._unreal_service.get_class(uobject=self.uobject)
+                self.uclass = self._unreal_service.get_class(uobject=self.uobject, as_handle=True)
             else:
                 self.uobject = spear.to_handle(obj=uobject)
                 self.uclass = self._unreal_service.to_uclass(uclass=uclass)
@@ -48,13 +48,27 @@ class UnrealObject:
 
             self._static_class_desc = self._unreal_service.get_static_class_desc(uclass=self.uclass)
 
+            # build unqualified function name lookup; more-derived classes overwrite less-derived
+            unqualified_function_descs = {}
+            for class_id in self._static_class_desc.derived_classes[::-1]:
+                for function_desc in self._static_class_desc.function_descs.values():
+                    if function_desc.static_class == class_id:
+                        unqualified_function_descs[function_desc.function_name] = function_desc
+
+            self.derived_state = {
+                "class_name": self._static_class_desc.name,
+                "derived_classes": self._static_class_desc.derived_classes,
+                "derived_class_names": self._static_class_desc.derived_class_names,
+                "qualified_function_descs": self._static_class_desc.function_descs,
+                "unqualified_function_descs": unqualified_function_descs}
+
             self.call_async = UnrealObject(
                 unreal_service=self._unreal_service.call_async,
                 sp_func_service=self._sp_func_service.call_async,
                 config=self._config,
                 uobject=self.uobject,
                 uclass=self.uclass,
-                static_class_desc=self._static_class_desc,
+                derived_state=self.derived_state,
                 is_top_level=False)
 
             self.send_async = UnrealObject(
@@ -63,13 +77,13 @@ class UnrealObject:
                 config=self._config,
                 uobject=self.uobject,
                 uclass=self.uclass,
-                static_class_desc=self._static_class_desc,
+                derived_state=self.derived_state,
                 is_top_level=False)
 
         else:
             self.uobject = uobject
             self.uclass = uclass
-            self._static_class_desc = static_class_desc
+            self.derived_state = derived_state
 
         if self._is_top_level:
             if with_sp_funcs:
@@ -128,7 +142,7 @@ class UnrealObject:
 
     def call(self, function_name, args=None, world_context_object="WorldContextObject", as_raw_dict=None, as_dict=None, as_value=None, as_handle=None, as_unreal_struct=None, as_unreal_class=None, as_unreal_object=None, with_sp_funcs=None, arrays=None, unreal_objs=None, info=""):
         args = args if args is not None else {}
-        if function_name in self._static_class_desc.ufunctions:
+        if function_name in self.derived_state["unqualified_function_descs"] or function_name in self.derived_state["qualified_function_descs"]:
             return self._call_ufunction(
                 function_name=function_name,
                 world_context_object=world_context_object,
@@ -152,7 +166,7 @@ class UnrealObject:
 
     def _call_ufunction(self, function_name, world_context_object="WorldContextObject", as_raw_dict=None, as_dict=None, as_value=None, as_handle=None, as_unreal_struct=None, as_unreal_class=None, as_unreal_object=None, with_sp_funcs=None, **kwargs):
         if self._config.SPEAR.UNREAL_OBJECT.PRINT_CALL_DEBUG_INFO:
-            spear.log(f"Calling uclass={self._static_class_desc.name}, ufunction={function_name}, uobject={self.uobject}...")
+            spear.log(f"Calling uclass={self.derived_state['class_name']}, function_name={function_name}, uobject={self.uobject}...")
             spear.log(f"    as_raw_dict:      {as_raw_dict}")
             spear.log(f"    as_dict:          {as_dict}")
             spear.log(f"    as_value:         {as_value}")
@@ -160,7 +174,12 @@ class UnrealObject:
             spear.log(f"    as_unreal_object: {as_unreal_object}")
             spear.log(f"    with_sp_funcs:    {with_sp_funcs}")
             spear.log(f"    kwargs:           {kwargs}")
-        ufunction = self._static_class_desc.ufunctions[function_name]
+        if function_name in self.derived_state["unqualified_function_descs"]:
+            ufunction = self.derived_state["unqualified_function_descs"][function_name].function
+        elif function_name in self.derived_state["qualified_function_descs"]:
+            ufunction = self.derived_state["qualified_function_descs"][function_name].function
+        else:
+            assert False
         result = self._unreal_service.call_function(uobject=self.uobject, uclass=0, ufunction=ufunction, args=kwargs, world_context_object=world_context_object)
         if as_raw_dict is not None:
             assert as_dict is None
@@ -185,7 +204,7 @@ class UnrealObject:
 
     def _call_sp_func(self, function_name, arrays=None, unreal_objs=None, info=""):
         if self._config.SPEAR.UNREAL_OBJECT.PRINT_CALL_DEBUG_INFO:
-            spear.log(f"Calling uclass={self._static_class_desc.name}, sp_func={function_name}, uobject={self.uobject}...")
+            spear.log(f"Calling uclass={self.derived_state['class_name']}, sp_func={function_name}, uobject={self.uobject}...")
             spear.log(f"    arrays:      {arrays}")
             spear.log(f"    unreal_objs: {unreal_objs}")
             spear.log(f"    info:        {info}")
@@ -238,6 +257,11 @@ class UnrealObject:
         assert property_name != ""
         self._unreal_service.set_property_value_for_object(uobject=self.uobject, property_name=property_name, property_value=property_value)
 
+    # type checking interface
+
+    def is_a(self, uclass):
+        return self._unreal_service.to_uclass(uclass=uclass) in self.derived_state["derived_classes"]
+
     # interface for debug printing
 
     def print_debug_info(self, prefix=""):
@@ -263,7 +287,7 @@ class UnrealObject:
         spear.log(f"{prefix}    Meta type: {meta_type_string}")
 
         if is_actor:
-            spear.log(f"{prefix}    Actor: {self._unreal_service.try_get_stable_name_for_actor(actor=self)}")
+            spear.log(f"{prefix}    Actor: {self._unreal_service.get_stable_name_for_actor(actor=self)}")
             spear.log(f"{prefix}        Non-scene components: ")
             components = self._unreal_service.get_components_as_dict(actor=self)
             for component_name, component in components.items():
@@ -294,7 +318,7 @@ class UnrealObject:
         # if self represents a UObject directly (i.e., it doesn't represent a possibly nested property), then we can call functions on it
         if self.property_name == "":
             # if attr_name is the name of a UFunction
-            if attr_name in self._static_class_desc.ufunctions:
+            if attr_name in self.derived_state["unqualified_function_descs"]:
                 def call_ufunction(*args, world_context_object="WorldContextObject", as_raw_dict=None, as_dict=None, as_value=None, as_handle=None, as_unreal_object=None, with_sp_funcs=None, **kwargs):
                     return self._call_ufunction(
                         function_name=attr_name,
@@ -331,7 +355,7 @@ class UnrealObject:
             config=self._config,
             uobject=self.uobject,
             uclass=self.uclass,
-            static_class_desc=self._static_class_desc,
+            derived_state=self.derived_state,
             property_name=property_name,
             is_top_level=self._is_top_level)
 
@@ -349,12 +373,12 @@ class UnrealObject:
             config=self._config,
             uobject=self.uobject,
             uclass=self.uclass,
-            static_class_desc=self._static_class_desc,
+            derived_state=self.derived_state,
             property_name=property_name,
             is_top_level=self._is_top_level)
 
     def __setattr__(self, attr_name, attr_value):
-        if attr_name.startswith("_") or attr_name in ["uobject", "uclass", "property_name", "call_async", "send_async"]:
+        if attr_name.startswith("_") or attr_name in ["uobject", "uclass", "property_name", "call_async", "send_async", "derived_state"]:
             super().__setattr__(attr_name, attr_value)
         else:
             assert self.uobject != 0
@@ -369,9 +393,8 @@ class UnrealObject:
             self._unreal_service.set_property_value_for_object(uobject=self.uobject, property_name=property_name, property_value=attr_value)
 
     def __repr__(self):
-        return \
-            f'UnrealObject(uobject={self.uobject}, uclass={self.uclass}, property_name="{self.property_name}", ' + \
-            f'_is_top_level={self._is_top_level}, _static_class_desc={self._static_class_desc}, _initialized_sp_funcs={self._initialized_sp_funcs}, _sp_func_names={self._sp_func_names})'
+        class_name = self.derived_state["class_name"]
+        return f'UnrealObject(uobject={self.uobject}, uclass={self.uclass}, property_name="{self.property_name}", _is_top_level={self._is_top_level}, _class_name={class_name}, _initialized_sp_funcs={self._initialized_sp_funcs}, _sp_func_names={self._sp_func_names})'
 
     # private helper functions
 
@@ -571,7 +594,7 @@ class UnrealObject:
 class UnrealStruct:
     def __init__(self, unreal_service, ustruct):
         self._unreal_service = unreal_service
-        self.ustruct = ustruct
+        self.ustruct = spear.to_handle(obj=ustruct)
 
     def print_debug_info(self, prefix=""):
         type_string = self._unreal_service.get_type_for_struct_as_string(ustruct=self.ustruct)
@@ -583,7 +606,7 @@ class UnrealStruct:
         spear.log(f"{prefix}    Meta type: {meta_class_string}")
 
         spear.log(f"{prefix}    Properties for type: {type_string}")
-        props = self._unreal_service.find_properties_for_struct_as_dict(ustruct=self.ustruct)
+        props = self._unreal_service.find_properties_as_dict(ustruct=self.ustruct)
         for name, prop in props.items():
             spear.log(f"{prefix}        Property: {name} ({self._unreal_service.get_type_for_property_as_string(prop=prop)})")
 
@@ -593,7 +616,7 @@ class UnrealStruct:
 class UnrealClass:
     def __init__(self, unreal_service, uclass):
         self._unreal_service = unreal_service
-        self.uclass = uclass
+        self.uclass = spear.to_handle(obj=uclass)
 
     def print_debug_info(self, prefix=""):
         type_string = self._unreal_service.get_type_for_class_as_string(uclass=self.uclass)
@@ -617,7 +640,7 @@ class UnrealClass:
             ufunctions = self._unreal_service.find_functions_as_dict(uclass=current_uclass, field_iteration_flags=["IncludeDeprecated"]) # exclude base classes
             for ufunction_name, ufunction in ufunctions.items():
                 spear.log(f"{prefix}            Function: {ufunction_name}")
-                props = self._unreal_service.find_properties_for_function_as_dict(ufunction=ufunction)
+                props = self._unreal_service.find_properties_as_dict(ustruct=ufunction)
                 for prop_name, prop in props.items():
                     property_flags = self._unreal_service.get_property_flags(prop=prop)
                     if "CPF_Parm" in property_flags and "CPF_ReturnParm" not in property_flags:
@@ -640,7 +663,9 @@ class UnrealClass:
         current_uclass = self.uclass
         while current_uclass != 0:
             spear.log(f"{prefix}        Properties for type: {self._unreal_service.get_type_for_class_as_string(uclass=current_uclass)}")
-            props = self._unreal_service.find_properties_for_class_as_dict(uclass=current_uclass, field_iteration_flags=["IncludeDeprecated"]) # exclude base classes
+            spear.log(current_uclass)
+            spear.log(type(current_uclass))
+            props = self._unreal_service.find_properties_as_dict(ustruct=current_uclass, field_iteration_flags=["IncludeDeprecated"]) # exclude base classes
             for name, prop in props.items():
                 spear.log(f"{prefix}            Property: {name} ({self._unreal_service.get_type_for_property_as_string(prop=prop)})")
             current_uclass = self._unreal_service.get_super_class(uclass=current_uclass, as_handle=True)

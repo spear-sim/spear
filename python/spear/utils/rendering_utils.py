@@ -4,7 +4,7 @@
 #
 
 import numpy as np
-import spear
+
 
 def get_object_ids_bgra_uint8_as_uint32(object_ids_bgra_uint8):
     return object_ids_bgra_uint8.view(np.uint32).reshape(object_ids_bgra_uint8.shape[:2]) & 0x00ffffff
@@ -31,7 +31,6 @@ def tone_map_hypersim(image, mask, as_dict=None):
 
         eps                               = 0.0001 # if the nth percentile brightness value in the unmodified image is less than this, set the scale to 0.0 to avoid divide-by-zero
         brightness_nth_percentile_current = np.percentile(brightness_mask, percentile)
-        # spear.log("brightness_nth_percentile_current: ", brightness_nth_percentile_current)
 
         if brightness_nth_percentile_current < eps:
             scale = 0.0

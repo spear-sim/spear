@@ -69,8 +69,8 @@ NB_MODULE(spear_ext, module)
     shared_memory_view_class.def_rw("id",           &SharedMemoryView::id_);
     shared_memory_view_class.def_rw("num_bytes",    &SharedMemoryView::num_bytes_);
     shared_memory_view_class.def_rw("offset_bytes", &SharedMemoryView::offset_bytes_);
-    shared_memory_view_class.def_rw("name",         &SharedMemoryView::name_);
     shared_memory_view_class.def_rw("usage_flags",  &SharedMemoryView::usage_flags_);
+    shared_memory_view_class.def_rw("name",         &SharedMemoryView::name_);
     shared_memory_view_class.def("__repr__", [](const SharedMemoryView& self) {
         std::ostringstream oss;
         oss << "spear_ext.SharedMemoryView(id=" << self.id_ << ", num_bytes=" << self.num_bytes_ << ", offset_bytes=" << self.offset_bytes_ << ", usage_flags=[";
@@ -80,7 +80,7 @@ NB_MODULE(spear_ext, module)
             }
             oss << "\"" << Std::at(self.usage_flags_, i) << "\"";
         }
-        oss << "]" << ")";
+        oss << "], name=\"" << self.name_ << "\")";
         return oss.str();
     });
 
@@ -123,30 +123,26 @@ NB_MODULE(spear_ext, module)
         return oss.str();
     });
 
-    auto func_signature_type_desc_class = nanobind::class_<FuncSignatureTypeDesc>(module, "FuncSignatureTypeDesc");
-    func_signature_type_desc_class.def(nanobind::init<>());
-    func_signature_type_desc_class.def_rw("type_names",    &FuncSignatureTypeDesc::type_names_);
-    func_signature_type_desc_class.def_rw("const_strings", &FuncSignatureTypeDesc::const_strings_);
-    func_signature_type_desc_class.def_rw("ref_strings",   &FuncSignatureTypeDesc::ref_strings_);
-    func_signature_type_desc_class.def("__repr__", [](const FuncSignatureTypeDesc& self) {
-        std::ostringstream oss;
-        oss << "spear_ext.FuncSignatureTypeDesc(type_names=" << self.type_names_.size() << ", const_strings=" << self.const_strings_.size() << ", ref_strings=" << self.ref_strings_.size() << ")";
-        return oss.str();
-    });
-
     auto func_signature_desc_class = nanobind::class_<FuncSignatureDesc>(module, "FuncSignatureDesc");
     func_signature_desc_class.def(nanobind::init<>());
-    func_signature_desc_class.def_rw("name",              &FuncSignatureDesc::name_);
-    func_signature_desc_class.def_rw("func_signature",    &FuncSignatureDesc::func_signature_);
-    func_signature_desc_class.def_rw("func_signature_id", &FuncSignatureDesc::func_signature_id_);
+    func_signature_desc_class.def_rw("name",       &FuncSignatureDesc::name_);
+    func_signature_desc_class.def_rw("type_ids",   &FuncSignatureDesc::type_ids_);
+    func_signature_desc_class.def_rw("type_names", &FuncSignatureDesc::type_names_);
     func_signature_desc_class.def("__repr__", [](const FuncSignatureDesc& self) {
         std::ostringstream oss;
-        oss << "spear_ext.FuncSignatureDesc(name='" << self.name_ << "', func_signature_id=[";
-        for (int i = 0; i < self.func_signature_id_.size(); i++) {
+        oss << "spear_ext.FuncSignatureDesc(name='" << self.name_ << "', type_ids=[";
+        for (int i = 0; i < self.type_ids_.size(); i++) {
             if (i > 0) {
                 oss << ", ";
             }
-            oss << Std::at(self.func_signature_id_, i);
+            oss << Std::at(self.type_ids_, i);
+        }
+        oss << "], type_names=[";
+        for (int i = 0; i < self.type_names_.size(); i++) {
+            if (i > 0) {
+                oss << ", ";
+            }
+            oss << "'" << Std::at(self.type_names_, i) << "'";
         }
         oss << "])";
         return oss.str();
@@ -162,14 +158,38 @@ NB_MODULE(spear_ext, module)
         return oss.str();
     });
 
+    auto function_desc_class = nanobind::class_<FunctionDesc>(module, "FunctionDesc");
+    function_desc_class.def(nanobind::init<>());
+    function_desc_class.def_rw("function",          &FunctionDesc::function_);
+    function_desc_class.def_rw("function_name",     &FunctionDesc::function_name_);
+    function_desc_class.def_rw("static_class",      &FunctionDesc::static_class_);
+    function_desc_class.def_rw("static_class_name", &FunctionDesc::static_class_name_);
+    function_desc_class.def("__repr__", [](const FunctionDesc &self) {
+        std::ostringstream oss;
+        oss << "spear_ext.FunctionDesc(function_name='" << self.function_name_ << "', static_class_name='" << self.static_class_name_ << "')";
+        return oss.str();
+    });
+
     auto static_struct_desc_class = nanobind::class_<StaticStructDesc>(module, "StaticStructDesc");
     static_struct_desc_class.def(nanobind::init<>());
     static_struct_desc_class.def_rw("static_struct", &StaticStructDesc::static_struct_);
     static_struct_desc_class.def_rw("name",          &StaticStructDesc::name_);
-    static_struct_desc_class.def_rw("ufunctions",    &StaticStructDesc::ufunctions_);
     static_struct_desc_class.def("__repr__", [](const StaticStructDesc &self) {
         std::ostringstream oss;
-        oss << "spear_ext.StaticStructDesc(name='" << self.name_ << "', static_struct=" << self.static_struct_ << ", ufunctions=" << self.ufunctions_.size() << ")";
+        oss << "spear_ext.StaticStructDesc(name='" << self.name_ << "', static_struct=" << self.static_struct_ << ")";
+        return oss.str();
+    });
+
+    auto static_class_desc_class = nanobind::class_<StaticClassDesc>(module, "StaticClassDesc");
+    static_class_desc_class.def(nanobind::init<>());
+    static_class_desc_class.def_rw("static_class",          &StaticClassDesc::static_class_);
+    static_class_desc_class.def_rw("name",                   &StaticClassDesc::name_);
+    static_class_desc_class.def_rw("derived_classes",        &StaticClassDesc::derived_classes_);
+    static_class_desc_class.def_rw("derived_class_names",    &StaticClassDesc::derived_class_names_);
+    static_class_desc_class.def_rw("function_descs",         &StaticClassDesc::function_descs_);
+    static_class_desc_class.def("__repr__", [](const StaticClassDesc &self) {
+        std::ostringstream oss;
+        oss << "spear_ext.StaticClassDesc(name='" << self.name_ << "', static_class=" << self.static_class_ << ", function_descs=" << self.function_descs_.size() << ")";
         return oss.str();
     });
 

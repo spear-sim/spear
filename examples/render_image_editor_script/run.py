@@ -7,7 +7,6 @@
 
 import argparse
 import cv2
-import math
 import matplotlib.pyplot as plt
 import os
 import spear
@@ -17,6 +16,13 @@ import unreal # not needed but useful to demonstrate that we're running inside t
 parser = argparse.ArgumentParser()
 parser.add_argument("--teaser", action="store_true")
 args = parser.parse_args()
+
+if args.teaser:
+    width = 1920
+    height = 1080
+else:
+    width = None
+    height = None
 
 file = __file__
 
@@ -35,47 +41,8 @@ def script():
         final_tone_curve_hdr_component = game.unreal_service.get_component_by_name(actor=bp_camera_sensor, component_name="DefaultSceneRoot.final_tone_curve_hdr_", uclass="USpSceneCaptureComponent2D")
 
         # configure the final_tone_curve_hdr component to match the viewport (width, height, FOV, post-processing settings, etc)
-        
-        engine = instance.engine_globals_service.get_engine()
-        game_viewport_client = engine.GameViewport.get()
-
-        gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
-        player_controller = gameplay_statics.GetPlayerController(PlayerIndex=0)
-        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
-
-        post_process_volume_settings = None
-        post_process_volumes = game.unreal_service.find_actors_by_class(uclass="APostProcessVolume")
-        if len(post_process_volumes) == 1:
-            post_process_volume = post_process_volumes[0]
-            spear.log("Found unique post-process volume.")
-            post_process_volume_settings = post_process_volume.Settings.get()
-
-        # GetViewportSize(...) modifies arguments in-place, so we need as_dict=True so all arguments get returned
-        sp_game_viewport = game.get_unreal_object(uclass="USpGameViewportClient")
-        return_values = sp_game_viewport.GetViewportSize(GameViewportClient=game_viewport_client, as_dict=True)
-
-        if args.teaser:
-            viewport_size_x = 1920
-            viewport_size_y = 1080
-        else:
-            viewport_size_x = return_values["ViewportSize"]["x"]
-            viewport_size_y = return_values["ViewportSize"]["y"]
-
-        viewport_aspect_ratio = viewport_size_x/viewport_size_y # see Engine/Source/Editor/UnrealEd/Private/EditorViewportClient.cpp:2130 for evidence that Unreal's aspect ratio convention is x/y
-        fov = view_target_pov["fOV"]*math.pi/180.0
-        half_fov = fov/2.0
-        half_fov_adjusted = math.atan(math.tan(half_fov)*viewport_aspect_ratio/view_target_pov["aspectRatio"]) # this adjustment is necessary to compute an FOV value that matches the game viewport
-        fov_adjusted = half_fov_adjusted*2.0
-        fov_adjusted_degrees = fov_adjusted*180.0/math.pi
-
-        bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
-        bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
-
-        final_tone_curve_hdr_component.Width = viewport_size_x
-        final_tone_curve_hdr_component.Height = viewport_size_y
-        final_tone_curve_hdr_component.FOVAngle = fov_adjusted_degrees
-        # if post_process_volume_settings is not None:
-        #     final_tone_curve_hdr_component.PostProcessSettings = post_process_volume_settings
+        viewport_info = game.rendering_service.get_current_viewport_info()
+        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=final_tone_curve_hdr_component, viewport_info=viewport_info, widths=width, heights=height)
 
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
         final_tone_curve_hdr_component.Initialize()

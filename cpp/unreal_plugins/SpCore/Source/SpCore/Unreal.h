@@ -50,10 +50,11 @@
 // to behave as expected. So we encode the std::derived_from<...> constraint outside the requires(...) { ... }
 // statement in each concept, where we can manipulate TStruct and TClass more freely.
 
-template <typename TStaticStruct>
-concept CStaticStruct =
-    std::derived_from<TStaticStruct, UStruct> &&
-    !std::derived_from<TStaticStruct, UFunction>;
+template <typename TEnum>
+concept CEnum =
+    requires () {
+        { StaticEnum<TEnum>() } -> std::same_as<UEnum*>;
+    };
 
 template <typename TObject>
 concept CNonObject =
@@ -63,11 +64,10 @@ template <typename TObject>
 concept CObject =
     std::derived_from<TObject, UObject>;
 
-template <typename TEnum>
-concept CEnum =
-    requires () {
-        { StaticEnum<TEnum>() } -> std::same_as<UEnum*>;
-    };
+template <typename TStaticStruct>
+concept CStaticStruct =
+    std::derived_from<TStaticStruct, UStruct> &&
+    !std::derived_from<TStaticStruct, UFunction>;
 
 template <typename TStruct>
 concept CStruct =
@@ -94,7 +94,14 @@ concept CInterface =
 
 template <typename TSpecialStruct>
 concept CSpecialStruct =
-        !(CStruct<TSpecialStruct> || CClass<TSpecialStruct> || CInterface<TSpecialStruct>);
+        !(CStruct<TSpecialStruct> || CClass<TSpecialStruct> || CInterface<TSpecialStruct>) &&
+        requires () {
+            { TBaseStructure<TSpecialStruct>::Get() } -> std::same_as<UScriptStruct*>;
+        };
+
+template <typename TReflectable>
+concept CReflectable =
+    (CSpecialStruct<TReflectable> || CStruct<TReflectable> || CClass<TReflectable> || CInterface<TReflectable>);
 
 template <typename TComponent>
 concept CComponent =
@@ -116,14 +123,15 @@ concept CActor =
     CObject<TActor> &&
     std::derived_from<TActor, AActor>;
 
-template <typename TStableNameObject>
-concept CStableNameObject =
-    CActor<TStableNameObject> || CComponent<TStableNameObject>;
+template <typename TParent>
+concept CParent =
+    CActor<TParent> || CSceneComponent<TParent>;
 
 template <typename TNameObject>
 concept CNameObject =
     !CStaticStruct<TNameObject> &&
-    !CStableNameObject<TNameObject> &&
+    !CComponent<TNameObject> &&
+    !CActor<TNameObject> &&
     (requires (TNameObject name_object) {
         { name_object.GetName() } -> std::same_as<FName>;
     } ||
@@ -131,13 +139,9 @@ concept CNameObject =
         { name_object.GetName() } -> std::same_as<FString>;
     });
 
-template <typename TParent>
-concept CParent =
-    CActor<TParent> || CSceneComponent<TParent>;
-
-template <typename TPropertyContainer>
-concept CPropertyContainer =
-    std::derived_from<TPropertyContainer, UStruct> || std::derived_from<TPropertyContainer, UFunction>;
+template <typename TMappable>
+concept CMappable =
+    (CStaticStruct<TMappable> || CComponent<TMappable> || CActor<TMappable> || CNameObject<TMappable>);
 
 template <typename TSubsystem>
 concept CSubsystem =
@@ -216,7 +220,14 @@ public:
     // Helper functions for getting types as strings
     //
 
-    static std::string getTypeAsString(UStruct* ustruct)
+    template <CReflectable TReflectable>
+    static std::string getCppTypeAsString()
+    {
+        UStruct* ustruct = getStaticStruct<TReflectable>();
+        return getCppTypeAsString(ustruct);
+    }
+
+    static std::string getTypeAsString(const UStruct* ustruct)
     {
         SP_ASSERT(ustruct);
         std::string str;
@@ -225,7 +236,7 @@ public:
         } else if (ustruct->IsA(UScriptStruct::StaticClass())) {
             str = getCppTypeAsString(ustruct);
         } else if (ustruct->IsA(UClass::StaticClass())) {
-            UClass* uclass = static_cast<UClass*>(ustruct);
+            const UClass* uclass = static_cast<const UClass*>(ustruct);
             if (uclass->HasAnyClassFlags(EClassFlags::CLASS_Native)) {
                 str = getCppTypeAsString(ustruct);
             } else {
@@ -237,15 +248,7 @@ public:
         return str;
     }
 
-    template <typename TStructOrClassOrInterface> requires
-         (CSpecialStruct<TStructOrClassOrInterface> || CStruct<TStructOrClassOrInterface> || CClass<TStructOrClassOrInterface> || CInterface<TStructOrClassOrInterface>)
-    static std::string getCppTypeAsString()
-    {
-        UStruct* ustruct = getStaticStruct<TStructOrClassOrInterface>();
-        return getCppTypeAsString(ustruct);
-    }
-
-    static std::string getCppTypeAsString(UStruct* ustruct)
+    static std::string getCppTypeAsString(const UStruct* ustruct)
     {
         SP_ASSERT(ustruct);
         if (ustruct->IsA(UUserDefinedStruct::StaticClass())) {
@@ -253,7 +256,7 @@ public:
         } else if (ustruct->IsA(UScriptStruct::StaticClass())) {
             // pass
         } else if (ustruct->IsA(UClass::StaticClass())) {
-            UClass* uclass = static_cast<UClass*>(ustruct);
+            const UClass* uclass = static_cast<const UClass*>(ustruct);
             SP_ASSERT(uclass->HasAnyClassFlags(EClassFlags::CLASS_Native));
         } else {
             SP_ASSERT(false);
@@ -278,7 +281,7 @@ public:
         return str;
     }
 
-    static std::string getBlueprintTypeAsString(UStruct* ustruct)
+    static std::string getBlueprintTypeAsString(const UStruct* ustruct)
     {
         SP_ASSERT(ustruct);
         if (ustruct->IsA(UUserDefinedStruct::StaticClass())) {
@@ -286,7 +289,7 @@ public:
         } else if (ustruct->IsA(UScriptStruct::StaticClass())) {
             SP_ASSERT(false);
         } else if (ustruct->IsA(UClass::StaticClass())) {
-            UClass* uclass = static_cast<UClass*>(ustruct);
+            const UClass* uclass = static_cast<const UClass*>(ustruct);
             SP_ASSERT(!uclass->HasAnyClassFlags(EClassFlags::CLASS_Native)); // EClassFlags::CLASS_CompiledFromBlueprint is not always set in this case
         } else {
             SP_ASSERT(false);

@@ -16,6 +16,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--conda-script")
 parser.add_argument("--cxx-compiler")
 parser.add_argument("--unreal-engine-dir") # only required on Linux
+parser.add_argument("--debug", action="store_true")
 parser.add_argument("--conda-env", default="spear-env")
 args = parser.parse_args()
 
@@ -40,8 +41,12 @@ if __name__ == "__main__":
             spear.log("ERROR: Compiler path:", cxx_compiler_path)
             assert False
 
-        # optimize agressively for speed, enable exceptions with standard C++ stack unwinding and assume extern "C" code never throws, disable RTTI
-        common_cxx_flags = "/std:c++20 /O2 /EHsc /GR-"
+        if args.debug:
+            optimization_flags = "/Od /Zi /DDEBUG /D_DEBUG"
+        else:
+            optimization_flags = "/O2"
+
+        common_cxx_flags = f"/std:c++20 {optimization_flags} /EHsc /GR-"
         cmake_cxx_flags = common_cxx_flags
 
         cmd_prefix = f"conda activate {args.conda_env} & "
@@ -53,7 +58,12 @@ if __name__ == "__main__":
         else:
             cxx_compiler = args.cxx_compiler
 
-        common_cxx_flags = f"-std=c++20 -O3 -stdlib=libc++ -mmacosx-version-min=10.14"
+        if args.debug:
+            optimization_flags = "-O0 -g -fno-omit-frame-pointer -DDEBUG"
+        else:
+            optimization_flags = "-O3"
+
+        common_cxx_flags = f"-std=c++20 {optimization_flags} -stdlib=libc++ -mmacosx-version-min=10.14"
         cmake_cxx_flags = common_cxx_flags
 
         if args.conda_script:
@@ -106,8 +116,13 @@ if __name__ == "__main__":
         # sufficient to enable std::ranges, but won't attempt to link against the missing library. This
         # low-level build customization is not necessary when building our Unreal plugins, because the Unreal
         # Build Tool handles this automatically.
-        common_cxx_flags = f"-std=c++20 -O3 -D_LIBCPP_ENABLE_EXPERIMENTAL -nostdinc++ -I\'{linux_libcpp_include_dir}\' -Wno-reserved-macro-identifier -stdlib=libc++ -L\'{linux_libcpp_lib_dir}\' -lc++"
-        cmake_cxx_flags = f"{common_cxx_flags}"
+        if args.debug:
+            optimization_flags = "-O0 -g -fno-omit-frame-pointer -DDEBUG"
+        else:
+            optimization_flags = "-O3"
+
+        common_cxx_flags = f"-std=c++20 {optimization_flags} -D_LIBCPP_ENABLE_EXPERIMENTAL -nostdinc++ -I\'{linux_libcpp_include_dir}\' -Wno-reserved-macro-identifier -stdlib=libc++ -L\'{linux_libcpp_lib_dir}\' -lc++"
+        cmake_cxx_flags = common_cxx_flags
 
         if args.conda_script:
             if os.path.exists(args.conda_script):
@@ -147,8 +162,20 @@ if __name__ == "__main__":
         f'-C cmake.define.CMAKE_CXX_COMPILER="{cxx_compiler}" ' + \
         f'-C cmake.define.CMAKE_CXX_FLAGS="{cmake_cxx_flags}"'
 
+    if args.debug:
+        cmd = cmd + " -C cmake.define.CMAKE_BUILD_TYPE=Debug"
+
     spear.log("Executing: ", cmd)
     subprocess.run(cmd, shell=True, check=True)
+
+    # generate dSYM debug symbols on macOS
+    if args.debug and sys.platform == "darwin":
+        python_ext_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "python_ext"))
+        so_files = glob.glob(os.path.join(python_ext_dir, "**", "*.so"), recursive=True)
+        for so_file in so_files:
+            dsym_cmd = f"dsymutil {so_file} -o {so_file}.dSYM"
+            spear.log("Executing: ", dsym_cmd)
+            subprocess.run(dsym_cmd, shell=True, check=True)
 
     spear.log("Successfully built and installed the spear_ext Python extension module.")
     spear.log("Done.")

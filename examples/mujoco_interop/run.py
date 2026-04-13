@@ -14,6 +14,9 @@ import scipy
 import shutil
 import spear
 
+width = 1280
+height = 720
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--mjcf-file", required=True)
@@ -30,7 +33,6 @@ component_descs = \
     {
         "name": "final_tone_curve_hdr",
         "long_name": "DefaultSceneRoot.final_tone_curve_hdr_",
-        "spatial_supersampling_factor": 1,
         "visualize_func": lambda data : data[:,:,[2,1,0]] # BGRA to RGB
     }
 ]
@@ -118,26 +120,9 @@ if __name__ == "__main__":
         assert final_tone_curve_hdr_component is not None
 
         # configure components to match the viewport (width, height, FOV, post-processing settings, etc)
-        
-        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
-
-        viewport_size_x = 1280
-        viewport_size_y = 720
-
-        viewport_aspect_ratio = viewport_size_x/viewport_size_y # see Engine/Source/Editor/UnrealEd/Private/EditorViewportClient.cpp:2130 for evidence that Unreal's aspect ratio convention is x/y
-        fov = view_target_pov["fOV"]*math.pi/180.0
-        half_fov = fov/2.0
-        half_fov_adjusted = math.atan(math.tan(half_fov)*viewport_aspect_ratio/view_target_pov["aspectRatio"]) # this adjustment is necessary to compute an FOV value that matches the game viewport
-        fov_adjusted = half_fov_adjusted*2.0
-        fov_adjusted_degrees = fov_adjusted*180.0/math.pi
-
-        bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
-        bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
-
-        for component_desc in component_descs:
-            component_desc["component"].Width = viewport_size_x*component_desc["spatial_supersampling_factor"]
-            component_desc["component"].Height = viewport_size_y*component_desc["spatial_supersampling_factor"]
-            component_desc["component"].FOVAngle = fov_adjusted_degrees
+        viewport_info = sp_game.rendering_service.get_current_viewport_info()
+        components = [ desc["component"] for desc in component_descs ]
+        sp_game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_info=viewport_info, widths=width, heights=height)
 
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
         for component_desc in component_descs:
@@ -156,7 +141,7 @@ if __name__ == "__main__":
     mj_bodies = { mj_model.body(mj_body).name: mj_body for mj_body in range(mj_model.nbody) if mj_model.body(mj_body).name.startswith(name_prefix) }
 
     # need to set mj_model.vis properties before launching the viewer
-    fov_y_degrees = 2.0*math.atan(math.tan(fov_adjusted/2.0)/viewport_aspect_ratio)*180.0/math.pi # fov_x -> fov_y -> fov_y_degrees
+    fov_y_degrees = viewport_info["fov_y_degrees"]
     mj_model.vis.global_.fovy = fov_y_degrees
     mj_model.vis.headlight.ambient = [0.4, 0.4, 0.4]
 
@@ -165,11 +150,8 @@ if __name__ == "__main__":
 
     # initialize MuJoCo camera (not needed when launching the viewer through the command-line, but needed when using launch_passive)
 
-    cam_location = view_target_pov["location"]
-    cam_rotator = view_target_pov["rotation"]
-
-    cam_position = spear.to_numpy_array_from_vector(vector=cam_location)
-    cam_rotation_matrix = spear.to_numpy_matrix_from_rotator(rotator=cam_rotator)
+    cam_position = spear.to_numpy_array_from_vector(vector=viewport_info["camera_location"])
+    cam_rotation_matrix = spear.to_numpy_matrix_from_rotator(rotator=viewport_info["camera_rotation"])
 
     if args.visual_parity_with_unreal:
         cam_position = (np.diag([1,-1,1])*np.matrix(cam_position).T).A1
@@ -196,9 +178,7 @@ if __name__ == "__main__":
     mj_viewer.sync()
 
     # initialize MuJoCo screenshot renderer
-    image_width = viewport_size_x
-    image_height = viewport_size_y
-    mj_renderer = mujoco.Renderer(model=mj_model, height=image_height, width=image_width)
+    mj_renderer = mujoco.Renderer(model=mj_model, height=height, width=width)
 
     # initialize counters
     ue_step_index = 0

@@ -284,11 +284,8 @@ class Client:
 
     def initialize(self):
         result = self._client.call("engine_service.call_sync_on_worker_thread.get_entry_point_signature_descs")
-        entry_point_signature_descs = self._to_return_values(obj=result, return_as="map_of_string_to_vector_of_func_signature_desc")
-        self.entry_point_signature_descs = {}
-        for registry_name, descs in entry_point_signature_descs.items():
-            for desc in descs:
-                self.entry_point_signature_descs[desc.name] = desc
+        entry_point_signature_descs = self._to_return_values(obj=result, return_as="map_of_string_to_func_signature_desc")
+        self.entry_point_signature_descs = entry_point_signature_descs
 
     def terminate(self):
         self._client.close()
@@ -309,7 +306,7 @@ class Client:
 
     def call(self, func_name, *args):
         desc = self.entry_point_signature_descs[func_name]
-        return_as = desc.func_signature[0].type_names["entry_point"]
+        return_as = desc.type_names[0]
         if self.verbose_rpc_calls:
             spear.log(f"Calling: {func_name} : {args} -> {return_as}")
         result = self._client.call(func_name, *[self._to_args(arg) for arg in args])
@@ -355,53 +352,73 @@ class Client:
             return obj
         elif return_as in ["string", "vector_of_string", "map_of_string_to_uint64", "map_of_string_to_string"]:
             return self._to_str(obj)
-        elif return_as == "vector_of_func_signature_type_desc":
-            obj = self._to_dict(obj)
-            return [ FuncSignatureTypeDesc(type_names=self._to_str(v["type_names"]), const_strings=self._to_str(v["const_strings"]), ref_strings=self._to_str(v["ref_strings"])) for v in obj ]
         elif return_as == "vector_of_static_struct_desc":
             obj = self._to_dict(obj)
-            return [ StaticStructDesc(static_struct=v["static_struct"], name=self._to_str(v["name"]), ufunctions=self._to_str(v["ufunctions"])) for v in obj ]
-        elif return_as == "map_of_string_to_property_value":
+            return [ StaticStructDesc(static_struct=v["static_struct"], name=self._to_str(v["name"])) for v in obj ]
+        elif return_as == "vector_of_static_class_desc":
             obj = self._to_dict(obj)
-            return { k: spear.PropertyValue(value=self._to_str(v["value"]), type_id=self._to_str(v["type_id"])) for k, v in obj.items() }
-        elif return_as == "map_of_string_to_shared_memory_view":
-            obj = self._to_dict(obj)
-            return { k: SharedMemoryView(id=self._to_str(v["id"]), num_bytes=v["num_bytes"], offset_bytes=v["offset_bytes"], name=self._to_str(v["name"]), usage_flags=self._to_str(v["usage_flags"])) for k, v in obj.items() }
+            return [ self._to_static_class_desc(v) for v in obj ]
         elif return_as == "map_of_string_to_packed_array":
             obj = self._to_dict(obj)
             return { k: self._to_packed_array_return_value(v) for k, v in obj.items() }
+        elif return_as == "map_of_string_to_shared_memory_view":
+            obj = self._to_dict(obj)
+            return { k: SharedMemoryView(id=self._to_str(v["id"]), num_bytes=v["num_bytes"], offset_bytes=v["offset_bytes"], usage_flags=self._to_str(v["usage_flags"]), name=self._to_str(v["name"])) for k, v in obj.items() }
+        elif return_as == "map_of_string_to_property_value":
+            obj = self._to_dict(obj)
+            return { k: spear.PropertyValue(value=self._to_str(v["value"]), type_id=self._to_str(v["type_id"])) for k, v in obj.items() }
+        elif return_as == "map_of_string_to_func_signature_desc":
+            obj = self._to_dict(obj)
+            return { self._to_str(k): FuncSignatureDesc(name=self._to_str(v["name"]), type_ids=v["type_ids"], type_names=self._to_str(v["type_names"])) for k, v in obj.items() }
         elif return_as == "map_of_string_to_world_desc":
             obj = self._to_dict(obj)
             return { k: WorldDesc(world=v["world"], world_id=v["world_id"], is_editor_world=v["is_editor_world"], is_game_world=v["is_game_world"], is_playing=v["is_playing"]) for k, v in obj.items() }
-        elif return_as == "map_of_string_to_vector_of_func_signature_desc":
+        elif return_as == "packed_array":
             obj = self._to_dict(obj)
-            return { k: [ FuncSignatureDesc(name=self._to_str(v["name"]), func_signature=[ FuncSignatureTypeDesc(type_names=self._to_str(s["type_names"]), const_strings=self._to_str(s["const_strings"]), ref_strings=self._to_str(s["ref_strings"])) for s in v["func_signature"] ], func_signature_id=v["func_signature_id"]) for v in values ] for k, values in obj.items() }
+            return self._to_packed_array_return_value(obj)
+        elif return_as == "shared_memory_view":
+            obj = self._to_dict(obj)
+            return SharedMemoryView(id=self._to_str(obj["id"]), num_bytes=obj["num_bytes"], offset_bytes=obj["offset_bytes"], usage_flags=self._to_str(obj["usage_flags"]), name=self._to_str(obj["name"]))
+        elif return_as == "data_bundle":
+            obj = self._to_dict(obj)
+            return spear.DataBundle(packed_arrays={ k: self._to_packed_array_return_value(v) for k, v in obj["packed_arrays"].items() }, unreal_obj_strings=self._to_str(obj["unreal_obj_strings"]), info=self._to_str(obj["info"]))
         elif return_as == "property_desc":
             obj = self._to_dict(obj)
             return PropertyDesc(property=obj["property"], value_ptr=obj["value_ptr"], type_id=self._to_str(obj["type_id"]))
         elif return_as == "property_value":
             obj = self._to_dict(obj)
             return spear.PropertyValue(value=self._to_str(obj["value"]), type_id=self._to_str(obj["type_id"]))
-        elif return_as == "shared_memory_view":
-            obj = self._to_dict(obj)
-            return SharedMemoryView(id=self._to_str(obj["id"]), num_bytes=obj["num_bytes"], offset_bytes=obj["offset_bytes"], name=self._to_str(obj["name"]), usage_flags=self._to_str(obj["usage_flags"]))
-        elif return_as == "packed_array":
-            obj = self._to_dict(obj)
-            return self._to_packed_array_return_value(obj)
-        elif return_as == "data_bundle":
-            obj = self._to_dict(obj)
-            return spear.DataBundle(packed_arrays={ k: self._to_packed_array_return_value(v) for k, v in obj["packed_arrays"].items() }, unreal_obj_strings=self._to_str(obj["unreal_obj_strings"]), info=self._to_str(obj["info"]))
         elif return_as == "future":
             obj = self._to_dict(obj)
             return Future(future_ptr=obj["future_ptr"], type_id=self._to_str(obj["type_id"]))
         elif return_as == "static_struct_desc":
             obj = self._to_dict(obj)
-            return StaticStructDesc(static_struct=obj["static_struct"], name=self._to_str(obj["name"]), ufunctions=self._to_str(obj["ufunctions"]))
+            return StaticStructDesc(static_struct=obj["static_struct"], name=self._to_str(obj["name"]))
+        elif return_as == "static_class_desc":
+            obj = self._to_dict(obj)
+            return self._to_static_class_desc(obj)
         elif return_as == "world_desc":
             obj = self._to_dict(obj)
             return WorldDesc(world=obj["world"], world_id=obj["world_id"], is_editor_world=obj["is_editor_world"], is_game_world=obj["is_game_world"], is_playing=obj["is_playing"])
         else:
             assert False
+
+    def _to_static_class_desc(self, obj):
+        obj = self._to_dict(obj)
+        function_descs = {}
+        for k, v in self._to_dict(obj.get("function_descs", {})).items():
+            v = self._to_dict(v)
+            function_descs[self._to_str(k)] = FunctionDesc(
+                function=v["function"],
+                function_name=self._to_str(v["function_name"]),
+                static_class=v["static_class"],
+                static_class_name=self._to_str(v["static_class_name"]))
+        return StaticClassDesc(
+            static_class=obj["static_class"],
+            name=self._to_str(obj["name"]),
+            derived_classes=obj.get("derived_classes", []),
+            derived_class_names=self._to_str(obj.get("derived_class_names", [])),
+            function_descs=function_descs)
 
     def _to_str(self, obj):
         if isinstance(obj, bytes):
@@ -433,11 +450,46 @@ class Client:
 
 
 #
-# ClientStruct and derived structs
+# ClientStruct and derived structs. Keep sorted in the same order as in cpp/unreal_plugins/SpServices/Source/SpServices/MsgpackAdaptors.h
 #
 
 class ClientStruct:
     pass
+
+class PackedArray(ClientStruct):
+    def __init__(self, data=None, data_source="Invalid", shape=None, data_type="", shared_memory_name=""):
+        shape = shape if shape is not None else []
+        self.data = data
+        self.data_source = data_source
+        self.shape = shape
+        self.data_type = data_type
+        self.shared_memory_name = shared_memory_name
+
+    def __repr__(self):
+        return f'spear.PackedArray(data={self.data}, data_source="{self.data_source}", shape={self.shape}, data_type="{self.data_type}", shared_memory_name="{self.shared_memory_name}")'
+
+class SharedMemoryView(ClientStruct):
+    def __init__(self, id="", num_bytes=0, offset_bytes=0, usage_flags=None, name="smem:invalid"):
+        usage_flags = usage_flags if usage_flags is not None else ["DoNotUse"]
+        self.id = id
+        self.num_bytes = num_bytes
+        self.offset_bytes = offset_bytes
+        self.usage_flags = usage_flags
+        self.name = name
+
+    def __repr__(self):
+        return f"spear.SharedMemoryView(id={self.id}, num_bytes={self.num_bytes}, offset_bytes={self.offset_bytes}, usage_flags={self.usage_flags}, name={self.name})"
+
+class DataBundle(ClientStruct):
+    def __init__(self, packed_arrays=None, unreal_obj_strings=None, info=""):
+        packed_arrays = packed_arrays if packed_arrays is not None else {}
+        unreal_obj_strings = unreal_obj_strings if unreal_obj_strings is not None else {}
+        self.packed_arrays = packed_arrays
+        self.unreal_obj_strings = unreal_obj_strings
+        self.info = info
+
+    def __repr__(self):
+        return f"spear.DataBundle(packed_arrays={len(self.packed_arrays)}, unreal_obj_strings={len(self.unreal_obj_strings)}, info={len(self.info)})"
 
 class PropertyDesc(ClientStruct):
     def __init__(self, property=0, value_ptr=0, type_id=""):
@@ -456,63 +508,16 @@ class PropertyValue(ClientStruct):
     def __repr__(self):
         return f"spear.PropertyValue(value={self.value}, type_id={self.type_id})"
 
-class SharedMemoryView(ClientStruct):
-    def __init__(self, id="", num_bytes=0, offset_bytes=0, name="smem:invalid", usage_flags=None):
-        usage_flags = usage_flags if usage_flags is not None else ["DoNotUse"]
-        self.id = id
-        self.num_bytes = num_bytes
-        self.offset_bytes = offset_bytes
-        self.name = name
-        self.usage_flags = usage_flags
-
-    def __repr__(self):
-        return f"spear.SharedMemoryView(id={self.id}, num_bytes={self.num_bytes}, offset_bytes={self.offset_bytes}, usage_flags={self.usage_flags})"
-
-class PackedArray(ClientStruct):
-    def __init__(self, data=None, data_source="Invalid", shape=None, data_type="", shared_memory_name=""):
-        shape = shape if shape is not None else []
-        self.data = data
-        self.data_source = data_source
-        self.shape = shape
-        self.data_type = data_type
-        self.shared_memory_name = shared_memory_name
-
-    def __repr__(self):
-        return f'spear.PackedArray(data={self.data}, data_source="{self.data_source}", shape={self.shape}, data_type="{self.data_type}", shared_memory_name="{self.shared_memory_name}")'
-
-class DataBundle(ClientStruct):
-    def __init__(self, packed_arrays=None, unreal_obj_strings=None, info=""):
-        packed_arrays = packed_arrays if packed_arrays is not None else {}
-        unreal_obj_strings = unreal_obj_strings if unreal_obj_strings is not None else {}
-        self.packed_arrays = packed_arrays
-        self.unreal_obj_strings = unreal_obj_strings
-        self.info = info
-
-    def __repr__(self):
-        return f"spear.DataBundle(packed_arrays={len(self.packed_arrays)}, unreal_obj_strings={len(self.unreal_obj_strings)}, info={len(self.info)})"
-
-class FuncSignatureTypeDesc(ClientStruct):
-    def __init__(self, type_names=None, const_strings=None, ref_strings=None):
-        type_names = type_names if type_names is not None else {}
-        const_strings = const_strings if const_strings is not None else {}
-        ref_strings = ref_strings if ref_strings is not None else {}
-        self.type_names = type_names
-        self.const_strings = const_strings
-        self.ref_strings = ref_strings
-
-    def __repr__(self):
-        return f"spear.FuncSignatureTypeDesc(type_names={self.type_names}, const_strings={self.const_strings}, ref_strings={self.ref_strings})"
-
 class FuncSignatureDesc(ClientStruct):
-    def __init__(self, name="", func_signature=None, func_signature_id=None):
-        func_signature = func_signature if func_signature is not None else []
-        func_signature_id = func_signature_id if func_signature_id is not None else []
+    def __init__(self, name="", type_ids=None, type_names=None):
+        type_ids = type_ids if type_ids is not None else []
+        type_names = type_names if type_names is not None else []
         self.name = name
-        self.func_signature = func_signature
-        self.func_signature_id = func_signature_id
+        self.type_ids = type_ids
+        self.type_names = type_names
 
     def __repr__(self):
-        return f"spear.FuncSignatureDesc(name='{self.name}', func_signature_id={self.func_signature_id})"
+        return f"spear.FuncSignatureDesc(name='{self.name}', type_ids={self.type_ids}, type_names={self.type_names})"
 
 class Future(ClientStruct):
     def __init__(self, future_ptr=0, type_id=""):
@@ -522,15 +527,37 @@ class Future(ClientStruct):
     def __repr__(self):
         return f'spear.Future(future_ptr={self.future_ptr}, type_id="{self.type_id}")'
 
-class StaticStructDesc(ClientStruct):
-    def __init__(self, static_struct=0, name="", ufunctions=None):
-        ufunctions = ufunctions if ufunctions is not None else {}
-        self.static_struct = static_struct
-        self.name = name
-        self.ufunctions = ufunctions
+class FunctionDesc(ClientStruct):
+    def __init__(self, function=0, function_name="", static_class=0, static_class_name=""):
+        self.function = function
+        self.function_name = function_name
+        self.static_class = static_class
+        self.static_class_name = static_class_name
 
     def __repr__(self):
-        return f"spear.StaticStructDesc(name='{self.name}', static_struct={self.static_struct}, ufunctions={len(self.ufunctions)})"
+        return f"spear.FunctionDesc(function_name='{self.function_name}', static_class_name='{self.static_class_name}')"
+
+class StaticStructDesc(ClientStruct):
+    def __init__(self, static_struct=0, name=""):
+        self.static_struct = static_struct
+        self.name = name
+
+    def __repr__(self):
+        return f"spear.StaticStructDesc(name='{self.name}', static_struct={self.static_struct})"
+
+class StaticClassDesc(ClientStruct):
+    def __init__(self, static_class=0, name="", derived_classes=None, derived_class_names=None, function_descs=None):
+        derived_classes = derived_classes if derived_classes is not None else []
+        derived_class_names = derived_class_names if derived_class_names is not None else []
+        function_descs = function_descs if function_descs is not None else {}
+        self.static_class = static_class
+        self.name = name
+        self.derived_classes = derived_classes
+        self.derived_class_names = derived_class_names
+        self.function_descs = function_descs
+
+    def __repr__(self):
+        return f"spear.StaticClassDesc(name='{self.name}', static_class={self.static_class}, function_descs={len(self.function_descs)})"
 
 class WorldDesc(ClientStruct):
     def __init__(self, world=0, world_id=-1, is_editor_world=False, is_game_world=False, is_playing=False):

@@ -13,12 +13,14 @@
 
 #include <Components/SkeletalMeshComponent.h>
 #include <Components/StaticMeshComponent.h>
-#include <Engine/EngineBaseTypes.h>    // ELevelTick
+#include <Engine/World.h>
+#include <GameFramework/Actor.h>
+#include <Engine/EngineBaseTypes.h>  // ELevelTick
 #include <Materials/MaterialInstanceDynamic.h>
 #include <Materials/MaterialInterface.h>
 #include <Math/Color.h>
-#include <UObject/StrongObjectPtr.h>   // TStrongObjectPtr
-#include <UObject/UObjectGlobals.h>    // LoadObject
+#include <UObject/StrongObjectPtr.h> // TStrongObjectPtr
+#include <UObject/UObjectGlobals.h>  // LoadObject
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
@@ -66,32 +68,35 @@ public:
     const std::map<uint32_t, MeshProxyGeometryDesc>& getMeshProxyGeometryDescs() const { return id_to_mesh_proxy_geometry_desc_map_; }
 
     //
+    // Allow/ignore lists
+    //
+
+    const std::vector<AActor*>& getAllowedActors() const { return allowed_actors_; }
+    void setAllowedActors(const std::vector<AActor*>& allowed_actors) { allowed_actors_ = allowed_actors; }
+
+    const std::vector<USceneComponent*>& getAllowedComponents() const { return allowed_components_; }
+    void setAllowedComponents(const std::vector<USceneComponent*>& allowed_components) { allowed_components_ = allowed_components; }
+
+    const std::vector<AActor*>& getIgnoredActors() const { return ignored_actors_; }
+    void setIgnoredActors(const std::vector<AActor*>& ignored_actors) { ignored_actors_ = ignored_actors; }
+
+    const std::vector<USceneComponent*>& getIgnoredComponents() const { return ignored_components_; }
+    void setIgnoredComponents(const std::vector<USceneComponent*>& ignored_components) { ignored_components_ = ignored_components; }
+
+    //
     // ProxyComponentManager<MeshProxyComponentManager, MeshProxyComponentData> CRTP interface. These
     // functions are called from the ProxyComponentManager<...> base class.
     //
 
-    bool shouldRegisterProxyComponent(USceneComponent* component)
+    bool shouldRegisterProxyForComponent(USceneComponent* component)
     {
-        SP_ASSERT(component);
-
-        if (component->bHiddenInGame || !component->GetVisibleFlag()) {
-            return false;
-        }
-
-        #if WITH_EDITOR
-            if (!component->GetOwner() || component->GetOwner()->IsHiddenEd()) {
-                return false;
-            }
-        #else
-            if (!component->GetOwner() || component->GetOwner()->IsHidden()) {
-                return false;
-            }
-        #endif
-
-        return true;
+        return isVisible(component) && isAllowed(component);
     }
 
-    bool shouldUnregisterProxyComponent(USceneComponent* proxy_component, MeshProxyComponentData* mesh_proxy_component_data) { return false; }
+    bool shouldUnregisterProxyForComponent(USceneComponent* component, MeshProxyComponentData* mesh_proxy_component_data)
+    {
+        return !isVisible(component) || !isAllowed(component);
+    }
 
     MeshProxyComponentData* registerProxyComponent(UStaticMeshComponent* proxy_component, UStaticMeshComponent* component)
     {
@@ -229,14 +234,64 @@ public:
     UWorld* getWorld() { return owner_->GetWorld(); }
     AActor* getOwner() { return owner_; }
 
-    //
-    // Virtual methods for derived classes to override. These functions are called internally in registerProxyComponent(...)
-    //
-
+private:
     virtual bool shouldProxyComponentBeHiddenInViewport(USceneComponent* component) const = 0;
     virtual UMaterialInterface* createMaterialForProxyComponentMaterialSlot(uint32_t id, USceneComponent* component, UMaterialInterface* material) = 0;
 
-private:
+    bool isVisible(USceneComponent* component)
+    {
+        SP_ASSERT(component);
+
+        AActor* owner = component->GetOwner();
+        if (!owner) {
+            return false;
+        }
+
+        UWorld* world = component->GetWorld();
+        if (!world) {
+            return false;
+        }
+
+        if (world->IsGameWorld()) {
+            if (owner->IsHidden()) {
+                return false;
+            } else {
+                return component->IsVisible();
+            }
+        } else {
+            #if WITH_EDITOR // defined in an auto-generated header
+                if (owner->IsHiddenEd()) {
+                    return false;
+                } else if (owner->IsTemporarilyHiddenInEditor()) {
+                    return false;
+                } else {
+                    return component->IsVisibleInEditor();
+                }
+            #else
+                return false;
+            #endif
+        }
+    }
+
+    bool isAllowed(USceneComponent* component)
+    {
+        SP_ASSERT(component);
+
+        // if either allow list is non-empty, the component must be explicitly allowed
+        if (!allowed_actors_.empty() || !allowed_components_.empty()) {
+            if (!Std::contains(allowed_components_, component) && !Std::contains(allowed_actors_, component->GetOwner())) {
+                return false;
+            }
+        }
+
+        // if either ignore list is non-empty, the component must not be ignored
+        if (Std::contains(ignored_components_, component) || Std::contains(ignored_actors_, component->GetOwner())) {
+            return false;
+        }
+
+        return true;
+    }
+
     uint32_t registerMeshProxyGeometryImpl(USceneComponent* component, UMaterialInterface* material)
     {
         uint32_t mesh_proxy_geometry_desc_id = getId(mesh_proxy_geometry_desc_id_initial_guess_, mesh_proxy_geometry_desc_ids_);
@@ -284,6 +339,11 @@ private:
     std::map<uint32_t, MeshProxyGeometryDesc> id_to_mesh_proxy_geometry_desc_map_;
     std::set<uint32_t> mesh_proxy_geometry_desc_ids_;
     uint32_t mesh_proxy_geometry_desc_id_initial_guess_ = 1;
+
+    std::vector<AActor*> allowed_actors_;
+    std::vector<USceneComponent*> allowed_components_;
+    std::vector<AActor*> ignored_actors_;
+    std::vector<USceneComponent*> ignored_components_;
 };
 
 

@@ -43,8 +43,8 @@ class UWorld;
 //   TDerivedProxyComponentData* registerProxyComponent(TComponent* proxy_component, TComponent* component)
 //   void invalidateProxyComponent(TDerivedProxyComponentData* derived_proxy_component_data)
 //   void unregisterProxyComponent(TDerivedProxyComponentData* derived_proxy_component_data)
-//   bool shouldRegisterProxyComponent(TComponent* component)
-//   bool shouldUnregisterProxyComponent(TComponent* proxy_component, TDerivedProxyComponentData* derived_proxy_component_data)
+//   bool shouldRegisterProxyForComponent(TComponent* component)
+//   bool shouldUnregisterProxyForComponent(TComponent* component, TDerivedProxyComponentData* derived_proxy_component_data)
 //   UWorld* getWorld()
 //   AActor* getOwner()
 //
@@ -86,7 +86,7 @@ public:
         // Find components to create and register: present in the world, of type TComponent, TDerivedProxyComponentManager thinks it should be registered, and not yet registered.
         std::map<std::string, TComponent*> components_to_create_and_register = Std::toMap<std::string, TComponent*>(
             non_proxy_components |
-            std::views::filter([this](auto& pair) { auto& [name, component] = pair; return getPtr()->shouldRegisterProxyComponent(component); }) |
+            std::views::filter([this](auto& pair) { auto& [name, component] = pair; return getPtr()->shouldRegisterProxyForComponent(component); }) |
             std::views::filter([this](auto& pair) { auto& [name, component] = pair; return !Std::containsKey(name_to_proxy_component_desc_map_, name); }));
 
         // Create and register proxy components.
@@ -138,7 +138,7 @@ public:
             std::views::filter([](auto& pair) { auto& [name, proxy_component_desc] = pair; return !proxy_component_desc.mark_as_unregistered_; }) |
             std::views::filter([this](auto& pair) {
                 auto& [name, proxy_component_desc] = pair;
-                return getPtr()->shouldUnregisterProxyComponent(static_cast<TComponent*>(proxy_component_desc.component_), proxy_component_desc.derived_proxy_component_data_); }) |
+                return getPtr()->shouldUnregisterProxyForComponent(static_cast<TComponent*>(proxy_component_desc.component_), proxy_component_desc.derived_proxy_component_data_); }) |
             std::views::transform([](auto& pair) {
                 auto& [name, proxy_component_desc] = pair;
                 return name; }));
@@ -165,9 +165,17 @@ public:
     // Immediate functions
     //
 
-    // Called from ASpProxyComponentManager::Update(), ASpProxyComponentManager::Terminate()
+    // Called from ASpProxyComponentManager::Terminate()
     void unregisterAllProxyComponents()
     {
+        // mark and destroy all components that haven't already been marked
+        std::vector<std::string> unmarked_names = Std::toVector<std::string>(
+            name_to_proxy_component_desc_map_ |
+            std::views::filter([](auto& pair) { auto& [name, proxy_component_desc] = pair; return !proxy_component_desc.mark_as_unregistered_; }) |
+            std::views::transform([](auto& pair) { auto& [name, proxy_component_desc] = pair; return name; }));
+        markAsUnregisteredAndDestroyProxyComponentsImpl(unmarked_names);
+
+        // unregister everything
         unregisterProxyComponentsImpl(Std::keys(name_to_proxy_component_desc_map_));
     }
 
@@ -282,11 +290,6 @@ private:
 
             getPtr()->unregisterProxyComponent(proxy_component_desc.derived_proxy_component_data_);
 
-            if (proxy_component_desc.proxy_component_) {
-                SP_LOG("Destroying component: ", name);
-                destroyComponent(proxy_component_desc.proxy_component_);
-            }
-
             Std::remove(proxy_component_desc_ids_, proxy_component_desc_id);
             Std::remove(name_to_proxy_component_desc_map_, name);
         }
@@ -296,11 +299,6 @@ private:
     {
         AActor* actor = getPtr()->getOwner();
         SP_ASSERT(actor);
-        #if WITH_EDITOR
-            if (!actor->HasAnyFlags(EObjectFlags::RF_Transient)) {
-                return Unreal::toStdString(actor->GetActorLabel());
-            }
-        #endif
         return Unreal::toStdString(actor->GetName());
     }
 
@@ -320,9 +318,9 @@ private:
         SP_ASSERT(world);
         SP_ASSERT(component);
 
-        bool include_actor_name = true;
-        bool actor_must_have_stable_name = false;
-        std::string actor_and_component_name = UnrealUtils::getStableName(component, include_actor_name, actor_must_have_stable_name);
+        bool include_actor_stable_name = true;
+        bool include_actor_unreal_name = true;
+        std::string actor_and_component_name = UnrealUtils::getStableName(component, include_actor_stable_name, include_actor_unreal_name);
 
         return Unreal::toStdString(world->GetPathName()) + ":" + actor_and_component_name + ":" + Std::toString(component->GetUniqueID()) + ":" + Std::toStringFromPtr(component);
     }

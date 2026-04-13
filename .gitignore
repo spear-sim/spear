@@ -80,3 +80,4 @@ tools/BUILD
 tools/run_editor_script_for_each_map/user_config.yaml
 
 tools/tmp
+examples/debug_draw/images

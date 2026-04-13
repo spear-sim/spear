@@ -276,8 +276,8 @@ void ASpDebugManager::GetAndSetObjectProperties()
     SP_LOG(UnrealUtils::getObjectPropertiesAsString(static_mesh_actor));
 
     // Find properties by fully qualified name (pointers like RootComponent are handled correctly)
-    SpPropertyDesc root_component_property_desc = UnrealUtils::findPropertyByName(static_mesh_actor, "RootComponent");
-    SpPropertyDesc relative_location_property_desc = UnrealUtils::findPropertyByName(static_mesh_actor, "RootComponent.RelativeLocation");
+    SpPropertyDesc root_component_property_desc = UnrealUtils::resolveProperty(static_mesh_actor, "RootComponent");
+    SpPropertyDesc relative_location_property_desc = UnrealUtils::resolveProperty(static_mesh_actor, "RootComponent.RelativeLocation");
 
     // Get property value from SpPropertyDesc
     SP_LOG(Std::toStringFromPtr(static_mesh_actor->GetStaticMeshComponent()));
@@ -301,18 +301,18 @@ void ASpDebugManager::GetAndSetObjectProperties()
     SP_ASSERT(scene_component);
     SP_LOG(scene_component);
 
-    SpPropertyDesc relative_location_property_desc_  = UnrealUtils::findPropertyByName(static_mesh_component, "RelativeLocation");
-    SpPropertyDesc relative_location_x_property_desc = UnrealUtils::findPropertyByName(static_mesh_component, "RelativeLocation.X");
-    SpPropertyDesc relative_location_y_property_desc = UnrealUtils::findPropertyByName(static_mesh_component, "RelativeLocation.Y");
-    SpPropertyDesc relative_location_z_property_desc = UnrealUtils::findPropertyByName(static_mesh_component, "RelativeLocation.Z");
-    SpPropertyDesc body_instance_property_desc       = UnrealUtils::findPropertyByName(static_mesh_component, "BodyInstance");
-    SpPropertyDesc com_nudge_property_desc           = UnrealUtils::findPropertyByName(static_mesh_component, "BodyInstance.COMNudge");
-    SpPropertyDesc com_nudge_x_property_desc         = UnrealUtils::findPropertyByName(static_mesh_component, "BodyInstance.COMNudge.X");
-    SpPropertyDesc com_nudge_y_property_desc         = UnrealUtils::findPropertyByName(static_mesh_component, "BodyInstance.COMNudge.Y");
-    SpPropertyDesc com_nudge_z_property_desc         = UnrealUtils::findPropertyByName(static_mesh_component, "BodyInstance.COMNudge.Z");
-    SpPropertyDesc com_nudge_property_desc_          = UnrealUtils::findPropertyByName(static_mesh_component, "bodyinstance.comnudge"); // not case-sensitive
-    SpPropertyDesc simulate_physics_property_desc    = UnrealUtils::findPropertyByName(static_mesh_component, "BodyInstance.bSimulatePhysics");
-    SpPropertyDesc component_velocity_property_desc  = UnrealUtils::findPropertyByName(static_mesh_component, "ComponentVelocity"); // defined in base class
+    SpPropertyDesc relative_location_property_desc_  = UnrealUtils::resolveProperty(static_mesh_component, "RelativeLocation");
+    SpPropertyDesc relative_location_x_property_desc = UnrealUtils::resolveProperty(static_mesh_component, "RelativeLocation.X");
+    SpPropertyDesc relative_location_y_property_desc = UnrealUtils::resolveProperty(static_mesh_component, "RelativeLocation.Y");
+    SpPropertyDesc relative_location_z_property_desc = UnrealUtils::resolveProperty(static_mesh_component, "RelativeLocation.Z");
+    SpPropertyDesc body_instance_property_desc       = UnrealUtils::resolveProperty(static_mesh_component, "BodyInstance");
+    SpPropertyDesc com_nudge_property_desc           = UnrealUtils::resolveProperty(static_mesh_component, "BodyInstance.COMNudge");
+    SpPropertyDesc com_nudge_x_property_desc         = UnrealUtils::resolveProperty(static_mesh_component, "BodyInstance.COMNudge.X");
+    SpPropertyDesc com_nudge_y_property_desc         = UnrealUtils::resolveProperty(static_mesh_component, "BodyInstance.COMNudge.Y");
+    SpPropertyDesc com_nudge_z_property_desc         = UnrealUtils::resolveProperty(static_mesh_component, "BodyInstance.COMNudge.Z");
+    SpPropertyDesc com_nudge_property_desc_          = UnrealUtils::resolveProperty(static_mesh_component, "bodyinstance.comnudge"); // not case-sensitive
+    SpPropertyDesc simulate_physics_property_desc    = UnrealUtils::resolveProperty(static_mesh_component, "BodyInstance.bSimulatePhysics");
+    SpPropertyDesc component_velocity_property_desc  = UnrealUtils::resolveProperty(static_mesh_component, "ComponentVelocity"); // defined in base class
 
     // Get property value from SpPropertyDesc
     SP_LOG(UnrealUtils::getPropertyValueAsString(relative_location_property_desc_).value_);
@@ -373,9 +373,9 @@ void ASpDebugManager::GetAndSetObjectProperties()
     // String properties can be get and set using our Unreal API
     MyString = Unreal::toFString("HELLO WORLD!");
 
-    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::findPropertyByName(this, "MyString")).value_);
-    UnrealUtils::setPropertyValueFromString(UnrealUtils::findPropertyByName(this, "MyString"), "hello world!");
-    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::findPropertyByName(this, "MyString")).value_);
+    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "MyString")).value_);
+    UnrealUtils::setPropertyValueFromString(UnrealUtils::resolveProperty(this, "MyString"), "hello world!");
+    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "MyString")).value_);
 
     SP_LOG(UnrealUtils::getObjectPropertiesAsString(this));
 
@@ -394,56 +394,56 @@ void ASpDebugManager::GetAndSetObjectProperties()
     ArrayOfEnums.Add(EDebugManagerEnum::Hello);
     SP_LOG(UnrealUtils::getObjectPropertiesAsString(this));
 
-    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::findPropertyByName(this, "ArrayOfInts[1]")).value_);
-    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::findPropertyByName(this, "ArrayOfVectors[1]")).value_);
+    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "ArrayOfInts[1]")).value_);
+    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "ArrayOfVectors[1]")).value_);
 
-    UnrealUtils::setPropertyValueFromString(UnrealUtils::findPropertyByName(this, "PrimaryActorTick.TickGroup"), "TG_PostPhysics");
-    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::findPropertyByName(this, "PrimaryActorTick.TickGroup")).value_);
-    UnrealUtils::setPropertyValueFromString(UnrealUtils::findPropertyByName(this, "PrimaryActorTick.TickGroup"), "TG_PrePhysics");
-    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::findPropertyByName(this, "PrimaryActorTick.TickGroup")).value_);
+    UnrealUtils::setPropertyValueFromString(UnrealUtils::resolveProperty(this, "PrimaryActorTick.TickGroup"), "TG_PostPhysics");
+    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "PrimaryActorTick.TickGroup")).value_);
+    UnrealUtils::setPropertyValueFromString(UnrealUtils::resolveProperty(this, "PrimaryActorTick.TickGroup"), "TG_PrePhysics");
+    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "PrimaryActorTick.TickGroup")).value_);
 
-    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::findPropertyByName(this, "ArrayOfInts")).value_);
-    UnrealUtils::setPropertyValueFromString(UnrealUtils::findPropertyByName(this, "ArrayOfInts"), "[9, 8, 7, 6, 5, 4, 3, 2, 1, 0]");
-    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::findPropertyByName(this, "ArrayOfInts")).value_);
+    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "ArrayOfInts")).value_);
+    UnrealUtils::setPropertyValueFromString(UnrealUtils::resolveProperty(this, "ArrayOfInts"), "[9, 8, 7, 6, 5, 4, 3, 2, 1, 0]");
+    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "ArrayOfInts")).value_);
 
-    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::findPropertyByName(this, "ArrayOfVectors")).value_);
+    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "ArrayOfVectors")).value_);
     str = Std::toString("{", "\"x\": ", 12.3*i, ", \"y\": ", 45.6*i, ", \"z\": ", 78.9*i, "}");
-    UnrealUtils::setPropertyValueFromString(UnrealUtils::findPropertyByName(this, "ArrayOfVectors"), "[ " + str + ", " + str + ", " + str + "]");
-    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::findPropertyByName(this, "ArrayOfVectors")).value_);
+    UnrealUtils::setPropertyValueFromString(UnrealUtils::resolveProperty(this, "ArrayOfVectors"), "[ " + str + ", " + str + ", " + str + "]");
+    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "ArrayOfVectors")).value_);
 
-    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::findPropertyByName(this, "ArrayOfPointers")).value_);
-    UnrealUtils::setPropertyValueFromString(UnrealUtils::findPropertyByName(this, "ArrayOfPointers"), "[\"0x0\", \"" + Std::toStringFromPtr(static_mesh_actor->GetStaticMeshComponent()) + "\"]");
-    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::findPropertyByName(this, "ArrayOfPointers")).value_);
+    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "ArrayOfPointers")).value_);
+    UnrealUtils::setPropertyValueFromString(UnrealUtils::resolveProperty(this, "ArrayOfPointers"), "[\"0x0\", \"" + Std::toStringFromPtr(static_mesh_actor->GetStaticMeshComponent()) + "\"]");
+    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "ArrayOfPointers")).value_);
 
     MapFromIntToInt.Add(1, 2);
     MapFromIntToInt.Add(3, 4);
     MapFromIntToInt.Add(5, 6);
     SP_LOG(UnrealUtils::getObjectPropertiesAsString(this));
 
-    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::findPropertyByName(this, "MapFromIntToInt")).value_);
-    UnrealUtils::setPropertyValueFromString(UnrealUtils::findPropertyByName(this, "MapFromIntToInt"), "{\"10\": 20, \"30\": 40, \"3\": 100}");
-    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::findPropertyByName(this, "MapFromIntToInt")).value_);
+    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "MapFromIntToInt")).value_);
+    UnrealUtils::setPropertyValueFromString(UnrealUtils::resolveProperty(this, "MapFromIntToInt"), "{\"10\": 20, \"30\": 40, \"3\": 100}");
+    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "MapFromIntToInt")).value_);
 
     MapFromStringToVector.Add(Unreal::toFString("Hello"), 1.0*vec);
     MapFromStringToVector.Add(Unreal::toFString("World"), 2.0*vec);
     SP_LOG(UnrealUtils::getObjectPropertiesAsString(this));
 
     // Maps can also be indexed when searching for properties
-    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::findPropertyByName(this, "MapFromIntToInt")).value_);
-    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::findPropertyByName(this, "MapFromStringToVector")).value_);
-    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::findPropertyByName(this, "MapFromIntToInt[3]")).value_);
-    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::findPropertyByName(this, "MapFromStringToVector[\"World\"]")).value_);
+    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "MapFromIntToInt")).value_);
+    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "MapFromStringToVector")).value_);
+    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "MapFromIntToInt[3]")).value_);
+    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "MapFromStringToVector[\"World\"]")).value_);
 
     SetOfStrings.Add("Hello");
     SetOfStrings.Add("1");
     SetOfStrings.Add("World");
     SetOfStrings.Add("2");
     SP_LOG(UnrealUtils::getObjectPropertiesAsString(this));
-    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::findPropertyByName(this, "SetOfStrings")).value_);
+    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "SetOfStrings")).value_);
 
-    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::findPropertyByName(this, "SetOfStrings")).value_);
-    UnrealUtils::setPropertyValueFromString(UnrealUtils::findPropertyByName(this, "SetOfStrings"), "[\"10\", \"Hello\", \"30\"]");
-    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::findPropertyByName(this, "SetOfStrings")).value_);
+    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "SetOfStrings")).value_);
+    UnrealUtils::setPropertyValueFromString(UnrealUtils::resolveProperty(this, "SetOfStrings"), "[\"10\", \"Hello\", \"30\"]");
+    SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "SetOfStrings")).value_);
 
     //
     // We need to do this do see visual updates in the editor. But this interface is not ideal because

@@ -305,7 +305,7 @@ class EngineService():
 
     def _call_impl(self, func_name, *args):
         if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
-            return_as = self.entry_point_signature_descs[func_name].func_signature[0].type_names["entry_point"]
+            return_as = self.entry_point_signature_descs[func_name].type_names[0]
             spear.log(f"Calling: {func_name} : {args} -> {return_as}")
         return_value = self._client.call(func_name, *args)
         if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:

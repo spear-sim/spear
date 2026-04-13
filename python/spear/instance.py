@@ -110,14 +110,16 @@ class Instance():
 
         # Initialize world-scoped services.
 
-        self._game = Instance.WorldScopedServices(
+        self._game = Instance.GameWorldScopedServices(
             engine_service=self._engine_service,
             shared_memory_service=self.shared_memory_service,
             world_registry_service=self.world_registry_service,
             sp_func_service=self.sp_func_service,
+            engine_globals_service=self.engine_globals_service,
             config=self._config)
 
-        if self.engine_globals_service.is_editor() and not self.engine_globals_service.is_running_commandlet():
+        # only create editor-scoped services if we're in the editor (regardless of PIE session) and we're not running a commandlet
+        if self.engine_globals_service.is_with_editor() and not self.engine_globals_service.is_running_commandlet():
             self._editor = Instance.EditorWorldScopedServices(
                 engine_service=self._engine_service,
                 shared_memory_service=self.shared_memory_service,
@@ -172,6 +174,15 @@ class Instance():
                 unreal_service=self.unreal_service,
                 config=self._config)
 
+        def initialize(self, unreal_service=None):
+            self.unreal_service.initialize(unreal_service=unreal_service)
+            # self.navigation_service.initialize() navigation service doesn't have an initialize() function
+            # self.segmentation_service.initialize() this has a non-trivial runtime cost, so we don't initialize by default
+
+        def invalidate(self):
+            self._world_registry_service.remove_world(world=self._world) # synchronous call on the game thread, so no need to flush()
+            self._world = None
+
         def get_unreal_object(self, uobject=None, uclass=None, with_sp_funcs=False):
             return spear.UnrealObject(
                 unreal_service=self.unreal_service,
@@ -181,32 +192,57 @@ class Instance():
                 uclass=uclass,
                 with_sp_funcs=with_sp_funcs)
 
-        def invalidate(self):
-            self._world_registry_service.remove_world(world=self._world) # synchronous call on the game thread, so no need to flush()
-            self._world = None
- 
-        def _get_world(self):
+        def get_world(self):
             return self._world
 
-        def _set_world(self, world):
+        def set_world(self, world):
             self._world = world
-            self._set_world_impl(world=world)
-
-        def _set_world_impl(self, world):
             self.unreal_service.set_world(world=world)
             self.navigation_service.set_world(world=world)
             self.segmentation_service.set_world(world=world)
 
-    class EditorWorldScopedServices(WorldScopedServices):
-        def __init__(self, engine_service, shared_memory_service, world_registry_service, sp_func_service, config):
-            super().__init__(engine_service=engine_service, shared_memory_service=shared_memory_service, world_registry_service=world_registry_service, sp_func_service=sp_func_service, config=config)
+    class GameWorldScopedServices(WorldScopedServices):
+        def __init__(self, engine_service, shared_memory_service, world_registry_service, sp_func_service, engine_globals_service, config):
+            super().__init__(
+                engine_service=engine_service,
+                shared_memory_service=shared_memory_service,
+                world_registry_service=world_registry_service,
+                sp_func_service=sp_func_service,
+                config=config)
 
             if spear.__can_import_unreal__:
                 entry_point_caller_type = spear.EditorEntryPointCaller
             else:
                 entry_point_caller_type = spear.CallSyncEntryPointCaller
 
-            # Initialize services that require a reference to EngineService, SpFuncService, UnrealService.
+            self.rendering_service = spear.GameRenderingService(
+                entry_point_caller=entry_point_caller_type(service_name=f"rendering_service", engine_service=engine_service),
+                sp_func_service=sp_func_service,
+                unreal_service=self.unreal_service,
+                config=config,
+                engine_globals_service=engine_globals_service)
+
+        def initialize(self, unreal_service=None):
+            super().initialize(unreal_service=unreal_service)
+            self.rendering_service.initialize()
+
+        def set_world(self, world):
+            super().set_world(world=world)
+            self.rendering_service.set_world(world=world)
+
+    class EditorWorldScopedServices(WorldScopedServices):
+        def __init__(self, engine_service, shared_memory_service, world_registry_service, sp_func_service, config):
+            super().__init__(
+                engine_service=engine_service,
+                shared_memory_service=shared_memory_service,
+                world_registry_service=world_registry_service,
+                sp_func_service=sp_func_service,
+                config=config)
+
+            if spear.__can_import_unreal__:
+                entry_point_caller_type = spear.EditorEntryPointCaller
+            else:
+                entry_point_caller_type = spear.CallSyncEntryPointCaller
 
             self.python_service = spear.PythonService(
                 entry_point_caller=entry_point_caller_type(service_name=f"python_service", engine_service=engine_service),
@@ -214,8 +250,19 @@ class Instance():
                 unreal_service=self.unreal_service,
                 config=config)
 
-        def _set_world_impl(self, world):
-            super()._set_world_impl(world=world)
+            self.rendering_service = spear.EditorRenderingService(
+                entry_point_caller=entry_point_caller_type(service_name=f"rendering_service", engine_service=engine_service),
+                sp_func_service=sp_func_service,
+                unreal_service=self.unreal_service,
+                config=config)
+
+        def initialize(self, unreal_service=None):
+            super().initialize(unreal_service=unreal_service)
+            self.rendering_service.initialize()
+
+        def set_world(self, world):
+            super().set_world(world=world)
+            self.rendering_service.set_world(world=world)
             self.python_service.set_world(world=world)
 
     #
@@ -319,26 +366,33 @@ class Instance():
 
     def get_editor(self, wait=None, wait_max_time_seconds=0.0, wait_sleep_time_seconds=0.0, warm_up=None, warm_up_time_seconds=0.0, warm_up_num_frames=0):
         spear.log_current_function()
-        assert self.engine_globals_service.is_editor() and not self.engine_globals_service.is_running_commandlet()
+
+        # only allow getting editor-scoped services if we're in the editor (regardless of PIE session) and we're not running a commandlet
+        assert self.engine_globals_service.is_with_editor() and not self.engine_globals_service.is_running_commandlet()
 
         self._engine_service.initialize()
         self._get_editor_wait_until(func=self._is_editor_world_initialized, wait=wait, max_time_seconds=wait_max_time_seconds, sleep_time_seconds=wait_sleep_time_seconds)
         self._get_editor_warm_up(warm_up=warm_up, time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames)
 
         world = self._get_editor_world()
-        self._editor._set_world(world=world)
+        self._editor.set_world(world=world)
+
+        spear.log("Initializing services...")
 
         with self.begin_frame():
             self._unreal_service.initialize()
-            self._editor.unreal_service.initialize(unreal_service=self._unreal_service)
-            self._editor.python_service.initialize()
+            self._editor.initialize(unreal_service=self._unreal_service)
         with self.end_frame():
             pass
+
+        spear.log("Finished initializing services.")
 
         return self._editor
 
     def get_editor_in_editor_script(self, wait=None, wait_max_time_seconds=None, wait_sleep_time_seconds=None, warm_up=None, warm_up_time_seconds=0.0, warm_up_num_frames=0):
         spear.log_current_function()
+
+        # only allow getting editor-scoped services if we're in the editor not in a PIE session and we're not running a commandlet
         assert self.engine_globals_service.is_editor() and not self.engine_globals_service.is_running_commandlet()
 
         self._engine_service.initialize()
@@ -346,16 +400,19 @@ class Instance():
         yield from self._get_editor_warm_up_in_editor_script(warm_up=warm_up, time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames)
 
         world = self._get_editor_world()
-        self._editor._set_world(world=world)
+        self._editor.set_world(world=world)
+
+        spear.log("Initializing services...")
 
         with self.begin_frame():
             self._unreal_service.initialize()
-            self._editor.unreal_service.initialize(unreal_service=self._unreal_service)
-            self._editor.python_service.initialize()
+            self._editor.initialize(unreal_service=self._unreal_service)
         yield
         with self.end_frame():
             pass
         yield
+
+        spear.log("Finished initializing services.")
 
         return self._editor
 
@@ -422,13 +479,17 @@ class Instance():
         self._get_game_warm_up(warm_up=warm_up, time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames)
 
         world = self._get_game_world()
-        self._game._set_world(world=world)
+        self._game.set_world(world=world)
+
+        spear.log("Initializing services...")
 
         with self.begin_frame():
             self._unreal_service.initialize()
-            self._game.unreal_service.initialize(unreal_service=self._unreal_service)
+            self._game.initialize(unreal_service=self._unreal_service)
         with self.end_frame():
             pass
+
+        spear.log("Finished initializing services...")
 
         return self._game
 
@@ -440,15 +501,19 @@ class Instance():
         yield from self._get_game_warm_up_in_editor_script(warm_up=warm_up, time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames)
 
         world = self._get_game_world()
-        self._game._set_world(world=world)
+        self._game.set_world(world=world)
+
+        spear.log("Initializing services...")
 
         with self.begin_frame():
             self._unreal_service.initialize()
-            self._game.unreal_service.initialize(unreal_service=self._unreal_service)
+            self._game.initialize(unreal_service=self._unreal_service)
         yield
         with self.end_frame():
             pass
         yield
+
+        spear.log("Finished initializing services...")
 
         return self._game
 

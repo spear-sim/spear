@@ -6,7 +6,6 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import argparse
-import math
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -70,15 +69,12 @@ if __name__ == "__main__":
                 os.makedirs(os.path.realpath(os.path.join(images_dir, component_name)), exist_ok=True)
 
         # configure components to match the viewport
-        viewport_size_x = 1280
-        viewport_size_y = 720
-
         component_names = sorted(components.keys())
+        component_list = [ components[name] for name in component_names ]
 
-        for component_name in component_names:
-            component = components[component_name]
-            component.Width = viewport_size_x
-            component.Height = viewport_size_y
+        for component in component_list:
+            component.Width = 1280
+            component.Height = 720
 
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
         for component_name in component_names:
@@ -102,24 +98,12 @@ if __name__ == "__main__":
 
     # set camera pose and configure components to match the viewport
     with instance.begin_frame():
-        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
-
-        bp_multi_view_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
-        bp_multi_view_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
-
-        viewport_aspect_ratio = viewport_size_x/viewport_size_y # see Engine/Source/Editor/UnrealEd/Private/EditorViewportClient.cpp:2130 for evidence that Unreal's aspect ratio convention is x/y
-        fov = view_target_pov["fOV"]*math.pi/180.0
-        half_fov = fov/2.0
-        half_fov_adjusted = math.atan(math.tan(half_fov)*viewport_aspect_ratio/view_target_pov["aspectRatio"]) # this adjustment is necessary to compute an FOV value that matches the game viewport
-        fov_adjusted = half_fov_adjusted*2.0
-        fov_adjusted_degrees = fov_adjusted*180.0/math.pi
+        viewport_info = game.rendering_service.get_current_viewport_info()
+        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_multi_view_camera_sensor, camera_components=component_list, viewport_info=viewport_info, widths=1280, heights=720)
 
         # make the FOV bigger than the game viewport
-        fov_adjusted_degrees = 1.35*fov_adjusted_degrees
-
-        for component_name in component_names:
-            component = components[component_name]
-            component.FOVAngle = fov_adjusted_degrees
+        for component in component_list:
+            component.FOVAngle = 1.35*component.FOVAngle.get()
 
     with instance.end_frame():
         pass
