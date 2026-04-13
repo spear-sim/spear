@@ -58,8 +58,8 @@ if __name__ == "__main__":
         sp_scene_component = game.get_unreal_object(uclass="USpSceneComponent")
         kismet_system_library = game.get_unreal_object(uclass="UKismetSystemLibrary")
 
-        cube_mesh = game.unreal_service.load_object(uclass="UStaticMesh", name="/Engine/BasicShapes/Cube.Cube")
-        box_material = game.unreal_service.load_object(uclass="UMaterialInterface", name="/SpContent/Materials/M_LocalPositionMultipliedByObjectScale.M_LocalPositionMultipliedByObjectScale")
+        bounding_box_mesh = game.unreal_service.load_object(uclass="UStaticMesh", name="/Engine/BasicShapes/Cube.Cube")
+        bounding_box_material = game.unreal_service.load_object(uclass="UMaterialInterface", name="/SpContent/Materials/M_LocalPositionMultipliedByObjectScale.M_LocalPositionMultipliedByObjectScale")
 
         # compute bounding boxes from scene actors, excluding proxy component managers
         actors = [ actor for actor in game.unreal_service.find_actors() if not actor.is_a(uclass="ASpProxyComponentManager") ]
@@ -115,8 +115,8 @@ if __name__ == "__main__":
 
             static_mesh_component = game.unreal_service.get_component_by_class(actor=bounding_box_actor, uclass="UStaticMeshComponent")
             static_mesh_component.SetMobility(NewMobility="Movable")
-            static_mesh_component.SetStaticMesh(NewMesh=cube_mesh)
-            static_mesh_component.SetMaterial(ElementIndex=0, Material=box_material)
+            static_mesh_component.SetStaticMesh(NewMesh=bounding_box_mesh)
+            static_mesh_component.SetMaterial(ElementIndex=0, Material=bounding_box_material)
             static_mesh_component.SetVisibleInSceneCaptureOnly(bValue=True)
             static_mesh_component.SetCollisionEnabled(NewType="NoCollision")
             static_mesh_component.SetGenerateOverlapEvents(bInGenerateOverlapEvents=False)
