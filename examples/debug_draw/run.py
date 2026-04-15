@@ -50,8 +50,6 @@ if __name__ == "__main__":
     instance = spear.Instance(config=config)
     game = instance.get_game()
 
-    game.async_loading_service.wait_for_engine_idle()
-
     with instance.begin_frame():
 
         game.segmentation_service.initialize()
@@ -176,6 +174,8 @@ if __name__ == "__main__":
 
     with instance.end_frame():
         pass
+
+    game.async_loading_service.wait_for_engine_idle()
 
     # let temporal anti-aliasing etc accumulate additional information across multiple frames
     instance.step(num_frames=2)

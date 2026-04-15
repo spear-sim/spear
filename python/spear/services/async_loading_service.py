@@ -73,7 +73,7 @@ class AsyncLoadingService(spear.Service):
             spear.log(f"engine_idle={engine_idle}")
             spear.log(f"    is_async_loading={is_async_loading}, is_loading_assets={is_loading_assets}, is_compiling_shaders={is_compiling_shaders}")
             spear.log(f"    num_outstanding_distance_field_tasks={num_outstanding_distance_field_tasks}, num_remaining_assets={num_remaining_assets}, num_remaining_build_tasks={num_remaining_build_tasks}, num_wanting_streaming_resources={num_wanting_streaming_resources}")
-            spear.log(f"    are_streaming_levels_loading={are_streaming_levels_loading})")
+            spear.log(f"    are_streaming_levels_loading={are_streaming_levels_loading}")
 
         return engine_idle
 
