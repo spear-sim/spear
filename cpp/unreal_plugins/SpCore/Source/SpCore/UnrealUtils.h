@@ -51,6 +51,7 @@ struct SpPropertyDesc
     FProperty* property_ = nullptr;
     void* value_ptr_ = nullptr;
     std::string type_id_;
+    UObject* notify_ = nullptr;
 };
 
 struct SpPropertyValue
@@ -143,8 +144,8 @@ public:
     static std::string getObjectPropertiesAsString(const UObject* uobject);
     static std::string getObjectPropertiesAsString(const void* value_ptr, const UStruct* ustruct);
 
-    static void setObjectPropertiesFromString(UObject* uobject, const std::string& string);
-    static void setObjectPropertiesFromString(void* value_ptr, const UStruct* ustruct, const std::string& string);
+    static void setObjectPropertiesFromString(UObject* uobject, const std::string& string, bool notify_editor = false);
+    static void setObjectPropertiesFromString(void* value_ptr, const UStruct* ustruct, const std::string& string, UObject* notify = nullptr);
 
     //
     // Get and set individual properties. Note that uobject can't be const because we cast it to (non-const)
@@ -153,12 +154,12 @@ public:
 
     static SpPropertyDesc resolveProperty(UObject* uobject, FProperty* property);
     static SpPropertyDesc resolveProperty(UObject* uobject, const std::string& property_name);
-    static SpPropertyDesc resolveProperty(void* value_ptr, const UStruct* ustruct, FProperty* property);
-    static SpPropertyDesc resolveProperty(void* value_ptr, const UStruct* ustruct, const std::string& property_name);
+    static SpPropertyDesc resolveProperty(void* value_ptr, const UStruct* ustruct, FProperty* property, UObject* notify = nullptr);
+    static SpPropertyDesc resolveProperty(void* value_ptr, const UStruct* ustruct, const std::string& property_name, UObject* notify = nullptr);
 
     static SpPropertyValue getPropertyValueAsString(const SpPropertyDesc& property_desc);
-    static void setPropertyValueFromString(const SpPropertyDesc& property_desc, const std::string& string);
-    static void setPropertyValueFromJsonValue(const SpPropertyDesc& property_desc, TSharedPtr<FJsonValue> json_value);
+    static void setPropertyValueFromString(const SpPropertyDesc& property_desc, const std::string& string, bool notify_editor = false);
+    static void setPropertyValueFromJsonValue(const SpPropertyDesc& property_desc, TSharedPtr<FJsonValue> json_value, bool notify_editor = false);
 
     //
     // Find objects

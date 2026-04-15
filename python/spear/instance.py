@@ -125,6 +125,7 @@ class Instance():
                 shared_memory_service=self.shared_memory_service,
                 world_registry_service=self.world_registry_service,
                 sp_func_service=self.sp_func_service,
+                engine_globals_service=self.engine_globals_service,
                 config=self._config)
 
     def get_unreal_object(self, uobject=None, uclass=None, with_sp_funcs=False):
@@ -137,7 +138,7 @@ class Instance():
             with_sp_funcs=with_sp_funcs)
 
     class WorldScopedServices():
-        def __init__(self, engine_service, shared_memory_service, world_registry_service, sp_func_service, config):
+        def __init__(self, engine_service, shared_memory_service, world_registry_service, sp_func_service, engine_globals_service, config):
 
             # needed internally in get_unreal_object(...)
             self._sp_func_service = sp_func_service
@@ -174,10 +175,20 @@ class Instance():
                 unreal_service=self.unreal_service,
                 config=self._config)
 
+            # Initialize services that require a reference to EngineService, SpFuncService, UnrealService, and EngineGlobalsService.
+
+            self.async_loading_service = spear.AsyncLoadingService(
+                entry_point_caller=entry_point_caller_type(service_name=f"async_loading_service", engine_service=engine_service),
+                sp_func_service=self._sp_func_service,
+                unreal_service=self.unreal_service,
+                engine_globals_service=engine_globals_service,
+                config=self._config)
+
         def initialize(self, unreal_service=None):
             self.unreal_service.initialize(unreal_service=unreal_service)
             # self.navigation_service.initialize() navigation service doesn't have an initialize() function
             # self.segmentation_service.initialize() this has a non-trivial runtime cost, so we don't initialize by default
+            self.async_loading_service.initialize()
 
         def invalidate(self):
             self._world_registry_service.remove_world(world=self._world) # synchronous call on the game thread, so no need to flush()
@@ -200,6 +211,7 @@ class Instance():
             self.unreal_service.set_world(world=world)
             self.navigation_service.set_world(world=world)
             self.segmentation_service.set_world(world=world)
+            self.async_loading_service.set_world(world=world)
 
     class GameWorldScopedServices(WorldScopedServices):
         def __init__(self, engine_service, shared_memory_service, world_registry_service, sp_func_service, engine_globals_service, config):
@@ -208,6 +220,7 @@ class Instance():
                 shared_memory_service=shared_memory_service,
                 world_registry_service=world_registry_service,
                 sp_func_service=sp_func_service,
+                engine_globals_service=engine_globals_service,
                 config=config)
 
             if spear.__can_import_unreal__:
@@ -215,12 +228,14 @@ class Instance():
             else:
                 entry_point_caller_type = spear.CallSyncEntryPointCaller
 
+            # Initialize services that require a reference to EngineService, SpFuncService, UnrealService, and EngineGlobalsService.
+
             self.rendering_service = spear.GameRenderingService(
                 entry_point_caller=entry_point_caller_type(service_name=f"rendering_service", engine_service=engine_service),
                 sp_func_service=sp_func_service,
                 unreal_service=self.unreal_service,
-                config=config,
-                engine_globals_service=engine_globals_service)
+                engine_globals_service=engine_globals_service,
+                config=config)
 
         def initialize(self, unreal_service=None):
             super().initialize(unreal_service=unreal_service)
@@ -231,18 +246,21 @@ class Instance():
             self.rendering_service.set_world(world=world)
 
     class EditorWorldScopedServices(WorldScopedServices):
-        def __init__(self, engine_service, shared_memory_service, world_registry_service, sp_func_service, config):
+        def __init__(self, engine_service, shared_memory_service, world_registry_service, sp_func_service, engine_globals_service, config):
             super().__init__(
                 engine_service=engine_service,
                 shared_memory_service=shared_memory_service,
                 world_registry_service=world_registry_service,
                 sp_func_service=sp_func_service,
+                engine_globals_service=engine_globals_service,
                 config=config)
 
             if spear.__can_import_unreal__:
                 entry_point_caller_type = spear.EditorEntryPointCaller
             else:
                 entry_point_caller_type = spear.CallSyncEntryPointCaller
+
+            # Initialize services that require a reference to EngineService, SpFuncService, and UnrealService..
 
             self.python_service = spear.PythonService(
                 entry_point_caller=entry_point_caller_type(service_name=f"python_service", engine_service=engine_service),

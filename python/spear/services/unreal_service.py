@@ -199,129 +199,6 @@ class UnrealService(spear.Service):
         return self.entry_point_caller.call_on_game_thread("get_type_for_property_as_string", None, prop)
 
     #
-    # Find properties
-    #
-
-    def find_properties(self, ustruct, field_iteration_flags=None):
-        ustruct = self.to_ustruct(ustruct=ustruct)
-        field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
-        return self.entry_point_caller.call_on_game_thread("find_properties", None, ustruct, field_iteration_flags)
-
-    def find_properties_as_dict(self, ustruct, field_iteration_flags=None):
-        ustruct = self.to_ustruct(ustruct=ustruct)
-        field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
-        return self.entry_point_caller.call_on_game_thread("find_properties_as_map", None, ustruct, field_iteration_flags)
-
-    def find_properties_by_flags_any(self, ustruct, property_flags, field_iteration_flags=None):
-        ustruct = self.to_ustruct(ustruct=ustruct)
-        field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
-        return self.entry_point_caller.call_on_game_thread("find_properties_by_flags_any", None, ustruct, property_flags, field_iteration_flags)
-
-    def find_properties_by_flags_all(self, ustruct, property_flags, field_iteration_flags=None):
-        ustruct = self.to_ustruct(ustruct=ustruct)
-        field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
-        return self.entry_point_caller.call_on_game_thread("find_properties_by_flags_all", None, ustruct, property_flags, field_iteration_flags)
-
-    def find_properties_by_flags_any_as_dict(self, ustruct, property_flags, field_iteration_flags=None):
-        ustruct = self.to_ustruct(ustruct=ustruct)
-        field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
-        return self.entry_point_caller.call_on_game_thread("find_properties_by_flags_any_as_map", None, ustruct, property_flags, field_iteration_flags)
-
-    def find_properties_by_flags_all_as_dict(self, ustruct, property_flags, field_iteration_flags=None):
-        ustruct = self.to_ustruct(ustruct=ustruct)
-        field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
-        return self.entry_point_caller.call_on_game_thread("find_properties_by_flags_all_as_map", None, ustruct, property_flags, field_iteration_flags)
-
-    def get_property_flags(self, prop):
-        return self.entry_point_caller.call_on_game_thread("get_property_flags", None, prop)
-
-    #
-    # Get and set multiple object properties
-    #
-
-    def get_properties_for_object(self, uobject):
-        uobject = spear.to_handle(obj=uobject)
-        convert_func = lambda result: spear.try_to_dict(json_string=result, default_value={})
-        return self.entry_point_caller.call_on_game_thread("get_properties_for_object_as_string", convert_func, uobject)
-
-    def get_properties_for_struct(self, value_ptr, ustruct):
-        ustruct = self.to_ustruct(ustruct=ustruct)
-        convert_func = lambda result: spear.try_to_dict(json_string=result, default_value={})
-        return self.entry_point_caller.call_on_game_thread("get_properties_for_struct_as_string", convert_func, value_ptr, ustruct)
-
-    def get_properties_for_class(self, value_ptr, uclass):
-        uclass = self.to_uclass(uclass=uclass)
-        convert_func = lambda result: spear.try_to_dict(json_string=result, default_value={})
-        return self.entry_point_caller.call_on_game_thread("get_properties_for_struct_as_string", convert_func, value_ptr, uclass)
-
-    def set_properties_for_object(self, uobject, properties):
-        uobject = spear.to_handle(obj=uobject)
-        properties = spear.to_json_string(obj=properties)
-        return self.entry_point_caller.call_on_game_thread("set_properties_for_object_from_string", None, uobject, properties)
-
-    def set_properties_for_struct(self, value_ptr, ustruct, properties):
-        ustruct = self.to_ustruct(ustruct=ustruct)
-        properties = spear.to_json_string(obj=properties)
-        return self.entry_point_caller.call_on_game_thread("set_properties_for_struct_from_string", None, value_ptr, ustruct, properties)
-
-    def set_properties_for_class(self, value_ptr, uclass, properties):
-        uclass = self.to_uclass(uclass=uclass)
-        properties = spear.to_json_string(obj=properties)
-        return self.entry_point_caller.call_on_game_thread("set_properties_for_struct_from_string", None, value_ptr, uclass, properties)
-
-    #
-    # Get and set individual property values using property descs
-    #
-
-    def resolve_property_for_object(self, uobject, property_name):
-        uobject = spear.to_handle(obj=uobject)
-        return self.entry_point_caller.call_on_game_thread("resolve_property_for_object_from_string", None, uobject, property_name)
-
-    def resolve_property_for_struct(self, value_ptr, ustruct, property_name):
-        return self.entry_point_caller.call_on_game_thread("resolve_property_for_struct_from_string", None, value_ptr, ustruct, property_name)
-
-    def get_property_value(self, property_desc):
-        convert_func = lambda result: spear.try_to_dict(json_string=result)
-        return self.entry_point_caller.call_on_game_thread("get_property_value_as_string", convert_func, property_desc)
-
-    def set_property_value(self, property_desc, property_value):
-        property_value = spear.to_json_string(obj=property_value)
-        return self.entry_point_caller.call_on_game_thread("set_property_value_from_string", None, property_desc, property_value)
-
-    #
-    # Get and set individual property values using string names
-    #
-
-    def get_property_value_for_object(self, uobject, property_name):
-        uobject = spear.to_handle(obj=uobject)
-        convert_func = lambda result: spear.PropertyValue(value=spear.try_to_dict(json_string=result.value), type_id=result.type_id)
-        return self.entry_point_caller.call_on_game_thread("get_property_value_for_object_as_string", convert_func, uobject, property_name)
-
-    def get_property_value_for_struct(self, value_ptr, ustruct, property_name):
-        ustruct = self.to_ustruct(ustruct=ustruct)
-        convert_func = lambda result: spear.PropertyValue(value=spear.try_to_dict(json_string=result.value), type_id=result.type_id)
-        return self.entry_point_caller.call_on_game_thread( "get_property_value_for_struct_as_string", convert_func, value_ptr, ustruct, property_name)
-
-    def get_property_value_for_class(self, value_ptr, uclass, property_name):
-        uclass = self.to_uclass(uclass=uclass)
-        convert_func = lambda result: spear.PropertyValue(value=spear.try_to_dict(json_string=result.value), type_id=result.type_id)
-        return self.entry_point_caller.call_on_game_thread( "get_property_value_for_struct_as_string", convert_func, value_ptr, uclass, property_name)
-
-    def set_property_value_for_object(self, uobject, property_name, property_value):
-        uobject = spear.to_handle(obj=uobject)
-        property_value = spear.to_json_string(obj=property_value)
-        return self.entry_point_caller.call_on_game_thread("set_property_value_for_object_from_string", None, uobject, property_name, property_value)
-
-    def set_property_value_for_struct(self, value_ptr, ustruct, property_name, property_value):
-        property_value = spear.to_json_string(obj=property_value)
-        return self.entry_point_caller.call_on_game_thread("set_property_value_for_struct_from_string", None, value_ptr, ustruct, property_name, property_value)
-
-    def set_property_value_for_class(self, value_ptr, uclass, property_name, property_value):
-        uclass = self.to_uclass(uclass=uclass)
-        property_value = spear.to_json_string(obj=property_value)
-        return self.entry_point_caller.call_on_game_thread("set_property_value_for_struct_from_string", None, value_ptr, uclass, property_name, property_value)
-
-    #
     # Find functions
     #
 
@@ -397,6 +274,154 @@ class UnrealService(spear.Service):
 
         convert_func = lambda result: { k: spear.PropertyValue(value=spear.try_to_dict(json_string=v.value), type_id=v.type_id) for k, v in result.items() }
         return self.entry_point_caller.call_on_game_thread("call_function", convert_func, self.get_world(), uobject, uclass, ufunction, args, world_context_object)
+
+    #
+    # Find properties
+    #
+
+    def find_properties(self, ustruct, field_iteration_flags=None):
+        ustruct = self.to_ustruct(ustruct=ustruct)
+        field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
+        return self.entry_point_caller.call_on_game_thread("find_properties", None, ustruct, field_iteration_flags)
+
+    def find_properties_as_dict(self, ustruct, field_iteration_flags=None):
+        ustruct = self.to_ustruct(ustruct=ustruct)
+        field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
+        return self.entry_point_caller.call_on_game_thread("find_properties_as_map", None, ustruct, field_iteration_flags)
+
+    def find_properties_by_flags_any(self, ustruct, property_flags, field_iteration_flags=None):
+        ustruct = self.to_ustruct(ustruct=ustruct)
+        field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
+        return self.entry_point_caller.call_on_game_thread("find_properties_by_flags_any", None, ustruct, property_flags, field_iteration_flags)
+
+    def find_properties_by_flags_all(self, ustruct, property_flags, field_iteration_flags=None):
+        ustruct = self.to_ustruct(ustruct=ustruct)
+        field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
+        return self.entry_point_caller.call_on_game_thread("find_properties_by_flags_all", None, ustruct, property_flags, field_iteration_flags)
+
+    def find_properties_by_flags_any_as_dict(self, ustruct, property_flags, field_iteration_flags=None):
+        ustruct = self.to_ustruct(ustruct=ustruct)
+        field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
+        return self.entry_point_caller.call_on_game_thread("find_properties_by_flags_any_as_map", None, ustruct, property_flags, field_iteration_flags)
+
+    def find_properties_by_flags_all_as_dict(self, ustruct, property_flags, field_iteration_flags=None):
+        ustruct = self.to_ustruct(ustruct=ustruct)
+        field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
+        return self.entry_point_caller.call_on_game_thread("find_properties_by_flags_all_as_map", None, ustruct, property_flags, field_iteration_flags)
+
+    def get_property_flags(self, prop):
+        return self.entry_point_caller.call_on_game_thread("get_property_flags", None, prop)
+
+    #
+    # Get and set multiple object properties
+    #
+
+    def get_properties_for_object(self, uobject):
+        uobject = spear.to_handle(obj=uobject)
+        convert_func = lambda result: spear.try_to_dict(json_string=result, default_value={})
+        return self.entry_point_caller.call_on_game_thread("get_properties_for_object_as_string", convert_func, uobject)
+
+    def get_properties_for_struct(self, value_ptr, ustruct):
+        ustruct = self.to_ustruct(ustruct=ustruct)
+        convert_func = lambda result: spear.try_to_dict(json_string=result, default_value={})
+        return self.entry_point_caller.call_on_game_thread("get_properties_for_struct_as_string", convert_func, value_ptr, ustruct)
+
+    def get_properties_for_class(self, value_ptr, uclass):
+        uclass = self.to_uclass(uclass=uclass)
+        convert_func = lambda result: spear.try_to_dict(json_string=result, default_value={})
+        return self.entry_point_caller.call_on_game_thread("get_properties_for_struct_as_string", convert_func, value_ptr, uclass)
+
+    def set_properties_for_object(self, uobject, properties, notify_editor=False):
+        uobject = spear.to_handle(obj=uobject)
+        properties = spear.to_json_string(obj=properties)
+        return self.entry_point_caller.call_on_game_thread("set_properties_for_object_from_string", None, uobject, properties, notify_editor)
+
+    def set_properties_for_struct(self, value_ptr, ustruct, properties, notify=0):
+        ustruct = self.to_ustruct(ustruct=ustruct)
+        properties = spear.to_json_string(obj=properties)
+        notify = spear.to_handle(obj=notify)
+        return self.entry_point_caller.call_on_game_thread("set_properties_for_struct_from_string", None, value_ptr, ustruct, properties, notify)
+
+    def set_properties_for_class(self, value_ptr, uclass, properties, notify=0):
+        uclass = self.to_uclass(uclass=uclass)
+        properties = spear.to_json_string(obj=properties)
+        notify = spear.to_handle(obj=notify)
+        return self.entry_point_caller.call_on_game_thread("set_properties_for_struct_from_string", None, value_ptr, uclass, properties, notify)
+
+    #
+    # Get and set individual property values using property descs
+    #
+
+    def resolve_property_for_object(self, uobject, property_name):
+        uobject = spear.to_handle(obj=uobject)
+        return self.entry_point_caller.call_on_game_thread("resolve_property_for_object_from_string", None, uobject, property_name)
+
+    def resolve_property_for_struct(self, value_ptr, ustruct, property_name, notify=0):
+        notify = spear.to_handle(obj=notify)
+        return self.entry_point_caller.call_on_game_thread("resolve_property_for_struct_from_string", None, value_ptr, ustruct, property_name, notify)
+
+    def get_property_value(self, property_desc):
+        convert_func = lambda result: spear.try_to_dict(json_string=result)
+        return self.entry_point_caller.call_on_game_thread("get_property_value_as_string", convert_func, property_desc)
+
+    def set_property_value(self, property_desc, property_value, notify_editor=False):
+        property_value = spear.to_json_string(obj=property_value)
+        return self.entry_point_caller.call_on_game_thread("set_property_value_from_string", None, property_desc, property_value, notify_editor)
+
+    #
+    # Get and set individual property values using string names
+    #
+
+    def get_property_value_for_object(self, uobject, property_name):
+        uobject = spear.to_handle(obj=uobject)
+        convert_func = lambda result: spear.PropertyValue(value=spear.try_to_dict(json_string=result.value), type_id=result.type_id)
+        return self.entry_point_caller.call_on_game_thread("get_property_value_for_object_as_string", convert_func, uobject, property_name)
+
+    def get_property_value_for_struct(self, value_ptr, ustruct, property_name):
+        ustruct = self.to_ustruct(ustruct=ustruct)
+        convert_func = lambda result: spear.PropertyValue(value=spear.try_to_dict(json_string=result.value), type_id=result.type_id)
+        return self.entry_point_caller.call_on_game_thread( "get_property_value_for_struct_as_string", convert_func, value_ptr, ustruct, property_name)
+
+    def get_property_value_for_class(self, value_ptr, uclass, property_name):
+        uclass = self.to_uclass(uclass=uclass)
+        convert_func = lambda result: spear.PropertyValue(value=spear.try_to_dict(json_string=result.value), type_id=result.type_id)
+        return self.entry_point_caller.call_on_game_thread( "get_property_value_for_struct_as_string", convert_func, value_ptr, uclass, property_name)
+
+    def set_property_value_for_object(self, uobject, property_name, property_value, notify_editor=False):
+        uobject = spear.to_handle(obj=uobject)
+        property_value = spear.to_json_string(obj=property_value)
+        return self.entry_point_caller.call_on_game_thread("set_property_value_for_object_from_string", None, uobject, property_name, property_value, notify_editor)
+
+    def set_property_value_for_struct(self, value_ptr, ustruct, property_name, property_value, notify=0):
+        property_value = spear.to_json_string(obj=property_value)
+        notify = spear.to_handle(obj=notify)
+        return self.entry_point_caller.call_on_game_thread("set_property_value_for_struct_from_string", None, value_ptr, ustruct, property_name, property_value, notify)
+
+    def set_property_value_for_class(self, value_ptr, uclass, property_name, property_value, notify=0):
+        uclass = self.to_uclass(uclass=uclass)
+        property_value = spear.to_json_string(obj=property_value)
+        notify = spear.to_handle(obj=notify)
+        return self.entry_point_caller.call_on_game_thread("set_property_value_for_struct_from_string", None, value_ptr, uclass, property_name, property_value, notify)
+
+    #
+    # Property notification interface
+    #
+
+    def pre_edit_change(self, uobject, property=0):
+        uobject = spear.to_handle(obj=uobject)
+        return self.entry_point_caller.call_on_game_thread("pre_edit_change", None, uobject, property)
+
+    def pre_edit_change_from_string(self, uobject, property_name):
+        uobject = spear.to_handle(obj=uobject)
+        return self.entry_point_caller.call_on_game_thread("pre_edit_change_from_string", None, uobject, property_name)
+
+    def post_edit_change(self, uobject, property=0):
+        uobject = spear.to_handle(obj=uobject)
+        return self.entry_point_caller.call_on_game_thread("post_edit_change", None, uobject, property)
+
+    def post_edit_change_from_string(self, uobject, property_name):
+        uobject = spear.to_handle(obj=uobject)
+        return self.entry_point_caller.call_on_game_thread("post_edit_change_from_string", None, uobject, property_name)
 
     #
     # Spawn actor

@@ -13,6 +13,7 @@
 
 #include <Containers/UnrealString.h> // FString
 #include <CoreGlobals.h>             // IsRunningCommandlet
+#include <Misc/CoreMisc.h>           // IsRunningGame
 #include <HAL/Platform.h>            // TEXT
 #include <Logging/LogMacros.h>       // DECLARE_LOG_CATEGORY_EXTERN, DEFINE_LOG_CATEGORY, UE_LOG
 #include <Misc/CommandLine.h>
@@ -42,13 +43,14 @@ void Log::logCurrentFunction(const std::filesystem::path& current_file, int curr
 void Log::logString(const std::string& str)
 {
     #if WITH_EDITOR // defined in an auto-generated header
-        if (IsRunningCommandlet() || FParse::Param(FCommandLine::Get(), Unreal::toTCharPtr("game"))) {
-            logStringToStdout(str); // editor mode via command-line (e.g., during cooking)
-        } else {
-            logStringToUnreal(str); // editor mode via GUI
+        if (IsRunningCommandlet() || IsRunningGame()) { // editor mode via command-line (e.g., during cooking or using -game)
+            logStringToStdout(str);
+        } else { // editor mode via GUI
+            logStringToUnreal(str);
+            logStringToStdout(str);
         }
-    #else
-        logStringToStdout(str); // standalone mode
+    #else // standalone mode
+        logStringToStdout(str);
     #endif
 }
 

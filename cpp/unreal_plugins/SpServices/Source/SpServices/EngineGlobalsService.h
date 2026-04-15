@@ -13,6 +13,7 @@
 
 #include <CoreGlobals.h>   // GIsEditor, IsAsyncLoading, IsRunningCommandlet
 #include <Engine/Engine.h> // GEngine
+#include <Misc/CoreMisc.h> // IsRunningGame
 #include <GenericPlatform/GenericPlatformMisc.h>
 #include <HAL/PlatformProcess.h>
 
@@ -91,6 +92,14 @@ public:
                 return IsRunningCommandlet();
             #else
                 return false;
+            #endif
+        });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("engine_globals_service", "is_running_game", []() -> bool {
+            #if WITH_EDITOR // defined in an auto-generated header
+                return IsRunningGame();
+            #else
+                return true;
             #endif
         });
 

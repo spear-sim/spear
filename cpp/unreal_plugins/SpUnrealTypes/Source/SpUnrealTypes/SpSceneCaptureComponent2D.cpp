@@ -175,7 +175,7 @@ void USpSceneCaptureComponent2D::Initialize()
 
     TextureTarget = NewObject<UTextureRenderTarget2D>(this);
     SP_ASSERT(TextureTarget);
-    TextureTarget->ClearColor = FLinearColor(1.0f, 0.0f, 1.0f, 1.0f); // bright pink
+    TextureTarget->ClearColor = FLinearColor(1.0f, 1.0f, 0.0f, 1.0f); // bright yellow
 
     if (bOverrideTextureRenderTargetFormat) {
         TextureTarget->RenderTargetFormat = TextureRenderTargetFormat;

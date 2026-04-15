@@ -80,7 +80,7 @@ class RenderingService(spear.Service):
 
 
 class GameRenderingService(RenderingService):
-    def __init__(self, entry_point_caller, sp_func_service, unreal_service, config, engine_globals_service):
+    def __init__(self, entry_point_caller, sp_func_service, unreal_service, engine_globals_service, config):
         super().__init__(
             entry_point_caller=entry_point_caller,
             sp_func_service=sp_func_service,

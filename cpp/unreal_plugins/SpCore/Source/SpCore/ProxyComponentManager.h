@@ -25,6 +25,7 @@
 
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
+#include "SpCore/Config.h"
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
@@ -217,7 +218,9 @@ private:
     void createAndRegisterProxyComponentsImpl(const std::map<std::string, TComponent*>& components)
     {
         for (auto& [name, component] : components) {
-            SP_LOG("Creating component: ", name);
+            if (Config::isInitialized() && Config::get<bool>("SP_CORE.MESH_PROXY_COMPONENT_MANAGER.VERBOSE")) {
+                SP_LOG("Creating component: ", name);
+            }
 
             uint32_t proxy_component_desc_id = getId(proxy_component_desc_id_initial_guess_, proxy_component_desc_ids_);
             proxy_component_desc_id_initial_guess_ = proxy_component_desc_id + 1;
@@ -230,7 +233,9 @@ private:
             TComponent* proxy_component = createComponent<TComponent>(getPtr()->getOwner(), component, proxy_component_name);
             SP_ASSERT(proxy_component);
 
-            SP_LOG("Registering component: ", name);
+            if (Config::isInitialized() && Config::get<bool>("SP_CORE.MESH_PROXY_COMPONENT_MANAGER.VERBOSE")) {
+                SP_LOG("Registering component: ", name);
+            }
 
             TDerivedProxyComponentData* derived_proxy_component_data = getPtr()->registerProxyComponent(proxy_component, component);
 
@@ -264,14 +269,18 @@ private:
             ProxyComponentDesc& proxy_component_desc = name_to_proxy_component_desc_map_.at(name);
             SP_ASSERT(!proxy_component_desc.mark_as_unregistered_);
 
-            SP_LOG("Marking component as unregistered and invalidating: ", name);
+            if (Config::isInitialized() && Config::get<bool>("SP_CORE.MESH_PROXY_COMPONENT_MANAGER.VERBOSE")) {
+                SP_LOG("Marking component as unregistered and invalidating: ", name);
+            }
             proxy_component_desc.mark_as_unregistered_ = true;
             proxy_component_desc.unregister_frame_counter_ = unregister_delay_frames_;
             proxy_component_desc.component_ = nullptr;
 
             getPtr()->invalidateProxyComponent(proxy_component_desc.derived_proxy_component_data_);
 
-            SP_LOG("Destroying component: ", name);
+            if (Config::isInitialized() && Config::get<bool>("SP_CORE.MESH_PROXY_COMPONENT_MANAGER.VERBOSE")) {
+                SP_LOG("Destroying component: ", name);
+            }
             destroyComponent(proxy_component_desc.proxy_component_);
             proxy_component_desc.proxy_component_ = nullptr;
         }
@@ -280,7 +289,9 @@ private:
     void unregisterProxyComponentsImpl(const std::vector<std::string>& component_names)
     {
         for (auto& name : component_names) {
-            SP_LOG("Unregistering component: ", name);
+            if (Config::isInitialized() && Config::get<bool>("SP_CORE.MESH_PROXY_COMPONENT_MANAGER.VERBOSE")) {
+                SP_LOG("Unregistering component: ", name);
+            }
 
             ProxyComponentDesc proxy_component_desc = name_to_proxy_component_desc_map_.at(name);
             uint32_t proxy_component_desc_id = proxy_component_desc.id_;
@@ -353,7 +364,9 @@ private:
     void destroyProxyComponentsImpl(const std::vector<TComponent*>& components)
     {
         for (auto component : components) {
-            SP_LOG("Destroying component: ", getLongComponentName(getPtr()->getWorld(), component));
+            if (Config::isInitialized() && Config::get<bool>("SP_CORE.MESH_PROXY_COMPONENT_MANAGER.VERBOSE")) {
+                SP_LOG("Destroying component: ", getLongComponentName(getPtr()->getWorld(), component));
+            }
             destroyComponent(component);
         }
     }

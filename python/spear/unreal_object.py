@@ -230,9 +230,9 @@ class UnrealObject:
         assert self.property_name == ""
         return self._unreal_service.get_properties_for_object(uobject=self.uobject)
 
-    def set_properties(self, properties):
+    def set_properties(self, properties, notify_editor=False):
         assert self.property_name == ""
-        return self._unreal_service.set_properties_for_object(uobject=self.uobject, properties=properties)
+        return self._unreal_service.set_properties_for_object(uobject=self.uobject, properties=properties, notify_editor=notify_editor)
 
     def get(self, as_raw_value=None, as_value=None, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         return self.get_property_value(property_name=self.property_name, as_raw_value=as_raw_value, as_value=as_value, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
@@ -253,9 +253,17 @@ class UnrealObject:
         else:
             return self._try_to_handle_or_unreal_type(obj=result, as_value=as_value, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
-    def set_property_value(self, property_name, property_value):
+    def set_property_value(self, property_name, property_value, notify_editor=False):
         assert property_name != ""
-        self._unreal_service.set_property_value_for_object(uobject=self.uobject, property_name=property_name, property_value=property_value)
+        self._unreal_service.set_property_value_for_object(uobject=self.uobject, property_name=property_name, property_value=property_value, notify_editor=notify_editor)
+
+    # property notification interface
+
+    def pre_edit_change(self):
+        self._unreal_service.pre_edit_change_from_string(uobject=self.uobject, property_name=self.property_name)
+
+    def post_edit_change(self):
+        self._unreal_service.post_edit_change_from_string(uobject=self.uobject, property_name=self.property_name)
 
     # type checking interface
 

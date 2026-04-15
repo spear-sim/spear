@@ -948,13 +948,13 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_properties_for_object_from_string",
-            [this](uint64_t& uobject, std::string& properties_string) -> void {
-                UnrealUtils::setObjectPropertiesFromString(toPtr<UObject>(uobject), properties_string);
+            [this](uint64_t& uobject, std::string& properties_string, bool& notify_editor) -> void {
+                UnrealUtils::setObjectPropertiesFromString(toPtr<UObject>(uobject), properties_string, notify_editor);
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_properties_for_struct_from_string",
-            [this](uint64_t& value_ptr, uint64_t& ustruct, std::string& properties_string) -> void {
-                UnrealUtils::setObjectPropertiesFromString(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), properties_string);
+            [this](uint64_t& value_ptr, uint64_t& ustruct, std::string& properties_string, uint64_t& notify) -> void {
+                UnrealUtils::setObjectPropertiesFromString(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), properties_string, toPtr<UObject>(notify));
             });
 
         //
@@ -972,13 +972,13 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "resolve_property_for_struct",
-            [this](uint64_t& value_ptr, uint64_t& ustruct, uint64_t& property) -> SpPropertyDesc {
-                return UnrealUtils::resolveProperty(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), toPtr<FProperty>(property));
+            [this](uint64_t& value_ptr, uint64_t& ustruct, uint64_t& property, uint64_t& notify) -> SpPropertyDesc {
+                return UnrealUtils::resolveProperty(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), toPtr<FProperty>(property), toPtr<UObject>(notify));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "resolve_property_for_struct_from_string",
-            [this](uint64_t& value_ptr, uint64_t& ustruct, std::string& property_name) -> SpPropertyDesc {
-                return UnrealUtils::resolveProperty(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), property_name);
+            [this](uint64_t& value_ptr, uint64_t& ustruct, std::string& property_name, uint64_t& notify) -> SpPropertyDesc {
+                return UnrealUtils::resolveProperty(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), property_name, toPtr<UObject>(notify));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_property_value_as_string",
@@ -999,20 +999,57 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_property_value_from_string",
-            [this](SpPropertyDesc& property_desc, std::string& property_value_string) -> void {
-                UnrealUtils::setPropertyValueFromString(property_desc, property_value_string);
+            [this](SpPropertyDesc& property_desc, std::string& property_value_string, bool& notify_editor) -> void {
+                UnrealUtils::setPropertyValueFromString(property_desc, property_value_string, notify_editor);
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_property_value_for_object_from_string",
-            [this](uint64_t& uobject, std::string& property_name, std::string& property_value_string) -> void {
+            [this](uint64_t& uobject, std::string& property_name, std::string& property_value_string, bool& notify_editor) -> void {
                 SpPropertyDesc property_desc = UnrealUtils::resolveProperty(toPtr<UObject>(uobject), property_name);
-                UnrealUtils::setPropertyValueFromString(property_desc, property_value_string);
+                UnrealUtils::setPropertyValueFromString(property_desc, property_value_string, notify_editor);
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_property_value_for_struct_from_string",
-            [this](uint64_t& value_ptr, uint64_t& ustruct, std::string& property_name, std::string& property_value_string) -> void {
-                SpPropertyDesc property_desc = UnrealUtils::resolveProperty(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), property_name);
-                UnrealUtils::setPropertyValueFromString(property_desc, property_value_string);
+            [this](uint64_t& value_ptr, uint64_t& ustruct, std::string& property_name, std::string& property_value_string, uint64_t& notify) -> void {
+                bool notify_editor = notify != 0;
+                SpPropertyDesc property_desc = UnrealUtils::resolveProperty(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), property_name, toPtr<UObject>(notify));
+                UnrealUtils::setPropertyValueFromString(property_desc, property_value_string, notify_editor);
+            });
+
+        //
+        // Property notification interface
+        //
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "pre_edit_change",
+            [this](uint64_t& uobject, uint64_t& property) -> void {
+                #if WITH_EDITOR
+                    toPtr<UObject>(uobject)->PreEditChange(toPtr<FProperty>(property));
+                #endif
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "pre_edit_change_from_string",
+            [this](uint64_t& uobject, std::string& property_name) -> void {
+                #if WITH_EDITOR
+                    SpPropertyDesc property_desc = UnrealUtils::resolveProperty(toPtr<UObject>(uobject), property_name);
+                    toPtr<UObject>(uobject)->PreEditChange(property_desc.property_);
+                #endif
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "post_edit_change",
+            [this](uint64_t& uobject, uint64_t& property) -> void {
+                #if WITH_EDITOR
+                    FPropertyChangedEvent property_changed_event(toPtr<FProperty>(property));
+                    toPtr<UObject>(uobject)->PostEditChangeProperty(property_changed_event);
+                #endif
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "post_edit_change_from_string",
+            [this](uint64_t& uobject, std::string& property_name) -> void {
+                #if WITH_EDITOR
+                    SpPropertyDesc property_desc = UnrealUtils::resolveProperty(toPtr<UObject>(uobject), property_name);
+                    FPropertyChangedEvent property_changed_event(property_desc.property_);
+                    toPtr<UObject>(uobject)->PostEditChangeProperty(property_changed_event);
+                #endif
             });
 
         //

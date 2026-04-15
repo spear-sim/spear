@@ -165,6 +165,22 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
     SP_ASSERT(world);
     SP_ASSERT(uobject);
     SP_ASSERT(ufunction);
+    SP_ASSERT(!world->IsPreviewWorld());
+    SP_ASSERT(GEngine->GetWorldContextFromWorld(world));
+
+    //
+    // If we call any function on a CDO, and the CDO's class is declared as a Within=World class, and the
+    // world is a PIE world, then we will get a benign error message in the editor. To avoid this error
+    // message, the solution is to wrap the function call in another UFUNCTION that isn't defined on a Within=World
+    // class.
+    //
+
+    if (uobject->HasAnyFlags(RF_ClassDefaultObject) && world->IsEditorWorld() && world->IsGameWorld()) {
+        UClass* uclass = uobject->GetClass();
+        if (uclass->ClassWithin && uclass->ClassWithin != UObject::StaticClass()) {
+            SP_LOG("WARNING: Calling any function on a CDO will generate a benign error message in the editor if: (1) the CDO's class is declared as Within=Anything; and (2) the world is a PIE world. To avoid this error message, wrap the function call in another UFUNCTION that isn't defined on a Within=World class..");
+        }
+    }
 
     // Create buffer to store all args and the return value.
     uint32 num_bytes = ufunction->ParmsSize;
@@ -340,16 +356,29 @@ std::string UnrealUtils::getObjectPropertiesAsString(const void* value_ptr, cons
     return Unreal::toStdString(string);
 }
 
-void UnrealUtils::setObjectPropertiesFromString(UObject* uobject, const std::string& string)
+void UnrealUtils::setObjectPropertiesFromString(UObject* uobject, const std::string& string, bool notify_editor)
 {
     SP_ASSERT(uobject);
-    return setObjectPropertiesFromString(uobject, uobject->GetClass(), string);
+
+    UObject* notify = nullptr;
+    if (notify_editor) {
+        notify = uobject;
+    }
+
+    setObjectPropertiesFromString(static_cast<void*>(uobject), uobject->GetClass(), string, notify);
 }
 
-void UnrealUtils::setObjectPropertiesFromString(void* value_ptr, const UStruct* ustruct, const std::string& string)
+void UnrealUtils::setObjectPropertiesFromString(void* value_ptr, const UStruct* ustruct, const std::string& string, UObject* notify)
 {
     SP_ASSERT(value_ptr);
     SP_ASSERT(ustruct);
+
+    #if WITH_EDITOR
+        if (notify) {
+            notify->PreEditChange(nullptr);
+        }
+    #endif
+
     bool success = false;
     TSharedRef<TJsonReader<>> json_reader = TJsonReaderFactory<>::Create(Unreal::toFString(string));
     TSharedPtr<FJsonObject> json_object;
@@ -358,6 +387,13 @@ void UnrealUtils::setObjectPropertiesFromString(void* value_ptr, const UStruct* 
     SP_ASSERT(json_object.IsValid());
     success = FJsonObjectConverter::JsonObjectToUStruct(json_object.ToSharedRef(), ustruct, value_ptr);
     SP_ASSERT(success);
+
+    #if WITH_EDITOR
+        if (notify) {
+            FPropertyChangedEvent property_changed_event(nullptr);
+            notify->PostEditChangeProperty(property_changed_event);
+        }
+    #endif
 }
 
 //
@@ -368,16 +404,16 @@ void UnrealUtils::setObjectPropertiesFromString(void* value_ptr, const UStruct* 
 SpPropertyDesc UnrealUtils::resolveProperty(UObject* uobject, FProperty* property)
 {
     SP_ASSERT(uobject);
-    return resolveProperty(uobject, uobject->GetClass(), property);
+    return resolveProperty(uobject, uobject->GetClass(), property, uobject);
 }
 
 SpPropertyDesc UnrealUtils::resolveProperty(UObject* uobject, const std::string& property_name)
 {
     SP_ASSERT(uobject);
-    return resolveProperty(uobject, uobject->GetClass(), property_name);
+    return resolveProperty(uobject, uobject->GetClass(), property_name, uobject);
 }
 
-SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustruct, FProperty* property)
+SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustruct, FProperty* property, UObject* notify)
 {
     SP_ASSERT(value_ptr);
     SP_ASSERT(ustruct);
@@ -389,10 +425,11 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
     SP_ASSERT(property_desc.type_id_ != "");
     property_desc.value_ptr_ = property_desc.property_->ContainerPtrToValuePtr<void>(value_ptr);
     SP_ASSERT(property_desc.value_ptr_);
+    property_desc.notify_ = notify;
     return property_desc;
 }
 
-SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustruct, const std::string& property_name)
+SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustruct, const std::string& property_name, UObject* notify)
 {
     SP_ASSERT(value_ptr);
     SP_ASSERT(ustruct);
@@ -401,6 +438,7 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
 
     SpPropertyDesc property_desc;
     property_desc.value_ptr_ = value_ptr;
+    property_desc.notify_ = notify;
 
     for (int i = 0; i < property_names.size(); i++) {
 
@@ -497,6 +535,7 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
                 UObject* uobject = object_property->GetObjectPropertyValue(property_desc.value_ptr_);
                 SP_ASSERT(uobject);
                 property_desc.value_ptr_ = uobject;
+                property_desc.notify_ = uobject;
                 ustruct = uobject->GetClass();
 
             } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
@@ -670,7 +709,7 @@ SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& prop
     return property_value;
 }
 
-void UnrealUtils::setPropertyValueFromString(const SpPropertyDesc& property_desc, const std::string& string)
+void UnrealUtils::setPropertyValueFromString(const SpPropertyDesc& property_desc, const std::string& string, bool notify_editor)
 {
     SP_ASSERT(property_desc.value_ptr_);
     SP_ASSERT(property_desc.property_);
@@ -698,14 +737,21 @@ void UnrealUtils::setPropertyValueFromString(const SpPropertyDesc& property_desc
     TSharedPtr<FJsonValue> json_value = json_object.Get()->TryGetField(Unreal::toFString("dummy"));
     SP_ASSERT(json_value.IsValid());
 
-    setPropertyValueFromJsonValue(property_desc, json_value);
+    setPropertyValueFromJsonValue(property_desc, json_value, notify_editor);
 }
 
-void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_desc, TSharedPtr<FJsonValue> json_value)
+void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_desc, TSharedPtr<FJsonValue> json_value, bool notify_editor)
 {
     SP_ASSERT(property_desc.value_ptr_);
     SP_ASSERT(property_desc.property_);
     SP_ASSERT(json_value.IsValid());
+
+    #if WITH_EDITOR
+        if (notify_editor) {
+            SP_ASSERT(property_desc.notify_);
+            property_desc.notify_->PreEditChange(property_desc.property_);
+        }
+    #endif
 
     // We don't need a special case for FStructProperty in this code block, but we do in getPropertyValueAsString(...).
     // See the discussion above for details.
@@ -873,6 +919,13 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
         SP_LOG(Unreal::toStdString(property_desc.property_->GetName()), " is an unsupported type: ", Unreal::toStdString(property_desc.property_->GetClass()->GetName()));
         SP_ASSERT(false);
     }
+
+    #if WITH_EDITOR
+        if (notify_editor) {
+            FPropertyChangedEvent property_changed_event(property_desc.property_);
+            property_desc.notify_->PostEditChangeProperty(property_changed_event);
+        }
+    #endif
 }
 
 //

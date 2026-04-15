@@ -13,6 +13,7 @@
 
 #include <Components/SkeletalMeshComponent.h>
 #include <Components/StaticMeshComponent.h>
+#include <Engine/CollisionProfile.h> // UCollisionProfile
 #include <Engine/World.h>
 #include <GameFramework/Actor.h>
 #include <Engine/EngineBaseTypes.h>  // ELevelTick
@@ -23,6 +24,7 @@
 #include <UObject/UObjectGlobals.h>  // LoadObject
 
 #include "SpCore/Assert.h"
+#include "SpCore/Config.h"
 #include "SpCore/Log.h"
 #include "SpCore/ProxyComponentManager.h"
 #include "SpCore/Std.h"
@@ -115,7 +117,7 @@ public:
 
         if (shouldProxyComponentBeHiddenInViewport(component)) {
             proxy_component->SetVisibleInSceneCaptureOnly(true);
-            proxy_component->bCastDynamicShadow = true;
+            proxy_component->bCastDynamicShadow = false;
             proxy_component->bCastStaticShadow = false;
             proxy_component->bAffectDistanceFieldLighting = false;
             proxy_component->bAffectDynamicIndirectLighting = false;
@@ -123,11 +125,14 @@ public:
 
         proxy_component->SetCanEverAffectNavigation(false);
         proxy_component->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        proxy_component->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName); // needed in editor worlds
         proxy_component->SetGenerateOverlapEvents(false);
 
         for (int i = 0; i < component->GetNumMaterials(); i++) {
             uint32_t mesh_proxy_geometry_desc_id = registerMeshProxyGeometryImpl(component, component->GetMaterial(i));
-            SP_LOG("Registering proxy geometry: ", UnrealUtils::getStableName(component), " (material slot = ", i, ", ID = ", mesh_proxy_geometry_desc_id, ")");
+            if (Config::isInitialized() && Config::get<bool>("SP_CORE.MESH_PROXY_COMPONENT_MANAGER.VERBOSE")) {
+                SP_LOG("Registering proxy geometry: ", UnrealUtils::getStableName(component), " (material slot = ", i, ", ID = ", mesh_proxy_geometry_desc_id, ")");
+            }
             UMaterialInterface* material = createMaterialForProxyComponentMaterialSlot(mesh_proxy_geometry_desc_id, component, component->GetMaterial(i));
             SP_ASSERT(material);
             proxy_component->SetMaterial(i, material);
@@ -178,11 +183,14 @@ public:
 
         proxy_component->SetCanEverAffectNavigation(false);
         proxy_component->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        proxy_component->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName); // needed in editor worlds
         proxy_component->SetGenerateOverlapEvents(false);
 
         for (int i = 0; i < component->GetNumMaterials(); i++) {
             uint32_t mesh_proxy_geometry_desc_id = registerMeshProxyGeometryImpl(component, component->GetMaterial(i));
-            SP_LOG("Registering proxy geometry: ", UnrealUtils::getStableName(component), " (material slot = ", i, ", ID = ", mesh_proxy_geometry_desc_id, ")");
+            if (Config::isInitialized() && Config::get<bool>("SP_CORE.MESH_PROXY_COMPONENT_MANAGER.VERBOSE")) {
+                SP_LOG("Registering proxy geometry: ", UnrealUtils::getStableName(component), " (material slot = ", i, ", ID = ", mesh_proxy_geometry_desc_id, ")");
+            }
             UMaterialInterface* material = createMaterialForProxyComponentMaterialSlot(mesh_proxy_geometry_desc_id, component, component->GetMaterial(i));
             SP_ASSERT(material);
             proxy_component->SetMaterial(i, material);
@@ -214,7 +222,9 @@ public:
         SP_ASSERT(mesh_proxy_component_data);
 
         for (auto mesh_proxy_geometry_desc_id : mesh_proxy_component_data->mesh_proxy_geometry_desc_ids_) {
-            SP_LOG("Invalidating proxy geometry: (ID = ", mesh_proxy_geometry_desc_id, ")");
+            if (Config::isInitialized() && Config::get<bool>("SP_CORE.MESH_PROXY_COMPONENT_MANAGER.VERBOSE")) {
+                SP_LOG("Invalidating proxy geometry: (ID = ", mesh_proxy_geometry_desc_id, ")");
+            }
             invalidateMeshProxyGeometryImpl(mesh_proxy_geometry_desc_id);
         }
     }
@@ -224,7 +234,9 @@ public:
         SP_ASSERT(mesh_proxy_component_data);
 
         for (auto mesh_proxy_geometry_desc_id : mesh_proxy_component_data->mesh_proxy_geometry_desc_ids_) {
-            SP_LOG("Unregistering proxy geometry: (ID = ", mesh_proxy_geometry_desc_id, ")");
+            if (Config::isInitialized() && Config::get<bool>("SP_CORE.MESH_PROXY_COMPONENT_MANAGER.VERBOSE")) {
+                SP_LOG("Unregistering proxy geometry: (ID = ", mesh_proxy_geometry_desc_id, ")");
+            }
             unregisterMeshProxyGeometryImpl(mesh_proxy_geometry_desc_id);
         }
 

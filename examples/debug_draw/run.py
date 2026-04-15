@@ -83,7 +83,6 @@ if __name__ == "__main__":
                 world_extent = np.abs(component_scale*local_extent)
 
                 bounding_box_descs.append({
-                    "actor": actor,
                     "world_center": world_center,
                     "world_extent": world_extent,
                     "rotation": component_rotation})
@@ -114,21 +113,24 @@ if __name__ == "__main__":
                 spawn_parameters={"SpawnCollisionHandlingOverride": "AlwaysSpawn"})
 
             static_mesh_component = game.unreal_service.get_component_by_class(actor=bounding_box_actor, uclass="UStaticMeshComponent")
+
             static_mesh_component.SetMobility(NewMobility="Movable")
             static_mesh_component.SetStaticMesh(NewMesh=bounding_box_mesh)
             static_mesh_component.SetMaterial(ElementIndex=0, Material=bounding_box_material)
-            static_mesh_component.SetVisibleInSceneCaptureOnly(bValue=True)
-            static_mesh_component.SetCollisionEnabled(NewType="NoCollision")
-            static_mesh_component.SetGenerateOverlapEvents(bInGenerateOverlapEvents=False)
 
+            static_mesh_component.SetVisibleInSceneCaptureOnly(bValue=True)
             static_mesh_component.bCastDynamicShadow = False
             static_mesh_component.bCastStaticShadow = False
             static_mesh_component.bAffectDistanceFieldLighting = False
             static_mesh_component.bAffectDynamicIndirectLighting = False
 
+            sp_actor_component.SetCanEverAffectNavigation(ActorComponent=static_mesh_component, bCanEverAffectNavigation=False)
+            static_mesh_component.SetCollisionEnabled(NewType="NoCollision")
+            static_mesh_component.SetCollisionProfileName(InCollisionProfileName="NoCollision")
+            static_mesh_component.SetGenerateOverlapEvents(bInGenerateOverlapEvents=False)
+
             bounding_box_actor.SetActorScale3D(NewScale3D=spear.to_vector_from_numpy_array(array=desc["world_extent"]/50.0))
 
-            sp_actor_component.SetCanEverAffectNavigation(ActorComponent=static_mesh_component, bCanEverAffectNavigation=False)
             sp_actor_component.MarkRenderStateDirty(ActorComponent=static_mesh_component)
             sp_scene_component.MarkRenderTransformDirty(SceneComponent=static_mesh_component)
 

@@ -73,6 +73,7 @@ if __can_import_unreal__:
 #
 
 # import a curated set of classes directly into the spear namespace
+from .services.async_loading_service import AsyncLoadingService
 from .services.debug_service import DebugService
 from .services.engine_service import EngineService
 from .services.engine_globals_service import EngineGlobalsService
