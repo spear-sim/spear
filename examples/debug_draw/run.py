@@ -126,7 +126,7 @@ if __name__ == "__main__":
 
             sp_actor_component.SetCanEverAffectNavigation(ActorComponent=static_mesh_component, bCanEverAffectNavigation=False)
             static_mesh_component.SetCollisionEnabled(NewType="NoCollision")
-            static_mesh_component.SetCollisionProfileName(InCollisionProfileName="NoCollision")
+            static_mesh_component.SetCollisionProfileName(InCollisionProfileName="NoCollision") # needed for editor worlds
             static_mesh_component.SetGenerateOverlapEvents(bInGenerateOverlapEvents=False)
 
             bounding_box_actor.SetActorScale3D(NewScale3D=spear.to_vector_from_numpy_array(array=desc["world_extent"]/50.0))

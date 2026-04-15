@@ -62,6 +62,8 @@ public:
         owner_ = owner;
     }
 
+    virtual ~MeshProxyComponentManager() = default;
+
     //
     // Accessing proxy geometry. This function is called from an owning AActor when returning proxy geometry
     // to user Python code.

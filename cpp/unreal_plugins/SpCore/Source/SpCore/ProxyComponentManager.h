@@ -53,7 +53,6 @@ class UWorld;
 template <typename TDerivedProxyComponentManager, typename TDerivedProxyComponentData>
 class ProxyComponentManager
 {
-
 public:
 
     struct ProxyComponentDesc
