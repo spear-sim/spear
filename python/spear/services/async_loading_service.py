@@ -43,7 +43,7 @@ class AsyncLoadingService(spear.Service):
 
         self._navigation_system = self._sp_navigation_system_v1.GetNavigationSystem()
 
-    def is_engine_idle(self):
+    def is_engine_idle(self, verbose=False):
 
         is_async_loading = self._engine_globals_service.is_async_loading()
         is_loading_assets = self._asset_registry.IsLoadingAssets()
@@ -69,8 +69,8 @@ class AsyncLoadingService(spear.Service):
 
         engine_idle = not is_async_loading and not is_loading_assets and num_remaining_assets == 0 and not is_compiling_shaders and num_remaining_build_tasks == 0 and num_wanting_streaming_resources == 0 and num_outstanding_distance_field_tasks == 0 and not are_streaming_levels_loading
 
-        spear.log(f"engine_idle={engine_idle}")
-        if not engine_idle:
+        if verbose and not engine_idle:
+            spear.log(f"engine_idle={engine_idle}")
             spear.log(f"    is_async_loading={is_async_loading}, is_loading_assets={is_loading_assets}, is_compiling_shaders={is_compiling_shaders}")
             spear.log(f"    num_outstanding_distance_field_tasks={num_outstanding_distance_field_tasks}, num_remaining_assets={num_remaining_assets}, num_remaining_build_tasks={num_remaining_build_tasks}, num_wanting_streaming_resources={num_wanting_streaming_resources}")
             spear.log(f"    are_streaming_levels_loading={are_streaming_levels_loading})")
@@ -90,7 +90,7 @@ class AsyncLoadingService(spear.Service):
         while not engine_idle:
             assert time.time() - start_time_seconds < max_time_seconds
             with engine_service.begin_frame():
-                engine_idle = self.is_engine_idle()
+                engine_idle = self.is_engine_idle(verbose=True)
             with engine_service.end_frame():
                 pass
             if not engine_idle:
@@ -111,7 +111,7 @@ class AsyncLoadingService(spear.Service):
         while not engine_idle:
             assert time.time() - start_time_seconds < max_time_seconds
             with engine_service.begin_frame():
-                engine_idle = self.is_engine_idle()
+                engine_idle = self.is_engine_idle(verbose=True)
             yield
             with engine_service.end_frame():
                 pass
