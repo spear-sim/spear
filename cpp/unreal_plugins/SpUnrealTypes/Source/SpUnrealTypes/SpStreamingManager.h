@@ -5,10 +5,9 @@
 
 #pragma once
 
-#include <HAL/Platform.h> // int32
-#include <Kismet/BlueprintFunctionLibrary.h>
-
 #include <ContentStreaming.h> // IStreamingManager
+#include <HAL/Platform.h>     // int32
+#include <Kismet/BlueprintFunctionLibrary.h>
 
 #include "SpCore/Assert.h"
 

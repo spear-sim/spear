@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <DistanceFieldAtlas.h> // FDistanceFieldAsyncQueue, GDistanceFieldAsyncQueue
+#include <DistanceFieldAtlas.h> // GDistanceFieldAsyncQueue
 #include <HAL/Platform.h>       // int32
 #include <Kismet/BlueprintFunctionLibrary.h>
 

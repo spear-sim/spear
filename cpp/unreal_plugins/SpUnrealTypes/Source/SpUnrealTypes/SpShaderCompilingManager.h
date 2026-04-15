@@ -7,7 +7,7 @@
 
 #include <HAL/Platform.h>   // int32
 #include <Kismet/BlueprintFunctionLibrary.h>
-#include <ShaderCompiler.h> // FShaderCompilingManager, GShaderCompilingManager
+#include <ShaderCompiler.h> // GShaderCompilingManager
 
 #include "SpShaderCompilingManager.generated.h"
 

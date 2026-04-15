@@ -561,6 +561,10 @@ SpPackedArray USpSceneCaptureComponent2D::readPixelsImpl()
         int64_t spin_wait_iterations = 0;
         while (num_readbacks_pending_ > 0) {
             spin_wait_iterations++;
+            if (spin_wait_iterations % 100*1000*1000 == 0) {
+                SP_LOG("ERROR: Spin wait in readPixelsImpl() appears to be deadlocked.");
+                SP_ASSERT(false);
+            }            
         }
         if (bPrintReadbackSpinWaitInfo && spin_wait_iterations > 0) {
             SP_LOG("WARNING: Readback spin-waited for ", spin_wait_iterations, " iterations in readPixelsImpl().");
@@ -613,9 +617,8 @@ void USpSceneCaptureComponent2D::enqueueCopyPixelsFromGPUToStagingAndImmediateFl
 {
     SP_ASSERT(readback);
     FRHITexture* src_texture = render_target_resource->GetRenderTargetTexture();
-    command_list.Transition(FRHITransitionInfo(src_texture, ERHIAccess::Unknown, ERHIAccess::CopySrc));
+    command_list.Transition(FRHITransitionInfo(src_texture, ERHIAccess::SRVMask, ERHIAccess::CopySrc));
     readback->EnqueueCopy(command_list, src_texture);
-    command_list.Transition(FRHITransitionInfo(src_texture, ERHIAccess::CopySrc, ERHIAccess::SRVMask));
     command_list.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
 }
 
@@ -624,21 +627,13 @@ void USpSceneCaptureComponent2D::copyPixelsFromStagingToCPU_RenderThread(FRHIGPU
     SP_ASSERT(readback);
     SP_ASSERT(dest_ptr);
 
-    int64_t spin_wait_iterations = 0;
-    while (!readback->IsReady()) {
-        spin_wait_iterations++;
-    }
-    if (bPrintReadbackSpinWaitInfo && spin_wait_iterations > 0) {
-        SP_LOG("WARNING: Readback spin-waited for ", spin_wait_iterations, " iterations in copyPixelsFromStagingToCPU_RenderThread(...).");
-    }
-
     SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
     uint64_t num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
     int32_t bytes_per_pixel = NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
     int32_t row_bytes = Width*bytes_per_pixel;
 
     int32 row_pitch_in_pixels = 0;
-    void* src_ptr = readback->Lock(row_pitch_in_pixels);
+    void* src_ptr = readback->Lock(row_pitch_in_pixels); // will block until the data is ready on all platforms
     SP_ASSERT(src_ptr);
     SP_ASSERT(row_pitch_in_pixels >= Width);
 

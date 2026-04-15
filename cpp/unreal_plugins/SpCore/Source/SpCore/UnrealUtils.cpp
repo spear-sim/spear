@@ -18,6 +18,7 @@
 #include <CoreGlobals.h>              // GAllowActorScriptExecutionInEditor
 #include <Dom/JsonObject.h>
 #include <Dom/JsonValue.h>
+#include <Engine/Engine.h>            // GEngine
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>             // TCHAR, uint16
 #include <JsonObjectConverter.h>
