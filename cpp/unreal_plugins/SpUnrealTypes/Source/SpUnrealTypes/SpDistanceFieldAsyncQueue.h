@@ -9,8 +9,6 @@
 #include <HAL/Platform.h>       // int32
 #include <Kismet/BlueprintFunctionLibrary.h>
 
-#include "SpCore/Assert.h"
-
 #include "SpDistanceFieldAsyncQueue.generated.h"
 
 UCLASS()
@@ -20,9 +18,12 @@ class USpDistanceFieldAsyncQueue : public UBlueprintFunctionLibrary
 public:
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static int32 GetNumOutstandingTasks()
+    static int32 GetNumOutstandingTasks(bool& bIsInitialized)
     {
-        SP_ASSERT(GDistanceFieldAsyncQueue);
+        bIsInitialized = GDistanceFieldAsyncQueue != nullptr;
+        if (!bIsInitialized) {
+            return 0;
+        }
         return GDistanceFieldAsyncQueue->GetNumOutstandingTasks();
     }
 };

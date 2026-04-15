@@ -47,12 +47,18 @@ class AsyncLoadingService(spear.Service):
 
         is_async_loading = self._engine_globals_service.is_async_loading()
         is_loading_assets = self._asset_registry.IsLoadingAssets()
-        is_compiling_shaders = self._sp_shader_compiling_manager.IsCompiling()
 
-        num_outstanding_distance_field_tasks = self._sp_distance_field_async_queue.GetNumOutstandingTasks()
         num_remaining_assets = self._sp_asset_compiling_manager.GetNumRemainingAssets()
         num_remaining_build_tasks = self._sp_navigation_system_v1.GetNumRemainingBuildTasks(NavigationSystem=self._navigation_system)
         num_wanting_streaming_resources = self._sp_streaming_manager.GetNumWantingResources()
+
+        return_values = self._sp_distance_field_async_queue.GetNumOutstandingTasks(as_dict=True)
+        num_outstanding_distance_field_tasks = return_values["ReturnValue"]
+        is_distance_field_async_queue_initialized = return_values["bIsInitialized"]
+
+        return_values = self._sp_shader_compiling_manager.GetNumRemainingJobs(as_dict=True)
+        num_remaining_shader_jobs = return_values["ReturnValue"]
+        is_shader_compiling_manager_initialized = return_values["bIsInitialized"]
 
         are_streaming_levels_loading = False
         world = self.get_world()
@@ -67,13 +73,26 @@ class AsyncLoadingService(spear.Service):
             if should_be_visible and not is_level_visible:
                 are_streaming_levels_loading = True
 
-        engine_idle = not is_async_loading and not is_loading_assets and num_remaining_assets == 0 and not is_compiling_shaders and num_remaining_build_tasks == 0 and num_wanting_streaming_resources == 0 and num_outstanding_distance_field_tasks == 0 and not are_streaming_levels_loading
+        engine_idle = \
+            not is_async_loading and \
+            not is_loading_assets and \
+            num_outstanding_distance_field_tasks == 0 and \
+            num_remaining_assets == 0 and \
+            num_remaining_build_tasks == 0 and \
+            num_remaining_shader_jobs == 0 and \
+            num_wanting_streaming_resources == 0 and \
+            num_wanting_streaming_resources == 0 and \
+            not are_streaming_levels_loading
 
         if verbose and not engine_idle:
             spear.log(f"engine_idle={engine_idle}")
-            spear.log(f"    is_async_loading={is_async_loading}, is_loading_assets={is_loading_assets}, is_compiling_shaders={is_compiling_shaders}")
-            spear.log(f"    num_outstanding_distance_field_tasks={num_outstanding_distance_field_tasks}, num_remaining_assets={num_remaining_assets}, num_remaining_build_tasks={num_remaining_build_tasks}, num_wanting_streaming_resources={num_wanting_streaming_resources}")
-            spear.log(f"    are_streaming_levels_loading={are_streaming_levels_loading}")
+            spear.log(f"    is_async_loading                     = {is_async_loading}")
+            spear.log(f"    is_loading_assets                    = {is_loading_assets}")
+            spear.log(f"    num_outstanding_distance_field_tasks = {num_outstanding_distance_field_tasks} (initialized={is_distance_field_async_queue_initialized})")
+            spear.log(f"    num_remaining_assets                 = {num_remaining_assets}")
+            spear.log(f"    num_remaining_shader_jobs            = {num_remaining_shader_jobs} (initialized={is_shader_compiling_manager_initialized})")
+            spear.log(f"    num_wanting_streaming_resources.     = {num_wanting_streaming_resources}")
+            spear.log(f"    are_streaming_levels_loading         = {are_streaming_levels_loading}")
 
         return engine_idle
 

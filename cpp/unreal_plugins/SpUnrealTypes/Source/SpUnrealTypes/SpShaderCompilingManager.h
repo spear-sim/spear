@@ -9,8 +9,6 @@
 #include <Kismet/BlueprintFunctionLibrary.h>
 #include <ShaderCompiler.h> // FShaderCompilingManager, GShaderCompilingManager
 
-#include "SpCore/Assert.h"
-
 #include "SpShaderCompilingManager.generated.h"
 
 UCLASS()
@@ -20,16 +18,22 @@ class USpShaderCompilingManager : public UBlueprintFunctionLibrary
 public:
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static bool IsCompiling()
+    static bool IsCompiling(bool& bIsInitialized)
     {
-        SP_ASSERT(GShaderCompilingManager);
+        bIsInitialized = GShaderCompilingManager != nullptr;
+        if (!bIsInitialized) {
+            return false;
+        }
         return GShaderCompilingManager->IsCompiling();
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static int32 GetNumRemainingJobs()
+    static int32 GetNumRemainingJobs(bool& bIsInitialized)
     {
-        SP_ASSERT(GShaderCompilingManager);
+        bIsInitialized = GShaderCompilingManager != nullptr;
+        if (!bIsInitialized) {
+            return 0;
+        }
         return GShaderCompilingManager->GetNumRemainingJobs();
     }
 };
