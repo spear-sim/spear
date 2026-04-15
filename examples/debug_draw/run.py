@@ -175,6 +175,7 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass
 
+    # needed in case our custom material is loading for the first time
     game.async_loading_service.wait_for_engine_idle()
 
     # let temporal anti-aliasing etc accumulate additional information across multiple frames
