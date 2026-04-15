@@ -50,6 +50,8 @@ if __name__ == "__main__":
     instance = spear.Instance(config=config)
     game = instance.get_game()
 
+    game.async_loading_service.wait_for_engine_idle()
+
     with instance.begin_frame():
 
         game.segmentation_service.initialize()

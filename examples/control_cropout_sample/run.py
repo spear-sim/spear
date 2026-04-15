@@ -124,8 +124,6 @@ if __name__ == "__main__":
         villager_uclass = game.unreal_service.load_class(uclass="AActor", name="/Game/Blueprint/Villagers/BP_Villager.BP_Villager_C")
 
         # get UnrealObject instances
-        kismet_material_library = game.get_unreal_object(uclass="UKismetMaterialLibrary")
-        navigation_system_v1 = game.get_unreal_object(uclass="UNavigationSystemV1")
         sp_navigation_system_v1 = game.get_unreal_object(uclass="USpNavigationSystemV1")
         bpf_shared = game.get_unreal_object(uclass=bpf_shared_uclass)
 
@@ -134,7 +132,7 @@ if __name__ == "__main__":
         # game_mode.print_debug_info()
 
         # get navigation data
-        navigation_system = navigation_system_v1.GetNavigationSystem()
+        navigation_system = sp_navigation_system_v1.GetNavigationSystem()
         navigation_data = sp_navigation_system_v1.GetNavDataForAgentName(NavigationSystem=navigation_system, AgentName="Main")
 
         #
