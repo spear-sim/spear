@@ -70,14 +70,14 @@ if __name__ == "__main__":
 
             for static_mesh_component in static_mesh_components:
                 local_bounds = static_mesh_component.GetLocalBounds(Min={"X": 0.0, "Y": 0.0, "Z": 0.0}, Max={"X": 0.0, "Y": 0.0, "Z": 0.0}, as_dict=True)
-                local_min = spear.to_numpy_array_from_vector(vector=local_bounds["Min"], as_matrix=True)
-                local_max = spear.to_numpy_array_from_vector(vector=local_bounds["Max"], as_matrix=True)
+                local_min = spear.math.to_numpy_array_from_spear_vector(spear_vector=local_bounds["Min"], as_matrix=True)
+                local_max = spear.math.to_numpy_array_from_spear_vector(spear_vector=local_bounds["Max"], as_matrix=True)
                 local_center = (local_min + local_max)/2.0
                 local_extent = (local_max - local_min)/2.0
 
-                component_location = spear.to_numpy_array_from_vector(vector=static_mesh_component.K2_GetComponentLocation(), as_matrix=True)
-                component_rotation = spear.to_numpy_matrix_from_rotator(rotator=static_mesh_component.K2_GetComponentRotation(), as_matrix=True)
-                component_scale = np.matrix(np.diag(spear.to_numpy_array_from_vector(vector=static_mesh_component.K2_GetComponentScale())))
+                component_location = spear.math.to_numpy_array_from_spear_vector(spear_vector=static_mesh_component.K2_GetComponentLocation(), as_matrix=True)
+                component_rotation = spear.math.to_numpy_matrix_from_spear_rotator(spear_rotator=static_mesh_component.K2_GetComponentRotation(), as_matrix=True)
+                component_scale = np.matrix(np.diag(spear.math.to_numpy_array_from_spear_vector(spear_vector=static_mesh_component.K2_GetComponentScale())))
 
                 world_center = component_location + component_rotation*component_scale*local_center
                 world_extent = np.abs(component_scale*local_extent)
@@ -97,10 +97,10 @@ if __name__ == "__main__":
         # debug draw bounding boxes (skip index 0 which is the "none" entry)
         for desc, color in zip(bounding_box_descs[1:], bounding_box_colors[1:]):
             kismet_system_library.DrawDebugBox(
-                Center=spear.to_vector_from_numpy_array(array=desc["world_center"]),
-                Extent=spear.to_vector_from_numpy_array(array=desc["world_extent"]),
+                Center=spear.math.to_spear_vector_from_numpy_array(numpy_array=desc["world_center"]),
+                Extent=spear.math.to_spear_vector_from_numpy_array(numpy_array=desc["world_extent"]),
                 LineColor={"R": float(color[0]), "G": float(color[1]), "B": float(color[2]), "A": 1.0},
-                Rotation=spear.to_rotator_from_numpy_matrix(matrix=desc["rotation"]),
+                Rotation=spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=desc["rotation"]),
                 Duration=60.0,
                 Thickness=2.0)
 
@@ -108,8 +108,8 @@ if __name__ == "__main__":
         for desc in bounding_box_descs[1:]:
             bounding_box_actor = game.unreal_service.spawn_actor(
                 uclass="AStaticMeshActor",
-                location=spear.to_vector_from_numpy_array(array=desc["world_center"]),
-                rotation=spear.to_rotator_from_numpy_matrix(matrix=desc["rotation"]),
+                location=spear.math.to_spear_vector_from_numpy_array(numpy_array=desc["world_center"]),
+                rotation=spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=desc["rotation"]),
                 spawn_parameters={"SpawnCollisionHandlingOverride": "AlwaysSpawn"})
 
             static_mesh_component = game.unreal_service.get_component_by_class(actor=bounding_box_actor, uclass="UStaticMeshComponent")
@@ -129,7 +129,7 @@ if __name__ == "__main__":
             static_mesh_component.SetCollisionProfileName(InCollisionProfileName="NoCollision") # needed for editor worlds
             static_mesh_component.SetGenerateOverlapEvents(bInGenerateOverlapEvents=False)
 
-            bounding_box_actor.SetActorScale3D(NewScale3D=spear.to_vector_from_numpy_array(array=desc["world_extent"]/50.0))
+            bounding_box_actor.SetActorScale3D(NewScale3D=spear.math.to_spear_vector_from_numpy_array(numpy_array=desc["world_extent"]/50.0))
 
             sp_actor_component.MarkRenderStateDirty(ActorComponent=static_mesh_component)
             sp_scene_component.MarkRenderTransformDirty(SceneComponent=static_mesh_component)
@@ -146,8 +146,8 @@ if __name__ == "__main__":
             components.append(component_desc["component"])
 
         # configure camera to match viewport
-        viewport_info = game.rendering_service.get_current_viewport_info()
-        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_info=viewport_info)
+        viewport_desc = game.rendering_service.get_current_viewport_desc()
+        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc)
 
         # configure capture component visibility routing
 

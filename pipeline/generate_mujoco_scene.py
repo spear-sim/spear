@@ -64,7 +64,7 @@ def process_scene():
     with open(actors_json_file, "r") as f:
         actors_json = json.load(f)
 
-    actors = { actor_name: actor_kinematic_tree for actor_name, actor_kinematic_tree in actors_json.items() if actor_name not in ignore_actors }
+    actors = { actor_name: actor_kinematic_tree for actor_name, actor_kinematic_tree in actors_json.items() if actor_name.split(":")[0] not in ignore_actors }
 
     meshes_element = xml.etree.ElementTree.Element("meshes")
     bodies_element = xml.etree.ElementTree.Element("bodies")
@@ -102,7 +102,7 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
         kinematic_tree_node=kinematic_tree["root_node"],
         meshes_element=meshes_element,
         parent_element=bodies_element,
-        transform_world_from_parent_node=spear.pipeline.identity_transform,
+        transform_world_from_parent_node=spear.math.identity_transform,
         root_node=True,
         color=color,
         log_prefix_str="    ")
@@ -112,25 +112,25 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
 # attribute on each mesh asset. But the input kinematic tree representation here (that we compute directly
 # from Unreal's component hierarchy) may have scale transformations throughout. So, when computing our
 # MuJoCo kinematic tree, we cannot simply copy the position of each node in our input tree. Instead, we need
-# to adjust the input node positions to account for the scale transformations that might be present throughout
-# our input tree, which are not directly representable in MuJoCo.
+# to adjust the input node positions to account for the scale transformations that might be present
+# throughout our input tree, which are not directly representable in MuJoCo.
 #
 # To derive adjusted node positions in a MuJoCo kinematic tree, we must first choose a particular target
 # reference frame, where we want projected mesh vertices to match in our input tree and the MuJoCo tree. This
-# up-front decision is necessary because projected mesh vertices will generally not match as they are projected
-# through each tree's various reference frames. But, as we will see here, the projected vertices can be made to
-# match at a particular reference frame. In this derivation, we choose the world frame as our target reference
-# frame.
+# up-front decision is necessary because projected mesh vertices will generally not match as they are
+# projected through each tree's various reference frames. But, as we will see here, the projected vertices
+# can be made to match at a particular reference frame. In this derivation, we choose the world frame as our
+# target reference frame.
 # 
-# Let v be a mesh vertex in object space, and let u_w be its corresponding location in world space, as computed
-# by Unreal. Given a hierarchy of transforms that map to world space from object space, Unreal computes u_w as
-# follows.
+# Let v be a mesh vertex in object space, and let u_w be its corresponding location in world space, as
+# computed by Unreal. Given a hierarchy of transforms that map to world space from object space, Unreal
+# computes u_w as follows.
 #
 #     u_w = R_wo*S_wo*v + l_wo                            (1)
 #
 # where R_wo and S_wo are the accumulated rotation and scale matrices that map points to world space from
 # object space, and l_wo is the accumulated location vector that maps points to world space from object
-# space. See spear.pipeline.compose_transforms(...) for a reference implementation.
+# space. See spear.math.compose_transforms(...) for a reference implementation.
 #
 # For illustrative purposes, we will assume here that we have a tree with a depth of 3, i.e., a tree with a
 # root node and some child nodes and some grandchild nodes. We will also assume that frames with numerically
@@ -144,7 +144,7 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
 # where R_ij and S_ij are the rotation and scale matrices that map points to reference frame i from reference
 # frame j.
 #
-# Now let l_wc be an accumulated location vector that maps points to world space to some current reference
+# Now let l_wc be an accumulated location vector that maps points to world space from some current reference
 # frame. Unreal computes l_wc as follows.
 #
 #     l_wc = R_wp*S_wp*l_pc + l_wp                        (3)
@@ -183,17 +183,17 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
 # Note that in equation (6), we have included an S matrix because MuJoCo allows us to scale mesh vertices by
 # a diagonal scale matrix before applying any other transformations.
 #
-# Our goal is therefore to choose the diagonal scale matrix S and the vectors t_ij such that m_w == u_w for all
-# mesh vertices v. If we set equation (4) equal to equation (6), we arrive at the following expressions for S
-# and t_ij.
+# Our goal is therefore to choose the diagonal scale matrix S and the vectors t_ij such that m_w == u_w for
+# all mesh vertices v. If we set equation (4) equal to equation (6), we arrive at the following expressions
+# for S and t_ij.
 #
 #        S := S_w3*S_32*S_21        = S_w1
 #     t_21 := S_w3*S_32      * l_21 = S_w2*l_21
 #     t_32 := S_w3           * l_32 = S_w3*l_32
 #     t_w3 := I              * l_w3 = I   *l_w3           (7)
 #
-# Noting the recursive structure in equation (7), we arrive at the following general expressions for S and t_pc
-# that apply for all tree depths.
+# Noting the recursive structure in equation (7), we arrive at the following general expressions for S and
+# t_pc that apply for all tree depths.
 #
 #        S := transform_world_from_current_node["scale"]
 #     t_pc := transform_world_from_parent_node["scale"]*transform_parent_node_from_current_node["location"] 
@@ -207,17 +207,19 @@ def add_mujoco_elements_for_kinematic_tree_node(
     kinematic_tree_node_name = kinematic_tree_node["name"]
     spear.log(log_prefix_str, "Processing kinematic tree node: ", kinematic_tree_node_name)
 
-    transform_parent_node_from_current_node = spear.pipeline.get_transform_from_transform_data(transform_data=kinematic_tree_node["transform_parent_node_from_current_node"])
-    transform_world_from_current_node = spear.pipeline.compose_transforms(transforms=[transform_world_from_parent_node, transform_parent_node_from_current_node])
+    transform_parent_node_from_current_node = kinematic_tree_node["transform_parent_node_from_current_node"]
+    transform_world_from_current_node = spear.math.compose_transforms(
+        transforms=[transform_world_from_parent_node, transform_parent_node_from_current_node], as_spear=True)
 
-    rotation_x_axis = transform_parent_node_from_current_node["rotation"][:,0].A1
-    rotation_y_axis = transform_parent_node_from_current_node["rotation"][:,1].A1
-    rotation_z_axis = transform_parent_node_from_current_node["rotation"][:,2].A1
+    numpy_transform = spear.math.to_numpy_transform_from_spear_transform(spear_transform=transform_parent_node_from_current_node, as_matrix=True)
+    rotation_x_axis = numpy_transform["rotation"][:, 0].A1
+    rotation_y_axis = numpy_transform["rotation"][:, 1].A1
+    rotation_z_axis = numpy_transform["rotation"][:, 2].A1
     assert np.allclose(np.cross(rotation_x_axis, rotation_y_axis), rotation_z_axis)
 
     # HACK: get dynamic-vs-static flag from the JSON data
 
-    if "Meshes/05_chair" in actor_name:
+    if actor_name.startswith("Meshes/05_chair"):
         body_type = "dynamic"
     else:
         body_type = "static"
@@ -226,13 +228,15 @@ def add_mujoco_elements_for_kinematic_tree_node(
 
     pos_offset = np.matrix([0.0, 0.0, 0.0]).T
 
-    if actor_name == "Meshes/02_floor/Floor":
+    actor_stable_name = actor_name.split(":")[0]
+    if actor_stable_name == "Meshes/02_floor/Floor":
         pos_offset = np.matrix([0.0, 0.0, -14.0]).T
-    if actor_name == "Meshes/05_chair/Round_Table_Chair_03":
+    if actor_stable_name == "Meshes/05_chair/Round_Table_Chair_03":
         pos_offset = np.matrix([5.0, -5.0, 0.0]).T
 
-    pos = transform_world_from_parent_node["scale"]*transform_parent_node_from_current_node["location"] + pos_offset
-    rot = transform_parent_node_from_current_node["rotation"]
+    numpy_parent = spear.math.to_numpy_transform_from_spear_transform(spear_transform=transform_world_from_parent_node, as_matrix=True)
+    pos = numpy_parent["scale"]*numpy_transform["translation"] + pos_offset
+    rot = numpy_transform["rotation"]
 
     # negate y-axis to maintain visual parity with Unreal
     if args.visual_parity_with_unreal:
@@ -265,7 +269,7 @@ def add_mujoco_elements_for_kinematic_tree_node(
             "..",
             "collision_geometry",
             convex_decomposition_strategy,
-            actor_name.replace("/", "."),
+            actor_name.replace("/", ".").replace(":", "."),
             kinematic_tree_node["name"],
             f"merge_id_{int(merge_id):04}") # JSON stores keys as strings, so we need to convert merge_id to an int
 
@@ -278,7 +282,7 @@ def add_mujoco_elements_for_kinematic_tree_node(
             if args.color_mode == "unique_color_per_geom":
                 color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
 
-            scale = transform_world_from_current_node["scale"]
+            scale = spear.math.to_numpy_array_from_spear_vector(spear_vector=transform_world_from_current_node["Scale3D"])
 
             # negate y-axis to maintain visual parity with Unreal
             if args.visual_parity_with_unreal:

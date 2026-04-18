@@ -17,9 +17,9 @@ class RenderingService(spear.Service):
             unreal_service=unreal_service,
             config=config)
 
-    def align_camera_with_viewport(self, camera_sensor, camera_components, viewport_info, widths=None, heights=None, only_align_pose=False, post_processing_components=None, post_processing_volumes=None):
+    def align_camera_with_viewport(self, camera_sensor, camera_components, viewport_desc, widths=None, heights=None, only_align_pose=False, post_processing_components=None, post_processing_volumes=None):
 
-        camera_sensor.K2_SetActorLocationAndRotation(NewLocation=viewport_info["camera_location"], NewRotation=viewport_info["camera_rotation"])
+        camera_sensor.K2_SetActorLocationAndRotation(NewLocation=viewport_desc["camera_location"], NewRotation=viewport_desc["camera_rotation"])
 
         if only_align_pose:
             return
@@ -31,8 +31,8 @@ class RenderingService(spear.Service):
             camera_components = [camera_components]
 
         # normalize widths and heights to lists
-        viewport_size_x = viewport_info["viewport_size_x"]
-        viewport_size_y = viewport_info["viewport_size_y"]
+        viewport_size_x = viewport_desc["viewport_size_x"]
+        viewport_size_y = viewport_desc["viewport_size_y"]
 
         if widths is None:
             widths = [viewport_size_x]*len(camera_components)
@@ -50,7 +50,7 @@ class RenderingService(spear.Service):
                 post_processing_components = [post_processing_components]
 
             if post_processing_volumes is None:
-                post_processing_volumes = viewport_info["post_process_volumes"]
+                post_processing_volumes = viewport_desc["post_process_volumes"]
                 if len(post_processing_volumes) == 1:
                     post_processing_volumes = post_processing_volumes*len(post_processing_components)
             elif not isinstance(post_processing_volumes, list):
@@ -61,17 +61,17 @@ class RenderingService(spear.Service):
             camera_component.Width = w
             camera_component.Height = h
 
-            if viewport_info["is_perspective"]:
+            if viewport_desc["is_perspective"]:
                 render_target_aspect_ratio = w/h
-                fov = viewport_info["fov_degrees"]*math.pi/180.0
+                fov = viewport_desc["fov_degrees"]*math.pi/180.0
                 half_fov = fov/2.0
-                half_fov_adjusted = math.atan(math.tan(half_fov)*render_target_aspect_ratio/viewport_info["aspect_ratio"])
+                half_fov_adjusted = math.atan(math.tan(half_fov)*render_target_aspect_ratio/viewport_desc["aspect_ratio"])
                 fov_adjusted_degrees = half_fov_adjusted*2.0*180.0/math.pi
                 camera_component.ProjectionType = "Perspective"
                 camera_component.FOVAngle = fov_adjusted_degrees
             else:
                 camera_component.ProjectionType = "Orthographic"
-                camera_component.OrthoWidth = viewport_info["ortho_width"]
+                camera_component.OrthoWidth = viewport_desc["ortho_width"]
 
         # apply post-processing settings
         if post_processing_components is not None:
@@ -98,7 +98,7 @@ class GameRenderingService(RenderingService):
         self._gameplay_statics = self.get_unreal_object(uclass="UGameplayStatics")
         self._sp_game_viewport = self.get_unreal_object(uclass="USpGameViewportClient")
 
-    def get_current_viewport_info(self, only_get_pose=False):
+    def get_current_viewport_desc(self, only_get_pose=False):
         player_controller = self._gameplay_statics.GetPlayerController(PlayerIndex=0)
         pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
 
@@ -144,7 +144,7 @@ class EditorRenderingService(RenderingService):
     def initialize(self):
         self._sp_editor_engine = self.get_unreal_object(uclass="USpEditorEngine")
 
-    def get_current_viewport_info(self, only_get_pose=False):
+    def get_current_viewport_desc(self, only_get_pose=False):
         viewport_client_descs = self._sp_editor_engine.GetLevelViewportClients()
         editing_descs = [ desc for desc in viewport_client_descs if desc["bIsCurrentLevelEditing"] ]
         assert len(editing_descs) == 1

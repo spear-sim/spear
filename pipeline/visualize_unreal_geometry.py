@@ -93,7 +93,7 @@ def draw_actor(actor_desc, color):
     if args.color_mode == "unique_color_per_actor":
         color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
     draw_component(
-        transform_world_from_parent_component=spear.pipeline.identity_transform,
+        transform_world_from_parent_component=spear.math.identity_transform,
         component_desc=actor_desc["root_component"],
         color=color,
         log_prefix_str="    ")
@@ -103,18 +103,23 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
     # Only process SceneComponents...
     component_class = component_desc["class"]
     if component_class in scene_component_classes:
-        spear.log(log_prefix_str, "Processing SceneComponent: ", component_desc["name"])
-        
-        transform_world_from_current_component = spear.pipeline.compose_transform_with_component(
-            transform_ancestor_from_parent_component=transform_world_from_parent_component, component_desc=component_desc)
-        M_world_from_current_component = spear.pipeline.get_matrix_from_transform(transform=transform_world_from_current_component)
+        spear.log(log_prefix_str, "Processing SceneComponent: ", component_desc["stable_name"])
+
+        transform_parent_from_current_component, is_absolute_location, is_absolute_rotation, is_absolute_scale = \
+            spear.pipeline.to_spear_transform_from_json_component(json_component=component_desc)
+
+        transform_world_from_current_component = spear.math.compose_component_transforms(
+            transforms=[transform_world_from_parent_component, transform_parent_from_current_component],
+            is_absolute_location=[is_absolute_location], is_absolute_rotation=[is_absolute_rotation], is_absolute_scale=[is_absolute_scale],
+            as_spear=True)
+        M_world_from_current_component = spear.math.to_numpy_matrix_from_spear_transform(spear_transform=transform_world_from_current_component, as_matrix=True)
 
         # Check the M_world_from_current_component matrix that we computed above against Unreal's 
         # SceneComponent.get_world_transform() function. We store the output from get_world_transform() in our
         # exported JSON file for each SceneComponent, so we can simply compare the matrix we computed above
         # against the stored matrix.
 
-        world_transform = spear.pipeline.get_matrix_from_matrix_desc(matrix_desc=component_desc["attributes"]["world_transform_as_matrix"])
+        world_transform = spear.pipeline.to_numpy_matrix_from_json_matrix(json_matrix=component_desc["attributes"]["world_transform_as_matrix"], as_matrix=True)
         assert np.allclose(M_world_from_current_component, world_transform)
 
         # ...and only attempt to draw StaticMeshComponents...

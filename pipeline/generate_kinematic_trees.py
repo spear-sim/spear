@@ -61,35 +61,38 @@ def get_kinematic_tree(actor_desc):
             actor_name=actor_name,
             component_desc=actor_desc["root_component"],
             component_is_root_within_node=True,
-            transform_node_from_parent_component=spear.pipeline.identity_transform,
+            transform_node_from_parent_component=spear.math.identity_transform,
             log_prefix_str="    ")}
 
 def get_kinematic_tree_node(actor_name, component_desc, component_is_root_within_node, transform_node_from_parent_component, log_prefix_str):
 
-    component_name = component_desc["name"]
+    component_name = component_desc["stable_name"]
     has_valid_geometry = False
     kinematic_tree_node = {
         "children_nodes": {},
         "name": component_name,
         "pipeline_info": {},
         "static_mesh_components": {},
-        "transform_parent_node_from_current_node": spear.pipeline.get_transform_data_from_transform(transform=spear.pipeline.identity_transform)}
+        "transform_parent_node_from_current_node": spear.math.identity_transform}
 
     spear.log(log_prefix_str, "Getting kinematic tree node for component: ", component_name)
 
     # Only process SceneComponents with no absolute transforms.
-    if component_desc["class"] in scene_component_classes and not spear.pipeline.any_component_transform_absolute(component_desc=component_desc):
+    if component_desc["class"] in scene_component_classes and not _any_component_transform_absolute(component_desc=component_desc):
 
-        transform_node_from_current_component = \
-            spear.pipeline.compose_transform_with_component(
-                transform_ancestor_from_parent_component=transform_node_from_parent_component, component_desc=component_desc)
+        transform_parent_component_from_current_component, is_absolute_location, is_absolute_rotation, is_absolute_scale = \
+            spear.pipeline.to_spear_transform_from_json_component(json_component=component_desc)
+
+        transform_node_from_current_component = spear.math.compose_component_transforms(
+            transforms=[transform_node_from_parent_component, transform_parent_component_from_current_component],
+            is_absolute_location=[is_absolute_location], is_absolute_rotation=[is_absolute_rotation], is_absolute_scale=[is_absolute_scale],
+            as_spear=True)
 
         # If the current component is the root component within its node, then the accumulated transform maps from the current node to
         # the parent node, and only an identity transform is needed to map from the current component to the current node.
         if component_is_root_within_node:
-            kinematic_tree_node["transform_parent_node_from_current_node"] = \
-                spear.pipeline.get_transform_data_from_transform(transform=transform_node_from_current_component)
-            transform_node_from_current_component = spear.pipeline.identity_transform
+            kinematic_tree_node["transform_parent_node_from_current_node"] = transform_node_from_current_component
+            transform_node_from_current_component = spear.math.identity_transform
 
         # Only attempt to add geometry to the current node if the current component is a StaticMeshComponent...
         if component_desc["class"] in static_mesh_component_classes:
@@ -105,15 +108,14 @@ def get_kinematic_tree_node(actor_name, component_desc, component_is_root_within
 
                 # The accumulated transform maps from the current component to the current node.
                 component_desc["pipeline_info"]["generate_kinematic_trees"] = {}
-                component_desc["pipeline_info"]["generate_kinematic_trees"]["transform_current_node_from_current_component"] = \
-                    spear.pipeline.get_transform_data_from_transform(transform=transform_node_from_current_component)
+                component_desc["pipeline_info"]["generate_kinematic_trees"]["transform_current_node_from_current_component"] = transform_node_from_current_component
 
                 kinematic_tree_node["static_mesh_components"][component_name] = component_desc
 
         # Recurse for each child component.
         physics_constraint_components = component_desc["children_components"]
         physics_constraint_components = { name: desc for name, desc in physics_constraint_components.items() if desc["class"] in physics_constraint_component_classes }
-        physics_constraint_components = { name: desc for name, desc in physics_constraint_components.items() if not spear.pipeline.any_component_transform_absolute(component_desc=desc) }
+        physics_constraint_components = { name: desc for name, desc in physics_constraint_components.items() if not _any_component_transform_absolute(component_desc=desc) }
 
         children_components = component_desc["children_components"]
         children_components = { name: desc for name, desc in children_components.items() if desc["class"] not in physics_constraint_component_classes }
@@ -175,15 +177,17 @@ def get_kinematic_tree_node(actor_name, component_desc, component_is_root_within
 
                     physics_constraint_component_desc = physics_constraint_component_descs[0]
 
-                     # Compute the transform that maps to the current node from the PhysicsConstraintComponent, i.e., find the pose
-                     # of the PhysicsConstraintComponent in the current node's frame.
-                    transform_node_from_child_physics_constraint_component = \
-                        spear.pipeline.compose_transform_with_component(
-                            transform_ancestor_from_parent_component=transform_node_from_current_component, component_desc=physics_constraint_component_desc)
+                    transform_current_component_from_child_physics_constraint_component, is_absolute_location, is_absolute_rotation, is_absolute_scale = \
+                        spear.pipeline.to_spear_transform_from_json_component(json_component=physics_constraint_component_desc)
+
+                    transform_node_from_child_physics_constraint_component = spear.math.compose_component_transforms(
+                        transforms=[transform_node_from_current_component, transform_current_component_from_child_physics_constraint_component],
+                        is_absolute_location=[is_absolute_location], is_absolute_rotation=[is_absolute_rotation], is_absolute_scale=[is_absolute_scale],
+                        as_spear=True)
 
                     physics_constraint_component_desc["pipeline_info"]["generate_kinematic_trees"] = {}
                     physics_constraint_component_desc["pipeline_info"]["generate_kinematic_trees"]["transform_current_node_from_current_component"] = \
-                        spear.pipeline.get_transform_data_from_transform(transform_node_from_child_physics_constraint_component)
+                        transform_node_from_child_physics_constraint_component
 
                     kinematic_tree_node["children_nodes"][child_component_name] = {
                         "node": child_component_kinematic_tree_node,
@@ -210,6 +214,15 @@ def get_kinematic_tree_node(actor_name, component_desc, component_is_root_within
     else:
         spear.log(log_prefix_str, "Kinematic tree node for component does not have valid geometry.")
         return None
+
+
+def _any_component_transform_absolute(component_desc):
+
+    absolute_location = component_desc["editor_properties"]["absolute_location"] 
+    absolute_rotation = component_desc["editor_properties"]["absolute_rotation"] 
+    absolute_scale    = component_desc["editor_properties"]["absolute_scale"]   
+
+    return absolute_location or absolute_rotation or absolute_scale
 
 
 if __name__ == "__main__":

@@ -24,6 +24,7 @@
 #include <Engine/StaticMeshActor.h>
 #include <Engine/World.h>                    // FActorSpawnParameters
 #include <GameFramework/Actor.h>
+#include <Math/Matrix.h>                     // FMatrix
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 #include <PhysicsEngine/BodyInstance.h>
@@ -1025,6 +1026,12 @@ FVector ASpDebugManager::GetVector(FString Arg0, bool Arg1, int Arg2, FVector& A
     SP_LOG_CURRENT_FUNCTION();
     Arg3 = FVector(1.11, 2.22, 3.33);
     return FVector(9.87, 6.54, 3.21);
+}
+
+FMatrix ASpDebugManager::GetMatrix(FMatrix Arg0) const
+{
+    SP_LOG_CURRENT_FUNCTION();
+    return Arg0*2;
 }
 
 UObject* ASpDebugManager::GetWorldContextObject(const UObject* WorldContextObject, FString Arg0, bool Arg1)

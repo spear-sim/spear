@@ -87,7 +87,7 @@ def draw_kinematic_tree(kinematic_tree, color):
     if args.color_mode == "unique_color_per_actor":
         color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
     draw_kinematic_tree_node(
-        transform_world_from_parent_node=spear.pipeline.identity_transform,
+        transform_world_from_parent_node=spear.math.identity_transform,
         kinematic_tree_node=kinematic_tree["root_node"],
         color=color,
         log_prefix_str="    ")
@@ -96,10 +96,9 @@ def draw_kinematic_tree_node(transform_world_from_parent_node, kinematic_tree_no
 
     spear.log(log_prefix_str, "Processing kinematic tree node: ", kinematic_tree_node["name"])
 
-    transform_parent_node_from_current_node = \
-        spear.pipeline.get_transform_from_transform_data(transform_data=kinematic_tree_node["transform_parent_node_from_current_node"])
-    transform_world_from_current_node = \
-        spear.pipeline.compose_transforms(transforms=[transform_world_from_parent_node, transform_parent_node_from_current_node])
+    transform_parent_node_from_current_node = kinematic_tree_node["transform_parent_node_from_current_node"]
+    transform_world_from_current_node = spear.math.compose_transforms(
+        transforms=[transform_world_from_parent_node, transform_parent_node_from_current_node], as_spear=True)
 
     if args.color_mode == "unique_color_per_node":
         color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
@@ -107,12 +106,11 @@ def draw_kinematic_tree_node(transform_world_from_parent_node, kinematic_tree_no
     for static_mesh_component_name, static_mesh_component_desc in kinematic_tree_node["static_mesh_components"].items():
 
         transform_current_node_from_current_component = \
-            spear.pipeline.get_transform_from_transform_data(
-                transform_data=static_mesh_component_desc["pipeline_info"]["generate_kinematic_trees"]["transform_current_node_from_current_component"])
-        transform_world_from_current_component = \
-            spear.pipeline.compose_transforms(transforms=[transform_world_from_current_node, transform_current_node_from_current_component])
+            static_mesh_component_desc["pipeline_info"]["generate_kinematic_trees"]["transform_current_node_from_current_component"]
+        transform_world_from_current_component = spear.math.compose_transforms(
+            transforms=[transform_world_from_current_node, transform_current_node_from_current_component], as_spear=True)
 
-        M_world_from_current_component = spear.pipeline.get_matrix_from_transform(transform=transform_world_from_current_component)
+        M_world_from_current_component = spear.math.to_numpy_matrix_from_spear_transform(spear_transform=transform_world_from_current_component, as_matrix=True)
 
         static_mesh_asset_path = pathlib.PurePosixPath(static_mesh_component_desc["editor_properties"]["static_mesh"]["path"])
 

@@ -93,9 +93,9 @@ if __name__ == "__main__":
         assert final_tone_curve_hdr_component is not None
 
         # configure components to match the viewport (width, height, FOV, post-processing settings, etc)
-        viewport_info = game.rendering_service.get_current_viewport_info()
+        viewport_desc = game.rendering_service.get_current_viewport_desc()
         components = [ desc["component"] for desc in component_descs ]
-        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_info=viewport_info, widths=1280, heights=720)
+        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, widths=1280, heights=720)
 
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
         for component_desc in component_descs:
@@ -180,7 +180,7 @@ if __name__ == "__main__":
         temp_build_target = player.Spawn.get()
 
         # get candidate spawn locations and sort by distance to player
-        player_location = spear.to_numpy_array_from_vector(vector=player.K2_GetActorLocation())
+        player_location = spear.math.to_numpy_array_from_spear_vector(spear_vector=player.K2_GetActorLocation())
         spawn_candidate_locations = game.navigation_service.get_random_points(navigation_data=navigation_data, num_points=num_build_target_candidate_locations)
         spawn_candidate_locations[:,2] = 0.0
         sorted_indices = np.argsort(np.linalg.norm(spawn_candidate_locations - player_location, axis=1))
@@ -194,7 +194,7 @@ if __name__ == "__main__":
             distance = np.linalg.norm(spawn_candidate_location - player_location)
 
             # set temp build object location to a quantized candidate location
-            return_values = bpf_shared.call(function_name="Convert To Stepped Pos", args={"A": spear.to_vector_from_numpy_array(array=spawn_candidate_location)}, as_dict=True)
+            return_values = bpf_shared.call(function_name="Convert To Stepped Pos", args={"A": spear.math.to_spear_vector_from_numpy_array(numpy_array=spawn_candidate_location)}, as_dict=True)
             spawn_candidate_location_stepped = return_values["NewParam"]
             temp_build_target.K2_SetActorLocation(NewLocation=spawn_candidate_location_stepped)
 
@@ -261,8 +261,8 @@ if __name__ == "__main__":
 
     for i in range(num_frames):
         with instance.begin_frame():
-            viewport_info = game.rendering_service.get_current_viewport_info()
-            game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_info=viewport_info, widths=1280, heights=720)
+            viewport_desc = game.rendering_service.get_current_viewport_desc()
+            game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, widths=1280, heights=720)
 
         with instance.end_frame():
 

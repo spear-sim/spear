@@ -21,6 +21,7 @@
 #include <Materials/MaterialInstanceDynamic.h>
 #include <Materials/MaterialInterface.h>
 #include <Math/Color.h>
+#include <UObject/Object.h>          // IsValid
 #include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 #include <UObject/UObjectGlobals.h>  // LoadObject
 
@@ -61,11 +62,6 @@ public:
     FString ComponentUnrealName;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
-    FString Material = "0x0";
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
-    FString MaterialUnrealName;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString Actor = "0x0";
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString ActorName;
@@ -73,6 +69,11 @@ public:
     FString ActorUnrealName;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString ActorStableName;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    FString Material = "0x0";
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    FString MaterialUnrealName;
 
     // Optional debug info
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
@@ -128,26 +129,37 @@ public:
             mesh_proxy_geometry_desc.RawId = id;
             mesh_proxy_geometry_desc.bIsValid = desc.is_valid_;
 
+            // It is possible for desc.is_valid_ to be true, but for desc.component_.IsValid() or desc.material_.IsValid()
+            // to be false, e.g., if an actor gets destroyed after SpProxyComponentManager has ticked, but
+            // before this function is called.
+
             if (desc.is_valid_) {
-                mesh_proxy_geometry_desc.Component = Unreal::toFString(Std::toStringFromPtr(desc.component_));
-                mesh_proxy_geometry_desc.ComponentStableName = Unreal::toFString(UnrealUtils::getStableName(desc.component_));
-                mesh_proxy_geometry_desc.ComponentUnrealName = desc.component_->GetName();
+                if (desc.component_.IsValid()) {
+                    mesh_proxy_geometry_desc.Component = Unreal::toFString(Std::toStringFromPtr(desc.component_.Get()));
+                    mesh_proxy_geometry_desc.ComponentStableName = Unreal::toFString(UnrealUtils::getStableName(desc.component_.Get()));
+                    mesh_proxy_geometry_desc.ComponentUnrealName = desc.component_->GetName();
+                    if (bIncludeDebugInfo) {
+                        mesh_proxy_geometry_desc.ComponentPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.component_.Get()));
+                    }
 
-                mesh_proxy_geometry_desc.Material = Unreal::toFString(Std::toStringFromPtr(desc.material_));
-                mesh_proxy_geometry_desc.MaterialUnrealName = desc.material_->GetName();
-
-                AActor* actor = desc.component_->GetOwner();
-                if (actor) {
+                    AActor* actor = desc.component_->GetOwner();
+                    SP_ASSERT(actor);
+                    SP_ASSERT(IsValid(actor));
                     mesh_proxy_geometry_desc.Actor = Unreal::toFString(Std::toStringFromPtr(actor));
                     mesh_proxy_geometry_desc.ActorName = Unreal::toFString(UnrealUtils::getStableName(actor, true)); // include_unreal_name=true
                     mesh_proxy_geometry_desc.ActorUnrealName = actor->GetName();
-                    mesh_proxy_geometry_desc.ActorStableName = Unreal::toFString(UnrealUtils::getStableName(actor, false)); //  include_unreal_name=false
+                    mesh_proxy_geometry_desc.ActorStableName = Unreal::toFString(UnrealUtils::getStableName(actor, false)); // include_unreal_name=false
+                    if (bIncludeDebugInfo) {
+                        mesh_proxy_geometry_desc.ActorPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(actor));
+                    }
                 }
 
-                if (bIncludeDebugInfo) {
-                    mesh_proxy_geometry_desc.ComponentPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.component_));
-                    mesh_proxy_geometry_desc.MaterialPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.material_));
-                    mesh_proxy_geometry_desc.ActorPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.component_->GetOwner()));
+                if (desc.material_.IsValid()) {
+                    mesh_proxy_geometry_desc.Material = Unreal::toFString(Std::toStringFromPtr(desc.material_.Get()));
+                    mesh_proxy_geometry_desc.MaterialUnrealName = desc.material_->GetName();
+                    if (bIncludeDebugInfo) {
+                        mesh_proxy_geometry_desc.MaterialPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.material_.Get()));
+                    }
                 }
             }
 

@@ -97,7 +97,7 @@ if __name__ == "__main__":
             bp_camera_sensor.K2_SetActorRotation(NewRotation={"Pitch": camera_pose["rotation_pitch"], "Yaw": camera_pose["rotation_yaw"], "Roll": camera_pose["rotation_roll"]})
 
             # set rotation matrix
-            R_world_from_camera = spear.to_numpy_matrix_from_rotator(rotator={"Pitch": camera_pose["rotation_pitch"], "Yaw": camera_pose["rotation_yaw"], "Roll": camera_pose["rotation_roll"]}, as_matrix=True)
+            R_world_from_camera = spear.math.to_numpy_matrix_from_spear_rotator(spear_rotator={"Pitch": camera_pose["rotation_pitch"], "Yaw": camera_pose["rotation_yaw"], "Roll": camera_pose["rotation_roll"]}, as_matrix=True)
             R_camera_from_world = R_world_from_camera.T.A
 
         #

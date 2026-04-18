@@ -107,9 +107,9 @@ if __name__ == "__main__":
         assert final_tone_curve_hdr_component is not None
 
         # configure components to match the viewport (width, height, FOV, post-processing settings, etc)
-        viewport_info = game.rendering_service.get_current_viewport_info()
+        viewport_desc = game.rendering_service.get_current_viewport_desc()
         components = [ desc["component"] for desc in component_descs ]
-        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_info=viewport_info, widths=widths, heights=heights)
+        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, widths=widths, heights=heights)
 
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
         for component_desc in component_descs:
@@ -178,8 +178,8 @@ if __name__ == "__main__":
             gameplay_statics.SetGamePaused(bPaused=False)
 
             # set camera pose
-            viewport_info = game.rendering_service.get_current_viewport_info(only_get_pose=True)
-            game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_info=viewport_info, only_align_pose=True)
+            viewport_desc = game.rendering_service.get_current_viewport_desc(only_get_pose=True)
+            game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, only_align_pose=True)
 
         with instance.end_frame():
 
@@ -218,8 +218,8 @@ if __name__ == "__main__":
             input_action_instance={"TriggerEvent": action_trigger_event, "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
         # set camera pose
-        viewport_info = game.rendering_service.get_current_viewport_info(only_get_pose=True)
-        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_info=viewport_info, only_align_pose=True)
+        viewport_desc = game.rendering_service.get_current_viewport_desc(only_get_pose=True)
+        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, only_align_pose=True)
 
     with instance.end_frame():
 
@@ -259,8 +259,8 @@ if __name__ == "__main__":
                 input_action_instance={"TriggerEvent": action_trigger_event, "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
             # set camera pose
-            viewport_info = game.rendering_service.get_current_viewport_info(only_get_pose=True)
-            game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_info=viewport_info, only_align_pose=True)
+            viewport_desc = game.rendering_service.get_current_viewport_desc(only_get_pose=True)
+            game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, only_align_pose=True)
 
         with instance.end_frame():
 
@@ -299,8 +299,8 @@ if __name__ == "__main__":
             input_action_instance={"TriggerEvent": action_trigger_event, "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
         # set camera pose
-        viewport_info = game.rendering_service.get_current_viewport_info(only_get_pose=True)
-        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_info=viewport_info, only_align_pose=True)
+        viewport_desc = game.rendering_service.get_current_viewport_desc(only_get_pose=True)
+        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, only_align_pose=True)
 
     with instance.end_frame():
 

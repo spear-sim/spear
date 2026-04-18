@@ -63,7 +63,7 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
     else:
         static_mesh_components_grouped_by_merge_id = {}
 
-    raw_obj_dir = os.path.realpath(os.path.join(args.export_dir, "collision_geometry", "raw", actor_name.replace("/", "."), kinematic_tree_node["name"]))
+    raw_obj_dir = os.path.realpath(os.path.join(args.export_dir, "collision_geometry", "raw", actor_name.replace("/", ".").replace(":", "."), kinematic_tree_node["name"]))
     os.makedirs(raw_obj_dir, exist_ok=True)
 
     # TODO: Break this group-by-merge-id step into a different pipeline stage, so we can generate the
@@ -86,10 +86,9 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
         for static_mesh_component_name, static_mesh_component_desc in static_mesh_components_for_merge_id.items():
 
             transform_current_node_from_current_component = \
-                spear.pipeline.get_transform_from_transform_data(
-                    transform_data=static_mesh_component_desc["pipeline_info"]["generate_kinematic_trees"]["transform_current_node_from_current_component"])
+                static_mesh_component_desc["pipeline_info"]["generate_kinematic_trees"]["transform_current_node_from_current_component"]
 
-            M_current_node_from_current_component = spear.pipeline.get_matrix_from_transform(transform=transform_current_node_from_current_component)
+            M_current_node_from_current_component = spear.math.to_numpy_matrix_from_spear_transform(spear_transform=transform_current_node_from_current_component, as_matrix=True)
 
             static_mesh_asset_path = pathlib.PurePosixPath(static_mesh_component_desc["editor_properties"]["static_mesh"]["path"])
 
@@ -118,7 +117,7 @@ def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tr
         coacd_parts_data = coacd.run_coacd(coacd_mesh)
 
         # Save COACD result as individual parts, and as a combined mesh for debugging.
-        coacd_obj_dir = os.path.realpath(os.path.join(args.export_dir, "collision_geometry", "coacd", actor_name.replace("/", "."), kinematic_tree_node["name"]))
+        coacd_obj_dir = os.path.realpath(os.path.join(args.export_dir, "collision_geometry", "coacd", actor_name.replace("/", ".").replace(":", "."), kinematic_tree_node["name"]))
         os.makedirs(coacd_obj_dir, exist_ok=True)
 
         coacd_part_obj_dir = os.path.realpath(os.path.join(coacd_obj_dir, f"merge_id_{merge_id:04}"))

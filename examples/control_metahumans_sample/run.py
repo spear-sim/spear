@@ -98,8 +98,8 @@ if __name__ == "__main__":
 
     # set camera pose and configure components to match the viewport
     with instance.begin_frame():
-        viewport_info = game.rendering_service.get_current_viewport_info()
-        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_multi_view_camera_sensor, camera_components=component_list, viewport_info=viewport_info, widths=1280, heights=720)
+        viewport_desc = game.rendering_service.get_current_viewport_desc()
+        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_multi_view_camera_sensor, camera_components=component_list, viewport_desc=viewport_desc, widths=1280, heights=720)
 
         # make the FOV bigger than the game viewport
         for component in component_list:

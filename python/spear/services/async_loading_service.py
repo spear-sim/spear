@@ -86,12 +86,12 @@ class AsyncLoadingService(spear.Service):
 
         if verbose:
             if not engine_idle or not is_distance_field_async_queue_initialized or not is_shader_compiling_manager_initialized:
-                spear.log(f"engine_idle={engine_idle}")
+                spear.log(f"engine_idle = {engine_idle}")
                 spear.log(f"    is_async_loading                     = {is_async_loading}")
                 spear.log(f"    is_loading_assets                    = {is_loading_assets}")
-                spear.log(f"    num_outstanding_distance_field_tasks = {num_outstanding_distance_field_tasks} (initialized={is_distance_field_async_queue_initialized})")
+                spear.log(f"    num_outstanding_distance_field_tasks = {num_outstanding_distance_field_tasks} (initialized = {is_distance_field_async_queue_initialized})")
                 spear.log(f"    num_remaining_assets                 = {num_remaining_assets}")
-                spear.log(f"    num_remaining_shader_jobs            = {num_remaining_shader_jobs} (initialized={is_shader_compiling_manager_initialized})")
+                spear.log(f"    num_remaining_shader_jobs            = {num_remaining_shader_jobs} (initialized = {is_shader_compiling_manager_initialized})")
                 spear.log(f"    num_wanting_streaming_resources.     = {num_wanting_streaming_resources}")
                 spear.log(f"    are_streaming_levels_loading         = {are_streaming_levels_loading}")
 

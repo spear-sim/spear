@@ -50,22 +50,22 @@ def save_images(images_dir, frame_index):
 def normalize(vector):
     return vector / np.linalg.norm(vector)
 
-def to_unreal_vector_from_mujoco_vector(mj_vector):
-    ue_vector = mj_vector
+def to_spear_vector_from_mujoco_array(mujoco_array):
+    numpy_array = mujoco_array
     if args.visual_parity_with_unreal:
-        ue_vector = (np.diag([1,-1,1])*np.matrix(ue_vector).T).A1
-    return {"X": ue_vector[0], "Y": ue_vector[1], "Z": ue_vector[2]}
+        numpy_array = (np.diag([1,-1,1])*np.matrix(numpy_array).T).A1
+    return spear.math.to_spear_vector_from_numpy_array(numpy_array=numpy_array)
 
-def to_unreal_rotator_from_mujoco_quaternion(mj_quaternion):
+def to_spear_rotator_from_mujoco_quat(mujoco_quat):
 
     # MuJoCo assumes quaternions are stored in scalar-first (wxyz) order, but scipy.spatial.transform.Rotation assumes scalar-last (xyzw) order
-    scipy_quaternion = mj_quaternion[[1,2,3,0]]
-    scipy_rotation_matrix = scipy.spatial.transform.Rotation.from_quat(scipy_quaternion).as_matrix()
+    numpy_quat = mujoco_quat[[1,2,3,0]]
+    numpy_matrix = scipy.spatial.transform.Rotation.from_quat(numpy_quat).as_matrix()
 
     if args.visual_parity_with_unreal:
-        scipy_rotation_matrix = np.diag([1,-1,1])*np.matrix(scipy_rotation_matrix)*np.diag([1,-1,1])
+        numpy_matrix = np.diag([1,-1,1])*np.matrix(numpy_matrix)*np.diag([1,-1,1])
 
-    return spear.to_rotator_from_numpy_matrix(matrix=scipy_rotation_matrix)
+    return spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=numpy_matrix)
 
 
 if __name__ == "__main__":
@@ -90,7 +90,7 @@ if __name__ == "__main__":
     # initialize actors and components
     with sp_instance.begin_frame():
 
-        ue_actors = sp_game.unreal_service.find_actors_as_dict()
+        ue_actors = sp_game.unreal_service.find_actors_as_dict(include_unreal_name=True)
         ue_actors = { ue_actor_name: ue_actor for ue_actor_name, ue_actor in ue_actors.items() if ue_actor_name.startswith(name_prefix) }
 
         # get UGameplayStatics
@@ -120,9 +120,9 @@ if __name__ == "__main__":
         assert final_tone_curve_hdr_component is not None
 
         # configure components to match the viewport (width, height, FOV, post-processing settings, etc)
-        viewport_info = sp_game.rendering_service.get_current_viewport_info()
+        viewport_desc = sp_game.rendering_service.get_current_viewport_desc()
         components = [ desc["component"] for desc in component_descs ]
-        sp_game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_info=viewport_info, widths=width, heights=height)
+        sp_game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, widths=width, heights=height)
 
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
         for component_desc in component_descs:
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     mj_bodies = { mj_model.body(mj_body).name: mj_body for mj_body in range(mj_model.nbody) if mj_model.body(mj_body).name.startswith(name_prefix) }
 
     # need to set mj_model.vis properties before launching the viewer
-    fov_y_degrees = viewport_info["fov_y_degrees"]
+    fov_y_degrees = viewport_desc["fov_y_degrees"]
     mj_model.vis.global_.fovy = fov_y_degrees
     mj_model.vis.headlight.ambient = [0.4, 0.4, 0.4]
 
@@ -150,8 +150,8 @@ if __name__ == "__main__":
 
     # initialize MuJoCo camera (not needed when launching the viewer through the command-line, but needed when using launch_passive)
 
-    cam_position = spear.to_numpy_array_from_vector(vector=viewport_info["camera_location"])
-    cam_rotation_matrix = spear.to_numpy_matrix_from_rotator(rotator=viewport_info["camera_rotation"])
+    cam_position = spear.math.to_numpy_array_from_spear_vector(spear_vector=viewport_desc["camera_location"])
+    cam_rotation_matrix = spear.math.to_numpy_matrix_from_spear_rotator(spear_rotator=viewport_desc["camera_rotation"])
 
     if args.visual_parity_with_unreal:
         cam_position = (np.diag([1,-1,1])*np.matrix(cam_position).T).A1
@@ -223,17 +223,17 @@ if __name__ == "__main__":
         with sp_instance.begin_frame():
 
             # update SPEAR camera pose
-            pawn_future = pawn.call_async.K2_SetActorLocation(NewLocation=spear.to_vector_from_numpy_array(array=cam_position))
-            player_controller_future = player_controller.call_async.SetControlRotation(NewRotation=spear.to_rotator_from_numpy_matrix(matrix=cam_rotation_matrix))
+            pawn_future = pawn.call_async.K2_SetActorLocation(NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=cam_position))
+            player_controller_future = player_controller.call_async.SetControlRotation(NewRotation=spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=cam_rotation_matrix))
 
-            bp_camera_sensor.K2_SetActorLocation(NewLocation=spear.to_vector_from_numpy_array(array=cam_position))
-            bp_camera_sensor.K2_SetActorRotation(NewRotation=spear.to_rotator_from_numpy_matrix(matrix=cam_rotation_matrix))
+            bp_camera_sensor.K2_SetActorLocation(NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=cam_position))
+            bp_camera_sensor.K2_SetActorRotation(NewRotation=spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=cam_rotation_matrix))
 
             # update SPEAR object poses
             for ue_actor_name, ue_actor in ue_actors.items():
                 ue_actor_futures[ue_actor_name] = ue_actor.call_async.K2_SetActorLocationAndRotation(
-                    NewLocation=to_unreal_vector_from_mujoco_vector(mj_bodies_xpos[f"{ue_actor_name}:StaticMeshComponent0"]),
-                    NewRotation=to_unreal_rotator_from_mujoco_quaternion(mj_bodies_xquat[f"{ue_actor_name}:StaticMeshComponent0"]),
+                    NewLocation=to_spear_vector_from_mujoco_array(mujoco_array=mj_bodies_xpos[f"{ue_actor_name}:StaticMeshComponent0"]),
+                    NewRotation=to_spear_rotator_from_mujoco_quat(mujoco_quat=mj_bodies_xquat[f"{ue_actor_name}:StaticMeshComponent0"]),
                     bSweep=False,
                     bTeleport=True)
 

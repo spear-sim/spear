@@ -633,7 +633,7 @@ void USpSceneCaptureComponent2D::copyPixelsFromStagingToCPU_RenderThread(FRHIGPU
     int32_t row_bytes = Width*bytes_per_pixel;
 
     int32 row_pitch_in_pixels = 0;
-    void* src_ptr = readback->Lock(row_pitch_in_pixels); // will block until the data is ready on all platforms
+    void* src_ptr = readback->Lock(row_pitch_in_pixels); // will block until the data is ready
     SP_ASSERT(src_ptr);
     SP_ASSERT(row_pitch_in_pixels >= Width);
 

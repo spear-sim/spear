@@ -29,7 +29,7 @@ def process_scene():
     spear.log("Processing scene: " + editor_world_name)
 
     actors = spear.editor.find_actors()
-    actors = { get_long_name_for_actor(actor=actor): get_actor_desc(actor) for actor in actors }
+    actors = { spear.editor.get_stable_name_for_actor(actor=actor, include_unreal_name=True): get_actor_desc(actor) for actor in actors }
 
     unreal_metadata_dir = os.path.realpath(os.path.join(args.export_dir, "unreal_metadata"))
     actors_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "scene.json"))
@@ -41,7 +41,7 @@ def process_scene():
     spear.log("Done.")
 
 def get_actor_desc(actor):
-    actor_name = get_long_name_for_actor(actor=actor)
+    actor_name = spear.editor.get_stable_name_for_actor(actor=actor, include_unreal_name=True)
     spear.log("Processing actor: ", actor_name)
 
     root_component = actor.get_editor_property(name="root_component")
@@ -59,9 +59,10 @@ def get_actor_desc(actor):
         "class": actor.__class__.__name__,
         "debug_info": {"str": str(actor)},
         "editor_properties": get_object_descs(actor),
-        "name": spear.editor.get_stable_name_for_actor(actor=actor),
+        "name": spear.editor.get_stable_name_for_actor(actor=actor, include_unreal_name=True),
         "other_components": { spear.editor.get_stable_name_for_component(component=c): get_component_desc(c) for c in other_components },
         "root_component": get_component_desc(component=root_component),
+        "stable_name": spear.editor.get_stable_name_for_actor(actor=actor, include_unreal_name=False),
         "unreal_name": actor.get_name()}
 
 def get_component_desc(component):
@@ -80,7 +81,7 @@ def get_component_desc(component):
         "class": component.__class__.__name__,
         "debug_info": {"str": str(component)},
         "editor_properties": get_object_descs(component),
-        "name": spear.editor.get_stable_name_for_component(component=component),
+        "stable_name": spear.editor.get_stable_name_for_component(component=component),
         "pipeline_info": {},
         "unreal_name": component.get_name()}
 
@@ -139,13 +140,16 @@ def get_object_desc(editor_property):
         return {
             "class": editor_property.__class__.__name__,
             "debug_info": {"str": str(editor_property)},
-            "long_name": get_long_name_for_actor(actor=editor_property)}
+            "name": spear.editor.get_stable_name_for_actor(actor=editor_property, include_unreal_name=True),
+            "stable_name": spear.editor.get_stable_name_for_actor(actor=editor_property, include_unreal_name=False),
+            "unreal_name": editor_property.get_name()}
 
     elif isinstance(editor_property, unreal.ActorComponent):
         return {
             "class": editor_property.__class__.__name__,
             "debug_info": {"str": str(editor_property)},
-            "stable_name": spear.editor.get_stable_name_for_component(component=editor_property)}
+            "stable_name": spear.editor.get_stable_name_for_component(component=editor_property),
+            "unreal_name": editor_property.get_name()}
 
     # Otherwise, if the editor property is a StaticMesh, then recurse via get_object_descs(...).
     elif isinstance(editor_property, unreal.StaticMesh):
@@ -178,9 +182,6 @@ def get_object_desc(editor_property):
             return editor_property
         except:
             return str(editor_property)
-
-def get_long_name_for_actor(actor):
-    return f"{spear.editor.get_stable_name_for_actor(actor=actor)}:{actor.get_name()}"
 
 
 if __name__ == "__main__":

@@ -13,11 +13,11 @@ import os
 import spear
 
 
-def initialize_camera(game, bp_camera_sensor_uclass, viewport_info, buffering_mode):
+def initialize_camera(game, bp_camera_sensor_uclass, viewport_desc, buffering_mode):
 
     bp_camera_sensor = game.unreal_service.spawn_actor(uclass=bp_camera_sensor_uclass)
     component = game.unreal_service.get_component_by_name(actor=bp_camera_sensor, component_name="DefaultSceneRoot.final_tone_curve_hdr_", uclass="USpSceneCaptureComponent2D")
-    game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=component, viewport_info=viewport_info, widths=512, heights=512)
+    game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=component, viewport_desc=viewport_desc, widths=512, heights=512)
 
     if buffering_mode is not None:
         component.BufferingMode = buffering_mode
@@ -45,11 +45,11 @@ if __name__ == "__main__":
 
         bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
         bp_axes_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_Axes.BP_Axes_C")
-        viewport_info = game.rendering_service.get_current_viewport_info()
+        viewport_desc = game.rendering_service.get_current_viewport_desc()
 
-        sb_camera, sb_component = initialize_camera(game=game, bp_camera_sensor_uclass=bp_camera_sensor_uclass, viewport_info=viewport_info, buffering_mode="SingleBuffered")
-        db_camera, db_component = initialize_camera(game=game, bp_camera_sensor_uclass=bp_camera_sensor_uclass, viewport_info=viewport_info, buffering_mode="DoubleBuffered")
-        tb_camera, tb_component = initialize_camera(game=game, bp_camera_sensor_uclass=bp_camera_sensor_uclass, viewport_info=viewport_info, buffering_mode="TripleBuffered")
+        sb_camera, sb_component = initialize_camera(game=game, bp_camera_sensor_uclass=bp_camera_sensor_uclass, viewport_desc=viewport_desc, buffering_mode="SingleBuffered")
+        db_camera, db_component = initialize_camera(game=game, bp_camera_sensor_uclass=bp_camera_sensor_uclass, viewport_desc=viewport_desc, buffering_mode="DoubleBuffered")
+        tb_camera, tb_component = initialize_camera(game=game, bp_camera_sensor_uclass=bp_camera_sensor_uclass, viewport_desc=viewport_desc, buffering_mode="TripleBuffered")
 
     with instance.end_frame(single_step=True):
         pass

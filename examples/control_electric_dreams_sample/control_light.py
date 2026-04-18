@@ -97,9 +97,9 @@ if __name__ == "__main__":
         assert final_tone_curve_hdr_component is not None
 
         # configure components to match the viewport (width, height, FOV, post-processing settings, etc)
-        viewport_info = game.rendering_service.get_current_viewport_info()
+        viewport_desc = game.rendering_service.get_current_viewport_desc()
         components = [ desc["component"] for desc in component_descs ]
-        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_info=viewport_info, widths=1280, heights=720)
+        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, widths=1280, heights=720)
 
         # make the FOV bigger than the game viewport
         for component in components:
@@ -142,8 +142,8 @@ if __name__ == "__main__":
     # set camera pose
     with instance.begin_frame():
         gameplay_statics.SetGamePaused(bPaused=False)
-        viewport_info = game.rendering_service.get_current_viewport_info(only_get_pose=True)
-        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_info=viewport_info, only_align_pose=True)
+        viewport_desc = game.rendering_service.get_current_viewport_desc(only_get_pose=True)
+        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, only_align_pose=True)
     with instance.end_frame():
         pass
 

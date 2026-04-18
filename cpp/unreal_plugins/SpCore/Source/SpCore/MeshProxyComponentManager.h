@@ -13,15 +13,16 @@
 
 #include <Components/SkeletalMeshComponent.h>
 #include <Components/StaticMeshComponent.h>
-#include <Engine/CollisionProfile.h> // UCollisionProfile
+#include <Engine/CollisionProfile.h>        // UCollisionProfile
 #include <Engine/World.h>
 #include <GameFramework/Actor.h>
-#include <Engine/EngineBaseTypes.h>  // ELevelTick
+#include <Engine/EngineBaseTypes.h>         // ELevelTick
 #include <Materials/MaterialInstanceDynamic.h>
 #include <Materials/MaterialInterface.h>
 #include <Math/Color.h>
-#include <UObject/StrongObjectPtr.h> // TStrongObjectPtr
-#include <UObject/UObjectGlobals.h>  // LoadObject
+#include <UObject/StrongObjectPtr.h>        // TStrongObjectPtr
+#include <UObject/UObjectGlobals.h>         // LoadObject
+#include <UObject/WeakObjectPtrTemplates.h> // TWeakObjectPtr
 
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
@@ -43,8 +44,8 @@ struct MeshProxyGeometryDesc
 {
     uint32_t id_ = 0;
     bool is_valid_ = false;
-    USceneComponent* component_ = nullptr;
-    UMaterialInterface* material_ = nullptr;
+    TWeakObjectPtr<USceneComponent> component_;
+    TWeakObjectPtr<UMaterialInterface> material_;
 };
 
 //

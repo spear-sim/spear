@@ -65,18 +65,17 @@ blueprint_desc = \
             "name": "final_tone_curve_hdr_",
             "width": 512,
             "height": 512,
-            "num_channels_per_pixel": 4,
             "fov_angle": 90.0,
+            "num_channels_per_pixel": 4,
             "channel_data_type": unreal.SpArrayDataType.U_INT8,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
-            "location": {"x": 0.0, "y": 0.0, "z": 45.0},
-            "rotation": {"pitch": 0.0, "yaw": 0.0, "roll": 0.0},
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB,
             "dynamic_global_illumination_method": unreal.DynamicGlobalIlluminationMethod.LUMEN,
             "reflection_method": unreal.ReflectionMethod.LUMEN,
-            "primitive_render_mode": unreal.SceneCapturePrimitiveRenderMode.PRM_RENDER_SCENE_PRIMITIVES,
             "show_flag_settings": [unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=True)],
-        },
+            "location": {"x": 0.0, "y": 0.0, "z": 45.0},
+            "rotation": {"pitch": 0.0, "yaw": 0.0, "roll": 0.0}
+        }
     ]
 }
 
@@ -209,8 +208,9 @@ if __name__ == "__main__":
         sp_scene_capture_component_2d.set_editor_property(name="height", value=component_desc["height"])
         sp_scene_capture_component_2d.set_editor_property(name="num_channels_per_pixel", value=component_desc["num_channels_per_pixel"])
         sp_scene_capture_component_2d.set_editor_property(name="channel_data_type", value=component_desc["channel_data_type"])
-        sp_scene_capture_component_2d.set_editor_property(name="texture_render_target_format", value=component_desc["texture_render_target_format"])
         sp_scene_capture_component_2d.set_editor_property(name="capture_source", value=component_desc["capture_source"])
+        sp_scene_capture_component_2d.set_editor_property(name="override_texture_render_target_format", value=True)
+        sp_scene_capture_component_2d.set_editor_property(name="texture_render_target_format", value=component_desc["texture_render_target_format"])
 
         sp_scene_capture_component_2d.set_relative_location(
             new_location=unreal.Vector(component_desc["location"]["x"], component_desc["location"]["y"], component_desc["location"]["z"]), sweep=False, teleport=False)

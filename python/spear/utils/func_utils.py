@@ -6,7 +6,6 @@
 import json
 import numbers
 import numpy as np
-import scipy
 import spear
 
 if spear.__can_import_unreal__:
@@ -572,114 +571,6 @@ def to_data_bundle_dict(data_bundle, src_byte_order, usage_flags, shared_memory_
         "info": data_bundle.info}
 
 
-#
-# Conversion functions for NumPy types
-#
-
-# quaternions
-
-# Convert to a NumPy array from an Unreal quaternion. Unreal's FQuat constructor takes (X, Y, Z, W) order.
-def to_numpy_array_from_quat(quat):
-    assert isinstance(quat, dict)
-    quat = { k.lower(): v for k, v in quat.items() }
-    assert set(["x", "y", "z", "w"]) == set(quat.keys())
-    return np.array([quat["x"], quat["y"], quat["z"], quat["w"]])
-
-# Convert to a NumPy rotation matrix from an Unreal quaternion (x, y, z, w). Unreal quaternions use scalar-last
-# order, which matches scipy.spatial.transform.Rotation.from_quat(...).
-def to_numpy_matrix_from_quat(quat, as_matrix=None):
-    assert isinstance(quat, dict)
-    quat = { k.lower(): v for k, v in quat.items() }
-    assert set(["x", "y", "z", "w"]) == set(quat.keys())
-    if as_matrix is None:
-        return np.array(scipy.spatial.transform.Rotation.from_quat([quat["x"], quat["y"], quat["z"], quat["w"]]).as_matrix())
-    else:
-        assert as_matrix
-        return np.matrix(scipy.spatial.transform.Rotation.from_quat([quat["x"], quat["y"], quat["z"], quat["w"]]).as_matrix())
-
-# Convert to an Unreal quaternion from a NumPy array in (X, Y, Z, W) order.
-def to_quat_from_numpy_array(array_xyzw):
-    if isinstance(array_xyzw, np.ndarray):
-        assert array_xyzw.shape == (4,)
-    else:
-        assert False
-    return {"X": float(array_xyzw[0]), "Y": float(array_xyzw[1]), "Z": float(array_xyzw[2]), "W": float(array_xyzw[3])}
-
-# Convert to an Unreal quaternion (x, y, z, w) from a NumPy rotation matrix.
-def to_quat_from_numpy_matrix(matrix):
-    if isinstance(matrix, np.ndarray) or isinstance(matrix, np.matrix):
-        assert matrix.shape == (3, 3)
-    else:
-        assert False
-    x, y, z, w = scipy.spatial.transform.Rotation.from_matrix(matrix).as_quat()
-    return {"X": float(x), "Y": float(y), "Z": float(z), "W": float(w)}
-
-# rotators
-
-# Convert to a NumPy array from an Unreal rotator.
-def to_numpy_array_from_rotator(rotator):
-    assert isinstance(rotator, dict)
-    rotator = { k.lower(): v for k, v in rotator.items() }
-    assert set(["roll", "pitch", "yaw"]) == set(rotator.keys())
-    return np.array([rotator["pitch"], rotator["yaw"], rotator["roll"]])
-
-# Convert to a NumPy matrix from an Unreal rotator. See utils/pipeline_utils.py for more details on Unreal's Euler angle conventions.
-def to_numpy_matrix_from_rotator(rotator, as_matrix=None):
-    assert isinstance(rotator, dict)
-    rotator = { k.lower(): v for k, v in rotator.items() }
-    assert set(["roll", "pitch", "yaw"]) == set(rotator.keys())
-    roll  = np.deg2rad(-rotator["roll"])
-    pitch = np.deg2rad(-rotator["pitch"])
-    yaw   = np.deg2rad(rotator["yaw"])
-    if as_matrix is None:
-        return np.array(scipy.spatial.transform.Rotation.from_euler("xyz", [roll, pitch, yaw]).as_matrix())
-    else:
-        assert as_matrix
-        return np.matrix(scipy.spatial.transform.Rotation.from_euler("xyz", [roll, pitch, yaw]).as_matrix())
-
-# Convert to an Unreal rotator from a NumPy array.
-def to_rotator_from_numpy_array(array_pyr):
-    if isinstance(array_pyr, np.ndarray):
-        assert array_pyr.shape == (3,)
-    else:
-        assert False
-    return {"Pitch": float(array_pyr[0]), "Yaw": float(array_pyr[1]), "Roll": float(array_pyr[2])}
-
-# Convert to an Unreal rotator from a NumPy matrix.
-def to_rotator_from_numpy_matrix(matrix):
-    if isinstance(matrix, np.ndarray) or isinstance(matrix, np.matrix):
-        assert matrix.shape == (3,3)
-    else:
-        assert False
-    scipy_roll, scipy_pitch, scipy_yaw = scipy.spatial.transform.Rotation.from_matrix(matrix).as_euler("xyz")
-    roll  = float(np.rad2deg(-scipy_roll))
-    pitch = float(np.rad2deg(-scipy_pitch))
-    yaw   = float(np.rad2deg(scipy_yaw))
-    return {"Roll": roll, "Pitch": pitch, "Yaw": yaw}
-
-# vectors
-
-# Convert to a NumPy array from an Unreal vector.
-def to_numpy_array_from_vector(vector, as_matrix=None):
-    assert isinstance(vector, dict)
-    vector = { k.lower(): v for k, v in vector.items() }
-    assert set(["x", "y", "z"]) == set(vector.keys())
-    if as_matrix is None:
-        return np.array([vector["x"], vector["y"], vector["z"]])
-    else:
-        assert as_matrix
-        return np.matrix([vector["x"], vector["y"], vector["z"]]).T
-
-# Convert to an Unreal vector from a NumPy array or matrix and vice versa.
-def to_vector_from_numpy_array(array):
-    if isinstance(array, np.matrix):
-        assert array.shape == (3, 1)
-        array = array.A1
-    elif isinstance(array, np.ndarray):
-        assert array.shape == (3,)
-    else:
-        assert False
-    return {"X": float(array[0]), "Y": float(array[1]), "Z": float(array[2])}
 
 
 #
@@ -736,12 +627,10 @@ def _to_script_expr_value(obj):
     else:
         return obj
 
-def to_script_struct(value, type_string):
-    return ScriptStruct(value=value, type_string=type_string)
-
+# needed to encode structs when passing them to editor Python
 def to_script_struct_expr(value, type_string):
     assert isinstance(value, dict)
-    return to_script_expr(to_script_struct(value=value, type_string=type_string))
+    return to_script_expr(ScriptStruct(value=value, type_string=type_string))
 
 # Decode a script result dict into a SPEAR Python object.
 def from_script_result(script_result, unreal_service=None, sp_func_service=None, config=None, as_handle=None, as_unreal_struct=None, as_unreal_class=None, as_unreal_object=None, with_sp_funcs=None):

@@ -16,8 +16,8 @@ camera_location = {"X": -125.0, "Y": 130.0, "Z": 245.0}
 camera_rotator = {"Pitch": -20.0, "Yaw": 20.0, "Roll": 0.0}
 
 rotator = {"Pitch": 0.0, "Yaw": 20.0, "Roll": 0.0}
-p_world_init = spear.to_numpy_array_from_vector(vector=camera_location, as_matrix=True)
-R_world_from_actor = spear.to_numpy_matrix_from_rotator(rotator=rotator, as_matrix=True)
+p_world_init = spear.math.to_numpy_array_from_spear_vector(spear_vector=camera_location, as_matrix=True)
+R_world_from_actor = spear.math.to_numpy_matrix_from_spear_rotator(spear_rotator=rotator, as_matrix=True)
 
 
 if __name__ == "__main__":
@@ -83,7 +83,7 @@ if __name__ == "__main__":
 
             p_actor = np.matrix([x, y, z]).T
             p_world = p_world_init + R_world_from_actor*p_actor
-            bp_multi_view_camera_sensor.K2_SetActorLocation(NewLocation=spear.to_vector_from_numpy_array(array=p_world))
+            bp_multi_view_camera_sensor.K2_SetActorLocation(NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=p_world))
 
         with instance.end_frame():
             canvas = np.zeros((component_height*num_rows, component_width*num_cols, 4), dtype=np.uint8)

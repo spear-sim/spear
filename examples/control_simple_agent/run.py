@@ -32,7 +32,7 @@ if __name__ == "__main__":
         bp_sphere_agent_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_SphereAgent.BP_SphereAgent_C")
         bp_sphere_agent = game.unreal_service.spawn_actor(uclass=bp_sphere_agent_uclass, location={"X": -10.0, "Y": 280.0, "Z": 150.0})
         root_component = game.unreal_service.get_component_by_name(actor=bp_sphere_agent, component_name="DefaultSceneRoot", uclass="USceneComponent")
-        final_tone_curve_hdr_component = game.unreal_service.get_component_by_name(actor=bp_sphere_agent, component_name="DefaultSceneRoot.final_tone_curve_hdr_", uclass="USceneComponent")
+        final_tone_curve_hdr_component = game.unreal_service.get_component_by_name(actor=bp_sphere_agent, component_name="DefaultSceneRoot.final_tone_curve_hdr_", uclass="USpSceneCaptureComponent2D")
 
         #
         # We get the sphere component "by path" (instead of "by name") because this particular component gets
@@ -79,10 +79,10 @@ if __name__ == "__main__":
 
             # add force
             rotator = root_component.K2_GetComponentRotation()
-            R_world_from_component = spear.to_numpy_matrix_from_rotator(rotator=rotator, as_matrix=True)
+            R_world_from_component = spear.math.to_numpy_matrix_from_spear_rotator(spear_rotator=rotator, as_matrix=True)
             force_component = np.matrix([1000.0, 0.0, 0.0]).T
             force_world = R_world_from_component*force_component
-            sphere_component.AddForce(Force=spear.to_vector_from_numpy_array(array=force_world))
+            sphere_component.AddForce(Force=spear.math.to_spear_vector_from_numpy_array(numpy_array=force_world))
 
         # get observation
         with instance.end_frame():
