@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "spear": {
+    "spear-mcp": {
       "type": "stdio",
       "command": "python",
       "args": [

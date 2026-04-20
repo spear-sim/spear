@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "spear": {
+    "spear-mcp": {
       "command": "/opt/miniconda3/envs/spear-env/bin/python",
       "args": [
         "tools/run_mcp_server.py"
