@@ -295,12 +295,13 @@ class Instance():
 
         def initialize(self, unreal_service=None):
             super().initialize(unreal_service=unreal_service)
+            self.python_service.initialize()
             self.rendering_service.initialize()
 
         def set_world(self, world):
             super().set_world(world=world)
-            self.rendering_service.set_world(world=world)
             self.python_service.set_world(world=world)
+            self.rendering_service.set_world(world=world)
 
     #
     # Public functions that can potentially call begin_frame() and end_frame(). When inside a spear.editor.script,
@@ -331,17 +332,17 @@ class Instance():
         # initialize engine service
         self._engine_service.initialize()
 
-        # wait until world initialized
-        wait, wait_max_time_seconds, wait_sleep_time_seconds = self._get_wait_until_info(
+        # wait until world initialized (if not wait_for_world_initialized then only try once)
+        wait_until_desc = self._get_wait_until_desc(
             wait=wait_for_world_initialized, max_time_seconds=wait_for_world_initialized_max_time_seconds, sleep_time_seconds=wait_for_world_initialized_sleep_time_seconds,
             config=self._config.SPEAR.INSTANCE.INITIALIZE_WAIT_FOR_WORLD_INITIALIZED)
-        self._wait_until(func=self._is_any_world_initialized, wait=wait, max_time_seconds=wait_max_time_seconds, sleep_time_seconds=wait_sleep_time_seconds)
+        self._wait_until(func=self._is_any_world_initialized, wait_until_desc=wait_until_desc)
 
         # warm up
-        warm_up, time_seconds, num_frames = self._get_warm_up_info(
+        warm_up_desc = self._get_warm_up_desc(
             warm_up=warm_up, time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames,
             config=self._config.SPEAR.INSTANCE.INITIALIZE_WARM_UP)
-        self._warm_up(warm_up=warm_up, time_seconds=time_seconds, num_frames=num_frames)
+        self._warm_up(warm_up_desc=warm_up_desc)
 
         # initialize services
         with self.begin_frame():
@@ -359,16 +360,16 @@ class Instance():
         self._engine_service.initialize()
 
         # wait until world initialized
-        wait, wait_max_time_seconds, wait_sleep_time_seconds = self._get_wait_until_info(
+        wait_until_desc = self._get_wait_until_desc(
             wait=wait_for_world_initialized, max_time_seconds=wait_for_world_initialized_max_time_seconds, sleep_time_seconds=wait_for_world_initialized_sleep_time_seconds,
             config=self._config.SPEAR.INSTANCE.INITIALIZE_WAIT_FOR_WORLD_INITIALIZED)
-        yield from self._wait_until_in_editor_script(func=self._is_any_world_initialized, wait=wait, max_time_seconds=wait_max_time_seconds, sleep_time_seconds=wait_sleep_time_seconds)
+        yield from self._wait_until_in_editor_script(func=self._is_any_world_initialized, wait_until_desc=wait_until_desc)
 
         # warm up
-        warm_up, time_seconds, num_frames = self._get_warm_up_info(
+        warm_up_desc = self._get_warm_up_desc(
             warm_up=warm_up, time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames,
             config=self._config.SPEAR.INSTANCE.INITIALIZE_WARM_UP)
-        yield from self._warm_up_in_editor_script(warm_up=warm_up, time_seconds=time_seconds, num_frames=num_frames)
+        yield from self._warm_up_in_editor_script(warm_up_desc=warm_up_desc)
 
         # initialize services
         with self.begin_frame():
@@ -386,8 +387,6 @@ class Instance():
         world_descs = self.world_registry_service.get_world_descs()
         for world_desc in world_descs.values():
             if world_desc.is_editor_world:
-                return True
-            elif world_desc.is_game_world and world_desc.is_playing:
                 return True
         return False
 
@@ -411,17 +410,17 @@ class Instance():
         # initialize engine service
         self._engine_service.initialize()
 
-        # wait until world initialized
-        wait, wait_max_time_seconds, wait_sleep_time_seconds = self._get_wait_until_info(
+        # wait until world initialized (if not wait_for_world_initialized then only try once)
+        wait_until_desc = self._get_wait_until_desc(
             wait=wait_for_world_initialized, max_time_seconds=wait_for_world_initialized_max_time_seconds, sleep_time_seconds=wait_for_world_initialized_sleep_time_seconds,
             config=self._config.SPEAR.INSTANCE.GET_EDITOR_WAIT_FOR_WORLD_INITIALIZED)
-        self._wait_until(func=self._is_editor_world_initialized, wait=wait, max_time_seconds=wait_max_time_seconds, sleep_time_seconds=wait_sleep_time_seconds)
+        self._wait_until(func=self._is_editor_world_initialized, wait_until_desc=wait_until_desc)
 
         # warm up
-        warm_up, time_seconds, num_frames = self._get_warm_up_info(
+        warm_up_desc = self._get_warm_up_desc(
             warm_up=warm_up, time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames,
             config=self._config.SPEAR.INSTANCE.GET_EDITOR_WARM_UP)
-        self._warm_up(warm_up=warm_up, time_seconds=time_seconds, num_frames=num_frames)
+        self._warm_up(warm_up_desc=warm_up_desc)
 
         # set world
         world = self._get_editor_world()
@@ -435,10 +434,11 @@ class Instance():
             pass
 
         # wait for engine idle
-        wait, wait_max_time_seconds, wait_sleep_time_seconds = self._get_wait_until_info(
-            wait=wait_for_engine_idle, max_time_seconds=wait_for_engine_idle_max_time_seconds, sleep_time_seconds=wait_for_engine_idle_sleep_time_seconds,
-            config=self._config.SPEAR.INSTANCE.GET_EDITOR_WAIT_FOR_ENGINE_IDLE)
-        self._wait_until(func=self._editor._is_engine_idle, wait=wait, max_time_seconds=wait_max_time_seconds, sleep_time_seconds=wait_sleep_time_seconds)
+        if wait_for_engine_idle is None or wait_for_engine_idle:
+            wait_until_desc = self._get_wait_until_desc(
+                wait=wait_for_engine_idle, max_time_seconds=wait_for_engine_idle_max_time_seconds, sleep_time_seconds=wait_for_engine_idle_sleep_time_seconds,
+                config=self._config.SPEAR.INSTANCE.GET_EDITOR_WAIT_FOR_ENGINE_IDLE)
+            self._wait_until(func=self._editor._is_engine_idle, wait_until_desc=wait_until_desc)
 
         return self._editor
 
@@ -456,16 +456,16 @@ class Instance():
         self._engine_service.initialize()
 
         # wait until world initialized
-        wait, wait_max_time_seconds, wait_sleep_time_seconds = self._get_wait_until_info(
+        wait_until_desc = self._get_wait_until_desc(
             wait=wait_for_world_initialized, max_time_seconds=wait_for_world_initialized_max_time_seconds, sleep_time_seconds=wait_for_world_initialized_sleep_time_seconds,
             config=self._config.SPEAR.INSTANCE.GET_EDITOR_WAIT_FOR_WORLD_INITIALIZED)
-        yield from self._wait_until_in_editor_script(func=self._is_editor_world_initialized, wait=wait, max_time_seconds=wait_max_time_seconds, sleep_time_seconds=wait_sleep_time_seconds)
+        yield from self._wait_until_in_editor_script(func=self._is_editor_world_initialized, wait_until_desc=wait_until_desc)
 
         # warm up
-        warm_up, time_seconds, num_frames = self._get_warm_up_info(
+        warm_up_desc = self._get_warm_up_desc(
             warm_up=warm_up, time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames,
             config=self._config.SPEAR.INSTANCE.GET_EDITOR_WARM_UP)
-        yield from self._warm_up_in_editor_script(warm_up=warm_up, time_seconds=time_seconds, num_frames=num_frames)
+        yield from self._warm_up_in_editor_script(warm_up_desc=warm_up_desc)
 
         # set world
         world = self._get_editor_world()
@@ -480,13 +480,12 @@ class Instance():
             pass
         yield
 
-        spear.log("Finished initializing services.")
-
         # wait for engine idle
-        wait, wait_max_time_seconds, wait_sleep_time_seconds = self._get_wait_until_info(
-            wait=wait_for_engine_idle, max_time_seconds=wait_for_engine_idle_max_time_seconds, sleep_time_seconds=wait_for_engine_idle_sleep_time_seconds,
-            config=self._config.SPEAR.INSTANCE.GET_EDITOR_WAIT_FOR_ENGINE_IDLE)
-        yield from self._wait_until_in_editor_script(func=self._editor._is_engine_idle_in_editor_script, wait=wait, max_time_seconds=wait_max_time_seconds, sleep_time_seconds=wait_sleep_time_seconds)
+        if wait_for_engine_idle is None or wait_for_engine_idle:
+            wait_until_desc = self._get_wait_until_desc(
+                wait=wait_for_engine_idle, max_time_seconds=wait_for_engine_idle_max_time_seconds, sleep_time_seconds=wait_for_engine_idle_sleep_time_seconds,
+                config=self._config.SPEAR.INSTANCE.GET_EDITOR_WAIT_FOR_ENGINE_IDLE)
+            yield from self._wait_until_in_editor_script(func=self._editor._is_engine_idle_in_editor_script, wait_until_desc=wait_until_desc)
 
         return self._editor
 
@@ -497,9 +496,7 @@ class Instance():
     def _is_game_world_initialized(self):
         world_descs = self.world_registry_service.get_world_descs()
         for world_desc in world_descs.values():
-            if world_desc.is_editor_world:
-                return True
-            elif world_desc.is_game_world and world_desc.is_playing:
+            if world_desc.is_game_world and world_desc.is_playing:
                 return True
         return False
 
@@ -520,17 +517,17 @@ class Instance():
         # initialize engine service
         self._engine_service.initialize()
 
-        # wait until world initialized
-        wait, wait_max_time_seconds, wait_sleep_time_seconds = self._get_wait_until_info(
+        # wait until world initialized (if not wait_for_world_initialized then only try once)
+        wait_until_desc = self._get_wait_until_desc(
             wait=wait_for_world_initialized, max_time_seconds=wait_for_world_initialized_max_time_seconds, sleep_time_seconds=wait_for_world_initialized_sleep_time_seconds,
             config=self._config.SPEAR.INSTANCE.GET_GAME_WAIT_FOR_WORLD_INITIALIZED)
-        self._wait_until(func=self._is_game_world_initialized, wait=wait, max_time_seconds=wait_max_time_seconds, sleep_time_seconds=wait_sleep_time_seconds)
+        self._wait_until(func=self._is_game_world_initialized, wait_until_desc=wait_until_desc)
 
         # warm up
-        warm_up, time_seconds, num_frames = self._get_warm_up_info(
+        warm_up_desc = self._get_warm_up_desc(
             warm_up=warm_up, time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames,
             config=self._config.SPEAR.INSTANCE.GET_GAME_WARM_UP)
-        self._warm_up(warm_up=warm_up, time_seconds=time_seconds, num_frames=num_frames)
+        self._warm_up(warm_up_desc=warm_up_desc)
 
         # set world
         world = self._get_game_world()
@@ -544,10 +541,11 @@ class Instance():
             pass
 
         # wait for engine idle
-        wait, wait_max_time_seconds, wait_sleep_time_seconds = self._get_wait_until_info(
-            wait=wait_for_engine_idle, max_time_seconds=wait_for_engine_idle_max_time_seconds, sleep_time_seconds=wait_for_engine_idle_sleep_time_seconds,
-            config=self._config.SPEAR.INSTANCE.GET_GAME_WAIT_FOR_ENGINE_IDLE)
-        self._wait_until(func=self._game._is_engine_idle, wait=wait, max_time_seconds=wait_max_time_seconds, sleep_time_seconds=wait_sleep_time_seconds)
+        if wait_for_engine_idle is None or wait_for_engine_idle:
+            wait_until_desc = self._get_wait_until_desc(
+                wait=wait_for_engine_idle, max_time_seconds=wait_for_engine_idle_max_time_seconds, sleep_time_seconds=wait_for_engine_idle_sleep_time_seconds,
+                config=self._config.SPEAR.INSTANCE.GET_GAME_WAIT_FOR_ENGINE_IDLE)
+            self._wait_until(func=self._game._is_engine_idle, wait_until_desc=wait_until_desc)
 
         return self._game
 
@@ -562,16 +560,16 @@ class Instance():
         self._engine_service.initialize()
 
         # wait until world initialized
-        wait, wait_max_time_seconds, wait_sleep_time_seconds = self._get_wait_until_info(
+        wait_until_desc = self._get_wait_until_desc(
             wait=wait_for_world_initialized, max_time_seconds=wait_for_world_initialized_max_time_seconds, sleep_time_seconds=wait_for_world_initialized_sleep_time_seconds,
             config=self._config.SPEAR.INSTANCE.GET_GAME_WAIT_FOR_WORLD_INITIALIZED)
-        yield from self._wait_until_in_editor_script(func=self._is_game_world_initialized, wait=wait, max_time_seconds=wait_max_time_seconds, sleep_time_seconds=wait_sleep_time_seconds)
+        yield from self._wait_until_in_editor_script(func=self._is_game_world_initialized, wait_until_desc=wait_until_desc)
 
         # warm up
-        warm_up, time_seconds, num_frames = self._get_warm_up_info(
+        warm_up_desc = self._get_warm_up_desc(
             warm_up=warm_up, time_seconds=warm_up_time_seconds, num_frames=warm_up_num_frames,
             config=self._config.SPEAR.INSTANCE.GET_GAME_WARM_UP)
-        yield from self._warm_up_in_editor_script(warm_up=warm_up, time_seconds=time_seconds, num_frames=num_frames)
+        yield from self._warm_up_in_editor_script(warm_up_desc=warm_up_desc)
 
         # set world
         world = self._get_game_world()
@@ -587,10 +585,11 @@ class Instance():
         yield
 
         # wait for engine idle
-        wait, wait_max_time_seconds, wait_sleep_time_seconds = self._get_wait_until_info(
-            wait=wait_for_engine_idle, max_time_seconds=wait_for_engine_idle_max_time_seconds, sleep_time_seconds=wait_for_engine_idle_sleep_time_seconds,
-            config=self._config.SPEAR.INSTANCE.GET_GAME_WAIT_FOR_ENGINE_IDLE)
-        yield from self._wait_until_in_editor_script(func=self._game._is_engine_idle_in_editor_script, wait=wait, max_time_seconds=wait_max_time_seconds, sleep_time_seconds=wait_sleep_time_seconds)
+        if wait_for_engine_idle is None or wait_for_engine_idle:
+            wait_until_desc = self._get_wait_until_desc(
+                wait=wait_for_engine_idle, max_time_seconds=wait_for_engine_idle_max_time_seconds, sleep_time_seconds=wait_for_engine_idle_sleep_time_seconds,
+                config=self._config.SPEAR.INSTANCE.GET_GAME_WAIT_FOR_ENGINE_IDLE)
+            yield from self._wait_until_in_editor_script(func=self._game._is_engine_idle_in_editor_script, wait_until_desc=wait_until_desc)
 
         return self._game
 
@@ -916,19 +915,16 @@ class Instance():
     # _wait_until
     #
 
-    def _get_wait_until_info(self, wait, max_time_seconds, sleep_time_seconds, config):
-        if wait is None:
-            wait = True
-            max_time_seconds = config.MAX_TIME_SECONDS
-            sleep_time_seconds = config.SLEEP_TIME_SECONDS
-        return wait, max_time_seconds, sleep_time_seconds
-
-    def _wait_until_impl_prefix(self, func, wait):
+    def _get_wait_until_desc(self, wait, max_time_seconds, sleep_time_seconds, config):
         if wait is None:
             retry = True
+            max_time_seconds = config.MAX_TIME_SECONDS
+            sleep_time_seconds = config.SLEEP_TIME_SECONDS
         else:
             retry = wait
+        return {"retry": retry, "max_time_seconds": max_time_seconds, "sleep_time_seconds": sleep_time_seconds}
 
+    def _wait_until_impl_prefix(self, func):
         func_name = ""
         if hasattr(func, "__qualname__"):
             func_name = func.__qualname__
@@ -938,8 +934,6 @@ class Instance():
             func_name = type(func).__name__
 
         spear.log("        Waiting for function to return true: ", func_name)
-
-        return retry
 
     def _wait_until_impl(self, func, retry, max_time_seconds, sleep_time_seconds):
         if retry:
@@ -996,23 +990,23 @@ class Instance():
         else:
             spear.log(f"        Finished waiting for function to return true.")
 
-    def _wait_until(self, func, wait=None, max_time_seconds=0.0, sleep_time_seconds=0.0):
+    def _wait_until(self, func, wait_until_desc):
         spear.log_current_function(prefix="    ")
-        retry = self._wait_until_impl_prefix(func=func, wait=wait)
-        success, elapsed_time_seconds = self._wait_until_impl(func=func, retry=retry, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
-        self._wait_until_impl_suffix(retry=retry, success=success, elapsed_time_seconds=elapsed_time_seconds)
+        self._wait_until_impl_prefix(func=func)
+        success, elapsed_time_seconds = self._wait_until_impl(func=func, retry=wait_until_desc["retry"], max_time_seconds=wait_until_desc["max_time_seconds"], sleep_time_seconds=wait_until_desc["sleep_time_seconds"])
+        self._wait_until_impl_suffix(retry=wait_until_desc["retry"], success=success, elapsed_time_seconds=elapsed_time_seconds)
 
-    def _wait_until_in_editor_script(self, func, wait=None, max_time_seconds=0.0, sleep_time_seconds=0.0):
+    def _wait_until_in_editor_script(self, func, wait_until_desc):
         spear.log_current_function(prefix="    ")
-        retry = self._wait_until_impl_prefix(func=func, wait=wait)
-        success, elapsed_time_seconds = yield from self._wait_until_impl_in_editor_script(func=func, retry=retry, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
-        self._wait_until_impl_suffix(retry=retry, success=success, elapsed_time_seconds=elapsed_time_seconds)
+        self._wait_until_impl_prefix(func=func)
+        success, elapsed_time_seconds = yield from self._wait_until_impl_in_editor_script(func=func, retry=wait_until_desc["retry"], max_time_seconds=wait_until_desc["max_time_seconds"], sleep_time_seconds=wait_until_desc["sleep_time_seconds"])
+        self._wait_until_impl_suffix(retry=wait_until_desc["retry"], success=success, elapsed_time_seconds=elapsed_time_seconds)
 
     #
     # _warm_up
     #
 
-    def _get_warm_up_info(self, warm_up, time_seconds, num_frames, config):
+    def _get_warm_up_desc(self, warm_up, time_seconds, num_frames, config):
         if warm_up is None:
             if spear.__can_import_unreal__ or self._config.SPEAR.LAUNCH_MODE == "none":
                 warm_up = False
@@ -1022,38 +1016,38 @@ class Instance():
                 num_frames = config.NUM_FRAMES
             else:
                 assert False
-        return warm_up, time_seconds, num_frames
+        return {"warm_up": warm_up, "time_seconds": time_seconds, "num_frames": num_frames}
 
-    def _warm_up(self, warm_up, time_seconds, num_frames):
+    def _warm_up(self, warm_up_desc):
 
-        if not warm_up:
+        if not warm_up_desc["warm_up"]:
             return
 
         spear.log_current_function(prefix="    ")
-        spear.log(f"        Warming up Unreal instance for {time_seconds} seconds and {num_frames} frames...")
+        spear.log(f"        Warming up Unreal instance for {warm_up_desc['time_seconds']} seconds and {warm_up_desc['num_frames']} frames...")
 
-        if time_seconds > 0.0:
-            time.sleep(time_seconds)
+        if warm_up_desc["time_seconds"] > 0.0:
+            time.sleep(warm_up_desc["time_seconds"])
 
-        self.step(num_frames=num_frames)
+        self.step(num_frames=warm_up_desc["num_frames"])
 
         spear.log("        Finished warming up Unreal instance.")
 
-    def _warm_up_in_editor_script(self, warm_up, time_seconds, num_frames):
+    def _warm_up_in_editor_script(self, warm_up_desc):
 
-        if not warm_up:
+        if not warm_up_desc["warm_up"]:
             return
 
         spear.log_current_function(prefix="    ")
-        spear.log(f"        Warming up Unreal instance for {time_seconds} seconds and {num_frames} frames...")
+        spear.log(f"        Warming up Unreal instance for {warm_up_desc['time_seconds']} seconds and {warm_up_desc['num_frames']} frames...")
 
         start_time_seconds = time.time()
         elapsed_time_seconds = time.time() - start_time_seconds
-        while elapsed_time_seconds < time_seconds:
+        while elapsed_time_seconds < warm_up_desc["time_seconds"]:
             yield from self.step_in_editor_script(num_frames=1)
             elapsed_time_seconds = time.time() - start_time_seconds
 
-        yield from self.step_in_editor_script(num_frames=num_frames)
+        yield from self.step_in_editor_script(num_frames=warm_up_desc["num_frames"])
 
         spear.log("        Finished warming up Unreal instance.")
 

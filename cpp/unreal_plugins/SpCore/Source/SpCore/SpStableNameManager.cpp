@@ -128,6 +128,7 @@ void ASpStableNameManager::setStableName(const AActor* actor, const std::string&
             FString id = Unreal::toFString(getStableIdString(actor));
             FString stable_name = Unreal::toFString(UnrealUtils::resolveStableName(actor));
             if (StableNames.Contains(id)) {
+                
                 StableNames[id] = stable_name;
             } else {
                 StableNames.Add(id, stable_name);
@@ -314,39 +315,71 @@ USpStableNameEventHandler::~USpStableNameEventHandler()
 
     void USpStableNameEventHandler::actorLabelChangedHandler(AActor* actor)
     {
+        // actorLabelChangedHandler(...) can be called before any other callbacks when loading a new map, so
+        // we need to call requestAddOrUpdateStableNameActor(...) because the actor might or might not have
+        // been added to the stable name system yet
+
         SP_ASSERT(actor);
-        UnrealUtils::requestUpdateStableName(actor);
+        if (!handler_active_) { 
+            handler_active_ = true;
+            UnrealUtils::requestAddOrUpdateStableNameActor(actor);
+            handler_active_ = false;
+        }
     }
 
     void USpStableNameEventHandler::levelAddedToWorldHandler(ULevel* level, UWorld* world)
     {
         // level can be null
         SP_ASSERT(world);
-        UnrealUtils::requestAddOrUpdateAllStableNameActors(world);
+        if (!handler_active_) {
+            handler_active_ = true;
+            UnrealUtils::requestAddOrUpdateAllStableNameActors(world);
+            handler_active_ = false;
+        }
     }
 
     void USpStableNameEventHandler::levelRemovedFromWorldHandler(ULevel* level, UWorld* world)
     {
         // level can be null
         SP_ASSERT(world);
-        UnrealUtils::requestAddOrUpdateAllStableNameActors(world);
+        if (!handler_active_) {
+            handler_active_ = true;
+            UnrealUtils::requestAddOrUpdateAllStableNameActors(world);
+            handler_active_ = false;
+        }
     }
 
     void USpStableNameEventHandler::levelActorAddedHandler(AActor* actor)
     {
+        // levelActorAddedHandler(...) can be called after other callbacks when loading a map, so we need to
+        // call requestAddOrUpdateStableNameActor(...) because the actor might or might not have been added
+        // to the stable name system yet
+
         SP_ASSERT(actor);
-        UnrealUtils::requestAddStableNameActor(actor);
+        if (!handler_active_) {
+            handler_active_ = true;
+            UnrealUtils::requestAddOrUpdateStableNameActor(actor);
+            handler_active_ = false;
+        }
     }
 
     void USpStableNameEventHandler::levelActorFolderChangedHandler(const AActor* actor, FName name)
     {
         SP_ASSERT(actor);
-        UnrealUtils::requestUpdateStableName(const_cast<AActor*>(actor));
+        if (!handler_active_) {
+            handler_active_ = true;
+            UnrealUtils::requestUpdateStableName(const_cast<AActor*>(actor));
+            handler_active_ = false;
+        }
     }
 
     void USpStableNameEventHandler::levelActorDeletedHandler(AActor* actor)
     {
         SP_ASSERT(actor);
-        UnrealUtils::requestRemoveStableNameActor(actor);
+        if (!handler_active_) {
+            handler_active_ = true;
+            UnrealUtils::requestRemoveStableNameActor(actor);
+            handler_active_ = false;
+        }
     }
 #endif

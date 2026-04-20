@@ -50,7 +50,7 @@ public:
             std::lock_guard<std::mutex> lock(mutex_);
 
             UWorld* world_ptr = toPtr<UWorld>(world);
-            std::string name = Unreal::toStdString(world_ptr->GetName());
+            std::string name = Unreal::toStdString(world_ptr->GetPathName());
             SP_ASSERT(Std::containsKey(world_descs_, name));
             SpWorldDesc& desc = world_descs_.at(name);
             world_ptr->OnWorldBeginPlay.Remove(desc.world_begin_play_handle_);

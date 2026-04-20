@@ -1,0 +1,9 @@
+{
+  "default_task": { "args": "--hello --world" },
+  "tasks":
+  [
+    { "map": "/Game/SPEAR/Scenes/apartment_0000/Maps/apartment_0000", "wait_for_engine_idle": false, "script": "/Users/miroberts/code/github/spear/editor/debug_print_actors.py" },
+    { "map": "/Game/SPEAR/Scenes/debug_0000/Maps/debug_0000" },
+    { "map": "/Game/SPEAR/Scenes/debug_0001/Maps/debug_0001", "script": "/Users/miroberts/code/github/spear/editor/debug_print_actors.py" },
+  ]
+}

@@ -38,9 +38,8 @@ if __name__ == "__main__":
     with instance.begin_frame():
         pass
     with instance.end_frame():
+        game.invalidate() # need to call invalidate() before calling OpenLevel()
         gameplay_statics.OpenLevel(LevelName="/Game/SPEAR/Scenes/debug_0000/Maps/debug_0000.debug_0000", bAbsolute=True, Options="")
-        game.invalidate()
-        game = None
 
     # Calling OpenLevel invalidates the old game object, so get a new one here. This call will block until
     # the new game object is ready.
@@ -65,9 +64,8 @@ if __name__ == "__main__":
     with instance.begin_frame():
         pass
     with instance.end_frame():
+        game.invalidate() # need to call invalidate() before calling OpenLevel()
         gameplay_statics.OpenLevel(LevelName="/Game/SPEAR/Scenes/apartment_0000/Maps/apartment_0000.apartment_0000", bAbsolute=True, Options="")
-        game.invalidate()
-        game = None
 
     # get a new game object again
     game = instance.get_game(wait=True, wait_max_time_seconds=10.0, wait_sleep_time_seconds=1.0, warm_up=True, warm_up_time_seconds=5.0, warm_up_num_frames=1)

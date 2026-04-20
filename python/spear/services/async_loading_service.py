@@ -9,6 +9,10 @@ import spear
 
 class AsyncLoadingService(spear.Service):
     def __init__(self, entry_point_caller, sp_func_service, unreal_service, engine_globals_service, config):
+        assert sp_func_service.is_top_level_service()
+        assert unreal_service.is_top_level_service()
+        assert engine_globals_service.is_top_level_service()
+
         super().__init__(
             entry_point_caller=entry_point_caller,
             sp_func_service=sp_func_service,

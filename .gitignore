@@ -77,7 +77,7 @@ tmp
 
 tools/BUILD
 
-tools/run_editor_script_for_each_map/user_config.yaml
+tools/run_editor_tasks/user_config.yaml
 
 tools/tmp
 examples/debug_draw/images

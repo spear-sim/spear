@@ -123,6 +123,11 @@ public:
         void levelActorFolderChangedHandler(const AActor* actor, FName name);
         void levelActorDeletedHandler(AActor* actor);
 
+        // We need this re-entrancy guard for our handler functions, e.g., because calling levelActorAddedHandler(...)
+        // can trigger a call in our code to actor->GetActorLabel(), which can trigger a call to actorLabelChangedHandler(...)
+        // internally.
+        bool handler_active_ = false;
+
         FDelegateHandle post_engine_init_handle_;
         FDelegateHandle engine_pre_exit_handle_;
 

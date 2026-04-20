@@ -8,6 +8,8 @@ import spear
 
 class EngineGlobalsService(spear.Service):
     def __init__(self, entry_point_caller, sp_func_service, unreal_service, config, parent_service=None, create_children_services=True):
+        assert sp_func_service.is_top_level_service()
+        assert unreal_service.is_top_level_service()
 
         # do this after initializing local state
         super().__init__(
