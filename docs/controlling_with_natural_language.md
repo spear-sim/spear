@@ -11,7 +11,7 @@ Our next step is to launch Claude Code from the project root directory. At this 
 - _"Move the two chairs I'm looking at so they're almost but not quite touching."_
 - _"Swap the materials of the coffee table and the floor."_
 
-In contrast to all existing MCP servers for the Unreal Engine (see References below), our MCP server can control standalone applications, and can link the user's text prompt (e.g., "the two chairs I'm looking at") with specific Unreal objects using an ID rendering approach. Internally, our MCP server acts on the user's behalf by writing snippets of SPEAR code, and therefore it not limited to a fixed vocabulary of actions.
+In contrast to all existing MCP servers for the Unreal Engine (see References below), our MCP server can control standalone applications, and can link the user's text prompt (e.g., "the two chairs I'm looking at") to specific Unreal objects using an ID rendering approach. Internally, our MCP server acts on the user's behalf by writing snippets of SPEAR code, and therefore it not limited to a fixed vocabulary of actions.
 
 ## References
 
@@ -23,7 +23,9 @@ In contrast to all existing MCP servers for the Unreal Engine (see References be
 - [GenOrca/unreal-mcp](https://github.com/GenOrca/unreal-mcp)
 - [gingerol/vhcilab-unreal-engine-mcp](https://github.com/gingerol/vhcilab-unreal-engine-mcp)
 - [kvick-games/UnrealMCP](https://github.com/kvick-games/UnrealMCP)
+- https://github.com/Natfii/UnrealClaude
 - [Natfii/ue5-mcp-bridge](https://github.com/Natfii/ue5-mcp-bridge)
+- [Natfii/UnrealClaude](https://github.com/Natfii/UnrealClaude)
 - [prajwalshettydev/UnrealGenAISupport](https://github.com/prajwalshettydev/UnrealGenAISupport)
 - [remiphilippe/mcp-unreal](https://github.com/remiphilippe/mcp-unreal)
 - [runreal/unreal-mcp](https://github.com/runreal/unreal-mcp)
