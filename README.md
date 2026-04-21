@@ -138,7 +138,7 @@ with instance.end_frame():
 - Our [Getting Started](docs/getting_started.md) tutorial explains how to set up your development environment.
 - Our [Running our Example Applications](docs/running_our_example_applications.md) tutorial explains how to run our example applications.
 - Our [Importing and Exporting Assets](docs/importing_and_exporting_assets.md) tutorial explains how to import and export assets.
-- Our [Controlling with Natural Language](docs/controlling_with_natural_language.md) tutorial explains how to control a SPEAR apps with natural language.
+- Our [Controlling with Natural Language](docs/controlling_with_natural_language.md) tutorial explains how to control a Unreal apps with natural language.
 
 ## Citation
 
