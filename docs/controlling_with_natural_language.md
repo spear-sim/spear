@@ -1,8 +1,8 @@
 # Controlling Unreal Applications with Natural Language
 
-We provide a [MCP](https://modelcontextprotocol.io) server that allows [Claude Code](https://claude.com/claude-code) to qury and manipulate any Unreal application.
+We provide an [MCP](https://modelcontextprotocol.io) server that allows [Claude Code](https://claude.com/claude-code) to query and manipulate any Unreal application.
 
-Our first step is to launch an Unreal application for our MCP server to connect to. This can be any Unreal application that has been built with the SPEAR plugins (e.g., the `SpearSim` application that we built in the [Getting Started](getting_started.md) tutorial), or it can be the Unreal Editor that is editing any project that includes the SPEAR plugins.
+To use our MCP server, our first step is to launch an Unreal application for our server to connect to. This can be any Unreal application that has been built with the SPEAR plugins (e.g., the `SpearSim` application that we built in the [Getting Started](getting_started.md) tutorial), or it can be the Unreal Editor after it has opened any project that includes the SPEAR plugins.
 
 Our next step is to launch Claude Code from the project root directory. At this point, we can control the application using natural language. For example, we can ask Claude Code,
 
@@ -34,4 +34,4 @@ In the table below, we compare our MCP server to existing MCP servers for intera
 | [unreal-engine-mcp-server](https://hub.docker.com/r/mcp/unreal-engine-mcp-server) | ✓ | | | ✓ | | |
 | [unrealmcp](https://pypi.org/project/unrealmcp/) | ✓ | | ✓ | ✓ | | |
 | [VedantRGosavi/UE5-MCP](https://github.com/VedantRGosavi/UE5-MCP) | | | | | | |
-| **SPEAR (ours)** | **✓** | **✓** | **✓** | **✓** | **✓** | **✓** |
+| **spear-mcp (ours)** | **✓** | **✓** | **✓** | **✓** | **✓** | **✓** |
