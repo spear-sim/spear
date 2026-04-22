@@ -102,6 +102,7 @@ class ScriptRunner:
             if self._token is not None:
                 ScriptRunner._exceptions[self._token] = traceback.format_exc()
             self.stop()
+            raise
         finally:
             ScriptRunner._active_token = prev_active_token
             self._advancing = False
@@ -742,8 +743,7 @@ class Client:
 
     def initialize(self):
         result = self._client.call("engine_service.call_sync_on_worker_thread.get_entry_point_signature_descs")
-        entry_point_signature_descs = self._to_return_values(obj=result, return_as="map_of_string_to_func_signature_desc")
-        self.entry_point_signature_descs = entry_point_signature_descs
+        self.entry_point_signature_descs = self._to_return_values(obj=result, return_as="map_of_string_to_func_signature_desc")
 
     def terminate(self):
         self._client.close()
@@ -761,6 +761,9 @@ class Client:
     def ping(self):
         result = self._client.call("engine_globals_service.call_sync_on_worker_thread.ping")
         return self._to_str(obj=result)
+
+    def get_entry_point_signature_descs(self):
+        return self.entry_point_signature_descs
 
     def call(self, func_name, *args):
         desc = self.entry_point_signature_descs[func_name]
