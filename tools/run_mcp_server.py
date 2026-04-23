@@ -36,33 +36,7 @@ _MAX_IMAGE_DIM = 256
 _STABLE_NAME_CAMERA_SENSOR = "__SP_CAMERA_SENSOR__"
 _M_HYPERSIM_CAMERA_FROM_UNREAL_CAMERA = np.matrix([[0, 1, 0], [0, 0, 1], [-1, 0, 0]], dtype=np.float32)
 
-_EXEC_NAMESPACE_DESCS = {
-    "math": "Python math module",
-    "np": "NumPy",
-    "spear": "SPEAR Python module",
-    "instance": "spear.Instance connected to the running engine",
-    "game": "game world scoped services (None if no game)",
-    "editor": "editor world scoped services (None if no editor)",
-    "viewport_desc": "dict with camera pose, FOV, viewport size",
-    "before_execute": "dict of viewport data captured before agent code runs (see inner keys below, identical to after_execute when calling the 'get_viewport_data' tool)",
-    "after_execute": "dict of viewport data captured after agent code runs (see inner keys below, identical to before_execute when calling the 'get_viewport_data' tool)"}
-
-_RENDER_DATA_DESCS = {
-    "final_tone_curve_hdr": "RGB image, uint8, (H,W,3)",
-    "depth_meters": "depth in meters, float32, (H,W)",
-    "world_position": "XYZ world coordinates, float32, (H,W,3)",
-    "world_normal": "surface normals in world space, float32, (H,W,3)",
-    "camera_normal": "surface normals in Hypersim camera space, float32, (H,W,3)",
-    "camera_position": "positions in Hypersim camera space, float32, (H,W,3)",
-    "segmentation_id_image": "per-pixel index into segmentation_id_descs, int32, (H,W)",
-    "segmentation_id_descs": "list of dicts with actor/component/material handles and names"}
-
-_SAVED_IMAGE_DESCS = {
-    "final_tone_curve_hdr.png": "RGB image",
-    "depth_meters.png": "depth shifted by min, divided by K = min(span, 7.5) meters",
-    "camera_normal.png": "surface normals in Hypersim camera space, (1+n)/2",
-    "camera_position.png": "positions in Hypersim camera space, per-channel median centered at 0.5, uniform K = min(2 * max_channel_abs_dev, 750)",
-    "segmentation_colors.png": "random colors per segmentation ID"}
+_EXEC_NAMESPACE_NAMES = ("math", "np", "spear", "instance", "game", "editor", "viewport_desc", "before_execute", "after_execute")
 
 
 #
@@ -123,13 +97,10 @@ def execute_code(code):
 
         # execute code
         _log(f"Executing code:\n\n\n{code}\n\n")
-        spear.register_log_func(func=_log)
         try:
             exec(code, _exec_namespace)
         except Exception:
             _log(f"EXCEPTION:\n{traceback.format_exc()}")
-        finally:
-            spear.unregister_log_func(func=_log)
 
         # attempt to clean up bad frame state
         if _instance._engine_service._frame_state == "idle":
@@ -173,17 +144,13 @@ def execute_editor_code(code):
 
         # execute code
         _log(f"Executing editor code:\n\n\n{code}\n\n")
-        spear.register_log_func(func=_log)
-        try:
-            with _instance.begin_frame():
-                try:
-                    _editor.python_service.execute_string(string=code, execution_scope="Public")
-                except RuntimeError:
-                    _log(f"EXCEPTION:\n{traceback.format_exc()}")
-            with _instance.end_frame():
-                pass
-        finally:
-            spear.unregister_log_func(func=_log)
+        with _instance.begin_frame():
+            try:
+                _editor.python_service.execute_string(string=code, execution_scope="Public")
+            except RuntimeError:
+                _log(f"EXCEPTION:\n{traceback.format_exc()}")
+        with _instance.end_frame():
+            pass
 
         _tool_suffix(world_desc=world_desc)
         return _get_log()
@@ -256,6 +223,9 @@ def _initialize_instance():
             _log("World state changed since last call. Clearing agent variables.")
             _exec_namespace.clear()
     _world_descs = world_descs
+
+    _game = None
+    _editor = None
 
     if game_available:
         _game = _instance.get_game()
@@ -350,6 +320,11 @@ def _initialize_actors():
     with _instance.end_frame():
         pass
 
+    # needed in case the segmentation service is still loading its materials
+    world_scoped_services.async_loading_service.wait_for_engine_idle()
+
+    # let temporal anti-aliasing etc accumulate additional information across multiple frames, and
+    # inserting an extra frame or two can fix occasional render-to-texture initialization issues
     _instance.step(num_frames=2)
     _log(f"Actors initialized: {image_width}x{image_height} camera, {'perspective' if viewport_desc['is_perspective'] else 'orthographic'} projection.")
 
@@ -542,30 +517,13 @@ def _log_status():
         _log(f"Game: {'not ' if _game is None else ''}available.")
         _log(f"Editor: {'not ' if _editor is None else ''}available.")
 
-    # log available variables
-    _log("Available variables:")
-    for name, desc in _EXEC_NAMESPACE_DESCS.items():
-        if name not in _exec_namespace:
-            continue
-        stale_suffix = ""
-        if name == "before_execute" and not _before_execute_populated:
-            stale_suffix = " (STALE — not populated this call)"
-        elif name == "after_execute" and not _after_execute_populated:
-            stale_suffix = " (STALE — not populated this call)"
-        _log(f"  {name}: {desc}{stale_suffix}")
+    # available namespace variables
+    names = [ name for name in _EXEC_NAMESPACE_NAMES if name in _exec_namespace ]
+    _log(f"Available variables: {', '.join(names)}")
 
-    # log inner keys of before_execute / after_execute dicts
-    _log("Inner keys of before_execute / after_execute dicts:")
-    for name, desc in _RENDER_DATA_DESCS.items():
-        _log(f"  {name}: {desc}")
-
-    # log saved images
-    _log(f"Saved images in {_SAVE_DIR}:")
     for key, populated in [("before_execute", _before_execute_populated), ("after_execute", _after_execute_populated)]:
-        stale_suffix = "" if populated else " (STALE — not saved this call)"
-        _log(f"  {key}/{stale_suffix}")
-        for filename, desc in _SAVED_IMAGE_DESCS.items():
-            _log(f"    {filename}: {desc}")
+        state = "up-to-date" if populated else "stale"
+        _log(f"Available images: {_SAVE_DIR}/{key}/*.png ({state})")
 
 
 #
@@ -582,13 +540,14 @@ def _rotate_log_file():
         os.remove(_log_file_prev)
     if os.path.exists(_log_file):
         os.rename(_log_file, _log_file_prev)
+        _log(f"Rotated previous log file to: {_log_file_prev}")
 
 def _log(*args):
     frame = inspect.currentframe()
     outer = inspect.getouterframes(frame)
     filename = os.path.basename(outer[1].filename)
     lineno = f"{outer[1].lineno:04}"
-    message = f"[SPEAR-MCP | {filename}:{lineno}] " + "".join([str(arg) for arg in args])
+    message = f"[spear-mcp | {filename}:{lineno}] " + "".join([str(arg) for arg in args])
     _log_lines.append(message)
     with open(_log_file, "a") as f:
         f.write(message + "\n")
@@ -598,13 +557,22 @@ def _get_log():
     _log_lines.clear()
     return result
 
-_rotate_log_file()
-
 
 #
 # Main
 #
 
 if __name__ == "__main__":
+
+    _rotate_log_file()
+
     _log("Server starting...")
-    _mcp.run(transport="stdio")
+
+    spear.register_log_func(func=_log)
+    try:
+        _mcp.run(transport="stdio")
+    except Exception:
+        _log(f"INTERNAL EXCEPTION:\n{traceback.format_exc()}")
+        raise
+    finally:
+        spear.unregister_log_func(func=_log)
