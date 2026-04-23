@@ -382,16 +382,16 @@ def convert_transform(transform, as_numpy=None, as_spear=None, as_quat=None, as_
 
 # Compose an array of transforms given in root-to-leaf order.
 def compose_transforms(transforms, as_numpy=None, as_spear=None, as_quat=None, as_array=None, as_matrix=None):
-    numpy_dicts = [ convert_transform(transform=t, as_numpy=True, as_matrix=True) for t in transforms ]
+    numpy_transforms = [ convert_transform(transform=t, as_numpy=True, as_matrix=True) for t in transforms ]
 
     t_composed = np.matrix(np.zeros(3)).T
     R_composed = np.matrix(np.identity(3))
     S_composed = np.matrix(np.identity(3))
 
-    for numpy_dict in numpy_dicts[::-1]:
-        t_current = numpy_dict["translation"]
-        R_current = numpy_dict["rotation"]
-        S_current = numpy_dict["scale"]
+    for numpy_transform in numpy_transforms[::-1]:
+        t_current = numpy_transform["translation"]
+        R_current = numpy_transform["rotation"]
+        S_current = numpy_transform["scale"]
 
         t_composed = R_current*S_current*t_composed + t_current
         R_composed = R_current*R_composed

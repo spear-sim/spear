@@ -46,7 +46,7 @@ def to_numpy_matrix_from_json_rotator(json_rotator, as_matrix=None):
 
 # JSON transform
 
-def to_numpy_dict_from_json_transform(json_transform, as_quat=None, as_array=None, as_matrix=None):
+def to_numpy_transform_from_json_transform(json_transform, as_quat=None, as_array=None, as_matrix=None):
     return spear.math.to_numpy_transform_from_spear_transform(spear_transform=to_spear_transform_from_json_transform(json_transform=json_transform), as_quat=as_quat, as_array=as_array, as_matrix=as_matrix)
 
 def to_numpy_matrix_from_json_transform(json_transform, as_matrix=None):

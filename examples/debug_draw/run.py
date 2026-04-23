@@ -31,6 +31,11 @@ component_descs = \
         "name": "sp_unlit_float16",
         "long_name": "DefaultSceneRoot.sp_unlit_float16_",
         "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]]/200.0, 0.0, 1.0)
+    },
+    {
+        "name": "sp_world_position",
+        "long_name": "DefaultSceneRoot.sp_world_position_",
+        "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]]/200.0, 0.0, 1.0)
     }
 ]
 
@@ -164,6 +169,11 @@ if __name__ == "__main__":
         unlit_component.PrimitiveRenderMode = "PRM_UseShowOnlyList" # use ShowOnlyActors
         unlit_component.ShowOnlyActors = bounding_box_actors[1:]
 
+        # configure the world-space position pass to only render bounding box actors
+        world_position_component = component_desc_map["sp_world_position"]["component"]
+        world_position_component.PrimitiveRenderMode = "PRM_UseShowOnlyList" # use ShowOnlyActors
+        world_position_component.ShowOnlyActors = bounding_box_actors[1:]
+
         # configure the segmentation pass to only render bounding box actors
         game.segmentation_service.set_allowed_actors(allowed_actors=bounding_box_actors[1:])
 
@@ -209,6 +219,29 @@ if __name__ == "__main__":
     image_file = os.path.realpath(os.path.join(images_dir, "segmentation.png"))
     spear.log("Saving image: ", image_file)
     plt.imsave(image_file, segmentation_image)
+
+    # save planar depth image
+
+    M_hypersim_camera_from_unreal_camera = np.array([[  0, 1, 0],
+                                                     [  0, 0, 1],
+                                                     [ -1, 0, 0]], dtype=np.float32)
+
+    camera_location = spear.math.to_numpy_array_from_spear_vector(spear_vector=viewport_desc["camera_location"], as_matrix=True)
+    R_world_from_camera = spear.math.to_numpy_matrix_from_spear_rotator(spear_rotator=viewport_desc["camera_rotation"], as_matrix=True)
+    R_camera_from_world = R_world_from_camera.T
+
+    world_position_image = component_desc_map["sp_world_position"]["data"][:,:,[0,1,2]]
+    world_position = np.matrix(world_position_image.reshape(-1, 3)).T
+    camera_position = M_hypersim_camera_from_unreal_camera*R_camera_from_world*(world_position - camera_location)
+    camera_position_image = camera_position.T.A.reshape(world_position_image.shape)
+
+    planar_depth_image = -camera_position_image[:,:,2]
+    K = min(750.0, float(np.max(planar_depth_image)))
+    planar_depth_image = np.clip(planar_depth_image, 0.0, K)/K
+
+    image_file = os.path.realpath(os.path.join(images_dir, "planar_depth.png"))
+    spear.log("Saving image: ", image_file)
+    plt.imsave(image_file, planar_depth_image)
 
     # cleanup
     with instance.begin_frame():
