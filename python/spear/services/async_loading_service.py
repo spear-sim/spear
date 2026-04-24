@@ -66,7 +66,7 @@ class AsyncLoadingService(spear.Service):
 
         are_streaming_levels_loading = False
         world = self.get_world()
-        streaming_levels = self._sp_world.GetStreamingLevels(World=spear.to_ptr(handle=world))
+        streaming_levels = self._sp_world.GetStreamingLevels(World=spear.to_ptr(handle=world), as_unreal_object=True) # need as_unreal_object=True because the return type is "TArray"
         for streaming_level in streaming_levels:
             is_level_loaded = streaming_level.IsLevelLoaded()
             is_level_visible = streaming_level.IsLevelVisible()
@@ -96,7 +96,7 @@ class AsyncLoadingService(spear.Service):
                 spear.log(f"    num_outstanding_distance_field_tasks = {num_outstanding_distance_field_tasks} (initialized = {is_distance_field_async_queue_initialized})")
                 spear.log(f"    num_remaining_assets                 = {num_remaining_assets}")
                 spear.log(f"    num_remaining_shader_jobs            = {num_remaining_shader_jobs} (initialized = {is_shader_compiling_manager_initialized})")
-                spear.log(f"    num_wanting_streaming_resources.     = {num_wanting_streaming_resources}")
+                spear.log(f"    num_wanting_streaming_resources      = {num_wanting_streaming_resources}")
                 spear.log(f"    are_streaming_levels_loading         = {are_streaming_levels_loading}")
 
         return engine_idle
