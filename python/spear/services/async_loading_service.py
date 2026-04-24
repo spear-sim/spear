@@ -66,7 +66,8 @@ class AsyncLoadingService(spear.Service):
 
         are_streaming_levels_loading = False
         world = self.get_world()
-        streaming_levels = self._sp_world.GetStreamingLevels(World=spear.to_ptr(handle=world), as_unreal_object=True) # need as_unreal_object=True because the return type is "TArray"
+
+        streaming_levels = self._sp_world.GetStreamingLevels(World=spear.to_ptr(handle=world))
         for streaming_level in streaming_levels:
             is_level_loaded = streaming_level.IsLevelLoaded()
             is_level_visible = streaming_level.IsLevelVisible()

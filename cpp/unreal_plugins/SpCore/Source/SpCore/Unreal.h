@@ -262,9 +262,7 @@ public:
             SP_ASSERT(false);
         }
         std::string str = toStdString(ustruct->GetPrefixCPP()) + toStdString(ustruct->GetName());
-
-        str.erase(0, str.find_first_not_of(" ")); // strip leading white space
-        str.erase(str.find_last_not_of(" ") + 1); // strip trailing white space
+        str = Std::join(Std::tokenize(str, " "), "");
 
         SP_ASSERT(str != "");
         return str;
@@ -272,11 +270,16 @@ public:
 
     static std::string getCppTypeAsString(FProperty* property)
     {
-        std::string str = toStdString(property->GetCPPType());
-
-        str.erase(0, str.find_first_not_of(" ")); // strip leading white space
-        str.erase(str.find_last_not_of(" ") + 1); // strip trailing white space
-
+        // FProperty::GetCPPType(&extended_type) fills extended_type with the template parameter suffix
+        // (e.g., "<int32>") for container properties like FArrayProperty, FSetProperty, and FMapProperty,
+        // and recurses into inner properties, so nested containers like TMap<FString, TArray<int32>> are
+        // handled without any special-casing here. Unreal inserts a space before ">" when nesting template
+        // closers (e.g. "TArray<TArray<int32> >") to work around an old MSVC parser limit, so we strip all
+        // whitespace, which is a safe operation because because C++ type names don't contain spaces.
+        FString extended_type;
+        FString type = property->GetCPPType(&extended_type);
+        std::string str = toStdString(type + extended_type);
+        str = Std::join(Std::tokenize(str, " "), "");
         SP_ASSERT(str != "");
         return str;
     }
