@@ -106,7 +106,7 @@ public:
             request_reinitialize_ = false;
             initializeImpl();
             std::vector<AActor*> actors = UnrealUtils::findActors(GetWorld());
-            requestDestroyProxyComponentsForAllTypes(actors);
+            unregisterAndDestroyProxyComponentsForAllTypes();
             requestCreateAndRegisterProxyComponentsForAllTypes(actors);
         } else if (IsInitialized()) {
             std::vector<AActor*> actors = UnrealUtils::findActors(GetWorld());
@@ -136,7 +136,7 @@ public:
             return;
         }
 
-        unregisterAllProxyComponents();
+        unregisterAndDestroyProxyComponentsForAllTypes();
         terminateImpl();
     }
 
@@ -158,13 +158,10 @@ protected:
         bIsInitialized = false;
     }
 
-    // Called from ThisClass::Initialize(), ThisClass::Tick(...)
+    // Called from ThisClass::Initialize(), ThisClass::Tick(...), ThisClass::Terminate()
     virtual void requestCreateAndRegisterProxyComponentsForAllTypes(const std::vector<AActor*>& actors) { SP_ASSERT(false); }
     virtual void requestUnregisterAndDestroyProxyComponentsForAllTypes(const std::vector<AActor*>& actors) { SP_ASSERT(false); }
-    virtual void requestDestroyProxyComponentsForAllTypes(const std::vector<AActor*>& actors) { SP_ASSERT(false); }
-
-    // Called from ThisClass::Terminate()
-    virtual void unregisterAllProxyComponents() { SP_ASSERT(false); }
+    virtual void unregisterAndDestroyProxyComponentsForAllTypes() { SP_ASSERT(false); }
 
 private:
     UPROPERTY(VisibleAnywhere, Category="SPEAR")

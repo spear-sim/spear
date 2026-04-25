@@ -26,180 +26,126 @@ engine_show_flag_settings["final_tone_curve_hdr"] = engine_show_flag_settings["f
 ]
 
 #
-# Without lighting
+# For the disable_all settings, we mimic various locations in the UE source code that turn off show flags, we
+# disable various show flags that are visible in the editor:
+#
+#   - FEngineShowFlags::DisableAdvancedFeatures()
+#   - UMoviePipelineObjectIdRenderPass::GetViewShowFlags(...)
+#   - General Show Flags, Advanced Show Flags, Light Types Show Flags, Lighting Components Show Flags,
+#     Lighting Features Show Flags, Post Processing Show Flags, Hidden Show Flags
 #
 
-engine_show_flag_settings["without_lighting"] = []
-
-# FEngineShowFlags::DisableAdvancedFeatures()
-# Excluded:
-#     unreal.EngineShowFlagsSetting(show_flag_name="PostProcessMaterial", enabled=False)
-
-engine_show_flag_settings["without_lighting"] = engine_show_flag_settings["without_lighting"] + \
+engine_show_flag_settings["disable_all"] = []
+engine_show_flag_settings["disable_all"] = engine_show_flag_settings["disable_all"] + \
 [
-    unreal.EngineShowFlagsSetting(show_flag_name="LensFlares", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="OnScreenDebug", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="EyeAdaptation", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="ColorGrading", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="CameraImperfections", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="DepthOfField", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="Vignette", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="Grain", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="SeparateTranslucency", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="ScreenPercentage", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="ScreenSpaceReflections", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="AmbientCubemap", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="AmbientOcclusion", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="IndirectLightingCache", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="LightShafts", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="HighResScreenshotMask", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="HMDDistortion", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="StereoRendering", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="AntiAliasing", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Atmosphere", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Bloom", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="CameraImperfections", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ColorGrading", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="DepthOfField", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="DistanceFieldAO", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="VolumetricFog", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="VolumetricLightmap", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="DynamicShadows", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="EyeAdaptation", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Fog", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Grain", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="HighResScreenshotMask", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="HitProxies", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="HMDDistortion", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="IndirectLightingCache", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LensFlares", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LightFunctions", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Lighting", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LightShafts", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LocalExposure", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="LumenGlobalIllumination", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="LumenReflections", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="MegaLights", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="VirtualShadowMapPersistentData", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="ShaderPrint", enabled=False)
-]
-
-# UMoviePipelineObjectIdRenderPass::GetViewShowFlags(...)
-# Excluded:
-#     unreal.EngineShowFlagsSetting(show_flag_name="PostProcessing", enabled=False)
-#     unreal.EngineShowFlagsSetting(show_flag_name="PostProcessMaterial", enabled=False)
-
-engine_show_flag_settings["without_lighting"] = engine_show_flag_settings["without_lighting"] + \
-[
-    unreal.EngineShowFlagsSetting(show_flag_name="ScreenPercentage", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="HitProxies", enabled=False)
-]
-
-# disable "General Show Flags" that are visible in the editor UI for scene capture components
-engine_show_flag_settings["without_lighting"] = engine_show_flag_settings["without_lighting"] + \
-[
-    unreal.EngineShowFlagsSetting(show_flag_name="AntiAliasing", enabled=False)
-]
-
-# disable "Advanced Show Flags" that are visible in the editor UI for scene capture components
-engine_show_flag_settings["without_lighting"] = engine_show_flag_settings["without_lighting"] + \
-[
-    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False)
-]
-
-# disable "Light Types Show Flags" that are visible in the editor UI for scene capture components
-engine_show_flag_settings["without_lighting"] = engine_show_flag_settings["without_lighting"] + \
-[
-    unreal.EngineShowFlagsSetting(show_flag_name="SkyLighting", enabled=False)
-]
-
-# disable "Lighting Components Show Flags" that are visible in the editor UI for scene capture components
-engine_show_flag_settings["without_lighting"] = engine_show_flag_settings["without_lighting"] + \
-[
-    unreal.EngineShowFlagsSetting(show_flag_name="AmbientOcclusion", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="DynamicShadows", enabled=False)
-]
-
-# disable "Lighting Features Show Flags" that are visible in the editor UI for scene capture components
-engine_show_flag_settings["without_lighting"] = engine_show_flag_settings["without_lighting"] + \
-[
-    unreal.EngineShowFlagsSetting(show_flag_name="AmbientCubemap", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="DistanceFieldAO", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="LightFunctions", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="LightShafts", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="ReflectionEnvironment", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="ScreenSpaceReflections", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="TexturedLightProfiles", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="VolumetricFog", enabled=False)
-]
-
-# disable "Post Processing Show Flags" that are visible in the editor UI for scene capture components
-engine_show_flag_settings["without_lighting"] = engine_show_flag_settings["without_lighting"] + \
-[
-    unreal.EngineShowFlagsSetting(show_flag_name="Bloom", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="EyeAdaptation", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="LocalExposure", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="MotionBlur", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="ToneCurve", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="Tonemapper", enabled=False)
-]
-
-# disable "Hidden Show Flags" that are visible in the editor UI for scene capture components
-engine_show_flag_settings["without_lighting"] = engine_show_flag_settings["without_lighting"] + \
-[
-    unreal.EngineShowFlagsSetting(show_flag_name="Lighting", enabled=False)
-]
-
-#
-# None (same as without_lighting except we also disable:
-#     Atmosphere, PostProcessing, PostProcessMaterial
-#
-
-engine_show_flag_settings["none"] = []
-engine_show_flag_settings["none"] = engine_show_flag_settings["none"] + \
-[
-    unreal.EngineShowFlagsSetting(show_flag_name="Atmosphere", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="OnScreenDebug", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="PostProcessing", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="PostProcessMaterial", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="LensFlares", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="OnScreenDebug", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="EyeAdaptation", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="ColorGrading", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="CameraImperfections", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="DepthOfField", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="Vignette", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="Grain", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="SeparateTranslucency", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="ScreenPercentage", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="ScreenSpaceReflections", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="AmbientOcclusion", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="IndirectLightingCache", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="LightShafts", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="HighResScreenshotMask", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="HMDDistortion", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="StereoRendering", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="DistanceFieldAO", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="VolumetricFog", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="VolumetricLightmap", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="LumenGlobalIllumination", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="LumenReflections", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="MegaLights", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="VirtualShadowMapPersistentData", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="ShaderPrint", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="ScreenPercentage", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="HitProxies", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="AntiAliasing", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="SkyLighting", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="AmbientOcclusion", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="DynamicShadows", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="AmbientCubemap", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="DistanceFieldAO", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="LightFunctions", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="LightShafts", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="ReflectionEnvironment", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ScreenPercentage", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="ScreenSpaceReflections", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="SeparateTranslucency", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ShaderPrint", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="SkyLighting", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="StereoRendering", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="TexturedLightProfiles", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="VolumetricFog", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="Bloom", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="EyeAdaptation", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="LocalExposure", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="MotionBlur", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="ToneCurve", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="Tonemapper", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="Lighting", enabled=False)
+    unreal.EngineShowFlagsSetting(show_flag_name="Vignette", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="VirtualShadowMapPersistentData", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="VolumetricFog", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="VolumetricLightmap", enabled=False)
 ]
 
 #
-# We intentially disable temporal antialiasing below. Otherwise, e.g., /SpContent/Materials/PPM_DiffuseColor
-# will be jittered across frames but not actually anti-aliased on any particular frame. On the other hand,
-# /SpContent/Materials/PPM_PostProcessInput2 won't be jittered across frames but will be anti-aliased on each
-# frame. This means we can't, e.g., divide PPM_PostProcessInput2 by PPM_DiffuseColor to estimate irradiance.
-# So we choose to disable temporal antialiasing, and implement our own anti-aliasing strategy with spatial
-# supersampling, similar to the strategy used in the MPPC_DefaultConfigWithLighting movie render queue config.
+# The disable_all_but_allow_post_processing_material settings are identical to disable_all except we allow
+# post-processing materials.
 #
+
+engine_show_flag_settings["disable_all_but_allow_post_processing_material"] = []
+engine_show_flag_settings["disable_all_but_allow_post_processing_material"] = engine_show_flag_settings["disable_all_but_allow_post_processing_material"] + \
+[
+    unreal.EngineShowFlagsSetting(show_flag_name="AmbientCubemap", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="AmbientOcclusion", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="AntiAliasing", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Atmosphere", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Bloom", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="CameraImperfections", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ColorGrading", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="DepthOfField", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="DistanceFieldAO", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="DynamicShadows", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="EyeAdaptation", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Fog", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Grain", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="HighResScreenshotMask", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="HitProxies", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="HMDDistortion", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="IndirectLightingCache", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LensFlares", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LightFunctions", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Lighting", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LightShafts", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LocalExposure", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LumenGlobalIllumination", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LumenReflections", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="MegaLights", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="MotionBlur", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="OnScreenDebug", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ReflectionEnvironment", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ScreenPercentage", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ScreenSpaceReflections", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="SeparateTranslucency", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ShaderPrint", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="SkyLighting", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="StereoRendering", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="TexturedLightProfiles", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ToneCurve", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Tonemapper", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Vignette", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="VirtualShadowMapPersistentData", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="VolumetricFog", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="VolumetricLightmap", enabled=False)
+]
+
+#
+# Lighting only
+#
+
+engine_show_flag_settings["lighting_only"] = []
+engine_show_flag_settings["lighting_only"] = engine_show_flag_settings["lighting_only"] + \
+[
+    unreal.EngineShowFlagsSetting(show_flag_name="LightingOnlyOverride", enabled=True),
+    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False)
+]
 
 #
 # With lighting
@@ -219,17 +165,6 @@ engine_show_flag_settings["with_lighting_diffuse_only"] = []
 engine_show_flag_settings["with_lighting_diffuse_only"] = engine_show_flag_settings["with_lighting_diffuse_only"] + \
 [
     unreal.EngineShowFlagsSetting(show_flag_name="Specular", enabled=False),
-    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False)
-]
-
-#
-# Lighting only
-#
-
-engine_show_flag_settings["lighting_only"] = []
-engine_show_flag_settings["lighting_only"] = engine_show_flag_settings["lighting_only"] + \
-[
-    unreal.EngineShowFlagsSetting(show_flag_name="LightingOnlyOverride", enabled=True),
     unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False)
 ]
 
@@ -262,7 +197,7 @@ blueprint_desc = \
             "channel_data_type": unreal.SpArrayDataType.U_INT8,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_CustomStencil",
-            "show_flag_settings": engine_show_flag_settings["without_lighting"],
+            "show_flag_settings": engine_show_flag_settings["disable_all_but_allow_post_processing_material"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R8
         },
@@ -353,7 +288,7 @@ blueprint_desc = \
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_MaterialAO",
-            "show_flag_settings": engine_show_flag_settings["without_lighting"],
+            "show_flag_settings": engine_show_flag_settings["disable_all_but_allow_post_processing_material"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R16F
         },
@@ -366,7 +301,7 @@ blueprint_desc = \
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_Metallic",
-            "show_flag_settings": engine_show_flag_settings["without_lighting"],
+            "show_flag_settings": engine_show_flag_settings["disable_all_but_allow_post_processing_material"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R16F
         },
@@ -379,7 +314,7 @@ blueprint_desc = \
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_Roughness",
-            "show_flag_settings": engine_show_flag_settings["without_lighting"],
+            "show_flag_settings": engine_show_flag_settings["disable_all_but_allow_post_processing_material"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R16F
         },
@@ -392,7 +327,7 @@ blueprint_desc = \
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_SceneDepth",
-            "show_flag_settings": engine_show_flag_settings["without_lighting"],
+            "show_flag_settings": engine_show_flag_settings["disable_all_but_allow_post_processing_material"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R16F
         },
@@ -405,7 +340,7 @@ blueprint_desc = \
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_SpCameraNormal",
-            "show_flag_settings": engine_show_flag_settings["without_lighting"],
+            "show_flag_settings": engine_show_flag_settings["disable_all_but_allow_post_processing_material"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
         },
@@ -418,7 +353,7 @@ blueprint_desc = \
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_SpDepthMeters",
-            "show_flag_settings": engine_show_flag_settings["without_lighting"],
+            "show_flag_settings": engine_show_flag_settings["disable_all_but_allow_post_processing_material"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R16F
         },
@@ -430,7 +365,7 @@ blueprint_desc = \
             "num_channels_per_pixel": 4,
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
-            "show_flag_settings": engine_show_flag_settings["none"],
+            "show_flag_settings": engine_show_flag_settings["disable_all"],
             "mesh_proxy_component_manager_class": unreal.SpObjectIdsProxyComponentManager,
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
@@ -443,7 +378,7 @@ blueprint_desc = \
             "num_channels_per_pixel": 4,
             "channel_data_type": unreal.SpArrayDataType.U_INT8,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
-            "show_flag_settings": engine_show_flag_settings["none"],
+            "show_flag_settings": engine_show_flag_settings["disable_all"],
             "mesh_proxy_component_manager_class": unreal.SpObjectIdsProxyComponentManager,
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8,
@@ -462,7 +397,7 @@ blueprint_desc = \
             "num_channels_per_pixel": 4,
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "capture_source": unreal.SceneCaptureSource.SCS_SCENE_COLOR_HDR, # needed to access negative values when there is no post-processing material
-            "show_flag_settings": engine_show_flag_settings["none"],
+            "show_flag_settings": engine_show_flag_settings["disable_all"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
         },
@@ -474,7 +409,7 @@ blueprint_desc = \
             "num_channels_per_pixel": 4,
             "channel_data_type": unreal.SpArrayDataType.U_INT8,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
-            "show_flag_settings": engine_show_flag_settings["none"],
+            "show_flag_settings": engine_show_flag_settings["disable_all"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8,
             "override_texture_render_target_srgb": True,
@@ -493,7 +428,7 @@ blueprint_desc = \
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_SpWorldPosition",
-            "show_flag_settings": engine_show_flag_settings["without_lighting"],
+            "show_flag_settings": engine_show_flag_settings["disable_all_but_allow_post_processing_material"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
         },
@@ -506,7 +441,7 @@ blueprint_desc = \
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_SpecularForLighting",
-            "show_flag_settings": engine_show_flag_settings["without_lighting"],
+            "show_flag_settings": engine_show_flag_settings["disable_all_but_allow_post_processing_material"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R16F
         },
@@ -519,7 +454,7 @@ blueprint_desc = \
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_WorldNormal",
-            "show_flag_settings": engine_show_flag_settings["without_lighting"],
+            "show_flag_settings": engine_show_flag_settings["disable_all_but_allow_post_processing_material"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
         }

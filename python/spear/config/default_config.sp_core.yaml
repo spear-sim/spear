@@ -15,6 +15,9 @@ SP_CORE:
   # being used by another instance.
   SHARED_MEMORY_INITIAL_UNIQUE_ID: 0
 
+  # Verbose debug printing for the proxy component system.
+  PROXY_COMPONENT_MANAGER:
+    VERBOSE: False
   MESH_PROXY_COMPONENT_MANAGER:
     VERBOSE: False
 

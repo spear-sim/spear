@@ -14,12 +14,13 @@
 #include <Components/SkeletalMeshComponent.h>
 #include <Components/StaticMeshComponent.h>
 #include <Engine/CollisionProfile.h>        // UCollisionProfile
+#include <Engine/EngineBaseTypes.h>         // ELevelTick
 #include <Engine/World.h>
 #include <GameFramework/Actor.h>
-#include <Engine/EngineBaseTypes.h>         // ELevelTick
 #include <Materials/MaterialInstanceDynamic.h>
 #include <Materials/MaterialInterface.h>
 #include <Math/Color.h>
+#include <UObject/Class.h>                  // UClass
 #include <UObject/StrongObjectPtr.h>        // TStrongObjectPtr
 #include <UObject/UObjectGlobals.h>         // LoadObject
 #include <UObject/WeakObjectPtrTemplates.h> // TWeakObjectPtr
@@ -50,8 +51,8 @@ struct MeshProxyGeometryDesc
 
 //
 // MeshProxyComponentManager inherits ProxyComponentManager<MeshProxyComponentManager, MeshProxyComponentData>
-// (CRTP) and owns per-material-slot proxy geometry bookkeeping. Derived classes (e.g.,
-// ObjectIdsMeshProxyComponentManager) override the virtual methods to customize material creation.
+// (CRTP) and owns per-material-slot proxy geometry bookkeeping. Derived classes (e.g., ObjectIdsMeshProxyComponentManager)
+// override the virtual methods to customize material creation.
 //
 
 class MeshProxyComponentManager : public ProxyComponentManager<MeshProxyComponentManager, MeshProxyComponentData>
@@ -95,12 +96,12 @@ public:
 
     bool shouldRegisterProxyForComponent(USceneComponent* component)
     {
-        return isVisible(component) && isAllowed(component);
+        return isVisible(component) && isAllowed(component) && isCompatibleType(component);
     }
 
     bool shouldUnregisterProxyForComponent(USceneComponent* component, MeshProxyComponentData* mesh_proxy_component_data)
     {
-        return !isVisible(component) || !isAllowed(component);
+        return !shouldRegisterProxyForComponent(component);
     }
 
     MeshProxyComponentData* registerProxyComponent(UStaticMeshComponent* proxy_component, UStaticMeshComponent* component)
@@ -178,7 +179,7 @@ public:
 
         if (shouldProxyComponentBeHiddenInViewport(component)) {
             proxy_component->SetVisibleInSceneCaptureOnly(true);
-            proxy_component->bCastDynamicShadow = true;
+            proxy_component->bCastDynamicShadow = false;
             proxy_component->bCastStaticShadow = false;
             proxy_component->bAffectDistanceFieldLighting = false;
             proxy_component->bAffectDynamicIndirectLighting = false;
@@ -305,6 +306,12 @@ private:
         }
 
         return true;
+    }
+
+    bool isCompatibleType(USceneComponent* component)
+    {
+        static std::set<UClass*> allowed_classes = {UStaticMeshComponent::StaticClass(), USkeletalMeshComponent::StaticClass()};
+        return allowed_classes.contains(component->GetClass());
     }
 
     uint32_t registerMeshProxyGeometryImpl(USceneComponent* component, UMaterialInterface* material)

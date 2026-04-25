@@ -66,12 +66,17 @@ if __name__ == "__main__":
         bounding_box_mesh = game.unreal_service.load_object(uclass="UStaticMesh", name="/Engine/BasicShapes/Cube.Cube")
         bounding_box_material = game.unreal_service.load_object(uclass="UMaterialInterface", name="/SpContent/Materials/M_LocalPositionMultipliedByObjectScale.M_LocalPositionMultipliedByObjectScale")
 
-        # compute bounding boxes from scene actors, excluding proxy component managers
-        actors = [ actor for actor in game.unreal_service.find_actors() if not actor.is_a(uclass="ASpProxyComponentManager") ]
+        # compute bounding boxes from scene actors
+        actors = [ actor for actor in game.unreal_service.find_actors() ]
+        actors = [ actor for actor in actors if not actor.is_a(uclass="ASpProxyComponentManager") ]
+
+        spear.log("Computing bounding box extents...")
 
         bounding_box_descs = [None]
         for actor in actors:
-            static_mesh_components = game.unreal_service.get_components_by_class(actor=actor, uclass="UStaticMeshComponent")
+
+            static_mesh_components = [ component for component in game.unreal_service.get_components_by_class(actor=actor, uclass="UStaticMeshComponent") ]
+            static_mesh_components = [ component for component in static_mesh_components if component.uclass == game.unreal_service.get_static_class(uclass="UStaticMeshComponent", as_handle=True) ]
 
             for static_mesh_component in static_mesh_components:
                 local_bounds = static_mesh_component.GetLocalBounds(Min={"X": 0.0, "Y": 0.0, "Z": 0.0}, Max={"X": 0.0, "Y": 0.0, "Z": 0.0}, as_dict=True)
@@ -92,7 +97,11 @@ if __name__ == "__main__":
                     "world_extent": world_extent,
                     "rotation": component_rotation})
 
+        spear.log("Finished computing bounding box extents.")
+
         num_bounding_boxes = len(bounding_box_descs)
+
+        spear.log("Debug drawing bounding boxes...")
 
         # generate colors for bounding boxes
         bounding_box_colors = np.zeros((num_bounding_boxes, 3))
@@ -108,6 +117,10 @@ if __name__ == "__main__":
                 Rotation=spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=desc["rotation"]),
                 Duration=60.0,
                 Thickness=2.0)
+
+        spear.log("Finished debug drawing bounding boxes.")
+
+        spear.log("Spawning bounding boxes...")
 
         # spawn bounding box mesh actors (visible in scene capture only, skip index 0)
         for desc in bounding_box_descs[1:]:
@@ -141,6 +154,8 @@ if __name__ == "__main__":
 
             desc["bounding_box_actor"] = bounding_box_actor
 
+        spear.log("Finished spawning bounding boxes.")
+
         # spawn camera sensor and get components
         bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
         bp_camera_sensor = game.unreal_service.spawn_actor(uclass=bp_camera_sensor_uclass)
@@ -150,13 +165,15 @@ if __name__ == "__main__":
             component_desc["component"] = game.unreal_service.get_component_by_name(actor=bp_camera_sensor, component_name=component_desc["long_name"], uclass="USpSceneCaptureComponent2D")
             components.append(component_desc["component"])
 
+        # create desc map
+        component_desc_map = { desc["name"]: desc for desc in component_descs }
+
         # configure camera to match viewport
         viewport_desc = game.rendering_service.get_current_viewport_desc()
         game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc)
 
         # configure capture component visibility routing
 
-        component_desc_map = { desc["name"]: desc for desc in component_descs }
         bounding_box_actors = [ None if desc is None else desc["bounding_box_actor"] for desc in bounding_box_descs ]
 
         # hide bounding boxes in the beauty pass
@@ -191,6 +208,8 @@ if __name__ == "__main__":
     # let temporal anti-aliasing etc accumulate additional information across multiple frames
     instance.step(num_frames=2)
 
+    spear.log("Getting segmentation data...")
+
     # get rendered frame
     with instance.begin_frame():
         pass
@@ -201,6 +220,8 @@ if __name__ == "__main__":
 
         object_ids_bgra_uint8_image = component_desc_map["sp_object_ids_uint8"]["data"]
         proxy_id_image, proxy_id_descs = game.segmentation_service.get_segmentation_data(object_ids_bgra_uint8_image=object_ids_bgra_uint8_image)
+
+    spear.log("Finished getting segmentation data.")
 
     # save images
     for component_desc in component_descs:
@@ -253,8 +274,12 @@ if __name__ == "__main__":
             component_desc["component"].Terminate()
         game.unreal_service.destroy_actor(actor=bp_camera_sensor)
 
+        spear.log("Destroying bounding boxes...")
+
         for bounding_box_actor in bounding_box_actors[1:]:
             game.unreal_service.destroy_actor(actor=bounding_box_actor)
+
+        spear.log("Finished destroying bounding boxes.")
 
         game.segmentation_service.terminate()
 

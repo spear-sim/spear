@@ -268,21 +268,15 @@ protected:
     void requestUnregisterAndDestroyProxyComponentsForAllTypes(const std::vector<AActor*>& actors) override
     {
         SP_ASSERT(mesh_proxy_component_manager_);
+        mesh_proxy_component_manager_->requestDecrementAndUnregisterProxyComponents();
         mesh_proxy_component_manager_->requestUnregisterAndDestroyProxyComponents<UStaticMeshComponent>(actors);
         mesh_proxy_component_manager_->requestUnregisterAndDestroyProxyComponents<USkeletalMeshComponent>(actors);
     }
 
-    void requestDestroyProxyComponentsForAllTypes(const std::vector<AActor*>& actors) override
+    void unregisterAndDestroyProxyComponentsForAllTypes() override
     {
         SP_ASSERT(mesh_proxy_component_manager_);
-        mesh_proxy_component_manager_->requestDestroyProxyComponents<UStaticMeshComponent>(actors);
-        mesh_proxy_component_manager_->requestDestroyProxyComponents<USkeletalMeshComponent>(actors);
-    }
-
-    void unregisterAllProxyComponents() override
-    {
-        SP_ASSERT(mesh_proxy_component_manager_);
-        mesh_proxy_component_manager_->unregisterAllProxyComponents();
+        mesh_proxy_component_manager_->unregisterAndDestroyProxyComponents();
     }
 
 private:

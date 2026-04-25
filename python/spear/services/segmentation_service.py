@@ -140,10 +140,14 @@ class SegmentationService(spear.Service):
         visible_raw_ids, visible_raw_ids_inverse = np.unique(raw_id_image, return_inverse=True)
 
         if not np.all(np.isin(visible_raw_ids, global_raw_ids)):
+            import matplotlib.pyplot as plt
+            visible_raw_ids_not_in_global_raw_ids = visible_raw_ids[np.logical_not(np.isin(visible_raw_ids, global_raw_ids))]
             spear.log("visible_raw_ids: ", visible_raw_ids)
             spear.log("global_raw_ids: ", global_raw_ids)
-            import matplotlib.pyplot as plt
-            plt.imshow(object_ids_bgra_uint8_image)
+            spear.log("visible_raw_ids not in global_raw_ids: ", visible_raw_ids_not_in_global_raw_ids)
+            fig, (ax1, ax2) = plt.subplots(2, 1)
+            ax1.imshow(object_ids_bgra_uint8_image)
+            ax2.imshow(np.isin(raw_id_image, visible_raw_ids_not_in_global_raw_ids))
             plt.show()
 
         # verify all visible raw IDs are known to the manager
