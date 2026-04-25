@@ -4,7 +4,6 @@
 #
 
 import glob
-import inspect
 import os
 import psutil
 import spear
@@ -140,9 +139,6 @@ class Instance():
     class WorldScopedServices():
         def __init__(self, engine_service, shared_memory_service, world_registry_service, sp_func_service, engine_globals_service, config):
 
-            # needed internally in _is_engine_idle(...)
-            self._engine_service = engine_service
-
             # needed internally in get_unreal_object(...)
             self._sp_func_service = sp_func_service
             self._config = config
@@ -215,22 +211,6 @@ class Instance():
             self.navigation_service.set_world(world=world)
             self.segmentation_service.set_world(world=world)
             self.async_loading_service.set_world(world=world)
-
-        def _is_engine_idle(self):
-            with self._engine_service.begin_frame():
-                result = self.async_loading_service.is_engine_idle()
-            with self._engine_service.end_frame():
-                pass
-            return result
-
-        def _is_engine_idle_in_editor_script(self):
-            with self._engine_service.begin_frame():
-                result = self.async_loading_service.is_engine_idle()
-            yield
-            with self._engine_service.end_frame():
-                pass
-            yield
-            return result
 
     class GameWorldScopedServices(WorldScopedServices):
         def __init__(self, engine_service, shared_memory_service, world_registry_service, sp_func_service, engine_globals_service, config):
@@ -333,10 +313,10 @@ class Instance():
         self._engine_service.initialize()
 
         # wait until world initialized (if not wait_for_world_initialized then only try once)
-        wait_until_desc = self._get_wait_until_desc(
+        wait_for_desc = self._get_wait_for_desc(
             wait=wait_for_world_initialized, max_time_seconds=wait_for_world_initialized_max_time_seconds, sleep_time_seconds=wait_for_world_initialized_sleep_time_seconds,
             config=self._config.SPEAR.INSTANCE.INITIALIZE_WAIT_FOR_WORLD_INITIALIZED)
-        self._wait_until(func=self._is_any_world_initialized, wait_until_desc=wait_until_desc)
+        self._wait_for(func=self._is_any_world_initialized, wait_for_desc=wait_for_desc)
 
         # warm up
         warm_up_desc = self._get_warm_up_desc(
@@ -360,10 +340,10 @@ class Instance():
         self._engine_service.initialize()
 
         # wait until world initialized
-        wait_until_desc = self._get_wait_until_desc(
+        wait_for_desc = self._get_wait_for_desc(
             wait=wait_for_world_initialized, max_time_seconds=wait_for_world_initialized_max_time_seconds, sleep_time_seconds=wait_for_world_initialized_sleep_time_seconds,
             config=self._config.SPEAR.INSTANCE.INITIALIZE_WAIT_FOR_WORLD_INITIALIZED)
-        yield from self._wait_until_in_editor_script(func=self._is_any_world_initialized, wait_until_desc=wait_until_desc)
+        self._wait_for(func=self._is_any_world_initialized, wait_for_desc=wait_for_desc)
 
         # warm up
         warm_up_desc = self._get_warm_up_desc(
@@ -411,10 +391,10 @@ class Instance():
         self._engine_service.initialize()
 
         # wait until world initialized (if not wait_for_world_initialized then only try once)
-        wait_until_desc = self._get_wait_until_desc(
+        wait_for_desc = self._get_wait_for_desc(
             wait=wait_for_world_initialized, max_time_seconds=wait_for_world_initialized_max_time_seconds, sleep_time_seconds=wait_for_world_initialized_sleep_time_seconds,
             config=self._config.SPEAR.INSTANCE.GET_EDITOR_WAIT_FOR_WORLD_INITIALIZED)
-        self._wait_until(func=self._is_editor_world_initialized, wait_until_desc=wait_until_desc)
+        self._wait_for(func=self._is_editor_world_initialized, wait_for_desc=wait_for_desc)
 
         # warm up
         warm_up_desc = self._get_warm_up_desc(
@@ -433,12 +413,14 @@ class Instance():
         with self.end_frame():
             pass
 
-        # wait for engine idle
-        if wait_for_engine_idle is None or wait_for_engine_idle:
-            wait_until_desc = self._get_wait_until_desc(
-                wait=wait_for_engine_idle, max_time_seconds=wait_for_engine_idle_max_time_seconds, sleep_time_seconds=wait_for_engine_idle_sleep_time_seconds,
-                config=self._config.SPEAR.INSTANCE.GET_EDITOR_WAIT_FOR_ENGINE_IDLE)
-            self._wait_until(func=self._editor._is_engine_idle, wait_until_desc=wait_until_desc)
+        # wait for engine idle (or try once if retry is False)
+        wait_for_desc = self._get_wait_for_desc(
+            wait=wait_for_engine_idle, max_time_seconds=wait_for_engine_idle_max_time_seconds, sleep_time_seconds=wait_for_engine_idle_sleep_time_seconds,
+            config=self._config.SPEAR.INSTANCE.GET_EDITOR_WAIT_FOR_ENGINE_IDLE)
+        if wait_for_desc["retry"]:
+            self._editor.async_loading_service.wait_for_engine_idle(max_time_seconds=wait_for_desc["max_time_seconds"], sleep_time_seconds=wait_for_desc["sleep_time_seconds"])
+        else:
+            assert self._editor.async_loading_service.is_engine_idle()
 
         return self._editor
 
@@ -456,10 +438,10 @@ class Instance():
         self._engine_service.initialize()
 
         # wait until world initialized
-        wait_until_desc = self._get_wait_until_desc(
+        wait_for_desc = self._get_wait_for_desc(
             wait=wait_for_world_initialized, max_time_seconds=wait_for_world_initialized_max_time_seconds, sleep_time_seconds=wait_for_world_initialized_sleep_time_seconds,
             config=self._config.SPEAR.INSTANCE.GET_EDITOR_WAIT_FOR_WORLD_INITIALIZED)
-        yield from self._wait_until_in_editor_script(func=self._is_editor_world_initialized, wait_until_desc=wait_until_desc)
+        self._wait_for(func=self._is_editor_world_initialized, wait_for_desc=wait_for_desc)
 
         # warm up
         warm_up_desc = self._get_warm_up_desc(
@@ -480,12 +462,14 @@ class Instance():
             pass
         yield
 
-        # wait for engine idle
-        if wait_for_engine_idle is None or wait_for_engine_idle:
-            wait_until_desc = self._get_wait_until_desc(
-                wait=wait_for_engine_idle, max_time_seconds=wait_for_engine_idle_max_time_seconds, sleep_time_seconds=wait_for_engine_idle_sleep_time_seconds,
-                config=self._config.SPEAR.INSTANCE.GET_EDITOR_WAIT_FOR_ENGINE_IDLE)
-            yield from self._wait_until_in_editor_script(func=self._editor._is_engine_idle_in_editor_script, wait_until_desc=wait_until_desc)
+        # wait for engine idle (or try once if retry is False)
+        wait_for_desc = self._get_wait_for_desc(
+            wait=wait_for_engine_idle, max_time_seconds=wait_for_engine_idle_max_time_seconds, sleep_time_seconds=wait_for_engine_idle_sleep_time_seconds,
+            config=self._config.SPEAR.INSTANCE.GET_EDITOR_WAIT_FOR_ENGINE_IDLE)
+        if wait_for_desc["retry"]:
+            yield from self._editor.async_loading_service.wait_for_engine_idle_in_editor_script(max_time_seconds=wait_for_desc["max_time_seconds"], sleep_time_seconds=wait_for_desc["sleep_time_seconds"])
+        else:
+            assert self._editor.async_loading_service.is_engine_idle()
 
         return self._editor
 
@@ -518,10 +502,10 @@ class Instance():
         self._engine_service.initialize()
 
         # wait until world initialized (if not wait_for_world_initialized then only try once)
-        wait_until_desc = self._get_wait_until_desc(
+        wait_for_desc = self._get_wait_for_desc(
             wait=wait_for_world_initialized, max_time_seconds=wait_for_world_initialized_max_time_seconds, sleep_time_seconds=wait_for_world_initialized_sleep_time_seconds,
             config=self._config.SPEAR.INSTANCE.GET_GAME_WAIT_FOR_WORLD_INITIALIZED)
-        self._wait_until(func=self._is_game_world_initialized, wait_until_desc=wait_until_desc)
+        self._wait_for(func=self._is_game_world_initialized, wait_for_desc=wait_for_desc)
 
         # warm up
         warm_up_desc = self._get_warm_up_desc(
@@ -540,12 +524,14 @@ class Instance():
         with self.end_frame():
             pass
 
-        # wait for engine idle
-        if wait_for_engine_idle is None or wait_for_engine_idle:
-            wait_until_desc = self._get_wait_until_desc(
-                wait=wait_for_engine_idle, max_time_seconds=wait_for_engine_idle_max_time_seconds, sleep_time_seconds=wait_for_engine_idle_sleep_time_seconds,
-                config=self._config.SPEAR.INSTANCE.GET_GAME_WAIT_FOR_ENGINE_IDLE)
-            self._wait_until(func=self._game._is_engine_idle, wait_until_desc=wait_until_desc)
+        # wait for engine idle (or try once if retry is False)
+        wait_for_desc = self._get_wait_for_desc(
+            wait=wait_for_engine_idle, max_time_seconds=wait_for_engine_idle_max_time_seconds, sleep_time_seconds=wait_for_engine_idle_sleep_time_seconds,
+            config=self._config.SPEAR.INSTANCE.GET_GAME_WAIT_FOR_ENGINE_IDLE)
+        if wait_for_desc["retry"]:
+            self._game.async_loading_service.wait_for_engine_idle(max_time_seconds=wait_for_desc["max_time_seconds"], sleep_time_seconds=wait_for_desc["sleep_time_seconds"])
+        else:
+            assert self._game.async_loading_service.is_engine_idle()
 
         return self._game
 
@@ -560,10 +546,10 @@ class Instance():
         self._engine_service.initialize()
 
         # wait until world initialized
-        wait_until_desc = self._get_wait_until_desc(
+        wait_for_desc = self._get_wait_for_desc(
             wait=wait_for_world_initialized, max_time_seconds=wait_for_world_initialized_max_time_seconds, sleep_time_seconds=wait_for_world_initialized_sleep_time_seconds,
             config=self._config.SPEAR.INSTANCE.GET_GAME_WAIT_FOR_WORLD_INITIALIZED)
-        yield from self._wait_until_in_editor_script(func=self._is_game_world_initialized, wait_until_desc=wait_until_desc)
+        self._wait_for(func=self._is_game_world_initialized, wait_for_desc=wait_for_desc)
 
         # warm up
         warm_up_desc = self._get_warm_up_desc(
@@ -584,12 +570,14 @@ class Instance():
             pass
         yield
 
-        # wait for engine idle
-        if wait_for_engine_idle is None or wait_for_engine_idle:
-            wait_until_desc = self._get_wait_until_desc(
-                wait=wait_for_engine_idle, max_time_seconds=wait_for_engine_idle_max_time_seconds, sleep_time_seconds=wait_for_engine_idle_sleep_time_seconds,
-                config=self._config.SPEAR.INSTANCE.GET_GAME_WAIT_FOR_ENGINE_IDLE)
-            yield from self._wait_until_in_editor_script(func=self._game._is_engine_idle_in_editor_script, wait_until_desc=wait_until_desc)
+        # wait for engine idle (or try once if retry is False)
+        wait_for_desc = self._get_wait_for_desc(
+            wait=wait_for_engine_idle, max_time_seconds=wait_for_engine_idle_max_time_seconds, sleep_time_seconds=wait_for_engine_idle_sleep_time_seconds,
+            config=self._config.SPEAR.INSTANCE.GET_GAME_WAIT_FOR_ENGINE_IDLE)
+        if wait_for_desc["retry"]:
+            yield from self._game.async_loading_service.wait_for_engine_idle_in_editor_script(max_time_seconds=wait_for_desc["max_time_seconds"], sleep_time_seconds=wait_for_desc["sleep_time_seconds"])
+        else:
+            assert self._game.async_loading_service.is_engine_idle()
 
         return self._game
 
@@ -912,10 +900,10 @@ class Instance():
         spear.log("        Finished initializing client.")
 
     #
-    # _wait_until
+    # _wait_for
     #
 
-    def _get_wait_until_desc(self, wait, max_time_seconds, sleep_time_seconds, config):
+    def _get_wait_for_desc(self, wait, max_time_seconds, sleep_time_seconds, config):
         if wait is None:
             retry = True
             max_time_seconds = config.MAX_TIME_SECONDS
@@ -924,7 +912,9 @@ class Instance():
             retry = wait
         return {"retry": retry, "max_time_seconds": max_time_seconds, "sleep_time_seconds": sleep_time_seconds}
 
-    def _wait_until_impl_prefix(self, func):
+    def _wait_for(self, func, wait_for_desc):
+        spear.log_current_function(prefix="    ")
+
         func_name = ""
         if hasattr(func, "__qualname__"):
             func_name = func.__qualname__
@@ -935,7 +925,10 @@ class Instance():
 
         spear.log("        Waiting for function to return true: ", func_name)
 
-    def _wait_until_impl(self, func, retry, max_time_seconds, sleep_time_seconds):
+        retry = wait_for_desc["retry"]
+        max_time_seconds = wait_for_desc["max_time_seconds"]
+        sleep_time_seconds = wait_for_desc["sleep_time_seconds"]
+
         if retry:
             spear.log(f"        Waiting for up to {max_time_seconds} seconds, retrying every {sleep_time_seconds} seconds...")
             success = func()
@@ -951,35 +944,7 @@ class Instance():
             spear.log("        Attempting to call function once...")
             success = func()
             elapsed_time_seconds = 0.0
-        return success, elapsed_time_seconds
 
-    def _wait_until_impl_in_editor_script(self, func, retry, max_time_seconds, sleep_time_seconds):
-        is_generator_func = inspect.isgeneratorfunction(func)
-
-        def call_func():
-            if is_generator_func:
-                return (yield from func())
-            else:
-                return func()
-
-        if retry:
-            spear.log(f"        Waiting for up to {max_time_seconds} seconds, retrying every {sleep_time_seconds} seconds...")
-            success = yield from call_func()
-            start_time_seconds = time.time()
-            elapsed_time_seconds = time.time() - start_time_seconds
-            while not success and elapsed_time_seconds < max_time_seconds:
-                success = yield from call_func()
-                if success:
-                    break
-                yield from self.step_in_editor_script(num_frames=1)
-                elapsed_time_seconds = time.time() - start_time_seconds
-        else:
-            spear.log("        Attempting to call function once...")
-            success = yield from call_func()
-            elapsed_time_seconds = 0.0
-        return success, elapsed_time_seconds
-
-    def _wait_until_impl_suffix(self, retry, success, elapsed_time_seconds):
         if not success:
             spear.log("        ERROR: Function never returned true, giving up...")
             self._terminate_client(verbose=True, log_prefix="        ")
@@ -989,18 +954,6 @@ class Instance():
             spear.log(f"        Finished waiting for function to return true (waited for {elapsed_time_seconds:.2f} seconds).")
         else:
             spear.log(f"        Finished waiting for function to return true.")
-
-    def _wait_until(self, func, wait_until_desc):
-        spear.log_current_function(prefix="    ")
-        self._wait_until_impl_prefix(func=func)
-        success, elapsed_time_seconds = self._wait_until_impl(func=func, retry=wait_until_desc["retry"], max_time_seconds=wait_until_desc["max_time_seconds"], sleep_time_seconds=wait_until_desc["sleep_time_seconds"])
-        self._wait_until_impl_suffix(retry=wait_until_desc["retry"], success=success, elapsed_time_seconds=elapsed_time_seconds)
-
-    def _wait_until_in_editor_script(self, func, wait_until_desc):
-        spear.log_current_function(prefix="    ")
-        self._wait_until_impl_prefix(func=func)
-        success, elapsed_time_seconds = yield from self._wait_until_impl_in_editor_script(func=func, retry=wait_until_desc["retry"], max_time_seconds=wait_until_desc["max_time_seconds"], sleep_time_seconds=wait_until_desc["sleep_time_seconds"])
-        self._wait_until_impl_suffix(retry=wait_until_desc["retry"], success=success, elapsed_time_seconds=elapsed_time_seconds)
 
     #
     # _warm_up

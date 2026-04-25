@@ -47,102 +47,237 @@ class AsyncLoadingService(spear.Service):
 
         self._navigation_system = self._sp_navigation_system_v1.GetNavigationSystem()
 
+    #
+    # Catch-all functions
+    #
+
     def is_engine_idle(self, verbose=False):
 
+        async_loading_idle = self.is_async_loading_idle()
+        asset_registry_idle = self.is_asset_registry_idle()
+        distance_field_async_queue_idle, num_outstanding_distance_field_tasks, is_distance_field_async_queue_initialized = self.is_distance_field_async_queue_idle()
+        asset_compiling_manager_idle, num_remaining_assets = self.is_asset_compiling_manager_idle()
+        navigation_system_idle, num_remaining_build_tasks = self.is_navigation_system_idle()
+        shader_compiling_manager_idle, num_remaining_shader_jobs, is_shader_compiling_manager_initialized = self.is_shader_compiling_manager_idle()
+        streaming_manager_idle, num_wanting_streaming_resources = self.is_streaming_manager_idle()
+        streaming_levels_idle = self.is_streaming_levels_idle()
+
+        engine_idle = \
+            async_loading_idle and \
+            asset_registry_idle and \
+            distance_field_async_queue_idle and \
+            asset_compiling_manager_idle and \
+            navigation_system_idle and \
+            shader_compiling_manager_idle and \
+            streaming_manager_idle and \
+            streaming_levels_idle
+
+        if verbose:
+            if not engine_idle or not is_distance_field_async_queue_initialized or not is_shader_compiling_manager_initialized:
+                spear.log(f"engine_idle = {engine_idle}")
+                spear.log(f"    is_async_loading                     = {not async_loading_idle}")
+                spear.log(f"    is_loading_assets                    = {not asset_registry_idle}")
+                spear.log(f"    num_outstanding_distance_field_tasks = {num_outstanding_distance_field_tasks} (initialized = {is_distance_field_async_queue_initialized})")
+                spear.log(f"    num_remaining_assets                 = {num_remaining_assets}")
+                spear.log(f"    num_remaining_build_tasks            = {num_remaining_build_tasks}")
+                spear.log(f"    num_remaining_shader_jobs            = {num_remaining_shader_jobs} (initialized = {is_shader_compiling_manager_initialized})")
+                spear.log(f"    num_wanting_streaming_resources      = {num_wanting_streaming_resources}")
+                spear.log(f"    are_streaming_levels_loading         = {not streaming_levels_idle}")
+
+        return engine_idle
+
+    def wait_for_engine_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        self._wait_for(func=self.is_engine_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+
+    def wait_for_engine_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        yield from self._wait_for_in_editor_script(func=self.is_engine_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+
+    #
+    # Fine-grained functions
+    #
+
+    def is_async_loading_idle(self, verbose=False):
         is_async_loading = self._engine_globals_service.is_async_loading()
+        async_loading_idle = not is_async_loading
+        if verbose:
+            spear.log(f"is_async_loading = {is_async_loading}")
+        return async_loading_idle
+
+    def is_asset_registry_idle(self, verbose=False):
         is_loading_assets = self._asset_registry.IsLoadingAssets()
+        asset_registry_idle = not is_loading_assets
+        if verbose:
+            spear.log(f"is_loading_assets = {is_loading_assets}")
+        return asset_registry_idle
 
-        num_remaining_assets = self._sp_asset_compiling_manager.GetNumRemainingAssets()
-        num_remaining_build_tasks = self._sp_navigation_system_v1.GetNumRemainingBuildTasks(NavigationSystem=self._navigation_system)
-        num_wanting_streaming_resources = self._sp_streaming_manager.GetNumWantingResources()
-
+    def is_distance_field_async_queue_idle(self, verbose=False):
         return_values = self._sp_distance_field_async_queue.GetNumOutstandingTasks(as_dict=True)
         num_outstanding_distance_field_tasks = return_values["ReturnValue"]
         is_distance_field_async_queue_initialized = return_values["bIsInitialized"]
+        distance_field_async_queue_idle = num_outstanding_distance_field_tasks == 0
+        if verbose:
+            spear.log(f"num_outstanding_distance_field_tasks = {num_outstanding_distance_field_tasks} (initialized = {is_distance_field_async_queue_initialized})")
+        return distance_field_async_queue_idle, num_outstanding_distance_field_tasks, is_distance_field_async_queue_initialized
 
+    def is_asset_compiling_manager_idle(self, verbose=False):
+        num_remaining_assets = self._sp_asset_compiling_manager.GetNumRemainingAssets()
+        asset_compiling_manager_idle = num_remaining_assets == 0
+        if verbose:
+            spear.log(f"num_remaining_assets = {num_remaining_assets}")
+        return asset_compiling_manager_idle, num_remaining_assets
+
+    def is_navigation_system_idle(self, verbose=False):
+        num_remaining_build_tasks = self._sp_navigation_system_v1.GetNumRemainingBuildTasks(NavigationSystem=self._navigation_system)
+        navigation_system_idle = num_remaining_build_tasks == 0
+        if verbose:
+            spear.log(f"num_remaining_build_tasks = {num_remaining_build_tasks}")
+        return navigation_system_idle, num_remaining_build_tasks
+
+    def is_shader_compiling_manager_idle(self, verbose=False):
         return_values = self._sp_shader_compiling_manager.GetNumRemainingJobs(as_dict=True)
         num_remaining_shader_jobs = return_values["ReturnValue"]
         is_shader_compiling_manager_initialized = return_values["bIsInitialized"]
+        shader_compiling_manager_idle = num_remaining_shader_jobs == 0
+        if verbose:
+            spear.log(f"num_remaining_shader_jobs = {num_remaining_shader_jobs} (initialized = {is_shader_compiling_manager_initialized})")
+        return shader_compiling_manager_idle, num_remaining_shader_jobs, is_shader_compiling_manager_initialized
 
+    def is_streaming_manager_idle(self, verbose=False):
+        num_wanting_streaming_resources = self._sp_streaming_manager.GetNumWantingResources()
+        streaming_manager_idle = num_wanting_streaming_resources == 0
+        if verbose:
+            spear.log(f"num_wanting_streaming_resources = {num_wanting_streaming_resources}")
+        return streaming_manager_idle, num_wanting_streaming_resources
+
+    def is_streaming_levels_idle(self, verbose=False):
         are_streaming_levels_loading = False
         world = self.get_world()
-
         streaming_levels = self._sp_world.GetStreamingLevels(World=spear.to_ptr(handle=world))
         for streaming_level in streaming_levels:
             is_level_loaded = streaming_level.IsLevelLoaded()
             is_level_visible = streaming_level.IsLevelVisible()
             should_be_visible = self._sp_level_streaming.ShouldBeVisible(LevelStreaming=streaming_level)
-
             if not is_level_loaded:
                 are_streaming_levels_loading = True
             if should_be_visible and not is_level_visible:
                 are_streaming_levels_loading = True
-
-        engine_idle = \
-            not is_async_loading and \
-            not is_loading_assets and \
-            num_outstanding_distance_field_tasks == 0 and \
-            num_remaining_assets == 0 and \
-            num_remaining_build_tasks == 0 and \
-            num_remaining_shader_jobs == 0 and \
-            num_wanting_streaming_resources == 0 and \
-            num_wanting_streaming_resources == 0 and \
-            not are_streaming_levels_loading
-
+        streaming_levels_idle = not are_streaming_levels_loading
         if verbose:
-            if not engine_idle or not is_distance_field_async_queue_initialized or not is_shader_compiling_manager_initialized:
-                spear.log(f"engine_idle = {engine_idle}")
-                spear.log(f"    is_async_loading                     = {is_async_loading}")
-                spear.log(f"    is_loading_assets                    = {is_loading_assets}")
-                spear.log(f"    num_outstanding_distance_field_tasks = {num_outstanding_distance_field_tasks} (initialized = {is_distance_field_async_queue_initialized})")
-                spear.log(f"    num_remaining_assets                 = {num_remaining_assets}")
-                spear.log(f"    num_remaining_shader_jobs            = {num_remaining_shader_jobs} (initialized = {is_shader_compiling_manager_initialized})")
-                spear.log(f"    num_wanting_streaming_resources      = {num_wanting_streaming_resources}")
-                spear.log(f"    are_streaming_levels_loading         = {are_streaming_levels_loading}")
+            spear.log(f"are_streaming_levels_loading = {are_streaming_levels_loading}")
+        return streaming_levels_idle
 
-        return engine_idle
+    def wait_for_async_loading_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        self._wait_for(func=self.is_async_loading_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
 
-    def wait_for_engine_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+    def wait_for_async_loading_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        yield from self._wait_for_in_editor_script(func=self.is_async_loading_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+
+    def wait_for_asset_registry_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        self._wait_for(func=self.is_asset_registry_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+
+    def wait_for_asset_registry_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        yield from self._wait_for_in_editor_script(func=self.is_asset_registry_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+
+    def wait_for_distance_field_async_queue_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        self._wait_for(func=self.is_distance_field_async_queue_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+
+    def wait_for_distance_field_async_queue_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        yield from self._wait_for_in_editor_script(func=self.is_distance_field_async_queue_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+
+    def wait_for_asset_compiling_manager_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        self._wait_for(func=self.is_asset_compiling_manager_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+
+    def wait_for_asset_compiling_manager_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        yield from self._wait_for_in_editor_script(func=self.is_asset_compiling_manager_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+
+    def wait_for_navigation_system_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        self._wait_for(func=self.is_navigation_system_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+
+    def wait_for_navigation_system_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        yield from self._wait_for_in_editor_script(func=self.is_navigation_system_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+
+    def wait_for_shader_compiling_manager_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        self._wait_for(func=self.is_shader_compiling_manager_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+
+    def wait_for_shader_compiling_manager_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        yield from self._wait_for_in_editor_script(func=self.is_shader_compiling_manager_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+
+    def wait_for_streaming_manager_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        self._wait_for(func=self.is_streaming_manager_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+
+    def wait_for_streaming_manager_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        yield from self._wait_for_in_editor_script(func=self.is_streaming_manager_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+
+    def wait_for_streaming_levels_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        self._wait_for(func=self.is_streaming_levels_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+
+    def wait_for_streaming_levels_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        yield from self._wait_for_in_editor_script(func=self.is_streaming_levels_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+
+    #
+    # Private helper functions
+    #
+
+    def _wait_for(self, func, max_time_seconds, sleep_time_seconds):
+        func_name = ""
+        if hasattr(func, "__qualname__"):
+            func_name = func.__qualname__
+        elif hasattr(func, "__name__"):
+            func_name = func.__name__
+        else:
+            func_name = type(func).__name__
+
         engine_service = self.entry_point_caller.engine_service
 
-        spear.log(f"Waiting for engine to be idle...")
+        spear.log(f"Waiting for function to return true: {func_name}")
         spear.log(f"Waiting for up to {max_time_seconds} seconds, retrying every {sleep_time_seconds} seconds...")
 
         start_time_seconds = time.time()
         elapsed_time_seconds = time.time() - start_time_seconds
 
-        engine_idle = False
-        while not engine_idle:
+        success = False
+        while not success:
             assert time.time() - start_time_seconds < max_time_seconds
             with engine_service.begin_frame():
-                engine_idle = self.is_engine_idle(verbose=True)
+                result = func(verbose=True)
+                success = result[0] if isinstance(result, tuple) else result
             with engine_service.end_frame():
                 pass
-            if not engine_idle:
+            if not success:
                 time.sleep(sleep_time_seconds)
             elapsed_time_seconds = time.time() - start_time_seconds
 
-        spear.log(f"Finished waiting for engine to be idle (waited for {elapsed_time_seconds:.2f} seconds).")
+        spear.log(f"Finished waiting for function to return true (waited for {elapsed_time_seconds:.2f} seconds).")
 
-    def wait_for_engine_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+    def _wait_for_in_editor_script(self, func, max_time_seconds, sleep_time_seconds):
+        func_name = ""
+        if hasattr(func, "__qualname__"):
+            func_name = func.__qualname__
+        elif hasattr(func, "__name__"):
+            func_name = func.__name__
+        else:
+            func_name = type(func).__name__
+
         engine_service = self.entry_point_caller.engine_service
 
-        spear.log(f"Waiting for engine to be idle for up to {max_time_seconds} seconds, retrying every {sleep_time_seconds} seconds...")
+        spear.log(f"Waiting for function to return true: {func_name}")
+        spear.log(f"Waiting for up to {max_time_seconds} seconds, retrying every {sleep_time_seconds} seconds...")
 
         start_time_seconds = time.time()
         elapsed_time_seconds = time.time() - start_time_seconds
 
-        engine_idle = False
-        while not engine_idle:
+        success = False
+        while not success:
             assert time.time() - start_time_seconds < max_time_seconds
             with engine_service.begin_frame():
-                engine_idle = self.is_engine_idle(verbose=True)
+                result = func(verbose=True)
+                success = result[0] if isinstance(result, tuple) else result
             yield
             with engine_service.end_frame():
                 pass
             yield
-            if not engine_idle:
+            if not success:
                 time.sleep(sleep_time_seconds)
             elapsed_time_seconds = time.time() - start_time_seconds
 
-        spear.log(f"Finished waiting for engine to be idle (waited for {elapsed_time_seconds:.2f} seconds).")
+        spear.log(f"Finished waiting for function to return true (waited for {elapsed_time_seconds:.2f} seconds).")
