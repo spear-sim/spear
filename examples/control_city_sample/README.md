@@ -23,7 +23,7 @@ Finally, in the Unreal Editor, we open the `Map/Small_City_LVL` map and wait for
 python control_character.py
 
 # control a car
-python control_character.py
+python control_car.py
 ```
 
 You should see the default `CitySample` character start walking, or a car start driving, depending on which SPEAR program you run. Additionally, an `images` directory of rendered images will begin to populate.
