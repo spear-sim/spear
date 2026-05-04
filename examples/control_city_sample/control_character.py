@@ -106,6 +106,12 @@ if __name__ == "__main__":
     instance.step(num_frames=30)
 
     #
+    # initialize frame counter
+    #
+
+    frame_index = 0
+
+    #
     # walk forwards
     #
 
