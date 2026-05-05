@@ -17,8 +17,10 @@ In the table below, we compare our MCP server to existing MCP servers for intera
 
 | MCP Server | RGB images | ID images | Python | Console | Play-in-editor | Standalone |
 |--------|:-----------:|:---------:|:------:|:-------:|:---:|:----------:|
+| [aadeshrao123/Unreal-MCP](https://github.com/aadeshrao123/Unreal-MCP) | ✓ | | ✓ | ✓ | | |
+| [ArtisanGameworks/SpecialAgentPlugin](https://github.com/ArtisanGameworks/SpecialAgentPlugin) | ✓ | | ✓ | ✓ | | |
 | [ayeletstudioindia/unreal-analyzer-mcp](https://github.com/ayeletstudioindia/unreal-analyzer-mcp) | | | | | | |
-| [ChiR24/Unreal_mcp](https://github.com/ChiR24/Unreal_mcp) | | | | | | |
+| [ChiR24/Unreal_mcp](https://github.com/ChiR24/Unreal_mcp) | ✓ | | | ✓ | | |
 | [chongdashu/unreal-mcp](https://github.com/chongdashu/unreal-mcp) | | | | | | |
 | [db-lyon/ue-mcp](https://github.com/db-lyon/ue-mcp) | ✓ | | ✓ | ✓ | | |
 | [flopperam/unreal-engine-mcp](https://github.com/flopperam/unreal-engine-mcp) | ✓ | | ✓ | ✓ | | |
@@ -29,9 +31,6 @@ In the table below, we compare our MCP server to existing MCP servers for intera
 | [prajwalshettydev/UnrealGenAISupport](https://github.com/prajwalshettydev/UnrealGenAISupport) | ✓ | | ✓ | ✓ | | |
 | [remiphilippe/mcp-unreal](https://github.com/remiphilippe/mcp-unreal) | ✓ | | ✓ | ✓ | | |
 | [runreal/unreal-mcp](https://github.com/runreal/unreal-mcp) | ✓ | | ✓ | ✓ | | |
-| [SpecialAgent Plugin](https://forums.unrealengine.com/t/specialagent-plugin-free-mcp-plugin-for-llm-control-of-ue-editor/2690142) | ✓ | | ✓ | ✓ | | |
 | [StraySpark Unreal MCP Server](https://forums.unrealengine.com/t/strayspark-unreal-mcp-server-200-ai-tools-for-ue5-editor-automation-via-mcp/2707474) | ✓ | | ✓ | ✓ | | |
-| [unreal-engine-mcp-server](https://hub.docker.com/r/mcp/unreal-engine-mcp-server) | ✓ | | | ✓ | | |
-| [unrealmcp](https://pypi.org/project/unrealmcp/) | ✓ | | ✓ | ✓ | | |
 | [VedantRGosavi/UE5-MCP](https://github.com/VedantRGosavi/UE5-MCP) | | | | | | |
 | **spear-mcp (ours)** | **✓** | **✓** | **✓** | **✓** | **✓** | **✓** |
