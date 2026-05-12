@@ -30,6 +30,7 @@ class AsyncLoadingService(spear.Service):
         self._sp_world = None
         self._asset_registry = None
         self._navigation_system = None
+        self._world_partition_subsystem = None
 
     def initialize(self):
         self._sp_asset_compiling_manager = self.get_unreal_object(uclass="USpAssetCompilingManager")
@@ -46,6 +47,7 @@ class AsyncLoadingService(spear.Service):
         self._asset_registry = self.get_unreal_object(uobject=asset_registry_handle, uclass=asset_registry_uclass)
 
         self._navigation_system = self._sp_navigation_system_v1.GetNavigationSystem()
+        self._world_partition_subsystem = self.unreal_service.get_subsystem(subsystem_provider_class_name="UWorld", subsystem_uclass="UWorldPartitionSubsystem")
 
     #
     # Catch-all functions
@@ -61,6 +63,7 @@ class AsyncLoadingService(spear.Service):
         shader_compiling_manager_idle, num_remaining_shader_jobs, is_shader_compiling_manager_initialized = self.is_shader_compiling_manager_idle()
         streaming_manager_idle, num_wanting_streaming_resources = self.is_streaming_manager_idle()
         streaming_levels_idle = self.are_streaming_levels_idle()
+        world_partition_streaming_idle = self.is_world_partition_streaming_idle()
 
         engine_idle = \
             async_loading_idle and \
@@ -70,7 +73,8 @@ class AsyncLoadingService(spear.Service):
             navigation_system_idle and \
             shader_compiling_manager_idle and \
             streaming_manager_idle and \
-            streaming_levels_idle
+            streaming_levels_idle and \
+            world_partition_streaming_idle
 
         if verbose:
             if not engine_idle or not is_distance_field_async_queue_initialized or not is_shader_compiling_manager_initialized:
@@ -83,6 +87,7 @@ class AsyncLoadingService(spear.Service):
                 spear.log(f"    num_remaining_shader_jobs            = {num_remaining_shader_jobs} (initialized = {is_shader_compiling_manager_initialized})")
                 spear.log(f"    num_wanting_streaming_resources      = {num_wanting_streaming_resources}")
                 spear.log(f"    are_streaming_levels_loading         = {not streaming_levels_idle}")
+                spear.log(f"    is_world_partition_streaming         = {not world_partition_streaming_idle}")
 
         return engine_idle
 
@@ -166,6 +171,12 @@ class AsyncLoadingService(spear.Service):
             spear.log(f"num_wanting_streaming_resources = {num_wanting_streaming_resources}")
         return streaming_manager_idle, num_wanting_streaming_resources
 
+    def is_world_partition_streaming_idle(self, verbose=False):
+        world_partition_streaming_idle = self._world_partition_subsystem.IsAllStreamingCompleted()
+        if verbose:
+            spear.log(f"is_world_partition_streaming = {not world_partition_streaming_idle}")
+        return world_partition_streaming_idle
+
     def wait_for_asset_compiling_manager_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
         self._wait_for(func=self.is_asset_compiling_manager_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
 
@@ -213,6 +224,12 @@ class AsyncLoadingService(spear.Service):
 
     def wait_for_streaming_manager_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
         yield from self._wait_for_in_editor_script(func=self.is_streaming_manager_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+
+    def wait_for_world_partition_streaming_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        self._wait_for(func=self.is_world_partition_streaming_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+
+    def wait_for_world_partition_streaming_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        yield from self._wait_for_in_editor_script(func=self.is_world_partition_streaming_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
 
     #
     # Private helper functions
