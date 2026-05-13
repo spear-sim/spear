@@ -87,7 +87,7 @@ class AsyncLoadingService(spear.Service):
                 spear.log(f"    num_remaining_shader_jobs            = {num_remaining_shader_jobs} (initialized = {is_shader_compiling_manager_initialized})")
                 spear.log(f"    num_wanting_streaming_resources      = {num_wanting_streaming_resources}")
                 spear.log(f"    are_streaming_levels_loading         = {not streaming_levels_idle}")
-                spear.log(f"    is_world_partition_streaming         = {not world_partition_streaming_idle}")
+                spear.log(f"    is_all_world_partition_streaming_completed = {world_partition_streaming_idle}")
 
         return engine_idle
 
@@ -172,10 +172,10 @@ class AsyncLoadingService(spear.Service):
         return streaming_manager_idle, num_wanting_streaming_resources
 
     def is_world_partition_streaming_idle(self, verbose=False):
-        world_partition_streaming_idle = self._world_partition_subsystem.IsAllStreamingCompleted()
+        is_all_world_partition_streaming_completed = self._world_partition_subsystem.IsAllStreamingCompleted()
         if verbose:
-            spear.log(f"is_world_partition_streaming = {not world_partition_streaming_idle}")
-        return world_partition_streaming_idle
+            spear.log(f"is_all_world_partition_streaming_completed = {is_all_world_partition_streaming_completed}")
+        return is_all_world_partition_streaming_completed
 
     def wait_for_asset_compiling_manager_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
         self._wait_for(func=self.is_asset_compiling_manager_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
