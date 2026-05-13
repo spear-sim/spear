@@ -167,9 +167,6 @@ public:
     TSubclassOf<ASpMeshProxyComponentManager> MeshProxyComponentManagerClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bHideMeshProxyComponentManagers = true;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bUseSceneViewExtension = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")

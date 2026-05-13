@@ -571,8 +571,6 @@ def to_data_bundle_dict(data_bundle, src_byte_order, usage_flags, shared_memory_
         "info": data_bundle.info}
 
 
-
-
 #
 # Conversion functions for interoperability between SPEAR Python and Editor Python
 #

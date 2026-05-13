@@ -1,5 +1,7 @@
 # SPEAR MCP Server
 
+**CRITICAL: YOU ARE NEVER ALLOWED TO USE ACTOR NAMES TO RESOLVE WHAT THE USER IS LOOKING AT, AND WHAT THEY ARE REFERRING TO, IN THEIR TEXT PROMPTS. YOU MUST ALWAYS, UNDER ALL CIRCUMSTANCES, START FROM THE RENDERED PIXELS. ABSOLUTELY DO NOT TAKE ANY SHORTCUTS HERE. IF YOU EVER SEARCH THROUGH THE ACTOR NAMES TO DISAMBIGUATE A USER TEXT PROMPT, YOU HAVE IMMEDIATLY FAILED THE TASK THAT HAS BEEN REQUESTED OF YOU, AND THE SESSION WILL BE OVER. YOU MUST ALWAYS LOOK AT THE RENDERED PIXELS, GROUND THE USER'S PROMPT TO THE RENDERED PIXELS, THEN LOOK UP THE RELEVANT ACTORS AND COMPONENTS IN A CORRESPONDING SEGMENTATION IMAGE. ALWAYS. NO EXCEPTIONS. SEE BELOW FOR HOW TO ACCESS RENDERED PIXELS.**
+
 ## Tools
 
 Each tool is self-contained — it initializes the engine connection, renders the current viewport, saves visualization images, populates the exec namespace, and tears down per-call actors automatically.
@@ -70,10 +72,16 @@ Scene metadata from Unreal is unreliable for spatial/visual tasks. Treat the ren
 - `segmentation_id_image` / `segmentation_id_descs` — per-pixel actor/component/material identity
 - `segmentation_colors.png` — useful when object boundaries in the RGB are ambiguous
 
+- **Don't grep actor names to answer "what is the user looking at?"** Names may not match what's visible, and things with matching names may be off-screen or occluded. Start from the pixels the user is asking about and resolve outward:
+  ```python
+  seg_id = before_execute["segmentation_id_image"][py, px]
+  desc   = before_execute["segmentation_id_descs"][seg_id]
+  with instance.begin_frame():
+      comp = game.get_unreal_object(uobject=desc["component"], with_sp_funcs=False)
+  ```
+- **Compute directions and distances from pixel data, not from metadata.** `world_position[y, x]` gives a 3D point you can trust for opaque surfaces. An actor's location and bounds are fine. A yaw or forward vector alone is not.
 - **Don't trust actor forward vectors or rotation values to tell you which way something "visually" faces.** Meshes can be authored with any local orientation — the reported forward has no guaranteed relationship to a visual front (seat front, door opening, camera lens direction, etc.). If facing matters, render and look.
 - **To recover the mesh-local forward offset, use guess-and-check.** Set the actor's yaw to a known value (e.g., 0°), render, and read the world-space visual forward off the image. The measured offset α lets you convert any desired world direction into an actor yaw. Don't try to infer α from the natural pose via surface-normal averaging (it only measures direction-to-camera) or backrest-height heuristics (biased by occlusion and gives inconsistent results across instances of the same mesh).
-- **Don't grep actor names to answer "what is the user looking at?"** Names may not match what's visible, and things with matching names may be off-screen or occluded. Start from the pixels the user is asking about and resolve outward.
-- **Compute directions and distances from pixel data, not from metadata.** `world_position[y, x]` gives a 3D point you can trust for opaque surfaces. An actor's location and bounds are fine. A yaw or forward vector alone is not.
 - **Translucent surfaces (glass, etc.) appear in `segmentation_id_image` but not in `world_position` / `world_normal` / `depth_meters` / `camera_position` / `camera_normal`.** Those buffers capture the opaque geometry behind the translucent surface. A pixel that segments as "glass" has a world_position out in whatever lies beyond (the yard, the sky). Use the actor's bounds/transform, or restrict pixel queries to opaque components (window frame, not glass panes).
 - **Verify by rendering.** Apply a change, re-render, and look at the `after_execute` image. Don't declare success from metadata alone.
 

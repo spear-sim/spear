@@ -208,16 +208,10 @@ void USpSceneCaptureComponent2D::Initialize()
         for (auto manager : UnrealUtils::findActorsByClass<ASpMeshProxyComponentManager>(MeshProxyComponentManagerClass, GetWorld())) {
             ShowOnlyActors.Add(manager);
         }
-    } else if (bHideMeshProxyComponentManagers) {
-        if ((PrimitiveRenderMode == ESceneCapturePrimitiveRenderMode::PRM_LegacySceneCapture) || (PrimitiveRenderMode == ESceneCapturePrimitiveRenderMode::PRM_RenderScenePrimitives)) {
-            std::vector<ASpMeshProxyComponentManager*> mesh_proxy_component_managers = UnrealUtils::findActorsByType<ASpMeshProxyComponentManager>(GetWorld());
-            if (!mesh_proxy_component_managers.empty()) {
-                PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_RenderScenePrimitives;
-                for (auto manager : UnrealUtils::findActorsByType<ASpMeshProxyComponentManager>(GetWorld())) {
-                    HiddenActors.Add(manager);
-                }
-            }
-        } 
+    } else {
+        for (auto manager : UnrealUtils::findActorsByType<ASpMeshProxyComponentManager>(GetWorld())) {
+            HiddenActors.Add(manager);
+        }
     }
 
     // ensure that the underlying view state data is stable across frames so FSpSceneViewExtensionBase can

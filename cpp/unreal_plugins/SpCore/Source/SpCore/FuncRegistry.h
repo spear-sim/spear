@@ -45,7 +45,7 @@
 // name.
 //
 //     void* my_ptr = new_registry.call("float", 10); // create an array of 10 floats
-//     delete_registrar.call("float", my_ptr);        // destroy the array
+//     delete_registry.call("float", my_ptr);         // destroy the array
 //
 // If we registered other names like "int" and "double" similarly, then we would be able to allocate and
 // de-allocate arrays of different types, which would typically require calling a templated function, based

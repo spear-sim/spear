@@ -149,9 +149,7 @@ public:
                 auto& [name, proxy_component_desc] = pair;
                 SP_ASSERT(proxy_component_desc.component_->IsA(TComponent::StaticClass()));
                 return getPtr()->shouldUnregisterProxyForComponent(static_cast<TComponent*>(proxy_component_desc.component_), proxy_component_desc.derived_proxy_component_data_); }) |
-            std::views::transform([](auto& pair) {
-                auto& [name, proxy_component_desc] = pair;
-                return name; }));
+            std::views::transform([](auto& pair) { auto& [name, proxy_component_desc] = pair; return name; }));
 
         // Mark as unregistered and destroy proxy components.
         markAsUnregisteredAndDestroyProxyComponentsImpl(proxy_components_to_mark_as_unregistered_and_destroy);

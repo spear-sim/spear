@@ -15,15 +15,16 @@ requires-python = "~=3.11"
 [tool.scikit-build]
 minimum-version = "build-system.requires" # protect the configuration against future changes in scikit-build-core
 build-dir = "BUILD/{wheel_tag}"           # setuptools-style build caching in a local directory
-wheel.py-api = "cp312"                    # build stable ABI wheels for CPython 3.12+
+# wheel.py-api = "cp312"                  # ignored when building from a Python 3.11 environment
 build.verbose = true
 logging.level = "INFO"
 
 [tool.cibuildwheel]
 build-verbosity = 1                       # necessary to see build output from the actual compilation
 
-[tool.cibuildwheel.macos.environment]
-MACOSX_DEPLOYMENT_TARGET = "10.14"        # necessary for full C++17 support
+# ignored when building the extension is invoked from pip, so we include MACOSX_DEPLOYMENT_TARGET directly in our build script
+# [tool.cibuildwheel.macos.environment]
+# MACOSX_DEPLOYMENT_TARGET = "10.14"      # necessary for full C++17 support
 
 [tool.wheel]
 license-files = []                        # necessary to suppress warning

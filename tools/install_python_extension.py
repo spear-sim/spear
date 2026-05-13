@@ -17,6 +17,7 @@ parser.add_argument("--conda-script")
 parser.add_argument("--cxx-compiler")
 parser.add_argument("--unreal-engine-dir") # only required on Linux
 parser.add_argument("--debug", action="store_true")
+parser.add_argument("--wheel", action="store_true")
 parser.add_argument("--conda-env", default="spear-env")
 args = parser.parse_args()
 
@@ -63,7 +64,7 @@ if __name__ == "__main__":
         else:
             optimization_flags = "-O3"
 
-        common_cxx_flags = f"-std=c++20 {optimization_flags} -stdlib=libc++ -mmacosx-version-min=10.14"
+        common_cxx_flags = f"-std=c++20 {optimization_flags} -stdlib=libc++ -mmacosx-version-min=11.0"
         cmake_cxx_flags = common_cxx_flags
 
         if args.conda_script:
@@ -88,7 +89,7 @@ if __name__ == "__main__":
                     break
             assert conda_script is not None
 
-        cmd_prefix = f". {conda_script}; conda activate {args.conda_env}; "
+        cmd_prefix = f". {conda_script}; conda activate {args.conda_env}; MACOSX_DEPLOYMENT_TARGET=11.0 "
 
     elif sys.platform == "linux":
 
@@ -153,12 +154,18 @@ if __name__ == "__main__":
     # spear_ext
     #
 
-    spear.log("Building and installing the spear_ext Python extension module...")
+    python_ext_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "python_ext"))
+    build_dir = os.path.realpath(os.path.join(python_ext_dir, "BUILD"))
 
-    # we need shell=True because we want to run in a specific anaconda env
+    if args.wheel:
+        spear.log("Building the spear_ext Python extension module...")
+        cmd_pip = f'pip wheel "{python_ext_dir}" -w "{build_dir}" '
+    else:
+        spear.log("Building and installing the spear_ext Python extension module...")
+        cmd_pip = f'pip install -e "{python_ext_dir}" '
+
     cmd = \
-        cmd_prefix + \
-        f'pip install -e "{os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "python_ext"))}" ' + \
+        cmd_prefix + cmd_pip + \
         f'-C cmake.define.CMAKE_CXX_COMPILER="{cxx_compiler}" ' + \
         f'-C cmake.define.CMAKE_CXX_FLAGS="{cmake_cxx_flags}"'
 
@@ -177,5 +184,9 @@ if __name__ == "__main__":
             spear.log("Executing: ", dsym_cmd)
             subprocess.run(dsym_cmd, shell=True, check=True)
 
-    spear.log("Successfully built and installed the spear_ext Python extension module.")
+    if args.wheel:
+        spear.log("Successfully built the spear_ext Python extension module.")
+    else:
+        spear.log("Successfully built and installed the spear_ext Python extension module.")
+
     spear.log("Done.")
