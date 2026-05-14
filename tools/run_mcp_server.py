@@ -3,6 +3,13 @@
 # Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
+try:
+    import spear
+except:
+    import sys
+    print("ERROR: Couldn't import spear. You need to run the spear-mcp server from a Python environment that has the spear Python package installed.", file=sys.stderr)
+    raise
+
 import ast
 import colorsys
 import inspect
@@ -11,8 +18,6 @@ import matplotlib.pyplot as plt
 import mcp
 import numpy as np
 import os
-import spear
-import sys
 import traceback
 
 
@@ -197,6 +202,7 @@ def _initialize_instance():
     config = spear.get_config()
     config.defrost()
     config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS = 3600.0
+    config.SPEAR.INSTANCE.CLIENT_SUPPRESS_DEFAULT_LOGGING = True # need to disable default logging otherwise we get errors in Cursor
     config.freeze()
     _instance = spear.Instance(config=config)
     _log("Instance created.")
@@ -564,15 +570,18 @@ def _get_log():
 
 if __name__ == "__main__":
 
+    # need to disable default logging otherwise we get errors in Cursor
+    spear.register_log_func(func=_log)
+    spear.set_default_log_enabled(enabled=False)
+
     _rotate_log_file()
 
     _log("Server starting...")
-
-    spear.register_log_func(func=_log)
     try:
         _mcp.run(transport="stdio")
     except Exception:
         _log(f"INTERNAL EXCEPTION:\n{traceback.format_exc()}")
         raise
     finally:
+        spear.set_default_log_enabled(enabled=True)
         spear.unregister_log_func(func=_log)

@@ -6,7 +6,17 @@
 import inspect
 import os
 
+_default_log_enabled = True
 _log_funcs = []
+
+def get_default_log_enabled():
+    return _default_log_enabled
+
+def set_default_log_enabled(enabled):
+    global _default_log_enabled
+    old_enabled = _default_log_enabled
+    _default_log_enabled = enabled
+    return old_enabled
 
 def register_log_func(func):
     _log_funcs.append(func)
@@ -17,16 +27,25 @@ def unregister_log_func(func):
 def log(*args):
     current_frame = inspect.currentframe()
     message = _log_get_prefix(current_frame) + "".join([str(arg) for arg in args])
-    print(message)
+    if _default_log_enabled:
+        print(message)
     for func in _log_funcs:
         func(message)
 
 def log_current_function(prefix=""):
     current_frame = inspect.currentframe()
-    print(_log_get_prefix(current_frame) + prefix + _get_current_function_abbreviated(current_frame))
+    message = _log_get_prefix(current_frame) + prefix + _get_current_function_abbreviated(current_frame)
+    if _default_log_enabled:
+        print(message)
+    for func in _log_funcs:
+        func(message)
 
 def log_no_prefix(*args):
-    print("".join([str(arg) for arg in args]))
+    message = "".join([str(arg) for arg in args])
+    if _default_log_enabled:
+        print(message)
+    for func in _log_funcs:
+        func(message)
 
 def log_get_prefix():
     current_frame = inspect.currentframe()

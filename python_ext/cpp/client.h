@@ -25,21 +25,22 @@ class Client
 {
 public:
     Client() = delete;
-    Client(const std::string& address, const uint16_t& port)
+    Client(const std::string& address, const uint16_t& port, bool suppress_default_logging = false)
     {
-        std::cout << "[SPEAR | spear_ext.cpp] Client::Client(...)" << std::endl;
+        suppress_default_logging_ = suppress_default_logging;
+        if (!suppress_default_logging_) { std::cout << "[SPEAR | spear_ext.cpp] Client::Client(...)" << std::endl; }
         client_ = std::make_unique<rpc::client>(address, port);
     };
 
     ~Client()
     {
-        std::cout << "[SPEAR | spear_ext.cpp] Client::~Client()" << std::endl;
+        if (!suppress_default_logging_) { std::cout << "[SPEAR | spear_ext.cpp] Client::~Client()" << std::endl; }
         client_ = nullptr;
     };
 
     void initialize()
     {
-        std::cout << "[SPEAR | spear_ext.cpp] Client::initialize()" << std::endl;
+        if (!suppress_default_logging_) { std::cout << "[SPEAR | spear_ext.cpp] Client::initialize()" << std::endl; }
         SP_ASSERT(client_);
 
         clmdep_msgpack::object_handle result = client_->call("engine_service.call_sync_on_worker_thread.get_entry_point_signature_descs");
@@ -48,7 +49,7 @@ public:
 
     void terminate()
     {
-        std::cout << "[SPEAR | spear_ext.cpp] Client::terminate()" << std::endl;
+        if (!suppress_default_logging_) { std::cout << "[SPEAR | spear_ext.cpp] Client::terminate()" << std::endl; }
         SP_ASSERT(client_);
         client_ = nullptr;
         entry_point_signature_descs_.clear();
@@ -113,6 +114,7 @@ public:
     }
 
     bool force_return_aligned_arrays_ = false;
+    bool suppress_default_logging_    = false;
     bool verbose_rpc_calls_           = false;
     bool verbose_allocations_         = false;
     bool verbose_exceptions_          = false; // owner should set to true once a connection to the server is established

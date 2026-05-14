@@ -4,7 +4,7 @@ We provide an [MCP](https://modelcontextprotocol.io) server that allows [Claude 
 
 To use our MCP server, our first step is to launch an Unreal application for our server to connect to. This can be any Unreal application that has been built with the SPEAR plugins (e.g., the `SpearSim` application that we built in the [Getting Started](getting_started.md) tutorial), or it can be the Unreal Editor after it has opened any project that includes the SPEAR plugins.
 
-Our next step is to launch Claude Code from the project root directory. At this point, we can control the application using natural language. For example, we can ask Claude Code,
+Our next step is to activate our `spear-env` Anaconda environment and launch Claude Code from the project root directory. At this point, we can control the application using natural language. For example, we can ask Claude Code,
 
 - _"I have a UE instance running, what am I looking at?"_
 - _"Spawn a spotlight above the vase I'm looking at."_

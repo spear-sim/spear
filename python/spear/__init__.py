@@ -44,7 +44,7 @@ from .utils.config_utils import get_config
 from .utils.func_utils import to_array, to_arrays, to_data_bundle, to_data_bundle_dict, try_to_dict, try_to_dicts, to_json_string, to_json_strings, to_packed_array, to_packed_arrays, to_ptr, to_shared
 from .utils.func_utils import to_handle_or_unreal_struct, to_handle_or_unreal_class, to_handle_or_unreal_object, to_handle, to_unreal_struct, to_unreal_class, to_unreal_object
 from .utils.func_utils import from_script_result, to_script_expr, to_script_struct_expr
-from .utils.log_utils import log, log_current_function, log_get_prefix, log_no_prefix, register_log_func, unregister_log_func
+from .utils.log_utils import get_default_log_enabled, log, log_current_function, log_get_prefix, log_no_prefix, register_log_func, set_default_log_enabled, unregister_log_func
 from .utils.system_utils import configure_system
 
 # import a curated set of classes directly into the spear namespace

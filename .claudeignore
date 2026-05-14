@@ -64,10 +64,8 @@ python_ext/BUILD
 
 third_party
 
-tmp
+/tmp
 
 tools/BUILD
 
 tools/run_editor_script_for_each_map/user_config.yaml
-
-tools/tmp

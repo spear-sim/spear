@@ -814,7 +814,7 @@ class Instance():
                 # throwing when calling a server function.
                 spear.log("        Attempting to connect to server...")
                 if spear.__can_import_spear_ext__:
-                    self._client = spear_ext.Client("127.0.0.1", self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT)
+                    self._client = spear_ext.Client("127.0.0.1", self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT, self._config.SPEAR.INSTANCE.CLIENT_SUPPRESS_DEFAULT_LOGGING)
                     self._client.set_timeout(int(self._config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS)*1000)
                 else:
                     self._client = spear.editor.Client(
@@ -846,7 +846,7 @@ class Instance():
                     # throwing when calling a server function.
                     spear.log("        Attempting to connect to server...")
                     if spear.__can_import_spear_ext__:
-                        self._client = spear_ext.Client("127.0.0.1", self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT)
+                        self._client = spear_ext.Client("127.0.0.1", self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT, self._config.SPEAR.INSTANCE.CLIENT_SUPPRESS_DEFAULT_LOGGING)
                         self._client.set_timeout(int(self._config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS)*1000)
                     else:
                         self._client = spear.editor.Client(
@@ -893,6 +893,7 @@ class Instance():
             assert False
 
         self._client.force_return_aligned_arrays = self._config.SPEAR.INSTANCE.CLIENT_FORCE_RETURN_ALIGNED_ARRAYS
+        self._client.suppress_default_logging = self._config.SPEAR.INSTANCE.CLIENT_SUPPRESS_DEFAULT_LOGGING
         self._client.verbose_rpc_calls = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_RPC_CALLS
         self._client.verbose_allocations = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_ALLOCATIONS
         self._client.verbose_exceptions = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_EXCEPTIONS

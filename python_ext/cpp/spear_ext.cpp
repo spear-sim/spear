@@ -22,6 +22,7 @@ NB_MODULE(spear_ext, module)
     auto client_class = nanobind::class_<Client>(module, "Client");
 
     client_class.def(nanobind::init<const std::string&, const uint16_t>());
+    client_class.def(nanobind::init<const std::string&, const uint16_t, bool>());
 
     client_class.def("initialize", &Client::initialize);
     client_class.def("terminate",  &Client::terminate);
@@ -36,6 +37,7 @@ NB_MODULE(spear_ext, module)
     client_class.def("call", &Client::call);
 
     client_class.def_rw("force_return_aligned_arrays", &Client::force_return_aligned_arrays_);
+    client_class.def_rw("suppress_default_logging",    &Client::suppress_default_logging_);
     client_class.def_rw("verbose_rpc_calls",           &Client::verbose_rpc_calls_);
     client_class.def_rw("verbose_allocations",         &Client::verbose_allocations_);
     client_class.def_rw("verbose_exceptions",          &Client::verbose_exceptions_);
