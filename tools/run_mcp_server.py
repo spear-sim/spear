@@ -111,13 +111,22 @@ def execute_code(code):
         if _instance._engine_service._frame_state == "idle":
             pass
         elif _instance._engine_service._frame_state == "executing_frame":
+            _log("ERROR: Agent code executed a begin_frame block without a matching end_frame block, executing empty end_frame block...")
             with _instance.end_frame():
                 pass
-            _log("ERROR: Agent code executed a begin_frame block without a matching end_frame block, executing empty end_frame block...")
+        elif _instance._engine_service._frame_state == "error":
+            _log("ERROR: Instance is in an error state after executing agent code, attempting to re-initialize the instance in order to clean up...")
+            _instance._engine_service.initialize()
         else:
-            _log(f"ERROR: Unexpected frame state after executing agent code: {_instance._engine_service._frame_state}")
+            _log(f'ERROR: Instance is in an unexpected frame state ("{_instance._engine_service._frame_state}"), attempting to re-initialize the instance in order to clean up...')
+            _instance._engine_service.initialize()
 
-        _tool_suffix(world_desc=world_desc)
+        # if we've recovered from the bad frame state, then we can clean up
+        if _instance._engine_service._frame_state == "idle":
+            _tool_suffix(world_desc=world_desc)
+        else:
+            _log(f'ERROR: Instance is still in an unexpected frame state ("{_instance._engine_service._frame_state}"), giving up...')
+
         return _get_log()
 
     except Exception:
@@ -551,6 +560,7 @@ def _rotate_log_file():
 def _log(*args):
     frame = inspect.currentframe()
     outer = inspect.getouterframes(frame)
+    assert len(outer) >= 2
     filename = os.path.basename(outer[1].filename)
     lineno = f"{outer[1].lineno:04}"
     message = f"[spear-mcp | {filename}:{lineno}] " + "".join([str(arg) for arg in args])

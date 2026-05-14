@@ -80,11 +80,13 @@ class EngineService():
                 spear.log("ERROR: Attempting to exit critical section by calling _execute_frame_impl and _end_frame_impl()...")
                 self._execute_frame_impl()
                 self._end_frame_impl()
+                self._frame_state = "error"
                 assert False
             elif self._frame_state in ("executing_frame", "executing_end_frame", "request_end_frame"):
                 spear.log("Unexpected frame state: ", self._frame_state)
                 spear.log("ERROR: Attempting to exit critical section by calling _execute_frame_impl and _end_frame_impl()...")
                 self._end_frame_impl()
+                self._frame_state = "error"
                 assert False
             elif self._frame_state == "error":
                 spear.log("Unexpected frame state: ", self._frame_state)
@@ -197,7 +199,7 @@ class EngineService():
         assert self._frame_state == "request_end_frame"
 
         if not success:
-            spear.log("ERROR: Server error state detected when calling _end_frame_impl_single_step(), but we do not appear to be in a critical section.")
+            spear.log("ERROR: Server error state detected when calling _end_frame_impl(), but we do not appear to be in a critical section.")
             self._frame_state = "error"
             assert False
 

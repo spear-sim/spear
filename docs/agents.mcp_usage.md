@@ -102,7 +102,7 @@ Scene metadata from Unreal is unreliable for spatial/visual tasks. Treat the ren
 
 - UFUNCTIONs return `UnrealObject` by default — use them directly, pass them to other functions, chain calls (e.g., `comp.GetOwner().K2_GetActorLocation()`).
 - `as_dict=True` is only needed for UFUNCTIONs with out parameters that aren't the formal return value. Example: `actor.GetActorBounds(bOnlyCollidingComponents=False, as_dict=True)` returns `{"Origin": {"X": ..., "Y": ..., "Z": ...}, "BoxExtent": {"X": ..., "Y": ..., "Z": ...}}` — both are `out` params, so without `as_dict=True` you can't read them. By contrast, `actor.GetActorScale3D()` returns its `FVector` as its formal return value and doesn't need `as_dict`.
-- All UFUNCTION calls must be inside `with instance.begin_frame()` / `with instance.end_frame()` blocks. Each `with instance.begin_frame():` block must be paired with a matching `with instance.end_frame():` block. Starting a new `begin_frame` before closing the previous one will raise an assertion.
+- All UFUNCTION calls must be inside `with instance.begin_frame()` / `with instance.end_frame()` blocks. Every `with instance.begin_frame():` **must** be followed by exactly one `with instance.end_frame():` — they always come in pairs and must never be nested or reordered. Starting a new `begin_frame` before the matching `end_frame` will raise an assertion and leave the engine in an error state.
 
 ## Rotations and Euler angles
 
