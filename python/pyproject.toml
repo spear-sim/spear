@@ -29,7 +29,7 @@ dependencies = [
 editor = [
     "msgpack-rpc-python==0.4.1"]
 examples = [
-    "jupyterlab==4.4.4",
+    "jupyterlab==4.5.7",
     "wget==3.2"]
 pipeline = [
     "coacd==1.0.0",
