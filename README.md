@@ -28,6 +28,10 @@ _SPEAR can be used in co-simulation applications with external physics simulator
 
 _We demonstrate the generality of the SPEAR camera sensor by using it to render synchronized multi-view images of a detailed human character in the `MetaHumans` sample project from Epic Games._
 
+![scene_editing](https://github.com/user-attachments/assets/2ed68f36-8cc9-4cc8-bfc8-f84f80c9e28e)
+
+_We demonstrate the programmability of SPEAR by implementing an agentic natural-language scene editing application, where we enable an AI coding assistant to manipulate UE scenes by writing and executing SPEAR code in response to user text prompts._
+
 ## A Simple SPEAR Program
 
 We demonstrate several fundamental concepts in the SPEAR programming model with a simple example program that spawns a set of coordinate axes in an indoor environment.
