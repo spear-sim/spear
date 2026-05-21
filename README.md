@@ -30,7 +30,7 @@ _We demonstrate the generality of the SPEAR camera sensor by using it to render 
 
 ![scene_editing](https://github.com/user-attachments/assets/2ed68f36-8cc9-4cc8-bfc8-f84f80c9e28e)
 
-_We demonstrate the flexibility of SPEAR by implementing an agentic natural-language scene editing application, where we enable an vision-and-language coding assistant to manipulate UE scenes by writing SPEAR programs in response to user text prompts._
+_We demonstrate the flexibility of SPEAR by implementing an agentic natural-language scene editing application, where we enable a vision-and-language coding assistant to manipulate UE scenes by writing SPEAR programs in response to user text prompts._
 
 ## A Simple SPEAR Program
 
