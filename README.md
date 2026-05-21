@@ -14,7 +14,7 @@ The code and assets in this repository are released under an [MIT License](LICEN
 
 ![hypersim](https://github.com/user-attachments/assets/a1246233-68a9-41d0-ba4b-10710b58b74f)
 
-_SPEAR includes a customizable camera sensor that can render 1920x1080 photorealistic beauty images (left) directly into a user's NumPy array at 56 frames per second -- an order of magnitude faster than existing UE plugins -- while also providing ground truth image modalities that are not available in any existing UE-based simulator. For example, the SPEAR camera sensor can render all of the image modalities in the Hypersim dataset, i.e., depths, surface normals, instance and semantic IDs (right top), and a non-diffuse intrinsic image decomposition (right bottom), as well as material IDs and physically based shading parameters._
+_SPEAR includes a customizable camera sensor that can render 1920x1080 photorealistic beauty images (left) directly into a user's NumPy array at 56 frames per second - an order of magnitude faster than existing UE plugins - while also providing ground truth image modalities that are not available in any existing UE-based simulator. For example, the SPEAR camera sensor can render all of the image modalities in the Hypersim dataset, i.e., depths, surface normals, instance and semantic IDs (right top), and a non-diffuse intrinsic image decomposition (right bottom), as well as material IDs and physically based shading parameters._
 
 ![electric_23](https://github.com/user-attachments/assets/bb45e91d-d94e-4912-a433-85f1f107484e)
 
