@@ -30,7 +30,7 @@ _BANNED_ATTRS = {
 
 _BANNED_CALLS = {
     "__import__", "compile", "delattr", "eval", "evaluate_expression", "exec", "execute_file", "execute_file_across_frames", "get_editor", "get_game",
-    "getattr", "open", "OpenLevel", "save", "savez", "savez_compressed", "savetxt", "setattr", "tofile"}
+    "getattr", "open", "OpenLevel", "print", "save", "savez", "savez_compressed", "savetxt", "setattr", "tofile"}
 
 _BANNED_NAMES = {
     "__builtins__", "__import__", "builtins", "importlib", "os", "pathlib", "shutil", "socket", "subprocess", "sys"}
