@@ -104,6 +104,7 @@ if __name__ == "__main__":
         sp_scene_capture_component_2d.set_editor_property(name="fov_angle", value=component_common_desc["fov_angle"])
         sp_scene_capture_component_2d.set_editor_property(name="num_channels_per_pixel", value=component_common_desc["num_channels_per_pixel"])
         sp_scene_capture_component_2d.set_editor_property(name="channel_data_type", value=component_common_desc["channel_data_type"])
+        sp_scene_capture_component_2d.set_editor_property(name="override_texture_render_target_format", value=True)
         sp_scene_capture_component_2d.set_editor_property(name="texture_render_target_format", value=component_common_desc["texture_render_target_format"])
         sp_scene_capture_component_2d.set_editor_property(name="capture_source", value=component_common_desc["capture_source"])
         sp_scene_capture_component_2d.set_editor_property(name="show_flag_settings", value=component_common_desc["show_flag_settings"])
