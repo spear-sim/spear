@@ -302,12 +302,12 @@ class UnrealObject:
                 is_scene_component = kismet_system_library.IsObjectOfSoftClass(Object=component, SoftClass="/Script/Engine.SceneComponent")
                 if not is_scene_component:
                     component_class = self._unreal_service.get_class(uobject=component)
-                    spear.log(f"{prefix}        {component_name} ({self._unreal_service.get_type_for_class_as_string(uclass=component_class)})")
+                    spear.log(f"{prefix}            {component_name} ({self._unreal_service.get_type_for_class_as_string(uclass=component_class)})")
             spear.log(f"{prefix}        Scene components: ")
             components = self._unreal_service.get_children_components_for_actor_as_dict(parent=self)
             for component_name, component in components.items():
                 component_class = self._unreal_service.get_class(uobject=component)
-                spear.log(f"{prefix}        {component_name} ({self._unreal_service.get_type_for_class_as_string(uclass=component_class)})")
+                spear.log(f"{prefix}            {component_name} ({self._unreal_service.get_type_for_class_as_string(uclass=component_class)})")
         elif is_component:
             spear.log(f"{prefix}    Component: {self._unreal_service.get_stable_name_for_component(component=self)}")
 
@@ -671,8 +671,6 @@ class UnrealClass:
         current_uclass = self.uclass
         while current_uclass != 0:
             spear.log(f"{prefix}        Properties for type: {self._unreal_service.get_type_for_class_as_string(uclass=current_uclass)}")
-            spear.log(current_uclass)
-            spear.log(type(current_uclass))
             props = self._unreal_service.find_properties_as_dict(ustruct=current_uclass, field_iteration_flags=["IncludeDeprecated"]) # exclude base classes
             for name, prop in props.items():
                 spear.log(f"{prefix}            Property: {name} ({self._unreal_service.get_type_for_property_as_string(prop=prop)})")
