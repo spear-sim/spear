@@ -10,3 +10,8 @@ SPEAR:
     COMMAND_LINE_ARGS:
       resx: 512
       resy: 512
+
+    # This example does a lot of off-screen rendering, and on some machines this can cause the Unreal frame
+    # time to be more than the default client timeout value. So we increase the client timeout value to
+    # accommodate these machines.
+    CLIENT_INTERNAL_TIMEOUT_SECONDS: 10.0

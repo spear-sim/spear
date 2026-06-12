@@ -254,7 +254,7 @@ if __name__ == "__main__":
         proxy_id_image, proxy_id_descs = game.segmentation_service.get_segmentation_data(object_ids_bgra_uint8_image=object_ids_bgra_uint8_image)
 
     # get actor names and handles
-    actor_names = [ proxy_id_desc["actorName"] for proxy_id_desc in proxy_id_descs ]
+    actor_names = [ proxy_id_desc["actorName"].split(":")[0] for proxy_id_desc in proxy_id_descs ]
     actor_handles = [ proxy_id_desc["actor"] for proxy_id_desc in proxy_id_descs ]
     assert actor_names[0] == ""
     assert actor_handles[0] == 0
