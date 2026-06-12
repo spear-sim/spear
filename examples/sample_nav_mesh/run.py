@@ -33,7 +33,7 @@ if __name__ == "__main__":
         # get navigation system
         navigation_system_v1 = game.get_unreal_object(uclass="UNavigationSystemV1")
         sp_navigation_system_v1 = game.get_unreal_object(uclass="USpNavigationSystemV1")
-        navigation_system = navigation_system_v1.GetNavigationSystem()
+        navigation_system = sp_navigation_system_v1.GetNavigationSystem()
         supports_rebuilding = navigation_system.bSupportRebuilding.get()                                   # get bSupportRebuilding flag
         navigation_system.bSupportRebuilding = True                                                        # needs to be set at runtime to force a rebuild
         sp_navigation_system_v1.Build(NavigationSystem=navigation_system)                                  # force a rebuild
