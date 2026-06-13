@@ -116,7 +116,7 @@ python tools/install_python_package_in_editor_env.py --unreal-engine-dir path/to
 If you're developing on macOS and using XCode 26, you will need to install an updated configuration file into the Unreal Engine.
 
 ```console
-# install an Apple_SDK.json file into the Unreal Engine to support XCode 26 (macOS only)
+# install an Apple_SDK.json file into the Unreal Engine to support XCode 26 (macOS)
 python tools/install_updated_apple_sdk_json_in_engine/run.py --unreal-engine-dir path/to/UE_5.5
 ```
 
