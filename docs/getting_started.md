@@ -28,7 +28,7 @@ If you're developing on Windows or macOS, you will need to install a specific co
 
 ```
 Windows: Visual Studio 2022
-macOS:   XCode 16, XCode 26
+macOS:   XCode 16 or 26
 ```
 
 If you're developing on Windows, make sure to select _Desktop development with C++_ and _Game development with C++_ from the _Workloads_ tab when installing Visual Studio, and also make sure to select _MSVC v143 - VS2022 C++ x64/x86 build tools (v14.44-17.14)_ from the _Individual Components_ tab.
