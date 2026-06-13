@@ -28,10 +28,12 @@ If you're developing on Windows or macOS, you will need to install a specific co
 
 ```
 Windows: Visual Studio 2022
-macOS:   XCode 16
+macOS:   XCode 16, XCode 26
 ```
 
 If you're developing on Windows, make sure to select _Desktop development with C++_ and _Game development with C++_ from the _Workloads_ tab when installing Visual Studio, and also make sure to select _MSVC v143 - VS2022 C++ x64/x86 build tools (v14.44-17.14)_ from the _Individual Components_ tab.
+
+If you're developing on macOS, make sure to select _macOS_ under _Platform Support_ when installing XCode, and make sure to select _Metal Toolchain_ from _Other Components_. Note that XCode 26 is not officially supported by Unreal Engine 5.5, but it can be made to work by running one of our command-line tools (see below).
 
 ## Configure your terminal
 
@@ -109,6 +111,13 @@ The Unreal Editor has its own Python environment, so you will need to install th
 ```console
 # install the spear Python package into the Unreal Editor Python environment
 python tools/install_python_package_in_editor_env.py --unreal-engine-dir path/to/UE_5.5
+```
+
+If you're developing on XCode 26, you will need to install an updated configuration file into the Unreal Engine.
+
+```console
+# install an Apple_SDK.json file into the Unreal Engine to support XCode 26 (macOS only)
+python tools/install_updated_apple_sdk_json_in_engine/run.py --unreal-engine-dir path/to/UE_5.5
 ```
 
 ## Build third-party C++ libraries
