@@ -38,8 +38,11 @@ public class SpTargetRulesTarget : TargetRules
             bOverrideBuildEnvironment = true;
             AdditionalLinkerArguments = " -Wl,-no_warn_duplicate_libraries";
 
+            // Needed for building UE 5.5 projects on Xcode 26 (which is a newer version of Xcode than is officially supported by UE 5.5)
+            AdditionalCompilerArguments = "-Wno-deprecated-literal-operator";
+
             // Sometimes useful for debugging:
-            // AdditionalCompilerArguments = "-###";
+            // AdditionalCompilerArguments = "-### -Wno-deprecated-literal-operator";
 
         } else if (targetInfo.Platform == UnrealTargetPlatform.Linux) {
 

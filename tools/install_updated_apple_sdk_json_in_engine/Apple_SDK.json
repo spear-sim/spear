@@ -1,0 +1,25 @@
+{
+	// Xcode versions
+	"MainVersion": "15.2",
+	"MinVersion": "15.2.0",
+	"MaxVersion": "26.9.0",
+	// !!!
+	// NOTE: If you update the MaxVersion, double check the AppleVersionToLLVMVersion array below!!!
+	// !!!
+
+	// The versions on Windows are iTunes versions
+	"MinVersion_Win64": "1100.0.0.0",
+	"MaxVersion_Win64": "8999.0",
+
+	// This is not a version range, but a mapping of Xcode clang versions to LLVM versions, for shared version checks with other clangs
+	// Version mapping can be found at https://en.wikipedia.org/wiki/Xcode#Toolchain_versions
+	// The first version is the first version that is using the second version source LLVM
+	"AppleVersionToLLVMVersions": [
+		"14.0.0-14.0.0", // Xcode 14.0 -> LLVM 14.0
+		"14.0.3-15.0.0", // Xcode 14.3 -> LLVM 15.0
+		"15.0.0-16.0.0", // Xcode 15.0 -> LLVM 16.0
+		"16.0.0-17.0.6", // Xcode 16.0 -> LLVM 17.0.6
+		"16.3.0-19.1.4", // Xcode 16.3 -> LLVM 19.1.4
+		"26.0.0-19.1.5", // Xcode 26.0 -> LLVM 19.1.5
+	],
+}

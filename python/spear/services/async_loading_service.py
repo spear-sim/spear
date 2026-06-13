@@ -55,6 +55,8 @@ class AsyncLoadingService(spear.Service):
 
     def is_engine_idle(self, verbose=False):
 
+        is_with_editor = self._engine_globals_service.is_with_editor()
+
         async_loading_idle = self.is_async_loading_idle()
         asset_registry_idle = self.is_asset_registry_idle()
         distance_field_async_queue_idle, num_outstanding_distance_field_tasks, is_distance_field_async_queue_initialized = self.is_distance_field_async_queue_idle()
@@ -77,8 +79,8 @@ class AsyncLoadingService(spear.Service):
             world_partition_streaming_idle
 
         if verbose:
-            if not engine_idle or not is_distance_field_async_queue_initialized or not is_shader_compiling_manager_initialized:
-                spear.log(f"engine_idle = {engine_idle}")
+            if not engine_idle or (is_with_editor and not is_distance_field_async_queue_initialized) or (is_with_editor and not is_shader_compiling_manager_initialized):
+                spear.log(f"engine_idle    = {engine_idle} (is_with_editor = {is_with_editor})")
                 spear.log(f"    is_async_loading                           = {not async_loading_idle}")
                 spear.log(f"    is_loading_assets                          = {not asset_registry_idle}")
                 spear.log(f"    num_outstanding_distance_field_tasks       = {num_outstanding_distance_field_tasks} (initialized = {is_distance_field_async_queue_initialized})")
