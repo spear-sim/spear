@@ -4,7 +4,7 @@
 #
 
 import argparse
-import colorsys
+import h5py
 import json
 import mayavi.mlab
 import numpy as np
@@ -18,10 +18,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--pipeline-dir", required=True)
 parser.add_argument("--visual-parity-with-unreal", action="store_true")
 parser.add_argument("--ignore-actors", nargs="*")
-parser.add_argument("--color-mode", default="unique_color_per_component")
 args = parser.parse_args()
-
-assert args.color_mode in ["single_color", "unique_color_per_actor", "unique_color_per_component"]
 
 ignore_actors = []
 if args.ignore_actors is not None:
@@ -34,6 +31,19 @@ np.random.seed(0)
 
 origin_scale_factor = 1.0
 mesh_opacity = 1.0
+
+# The camera paths are drawn as faint light grey polylines so the camera axes drawn along them stand out.
+path_color = (0.7, 0.7, 0.7)
+path_opacity = 0.5
+path_line_width = 1.0
+
+# Number of evenly-spaced frames along each (densely-sampled) camera path at which to draw the camera orientation,
+# so the orientation is visible along the path without drawing an axis triad at every sample.
+num_visualized_frames = 50
+
+# Each visualized frame's camera orientation is drawn as a small RGB axis triad (red +X look direction, green +Y
+# right, blue +Z up) whose arrows are this long, in world units (cm).
+camera_axis_length = 30.0
 
 c_x_axis = (1.0,  0.0,  0.0)
 c_y_axis = (0.0,  1.0,  0.0)
@@ -79,19 +89,71 @@ def process_scene():
     actors = { actor_name: actor_desc for actor_name, actor_desc in actors.items() if actor_desc["editor_properties"]["relevant_for_level_bounds"] }
     actors = { actor_name: actor_desc for actor_name, actor_desc in actors.items() if actor_desc["root_component"] is not None }
 
-    color = (0.75, 0.75, 0.75)
+    # Draw the scene's original triangle meshes in dark grey to highlight the camera paths and axes drawn on top.
+    color = (0.4, 0.4, 0.4)
 
     for actor_name, actor_desc in actors.items():
         spear.log("Processing actor: ", actor_name)
         draw_actor(actor_desc=actor_desc, color=color)
+
+    # Load the camera paths computed by generate_free_space_camera_paths.py. Each path has a position and a
+    # camera-to-world rotation matrix at each of a dense set of samples (the rotation matrix's columns are the
+    # camera's +X look, +Y right, and +Z up directions in world space).
+    free_space_camera_paths_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_camera_paths", "free_space_camera_paths.h5"))
+    assert os.path.exists(free_space_camera_paths_file)
+    spear.log("Reading free-space camera paths file: ", free_space_camera_paths_file)
+    with h5py.File(free_space_camera_paths_file, "r") as f:
+        positions = f["camera_path_positions"][:]
+        camera_rotations = f["camera_path_orientations"][:]
+
+    # Draw each camera path as a faint polyline (consecutive samples are joined by an edge).
+    path_edge_indices = np.column_stack([np.arange(positions.shape[1] - 1), np.arange(1, positions.shape[1])])
+    for path_positions in positions:
+
+        # Swap y and z coordinates to match the visual appearance of the Unreal editor.
+        if args.visual_parity_with_unreal:
+            path_positions = path_positions[:,[0,2,1]]
+
+        draw_lines(points=path_positions, lines=path_edge_indices, color=path_color, opacity=path_opacity, line_width=path_line_width)
+
+    # Gather the camera position and orientation axes at an evenly-spaced subset of the samples along every path. A
+    # sample's orientation axes are the columns of its camera-to-world rotation matrix (column 0 is the +X look
+    # direction, column 1 the +Y right direction, column 2 the +Z up direction).
+    frame_indices = np.unique(np.linspace(0.0, positions.shape[1] - 1, num_visualized_frames).round().astype(int))
+    frame_positions = []
+    frame_x_axes = []
+    frame_y_axes = []
+    frame_z_axes = []
+    for path_index in range(positions.shape[0]):
+        for frame_index in frame_indices:
+            frame_positions.append(positions[path_index][frame_index])
+            frame_x_axes.append(camera_rotations[path_index][frame_index][:,0])
+            frame_y_axes.append(camera_rotations[path_index][frame_index][:,1])
+            frame_z_axes.append(camera_rotations[path_index][frame_index][:,2])
+    frame_positions = np.array(frame_positions)
+    frame_x_axes = np.array(frame_x_axes)
+    frame_y_axes = np.array(frame_y_axes)
+    frame_z_axes = np.array(frame_z_axes)
+
+    # Swap y and z coordinates to match the visual appearance of the Unreal editor.
+    if args.visual_parity_with_unreal:
+        frame_positions = frame_positions[:,[0,2,1]]
+        frame_x_axes = frame_x_axes[:,[0,2,1]]
+        frame_y_axes = frame_y_axes[:,[0,2,1]]
+        frame_z_axes = frame_z_axes[:,[0,2,1]]
+
+    # Draw a small RGB axis triad at each visualized frame, reusing the same arrow style as the world origin axes
+    # above (red for the camera's +X look direction, green for +Y right, blue for +Z up).
+    for frame_axes, color in [(frame_x_axes, c_x_axis), (frame_y_axes, c_y_axis), (frame_z_axes, c_z_axis)]:
+        mayavi.mlab.quiver3d(frame_positions[:,0], frame_positions[:,1], frame_positions[:,2],
+                             frame_axes[:,0], frame_axes[:,1], frame_axes[:,2],
+                             mode="arrow", scale_factor=camera_axis_length, color=color)
 
     mayavi.mlab.show()
 
     spear.log("Done.")
 
 def draw_actor(actor_desc, color):
-    if args.color_mode == "unique_color_per_actor":
-        color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
     draw_component(
         transform_world_from_parent_component=spear.math.identity_transform,
         component_desc=actor_desc["root_component"],
@@ -103,7 +165,7 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
     # Only process SceneComponents...
     component_class = component_desc["class"]
     if component_class in scene_component_classes:
-        spear.log(log_prefix_str, "Processing SceneComponent: ", component_desc["stable_name"])
+        spear.log(f"{log_prefix_str}Processing SceneComponent: {component_desc['stable_name']}")
 
         transform_parent_from_current_component, is_absolute_location, is_absolute_rotation, is_absolute_scale = \
             spear.pipeline.to_spear_transform_from_json_component(json_component=component_desc)
@@ -114,7 +176,7 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
             as_spear=True)
         M_world_from_current_component = spear.math.to_numpy_matrix_from_spear_transform(spear_transform=transform_world_from_current_component, as_matrix=True)
 
-        # Check the M_world_from_current_component matrix that we computed above against Unreal's 
+        # Check the M_world_from_current_component matrix that we computed above against Unreal's
         # SceneComponent.get_world_transform() function. We store the output from get_world_transform() in our
         # exported JSON file for each SceneComponent, so we can simply compare the matrix we computed above
         # against the stored matrix.
@@ -124,17 +186,17 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
 
         # ...and only attempt to draw StaticMeshComponents...
         if component_class in static_mesh_component_classes:
-            spear.log(log_prefix_str, "Component is a StaticMeshComponent.")
+            spear.log(f"{log_prefix_str}Component is a StaticMeshComponent.")
             static_mesh_desc = component_desc["editor_properties"]["static_mesh"]
 
             # ...that refer to non-null StaticMesh assets.
             if static_mesh_desc is not None:
                 static_mesh_asset_path = pathlib.PurePosixPath(static_mesh_desc["path"])
-                spear.log(log_prefix_str, "StaticMesh asset path: ", static_mesh_asset_path)
-    
+                spear.log(f"{log_prefix_str}StaticMesh asset path: {static_mesh_asset_path}")
+
                 obj_path_suffix = f"{os.path.join(*static_mesh_asset_path.parts[1:])}.obj"
                 numerical_parity_obj_path = os.path.realpath(os.path.join(args.pipeline_dir, "unreal_geometry", "numerical_parity", obj_path_suffix))
-                spear.log(log_prefix_str, "Reading OBJ file: ", numerical_parity_obj_path)
+                spear.log(f"{log_prefix_str}Reading OBJ file: {numerical_parity_obj_path}")
 
                 mesh = trimesh.load_mesh(numerical_parity_obj_path, process=False, validate=False)
                 V_current_component = np.matrix(np.c_[mesh.vertices, np.ones(mesh.vertices.shape[0])]).T
@@ -142,15 +204,11 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
                 assert np.allclose(V_world[3,:], 1.0)
                 mesh.vertices = V_world.T.A[:,0:3]
 
-                if args.color_mode == "unique_color_per_component":
-                    color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
-
                 # Swap y and z coordinates to match the visual appearance of the Unreal editor.
                 if args.visual_parity_with_unreal:
                     mesh.vertices = mesh.vertices[:,[0,2,1]]
 
-                mayavi.mlab.triangular_mesh(
-                    mesh.vertices[:,0], mesh.vertices[:,1], mesh.vertices[:,2], mesh.faces, representation="surface", color=color, opacity=mesh_opacity)
+                mayavi.mlab.triangular_mesh(mesh.vertices[:,0], mesh.vertices[:,1], mesh.vertices[:,2], mesh.faces, representation="surface", color=color, opacity=mesh_opacity)
 
         # Recurse for each child component.
         for child_component_desc in component_desc["children_components"].values():
@@ -159,6 +217,13 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
                 component_desc=child_component_desc,
                 color=color,
                 log_prefix_str=f"{log_prefix_str}    ")
+
+def draw_lines(points, lines, color, opacity, line_width):
+
+    line_source = mayavi.mlab.pipeline.scalar_scatter(points[:,0], points[:,1], points[:,2])
+    line_source.mlab_source.dataset.lines = lines
+    line_source.update()
+    mayavi.mlab.pipeline.surface(mayavi.mlab.pipeline.stripper(line_source), color=color, opacity=opacity, line_width=line_width)
 
 
 if __name__ == "__main__":

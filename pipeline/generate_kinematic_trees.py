@@ -11,7 +11,7 @@ import spear
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--export-dir", required=True)
+parser.add_argument("--pipeline-dir", required=True)
 args = parser.parse_args()
 
 scene_component_classes = ["SceneComponent", "StaticMeshComponent"]
@@ -21,7 +21,7 @@ physics_constraint_component_classes = ["PhysicsConstraintComponent"]
 
 def process_scene():
 
-    unreal_metadata_dir = os.path.realpath(os.path.join(args.export_dir, "unreal_metadata"))
+    unreal_metadata_dir = os.path.realpath(os.path.join(args.pipeline_dir, "unreal_metadata"))
     unreal_metadata_actors_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "scene.json"))
     assert os.path.exists(unreal_metadata_dir)
     spear.log("Reading JSON file: ", unreal_metadata_actors_json_file)
@@ -41,10 +41,10 @@ def process_scene():
             assert False
 
     actors = { actor_name: actor_desc for actor_name, actor_desc in actors.items() if actor_desc["editor_properties"]["relevant_for_level_bounds"] }
-    actors = { actor_name: get_kinematic_tree(actor_desc) for actor_name, actor_desc in actors.items() }
+    actors = { actor_name: get_kinematic_tree(actor_desc=actor_desc) for actor_name, actor_desc in actors.items() }
     actors = { actor_name: actor_kinematic_tree for actor_name, actor_kinematic_tree in actors.items() if actor_kinematic_tree["root_node"] is not None }
 
-    kinematic_trees_dir = os.path.realpath(os.path.join(args.export_dir, "kinematic_trees"))
+    kinematic_trees_dir = os.path.realpath(os.path.join(args.pipeline_dir, "kinematic_trees"))
     kinematic_trees_actors_json_file = os.path.realpath(os.path.join(kinematic_trees_dir, "scene.json"))
     spear.log("Writing JSON file: ", kinematic_trees_actors_json_file)
     os.makedirs(kinematic_trees_dir, exist_ok=True)

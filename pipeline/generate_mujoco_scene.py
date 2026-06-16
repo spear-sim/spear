@@ -16,7 +16,7 @@ import xml.etree.ElementTree
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--export-dir", required=True)
+parser.add_argument("--pipeline-dir", required=True)
 parser.add_argument("--mujoco-model-name", required=True)
 parser.add_argument("--visual-parity-with-unreal", action="store_true")
 parser.add_argument("--ignore-actors", nargs="*")
@@ -57,7 +57,7 @@ main_mjcf_str = \
 
 def process_scene():
 
-    collision_geometry_dir = os.path.realpath(os.path.join(args.export_dir, "collision_geometry"))
+    collision_geometry_dir = os.path.realpath(os.path.join(args.pipeline_dir, "collision_geometry"))
     actors_json_file = os.path.realpath(os.path.join(collision_geometry_dir, "scene.json"))
     spear.log("Reading JSON file: ", actors_json_file)
     assert os.path.exists(collision_geometry_dir)
@@ -70,21 +70,21 @@ def process_scene():
     bodies_element = xml.etree.ElementTree.Element("bodies")
     color = (0.75, 0.75, 0.75)
     for actor_name, actor_kinematic_tree in actors.items():
-        add_mujoco_elements(actor_name, actor_kinematic_tree, meshes_element, bodies_element, color)
+        add_mujoco_elements(actor_name=actor_name, kinematic_tree=actor_kinematic_tree, meshes_element=meshes_element, bodies_element=bodies_element, color=color)
 
-    mujoco_scene_dir = os.path.realpath(os.path.join(args.export_dir, "mujoco_scene"))
+    mujoco_scene_dir = os.path.realpath(os.path.join(args.pipeline_dir, "mujoco_scene"))
     spear.log("Creating directory if it does not already exist: ", mujoco_scene_dir)
     os.makedirs(mujoco_scene_dir, exist_ok=True)
 
     meshes_mjcf_file = os.path.realpath(os.path.join(mujoco_scene_dir, "meshes.mjcf"))
     spear.log("Writing MJCF file: ", meshes_mjcf_file)
     with open(meshes_mjcf_file, "w") as f:
-        f.write(get_element_str(meshes_element))
+        f.write(get_element_str(element=meshes_element))
 
     bodies_mjcf_file = os.path.realpath(os.path.join(mujoco_scene_dir, "bodies.mjcf"))
     spear.log("Writing MJCF file: ", bodies_mjcf_file)
     with open(bodies_mjcf_file, "w") as f:
-        f.write(get_element_str(bodies_element))
+        f.write(get_element_str(element=bodies_element))
 
     main_mjcf_file = os.path.realpath(os.path.join(mujoco_scene_dir, "main.mjcf"))
     spear.log("Writing MJCF file: ", main_mjcf_file)
@@ -246,8 +246,8 @@ def add_mujoco_elements_for_kinematic_tree_node(
     body_name = f"{actor_name}:{kinematic_tree_node_name}"
     body_element = xml.etree.ElementTree.SubElement(parent_element, "body", attrib={
         "name": body_name,
-        "pos": get_mujoco_pos_str(pos),
-        "xyaxes": get_mujoco_xyaxes_str(rot)})
+        "pos": get_mujoco_pos_str(pos=pos),
+        "xyaxes": get_mujoco_xyaxes_str(rotation=rot)})
 
     if body_type == "dynamic" and root_node:
         xml.etree.ElementTree.SubElement(body_element, "freejoint")
@@ -294,11 +294,11 @@ def add_mujoco_elements_for_kinematic_tree_node(
             mesh_element = xml.etree.ElementTree.SubElement(meshes_element, "mesh", attrib={
                 "file": part_id_obj_path,
                 "name": mesh_name,
-                "scale": get_mujoco_scale_str(scale)})
+                "scale": get_mujoco_scale_str(scale=scale)})
             geom_element = xml.etree.ElementTree.SubElement(body_element, "geom", attrib={
                 "mesh": mesh_name,
                 "name": geom_name,
-                "rgba": get_mujoco_rgba_str(color),
+                "rgba": get_mujoco_rgba_str(rgb=color),
                 "type": "mesh"})
 
     # Recurse for each child node.

@@ -15,7 +15,7 @@ import spear
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--export-dir", required=True)
+parser.add_argument("--pipeline-dir", required=True)
 parser.add_argument("--visual-parity-with-unreal", action="store_true")
 parser.add_argument("--ignore-actors", nargs="*")
 parser.add_argument("--color-mode", default="unique_color_per_part_id")
@@ -51,7 +51,7 @@ if args.visual_parity_with_unreal:
 
 def process_scene():
 
-    collision_geometry_dir = os.path.realpath(os.path.join(args.export_dir, "collision_geometry"))
+    collision_geometry_dir = os.path.realpath(os.path.join(args.pipeline_dir, "collision_geometry"))
     actors_json_file = os.path.realpath(os.path.join(collision_geometry_dir, "scene.json"))
     spear.log("Reading JSON file: ", actors_json_file)
     assert os.path.exists(collision_geometry_dir)
@@ -70,13 +70,13 @@ def process_scene():
                          z_axis_world[:,0], z_axis_world[:,1], z_axis_world[:,2],
                          mode="arrow", scale_factor=origin_scale_factor, color=c_z_axis)
 
-    actors = { actor_name: actor_kinematic_tree for actor_name, actor_kinematic_tree in actors_json.items() if actor_name not in ignore_actors }
+    actors = { actor_name: actor_kinematic_tree for actor_name, actor_kinematic_tree in actors_json.items() if actor_name.split(":")[0] not in ignore_actors }
 
     color = (0.75, 0.75, 0.75)
 
     for actor_name, actor_kinematic_tree in actors.items():
         spear.log("Processing actor: ", actor_name)
-        draw_collision_geometry(actor_name, actor_kinematic_tree, color)
+        draw_collision_geometry(actor_name=actor_name, kinematic_tree=actor_kinematic_tree, color=color)
 
     mayavi.mlab.show()
 
@@ -114,7 +114,7 @@ def draw_collision_geometry_for_kinematic_tree_node(actor_name, transform_world_
         convex_decomposition_strategy = "coacd"
 
         merge_id_obj_dir = os.path.realpath(os.path.join(
-            args.export_dir,
+            args.pipeline_dir,
             "collision_geometry",
             convex_decomposition_strategy,
             actor_name.replace("/", ".").replace(":", "."),

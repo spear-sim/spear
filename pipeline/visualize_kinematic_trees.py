@@ -15,7 +15,7 @@ import spear
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--export-dir", required=True)
+parser.add_argument("--pipeline-dir", required=True)
 parser.add_argument("--visual-parity-with-unreal", action="store_true")
 parser.add_argument("--ignore-actors", nargs="*")
 parser.add_argument("--color-mode", default="unique_color_per_node")
@@ -51,7 +51,7 @@ if args.visual_parity_with_unreal:
 
 def process_scene():
 
-    kinematic_trees_dir = os.path.realpath(os.path.join(args.export_dir, "kinematic_trees"))
+    kinematic_trees_dir = os.path.realpath(os.path.join(args.pipeline_dir, "kinematic_trees"))
     actors_json_file = os.path.realpath(os.path.join(kinematic_trees_dir, "scene.json"))
     assert os.path.exists(kinematic_trees_dir)
     spear.log("Reading JSON file: ", actors_json_file)
@@ -71,13 +71,13 @@ def process_scene():
                          mode="arrow", scale_factor=origin_scale_factor, color=c_z_axis)
 
     actors = actors_json
-    actors = { actor_name: actor_kinematic_tree for actor_name, actor_kinematic_tree in actors.items() if actor_name not in ignore_actors }
+    actors = { actor_name: actor_kinematic_tree for actor_name, actor_kinematic_tree in actors.items() if actor_name.split(":")[0] not in ignore_actors }
 
     color = (0.75, 0.75, 0.75)
 
     for actor_name, actor_kinematic_tree in actors.items():
         spear.log("Processing actor: ", actor_name)
-        draw_kinematic_tree(actor_kinematic_tree, color)
+        draw_kinematic_tree(kinematic_tree=actor_kinematic_tree, color=color)
 
     mayavi.mlab.show()
 
@@ -115,7 +115,7 @@ def draw_kinematic_tree_node(transform_world_from_parent_node, kinematic_tree_no
         static_mesh_asset_path = pathlib.PurePosixPath(static_mesh_component_desc["editor_properties"]["static_mesh"]["path"])
 
         obj_path_suffix = f"{os.path.join(*static_mesh_asset_path.parts[1:])}.obj"
-        numerical_parity_obj_path = os.path.realpath(os.path.join(args.export_dir, "unreal_geometry", "numerical_parity", obj_path_suffix))
+        numerical_parity_obj_path = os.path.realpath(os.path.join(args.pipeline_dir, "unreal_geometry", "numerical_parity", obj_path_suffix))
         spear.log(log_prefix_str, "Reading OBJ file: ", numerical_parity_obj_path)
 
         mesh = trimesh.load_mesh(numerical_parity_obj_path, process=False, validate=False)

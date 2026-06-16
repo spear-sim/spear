@@ -4,7 +4,7 @@
 #
 
 import argparse
-import colorsys
+import h5py
 import json
 import mayavi.mlab
 import numpy as np
@@ -18,10 +18,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--pipeline-dir", required=True)
 parser.add_argument("--visual-parity-with-unreal", action="store_true")
 parser.add_argument("--ignore-actors", nargs="*")
-parser.add_argument("--color-mode", default="unique_color_per_component")
 args = parser.parse_args()
-
-assert args.color_mode in ["single_color", "unique_color_per_actor", "unique_color_per_component"]
 
 ignore_actors = []
 if args.ignore_actors is not None:
@@ -52,6 +49,13 @@ if args.visual_parity_with_unreal:
     y_axis_world = y_axis_world[:,[0,2,1]]
     z_axis_world = z_axis_world[:,[0,2,1]]
 
+# Vertex indices of the 12 edges of a bounding box, where each edge connects two corners that differ on exactly
+# one axis (using the same corner indexing as spear.pipeline.get_bounding_box's corners_world).
+box_edge_indices = np.array([
+    [0, 4], [1, 5], [2, 6], [3, 7],
+    [0, 2], [1, 3], [4, 6], [5, 7],
+    [0, 1], [2, 3], [4, 5], [6, 7]])
+
 
 def process_scene():
 
@@ -79,19 +83,33 @@ def process_scene():
     actors = { actor_name: actor_desc for actor_name, actor_desc in actors.items() if actor_desc["editor_properties"]["relevant_for_level_bounds"] }
     actors = { actor_name: actor_desc for actor_name, actor_desc in actors.items() if actor_desc["root_component"] is not None }
 
-    color = (0.75, 0.75, 0.75)
+    # Draw the scene's original triangle meshes in dark grey to highlight the free-space points drawn on top.
+    color = (0.25, 0.25, 0.25)
 
     for actor_name, actor_desc in actors.items():
         spear.log("Processing actor: ", actor_name)
         draw_actor(actor_desc=actor_desc, color=color)
+
+    # Load the free-space points computed by generate_free_space_points.py. The occupied oriented bounding boxes are
+    # recomputed and drawn per-component from the same metadata as the meshes in draw_component below.
+    free_space_points_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_points", "free_space_points.h5"))
+    assert os.path.exists(free_space_points_file)
+    spear.log("Reading free-space points file: ", free_space_points_file)
+    with h5py.File(free_space_points_file, "r") as f:
+        points = f["scene_points"][:]
+
+    # Swap y and z coordinates to match the visual appearance of the Unreal editor.
+    if args.visual_parity_with_unreal:
+        points = points[:,[0,2,1]]
+
+    # Draw the free-space points as white markers.
+    mayavi.mlab.points3d(points[:,0], points[:,1], points[:,2], color=(1.0, 1.0, 1.0), scale_factor=3.0)
 
     mayavi.mlab.show()
 
     spear.log("Done.")
 
 def draw_actor(actor_desc, color):
-    if args.color_mode == "unique_color_per_actor":
-        color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
     draw_component(
         transform_world_from_parent_component=spear.math.identity_transform,
         component_desc=actor_desc["root_component"],
@@ -103,7 +121,7 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
     # Only process SceneComponents...
     component_class = component_desc["class"]
     if component_class in scene_component_classes:
-        spear.log(log_prefix_str, "Processing SceneComponent: ", component_desc["stable_name"])
+        spear.log(f"{log_prefix_str}Processing SceneComponent: {component_desc['stable_name']}")
 
         transform_parent_from_current_component, is_absolute_location, is_absolute_rotation, is_absolute_scale = \
             spear.pipeline.to_spear_transform_from_json_component(json_component=component_desc)
@@ -114,7 +132,7 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
             as_spear=True)
         M_world_from_current_component = spear.math.to_numpy_matrix_from_spear_transform(spear_transform=transform_world_from_current_component, as_matrix=True)
 
-        # Check the M_world_from_current_component matrix that we computed above against Unreal's 
+        # Check the M_world_from_current_component matrix that we computed above against Unreal's
         # SceneComponent.get_world_transform() function. We store the output from get_world_transform() in our
         # exported JSON file for each SceneComponent, so we can simply compare the matrix we computed above
         # against the stored matrix.
@@ -124,17 +142,17 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
 
         # ...and only attempt to draw StaticMeshComponents...
         if component_class in static_mesh_component_classes:
-            spear.log(log_prefix_str, "Component is a StaticMeshComponent.")
+            spear.log(f"{log_prefix_str}Component is a StaticMeshComponent.")
             static_mesh_desc = component_desc["editor_properties"]["static_mesh"]
 
             # ...that refer to non-null StaticMesh assets.
             if static_mesh_desc is not None:
                 static_mesh_asset_path = pathlib.PurePosixPath(static_mesh_desc["path"])
-                spear.log(log_prefix_str, "StaticMesh asset path: ", static_mesh_asset_path)
-    
+                spear.log(f"{log_prefix_str}StaticMesh asset path: {static_mesh_asset_path}")
+
                 obj_path_suffix = f"{os.path.join(*static_mesh_asset_path.parts[1:])}.obj"
                 numerical_parity_obj_path = os.path.realpath(os.path.join(args.pipeline_dir, "unreal_geometry", "numerical_parity", obj_path_suffix))
-                spear.log(log_prefix_str, "Reading OBJ file: ", numerical_parity_obj_path)
+                spear.log(f"{log_prefix_str}Reading OBJ file: {numerical_parity_obj_path}")
 
                 mesh = trimesh.load_mesh(numerical_parity_obj_path, process=False, validate=False)
                 V_current_component = np.matrix(np.c_[mesh.vertices, np.ones(mesh.vertices.shape[0])]).T
@@ -142,15 +160,23 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
                 assert np.allclose(V_world[3,:], 1.0)
                 mesh.vertices = V_world.T.A[:,0:3]
 
-                if args.color_mode == "unique_color_per_component":
-                    color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
-
                 # Swap y and z coordinates to match the visual appearance of the Unreal editor.
                 if args.visual_parity_with_unreal:
                     mesh.vertices = mesh.vertices[:,[0,2,1]]
 
-                mayavi.mlab.triangular_mesh(
-                    mesh.vertices[:,0], mesh.vertices[:,1], mesh.vertices[:,2], mesh.faces, representation="surface", color=color, opacity=mesh_opacity)
+                mayavi.mlab.triangular_mesh(mesh.vertices[:,0], mesh.vertices[:,1], mesh.vertices[:,2], mesh.faces, representation="surface", color=color, opacity=mesh_opacity)
+
+                # Compute the component's oriented bounding box from the exported local_bounds and world_transform
+                # metadata (the same spear.pipeline.get_bounding_box the free-space pipeline uses) and draw it as a
+                # white wireframe.
+                bounding_box = spear.pipeline.get_bounding_box(component_desc=component_desc)
+                box_corners = bounding_box["corners_world"]
+
+                # Swap y and z coordinates to match the visual appearance of the Unreal editor.
+                if args.visual_parity_with_unreal:
+                    box_corners = box_corners[:,[0,2,1]]
+
+                draw_lines(points=box_corners, lines=box_edge_indices, color=(1.0, 1.0, 1.0), opacity=1.0, line_width=1.0)
 
         # Recurse for each child component.
         for child_component_desc in component_desc["children_components"].values():
@@ -159,6 +185,13 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
                 component_desc=child_component_desc,
                 color=color,
                 log_prefix_str=f"{log_prefix_str}    ")
+
+def draw_lines(points, lines, color, opacity, line_width):
+
+    line_source = mayavi.mlab.pipeline.scalar_scatter(points[:,0], points[:,1], points[:,2])
+    line_source.mlab_source.dataset.lines = lines
+    line_source.update()
+    mayavi.mlab.pipeline.surface(mayavi.mlab.pipeline.stripper(line_source), color=color, opacity=opacity, line_width=line_width)
 
 
 if __name__ == "__main__":

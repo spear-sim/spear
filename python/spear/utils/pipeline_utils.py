@@ -112,6 +112,91 @@ def to_spear_vector_from_json_vector(json_vector):
 
 
 #
+# Function for computing a component's world-space oriented bounding box from its exported metadata.
+#
+
+# The 8 corners of a unit cube in a component's local frame, expressed as signs that scale a box's half-extents.
+cube_corners_normalized_component = np.array([
+    [-1.0, -1.0, -1.0],
+    [-1.0, -1.0,  1.0],
+    [-1.0,  1.0, -1.0],
+    [-1.0,  1.0,  1.0],
+    [ 1.0, -1.0, -1.0],
+    [ 1.0, -1.0,  1.0],
+    [ 1.0,  1.0, -1.0],
+    [ 1.0,  1.0,  1.0]])
+
+def get_bounding_box(component_desc):
+
+    assert "world_transform" in component_desc["attributes"]
+    assert "local_bounds" in component_desc["attributes"]
+    assert "static_mesh" in component_desc["editor_properties"]
+
+    # A StaticMeshComponent exports its local-space bounds (local_bounds); combined with its world transform, this
+    # gives an oriented bounding box in world space. The exported world transform and local bounds parse into
+    # matrices: a (3, 1) translation, a (3, 3) rotation, a (3, 3) diagonal scale, and (3, 1) local bounds.
+    transform_world_from_component = to_numpy_transform_from_json_transform(json_transform=component_desc["attributes"]["world_transform"], as_matrix=True)
+    box_min, box_max = component_desc["attributes"]["local_bounds"]
+    box_min = to_numpy_array_from_json_vector(json_vector=box_min, as_matrix=True)
+    box_max = to_numpy_array_from_json_vector(json_vector=box_max, as_matrix=True)
+
+    translation_world = transform_world_from_component["translation"]
+    rotation_world_from_component = transform_world_from_component["rotation"]
+    rotation_component_from_world = rotation_world_from_component.T
+    scale = transform_world_from_component["scale"]
+
+    # The box is axis-aligned in the component's local frame, so its world half-extent is the local half-extent
+    # scaled by the component's scale, its world orientation is the component's rotation, and its world center is
+    # the local center mapped out to world space. The rotation is rigid, so distances are preserved in world units.
+    half_extent = scale*(box_max - box_min)/2.0
+    center_world = rotation_world_from_component*scale*(box_min + box_max)/2.0 + translation_world
+    translation_component_from_world = -rotation_component_from_world*center_world
+
+    # World-space corners: scale the unit-cube corner signs by the world half-extent, then rotate and translate
+    # them out to world space. We keep the corners as column vectors (3 rows, N cols) so the rotation matrix
+    # appears on the left.
+    corner_offsets_component = np.matrix(cube_corners_normalized_component*half_extent.A1).T
+    corners_world = rotation_world_from_component*corner_offsets_component + center_world
+
+    # Compute every piece of derived data we need downstream once, so a bounding box is described by a single dict:
+    # the component-from-world rotation and translation (the local-frame containment and slab tests), the
+    # world-space center and axes (the oriented-box overlap test), the half-extent, and the world-space corners.
+    return {
+        "rotation_component_from_world": rotation_component_from_world.A,
+        "translation_component_from_world": translation_component_from_world.A1,
+        "half_extent": half_extent.A1,
+        "center_world": center_world.A1,
+        "axes_world": rotation_world_from_component.A,
+        "corners_world": corners_world.T.A}
+
+def expand_bounding_box(bounding_box, eps):
+
+    # Return a copy of bounding_box expanded by eps along each of its local axes (in world units), leaving its
+    # center and orientation unchanged. A point outside the expanded box is then guaranteed to be more than eps
+    # away (in Euclidean distance) from the original box, which the free-space pipeline relies on to keep a
+    # clearance of eps around every obstacle.
+
+    half_extent = bounding_box["half_extent"] + eps
+    rotation_world_from_component = np.matrix(bounding_box["axes_world"])
+    center_world = np.matrix(bounding_box["center_world"]).T
+
+    # Recompute the world-space corners from the expanded half-extent (the same construction as get_bounding_box):
+    # scale the unit-cube corner signs by the expanded half-extent, then rotate and translate them out to world
+    # space, keeping the corners as column vectors (3 rows, N cols) so the rotation matrix appears on the left.
+    corner_offsets_component = np.matrix(cube_corners_normalized_component*half_extent).T
+    corners_world = rotation_world_from_component*corner_offsets_component + center_world
+
+    # The center and orientation are unchanged, so the component-from-world rotation and translation carry over.
+    return {
+        "rotation_component_from_world": bounding_box["rotation_component_from_world"],
+        "translation_component_from_world": bounding_box["translation_component_from_world"],
+        "half_extent": half_extent,
+        "center_world": bounding_box["center_world"],
+        "axes_world": bounding_box["axes_world"],
+        "corners_world": corners_world.T.A}
+
+
+#
 # Function for getting a physical filesystem path from a logical content path.
 #
 
