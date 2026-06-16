@@ -10,6 +10,10 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["spear"]
 
+# Allow the "fastpathplanning" git direct reference in project.optional-dependencies below.
+[tool.hatch.metadata]
+allow-direct-references = true
+
 [project]
 name = "spear-sim"
 version = "1.0.0"
