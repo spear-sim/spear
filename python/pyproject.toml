@@ -10,29 +10,28 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["spear"]
 
-# Allow the "fastpathplanning" git direct reference in project.optional-dependencies below.
 [tool.hatch.metadata]
-allow-direct-references = true
+allow-direct-references = true  # allow the fastpathplanning git direct reference in project.optional-dependencies below
 
 [project]
 name = "spear-sim"
 version = "1.0.0"
 requires-python = "~=3.11"
 dependencies = [
-    "matplotlib==3.10.0",
-    "mcp==1.26.0",
+    "matplotlib==3.10.0",       # tools/run_mcp_server.py
+    "mcp==1.26.0",              # tools/run_mcp_server.py
     "numpy==2.0.2",
     "opencv-python==4.10.0.84",
-    "p4python==2025.1.2767466",
-    "pandas==2.2.3",
+    "p4python==2025.1.2767466", # tools/download_content_from_perforce.py
+    "pandas==2.2.3",            # various tools
     "psutil==5.9.0",
     "scipy==1.14.1",
-    "trimesh==4.4.0",
     "yacs==0.1.8"]
 
 [project.optional-dependencies]
 editor = [
-    "msgpack-rpc-python==0.4.1"]
+    "msgpack-rpc-python==0.4.1",
+    "trimesh==4.4.0"]           # editor/export_unreal_geometry.py
 examples = [
     "jupyterlab==4.5.7",
     "wget==3.2"]
@@ -42,4 +41,5 @@ pipeline = [
     "h5py==3.12.1",
     "imageio-ffmpeg==0.6.0",
     "mujoco==3.5.0",
-    "setuptools==78.1.1"] # required by Mayavi, but not pinned by Mayavi, so we pin here
+    "setuptools==78.1.1",       # required by Mayavi, but not pinned by Mayavi, so we pin here
+    "trimesh==4.4.0"]
