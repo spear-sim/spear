@@ -66,7 +66,7 @@ python -m mujoco.viewer --mjcf=path/to/spear-pipeline/scenes/apartment_0000/mujo
 # generate Unreal metadata
 python tools/run_editor_script.py --unreal-engine-dir path/to/UE_5.5 --launch-mode full --render-offscreen --script export_unreal_metadata/run.py --export-dir path/to/spear-pipeline/scenes/apartment_0000
 
-# generate Unreal geometry (only required for the optional visualization steps below)
+# generate Unreal geometry (only required to support the optional visualization steps below)
 python tools/run_editor_script.py --unreal-engine-dir path/to/UE_5.5 --launch-mode full --render-offscreen --script export_unreal_geometry.py --export-dir path/to/spear-pipeline/scenes/apartment_0000
 
 # generate free-space points
@@ -108,6 +108,6 @@ python pipeline/visualize_free_space_camera_paths.py --pipeline-dir path/to/spea
 # generate rendered images along each camera path
 python pipeline/generate_free_space_camera_path_images.py --pipeline-dir path/to/spear-pipeline/scenes/apartment_0000 --user-config-files path/to/user_config.yaml
 
-# generate a rendered video for each camera path
+# generate rendered videos
 python pipeline/generate_free_space_camera_path_videos.py --pipeline-dir path/to/spear-pipeline/scenes/apartment_0000
 ```
