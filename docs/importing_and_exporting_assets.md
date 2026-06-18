@@ -8,14 +8,10 @@ In order to execute the pipeline in this document, we will assume that you have 
 
 ## Installing additional Python dependencies
 
-In order to execute the pipeline in this document, you will need to install several additional Python dependencies. Installing [Mayavi](https://docs.enthought.com/mayavi/mayavi) is only necessary if you want to use our optional debug visualization tools.
+In order to execute the pipeline in this document, you will need to install the `pipeline` optional dependencies. When executing the command below, `PIP_BUILD_CONSTRAINT` forces `pip` to build against the versions we specify, and `--no-cache-dir` forces a fresh build.
 
 ```console
-# install dependencies to execute our pipeline
-pip install -e "python[pipeline]"
-
-# install mayavi (optional)
-conda install -c conda-forge mayavi=4.8.2
+PIP_BUILD_CONSTRAINT=python/pip_build_constraint.txt pip install --no-cache-dir -e "python[pipeline]"
 ```
 
 ## Accessing the Unreal Editor's built-in Python Interface

@@ -8,11 +8,10 @@
 import argparse
 import colorsys
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
-import PIL
+import PIL.Image
 import pprint
 import re
 import shutil
@@ -311,35 +310,41 @@ if __name__ == "__main__":
         data = component_desc["data"]
         image_file = os.path.realpath(os.path.join(images_dir, f"{component_desc['name']}.png"))
         image = component_desc["visualize_func"](data=data)
+        if image.dtype != np.uint8:
+            image = (np.clip(image, 0.0, 1.0)*255.0).astype(np.uint8)
+        if image.ndim == 3:
+            image = image[:, :, [2,1,0]] # RGB -> BGR
+        elif image.ndim == 2:
+            image = cv2.applyColorMap(image, cv2.COLORMAP_VIRIDIS) # match matplotlib's default colormap for single-channel images
         spear.log("Saving image: ", image_file)
-        plt.imsave(image_file, image)
+        cv2.imwrite(image_file, image)
 
     # foreground
     foreground = np.isin(proxy_id_image, foreground_actor_proxy_ids)*255
     image_file = os.path.realpath(os.path.join(images_dir, "foreground.png"))
     spear.log("Saving image: ", image_file)
-    plt.imsave(image_file, foreground)
+    cv2.imwrite(image_file, cv2.applyColorMap(foreground.astype(np.uint8), cv2.COLORMAP_VIRIDIS)) # match matplotlib's default colormap for single-channel images
 
     # semantic
     semantic_ids = semantic_id_image
     semantic = semantic_colors[semantic_ids]
     image_file = os.path.realpath(os.path.join(images_dir, "semantic.png"))
     spear.log("Saving image: ", image_file)
-    plt.imsave(image_file, semantic)
+    cv2.imwrite(image_file, semantic[:,:,[2,1,0]]) # RGB -> BGR
 
     # semantic instance
     semantic_instance_ids = semantic_instance_id_image
     semantic_instance = semantic_instance_colors[semantic_instance_ids]
     image_file = os.path.realpath(os.path.join(images_dir, "semantic_instance.png"))
     spear.log("Saving image: ", image_file)
-    plt.imsave(image_file, semantic_instance)
+    cv2.imwrite(image_file, semantic_instance[:,:,[2,1,0]]) # RGB -> BGR
 
     # material
     material_ids = material_id_image
     material = material_colors[material_id_image]
     image_file = os.path.realpath(os.path.join(images_dir, "material.png"))
     spear.log("Saving image: ", image_file)
-    plt.imsave(image_file, material)
+    cv2.imwrite(image_file, material[:,:,[2,1,0]]) # RGB -> BGR
 
     # diffuse_reflectance
     gamma = 1.0/2.2
@@ -352,7 +357,7 @@ if __name__ == "__main__":
     diffuse_reflectance = np.asarray(diffuse_reflectance)
     image_file = os.path.realpath(os.path.join(images_dir, "diffuse_reflectance.png"))
     spear.log("Saving image: ", image_file)
-    plt.imsave(image_file, diffuse_reflectance)
+    cv2.imwrite(image_file, diffuse_reflectance[:,:,[2,1,0,3]]) # RGBA -> BGRA
 
     # diffuse_illumination
     spatial_supersampling_factor = component_desc_map["lighting_only_diffuse_color"]["spatial_supersampling_factor"]
@@ -367,7 +372,7 @@ if __name__ == "__main__":
     diffuse_illumination = np.asarray(diffuse_illumination)
     image_file = os.path.realpath(os.path.join(images_dir, "diffuse_illumination.png"))
     spear.log("Saving image: ", image_file)
-    plt.imsave(image_file, diffuse_illumination)
+    cv2.imwrite(image_file, diffuse_illumination[:,:,[2,1,0]]) # RGB -> BGR
 
     # diffuse_and_specular
     spatial_supersampling_factor = component_desc_map["diffuse_color"]["spatial_supersampling_factor"]
@@ -382,7 +387,7 @@ if __name__ == "__main__":
     diffuse_and_specular = np.asarray(diffuse_and_specular)
     image_file = os.path.realpath(os.path.join(images_dir, "diffuse_and_specular.png"))
     spear.log("Saving image: ", image_file)
-    plt.imsave(image_file, diffuse_and_specular)
+    cv2.imwrite(image_file, diffuse_and_specular[:,:,[2,1,0]]) # RGB -> BGR
 
     # diffuse_only
     spatial_supersampling_factor = component_desc_map["diffuse_color"]["spatial_supersampling_factor"]
@@ -394,7 +399,7 @@ if __name__ == "__main__":
     diffuse_only = np.asarray(diffuse_only)
     image_file = os.path.realpath(os.path.join(images_dir, "diffuse_only.png"))
     spear.log("Saving image: ", image_file)
-    plt.imsave(image_file, diffuse_only)
+    cv2.imwrite(image_file, diffuse_only[:,:,[2,1,0]]) # RGB -> BGR
 
     # residual
     spatial_supersampling_factor = component_desc_map["diffuse_color"]["spatial_supersampling_factor"]
@@ -408,7 +413,7 @@ if __name__ == "__main__":
     residual = np.asarray(residual)
     image_file = os.path.realpath(os.path.join(images_dir, "residual.png"))
     spear.log("Saving image: ", image_file)
-    plt.imsave(image_file, residual)
+    cv2.imwrite(image_file, residual[:,:,[2,1,0]]) # RGB -> BGR
 
     # terminate actors and components
     with instance.begin_frame():

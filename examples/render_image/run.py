@@ -7,7 +7,6 @@
 
 import argparse
 import cv2
-import matplotlib.pyplot as plt
 import os
 import spear
 
@@ -65,11 +64,10 @@ if __name__ == "__main__":
     cv2.imshow("final_tone_curve_hdr", data_bundle["arrays"]["data"])
     cv2.waitKey(0)
 
-    # save image
-    image = data_bundle["arrays"]["data"][:,:,[2,1,0]]
+    # save image (cv2 writes the native BGR, dropping alpha)
     image_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "image.png"))
     spear.log("Saving image: ", image_file)
-    plt.imsave(image_file, image)
+    cv2.imwrite(image_file, data_bundle["arrays"]["data"][:,:,[0,1,2]])
 
     # terminate actors and components
     with instance.begin_frame():

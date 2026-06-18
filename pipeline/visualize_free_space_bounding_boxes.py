@@ -4,9 +4,9 @@
 #
 
 import argparse
+import cv2
 import h5py
 import json
-import matplotlib
 import mayavi.mlab
 import numpy as np
 import os
@@ -39,13 +39,13 @@ mesh_opacity = 1.0
 box_jitter = 2.5
 
 # The candidate boxes selected in phase 1 (covering the free-space points) and phase 2 (covering the phase-1 boxes'
-# footprints) are drawn in a single hue per phase (red for phase 1, blue for phase 2), shaded from dark to light by
-# each box's rank in that phase's greedy selection order so the order in which boxes were selected is visible. The
-# reversed single-hue colormaps run dark (rank 0) to near-white (rank 1), so we only sample up to colormap_light_end
-# rather than all the way to 1.0, keeping the lightest boxes clearly red/blue instead of fading to white (which
-# would blur the distinction between the two phases). The unselected candidate boxes are drawn in faint light grey.
-covering_colormap = matplotlib.colormaps["Reds_r"]
-overlapping_colormap = matplotlib.colormaps["Blues_r"]
+# footprints) are drawn with a different colormap per phase (cv2's autumn for phase 1, winter for phase 2), shaded by
+# each box's rank in that phase's greedy selection order so the order in which boxes were selected is visible. We only
+# sample each colormap up to colormap_light_end rather than all the way to 1.0, which keeps the two phases' colors
+# visually distinct. The unselected candidate boxes are drawn in faint light grey. cv2 returns BGR, so we reverse each
+# 256-entry lookup table to RGB.
+covering_colormap_table = cv2.applyColorMap(np.arange(256, dtype=np.uint8).reshape(256, 1), cv2.COLORMAP_AUTUMN).reshape(256, 3)[:, [2,1,0]]
+overlapping_colormap_table = cv2.applyColorMap(np.arange(256, dtype=np.uint8).reshape(256, 1), cv2.COLORMAP_WINTER).reshape(256, 3)[:, [2,1,0]]
 colormap_light_end = 0.7
 unselected_box_color = (0.7, 0.7, 0.7)
 unselected_box_opacity = 0.1
@@ -167,13 +167,12 @@ def process_scene():
     is_selected[overlapping_indices] = True
     unselected_indices = np.flatnonzero(np.logical_not(is_selected))
 
-    # Map each selected box to a color sampled from its phase's colormap at its selection rank (the first box
-    # selected in a phase is the lightest, the last the darkest).
+    # Map each selected box to a color sampled from its phase's colormap at its selection rank.
     box_color_from_index = {}
     for box_index, t in zip(covering_indices, np.linspace(colormap_light_end, 0.0, covering_indices.shape[0])):
-        box_color_from_index[box_index] = tuple(float(component) for component in covering_colormap(t)[:3])
+        box_color_from_index[box_index] = tuple(float(component) / 255.0 for component in covering_colormap_table[int(round(t * 255.0))])
     for box_index, t in zip(overlapping_indices, np.linspace(colormap_light_end, 0.0, overlapping_indices.shape[0])):
-        box_color_from_index[box_index] = tuple(float(component) for component in overlapping_colormap(t)[:3])
+        box_color_from_index[box_index] = tuple(float(component) / 255.0 for component in overlapping_colormap_table[int(round(t * 255.0))])
 
     for box_index in np.concatenate([unselected_indices, covering_indices, overlapping_indices]):
         box_corners = get_axis_aligned_bounding_box_corners(box_min=free_space_box_mins[box_index], box_max=free_space_box_maxs[box_index])

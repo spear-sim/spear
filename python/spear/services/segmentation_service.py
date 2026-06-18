@@ -140,15 +140,16 @@ class SegmentationService(spear.Service):
         visible_raw_ids, visible_raw_ids_inverse = np.unique(raw_id_image, return_inverse=True)
 
         if not np.all(np.isin(visible_raw_ids, global_raw_ids)):
-            import matplotlib.pyplot as plt
+            import cv2
             visible_raw_ids_not_in_global_raw_ids = visible_raw_ids[np.logical_not(np.isin(visible_raw_ids, global_raw_ids))]
             spear.log("visible_raw_ids: ", visible_raw_ids)
             spear.log("global_raw_ids: ", global_raw_ids)
             spear.log("visible_raw_ids not in global_raw_ids: ", visible_raw_ids_not_in_global_raw_ids)
-            fig, (ax1, ax2) = plt.subplots(2, 1)
-            ax1.imshow(object_ids_bgra_uint8_image)
-            ax2.imshow(np.isin(raw_id_image, visible_raw_ids_not_in_global_raw_ids))
-            plt.show()
+            # Show both debug images in their own windows (cv2 displays the BGRA image natively) and wait for a keypress.
+            cv2.imshow("object_ids_bgra_uint8_image", object_ids_bgra_uint8_image)
+            cv2.imshow("visible_raw_ids_not_in_global_raw_ids", (np.isin(raw_id_image, visible_raw_ids_not_in_global_raw_ids) * 255).astype(np.uint8))
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
 
         # verify all visible raw IDs are known to the manager
         assert np.all(np.isin(visible_raw_ids, global_raw_ids))

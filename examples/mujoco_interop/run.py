@@ -4,8 +4,8 @@
 #
 
 import argparse
+import cv2
 import math
-import matplotlib.pyplot as plt
 import mujoco
 import mujoco.viewer
 import numpy as np
@@ -33,7 +33,7 @@ component_descs = \
     {
         "name": "final_tone_curve_hdr",
         "long_name": "DefaultSceneRoot.final_tone_curve_hdr_",
-        "visualize_func": lambda data : data[:,:,[2,1,0]] # BGRA to RGB
+        "visualize_func": lambda data : data[:,:,[0,1,2]] # native BGR (drop alpha)
     }
 ]
 
@@ -45,7 +45,7 @@ def save_images(images_dir, frame_index):
         image_file = os.path.realpath(os.path.join(images_dir, component_desc["name"], f"{frame_index:04d}.png"))
         image = component_desc["visualize_func"](data=data)
         spear.log("Saving image: ", image_file)
-        plt.imsave(image_file, image)
+        cv2.imwrite(image_file, image)
 
 def normalize(vector):
     return vector / np.linalg.norm(vector)
@@ -263,9 +263,9 @@ if __name__ == "__main__":
                 mj_renderer.update_scene(data=mj_data, camera=mj_viewer.cam)
                 mj_render = mj_renderer.render()
                 image_file = os.path.realpath(os.path.join(images_dir, "mujoco", f"{frame_index:04d}.png"))
-                image = mj_render
+                image = mj_render[:,:,[2,1,0]] # MuJoCo renders RGB -> BGR for cv2
                 spear.log("Saving image: ", image_file)
-                plt.imsave(image_file, image)
+                cv2.imwrite(image_file, image)
 
         # increment counters
         if args.save_images:

@@ -3,10 +3,12 @@
 # Before running this example, you should have a good understanding of the example in render_image/run.py
 
 import cv2
+import imageio_ffmpeg
 import math
 import numpy as np
 import os
 import spear
+import subprocess
 
 
 num_frames = 300
@@ -14,6 +16,11 @@ num_rows = 3
 num_cols = 3
 camera_location = {"X": -125.0, "Y": 130.0, "Z": 245.0}
 camera_rotator = {"Pitch": -20.0, "Yaw": 20.0, "Roll": 0.0}
+
+# Frames per second of the generated video, and the H.264 constant rate factor that controls quality-vs-size (lower
+# means higher quality and larger files; 23 is libx264's default).
+frame_rate = 30
+crf = 23
 
 rotator = {"Pitch": 0.0, "Yaw": 20.0, "Roll": 0.0}
 p_world_init = spear.math.to_numpy_array_from_spear_vector(spear_vector=camera_location, as_matrix=True)
@@ -107,5 +114,23 @@ if __name__ == "__main__":
             component.terminate_sp_funcs()
             component.Terminate()
         game.unreal_service.destroy_actor(actor=bp_multi_view_camera_sensor)
+
+    # Combine the rendered images into a video. We call the ffmpeg binary bundled with the imageio-ffmpeg package, so
+    # no system ffmpeg installation is required. The images are named by their zero-padded frame index, which ffmpeg
+    # reads as a numbered sequence.
+    video_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "video.mp4")
+    ffmpeg_executable = imageio_ffmpeg.get_ffmpeg_exe()
+    cmd = [
+        ffmpeg_executable, "-y", "-loglevel", "warning",
+        "-framerate", str(frame_rate),
+        "-start_number", "0",
+        "-i", os.path.join(images_dir, "%04d.png"),
+        "-c:v", "libx264",
+        "-crf", str(crf),
+        "-pix_fmt", "yuv420p",
+        video_file]
+    spear.log("Writing video file: ", video_file)
+    spear.log("Executing: ", " ".join(cmd))
+    subprocess.run(cmd, check=True)
 
     spear.log("Done.")

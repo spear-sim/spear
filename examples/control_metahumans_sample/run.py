@@ -6,7 +6,7 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import argparse
-import matplotlib.pyplot as plt
+import cv2
 import numpy as np
 import os
 import shutil
@@ -23,7 +23,7 @@ component_names = []
 components = {}
 component_data = {}
 
-visualize_func = lambda data : data[:,:,[2,1,0]] # BGRA to RGB
+visualize_func = lambda data : data[:,:,[0,1,2]] # native BGR (drop alpha)
 
 # save an image for each component using the component's visualizer function
 def save_images(images_dir, frame_index):
@@ -33,7 +33,7 @@ def save_images(images_dir, frame_index):
         image_file = os.path.realpath(os.path.join(images_dir, component_name, f"{frame_index:04d}.png"))
         image = visualize_func(data=data)
         spear.log("Saving image: ", image_file)
-        plt.imsave(image_file, image)
+        cv2.imwrite(image_file, image)
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import colorsys
-import matplotlib.pyplot as plt
+import cv2
 import numpy as np
 import os
 import shutil
@@ -20,22 +20,22 @@ component_descs = \
     {
         "name": "final_tone_curve_hdr",
         "long_name": "DefaultSceneRoot.final_tone_curve_hdr_",
-        "visualize_func": lambda data : data[:,:,[2,1,0]] # BGRA to RGB
+        "visualize_func": lambda data : data[:,:,[0,1,2]] # native BGR (drop alpha)
     },
     {
         "name": "sp_object_ids_uint8",
         "long_name": "DefaultSceneRoot.sp_object_ids_uint8_",
-        "visualize_func": lambda data : data[:,:,[2,1,0]] # BGRA to RGB
+        "visualize_func": lambda data : data[:,:,[0,1,2]] # native BGR (drop alpha)
     },
     {
         "name": "sp_unlit_float16",
         "long_name": "DefaultSceneRoot.sp_unlit_float16_",
-        "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]]/200.0, 0.0, 1.0)
+        "visualize_func": lambda data : (np.clip(data[:,:,[0,1,2]]/200.0, 0.0, 1.0)*255.0).astype(np.uint8)[:,:,[2,1,0]] # RGB [0,1] -> BGR uint8
     },
     {
         "name": "sp_world_position",
         "long_name": "DefaultSceneRoot.sp_world_position_",
-        "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]]/200.0, 0.0, 1.0)
+        "visualize_func": lambda data : (np.clip(data[:,:,[0,1,2]]/200.0, 0.0, 1.0)*255.0).astype(np.uint8)[:,:,[2,1,0]] # RGB [0,1] -> BGR uint8
     }
 ]
 
@@ -229,7 +229,7 @@ if __name__ == "__main__":
         image_file = os.path.realpath(os.path.join(images_dir, f"{component_desc['name']}.png"))
         image = component_desc["visualize_func"](data=data)
         spear.log("Saving image: ", image_file)
-        plt.imsave(image_file, image)
+        cv2.imwrite(image_file, image)
 
     # save segmentation image with colors matching debug draw
     bounding_box_handles = [ 0 if actor is None else actor.uobject for actor in bounding_box_actors ]
@@ -239,7 +239,7 @@ if __name__ == "__main__":
     segmentation_image = bounding_box_colors_uint8[proxy_bounding_box_ids[proxy_id_image]]
     image_file = os.path.realpath(os.path.join(images_dir, "segmentation.png"))
     spear.log("Saving image: ", image_file)
-    plt.imsave(image_file, segmentation_image)
+    cv2.imwrite(image_file, segmentation_image[:,:,[2,1,0]]) # RGB -> BGR
 
     # save planar depth image
 
@@ -262,7 +262,7 @@ if __name__ == "__main__":
 
     image_file = os.path.realpath(os.path.join(images_dir, "planar_depth.png"))
     spear.log("Saving image: ", image_file)
-    plt.imsave(image_file, planar_depth_image)
+    cv2.imwrite(image_file, cv2.applyColorMap((planar_depth_image*255.0).astype(np.uint8), cv2.COLORMAP_VIRIDIS))
 
     # cleanup
     with instance.begin_frame():

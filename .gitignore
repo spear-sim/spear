@@ -54,6 +54,7 @@ examples/control_game_animation_sample/images
 examples/control_hillside_sample/images
 examples/control_metahumans_sample/images
 examples/control_stackobot_sample/images
+examples/debug_draw/images
 examples/import_stanford_dataset/csv
 examples/import_stanford_dataset/download
 examples/import_stanford_dataset/gltf
@@ -69,7 +70,7 @@ examples/render_image_editor/screenshot.png
 examples/render_image_editor_script/image.png
 examples/render_image_hypersim/images
 examples/render_image_multi_view/images
-examples/render_image_multi_view/movie.mp4
+examples/render_image_multi_view/video.mp4
 
 python_ext/BUILD
 
@@ -80,4 +81,3 @@ tools/BUILD
 tools/run_editor_tasks/user_config.yaml
 
 tools/tmp
-examples/debug_draw/images

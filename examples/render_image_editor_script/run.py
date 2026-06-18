@@ -7,7 +7,6 @@
 
 import argparse
 import cv2
-import matplotlib.pyplot as plt
 import os
 import spear
 import unreal # not needed but useful to demonstrate that we're running inside the editor
@@ -69,11 +68,10 @@ def script():
     # show rendered frame using spear.editor.imshow() since cv2 and matplotlib cause problems in the editor
     spear.editor.imshow(name="final_tone_curve_hdr", image=data_bundle["arrays"]["data"])
 
-    # save image
-    image = data_bundle["arrays"]["data"][:,:,[2,1,0]]
+    # save image (cv2 writes the native BGR, dropping alpha)
     image_file = os.path.realpath(os.path.join(os.path.dirname(file), "image.png"))
     spear.log("Saving image: ", image_file)
-    plt.imsave(image_file, image)
+    cv2.imwrite(image_file, data_bundle["arrays"]["data"][:,:,[0,1,2]])
 
     # terminate actors and components
     with instance.begin_frame():

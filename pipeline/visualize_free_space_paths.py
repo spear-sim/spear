@@ -4,9 +4,9 @@
 #
 
 import argparse
+import cv2
 import h5py
 import json
-import matplotlib
 import mayavi.mlab
 import numpy as np
 import os
@@ -42,10 +42,9 @@ network_box_line_width = 1.0
 # Each path is drawn as a polyline colored by progress along the path (its evolution from begin to end) using this
 # colormap, and the waypoints each path was planned through are drawn as balls colored by their position in the
 # waypoint sequence using the same colormap (so the first waypoint takes the colormap's start color, the last its end
-# color, and the interior waypoints the colors in between). path_colormap_table is the colormap sampled as a
-# 256-entry RGBA lookup table that we install on each path's line.
-path_colormap = matplotlib.colormaps["turbo"]
-path_colormap_table = (path_colormap(np.linspace(0.0, 1.0, 256))*255.0).astype(np.uint8)
+# color, and the interior waypoints the colors in between). path_colormap_table is turbo as a 256-entry RGBA lookup
+# table that we install on each path's line; cv2 returns BGR, so we reverse to RGB and append an opaque alpha channel.
+path_colormap_table = np.column_stack([cv2.applyColorMap(np.arange(256, dtype=np.uint8).reshape(256, 1), cv2.COLORMAP_TURBO).reshape(256, 3)[:, [2,1,0]], np.full(256, 255, dtype=np.uint8)])
 path_line_width = 5.0
 path_waypoint_scale_factor = 8.0
 
@@ -166,7 +165,7 @@ def process_scene():
         path_line.module_manager.scalar_lut_manager.lut.table = path_colormap_table
 
         for waypoint, waypoint_time in zip(waypoints, waypoint_times):
-            color = tuple(float(component) for component in path_colormap(waypoint_time)[:3])
+            color = tuple(float(component) / 255.0 for component in path_colormap_table[int(round(np.clip(waypoint_time, 0.0, 1.0) * 255.0)), :3])
             mayavi.mlab.points3d(waypoint[0:1], waypoint[1:2], waypoint[2:3], color=color, scale_factor=path_waypoint_scale_factor)
 
     mayavi.mlab.show()

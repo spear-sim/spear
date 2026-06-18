@@ -6,8 +6,4 @@ In this example application, we demonstrate how to spawn a multi-view camera sen
 python run.py
 ```
 
-You should see a game window appear.  Several images will be saved to an `images` directory, which can be combined into a video with `ffmpeg` as follows.
-
-```console
-ffmpeg -i "images/%d.png" video.mp4
-```
+You should see a game window appear. Several images will be saved to an `images` directory, and a video will be saved to the same directory as this `README` file.

@@ -12,9 +12,9 @@ except:
 
 import ast
 import colorsys
+import cv2
 import inspect
 import math
-import matplotlib.pyplot as plt
 import mcp
 import numpy as np
 import os
@@ -392,7 +392,7 @@ def _get_image_data(world_desc, key):
 
     # convert raw buffers to preferred formats
 
-    final_tone_curve_hdr = raw_final_tone_curve_hdr[:,:,[2,1,0]] # BGRA to RGB
+    final_tone_curve_hdr = raw_final_tone_curve_hdr # leave as native BGRA (no channel reorder; cv2 writes it directly)
     depth_meters = raw_sp_depth_meters[:,:,0].astype(np.float32)
     world_position = raw_sp_world_position[:,:,[0,1,2]].astype(np.float32)
     world_normal = raw_world_normal[:,:,[0,1,2]].astype(np.float32)
@@ -442,30 +442,34 @@ def _save_images(world_desc, key):
     segmentation_id_image = data["segmentation_id_image"]
     segmentation_id_descs = data["segmentation_id_descs"]
 
-    # final_tone_curve_hdr
-    plt.imsave(os.path.join(save_dir, "final_tone_curve_hdr.png"), final_tone_curve_hdr)
+    # final_tone_curve_hdr (native BGRA -> BGR, dropping alpha)
+    cv2.imwrite(os.path.join(save_dir, "final_tone_curve_hdr.png"), final_tone_curve_hdr[:, :, [0,1,2]])
 
-    # depth_meters: clamp to [vmin, min(vmax, vmin + 7.5)] meters then scale to [0, 1]
+    # depth_meters: clamp to [vmin, min(vmax, vmin + 7.5)] meters, scale to [0, 1], then colorize
     finite = depth_meters[np.isfinite(depth_meters)]
     vmin = finite.min()
     vmax = min(finite.max(), vmin + 7.5)
-    plt.imsave(os.path.join(save_dir, "depth_meters.png"), np.clip((depth_meters - vmin) / (vmax - vmin), 0.0, 1.0))
+    depth_normalized = np.clip((depth_meters - vmin) / (vmax - vmin), 0.0, 1.0)
+    cv2.imwrite(os.path.join(save_dir, "depth_meters.png"), cv2.applyColorMap((depth_normalized * 255.0).astype(np.uint8), cv2.COLORMAP_VIRIDIS))
 
-    # camera_normal
-    plt.imsave(os.path.join(save_dir, "camera_normal.png"), np.clip((1.0 + camera_normal[:, :, :3]) / 2.0, 0.0, 1.0))
+    # camera_normal (RGB in [0, 1] -> BGR uint8)
+    camera_normal_image = np.clip((1.0 + camera_normal[:, :, :3]) / 2.0, 0.0, 1.0)
+    cv2.imwrite(os.path.join(save_dir, "camera_normal.png"), (camera_normal_image * 255.0).astype(np.uint8)[:, :, [2,1,0]])
 
     # camera_position: per-channel median -> 0.5 (middle grey), uniform K = min(2 * max_channel_abs_dev, 750)
     finite_all_mask = np.all(np.isfinite(camera_position), axis=2)
     finite_pixels = camera_position[finite_all_mask]
     median = np.median(finite_pixels, axis=0)
     K = min(float(2.0 * np.abs(finite_pixels - median).max(axis=0).max()), 750.0)
-    plt.imsave(os.path.join(save_dir, "camera_position.png"), np.clip((camera_position - median) / K + 0.5, 0.0, 1.0))
+    camera_position_image = np.clip((camera_position - median) / K + 0.5, 0.0, 1.0)
+    cv2.imwrite(os.path.join(save_dir, "camera_position.png"), (camera_position_image * 255.0).astype(np.uint8)[:, :, [2,1,0]])
 
-    # segmentation: random HSV colors per ID, index 0 = black
+    # segmentation: random HSV colors per ID, index 0 = black (RGB in [0, 1] -> BGR uint8)
     segmentation_colors = np.zeros((len(segmentation_id_descs), 3))
     for i in range(1, len(segmentation_id_descs)):
         segmentation_colors[i] = np.array(colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0))
-    plt.imsave(os.path.join(save_dir, "segmentation_colors.png"), segmentation_colors[segmentation_id_image])
+    segmentation_image = segmentation_colors[segmentation_id_image]
+    cv2.imwrite(os.path.join(save_dir, "segmentation_colors.png"), (segmentation_image * 255.0).astype(np.uint8)[:, :, [2,1,0]])
 
 
 def _update_exec_namespace(world_desc, key):

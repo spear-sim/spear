@@ -55,7 +55,7 @@ def process_scene():
         # generate_free_space_camera_path_images.py), which ffmpeg reads as a numbered sequence.
         video_file = os.path.realpath(os.path.join(videos_dir, f"{os.path.basename(path_images_dir)}.mp4"))
         spear.log("Writing video file: ", video_file)
-        subprocess.run([
+        cmd = [
             ffmpeg_executable, "-y", "-loglevel", "warning",
             "-framerate", str(frame_rate),
             "-start_number", "0",
@@ -63,7 +63,9 @@ def process_scene():
             "-c:v", "libx264",
             "-crf", str(video_crf),
             "-pix_fmt", "yuv420p",
-            video_file], check=True)
+            video_file]
+        spear.log("Executing: ", " ".join(cmd))
+        subprocess.run(cmd, check=True)
 
     spear.log("Done.")
 

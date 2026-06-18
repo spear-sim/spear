@@ -6,7 +6,7 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import argparse
-import matplotlib.pyplot as plt
+import cv2
 import numpy as np
 import os
 import pandas as pd
@@ -30,17 +30,17 @@ component_descs = \
     {
         "name": "final_tone_curve_hdr",
         "long_name": "DefaultSceneRoot.final_tone_curve_hdr_",
-        "visualize_func": lambda data : data[:,:,[2,1,0]] # BGRA to RGB
+        "visualize_func": lambda data : data[:,:,[0,1,2]] # native BGR (drop alpha)
     },
     {
         "name": "sp_camera_normal",
         "long_name": "DefaultSceneRoot.world_normal_",
-        "visualize_func": lambda data : np.clip((1.0 + (data[:,:,[0,1,2]] @ R_camera_from_world.T @ M_hypersim_camera_from_unreal_camera.T))/2.0, 0.0, 1.0)
+        "visualize_func": lambda data : (np.clip((1.0 + (data[:,:,[0,1,2]] @ R_camera_from_world.T @ M_hypersim_camera_from_unreal_camera.T))/2.0, 0.0, 1.0)*255.0).astype(np.uint8)[:,:,[2,1,0]] # RGB [0,1] -> BGR uint8
     },
     {
         "name": "sp_depth_meters",
         "long_name": "DefaultSceneRoot.sp_depth_meters_",
-        "visualize_func": lambda data : np.clip((data[:,:,0] - np.min(data[:,:,0])) / np.minimum((np.max(data[:,:,0]) - np.min(data[:,:,0])), 7.5), 0.0, 1.0) # normalize to max depth of 7.5 meters
+        "visualize_func": lambda data : cv2.applyColorMap((np.clip((data[:,:,0] - np.min(data[:,:,0])) / np.minimum((np.max(data[:,:,0]) - np.min(data[:,:,0])), 7.5), 0.0, 1.0)*255.0).astype(np.uint8), cv2.COLORMAP_VIRIDIS) # normalize to max depth of 7.5 meters, then colorize
     }
 ]
 
@@ -123,7 +123,7 @@ if __name__ == "__main__":
                 component_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "images", scene_desc["name"], component_desc["name"]))
                 image_file = os.path.realpath(os.path.join(component_dir, f"{camera_pose['index']:04d}.png"))
                 image = component_desc["visualize_func"](data=data_bundle["arrays"]["data"])
-                plt.imsave(image_file, image)
+                cv2.imwrite(image_file, image)
 
     # terminate actors and components
     with instance.begin_frame():
