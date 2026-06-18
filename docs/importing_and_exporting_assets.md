@@ -11,6 +11,13 @@ In order to execute the pipeline in this document, we will assume that you have 
 In order to execute the pipeline in this document, you will need to install the `pipeline` optional dependencies. When executing the command below, `PIP_BUILD_CONSTRAINT` forces `pip` to build against the versions we specify in `python/pip_build_constraint.txt`, and `--no-cache-dir` forces a fresh build.
 
 ```console
+# install additional pipeline dependencies (Windows Powershell)
+$env:PIP_BUILD_CONSTRAINT="python/pip_build_constraint.txt"; pip install --no-cache-dir -e "python[pipeline]"
+
+# install additional pipeline dependencies (Windows Command Prompt)
+set PIP_BUILD_CONSTRAINT=python/pip_build_constraint.txt && pip install --no-cache-dir -e "python[pipeline]"
+
+# install additional pipeline dependencies (macOS and Linux)
 PIP_BUILD_CONSTRAINT=python/pip_build_constraint.txt pip install --no-cache-dir -e "python[pipeline]"
 ```
 
