@@ -16,9 +16,9 @@ public class SpTargetRulesTarget : TargetRules
         // generate Visual Studio project files. Needs to be overridden in derived classes.
         Type = TargetType.Client;
 
-        // Added to projects by default in UE 5.7.
-        DefaultBuildSettings = BuildSettingsVersion.V6;
-        IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_7;
+        // Added to projects by default in UE 5.8.
+        DefaultBuildSettings = BuildSettingsVersion.V7;
+        IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_8;
         ExtraModuleNames.Add("SpearSim");
 
         if (targetInfo.Platform == UnrealTargetPlatform.Win64) {

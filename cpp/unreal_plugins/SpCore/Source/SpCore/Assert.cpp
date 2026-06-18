@@ -8,9 +8,11 @@
 
 #include "SpCore/Assert.h"
 
-#include <CoreGlobals.h> // IsRunningCommandlet
+#include <CoreGlobals.h>   // IsRunningCommandlet
+#include <Misc/CoreMisc.h> // IsRunningGame
 
 #include "SpCore/Boost.h"
+#include "SpCore/Log.h"
 #include "SpCore/SuppressCompilerWarnings.h"
 #include "SpCore/Windows.h"
 
@@ -146,6 +148,20 @@ namespace {
     PPK_ASSERT_UNUSED(level);
 #endif
 
+    // ---- BEGIN SPEAR MODIFICATION ----
+
+    #if WITH_EDITOR // defined in an auto-generated header
+      if (!IsRunningCommandlet() && !IsRunningGame()) { // editor mode via GUI
+        char buffer[PPK_ASSERT_MESSAGE_BUFFER_SIZE];
+        va_start(args, format);
+        vsnprintf(buffer, PPK_ASSERT_MESSAGE_BUFFER_SIZE, format, args);
+        SP_LOG("ERROR: ", buffer);
+        va_end(args);
+      }
+    #endif
+
+    // ---- END SPEAR MODIFICATION ----
+
     return count;
   }
 
@@ -225,7 +241,7 @@ namespace {
       // break-then-throw if we're in a debugger, throw otherwise.
 
       #if WITH_EDITOR // defined in an auto-generated header
-        if (!IsRunningCommandlet()) { // editor mode via GUI
+        if (!IsRunningCommandlet() && !IsRunningGame()) { // editor mode via GUI
           if (boost::debug::under_debugger()) {
             return AssertAction::BreakThenThrow;
           } else {

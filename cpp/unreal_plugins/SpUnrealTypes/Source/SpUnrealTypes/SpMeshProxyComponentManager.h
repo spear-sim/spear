@@ -21,6 +21,7 @@
 #include <Materials/MaterialInstanceDynamic.h>
 #include <Materials/MaterialInterface.h>
 #include <Math/Color.h>
+#include <UObject/Object.h>          // IsValid
 #include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 #include <UObject/UObjectGlobals.h>  // LoadObject
 
@@ -61,20 +62,18 @@ public:
     FString ComponentUnrealName;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
-    FString Material = "0x0";
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
-    FString MaterialUnrealName;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString Actor = "0x0";
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString ActorName;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
-    bool bActorHasStableName = false;
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString ActorUnrealName;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString ActorStableName;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    FString Material = "0x0";
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    FString MaterialUnrealName;
 
     // Optional debug info
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
@@ -87,8 +86,9 @@ public:
 
 //
 // ASpMeshProxyComponentManager holds a MeshProxyComponentManager* and dispatches the
-// ASpProxyComponentManager virtual hooks into it. Derived classes set the pointer via
-// setMeshProxyComponentManager() and implement IMeshProxyComponentManager.
+// ASpProxyComponentManager virtual hooks into it. Derived classes own a concrete
+// MeshProxyComponentManager subclass and set the pointer via setMeshProxyComponentManager()
+// in initializeImpl().
 //
 
 UCLASS(Abstract, ClassGroup="SPEAR", HideCategories=(Actor, Collision, Cooking, DataLayers, HLOD, Input, LevelInstance, Navigation, Networking, Physics, Rendering, Replication, WorldPartition))
@@ -97,6 +97,23 @@ class ASpMeshProxyComponentManager : public ASpProxyComponentManager
     GENERATED_BODY()
 
 public:
+
+    // AActor interface
+    void Tick(float delta_time) override
+    {
+        ASpProxyComponentManager::Tick(delta_time);
+
+        // only need to update these variables for debugging in the editor
+        #if WITH_EDITOR // defined in an auto-generated header
+            if (mesh_proxy_component_manager_) {
+                UnregisterDelayFrames = GetUnregisterDelayFrames();
+                MeshProxyGeometryDescs = GetMeshProxyGeometryDescs();
+            }
+        #endif
+    }
+
+    // Public interface for Python users
+
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     TArray<FMeshProxyGeometryDesc> GetMeshProxyGeometryDescs(bool bIncludeDebugInfo = false)
     {
@@ -104,7 +121,7 @@ public:
 
         TArray<FMeshProxyGeometryDesc> mesh_proxy_geometry_descs;
 
-        // add 0 desc explicitly
+        // explicitly add empty desc at index 0
         mesh_proxy_geometry_descs.Add(FMeshProxyGeometryDesc());
 
         for (auto& [id, desc] : mesh_proxy_component_manager_->getMeshProxyGeometryDescs()) {
@@ -112,30 +129,37 @@ public:
             mesh_proxy_geometry_desc.RawId = id;
             mesh_proxy_geometry_desc.bIsValid = desc.is_valid_;
 
+            // It is possible for desc.is_valid_ to be true, but for desc.component_.IsValid() or desc.material_.IsValid()
+            // to be false, e.g., if an actor gets destroyed after SpProxyComponentManager has ticked, but
+            // before this function is called.
+
             if (desc.is_valid_) {
-                mesh_proxy_geometry_desc.Component = Unreal::toFString(Std::toStringFromPtr(desc.component_));
-                mesh_proxy_geometry_desc.ComponentStableName = Unreal::toFString(UnrealUtils::getStableName(desc.component_));
-                mesh_proxy_geometry_desc.ComponentUnrealName = desc.component_->GetName();
+                if (desc.component_.IsValid()) {
+                    mesh_proxy_geometry_desc.Component = Unreal::toFString(Std::toStringFromPtr(desc.component_.Get()));
+                    mesh_proxy_geometry_desc.ComponentStableName = Unreal::toFString(UnrealUtils::getStableName(desc.component_.Get()));
+                    mesh_proxy_geometry_desc.ComponentUnrealName = desc.component_->GetName();
+                    if (bIncludeDebugInfo) {
+                        mesh_proxy_geometry_desc.ComponentPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.component_.Get()));
+                    }
 
-                mesh_proxy_geometry_desc.Material = Unreal::toFString(Std::toStringFromPtr(desc.material_));
-                mesh_proxy_geometry_desc.MaterialUnrealName = desc.material_->GetName();
-
-                AActor* actor = desc.component_->GetOwner();
-                if (actor) {
+                    AActor* actor = desc.component_->GetOwner();
+                    SP_ASSERT(actor);
+                    SP_ASSERT(IsValid(actor));
                     mesh_proxy_geometry_desc.Actor = Unreal::toFString(Std::toStringFromPtr(actor));
-                    mesh_proxy_geometry_desc.ActorName = Unreal::toFString(UnrealUtils::tryGetStableName(actor));
+                    mesh_proxy_geometry_desc.ActorName = Unreal::toFString(UnrealUtils::getStableName(actor, true)); // include_unreal_name=true
                     mesh_proxy_geometry_desc.ActorUnrealName = actor->GetName();
-                    bool has_stable_name = UnrealUtils::hasStableName(actor);
-                    mesh_proxy_geometry_desc.bActorHasStableName = has_stable_name;
-                    if (has_stable_name) {
-                        mesh_proxy_geometry_desc.ActorStableName = Unreal::toFString(UnrealUtils::getStableName(actor));
+                    mesh_proxy_geometry_desc.ActorStableName = Unreal::toFString(UnrealUtils::getStableName(actor, false)); // include_unreal_name=false
+                    if (bIncludeDebugInfo) {
+                        mesh_proxy_geometry_desc.ActorPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(actor));
                     }
                 }
 
-                if (bIncludeDebugInfo) {
-                    mesh_proxy_geometry_desc.ComponentPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.component_));
-                    mesh_proxy_geometry_desc.MaterialPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.material_));
-                    mesh_proxy_geometry_desc.ActorPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.component_->GetOwner()));
+                if (desc.material_.IsValid()) {
+                    mesh_proxy_geometry_desc.Material = Unreal::toFString(Std::toStringFromPtr(desc.material_.Get()));
+                    mesh_proxy_geometry_desc.MaterialUnrealName = desc.material_->GetName();
+                    if (bIncludeDebugInfo) {
+                        mesh_proxy_geometry_desc.MaterialPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.material_.Get()));
+                    }
                 }
             }
 
@@ -145,8 +169,75 @@ public:
         return mesh_proxy_geometry_descs;
     }
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    int32 UnregisterDelayFrames = 3;
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    TArray<AActor*> GetAllowedActors()
+    {
+        SP_ASSERT(mesh_proxy_component_manager_);
+        return Unreal::toTArray(mesh_proxy_component_manager_->getAllowedActors());
+    }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    void SetAllowedActors(const TArray<AActor*>& AllowedActors)
+    {
+        SP_ASSERT(mesh_proxy_component_manager_);
+        mesh_proxy_component_manager_->setAllowedActors(Unreal::toStdVector(AllowedActors));
+    }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    TArray<USceneComponent*> GetAllowedComponents()
+    {
+        SP_ASSERT(mesh_proxy_component_manager_);
+        return Unreal::toTArray(mesh_proxy_component_manager_->getAllowedComponents());
+    }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    void SetAllowedComponents(const TArray<USceneComponent*>& AllowedComponents)
+    {
+        SP_ASSERT(mesh_proxy_component_manager_);
+        mesh_proxy_component_manager_->setAllowedComponents(Unreal::toStdVector(AllowedComponents));
+    }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    TArray<AActor*> GetIgnoredActors()
+    {
+        SP_ASSERT(mesh_proxy_component_manager_);
+        return Unreal::toTArray(mesh_proxy_component_manager_->getIgnoredActors());
+    }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    void SetIgnoredActors(const TArray<AActor*>& IgnoredActors)
+    {
+        SP_ASSERT(mesh_proxy_component_manager_);
+        mesh_proxy_component_manager_->setIgnoredActors(Unreal::toStdVector(IgnoredActors));
+    }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    TArray<USceneComponent*> GetIgnoredComponents()
+    {
+        SP_ASSERT(mesh_proxy_component_manager_);
+        return Unreal::toTArray(mesh_proxy_component_manager_->getIgnoredComponents());
+    }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    void SetIgnoredComponents(const TArray<USceneComponent*>& IgnoredComponents)
+    {
+        SP_ASSERT(mesh_proxy_component_manager_);
+        mesh_proxy_component_manager_->setIgnoredComponents(Unreal::toStdVector(IgnoredComponents));
+    }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    int32 GetUnregisterDelayFrames() const
+    {
+        SP_ASSERT(mesh_proxy_component_manager_);
+        return mesh_proxy_component_manager_->getUnregisterDelayFrames();
+    }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    void SetUnregisterDelayFrames(int32 InUnregisterDelayFrames)
+    {
+        SP_ASSERT(mesh_proxy_component_manager_);
+        mesh_proxy_component_manager_->setUnregisterDelayFrames(InUnregisterDelayFrames);
+    }
 
 protected:
     void setMeshProxyComponentManager(MeshProxyComponentManager* mesh_proxy_component_manager)
@@ -160,7 +251,6 @@ protected:
     {
         SP_ASSERT(mesh_proxy_component_manager_);
         ASpProxyComponentManager::initializeImpl();
-        mesh_proxy_component_manager_->setUnregisterDelayFrames(UnregisterDelayFrames);
     }
 
     void terminateImpl() override
@@ -178,88 +268,52 @@ protected:
     void requestUnregisterAndDestroyProxyComponentsForAllTypes(const std::vector<AActor*>& actors) override
     {
         SP_ASSERT(mesh_proxy_component_manager_);
+        mesh_proxy_component_manager_->requestDecrementAndUnregisterProxyComponents();
         mesh_proxy_component_manager_->requestUnregisterAndDestroyProxyComponents<UStaticMeshComponent>(actors);
         mesh_proxy_component_manager_->requestUnregisterAndDestroyProxyComponents<USkeletalMeshComponent>(actors);
     }
 
-    void requestDestroyProxyComponentsForAllTypes(const std::vector<AActor*>& actors) override
+    void unregisterAndDestroyProxyComponentsForAllTypes() override
     {
         SP_ASSERT(mesh_proxy_component_manager_);
-        mesh_proxy_component_manager_->requestDestroyProxyComponents<UStaticMeshComponent>(actors);
-        mesh_proxy_component_manager_->requestDestroyProxyComponents<USkeletalMeshComponent>(actors);
-    }
-
-    void unregisterAllProxyComponents() override
-    {
-        SP_ASSERT(mesh_proxy_component_manager_);
-        mesh_proxy_component_manager_->unregisterAllProxyComponents();
+        mesh_proxy_component_manager_->unregisterAndDestroyProxyComponents();
     }
 
 private:
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
+    int32 UnregisterDelayFrames = -1;
+
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
+    TArray<FMeshProxyGeometryDesc> MeshProxyGeometryDescs;
+
     MeshProxyComponentManager* mesh_proxy_component_manager_ = nullptr;
 };
 
 
 UCLASS(ClassGroup="SPEAR", HideCategories=(Actor, Collision, Cooking, DataLayers, HLOD, Input, LevelInstance, Navigation, Networking, Physics, Rendering, Replication, WorldPartition))
-class ASpObjectIdsProxyComponentManager : public ASpMeshProxyComponentManager, public IMeshProxyComponentManager
+class ASpObjectIdsProxyComponentManager : public ASpMeshProxyComponentManager
 {
     GENERATED_BODY()
-
-public:
-    ASpObjectIdsProxyComponentManager()
-    {
-        setMeshProxyComponentManager(&mesh_proxy_component_manager_);
-    }
-
-    void BeginPlay() override
-    {
-        SP_LOG_CURRENT_FUNCTION();
-        ASpMeshProxyComponentManager::BeginPlay();
-        EmissiveMaterial = nullptr;
-    }
 
 protected:
     void initializeImpl() override
     {
+        setMeshProxyComponentManager(&object_ids_mesh_proxy_component_manager_);
+
+        object_ids_mesh_proxy_component_manager_.initialize();
         ASpMeshProxyComponentManager::initializeImpl();
-        EmissiveMaterial = LoadObject<UMaterialInterface>(nullptr, Unreal::toTCharPtr("/SpContent/Materials/M_Emissive.M_Emissive"));
     }
 
     void terminateImpl() override
     {
-        EmissiveMaterial = nullptr;
         ASpMeshProxyComponentManager::terminateImpl();
+        object_ids_mesh_proxy_component_manager_.terminate();
+
+        setMeshProxyComponentManager(nullptr);
     }
-
-    // IMeshProxyComponentManager interface
-
-    UMaterialInterface* createMaterialForProxyComponentMaterialSlot(uint32_t id, USceneComponent* component, UMaterialInterface* material) override
-    {
-        SP_ASSERT(EmissiveMaterial);
-        UMaterialInstanceDynamic* new_material = UMaterialInstanceDynamic::Create(EmissiveMaterial, this);
-        SP_ASSERT(new_material);
-        FLinearColor color = getLinearColorImpl(id);
-        new_material->SetVectorParameterValue("EmissiveColor", color);
-        return new_material;
-    }
-
-    bool shouldProxyComponentBeHiddenInViewport(USceneComponent* component) const override { return true; }
 
 private:
-    MeshProxyComponentManager mesh_proxy_component_manager_ = MeshProxyComponentManager(this, this);
-
-    UPROPERTY()
-    UMaterialInterface* EmissiveMaterial = nullptr;
-
-    static FLinearColor getLinearColorImpl(uint32_t id)
-    {
-        SP_ASSERT(id > 0 && id <= 0xffffff);
-        float r = static_cast<float>((id >> 16) & 0xff) / 255.0f;
-        float g = static_cast<float>((id >>  8) & 0xff) / 255.0f;
-        float b = static_cast<float>((id >>  0) & 0xff) / 255.0f;
-        float a = 1.0f;
-        return FLinearColor(r, g, b, a);
-    }
+    ObjectIdsMeshProxyComponentManager object_ids_mesh_proxy_component_manager_ = ObjectIdsMeshProxyComponentManager(this);
 };
 
 
@@ -268,44 +322,23 @@ class ASpObjectIdsVisualizerProxyComponentManager : public ASpObjectIdsProxyComp
 {
     GENERATED_BODY()
 
-public:
-    void BeginPlay() override
-    {
-        SP_LOG_CURRENT_FUNCTION();
-        ASpMeshProxyComponentManager::BeginPlay();
-        DiffuseMaterial = nullptr;
-    }
-
 protected:
     void initializeImpl() override
     {
+        setMeshProxyComponentManager(&object_ids_visualizer_mesh_proxy_component_manager_);
+
+        object_ids_visualizer_mesh_proxy_component_manager_.initialize();
         ASpMeshProxyComponentManager::initializeImpl();
-        DiffuseMaterial = LoadObject<UMaterialInterface>(nullptr, Unreal::toTCharPtr("/SpContent/Materials/M_Diffuse.M_Diffuse"));
     }
 
     void terminateImpl() override
     {
-        DiffuseMaterial = nullptr;
+        object_ids_visualizer_mesh_proxy_component_manager_.terminate();
         ASpMeshProxyComponentManager::terminateImpl();
+
+        setMeshProxyComponentManager(nullptr);
     }
-
-    // IMeshProxyComponentManager interface
-
-    UMaterialInterface* createMaterialForProxyComponentMaterialSlot(uint32_t id, USceneComponent* component, UMaterialInterface* material) override
-    {
-        SP_ASSERT(DiffuseMaterial);
-        UMaterialInstanceDynamic* new_material = UMaterialInstanceDynamic::Create(DiffuseMaterial, this);
-        SP_ASSERT(new_material);
-        FColor color = getColorImpl(id);
-        new_material->SetVectorParameterValue("BaseColor", color);
-        return new_material;
-    }
-
-    bool shouldProxyComponentBeHiddenInViewport(USceneComponent* component) const override { return false; }
 
 private:
-    UPROPERTY()
-    UMaterialInterface* DiffuseMaterial = nullptr;
-
-    static FColor getColorImpl(uint32_t id) { return FColor::MakeRandomColor(); }
+    ObjectIdsVisualizerMeshProxyComponentManager object_ids_visualizer_mesh_proxy_component_manager_ = ObjectIdsVisualizerMeshProxyComponentManager(this);
 };

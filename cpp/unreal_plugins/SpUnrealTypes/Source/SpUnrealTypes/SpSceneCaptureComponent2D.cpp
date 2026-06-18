@@ -175,7 +175,7 @@ void USpSceneCaptureComponent2D::Initialize()
 
     TextureTarget = NewObject<UTextureRenderTarget2D>(this);
     SP_ASSERT(TextureTarget);
-    TextureTarget->ClearColor = FLinearColor(1.0f, 0.0f, 1.0f, 1.0f); // bright pink
+    TextureTarget->ClearColor = FLinearColor(1.0f, 1.0f, 0.0f, 1.0f); // bright yellow
 
     if (bOverrideTextureRenderTargetFormat) {
         TextureTarget->RenderTargetFormat = TextureRenderTargetFormat;
@@ -209,7 +209,6 @@ void USpSceneCaptureComponent2D::Initialize()
             ShowOnlyActors.Add(manager);
         }
     } else {
-        PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_RenderScenePrimitives;
         for (auto manager : UnrealUtils::findActorsByType<ASpMeshProxyComponentManager>(GetWorld())) {
             HiddenActors.Add(manager);
         }
@@ -257,9 +256,9 @@ void USpSceneCaptureComponent2D::Initialize()
 
     // allocate readback buffers
     if (BufferingMode == ESpBufferingMode::SingleBuffered) {
-        readback_buffers_ = { std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A")), nullptr };
+        readback_buffers_ = {std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A")), nullptr};
     } else if (BufferingMode == ESpBufferingMode::DoubleBuffered) {
-        readback_buffers_ = { std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A")), nullptr };
+        readback_buffers_ = {std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A")), nullptr};
         readback_enqueue_index_ = 0;
         readback_primed_ = false;
         num_readbacks_pending_ = 0;
@@ -327,7 +326,7 @@ void USpSceneCaptureComponent2D::Terminate()
     num_readbacks_pending_ = 0;
     readback_primed_ = false;
     readback_enqueue_index_ = 0;
-    readback_buffers_ = { nullptr, nullptr };
+    readback_buffers_ = {nullptr, nullptr};
 
     // deallocate memory
     scratchpad_.clear();
@@ -556,6 +555,10 @@ SpPackedArray USpSceneCaptureComponent2D::readPixelsImpl()
         int64_t spin_wait_iterations = 0;
         while (num_readbacks_pending_ > 0) {
             spin_wait_iterations++;
+            if (spin_wait_iterations % 100*1000*1000 == 0) {
+                SP_LOG("ERROR: Spin wait in readPixelsImpl() appears to be deadlocked.");
+                SP_ASSERT(false);
+            }            
         }
         if (bPrintReadbackSpinWaitInfo && spin_wait_iterations > 0) {
             SP_LOG("WARNING: Readback spin-waited for ", spin_wait_iterations, " iterations in readPixelsImpl().");
@@ -608,9 +611,8 @@ void USpSceneCaptureComponent2D::enqueueCopyPixelsFromGPUToStagingAndImmediateFl
 {
     SP_ASSERT(readback);
     FRHITexture* src_texture = render_target_resource->GetRenderTargetTexture();
-    command_list.Transition(FRHITransitionInfo(src_texture, ERHIAccess::Unknown, ERHIAccess::CopySrc));
+    command_list.Transition(FRHITransitionInfo(src_texture, ERHIAccess::SRVMask, ERHIAccess::CopySrc));
     readback->EnqueueCopy(command_list, src_texture);
-    command_list.Transition(FRHITransitionInfo(src_texture, ERHIAccess::CopySrc, ERHIAccess::SRVMask));
     command_list.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
 }
 
@@ -619,25 +621,17 @@ void USpSceneCaptureComponent2D::copyPixelsFromStagingToCPU_RenderThread(FRHIGPU
     SP_ASSERT(readback);
     SP_ASSERT(dest_ptr);
 
-    int64_t spin_wait_iterations = 0;
-    while (!readback->IsReady()) {
-        spin_wait_iterations++;
-    }
-    if (bPrintReadbackSpinWaitInfo && spin_wait_iterations > 0) {
-        SP_LOG("WARNING: Readback spin-waited for ", spin_wait_iterations, " iterations in copyPixelsFromStagingToCPU_RenderThread(...).");
-    }
-
     SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
     uint64_t num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
-    int32_t bytes_per_pixel = NumChannelsPerPixel * SpArrayDataTypeUtils::getSizeOf(channel_data_type);
-    int32_t row_bytes = Width * bytes_per_pixel;
+    int32_t bytes_per_pixel = NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
+    int32_t row_bytes = Width*bytes_per_pixel;
 
     int32 row_pitch_in_pixels = 0;
-    void* src_ptr = readback->Lock(row_pitch_in_pixels);
+    void* src_ptr = readback->Lock(row_pitch_in_pixels); // will block until the data is ready
     SP_ASSERT(src_ptr);
     SP_ASSERT(row_pitch_in_pixels >= Width);
 
-    int32_t src_row_pitch_bytes = row_pitch_in_pixels * bytes_per_pixel;
+    int32_t src_row_pitch_bytes = row_pitch_in_pixels*bytes_per_pixel;
 
     if (src_row_pitch_bytes == row_bytes) {
         std::memcpy(dest_ptr, src_ptr, num_bytes);
@@ -645,7 +639,7 @@ void USpSceneCaptureComponent2D::copyPixelsFromStagingToCPU_RenderThread(FRHIGPU
         uint8_t* src = static_cast<uint8_t*>(src_ptr);
         uint8_t* dst = static_cast<uint8_t*>(dest_ptr);
         for (int32_t y = 0; y < Height; y++) {
-            std::memcpy(dst + y * row_bytes, src + y * src_row_pitch_bytes, row_bytes);
+            std::memcpy(dst + y*row_bytes, src + y*src_row_pitch_bytes, row_bytes);
         }
     }
 

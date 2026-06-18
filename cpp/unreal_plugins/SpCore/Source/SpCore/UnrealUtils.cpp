@@ -18,6 +18,7 @@
 #include <CoreGlobals.h>              // GAllowActorScriptExecutionInEditor
 #include <Dom/JsonObject.h>
 #include <Dom/JsonValue.h>
+#include <Engine/Engine.h>            // GEngine
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>             // TCHAR, uint16
 #include <JsonObjectConverter.h>
@@ -165,6 +166,22 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
     SP_ASSERT(world);
     SP_ASSERT(uobject);
     SP_ASSERT(ufunction);
+    SP_ASSERT(!world->IsPreviewWorld());
+    SP_ASSERT(GEngine->GetWorldContextFromWorld(world));
+
+    //
+    // If we call any function on a CDO, and the CDO's class is declared as a Within=World class, and the
+    // world is a PIE world, then we will get a benign error message in the editor. To avoid this error
+    // message, the solution is to wrap the function call in another UFUNCTION that isn't defined on a Within=World
+    // class.
+    //
+
+    if (uobject->HasAnyFlags(RF_ClassDefaultObject) && world->IsEditorWorld() && world->IsGameWorld()) {
+        UClass* uclass = uobject->GetClass();
+        if (uclass->ClassWithin && uclass->ClassWithin != UObject::StaticClass()) {
+            SP_LOG("WARNING: Calling any function on a CDO will generate a benign error message in the editor if: (1) the CDO's class is declared as Within=Anything; and (2) the world is a PIE world. To avoid this error message, wrap the function call in another UFUNCTION that isn't defined on a Within=World class..");
+        }
+    }
 
     // Create buffer to store all args and the return value.
     uint32 num_bytes = ufunction->ParmsSize;
@@ -252,69 +269,74 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
 }
 
 //
-// Find properties (could be templated but we choose to explicitly instantiate for readability)
+// Find properties
 //
 
 std::vector<FProperty*> UnrealUtils::findProperties(const UStruct* ustruct, EFieldIterationFlags field_iteration_flags)
 {
-    return findPropertiesAll(ustruct, field_iteration_flags);
+    SP_ASSERT(ustruct);
+    std::vector<FProperty*> properties;
+    for (TFieldIterator<FProperty> itr(ustruct, field_iteration_flags); itr; ++itr) {
+        FProperty* property = *itr;
+        properties.push_back(property);
+    }
+    return properties;
 }
 
-std::vector<FProperty*> UnrealUtils::findProperties(const UFunction* ufunction, EFieldIterationFlags field_iteration_flags)
+std::map<std::string, FProperty*> UnrealUtils::findPropertiesAsMap(const UStruct* ustruct, EFieldIterationFlags field_iteration_flags)
 {
-    return findPropertiesAll(ufunction, field_iteration_flags);
+    return toMap(findProperties(ustruct, field_iteration_flags));
 }
 
-//
-// Find actors unconditionally and return an std::vector or an std::map
-//
-
-std::vector<AActor*> UnrealUtils::findActors(const UWorld* world)
+std::vector<FProperty*> UnrealUtils::findPropertiesByName(const UStruct* ustruct, const std::string& property_name, EFieldIterationFlags field_iteration_flags)
 {
-    return findActorsByType(world);
+    return Std::toVector<FProperty*>(
+        findProperties(ustruct, field_iteration_flags) |
+        std::views::filter([&property_name](auto property) { return Unreal::toStdString(property->GetName()) == property_name; }));
 }
 
-std::map<std::string, AActor*> UnrealUtils::findActorsAsMap(const UWorld* world)
+std::vector<FProperty*> UnrealUtils::findPropertiesByFlagsAny(const UStruct* ustruct, EPropertyFlags property_flags, EFieldIterationFlags field_iteration_flags)
 {
-    return toMap(findActors(world));
+    return Std::toVector<FProperty*>(
+        findProperties(ustruct, field_iteration_flags) |
+        std::views::filter([property_flags](auto property) { return property->HasAnyPropertyFlags(property_flags); }));
 }
 
-// 
-// Get components unconditionally and return an std::vector or an std::map
-//
-
-std::vector<UActorComponent*> UnrealUtils::getComponents(const AActor* actor)
+std::vector<FProperty*> UnrealUtils::findPropertiesByFlagsAll(const UStruct* ustruct, EPropertyFlags property_flags, EFieldIterationFlags field_iteration_flags)
 {
-    return getComponentsByType(actor);
+    return Std::toVector<FProperty*>(
+        findProperties(ustruct, field_iteration_flags) |
+        std::views::filter([property_flags](auto property) { return property->HasAllPropertyFlags(property_flags); }));
 }
 
-std::map<std::string, UActorComponent*> UnrealUtils::getComponentsAsMap(const AActor* actor)
+std::map<std::string, FProperty*> UnrealUtils::findPropertiesByNameAsMap(const UStruct* ustruct, const std::string& property_name, EFieldIterationFlags field_iteration_flags)
 {
-    return toMap(getComponents(actor));
+    return toMap(findPropertiesByName(ustruct, property_name, field_iteration_flags));
 }
 
-//
-// Get children components unconditionally and return an std::vector or an std::map (could be templated but we choose to explicitly instantiate for readability)
-//
-
-std::vector<USceneComponent*> UnrealUtils::getChildrenComponents(const AActor* parent, bool include_all_descendants)
+std::map<std::string, FProperty*> UnrealUtils::findPropertiesByFlagsAnyAsMap(const UStruct* ustruct, EPropertyFlags property_flags, EFieldIterationFlags field_iteration_flags)
 {
-    return getChildrenComponentsByType(parent, include_all_descendants);
+    return toMap(findPropertiesByFlagsAny(ustruct, property_flags, field_iteration_flags));
 }
 
-std::vector<USceneComponent*> UnrealUtils::getChildrenComponents(const USceneComponent* parent, bool include_all_descendants)
+std::map<std::string, FProperty*> UnrealUtils::findPropertiesByFlagsAllAsMap(const UStruct* ustruct, EPropertyFlags property_flags, EFieldIterationFlags field_iteration_flags)
 {
-    return getChildrenComponentsByType(parent, include_all_descendants);
+    return toMap(findPropertiesByFlagsAll(ustruct, property_flags, field_iteration_flags));
 }
 
-std::map<std::string, USceneComponent*> UnrealUtils::getChildrenComponentsAsMap(const AActor* parent, bool include_all_descendants)
+FProperty* UnrealUtils::findPropertyByName(const UStruct* ustruct, const std::string& property_name, EFieldIterationFlags field_iteration_flags)
 {
-    return toMap(getChildrenComponents(parent, include_all_descendants));
+    return toItem(findPropertiesByName(ustruct, property_name, field_iteration_flags));
 }
 
-std::map<std::string, USceneComponent*> UnrealUtils::getChildrenComponentsAsMap(const USceneComponent* parent, bool include_all_descendants)
+FProperty* UnrealUtils::findPropertyByFlagsAny(const UStruct* ustruct, EPropertyFlags property_flags, EFieldIterationFlags field_iteration_flags)
 {
-    return toMap(getChildrenComponents(parent, include_all_descendants));
+    return toItem(findPropertiesByFlagsAny(ustruct, property_flags, field_iteration_flags));
+}
+
+FProperty* UnrealUtils::findPropertyByFlagsAll(const UStruct* ustruct, EPropertyFlags property_flags, EFieldIterationFlags field_iteration_flags)
+{
+    return toItem(findPropertiesByFlagsAll(ustruct, property_flags, field_iteration_flags));
 }
 
 //
@@ -335,16 +357,29 @@ std::string UnrealUtils::getObjectPropertiesAsString(const void* value_ptr, cons
     return Unreal::toStdString(string);
 }
 
-void UnrealUtils::setObjectPropertiesFromString(UObject* uobject, const std::string& string)
+void UnrealUtils::setObjectPropertiesFromString(UObject* uobject, const std::string& string, bool notify_editor)
 {
     SP_ASSERT(uobject);
-    return setObjectPropertiesFromString(uobject, uobject->GetClass(), string);
+
+    UObject* notify = nullptr;
+    if (notify_editor) {
+        notify = uobject;
+    }
+
+    setObjectPropertiesFromString(static_cast<void*>(uobject), uobject->GetClass(), string, notify);
 }
 
-void UnrealUtils::setObjectPropertiesFromString(void* value_ptr, const UStruct* ustruct, const std::string& string)
+void UnrealUtils::setObjectPropertiesFromString(void* value_ptr, const UStruct* ustruct, const std::string& string, UObject* notify)
 {
     SP_ASSERT(value_ptr);
     SP_ASSERT(ustruct);
+
+    #if WITH_EDITOR
+        if (notify) {
+            notify->PreEditChange(nullptr);
+        }
+    #endif
+
     bool success = false;
     TSharedRef<TJsonReader<>> json_reader = TJsonReaderFactory<>::Create(Unreal::toFString(string));
     TSharedPtr<FJsonObject> json_object;
@@ -353,20 +388,49 @@ void UnrealUtils::setObjectPropertiesFromString(void* value_ptr, const UStruct* 
     SP_ASSERT(json_object.IsValid());
     success = FJsonObjectConverter::JsonObjectToUStruct(json_object.ToSharedRef(), ustruct, value_ptr);
     SP_ASSERT(success);
+
+    #if WITH_EDITOR
+        if (notify) {
+            FPropertyChangedEvent property_changed_event(nullptr);
+            notify->PostEditChangeProperty(property_changed_event);
+        }
+    #endif
 }
 
 //
-// Find property by name, get and set property values, uobject can't be const because we cast it to void*,
+// Get and set properties. Note that uobject can't be const because we cast it to (non-const) void*,
 // value_ptr can't be const because we assign to SpPropertyDesc::value_ptr_.
 //
 
-SpPropertyDesc UnrealUtils::findPropertyByName(UObject* uobject, const std::string& property_name)
+SpPropertyDesc UnrealUtils::resolveProperty(UObject* uobject, FProperty* property)
 {
     SP_ASSERT(uobject);
-    return findPropertyByName(uobject, uobject->GetClass(), property_name);
+    return resolveProperty(uobject, uobject->GetClass(), property, uobject);
 }
 
-SpPropertyDesc UnrealUtils::findPropertyByName(void* value_ptr, const UStruct* ustruct, const std::string& property_name)
+SpPropertyDesc UnrealUtils::resolveProperty(UObject* uobject, const std::string& property_name)
+{
+    SP_ASSERT(uobject);
+    return resolveProperty(uobject, uobject->GetClass(), property_name, uobject);
+}
+
+SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustruct, FProperty* property, UObject* notify)
+{
+    SP_ASSERT(value_ptr);
+    SP_ASSERT(ustruct);
+    SP_ASSERT(property);
+
+    SpPropertyDesc property_desc;
+    property_desc.property_ = property;
+    property_desc.type_id_ = Unreal::getCppTypeAsString(property_desc.property_);
+    SP_ASSERT(property_desc.type_id_ != "");
+    property_desc.value_ptr_ = property_desc.property_->ContainerPtrToValuePtr<void>(value_ptr);
+    SP_ASSERT(property_desc.value_ptr_);
+    property_desc.notify_ = notify;
+    return property_desc;
+}
+
+SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustruct, const std::string& property_name, UObject* notify)
 {
     SP_ASSERT(value_ptr);
     SP_ASSERT(ustruct);
@@ -375,6 +439,7 @@ SpPropertyDesc UnrealUtils::findPropertyByName(void* value_ptr, const UStruct* u
 
     SpPropertyDesc property_desc;
     property_desc.value_ptr_ = value_ptr;
+    property_desc.notify_ = notify;
 
     for (int i = 0; i < property_names.size(); i++) {
 
@@ -471,6 +536,7 @@ SpPropertyDesc UnrealUtils::findPropertyByName(void* value_ptr, const UStruct* u
                 UObject* uobject = object_property->GetObjectPropertyValue(property_desc.value_ptr_);
                 SP_ASSERT(uobject);
                 property_desc.value_ptr_ = uobject;
+                property_desc.notify_ = uobject;
                 ustruct = uobject->GetClass();
 
             } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
@@ -644,7 +710,7 @@ SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& prop
     return property_value;
 }
 
-void UnrealUtils::setPropertyValueFromString(const SpPropertyDesc& property_desc, const std::string& string)
+void UnrealUtils::setPropertyValueFromString(const SpPropertyDesc& property_desc, const std::string& string, bool notify_editor)
 {
     SP_ASSERT(property_desc.value_ptr_);
     SP_ASSERT(property_desc.property_);
@@ -672,14 +738,21 @@ void UnrealUtils::setPropertyValueFromString(const SpPropertyDesc& property_desc
     TSharedPtr<FJsonValue> json_value = json_object.Get()->TryGetField(Unreal::toFString("dummy"));
     SP_ASSERT(json_value.IsValid());
 
-    setPropertyValueFromJsonValue(property_desc, json_value);
+    setPropertyValueFromJsonValue(property_desc, json_value, notify_editor);
 }
 
-void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_desc, TSharedPtr<FJsonValue> json_value)
+void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_desc, TSharedPtr<FJsonValue> json_value, bool notify_editor)
 {
     SP_ASSERT(property_desc.value_ptr_);
     SP_ASSERT(property_desc.property_);
     SP_ASSERT(json_value.IsValid());
+
+    #if WITH_EDITOR
+        if (notify_editor) {
+            SP_ASSERT(property_desc.notify_);
+            property_desc.notify_->PreEditChange(property_desc.property_);
+        }
+    #endif
 
     // We don't need a special case for FStructProperty in this code block, but we do in getPropertyValueAsString(...).
     // See the discussion above for details.
@@ -777,8 +850,13 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
         SP_ASSERT(json_object->IsValid());
         TArray<FString> json_keys;
         TArray<TSharedPtr<FJsonValue>> json_values;
-        json_object->Get()->Values.GenerateKeyArray(json_keys);
-        json_object->Get()->Values.GenerateValueArray(json_values);
+
+        // In UE 5.8, FJsonObject::Values is keyed by UE::TSharedString rather than FString, so we build key
+        // and value arrays by iterating the map.
+        for (const auto& json_pair : json_object->Get()->Values) {
+            json_keys.Add(*json_pair.Key); // operator* on TSharedString returns a const TCHAR*, which FString accepts
+            json_values.Add(json_pair.Value);
+        }
         SP_ASSERT(json_keys.Num() == json_values.Num());
 
         FMapProperty* map_property = static_cast<FMapProperty*>(property_desc.property_);
@@ -847,128 +925,302 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
         SP_LOG(Unreal::toStdString(property_desc.property_->GetName()), " is an unsupported type: ", Unreal::toStdString(property_desc.property_->GetClass()->GetName()));
         SP_ASSERT(false);
     }
+
+    #if WITH_EDITOR
+        if (notify_editor) {
+            FPropertyChangedEvent property_changed_event(property_desc.property_);
+            property_desc.notify_->PostEditChangeProperty(property_changed_event);
+        }
+    #endif
+}
+
+//
+// Find objects
+//
+
+std::vector<UObject*> UnrealUtils::findObjects()
+{
+    return findObjectsByType<UObject>();
+}
+
+//
+// Find actors unconditionally and return an std::vector or an std::map
+//
+
+std::vector<AActor*> UnrealUtils::findActors(const UWorld* world)
+{
+    return findActorsByType(world);
+}
+
+std::map<std::string, AActor*> UnrealUtils::findActorsAsMap(const UWorld* world, bool include_unreal_name)
+{
+    return toMap(findActors(world), include_unreal_name);
+}
+
+// 
+// Get components unconditionally and return an std::vector or an std::map
+//
+
+std::vector<UActorComponent*> UnrealUtils::getComponents(const AActor* actor)
+{
+    return getComponentsByType(actor);
+}
+
+std::map<std::string, UActorComponent*> UnrealUtils::getComponentsAsMap(const AActor* actor, bool include_actor_stable_name, bool include_actor_unreal_name)
+{
+    return toMap(getComponents(actor), include_actor_stable_name, include_actor_unreal_name);
+}
+
+//
+// Get children components unconditionally and return an std::vector or an std::map (could be templated but we choose to explicitly instantiate for readability)
+//
+
+std::vector<USceneComponent*> UnrealUtils::getChildrenComponents(const AActor* parent, bool include_all_descendants)
+{
+    return getChildrenComponentsByType(parent, include_all_descendants);
+}
+
+std::vector<USceneComponent*> UnrealUtils::getChildrenComponents(const USceneComponent* parent, bool include_all_descendants)
+{
+    return getChildrenComponentsByType(parent, include_all_descendants);
+}
+
+std::map<std::string, USceneComponent*> UnrealUtils::getChildrenComponentsAsMap(const AActor* parent, bool include_all_descendants, bool include_actor_stable_name, bool include_actor_unreal_name)
+{
+    return toMap(getChildrenComponents(parent, include_all_descendants), include_actor_stable_name, include_actor_unreal_name);
+}
+
+std::map<std::string, USceneComponent*> UnrealUtils::getChildrenComponentsAsMap(const USceneComponent* parent, bool include_all_descendants, bool include_actor_stable_name, bool include_actor_unreal_name)
+{
+    return toMap(getChildrenComponents(parent, include_all_descendants), include_actor_stable_name, include_actor_unreal_name);
 }
 
 //
 // Get and set actor and component stable names
 //
 
-bool UnrealUtils::hasStableName(const AActor* actor)
+std::string UnrealUtils::getStableName(const AActor* actor, bool include_unreal_name)
 {
     SP_ASSERT(actor);
 
-    std::vector<USpStableNameComponent*> sp_stable_name_components = getComponentsByType<USpStableNameComponent>(actor);
-    if (sp_stable_name_components.size() == 1) {
-        return true;
-    }
+    UWorld* world = actor->GetWorld();
+    SP_ASSERT(world);
+    SP_ASSERT(!world->IsPreviewWorld());
+    SP_ASSERT(GEngine->GetWorldContextFromWorld(world));
 
-    std::vector<ASpStableNameManager*> sp_stable_name_managers = findActorsByType<ASpStableNameManager>(actor->GetWorld());
-    if (sp_stable_name_managers.size() == 1) {
-        ASpStableNameManager* sp_stable_name_manager = Std::at(sp_stable_name_managers, 0);
-        SP_ASSERT(sp_stable_name_manager);
-        if (sp_stable_name_manager->hasActor(actor)) {
-            return true;
-        }
-    }
+    std::string stable_name;
 
-    return false;
-}
+    // If we're in the editor but outside of a PIE session, stable names are given by resolveStableName(...)
+    // The only way to set an actor's stable name in this case is to call actor->SetFolderPath(...) and actor->SetActorLabel(...).
 
-bool UnrealUtils::hasStableName(const UActorComponent* component)
-{
-    SP_ASSERT(component);
-    return true;
-}
-
-std::string UnrealUtils::tryGetStableName(const AActor* actor)
-{
-    SP_ASSERT(actor);
-    if (hasStableName(actor)) {
-        return UnrealUtils::getStableName(actor);
-    } else {
+    if (world->IsEditorWorld() && !world->IsGameWorld()) {
         #if WITH_EDITOR // defined in an auto-generated header
-            if (!actor->HasAnyFlags(EObjectFlags::RF_Transient)) {
-                return ASpStableNameManager::getStableNameEditorOnly(actor);
-            }
+            stable_name = resolveStableName(actor);
+        #else
+            SP_ASSERT(false);
         #endif
-        return Unreal::toStdString(actor->GetName());
-    }
-}
 
-std::string UnrealUtils::getStableName(const AActor* actor)
-{
-    SP_ASSERT(actor);
+    // Otherwise, we're either in a PIE game or a standalone game. In this case, we try to go through our
+    // stateful interfaces.
 
-    std::vector<USpStableNameComponent*> sp_stable_name_components = getComponentsByType<USpStableNameComponent>(actor);
-    for (auto sp_stable_name_component : sp_stable_name_components) {
-        SP_ASSERT(sp_stable_name_component);
-        return sp_stable_name_component->getStableName();
-    }
+    } else {
 
-    std::vector<ASpStableNameManager*> sp_stable_name_managers = findActorsByType<ASpStableNameManager>(actor->GetWorld());
-    for (auto sp_stable_name_manager : sp_stable_name_managers) {
-        SP_ASSERT(sp_stable_name_manager);
-        if (sp_stable_name_manager->hasActor(actor)) {
-            return sp_stable_name_manager->getStableName(actor);
+        std::vector<USpStableNameComponent*> sp_stable_name_components = getComponentsByType<USpStableNameComponent>(actor);
+        SP_ASSERT(sp_stable_name_components.size() <= 1);
+
+        // Try to find a UStableNameComponent on the actor.
+
+        if (sp_stable_name_components.size() == 1) {
+            USpStableNameComponent* sp_stable_name_component = sp_stable_name_components.at(0);
+            SP_ASSERT(sp_stable_name_component);
+            stable_name = sp_stable_name_component->getStableName();
+
+        // Otherwise, try various fallbacks.
+
+        } else {
+
+            std::vector<ASpStableNameManager*> sp_stable_name_managers = findActorsByType<ASpStableNameManager>(actor->GetWorld());
+
+            // Try to find an ASpStableNameManager.
+
+            if (sp_stable_name_managers.size() == 1) {
+                ASpStableNameManager* sp_stable_name_manager = sp_stable_name_managers.at(0);
+                SP_ASSERT(sp_stable_name_manager);
+
+                // If the actor is registered with the stable name manager, then use getStableName(...).
+
+                if (sp_stable_name_manager->hasActor(actor)) {
+                    stable_name = sp_stable_name_manager->getStableName(actor);
+
+                // Otherwise, try various fallbacks.
+
+                } else {
+
+                    // If we're in a PIE game, then use resolveStableName(actor),
+                    // otherwise use the actor's Unreal name.
+
+                    if (world->IsEditorWorld() && world->IsGameWorld()) {
+                        #if WITH_EDITOR // defined in an auto-generated header
+                            stable_name = resolveStableName(actor);
+                        #else
+                            SP_ASSERT(false);
+                        #endif
+                    } else if (!world->IsEditorWorld() && world->IsGameWorld()) {
+                        stable_name = Unreal::toStdString(actor->GetName());
+                    } else {
+                        SP_ASSERT(false);
+                    }
+                }
+
+            // Otherwise, try various fallbacks.
+
+            } else {
+
+                // If we're in a PIE game, then use resolveStableName(actor),
+                // otherwise use the actor's Unreal name.
+
+                if (world->IsEditorWorld() && world->IsGameWorld()) {
+                    #if WITH_EDITOR // defined in an auto-generated header
+                        stable_name = resolveStableName(actor);
+                    #else
+                        SP_ASSERT(false);
+                    #endif
+                } else if (!world->IsEditorWorld() && world->IsGameWorld()) { 
+                    stable_name = Unreal::toStdString(actor->GetName());
+                } else {
+                    SP_ASSERT(false);
+                }
+            }
         }
     }
 
-    SP_ASSERT(false);
-    return "";
+    if (include_unreal_name) {
+        std::string sep;
+        if (stable_name != "") {
+            sep = ":";
+        }
+        stable_name = stable_name + sep + Unreal::toStdString(actor->GetName());
+    }
+
+    return stable_name;
 }
 
-std::string UnrealUtils::getStableName(const UActorComponent* component, bool include_actor_name, bool actor_must_have_stable_name)
+std::string UnrealUtils::getStableName(const UActorComponent* component, bool include_actor_stable_name, bool include_actor_unreal_name)
 {
     SP_ASSERT(component);
 
-    std::string component_name;
+    std::string stable_name;
 
     const USceneComponent* scene_component = Cast<USceneComponent>(component); // no RTTI available, so use Cast instead of dynamic_cast
     if (scene_component) {
         TArray<USceneComponent*> parents;
         scene_component->GetParentComponents(parents);
         for (auto parent : parents) {
-            component_name = Unreal::toStdString(parent->GetName()) + "." + component_name;
+            stable_name = Unreal::toStdString(parent->GetName()) + "." + stable_name;
         }
     }
 
-    component_name = component_name + Unreal::toStdString(component->GetName());
+    stable_name = stable_name + Unreal::toStdString(component->GetName());
 
-    if (include_actor_name) {
+    if (include_actor_stable_name) {
         const AActor* actor = component->GetOwner();
         SP_ASSERT(actor);
-        if (actor_must_have_stable_name) {
-            component_name = getStableName(actor) + ":" + component_name;
-        } else {
-            component_name = tryGetStableName(actor) + ":" + component_name;
+        std::string actor_stable_name = getStableName(actor, include_actor_unreal_name);
+        std::string sep;
+        if (actor_stable_name != "") {
+            sep = ":";
         }
+        stable_name = actor_stable_name + sep + stable_name;
     }
 
-    return component_name;
+    return stable_name;
 }
 
-void UnrealUtils::setStableName(const AActor* actor, const std::string& stable_name)
+void UnrealUtils::setStableName(AActor* actor, const std::string& stable_name)
 {
     SP_ASSERT(actor);
 
-    std::vector<USpStableNameComponent*> sp_stable_name_components = getComponentsByType<USpStableNameComponent>(actor);
-    for (auto sp_stable_name_component : sp_stable_name_components) {
-        SP_ASSERT(sp_stable_name_component);
-        sp_stable_name_component->setStableName(stable_name);
-    }
+    UWorld* world = actor->GetWorld();
+    SP_ASSERT(world);
+    SP_ASSERT(!world->IsPreviewWorld());
+    SP_ASSERT(GEngine->GetWorldContextFromWorld(world));
 
-    std::vector<ASpStableNameManager*> sp_stable_name_managers = findActorsByType<ASpStableNameManager>(actor->GetWorld());
-    for (auto sp_stable_name_manager : sp_stable_name_managers) {
-        SP_ASSERT(sp_stable_name_manager);
-        if (sp_stable_name_manager->hasActor(actor)) {
-            sp_stable_name_manager->setStableName(actor, stable_name);
+    // If we're in the editor but outside of a PIE session, set the folder path and actor label directly.
+
+    if (world->IsEditorWorld() && !world->IsGameWorld()) {
+        #if WITH_EDITOR // defined in an auto-generated header
+            auto [folder_path, actor_label] = unresolveStableName(stable_name);
+            actor->SetFolderPath(Unreal::toFName(folder_path));
+            actor->SetActorLabel(Unreal::toFString(actor_label));
+        #else
+            SP_ASSERT(false);
+        #endif
+
+    // Otherwise, we're either in a PIE game or a standalone game. In this case, we try to go through our
+    // stateful interfaces.
+
+    } else {
+
+        std::vector<USpStableNameComponent*> sp_stable_name_components = getComponentsByType<USpStableNameComponent>(actor);
+        SP_ASSERT(sp_stable_name_components.size() <= 1);
+
+        // Try to find a UStableNameComponent on the actor.
+
+        if (sp_stable_name_components.size() == 1) {
+            USpStableNameComponent* sp_stable_name_component = sp_stable_name_components.at(0);
+            SP_ASSERT(sp_stable_name_component);
+            sp_stable_name_component->setStableName(stable_name);
+
+        // Otherwise, try various fallbacks.
+
         } else {
-            sp_stable_name_manager->addActor(actor, stable_name); // this case can happen, e.g., for a default pawn with a stable name component
+
+            std::vector<ASpStableNameManager*> sp_stable_name_managers = findActorsByType<ASpStableNameManager>(actor->GetWorld());
+
+            // Try to find an ASpStableNameManager.
+
+            if (sp_stable_name_managers.size() == 1) {
+                ASpStableNameManager* sp_stable_name_manager = sp_stable_name_managers.at(0);
+                SP_ASSERT(sp_stable_name_manager);
+
+                // If the actor is registered with the stable name manager, then use setStableName(...).
+
+                if (sp_stable_name_manager->hasActor(actor)) {
+                    sp_stable_name_manager->setStableName(actor, stable_name);
+
+                // Otherwise, use addActor(...).
+
+                } else {
+                    sp_stable_name_manager->addActor(actor, stable_name);
+                }
+            } else {
+                SP_LOG("ERROR: Called setStableName(actor=", Std::toStringFromPtr(actor), ", stable_name=\"", stable_name, "\") but no data structure could be found to store the stable name, giving up...");
+            }
         }
     }
 }
 
 #if WITH_EDITOR // defined in an auto-generated header
+    void UnrealUtils::requestAddOrUpdateAllStableNameActors(const UWorld* world)
+    {
+        SP_ASSERT(world);
+        std::vector<ASpStableNameManager*> sp_stable_name_managers = findActorsByType<ASpStableNameManager>(world);
+        for (auto sp_stable_name_manager : sp_stable_name_managers) {
+            SP_ASSERT(sp_stable_name_manager);
+            sp_stable_name_manager->requestAddOrUpdateAllActors();
+        }
+    }
+
+    void UnrealUtils::requestAddOrUpdateStableNameActor(AActor* actor)
+    {
+        SP_ASSERT(actor);
+        std::vector<ASpStableNameManager*> sp_stable_name_managers = findActorsByType<ASpStableNameManager>(actor->GetWorld());
+        for (auto sp_stable_name_manager : sp_stable_name_managers) {
+            SP_ASSERT(sp_stable_name_manager);
+            sp_stable_name_manager->requestAddOrUpdateActor(actor);
+        }
+    }
+
     void UnrealUtils::requestAddStableNameActor(AActor* actor)
     {
         SP_ASSERT(actor);
@@ -1007,25 +1259,42 @@ void UnrealUtils::setStableName(const AActor* actor, const std::string& stable_n
         }
     }
 
-    void UnrealUtils::requestUpdateAllStableNameActors(const UWorld* world)
+    std::string UnrealUtils::resolveStableName(const AActor* actor)
     {
+        SP_ASSERT(actor);
+
+        UWorld* world = actor->GetWorld();
         SP_ASSERT(world);
-        std::vector<ASpStableNameManager*> sp_stable_name_managers = findActorsByType<ASpStableNameManager>(world);
-        for (auto sp_stable_name_manager : sp_stable_name_managers) {
-            SP_ASSERT(sp_stable_name_manager);
-            sp_stable_name_manager->requestUpdateAllActors();
+        SP_ASSERT(world->IsEditorWorld());
+        SP_ASSERT(!world->IsPreviewWorld());
+        SP_ASSERT(GEngine->GetWorldContextFromWorld(world));
+
+        FName folder_name = actor->GetFolderPath();
+        std::string folder_string;
+        if (!folder_name.IsNone()) {
+            folder_string = Unreal::toStdString(folder_name);
+        }
+        std::string label_string = Unreal::toStdString(actor->GetActorLabel());
+
+        if (folder_string != "") {
+            return folder_string + "/" + label_string;
+        } else {
+            return label_string;
+        }
+    }
+
+    std::pair<std::string, std::string> UnrealUtils::unresolveStableName(const std::string& stable_name)
+    {
+        std::vector<std::string> tokens = Std::tokenize(stable_name, "/");
+        if (tokens.size() == 1) {
+            return {"", tokens.at(0)};
+        } else {
+            std::string label = tokens.back();
+            std::string folder = stable_name.substr(0, stable_name.size() - label.size() - 1);
+            return {folder, label};
         }
     }
 #endif
-
-//
-// Find objects
-//
-
-std::vector<UObject*> UnrealUtils::findObjects()
-{
-    return findObjectsByType<UObject>();
-}
 
 //
 // Helper functions for formatting container properties as strings in the same style as Unreal
@@ -1193,4 +1462,37 @@ std::string UnrealUtils::getJsonString(const std::string& input)
         }
     }
     return output;
+}
+
+//
+// Helper functions for returning dictionaries
+//
+
+std::string UnrealUtils::toKey(const UStruct* ustruct)
+{
+    return Unreal::getTypeAsString(ustruct);
+}
+
+std::string UnrealUtils::toKey(const UActorComponent* component, bool include_actor_stable_name, bool include_actor_unreal_name)
+{
+    return getStableName(component, include_actor_stable_name, include_actor_unreal_name);
+}
+
+std::string UnrealUtils::toKey(const AActor* actor, bool include_unreal_name)
+{
+    return getStableName(actor, include_unreal_name);
+}
+
+std::string UnrealUtils::toKey(const UFunction* ufunction)
+{
+    SP_ASSERT(ufunction);
+    UStruct* outer = Cast<UStruct>(ufunction->GetOuter());
+    SP_ASSERT(outer);
+    return Unreal::getTypeAsString(outer) + "::" + Unreal::toStdString(ufunction->GetName());
+}
+
+std::string UnrealUtils::toKey(const FProperty* property)
+{
+    SP_ASSERT(property);
+    return Unreal::toStdString(property->GetName());
 }

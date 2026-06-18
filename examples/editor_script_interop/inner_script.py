@@ -10,4 +10,4 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--scale", type=float, default=10.0)
 args = parser.parse_args()
 
-inner_script_result = np.array([1.0, 2.0, 3.0]) * args.scale
+inner_script_result = np.array([1.0, 2.0, 3.0])*args.scale

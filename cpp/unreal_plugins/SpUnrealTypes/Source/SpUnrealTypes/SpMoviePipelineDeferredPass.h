@@ -113,7 +113,7 @@ public:
 
         // restore previous cvar values in reverse order
         for (int i = previous_cvar_values.size() - 1; i >= 0; i--) {
-            const auto& [cvar_name, cvar_value] = Std::at(previous_cvar_values, i);
+            const auto& [cvar_name, cvar_value] = previous_cvar_values.at(i);
             IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr(cvar_name)); 
             SP_ASSERT(cvar);
             if (bVerbose) {

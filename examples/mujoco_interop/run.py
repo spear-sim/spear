@@ -4,8 +4,8 @@
 #
 
 import argparse
+import cv2
 import math
-import matplotlib.pyplot as plt
 import mujoco
 import mujoco.viewer
 import numpy as np
@@ -13,6 +13,9 @@ import os
 import scipy
 import shutil
 import spear
+
+width = 1280
+height = 720
 
 
 parser = argparse.ArgumentParser()
@@ -30,8 +33,7 @@ component_descs = \
     {
         "name": "final_tone_curve_hdr",
         "long_name": "DefaultSceneRoot.final_tone_curve_hdr_",
-        "spatial_supersampling_factor": 1,
-        "visualize_func": lambda data : data[:,:,[2,1,0]] # BGRA to RGB
+        "visualize_func": lambda data : data[:,:,[0,1,2]] # native BGR (drop alpha)
     }
 ]
 
@@ -43,27 +45,27 @@ def save_images(images_dir, frame_index):
         image_file = os.path.realpath(os.path.join(images_dir, component_desc["name"], f"{frame_index:04d}.png"))
         image = component_desc["visualize_func"](data=data)
         spear.log("Saving image: ", image_file)
-        plt.imsave(image_file, image)
+        cv2.imwrite(image_file, image)
 
 def normalize(vector):
     return vector / np.linalg.norm(vector)
 
-def to_unreal_vector_from_mujoco_vector(mj_vector):
-    ue_vector = mj_vector
+def to_spear_vector_from_mujoco_array(mujoco_array):
+    numpy_array = mujoco_array
     if args.visual_parity_with_unreal:
-        ue_vector = (np.diag([1,-1,1])*np.matrix(ue_vector).T).A1
-    return {"X": ue_vector[0], "Y": ue_vector[1], "Z": ue_vector[2]}
+        numpy_array = (np.diag([1,-1,1])*np.matrix(numpy_array).T).A1
+    return spear.math.to_spear_vector_from_numpy_array(numpy_array=numpy_array)
 
-def to_unreal_rotator_from_mujoco_quaternion(mj_quaternion):
+def to_spear_rotator_from_mujoco_quat(mujoco_quat):
 
     # MuJoCo assumes quaternions are stored in scalar-first (wxyz) order, but scipy.spatial.transform.Rotation assumes scalar-last (xyzw) order
-    scipy_quaternion = mj_quaternion[[1,2,3,0]]
-    scipy_rotation_matrix = scipy.spatial.transform.Rotation.from_quat(scipy_quaternion).as_matrix()
+    numpy_quat = mujoco_quat[[1,2,3,0]]
+    numpy_matrix = scipy.spatial.transform.Rotation.from_quat(numpy_quat).as_matrix()
 
     if args.visual_parity_with_unreal:
-        scipy_rotation_matrix = np.diag([1,-1,1])*np.matrix(scipy_rotation_matrix)*np.diag([1,-1,1])
+        numpy_matrix = np.diag([1,-1,1])*np.matrix(numpy_matrix)*np.diag([1,-1,1])
 
-    return spear.to_rotator_from_numpy_matrix(matrix=scipy_rotation_matrix)
+    return spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=numpy_matrix)
 
 
 if __name__ == "__main__":
@@ -88,7 +90,7 @@ if __name__ == "__main__":
     # initialize actors and components
     with sp_instance.begin_frame():
 
-        ue_actors = sp_game.unreal_service.find_actors_as_dict()
+        ue_actors = sp_game.unreal_service.find_actors_as_dict(include_unreal_name=True)
         ue_actors = { ue_actor_name: ue_actor for ue_actor_name, ue_actor in ue_actors.items() if ue_actor_name.startswith(name_prefix) }
 
         # get UGameplayStatics
@@ -118,26 +120,9 @@ if __name__ == "__main__":
         assert final_tone_curve_hdr_component is not None
 
         # configure components to match the viewport (width, height, FOV, post-processing settings, etc)
-        
-        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
-
-        viewport_size_x = 1280
-        viewport_size_y = 720
-
-        viewport_aspect_ratio = viewport_size_x/viewport_size_y # see Engine/Source/Editor/UnrealEd/Private/EditorViewportClient.cpp:2130 for evidence that Unreal's aspect ratio convention is x/y
-        fov = view_target_pov["fOV"]*math.pi/180.0
-        half_fov = fov/2.0
-        half_fov_adjusted = math.atan(math.tan(half_fov)*viewport_aspect_ratio/view_target_pov["aspectRatio"]) # this adjustment is necessary to compute an FOV value that matches the game viewport
-        fov_adjusted = half_fov_adjusted*2.0
-        fov_adjusted_degrees = fov_adjusted*180.0/math.pi
-
-        bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
-        bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
-
-        for component_desc in component_descs:
-            component_desc["component"].Width = viewport_size_x*component_desc["spatial_supersampling_factor"]
-            component_desc["component"].Height = viewport_size_y*component_desc["spatial_supersampling_factor"]
-            component_desc["component"].FOVAngle = fov_adjusted_degrees
+        viewport_desc = sp_game.rendering_service.get_current_viewport_desc()
+        components = [ desc["component"] for desc in component_descs ]
+        sp_game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, widths=width, heights=height)
 
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
         for component_desc in component_descs:
@@ -156,7 +141,7 @@ if __name__ == "__main__":
     mj_bodies = { mj_model.body(mj_body).name: mj_body for mj_body in range(mj_model.nbody) if mj_model.body(mj_body).name.startswith(name_prefix) }
 
     # need to set mj_model.vis properties before launching the viewer
-    fov_y_degrees = 2.0*math.atan(math.tan(fov_adjusted/2.0)/viewport_aspect_ratio)*180.0/math.pi # fov_x -> fov_y -> fov_y_degrees
+    fov_y_degrees = viewport_desc["fov_y_degrees"]
     mj_model.vis.global_.fovy = fov_y_degrees
     mj_model.vis.headlight.ambient = [0.4, 0.4, 0.4]
 
@@ -165,11 +150,8 @@ if __name__ == "__main__":
 
     # initialize MuJoCo camera (not needed when launching the viewer through the command-line, but needed when using launch_passive)
 
-    cam_location = view_target_pov["location"]
-    cam_rotator = view_target_pov["rotation"]
-
-    cam_position = spear.to_numpy_array_from_vector(vector=cam_location)
-    cam_rotation_matrix = spear.to_numpy_matrix_from_rotator(rotator=cam_rotator)
+    cam_position = spear.math.to_numpy_array_from_spear_vector(spear_vector=viewport_desc["camera_location"])
+    cam_rotation_matrix = spear.math.to_numpy_matrix_from_spear_rotator(spear_rotator=viewport_desc["camera_rotation"])
 
     if args.visual_parity_with_unreal:
         cam_position = (np.diag([1,-1,1])*np.matrix(cam_position).T).A1
@@ -196,9 +178,7 @@ if __name__ == "__main__":
     mj_viewer.sync()
 
     # initialize MuJoCo screenshot renderer
-    image_width = viewport_size_x
-    image_height = viewport_size_y
-    mj_renderer = mujoco.Renderer(model=mj_model, height=image_height, width=image_width)
+    mj_renderer = mujoco.Renderer(model=mj_model, height=height, width=width)
 
     # initialize counters
     ue_step_index = 0
@@ -243,17 +223,17 @@ if __name__ == "__main__":
         with sp_instance.begin_frame():
 
             # update SPEAR camera pose
-            pawn_future = pawn.call_async.K2_SetActorLocation(NewLocation=spear.to_vector_from_numpy_array(array=cam_position))
-            player_controller_future = player_controller.call_async.SetControlRotation(NewRotation=spear.to_rotator_from_numpy_matrix(matrix=cam_rotation_matrix))
+            pawn_future = pawn.call_async.K2_SetActorLocation(NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=cam_position))
+            player_controller_future = player_controller.call_async.SetControlRotation(NewRotation=spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=cam_rotation_matrix))
 
-            bp_camera_sensor.K2_SetActorLocation(NewLocation=spear.to_vector_from_numpy_array(array=cam_position))
-            bp_camera_sensor.K2_SetActorRotation(NewRotation=spear.to_rotator_from_numpy_matrix(matrix=cam_rotation_matrix))
+            bp_camera_sensor.K2_SetActorLocation(NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=cam_position))
+            bp_camera_sensor.K2_SetActorRotation(NewRotation=spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=cam_rotation_matrix))
 
             # update SPEAR object poses
             for ue_actor_name, ue_actor in ue_actors.items():
                 ue_actor_futures[ue_actor_name] = ue_actor.call_async.K2_SetActorLocationAndRotation(
-                    NewLocation=to_unreal_vector_from_mujoco_vector(mj_bodies_xpos[f"{ue_actor_name}:StaticMeshComponent0"]),
-                    NewRotation=to_unreal_rotator_from_mujoco_quaternion(mj_bodies_xquat[f"{ue_actor_name}:StaticMeshComponent0"]),
+                    NewLocation=to_spear_vector_from_mujoco_array(mujoco_array=mj_bodies_xpos[f"{ue_actor_name}:StaticMeshComponent0"]),
+                    NewRotation=to_spear_rotator_from_mujoco_quat(mujoco_quat=mj_bodies_xquat[f"{ue_actor_name}:StaticMeshComponent0"]),
                     bSweep=False,
                     bTeleport=True)
 
@@ -283,9 +263,9 @@ if __name__ == "__main__":
                 mj_renderer.update_scene(data=mj_data, camera=mj_viewer.cam)
                 mj_render = mj_renderer.render()
                 image_file = os.path.realpath(os.path.join(images_dir, "mujoco", f"{frame_index:04d}.png"))
-                image = mj_render
+                image = mj_render[:,:,[2,1,0]] # MuJoCo renders RGB -> BGR for cv2
                 spear.log("Saving image: ", image_file)
-                plt.imsave(image_file, image)
+                cv2.imwrite(image_file, image)
 
         # increment counters
         if args.save_images:

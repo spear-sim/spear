@@ -141,7 +141,7 @@ public:
 
                         // SourceAction is a private member variable on FSpInputActionInstance, but it is
                         // accessible through Unreal's property system, so we can still get and set it.
-                        SpPropertyDesc property_desc = UnrealUtils::findPropertyByName(
+                        SpPropertyDesc property_desc = UnrealUtils::resolveProperty(
                             &sp_input_action_instance, FSpInputActionInstance::StaticStruct(), "SourceAction");
                         UnrealUtils::setPropertyValueFromString(property_desc, Std::toStringFromPtr(input_action));
 
@@ -193,7 +193,7 @@ private:
         std::vector<UEnhancedInputComponent*> enhanced_input_components = UnrealUtils::getComponentsByType<UEnhancedInputComponent>(actor_ptr);
         if (enhanced_input_components.size() != 1) {
             SP_LOG_CURRENT_FUNCTION();
-            SP_LOG("    Couldn't find a unique UEnhancedInputComponent on actor ", UnrealUtils::tryGetStableName(actor_ptr), ", giving up...");
+            SP_LOG("    Couldn't find a unique UEnhancedInputComponent on actor ", UnrealUtils::getStableName(actor_ptr), ", giving up...");
             return nullptr;
         } else {
             return enhanced_input_components.at(0);

@@ -45,6 +45,21 @@ class USpNavigationSystemV1 : public UBlueprintFunctionLibrary
 public:
 
     //
+    // UNavigationSystemV1::GetNavigationSystem() is already exposed as a UFUNCTION, but it is a static
+    // function, meaning that we must call it from Python by obtaining the class' CDO and calling cdo->ProcessEvent(...).
+    // But UNavigationSystemV1 is declared as a Within=World class, and calling any function on a CDO via
+    // cdo->ProcessEvent(...) for a Within=World class will trigger a benign error message in the
+    // editor during PIE sessions. To avoid the error, we declare our own UFUNCTION. Since USpNavigationSystemV1
+    // is not declared as a Within=World class, we avoid the error message.
+    //
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR", meta=(WorldContext="WorldContextObject"))
+    static UNavigationSystemV1* GetNavigationSystem(UObject* WorldContextObject)
+    {
+        return UNavigationSystemV1::GetNavigationSystem(WorldContextObject);
+    }
+
+    //
     // Update lock state
     //
 

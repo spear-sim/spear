@@ -12,27 +12,20 @@
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 
 class FProperty;
+class UClass;
 class UFunction;
 class UStruct;
 class UWorld;
 
 //
-// SpFuncSignatureTypeDesc and SpFuncSignatureDesc are helper structs for tracking the function signatures
-// of RPC entry points.
+// SpFuncSignatureDesc is a helper structs for tracking the function signatures of RPC entry points.
 //
-
-struct SpFuncSignatureTypeDesc
-{
-    std::map<std::string, std::string> type_names_;
-    std::map<std::string, std::string> const_strings_;
-    std::map<std::string, std::string> ref_strings_;
-};
 
 struct SpFuncSignatureDesc
 {
     std::string name_;
-    std::vector<SpFuncSignatureTypeDesc> func_signature_;
-    std::vector<int> func_signature_id_;
+    std::vector<int> type_ids_;
+    std::vector<std::string> type_names_;
 };
 
 //
@@ -47,14 +40,38 @@ struct SpFuture
 };
 
 //
-// SpStaticStructDesc is a helper struct that stores reflection metadata for Unreal types.
+// SpFunctionDesc stores metadata about a UFunction.
+//
+
+struct SpFunctionDesc
+{
+    UFunction* function_ = nullptr;
+    std::string function_name_;
+    UClass* static_class_ = nullptr;
+    std::string static_class_name_;
+};
+
+//
+// SpStaticStructDesc stores reflection metadata for a UScriptStruct.
 //
 
 struct SpStaticStructDesc
 {
     UStruct* static_struct_ = nullptr;
     std::string name_;
-    std::map<std::string, UFunction*> ufunctions_;
+};
+
+//
+// SpStaticClassDesc stores reflection metadata for a UClass.
+//
+
+struct SpStaticClassDesc
+{
+    UClass* static_class_ = nullptr;
+    std::string name_;
+    std::vector<UClass*> derived_classes_;
+    std::vector<std::string> derived_class_names_;
+    std::map<std::string, SpFunctionDesc> function_descs_;
 };
 
 //

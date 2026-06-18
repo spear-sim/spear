@@ -7,6 +7,7 @@ import spear
 
 class SpFuncService(spear.Service):
     def __init__(self, entry_point_caller, shared_memory_service, parent_service=None, create_children_services=True):
+        assert shared_memory_service.is_top_level_service()
 
         self._shared_memory_service = shared_memory_service
 

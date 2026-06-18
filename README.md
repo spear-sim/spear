@@ -6,7 +6,7 @@ _SPEAR is a Python library that can connect to, and programmatically control, an
 
 ## Abstract
 
-Interactive simulators have become powerful tools for training embodied agents and generating synthetic visual data, but existing photorealistic simulators suffer from limited generality, programmability, and rendering speed. We address these limitations by introducing _SPEAR: A Simulator for Photorealistic Embodied AI Research_. At its core, SPEAR is a Python library that can connect to, and programmatically control, any Unreal Engine (UE) application via a modular plugin architecture. SPEAR exposes over 14K unique UE functions to Python, representing an order-of-magnitude increase in programmable functionality over existing UE-based simulators. Additionally, a single SPEAR instance can render 1920x1080 photorealistic beauty images directly into a user's NumPy array at 56 frames per second -- an order of magnitude faster than existing UE plugins -- while also providing ground truth image modalities that are not available in any existing UE-based simulator (e.g., a non-diffuse intrinsic image decomposition, material IDs, and physically based shading parameters). Finally, SPEAR introduces an expressive high-level programming model that enables users to specify complex graphs of UE work with arbitrary data dependencies among work items, and to execute these graphs deterministically within a single UE frame. We demonstrate the utility of SPEAR through a diverse collection of example applications: controlling multiple embodied agents with distinct action spaces (e.g., humans, cars, and robots) across several in-the-wild UE projects; rendering photorealistic city-scale environments; manipulating UE's procedural content generation system; rendering synchronized multi-view images of detailed human faces; and running an interactive co-simulation with the MuJoCo physics simulator.
+Interactive simulators have become powerful tools for training embodied agents and generating synthetic visual data, but existing photorealistic simulators suffer from limited generality, programmability, and rendering speed. We address these limitations by introducing _SPEAR: A Simulator for Photorealistic Embodied AI Research_. At its core, SPEAR is a Python library that can connect to, and programmatically control, any Unreal Engine (UE) application via a modular plugin architecture. SPEAR exposes over 14K unique UE functions to Python, representing an order-of-magnitude increase in programmable functionality over existing UE-based simulators. Additionally, a single SPEAR instance can render 1920x1080 photorealistic beauty images directly into a user's NumPy array at 56 frames per second -- an order of magnitude faster than existing UE plugins -- while also providing ground truth image modalities that are not available in any existing UE-based simulator (e.g., a non-diffuse intrinsic image decomposition, material IDs, and physically based shading parameters). Finally, SPEAR introduces an expressive high-level programming model that enables users to specify complex graphs of UE work with arbitrary data dependencies among work items, and to execute these graphs deterministically within a single UE frame. We demonstrate the utility of SPEAR through a diverse collection of example applications: controlling multiple embodied agents with distinct action spaces (e.g., humans, cars, and robots) across several in-the-wild UE projects; rendering photorealistic city-scale environments; manipulating UE's procedural content generation system; rendering synchronized multi-view images of detailed human faces; running an interactive co-simulation with the MuJoCo physics simulator; and editing scenes using natural-language instructions via a vision-and-language coding assistant.
 
 The code and assets in this repository are released under an [MIT License](LICENSE.txt) and a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0) respectively.
 
@@ -14,7 +14,7 @@ The code and assets in this repository are released under an [MIT License](LICEN
 
 ![hypersim](https://github.com/user-attachments/assets/a1246233-68a9-41d0-ba4b-10710b58b74f)
 
-_SPEAR includes a customizable camera sensor that can render 1920x1080 photorealistic beauty images (left) directly into a user's NumPy array at 56 frames per second -- an order of magnitude faster than existing UE plugins -- while also providing ground truth image modalities that are not available in any existing UE-based simulator. For example, the SPEAR camera sensor can render all of the image modalities in the Hypersim dataset, i.e., depths, surface normals, instance and semantic IDs (right top), and a non-diffuse intrinsic image decomposition (right bottom), as well as material IDs and physically based shading parameters._
+_SPEAR includes a customizable camera sensor that can render 1920x1080 photorealistic beauty images (left) directly into a user's NumPy array at 56 frames per second - an order of magnitude faster than existing UE plugins - while also providing ground truth image modalities that are not available in any existing UE-based simulator. For example, the SPEAR camera sensor can render all of the image modalities in the Hypersim dataset, i.e., depths, surface normals, instance and semantic IDs (right top), and a non-diffuse intrinsic image decomposition (right bottom), as well as material IDs and physically based shading parameters._
 
 ![electric_23](https://github.com/user-attachments/assets/bb45e91d-d94e-4912-a433-85f1f107484e)
 
@@ -27,6 +27,10 @@ _SPEAR can be used in co-simulation applications with external physics simulator
 ![metahumans](https://github.com/user-attachments/assets/9b57b1cb-f89a-4dce-bd82-d7fedf0cdc0c)
 
 _We demonstrate the generality of the SPEAR camera sensor by using it to render synchronized multi-view images of a detailed human character in the `MetaHumans` sample project from Epic Games._
+
+![scene_editing](https://github.com/user-attachments/assets/2ed68f36-8cc9-4cc8-bfc8-f84f80c9e28e)
+
+_We demonstrate the flexibility of SPEAR by implementing an agentic natural-language scene editing application, where we enable a vision-and-language coding assistant to manipulate UE scenes by writing SPEAR programs in response to user text prompts._
 
 ## A Simple SPEAR Program
 
@@ -138,6 +142,7 @@ with instance.end_frame():
 - Our [Getting Started](docs/getting_started.md) tutorial explains how to set up your development environment.
 - Our [Running our Example Applications](docs/running_our_example_applications.md) tutorial explains how to run our example applications.
 - Our [Importing and Exporting Assets](docs/importing_and_exporting_assets.md) tutorial explains how to import and export assets.
+- Our [Controlling with Natural Language](docs/controlling_with_natural_language.md) tutorial explains how to control Unreal apps with natural language.
 
 ## Citation
 

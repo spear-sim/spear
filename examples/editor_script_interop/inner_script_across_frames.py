@@ -22,7 +22,7 @@ def script():
         yield
 
     global across_frames_result
-    across_frames_result = np.array([1.0, 2.0, 3.0]) * args.scale
+    across_frames_result = np.array([1.0, 2.0, 3.0])*args.scale
 
 
 if __name__ == "__main__":

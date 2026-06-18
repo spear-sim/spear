@@ -25,37 +25,31 @@ class Client
 {
 public:
     Client() = delete;
-    Client(const std::string& address, const uint16_t& port)
+    Client(const std::string& address, const uint16_t& port, bool suppress_default_logging = false)
     {
-        std::cout << "[SPEAR | spear_ext.cpp] Client::Client(...)" << std::endl;
+        suppress_default_logging_ = suppress_default_logging;
+        if (!suppress_default_logging_) { std::cout << "[SPEAR | spear_ext.cpp] Client::Client(...)" << std::endl; }
         client_ = std::make_unique<rpc::client>(address, port);
     };
 
     ~Client()
     {
-        std::cout << "[SPEAR | spear_ext.cpp] Client::~Client()" << std::endl;
+        if (!suppress_default_logging_) { std::cout << "[SPEAR | spear_ext.cpp] Client::~Client()" << std::endl; }
         client_ = nullptr;
     };
 
     void initialize()
     {
-        std::cout << "[SPEAR | spear_ext.cpp] Client::initialize()" << std::endl;
+        if (!suppress_default_logging_) { std::cout << "[SPEAR | spear_ext.cpp] Client::initialize()" << std::endl; }
         SP_ASSERT(client_);
 
         clmdep_msgpack::object_handle result = client_->call("engine_service.call_sync_on_worker_thread.get_entry_point_signature_descs");
-        std::map<std::string, std::vector<FuncSignatureDesc>> entry_point_signature_descs = result.get().as<std::map<std::string, std::vector<FuncSignatureDesc>>>();
-
-        entry_point_signature_descs_.clear();
-        for (const auto& [registry_name, descs] : entry_point_signature_descs) {
-            for (const auto& desc : descs) {
-                entry_point_signature_descs_[desc.name_] = desc;
-            }
-        }
+        entry_point_signature_descs_ = result.get().as<std::map<std::string, FuncSignatureDesc>>();
     };
 
     void terminate()
     {
-        std::cout << "[SPEAR | spear_ext.cpp] Client::terminate()" << std::endl;
+        if (!suppress_default_logging_) { std::cout << "[SPEAR | spear_ext.cpp] Client::terminate()" << std::endl; }
         SP_ASSERT(client_);
         client_ = nullptr;
         entry_point_signature_descs_.clear();
@@ -97,8 +91,8 @@ public:
         SP_ASSERT(client_);
 
         const FuncSignatureDesc& desc = entry_point_signature_descs_.at(func_name);
-        int return_type_id = desc.func_signature_id_[0];
-        SP_ASSERT(args.size() == desc.func_signature_id_.size() - 1);
+        int return_type_id = desc.type_ids_[0];
+        SP_ASSERT(args.size() == desc.type_ids_.size() - 1);
 
         // pack args into a msgpack array
         clmdep_msgpack::zone zone;
@@ -109,7 +103,7 @@ public:
             zone.allocate_align(sizeof(clmdep_msgpack::object) * args.size(), MSGPACK_ZONE_ALIGNOF(clmdep_msgpack::object)));
 
         for (size_t i = 0; i < args.size(); i++) {
-            args_msgpack_array.via.array.ptr[i] = FuncSignatureRegistry::getArg(zone, desc.func_signature_id_[i + 1], args[i]);
+            args_msgpack_array.via.array.ptr[i] = FuncSignatureRegistry::getArg(zone, desc.type_ids_[i + 1], args[i]);
         }
 
         // call via rpclib
@@ -120,6 +114,7 @@ public:
     }
 
     bool force_return_aligned_arrays_ = false;
+    bool suppress_default_logging_    = false;
     bool verbose_rpc_calls_           = false;
     bool verbose_allocations_         = false;
     bool verbose_exceptions_          = false; // owner should set to true once a connection to the server is established

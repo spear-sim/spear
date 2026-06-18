@@ -387,7 +387,7 @@ public:
     {
         using TValue = typename TVector::value_type;
         
-        return Std::reinterpretAsSpanOf<TValue>(vector);
+        return reinterpretAsSpanOf<TValue>(vector);
     }
 
     template <typename TVector> requires
@@ -396,7 +396,7 @@ public:
     {
         using TValue = typename TVector::value_type;
 
-        return Std::reinterpretAsSpanOf<const TValue>(vector);
+        return reinterpretAsSpanOf<const TValue>(vector);
     }
 
     template <typename TVector, typename TValue> requires
@@ -472,8 +472,8 @@ public:
 
         std::map<TValue, uint64_t> counts;
         for (auto& s : src) {
-            if (!Std::containsKey(counts, s)) {
-                Std::insert(counts, s, 0);
+            if (!containsKey(counts, s)) {
+                insert(counts, s, 0);
             }
             counts.at(s) += 1;
         }
@@ -784,8 +784,8 @@ public:
         SP_ASSERT(dest_capacity_ptr == dest_begin_ptr + dest.capacity());
 
         // check to make sure the src byte range would fit an integer number of TDestValue
-        SP_ASSERT(((src_end_ptr      - src_begin_ptr) * sizeof(TSrcValue)) % sizeof(TDestValue) == 0);
-        SP_ASSERT(((src_capacity_ptr - src_begin_ptr) * sizeof(TSrcValue)) % sizeof(TDestValue) == 0);
+        SP_ASSERT(((src_end_ptr      - src_begin_ptr)*sizeof(TSrcValue)) % sizeof(TDestValue) == 0);
+        SP_ASSERT(((src_capacity_ptr - src_begin_ptr)*sizeof(TSrcValue)) % sizeof(TDestValue) == 0);
 
         // check to make sure each pointer is sufficiently aligned for its swapped type
 

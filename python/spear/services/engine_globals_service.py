@@ -8,6 +8,8 @@ import spear
 
 class EngineGlobalsService(spear.Service):
     def __init__(self, entry_point_caller, sp_func_service, unreal_service, config, parent_service=None, create_children_services=True):
+        assert sp_func_service.is_top_level_service()
+        assert unreal_service.is_top_level_service()
 
         # do this after initializing local state
         super().__init__(
@@ -54,6 +56,9 @@ class EngineGlobalsService(spear.Service):
 
     def is_running_commandlet(self):
         return self.entry_point_caller.call_on_worker_thread("is_running_commandlet", None)
+
+    def is_running_game(self):
+        return self.entry_point_caller.call_on_worker_thread("is_running_game", None)
 
     def request_exit(self, immediate_shutdown):
         self.entry_point_caller.call_on_worker_thread("request_exit", None, immediate_shutdown)

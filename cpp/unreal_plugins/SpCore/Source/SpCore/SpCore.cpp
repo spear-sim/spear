@@ -39,7 +39,7 @@ void SpCore::StartupModule()
     initializeIniConfigs();        // no need to undo
     registerClasses();
 
-    post_engine_init_handle_ = FCoreDelegates::OnPostEngineInit.AddRaw(this, &SpCore::postEngineInitHandler);
+    post_engine_init_handle_ = FCoreDelegates::GetOnPostEngineInit().AddRaw(this, &SpCore::postEngineInitHandler);
     engine_pre_exit_handle_  = FCoreDelegates::OnEnginePreExit.AddRaw(this, &SpCore::enginePreExitHandler);
 
     SP_LOG_CURRENT_FUNCTION();
@@ -50,7 +50,7 @@ void SpCore::ShutdownModule()
     SP_LOG_CURRENT_FUNCTION();
 
     FCoreDelegates::OnEnginePreExit.Remove(engine_pre_exit_handle_);
-    FCoreDelegates::OnPostEngineInit.Remove(post_engine_init_handle_);
+    FCoreDelegates::GetOnPostEngineInit().Remove(post_engine_init_handle_);
     engine_pre_exit_handle_.Reset();
     post_engine_init_handle_.Reset();
 

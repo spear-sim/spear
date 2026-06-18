@@ -75,6 +75,10 @@ post_process_material_descs = \
         "path": "/SpContent/Materials/PPM_SpWorldPosition",
     },
     {
+        "name": "specular_for_lighting",
+        "path": "/SpContent/Materials/PPM_SpecularForLighting",
+    },
+    {
         "name": "world_normal",
         "path": "/SpContent/Materials/PPM_WorldNormal",
     }
@@ -101,6 +105,7 @@ if __name__ == "__main__":
 
     # convert to dict
     post_process_material_descs = { post_process_material_desc["name"]: post_process_material_desc for post_process_material_desc in post_process_material_descs }
+
 
     #
     #
@@ -149,110 +154,58 @@ if __name__ == "__main__":
         post_process_material_descs["sp_camera_normal"]["post_process_pass"],
         post_process_material_descs["sp_depth_meters"]["post_process_pass"],
         post_process_material_descs["sp_world_position"]["post_process_pass"],
+        post_process_material_descs["specular_for_lighting"]["post_process_pass"],
         post_process_material_descs["world_normal"]["post_process_pass"]
     ]
 
     console_variables = []
     engine_show_flag_settings = []
 
-    # FEngineShowFlags::DisableAdvancedFeatures()
-    # Excluded:
-    #     unreal.EngineShowFlagsSetting(show_flag_name="PostProcessMaterial", enabled=False)
-
-    engine_show_flag_settings = engine_show_flag_settings + \
-    [
-        unreal.EngineShowFlagsSetting(show_flag_name="LensFlares", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="OnScreenDebug", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="EyeAdaptation", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="ColorGrading", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="CameraImperfections", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="DepthOfField", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="Vignette", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="Grain", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="SeparateTranslucency", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="ScreenPercentage", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="ScreenSpaceReflections", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="AmbientOcclusion", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="IndirectLightingCache", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="LightShafts", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="HighResScreenshotMask", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="HMDDistortion", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="StereoRendering", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="DistanceFieldAO", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="VolumetricFog", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="VolumetricLightmap", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="LumenGlobalIllumination", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="LumenReflections", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="MegaLights", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="VirtualShadowMapPersistentData", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="ShaderPrint", enabled=False)
-    ]
-
-    # UMoviePipelineObjectIdRenderPass::GetViewShowFlags(...)
-    # Excluded:
-    #     unreal.EngineShowFlagsSetting(show_flag_name="PostProcessing", enabled=False)
-    #     unreal.EngineShowFlagsSetting(show_flag_name="PostProcessMaterial", enabled=False)
-
-    engine_show_flag_settings = engine_show_flag_settings + \
-    [
-        unreal.EngineShowFlagsSetting(show_flag_name="ScreenPercentage", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="HitProxies", enabled=False)
-    ]
-
-    # disable "General Show Flags" that are visible in the editor UI for scene capture components
-    engine_show_flag_settings = engine_show_flag_settings + \
-    [
-        unreal.EngineShowFlagsSetting(show_flag_name="AntiAliasing", enabled=False)
-    ]
-
-    # disable "Advanced Show Flags" that are visible in the editor UI for scene capture components
-    engine_show_flag_settings = engine_show_flag_settings + \
-    [
-        unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False)
-    ]
-
-    # disable "Light Types Show Flags" that are visible in the editor UI for scene capture components
-    engine_show_flag_settings = engine_show_flag_settings + \
-    [
-        unreal.EngineShowFlagsSetting(show_flag_name="SkyLighting", enabled=False)
-    ]
-
-    # disable "Lighting Components Show Flags" that are visible in the editor UI for scene capture components
-    engine_show_flag_settings = engine_show_flag_settings + \
-    [
-        unreal.EngineShowFlagsSetting(show_flag_name="AmbientOcclusion", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="DynamicShadows", enabled=False)
-    ]
-
-    # disable "Lighting Features Show Flags" that are visible in the editor UI for scene capture components
+    # mimic engine_show_flag_settings["disable_all_but_allow_post_processing_material"] in create_asset_bp_camera_sensor.py
     engine_show_flag_settings = engine_show_flag_settings + \
     [
         unreal.EngineShowFlagsSetting(show_flag_name="AmbientCubemap", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="DistanceFieldAO", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="LightFunctions", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="LightShafts", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="ReflectionEnvironment", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="ScreenSpaceReflections", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="TexturedLightProfiles", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="VolumetricFog", enabled=False)
-    ]
-
-    # disable "Post Processing Show Flags" that are visible in the editor UI for scene capture components
-    engine_show_flag_settings = engine_show_flag_settings + \
-    [
+        unreal.EngineShowFlagsSetting(show_flag_name="AmbientOcclusion", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="AntiAliasing", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="Atmosphere", enabled=False),
         unreal.EngineShowFlagsSetting(show_flag_name="Bloom", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="CameraImperfections", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="ColorGrading", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="DepthOfField", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="DistanceFieldAO", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="DynamicShadows", enabled=False),
         unreal.EngineShowFlagsSetting(show_flag_name="EyeAdaptation", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="Fog", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="Grain", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="HighResScreenshotMask", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="HitProxies", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="HMDDistortion", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="IndirectLightingCache", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="LensFlares", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="LightFunctions", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="Lighting", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="LightShafts", enabled=False),
         unreal.EngineShowFlagsSetting(show_flag_name="LocalExposure", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="LumenGlobalIllumination", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="LumenReflections", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="MegaLights", enabled=False),
         unreal.EngineShowFlagsSetting(show_flag_name="MotionBlur", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="OnScreenDebug", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="ReflectionEnvironment", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="ScreenPercentage", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="ScreenSpaceReflections", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="SeparateTranslucency", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="ShaderPrint", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="SkyLighting", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="StereoRendering", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="TexturedLightProfiles", enabled=False),
         unreal.EngineShowFlagsSetting(show_flag_name="ToneCurve", enabled=False),
-        unreal.EngineShowFlagsSetting(show_flag_name="Tonemapper", enabled=False)
-    ]
-
-    # disable "Hidden Show Flags" that are visible in the editor UI for scene capture components
-    engine_show_flag_settings = engine_show_flag_settings + \
-    [
-        unreal.EngineShowFlagsSetting(show_flag_name="Lighting", enabled=False)
+        unreal.EngineShowFlagsSetting(show_flag_name="Tonemapper", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="Vignette", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="VirtualShadowMapPersistentData", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="VolumetricFog", enabled=False),
+        unreal.EngineShowFlagsSetting(show_flag_name="VolumetricLightmap", enabled=False)
     ]
 
     setting.set_editor_property(name="additional_post_process_materials", value=additional_post_process_materials)
@@ -280,6 +233,7 @@ if __name__ == "__main__":
     spear.log("Saving config: ", config)
     editor_asset_subsystem.save_loaded_asset(asset_to_save=config)
 
+
     #
     #
     # With lighting
@@ -303,14 +257,12 @@ if __name__ == "__main__":
     # needed to behave identically to a manually created config in the MRQ editor pane
     unreal.SpMoviePipelineConfigBase.set_display_name(config=config, display_name=config.get_name())
 
-
     #
     # Exports
     #
 
     # exr Sequence [16bit]
     setting = config.find_or_add_setting_by_class(class_=unreal.MoviePipelineImageSequenceOutput_EXR, include_disabled_settings=False, exact_match=True)
-
 
     #
     # Rendering
@@ -407,7 +359,6 @@ if __name__ == "__main__":
     # Object Ids (Limited)
     setting = config.find_or_add_setting_by_class(class_=unreal.MoviePipelineObjectIdRenderPass, include_disabled_settings=False, exact_match=True)
 
-
     #
     # Settings
     #
@@ -427,7 +378,6 @@ if __name__ == "__main__":
         setting.set_editor_property(name="use_custom_playback_range", value=True)
         setting.set_editor_property(name="custom_start_frame", value=custom_start_frame)
         setting.set_editor_property(name="custom_end_frame", value=custom_end_frame)
-
 
     # save config
     spear.log("Saving config: ", config)

@@ -7,6 +7,8 @@ import numpy as np
 import spear
 
 
+_SP_OBJECT_IDS_PROXY_COMPONENT_MANAGER_NAME = "__SP_OBJECT_IDS_PROXY_COMPONENT_MANAGER__"
+
 class SegmentationService(spear.Service):
     def __init__(self, entry_point_caller, sp_func_service, unreal_service, config):
         assert sp_func_service.is_top_level_service()
@@ -21,8 +23,26 @@ class SegmentationService(spear.Service):
         self.proxy_component_manager = None
 
     def initialize(self):
-        self.proxy_component_manager = self.unreal_service.spawn_actor(uclass="ASpObjectIdsProxyComponentManager")
-        self.proxy_component_manager.Initialize()
+        proxy_component_managers = self.unreal_service.find_actors_by_class_as_dict(uclass="ASpObjectIdsProxyComponentManager")
+        if len(proxy_component_managers) == 0:
+            spear.log("No proxy component manager detected, spawning...")
+            self.proxy_component_manager = self.unreal_service.spawn_actor(uclass="ASpObjectIdsProxyComponentManager", spawn_parameters={"ObjectFlags": ["RF_Transient"]})
+            self.unreal_service.set_stable_name_for_actor(actor=self.proxy_component_manager, stable_name=_SP_OBJECT_IDS_PROXY_COMPONENT_MANAGER_NAME)
+            self.proxy_component_manager.Initialize()
+            spear.log("Finished spawning.")
+        elif len(proxy_component_managers) == 1:
+            if _SP_OBJECT_IDS_PROXY_COMPONENT_MANAGER_NAME in proxy_component_managers.keys():
+                spear.log("Proxy component manager detected, reinitializing...")
+                self.proxy_component_manager = proxy_component_managers[_SP_OBJECT_IDS_PROXY_COMPONENT_MANAGER_NAME]
+                self.proxy_component_manager.Terminate()
+                self.proxy_component_manager.Initialize()
+                spear.log("Finished reinitializing.")
+            else:
+                spear.log("Unexpected proxy component manager detected, giving up...")
+                assert False
+        else:
+            spear.log("Multiple proxy component managers detected, giving up...")
+            assert False
 
     def terminate(self):
         if self.proxy_component_manager is not None:
@@ -75,8 +95,15 @@ class SegmentationService(spear.Service):
 
         return descs
 
-    def get_segmentation_data(self, object_ids_uint8_image, include_debug_info=False, mesh_proxy_geometry_descs=None, as_raw=None, as_global=None, as_visible=None):
+    def get_segmentation_data(self, object_ids_bgra_uint8_image=None, object_ids_rgba_float16_image=None, include_debug_info=False, mesh_proxy_geometry_descs=None, as_raw=None, as_global=None, as_visible=None):
         assert self.proxy_component_manager is not None
+
+        if object_ids_bgra_uint8_image is not None:
+            assert object_ids_rgba_float16_image is None
+        elif object_ids_rgba_float16_image is not None:
+            assert object_ids_bgra_uint8_image is None
+        else:
+            assert False
 
         if as_raw is not None:
             assert as_global is None
@@ -88,7 +115,12 @@ class SegmentationService(spear.Service):
             as_visible = True
 
         # decode raw segmentation image to raw IDs
-        raw_id_image = spear.rendering.get_object_ids_uint8_as_uint32(object_ids_uint8_image)
+        if object_ids_bgra_uint8_image is not None:
+            raw_id_image = spear.rendering.get_object_ids_bgra_uint8_as_uint32(object_ids_bgra_uint8=object_ids_bgra_uint8_image)
+        elif object_ids_rgba_float16_image is not None:
+            raw_id_image = spear.rendering.get_object_ids_rgba_float16_as_uint32(object_ids_rgba_float16=object_ids_rgba_float16_image)
+        else:
+            assert False
 
         # get global descs or use caller-provided descs
         if mesh_proxy_geometry_descs is not None:
@@ -106,6 +138,18 @@ class SegmentationService(spear.Service):
 
         # get visible raw IDs in the image and their inverse mapping
         visible_raw_ids, visible_raw_ids_inverse = np.unique(raw_id_image, return_inverse=True)
+
+        if not np.all(np.isin(visible_raw_ids, global_raw_ids)):
+            import cv2
+            visible_raw_ids_not_in_global_raw_ids = visible_raw_ids[np.logical_not(np.isin(visible_raw_ids, global_raw_ids))]
+            spear.log("visible_raw_ids: ", visible_raw_ids)
+            spear.log("global_raw_ids: ", global_raw_ids)
+            spear.log("visible_raw_ids not in global_raw_ids: ", visible_raw_ids_not_in_global_raw_ids)
+            # Show both debug images in their own windows (cv2 displays the BGRA image natively) and wait for a keypress.
+            cv2.imshow("object_ids_bgra_uint8_image", object_ids_bgra_uint8_image)
+            cv2.imshow("visible_raw_ids_not_in_global_raw_ids", (np.isin(raw_id_image, visible_raw_ids_not_in_global_raw_ids) * 255).astype(np.uint8))
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
 
         # verify all visible raw IDs are known to the manager
         assert np.all(np.isin(visible_raw_ids, global_raw_ids))
@@ -132,3 +176,39 @@ class SegmentationService(spear.Service):
         visible_id_image = global_visible_ids[global_id_image]
 
         return visible_id_image, visible_descs
+
+    #
+    # Allow/ignore lists
+    #
+
+    def get_allowed_actors(self):
+        assert self.proxy_component_manager is not None
+        return self.proxy_component_manager.GetAllowedActors()
+
+    def set_allowed_actors(self, allowed_actors):
+        assert self.proxy_component_manager is not None
+        self.proxy_component_manager.SetAllowedActors(AllowedActors=allowed_actors)
+
+    def get_allowed_components(self):
+        assert self.proxy_component_manager is not None
+        return self.proxy_component_manager.GetAllowedComponents()
+
+    def set_allowed_components(self, allowed_components):
+        assert self.proxy_component_manager is not None
+        self.proxy_component_manager.SetAllowedComponents(AllowedComponents=allowed_components)
+
+    def get_ignored_actors(self):
+        assert self.proxy_component_manager is not None
+        return self.proxy_component_manager.GetIgnoredActors()
+
+    def set_ignored_actors(self, ignored_actors):
+        assert self.proxy_component_manager is not None
+        self.proxy_component_manager.SetIgnoredActors(IgnoredActors=ignored_actors)
+
+    def get_ignored_components(self):
+        assert self.proxy_component_manager is not None
+        return self.proxy_component_manager.GetIgnoredComponents()
+
+    def set_ignored_components(self, ignored_components):
+        assert self.proxy_component_manager is not None
+        self.proxy_component_manager.SetIgnoredComponents(IgnoredComponents=ignored_components)

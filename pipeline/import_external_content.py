@@ -58,7 +58,7 @@ if __name__ == "__main__":
     # projects
     #
 
-    reference_unreal_project_dir = os.path.realpath(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "DefaultProject")))
+    reference_unreal_project_dir = os.path.realpath(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "DefaultProjectBp")))
     reference_unreal_project_dir_name = os.path.split(reference_unreal_project_dir)[1]
     reference_uprojects = glob.glob(os.path.realpath(os.path.join(reference_unreal_project_dir, "*.uproject")))
     assert len(reference_uprojects) == 1

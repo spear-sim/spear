@@ -6,8 +6,7 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import argparse
-import math
-import matplotlib.pyplot as plt
+import cv2
 import numpy as np
 import os
 import shutil
@@ -34,8 +33,7 @@ component_descs = \
     {
         "name": "final_tone_curve_hdr",
         "long_name": "DefaultSceneRoot.final_tone_curve_hdr_",
-        "spatial_supersampling_factor": 1,
-        "visualize_func": lambda data : data[:,:,[2,1,0]] # BGRA to RGB
+        "visualize_func": lambda data : data[:,:,[0,1,2]] # native BGR (drop alpha)
     }
 ]
 
@@ -55,7 +53,7 @@ def save_images(images_dir, frame_index):
         image_file = os.path.realpath(os.path.join(images_dir, component_desc["name"], f"{frame_index:04d}.png"))
         image = component_desc["visualize_func"](data=data)
         spear.log("Saving image: ", image_file)
-        plt.imsave(image_file, image)
+        cv2.imwrite(image_file, image)
 
 
 if __name__ == "__main__":
@@ -128,26 +126,13 @@ if __name__ == "__main__":
         assert final_tone_curve_hdr_component is not None
 
         # configure components to match the viewport (width, height, FOV, post-processing settings, etc)
-        
-        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
-
-        viewport_size_x = 1280
-        viewport_size_y = 720
-
-        viewport_aspect_ratio = viewport_size_x/viewport_size_y # see Engine/Source/Editor/UnrealEd/Private/EditorViewportClient.cpp:2130 for evidence that Unreal's aspect ratio convention is x/y
-        fov = view_target_pov["fOV"]*math.pi/180.0
-        half_fov = fov/2.0
-        half_fov_adjusted = math.atan(math.tan(half_fov)*viewport_aspect_ratio/view_target_pov["aspectRatio"]) # this adjustment is necessary to compute an FOV value that matches the game viewport
-        fov_adjusted = half_fov_adjusted*2.0
-        fov_adjusted_degrees = fov_adjusted*180.0/math.pi
+        viewport_desc = game.rendering_service.get_current_viewport_desc()
+        components = [ desc["component"] for desc in component_descs ]
+        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, widths=1280, heights=720)
 
         # make the FOV bigger than the game viewport
-        fov_adjusted_degrees = 1.25*fov_adjusted_degrees
-
-        for component_desc in component_descs:
-            component_desc["component"].Width = viewport_size_x*component_desc["spatial_supersampling_factor"]
-            component_desc["component"].Height = viewport_size_y*component_desc["spatial_supersampling_factor"]
-            component_desc["component"].FOVAngle = fov_adjusted_degrees
+        for component in components:
+            component.FOVAngle = 1.25*component.FOVAngle.get()
 
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
         for component_desc in component_descs:
@@ -166,8 +151,8 @@ if __name__ == "__main__":
         gameplay_statics.SetGamePaused(bPaused=False)
 
         # set PCG assembly pose
-        bp_pcg_large_assembly.K2_SetActorLocation(NewLocation=spear.to_vector_from_numpy_array(array=location_start))
-        bp_pcg_large_assembly.K2_SetActorRotation(NewRotation=spear.to_rotator_from_numpy_array(array_pyr=rotator_pyr_start))
+        bp_pcg_large_assembly.K2_SetActorLocation(NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=location_start))
+        bp_pcg_large_assembly.K2_SetActorRotation(NewRotation=spear.math.to_spear_rotator_from_numpy_array(numpy_array_pyr=rotator_pyr_start))
 
         # force PCG updates
         sp_pcg_subsystem.FlushCache(PCGSubsystem=pcg_subsystem)
@@ -183,9 +168,8 @@ if __name__ == "__main__":
             gameplay_statics.SetGamePaused(bPaused=False)
 
             # set camera pose
-            view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
-            bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
-            bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
+            viewport_desc = game.rendering_service.get_current_viewport_desc(only_get_pose=True)
+            game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, only_align_pose=True)
 
             # inject input
             instance.enhanced_input_service.inject_input_for_actor(
@@ -202,18 +186,16 @@ if __name__ == "__main__":
     for _ in range(num_frames_for_pcg_update):
         with instance.begin_frame():
             gameplay_statics.SetGamePaused(bPaused=False)
-            view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
-            bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
-            bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
+            viewport_desc = game.rendering_service.get_current_viewport_desc(only_get_pose=True)
+            game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, only_align_pose=True)
         with instance.end_frame():
             gameplay_statics.SetGamePaused(bPaused=True)
 
     # set camera pose
     with instance.begin_frame():
         gameplay_statics.SetGamePaused(bPaused=False)
-        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
-        bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
-        bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
+        viewport_desc = game.rendering_service.get_current_viewport_desc(only_get_pose=True)
+        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, only_align_pose=True)
     with instance.end_frame():
         pass
 
@@ -239,8 +221,8 @@ if __name__ == "__main__":
             spear.log(f"Set PCG assembly location and rotation: {location}, {rotator_pyr}")
 
             # set PCG assembly pose
-            bp_pcg_large_assembly.K2_SetActorLocation(NewLocation=spear.to_vector_from_numpy_array(array=location))
-            bp_pcg_large_assembly.K2_SetActorRotation(NewRotation=spear.to_rotator_from_numpy_array(array_pyr=rotator_pyr))
+            bp_pcg_large_assembly.K2_SetActorLocation(NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=location))
+            bp_pcg_large_assembly.K2_SetActorRotation(NewRotation=spear.math.to_spear_rotator_from_numpy_array(numpy_array_pyr=rotator_pyr))
 
             # force PCG updates
             sp_pcg_subsystem.FlushCache(PCGSubsystem=pcg_subsystem)

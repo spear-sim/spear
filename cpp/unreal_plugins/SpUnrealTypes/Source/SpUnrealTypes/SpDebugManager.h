@@ -14,6 +14,7 @@
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Engine/EngineTypes.h>          // EEndPlayReason
 #include <GameFramework/Actor.h>
+#include <Math/Matrix.h>                 // FMatrix
 #include <Math/Vector.h>
 #include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS, UENUM, UFUNCTION, UPROPERTY
 
@@ -105,6 +106,9 @@ private:
 
     UFUNCTION()
     FVector GetVector(FString Arg0, bool Arg1, int Arg2, FVector& Arg3) const;
+
+    UFUNCTION()
+    FMatrix GetMatrix(FMatrix Arg0) const;
 
     UFUNCTION()
     static UObject* GetWorldContextObject(const UObject* WorldContextObject, FString Arg0, bool Arg1);

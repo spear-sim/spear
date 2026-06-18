@@ -8,12 +8,10 @@
 import argparse
 import colorsys
 import cv2
-import math
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pandas as pd
-import PIL
+import PIL.Image
 import pprint
 import re
 import shutil
@@ -25,6 +23,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--teaser", action="store_true")
 args = parser.parse_args()
 
+if args.teaser:
+    width = 1920
+    height = 1080
+else:
+    width = None
+    height = None
+
 np.random.seed(0)
 
 R_camera_from_world = None
@@ -33,7 +38,7 @@ M_hypersim_camera_from_unreal_camera = np.array([[  0, 1, 0],
                                                  [ -1, 0, 0]], dtype=np.float32)
 
 # foreground_actor_name = "Meshes/05_chair/LivingRoom_Chair_02"
-foreground_actor_name = "Meshes/40_otherprop/Vase_03"
+# foreground_actor_name = "Meshes/40_otherprop/Vase_03"
 foreground_actor_name = "Meshes/35_lamp/Ceiling_LivingRoom_Lights"
 
 semantic_instance_categories = [
@@ -63,7 +68,7 @@ component_descs = \
         "name": "diffuse_and_specular_post_process_input_2",
         "long_name": "DefaultSceneRoot.diffuse_and_specular_post_process_input_2_",
         "spatial_supersampling_factor": 2,
-        "visualize_func": lambda data : np.clip(2.0*data[:,:,[0,1,2]], 0.0, 1.0)
+        "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
     },
     {
         "name": "diffuse_color",
@@ -75,7 +80,7 @@ component_descs = \
         "name": "diffuse_only_post_process_input_2",
         "long_name": "DefaultSceneRoot.diffuse_only_post_process_input_2_",
         "spatial_supersampling_factor": 2,
-        "visualize_func": lambda data : np.clip(2.0*data[:,:,[0,1,2]], 0.0, 1.0)
+        "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
     },
     {
         "name": "final_tone_curve_hdr",
@@ -93,7 +98,7 @@ component_descs = \
         "name": "lighting_only_post_process_input_2",
         "long_name": "DefaultSceneRoot.lighting_only_post_process_input_2_",
         "spatial_supersampling_factor": 2,
-        "visualize_func": lambda data : np.clip(2.0*data[:,:,[0,1,2]], 0.0, 1.0)
+        "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
     },
     {
         "name": "material_ao",
@@ -106,18 +111,6 @@ component_descs = \
         "long_name": "DefaultSceneRoot.metallic_",
         "spatial_supersampling_factor": 1,
         "visualize_func": lambda data : np.clip(data[:,:,[0,0,0]], 0.0, 1.0)
-    },
-    {
-        "name": "object_ids_float16",
-        "long_name": "DefaultSceneRoot.object_ids_float16_",
-        "spatial_supersampling_factor": 1,
-        "visualize_func": lambda data : spear.rendering.get_object_ids_float16_as_rgba(data)
-    },
-    {
-        "name": "object_ids_uint8",
-        "long_name": "DefaultSceneRoot.object_ids_uint8_",
-        "spatial_supersampling_factor": 1,
-        "visualize_func": lambda data : spear.rendering.get_object_ids_uint8_as_rgba(data)
     },
     {
         "name": "roughness",
@@ -138,6 +131,30 @@ component_descs = \
         "visualize_func": lambda data : np.clip((data[:,:,0] - np.min(data[:,:,0])) / np.minimum((np.max(data[:,:,0]) - np.min(data[:,:,0])), 7.5), 0.0, 1.0) # normalize to max depth of 7.5 meters
     },
     {
+        "name": "sp_object_ids_float16",
+        "long_name": "DefaultSceneRoot.sp_object_ids_float16_",
+        "spatial_supersampling_factor": 1,
+        "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
+    },
+    {
+        "name": "sp_object_ids_uint8",
+        "long_name": "DefaultSceneRoot.sp_object_ids_uint8_",
+        "spatial_supersampling_factor": 1,
+        "visualize_func": lambda data : data[:,:,[2,1,0]] # BGRA to RGB
+    },
+    {
+        "name": "sp_unlit_float16",
+        "long_name": "DefaultSceneRoot.sp_unlit_float16_",
+        "spatial_supersampling_factor": 1,
+        "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
+    },
+    {
+        "name": "sp_unlit_uint8",
+        "long_name": "DefaultSceneRoot.sp_unlit_uint8_",
+        "spatial_supersampling_factor": 1,
+        "visualize_func": lambda data : data[:,:,[2,1,0]] # BGRA to RGB
+    },
+    {
         "name": "sp_world_position",
         "long_name": "DefaultSceneRoot.sp_world_position_",
         "spatial_supersampling_factor": 1,
@@ -150,7 +167,6 @@ component_descs = \
         "visualize_func": lambda data : np.clip(data[:,:,[0,0,0]], 0.0, 1.0)
     }
 ]
-
 
 
 if __name__ == "__main__":
@@ -192,51 +208,19 @@ if __name__ == "__main__":
         assert final_tone_curve_hdr_component is not None
 
         # configure components to match the viewport (width, height, FOV, post-processing settings, etc)
-        
-        engine = instance.engine_globals_service.get_engine()
-        game_viewport_client = engine.GameViewport.get()
 
-        gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
-        player_controller = gameplay_statics.GetPlayerController(PlayerIndex=0)
-        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
-        R_world_from_camera = spear.to_numpy_matrix_from_rotator(rotator=view_target_pov["rotation"], as_matrix=True)
+        viewport_desc = game.rendering_service.get_current_viewport_desc()
+
+        R_world_from_camera = spear.math.to_numpy_matrix_from_spear_rotator(spear_rotator=viewport_desc["camera_rotation"], as_matrix=True)
         R_camera_from_world = R_world_from_camera.T.A
 
-        post_process_volume_settings = None
-        post_process_volumes = game.unreal_service.find_actors_by_class(uclass="APostProcessVolume")
-        if len(post_process_volumes) == 1:
-            post_process_volume = post_process_volumes[0]
-            spear.log("Found unique post-process volume: ", post_process_volume)
-            post_process_volume_settings = post_process_volume.Settings.get()
+        w = width if width is not None else viewport_desc["viewport_size_x"]
+        h = height if height is not None else viewport_desc["viewport_size_y"]
+        components = [ desc["component"] for desc in component_descs ]
+        widths = [ w*desc["spatial_supersampling_factor"] for desc in component_descs ]
+        heights = [ h*desc["spatial_supersampling_factor"] for desc in component_descs ]
 
-        # GetViewportSize(...) modifies arguments in-place, so we need as_dict=True so all arguments get returned
-        sp_game_viewport = game.get_unreal_object(uclass="USpGameViewportClient")
-        return_values = sp_game_viewport.GetViewportSize(GameViewportClient=game_viewport_client, as_dict=True)
-
-        if args.teaser:
-            viewport_size_x = 1920
-            viewport_size_y = 1080
-        else:
-            viewport_size_x = return_values["ViewportSize"]["x"]
-            viewport_size_y = return_values["ViewportSize"]["y"]
-
-        viewport_aspect_ratio = viewport_size_x/viewport_size_y # see Engine/Source/Editor/UnrealEd/Private/EditorViewportClient.cpp:2130 for evidence that Unreal's aspect ratio convention is x/y
-        fov = view_target_pov["fOV"]*math.pi/180.0
-        half_fov = fov/2.0
-        half_fov_adjusted = math.atan(math.tan(half_fov)*viewport_aspect_ratio/view_target_pov["aspectRatio"]) # this adjustment is necessary to compute an FOV value that matches the game viewport
-        fov_adjusted = half_fov_adjusted*2.0
-        fov_adjusted_degrees = fov_adjusted*180.0/math.pi
-
-        bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
-        bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
-
-        for component_desc in component_descs:
-            component_desc["component"].Width = viewport_size_x*component_desc["spatial_supersampling_factor"]
-            component_desc["component"].Height = viewport_size_y*component_desc["spatial_supersampling_factor"]
-            component_desc["component"].FOVAngle = fov_adjusted_degrees
-
-        if post_process_volume_settings is not None:
-            final_tone_curve_hdr_component.PostProcessSettings = post_process_volume_settings
+        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, widths=widths, heights=heights)
 
         # need to call Initialize() after calling game.segmentation_service.initialize()
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
@@ -247,9 +231,12 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing etc accumulate additional information across frames
 
+    # needed in case the segmentation service is still loading its materials
+    game.async_loading_service.wait_for_engine_idle()
+
     # let temporal anti-aliasing etc accumulate additional information across multiple frames, and
     # inserting an extra frame or two can fix occasional render-to-texture initialization issues
-    instance.step(num_frames=2)
+    instance.step(num_frames=45)
 
     # get rendered frame
     with instance.begin_frame():
@@ -262,13 +249,11 @@ if __name__ == "__main__":
         # create component desc map for easier bookkeeping later
         component_desc_map = { desc["name"]: desc for desc in component_descs }
 
-        spear.log("Getting segmentation data...")
-        object_ids_uint8_image = component_desc_map["object_ids_uint8"]["data"]
-        proxy_id_image, proxy_id_descs = game.segmentation_service.get_segmentation_data(object_ids_uint8_image=object_ids_uint8_image)
-        spear.log("Finished getting segmentation data.")
+        object_ids_bgra_uint8_image = component_desc_map["sp_object_ids_uint8"]["data"]
+        proxy_id_image, proxy_id_descs = game.segmentation_service.get_segmentation_data(object_ids_bgra_uint8_image=object_ids_bgra_uint8_image)
 
     # get actor names and handles
-    actor_names = [ proxy_id_desc["actorName"] for proxy_id_desc in proxy_id_descs ]
+    actor_names = [ proxy_id_desc["actorName"].split(":")[0] for proxy_id_desc in proxy_id_descs ]
     actor_handles = [ proxy_id_desc["actor"] for proxy_id_desc in proxy_id_descs ]
     assert actor_names[0] == ""
     assert actor_handles[0] == 0
@@ -325,35 +310,41 @@ if __name__ == "__main__":
         data = component_desc["data"]
         image_file = os.path.realpath(os.path.join(images_dir, f"{component_desc['name']}.png"))
         image = component_desc["visualize_func"](data=data)
+        if image.dtype != np.uint8:
+            image = (np.clip(image, 0.0, 1.0)*255.0).astype(np.uint8)
+        if image.ndim == 3:
+            image = image[:, :, [2,1,0]] # RGB -> BGR
+        elif image.ndim == 2:
+            image = cv2.applyColorMap(image, cv2.COLORMAP_VIRIDIS) # match matplotlib's default colormap for single-channel images
         spear.log("Saving image: ", image_file)
-        plt.imsave(image_file, image)
+        cv2.imwrite(image_file, image)
 
     # foreground
     foreground = np.isin(proxy_id_image, foreground_actor_proxy_ids)*255
     image_file = os.path.realpath(os.path.join(images_dir, "foreground.png"))
     spear.log("Saving image: ", image_file)
-    plt.imsave(image_file, foreground)
+    cv2.imwrite(image_file, cv2.applyColorMap(foreground.astype(np.uint8), cv2.COLORMAP_VIRIDIS)) # match matplotlib's default colormap for single-channel images
 
     # semantic
     semantic_ids = semantic_id_image
     semantic = semantic_colors[semantic_ids]
     image_file = os.path.realpath(os.path.join(images_dir, "semantic.png"))
     spear.log("Saving image: ", image_file)
-    plt.imsave(image_file, semantic)
+    cv2.imwrite(image_file, semantic[:,:,[2,1,0]]) # RGB -> BGR
 
     # semantic instance
     semantic_instance_ids = semantic_instance_id_image
     semantic_instance = semantic_instance_colors[semantic_instance_ids]
     image_file = os.path.realpath(os.path.join(images_dir, "semantic_instance.png"))
     spear.log("Saving image: ", image_file)
-    plt.imsave(image_file, semantic_instance)
+    cv2.imwrite(image_file, semantic_instance[:,:,[2,1,0]]) # RGB -> BGR
 
     # material
     material_ids = material_id_image
     material = material_colors[material_id_image]
     image_file = os.path.realpath(os.path.join(images_dir, "material.png"))
     spear.log("Saving image: ", image_file)
-    plt.imsave(image_file, material)
+    cv2.imwrite(image_file, material[:,:,[2,1,0]]) # RGB -> BGR
 
     # diffuse_reflectance
     gamma = 1.0/2.2
@@ -366,7 +357,7 @@ if __name__ == "__main__":
     diffuse_reflectance = np.asarray(diffuse_reflectance)
     image_file = os.path.realpath(os.path.join(images_dir, "diffuse_reflectance.png"))
     spear.log("Saving image: ", image_file)
-    plt.imsave(image_file, diffuse_reflectance)
+    cv2.imwrite(image_file, diffuse_reflectance[:,:,[2,1,0,3]]) # RGBA -> BGRA
 
     # diffuse_illumination
     spatial_supersampling_factor = component_desc_map["lighting_only_diffuse_color"]["spatial_supersampling_factor"]
@@ -381,7 +372,7 @@ if __name__ == "__main__":
     diffuse_illumination = np.asarray(diffuse_illumination)
     image_file = os.path.realpath(os.path.join(images_dir, "diffuse_illumination.png"))
     spear.log("Saving image: ", image_file)
-    plt.imsave(image_file, diffuse_illumination)
+    cv2.imwrite(image_file, diffuse_illumination[:,:,[2,1,0]]) # RGB -> BGR
 
     # diffuse_and_specular
     spatial_supersampling_factor = component_desc_map["diffuse_color"]["spatial_supersampling_factor"]
@@ -396,7 +387,7 @@ if __name__ == "__main__":
     diffuse_and_specular = np.asarray(diffuse_and_specular)
     image_file = os.path.realpath(os.path.join(images_dir, "diffuse_and_specular.png"))
     spear.log("Saving image: ", image_file)
-    plt.imsave(image_file, diffuse_and_specular)
+    cv2.imwrite(image_file, diffuse_and_specular[:,:,[2,1,0]]) # RGB -> BGR
 
     # diffuse_only
     spatial_supersampling_factor = component_desc_map["diffuse_color"]["spatial_supersampling_factor"]
@@ -408,7 +399,7 @@ if __name__ == "__main__":
     diffuse_only = np.asarray(diffuse_only)
     image_file = os.path.realpath(os.path.join(images_dir, "diffuse_only.png"))
     spear.log("Saving image: ", image_file)
-    plt.imsave(image_file, diffuse_only)
+    cv2.imwrite(image_file, diffuse_only[:,:,[2,1,0]]) # RGB -> BGR
 
     # residual
     spatial_supersampling_factor = component_desc_map["diffuse_color"]["spatial_supersampling_factor"]
@@ -422,7 +413,7 @@ if __name__ == "__main__":
     residual = np.asarray(residual)
     image_file = os.path.realpath(os.path.join(images_dir, "residual.png"))
     spear.log("Saving image: ", image_file)
-    plt.imsave(image_file, residual)
+    cv2.imwrite(image_file, residual[:,:,[2,1,0]]) # RGB -> BGR
 
     # terminate actors and components
     with instance.begin_frame():
@@ -432,6 +423,8 @@ if __name__ == "__main__":
             component_desc["component"].terminate_sp_funcs()
             component_desc["component"].Terminate()
         game.unreal_service.destroy_actor(actor=bp_camera_sensor)
+
+        # terminate segmentation service
         game.segmentation_service.terminate()
 
     spear.log("Done.")

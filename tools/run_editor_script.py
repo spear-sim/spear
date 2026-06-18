@@ -12,19 +12,15 @@ import sys
 
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--script", required=True)
 parser.add_argument("--unreal-engine-dir", required=True)
-parser.add_argument("--maps-file")
-parser.add_argument("--script")
+parser.add_argument("--map")
 parser.add_argument("--render-offscreen", action="store_true")
 parser.add_argument("--launch-mode", default="commandlet")
 parser.add_argument("--unreal-project-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
 args, unknown_args = parser.parse_known_args() # get unknown args to pass to inner script
 
-assert args.script is not None or args.maps_file is not None
 assert os.path.exists(args.unreal_engine_dir)
-
-if args.script is None:
-    assert len(unknown_args) == 0
 
 
 if __name__ == "__main__":
@@ -47,16 +43,11 @@ if __name__ == "__main__":
     if len(unknown_args) > 0:
         unknown_arg_string = " ".join(unknown_args)
 
-    if args.maps_file is None:
-        if args.script is None:
-            assert False
-        else:
-            editor_script_args_string = f"{args.script} {unknown_arg_string}".strip()
-    else:
-        if args.script is None:
-            editor_script_args_string = f"run_editor_script_for_each_map.py --maps-file {args.maps_file}".strip()
-        else:
-            editor_script_args_string = f"run_editor_script_for_each_map.py --maps-file {args.maps_file} --script {args.script} {unknown_arg_string}".strip()
+    editor_script_args_string = f"{args.script} {unknown_arg_string}".strip()
+
+    map_arg_string = ""
+    if args.map is not None:
+        map_arg_string = args.map
 
     render_offscreen_arg_string = ""
     if args.render_offscreen:
@@ -71,7 +62,7 @@ if __name__ == "__main__":
         assert False
 
     # need shell=True to correctly handle the quotes in cmd
-    cmd = f'"{unreal_editor_bin}" "{uproject}" {render_offscreen_arg_string} {python_arg_string}"{editor_script_args_string}"'
+    cmd = f'"{unreal_editor_bin}" "{uproject}" {map_arg_string} {render_offscreen_arg_string} {python_arg_string}"{editor_script_args_string}"'
     spear.log("Executing: ", cmd)
     subprocess.run(cmd, shell=True, check=True)
 

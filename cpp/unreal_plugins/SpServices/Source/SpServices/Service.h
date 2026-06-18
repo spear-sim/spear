@@ -30,7 +30,7 @@ class SPSERVICES_API Service // SPSERVICES_API is needed here because the SpServ
 public:
     Service()
     {
-        post_engine_init_handle_ = FCoreDelegates::OnPostEngineInit.AddRaw(this, &Service::postEngineInitHandler);
+        post_engine_init_handle_ = FCoreDelegates::GetOnPostEngineInit().AddRaw(this, &Service::postEngineInitHandler);
         engine_pre_exit_handle_ = FCoreDelegates::OnEnginePreExit.AddRaw(this, &Service::enginePreExitHandler);
         begin_frame_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &Service::beginFrameHandler);
         end_frame_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &Service::endFrameHandler);
@@ -38,7 +38,7 @@ public:
 
     virtual ~Service()
     {
-        FCoreDelegates::OnPostEngineInit.Remove(post_engine_init_handle_);
+        FCoreDelegates::GetOnPostEngineInit().Remove(post_engine_init_handle_);
         FCoreDelegates::OnEnginePreExit.Remove(engine_pre_exit_handle_);
         FCoreDelegates::OnBeginFrame.Remove(begin_frame_handle_);
         FCoreDelegates::OnEndFrame.Remove(end_frame_handle_);

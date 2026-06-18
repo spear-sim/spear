@@ -28,7 +28,7 @@ void ASpDebugCameraHUD::PostRender()
 
     #if ENABLE_DRAW_DEBUG
         if (bShowHUD) {
-            ASpDebugCameraController* sp_debug_camera_controller = Cast<ASpDebugCameraController>(PlayerOwner);
+            ASpDebugCameraController* sp_debug_camera_controller = Cast<ASpDebugCameraController>(PlayerOwner); // no RTTI available
             if (sp_debug_camera_controller && sp_debug_camera_controller->PlayerCameraManager) {
                 FVector camera_location = sp_debug_camera_controller->PlayerCameraManager->GetCameraLocation();
                 FRotator camera_rotation = sp_debug_camera_controller->PlayerCameraManager->GetCameraRotation();
@@ -43,7 +43,7 @@ void ASpDebugCameraHUD::PostRender()
                 FCollisionQueryParams collision_query_params = FCollisionQueryParams(NAME_None, FCollisionQueryParams::GetUnknownStatId(), trace_complex, this);
                 collision_query_params.bReturnPhysicalMaterial = true;
                 FHitResult hit_result;
-                bool hit = GetWorld()->LineTraceSingleByChannel(hit_result, camera_location, camera_rotation.Vector() * 100000.0f + camera_location, ECC_Visibility, collision_query_params);
+                bool hit = GetWorld()->LineTraceSingleByChannel(hit_result, camera_location, camera_rotation.Vector()*100000.0f + camera_location, ECC_Visibility, collision_query_params);
 
                 if (hit) {
                     UActorComponent* component = hit_result.Component.Get();
@@ -68,11 +68,8 @@ void ASpDebugCameraHUD::PostRender()
 
                     y += y_single_line;
 
-                    if (UnrealUtils::hasStableName(actor)) {
-                        Canvas->DrawText(font, Unreal::toFString("Actor (stable Name): " + UnrealUtils::getStableName(actor)), x, y, 1.0f, 1.0f, font_render_info);
-                    } else {
-                        Canvas->DrawText(font, Unreal::toFString("Actor doesn't have a stable name."), x, y, 1.0f, 1.0f, font_render_info);
-                    }
+                    bool include_unreal_name = true;
+                    Canvas->DrawText(font, Unreal::toFString("Actor (stable Name): " + UnrealUtils::getStableName(actor, include_unreal_name)), x, y, 1.0f, 1.0f, font_render_info);
 
                     y += y_single_line;
                     Canvas->DrawText(font, Unreal::toFString("Component (stable name): " + UnrealUtils::getStableName(component)), x, y, 1.0f, 1.0f, font_render_info);

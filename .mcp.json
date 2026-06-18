@@ -1,10 +1,10 @@
 {
   "mcpServers": {
-    "spear": {
+    "spear-mcp": {
       "type": "stdio",
       "command": "python",
       "args": [
-        "/Users/miroberts/code/github/spear/tools/run_mcp_server.py"
+        "tools/run_mcp_server.py"
       ]
     }
   }

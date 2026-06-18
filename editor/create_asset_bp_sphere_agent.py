@@ -65,18 +65,17 @@ blueprint_desc = \
             "name": "final_tone_curve_hdr_",
             "width": 512,
             "height": 512,
-            "num_channels_per_pixel": 4,
             "fov_angle": 90.0,
+            "num_channels_per_pixel": 4,
             "channel_data_type": unreal.SpArrayDataType.U_INT8,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
-            "location": {"x": 0.0, "y": 0.0, "z": 45.0},
-            "rotation": {"pitch": 0.0, "yaw": 0.0, "roll": 0.0},
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB,
             "dynamic_global_illumination_method": unreal.DynamicGlobalIlluminationMethod.LUMEN,
             "reflection_method": unreal.ReflectionMethod.LUMEN,
-            "primitive_render_mode": unreal.SceneCapturePrimitiveRenderMode.PRM_RENDER_SCENE_PRIMITIVES,
             "show_flag_settings": [unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=True)],
-        },
+            "location": {"x": 0.0, "y": 0.0, "z": 45.0},
+            "rotation": {"pitch": 0.0, "yaw": 0.0, "roll": 0.0}
+        }
     ]
 }
 
@@ -205,12 +204,13 @@ if __name__ == "__main__":
 
         # SpSceneCaptureComponent2D properties (required)
 
-        sp_scene_capture_component_2d.set_editor_property("width", component_desc["width"])
-        sp_scene_capture_component_2d.set_editor_property("height", component_desc["height"])
-        sp_scene_capture_component_2d.set_editor_property("num_channels_per_pixel", component_desc["num_channels_per_pixel"])
-        sp_scene_capture_component_2d.set_editor_property("channel_data_type", component_desc["channel_data_type"])
-        sp_scene_capture_component_2d.set_editor_property("texture_render_target_format", component_desc["texture_render_target_format"])
-        sp_scene_capture_component_2d.set_editor_property("capture_source", component_desc["capture_source"])
+        sp_scene_capture_component_2d.set_editor_property(name="width", value=component_desc["width"])
+        sp_scene_capture_component_2d.set_editor_property(name="height", value=component_desc["height"])
+        sp_scene_capture_component_2d.set_editor_property(name="num_channels_per_pixel", value=component_desc["num_channels_per_pixel"])
+        sp_scene_capture_component_2d.set_editor_property(name="channel_data_type", value=component_desc["channel_data_type"])
+        sp_scene_capture_component_2d.set_editor_property(name="capture_source", value=component_desc["capture_source"])
+        sp_scene_capture_component_2d.set_editor_property(name="override_texture_render_target_format", value=True)
+        sp_scene_capture_component_2d.set_editor_property(name="texture_render_target_format", value=component_desc["texture_render_target_format"])
 
         sp_scene_capture_component_2d.set_relative_location(
             new_location=unreal.Vector(component_desc["location"]["x"], component_desc["location"]["y"], component_desc["location"]["z"]), sweep=False, teleport=False)
@@ -221,27 +221,27 @@ if __name__ == "__main__":
 
         if "material_path" in component_desc:
             material = unreal.load_asset(name=component_desc["material_path"])
-            sp_scene_capture_component_2d.set_editor_property("material", material)
+            sp_scene_capture_component_2d.set_editor_property(name="material", value=material)
 
         if "fov_angle" in component_desc:
-            sp_scene_capture_component_2d.set_editor_property("fov_angle", component_desc["fov_angle"])
+            sp_scene_capture_component_2d.set_editor_property(name="fov_angle", value=component_desc["fov_angle"])
 
         # SceneCaptureComponent properties (optional)
 
         if "show_flag_settings" in component_desc:
-            sp_scene_capture_component_2d.set_editor_property("show_flag_settings", component_desc["show_flag_settings"])
+            sp_scene_capture_component_2d.set_editor_property(name="show_flag_settings", value=component_desc["show_flag_settings"])
 
         # PostProcessingSettings properties (optional)
 
         if "dynamic_global_illumination_method" in component_desc:
-            post_process_settings = sp_scene_capture_component_2d.get_editor_property("post_process_settings")
-            post_process_settings.set_editor_property("override_dynamic_global_illumination_method", True)
-            post_process_settings.set_editor_property("dynamic_global_illumination_method", component_desc["dynamic_global_illumination_method"])
+            post_process_settings = sp_scene_capture_component_2d.get_editor_property(name="post_process_settings")
+            post_process_settings.set_editor_property(name="override_dynamic_global_illumination_method", value=True)
+            post_process_settings.set_editor_property(name="dynamic_global_illumination_method", value=component_desc["dynamic_global_illumination_method"])
 
         if "reflection_method" in component_desc:
-            post_process_settings = sp_scene_capture_component_2d.get_editor_property("post_process_settings")
-            post_process_settings.set_editor_property("override_reflection_method", True)
-            post_process_settings.set_editor_property("reflection_method", component_desc["reflection_method"])
+            post_process_settings = sp_scene_capture_component_2d.get_editor_property(name="post_process_settings")
+            post_process_settings.set_editor_property(name="override_reflection_method", value=True)
+            post_process_settings.set_editor_property(name="reflection_method", value=component_desc["reflection_method"])
 
     # compile blueprint
     unreal.BlueprintEditorLibrary.compile_blueprint(blueprint=blueprint_asset)

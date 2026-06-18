@@ -21,22 +21,13 @@ class PythonService(spear.Service):
         self._python_script_library = None
 
     def initialize(self):
-        self._python_script_library = spear.UnrealObject(
-            unreal_service=self.unreal_service,
-            sp_func_service=self.sp_func_service,
-            config=self.config,
-            uclass="UPythonScriptLibrary")
-
+        self._python_script_library = self.get_unreal_object(uclass="UPythonScriptLibrary")
         assert self._python_script_library.IsPythonAvailable()
 
         # make it so the spear namespace can be used more easily
         self.execute_statement(statement="import numpy as np", execution_scope="Public")
         self.execute_statement(statement="import spear", execution_scope="Public")
         self.execute_statement(statement="import unreal", execution_scope="Public")
-
-        # wire up async variants so child services route through the appropriate async UnrealObject
-        self.call_async._python_script_library = self._python_script_library.call_async
-        self.send_async._python_script_library = self._python_script_library.send_async
 
     #
     # Functions for executing long-running editor scripts that span multiple frames.

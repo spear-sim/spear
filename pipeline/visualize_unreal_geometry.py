@@ -15,7 +15,7 @@ import spear
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--export-dir", required=True)
+parser.add_argument("--pipeline-dir", required=True)
 parser.add_argument("--visual-parity-with-unreal", action="store_true")
 parser.add_argument("--ignore-actors", nargs="*")
 parser.add_argument("--color-mode", default="unique_color_per_component")
@@ -55,7 +55,7 @@ if args.visual_parity_with_unreal:
 
 def process_scene():
 
-    unreal_metadata_dir = os.path.realpath(os.path.join(args.export_dir, "unreal_metadata"))
+    unreal_metadata_dir = os.path.realpath(os.path.join(args.pipeline_dir, "unreal_metadata"))
     actors_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "scene.json"))
     assert os.path.exists(unreal_metadata_dir)
     spear.log("Reading JSON file: ", actors_json_file)
@@ -75,7 +75,7 @@ def process_scene():
                          mode="arrow", scale_factor=origin_scale_factor, color=c_z_axis)
 
     actors = actors_json
-    actors = { actor_name: actor_desc for actor_name, actor_desc in actors.items() if actor_name not in ignore_actors }
+    actors = { actor_name: actor_desc for actor_name, actor_desc in actors.items() if actor_name.split(":")[0] not in ignore_actors }
     actors = { actor_name: actor_desc for actor_name, actor_desc in actors.items() if actor_desc["editor_properties"]["relevant_for_level_bounds"] }
     actors = { actor_name: actor_desc for actor_name, actor_desc in actors.items() if actor_desc["root_component"] is not None }
 
@@ -83,7 +83,7 @@ def process_scene():
 
     for actor_name, actor_desc in actors.items():
         spear.log("Processing actor: ", actor_name)
-        draw_actor(actor_desc, color)
+        draw_actor(actor_desc=actor_desc, color=color)
 
     mayavi.mlab.show()
 
@@ -93,7 +93,7 @@ def draw_actor(actor_desc, color):
     if args.color_mode == "unique_color_per_actor":
         color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
     draw_component(
-        transform_world_from_parent_component=spear.pipeline.identity_transform,
+        transform_world_from_parent_component=spear.math.identity_transform,
         component_desc=actor_desc["root_component"],
         color=color,
         log_prefix_str="    ")
@@ -103,18 +103,23 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
     # Only process SceneComponents...
     component_class = component_desc["class"]
     if component_class in scene_component_classes:
-        spear.log(log_prefix_str, "Processing SceneComponent: ", component_desc["name"])
-        
-        transform_world_from_current_component = spear.pipeline.compose_transform_with_component(
-            transform_ancestor_from_parent_component=transform_world_from_parent_component, component_desc=component_desc)
-        M_world_from_current_component = spear.pipeline.get_matrix_from_transform(transform=transform_world_from_current_component)
+        spear.log(log_prefix_str, "Processing SceneComponent: ", component_desc["stable_name"])
+
+        transform_parent_from_current_component, is_absolute_location, is_absolute_rotation, is_absolute_scale = \
+            spear.pipeline.to_spear_transform_from_json_component(json_component=component_desc)
+
+        transform_world_from_current_component = spear.math.compose_component_transforms(
+            transforms=[transform_world_from_parent_component, transform_parent_from_current_component],
+            is_absolute_location=[is_absolute_location], is_absolute_rotation=[is_absolute_rotation], is_absolute_scale=[is_absolute_scale],
+            as_spear=True)
+        M_world_from_current_component = spear.math.to_numpy_matrix_from_spear_transform(spear_transform=transform_world_from_current_component, as_matrix=True)
 
         # Check the M_world_from_current_component matrix that we computed above against Unreal's 
         # SceneComponent.get_world_transform() function. We store the output from get_world_transform() in our
         # exported JSON file for each SceneComponent, so we can simply compare the matrix we computed above
         # against the stored matrix.
 
-        world_transform = spear.pipeline.get_matrix_from_matrix_desc(matrix_desc=component_desc["attributes"]["world_transform_as_matrix"])
+        world_transform = spear.pipeline.to_numpy_matrix_from_json_matrix(json_matrix=component_desc["attributes"]["world_transform_as_matrix"], as_matrix=True)
         assert np.allclose(M_world_from_current_component, world_transform)
 
         # ...and only attempt to draw StaticMeshComponents...
@@ -128,7 +133,7 @@ def draw_component(transform_world_from_parent_component, component_desc, color,
                 spear.log(log_prefix_str, "StaticMesh asset path: ", static_mesh_asset_path)
     
                 obj_path_suffix = f"{os.path.join(*static_mesh_asset_path.parts[1:])}.obj"
-                numerical_parity_obj_path = os.path.realpath(os.path.join(args.export_dir, "unreal_geometry", "numerical_parity", obj_path_suffix))
+                numerical_parity_obj_path = os.path.realpath(os.path.join(args.pipeline_dir, "unreal_geometry", "numerical_parity", obj_path_suffix))
                 spear.log(log_prefix_str, "Reading OBJ file: ", numerical_parity_obj_path)
 
                 mesh = trimesh.load_mesh(numerical_parity_obj_path, process=False, validate=False)

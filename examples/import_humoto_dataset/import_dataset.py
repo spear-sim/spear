@@ -119,11 +119,11 @@ if __name__ == "__main__":
 
 
             fbx_scene_import_options = unreal.FbxSceneImportOptions()
-            fbx_scene_import_options.set_editor_property("import_as_dynamic", True)
+            fbx_scene_import_options.set_editor_property(name="import_as_dynamic", True)
 
             fbx_scene_import_factory = unreal.FbxSceneImportFactory()
-            fbx_scene_import_factory.set_editor_property("edit_after_new", value=False)
-            fbx_scene_import_factory.set_editor_property("scene_import_options", value=fbx_scene_import_options)
+            fbx_scene_import_factory.set_editor_property(name="edit_after_new", value=False)
+            fbx_scene_import_factory.set_editor_property(name="scene_import_options", value=fbx_scene_import_options)
 
             asset_import_task = unreal.AssetImportTask()
             asset_import_task.set_editor_property(name="async_", value=False)
@@ -183,7 +183,7 @@ if __name__ == "__main__":
 
                         asset_data = unreal.EditorAssetLibrary.find_asset_data(asset_path=asset_path)
                         asset_class_name = asset_data.get_editor_property(name="asset_class_path").get_editor_property(name="asset_name")
-                        asset_name = asset_data.get_editor_property("asset_name")
+                        asset_name = asset_data.get_editor_property(name="asset_name")
 
                         if asset_class_name == "AnimSequence" and str(asset_name).endswith(skeletal_mesh_component_name + "_Anim"):
                             anim_sequence_dir = str(asset_data.get_editor_property(name="package_path"))

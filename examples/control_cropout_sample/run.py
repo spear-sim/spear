@@ -6,8 +6,7 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import argparse
-import math
-import matplotlib.pyplot as plt
+import cv2
 import numpy as np
 import os
 import shutil
@@ -28,8 +27,7 @@ component_descs = \
     {
         "name": "final_tone_curve_hdr",
         "long_name": "DefaultSceneRoot.final_tone_curve_hdr_",
-        "spatial_supersampling_factor": 1,
-        "visualize_func": lambda data : data[:,:,[2,1,0]] # BGRA to RGB
+        "visualize_func": lambda data : data[:,:,[0,1,2]] # native BGR (drop alpha)
     }
 ]
 
@@ -41,7 +39,7 @@ def save_images(images_dir, frame_index):
         image_file = os.path.realpath(os.path.join(images_dir, component_desc["name"], f"{frame_index:04d}.png"))
         image = component_desc["visualize_func"](data=data)
         spear.log("Saving image: ", image_file)
-        plt.imsave(image_file, image)
+        cv2.imwrite(image_file, image)
 
 
 if __name__ == "__main__":
@@ -95,26 +93,9 @@ if __name__ == "__main__":
         assert final_tone_curve_hdr_component is not None
 
         # configure components to match the viewport (width, height, FOV, post-processing settings, etc)
-        
-        view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
-
-        viewport_size_x = 1280
-        viewport_size_y = 720
-
-        viewport_aspect_ratio = viewport_size_x/viewport_size_y # see Engine/Source/Editor/UnrealEd/Private/EditorViewportClient.cpp:2130 for evidence that Unreal's aspect ratio convention is x/y
-        fov = view_target_pov["fOV"]*math.pi/180.0
-        half_fov = fov/2.0
-        half_fov_adjusted = math.atan(math.tan(half_fov)*viewport_aspect_ratio/view_target_pov["aspectRatio"]) # this adjustment is necessary to compute an FOV value that matches the game viewport
-        fov_adjusted = half_fov_adjusted*2.0
-        fov_adjusted_degrees = fov_adjusted*180.0/math.pi
-
-        bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
-        bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
-
-        for component_desc in component_descs:
-            component_desc["component"].Width = viewport_size_x*component_desc["spatial_supersampling_factor"]
-            component_desc["component"].Height = viewport_size_y*component_desc["spatial_supersampling_factor"]
-            component_desc["component"].FOVAngle = fov_adjusted_degrees
+        viewport_desc = game.rendering_service.get_current_viewport_desc()
+        components = [ desc["component"] for desc in component_descs ]
+        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, widths=1280, heights=720)
 
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
         for component_desc in component_descs:
@@ -143,8 +124,6 @@ if __name__ == "__main__":
         villager_uclass = game.unreal_service.load_class(uclass="AActor", name="/Game/Blueprint/Villagers/BP_Villager.BP_Villager_C")
 
         # get UnrealObject instances
-        kismet_material_library = game.get_unreal_object(uclass="UKismetMaterialLibrary")
-        navigation_system_v1 = game.get_unreal_object(uclass="UNavigationSystemV1")
         sp_navigation_system_v1 = game.get_unreal_object(uclass="USpNavigationSystemV1")
         bpf_shared = game.get_unreal_object(uclass=bpf_shared_uclass)
 
@@ -153,7 +132,7 @@ if __name__ == "__main__":
         # game_mode.print_debug_info()
 
         # get navigation data
-        navigation_system = navigation_system_v1.GetNavigationSystem()
+        navigation_system = sp_navigation_system_v1.GetNavigationSystem()
         navigation_data = sp_navigation_system_v1.GetNavDataForAgentName(NavigationSystem=navigation_system, AgentName="Main")
 
         #
@@ -201,7 +180,7 @@ if __name__ == "__main__":
         temp_build_target = player.Spawn.get()
 
         # get candidate spawn locations and sort by distance to player
-        player_location = spear.to_numpy_array_from_vector(vector=player.K2_GetActorLocation())
+        player_location = spear.math.to_numpy_array_from_spear_vector(spear_vector=player.K2_GetActorLocation())
         spawn_candidate_locations = game.navigation_service.get_random_points(navigation_data=navigation_data, num_points=num_build_target_candidate_locations)
         spawn_candidate_locations[:,2] = 0.0
         sorted_indices = np.argsort(np.linalg.norm(spawn_candidate_locations - player_location, axis=1))
@@ -215,7 +194,7 @@ if __name__ == "__main__":
             distance = np.linalg.norm(spawn_candidate_location - player_location)
 
             # set temp build object location to a quantized candidate location
-            return_values = bpf_shared.call(function_name="Convert To Stepped Pos", args={"A": spear.to_vector_from_numpy_array(array=spawn_candidate_location)}, as_dict=True)
+            return_values = bpf_shared.call(function_name="Convert To Stepped Pos", args={"A": spear.math.to_spear_vector_from_numpy_array(numpy_array=spawn_candidate_location)}, as_dict=True)
             spawn_candidate_location_stepped = return_values["NewParam"]
             temp_build_target.K2_SetActorLocation(NewLocation=spawn_candidate_location_stepped)
 
@@ -282,19 +261,8 @@ if __name__ == "__main__":
 
     for i in range(num_frames):
         with instance.begin_frame():
-            view_target_pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
-
-            fov = view_target_pov["fOV"]*math.pi/180.0
-            half_fov = fov/2.0
-            half_fov_adjusted = math.atan(math.tan(half_fov)*viewport_aspect_ratio/view_target_pov["aspectRatio"]) # this adjustment is necessary to compute an FOV value that matches the game viewport
-            fov_adjusted = half_fov_adjusted*2.0
-            fov_adjusted_degrees = fov_adjusted*180.0/math.pi
-
-            bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
-            bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
-
-            for component_desc in component_descs:
-                component_desc["component"].FOVAngle = fov_adjusted_degrees
+            viewport_desc = game.rendering_service.get_current_viewport_desc()
+            game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, widths=1280, heights=720)
 
         with instance.end_frame():
 

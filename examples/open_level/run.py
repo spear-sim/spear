@@ -27,16 +27,19 @@ if __name__ == "__main__":
     # sleep for a few seconds
     time.sleep(5.0)
 
-    # Call OpenLevel. It is recommended to call OpenLevel in a "with instance.end_frame()" block, rather than
-    # in a "with instance.begin_frame()" block. Calling OpenLevel in a "with instance.begin_frame()" does
-    # work, but it requires the user to set the SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS config
-    # parameter conservatively due to various implementation details in begin_frame() and end_frame().
+    # Call OpenLevel. It is recommended to call OpenLevel() in a "with instance.end_frame()" block, rather
+    # than in a "with instance.begin_frame()" block. Calling OpenLevel in a "with instance.begin_frame()"
+    # does work, but it requires the user to set the SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS config
+    # parameter conservatively due to various implementation details in begin_frame() and end_frame(). At the
+    # end of the frame block where you called OpenLevel(), it is it is required to call game.invalidate(),
+    # as we do here.
 
-    spear.log("Opening level: /Game/ThirdPerson/Lvl_ThirdPerson.Lvl_ThirdPerson")
+    spear.log("Opening level: /Game/SPEAR/Scenes/debug_0000/Maps/debug_0000.debug_0000")
     with instance.begin_frame():
         pass
     with instance.end_frame():
-        gameplay_statics.OpenLevel(LevelName="/Game/ThirdPerson/Lvl_ThirdPerson.Lvl_ThirdPerson", bAbsolute=True, Options="")
+        game.invalidate() # need to call invalidate() before calling OpenLevel()
+        gameplay_statics.OpenLevel(LevelName="/Game/SPEAR/Scenes/debug_0000/Maps/debug_0000.debug_0000", bAbsolute=True, Options="")
 
     # Calling OpenLevel invalidates the old game object, so get a new one here. This call will block until
     # the new game object is ready.
@@ -61,6 +64,7 @@ if __name__ == "__main__":
     with instance.begin_frame():
         pass
     with instance.end_frame():
+        game.invalidate() # need to call invalidate() before calling OpenLevel()
         gameplay_statics.OpenLevel(LevelName="/Game/SPEAR/Scenes/apartment_0000/Maps/apartment_0000.apartment_0000", bAbsolute=True, Options="")
 
     # get a new game object again

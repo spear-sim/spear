@@ -36,12 +36,12 @@ if __name__ == "__main__":
 
     # get scale
     scale_3d = bp_axes.get_actor_scale3d()
-    spear.log("scale_3d: ", scale_3d.get_editor_property("x"), ", ", scale_3d.get_editor_property("y"), ", ", scale_3d.get_editor_property("z"))
+    spear.log("scale_3d: ", scale_3d.get_editor_property(name="x"), ", ", scale_3d.get_editor_property(name="y"), ", ", scale_3d.get_editor_property(name="z"))
 
     # set scale and get it again to verify that it has been updated
     bp_axes.set_actor_scale3d(unreal.Vector(x=4.0, y=4.0, z=4.0))
     scale_3d = bp_axes.get_actor_scale3d()
-    spear.log("scale_3d: ", scale_3d.get_editor_property("x"), ", ", scale_3d.get_editor_property("y"), ", ", scale_3d.get_editor_property("z"))
+    spear.log("scale_3d: ", scale_3d.get_editor_property(name="x"), ", ", scale_3d.get_editor_property(name="y"), ", ", scale_3d.get_editor_property(name="z"))
 
     # Explicitly save changes to level.
     if args.save_level:

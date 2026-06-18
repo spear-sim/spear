@@ -98,7 +98,7 @@ private:
             return nullptr;
         } else {
             SP_ASSERT(sp_func_components.size() == 1);
-            return Std::at(sp_func_components, 0);
+            return sp_func_components.at(0);
         }
     }
 

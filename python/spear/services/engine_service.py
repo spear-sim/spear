@@ -80,11 +80,13 @@ class EngineService():
                 spear.log("ERROR: Attempting to exit critical section by calling _execute_frame_impl and _end_frame_impl()...")
                 self._execute_frame_impl()
                 self._end_frame_impl()
+                self._frame_state = "error"
                 assert False
             elif self._frame_state in ("executing_frame", "executing_end_frame", "request_end_frame"):
                 spear.log("Unexpected frame state: ", self._frame_state)
                 spear.log("ERROR: Attempting to exit critical section by calling _execute_frame_impl and _end_frame_impl()...")
                 self._end_frame_impl()
+                self._frame_state = "error"
                 assert False
             elif self._frame_state == "error":
                 spear.log("Unexpected frame state: ", self._frame_state)
@@ -197,7 +199,7 @@ class EngineService():
         assert self._frame_state == "request_end_frame"
 
         if not success:
-            spear.log("ERROR: Server error state detected when calling _end_frame_impl_single_step(), but we do not appear to be in a critical section.")
+            spear.log("ERROR: Server error state detected when calling _end_frame_impl(), but we do not appear to be in a critical section.")
             self._frame_state = "error"
             assert False
 
@@ -305,7 +307,7 @@ class EngineService():
 
     def _call_impl(self, func_name, *args):
         if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
-            return_as = self.entry_point_signature_descs[func_name].func_signature[0].type_names["entry_point"]
+            return_as = self.entry_point_signature_descs[func_name].type_names[0]
             spear.log(f"Calling: {func_name} : {args} -> {return_as}")
         return_value = self._client.call(func_name, *args)
         if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:

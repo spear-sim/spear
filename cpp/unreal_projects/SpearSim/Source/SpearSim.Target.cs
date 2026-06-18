@@ -9,7 +9,7 @@ public class SpearSimTarget : SpTargetRulesTarget
 {
     public SpearSimTarget(TargetInfo targetInfo) : base(targetInfo)
     {
-        // Added to projects by default in UE 5.7.
+        // Added to projects by default in UE 5.8.
         Type = TargetType.Game;
     }
 }

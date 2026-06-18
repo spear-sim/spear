@@ -1,0 +1,19 @@
+#
+# Copyright (c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+# Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+#
+
+# Build-time constraints for installing the "pipeline" optional dependencies, applied via PIP_BUILD_CONSTRAINT, e.g.
+#
+#     PIP_BUILD_CONSTRAINT=python/pip_build_constraint.txt pip install --no-cache-dir -e "python[pipeline]"
+#
+# Mayavi is distributed only as an sdist, so pip compiles it (its tvtk extension) from source at install time. By
+# default pip builds it in an isolated environment against the *latest* numpy and VTK, which then mismatch the numpy
+# and VTK we pin at runtime and crash on import (numpy ABI mismatch, and a VTK-version mismatch in tvtk). Pinning the
+# build to the same numpy and VTK we use at runtime makes the compiled bits match. We also pass --no-cache-dir when
+# installing, because pip's built-wheel cache is keyed by the sdist, not by these build constraints, so a previously
+# cached Mayavi wheel (possibly built without them) would otherwise be reused without rebuilding. (Mayavi must be at
+# least 4.8.3 here: 4.8.2's sdist does not compile against numpy 2.x at all.)
+
+numpy==2.0.2
+vtk==9.3.1
