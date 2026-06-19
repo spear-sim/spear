@@ -10,6 +10,21 @@ Interactive simulators have become powerful tools for training embodied agents a
 
 The code and assets in this repository are released under an [MIT License](LICENSE.txt) and a [CC0 License](http://creativecommons.org/publicdomain/zero/1.0) respectively.
 
+## Citation
+
+If you find SPEAR useful in your research, please cite this repository as follows:
+
+```
+@inproceedings{roberts:2026
+    author       = {Mike Roberts AND Renhan Wang AND Rushikesh Zawar AND Rachith Prakash
+                    AND Quentin Leboutet AND Stephan Richter AND Matthias M{\"u}ller
+                    AND German Ros AND Rui Tang AND Stefan Leutenegger AND Yannick
+                    Hold-Geoffroy AND Kalyan Sunkavalli AND Vladlen Koltun},
+    title        = {{SPEAR}: {A} Simulator for Photorealistic Embodied {AI} Research},
+    booktitle    = {ECCV 2026}
+}
+```
+
 ## Overview
 
 ![hypersim](https://github.com/user-attachments/assets/a1246233-68a9-41d0-ba4b-10710b58b74f)
@@ -143,18 +158,3 @@ with instance.end_frame():
 - Our [Running our Example Applications](docs/running_our_example_applications.md) tutorial explains how to run our example applications.
 - Our [Importing and Exporting Assets](docs/importing_and_exporting_assets.md) tutorial explains how to import and export assets.
 - Our [Controlling with Natural Language](docs/controlling_with_natural_language.md) tutorial explains how to control Unreal apps with natural language.
-
-## Citation
-
-If you find SPEAR useful in your research, please cite this repository as follows:
-
-```
-@misc{spear,
-    author       = {Mike Roberts AND Renhan Wang AND Rushikesh Zawar AND Rachith Prakash
-                    AND Quentin Leboutet AND Stephan Richter AND Matthias M{\"u}ller
-                    AND German Ros AND Rui Tang AND Stefan Leutenegger AND Yannick
-                    Hold-Geoffroy AND Kalyan Sunkavalli AND Vladlen Koltun},
-    title        = {{SPEAR}: {A} Simulator for Photorealistic Embodied {AI} Research},
-    howpublished = {\url{https://github.com/spear-sim/spear}}
-}
-```
