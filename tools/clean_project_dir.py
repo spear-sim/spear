@@ -25,7 +25,12 @@ if __name__ == "__main__":
         os.path.realpath(os.path.join(unreal_project_dir, "Binaries")),
         os.path.realpath(os.path.join(unreal_project_dir, "DerivedDataCache")),
         os.path.realpath(os.path.join(unreal_project_dir, "Intermediate")),
-        os.path.realpath(os.path.join(unreal_project_dir, "Saved"))]
+        os.path.realpath(os.path.join(unreal_project_dir, "Saved")),
+        os.path.realpath(os.path.join(unreal_project_dir, "Standalone-Debug")),
+        os.path.realpath(os.path.join(unreal_project_dir, "Standalone-DebugGame")),
+        os.path.realpath(os.path.join(unreal_project_dir, "Standalone-Development")),
+        os.path.realpath(os.path.join(unreal_project_dir, "Standalone-Shipping")),
+        os.path.realpath(os.path.join(unreal_project_dir, "Standalone-Test"))]
 
     # individual files to be removed
     files = []
