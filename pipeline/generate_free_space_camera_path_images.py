@@ -81,8 +81,7 @@ def process_scene():
     with instance.end_frame():
         pass
 
-    # Wait for the engine to finish loading, and step a couple of frames to let the render targets initialize, before
-    # rendering.
+    # Wait for the engine to finish loading, and step a couple of frames to let the render targets initialize, before rendering.
     game.async_loading_service.wait_for_engine_idle()
     instance.step(num_frames=2)
 
