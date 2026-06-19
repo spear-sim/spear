@@ -158,10 +158,10 @@ You are now ready to build the `SpearSim` project as follows.
 
 ```console
 # minimal build required to open the SpearSim project inside the Unreal Editor (optional)
-python tools/run_uat.py --unreal-engine-dir path/to/UE_5.8 -build
+python tools/run_uat.py --unreal-engine-dir path/to/UE_5.8 -build -UbtArgs="-UbaVisualizer"
 
 # build a standalone executable
-python tools/run_uat.py --unreal-engine-dir path/to/UE_5.8 -build -cook -stage -package -archive -pak
+python tools/run_uat.py --unreal-engine-dir path/to/UE_5.8 -build -cook -stage -package -archive -pak -UbtArgs="-UbaVisualizer"
 ```
 
 Our `run_uat.py` tool is a thin wrapper around Unreal's [`RunUAT`](https://docs.unrealengine.com/4.27/en-US/SharingAndReleasing/Deployment/BuildOperations) tool. Our tool consumes `--unreal-engine-dir`, provides Unreal's `RunUAT` tool with sensible default values for a few commonly used arguments, and otherwise forwards all arguments directly to `RunUAT`. This step will generate a standalone executable at the following locations.
@@ -171,6 +171,8 @@ Windows: cpp\unreal_projects\SpearSim\Standalone-Development\Windows\SpearSim.ex
 macOS:   cpp/unreal_projects/SpearSim/Standalone-Development/Mac/SpearSim.app
 Linux:   cpp/unreal_projects/SpearSim/Standalone-Development/Linux/SpearSim.sh
 ```
+
+Starting in Unreal 5.8, `RunUAT` will not log its `-build` progress in the terminal. We therefore include the optional `-UbtArgs="-UbaVisualizer"` above, which will display build progress visually in a separate window. This flag can be omitted in headless environments.
 
 When building with our `run_uat.py` tool, you can optionally specify `--build-config Shipping` to build more a optimized standalone executable. In this case, the executable will be generated in `Standalone-Shipping` instead of `Standalone-Development`.
 
