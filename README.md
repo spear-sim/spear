@@ -146,15 +146,15 @@ with instance.end_frame():
 
 ## Citation
 
-If you find SPEAR useful in your research, please cite this repository as follows:
+If you find SPEAR useful in your research, please cite this repository as follows.
 
 ```
-@misc{spear,
+@inproceedings{roberts:2026
     author       = {Mike Roberts AND Renhan Wang AND Rushikesh Zawar AND Rachith Prakash
                     AND Quentin Leboutet AND Stephan Richter AND Matthias M{\"u}ller
                     AND German Ros AND Rui Tang AND Stefan Leutenegger AND Yannick
                     Hold-Geoffroy AND Kalyan Sunkavalli AND Vladlen Koltun},
     title        = {{SPEAR}: {A} Simulator for Photorealistic Embodied {AI} Research},
-    howpublished = {\url{https://github.com/spear-sim/spear}}
+    booktitle    = {ECCV 2026}
 }
 ```
