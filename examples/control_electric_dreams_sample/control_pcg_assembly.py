@@ -151,8 +151,9 @@ if __name__ == "__main__":
         gameplay_statics.SetGamePaused(bPaused=False)
 
         # set PCG assembly pose
-        bp_pcg_large_assembly.K2_SetActorLocation(NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=location_start))
-        bp_pcg_large_assembly.K2_SetActorRotation(NewRotation=spear.math.to_spear_rotator_from_numpy_array(numpy_array_pyr=rotator_pyr_start))
+        bp_pcg_large_assembly.K2_SetActorLocationAndRotation(
+            NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=location_start),
+            NewRotation=spear.math.to_spear_rotator_from_numpy_array(numpy_array_pyr=rotator_pyr_start))
 
         # force PCG updates
         sp_pcg_subsystem.FlushCache(PCGSubsystem=pcg_subsystem)
@@ -221,8 +222,9 @@ if __name__ == "__main__":
             spear.log(f"Set PCG assembly location and rotation: {location}, {rotator_pyr}")
 
             # set PCG assembly pose
-            bp_pcg_large_assembly.K2_SetActorLocation(NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=location))
-            bp_pcg_large_assembly.K2_SetActorRotation(NewRotation=spear.math.to_spear_rotator_from_numpy_array(numpy_array_pyr=rotator_pyr))
+            bp_pcg_large_assembly.K2_SetActorLocationAndRotation(
+                NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=location),
+                NewRotation=spear.math.to_spear_rotator_from_numpy_array(numpy_array_pyr=rotator_pyr))
 
             # force PCG updates
             sp_pcg_subsystem.FlushCache(PCGSubsystem=pcg_subsystem)

@@ -93,8 +93,9 @@ if __name__ == "__main__":
         with instance.begin_frame():
 
             # set camera pose
-            bp_camera_sensor.K2_SetActorLocation(NewLocation={"X": camera_pose["location_x"], "Y": camera_pose["location_y"], "Z": camera_pose["location_z"]})
-            bp_camera_sensor.K2_SetActorRotation(NewRotation={"Pitch": camera_pose["rotation_pitch"], "Yaw": camera_pose["rotation_yaw"], "Roll": camera_pose["rotation_roll"]})
+            bp_camera_sensor.K2_SetActorLocationAndRotation(
+                NewLocation={"X": camera_pose["location_x"], "Y": camera_pose["location_y"], "Z": camera_pose["location_z"]},
+                NewRotation={"Pitch": camera_pose["rotation_pitch"], "Yaw": camera_pose["rotation_yaw"], "Roll": camera_pose["rotation_roll"]})
 
             # set rotation matrix
             R_world_from_camera = spear.math.to_numpy_matrix_from_spear_rotator(spear_rotator={"Pitch": camera_pose["rotation_pitch"], "Yaw": camera_pose["rotation_yaw"], "Roll": camera_pose["rotation_roll"]}, as_matrix=True)
