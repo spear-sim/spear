@@ -24,7 +24,7 @@ private:
     void requestWaitForKeyboardInput() const;
 
     void initializeIniConfigs() const;
-    void initializeIniConfig(const FString& ini_config_filename, const std::string& ini_config_name, const std::string& sp_config_key) const;
+    void initializeIniConfig(const FString& ini_config_filename, const std::string& ini_config_name, const std::string& sp_config_override_key, const std::string& sp_config_string_key) const;
 
     void registerClasses() const;
     void unregisterClasses() const;

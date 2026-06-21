@@ -21,11 +21,27 @@ SP_CORE:
   MESH_PROXY_COMPONENT_MANAGER:
     VERBOSE: False
 
+  #
   # We allow the user to override the ini values in the project Config directory. These overrides must happen
   # very early in the application lifecycle because they can affect the initialization of engine systems that
-  # can't be changed at runtime, e.g., which graphics API to use, etc.
-  EDITOR_INI_CONFIG_VALUES: {}
-  ENGINE_INI_CONFIG_VALUES: {}
-  GAME_INI_CONFIG_VALUES: {}
-  GAME_USER_SETTINGS_INI_CONFIG_VALUES: {}
-  INPUT_INI_CONFIG_VALUES: {}
+  # can't be changed at runtime, e.g., which graphics API to use, etc. Each CONFIG_*_INI_STRING is interpreted as
+  # Unreal INI text (section headers, key=value lines, and the +/-/./! array operators), exactly as if the text
+  # had been appended to the corresponding default INI file. We recommend specifying these strings using YAML
+  # block scalars, e.g.,
+  #
+  #   OVERRIDE_CONFIG_ENGINE_INI: True
+  #   CONFIG_ENGINE_INI_STRING: |
+  #     [/Script/Engine.RendererSettings]
+  #     r.CustomDepth=3
+  #
+
+  OVERRIDE_CONFIG_EDITOR_INI: False
+  CONFIG_EDITOR_INI_STRING: ""
+  OVERRIDE_CONFIG_ENGINE_INI: False
+  CONFIG_ENGINE_INI_STRING: ""
+  OVERRIDE_CONFIG_GAME_INI: False
+  CONFIG_GAME_INI_STRING: ""
+  OVERRIDE_CONFIG_GAME_USER_SETTINGS_INI: False
+  CONFIG_GAME_USER_SETTINGS_INI_STRING: ""
+  OVERRIDE_CONFIG_INPUT_INI: False
+  CONFIG_INPUT_INI_STRING: ""

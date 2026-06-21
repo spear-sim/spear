@@ -73,23 +73,31 @@ void SpCore::requestWaitForKeyboardInput() const
 void SpCore::initializeIniConfigs() const
 {
     if (Config::isInitialized()) {
-        initializeIniConfig(GEditorIni,           "GEditorIni",           "SP_CORE.EDITOR_INI_CONFIG_VALUES");
-        initializeIniConfig(GEngineIni,           "GEngineIni",           "SP_CORE.ENGINE_INI_CONFIG_VALUES");
-        initializeIniConfig(GGameIni,             "GGameIni",             "SP_CORE.GAME_INI_CONFIG_VALUES");
-        initializeIniConfig(GGameUserSettingsIni, "GGameUserSettingsIni", "SP_CORE.GAME_USER_SETTINGS_INI_CONFIG_VALUES");
-        initializeIniConfig(GInputIni,            "GInputIni",            "SP_CORE.INPUT_INI_CONFIG_VALUES");
+        initializeIniConfig(GEditorIni,           "GEditorIni",           "SP_CORE.OVERRIDE_CONFIG_EDITOR_INI",             "SP_CORE.CONFIG_EDITOR_INI_STRING");
+        initializeIniConfig(GEngineIni,           "GEngineIni",           "SP_CORE.OVERRIDE_CONFIG_ENGINE_INI",             "SP_CORE.CONFIG_ENGINE_INI_STRING");
+        initializeIniConfig(GGameIni,             "GGameIni",             "SP_CORE.OVERRIDE_CONFIG_GAME_INI",               "SP_CORE.CONFIG_GAME_INI_STRING");
+        initializeIniConfig(GGameUserSettingsIni, "GGameUserSettingsIni", "SP_CORE.OVERRIDE_CONFIG_GAME_USER_SETTINGS_INI", "SP_CORE.CONFIG_GAME_USER_SETTINGS_INI_STRING");
+        initializeIniConfig(GInputIni,            "GInputIni",            "SP_CORE.OVERRIDE_CONFIG_INPUT_INI",              "SP_CORE.CONFIG_INPUT_INI_STRING");
     }
 }
 
-void SpCore::initializeIniConfig(const FString& ini_config_filename, const std::string& ini_config_name, const std::string& sp_config_key) const
+void SpCore::initializeIniConfig(const FString& ini_config_filename, const std::string& ini_config_name, const std::string& sp_config_override_key, const std::string& sp_config_string_key) const
 {
     SP_ASSERT(Config::isInitialized());
-    std::map<std::string, std::map<std::string, std::string>> ini_config_values = Config::get<std::map<std::string, std::map<std::string, std::string>>>(sp_config_key);
-    for (auto& [ini_config_section_name, ini_config_section_values] : ini_config_values) {
-        for (auto& [ini_config_key, ini_config_value] : ini_config_section_values) {
-            SP_LOG("Setting ", ini_config_name, " (", Unreal::toStdString(ini_config_filename), ") value: [", ini_config_section_name, "] ", ini_config_key, " = ", ini_config_value);
-            GConfig->SetString(Unreal::toTCharPtr(ini_config_section_name), Unreal::toTCharPtr(ini_config_key), Unreal::toTCharPtr(ini_config_value), ini_config_filename);
-        }
+
+    if (Config::get<bool>(sp_config_override_key)) {
+        std::string ini_config_string = Config::get<std::string>(sp_config_string_key);
+
+        FConfigFile* config_file = GConfig->Find(ini_config_filename);
+        SP_ASSERT(config_file);
+
+        SP_LOG("Overriding ", ini_config_name, " (", Unreal::toStdString(ini_config_filename), ") with the following config string:");
+        SP_LOG_NO_PREFIX(ini_config_string);
+
+        // CombineFromBuffer parses the string as Unreal INI text (section headers, key=value lines, and the +/-/./!
+        // array operators) and combines it onto the in-memory config, exactly as if the text had been appended to
+        // the corresponding default INI file.
+        config_file->CombineFromBuffer(Unreal::toFString(ini_config_string), ini_config_filename);
     }
 }
 

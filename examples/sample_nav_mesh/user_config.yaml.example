@@ -18,24 +18,60 @@ SP_SERVICES:
     # we are only overriding AgentRadius and AgentHeight.
 
     OVERRIDE_NAVIGATION_SYSTEM_DEFAULT_OBJECT: True
-    NAVIGATION_SYSTEM_DEFAULT_OBJECT_STRING: '''
-    {
-      "SupportedAgents":
-      [
-        {
-          "Name": "Default",
-          "Color":
+    NAVIGATION_SYSTEM_DEFAULT_OBJECT_STRING: |
+      {
+        "SupportedAgents":
+        [
           {
+            "Name": "Default",
+            "Color":
+            {
               "B": 0,
               "G": 75,
               "R": 38,
               "A": 164
-          },
-          "DefaultQueryExtent":
-          {
+            },
+            "DefaultQueryExtent":
+            {
               "X": 50,
               "Y": 50,
               "Z": 250
+            },
+            "NavDataClass": "/Script/NavigationSystem.RecastNavMesh",
+            "AgentRadius": 80,
+            "AgentHeight": 180,
+            "AgentStepHeight": 10.0,
+            "NavWalkingSearchHeightScale": 0.5,
+            "PreferredNavData": "None",
+            "bCanCrouch": false,
+            "bCanJump": false,
+            "bCanWalk": false,
+            "bCanSwim": false,
+            "bCanFly": false
+          }
+        ]
+      }
+
+    OVERRIDE_RECAST_NAV_MESH_DEFAULT_OBJECT: True
+    RECAST_NAV_MESH_DEFAULT_OBJECT_STRING: |
+      {
+        "AgentRadius": 80,
+        "AgentHeight": 180,
+        "NavDataConfig":
+        {
+          "Name": "Default",
+          "Color":
+          {
+            "B": 0,
+            "G": 75,
+            "R": 38,
+            "A": 164
+          },
+          "DefaultQueryExtent":
+          {
+            "X": 50,
+            "Y": 50,
+            "Z": 250
           },
           "NavDataClass": "/Script/NavigationSystem.RecastNavMesh",
           "AgentRadius": 80,
@@ -48,62 +84,24 @@ SP_SERVICES:
           "bCanWalk": false,
           "bCanSwim": false,
           "bCanFly": false
-        }
-      ]
-    }
-    '''
-
-    OVERRIDE_RECAST_NAV_MESH_DEFAULT_OBJECT: True
-    RECAST_NAV_MESH_DEFAULT_OBJECT_STRING: '''
-    {
-      "AgentRadius": 80,
-      "AgentHeight": 180,
-      "NavDataConfig":
-      {
-        "Name": "Default",
-        "Color":
-        {
-          "B": 0,
-          "G": 75,
-          "R": 38,
-          "A": 164
         },
-        "DefaultQueryExtent":
-        {
-          "X": 50,
-          "Y": 50,
-          "Z": 250
-        },
-        "NavDataClass": "/Script/NavigationSystem.RecastNavMesh",
-        "AgentRadius": 80,
-        "AgentHeight": 180,
-        "AgentStepHeight": 10.0,
-        "NavWalkingSearchHeightScale": 0.5,
-        "PreferredNavData": "None",
-        "bCanCrouch": false,
-        "bCanJump": false,
-        "bCanWalk": false,
-        "bCanSwim": false,
-        "bCanFly": false
-      },
-      "NavMeshResolutionParams":
-      [
-        {
-          "CellSize": 1.0,
-          "CellHeight": 1.0,
-          "AgentMaxStepHeight": 10.0
-        },
-        {
-          "CellSize": 1.0,
-          "CellHeight": 1.0,
-          "AgentMaxStepHeight": 10.0
-        },
-        {
-          "CellSize": 1.0,
-          "CellHeight": 1.0,
-          "AgentMaxStepHeight": 10.0
-        }
-      ],
-      "RuntimeGeneration": "Dynamic"
-    }
-    '''
+        "NavMeshResolutionParams":
+        [
+          {
+            "CellSize": 1.0,
+            "CellHeight": 1.0,
+            "AgentMaxStepHeight": 10.0
+          },
+          {
+            "CellSize": 1.0,
+            "CellHeight": 1.0,
+            "AgentMaxStepHeight": 10.0
+          },
+          {
+            "CellSize": 1.0,
+            "CellHeight": 1.0,
+            "AgentMaxStepHeight": 10.0
+          }
+        ],
+        "RuntimeGeneration": "Dynamic"
+      }

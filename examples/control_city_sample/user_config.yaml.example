@@ -7,22 +7,22 @@ SPEAR:
   LAUNCH_MODE: "none"
 
 SP_CORE:
-  ENGINE_INI_CONFIG_VALUES:
-    SystemSettings:
-      r.DistanceFields.SupportEvenIfHardwareRayTracingSupported: 1
+  OVERRIDE_CONFIG_ENGINE_INI: True
+  CONFIG_ENGINE_INI_STRING: |
+    [SystemSettings]
+    r.DistanceFields.SupportEvenIfHardwareRayTracingSupported=1
 
 SP_SERVICES:
   INITIALIZE_ENGINE_SERVICE:
     OVERRIDE_PHYSICS_SETTINGS: True
-    PHYSICS_SETTINGS_STRING: '''
-    {
+    PHYSICS_SETTINGS_STRING: |
+      {
         "MinPhysicsDeltaTime": 0.000001,
         "MaxPhysicsDeltaTime": 0.033333,
         "bSubstepping": true,
         "MaxSubstepDeltaTime": 0.006666,
         "MaxSubsteps": 10
-    }
-    '''
+      }
 
   WORLD_REGISTRY_SERVICE:
     OVERRIDE_GAME_PAUSED: True
