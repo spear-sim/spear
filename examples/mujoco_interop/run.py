@@ -178,7 +178,8 @@ if __name__ == "__main__":
     mj_viewer.sync()
 
     # initialize MuJoCo screenshot renderer
-    mj_renderer = mujoco.Renderer(model=mj_model, height=height, width=width)
+    if args.save_images:
+        mj_renderer = mujoco.Renderer(model=mj_model, height=height, width=width)
 
     # initialize counters
     ue_step_index = 0
@@ -225,9 +226,9 @@ if __name__ == "__main__":
             # update SPEAR camera pose
             pawn_future = pawn.call_async.K2_SetActorLocation(NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=cam_position))
             player_controller_future = player_controller.call_async.SetControlRotation(NewRotation=spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=cam_rotation_matrix))
-
-            bp_camera_sensor.K2_SetActorLocation(NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=cam_position))
-            bp_camera_sensor.K2_SetActorRotation(NewRotation=spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=cam_rotation_matrix))
+            bp_camera_sensor_future = bp_camera_sensor.call_async.K2_SetActorLocationAndRotation(
+                NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=cam_position),
+                NewRotation=spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=cam_rotation_matrix))
 
             # update SPEAR object poses
             for ue_actor_name, ue_actor in ue_actors.items():
@@ -242,6 +243,7 @@ if __name__ == "__main__":
             # clean up futures
             pawn_future.get()
             player_controller_future.get()
+            bp_camera_sensor_future.get()
             for ue_actor_name in ue_actors.keys():
                 ue_actor_futures[ue_actor_name].get()
 
@@ -278,11 +280,14 @@ if __name__ == "__main__":
     with sp_instance.begin_frame():
         pass
     with sp_instance.end_frame():
-        final_tone_curve_hdr_component.terminate_sp_funcs()
-        final_tone_curve_hdr_component.Terminate()
+        for component_desc in component_descs:
+            component_desc["component"].terminate_sp_funcs()
+            component_desc["component"].Terminate()
         sp_game.unreal_service.destroy_actor(actor=bp_camera_sensor)
 
-    # close MuJoCo viewer and SPEAR instance
+    # close the MuJoCo renderer and viewer, and the SPEAR instance
+    if args.save_images:
+        mj_renderer.close()
     mj_viewer.close()
     sp_instance.close()
 

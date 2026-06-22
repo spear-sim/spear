@@ -24,19 +24,18 @@ class AsyncLoadingService(spear.Service):
         self._sp_asset_compiling_manager = None
         self._sp_distance_field_async_queue = None
         self._sp_level_streaming = None
-        self._sp_navigation_system_v1 = None
         self._sp_shader_compiling_manager = None
         self._sp_streaming_manager = None
         self._sp_world = None
+
         self._asset_registry = None
-        self._navigation_system = None
+
         self._world_partition_subsystem = None
 
     def initialize(self):
         self._sp_asset_compiling_manager = self.get_unreal_object(uclass="USpAssetCompilingManager")
         self._sp_distance_field_async_queue = self.get_unreal_object(uclass="USpDistanceFieldAsyncQueue")
         self._sp_level_streaming = self.get_unreal_object(uclass="USpLevelStreaming")
-        self._sp_navigation_system_v1 = self.get_unreal_object(uclass="USpNavigationSystemV1")
         self._sp_shader_compiling_manager = self.get_unreal_object(uclass="USpShaderCompilingManager")
         self._sp_streaming_manager = self.get_unreal_object(uclass="USpStreamingManager")
         self._sp_world = self.get_unreal_object(uclass="USpWorld")
@@ -46,7 +45,6 @@ class AsyncLoadingService(spear.Service):
         asset_registry_handle = asset_registry_helpers.GetAssetRegistry(as_handle=True)
         self._asset_registry = self.get_unreal_object(uobject=asset_registry_handle, uclass=asset_registry_uclass)
 
-        self._navigation_system = self._sp_navigation_system_v1.GetNavigationSystem()
         self._world_partition_subsystem = self.unreal_service.get_subsystem(subsystem_provider_class_name="UWorld", subsystem_uclass="UWorldPartitionSubsystem")
 
     #
@@ -60,10 +58,9 @@ class AsyncLoadingService(spear.Service):
         async_loading_idle = self.is_async_loading_idle()
         asset_registry_idle = self.is_asset_registry_idle()
         distance_field_async_queue_idle, num_outstanding_distance_field_tasks, is_distance_field_async_queue_initialized = self.is_distance_field_async_queue_idle()
-        asset_compiling_manager_idle, num_remaining_assets = self.is_asset_compiling_manager_idle()
-        navigation_system_idle, num_remaining_build_tasks = self.is_navigation_system_idle()
-        shader_compiling_manager_idle, num_remaining_shader_jobs, is_shader_compiling_manager_initialized = self.is_shader_compiling_manager_idle()
-        streaming_manager_idle, num_wanting_streaming_resources = self.is_streaming_manager_idle()
+        asset_compiling_manager_idle, asset_compiling_manager_num_remaining_assets = self.is_asset_compiling_manager_idle()
+        shader_compiling_manager_idle, shader_compiling_manager_num_remaining_shader_jobs, is_shader_compiling_manager_initialized = self.is_shader_compiling_manager_idle()
+        streaming_manager_idle, streaming_manager_num_wanting_resources = self.is_streaming_manager_idle()
         streaming_levels_idle = self.are_streaming_levels_idle()
         world_partition_streaming_idle = self.is_world_partition_streaming_idle()
 
@@ -72,7 +69,6 @@ class AsyncLoadingService(spear.Service):
             asset_registry_idle and \
             distance_field_async_queue_idle and \
             asset_compiling_manager_idle and \
-            navigation_system_idle and \
             shader_compiling_manager_idle and \
             streaming_manager_idle and \
             streaming_levels_idle and \
@@ -80,16 +76,15 @@ class AsyncLoadingService(spear.Service):
 
         if verbose:
             if not engine_idle or (is_with_editor and not is_distance_field_async_queue_initialized) or (is_with_editor and not is_shader_compiling_manager_initialized):
-                spear.log(f"engine_idle    = {engine_idle} (is_with_editor = {is_with_editor})")
-                spear.log(f"    is_async_loading                           = {not async_loading_idle}")
-                spear.log(f"    is_loading_assets                          = {not asset_registry_idle}")
-                spear.log(f"    num_outstanding_distance_field_tasks       = {num_outstanding_distance_field_tasks} (initialized = {is_distance_field_async_queue_initialized})")
-                spear.log(f"    num_remaining_assets                       = {num_remaining_assets}")
-                spear.log(f"    num_remaining_build_tasks                  = {num_remaining_build_tasks}")
-                spear.log(f"    num_remaining_shader_jobs                  = {num_remaining_shader_jobs} (initialized = {is_shader_compiling_manager_initialized})")
-                spear.log(f"    num_wanting_streaming_resources            = {num_wanting_streaming_resources}")
-                spear.log(f"    are_streaming_levels_loading               = {not streaming_levels_idle}")
-                spear.log(f"    is_all_world_partition_streaming_completed = {world_partition_streaming_idle}")
+                spear.log(f"engine_idle = {engine_idle} (is_with_editor = {is_with_editor})")
+                spear.log(f"    async_loading_idle              = {async_loading_idle}")
+                spear.log(f"    asset_registry_idle             = {asset_registry_idle}")
+                spear.log(f"    distance_field_async_queue_idle = {distance_field_async_queue_idle} (num_outstanding_tasks = {num_outstanding_distance_field_tasks}, initialized = {is_distance_field_async_queue_initialized})")
+                spear.log(f"    asset_compiling_manager_idle    = {asset_compiling_manager_idle} (num_remaining_assets = {asset_compiling_manager_num_remaining_assets})")
+                spear.log(f"    shader_compiling_manager_idle   = {shader_compiling_manager_idle} (num_remaining_shader_jobs = {shader_compiling_manager_num_remaining_shader_jobs}, initialized ={is_shader_compiling_manager_initialized})")
+                spear.log(f"    streaming_manager_idle          = {streaming_manager_idle} (num_wanting_resources = {streaming_manager_num_wanting_resources})")
+                spear.log(f"    streaming_levels_idle           = {streaming_levels_idle}")
+                spear.log(f"    world_partition_streaming_idle  = {world_partition_streaming_idle}")
 
         return engine_idle
 
@@ -126,28 +121,21 @@ class AsyncLoadingService(spear.Service):
 
     def is_distance_field_async_queue_idle(self, verbose=False):
         return_values = self._sp_distance_field_async_queue.GetNumOutstandingTasks(as_dict=True)
-        num_outstanding_distance_field_tasks = return_values["ReturnValue"]
-        is_distance_field_async_queue_initialized = return_values["bIsInitialized"]
-        distance_field_async_queue_idle = num_outstanding_distance_field_tasks == 0
+        num_outstanding_tasks = return_values["ReturnValue"]
+        is_initialized = return_values["bIsInitialized"]
+        distance_field_async_queue_idle = num_outstanding_tasks == 0
         if verbose:
-            spear.log(f"num_outstanding_distance_field_tasks = {num_outstanding_distance_field_tasks} (initialized = {is_distance_field_async_queue_initialized})")
-        return distance_field_async_queue_idle, num_outstanding_distance_field_tasks, is_distance_field_async_queue_initialized
-
-    def is_navigation_system_idle(self, verbose=False):
-        num_remaining_build_tasks = self._sp_navigation_system_v1.GetNumRemainingBuildTasks(NavigationSystem=self._navigation_system)
-        navigation_system_idle = num_remaining_build_tasks == 0
-        if verbose:
-            spear.log(f"num_remaining_build_tasks = {num_remaining_build_tasks}")
-        return navigation_system_idle, num_remaining_build_tasks
+            spear.log(f"distance_field_async_queue_idle = {distance_field_async_queue_idle} (num_outstanding_tasks = {num_outstanding_tasks}, initialized = {is_initialized})")
+        return distance_field_async_queue_idle, num_outstanding_tasks, is_initialized
 
     def is_shader_compiling_manager_idle(self, verbose=False):
         return_values = self._sp_shader_compiling_manager.GetNumRemainingJobs(as_dict=True)
-        num_remaining_shader_jobs = return_values["ReturnValue"]
-        is_shader_compiling_manager_initialized = return_values["bIsInitialized"]
-        shader_compiling_manager_idle = num_remaining_shader_jobs == 0
+        num_remaining_jobs = return_values["ReturnValue"]
+        is_initialized = return_values["bIsInitialized"]
+        shader_compiling_manager_idle = num_remaining_jobs == 0
         if verbose:
-            spear.log(f"num_remaining_shader_jobs = {num_remaining_shader_jobs} (initialized = {is_shader_compiling_manager_initialized})")
-        return shader_compiling_manager_idle, num_remaining_shader_jobs, is_shader_compiling_manager_initialized
+            spear.log(f"shader_compiling_manager_idle = {shader_compiling_manager_idle} (num_remaining_jobs = {num_remaining_shader_jobs}, (initialized = {is_initialized})")
+        return shader_compiling_manager_idle, num_remaining_jobs, is_initialized
 
     def are_streaming_levels_idle(self, verbose=False):
         are_streaming_levels_loading = False
@@ -163,21 +151,21 @@ class AsyncLoadingService(spear.Service):
                 are_streaming_levels_loading = True
         streaming_levels_idle = not are_streaming_levels_loading
         if verbose:
-            spear.log(f"are_streaming_levels_loading = {are_streaming_levels_loading}")
+            spear.log(f"streaming_levels_idle = {streaming_levels_idle}")
         return streaming_levels_idle
 
     def is_streaming_manager_idle(self, verbose=False):
-        num_wanting_streaming_resources = self._sp_streaming_manager.GetNumWantingResources()
-        streaming_manager_idle = num_wanting_streaming_resources == 0
+        num_wanting_resources = self._sp_streaming_manager.GetNumWantingResources()
+        streaming_manager_idle = num_wanting_resources == 0
         if verbose:
-            spear.log(f"num_wanting_streaming_resources = {num_wanting_streaming_resources}")
-        return streaming_manager_idle, num_wanting_streaming_resources
+            spear.log(f"streaming_manager_idle = {streaming_manager_idle} (num_wanting_resources = {num_wanting_resources}")
+        return streaming_manager_idle, num_wanting_resources
 
     def is_world_partition_streaming_idle(self, verbose=False):
-        is_all_world_partition_streaming_completed = self._world_partition_subsystem.IsAllStreamingCompleted()
+        world_partition_streaming_idle = self._world_partition_subsystem.IsAllStreamingCompleted()
         if verbose:
-            spear.log(f"is_all_world_partition_streaming_completed = {is_all_world_partition_streaming_completed}")
-        return is_all_world_partition_streaming_completed
+            spear.log(f"world_partition_streaming_idle = {world_partition_streaming_idle}")
+        return world_partition_streaming_idle
 
     def wait_for_asset_compiling_manager_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
         self._wait_for(func=self.is_asset_compiling_manager_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
@@ -202,12 +190,6 @@ class AsyncLoadingService(spear.Service):
 
     def wait_for_distance_field_async_queue_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
         yield from self._wait_for_in_editor_script(func=self.is_distance_field_async_queue_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
-
-    def wait_for_navigation_system_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
-        self._wait_for(func=self.is_navigation_system_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
-
-    def wait_for_navigation_system_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
-        yield from self._wait_for_in_editor_script(func=self.is_navigation_system_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
 
     def wait_for_shader_compiling_manager_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
         self._wait_for(func=self.is_shader_compiling_manager_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)

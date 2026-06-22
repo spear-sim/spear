@@ -48,8 +48,7 @@ if __name__ == "__main__":
         components = game.unreal_service.get_components_by_class_as_dict(actor=bp_multi_view_camera_sensor, uclass="USpSceneCaptureComponent2D")
         assert len(components) == num_rows*num_cols
 
-        bp_multi_view_camera_sensor.K2_SetActorLocation(NewLocation=camera_location)
-        bp_multi_view_camera_sensor.K2_SetActorRotation(NewRotation=camera_rotator)
+        bp_multi_view_camera_sensor.K2_SetActorLocationAndRotation(NewLocation=camera_location, NewRotation=camera_rotator)
 
         post_process_volume_settings = None
         post_process_volumes = game.unreal_service.find_actors_by_class(uclass="APostProcessVolume")
