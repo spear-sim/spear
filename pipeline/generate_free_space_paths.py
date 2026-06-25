@@ -277,7 +277,26 @@ def plan_through_waypoints(safe_set, waypoints, cost_weights):
         set_planning_step(description=f"fastpathplanning polygonal phase for leg {waypoint_index}")
         discrete_planner, _ = safe_set.G.shortest_path(goal=p_term)
         leg_box_sequence, _, _ = discrete_planner(start=p_init)
-        leg_box_sequence, leg_trajectory, _, _ = fpp.polygonal.iterative_planner(B=safe_set.B, start=p_init, goal=p_term, box_seq=leg_box_sequence, verbose=True)
+
+        # This fix-up logic is required to work around a bug in fastpathplanning. Specifically, discrete_planner can
+        # in some cases append an extra bounding box to leg_box_sequence that doesn't contain p_term. This is a bug.
+        # The smooth phase pins p_term to the end of the last box in leg_box_sequence, so a trailing box that doesn't
+        # contain p_term would make the optimization problem infeasible. So we must detect and remove this extra
+        # bounding box if it is present.
+        if not (np.all(safe_set.B.boxes[leg_box_sequence[-1]].l <= p_term) and np.all(p_term <= safe_set.B.boxes[leg_box_sequence[-1]].u)):
+            leg_box_sequence = leg_box_sequence[:-1]
+
+        assert np.all(safe_set.B.boxes[leg_box_sequence[0]].l <= p_init) and np.all(p_init <= safe_set.B.boxes[leg_box_sequence[0]].u)
+        assert np.all(safe_set.B.boxes[leg_box_sequence[-1]].l <= p_term) and np.all(p_term <= safe_set.B.boxes[leg_box_sequence[-1]].u)
+
+        # iterative_planner's solve_min_distance cannot handle a single-box sequence: zip(boxes[:-1], boxes[1:])
+        # produces no intersection constraints, leaving l and u as shape-(0,) arrays, which CVXPY can't broadcast
+        # against shape-(0,3) trajectory variables. Since both p_init and p_term are in the single box (guaranteed
+        # by the asserts above), the straight-line trajectory is valid and optimal.
+        if len(leg_box_sequence) == 1:
+            leg_trajectory = np.array([p_init, p_term])
+        else:
+            leg_box_sequence, leg_trajectory, _, _ = fpp.polygonal.iterative_planner(B=safe_set.B, start=p_init, goal=p_term, box_seq=leg_box_sequence, verbose=True)
 
         box_sequence.extend(leg_box_sequence)
         durations.extend(np.linalg.norm(leg_trajectory[1:] - leg_trajectory[:-1], axis=1))
