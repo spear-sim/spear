@@ -108,7 +108,7 @@ public:
             std::vector<AActor*> actors = UnrealUtils::findActors(GetWorld());
             unregisterAndDestroyProxyComponentsForAllTypes();
             requestCreateAndRegisterProxyComponentsForAllTypes(actors);
-        } else if (IsInitialized()) {
+        } else if (IsInitialized() && bUpdateProxyComponentsEveryTick) {
             std::vector<AActor*> actors = UnrealUtils::findActors(GetWorld());
             requestUnregisterAndDestroyProxyComponentsForAllTypes(actors);
             requestCreateAndRegisterProxyComponentsForAllTypes(actors);
@@ -141,6 +141,18 @@ public:
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
+    void Update()
+    {
+        if (!IsInitialized()) {
+            return;
+        }
+
+        std::vector<AActor*> actors = UnrealUtils::findActors(GetWorld());
+        requestUnregisterAndDestroyProxyComponentsForAllTypes(actors);
+        requestCreateAndRegisterProxyComponentsForAllTypes(actors);
+    }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
     bool IsInitialized() const { return is_initialized_; }
 
 protected:
@@ -169,6 +181,9 @@ private:
 
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
     bool bIsInitialized = false;
+
+    UPROPERTY(VisibleAnywhere, Category="SPEAR")
+    bool bUpdateProxyComponentsEveryTick = true;
 
     bool request_reinitialize_ = false;
     bool is_initialized_ = false;
