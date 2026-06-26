@@ -68,7 +68,14 @@ def process_scene():
     # resolution and field of view). The segmentation service must be initialized before the component so that the
     # rendered object-ids pass contains valid per-component-material segment ids.
     with instance.begin_frame():
+
+        # The default behavior of SegmentationService is to automatically update its internal segmentation book-keeping
+        # data structures every frame. We assume we're operating in a static scene here, so we disable this automatic
+        # update behavior. If we call segmentation_service.set_update_every_tick(update_every_tick=False), then we must
+        # call segmentation_service.update() whenever a segmentation-visible actor is spawned or destroyed.
         game.segmentation_service.initialize()
+        game.segmentation_service.set_update_every_tick(update_every_tick=False)
+
         camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
         camera_sensor = game.unreal_service.spawn_actor(uclass=camera_sensor_uclass)
         segmentation_component = game.unreal_service.get_component_by_name(actor=camera_sensor, component_name="DefaultSceneRoot.sp_object_ids_uint8_", uclass="USpSceneCaptureComponent2D")
