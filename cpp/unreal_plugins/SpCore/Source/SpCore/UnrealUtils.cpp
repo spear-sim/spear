@@ -1214,48 +1214,58 @@ void UnrealUtils::setStableName(AActor* actor, const std::string& stable_name)
     void UnrealUtils::requestAddOrUpdateStableNameActor(AActor* actor)
     {
         SP_ASSERT(actor);
-        std::vector<ASpStableNameManager*> sp_stable_name_managers = findActorsByType<ASpStableNameManager>(actor->GetWorld());
-        for (auto sp_stable_name_manager : sp_stable_name_managers) {
-            SP_ASSERT(sp_stable_name_manager);
-            sp_stable_name_manager->requestAddOrUpdateActor(actor);
+        UWorld* world = actor->GetWorld(); // this function can be called for CDO actors, so we need to check if world is valid
+        if (world) {
+            std::vector<ASpStableNameManager*> sp_stable_name_managers = findActorsByType<ASpStableNameManager>(world);
+            for (auto sp_stable_name_manager : sp_stable_name_managers) {
+                SP_ASSERT(sp_stable_name_manager);
+                sp_stable_name_manager->requestAddOrUpdateActor(actor);
+            }
         }
     }
 
     void UnrealUtils::requestAddStableNameActor(AActor* actor)
     {
         SP_ASSERT(actor);
-        std::vector<ASpStableNameManager*> sp_stable_name_managers = findActorsByType<ASpStableNameManager>(actor->GetWorld());
-        for (auto sp_stable_name_manager : sp_stable_name_managers) {
-            SP_ASSERT(sp_stable_name_manager);
-            sp_stable_name_manager->requestAddActor(actor);
+        UWorld* world = actor->GetWorld();
+        if (world) {
+            std::vector<ASpStableNameManager*> sp_stable_name_managers = findActorsByType<ASpStableNameManager>(actor->GetWorld());
+            for (auto sp_stable_name_manager : sp_stable_name_managers) {
+                SP_ASSERT(sp_stable_name_manager);
+                sp_stable_name_manager->requestAddActor(actor);
+            }
         }
     }
 
     void UnrealUtils::requestRemoveStableNameActor(AActor* actor)
     {
         SP_ASSERT(actor);
-        std::vector<ASpStableNameManager*> sp_stable_name_managers = findActorsByType<ASpStableNameManager>(actor->GetWorld());
-        for (auto sp_stable_name_manager : sp_stable_name_managers) {
-            SP_ASSERT(sp_stable_name_manager);
-            sp_stable_name_manager->requestRemoveActor(actor);
+        UWorld* world = actor->GetWorld();
+        if (world) {
+            std::vector<ASpStableNameManager*> sp_stable_name_managers = findActorsByType<ASpStableNameManager>(actor->GetWorld());
+            for (auto sp_stable_name_manager : sp_stable_name_managers) {
+                SP_ASSERT(sp_stable_name_manager);
+                sp_stable_name_manager->requestRemoveActor(actor);
+            }
         }
     }
 
     void UnrealUtils::requestUpdateStableName(AActor* actor)
     {
         SP_ASSERT(actor);
-
-        bool include_from_child_actors = false;
-        std::vector<USpStableNameComponent*> sp_stable_name_components = getComponentsByType<USpStableNameComponent>(actor, include_from_child_actors);
-        for (auto sp_stable_name_component : sp_stable_name_components) {
-            SP_ASSERT(sp_stable_name_component);
-            sp_stable_name_component->requestUpdate();
-        }
-
-        std::vector<ASpStableNameManager*> sp_stable_name_managers = findActorsByType<ASpStableNameManager>(actor->GetWorld());
-        for (auto sp_stable_name_manager : sp_stable_name_managers) {
-            SP_ASSERT(sp_stable_name_manager);
-            sp_stable_name_manager->requestUpdateActor(actor);
+        UWorld* world = actor->GetWorld();
+        if (world) {
+            bool include_from_child_actors = false;
+            std::vector<USpStableNameComponent*> sp_stable_name_components = getComponentsByType<USpStableNameComponent>(actor, include_from_child_actors);
+            for (auto sp_stable_name_component : sp_stable_name_components) {
+                SP_ASSERT(sp_stable_name_component);
+                sp_stable_name_component->requestUpdate();
+            }
+            std::vector<ASpStableNameManager*> sp_stable_name_managers = findActorsByType<ASpStableNameManager>(actor->GetWorld());
+            for (auto sp_stable_name_manager : sp_stable_name_managers) {
+                SP_ASSERT(sp_stable_name_manager);
+                sp_stable_name_manager->requestUpdateActor(actor);
+            }
         }
     }
 
