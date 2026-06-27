@@ -37,6 +37,7 @@ python examples/getting_started/run.py
 We recommend browsing through our example applications to get a sense of what is currently possible with SPEAR.
   - [`examples/control_car`](../examples/control_car) demonstrates how to control the default Unreal car.
   - [`examples/control_character`](../examples/control_character) demonstrates how to control the default Unreal humanoid character.
+  - [`examples/control_city_generator`](../examples/control_city_generator) demonstrates how to control Epic Games' procedural city map.
   - [`examples/control_city_sample`](../examples/control_city_sample) demonstrates how to control Epic Games' `CitySample` project.
   - [`examples/control_cropout_sample`](../examples/control_cropout_sample) demonstrates how to control Epic Games' `CropoutSample` project.
   - [`examples/control_editor`](../examples/control_editor) demonstrates how to control the Unreal Editor and a play-in-editor simulation.
