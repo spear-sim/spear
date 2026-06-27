@@ -152,7 +152,7 @@ if __name__ == "__main__":
     # execute warm-up frames to give us a chance to teleport to the spawned character
     #
 
-    instance.flush(num_frames=60)
+    instance.step(num_frames=60)
 
     #
     # initialize frame counter

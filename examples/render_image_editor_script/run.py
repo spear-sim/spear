@@ -54,7 +54,7 @@ def script():
 
     # let temporal anti-aliasing etc accumulate additional information across multiple frames, and
     # inserting an extra frame or two can fix occasional render-to-texture initialization issues
-    yield from instance.flush_in_editor_script(num_frames=2)
+    yield from instance.step_in_editor_script(num_frames=2)
 
     # get rendered frame
     with instance.begin_frame():

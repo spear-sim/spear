@@ -42,6 +42,10 @@
             "Enabled": true
         },
         {
+            "Name": "PCGPrimitives",
+            "Enabled": true
+        },
+        {
             "Name": "PythonScriptPlugin",
             "Enabled": true
         },
