@@ -212,3 +212,24 @@ class SegmentationService(spear.Service):
     def set_ignored_components(self, ignored_components):
         assert self.proxy_component_manager is not None
         self.proxy_component_manager.SetIgnoredComponents(IgnoredComponents=ignored_components)
+
+    #
+    # Explicit update functions. The default behavior of SegmentationService is to automatically update its
+    # internal segmentation book-keeping data structures every frame. This behavior guarantees correct
+    # segmentation maps for fully dynamic scenes, regardless of how actors are spawned and destroyed. But
+    # this approach can be expensive for large scenes. So a user can optionally call set_update_every_tick(update_every_tick=False)
+    # to disable automatic updates, in which case the user must call update() whenever a segmentation-visible
+    # actor is spawned or destroyed.
+    #
+
+    def update(self):
+        assert self.proxy_component_manager is not None
+        return self.proxy_component_manager.Update()
+
+    def get_update_every_tick(self):
+        assert self.proxy_component_manager is not None
+        return self.proxy_component_manager.bUpdateProxyComponentsEveryTick.get()
+
+    def set_update_every_tick(self, update_every_tick):
+        assert self.proxy_component_manager is not None
+        self.proxy_component_manager.bUpdateProxyComponentsEveryTick = update_every_tick

@@ -105,7 +105,7 @@ public:
 
         // only need to update these variables for debugging in the editor
         #if WITH_EDITOR // defined in an auto-generated header
-            if (mesh_proxy_component_manager_) {
+            if (mesh_proxy_component_manager_ && bUpdateDebugInfoEveryTick) {
                 UnregisterDelayFrames = GetUnregisterDelayFrames();
                 MeshProxyGeometryDescs = GetMeshProxyGeometryDescs();
             }
@@ -238,6 +238,9 @@ public:
         SP_ASSERT(mesh_proxy_component_manager_);
         mesh_proxy_component_manager_->setUnregisterDelayFrames(InUnregisterDelayFrames);
     }
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bUpdateDebugInfoEveryTick = false;
 
 protected:
     void setMeshProxyComponentManager(MeshProxyComponentManager* mesh_proxy_component_manager)
