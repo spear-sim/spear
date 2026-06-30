@@ -28,7 +28,7 @@ _We demonstrate the generality of the SPEAR camera sensor by using it to render 
 
 _SPEAR can be used in co-simulation applications with external physics simulators. In this application, we interactively control the MuJoCo physics simulator using the default MuJoCo viewer, e.g., by applying a force to the leftmost chair (red arrow). In real-time as the MuJoCo simulation is running, we query the state of the MuJoCo scene (inset images), and we use SPEAR to update the state of a corresponding UE scene (large images)._
 
-![scene_editing](https://github.com/user-attachments/assets/2ed68f36-8cc9-4cc8-bfc8-f84f80c9e28e)
+![scene_editing](https://github.com/user-attachments/assets/36939703-1981-4263-ac9c-70c5441999dd)
 
 _We demonstrate the flexibility of SPEAR by using it to implement an agentic natural-language scene editing application, where a vision-and-language coding assistant manipulates a UE scene by iteratively writing SPEAR programs in response to user text prompts._
 
