@@ -42,9 +42,12 @@ We recommend browsing through our example applications to get a sense of what is
   - [`examples/control_editor`](../examples/control_editor) demonstrates how to control the Unreal Editor and a play-in-editor simulation.
   - [`examples/control_electric_dreams_sample`](../examples/control_electric_dreams_sample) demonstrates how to control Epic Games' `ElectricDreams` project.
   - [`examples/control_game_animation_sample`](../examples/control_game_animation_sample) demonstrates how to control Epic Games' `GameAnimationSample` project.
+  - [`examples/control_hillside_sample`](../examples/control_hillside_sample) demonstrates how to control Epic Games' `HillsideSample` project.
   - [`examples/control_metahumans_sample`](../examples/control_metahumans_sample) demonstrates how to control Epic Games' `MetaHumans` project.
   - [`examples/control_simple_agent`](../examples/control_simple_agent) demonstrates how to control a simple agent and obtain egocentric visual observations.
   - [`examples/control_stackobot_sample`](../examples/control_stackobot_sample) demonstrates how to control Epic Games' `StackOBot` project.
+  - [`examples/debug_draw`](../examples/debug_draw) demonstrates how to interact with Unreal's DebugDraw system.
+  - [`examples/editor_script_interop`](../examples/editor_script_interop) demonstrates how to interact with the Unreal Editor's built-in Python API from SPEAR.
   - [`examples/enhanced_input`](../examples/enhanced_input) demonstrates how to interact with Unreal's Enhanced Input system.
   - [`examples/get_class_info`](../examples/get_class_info) demonstrates how to interact with Unreal's runtime reflection system.
   - [`examples/getting_started`](../examples/getting_started) demonstrates how to spawn an object and access object properties.
@@ -59,8 +62,10 @@ We recommend browsing through our example applications to get a sense of what is
   - [`examples/open_level`](../examples/open_level) demonstrates how to dynamically change levels.
   - [`examples/render_image`](../examples/render_image) demonstrates how to spawn a camera sensor object and render an image.
   - [`examples/render_image_async`](../examples/render_image_async) demonstrates how to render an image using the asynchronous API available in SPEAR.
+  - [`examples/render_image_buffered`](../examples/render_image_buffered) demonstrates how to render an image using buffered rendering for increased throughput.
   - [`examples/render_image_dataset`](../examples/render_image_dataset) demonstrates how to generate random camera poses and render a collection of images.
-  - [`examples/render_image_hypersim`](../examples/render_image_hypersim) demonstrates how to render images that match the Hypersim dataset.
   - [`examples/render_image_editor`](../examples/render_image_editor) demonstrates how to render an image using the Unreal Editor's built-in Python API.
+  - [`examples/render_image_editor_script`](../examples/render_image_editor_script) demonstrates how to render an image using the editor's built-in Python API and SPEAR.
+  - [`examples/render_image_hypersim`](../examples/render_image_hypersim) demonstrates how to render images that match the Hypersim dataset.
   - [`examples/render_image_multi_view`](../examples/render_image_multi_view) demonstrates how to render from a multi-view camera rig.
   - [`examples/sample_nav_mesh`](../examples/sample_nav_mesh) demonstrates how to sample points and shortest paths from Unreal's nav mesh system.
