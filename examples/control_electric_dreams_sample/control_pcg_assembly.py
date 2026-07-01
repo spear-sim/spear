@@ -155,7 +155,13 @@ if __name__ == "__main__":
             NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=location_start),
             NewRotation=spear.math.to_spear_rotator_from_numpy_array(numpy_array_pyr=rotator_pyr_start))
 
-        # force PCG updates
+        # Force the PCG assemblies to regenerate at the new pose. FlushCache is required here, not just
+        # Generate(bForce=True): bForce forces re-execution but does NOT bypass the PCG graph cache, which
+        # is keyed on each node's input CRC. The assembly's input is UPCGPrimitiveData, whose CRC is a
+        # transform-insensitive UID, and the component's cached actor data is not refreshed on a runtime
+        # move -- so the input CRC is unchanged after K2_SetActorLocationAndRotation. Without flushing, the
+        # graph cache would hit and return stale geometry at the old pose; clearing it forces the elements
+        # to re-sample the live (moved) components.
         sp_pcg_subsystem.FlushCache(PCGSubsystem=pcg_subsystem)
         for bp_pcg_assembly_desc in bp_pcg_assembly_descs:
             for pcg_component in bp_pcg_assembly_desc["pcg_components"]:
@@ -226,7 +232,8 @@ if __name__ == "__main__":
                 NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=location),
                 NewRotation=spear.math.to_spear_rotator_from_numpy_array(numpy_array_pyr=rotator_pyr))
 
-            # force PCG updates
+            # Force the PCG assemblies to regenerate at the new pose. FlushCache is required (see the
+            # detailed rationale at the first FlushCache call above).
             sp_pcg_subsystem.FlushCache(PCGSubsystem=pcg_subsystem)
             for bp_pcg_assembly_desc in bp_pcg_assembly_descs:
                 for pcg_component in bp_pcg_assembly_desc["pcg_components"]:
