@@ -100,9 +100,11 @@ if __name__ == "__main__":
         pass
     spear.log(f"Set {len(knots_world)} spline points.")
 
-    # Regenerate PCG_2 through PCG_7 in dependency order. Generate(bForce=True) ignores the PCG
-    # cache, and the modified City_Shape spline changes each graph's input hash, so a separate
-    # FlushCache is unnecessary here.
+    # Regenerate PCG_2 through PCG_7 in dependency order. Generate(bForce=True) forces re-execution
+    # but does NOT bypass the PCG graph cache (the cache is always consulted, keyed on each node's
+    # input CRC). No separate FlushCache is needed here because we edited the City_Shape spline
+    # above: UPCGSplineData hashes its control points into its CRC, so the new knots change each
+    # graph's input CRC and the stale cache entries miss on their own.
     with instance.begin_frame():
         for name in _PCG_VOLUME_NAMES_TO_GENERATE:
             pcg_actor = game.unreal_service.find_actor_by_name(actor_name=name, uclass="AActor")
