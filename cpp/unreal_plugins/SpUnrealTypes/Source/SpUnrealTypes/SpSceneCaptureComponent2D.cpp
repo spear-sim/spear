@@ -555,7 +555,7 @@ SpPackedArray USpSceneCaptureComponent2D::readPixelsImpl()
         int64_t spin_wait_iterations = 0;
         while (num_readbacks_pending_ > 0) {
             spin_wait_iterations++;
-            if (spin_wait_iterations % 100*1000*1000 == 0) {
+            if (spin_wait_iterations % (100*1000*1000) == 0) {
                 SP_LOG("ERROR: Spin wait in readPixelsImpl() appears to be deadlocked.");
                 SP_ASSERT(false);
             }            
