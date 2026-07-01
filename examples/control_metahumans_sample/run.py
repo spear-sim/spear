@@ -49,9 +49,6 @@ if __name__ == "__main__":
         # get UGameplayStatics
         gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
 
-        # get player controller
-        player_controller = gameplay_statics.GetPlayerController(PlayerIndex=0)
-
         # spawn camera sensor and get its components
         bp_multi_view_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_MultiViewCameraSensor_13.BP_MultiViewCameraSensor_13_C")
         bp_multi_view_camera_sensor = game.unreal_service.spawn_actor(uclass=bp_multi_view_camera_sensor_uclass)
