@@ -18,6 +18,13 @@ class USpLevelStreaming : public UBlueprintFunctionLibrary
     GENERATED_BODY()
 public: 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
+    static bool IsStreamingStatePending(ULevelStreaming* LevelStreaming)
+    {
+        SP_ASSERT(LevelStreaming);
+        return LevelStreaming->IsStreamingStatePending();
+    }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
     static bool ShouldBeVisible(ULevelStreaming* LevelStreaming)
     {
         SP_ASSERT(LevelStreaming);
