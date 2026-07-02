@@ -23,4 +23,11 @@ public:
         SP_ASSERT(LevelStreaming);
         return LevelStreaming->ShouldBeVisible();
     }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    static bool IsStreamingStatePending(ULevelStreaming* LevelStreaming)
+    {
+        SP_ASSERT(LevelStreaming);
+        return LevelStreaming->IsStreamingStatePending();
+    }
 };

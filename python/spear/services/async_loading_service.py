@@ -142,12 +142,7 @@ class AsyncLoadingService(spear.Service):
         world = self.get_world()
         streaming_levels = self._sp_world.GetStreamingLevels(World=spear.to_ptr(handle=world))
         for streaming_level in streaming_levels:
-            is_level_loaded = streaming_level.IsLevelLoaded()
-            is_level_visible = streaming_level.IsLevelVisible()
-            should_be_visible = self._sp_level_streaming.ShouldBeVisible(LevelStreaming=streaming_level)
-            if not is_level_loaded:
-                are_streaming_levels_loading = True
-            if should_be_visible and not is_level_visible:
+            if self._sp_level_streaming.IsStreamingStatePending(LevelStreaming=streaming_level):
                 are_streaming_levels_loading = True
         streaming_levels_idle = not are_streaming_levels_loading
         if verbose:
