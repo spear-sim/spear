@@ -24,7 +24,7 @@ _We demonstrate the flexibility of SPEAR by using it to programmtically manipula
 
 _We demonstrate the generality of the SPEAR camera sensor by using it to render synchronized multi-view images of a detailed human character in the `MetaHumans` sample project from Epic Games._
 
-![mujoco](https://github.com/user-attachments/assets/23629609-47ff-45c5-92f1-0243d0aac858)
+![mujoco](https://github.com/user-attachments/assets/ce7fe56f-7cbf-4c06-90c9-a5b844d39d3f)
 
 _SPEAR can be used in co-simulation applications with external physics simulators. In this application, we interactively control the MuJoCo physics simulator using the default MuJoCo viewer, e.g., by applying a force to the leftmost chair (red arrow). In real-time as the MuJoCo simulation is running, we query the state of the MuJoCo scene (inset images), and we use SPEAR to update the state of a corresponding UE scene (large images)._
 
