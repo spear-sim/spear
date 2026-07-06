@@ -5,6 +5,8 @@
 
 import os
 
+from .log_utils import log
+
 # perform configuration steps that should only be done once per system, as opposed to once per instance
 def configure_system(config):
 
