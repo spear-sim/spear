@@ -56,8 +56,8 @@ if __name__ == "__main__":
         config.SP_SERVICES.INITIALIZE_ENGINE_SERVICE.BENCHMARKING = False
 
     if not args.skip_override_game_paused:
-        config.SP_SERVICES.INITIALIZE_GAME_WORLD_SERVICE.OVERIDE_GAME_PAUSED = True
-        config.SP_SERVICES.INITIALIZE_GAME_WORLD_SERVICE.GAME_PAUSED = False
+        config.SP_SERVICES.WORLD_REGISTRY_SERVICE.OVERRIDE_GAME_PAUSED = True
+        config.SP_SERVICES.WORLD_REGISTRY_SERVICE.GAME_PAUSED = False
 
     if args.graphics_adaptor is not None:
         config.SPEAR.INSTANCE.COMMAND_LINE_ARGS.graphics_adaptor = args.graphics_adaptor
