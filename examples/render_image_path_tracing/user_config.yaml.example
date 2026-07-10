@@ -1,0 +1,16 @@
+#
+# Copyright (c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+# Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+#
+
+# The recommended workflow here for convenience and fast iteration time is LAUNCH_MODE:"none" + EDITOR_LAUNCH_MODE:"game".
+# To run the `run.py`, open the SpearSim project in the UE editor and enter play mode. The render uses the viewport camera.
+
+SPEAR:
+  LAUNCH_MODE: "none"
+
+  INSTANCE:
+    EDITOR_LAUNCH_MODE: "game"
+    # Rendering/denoising can sometimes take a few seconds
+    RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 30.0
+    CLIENT_INTERNAL_TIMEOUT_SECONDS: 30.0
