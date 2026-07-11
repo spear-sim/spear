@@ -804,7 +804,7 @@ class Client:
         return {"data": data, "data_source": packed_array.data_source, "shape": packed_array.shape, "data_type": data_type, "shared_memory_name": packed_array.shared_memory_name}
 
     #
-    # The return_as strings used in _to_return_values(...) need to match the "entry_point" values in:
+    # The return_as strings used in _to_return_values(...) need to match the s_type_names_ values in:
     #     cpp/unreal_plugins/SpServices/Source/SpServices/FuncSignatureRegistry.h
     #
 

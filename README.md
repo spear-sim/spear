@@ -146,7 +146,7 @@ with instance.end_frame():
 
 ## Citation
 
-If you find SPEAR useful in your research, please cite this repository as follows.
+If you find SPEAR useful in your research, please cite this [paper](https://arxiv.org/abs/2607.06701) as follows.
 
 ```
 @inproceedings{roberts:2026

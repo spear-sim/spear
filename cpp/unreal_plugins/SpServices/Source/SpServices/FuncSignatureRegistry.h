@@ -23,8 +23,8 @@ class FuncSignatureRegistry
 {
     //
     // If a type appears as an argument or a return value anywhere in our RPC interface, it needs to be
-    // listed here, and these lists need to match the ones in (keep custom types sorted by the order the
-    // types appear in MsgpackAdaptors.h:
+    // listed here, and these lists need to match the ones in the following files. Keep custom types sorted
+    // by the order the types appear in MsgpackAdaptors.h:
     //     python_ext/cpp/func_signature_registry.h
     //     python/spear/utils/editor_utils.py
     //
