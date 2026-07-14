@@ -312,7 +312,7 @@ if __name__ == "__main__":
             cmd = \
                 cmd_prefix + \
                 "python " + \
-                f'{os.path.realpath(os.path.join(os.path.dirname(__file__), "build_pak.py"))} ' + \
+                f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "build_pak.py"))}" ' + \
                 f'--pak-file "{pak_file}" ' + \
                 f'--cook-dirs-file "{cook_dirs_file}" ' + \
                 f'--cook-maps-file "{cook_maps_file}" ' + \

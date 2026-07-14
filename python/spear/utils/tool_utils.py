@@ -63,6 +63,6 @@ def remove_path(path):
             rm_cmd = "rm"
         else:
             assert False
-        cmd = f"{rm_cmd} {path}"
+        cmd = f'{rm_cmd} "{path}"'
         cmd_result = os.system(cmd)
         assert cmd_result == 0

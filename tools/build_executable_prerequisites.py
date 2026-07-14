@@ -126,7 +126,7 @@ if __name__ == "__main__":
             cmd_prefix + \
             "python " + \
             f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "build_third_party_libs.py"))}" ' + \
-            f"--third-party-dir  {third_party_dir} "
+            f'--third-party-dir "{third_party_dir}" '
         spear.log("Executing: ", cmd)
         subprocess.run(cmd, shell=True, check=True)
 

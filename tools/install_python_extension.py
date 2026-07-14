@@ -180,7 +180,7 @@ if __name__ == "__main__":
         python_ext_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "python_ext"))
         so_files = glob.glob(os.path.join(python_ext_dir, "**", "*.so"), recursive=True)
         for so_file in so_files:
-            dsym_cmd = f"dsymutil {so_file} -o {so_file}.dSYM"
+            dsym_cmd = f'dsymutil "{so_file}" -o "{so_file}.dSYM"'
             spear.log("Executing: ", dsym_cmd)
             subprocess.run(dsym_cmd, shell=True, check=True)
 
