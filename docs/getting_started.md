@@ -35,6 +35,8 @@ macOS:   XCode 16 or 26
 
 If you're developing on Windows, make sure to select _Desktop development with C++_ and _Game development with C++_ from the _Workloads_ tab when installing Visual Studio, and also make sure to select _MSVC v143 - VS2022 C++ x64/x86 build tools (v14.44-17.14)_ from the _Individual Components_ tab.
 
+In case you have a newer Visual Studio version installed (for example VS 2026), it's possible the UBT might choose that toolchain instead of the correct VS 2022 one. In that case please see the note in `SpTargetRules.Target.cs`.
+
 If you're developing on macOS, make sure to select _macOS_ under _Platform Support_ when installing XCode, and make sure to select _Metal Toolchain_ from _Other Components_. Note that XCode 26 is not officially supported by Unreal Engine 5.5, but it can be made to work by running one of our command-line tools (see below).
 
 ## Configure your terminal
