@@ -27,6 +27,12 @@ public class SpTargetRulesTarget : TargetRules
             // are visible in the terminal.
             bBuildAdditionalConsoleApp = true;
 
+            WindowsPlatform.Compiler = WindowsCompiler.VisualStudio2022;
+
+            // When you have multiple Visual Studio versions installed, the UBT can sometimes pick the wrong one
+            // by default. Use this flag to pin it to a specific version of the MSVC toolchain.
+            // WindowsPlatform.CompilerVersion = "14.44.35207";
+
             // Sometimes useful for debugging:
             // bOverrideBuildEnvironment = true;
             // AdditionalCompilerArguments = "/showIncludes";
