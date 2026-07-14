@@ -53,8 +53,6 @@ public class SpModuleRules : ModuleRules
             PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost")));
 
             if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Win64) {
-                // boost::asio::disposition conflicts with a local variable of the same name in win_iocp_file_service.ipp, triggering MSVC error C4459.
-                PublicDefinitions.Add("BOOST_ASIO_DISABLE_CONCEPTS");
                 PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_filesystem-vc143-mt-x64-1_90.lib")));
                 PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_unit_test_framework-vc143-mt-x64-1_90.lib")));
             } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Mac) {
