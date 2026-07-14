@@ -1,25 +1,5 @@
 # Getting Started
 
-## TL;DR - minimal windows SpearSim editor install
-This is the bare minimum to let you open the project and get started. Please read the full guide to learn more.
-
-Install `git`, `UE 5.5`, `VS 2022` and `cmake` before starting.
-
-```
-conda create --name spear-env python=3.11
-conda activate spear-env
-
-git clone https://github.com/spear-sim/spear --recurse-submodules
-cd spear
-
-pip install -e python
-python tools/install_python_package_in_editor_env.py --unreal-engine-dir "C:\Program Files\Epic Games\UE_5.5"
-python tools/build_third_party_libs.py
-python tools/install_python_extension.py  
-python tools/copy_engine_content.py --unreal-engine-dir "C:\Program Files\Epic Games\UE_5.5"
-python tools/run_uat.py --unreal-engine-dir "C:\Program Files\Epic Games\UE_5.5" -build
-```
-
 ## Assumptions
 
 We will assume that you are developing on a version of Windows, macOS, or Linux that is compatible with Unreal Engine 5.5. We will also assume that you're using Anaconda Python to manage your Python environment, and that you have Git and CMake installed.
