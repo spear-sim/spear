@@ -43,7 +43,7 @@ if __name__ == "__main__":
         unknown_arg_string = " ".join(unknown_args)
 
     # need shell=True to correctly handle the quotes in cmd
-    cmd = f'"{unreal_editor_bin}" "{uproject}" {args.map} -game -levelsequence="{args.level_sequence}" -moviepipelineconfig="{args.mrq_config}"'
+    cmd = f'"{unreal_editor_bin}" "{uproject}" "{args.map}" -game -levelsequence="{args.level_sequence}" -moviepipelineconfig="{args.mrq_config}"'
     spear.log("Executing: ", cmd)
     subprocess.run(cmd, shell=True, check=True)
 

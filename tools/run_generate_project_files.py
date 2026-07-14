@@ -50,7 +50,7 @@ if __name__ == "__main__":
     assert len(uprojects) == 1
     uproject = uprojects[0]
 
-    cmd = f'{generate_project_files_script} -project="{uproject}" {generate_project_files_args}'
+    cmd = f'"{generate_project_files_script}" -project="{uproject}" {generate_project_files_args}'
     spear.log("Executing: ", cmd)
     subprocess.run(cmd, shell=True, check=True)
 
