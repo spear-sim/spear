@@ -3,20 +3,23 @@
     "EngineAssociation": "5.5",
     "Category": "",
     "Description": "",
-    "Modules": [
+    "Modules":
+    [
         {
             "Name": "SpearSim",
             "Type": "Runtime",
             "LoadingPhase": "Default",
-            "AdditionalDependencies": [
+            "AdditionalDependencies":
+            [
                 "SpCore"
             ]
         }
     ],
-    "Plugins": [
+    "Plugins":
+    [
         {
             "Name": "ChaosVehiclesPlugin",
-            "Enabled": true
+            "Enabled":  true
         },
         {
             "Name": "EditorScriptingUtilities",
@@ -39,23 +42,24 @@
             "Enabled": true
         },
         {
-            "Name": "PythonScriptPlugin",
-            "Enabled": true
-        },
-        {
-            "Name": "SpCore",
-            "Enabled":  true
-        },
-        {
             "Name": "OpenImageDenoise",
             "Enabled": true
         },
         {
             "Name": "OptiXDenoise",
             "Enabled": true
+        },
+        {
+            "Name": "PythonScriptPlugin",
+            "Enabled": true
+        },
+        {
+            "Name": "SpCore",
+            "Enabled":  true
         }
     ],
-    "AdditionalPluginDirectories": [
+    "AdditionalPluginDirectories":
+    [
         "../../unreal_plugins"
     ]
 }
