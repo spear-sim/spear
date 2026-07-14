@@ -27,11 +27,12 @@ public class SpTargetRulesTarget : TargetRules
             // are visible in the terminal.
             bBuildAdditionalConsoleApp = true;
 
+            // When multiple versions of Visual Studio and/or the MSVC toolchain are installed, the Unreal
+            // Build Tool (UBT) is not guaranteed to select the correct one by default. We use these settings
+            // to pin the UBT to the specific version of the MSVC toolchain that we have found to be
+            // compatible with our plugins.
             WindowsPlatform.Compiler = WindowsCompiler.VisualStudio2022;
-
-            // When you have multiple Visual Studio versions installed, the UBT can sometimes pick the wrong one
-            // by default. Use this flag to pin it to a specific version of the MSVC toolchain.
-            // WindowsPlatform.CompilerVersion = "14.44.35207";
+            WindowsPlatform.CompilerVersion = "14.44.35207";
 
             // Sometimes useful for debugging:
             // bOverrideBuildEnvironment = true;
