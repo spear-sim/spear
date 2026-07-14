@@ -19,7 +19,7 @@
     [
         {
             "Name": "ChaosVehiclesPlugin",
-            "Enabled":  true
+            "Enabled": true
         },
         {
             "Name": "EditorScriptingUtilities",
@@ -47,7 +47,7 @@
         },
         {
             "Name": "SpCore",
-            "Enabled":  true
+            "Enabled": true
         }
     ],
     "AdditionalPluginDirectories":
