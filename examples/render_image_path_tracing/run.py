@@ -8,7 +8,7 @@
 # This example renders a path-traced image with a USpSceneCaptureComponent2D (no Movie Render Queue). It is the
 # same flow as examples/render_image, except the scene capture is routed through Unreal's offline path tracer
 # instead of the real-time renderer.
-# r.RayTracing.Enable=1 is set in SpearSim's DefaultEngine.ini because it is a read-only CVar that must be set at startup.
+# r.RayTracing.Enable=1 must be set in SpearSim's DefaultEngine.ini because it is a read-only CVar that's immutable at runtime.
 
 import argparse
 import cv2

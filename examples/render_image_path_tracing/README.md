@@ -18,6 +18,6 @@ python run.py --teaser --num-frames 128 --bounces 12 --denoiser OIDN
 
 ## Before running
 
-- A hardware ray-tracing capable GPU is required. `r.RayTracing.Enable=1` is already set in SpearSim's `DefaultEngine.ini` (it must be set at startup and can't be changed at runtime).
+- A hardware ray-tracing capable GPU is required. Set `r.RayTracing.Enable=1` in SpearSim's `DefaultEngine.ini` (it must be set at startup and can't be changed at runtime).
 - Rename `user_config.yaml.example` -> `user_config.yaml`.
 - The example config uses `LAUNCH_MODE:"none"` + `EDITOR_LAUNCH_MODE:"game"`: open the SpearSim project in the editor, enter play mode, then run `run.py`. The render uses the viewport camera and the current level.
