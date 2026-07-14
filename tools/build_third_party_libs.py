@@ -246,7 +246,6 @@ if __name__ == "__main__":
 
         cmd = \
             "cmake " + \
-            '-G "Visual Studio 17 2022" ' + \
             f'"-DCMAKE_CXX_COMPILER={cxx_compiler}" ' + \
             f'"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}" ' + \
             f'"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}" ' + \
@@ -313,7 +312,6 @@ if __name__ == "__main__":
 
         cmd = \
             "cmake " + \
-            '-G "Visual Studio 17 2022" ' + \
             f'"-DCMAKE_CXX_COMPILER={cxx_compiler}" ' + \
             f'"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}" ' + \
             f'"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}" ' + \
