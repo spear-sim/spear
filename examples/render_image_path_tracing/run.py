@@ -94,9 +94,7 @@ if __name__ == "__main__":
     # frame. The engine then applies the denoiser (if one was requested) to the converged result.
     spear.log("Path-traced rendering beginning...")
 
-    for i in range(args.num_frames):
-        spear.log(f"Rendering frame {i}/{args.num_frames} ...")
-        instance.step()
+    instance.step(num_frames=args.num_frames, single_step=True)
 
     # let the final converged frame (and the denoiser, if enabled) settle before we read it back
     spear.log("Path-traced rendering finished.")
