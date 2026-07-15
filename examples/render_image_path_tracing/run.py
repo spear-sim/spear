@@ -1,4 +1,4 @@
-#
+
 # Copyright (c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 # Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
@@ -11,13 +11,13 @@ import os
 import spear
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--num-bounces", type=int, default=8)
 parser.add_argument("--denoiser", type=str, default="")
+parser.add_argument("--num-bounces", type=int, default=8)
 parser.add_argument("--num-frames", type=int, default=64)
 parser.add_argument("--teaser", action="store_true")
 args = parser.parse_args()
 
-assert args.denoiser in ["", "nne", "oidn", "optix"]
+assert args.denoiser in ["", "nne", "oidn"]
 
 if args.teaser:
     width = 1920
@@ -26,17 +26,15 @@ else:
     width = None
     height = None
 
-use_denoiser = False
-
 if args.denoiser == "nne":
-    use_denoiser = True
+    denoiser = 1
     denoiser_name = "NNEDenoiser"
-elif args.denoiser == "oidn"
-    use_denoiser = True
+elif args.denoiser == "oidn":
+    denoiser = 1
     denoiser_name = "OIDN"
-elif args.denoiser == "optix"
-    use_denoiser = True
-    denoiser_name = "Optix"
+elif args.denoiser == "":
+    denoiser = 0
+    denoiser_name = ""
 else:
     assert False
 
@@ -55,13 +53,12 @@ if __name__ == "__main__":
         # configure the path tracer via console variables
 
         game.console_service.set(name="r.RayTracing.Enable", value=1)
-        game.console_service.set(name="r.PathTracing.ProgressDisplay", value=0)
+        game.console_service.set(name="r.RayTracing.SceneCaptures", value=1)
+
         game.console_service.set(name="r.PathTracing.SamplesPerPixel", value=args.num_frames)
         game.console_service.set(name="r.PathTracing.MaxBounces", value=args.num_bounces)
-
-        if use_denoiser:
-            game.console_service.set(name="r.PathTracing.Denoiser", 1)
-            game.console_service.set(name="r.PathTracing.Denoiser.Name", denoiser_name)
+        game.console_service.set(name="r.PathTracing.Denoiser", value=denoiser)
+        game.console_service.set(name="r.PathTracing.Denoiser.Name", value=denoiser_name)
 
         # spawn camera sensor and get the final_tone_curve_hdr component
         bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
@@ -81,11 +78,8 @@ if __name__ == "__main__":
         final_tone_curve_hdr_component.Initialize()
         final_tone_curve_hdr_component.initialize_sp_funcs()
 
-    with instance.end_frame():
+    with instance.end_frame(single_step=True):
         pass
-
-    # inserting an extra frame or two can fix occasional render-to-texture initialization issues
-    instance.step(num_frames=2)
 
     # The path tracer accumulates one sample per pixel per rendered frame, exactly like the editor's
     # path-tracing viewport, and stops once it reaches r.PathTracing.SamplesPerPixel (set to args.num_frames
@@ -95,13 +89,15 @@ if __name__ == "__main__":
     # the converged result. Note that calling instance.step(num_frames=args.num_frames) without specifying
     # single_step=True advances at least num_frames, but is not guaranteed to advance exactly num_frames.
     spear.log("Path-traced rendering beginning...")
-    instance.step(num_frames=args.num_frames)
+    for i in range(args.num_frames):
+        spear.log(f"Rendering frame {i:04d}...")
+        instance.step(single_step=True)
     spear.log("Path-traced rendering finished.")
 
     # get rendered frame
     with instance.begin_frame():
         pass
-    with instance.end_frame():
+    with instance.end_frame(single_step=True):
         data_bundle = final_tone_curve_hdr_component.read_pixels()
 
     # save image (cv2 writes the native BGR, dropping alpha)
