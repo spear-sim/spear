@@ -3,14 +3,16 @@
 # Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-# The recommended workflow here for convenience and fast iteration time is LAUNCH_MODE:"none" + EDITOR_LAUNCH_MODE:"game".
-# To run the `run.py`, open the SpearSim project in the UE editor and enter play mode. The render uses the viewport camera.
-
 SPEAR:
-  LAUNCH_MODE: "none"
-
+  LAUNCH_MODE: "game"
   INSTANCE:
-    EDITOR_LAUNCH_MODE: "game"
-    # Rendering/denoising can sometimes take a few seconds
-    RPC_CLIENT_INTERNAL_TIMEOUT_SECONDS: 30.0
-    CLIENT_INTERNAL_TIMEOUT_SECONDS: 30.0
+    GAME_EXECUTABLE: "C:\\repos\\spear\\cpp\\unreal_projects\\SpearSim\\Binaries\\Win64\\SpearSim.exe"
+    COMMAND_LINE_ARGS:
+      resx: 512
+      resy: 512
+    CLIENT_INTERNAL_TIMEOUT_SECONDS: 30.0 # Rendering/denoising can sometimes take a few seconds
+
+SP_CORE:
+  CONFIG_GAME_INI_STRING: |
+    [/Script/Engine.RendererSettings]
+    r.RayTracing.Enable=1

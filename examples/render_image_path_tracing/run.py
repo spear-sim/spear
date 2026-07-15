@@ -5,10 +5,7 @@
 
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
-# This example renders a path-traced image with a USpSceneCaptureComponent2D (no Movie Render Queue). It is the
-# same flow as examples/render_image, except the scene capture is routed through Unreal's offline path tracer
-# instead of the real-time renderer.
-# r.RayTracing.Enable=1 must be set in SpearSim's DefaultEngine.ini because it is a read-only CVar that's immutable at runtime.
+# This example renders a path-traced image with a USpSceneCaptureComponent2D (no Movie Render Queue).
 
 import argparse
 import cv2
@@ -43,9 +40,6 @@ if __name__ == "__main__":
 
         # Configure the path tracer via runtime CVars (see the note at the top of this file for why we don't use
         # user_config.yaml). r.RayTracing.SceneCaptures=1 lets a scene-capture view use ray tracing at all, which is
-        # required for the path tracer to run here. The path tracer accumulates one sample per pixel per rendered
-        # frame and stops at r.PathTracing.SamplesPerPixel, so we set that cap equal to the number of frames we
-        # render below (see the rendering loop).
         scene_captures_cvar = game.unreal_service.find_console_variable_by_name(console_variable_name="r.RayTracing.SceneCaptures")
         game.unreal_service.set_console_variable_value(cvar=scene_captures_cvar, value=1)
         samples_cvar = game.unreal_service.find_console_variable_by_name(console_variable_name="r.PathTracing.SamplesPerPixel")
@@ -58,14 +52,17 @@ if __name__ == "__main__":
         progress_display_cvar = game.unreal_service.find_console_variable_by_name(console_variable_name="r.PathTracing.ProgressDisplay")
         game.unreal_service.set_console_variable_value(cvar=progress_display_cvar, value=0)
 
-        # The engine applies the spatial denoiser to the converged image once accumulation reaches
-        # r.PathTracing.SamplesPerPixel. Selecting a denoiser by name requires its plugin to be enabled in
-        # SpearSim.uproject; SpearSim enables "NNEDenoiser" (the engine default) and "OIDN".
+        # The engine applies the spatial denoiser to the converged image once all frames are accumulated.
+        # The denoiser plugin must be enabled in SpearSim.uproject; SpearSim enables "NNEDenoiser", "OIDN" and "OptiX" by default.
         denoiser_cvar = game.unreal_service.find_console_variable_by_name(console_variable_name="r.PathTracing.Denoiser")
-        game.unreal_service.set_console_variable_value(cvar=denoiser_cvar, value=1 if args.denoiser is not None else 0)
+        denoiser_name_cvar = game.unreal_service.find_console_variable_by_name(console_variable_name="r.PathTracing.Denoiser.Name")
+
         if args.denoiser is not None:
-            denoiser_name_cvar = game.unreal_service.find_console_variable_by_name(console_variable_name="r.PathTracing.Denoiser.Name")
+            game.unreal_service.set_console_variable_value(cvar=denoiser_cvar, value=1)
             game.unreal_service.set_console_variable_value(cvar=denoiser_name_cvar, value=args.denoiser)
+        else:
+            game.unreal_service.set_console_variable_value(cvar=denoiser_cvar, value=0)
+            game.unreal_service.set_console_variable_value(cvar=denoiser_name_cvar, value="")
 
         # spawn camera sensor and get the final_tone_curve_hdr component (same as examples/render_image)
         bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
@@ -76,13 +73,10 @@ if __name__ == "__main__":
         viewport_desc = game.rendering_service.get_current_viewport_desc()
         game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=final_tone_curve_hdr_component, viewport_desc=viewport_desc, widths=width, heights=height)
 
-        # route this scene-capture view through the path tracer: allow it to use ray tracing and turn on the
-        # PathTracing show flag. SetShowFlagSettings() applies immediately.
+        # enable path tracing and disable camera imperfections because they amplify noise and produce artifacts if we don't denoise
         final_tone_curve_hdr_component.bUseRayTracingIfEnabled = True
-
         final_tone_curve_hdr_component.SetShowFlagSettings(InShowFlagSettings=[
             {"ShowFlagName": "PathTracing", "Enabled": True},
-            # The chromatic aberration and lens distortion amplifies the noise and produces artifacts when we don't denoise.
             {"ShowFlagName": "CameraImperfections", "Enabled": False},
         ])
 
@@ -101,7 +95,7 @@ if __name__ == "__main__":
     spear.log("Path-traced rendering beginning...")
 
     for i in range(args.num_frames):
-        spear.log(f"Rendering frame {i + 1}/{args.num_frames} ...")
+        spear.log(f"Rendering frame {i}/{args.num_frames} ...")
         instance.step()
 
     # let the final converged frame (and the denoiser, if enabled) settle before we read it back
