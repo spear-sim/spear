@@ -46,10 +46,6 @@
             "Enabled": true
         },
         {
-            "Name": "OptiXDenoise",
-            "Enabled": true
-        },
-        {
             "Name": "PythonScriptPlugin",
             "Enabled": true
         },
