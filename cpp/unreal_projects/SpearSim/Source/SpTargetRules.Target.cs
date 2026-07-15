@@ -30,7 +30,9 @@ public class SpTargetRulesTarget : TargetRules
             // When multiple versions of Visual Studio and/or the MSVC toolchain are installed, the Unreal
             // Build Tool (UBT) is not guaranteed to select the correct one by default. We use these settings
             // to pin the UBT to the specific version of the MSVC toolchain that we have found to be
-            // compatible with our plugins.
+            // compatible with our plugins. The specific version of the MSVC toolchain referenced here
+            // corresponds to the "MSVC v143 - VS2022 C++ x64/x86 build tools (v14.44-17.14)" Individual
+            // Component that we require to be installed with Visual Studio.
             WindowsPlatform.Compiler = WindowsCompiler.VisualStudio2022;
             WindowsPlatform.CompilerVersion = "14.44.35207";
 
