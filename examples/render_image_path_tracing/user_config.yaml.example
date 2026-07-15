@@ -6,13 +6,8 @@
 SPEAR:
   LAUNCH_MODE: "game"
   INSTANCE:
-    GAME_EXECUTABLE: "C:\\repos\\spear\\cpp\\unreal_projects\\SpearSim\\Binaries\\Win64\\SpearSim.exe"
+    GAME_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
     COMMAND_LINE_ARGS:
       resx: 512
       resy: 512
     CLIENT_INTERNAL_TIMEOUT_SECONDS: 30.0 # Rendering/denoising can sometimes take a few seconds
-
-SP_CORE:
-  CONFIG_GAME_INI_STRING: |
-    [/Script/Engine.RendererSettings]
-    r.RayTracing.Enable=1
