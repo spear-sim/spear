@@ -29,11 +29,11 @@ Linux:   path/to/Linux_Unreal_Engine_5.5.4
 If you're developing on Windows or macOS, you will need to install a specific compiler that is compatible with Unreal Engine 5.5. If you're developing on Linux, the Unreal Engine ships with its own version of `clang` and `libc++`, so there is no need to install another compiler to build the `SpearSim` project in this repository, but you will still need to install an appropriate compiler to build our third-party dependencies as described below. We have verified that the following compilers behave as expected when building `SpearSim`.
 
 ```
-Windows: Visual Studio 2022
+Windows: Visual Studio 2022 (17.14)
 macOS:   XCode 16 or 26
 ```
 
-If you're developing on Windows, make sure to select _Desktop development with C++_ and _Game development with C++_ from the _Workloads_ tab when installing Visual Studio, and also make sure to select _MSVC v143 - VS2022 C++ x64/x86 build tools (v14.44-17.14)_ from the _Individual Components_ tab.
+If you're developing on Windows, you can download a the correct version of Visual Studio [here](https://learn.microsoft.com/en-us/visualstudio/releases/2022/release-history#evergreen-bootstrappers). Make sure to select _Desktop development with C++_ and _Game development with C++_ from the _Workloads_ tab when installing Visual Studio, and also make sure to select _MSVC v143 - VS2022 C++ x64/x86 build tools (v14.44-17.14)_ from the _Individual Components_ tab.
 
 If you're developing on macOS, make sure to select _macOS_ under _Platform Support_ when installing XCode, and make sure to select _Metal Toolchain_ from _Other Components_. Note that XCode 26 is not officially supported by Unreal Engine 5.5, but it can be made to work by running one of our command-line tools (see below).
 
