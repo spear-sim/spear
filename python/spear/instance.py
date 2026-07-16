@@ -161,6 +161,12 @@ class Instance():
 
             # Initialize services that require a reference to EngineService, SpFuncService, UnrealService.
 
+            self.console_service = spear.ConsoleService(
+                entry_point_caller=entry_point_caller_type(service_name=f"console_service", engine_service=engine_service),
+                sp_func_service=self._sp_func_service,
+                unreal_service=self.unreal_service,
+                config=self._config)
+
             self.navigation_service = spear.NavigationService(
                 entry_point_caller=entry_point_caller_type(service_name=f"navigation_service", engine_service=engine_service),
                 shared_memory_service=shared_memory_service,
@@ -185,6 +191,7 @@ class Instance():
 
         def initialize(self, unreal_service=None):
             self.unreal_service.initialize(unreal_service=unreal_service)
+            # self.console_service.initialize() console service doesn't have an initialize() function
             # self.navigation_service.initialize() navigation service doesn't have an initialize() function
             # self.segmentation_service.initialize() this has a non-trivial runtime cost, so we don't initialize by default
             self.async_loading_service.initialize()
@@ -208,6 +215,7 @@ class Instance():
         def set_world(self, world):
             self._world = world
             self.unreal_service.set_world(world=world)
+            self.console_service.set_world(world=world)
             self.navigation_service.set_world(world=world)
             self.segmentation_service.set_world(world=world)
             self.async_loading_service.set_world(world=world)

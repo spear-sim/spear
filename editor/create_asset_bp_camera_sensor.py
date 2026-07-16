@@ -332,19 +332,6 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_R16F
         },
         {
-            "name": "sp_camera_normal_",
-            "width": width,
-            "height": height,
-            "fov_angle": fov_angle,
-            "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
-            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
-            "material_path": "/SpContent/Materials/PPM_SpCameraNormal",
-            "show_flag_settings": engine_show_flag_settings["disable_all_but_allow_post_processing_material"],
-            "override_texture_render_target_format": True,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
-        },
-        {
             "name": "sp_depth_meters_",
             "width": width,
             "height": height,
@@ -418,6 +405,19 @@ blueprint_desc = \
             "texture_render_target_force_linear_gamma": True,
             "override_texture_render_target_gamma": True,
             "texture_render_target_gamma": 1.0
+        },
+        {
+            "name": "sp_view_normal_",
+            "width": width,
+            "height": height,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpContent/Materials/PPM_SpViewNormal",
+            "show_flag_settings": engine_show_flag_settings["disable_all_but_allow_post_processing_material"],
+            "override_texture_render_target_format": True,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
         },
         {
             "name": "sp_world_position_",

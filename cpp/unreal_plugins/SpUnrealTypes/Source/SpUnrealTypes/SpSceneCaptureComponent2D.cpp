@@ -99,7 +99,7 @@ bool FSpSceneViewExtensionBase::shouldHandleView(const FSceneViewFamily* view_fa
 
     int32 view_state_key = view->State->GetViewKey();
 
-    for (int32 i = 0; i < component_->getNumViewStates(); i++) {
+    for (int32 i = 0; i < component_->getViewStates().Num(); i++) {
         FSceneViewStateInterface* component_view_state = component_->GetViewState(i);
         if (component_view_state) {
             int32 component_view_state_key = component_view_state->GetViewKey();
@@ -122,23 +122,12 @@ FSpSceneViewExtension::FSpSceneViewExtension(const FAutoRegister& auto_register,
 
 void FSpSceneViewExtension::setupView(FSceneViewFamily& view_family, FSceneView& view)
 {
-    const TArray<FEngineShowFlagsSetting>& engine_show_flag_settings = getComponent()->GetShowFlagSettings();
-
-    for (auto& engine_show_flag_setting : engine_show_flag_settings) {
-        if (Unreal::toStdString(engine_show_flag_setting.ShowFlagName) == "LightingOnlyOverride" && engine_show_flag_setting.Enabled) {
-            view.DiffuseOverrideParameter = FVector4f(GEngine->LightingOnlyBrightness.R, GEngine->LightingOnlyBrightness.G, GEngine->LightingOnlyBrightness.B, 0.0f);
-            view.SpecularOverrideParameter = FVector4f(0.0f, 0.0f, 0.0f, 0.0f);
-        }
-
-        if (Unreal::toStdString(engine_show_flag_setting.ShowFlagName) == "Specular" && !engine_show_flag_setting.Enabled) {
-            view.SpecularOverrideParameter = FVector4f(0.0f, 0.0f, 0.0f, 0.0f);
-        }
-    }
+    getComponent()->setupView(view_family, view);
 }
 
 void FSpSceneViewExtension::postRenderViewFamily_RenderThread(FSceneViewFamily& view_family)
 {
-    getComponent()->postRender_RenderThread();
+    getComponent()->postRenderViewFamily_RenderThread();
 }
 
 USpSceneCaptureComponent2D::USpSceneCaptureComponent2D()
@@ -328,6 +317,8 @@ void USpSceneCaptureComponent2D::Terminate()
     readback_enqueue_index_ = 0;
     readback_buffers_ = {nullptr, nullptr};
 
+    request_path_tracer_reset_ = false;
+
     // deallocate memory
     scratchpad_.clear();
     if (shared_memory_region_) {
@@ -366,7 +357,34 @@ bool USpSceneCaptureComponent2D::IsInitialized()
     return is_initialized_;
 }
 
-void USpSceneCaptureComponent2D::postRender_RenderThread()
+void USpSceneCaptureComponent2D::RequestPathTracerReset()
+{
+    SP_ASSERT(IsInitialized());
+    request_path_tracer_reset_ = true;
+}
+
+void USpSceneCaptureComponent2D::setupView(FSceneViewFamily& view_family, FSceneView& view)
+{
+    const TArray<FEngineShowFlagsSetting>& engine_show_flag_settings = GetShowFlagSettings();
+
+    for (auto& engine_show_flag_setting : engine_show_flag_settings) {
+        if (Unreal::toStdString(engine_show_flag_setting.ShowFlagName) == "LightingOnlyOverride" && engine_show_flag_setting.Enabled) {
+            view.DiffuseOverrideParameter = FVector4f(GEngine->LightingOnlyBrightness.R, GEngine->LightingOnlyBrightness.G, GEngine->LightingOnlyBrightness.B, 0.0f);
+            view.SpecularOverrideParameter = FVector4f(0.0f, 0.0f, 0.0f, 0.0f);
+        }
+
+        if (Unreal::toStdString(engine_show_flag_setting.ShowFlagName) == "Specular" && !engine_show_flag_setting.Enabled) {
+            view.SpecularOverrideParameter = FVector4f(0.0f, 0.0f, 0.0f, 0.0f);
+        }
+    }
+
+    if (request_path_tracer_reset_) {
+        view.bForcePathTracerReset = true;
+        request_path_tracer_reset_ = false;
+    }
+}
+
+void USpSceneCaptureComponent2D::postRenderViewFamily_RenderThread()
 {
     if (BufferingMode != ESpBufferingMode::DoubleBuffered) {
         return;
@@ -391,7 +409,7 @@ void USpSceneCaptureComponent2D::postRender_RenderThread()
     }
 }
 
-//  
+//
 // callbacks
 //
 
@@ -467,7 +485,7 @@ void USpSceneCaptureComponent2D::enqueueCopyPixelsDoubleBuffered()
 
     if (bReadPixelData) {
         SP_ASSERT(num_readbacks_pending_ >= 0);
-        num_readbacks_pending_++; // decremented in postRender_RenderThread()
+        num_readbacks_pending_++; // decremented in postRenderViewFamily_RenderThread()
 
         FTextureRenderTargetResource* render_target_resource = TextureTarget->GameThread_GetRenderTargetResource();
         SP_ASSERT(render_target_resource);

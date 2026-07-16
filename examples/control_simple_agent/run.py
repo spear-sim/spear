@@ -56,7 +56,7 @@ if __name__ == "__main__":
         final_tone_curve_hdr_component.initialize_sp_funcs()
 
         # show FPS
-        game.unreal_service.execute_console_command("stat fps")
+        game.console_service.execute("stat fps")
 
     with instance.end_frame():
         pass

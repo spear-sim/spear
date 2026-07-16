@@ -14,11 +14,13 @@
 #include <Components/SceneCaptureComponent2D.h>
 #include <Containers/Array.h>
 #include <Containers/EnumAsByte.h>
+#include <Containers/IndirectArray.h>
 #include <Delegates/IDelegateInstance.h>  // FDelegateHandle
 #include <Engine/EngineTypes.h>           // EEndPlayReason
 #include <Engine/TextureRenderTarget2D.h> // ETextureRenderTargetFormat
 #include <HAL/Platform.h>                 // int32, uint32
 #include <RHIGPUReadback.h>               // FRHIGPUTextureReadback
+#include <SceneTypes.h>                   // FSceneViewStateReference
 #include <SceneView.h>                    // FSceneViewFamily
 #include <SceneViewExtension.h>           // FAutoRegister, FSceneViewExtensionBase, FSceneViewExtensions
 #include <Templates/SharedPointer.h>      // TSharedPtr
@@ -104,10 +106,18 @@ public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     bool IsInitialized();
 
-    // called from FSpSceneViewExtension::postRenderViewFamily_RenderThread to do post-render work on the render thread
-    void postRender_RenderThread();
+    // requests that the path tracer restarts rendering from scratch; only has an effect if bUseSceneViewExtension is true
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
+    void RequestPathTracerReset();
 
-    int32 getNumViewStates() { return ViewStates.Num(); }
+    // called from FSpSceneViewExtensionBase::shouldHandleView(...) when deciding whether or not this component matches the current view
+    const TIndirectArray<FSceneViewStateReference>& getViewStates() const { return ViewStates; }
+
+    // called from FSpSceneViewExtension::setupView(...) to set up the view before rendering
+    void setupView(FSceneViewFamily& view_family, FSceneView& view);
+
+    // called from FSpSceneViewExtension::postRenderViewFamily_RenderThread(...) to do post-render work on the render thread
+    void postRenderViewFamily_RenderThread();
 
     // BlueprintReadWrite is incompatible with uint32 so we use int32
 
@@ -224,7 +234,7 @@ private:
     std::array<std::unique_ptr<FRHIGPUTextureReadback>, 2> readback_buffers_;
     int readback_enqueue_index_ = 0;             // GT-only: used by TripleBuffered to alternate buffers
     bool readback_primed_ = false;               // GT-only: one-way latch, true after first enqueueCopyPixelsTripleBuffered call
-    std::atomic<int> num_readbacks_pending_ = 0; // GT increments in enqueueCopyPixelsDoubleBuffered/enqueueCopyPixelsTripleBuffered, RT decrements in postRender_RenderThread/enqueueCopyPixelsTripleBuffered
+    std::atomic<int> num_readbacks_pending_ = 0; // GT increments in enqueueCopyPixelsDoubleBuffered/enqueueCopyPixelsTripleBuffered, RT decrements in postRenderViewFamily_RenderThread/enqueueCopyPixelsTripleBuffered
 
     // Additional state for measuring "standalone" and "standalone + extra work" frame rates.
     FDelegateHandle begin_frame_handle_;
@@ -233,4 +243,6 @@ private:
     boost::circular_buffer<double> previous_time_deltas_;
     std::chrono::time_point<std::chrono::high_resolution_clock> previous_time_point_;
     int frame_index_ = 0;
+
+    bool request_path_tracer_reset_ = false;
 };

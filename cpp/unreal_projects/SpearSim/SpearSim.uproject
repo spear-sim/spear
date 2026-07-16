@@ -42,6 +42,10 @@
             "Enabled": true
         },
         {
+            "Name": "OpenImageDenoise",
+            "Enabled": true
+        },
+        {
             "Name": "PCGPrimitives",
             "Enabled": true
         },
