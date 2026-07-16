@@ -68,4 +68,5 @@ We recommend browsing through our example applications to get a sense of what is
   - [`examples/render_image_editor_script`](../examples/render_image_editor_script) demonstrates how to render an image using the editor's built-in Python API and SPEAR.
   - [`examples/render_image_hypersim`](../examples/render_image_hypersim) demonstrates how to render images that match the Hypersim dataset.
   - [`examples/render_image_multi_view`](../examples/render_image_multi_view) demonstrates how to render from a multi-view camera rig.
+  - [`examples/render_image_path_tracer`](../examples/render_image_path_tracer) demonstrates how to render using Unreal's path tracer.
   - [`examples/sample_nav_mesh`](../examples/sample_nav_mesh) demonstrates how to sample points and shortest paths from Unreal's nav mesh system.
