@@ -1,4 +1,4 @@
-# Render a Path-Traced Image
+# Render an Image (Using Unreal's Path Tracer)
 
 In this example application, we demonstrate how to spawn a camera sensor object and use it to render images using the Unreal's path tracer.
 
