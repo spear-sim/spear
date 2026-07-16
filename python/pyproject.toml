@@ -18,7 +18,7 @@ name = "spear-sim"
 version = "1.0.0"
 requires-python = "~=3.11"
 dependencies = [
-    "mcp==1.26.0",               # tools/run_mcp_server.py
+    "mcp==1.28.1",               # tools/run_mcp_server.py
     "numpy==2.0.2",
     "opencv-python==4.10.0.84",
     "p4python==2025.1.2767466",  # tools/download_content_from_perforce.py
