@@ -30,4 +30,22 @@ public:
     {
         return IStreamingManager::Get().GetNumWantingResources();
     }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    static void UpdateResourceStreaming(float DeltaTime, bool bProcessEverything = false)
+    {
+        IStreamingManager::Get().UpdateResourceStreaming(DeltaTime, bProcessEverything);
+    }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    static int32 BlockTillAllRequestsFinished(float TimeLimit = 0.0f, bool bLogResults = false)
+    {
+        return IStreamingManager::Get().BlockTillAllRequestsFinished(TimeLimit, bLogResults);
+    }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    static int32 StreamAllResources(float TimeLimit = 0.0f)
+    {
+        return IStreamingManager::Get().StreamAllResources(TimeLimit);
+    }
 };
