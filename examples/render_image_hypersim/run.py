@@ -360,6 +360,7 @@ if __name__ == "__main__":
     cv2.imwrite(image_file, diffuse_reflectance[:,:,[2,1,0,3]]) # RGBA -> BGRA
 
     # diffuse_illumination
+    assert component_desc_map["lighting_only_diffuse_color"]["spatial_supersampling_factor"] == component_desc_map["lighting_only_post_process_input_2"]["spatial_supersampling_factor"]
     spatial_supersampling_factor = component_desc_map["lighting_only_diffuse_color"]["spatial_supersampling_factor"]
     mask = proxy_id_image != 0
     mask = np.repeat(np.repeat(mask, spatial_supersampling_factor, axis=0), spatial_supersampling_factor, axis=1)
@@ -375,11 +376,11 @@ if __name__ == "__main__":
     cv2.imwrite(image_file, diffuse_illumination[:,:,[2,1,0]]) # RGB -> BGR
 
     # diffuse_and_specular
-    spatial_supersampling_factor = component_desc_map["diffuse_color"]["spatial_supersampling_factor"]
+    spatial_supersampling_factor = component_desc_map["diffuse_and_specular_post_process_input_2"]["spatial_supersampling_factor"]
     mask = proxy_id_image != 0
     mask = np.repeat(np.repeat(mask, spatial_supersampling_factor, axis=0), spatial_supersampling_factor, axis=1)
     diffuse_and_specular = component_desc_map["diffuse_and_specular_post_process_input_2"]["data"][:,:,[0,1,2]].astype(np.float32)
-    tone_map_result_dict = spear.rendering.tone_map_hypersim(image=diffuse_and_specular, mask=mask, as_dict=True) # get scale and gamma from tone-mapping diffuse_and_specular
+    tone_map_result_dict = spear.rendering.tone_map_hypersim(image=diffuse_and_specular, mask=mask, as_dict=True) # get scale and gamma from tone-mapping diffuse_and_specular and use repeatedly
     diffuse_and_specular, scale, gamma = tone_map_result_dict["image_tone_map"], tone_map_result_dict["scale"], tone_map_result_dict["gamma"]
     diffuse_and_specular = np.clip(diffuse_and_specular, 0.0, 1.0)
     diffuse_and_specular = PIL.Image.fromarray((diffuse_and_specular*255.0).astype(np.uint8))
@@ -390,7 +391,7 @@ if __name__ == "__main__":
     cv2.imwrite(image_file, diffuse_and_specular[:,:,[2,1,0]]) # RGB -> BGR
 
     # diffuse_only
-    spatial_supersampling_factor = component_desc_map["diffuse_color"]["spatial_supersampling_factor"]
+    spatial_supersampling_factor = component_desc_map["diffuse_only_post_process_input_2"]["spatial_supersampling_factor"]
     diffuse_only = component_desc_map["diffuse_only_post_process_input_2"]["data"][:,:,[0,1,2]].astype(np.float32)
     diffuse_only = np.power(np.maximum(scale*diffuse_only, 0), gamma) # use previous scale and gamma
     diffuse_only = np.clip(diffuse_only, 0.0, 1.0)
@@ -402,7 +403,8 @@ if __name__ == "__main__":
     cv2.imwrite(image_file, diffuse_only[:,:,[2,1,0]]) # RGB -> BGR
 
     # residual
-    spatial_supersampling_factor = component_desc_map["diffuse_color"]["spatial_supersampling_factor"]
+    assert component_desc_map["diffuse_and_specular_post_process_input_2"]["spatial_supersampling_factor"] == component_desc_map["diffuse_only_post_process_input_2"]["spatial_supersampling_factor"]
+    spatial_supersampling_factor = component_desc_map["diffuse_and_specular_post_process_input_2"]["spatial_supersampling_factor"]
     diffuse_and_specular = component_desc_map["diffuse_and_specular_post_process_input_2"]["data"][:,:,[0,1,2]].astype(np.float32)
     diffuse_only = component_desc_map["diffuse_only_post_process_input_2"]["data"][:,:,[0,1,2]].astype(np.float32)
     residual = diffuse_and_specular - diffuse_only

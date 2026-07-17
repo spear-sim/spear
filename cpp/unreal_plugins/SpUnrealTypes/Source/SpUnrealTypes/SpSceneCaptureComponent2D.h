@@ -58,7 +58,7 @@ protected:
     virtual void setupViewFamily(FSceneViewFamily& view_family) {};
     virtual void setupView(FSceneViewFamily& view_family, FSceneView& view) {};
     virtual void beginRenderViewFamily(FSceneViewFamily& view_family) {};
-    virtual void postRenderViewFamily_RenderThread(FSceneViewFamily& view_family) {};
+    virtual void postRenderViewFamily_RenderThread(FRDGBuilder& graph_builder, FSceneViewFamily& view_family) {};
 
     USpSceneCaptureComponent2D* getComponent() { SP_ASSERT(component_); return component_; };
 
@@ -75,7 +75,7 @@ public:
     FSpSceneViewExtension(const FAutoRegister& auto_register, USpSceneCaptureComponent2D* component);
 protected:
     void setupView(FSceneViewFamily& view_family, FSceneView& view) override;
-    void postRenderViewFamily_RenderThread(FSceneViewFamily& view_family) override;
+    void postRenderViewFamily_RenderThread(FRDGBuilder& graph_builder, FSceneViewFamily& view_family) override;
 };
 
 UENUM()
@@ -117,7 +117,7 @@ public:
     void setupView(FSceneViewFamily& view_family, FSceneView& view);
 
     // called from FSpSceneViewExtension::postRenderViewFamily_RenderThread(...) to do post-render work on the render thread
-    void postRenderViewFamily_RenderThread();
+    void postRenderViewFamily_RenderThread(FRDGBuilder& graph_builder, FSceneViewFamily& view_family);
 
     // BlueprintReadWrite is incompatible with uint32 so we use int32
 

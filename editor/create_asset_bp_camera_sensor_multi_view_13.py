@@ -10,7 +10,7 @@ import unreal
 
 blueprint_desc = \
 {
-    "blueprint_name": "BP_MultiViewCameraSensor_13",
+    "blueprint_name": "BP_CameraSensorMultiView_13",
     "blueprint_dir": "/SpContent/Blueprints"
 }
 

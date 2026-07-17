@@ -50,7 +50,7 @@ if __name__ == "__main__":
         gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
 
         # spawn camera sensor and get its components
-        bp_multi_view_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_MultiViewCameraSensor_13.BP_MultiViewCameraSensor_13_C")
+        bp_multi_view_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensorMultiView_13.BP_CameraSensorMultiView_13_C")
         bp_multi_view_camera_sensor = game.unreal_service.spawn_actor(uclass=bp_multi_view_camera_sensor_uclass)
         components = game.unreal_service.get_components_by_class_as_dict(actor=bp_multi_view_camera_sensor, uclass="USpSceneCaptureComponent2D")
         component_names = sorted(components.keys())

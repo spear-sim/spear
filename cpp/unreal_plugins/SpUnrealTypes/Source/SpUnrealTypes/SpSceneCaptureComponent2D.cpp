@@ -70,7 +70,7 @@ void FSpSceneViewExtensionBase::BeginRenderViewFamily(FSceneViewFamily& in_view_
 void FSpSceneViewExtensionBase::PostRenderViewFamily_RenderThread(FRDGBuilder& graph_builder, FSceneViewFamily& in_view_family)
 {
     if (shouldHandleViewFamily(&in_view_family)) {
-        postRenderViewFamily_RenderThread(in_view_family);
+        postRenderViewFamily_RenderThread(graph_builder, in_view_family);
     }
 }
 
@@ -125,9 +125,9 @@ void FSpSceneViewExtension::setupView(FSceneViewFamily& view_family, FSceneView&
     getComponent()->setupView(view_family, view);
 }
 
-void FSpSceneViewExtension::postRenderViewFamily_RenderThread(FSceneViewFamily& view_family)
+void FSpSceneViewExtension::postRenderViewFamily_RenderThread(FRDGBuilder& graph_builder, FSceneViewFamily& view_family)
 {
-    getComponent()->postRenderViewFamily_RenderThread();
+    getComponent()->postRenderViewFamily_RenderThread(graph_builder, view_family);
 }
 
 USpSceneCaptureComponent2D::USpSceneCaptureComponent2D()
@@ -384,7 +384,7 @@ void USpSceneCaptureComponent2D::setupView(FSceneViewFamily& view_family, FScene
     }
 }
 
-void USpSceneCaptureComponent2D::postRenderViewFamily_RenderThread()
+void USpSceneCaptureComponent2D::postRenderViewFamily_RenderThread(FRDGBuilder& graph_builder, FSceneViewFamily& view_family)
 {
     if (BufferingMode != ESpBufferingMode::DoubleBuffered) {
         return;

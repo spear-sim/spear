@@ -148,6 +148,59 @@ engine_show_flag_settings["lighting_only"] = engine_show_flag_settings["lighting
 ]
 
 #
+# The lighting_only_disable_all_but_allow_post_processing_material settings are identical to disable_all
+# except enable the lighting-only override and we allow post-processing materials.
+#
+
+engine_show_flag_settings["lighting_only_disable_all_but_allow_post_processing_material"] = []
+engine_show_flag_settings["lighting_only_disable_all_but_allow_post_processing_material"] = engine_show_flag_settings["lighting_only_disable_all_but_allow_post_processing_material"] + \
+[
+    unreal.EngineShowFlagsSetting(show_flag_name="AmbientCubemap", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="AmbientOcclusion", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="AntiAliasing", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Atmosphere", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Bloom", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="CameraImperfections", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ColorGrading", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="DepthOfField", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="DistanceFieldAO", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="DynamicShadows", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="EyeAdaptation", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Fog", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Grain", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="HighResScreenshotMask", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="HitProxies", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="HMDDistortion", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="IndirectLightingCache", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LensFlares", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LightFunctions", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Lighting", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LightingOnlyOverride", enabled=True),
+    unreal.EngineShowFlagsSetting(show_flag_name="LightShafts", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LocalExposure", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LumenGlobalIllumination", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LumenReflections", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="MegaLights", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="MotionBlur", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="OnScreenDebug", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ReflectionEnvironment", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ScreenPercentage", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ScreenSpaceReflections", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="SeparateTranslucency", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ShaderPrint", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="SkyLighting", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="StereoRendering", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="TexturedLightProfiles", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ToneCurve", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Tonemapper", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Vignette", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="VirtualShadowMapPersistentData", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="VolumetricFog", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="VolumetricLightmap", enabled=False)
+]
+
+#
 # With lighting
 #
 
@@ -225,9 +278,7 @@ blueprint_desc = \
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_DiffuseColor",
-            "dynamic_global_illumination_method": unreal.DynamicGlobalIlluminationMethod.LUMEN,
-            "reflection_method": unreal.ReflectionMethod.LUMEN,
-            "show_flag_settings": engine_show_flag_settings["with_lighting_diffuse_only"],
+            "show_flag_settings": engine_show_flag_settings["disable_all_but_allow_post_processing_material"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
         },
@@ -256,9 +307,7 @@ blueprint_desc = \
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_DiffuseColor",
-            "dynamic_global_illumination_method": unreal.DynamicGlobalIlluminationMethod.LUMEN,
-            "reflection_method": unreal.ReflectionMethod.LUMEN,
-            "show_flag_settings": engine_show_flag_settings["lighting_only"],
+            "show_flag_settings": engine_show_flag_settings["lighting_only_disable_all_but_allow_post_processing_material"],
             "use_scene_view_extension": True,
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
