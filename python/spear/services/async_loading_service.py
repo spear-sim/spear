@@ -89,9 +89,11 @@ class AsyncLoadingService(spear.Service):
         return engine_idle
 
     def wait_for_engine_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        self._force_update_streaming_manager()
         self._wait_for(func=self.is_engine_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
 
     def wait_for_engine_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        yield from self._force_update_streaming_manager_in_editor_script()
         yield from self._wait_for_in_editor_script(func=self.is_engine_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
 
     #
@@ -199,9 +201,11 @@ class AsyncLoadingService(spear.Service):
         yield from self._wait_for_in_editor_script(func=self.are_streaming_levels_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
 
     def wait_for_streaming_manager_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        self._force_update_streaming_manager()
         self._wait_for(func=self.is_streaming_manager_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
 
     def wait_for_streaming_manager_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
+        yield from self._force_update_streaming_manager_in_editor_script()
         yield from self._wait_for_in_editor_script(func=self.is_streaming_manager_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
 
     def wait_for_world_partition_streaming_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
@@ -213,6 +217,42 @@ class AsyncLoadingService(spear.Service):
     #
     # Private helper functions
     #
+
+    def _force_update_streaming_manager(self):
+        engine_service = self.entry_point_caller.engine_service
+
+        # Advance two complete frames so that a capture component initialized in the caller's most recent
+        # begin_frame block is guaranteed to be fully initialized and rendering (matching the two extra
+        # frames needed after Initialize()), then force the streaming manager to recompute wanted mips and
+        # issue all stream-in requests in a single unthrottled update. This only issues the requests; the
+        # subsequent polling wait blocks until they complete.
+        for _ in range(2):
+            with engine_service.begin_frame():
+                pass
+            with engine_service.end_frame():
+                pass
+        with engine_service.begin_frame():
+            self._sp_streaming_manager.UpdateResourceStreaming(DeltaTime=0.0, bProcessEverything=True)
+        with engine_service.end_frame():
+            pass
+
+    def _force_update_streaming_manager_in_editor_script(self):
+        engine_service = self.entry_point_caller.engine_service
+
+        # See _force_update_streaming_manager() for details.
+        for _ in range(2):
+            with engine_service.begin_frame():
+                pass
+            yield
+            with engine_service.end_frame():
+                pass
+            yield
+        with engine_service.begin_frame():
+            self._sp_streaming_manager.UpdateResourceStreaming(DeltaTime=0.0, bProcessEverything=True)
+        yield
+        with engine_service.end_frame():
+            pass
+        yield
 
     def _wait_for(self, func, max_time_seconds, sleep_time_seconds):
         func_name = ""
