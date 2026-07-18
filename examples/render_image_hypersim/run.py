@@ -187,6 +187,9 @@ if __name__ == "__main__":
     # initialize actors and components
     with instance.begin_frame():
 
+        # force high-res textures for captured images
+        game.console_service.set(name="r.Streaming.FullyLoadUsedTextures", value=1)
+
         # initialize segmentation service
         game.segmentation_service.initialize()
 
@@ -231,11 +234,9 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing etc accumulate additional information across frames
 
-    # let temporal anti-aliasing etc accumulate additional information across multiple frames, and
-    # inserting an extra frame or two can fix occasional render-to-texture initialization issues
-    instance.step(num_frames=2)
-
-    # needed in case the segmentation service is still loading its materials
+    # let temporal anti-aliasing etc accumulate additional information across multiple frames, and inserting
+    # an extra frame or two can fix occasional render-to-texture initialization issues, and we need to wait
+    # in case the segmentation service is still loading its materials (advances a minimum of 3 frames)
     game.async_loading_service.wait_for_engine_idle()
 
     # get rendered frame

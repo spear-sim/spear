@@ -224,11 +224,11 @@ class AsyncLoadingService(spear.Service):
         # Advance two complete frames so that a capture component initialized in the caller's most recent
         # begin_frame block is guaranteed to be fully initialized and rendering (matching the two extra
         # frames needed after Initialize()), then force the streaming manager to load all wanted mips and
-        # block until they are resident. We use StreamAllResources() (which recomputes wanted mips, issues
-        # all requests, and blocks on each asset's RequestedMips == ResidentMips) rather than
-        # UpdateResourceStreaming() followed by polling GetNumWantingResources(): that counter is only
-        # refreshed on the streaming system's multi-frame cycle, so a poll can read a stale 0 and stop
-        # before the async mip IO has actually landed.
+        # block until they are resident. We use StreamAllResources(), which recomputes wanted mips, issues
+        # all requests, and blocks on each asset's RequestedMips == ResidentMips, rather than UpdateResourceStreaming()
+        # followed by polling GetNumWantingResources(). That counter is only refreshed on the streaming
+        # system's multi-frame cycle, so a poll can read a stale 0 and stop before the async mip IO has
+        # actually landed.
         for _ in range(2):
             with engine_service.begin_frame():
                 pass

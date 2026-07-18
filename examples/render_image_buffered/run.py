@@ -43,6 +43,9 @@ if __name__ == "__main__":
 
     with instance.begin_frame():
 
+        # force high-res textures for captured images
+        game.console_service.set(name="r.Streaming.FullyLoadUsedTextures", value=1)
+
         bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
         bp_axes_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_Axes.BP_Axes_C")
         viewport_desc = game.rendering_service.get_current_viewport_desc()
@@ -54,7 +57,10 @@ if __name__ == "__main__":
     with instance.end_frame(single_step=True):
         pass
 
-    instance.step(num_frames=2) # two flush frames are occasionally needed on Windows
+    # let temporal anti-aliasing etc accumulate additional information across multiple frames, and inserting
+    # an extra frame or two can fix occasional render-to-texture initialization issues (advances a minimum of
+    # 3 frames)
+    game.async_loading_service.wait_for_engine_idle()
 
     spawn_y_positions = [200.0, 260.0, 320.0]
 

@@ -13,9 +13,8 @@ SPEAR:
 
       # setting the game viewport to be small when we're rendering offscreen improves performance,
       # but it can also prevent high-resolution textures from being loaded, so we explicitly force
-      # high-resolution textures to be loaded
+      # high-resolution textures to be loaded in code
 
       # resx: 128
       # resy: 128
       # renderoffscreen: null
-      # notexturestreaming: null

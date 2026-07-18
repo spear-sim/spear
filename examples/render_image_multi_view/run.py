@@ -42,6 +42,9 @@ if __name__ == "__main__":
     # initialize actors and components
     with instance.begin_frame():
 
+        # force high-res textures for captured images
+        game.console_service.set(name="r.Streaming.FullyLoadUsedTextures", value=1)
+
         # spawn camera sensor and get its components
         bp_multi_view_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensorMultiView_33.BP_CameraSensorMultiView_33_C")
         bp_multi_view_camera_sensor = game.unreal_service.spawn_actor(uclass=bp_multi_view_camera_sensor_uclass)
@@ -74,6 +77,11 @@ if __name__ == "__main__":
 
     with instance.end_frame():
         pass
+
+    # let temporal anti-aliasing etc accumulate additional information across multiple frames, and inserting
+    # an extra frame or two can fix occasional render-to-texture initialization issues (advances a minimum of
+    # 3 frames)
+    game.async_loading_service.wait_for_engine_idle()
 
     # let temporal anti-aliasing etc accumulate additional information across multiple frames, and
     # inserting an extra frame or two can fix occasional render-to-texture initialization issues
