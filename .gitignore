@@ -71,6 +71,7 @@ examples/render_image_editor_script/image.png
 examples/render_image_hypersim/images
 examples/render_image_multi_view/images
 examples/render_image_multi_view/video.mp4
+examples/render_image_path_tracer/image.png
 
 python_ext/BUILD
 

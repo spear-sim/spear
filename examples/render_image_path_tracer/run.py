@@ -7,6 +7,7 @@
 
 import argparse
 import cv2
+import numpy as np
 import os
 import spear
 
@@ -72,6 +73,9 @@ if __name__ == "__main__":
         viewport_desc = game.rendering_service.get_current_viewport_desc()
         game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=final_tone_curve_hdr_component, viewport_desc=viewport_desc, widths=width, heights=height)
 
+        visualize_func = lambda data : data[:,:,[2,1,0]] # BGRA -> RGB
+        # visualize_func = lambda data : data
+
         # enable path tracing and disable camera imperfections because they amplify noise and produce artifacts if we don't denoise
         final_tone_curve_hdr_component.SetShowFlagSettings(InShowFlagSettings=[
             {"ShowFlagName": "PathTracing", "Enabled": True},
@@ -109,7 +113,14 @@ if __name__ == "__main__":
     # save image (cv2 writes the native BGR, dropping alpha)
     image_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "image.png"))
     spear.log("Saving image: ", image_file)
-    cv2.imwrite(image_file, data_bundle["arrays"]["data"][:,:,[0,1,2]])
+
+    image = visualize_func(data=data_bundle["arrays"]["data"])
+    if image.dtype != np.uint8:
+        image = (np.clip(image, 0.0, 1.0)*255.0).astype(np.uint8)
+    if image.ndim == 3:
+        image = image[:, :, [2,1,0]] # RGB -> BGR
+
+    cv2.imwrite(image_file, image)
 
     # terminate actors and components
     with instance.begin_frame():
