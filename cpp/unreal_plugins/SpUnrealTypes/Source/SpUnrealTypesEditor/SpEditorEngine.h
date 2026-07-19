@@ -60,7 +60,7 @@ public:
         SP_ASSERT(GEditor);
 
         TArray<FSpLevelViewportClientDesc> level_viewport_client_descs;
-        for (FLevelEditorViewportClient* level_editor_viewport_client : GEditor->GetLevelViewportClients()) {
+        for (auto level_editor_viewport_client : GEditor->GetLevelViewportClients()) {
             SP_ASSERT(level_editor_viewport_client);
             SP_ASSERT(level_editor_viewport_client->Viewport);
             SP_ASSERT(GEditor->GetActiveViewport());

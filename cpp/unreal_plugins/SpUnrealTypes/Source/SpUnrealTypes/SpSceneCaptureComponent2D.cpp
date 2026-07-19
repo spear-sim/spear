@@ -9,24 +9,31 @@
 
 #include <chrono>
 #include <cstring> // std::memcpy
-#include <memory>  // std::make_unique
+#include <memory>  // std::construct_at, std::destroy_at, std::make_unique
 #include <numeric> // std::accumulate
-#include <utility> // std::move
+#include <utility> // std::move, std::pair
 
 #include <Components/SceneCaptureComponent2D.h>
 #include <Containers/Array.h>
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Materials/Material.h>
-#include <Materials/MaterialInstanceDynamic.h>
 #include <Math/Color.h>                  // FLinearColor
+#include <Math/UnrealMathUtility.h>      // FMath
+#include <RenderGraphBuilder.h>          // FRDGTextureRef
+#include <RendererInterface.h>           // FPooledRenderTargetDesc, IPooledRenderTarget
 #include <RenderingThread.h>             // ENQUEUE_RENDER_COMMAND, FlushRenderingCommands
 #include <RHICommandList.h>              // EImmediateFlushType, ERHIAccess, FRHICommandListImmediate, FRHITexture, FRHITransitionInfo
 #include <SceneManagement.h>             // FSceneViewStateInterface
+#include <SceneTextures.h>               // FSceneTextures, FTransientUserSceneTexture
 #include <SceneView.h>                   // FSceneViewFamily
 #include <SceneViewExtension.h>          // FAutoRegister, FSceneViewExtensionBase, FSceneViewExtensions
+#include <Templates/RefCounting.h>       // TRefCountPtr
 #include <Templates/SharedPointer.h>     // TSharedPtr
 #include <TextureResource.h>             // FTextureRenderTargetResource
 #include <UObject/UObjectGlobals.h>      // NewObject
+
+// private headers need custom include paths in SpModuleRules.Build.cs
+#include <SceneRendering.h> // FViewFamilyInfo
 
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
@@ -188,8 +195,7 @@ void USpSceneCaptureComponent2D::Initialize()
     TextureTarget->UpdateResourceImmediate(clear_render_target);
 
     if (Material) {
-        material_instance_dynamic_ = UMaterialInstanceDynamic::Create(Material, this);
-        PostProcessSettings.AddBlendable(material_instance_dynamic_, 1.0f);
+        PostProcessSettings.AddBlendable(Material, 1.0f);
     }
 
     if (MeshProxyComponentManagerClass) {
@@ -203,12 +209,100 @@ void USpSceneCaptureComponent2D::Initialize()
         }
     }
 
-    // ensure that the underlying view state data is stable across frames so FSpSceneViewExtensionBase can
-    // match view state data to this component
-    bAlwaysPersistRenderingState = true;
-
-    if (bUseSceneViewExtension || BufferingMode != ESpBufferingMode::SingleBuffered) {
+    if (bUseSceneViewExtension || BufferingMode == ESpBufferingMode::DoubleBuffered || UserSceneTextureNames.Num() > 0) {
+        bAlwaysPersistRenderingState = true; // ensure that the underlying view-state data is stable across frames so FSpSceneViewExtensionBase can match view-state data to this component
         scene_view_extension_ = FSceneViewExtensions::NewExtension<FSpSceneViewExtension>(this);
+    }
+
+    // allocate memory
+
+    {
+        SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
+        uint64_t num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
+
+        texture_readback_desc_.width_ = Width;
+        texture_readback_desc_.height_ = Height;
+        texture_readback_desc_.num_channels_per_pixel_ = NumChannelsPerPixel;
+        texture_readback_desc_.channel_data_type_ = channel_data_type;
+
+        if (bUseSharedMemory) {
+            SP_ASSERT(!texture_readback_desc_.shared_memory_region_);
+            texture_readback_desc_.shared_memory_region_ = std::make_unique<SharedMemoryRegion>(num_bytes);
+            SP_ASSERT(texture_readback_desc_.shared_memory_region_);
+            std::string shared_memory_name = "smem:sp_scene_capture_component_2d";
+            texture_readback_desc_.shared_memory_view_ = SpArraySharedMemoryView(texture_readback_desc_.shared_memory_region_->getView(), shared_memory_name, SpArraySharedMemoryUsageFlags::ReturnValue);
+            SpFuncComponent->registerSharedMemoryView(texture_readback_desc_.shared_memory_view_); // name needs to be unique per USpFuncComponent
+        } else if (BufferingMode == ESpBufferingMode::DoubleBuffered || BufferingMode == ESpBufferingMode::TripleBuffered) {
+            texture_readback_desc_.scratchpad_.resize(num_bytes);
+        }
+    }
+
+    // allocate readback buffers
+
+    if (BufferingMode == ESpBufferingMode::SingleBuffered || BufferingMode == ESpBufferingMode::DoubleBuffered) {
+        texture_readback_desc_.rhi_gpu_texture_readbacks_ = {
+            std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A")), nullptr};
+    } else if (BufferingMode == ESpBufferingMode::TripleBuffered) {
+        texture_readback_desc_.rhi_gpu_texture_readbacks_ = {
+            std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A")),
+            std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_B")) };
+    }
+
+    //
+    // user scene textures
+    //
+
+    for (auto& user_scene_texture_name : UserSceneTextureNames) {
+
+        std::string user_scene_texture_name_string = Unreal::toStdString(user_scene_texture_name);
+
+        // construct the desc in place because TextureReadbackDesc is non-movable (it holds a std::atomic)
+        auto [itr, inserted] = user_scene_texture_readback_descs_.try_emplace(user_scene_texture_name_string);
+        SP_ASSERT(inserted);
+        TextureReadbackDesc& texture_readback_desc = itr->second;
+
+        SP_ASSERT(UserSceneTextureMaterialDescs.Contains(user_scene_texture_name));
+        const FSpUserSceneTextureMaterialDesc& user_scene_texture_material_desc = UserSceneTextureMaterialDescs[user_scene_texture_name];
+
+        // validate user_scene_texture_material_desc
+        SP_ASSERT(user_scene_texture_material_desc.Material);
+        SP_ASSERT(user_scene_texture_material_desc.ResolutionDivisorWidth >= 1 && user_scene_texture_material_desc.ResolutionDivisorHeight >= 1);
+
+        PostProcessSettings.AddBlendable(user_scene_texture_material_desc.Material, 1.0f);
+
+        // allocate memory
+
+        int height = FMath::DivideAndRoundUp(Height, user_scene_texture_material_desc.ResolutionDivisorHeight);
+        int width = FMath::DivideAndRoundUp(Width, user_scene_texture_material_desc.ResolutionDivisorWidth);
+        int num_channels_per_pixel = 4;
+        SpArrayDataType channel_data_type = SpArrayDataType::Float16;
+        uint64_t num_bytes = height*width*num_channels_per_pixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
+
+        texture_readback_desc.width_ = width;
+        texture_readback_desc.height_ = height;
+        texture_readback_desc.num_channels_per_pixel_ = num_channels_per_pixel;
+        texture_readback_desc.channel_data_type_ = channel_data_type;
+
+        if (bUseSharedMemory) {
+            texture_readback_desc.shared_memory_region_ = std::make_unique<SharedMemoryRegion>(num_bytes);
+            SP_ASSERT(texture_readback_desc.shared_memory_region_);
+            std::string shared_memory_name = "smem:sp_scene_capture_component_2d:" + user_scene_texture_name_string;
+            texture_readback_desc.shared_memory_view_ = SpArraySharedMemoryView(texture_readback_desc.shared_memory_region_->getView(), shared_memory_name, SpArraySharedMemoryUsageFlags::ReturnValue);
+            SpFuncComponent->registerSharedMemoryView(texture_readback_desc.shared_memory_view_); // name needs to be unique per USpFuncComponent
+        } else if (BufferingMode == ESpBufferingMode::DoubleBuffered || BufferingMode == ESpBufferingMode::TripleBuffered) {
+            texture_readback_desc.scratchpad_.resize(num_bytes);
+        }
+
+        // allocate readback buffers
+
+        if (BufferingMode == ESpBufferingMode::SingleBuffered || BufferingMode == ESpBufferingMode::DoubleBuffered) {
+            texture_readback_desc.rhi_gpu_texture_readbacks_ = {
+                std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A_" + user_scene_texture_name_string)), nullptr};
+        } else if (BufferingMode == ESpBufferingMode::TripleBuffered) {
+            texture_readback_desc.rhi_gpu_texture_readbacks_ = {
+                std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A_" + user_scene_texture_name_string)),
+                std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_B_" + user_scene_texture_name_string)) };
+        }
     }
 
     // initialize state for measuring "standalone" and "standalone + extra work" frame rates
@@ -226,70 +320,39 @@ void USpSceneCaptureComponent2D::Initialize()
         previous_time_deltas_.set_capacity(num_samples);
     }
 
-    // allocate memory
-
-    SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
-    uint64_t num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
-
-    if (bUseSharedMemory) {
-        SP_ASSERT(!shared_memory_region_);
-        shared_memory_region_ = std::make_unique<SharedMemoryRegion>(num_bytes);
-        SP_ASSERT(shared_memory_region_);
-        shared_memory_view_ = SpArraySharedMemoryView(shared_memory_region_->getView(), "smem:sp_scene_capture_component_2d", SpArraySharedMemoryUsageFlags::ReturnValue);
-        SpFuncComponent->registerSharedMemoryView(shared_memory_view_); // name needs to be unique per USpFuncComponent
-    }
-
-    if (!bUseSharedMemory) {
-        scratchpad_.resize(num_bytes);
-    }
-
-    // allocate readback buffers
-    if (BufferingMode == ESpBufferingMode::SingleBuffered) {
-        readback_buffers_ = {std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A")), nullptr};
-    } else if (BufferingMode == ESpBufferingMode::DoubleBuffered) {
-        readback_buffers_ = {std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A")), nullptr};
-        readback_enqueue_index_ = 0;
-        readback_primed_ = false;
-        num_readbacks_pending_ = 0;
-    } else if (BufferingMode == ESpBufferingMode::TripleBuffered) {
-        readback_buffers_ = {
-            std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_A")),
-            std::make_unique<FRHIGPUTextureReadback>(Unreal::toFName("rhi_gpu_texture_readback_B")) };
-        readback_enqueue_index_ = 0;
-        readback_primed_ = false;
-        num_readbacks_pending_ = 0;
-    }
-
     // register SpFuncs
 
     SpFuncComponent->registerFunc("enqueue_copy", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
         SP_ASSERT(!bReadPixelsEveryFrame);
+
         if (BufferingMode == ESpBufferingMode::DoubleBuffered) {
-            enqueueCopyPixelsDoubleBuffered();
+            std::map<std::string, TextureReadbackMinimalDesc> texture_readback_minimal_descs = requestUpdateAndGetTextureReadbackMinimalDescs();
+            enqueueCopyPixelsDoubleBuffered(texture_readback_minimal_descs);
         } else if (BufferingMode == ESpBufferingMode::TripleBuffered) {
-            enqueueCopyPixelsTripleBuffered();
+            std::map<std::string, TextureReadbackMinimalDesc> texture_readback_minimal_descs = requestUpdateAndGetTextureReadbackMinimalDescs(); // in triple-buffered case, must be called exactly once per enqueue
+            enqueueCopyPixelsTripleBuffered(texture_readback_minimal_descs);
         } else {
             SP_ASSERT(false);
         }
+
         return SpFuncDataBundle();
     });
 
     SpFuncComponent->registerFunc("read_pixels", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
-        SpFuncDataBundle return_values;
-        SpPackedArray packed_array;
         if (BufferingMode == ESpBufferingMode::SingleBuffered) {
-            packed_array = readPixelsSingleBuffered();
+            std::map<std::string, TextureReadbackMinimalDesc> texture_readback_minimal_descs = requestUpdateAndGetTextureReadbackMinimalDescs();
+            return readPixelsSingleBuffered(texture_readback_minimal_descs);
         } else if (BufferingMode == ESpBufferingMode::DoubleBuffered) {
-            packed_array = readPixelsDoubleBuffered();
+            return readPixelsDoubleBuffered();
         } else if (BufferingMode == ESpBufferingMode::TripleBuffered) {
-            packed_array = readPixelsTripleBuffered();
+            return readPixelsTripleBuffered();
         } else {
             SP_ASSERT(false);
+            return SpFuncDataBundle();
         }
-        Std::insert(return_values.packed_arrays_, "data", std::move(packed_array));
-        return return_values;
     });
 
+    request_path_tracer_reset_ = false;
     is_initialized_ = true;
     bIsInitialized = true;
 
@@ -304,6 +367,7 @@ void USpSceneCaptureComponent2D::Terminate()
 
     SetVisibility(false); // disable rendering to texture
 
+    request_path_tracer_reset_ = false;
     is_initialized_ = false;
     bIsInitialized = false;
 
@@ -311,42 +375,63 @@ void USpSceneCaptureComponent2D::Terminate()
     SpFuncComponent->unregisterFunc("enqueue_copy");
     SpFuncComponent->unregisterFunc("read_pixels");
 
-    // deallocate readback buffers
-    num_readbacks_pending_ = 0;
-    readback_primed_ = false;
-    readback_enqueue_index_ = 0;
-    readback_buffers_ = {nullptr, nullptr};
-
-    request_path_tracer_reset_ = false;
-
-    // deallocate memory
-    scratchpad_.clear();
-    if (shared_memory_region_) {
-        SpFuncComponent->unregisterSharedMemoryView(shared_memory_view_);
-        shared_memory_view_ = SpArraySharedMemoryView();
-        shared_memory_region_ = nullptr;
-    }
-
-    // remove callbacks
-
+    // terminate state for measuring "standalone" and "standalone + extra work" frame rates
     if (bPrintFrameTimeEveryFrame || bReadPixelsEveryFrame) {
         FCoreDelegates::OnBeginFrame.Remove(begin_frame_handle_);
         begin_frame_handle_.Reset();
     }
-
     if (bReadPixelsEveryFrame) {
         FCoreDelegates::OnEndFrame.Remove(end_frame_handle_);
         end_frame_handle_.Reset();
     }
 
-    bAlwaysPersistRenderingState = false;
-    scene_view_extension_ = nullptr;
+    //
+    // user scene textures
+    //
+
+    if (UserSceneTextureNames.Num() > 0) {
+        FlushRenderingCommands();
+
+        for (auto& user_scene_texture_name : UserSceneTextureNames) {
+            SP_ASSERT(UserSceneTextureMaterialDescs.Contains(user_scene_texture_name));
+
+            if (bUseSharedMemory) {
+                std::string user_scene_texture_name_string = Unreal::toStdString(user_scene_texture_name);
+                SP_ASSERT(user_scene_texture_readback_descs_.contains(user_scene_texture_name_string));
+
+                TextureReadbackDesc& texture_readback_desc = user_scene_texture_readback_descs_.at(user_scene_texture_name_string);
+                SP_ASSERT(texture_readback_desc.shared_memory_region_);
+
+                SpFuncComponent->unregisterSharedMemoryView(texture_readback_desc.shared_memory_view_);
+            }
+
+            const FSpUserSceneTextureMaterialDesc& user_scene_texture_material_desc = UserSceneTextureMaterialDescs[user_scene_texture_name];
+            PostProcessSettings.RemoveBlendable(user_scene_texture_material_desc.Material);
+        }
+
+        user_scene_texture_readback_descs_.clear();
+    }
+
+    // de-allocate memory
+    if (bUseSharedMemory) {
+        SP_ASSERT(texture_readback_desc_.shared_memory_region_);
+        SpFuncComponent->unregisterSharedMemoryView(texture_readback_desc_.shared_memory_view_);
+    }
+
+    // reset in-place because texture_readback_desc_ is non-movable and non-copyable
+    std::destroy_at(&texture_readback_desc_);
+    std::construct_at(&texture_readback_desc_);
+
+    if (bUseSceneViewExtension || BufferingMode == ESpBufferingMode::DoubleBuffered || UserSceneTextureNames.Num() > 0) {
+        scene_view_extension_ = nullptr;
+        bAlwaysPersistRenderingState = false;
+    }
 
     ShowOnlyActors.Empty();
     HiddenActors.Empty();
 
-    if (material_instance_dynamic_) {
-        PostProcessSettings.RemoveBlendable(material_instance_dynamic_);
+    if (Material) {
+        PostProcessSettings.RemoveBlendable(Material);
     }
 
     TextureTarget = nullptr;
@@ -386,26 +471,101 @@ void USpSceneCaptureComponent2D::setupView(FSceneViewFamily& view_family, FScene
 
 void USpSceneCaptureComponent2D::postRenderViewFamily_RenderThread(FRDGBuilder& graph_builder, FSceneViewFamily& view_family)
 {
+    // Copy each active UserSceneTexture's transient render-graph texture into our persistent pooled render target
+    // so it can be read back to the CPU later. The view family is a FViewFamilyInfo (a renderer-private type), whose
+    // GetSceneTextures() gives us the UserSceneTextures map. That map is keyed by the material's internal output
+    // name (FSpUserSceneTextureMaterialDesc::InternalName), whereas our readback desc map is keyed by public name.
+
+    if (UserSceneTextureNames.Num() > 0) {
+        SP_ASSERT(view_family.bIsViewFamilyInfo); // guard the static_cast below
+        const FSceneTextures& scene_textures = static_cast<FViewFamilyInfo&>(view_family).GetSceneTextures();
+
+        for (auto& user_scene_texture_name : UserSceneTextureNames) {
+            SP_ASSERT(UserSceneTextureMaterialDescs.Contains(user_scene_texture_name));
+
+            std::string user_scene_texture_name_string = Unreal::toStdString(user_scene_texture_name);
+            SP_ASSERT(user_scene_texture_readback_descs_.contains(user_scene_texture_name_string));
+
+            const FSpUserSceneTextureMaterialDesc& user_scene_texture_material_desc = UserSceneTextureMaterialDescs[user_scene_texture_name];
+
+            std::string internal_name_string = Unreal::toStdString(user_scene_texture_material_desc.InternalName);
+            FName internal_name_fname = Unreal::toFName(internal_name_string);
+            SP_ASSERT(scene_textures.UserSceneTextures.Contains(internal_name_fname));
+
+            const TArray<FTransientUserSceneTexture>& transient_user_scene_textures = scene_textures.UserSceneTextures[internal_name_fname];
+            const FTransientUserSceneTexture& transient_user_scene_texture = transient_user_scene_textures[0]; // [0] is the most recently written resolution for this name
+
+            // Verify the configured resolution divisor matches the actual transient resource, and that the transient
+            // extent is at least the divisor-derived dims we sized our buffers for. The transient can be larger: the
+            // engine quantizes the scene-texture extent up to a multiple of 4 (8 under Substrate, possibly more via a
+            // suggested divisor) in QuantizeSceneBufferSize(), so the transient is DivideAndRoundUp(quantized extent,
+            // ResolutionDivisor). That padding is on the right/bottom; the view still renders into the top-left rect,
+            // so copyPixelsFromStagingToCPU_RenderThread() reads back exactly our top-left (width, height) sub-region
+            // using the staging row pitch. Checked here every frame, so all buffering modes rely on it.
+
+            SP_ASSERT(transient_user_scene_texture.ResolutionDivisor.X == user_scene_texture_material_desc.ResolutionDivisorWidth);
+            SP_ASSERT(transient_user_scene_texture.ResolutionDivisor.Y == user_scene_texture_material_desc.ResolutionDivisorHeight);
+            SP_ASSERT(transient_user_scene_texture.Texture->Desc.Extent.X >= FMath::DivideAndRoundUp(Width, user_scene_texture_material_desc.ResolutionDivisorWidth));
+            SP_ASSERT(transient_user_scene_texture.Texture->Desc.Extent.Y >= FMath::DivideAndRoundUp(Height, user_scene_texture_material_desc.ResolutionDivisorHeight));
+            SP_ASSERT(transient_user_scene_texture.Texture->Desc.Format == PF_FloatRGBA);
+
+            // Extract the transient texture into the desc's persistent pooled render target, leaving it in SRVMask
+            // so copyPixelsFromStagingToCPU_RenderThread()'s SRVMask->CopySrc transition is valid on readback. The
+            // key already exists (populated in Initialize()) and std::map node addresses are stable, so the address
+            // we hand to QueueTextureExtraction() stays valid until graph execution.
+
+            graph_builder.QueueTextureExtraction(transient_user_scene_texture.Texture, &user_scene_texture_readback_descs_.at(user_scene_texture_name_string).pooled_render_target_, ERHIAccess::SRVMask);
+        }
+    }
+
+    // Double-buffered staging-to-CPU copy step happens here. Copy each pending staging readback to the CPU and 
+    // decrement its pending counter. Triple-buffered staging-to-CPU completes inside its own enqueue command
+    // instead.
+
     if (BufferingMode != ESpBufferingMode::DoubleBuffered) {
         return;
     }
 
-    SP_ASSERT(num_readbacks_pending_ >= 0);
-
-    if (num_readbacks_pending_ == 0) {
-        return;
-    }
-
     if (bReadPixelData) {
-        void* dest_ptr = nullptr;
-        if (bUseSharedMemory) {
-            dest_ptr = shared_memory_view_.data_;
-        } else {
-            dest_ptr = scratchpad_.data();
+        SP_ASSERT(texture_readback_desc_.num_readbacks_pending_ >= 0);
+        if (texture_readback_desc_.num_readbacks_pending_ > 0) {
+            void* dest_ptr = nullptr;
+            if (bUseSharedMemory) {
+                dest_ptr = texture_readback_desc_.shared_memory_view_.data_;
+            } else {
+                dest_ptr = texture_readback_desc_.scratchpad_.data();
+            }
+
+            FRHIGPUTextureReadback* readback = texture_readback_desc_.rhi_gpu_texture_readbacks_.at(0).get(); // always use index 0 for DoubleBuffered
+            SP_ASSERT(readback);
+
+            copyPixelsFromStagingToCPU_RenderThread(readback, dest_ptr, texture_readback_desc_);
+            texture_readback_desc_.num_readbacks_pending_--;
+            SP_ASSERT(texture_readback_desc_.num_readbacks_pending_ >= 0);
         }
-        copyPixelsFromStagingToCPU_RenderThread(readback_buffers_.at(0).get(), dest_ptr); // always use index 0 for DoubleBuffered
-        num_readbacks_pending_--;
-        SP_ASSERT(num_readbacks_pending_ >= 0);
+
+        for (auto& user_scene_texture_name : UserSceneTextureNames) {
+            std::string user_scene_texture_name_string = Unreal::toStdString(user_scene_texture_name);
+            SP_ASSERT(user_scene_texture_readback_descs_.contains(user_scene_texture_name_string));
+            TextureReadbackDesc& user_scene_texture_readback_desc = user_scene_texture_readback_descs_.at(user_scene_texture_name_string);
+
+            SP_ASSERT(user_scene_texture_readback_desc.num_readbacks_pending_ >= 0);
+            if (user_scene_texture_readback_desc.num_readbacks_pending_ > 0) {
+                void* dest_ptr = nullptr;
+                if (bUseSharedMemory) {
+                    dest_ptr = user_scene_texture_readback_desc.shared_memory_view_.data_;
+                } else {
+                    dest_ptr = user_scene_texture_readback_desc.scratchpad_.data();
+                }
+
+                FRHIGPUTextureReadback* readback = user_scene_texture_readback_desc.rhi_gpu_texture_readbacks_.at(0).get(); // always use index 0 for DoubleBuffered
+                SP_ASSERT(readback);
+
+                copyPixelsFromStagingToCPU_RenderThread(readback, dest_ptr, user_scene_texture_readback_desc);
+                user_scene_texture_readback_desc.num_readbacks_pending_--;
+                SP_ASSERT(user_scene_texture_readback_desc.num_readbacks_pending_ >= 0);
+            }
+        }
     }
 }
 
@@ -420,10 +580,20 @@ void USpSceneCaptureComponent2D::beginFrameHandler()
     }
 
     if (bReadPixelsEveryFrame) {
+
+        // single-buffered does all its work in endFrameHandler(), so there is nothing to enqueue here
+        if (BufferingMode == ESpBufferingMode::SingleBuffered) {
+            return;
+        }
+
         if (BufferingMode == ESpBufferingMode::DoubleBuffered) {
-            enqueueCopyPixelsDoubleBuffered();
+            std::map<std::string, TextureReadbackMinimalDesc> texture_readback_minimal_descs = requestUpdateAndGetTextureReadbackMinimalDescs();
+            enqueueCopyPixelsDoubleBuffered(texture_readback_minimal_descs);
         } else if (BufferingMode == ESpBufferingMode::TripleBuffered) {
-            enqueueCopyPixelsTripleBuffered();
+            std::map<std::string, TextureReadbackMinimalDesc> texture_readback_minimal_descs = requestUpdateAndGetTextureReadbackMinimalDescs(); // in triple-buffered case, must be called exactly once per enqueue
+            enqueueCopyPixelsTripleBuffered(texture_readback_minimal_descs);
+        } else {
+            SP_ASSERT(false);
         }
     }
 }
@@ -432,11 +602,14 @@ void USpSceneCaptureComponent2D::endFrameHandler()
 {
     if (bReadPixelsEveryFrame) {
         if (BufferingMode == ESpBufferingMode::SingleBuffered) {
-            scratchpad_packed_array_ = readPixelsSingleBuffered();
+            std::map<std::string, TextureReadbackMinimalDesc> texture_readback_minimal_descs = requestUpdateAndGetTextureReadbackMinimalDescs();
+            scratchpad_data_bundle_ = readPixelsSingleBuffered(texture_readback_minimal_descs);
         } else if (BufferingMode == ESpBufferingMode::DoubleBuffered) {
-            scratchpad_packed_array_ = readPixelsDoubleBuffered();
+            scratchpad_data_bundle_ = readPixelsDoubleBuffered();
         } else if (BufferingMode == ESpBufferingMode::TripleBuffered) {
-            scratchpad_packed_array_ = readPixelsTripleBuffered();
+            scratchpad_data_bundle_ = readPixelsTripleBuffered();
+        } else {
+            SP_ASSERT(false);
         }
     }
 }
@@ -445,173 +618,298 @@ void USpSceneCaptureComponent2D::endFrameHandler()
 // single-buffered mode
 //
 
-SpPackedArray USpSceneCaptureComponent2D::readPixelsSingleBuffered()
+SpFuncDataBundle USpSceneCaptureComponent2D::readPixelsSingleBuffered(std::map<std::string, TextureReadbackMinimalDesc>& texture_readback_minimal_descs)
 {
     SP_ASSERT(BufferingMode == ESpBufferingMode::SingleBuffered);
     SP_ASSERT(IsInitialized());
 
-    SpPackedArray packed_array = getPackedArray();
+    SpFuncDataBundle return_values;
+
+    // Build every packed array and resolve its CPU destination pointer into the corresponding minimal desc, then move
+    // the whole map into the batched command below.
+
+    for (auto& [name, texture_readback_minimal_desc] : texture_readback_minimal_descs) {
+        SpPackedArray packed_array = getPackedArray(texture_readback_minimal_desc);
+        if (bReadPixelData) {
+            texture_readback_minimal_desc.dest_ptr_ = packed_array.view_;
+            SP_ASSERT(texture_readback_minimal_desc.dest_ptr_);
+        }
+        Std::insert(return_values.packed_arrays_, name, std::move(packed_array));
+    }
 
     if (bReadPixelData) {
-        FTextureRenderTargetResource* render_target_resource = TextureTarget->GameThread_GetRenderTargetResource();
-        SP_ASSERT(render_target_resource);
 
-        FRHIGPUTextureReadback* readback = readback_buffers_.at(0).get(); // always use index 0 for SingleBuffered
-        SP_ASSERT(readback);
-
-        void* dest_ptr = packed_array.view_;
-        SP_ASSERT(dest_ptr);
+        // Enqueue every GPU-to-staging copy first, then flush once, then copy every staging buffer to the CPU. The
+        // whole batch lives in a single ENQUEUE_RENDER_COMMAND because copyPixelsFromStagingToCPU_RenderThread()
+        // blocks on each readback's Lock(), so we can't interleave a Lock() before the one flush that dispatches all
+        // the copies. Everything is synchronous (we FlushRenderingCommands() below), so the borrowed readback and
+        // src_texture pointers stay valid for the duration of the command, as do the dest_ptrs (which point into the
+        // packed arrays we already moved into return_values, whose backing buffers are stable across the move).
 
         ENQUEUE_RENDER_COMMAND(SpReadPixelsSingleBuffered)(
-            [this, readback, render_target_resource, dest_ptr](FRHICommandListImmediate& command_list) {
-                enqueueCopyPixelsFromGPUToStagingAndImmediateFlush_RenderThread(readback, command_list, render_target_resource);
-                copyPixelsFromStagingToCPU_RenderThread(readback, dest_ptr);
+            [this, texture_readback_minimal_descs = std::move(texture_readback_minimal_descs)](FRHICommandListImmediate& command_list) {
+                for (auto& [name, texture_readback_minimal_desc] : texture_readback_minimal_descs) {
+                    enqueueCopyPixelsFromGPUToStaging_RenderThread(command_list, texture_readback_minimal_desc);
+                }
+                command_list.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
+                for (auto& [name, texture_readback_minimal_desc] : texture_readback_minimal_descs) {
+                    copyPixelsFromStagingToCPU_RenderThread(texture_readback_minimal_desc.prev_readback_, texture_readback_minimal_desc.dest_ptr_, texture_readback_minimal_desc);
+                }
             });
 
         FlushRenderingCommands();
     }
 
-    return packed_array;
+    return return_values;
 }
 
 //
 // double-buffered mode
 //
 
-void USpSceneCaptureComponent2D::enqueueCopyPixelsDoubleBuffered()
+void USpSceneCaptureComponent2D::enqueueCopyPixelsDoubleBuffered(std::map<std::string, TextureReadbackMinimalDesc>& texture_readback_minimal_descs)
 {
     SP_ASSERT(BufferingMode == ESpBufferingMode::DoubleBuffered);
     SP_ASSERT(IsInitialized());
 
     if (bReadPixelData) {
-        SP_ASSERT(num_readbacks_pending_ >= 0);
-        num_readbacks_pending_++; // decremented in postRenderViewFamily_RenderThread()
 
-        FTextureRenderTargetResource* render_target_resource = TextureTarget->GameThread_GetRenderTargetResource();
-        SP_ASSERT(render_target_resource);
+        // Increment the pending counter for every texture (decremented later on the render thread in
+        // postRenderViewFamily_RenderThread(), waited on in readPixelsImpl()). num_readbacks_pending_ points at the
+        // persistent desc's counter, since the minimal descs are transient.
 
-        FRHIGPUTextureReadback* readback = readback_buffers_.at(0).get(); // always use index 0 for DoubleBuffered
-        SP_ASSERT(readback);
+        for (auto& [name, texture_readback_minimal_desc] : texture_readback_minimal_descs) {
+            SP_ASSERT(texture_readback_minimal_desc.num_readbacks_pending_);
+            SP_ASSERT(*texture_readback_minimal_desc.num_readbacks_pending_ >= 0);
+            (*texture_readback_minimal_desc.num_readbacks_pending_)++;
+        }
 
-        ENQUEUE_RENDER_COMMAND(SpEnqueueCopyPixelsFromGPUToStaging)(
-            [this, readback, render_target_resource](FRHICommandListImmediate& rhi_command_list_immediate) {
-                enqueueCopyPixelsFromGPUToStagingAndImmediateFlush_RenderThread(readback, rhi_command_list_immediate, render_target_resource);
+        // Enqueue every GPU-to-staging copy in a single command, then do a single flush. This command is async, so each
+        // source texture must stay valid until it runs; each minimal desc holds its pooled render target by value,
+        // which keeps a user scene texture's source alive (null for the main texture, whose source TextureTarget owns
+        // and keeps alive for its lifetime). The staging-to-CPU copy and the matching pending-counter decrement happen
+        // later in postRenderViewFamily_RenderThread().
+
+        ENQUEUE_RENDER_COMMAND(SpEnqueueCopyPixelsDoubleBuffered)(
+            [this, texture_readback_minimal_descs = std::move(texture_readback_minimal_descs)](FRHICommandListImmediate& command_list) {
+                for (auto& [name, texture_readback_minimal_desc] : texture_readback_minimal_descs) {
+                    enqueueCopyPixelsFromGPUToStaging_RenderThread(command_list, texture_readback_minimal_desc);
+                }
+                command_list.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
             });
     }
 }
 
-SpPackedArray USpSceneCaptureComponent2D::readPixelsDoubleBuffered()
+SpFuncDataBundle USpSceneCaptureComponent2D::readPixelsDoubleBuffered()
 {
     SP_ASSERT(BufferingMode == ESpBufferingMode::DoubleBuffered);
-    return readPixelsImpl();
+    SP_ASSERT(IsInitialized());
+
+    // Wait for and read back the CPU-side data for the main texture and every user scene texture. The staging-to-CPU
+    // copy already happened on the render thread (in postRenderViewFamily_RenderThread()), so we just read the
+    // persistent descs' buffers here; readPixelsImpl() spin-waits on each pending counter first.
+
+    SpFuncDataBundle return_values;
+    Std::insert(return_values.packed_arrays_, "data", readPixelsImpl(texture_readback_desc_));
+    for (auto& [user_scene_texture_name, user_scene_texture_readback_desc] : user_scene_texture_readback_descs_) {
+        Std::insert(return_values.packed_arrays_, user_scene_texture_name, readPixelsImpl(user_scene_texture_readback_desc));
+    }
+    return return_values;
 }
 
 //
 // triple-buffered mode
 //
 
-void USpSceneCaptureComponent2D::enqueueCopyPixelsTripleBuffered()
+void USpSceneCaptureComponent2D::enqueueCopyPixelsTripleBuffered(std::map<std::string, TextureReadbackMinimalDesc>& texture_readback_minimal_descs)
 {
     SP_ASSERT(BufferingMode == ESpBufferingMode::TripleBuffered);
     SP_ASSERT(IsInitialized());
 
     if (bReadPixelData) {
-        int prev_index = (readback_enqueue_index_ + 1) % 2;
-        int current_index = readback_enqueue_index_;
 
-        FRHIGPUTextureReadback* prev_readback = nullptr;
-        FRHIGPUTextureReadback* current_readback = readback_buffers_.at(current_index).get();
-        SP_ASSERT(current_readback);
+        // A non-null prev_readback_ means this texture wrote a readback on a previous frame that is now ready to copy
+        // back this frame (i.e. it has been primed; requestUpdateAndGetTextureReadbackMinimalDescs() resolves this).
+        // Increment the pending counter for exactly those textures; the matching decrement happens in the command below.
+        // num_readbacks_pending_ points at the persistent desc's counter, since the minimal descs are transient.
 
-        if (readback_primed_) {
-            SP_ASSERT(num_readbacks_pending_ >= 0);
-            num_readbacks_pending_++; // decremented in SpEnqueueCopyPixelsTripleBuffered command below
-            prev_readback = readback_buffers_.at(prev_index).get();
+        for (auto& [name, texture_readback_minimal_desc] : texture_readback_minimal_descs) {
+            if (texture_readback_minimal_desc.prev_readback_) {
+                SP_ASSERT(texture_readback_minimal_desc.num_readbacks_pending_);
+                SP_ASSERT(*texture_readback_minimal_desc.num_readbacks_pending_ >= 0);
+                (*texture_readback_minimal_desc.num_readbacks_pending_)++;
+            }
         }
 
-        FTextureRenderTargetResource* render_target_resource = TextureTarget->GameThread_GetRenderTargetResource();
-        SP_ASSERT(render_target_resource);
-
-        void* dest_ptr = nullptr;
-        if (bUseSharedMemory) {
-            dest_ptr = shared_memory_view_.data_;
-        } else {
-            dest_ptr = scratchpad_.data();
-        }
+        // Enqueue every GPU-to-staging copy (into current_readback_) in a single command, do a single flush, then copy
+        // every previous frame's staging buffer (prev_readback_) to the CPU and decrement its pending counter. The
+        // whole batch lives in one command because copyPixelsFromStagingToCPU_RenderThread() blocks on Lock(), so we
+        // can't interleave a Lock() before the one flush that dispatches all the copies. This command is async, so
+        // each minimal desc holds its pooled render target by value to keep a user scene texture's source alive (null
+        // for the main texture, whose source TextureTarget owns and keeps alive for its lifetime).
 
         ENQUEUE_RENDER_COMMAND(SpEnqueueCopyPixelsTripleBuffered)(
-            [this, prev_readback, current_readback, render_target_resource, dest_ptr](FRHICommandListImmediate& command_list) {
-                enqueueCopyPixelsFromGPUToStagingAndImmediateFlush_RenderThread(current_readback, command_list, render_target_resource);
-                if (prev_readback) {
-                    copyPixelsFromStagingToCPU_RenderThread(prev_readback, dest_ptr);
-                    num_readbacks_pending_--;
-                    SP_ASSERT(num_readbacks_pending_ >= 0);
+            [this, texture_readback_minimal_descs = std::move(texture_readback_minimal_descs)](FRHICommandListImmediate& command_list) {
+                for (auto& [name, texture_readback_minimal_desc] : texture_readback_minimal_descs) {
+                    enqueueCopyPixelsFromGPUToStaging_RenderThread(command_list, texture_readback_minimal_desc);
+                }
+                command_list.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
+                for (auto& [name, texture_readback_minimal_desc] : texture_readback_minimal_descs) {
+                    if (texture_readback_minimal_desc.prev_readback_) {
+                        copyPixelsFromStagingToCPU_RenderThread(texture_readback_minimal_desc.prev_readback_, texture_readback_minimal_desc.dest_ptr_, texture_readback_minimal_desc);
+                        SP_ASSERT(texture_readback_minimal_desc.num_readbacks_pending_);
+                        (*texture_readback_minimal_desc.num_readbacks_pending_)--;
+                        SP_ASSERT(*texture_readback_minimal_desc.num_readbacks_pending_ >= 0);
+                    }
                 }
             });
-
-        readback_enqueue_index_ = (readback_enqueue_index_ + 1) % 2;
-        readback_primed_ = true;
     }
 }
 
-SpPackedArray USpSceneCaptureComponent2D::readPixelsTripleBuffered()
+SpFuncDataBundle USpSceneCaptureComponent2D::readPixelsTripleBuffered()
 {
     SP_ASSERT(BufferingMode == ESpBufferingMode::TripleBuffered);
-    return readPixelsImpl();
+    SP_ASSERT(IsInitialized());
+
+    // Wait for and read back the CPU-side data for the main texture and every user scene texture. The staging-to-CPU
+    // copy already happened on the render thread (inside the enqueue command, see enqueueCopyPixelsTripleBuffered()),
+    // so we just read the persistent descs' buffers here; readPixelsImpl() spin-waits on each pending counter first.
+
+    SpFuncDataBundle return_values;
+    Std::insert(return_values.packed_arrays_, "data", readPixelsImpl(texture_readback_desc_));
+    for (auto& [user_scene_texture_name, user_scene_texture_readback_desc] : user_scene_texture_readback_descs_) {
+        Std::insert(return_values.packed_arrays_, user_scene_texture_name, readPixelsImpl(user_scene_texture_readback_desc));
+    }
+    return return_values;
 }
 
 //
 // game thread helpers
 //
 
-SpPackedArray USpSceneCaptureComponent2D::readPixelsImpl()
+std::map<std::string, USpSceneCaptureComponent2D::TextureReadbackMinimalDesc> USpSceneCaptureComponent2D::requestUpdateAndGetTextureReadbackMinimalDescs()
 {
     SP_ASSERT(IsInitialized());
 
-    if (bReadPixelData) {
-        SP_ASSERT(num_readbacks_pending_ >= 0);
-        int64_t spin_wait_iterations = 0;
-        while (num_readbacks_pending_ > 0) {
-            spin_wait_iterations++;
-            if (spin_wait_iterations % (100*1000*1000) == 0) {
-                SP_LOG("ERROR: Spin wait in readPixelsImpl() appears to be deadlocked.");
-                SP_ASSERT(false);
-            }            
-        }
-        if (bPrintReadbackSpinWaitInfo && spin_wait_iterations > 0) {
-            SP_LOG("WARNING: Readback spin-waited for ", spin_wait_iterations, " iterations in readPixelsImpl().");
-        }
+    // Assemble a TextureReadbackMinimalDesc for the main texture and every active user scene texture, keyed by public
+    // name, so a single batched render command can process all of them. Used by every buffering mode: single-buffered
+    // readback (readPixelsSingleBuffered), double-buffered enqueue (enqueueCopyPixelsDoubleBuffered), and
+    // triple-buffered enqueue (enqueueCopyPixelsTripleBuffered).
+
+    // The current/prev readback pointers are resolved per buffering mode by requestSwapRHIGPUTextureReadbacks(). For
+    // triple-buffered that advances the per-desc ring-buffer state (readback_enqueue_index_/readback_primed_), so this
+    // function must be called exactly once per enqueue.
+
+    // The pooled_render_target_ reads below are safe even though pooled_render_target_ is written by the rendering
+    // thread (see postRenderViewFamily_RenderThread(...)) and we're reading it on the game thread without any
+    // synchronization. This is because we set r.OneFrameThreadLag=0, so we guarantee that rendering is complete (in a
+    // formal happens-before sense) whenever a user's begin_frame() or end_frame() code is executing on the game thread.
+
+    std::map<std::string, TextureReadbackMinimalDesc> texture_readback_minimal_descs;
+
+    FTextureRenderTargetResource* render_target_resource = TextureTarget->GameThread_GetRenderTargetResource();
+    SP_ASSERT(render_target_resource);
+    FRHITexture* src_texture = render_target_resource->GetRenderTargetTexture(); // stable and valid for the life of TextureTarget
+    SP_ASSERT(src_texture);
+    auto [current_readback, prev_readback] = requestSwapRHIGPUTextureReadbacks(texture_readback_desc_);
+    Std::insert(texture_readback_minimal_descs, "data", getTextureReadbackMinimalDesc(texture_readback_desc_, src_texture, current_readback, prev_readback));
+
+    for (auto& user_scene_texture_name : UserSceneTextureNames) {
+        std::string user_scene_texture_name_string = Unreal::toStdString(user_scene_texture_name);
+        SP_ASSERT(user_scene_texture_readback_descs_.contains(user_scene_texture_name_string));
+        TextureReadbackDesc& user_scene_texture_readback_desc = user_scene_texture_readback_descs_.at(user_scene_texture_name_string);
+        SP_ASSERT(user_scene_texture_readback_desc.pooled_render_target_);
+        FRHITexture* user_scene_texture_src_texture = user_scene_texture_readback_desc.pooled_render_target_->GetRHI(); // only stable and valid for the life of pooled_render_target_
+        SP_ASSERT(user_scene_texture_src_texture);
+        auto [user_scene_texture_current_readback, user_scene_texture_prev_readback] = requestSwapRHIGPUTextureReadbacks(user_scene_texture_readback_desc);
+        Std::insert(texture_readback_minimal_descs, user_scene_texture_name_string, getTextureReadbackMinimalDesc(user_scene_texture_readback_desc, user_scene_texture_src_texture, user_scene_texture_current_readback, user_scene_texture_prev_readback));
     }
 
-    SpPackedArray packed_array = getPackedArray();
-
-    if (!bUseSharedMemory && bReadPixelData) {
-        SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
-        uint64_t num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
-        std::memcpy(packed_array.data_.data(), scratchpad_.data(), num_bytes);
-    }
-
-    return packed_array;
+    return texture_readback_minimal_descs;
 }
 
-SpPackedArray USpSceneCaptureComponent2D::getPackedArray()
+std::pair<FRHIGPUTextureReadback*, FRHIGPUTextureReadback*> USpSceneCaptureComponent2D::requestSwapRHIGPUTextureReadbacks(TextureReadbackDesc& texture_readback_desc)
+{
+    // Resolve this frame's {current, prev} readback pointers according to the buffering mode. current_readback_ is the
+    // GPU-to-staging target; prev_readback_ is the in-command staging-to-CPU source, or null if there is no in-command
+    // copy this frame. For triple-buffered this advances the per-desc ring-buffer state, so it must be called exactly
+    // once per enqueue.
+
+    if (BufferingMode == ESpBufferingMode::SingleBuffered) {
+        FRHIGPUTextureReadback* readback = texture_readback_desc.rhi_gpu_texture_readbacks_.at(0).get();
+        return {readback, readback}; // single-buffered enqueues into and copies from the same readback
+    } else if (BufferingMode == ESpBufferingMode::DoubleBuffered) {
+        return {texture_readback_desc.rhi_gpu_texture_readbacks_.at(0).get(), nullptr}; // double-buffered has no in-command copy (it copies later in postRenderViewFamily_RenderThread)
+    } else {
+        SP_ASSERT(BufferingMode == ESpBufferingMode::TripleBuffered);
+        int current_index = texture_readback_desc.readback_enqueue_index_;
+        int prev_index = (current_index + 1) % 2;
+        FRHIGPUTextureReadback* current_readback = texture_readback_desc.rhi_gpu_texture_readbacks_.at(current_index).get();
+        FRHIGPUTextureReadback* prev_readback = nullptr;
+        if (texture_readback_desc.readback_primed_) {
+            prev_readback = texture_readback_desc.rhi_gpu_texture_readbacks_.at(prev_index).get(); // copy from the readback we wrote last frame
+        }
+        texture_readback_desc.readback_enqueue_index_ = prev_index; // advance the ring buffer
+        texture_readback_desc.readback_primed_ = true;
+        return {current_readback, prev_readback};
+    }
+}
+
+USpSceneCaptureComponent2D::TextureReadbackMinimalDesc USpSceneCaptureComponent2D::getTextureReadbackMinimalDesc(TextureReadbackDesc& texture_readback_desc, FRHITexture* src_texture, FRHIGPUTextureReadback* current_readback, FRHIGPUTextureReadback* prev_readback)
 {
     SP_ASSERT(IsInitialized());
-    SP_ASSERT(Height >= 0);
-    SP_ASSERT(Width >= 0);
+    SP_ASSERT(src_texture);
+    SP_ASSERT(current_readback);
 
-    SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
-    uint64_t num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
+    TextureReadbackMinimalDesc texture_readback_minimal_desc;
+    texture_readback_minimal_desc.width_ = texture_readback_desc.width_;
+    texture_readback_minimal_desc.height_ = texture_readback_desc.height_;
+    texture_readback_minimal_desc.num_channels_per_pixel_ = texture_readback_desc.num_channels_per_pixel_;
+    texture_readback_minimal_desc.channel_data_type_ = texture_readback_desc.channel_data_type_;
+    texture_readback_minimal_desc.shared_memory_view_ = texture_readback_desc.shared_memory_view_;
+    texture_readback_minimal_desc.current_readback_ = current_readback;
+    texture_readback_minimal_desc.prev_readback_ = prev_readback;
+    texture_readback_minimal_desc.src_texture_ = src_texture;
+    texture_readback_minimal_desc.pooled_render_target_ = texture_readback_desc.pooled_render_target_; // keeps a user scene texture's source alive across an async command; null for the main texture
+    texture_readback_minimal_desc.num_readbacks_pending_ = &texture_readback_desc.num_readbacks_pending_;
+
+    // Destination for the in-command staging-to-CPU copy. Only triple-buffered resolves it here (to the persistent
+    // shared-memory or scratchpad buffer that readPixelsImpl() later returns). Single-buffered mode resolves its own
+    // destination (the returned packed array's buffer) in readPixelsSingleBuffered(), and double-buffered copies
+    // later in postRenderViewFamily_RenderThread(), so it never uses dest_ptr_.
+
+    if (BufferingMode == ESpBufferingMode::TripleBuffered) {
+        if (bUseSharedMemory) {
+            texture_readback_minimal_desc.dest_ptr_ = texture_readback_desc.shared_memory_view_.data_;
+        } else {
+            texture_readback_minimal_desc.dest_ptr_ = texture_readback_desc.scratchpad_.data();
+        }
+    }
+
+    return texture_readback_minimal_desc;
+}
+
+SpPackedArray USpSceneCaptureComponent2D::getPackedArray(const TextureReadbackDescBase& texture_readback_desc_base)
+{
+    SP_ASSERT(IsInitialized());
+    SP_ASSERT(texture_readback_desc_base.width_ >= 0);
+    SP_ASSERT(texture_readback_desc_base.height_ >= 0);
+
+    int32 width = texture_readback_desc_base.width_;
+    int32 height = texture_readback_desc_base.height_;
+    int32 num_channels_per_pixel = texture_readback_desc_base.num_channels_per_pixel_;
+    SpArrayDataType channel_data_type = texture_readback_desc_base.channel_data_type_;
+    uint64_t num_bytes = height*width*num_channels_per_pixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
 
     SpPackedArray packed_array;
-    packed_array.shape_ = {static_cast<uint64_t>(Height), static_cast<uint64_t>(Width), static_cast<uint64_t>(NumChannelsPerPixel)}; // explicit cast needed on Windows
+    packed_array.shape_ = {static_cast<uint64_t>(height), static_cast<uint64_t>(width), static_cast<uint64_t>(num_channels_per_pixel)}; // explicit cast needed on Windows
     packed_array.data_type_ = channel_data_type;
 
     if (bUseSharedMemory) {
-        packed_array.view_ = shared_memory_view_.data_;
+        packed_array.view_ = texture_readback_desc_base.shared_memory_view_.data_;
         packed_array.data_source_ = SpArrayDataSource::Shared;
-        packed_array.shared_memory_name_ = shared_memory_view_.name_;
-        packed_array.shared_memory_usage_flags_ = shared_memory_view_.usage_flags_;
+        packed_array.shared_memory_name_ = texture_readback_desc_base.shared_memory_view_.name_;
+        packed_array.shared_memory_usage_flags_ = texture_readback_desc_base.shared_memory_view_.usage_flags_;
     } else {
         Std::resizeUninitialized(packed_array.data_, num_bytes);
         packed_array.view_ = packed_array.data_.data();
@@ -621,33 +919,65 @@ SpPackedArray USpSceneCaptureComponent2D::getPackedArray()
     return packed_array;
 }
 
+SpPackedArray USpSceneCaptureComponent2D::readPixelsImpl(const TextureReadbackDesc& texture_readback_desc)
+{
+    SP_ASSERT(IsInitialized());
+
+    if (bReadPixelData) {
+        SP_ASSERT(texture_readback_desc.num_readbacks_pending_ >= 0);
+        int64_t spin_wait_iterations = 0;
+        while (texture_readback_desc.num_readbacks_pending_ > 0) {
+            spin_wait_iterations++;
+            if (spin_wait_iterations % (100*1000*1000) == 0) {
+                SP_LOG("ERROR: Spin wait in readPixelsImpl() appears to be deadlocked.");
+                SP_ASSERT(false);
+            }
+        }
+        if (bPrintReadbackSpinWaitInfo && spin_wait_iterations > 0) {
+            SP_LOG("WARNING: Readback spin-waited for ", spin_wait_iterations, " iterations in readPixelsImpl().");
+        }
+    }
+
+    SpPackedArray packed_array = getPackedArray(texture_readback_desc);
+
+    if (!bUseSharedMemory && bReadPixelData) {
+        uint64_t num_bytes = texture_readback_desc.height_*texture_readback_desc.width_*texture_readback_desc.num_channels_per_pixel_*SpArrayDataTypeUtils::getSizeOf(texture_readback_desc.channel_data_type_);
+        std::memcpy(packed_array.data_.data(), texture_readback_desc.scratchpad_.data(), num_bytes);
+    }
+
+    return packed_array;
+}
+
 //
 // render thread helpers
 //
 
-void USpSceneCaptureComponent2D::enqueueCopyPixelsFromGPUToStagingAndImmediateFlush_RenderThread(FRHIGPUTextureReadback* readback, FRHICommandListImmediate& command_list, FTextureRenderTargetResource* render_target_resource)
+void USpSceneCaptureComponent2D::enqueueCopyPixelsFromGPUToStaging_RenderThread(FRHICommandListImmediate& command_list, const TextureReadbackMinimalDesc& texture_readback_minimal_desc)
 {
-    SP_ASSERT(readback);
-    FRHITexture* src_texture = render_target_resource->GetRenderTargetTexture();
-    command_list.Transition(FRHITransitionInfo(src_texture, ERHIAccess::SRVMask, ERHIAccess::CopySrc));
-    readback->EnqueueCopy(command_list, src_texture);
-    command_list.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
+    SP_ASSERT(texture_readback_minimal_desc.current_readback_);
+    SP_ASSERT(texture_readback_minimal_desc.src_texture_);
+    command_list.Transition(FRHITransitionInfo(texture_readback_minimal_desc.src_texture_, ERHIAccess::SRVMask, ERHIAccess::CopySrc));
+    texture_readback_minimal_desc.current_readback_->EnqueueCopy(command_list, texture_readback_minimal_desc.src_texture_);
 }
 
-void USpSceneCaptureComponent2D::copyPixelsFromStagingToCPU_RenderThread(FRHIGPUTextureReadback* readback, void* dest_ptr)
+void USpSceneCaptureComponent2D::copyPixelsFromStagingToCPU_RenderThread(FRHIGPUTextureReadback* readback, void* dest_ptr, const TextureReadbackDescBase& texture_readback_desc_base)
 {
     SP_ASSERT(readback);
     SP_ASSERT(dest_ptr);
 
-    SpArrayDataType channel_data_type = Unreal::getEnumValueAs<SpArrayDataType, ESpArrayDataType>(ChannelDataType);
-    uint64_t num_bytes = Height*Width*NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
-    int32_t bytes_per_pixel = NumChannelsPerPixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
-    int32_t row_bytes = Width*bytes_per_pixel;
+    int32 width = texture_readback_desc_base.width_;
+    int32 height = texture_readback_desc_base.height_;
+    int32 num_channels_per_pixel = texture_readback_desc_base.num_channels_per_pixel_;
+    SpArrayDataType channel_data_type = texture_readback_desc_base.channel_data_type_;
+
+    uint64_t num_bytes = height*width*num_channels_per_pixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
+    int32_t bytes_per_pixel = num_channels_per_pixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
+    int32_t row_bytes = width*bytes_per_pixel;
 
     int32 row_pitch_in_pixels = 0;
     void* src_ptr = readback->Lock(row_pitch_in_pixels); // will block until the data is ready
     SP_ASSERT(src_ptr);
-    SP_ASSERT(row_pitch_in_pixels >= Width);
+    SP_ASSERT(row_pitch_in_pixels >= width);
 
     int32_t src_row_pitch_bytes = row_pitch_in_pixels*bytes_per_pixel;
 
@@ -656,7 +986,7 @@ void USpSceneCaptureComponent2D::copyPixelsFromStagingToCPU_RenderThread(FRHIGPU
     } else {
         uint8_t* src = static_cast<uint8_t*>(src_ptr);
         uint8_t* dst = static_cast<uint8_t*>(dest_ptr);
-        for (int32_t y = 0; y < Height; y++) {
+        for (int32_t y = 0; y < height; y++) {
             std::memcpy(dst + y*row_bytes, src + y*src_row_pitch_bytes, row_bytes);
         }
     }

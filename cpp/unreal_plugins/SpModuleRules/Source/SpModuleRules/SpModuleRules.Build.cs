@@ -36,8 +36,11 @@ public class SpModuleRules : ModuleRules
 
         PublicDependencyModuleNames.AddRange(new string[] {
             "AssetRegistry", "Chaos", "Core", "CoreUObject", "Engine", "EngineSettings", "InputCore", "Json", "JsonUtilities", "LevelSequence",
-            "NavigationSystem", "PhysicsCore", "RenderCore", "RHI", "Slate"});
+            "NavigationSystem", "PhysicsCore", "RenderCore", "Renderer", "RHI", "Slate"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
+
+        // Needed to expose a private header in Renderer
+        PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(readOnlyTargetRules.RelativeEnginePath, "Source", "Runtime", "Renderer", "Private")));
 
         // Only add library dependencies if we're in a derived SpModuleRules class. This avoids build issues
         // on Linux where the SpModuleRules dummy plugin is trying to link against Boost but isn't set up
