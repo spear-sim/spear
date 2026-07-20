@@ -7,6 +7,7 @@
 
 import argparse
 import cv2
+import json
 import numpy as np
 import os
 import spear
@@ -81,6 +82,9 @@ if __name__ == "__main__":
             {"ShowFlagName": "PathTracing", "Enabled": True},
             {"ShowFlagName": "CameraImperfections", "Enabled": False}])
 
+        # Required for RequestPathTracerReset() (called below) to have any effect
+        final_tone_curve_hdr_component.bUseSceneViewExtension = True
+
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
         final_tone_curve_hdr_component.Initialize()
         final_tone_curve_hdr_component.initialize_sp_funcs()
@@ -91,17 +95,38 @@ if __name__ == "__main__":
     # inserting an extra frame or two can fix occasional render-to-texture initialization issues (advances a minimum of 3 frames)
     game.async_loading_service.wait_for_engine_idle()
 
+    # Explicitly reset the path tracer's accumulated samples right before we start counting. Nothing moves
+    # in this example, but frames rendered above (e.g. during wait_for_engine_idle()) already accumulated
+    # samples against this component's persistent view state, so without this reset, sample_index would
+    # start ahead of 0 below.
+    with instance.begin_frame():
+        final_tone_curve_hdr_component.RequestPathTracerReset()
+    with instance.end_frame(single_step=True):
+        pass
+
     # The path tracer accumulates one sample per pixel per rendered frame, exactly like the editor's
     # path-tracing viewport, and stops once it reaches r.PathTracing.SamplesPerPixel (set to args.num_frames
     # above). Moving the camera or anything in the scene invalidates the accumulated samples and restarts
-    # from scratch, so we simply render args.num_frames frames in a row without moving anything, which
-    # converges the image on the final frame. The engine then applies the denoiser (if one was requested) to
-    # the converged result. Note that calling instance.step(num_frames=args.num_frames) without specifying
-    # single_step=True advances at least num_frames, but is not guaranteed to advance exactly num_frames.
+    # from scratch. We poll the internal path tracer accumulation counter instead of blindly stepping to
+    # ensure the image has been fully rendered. This way we avoid potential loading issues.
+    # The engine then applies the denoiser (if one was requested) to the converged result.
     spear.log("Path-traced rendering beginning...")
-    for i in range(args.num_frames):
-        spear.log(f"Rendering frame {i:04d}...")
-        instance.step(single_step=True)
+    max_num_frames = args.num_frames*2
+    sample_index = 0
+    sample_count = 0
+    for i in range(max_num_frames):
+        with instance.begin_frame():
+            pass
+        with instance.end_frame(single_step=True):
+            path_tracing_stats_data_bundle = final_tone_curve_hdr_component.get_path_tracing_stats()
+        path_tracing_stats = json.loads(path_tracing_stats_data_bundle["info"])
+        sample_index = path_tracing_stats["sample_index"]
+        sample_count = path_tracing_stats["sample_count"]
+        spear.log(f"Rendered frame {sample_index:04d}/{sample_count}...")
+        if sample_count <= 0 or sample_index >= sample_count:
+            break
+    if sample_count <= 0 or sample_index < sample_count:
+        spear.log("Error: failed to accumulate all path-traced sampled within the frame limit")
     spear.log("Path-traced rendering finished.")
 
     # get rendered frame
