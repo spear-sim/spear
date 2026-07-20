@@ -11,6 +11,7 @@
 #include <cstring> // std::memcpy
 #include <memory>  // std::construct_at, std::destroy_at, std::make_unique
 #include <numeric> // std::accumulate
+#include <string>
 #include <utility> // std::move, std::pair
 
 #include <Components/SceneCaptureComponent2D.h>
@@ -352,6 +353,25 @@ void USpSceneCaptureComponent2D::Initialize()
         }
     });
 
+    SpFuncComponent->registerFunc("get_path_tracing_stats", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
+        uint32 sample_index = 0;
+        uint32 sample_count = 0;
+
+        #if RHI_RAYTRACING
+            if (getViewStates().Num() > 0) {
+                FSceneViewStateInterface* view_state = GetViewState(0);
+                if (view_state) {
+                    sample_index = view_state->GetPathTracingSampleIndex();
+                    sample_count = view_state->GetPathTracingSampleCount();
+                }
+            }
+        #endif
+
+        SpFuncDataBundle return_values;
+        return_values.info_ = "{\"sample_index\": " + std::to_string(sample_index) + ", \"sample_count\": " + std::to_string(sample_count) + "}";
+        return return_values;
+    });
+
     request_path_tracer_reset_ = false;
     is_initialized_ = true;
     bIsInitialized = true;
@@ -374,6 +394,7 @@ void USpSceneCaptureComponent2D::Terminate()
     // unregister SpFuncs
     SpFuncComponent->unregisterFunc("enqueue_copy");
     SpFuncComponent->unregisterFunc("read_pixels");
+    SpFuncComponent->unregisterFunc("get_path_tracing_stats");
 
     // terminate state for measuring "standalone" and "standalone + extra work" frame rates
     if (bPrintFrameTimeEveryFrame || bReadPixelsEveryFrame) {
