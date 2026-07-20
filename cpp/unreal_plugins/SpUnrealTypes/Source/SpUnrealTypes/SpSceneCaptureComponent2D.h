@@ -240,12 +240,6 @@ private:
         SpArrayDataType channel_data_type_ = SpArrayDataType::Invalid;
 
         SpArraySharedMemoryView shared_memory_view_; // only used when shared memory is enabled
-
-        // A user scene texture's extracted transient render target, whose GetRHI() gives the readback source. Null for
-        // the main texture, which reads from TextureTarget instead. Used by all buffering modes. It is written on the
-        // persistent desc by postRenderViewFamily_RenderThread(), then copied by value into the minimal desc to keep
-        // the source alive across a double-buffered or triple-buffered command.
-        TRefCountPtr<IPooledRenderTarget> pooled_render_target_;
     };
 
     // std::atomic makes TextureReadbackDesc non-copyable and non-movable, so populate maps with try_emplace(), not insert()
@@ -267,16 +261,28 @@ private:
         // Triple-buffered
         int readback_enqueue_index_ = 0; // GT-only: ring-buffer index, advanced in requestSwapRHIGPUTextureReadbacks()
         bool readback_primed_ = false;   // GT-only: one-way latch, set true by the first requestSwapRHIGPUTextureReadbacks() call
+
+        // A user scene texture's extracted transient render target (null for the main texture, which reads from
+        // TextureTarget). Written on the render thread by postRenderViewFamily_RenderThread() every frame. Its address
+        // is stable for the desc's lifetime, but its value is not, so only the render thread reads its value (via the
+        // minimal desc's pooled_render_target_ptr_); the game thread only ever takes its address.
+        TRefCountPtr<IPooledRenderTarget> pooled_render_target_;
     };
 
-    // A minimal and movable view of readback data required on the rendering thread. This data structure is
-    // not intended to be persistent because src_texture_ and the readback pointers are not stable across frames.
+    // A minimal and movable view of readback data required on the rendering thread. This data structure is not
+    // intended to be persistent: its readback pointers, destination, and source handle are re-resolved every frame.
     // It must be assembled on the game thread every frame to be used for a single readback.
     struct TextureReadbackMinimalDesc : TextureReadbackDescBase
     {
         FRHIGPUTextureReadback* current_readback_ = nullptr; // GPU-to-staging copy target for this frame (used by all buffering modes)
         FRHIGPUTextureReadback* prev_readback_ = nullptr;    // staging-to-CPU copy source for the in-command copy; nullptr if there is no in-command copy this frame
-        FRHITexture* src_texture_ = nullptr;
+
+        // Stable handles to the GPU-to-staging source, recorded on the game thread and resolved to a live FRHITexture
+        // on the render thread (see enqueueCopyPixelsFromGPUToStaging_RenderThread). Exactly one is non-null. We never
+        // resolve the live texture on the game thread. For the main texture that would be unnecessary, and for a user
+        // scene texture, it would race with the render thread reassigning pooled_render_target_ every frame.
+        FTextureRenderTargetResource* render_target_resource_ptr_ = nullptr;    // main texture: render thread calls GetRenderTargetTexture()
+        TRefCountPtr<IPooledRenderTarget>* pooled_render_target_ptr_ = nullptr; // user scene texture: render thread dereferences and calls GetRHI()
 
         void* dest_ptr_ = nullptr; // CPU destination for the in-command staging-to-CPU copy
 
@@ -302,7 +308,12 @@ private:
     // game thread helpers
     std::map<std::string, TextureReadbackMinimalDesc> requestUpdateAndGetTextureReadbackMinimalDescs();
     std::pair<FRHIGPUTextureReadback*, FRHIGPUTextureReadback*> requestSwapRHIGPUTextureReadbacks(TextureReadbackDesc& texture_readback_desc); // returns {current, prev}; advances the triple-buffered ring-buffer state
-    TextureReadbackMinimalDesc getTextureReadbackMinimalDesc(TextureReadbackDesc& texture_readback_desc, FRHITexture* src_texture, FRHIGPUTextureReadback* current_readback, FRHIGPUTextureReadback* prev_readback);
+    TextureReadbackMinimalDesc getTextureReadbackMinimalDesc(
+        TextureReadbackDesc& texture_readback_desc,
+        FRHIGPUTextureReadback* current_readback,
+        FRHIGPUTextureReadback* prev_readback,
+        FTextureRenderTargetResource* render_target_resource_ptr,
+        TRefCountPtr<IPooledRenderTarget>* pooled_render_target_ptr);
     SpPackedArray getPackedArray(const TextureReadbackDescBase& texture_readback_desc_base);
     SpPackedArray readPixelsImpl(const TextureReadbackDesc& texture_readback_desc);
 
