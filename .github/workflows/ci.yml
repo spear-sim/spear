@@ -83,10 +83,8 @@ jobs:
         with:
           arch: x64
 
-      # Pin explicitly rather than relying on the image's default Xcode version, which can
-      # change out from under us. docs/getting_started.md verifies Xcode 16 or 26.
       - if: runner.os == 'macOS'
-        run: sudo xcode-select -s /Applications/Xcode_16.4.app
+        run: sudo xcode-select -s /Applications/Xcode_26.5.app
 
       - name: Install the spear Python package
         run: pip install -e python
