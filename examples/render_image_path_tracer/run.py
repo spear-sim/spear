@@ -95,15 +95,6 @@ if __name__ == "__main__":
     # inserting an extra frame or two can fix occasional render-to-texture initialization issues (advances a minimum of 3 frames)
     game.async_loading_service.wait_for_engine_idle()
 
-    # Explicitly reset the path tracer's accumulated samples right before we start counting. Nothing moves
-    # in this example, but frames rendered above (e.g. during wait_for_engine_idle()) already accumulated
-    # samples against this component's persistent view state, so without this reset, sample_index would
-    # start ahead of 0 below.
-    with instance.begin_frame():
-        final_tone_curve_hdr_component.RequestPathTracerReset()
-    with instance.end_frame(single_step=True):
-        pass
-
     # The path tracer accumulates one sample per pixel per rendered frame, exactly like the editor's
     # path-tracing viewport, and stops once it reaches r.PathTracing.SamplesPerPixel (set to args.num_frames
     # above). Moving the camera or anything in the scene invalidates the accumulated samples and restarts
@@ -116,9 +107,16 @@ if __name__ == "__main__":
     sample_count = 0
     for i in range(max_num_frames):
         with instance.begin_frame():
-            pass
+            # Explicitly reset the path tracer's accumulated samples on the first frame. Nothing moves
+            # in this example, but frames rendered above (e.g. during wait_for_engine_idle()) already accumulated
+            # samples against this component's persistent view state, so without this reset, sample_index would
+            # start ahead of 0 below.
+            if i == 0:
+                final_tone_curve_hdr_component.RequestPathTracerReset()
+
         with instance.end_frame(single_step=True):
             path_tracing_stats_data_bundle = final_tone_curve_hdr_component.get_path_tracing_stats()
+
         path_tracing_stats = json.loads(path_tracing_stats_data_bundle["info"])
         sample_index = path_tracing_stats["sample_index"]
         sample_count = path_tracing_stats["sample_count"]
