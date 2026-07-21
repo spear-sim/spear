@@ -8,7 +8,14 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore: &docs_paths
+      - "**/*.md"
+      - "**/*.mdc"
+      - "docs/**"
+      - "LICENSE.txt"
+      - "ACKNOWLEDGMENTS.txt"
   pull_request:
+    paths-ignore: *docs_paths
   workflow_dispatch:
 
 jobs:
@@ -77,12 +84,9 @@ jobs:
           arch: x64
 
       # Pin explicitly rather than relying on the image's default Xcode version, which can
-      # change out from under us (e.g. macos-latest dropped every Xcode 16.x install when it
-      # moved to the macos-26 image). docs/getting_started.md verifies Xcode 16 or 26; the
-      # Xcode-26-needs-a-patched-Apple_SDK.json caveat in that doc is about building against
-      # the Unreal Engine specifically and doesn't apply here, since this job never touches UE.
+      # change out from under us. docs/getting_started.md verifies Xcode 16 or 26.
       - if: runner.os == 'macOS'
-        run: sudo xcode-select -s /Applications/Xcode_26.5.app
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app
 
       - name: Install the spear Python package
         run: pip install -e python
