@@ -137,9 +137,11 @@ public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     bool IsInitialized();
 
-    // requests that the path tracer restarts rendering from scratch; only has an effect if bUseSceneViewExtension is true
+    UFUNCTION(Category="SPEAR") // uint64 not supported for BlueprintCallable, can't be const
+    TArray<uint64> GetViewStates(); // FSceneViewStateInterface is not a UCLASS so we can't return FSceneViewStateInterface*, so we return uint64 instead
+
     UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
-    void RequestPathTracerReset();
+    void RequestPathTracerReset(); // requests that the path tracer restarts rendering from scratch; only has an effect if bUseSceneViewExtension is true
 
     // called from FSpSceneViewExtensionBase::shouldHandleView(...) when deciding whether or not this component matches the current view
     const TIndirectArray<FSceneViewStateReference>& getViewStates() const { return ViewStates; }
