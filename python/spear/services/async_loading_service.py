@@ -136,7 +136,7 @@ class AsyncLoadingService(spear.Service):
         is_initialized = return_values["bIsInitialized"]
         shader_compiling_manager_idle = num_remaining_jobs == 0
         if verbose:
-            spear.log(f"shader_compiling_manager_idle = {shader_compiling_manager_idle} (num_remaining_jobs = {num_remaining_shader_jobs}, (initialized = {is_initialized})")
+            spear.log(f"shader_compiling_manager_idle = {shader_compiling_manager_idle} (num_remaining_jobs = {num_remaining_jobs}, (initialized = {is_initialized})")
         return shader_compiling_manager_idle, num_remaining_jobs, is_initialized
 
     def are_streaming_levels_idle(self, verbose=False):
