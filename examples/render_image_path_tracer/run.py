@@ -66,7 +66,7 @@ if __name__ == "__main__":
         game.console_service.set(name="r.PathTracing.Denoiser.Name", value=denoiser_name)
 
         # spawn camera sensor and get the final_tone_curve_hdr component
-        bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensorPathTracer.BP_CameraSensorPathTracer_C")
+        bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
         bp_camera_sensor = game.unreal_service.spawn_actor(uclass=bp_camera_sensor_uclass)
         final_tone_curve_hdr_component = game.unreal_service.get_component_by_name(actor=bp_camera_sensor, component_name="DefaultSceneRoot.final_tone_curve_hdr_", uclass="USpSceneCaptureComponent2D")
 
@@ -88,6 +88,8 @@ if __name__ == "__main__":
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
         final_tone_curve_hdr_component.Initialize()
         final_tone_curve_hdr_component.initialize_sp_funcs()
+
+        sp_scene_view_state_interface = game.get_unreal_object(uclass="USpSceneViewStateInterface")
 
     with instance.end_frame(single_step=True):
         pass
@@ -115,11 +117,15 @@ if __name__ == "__main__":
                 final_tone_curve_hdr_component.RequestPathTracerReset()
 
         with instance.end_frame(single_step=True):
-            path_tracing_stats_data_bundle = final_tone_curve_hdr_component.get_path_tracing_stats()
+            view_states = final_tone_curve_hdr_component.GetViewStates()
+            if len(view_states) > 0:
+                view_state = view_states[0]
+                sample_index = sp_scene_view_state_interface.GetPathTracingSampleIndex(ViewState=view_state)
+                sample_count = sp_scene_view_state_interface.GetPathTracingSampleCount(ViewState=view_state)
+            else:
+                sample_index = 0
+                sample_count = 0
 
-        path_tracing_stats = json.loads(path_tracing_stats_data_bundle["info"])
-        sample_index = path_tracing_stats["sample_index"]
-        sample_count = path_tracing_stats["sample_count"]
         spear.log(f"Rendered frame {sample_index:04d}/{sample_count}...")
         if sample_count <= 0 or sample_index >= sample_count:
             break
