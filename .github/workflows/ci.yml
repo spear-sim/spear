@@ -50,3 +50,45 @@ jobs:
 
       - name: Import spear
         run: python -c "import spear; spear.log('spear imported successfully, __can_import_spear_ext__ = ', spear.__can_import_spear_ext__)"
+
+  # Compile the spear_ext Python extension module and its vendored third-party libraries
+  # (boost, rpclib, yaml-cpp) using the system compiler. This intentionally excludes Linux,
+  # because our build scripts source clang/libc++ from an Unreal Engine install on Linux.
+  #
+  # We pin windows-2022 rather than windows-latest because MSVC v143 (v14.44-17.14) is required.
+  compile-spear-ext:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      # Pin explicitly rather than relying on the image's default Xcode version, which can
+      # change out from under us. docs/getting_started.md verifies Xcode 16 or 26.
+      - if: runner.os == 'macOS'
+        run: sudo xcode-select -s /Applications/Xcode_16.4.app
+
+      - name: Install the spear Python package
+        run: pip install -e python
+
+      - name: Build third-party libraries
+        run: python tools/build_third_party_libs.py
+
+      - name: Build and install the spear_ext Python extension module
+        run: python tools/install_python_extension.py
+
+      - name: Import spear_ext
+        run: python -c "import spear_ext; print('spear_ext imported successfully')"
