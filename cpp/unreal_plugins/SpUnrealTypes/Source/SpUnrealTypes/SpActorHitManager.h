@@ -25,9 +25,9 @@ struct FActorHitDesc
     GENERATED_BODY()
 
     UPROPERTY()
-    uint64 SelfActor = 0;
+    FString SelfActor = "0x0";
     UPROPERTY()
-    uint64 OtherActor = 0;
+    FString OtherActor = "0x0";
     UPROPERTY()
     FVector NormalImpulse = FVector::ZeroVector;
     UPROPERTY()
@@ -35,11 +35,7 @@ struct FActorHitDesc
 
     // Optional debug info
     UPROPERTY()
-    FString SelfActorPtrString;
-    UPROPERTY()
     FString SelfActorPropertiesString;
-    UPROPERTY()
-    FString OtherActorPtrString;
     UPROPERTY()
     FString OtherActorPropertiesString;
 };

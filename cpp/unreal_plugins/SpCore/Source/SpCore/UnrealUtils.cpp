@@ -578,11 +578,11 @@ SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& prop
         property_desc.property_->IsA(FInt8Property::StaticClass()) ||
         property_desc.property_->IsA(FInt16Property::StaticClass()) ||
         // no FInt32Property because the int32 C++ type maps to FIntProperty
-        property_desc.property_->IsA(FInt64Property::StaticClass()) ||
+        // no FInt64Property because it could lose precision when passed through FJsonObjectConverter, which stores integers in a double-backed FJsonValue
         // no FUInt8Property because the uint8 C++ type maps to FByteProperty
         property_desc.property_->IsA(FUInt16Property::StaticClass()) ||
         property_desc.property_->IsA(FUInt32Property::StaticClass()) ||
-        property_desc.property_->IsA(FUInt64Property::StaticClass()) ||
+        // no FUInt64Property because it could lose precision when passed through FJsonObjectConverter, which stores integers in a double-backed FJsonValue
         property_desc.property_->IsA(FFloatProperty::StaticClass()) ||
         property_desc.property_->IsA(FDoubleProperty::StaticClass()) ||
         property_desc.property_->IsA(FStrProperty::StaticClass()) ||
@@ -600,6 +600,23 @@ SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& prop
         SP_ASSERT(success);
 
         property_value.value_ = Unreal::toStdString(fstring);
+
+    } else if (property_desc.property_->IsA(FInt64Property::StaticClass())) {
+
+        // Note that int64 and uint64 can exceed 2^53, so the path above FJsonObjectConverter::UPropertyToJsonValue(...)
+        // would lose precision. It stores integers in a double-backed FJsonValue and then stringifies via FString::SanitizeFloat).
+        // Instead, we format the raw integer to a decimal string directly. The value is emitted unquoted (see
+        // getQuoteStringForProperty(...)), so it is a valid JSON number, and Python's json.loads(...) parses it into
+        // an arbitrary-precision int. uint64 must use the unsigned accessor because GetSignedIntPropertyValue(...)
+        // would misread values above INT64_MAX as negative.
+
+        FNumericProperty* numeric_property = static_cast<FNumericProperty*>(property_desc.property_); // FInt64Property is-a FNumericProperty
+        property_value.value_ = Std::toString(numeric_property->GetSignedIntPropertyValue(property_desc.value_ptr_));
+
+    } else if (property_desc.property_->IsA(FUInt64Property::StaticClass())) {
+
+        FNumericProperty* numeric_property = static_cast<FNumericProperty*>(property_desc.property_); // FUInt64Property is-a FNumericProperty
+        property_value.value_ = Std::toString(numeric_property->GetUnsignedIntPropertyValue(property_desc.value_ptr_));
 
     }  else if (property_desc.property_->IsA(FArrayProperty::StaticClass())) {
 
@@ -730,9 +747,14 @@ void UnrealUtils::setPropertyValueFromString(const SpPropertyDesc& property_desc
 
     bool success = false;
 
+    // Deserialize with StoreNumbersAsStrings so numeric tokens are preserved as exact strings rather than
+    // flattened to a double. This lets the FInt64Property/FUInt64Property cases in setPropertyValueFromJsonValue(...)
+    // recover the exact value for scalars and for container elements, which are parsed here before those
+    // cases run. Other numeric types are unaffected.
+
     TSharedRef<TJsonReader<>> json_reader = TJsonReaderFactory<>::Create(Unreal::toFString("{ \"dummy\": " + quote_string + json_string + quote_string + " }"));
     TSharedPtr<FJsonObject> json_object;
-    success = FJsonSerializer::Deserialize(json_reader, json_object);
+    success = FJsonSerializer::Deserialize(json_reader, json_object, FJsonSerializer::EFlags::StoreNumbersAsStrings);
     SP_ASSERT(success);
     SP_ASSERT(json_object.IsValid());
     TSharedPtr<FJsonValue> json_value = json_object.Get()->TryGetField(Unreal::toFString("dummy"));
@@ -766,11 +788,11 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
         property_desc.property_->IsA(FInt8Property::StaticClass()) ||
         property_desc.property_->IsA(FInt16Property::StaticClass()) ||
         // no FInt32Property because the int32 C++ type maps to FIntProperty
-        property_desc.property_->IsA(FInt64Property::StaticClass()) ||
+        // no FInt64Property because it could lose precision when passed through FJsonObjectConverter, which stores integers in a double-backed FJsonValue
         // no FUInt8Property because the uint8 C++ type maps to FByteProperty
         property_desc.property_->IsA(FUInt16Property::StaticClass()) ||
         property_desc.property_->IsA(FUInt32Property::StaticClass()) ||
-        property_desc.property_->IsA(FUInt64Property::StaticClass()) ||
+        // no FUInt64Property because it could lose precision when passed through FJsonObjectConverter, which stores integers in a double-backed FJsonValue
         property_desc.property_->IsA(FFloatProperty::StaticClass()) ||
         property_desc.property_->IsA(FDoubleProperty::StaticClass()) ||
         property_desc.property_->IsA(FStrProperty::StaticClass()) ||
@@ -783,6 +805,29 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
         bool success = false;
         success = FJsonObjectConverter::JsonValueToUProperty(json_value, property_desc.property_, property_desc.value_ptr_);
         SP_ASSERT(success);
+
+    } else if (property_desc.property_->IsA(FInt64Property::StaticClass())) {
+
+        // See the corresponding comment in getPropertyValueAsString(...). setPropertyValueFromString(...) deserializes
+        // with StoreNumbersAsStrings, so json_value is a string-backed number and TryGetString(...) returns the exact
+        // decimal digits, which we parse directly rather than casting through a double. Note that uint64 must use the
+        // unsigned parse and the unsigned SetIntPropertyValue(...) overload to represent values above INT64_MAX correctly.
+
+        FString fstring;
+        bool success = json_value->TryGetString(fstring);
+        SP_ASSERT(success);
+        FNumericProperty* numeric_property = static_cast<FNumericProperty*>(property_desc.property_); // FInt64Property is-a FNumericProperty
+        numeric_property->SetIntPropertyValue(property_desc.value_ptr_, static_cast<int64>(FCString::Strtoi64(*fstring, nullptr, 10)));
+
+    } else if (property_desc.property_->IsA(FUInt64Property::StaticClass())) {
+
+        // See comment for FInt64Property above.
+
+        FString fstring;
+        bool success = json_value->TryGetString(fstring);
+        SP_ASSERT(success);
+        FNumericProperty* numeric_property = static_cast<FNumericProperty*>(property_desc.property_); // FUInt64Property is-a FNumericProperty
+        numeric_property->SetIntPropertyValue(property_desc.value_ptr_, static_cast<uint64>(FCString::Strtoui64(*fstring, nullptr, 10)));
 
     } else if (property_desc.property_->IsA(FArrayProperty::StaticClass())) {
 

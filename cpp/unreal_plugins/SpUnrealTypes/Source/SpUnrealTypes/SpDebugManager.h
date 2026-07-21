@@ -101,8 +101,23 @@ private:
     UFUNCTION(CallInEditor, Category="SPEAR")
     void TestReinterpretAsVectorOf() const;
 
+    UFUNCTION(CallInEditor, Category="SPEAR")
+    void TestInt64(); // can't be const
+
     UFUNCTION()
     FString GetString(FString Arg0, bool Arg1, int Arg2, FVector Arg3) const;
+
+    UFUNCTION()
+    int64 GetInt64(int64 Arg0) const; // echoes Arg0 so we can verify exact round-trips
+
+    UFUNCTION()
+    uint64 GetUInt64(uint64 Arg0) const; // echoes Arg0 so we can verify exact round-trips
+
+    UFUNCTION()
+    TArray<int64> GetArrayOfInt64(TArray<int64> Arg0) const; // echoes Arg0 to exercise the container arg + return path
+
+    UFUNCTION()
+    TArray<uint64> GetArrayOfUInt64(TArray<uint64> Arg0) const; // echoes Arg0 to exercise the container arg + return path
 
     UFUNCTION()
     FVector GetVector(FString Arg0, bool Arg1, int Arg2, FVector& Arg3) const;
@@ -124,6 +139,18 @@ private:
 
     UPROPERTY()
     TArray<int> ArrayOfInts;
+
+    UPROPERTY()
+    int64 Int64Value = 0;
+
+    UPROPERTY()
+    uint64 UInt64Value = 0;
+
+    UPROPERTY()
+    TArray<int64> ArrayOfInt64;
+
+    UPROPERTY()
+    TArray<uint64> ArrayOfUInt64;
 
     UPROPERTY()
     TArray<FVector> ArrayOfVectors;
