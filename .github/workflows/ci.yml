@@ -69,14 +69,20 @@ jobs:
       matrix:
         os: [windows-2022, macos-latest]
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - uses: actions/setup-python@v5
+      # install_python_extension.py requires an activated conda environment (see
+      # docs/getting_started.md), so we set one up rather than using actions/setup-python.
+      - uses: conda-incubator/setup-miniconda@v3
         with:
           python-version: "3.11"
+          activate-environment: spear-env
 
       - if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
@@ -87,13 +93,13 @@ jobs:
         run: sudo xcode-select -s /Applications/Xcode_26.5.app
 
       - name: Install the spear Python package
-        run: pip install -e python
+        run: conda run --no-capture-output -n spear-env pip install -e python
 
       - name: Build third-party libraries
-        run: python tools/build_third_party_libs.py
+        run: conda run --no-capture-output -n spear-env python tools/build_third_party_libs.py
 
       - name: Build and install the spear_ext Python extension module
-        run: python tools/install_python_extension.py
+        run: conda run --no-capture-output -n spear-env python tools/install_python_extension.py --conda-script "$CONDA/etc/profile.d/conda.sh"
 
       - name: Import spear_ext
-        run: python -c "import spear_ext; print('spear_ext imported successfully')"
+        run: conda run --no-capture-output -n spear-env python -c "import spear_ext; print('spear_ext imported successfully')"
