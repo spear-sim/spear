@@ -19,4 +19,7 @@ class USpCoreDelegates : public UBlueprintFunctionLibrary
 public: 
     UFUNCTION()
     static uint64 MountPak(const FString& PakFile, int32 PakOrder) { return reinterpret_cast<uint64>(FCoreDelegates::MountPak.Execute(PakFile, PakOrder)); }
+
+    UFUNCTION()
+    static bool OnUnmountPak(const FString& PakFile) { return FCoreDelegates::OnUnmountPak.Execute(PakFile); }
 };
