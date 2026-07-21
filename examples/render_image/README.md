@@ -7,3 +7,5 @@ python run.py
 ```
 
 You should see a game window appear, as well as an OpenCV window that matches what you see in the game window. You can close the OpenCV window by pressing any key while it is in focus. Additionally, you should see an image saved in the same directory as this `README` file.
+
+There is also a `--capture` flag which enables GPU traces. To enable it, uncomment and the parameters in `user_config.yaml`. RenderDoc can be installed from https://renderdoc.org/. Please also note some captures can get quite large.
