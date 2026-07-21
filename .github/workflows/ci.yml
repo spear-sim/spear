@@ -1,0 +1,52 @@
+#
+# Copyright (c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+# Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+#
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+
+  # Pure static analysis. Results don't depend on OS, so this only needs to run once.
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Check Python syntax
+        run: python -m compileall -q python tools pipeline editor examples python_ext/python
+
+      - name: Lint with ruff
+        run: |
+          pip install ruff==0.15.22
+          ruff check --select F --ignore F401,F403,F541,F841 python tools pipeline editor examples python_ext/python
+
+  # Verify the spear Python package actually installs and imports on each platform.
+  install:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install the spear Python package
+        run: pip install -e "python[examples]"
+
+      - name: Import spear
+        run: python -c "import spear; spear.log('spear imported successfully, __can_import_spear_ext__ = ', spear.__can_import_spear_ext__)"
