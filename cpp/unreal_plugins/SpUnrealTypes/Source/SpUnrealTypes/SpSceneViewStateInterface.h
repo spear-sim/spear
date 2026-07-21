@@ -15,7 +15,7 @@ class USpSceneViewStateInterface : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public: 
-    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    UFUNCTION(Category="SPEAR") // uint64 is not supported for BlueprintCallable
     static uint32 GetPathTracingSampleIndex(uint64 ViewState)
     {
         #if RHI_RAYTRACING
@@ -28,7 +28,7 @@ public:
         return 0;
     }
 
-    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    UFUNCTION(Category="SPEAR") // uint64 is not supported for BlueprintCallable
     static uint32 GetPathTracingSampleCount(uint64 ViewState)
     {
         #if RHI_RAYTRACING
