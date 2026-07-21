@@ -1015,10 +1015,79 @@ void ASpDebugManager::TestReinterpretAsVectorOf() const
     SP_LOG();
 }
 
+void ASpDebugManager::TestInt64()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    UFunction* ufunction = nullptr;
+    std::map<std::string, std::string> args;
+    std::map<std::string, SpPropertyValue> return_values;
+
+    // Boundary values that exceed 2^53 and therefore cannot round-trip through a double. INT64_MAX and UINT64_MAX
+    // are the exact values we expect to see echoed back if precision is preserved end to end.
+    std::string int64_max_string = std::to_string(INT64_MAX);   // 9223372036854775807
+    std::string int64_min_string = std::to_string(INT64_MIN);   // -9223372036854775808
+    std::string uint64_max_string = std::to_string(UINT64_MAX); // 18446744073709551615
+
+    args = {{"Arg0", int64_max_string}};
+    ufunction = UnrealUtils::findFunctionByName(this->GetClass(), "GetInt64");
+    SP_ASSERT(ufunction);
+    return_values = UnrealUtils::callFunction(GetWorld(), this, ufunction, args);
+    SP_LOG("GetInt64  in:  ", int64_max_string);
+    SP_LOG("GetInt64  out: ", return_values.at("ReturnValue").value_, " (", return_values.at("ReturnValue").type_id_, ")");
+
+    args = {{"Arg0", uint64_max_string}};
+    ufunction = UnrealUtils::findFunctionByName(this->GetClass(), "GetUInt64");
+    SP_ASSERT(ufunction);
+    return_values = UnrealUtils::callFunction(GetWorld(), this, ufunction, args);
+    SP_LOG("GetUInt64 in:  ", uint64_max_string);
+    SP_LOG("GetUInt64 out: ", return_values.at("ReturnValue").value_, " (", return_values.at("ReturnValue").type_id_, ")");
+
+    std::string int64_array_string = "[ " + int64_max_string + ", " + int64_min_string + ", 0 ]";
+    args = {{"Arg0", int64_array_string}};
+    ufunction = UnrealUtils::findFunctionByName(this->GetClass(), "GetArrayOfInt64");
+    SP_ASSERT(ufunction);
+    return_values = UnrealUtils::callFunction(GetWorld(), this, ufunction, args);
+    SP_LOG("GetArrayOfInt64  in:  ", int64_array_string);
+    SP_LOG("GetArrayOfInt64  out: ", return_values.at("ReturnValue").value_, " (", return_values.at("ReturnValue").type_id_, ")");
+
+    std::string uint64_array_string = "[ " + uint64_max_string + ", 0 ]";
+    args = {{"Arg0", uint64_array_string}};
+    ufunction = UnrealUtils::findFunctionByName(this->GetClass(), "GetArrayOfUInt64");
+    SP_ASSERT(ufunction);
+    return_values = UnrealUtils::callFunction(GetWorld(), this, ufunction, args);
+    SP_LOG("GetArrayOfUInt64 in:  ", uint64_array_string);
+    SP_LOG("GetArrayOfUInt64 out: ", return_values.at("ReturnValue").value_, " (", return_values.at("ReturnValue").type_id_, ")");
+}
+
 FString ASpDebugManager::GetString(FString Arg0, bool Arg1, int Arg2, FVector Arg3) const
 {
     SP_LOG_CURRENT_FUNCTION();
     return FString("    GetString return value.");
+}
+
+int64 ASpDebugManager::GetInt64(int64 Arg0) const
+{
+    SP_LOG_CURRENT_FUNCTION();
+    return Arg0;
+}
+
+uint64 ASpDebugManager::GetUInt64(uint64 Arg0) const
+{
+    SP_LOG_CURRENT_FUNCTION();
+    return Arg0;
+}
+
+TArray<int64> ASpDebugManager::GetArrayOfInt64(TArray<int64> Arg0) const
+{
+    SP_LOG_CURRENT_FUNCTION();
+    return Arg0;
+}
+
+TArray<uint64> ASpDebugManager::GetArrayOfUInt64(TArray<uint64> Arg0) const
+{
+    SP_LOG_CURRENT_FUNCTION();
+    return Arg0;
 }
 
 FVector ASpDebugManager::GetVector(FString Arg0, bool Arg1, int Arg2, FVector& Arg3) const

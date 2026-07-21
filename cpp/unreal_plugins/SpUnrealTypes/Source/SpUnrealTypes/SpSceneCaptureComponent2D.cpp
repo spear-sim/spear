@@ -442,6 +442,16 @@ bool USpSceneCaptureComponent2D::IsInitialized()
     return is_initialized_;
 }
 
+TArray<uint64> USpSceneCaptureComponent2D::GetViewStates() // can't be const because GetViewState(...) is non-const
+{
+    TArray<uint64> view_states;
+    for (int32 i = 0; i < ViewStates.Num(); i++) {
+        FSceneViewStateInterface* view_state = GetViewState(i);
+        view_states.Add(reinterpret_cast<uint64>(view_state));
+    }
+    return view_states;
+}
+
 void USpSceneCaptureComponent2D::RequestPathTracerReset()
 {
     SP_ASSERT(IsInitialized());

@@ -65,7 +65,7 @@ if __name__ == "__main__":
         game.console_service.set(name="r.PathTracing.Denoiser.Name", value=denoiser_name)
 
         # spawn camera sensor and get the final_tone_curve_hdr component
-        bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
+        bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensorPathTracer.BP_CameraSensorPathTracer_C")
         bp_camera_sensor = game.unreal_service.spawn_actor(uclass=bp_camera_sensor_uclass)
         final_tone_curve_hdr_component = game.unreal_service.get_component_by_name(actor=bp_camera_sensor, component_name="DefaultSceneRoot.final_tone_curve_hdr_", uclass="USpSceneCaptureComponent2D")
 
@@ -75,11 +75,6 @@ if __name__ == "__main__":
 
         visualize_func = lambda data : data[:,:,[2,1,0]] # BGRA -> RGB
         # visualize_func = lambda data : data
-
-        # enable path tracing and disable camera imperfections because they amplify noise and produce artifacts if we don't denoise
-        final_tone_curve_hdr_component.SetShowFlagSettings(InShowFlagSettings=[
-            {"ShowFlagName": "PathTracing", "Enabled": True},
-            {"ShowFlagName": "CameraImperfections", "Enabled": False}])
 
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
         final_tone_curve_hdr_component.Initialize()

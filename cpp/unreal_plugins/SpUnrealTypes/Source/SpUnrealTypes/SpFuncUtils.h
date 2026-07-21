@@ -23,14 +23,14 @@ class USpFuncUtils : public UBlueprintFunctionLibrary
     GENERATED_BODY()
 public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static int64 ToHandleFromObject(UObject* Object)
+    static int64 ToHandleFromObject(UObject* Object) // uint64 not supported for BlueprintCallable
     {
         SP_ASSERT(Object);
         return reinterpret_cast<int64>(Object);
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static UObject* ToObjectFromHandle(int64 Handle)
+    static UObject* ToObjectFromHandle(int64 Handle) // uint64 not supported for BlueprintCallable
     {
         UObject* uobject = reinterpret_cast<UObject*>(Handle);
         SP_ASSERT(uobject);

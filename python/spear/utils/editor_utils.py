@@ -382,8 +382,8 @@ def to_numpy_matrix_from_unreal_transform(unreal_transform, as_matrix=None):
 def to_unreal_transform_from_numpy_transform(numpy_transform):
     return to_unreal_transform_from_spear_transform(spear_transform=spear.math.to_spear_transform_from_numpy_transform(numpy_transform=numpy_transform))
 
-def to_unreal_transform_from_numpy_matrix(matrix):
-    return to_unreal_transform_from_spear_transform(spear_transform=spear.math.to_spear_transform_from_numpy_matrix(numpy_matrix=matrix))
+def to_unreal_transform_from_numpy_matrix(numpy_matrix):
+    return to_unreal_transform_from_spear_transform(spear_transform=spear.math.to_spear_transform_from_numpy_matrix(numpy_matrix=numpy_matrix))
 
 # unreal.Vector
 
