@@ -66,7 +66,7 @@ if __name__ == "__main__":
         game.console_service.set(name="r.PathTracing.Denoiser.Name", value=denoiser_name)
 
         # spawn camera sensor and get the final_tone_curve_hdr component
-        bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
+        bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensorPathTracer.BP_CameraSensorPathTracer_C")
         bp_camera_sensor = game.unreal_service.spawn_actor(uclass=bp_camera_sensor_uclass)
         final_tone_curve_hdr_component = game.unreal_service.get_component_by_name(actor=bp_camera_sensor, component_name="DefaultSceneRoot.final_tone_curve_hdr_", uclass="USpSceneCaptureComponent2D")
 
