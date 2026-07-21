@@ -77,9 +77,12 @@ jobs:
           arch: x64
 
       # Pin explicitly rather than relying on the image's default Xcode version, which can
-      # change out from under us. docs/getting_started.md verifies Xcode 16 or 26.
+      # change out from under us (e.g. macos-latest dropped every Xcode 16.x install when it
+      # moved to the macos-26 image). docs/getting_started.md verifies Xcode 16 or 26; the
+      # Xcode-26-needs-a-patched-Apple_SDK.json caveat in that doc is about building against
+      # the Unreal Engine specifically and doesn't apply here, since this job never touches UE.
       - if: runner.os == 'macOS'
-        run: sudo xcode-select -s /Applications/Xcode_16.4.app
+        run: sudo xcode-select -s /Applications/Xcode_26.5.app
 
       - name: Install the spear Python package
         run: pip install -e python
