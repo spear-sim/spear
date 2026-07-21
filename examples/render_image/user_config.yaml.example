@@ -10,3 +10,17 @@ SPEAR:
     COMMAND_LINE_ARGS:
       resx: 512
       resy: 512
+    CLIENT_INTERNAL_TIMEOUT_SECONDS: 60.0
+
+# Uncomment the config below to enable RenderDoc captures with the --capture param.
+# Adjust renderdoc.BinaryPath to your RenderDoc install.
+# SP_CORE:
+#   OVERRIDE_CONFIG_ENGINE_INI: True
+#   CONFIG_ENGINE_INI_STRING: |
+#     [/Script/RenderDocPlugin.RenderDocPluginSettings]
+#     renderdoc.AutoAttach=True
+#     renderdoc.BinaryPath=C:\Program Files\RenderDoc
+#     renderdoc.CaptureAllActivity=False
+#     renderdoc.ReferenceAllResources=False
+#     renderdoc.CaptureCallstacks=False
+#     renderdoc.SaveAllInitials=False
