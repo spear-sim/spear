@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
         game.console_service.set(name="r.RayTracing.Enable", value=1)
         game.console_service.set(name="r.RayTracing.SceneCaptures", value=1)
-        game.console_service.set(name="r.PathTracing.ShowProgress", value=0)
+        game.console_service.set(name="r.PathTracing.ProgressDisplay", value=0)
 
         game.console_service.set(name="r.PathTracing.SamplesPerPixel", value=args.num_frames)
         game.console_service.set(name="r.PathTracing.MaxBounces", value=args.num_bounces)
