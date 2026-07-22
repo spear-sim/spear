@@ -166,6 +166,18 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
     SP_ASSERT(world);
     SP_ASSERT(uobject);
     SP_ASSERT(ufunction);
+
+    // Ensure UFunction/UObject are not garbage-collected.
+    if (!ufunction->IsValidLowLevelFast()) {
+        SP_LOG("ERROR: callFunction: ufunction is a stale/invalid handle; refusing to call.");
+        SP_ASSERT(false);
+    }
+    if (!uobject->IsValidLowLevelFast()) {
+        SP_LOG("ERROR: callFunction: uobject is a stale/dangling handle (object was likely "
+               "garbage-collected or destroyed); function=", Unreal::toStdString(ufunction->GetName()));
+        SP_ASSERT(false);
+    }
+
     SP_ASSERT(!world->IsPreviewWorld());
     SP_ASSERT(GEngine->GetWorldContextFromWorld(world));
 
