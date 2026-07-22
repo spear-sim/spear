@@ -8,6 +8,8 @@
 #include <Kismet/BlueprintFunctionLibrary.h>
 #include <SceneManagement.h> // FSceneViewStateInterface
 
+#include "SpCore/Assert.h"
+
 #include "SpSceneViewStateInterface.generated.h"
 
 UCLASS()
@@ -20,12 +22,11 @@ public:
     {
         #if RHI_RAYTRACING
             FSceneViewStateInterface* view_state_ptr = reinterpret_cast<FSceneViewStateInterface*>(ViewState);
-            if (view_state_ptr) {
-                return view_state_ptr->GetPathTracingSampleIndex();
-            }
+            SP_ASSERT(view_state_ptr);
+            return view_state_ptr->GetPathTracingSampleIndex();
+        #else
+            return 0;
         #endif
-
-        return 0;
     }
 
     UFUNCTION(Category="SPEAR") // uint64 is not supported for BlueprintCallable
@@ -33,11 +34,11 @@ public:
     {
         #if RHI_RAYTRACING
             FSceneViewStateInterface* view_state_ptr = reinterpret_cast<FSceneViewStateInterface*>(ViewState);
-            if (view_state_ptr) {
-                return view_state_ptr->GetPathTracingSampleCount();
-            }
+            SP_ASSERT(view_state_ptr);
+            return view_state_ptr->GetPathTracingSampleCount();
+        #else
+            return 0;
         #endif
 
-        return 0;
     }
 };
