@@ -59,6 +59,7 @@ if __name__ == "__main__":
 
         game.console_service.set(name="r.RayTracing.Enable", value=1)
         game.console_service.set(name="r.RayTracing.SceneCaptures", value=1)
+        game.console_service.set(name="r.PathTracing.ShowProgress", value=0)
 
         game.console_service.set(name="r.PathTracing.SamplesPerPixel", value=args.num_frames)
         game.console_service.set(name="r.PathTracing.MaxBounces", value=args.num_bounces)
@@ -118,13 +119,10 @@ if __name__ == "__main__":
 
         with instance.end_frame(single_step=True):
             view_states = final_tone_curve_hdr_component.GetViewStates()
-            if len(view_states) > 0:
-                view_state = view_states[0]
-                sample_index = sp_scene_view_state_interface.GetPathTracingSampleIndex(ViewState=view_state)
-                sample_count = sp_scene_view_state_interface.GetPathTracingSampleCount(ViewState=view_state)
-            else:
-                sample_index = 0
-                sample_count = 0
+            assert len(view_states) > 0
+            view_state = view_states[0]
+            sample_index = sp_scene_view_state_interface.GetPathTracingSampleIndex(ViewState=view_state)
+            sample_count = sp_scene_view_state_interface.GetPathTracingSampleCount(ViewState=view_state)
 
         spear.log(f"Rendered frame {sample_index:04d}/{sample_count}...")
         if sample_count <= 0 or sample_index >= sample_count:
