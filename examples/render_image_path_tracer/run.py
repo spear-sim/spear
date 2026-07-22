@@ -107,7 +107,6 @@ if __name__ == "__main__":
     spear.log("Path-traced rendering beginning...")
     max_num_frames = args.num_frames*2
     sample_index = 0
-    sample_count = 0
     for i in range(max_num_frames):
         with instance.begin_frame():
             # Explicitly reset the path tracer's accumulated samples on the first frame. Nothing moves
@@ -122,12 +121,11 @@ if __name__ == "__main__":
             assert len(view_states) > 0
             view_state = view_states[0]
             sample_index = sp_scene_view_state_interface.GetPathTracingSampleIndex(ViewState=view_state)
-            sample_count = sp_scene_view_state_interface.GetPathTracingSampleCount(ViewState=view_state)
 
-        spear.log(f"Rendered frame {sample_index:04d}/{sample_count}...")
-        if sample_count <= 0 or sample_index >= sample_count:
+        spear.log(f"Rendered frame {sample_index:04d}/{args.num_frames}...")
+        if sample_index >= args.num_frames:
             break
-    if sample_count <= 0 or sample_index < sample_count:
+    if sample_index < args.num_frames:
         spear.log("Error: failed to accumulate all path-traced sampled within the frame limit")
     spear.log("Path-traced rendering finished.")
 
