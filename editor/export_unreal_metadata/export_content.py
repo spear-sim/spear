@@ -17,6 +17,7 @@ parser.add_argument("--export-dir", required=True)
 args = parser.parse_args()
 
 asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
+dependency_options = unreal.AssetRegistryDependencyOptions(include_soft_package_references=True, include_hard_package_references=True)
 
 editor_properties_csv_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "editor_properties.csv"))
 df_editor_properties = pd.read_csv(editor_properties_csv_file, comment="#")
@@ -44,9 +45,14 @@ def get_asset_desc(asset_data):
     asset_path = f"{asset_data.package_name}.{asset_data.asset_name}"
     spear.log("Processing asset: " + asset_path)
 
+    # Immediate (non-recursive) dependencies come from the Asset Registry's cached metadata, so we get the
+    # dependency package names without loading the referenced assets.
+    dependencies = sorted( str(d) for d in asset_registry.get_dependencies(package_name=asset_data.package_name, dependency_options=dependency_options) )
+
     asset = asset_data.get_asset()
     return {
         "class": str(asset_data.asset_class_path.asset_name),
+        "dependencies": dependencies,
         "editor_properties": get_object_descs(uobject=asset) if asset is not None else None,
         "name": str(asset_data.asset_name),
         "package": str(asset_data.package_name),
