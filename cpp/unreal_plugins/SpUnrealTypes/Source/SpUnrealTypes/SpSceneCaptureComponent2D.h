@@ -54,8 +54,13 @@ class UMaterial;
 class FSpSceneViewExtensionBase : public FSceneViewExtensionBase
 {
 public:
-    FSpSceneViewExtensionBase(const FAutoRegister& auto_register, USpSceneCaptureComponent2D* component);
+    FSpSceneViewExtensionBase(const FAutoRegister& auto_register);
+    ~FSpSceneViewExtensionBase() override;
 
+    void initialize(USpSceneCaptureComponent2D* component) { SP_ASSERT(component); component_ = component; }
+    void terminate() { component_ = nullptr; }
+
+    bool IsActiveThisFrame_Internal(const FSceneViewExtensionContext& context) const override;
     void SetupViewFamily(FSceneViewFamily& in_view_family) override;
     void SetupView(FSceneViewFamily& in_view_family, FSceneView& in_view) override;
     void BeginRenderViewFamily(FSceneViewFamily& in_view_family) override;
@@ -67,7 +72,7 @@ protected:
     virtual void beginRenderViewFamily(FSceneViewFamily& view_family) {};
     virtual void postRenderViewFamily_RenderThread(FRDGBuilder& graph_builder, FSceneViewFamily& view_family) {};
 
-    USpSceneCaptureComponent2D* getComponent() { SP_ASSERT(component_); return component_; };
+    USpSceneCaptureComponent2D* getComponent() const { SP_ASSERT(component_); return component_; };
 
 private:
     bool shouldHandleViewFamily(const FSceneViewFamily* view_family) const;
@@ -79,7 +84,9 @@ private:
 class FSpSceneViewExtension : public FSpSceneViewExtensionBase
 {
 public:
-    FSpSceneViewExtension(const FAutoRegister& auto_register, USpSceneCaptureComponent2D* component);
+    FSpSceneViewExtension(const FAutoRegister& auto_register);
+    ~FSpSceneViewExtension() override;
+
 protected:
     void setupView(FSceneViewFamily& view_family, FSceneView& view) override;
     void postRenderViewFamily_RenderThread(FRDGBuilder& graph_builder, FSceneViewFamily& view_family) override;

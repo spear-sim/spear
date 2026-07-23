@@ -47,10 +47,21 @@
 
 #include "SpUnrealTypes/SpMeshProxyComponentManager.h"
 
-FSpSceneViewExtensionBase::FSpSceneViewExtensionBase(const FAutoRegister& auto_register, USpSceneCaptureComponent2D* component) : FSceneViewExtensionBase(auto_register)
+FSpSceneViewExtensionBase::FSpSceneViewExtensionBase(const FAutoRegister& auto_register) : FSceneViewExtensionBase(auto_register)
 {
-    SP_ASSERT(component);
-    component_ = component;
+    SP_LOG_CURRENT_FUNCTION();
+}
+
+FSpSceneViewExtensionBase::~FSpSceneViewExtensionBase()
+{
+    SP_LOG_CURRENT_FUNCTION();
+}
+
+bool FSpSceneViewExtensionBase::IsActiveThisFrame_Internal(const FSceneViewExtensionContext& context) const
+{
+    // It is possible for an FSceneViewExtensionBase instance to outlive its owning component if IsActiveThisFrame_Internal(...)
+    // returns true, so we return false after the owning component has called terminate().
+    return component_ != nullptr;
 }
 
 void FSpSceneViewExtensionBase::SetupViewFamily(FSceneViewFamily& in_view_family)
@@ -83,6 +94,10 @@ void FSpSceneViewExtensionBase::PostRenderViewFamily_RenderThread(FRDGBuilder& g
 
 bool FSpSceneViewExtensionBase::shouldHandleViewFamily(const FSceneViewFamily* view_family) const
 {
+    if (!component_) {
+        return false;
+    }
+
     SP_ASSERT(view_family);
     for (int i = 0; i < view_family->Views.Num(); i++) {
         const FSceneView* view = view_family->Views[i];
@@ -95,9 +110,12 @@ bool FSpSceneViewExtensionBase::shouldHandleViewFamily(const FSceneViewFamily* v
 
 bool FSpSceneViewExtensionBase::shouldHandleView(const FSceneViewFamily* view_family, const FSceneView* view) const
 {
-    SP_ASSERT(component_);
     SP_ASSERT(view_family);
     SP_ASSERT(view);
+
+    if (!component_) {
+        return false;
+    }
 
     FSceneViewStateInterface* view_state = view->State;
     if (!view_state) {
@@ -106,8 +124,8 @@ bool FSpSceneViewExtensionBase::shouldHandleView(const FSceneViewFamily* view_fa
 
     int32 view_state_key = view->State->GetViewKey();
 
-    for (int32 i = 0; i < component_->getViewStates().Num(); i++) {
-        FSceneViewStateInterface* component_view_state = component_->GetViewState(i);
+    for (int32 i = 0; i < getComponent()->getViewStates().Num(); i++) {
+        FSceneViewStateInterface* component_view_state = getComponent()->GetViewState(i);
         if (component_view_state) {
             int32 component_view_state_key = component_view_state->GetViewKey();
             if (component_view_state_key > 0 && view_state_key > 0) { // compare keys if they're both valid
@@ -125,7 +143,15 @@ bool FSpSceneViewExtensionBase::shouldHandleView(const FSceneViewFamily* view_fa
     return false;
 }
 
-FSpSceneViewExtension::FSpSceneViewExtension(const FAutoRegister& auto_register, USpSceneCaptureComponent2D* component) : FSpSceneViewExtensionBase(auto_register, component) {}
+FSpSceneViewExtension::FSpSceneViewExtension(const FAutoRegister& auto_register) : FSpSceneViewExtensionBase(auto_register)
+{
+    SP_LOG_CURRENT_FUNCTION();
+}
+
+FSpSceneViewExtension::~FSpSceneViewExtension()
+{
+    SP_LOG_CURRENT_FUNCTION();
+}
 
 void FSpSceneViewExtension::setupView(FSceneViewFamily& view_family, FSceneView& view)
 {
@@ -211,7 +237,8 @@ void USpSceneCaptureComponent2D::Initialize()
 
     if (bUseSceneViewExtension || BufferingMode == ESpBufferingMode::DoubleBuffered || UserSceneTextureNames.Num() > 0) {
         bAlwaysPersistRenderingState = true; // ensure that the underlying view-state data is stable across frames so FSpSceneViewExtensionBase can match view-state data to this component
-        scene_view_extension_ = FSceneViewExtensions::NewExtension<FSpSceneViewExtension>(this);
+        scene_view_extension_ = FSceneViewExtensions::NewExtension<FSpSceneViewExtension>();
+        scene_view_extension_->initialize(this);
     }
 
     // allocate memory
@@ -423,6 +450,8 @@ void USpSceneCaptureComponent2D::Terminate()
     std::construct_at(&texture_readback_desc_);
 
     if (bUseSceneViewExtension || BufferingMode == ESpBufferingMode::DoubleBuffered || UserSceneTextureNames.Num() > 0) {
+        SP_ASSERT(scene_view_extension_);
+        scene_view_extension_->terminate();
         scene_view_extension_ = nullptr;
         bAlwaysPersistRenderingState = false;
     }
