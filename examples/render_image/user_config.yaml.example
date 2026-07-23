@@ -10,10 +10,14 @@ SPEAR:
     COMMAND_LINE_ARGS:
       resx: 512
       resy: 512
-    CLIENT_INTERNAL_TIMEOUT_SECONDS: 60.0
 
-# Uncomment the config below to enable RenderDoc captures with the --capture param.
-# Adjust renderdoc.BinaryPath to your RenderDoc install.
+    # Uncomment to capture a GPU trace using --capture
+    # CLIENT_INTERNAL_TIMEOUT_SECONDS: 60.0
+
+#
+# Uncomment and adjust as necessary to cpature a GPU trace using --capture
+#
+
 # SP_CORE:
 #   OVERRIDE_CONFIG_ENGINE_INI: True
 #   CONFIG_ENGINE_INI_STRING: |
