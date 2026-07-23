@@ -256,9 +256,24 @@ private:
         // RHI GPU texture readback resources (single-buffered and double-buffered are hard-coded to only use index 0, triple-buffered uses index 0 and 1)
         std::array<std::unique_ptr<FRHIGPUTextureReadback>, 2> rhi_gpu_texture_readbacks_;
 
+        // Read-side wait counter. Incremented on the game thread at enqueue time so readPixelsImpl()'s game-thread
+        // spin-wait always observes an outstanding readback (it must be bumped before read_pixels() can run, so we can't
+        // defer it to the render thread), and decremented on the render thread once the staging-to-CPU copy is done.
         // Double-buffered: GT increments in enqueueCopyPixelsDoubleBuffered(), RT decrements in postRenderViewFamily_RenderThread()
         // Triple-buffered: GT increments in enqueueCopyPixelsTripleBuffered(), RT decrements in enqueueCopyPixelsTripleBuffered()'s render command
         std::atomic<int> num_readbacks_pending_ = 0;
+
+        // Double-buffered consume gate. Incremented on the render thread inside enqueueCopyPixelsDoubleBuffered()'s
+        // command, immediately after the GPU-to-staging EnqueueCopy() populates the staging texture, and decremented on
+        // the render thread in postRenderViewFamily_RenderThread() when the staging-to-CPU copy consumes it. Because the
+        // GPU-to-staging copy runs in an async command but the staging-to-CPU copy runs in a separate render-thread
+        // callback (postRenderViewFamily_RenderThread), we can't gate the consume on num_readbacks_pending_: under
+        // r.OneFrameThreadLag>0 the render thread runs behind the game thread, so a postRenderViewFamily callback from an
+        // in-flight frame can fire after the game thread bumped num_readbacks_pending_ but before the command populated
+        // the staging texture, and would then Lock() an empty slot. Gating on this render-thread-only counter guarantees
+        // we only consume a slot whose EnqueueCopy() has actually executed. Triple-buffered does not need this because
+        // its consume runs inside the same command, in render-thread FIFO order behind the slot's populating command.
+        std::atomic<int> num_staging_copies_pending_ = 0;
 
         // Triple-buffered
         int readback_enqueue_index_ = 0; // GT-only: ring-buffer index, advanced in requestSwapRHIGPUTextureReadbacks()
@@ -289,7 +304,10 @@ private:
         void* dest_ptr_ = nullptr; // CPU destination for the in-command staging-to-CPU copy
 
         // points at the persistent desc's pending counter (incremented on the game thread, decremented on the render thread); only used by double- and triple-buffered
-        std::atomic<int>* num_readbacks_pending_ = nullptr;
+        std::atomic<int>* num_readbacks_pending_ptr_ = nullptr;
+
+        // points at the persistent desc's render-thread consume-gate counter (incremented and decremented on the render thread); only used by double-buffered
+        std::atomic<int>* num_staging_copies_pending_ptr_ = nullptr;
     };
 
     // callbacks
