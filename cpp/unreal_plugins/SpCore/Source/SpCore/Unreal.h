@@ -460,8 +460,7 @@ public:
 
     static bool isValid(const UObject* uobject)
     {
-        SP_ASSERT(uobject);
-        return uobject->IsValidLowLevelFast() && uobject->IsValidLowLevel() && IsValid(uobject);
+        return uobject && uobject->IsValidLowLevelFast() && uobject->IsValidLowLevel() && IsValid(uobject);
     }
 
     static std::string toStringFromPtr(const void* ptr)
