@@ -485,6 +485,7 @@ TArray<uint64> USpSceneCaptureComponent2D::GetViewStates() // can't be const bec
 void USpSceneCaptureComponent2D::RequestPathTracerReset()
 {
     SP_ASSERT(IsInitialized());
+    FlushRenderingCommands(); // force rendering thread to be fully up-to-date before resetting the path tracer
     request_path_tracer_reset_ = true;
 }
 

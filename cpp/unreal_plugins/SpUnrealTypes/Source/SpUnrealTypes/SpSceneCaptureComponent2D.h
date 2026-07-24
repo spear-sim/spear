@@ -372,7 +372,7 @@ private:
     std::map<std::string, TextureReadbackDesc> user_scene_texture_readback_descs_;
 
     // Path tracer state
-    bool request_path_tracer_reset_ = false;
+    std::atomic<bool> request_path_tracer_reset_ = false;
 
     // Additional state for measuring "standalone" and "standalone + extra work" frame rates.
     FDelegateHandle begin_frame_handle_;
