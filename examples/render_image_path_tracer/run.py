@@ -55,6 +55,9 @@ if __name__ == "__main__":
         # force high-res textures for captured images
         game.console_service.set(name="r.Streaming.FullyLoadUsedTextures", value=1)
 
+        # workaround for nanite rebuilds invalidating the path tracer state
+        game.console_service.set(name="r.RayTracing.Nanite.MaxBuiltPrimitivesPerFrame", value=1024*1024*256)
+
         # configure the path tracer via console variables
 
         game.console_service.set(name="r.RayTracing.Enable", value=1)
@@ -105,7 +108,7 @@ if __name__ == "__main__":
     # ensure the image has been fully rendered. This way we avoid potential loading issues.
     # The engine then applies the denoiser (if one was requested) to the converged result.
     spear.log("Path-traced rendering beginning...")
-    max_num_frames = args.num_frames*2
+    max_num_frames = args.num_frames*4
     sample_index = 0
     for i in range(max_num_frames):
         with instance.begin_frame():
