@@ -25,7 +25,6 @@ public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static int64 ToHandleFromObject(UObject* Object) // uint64 not supported for BlueprintCallable
     {
-        SP_ASSERT(Object);
         return reinterpret_cast<int64>(Object);
     }
 
@@ -33,22 +32,22 @@ public:
     static UObject* ToObjectFromHandle(int64 Handle) // uint64 not supported for BlueprintCallable
     {
         UObject* uobject = reinterpret_cast<UObject*>(Handle);
-        SP_ASSERT(uobject);
+        if (uobject) {
+            SP_ASSERT(Unreal::isValid(uobject));
+        }
         return uobject;
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static FString ToStringFromObject(UObject* Object)
     {
-        SP_ASSERT(Object);
-        return Unreal::toFString(Std::toStringFromPtr(Object));
+        return Unreal::toFString(Unreal::toStringFromPtr(Object));
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static UObject* ToObjectFromString(FString String)
     {
-        UObject* uobject = Std::toPtrFromString<UObject>(Unreal::toStdString(String));
-        SP_ASSERT(uobject);
+        UObject* uobject = Unreal::toPtrFromString<UObject>(Unreal::toStdString(String));
         return uobject;
     }
 

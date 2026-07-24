@@ -942,7 +942,7 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
         success = json_value.Get()->TryGetString(fstring);
         SP_ASSERT(success);
 
-        UObject* uobject = Std::toPtrFromString<UObject>(Unreal::toStdString(fstring));
+        UObject* uobject = Unreal::toPtrFromString<UObject>(Unreal::toStdString(fstring));
         object_property->SetObjectPropertyValue(property_desc.value_ptr_, uobject);
 
     } else if (property_desc.property_->IsA(FInterfaceProperty::StaticClass())) {
@@ -954,7 +954,7 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
         success = json_value.Get()->TryGetString(fstring);
         SP_ASSERT(success);
 
-        UObject* uobject = Std::toPtrFromString<UObject>(Unreal::toStdString(fstring));
+        UObject* uobject = Unreal::toPtrFromString<UObject>(Unreal::toStdString(fstring));
 
         FScriptInterface* script_interface = interface_property->GetPropertyValuePtr(property_desc.value_ptr_);
         SP_ASSERT(script_interface);

@@ -47,10 +47,21 @@
 
 #include "SpUnrealTypes/SpMeshProxyComponentManager.h"
 
-FSpSceneViewExtensionBase::FSpSceneViewExtensionBase(const FAutoRegister& auto_register, USpSceneCaptureComponent2D* component) : FSceneViewExtensionBase(auto_register)
+FSpSceneViewExtensionBase::FSpSceneViewExtensionBase(const FAutoRegister& auto_register) : FSceneViewExtensionBase(auto_register)
 {
-    SP_ASSERT(component);
-    component_ = component;
+    SP_LOG_CURRENT_FUNCTION();
+}
+
+FSpSceneViewExtensionBase::~FSpSceneViewExtensionBase()
+{
+    SP_LOG_CURRENT_FUNCTION();
+}
+
+bool FSpSceneViewExtensionBase::IsActiveThisFrame_Internal(const FSceneViewExtensionContext& context) const
+{
+    // It is possible for an FSceneViewExtensionBase instance to outlive its owning component if IsActiveThisFrame_Internal(...)
+    // returns true, so we return false after the owning component has called terminate().
+    return component_ != nullptr;
 }
 
 void FSpSceneViewExtensionBase::SetupViewFamily(FSceneViewFamily& in_view_family)
@@ -83,6 +94,10 @@ void FSpSceneViewExtensionBase::PostRenderViewFamily_RenderThread(FRDGBuilder& g
 
 bool FSpSceneViewExtensionBase::shouldHandleViewFamily(const FSceneViewFamily* view_family) const
 {
+    if (!component_) {
+        return false;
+    }
+
     SP_ASSERT(view_family);
     for (int i = 0; i < view_family->Views.Num(); i++) {
         const FSceneView* view = view_family->Views[i];
@@ -95,9 +110,12 @@ bool FSpSceneViewExtensionBase::shouldHandleViewFamily(const FSceneViewFamily* v
 
 bool FSpSceneViewExtensionBase::shouldHandleView(const FSceneViewFamily* view_family, const FSceneView* view) const
 {
-    SP_ASSERT(component_);
     SP_ASSERT(view_family);
     SP_ASSERT(view);
+
+    if (!component_) {
+        return false;
+    }
 
     FSceneViewStateInterface* view_state = view->State;
     if (!view_state) {
@@ -106,8 +124,8 @@ bool FSpSceneViewExtensionBase::shouldHandleView(const FSceneViewFamily* view_fa
 
     int32 view_state_key = view->State->GetViewKey();
 
-    for (int32 i = 0; i < component_->getViewStates().Num(); i++) {
-        FSceneViewStateInterface* component_view_state = component_->GetViewState(i);
+    for (int32 i = 0; i < getComponent()->getViewStates().Num(); i++) {
+        FSceneViewStateInterface* component_view_state = getComponent()->GetViewState(i);
         if (component_view_state) {
             int32 component_view_state_key = component_view_state->GetViewKey();
             if (component_view_state_key > 0 && view_state_key > 0) { // compare keys if they're both valid
@@ -125,7 +143,15 @@ bool FSpSceneViewExtensionBase::shouldHandleView(const FSceneViewFamily* view_fa
     return false;
 }
 
-FSpSceneViewExtension::FSpSceneViewExtension(const FAutoRegister& auto_register, USpSceneCaptureComponent2D* component) : FSpSceneViewExtensionBase(auto_register, component) {}
+FSpSceneViewExtension::FSpSceneViewExtension(const FAutoRegister& auto_register) : FSpSceneViewExtensionBase(auto_register)
+{
+    SP_LOG_CURRENT_FUNCTION();
+}
+
+FSpSceneViewExtension::~FSpSceneViewExtension()
+{
+    SP_LOG_CURRENT_FUNCTION();
+}
 
 void FSpSceneViewExtension::setupView(FSceneViewFamily& view_family, FSceneView& view)
 {
@@ -211,7 +237,8 @@ void USpSceneCaptureComponent2D::Initialize()
 
     if (bUseSceneViewExtension || BufferingMode == ESpBufferingMode::DoubleBuffered || UserSceneTextureNames.Num() > 0) {
         bAlwaysPersistRenderingState = true; // ensure that the underlying view-state data is stable across frames so FSpSceneViewExtensionBase can match view-state data to this component
-        scene_view_extension_ = FSceneViewExtensions::NewExtension<FSpSceneViewExtension>(this);
+        scene_view_extension_ = FSceneViewExtensions::NewExtension<FSpSceneViewExtension>();
+        scene_view_extension_->initialize(this);
     }
 
     // allocate memory
@@ -423,6 +450,8 @@ void USpSceneCaptureComponent2D::Terminate()
     std::construct_at(&texture_readback_desc_);
 
     if (bUseSceneViewExtension || BufferingMode == ESpBufferingMode::DoubleBuffered || UserSceneTextureNames.Num() > 0) {
+        SP_ASSERT(scene_view_extension_);
+        scene_view_extension_->terminate();
         scene_view_extension_ = nullptr;
         bAlwaysPersistRenderingState = false;
     }
@@ -532,48 +561,57 @@ void USpSceneCaptureComponent2D::postRenderViewFamily_RenderThread(FRDGBuilder& 
     // decrement its pending counter. Triple-buffered staging-to-CPU completes inside its own enqueue command
     // instead.
 
-    if (BufferingMode != ESpBufferingMode::DoubleBuffered) {
-        return;
-    }
+    if (BufferingMode == ESpBufferingMode::DoubleBuffered) {
+        if (bReadPixelData) {
 
-    if (bReadPixelData) {
-        SP_ASSERT(texture_readback_desc_.num_readbacks_pending_ >= 0);
-        if (texture_readback_desc_.num_readbacks_pending_ > 0) {
-            void* dest_ptr = nullptr;
-            if (bUseSharedMemory) {
-                dest_ptr = texture_readback_desc_.shared_memory_view_.data_;
-            } else {
-                dest_ptr = texture_readback_desc_.scratchpad_.data();
-            }
+            // Gate the staging-to-CPU consume on num_staging_copies_pending_ (bumped on the render thread once the matching
+            // EnqueueCopy() executed), not num_readbacks_pending_ (bumped on the game thread at enqueue time), so we never
+            // Lock() a staging texture that hasn't been populated yet. num_staging_copies_pending_ <= num_readbacks_pending_
+            // always, so when we consume we decrement both: num_staging_copies_pending_ closes the gate, and
+            // num_readbacks_pending_ releases readPixelsImpl()'s game-thread wait.
 
-            FRHIGPUTextureReadback* readback = texture_readback_desc_.rhi_gpu_texture_readbacks_.at(0).get(); // always use index 0 for DoubleBuffered
-            SP_ASSERT(readback);
-
-            copyPixelsFromStagingToCPU_RenderThread(readback, dest_ptr, texture_readback_desc_);
-            texture_readback_desc_.num_readbacks_pending_--;
-            SP_ASSERT(texture_readback_desc_.num_readbacks_pending_ >= 0);
-        }
-
-        for (auto& name : UserSceneTextureNames) {
-            std::string name_string = Unreal::toStdString(name);
-            SP_ASSERT(user_scene_texture_readback_descs_.contains(name_string));
-            TextureReadbackDesc& texture_readback_desc = user_scene_texture_readback_descs_.at(name_string);
-
-            SP_ASSERT(texture_readback_desc.num_readbacks_pending_ >= 0);
-            if (texture_readback_desc.num_readbacks_pending_ > 0) {
+            SP_ASSERT(texture_readback_desc_.num_staging_copies_pending_ >= 0);
+            if (texture_readback_desc_.num_staging_copies_pending_ > 0) {
                 void* dest_ptr = nullptr;
                 if (bUseSharedMemory) {
-                    dest_ptr = texture_readback_desc.shared_memory_view_.data_;
+                    dest_ptr = texture_readback_desc_.shared_memory_view_.data_;
                 } else {
-                    dest_ptr = texture_readback_desc.scratchpad_.data();
+                    dest_ptr = texture_readback_desc_.scratchpad_.data();
                 }
 
-                FRHIGPUTextureReadback* readback = texture_readback_desc.rhi_gpu_texture_readbacks_.at(0).get(); // always use index 0 for DoubleBuffered
+                FRHIGPUTextureReadback* readback = texture_readback_desc_.rhi_gpu_texture_readbacks_.at(0).get(); // always use index 0 for DoubleBuffered
                 SP_ASSERT(readback);
 
-                copyPixelsFromStagingToCPU_RenderThread(readback, dest_ptr, texture_readback_desc);
-                texture_readback_desc.num_readbacks_pending_--;
-                SP_ASSERT(texture_readback_desc.num_readbacks_pending_ >= 0);
+                copyPixelsFromStagingToCPU_RenderThread(readback, dest_ptr, texture_readback_desc_);
+                texture_readback_desc_.num_staging_copies_pending_--;
+                texture_readback_desc_.num_readbacks_pending_--;
+                SP_ASSERT(texture_readback_desc_.num_staging_copies_pending_ >= 0);
+                SP_ASSERT(texture_readback_desc_.num_readbacks_pending_ >= 0);
+            }
+
+            for (auto& name : UserSceneTextureNames) {
+                std::string name_string = Unreal::toStdString(name);
+                SP_ASSERT(user_scene_texture_readback_descs_.contains(name_string));
+                TextureReadbackDesc& texture_readback_desc = user_scene_texture_readback_descs_.at(name_string);
+
+                SP_ASSERT(texture_readback_desc.num_staging_copies_pending_ >= 0);
+                if (texture_readback_desc.num_staging_copies_pending_ > 0) {
+                    void* dest_ptr = nullptr;
+                    if (bUseSharedMemory) {
+                        dest_ptr = texture_readback_desc.shared_memory_view_.data_;
+                    } else {
+                        dest_ptr = texture_readback_desc.scratchpad_.data();
+                    }
+
+                    FRHIGPUTextureReadback* readback = texture_readback_desc.rhi_gpu_texture_readbacks_.at(0).get(); // always use index 0 for DoubleBuffered
+                    SP_ASSERT(readback);
+
+                    copyPixelsFromStagingToCPU_RenderThread(readback, dest_ptr, texture_readback_desc);
+                    texture_readback_desc.num_staging_copies_pending_--;
+                    texture_readback_desc.num_readbacks_pending_--;
+                    SP_ASSERT(texture_readback_desc.num_staging_copies_pending_ >= 0);
+                    SP_ASSERT(texture_readback_desc.num_readbacks_pending_ >= 0);
+                }
             }
         }
     }
@@ -689,9 +727,9 @@ void USpSceneCaptureComponent2D::enqueueCopyPixelsDoubleBuffered(std::map<std::s
         // persistent desc's counter, since the minimal descs are transient.
 
         for (auto& [name, texture_readback_minimal_desc] : texture_readback_minimal_descs) {
-            SP_ASSERT(texture_readback_minimal_desc.num_readbacks_pending_);
-            SP_ASSERT(*texture_readback_minimal_desc.num_readbacks_pending_ >= 0);
-            (*texture_readback_minimal_desc.num_readbacks_pending_)++;
+            SP_ASSERT(texture_readback_minimal_desc.num_readbacks_pending_ptr_);
+            SP_ASSERT(*texture_readback_minimal_desc.num_readbacks_pending_ptr_ >= 0);
+            (*texture_readback_minimal_desc.num_readbacks_pending_ptr_)++;
         }
 
         // Enqueue every GPU-to-staging copy in a single command, then do a single flush. This command is async, so each
@@ -704,6 +742,14 @@ void USpSceneCaptureComponent2D::enqueueCopyPixelsDoubleBuffered(std::map<std::s
             [this, texture_readback_minimal_descs = std::move(texture_readback_minimal_descs)](FRHICommandListImmediate& command_list) {
                 for (auto& [name, texture_readback_minimal_desc] : texture_readback_minimal_descs) {
                     enqueueCopyPixelsFromGPUToStaging_RenderThread(command_list, texture_readback_minimal_desc);
+
+                    // The staging texture is now populated, so the staging-to-CPU consume in postRenderViewFamily_RenderThread()
+                    // is safe. Bump the render-thread consume gate here (not on the game thread) so a postRenderViewFamily
+                    // callback that fires before this command executes cannot Lock() an empty slot (see num_staging_copies_pending_).
+
+                    SP_ASSERT(texture_readback_minimal_desc.num_staging_copies_pending_ptr_);
+                    SP_ASSERT(*texture_readback_minimal_desc.num_staging_copies_pending_ptr_ >= 0);
+                    (*texture_readback_minimal_desc.num_staging_copies_pending_ptr_)++;
                 }
                 command_list.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
             });
@@ -745,9 +791,9 @@ void USpSceneCaptureComponent2D::enqueueCopyPixelsTripleBuffered(std::map<std::s
 
         for (auto& [name, texture_readback_minimal_desc] : texture_readback_minimal_descs) {
             if (texture_readback_minimal_desc.prev_readback_) {
-                SP_ASSERT(texture_readback_minimal_desc.num_readbacks_pending_);
-                SP_ASSERT(*texture_readback_minimal_desc.num_readbacks_pending_ >= 0);
-                (*texture_readback_minimal_desc.num_readbacks_pending_)++;
+                SP_ASSERT(texture_readback_minimal_desc.num_readbacks_pending_ptr_);
+                SP_ASSERT(*texture_readback_minimal_desc.num_readbacks_pending_ptr_ >= 0);
+                (*texture_readback_minimal_desc.num_readbacks_pending_ptr_)++;
             }
         }
 
@@ -767,9 +813,9 @@ void USpSceneCaptureComponent2D::enqueueCopyPixelsTripleBuffered(std::map<std::s
                 for (auto& [name, texture_readback_minimal_desc] : texture_readback_minimal_descs) {
                     if (texture_readback_minimal_desc.prev_readback_) {
                         copyPixelsFromStagingToCPU_RenderThread(texture_readback_minimal_desc.prev_readback_, texture_readback_minimal_desc.dest_ptr_, texture_readback_minimal_desc);
-                        SP_ASSERT(texture_readback_minimal_desc.num_readbacks_pending_);
-                        (*texture_readback_minimal_desc.num_readbacks_pending_)--;
-                        SP_ASSERT(*texture_readback_minimal_desc.num_readbacks_pending_ >= 0);
+                        SP_ASSERT(texture_readback_minimal_desc.num_readbacks_pending_ptr_);
+                        (*texture_readback_minimal_desc.num_readbacks_pending_ptr_)--;
+                        SP_ASSERT(*texture_readback_minimal_desc.num_readbacks_pending_ptr_ >= 0);
                     }
                 }
             });
@@ -899,7 +945,8 @@ USpSceneCaptureComponent2D::TextureReadbackMinimalDesc USpSceneCaptureComponent2
     texture_readback_minimal_desc.shared_memory_view_ = texture_readback_desc.shared_memory_view_;
     texture_readback_minimal_desc.current_readback_ = current_readback;
     texture_readback_minimal_desc.prev_readback_ = prev_readback;
-    texture_readback_minimal_desc.num_readbacks_pending_ = &texture_readback_desc.num_readbacks_pending_;
+    texture_readback_minimal_desc.num_readbacks_pending_ptr_ = &texture_readback_desc.num_readbacks_pending_;
+    texture_readback_minimal_desc.num_staging_copies_pending_ptr_ = &texture_readback_desc.num_staging_copies_pending_;
     texture_readback_minimal_desc.render_target_resource_ptr_ = render_target_resource_ptr;
     texture_readback_minimal_desc.pooled_render_target_ptr_ = pooled_render_target_ptr;
 
@@ -1025,8 +1072,16 @@ void USpSceneCaptureComponent2D::copyPixelsFromStagingToCPU_RenderThread(FRHIGPU
     int32_t bytes_per_pixel = num_channels_per_pixel*SpArrayDataTypeUtils::getSizeOf(channel_data_type);
     int32_t row_bytes = width*bytes_per_pixel;
 
+    // Lock() blocks internally until the readback is GPU-complete before mapping (e.g., on Metal RHIMapStagingSurface()
+    // does SubmitAndBlockUntilGPUIdle() + a CPU wait on the fence), so the mapped pointer is always valid data and we
+    // do not need any RT-side readiness wait here. Lock() returns null only if the readback's staging texture was never
+    // populated by EnqueueCopy(); callers must guarantee the matching EnqueueCopy() has executed on the render thread
+    // before we reach here. That ordering is enforced by the render-thread consume gate (num_staging_copies_pending_)
+    // in postRenderViewFamily_RenderThread() for DoubleBuffered, and by construction in enqueueCopyPixelsTripleBuffered()
+    // and readPixelsSingleBuffered(), where the EnqueueCopy() and this copy run in the same command.
+
     int32 row_pitch_in_pixels = 0;
-    void* src_ptr = readback->Lock(row_pitch_in_pixels); // will block until the data is ready
+    void* src_ptr = readback->Lock(row_pitch_in_pixels);
     SP_ASSERT(src_ptr);
     SP_ASSERT(row_pitch_in_pixels >= width);
 
