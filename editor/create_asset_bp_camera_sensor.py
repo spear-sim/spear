@@ -294,7 +294,6 @@ blueprint_desc = \
             "dynamic_global_illumination_method": unreal.DynamicGlobalIlluminationMethod.LUMEN,
             "reflection_method": unreal.ReflectionMethod.LUMEN,
             "show_flag_settings": engine_show_flag_settings["with_lighting_diffuse_only"],
-            "use_scene_view_extension": True,
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
         },
@@ -308,7 +307,6 @@ blueprint_desc = \
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_DiffuseColor",
             "show_flag_settings": engine_show_flag_settings["lighting_only_disable_all_but_allow_post_processing_material"],
-            "use_scene_view_extension": True,
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
         },
@@ -324,7 +322,6 @@ blueprint_desc = \
             "dynamic_global_illumination_method": unreal.DynamicGlobalIlluminationMethod.LUMEN,
             "reflection_method": unreal.ReflectionMethod.LUMEN,
             "show_flag_settings": engine_show_flag_settings["lighting_only"],
-            "use_scene_view_extension": True,
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
         },
@@ -576,9 +573,6 @@ if __name__ == "__main__":
         if "material_path" in component_desc:
             material = unreal.load_asset(name=component_desc["material_path"])
             sp_scene_capture_component_2d.set_editor_property(name="material", value=material)
-
-        if "use_scene_view_extension" in component_desc:
-            sp_scene_capture_component_2d.set_editor_property(name="use_scene_view_extension", value=component_desc["use_scene_view_extension"])
 
         # SpSceneCaptureComponent2D properties for texture render target (optional)
 

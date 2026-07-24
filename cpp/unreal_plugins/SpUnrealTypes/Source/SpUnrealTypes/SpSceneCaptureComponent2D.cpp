@@ -11,6 +11,7 @@
 #include <cstring> // std::memcpy
 #include <memory>  // std::construct_at, std::destroy_at, std::make_unique
 #include <numeric> // std::accumulate
+#include <ranges>  // std::views::filter, std::views::transform
 #include <utility> // std::move, std::pair
 
 #include <Components/SceneCaptureComponent2D.h>
@@ -235,7 +236,7 @@ void USpSceneCaptureComponent2D::Initialize()
         }
     }
 
-    if (bUseSceneViewExtension || BufferingMode == ESpBufferingMode::DoubleBuffered || UserSceneTextureNames.Num() > 0) {
+    if (BufferingMode == ESpBufferingMode::DoubleBuffered || UserSceneTextureNames.Num() > 0 || showFlagsNeedSceneViewExtension()) {
         bAlwaysPersistRenderingState = true; // ensure that the underlying view-state data is stable across frames so FSpSceneViewExtensionBase can match view-state data to this component
         scene_view_extension_ = FSceneViewExtensions::NewExtension<FSpSceneViewExtension>();
         scene_view_extension_->initialize(this);
@@ -449,7 +450,7 @@ void USpSceneCaptureComponent2D::Terminate()
     std::destroy_at(&texture_readback_desc_);
     std::construct_at(&texture_readback_desc_);
 
-    if (bUseSceneViewExtension || BufferingMode == ESpBufferingMode::DoubleBuffered || UserSceneTextureNames.Num() > 0) {
+    if (BufferingMode == ESpBufferingMode::DoubleBuffered || UserSceneTextureNames.Num() > 0 || showFlagsNeedSceneViewExtension()) {
         SP_ASSERT(scene_view_extension_);
         scene_view_extension_->terminate();
         scene_view_extension_ = nullptr;
@@ -615,6 +616,26 @@ void USpSceneCaptureComponent2D::postRenderViewFamily_RenderThread(FRDGBuilder& 
             }
         }
     }
+}
+
+bool USpSceneCaptureComponent2D::showFlagsNeedSceneViewExtension()
+{
+    std::vector<std::string> setting_names_that_need_sve_when_enabled = {"LightingOnlyOverride", "PathTracing"};
+    std::vector<std::string> setting_names_that_need_sve_when_disabled = {"Specular"};
+
+    std::vector<FEngineShowFlagsSetting> show_flag_settings = Unreal::toStdVector(GetShowFlagSettings());
+
+    return
+        Std::any(
+            show_flag_settings |
+            std::views::filter([](const auto& setting) { return setting.Enabled; }) |
+            std::views::transform([](const auto& setting) { return Unreal::toStdString(setting.ShowFlagName); }) |
+            std::views::transform([&setting_names_that_need_sve_when_enabled](const auto& name) { return Std::contains(setting_names_that_need_sve_when_enabled, name); })) ||
+        Std::any(
+            show_flag_settings |
+            std::views::filter([](const auto& setting) { return !setting.Enabled; }) |
+            std::views::transform([](const auto& setting) { return Unreal::toStdString(setting.ShowFlagName); }) |
+            std::views::transform([&setting_names_that_need_sve_when_disabled](const auto& name) { return Std::contains(setting_names_that_need_sve_when_disabled, name); }));
 }
 
 //

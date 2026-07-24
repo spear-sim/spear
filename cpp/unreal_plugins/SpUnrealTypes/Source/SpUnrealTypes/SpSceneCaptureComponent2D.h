@@ -148,7 +148,7 @@ public:
     TArray<uint64> GetViewStates(); // FSceneViewStateInterface is not a UCLASS so we can't return FSceneViewStateInterface*, so we return uint64 instead
 
     UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
-    void RequestPathTracerReset(); // requests that the path tracer restarts rendering from scratch; only has an effect if bUseSceneViewExtension is true
+    void RequestPathTracerReset();
 
     // called from FSpSceneViewExtensionBase::shouldHandleView(...) when deciding whether or not this component matches the current view
     const TIndirectArray<FSceneViewStateReference>& getViewStates() const { return ViewStates; }
@@ -159,6 +159,10 @@ public:
     // called from FSpSceneViewExtension::postRenderViewFamily_RenderThread(...) to do post-render work on the render thread
     void postRenderViewFamily_RenderThread(FRDGBuilder& graph_builder, FSceneViewFamily& view_family);
 
+private:
+    bool showFlagsNeedSceneViewExtension();
+
+public:
     // BlueprintReadWrite is incompatible with uint32 so we use int32
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
@@ -202,10 +206,7 @@ public:
     UMaterial* Material = nullptr;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bUseSharedMemory = true;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bReadPixelData = true;
+    TSubclassOf<ASpMeshProxyComponentManager> MeshProxyComponentManagerClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     ESpBufferingMode BufferingMode = ESpBufferingMode::SingleBuffered;
@@ -218,14 +219,15 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     TArray<FString> UserSceneTextureNames;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bPrintReadbackSpinWaitInfo = false;
+    // Can be disabled for debugging
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    TSubclassOf<ASpMeshProxyComponentManager> MeshProxyComponentManagerClass;
+    bool bUseSharedMemory = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bUseSceneViewExtension = false;
+    bool bReadPixelData = true;
+
+    // Can be enabled for debugging
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bPrintFrameTime = false;
@@ -235,6 +237,9 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bReadPixelsEveryFrame = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bPrintReadbackSpinWaitInfo = false;
 
 private:
 
