@@ -50,6 +50,7 @@ class FRDGBuilder;
 class FRHICommandListImmediate;
 class FRHITexture;
 class UMaterial;
+class UMaterialInterface;
 
 class FSpSceneViewExtensionBase : public FSceneViewExtensionBase
 {
@@ -100,7 +101,7 @@ struct FSpUserSceneTextureMaterialDesc
 
     // Post-process material.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    UMaterial* Material = nullptr;
+    UMaterialInterface* Material = nullptr;
 
     // The UserSceneTexture output name specified in the material editor.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
