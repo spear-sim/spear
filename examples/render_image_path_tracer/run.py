@@ -7,6 +7,7 @@
 
 import argparse
 import cv2
+import json
 import numpy as np
 import os
 import spear
@@ -54,10 +55,14 @@ if __name__ == "__main__":
         # force high-res textures for captured images
         game.console_service.set(name="r.Streaming.FullyLoadUsedTextures", value=1)
 
+        # workaround for nanite rebuilds invalidating the path tracer state
+        game.console_service.set(name="r.RayTracing.Nanite.MaxBuiltPrimitivesPerFrame", value=1024*1024*256)
+
         # configure the path tracer via console variables
 
         game.console_service.set(name="r.RayTracing.Enable", value=1)
         game.console_service.set(name="r.RayTracing.SceneCaptures", value=1)
+        game.console_service.set(name="r.PathTracing.ProgressDisplay", value=0)
 
         game.console_service.set(name="r.PathTracing.SamplesPerPixel", value=args.num_frames)
         game.console_service.set(name="r.PathTracing.MaxBounces", value=args.num_bounces)
@@ -76,9 +81,19 @@ if __name__ == "__main__":
         visualize_func = lambda data : data[:,:,[2,1,0]] # BGRA -> RGB
         # visualize_func = lambda data : data
 
+        # enable path tracing and disable camera imperfections because they amplify noise and produce artifacts if we don't denoise
+        final_tone_curve_hdr_component.SetShowFlagSettings(InShowFlagSettings=[
+            {"ShowFlagName": "PathTracing", "Enabled": True},
+            {"ShowFlagName": "CameraImperfections", "Enabled": False}])
+
+        # Required for RequestPathTracerReset() (called below) to have any effect
+        final_tone_curve_hdr_component.bUseSceneViewExtension = True
+
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
         final_tone_curve_hdr_component.Initialize()
         final_tone_curve_hdr_component.initialize_sp_funcs()
+
+        sp_scene_view_state_interface = game.get_unreal_object(uclass="USpSceneViewStateInterface")
 
     with instance.end_frame(single_step=True):
         pass
@@ -89,14 +104,32 @@ if __name__ == "__main__":
     # The path tracer accumulates one sample per pixel per rendered frame, exactly like the editor's
     # path-tracing viewport, and stops once it reaches r.PathTracing.SamplesPerPixel (set to args.num_frames
     # above). Moving the camera or anything in the scene invalidates the accumulated samples and restarts
-    # from scratch, so we simply render args.num_frames frames in a row without moving anything, which
-    # converges the image on the final frame. The engine then applies the denoiser (if one was requested) to
-    # the converged result. Note that calling instance.step(num_frames=args.num_frames) without specifying
-    # single_step=True advances at least num_frames, but is not guaranteed to advance exactly num_frames.
+    # from scratch. We poll the internal path tracer accumulation counter instead of blindly stepping to
+    # ensure the image has been fully rendered. This way we avoid potential loading issues.
+    # The engine then applies the denoiser (if one was requested) to the converged result.
     spear.log("Path-traced rendering beginning...")
-    for i in range(args.num_frames):
-        spear.log(f"Rendering frame {i:04d}...")
-        instance.step(single_step=True)
+    max_num_frames = args.num_frames*4
+    sample_index = 0
+    for i in range(max_num_frames):
+        with instance.begin_frame():
+            # Explicitly reset the path tracer's accumulated samples on the first frame. Nothing moves
+            # in this example, but frames rendered above (e.g. during wait_for_engine_idle()) already accumulated
+            # samples against this component's persistent view state, so without this reset, sample_index would
+            # start ahead of 0 below.
+            if i == 0:
+                final_tone_curve_hdr_component.RequestPathTracerReset()
+
+        with instance.end_frame(single_step=True):
+            view_states = final_tone_curve_hdr_component.GetViewStates()
+            assert len(view_states) > 0
+            view_state = view_states[0]
+            sample_index = sp_scene_view_state_interface.GetPathTracingSampleIndex(ViewState=view_state)
+
+        spear.log(f"Rendered frame {sample_index:04d}/{args.num_frames}...")
+        if sample_index >= args.num_frames:
+            break
+    if sample_index < args.num_frames:
+        spear.log("Error: failed to accumulate all path-traced sampled within the frame limit")
     spear.log("Path-traced rendering finished.")
 
     # get rendered frame
