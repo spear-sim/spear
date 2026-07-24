@@ -42,9 +42,8 @@ def unregister_log_func(func):
 # library's own notion of whether stdout is a terminal (to avoid dumping escape codes to files for example)
 def supports_color():
     global _supports_color_cached
-    if _supports_color_cached is not None:
-        return _supports_color_cached
-    _supports_color_cached = _supports_color()
+    if _supports_color_cached is None:
+        _supports_color_cached = _supports_color()
     return _supports_color_cached
 
 def _supports_color():
