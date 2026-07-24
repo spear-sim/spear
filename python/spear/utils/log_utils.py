@@ -62,11 +62,11 @@ def colorize(text, color, bold=False):
 def colorize_message_category(message):
     message_lower = message.lower()
     if "error" in message_lower or "exception" in message_lower:
-        print(colorize(text=message, color="red", bold=True))
+        return colorize(text=message, color="red", bold=True)
     elif "warning" in message_lower:
-        print(colorize(text=message, color="yellow"))
+        return colorize(text=message, color="yellow")
     else:
-        print(message)
+        return message
 
 def log(*args):
     current_frame = inspect.currentframe()
