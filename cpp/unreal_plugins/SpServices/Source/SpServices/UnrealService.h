@@ -13,25 +13,26 @@
 #include <vector>
 
 #include <Components/ActorComponent.h>
-#include <Delegates/IDelegateInstance.h> // FDelegateHandle
-#include <Engine/Engine.h>               // GEngine
-#include <Engine/EngineTypes.h>          // ESpawnActorCollisionHandlingMethod
-#include <Engine/World.h>                // FActorSpawnParameters
-#include <GameFramework/Actor.h>         // ESpawnActorScaleMethod
-#include <HAL/IConsoleManager.h>         // EConsoleVariableFlags, IConsoleVariable
-#include <HAL/Platform.h>                // uint64
+#include <Delegates/IDelegateInstance.h>     // FDelegateHandle
+#include <Engine/Engine.h>                   // GEngine
+#include <Engine/EngineTypes.h>              // ESpawnActorCollisionHandlingMethod
+#include <Engine/World.h>                    // FActorSpawnParameters
+#include <GameFramework/Actor.h>             // ESpawnActorScaleMethod
+#include <HAL/IConsoleManager.h>             // EConsoleVariableFlags, IConsoleVariable
+#include <HAL/Platform.h>                    // uint64
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
-#include <Misc/EnumClassFlags.h>         // ENUM_CLASS_FLAGS
+#include <Misc/EnumClassFlags.h>             // ENUM_CLASS_FLAGS
 #include <StructUtils/UserDefinedStruct.h>
-#include <UObject/Class.h>               // EIncludeSuperFlag, EStructFlags, UClass, UScriptStruct
-#include <UObject/NameTypes.h>           // FName
-#include <UObject/Object.h>              // UObject
-#include <UObject/ObjectMacros.h>        // ELoadFlags, EObjectFlags, EPropertyFlags, GENERATED_BODY, UCLASS, UENUM, UFUNCTION, UPROPERTY
+#include <UObject/Class.h>                   // EIncludeSuperFlag, EStructFlags, UClass, UScriptStruct
+#include <UObject/LinkerInstancingContext.h> // FLinkerInstancingContext
+#include <UObject/NameTypes.h>               // FName
+#include <UObject/Object.h>                  // UObject
+#include <UObject/ObjectMacros.h>            // ELoadFlags, EObjectFlags, EPropertyFlags, GENERATED_BODY, UCLASS, UENUM, UFUNCTION, UPROPERTY
 #include <UObject/Package.h>
-#include <UObject/Script.h>              // EFunctionFlags
-#include <UObject/UObjectGlobals.h>      // GetTransientPackage, StaticLoadClass, StaticLoadObject
-#include <UObject/UnrealType.h>          // EFieldIterationFlags
+#include <UObject/Script.h>                  // EFunctionFlags
+#include <UObject/UObjectGlobals.h>          // GetTransientPackage, StaticLoadClass, StaticLoadObject
+#include <UObject/UnrealType.h>              // EFieldIterationFlags
 
 #include "SpCore/Assert.h"
 #include "SpCore/Unreal.h"
