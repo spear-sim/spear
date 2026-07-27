@@ -23,8 +23,8 @@ camera_sensor_descs = \
         "component_names":
         [
             "final_tone_curve_hdr_",
-            "final_tone_curve_hdr_no_taa_",
-            "lighting_only_"
+            "lighting_only_",
+            "with_lighting_"
         ],
         "user_scene_texture_names":
         [
@@ -48,7 +48,9 @@ camera_sensor_descs = \
         "component_names":
         [
             "final_tone_curve_hdr_",
-            "lighting_only_"
+            "lighting_only_with_path_tracing_",
+            "diffuse_only_with_path_tracing_",
+            "specular_only_with_path_tracing_"
         ],
         "user_scene_texture_names":
         [
