@@ -49,7 +49,6 @@
 class FRDGBuilder;
 class FRHICommandListImmediate;
 class FRHITexture;
-class UMaterial;
 class UMaterialInterface;
 
 class FSpSceneViewExtensionBase : public FSceneViewExtensionBase
