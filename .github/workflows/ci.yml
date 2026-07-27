@@ -3,6 +3,8 @@
 # Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
+# See https://github.com/actions/runner-images for info about the cloud environment.
+
 name: CI
 
 on:
@@ -21,8 +23,8 @@ on:
 jobs:
 
   # Pure static analysis. Results don't depend on OS, so this only needs to run once.
-  lint:
-    runs-on: ubuntu-latest
+  lint-python:
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
@@ -33,17 +35,17 @@ jobs:
       - name: Check Python syntax
         run: python -m compileall -q python tools pipeline editor examples python_ext/python
 
-      - name: Lint with ruff
+      - name: Lint python source code
         run: |
           pip install ruff==0.15.22
           ruff check --select F --ignore F401,F403,F541,F841 python tools pipeline editor examples python_ext/python
 
   # Verify the spear Python package actually installs and imports on each platform.
-  install:
+  install-python:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-24.04, windows-2022, macos-26]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -56,18 +58,17 @@ jobs:
         run: pip install -e "python[examples]"
 
       - name: Import spear
-        run: python -c "import spear; spear.log('spear imported successfully, __can_import_spear_ext__ = ', spear.__can_import_spear_ext__)"
+        run: python -c "import spear; spear.log('spear imported successfully (__can_import_spear_ext__ = ', spear.__can_import_spear_ext__, ')')"
 
   # Compile the spear_ext Python extension module and its vendored third-party libraries
-  # (boost, rpclib, yaml-cpp) using the system compiler. This intentionally excludes Linux,
+  # (boost, rpclib, yaml-cpp) using the system compiler. We intentionally exclude Linux
   # because our build scripts source clang/libc++ from an Unreal Engine install on Linux.
-  #
   # We pin windows-2022 rather than windows-latest because MSVC v143 (v14.44-17.14) is required.
-  compile-spear-ext:
+  install-spear-ext:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022, macos-latest]
+        os: [windows-2022, macos-26]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -93,13 +94,13 @@ jobs:
         run: sudo xcode-select -s /Applications/Xcode_26.5.app
 
       - name: Install the spear Python package
-        run: conda run --no-capture-output -n spear-env pip install -e python
+        run: pip install -e python
 
       - name: Build third-party libraries
-        run: conda run --no-capture-output -n spear-env python tools/build_third_party_libs.py
+        run: python tools/build_third_party_libs.py
 
       - name: Build and install the spear_ext Python extension module
-        run: conda run --no-capture-output -n spear-env python tools/install_python_extension.py --conda-script "$CONDA/etc/profile.d/conda.sh"
+        run: python tools/install_python_extension.py --conda-script "$CONDA/etc/profile.d/conda.sh"
 
       - name: Import spear_ext
-        run: conda run --no-capture-output -n spear-env python -c "import spear_ext; print('spear_ext imported successfully')"
+        run: python -c "import spear_ext; print('spear_ext imported successfully')"
