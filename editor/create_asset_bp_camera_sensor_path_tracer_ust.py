@@ -71,17 +71,61 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB
         },
         {
-            "name": "lighting_only_",
+            "name": "lighting_only_with_path_tracing_",
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
             "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpArrayDataType.FLOAT32,
+            "channel_data_type": unreal.SpArrayDataType.U_INT8,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "show_flag_settings": engine_show_flag_settings["lighting_only_with_path_tracing"],
             "use_scene_view_extension": True,
             "override_texture_render_target_format": True,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB,
+        },
+        {
+            "name": "diffuse_only_with_path_tracing_",
+            "width": width,
+            "height": height,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.U_INT8,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "show_flag_settings": engine_show_flag_settings["with_path_tracing"],
+            "override_texture_render_target_format": True,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB,
+            "post_process_settings":
+            [
+                {"property": "override_path_tracing_include_emissive", "value": True},
+                {"property": "path_tracing_include_emissive", "value": False},
+                {"property": "override_path_tracing_include_specular", "value": True},
+                {"property": "path_tracing_include_specular", "value": False},
+                {"property": "override_path_tracing_include_indirect_specular", "value": True},
+                {"property": "path_tracing_include_indirect_specular", "value": False},
+                {"property": "override_path_tracing_include_volume", "value": True},
+                {"property": "path_tracing_include_volume", "value": False},
+                {"property": "override_path_tracing_include_indirect_volume", "value": True},
+                {"property": "path_tracing_include_indirect_volume", "value": False}
+            ]
+        },
+        {
+            "name": "specular_only_with_path_tracing_",
+            "width": width,
+            "height": height,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.U_INT8,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "show_flag_settings": engine_show_flag_settings["with_path_tracing"],
+            "override_texture_render_target_format": True,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB,
+            "post_process_settings":
+            [
+                {"property": "override_path_tracing_include_diffuse", "value": True},
+                {"property": "path_tracing_include_diffuse", "value": False},
+                {"property": "override_path_tracing_include_indirect_diffuse", "value": True},
+                {"property": "path_tracing_include_indirect_diffuse", "value": False}
+            ]
         }
     ]
 }

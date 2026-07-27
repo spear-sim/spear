@@ -47,18 +47,6 @@ engine_show_flag_settings["final_tone_curve_hdr"] = engine_show_flag_settings["f
 ]
 
 #
-# final_tone_curve_hdr without temporal anti-aliasing. TAA only accumulates the scene color, so the beauty is
-# not anti-aliased here, but the GBuffer-derived aux buffers (normals, depth, etc.) are captured without the
-# sub-pixel jitter that TAA introduces on every frame.
-#
-
-engine_show_flag_settings["final_tone_curve_hdr_no_taa"] = []
-engine_show_flag_settings["final_tone_curve_hdr_no_taa"] = engine_show_flag_settings["final_tone_curve_hdr_no_taa"] + \
-[
-    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False)
-]
-
-#
 # Lighting only
 #
 
@@ -67,6 +55,18 @@ engine_show_flag_settings["lighting_only"] = engine_show_flag_settings["lighting
 [
     unreal.EngineShowFlagsSetting(show_flag_name="LightingOnlyOverride", enabled=True),
     unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=True)
+]
+
+#
+# final_tone_curve_hdr without temporal anti-aliasing. TAA only accumulates the scene color, so the beauty is
+# not anti-aliased here, but the GBuffer-derived aux buffers (normals, depth, etc.) are captured without the
+# sub-pixel jitter that TAA introduces on every frame.
+#
+
+engine_show_flag_settings["with_lighting"] = []
+engine_show_flag_settings["with_lighting"] = engine_show_flag_settings["with_lighting"] + \
+[
+    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False)
 ]
 
 blueprint_desc = \
@@ -90,7 +90,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB
         },
         {
-            "name": "final_tone_curve_hdr_no_taa_",
+            "name": "with_lighting_",
             "width": width,
             "height": height,
             "fov_angle": fov_angle,
@@ -99,7 +99,7 @@ blueprint_desc = \
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
             "dynamic_global_illumination_method": unreal.DynamicGlobalIlluminationMethod.LUMEN,
             "reflection_method": unreal.ReflectionMethod.LUMEN,
-            "show_flag_settings": engine_show_flag_settings["final_tone_curve_hdr_no_taa"],
+            "show_flag_settings": engine_show_flag_settings["with_lighting"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB
         },

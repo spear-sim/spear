@@ -25,11 +25,11 @@ if __name__ == "__main__":
     # as opposed to -ExecutePythonScript.
     asset_registry.scan_paths_synchronous(paths=["/SpContent"])
 
-    # For each PPM_* post-process material, create a lightweight material instance that redirects the
-    # material's output to a UserSceneTexture, so a single SpSceneCaptureComponent2D can read the buffer back.
-    # We use a material instance rather than a full material copy because the override is resolved on the render
-    # proxy at render time, so the instance reuses the parent material's compiled shader with no recompile, and
-    # any future edit to the parent material is inherited automatically.
+    # For each PPM_* post-process material, create a lightweight material instance that redirects the material's
+    # output to a UserSceneTexture, so a single SpSceneCaptureComponent2D can read the buffer back. We use a
+    # material instance rather than a full material copy because the override is resolved on the render proxy at
+    # render time, so the instance reuses the parent material's compiled shader with no recompile, and any
+    # future edit to the parent material is inherited automatically.
     for asset_path in unreal.EditorAssetLibrary.list_assets(directory_path=material_dir, recursive=False, include_folder=False):
 
         source_material_name = posixpath.split(asset_path)[1].split(".")[0]
@@ -43,7 +43,7 @@ if __name__ == "__main__":
         # The UserSceneTexture output name is the source material name without the "PPM_" prefix (e.g.,
         # PPM_DiffuseColor -> DiffuseColor). This is the name that FSpUserSceneTextureMaterialDesc::InternalName
         # must match on the SPEAR side.
-        user_scene_texture_name = source_material_name[len(source_material_name_prefix):]
+        user_scene_texture_name = source_material_name[len(source_material_name_prefix):] + "_UST"
 
         # The material instance keeps the full parent name so its parentage is obvious (e.g.,
         # PPM_DiffuseColor -> MI_PPM_DiffuseColor_UST).
