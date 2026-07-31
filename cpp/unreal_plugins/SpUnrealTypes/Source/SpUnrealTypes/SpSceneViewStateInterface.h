@@ -7,6 +7,7 @@
 
 #include <Kismet/BlueprintFunctionLibrary.h>
 #include <SceneManagement.h> // FSceneViewStateInterface
+#include <RenderingThread.h> // FlushRenderingCommands
 
 #include "SpCore/Assert.h"
 
@@ -21,6 +22,7 @@ public:
     static uint32 GetPathTracingSampleIndex(uint64 ViewState)
     {
         #if RHI_RAYTRACING
+            FlushRenderingCommands(); // force rendering thread to be fully up-to-date before querying GetPathTracingSampleCount()
             FSceneViewStateInterface* view_state_ptr = reinterpret_cast<FSceneViewStateInterface*>(ViewState);
             SP_ASSERT(view_state_ptr);
             return view_state_ptr->GetPathTracingSampleIndex();
@@ -33,6 +35,7 @@ public:
     static uint32 GetPathTracingSampleCount(uint64 ViewState)
     {
         #if RHI_RAYTRACING
+            FlushRenderingCommands(); // force rendering thread to be fully up-to-date before querying GetPathTracingSampleCount()
             FSceneViewStateInterface* view_state_ptr = reinterpret_cast<FSceneViewStateInterface*>(ViewState);
             SP_ASSERT(view_state_ptr);
             return view_state_ptr->GetPathTracingSampleCount();
