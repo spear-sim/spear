@@ -203,6 +203,12 @@ public:
     float TextureRenderTargetGamma = 0.0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bOverridePathTracerOfflineMode = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bPathTracerOfflineMode = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     UMaterial* Material = nullptr;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")

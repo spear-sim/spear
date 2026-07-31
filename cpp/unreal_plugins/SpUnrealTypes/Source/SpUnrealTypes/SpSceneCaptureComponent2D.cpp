@@ -504,6 +504,10 @@ void USpSceneCaptureComponent2D::setupView(FSceneViewFamily& view_family, FScene
         }
     }
 
+    if (bOverridePathTracerOfflineMode) {
+        view.bIsOfflineRender = bPathTracerOfflineMode;
+    }
+
     if (request_path_tracer_reset_) {
         view.bForcePathTracerReset = true;
         request_path_tracer_reset_ = false;
