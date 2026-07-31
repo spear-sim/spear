@@ -33,7 +33,7 @@ When executing the pipelines below, specifying the optional `--visual-parity-wit
 
 ```console
 # generate Unreal metadata
-python tools/run_editor_script.py --unreal-engine-dir path/to/UE_5.5 --launch-mode full --render-offscreen --script export_unreal_metadata/run.py --export-dir path/to/spear-pipeline/scenes/apartment_0000
+python tools/run_editor_script.py --unreal-engine-dir path/to/UE_5.5 --launch-mode full --render-offscreen --script export_unreal_metadata/export_scene.py --export-dir path/to/spear-pipeline/scenes/apartment_0000
 
 # generate Unreal geometry
 python tools/run_editor_script.py --unreal-engine-dir path/to/UE_5.5 --launch-mode full --render-offscreen --script export_unreal_geometry.py --export-dir path/to/spear-pipeline/scenes/apartment_0000
@@ -64,7 +64,7 @@ python -m mujoco.viewer --mjcf=path/to/spear-pipeline/scenes/apartment_0000/mujo
 
 ```console
 # generate Unreal metadata
-python tools/run_editor_script.py --unreal-engine-dir path/to/UE_5.5 --launch-mode full --render-offscreen --script export_unreal_metadata/run.py --export-dir path/to/spear-pipeline/scenes/apartment_0000
+python tools/run_editor_script.py --unreal-engine-dir path/to/UE_5.5 --launch-mode full --render-offscreen --script export_unreal_metadata/export_scene.py --export-dir path/to/spear-pipeline/scenes/apartment_0000
 
 # generate Unreal geometry (only required to support the optional visualization steps below)
 python tools/run_editor_script.py --unreal-engine-dir path/to/UE_5.5 --launch-mode full --render-offscreen --script export_unreal_geometry.py --export-dir path/to/spear-pipeline/scenes/apartment_0000

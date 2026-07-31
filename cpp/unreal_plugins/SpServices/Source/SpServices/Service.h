@@ -79,6 +79,16 @@ protected:
         return reinterpret_cast<TPtr*>(src);
     }
 
+    template <CObject TObject>
+    static TObject* toPtr(uint64_t src)
+    {
+        TObject* src_ptr = reinterpret_cast<TObject*>(src);
+        if (src_ptr) {
+            SP_ASSERT(Unreal::isValid(src_ptr));
+        }
+        return src_ptr;
+    }
+
     template <typename TPtr>
     static std::vector<TPtr*> toPtr(std::vector<uint64_t>&& src)
     {

@@ -12,6 +12,7 @@ import spear
 
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--capture", action="store_true")
 parser.add_argument("--teaser", action="store_true")
 args = parser.parse_args()
 
@@ -60,7 +61,8 @@ if __name__ == "__main__":
 
     # get rendered frame
     with instance.begin_frame():
-        pass
+        if args.capture:
+            final_tone_curve_hdr_component.bCaptureGpuNextRender = True
     with instance.end_frame():
         data_bundle = final_tone_curve_hdr_component.read_pixels()
 
