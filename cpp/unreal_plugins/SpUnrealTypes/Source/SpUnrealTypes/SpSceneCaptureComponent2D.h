@@ -147,8 +147,11 @@ public:
     UFUNCTION(Category="SPEAR") // uint64 not supported for BlueprintCallable, can't be const
     TArray<uint64> GetViewStates(); // FSceneViewStateInterface is not a UCLASS so we can't return FSceneViewStateInterface*, so we return uint64 instead
 
+    // Functions for setting deferred state that gets consumed in an FSceneViewExtension callback
     UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void RequestPathTracerReset();
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    void RequestSetOfflineRender(bool bOverrideIsOfflineRender, bool bIsOfflineRender);
 
     // called from FSpSceneViewExtensionBase::shouldHandleView(...) when deciding whether or not this component matches the current view
     const TIndirectArray<FSceneViewStateReference>& getViewStates() const { return ViewStates; }
@@ -371,8 +374,10 @@ private:
     TextureReadbackDesc texture_readback_desc_;
     std::map<std::string, TextureReadbackDesc> user_scene_texture_readback_descs_;
 
-    // Path tracer state
-    std::atomic<bool> request_path_tracer_reset_ = false;
+    // Deferred state to be consumed in an FSceneViewExtension callback
+    bool request_path_tracer_reset_ = false;
+    bool request_override_is_offline_render_ = false;
+    bool request_is_offline_render_ = false;
 
     // Additional state for measuring "standalone" and "standalone + extra work" frame rates.
     FDelegateHandle begin_frame_handle_;
