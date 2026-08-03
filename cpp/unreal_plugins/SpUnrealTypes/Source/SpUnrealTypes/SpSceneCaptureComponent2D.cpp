@@ -383,6 +383,7 @@ void USpSceneCaptureComponent2D::Initialize()
     request_path_tracer_reset_ = false;
     request_override_is_offline_render_ = false;
     request_is_offline_render_ = false;
+
     is_initialized_ = true;
     bIsInitialized = true;
 
@@ -398,6 +399,9 @@ void USpSceneCaptureComponent2D::Terminate()
     SetVisibility(false); // disable rendering to texture
 
     request_path_tracer_reset_ = false;
+    request_override_is_offline_render_ = false;
+    request_is_offline_render_ = false;
+
     is_initialized_ = false;
     bIsInitialized = false;
 
