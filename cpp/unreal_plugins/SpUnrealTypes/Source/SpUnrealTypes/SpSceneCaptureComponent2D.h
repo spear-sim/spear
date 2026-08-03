@@ -150,6 +150,9 @@ public:
     UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void RequestPathTracerReset();
 
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    void RequestSetOfflineRender(bool bOverrideIsOfflineRender, bool bIsOfflineRender);
+
     // called from FSpSceneViewExtensionBase::shouldHandleView(...) when deciding whether or not this component matches the current view
     const TIndirectArray<FSceneViewStateReference>& getViewStates() const { return ViewStates; }
 
@@ -201,12 +204,6 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     float TextureRenderTargetGamma = 0.0;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bOverridePathTracerOfflineMode = false;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bPathTracerOfflineMode = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     UMaterial* Material = nullptr;
@@ -377,8 +374,10 @@ private:
     TextureReadbackDesc texture_readback_desc_;
     std::map<std::string, TextureReadbackDesc> user_scene_texture_readback_descs_;
 
-    // Path tracer state
-    std::atomic<bool> request_path_tracer_reset_ = false;
+    // Deferred state to be consumed in an FSceneViewExtension callback
+    bool request_path_tracer_reset_ = false;
+    bool request_override_is_offline_render_ = false;
+    bool request_is_offline_render_ = false;
 
     // Additional state for measuring "standalone" and "standalone + extra work" frame rates.
     FDelegateHandle begin_frame_handle_;

@@ -381,6 +381,8 @@ void USpSceneCaptureComponent2D::Initialize()
     });
 
     request_path_tracer_reset_ = false;
+    request_override_is_offline_render_ = false;
+    request_is_offline_render_ = false;
     is_initialized_ = true;
     bIsInitialized = true;
 
@@ -489,6 +491,13 @@ void USpSceneCaptureComponent2D::RequestPathTracerReset()
     request_path_tracer_reset_ = true;
 }
 
+void USpSceneCaptureComponent2D::RequestSetOfflineRender(bool bOverrideIsOfflineRender, bool bIsOfflineRender)
+{
+    SP_ASSERT(IsInitialized());
+    request_override_is_offline_render_ = bOverrideIsOfflineRender;
+    request_is_offline_render_ = bIsOfflineRender;
+}
+
 void USpSceneCaptureComponent2D::setupView(FSceneViewFamily& view_family, FSceneView& view)
 {
     const TArray<FEngineShowFlagsSetting>& engine_show_flag_settings = GetShowFlagSettings();
@@ -504,13 +513,13 @@ void USpSceneCaptureComponent2D::setupView(FSceneViewFamily& view_family, FScene
         }
     }
 
-    if (bOverridePathTracerOfflineMode) {
-        view.bIsOfflineRender = bPathTracerOfflineMode;
-    }
-
     if (request_path_tracer_reset_) {
         view.bForcePathTracerReset = true;
         request_path_tracer_reset_ = false;
+    }
+
+    if (request_override_is_offline_render_) {
+        view.bIsOfflineRender = request_is_offline_render_;
     }
 }
 
