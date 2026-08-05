@@ -89,11 +89,6 @@ if __name__ == "__main__":
         visualize_func = lambda data : data[:,:,[2,1,0]] # BGRA -> RGB
         # visualize_func = lambda data : data
 
-        # # enable path tracing and disable camera imperfections because they amplify noise and produce artifacts if we don't denoise
-        # final_tone_curve_hdr_component.SetShowFlagSettings(InShowFlagSettings=[
-        #     {"ShowFlagName": "PathTracing", "Enabled": True},
-        #     {"ShowFlagName": "CameraImperfections", "Enabled": False}])
-
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
         final_tone_curve_hdr_component.Initialize()
         final_tone_curve_hdr_component.initialize_sp_funcs()
