@@ -32,13 +32,10 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Check Python syntax
-        run: python -m compileall -q python tools pipeline editor examples python_ext/python
-
       - name: Lint python source code
         run: |
           pip install ruff==0.15.22
-          ruff check --select F --ignore F401,F403,F541,F841 python tools pipeline editor examples python_ext/python
+          ruff check --select F,PLE --ignore F401,F403,F541,F841 python tools pipeline editor examples python_ext/python
 
   # Verify the spear Python package actually installs and imports on each platform.
   install-python:
