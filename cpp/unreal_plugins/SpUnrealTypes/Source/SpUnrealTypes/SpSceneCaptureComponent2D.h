@@ -9,7 +9,7 @@
 #include <atomic>
 #include <chrono>
 #include <map>
-#include <memory> // std::unique_ptr
+#include <memory>  // std::unique_ptr
 #include <string>
 #include <utility> // std::pair
 #include <vector>
@@ -147,8 +147,11 @@ public:
     UFUNCTION(Category="SPEAR") // uint64 not supported for BlueprintCallable, can't be const
     TArray<uint64> GetViewStates(); // FSceneViewStateInterface is not a UCLASS so we can't return FSceneViewStateInterface*, so we return uint64 instead
 
+    // Functions for setting deferred state that gets consumed in an FSceneViewExtension callback
     UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
-    void RequestPathTracerReset(); // requests that the path tracer restarts rendering from scratch; only has an effect if bUseSceneViewExtension is true
+    void RequestPathTracerReset();
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    void RequestSetOfflineRender(bool bOverrideIsOfflineRender, bool bIsOfflineRender);
 
     // called from FSpSceneViewExtensionBase::shouldHandleView(...) when deciding whether or not this component matches the current view
     const TIndirectArray<FSceneViewStateReference>& getViewStates() const { return ViewStates; }
@@ -159,6 +162,10 @@ public:
     // called from FSpSceneViewExtension::postRenderViewFamily_RenderThread(...) to do post-render work on the render thread
     void postRenderViewFamily_RenderThread(FRDGBuilder& graph_builder, FSceneViewFamily& view_family);
 
+private:
+    bool showFlagsNeedSceneViewExtension();
+
+public:
     // BlueprintReadWrite is incompatible with uint32 so we use int32
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
@@ -202,10 +209,7 @@ public:
     UMaterial* Material = nullptr;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bUseSharedMemory = true;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bReadPixelData = true;
+    TSubclassOf<ASpMeshProxyComponentManager> MeshProxyComponentManagerClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     ESpBufferingMode BufferingMode = ESpBufferingMode::SingleBuffered;
@@ -218,14 +222,15 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     TArray<FString> UserSceneTextureNames;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bPrintReadbackSpinWaitInfo = false;
+    // Can be disabled for debugging
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    TSubclassOf<ASpMeshProxyComponentManager> MeshProxyComponentManagerClass;
+    bool bUseSharedMemory = true;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bUseSceneViewExtension = false;
+    bool bReadPixelData = true;
+
+    // Can be enabled for debugging
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bPrintFrameTime = false;
@@ -235,6 +240,9 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bReadPixelsEveryFrame = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bPrintReadbackSpinWaitInfo = false;
 
 private:
 
@@ -366,8 +374,10 @@ private:
     TextureReadbackDesc texture_readback_desc_;
     std::map<std::string, TextureReadbackDesc> user_scene_texture_readback_descs_;
 
-    // Path tracer state
+    // Deferred state to be consumed in an FSceneViewExtension callback
     bool request_path_tracer_reset_ = false;
+    bool request_override_is_offline_render_ = false;
+    bool request_is_offline_render_ = false;
 
     // Additional state for measuring "standalone" and "standalone + extra work" frame rates.
     FDelegateHandle begin_frame_handle_;
