@@ -32,7 +32,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Lint python source code
+      - name: Lint all Python source code
         run: |
           pip install ruff==0.15.22
           ruff check \
@@ -55,16 +55,16 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install the spear Python package
-        run: pip install -e "python[examples]"
+      - name: Install the spear Python package with optional components: examples, pipeline
+        run: |
+          pip install -e python[examples,pipeline]
 
       - name: Import spear
-        run: python -c "import spear; spear.log('spear imported successfully (__can_import_spear_ext__ = ', spear.__can_import_spear_ext__, ')')"
+        run: python -c "import spear; spear.log('spear imported successfully (spear.__can_import_spear_ext__ = ', spear.__can_import_spear_ext__, ')')"
 
-  # Compile the spear_ext Python extension module and its vendored third-party libraries
-  # (boost, rpclib, yaml-cpp) using the system compiler. We intentionally exclude Linux
-  # because our build scripts source clang/libc++ from an Unreal Engine install on Linux.
-  # We pin windows-2022 rather than windows-latest because MSVC v143 (v14.44-17.14) is required.
+  # Compile the spear_ext Python extension module and its dependent third-party libraries
+  # using the system compiler. We intentionally exclude Linux, because our build scripts source
+  # clang/libc++ from an Unreal Engine install on Linux.
   install-spear-ext:
     strategy:
       fail-fast: false
@@ -76,8 +76,6 @@ jobs:
         shell: bash -l {0}
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       # install_python_extension.py requires an activated conda environment (see
       # docs/getting_started.md), so we set one up rather than using actions/setup-python.
@@ -94,14 +92,17 @@ jobs:
       - if: runner.os == 'macOS'
         run: sudo xcode-select -s /Applications/Xcode_26.5.app
 
+      - name: Check out rpclib
+        run: git submodule update --init third_party/rpclib
+
       - name: Install the spear Python package
         run: pip install -e python
 
       - name: Build third-party libraries
-        run: python tools/build_third_party_libs.py
+        run: python tools/build_third_party_libs.py --skip-boost --skip-yamlcpp
 
       - name: Build and install the spear_ext Python extension module
         run: python tools/install_python_extension.py --conda-script "$CONDA/etc/profile.d/conda.sh"
 
       - name: Import spear_ext
-        run: python -c "import spear_ext; print('spear_ext imported successfully')"
+        run: python -c "import spear; import spear_ext; spear.log('spear_ext imported successfully')"
