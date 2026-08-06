@@ -35,7 +35,11 @@ jobs:
       - name: Lint python source code
         run: |
           pip install ruff==0.15.22
-          ruff check --select F,PLE --ignore F401,F403,F541,F841 python tools pipeline editor examples python_ext/python
+          ruff check \
+            --target-version py311 \
+            --select F,PLE \
+            --ignore F401,F403,F541,F841 \
+            python tools pipeline editor examples python_ext/python
 
   # Verify the spear Python package actually installs and imports on each platform.
   install-python:
