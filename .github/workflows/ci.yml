@@ -41,6 +41,24 @@ jobs:
             --ignore F401,F403,F541,F841 \
             python tools pipeline editor examples python_ext/python
 
+  test-vtk-and-mayavi:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, macos-26, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: "Install VTK and Mayavi"
+        run: |
+          pip install vtk==9.3.1
+          pip install --no-build-isolation mayavi==4.8.3
+
   # Verify the spear Python package actually installs and imports on each platform.
   install-python:
     strategy:
