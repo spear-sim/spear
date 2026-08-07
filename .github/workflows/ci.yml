@@ -23,7 +23,7 @@ on:
 jobs:
 
   # Pure static analysis. Results don't depend on OS, so this only needs to run once.
-  lint-python:
+  test-lint-python:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -42,7 +42,7 @@ jobs:
             python tools pipeline editor examples python_ext/python
 
   # Verify the spear Python package actually installs and imports on each platform.
-  install-python:
+  test-install-python:
     strategy:
       fail-fast: false
       matrix:
@@ -69,7 +69,7 @@ jobs:
   # Compile the spear_ext Python extension module and its dependent third-party libraries
   # using the system compiler. We intentionally exclude Linux, because our build scripts source
   # clang/libc++ from an Unreal Engine install on Linux.
-  install-spear-ext:
+  test-install-spear-ext:
     strategy:
       fail-fast: false
       matrix:
