@@ -41,24 +41,6 @@ jobs:
             --ignore F401,F403,F541,F841 \
             python tools pipeline editor examples python_ext/python
 
-  test-vtk-and-mayavi:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-2022, macos-26, ubuntu-24.04]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: "Install VTK and Mayavi"
-        run: |
-          pip install wheel setuptools==78.1.1 vtk==9.3.1
-          pip install --no-build-isolation mayavi==4.8.3
-
   # Verify the spear Python package actually installs and imports on each platform.
   install-python:
     strategy:
@@ -73,9 +55,13 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: "Install the spear Python package (with optional components [examples,pipeline])"
-        run: |
-          pip install -e python[examples,pipeline]
+      - name: "Install the spear Python package with optional components: examples"
+        run: pip install -e "python[examples]"
+
+      - name: "Install the spear Python package with optional components: pipeline"
+        env:
+          PIP_BUILD_CONSTRAINT: python/pip_build_constraint.txt
+        run: pip install --no-cache-dir -e "python[pipeline]"
 
       - name: "Import spear"
         run: python -c "import spear; spear.log('spear imported successfully (spear.__can_import_spear_ext__ = ', spear.__can_import_spear_ext__, ')')"
@@ -117,7 +103,7 @@ jobs:
         run: pip install -e python
 
       - name: "Build third-party libraries"
-        run: python tools/build_third_party_libs.py --skip-boost --skip-yamlcpp
+        run: python tools/build_third_party_libs.py --skip-boost --skip-yaml-cpp
 
       - name: "Build and install the spear_ext Python extension module"
         run: python tools/install_python_extension.py --conda-script "$CONDA/etc/profile.d/conda.sh"
