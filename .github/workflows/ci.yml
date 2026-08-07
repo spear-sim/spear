@@ -22,38 +22,56 @@ on:
 
 jobs:
 
-  # Pure static analysis. Results don't depend on OS, so this only needs to run once.
-  test-lint-python:
-    runs-on: ubuntu-24.04
+  # A single job that fans out across our supported platforms, so each platform checks out
+  # the repo and provisions its Python environment exactly once. We use a conda environment
+  # on every platform because SPEAR assumes Anaconda Python everywhere (see docs/getting_started.md).
+  # Platform-specific steps are gated with "if:" guards:
+  #   - Linting is pure static analysis (results don't depend on the OS), so it only runs on Linux.
+  #   - We compile the spear_ext Python extension module and its dependent third-party libraries
+  #     only on Windows and macOS, because our build scripts source clang/libc++ from an Unreal
+  #     Engine install on Linux.
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, macos-26, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -l {0}
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      # only check out rpclib on Windows and macOS
+      - if: runner.os != 'Linux'
+        name: "Check out rpclib"
+        run: git submodule update --init third_party/rpclib
+
+      - uses: conda-incubator/setup-miniconda@v3
         with:
           python-version: "3.11"
+          activate-environment: spear-env
 
-      - name: "Lint all Python source code"
+      # only configure MSVC on Windows
+      - if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      # only configure XCode on macOS
+      - if: runner.os == 'macOS'
+        run: sudo xcode-select -s /Applications/Xcode_26.5.app
+
+      # only need to lint on Linux because it is platform-independent
+      - if: runner.os == 'Linux'
+        name: "Lint Python source code: editor, examples, pipeline, python_ext/python, tools"
         run: |
           pip install ruff==0.15.22
           ruff check \
             --target-version py311 \
             --select F,PLE \
             --ignore F401,F403,F541,F841 \
-            python tools pipeline editor examples python_ext/python
-
-  # Verify the spear Python package actually installs and imports on each platform.
-  test-install-python:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-2022, macos-26, ubuntu-24.04]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+            python editor examples pipeline python_ext/python tools
 
       - name: "Install the spear Python package with optional components: examples"
         run: pip install -e "python[examples]"
@@ -63,50 +81,25 @@ jobs:
           PIP_BUILD_CONSTRAINT: python/pip_build_constraint.txt
         run: pip install --no-cache-dir -e "python[pipeline]"
 
-      - name: "Import spear"
-        run: python -c "import spear; spear.log('spear imported successfully (spear.__can_import_spear_ext__ = ', spear.__can_import_spear_ext__, ')')"
+      - name: "Import module: mayavi.mlab"
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python -c "import mayavi.mlab; print('mayavi imported successfully')"
 
-  # Compile the spear_ext Python extension module and its dependent third-party libraries
-  # using the system compiler. We intentionally exclude Linux, because our build scripts source
-  # clang/libc++ from an Unreal Engine install on Linux.
-  test-install-spear-ext:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-2022, macos-26]
-    runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        shell: bash -l {0}
-    steps:
-      - uses: actions/checkout@v4
+      - name: "Import module: spear"
+        run: python -c "import spear; print(f'spear imported successfully (spear.__can_import_spear_ext__ = {spear.__can_import_spear_ext__})')"
 
-      # install_python_extension.py requires an activated conda environment (see
-      # docs/getting_started.md), so we set one up rather than using actions/setup-python.
-      - uses: conda-incubator/setup-miniconda@v3
-        with:
-          python-version: "3.11"
-          activate-environment: spear-env
-
-      - if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x64
-
-      - if: runner.os == 'macOS'
-        run: sudo xcode-select -s /Applications/Xcode_26.5.app
-
-      - name: "Check out rpclib"
-        run: git submodule update --init third_party/rpclib
-
-      - name: "Install the spear Python package"
-        run: pip install -e python
-
-      - name: "Build third-party libraries"
+      # only build third-party libs on Windows and macOS
+      - if: runner.os != 'Linux'
+        name: "Build third-party libraries"
         run: python tools/build_third_party_libs.py --skip-boost --skip-yaml-cpp
 
-      - name: "Build and install the spear_ext Python extension module"
+      # only install Python extension on Windows and macOS
+      - if: runner.os != 'Linux'
+        name: "Install the spear_ext Python extension module"
         run: python tools/install_python_extension.py --conda-script "$CONDA/etc/profile.d/conda.sh"
 
-      - name: "Import spear_ext"
-        run: python -c "import spear; import spear_ext; spear.log('spear_ext imported successfully')"
+      # only import spear_ext on Windows and macOS
+      - if: runner.os != 'Linux'
+        name: "Import module: spear_ext"
+        run: python -c "import spear; import spear_ext; print(f'spear_ext imported successfully (spear.__can_import_spear_ext__ = {spear.__can_import_spear_ext__})')"
