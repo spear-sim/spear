@@ -84,7 +84,7 @@ jobs:
       - name: "Import module: mayavi.mlab"
         env:
           QT_QPA_PLATFORM: offscreen
-        run: python -c "import mayavi.mlab; print('mayavi imported successfully')"
+        run: python -c "import mayavi.mlab; print('mayavi.mlab imported successfully')"
 
       - name: "Import module: spear"
         run: python -c "import spear; print(f'spear imported successfully (spear.__can_import_spear_ext__ = {spear.__can_import_spear_ext__})')"
