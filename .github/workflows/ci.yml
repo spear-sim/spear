@@ -22,14 +22,15 @@ on:
 
 jobs:
 
-  # A single job that fans out across our supported platforms, so each platform checks out
-  # the repo and provisions its Python environment exactly once. We use a conda environment
+  # We implement a single job that fans out across our supported platforms, so each platform checks
+  # out the repo and provisions its Python environment exactly once. We use a conda environment
   # on every platform because SPEAR assumes Anaconda Python everywhere (see docs/getting_started.md).
   # Platform-specific steps are gated with "if:" guards:
   #   - Linting is pure static analysis (results don't depend on the OS), so it only runs on Linux.
   #   - We compile the spear_ext Python extension module and its dependent third-party libraries
   #     only on Windows and macOS, because our build scripts source clang/libc++ from an Unreal
-  #     Engine install on Linux.
+  #     Engine install on Linux, and we don't have access to the Unreal Engine here.
+
   test:
     strategy:
       fail-fast: false
