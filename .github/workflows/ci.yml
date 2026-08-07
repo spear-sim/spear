@@ -56,7 +56,7 @@ jobs:
 
       - name: "Install VTK and Mayavi"
         run: |
-          pip install vtk==9.3.1
+          pip install wheel setuptools==78.1.1 vtk==9.3.1
           pip install --no-build-isolation mayavi==4.8.3
 
   # Verify the spear Python package actually installs and imports on each platform.
