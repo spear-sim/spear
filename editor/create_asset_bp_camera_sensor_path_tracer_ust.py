@@ -79,7 +79,6 @@ blueprint_desc = \
             "channel_data_type": unreal.SpArrayDataType.U_INT8,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
             "show_flag_settings": engine_show_flag_settings["lighting_only_with_path_tracing"],
-            "use_scene_view_extension": True,
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB,
         },
@@ -187,8 +186,6 @@ if __name__ == "__main__":
         material_desc = unreal.SpUserSceneTextureMaterialDesc()
         material_desc.set_editor_property(name="material", value=material_instance)
         material_desc.set_editor_property(name="internal_name", value=internal_name)
-        material_desc.set_editor_property(name="resolution_divisor_width", value=1)
-        material_desc.set_editor_property(name="resolution_divisor_height", value=1)
 
         # the public key is derived from the material name and matches InternalName
         user_scene_texture_material_descs[user_scene_texture_material_name] = material_desc
@@ -214,11 +211,6 @@ if __name__ == "__main__":
         sp_scene_capture_component_2d.set_editor_property(name="channel_data_type", value=component_desc["channel_data_type"])
         sp_scene_capture_component_2d.set_editor_property(name="capture_source", value=component_desc["capture_source"])
 
-        # SpSceneCaptureComponent2D properties (optional)
-
-        if "use_scene_view_extension" in component_desc:
-            sp_scene_capture_component_2d.set_editor_property(name="use_scene_view_extension", value=component_desc["use_scene_view_extension"])
-
         # SpSceneCaptureComponent2D properties for texture render target (optional)
 
         if "override_texture_render_target_format" in component_desc:
@@ -242,7 +234,7 @@ if __name__ == "__main__":
             for post_process_setting in component_desc["post_process_settings"]:
                 post_process_settings.set_editor_property(name=post_process_setting["property"], value=post_process_setting["value"])
 
-        # UserSceneTexture universe (applied to every component; enabled set left empty)
+        # UserSceneTexture universe (must be enabled by setting UserSceneTextureNames at runtime)
 
         sp_scene_capture_component_2d.set_editor_property(name="user_scene_texture_material_descs", value=user_scene_texture_material_descs)
         sp_scene_capture_component_2d.set_editor_property(name="user_scene_texture_names", value=[])
