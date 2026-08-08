@@ -12,13 +12,13 @@ width = 512
 height = 512
 fov_angle = 90.0
 
-# The "universe" of UserSceneTexture buffers exposed on every capture component. Each name maps to the
-# MI_PPM_<name>_UST material instance (see create_asset_ppm_ust_instances.py), whose post-process output is
-# redirected to a UserSceneTexture of that name. We apply the universe to every component because different
-# components render different passes (e.g. lighting-only), and a buffer can only be produced by the pass that
-# renders it. Depth uses SceneDepth (the raw depth buffer) rather than SpDepthMeters, whose world-position
-# reconstruction does not survive the path tracer. The enabled set (UserSceneTextureNames) is left empty here;
-# consumers select buffers at runtime.
+# The universe of possible UserSceneTexture buffers that can be extracted by each capture component. Each name
+# here adds a MI_PPM_<name>_UST material instance (see create_asset_ppm_ust_instances.py) to the capture
+# component via the UserSceneTextures property. Each PPM is configured to route its output to a buffer named
+# <name>_UST, and the capture component knows how to extract data from these buffers. In order to enable the
+# capture component to extract data from a buffer, the user must add <name> to the component's UserSceneTextureNames
+# property at runtime.
+
 user_scene_texture_material_names = \
 [
     "PathTracingAlbedo",
