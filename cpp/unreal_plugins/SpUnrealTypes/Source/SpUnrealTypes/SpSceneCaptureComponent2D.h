@@ -222,6 +222,13 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     TArray<FString> UserSceneTextureNames;
 
+    // When disabled, the main (primary) texture is excluded entirely from the returned data (the "data" entry is
+    // omitted), so only the user scene textures are read. Unlike bReadPixelData below (a developer/benchmarking flag
+    // that skips the internal GPU-to-CPU readback without changing the shape of the returned data), this flag is
+    // user-facing and deliberately changes the shape of the returned data.
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bReadPrimaryPixelData = true;
+
     // Can be disabled for debugging
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
