@@ -11,13 +11,15 @@ import unreal
 width = 512
 height = 512
 fov_angle = 90.0
+spatial_supersampling_factor = 2
 
-# The "universe" of UserSceneTexture buffers exposed on every capture component. Each name maps to the
-# MI_PPM_<name>_UST material instance (see create_asset_ppm_ust_instances.py), whose post-process output is
-# redirected to a UserSceneTexture of that name. We apply the universe to every component because different
-# components render different passes (e.g. lighting-only), and a buffer can only be produced by the pass that
-# renders it. Depth (SpDepthMeters) is included so it is available from every component. The enabled set
-# (UserSceneTextureNames) is left empty here; consumers select buffers at runtime.
+# The universe of possible UserSceneTexture buffers that can be extracted by each capture component. Each name
+# here adds a MI_PPM_<name>_UST material instance (see create_asset_ppm_ust_instances.py) to the capture
+# component via the UserSceneTextures property. Each PPM is configured to route its output to a buffer named
+# <name>_UST, and the capture component knows how to extract data from these buffers. In order to enable the
+# capture component to extract data from a buffer, the user must add <name> to the component's UserSceneTextureNames
+# property at runtime.
+
 user_scene_texture_material_names = \
 [
     "CustomStencil",
@@ -37,8 +39,10 @@ user_scene_texture_material_names = \
 engine_show_flag_settings = {}
 
 #
-# final_tone_curve_hdr
+# Show flags for specific components
 #
+
+# final_tone_curve_hdr
 
 engine_show_flag_settings["final_tone_curve_hdr"] = []
 engine_show_flag_settings["final_tone_curve_hdr"] = engine_show_flag_settings["final_tone_curve_hdr"] + \
@@ -46,27 +50,91 @@ engine_show_flag_settings["final_tone_curve_hdr"] = engine_show_flag_settings["f
     unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=True)
 ]
 
-#
-# Lighting only
-#
+# diffuse_and_specular
+
+engine_show_flag_settings["diffuse_and_specular"] = []
+engine_show_flag_settings["diffuse_and_specular"] = engine_show_flag_settings["diffuse_and_specular"] + \
+[
+    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False)
+]
+
+# diffuse_only
+
+engine_show_flag_settings["diffuse_only"] = []
+engine_show_flag_settings["diffuse_only"] = engine_show_flag_settings["diffuse_only"] + \
+[
+    unreal.EngineShowFlagsSetting(show_flag_name="Specular", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False)
+]
+
+# lighting_only
 
 engine_show_flag_settings["lighting_only"] = []
 engine_show_flag_settings["lighting_only"] = engine_show_flag_settings["lighting_only"] + \
 [
     unreal.EngineShowFlagsSetting(show_flag_name="LightingOnlyOverride", enabled=True),
-    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=True)
+    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False)
 ]
 
+# sp_object_ids_uint8
+
 #
-# final_tone_curve_hdr without temporal anti-aliasing. TAA only accumulates the scene color, so the beauty is
-# not anti-aliased here, but the GBuffer-derived aux buffers (normals, depth, etc.) are captured without the
-# sub-pixel jitter that TAA introduces on every frame.
+# For the sp_object_ids_uint8 settings, we mimic various locations in the UE source code that turn off show
+# flags, we disable various show flags that are visible in the editor:
+#
+#   - FEngineShowFlags::DisableAdvancedFeatures()
+#   - UMoviePipelineObjectIdRenderPass::GetViewShowFlags(...)
+#   - General Show Flags, Advanced Show Flags, Light Types Show Flags, Lighting Components Show Flags,
+#     Lighting Features Show Flags, Post Processing Show Flags, Hidden Show Flags
 #
 
-engine_show_flag_settings["with_lighting"] = []
-engine_show_flag_settings["with_lighting"] = engine_show_flag_settings["with_lighting"] + \
+engine_show_flag_settings["sp_object_ids_uint8"] = []
+engine_show_flag_settings["sp_object_ids_uint8"] = engine_show_flag_settings["sp_object_ids_uint8"] + \
 [
-    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False)
+    unreal.EngineShowFlagsSetting(show_flag_name="AmbientCubemap", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="AmbientOcclusion", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="AntiAliasing", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Atmosphere", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Bloom", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="CameraImperfections", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ColorGrading", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="DepthOfField", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="DistanceFieldAO", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="DynamicShadows", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="EyeAdaptation", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Fog", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Grain", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="HighResScreenshotMask", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="HitProxies", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="HMDDistortion", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="IndirectLightingCache", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LensFlares", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LightFunctions", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Lighting", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LightShafts", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LocalExposure", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LumenGlobalIllumination", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="LumenReflections", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="MegaLights", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="MotionBlur", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="OnScreenDebug", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="PostProcessing", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="PostProcessMaterial", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ReflectionEnvironment", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ScreenPercentage", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ScreenSpaceReflections", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="SeparateTranslucency", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ShaderPrint", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="SkyLighting", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="StereoRendering", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="TemporalAA", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="TexturedLightProfiles", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="ToneCurve", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Tonemapper", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="Vignette", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="VirtualShadowMapPersistentData", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="VolumetricFog", enabled=False),
+    unreal.EngineShowFlagsSetting(show_flag_name="VolumetricLightmap", enabled=False)
 ]
 
 blueprint_desc = \
@@ -90,23 +158,37 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB
         },
         {
-            "name": "with_lighting_",
-            "width": width,
-            "height": height,
+            "name": "diffuse_and_specular_",
+            "width": width*spatial_supersampling_factor,
+            "height": height*spatial_supersampling_factor,
             "fov_angle": fov_angle,
             "num_channels_per_pixel": 4,
             "channel_data_type": unreal.SpArrayDataType.U_INT8,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
             "dynamic_global_illumination_method": unreal.DynamicGlobalIlluminationMethod.LUMEN,
             "reflection_method": unreal.ReflectionMethod.LUMEN,
-            "show_flag_settings": engine_show_flag_settings["with_lighting"],
+            "show_flag_settings": engine_show_flag_settings["diffuse_and_specular"],
+            "override_texture_render_target_format": True,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB
+        },
+        {
+            "name": "diffuse_only_",
+            "width": width*spatial_supersampling_factor,
+            "height": height*spatial_supersampling_factor,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.U_INT8,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
+            "dynamic_global_illumination_method": unreal.DynamicGlobalIlluminationMethod.LUMEN,
+            "reflection_method": unreal.ReflectionMethod.LUMEN,
+            "show_flag_settings": engine_show_flag_settings["diffuse_only"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB
         },
         {
             "name": "lighting_only_",
-            "width": width,
-            "height": height,
+            "width": width*spatial_supersampling_factor,
+            "height": height*spatial_supersampling_factor,
             "fov_angle": fov_angle,
             "num_channels_per_pixel": 4,
             "channel_data_type": unreal.SpArrayDataType.U_INT8,
@@ -114,9 +196,27 @@ blueprint_desc = \
             "dynamic_global_illumination_method": unreal.DynamicGlobalIlluminationMethod.LUMEN,
             "reflection_method": unreal.ReflectionMethod.LUMEN,
             "show_flag_settings": engine_show_flag_settings["lighting_only"],
-            "use_scene_view_extension": True,
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB
+        },
+        {
+            "name": "sp_object_ids_uint8_",
+            "width": width,
+            "height": height,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.U_INT8,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "show_flag_settings": engine_show_flag_settings["sp_object_ids_uint8"],
+            "mesh_proxy_component_manager_class": unreal.SpObjectIdsProxyComponentManager,
+            "override_texture_render_target_format": True,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8,
+            "override_texture_render_target_srgb": True,
+            "texture_render_target_srgb": False,
+            "override_texture_render_target_force_linear_gamma": True,
+            "texture_render_target_force_linear_gamma": True,
+            "override_texture_render_target_gamma": True,
+            "texture_render_target_gamma": 1.0
         }
     ]
 }
@@ -204,11 +304,6 @@ if __name__ == "__main__":
         sp_scene_capture_component_2d.set_editor_property(name="num_channels_per_pixel", value=component_desc["num_channels_per_pixel"])
         sp_scene_capture_component_2d.set_editor_property(name="channel_data_type", value=component_desc["channel_data_type"])
         sp_scene_capture_component_2d.set_editor_property(name="capture_source", value=component_desc["capture_source"])
-
-        # SpSceneCaptureComponent2D properties (optional)
-
-        if "use_scene_view_extension" in component_desc:
-            sp_scene_capture_component_2d.set_editor_property(name="use_scene_view_extension", value=component_desc["use_scene_view_extension"])
 
         # SpSceneCaptureComponent2D properties for texture render target (optional)
 
