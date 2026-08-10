@@ -49,7 +49,7 @@
 class FRDGBuilder;
 class FRHICommandListImmediate;
 class FRHITexture;
-class UMaterial;
+class UMaterialInterface;
 
 class FSpSceneViewExtensionBase : public FSceneViewExtensionBase
 {
@@ -105,9 +105,9 @@ struct FSpUserSceneTextureMaterialDesc
 {
     GENERATED_BODY()
 
-    // Post-process material.
+    // Post-process material (may be a UMaterial or a UMaterialInstance, since post-process blendables accept either).
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    UMaterial* Material = nullptr;
+    UMaterialInterface* Material = nullptr;
 
     // The UserSceneTexture output name specified in the material editor.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
@@ -206,7 +206,7 @@ public:
     float TextureRenderTargetGamma = 0.0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    UMaterial* Material = nullptr;
+    UMaterialInterface* Material = nullptr;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     TSubclassOf<ASpMeshProxyComponentManager> MeshProxyComponentManagerClass;

@@ -17,7 +17,6 @@
 #include <Components/SceneCaptureComponent2D.h>
 #include <Containers/Array.h>
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
-#include <Materials/Material.h>
 #include <Math/Color.h>                  // FLinearColor
 #include <Math/UnrealMathUtility.h>      // FMath
 #include <RenderGraphBuilder.h>          // FRDGTextureRef
@@ -47,6 +46,8 @@
 #include "SpCore/UnrealUtils.h"
 
 #include "SpUnrealTypes/SpMeshProxyComponentManager.h"
+
+class UMaterialInterface;
 
 FSpSceneViewExtensionBase::FSpSceneViewExtensionBase(const FAutoRegister& auto_register) : FSceneViewExtensionBase(auto_register)
 {
