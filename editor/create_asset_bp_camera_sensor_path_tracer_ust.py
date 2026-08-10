@@ -11,6 +11,7 @@ import unreal
 width = 512
 height = 512
 fov_angle = 90.0
+spatial_supersampling_factor = 2
 
 # The universe of possible UserSceneTexture buffers that can be extracted by each capture component. Each name
 # here adds a MI_PPM_<name>_UST material instance (see create_asset_ppm_ust_instances.py) to the capture
@@ -32,23 +33,27 @@ user_scene_texture_material_names = \
 engine_show_flag_settings = {}
 
 #
-# With path tracing
+# Show flags for specific components
 #
 
-engine_show_flag_settings["with_path_tracing"] = []
-engine_show_flag_settings["with_path_tracing"] = engine_show_flag_settings["with_path_tracing"] + \
+# lighting_only
+
+engine_show_flag_settings["lighting_only"] = []
+engine_show_flag_settings["lighting_only"] = engine_show_flag_settings["lighting_only"] + \
 [
+    unreal.EngineShowFlagsSetting(show_flag_name="LightingOnlyOverride", enabled=True),
     unreal.EngineShowFlagsSetting(show_flag_name="PathTracing", enabled=True)
 ]
 
 #
-# Lighting only (with path tracing)
+# Show flags for multiple components
 #
 
-engine_show_flag_settings["lighting_only_with_path_tracing"] = []
-engine_show_flag_settings["lighting_only_with_path_tracing"] = engine_show_flag_settings["lighting_only_with_path_tracing"] + \
+# enable_path_tracing
+
+engine_show_flag_settings["enable_path_tracing"] = []
+engine_show_flag_settings["enable_path_tracing"] = engine_show_flag_settings["enable_path_tracing"] + \
 [
-    unreal.EngineShowFlagsSetting(show_flag_name="LightingOnlyOverride", enabled=True),
     unreal.EngineShowFlagsSetting(show_flag_name="PathTracing", enabled=True)
 ]
 
@@ -66,31 +71,31 @@ blueprint_desc = \
             "num_channels_per_pixel": 4,
             "channel_data_type": unreal.SpArrayDataType.U_INT8,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
-            "show_flag_settings": engine_show_flag_settings["with_path_tracing"],
+            "show_flag_settings": engine_show_flag_settings["enable_path_tracing"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB
         },
         {
-            "name": "lighting_only_with_path_tracing_",
-            "width": width,
-            "height": height,
+            "name": "diffuse_and_specular_",
+            "width": width*spatial_supersampling_factor,
+            "height": height*spatial_supersampling_factor,
             "fov_angle": fov_angle,
             "num_channels_per_pixel": 4,
             "channel_data_type": unreal.SpArrayDataType.U_INT8,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
-            "show_flag_settings": engine_show_flag_settings["lighting_only_with_path_tracing"],
+            "show_flag_settings": engine_show_flag_settings["enable_path_tracing"],
             "override_texture_render_target_format": True,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB
         },
         {
-            "name": "diffuse_only_with_path_tracing_",
-            "width": width,
-            "height": height,
+            "name": "diffuse_only_",
+            "width": width*spatial_supersampling_factor,
+            "height": height*spatial_supersampling_factor,
             "fov_angle": fov_angle,
             "num_channels_per_pixel": 4,
             "channel_data_type": unreal.SpArrayDataType.U_INT8,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
-            "show_flag_settings": engine_show_flag_settings["with_path_tracing"],
+            "show_flag_settings": engine_show_flag_settings["enable_path_tracing"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB,
             "post_process_settings":
@@ -108,14 +113,26 @@ blueprint_desc = \
             ]
         },
         {
-            "name": "specular_only_with_path_tracing_",
-            "width": width,
-            "height": height,
+            "name": "lighting_only_",
+            "width": width*spatial_supersampling_factor,
+            "height": height*spatial_supersampling_factor,
             "fov_angle": fov_angle,
             "num_channels_per_pixel": 4,
             "channel_data_type": unreal.SpArrayDataType.U_INT8,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
-            "show_flag_settings": engine_show_flag_settings["with_path_tracing"],
+            "show_flag_settings": engine_show_flag_settings["lighting_only"],
+            "override_texture_render_target_format": True,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB,
+        },
+        {
+            "name": "specular_only_with_path_tracing_",
+            "width": width*spatial_supersampling_factor,
+            "height": height*spatial_supersampling_factor,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.U_INT8,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
+            "show_flag_settings": engine_show_flag_settings["enable_path_tracing"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB,
             "post_process_settings":
