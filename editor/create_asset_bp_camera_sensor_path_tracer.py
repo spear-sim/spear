@@ -16,22 +16,13 @@ spatial_supersampling_factor = 2
 engine_show_flag_settings = {}
 
 #
-# final_tone_curve_hdr
+# Show flags for specific components
 #
 
-engine_show_flag_settings["final_tone_curve_hdr_with_path_tracing"] = []
-engine_show_flag_settings["final_tone_curve_hdr_with_path_tracing"] = engine_show_flag_settings["final_tone_curve_hdr_with_path_tracing"] + \
-[
-    unreal.EngineShowFlagsSetting(show_flag_name="PathTracing", enabled=True)
-]
+# diffuse_color
 
-#
-# The disable_all_but_allow_post_processing_material settings are identical to disable_all
-# (see create_asset_bp_camera_sensor.py) except we allow post-processing materials.
-#
-
-engine_show_flag_settings["disable_all_but_allow_post_processing_material"] = []
-engine_show_flag_settings["disable_all_but_allow_post_processing_material"] = engine_show_flag_settings["disable_all_but_allow_post_processing_material"] + \
+engine_show_flag_settings["diffuse_color"] = []
+engine_show_flag_settings["diffuse_color"] = engine_show_flag_settings["diffuse_color"] + \
 [
     unreal.EngineShowFlagsSetting(show_flag_name="AmbientCubemap", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="AmbientOcclusion", enabled=False),
@@ -77,14 +68,10 @@ engine_show_flag_settings["disable_all_but_allow_post_processing_material"] = en
     unreal.EngineShowFlagsSetting(show_flag_name="VolumetricLightmap", enabled=False)
 ]
 
-#
-# The lighting_only_disable_all_but_allow_post_processing_material settings are identical to disable_all
-# (see create_asset_bp_camera_sensor.py) except enable the lighting-only override and we allow
-# post-processing materials.
-#
+# lighting_only_diffuse_color == diffuse_color + LightingOnlyOverride=True
 
-engine_show_flag_settings["lighting_only_disable_all_but_allow_post_processing_material"] = []
-engine_show_flag_settings["lighting_only_disable_all_but_allow_post_processing_material"] = engine_show_flag_settings["lighting_only_disable_all_but_allow_post_processing_material"] + \
+engine_show_flag_settings["lighting_only_diffuse_color"] = []
+engine_show_flag_settings["lighting_only_diffuse_color"] = engine_show_flag_settings["lighting_only_diffuse_color"] + \
 [
     unreal.EngineShowFlagsSetting(show_flag_name="AmbientCubemap", enabled=False),
     unreal.EngineShowFlagsSetting(show_flag_name="AmbientOcclusion", enabled=False),
@@ -131,23 +118,23 @@ engine_show_flag_settings["lighting_only_disable_all_but_allow_post_processing_m
     unreal.EngineShowFlagsSetting(show_flag_name="VolumetricLightmap", enabled=False)
 ]
 
-#
-# Lighting only (with path tracing)
-#
+# lighting_only_path_tracing_radiance
 
-engine_show_flag_settings["lighting_only_with_path_tracing"] = []
-engine_show_flag_settings["lighting_only_with_path_tracing"] = engine_show_flag_settings["lighting_only_with_path_tracing"] + \
+engine_show_flag_settings["lighting_only_path_tracing_radiance"] = []
+engine_show_flag_settings["lighting_only_path_tracing_radiance"] = engine_show_flag_settings["lighting_only_path_tracing_radiance"] + \
 [
     unreal.EngineShowFlagsSetting(show_flag_name="LightingOnlyOverride", enabled=True),
     unreal.EngineShowFlagsSetting(show_flag_name="PathTracing", enabled=True)
 ]
 
 #
-# With lighting (with path tracing)
+# Show flags for multiple components
 #
 
-engine_show_flag_settings["with_lighting_with_path_tracing"] = []
-engine_show_flag_settings["with_lighting_with_path_tracing"] = engine_show_flag_settings["with_lighting_with_path_tracing"] + \
+# path_tracing_radiance
+
+engine_show_flag_settings["enable_path_tracing"] = []
+engine_show_flag_settings["enable_path_tracing"] = engine_show_flag_settings["enable_path_tracing"] + \
 [
     unreal.EngineShowFlagsSetting(show_flag_name="PathTracing", enabled=True)
 ]
@@ -166,7 +153,7 @@ blueprint_desc = \
             "num_channels_per_pixel": 4,
             "channel_data_type": unreal.SpArrayDataType.U_INT8,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_TONE_CURVE_HDR,
-            "show_flag_settings": engine_show_flag_settings["final_tone_curve_hdr_with_path_tracing"],
+            "show_flag_settings": engine_show_flag_settings["enable_path_tracing"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB
         },
@@ -179,9 +166,35 @@ blueprint_desc = \
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_DiffuseColor",
-            "show_flag_settings": engine_show_flag_settings["disable_all_but_allow_post_processing_material"],
+            "show_flag_settings": engine_show_flag_settings["diffuse_color"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA16F
+        },
+        {
+            "name": "diffuse_only_path_tracing_radiance_",
+            "width": width*spatial_supersampling_factor,
+            "height": height*spatial_supersampling_factor,
+            "fov_angle": fov_angle,
+            "num_channels_per_pixel": 4,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT32,
+            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
+            "material_path": "/SpContent/Materials/PPM_PathTracingRadiance",
+            "show_flag_settings": engine_show_flag_settings["enable_path_tracing"],
+            "override_texture_render_target_format": True,
+            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F,
+            "post_process_settings":
+            [
+                {"property": "override_path_tracing_include_emissive", "value": True},
+                {"property": "path_tracing_include_emissive", "value": False},
+                {"property": "override_path_tracing_include_specular", "value": True},
+                {"property": "path_tracing_include_specular", "value": False},
+                {"property": "override_path_tracing_include_indirect_specular", "value": True},
+                {"property": "path_tracing_include_indirect_specular", "value": False},
+                {"property": "override_path_tracing_include_volume", "value": True},
+                {"property": "path_tracing_include_volume", "value": False},
+                {"property": "override_path_tracing_include_indirect_volume", "value": True},
+                {"property": "path_tracing_include_indirect_volume", "value": False}
+            ]
         },
         {
             "name": "diffuse_and_specular_path_tracing_radiance_",
@@ -192,20 +205,7 @@ blueprint_desc = \
             "channel_data_type": unreal.SpArrayDataType.FLOAT32,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_PathTracingRadiance",
-            "show_flag_settings": engine_show_flag_settings["with_lighting_with_path_tracing"],
-            "override_texture_render_target_format": True,
-            "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F
-        },
-        {
-            "name": "diffuse_and_specular_path_tracing_variance_",
-            "width": width,
-            "height": height,
-            "fov_angle": fov_angle,
-            "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpArrayDataType.FLOAT32,
-            "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
-            "material_path": "/SpContent/Materials/PPM_PathTracingVariance",
-            "show_flag_settings": engine_show_flag_settings["with_lighting_with_path_tracing"],
+            "show_flag_settings": engine_show_flag_settings["enable_path_tracing"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F
         },
@@ -218,7 +218,7 @@ blueprint_desc = \
             "channel_data_type": unreal.SpArrayDataType.FLOAT16,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_DiffuseColor",
-            "show_flag_settings": engine_show_flag_settings["lighting_only_disable_all_but_allow_post_processing_material"],
+            "show_flag_settings": engine_show_flag_settings["lighting_only_diffuse_color"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F
         },
@@ -231,7 +231,7 @@ blueprint_desc = \
             "channel_data_type": unreal.SpArrayDataType.FLOAT32,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_PathTracingRadiance",
-            "show_flag_settings": engine_show_flag_settings["lighting_only_with_path_tracing"],
+            "show_flag_settings": engine_show_flag_settings["lighting_only_path_tracing_radiance"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F
         },
@@ -244,7 +244,7 @@ blueprint_desc = \
             "channel_data_type": unreal.SpArrayDataType.FLOAT32,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_PathTracingRadiance",
-            "show_flag_settings": engine_show_flag_settings["with_lighting_with_path_tracing"],
+            "show_flag_settings": engine_show_flag_settings["enable_path_tracing"],
             "override_texture_render_target_format": True,
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA32F,
             "post_process_settings":
@@ -254,7 +254,7 @@ blueprint_desc = \
                 {"property": "override_path_tracing_include_indirect_diffuse", "value": True},
                 {"property": "path_tracing_include_indirect_diffuse", "value": False}
             ]
-        },
+        }
     ]
 }
 
