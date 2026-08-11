@@ -17,7 +17,6 @@
 #include <Components/SceneCaptureComponent2D.h>
 #include <Containers/Array.h>
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
-#include <Materials/Material.h>
 #include <Math/Color.h>                  // FLinearColor
 #include <Math/UnrealMathUtility.h>      // FMath
 #include <RenderGraphBuilder.h>          // FRDGTextureRef
@@ -47,6 +46,8 @@
 #include "SpCore/UnrealUtils.h"
 
 #include "SpUnrealTypes/SpMeshProxyComponentManager.h"
+
+class UMaterialInterface;
 
 FSpSceneViewExtensionBase::FSpSceneViewExtensionBase(const FAutoRegister& auto_register) : FSceneViewExtensionBase(auto_register)
 {
@@ -381,6 +382,9 @@ void USpSceneCaptureComponent2D::Initialize()
     });
 
     request_path_tracer_reset_ = false;
+    request_override_is_offline_render_ = false;
+    request_is_offline_render_ = false;
+
     is_initialized_ = true;
     bIsInitialized = true;
 
@@ -396,6 +400,9 @@ void USpSceneCaptureComponent2D::Terminate()
     SetVisibility(false); // disable rendering to texture
 
     request_path_tracer_reset_ = false;
+    request_override_is_offline_render_ = false;
+    request_is_offline_render_ = false;
+
     is_initialized_ = false;
     bIsInitialized = false;
 
@@ -489,6 +496,13 @@ void USpSceneCaptureComponent2D::RequestPathTracerReset()
     request_path_tracer_reset_ = true;
 }
 
+void USpSceneCaptureComponent2D::RequestSetOfflineRender(bool bOverrideIsOfflineRender, bool bIsOfflineRender)
+{
+    SP_ASSERT(IsInitialized());
+    request_override_is_offline_render_ = bOverrideIsOfflineRender;
+    request_is_offline_render_ = bIsOfflineRender;
+}
+
 void USpSceneCaptureComponent2D::setupView(FSceneViewFamily& view_family, FSceneView& view)
 {
     const TArray<FEngineShowFlagsSetting>& engine_show_flag_settings = GetShowFlagSettings();
@@ -507,6 +521,10 @@ void USpSceneCaptureComponent2D::setupView(FSceneViewFamily& view_family, FScene
     if (request_path_tracer_reset_) {
         view.bForcePathTracerReset = true;
         request_path_tracer_reset_ = false;
+    }
+
+    if (request_override_is_offline_render_) {
+        view.bIsOfflineRender = request_is_offline_render_;
     }
 }
 
@@ -721,7 +739,9 @@ SpFuncDataBundle USpSceneCaptureComponent2D::readPixelsSingleBuffered(std::map<s
                 for (auto& [name, texture_readback_minimal_desc] : texture_readback_minimal_descs) {
                     enqueueCopyPixelsFromGPUToStaging_RenderThread(command_list, texture_readback_minimal_desc);
                 }
-                command_list.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
+                if (!texture_readback_minimal_descs.empty()) { // may be empty if bReadPrimaryPixelData is disabled and there are no user scene textures
+                    command_list.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
+                }
                 for (auto& [name, texture_readback_minimal_desc] : texture_readback_minimal_descs) {
                     copyPixelsFromStagingToCPU_RenderThread(texture_readback_minimal_desc.prev_readback_, texture_readback_minimal_desc.dest_ptr_, texture_readback_minimal_desc);
                 }
@@ -773,7 +793,9 @@ void USpSceneCaptureComponent2D::enqueueCopyPixelsDoubleBuffered(std::map<std::s
                     SP_ASSERT(*texture_readback_minimal_desc.num_staging_copies_pending_ptr_ >= 0);
                     (*texture_readback_minimal_desc.num_staging_copies_pending_ptr_)++;
                 }
-                command_list.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
+                if (!texture_readback_minimal_descs.empty()) { // may be empty if bReadPrimaryPixelData is disabled and there are no user scene textures
+                    command_list.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
+                }
             });
     }
 }
@@ -785,10 +807,14 @@ SpFuncDataBundle USpSceneCaptureComponent2D::readPixelsDoubleBuffered()
 
     // Wait for and read back the CPU-side data for the main texture and every user scene texture. The staging-to-CPU
     // copy already happened on the render thread (in postRenderViewFamily_RenderThread()), so we just read the
-    // persistent descs' buffers here; readPixelsImpl() spin-waits on each pending counter first.
+    // persistent descs' buffers here; readPixelsImpl() spin-waits on each pending counter first. The main texture is
+    // omitted entirely when bReadPrimaryPixelData is disabled, matching the descs assembled in
+    // requestUpdateAndGetTextureReadbackMinimalDescs().
 
     SpFuncDataBundle return_values;
-    Std::insert(return_values.packed_arrays_, "data", readPixelsImpl(texture_readback_desc_));
+    if (bReadPrimaryPixelData) {
+        Std::insert(return_values.packed_arrays_, "data", readPixelsImpl(texture_readback_desc_));
+    }
     for (auto& [name, texture_readback_desc] : user_scene_texture_readback_descs_) {
         Std::insert(return_values.packed_arrays_, name, readPixelsImpl(texture_readback_desc));
     }
@@ -831,7 +857,9 @@ void USpSceneCaptureComponent2D::enqueueCopyPixelsTripleBuffered(std::map<std::s
                 for (auto& [name, texture_readback_minimal_desc] : texture_readback_minimal_descs) {
                     enqueueCopyPixelsFromGPUToStaging_RenderThread(command_list, texture_readback_minimal_desc);
                 }
-                command_list.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
+                if (!texture_readback_minimal_descs.empty()) { // may be empty if bReadPrimaryPixelData is disabled and there are no user scene textures
+                    command_list.ImmediateFlush(EImmediateFlushType::DispatchToRHIThread);
+                }
                 for (auto& [name, texture_readback_minimal_desc] : texture_readback_minimal_descs) {
                     if (texture_readback_minimal_desc.prev_readback_) {
                         copyPixelsFromStagingToCPU_RenderThread(texture_readback_minimal_desc.prev_readback_, texture_readback_minimal_desc.dest_ptr_, texture_readback_minimal_desc);
@@ -852,9 +880,13 @@ SpFuncDataBundle USpSceneCaptureComponent2D::readPixelsTripleBuffered()
     // Wait for and read back the CPU-side data for the main texture and every user scene texture. The staging-to-CPU
     // copy already happened on the render thread (inside the enqueue command, see enqueueCopyPixelsTripleBuffered()),
     // so we just read the persistent descs' buffers here; readPixelsImpl() spin-waits on each pending counter first.
+    // The main texture is omitted entirely when bReadPrimaryPixelData is disabled, matching the descs assembled in
+    // requestUpdateAndGetTextureReadbackMinimalDescs().
 
     SpFuncDataBundle return_values;
-    Std::insert(return_values.packed_arrays_, "data", readPixelsImpl(texture_readback_desc_));
+    if (bReadPrimaryPixelData) {
+        Std::insert(return_values.packed_arrays_, "data", readPixelsImpl(texture_readback_desc_));
+    }
     for (auto& [name, texture_readback_desc] : user_scene_texture_readback_descs_) {
         Std::insert(return_values.packed_arrays_, name, readPixelsImpl(texture_readback_desc));
     }
@@ -885,9 +917,8 @@ std::map<std::string, USpSceneCaptureComponent2D::TextureReadbackMinimalDesc> US
 
     std::map<std::string, TextureReadbackMinimalDesc> texture_readback_minimal_descs;
 
-    // main texture: record the stable resource pointer (its GetRenderTargetTexture() is resolved later on the render thread)
-
-    {
+    // main texture: record the stable resource pointer (its GetRenderTargetTexture() is resolved later on the render thread).
+    if (bReadPrimaryPixelData) {
         FTextureRenderTargetResource* render_target_resource_ptr = TextureTarget->GameThread_GetRenderTargetResource();
         SP_ASSERT(render_target_resource_ptr);
         auto [current_readback, prev_readback] = requestSwapRHIGPUTextureReadbacks(texture_readback_desc_);

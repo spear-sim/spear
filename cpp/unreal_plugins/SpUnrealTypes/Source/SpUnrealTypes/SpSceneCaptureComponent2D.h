@@ -9,7 +9,7 @@
 #include <atomic>
 #include <chrono>
 #include <map>
-#include <memory> // std::unique_ptr
+#include <memory>  // std::unique_ptr
 #include <string>
 #include <utility> // std::pair
 #include <vector>
@@ -105,7 +105,7 @@ struct FSpUserSceneTextureMaterialDesc
 {
     GENERATED_BODY()
 
-    // Post-process material.
+    // Post-process material (may be a UMaterial or a UMaterialInstance, since post-process blendables accept either).
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     UMaterialInterface* Material = nullptr;
 
@@ -147,8 +147,11 @@ public:
     UFUNCTION(Category="SPEAR") // uint64 not supported for BlueprintCallable, can't be const
     TArray<uint64> GetViewStates(); // FSceneViewStateInterface is not a UCLASS so we can't return FSceneViewStateInterface*, so we return uint64 instead
 
+    // Functions for setting deferred state that gets consumed in an FSceneViewExtension callback
     UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void RequestPathTracerReset();
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    void RequestSetOfflineRender(bool bOverrideIsOfflineRender, bool bIsOfflineRender);
 
     // called from FSpSceneViewExtensionBase::shouldHandleView(...) when deciding whether or not this component matches the current view
     const TIndirectArray<FSceneViewStateReference>& getViewStates() const { return ViewStates; }
@@ -203,7 +206,7 @@ public:
     float TextureRenderTargetGamma = 0.0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    UMaterial* Material = nullptr;
+    UMaterialInterface* Material = nullptr;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     TSubclassOf<ASpMeshProxyComponentManager> MeshProxyComponentManagerClass;
@@ -218,6 +221,13 @@ public:
     // Selects which materials are active by populating this array with "public names" (i.e., keys into UserSceneTextureMaterialDescs).
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     TArray<FString> UserSceneTextureNames;
+
+    // When disabled, the main (primary) texture is excluded entirely from the returned data (the "data" entry is
+    // omitted), so only the user scene textures are read. Unlike bReadPixelData below (a developer/benchmarking flag
+    // that skips the internal GPU-to-CPU readback without changing the shape of the returned data), this flag is
+    // user-facing and deliberately changes the shape of the returned data.
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bReadPrimaryPixelData = true;
 
     // Can be disabled for debugging
 
@@ -371,8 +381,10 @@ private:
     TextureReadbackDesc texture_readback_desc_;
     std::map<std::string, TextureReadbackDesc> user_scene_texture_readback_descs_;
 
-    // Path tracer state
-    std::atomic<bool> request_path_tracer_reset_ = false;
+    // Deferred state to be consumed in an FSceneViewExtension callback
+    bool request_path_tracer_reset_ = false;
+    bool request_override_is_offline_render_ = false;
+    bool request_is_offline_render_ = false;
 
     // Additional state for measuring "standalone" and "standalone + extra work" frame rates.
     FDelegateHandle begin_frame_handle_;

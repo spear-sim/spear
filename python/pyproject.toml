@@ -33,7 +33,7 @@ editor = [
     "trimesh==4.4.0"]            # editor/export_unreal_geometry.py
 examples = [
     "imageio-ffmpeg==0.6.0",
-    "jupyterlab==4.5.9",
+    "jupyterlab==4.5.10",
     "wget==3.2"]
 pipeline = [
     "coacd==1.0.0",
@@ -43,6 +43,6 @@ pipeline = [
     "mayavi==4.8.3",
     "mujoco==3.5.0",
     "PySide6==6.8.3",            # required by Mayavi but not specified as a dependency
-    "setuptools==78.1.1",        # required by Mayavi but not pinned
+    "setuptools==83.0.0",        # required by Mayavi but not pinned
     "trimesh==4.4.0",
     "vtk==9.3.1"]                # required by Mayavi but not pinned

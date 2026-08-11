@@ -1,0 +1,106 @@
+#
+# Copyright (c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+# Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+#
+
+# See https://github.com/actions/runner-images for info about the cloud environment.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: &docs_paths
+      - "**/*.md"
+      - "**/*.mdc"
+      - "docs/**"
+      - "LICENSE.txt"
+      - "ACKNOWLEDGMENTS.txt"
+  pull_request:
+    paths-ignore: *docs_paths
+  workflow_dispatch:
+
+jobs:
+
+  # We implement a single job that fans out across our supported platforms, so each platform checks
+  # out the repo and provisions its Python environment exactly once. We use a conda environment
+  # on every platform because SPEAR assumes Anaconda Python everywhere (see docs/getting_started.md).
+  # Platform-specific steps are gated with "if:" guards:
+  #   - Linting is pure static analysis (results don't depend on the OS), so it only runs on Linux.
+  #   - We compile the spear_ext Python extension module and its dependent third-party libraries
+  #     only on Windows and macOS, because our build scripts source clang/libc++ from an Unreal
+  #     Engine install on Linux, and we don't have access to the Unreal Engine here.
+
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, macos-26, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      # only check out rpclib on Windows and macOS
+      - if: runner.os != 'Linux'
+        name: "Check out rpclib"
+        run: git submodule update --init third_party/rpclib
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          python-version: "3.11"
+          activate-environment: spear-env
+
+      # only configure MSVC on Windows
+      - if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      # only configure XCode on macOS
+      - if: runner.os == 'macOS'
+        run: sudo xcode-select -s /Applications/Xcode_26.5.app
+
+      # only need to lint on Linux because it is platform-independent
+      - if: runner.os == 'Linux'
+        name: "Lint Python source code: editor, examples, pipeline, python_ext/python, tools"
+        run: |
+          pip install ruff==0.15.22
+          ruff check \
+            --target-version py311 \
+            --select F,PLE \
+            --ignore F401,F403,F541,F841 \
+            python editor examples pipeline python_ext/python tools
+
+      - name: "Install the spear Python package with optional components: examples"
+        run: pip install -e "python[examples]"
+
+      - name: "Install the spear Python package with optional components: pipeline"
+        env:
+          PIP_BUILD_CONSTRAINT: python/pip_build_constraint.txt
+        run: pip install --no-cache-dir -e "python[pipeline]"
+
+      - name: "Import module: mayavi.mlab"
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python -c "import mayavi.mlab; print('mayavi.mlab imported successfully')"
+
+      - name: "Import module: spear"
+        run: python -c "import spear; print(f'spear imported successfully (spear.__can_import_spear_ext__ = {spear.__can_import_spear_ext__})')"
+
+      # only build third-party libs on Windows and macOS
+      - if: runner.os != 'Linux'
+        name: "Build third-party libraries"
+        run: python tools/build_third_party_libs.py --skip-boost --skip-yaml-cpp
+
+      # only install Python extension on Windows and macOS
+      - if: runner.os != 'Linux'
+        name: "Install the spear_ext Python extension module"
+        run: python tools/install_python_extension.py --conda-script "$CONDA/etc/profile.d/conda.sh"
+
+      # only import spear_ext on Windows and macOS
+      - if: runner.os != 'Linux'
+        name: "Import module: spear_ext"
+        run: python -c "import spear; import spear_ext; print(f'spear_ext imported successfully (spear.__can_import_spear_ext__ = {spear.__can_import_spear_ext__})')"
