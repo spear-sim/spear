@@ -316,6 +316,9 @@ if __name__ == "__main__":
         if "fov_angle" in component_desc:
             sp_scene_capture_component_2d.set_editor_property(name="fov_angle", value=component_desc["fov_angle"])
 
+        if "mesh_proxy_component_manager_class" in component_desc:
+            sp_scene_capture_component_2d.set_editor_property(name="mesh_proxy_component_manager_class", value=component_desc["mesh_proxy_component_manager_class"])
+
         # SceneCaptureComponent properties (optional)
 
         if "show_flag_settings" in component_desc:
