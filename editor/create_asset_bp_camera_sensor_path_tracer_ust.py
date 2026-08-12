@@ -125,7 +125,7 @@ blueprint_desc = \
             "texture_render_target_format": unreal.TextureRenderTargetFormat.RTF_RGBA8_SRGB,
         },
         {
-            "name": "specular_only_with_path_tracing_",
+            "name": "specular_only_",
             "width": width*spatial_supersampling_factor,
             "height": height*spatial_supersampling_factor,
             "fov_angle": fov_angle,
