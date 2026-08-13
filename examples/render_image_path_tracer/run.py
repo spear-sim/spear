@@ -23,6 +23,16 @@ user_scene_texture_names = [
     "SceneDepth"
 ]
 
+visualize_funcs = {
+    "data":                        lambda data : data[:,:,[0,1,2]],
+    "PathTracingAlbedo":           lambda data : np.clip(255.0*data[:,:,[2,1,0]], 0.0, 255.0).astype(np.uint8),
+    "PathTracingDenoisedRadiance": lambda data : np.clip(255.0*data[:,:,[2,1,0]], 0.0, 255.0).astype(np.uint8),
+    "PathTracingNormal":           lambda data : np.clip(255.0*(0.5*data[:,:,[2,1,0]] + 0.5), 0.0, 255.0).astype(np.uint8),
+    "PathTracingRadiance":         lambda data : np.clip(255.0*data[:,:,[2,1,0]], 0.0, 255.0).astype(np.uint8),
+    "PathTracingVariance":         lambda data : np.clip(255.0*((x := data[:,:,[0,0,0]].astype(np.float32)) - x.min())/(x.max() - x.min() + 1e-8), 0.0, 255.0).astype(np.uint8),
+    "SceneDepth":                  lambda data : np.clip(255.0*((x := data[:,:,[0,0,0]].astype(np.float32)) - x.min())/(x.max() - x.min() + 1e-8), 0.0, 255.0).astype(np.uint8)
+}
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--denoiser", default="")
 parser.add_argument("--num-bounces", type=int, default=8)
@@ -52,27 +62,6 @@ elif args.denoiser == "":
     denoiser_name = ""
 else:
     assert False
-
-
-def normalize(image):
-    image = image.astype(np.float32)
-    return (image - np.min(image)) / (np.max(image) - np.min(image) + 1e-8)
-
-def as_uint8(image):
-    if image.dtype == np.uint8:
-        return image[:,:,[0,1,2]]
-    else:
-        return np.clip(255.0*image[:,:,[0,1,2]], 0.0, 255.0).astype(np.uint8)
-
-process_fns = {
-    "data":                        as_uint8,
-    "PathTracingAlbedo":           lambda image : as_uint8(image[:,:,[2,1,0]]),
-    "PathTracingDenoisedRadiance": lambda image : as_uint8(image[:,:,[2,1,0]]),
-    "PathTracingNormal":           lambda image : as_uint8(0.5*image[:,:,[2,1,0]] + 0.5),
-    "PathTracingRadiance":         lambda image : as_uint8(image[:,:,[2,1,0]]),
-    "PathTracingVariance":         lambda image : as_uint8(normalize(image[:,:,[0,0,0]])),
-    "SceneDepth":                  lambda image : as_uint8(normalize(image[:,:,[0,0,0]]))
-}
 
 
 if __name__ == "__main__":
@@ -193,7 +182,7 @@ if __name__ == "__main__":
     for name, image in data_bundle["arrays"].items():
         image_file = os.path.realpath(os.path.join(images_dir, f"{name}.png"))
         spear.log("Saving image: ", image_file)
-        cv2.imwrite(image_file, process_fns[name](image))
+        cv2.imwrite(image_file, visualize_funcs[name](image))
 
     # terminate actors and components
     with instance.begin_frame():
