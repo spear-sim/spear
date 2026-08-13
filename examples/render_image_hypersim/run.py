@@ -67,88 +67,55 @@ component_descs = \
         "name": "final_tone_curve_hdr_",
         "spatial_supersampling_factor": 1,
         "read_primary_pixel_data": True,
-        "visualize_func": lambda data : data[:,:,[2,1,0]], # BGRA to RGB
-        "user_scene_texture_descs": [
-            {
-                "name": "MaterialAO",
-                "visualize_func": lambda data : np.clip(data[:,:,[0,0,0]], 0.0, 1.0)
-            },
-            {
-                "name": "Metallic",
-                "visualize_func": lambda data : np.clip(data[:,:,[0,0,0]], 0.0, 1.0)
-            },
-            {
-                "name": "Roughness",
-                "visualize_func": lambda data : np.clip(data[:,:,[0,0,0]], 0.0, 1.0)
-            },
-            {
-                "name": "SpViewNormal",
-                "visualize_func": lambda data : np.clip((1.0 + data[:,:,[0,1,2]])/2.0, 0.0, 1.0)
-            },
-            {
-                "name": "SpDepthMeters",
-                "visualize_func": lambda data : np.clip((data[:,:,0] - np.min(data[:,:,0])) / np.minimum((np.max(data[:,:,0]) - np.min(data[:,:,0])), 7.5), 0.0, 1.0) # normalize to max depth of 7.5 meters
-            },
-            {
-                "name": "SpWorldPosition",
-                "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]]/100.0, 0.0, 1.0)
-            },
-            {
-                "name": "SpecularForLighting",
-                "visualize_func": lambda data : np.clip(data[:,:,[0,0,0]], 0.0, 1.0)
-            }
-        ]
+        "user_scene_texture_names": ["MaterialAO", "Metallic", "Roughness", "SpViewNormal", "SpDepthMeters", "SpWorldPosition", "SpecularForLighting"],
+        "visualize_funcs": {
+            "data":                lambda data : data[:,:,[2,1,0]], # BGRA to RGB
+            "MaterialAO":          lambda data : np.clip(data[:,:,[0,0,0]], 0.0, 1.0),
+            "Metallic":            lambda data : np.clip(data[:,:,[0,0,0]], 0.0, 1.0),
+            "Roughness":           lambda data : np.clip(data[:,:,[0,0,0]], 0.0, 1.0),
+            "SpViewNormal":        lambda data : np.clip((1.0 + data[:,:,[0,1,2]])/2.0, 0.0, 1.0),
+            "SpDepthMeters":       lambda data : np.clip((data[:,:,0] - np.min(data[:,:,0])) / np.minimum((np.max(data[:,:,0]) - np.min(data[:,:,0])), 7.5), 0.0, 1.0), # normalize to max depth of 7.5 meters
+            "SpWorldPosition":     lambda data : np.clip(data[:,:,[0,1,2]]/100.0, 0.0, 1.0),
+            "SpecularForLighting": lambda data : np.clip(data[:,:,[0,0,0]], 0.0, 1.0)
+        }
     },
     {
         "name": "diffuse_and_specular_",
         "spatial_supersampling_factor": 2,
         "read_primary_pixel_data": False,
-        "visualize_func": None,
-        "user_scene_texture_descs": [
-            {
-                "name": "PostProcessInput2",
-                "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
-            },
-        ]
+        "user_scene_texture_names": ["PostProcessInput2"],
+        "visualize_funcs": {
+            "PostProcessInput2": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
+        }
     },
     {
         "name": "diffuse_only_",
         "spatial_supersampling_factor": 2,
         "read_primary_pixel_data": False,
-        "visualize_func": None,
-        "user_scene_texture_descs": [
-            {
-                "name": "PostProcessInput2",
-                "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
-            },
-            {
-                "name": "DiffuseColor",
-                "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
-            }
-        ]
+        "user_scene_texture_names": ["DiffuseColor", "PostProcessInput2"],
+        "visualize_funcs": {
+            "DiffuseColor":      lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0),
+            "PostProcessInput2": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
+        }
     },
     {
         "name": "lighting_only_",
         "spatial_supersampling_factor": 2,
-        "read_primary_pixel_data": True,
-        "visualize_func": lambda data : data[:,:,[2,1,0]], # BGRA to RGB
-        "user_scene_texture_descs": [
-            {
-                "name": "PostProcessInput2",
-                "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
-            },
-            {
-                "name": "DiffuseColor",
-                "visualize_func": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
-            }
-        ]
+        "read_primary_pixel_data": False,
+        "user_scene_texture_names": ["DiffuseColor", "PostProcessInput2"],
+        "visualize_funcs": {
+            "DiffuseColor":      lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0),
+            "PostProcessInput2": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
+        }
     },
     {
         "name": "sp_object_ids_uint8_",
         "spatial_supersampling_factor": 1,
         "read_primary_pixel_data": True,
-        "visualize_func": lambda data : data[:,:,[2,1,0]], # BGRA to RGB
-        "user_scene_texture_descs": []
+        "user_scene_texture_names": [],
+        "visualize_funcs": {
+            "data": lambda data : data[:,:,[2,1,0]] # BGRA to RGB
+        }
     },
 ]
 
@@ -212,10 +179,7 @@ if __name__ == "__main__":
         # need to call Initialize() after calling game.segmentation_service.initialize()
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
         for component_desc in component_descs:
-            enabled_ust_names = []
-            for ust_desc in component_desc["user_scene_texture_descs"]:
-                enabled_ust_names.append(ust_desc["name"])
-            component_desc["component"].UserSceneTextureNames = enabled_ust_names
+            component_desc["component"].UserSceneTextureNames = component_desc["user_scene_texture_names"]
             component_desc["component"].bReadPrimaryPixelData = component_desc["read_primary_pixel_data"]
             component_desc["component"].Initialize()
             component_desc["component"].initialize_sp_funcs()
@@ -299,15 +263,7 @@ if __name__ == "__main__":
     for component_desc in component_descs:
         for name, data in component_desc["arrays"].items():
             image_file = os.path.realpath(os.path.join(images_dir, f"{component_desc['name']}.{name}.png"))
-            visualize_func = None
-            if name == "data":
-                visualize_func = component_desc["visualize_func"]
-            else:
-                for ust_desc in component_desc["user_scene_texture_descs"]:
-                    if ust_desc["name"] == name:
-                        visualize_func = ust_desc["visualize_func"]
-            assert visualize_func != None
-            image = visualize_func(data=data)
+            image = component_desc["visualize_funcs"][name](data=data)
             if image.dtype != np.uint8:
                 image = (np.clip(image, 0.0, 1.0)*255.0).astype(np.uint8)
             if image.ndim == 3:
@@ -319,28 +275,28 @@ if __name__ == "__main__":
 
     # foreground
     foreground = np.isin(proxy_id_image, foreground_actor_proxy_ids)*255
-    image_file = os.path.realpath(os.path.join(images_dir, "foreground.png"))
+    image_file = os.path.realpath(os.path.join(images_dir, "_foreground.png"))
     spear.log("Saving image: ", image_file)
     cv2.imwrite(image_file, cv2.applyColorMap(foreground.astype(np.uint8), cv2.COLORMAP_VIRIDIS)) # match matplotlib's default colormap for single-channel images
 
     # semantic
     semantic_ids = semantic_id_image
     semantic = semantic_colors[semantic_ids]
-    image_file = os.path.realpath(os.path.join(images_dir, "semantic.png"))
+    image_file = os.path.realpath(os.path.join(images_dir, "_semantic.png"))
     spear.log("Saving image: ", image_file)
     cv2.imwrite(image_file, semantic[:,:,[2,1,0]]) # RGB -> BGR
 
     # semantic instance
     semantic_instance_ids = semantic_instance_id_image
     semantic_instance = semantic_instance_colors[semantic_instance_ids]
-    image_file = os.path.realpath(os.path.join(images_dir, "semantic_instance.png"))
+    image_file = os.path.realpath(os.path.join(images_dir, "_semantic_instance.png"))
     spear.log("Saving image: ", image_file)
     cv2.imwrite(image_file, semantic_instance[:,:,[2,1,0]]) # RGB -> BGR
 
     # material
     material_ids = material_id_image
     material = material_colors[material_id_image]
-    image_file = os.path.realpath(os.path.join(images_dir, "material.png"))
+    image_file = os.path.realpath(os.path.join(images_dir, "_material.png"))
     spear.log("Saving image: ", image_file)
     cv2.imwrite(image_file, material[:,:,[2,1,0]]) # RGB -> BGR
 
@@ -353,7 +309,7 @@ if __name__ == "__main__":
     diffuse_reflectance = PIL.Image.fromarray((diffuse_reflectance*255.0).astype(np.uint8))
     diffuse_reflectance = diffuse_reflectance.resize((diffuse_reflectance.width // spatial_supersampling_factor, diffuse_reflectance.height // spatial_supersampling_factor), resample=PIL.Image.Resampling.LANCZOS)
     diffuse_reflectance = np.asarray(diffuse_reflectance)
-    image_file = os.path.realpath(os.path.join(images_dir, "diffuse_reflectance.png"))
+    image_file = os.path.realpath(os.path.join(images_dir, "_diffuse_reflectance.png"))
     spear.log("Saving image: ", image_file)
     cv2.imwrite(image_file, diffuse_reflectance[:,:,[2,1,0,3]]) # RGBA -> BGRA
 
@@ -368,7 +324,7 @@ if __name__ == "__main__":
     diffuse_illumination = PIL.Image.fromarray((diffuse_illumination*255.0).astype(np.uint8))
     diffuse_illumination = diffuse_illumination.resize((diffuse_illumination.width // spatial_supersampling_factor, diffuse_illumination.height // spatial_supersampling_factor), resample=PIL.Image.Resampling.LANCZOS)
     diffuse_illumination = np.asarray(diffuse_illumination)
-    image_file = os.path.realpath(os.path.join(images_dir, "diffuse_illumination.png"))
+    image_file = os.path.realpath(os.path.join(images_dir, "_diffuse_illumination.png"))
     spear.log("Saving image: ", image_file)
     cv2.imwrite(image_file, diffuse_illumination[:,:,[2,1,0]]) # RGB -> BGR
 
@@ -383,7 +339,7 @@ if __name__ == "__main__":
     diffuse_and_specular = PIL.Image.fromarray((diffuse_and_specular*255.0).astype(np.uint8))
     diffuse_and_specular = diffuse_and_specular.resize((diffuse_and_specular.width // spatial_supersampling_factor, diffuse_and_specular.height // spatial_supersampling_factor), resample=PIL.Image.Resampling.LANCZOS)
     diffuse_and_specular = np.asarray(diffuse_and_specular)
-    image_file = os.path.realpath(os.path.join(images_dir, "diffuse_and_specular.png"))
+    image_file = os.path.realpath(os.path.join(images_dir, "_diffuse_and_specular.png"))
     spear.log("Saving image: ", image_file)
     cv2.imwrite(image_file, diffuse_and_specular[:,:,[2,1,0]]) # RGB -> BGR
 
@@ -395,7 +351,7 @@ if __name__ == "__main__":
     diffuse_only = PIL.Image.fromarray((diffuse_only*255.0).astype(np.uint8))
     diffuse_only = diffuse_only.resize((diffuse_only.width // spatial_supersampling_factor, diffuse_only.height // spatial_supersampling_factor), resample=PIL.Image.Resampling.LANCZOS)
     diffuse_only = np.asarray(diffuse_only)
-    image_file = os.path.realpath(os.path.join(images_dir, "diffuse_only.png"))
+    image_file = os.path.realpath(os.path.join(images_dir, "_diffuse_only.png"))
     spear.log("Saving image: ", image_file)
     cv2.imwrite(image_file, diffuse_only[:,:,[2,1,0]]) # RGB -> BGR
 
@@ -410,7 +366,7 @@ if __name__ == "__main__":
     residual = PIL.Image.fromarray((residual*255.0).astype(np.uint8))
     residual = residual.resize((residual.width // spatial_supersampling_factor, residual.height // spatial_supersampling_factor), resample=PIL.Image.Resampling.LANCZOS)
     residual = np.asarray(residual)
-    image_file = os.path.realpath(os.path.join(images_dir, "residual.png"))
+    image_file = os.path.realpath(os.path.join(images_dir, "_residual.png"))
     spear.log("Saving image: ", image_file)
     cv2.imwrite(image_file, residual[:,:,[2,1,0]]) # RGB -> BGR
 
