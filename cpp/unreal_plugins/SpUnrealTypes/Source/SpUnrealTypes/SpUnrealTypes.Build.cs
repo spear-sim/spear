@@ -21,5 +21,15 @@ public class SpUnrealTypes : SpModuleRules
 
         PublicDependencyModuleNames.AddRange(new string[] {"MovieRenderPipelineCore", "MovieRenderPipelineRenderPasses", "PCG", "SpCore"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
+
+        if (target.Platform == UnrealTargetPlatform.Win64) {
+            PrivateDependencyModuleNames.AddRange(new string[] {"D3D12RHI"});
+            AddEngineThirdPartyPrivateStaticDependencies(target, "DX12");
+        }
+
+        if (target.Platform == UnrealTargetPlatform.Win64 || target.Platform == UnrealTargetPlatform.Linux) {
+            PrivateDependencyModuleNames.AddRange(new string[] {"VulkanRHI"});
+            AddEngineThirdPartyPrivateStaticDependencies(target, "Vulkan");
+        }
     }
 }
