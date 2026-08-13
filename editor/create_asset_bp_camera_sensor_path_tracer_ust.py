@@ -14,7 +14,7 @@ fov_angle = 90.0
 spatial_supersampling_factor = 2
 
 # The universe of possible UserSceneTexture buffers that can be extracted by each capture component. Each name
-# here adds a MI_PPM_<name>_UST material instance (see create_asset_ppm_ust_instances.py) to the capture
+# here adds a MI_PPM_<name>_UST material instance (see create_asset_mi_ppm_ust_instances.py) to the capture
 # component via the UserSceneTextures property. Each PPM is configured to route its output to a buffer named
 # <name>_UST, and the capture component knows how to extract data from these buffers. In order to enable the
 # capture component to extract data from a buffer, the user must add <name> to the component's UserSceneTextureNames
