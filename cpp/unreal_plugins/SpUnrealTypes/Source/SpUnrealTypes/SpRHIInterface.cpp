@@ -9,19 +9,17 @@
 
 #include <DynamicRHI.h>              // GDynamicRHI
 #include <HAL/Platform.h>            // uint32, uint64
-#if PLATFORM_WINDOWS
-    #include <ID3D12DynamicRHI.h>        // GetID3D12DynamicRHI, ID3D12DynamicRHI
-#endif
-#if PLATFORM_WINDOWS || PLATFORM_LINUX
-    #include <IVulkanDynamicRHI.h>       // GetIVulkanDynamicRHI, IVulkanDynamicRHI
-#endif
 #include <RHI.h>                     // FRHIResourceStats, RHIGetTrackedResourceStats
 #include <RHIDefinitions.h>          // ERHIInterfaceType
 #include <RHIFwd.h>                  // RHI_ENABLE_RESOURCE_INFO
-#if PLATFORM_WINDOWS
-    #include <Templates/RefCounting.h>   // TRefCountPtr
-#endif
 #include <Templates/SharedPointer.h> // TSharedPtr
+#if PLATFORM_WINDOWS
+    #include <Templates/RefCounting.h> // TRefCountPtr
+    #include <ID3D12DynamicRHI.h>    // GetID3D12DynamicRHI, ID3D12DynamicRHI
+#endif
+#if PLATFORM_WINDOWS || PLATFORM_LINUX
+    #include <IVulkanDynamicRHI.h>   // GetIVulkanDynamicRHI, IVulkanDynamicRHI
+#endif
 
 #include "SpCore/Assert.h"
 
