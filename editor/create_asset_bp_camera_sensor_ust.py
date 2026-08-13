@@ -14,7 +14,7 @@ fov_angle = 90.0
 spatial_supersampling_factor = 2
 
 # The universe of possible UserSceneTexture buffers that can be extracted by each capture component. Each name
-# here adds a MI_PPM_<name>_UST material instance (see create_asset_ppm_ust_instances.py) to the capture
+# here adds a MI_PPM_<name>_UST material instance (see create_asset_mi_ppm_ust_instances.py) to the capture
 # component via the UserSceneTextures property. Each PPM is configured to route its output to a buffer named
 # <name>_UST, and the capture component knows how to extract data from these buffers. In order to enable the
 # capture component to extract data from a buffer, the user must add <name> to the component's UserSceneTextureNames
@@ -305,19 +305,31 @@ if __name__ == "__main__":
         sp_scene_capture_component_2d.set_editor_property(name="channel_data_type", value=component_desc["channel_data_type"])
         sp_scene_capture_component_2d.set_editor_property(name="capture_source", value=component_desc["capture_source"])
 
-        # SpSceneCaptureComponent2D properties for texture render target (optional)
+        # SpSceneCaptureComponent2D properties (optional)
+
+        if "mesh_proxy_component_manager_class" in component_desc:
+            sp_scene_capture_component_2d.set_editor_property(name="mesh_proxy_component_manager_class", value=component_desc["mesh_proxy_component_manager_class"])
 
         if "override_texture_render_target_format" in component_desc:
             sp_scene_capture_component_2d.set_editor_property(name="override_texture_render_target_format", value=component_desc["override_texture_render_target_format"])
             sp_scene_capture_component_2d.set_editor_property(name="texture_render_target_format", value=component_desc["texture_render_target_format"])
 
+        if "override_texture_render_target_srgb" in component_desc:
+            sp_scene_capture_component_2d.set_editor_property(name="override_texture_render_target_srgb", value=component_desc["override_texture_render_target_srgb"])
+            sp_scene_capture_component_2d.set_editor_property(name="texture_render_target_srgb", value=component_desc["texture_render_target_srgb"])
+
+        if "override_texture_render_target_force_linear_gamma" in component_desc:
+            sp_scene_capture_component_2d.set_editor_property(name="override_texture_render_target_force_linear_gamma", value=component_desc["override_texture_render_target_force_linear_gamma"])
+            sp_scene_capture_component_2d.set_editor_property(name="texture_render_target_force_linear_gamma", value=component_desc["texture_render_target_force_linear_gamma"])
+
+        if "override_texture_render_target_gamma" in component_desc:
+            sp_scene_capture_component_2d.set_editor_property(name="override_texture_render_target_gamma", value=component_desc["override_texture_render_target_gamma"])
+            sp_scene_capture_component_2d.set_editor_property(name="texture_render_target_gamma", value=component_desc["texture_render_target_gamma"])
+
         # SceneCaptureComponent2D properties (optional)
 
         if "fov_angle" in component_desc:
             sp_scene_capture_component_2d.set_editor_property(name="fov_angle", value=component_desc["fov_angle"])
-
-        if "mesh_proxy_component_manager_class" in component_desc:
-            sp_scene_capture_component_2d.set_editor_property(name="mesh_proxy_component_manager_class", value=component_desc["mesh_proxy_component_manager_class"])
 
         # SceneCaptureComponent properties (optional)
 
