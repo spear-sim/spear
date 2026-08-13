@@ -12,7 +12,7 @@ import os
 import shutil
 import spear
 
-capture_component_name = "final_tone_curve_hdr_"
+component_name = "final_tone_curve_hdr_"
 
 user_scene_texture_names = [
     "PathTracingAlbedo",
@@ -113,17 +113,17 @@ if __name__ == "__main__":
         # spawn camera sensor and get the final_tone_curve_hdr component
         bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name=f"/SpContent/Blueprints/BP_CameraSensorPathTracer_UST.BP_CameraSensorPathTracer_UST_C")
         bp_camera_sensor = game.unreal_service.spawn_actor(uclass=bp_camera_sensor_uclass)
-        capture_component = game.unreal_service.get_component_by_name(actor=bp_camera_sensor, component_name=f"DefaultSceneRoot.{capture_component_name}", uclass="USpSceneCaptureComponent2D")
+        component = game.unreal_service.get_component_by_name(actor=bp_camera_sensor, component_name=f"DefaultSceneRoot.{component_name}", uclass="USpSceneCaptureComponent2D")
 
         # configure the final_tone_curve_hdr component to match the viewport (width, height, FOV, post-processing settings, etc)
         viewport_desc = game.rendering_service.get_current_viewport_desc()
-        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=capture_component, viewport_desc=viewport_desc, widths=width, heights=height)
+        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=component, viewport_desc=viewport_desc, widths=width, heights=height)
 
         # enable all the available UserSceneTexture buffers on our capture component; need to call
         # initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
-        capture_component.UserSceneTextureNames = user_scene_texture_names
-        capture_component.Initialize()
-        capture_component.initialize_sp_funcs()
+        component.UserSceneTextureNames = user_scene_texture_names
+        component.Initialize()
+        component.initialize_sp_funcs()
 
         sp_scene_view_state_interface = game.get_unreal_object(uclass="USpSceneViewStateInterface")
 
@@ -162,10 +162,10 @@ if __name__ == "__main__":
             # samples against this component's persistent view state, so without this reset, sample_index would
             # start ahead of 0 below.
             if i == 0:
-                capture_component.RequestPathTracerReset()
+                component.RequestPathTracerReset()
 
         with instance.end_frame(single_step=True):
-            view_states = capture_component.GetViewStates()
+            view_states = component.GetViewStates()
             assert len(view_states) == 1
             view_state = view_states[0]
             sample_index = sp_scene_view_state_interface.GetPathTracingSampleIndex(ViewState=view_state)
@@ -177,7 +177,7 @@ if __name__ == "__main__":
     with instance.begin_frame():
         pass
     with instance.end_frame(single_step=True):
-        data_bundle = capture_component.read_pixels()
+        data_bundle = component.read_pixels()
 
     for name, image in data_bundle["arrays"].items():
         image_file = os.path.realpath(os.path.join(images_dir, f"{name}.png"))
@@ -188,8 +188,8 @@ if __name__ == "__main__":
     with instance.begin_frame():
         pass
     with instance.end_frame():
-        capture_component.terminate_sp_funcs()
-        capture_component.Terminate()
+        component.terminate_sp_funcs()
+        component.Terminate()
         game.unreal_service.destroy_actor(actor=bp_camera_sensor)
 
     instance.close()
