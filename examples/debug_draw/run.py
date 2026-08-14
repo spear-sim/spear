@@ -169,8 +169,8 @@ if __name__ == "__main__":
         component_desc_map = { desc["name"]: desc for desc in component_descs }
 
         # configure camera to match viewport
-        viewport_desc = game.rendering_service.get_current_viewport_desc()
-        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc)
+        viewport_desc = game.viewport_service.get_current_viewport_desc()
+        game.viewport_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc)
 
         # configure capture component visibility routing
 

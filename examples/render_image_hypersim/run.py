@@ -163,7 +163,7 @@ if __name__ == "__main__":
 
         # configure components to match the viewport (width, height, FOV, post-processing settings, etc)
 
-        viewport_desc = game.rendering_service.get_current_viewport_desc()
+        viewport_desc = game.viewport_service.get_current_viewport_desc()
 
         R_world_from_camera = spear.math.to_numpy_matrix_from_spear_rotator(spear_rotator=viewport_desc["camera_rotation"], as_matrix=True)
         R_camera_from_world = R_world_from_camera.T.A
@@ -174,7 +174,7 @@ if __name__ == "__main__":
         widths = [ w*desc["spatial_supersampling_factor"] for desc in component_descs ]
         heights = [ h*desc["spatial_supersampling_factor"] for desc in component_descs ]
 
-        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, widths=widths, heights=heights)
+        game.viewport_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, widths=widths, heights=heights)
 
         # need to call Initialize() after calling game.segmentation_service.initialize()
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
