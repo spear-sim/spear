@@ -237,8 +237,8 @@ class Instance():
 
             # Initialize services that require a reference to EngineService, SpFuncService, UnrealService, and EngineGlobalsService.
 
-            self.rendering_service = spear.GameRenderingService(
-                entry_point_caller=entry_point_caller_type(service_name=f"rendering_service", engine_service=engine_service),
+            self.viewport_service = spear.GameViewportService(
+                entry_point_caller=entry_point_caller_type(service_name=f"viewport_service", engine_service=engine_service),
                 sp_func_service=sp_func_service,
                 unreal_service=self.unreal_service,
                 engine_globals_service=engine_globals_service,
@@ -246,11 +246,11 @@ class Instance():
 
         def initialize(self, unreal_service=None):
             super().initialize(unreal_service=unreal_service)
-            self.rendering_service.initialize()
+            self.viewport_service.initialize()
 
         def set_world(self, world):
             super().set_world(world=world)
-            self.rendering_service.set_world(world=world)
+            self.viewport_service.set_world(world=world)
 
     class EditorWorldScopedServices(WorldScopedServices):
         def __init__(self, engine_service, shared_memory_service, world_registry_service, sp_func_service, engine_globals_service, config):
@@ -275,8 +275,8 @@ class Instance():
                 unreal_service=self.unreal_service,
                 config=config)
 
-            self.rendering_service = spear.EditorRenderingService(
-                entry_point_caller=entry_point_caller_type(service_name=f"rendering_service", engine_service=engine_service),
+            self.viewport_service = spear.EditorViewportService(
+                entry_point_caller=entry_point_caller_type(service_name=f"viewport_service", engine_service=engine_service),
                 sp_func_service=sp_func_service,
                 unreal_service=self.unreal_service,
                 config=config)
@@ -284,12 +284,12 @@ class Instance():
         def initialize(self, unreal_service=None):
             super().initialize(unreal_service=unreal_service)
             self.python_service.initialize()
-            self.rendering_service.initialize()
+            self.viewport_service.initialize()
 
         def set_world(self, world):
             super().set_world(world=world)
             self.python_service.set_world(world=world)
-            self.rendering_service.set_world(world=world)
+            self.viewport_service.set_world(world=world)
 
     #
     # Public functions that can potentially call begin_frame() and end_frame(). When inside a spear.editor.script,

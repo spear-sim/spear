@@ -120,9 +120,9 @@ if __name__ == "__main__":
         assert final_tone_curve_hdr_component is not None
 
         # configure components to match the viewport (width, height, FOV, post-processing settings, etc)
-        viewport_desc = sp_game.rendering_service.get_current_viewport_desc()
+        viewport_desc = sp_game.viewport_service.get_current_viewport_desc()
         components = [ desc["component"] for desc in component_descs ]
-        sp_game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, widths=width, heights=height)
+        sp_game.viewport_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, widths=width, heights=height)
 
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
         for component_desc in component_descs:

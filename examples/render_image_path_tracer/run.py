@@ -1,4 +1,4 @@
-
+#
 # Copyright (c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 # Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
@@ -9,13 +9,36 @@ import argparse
 import cv2
 import numpy as np
 import os
+import shutil
 import spear
 
+component_name = "final_tone_curve_hdr_"
+
+user_scene_texture_names = [
+    "PathTracingAlbedo",
+    "PathTracingDenoisedRadiance",
+    "PathTracingNormal",
+    "PathTracingRadiance",
+    "PathTracingVariance",
+    "SceneDepth"
+]
+
+visualize_funcs = {
+    "data":                        lambda data : data[:,:,[0,1,2]],
+    "PathTracingAlbedo":           lambda data : np.clip(255.0*data[:,:,[2,1,0]], 0.0, 255.0).astype(np.uint8),
+    "PathTracingDenoisedRadiance": lambda data : np.clip(255.0*data[:,:,[2,1,0]], 0.0, 255.0).astype(np.uint8),
+    "PathTracingNormal":           lambda data : np.clip(255.0*(0.5*data[:,:,[2,1,0]] + 0.5), 0.0, 255.0).astype(np.uint8),
+    "PathTracingRadiance":         lambda data : np.clip(255.0*data[:,:,[2,1,0]], 0.0, 255.0).astype(np.uint8),
+    "PathTracingVariance":         lambda data : np.clip(255.0*((x := data[:,:,[0,0,0]].astype(np.float32)) - x.min())/(x.max() - x.min() + 1e-8), 0.0, 255.0).astype(np.uint8),
+    "SceneDepth":                  lambda data : np.clip(255.0*((x := data[:,:,[0,0,0]].astype(np.float32)) - x.min())/(x.max() - x.min() + 1e-8), 0.0, 255.0).astype(np.uint8)
+}
+
 parser = argparse.ArgumentParser()
-parser.add_argument("--denoiser", type=str, default="")
+parser.add_argument("--denoiser", default="")
 parser.add_argument("--num-bounces", type=int, default=8)
 parser.add_argument("--num-frames", type=int, default=64)
 parser.add_argument("--num-warmup-frames", type=int, default=4)
+parser.add_argument("--filter-width", type=float, default=3.0)
 parser.add_argument("--teaser", action="store_true")
 args = parser.parse_args()
 
@@ -49,6 +72,12 @@ if __name__ == "__main__":
     instance = spear.Instance(config=config)
     game = instance.get_game()
 
+    images_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "images"))
+    if os.path.exists(images_dir):
+        spear.log("Directory exists, removing: ", images_dir)
+        shutil.rmtree(images_dir, ignore_errors=True)
+    os.makedirs(images_dir, exist_ok=True)
+
     # initialize actors and components
     with instance.begin_frame():
 
@@ -77,21 +106,24 @@ if __name__ == "__main__":
         game.console_service.set(name="r.PathTracing.Denoiser", value=denoiser)
         game.console_service.set(name="r.PathTracing.Denoiser.Name", value=denoiser_name)
 
+        # Filter Width controls how much primary rays are jittered, so it can be used to effectively
+        # turn off anti-aliasing for primary rays.
+        game.console_service.set(name="r.PathTracing.FilterWidth", value=args.filter_width)
+
         # spawn camera sensor and get the final_tone_curve_hdr component
-        bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensorPathTracer.BP_CameraSensorPathTracer_C")
+        bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name=f"/SpContent/Blueprints/BP_CameraSensorPathTracer_UST.BP_CameraSensorPathTracer_UST_C")
         bp_camera_sensor = game.unreal_service.spawn_actor(uclass=bp_camera_sensor_uclass)
-        final_tone_curve_hdr_component = game.unreal_service.get_component_by_name(actor=bp_camera_sensor, component_name="DefaultSceneRoot.final_tone_curve_hdr_", uclass="USpSceneCaptureComponent2D")
+        component = game.unreal_service.get_component_by_name(actor=bp_camera_sensor, component_name=f"DefaultSceneRoot.{component_name}", uclass="USpSceneCaptureComponent2D")
 
         # configure the final_tone_curve_hdr component to match the viewport (width, height, FOV, post-processing settings, etc)
-        viewport_desc = game.rendering_service.get_current_viewport_desc()
-        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=final_tone_curve_hdr_component, viewport_desc=viewport_desc, widths=width, heights=height)
+        viewport_desc = game.viewport_service.get_current_viewport_desc()
+        game.viewport_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=component, viewport_desc=viewport_desc, widths=width, heights=height)
 
-        visualize_func = lambda data : data[:,:,[2,1,0]] # BGRA -> RGB
-        # visualize_func = lambda data : data
-
-        # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
-        final_tone_curve_hdr_component.Initialize()
-        final_tone_curve_hdr_component.initialize_sp_funcs()
+        # enable all the available UserSceneTexture buffers on our capture component; need to call
+        # initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
+        component.UserSceneTextureNames = user_scene_texture_names
+        component.Initialize()
+        component.initialize_sp_funcs()
 
         sp_scene_view_state_interface = game.get_unreal_object(uclass="USpSceneViewStateInterface")
 
@@ -110,7 +142,7 @@ if __name__ == "__main__":
         game.console_service.set(name="r.RayTracing.Nanite.Update", value=0)
     with instance.end_frame():
         pass
-   
+
     spear.log("Finished rendering warm-up frames.")
 
     # The path tracer accumulates one sample per pixel per rendered frame, exactly like the editor's
@@ -130,10 +162,10 @@ if __name__ == "__main__":
             # samples against this component's persistent view state, so without this reset, sample_index would
             # start ahead of 0 below.
             if i == 0:
-                final_tone_curve_hdr_component.RequestPathTracerReset()
+                component.RequestPathTracerReset()
 
         with instance.end_frame(single_step=True):
-            view_states = final_tone_curve_hdr_component.GetViewStates()
+            view_states = component.GetViewStates()
             assert len(view_states) == 1
             view_state = view_states[0]
             sample_index = sp_scene_view_state_interface.GetPathTracingSampleIndex(ViewState=view_state)
@@ -145,26 +177,19 @@ if __name__ == "__main__":
     with instance.begin_frame():
         pass
     with instance.end_frame(single_step=True):
-        data_bundle = final_tone_curve_hdr_component.read_pixels()
+        data_bundle = component.read_pixels()
 
-    # save image (cv2 writes the native BGR, dropping alpha)
-    image_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "image.png"))
-    spear.log("Saving image: ", image_file)
-
-    image = visualize_func(data=data_bundle["arrays"]["data"])
-    if image.dtype != np.uint8:
-        image = (np.clip(image, 0.0, 1.0)*255.0).astype(np.uint8)
-    if image.ndim == 3:
-        image = image[:, :, [2,1,0]] # RGB -> BGR
-
-    cv2.imwrite(image_file, image)
+    for name, image in data_bundle["arrays"].items():
+        image_file = os.path.realpath(os.path.join(images_dir, f"{name}.png"))
+        spear.log("Saving image: ", image_file)
+        cv2.imwrite(image_file, visualize_funcs[name](image))
 
     # terminate actors and components
     with instance.begin_frame():
         pass
     with instance.end_frame():
-        final_tone_curve_hdr_component.terminate_sp_funcs()
-        final_tone_curve_hdr_component.Terminate()
+        component.terminate_sp_funcs()
+        component.Terminate()
         game.unreal_service.destroy_actor(actor=bp_camera_sensor)
 
     instance.close()
