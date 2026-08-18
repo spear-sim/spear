@@ -7,6 +7,7 @@
 
 #include <Engine/LevelStreaming.h>
 #include <Kismet/BlueprintFunctionLibrary.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpCore/Assert.h"
 
@@ -16,7 +17,7 @@ UCLASS()
 class USpLevelStreaming : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
-public: 
+public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static bool IsStreamingStatePending(ULevelStreaming* LevelStreaming)
     {

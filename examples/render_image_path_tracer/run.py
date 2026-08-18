@@ -24,19 +24,19 @@ user_scene_texture_names = [
 ]
 
 visualize_funcs = {
-    "data":                        lambda data : data[:,:,[0,1,2]],
-    "PathTracingAlbedo":           lambda data : np.clip(255.0*data[:,:,[2,1,0]], 0.0, 255.0).astype(np.uint8),
-    "PathTracingDenoisedRadiance": lambda data : np.clip(255.0*data[:,:,[2,1,0]], 0.0, 255.0).astype(np.uint8),
-    "PathTracingNormal":           lambda data : np.clip(255.0*(0.5*data[:,:,[2,1,0]] + 0.5), 0.0, 255.0).astype(np.uint8),
-    "PathTracingRadiance":         lambda data : np.clip(255.0*data[:,:,[2,1,0]], 0.0, 255.0).astype(np.uint8),
-    "PathTracingVariance":         lambda data : np.clip(255.0*((x := data[:,:,[0,0,0]].astype(np.float32)) - x.min())/(x.max() - x.min() + 1e-8), 0.0, 255.0).astype(np.uint8),
-    "SceneDepth":                  lambda data : np.clip(255.0*((x := data[:,:,[0,0,0]].astype(np.float32)) - x.min())/(x.max() - x.min() + 1e-8), 0.0, 255.0).astype(np.uint8)
+    "data":                        lambda data : data[:,:,[2,1,0]], # BGRA to RGB
+    "PathTracingAlbedo":           lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0),
+    "PathTracingDenoisedRadiance": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0),
+    "PathTracingNormal":           lambda data : np.clip((1.0 + data[:,:,[0,1,2]])/2.0, 0.0, 1.0),
+    "PathTracingRadiance":         lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0),
+    "PathTracingVariance":         lambda data : (data[:,:,0] - np.min(data[:,:,0])) / (np.max(data[:,:,0]) - np.min(data[:,:,0]) + 1e-8),
+    "SceneDepth":                  lambda data : np.clip((data[:,:,0] - np.min(data[:,:,0])) / np.minimum((np.max(data[:,:,0]) - np.min(data[:,:,0])), 750.0), 0.0, 1.0) # normalize to max depth of 750 cm
 }
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--denoiser", default="")
 parser.add_argument("--num-bounces", type=int, default=8)
-parser.add_argument("--num-frames", type=int, default=64)
+parser.add_argument("--num-frames", type=int, default=256)
 parser.add_argument("--num-warmup-frames", type=int, default=4)
 parser.add_argument("--filter-width", type=float, default=3.0)
 parser.add_argument("--teaser", action="store_true")
@@ -66,22 +66,24 @@ else:
 
 if __name__ == "__main__":
 
-    # create instance
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
-    spear.configure_system(config=config)
-    instance = spear.Instance(config=config)
-    game = instance.get_game()
-
+    # create output dir
     images_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "images"))
     if os.path.exists(images_dir):
         spear.log("Directory exists, removing: ", images_dir)
         shutil.rmtree(images_dir, ignore_errors=True)
     os.makedirs(images_dir, exist_ok=True)
 
+    # create instance
+    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
+    spear.configure_system(config=config)
+    instance = spear.Instance(config=config)
+    game = instance.get_game()
+
     # initialize actors and components
     with instance.begin_frame():
 
         # force high-res textures for captured images
+        game.console_service.set(name="r.Streaming.FramesForFullUpdate", value=0)
         game.console_service.set(name="r.Streaming.FullyLoadUsedTextures", value=1)
 
         # When path tracing begins, Unreal begins asynchronously building various Nanite data structures, and
@@ -179,10 +181,17 @@ if __name__ == "__main__":
     with instance.end_frame(single_step=True):
         data_bundle = component.read_pixels()
 
-    for name, image in data_bundle["arrays"].items():
-        image_file = os.path.realpath(os.path.join(images_dir, f"{name}.png"))
+    for name, data in data_bundle["arrays"].items():
+        image_file = os.path.realpath(os.path.join(images_dir, f"{component_name}.{name}.png"))
+        image = visualize_funcs[name](data=data)
+        if image.dtype != np.uint8:
+            image = (np.clip(image, 0.0, 1.0)*255.0).astype(np.uint8)
+        if image.ndim == 3:
+            image = image[:, :, [2,1,0]] # RGB -> BGR
+        elif image.ndim == 2:
+            image = cv2.applyColorMap(image, cv2.COLORMAP_VIRIDIS) # match matplotlib's default colormap for single-channel images
         spear.log("Saving image: ", image_file)
-        cv2.imwrite(image_file, visualize_funcs[name](image))
+        cv2.imwrite(image_file, image)
 
     # terminate actors and components
     with instance.begin_frame():

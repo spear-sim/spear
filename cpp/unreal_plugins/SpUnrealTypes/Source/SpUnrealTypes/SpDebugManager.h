@@ -14,6 +14,7 @@
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Engine/EngineTypes.h>          // EEndPlayReason
 #include <GameFramework/Actor.h>
+#include <HAL/Platform.h>                // uint8
 #include <Math/Matrix.h>                 // FMatrix
 #include <Math/Vector.h>
 #include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS, UENUM, UFUNCTION, UPROPERTY
@@ -26,8 +27,8 @@
 
 class UObject;
 
-UENUM()
-enum class EDebugManagerEnum
+UENUM(BlueprintType)
+enum class EDebugManagerEnum : uint8
 {
     Hello,
     World
@@ -37,7 +38,7 @@ UCLASS(ClassGroup="SPEAR", Config=Spear, HideCategories=(Actor, Collision, Cooki
 class ASpDebugManager : public AActor
 {
     GENERATED_BODY()
-public: 
+public:
     ASpDebugManager();
     ~ASpDebugManager() override;
 
@@ -53,56 +54,58 @@ public:
     FString DebugString;
 
 private:
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void Initialize(); // can't be const
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void Terminate(); // can't be const
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void LoadConfig(); // can't be const
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void SaveConfig(); // can't be const
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void PrintDebugString() const;
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void GetAndSetObjectProperties(); // can't be const
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void CallFunctions(); // can't be const
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void CallSpFunc() const;
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void CreateObjects() const;
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void SubscribeToActorHitEvents() const;
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void UnsubscribeFromActorHitEvents() const;
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void ReadPixels() const;
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void PrintLevelDebugInfo() const;
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void PrintActorDebugInfo() const;
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void PrintAllClassesDebugInfo() const;
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void TestReinterpretAsVectorOf() const;
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void TestInt64(); // can't be const
+
+    // not intended to be BlueprintCallable
 
     UFUNCTION()
     FString GetString(FString Arg0, bool Arg1, int Arg2, FVector Arg3) const;
@@ -133,6 +136,8 @@ private:
 
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
     USpFuncComponent* SpFuncComponent = nullptr;
+
+    // not intended to be Blueprint-accessible
 
     UPROPERTY()
     FString MyString;

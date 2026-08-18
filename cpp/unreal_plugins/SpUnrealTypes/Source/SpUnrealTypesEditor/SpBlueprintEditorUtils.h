@@ -7,6 +7,7 @@
 
 #include <Kismet/BlueprintFunctionLibrary.h>
 #include <Kismet2/BlueprintEditorUtils.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpBlueprintEditorUtils.generated.h"
 

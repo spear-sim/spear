@@ -23,19 +23,26 @@ class AsyncLoadingService(spear.Service):
 
         self._sp_asset_compiling_manager = None
         self._sp_distance_field_async_queue = None
+        self._sp_landscape_subsystem = None
         self._sp_level_streaming = None
+        self._sp_material_interface = None
+        self._sp_renderer_module = None
         self._sp_shader_compiling_manager = None
         self._sp_streaming_manager = None
         self._sp_world = None
 
         self._asset_registry = None
 
+        self._landscape_subsystem = None
         self._world_partition_subsystem = None
 
     def initialize(self):
         self._sp_asset_compiling_manager = self.get_unreal_object(uclass="USpAssetCompilingManager")
         self._sp_distance_field_async_queue = self.get_unreal_object(uclass="USpDistanceFieldAsyncQueue")
+        self._sp_landscape_subsystem = self.get_unreal_object(uclass="USpLandscapeSubsystem")
         self._sp_level_streaming = self.get_unreal_object(uclass="USpLevelStreaming")
+        self._sp_material_interface = self.get_unreal_object(uclass="USpMaterialInterface")
+        self._sp_renderer_module = self.get_unreal_object(uclass="USpRendererModule")
         self._sp_shader_compiling_manager = self.get_unreal_object(uclass="USpShaderCompilingManager")
         self._sp_streaming_manager = self.get_unreal_object(uclass="USpStreamingManager")
         self._sp_world = self.get_unreal_object(uclass="USpWorld")
@@ -45,6 +52,7 @@ class AsyncLoadingService(spear.Service):
         asset_registry_handle = asset_registry_helpers.GetAssetRegistry(as_handle=True)
         self._asset_registry = self.get_unreal_object(uobject=asset_registry_handle, uclass=asset_registry_uclass)
 
+        self._landscape_subsystem = self.unreal_service.get_subsystem(subsystem_provider_class_name="UWorld", subsystem_uclass="ULandscapeSubsystem")
         self._world_partition_subsystem = self.unreal_service.get_subsystem(subsystem_provider_class_name="UWorld", subsystem_uclass="UWorldPartitionSubsystem")
 
     #
@@ -60,7 +68,7 @@ class AsyncLoadingService(spear.Service):
         distance_field_async_queue_idle, num_outstanding_distance_field_tasks, is_distance_field_async_queue_initialized = self.is_distance_field_async_queue_idle()
         asset_compiling_manager_idle, asset_compiling_manager_num_remaining_assets = self.is_asset_compiling_manager_idle()
         shader_compiling_manager_idle, shader_compiling_manager_num_remaining_shader_jobs, is_shader_compiling_manager_initialized = self.is_shader_compiling_manager_idle()
-        streaming_manager_idle, streaming_manager_num_wanting_resources = self.is_streaming_manager_idle()
+        streaming_manager_idle, streaming_manager_num_pending_requests, streaming_manager_num_wanting_resources = self.is_streaming_manager_idle()
         streaming_levels_idle = self.are_streaming_levels_idle()
         world_partition_streaming_idle = self.is_world_partition_streaming_idle()
 
@@ -82,19 +90,17 @@ class AsyncLoadingService(spear.Service):
                 spear.log(f"    distance_field_async_queue_idle = {distance_field_async_queue_idle} (num_outstanding_tasks = {num_outstanding_distance_field_tasks}, initialized = {is_distance_field_async_queue_initialized})")
                 spear.log(f"    asset_compiling_manager_idle    = {asset_compiling_manager_idle} (num_remaining_assets = {asset_compiling_manager_num_remaining_assets})")
                 spear.log(f"    shader_compiling_manager_idle   = {shader_compiling_manager_idle} (num_remaining_shader_jobs = {shader_compiling_manager_num_remaining_shader_jobs}, initialized ={is_shader_compiling_manager_initialized})")
-                spear.log(f"    streaming_manager_idle          = {streaming_manager_idle} (num_wanting_resources = {streaming_manager_num_wanting_resources})")
+                spear.log(f"    streaming_manager_idle          = {streaming_manager_idle} (num_pending_requests = {streaming_manager_num_pending_requests}, num_wanting_resources = {streaming_manager_num_wanting_resources})")
                 spear.log(f"    streaming_levels_idle           = {streaming_levels_idle}")
                 spear.log(f"    world_partition_streaming_idle  = {world_partition_streaming_idle}")
 
         return engine_idle
 
-    def wait_for_engine_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
-        self._force_update_streaming_manager()
-        self._wait_for(func=self.is_engine_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+    def wait_for_engine_idle(self, max_time_seconds=1000.0, log_interval_seconds=1.0):
+        self._wait_for(func=self.is_engine_idle, max_time_seconds=max_time_seconds, log_interval_seconds=log_interval_seconds)
 
-    def wait_for_engine_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
-        yield from self._force_update_streaming_manager_in_editor_script()
-        yield from self._wait_for_in_editor_script(func=self.is_engine_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+    def wait_for_engine_idle_in_editor_script(self, max_time_seconds=1000.0, log_interval_seconds=1.0):
+        yield from self._wait_for_in_editor_script(func=self.is_engine_idle, max_time_seconds=max_time_seconds, log_interval_seconds=log_interval_seconds)
 
     #
     # Fine-grained functions
@@ -152,11 +158,12 @@ class AsyncLoadingService(spear.Service):
         return streaming_levels_idle
 
     def is_streaming_manager_idle(self, verbose=False):
+        num_pending_requests = self._sp_streaming_manager.StreamAllResources(TimeLimit=0.01)
         num_wanting_resources = self._sp_streaming_manager.GetNumWantingResources()
-        streaming_manager_idle = num_wanting_resources == 0
+        streaming_manager_idle = num_pending_requests == 0 and num_wanting_resources == 0
         if verbose:
-            spear.log(f"streaming_manager_idle = {streaming_manager_idle} (num_wanting_resources = {num_wanting_resources}")
-        return streaming_manager_idle, num_wanting_resources
+            spear.log(f"streaming_manager_idle = {streaming_manager_idle} (num_pending_requests = {num_pending_requests}, num_wanting_resources = {num_wanting_resources})")
+        return streaming_manager_idle, num_pending_requests, num_wanting_resources
 
     def is_world_partition_streaming_idle(self, verbose=False):
         world_partition_streaming_idle = self._world_partition_subsystem.IsAllStreamingCompleted()
@@ -164,100 +171,68 @@ class AsyncLoadingService(spear.Service):
             spear.log(f"world_partition_streaming_idle = {world_partition_streaming_idle}")
         return world_partition_streaming_idle
 
-    def wait_for_asset_compiling_manager_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
-        self._wait_for(func=self.is_asset_compiling_manager_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+    def wait_for_asset_compiling_manager_idle(self, max_time_seconds=1000.0, log_interval_seconds=1.0):
+        self._wait_for(func=self.is_asset_compiling_manager_idle, max_time_seconds=max_time_seconds, log_interval_seconds=log_interval_seconds)
 
-    def wait_for_asset_compiling_manager_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
-        yield from self._wait_for_in_editor_script(func=self.is_asset_compiling_manager_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+    def wait_for_asset_compiling_manager_idle_in_editor_script(self, max_time_seconds=1000.0, log_interval_seconds=1.0):
+        yield from self._wait_for_in_editor_script(func=self.is_asset_compiling_manager_idle, max_time_seconds=max_time_seconds, log_interval_seconds=log_interval_seconds)
 
-    def wait_for_asset_registry_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
-        self._wait_for(func=self.is_asset_registry_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+    def wait_for_asset_registry_idle(self, max_time_seconds=1000.0, log_interval_seconds=1.0):
+        self._wait_for(func=self.is_asset_registry_idle, max_time_seconds=max_time_seconds, log_interval_seconds=log_interval_seconds)
 
-    def wait_for_asset_registry_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
-        yield from self._wait_for_in_editor_script(func=self.is_asset_registry_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+    def wait_for_asset_registry_idle_in_editor_script(self, max_time_seconds=1000.0, log_interval_seconds=1.0):
+        yield from self._wait_for_in_editor_script(func=self.is_asset_registry_idle, max_time_seconds=max_time_seconds, log_interval_seconds=log_interval_seconds)
 
-    def wait_for_async_loading_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
-        self._wait_for(func=self.is_async_loading_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+    def wait_for_async_loading_idle(self, max_time_seconds=1000.0, log_interval_seconds=1.0):
+        self._wait_for(func=self.is_async_loading_idle, max_time_seconds=max_time_seconds, log_interval_seconds=log_interval_seconds)
 
-    def wait_for_async_loading_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
-        yield from self._wait_for_in_editor_script(func=self.is_async_loading_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+    def wait_for_async_loading_idle_in_editor_script(self, max_time_seconds=1000.0, log_interval_seconds=1.0):
+        yield from self._wait_for_in_editor_script(func=self.is_async_loading_idle, max_time_seconds=max_time_seconds, log_interval_seconds=log_interval_seconds)
 
-    def wait_for_distance_field_async_queue_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
-        self._wait_for(func=self.is_distance_field_async_queue_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+    def wait_for_distance_field_async_queue_idle(self, max_time_seconds=1000.0, log_interval_seconds=1.0):
+        self._wait_for(func=self.is_distance_field_async_queue_idle, max_time_seconds=max_time_seconds, log_interval_seconds=log_interval_seconds)
 
-    def wait_for_distance_field_async_queue_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
-        yield from self._wait_for_in_editor_script(func=self.is_distance_field_async_queue_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+    def wait_for_distance_field_async_queue_idle_in_editor_script(self, max_time_seconds=1000.0, log_interval_seconds=1.0):
+        yield from self._wait_for_in_editor_script(func=self.is_distance_field_async_queue_idle, max_time_seconds=max_time_seconds, log_interval_seconds=log_interval_seconds)
 
-    def wait_for_shader_compiling_manager_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
-        self._wait_for(func=self.is_shader_compiling_manager_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+    def wait_for_shader_compiling_manager_idle(self, max_time_seconds=1000.0, log_interval_seconds=1.0):
+        self._wait_for(func=self.is_shader_compiling_manager_idle, max_time_seconds=max_time_seconds, log_interval_seconds=log_interval_seconds)
 
-    def wait_for_shader_compiling_manager_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
-        yield from self._wait_for_in_editor_script(func=self.is_shader_compiling_manager_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+    def wait_for_shader_compiling_manager_idle_in_editor_script(self, max_time_seconds=1000.0, log_interval_seconds=1.0):
+        yield from self._wait_for_in_editor_script(func=self.is_shader_compiling_manager_idle, max_time_seconds=max_time_seconds, log_interval_seconds=log_interval_seconds)
 
-    def wait_for_streaming_levels_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
-        self._wait_for(func=self.are_streaming_levels_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+    def wait_for_streaming_levels_idle(self, max_time_seconds=1000.0, log_interval_seconds=1.0):
+        self._wait_for(func=self.are_streaming_levels_idle, max_time_seconds=max_time_seconds, log_interval_seconds=log_interval_seconds)
 
-    def wait_for_streaming_levels_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
-        yield from self._wait_for_in_editor_script(func=self.are_streaming_levels_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+    def wait_for_streaming_levels_idle_in_editor_script(self, max_time_seconds=1000.0, log_interval_seconds=1.0):
+        yield from self._wait_for_in_editor_script(func=self.are_streaming_levels_idle, max_time_seconds=max_time_seconds, log_interval_seconds=log_interval_seconds)
 
-    def wait_for_streaming_manager_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
-        self._force_update_streaming_manager()
-        self._wait_for(func=self.is_streaming_manager_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+    def wait_for_streaming_manager_idle(self, max_time_seconds=1000.0, log_interval_seconds=1.0):
+        self._wait_for(func=self.is_streaming_manager_idle, max_time_seconds=max_time_seconds, log_interval_seconds=log_interval_seconds)
 
-    def wait_for_streaming_manager_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
-        yield from self._force_update_streaming_manager_in_editor_script()
-        yield from self._wait_for_in_editor_script(func=self.is_streaming_manager_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+    def wait_for_streaming_manager_idle_in_editor_script(self, max_time_seconds=1000.0, log_interval_seconds=1.0):
+        yield from self._wait_for_in_editor_script(func=self.is_streaming_manager_idle, max_time_seconds=max_time_seconds, log_interval_seconds=log_interval_seconds)
 
-    def wait_for_world_partition_streaming_idle(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
-        self._wait_for(func=self.is_world_partition_streaming_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+    def wait_for_world_partition_streaming_idle(self, max_time_seconds=1000.0, log_interval_seconds=1.0):
+        self._wait_for(func=self.is_world_partition_streaming_idle, max_time_seconds=max_time_seconds, log_interval_seconds=log_interval_seconds)
 
-    def wait_for_world_partition_streaming_idle_in_editor_script(self, max_time_seconds=1000.0, sleep_time_seconds=1.0):
-        yield from self._wait_for_in_editor_script(func=self.is_world_partition_streaming_idle, max_time_seconds=max_time_seconds, sleep_time_seconds=sleep_time_seconds)
+    def wait_for_world_partition_streaming_idle_in_editor_script(self, max_time_seconds=1000.0, log_interval_seconds=1.0):
+        yield from self._wait_for_in_editor_script(func=self.is_world_partition_streaming_idle, max_time_seconds=max_time_seconds, log_interval_seconds=log_interval_seconds)
 
     #
     # Private helper functions
     #
 
-    def _force_update_streaming_manager(self):
-        engine_service = self.entry_point_caller.engine_service
+    def _force_update_engine(self):
+        # Force update async-loading engine systems in the same order as UMoviePipeline::FlushAsyncEngineSystems()
+        world = self.get_world()
+        feature_level = self._sp_world.GetFeatureLevel(World=spear.to_ptr(handle=world))
+        self._sp_material_interface.SubmitRemainingJobsForWorld(World=spear.to_ptr(handle=world), CompileMode="Background")
+        self._sp_streaming_manager.StreamAllResources(TimeLimit=0.1)
+        self._sp_landscape_subsystem.RegenerateGrass(LandscapeSubsystem=self._landscape_subsystem, bFlushGrass=False, bForceSync=True, bOverrideCameraLocations=True, CameraLocations=[])
+        self._sp_renderer_module.LoadPendingVirtualTextureTiles(FeatureLevel=feature_level)
 
-        # Advance two complete frames so that a capture component initialized in the caller's most recent
-        # begin_frame block is guaranteed to be fully initialized and rendering (matching the two extra
-        # frames needed after Initialize()), then force the streaming manager to load all wanted mips and
-        # block until they are resident. We use StreamAllResources(), which recomputes wanted mips, issues
-        # all requests, and blocks on each asset's RequestedMips == ResidentMips, rather than UpdateResourceStreaming()
-        # followed by polling GetNumWantingResources(). That counter is only refreshed on the streaming
-        # system's multi-frame cycle, so a poll can read a stale 0 and stop before the async mip IO has
-        # actually landed.
-        for _ in range(2):
-            with engine_service.begin_frame():
-                pass
-            with engine_service.end_frame():
-                pass
-        with engine_service.begin_frame():
-            self._sp_streaming_manager.StreamAllResources(TimeLimit=0.0)
-        with engine_service.end_frame():
-            pass
-
-    def _force_update_streaming_manager_in_editor_script(self):
-        engine_service = self.entry_point_caller.engine_service
-
-        # See _force_update_streaming_manager() for details.
-        for _ in range(2):
-            with engine_service.begin_frame():
-                pass
-            yield
-            with engine_service.end_frame():
-                pass
-            yield
-        with engine_service.begin_frame():
-            self._sp_streaming_manager.StreamAllResources(TimeLimit=0.0)
-        yield
-        with engine_service.end_frame():
-            pass
-        yield
-
-    def _wait_for(self, func, max_time_seconds, sleep_time_seconds):
+    def _wait_for(self, func, max_time_seconds, log_interval_seconds):
         func_name = ""
         if hasattr(func, "__qualname__"):
             func_name = func.__qualname__
@@ -269,26 +244,50 @@ class AsyncLoadingService(spear.Service):
         engine_service = self.entry_point_caller.engine_service
 
         spear.log(f"Waiting for function to return true: {func_name}")
-        spear.log(f"Waiting for up to {max_time_seconds} seconds, retrying every {sleep_time_seconds} seconds...")
+        spear.log(f"Waiting for up to {max_time_seconds} seconds, logging progress every {log_interval_seconds} seconds...")
 
         start_time_seconds = time.time()
+        last_verbose_time_seconds = start_time_seconds
         elapsed_time_seconds = time.time() - start_time_seconds
 
-        success = False
-        while not success:
+        # Advance a fixed number of frames so that a capture component initialized in the caller's most recent
+        # begin_frame block is fully initialized and rendering before the first idle check (otherwise the first
+        # check could observe a premature idle state before the component is rendering).
+        num_extra_frames = 2
+        engine_service.step(num_frames=num_extra_frames)
+
+        # We don't sleep between iterations; each iteration already does bounded work (advancing frames, which lets
+        # compilation and streaming finalize, and StreamAllResources(...) blocking briefly), so the loop is self-paced.
+        # We require the idle signal to hold for the same fixed number of consecutive frames before stopping: each of
+        # those frames still runs _force_update_engine(), so if a streamed-in level's primitives become render-stated
+        # during one of them, that frame submits their shader jobs and the idle signal resets. We only emit the verbose
+        # idle breakdown at most once per log_interval_seconds to avoid spam.
+        num_consecutive_idle_frames = 0
+        while num_consecutive_idle_frames < num_extra_frames:
             assert time.time() - start_time_seconds < max_time_seconds
+
+            verbose = time.time() - last_verbose_time_seconds >= log_interval_seconds
+            if verbose:
+                last_verbose_time_seconds = time.time()
+
             with engine_service.begin_frame():
-                result = func(verbose=True)
-                success = result[0] if isinstance(result, tuple) else result
+                self._force_update_engine()
+                result = func(verbose=verbose)
+                if isinstance(result, tuple):
+                    idle = result[0]
+                else:
+                    idle = result
             with engine_service.end_frame():
                 pass
-            if not success:
-                time.sleep(sleep_time_seconds)
+            if idle:
+                num_consecutive_idle_frames = num_consecutive_idle_frames + 1
+            else:
+                num_consecutive_idle_frames = 0
             elapsed_time_seconds = time.time() - start_time_seconds
 
         spear.log(f"Finished waiting for function to return true (waited for {elapsed_time_seconds:.2f} seconds).")
 
-    def _wait_for_in_editor_script(self, func, max_time_seconds, sleep_time_seconds):
+    def _wait_for_in_editor_script(self, func, max_time_seconds, log_interval_seconds):
         func_name = ""
         if hasattr(func, "__qualname__"):
             func_name = func.__qualname__
@@ -300,23 +299,38 @@ class AsyncLoadingService(spear.Service):
         engine_service = self.entry_point_caller.engine_service
 
         spear.log(f"Waiting for function to return true: {func_name}")
-        spear.log(f"Waiting for up to {max_time_seconds} seconds, retrying every {sleep_time_seconds} seconds...")
+        spear.log(f"Waiting for up to {max_time_seconds} seconds, logging progress every {log_interval_seconds} seconds...")
 
         start_time_seconds = time.time()
+        last_verbose_time_seconds = start_time_seconds
         elapsed_time_seconds = time.time() - start_time_seconds
 
-        success = False
-        while not success:
+        num_extra_frames = 2
+        yield from engine_service.step_in_editor_script(num_frames=num_extra_frames)
+
+        num_consecutive_idle_frames = 0
+        while num_consecutive_idle_frames < num_extra_frames:
             assert time.time() - start_time_seconds < max_time_seconds
+
+            verbose = time.time() - last_verbose_time_seconds >= log_interval_seconds
+            if verbose:
+                last_verbose_time_seconds = time.time()
+
             with engine_service.begin_frame():
-                result = func(verbose=True)
-                success = result[0] if isinstance(result, tuple) else result
+                self._force_update_engine()
+                result = func(verbose=verbose)
+                if isinstance(result, tuple):
+                    idle = result[0]
+                else:
+                    idle = result
             yield
             with engine_service.end_frame():
                 pass
             yield
-            if not success:
-                time.sleep(sleep_time_seconds)
+            if idle:
+                num_consecutive_idle_frames = num_consecutive_idle_frames + 1
+            else:
+                num_consecutive_idle_frames = 0
             elapsed_time_seconds = time.time() - start_time_seconds
 
         spear.log(f"Finished waiting for function to return true (waited for {elapsed_time_seconds:.2f} seconds).")

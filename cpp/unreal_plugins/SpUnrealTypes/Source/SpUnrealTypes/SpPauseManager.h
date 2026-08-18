@@ -9,7 +9,7 @@
 #include <Engine/World.h>
 #include <GameFramework/Actor.h>
 #include <Kismet/GameplayStatics.h>
-#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
+#include <UObject/ObjectMacros.h>   // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
 #include "SpCore/Log.h"
 
@@ -19,7 +19,7 @@ UCLASS(ClassGroup="SPEAR", HideCategories=(Actor, Collision, Cooking, DataLayers
 class ASpPauseManager : public AActor
 {
     GENERATED_BODY()
-public: 
+public:
     ASpPauseManager()
     {
         SP_LOG_CURRENT_FUNCTION();

@@ -5,9 +5,10 @@
 
 #pragma once
 
-#include <ContentStreaming.h> // IStreamingManager
-#include <HAL/Platform.h>     // int32
+#include <ContentStreaming.h>     // IStreamingManager
+#include <HAL/Platform.h>         // int32
 #include <Kismet/BlueprintFunctionLibrary.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpCore/Assert.h"
 

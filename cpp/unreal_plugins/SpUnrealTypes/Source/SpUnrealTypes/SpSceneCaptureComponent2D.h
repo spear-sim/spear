@@ -92,7 +92,7 @@ protected:
     void postRenderViewFamily_RenderThread(FRDGBuilder& graph_builder, FSceneViewFamily& view_family) override;
 };
 
-UENUM()
+UENUM(BlueprintType)
 enum class ESpBufferingMode : uint8
 {
     SingleBuffered = 0,
@@ -144,8 +144,8 @@ public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     bool IsInitialized();
 
-    UFUNCTION(Category="SPEAR") // uint64 not supported for BlueprintCallable, can't be const
-    TArray<uint64> GetViewStates(); // FSceneViewStateInterface is not a UCLASS so we can't return FSceneViewStateInterface*, so we return uint64 instead
+    UFUNCTION()
+    TArray<uint64> GetViewStates(); // uint64 not supported for BlueprintCallable, can't be const, FSceneViewStateInterface is not a UCLASS so we can't return FSceneViewStateInterface* and we return uint64 instead
 
     // Functions for setting deferred state that gets consumed in an FSceneViewExtension callback
     UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")

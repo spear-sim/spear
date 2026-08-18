@@ -5,9 +5,10 @@
 
 #pragma once
 
-#include <Editor.h>              // GEditor
+#include <Editor.h>               // GEditor
 #include <Kismet/BlueprintFunctionLibrary.h>
-#include <LevelEditorViewport.h> // FLevelEditorViewportClient, GCurrentLevelEditingViewportClient
+#include <LevelEditorViewport.h>  // FLevelEditorViewportClient, GCurrentLevelEditingViewportClient
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY, USTRUCT
 
 #include "SpCore/Assert.h"
 

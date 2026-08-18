@@ -7,6 +7,7 @@
 
 #include <Kismet/BlueprintFunctionLibrary.h>
 #include <Misc/App.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpApp.generated.h"
 
@@ -14,7 +15,7 @@ UCLASS()
 class USpApp : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
-public: 
+public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static bool IsBenchmarking()
     {
