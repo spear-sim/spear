@@ -570,7 +570,10 @@ if __name__ == "__main__":
             material = unreal.load_asset(name=component_desc["material_path"])
             sp_scene_capture_component_2d.set_editor_property(name="material", value=material)
 
-        # SpSceneCaptureComponent2D properties for texture render target (optional)
+        # SpSceneCaptureComponent2D properties (optional)
+
+        if "mesh_proxy_component_manager_class" in component_desc:
+            sp_scene_capture_component_2d.set_editor_property(name="mesh_proxy_component_manager_class", value=component_desc["mesh_proxy_component_manager_class"])
 
         if "override_texture_render_target_format" in component_desc:
             sp_scene_capture_component_2d.set_editor_property(name="override_texture_render_target_format", value=component_desc["override_texture_render_target_format"])
@@ -592,9 +595,6 @@ if __name__ == "__main__":
 
         if "fov_angle" in component_desc:
             sp_scene_capture_component_2d.set_editor_property(name="fov_angle", value=component_desc["fov_angle"])
-
-        if "mesh_proxy_component_manager_class" in component_desc:
-            sp_scene_capture_component_2d.set_editor_property(name="mesh_proxy_component_manager_class", value=component_desc["mesh_proxy_component_manager_class"])
 
         # SceneCaptureComponent properties (optional)
 

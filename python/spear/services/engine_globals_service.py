@@ -68,9 +68,9 @@ class EngineGlobalsService(spear.Service):
     # from the game thread.
     #
 
-    def is_async_loading(self):
-        return self.entry_point_caller.call_on_game_thread("is_async_loading", None)
-
     def get_engine(self, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         result = self.entry_point_caller.call_on_worker_thread("get_engine", None)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
+
+    def is_async_loading(self):
+        return self.entry_point_caller.call_on_game_thread("is_async_loading", None)

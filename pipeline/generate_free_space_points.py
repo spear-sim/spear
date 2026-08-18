@@ -40,7 +40,7 @@ inside_tolerance = 0.01
 #     final_image_znear          = 10.0    # Unreal's default near clipping plane GNearClippingPlane, in cm.
 #
 # render_image sets the capture component's horizontal field of view to match the viewport, so we set ours the same
-# way, following rendering_service.align_camera_with_viewport. For a standalone game the viewport field of view and
+# way, following viewport_service.align_camera_with_viewport. For a standalone game the viewport field of view and
 # aspect ratio are Unreal's default camera field of view and aspect ratio (the ViewTarget POV's fOV and aspectRatio):
 #
 #     viewport_fov_degrees       = 90.0     # Unreal's default camera field of view.
