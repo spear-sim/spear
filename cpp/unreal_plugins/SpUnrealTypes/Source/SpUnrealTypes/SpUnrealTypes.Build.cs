@@ -3,6 +3,7 @@
 // Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
+using System;          // Exception
 using UnrealBuildTool; // ReadOnlyTargetRules
 
 public class SpUnrealTypes : SpModuleRules
@@ -23,13 +24,18 @@ public class SpUnrealTypes : SpModuleRules
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         if (target.Platform == UnrealTargetPlatform.Win64) {
-            PrivateDependencyModuleNames.AddRange(new string[] {"D3D12RHI"});
+            PrivateDependencyModuleNames.AddRange(new string[] {"D3D11RHI", "D3D12RHI", "VulkanRHI"});
+            AddEngineThirdPartyPrivateStaticDependencies(target, "DX11");
             AddEngineThirdPartyPrivateStaticDependencies(target, "DX12");
-        }
-
-        if (target.Platform == UnrealTargetPlatform.Win64 || target.Platform == UnrealTargetPlatform.Linux) {
+            AddEngineThirdPartyPrivateStaticDependencies(target, "Vulkan");
+        } else if (target.Platform == UnrealTargetPlatform.Linux) {
             PrivateDependencyModuleNames.AddRange(new string[] {"VulkanRHI"});
             AddEngineThirdPartyPrivateStaticDependencies(target, "Vulkan");
+        } else if (target.Platform == UnrealTargetPlatform.Mac) {
+            PrivateDependencyModuleNames.AddRange(new string[] {"MetalRHI"});
+            AddEngineThirdPartyPrivateStaticDependencies(target, "MetalCPP");
+        } else {
+            throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + target.Platform);
         }
     }
 }
