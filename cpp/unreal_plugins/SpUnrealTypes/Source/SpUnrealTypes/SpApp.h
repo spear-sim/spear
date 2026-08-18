@@ -15,7 +15,7 @@ UCLASS()
 class USpApp : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
-public: 
+public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static bool IsBenchmarking()
     {

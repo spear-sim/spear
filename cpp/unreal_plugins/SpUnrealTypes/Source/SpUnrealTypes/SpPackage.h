@@ -17,7 +17,7 @@ UCLASS()
 class USpPackage : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
-public: 
+public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static bool IsDirty(UPackage* Package)
     {

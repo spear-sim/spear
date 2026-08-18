@@ -21,7 +21,7 @@ UCLASS()
 class USpNavigationData : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
-public: 
+public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static FNavDataConfig GetConfig(const ANavigationData* NavigationData)
     {

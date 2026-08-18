@@ -37,7 +37,7 @@ UCLASS(ClassGroup="SPEAR", Config=Spear, HideCategories=(Actor, Collision, Cooki
 class ASpDebugManager : public AActor
 {
     GENERATED_BODY()
-public: 
+public:
     ASpDebugManager();
     ~ASpDebugManager() override;
 

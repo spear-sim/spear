@@ -17,7 +17,7 @@ UCLASS()
 class USpPCGSubsystem : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
-public: 
+public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     bool IsInitialized(UPCGSubsystem* PCGSubsystem)
     {

@@ -146,7 +146,7 @@ if __name__ == "__main__":
         # # force Cinematic rendering quality for captured images (except use Epic quality for GI otherwise Lumen's internally allocated textures may be too big)
         # sp_scalability = game.get_unreal_object(uclass="USpScalability")
         # previous_quality_levels = sp_scalability.GetQualityLevels()
-        # return_values = sp_scalability.SetQualityLevelsFromSingleQualityLevelRelativeToMax(QualityLevels=previous_quality_levels, Value=0, as_dict=True)
+        # return_values = sp_scalability.SetFromSingleQualityLevelRelativeToMax(QualityLevels=previous_quality_levels, Value=0, as_dict=True)
         # cinematic_quality_levels = return_values["QualityLevels"]
         # cinematic_quality_levels["globalIlluminationQuality"] = "Epic"
         # game.rendering_quality_service.log_quality_levels(label="Previous quality levels:", quality_levels=previous_quality_levels)

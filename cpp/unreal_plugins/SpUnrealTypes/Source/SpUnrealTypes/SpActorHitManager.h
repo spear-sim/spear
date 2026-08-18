@@ -44,7 +44,7 @@ UCLASS()
 class ASpActorHitManager : public AActor
 {
     GENERATED_BODY()
-public: 
+public:
     ASpActorHitManager();
     ~ASpActorHitManager() = default;
 

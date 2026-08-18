@@ -17,7 +17,7 @@ UCLASS()
 class USpLevelStreaming : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
-public: 
+public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static bool IsStreamingStatePending(ULevelStreaming* LevelStreaming)
     {

@@ -15,7 +15,7 @@ UCLASS()
 class USpAssetCompilingManager : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
-public: 
+public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static int GetNumRemainingAssets() { return FAssetCompilingManager::Get().GetNumRemainingAssets(); }
 

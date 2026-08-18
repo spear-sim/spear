@@ -19,7 +19,7 @@ UCLASS(ClassGroup="SPEAR", HideCategories=(Actor, Collision, Cooking, DataLayers
 class ASpPauseManager : public AActor
 {
     GENERATED_BODY()
-public: 
+public:
     ASpPauseManager()
     {
         SP_LOG_CURRENT_FUNCTION();

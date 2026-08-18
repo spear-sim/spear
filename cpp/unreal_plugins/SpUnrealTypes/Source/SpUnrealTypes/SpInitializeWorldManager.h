@@ -251,7 +251,7 @@ UCLASS(ClassGroup="SPEAR", HideCategories=(Actor, Collision, Cooking, DataLayers
 class ASpInitializeWorldManager : public AActor
 {
     GENERATED_BODY()
-public: 
+public:
     ASpInitializeWorldManager();
     ~ASpInitializeWorldManager() override;
 

@@ -18,7 +18,7 @@ UCLASS()
 class USpGameViewportClient : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
-public: 
+public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static void GetViewportSize(UGameViewportClient* GameViewportClient, FVector2D& ViewportSize)
     {

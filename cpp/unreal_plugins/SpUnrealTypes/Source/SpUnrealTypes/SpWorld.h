@@ -23,7 +23,7 @@ UCLASS()
 class USpWorld : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
-public: 
+public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static ESpRHIFeatureLevel GetFeatureLevel(UWorld* World)
     {

@@ -18,7 +18,7 @@ UCLASS()
 class USpSceneViewStateInterface : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
-public: 
+public:
     UFUNCTION()
     static uint32 GetPathTracingSampleIndex(uint64 ViewState) // uint64 not supported for BlueprintCallable
     {
