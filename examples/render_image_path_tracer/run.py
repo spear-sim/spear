@@ -29,14 +29,14 @@ visualize_funcs = {
     "PathTracingDenoisedRadiance": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0),
     "PathTracingNormal":           lambda data : np.clip((1.0 + data[:,:,[0,1,2]])/2.0, 0.0, 1.0),
     "PathTracingRadiance":         lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0),
-    "PathTracingVariance":         lambda data : ((x := data[:,:,0].astype(np.float32)) - x.min())/(x.max() - x.min() + 1e-8),
-    "SceneDepth":                  lambda data : ((x := data[:,:,0].astype(np.float32)) - x.min())/(x.max() - x.min() + 1e-8)
+    "PathTracingVariance":         lambda data : (data[:,:,0] - np.min(data[:,:,0])) / (np.max(data[:,:,0]) - np.min(data[:,:,0]) + 1e-8),
+    "SceneDepth":                  lambda data : np.clip((data[:,:,0] - np.min(data[:,:,0])) / np.minimum((np.max(data[:,:,0]) - np.min(data[:,:,0])), 750.0), 0.0, 1.0) # normalize to max depth of 750 cm
 }
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--denoiser", default="")
 parser.add_argument("--num-bounces", type=int, default=8)
-parser.add_argument("--num-frames", type=int, default=64)
+parser.add_argument("--num-frames", type=int, default=256)
 parser.add_argument("--num-warmup-frames", type=int, default=4)
 parser.add_argument("--filter-width", type=float, default=3.0)
 parser.add_argument("--teaser", action="store_true")
@@ -83,6 +83,7 @@ if __name__ == "__main__":
     with instance.begin_frame():
 
         # force high-res textures for captured images
+        game.console_service.set(name="r.Streaming.FramesForFullUpdate", value=0)
         game.console_service.set(name="r.Streaming.FullyLoadUsedTextures", value=1)
 
         # When path tracing begins, Unreal begins asynchronously building various Nanite data structures, and
