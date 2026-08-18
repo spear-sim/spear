@@ -6,6 +6,7 @@
 #pragma once
 
 #include <Engine/World.h>
+#include <HAL/Platform.h>                 // uint8
 #include <Kismet/BlueprintFunctionLibrary.h>
 #include <MaterialShaderPrecompileMode.h> // EMaterialShaderPrecompileMode
 #include <Materials/MaterialInterface.h>  // UMaterialInterface
@@ -20,8 +21,8 @@
 // This enum corresponds to EMaterialShaderPrecompileMode declared in Engine/Source/Runtime/Engine/Public/MaterialShaderPrecompileMode.h
 //
 
-UENUM()
-enum class ESpMaterialShaderPrecompileMode
+UENUM(BlueprintType)
+enum class ESpMaterialShaderPrecompileMode : uint8
 {
     None        = Unreal::getConstEnumValue(EMaterialShaderPrecompileMode::None),
     Background  = Unreal::getConstEnumValue(EMaterialShaderPrecompileMode::Background),

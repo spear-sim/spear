@@ -92,7 +92,7 @@ protected:
     void postRenderViewFamily_RenderThread(FRDGBuilder& graph_builder, FSceneViewFamily& view_family) override;
 };
 
-UENUM()
+UENUM(BlueprintType)
 enum class ESpBufferingMode : uint8
 {
     SingleBuffered = 0,

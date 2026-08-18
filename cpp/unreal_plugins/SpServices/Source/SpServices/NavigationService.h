@@ -37,7 +37,7 @@
 
 #include "NavigationService.generated.h"
 
-UENUM()
+UENUM() // not intended to be Blueprint-accessible
 enum class ESpPathFindingMode
 {
     Regular      = Unreal::getConstEnumValue(EPathFindingMode::Type::Regular),

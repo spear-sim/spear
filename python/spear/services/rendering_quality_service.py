@@ -19,10 +19,12 @@ class RenderingQualityService(spear.Service):
 
         self._console_service = console_service
         self._sp_scalability = None
+        self._sp_quality_levels_utils = None
         self._restore_stack = []
 
     def initialize(self):
         self._sp_scalability = self.get_unreal_object(uclass="USpScalability")
+        self._sp_quality_levels_utils = self.get_unreal_object(uclass="USpQualityLevelsUtils")
 
     #
     # set_mrq_rendering_quality(...) mirrors UMoviePipelineGameOverrideSetting::ApplyCVarSettings(bOverrideValues=true).
@@ -122,10 +124,10 @@ class RenderingQualityService(spear.Service):
         # Cache previous cvar values.
         previous_cvar_descs = [ {**cvar_desc, "value": self._get_cvar_value(cvar_desc=cvar_desc)} for cvar_desc in cvar_descs ]
 
-        # bCinematicQualitySettings and bOverrideValues: compute the new Scalability quality levels (if any).
+        # bCinematicQualitySettings and bOverrideValues
         cinematic_quality_levels = None
         if cinematic_quality_settings:
-            cinematic_quality_levels = self._sp_scalability.GetQualityLevelsFromSingleQualityLevelRelativeToMax(SpQualityLevels=previous_quality_levels, Value=0)
+            cinematic_quality_levels = self._sp_quality_levels_utils.GetQualityLevelsFromSingleQualityLevel(QualityLevel="Cinematic")
 
         self.log_quality_levels(label="Previous quality levels:", quality_levels=previous_quality_levels)
         self.log_cvar_descs(label="Previous cvars:", cvar_descs=previous_cvar_descs)
@@ -133,7 +135,7 @@ class RenderingQualityService(spear.Service):
         self.log_cvar_descs(label="New cvars:", cvar_descs=cvar_descs)
 
         if cinematic_quality_levels is not None:
-            self._sp_scalability.SetQualityLevels(SpQualityLevels=cinematic_quality_levels)
+            self._sp_scalability.SetQualityLevels(QualityLevels=cinematic_quality_levels)
         for cvar_desc in cvar_descs:
             self._console_service.set(name=cvar_desc["name"], value=cvar_desc["value"], set_with_current_priority=True)
 
@@ -161,7 +163,7 @@ class RenderingQualityService(spear.Service):
         for cvar_desc in restore_data["cvar_descs"]:
             self._console_service.set(name=cvar_desc["name"], value=cvar_desc["value"], set_with_current_priority=True)
         if restore_data["quality_levels"] is not None:
-            self._sp_scalability.SetQualityLevels(SpQualityLevels=restore_data["quality_levels"])
+            self._sp_scalability.SetQualityLevels(QualityLevels=restore_data["quality_levels"])
 
 
     def log_quality_levels(self, label, quality_levels):

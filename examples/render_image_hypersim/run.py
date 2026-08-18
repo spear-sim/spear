@@ -143,17 +143,17 @@ if __name__ == "__main__":
     # initialize actors and components
     with instance.begin_frame():
 
-        # # force Cinematic rendering quality for captured images (except use Epic quality for GI otherwise Lumen's internally allocated textures may be too big)
+        # # force Cinematic rendering quality for captured images (except use Epic quality for GI otherwise Lumen's internally allocated textures might be too big depending on viewport size)
         # sp_scalability = game.get_unreal_object(uclass="USpScalability")
+        # sp_quality_levels_utils = game.get_unreal_object(uclass="USpQualityLevelsUtils")
         # previous_quality_levels = sp_scalability.GetQualityLevels()
-        # return_values = sp_scalability.SetFromSingleQualityLevelRelativeToMax(QualityLevels=previous_quality_levels, Value=0, as_dict=True)
-        # cinematic_quality_levels = return_values["QualityLevels"]
-        # cinematic_quality_levels["globalIlluminationQuality"] = "Epic"
+        # cinematic_quality_levels = sp_quality_levels_utils.GetQualityLevelsFromSingleQualityLevel(QualityLevel="Cinematic")
+        # cinematic_quality_levels_epic_gi = sp_quality_levels_utils.SetGlobalIlluminationQuality(QualityLevels=cinematic_quality_levels, QualityLevel="Epic", as_dict=True)["QualityLevels"]
         # game.rendering_quality_service.log_quality_levels(label="Previous quality levels:", quality_levels=previous_quality_levels)
-        # game.rendering_quality_service.log_quality_levels(label="New quality levels:", quality_levels=cinematic_quality_levels)
-        # sp_scalability.SetQualityLevels(QualityLevels=cinematic_quality_levels)
+        # game.rendering_quality_service.log_quality_levels(label="New quality levels:", quality_levels=cinematic_quality_levels_epic_gi)
+        # sp_scalability.SetQualityLevels(QualityLevels=cinematic_quality_levels_epic_gi)
 
-        # # we set cinematic_quality_settings=False because we already customize the quality levels above
+        # # we set cinematic_quality_settings=False because we already do our own customization above
         # game.rendering_quality_service.set_default_mrq_rendering_quality(cinematic_quality_settings=False)
 
         # initialize segmentation service

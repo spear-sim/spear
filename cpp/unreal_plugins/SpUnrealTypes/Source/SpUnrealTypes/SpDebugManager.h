@@ -14,6 +14,7 @@
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Engine/EngineTypes.h>          // EEndPlayReason
 #include <GameFramework/Actor.h>
+#include <HAL/Platform.h>                // uint8
 #include <Math/Matrix.h>                 // FMatrix
 #include <Math/Vector.h>
 #include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS, UENUM, UFUNCTION, UPROPERTY
@@ -26,8 +27,8 @@
 
 class UObject;
 
-UENUM()
-enum class EDebugManagerEnum
+UENUM(BlueprintType)
+enum class EDebugManagerEnum : uint8
 {
     Hello,
     World

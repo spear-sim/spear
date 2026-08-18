@@ -19,7 +19,7 @@
 
 class ANavigationData;
 
-// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value, BlueprintType enums must have a 0 entry
 UENUM(Flags)
 enum class ESpNavigationBuildLock : uint8
 {
@@ -31,8 +31,8 @@ enum class ESpNavigationBuildLock : uint8
 };
 ENUM_CLASS_FLAGS(ESpNavigationBuildLock); // required if combining values using bitwise operations
 
-UENUM()
-enum class ESpLockRemovalRebuildAction
+UENUM(BlueprintType)
+enum class ESpLockRemovalRebuildAction : uint8
 {
     Rebuild              = Unreal::getConstEnumValue(UNavigationSystemV1::ELockRemovalRebuildAction::Rebuild),
     RebuildIfNotInEditor = Unreal::getConstEnumValue(UNavigationSystemV1::ELockRemovalRebuildAction::RebuildIfNotInEditor),

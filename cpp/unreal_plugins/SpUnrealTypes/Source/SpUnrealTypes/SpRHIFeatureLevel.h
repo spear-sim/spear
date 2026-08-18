@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <HAL/Platform.h>         // uint8
 #include <RHIFeatureLevel.h>      // ERHIFeatureLevel
 #include <UObject/ObjectMacros.h> // UENUM
 
@@ -16,8 +17,8 @@
 // This enum corresponds to ERHIFeatureLevel::Type declared in Engine/Source/Runtime/RHI/Public/RHIFeatureLevel.h
 //
 
-UENUM()
-enum class ESpRHIFeatureLevel
+UENUM(BlueprintType)
+enum class ESpRHIFeatureLevel : uint8
 {
     ES2_REMOVED = Unreal::getConstEnumValue(ERHIFeatureLevel::ES2_REMOVED),
     ES3_1       = Unreal::getConstEnumValue(ERHIFeatureLevel::ES3_1),

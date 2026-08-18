@@ -69,7 +69,7 @@ struct FObjectInstancingGraph;
 // This enum corresponds to EStructFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/Class.h
 //
 
-// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value, not intended to be Blueprint-accessible
 UENUM(Flags)
 enum class ESpStructFlags
 {
@@ -108,7 +108,7 @@ ENUM_CLASS_FLAGS(ESpStructFlags); // required if combining values using bitwise 
 // This enum corresponds to EClassFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectMacros.h
 //
 
-// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value, not intended to be Blueprint-accessible
 UENUM(Flags)
 enum class ESpClassFlags : uint64
 {
@@ -152,7 +152,7 @@ ENUM_CLASS_FLAGS(ESpClassFlags); // required if combining values using bitwise o
 // This enum corresponds to EPropertyFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectMacros.h
 //
 
-// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value, not intended to be Blueprint-accessible
 UENUM(Flags)
 enum class ESpPropertyFlags : uint64
 {
@@ -234,7 +234,7 @@ ENUM_CLASS_FLAGS(ESpPropertyFlags); // required if combining values using bitwis
 // This enum corresponds to EFieldIterationFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/UnrealType.h
 //
 
-// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value, not intended to be Blueprint-accessible
 UENUM(Flags)
 enum class ESpFieldIterationFlags
 {
@@ -251,7 +251,7 @@ ENUM_CLASS_FLAGS(ESpFieldIterationFlags); // required if combining values using 
 // This enum corresponds to EFunctionFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/Script.h
 //
 
-// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value, not intended to be Blueprint-accessible
 UENUM(Flags)
 enum class ESpFunctionFlags : uint32
 {
@@ -294,7 +294,7 @@ ENUM_CLASS_FLAGS(ESpFunctionFlags); // required if combining values using bitwis
 // This enum corresponds to EIncludeSuperFlag::Type declared in Engine/Source/Runtime/CoreUObject/Public/UObject/Class.h
 //
 
-UENUM()
+UENUM() // not intended to be Blueprint-accessible
 enum class ESpIncludeSuperFlag
 {
     ExcludeSuper = Unreal::getConstEnumValue(EIncludeSuperFlag::Type::ExcludeSuper),
@@ -305,7 +305,7 @@ enum class ESpIncludeSuperFlag
 // This enum corresponds to EObjectFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectMacros.h
 //
 
-// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value, not intended to be Blueprint-accessible
 UENUM(Flags)
 enum class ESpObjectFlags
 {
@@ -346,7 +346,7 @@ ENUM_CLASS_FLAGS(ESpObjectFlags); // required if combining values using bitwise 
 // This enum corresponds to ELoadFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectMacros.h
 //
 
-// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value, not intended to be Blueprint-accessible
 UENUM(Flags)
 enum class ESpLoadFlags
 {
@@ -378,7 +378,7 @@ ENUM_CLASS_FLAGS(ESpLoadFlags); // required if combining values using bitwise op
 // This enum corresponds to EConsoleVariableFlags declared in Engine/Source/Runtime/Core/Public/HAL/IConsoleManager.h
 //
 
-// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value, not intended to be Blueprint-accessible
 UENUM(Flags)
 enum class ESpConsoleVariableFlags
 {
@@ -417,7 +417,7 @@ ENUM_CLASS_FLAGS(ESpConsoleVariableFlags); // required if combining values using
 // This enum corresponds to ESpawnActorNameMode declared in Engine/Source/Runtime/Engine/Classes/Engine/World.h
 //
 
-UENUM()
+UENUM() // not intended to be Blueprint-accessible
 enum class ESpSpawnActorNameMode
 {
     Required_Fatal              = Unreal::getConstEnumValue(FActorSpawnParameters::ESpawnActorNameMode::Required_Fatal),
