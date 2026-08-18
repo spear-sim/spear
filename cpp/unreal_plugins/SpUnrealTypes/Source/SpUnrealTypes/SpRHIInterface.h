@@ -6,17 +6,59 @@
 #pragma once
 
 #include <Kismet/BlueprintFunctionLibrary.h>
+#include <Containers/Array.h>  // TArray
 #include <Containers/UnrealString.h>
 #include <DynamicRHI.h>        // GDynamicRHI
-#include <HAL/Platform.h>      // int32, uint32, uint64
+#include <HAL/Platform.h>      // uint64
 #include <RHI.h>               // IsRHIDevice*
 #include <RHIDefinitions.h>    // ERHIInterfaceType
 #include <RHIFeatureLevel.h>   // GMaxRHIFeatureLevel
-#include <RHIGlobals.h>        // Global IDs and limits
 #include <RHIShaderPlatform.h> // GMaxRHIShaderPlatform
 #include <RHIStrings.h>        // LexToString
 
+#include "SpCore/Unreal.h"
+#include "SpCore/Assert.h"     // SP_ASSERT
+#include "SpRHIGlobals.h"
+
 #include "SpRHIInterface.generated.h"
+
+UENUM()
+enum class ESpRHIInterfaceType
+{
+	Hidden = Unreal::getConstEnumValue(ERHIInterfaceType::Hidden),
+	Null = Unreal::getConstEnumValue(ERHIInterfaceType::Null),
+	D3D11 = Unreal::getConstEnumValue(ERHIInterfaceType::D3D11),
+	D3D12 = Unreal::getConstEnumValue(ERHIInterfaceType::D3D12),
+	Vulkan = Unreal::getConstEnumValue(ERHIInterfaceType::Vulkan),
+	Metal = Unreal::getConstEnumValue(ERHIInterfaceType::Metal),
+	Agx = Unreal::getConstEnumValue(ERHIInterfaceType::Agx),
+	OpenGL = Unreal::getConstEnumValue(ERHIInterfaceType::OpenGL),
+};
+
+USTRUCT()
+struct FSpRHIMemoryStats
+{
+    GENERATED_BODY()
+
+    UPROPERTY()
+    bool IsValid = false;
+
+    UPROPERTY()
+    uint64 BudgetBytes = 0;
+
+    UPROPERTY()
+    uint64 UsedBytes = 0;
+
+    UPROPERTY()
+    uint64 DedicatedBytes = 0;
+
+    UPROPERTY()
+    uint64 SystemBudgetBytes = 0;
+
+    UPROPERTY()
+    uint64 SystemUsedBytes = 0;
+};
+
 
 USTRUCT()
 struct FSpRHIResourceStats
@@ -73,15 +115,17 @@ class USpRHIInterface : public UBlueprintFunctionLibrary
 public:
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FString GetRHIName()
+    static FString GetName()
     {
+        SP_ASSERT(GDynamicRHI);
         return GDynamicRHI->GetName();
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FString GetGPUName()
+    static ESpRHIInterfaceType GetInterfaceType()
     {
-        return GRHIAdapterName;
+        SP_ASSERT(GDynamicRHI);
+        return static_cast<ESpRHIInterfaceType>(GDynamicRHI->GetInterfaceType());
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
@@ -109,113 +153,22 @@ public:
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static bool IsInterfaceDX11()
+    static ESpShaderPlatform GetShaderPlatform()
     {
-        return GDynamicRHI->GetInterfaceType() == ERHIInterfaceType::D3D11;
+        return static_cast<ESpShaderPlatform>(GMaxRHIShaderPlatform);
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static bool IsInterfaceDX12()
+    static ESpRHIFeatureLevel GetFeatureLevel()
     {
-        return GDynamicRHI->GetInterfaceType() == ERHIInterfaceType::D3D12;
+        return static_cast<ESpRHIFeatureLevel>(GMaxRHIFeatureLevel);
     }
 
-    UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static bool IsInterfaceVulkan()
-    {
-        return GDynamicRHI->GetInterfaceType() == ERHIInterfaceType::Vulkan;
-    }
-
+    // Queries the active RHI backend for a summary of GPU and system memory budget and usage.
     UFUNCTION(Category="SPEAR")
-    static uint32 GetVendorId()
-    {
-        return GRHIVendorId;
-    }
+    static FSpRHIMemoryStats GetMemoryStats();
 
-    UFUNCTION(Category="SPEAR")
-    static uint32 GetDeviceId()
-    {
-        return GRHIDeviceId;
-    }
-
-    UFUNCTION(Category="SPEAR")
-    static uint32 GetDeviceRevision()
-    {
-        return GRHIDeviceRevision;
-    }
-
-    // The vendor's raw internal build identifier for the driver (format is vendor-specific).
-    UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FString GetInternalDriverVersion()
-    {
-        return GRHIAdapterInternalDriverVersion;
-    }
-
-    // The human-readable driver version shown in vendor control panels (e.g. "31.0.15.3623").
-    UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FString GetUserDriverVersion()
-    {
-        return GRHIAdapterUserDriverVersion;
-    }
-
-    UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FString GetDriverDate()
-    {
-        return GRHIAdapterDriverDate;
-    }
-
-    // Whether Unreal has flagged the currently installed driver as known-bad for this GPU.
-    UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static bool IsDriverOnDenyList()
-    {
-        return GRHIAdapterDriverOnDenyList;
-    }
-
-    UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static bool SupportsRayTracing()
-    {
-        return GRHISupportsRayTracing;
-    }
-
-    UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static int32 GetMaxTextureDimensions()
-    {
-        return GMaxTextureDimensions;
-    }
-
-    UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FString GetShaderPlatformName()
-    {
-        return LexToString(GMaxRHIShaderPlatform);
-    }
-
-    UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FString GetFeatureLevelName()
-    {
-        return LexToString(GMaxRHIFeatureLevel);
-    }
-
-    // Rough estimate of the total VRAM budget our process can allocate.
-    UFUNCTION(Category="SPEAR")
-    static uint64 GetTotalVideoMemoryBytes();
-
-    // How much of GetTotalVideoMemoryBytes() is currently in use by this process.
-    UFUNCTION(Category="SPEAR")
-    static uint64 GetUsedVideoMemoryBytes();
-
-    // The fixed, total amount of dedicated VRAM on the GPU.
-    UFUNCTION(Category="SPEAR")
-    static uint64 GetTotalPhysicalVideoMemoryBytes();
-
-    // Total amount of the GPU-visible RAM.
-    UFUNCTION(Category="SPEAR")
-    static uint64 GetTotalSystemMemoryBytes();
-
-    // How much of GetTotalSystemMemoryBytes() is currently in use by this process.
-    UFUNCTION(Category="SPEAR")
-    static uint64 GetUsedSystemMemoryBytes();
-
-    // Takes a fresh snapshot of all currently tracked RHI.
+    // Takes a fresh snapshot of all currently tracked RHI resources.
     UFUNCTION(Category="SPEAR")
     static TArray<FSpRHIResourceStats> GetResourceStats();
 };

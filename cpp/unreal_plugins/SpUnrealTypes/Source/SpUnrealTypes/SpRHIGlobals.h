@@ -13,7 +13,7 @@
 
 #include "SpRHIGlobals.generated.h"
 
-// TEMP
+// WinSock2.h workaround
 #ifdef PF_MAX
 #undef PF_MAX
 #endif
