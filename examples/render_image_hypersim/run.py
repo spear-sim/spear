@@ -143,7 +143,7 @@ if __name__ == "__main__":
     # initialize actors and components
     with instance.begin_frame():
 
-        # # force Cinematic rendering quality for captured images (except use Epic quality for GI otherwise Lumen's internally allocated textures might be too big depending on viewport size)
+        # # force Cinematic rendering quality levels for captured images (except use Epic quality for GI otherwise Lumen's internally allocated textures might be too big depending on viewport size)
         # sp_scalability = game.get_unreal_object(uclass="USpScalability")
         # sp_quality_levels_utils = game.get_unreal_object(uclass="USpQualityLevelsUtils")
         # previous_quality_levels = sp_scalability.GetQualityLevels()
@@ -400,7 +400,7 @@ if __name__ == "__main__":
         # # restore rendering quality
         # game.rendering_quality_service.restore_rendering_quality()
 
-        # # restore quality settings
+        # # restore quality levels from our own customization
         # game.rendering_quality_service.log_quality_levels(label="Restoring quality levels:", quality_levels=previous_quality_levels)
         # sp_scalability.SetQualityLevels(QualityLevels=previous_quality_levels)
 
