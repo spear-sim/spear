@@ -21,6 +21,7 @@
 #include <NavMesh/RecastNavMesh.h>
 #include <UObject/Class.h>                 // UClass
 #include <UObject/Object.h>                // UObject
+#include <UObject/ObjectMacros.h>          // UENUM
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"

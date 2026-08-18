@@ -8,7 +8,8 @@
 #include <string>
 
 #include <Editor/UnrealEdEngine.h>
-#include <HAL/Platform.h> // TCHAR
+#include <HAL/Platform.h>         // TCHAR
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"

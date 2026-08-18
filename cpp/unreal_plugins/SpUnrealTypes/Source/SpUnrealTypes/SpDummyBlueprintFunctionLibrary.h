@@ -7,6 +7,7 @@
 
 #include <Containers/UnrealString.h> // FString
 #include <Kismet/BlueprintFunctionLibrary.h>
+#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpDummyBlueprintFunctionLibrary.generated.h"
 

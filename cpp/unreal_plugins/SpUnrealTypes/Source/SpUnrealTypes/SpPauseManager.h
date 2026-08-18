@@ -9,7 +9,7 @@
 #include <Engine/World.h>
 #include <GameFramework/Actor.h>
 #include <Kismet/GameplayStatics.h>
-#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
+#include <UObject/ObjectMacros.h>   // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
 #include "SpCore/Log.h"
 

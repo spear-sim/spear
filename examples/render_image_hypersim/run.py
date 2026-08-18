@@ -68,7 +68,8 @@ component_descs = \
         "spatial_supersampling_factor": 1,
         "read_primary_pixel_data": True,
         "user_scene_texture_names": ["MaterialAO", "Metallic", "Roughness", "SpViewNormal", "SpDepthMeters", "SpWorldPosition", "SpecularForLighting"],
-        "visualize_funcs": {
+        "visualize_funcs":
+        {
             "data":                lambda data : data[:,:,[2,1,0]], # BGRA to RGB
             "MaterialAO":          lambda data : np.clip(data[:,:,[0,0,0]], 0.0, 1.0),
             "Metallic":            lambda data : np.clip(data[:,:,[0,0,0]], 0.0, 1.0),
@@ -84,7 +85,8 @@ component_descs = \
         "spatial_supersampling_factor": 2,
         "read_primary_pixel_data": False,
         "user_scene_texture_names": ["PostProcessInput2"],
-        "visualize_funcs": {
+        "visualize_funcs":
+        {
             "PostProcessInput2": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
         }
     },
@@ -93,7 +95,8 @@ component_descs = \
         "spatial_supersampling_factor": 2,
         "read_primary_pixel_data": False,
         "user_scene_texture_names": ["DiffuseColor", "PostProcessInput2"],
-        "visualize_funcs": {
+        "visualize_funcs":
+        {
             "DiffuseColor":      lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0),
             "PostProcessInput2": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
         }
@@ -103,7 +106,8 @@ component_descs = \
         "spatial_supersampling_factor": 2,
         "read_primary_pixel_data": False,
         "user_scene_texture_names": ["DiffuseColor", "PostProcessInput2"],
-        "visualize_funcs": {
+        "visualize_funcs":
+        {
             "DiffuseColor":      lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0),
             "PostProcessInput2": lambda data : np.clip(data[:,:,[0,1,2]], 0.0, 1.0)
         }
@@ -113,7 +117,8 @@ component_descs = \
         "spatial_supersampling_factor": 1,
         "read_primary_pixel_data": True,
         "user_scene_texture_names": [],
-        "visualize_funcs": {
+        "visualize_funcs":
+        {
             "data": lambda data : data[:,:,[2,1,0]] # BGRA to RGB
         }
     },
@@ -138,8 +143,18 @@ if __name__ == "__main__":
     # initialize actors and components
     with instance.begin_frame():
 
-        # force high-res textures for captured images
-        game.console_service.set(name="r.Streaming.FullyLoadUsedTextures", value=1)
+        # # force Cinematic rendering quality for captured images (except use Epic quality for GI otherwise Lumen's internally allocated textures may be too big)
+        # sp_scalability = game.get_unreal_object(uclass="USpScalability")
+        # previous_quality_levels = sp_scalability.GetQualityLevels()
+        # return_values = sp_scalability.SetQualityLevelsFromSingleQualityLevelRelativeToMax(QualityLevels=previous_quality_levels, Value=0, as_dict=True)
+        # cinematic_quality_levels = return_values["QualityLevels"]
+        # cinematic_quality_levels["globalIlluminationQuality"] = "Epic"
+        # game.rendering_quality_service.log_quality_levels(label="Previous quality levels:", quality_levels=previous_quality_levels)
+        # game.rendering_quality_service.log_quality_levels(label="New quality levels:", quality_levels=cinematic_quality_levels)
+        # sp_scalability.SetQualityLevels(QualityLevels=cinematic_quality_levels)
+
+        # # we set cinematic_quality_settings=False because we already customize the quality levels above
+        # game.rendering_quality_service.set_default_mrq_rendering_quality(cinematic_quality_settings=False)
 
         # initialize segmentation service
         game.segmentation_service.initialize()
@@ -381,5 +396,12 @@ if __name__ == "__main__":
 
         # terminate segmentation service
         game.segmentation_service.terminate()
+
+        # # restore rendering quality
+        # game.rendering_quality_service.restore_rendering_quality()
+
+        # # restore quality settings
+        # game.rendering_quality_service.log_quality_levels(label="Restoring quality levels:", quality_levels=previous_quality_levels)
+        # sp_scalability.SetQualityLevels(QualityLevels=previous_quality_levels)
 
     spear.log("Done.")

@@ -6,6 +6,7 @@
 #pragma once
 
 #include <Kismet/BlueprintFunctionLibrary.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 #include <UObject/Package.h>
 
 #include "SpCore/Assert.h"

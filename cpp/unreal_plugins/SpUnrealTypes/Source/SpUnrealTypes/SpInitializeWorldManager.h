@@ -24,7 +24,7 @@
 // This struct is intended to mimic UPhysicsSettings, but implemented as a USTRUCT so it can be declared
 // directly as a member variable (not a pointer) in ASpInitializeWorldManager.
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FSpPhysicsSettings
 {
     GENERATED_BODY()

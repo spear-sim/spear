@@ -559,18 +559,36 @@ class UnrealService(spear.Service):
     def get_console_variable_value_as_string(self, cvar):
         return self.entry_point_caller.call_on_game_thread("get_console_variable_value_as_string", None, cvar)
 
-    def set_console_variable_value(self, cvar, value, set_by_flags=None):
-        set_by_flags = set_by_flags if set_by_flags is not None else ["ECVF_SetByCode"]
-        if isinstance(value, bool):
-            return self.entry_point_caller.call_on_game_thread("set_console_variable_value_from_bool", None, cvar, value, set_by_flags)
-        elif isinstance(value, numbers.Integral):
-            return self.entry_point_caller.call_on_game_thread("set_console_variable_value_from_int", None, cvar, value, set_by_flags)
-        elif isinstance(value, float):
-            return self.entry_point_caller.call_on_game_thread("set_console_variable_value_from_float", None, cvar, value, set_by_flags)
-        elif isinstance(value, str):
-            return self.entry_point_caller.call_on_game_thread("set_console_variable_value_from_string", None, cvar, value, set_by_flags)
+    def set_console_variable_value(self, cvar, value, set_by_flags=None, set_with_current_priority=None):
+
+        # If set_with_current_priority is True, set the value at the variable's current priority (i.e., without
+        # changing its ECVF_SetBy* provenance), which is what IConsoleVariable::SetWithCurrentPriority(...) does and
+        # is mutually exclusive with set_by_flags. Otherwise set the value at set_by_flags (default ECVF_SetByCode).
+
+        if set_with_current_priority:
+            assert set_by_flags is None
+            if isinstance(value, bool):
+                return self.entry_point_caller.call_on_game_thread("set_console_variable_value_with_current_priority_from_bool", None, cvar, value)
+            elif isinstance(value, numbers.Integral):
+                return self.entry_point_caller.call_on_game_thread("set_console_variable_value_with_current_priority_from_int", None, cvar, value)
+            elif isinstance(value, float):
+                return self.entry_point_caller.call_on_game_thread("set_console_variable_value_with_current_priority_from_float", None, cvar, value)
+            elif isinstance(value, str):
+                return self.entry_point_caller.call_on_game_thread("set_console_variable_value_with_current_priority_from_string", None, cvar, value)
+            else:
+                assert False
         else:
-            assert False
+            set_by_flags = set_by_flags if set_by_flags is not None else ["ECVF_SetByCode"]
+            if isinstance(value, bool):
+                return self.entry_point_caller.call_on_game_thread("set_console_variable_value_from_bool", None, cvar, value, set_by_flags)
+            elif isinstance(value, numbers.Integral):
+                return self.entry_point_caller.call_on_game_thread("set_console_variable_value_from_int", None, cvar, value, set_by_flags)
+            elif isinstance(value, float):
+                return self.entry_point_caller.call_on_game_thread("set_console_variable_value_from_float", None, cvar, value, set_by_flags)
+            elif isinstance(value, str):
+                return self.entry_point_caller.call_on_game_thread("set_console_variable_value_from_string", None, cvar, value, set_by_flags)
+            else:
+                assert False
 
     #
     # Execute console command

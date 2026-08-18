@@ -19,7 +19,7 @@
 
 class USpStableNameComponent;
 
-USTRUCT()
+USTRUCT() // not intended to be Blueprint-accessible
 struct FActorHitDesc
 {
     GENERATED_BODY()
@@ -52,17 +52,17 @@ public:
     void Tick(float delta_time) override;
 
     UFUNCTION()
-    void SubscribeToActor(AActor* Actor);
+    void SubscribeToActor(AActor* Actor); // not intended to be BlueprintCallable
 
     UFUNCTION()
-    void UnsubscribeFromActor(AActor* Actor);
+    void UnsubscribeFromActor(AActor* Actor); // not intended to be BlueprintCallable
 
     UFUNCTION()
-    TArray<FActorHitDesc> GetActorHitDescs(bool bIncludeDebugInfo = false);
+    TArray<FActorHitDesc> GetActorHitDescs(bool bIncludeDebugInfo = false); // TArray<FActorHitDesc> not supported for BlueprintCallable
 
 private:
-    UFUNCTION() // needs to be a UFUNCTION
-    void ActorHitHandler(AActor* SelfActor, AActor* OtherActor, FVector NormalImpulse, const FHitResult& HitResult);
+    UFUNCTION()
+    void ActorHitHandler(AActor* SelfActor, AActor* OtherActor, FVector NormalImpulse, const FHitResult& HitResult); // needs to be a UFUNCTION
 
     struct ActorHitDesc
     {

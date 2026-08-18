@@ -36,7 +36,7 @@
 #include "EnhancedInputService.generated.h"
 
 // This struct is intended to be identical to Unreal's FInputActionValue struct, see Engine/Plugins/EnhancedInput/Source/EnhancedInput/Public/InputActionValue.h
-USTRUCT()
+USTRUCT() // not intended to be Blueprint-accessible
 struct FSpInputActionValue
 {
     GENERATED_BODY()
@@ -48,7 +48,7 @@ struct FSpInputActionValue
     EInputActionValueType ValueType = EInputActionValueType::Axis3D;
 };
 
-USTRUCT()
+USTRUCT() // not intended to be Blueprint-accessible
 struct FSpInputActionInstance : public FInputActionInstance
 {
     GENERATED_BODY()
@@ -141,8 +141,7 @@ public:
 
                         // SourceAction is a private member variable on FSpInputActionInstance, but it is
                         // accessible through Unreal's property system, so we can still get and set it.
-                        SpPropertyDesc property_desc = UnrealUtils::resolveProperty(
-                            &sp_input_action_instance, FSpInputActionInstance::StaticStruct(), "SourceAction");
+                        SpPropertyDesc property_desc = UnrealUtils::resolveProperty(&sp_input_action_instance, FSpInputActionInstance::StaticStruct(), "SourceAction");
                         UnrealUtils::setPropertyValueFromString(property_desc, Std::toStringFromPtr(input_action));
 
                         event_binding->Execute(sp_input_action_instance);

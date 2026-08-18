@@ -10,6 +10,7 @@
 #include <Kismet/BlueprintFunctionLibrary.h>
 #include <NavigationSystem.h>              // ELockRemovalRebuildAction, ENavigationBuildLock
 #include <UObject/NameTypes.h>             // FName
+#include <UObject/ObjectMacros.h>          // GENERATED_BODY, UCLASS, UENUM, UFUNCTION
 
 #include "SpCore/Assert.h"
 #include "SpCore/Unreal.h"

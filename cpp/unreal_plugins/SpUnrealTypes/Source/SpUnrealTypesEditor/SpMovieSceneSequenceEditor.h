@@ -8,6 +8,7 @@
 #include <Kismet/BlueprintFunctionLibrary.h>
 #include <MovieSceneSequence.h>
 #include <MovieSceneSequenceEditor.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpCore/Assert.h"
 

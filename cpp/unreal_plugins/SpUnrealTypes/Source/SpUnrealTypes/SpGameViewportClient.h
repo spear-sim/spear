@@ -8,6 +8,7 @@
 #include <Engine/GameViewportClient.h>
 #include <Kismet/BlueprintFunctionLibrary.h>
 #include <Math/Vector2D.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpCore/Assert.h"
 

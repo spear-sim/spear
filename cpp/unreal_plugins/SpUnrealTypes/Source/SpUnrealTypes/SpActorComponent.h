@@ -7,6 +7,7 @@
 
 #include <Components/ActorComponent.h>
 #include <Kismet/BlueprintFunctionLibrary.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpActorComponent.generated.h"
 

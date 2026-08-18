@@ -6,8 +6,9 @@
 #pragma once
 
 #include <Kismet/BlueprintFunctionLibrary.h>
-#include <SceneManagement.h> // FSceneViewStateInterface
-#include <RenderingThread.h> // FlushRenderingCommands
+#include <SceneManagement.h>      // FSceneViewStateInterface
+#include <RenderingThread.h>      // FlushRenderingCommands
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpCore/Assert.h"
 
@@ -18,8 +19,8 @@ class USpSceneViewStateInterface : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public: 
-    UFUNCTION(Category="SPEAR") // uint64 is not supported for BlueprintCallable
-    static uint32 GetPathTracingSampleIndex(uint64 ViewState)
+    UFUNCTION()
+    static uint32 GetPathTracingSampleIndex(uint64 ViewState) // uint64 not supported for BlueprintCallable
     {
         #if RHI_RAYTRACING
             FlushRenderingCommands(); // force rendering thread to be fully up-to-date before querying GetPathTracingSampleCount()
@@ -32,8 +33,8 @@ public:
         #endif
     }
 
-    UFUNCTION(Category="SPEAR") // uint64 is not supported for BlueprintCallable
-    static uint32 GetPathTracingSampleCount(uint64 ViewState)
+    UFUNCTION(Category="SPEAR")
+    static uint32 GetPathTracingSampleCount(uint64 ViewState) // uint64 not supported for BlueprintCallable
     {
         #if RHI_RAYTRACING
             FlushRenderingCommands(); // force rendering thread to be fully up-to-date before querying GetPathTracingSampleCount()

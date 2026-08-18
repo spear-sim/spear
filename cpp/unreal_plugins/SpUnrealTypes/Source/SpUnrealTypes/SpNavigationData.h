@@ -11,6 +11,7 @@
 #include <NavFilters/NavigationQueryFilter.h>
 #include <NavigationData.h>
 #include <Templates/SubclassOf.h>
+#include <UObject/ObjectMacros.h>          // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpCore/Assert.h"
 
@@ -29,7 +30,7 @@ public:
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FVector GetRandomPoint(ANavigationData* NavigationData, TSubclassOf<UNavigationQueryFilter> FilterClass = NULL)
+    static FVector GetRandomPoint(ANavigationData* NavigationData, TSubclassOf<UNavigationQueryFilter> FilterClass = nullptr)
     {
         SP_ASSERT(NavigationData);
         return NavigationData->GetRandomPoint(UNavigationQueryFilter::GetQueryFilter(*NavigationData, nullptr, FilterClass)).Location;
