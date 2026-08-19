@@ -8,13 +8,26 @@
 
 #include "SpCore/Assert.h"
 
-#include <CoreGlobals.h>   // IsRunningCommandlet
-#include <Misc/CoreMisc.h> // IsRunningGame
+#include <string> // std::string
+
+#include <CoreGlobals.h>           // IsRunningCommandlet
+#include <HAL/PlatformMisc.h>      // FPlatformMisc
+#include <HAL/PlatformStackWalk.h> // FPlatformStackWalk
+#include <Misc/CoreMisc.h>         // IsRunningGame
 
 #include "SpCore/Boost.h"
 #include "SpCore/Log.h"
 #include "SpCore/SuppressCompilerWarnings.h"
+#include "SpCore/Unreal.h"
 #include "SpCore/Windows.h"
+
+// ---- BEGIN SPEAR MODIFICATION ----
+
+#if BOOST_OS_MACOS || BOOST_OS_LINUX
+    #include <unistd.h> // fileno, isatty
+#endif
+
+// ---- END SPEAR MODIFICATION ----
 
 SP_BEGIN_SUPPRESS_COMPILER_WARNINGS
 
@@ -221,6 +234,46 @@ namespace {
     if (message)
       print(stderr, level, "  with message: %s\n\n", message);
 
+    // ---- BEGIN SPEAR MODIFICATION ----
+
+    //
+    // On macOS and Linux, a double-clicked executable has no controlling terminal attached to stdin, so
+    // there is no way to show the interactive prompt below or read a response to it. In this situation, we
+    // decide automatically based on whether a debugger is available and whether we're currently executing
+    // inside a region (e.g., EngineService::executeFuncInTryCatch(...)) that knows how to gracefully
+    // recover from a thrown exception:
+    //
+    //     debugger    | throw allowed      |            | BreakThenThrow | inspect then throw and let the exception be handled
+    //     debugger    | throw not allowed  |            | Break          | inspect then continue since throwing an exception here would be uncaught
+    //     no debugger | throw allowed      |            | Throw          | throw and let the exception be handled
+    //     no debugger | throw not allowed  | editor     | Crash          | let the UE crash handler try to display the call stack
+    //     no debugger | throw not allowed  | no editor  | Exit           | exit to avoid leaving a zombie process that can take a long time to clean up
+    //
+    // On Windows we don't need this special case, because we already forced a console into existence above
+    // if one didn't already exist.
+    //
+
+    AssertAction::AssertAction default_assert_action = AssertAction::None;
+    if (boost::debug::under_debugger()) {
+      if (AssertsAreAllowedToThrowScope::insideAssertsAreAllowedToThrowScope()) {
+        default_assert_action = AssertAction::BreakThenThrow;
+      } else {
+        default_assert_action = AssertAction::Break;
+      }
+    } else {
+      if (AssertsAreAllowedToThrowScope::insideAssertsAreAllowedToThrowScope()) {
+        default_assert_action = AssertAction::Throw;
+      } else {
+        #if WITH_EDITOR
+          default_assert_action = AssertAction::Crash;
+        #else
+          default_assert_action = AssertAction::Exit;
+        #endif
+      }
+    }
+
+    // ---- END SPEAR MODIFICATION ----
+
     if (level < AssertLevel::Debug)
     {
       return AssertAction::None;
@@ -230,6 +283,7 @@ namespace {
 #if (!TARGET_OS_IPHONE && !TARGET_IPHONE_SIMULATOR) && (!defined(__ANDROID__) && !defined(ANDROID)) || defined(PPK_ASSERT_DEFAULT_HANDLER_STDIN)
 
       // ---- BEGIN SPEAR MODIFICATION ----
+
       //
       // In practice, this for loop doesn't interact cleanly with Unreal applications, and leads to a flood
       // of output to the console in a variety of situations, so we disable.
@@ -237,16 +291,10 @@ namespace {
       // for (;;)
       // {
       //
-      // If we're in the GUI editor, then we can't expect to get a user response via fgets. In this case,
-      // break-then-throw if we're in a debugger, throw otherwise.
 
-      #if WITH_EDITOR // defined in an auto-generated header
-        if (!IsRunningCommandlet() && !IsRunningGame()) { // editor mode via GUI
-          if (boost::debug::under_debugger()) {
-            return AssertAction::BreakThenThrow;
-          } else {
-            return AssertAction::Throw;
-          }
+      #if BOOST_OS_MACOS || BOOST_OS_LINUX
+        if (!isatty(fileno(stdin))) {
+          return default_assert_action;
         }
       #endif
 
@@ -256,12 +304,12 @@ namespace {
 //         fprintf(stderr, "Press (I)gnore / Ignore (F)orever / Ignore (A)ll / (D)ebug / A(b)ort: ");
 // #endif
 
-        // Adding an option to throw.
+        // Adding multiple new options.
 
 #if defined(PPK_ASSERT_DISABLE_IGNORE_LINE)
-        fprintf(stderr, "Press (I)gnore / Ignore (A)ll / (D)ebug / Debug if available then (T)hrow / Th(r)ow / A(b)ort: ");
+        fprintf(stderr, "Press (I)gnore / Ignore (A)ll / (D)ebug / Debug then (T)hrow / Th(r)ow / A(b)ort / (C)rash / E(x)it: ");
 #else
-        fprintf(stderr, "Press (I)gnore / Ignore (F)orever / Ignore (A)ll / (D)ebug / Debug if available then (T)hrow / Th(r)ow / A(b)ort: ");
+        fprintf(stderr, "Press (I)gnore / Ignore (F)orever / Ignore (A)ll / (D)ebug / Debug then (T)hrow / Th(r)ow / A(b)ort / (C)rash / E(x)it: ");
 #endif
 
         // ---- END SPEAR MODIFICATION ----
@@ -276,17 +324,12 @@ namespace {
           fflush(stderr);
 
           // ---- BEGIN SPEAR MODIFICATION ----
-          //
-          // continue;
-          //
-          // If fgets returns null while waiting for input, then break-then-throw if we're in a debugger,
-          // throw otherwise.
 
-          if (boost::debug::under_debugger()) {
-            return AssertAction::BreakThenThrow;
-          } else {
-            return AssertAction::Throw;
-          }
+          // continue;
+
+          // If fgets returns null while waiting for input, then return the default assert action.
+
+          return default_assert_action;
 
           // ---- END SPEAR MODIFICATION ----
         }
@@ -296,19 +339,12 @@ namespace {
         if (sscanf(buffer, " %1[a-zA-Z] ", input) != 1)
 
           // ---- BEGIN SPEAR MODIFICATION ----
-          //
-          // continue;
-          //
-          // If sscanf returns the wrong number of items, then break-then-throw if we're in a debugger, throw
-          // otherwise.
 
-          {
-            if (boost::debug::under_debugger()) {
-              return AssertAction::BreakThenThrow;
-            } else {
-              return AssertAction::Throw;
-            }
-          }
+          // continue;
+
+          // If sscanf returns the wrong number of items, then return the default assert action.
+
+          return default_assert_action;
 
           // ---- END SPEAR MODIFICATION ----
  
@@ -318,9 +354,21 @@ namespace {
           case 'B':
             return AssertAction::Abort;
 
+          // ---- BEGIN SPEAR MODIFICATION ----
+
+          case 'c':
+          case 'C':
+            return AssertAction::Crash;
+
           case 'd':
           case 'D':
-            return AssertAction::Break;
+            if (boost::debug::under_debugger()) {
+              return AssertAction::Break;
+            } else {
+              return AssertAction::Exit;
+            }
+
+          // ---- END SPEAR MODIFICATION ----
 
           case 'i':
           case 'I':
@@ -350,6 +398,10 @@ namespace {
           case 'R':
             return AssertAction::Throw;
 
+          case 'x':
+          case 'X':
+            return AssertAction::Exit;
+
           // ---- END SPEAR MODIFICATION ----
 
           default:
@@ -371,12 +423,57 @@ namespace {
 
     // ---- BEGIN SPEAR MODIFICATION ----
 
-    fprintf(stderr, "Unrecognized input, choosing A(b)ort...\n");
+    // If no other assert action applies, then return the default assert action.
+
+    return default_assert_action;
 
     // ---- END SPEAR MODIFICATION ----
-
-    return AssertAction::Abort;
   }
+
+  // ---- BEGIN SPEAR MODIFICATION ----
+
+  // Prints the current call stack, so we have a record of where an assert failed even in the Throw, Abort,
+  // Exit, and Crash cases, where there might not be a debugger attached to show it to us another way.
+  // num_frames_to_skip is the number of frames to skip starting from (and including) this function's own
+  // frame, so callers need to pass a value that accounts for their own depth relative to the original
+  // SP_ASSERT call site: 2 when called directly from handleAssert (e.g., the Abort case), or 3 when called
+  // from a dedicated helper like _throw(...)/_exit(...)/_crash(...), which sits one frame deeper (those
+  // helpers are themselves called either from handleAssert, or -- in _throw(...)'s case -- from
+  // handleThrow(...), which is called directly from the BreakThenThrow branch of the PPK_ASSERT_3 macro; both
+  // of those call sites are one frame above _throw(...)/_exit(...)/_crash(...), so the same skip count of 3
+  // works for either).
+  void _printCallStack(int32 num_frames_to_skip)
+  {
+    const int32 max_call_stack_chars = 65535;
+    ANSICHAR call_stack[max_call_stack_chars] = {0};
+    FPlatformStackWalk::StackWalkAndDump(call_stack, max_call_stack_chars, num_frames_to_skip);
+    SP_LOG("Call stack:");
+    SP_LOG_NO_PREFIX(std::string(call_stack));
+  }
+
+  // Returns a human-readable description of a single call stack frame (e.g., "0x0b7f9868
+  // SpearSim!SpCore::initializeSharedMemory() [UnknownFile]"), so we can pass something more useful than a
+  // hardcoded string to FPlatformMisc::RequestExit(...)'s CallSite parameter. See _printCallStack(...) above
+  // for how to choose num_frames_to_skip.
+  std::string _getCallSiteString(int32 num_frames_to_skip)
+  {
+    const int32 max_depth = 16;
+    SP_ASSERT(num_frames_to_skip < max_depth);
+
+    uint64 back_trace[max_depth] = {0};
+    uint32 num_frames_captured = FPlatformStackWalk::CaptureStackBackTrace(back_trace, num_frames_to_skip + 1);
+
+    if (num_frames_captured <= static_cast<uint32>(num_frames_to_skip)) {
+      return "";
+    }
+
+    const int32 max_buffer_chars = 8192;
+    ANSICHAR buffer[max_buffer_chars] = {0};
+    FPlatformStackWalk::ProgramCounterToHumanReadableString(0, back_trace[num_frames_to_skip], buffer, max_buffer_chars);
+    return std::string(buffer);
+  }
+
+  // ---- END SPEAR MODIFICATION ----
 
   void _throw(const char* file,
               int line,
@@ -384,9 +481,51 @@ namespace {
               const char* expression,
               const char* message)
   {
+    // ---- BEGIN SPEAR MODIFICATION ----
+    _printCallStack(3);
+    // ---- END SPEAR MODIFICATION ----
+
     using ppk::assert::implementation::throwException;
     throwException(ppk::assert::AssertionException(file, line, function, expression, message));
   }
+
+  // ---- BEGIN SPEAR MODIFICATION ----
+
+  void _exit(const char* file,
+             int line,
+             const char* function,
+             const char* expression,
+             const char* message)
+  {
+    SP_LOG("ERROR: Assertion '", expression, "' failed (", file, ":", line, ", ", function, ")");
+    if (message) {
+        SP_LOG("    with message: ", message);
+    }
+    _printCallStack(3);
+    std::string call_site_string = _getCallSiteString(3);
+    bool force = true;
+    FPlatformMisc::RequestExit(force, Unreal::toTCharPtr(call_site_string));
+  }
+
+  void _crash(const char* file,
+              int line,
+              const char* function,
+              const char* expression,
+              const char* message)
+  {
+    SP_LOG("ERROR: Assertion '", expression, "' failed (", file, ":", line, ", ", function, ")");
+    if (message) {
+        SP_LOG("    with message: ", message);
+    }
+    _printCallStack(3);
+
+    // Deliberately trigger a hardware fault so Unreal's own crash-handling pipeline (e.g., the editor's
+    // built-in crash handler) engages, in case it can produce a more complete call stack than the one
+    // printed above.
+    FPlatformMisc::RaiseException(1);
+  }
+
+  // ---- END SPEAR MODIFICATION ----
 }
 
 namespace ppk {
@@ -589,6 +728,9 @@ namespace implementation {
     switch (action)
     {
       case AssertAction::Abort:
+        // ---- BEGIN SPEAR MODIFICATION ----
+        _printCallStack(2);
+        // ---- END SPEAR MODIFICATION ----
         PPK_ASSERT_ABORT();
 
 #if !defined(PPK_ASSERT_DISABLE_IGNORE_LINE)
@@ -606,6 +748,18 @@ namespace implementation {
       case AssertAction::Throw:
         _throw(file, line, function, expression, message);
         break;
+
+      // ---- BEGIN SPEAR MODIFICATION ----
+
+      case AssertAction::Exit:
+        _exit(file, line, function, expression, message);
+        break;
+
+      case AssertAction::Crash:
+        _crash(file, line, function, expression, message);
+        break;
+
+      // ---- END SPEAR MODIFICATION ----
 
       case AssertAction::Ignore:
       case AssertAction::Break:
@@ -649,6 +803,36 @@ namespace implementation {
     _throw(file, line, function, expression, message);
   }
 
+  void PPK_ASSERT_CALL handleExit(const char* file,
+                                  int line,
+                                  const char* function,
+                                  const char* expression,
+                                  const char* message, ...)
+  {
+    char message_[PPK_ASSERT_MESSAGE_BUFFER_SIZE] = {0};
+    const char* file_;
+
+    if (message)
+    {
+      va_list args;
+      va_start(args, message);
+      vsnprintf(message_, PPK_ASSERT_MESSAGE_BUFFER_SIZE, message, args);
+      va_end(args);
+
+      message = message_;
+    }
+
+#if defined(_WIN32)
+    file_ = strrchr(file, '\\');
+#else
+    file_ = strrchr(file, '/');
+#endif // #if defined(_WIN32)
+
+    file = file_ ? file_ + 1 : file;
+
+    _exit(file, line, function, expression, message);
+  }
+
   // ---- END SPEAR MODIFICATION ----
 
 } // namespace implementation
@@ -658,3 +842,22 @@ namespace implementation {
 // ------------------------------------------------------------------------------
 
 SP_END_SUPPRESS_COMPILER_WARNINGS
+
+// ---- BEGIN SPEAR MODIFICATION ----
+
+AssertsAreAllowedToThrowScope::AssertsAreAllowedToThrowScope()
+{
+    depth_++;
+}
+
+AssertsAreAllowedToThrowScope::~AssertsAreAllowedToThrowScope()
+{
+    depth_--;
+}
+
+bool AssertsAreAllowedToThrowScope::insideAssertsAreAllowedToThrowScope()
+{
+    return depth_ > 0;
+}
+
+// ---- END SPEAR MODIFICATION ----

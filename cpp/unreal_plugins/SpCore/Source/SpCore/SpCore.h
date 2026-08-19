@@ -8,8 +8,7 @@
 #include <memory> // std::unique_ptr
 #include <string>
 
-#include <Containers/UnrealString.h>     // FString
-#include <Delegates/IDelegateInstance.h> // FDelegateHandle
+#include <Containers/UnrealString.h> // FString
 #include <Modules/ModuleInterface.h>
 
 #include "SpCore/SharedMemory.h"
@@ -23,17 +22,14 @@ public:
 private:
     void requestWaitForKeyboardInput() const;
 
-    void initializeIniConfigs() const;
-    void initializeIniConfig(const FString& ini_config_filename, const std::string& ini_config_name, const std::string& sp_config_override_key, const std::string& sp_config_string_key) const;
+    void requestInitializeIniConfigs() const;
+    void requestInitializeIniConfig(const FString& ini_config_filename, const std::string& ini_config_name, const std::string& sp_config_override_key, const std::string& sp_config_string_key) const;
 
     void registerClasses() const;
     void unregisterClasses() const;
 
-    void postEngineInitHandler();
-    void enginePreExitHandler();
-
-    FDelegateHandle post_engine_init_handle_;
-    FDelegateHandle engine_pre_exit_handle_;
+    void initializeSharedMemory();
+    void terminateSharedMemory();
 
     std::unique_ptr<SharedMemoryRegion> shared_memory_region_;
 };

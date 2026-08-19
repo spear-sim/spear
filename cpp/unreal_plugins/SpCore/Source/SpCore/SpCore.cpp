@@ -7,16 +7,14 @@
 
 #include <stdint.h> // uint64_t
 
-#include <exception> // std::current_exception, std::rethrow_exception
-#include <iostream>  // std::cin
+#include <iostream> // std::cin
 #include <map>
-#include <memory>    // std::make_unique, std::unique_ptr
+#include <memory>   // std::make_unique, std::unique_ptr
 
-#include <CoreGlobals.h>                 // GConfig, GEditorIni, GEngineIni, GGameIni, GGameUserSettingsIni, GInputIni
-#include <Delegates/IDelegateInstance.h> // FDelegateHandle
-#include <Misc/ConfigCacheIni.h>         // GConfig
-#include <Misc/CoreDelegates.h>
-#include <Modules/ModuleManager.h>       // FDefaultGameModuleImpl, FDefaultModuleImpl, IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
+#include <CoreGlobals.h>           // GConfig, GEditorIni, GEngineIni, GGameIni, GGameUserSettingsIni, GInputIni
+#include <HAL/PlatformMisc.h>      // FPlatformMisc
+#include <Misc/ConfigCacheIni.h>   // GConfig
+#include <Modules/ModuleManager.h> // FDefaultGameModuleImpl, FDefaultModuleImpl, IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
 
 // Unreal classes to register
 #include <AssetRegistry/IAssetRegistry.h>
@@ -24,6 +22,7 @@
 #include <Engine/World.h>
 
 #include "SpCore/Config.h"
+#include "SpCore/Console.h"
 #include "SpCore/Log.h"
 #include "SpCore/SharedMemory.h"
 #include "SpCore/Unreal.h"
@@ -33,14 +32,14 @@ void SpCore::StartupModule()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    Config::requestInitialize();
+    Config::requestInitialize(); // do this first so we know whether or not to wait for keyboard input
 
-    requestWaitForKeyboardInput(); // no need to undo
-    initializeIniConfigs();        // no need to undo
+    requestWaitForKeyboardInput(); // no need to undo in ShutdownModule()
+    requestInitializeIniConfigs(); // no need to undo in ShutdownModule()
+
     registerClasses();
-
-    post_engine_init_handle_ = FCoreDelegates::OnPostEngineInit.AddRaw(this, &SpCore::postEngineInitHandler);
-    engine_pre_exit_handle_  = FCoreDelegates::OnEnginePreExit.AddRaw(this, &SpCore::enginePreExitHandler);
+    initializeSharedMemory();
+    Console::requestInitialize();
 
     SP_LOG_CURRENT_FUNCTION();
 }
@@ -49,12 +48,10 @@ void SpCore::ShutdownModule()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    FCoreDelegates::OnEnginePreExit.Remove(engine_pre_exit_handle_);
-    FCoreDelegates::OnPostEngineInit.Remove(post_engine_init_handle_);
-    engine_pre_exit_handle_.Reset();
-    post_engine_init_handle_.Reset();
-
+    Console::terminate();
+    terminateSharedMemory();
     unregisterClasses();
+
     Config::terminate();
 
     SP_LOG_CURRENT_FUNCTION();
@@ -70,18 +67,18 @@ void SpCore::requestWaitForKeyboardInput() const
     }
 }
 
-void SpCore::initializeIniConfigs() const
+void SpCore::requestInitializeIniConfigs() const
 {
     if (Config::isInitialized()) {
-        initializeIniConfig(GEditorIni,           "GEditorIni",           "SP_CORE.OVERRIDE_CONFIG_EDITOR_INI",             "SP_CORE.CONFIG_EDITOR_INI_STRING");
-        initializeIniConfig(GEngineIni,           "GEngineIni",           "SP_CORE.OVERRIDE_CONFIG_ENGINE_INI",             "SP_CORE.CONFIG_ENGINE_INI_STRING");
-        initializeIniConfig(GGameIni,             "GGameIni",             "SP_CORE.OVERRIDE_CONFIG_GAME_INI",               "SP_CORE.CONFIG_GAME_INI_STRING");
-        initializeIniConfig(GGameUserSettingsIni, "GGameUserSettingsIni", "SP_CORE.OVERRIDE_CONFIG_GAME_USER_SETTINGS_INI", "SP_CORE.CONFIG_GAME_USER_SETTINGS_INI_STRING");
-        initializeIniConfig(GInputIni,            "GInputIni",            "SP_CORE.OVERRIDE_CONFIG_INPUT_INI",              "SP_CORE.CONFIG_INPUT_INI_STRING");
+        requestInitializeIniConfig(GEditorIni,           "GEditorIni",           "SP_CORE.OVERRIDE_CONFIG_EDITOR_INI",             "SP_CORE.CONFIG_EDITOR_INI_STRING");
+        requestInitializeIniConfig(GEngineIni,           "GEngineIni",           "SP_CORE.OVERRIDE_CONFIG_ENGINE_INI",             "SP_CORE.CONFIG_ENGINE_INI_STRING");
+        requestInitializeIniConfig(GGameIni,             "GGameIni",             "SP_CORE.OVERRIDE_CONFIG_GAME_INI",               "SP_CORE.CONFIG_GAME_INI_STRING");
+        requestInitializeIniConfig(GGameUserSettingsIni, "GGameUserSettingsIni", "SP_CORE.OVERRIDE_CONFIG_GAME_USER_SETTINGS_INI", "SP_CORE.CONFIG_GAME_USER_SETTINGS_INI_STRING");
+        requestInitializeIniConfig(GInputIni,            "GInputIni",            "SP_CORE.OVERRIDE_CONFIG_INPUT_INI",              "SP_CORE.CONFIG_INPUT_INI_STRING");
     }
 }
 
-void SpCore::initializeIniConfig(const FString& ini_config_filename, const std::string& ini_config_name, const std::string& sp_config_override_key, const std::string& sp_config_string_key) const
+void SpCore::requestInitializeIniConfig(const FString& ini_config_filename, const std::string& ini_config_name, const std::string& sp_config_override_key, const std::string& sp_config_string_key) const
 {
     SP_ASSERT(Config::isInitialized());
 
@@ -119,30 +116,27 @@ void SpCore::unregisterClasses() const
     SP_UNREGISTER_INTERFACE_CLASS(IAssetRegistry);
 }
 
-void SpCore::postEngineInitHandler()
+void SpCore::initializeSharedMemory()
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     uint64_t shared_memory_initial_unique_id = 0;
     if (Config::isInitialized()) {
         shared_memory_initial_unique_id = Config::get<unsigned int>("SP_CORE.SHARED_MEMORY_INITIAL_UNIQUE_ID");
     }
     SharedMemory::initialize(shared_memory_initial_unique_id);
 
-    // Try to create a shared memory region so we can provide a meaningful error message if it fails.
     try {
-        uint64_t num_bytes = 1;
-        shared_memory_region_ = std::make_unique<SharedMemoryRegion>(num_bytes);
+        shared_memory_region_ = std::make_unique<SharedMemoryRegion>(1);
+    } catch (const IdMutexError& e) {
+        SP_LOG("    ERROR: Couldn't acquire shared memory region id=", e.getId(), " (id_string=", e.getIdString(), "). The Unreal Editor might be open already, or there might be another SPEAR executable running in the background. Close the Unreal Editor and other SPEAR executables, or change SP_CORE.SHARED_MEMORY_INITIAL_UNIQUE_ID to an unused ID, and try launching again.");
+        SP_ASSERT(false);
     } catch (...) {
-        SP_LOG("    ERROR: Couldn't create a shared memory region. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables, or change SP_CORE.SHARED_MEMORY_INITIAL_UNIQUE_ID to an unused ID, and try launching again.");
-        std::rethrow_exception(std::current_exception());
+        SP_LOG("    ERROR: Unexpected error when attempting to acquire shared memory.");
+        SP_ASSERT(false);
     }
 }
 
-void SpCore::enginePreExitHandler()
+void SpCore::terminateSharedMemory()
 {
-    SP_LOG_CURRENT_FUNCTION();
-
     shared_memory_region_ = nullptr;
     SharedMemory::terminate();
 }

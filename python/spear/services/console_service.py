@@ -59,3 +59,10 @@ class ConsoleService(spear.Service):
 
     def execute(self, command):
         return self.unreal_service.execute_console_command(command=command)
+
+    #
+    # Flush console messages
+    #
+
+    def flush_messages(self):
+        return self.unreal_service.flush_console_messages()

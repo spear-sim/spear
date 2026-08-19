@@ -7,9 +7,8 @@
 
 #include <stdint.h> // uint16_t
 
-#include <exception> // std::current_exception, std::rethrow_exception
-#include <limits>    // std::numeric_limits
-#include <memory>    // std::unique_ptr
+#include <limits> // std::numeric_limits
+#include <memory> // std::unique_ptr
 
 #include "SpCore/Config.h"
 
@@ -41,7 +40,7 @@ public:
             SP_ASSERT(rpc_server_);
         } catch (...) {
             SP_LOG("    ERROR: Couldn't create an RPC server. The Unreal Editor might be open already, or there might be another SPEAR executable running in the background. Close the Unreal Editor and other SPEAR executables, or change SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT to a different unused port, and try launching again.");
-            std::rethrow_exception(std::current_exception());
+            SP_ASSERT(false);
         }
     }
 

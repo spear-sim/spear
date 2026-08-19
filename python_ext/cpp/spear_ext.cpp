@@ -31,8 +31,9 @@ NB_MODULE(spear_ext, module)
     client_class.def("set_timeout",   &Client::setTimeout);
     client_class.def("clear_timeout", &Client::clearTimeout);
 
-    client_class.def("ping",                            &Client::ping);
-    client_class.def("get_entry_point_signature_descs", &Client::getEntryPointSignatureDescs);
+    client_class.def("ping",                                 &Client::ping);
+    client_class.def("get_entry_point_signature_descs",      &Client::getEntryPointSignatureDescs);
+    client_class.def("get_entry_point_signature_type_names", &Client::getEntryPointSignatureTypeNames);
 
     client_class.def("call", &Client::call);
 
@@ -45,6 +46,16 @@ NB_MODULE(spear_ext, module)
     //
     // Custom types
     //
+
+    auto console_messages_class = nanobind::class_<ConsoleMessages>(module, "ConsoleMessages");
+    console_messages_class.def(nanobind::init<>());
+    console_messages_class.def_rw("messages",    &ConsoleMessages::messages_);
+    console_messages_class.def_rw("num_evicted", &ConsoleMessages::num_evicted_);
+    console_messages_class.def("__repr__", [](const ConsoleMessages& self) {
+        std::ostringstream oss;
+        oss << "spear_ext.ConsoleMessages(messages=" << self.messages_.size() << ", num_evicted=" << self.num_evicted_ << ")";
+        return oss.str();
+    });
 
     auto property_desc_class = nanobind::class_<PropertyDesc>(module, "PropertyDesc");
     property_desc_class.def(nanobind::init<>());

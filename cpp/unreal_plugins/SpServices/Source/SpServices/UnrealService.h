@@ -35,6 +35,7 @@
 #include <UObject/UnrealType.h>              // EFieldIterationFlags
 
 #include "SpCore/Assert.h"
+#include "SpCore/Console.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealUtils.h"
 #include "SpCore/UnrealClassRegistry.h"
@@ -1288,6 +1289,13 @@ public:
                 SP_ASSERT(GEngine);
                 GEngine->Exec(toPtr<UWorld>(world), Unreal::toTCharPtr(command));
             });
+
+        //
+        // Flush console messages
+        //
+
+        unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("unreal_service", "flush_console_messages",
+            [this]() -> SpConsoleMessages { return Console::flush(); });
 
         //
         // Stable name helper functions
