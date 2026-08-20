@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "SpCore/Assert.h"
-#include "SpCore/Console.h"
+#include "SpCore/OutputLog.h"
 #include "SpCore/SpArray.h"
 #include "SpCore/SpFuncComponent.h"
 #include "SpCore/Std.h"
@@ -49,7 +49,7 @@ class FuncSignatureRegistry
         /* 15 */ "map_of_string_to_property_value",
         /* 16 */ "map_of_string_to_func_signature_desc",
         /* 17 */ "map_of_string_to_world_desc",
-        /* 18 */ "console_messages",
+        /* 18 */ "output_log_messages",
         /* 19 */ "packed_array",
         /* 20 */ "shared_memory_view",
         /* 21 */ "data_bundle",
@@ -79,7 +79,7 @@ class FuncSignatureRegistry
     /* 15 */ template <> int getTypeId<std::map<std::string, SpPropertyValue>>         () { return 15; }
     /* 16 */ template <> int getTypeId<std::map<std::string, SpFuncSignatureDesc>>     () { return 16; }
     /* 17 */ template <> int getTypeId<std::map<std::string, SpWorldDesc>>             () { return 17; }
-    /* 18 */ template <> int getTypeId<SpConsoleMessages>                              () { return 18; }
+    /* 18 */ template <> int getTypeId<SpOutputLogMessages>                            () { return 18; }
     /* 19 */ template <> int getTypeId<SpPackedArray>                                  () { return 19; }
     /* 20 */ template <> int getTypeId<SpArraySharedMemoryView>                        () { return 20; }
     /* 21 */ template <> int getTypeId<SpFuncDataBundle>                               () { return 21; }

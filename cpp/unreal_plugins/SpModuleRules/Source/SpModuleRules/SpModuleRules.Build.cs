@@ -36,8 +36,11 @@ public class SpModuleRules : ModuleRules
 
         PublicDependencyModuleNames.AddRange(new string[] {
             "AssetRegistry", "Chaos", "Core", "CoreUObject", "Engine", "EngineSettings", "InputCore", "Json", "JsonUtilities", "Landscape",
-            "LevelSequence", "NavigationSystem", "PhysicsCore", "RenderCore", "Renderer", "RHI", "Slate"});
+            "LevelSequence", "MessageLog", "NavigationSystem", "PhysicsCore", "RenderCore", "Renderer", "RHI", "Slate"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
+
+        // Needed to expose a private header in MessageLog
+        PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(readOnlyTargetRules.RelativeEnginePath, "Source", "Developer", "MessageLog", "Private")));
 
         // Needed to expose a private header in Renderer
         PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(readOnlyTargetRules.RelativeEnginePath, "Source", "Runtime", "Renderer", "Private")));

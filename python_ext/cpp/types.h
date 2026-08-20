@@ -19,7 +19,7 @@
 // Custom types
 //
 
-struct ConsoleMessages
+struct OutputLogMessages
 {
     std::vector<std::string> messages_;
     int32_t num_evicted_ = 0;

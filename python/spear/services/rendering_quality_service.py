@@ -137,12 +137,12 @@ class RenderingQualityService(spear.Service):
         if cinematic_quality_levels is not None:
             self._sp_scalability.SetQualityLevels(QualityLevels=cinematic_quality_levels)
         for cvar_desc in cvar_descs:
-            self._console_service.set(name=cvar_desc["name"], value=cvar_desc["value"], set_with_current_priority=True)
+            self._console_service.set_cvar(name=cvar_desc["name"], value=cvar_desc["value"], set_with_current_priority=True)
 
         # bDisableHLODs
         if disable_hlods:
             spear.log("    Executing console command: r.HLOD 0")
-            self._console_service.execute(command="r.HLOD 0")
+            self._console_service.execute_command(command="r.HLOD 0")
 
         self._restore_stack.append({"cvar_descs": previous_cvar_descs, "quality_levels": previous_quality_levels})
 
@@ -155,13 +155,13 @@ class RenderingQualityService(spear.Service):
 
         if enable_hlods:
             spear.log("    Executing console command: r.HLOD 1")
-            self._console_service.execute(command="r.HLOD 1")
+            self._console_service.execute_command(command="r.HLOD 1")
 
         self.log_cvar_descs(label="Restoring cvars:", cvar_descs=restore_data["cvar_descs"])
         self.log_quality_levels(label="Restoring quality levels:", quality_levels=restore_data["quality_levels"])
 
         for cvar_desc in restore_data["cvar_descs"]:
-            self._console_service.set(name=cvar_desc["name"], value=cvar_desc["value"], set_with_current_priority=True)
+            self._console_service.set_cvar(name=cvar_desc["name"], value=cvar_desc["value"], set_with_current_priority=True)
         if restore_data["quality_levels"] is not None:
             self._sp_scalability.SetQualityLevels(QualityLevels=restore_data["quality_levels"])
 
@@ -181,8 +181,8 @@ class RenderingQualityService(spear.Service):
     def _get_cvar_value(self, cvar_desc):
         assert cvar_desc["type"] in ["int", "float"]
         if cvar_desc["type"] == "int":
-            return self._console_service.get_as_int(name=cvar_desc["name"])
+            return self._console_service.get_cvar_as(name=cvar_desc["name"], as_type=int)
         elif cvar_desc["type"] == "float":
-            return self._console_service.get_as_float(name=cvar_desc["name"])
+            return self._console_service.get_cvar_as(name=cvar_desc["name"], as_type=float)
         else:
             assert False

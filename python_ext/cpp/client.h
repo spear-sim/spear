@@ -155,9 +155,13 @@ private:
             bool has_client_name = i < client_type_names.size();
             bool has_server_name = i < server_type_names.size();
             if (!has_client_name || !has_server_name || client_type_names.at(i) != server_type_names.at(i)) {
-                std::cout << "[SPEAR | spear_ext.cpp]     ERROR: type ID/name mismatch at id=" << i << " (server=" << get_display_string_func(server_type_names, i) << ", client=" << get_display_string_func(client_type_names, i) << ")" << std::endl;
+                std::cout << "[SPEAR | spear_ext.cpp] ERROR: type ID/name mismatch at id=" << i << " (server=" << get_display_string_func(server_type_names, i) << ", client=" << get_display_string_func(client_type_names, i) << ")" << std::endl;
                 success = false;
             }
+        }
+
+        if (!success) {
+            std::cout << "[SPEAR | spear_ext.cpp] ERROR: The spear_ext Python extension module is out of sync with the server. Rebuild both the server and the spear_ext Python extension module." << std::endl;
         }
 
         SP_ASSERT(success);

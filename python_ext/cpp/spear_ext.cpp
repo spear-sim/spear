@@ -47,13 +47,13 @@ NB_MODULE(spear_ext, module)
     // Custom types
     //
 
-    auto console_messages_class = nanobind::class_<ConsoleMessages>(module, "ConsoleMessages");
-    console_messages_class.def(nanobind::init<>());
-    console_messages_class.def_rw("messages",    &ConsoleMessages::messages_);
-    console_messages_class.def_rw("num_evicted", &ConsoleMessages::num_evicted_);
-    console_messages_class.def("__repr__", [](const ConsoleMessages& self) {
+    auto output_log_messages_class = nanobind::class_<OutputLogMessages>(module, "OutputLogMessages");
+    output_log_messages_class.def(nanobind::init<>());
+    output_log_messages_class.def_rw("messages",    &OutputLogMessages::messages_);
+    output_log_messages_class.def_rw("num_evicted", &OutputLogMessages::num_evicted_);
+    output_log_messages_class.def("__repr__", [](const OutputLogMessages& self) {
         std::ostringstream oss;
-        oss << "spear_ext.ConsoleMessages(messages=" << self.messages_.size() << ", num_evicted=" << self.num_evicted_ << ")";
+        oss << "spear_ext.OutputLogMessages(messages=" << self.messages_.size() << ", num_evicted=" << self.num_evicted_ << ")";
         return oss.str();
     });
 

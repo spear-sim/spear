@@ -831,9 +831,9 @@ class Client:
         elif return_as == "map_of_string_to_world_desc":
             obj = self._to_dict(obj)
             return { k: WorldDesc(world=v["world"], world_id=v["world_id"], is_editor_world=v["is_editor_world"], is_game_world=v["is_game_world"], is_playing=v["is_playing"]) for k, v in obj.items() }
-        elif return_as == "console_messages":
+        elif return_as == "output_log_messages":
             obj = self._to_dict(obj)
-            return ConsoleMessages(messages=self._to_str(obj["messages"]), num_evicted=obj["num_evicted"])
+            return OutputLogMessages(messages=self._to_str(obj["messages"]), num_evicted=obj["num_evicted"])
         elif return_as == "packed_array":
             obj = self._to_dict(obj)
             return self._to_packed_array_return_value(obj)
@@ -917,14 +917,14 @@ class Client:
 class ClientStruct:
     pass
 
-class ConsoleMessages(ClientStruct):
+class OutputLogMessages(ClientStruct):
     def __init__(self, messages=None, num_evicted=0):
         messages = messages if messages is not None else []
         self.messages = messages
         self.num_evicted = num_evicted
 
     def __repr__(self):
-        return f"spear.ConsoleMessages(messages={len(self.messages)}, num_evicted={self.num_evicted})"
+        return f"spear.OutputLogMessages(messages={len(self.messages)}, num_evicted={self.num_evicted})"
 
 class PackedArray(ClientStruct):
     def __init__(self, data=None, data_source="Invalid", shape=None, data_type="", shared_memory_name=""):

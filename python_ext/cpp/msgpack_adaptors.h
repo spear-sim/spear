@@ -127,16 +127,16 @@ public:
 };
 
 //
-// ConsoleMessages (never sent as an arg to the server)
+// OutputLogMessages (never sent as an arg to the server)
 //
 
 template <> // needed to receive a custom type as a return value from the server
-struct clmdep_msgpack::adaptor::convert<ConsoleMessages> {
-    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, ConsoleMessages& console_messages) const {
+struct clmdep_msgpack::adaptor::convert<OutputLogMessages> {
+    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, OutputLogMessages& output_log_messages) const {
         std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
         SP_ASSERT(objects.size() == 2);
-        console_messages.messages_    = MsgpackUtils::to<std::vector<std::string>>(objects.at("messages"));
-        console_messages.num_evicted_ = MsgpackUtils::to<int32_t>(objects.at("num_evicted"));
+        output_log_messages.messages_    = MsgpackUtils::to<std::vector<std::string>>(objects.at("messages"));
+        output_log_messages.num_evicted_ = MsgpackUtils::to<int32_t>(objects.at("num_evicted"));
         return object;
     }
 };

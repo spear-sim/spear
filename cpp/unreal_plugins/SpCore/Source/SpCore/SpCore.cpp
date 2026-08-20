@@ -22,8 +22,8 @@
 #include <Engine/World.h>
 
 #include "SpCore/Config.h"
-#include "SpCore/Console.h"
 #include "SpCore/Log.h"
+#include "SpCore/OutputLog.h"
 #include "SpCore/SharedMemory.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealClassRegistry.h"
@@ -39,7 +39,7 @@ void SpCore::StartupModule()
 
     registerClasses();
     initializeSharedMemory();
-    Console::requestInitialize();
+    OutputLog::requestInitialize();
 
     SP_LOG_CURRENT_FUNCTION();
 }
@@ -48,7 +48,7 @@ void SpCore::ShutdownModule()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    Console::terminate();
+    OutputLog::terminate();
     terminateSharedMemory();
     unregisterClasses();
 

@@ -52,7 +52,7 @@ class FuncSignatureRegistry
         /* 15 */ "map_of_string_to_property_value",
         /* 16 */ "map_of_string_to_func_signature_desc",
         /* 17 */ "map_of_string_to_world_desc",
-        /* 18 */ "console_messages",
+        /* 18 */ "output_log_messages",
         /* 19 */ "packed_array",
         /* 20 */ "shared_memory_view",
         /* 21 */ "data_bundle",
@@ -112,7 +112,7 @@ public:
             case 15: return nanobind::cast(result.get().as<std::map<std::string, PropertyValue>>());
             case 16: return nanobind::cast(result.get().as<std::map<std::string, FuncSignatureDesc>>());
             case 17: return nanobind::cast(result.get().as<std::map<std::string, WorldDesc>>());
-            case 18: return nanobind::cast(result.get().as<ConsoleMessages>());
+            case 18: return nanobind::cast(result.get().as<OutputLogMessages>());
             case 19: return nanobind::cast(getConvertedReturnValue<PackedArray, PackedArrayView>(client, std::move(result)));
             case 20: return nanobind::cast(result.get().as<SharedMemoryView>());
             case 21: return nanobind::cast(getConvertedReturnValue<DataBundle, DataBundleView>(client, std::move(result)));

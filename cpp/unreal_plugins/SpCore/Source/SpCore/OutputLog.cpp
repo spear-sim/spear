@@ -3,7 +3,7 @@
 // Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-#include "SpCore/Console.h"
+#include "SpCore/OutputLog.h"
 
 #include <iostream> // std::cout
 #include <memory>   // std::make_unique, std::unique_ptr
@@ -42,18 +42,18 @@ public:
         messages_.push_back(message_str);
     }
 
-    SpConsoleMessages flush()
+    SpOutputLogMessages flush()
     {
         std::lock_guard<std::mutex> lock(mutex_);
 
-        SpConsoleMessages console_messages;
-        console_messages.messages_ = Std::toVector<std::string>(messages_);
-        console_messages.num_evicted_ = num_evicted_;
+        SpOutputLogMessages output_log_messages;
+        output_log_messages.messages_ = Std::toVector<std::string>(messages_);
+        output_log_messages.num_evicted_ = num_evicted_;
 
         messages_.clear();
         num_evicted_ = 0;
 
-        return console_messages;
+        return output_log_messages;
     }
 
 private:
@@ -64,7 +64,7 @@ private:
 
 std::unique_ptr<SpOutputDevice> g_output_device;
 
-void Console::requestInitialize()
+void OutputLog::requestInitialize()
 {
     SP_ASSERT(!g_output_device);
 
@@ -84,7 +84,7 @@ void Console::requestInitialize()
     }
 }
 
-void Console::terminate()
+void OutputLog::terminate()
 {
     if (g_output_device) {
         SP_LOG("    Terminating output device system...");
@@ -93,12 +93,12 @@ void Console::terminate()
     }
 }
 
-bool Console::isInitialized()
+bool OutputLog::isInitialized()
 {
     return g_output_device != nullptr;
 }
 
-SpConsoleMessages Console::flush()
+SpOutputLogMessages OutputLog::flush()
 {
     SP_ASSERT(isInitialized());
     return g_output_device->flush();

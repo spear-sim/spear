@@ -13,11 +13,11 @@
 #include <HAL/Platform.h> // SPCORE_API
 
 //
-// SpConsoleMessages stores the messages returned by Console::flush(...), along with the number of
+// SpOutputLogMessages stores the messages returned by OutputLog::flush(...), along with the number of
 // messages that were evicted because the underlying ring buffer was full.
 //
 
-struct SpConsoleMessages
+struct SpOutputLogMessages
 {
     std::vector<std::string> messages_;
     int32_t num_evicted_ = 0;
@@ -29,15 +29,15 @@ struct SpConsoleMessages
 // that has no other way of seeing the Unreal log.
 //
 
-class SPCORE_API Console
+class SPCORE_API OutputLog
 {
 public:
-    Console() = delete;
-    ~Console() = delete;
+    OutputLog() = delete;
+    ~OutputLog() = delete;
 
     static void requestInitialize();
     static void terminate();
     static bool isInitialized();
 
-    static SpConsoleMessages flush();
+    static SpOutputLogMessages flush();
 };

@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "SpCore/Assert.h"
-#include "SpCore/Console.h"
+#include "SpCore/OutputLog.h"
 #include "SpCore/SpArray.h"
 #include "SpCore/SpFuncComponent.h"
 #include "SpCore/Std.h"
@@ -29,17 +29,17 @@ class UStruct;
 class UWorld;
 
 //
-// SpCore/Console.h
+// SpCore/OutputLog.h
 //
 
-// SpConsoleMessages (never received as an arg from the client)
+// SpOutputLogMessages (never received as an arg from the client)
 
 template <> // needed to send a custom type as a return value to the client
-struct clmdep_msgpack::adaptor::object_with_zone<SpConsoleMessages> {
-    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpConsoleMessages const& sp_console_messages) const {
+struct clmdep_msgpack::adaptor::object_with_zone<SpOutputLogMessages> {
+    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpOutputLogMessages const& sp_output_log_messages) const {
         std::map<std::string, clmdep_msgpack::object> objects;
-        Std::insert(objects, "messages",    MsgpackUtils::toMsgpackObject(sp_console_messages.messages_,    object_with_zone));
-        Std::insert(objects, "num_evicted", MsgpackUtils::toMsgpackObject(sp_console_messages.num_evicted_, object_with_zone));
+        Std::insert(objects, "messages",    MsgpackUtils::toMsgpackObject(sp_output_log_messages.messages_,    object_with_zone));
+        Std::insert(objects, "num_evicted", MsgpackUtils::toMsgpackObject(sp_output_log_messages.num_evicted_, object_with_zone));
         MsgpackUtils::setMsgpackObjectToMap(object_with_zone, objects);
     }
 };
