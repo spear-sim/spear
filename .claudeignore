@@ -9,8 +9,6 @@ cpp/unreal_plugins/*/Binaries
 cpp/unreal_plugins/*/Intermediate
 cpp/unreal_plugins/*/ThirdParty
 
-cpp/unreal_projects/DefaultProject/Content
-
 cpp/unreal_projects/SpearSim/.vs
 cpp/unreal_projects/SpearSim/.vsconfig
 cpp/unreal_projects/SpearSim/.vscode
@@ -49,6 +47,7 @@ examples/import_stanford_dataset/gltf
 examples/import_stanford_dataset/pak
 examples/import_stanford_dataset/ply
 examples/import_stanford_dataset/stanford
+examples/debug_draw/images
 examples/mujoco_interop/images
 examples/render_image/image.png
 examples/render_image_async/image.png
@@ -58,7 +57,8 @@ examples/render_image_editor/screenshot.png
 examples/render_image_editor_script/image.png
 examples/render_image_hypersim/images
 examples/render_image_multi_view/images
-examples/render_image_multi_view/movie.mp4
+examples/render_image_multi_view/video.mp4
+examples/render_image_path_tracer/images
 
 python_ext/BUILD
 
@@ -68,4 +68,4 @@ third_party
 
 tools/BUILD
 
-tools/run_editor_script_for_each_map/user_config.yaml
+tools/run_editor_tasks/user_config.yaml
