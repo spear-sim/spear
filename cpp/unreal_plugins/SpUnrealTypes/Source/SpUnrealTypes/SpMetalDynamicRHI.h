@@ -5,40 +5,21 @@
 
 #pragma once
 
+#include <boost/predef.h> // BOOST_OS_MACOS
+
 #include <HAL/Platform.h>                    // uint64
 #include <Kismet/BlueprintFunctionLibrary.h> // UBlueprintFunctionLibrary
-#include <UObject/ObjectMacros.h>            // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY, USTRUCT
-
+#include <UObject/ObjectMacros.h>            // GENERATED_BODY, UCLASS, UFUNCTION
 #include "SpCore/Assert.h" // SP_ASSERT
+#if BOOST_OS_MACOS
+    #include <RHICommandList.h> // RHIGetNativeDevice
+    THIRD_PARTY_INCLUDES_START
+        #include <Metal/Metal.h>  // id<MTLDevice>
+        #include <MetalInclude.h> // MTL::Device
+    THIRD_PARTY_INCLUDES_END
+#endif
 
 #include "SpMetalDynamicRHI.generated.h"
-
-//
-// This class is intended to mimic the low-level Metal device queries we need, following the same pattern as our
-// other backends (see SpD3D12DynamicRHI.h, SpD3D11DynamicRHI.h, SpVulkanDynamicRHI.h). It transcribes native handles
-// as uint64 values and native structs as faithful USTRUCT instances so they can participate in UFUNCTION signatures.
-//
-// TODO: UE 5.5 does not expose a public IMetalDynamicRHI accessor analogous to GetID3D12DynamicRHI(),
-// GetID3D11DynamicRHI(), and GetIVulkanDynamicRHI(), so the functions below are not yet implemented. They will need
-// an Objective-C++/metal-cpp implementation that queries id<MTLDevice> (recommendedMaxWorkingSetSize,
-// currentAllocatedSize, hasUnifiedMemory) directly.
-//
-
-// Faithful transcription of the id<MTLDevice> memory properties we care about.
-USTRUCT()
-struct FSpMTLDeviceMemoryInfo
-{
-    GENERATED_BODY()
-
-    UPROPERTY()
-    uint64 RecommendedMaxWorkingSetSize = 0;
-
-    UPROPERTY()
-    uint64 CurrentAllocatedSize = 0;
-
-    UPROPERTY()
-    bool HasUnifiedMemory = false;
-};
 
 UCLASS()
 class USpMetalDynamicRHIInterface : public UBlueprintFunctionLibrary
@@ -50,14 +31,52 @@ public:
     UFUNCTION(Category="SPEAR") // uint64 is not supported for BlueprintCallable
     static uint64 RHIGetDevice()
     {
-        SP_ASSERT(false); // TODO
-        return 0;
+        #if BOOST_OS_MACOS
+            void* mtl_device = RHIGetNativeDevice();
+            SP_ASSERT(mtl_device);
+            return reinterpret_cast<uint64>(mtl_device);
+        #else
+            SP_ASSERT(false);
+            return 0;
+        #endif
     }
 
     UFUNCTION(Category="SPEAR") // uint64 is not supported for BlueprintCallable
-    static FSpMTLDeviceMemoryInfo GetDeviceMemoryInfo(uint64 MTLDevice)
+    static uint64 RecommendedMaxWorkingSetSize(uint64 MTLDevice)
     {
-        SP_ASSERT(false); // TODO
-        return FSpMTLDeviceMemoryInfo();
+        #if BOOST_OS_MACOS
+            MTL::Device* mtl_device = reinterpret_cast<MTL::Device*>(MTLDevice);
+            SP_ASSERT(mtl_device);
+            return mtl_device->recommendedMaxWorkingSetSize();
+        #else
+            SP_ASSERT(false);
+            return 0;
+        #endif
+    }
+
+    UFUNCTION(Category="SPEAR") // uint64 is not supported for BlueprintCallable
+    static uint64 CurrentAllocatedSize(uint64 MTLDevice)
+    {
+        #if BOOST_OS_MACOS
+            MTL::Device* mtl_device = reinterpret_cast<MTL::Device*>(MTLDevice);
+            SP_ASSERT(mtl_device);
+            return static_cast<uint64>(mtl_device->currentAllocatedSize());
+        #else
+            SP_ASSERT(false);
+            return 0;
+        #endif
+    }
+
+    UFUNCTION(Category="SPEAR")
+    static bool HasUnifiedMemory(uint64 MTLDevice)
+    {
+        #if BOOST_OS_MACOS
+            MTL::Device* mtl_device = reinterpret_cast<MTL::Device*>(MTLDevice);
+            SP_ASSERT(mtl_device);
+            return mtl_device->hasUnifiedMemory();
+        #else
+            SP_ASSERT(false);
+            return false;
+        #endif
     }
 };

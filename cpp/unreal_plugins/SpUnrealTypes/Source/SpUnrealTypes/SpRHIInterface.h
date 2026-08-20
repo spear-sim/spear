@@ -35,28 +35,39 @@ enum class ESpRHIInterfaceType
 	OpenGL = Unreal::getConstEnumValue(ERHIInterfaceType::OpenGL),
 };
 
+// Based on FRHIMemoryStats from UE 5.8
 USTRUCT()
 struct FSpRHIMemoryStats
 {
     GENERATED_BODY()
 
+    // Budget assigned by the OS/driver. Total memory the app should use.
     UPROPERTY()
-    bool IsValid = false;
+    uint64 BudgetLocal = 0; // GPU VRAM budget
 
     UPROPERTY()
-    uint64 BudgetBytes = 0;
+    uint64 BudgetSystem = 0; // System/host memory budget
+
+    // Currently used memory.
+    UPROPERTY()
+    uint64 UsedLocal = 0; // GPU VRAM used
 
     UPROPERTY()
-    uint64 UsedBytes = 0;
+    uint64 UsedSystem = 0; // System/host memory used
+
+    // Over-budget memory
+    UPROPERTY()
+    uint64 DemotedLocal = 0;
 
     UPROPERTY()
-    uint64 DedicatedBytes = 0;
+    uint64 DemotedSystem = 0;
+
+    // Available memory within budget
+    UPROPERTY()
+    uint64 AvailableLocal = 0;
 
     UPROPERTY()
-    uint64 SystemBudgetBytes = 0;
-
-    UPROPERTY()
-    uint64 SystemUsedBytes = 0;
+    uint64 AvailableSystem = 0;
 };
 
 

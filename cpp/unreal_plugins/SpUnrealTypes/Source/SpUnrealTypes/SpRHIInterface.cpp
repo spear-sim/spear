@@ -14,17 +14,16 @@
 #include <RHIDefinitions.h>          // ERHIInterfaceType
 #include <RHIFwd.h>                  // RHI_ENABLE_RESOURCE_INFO
 #include <Templates/SharedPointer.h> // TSharedPtr
+#include "SpCore/Assert.h" // SP_ASSERT
+#include "SpUnrealTypes/SpD3D11DynamicRHI.h"  // USpD3D11DynamicRHIInterface
+#include "SpUnrealTypes/SpD3D12DynamicRHI.h"  // USpD3D12DynamicRHIInterface
+#include "SpUnrealTypes/SpDXGI.h"             // ESpDXGIMemorySegmentGroup, FSpDXGIQueryVideoMemoryInfo
+#include "SpUnrealTypes/SpMetalDynamicRHI.h"  // USpMetalDynamicRHIInterface
+#include "SpUnrealTypes/SpVulkanDynamicRHI.h" // FSpVkMemoryHeap, FSpVkPhysicalDeviceMemoryProperties2, USpVulkanDynamicRHIInterface
+
 #if BOOST_OS_WINDOWS || BOOST_OS_LINUX
     #include <IVulkanDynamicRHI.h> // VK_MEMORY_HEAP_DEVICE_LOCAL_BIT
 #endif
-
-#include "SpCore/Assert.h" // SP_ASSERT
-
-#include "SpUnrealTypes/SpD3D11DynamicRHI.h"  // USpD3D11DynamicRHIInterface
-#include "SpUnrealTypes/SpD3D12DynamicRHI.h"  // USpD3D12DynamicRHIInterface
-#include "SpUnrealTypes/SpDXGI.h"             // ESpDXGIMemorySegmentGroup, FSpDXGIAdapterDesc, FSpDXGIQueryVideoMemoryInfo
-#include "SpUnrealTypes/SpMetalDynamicRHI.h"  // FSpMTLDeviceMemoryInfo, USpMetalDynamicRHIInterface
-#include "SpUnrealTypes/SpVulkanDynamicRHI.h" // FSpVkMemoryHeap, FSpVkPhysicalDeviceMemoryProperties2, USpVulkanDynamicRHIInterface
 
 FSpRHIMemoryStats USpRHIInterface::GetMemoryStats()
 {
@@ -36,28 +35,22 @@ FSpRHIMemoryStats USpRHIInterface::GetMemoryStats()
     if (interface_type == ERHIInterfaceType::D3D12) {
         #if BOOST_OS_WINDOWS
             uint64 d3d12_device = USpD3D12DynamicRHIInterface::RHIGetDevice(0);
-            FSpDXGIAdapterDesc adapter_desc = USpD3D12DynamicRHIInterface::GetAdapterDesc(d3d12_device);
             FSpDXGIQueryVideoMemoryInfo local_info = USpD3D12DynamicRHIInterface::QueryVideoMemoryInfo(d3d12_device, ESpDXGIMemorySegmentGroup::Local);
             FSpDXGIQueryVideoMemoryInfo non_local_info = USpD3D12DynamicRHIInterface::QueryVideoMemoryInfo(d3d12_device, ESpDXGIMemorySegmentGroup::NonLocal);
-            stats.BudgetBytes = local_info.Budget;
-            stats.UsedBytes = local_info.CurrentUsage;
-            stats.DedicatedBytes = adapter_desc.DedicatedVideoMemory;
-            stats.SystemBudgetBytes = non_local_info.Budget;
-            stats.SystemUsedBytes = non_local_info.CurrentUsage;
-            stats.IsValid = true;
+            stats.BudgetLocal = local_info.Budget;
+            stats.UsedLocal = local_info.CurrentUsage;
+            stats.BudgetSystem = non_local_info.Budget;
+            stats.UsedSystem = non_local_info.CurrentUsage;
         #endif
     } else if (interface_type == ERHIInterfaceType::D3D11) {
         #if BOOST_OS_WINDOWS
             uint64 dxgi_adapter = USpD3D11DynamicRHIInterface::RHIGetAdapter();
-            FSpDXGIAdapterDesc adapter_desc = USpD3D11DynamicRHIInterface::GetAdapterDesc(dxgi_adapter);
             FSpDXGIQueryVideoMemoryInfo local_info = USpD3D11DynamicRHIInterface::QueryVideoMemoryInfo(dxgi_adapter, ESpDXGIMemorySegmentGroup::Local);
             FSpDXGIQueryVideoMemoryInfo non_local_info = USpD3D11DynamicRHIInterface::QueryVideoMemoryInfo(dxgi_adapter, ESpDXGIMemorySegmentGroup::NonLocal);
-            stats.BudgetBytes = local_info.Budget;
-            stats.UsedBytes = local_info.CurrentUsage;
-            stats.DedicatedBytes = adapter_desc.DedicatedVideoMemory;
-            stats.SystemBudgetBytes = non_local_info.Budget;
-            stats.SystemUsedBytes = non_local_info.CurrentUsage;
-            stats.IsValid = true;
+            stats.BudgetLocal = local_info.Budget;
+            stats.UsedLocal = local_info.CurrentUsage;
+            stats.BudgetSystem = non_local_info.Budget;
+            stats.UsedSystem = non_local_info.CurrentUsage;
         #endif
     } else if (interface_type == ERHIInterfaceType::Vulkan) {
         #if BOOST_OS_WINDOWS || BOOST_OS_LINUX
@@ -66,25 +59,26 @@ FSpRHIMemoryStats USpRHIInterface::GetMemoryStats()
             for (int i = 0; i < memory_properties.MemoryProperties.MemoryHeaps.Num(); i++) {
                 const FSpVkMemoryHeap& memory_heap = memory_properties.MemoryProperties.MemoryHeaps[i];
                 if (memory_heap.Flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) {
-                    stats.BudgetBytes += memory_properties.MemoryBudget.HeapBudget[i];
-                    stats.UsedBytes += memory_properties.MemoryBudget.HeapUsage[i];
-                    stats.DedicatedBytes += memory_heap.Size;
+                    stats.BudgetLocal += memory_properties.MemoryBudget.HeapBudget[i];
+                    stats.UsedLocal += memory_properties.MemoryBudget.HeapUsage[i];
                 } else {
-                    stats.SystemBudgetBytes += memory_properties.MemoryBudget.HeapBudget[i];
-                    stats.SystemUsedBytes += memory_properties.MemoryBudget.HeapUsage[i];
+                    stats.BudgetSystem += memory_properties.MemoryBudget.HeapBudget[i];
+                    stats.UsedSystem += memory_properties.MemoryBudget.HeapUsage[i];
                 }
             }
-            stats.IsValid = true;
         #endif
     } else if (interface_type == ERHIInterfaceType::Metal) {
         #if BOOST_OS_MACOS
             uint64 mtl_device = USpMetalDynamicRHIInterface::RHIGetDevice();
-            FSpMTLDeviceMemoryInfo memory_info = USpMetalDynamicRHIInterface::GetDeviceMemoryInfo(mtl_device);
-            stats.BudgetBytes = memory_info.RecommendedMaxWorkingSetSize;
-            stats.UsedBytes = memory_info.CurrentAllocatedSize;
-            stats.IsValid = true;
+            stats.BudgetLocal = USpMetalDynamicRHIInterface::RecommendedMaxWorkingSetSize(mtl_device);
+            stats.UsedLocal = USpMetalDynamicRHIInterface::CurrentAllocatedSize(mtl_device);
         #endif
     }
+
+    stats.AvailableLocal = (stats.UsedLocal < stats.BudgetLocal) ? (stats.BudgetLocal - stats.UsedLocal) : 0;
+    stats.DemotedLocal = (stats.UsedLocal > stats.BudgetLocal) ? (stats.UsedLocal - stats.BudgetLocal) : 0;
+    stats.AvailableSystem = (stats.UsedSystem < stats.BudgetSystem) ? (stats.BudgetSystem - stats.UsedSystem) : 0;
+    stats.DemotedSystem = (stats.UsedSystem > stats.BudgetSystem) ? (stats.UsedSystem - stats.BudgetSystem) : 0;
 
     return stats;
 }

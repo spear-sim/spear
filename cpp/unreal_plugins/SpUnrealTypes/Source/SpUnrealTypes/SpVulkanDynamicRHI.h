@@ -17,28 +17,18 @@
 #include <HAL/Platform.h>                    // uint32, uint64
 #include <Kismet/BlueprintFunctionLibrary.h> // UBlueprintFunctionLibrary
 #include <UObject/ObjectMacros.h>            // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY, USTRUCT
-#if BOOST_OS_WINDOWS || BOOST_OS_LINUX
-    #include <IVulkanDynamicRHI.h> // GetIVulkanDynamicRHI, IVulkanDynamicRHI, PFN_vkGetPhysicalDeviceMemoryProperties2, VK_EXT_MEMORY_BUDGET_EXTENSION_NAME, VkExtensionProperties, VkPhysicalDevice, VkPhysicalDeviceMemoryBudgetPropertiesEXT, VkPhysicalDeviceMemoryProperties2
-#endif
-
 #include "SpCore/Assert.h" // SP_ASSERT
-
-// SpCore/Std.h and SpCore/Unreal.h use "interface" and "small" as ordinary identifiers. When this header is compiled
-// in a translation unit that has already pulled in the Windows COM/RPC headers (e.g., alongside our D3D wrappers in
-// SpRHIInterface.cpp), those headers leak "interface" (combaseapi.h) and "small" (rpcndr.h) as macros, which
-// HideWindowsPlatformTypes.h does not undo. We undefine them here, after all Windows headers in the translation unit
-// have been parsed, so the SpCore headers below compile regardless of include order.
+// Workaround for windows macro mess
 #undef interface
 #undef small
 #include "SpCore/Std.h"    // Std::contains, Std::toVector
 #include "SpCore/Unreal.h" // Unreal::toStdString, Unreal::toStdVector
 
-#include "SpVulkanDynamicRHI.generated.h"
+#if BOOST_OS_WINDOWS || BOOST_OS_LINUX
+    #include <IVulkanDynamicRHI.h>
+#endif
 
-//
-// Types in this file are intended to be faithful transcriptions of the Vulkan types we query, see VkExtensionProperties,
-// VkPhysicalDeviceMemoryProperties2, and VkPhysicalDeviceMemoryBudgetPropertiesEXT.
-//
+#include "SpVulkanDynamicRHI.generated.h"
 
 USTRUCT()
 struct FSpVkExtensionProperties
@@ -118,12 +108,6 @@ struct FSpVkPhysicalDeviceMemoryProperties2
     UPROPERTY()
     FSpVkPhysicalDeviceMemoryBudgetProperties MemoryBudget;
 };
-
-//
-// This class mimics Unreal's IVulkanDynamicRHI, see Engine/Source/Runtime/VulkanRHI/Public/IVulkanDynamicRHI.h. We
-// expose the low-level Vulkan physical device queries we need, transcribing native handles as uint64 values and
-// native structs as faithful USTRUCT instances so they can participate in UFUNCTION signatures.
-//
 
 UCLASS()
 class USpVulkanDynamicRHIInterface : public UBlueprintFunctionLibrary
