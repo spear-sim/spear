@@ -8,6 +8,8 @@
 #include <exception>
 #include <memory> // std::make_unique
 
+#include "SpServices/UnrealServiceHeaderPrefix.h" // must be included before all other Unreal headers
+
 #include <CoreGlobals.h>           // IsRunningCommandlet
 #include <Modules/ModuleManager.h> // FDefaultGameModuleImpl, FDefaultModuleImpl, IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
 

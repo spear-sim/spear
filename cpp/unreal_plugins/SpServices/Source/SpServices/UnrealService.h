@@ -13,16 +13,17 @@
 #include <utility> // std::make_pair, std::move
 #include <vector>
 
+#include "SpServices/UnrealServiceHeaderPrefix.h" // must be included before all other Unreal headers
+
 #include <Components/ActorComponent.h>
 #include <Delegates/IDelegateInstance.h>     // FDelegateHandle
 #include <Engine/Engine.h>                   // GEngine
 #include <Engine/EngineTypes.h>              // ESpawnActorCollisionHandlingMethod
+#include <Engine/LocalPlayer.h>              // ULocalPlayer
 #include <Engine/World.h>                    // FActorSpawnParameters
 #include <GameFramework/Actor.h>             // ESpawnActorScaleMethod
 #include <HAL/IConsoleManager.h>             // EConsoleVariableFlags, IConsoleVariable
 #include <HAL/Platform.h>                    // uint64
-#include <IMessageLogListing.h>              // IMessageLogListing, IMessageLogListingPtr
-#include <Logging/TokenizedMessage.h>        // FTokenizedMessage
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 #include <Misc/EnumClassFlags.h>             // ENUM_CLASS_FLAGS
@@ -38,29 +39,20 @@
 #include <UObject/UObjectGlobals.h>          // GetTransientPackage, StaticLoadClass, StaticLoadObject
 #include <UObject/UnrealType.h>              // EFieldIterationFlags
 
-// private headers need custom include paths in SpModuleRules.Build.cs
-#include <Model/MessageLogListingModel.h> // FMessageLogListingModel, MessageContainer
+// MessageLog is a Developer-category module and is therefore not available in Shipping builds.
+#if WITH_UNREAL_DEVELOPER_TOOLS
 
-// HACK: FMessageLogModule::MessageLogViewModel and FMessageLogListingViewModel::MessageLogListingModel are
-// both private members, and there is no public API for enumerating all registered message log listings, or
-// for reading all (as opposed to filtered) messages across all pages of a listing. We only reach into these
-// two members directly (a private member access needs no exported symbol); every method we call is either
-// inline (FMessageLogViewModel::GetLogListingViewModels()) or a member of a class that is properly exported
-// from the MessageLog module (FMessageLogListingViewModel, FMessageLogListingModel are both MESSAGELOG_API),
-// so this links correctly. FMessageLogViewModel and FMessageLogModule themselves are not exported, so we
-// deliberately avoid calling any of their non-inline methods (e.g., FindLogListingViewModel(...)). We must
-// include Presentation/MessageLogListingViewModel.h under this #define too (not just MessageLogModule.h),
-// because Presentation/MessageLogViewModel.h transitively includes it -- if that transitive include happened
-// first, outside this block, its header guard would make our own include below a no-op, leaving
-// MessageLogListingModel private after all.
-#define private public
-    #include <Presentation/MessageLogListingViewModel.h> // FMessageLogListingViewModel
-    #include <Presentation/MessageLogViewModel.h>        // FMessageLogViewModel
-    #include <MessageLogModule.h>                        // FMessageLogModule
-#undef private
+    #include <IMessageLogListing.h>       // IMessageLogListing, IMessageLogListingPtr
+    #include <Logging/TokenizedMessage.h> // FTokenizedMessage
+
+    // private headers need custom include paths in SpModuleRules.Build.cs
+    #include <Model/MessageLogListingModel.h> // FMessageLogListingModel, MessageContainer
+
+#endif
 
 #include "SpCore/Assert.h"
 #include "SpCore/AssertModuleLoaded.h"
+#include "SpCore/Log.h"
 #include "SpCore/OutputLog.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
@@ -1314,7 +1306,17 @@ public:
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "execute_console_command",
             [this](uint64_t& world, std::string& command) -> void {
                 SP_ASSERT(GEngine);
-                GEngine->Exec(toPtr<UWorld>(world), Unreal::toTCharPtr(command));
+                UWorld* world_ptr = toPtr<UWorld>(world);
+                ULocalPlayer* local_player = GEngine->GetFirstGamePlayer(world_ptr);
+
+                bool handled = false;
+                if (!handled && local_player) {
+                    handled = local_player->Exec(world_ptr, Unreal::toTCharPtr(command), *GLog);
+                } if (!handled) {
+                    handled = GEngine->Exec(world_ptr, Unreal::toTCharPtr(command));
+                } if (!handled) {
+                    SP_LOG("WARNING: \"", command, "\" command not handled.");
+                }
             });
 
         //
@@ -1330,53 +1332,67 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_message_log_names",
             [this]() -> std::vector<std::string> {
-                SP_ASSERT_MODULE_LOADED("MessageLog");
-                FMessageLogModule* message_log_module = FModuleManager::Get().GetModulePtr<FMessageLogModule>("MessageLog");
-                SP_ASSERT(message_log_module);
-                SP_ASSERT(message_log_module->MessageLogViewModel);
+                // Not available in Shipping builds, since MessageLog is a Developer-category module -- see
+                // the WITH_UNREAL_DEVELOPER_TOOLS include guards above.
+                #if WITH_UNREAL_DEVELOPER_TOOLS
+                    SP_ASSERT_MODULE_LOADED("MessageLog");
+                    FMessageLogModule* message_log_module = FModuleManager::Get().GetModulePtr<FMessageLogModule>("MessageLog");
+                    SP_ASSERT(message_log_module);
+                    SP_ASSERT(message_log_module->MessageLogViewModel);
 
-                return Std::toVector<std::string>(
-                    Unreal::toStdVector(message_log_module->MessageLogViewModel->GetLogListingViewModels()) |
-                    std::views::transform([](const IMessageLogListingPtr& listing) { SP_ASSERT(listing); return Unreal::toStdString(listing->GetName()); }));
+                    return Std::toVector<std::string>(
+                        Unreal::toStdVector(message_log_module->MessageLogViewModel->GetLogListingViewModels()) |
+                        std::views::transform([](const IMessageLogListingPtr& listing) { SP_ASSERT(listing); return Unreal::toStdString(listing->GetName()); }));
+                #else
+                    SP_ASSERT(false);
+                    return std::vector<std::string>();
+                #endif
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_message_log_messages",
             [this](std::string& name) -> std::vector<std::string> {
-                SP_ASSERT_MODULE_LOADED("MessageLog");
-                FMessageLogModule* message_log_module = FModuleManager::Get().GetModulePtr<FMessageLogModule>("MessageLog");
-                SP_ASSERT(message_log_module);
-                SP_ASSERT(message_log_module->MessageLogViewModel);
+                // Not available in Shipping builds, since MessageLog is a Developer-category module -- see
+                // the WITH_UNREAL_DEVELOPER_TOOLS include guards above.
+                #if WITH_UNREAL_DEVELOPER_TOOLS
+                    SP_ASSERT_MODULE_LOADED("MessageLog");
+                    FMessageLogModule* message_log_module = FModuleManager::Get().GetModulePtr<FMessageLogModule>("MessageLog");
+                    SP_ASSERT(message_log_module);
+                    SP_ASSERT(message_log_module->MessageLogViewModel);
 
-                // FMessageLogViewModel::FindLogListingViewModel(...) and FMessageLogModel::GetLogListingModel(...)
-                // are not exported from the MessageLog module (FMessageLogViewModel and FMessageLogModule have
-                // no MESSAGELOG_API), so we can't call them directly across the module boundary. We instead
-                // linearly search the (inline, and therefore always linkable) GetLogListingViewModels() array
-                // for the matching name.
-                FName log_name = Unreal::toFName(name);
-                TSharedPtr<FMessageLogListingViewModel> listing;
-                for (const IMessageLogListingPtr& candidate : message_log_module->MessageLogViewModel->GetLogListingViewModels()) {
-                    SP_ASSERT(candidate);
-                    if (candidate->GetName() == log_name) {
-                        listing = StaticCastSharedPtr<FMessageLogListingViewModel>(candidate);
-                        break;
+                    // FMessageLogViewModel::FindLogListingViewModel(...) and FMessageLogModel::GetLogListingModel(...)
+                    // are not exported from the MessageLog module (FMessageLogViewModel and FMessageLogModule have
+                    // no MESSAGELOG_API), so we can't call them directly across the module boundary. We instead
+                    // linearly search the (inline, and therefore always linkable) GetLogListingViewModels() array
+                    // for the matching name.
+                    FName log_name = Unreal::toFName(name);
+                    TSharedPtr<FMessageLogListingViewModel> listing;
+                    for (const IMessageLogListingPtr& candidate : message_log_module->MessageLogViewModel->GetLogListingViewModels()) {
+                        SP_ASSERT(candidate);
+                        if (candidate->GetName() == log_name) {
+                            listing = StaticCastSharedPtr<FMessageLogListingViewModel>(candidate);
+                            break;
+                        }
                     }
-                }
-                SP_ASSERT(listing);
-                SP_ASSERT(listing->MessageLogListingModel);
+                    SP_ASSERT(listing);
+                    SP_ASSERT(listing->MessageLogListingModel);
 
-                // Deliberately read from FMessageLogListingModel rather than
-                // FMessageLogListingViewModel::GetFilteredMessages(...), so we return every message across
-                // every page, regardless of any severity/search filtering that might be active in the UI.
-                TSharedPtr<FMessageLogListingModel> listing_model = listing->MessageLogListingModel;
+                    // Deliberately read from FMessageLogListingModel rather than
+                    // FMessageLogListingViewModel::GetFilteredMessages(...), so we return every message across
+                    // every page, regardless of any severity/search filtering that might be active in the UI.
+                    TSharedPtr<FMessageLogListingModel> listing_model = listing->MessageLogListingModel;
 
-                std::vector<std::string> messages;
-                for (uint32 page_index = 0; page_index < listing_model->NumPages(); page_index++) {
-                    for (MessageContainer::TConstIterator it = listing_model->GetMessageIterator(page_index); it; ++it) {
-                        messages.push_back(Unreal::toStdString((*it)->ToText().ToString()));
+                    std::vector<std::string> messages;
+                    for (uint32 page_index = 0; page_index < listing_model->NumPages(); page_index++) {
+                        for (MessageContainer::TConstIterator it = listing_model->GetMessageIterator(page_index); it; ++it) {
+                            messages.push_back(Unreal::toStdString((*it)->ToText().ToString()));
+                        }
                     }
-                }
 
-                return messages;
+                    return messages;
+                #else
+                    SP_ASSERT(false);
+                    return std::vector<std::string>();
+                #endif
             });
 
         //

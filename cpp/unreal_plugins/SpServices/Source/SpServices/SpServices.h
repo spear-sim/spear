@@ -7,6 +7,8 @@
 
 #include <memory> // std::unique_ptr
 
+#include "SpServices/UnrealServiceHeaderPrefix.h" // must be included before all other Unreal headers
+
 #include <Modules/ModuleInterface.h>
 
 // Service

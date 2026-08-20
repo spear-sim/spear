@@ -36,14 +36,17 @@ public class SpModuleRules : ModuleRules
 
         PublicDependencyModuleNames.AddRange(new string[] {
             "AssetRegistry", "Chaos", "Core", "CoreUObject", "Engine", "EngineSettings", "InputCore", "Json", "JsonUtilities", "Landscape",
-            "LevelSequence", "MessageLog", "NavigationSystem", "PhysicsCore", "RenderCore", "Renderer", "RHI", "Slate"});
+            "LevelSequence", "NavigationSystem", "PhysicsCore", "RenderCore", "Renderer", "RHI", "Slate"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
-
-        // Needed to expose a private header in MessageLog
-        PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(readOnlyTargetRules.RelativeEnginePath, "Source", "Developer", "MessageLog", "Private")));
 
         // Needed to expose a private header in Renderer
         PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(readOnlyTargetRules.RelativeEnginePath, "Source", "Runtime", "Renderer", "Private")));
+
+        // MessageLog is a Developer-category module, and is therefore not available in Shipping builds.
+        if (readOnlyTargetRules.bBuildDeveloperTools) {
+            PublicDependencyModuleNames.Add("MessageLog");
+            PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(readOnlyTargetRules.RelativeEnginePath, "Source", "Developer", "MessageLog", "Private")));
+        }
 
         // Only add library dependencies if we're in a derived SpModuleRules class. This avoids build issues
         // on Linux where the SpModuleRules dummy plugin is trying to link against Boost but isn't set up
