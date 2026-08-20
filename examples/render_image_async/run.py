@@ -52,7 +52,8 @@ if __name__ == "__main__":
     with instance.begin_frame():
 
         # force high-res textures for captured images
-        game.console_service.set(name="r.Streaming.FullyLoadUsedTextures", value=1)
+        game.console_service.set_cvar(name="r.Streaming.FramesForFullUpdate", value=0)
+        game.console_service.set_cvar(name="r.Streaming.FullyLoadUsedTextures", value=1)
 
         # spawn camera sensor and get the final_tone_curve_hdr component
         bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")

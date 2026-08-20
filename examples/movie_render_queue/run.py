@@ -46,8 +46,8 @@ if __name__ == "__main__":
         # used for rendering has been configured to enable path tracer output.
         #
 
-        # ray_tracing_enable_cvar_value = game.console_service.get_as_int(name="r.RayTracing.Enable")
-        # game.console_service.set(name="r.RayTracing.Enable", value=1)
+        # ray_tracing_enable_cvar_value = game.console_service.get_cvar_as(as_type=int, name="r.RayTracing.Enable")
+        # game.console_service.set_cvar(name="r.RayTracing.Enable", value=1)
         # movie_pipeline_primary_config = game.unreal_service.load_object(uclass="UMoviePipelinePrimaryConfig", name="/SpContent/Cinematic/MPPC_DefaultConfigWithPathTracer.MPPC_DefaultConfigWithPathTracer")
         # spear.log("movie_pipeline_primary_config: ", movie_pipeline_primary_config)
         # pprint.pprint(movie_pipeline_primary_config.get_properties(), depth=1)
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     #
 
     # with instance.begin_frame():
-    #     game.console_service.set(name="r.RayTracing.Enable", value=ray_tracing_enable_cvar_value)
+    #     game.console_service.set_cvar(name="r.RayTracing.Enable", value=ray_tracing_enable_cvar_value)
     # with instance.end_frame():
     #     pass
 
