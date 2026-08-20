@@ -7,6 +7,7 @@
 
 #include <Kismet/BlueprintFunctionLibrary.h>
 #include <Modules/ModuleManager.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpCore/Assert.h"
 

@@ -5,9 +5,10 @@
 
 #pragma once
 
-#include <DistanceFieldAtlas.h> // GDistanceFieldAsyncQueue
-#include <HAL/Platform.h>       // int32
+#include <DistanceFieldAtlas.h>   // GDistanceFieldAsyncQueue
+#include <HAL/Platform.h>         // int32
 #include <Kismet/BlueprintFunctionLibrary.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpDistanceFieldAsyncQueue.generated.h"
 

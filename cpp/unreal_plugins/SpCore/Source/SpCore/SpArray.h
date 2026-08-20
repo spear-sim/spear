@@ -67,7 +67,7 @@ enum class SpArrayDataType
     Float64 = 10
 };
 
-UENUM()
+UENUM() // not intended to be Blueprint-accessible
 enum class ESpArrayDataType
 {
     Invalid = Unreal::getConstEnumValue(SpArrayDataType::Invalid),
@@ -84,7 +84,7 @@ enum class ESpArrayDataType
     Float64 = Unreal::getConstEnumValue(SpArrayDataType::Float64)
 };
 
-UENUM()
+UENUM() // not intended to be Blueprint-accessible
 enum class ESpArrayShortDataType
 {
     Invalid = Unreal::getConstEnumValue(SpArrayDataType::Invalid),
@@ -109,7 +109,7 @@ enum class SpArrayDataSource
     Shared   = 2
 };
 
-UENUM()
+UENUM() // not intended to be Blueprint-accessible
 enum class ESpArrayDataSource
 {
     Invalid  = Unreal::getConstEnumValue(SpArrayDataSource::Invalid),
@@ -170,7 +170,7 @@ enum class SpArraySharedMemoryUsageFlags
 };
 SP_DECLARE_ENUM_FLAG_OPERATORS(SpArraySharedMemoryUsageFlags);
 
-// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value, not intended to be Blueprint-accessible
 UENUM(Flags)
 enum class ESpArraySharedMemoryUsageFlags
 {

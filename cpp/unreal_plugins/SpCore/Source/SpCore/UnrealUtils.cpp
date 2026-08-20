@@ -32,8 +32,8 @@
 #include <UObject/Object.h>           // UObject
 #include <UObject/Script.h>           // EFunctionFlags
 #include <UObject/ScriptInterface.h>  // FScriptInterface
-#include <UObject/UnrealType.h>       // EFieldIterationFlags, FArrayProperty, FBoolProperty, FByteProperty, FDoubleProperty, FInt8Property, FInt16Property,
-                                      // FInt64Property, FFloatProperty, FIntProperty, FMapProperty, FProperty, FScriptArrayHelper, FScriptMapHelper,
+#include <UObject/UnrealType.h>       // EFieldIterationFlags, EPropertyPortFlags, FArrayProperty, FBoolProperty, FByteProperty, FDoubleProperty, FInt8Property,
+                                      // FInt16Property, FInt64Property, FFloatProperty, FIntProperty, FMapProperty, FProperty, FScriptArrayHelper, FScriptMapHelper,
                                       // FScriptSetHelper, FSetProperty, FStrProperty, FStructProperty, FUInt16Property, FUInt32Property, FUInt64Property,
                                       // TFieldIterator
 #include <UObject/UObjectHash.h>      // GetDerivedClasses
@@ -218,6 +218,18 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
     // Input args must be a subset of the function's args.
     SP_ASSERT(Std::isSubsetOf(Std::keys(args), Std::keys(property_descs)));
 
+    // In the editor, we perform extra validation to make sure that if the user omits an argument, it will be
+    // initialized correctly (i.e., in a way that matches the C++ signature) by InitializeStruct(...). We can
+    // only perform this validation in the editor because the necessary metadata (i.e., the default value
+    // given in the C++ signature) is not available in standalone builds.
+
+    #if WITH_EDITOR
+        std::vector<uint8_t, SpAlignedAllocator<uint8_t, 4096>> metadata_vector(num_bytes, initial_value);
+        if (num_bytes > 0) {
+            ufunction->InitializeStruct(metadata_vector.data());
+        }
+    #endif
+
     // Set property values.
     for (auto& [property_name, property_desc] : property_descs) {
 
@@ -239,11 +251,41 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
         // If the property name is in args, then set it using the string in args, and make sure the property
         // name was not also flagged by the caller as being the special world_context_object arg.
 
-        if (Std::containsKey(args, property_name)) {
+        else if (Std::containsKey(args, property_name)) {
             SP_ASSERT(property_name != world_context_object);
             setPropertyValueFromString(property_desc, args.at(property_name));
         }
+
+        // If the caller omitted this parameter (i.e., it is not present in args), the RPC path uses the parameter's
+        // default-constructed value, not any C++ default declared in the function signature. Assert that no non-zero
+        // default was declared, so the caller is forced to pass the argument explicitly rather than silently getting
+        // a value that differs from what the signature implies.
+
+        else {
+            #if WITH_EDITOR
+                FProperty* property = property_desc.property_;
+                if (!property->HasAnyPropertyFlags(EPropertyFlags::CPF_ReturnParm)) {
+                    std::string metadata_key = "CPP_Default_" + Unreal::toStdString(property->GetName());
+                    if (ufunction->HasMetaData(Unreal::toTCharPtr(metadata_key))) {
+                        std::string metadata_value_string = Unreal::toStdString(ufunction->GetMetaData(Unreal::toTCharPtr(metadata_key)));
+                        void* metadata_value_ptr = property->ContainerPtrToValuePtr<void>(metadata_vector.data());
+                        const TCHAR* success = property->ImportText_Direct(Unreal::toTCharPtr(metadata_value_string), metadata_value_ptr, nullptr, EPropertyPortFlags::PPF_None);
+                        SP_ASSERT(success);
+                        if (!property->Identical(property_desc.value_ptr_, metadata_value_ptr, EPropertyPortFlags::PPF_None)) {
+                            SP_LOG("ERROR: UFUNCTION \"", Unreal::toStdString(ufunction->GetName()), "\" argument \"", property_name, "\" is declared in C++ with a non-zero default value of ", metadata_value_string, " that is not available in standalone builds, and must therefore be passed in explicitly.");
+                            SP_ASSERT(false);
+                        }
+                    }
+                }
+            #endif
+        }
     }
+
+    #if WITH_EDITOR
+        if (num_bytes > 0) {
+            ufunction->DestroyStruct(metadata_vector.data());
+        }
+    #endif
 
     // Call function. We need to set GAllowActorScriptExecutionInEditor to true because AActor::ProcessEvent
     // blocks calls on non-CDO actor instances in the editor unless this flag is set or the function has

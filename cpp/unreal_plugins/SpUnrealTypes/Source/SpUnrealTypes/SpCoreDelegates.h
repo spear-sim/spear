@@ -9,6 +9,7 @@
 #include <HAL/Platform.h>            // int32, uint64
 #include <Kismet/BlueprintFunctionLibrary.h>
 #include <Misc/CoreDelegates.h>
+#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpCoreDelegates.generated.h"
 
@@ -16,10 +17,10 @@ UCLASS()
 class USpCoreDelegates : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
-public: 
+public:
     UFUNCTION()
-    static uint64 MountPak(const FString& PakFile, int32 PakOrder) { return reinterpret_cast<uint64>(FCoreDelegates::MountPak.Execute(PakFile, PakOrder)); }
+    static uint64 MountPak(const FString& PakFile, int32 PakOrder) { return reinterpret_cast<uint64>(FCoreDelegates::MountPak.Execute(PakFile, PakOrder)); } // uint64 not supported for BlueprintCallable
 
     UFUNCTION()
-    static bool OnUnmountPak(const FString& PakFile) { return FCoreDelegates::OnUnmountPak.Execute(PakFile); }
+    static bool OnUnmountPak(const FString& PakFile) { return FCoreDelegates::OnUnmountPak.Execute(PakFile); } // not intended to be BlueprintCallable
 };

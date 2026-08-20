@@ -69,7 +69,7 @@ struct FObjectInstancingGraph;
 // This enum corresponds to EStructFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/Class.h
 //
 
-// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value, not intended to be Blueprint-accessible
 UENUM(Flags)
 enum class ESpStructFlags
 {
@@ -108,7 +108,7 @@ ENUM_CLASS_FLAGS(ESpStructFlags); // required if combining values using bitwise 
 // This enum corresponds to EClassFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectMacros.h
 //
 
-// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value, not intended to be Blueprint-accessible
 UENUM(Flags)
 enum class ESpClassFlags : uint64
 {
@@ -152,7 +152,7 @@ ENUM_CLASS_FLAGS(ESpClassFlags); // required if combining values using bitwise o
 // This enum corresponds to EPropertyFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectMacros.h
 //
 
-// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value, not intended to be Blueprint-accessible
 UENUM(Flags)
 enum class ESpPropertyFlags : uint64
 {
@@ -234,7 +234,7 @@ ENUM_CLASS_FLAGS(ESpPropertyFlags); // required if combining values using bitwis
 // This enum corresponds to EFieldIterationFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/UnrealType.h
 //
 
-// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value, not intended to be Blueprint-accessible
 UENUM(Flags)
 enum class ESpFieldIterationFlags
 {
@@ -251,7 +251,7 @@ ENUM_CLASS_FLAGS(ESpFieldIterationFlags); // required if combining values using 
 // This enum corresponds to EFunctionFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/Script.h
 //
 
-// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value, not intended to be Blueprint-accessible
 UENUM(Flags)
 enum class ESpFunctionFlags : uint32
 {
@@ -294,7 +294,7 @@ ENUM_CLASS_FLAGS(ESpFunctionFlags); // required if combining values using bitwis
 // This enum corresponds to EIncludeSuperFlag::Type declared in Engine/Source/Runtime/CoreUObject/Public/UObject/Class.h
 //
 
-UENUM()
+UENUM() // not intended to be Blueprint-accessible
 enum class ESpIncludeSuperFlag
 {
     ExcludeSuper = Unreal::getConstEnumValue(EIncludeSuperFlag::Type::ExcludeSuper),
@@ -305,7 +305,7 @@ enum class ESpIncludeSuperFlag
 // This enum corresponds to EObjectFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectMacros.h
 //
 
-// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value, not intended to be Blueprint-accessible
 UENUM(Flags)
 enum class ESpObjectFlags
 {
@@ -346,7 +346,7 @@ ENUM_CLASS_FLAGS(ESpObjectFlags); // required if combining values using bitwise 
 // This enum corresponds to ELoadFlags declared in Engine/Source/Runtime/CoreUObject/Public/UObject/ObjectMacros.h
 //
 
-// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value, not intended to be Blueprint-accessible
 UENUM(Flags)
 enum class ESpLoadFlags
 {
@@ -378,7 +378,7 @@ ENUM_CLASS_FLAGS(ESpLoadFlags); // required if combining values using bitwise op
 // This enum corresponds to EConsoleVariableFlags declared in Engine/Source/Runtime/Core/Public/HAL/IConsoleManager.h
 //
 
-// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value, not intended to be Blueprint-accessible
 UENUM(Flags)
 enum class ESpConsoleVariableFlags
 {
@@ -417,7 +417,7 @@ ENUM_CLASS_FLAGS(ESpConsoleVariableFlags); // required if combining values using
 // This enum corresponds to ESpawnActorNameMode declared in Engine/Source/Runtime/Engine/Classes/Engine/World.h
 //
 
-UENUM()
+UENUM() // not intended to be Blueprint-accessible
 enum class ESpSpawnActorNameMode
 {
     Required_Fatal              = Unreal::getConstEnumValue(FActorSpawnParameters::ESpawnActorNameMode::Required_Fatal),
@@ -430,7 +430,7 @@ enum class ESpSpawnActorNameMode
 // This struct is intended to be identical to Unreal's FActorSpawnParameters struct, see Engine/Source/Runtime/Engine/Classes/Engine/World.h
 //
 
-USTRUCT()
+USTRUCT() // not intended to be Blueprint-accessible
 struct FSpActorSpawnParameters
 {
     GENERATED_BODY()
@@ -1253,6 +1253,30 @@ public:
             [this](uint64_t& cvar, std::string& val, std::vector<std::string>& set_by_strings) -> void {
                 SP_ASSERT(cvar);
                 toPtr<IConsoleVariable>(cvar)->Set(Unreal::toTCharPtr(val), Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings));
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_with_current_priority_from_bool",
+            [this](uint64_t& cvar, bool& val) -> void {
+                SP_ASSERT(cvar);
+                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(val);
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_with_current_priority_from_int",
+            [this](uint64_t& cvar, int32_t& val) -> void {
+                SP_ASSERT(cvar);
+                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(val);
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_with_current_priority_from_float",
+            [this](uint64_t& cvar, float& val) -> void {
+                SP_ASSERT(cvar);
+                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(val);
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_with_current_priority_from_string",
+            [this](uint64_t& cvar, std::string& val) -> void {
+                SP_ASSERT(cvar);
+                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(Unreal::toTCharPtr(val));
             });
 
         //

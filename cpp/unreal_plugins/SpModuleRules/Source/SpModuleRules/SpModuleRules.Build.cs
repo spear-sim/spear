@@ -35,8 +35,8 @@ public class SpModuleRules : ModuleRules
         UndefinedIdentifierWarningLevel = WarningLevel.Warning;
 
         PublicDependencyModuleNames.AddRange(new string[] {
-            "AssetRegistry", "Chaos", "Core", "CoreUObject", "Engine", "EngineSettings", "InputCore", "Json", "JsonUtilities", "LevelSequence",
-            "NavigationSystem", "PhysicsCore", "RenderCore", "Renderer", "RHI", "Slate"});
+            "AssetRegistry", "Chaos", "Core", "CoreUObject", "Engine", "EngineSettings", "InputCore", "Json", "JsonUtilities", "Landscape",
+            "LevelSequence", "NavigationSystem", "PhysicsCore", "RenderCore", "Renderer", "RHI", "Slate"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         // Needed to expose a private header in Renderer

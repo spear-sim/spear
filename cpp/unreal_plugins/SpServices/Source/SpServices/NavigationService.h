@@ -21,6 +21,7 @@
 #include <NavMesh/RecastNavMesh.h>
 #include <UObject/Class.h>                 // UClass
 #include <UObject/Object.h>                // UObject
+#include <UObject/ObjectMacros.h>          // UENUM
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
@@ -36,7 +37,7 @@
 
 #include "NavigationService.generated.h"
 
-UENUM()
+UENUM() // not intended to be Blueprint-accessible
 enum class ESpPathFindingMode
 {
     Regular      = Unreal::getConstEnumValue(EPathFindingMode::Type::Regular),
