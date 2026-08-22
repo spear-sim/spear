@@ -469,7 +469,8 @@ namespace {
 
     const int32 max_buffer_chars = 8192;
     ANSICHAR buffer[max_buffer_chars] = {0};
-    FPlatformStackWalk::ProgramCounterToHumanReadableString(0, back_trace[num_frames_to_skip], buffer, max_buffer_chars);
+    int32 current_call_depth = 0;
+    FPlatformStackWalk::ProgramCounterToHumanReadableString(current_call_depth, back_trace[num_frames_to_skip], buffer, max_buffer_chars);
     return std::string(buffer);
   }
 
@@ -482,7 +483,8 @@ namespace {
               const char* message)
   {
     // ---- BEGIN SPEAR MODIFICATION ----
-    _printCallStack(3);
+    int32 num_frames_to_skip = 3;
+    _printCallStack(num_frames_to_skip);
     // ---- END SPEAR MODIFICATION ----
 
     using ppk::assert::implementation::throwException;
@@ -501,8 +503,9 @@ namespace {
     if (message) {
         SP_LOG("    with message: ", message);
     }
-    _printCallStack(3);
-    std::string call_site_string = _getCallSiteString(3);
+    int32 num_frames_to_skip = 3;
+    _printCallStack(num_frames_to_skip);
+    std::string call_site_string = _getCallSiteString(num_frames_to_skip);
     bool force = true;
     FPlatformMisc::RequestExit(force, Unreal::toTCharPtr(call_site_string));
   }
@@ -517,12 +520,14 @@ namespace {
     if (message) {
         SP_LOG("    with message: ", message);
     }
-    _printCallStack(3);
+    int32 num_frames_to_skip = 3;
+    _printCallStack(num_frames_to_skip);
 
     // Deliberately trigger a hardware fault so Unreal's own crash-handling pipeline (e.g., the editor's
     // built-in crash handler) engages, in case it can produce a more complete call stack than the one
     // printed above.
-    FPlatformMisc::RaiseException(1);
+    uint32 exception_code = 1;
+    FPlatformMisc::RaiseException(exception_code);
   }
 
   // ---- END SPEAR MODIFICATION ----
@@ -729,7 +734,10 @@ namespace implementation {
     {
       case AssertAction::Abort:
         // ---- BEGIN SPEAR MODIFICATION ----
-        _printCallStack(2);
+        {
+            int32 num_frames_to_skip = 2;
+            _printCallStack(num_frames_to_skip);
+        }
         // ---- END SPEAR MODIFICATION ----
         PPK_ASSERT_ABORT();
 

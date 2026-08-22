@@ -11,10 +11,12 @@
 #include <map>
 #include <memory>   // std::make_unique, std::unique_ptr
 
-#include <CoreGlobals.h>           // GConfig, GEditorIni, GEngineIni, GGameIni, GGameUserSettingsIni, GInputIni
-#include <HAL/PlatformMisc.h>      // FPlatformMisc
-#include <Misc/ConfigCacheIni.h>   // GConfig
-#include <Modules/ModuleManager.h> // FDefaultGameModuleImpl, FDefaultModuleImpl, IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
+#include <CoreGlobals.h>                 // GConfig, GEditorIni, GEngineIni, GGameIni, GGameUserSettingsIni, GInputIni
+#include <Delegates/IDelegateInstance.h> // FDelegateHandle
+#include <HAL/PlatformMisc.h>            // FPlatformMisc
+#include <Misc/ConfigCacheIni.h>         // GConfig
+#include <Misc/CoreDelegates.h>          // FCoreDelegates
+#include <Modules/ModuleManager.h>       // FDefaultGameModuleImpl, FDefaultModuleImpl, IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
 
 // Unreal classes to register
 #include <AssetRegistry/IAssetRegistry.h>
@@ -38,8 +40,10 @@ void SpCore::StartupModule()
     requestInitializeIniConfigs(); // no need to undo in ShutdownModule()
 
     registerClasses();
-    initializeSharedMemory();
     OutputLog::requestInitialize();
+
+    post_engine_init_handle_ = FCoreDelegates::OnPostEngineInit.AddRaw(this, &SpCore::postEngineInitHandler);
+    engine_pre_exit_handle_  = FCoreDelegates::OnEnginePreExit.AddRaw(this, &SpCore::enginePreExitHandler);
 
     SP_LOG_CURRENT_FUNCTION();
 }
@@ -48,13 +52,34 @@ void SpCore::ShutdownModule()
 {
     SP_LOG_CURRENT_FUNCTION();
 
+    FCoreDelegates::OnEnginePreExit.Remove(engine_pre_exit_handle_);
+    FCoreDelegates::OnPostEngineInit.Remove(post_engine_init_handle_);
+    engine_pre_exit_handle_.Reset();
+    post_engine_init_handle_.Reset();
+
     OutputLog::terminate();
-    terminateSharedMemory();
     unregisterClasses();
 
     Config::terminate();
 
     SP_LOG_CURRENT_FUNCTION();
+}
+
+void SpCore::postEngineInitHandler()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    // This can't happen in StartupModule() because if we re-open a SPEAR project in the editor, then
+    // StartupModule() will get called again before the first ShutdownModule() gets called.
+    initializeSharedMemory(); 
+}
+
+void SpCore::enginePreExitHandler()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    // See above.
+    terminateSharedMemory();
 }
 
 void SpCore::requestWaitForKeyboardInput() const
@@ -125,7 +150,8 @@ void SpCore::initializeSharedMemory()
     SharedMemory::initialize(shared_memory_initial_unique_id);
 
     try {
-        shared_memory_region_ = std::make_unique<SharedMemoryRegion>(1);
+        uint64_t num_bytes = 1;
+        shared_memory_region_ = std::make_unique<SharedMemoryRegion>(num_bytes);
     } catch (const IdMutexError& e) {
         SP_LOG("    ERROR: Couldn't acquire shared memory region id=", e.getId(), " (id_string=", e.getIdString(), "). The Unreal Editor might be open already, or there might be another SPEAR executable running in the background. Close the Unreal Editor and other SPEAR executables, or change SP_CORE.SHARED_MEMORY_INITIAL_UNIQUE_ID to an unused ID, and try launching again.");
         SP_ASSERT(false);

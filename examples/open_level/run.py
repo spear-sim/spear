@@ -56,7 +56,9 @@ if __name__ == "__main__":
 
     # Calling OpenLevel invalidates the old game object, so get a new one here. This call will block until
     # the new game object is ready.
-    game = instance.get_game(wait_for_world_initialized=True, wait_for_world_initialized_max_time_seconds=10.0, wait_for_world_initialized_sleep_time_seconds=1.0, warm_up=True, warm_up_time_seconds=5.0, warm_up_num_frames=1)
+    game = instance.get_game(
+        wait_for_world_initialized=True, wait_for_world_initialized_max_time_seconds=10.0, wait_for_world_initialized_sleep_time_seconds=1.0,
+        warm_up=True, warm_up_time_seconds=5.0, warm_up_num_frames=1)
 
     if is_with_editor:
         with instance.begin_frame():
@@ -91,7 +93,9 @@ if __name__ == "__main__":
         gameplay_statics.OpenLevel(LevelName="/Game/SPEAR/Scenes/apartment_0000/Maps/apartment_0000", bAbsolute=True, Options="")
 
     # get a new game object again
-    game = instance.get_game(wait_for_world_initialized=True, wait_for_world_initialized_max_time_seconds=10.0, wait_for_world_initialized_sleep_time_seconds=1.0, warm_up=True, warm_up_time_seconds=5.0, warm_up_num_frames=1)
+    game = instance.get_game(
+        wait_for_world_initialized=True, wait_for_world_initialized_max_time_seconds=10.0, wait_for_world_initialized_sleep_time_seconds=1.0,
+        warm_up=True, warm_up_time_seconds=5.0, warm_up_num_frames=1)
 
     if is_with_editor:
         with instance.begin_frame():
