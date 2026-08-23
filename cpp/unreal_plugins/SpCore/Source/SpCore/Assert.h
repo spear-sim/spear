@@ -739,15 +739,14 @@
 // response rather than letting it propagate uncaught. But most SP_ASSERT call sites have no way of knowing,
 // locally, whether they happen to be executing inside one of these protected regions. Constructing an
 // AssertsAreAllowedToThrowScope as the first statement inside such a try block lets it announce that it is
-// currently active, for as long as the object stays in scope.
-//
-
-class SPCORE_API AssertsAreAllowedToThrowScope
+// currently active, for as long as the object stays in scope. Note that this class is intentionally not
+// marked SPCORE_API. Doing so would mark the thread_local variable, and that is not allowed on Windows.
+class AssertsAreAllowedToThrowScope
 {
 public:
-    AssertsAreAllowedToThrowScope();
-    ~AssertsAreAllowedToThrowScope();
-    static bool insideAssertsAreAllowedToThrowScope();
+    SPCORE_API AssertsAreAllowedToThrowScope();
+    SPCORE_API ~AssertsAreAllowedToThrowScope();
+    static SPCORE_API bool insideAssertsAreAllowedToThrowScope();
 private:
     inline static thread_local int depth_ = 0;
 };
