@@ -60,7 +60,7 @@ public:
         rpc_server_ = nullptr;
     }
 
-    std::unique_ptr<RpcServer> rpc_server_ = nullptr;
+    std::unique_ptr<RpcServer> rpc_server_;
 
 protected:
     void beginFrame() override

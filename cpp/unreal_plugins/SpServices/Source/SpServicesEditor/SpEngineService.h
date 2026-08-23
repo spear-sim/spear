@@ -11,6 +11,9 @@
 
 #include "SpCore/Assert.h"
 
+// needed to use SpServices::engine_service_
+#include "SpServices/RpcServer.h"
+#include "SpServices/EngineService.h"
 #include "SpServices/SpServices.h"
 
 #include "SpEngineService.generated.h"
