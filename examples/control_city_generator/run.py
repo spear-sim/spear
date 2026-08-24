@@ -2,8 +2,6 @@
 # Copyright (c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-# Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
-
 import os
 import time
 import numpy as np
@@ -72,8 +70,6 @@ if __name__ == "__main__":
     keyframe_rotations = keyframes_df[[f"camera_rotation_{i}{j}" for i in range(3) for j in range(3)]].to_numpy().reshape(-1, 3, 3)
 
     # create instance
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
-    spear.configure_system(config=config)
     instance = spear.Instance()
     game = instance.get_game()
 
