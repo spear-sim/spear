@@ -2,6 +2,8 @@
 
 In this example application, we demonstrate how to control the `MetaHumans` project, which is a freely available sample project from Epic Games.
 
+## Render multi-view images
+
 In a pre-processing step, we need to install the SPEAR plugins in `MetaHumans` by adding an `AdditionalPluginDirectories` entry to `MetaHumans.uproject`. We could do this by editing the `uproject` file directly, but here we use one of our command-line tools for convenience. We must also build the project, which will build the SPEAR plugin binaries and copy them into the project directory.
 
 ```console
@@ -19,7 +21,27 @@ python ../../run_editor.py --unreal-engine-dir path/to/UE_5.5 --unreal-project-d
 Finally, in the Unreal Editor, we wait for the default map to fully load. Then we press play in the editor and wait for the Unreal simulation to load and warm up. Once the simulation is fully loaded and warmed up, we are ready to launch our SPEAR programs.
 
 ```console
-python run.py
+python render.py
 ```
 
 You should see a MetaHumans character start talking. Additionally, an `images` directory of rendered images will begin to populate.
+
+## Control the MetaHuman face control rig
+
+In a pre-processing step, we need to link a small amount of external content into the project, and install the SPEAR plugins in `MetaHumans`.
+
+```console
+python ../../tools/update_symlink_for_external_content.py --unreal-project-dir path/to/MetaHumans --create --external-content-dir data --unreal-project-content-dir SPEAR
+
+python ../../tools/install_plugins_in_external_project.py --external-project-dir path/to/MetaHumans
+
+python ../../tools/run_uat.py --unreal-engine-dir path/to/UE_5.5 --unreal-project-dir path/to/MetaHumans -build
+```
+
+Next, we open `MetaHumans.uproject` in the Unreal Editor, open the `/Game/SPEAR/MH_Demo_CRC` map, and wait for the map to fully load. Then we press play in the editor and wait for the Unreal simulation to load and warm up. Once the simulation is fully loaded and warmed up, we are ready to control the character via SPEAR.
+
+```console
+python control.py
+```
+
+You should see the character's face move in a periodic pattern.
