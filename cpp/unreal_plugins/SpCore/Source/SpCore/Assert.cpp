@@ -8,6 +8,7 @@
 
 #include "SpCore/Assert.h"
 
+#include <mutex>  // std::lock_guard, std::recursive_mutex
 #include <string> // std::string
 
 #include <CoreGlobals.h>           // IsRunningCommandlet
@@ -231,20 +232,30 @@ namespace {
     }
 #endif
 
-    formatLevel(level, expression, stdout, reinterpret_cast<printHandler>(print));
-    print(stdout, level, "  in file %s, line %d\n  function: %s\n", file, line, function);
-
-    if (message)
-      print(stdout, level, "  with message: %s\n\n", message);
-
     // ---- BEGIN SPEAR MODIFICATION ----
 
-    // Print the call stack here, before the interactive prompt below (which blocks on keyboard input), so
-    // we always have a record of where the assert failed even if we end up sitting at the prompt for a while
-    // This is now the only place we print the call stack, regardless of which AssertAction we ultimately
-    // resolve to. See _printCallStack(...) below for how num_frames_to_skip was chosen.
-    int32 num_frames_to_skip = 3;
-    _printCallStack(num_frames_to_skip);
+    // Hold this lock across our entire report (header + call stack) so it can never be torn by an
+    // interleaved write from another thread, e.g., GLog's dedicated background thread flushing an unrelated
+    // message via StdOutputDevice::Serialize(...) at the same time (see Log::getStdoutMutex()'s comment for
+    // the full explanation). We deliberately release it before the interactive prompt below, since that
+    // prompt can block on keyboard input for an arbitrary amount of time, and we don't want to stall every
+    // other thread's logging for as long as we happen to be sitting at the prompt.
+    {
+      std::lock_guard<std::recursive_mutex> lock(Log::getStdoutMutex());
+
+      formatLevel(level, expression, stdout, reinterpret_cast<printHandler>(print));
+      print(stdout, level, "  in file %s, line %d\n  function: %s\n", file, line, function);
+
+      if (message)
+        print(stdout, level, "  with message: %s\n\n", message);
+
+      // Print the call stack here, before the interactive prompt below (which blocks on keyboard input),
+      // so we always have a record of where the assert failed even if we end up sitting at the prompt for
+      // a while. This is now the only place we print the call stack, regardless of which AssertAction we
+      // ultimately resolve to. See _printCallStack(...) below for how num_frames_to_skip was chosen.
+      int32 num_frames_to_skip = 3;
+      _printCallStack(num_frames_to_skip);
+    }
 
     //
     // On macOS and Linux, a double-clicked executable has no controlling terminal attached to stdin, so

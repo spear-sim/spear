@@ -6,6 +6,7 @@
 #pragma once
 
 #include <filesystem>
+#include <mutex>   // std::recursive_mutex
 #include <string>
 #include <utility> // std::forward
 
@@ -56,6 +57,16 @@ public:
 
     static void logCurrentFunction(const std::filesystem::path& current_file, int current_line, const std::string& current_function);
     static std::string getPrefix(const std::filesystem::path& current_file, int current_line);
+
+    // Shared across Log::logStringToStdout(...), StdOutputDevice::Serialize(...) (see SpCore/OutputLog.cpp),
+    // and Assert.cpp's own terminal reporting, so a full multi-part message from any one of these can never
+    // be torn by an interleaved write from another, regardless of which thread each runs on (Unreal's GLog
+    // can invoke output devices from a dedicated background thread rather than the thread that logged the
+    // message). This needs to be a recursive_mutex because Assert.cpp's reporting code and this class's own
+    // logString(...) can both re-enter the lock on the same thread, e.g., when the vendored PPK_ASSERT
+    // print() function locks around its own raw fprintf(...) calls and then also calls SP_LOG_NO_PREFIX(...),
+    // which locks again via logStringToStdout(...).
+    static std::recursive_mutex& getStdoutMutex();
 
 private:
     static void logString(const std::string& str);

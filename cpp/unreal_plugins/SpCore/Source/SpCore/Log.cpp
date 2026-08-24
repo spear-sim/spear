@@ -7,6 +7,7 @@
 
 #include <filesystem>
 #include <iostream> // std::cout
+#include <mutex>    // std::recursive_mutex
 #include <regex>
 #include <string>   // std::string::operator<<
 #include <vector>
@@ -34,6 +35,8 @@
 
 DEFINE_LOG_CATEGORY(LogSpear);
 
+std::recursive_mutex g_mutex;
+
 void Log::logCurrentFunction(const std::filesystem::path& current_file, int current_line, const std::string& current_function)
 {
     log(current_file, current_line, getCurrentFunctionAbbreviated(current_function));
@@ -55,7 +58,13 @@ void Log::logString(const std::string& str)
 
 void Log::logStringToStdout(const std::string& str)
 {
+    std::lock_guard<std::recursive_mutex> lock(getStdoutMutex());
     std::cout << str << std::endl;
+}
+
+std::recursive_mutex& Log::getStdoutMutex()
+{
+    return g_mutex;
 }
 
 void Log::logStringToUnreal(const std::string& str)

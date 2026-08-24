@@ -38,6 +38,11 @@ public:
     void Serialize(const TCHAR* message, ELogVerbosity::Type verbosity, const FName& category) override
     {
         if (category != LogSpear.GetCategoryName()) {
+            // GLog can invoke this Serialize(...) call from a dedicated background thread rather than the
+            // thread that originally logged the message, so we share a mutex with every other place that
+            // writes to the terminal (see Log::getStdoutMutex()'s comment) to guarantee this write can
+            // never be torn by an interleaved write from another thread.
+            std::lock_guard<std::recursive_mutex> lock(Log::getStdoutMutex());
             std::cout << Unreal::toStdString(category) << ": " << Unreal::toStdString(message) << std::endl;
         }
     }
