@@ -13,7 +13,7 @@
 #include "SpCore/Assert.h"
 #include "SpCore/Unreal.h"
 
-#include "SpUnrealTypes/SpRHIGlobals.h" // ESpRHIFeatureLevel
+#include "SpUnrealTypes/SpRHIFeatureLevel.h" // ESpRHIFeatureLevel
 
 #include "SpWorld.generated.h"
 

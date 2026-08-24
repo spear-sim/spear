@@ -16,9 +16,11 @@
 #include <RHIShaderPlatform.h> // GMaxRHIShaderPlatform
 #include <RHIStrings.h>        // LexToString
 
+#include "SpCore/Assert.h" // SP_ASSERT
 #include "SpCore/Unreal.h"
-#include "SpCore/Assert.h"     // SP_ASSERT
-#include "SpRHIGlobals.h"
+
+#include "SpUnrealTypes/SpRHIFeatureLevel.h" // ESpRHIFeatureLevel
+#include "SpUnrealTypes/SpRHIGlobals.h"      // ESpShaderPlatform
 
 #include "SpRHIInterface.generated.h"
 

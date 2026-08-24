@@ -6,11 +6,11 @@
 #pragma once
 
 #include <Kismet/BlueprintFunctionLibrary.h>
-#include <RHIFeatureLevel.h>   // ERHIFeatureLevel
 #include <RHIGlobals.h>        // Global IDs and limits
 #include <RHIShaderPlatform.h>
 
 #include "SpCore/Unreal.h"
+#include "SpUnrealTypes/SpRHIFeatureLevel.h" // ESpRHIFeatureLevel
 
 #include "SpRHIGlobals.generated.h"
 
@@ -167,17 +167,6 @@ enum class ESpPixelFormat
     ASTC_12x12_NORM_RG = Unreal::getConstEnumValue(EPixelFormat::PF_ASTC_12x12_NORM_RG),
     R16G16_SINT = Unreal::getConstEnumValue(EPixelFormat::PF_R16G16_SINT),
     MAX = Unreal::getConstEnumValue(EPixelFormat::PF_MAX),
-};
-
-UENUM(BlueprintType)
-enum class ESpRHIFeatureLevel : uint8
-{
-    ES2_REMOVED = Unreal::getConstEnumValue(ERHIFeatureLevel::ES2_REMOVED),
-    ES3_1       = Unreal::getConstEnumValue(ERHIFeatureLevel::ES3_1),
-    SM4_REMOVED = Unreal::getConstEnumValue(ERHIFeatureLevel::SM4_REMOVED),
-    SM5         = Unreal::getConstEnumValue(ERHIFeatureLevel::SM5),
-    SM6         = Unreal::getConstEnumValue(ERHIFeatureLevel::SM6),
-    Num         = Unreal::getConstEnumValue(ERHIFeatureLevel::Num),
 };
 
 UENUM(Flags)
