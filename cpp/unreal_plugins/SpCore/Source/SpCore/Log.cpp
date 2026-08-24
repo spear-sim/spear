@@ -32,7 +32,6 @@
     #error
 #endif
 
-DECLARE_LOG_CATEGORY_EXTERN(LogSpear, Log, All);
 DEFINE_LOG_CATEGORY(LogSpear);
 
 void Log::logCurrentFunction(const std::filesystem::path& current_file, int current_line, const std::string& current_function)

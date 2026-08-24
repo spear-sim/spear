@@ -17,11 +17,10 @@ SP_CORE:
 
   # Capture messages emitted via Unreal's logging system into an in-memory ring buffer, so they can be
   # retrieved later, e.g., to include in an error response sent back to a client that has no other way of
-  # seeing the Unreal log. NUM_MESSAGES is the capacity of the ring buffer; once it is full, each new
-  # message evicts the oldest message currently in the buffer.
-  OUTPUT_DEVICE:
-    ENABLE: True
-    NUM_MESSAGES: 8192
+  # seeing the Unreal log.
+  OUTPUT_LOG:
+    ENABLE_BUFFERED_OUTPUT_DEVICE: True
+    BUFFERED_OUTPUT_DEVICE_NUM_MESSAGES: 8192
 
   # Verbose debug printing for the proxy component system.
   PROXY_COMPONENT_MANAGER:

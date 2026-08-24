@@ -12,22 +12,11 @@
 
 #include <HAL/Platform.h> // SPCORE_API
 
-//
-// SpOutputLogMessages stores the messages returned by OutputLog::flush(...), along with the number of
-// messages that were evicted because the underlying ring buffer was full.
-//
-
 struct SpOutputLogMessages
 {
     std::vector<std::string> messages_;
     int32_t num_evicted_ = 0;
 };
-
-//
-// Captures messages emitted via Unreal's logging system (UE_LOG, GLog->Log(...), etc.) into an in-memory
-// ring buffer, so they can be retrieved later, e.g., to include in an error response sent back to a client
-// that has no other way of seeing the Unreal log.
-//
 
 class SPCORE_API OutputLog
 {

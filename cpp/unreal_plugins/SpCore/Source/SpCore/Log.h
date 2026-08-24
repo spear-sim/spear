@@ -9,10 +9,13 @@
 #include <string>
 #include <utility> // std::forward
 
-#include <HAL/Platform.h> // SPCORE_API
+#include <HAL/Platform.h>      // SPCORE_API
+#include <Logging/LogMacros.h> // DECLARE_LOG_CATEGORY_EXTERN
 
 #include "SpCore/Boost.h"
 #include "SpCore/Std.h"
+
+DECLARE_LOG_CATEGORY_EXTERN(LogSpear, Log, All);
 
 //
 // In some situations, the output from UE_LOG is not available, e.g., running on a cluster through an RL framework like RLLib.
