@@ -68,10 +68,14 @@ public:
     // which locks again via logStringToStdout(...).
     static std::recursive_mutex& getStdoutMutex();
 
+    // Exposed (rather than private) so that Assert.cpp's vendored print() function can route its already-
+    // formatted buffer to UE_LOG without also writing to std::cout, since print() already writes to stdout
+    // directly itself; calling SP_LOG_NO_PREFIX(...) there instead would print the same content twice.
+    static void logStringToUnreal(const std::string& str);
+
 private:
     static void logString(const std::string& str);
     static void logStringToStdout(const std::string& str);
-    static void logStringToUnreal(const std::string& str);
 
     static std::string getCurrentFileAbbreviated(const std::filesystem::path& current_file);
     static std::string getCurrentFunctionAbbreviated(const std::string& current_function);

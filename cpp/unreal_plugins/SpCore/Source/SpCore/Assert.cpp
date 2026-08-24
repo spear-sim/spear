@@ -11,10 +11,8 @@
 #include <mutex>  // std::lock_guard, std::recursive_mutex
 #include <string> // std::string
 
-#include <CoreGlobals.h>           // IsRunningCommandlet
 #include <HAL/PlatformMisc.h>      // FPlatformMisc
 #include <HAL/PlatformStackWalk.h> // FPlatformStackWalk
-#include <Misc/CoreMisc.h>         // IsRunningGame
 
 #include "SpCore/Boost.h"
 #include "SpCore/Log.h"
@@ -164,15 +162,17 @@ namespace {
 
     // ---- BEGIN SPEAR MODIFICATION ----
 
-    #if WITH_EDITOR // defined in an auto-generated header
-      if (!IsRunningCommandlet() && !IsRunningGame()) { // editor mode via GUI
-        char buffer[PPK_ASSERT_MESSAGE_BUFFER_SIZE];
-        va_start(args, format);
-        vsnprintf(buffer, PPK_ASSERT_MESSAGE_BUFFER_SIZE, format, args);
-        SP_LOG_NO_PREFIX("ERROR: ", buffer);
-        va_end(args);
-      }
-    #endif
+    // We call Log::logStringToUnreal(...) directly here, rather than SP_LOG_NO_PREFIX(...), because we
+    // already wrote this same content to stdout via vfprintf(...) above; SP_LOG_NO_PREFIX(...) would write
+    // it to stdout a second time in addition to routing it to UE_LOG. logStringToUnreal(...) is a no-op
+    // unless we're in editor mode via GUI, so we don't need to duplicate that condition here ourselves.
+    {
+      char buffer[PPK_ASSERT_MESSAGE_BUFFER_SIZE];
+      va_start(args, format);
+      vsnprintf(buffer, PPK_ASSERT_MESSAGE_BUFFER_SIZE, format, args);
+      Log::logStringToUnreal(std::string("ERROR: ") + buffer);
+      va_end(args);
+    }
 
     // ---- END SPEAR MODIFICATION ----
 
