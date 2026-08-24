@@ -407,8 +407,8 @@ class UnrealObject:
     # private helper functions
 
     def _unpack_property_values(self, obj):
-        if obj is None: # send_async discards the return value entirely, so obj can legitimately be None here
-            return None
+        if obj is None:
+            return None # send_async discards the return value entirely, so obj can legitimately be None here
         elif isinstance(obj, spear.PropertyValue):
             return obj.value
         elif isinstance(obj, list):
@@ -427,8 +427,8 @@ class UnrealObject:
             assert False
 
     def _try_to_return_value(self, obj):
-        if obj is None: # send_async discards the return value entirely, so obj can legitimately be None here
-            return None
+        if obj is None:
+            return None # send_async discards the return value entirely, so obj can legitimately be None here
         elif isinstance(obj, dict):
             if "ReturnValue" in obj:
                 return obj["ReturnValue"]

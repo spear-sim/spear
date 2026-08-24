@@ -30,6 +30,7 @@ if __name__ == "__main__":
         gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
         gameplay_statics.SetGamePaused(bPaused=False)
 
+        # get control rig component
         character = game.unreal_service.find_actor_by_name(actor_name="Actor_metahuman_004_CR", uclass="AActor")
         control_rig_component = game.unreal_service.get_component_by_class(actor=character, uclass="UControlRigComponent")
 
@@ -56,18 +57,18 @@ if __name__ == "__main__":
         v_2 = {"X": -0.5*cs, "Y": -0.5*ss}
 
         with instance.begin_frame():
-            control_rig_component.SetControlVector2D(ControlName="CTRL_C_jaw", Value=v_1)
-            control_rig_component.SetControlVector2D(ControlName="CTRL_C_mouth", Value=v_1)
+            control_rig_component.send_async.SetControlVector2D(ControlName="CTRL_C_jaw", Value=v_1)
+            control_rig_component.send_async.SetControlVector2D(ControlName="CTRL_C_mouth", Value=v_1)
 
-            control_rig_component.SetControlVector2D(ControlName="CTRL_L_eye", Value=v_2)
-            control_rig_component.SetControlVector2D(ControlName="CTRL_L_nose", Value=v_2)
-            control_rig_component.SetControlFloat(ControlName="CTRL_L_brow_raiseIn", Value=cs)
+            control_rig_component.send_async.SetControlVector2D(ControlName="CTRL_L_eye", Value=v_2)
+            control_rig_component.send_async.SetControlVector2D(ControlName="CTRL_L_nose", Value=v_2)
+            control_rig_component.send_async.SetControlFloat(ControlName="CTRL_L_brow_raiseIn", Value=cs)
 
-            control_rig_component.SetControlVector2D(ControlName="CTRL_R_eye", Value=v_1)
-            control_rig_component.SetControlVector2D(ControlName="CTRL_R_nose", Value=v_2)
-            control_rig_component.SetControlFloat(ControlName="CTRL_R_brow_raiseOut", Value=s)
-            control_rig_component.SetControlFloat(ControlName="CTRL_R_eye_faceScrunch", Value=s)
-            control_rig_component.SetControlFloat(ControlName="CTRL_R_eye_cheekRaise", Value=s)
+            control_rig_component.send_async.SetControlVector2D(ControlName="CTRL_R_eye", Value=v_1)
+            control_rig_component.send_async.SetControlVector2D(ControlName="CTRL_R_nose", Value=v_2)
+            control_rig_component.send_async.SetControlFloat(ControlName="CTRL_R_brow_raiseOut", Value=s)
+            control_rig_component.send_async.SetControlFloat(ControlName="CTRL_R_eye_faceScrunch", Value=s)
+            control_rig_component.send_async.SetControlFloat(ControlName="CTRL_R_eye_cheekRaise", Value=s)
 
         with instance.end_frame():
             pass
