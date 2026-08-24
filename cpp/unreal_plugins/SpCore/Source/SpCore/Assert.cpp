@@ -168,7 +168,7 @@ namespace {
         char buffer[PPK_ASSERT_MESSAGE_BUFFER_SIZE];
         va_start(args, format);
         vsnprintf(buffer, PPK_ASSERT_MESSAGE_BUFFER_SIZE, format, args);
-        SP_LOG("ERROR: ", buffer);
+        SP_LOG_NO_PREFIX("ERROR: ", buffer);
         va_end(args);
       }
     #endif
@@ -454,7 +454,7 @@ namespace {
     const int32 max_call_stack_chars = 65535;
     ANSICHAR call_stack[max_call_stack_chars] = {0};
     FPlatformStackWalk::StackWalkAndDump(call_stack, max_call_stack_chars, num_frames_to_skip);
-    SP_LOG("Call stack:");
+    SP_LOG_NO_PREFIX("Call stack:");
     SP_LOG_NO_PREFIX(std::string(call_stack));
   }
 
@@ -501,9 +501,9 @@ namespace {
              const char* expression,
              const char* message)
   {
-    SP_LOG("ERROR: Assertion '", expression, "' failed (", file, ":", line, ", ", function, ")");
+    SP_LOG_NO_PREFIX("ERROR: Assertion '", expression, "' failed (", file, ":", line, ", ", function, ")");
     if (message) {
-        SP_LOG("    with message: ", message);
+        SP_LOG_NO_PREFIX("    with message: ", message);
     }
     int32 num_frames_to_skip = 3;
     std::string call_site_string = _getCallSiteString(num_frames_to_skip);
@@ -517,9 +517,9 @@ namespace {
               const char* expression,
               const char* message)
   {
-    SP_LOG("ERROR: Assertion '", expression, "' failed (", file, ":", line, ", ", function, ")");
+    SP_LOG_NO_PREFIX("ERROR: Assertion '", expression, "' failed (", file, ":", line, ", ", function, ")");
     if (message) {
-        SP_LOG("    with message: ", message);
+        SP_LOG_NO_PREFIX("    with message: ", message);
     }
 
     // Deliberately trigger a hardware fault so Unreal's own crash-handling pipeline (e.g., the editor's
