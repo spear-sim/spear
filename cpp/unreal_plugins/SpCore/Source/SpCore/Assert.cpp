@@ -207,6 +207,9 @@ namespace {
       return print(out, level, "Assertion '%s' failed (level = %d)\n", expression, level);
   }
 
+  // Forward declaration; see the definition below for details.
+  void _printCallStack(int32 num_frames_to_skip);
+
   AssertAction::AssertAction PPK_ASSERT_CALL _defaultHandler( const char* file,
                                                               int line,
                                                               const char* function,
@@ -235,6 +238,13 @@ namespace {
       print(stderr, level, "  with message: %s\n\n", message);
 
     // ---- BEGIN SPEAR MODIFICATION ----
+
+    // Print the call stack here, before the interactive prompt below (which blocks on keyboard input), so
+    // we always have a record of where the assert failed even if we end up sitting at the prompt for a while
+    // This is now the only place we print the call stack, regardless of which AssertAction we ultimately
+    // resolve to. See _printCallStack(...) below for how num_frames_to_skip was chosen.
+    int32 num_frames_to_skip = 3;
+    _printCallStack(num_frames_to_skip);
 
     //
     // On macOS and Linux, a double-clicked executable has no controlling terminal attached to stdin, so
@@ -432,16 +442,13 @@ namespace {
 
   // ---- BEGIN SPEAR MODIFICATION ----
 
-  // Prints the current call stack, so we have a record of where an assert failed even in the Throw, Abort,
-  // Exit, and Crash cases, where there might not be a debugger attached to show it to us another way.
-  // num_frames_to_skip is the number of frames to skip starting from (and including) this function's own
-  // frame, so callers need to pass a value that accounts for their own depth relative to the original
-  // SP_ASSERT call site: 2 when called directly from handleAssert (e.g., the Abort case), or 3 when called
-  // from a dedicated helper like _throw(...)/_exit(...)/_crash(...), which sits one frame deeper (those
-  // helpers are themselves called either from handleAssert, or -- in _throw(...)'s case -- from
-  // handleThrow(...), which is called directly from the BreakThenThrow branch of the PPK_ASSERT_3 macro; both
-  // of those call sites are one frame above _throw(...)/_exit(...)/_crash(...), so the same skip count of 3
-  // works for either).
+  // Prints the current call stack. Called once, from _defaultHandler(...) above, immediately after the
+  // assertion header is printed and before the interactive prompt (if any) blocks on keyboard input, so we
+  // always have a record of where an assert failed regardless of which AssertAction we end up resolving to,
+  // and regardless of whether a debugger is attached to show us the stack another way. num_frames_to_skip
+  // is the number of frames to skip starting from (and including) this function's own frame; handleAssert(...)
+  // calls _handler(...), which is _defaultHandler(...), which calls this function, so a skip count of 3
+  // reaches the original SP_ASSERT call site.
   void _printCallStack(int32 num_frames_to_skip)
   {
     const int32 max_call_stack_chars = 65535;
@@ -482,11 +489,6 @@ namespace {
               const char* expression,
               const char* message)
   {
-    // ---- BEGIN SPEAR MODIFICATION ----
-    int32 num_frames_to_skip = 3;
-    _printCallStack(num_frames_to_skip);
-    // ---- END SPEAR MODIFICATION ----
-
     using ppk::assert::implementation::throwException;
     throwException(ppk::assert::AssertionException(file, line, function, expression, message));
   }
@@ -504,7 +506,6 @@ namespace {
         SP_LOG("    with message: ", message);
     }
     int32 num_frames_to_skip = 3;
-    _printCallStack(num_frames_to_skip);
     std::string call_site_string = _getCallSiteString(num_frames_to_skip);
     bool force = true;
     FPlatformMisc::RequestExit(force, Unreal::toTCharPtr(call_site_string));
@@ -520,12 +521,10 @@ namespace {
     if (message) {
         SP_LOG("    with message: ", message);
     }
-    int32 num_frames_to_skip = 3;
-    _printCallStack(num_frames_to_skip);
 
     // Deliberately trigger a hardware fault so Unreal's own crash-handling pipeline (e.g., the editor's
     // built-in crash handler) engages, in case it can produce a more complete call stack than the one
-    // printed above.
+    // printed earlier in _defaultHandler(...).
     uint32 exception_code = 1;
     FPlatformMisc::RaiseException(exception_code);
   }
@@ -733,12 +732,6 @@ namespace implementation {
     switch (action)
     {
       case AssertAction::Abort:
-        // ---- BEGIN SPEAR MODIFICATION ----
-        {
-            int32 num_frames_to_skip = 2;
-            _printCallStack(num_frames_to_skip);
-        }
-        // ---- END SPEAR MODIFICATION ----
         PPK_ASSERT_ABORT();
 
 #if !defined(PPK_ASSERT_DISABLE_IGNORE_LINE)
