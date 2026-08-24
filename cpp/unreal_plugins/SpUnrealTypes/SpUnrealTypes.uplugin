@@ -39,6 +39,10 @@
     "Plugins":
     [
         {
+            "Name": "HairStrands",
+            "Enabled": true
+        },
+        {
             "Name": "MovieRenderPipeline",
             "Enabled": true
         },
