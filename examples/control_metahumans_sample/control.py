@@ -17,11 +17,6 @@ import time
 
 _ANIMATION_DURATION = 10.0
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--skip-save-images", action="store_true")
-parser.add_argument("--skip-read-pixels", action="store_true")
-args = parser.parse_args()
-
 
 if __name__ == "__main__":
 
@@ -35,16 +30,11 @@ if __name__ == "__main__":
         gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
         gameplay_statics.SetGamePaused(bPaused=False)
 
-        # get control rig component
         character = game.unreal_service.find_actor_by_name(actor_name="Actor_metahuman_004_CR", uclass="AActor")
         control_rig_component = game.unreal_service.get_component_by_class(actor=character, uclass="UControlRigComponent")
 
     with instance.end_frame():
         pass
-
-    #
-    # animate face
-    #
 
     spear.log(f"Animating character for {_ANIMATION_DURATION} seconds...")
 
