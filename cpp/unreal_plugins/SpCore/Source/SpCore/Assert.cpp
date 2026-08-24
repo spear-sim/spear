@@ -231,11 +231,11 @@ namespace {
     }
 #endif
 
-    formatLevel(level, expression, stderr, reinterpret_cast<printHandler>(print));
-    print(stderr, level, "  in file %s, line %d\n  function: %s\n", file, line, function);
+    formatLevel(level, expression, stdout, reinterpret_cast<printHandler>(print));
+    print(stdout, level, "  in file %s, line %d\n  function: %s\n", file, line, function);
 
     if (message)
-      print(stderr, level, "  with message: %s\n\n", message);
+      print(stdout, level, "  with message: %s\n\n", message);
 
     // ---- BEGIN SPEAR MODIFICATION ----
 
@@ -317,21 +317,21 @@ namespace {
         // Adding multiple new options.
 
 #if defined(PPK_ASSERT_DISABLE_IGNORE_LINE)
-        fprintf(stderr, "Press (I)gnore / Ignore (A)ll / (D)ebug / Debug then (T)hrow / Th(r)ow / A(b)ort / (C)rash / E(x)it: ");
+        fprintf(stdout, "Press (I)gnore / Ignore (A)ll / (D)ebug / Debug then (T)hrow / Th(r)ow / A(b)ort / (C)rash / E(x)it: ");
 #else
-        fprintf(stderr, "Press (I)gnore / Ignore (F)orever / Ignore (A)ll / (D)ebug / Debug then (T)hrow / Th(r)ow / A(b)ort / (C)rash / E(x)it: ");
+        fprintf(stdout, "Press (I)gnore / Ignore (F)orever / Ignore (A)ll / (D)ebug / Debug then (T)hrow / Th(r)ow / A(b)ort / (C)rash / E(x)it: ");
 #endif
 
         // ---- END SPEAR MODIFICATION ----
 
-        fflush(stderr);
+        fflush(stdout);
 
         char buffer[256];
         if (!fgets(buffer, sizeof(buffer), stdin))
         {
           clearerr(stdin);
-          fprintf(stderr, "\n");
-          fflush(stderr);
+          fprintf(stdout, "\n");
+          fflush(stdout);
 
           // ---- BEGIN SPEAR MODIFICATION ----
 
