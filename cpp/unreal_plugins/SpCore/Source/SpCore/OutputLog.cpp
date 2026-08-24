@@ -102,6 +102,7 @@ void OutputLog::requestInitialize()
     SP_LOG("    Initializing StdOutputDevice...");
     g_std_output_device = std::make_unique<StdOutputDevice>();
     GLog->AddOutputDevice(g_std_output_device.get());
+    GLog->SerializeBacklog(g_std_output_device.get()); // recovers early messages, editor only, see GIsEditor in LaunchEngineLoop.cpp
 
     bool enable_buffered_output_device = true;
     int buffered_output_device_num_messages = 8192;
@@ -116,6 +117,7 @@ void OutputLog::requestInitialize()
         SP_LOG("    Initializing BufferedOutputDevice...");
         g_buffered_output_device = std::make_unique<BufferedOutputDevice>(buffered_output_device_num_messages);
         GLog->AddOutputDevice(g_buffered_output_device.get());
+        GLog->SerializeBacklog(g_buffered_output_device.get());
     }
 }
 

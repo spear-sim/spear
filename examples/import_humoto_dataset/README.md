@@ -21,7 +21,7 @@ With this directory structure in place, you can import the animation sequences i
 python ../../tools/run_editor_script.py --unreal-engine-dir path/to/UE_5.5 --launch-mode full --render-offscreen --script /absolute/path/to/spear/examples/import_animation_dataset/import_dataset.py --filesystem-base-dir /absolute/path/to/humoto_dataset --content-base-dir /Game/Humoto
 ```
 
-The `user_config.yaml.example` file in this example sets `SPEAR.LAUNCH_MODE` to `"none"`, which means the example is intended to run directly within a live game session in the Unreal Editor. If you launch the editor and press the play button, you can run spawn the previously imported animation sequences within the live game session as follows.
+Next, we open the Unreal Editor and wait for the default map to fully load. Then we press play in the editor and wait for the Unreal simulation to load and warm up. Once the simulation is fully loaded and warmed up, we can run spawn the previously imported animation sequences within the live game session as follows.
 
 ```console
 # spawn animation sequences

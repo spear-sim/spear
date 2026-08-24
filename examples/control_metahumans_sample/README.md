@@ -2,15 +2,15 @@
 
 In this example application, we demonstrate how to control the `MetaHumans` project, which is a freely available sample project from Epic Games.
 
-## Render multi-view images
-
-In a pre-processing step, we need to install the SPEAR plugins in `MetaHumans` by adding an `AdditionalPluginDirectories` entry to `MetaHumans.uproject`. We could do this by editing the `uproject` file directly, but here we use one of our command-line tools for convenience. We must also build the project, which will build the SPEAR plugin binaries and copy them into the project directory.
+In a pre-processing step, we need to install the SPEAR plugins into the `MetaHumans` project. We must also build the project, which will build the SPEAR plugin binaries and copy them into the project directory.
 
 ```console
 python ../../tools/install_plugins_in_external_project.py --external-project-dir path/to/MetaHumans
 
 python ../../tools/run_uat.py --unreal-engine-dir path/to/UE_5.5 --unreal-project-dir path/to/MetaHumans -build
 ```
+
+## Render multi-view images
 
 Our next step is to launch the Unreal Editor via the command-line, which is necessary to override some of the project settings in `MetaHumans`. Alternatively, we could override these settings by editing the files in the `MetaHumans/Config` directly, but we choose to launch the editor via the command-line so we can avoid modifying the project any more than necessary.
 
@@ -28,17 +28,7 @@ You should see a MetaHumans character start talking. Additionally, an `images` d
 
 ## Control the MetaHuman face control rig
 
-In a pre-processing step, we need to link a small amount of external content into the project, and install the SPEAR plugins in `MetaHumans`.
-
-```console
-python ../../tools/update_symlink_for_external_content.py --unreal-project-dir path/to/MetaHumans --create --external-content-dir data --unreal-project-content-dir SPEAR
-
-python ../../tools/install_plugins_in_external_project.py --external-project-dir path/to/MetaHumans
-
-python ../../tools/run_uat.py --unreal-engine-dir path/to/UE_5.5 --unreal-project-dir path/to/MetaHumans -build
-```
-
-Next, we open `MetaHumans.uproject` in the Unreal Editor, open the `/Game/SPEAR/MH_Demo_CRC` map, and wait for the map to fully load. Then we press play in the editor and wait for the Unreal simulation to load and warm up. Once the simulation is fully loaded and warmed up, we are ready to control the character via SPEAR.
+Alternatively, we can open `MetaHumans.uproject` in the Unreal Editor, open the `/Game/SPEAR/MH_Demo_CRC` map, and wait for the map to fully load. Then we press play in the editor and wait for the Unreal simulation to load and warm up. Once the simulation is fully loaded and warmed up, we are ready to control the character via SPEAR.
 
 ```console
 python control.py
