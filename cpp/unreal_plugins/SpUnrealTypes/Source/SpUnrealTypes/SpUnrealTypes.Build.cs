@@ -24,16 +24,16 @@ public class SpUnrealTypes : SpModuleRules
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         if (target.Platform == UnrealTargetPlatform.Win64) {
-            PrivateDependencyModuleNames.AddRange(new string[] {"D3D11RHI", "D3D12RHI", "VulkanRHI"});
+            PublicDependencyModuleNames.AddRange(new string[] {"D3D11RHI", "D3D12RHI", "VulkanRHI"});
             AddEngineThirdPartyPrivateStaticDependencies(target, "DX11");
             AddEngineThirdPartyPrivateStaticDependencies(target, "DX12");
             AddEngineThirdPartyPrivateStaticDependencies(target, "Vulkan");
-        } else if (target.Platform == UnrealTargetPlatform.Linux) {
-            PrivateDependencyModuleNames.AddRange(new string[] {"VulkanRHI"});
-            AddEngineThirdPartyPrivateStaticDependencies(target, "Vulkan");
         } else if (target.Platform == UnrealTargetPlatform.Mac) {
-            PrivateDependencyModuleNames.AddRange(new string[] {"MetalRHI"});
-            AddEngineThirdPartyPrivateStaticDependencies(target, "MetalCPP");
+            // We don't query Metal memory stats, mimicking UE 5.8's no-op ::RHIGetMemoryStats() on Metal, so no
+            // Metal-specific module dependencies are required.
+        } else if (target.Platform == UnrealTargetPlatform.Linux) {
+            PublicDependencyModuleNames.AddRange(new string[] {"VulkanRHI"});
+            AddEngineThirdPartyPrivateStaticDependencies(target, "Vulkan");
         } else {
             throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + target.Platform);
         }
