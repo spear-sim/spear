@@ -19,8 +19,7 @@ _PCG_VOLUME_NAMES_TO_GENERATE = [
     "City_Generator_PCG_6_Left_over_lots",
     "City_Generator_PCG_7_city_Contour"]
 
-# Wall-clock duration of the camera flythrough, in seconds.
-_FLYTHROUGH_DURATION_S = 20.0
+_FLYTHROUGH_DURATION_SECONDS = 20.0
 
 
 if __name__ == "__main__":
@@ -135,11 +134,11 @@ if __name__ == "__main__":
     rot_spline = scipy.spatial.transform.RotationSpline(kt, scipy.spatial.transform.Rotation.from_matrix(kr_matrices))
 
     # Animate: sample the splines by elapsed wall-clock time so the flythrough always takes
-    # _FLYTHROUGH_DURATION_S regardless of render speed (faster machines just sample it finer).
-    spear.log(f"Starting {_FLYTHROUGH_DURATION_S:.0f}s flythrough.")
+    # _FLYTHROUGH_DURATION_SECONDS regardless of render speed (faster machines just sample it finer).
+    spear.log(f"Starting {_FLYTHROUGH_DURATION_SECONDS:.0f}s flythrough.")
     start_time = time.time()
     while True:
-        frame_t = min((time.time() - start_time) / _FLYTHROUGH_DURATION_S, 1.0)
+        frame_t = min((time.time() - start_time) / _FLYTHROUGH_DURATION_SECONDS, 1.0)
         pos = pos_spline(frame_t)
         rot_dict = spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=rot_spline(frame_t).as_matrix())
 
