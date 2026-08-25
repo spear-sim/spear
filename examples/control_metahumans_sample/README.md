@@ -26,7 +26,13 @@ python render.py
 
 You should see a MetaHumans character start talking. Additionally, an `images` directory of rendered images will begin to populate.
 
-## Control the MetaHuman face control rig
+## Control the MetaHumans face control rig
+
+To control the MetaHumans face control rig from Python, we need to symlink a small amount of additional content into the `MetaHumans` project.
+
+```console
+python ../../tools/update_symlink_for_external_content.py --unreal-project-dir path/to/MetaHumans --create --external-content-dir data --unreal-project-content-dir SPEAR
+```
 
 Alternatively, we can open `MetaHumans.uproject` in the Unreal Editor, open the `/Game/SPEAR/MH_Demo_CRC` map, and wait for the map to fully load. Then we press play in the editor and wait for the Unreal simulation to load and warm up. Once the simulation is fully loaded and warmed up, we are ready to control the character via SPEAR.
 
