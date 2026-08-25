@@ -104,9 +104,20 @@ if __name__ == "__main__":
 
         spear.log("Found Unreal clang: ", linux_clang_path)
 
+        # In UE 5.8, libc++ ships inside the clang SDK we just located, rather than in
+        # Engine/Source/ThirdParty/Unix/LibCxx as it did in UE 5.5. Note that the compiler
+        # flags below are "-nostdinc++ -I<linux_libcpp_include_dir>", so if the include
+        # directory is wrong, the standard library is disabled and nothing replaces it,
+        # and every #include fails. We assert that the directories are non-empty rather
+        # than merely present, because an empty directory reproduces the same failure.
         linux_clang_bin_dir      = os.path.realpath(os.path.join(linux_clang_path, "x86_64-unknown-linux-gnu", "bin"))
-        linux_libcpp_include_dir = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "include", "c++", "v1"))
-        linux_libcpp_lib_dir     = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "lib", "Unix", "x86_64-unknown-linux-gnu"))
+        linux_libcpp_include_dir = os.path.realpath(os.path.join(linux_clang_path, "x86_64-unknown-linux-gnu", "include", "c++", "v1"))
+        linux_libcpp_lib_dir     = os.path.realpath(os.path.join(linux_clang_path, "x86_64-unknown-linux-gnu", "lib64"))
+
+        assert os.path.isdir(linux_libcpp_include_dir) and os.listdir(linux_libcpp_include_dir), f"Could not find libc++ headers: {linux_libcpp_include_dir}"
+        assert glob.glob(os.path.join(linux_libcpp_lib_dir, "libc++.*")), f"Could not find libc++ library: {linux_libcpp_lib_dir}"
+
+        spear.log("Found Unreal libc++: ", linux_libcpp_include_dir)
 
         boost_toolset = "clang"
         boost_toolset_version = ""
@@ -343,15 +354,20 @@ if __name__ == "__main__":
 
     elif sys.platform == "linux":
 
-        # -lpthread needed on some Linux environments
+        # The clang SDK in UE 5.8 ships libc++ and libc++abi as two separate static
+        # libraries, and in this configuration "-stdlib=libc++" only pulls in "-lc++", so
+        # we need "-lc++abi" to resolve the ABI symbols. -lpthread needed on some Linux
+        # environments. We also set YAML_CPP_BUILD_TOOLS=OFF, because we only need the
+        # yaml-cpp library, not its command-line tools.
         cmd = \
             "cmake " + \
             f'"-DCMAKE_CXX_COMPILER={cxx_compiler}" ' + \
             f'"-DCMAKE_POSITION_INDEPENDENT_CODE=ON" ' + \
             f'"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}" ' + \
-            f'"-DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++ -L\'{linux_libcpp_lib_dir}\' -lpthread" ' + \
+            f'"-DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++ -L\'{linux_libcpp_lib_dir}\' -lc++abi -lpthread" ' + \
             f'"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}" ' + \
             '"-DYAML_CPP_BUILD_TESTS=OFF" ' + \
+            '"-DYAML_CPP_BUILD_TOOLS=OFF" ' + \
             '"-DCMAKE_POLICY_VERSION_MINIMUM=3.5" ' + \
             os.path.join("..", "..")
 
