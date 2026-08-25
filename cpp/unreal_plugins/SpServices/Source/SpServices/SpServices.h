@@ -9,30 +9,31 @@
 
 #include <Modules/ModuleInterface.h>
 
-// Service
-#include "SpServices/Service.h"
+#include "SpServices/EntryPointBinder.h"
+#include "SpServices/RpcServer.h"
 
 // RpcService
-#include "SpServices/RpcService.h"
+class RpcService;
 
 // EngineService
-#include "SpServices/EngineService.h"
+template <CEntryPointBinder TEntryPointBinder>
+class EngineService;
 
 // Services that don't require a reference to EngineService
-#include "SpServices/InitializeEngineService.h"
+class InitializeEngineService;
 
 // Services that require a reference to EngineService
-#include "SpServices/DebugService.h"
-#include "SpServices/EngineGlobalsService.h"
-#include "SpServices/EnhancedInputService.h"
-#include "SpServices/InputService.h"
-#include "SpServices/SharedMemoryService.h"
-#include "SpServices/UnrealService.h"
-#include "SpServices/WorldRegistryService.h"
+class DebugService;
+class EngineGlobalsService;
+class EnhancedInputService;
+class InputService;
+class SharedMemoryService;
+class UnrealService;
+class WorldRegistryService;
 
 // Services that require a reference to EngineService and SharedMemoryService
-#include "SpServices/NavigationService.h"
-#include "SpServices/SpFuncService.h"
+class NavigationService;
+class SpFuncService;
 
 class SpServices : public IModuleInterface
 {
@@ -41,26 +42,26 @@ public:
     void ShutdownModule() override;
 
     // RpcService
-    std::unique_ptr<RpcService> rpc_service_ = nullptr;
+    std::unique_ptr<RpcService> rpc_service_;
 
     // EngineService
-    std::unique_ptr<EngineService<RpcServer>> engine_service_ = nullptr;
+    std::unique_ptr<EngineService<RpcServer>> engine_service_;
 
     // Services that don't require a reference to EngineService
-    std::unique_ptr<InitializeEngineService> initialize_engine_service_ = nullptr;
+    std::unique_ptr<InitializeEngineService> initialize_engine_service_;
 
     // Services that require a reference to EngineService
-    std::unique_ptr<DebugService> debug_service_ = nullptr;
-    std::unique_ptr<EngineGlobalsService> engine_globals_service_ = nullptr;
-    std::unique_ptr<EnhancedInputService> enhanced_input_service_ = nullptr;
-    std::unique_ptr<InputService> input_service_ = nullptr;
-    std::unique_ptr<SharedMemoryService> shared_memory_service_ = nullptr;
-    std::unique_ptr<UnrealService> unreal_service_ = nullptr;
-    std::unique_ptr<WorldRegistryService> world_registry_service_ = nullptr;
+    std::unique_ptr<DebugService> debug_service_;
+    std::unique_ptr<EngineGlobalsService> engine_globals_service_;
+    std::unique_ptr<EnhancedInputService> enhanced_input_service_;
+    std::unique_ptr<InputService> input_service_;
+    std::unique_ptr<SharedMemoryService> shared_memory_service_;
+    std::unique_ptr<UnrealService> unreal_service_;
+    std::unique_ptr<WorldRegistryService> world_registry_service_;
 
     // Services that require a reference to EngineService and SharedMemoryService
-    std::unique_ptr<NavigationService> navigation_service_ = nullptr;
-    std::unique_ptr<SpFuncService> sp_func_service_ = nullptr;
+    std::unique_ptr<NavigationService> navigation_service_;
+    std::unique_ptr<SpFuncService> sp_func_service_;
 
 private:
     void registerClasses() const;

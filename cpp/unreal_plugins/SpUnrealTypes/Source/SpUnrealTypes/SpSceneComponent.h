@@ -7,6 +7,7 @@
 
 #include <Components/SceneComponent.h>
 #include <Kismet/BlueprintFunctionLibrary.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpSceneComponent.generated.h"
 

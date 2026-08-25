@@ -118,6 +118,7 @@ SP_BEGIN_SUPPRESS_COMPILER_WARNINGS
     #endif
 
     #include <boost/interprocess/mapped_region.hpp>
+    #include <boost/interprocess/sync/file_lock.hpp>
 SP_END_SUPPRESS_COMPILER_WARNINGS
 
 // ----------------------------------------------------------------------------------------------------------

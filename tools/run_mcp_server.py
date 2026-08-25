@@ -292,7 +292,7 @@ def _initialize_actors():
         world_scoped_services.segmentation_service.initialize()
 
         # get viewport info
-        viewport_desc = world_scoped_services.rendering_service.get_current_viewport_desc()
+        viewport_desc = world_scoped_services.viewport_service.get_current_viewport_desc()
         world_desc["viewport_desc"] = viewport_desc
 
         # compute image dims
@@ -320,7 +320,7 @@ def _initialize_actors():
             "world_normal": world_scoped_services.unreal_service.get_component_by_name(actor=world_desc["camera_sensor"], component_name="DefaultSceneRoot.world_normal_", uclass="USpSceneCaptureComponent2D")}
 
         # align camera with viewport and configure components
-        world_scoped_services.rendering_service.align_camera_with_viewport(
+        world_scoped_services.viewport_service.align_camera_with_viewport(
             camera_sensor=world_desc["camera_sensor"],
             camera_components=list(world_desc["camera_components"].values()),
             viewport_desc=viewport_desc,

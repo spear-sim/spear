@@ -7,6 +7,7 @@
 
 #include <Containers/UnrealString.h> // FString
 #include <Kismet/BlueprintFunctionLibrary.h>
+#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpDummyBlueprintFunctionLibrary.generated.h"
 
@@ -21,7 +22,7 @@ UCLASS()
 class USpDummyBlueprintFunctionLibrary : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
-public: 
+public:
 
     // The BlueprintCallable decoration is not required for this function to be visible to the SPEAR Python
     // API, but it will make it so the function is also visible to Unreal's built-in Python API (which is

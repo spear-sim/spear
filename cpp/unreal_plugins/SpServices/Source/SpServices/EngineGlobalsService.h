@@ -103,8 +103,8 @@ public:
             #endif
         });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("engine_globals_service", "request_exit", [](bool immediate_shutdown) -> void {
-            FGenericPlatformMisc::RequestExit(immediate_shutdown);
+        unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("engine_globals_service", "request_exit", [](bool force) -> void {
+            FGenericPlatformMisc::RequestExit(force);
         });
 
         //

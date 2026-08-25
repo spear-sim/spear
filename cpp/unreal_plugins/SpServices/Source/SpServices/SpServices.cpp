@@ -17,8 +17,8 @@
 
 #include "SpServices/MsgpackRpc.h"
 
-// Service
-#include "SpServices/Service.h"
+// RpcServer
+#include "SpServices/RpcServer.h"
 
 // RpcService
 #include "SpServices/RpcService.h"
@@ -35,12 +35,15 @@
 #include "SpServices/EnhancedInputService.h"
 #include "SpServices/InputService.h"
 #include "SpServices/SharedMemoryService.h"
-#include "SpServices/UnrealService.h"
+// #include "SpServices/UnrealService.h" must only be included in cpp files, and must be included after all other headers.
 #include "SpServices/WorldRegistryService.h"
 
 // Services that require a reference to EngineService and SharedMemoryService
 #include "SpServices/NavigationService.h"
 #include "SpServices/SpFuncService.h"
+
+// UnrealService.h must only be included in cpp files, and must be included after all other headers.
+#include "SpServices/UnrealService.h"
 
 void SpServices::StartupModule()
 {

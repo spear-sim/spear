@@ -27,13 +27,48 @@
 class Client;
 
 //
-// The type IDs used in getArg(...) and getReturnValue(...) need to match the ones in:
+// The type IDs used in getTypeNames(), getArg(...), and getReturnValue(...) need to match the ones in:
 //     cpp/unreal_plugins/SpServices/Source/SpServices/FuncSignatureRegistry.h
 //
 
 class FuncSignatureRegistry
 {
+    inline static std::vector<std::string> s_type_names_ = {
+        /*  0 */ "void",
+        /*  1 */ "bool",
+        /*  2 */ "float",
+        /*  3 */ "int32",
+        /*  4 */ "int64",
+        /*  5 */ "uint64",
+        /*  6 */ "string",
+        /*  7 */ "vector_of_uint64",
+        /*  8 */ "vector_of_string",
+        /*  9 */ "vector_of_static_struct_desc",
+        /* 10 */ "vector_of_static_class_desc",
+        /* 11 */ "map_of_string_to_uint64",
+        /* 12 */ "map_of_string_to_string",
+        /* 13 */ "map_of_string_to_packed_array",
+        /* 14 */ "map_of_string_to_shared_memory_view",
+        /* 15 */ "map_of_string_to_property_value",
+        /* 16 */ "map_of_string_to_func_signature_desc",
+        /* 17 */ "map_of_string_to_world_desc",
+        /* 18 */ "output_log_messages",
+        /* 19 */ "packed_array",
+        /* 20 */ "shared_memory_view",
+        /* 21 */ "data_bundle",
+        /* 22 */ "property_desc",
+        /* 23 */ "property_value",
+        /* 24 */ "future",
+        /* 25 */ "static_struct_desc",
+        /* 26 */ "static_class_desc",
+        /* 27 */ "world_desc" };
+
 public:
+    static const std::vector<std::string>& getTypeNames()
+    {
+        return s_type_names_;
+    }
+
     static clmdep_msgpack::object getArg(clmdep_msgpack::zone& zone, int type_id, nanobind::handle py_obj)
     {
         switch (type_id) {
@@ -48,10 +83,10 @@ public:
             case 11: return clmdep_msgpack::object(nanobind::cast<std::map<std::string, uint64_t>>    (py_obj), zone);
             case 12: return clmdep_msgpack::object(nanobind::cast<std::map<std::string, std::string>> (py_obj), zone);
             case 13: return clmdep_msgpack::object(nanobind::cast<std::map<std::string, PackedArray>> (py_obj), zone);
-            case 18: return clmdep_msgpack::object(nanobind::cast<PackedArray>                        (py_obj), zone);
-            case 20: return clmdep_msgpack::object(nanobind::cast<DataBundle>                         (py_obj), zone);
-            case 21: return clmdep_msgpack::object(nanobind::cast<PropertyDesc>                       (py_obj), zone);
-            case 23: return clmdep_msgpack::object(nanobind::cast<Future>                             (py_obj), zone);
+            case 19: return clmdep_msgpack::object(nanobind::cast<PackedArray>                        (py_obj), zone);
+            case 21: return clmdep_msgpack::object(nanobind::cast<DataBundle>                         (py_obj), zone);
+            case 22: return clmdep_msgpack::object(nanobind::cast<PropertyDesc>                       (py_obj), zone);
+            case 24: return clmdep_msgpack::object(nanobind::cast<Future>                             (py_obj), zone);
             default: SP_ASSERT(false); return clmdep_msgpack::object();
         }
     }
@@ -77,15 +112,16 @@ public:
             case 15: return nanobind::cast(result.get().as<std::map<std::string, PropertyValue>>());
             case 16: return nanobind::cast(result.get().as<std::map<std::string, FuncSignatureDesc>>());
             case 17: return nanobind::cast(result.get().as<std::map<std::string, WorldDesc>>());
-            case 18: return nanobind::cast(getConvertedReturnValue<PackedArray, PackedArrayView>(client, std::move(result)));
-            case 19: return nanobind::cast(result.get().as<SharedMemoryView>());
-            case 20: return nanobind::cast(getConvertedReturnValue<DataBundle, DataBundleView>(client, std::move(result)));
-            case 21: return nanobind::cast(result.get().as<PropertyDesc>());
-            case 22: return nanobind::cast(result.get().as<PropertyValue>());
-            case 23: return nanobind::cast(result.get().as<Future>());
-            case 24: return nanobind::cast(result.get().as<StaticStructDesc>());
-            case 25: return nanobind::cast(result.get().as<StaticClassDesc>());
-            case 26: return nanobind::cast(result.get().as<WorldDesc>());
+            case 18: return nanobind::cast(result.get().as<OutputLogMessages>());
+            case 19: return nanobind::cast(getConvertedReturnValue<PackedArray, PackedArrayView>(client, std::move(result)));
+            case 20: return nanobind::cast(result.get().as<SharedMemoryView>());
+            case 21: return nanobind::cast(getConvertedReturnValue<DataBundle, DataBundleView>(client, std::move(result)));
+            case 22: return nanobind::cast(result.get().as<PropertyDesc>());
+            case 23: return nanobind::cast(result.get().as<PropertyValue>());
+            case 24: return nanobind::cast(result.get().as<Future>());
+            case 25: return nanobind::cast(result.get().as<StaticStructDesc>());
+            case 26: return nanobind::cast(result.get().as<StaticClassDesc>());
+            case 27: return nanobind::cast(result.get().as<WorldDesc>());
             default: SP_ASSERT(false); return nanobind::none();
         }
     }

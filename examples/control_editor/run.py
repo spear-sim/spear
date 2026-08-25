@@ -23,7 +23,7 @@ if __name__ == "__main__":
         level_editor_subsystem = editor.unreal_service.get_editor_subsystem(uclass="ULevelEditorSubsystem")
 
         # execute console command
-        editor.console_service.execute(command="stat fps")
+        editor.console_service.execute_command(command="stat fps")
 
     with instance.end_frame():
         pass
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     editor.python_service.execute_file_across_frames(file=take_screenshot_file, args_string="")
 
     with instance.begin_frame():
-        editor.console_service.execute(command="stat fps")
+        editor.console_service.execute_command(command="stat fps")
     with instance.end_frame():
         pass
 

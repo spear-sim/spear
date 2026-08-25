@@ -13,5 +13,6 @@ public class SpearSimEditorTarget : SpTargetRulesTarget
 
         // Added to projects by default in UE 5.5.
         Type = TargetType.Editor;
+        ExtraModuleNames.Add("SpearSim");
     }
 }

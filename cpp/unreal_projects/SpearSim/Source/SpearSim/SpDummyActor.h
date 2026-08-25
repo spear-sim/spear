@@ -17,7 +17,7 @@ UCLASS()
 class ASpDummyActor : public AActor
 {
     GENERATED_BODY()
-public: 
+public:
     ASpDummyActor();
     ~ASpDummyActor();
 };

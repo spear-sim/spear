@@ -6,7 +6,7 @@ import math
 import spear
 
 
-class RenderingService(spear.Service):
+class ViewportService(spear.Service):
     def __init__(self, entry_point_caller, sp_func_service, unreal_service, config):
         assert sp_func_service.is_top_level_service()
         assert unreal_service.is_top_level_service()
@@ -79,7 +79,7 @@ class RenderingService(spear.Service):
                 camera_component.PostProcessSettings = volume.Settings.get()
 
 
-class GameRenderingService(RenderingService):
+class GameViewportService(ViewportService):
     def __init__(self, entry_point_caller, sp_func_service, unreal_service, engine_globals_service, config):
         super().__init__(
             entry_point_caller=entry_point_caller,
@@ -131,7 +131,7 @@ class GameRenderingService(RenderingService):
                 "post_process_volumes": self.unreal_service.find_actors_by_class(uclass="APostProcessVolume")}
 
 
-class EditorRenderingService(RenderingService):
+class EditorViewportService(ViewportService):
     def __init__(self, entry_point_caller, sp_func_service, unreal_service, config):
         super().__init__(
             entry_point_caller=entry_point_caller,
