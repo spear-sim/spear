@@ -21,7 +21,6 @@
 #include <Materials/MaterialInstanceDynamic.h>
 #include <Materials/MaterialInterface.h>
 #include <Math/Color.h>
-#include <UObject/Object.h>          // IsValid
 #include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 #include <UObject/UObjectGlobals.h>  // LoadObject
 
@@ -134,17 +133,18 @@ public:
             // before this function is called.
 
             if (desc.is_valid_) {
-                if (desc.component_.IsValid()) {
-                    mesh_proxy_geometry_desc.Component = Unreal::toFString(Std::toStringFromPtr(desc.component_.Get()));
-                    mesh_proxy_geometry_desc.ComponentStableName = Unreal::toFString(UnrealUtils::getStableName(desc.component_.Get()));
-                    mesh_proxy_geometry_desc.ComponentUnrealName = desc.component_->GetName();
+                if (desc.component_.IsValid()) { // check if TWeakObjectPtr is valid
+                    USceneComponent* component = desc.component_.Get();
+                    SP_ASSERT(Unreal::isValid(component));
+                    mesh_proxy_geometry_desc.Component = Unreal::toFString(Std::toStringFromPtr(component));
+                    mesh_proxy_geometry_desc.ComponentStableName = Unreal::toFString(UnrealUtils::getStableName(component));
+                    mesh_proxy_geometry_desc.ComponentUnrealName = component->GetName();
                     if (bIncludeDebugInfo) {
-                        mesh_proxy_geometry_desc.ComponentPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.component_.Get()));
+                        mesh_proxy_geometry_desc.ComponentPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(component));
                     }
 
-                    AActor* actor = desc.component_->GetOwner();
-                    SP_ASSERT(actor);
-                    SP_ASSERT(IsValid(actor));
+                    AActor* actor = component->GetOwner();
+                    SP_ASSERT(Unreal::isValid(actor));
                     mesh_proxy_geometry_desc.Actor = Unreal::toFString(Std::toStringFromPtr(actor));
                     mesh_proxy_geometry_desc.ActorName = Unreal::toFString(UnrealUtils::getStableName(actor, true)); // include_unreal_name=true
                     mesh_proxy_geometry_desc.ActorUnrealName = actor->GetName();
@@ -154,11 +154,13 @@ public:
                     }
                 }
 
-                if (desc.material_.IsValid()) {
-                    mesh_proxy_geometry_desc.Material = Unreal::toFString(Std::toStringFromPtr(desc.material_.Get()));
-                    mesh_proxy_geometry_desc.MaterialUnrealName = desc.material_->GetName();
+                if (desc.material_.IsValid()) { // check if TWeakObjectPtr is valid
+                    UMaterialInterface* material = desc.material_.Get();
+                    SP_ASSERT(Unreal::isValid(material));
+                    mesh_proxy_geometry_desc.Material = Unreal::toFString(Std::toStringFromPtr(material));
+                    mesh_proxy_geometry_desc.MaterialUnrealName = material->GetName();
                     if (bIncludeDebugInfo) {
-                        mesh_proxy_geometry_desc.MaterialPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.material_.Get()));
+                        mesh_proxy_geometry_desc.MaterialPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(material));
                     }
                 }
             }

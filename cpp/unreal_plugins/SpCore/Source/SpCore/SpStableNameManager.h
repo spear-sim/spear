@@ -105,7 +105,7 @@ UCLASS()
 class USpStableNameEventHandler : public UObject
 {
     GENERATED_BODY()
-public: 
+public:
     USpStableNameEventHandler();
     ~USpStableNameEventHandler() override;
 

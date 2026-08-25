@@ -6,6 +6,7 @@
 #pragma once
 
 #include <Engine/DebugCameraController.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS
 
 #include "SpDebugCameraController.generated.h"
 

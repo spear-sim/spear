@@ -5,9 +5,10 @@
 
 #pragma once
 
-#include <HAL/Platform.h>   // int32
+#include <HAL/Platform.h>         // int32
 #include <Kismet/BlueprintFunctionLibrary.h>
-#include <ShaderCompiler.h> // GShaderCompilingManager
+#include <ShaderCompiler.h>       // GShaderCompilingManager
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpShaderCompilingManager.generated.h"
 

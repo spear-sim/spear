@@ -8,11 +8,13 @@
 #include <stddef.h> // ptrdiff_t, size_t
 #include <stdint.h> // uint64_t
 
+#include <filesystem>
+#include <fstream>
 #include <limits> // std::numeric_limits
 #include <memory> // std::align
 #include <string>
 
-#include <boost/predef.h> // BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
+#include <boost/predef.h> // BOOST_COMP_CLANG, BOOST_COMP_MSVC, BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
 
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
@@ -51,9 +53,48 @@ std::string SharedMemory::getUniqueIdString(uint64_t id)
     #endif
 }
 
+IdMutex::IdMutex(uint64_t id)
+{
+    std::string id_string = getUniqueIdString(id);
+    std::filesystem::path lock_file_path = std::filesystem::temp_directory_path() / id_string;
+    lock_file_path_ = lock_file_path.string();
+
+    // file_lock requires the file to already exist; a leftover file from a previous unclean shutdown is
+    // safe to reuse here, since the OS-level lock (not the file's existence) is what conveys ownership.
+    if (!std::filesystem::exists(lock_file_path)) {
+        std::ofstream(lock_file_path_).close();
+    }
+
+    file_lock_ = boost::interprocess::file_lock(lock_file_path_.c_str());
+
+    if (!file_lock_->try_lock()) {
+        throw IdMutexError(id, id_string);
+    }
+}
+
+IdMutex::~IdMutex()
+{
+    // Release the OS-level lock (and close the underlying file handle) before removing the file, rather
+    // than relying on platform-specific behavior for removing a file that's still open.
+    file_lock_.reset();
+    std::filesystem::remove(lock_file_path_);
+}
+
+std::string IdMutex::getUniqueIdString(uint64_t id)
+{
+    // TODO: remove platform-specific logic
+    #if BOOST_COMP_MSVC
+        return std::format("__SP_ID_MUTEX_{:#018x}__", id);
+    #elif BOOST_COMP_CLANG
+        return (boost::format("__SP_ID_MUTEX_0x%016x__")%id).str();
+    #else
+        #error
+    #endif
+}
+
 SharedMemoryRegion::SharedMemoryRegion(uint64_t num_bytes) : SharedMemoryRegion(num_bytes, SharedMemory::getUniqueId()) {}
 
-SharedMemoryRegion::SharedMemoryRegion(uint64_t num_bytes, uint64_t id)
+SharedMemoryRegion::SharedMemoryRegion(uint64_t num_bytes, uint64_t id) : id_mutex_(id)
 {
     SP_ASSERT(num_bytes > 0);
     SP_ASSERT(num_bytes <= std::numeric_limits<uint64_t>::max() - (s_alignment_bytes_ - 1));

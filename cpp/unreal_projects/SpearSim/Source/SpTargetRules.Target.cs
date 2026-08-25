@@ -19,7 +19,6 @@ public class SpTargetRulesTarget : TargetRules
         // Added to projects by default in UE 5.5.
         DefaultBuildSettings = BuildSettingsVersion.V5;
         IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_5;
-        ExtraModuleNames.Add("SpearSim");
 
         if (targetInfo.Platform == UnrealTargetPlatform.Win64) {
 
@@ -62,7 +61,7 @@ public class SpTargetRulesTarget : TargetRules
             AdditionalCompilerArguments = "-fexperimental-library";
 
             // Sometimes useful for debugging:
-            // AdditionalCompilerArguments = "-fexperimental-library -###";
+            // AdditionalCompilerArguments = "-### -fexperimental-library";
 
         } else if (targetInfo.Platform == UnrealTargetPlatform.IOS || targetInfo.Platform == UnrealTargetPlatform.TVOS) {
             SP_LOG("    NOTE: We only expect to see targetInfo.Platform == UnrealTargetPlatform.IOS or targetInfo.Platform == UnrealTargetPlatform.TVOS when we're on macOS and we're attempting to generate XCode project files. If we're not on macOS generating XCode project files, target.Platform == UnrealTargetPlatform.IOS and target.Platform == UnrealTargetPlatform.TVOS are unexpected.");

@@ -3,8 +3,6 @@
 # Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-# Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
-
 import argparse
 import cv2
 import os
@@ -52,9 +50,7 @@ if __name__ == "__main__":
             os.makedirs(os.path.realpath(os.path.join(images_dir, component_desc["name"])), exist_ok=True)
 
     # create instance
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
-    spear.configure_system(config=config)
-    instance = spear.Instance(config=config)
+    instance = spear.Instance()
     game = instance.get_game()
 
     #
@@ -115,9 +111,9 @@ if __name__ == "__main__":
         assert final_tone_curve_hdr_component is not None
 
         # configure components to match the viewport (width, height, FOV, post-processing settings, etc)
-        viewport_desc = game.rendering_service.get_current_viewport_desc()
+        viewport_desc = game.viewport_service.get_current_viewport_desc()
         components = [ desc["component"] for desc in component_descs ]
-        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, widths=1280, heights=720)
+        game.viewport_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, widths=1280, heights=720)
 
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
         for component_desc in component_descs:
@@ -128,8 +124,8 @@ if __name__ == "__main__":
         pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing etc accumulate additional information across frames
 
     with instance.begin_frame():
-        viewport_desc = game.rendering_service.get_current_viewport_desc(only_get_pose=True)
-        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, only_align_pose=True)
+        viewport_desc = game.viewport_service.get_current_viewport_desc(only_get_pose=True)
+        game.viewport_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, only_align_pose=True)
     with instance.end_frame():
         pass
 

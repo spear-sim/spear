@@ -3,8 +3,6 @@
 # Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-# Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
-
 import argparse
 import cv2
 import numpy as np
@@ -69,9 +67,7 @@ if __name__ == "__main__":
             os.makedirs(os.path.realpath(os.path.join(images_dir, component_desc["name"])), exist_ok=True)
 
     # create instance
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
-    spear.configure_system(config=config)
-    instance = spear.Instance(config=config)
+    instance = spear.Instance()
     game = instance.get_game()
 
     with instance.begin_frame():
@@ -126,9 +122,9 @@ if __name__ == "__main__":
         assert final_tone_curve_hdr_component is not None
 
         # configure components to match the viewport (width, height, FOV, post-processing settings, etc)
-        viewport_desc = game.rendering_service.get_current_viewport_desc()
+        viewport_desc = game.viewport_service.get_current_viewport_desc()
         components = [ desc["component"] for desc in component_descs ]
-        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, widths=1280, heights=720)
+        game.viewport_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, widths=1280, heights=720)
 
         # make the FOV bigger than the game viewport
         for component in components:
@@ -175,8 +171,8 @@ if __name__ == "__main__":
             gameplay_statics.SetGamePaused(bPaused=False)
 
             # set camera pose
-            viewport_desc = game.rendering_service.get_current_viewport_desc(only_get_pose=True)
-            game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, only_align_pose=True)
+            viewport_desc = game.viewport_service.get_current_viewport_desc(only_get_pose=True)
+            game.viewport_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, only_align_pose=True)
 
             # inject input
             instance.enhanced_input_service.inject_input_for_actor(
@@ -193,16 +189,16 @@ if __name__ == "__main__":
     for _ in range(num_frames_for_pcg_update):
         with instance.begin_frame():
             gameplay_statics.SetGamePaused(bPaused=False)
-            viewport_desc = game.rendering_service.get_current_viewport_desc(only_get_pose=True)
-            game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, only_align_pose=True)
+            viewport_desc = game.viewport_service.get_current_viewport_desc(only_get_pose=True)
+            game.viewport_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, only_align_pose=True)
         with instance.end_frame():
             gameplay_statics.SetGamePaused(bPaused=True)
 
     # set camera pose
     with instance.begin_frame():
         gameplay_statics.SetGamePaused(bPaused=False)
-        viewport_desc = game.rendering_service.get_current_viewport_desc(only_get_pose=True)
-        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, only_align_pose=True)
+        viewport_desc = game.viewport_service.get_current_viewport_desc(only_get_pose=True)
+        game.viewport_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, only_align_pose=True)
     with instance.end_frame():
         pass
 

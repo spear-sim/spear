@@ -22,6 +22,7 @@ class EngineService():
         self._byte_order = None
         self.entry_point_signature_descs = None
 
+
     def initialize(self):
         assert self._frame_state is None or self._frame_state == "idle" or self._frame_state == "error"
         assert self._editor_transaction_state is None or self._editor_transaction_state == "idle" or self._editor_transaction_state == "error"
@@ -50,6 +51,7 @@ class EngineService():
         self._editor_transaction_state = None
         self._client.call("engine_service.call_sync_on_worker_thread.terminate")
 
+
     #
     # Helper functions to support initializing a spear.Instance
     #
@@ -57,6 +59,30 @@ class EngineService():
     def get_byte_order(self):
         assert self._byte_order is not None
         return self._byte_order
+
+
+    #
+    # These functions advance the server by one or more complete frames, where each frame is an empty
+    # begin_frame() / end_frame() block. When inside a spear.editor.script, call step_in_editor_script(...)
+    # using Python's "yield from" syntax.
+    #
+
+    def step(self, num_frames=1, single_step=False):
+        for i in range(num_frames):
+            with self.begin_frame():
+                pass
+            with self.end_frame(single_step=single_step):
+                pass
+
+    def step_in_editor_script(self, num_frames=1, single_step=False):
+        for i in range(num_frames):
+            with self.begin_frame():
+                pass
+            yield
+            with self.end_frame(single_step=single_step):
+                pass
+            yield
+
 
     #
     # These context managers are intended as exception-safe wrappers for managing the server's frame state.
@@ -280,8 +306,6 @@ class EngineService():
     def _end_editor_transaction_impl(self):
         return self.call_on_worker_thread("engine_service.call_sync_on_worker_thread.end_editor_transaction")
 
-    def flush(self):
-        self.call_on_game_thread("engine_service.call_sync_on_game_thread.flush")
 
     #
     # Functions for calling entry points on the server.
@@ -305,6 +329,11 @@ class EngineService():
             self._validate_editor_transaction_state_for_worker_thread_work()
         return self._call_impl(f"engine_service.get_future_result_from_game_thread_as_{return_as}", future)
 
+
+    #
+    # Helper functions for calling entry points on the server
+    #
+
     def _call_impl(self, func_name, *args):
         if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
             return_as = self.entry_point_signature_descs[func_name].type_names[0]
@@ -313,10 +342,6 @@ class EngineService():
         if self._config.SPEAR.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO:
             spear.log(f"Obtained return value: {return_value}")
         return return_value
-
-    #
-    # Helper functions for calling entry points on the server
-    #
 
     def _validate_frame_state_for_worker_thread_work(self):
         if self._frame_state not in ["idle", "request_begin_frame", "executing_begin_frame", "executing_frame", "executing_end_frame", "request_end_frame"]:
@@ -345,3 +370,11 @@ class EngineService():
             spear.log('ERROR: Entry points that execute on the game thread are only allowed in "with editor_transaction()" code blocks.')
             spear.log(f'ERROR: self._editor_transaction_state == "{self._editor_transaction_state}"')
             assert False
+
+
+    #
+    # Flush all queued game thread work
+    #
+
+    def flush(self):
+        self.call_on_game_thread("engine_service.call_sync_on_game_thread.flush")

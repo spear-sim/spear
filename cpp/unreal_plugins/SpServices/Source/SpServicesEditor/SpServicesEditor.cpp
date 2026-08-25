@@ -14,10 +14,16 @@
 #include "SpCore/AssertModuleLoaded.h"
 #include "SpCore/Log.h"
 
-#include "SpServices/SpServices.h"
+// EngineService
+#include "SpServices/EngineService.h"
 
 // Services that require a reference to EngineService
 #include "SpServicesEditor/UnrealServiceEditor.h"
+
+// needed to use SpServices::engine_service_
+#include "SpServices/RpcServer.h"
+#include "SpServices/EngineService.h"
+#include "SpServices/SpServices.h"
 
 void SpServicesEditor::StartupModule()
 {

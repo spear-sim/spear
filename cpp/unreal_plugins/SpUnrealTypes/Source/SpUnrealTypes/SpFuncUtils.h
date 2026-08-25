@@ -5,10 +5,17 @@
 
 #pragma once
 
-#include <HAL/Platform.h>         // uint64
+#include <vector>
+
+#include <Containers/UnrealString.h> // FString
+#include <CoreGlobals.h>             // GWarn
+#include <HAL/Platform.h>            // int64, TCHAR, uint32
 #include <Kismet/BlueprintFunctionLibrary.h>
-#include <Misc/FeedbackContext.h> // GWarn
-#include <UObject/Object.h>       // UObject
+#include <Misc/FeedbackContext.h>    // FFeedbackContext
+#include <UObject/Class.h>           // UScriptStruct
+#include <UObject/Object.h>          // UObject
+#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION
+#include <UObject/UnrealType.h>      // EPropertyPortFlags
 
 #include "SpCore/Assert.h"
 #include "SpCore/Std.h"
@@ -69,7 +76,7 @@ public:
             struct_data.data(),             // Value
             nullptr,                        // OwnerObject
             EPropertyPortFlags::PPF_None,   // PortFlags
-            GWarn,                          // ErrorText
+            GWarn,                          // ErrorText (GWarn is an FFeedbackContext*, so <Misc/FeedbackContext.h> is needed for the implicit conversion to FOutputDevice*)
             ScriptStruct->GetName());       // StructName
         SP_ASSERT(result);
 
@@ -96,12 +103,12 @@ public:
 
         FString export_text;
         ScriptStruct->ExportText(
-            export_text,                    // ValueStr
-            struct_data.data(),             // Value
-            nullptr,                        // Defaults
-            nullptr,                        // OwnerObject
-            EPropertyPortFlags::PPF_None,   // PortFlags
-            nullptr);                       // ExportRootScope
+            export_text,                  // ValueStr
+            struct_data.data(),           // Value
+            nullptr,                      // Defaults
+            nullptr,                      // OwnerObject
+            EPropertyPortFlags::PPF_None, // PortFlags
+            nullptr);                     // ExportRootScope
         ScriptStruct->DestroyStruct(struct_data.data());
 
         return export_text;

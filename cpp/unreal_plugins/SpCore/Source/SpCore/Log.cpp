@@ -7,6 +7,7 @@
 
 #include <filesystem>
 #include <iostream> // std::cout
+#include <mutex>    // std::recursive_mutex
 #include <regex>
 #include <string>   // std::string::operator<<
 #include <vector>
@@ -32,8 +33,9 @@
     #error
 #endif
 
-DECLARE_LOG_CATEGORY_EXTERN(LogSpear, Log, All);
 DEFINE_LOG_CATEGORY(LogSpear);
+
+std::recursive_mutex g_mutex;
 
 void Log::logCurrentFunction(const std::filesystem::path& current_file, int current_line, const std::string& current_function)
 {
@@ -42,25 +44,35 @@ void Log::logCurrentFunction(const std::filesystem::path& current_file, int curr
 
 void Log::logString(const std::string& str)
 {
-    #if WITH_EDITOR // defined in an auto-generated header
-        if (IsRunningCommandlet() || IsRunningGame()) { // editor mode via command-line (e.g., during cooking or using -game)
-            logStringToStdout(str);
-        } else { // editor mode via GUI
-            logStringToUnreal(str);
-            logStringToStdout(str);
-        }
-    #else // standalone mode
-        logStringToStdout(str);
-    #endif
+    logStringToUnreal(str); // logStringToUnreal(...) is a no-op unless we're in editor mode via GUI
+    logStringToStdout(str);
 }
 
 void Log::logStringToStdout(const std::string& str)
 {
+    std::lock_guard<std::recursive_mutex> lock(getStdoutMutex());
     std::cout << str << std::endl;
+}
+
+std::recursive_mutex& Log::getStdoutMutex()
+{
+    return g_mutex;
 }
 
 void Log::logStringToUnreal(const std::string& str)
 {
+    // This is the single source of truth for whether we should route a message to UE_LOG at all: only in
+    // editor mode via GUI, not via the command line (e.g., during cooking or using -game), and not in
+    // standalone mode. Assert.cpp's print() function also calls this function directly (rather than going
+    // through logString(...)).
+    #if WITH_EDITOR // defined in an auto-generated header
+        if (IsRunningCommandlet() || IsRunningGame()) {
+            return;
+        }
+    #else // standalone mode
+        return;
+    #endif
+
     // We need to use TEXT(...) and *Unreal::toFString(...) because if we use Unreal::toTCharPtr(...) we will
     // fail static assertions and get errors in the UE_LOG macro:
     //     error: static assertion failed due to requirement 'std::is_const_v<Unreal::TCharPtr>': Formatting string must be a const TCHAR array.

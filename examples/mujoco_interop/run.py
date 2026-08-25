@@ -120,9 +120,9 @@ if __name__ == "__main__":
         assert final_tone_curve_hdr_component is not None
 
         # configure components to match the viewport (width, height, FOV, post-processing settings, etc)
-        viewport_desc = sp_game.rendering_service.get_current_viewport_desc()
+        viewport_desc = sp_game.viewport_service.get_current_viewport_desc()
         components = [ desc["component"] for desc in component_descs ]
-        sp_game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, widths=width, heights=height)
+        sp_game.viewport_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, widths=width, heights=height)
 
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
         for component_desc in component_descs:
@@ -224,28 +224,21 @@ if __name__ == "__main__":
         with sp_instance.begin_frame():
 
             # update SPEAR camera pose
-            pawn_future = pawn.call_async.K2_SetActorLocation(NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=cam_position))
-            player_controller_future = player_controller.call_async.SetControlRotation(NewRotation=spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=cam_rotation_matrix))
-            bp_camera_sensor_future = bp_camera_sensor.call_async.K2_SetActorLocationAndRotation(
+            pawn.send_async.K2_SetActorLocation(NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=cam_position))
+            player_controller.send_async.SetControlRotation(NewRotation=spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=cam_rotation_matrix))
+            bp_camera_sensor.send_async.K2_SetActorLocationAndRotation(
                 NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=cam_position),
                 NewRotation=spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=cam_rotation_matrix))
 
             # update SPEAR object poses
             for ue_actor_name, ue_actor in ue_actors.items():
-                ue_actor_futures[ue_actor_name] = ue_actor.call_async.K2_SetActorLocationAndRotation(
+                ue_actor.send_async.K2_SetActorLocationAndRotation(
                     NewLocation=to_spear_vector_from_mujoco_array(mujoco_array=mj_bodies_xpos[f"{ue_actor_name}:StaticMeshComponent0"]),
                     NewRotation=to_spear_rotator_from_mujoco_quat(mujoco_quat=mj_bodies_xquat[f"{ue_actor_name}:StaticMeshComponent0"]),
                     bSweep=False,
                     bTeleport=True)
 
         with sp_instance.end_frame():
-
-            # clean up futures
-            pawn_future.get()
-            player_controller_future.get()
-            bp_camera_sensor_future.get()
-            for ue_actor_name in ue_actors.keys():
-                ue_actor_futures[ue_actor_name].get()
 
             # read pixels from camera sensor
             if args.save_images:

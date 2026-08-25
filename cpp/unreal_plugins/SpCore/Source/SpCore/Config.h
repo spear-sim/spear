@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <exception> // std::current_exception, std::rethrow_exception
 #include <string>
 #include <vector>
 
@@ -36,11 +35,11 @@ public:
     // If the -config_file= command-line argument is passed in to the executable, calling requestInitialize()
     // will successfully initialize the config system. Otherwise, calling requestInitialize() will fail to
     // initialize the config system. Systems that want to use the config system must check if it has been
-    // successfully initialized by checking Config::isInitialized(). Calling terminate()  will completely reset
+    // successfully initialized by checking Config::isInitialized(). Calling terminate() will completely reset
     // the state of the config system, regardless of whether or not it was successfully initialized.
 
-    static void initialize(const std::string& config_file);
     static void requestInitialize();
+    static void initialize(const std::string& config_file);
     static void terminate();
     static bool isInitialized();
 
@@ -66,7 +65,7 @@ public:
         } catch (...) {
             SP_LOG_CURRENT_FUNCTION();
             SP_LOG("    ERROR: Couldn't get value for key: ", key);
-            std::rethrow_exception(std::current_exception());
+            SP_ASSERT(false);
             return TValue();
         }
     }
@@ -81,7 +80,7 @@ public:
         } catch (...) {
             SP_LOG_CURRENT_FUNCTION();
             SP_LOG("    ERROR: Couldn't get value for keys: [", Std::join(keys, ", "), "]");
-            std::rethrow_exception(std::current_exception());
+            SP_ASSERT(false);
             return TValue();
         }
     }
