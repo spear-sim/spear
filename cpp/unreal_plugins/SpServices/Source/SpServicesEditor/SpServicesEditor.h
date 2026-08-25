@@ -7,6 +7,7 @@
 
 #include <memory> // std::unique_ptr
 
+#include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Modules/ModuleInterface.h>
 
 // Services that require a reference to EngineService
@@ -20,4 +21,11 @@ public:
 
     // Editor world services
     std::unique_ptr<UnrealServiceEditor> editor_unreal_service_editor_;
+
+private:
+    void postEngineInitHandler();
+    void enginePreExitHandler();
+
+    FDelegateHandle post_engine_init_handle_;
+    FDelegateHandle engine_pre_exit_handle_;
 };
