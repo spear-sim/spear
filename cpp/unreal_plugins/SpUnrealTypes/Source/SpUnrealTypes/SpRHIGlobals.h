@@ -5,23 +5,30 @@
 
 #pragma once
 
+#include <HAL/Platform.h>         // int32, int64, uint8, uint16, uint32, uint64
 #include <Kismet/BlueprintFunctionLibrary.h>
-#include <RHIGlobals.h>        // Global IDs and limits
-#include <RHIShaderPlatform.h>
+#include <Math/IntVector.h>       // FIntVector
+#include <Math/Vector2D.h>        // FVector2f
+#include <Misc/EnumClassFlags.h>  // ENUM_CLASS_FLAGS
+#include <PixelFormat.h>          // EPixelFormat
+#include <RHIDefinitions.h>       // ERHIBindlessSupport, ERequestedGPUCrash, EVRSImageDataType, MAX_TEXTURE_MIP_COUNT
+#include <RHIGlobals.h>           // FRHIGlobals, GRHIGlobals
+#include <RHIShaderPlatform.h>    // EShaderPlatform
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UENUM, UPROPERTY, USTRUCT
 
 #include "SpCore/Unreal.h"
-#include "SpUnrealTypes/SpRHIFeatureLevel.h" // ESpRHIFeatureLevel
+#include "SpCore/Windows.h" // undefines the PF_MAX macro so EPixelFormat::PF_MAX below refers to the enumerator
+
+#include "SpUnrealTypes/SpRHIFeatureLevel.h"
 
 #include "SpRHIGlobals.generated.h"
 
-// WinSock2.h workaround
-#ifdef PF_MAX
-#undef PF_MAX
-#endif
+//
+// The enums and structs in this file are intended to be identical to their Unreal Engine counterparts. They are
+// grouped by the engine header they are transcribed from.
+//
 
-//
-// Structs in this file are intended to be identical to FRHIGlobals, see Engine/Source/Runtime/RHI/Public/RHIGlobals.h
-//
+// Engine/Source/Runtime/RHI/Public/RHIDefinitions.h
 
 UENUM(BlueprintType)
 enum class ESpRHIBindlessSupport : uint8
@@ -29,10 +36,35 @@ enum class ESpRHIBindlessSupport : uint8
     Unsupported = Unreal::getConstEnumValue(ERHIBindlessSupport::Unsupported),
     RayTracingOnly = Unreal::getConstEnumValue(ERHIBindlessSupport::RayTracingOnly),
     AllShaderTypes = Unreal::getConstEnumValue(ERHIBindlessSupport::AllShaderTypes),
-    NumBits = Unreal::getConstEnumValue(ERHIBindlessSupport::NumBits),
+    NumBits = Unreal::getConstEnumValue(ERHIBindlessSupport::NumBits)
 };
 
 UENUM(BlueprintType)
+enum class ESpVRSImageDataType : uint8
+{
+    VRSImage_NotSupported = Unreal::getConstEnumValue(EVRSImageDataType::VRSImage_NotSupported),
+    VRSImage_Palette = Unreal::getConstEnumValue(EVRSImageDataType::VRSImage_Palette),
+    VRSImage_Fractional = Unreal::getConstEnumValue(EVRSImageDataType::VRSImage_Fractional)
+};
+
+UENUM()
+enum class ESpRequestedGPUCrash : uint8
+{
+    None = Unreal::getConstEnumValue(ERequestedGPUCrash::None),
+    Type_Hang = Unreal::getConstEnumValue(ERequestedGPUCrash::Type_Hang),
+    Type_PageFault = Unreal::getConstEnumValue(ERequestedGPUCrash::Type_PageFault),
+    Type_PlatformBreak = Unreal::getConstEnumValue(ERequestedGPUCrash::Type_PlatformBreak),
+    Type_Assert = Unreal::getConstEnumValue(ERequestedGPUCrash::Type_Assert),
+    Queue_Direct = Unreal::getConstEnumValue(ERequestedGPUCrash::Queue_Direct),
+    Queue_Compute = Unreal::getConstEnumValue(ERequestedGPUCrash::Queue_Compute)
+};
+ENUM_CLASS_FLAGS(ESpRequestedGPUCrash);
+
+// Engine/Source/Runtime/RHI/Public/RHIShaderPlatform.h
+
+// Not UENUM(BlueprintType) because BlueprintType enums must be uint8, but this enum mirrors EShaderPlatform, which is
+// declared as uint16.
+UENUM()
 enum class ESpShaderPlatform : uint16
 {
     SP_PCD3D_SM5 = Unreal::getConstEnumValue(EShaderPlatform::SP_PCD3D_SM5),
@@ -59,16 +91,10 @@ enum class ESpShaderPlatform : uint16
     SP_CUSTOM_PLATFORM_FIRST = Unreal::getConstEnumValue(EShaderPlatform::SP_CUSTOM_PLATFORM_FIRST),
     SP_CUSTOM_PLATFORM_LAST = Unreal::getConstEnumValue(EShaderPlatform::SP_CUSTOM_PLATFORM_LAST),
     SP_NumPlatforms = Unreal::getConstEnumValue(EShaderPlatform::SP_NumPlatforms),
-    SP_NumBits = Unreal::getConstEnumValue(EShaderPlatform::SP_NumBits),
+    SP_NumBits = Unreal::getConstEnumValue(EShaderPlatform::SP_NumBits)
 };
 
-UENUM(BlueprintType)
-enum class ESpVRSImageDataType : uint8
-{
-    VRSImage_NotSupported = Unreal::getConstEnumValue(EVRSImageDataType::VRSImage_NotSupported),
-    VRSImage_Palette = Unreal::getConstEnumValue(EVRSImageDataType::VRSImage_Palette),
-    VRSImage_Fractional = Unreal::getConstEnumValue(EVRSImageDataType::VRSImage_Fractional),
-};
+// Engine/Source/Runtime/Core/Public/PixelFormat.h
 
 UENUM(BlueprintType)
 enum class ESpPixelFormat : uint8
@@ -146,10 +172,10 @@ enum class ESpPixelFormat : uint8
     PF_ETC2_RG11_EAC = Unreal::getConstEnumValue(EPixelFormat::PF_ETC2_RG11_EAC),
     PF_R8 = Unreal::getConstEnumValue(EPixelFormat::PF_R8),
     PF_B5G5R5A1_UNORM = Unreal::getConstEnumValue(EPixelFormat::PF_B5G5R5A1_UNORM),
-    PF_ASTC_4x4_HDR = Unreal::getConstEnumValue(EPixelFormat::PF_ASTC_4x4_HDR),	
-    PF_ASTC_6x6_HDR = Unreal::getConstEnumValue(EPixelFormat::PF_ASTC_6x6_HDR),	
-    PF_ASTC_8x8_HDR = Unreal::getConstEnumValue(EPixelFormat::PF_ASTC_8x8_HDR),	
-    PF_ASTC_10x10_HDR = Unreal::getConstEnumValue(EPixelFormat::PF_ASTC_10x10_HDR),	
+    PF_ASTC_4x4_HDR = Unreal::getConstEnumValue(EPixelFormat::PF_ASTC_4x4_HDR),
+    PF_ASTC_6x6_HDR = Unreal::getConstEnumValue(EPixelFormat::PF_ASTC_6x6_HDR),
+    PF_ASTC_8x8_HDR = Unreal::getConstEnumValue(EPixelFormat::PF_ASTC_8x8_HDR),
+    PF_ASTC_10x10_HDR = Unreal::getConstEnumValue(EPixelFormat::PF_ASTC_10x10_HDR),
     PF_ASTC_12x12_HDR = Unreal::getConstEnumValue(EPixelFormat::PF_ASTC_12x12_HDR),
     PF_G16R16_SNORM = Unreal::getConstEnumValue(EPixelFormat::PF_G16R16_SNORM),
     PF_R8G8_UINT = Unreal::getConstEnumValue(EPixelFormat::PF_R8G8_UINT),
@@ -166,24 +192,12 @@ enum class ESpPixelFormat : uint8
     PF_ASTC_10x10_NORM_RG = Unreal::getConstEnumValue(EPixelFormat::PF_ASTC_10x10_NORM_RG),
     PF_ASTC_12x12_NORM_RG = Unreal::getConstEnumValue(EPixelFormat::PF_ASTC_12x12_NORM_RG),
     PF_R16G16_SINT = Unreal::getConstEnumValue(EPixelFormat::PF_R16G16_SINT),
-    PF_MAX = Unreal::getConstEnumValue(EPixelFormat::PF_MAX),
+    PF_MAX = Unreal::getConstEnumValue(EPixelFormat::PF_MAX)
 };
 
-UENUM(Flags)
-enum class ESpRequestedGPUCrash
-{
-    None = Unreal::getConstEnumValue(ERequestedGPUCrash::None),
-    Type_Hang = Unreal::getConstEnumValue(ERequestedGPUCrash::Type_Hang),
-    Type_PageFault = Unreal::getConstEnumValue(ERequestedGPUCrash::Type_PageFault),
-    Type_PlatformBreak = Unreal::getConstEnumValue(ERequestedGPUCrash::Type_PlatformBreak),
-    Type_Assert = Unreal::getConstEnumValue(ERequestedGPUCrash::Type_Assert),
-    Queue_Direct = Unreal::getConstEnumValue(ERequestedGPUCrash::Queue_Direct),
-    Queue_Compute = Unreal::getConstEnumValue(ERequestedGPUCrash::Queue_Compute),
-};
-ENUM_CLASS_FLAGS(ESpRequestedGPUCrash);
+// Engine/Source/Runtime/RHI/Public/RHIGlobals.h
 
-
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FSpReservedResources
 {
     GENERATED_BODY()
@@ -219,7 +233,7 @@ struct FSpReservedResources
     int32 TileSizeInBytes = 65536;
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FSpGpuInfo
 {
     GENERATED_BODY()
@@ -259,7 +273,7 @@ struct FSpGpuInfo
 };
 
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FSpRayTracing
 {
     GENERATED_BODY()
@@ -328,7 +342,7 @@ struct FSpRayTracing
 };
 
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FSpVariableRateShading
 {
     GENERATED_BODY()
@@ -371,11 +385,11 @@ struct FSpVariableRateShading
 
     /** Data type contained in a shading-rate image for image-based Variable Rate Shading. */
     UPROPERTY()
-    ESpVRSImageDataType ImageDataType = ESpVRSImageDataType::NotSupported;
+    ESpVRSImageDataType ImageDataType = ESpVRSImageDataType::VRSImage_NotSupported;
 
     /** Image format for the shading rate image for image-based Variable Rate Shading. */
     UPROPERTY()
-    ESpPixelFormat ImageFormat = ESpPixelFormat::Unknown;
+    ESpPixelFormat ImageFormat = ESpPixelFormat::PF_Unknown;
 
     /** Whether Variable Rate Shading deferred shading rate texture update is supported. */
     UPROPERTY()
@@ -383,7 +397,7 @@ struct FSpVariableRateShading
 
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FSpShaderBundles
 {
     GENERATED_BODY()
@@ -405,7 +419,7 @@ struct FSpShaderBundles
     bool RequiresSharedBindlessParameters = false;
 };
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FSpRHIGlobals
 {
     GENERATED_BODY()
@@ -876,7 +890,7 @@ struct FSpRHIGlobals
 
     /** Format used for the backbuffer when outputting to a HDR display. */
     UPROPERTY()
-    ESpPixelFormat HDRDisplayOutputFormat = ESpPixelFormat::FloatRGBA;
+    ESpPixelFormat HDRDisplayOutputFormat = ESpPixelFormat::PF_FloatRGBA;
 
     /** Counter incremented once on each frame present. Used to support game thread synchronization with swap chain frame flips. */
     UPROPERTY()
@@ -989,88 +1003,60 @@ class USpRHIGlobalsInterface : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public:
-    UFUNCTION(Category="SPEAR")
-    static FSpGpuInfo GetGpuInfo() {
-        FSpGpuInfo result;
-        result.AdapterName = GRHIGlobals.GpuInfo.AdapterName;
-        result.AdapterInternalDriverVersion = GRHIGlobals.GpuInfo.AdapterInternalDriverVersion;
-        result.AdapterUserDriverVersion = GRHIGlobals.GpuInfo.AdapterUserDriverVersion;
-        result.AdapterDriverDate = GRHIGlobals.GpuInfo.AdapterDriverDate;
-        result.AdapterDriverOnDenyList = GRHIGlobals.GpuInfo.AdapterDriverOnDenyList;
-        result.DeviceId = GRHIGlobals.GpuInfo.DeviceId;
-        result.DeviceRevision = GRHIGlobals.GpuInfo.DeviceRevision;
-        result.IsAMDPreGCNArchitecture = GRHIGlobals.GpuInfo.IsAMDPreGCNArchitecture;
-        result.VendorId = GRHIGlobals.GpuInfo.VendorId;
-        return result;
-    }
-
-    UFUNCTION(Category="SPEAR")
-    static FSpRayTracing GetRayTracing() {
-        FSpRayTracing result;
-        result.Supported = GRHIGlobals.RayTracing.Supported;
-        result.SupportsShaders = GRHIGlobals.RayTracing.SupportsShaders;
-        result.SupportsPSOAdditions = GRHIGlobals.RayTracing.SupportsPSOAdditions;
-        result.SupportsDispatchIndirect = GRHIGlobals.RayTracing.SupportsDispatchIndirect;
-        result.SupportsAsyncBuildAccelerationStructure = GRHIGlobals.RayTracing.SupportsAsyncBuildAccelerationStructure;
-        result.SupportsAMDHitToken = GRHIGlobals.RayTracing.SupportsAMDHitToken;
-        result.SupportsInlineRayTracing = GRHIGlobals.RayTracing.SupportsInlineRayTracing;
-        result.RequiresInlineRayTracingSBT = GRHIGlobals.RayTracing.RequiresInlineRayTracingSBT;
-        result.SupportsInlinedCallbacks = GRHIGlobals.RayTracing.SupportsInlinedCallbacks;
-        result.SupportsLooseParamsInShaderRecord = GRHIGlobals.RayTracing.SupportsLooseParamsInShaderRecord;
-        result.AccelerationStructureAlignment = GRHIGlobals.RayTracing.AccelerationStructureAlignment;
-        result.ScratchBufferAlignment = GRHIGlobals.RayTracing.ScratchBufferAlignment;
-        result.ShaderTableAlignment = GRHIGlobals.RayTracing.ShaderTableAlignment;
-        result.InstanceDescriptorSize = GRHIGlobals.RayTracing.InstanceDescriptorSize;
-        return result;
-    }
-
-    UFUNCTION(Category="SPEAR")
-    static FSpVariableRateShading GetVariableRateShading() {
-        FSpVariableRateShading result;
-        result.SupportsPipeline = GRHIGlobals.VariableRateShading.SupportsPipeline;
-        result.SupportsLargerSizes = GRHIGlobals.VariableRateShading.SupportsLargerSizes;
-        result.SupportsAttachment = GRHIGlobals.VariableRateShading.SupportsAttachment;
-        result.SupportsComplexCombinerOps = GRHIGlobals.VariableRateShading.SupportsComplexCombinerOps;
-        result.SupportsAttachmentArrayTextures = GRHIGlobals.VariableRateShading.SupportsAttachmentArrayTextures;
-        result.ImageTileMaxWidth = GRHIGlobals.VariableRateShading.ImageTileMaxWidth;
-        result.ImageTileMaxHeight = GRHIGlobals.VariableRateShading.ImageTileMaxHeight;
-        result.ImageTileMinWidth = GRHIGlobals.VariableRateShading.ImageTileMinWidth;
-        result.ImageTileMinHeight = GRHIGlobals.VariableRateShading.ImageTileMinHeight;
-        result.ImageDataType = static_cast<ESpVRSImageDataType>(GRHIGlobals.VariableRateShading.ImageDataType);
-        result.ImageFormat = static_cast<ESpPixelFormat>(GRHIGlobals.VariableRateShading.ImageFormat);
-        result.SupportsLateUpdate = GRHIGlobals.VariableRateShading.SupportsLateUpdate;
-        return result;
-    }
-
-    UFUNCTION(Category="SPEAR")
-    static FSpShaderBundles GetShaderBundles() {
-        FSpShaderBundles result;
-        result.SupportsDispatch = GRHIGlobals.ShaderBundles.SupportsDispatch;
-        result.SupportsWorkGraphDispatch = GRHIGlobals.ShaderBundles.SupportsWorkGraphDispatch;
-        result.SupportsParallel = GRHIGlobals.ShaderBundles.SupportsParallel;
-        result.RequiresSharedBindlessParameters = GRHIGlobals.ShaderBundles.RequiresSharedBindlessParameters;
-        return result;
-    }
-
-    UFUNCTION(Category="SPEAR")
-    static FSpReservedResources GetReservedResources() {
-        FSpReservedResources result;
-        result.Supported = GRHIGlobals.ReservedResources.Supported;
-        result.SupportsVolumeTextures = GRHIGlobals.ReservedResources.SupportsVolumeTextures;
-        result.TextureArrayMinimumMipDimension = GRHIGlobals.ReservedResources.TextureArrayMinimumMipDimension;
-        result.TileSizeInBytes = GRHIGlobals.ReservedResources.TileSizeInBytes;
-        return result;
-    }
-
-    UFUNCTION(Category="SPEAR")
-    static FSpRHIGlobals Get() {
+    // Transcribes the entire GRHIGlobals struct, see Engine/Source/Runtime/RHI/Public/RHIGlobals.h. Not
+    // BlueprintCallable because uint64 is not a Blueprint type.
+    UFUNCTION()
+    static FSpRHIGlobals GetRHIGlobals()
+    {
         FSpRHIGlobals result;
 
-        result.GpuInfo = GetGpuInfo();
-        result.RayTracing = GetRayTracing();
-        result.VariableRateShading = GetVariableRateShading();
-        result.ShaderBundles = GetShaderBundles();
-        result.ReservedResources = GetReservedResources();
+        result.GpuInfo.AdapterName = GRHIGlobals.GpuInfo.AdapterName;
+        result.GpuInfo.AdapterInternalDriverVersion = GRHIGlobals.GpuInfo.AdapterInternalDriverVersion;
+        result.GpuInfo.AdapterUserDriverVersion = GRHIGlobals.GpuInfo.AdapterUserDriverVersion;
+        result.GpuInfo.AdapterDriverDate = GRHIGlobals.GpuInfo.AdapterDriverDate;
+        result.GpuInfo.AdapterDriverOnDenyList = GRHIGlobals.GpuInfo.AdapterDriverOnDenyList;
+        result.GpuInfo.DeviceId = GRHIGlobals.GpuInfo.DeviceId;
+        result.GpuInfo.DeviceRevision = GRHIGlobals.GpuInfo.DeviceRevision;
+        result.GpuInfo.IsAMDPreGCNArchitecture = GRHIGlobals.GpuInfo.IsAMDPreGCNArchitecture;
+        result.GpuInfo.VendorId = GRHIGlobals.GpuInfo.VendorId;
+
+        result.RayTracing.Supported = GRHIGlobals.RayTracing.Supported;
+        result.RayTracing.SupportsShaders = GRHIGlobals.RayTracing.SupportsShaders;
+        result.RayTracing.SupportsPSOAdditions = GRHIGlobals.RayTracing.SupportsPSOAdditions;
+        result.RayTracing.SupportsDispatchIndirect = GRHIGlobals.RayTracing.SupportsDispatchIndirect;
+        result.RayTracing.SupportsAsyncBuildAccelerationStructure = GRHIGlobals.RayTracing.SupportsAsyncBuildAccelerationStructure;
+        result.RayTracing.SupportsAMDHitToken = GRHIGlobals.RayTracing.SupportsAMDHitToken;
+        result.RayTracing.SupportsInlineRayTracing = GRHIGlobals.RayTracing.SupportsInlineRayTracing;
+        result.RayTracing.RequiresInlineRayTracingSBT = GRHIGlobals.RayTracing.RequiresInlineRayTracingSBT;
+        result.RayTracing.SupportsInlinedCallbacks = GRHIGlobals.RayTracing.SupportsInlinedCallbacks;
+        result.RayTracing.SupportsLooseParamsInShaderRecord = GRHIGlobals.RayTracing.SupportsLooseParamsInShaderRecord;
+        result.RayTracing.AccelerationStructureAlignment = GRHIGlobals.RayTracing.AccelerationStructureAlignment;
+        result.RayTracing.ScratchBufferAlignment = GRHIGlobals.RayTracing.ScratchBufferAlignment;
+        result.RayTracing.ShaderTableAlignment = GRHIGlobals.RayTracing.ShaderTableAlignment;
+        result.RayTracing.InstanceDescriptorSize = GRHIGlobals.RayTracing.InstanceDescriptorSize;
+
+        result.VariableRateShading.SupportsPipeline = GRHIGlobals.VariableRateShading.SupportsPipeline;
+        result.VariableRateShading.SupportsLargerSizes = GRHIGlobals.VariableRateShading.SupportsLargerSizes;
+        result.VariableRateShading.SupportsAttachment = GRHIGlobals.VariableRateShading.SupportsAttachment;
+        result.VariableRateShading.SupportsComplexCombinerOps = GRHIGlobals.VariableRateShading.SupportsComplexCombinerOps;
+        result.VariableRateShading.SupportsAttachmentArrayTextures = GRHIGlobals.VariableRateShading.SupportsAttachmentArrayTextures;
+        result.VariableRateShading.ImageTileMaxWidth = GRHIGlobals.VariableRateShading.ImageTileMaxWidth;
+        result.VariableRateShading.ImageTileMaxHeight = GRHIGlobals.VariableRateShading.ImageTileMaxHeight;
+        result.VariableRateShading.ImageTileMinWidth = GRHIGlobals.VariableRateShading.ImageTileMinWidth;
+        result.VariableRateShading.ImageTileMinHeight = GRHIGlobals.VariableRateShading.ImageTileMinHeight;
+        result.VariableRateShading.ImageDataType = Unreal::getEnumValueAs<ESpVRSImageDataType>(GRHIGlobals.VariableRateShading.ImageDataType);
+        result.VariableRateShading.ImageFormat = Unreal::getEnumValueAs<ESpPixelFormat>(GRHIGlobals.VariableRateShading.ImageFormat);
+        result.VariableRateShading.SupportsLateUpdate = GRHIGlobals.VariableRateShading.SupportsLateUpdate;
+
+        result.ShaderBundles.SupportsDispatch = GRHIGlobals.ShaderBundles.SupportsDispatch;
+        result.ShaderBundles.SupportsWorkGraphDispatch = GRHIGlobals.ShaderBundles.SupportsWorkGraphDispatch;
+        result.ShaderBundles.SupportsParallel = GRHIGlobals.ShaderBundles.SupportsParallel;
+        result.ShaderBundles.RequiresSharedBindlessParameters = GRHIGlobals.ShaderBundles.RequiresSharedBindlessParameters;
+
+        result.ReservedResources.Supported = GRHIGlobals.ReservedResources.Supported;
+        result.ReservedResources.SupportsVolumeTextures = GRHIGlobals.ReservedResources.SupportsVolumeTextures;
+        result.ReservedResources.TextureArrayMinimumMipDimension = GRHIGlobals.ReservedResources.TextureArrayMinimumMipDimension;
+        result.ReservedResources.TileSizeInBytes = GRHIGlobals.ReservedResources.TileSizeInBytes;
 
         result.IsRHIInitialized = GRHIGlobals.IsRHIInitialized;
         result.PersistentThreadGroupCount = GRHIGlobals.PersistentThreadGroupCount;
@@ -1154,7 +1140,7 @@ public:
         result.DrawUPIndexCheckCount = GRHIGlobals.DrawUPIndexCheckCount;
         result.TriggerGPUProfile = GRHIGlobals.TriggerGPUProfile;
         result.TriggerGPUHitchProfile = GRHIGlobals.TriggerGPUHitchProfile;
-        result.TriggerGPUCrash = static_cast<ESpRequestedGPUCrash>(GRHIGlobals.TriggerGPUCrash);
+        result.TriggerGPUCrash = Unreal::getEnumValueAs<ESpRequestedGPUCrash>(GRHIGlobals.TriggerGPUCrash);
         result.GPUTraceFileName = GRHIGlobals.GPUTraceFileName;
         result.SupportsTextureStreaming = GRHIGlobals.SupportsTextureStreaming;
         result.StreamingTextureMemorySizeInKB = GRHIGlobals.StreamingTextureMemorySizeInKB;
@@ -1180,7 +1166,7 @@ public:
         result.IsHDREnabled = GRHIGlobals.IsHDREnabled;
         result.SupportsHDROutput = GRHIGlobals.SupportsHDROutput;
         result.MaxDispatchThreadGroupsPerDimension = GRHIGlobals.MaxDispatchThreadGroupsPerDimension;
-        result.HDRDisplayOutputFormat = static_cast<ESpPixelFormat>(GRHIGlobals.HDRDisplayOutputFormat);
+        result.HDRDisplayOutputFormat = Unreal::getEnumValueAs<ESpPixelFormat>(GRHIGlobals.HDRDisplayOutputFormat);
         result.PresentCounter = GRHIGlobals.PresentCounter;
         result.SupportsArrayIndexFromAnyShader = GRHIGlobals.SupportsArrayIndexFromAnyShader;
         result.SupportsPipelineFileCache = GRHIGlobals.SupportsPipelineFileCache;
@@ -1196,20 +1182,20 @@ public:
         result.SupportsEfficientUploadOnResourceCreation = GRHIGlobals.SupportsEfficientUploadOnResourceCreation;
         result.SupportsMapWriteNoOverwrite = GRHIGlobals.SupportsMapWriteNoOverwrite;
         result.SupportsAsyncPipelinePrecompile = GRHIGlobals.SupportsAsyncPipelinePrecompile;
-        result.BindlessSupport = static_cast<ESpRHIBindlessSupport>(GRHIGlobals.BindlessSupport);
+        result.BindlessSupport = Unreal::getEnumValueAs<ESpRHIBindlessSupport>(GRHIGlobals.BindlessSupport);
         result.IsDebugLayerEnabled = GRHIGlobals.IsDebugLayerEnabled;
         result.NeedsShaderUnbinds = GRHIGlobals.NeedsShaderUnbinds;
         result.SupportsBarycentricsSemantic = GRHIGlobals.SupportsBarycentricsSemantic;
         result.SupportsMSAAShaderResolve = GRHIGlobals.SupportsMSAAShaderResolve;
         result.SupportsDepthStencilResolve = GRHIGlobals.SupportsDepthStencilResolve;
         result.SupportLinearTextureVolumeFormat = GRHIGlobals.SupportLinearTextureVolumeFormat;
-        
+
         for (int i = 0; i < FSpRHIGlobals::MaxMSAASampleOffsets; i++) {
             result.DefaultMSAASampleOffsets[i] = GRHIGlobals.DefaultMSAASampleOffsets[i];
         }
 
         for (int i = 0; i < (int)ESpRHIFeatureLevel::Num; i++) {
-            result.ShaderPlatformForFeatureLevel[i] = static_cast<ESpShaderPlatform>(GRHIGlobals.ShaderPlatformForFeatureLevel[i]);
+            result.ShaderPlatformForFeatureLevel[i] = Unreal::getEnumValueAs<ESpShaderPlatform>(GRHIGlobals.ShaderPlatformForFeatureLevel[i]);
         }
 
         return result;
