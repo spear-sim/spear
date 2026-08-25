@@ -17,8 +17,7 @@ _PCG_VOLUME_NAMES_TO_GENERATE = [
     "City_Generator_PCG_4_Ground",
     "City_Generator_PCG_5_Buildings",
     "City_Generator_PCG_6_Left_over_lots",
-    "City_Generator_PCG_7_city_Contour",
-]
+    "City_Generator_PCG_7_city_Contour"]
 
 # Wall-clock duration of the camera flythrough, in seconds.
 _FLYTHROUGH_DURATION_S = 20.0
