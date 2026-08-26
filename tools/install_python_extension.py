@@ -107,8 +107,14 @@ if __name__ == "__main__":
         spear.log("Found Unreal clang: ", linux_clang_path)
 
         linux_clang_bin_dir      = os.path.realpath(os.path.join(linux_clang_path, "x86_64-unknown-linux-gnu", "bin"))
-        linux_libcpp_include_dir = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "include", "c++", "v1"))
-        linux_libcpp_lib_dir     = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Source", "ThirdParty", "Unix", "LibCxx", "lib", "Unix", "x86_64-unknown-linux-gnu"))
+        linux_libcpp_include_dir = os.path.realpath(os.path.join(linux_clang_path, "x86_64-unknown-linux-gnu", "include", "c++", "v1"))
+        linux_libcpp_lib_dir     = os.path.realpath(os.path.join(linux_clang_path, "x86_64-unknown-linux-gnu", "lib64"))
+
+        assert os.path.isdir(linux_libcpp_include_dir) and os.listdir(linux_libcpp_include_dir)
+        assert os.path.isdir(linux_libcpp_lib_dir) and os.listdir(linux_libcpp_lib_dir)
+
+        spear.log("Found Unreal libc++ include dir: ", linux_libcpp_include_dir)
+        spear.log("Found Unreal libc++ lib dir:     ", linux_libcpp_lib_dir)
 
         cxx_compiler = os.path.join(linux_clang_bin_dir, "clang++")
 
@@ -122,7 +128,7 @@ if __name__ == "__main__":
         else:
             optimization_flags = "-O3"
 
-        common_cxx_flags = f"-std=c++20 {optimization_flags} -D_LIBCPP_ENABLE_EXPERIMENTAL -nostdinc++ -I\'{linux_libcpp_include_dir}\' -Wno-reserved-macro-identifier -stdlib=libc++ -L\'{linux_libcpp_lib_dir}\' -lc++"
+        common_cxx_flags = f"-std=c++20 {optimization_flags} -D_LIBCPP_ENABLE_EXPERIMENTAL -nostdinc++ -I\'{linux_libcpp_include_dir}\' -Wno-reserved-macro-identifier -stdlib=libc++ -L\'{linux_libcpp_lib_dir}\' -lc++ -lc++abi"
         cmake_cxx_flags = common_cxx_flags
 
         if args.conda_script:

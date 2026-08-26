@@ -150,11 +150,11 @@ If you find SPEAR useful in your research, please cite this [paper](https://arxi
 
 ```
 @inproceedings{roberts:2026
-    author       = {Mike Roberts AND Renhan Wang AND Rushikesh Zawar AND Rachith Dey-Prakash
-                    AND Quentin Leboutet AND Stephan R.~Richter AND Matthias M{\"u}ller
-                    AND German Ros AND Rui Tang AND Stefan Leutenegger AND Yannick
-                    Hold-Geoffroy AND Kalyan Sunkavalli AND Vladlen Koltun},
-    title        = {{SPEAR}: {A} Simulator for Photorealistic Embodied {AI} Research},
-    booktitle    = {ECCV 2026}
+    author    = {Mike Roberts AND Renhan Wang AND Rushikesh Zawar AND Rachith Dey-Prakash
+                 AND Quentin Leboutet AND Stephan R.~Richter AND Matthias M{\"u}ller
+                 AND German Ros AND Rui Tang AND Stefan Leutenegger AND Yannick
+                 Hold-Geoffroy AND Kalyan Sunkavalli AND Vladlen Koltun},
+    title     = {{SPEAR}: {A} Simulator for Photorealistic Embodied {AI} Research},
+    booktitle = {ECCV 2026}
 }
 ```

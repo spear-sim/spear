@@ -47,12 +47,12 @@ if __name__ == "__main__":
     # end of the frame block where you called OpenLevel(), it is it is required to call game.invalidate(),
     # as we do here.
 
-    spear.log("Opening level: /Game/FirstPerson/Lvl_FirstPerson")
+    spear.log("Opening level: /Game/ThirdPerson/Lvl_ThirdPerson")
     with instance.begin_frame():
         pass
     with instance.end_frame():
         game.invalidate() # need to call invalidate() before calling OpenLevel()
-        gameplay_statics.OpenLevel(LevelName="/Game/FirstPerson/Lvl_FirstPerson", bAbsolute=True, Options="")
+        gameplay_statics.OpenLevel(LevelName="/Game/ThirdPerson/Lvl_ThirdPerson", bAbsolute=True, Options="")
 
     # Calling OpenLevel invalidates the old game object, so get a new one here. This call will block until
     # the new game object is ready.
