@@ -594,12 +594,12 @@ public:
         return FText::FromString(toFString(str));
     }
 
-    struct TCharPtr
+    struct FStringContainer
     {
-        TCharPtr() = delete;
-        TCharPtr(const std::string& str) { str_ = toFString(str); }
-        TCharPtr(const FString& str) { str_ = str; }
-        TCharPtr(const char* str) { str_ = str; }
+        FStringContainer() = delete;
+        FStringContainer(const std::string& str) { str_ = toFString(str); }
+        FStringContainer(const FString& str) { str_ = str; }
+        FStringContainer(const char* str) { str_ = str; }
 
         operator const TCHAR* () const { return *str_; }
 
@@ -607,9 +607,9 @@ public:
     };
 
     template <typename TStr> requires
-        std::constructible_from<TCharPtr, TStr>
-    static Unreal::TCharPtr toTCharPtr(TStr&& str)
+        std::constructible_from<FStringContainer, TStr>
+    static Unreal::FStringContainer toTCharPtr(TStr&& str)
     {
-        return TCharPtr(std::forward<TStr>(str));
+        return FStringContainer(std::forward<TStr>(str));
     }
 };

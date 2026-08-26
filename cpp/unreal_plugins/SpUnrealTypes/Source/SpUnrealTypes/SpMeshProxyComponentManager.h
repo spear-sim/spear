@@ -248,6 +248,13 @@ protected:
     void setMeshProxyComponentManager(MeshProxyComponentManager* mesh_proxy_component_manager)
     {
         mesh_proxy_component_manager_ = mesh_proxy_component_manager;
+
+        #if WITH_EDITOR
+            if (!mesh_proxy_component_manager_) {
+                UnregisterDelayFrames = -1;
+                MeshProxyGeometryDescs.Empty();
+            }
+        #endif
     }
 
     // ASpProxyComponentManager interface

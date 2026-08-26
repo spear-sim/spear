@@ -30,42 +30,28 @@ if __name__ == "__main__":
     unreal_project_dir = os.path.realpath(os.path.join(repo_dir, "cpp", "unreal_projects", "SpearSim"))
     uproject           = os.path.realpath(os.path.join(unreal_project_dir, "SpearSim.uproject"))
 
+    spear.tools.validate_build_environment()
+
+    target_platform = spear.tools.get_target_platform()
+
     # set various platform-specific variables that we use throughout our build procedure
     if sys.platform == "win32":
-        target_platform       = "Win64"
-        run_uat_script        = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.bat"))
         archive_dir           = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{args.build_config}-Unsigned"))
         run_uat_platform_args = ""
         unreal_tmp_dir        = ""
 
-        cxx_compiler = "cl"
-        cxx_compiler_path = shutil.which(cxx_compiler)
-        if cxx_compiler_path is None:
-            spear.log("ERROR: Can't find the Visual Studio command-line tools. All SPEAR build steps must run in a terminal where the Visual Studio command-line tools are visible. Giving up...")
-            assert False
-        if cxx_compiler_path.lower().endswith("hostx86\\x86\\cl.exe") or cxx_compiler_path.lower().endswith("hostx86\\x64\\cl.exe"):
-            spear.log("ERROR: 32-bit terminal detected. All SPEAR build steps must run in a 64-bit terminal. Giving up...")
-            spear.log("ERROR: Compiler path:", cxx_compiler_path)
-            assert False
-
     elif sys.platform == "darwin":
-        target_platform       = "Mac"
-        run_uat_script        = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh"))
         archive_dir           = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{args.build_config}-Unsigned"))
         run_uat_platform_args = "-specifiedarchitecture=arm64+x86_64"
         unreal_tmp_dir        = os.path.expanduser(os.path.join("~", "Library", "Preferences", "Unreal Engine", "SpearSimEditor"))
 
     elif sys.platform == "linux":
-        target_platform = "Linux"
-        run_uat_script        = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Build", "BatchFiles", "RunUAT.sh"))        
         archive_dir           = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{args.build_config}"))
         run_uat_platform_args = ""
         unreal_tmp_dir        = ""
 
     else:
         assert False
-
-    assert os.path.exists(run_uat_script)
 
     if os.path.exists(archive_dir):
         spear.log("Archive directory exists, removing: ", archive_dir)
@@ -118,30 +104,22 @@ if __name__ == "__main__":
             spear.log("File has no signatures, proceeding...")
 
     # assemble dirs to cook
-
-    cook_dirs = []
-    if args.cook_dirs is not None:
-        cook_dirs = args.cook_dirs
-
+    cook_dirs = args.cook_dirs if args.cook_dirs is not None else []
     cook_dir_args = [ f'-cookdir="{os.path.join(unreal_project_dir, cook_dir)}"' for cook_dir in cook_dirs ]
 
     # assemble maps to cook
-
     cook_maps = []
     if not args.skip_cook_default_maps:
         cook_maps.extend(spear.tools.get_default_maps_to_cook())
     if args.cook_maps is not None:
         cook_maps.extend(args.cook_maps)
+    cook_maps_arg = [] if len(cook_maps) == 0 else [f"-map={'+'.join(cook_maps)}"]
 
-    if len(cook_maps) == 0:
-        cook_maps_arg = []
-    else:
-        cook_maps_arg = [f"-map={'+'.join(cook_maps)}"]
+    cook_args = cook_dir_args + cook_maps_arg
 
     # build SpearSim project
 
-    cmd = [
-        run_uat_script,
+    run_uat_args = [
         "BuildCookRun",
         f'-project="{uproject}"',
         "-target=SpearSim",
@@ -156,11 +134,9 @@ if __name__ == "__main__":
         f'-archivedirectory="{archive_dir}"',
         run_uat_platform_args] + \
         unknown_args + \
-        cook_dir_args + \
-        cook_maps_arg
+        cook_args
 
-    spear.log("Executing: ", " ".join(cmd))
-    subprocess.run(cmd, check=True)
+    spear.tools.run_uat(unreal_engine_dir=args.unreal_engine_dir, args=run_uat_args)
 
     # We need to remove this temp dir (created by the Unreal build process) because it contains paths from the above build.
     # If we don't do this step, we will get many warnings during subsequent builds:
