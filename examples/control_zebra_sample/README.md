@@ -16,7 +16,7 @@ Our next step is to symlink a small amount of additional content into the `Zebra
 python ../../tools/update_symlink_for_external_content.py --unreal-project-dir path/to/ZebraSample --create --external-content-dir data --unreal-project-content-dir SPEAR
 ```
 
-Our next step is to open `ZebraSample.uproject` in the Unreal Editor, open the `/Game/SPEAR/LV_Demo_CRC` map, and wait for the map to fully load. Then we press play in the editor and wait for the Unreal simulation to load and warm up. Once the simulation is fully loaded and warmed up, we are ready to control the character via SPEAR.
+Finally, we can open `ZebraSample.uproject` in the Unreal Editor, open the `/Game/SPEAR/LV_Demo_CRC` map, and wait for the map to fully load. Then we press play in the editor and wait for the Unreal simulation to load and warm up. Once the simulation is fully loaded and warmed up, we are ready to control the character via SPEAR.
 
 ```console
 python run.py

@@ -335,7 +335,7 @@ def _initialize_actors():
     with _instance.end_frame():
         pass
 
-    # needed in case the segmentation service is still loading its materials (advances a minimum of 3 frames)
+    # needed in case the segmentation service is still loading its materials (advances a minimum of 4 frames)
     world_scoped_services.async_loading_service.wait_for_engine_idle()
 
     _log(f"Actors initialized: {image_width}x{image_height} camera, {'perspective' if viewport_desc['is_perspective'] else 'orthographic'} projection.")
