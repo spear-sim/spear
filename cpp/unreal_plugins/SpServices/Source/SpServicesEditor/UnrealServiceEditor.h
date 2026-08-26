@@ -7,6 +7,7 @@
 
 #include <stdint.h> // uint64_t
 
+#include <memory> // std::unique_ptr
 #include <string>
 
 #include "SpCoreEditor/UnrealEditor.h"
@@ -29,4 +30,7 @@ public:
                 return toUInt64(UnrealEditor::getEditorSubsystemByClass(toPtr<UClass>(uclass)));
             });
     }
+
+    template <CUnrealEntryPointBinder TEntryPointBinder>
+    static std::unique_ptr<UnrealServiceEditor> create(TEntryPointBinder* unreal_entry_point_binder);
 };

@@ -7,6 +7,7 @@
 
 #include <stdint.h> // int64_t, uint64_t
 
+#include <memory> // std::unique_ptr
 #include <string>
 
 #include <boost/predef.h> // BOOST_ENDIAN_BIG_BYTE, BOOST_ENDIAN_LITTLE_BYTE
@@ -116,4 +117,7 @@ public:
             return IsAsyncLoading();
         });
     }
+
+    template <CUnrealEntryPointBinder TEntryPointBinder>
+    static std::unique_ptr<EngineGlobalsService> create(TEntryPointBinder* unreal_entry_point_binder);
 };

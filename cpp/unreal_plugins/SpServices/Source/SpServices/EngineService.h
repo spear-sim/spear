@@ -363,6 +363,8 @@ public:
         bindFuncToExecuteOnGameThread("engine_service", "flush", []() -> void {});
     }
 
+    static std::unique_ptr<EngineService<TEntryPointBinder>> create(TEntryPointBinder* entry_point_binder);
+
     template <typename TFunc>
     void bindFuncToExecuteOnWorkerThread(const std::string& service_name, const std::string& func_name, const TFunc& func)
     {

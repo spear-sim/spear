@@ -13,6 +13,7 @@
 #include <stdint.h> // uint64_t
 
 #include <map>
+#include <memory>  // std::unique_ptr
 #include <ranges>  // std::views::transform
 #include <string>
 #include <utility> // std::make_pair, std::move
@@ -1473,4 +1474,7 @@ public:
                 UnrealUtils::destroyComponentOutsideOwnerConstructor(toPtr<UActorComponent>(component), promote_children);
             });
     }
+
+    template <CUnrealEntryPointBinder TEntryPointBinder>
+    static std::unique_ptr<UnrealService> create(TEntryPointBinder* unreal_entry_point_binder);
 };
