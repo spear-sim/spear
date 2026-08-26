@@ -5,9 +5,10 @@
 
 #pragma once
 
-#include <Editor.h>              // GEditor
+#include <Editor.h>               // GEditor
 #include <Kismet/BlueprintFunctionLibrary.h>
-#include <LevelEditorViewport.h> // FLevelEditorViewportClient, GCurrentLevelEditingViewportClient
+#include <LevelEditorViewport.h>  // FLevelEditorViewportClient, GCurrentLevelEditingViewportClient
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY, USTRUCT
 
 #include "SpCore/Assert.h"
 
@@ -60,7 +61,7 @@ public:
         SP_ASSERT(GEditor);
 
         TArray<FSpLevelViewportClientDesc> level_viewport_client_descs;
-        for (FLevelEditorViewportClient* level_editor_viewport_client : GEditor->GetLevelViewportClients()) {
+        for (auto level_editor_viewport_client : GEditor->GetLevelViewportClients()) {
             SP_ASSERT(level_editor_viewport_client);
             SP_ASSERT(level_editor_viewport_client->Viewport);
             SP_ASSERT(GEditor->GetActiveViewport());

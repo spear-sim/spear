@@ -19,6 +19,7 @@
 #include <Components/SceneComponent.h>
 #include <Containers/Array.h>
 #include <Containers/Map.h>
+#include <Containers/StringView.h>          // FStringView
 #include <Containers/UnrealString.h>        // FString::operator*
 #include <Engine/Engine.h>                  // GEngine
 #include <Engine/LocalPlayer.h>
@@ -307,82 +308,6 @@ public:
     }
 
     //
-    // Helper functions for getting subsystems, world can't be const because we may need to return it
-    // directly in some specializations
-    //
-
-    template <CSubsystemProvider TSubsystemProvider>
-    static TSubsystemProvider* getSubsystemProvider(UWorld* world) { SP_ASSERT(false); return nullptr; }
-
-    template <>
-    ULocalPlayer* getSubsystemProvider<ULocalPlayer>(UWorld* world)
-    {
-        SP_ASSERT(world);
-        APlayerController* player_controller = world->GetFirstPlayerController();
-        SP_ASSERT(player_controller);
-        ULocalPlayer* local_player = player_controller->GetLocalPlayer();
-        SP_ASSERT(local_player);
-        return local_player;
-    }
-
-    template <>
-    UWorld* getSubsystemProvider<UWorld>(UWorld* world)
-    {
-        SP_ASSERT(world);
-        return world;
-    }
-
-    //
-    // Get engine subsystem, uclass can't be const because we need to pass it to GetEngineSubsystemBase(...)
-    //
-
-    template <CEngineSubsystem TEngineSubsystem>
-    static TEngineSubsystem* getEngineSubsystemByType()
-    {
-        SP_ASSERT(GEngine);
-        return GEngine->GetEngineSubsystem<TEngineSubsystem>();
-    }
-
-    static UEngineSubsystem* getEngineSubsystemByClass(UClass* uclass)
-    {
-        SP_ASSERT(GEngine);
-        return GEngine->GetEngineSubsystemBase(uclass);
-    }
-
-    //
-    // Get subsystem, world can't be const because we need to return it directly in some specializations, and
-    // uclass can't be const because we need to pass it to GetSubsystemBase(...)
-    //
-
-    template <CSubsystem TSubsystem, CSubsystemProvider TSubsystemProvider>
-    static TSubsystem* getSubsystemByType(UWorld* world)
-    {
-        return getSubsystemProvider<TSubsystemProvider>(world)->template GetSubsystem<TSubsystem>();
-    }
-
-    template <CSubsystemProvider TSubsystemProvider>
-    static USubsystem* getSubsystemByClass(UWorld* world, UClass* uclass)
-    {
-        return getSubsystemProvider<TSubsystemProvider>(world)->GetSubsystemBase(uclass);
-    }
-
-    //
-    // Get object tags
-    //
-
-    static std::vector<std::string> getTags(const AActor* actor)
-    {
-        SP_ASSERT(actor);
-        return Std::toVector<std::string>(toStdVector(actor->Tags) | std::views::transform([](const auto& tag) { return toStdString(tag); }));
-    }
-
-    static std::vector<std::string> getTags(const UActorComponent* component)
-    {
-        SP_ASSERT(component);
-        return Std::toVector<std::string>(toStdVector(component->ComponentTags) | std::views::transform([](const auto& tag) { return toStdString(tag); }));
-    }
-
-    //
     // Helper functions for working with enums
     //
 
@@ -471,7 +396,103 @@ public:
     }
 
     //
-    // Container functions
+    // Helper functions for getting subsystems, world can't be const because we may need to return it
+    // directly in some specializations
+    //
+
+    template <CSubsystemProvider TSubsystemProvider>
+    static TSubsystemProvider* getSubsystemProvider(UWorld* world) { SP_ASSERT(false); return nullptr; }
+
+    template <>
+    ULocalPlayer* getSubsystemProvider<ULocalPlayer>(UWorld* world)
+    {
+        SP_ASSERT(world);
+        APlayerController* player_controller = world->GetFirstPlayerController();
+        SP_ASSERT(player_controller);
+        ULocalPlayer* local_player = player_controller->GetLocalPlayer();
+        SP_ASSERT(local_player);
+        return local_player;
+    }
+
+    template <>
+    UWorld* getSubsystemProvider<UWorld>(UWorld* world)
+    {
+        SP_ASSERT(world);
+        return world;
+    }
+
+    //
+    // Get engine subsystem, uclass can't be const because we need to pass it to GetEngineSubsystemBase(...)
+    //
+
+    template <CEngineSubsystem TEngineSubsystem>
+    static TEngineSubsystem* getEngineSubsystemByType()
+    {
+        SP_ASSERT(GEngine);
+        return GEngine->GetEngineSubsystem<TEngineSubsystem>();
+    }
+
+    static UEngineSubsystem* getEngineSubsystemByClass(UClass* uclass)
+    {
+        SP_ASSERT(GEngine);
+        return GEngine->GetEngineSubsystemBase(uclass);
+    }
+
+    //
+    // Get subsystem, world can't be const because we need to return it directly in some specializations, and
+    // uclass can't be const because we need to pass it to GetSubsystemBase(...)
+    //
+
+    template <CSubsystem TSubsystem, CSubsystemProvider TSubsystemProvider>
+    static TSubsystem* getSubsystemByType(UWorld* world)
+    {
+        return getSubsystemProvider<TSubsystemProvider>(world)->template GetSubsystem<TSubsystem>();
+    }
+
+    template <CSubsystemProvider TSubsystemProvider>
+    static USubsystem* getSubsystemByClass(UWorld* world, UClass* uclass)
+    {
+        return getSubsystemProvider<TSubsystemProvider>(world)->GetSubsystemBase(uclass);
+    }
+
+    //
+    // Helper functions for objects
+    //
+
+    static bool isValid(const UObject* uobject)
+    {
+        return uobject && uobject->IsValidLowLevelFast() && uobject->IsValidLowLevel() && IsValid(uobject);
+    }
+
+    static std::string toStringFromPtr(const void* ptr)
+    {
+        return Std::toStringFromPtr(ptr);
+    }
+
+    template <CObject TObject>
+    static TObject* toPtrFromString(const std::string& string)
+    {
+        TObject* uobject = Std::toPtrFromString<TObject>(string);
+        if (uobject) {
+            SP_ASSERT(isValid(uobject));
+        }
+        return uobject;
+    }
+
+    static std::vector<std::string> getTags(const AActor* actor)
+    {
+        SP_ASSERT(actor);
+        return Std::toVector<std::string>(toStdVector(actor->Tags) | std::views::transform([](const auto& tag) { return toStdString(tag); }));
+    }
+
+    static std::vector<std::string> getTags(const UActorComponent* component)
+    {
+        SP_ASSERT(component);
+        return Std::toVector<std::string>(toStdVector(component->ComponentTags) | std::views::transform([](const auto& tag) { return toStdString(tag); }));
+    }
+
+    //
+    // Container conversion functions
     //
 
     template <typename TValue>
@@ -535,7 +556,7 @@ public:
     }
 
     //
-    // String functions
+    // String conversion functions
     //
 
     static std::string toStdString(const FName& str)
@@ -574,22 +595,30 @@ public:
         return FText::FromString(toFString(str));
     }
 
-    struct TCharPtr
+    struct FStringContainer
     {
-        TCharPtr() = delete;
-        TCharPtr(const std::string& str) { str_ = toFString(str); }
-        TCharPtr(const FString& str) { str_ = str; }
-        TCharPtr(const char* str) { str_ = str; }
+        FStringContainer() = delete;
+        FStringContainer(const std::string& str) { str_ = toFString(str); }
+        FStringContainer(const FString& str) { str_ = str; }
+        FStringContainer(const char* str) { str_ = str; }
 
         operator const TCHAR* () const { return *str_; }
+        operator FStringView () const { return str_; }
 
         FString str_;
     };
 
     template <typename TStr> requires
-        std::constructible_from<TCharPtr, TStr>
-    static Unreal::TCharPtr toTCharPtr(TStr&& str)
+        std::constructible_from<FStringContainer, TStr>
+    static Unreal::FStringContainer toTCharPtr(TStr&& str)
     {
-        return TCharPtr(std::forward<TStr>(str));
+        return FStringContainer(std::forward<TStr>(str));
+    }
+
+    template <typename TStr> requires
+        std::constructible_from<FStringContainer, TStr>
+    static Unreal::FStringContainer toFStringView(TStr&& str)
+    {
+        return FStringContainer(std::forward<TStr>(str));
     }
 };

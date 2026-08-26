@@ -19,7 +19,7 @@ if spear.__can_import_unreal__:
         if rtype == "shared_memory":
             return
         else:
-            return multiprocessing_resource_tracker_register_func_original(name, rtype)
+            return _multiprocessing_resource_tracker_register_func_original(name, rtype)
     multiprocessing.resource_tracker.register = _multiprocessing_resource_tracker_register_func_noop
 
 

@@ -5,9 +5,10 @@
 
 #pragma once
 
-#include <ContentStreaming.h> // IStreamingManager
-#include <HAL/Platform.h>     // int32
+#include <ContentStreaming.h>     // IStreamingManager
+#include <HAL/Platform.h>         // int32
 #include <Kismet/BlueprintFunctionLibrary.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpCore/Assert.h"
 
@@ -29,5 +30,23 @@ public:
     static int32 GetNumWantingResources()
     {
         return IStreamingManager::Get().GetNumWantingResources();
+    }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    static void UpdateResourceStreaming(float DeltaTime, bool bProcessEverything = false)
+    {
+        IStreamingManager::Get().UpdateResourceStreaming(DeltaTime, bProcessEverything);
+    }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    static int32 BlockTillAllRequestsFinished(float TimeLimit = 0.0f, bool bLogResults = false)
+    {
+        return IStreamingManager::Get().BlockTillAllRequestsFinished(TimeLimit, bLogResults);
+    }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    static int32 StreamAllResources(float TimeLimit = 0.0f)
+    {
+        return IStreamingManager::Get().StreamAllResources(TimeLimit);
     }
 };

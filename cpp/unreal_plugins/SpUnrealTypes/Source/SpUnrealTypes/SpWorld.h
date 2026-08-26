@@ -8,8 +8,12 @@
 #include <Containers/Array.h>
 #include <Engine/World.h>
 #include <Kismet/BlueprintFunctionLibrary.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpCore/Assert.h"
+#include "SpCore/Unreal.h"
+
+#include "SpUnrealTypes/SpRHIFeatureLevel.h"
 
 #include "SpWorld.generated.h"
 
@@ -19,7 +23,14 @@ UCLASS()
 class USpWorld : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
-public: 
+public:
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    static ESpRHIFeatureLevel GetFeatureLevel(UWorld* World)
+    {
+        SP_ASSERT(World);
+        return Unreal::getEnumValueAs<ESpRHIFeatureLevel>(World->GetFeatureLevel());
+    }
+
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static TArray<ULevelStreaming*> GetStreamingLevels(UWorld* World)
     {

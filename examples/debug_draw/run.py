@@ -3,8 +3,6 @@
 # Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-# Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
-
 import colorsys
 import cv2
 import numpy as np
@@ -50,9 +48,7 @@ if __name__ == "__main__":
     os.makedirs(images_dir, exist_ok=True)
 
     # create instance
-    config = spear.get_config(user_config_files=[os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))])
-    spear.configure_system(config=config)
-    instance = spear.Instance(config=config)
+    instance = spear.Instance()
     game = instance.get_game()
 
     with instance.begin_frame():
@@ -64,7 +60,7 @@ if __name__ == "__main__":
         kismet_system_library = game.get_unreal_object(uclass="UKismetSystemLibrary")
 
         bounding_box_mesh = game.unreal_service.load_object(uclass="UStaticMesh", name="/Engine/BasicShapes/Cube.Cube")
-        bounding_box_material = game.unreal_service.load_object(uclass="UMaterialInterface", name="/SpContent/Materials/M_LocalPositionMultipliedByObjectScale.M_LocalPositionMultipliedByObjectScale")
+        bounding_box_material = game.unreal_service.load_object(uclass="UMaterialInterface", name="/Game/SPEAR/Materials/M_LocalPositionMultipliedByObjectScale.M_LocalPositionMultipliedByObjectScale")
 
         # compute bounding boxes from scene actors
         actors = [ actor for actor in game.unreal_service.find_actors() ]
@@ -169,8 +165,8 @@ if __name__ == "__main__":
         component_desc_map = { desc["name"]: desc for desc in component_descs }
 
         # configure camera to match viewport
-        viewport_desc = game.rendering_service.get_current_viewport_desc()
-        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc)
+        viewport_desc = game.viewport_service.get_current_viewport_desc()
+        game.viewport_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc)
 
         # configure capture component visibility routing
 
@@ -202,11 +198,11 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass
 
-    # needed in case the segmentation service is still loading its materials, or in case our custom material is still loading
+    # let temporal anti-aliasing etc accumulate additional information across multiple frames, and inserting
+    # an extra frame or two can fix occasional render-to-texture initialization issues, and we need to wait
+    # in case the segmentation service is still loading its materials or in case our custom material is still
+    # loading (advances a minimum of 4 frames)
     game.async_loading_service.wait_for_engine_idle()
-
-    # let temporal anti-aliasing etc accumulate additional information across multiple frames
-    instance.step(num_frames=45)
 
     spear.log("Getting segmentation data...")
 

@@ -21,38 +21,52 @@ class ConsoleService(spear.Service):
     # Get console variable value
     #
 
-    def get_as_bool(self, name):
+    def get_cvar_as(self, name, as_type):
         cvar = self.unreal_service.find_console_variable_by_name(console_variable_name=name)
         assert cvar != 0
-        return self.unreal_service.get_console_variable_value_as_bool(cvar=cvar)
+        if as_type is bool:
+            return self.unreal_service.get_console_variable_value_as_bool(cvar=cvar)
+        elif as_type is int:
+            return self.unreal_service.get_console_variable_value_as_int(cvar=cvar)
+        elif as_type is float:
+            return self.unreal_service.get_console_variable_value_as_float(cvar=cvar)
+        elif as_type is str:
+            return self.unreal_service.get_console_variable_value_as_string(cvar=cvar)
+        else:
+            assert False
 
-    def get_as_int(self, name):
-        cvar = self.unreal_service.find_console_variable_by_name(console_variable_name=name)
-        assert cvar != 0
-        return self.unreal_service.get_console_variable_value_as_int(cvar=cvar)
-
-    def get_as_float(self, name):
-        cvar = self.unreal_service.find_console_variable_by_name(console_variable_name=name)
-        assert cvar != 0
-        return self.unreal_service.get_console_variable_value_as_float(cvar=cvar)
-
-    def get_as_string(self, name):
-        cvar = self.unreal_service.find_console_variable_by_name(console_variable_name=name)
-        assert cvar != 0
-        return self.unreal_service.get_console_variable_value_as_string(cvar=cvar)
+    def exists(self, name):
+        return self.unreal_service.find_console_variable_by_name(console_variable_name=name) != 0
 
     #
     # Set console variable value
     #
 
-    def set(self, name, value, set_by_flags=None):
+    def set_cvar(self, name, value, set_by_flags=None, set_with_current_priority=None):
         cvar = self.unreal_service.find_console_variable_by_name(console_variable_name=name)
         assert cvar != 0
-        return self.unreal_service.set_console_variable_value(cvar=cvar, value=value, set_by_flags=set_by_flags)
+        return self.unreal_service.set_console_variable_value(cvar=cvar, value=value, set_by_flags=set_by_flags, set_with_current_priority=set_with_current_priority)
 
     #
     # Execute console command
     #
 
-    def execute(self, command):
+    def execute_command(self, command):
         return self.unreal_service.execute_console_command(command=command)
+
+    #
+    # Flush output log messages
+    #
+
+    def flush_output_log_messages(self):
+        return self.unreal_service.flush_output_log_messages()
+
+    #
+    # Get message log names and messages
+    #
+
+    def get_message_log_names(self):
+        return self.unreal_service.get_message_log_names()
+
+    def get_message_log_messages(self, name):
+        return self.unreal_service.get_message_log_messages(name=name)

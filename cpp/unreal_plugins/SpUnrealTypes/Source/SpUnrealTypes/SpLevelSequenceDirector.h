@@ -38,14 +38,14 @@ public:
 
 private:
     UFUNCTION()
-    void StopHandler()
+    void StopHandler() // not intended to be BlueprintCallable
     {
         SP_LOG_CURRENT_FUNCTION();
         terminate();
     }
 
     UFUNCTION()
-    void FinishedHandler()
+    void FinishedHandler() // not intended to be BlueprintCallable
     {
         SP_LOG_CURRENT_FUNCTION();
         terminate();

@@ -505,15 +505,11 @@
         IgnoreAll,
 
         // ---- BEGIN SPEAR MODIFICATION ----
-        //
-        // Throw
-        //
-        // We add a BreakThenThrow case because if we're in a debugger, it is sometimes helpful to break and
-        // then continue running cleanly, but this requires that we throw after breaking.
-        //
 
+        BreakThenThrow,
         Throw,
-        BreakThenThrow
+        Crash,
+        Exit
 
         // ---- END SPEAR MODIFICATION ----
 
@@ -590,6 +586,14 @@
                                                 const char* function,
                                                 const char* expression,
                                                 const char* message, ...) PPK_ASSERT_HANDLE_THROW_FORMAT;
+
+    // This function is not in the original implementation, but we use it to customize our assert behavior.
+    PPK_ASSERT_FUNCSPEC
+    void SPCORE_API PPK_ASSERT_CALL handleExit(const char* file,
+                                               int line,
+                                               const char* function,
+                                               const char* expression,
+                                               const char* message, ...) PPK_ASSERT_HANDLE_THROW_FORMAT;
 
     // ---- END SPEAR MODIFICATION ----
 
@@ -727,4 +731,26 @@
 
 // ------------------------------------------------------------------------------
 
+// ---- BEGIN SPEAR MODIFICATION ----
+
+//
+// Some call sites (e.g., EngineService::executeFuncInTryCatch(...)) are wrapped in a try-catch block
+// specifically designed to recover gracefully from an assert-triggered throw, converting it into an error
+// response rather than letting it propagate uncaught. But most SP_ASSERT call sites have no way of knowing,
+// locally, whether they happen to be executing inside one of these protected regions. Constructing an
+// AssertsAreAllowedToThrowScope as the first statement inside such a try block lets it announce that it is
+// currently active, for as long as the object stays in scope. Note that this class is intentionally not
+// marked SPCORE_API. Doing so would mark the thread_local variable, and that is not allowed on Windows.
+class AssertsAreAllowedToThrowScope
+{
+public:
+    SPCORE_API AssertsAreAllowedToThrowScope();
+    SPCORE_API ~AssertsAreAllowedToThrowScope();
+    static SPCORE_API bool insideAssertsAreAllowedToThrowScope();
+private:
+    inline static thread_local int depth_ = 0;
+};
+
 #define SP_ASSERT PPK_ASSERT
+
+// ---- END SPEAR MODIFICATION ----

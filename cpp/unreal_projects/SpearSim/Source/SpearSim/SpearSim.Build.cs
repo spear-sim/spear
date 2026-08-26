@@ -7,7 +7,7 @@ using UnrealBuildTool; // ReadOnlyTargetRules
 
 public class SpearSim : SpModuleRules
 {
-    public SpearSim(ReadOnlyTargetRules target) : base(target)
+    public SpearSim(ReadOnlyTargetRules target) : base(target, bLinkThirdPartyLibraries: true)
     {
         SP_LOG_CURRENT_FUNCTION();
 

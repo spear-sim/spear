@@ -8,21 +8,28 @@
 #include <array>
 #include <atomic>
 #include <chrono>
-#include <memory> // std::unique_ptr
+#include <map>
+#include <memory>  // std::unique_ptr
+#include <string>
+#include <utility> // std::pair
 #include <vector>
 
 #include <Components/SceneCaptureComponent2D.h>
 #include <Containers/Array.h>
 #include <Containers/EnumAsByte.h>
 #include <Containers/IndirectArray.h>
+#include <Containers/Map.h>
+#include <Containers/UnrealString.h>
 #include <Delegates/IDelegateInstance.h>  // FDelegateHandle
 #include <Engine/EngineTypes.h>           // EEndPlayReason
 #include <Engine/TextureRenderTarget2D.h> // ETextureRenderTargetFormat
 #include <HAL/Platform.h>                 // int32, uint32
 #include <RHIGPUReadback.h>               // FRHIGPUTextureReadback
+#include <RendererInterface.h>            // IPooledRenderTarget
 #include <SceneTypes.h>                   // FSceneViewStateReference
 #include <SceneView.h>                    // FSceneViewFamily
 #include <SceneViewExtension.h>           // FAutoRegister, FSceneViewExtensionBase, FSceneViewExtensions
+#include <Templates/RefCounting.h>        // TRefCountPtr
 #include <Templates/SharedPointer.h>      // TSharedPtr
 #include <Templates/SharedPointerFwd.h>   // ESPMode
 #include <TextureResource.h>              // FTextureRenderTargetResource
@@ -41,14 +48,19 @@
 
 class FRDGBuilder;
 class FRHICommandListImmediate;
-class UMaterial;
-class UMaterialInstanceDynamic;
+class FRHITexture;
+class UMaterialInterface;
 
 class FSpSceneViewExtensionBase : public FSceneViewExtensionBase
 {
 public:
-    FSpSceneViewExtensionBase(const FAutoRegister& auto_register, USpSceneCaptureComponent2D* component);
+    FSpSceneViewExtensionBase(const FAutoRegister& auto_register);
+    ~FSpSceneViewExtensionBase() override;
 
+    void initialize(USpSceneCaptureComponent2D* component) { SP_ASSERT(component); component_ = component; }
+    void terminate() { component_ = nullptr; }
+
+    bool IsActiveThisFrame_Internal(const FSceneViewExtensionContext& context) const override;
     void SetupViewFamily(FSceneViewFamily& in_view_family) override;
     void SetupView(FSceneViewFamily& in_view_family, FSceneView& in_view) override;
     void BeginRenderViewFamily(FSceneViewFamily& in_view_family) override;
@@ -58,9 +70,9 @@ protected:
     virtual void setupViewFamily(FSceneViewFamily& view_family) {};
     virtual void setupView(FSceneViewFamily& view_family, FSceneView& view) {};
     virtual void beginRenderViewFamily(FSceneViewFamily& view_family) {};
-    virtual void postRenderViewFamily_RenderThread(FSceneViewFamily& view_family) {};
+    virtual void postRenderViewFamily_RenderThread(FRDGBuilder& graph_builder, FSceneViewFamily& view_family) {};
 
-    USpSceneCaptureComponent2D* getComponent() { SP_ASSERT(component_); return component_; };
+    USpSceneCaptureComponent2D* getComponent() const { SP_ASSERT(component_); return component_; };
 
 private:
     bool shouldHandleViewFamily(const FSceneViewFamily* view_family) const;
@@ -72,18 +84,44 @@ private:
 class FSpSceneViewExtension : public FSpSceneViewExtensionBase
 {
 public:
-    FSpSceneViewExtension(const FAutoRegister& auto_register, USpSceneCaptureComponent2D* component);
+    FSpSceneViewExtension(const FAutoRegister& auto_register);
+    ~FSpSceneViewExtension() override;
+
 protected:
     void setupView(FSceneViewFamily& view_family, FSceneView& view) override;
-    void postRenderViewFamily_RenderThread(FSceneViewFamily& view_family) override;
+    void postRenderViewFamily_RenderThread(FRDGBuilder& graph_builder, FSceneViewFamily& view_family) override;
 };
 
-UENUM()
+UENUM(BlueprintType)
 enum class ESpBufferingMode : uint8
 {
     SingleBuffered = 0,
     DoubleBuffered = 1,
     TripleBuffered = 2
+};
+
+USTRUCT(BlueprintType)
+struct FSpUserSceneTextureMaterialDesc
+{
+    GENERATED_BODY()
+
+    // Post-process material (may be a UMaterial or a UMaterialInstance, since post-process blendables accept either).
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    UMaterialInterface* Material = nullptr;
+
+    // The UserSceneTexture output name specified in the material editor.
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    FString InternalName;
+
+    // The resolution divisor specified in the material editor. The transient texture's extent is the render
+    // extent divided by this rounded up per component, so it lets us allocate shared memory buffers ahead of
+    // time.
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    int32 ResolutionDivisorWidth = 1;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    int32 ResolutionDivisorHeight = 1;
 };
 
 // We need meta=(BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
@@ -106,9 +144,14 @@ public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     bool IsInitialized();
 
-    // requests that the path tracer restarts rendering from scratch; only has an effect if bUseSceneViewExtension is true
+    UFUNCTION()
+    TArray<uint64> GetViewStates(); // uint64 not supported for BlueprintCallable, can't be const, FSceneViewStateInterface is not a UCLASS so we can't return FSceneViewStateInterface* and we return uint64 instead
+
+    // Functions for setting deferred state that gets consumed in an FSceneViewExtension callback
     UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void RequestPathTracerReset();
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    void RequestSetOfflineRender(bool bOverrideIsOfflineRender, bool bIsOfflineRender);
 
     // called from FSpSceneViewExtensionBase::shouldHandleView(...) when deciding whether or not this component matches the current view
     const TIndirectArray<FSceneViewStateReference>& getViewStates() const { return ViewStates; }
@@ -117,8 +160,12 @@ public:
     void setupView(FSceneViewFamily& view_family, FSceneView& view);
 
     // called from FSpSceneViewExtension::postRenderViewFamily_RenderThread(...) to do post-render work on the render thread
-    void postRenderViewFamily_RenderThread();
+    void postRenderViewFamily_RenderThread(FRDGBuilder& graph_builder, FSceneViewFamily& view_family);
 
+private:
+    bool showFlagsNeedSceneViewExtension();
+
+public:
     // BlueprintReadWrite is incompatible with uint32 so we use int32
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
@@ -159,7 +206,30 @@ public:
     float TextureRenderTargetGamma = 0.0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    UMaterial* Material = nullptr;
+    UMaterialInterface* Material = nullptr;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    TSubclassOf<ASpMeshProxyComponentManager> MeshProxyComponentManagerClass;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    ESpBufferingMode BufferingMode = ESpBufferingMode::SingleBuffered;
+
+    // The universe of possible post-process materials that can be enabled dynamically keyed by a "public name".
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    TMap<FString, FSpUserSceneTextureMaterialDesc> UserSceneTextureMaterialDescs;
+
+    // Selects which materials are active by populating this array with "public names" (i.e., keys into UserSceneTextureMaterialDescs).
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    TArray<FString> UserSceneTextureNames;
+
+    // When disabled, the main (primary) texture is excluded entirely from the returned data (the "data" entry is
+    // omitted), so only the user scene textures are read. Unlike bReadPixelData below (a developer/benchmarking flag
+    // that skips the internal GPU-to-CPU readback without changing the shape of the returned data), this flag is
+    // user-facing and deliberately changes the shape of the returned data.
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bReadPrimaryPixelData = true;
+
+    // Can be disabled for debugging
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bUseSharedMemory = true;
@@ -167,17 +237,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bReadPixelData = true;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    ESpBufferingMode BufferingMode = ESpBufferingMode::SingleBuffered;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bPrintReadbackSpinWaitInfo = false;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    TSubclassOf<ASpMeshProxyComponentManager> MeshProxyComponentManagerClass;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bUseSceneViewExtension = false;
+    // Can be enabled for debugging
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bPrintFrameTime = false;
@@ -188,29 +248,120 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bReadPixelsEveryFrame = false;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    bool bPrintReadbackSpinWaitInfo = false;
+
 private:
+
+    // State common to TextureReadbackDesc (persistent) and TextureReadbackMinimalDesc (transient). Factoring it into a
+    // base lets getPackedArray() have a single implementation.
+    struct TextureReadbackDescBase
+    {
+        // metadata that is used when the pixel data is being read back
+        int32 width_ = 0;
+        int32 height_ = 0;
+        int32 num_channels_per_pixel_ = 0;
+        SpArrayDataType channel_data_type_ = SpArrayDataType::Invalid;
+
+        SpArraySharedMemoryView shared_memory_view_; // only used when shared memory is enabled
+    };
+
+    // std::atomic makes TextureReadbackDesc non-copyable and non-movable, so populate maps with try_emplace(), not insert()
+    struct TextureReadbackDesc : TextureReadbackDescBase
+    {
+        // owns the shared memory region whose view lives in the base (only used when shared memory is enabled)
+        std::unique_ptr<SharedMemoryRegion> shared_memory_region_;
+
+        // scratchpad buffer for staging-to-CPU data (only used when shared memory is disabled and only when double-buffered or triple-buffered)
+        std::vector<uint8_t, SpAlignedAllocator<uint8_t, 4096>> scratchpad_;
+
+        // RHI GPU texture readback resources (single-buffered and double-buffered are hard-coded to only use index 0, triple-buffered uses index 0 and 1)
+        std::array<std::unique_ptr<FRHIGPUTextureReadback>, 2> rhi_gpu_texture_readbacks_;
+
+        // Read-side wait counter. Incremented on the game thread at enqueue time so readPixelsImpl()'s game-thread
+        // spin-wait always observes an outstanding readback (it must be bumped before read_pixels() can run, so we can't
+        // defer it to the render thread), and decremented on the render thread once the staging-to-CPU copy is done.
+        // Double-buffered: GT increments in enqueueCopyPixelsDoubleBuffered(), RT decrements in postRenderViewFamily_RenderThread()
+        // Triple-buffered: GT increments in enqueueCopyPixelsTripleBuffered(), RT decrements in enqueueCopyPixelsTripleBuffered()'s render command
+        std::atomic<int> num_readbacks_pending_ = 0;
+
+        // Double-buffered consume gate. Incremented on the render thread inside enqueueCopyPixelsDoubleBuffered()'s
+        // command, immediately after the GPU-to-staging EnqueueCopy() populates the staging texture, and decremented on
+        // the render thread in postRenderViewFamily_RenderThread() when the staging-to-CPU copy consumes it. Because the
+        // GPU-to-staging copy runs in an async command but the staging-to-CPU copy runs in a separate render-thread
+        // callback (postRenderViewFamily_RenderThread), we can't gate the consume on num_readbacks_pending_: under
+        // r.OneFrameThreadLag>0 the render thread runs behind the game thread, so a postRenderViewFamily callback from an
+        // in-flight frame can fire after the game thread bumped num_readbacks_pending_ but before the command populated
+        // the staging texture, and would then Lock() an empty slot. Gating on this render-thread-only counter guarantees
+        // we only consume a slot whose EnqueueCopy() has actually executed. Triple-buffered does not need this because
+        // its consume runs inside the same command, in render-thread FIFO order behind the slot's populating command.
+        std::atomic<int> num_staging_copies_pending_ = 0;
+
+        // Triple-buffered
+        int readback_enqueue_index_ = 0; // GT-only: ring-buffer index, advanced in requestSwapRHIGPUTextureReadbacks()
+        bool readback_primed_ = false;   // GT-only: one-way latch, set true by the first requestSwapRHIGPUTextureReadbacks() call
+
+        // A user scene texture's extracted transient render target (null for the main texture, which reads from
+        // TextureTarget). Written on the render thread by postRenderViewFamily_RenderThread() every frame. Its address
+        // is stable for the desc's lifetime, but its value is not, so only the render thread reads its value (via the
+        // minimal desc's pooled_render_target_ptr_); the game thread only ever takes its address.
+        TRefCountPtr<IPooledRenderTarget> pooled_render_target_;
+    };
+
+    // A minimal and movable view of readback data required on the rendering thread. This data structure is not
+    // intended to be persistent: its readback pointers, destination, and source handle are re-resolved every frame.
+    // It must be assembled on the game thread every frame to be used for a single readback.
+    struct TextureReadbackMinimalDesc : TextureReadbackDescBase
+    {
+        FRHIGPUTextureReadback* current_readback_ = nullptr; // GPU-to-staging copy target for this frame (used by all buffering modes)
+        FRHIGPUTextureReadback* prev_readback_ = nullptr;    // staging-to-CPU copy source for the in-command copy; nullptr if there is no in-command copy this frame
+
+        // Stable handles to the GPU-to-staging source, recorded on the game thread and resolved to a live FRHITexture
+        // on the render thread (see enqueueCopyPixelsFromGPUToStaging_RenderThread). Exactly one is non-null. We never
+        // resolve the live texture on the game thread. For the main texture that would be unnecessary, and for a user
+        // scene texture, it would race with the render thread reassigning pooled_render_target_ every frame.
+        FTextureRenderTargetResource* render_target_resource_ptr_ = nullptr;    // main texture: render thread calls GetRenderTargetTexture()
+        TRefCountPtr<IPooledRenderTarget>* pooled_render_target_ptr_ = nullptr; // user scene texture: render thread dereferences and calls GetRHI()
+
+        void* dest_ptr_ = nullptr; // CPU destination for the in-command staging-to-CPU copy
+
+        // points at the persistent desc's pending counter (incremented on the game thread, decremented on the render thread); only used by double- and triple-buffered
+        std::atomic<int>* num_readbacks_pending_ptr_ = nullptr;
+
+        // points at the persistent desc's render-thread consume-gate counter (incremented and decremented on the render thread); only used by double-buffered
+        std::atomic<int>* num_staging_copies_pending_ptr_ = nullptr;
+    };
+
     // callbacks
     void beginFrameHandler();
     void endFrameHandler();
 
     // single-buffered mode
-    SpPackedArray readPixelsSingleBuffered();
+    SpFuncDataBundle readPixelsSingleBuffered(std::map<std::string, TextureReadbackMinimalDesc>& texture_readback_minimal_descs);
 
     // double-buffered mode
-    void enqueueCopyPixelsDoubleBuffered();
-    SpPackedArray readPixelsDoubleBuffered();
+    void enqueueCopyPixelsDoubleBuffered(std::map<std::string, TextureReadbackMinimalDesc>& texture_readback_minimal_descs);
+    SpFuncDataBundle readPixelsDoubleBuffered();
 
     // triple-buffered mode
-    void enqueueCopyPixelsTripleBuffered();
-    SpPackedArray readPixelsTripleBuffered();
+    void enqueueCopyPixelsTripleBuffered(std::map<std::string, TextureReadbackMinimalDesc>& texture_readback_minimal_descs);
+    SpFuncDataBundle readPixelsTripleBuffered();
 
     // game thread helpers
-    SpPackedArray readPixelsImpl();
-    SpPackedArray getPackedArray();
+    std::map<std::string, TextureReadbackMinimalDesc> requestUpdateAndGetTextureReadbackMinimalDescs();
+    std::pair<FRHIGPUTextureReadback*, FRHIGPUTextureReadback*> requestSwapRHIGPUTextureReadbacks(TextureReadbackDesc& texture_readback_desc); // returns {current, prev}; advances the triple-buffered ring-buffer state
+    TextureReadbackMinimalDesc getTextureReadbackMinimalDesc(
+        TextureReadbackDesc& texture_readback_desc,
+        FRHIGPUTextureReadback* current_readback,
+        FRHIGPUTextureReadback* prev_readback,
+        FTextureRenderTargetResource* render_target_resource_ptr,
+        TRefCountPtr<IPooledRenderTarget>* pooled_render_target_ptr);
+    SpPackedArray getPackedArray(const TextureReadbackDescBase& texture_readback_desc_base);
+    SpPackedArray readPixelsImpl(const TextureReadbackDesc& texture_readback_desc);
 
     // render thread helpers
-    void enqueueCopyPixelsFromGPUToStagingAndImmediateFlush_RenderThread(FRHIGPUTextureReadback* readback, FRHICommandListImmediate& rhi_command_list_immediate, FTextureRenderTargetResource* render_target_resource);
-    void copyPixelsFromStagingToCPU_RenderThread(FRHIGPUTextureReadback* readback, void* dest_ptr);
+    void enqueueCopyPixelsFromGPUToStaging_RenderThread(FRHICommandListImmediate& rhi_command_list_immediate, const TextureReadbackMinimalDesc& texture_readback_minimal_desc);
+    void copyPixelsFromStagingToCPU_RenderThread(FRHIGPUTextureReadback* readback, void* dest_ptr, const TextureReadbackDescBase& texture_readback_desc_base);
 
     // miscellaneous helpers
     void updateFrameTime();
@@ -222,27 +373,24 @@ private:
     USpFuncComponent* SpFuncComponent = nullptr;
 
     bool is_initialized_ = false;
+
+    // Scene view extension
     TSharedPtr<FSpSceneViewExtension, ESPMode::ThreadSafe> scene_view_extension_ = nullptr;
-    UMaterialInstanceDynamic* material_instance_dynamic_ = nullptr;
-    std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
-    SpArraySharedMemoryView shared_memory_view_;
 
-    // Scratchpad buffer for staging-to-CPU pixel data (only allocated when !bUseSharedMemory).
-    std::vector<uint8_t, SpAlignedAllocator<uint8_t, 4096>> scratchpad_;
+    // Texture readback state for main texture and user scene textures
+    TextureReadbackDesc texture_readback_desc_;
+    std::map<std::string, TextureReadbackDesc> user_scene_texture_readback_descs_;
 
-    // State for buffered readback (SingleBuffered and DoubleBuffered use index 0 only, TripleBuffered alternates uses both in an alternating fashion).
-    std::array<std::unique_ptr<FRHIGPUTextureReadback>, 2> readback_buffers_;
-    int readback_enqueue_index_ = 0;             // GT-only: used by TripleBuffered to alternate buffers
-    bool readback_primed_ = false;               // GT-only: one-way latch, true after first enqueueCopyPixelsTripleBuffered call
-    std::atomic<int> num_readbacks_pending_ = 0; // GT increments in enqueueCopyPixelsDoubleBuffered/enqueueCopyPixelsTripleBuffered, RT decrements in postRenderViewFamily_RenderThread/enqueueCopyPixelsTripleBuffered
+    // Deferred state to be consumed in an FSceneViewExtension callback
+    bool request_path_tracer_reset_ = false;
+    bool request_override_is_offline_render_ = false;
+    bool request_is_offline_render_ = false;
 
     // Additional state for measuring "standalone" and "standalone + extra work" frame rates.
     FDelegateHandle begin_frame_handle_;
     FDelegateHandle end_frame_handle_;
-    SpPackedArray scratchpad_packed_array_;
+    SpFuncDataBundle scratchpad_data_bundle_;
     boost::circular_buffer<double> previous_time_deltas_;
     std::chrono::time_point<std::chrono::high_resolution_clock> previous_time_point_;
     int frame_index_ = 0;
-
-    bool request_path_tracer_reset_ = false;
 };

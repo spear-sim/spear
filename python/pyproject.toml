@@ -18,7 +18,7 @@ name = "spear-sim"
 version = "1.0.0"
 requires-python = "~=3.11"
 dependencies = [
-    "mcp==1.26.0",               # tools/run_mcp_server.py
+    "mcp==1.28.1",               # tools/run_mcp_server.py
     "numpy==2.0.2",
     "opencv-python==4.10.0.84",
     "p4python==2025.1.2767466",  # tools/download_content_from_perforce.py
@@ -33,7 +33,7 @@ editor = [
     "trimesh==4.4.0"]            # editor/export_unreal_geometry.py
 examples = [
     "imageio-ffmpeg==0.6.0",
-    "jupyterlab==4.5.9",
+    "jupyterlab==4.5.10",
     "wget==3.2"]
 pipeline = [
     "coacd==1.0.0",
@@ -43,6 +43,6 @@ pipeline = [
     "mayavi==4.8.3",
     "mujoco==3.5.0",
     "PySide6==6.8.3",            # required by Mayavi but not specified as a dependency
-    "setuptools==78.1.1",        # required by Mayavi but not pinned
+    "setuptools==83.0.0",        # required by Mayavi but not pinned
     "trimesh==4.4.0",
     "vtk==9.3.1"]                # required by Mayavi but not pinned

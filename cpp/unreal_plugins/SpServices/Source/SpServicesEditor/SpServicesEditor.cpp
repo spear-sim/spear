@@ -8,16 +8,23 @@
 #include <memory> // std::make_unique
 
 #include <CoreGlobals.h>           // IsRunningCommandlet
+#include <Misc/CoreDelegates.h>    // FCoreDelegates
 #include <Modules/ModuleManager.h> // FDefaultGameModuleImpl, FDefaultModuleImpl, IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
 
 #include "SpCore/Assert.h"
 #include "SpCore/AssertModuleLoaded.h"
 #include "SpCore/Log.h"
 
-#include "SpServices/SpServices.h"
+// EngineService
+#include "SpServices/EngineService.h"
 
 // Services that require a reference to EngineService
 #include "SpServicesEditor/UnrealServiceEditor.h"
+
+// needed to use SpServices::engine_service_
+#include "SpServices/RpcServer.h"
+#include "SpServices/EngineService.h"
+#include "SpServices/SpServices.h"
 
 void SpServicesEditor::StartupModule()
 {
@@ -35,11 +42,8 @@ void SpServicesEditor::StartupModule()
         }
     #endif
 
-    SpServices* sp_services = FModuleManager::Get().GetModulePtr<SpServices>("SpServices");
-    SP_ASSERT(sp_services);
-
-    // Create editor world services.
-    editor_unreal_service_editor_ = std::make_unique<UnrealServiceEditor>(sp_services->engine_service_.get());
+    post_engine_init_handle_ = FCoreDelegates::GetOnPostEngineInit().AddRaw(this, &SpServicesEditor::postEngineInitHandler);
+    engine_pre_exit_handle_  = FCoreDelegates::OnEnginePreExit.AddRaw(this, &SpServicesEditor::enginePreExitHandler);
 }
 
 void SpServicesEditor::ShutdownModule()
@@ -51,6 +55,37 @@ void SpServicesEditor::ShutdownModule()
             return;
         }
     #endif
+
+    FCoreDelegates::OnEnginePreExit.Remove(engine_pre_exit_handle_);
+    FCoreDelegates::GetOnPostEngineInit().Remove(post_engine_init_handle_);
+    engine_pre_exit_handle_.Reset();
+    post_engine_init_handle_.Reset();
+}
+
+void SpServicesEditor::postEngineInitHandler()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    // This can't happen in StartupModule() because if we re-open a SPEAR project in the editor, then
+    // StartupModule() will get called again before the first ShutdownModule() gets called.
+
+    SpServices* sp_services = FModuleManager::Get().GetModulePtr<SpServices>("SpServices");
+    SP_ASSERT(sp_services);
+
+    // We can't guarantee whether SpServices's or SpServicesEditor's OnPostEngineInit handler will run first,
+    // so we call requestInitialize() here to guarantee that engine_service_ is valid, regardless of order.
+    sp_services->requestInitialize();
+    SP_ASSERT(sp_services->isInitialized());
+
+    // Create editor world services.
+    editor_unreal_service_editor_ = std::make_unique<UnrealServiceEditor>(sp_services->engine_service_.get());
+}
+
+void SpServicesEditor::enginePreExitHandler()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    // Note that sp_services is not guaranteed to be initialized here, see above.
 
     SP_ASSERT(editor_unreal_service_editor_);
     editor_unreal_service_editor_ = nullptr;

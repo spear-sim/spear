@@ -56,6 +56,10 @@
         {
             "Name": "SpCore",
             "Enabled": true
+        },
+        {
+            "Name": "XcodeGPUDebuggerPlugin",
+            "Enabled": false
         }
     ],
     "AdditionalPluginDirectories":

@@ -7,6 +7,7 @@
 
 #include <Kismet/BlueprintFunctionLibrary.h>
 #include <PCGSubsystem.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpCore/Assert.h"
 
@@ -16,7 +17,7 @@ UCLASS()
 class USpPCGSubsystem : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
-public: 
+public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     bool IsInitialized(UPCGSubsystem* PCGSubsystem)
     {

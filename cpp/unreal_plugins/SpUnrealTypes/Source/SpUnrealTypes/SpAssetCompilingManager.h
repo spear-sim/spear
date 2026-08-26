@@ -7,6 +7,7 @@
 
 #include <AssetCompilingManager.h>
 #include <Kismet/BlueprintFunctionLibrary.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpAssetCompilingManager.generated.h"
 
@@ -14,7 +15,10 @@ UCLASS()
 class USpAssetCompilingManager : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
-public: 
+public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static int GetNumRemainingAssets() { return FAssetCompilingManager::Get().GetNumRemainingAssets(); }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    static void FinishAllCompilation() { FAssetCompilingManager::Get().FinishAllCompilation(); }
 };

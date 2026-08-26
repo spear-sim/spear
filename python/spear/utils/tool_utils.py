@@ -5,7 +5,11 @@
 
 import os
 import shutil
+import spear
+import subprocess
 import sys
+import threading
+
 
 #
 # Return a default set of maps to cook. This set is needed in several places, e.g., build_executable.py,
@@ -21,6 +25,149 @@ def get_default_maps_to_cook():
         # "Lvl_IntroRoom",    # /Game/DemoTemplate/_Core/Lvl_IntroRoom doesn't work in standalone builds
         "Lvl_ThirdPerson",  # /Game/ThirdPerson
         "Lvl_VehicleBasic"] # /Game/VehicleTemplate/Maps
+
+
+#
+# Returns the target platform for use in Unreal command-line tools.
+#
+
+def get_target_platform():
+    if sys.platform == "win32":
+        return "Win64"
+    elif sys.platform == "darwin":
+        return "Mac"
+    elif sys.platform == "linux":
+        return "Linux"
+    else:
+        assert False
+
+
+#
+# Helper functions for building via Build, RunUAT, and UnrealBuildTool. Used by run_build.py, run_uat.py, and build_executable.py.
+#
+
+def validate_build_environment():
+    if sys.platform == "win32":
+        cxx_compiler_path = shutil.which("cl")
+        if cxx_compiler_path is None:
+            spear.log("ERROR: Can't find the Visual Studio command-line tools. All SPEAR build steps must run in a terminal where the Visual Studio command-line tools are visible. Giving up...")
+            assert False
+        if cxx_compiler_path.lower().endswith("hostx86\\x86\\cl.exe") or cxx_compiler_path.lower().endswith("hostx86\\x64\\cl.exe"):
+            spear.log("ERROR: 32-bit terminal detected. All SPEAR build steps must run in a 64-bit terminal. Giving up...")
+            spear.log("ERROR: Compiler path:", cxx_compiler_path)
+            assert False
+
+    elif sys.platform in ["darwin", "linux"]:
+        # The Unreal Build Tool expects "~/.config/" to be owned by the user, so it can create and write to
+        # "~/.config/Unreal Engine/" without requiring admin privileges. This check might seem esoteric, but
+        # we have seen cases where "~/.config/" is owned by root in some corporate environments, so we choose
+        # to check it here as a courtesy to new users. We don't know if we need a similar check on Windows.
+        config_dir = os.path.expanduser(os.path.join("~", ".config"))
+        if os.path.exists(config_dir):
+            import pwd # not available on Windows
+            current_user = pwd.getpwuid(os.getuid()).pw_name
+            config_dir_owner = pwd.getpwuid(os.stat(config_dir).st_uid).pw_name
+            if current_user != config_dir_owner:
+                spear.log(f"ERROR: The Unreal Build Tool expects {current_user} to be the owner of {config_dir}, but the current owner is {config_dir_owner}. To update, run the following command:")
+                spear.log(f"    sudo chown {current_user} {config_dir}")
+                assert False
+
+    else:
+        assert False
+
+def run_uat(unreal_engine_dir, args):
+    # there is only one correct RunUAT script to use for a given platform, so we determine it here rather
+    # than asking the caller to specify it
+    if sys.platform == "win32":
+        run_uat_script_name = "RunUAT.bat"
+    elif sys.platform in ["darwin", "linux"]:
+        run_uat_script_name = "RunUAT.sh"
+    else:
+        assert False
+    run_uat_script = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Build", "BatchFiles", run_uat_script_name))
+    assert os.path.exists(run_uat_script)
+
+    cmd = [run_uat_script] + args
+    _run_and_watch_log_file(cmd=cmd, shell=False)
+
+def run_build(unreal_engine_dir, args):
+    # there is only one correct Build script to use for a given platform, so we determine it here rather
+    # than asking the caller to specify it
+    if sys.platform == "win32":
+        build_script_name = "Build.bat"
+    elif sys.platform in ["darwin", "linux"]:
+        build_script_name = "Build.sh"
+    else:
+        assert False
+    build_script = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Build", "BatchFiles", build_script_name))
+    assert os.path.exists(build_script)
+
+    # Build.bat/Build.sh need to be run via the shell to correctly handle quoted paths containing spaces
+    cmd = " ".join([f'"{build_script}"'] + args)
+    _run_and_watch_log_file(cmd=cmd, shell=True)
+
+def _run_and_watch_log_file(cmd, shell):
+    # Build.bat/Build.sh/RunUAT.bat/RunUAT.sh all invoke UnrealBuildTool under the hood, which announces
+    # its own log file (e.g., "Log file: /path/to/UBA-....txt") early on, but then produces no further
+    # console output until the entire build finishes, at which point it dumps all of its buffered output
+    # at once. The log file itself, on the other hand, is written to incrementally throughout the build,
+    # so we watch it in the background to get live progress.
+    spear.log("Executing: ", cmd if shell else " ".join(cmd))
+
+    state = WatchLogFileState()
+    thread = threading.Thread(target=_watch_log_file, kwargs={"state": state}, daemon=True)
+    thread.start()
+
+    process = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+    for line in process.stdout:
+        line = line.rstrip("\n")
+        spear.log_no_prefix(line)
+        if line.startswith("Log file: "):
+            state.path = line[len("Log file: "):].strip()
+    process.wait()
+
+    state.stop.set()
+    thread.join()
+
+    if process.returncode != 0:
+        raise subprocess.CalledProcessError(process.returncode, cmd)
+
+def _watch_log_file(state, poll_interval_seconds=1.0):
+    current_path = None
+    offset = 0
+    pending = ""
+    while True:
+        should_stop = state.stop.is_set()
+
+        if state.path != current_path:
+            current_path = state.path
+            offset = 0
+            pending = ""
+
+        if current_path is not None and os.path.exists(current_path):
+            with open(current_path, "r", errors="replace") as f:
+                f.seek(offset)
+                new_data = f.read()
+                offset = f.tell()
+            if new_data:
+                pending += new_data
+                lines = pending.split("\n")
+                pending = lines[-1]
+                for line in lines[:-1]:
+                    spear.log_no_prefix(line)
+
+        if should_stop:
+            if pending:
+                spear.log_no_prefix(pending)
+            break
+
+        state.stop.wait(poll_interval_seconds)
+
+class WatchLogFileState:
+    def __init__(self):
+        self.path = None
+        self.stop = threading.Event()
+
 
 #
 # Helper functions for paths that handle symlinks robustly.

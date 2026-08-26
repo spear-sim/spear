@@ -7,6 +7,7 @@
 
 #include <Engine/GameEngine.h>
 #include <HAL/Platform.h> // TCHAR
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS
 
 #include "SpCore/Log.h"
 #include "SpCore/Unreal.h"

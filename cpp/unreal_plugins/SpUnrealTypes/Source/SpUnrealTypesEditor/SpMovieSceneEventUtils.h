@@ -18,6 +18,7 @@
 
 // private headers need custom include paths in SpUnrealTypesEditor.Build.cs
 #include <KeysAndChannels/MovieSceneScriptingEvent.h> // UMovieSceneScriptingEventKey
+#include <UObject/ObjectMacros.h>                     // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpCore/Assert.h"
 

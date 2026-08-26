@@ -49,15 +49,13 @@ TArray<FActorHitDesc> ASpActorHitManager::GetActorHitDescs(bool bIncludeDebugInf
     for (auto& desc : actor_hit_descs_) {
         FActorHitDesc actor_hit_desc;
 
-        actor_hit_desc.SelfActor     = reinterpret_cast<uint64>(desc.self_actor_);
-        actor_hit_desc.OtherActor    = reinterpret_cast<uint64>(desc.other_actor_);
+        actor_hit_desc.SelfActor     = Unreal::toFString(Std::toStringFromPtr(desc.self_actor_));
+        actor_hit_desc.OtherActor    = Unreal::toFString(Std::toStringFromPtr(desc.other_actor_));
         actor_hit_desc.NormalImpulse = desc.normal_impulse_;
         actor_hit_desc.HitResult     = desc.hit_result_;
 
         if (bIncludeDebugInfo) {
-            actor_hit_desc.SelfActorPtrString         = Unreal::toFString(Std::toStringFromPtr(desc.self_actor_));
             actor_hit_desc.SelfActorPropertiesString  = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.self_actor_));
-            actor_hit_desc.OtherActorPtrString        = Unreal::toFString(Std::toStringFromPtr(desc.other_actor_));
             actor_hit_desc.OtherActorPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.other_actor_));
         }
 

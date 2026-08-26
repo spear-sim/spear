@@ -119,7 +119,7 @@ if __name__ == "__main__":
 
 
             fbx_scene_import_options = unreal.FbxSceneImportOptions()
-            fbx_scene_import_options.set_editor_property(name="import_as_dynamic", True)
+            fbx_scene_import_options.set_editor_property(name="import_as_dynamic", value=True)
 
             fbx_scene_import_factory = unreal.FbxSceneImportFactory()
             fbx_scene_import_factory.set_editor_property(name="edit_after_new", value=False)

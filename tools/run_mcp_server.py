@@ -36,7 +36,7 @@ _BANNED_NAMES = {
     "__builtins__", "__import__", "builtins", "importlib", "os", "pathlib", "shutil", "socket", "subprocess", "sys"}
 
 _SAVE_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), "tmp", "spear-mcp"))
-_MAX_IMAGE_DIM = 256
+_MAX_IMAGE_DIM = 512
 
 _STABLE_NAME_CAMERA_SENSOR = "__SP_CAMERA_SENSOR__"
 _M_HYPERSIM_CAMERA_FROM_UNREAL_CAMERA = np.matrix([[0, 1, 0], [0, 0, 1], [-1, 0, 0]], dtype=np.float32)
@@ -292,7 +292,7 @@ def _initialize_actors():
         world_scoped_services.segmentation_service.initialize()
 
         # get viewport info
-        viewport_desc = world_scoped_services.rendering_service.get_current_viewport_desc()
+        viewport_desc = world_scoped_services.viewport_service.get_current_viewport_desc()
         world_desc["viewport_desc"] = viewport_desc
 
         # compute image dims
@@ -320,7 +320,7 @@ def _initialize_actors():
             "world_normal": world_scoped_services.unreal_service.get_component_by_name(actor=world_desc["camera_sensor"], component_name="DefaultSceneRoot.world_normal_", uclass="USpSceneCaptureComponent2D")}
 
         # align camera with viewport and configure components
-        world_scoped_services.rendering_service.align_camera_with_viewport(
+        world_scoped_services.viewport_service.align_camera_with_viewport(
             camera_sensor=world_desc["camera_sensor"],
             camera_components=list(world_desc["camera_components"].values()),
             viewport_desc=viewport_desc,
@@ -335,12 +335,9 @@ def _initialize_actors():
     with _instance.end_frame():
         pass
 
-    # needed in case the segmentation service is still loading its materials
+    # needed in case the segmentation service is still loading its materials (advances a minimum of 3 frames)
     world_scoped_services.async_loading_service.wait_for_engine_idle()
 
-    # let temporal anti-aliasing etc accumulate additional information across multiple frames, and
-    # inserting an extra frame or two can fix occasional render-to-texture initialization issues
-    _instance.step(num_frames=2)
     _log(f"Actors initialized: {image_width}x{image_height} camera, {'perspective' if viewport_desc['is_perspective'] else 'orthographic'} projection.")
 
     return True, world_desc
@@ -367,9 +364,6 @@ def _terminate_actors(world_desc):
 
 
 def _get_image_data(world_desc, key):
-
-    # let temporal anti-aliasing etc accumulate additional information across multiple frames
-    _instance.step(num_frames=2)
 
     camera_components = world_desc["camera_components"]
     viewport_desc = world_desc["viewport_desc"]

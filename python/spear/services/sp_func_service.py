@@ -43,8 +43,9 @@ class SpFuncService(spear.Service):
         self._shared_memory_service.destroy_shared_memory_handles(shared_memory_handles=shared_memory_handles)
 
     #
-    # The caller must ensure that arrays and uobject_shared_memory_handles remain valid until future.get()
-    # has been called for the future that might be returned by this function.
+    # The caller must ensure that arrays and uobject_shared_memory_handles remain valid until the underlying
+    # function on the server actually executes, which may be after this Python function returns, e.g., if
+    # self.entry_point_caller is asynchronous.
     #
 
     def call_function(self, uobject, function_name, arrays=None, unreal_objs=None, info="", uobject_shared_memory_handles=None):

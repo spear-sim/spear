@@ -32,8 +32,8 @@
 #include <UObject/Object.h>           // UObject
 #include <UObject/Script.h>           // EFunctionFlags
 #include <UObject/ScriptInterface.h>  // FScriptInterface
-#include <UObject/UnrealType.h>       // EFieldIterationFlags, FArrayProperty, FBoolProperty, FByteProperty, FDoubleProperty, FInt8Property, FInt16Property,
-                                      // FInt64Property, FFloatProperty, FIntProperty, FMapProperty, FProperty, FScriptArrayHelper, FScriptMapHelper,
+#include <UObject/UnrealType.h>       // EFieldIterationFlags, EPropertyPortFlags, FArrayProperty, FBoolProperty, FByteProperty, FDoubleProperty, FInt8Property,
+                                      // FInt16Property, FInt64Property, FFloatProperty, FIntProperty, FMapProperty, FProperty, FScriptArrayHelper, FScriptMapHelper,
                                       // FScriptSetHelper, FSetProperty, FStrProperty, FStructProperty, FUInt16Property, FUInt32Property, FUInt64Property,
                                       // TFieldIterator
 #include <UObject/UObjectHash.h>      // GetDerivedClasses
@@ -218,6 +218,18 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
     // Input args must be a subset of the function's args.
     SP_ASSERT(Std::isSubsetOf(Std::keys(args), Std::keys(property_descs)));
 
+    // In the editor, we perform extra validation to make sure that if the user omits an argument, it will be
+    // initialized correctly (i.e., in a way that matches the C++ signature) by InitializeStruct(...). We can
+    // only perform this validation in the editor because the necessary metadata (i.e., the default value
+    // given in the C++ signature) is not available in standalone builds.
+
+    #if WITH_EDITOR
+        std::vector<uint8_t, SpAlignedAllocator<uint8_t, 4096>> metadata_vector(num_bytes, initial_value);
+        if (num_bytes > 0) {
+            ufunction->InitializeStruct(metadata_vector.data());
+        }
+    #endif
+
     // Set property values.
     for (auto& [property_name, property_desc] : property_descs) {
 
@@ -239,11 +251,41 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
         // If the property name is in args, then set it using the string in args, and make sure the property
         // name was not also flagged by the caller as being the special world_context_object arg.
 
-        if (Std::containsKey(args, property_name)) {
+        else if (Std::containsKey(args, property_name)) {
             SP_ASSERT(property_name != world_context_object);
             setPropertyValueFromString(property_desc, args.at(property_name));
         }
+
+        // If the caller omitted this parameter (i.e., it is not present in args), the RPC path uses the parameter's
+        // default-constructed value, not any C++ default declared in the function signature. Assert that no non-zero
+        // default was declared, so the caller is forced to pass the argument explicitly rather than silently getting
+        // a value that differs from what the signature implies.
+
+        else {
+            #if WITH_EDITOR
+                FProperty* property = property_desc.property_;
+                if (!property->HasAnyPropertyFlags(EPropertyFlags::CPF_ReturnParm)) {
+                    std::string metadata_key = "CPP_Default_" + Unreal::toStdString(property->GetName());
+                    if (ufunction->HasMetaData(Unreal::toTCharPtr(metadata_key))) {
+                        std::string metadata_value_string = Unreal::toStdString(ufunction->GetMetaData(Unreal::toTCharPtr(metadata_key)));
+                        void* metadata_value_ptr = property->ContainerPtrToValuePtr<void>(metadata_vector.data());
+                        const TCHAR* success = property->ImportText_Direct(Unreal::toTCharPtr(metadata_value_string), metadata_value_ptr, nullptr, EPropertyPortFlags::PPF_None);
+                        SP_ASSERT(success);
+                        if (!property->Identical(property_desc.value_ptr_, metadata_value_ptr, EPropertyPortFlags::PPF_None)) {
+                            SP_LOG("ERROR: UFUNCTION \"", Unreal::toStdString(ufunction->GetName()), "\" argument \"", property_name, "\" is declared in C++ with a non-zero default value of ", metadata_value_string, " that is not available in standalone builds, and must therefore be passed in explicitly.");
+                            SP_ASSERT(false);
+                        }
+                    }
+                }
+            #endif
+        }
     }
+
+    #if WITH_EDITOR
+        if (num_bytes > 0) {
+            ufunction->DestroyStruct(metadata_vector.data());
+        }
+    #endif
 
     // Call function. We need to set GAllowActorScriptExecutionInEditor to true because AActor::ProcessEvent
     // blocks calls on non-CDO actor instances in the editor unless this flag is set or the function has
@@ -578,11 +620,11 @@ SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& prop
         property_desc.property_->IsA(FInt8Property::StaticClass()) ||
         property_desc.property_->IsA(FInt16Property::StaticClass()) ||
         // no FInt32Property because the int32 C++ type maps to FIntProperty
-        property_desc.property_->IsA(FInt64Property::StaticClass()) ||
+        // no FInt64Property because it could lose precision when passed through FJsonObjectConverter, which stores integers in a double-backed FJsonValue
         // no FUInt8Property because the uint8 C++ type maps to FByteProperty
         property_desc.property_->IsA(FUInt16Property::StaticClass()) ||
         property_desc.property_->IsA(FUInt32Property::StaticClass()) ||
-        property_desc.property_->IsA(FUInt64Property::StaticClass()) ||
+        // no FUInt64Property because it could lose precision when passed through FJsonObjectConverter, which stores integers in a double-backed FJsonValue
         property_desc.property_->IsA(FFloatProperty::StaticClass()) ||
         property_desc.property_->IsA(FDoubleProperty::StaticClass()) ||
         property_desc.property_->IsA(FStrProperty::StaticClass()) ||
@@ -600,6 +642,23 @@ SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& prop
         SP_ASSERT(success);
 
         property_value.value_ = Unreal::toStdString(fstring);
+
+    } else if (property_desc.property_->IsA(FInt64Property::StaticClass())) {
+
+        // Note that int64 and uint64 can exceed 2^53, so the path above FJsonObjectConverter::UPropertyToJsonValue(...)
+        // would lose precision. It stores integers in a double-backed FJsonValue and then stringifies via FString::SanitizeFloat).
+        // Instead, we format the raw integer to a decimal string directly. The value is emitted unquoted (see
+        // getQuoteStringForProperty(...)), so it is a valid JSON number, and Python's json.loads(...) parses it into
+        // an arbitrary-precision int. uint64 must use the unsigned accessor because GetSignedIntPropertyValue(...)
+        // would misread values above INT64_MAX as negative.
+
+        FNumericProperty* numeric_property = static_cast<FNumericProperty*>(property_desc.property_); // FInt64Property is-a FNumericProperty
+        property_value.value_ = Std::toString(numeric_property->GetSignedIntPropertyValue(property_desc.value_ptr_));
+
+    } else if (property_desc.property_->IsA(FUInt64Property::StaticClass())) {
+
+        FNumericProperty* numeric_property = static_cast<FNumericProperty*>(property_desc.property_); // FUInt64Property is-a FNumericProperty
+        property_value.value_ = Std::toString(numeric_property->GetUnsignedIntPropertyValue(property_desc.value_ptr_));
 
     }  else if (property_desc.property_->IsA(FArrayProperty::StaticClass())) {
 
@@ -730,9 +789,14 @@ void UnrealUtils::setPropertyValueFromString(const SpPropertyDesc& property_desc
 
     bool success = false;
 
+    // Deserialize with StoreNumbersAsStrings so numeric tokens are preserved as exact strings rather than
+    // flattened to a double. This lets the FInt64Property/FUInt64Property cases in setPropertyValueFromJsonValue(...)
+    // recover the exact value for scalars and for container elements, which are parsed here before those
+    // cases run. Other numeric types are unaffected.
+
     TSharedRef<TJsonReader<>> json_reader = TJsonReaderFactory<>::Create(Unreal::toFString("{ \"dummy\": " + quote_string + json_string + quote_string + " }"));
     TSharedPtr<FJsonObject> json_object;
-    success = FJsonSerializer::Deserialize(json_reader, json_object);
+    success = FJsonSerializer::Deserialize(json_reader, json_object, FJsonSerializer::EFlags::StoreNumbersAsStrings);
     SP_ASSERT(success);
     SP_ASSERT(json_object.IsValid());
     TSharedPtr<FJsonValue> json_value = json_object.Get()->TryGetField(Unreal::toFString("dummy"));
@@ -766,11 +830,11 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
         property_desc.property_->IsA(FInt8Property::StaticClass()) ||
         property_desc.property_->IsA(FInt16Property::StaticClass()) ||
         // no FInt32Property because the int32 C++ type maps to FIntProperty
-        property_desc.property_->IsA(FInt64Property::StaticClass()) ||
+        // no FInt64Property because it could lose precision when passed through FJsonObjectConverter, which stores integers in a double-backed FJsonValue
         // no FUInt8Property because the uint8 C++ type maps to FByteProperty
         property_desc.property_->IsA(FUInt16Property::StaticClass()) ||
         property_desc.property_->IsA(FUInt32Property::StaticClass()) ||
-        property_desc.property_->IsA(FUInt64Property::StaticClass()) ||
+        // no FUInt64Property because it could lose precision when passed through FJsonObjectConverter, which stores integers in a double-backed FJsonValue
         property_desc.property_->IsA(FFloatProperty::StaticClass()) ||
         property_desc.property_->IsA(FDoubleProperty::StaticClass()) ||
         property_desc.property_->IsA(FStrProperty::StaticClass()) ||
@@ -783,6 +847,29 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
         bool success = false;
         success = FJsonObjectConverter::JsonValueToUProperty(json_value, property_desc.property_, property_desc.value_ptr_);
         SP_ASSERT(success);
+
+    } else if (property_desc.property_->IsA(FInt64Property::StaticClass())) {
+
+        // See the corresponding comment in getPropertyValueAsString(...). setPropertyValueFromString(...) deserializes
+        // with StoreNumbersAsStrings, so json_value is a string-backed number and TryGetString(...) returns the exact
+        // decimal digits, which we parse directly rather than casting through a double. Note that uint64 must use the
+        // unsigned parse and the unsigned SetIntPropertyValue(...) overload to represent values above INT64_MAX correctly.
+
+        FString fstring;
+        bool success = json_value->TryGetString(fstring);
+        SP_ASSERT(success);
+        FNumericProperty* numeric_property = static_cast<FNumericProperty*>(property_desc.property_); // FInt64Property is-a FNumericProperty
+        numeric_property->SetIntPropertyValue(property_desc.value_ptr_, static_cast<int64>(FCString::Strtoi64(*fstring, nullptr, 10)));
+
+    } else if (property_desc.property_->IsA(FUInt64Property::StaticClass())) {
+
+        // See comment for FInt64Property above.
+
+        FString fstring;
+        bool success = json_value->TryGetString(fstring);
+        SP_ASSERT(success);
+        FNumericProperty* numeric_property = static_cast<FNumericProperty*>(property_desc.property_); // FUInt64Property is-a FNumericProperty
+        numeric_property->SetIntPropertyValue(property_desc.value_ptr_, static_cast<uint64>(FCString::Strtoui64(*fstring, nullptr, 10)));
 
     } else if (property_desc.property_->IsA(FArrayProperty::StaticClass())) {
 
@@ -902,7 +989,7 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
         success = json_value.Get()->TryGetString(fstring);
         SP_ASSERT(success);
 
-        UObject* uobject = Std::toPtrFromString<UObject>(Unreal::toStdString(fstring));
+        UObject* uobject = Unreal::toPtrFromString<UObject>(Unreal::toStdString(fstring));
         object_property->SetObjectPropertyValue(property_desc.value_ptr_, uobject);
 
     } else if (property_desc.property_->IsA(FInterfaceProperty::StaticClass())) {
@@ -914,7 +1001,7 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
         success = json_value.Get()->TryGetString(fstring);
         SP_ASSERT(success);
 
-        UObject* uobject = Std::toPtrFromString<UObject>(Unreal::toStdString(fstring));
+        UObject* uobject = Unreal::toPtrFromString<UObject>(Unreal::toStdString(fstring));
 
         FScriptInterface* script_interface = interface_property->GetPropertyValuePtr(property_desc.value_ptr_);
         SP_ASSERT(script_interface);

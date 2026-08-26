@@ -15,11 +15,11 @@ import time
 parser = argparse.ArgumentParser()
 parser.add_argument("--benchmark", action="store_true")
 parser.add_argument("--double-buffered-readback", action="store_true")
+parser.add_argument("--triple-buffered-readback", action="store_true")
 parser.add_argument("--no-shared-memory", action="store_true")
 parser.add_argument("--print-frame-time-every-frame", action="store_true")
 parser.add_argument("--print-readback-spin-wait-info", action="store_true")
 parser.add_argument("--read-pixels-every-frame", action="store_true")
-parser.add_argument("--triple-buffered-readback", action="store_true")
 args = parser.parse_args()
 
 if args.benchmark:
@@ -51,14 +51,18 @@ if __name__ == "__main__":
     # initialize actors and components
     with instance.begin_frame():
 
+        # force high-res textures for captured images
+        game.console_service.set_cvar(name="r.Streaming.FramesForFullUpdate", value=0)
+        game.console_service.set_cvar(name="r.Streaming.FullyLoadUsedTextures", value=1)
+
         # spawn camera sensor and get the final_tone_curve_hdr component
         bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
         bp_camera_sensor = game.unreal_service.spawn_actor(uclass=bp_camera_sensor_uclass)
         final_tone_curve_hdr_component = game.unreal_service.get_component_by_name(actor=bp_camera_sensor, component_name="DefaultSceneRoot.final_tone_curve_hdr_", uclass="USpSceneCaptureComponent2D")
 
         # configure the final_tone_curve_hdr component to match the viewport (width, height, FOV, post-processing settings, etc)
-        viewport_desc = game.rendering_service.get_current_viewport_desc()
-        game.rendering_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=final_tone_curve_hdr_component, viewport_desc=viewport_desc, widths=width, heights=height)
+        viewport_desc = game.viewport_service.get_current_viewport_desc()
+        game.viewport_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=final_tone_curve_hdr_component, viewport_desc=viewport_desc, widths=width, heights=height)
 
         if not shared_memory:
             final_tone_curve_hdr_component.bUseSharedMemory = False
@@ -84,9 +88,10 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing etc accumulate additional information across frames
 
-    # let temporal anti-aliasing etc accumulate additional information across multiple frames, and
-    # inserting an extra frame or two can fix occasional render-to-texture initialization issues
-    instance.step(num_frames=45)
+    # let temporal anti-aliasing etc accumulate additional information across multiple frames, and inserting
+    # an extra frame or two can fix occasional render-to-texture initialization issues (advances a minimum of
+    # 3 frames)
+    game.async_loading_service.wait_for_engine_idle()
 
     # get rendered frame
     if buffered_readback:
@@ -94,17 +99,17 @@ if __name__ == "__main__":
         # priming frames
         for i in range(num_priming_frames):
             with instance.begin_frame():
-                future_enqueue_copy = final_tone_curve_hdr_component.call_async.enqueue_copy()
+                final_tone_curve_hdr_component.send_async.enqueue_copy()
             with instance.end_frame():
-                future_enqueue_copy.get()
+                pass
 
         # steady state frame
         with instance.begin_frame():
             future_read_pixels = final_tone_curve_hdr_component.call_async.read_pixels()
-            future_enqueue_copy = final_tone_curve_hdr_component.call_async.enqueue_copy()
+            final_tone_curve_hdr_component.send_async.enqueue_copy()
         with instance.end_frame():
             data_bundle = future_read_pixels.get()
-            future_enqueue_copy.get()
+            pass
 
     else:
         with instance.begin_frame():
@@ -254,18 +259,17 @@ if __name__ == "__main__":
         if buffered_readback:
             for i in range(num_priming_frames):
                 with instance.begin_frame():
-                    future_enqueue_copy = final_tone_curve_hdr_component.call_async.enqueue_copy()
+                    final_tone_curve_hdr_component.send_async.enqueue_copy()
                 with instance.end_frame():
-                    future_enqueue_copy.get()
+                    pass
         start_time_seconds = time.time()
         if buffered_readback:
             for i in range(num_steps):
                 with instance.begin_frame():
                     future_read_pixels = final_tone_curve_hdr_component.call_async.read_pixels()
-                    future_enqueue_copy = final_tone_curve_hdr_component.call_async.enqueue_copy()
+                    final_tone_curve_hdr_component.send_async.enqueue_copy()
                 with instance.end_frame():
                     data_bundle = future_read_pixels.get()
-                    future_enqueue_copy.get()
         else:
             for i in range(num_steps):
                 with instance.begin_frame():
@@ -281,18 +285,17 @@ if __name__ == "__main__":
         if buffered_readback:
             for i in range(num_priming_frames):
                 with instance.begin_frame():
-                    future_enqueue_copy = final_tone_curve_hdr_component.call_async.enqueue_copy()
+                    final_tone_curve_hdr_component.send_async.enqueue_copy()
                 with instance.end_frame(single_step=True):
-                    future_enqueue_copy.get()
+                    pass
         start_time_seconds = time.time()
         if buffered_readback:
             for i in range(num_steps):
                 with instance.begin_frame():
                     future_read_pixels = final_tone_curve_hdr_component.call_async.read_pixels()
-                    future_enqueue_copy = final_tone_curve_hdr_component.call_async.enqueue_copy()
+                    final_tone_curve_hdr_component.send_async.enqueue_copy()
                 with instance.end_frame(single_step=True):
                     data_bundle = future_read_pixels.get()
-                    future_enqueue_copy.get()
         else:
             for i in range(num_steps):
                 with instance.begin_frame():

@@ -14,6 +14,7 @@
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Engine/EngineTypes.h>          // EEndPlayReason
 #include <GameFramework/Actor.h>
+#include <HAL/Platform.h>                // uint8
 #include <Math/Matrix.h>                 // FMatrix
 #include <Math/Vector.h>
 #include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS, UENUM, UFUNCTION, UPROPERTY
@@ -26,8 +27,8 @@
 
 class UObject;
 
-UENUM()
-enum class EDebugManagerEnum
+UENUM(BlueprintType)
+enum class EDebugManagerEnum : uint8
 {
     Hello,
     World
@@ -37,7 +38,7 @@ UCLASS(ClassGroup="SPEAR", Config=Spear, HideCategories=(Actor, Collision, Cooki
 class ASpDebugManager : public AActor
 {
     GENERATED_BODY()
-public: 
+public:
     ASpDebugManager();
     ~ASpDebugManager() override;
 
@@ -53,56 +54,73 @@ public:
     FString DebugString;
 
 private:
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void Initialize(); // can't be const
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void Terminate(); // can't be const
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void LoadConfig(); // can't be const
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void SaveConfig(); // can't be const
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void PrintDebugString() const;
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void GetAndSetObjectProperties(); // can't be const
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void CallFunctions(); // can't be const
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void CallSpFunc() const;
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void CreateObjects() const;
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void SubscribeToActorHitEvents() const;
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void UnsubscribeFromActorHitEvents() const;
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void ReadPixels() const;
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void PrintLevelDebugInfo() const;
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void PrintActorDebugInfo() const;
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void PrintAllClassesDebugInfo() const;
 
-    UFUNCTION(CallInEditor, Category="SPEAR")
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void TestReinterpretAsVectorOf() const;
+
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
+    void TestInt64(); // can't be const
+
+    // not intended to be BlueprintCallable
 
     UFUNCTION()
     FString GetString(FString Arg0, bool Arg1, int Arg2, FVector Arg3) const;
+
+    UFUNCTION()
+    int64 GetInt64(int64 Arg0) const; // echoes Arg0 so we can verify exact round-trips
+
+    UFUNCTION()
+    uint64 GetUInt64(uint64 Arg0) const; // echoes Arg0 so we can verify exact round-trips
+
+    UFUNCTION()
+    TArray<int64> GetArrayOfInt64(TArray<int64> Arg0) const; // echoes Arg0 to exercise the container arg + return path
+
+    UFUNCTION()
+    TArray<uint64> GetArrayOfUInt64(TArray<uint64> Arg0) const; // echoes Arg0 to exercise the container arg + return path
 
     UFUNCTION()
     FVector GetVector(FString Arg0, bool Arg1, int Arg2, FVector& Arg3) const;
@@ -119,11 +137,25 @@ private:
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
     USpFuncComponent* SpFuncComponent = nullptr;
 
+    // not intended to be Blueprint-accessible
+
     UPROPERTY()
     FString MyString;
 
     UPROPERTY()
     TArray<int> ArrayOfInts;
+
+    UPROPERTY()
+    int64 Int64Value = 0;
+
+    UPROPERTY()
+    uint64 UInt64Value = 0;
+
+    UPROPERTY()
+    TArray<int64> ArrayOfInt64;
+
+    UPROPERTY()
+    TArray<uint64> ArrayOfUInt64;
 
     UPROPERTY()
     TArray<FVector> ArrayOfVectors;
@@ -149,6 +181,6 @@ private:
     UPROPERTY()
     TSet<FString> SetOfStrings;
 
-    std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
+    std::unique_ptr<SharedMemoryRegion> shared_memory_region_;
     SpArraySharedMemoryView shared_memory_view_;
 };

@@ -5,10 +5,17 @@
 
 #pragma once
 
-#include <HAL/Platform.h>         // uint64
+#include <vector>
+
+#include <Containers/UnrealString.h> // FString
+#include <CoreGlobals.h>             // GWarn
+#include <HAL/Platform.h>            // int64, TCHAR, uint32
 #include <Kismet/BlueprintFunctionLibrary.h>
-#include <Misc/FeedbackContext.h> // GWarn
-#include <UObject/Object.h>       // UObject
+#include <Misc/FeedbackContext.h>    // FFeedbackContext
+#include <UObject/Class.h>           // UScriptStruct
+#include <UObject/Object.h>          // UObject
+#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION
+#include <UObject/UnrealType.h>      // EPropertyPortFlags
 
 #include "SpCore/Assert.h"
 #include "SpCore/Std.h"
@@ -23,32 +30,31 @@ class USpFuncUtils : public UBlueprintFunctionLibrary
     GENERATED_BODY()
 public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static int64 ToHandleFromObject(UObject* Object)
+    static int64 ToHandleFromObject(UObject* Object) // uint64 not supported for BlueprintCallable
     {
-        SP_ASSERT(Object);
         return reinterpret_cast<int64>(Object);
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static UObject* ToObjectFromHandle(int64 Handle)
+    static UObject* ToObjectFromHandle(int64 Handle) // uint64 not supported for BlueprintCallable
     {
         UObject* uobject = reinterpret_cast<UObject*>(Handle);
-        SP_ASSERT(uobject);
+        if (uobject) {
+            SP_ASSERT(Unreal::isValid(uobject));
+        }
         return uobject;
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static FString ToStringFromObject(UObject* Object)
     {
-        SP_ASSERT(Object);
-        return Unreal::toFString(Std::toStringFromPtr(Object));
+        return Unreal::toFString(Unreal::toStringFromPtr(Object));
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static UObject* ToObjectFromString(FString String)
     {
-        UObject* uobject = Std::toPtrFromString<UObject>(Unreal::toStdString(String));
-        SP_ASSERT(uobject);
+        UObject* uobject = Unreal::toPtrFromString<UObject>(Unreal::toStdString(String));
         return uobject;
     }
 
@@ -70,7 +76,7 @@ public:
             struct_data.data(),             // Value
             nullptr,                        // OwnerObject
             EPropertyPortFlags::PPF_None,   // PortFlags
-            GWarn,                          // ErrorText
+            GWarn,                          // ErrorText (GWarn is an FFeedbackContext*, so <Misc/FeedbackContext.h> is needed for the implicit conversion to FOutputDevice*)
             ScriptStruct->GetName());       // StructName
         SP_ASSERT(result);
 
@@ -97,12 +103,12 @@ public:
 
         FString export_text;
         ScriptStruct->ExportText(
-            export_text,                    // ValueStr
-            struct_data.data(),             // Value
-            nullptr,                        // Defaults
-            nullptr,                        // OwnerObject
-            EPropertyPortFlags::PPF_None,   // PortFlags
-            nullptr);                       // ExportRootScope
+            export_text,                  // ValueStr
+            struct_data.data(),           // Value
+            nullptr,                      // Defaults
+            nullptr,                      // OwnerObject
+            EPropertyPortFlags::PPF_None, // PortFlags
+            nullptr);                     // ExportRootScope
         ScriptStruct->DestroyStruct(struct_data.data());
 
         return export_text;

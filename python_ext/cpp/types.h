@@ -19,6 +19,12 @@
 // Custom types
 //
 
+struct OutputLogMessages
+{
+    std::vector<std::string> messages_;
+    int32_t num_evicted_ = 0;
+};
+
 struct PropertyDesc
 {
     uint64_t property_ = 0;

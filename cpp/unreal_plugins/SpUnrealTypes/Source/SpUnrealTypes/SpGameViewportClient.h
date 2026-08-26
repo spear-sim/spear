@@ -8,6 +8,7 @@
 #include <Engine/GameViewportClient.h>
 #include <Kismet/BlueprintFunctionLibrary.h>
 #include <Math/Vector2D.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpCore/Assert.h"
 
@@ -17,7 +18,7 @@ UCLASS()
 class USpGameViewportClient : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
-public: 
+public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static void GetViewportSize(UGameViewportClient* GameViewportClient, FVector2D& ViewportSize)
     {

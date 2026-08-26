@@ -9,6 +9,7 @@
 #include <memory> // std::make_unique
 
 #include <CoreGlobals.h>           // IsRunningCommandlet
+#include <Misc/CoreDelegates.h>    // FCoreDelegates
 #include <Modules/ModuleManager.h> // FDefaultGameModuleImpl, FDefaultModuleImpl, IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
 
 #include "SpCore/Assert.h"
@@ -17,8 +18,8 @@
 
 #include "SpServices/MsgpackRpc.h"
 
-// Service
-#include "SpServices/Service.h"
+// RpcServer
+#include "SpServices/RpcServer.h"
 
 // RpcService
 #include "SpServices/RpcService.h"
@@ -35,12 +36,15 @@
 #include "SpServices/EnhancedInputService.h"
 #include "SpServices/InputService.h"
 #include "SpServices/SharedMemoryService.h"
-#include "SpServices/UnrealService.h"
+// #include "SpServices/UnrealService.h" must only be included in cpp files, and must be included after all other headers.
 #include "SpServices/WorldRegistryService.h"
 
 // Services that require a reference to EngineService and SharedMemoryService
 #include "SpServices/NavigationService.h"
 #include "SpServices/SpFuncService.h"
+
+// UnrealService.h must only be included in cpp files, and must be included after all other headers.
+#include "SpServices/UnrealService.h"
 
 void SpServices::StartupModule()
 {
@@ -55,6 +59,51 @@ void SpServices::StartupModule()
             return;
         }
     #endif
+
+    post_engine_init_handle_ = FCoreDelegates::GetOnPostEngineInit().AddRaw(this, &SpServices::postEngineInitHandler);
+    engine_pre_exit_handle_  = FCoreDelegates::OnEnginePreExit.AddRaw(this, &SpServices::enginePreExitHandler);
+}
+
+void SpServices::ShutdownModule()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    #if WITH_EDITOR // defined in an auto-generated header
+        if (IsRunningCommandlet()) {
+            return;
+        }
+    #endif
+
+    FCoreDelegates::OnEnginePreExit.Remove(engine_pre_exit_handle_);
+    FCoreDelegates::GetOnPostEngineInit().Remove(post_engine_init_handle_);
+    engine_pre_exit_handle_.Reset();
+    post_engine_init_handle_.Reset();
+}
+
+void SpServices::postEngineInitHandler()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    // This can't happen in StartupModule() because if we re-open a SPEAR project in the editor, then
+    // StartupModule() will get called again before the first ShutdownModule() gets called.
+    requestInitialize();
+}
+
+void SpServices::enginePreExitHandler()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    // See above.
+    terminate();
+}
+
+void SpServices::requestInitialize()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    if (initialized_) {
+        return;
+    }
 
     // Create the RPC server. The RPC server won't be launched until beginFrame() to give other services a
     // chance to bind their entry points.
@@ -83,17 +132,17 @@ void SpServices::StartupModule()
     // Construct services that require a reference to EngineService and SharedMemoryService.
     navigation_service_ = std::make_unique<NavigationService>(engine_service_.get(), shared_memory_service_.get());
     sp_func_service_ = std::make_unique<SpFuncService>(engine_service_.get(), shared_memory_service_.get());
+
+    initialized_ = true;
 }
 
-void SpServices::ShutdownModule()
+void SpServices::terminate()
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    #if WITH_EDITOR // defined in an auto-generated header
-        if (IsRunningCommandlet()) {
-            return;
-        }
-    #endif
+    if (!initialized_) {
+        return;
+    }
 
     // The logic in EngineService guarantees that no other RPC server functions can ever get called after the
     // engine_service.terminate entry point gets called, which should have already happened at this point. So
@@ -132,6 +181,13 @@ void SpServices::ShutdownModule()
 
     SP_ASSERT(rpc_service_);
     rpc_service_ = nullptr;
+
+    initialized_ = false;
+}
+
+bool SpServices::isInitialized() const
+{
+    return initialized_;
 }
 
 // use IMPLEMENT_GAME_MODULE if module implements Unreal classes, use IMPLEMENT_MODULE otherwise

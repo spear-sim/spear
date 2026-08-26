@@ -10,7 +10,12 @@ using UnrealBuildTool;                 // ModuleRules, ReadOnlyTargetRules
 
 public class SpModuleRules : ModuleRules
 {
-    public SpModuleRules(ReadOnlyTargetRules readOnlyTargetRules) : base(readOnlyTargetRules)
+    // UBT instantiates this constructor via reflection when building the SpModuleRules module itself, so it
+    // must take exactly one argument (reflection doesn't perform C#'s compile-time default-parameter substitution).
+    // Delegate to the constructor below so this module defaults to bLinkThirdPartyLibraries: false.
+    public SpModuleRules(ReadOnlyTargetRules readOnlyTargetRules) : this(readOnlyTargetRules, bLinkThirdPartyLibraries: false) {}
+
+    public SpModuleRules(ReadOnlyTargetRules readOnlyTargetRules, bool bLinkThirdPartyLibraries) : base(readOnlyTargetRules)
     {
         // Disable precompiled headers entirely because they somehow force full rebuilds in UE 5.5.
         // Additionally, we prefer to avoid precompiled headers for easier debugging of compile errors, and
@@ -35,14 +40,32 @@ public class SpModuleRules : ModuleRules
         CppCompileWarningSettings.UndefinedIdentifierWarningLevel = WarningLevel.Warning;
 
         PublicDependencyModuleNames.AddRange(new string[] {
-            "AssetRegistry", "Chaos", "Core", "CoreUObject", "Engine", "EngineSettings", "InputCore", "Json", "JsonUtilities", "LevelSequence",
-            "NavigationSystem", "PhysicsCore", "RenderCore", "RHI", "Slate"});
+            "AssetRegistry", "Chaos", "Core", "CoreUObject", "Engine", "EngineSettings", "InputCore", "Json", "JsonUtilities", "Landscape",
+            "LevelSequence", "NavigationSystem", "PhysicsCore", "RenderCore", "Renderer", "RHI", "Slate"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
-        // Only add library dependencies if we're in a derived SpModuleRules class. This avoids build issues
-        // on Linux where the SpModuleRules dummy plugin is trying to link against Boost but isn't set up
-        // correctly, which can happen in UE 5.7.
-        if (GetType().Name != "SpModuleRules" && GetType().Name != "SpModuleRulesEditor") {
+        // Needed to expose an internal header in Renderer
+        PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(readOnlyTargetRules.RelativeEnginePath, "Source", "Runtime", "Renderer", "Internal")));
+
+        // Needed to expose a private header in Renderer
+        PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(readOnlyTargetRules.RelativeEnginePath, "Source", "Runtime", "Renderer", "Private")));
+
+        // MessageLog is a Developer-category module, and is therefore not available in Shipping builds.
+        if (readOnlyTargetRules.bBuildDeveloperTools) {
+            PublicDependencyModuleNames.Add("MessageLog");
+            PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(readOnlyTargetRules.RelativeEnginePath, "Source", "Developer", "MessageLog", "Private")));
+        }
+
+        // Only add library dependencies if explicitly requested, because the third-party paths below are
+        // computed relative to ModuleDirectory and assume the module lives inside the SPEAR repo (under
+        // spear/cpp/unreal_plugins/<Plugin>/Source/<Module>). bLinkThirdPartyLibraries therefore defaults to
+        // false, and modules that actually need these libraries (e.g., SpCore.Build.cs, SpServices.Build.cs,
+        // SpUnrealTypes.Build.cs, SpearSim.Build.cs) must opt in with bLinkThirdPartyLibraries: true. This
+        // default also avoids build issues on Linux where the SpModuleRules dummy plugin is trying to link
+        // against Boost but isn't set up correctly, which can happen in UE 5.7, and it lets a project's own
+        // auto-generated primary game module (see tools/install_plugins_in_external_project.py) opt out too,
+        // since that module lives inside the external project's own directory tree instead.
+        if (bLinkThirdPartyLibraries) {
 
             string thirdPartyDir = Path.GetFullPath(Path.Combine(ModuleDirectory, "..", "..", "..", "..", "..", "third_party"));
 
