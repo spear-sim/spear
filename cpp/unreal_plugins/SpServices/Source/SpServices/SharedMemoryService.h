@@ -61,6 +61,9 @@ public:
         });
     }
 
+    template <CUnrealEntryPointBinder TEntryPointBinder>
+    static std::unique_ptr<SharedMemoryService> create(TEntryPointBinder* unreal_entry_point_binder);
+
     std::map<std::string, SpArraySharedMemoryView> getSharedMemoryViews()
     {
         std::lock_guard<std::mutex> lock(mutex_);

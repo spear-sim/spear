@@ -8,6 +8,7 @@
 #include <stdint.h> // int64_t, uint8_t, uint64_t
 
 #include <map>
+#include <memory>  // std::unique_ptr
 #include <string>
 #include <utility> // std::move
 #include <vector>
@@ -342,6 +343,9 @@ public:
                 return return_values;
             });
     }
+
+    template <CUnrealEntryPointBinder TEntryPointBinder>
+    static std::unique_ptr<NavigationService> create(TEntryPointBinder* unreal_entry_point_binder, SharedMemoryService* shared_memory_service);
 
 private:
     SharedMemoryService* shared_memory_service_ = nullptr;

@@ -107,31 +107,31 @@ void SpServices::requestInitialize()
 
     // Create the RPC server. The RPC server won't be launched until beginFrame() to give other services a
     // chance to bind their entry points.
-    rpc_service_ = std::make_unique<RpcService>();
+    rpc_service_ = RpcService::create();
 
     // EngineService needs its own custom logic for binding its entry points, because they are intended to
     // run directly on the RPC server worker thread, whereas most other entry points are intended to run on
     // work queues maintained by EngineService. So we pass in the RPC server when constructing EngineService,
     // and we pass in EngineService when constructing all other services that need to bind entry points. We
     // need to call engine_service_->startup() explicitly.
-    engine_service_ = std::make_unique<EngineService<RpcServer>>(rpc_service_->rpc_server_.get());
+    engine_service_ = EngineService<RpcServer>::create(rpc_service_->rpc_server_.get());
     engine_service_->startup();
 
     // Construct services that don't require a reference to EngineService.
-    initialize_engine_service_ = std::make_unique<InitializeEngineService>();
+    initialize_engine_service_ = InitializeEngineService::create();
 
     // Construct services that require a reference to EngineService.
-    debug_service_ = std::make_unique<DebugService>(engine_service_.get());
-    engine_globals_service_ = std::make_unique<EngineGlobalsService>(engine_service_.get());
-    enhanced_input_service_ = std::make_unique<EnhancedInputService>(engine_service_.get());
-    input_service_ = std::make_unique<InputService>(engine_service_.get());
-    shared_memory_service_ = std::make_unique<SharedMemoryService>(engine_service_.get());
-    unreal_service_ = std::make_unique<UnrealService>(engine_service_.get());
-    world_registry_service_ = std::make_unique<WorldRegistryService>(engine_service_.get());
+    debug_service_ = DebugService::create(engine_service_.get());
+    engine_globals_service_ = EngineGlobalsService::create(engine_service_.get());
+    enhanced_input_service_ = EnhancedInputService::create(engine_service_.get());
+    input_service_ = InputService::create(engine_service_.get());
+    shared_memory_service_ = SharedMemoryService::create(engine_service_.get());
+    unreal_service_ = UnrealService::create(engine_service_.get());
+    world_registry_service_ = WorldRegistryService::create(engine_service_.get());
 
     // Construct services that require a reference to EngineService and SharedMemoryService.
-    navigation_service_ = std::make_unique<NavigationService>(engine_service_.get(), shared_memory_service_.get());
-    sp_func_service_ = std::make_unique<SpFuncService>(engine_service_.get(), shared_memory_service_.get());
+    navigation_service_ = NavigationService::create(engine_service_.get(), shared_memory_service_.get());
+    sp_func_service_ = SpFuncService::create(engine_service_.get(), shared_memory_service_.get());
 
     initialized_ = true;
 }

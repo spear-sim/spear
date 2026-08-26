@@ -11,7 +11,7 @@
 #include <Modules/ModuleInterface.h>
 
 // Services that require a reference to EngineService
-#include "SpServicesEditor/UnrealServiceEditor.h"
+class UnrealServiceEditor;
 
 class SpServicesEditor : public IModuleInterface
 {

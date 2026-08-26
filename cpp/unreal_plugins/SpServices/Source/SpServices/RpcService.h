@@ -71,6 +71,8 @@ public:
         rpc_server_ = nullptr;
     }
 
+    static std::unique_ptr<RpcService> create();
+
     std::unique_ptr<RpcServer> rpc_server_;
 
 protected:
