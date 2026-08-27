@@ -52,7 +52,7 @@ public:
         // Because we print all non-SPEAR-originating Unreal messages to stdout by default in this Serialize(...)
         // function, it means there is no reason for a user to pass in -stdout (or -fullstdoutlogoutput),
         // unless they want to see output extremely late in the application lifecycle. If a user wants to
-        // suppress our default behavior, they can pass in -sp-no-stdout or set the SP_CORE.OUTPUT_LOG.STDOUT
+        // suppress our default behavior, they can pass in -sp-no-stdout or set the SP_CORE.OUTPUT_LOG.ENABLE_STDOUT
         // config value to false (default is True).
         //
 
@@ -70,12 +70,12 @@ public:
             return;
         }
 
-        // On all platforms, check the -sp-no-stdout (or its equivalent config value SP_CORE.OUTPUT_LOG.STDOUT).
+        // On all platforms, check the -sp-no-stdout (or its equivalent config value SP_CORE.OUTPUT_LOG.ENABLE_STDOUT).
         bool sp_stdout = true;
         if (sp_stdout) {
             sp_stdout = !FParse::Param(FCommandLine::Get(), Unreal::toTCharPtr("sp-no-stdout"));
         } if (sp_stdout && Config::isInitialized()) {
-            sp_stdout = Config::get<bool>("SP_CORE.OUTPUT_LOG.STDOUT");
+            sp_stdout = Config::get<bool>("SP_CORE.OUTPUT_LOG.ENABLE_STDOUT");
         }
 
         if (!sp_stdout) {
