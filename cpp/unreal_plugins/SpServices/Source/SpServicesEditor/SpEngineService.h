@@ -28,7 +28,7 @@ public:
     {
         SpServices* sp_services = FModuleManager::Get().GetModulePtr<SpServices>("SpServices");
         SP_ASSERT(sp_services);
-        SP_ASSERT(sp_services->engine_service_);
+        SP_ASSERT(sp_services->isInitialized());
         sp_services->engine_service_->executeEditorPostTransaction();
     }
 };

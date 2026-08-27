@@ -12,7 +12,7 @@ import spear
 import time
 
 
-_ANIMATION_DURATION = 10.0
+_ANIMATION_DURATION_SECONDS = 10.0
 
 
 if __name__ == "__main__":
@@ -29,10 +29,21 @@ if __name__ == "__main__":
         character = game.unreal_service.find_actor_by_name(actor_name="Actor_metahuman_004_CR", uclass="AActor")
         control_rig_component = game.unreal_service.get_component_by_class(actor=character, uclass="UControlRigComponent")
 
+        # print all available controls and their types. There is no dedicated UFUNCTION for querying a
+        # control's type, so we look it up via the control rig's hierarchy instead.
+        control_names = control_rig_component.GetElementNames(ElementType="Control")
+        hierarchy = control_rig_component.GetControlRig().GetHierarchy()
+
+        spear.log(f"Found {len(control_names)} controls:")
+        for control_name in control_names:
+            control = hierarchy.FindControl_ForBlueprintOnly(InKey={"Name": control_name, "Type": "Control"})
+            control_type = control["settings"]["controlType"]
+            spear.log_no_prefix("    ", f"{control_name} ({control_type})")
+
     with instance.end_frame():
         pass
 
-    spear.log(f"Animating character for {_ANIMATION_DURATION} seconds...")
+    spear.log(f"Animating character for {_ANIMATION_DURATION_SECONDS} seconds...")
 
     start_time = time.time()
     current_time = start_time
@@ -68,7 +79,7 @@ if __name__ == "__main__":
         with instance.end_frame():
             pass
 
-        if elapsed_time >= _ANIMATION_DURATION:
+        if elapsed_time >= _ANIMATION_DURATION_SECONDS:
             break
 
     spear.log(f"Finished animation.")

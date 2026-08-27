@@ -8,6 +8,7 @@
 #include <stdint.h> // uint64_t
 
 #include <map>
+#include <memory> // std::unique_ptr
 #include <string>
 
 #include <Components/SceneComponent.h>
@@ -77,6 +78,9 @@ public:
             return return_values;
         });
     }
+
+    template <CUnrealEntryPointBinder TEntryPointBinder>
+    static std::unique_ptr<SpFuncService> create(TEntryPointBinder* unreal_entry_point_binder, SharedMemoryService* shared_memory_service);
 
 private:
     static USpFuncComponent* getSpFuncComponent(const UObject* uobject)

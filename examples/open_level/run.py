@@ -47,12 +47,12 @@ if __name__ == "__main__":
     # end of the frame block where you called OpenLevel(), it is it is required to call game.invalidate(),
     # as we do here.
 
-    spear.log("Opening level: /Game/SPEAR/Scenes/debug_0000/Maps/debug_0000")
+    spear.log("Opening level: /Game/ThirdPerson/Maps/ThirdPersonMap")
     with instance.begin_frame():
         pass
     with instance.end_frame():
         game.invalidate() # need to call invalidate() before calling OpenLevel()
-        gameplay_statics.OpenLevel(LevelName="/Game/SPEAR/Scenes/debug_0000/Maps/debug_0000", bAbsolute=True, Options="")
+        gameplay_statics.OpenLevel(LevelName="/Game/ThirdPerson/Maps/ThirdPersonMap", bAbsolute=True, Options="")
 
     # Calling OpenLevel invalidates the old game object, so get a new one here. This call will block until
     # the new game object is ready.
@@ -75,9 +75,6 @@ if __name__ == "__main__":
         bp_axes_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_Axes.BP_Axes_C")
         bp_axes = game.unreal_service.spawn_actor(uclass=bp_axes_uclass, location={"X": -10.0, "Y": 280.0, "Z": 50.0})
 
-        # because this level has an ASpStableNameManager, we can find actors by name even if an actor doesn't have a USpStableNameComponent
-        player_start = game.unreal_service.find_actor_by_name(uclass="APlayerStart", actor_name="Settings/PlayerStart")
-        spear.log("player_start:", player_start)
     with instance.end_frame():
         pass
 

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <memory> // std::unique_ptr
 #include <string>
 #include <vector>
 
@@ -173,6 +174,8 @@ public:
             }
         }
     }
+
+    static std::unique_ptr<InitializeEngineService> create();
 
 protected:
     void postEngineInit()
