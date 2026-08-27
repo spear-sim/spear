@@ -17,9 +17,12 @@
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UENUM, UPROPERTY, USTRUCT
 
 #include "SpCore/Unreal.h"
-#include "SpCore/Windows.h" // undefines the PF_MAX macro so EPixelFormat::PF_MAX below refers to the enumerator
 
 #include "SpUnrealTypes/SpRHIFeatureLevel.h"
+
+#ifdef PF_MAX
+#undef PF_MAX // Windows winsock2 macro, conflicts with a pixel format definition below
+#endif
 
 #include "SpRHIGlobals.generated.h"
 
