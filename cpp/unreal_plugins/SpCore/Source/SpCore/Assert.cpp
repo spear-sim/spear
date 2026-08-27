@@ -8,6 +8,8 @@
 
 #include "SpCore/Assert.h"
 
+#include <boost/predef.h> // BOOST_OS_MACOS, BOOST_OS_LINUX
+
 #include <mutex>  // std::lock_guard, std::recursive_mutex
 #include <string> // std::string
 

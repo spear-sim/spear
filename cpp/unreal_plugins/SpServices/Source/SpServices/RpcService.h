@@ -99,8 +99,8 @@ private:
         // mark only that one close-on-exec.
         #if BOOST_OS_MACOS || BOOST_OS_LINUX
             long max_fd = sysconf(_SC_OPEN_MAX);
-            SP_ASSERT(max_fd > 0 && max_fd <= 1000*1000);
-
+            SP_LOG("    sysconf reports the maximum file descriptor ID is ", max_fd, ".");
+            SP_ASSERT(max_fd > 0 && max_fd <= 2*1000*1000); // larges value observed on Linux was roughly 1,000,000
             SP_LOG("    Attempting to find file descriptor that matches port ", port, ", searching IDs [3, ", max_fd, "]...");
 
             bool found = false;
