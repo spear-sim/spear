@@ -5,6 +5,8 @@
 
 #include "SpCore/OutputLog.h"
 
+#include <boost/predef.h> // BOOST_OS_LINUX
+
 #include <iostream> // std::cout
 #include <memory>   // std::make_unique, std::unique_ptr
 #include <mutex>    // std::lock_guard, std::mutex
@@ -13,11 +15,12 @@
 
 #include <CoreGlobals.h>       // GLog
 #include <Logging/LogVerbosity.h>
+#include <Misc/CommandLine.h>  // FCommandLine
 #include <Misc/OutputDevice.h> // FOutputDevice
+#include <Misc/Parse.h>        // FParse
 #include <UObject/NameTypes.h> // FName
 
 #include "SpCore/Assert.h"
-#include "SpCore/Boost.h"
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
@@ -37,14 +40,54 @@ public:
 
     void Serialize(const TCHAR* message, ELogVerbosity::Type verbosity, const FName& category) override
     {
-        if (category != LogSpear.GetCategoryName()) {
-            // GLog can invoke this Serialize(...) call from a dedicated background thread rather than the
-            // thread that originally logged the message, so we share a mutex with every other place that
-            // writes to the terminal (see Log::getStdoutMutex()'s comment) to guarantee this write can
-            // never be torn by an interleaved write from another thread.
-            std::lock_guard<std::recursive_mutex> lock(Log::getStdoutMutex());
-            std::cout << Unreal::toStdString(category) << ": " << Unreal::toStdString(message) << std::endl;
+        //
+        // In SPEAR, we want to print SP_LOG messages to stdout by default without relying on Unreal logging.
+        // But we also always want these messages to go through the UE_LOG macro so they are visible in the
+        // editor. However, due to an inconsistency in how UE_LOG is implemented on Linux, SP_LOG messages
+        // will be duplicated by default. Each message will get printed once internally by SP_LOG and then
+        // again by an internal Linux-only printf() statement in Unreal. In order to avoid this duplication
+        // on Linux, a user must pass -nostdout. We include this command-line argument by default on all
+        // platforms in default_config.spear.yaml, but it only has an effect on Linux.
+        //
+        // Because we print all non-SPEAR-originating Unreal messages to stdout by default in this Serialize(...)
+        // function, it means there is no reason for a user to pass in -stdout (or -fullstdoutlogoutput),
+        // unless they want to see output extremely late in the application lifecycle. If a user wants to
+        // suppress our default behavior, they can pass in -sp-no-stdout or set the SP_CORE.OUTPUT_LOG.STDOUT
+        // config value to false (default is True).
+        //
+
+        // SP_LOG(...) always writes LogSpear messages directly to std::cout itself (see Log::logString(...)),
+        // regardless of platform, so echoing them here again is always redundant.
+        if (category == LogSpear.GetCategoryName()) {
+            return;
         }
+
+        // On Linux, return early if we know Unreal's native console device is going to print this message
+        // for us, i.e., when -nostdout is absent. When -nostdout is present, Unreal's native console device
+        // goes silent, so we don't automatically know that we want to return early here, i.e., we still have
+        // a decision to make, so we fall through to the remaining checks in this function.
+        if (BOOST_OS_LINUX && !FParse::Param(FCommandLine::Get(), Unreal::toTCharPtr("nostdout"))) {
+            return;
+        }
+
+        // On all platforms, check the -sp-no-stdout (or its equivalent config value SP_CORE.OUTPUT_LOG.STDOUT).
+        bool sp_stdout = true;
+        if (sp_stdout) {
+            sp_stdout = !FParse::Param(FCommandLine::Get(), Unreal::toTCharPtr("sp-no-stdout"));
+        } if (sp_stdout && Config::isInitialized()) {
+            sp_stdout = Config::get<bool>("SP_CORE.OUTPUT_LOG.STDOUT");
+        }
+
+        if (!sp_stdout) {
+            return;
+        }
+
+        // GLog can invoke this Serialize(...) call from a dedicated background thread rather than the
+        // thread that originally logged the message, so we share a mutex with every other place that
+        // writes to the terminal (see Log::getStdoutMutex()'s comment) to guarantee this write can
+        // never be torn by an interleaved write from another thread.
+        std::lock_guard<std::recursive_mutex> lock(Log::getStdoutMutex());
+        std::cout << Unreal::toStdString(category) << ": " << Unreal::toStdString(message) << std::endl;
     }
 };
 
