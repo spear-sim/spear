@@ -105,7 +105,7 @@ if __name__ == "__main__":
 
     # assemble dirs to cook
     cook_dirs = args.cook_dirs if args.cook_dirs is not None else []
-    cook_dir_args = [ f'-cookdir="{os.path.join(unreal_project_dir, cook_dir)}"' for cook_dir in cook_dirs ]
+    cook_dir_args = [ f"-cookdir={os.path.join(unreal_project_dir, cook_dir)}" for cook_dir in cook_dirs ]
 
     # assemble maps to cook
     cook_maps = []
@@ -121,7 +121,7 @@ if __name__ == "__main__":
 
     run_uat_args = [
         "BuildCookRun",
-        f'-project="{uproject}"',
+        f"-project={uproject}",
         "-target=SpearSim",
         "-build",   # build C++ executable
         "-cook",    # prepare cross-platform content for a specific platform (e.g., compile shaders)
@@ -131,7 +131,7 @@ if __name__ == "__main__":
         "-pak",     # generate a pak file for cooked content and configure executable so it can load pak files
         f"-targetplatform={target_platform}",
         f"-clientconfig={args.build_config}",
-        f'-archivedirectory="{archive_dir}"',
+        f"-archivedirectory={archive_dir}",
         run_uat_platform_args] + \
         unknown_args + \
         cook_args

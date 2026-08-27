@@ -89,7 +89,10 @@ def run_uat(unreal_engine_dir, args):
 
     cmd = [run_uat_script] + args
     spear.log("Executing: ", " ".join(cmd))
-    subprocess.run(cmd, check=True)
+
+    result = subprocess.run(cmd)
+    if result.returncode != 0:
+        raise subprocess.CalledProcessError(result.returncode, cmd)
 
 def run_build(unreal_engine_dir, args):
     if sys.platform == "win32":
