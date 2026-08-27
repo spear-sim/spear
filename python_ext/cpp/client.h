@@ -5,11 +5,13 @@
 
 #pragma once
 
+#include <stddef.h> // size_t
 #include <stdint.h> // int64_t, uint16_t
 
+#include <algorithm> // std::max
 #include <iostream>
 #include <map>
-#include <memory> // std::make_unique, std::unique_ptr
+#include <memory>    // std::make_unique, std::unique_ptr
 #include <string>
 #include <vector>
 
@@ -43,8 +45,12 @@ public:
         if (!suppress_default_logging_) { std::cout << "[SPEAR | spear_ext.cpp] Client::initialize()" << std::endl; }
         SP_ASSERT(client_);
 
-        clmdep_msgpack::object_handle result = client_->call("engine_service.call_sync_on_worker_thread.get_entry_point_signature_descs");
-        entry_point_signature_descs_ = result.get().as<std::map<std::string, FuncSignatureDesc>>();
+        clmdep_msgpack::object_handle type_names_result = client_->call("engine_service.call_sync_on_worker_thread.get_entry_point_signature_type_names");
+        entry_point_signature_type_names_ = type_names_result.get().as<std::vector<std::string>>();
+        validateEntryPointSignatureTypeNames();
+
+        clmdep_msgpack::object_handle descs_result = client_->call("engine_service.call_sync_on_worker_thread.get_entry_point_signature_descs");
+        entry_point_signature_descs_ = descs_result.get().as<std::map<std::string, FuncSignatureDesc>>();
     };
 
     void terminate()
@@ -53,6 +59,7 @@ public:
         SP_ASSERT(client_);
         client_ = nullptr;
         entry_point_signature_descs_.clear();
+        entry_point_signature_type_names_.clear();
     };
 
     int64_t getTimeout() const
@@ -124,7 +131,43 @@ public:
         return entry_point_signature_descs_;
     }
 
+    std::vector<std::string> getEntryPointSignatureTypeNames() const
+    {
+        return entry_point_signature_type_names_;
+    }
+
 private:
+    void validateEntryPointSignatureTypeNames() const
+    {
+        const std::vector<std::string>& client_type_names = FuncSignatureRegistry::getTypeNames();
+        const std::vector<std::string>& server_type_names = entry_point_signature_type_names_;
+
+        auto get_display_string_func = [](const std::vector<std::string>& names, size_t i) -> std::string {
+            if (i < names.size()) {
+                return "\"" + names.at(i) + "\"";
+            } else {
+                return "<missing>";
+            }
+        };
+
+        bool success = true;
+        for (size_t i = 0; i < std::max(client_type_names.size(), server_type_names.size()); i++) {
+            bool has_client_name = i < client_type_names.size();
+            bool has_server_name = i < server_type_names.size();
+            if (!has_client_name || !has_server_name || client_type_names.at(i) != server_type_names.at(i)) {
+                std::cout << "[SPEAR | spear_ext.cpp] ERROR: type ID/name mismatch at id=" << i << " (server=" << get_display_string_func(server_type_names, i) << ", client=" << get_display_string_func(client_type_names, i) << ")" << std::endl;
+                success = false;
+            }
+        }
+
+        if (!success) {
+            std::cout << "[SPEAR | spear_ext.cpp] ERROR: The spear_ext Python extension module is out of sync with the server. Rebuild both the server and the spear_ext Python extension module." << std::endl;
+        }
+
+        SP_ASSERT(success);
+    }
+
     std::unique_ptr<rpc::client> client_ = nullptr;
     std::map<std::string, FuncSignatureDesc> entry_point_signature_descs_;
+    std::vector<std::string> entry_point_signature_type_names_;
 };

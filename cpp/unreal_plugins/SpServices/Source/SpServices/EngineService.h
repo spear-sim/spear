@@ -363,6 +363,8 @@ public:
         bindFuncToExecuteOnGameThread("engine_service", "flush", []() -> void {});
     }
 
+    static std::unique_ptr<EngineService<TEntryPointBinder>> create(TEntryPointBinder* entry_point_binder);
+
     template <typename TFunc>
     void bindFuncToExecuteOnWorkerThread(const std::string& service_name, const std::string& func_name, const TFunc& func)
     {
@@ -861,7 +863,18 @@ private:
         using TReturn = std::invoke_result_t<TFunc>;
 
         try {
+
+            // Announce that a throw occurring anywhere inside func() will be gracefully handled by the catch
+            // blocks below, so SP_ASSERT can choose to throw (rather than exit or crash) if this is the only
+            // way to get a response, e.g., because there is no interactive terminal available. We declare this
+            // as the first statement inside the try block (rather than outside it) so the scope's destructor
+            // runs before the matching catch block's body starts running, since a new exception thrown from
+            // inside that catch body would not be caught by this same try-catch. See AssertsAreAllowedToThrowScope
+            // in SpCore/Assert.h.
+            AssertsAreAllowedToThrowScope asserts_are_allowed_to_throw_scope;
+
             return func();
+
         } catch (const std::exception& e) {
             SP_LOG_CURRENT_FUNCTION();
             SP_LOG("ERROR: Caught exception when executing ", func_name, ": ", e.what());

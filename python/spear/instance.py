@@ -1030,7 +1030,7 @@ class Instance():
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:        
             try:
                 self.step()
-                self.engine_globals_service.request_exit(immediate_shutdown=False)
+                self.engine_globals_service.request_exit(force=False)
                 self._engine_service.terminate() # EngineService must be explicitly terminated, needs to be the last entry point that gets called
             except:
                 pass # no need to log exception because this case is expected when the instance is no longer running

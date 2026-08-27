@@ -193,6 +193,6 @@ private:
     std::string name_;
 
     std::mutex mutex_;
-    std::unique_ptr<boost::asio::io_context> io_context_ = nullptr;
-    std::unique_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> executor_work_guard_ = nullptr;
+    std::unique_ptr<boost::asio::io_context> io_context_;
+    std::unique_ptr<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>> executor_work_guard_;
 };

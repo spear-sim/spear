@@ -83,8 +83,8 @@ if __name__ == "__main__":
     with instance.begin_frame():
 
         # force high-res textures for captured images
-        game.console_service.set(name="r.Streaming.FramesForFullUpdate", value=0)
-        game.console_service.set(name="r.Streaming.FullyLoadUsedTextures", value=1)
+        game.console_service.set_cvar(name="r.Streaming.FramesForFullUpdate", value=0)
+        game.console_service.set_cvar(name="r.Streaming.FullyLoadUsedTextures", value=1)
 
         # When path tracing begins, Unreal begins asynchronously building various Nanite data structures, and
         # as these data structures finish building, they internally reset the progress of the path tracer.
@@ -93,24 +93,24 @@ if __name__ == "__main__":
         # possible, and then we render a conservative number of warm-up frames to ensure the build tasks are
         # complete before we start rendering a final image.
 
-        game.console_service.set(name="r.RayTracing.Nanite.ForceUpdateVisible", value=1)                     # force all Nanite builds to be scheduled on a single frame
-        game.console_service.set(name="r.RayTracing.Nanite.MaxBuiltPrimitivesPerFrame", value=256*1024*1024) # set the max number of built Nanite primitives per frame to be very large (default is 8*1024*1024)
-        game.console_service.set(name="r.RayTracing.Nanite.MaxStagingBufferSizeMB", value=2048)              # set the size of the Nanite staging buffer to be large (default is 1024)
+        game.console_service.set_cvar(name="r.RayTracing.Nanite.ForceUpdateVisible", value=1)                     # force all Nanite builds to be scheduled on a single frame
+        game.console_service.set_cvar(name="r.RayTracing.Nanite.MaxBuiltPrimitivesPerFrame", value=256*1024*1024) # set the max number of built Nanite primitives per frame to be very large (default is 8*1024*1024)
+        game.console_service.set_cvar(name="r.RayTracing.Nanite.MaxStagingBufferSizeMB", value=2048)              # set the size of the Nanite staging buffer to be large (default is 1024)
 
         # configure the path tracer via console variables
 
-        game.console_service.set(name="r.RayTracing.Enable", value=1)
-        game.console_service.set(name="r.RayTracing.SceneCaptures", value=1)
-        game.console_service.set(name="r.PathTracing.ProgressDisplay", value=0)
+        game.console_service.set_cvar(name="r.RayTracing.Enable", value=1)
+        game.console_service.set_cvar(name="r.RayTracing.SceneCaptures", value=1)
+        game.console_service.set_cvar(name="r.PathTracing.ProgressDisplay", value=0)
 
-        game.console_service.set(name="r.PathTracing.SamplesPerPixel", value=args.num_frames)
-        game.console_service.set(name="r.PathTracing.MaxBounces", value=args.num_bounces)
-        game.console_service.set(name="r.PathTracing.Denoiser", value=denoiser)
-        game.console_service.set(name="r.PathTracing.Denoiser.Name", value=denoiser_name)
+        game.console_service.set_cvar(name="r.PathTracing.SamplesPerPixel", value=args.num_frames)
+        game.console_service.set_cvar(name="r.PathTracing.MaxBounces", value=args.num_bounces)
+        game.console_service.set_cvar(name="r.PathTracing.Denoiser", value=denoiser)
+        game.console_service.set_cvar(name="r.PathTracing.Denoiser.Name", value=denoiser_name)
 
         # Filter Width controls how much primary rays are jittered, so it can be used to effectively
         # turn off anti-aliasing for primary rays.
-        game.console_service.set(name="r.PathTracing.FilterWidth", value=args.filter_width)
+        game.console_service.set_cvar(name="r.PathTracing.FilterWidth", value=args.filter_width)
 
         # spawn camera sensor and get the final_tone_curve_hdr component
         bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name=f"/SpContent/Blueprints/BP_CameraSensorPathTracer_UST.BP_CameraSensorPathTracer_UST_C")
@@ -141,7 +141,7 @@ if __name__ == "__main__":
 
     # force Nanite to stop building its data structures so it can't invalidate the path tracer any more
     with instance.begin_frame():
-        game.console_service.set(name="r.RayTracing.Nanite.Update", value=0)
+        game.console_service.set_cvar(name="r.RayTracing.Nanite.Update", value=0)
     with instance.end_frame():
         pass
 

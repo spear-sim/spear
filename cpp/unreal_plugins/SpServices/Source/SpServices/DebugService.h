@@ -6,6 +6,7 @@
 #pragma once
 
 #include <exception>
+#include <memory> // std::unique_ptr
 #include <string>
 
 #include "SpCore/Assert.h"
@@ -37,4 +38,7 @@ public:
             throw std::runtime_error("DebugService: intentional exception on worker thread");
         });
     }
+
+    template <CUnrealEntryPointBinder TEntryPointBinder>
+    static std::unique_ptr<DebugService> create(TEntryPointBinder* unreal_entry_point_binder);
 };

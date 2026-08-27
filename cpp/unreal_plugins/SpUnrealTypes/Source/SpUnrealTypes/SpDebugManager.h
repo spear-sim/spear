@@ -181,6 +181,6 @@ private:
     UPROPERTY()
     TSet<FString> SetOfStrings;
 
-    std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
+    std::unique_ptr<SharedMemoryRegion> shared_memory_region_;
     SpArraySharedMemoryView shared_memory_view_;
 };

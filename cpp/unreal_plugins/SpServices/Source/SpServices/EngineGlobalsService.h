@@ -7,6 +7,7 @@
 
 #include <stdint.h> // int64_t, uint64_t
 
+#include <memory> // std::unique_ptr
 #include <string>
 
 #include <boost/predef.h> // BOOST_ENDIAN_BIG_BYTE, BOOST_ENDIAN_LITTLE_BYTE
@@ -103,8 +104,8 @@ public:
             #endif
         });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("engine_globals_service", "request_exit", [](bool immediate_shutdown) -> void {
-            FGenericPlatformMisc::RequestExit(immediate_shutdown);
+        unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("engine_globals_service", "request_exit", [](bool force) -> void {
+            FGenericPlatformMisc::RequestExit(force);
         });
 
         //
@@ -116,4 +117,7 @@ public:
             return IsAsyncLoading();
         });
     }
+
+    template <CUnrealEntryPointBinder TEntryPointBinder>
+    static std::unique_ptr<EngineGlobalsService> create(TEntryPointBinder* unreal_entry_point_binder);
 };
