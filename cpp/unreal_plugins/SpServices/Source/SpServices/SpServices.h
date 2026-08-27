@@ -30,7 +30,8 @@ class EngineGlobalsService;
 class EnhancedInputService;
 class InputService;
 class SharedMemoryService;
-class UnrealService;
+class UnrealService_0;
+class UnrealService_1;
 class WorldRegistryService;
 
 // Services that require a reference to EngineService and SharedMemoryService
@@ -67,7 +68,8 @@ public:
     std::unique_ptr<EnhancedInputService> enhanced_input_service_;
     std::unique_ptr<InputService> input_service_;
     std::unique_ptr<SharedMemoryService> shared_memory_service_;
-    std::unique_ptr<UnrealService> unreal_service_;
+    std::unique_ptr<UnrealService_0> unreal_service_0_;
+    std::unique_ptr<UnrealService_1> unreal_service_1_;
     std::unique_ptr<WorldRegistryService> world_registry_service_;
 
     // Services that require a reference to EngineService and SharedMemoryService

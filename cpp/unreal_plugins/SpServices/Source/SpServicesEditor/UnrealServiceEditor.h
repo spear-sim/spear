@@ -22,7 +22,7 @@ public:
     UnrealServiceEditor(CUnrealEntryPointBinder auto* unreal_entry_point_binder)
     {
         //
-        // Get editor subsystem, !WITH_EDITOR implementations in SpServices/UnrealService.h
+        // Get editor subsystem, !WITH_EDITOR implementations in SpServices/UnrealService_0.h
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_editor_subsystem_by_class",
