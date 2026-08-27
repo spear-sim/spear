@@ -9,10 +9,10 @@
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/RpcServer.h"
 
-// UnrealService.h must only be included in cpp files, and must be included after all other headers.
-#include "SpServices/UnrealService.h"
+// UnrealService_1.h must only be included in cpp files, and must be included after all other headers.
+#include "SpServices/UnrealService_1.h"
 
 template <CUnrealEntryPointBinder TEntryPointBinder>
-std::unique_ptr<UnrealService> UnrealService::create(TEntryPointBinder* unreal_entry_point_binder) { return std::make_unique<UnrealService>(unreal_entry_point_binder); }
+std::unique_ptr<UnrealService_1> UnrealService_1::create(TEntryPointBinder* unreal_entry_point_binder) { return std::make_unique<UnrealService_1>(unreal_entry_point_binder); }
 
-template std::unique_ptr<UnrealService> UnrealService::create<EngineService<RpcServer>>(EngineService<RpcServer>*);
+template std::unique_ptr<UnrealService_1> UnrealService_1::create<EngineService<RpcServer>>(EngineService<RpcServer>*);

@@ -36,15 +36,15 @@
 #include "SpServices/EnhancedInputService.h"
 #include "SpServices/InputService.h"
 #include "SpServices/SharedMemoryService.h"
-// #include "SpServices/UnrealService.h" must only be included in cpp files, and must be included after all other headers.
 #include "SpServices/WorldRegistryService.h"
 
 // Services that require a reference to EngineService and SharedMemoryService
 #include "SpServices/NavigationService.h"
 #include "SpServices/SpFuncService.h"
 
-// UnrealService.h must only be included in cpp files, and must be included after all other headers.
-#include "SpServices/UnrealService.h"
+// UnrealService_1.h must only be included in cpp files, and must be included after all other headers.
+#include "SpServices/UnrealService_0.h"
+#include "SpServices/UnrealService_1.h"
 
 void SpServices::StartupModule()
 {
@@ -126,7 +126,8 @@ void SpServices::requestInitialize()
     enhanced_input_service_ = EnhancedInputService::create(engine_service_.get());
     input_service_ = InputService::create(engine_service_.get());
     shared_memory_service_ = SharedMemoryService::create(engine_service_.get());
-    unreal_service_ = UnrealService::create(engine_service_.get());
+    unreal_service_0_ = UnrealService_0::create(engine_service_.get());
+    unreal_service_1_ = UnrealService_1::create(engine_service_.get());
     world_registry_service_ = WorldRegistryService::create(engine_service_.get());
 
     // Construct services that require a reference to EngineService and SharedMemoryService.
@@ -159,14 +160,16 @@ void SpServices::terminate()
     SP_ASSERT(enhanced_input_service_);
     SP_ASSERT(input_service_);
     SP_ASSERT(shared_memory_service_);
-    SP_ASSERT(unreal_service_);
+    SP_ASSERT(unreal_service_0_);
+    SP_ASSERT(unreal_service_1_);
     SP_ASSERT(world_registry_service_);
     debug_service_ = nullptr;
     engine_globals_service_ = nullptr;
     enhanced_input_service_ = nullptr;
     input_service_ = nullptr;
     shared_memory_service_ = nullptr;
-    unreal_service_ = nullptr;
+    unreal_service_0_ = nullptr;
+    unreal_service_1_ = nullptr;
     world_registry_service_ = nullptr;
 
     SP_ASSERT(initialize_engine_service_);
