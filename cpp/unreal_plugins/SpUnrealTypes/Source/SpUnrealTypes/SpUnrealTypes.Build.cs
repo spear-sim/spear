@@ -24,7 +24,7 @@ public class SpUnrealTypes : SpModuleRules
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         if (target.Platform == UnrealTargetPlatform.Win64) {
-            PublicDependencyModuleNames.AddRange(new string[] {"D3D11RHI", "D3D12RHI", "VulkanRHI"});
+            PublicDependencyModuleNames.AddRange(new string[] {"D3D11RHI", "D3D12RHI", "VulkanRHI", "RHICore"});
             AddEngineThirdPartyPrivateStaticDependencies(target, "DX11");
             AddEngineThirdPartyPrivateStaticDependencies(target, "DX12");
             AddEngineThirdPartyPrivateStaticDependencies(target, "Vulkan");

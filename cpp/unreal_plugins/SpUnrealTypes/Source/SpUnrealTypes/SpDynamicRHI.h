@@ -16,26 +16,23 @@
 #include <HAL/Platform.h>          // uint32, uint64
 #include <Kismet/BlueprintFunctionLibrary.h>
 #include <RHIDefinitions.h>        // ERHIInterfaceType
+#include <RHIStats.h>              // FD3DMemoryStats
 #include <UObject/ObjectMacros.h>  // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY, USTRUCT
+#include <Templates/RefCounting.h> // TRefCountPtr
+
+#include "SpCore/Assert.h"
+#include "SpCore/Std.h"
+#include "SpCore/Unreal.h"
 
 #if BOOST_OS_WINDOWS
+    #include <IVulkanDynamicRHI.h> // GetIVulkanDynamicRHI, IVulkanDynamicRHI, VkExtensionProperties, VkPhysicalDevice,
+                                // VkPhysicalDeviceMemoryBudgetPropertiesEXT, VkPhysicalDeviceMemoryProperties2,
+                                // VK_EXT_MEMORY_BUDGET_EXTENSION_NAME, VK_MEMORY_HEAP_DEVICE_LOCAL_BIT
+                                
     #include <ID3D11DynamicRHI.h> // GetID3D11DynamicRHI, ID3D11DynamicRHI, IDXGIAdapter, IDXGIAdapter3, DXGI_MEMORY_SEGMENT_GROUP_LOCAL,
                                   // DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL, DXGI_QUERY_VIDEO_MEMORY_INFO
     #include <ID3D12DynamicRHI.h> // CreateDXGIFactory2, GetID3D12DynamicRHI, ID3D12Device, ID3D12DynamicRHI, IDXGIFactory4
-    
-    // Windows macros, conflicts with vulkan declarations
-    #pragma push_macro("interface")
-    #pragma push_macro("small")
-    #undef interface
-    #undef small
-    #include <IVulkanDynamicRHI.h> // GetIVulkanDynamicRHI, IVulkanDynamicRHI, VkExtensionProperties, VkPhysicalDevice,
-                                   // VkPhysicalDeviceMemoryBudgetPropertiesEXT, VkPhysicalDeviceMemoryProperties2,
-                                   // VK_EXT_MEMORY_BUDGET_EXTENSION_NAME, VK_MEMORY_HEAP_DEVICE_LOCAL_BIT
-    #pragma pop_macro("interface")
-    #pragma pop_macro("small")
-
-    #include <MultiGPU.h>              // GNumExplicitGPUsForRendering, GVirtualMGPU
-    #include <Templates/RefCounting.h> // TRefCountPtr
+    #include <DXGIUtilities.h>     // FD3DMemoryStats, GetD3DMemoryStats
 #elif BOOST_OS_MACOS
     // No metal headers needed currently
 #elif BOOST_OS_LINUX
@@ -45,10 +42,6 @@
 #else
     #errors
 #endif
-
-#include "SpCore/Assert.h"
-#include "SpCore/Std.h"
-#include "SpCore/Unreal.h"
 
 #include "SpDynamicRHI.generated.h"
 
@@ -92,90 +85,23 @@ struct FSpRHIMemoryStats
 };
 
 #if BOOST_OS_WINDOWS
-// Resolves the IDXGIAdapter backing the D3D12 device at GPU node 0. The D3D12 RHI exposes an ID3D12Device but not the
-// DXGI adapter, so we resolve it ourselves via the device's adapter LUID.
-static TRefCountPtr<IDXGIAdapter> getD3D12DXGIAdapter()
-{
-    ID3D12DynamicRHI* d3d12_dynamic_rhi = GetID3D12DynamicRHI();
-    SP_ASSERT(d3d12_dynamic_rhi);
-    ID3D12Device* d3d12_device = d3d12_dynamic_rhi->RHIGetDevice(0);
-    SP_ASSERT(d3d12_device);
+    static void getD3DMemoryStats(IDXGIAdapter* dxgi_adapter, FSpRHIMemoryStats& stats)
+    {
+        SP_ASSERT(dxgi_adapter);
 
-    LUID adapter_luid = d3d12_device->GetAdapterLuid();
+        FD3DMemoryStats d3d_memory_stats;
+        HRESULT status = UE::DXGIUtilities::GetD3DMemoryStats(dxgi_adapter, d3d_memory_stats);
+        SP_ASSERT(!FAILED(status));
 
-    HRESULT status;
-
-    TRefCountPtr<IDXGIFactory4> dxgi_factory;
-    status = CreateDXGIFactory2(0, IID_PPV_ARGS(dxgi_factory.GetInitReference()));
-    SP_ASSERT(!FAILED(status));
-
-    TRefCountPtr<IDXGIAdapter> dxgi_adapter;
-    status = dxgi_factory->EnumAdapterByLuid(adapter_luid, IID_PPV_ARGS(dxgi_adapter.GetInitReference()));
-    SP_ASSERT(!FAILED(status));
-
-    return dxgi_adapter;
-}
-
-// Fills stats from the given DXGI adapter, shared by our D3D11 and D3D12 code paths. Mimics
-// UE::DXGIUtilities::GetD3DMemoryStats(...) in UE 5.8, see Engine/Source/Runtime/RHICore/Private/DXGIUtilities.cpp
-static void getDXGIMemoryStats(IDXGIAdapter* dxgi_adapter, FSpRHIMemoryStats& stats)
-{
-    SP_ASSERT(dxgi_adapter);
-
-    HRESULT status;
-
-    TRefCountPtr<IDXGIAdapter3> dxgi_adapter_3;
-    status = dxgi_adapter->QueryInterface(IID_PPV_ARGS(dxgi_adapter_3.GetInitReference()));
-    SP_ASSERT(!FAILED(status));
-
-    DXGI_QUERY_VIDEO_MEMORY_INFO local_memory_info;
-    status = dxgi_adapter_3->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &local_memory_info);
-    SP_ASSERT(!FAILED(status));
-
-    DXGI_QUERY_VIDEO_MEMORY_INFO non_local_memory_info;
-    status = dxgi_adapter_3->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL, &non_local_memory_info);
-    SP_ASSERT(!FAILED(status));
-
-    // In case of multiple GPUs, use the memory info from the one with the highest local budget.
-    if (!GVirtualMGPU) {
-        for (uint32 index = 1; index < GNumExplicitGPUsForRendering; index++) {
-            DXGI_QUERY_VIDEO_MEMORY_INFO temp_local_memory_info;
-            status = dxgi_adapter_3->QueryVideoMemoryInfo(index, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &temp_local_memory_info);
-            SP_ASSERT(!FAILED(status));
-
-            DXGI_QUERY_VIDEO_MEMORY_INFO temp_non_local_memory_info;
-            status = dxgi_adapter_3->QueryVideoMemoryInfo(index, DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL, &temp_non_local_memory_info);
-            SP_ASSERT(!FAILED(status));
-
-            if (temp_local_memory_info.Budget > local_memory_info.Budget) {
-                local_memory_info = temp_local_memory_info;
-                non_local_memory_info = temp_non_local_memory_info;
-            }
-        }
+        stats.BudgetLocal = d3d_memory_stats.BudgetLocal;
+        stats.BudgetSystem = d3d_memory_stats.BudgetSystem;
+        stats.UsedLocal = d3d_memory_stats.UsedLocal;
+        stats.UsedSystem = d3d_memory_stats.UsedSystem;
+        stats.DemotedLocal = d3d_memory_stats.DemotedLocal;
+        stats.DemotedSystem = d3d_memory_stats.DemotedSystem;
+        stats.AvailableLocal = d3d_memory_stats.AvailableLocal;
+        stats.AvailableSystem = d3d_memory_stats.AvailableSystem;
     }
-
-    stats.BudgetLocal = local_memory_info.Budget;
-    stats.BudgetSystem = non_local_memory_info.Budget;
-    stats.UsedLocal = local_memory_info.CurrentUsage;
-    stats.UsedSystem = non_local_memory_info.CurrentUsage;
-
-    // Check if we're over budget.
-    if (stats.UsedLocal > stats.BudgetLocal) {
-        stats.AvailableLocal = 0;
-        stats.DemotedLocal = stats.UsedLocal - stats.BudgetLocal;
-    } else {
-        stats.AvailableLocal = stats.BudgetLocal - stats.UsedLocal;
-        stats.DemotedLocal = 0;
-    }
-
-    if (stats.UsedSystem > stats.BudgetSystem) {
-        stats.AvailableSystem = 0;
-        stats.DemotedSystem = stats.UsedSystem - stats.BudgetSystem;
-    } else {
-        stats.AvailableSystem = stats.BudgetSystem - stats.UsedSystem;
-        stats.DemotedSystem = 0;
-    }
-}
 #endif
 
 //
@@ -207,22 +133,44 @@ public:
         SP_ASSERT(GDynamicRHI);
         ERHIInterfaceType interface_type = RHIGetInterfaceType();
 
-        if (interface_type == ERHIInterfaceType::D3D12) {
-            #if BOOST_OS_WINDOWS
-                TRefCountPtr<IDXGIAdapter> dxgi_adapter = getD3D12DXGIAdapter();
-                getDXGIMemoryStats(dxgi_adapter, stats);
-            #endif
+            if (interface_type == ERHIInterfaceType::D3D12) {
+        #if BOOST_OS_WINDOWS
+            ID3D12DynamicRHI* d3d12_dynamic_rhi = GetID3D12DynamicRHI();
+            SP_ASSERT(d3d12_dynamic_rhi);
 
-        } else if (interface_type == ERHIInterfaceType::D3D11) {
-            #if BOOST_OS_WINDOWS
-                ID3D11DynamicRHI* d3d11_dynamic_rhi = GetID3D11DynamicRHI();
-                SP_ASSERT(d3d11_dynamic_rhi);
-                IDXGIAdapter* dxgi_adapter = d3d11_dynamic_rhi->RHIGetAdapter();
-                SP_ASSERT(dxgi_adapter);
-                getDXGIMemoryStats(dxgi_adapter, stats);
-            #endif
+            // ID3D12DynamicRHI::RHIGetAdapterDescs() always returns exactly one entry,
+            // see FD3D12DynamicRHIModule::FindAdapter in Engine/Source/Runtime/D3D12RHI/Private/Windows/WindowsD3D12Device.cpp
+            TArray<FD3D12MinimalAdapterDesc> adapter_descs = d3d12_dynamic_rhi->RHIGetAdapterDescs();
+            SP_ASSERT(adapter_descs.Num() == 1);
+            LUID adapter_luid = adapter_descs[0].Desc.AdapterLuid;
 
-        } else if (interface_type == ERHIInterfaceType::Vulkan) {
+            HRESULT status;
+
+            TRefCountPtr<IDXGIFactory4> dxgi_factory;
+            status = CreateDXGIFactory2(0, IID_PPV_ARGS(dxgi_factory.GetInitReference()));
+            SP_ASSERT(!FAILED(status));
+
+            TRefCountPtr<IDXGIAdapter> dxgi_adapter;
+            status = dxgi_factory->EnumAdapterByLuid(adapter_luid, IID_PPV_ARGS(dxgi_adapter.GetInitReference()));
+            SP_ASSERT(!FAILED(status));
+
+            getD3DMemoryStats(dxgi_adapter, stats);
+        #else
+            SP_ASSERT(false);
+        #endif
+
+    } else if (interface_type == ERHIInterfaceType::D3D11) {
+        #if BOOST_OS_WINDOWS
+            ID3D11DynamicRHI* d3d11_dynamic_rhi = GetID3D11DynamicRHI();
+            SP_ASSERT(d3d11_dynamic_rhi);
+            IDXGIAdapter* dxgi_adapter = d3d11_dynamic_rhi->RHIGetAdapter();
+            SP_ASSERT(dxgi_adapter);
+            getD3DMemoryStats(dxgi_adapter, stats);
+        #else
+            SP_ASSERT(false);
+        #endif
+
+    } else if (interface_type == ERHIInterfaceType::Vulkan) {
             #if BOOST_OS_WINDOWS || BOOST_OS_LINUX
                 // Mimics FDeviceMemoryManager::UpdateMemoryProperties() in UE 5.8, see
                 // Engine/Source/Runtime/VulkanRHI/Private/VulkanMemory.cpp
