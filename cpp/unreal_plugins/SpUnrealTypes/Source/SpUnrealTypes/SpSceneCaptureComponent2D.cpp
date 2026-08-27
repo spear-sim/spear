@@ -512,30 +512,30 @@ void USpSceneCaptureComponent2D::setupView(FSceneViewFamily& view_family, FScene
 
         if (Unreal::toStdString(engine_show_flag_setting.ShowFlagName) == "Wireframe" && engine_show_flag_setting.Enabled) {
             // Wireframe color is emissive-only, and mesh-modifying materials do not use material substitution, hence...
-            view.DiffuseOverrideParameter = FVector4f(0.f, 0.f, 0.f, 0.f);
-            view.SpecularOverrideParameter = FVector4f(0.f, 0.f, 0.f, 0.f);
+            view.DiffuseOverrideParameter = FVector4f(0.0f, 0.0f, 0.0f, 0.0f);
+            view.SpecularOverrideParameter = FVector4f(0.0f, 0.0f, 0.0f, 0.0f);
         }
         else if (Unreal::toStdString(engine_show_flag_setting.ShowFlagName) == "OverrideDiffuseAndSpecular" && engine_show_flag_setting.Enabled) {
             view.DiffuseOverrideParameter = FVector4f(GEngine->LightingOnlyBrightness.R, GEngine->LightingOnlyBrightness.G, GEngine->LightingOnlyBrightness.B, 0.0f);
-            view.SpecularOverrideParameter = FVector4f(.1f, .1f, .1f, 0.0f);
+            view.SpecularOverrideParameter = FVector4f(0.1f, 0.1f, 0.1f, 0.0f);
         }
         else if (Unreal::toStdString(engine_show_flag_setting.ShowFlagName) == "LightingOnlyOverride" && engine_show_flag_setting.Enabled) {
             view.DiffuseOverrideParameter = FVector4f(GEngine->LightingOnlyBrightness.R, GEngine->LightingOnlyBrightness.G, GEngine->LightingOnlyBrightness.B, 0.0f);
-            view.SpecularOverrideParameter = FVector4f(0.f, 0.f, 0.f, 0.f);
+            view.SpecularOverrideParameter = FVector4f(0.0f, 0.0f, 0.0f, 0.0f);
         }
         else if (Unreal::toStdString(engine_show_flag_setting.ShowFlagName) == "ReflectionOverride" && engine_show_flag_setting.Enabled) {
-            view.DiffuseOverrideParameter = FVector4f(0.f, 0.f, 0.f, 0.f);
+            view.DiffuseOverrideParameter = FVector4f(0.0f, 0.0f, 0.0f, 0.0f);
             view.SpecularOverrideParameter = FVector4f(1, 1, 1, 0.0f);
             view.NormalOverrideParameter = FVector4f(0, 0, 1, 0.0f);
             view.RoughnessOverrideParameter = FVector2D(0.0f, 0.0f);
         }
 
         if (Unreal::toStdString(engine_show_flag_setting.ShowFlagName) == "Diffuse" && !engine_show_flag_setting.Enabled) {
-            view.DiffuseOverrideParameter = FVector4f(0.f, 0.f, 0.f, 0.f);
+            view.DiffuseOverrideParameter = FVector4f(0.0f, 0.0f, 0.0f, 0.0f);
         }
 
         if (Unreal::toStdString(engine_show_flag_setting.ShowFlagName) == "Specular" && !engine_show_flag_setting.Enabled) {
-            view.SpecularOverrideParameter = FVector4f(0.f, 0.f, 0.f, 0.f);
+            view.SpecularOverrideParameter = FVector4f(0.0f, 0.0f, 0.0f, 0.0f);
         }
     }
 
