@@ -46,7 +46,7 @@ if __name__ == "__main__":
         build_target,
         target_platform,
         args.build_config,
-        f'"{uproject}"'] + \
+        uproject] + \
         unknown_args
 
     spear.tools.run_build(unreal_engine_dir=args.unreal_engine_dir, args=build_args)

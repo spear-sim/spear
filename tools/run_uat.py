@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     # assemble dirs to cook
     cook_dirs = args.cook_dirs if args.cook_dirs is not None else []
-    cook_dir_args = [ f'-cookdir="{os.path.join(unreal_project_dir, cook_dir)}"' for cook_dir in cook_dirs ]
+    cook_dir_args = [ f"-cookdir={os.path.join(unreal_project_dir, cook_dir)}" for cook_dir in cook_dirs ]
 
     # assemble maps to cook; only cook default maps if we're building the default SpearSim project and the caller hasn't opted out
     cook_maps = []
@@ -68,11 +68,11 @@ if __name__ == "__main__":
     # build project
     run_uat_args = [
         "BuildCookRun",
-        f'-project="{uproject}"',
+        f"-project={uproject}",
         f"-target={build_target}",
         f"-targetplatform={target_platform}",
         f"-clientconfig={args.build_config}",
-        f'-archivedirectory="{archive_dir}"'] + \
+        f"-archivedirectory={archive_dir}"] + \
         unknown_args + \
         cook_args
 

@@ -76,8 +76,6 @@ def validate_build_environment():
         assert False
 
 def run_uat(unreal_engine_dir, args):
-    # there is only one correct RunUAT script to use for a given platform, so we determine it here rather
-    # than asking the caller to specify it
     if sys.platform == "win32":
         run_uat_script_name = "RunUAT.bat"
     elif sys.platform in ["darwin", "linux"]:
@@ -88,37 +86,46 @@ def run_uat(unreal_engine_dir, args):
     assert os.path.exists(run_uat_script)
 
     cmd = [run_uat_script] + args
-    _run_and_watch_log_file(cmd=cmd, shell=False)
+    returncode = _run_and_watch_log_file(cmd=cmd)
+    if returncode != 0:
+        raise subprocess.CalledProcessError(returncode, cmd)
 
 def run_build(unreal_engine_dir, args):
-    # there is only one correct Build script to use for a given platform, so we determine it here rather
-    # than asking the caller to specify it
     if sys.platform == "win32":
-        build_script_name = "Build.bat"
-    elif sys.platform in ["darwin", "linux"]:
-        build_script_name = "Build.sh"
+        build_script_suffix = "Build.bat"
+    elif sys.platform == "darwin":
+        build_script_suffix = os.path.join("Mac", "Build.sh")
+    elif sys.platform == "linux":
+        build_script_suffix = os.path.join("Linux", "Build.sh")
     else:
         assert False
-    build_script = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Build", "BatchFiles", build_script_name))
+    build_script = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Build", "BatchFiles", build_script_suffix))
     assert os.path.exists(build_script)
 
-    # Build.bat/Build.sh need to be run via the shell to correctly handle quoted paths containing spaces
-    cmd = " ".join([f'"{build_script}"'] + args)
-    _run_and_watch_log_file(cmd=cmd, shell=True)
+    cmd = [build_script] + args
 
-def _run_and_watch_log_file(cmd, shell):
+    # UnrealBuildTool returns exit code 2 when every target is already up-to-date, which isn't an error, so we
+    # treat it as success on every platform. Mac's Build.sh additionally treats exit code 255 (UnrealBuildTool
+    # was canceled, e.g., via Ctrl-C) and exit code 254 (not used by any current UnrealBuildTool code path, so
+    # presumably vestigial) as success internally, before we ever see its return code here, but we don't
+    # attempt to replicate that choice on Windows or Linux.
+    returncode = _run_and_watch_log_file(cmd=cmd)
+    if returncode not in (0, 2):
+        raise subprocess.CalledProcessError(returncode, cmd)
+
+def _run_and_watch_log_file(cmd):
     # Build.bat/Build.sh/RunUAT.bat/RunUAT.sh all invoke UnrealBuildTool under the hood, which announces
     # its own log file (e.g., "Log file: /path/to/UBA-....txt") early on, but then produces no further
     # console output until the entire build finishes, at which point it dumps all of its buffered output
     # at once. The log file itself, on the other hand, is written to incrementally throughout the build,
     # so we watch it in the background to get live progress.
-    spear.log("Executing: ", cmd if shell else " ".join(cmd))
+    spear.log("Executing: ", " ".join(cmd))
 
     state = WatchLogFileState()
     thread = threading.Thread(target=_watch_log_file, kwargs={"state": state}, daemon=True)
     thread.start()
 
-    process = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
     for line in process.stdout:
         line = line.rstrip("\n")
         spear.log_no_prefix(line)
@@ -129,8 +136,7 @@ def _run_and_watch_log_file(cmd, shell):
     state.stop.set()
     thread.join()
 
-    if process.returncode != 0:
-        raise subprocess.CalledProcessError(process.returncode, cmd)
+    return process.returncode
 
 def _watch_log_file(state, poll_interval_seconds=1.0):
     current_path = None
