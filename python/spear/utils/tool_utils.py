@@ -78,8 +78,6 @@ def validate_build_environment():
         assert False
 
 def run_uat(unreal_engine_dir, args):
-    # there is only one correct RunUAT script to use for a given platform, so we determine it here rather
-    # than asking the caller to specify it
     if sys.platform == "win32":
         run_uat_script_name = "RunUAT.bat"
     elif sys.platform in ["darwin", "linux"]:
@@ -94,21 +92,28 @@ def run_uat(unreal_engine_dir, args):
     subprocess.run(cmd, check=True)
 
 def run_build(unreal_engine_dir, args):
-    # there is only one correct Build script to use for a given platform, so we determine it here rather
-    # than asking the caller to specify it
     if sys.platform == "win32":
-        build_script_name = "Build.bat"
-    elif sys.platform in ["darwin", "linux"]:
-        build_script_name = "Build.sh"
+        build_script_suffix = "Build.bat"
+    elif sys.platform == "darwin":
+        build_script_suffix = os.path.join("Mac", "Build.sh")
+    elif sys.platform == "linux":
+        build_script_suffix = os.path.join("Linux", "Build.sh")
     else:
         assert False
-    build_script = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Build", "BatchFiles", build_script_name))
+    build_script = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Build", "BatchFiles", build_script_suffix))
     assert os.path.exists(build_script)
 
-    # Build.bat/Build.sh need to be run via the shell to correctly handle quoted paths containing spaces
-    cmd = " ".join([f'"{build_script}"'] + args)
-    spear.log("Executing: ", cmd)
-    subprocess.run(cmd, shell=True, check=True)
+    cmd = [build_script] + args
+    spear.log("Executing: ", " ".join(cmd))
+
+    # UnrealBuildTool returns exit code 2 when every target is already up-to-date, which isn't an error, so we
+    # treat it as success on every platform. Mac's Build.sh additionally treats exit code 255 (UnrealBuildTool
+    # was canceled, e.g., via Ctrl-C) and exit code 254 (not used by any current UnrealBuildTool code path, so
+    # presumably vestigial) as success internally, before we ever see its return code here, but we don't
+    # attempt to replicate that choice on Windows or Linux.
+    result = subprocess.run(cmd)
+    if result.returncode not in [0, 2]:
+        raise subprocess.CalledProcessError(result.returncode, cmd)
 
 
 #
