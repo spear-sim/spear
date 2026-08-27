@@ -26,8 +26,8 @@
 
 #if BOOST_OS_WINDOWS
     #include <IVulkanDynamicRHI.h> // GetIVulkanDynamicRHI, IVulkanDynamicRHI, VkExtensionProperties, VkPhysicalDevice,
-                                // VkPhysicalDeviceMemoryBudgetPropertiesEXT, VkPhysicalDeviceMemoryProperties2,
-                                // VK_EXT_MEMORY_BUDGET_EXTENSION_NAME, VK_MEMORY_HEAP_DEVICE_LOCAL_BIT
+                                   // VkPhysicalDeviceMemoryBudgetPropertiesEXT, VkPhysicalDeviceMemoryProperties2,
+                                   // VK_EXT_MEMORY_BUDGET_EXTENSION_NAME, VK_MEMORY_HEAP_DEVICE_LOCAL_BIT
                                 
     #include <ID3D11DynamicRHI.h> // GetID3D11DynamicRHI, ID3D11DynamicRHI, IDXGIAdapter, IDXGIAdapter3, DXGI_MEMORY_SEGMENT_GROUP_LOCAL,
                                   // DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL, DXGI_QUERY_VIDEO_MEMORY_INFO
