@@ -7,6 +7,7 @@
 
 #include <stdint.h> // uint64_t
 
+#include <memory> // std::unique_ptr
 #include <string>
 #include <vector>
 
@@ -244,6 +245,9 @@ public:
                 }
             });
     }
+
+    template <CUnrealEntryPointBinder TEntryPointBinder>
+    static std::unique_ptr<InputService> create(TEntryPointBinder* unreal_entry_point_binder);
 
 private:
     static UInputComponent* getInputComponent(uint64_t& actor)

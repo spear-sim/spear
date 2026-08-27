@@ -15,10 +15,14 @@ SP_CORE:
   # being used by another instance.
   SHARED_MEMORY_INITIAL_UNIQUE_ID: 0
 
-  # Capture messages emitted via Unreal's logging system into an in-memory ring buffer, so they can be
-  # retrieved later, e.g., to include in an error response sent back to a client that has no other way of
-  # seeing the Unreal log.
   OUTPUT_LOG:
+    # Mirror non-SPEAR-originating Unreal log messages to stdout by default (see StdOutputDevice::Serialize(...)
+    # in SpCore/OutputLog.cpp). Set to False, or pass -sp-no-stdout on the command-line, to suppress this.
+    ENABLE_STDOUT: True
+
+    # Capture messages emitted via Unreal's logging system into an in-memory ring buffer, so they can be
+    # retrieved later, e.g., to include in an error response sent back to a client that has no other way of
+    # seeing the Unreal log.
     ENABLE_BUFFERED_OUTPUT_DEVICE: True
     BUFFERED_OUTPUT_DEVICE_NUM_MESSAGES: 8192
 
