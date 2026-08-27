@@ -19,21 +19,31 @@
 #include <UObject/ObjectMacros.h>  // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY, USTRUCT
 
 #if BOOST_OS_WINDOWS
-    #include <ID3D11DynamicRHI.h>      // GetID3D11DynamicRHI, ID3D11DynamicRHI, IDXGIAdapter, IDXGIAdapter3, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL, DXGI_QUERY_VIDEO_MEMORY_INFO
-    #include <ID3D12DynamicRHI.h>      // CreateDXGIFactory2, GetID3D12DynamicRHI, ID3D12Device, ID3D12DynamicRHI, IDXGIFactory4
-    #include <MultiGPU.h>              // GNumExplicitGPUsForRendering, GVirtualMGPU
-    #include <Templates/RefCounting.h> // TRefCountPtr
-
-    // The D3D headers above transitively include windows.h, which defines "interface" and "small" which collide with other code.
+    #include <ID3D11DynamicRHI.h> // GetID3D11DynamicRHI, ID3D11DynamicRHI, IDXGIAdapter, IDXGIAdapter3, DXGI_MEMORY_SEGMENT_GROUP_LOCAL,
+                                  // DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL, DXGI_QUERY_VIDEO_MEMORY_INFO
+    #include <ID3D12DynamicRHI.h> // CreateDXGIFactory2, GetID3D12DynamicRHI, ID3D12Device, ID3D12DynamicRHI, IDXGIFactory4
+    
+    // Windows macros, conflicts with vulkan declarations
+    #pragma push_macro("interface")
+    #pragma push_macro("small")
     #undef interface
     #undef small
-    #include <IVulkanDynamicRHI.h>     // GetIVulkanDynamicRHI, IVulkanDynamicRHI, VkExtensionProperties, VkPhysicalDevice, VkPhysicalDeviceMemoryBudgetPropertiesEXT, VkPhysicalDeviceMemoryProperties2, VK_EXT_MEMORY_BUDGET_EXTENSION_NAME, VK_MEMORY_HEAP_DEVICE_LOCAL_BIT
+    #include <IVulkanDynamicRHI.h> // GetIVulkanDynamicRHI, IVulkanDynamicRHI, VkExtensionProperties, VkPhysicalDevice,
+                                   // VkPhysicalDeviceMemoryBudgetPropertiesEXT, VkPhysicalDeviceMemoryProperties2,
+                                   // VK_EXT_MEMORY_BUDGET_EXTENSION_NAME, VK_MEMORY_HEAP_DEVICE_LOCAL_BIT
+    #pragma pop_macro("interface")
+    #pragma pop_macro("small")
+
+    #include <MultiGPU.h>              // GNumExplicitGPUsForRendering, GVirtualMGPU
+    #include <Templates/RefCounting.h> // TRefCountPtr
 #elif BOOST_OS_MACOS
-    // Metal memory stats are a no-op (mimics UE 5.8's no-op ::RHIGetMemoryStats() on Metal), so nothing to include.
+    // No metal headers needed currently
 #elif BOOST_OS_LINUX
-    #include <IVulkanDynamicRHI.h>     // GetIVulkanDynamicRHI, IVulkanDynamicRHI, VkExtensionProperties, VkPhysicalDevice, VkPhysicalDeviceMemoryBudgetPropertiesEXT, VkPhysicalDeviceMemoryProperties2, VK_EXT_MEMORY_BUDGET_EXTENSION_NAME, VK_MEMORY_HEAP_DEVICE_LOCAL_BIT
+    #include <IVulkanDynamicRHI.h> // GetIVulkanDynamicRHI, IVulkanDynamicRHI, VkExtensionProperties, VkPhysicalDevice,
+                                   // VkPhysicalDeviceMemoryBudgetPropertiesEXT, VkPhysicalDeviceMemoryProperties2,
+                                   // VK_EXT_MEMORY_BUDGET_EXTENSION_NAME, VK_MEMORY_HEAP_DEVICE_LOCAL_BIT
 #else
-    #error Unsupported platform
+    #errors
 #endif
 
 #include "SpCore/Assert.h"
