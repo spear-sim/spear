@@ -598,6 +598,23 @@ class UnrealService(spear.Service):
         return self.entry_point_caller.call_on_game_thread("execute_console_command", None, self.get_world(), command)
 
     #
+    # Flush output log messages
+    #
+
+    def flush_output_log_messages(self):
+        return self.entry_point_caller.call_on_worker_thread("flush_output_log_messages", None)
+
+    #
+    # Get message log names and messages
+    #
+
+    def get_message_log_names(self):
+        return self.entry_point_caller.call_on_game_thread("get_message_log_names", None)
+
+    def get_message_log_messages(self, name):
+        return self.entry_point_caller.call_on_game_thread("get_message_log_messages", None, name)
+
+    #
     # Stable name helper functions
     #
 

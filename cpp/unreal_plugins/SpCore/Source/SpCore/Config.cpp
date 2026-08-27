@@ -25,13 +25,6 @@
 
 YAML::Node g_config_node;
 
-void Config::initialize(const std::string& config_file)
-{
-    SP_LOG("    Initializing config system from file: ", config_file);
-    g_config_node = YAML::LoadFile(config_file);
-    s_initialized_ = true;
-}
-
 void Config::requestInitialize()
 {
     // if a config file is provided via the -sp-config-file=path/to/config.yaml command-line argument, then load it
@@ -41,6 +34,13 @@ void Config::requestInitialize()
         SP_LOG("    Found config file via the -sp-config-file command-line argument...");
         initialize(config_file_str);
     }
+}
+
+void Config::initialize(const std::string& config_file)
+{
+    SP_LOG("    Initializing config system from file: ", config_file);
+    g_config_node = YAML::LoadFile(config_file);
+    s_initialized_ = true;
 }
 
 void Config::terminate()

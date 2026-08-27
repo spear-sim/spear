@@ -122,7 +122,7 @@ if __name__ == "__main__":
         else:
             optimization_flags = "-O3"
 
-        common_cxx_flags = f"-std=c++20 {optimization_flags} -D_LIBCPP_ENABLE_EXPERIMENTAL -nostdinc++ -I\'{linux_libcpp_include_dir}\' -Wno-reserved-macro-identifier -stdlib=libc++ -L\'{linux_libcpp_lib_dir}\' -lc++"
+        common_cxx_flags = f"-std=c++20 {optimization_flags} -D_LIBCPP_ENABLE_EXPERIMENTAL -nostdinc++ -I\'{linux_libcpp_include_dir}\' -Wno-reserved-macro-identifier -stdlib=libc++ -L\'{linux_libcpp_lib_dir}\' -lc++ -lc++abi"
         cmake_cxx_flags = common_cxx_flags
 
         if args.conda_script:

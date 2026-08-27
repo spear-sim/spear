@@ -270,7 +270,7 @@ private:
     struct TextureReadbackDesc : TextureReadbackDescBase
     {
         // owns the shared memory region whose view lives in the base (only used when shared memory is enabled)
-        std::unique_ptr<SharedMemoryRegion> shared_memory_region_ = nullptr;
+        std::unique_ptr<SharedMemoryRegion> shared_memory_region_;
 
         // scratchpad buffer for staging-to-CPU data (only used when shared memory is disabled and only when double-buffered or triple-buffered)
         std::vector<uint8_t, SpAlignedAllocator<uint8_t, 4096>> scratchpad_;

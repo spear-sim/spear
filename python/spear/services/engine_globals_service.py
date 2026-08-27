@@ -60,8 +60,8 @@ class EngineGlobalsService(spear.Service):
     def is_running_game(self):
         return self.entry_point_caller.call_on_worker_thread("is_running_game", None)
 
-    def request_exit(self, immediate_shutdown):
-        self.entry_point_caller.call_on_worker_thread("request_exit", None, immediate_shutdown)
+    def request_exit(self, force):
+        self.entry_point_caller.call_on_worker_thread("request_exit", None, force)
 
     #
     # Miscellaneous low-level entry points that potentially interact with Unreal globals and must be called

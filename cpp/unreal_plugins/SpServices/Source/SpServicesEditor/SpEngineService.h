@@ -11,6 +11,9 @@
 
 #include "SpCore/Assert.h"
 
+// needed to use SpServices::engine_service_
+#include "SpServices/RpcServer.h"
+#include "SpServices/EngineService.h"
 #include "SpServices/SpServices.h"
 
 #include "SpEngineService.generated.h"
@@ -25,7 +28,7 @@ public:
     {
         SpServices* sp_services = FModuleManager::Get().GetModulePtr<SpServices>("SpServices");
         SP_ASSERT(sp_services);
-        SP_ASSERT(sp_services->engine_service_);
+        SP_ASSERT(sp_services->isInitialized());
         sp_services->engine_service_->executeEditorPostTransaction();
     }
 };

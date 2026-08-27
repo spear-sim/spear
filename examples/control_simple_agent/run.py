@@ -26,7 +26,8 @@ if __name__ == "__main__":
     with instance.begin_frame():
 
         # force high-res textures for captured images
-        game.console_service.set(name="r.Streaming.FullyLoadUsedTextures", value=1)
+        game.console_service.set_cvar(name="r.Streaming.FramesForFullUpdate", value=0)
+        game.console_service.set_cvar(name="r.Streaming.FullyLoadUsedTextures", value=1)
 
         # get UGameplayStatics
         gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
@@ -59,7 +60,7 @@ if __name__ == "__main__":
         final_tone_curve_hdr_component.initialize_sp_funcs()
 
         # show FPS
-        game.console_service.execute("stat fps")
+        game.console_service.execute_command("stat fps")
 
     with instance.end_frame():
         pass

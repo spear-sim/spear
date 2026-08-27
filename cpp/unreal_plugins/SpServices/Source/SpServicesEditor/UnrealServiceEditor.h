@@ -7,6 +7,7 @@
 
 #include <stdint.h> // uint64_t
 
+#include <memory> // std::unique_ptr
 #include <string>
 
 #include "SpCoreEditor/UnrealEditor.h"
@@ -21,7 +22,7 @@ public:
     UnrealServiceEditor(CUnrealEntryPointBinder auto* unreal_entry_point_binder)
     {
         //
-        // Get editor subsystem, !WITH_EDITOR implementations in SpServices/UnrealService.h
+        // Get editor subsystem, !WITH_EDITOR implementations in SpServices/UnrealService_0.h
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_editor_subsystem_by_class",
@@ -29,4 +30,7 @@ public:
                 return toUInt64(UnrealEditor::getEditorSubsystemByClass(toPtr<UClass>(uclass)));
             });
     }
+
+    template <CUnrealEntryPointBinder TEntryPointBinder>
+    static std::unique_ptr<UnrealServiceEditor> create(TEntryPointBinder* unreal_entry_point_binder);
 };

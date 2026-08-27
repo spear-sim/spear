@@ -6,7 +6,8 @@
 #pragma once
 
 #include <map>
-#include <mutex> // std::lock_guard
+#include <memory> // std::unique_ptr
+#include <mutex>  // std::lock_guard
 #include <string>
 #include <vector>
 
@@ -22,6 +23,7 @@
 #include "SpCore/SpStableNameManager.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
+#include "SpCore/UnrealUtils.h"
 
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/Service.h"
@@ -72,6 +74,9 @@ public:
         world_begin_tear_down_handle_.Reset();
         world_cleanup_handle_.Reset();
     }
+
+    template <CUnrealEntryPointBinder TEntryPointBinder>
+    static std::unique_ptr<WorldRegistryService> create(TEntryPointBinder* unreal_entry_point_binder);
 
 private:
     void postWorldInitializationHandler(UWorld* world, const UWorld::InitializationValues initialization_values)
