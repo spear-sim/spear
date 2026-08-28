@@ -20,10 +20,6 @@
 
 #include "SpUnrealTypes/SpRHIFeatureLevel.h"
 
-#ifdef PF_MAX
-#undef PF_MAX // Windows winsock2 macro, conflicts with a pixel format definition below
-#endif
-
 #include "SpRHIGlobals.generated.h"
 
 //
@@ -195,7 +191,7 @@ enum class ESpPixelFormat : uint8
     PF_ASTC_10x10_NORM_RG   = Unreal::getConstEnumValue(EPixelFormat::PF_ASTC_10x10_NORM_RG),
     PF_ASTC_12x12_NORM_RG   = Unreal::getConstEnumValue(EPixelFormat::PF_ASTC_12x12_NORM_RG),
     PF_R16G16_SINT          = Unreal::getConstEnumValue(EPixelFormat::PF_R16G16_SINT),
-    PF_MAX                  = Unreal::getConstEnumValue(EPixelFormat::PF_MAX)
+    PF_MAX_                 = Unreal::getConstEnumValue(EPixelFormat::PF_MAX),
 };
 
 // Engine/Source/Runtime/RHI/Public/RHIGlobals.h
