@@ -527,9 +527,9 @@ void USpSceneCaptureComponent2D::setupView(FSceneViewFamily& view_family, FScene
         }
         else if (Unreal::toStdString(engine_show_flag_setting.ShowFlagName) == "ReflectionOverride" && engine_show_flag_setting.Enabled) {
             view.DiffuseOverrideParameter = FVector4f(0.0f, 0.0f, 0.0f, 0.0f);
-            view.SpecularOverrideParameter = FVector4f(1, 1, 1, 0.0f);
-            view.NormalOverrideParameter = FVector4f(0, 0, 1, 0.0f);
-            view.RoughnessOverrideParameter = FVector2D(0.0f, 0.0f);
+            view.SpecularOverrideParameter = FVector4f(1.0f, 1.0f, 1.0f, 0.0f);
+            view.NormalOverrideParameter = FVector4f(0.0f, 0.0f, 1.0f, 0.0f);
+            view.RoughnessOverrideParameter = FVector2f(0.0f, 0.0f);
         }
 
         if (Unreal::toStdString(engine_show_flag_setting.ShowFlagName) == "Diffuse" && !engine_show_flag_setting.Enabled) {

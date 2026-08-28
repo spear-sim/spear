@@ -66,9 +66,11 @@ public:
         // for us, i.e., when -nostdout is absent. When -nostdout is present, Unreal's native console device
         // goes silent, so we don't automatically know that we want to return early here, i.e., we still have
         // a decision to make, so we fall through to the remaining checks in this function.
-        if (BOOST_OS_LINUX && !FParse::Param(FCommandLine::Get(), Unreal::toTCharPtr("nostdout"))) {
-            return;
-        }
+        #if BOOST_OS_LINUX
+            if (!FParse::Param(FCommandLine::Get(), Unreal::toTCharPtr("nostdout"))) {
+                return;
+            }
+        #endif
 
         // On all platforms, check the -sp-no-stdout (or its equivalent config value SP_CORE.OUTPUT_LOG.ENABLE_STDOUT).
         bool sp_stdout = true;
