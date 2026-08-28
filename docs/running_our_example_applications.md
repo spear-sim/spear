@@ -2,7 +2,7 @@
 
 ## Assumptions
 
-We will assume that you have completed all the steps in our [Getting Started](docs/getting_started.md) tutorial.
+We will assume that you have completed all the steps in our [Getting Started](getting_started.md) tutorial.
 
 ## Installing additional Python dependencies
 
@@ -39,6 +39,7 @@ We recommend browsing through our example applications to get a sense of what is
   - [`examples/control_character`](../examples/control_character) demonstrates how to control the default Unreal humanoid character.
   - [`examples/control_city_generator`](../examples/control_city_generator) demonstrates how to control Epic Games' procedural city map.
   - [`examples/control_city_sample`](../examples/control_city_sample) demonstrates how to control Epic Games' `CitySample` project.
+  - [`examples/control_content_samples`](../examples/control_content_samples) demonstrates how to control Epic Games' `ContentSamples` project.
   - [`examples/control_cropout_sample`](../examples/control_cropout_sample) demonstrates how to control Epic Games' `CropoutSample` project.
   - [`examples/control_editor`](../examples/control_editor) demonstrates how to control the Unreal Editor and a play-in-editor simulation.
   - [`examples/control_electric_dreams_sample`](../examples/control_electric_dreams_sample) demonstrates how to control Epic Games' `ElectricDreams` project.
@@ -48,7 +49,7 @@ We recommend browsing through our example applications to get a sense of what is
   - [`examples/control_metahumans_sample`](../examples/control_metahumans_sample) demonstrates how to control Epic Games' `MetaHumans` project.
   - [`examples/control_simple_agent`](../examples/control_simple_agent) demonstrates how to control a simple agent and obtain egocentric visual observations.
   - [`examples/control_stackobot_sample`](../examples/control_stackobot_sample) demonstrates how to control Epic Games' `StackOBot` project.
-  - [`examples/debug_draw`](../examples/debug_draw) demonstrates how to interact with Unreal's DebugDraw system.
+  - [`examples/debug_draw`](../examples/debug_draw) demonstrates how to interact with Unreal's Debug Draw system.
   - [`examples/editor_script_interop`](../examples/editor_script_interop) demonstrates how to interact with the Unreal Editor's built-in Python API from SPEAR.
   - [`examples/enhanced_input`](../examples/enhanced_input) demonstrates how to interact with Unreal's Enhanced Input system.
   - [`examples/get_class_info`](../examples/get_class_info) demonstrates how to interact with Unreal's runtime reflection system.
@@ -71,4 +72,4 @@ We recommend browsing through our example applications to get a sense of what is
   - [`examples/render_image_hypersim`](../examples/render_image_hypersim) demonstrates how to render images that match the Hypersim dataset.
   - [`examples/render_image_multi_view`](../examples/render_image_multi_view) demonstrates how to render from a multi-view camera rig.
   - [`examples/render_image_path_tracer`](../examples/render_image_path_tracer) demonstrates how to render using Unreal's path tracer.
-  - [`examples/sample_nav_mesh`](../examples/sample_nav_mesh) demonstrates how to sample points and shortest paths from Unreal's nav mesh system.
+  - [`examples/sample_nav_mesh`](../examples/sample_nav_mesh) demonstrates how to sample points and shortest paths from Unreal's Nav Mesh system.
