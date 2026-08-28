@@ -44,11 +44,12 @@ We recommend browsing through our example applications to get a sense of what is
   - [`examples/control_editor`](../examples/control_editor) demonstrates how to control the Unreal Editor and a play-in-editor simulation.
   - [`examples/control_electric_dreams_sample`](../examples/control_electric_dreams_sample) demonstrates how to control Epic Games' `ElectricDreams` project.
   - [`examples/control_game_animation_sample`](../examples/control_game_animation_sample) demonstrates how to control Epic Games' `GameAnimationSample` project.
-  - [`examples/control_game_animation_sample_58`](../examples/control_game_animation_sample_58) demonstrates how to control Epic Games' `GameAnimationSample` project.
+  - [`examples/control_game_animation_sample_58`](../examples/control_game_animation_sample_58) demonstrates how to control Epic Games' `GameAnimationSample` project in UE 5.8.
   - [`examples/control_hillside_sample`](../examples/control_hillside_sample) demonstrates how to control Epic Games' `HillsideSample` project.
   - [`examples/control_metahumans_sample`](../examples/control_metahumans_sample) demonstrates how to control Epic Games' `MetaHumans` project.
   - [`examples/control_simple_agent`](../examples/control_simple_agent) demonstrates how to control a simple agent and obtain egocentric visual observations.
   - [`examples/control_stackobot_sample`](../examples/control_stackobot_sample) demonstrates how to control Epic Games' `StackOBot` project.
+  - [`examples/control_zebra_sample`](../examples/control_zebra_sample) demonstrates how to control Epic Games' `ZebraSample` project.
   - [`examples/debug_draw`](../examples/debug_draw) demonstrates how to interact with Unreal's Debug Draw system.
   - [`examples/editor_script_interop`](../examples/editor_script_interop) demonstrates how to interact with the Unreal Editor's built-in Python API from SPEAR.
   - [`examples/enhanced_input`](../examples/enhanced_input) demonstrates how to interact with Unreal's Enhanced Input system.
