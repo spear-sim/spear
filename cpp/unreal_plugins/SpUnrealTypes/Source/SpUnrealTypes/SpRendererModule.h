@@ -15,7 +15,7 @@
 
 #include "SpCore/Unreal.h"
 
-#include "SpUnrealTypes/SpRHIFeatureLevel.h" // ESpRHIFeatureLevel
+#include "SpUnrealTypes/SpRHIFeatureLevel.h"
 
 #include "SpRendererModule.generated.h"
 
