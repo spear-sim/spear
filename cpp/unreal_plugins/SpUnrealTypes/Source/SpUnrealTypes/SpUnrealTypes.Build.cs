@@ -3,7 +3,6 @@
 // Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-using System;          // Exception
 using UnrealBuildTool; // ReadOnlyTargetRules
 
 public class SpUnrealTypes : SpModuleRules
