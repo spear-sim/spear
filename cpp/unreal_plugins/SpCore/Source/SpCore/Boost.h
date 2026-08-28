@@ -29,6 +29,11 @@
 
 // Avoid errors related to macros that are defined on Windows but conflict with <boost/asio.hpp>.
 
+#if BOOST_OS_WINDOWS || BOOST_OS_MACOS
+    #pragma push_macro("PF_MAX")
+    #undef PF_MAX
+#endif
+
 #if BOOST_OS_WINDOWS
     #pragma push_macro("TRUE")
     #pragma push_macro("FALSE")
@@ -55,8 +60,6 @@
     #define TRUE true
     #define FALSE false
 
-    #undef PF_MAX
-
     #define InterlockedCompareExchange _InterlockedCompareExchange
     #define InterlockedCompareExchangePointer _InterlockedCompareExchangePointer
     #define InterlockedDecrement _InterlockedDecrement
@@ -80,6 +83,9 @@ SP_END_SUPPRESS_COMPILER_WARNINGS
     #pragma pop_macro("InterlockedExchangeAdd")
     #pragma pop_macro("InterlockedIncrement")
 
+#endif
+
+#if BOOST_OS_WINDOWS || BOOST_OS_MACOS
     #pragma pop_macro("PF_MAX")
 #endif
 
