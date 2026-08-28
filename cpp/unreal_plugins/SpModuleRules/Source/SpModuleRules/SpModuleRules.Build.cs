@@ -41,7 +41,7 @@ public class SpModuleRules : ModuleRules
 
         PublicDependencyModuleNames.AddRange(new string[] {
             "AssetRegistry", "Chaos", "Core", "CoreUObject", "Engine", "EngineSettings", "InputCore", "Json", "JsonUtilities", "Landscape",
-            "LevelSequence", "NavigationSystem", "PhysicsCore", "RenderCore", "Renderer", "RHI", "Slate"});
+            "LevelSequence", "NavigationSystem", "PhysicsCore", "RenderCore", "Renderer", "RHI", "RHICore", "Slate"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         // Needed to expose an internal header in Renderer
