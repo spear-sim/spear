@@ -55,10 +55,7 @@ enum class ESpRequestedGPUCrash : uint8
 {
     None                = Unreal::getConstEnumValue(ERequestedGPUCrash::None),
     Type_Hang           = Unreal::getConstEnumValue(ERequestedGPUCrash::Type_Hang),
-    Type_Hang           = Unreal::getConstEnumValue(ERequestedGPUCrash::Type_Hang),
     Type_PageFault      = Unreal::getConstEnumValue(ERequestedGPUCrash::Type_PageFault),
-    Type_PageFault      = Unreal::getConstEnumValue(ERequestedGPUCrash::Type_PageFault),
-    Type_PlatformBreak  = Unreal::getConstEnumValue(ERequestedGPUCrash::Type_PlatformBreak),
     Type_PlatformBreak  = Unreal::getConstEnumValue(ERequestedGPUCrash::Type_PlatformBreak),
     Type_Assert         = Unreal::getConstEnumValue(ERequestedGPUCrash::Type_Assert),
     Queue_Direct        = Unreal::getConstEnumValue(ERequestedGPUCrash::Queue_Direct),
