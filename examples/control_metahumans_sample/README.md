@@ -28,7 +28,7 @@ You should see a MetaHumans character start talking. Additionally, an `images` d
 
 ## Control the MetaHumans face control rig
 
-In order to control the MetaHumans face control rig, we need to symlink a small amount of additional content into the `ZebraSample` project.
+In order to control the MetaHumans face control rig, we need to symlink a small amount of additional content into the `MetaHumans` project.
 
 ```console
 python ../../tools/update_symlink_for_external_content.py --unreal-project-dir path/to/MetaHumans --create --external-content-dir data --unreal-project-content-dir SPEAR
