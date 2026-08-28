@@ -55,6 +55,8 @@
     #define TRUE true
     #define FALSE false
 
+    #undef PF_MAX
+
     #define InterlockedCompareExchange _InterlockedCompareExchange
     #define InterlockedCompareExchangePointer _InterlockedCompareExchangePointer
     #define InterlockedDecrement _InterlockedDecrement
