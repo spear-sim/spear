@@ -22,17 +22,5 @@ public class SpUnrealTypes : SpModuleRules
 
         PublicDependencyModuleNames.AddRange(new string[] {"MovieRenderPipelineCore", "MovieRenderPipelineRenderPasses", "PCG", "SpCore"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
-
-        // if (target.Platform == UnrealTargetPlatform.Win64) {
-        //     PublicDependencyModuleNames.AddRange(new string[] {"D3D11RHI", "D3D12RHI", "VulkanRHI", "RHICore"});
-        //     AddEngineThirdPartyPrivateStaticDependencies(target, "DX11");
-        //     AddEngineThirdPartyPrivateStaticDependencies(target, "DX12");
-        //     AddEngineThirdPartyPrivateStaticDependencies(target, "Vulkan");
-        // } else if (target.Platform == UnrealTargetPlatform.Linux) {
-        //     PublicDependencyModuleNames.AddRange(new string[] {"VulkanRHI"});
-        //     AddEngineThirdPartyPrivateStaticDependencies(target, "Vulkan");
-        // } else {
-        //     throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + target.Platform);
-        // }
     }
 }
