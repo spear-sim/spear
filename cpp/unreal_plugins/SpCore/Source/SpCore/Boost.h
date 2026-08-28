@@ -39,6 +39,8 @@
     #pragma push_macro("InterlockedExchange")
     #pragma push_macro("InterlockedExchangeAdd")
     #pragma push_macro("InterlockedIncrement")
+    
+    #pragma push_macro("PF_MAX")
 
     #undef TRUE
     #undef FALSE
@@ -52,6 +54,8 @@
 
     #define TRUE true
     #define FALSE false
+
+    #undef PF_MAX
 
     #define InterlockedCompareExchange _InterlockedCompareExchange
     #define InterlockedCompareExchangePointer _InterlockedCompareExchangePointer
@@ -75,6 +79,8 @@ SP_END_SUPPRESS_COMPILER_WARNINGS
     #pragma pop_macro("InterlockedExchange")
     #pragma pop_macro("InterlockedExchangeAdd")
     #pragma pop_macro("InterlockedIncrement")
+
+    #pragma pop_macro("PF_MAX")
 #endif
 
 // ----------------------------------------------------------------------------------------------------------

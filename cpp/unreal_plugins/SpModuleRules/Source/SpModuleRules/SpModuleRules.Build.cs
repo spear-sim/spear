@@ -44,6 +44,15 @@ public class SpModuleRules : ModuleRules
             "LevelSequence", "NavigationSystem", "PhysicsCore", "RenderCore", "Renderer", "RHI", "Slate"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
+        // Required for our RHI interface
+        if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Win64) {
+            PublicDependencyModuleNames.AddRange(new string[] {"D3D11RHI", "D3D12RHI", "RHICore", "VulkanRHI"});
+            AddEngineThirdPartyPrivateStaticDependencies(readOnlyTargetRules, "DX11", "DX12", "Vulkan");
+        } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Linux) {
+            PublicDependencyModuleNames.Add("VulkanRHI");
+            AddEngineThirdPartyPrivateStaticDependencies(readOnlyTargetRules, "Vulkan");
+        }
+
         // Needed to expose a private header in Renderer
         PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(readOnlyTargetRules.RelativeEnginePath, "Source", "Runtime", "Renderer", "Private")));
 
