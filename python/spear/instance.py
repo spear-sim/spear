@@ -328,9 +328,6 @@ class Instance():
 
         spear.log_current_function()
 
-        # initialize engine service
-        self._engine_service.initialize()
-
         # wait until world initialized (if not wait_for_world_initialized then only try once)
         wait_for_desc = self._get_wait_for_desc(
             wait=wait_for_world_initialized, config=self._config.SPEAR.INSTANCE.INITIALIZE_WAIT_FOR_WORLD_INITIALIZED,
@@ -354,9 +351,6 @@ class Instance():
         warm_up=None, warm_up_time_seconds=0.0, warm_up_num_frames=0):
 
         spear.log_current_function()
-
-        # initialize engine service
-        self._engine_service.initialize()
 
         # wait until world initialized
         wait_for_desc = self._get_wait_for_desc(
@@ -406,9 +400,6 @@ class Instance():
         # only allow getting editor-scoped services if we're in the editor (regardless of PIE session) and we're not running a commandlet
         assert self.engine_globals_service.is_with_editor() and not self.engine_globals_service.is_running_commandlet()
 
-        # initialize engine service
-        self._engine_service.initialize()
-
         # wait until world initialized (if not wait_for_world_initialized then only try once)
         wait_for_desc = self._get_wait_for_desc(
             wait=wait_for_world_initialized, config=self._config.SPEAR.INSTANCE.GET_EDITOR_WAIT_FOR_WORLD_INITIALIZED,
@@ -452,9 +443,6 @@ class Instance():
 
         # only allow getting editor-scoped services if we're in the editor not in a PIE session and we're not running a commandlet
         assert self.engine_globals_service.is_editor() and not self.engine_globals_service.is_running_commandlet()
-
-        # initialize engine service
-        self._engine_service.initialize()
 
         # wait until world initialized
         wait_for_desc = self._get_wait_for_desc(
@@ -517,9 +505,6 @@ class Instance():
 
         spear.log_current_function()
 
-        # initialize engine service
-        self._engine_service.initialize()
-
         # wait until world initialized (if not wait_for_world_initialized then only try once)
         wait_for_desc = self._get_wait_for_desc(
             wait=wait_for_world_initialized, config=self._config.SPEAR.INSTANCE.GET_GAME_WAIT_FOR_WORLD_INITIALIZED,
@@ -560,9 +545,6 @@ class Instance():
         wait_for_engine_idle=None, wait_for_engine_idle_max_time_seconds=0.0, wait_for_engine_idle_log_interval_seconds=0.0):
 
         spear.log_current_function()
-
-        # initialize engine service
-        self._engine_service.initialize()
 
         # wait until world initialized
         wait_for_desc = self._get_wait_for_desc(

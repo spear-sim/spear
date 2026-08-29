@@ -121,7 +121,7 @@ def execute_code(code):
             _log(f'ERROR: Instance is in an unexpected frame state ("{_instance._engine_service._frame_state}"), attempting to re-initialize the instance in order to clean up...')
             _instance._engine_service.initialize()
 
-        # if we've recovered from the bad frame state, then we can clean up
+        # this should always be true at this point, but we avoid asserting since the MCP server needs to keep running even if this assumption is ever violated
         if _instance._engine_service._frame_state == "idle":
             _tool_suffix(world_desc=world_desc)
         else:
