@@ -15,7 +15,7 @@ allow-direct-references = true   # allow the fastpathplanning git direct referen
 
 [project]
 name = "spear-sim"
-version = "1.0.0"
+version = "1.1.0+ue58"
 requires-python = "~=3.11"
 dependencies = [
     "mcp==1.28.1",               # tools/run_mcp_server.py
