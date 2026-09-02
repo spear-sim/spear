@@ -260,10 +260,16 @@ class UnrealObject:
     # property notification interface
 
     def pre_edit_change(self):
-        self._unreal_service.pre_edit_change_from_string(uobject=self.uobject, property_name=self.property_name)
+        if self.property_name == "":
+            self._unreal_service.pre_edit_change(uobject=self.uobject)
+        else:
+            self._unreal_service.pre_edit_change_from_string(uobject=self.uobject, property_name=self.property_name)
 
     def post_edit_change(self):
-        self._unreal_service.post_edit_change_from_string(uobject=self.uobject, property_name=self.property_name)
+        if self.property_name == "":
+            self._unreal_service.post_edit_change(uobject=self.uobject)
+        else:
+            self._unreal_service.post_edit_change_from_string(uobject=self.uobject, property_name=self.property_name)
 
     # type checking interface
 
