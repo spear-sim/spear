@@ -26,4 +26,11 @@ public:
         SP_ASSERT(StaticMesh);
         return StaticMesh->GetBodySetup();
     }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    static void SetBodySetup(UStaticMesh* StaticMesh, UBodySetup* InBodySetup)
+    {
+        SP_ASSERT(StaticMesh);
+        StaticMesh->SetBodySetup(InBodySetup);
+    }
 };
