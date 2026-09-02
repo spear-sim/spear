@@ -54,6 +54,7 @@ void ASpGameMode::PostLogin(APlayerController* new_player)
     AGameModeBase::PostLogin(new_player);
 
     SP_ASSERT(GetWorld());
+    SP_ASSERT(new_player);
 
     // Set the stable name for the DefaultPawnClass instance so we can find it later. We only do this if the
     // pawn is non-null (it is possible for pawn to be null if we press "Simulate" in the editor), and if the

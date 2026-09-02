@@ -9,6 +9,8 @@
 #include <Kismet/BlueprintFunctionLibrary.h>
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
+#include "SpCore/Assert.h"
+
 #include "SpActorComponent.generated.h"
 
 UCLASS()
@@ -19,12 +21,14 @@ public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static void MarkRenderStateDirty(UActorComponent* ActorComponent)
     {
+        SP_ASSERT(ActorComponent);
         ActorComponent->MarkRenderStateDirty();
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static void SetCanEverAffectNavigation(UActorComponent* ActorComponent, bool bCanEverAffectNavigation)
     {
+        SP_ASSERT(ActorComponent);
         ActorComponent->SetCanEverAffectNavigation(bCanEverAffectNavigation);
     }
 };

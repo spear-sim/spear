@@ -5,23 +5,25 @@
 
 #pragma once
 
-#include <Components/SceneComponent.h>
+#include <Engine/StaticMesh.h> // UStaticMesh
 #include <Kismet/BlueprintFunctionLibrary.h>
-#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpCore/Assert.h"
 
-#include "SpSceneComponent.generated.h"
+#include "SpStaticMesh.generated.h"
+
+class UBodySetup;
 
 UCLASS()
-class USpSceneComponent : public UBlueprintFunctionLibrary
+class USpStaticMesh : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public:
+
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static void MarkRenderTransformDirty(USceneComponent* SceneComponent)
+    static UBodySetup* GetBodySetup(UStaticMesh* StaticMesh)
     {
-        SP_ASSERT(SceneComponent);
-        SceneComponent->MarkRenderTransformDirty();
+        SP_ASSERT(StaticMesh);
+        return StaticMesh->GetBodySetup();
     }
 };
