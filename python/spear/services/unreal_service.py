@@ -336,17 +336,17 @@ class UnrealService(spear.Service):
         properties = spear.to_json_string(obj=properties)
         return self.entry_point_caller.call_on_game_thread("set_properties_for_object_from_string", None, uobject, properties, notify_editor)
 
-    def set_properties_for_struct(self, value_ptr, ustruct, properties, notify=0):
+    def set_properties_for_struct(self, value_ptr, ustruct, properties, notify_object=0):
         ustruct = self.to_ustruct(ustruct=ustruct)
         properties = spear.to_json_string(obj=properties)
-        notify = spear.to_handle(obj=notify)
-        return self.entry_point_caller.call_on_game_thread("set_properties_for_struct_from_string", None, value_ptr, ustruct, properties, notify)
+        notify_object = spear.to_handle(obj=notify_object)
+        return self.entry_point_caller.call_on_game_thread("set_properties_for_struct_from_string", None, value_ptr, ustruct, properties, notify_object)
 
-    def set_properties_for_class(self, value_ptr, uclass, properties, notify=0):
+    def set_properties_for_class(self, value_ptr, uclass, properties, notify_object=0):
         uclass = self.to_uclass(uclass=uclass)
         properties = spear.to_json_string(obj=properties)
-        notify = spear.to_handle(obj=notify)
-        return self.entry_point_caller.call_on_game_thread("set_properties_for_struct_from_string", None, value_ptr, uclass, properties, notify)
+        notify_object = spear.to_handle(obj=notify_object)
+        return self.entry_point_caller.call_on_game_thread("set_properties_for_struct_from_string", None, value_ptr, uclass, properties, notify_object)
 
     #
     # Get and set individual property values using property descs
@@ -356,9 +356,17 @@ class UnrealService(spear.Service):
         uobject = spear.to_handle(obj=uobject)
         return self.entry_point_caller.call_on_game_thread("resolve_property_for_object_from_string", None, uobject, property_name)
 
-    def resolve_property_for_struct(self, value_ptr, ustruct, property_name, notify=0):
-        notify = spear.to_handle(obj=notify)
-        return self.entry_point_caller.call_on_game_thread("resolve_property_for_struct_from_string", None, value_ptr, ustruct, property_name, notify)
+    def resolve_property_for_struct(self, value_ptr, ustruct, property_name, notify_object=0, parent=None):
+        if notify_object != 0:
+            assert parent is None # notify_object is only valid without a parent; a non-default parent supplies its own notify object
+        if parent is not None:
+            assert notify_object == 0 # a non-default parent supplies its own notify object
+        notify_object = spear.to_handle(obj=notify_object)
+        parent = parent if parent is not None else spear.PropertyDesc()
+        return self.entry_point_caller.call_on_game_thread("resolve_property_for_struct_from_string", None, value_ptr, ustruct, property_name, notify_object, parent)
+
+    def resolve_property_for_property_desc(self, property_desc, property_name):
+        return self.entry_point_caller.call_on_game_thread("resolve_property_for_property_desc_from_string", None, property_desc, property_name)
 
     def get_property_value(self, property_desc):
         convert_func = lambda result: spear.try_to_dict(json_string=result)
@@ -392,36 +400,55 @@ class UnrealService(spear.Service):
         property_value = spear.to_json_string(obj=property_value)
         return self.entry_point_caller.call_on_game_thread("set_property_value_for_object_from_string", None, uobject, property_name, property_value, notify_editor)
 
-    def set_property_value_for_struct(self, value_ptr, ustruct, property_name, property_value, notify=0):
+    def set_property_value_for_struct(self, value_ptr, ustruct, property_name, property_value, notify_object=0, parent=None):
+        if notify_object != 0:
+            assert parent is None # notify_object is only valid without a parent; a non-default parent supplies its own notify object
+        if parent is not None:
+            assert notify_object == 0 # a non-default parent supplies its own notify object
         property_value = spear.to_json_string(obj=property_value)
-        notify = spear.to_handle(obj=notify)
-        return self.entry_point_caller.call_on_game_thread("set_property_value_for_struct_from_string", None, value_ptr, ustruct, property_name, property_value, notify)
+        notify_object = spear.to_handle(obj=notify_object)
+        parent = parent if parent is not None else spear.PropertyDesc()
+        return self.entry_point_caller.call_on_game_thread("set_property_value_for_struct_from_string", None, value_ptr, ustruct, property_name, property_value, notify_object, parent)
 
-    def set_property_value_for_class(self, value_ptr, uclass, property_name, property_value, notify=0):
+    def set_property_value_for_class(self, value_ptr, uclass, property_name, property_value, notify_object=0, parent=None):
+        if notify_object != 0:
+            assert parent is None # notify_object is only valid without a parent; a non-default parent supplies its own notify object
+        if parent is not None:
+            assert notify_object == 0 # a non-default parent supplies its own notify object
         uclass = self.to_uclass(uclass=uclass)
         property_value = spear.to_json_string(obj=property_value)
-        notify = spear.to_handle(obj=notify)
-        return self.entry_point_caller.call_on_game_thread("set_property_value_for_struct_from_string", None, value_ptr, uclass, property_name, property_value, notify)
+        notify_object = spear.to_handle(obj=notify_object)
+        parent = parent if parent is not None else spear.PropertyDesc()
+        return self.entry_point_caller.call_on_game_thread("set_property_value_for_struct_from_string", None, value_ptr, uclass, property_name, property_value, notify_object, parent)
 
     #
     # Property notification interface
     #
 
-    def pre_edit_change(self, uobject, property=0):
+    def supports_edit_change_notify(self, property_desc):
+        return self.entry_point_caller.call_on_game_thread("supports_edit_change_notify", None, property_desc)
+
+    def pre_edit_change(self, uobject, prop=0):
         uobject = spear.to_handle(obj=uobject)
-        return self.entry_point_caller.call_on_game_thread("pre_edit_change", None, uobject, property)
+        return self.entry_point_caller.call_on_game_thread("pre_edit_change", None, uobject, prop)
 
     def pre_edit_change_from_string(self, uobject, property_name):
         uobject = spear.to_handle(obj=uobject)
         return self.entry_point_caller.call_on_game_thread("pre_edit_change_from_string", None, uobject, property_name)
 
-    def post_edit_change(self, uobject, property=0):
+    def pre_edit_change_from_property_desc(self, property_desc):
+        return self.entry_point_caller.call_on_game_thread("pre_edit_change_from_property_desc", None, property_desc)
+
+    def post_edit_change(self, uobject, prop=0):
         uobject = spear.to_handle(obj=uobject)
-        return self.entry_point_caller.call_on_game_thread("post_edit_change", None, uobject, property)
+        return self.entry_point_caller.call_on_game_thread("post_edit_change", None, uobject, prop)
 
     def post_edit_change_from_string(self, uobject, property_name):
         uobject = spear.to_handle(obj=uobject)
         return self.entry_point_caller.call_on_game_thread("post_edit_change_from_string", None, uobject, property_name)
+
+    def post_edit_change_from_property_desc(self, property_desc):
+        return self.entry_point_caller.call_on_game_thread("post_edit_change_from_property_desc", None, property_desc)
 
     #
     # Spawn actor

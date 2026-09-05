@@ -403,22 +403,22 @@ void UnrealUtils::setObjectPropertiesFromString(UObject* uobject, const std::str
 {
     SP_ASSERT(uobject);
 
-    UObject* notify = nullptr;
+    UObject* notify_object = nullptr;
     if (notify_editor) {
-        notify = uobject;
+        notify_object = uobject;
     }
 
-    setObjectPropertiesFromString(static_cast<void*>(uobject), uobject->GetClass(), string, notify);
+    setObjectPropertiesFromString(static_cast<void*>(uobject), uobject->GetClass(), string, notify_object);
 }
 
-void UnrealUtils::setObjectPropertiesFromString(void* value_ptr, const UStruct* ustruct, const std::string& string, UObject* notify)
+void UnrealUtils::setObjectPropertiesFromString(void* value_ptr, const UStruct* ustruct, const std::string& string, UObject* notify_object)
 {
     SP_ASSERT(value_ptr);
     SP_ASSERT(ustruct);
 
     #if WITH_EDITOR
-        if (notify) {
-            notify->PreEditChange(nullptr);
+        if (notify_object) {
+            notify_object->PreEditChange(nullptr);
         }
     #endif
 
@@ -432,9 +432,9 @@ void UnrealUtils::setObjectPropertiesFromString(void* value_ptr, const UStruct* 
     SP_ASSERT(success);
 
     #if WITH_EDITOR
-        if (notify) {
+        if (notify_object) {
             FPropertyChangedEvent property_changed_event(nullptr);
-            notify->PostEditChangeProperty(property_changed_event);
+            notify_object->PostEditChangeProperty(property_changed_event);
         }
     #endif
 }
@@ -456,11 +456,28 @@ SpPropertyDesc UnrealUtils::resolveProperty(UObject* uobject, const std::string&
     return resolveProperty(uobject, uobject->GetClass(), property_name, uobject);
 }
 
-SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustruct, FProperty* property, UObject* notify)
+SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustruct, FProperty* property, UObject* notify_object, const SpPropertyDesc& parent)
 {
     SP_ASSERT(value_ptr);
     SP_ASSERT(ustruct);
     SP_ASSERT(property);
+    SP_ASSERT(ustruct->IsChildOf(property->GetOwnerStruct())); // property must be a direct member of ustruct
+
+    // notify_object and parent are mutually exclusive
+
+    if (notify_object) {
+        SP_ASSERT(parent == SpPropertyDesc());
+    }
+
+    if (parent != SpPropertyDesc()) {
+        SP_ASSERT(!parent.notify_objects_.empty());
+        SP_ASSERT(parent.value_ptr_ == value_ptr);
+        SP_ASSERT(parent.notify_member_properties_.size() == parent.notify_objects_.size());
+        SP_ASSERT(parent.notify_element_properties_.size() == parent.notify_objects_.size());
+        SP_ASSERT(parent.notify_array_indices_.size() == parent.notify_objects_.size());
+        SP_ASSERT(parent.notify_map_keys_.size() == parent.notify_objects_.size());
+        notify_object = parent.notify_objects_.back();
+    }
 
     SpPropertyDesc property_desc;
     property_desc.property_ = property;
@@ -468,20 +485,55 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
     SP_ASSERT(property_desc.type_id_ != "");
     property_desc.value_ptr_ = property_desc.property_->ContainerPtrToValuePtr<void>(value_ptr);
     SP_ASSERT(property_desc.value_ptr_);
-    property_desc.notify_ = notify;
+
+    property_desc.notify_objects_            = parent.notify_objects_;
+    property_desc.notify_member_properties_  = parent.notify_member_properties_;
+    property_desc.notify_element_properties_ = parent.notify_element_properties_;
+    property_desc.notify_array_indices_      = parent.notify_array_indices_;
+    property_desc.notify_map_keys_           = parent.notify_map_keys_;
+
+    property_desc.notify_objects_.push_back(notify_object);
+    property_desc.notify_member_properties_.push_back(property);
+    property_desc.notify_element_properties_.push_back(nullptr);
+    property_desc.notify_array_indices_.push_back(-1);
+    property_desc.notify_map_keys_.push_back("");
+
     return property_desc;
 }
 
-SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustruct, const std::string& property_name, UObject* notify)
+SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustruct, const std::string& property_name, UObject* notify_object, const SpPropertyDesc& parent)
 {
     SP_ASSERT(value_ptr);
     SP_ASSERT(ustruct);
+
+    // notify_object and parent are mutually exclusive
+
+    if (notify_object) {
+        SP_ASSERT(parent == SpPropertyDesc());
+    }
+
+    if (parent != SpPropertyDesc()) {
+        SP_ASSERT(!parent.notify_objects_.empty());
+        SP_ASSERT(parent.value_ptr_ == value_ptr);
+        SP_ASSERT(parent.notify_member_properties_.size() == parent.notify_objects_.size());
+        SP_ASSERT(parent.notify_element_properties_.size() == parent.notify_objects_.size());
+        SP_ASSERT(parent.notify_array_indices_.size() == parent.notify_objects_.size());
+        SP_ASSERT(parent.notify_map_keys_.size() == parent.notify_objects_.size());
+        notify_object = parent.notify_objects_.back();
+    }
 
     std::vector<std::string> property_names = Std::tokenize(property_name, ".");
 
     SpPropertyDesc property_desc;
     property_desc.value_ptr_ = value_ptr;
-    property_desc.notify_ = notify;
+
+    property_desc.notify_objects_            = parent.notify_objects_;
+    property_desc.notify_member_properties_  = parent.notify_member_properties_;
+    property_desc.notify_element_properties_ = parent.notify_element_properties_;
+    property_desc.notify_array_indices_      = parent.notify_array_indices_;
+    property_desc.notify_map_keys_           = parent.notify_map_keys_;
+
+    UObject* current_object = notify_object; // base object for the current step; changes at each object traversal
 
     for (int i = 0; i < property_names.size(); i++) {
 
@@ -495,6 +547,13 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
         SP_ASSERT(property_desc.type_id_ != "");
         property_desc.value_ptr_ = property_desc.property_->ContainerPtrToValuePtr<void>(property_desc.value_ptr_);
         SP_ASSERT(property_desc.value_ptr_);
+
+        // Record one parallel notify entry per step. notify_objects_ and notify_member_properties_ are set
+        // here; notify_member_properties_ is set before the array/map block below so it refers to the
+        // container property rather than the array/map element. The array/map/default blocks below set the
+        // other three arrays.
+        property_desc.notify_objects_.push_back(current_object);
+        property_desc.notify_member_properties_.push_back(property_desc.property_);
 
         // If the current property is an array or map property, and the name includes the index operator,
         // then update the current property to refer to the array or map element based on the index. For map
@@ -516,6 +575,10 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
             SP_ASSERT(index < array_helper.Num());
             property_desc.value_ptr_ = array_property->GetValueAddressAtIndex_Direct(property_desc.property_, property_desc.value_ptr_, index);
             SP_ASSERT(property_desc.value_ptr_);
+
+            property_desc.notify_element_properties_.push_back(array_property->Inner);
+            property_desc.notify_array_indices_.push_back(index);
+            property_desc.notify_map_keys_.push_back("");
 
         } else if (property_desc.property_->IsA(FMapProperty::StaticClass()) && name_tokens.size() == 2) {
 
@@ -564,6 +627,15 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
                 }
             }
             SP_ASSERT(found);
+
+            property_desc.notify_element_properties_.push_back(map_property->ValueProp);
+            property_desc.notify_array_indices_.push_back(-1);
+            property_desc.notify_map_keys_.push_back(name_tokens.at(1));
+
+        } else {
+            property_desc.notify_element_properties_.push_back(nullptr);
+            property_desc.notify_array_indices_.push_back(-1);
+            property_desc.notify_map_keys_.push_back("");
         }
 
         // If the current property name is not the last name in our sequence, then by definition the current
@@ -578,8 +650,8 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
                 UObject* uobject = object_property->GetObjectPropertyValue(property_desc.value_ptr_);
                 SP_ASSERT(uobject);
                 property_desc.value_ptr_ = uobject;
-                property_desc.notify_ = uobject;
                 ustruct = uobject->GetClass();
+                current_object = uobject;
 
             } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
                 FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
@@ -593,6 +665,127 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
     }
 
     return property_desc;
+}
+
+SpPropertyDesc UnrealUtils::resolveProperty(const SpPropertyDesc& parent, FProperty* property)
+{
+    SP_ASSERT(parent.property_);
+    SP_ASSERT(parent.property_->IsA(FStructProperty::StaticClass()));
+    SP_ASSERT(!parent.notify_objects_.empty());
+
+    const UStruct* ustruct = static_cast<FStructProperty*>(parent.property_)->Struct;
+    return resolveProperty(parent.value_ptr_, ustruct, property, nullptr, parent);
+}
+
+SpPropertyDesc UnrealUtils::resolveProperty(const SpPropertyDesc& parent, const std::string& property_name)
+{
+    SP_ASSERT(parent.property_);
+    SP_ASSERT(parent.property_->IsA(FStructProperty::StaticClass()));
+    SP_ASSERT(!parent.notify_objects_.empty());
+
+    const UStruct* ustruct = static_cast<FStructProperty*>(parent.property_)->Struct;
+    return resolveProperty(parent.value_ptr_, ustruct, property_name, nullptr, parent);
+}
+
+bool UnrealUtils::supportsEditChangeNotify(const SpPropertyDesc& property_desc)
+{
+    // We can send an edit-change notification directly only if the resolved path stays within one object,
+    // has at most one array entry (its index is conveyed via the FPropertyChangedEvent array index map),
+    // and has no map entries (a map key can't be conveyed).
+
+    SP_ASSERT(!property_desc.notify_objects_.empty());
+    SP_ASSERT(property_desc.property_);
+
+    UObject* notify_object = property_desc.notify_objects_.back();
+    bool single_object     = Std::all(property_desc.notify_objects_ | std::views::transform([notify_object](auto object) { return object == notify_object; }));
+    int num_array_indices  = Std::countNonzero(property_desc.notify_array_indices_ | std::views::transform([](auto array_index) { return array_index != -1; }));
+    int num_map_keys       = Std::countNonzero(property_desc.notify_map_keys_ | std::views::transform([](auto& map_key) { return map_key != ""; }));
+
+    return single_object && num_array_indices <= 1 && num_map_keys == 0;
+}
+
+void UnrealUtils::preEditChange(const SpPropertyDesc& property_desc)
+{
+    #if WITH_EDITOR
+        SP_ASSERT(supportsEditChangeNotify(property_desc));
+
+        UObject* notify_object = property_desc.notify_objects_.back();
+        SP_ASSERT(notify_object);
+
+        FEditPropertyChain property_chain;
+        setEditPropertyChain(property_desc, property_chain);
+
+        notify_object->PreEditChange(property_chain);
+    #endif
+}
+
+void UnrealUtils::postEditChange(const SpPropertyDesc& property_desc)
+{
+    #if WITH_EDITOR
+        SP_ASSERT(supportsEditChangeNotify(property_desc));
+
+        UObject* notify_object = property_desc.notify_objects_.back();
+        SP_ASSERT(notify_object);
+
+        FEditPropertyChain property_chain;
+        setEditPropertyChain(property_desc, property_chain);
+
+        TArray<TMap<FString, int32>> array_indices_per_object;
+        FPropertyChangedChainEvent property_changed_chain_event = getPropertyChangedChainEvent(property_desc, property_chain, array_indices_per_object);
+        notify_object->PostEditChangeChainProperty(property_changed_chain_event);
+    #endif
+}
+
+void UnrealUtils::setEditPropertyChain(const SpPropertyDesc& property_desc, FEditPropertyChain& property_chain)
+{
+    #if WITH_EDITOR
+        // supportsEditChangeNotify guarantees every notify_objects_ entry is the same object, so the chain
+        // is simply every member property in order from root to leaf
+        for (auto member_property : property_desc.notify_member_properties_) {
+            property_chain.AddTail(member_property);
+        }
+
+        SP_ASSERT(property_chain.GetHead());
+        SP_ASSERT(property_chain.GetTail());
+        property_chain.SetActiveMemberPropertyNode(property_chain.GetHead()->GetValue());
+        property_chain.SetActivePropertyNode(property_chain.GetTail()->GetValue());
+    #endif
+}
+
+FPropertyChangedChainEvent UnrealUtils::getPropertyChangedChainEvent(const SpPropertyDesc& property_desc, FEditPropertyChain& property_chain, TArray<TMap<FString, int32>>& array_indices_per_object)
+{
+    // property_chain must already be populated by setEditPropertyChain. property_chain and array_indices_per_object
+    // are caller-owned backing storage: the returned FPropertyChangedChainEvent references property_chain by non-owning
+    // reference, and its FPropertyChangedEvent base references array_indices_per_object through a non-owning TArrayView
+    // (see SetArrayIndexPerObject), so both must outlive the returned event.
+
+    FPropertyChangedEvent property_changed_event(property_desc.property_);
+
+    #if WITH_EDITOR
+        // The active member property is the top-level member (Head of the edit property chain), which under the
+        // single-object invariant guaranteed by supportsEditChangeNotify is notify_member_properties_.front().
+        property_changed_event.SetActiveMemberProperty(property_desc.notify_member_properties_.front());
+
+        // Convey array indices for array entries, keyed by the array property name (matching the editor's
+        // convention in GenerateArrayIndexMapToObjectNode). The single-object invariant means every entry belongs
+        // to the notify object, so there is exactly one object node and no need to filter by object.
+        array_indices_per_object.AddDefaulted();
+        for (int i = 0; i < property_desc.notify_member_properties_.size(); i++) {
+            int array_index = property_desc.notify_array_indices_.at(i);
+            if (array_index != -1) {
+                FProperty* member_property = property_desc.notify_member_properties_.at(i);
+                SP_ASSERT(member_property);
+                array_indices_per_object.Last().Add(member_property->GetName(), array_index);
+            }
+        }
+
+        if (array_indices_per_object.Last().Num() > 0) {
+            property_changed_event.ObjectIteratorIndex = 0;
+            property_changed_event.SetArrayIndexPerObject(array_indices_per_object);
+        }
+    #endif
+
+    return FPropertyChangedChainEvent(property_chain, property_changed_event);
 }
 
 SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& property_desc)
@@ -813,8 +1006,7 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
 
     #if WITH_EDITOR
         if (notify_editor) {
-            SP_ASSERT(property_desc.notify_);
-            property_desc.notify_->PreEditChange(property_desc.property_);
+            preEditChange(property_desc);
         }
     #endif
 
@@ -1010,8 +1202,7 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
 
     #if WITH_EDITOR
         if (notify_editor) {
-            FPropertyChangedEvent property_changed_event(property_desc.property_);
-            property_desc.notify_->PostEditChangeProperty(property_changed_event);
+            postEditChange(property_desc);
         }
     #endif
 }

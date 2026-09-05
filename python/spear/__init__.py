@@ -59,11 +59,11 @@ from .utils import tool_utils as tools
 # conditional imports
 if __can_import_spear_ext__:
     assert not __can_import_unreal__
-    from spear_ext import DataBundle, PackedArray # directly into the spear namespace
+    from spear_ext import DataBundle, PackedArray, PropertyDesc # directly into the spear namespace
 
 if __can_import_unreal__:
     assert not __can_import_spear_ext__
-    from .utils.editor_utils import DataBundle, PackedArray # directly into the spear namespace
+    from .utils.editor_utils import DataBundle, PackedArray, PropertyDesc # directly into the spear namespace
     from .utils import editor_utils as editor # into a child namespace
 
 #

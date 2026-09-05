@@ -149,10 +149,15 @@ template <> // needed to send a custom type as an arg to the server
 struct clmdep_msgpack::adaptor::pack<PropertyDesc> {
     template <typename TStream>
     clmdep_msgpack::packer<TStream>& operator()(clmdep_msgpack::packer<TStream>& packer, PropertyDesc const& property_desc) const {
-        packer.pack_map(3);
-        packer.pack("property");  packer.pack(property_desc.property_);
-        packer.pack("value_ptr"); packer.pack(property_desc.value_ptr_);
-        packer.pack("type_id");   packer.pack(property_desc.type_id_);
+        packer.pack_map(8);
+        packer.pack("property");                  packer.pack(property_desc.property_);
+        packer.pack("value_ptr");                 packer.pack(property_desc.value_ptr_);
+        packer.pack("type_id");                   packer.pack(property_desc.type_id_);
+        packer.pack("notify_objects");            packer.pack(property_desc.notify_objects_);
+        packer.pack("notify_member_properties");  packer.pack(property_desc.notify_member_properties_);
+        packer.pack("notify_element_properties"); packer.pack(property_desc.notify_element_properties_);
+        packer.pack("notify_array_indices");      packer.pack(property_desc.notify_array_indices_);
+        packer.pack("notify_map_keys");           packer.pack(property_desc.notify_map_keys_);
         return packer;
     }
 };
@@ -161,11 +166,16 @@ template <> // needed to send a custom type as an arg to the server
 struct clmdep_msgpack::adaptor::object_with_zone<PropertyDesc> {
     void operator()(clmdep_msgpack::object::with_zone& o, const PropertyDesc& v) const {
         o.type = clmdep_msgpack::type::MAP;
-        o.via.map.size = 3;
-        o.via.map.ptr = static_cast<clmdep_msgpack::object_kv*>(o.zone.allocate_align(sizeof(clmdep_msgpack::object_kv) * 3, MSGPACK_ZONE_ALIGNOF(clmdep_msgpack::object_kv)));
-        o.via.map.ptr[0].key = clmdep_msgpack::object("property",  o.zone); o.via.map.ptr[0].val = clmdep_msgpack::object(v.property_,  o.zone);
-        o.via.map.ptr[1].key = clmdep_msgpack::object("value_ptr", o.zone); o.via.map.ptr[1].val = clmdep_msgpack::object(v.value_ptr_, o.zone);
-        o.via.map.ptr[2].key = clmdep_msgpack::object("type_id",   o.zone); o.via.map.ptr[2].val = clmdep_msgpack::object(v.type_id_,   o.zone);
+        o.via.map.size = 8;
+        o.via.map.ptr = static_cast<clmdep_msgpack::object_kv*>(o.zone.allocate_align(sizeof(clmdep_msgpack::object_kv) * 8, MSGPACK_ZONE_ALIGNOF(clmdep_msgpack::object_kv)));
+        o.via.map.ptr[0].key = clmdep_msgpack::object("property",                  o.zone); o.via.map.ptr[0].val = clmdep_msgpack::object(v.property_,                  o.zone);
+        o.via.map.ptr[1].key = clmdep_msgpack::object("value_ptr",                 o.zone); o.via.map.ptr[1].val = clmdep_msgpack::object(v.value_ptr_,                 o.zone);
+        o.via.map.ptr[2].key = clmdep_msgpack::object("type_id",                   o.zone); o.via.map.ptr[2].val = clmdep_msgpack::object(v.type_id_,                   o.zone);
+        o.via.map.ptr[3].key = clmdep_msgpack::object("notify_objects",            o.zone); o.via.map.ptr[3].val = clmdep_msgpack::object(v.notify_objects_,            o.zone);
+        o.via.map.ptr[4].key = clmdep_msgpack::object("notify_member_properties",  o.zone); o.via.map.ptr[4].val = clmdep_msgpack::object(v.notify_member_properties_,  o.zone);
+        o.via.map.ptr[5].key = clmdep_msgpack::object("notify_element_properties", o.zone); o.via.map.ptr[5].val = clmdep_msgpack::object(v.notify_element_properties_, o.zone);
+        o.via.map.ptr[6].key = clmdep_msgpack::object("notify_array_indices",      o.zone); o.via.map.ptr[6].val = clmdep_msgpack::object(v.notify_array_indices_,      o.zone);
+        o.via.map.ptr[7].key = clmdep_msgpack::object("notify_map_keys",           o.zone); o.via.map.ptr[7].val = clmdep_msgpack::object(v.notify_map_keys_,           o.zone);
     }
 };
 
@@ -173,10 +183,15 @@ template <> // needed to receive a custom type as a return value from the server
 struct clmdep_msgpack::adaptor::convert<PropertyDesc> {
     clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, PropertyDesc& property_desc) const {
         std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
-        SP_ASSERT(objects.size() == 3);
-        property_desc.property_  = MsgpackUtils::to<uint64_t>(objects.at("property"));
-        property_desc.value_ptr_ = MsgpackUtils::to<uint64_t>(objects.at("value_ptr"));
-        property_desc.type_id_   = MsgpackUtils::to<std::string>(objects.at("type_id"));
+        SP_ASSERT(objects.size() == 8);
+        property_desc.property_                  = MsgpackUtils::to<uint64_t>(objects.at("property"));
+        property_desc.value_ptr_                 = MsgpackUtils::to<uint64_t>(objects.at("value_ptr"));
+        property_desc.type_id_                   = MsgpackUtils::to<std::string>(objects.at("type_id"));
+        property_desc.notify_objects_            = MsgpackUtils::to<std::vector<uint64_t>>(objects.at("notify_objects"));
+        property_desc.notify_member_properties_  = MsgpackUtils::to<std::vector<uint64_t>>(objects.at("notify_member_properties"));
+        property_desc.notify_element_properties_ = MsgpackUtils::to<std::vector<uint64_t>>(objects.at("notify_element_properties"));
+        property_desc.notify_array_indices_      = MsgpackUtils::to<std::vector<int>>(objects.at("notify_array_indices"));
+        property_desc.notify_map_keys_           = MsgpackUtils::to<std::vector<std::string>>(objects.at("notify_map_keys"));
         return object;
     }
 };

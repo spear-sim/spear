@@ -59,8 +59,14 @@ NB_MODULE(spear_ext, module)
 
     auto property_desc_class = nanobind::class_<PropertyDesc>(module, "PropertyDesc");
     property_desc_class.def(nanobind::init<>());
-    property_desc_class.def_rw("property",  &PropertyDesc::property_);
-    property_desc_class.def_rw("value_ptr", &PropertyDesc::value_ptr_);
+    property_desc_class.def_rw("property",                  &PropertyDesc::property_);
+    property_desc_class.def_rw("value_ptr",                 &PropertyDesc::value_ptr_);
+    property_desc_class.def_rw("type_id",                   &PropertyDesc::type_id_);
+    property_desc_class.def_rw("notify_objects",            &PropertyDesc::notify_objects_);
+    property_desc_class.def_rw("notify_member_properties",  &PropertyDesc::notify_member_properties_);
+    property_desc_class.def_rw("notify_element_properties", &PropertyDesc::notify_element_properties_);
+    property_desc_class.def_rw("notify_array_indices",      &PropertyDesc::notify_array_indices_);
+    property_desc_class.def_rw("notify_map_keys",           &PropertyDesc::notify_map_keys_);
     property_desc_class.def("__repr__", [](const PropertyDesc& self) {
         std::ostringstream oss;
         oss << "spear_ext.PropertyDesc(" << "property=" << self.property_ << ", value_ptr=" << self.value_ptr_ << ")";

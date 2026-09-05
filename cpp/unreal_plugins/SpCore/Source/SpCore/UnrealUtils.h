@@ -48,10 +48,21 @@ class UWorld;
 
 struct SpPropertyDesc
 {
-    FProperty* property_ = nullptr;
-    void* value_ptr_ = nullptr;
-    std::string type_id_;
-    UObject* notify_ = nullptr;
+    FProperty* property_ = nullptr; // leaf property, not always equal to the tail of notify_member_properties_ when property_ refers to a specific entry in an array or map
+    void* value_ptr_ = nullptr;     // pointer to property_'s value for a specific object or struct
+    std::string type_id_;           // string ID representing the type of property_
+
+    // The following arrays are intended to be parallel, i.e., all the same length, with one entry per step
+    // in the resolved traversal. notify_objects_ and notify_member_properties_ are always set, and the
+    // remaining arrays describe an array or map entry at each step and are sentinels (nullptr, -1, "") for a
+    // plain member step. The object to notify is notify_objects_.back().
+    std::vector<UObject*> notify_objects_;              // base object at each step (repeated across a struct segment; changes each time a new object is traversed
+    std::vector<FProperty*> notify_member_properties_;  // named member property at each step (i.e., the container for an array or map entry)
+    std::vector<FProperty*> notify_element_properties_; // array Inner or map ValueProp at each step, or nullptr for a plain member step
+    std::vector<int> notify_array_indices_;             // array index at each step, or -1 for a non-array step
+    std::vector<std::string> notify_map_keys_;          // map key at each step, or "" for a non-map step
+
+    bool operator==(const SpPropertyDesc& other) const = default; // used to assert that a parent desc is entirely default
 };
 
 struct SpPropertyValue
@@ -145,7 +156,7 @@ public:
     static std::string getObjectPropertiesAsString(const void* value_ptr, const UStruct* ustruct);
 
     static void setObjectPropertiesFromString(UObject* uobject, const std::string& string, bool notify_editor = false);
-    static void setObjectPropertiesFromString(void* value_ptr, const UStruct* ustruct, const std::string& string, UObject* notify = nullptr);
+    static void setObjectPropertiesFromString(void* value_ptr, const UStruct* ustruct, const std::string& string, UObject* notify_object = nullptr);
 
     //
     // Get and set individual properties. Note that uobject can't be const because we cast it to (non-const)
@@ -154,12 +165,36 @@ public:
 
     static SpPropertyDesc resolveProperty(UObject* uobject, FProperty* property);
     static SpPropertyDesc resolveProperty(UObject* uobject, const std::string& property_name);
-    static SpPropertyDesc resolveProperty(void* value_ptr, const UStruct* ustruct, FProperty* property, UObject* notify = nullptr);
-    static SpPropertyDesc resolveProperty(void* value_ptr, const UStruct* ustruct, const std::string& property_name, UObject* notify = nullptr);
+    static SpPropertyDesc resolveProperty(void* value_ptr, const UStruct* ustruct, FProperty* property, UObject* notify_object = nullptr, const SpPropertyDesc& parent = {});
+    static SpPropertyDesc resolveProperty(void* value_ptr, const UStruct* ustruct, const std::string& property_name, UObject* notify_object = nullptr, const SpPropertyDesc& parent = {});
+    static SpPropertyDesc resolveProperty(const SpPropertyDesc& parent, FProperty* property);
+    static SpPropertyDesc resolveProperty(const SpPropertyDesc& parent, const std::string& property_name);
 
     static SpPropertyValue getPropertyValueAsString(const SpPropertyDesc& property_desc);
     static void setPropertyValueFromString(const SpPropertyDesc& property_desc, const std::string& string, bool notify_editor = false);
     static void setPropertyValueFromJsonValue(const SpPropertyDesc& property_desc, TSharedPtr<FJsonValue> json_value, bool notify_editor = false);
+
+    //
+    // Helper functions to fire editor property notifications. supportsEditChangeNotify returns true only if
+    // a resolved SpPropertyDesc object stays within one object, has at most one array entry, and has no map
+    // entries.
+    //
+
+    static bool supportsEditChangeNotify(const SpPropertyDesc& property_desc);
+    static void preEditChange(const SpPropertyDesc& property_desc);
+    static void postEditChange(const SpPropertyDesc& property_desc);
+
+private:
+
+    // setEditPropertyChain uses the out-param style because FEditPropertyChain is neither copyable nor movable, so
+    // it can't be returned by value. getPropertyChangedChainEvent can be returned by value, but it holds non-owning
+    // references into caller-owned backing storage that must outlive the returned event. These functions assume but
+    // do not assert that supportsEditChangeNotify(property_desc) is true.
+
+    static void setEditPropertyChain(const SpPropertyDesc& property_desc, FEditPropertyChain& property_chain);
+    static FPropertyChangedChainEvent getPropertyChangedChainEvent(const SpPropertyDesc& property_desc, FEditPropertyChain& property_chain, TArray<TMap<FString, int32>>& array_indices_per_object);
+
+public:
 
     //
     // Find objects

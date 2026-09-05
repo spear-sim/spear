@@ -133,10 +133,15 @@ template <> // needed to receive a custom type as an arg from the client
 struct clmdep_msgpack::adaptor::convert<SpPropertyDesc> {
     clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpPropertyDesc& sp_property_desc) const {
         std::map<std::string, clmdep_msgpack::object> map = MsgpackUtils::toMapOfMsgpackObjects(object);
-        SP_ASSERT(map.size() == 3);
-        sp_property_desc.property_  = MsgpackUtils::to<FProperty*>(map.at("property"));
-        sp_property_desc.value_ptr_ = MsgpackUtils::to<void*>(map.at("value_ptr"));
-        sp_property_desc.type_id_   = MsgpackUtils::to<std::string>(map.at("type_id"));
+        SP_ASSERT(map.size() == 8);
+        sp_property_desc.property_                  = MsgpackUtils::to<FProperty*>(map.at("property"));
+        sp_property_desc.value_ptr_                 = MsgpackUtils::to<void*>(map.at("value_ptr"));
+        sp_property_desc.type_id_                   = MsgpackUtils::to<std::string>(map.at("type_id"));
+        sp_property_desc.notify_objects_            = MsgpackUtils::toVector<UObject*>(MsgpackUtils::toVectorOfMsgpackObjects(map.at("notify_objects")));
+        sp_property_desc.notify_member_properties_  = MsgpackUtils::toVector<FProperty*>(MsgpackUtils::toVectorOfMsgpackObjects(map.at("notify_member_properties")));
+        sp_property_desc.notify_element_properties_ = MsgpackUtils::toVector<FProperty*>(MsgpackUtils::toVectorOfMsgpackObjects(map.at("notify_element_properties")));
+        sp_property_desc.notify_array_indices_      = MsgpackUtils::to<std::vector<int>>(map.at("notify_array_indices"));
+        sp_property_desc.notify_map_keys_           = MsgpackUtils::to<std::vector<std::string>>(map.at("notify_map_keys"));
         return object;
     }
 };
@@ -145,9 +150,14 @@ template <> // needed to send a custom type as a return value to the client
 struct clmdep_msgpack::adaptor::object_with_zone<SpPropertyDesc> {
     void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpPropertyDesc const& sp_property_desc) const {
         std::map<std::string, clmdep_msgpack::object> objects;
-        Std::insert(objects, "property",  MsgpackUtils::toMsgpackObject(sp_property_desc.property_,  object_with_zone));
-        Std::insert(objects, "value_ptr", MsgpackUtils::toMsgpackObject(sp_property_desc.value_ptr_, object_with_zone));
-        Std::insert(objects, "type_id",   MsgpackUtils::toMsgpackObject(sp_property_desc.type_id_,   object_with_zone));
+        Std::insert(objects, "property",                  MsgpackUtils::toMsgpackObject(sp_property_desc.property_,  object_with_zone));
+        Std::insert(objects, "value_ptr",                 MsgpackUtils::toMsgpackObject(sp_property_desc.value_ptr_, object_with_zone));
+        Std::insert(objects, "type_id",                   MsgpackUtils::toMsgpackObject(sp_property_desc.type_id_,   object_with_zone));
+        Std::insert(objects, "notify_objects",            MsgpackUtils::toVectorMsgpackObject(sp_property_desc.notify_objects_,            object_with_zone));
+        Std::insert(objects, "notify_member_properties",  MsgpackUtils::toVectorMsgpackObject(sp_property_desc.notify_member_properties_,  object_with_zone));
+        Std::insert(objects, "notify_element_properties", MsgpackUtils::toVectorMsgpackObject(sp_property_desc.notify_element_properties_, object_with_zone));
+        Std::insert(objects, "notify_array_indices",      MsgpackUtils::toMsgpackObject(sp_property_desc.notify_array_indices_, object_with_zone));
+        Std::insert(objects, "notify_map_keys",           MsgpackUtils::toMsgpackObject(sp_property_desc.notify_map_keys_,      object_with_zone));
         MsgpackUtils::setMsgpackObjectToMap(object_with_zone, objects);
     }
 };

@@ -30,6 +30,12 @@ struct PropertyDesc
     uint64_t property_ = 0;
     uint64_t value_ptr_ = 0;
     std::string type_id_;
+
+    std::vector<uint64_t> notify_objects_;
+    std::vector<uint64_t> notify_member_properties_;
+    std::vector<uint64_t> notify_element_properties_;
+    std::vector<int> notify_array_indices_;
+    std::vector<std::string> notify_map_keys_;
 };
 
 struct PropertyValue
