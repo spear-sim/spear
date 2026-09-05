@@ -845,7 +845,7 @@ class Client:
             return spear.DataBundle(packed_arrays={ k: self._to_packed_array_return_value(v) for k, v in obj["packed_arrays"].items() }, unreal_obj_strings=self._to_str(obj["unreal_obj_strings"]), info=self._to_str(obj["info"]))
         elif return_as == "property_desc":
             obj = self._to_dict(obj)
-            return PropertyDesc(property=obj["property"], value_ptr=obj["value_ptr"], type_id=self._to_str(obj["type_id"]))
+            return PropertyDesc(property=obj["property"], value_ptr=obj["value_ptr"], type_id=self._to_str(obj["type_id"]), notify_objects=obj["notify_objects"], notify_member_properties=obj["notify_member_properties"], notify_element_properties=obj["notify_element_properties"], notify_array_indices=obj["notify_array_indices"], notify_map_keys=self._to_str(obj["notify_map_keys"]))
         elif return_as == "property_value":
             obj = self._to_dict(obj)
             return spear.PropertyValue(value=self._to_str(obj["value"]), type_id=self._to_str(obj["type_id"]))
@@ -869,17 +869,8 @@ class Client:
         function_descs = {}
         for k, v in self._to_dict(obj.get("function_descs", {})).items():
             v = self._to_dict(v)
-            function_descs[self._to_str(k)] = FunctionDesc(
-                function=v["function"],
-                function_name=self._to_str(v["function_name"]),
-                static_class=v["static_class"],
-                static_class_name=self._to_str(v["static_class_name"]))
-        return StaticClassDesc(
-            static_class=obj["static_class"],
-            name=self._to_str(obj["name"]),
-            derived_classes=obj.get("derived_classes", []),
-            derived_class_names=self._to_str(obj.get("derived_class_names", [])),
-            function_descs=function_descs)
+            function_descs[self._to_str(k)] = FunctionDesc(function=v["function"], function_name=self._to_str(v["function_name"]), static_class=v["static_class"], static_class_name=self._to_str(v["static_class_name"]))
+        return StaticClassDesc(static_class=obj["static_class"], name=self._to_str(obj["name"]), derived_classes=obj.get("derived_classes", []), derived_class_names=self._to_str(obj.get("derived_class_names", [])), function_descs=function_descs)
 
     def _to_str(self, obj):
         if isinstance(obj, bytes):
@@ -962,10 +953,15 @@ class DataBundle(ClientStruct):
         return f"spear.DataBundle(packed_arrays={len(self.packed_arrays)}, unreal_obj_strings={len(self.unreal_obj_strings)}, info={len(self.info)})"
 
 class PropertyDesc(ClientStruct):
-    def __init__(self, property=0, value_ptr=0, type_id=""):
+    def __init__(self, property=0, value_ptr=0, type_id="", notify_objects=None, notify_member_properties=None, notify_element_properties=None, notify_array_indices=None, notify_map_keys=None):
         self.property = property
         self.value_ptr = value_ptr
         self.type_id = type_id
+        self.notify_objects = notify_objects if notify_objects is not None else []
+        self.notify_member_properties = notify_member_properties if notify_member_properties is not None else []
+        self.notify_element_properties = notify_element_properties if notify_element_properties is not None else []
+        self.notify_array_indices = notify_array_indices if notify_array_indices is not None else []
+        self.notify_map_keys = notify_map_keys if notify_map_keys is not None else []
 
     def __repr__(self):
         return f"spear.PropertyDesc(property={self.property}, value_ptr={self.value_ptr})"

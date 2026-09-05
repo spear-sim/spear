@@ -8,8 +8,8 @@
 #include <stddef.h> // size_t
 #include <stdint.h> // uint64_t
 
-#include <algorithm>   // std::ranges::all_of, std::ranges::any_of, std::ranges::find, std::ranges::copy, std::ranges::equal, std::ranges::sort,
-                       // std::ranges::set_intersection, std::ranges::unique
+#include <algorithm>   // std::ranges::all_of, std::ranges::any_of, std::ranges::count_if, std::ranges::find, std::ranges::copy, std::ranges::equal,
+                       // std::ranges::sort, std::ranges::set_intersection, std::ranges::unique
 #include <concepts>    // std::convertible_to, std::same_as
 #include <cstdlib>     // std::strtoull
 #include <cstring>     // std::memcpy
@@ -375,6 +375,13 @@ public:
     static bool any(TRange&& range)
     {
         return std::ranges::any_of(std::forward<TRange>(range), [](auto val) { return val; });
+    }
+
+    template <typename TRange> requires
+        CRangeValuesAreConvertibleTo<TRange, bool>
+    static int countNonzero(TRange&& range)
+    {
+        return static_cast<int>(std::ranges::count_if(std::forward<TRange>(range), [](auto val) { return val; }));
     }
 
     //
