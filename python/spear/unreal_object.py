@@ -62,23 +62,24 @@ class UnrealObject:
                 "qualified_function_descs": self._static_class_desc.function_descs,
                 "unqualified_function_descs": unqualified_function_descs}
 
-            self.call_async = UnrealObject(
-                unreal_service=self._unreal_service.call_async,
-                sp_func_service=self._sp_func_service.call_async,
-                config=self._config,
-                uobject=self.uobject,
-                uclass=self.uclass,
-                derived_state=self.derived_state,
-                is_top_level=False)
+            if self.property_name == "":
+                self.call_async = UnrealObject(
+                    unreal_service=self._unreal_service.call_async,
+                    sp_func_service=self._sp_func_service.call_async,
+                    config=self._config,
+                    uobject=self.uobject,
+                    uclass=self.uclass,
+                    derived_state=self.derived_state,
+                    is_top_level=False)
 
-            self.send_async = UnrealObject(
-                unreal_service=self._unreal_service.send_async,
-                sp_func_service=self._sp_func_service.send_async,
-                config=self._config,
-                uobject=self.uobject,
-                uclass=self.uclass,
-                derived_state=self.derived_state,
-                is_top_level=False)
+                self.send_async = UnrealObject(
+                    unreal_service=self._unreal_service.send_async,
+                    sp_func_service=self._sp_func_service.send_async,
+                    config=self._config,
+                    uobject=self.uobject,
+                    uclass=self.uclass,
+                    derived_state=self.derived_state,
+                    is_top_level=False)
 
         else:
             self.uobject = uobject
@@ -328,6 +329,7 @@ class UnrealObject:
     def __getattr__(self, attr_name):
         assert self.uclass != 0
         assert self.uobject != 0
+        assert attr_name not in ["call_async", "send_async"]
 
         # if self represents a UObject directly (i.e., it doesn't represent a possibly nested property), then we can call functions on it
         if self.property_name == "":
