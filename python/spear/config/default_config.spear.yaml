@@ -79,6 +79,13 @@ SPEAR:
     INITIALIZE_CLIENT_MAX_TIME_SECONDS: 120.0
     INITIALIZE_CLIENT_SLEEP_TIME_SECONDS: 1.0
 
+    # Wait for this amount of time for the Unreal instance to exit in response to a request_exit RPC call
+    # before giving up and forcefully killing the process. This is useful because the Unreal Editor can hang
+    # during shutdown, even if the entire SPEAR shutdown sequence executes successfully, after it has loaded
+    # a lot of scenes.
+    REQUEST_TERMINATE_UNREAL_INSTANCE_MAX_TIME_SECONDS: 120.0
+    REQUEST_TERMINATE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS: 1.0
+
     # Config options for the client
     CLIENT_FORCE_RETURN_ALIGNED_ARRAYS: False
     CLIENT_SUPPRESS_DEFAULT_LOGGING: False
@@ -147,9 +154,6 @@ SPEAR:
       MAX_TIME_SECONDS: 1000.0
       SLEEP_TIME_SECONDS: null
       LOG_INTERVAL_SECONDS: 1.0
-
-    # Sleep for this amount of time in-between checks to see if the Unreal instance has exited.
-    REQUEST_EXIT_UNREAL_INSTANCE_SLEEP_TIME_SECONDS: 1.0
 
   # Print debug info when calling UnrealObject functions.
   UNREAL_OBJECT:

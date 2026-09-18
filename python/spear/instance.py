@@ -14,6 +14,8 @@ import time
 if spear.__can_import_spear_ext__:
     import spear_ext
 
+if spear.__can_import_msgpackrpc__:
+    import msgpackrpc
 
 #
 # Global constants
@@ -628,7 +630,7 @@ class Instance():
         # terminate the Unreal instance first, and then terminate the client afterwards.
 
         if force:
-            self._force_kill_unreal_instance()
+            self._force_kill_unreal_instance(log_prefix="    ")
         else:
             self._request_terminate_unreal_instance()
         self._terminate_client(verbose=True, log_prefix="    ")
@@ -780,7 +782,7 @@ class Instance():
             if status not in expected_process_status_values:
                 spear.log("        ERROR: Unrecognized process status: ", status)
                 spear.log(f"        ERROR: Killing process {self._process.pid}...")
-                self._force_kill_unreal_instance()
+                self._force_kill_unreal_instance(log_prefix="        ")
                 assert False
 
         else:
@@ -878,7 +880,7 @@ class Instance():
             else:            
                 spear.log(f"        ERROR: engine_globals_service.call_sync_on_worker_thread.get_current_process_id returned {pid} but the PID of the process we just launched is {self._process.pid}. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables and try launching again.")
                 self._terminate_client(verbose=True, log_prefix="        ")
-                self._force_kill_unreal_instance()
+                self._force_kill_unreal_instance(log_prefix="        ")
                 assert False
         else:
             assert False
@@ -1009,32 +1011,46 @@ class Instance():
 
         if spear.__can_import_unreal__ or self._config.SPEAR.LAUNCH_MODE == "none":
             pass
-        elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:        
+        elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
             try:
                 self.step()
                 self.engine_globals_service.request_exit(force=False)
                 self._engine_service.terminate() # EngineService must be explicitly terminated, needs to be the last entry point that gets called
-            except:
-                pass # no need to log exception because this case is expected when the instance is no longer running
+                spear.log("        Finished terminating engine service, waiting for Unreal process to terminate...")
+            except RuntimeError:
+                spear.log("        Caught RPC timeout exception while terminating engine service, waiting for Unreal process to terminate...")
+            except msgpackrpc.error.TimeoutError:
+                spear.log("        Caught RPC timeout exception while terminating engine service, waiting for Unreal process to terminate...")
+            except Exception as e:
+                spear.log("        ERROR: Unexpected exception: ", e)
+
+            start_time_seconds = time.time()
+            elapsed_time_seconds = time.time() - start_time_seconds
             try:
                 status = self._process.status()
             except psutil.NoSuchProcess:
                 status = None
-            while status in expected_process_status_values:
-                time.sleep(self._config.SPEAR.INSTANCE.REQUEST_EXIT_UNREAL_INSTANCE_SLEEP_TIME_SECONDS)
+            while status in expected_process_status_values and elapsed_time_seconds < self._config.SPEAR.INSTANCE.REQUEST_TERMINATE_UNREAL_INSTANCE_MAX_TIME_SECONDS:
+                time.sleep(self._config.SPEAR.INSTANCE.REQUEST_TERMINATE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS)
                 try:
                     status = self._process.status()
                 except psutil.NoSuchProcess:
+                    status = None
                     break
+                elapsed_time_seconds = time.time() - start_time_seconds
+
+            if status in expected_process_status_values:
+                spear.log("        ERROR: Unreal process did not terminate successfully, forcefully killing...")
+                self._force_kill_unreal_instance(log_prefix="        ")
         else:
             assert False
 
         spear.log("        Finished requesting to terminate Unreal instance.")
 
 
-    def _force_kill_unreal_instance(self):
-        spear.log_current_function(prefix="    ")
-        spear.log("        Forcefully killing Unreal instance...")
+    def _force_kill_unreal_instance(self, log_prefix=""):
+        spear.log_current_function(prefix=log_prefix)
+        spear.log(f"{log_prefix}    Forcefully killing Unreal instance...")
 
         if spear.__can_import_unreal__ or self._config.SPEAR.LAUNCH_MODE == "none":
             assert False
@@ -1043,10 +1059,10 @@ class Instance():
                 self._process.terminate()
                 self._process.kill()
             except psutil.NoSuchProcess:
-                spear.log("        Process already terminated.")
+                spear.log(f"{log_prefix}    Process already terminated.")
             except Exception as e:
-                spear.log("        Exception: ", e)
-            spear.log("        Finished forcefully killing Unreal instance.")
+                spear.log(f"{log_prefix}    Exception: ", e)
+            spear.log(f"{log_prefix}    Finished forcefully killing Unreal instance.")
         else:
             assert False
 

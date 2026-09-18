@@ -1411,7 +1411,7 @@ private:
         } else if (vector.size() > 1) {
             SP_LOG_CURRENT_FUNCTION();
             SP_LOG("    ERROR: Input vector has multiple entries: [", Std::join(Std::toVector<std::string>(vector | std::views::transform([](auto v) { return Std::toString(v); })), ", "), "]");
-        }        
+        }
         SP_ASSERT(vector.size() == 1);
         return vector.at(0);
     }
