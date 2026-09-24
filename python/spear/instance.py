@@ -825,6 +825,14 @@ class Instance():
         # otherwise try to connect repeatedly, since the server might not have started yet
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
 
+            # spear.editor is only bound when we can import unreal (see spear/__init__.py), and we can only
+            # get here when we can't, so spear_ext is the only client implementation available in this
+            # branch. Check up front, because otherwise the loop below retries an AttributeError until
+            # INITIALIZE_CLIENT_MAX_TIME_SECONDS elapses before giving up.
+            if not spear.__can_import_spear_ext__:
+                spear.log("        ERROR: Can't import spear_ext, which is the only RPC client implementation available outside the Unreal Editor. See tools/install_python_extension.py. Giving up...")
+                assert False
+
             start_time_seconds = time.time()
             elapsed_time_seconds = time.time() - start_time_seconds
             while elapsed_time_seconds < self._config.SPEAR.INSTANCE.INITIALIZE_CLIENT_MAX_TIME_SECONDS:
