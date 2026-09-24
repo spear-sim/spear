@@ -28,8 +28,6 @@ if __name__ == "__main__":
     # define build variables
     #
 
-    # Libraries that need to appear at the end of the link line, e.g., static archives. CMake emits
-    # CMAKE_CXX_FLAGS before the object files, but CMAKE_CXX_STANDARD_LIBRARIES after them.
     cmake_cxx_standard_libraries = ""
 
     if sys.platform == "win32":
@@ -135,11 +133,8 @@ if __name__ == "__main__":
         common_cxx_flags = f"-std=c++20 {optimization_flags} -D_LIBCPP_ENABLE_EXPERIMENTAL -nostdinc++ -I\'{linux_libcpp_include_dir}\' -Wno-reserved-macro-identifier -stdlib=libc++"
         cmake_cxx_flags = common_cxx_flags
 
-        # UE ships libc++ and libc++abi as separate static archives, so they have to be named after the
-        # object files that reference them. Passing them in CMAKE_CXX_FLAGS puts them before the object
-        # files, where the linker sees no undefined symbols yet and therefore takes nothing from them. The
-        # module still links, but with no C++ runtime in DT_NEEDED, and importing it fails with, e.g.,
-        # "undefined symbol: _ZTVN10__cxxabiv117__class_type_infoE".
+        # libc++ and libc++abi are separate static archives in UE's clang SDK, so they need to come after
+        # the object files on the link line. CMAKE_CXX_FLAGS is emitted before them.
         cmake_cxx_standard_libraries = f"-L\'{linux_libcpp_lib_dir}\' -lc++ -lc++abi"
 
         if args.conda_script:
