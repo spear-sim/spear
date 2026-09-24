@@ -797,6 +797,7 @@ class Instance():
         spear.log("        Initializing client...")
 
         connected = False
+        connect_exception = None
 
         # If we're connecting to a running instance, then we assume that the server is already running and
         # only try to connect once.
@@ -850,10 +851,13 @@ class Instance():
                     connected = self._client.ping() == "ping"
                     break
 
-                except:
-                    # There is no need to log the exception because this case is expected until until we can
+                except Exception as e:
+                    # There is no need to log the exception here, because this case is expected until we can
                     # successfully connect to the server, which is why we set verbose=False when terminating
-                    # the client.
+                    # the client. But we retain it so we can report it if we never connect at all. Otherwise
+                    # a permanent failure, e.g., spear_ext not being importable, is indistinguishable from
+                    # the server simply not being ready yet, and is reported as neither.
+                    connect_exception = e
                     self._terminate_client(verbose=False)
 
                 time.sleep(self._config.SPEAR.INSTANCE.INITIALIZE_CLIENT_SLEEP_TIME_SECONDS)
@@ -866,6 +870,8 @@ class Instance():
             spear.log("        Connected to server.")
         else:
             spear.log("        ERROR: Couldn't connect to RPC server, giving up...")
+            if connect_exception is not None:
+                spear.log("        ERROR: Most recent exception when attempting to connect: ", repr(connect_exception))
             self._terminate_client(verbose=True, log_prefix="        ")
             assert False
 
