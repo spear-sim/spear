@@ -797,7 +797,6 @@ class Instance():
         spear.log("        Initializing client...")
 
         connected = False
-        connect_exception = None
 
         # If we're connecting to a running instance, then we assume that the server is already running and
         # only try to connect once.
@@ -825,7 +824,7 @@ class Instance():
         # otherwise try to connect repeatedly, since the server might not have started yet
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
 
-            assert spear.__can_import_spear_ext__ or spear.__can_import_unreal__
+            assert spear.__can_import_spear_ext__
 
             start_time_seconds = time.time()
             elapsed_time_seconds = time.time() - start_time_seconds
@@ -841,26 +840,21 @@ class Instance():
                     # Once a connection has been established, the client will wait for timeout seconds before
                     # throwing when calling a server function.
                     spear.log("        Attempting to connect to server...")
-                    if spear.__can_import_spear_ext__:
-                        self._client = spear_ext.Client("127.0.0.1", self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT, self._config.SPEAR.INSTANCE.CLIENT_SUPPRESS_DEFAULT_LOGGING)
-                        self._client.set_timeout(int(self._config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS)*1000)
-                    else:
-                        self._client = spear.editor.Client(
-                            address="127.0.0.1",
-                            port=self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT,
-                            timeout=float(self._config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS),
-                            reconnect_limit=int(self._config.SPEAR.INSTANCE.EDITOR_CLIENT_INTERNAL_RECONNECT_LIMIT))
+                    self._client = spear_ext.Client("127.0.0.1", self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT, self._config.SPEAR.INSTANCE.CLIENT_SUPPRESS_DEFAULT_LOGGING)
+                    self._client.set_timeout(int(self._config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS)*1000)
                     connected = self._client.ping() == "ping"
                     break
 
-                except Exception as e:
-                    # There is no need to log the exception here, because this case is expected until we can
+                except RuntimeError:
+                    # There is no need to log the exception because this case is expected until we can
                     # successfully connect to the server, which is why we set verbose=False when terminating
-                    # the client. But we retain it so we can report it if we never connect at all. Otherwise
-                    # a permanent failure, e.g., spear_ext not being importable, is indistinguishable from
-                    # the server simply not being ready yet, and is reported as neither.
-                    connect_exception = e
+                    # the client.
                     self._terminate_client(verbose=False)
+
+                except Exception as e:
+                    spear.log("        Exception: ", e)
+                    self._terminate_client(verbose=True, log_prefix="        ")
+                    assert False
 
                 time.sleep(self._config.SPEAR.INSTANCE.INITIALIZE_CLIENT_SLEEP_TIME_SECONDS)
                 elapsed_time_seconds = time.time() - start_time_seconds
@@ -872,8 +866,6 @@ class Instance():
             spear.log("        Connected to server.")
         else:
             spear.log("        ERROR: Couldn't connect to RPC server, giving up...")
-            if connect_exception is not None:
-                spear.log("        ERROR: Most recent exception when attempting to connect: ", repr(connect_exception))
             self._terminate_client(verbose=True, log_prefix="        ")
             assert False
 
