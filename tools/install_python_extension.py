@@ -28,8 +28,6 @@ if __name__ == "__main__":
     # define build variables
     #
 
-    cmake_cxx_standard_libraries = ""
-
     if sys.platform == "win32":
 
         assert args.cxx_compiler is None
@@ -51,6 +49,7 @@ if __name__ == "__main__":
 
         common_cxx_flags = f"/std:c++20 {optimization_flags} /EHsc /GR-"
         cmake_cxx_flags = common_cxx_flags
+        cmake_cxx_standard_libraries = ""
 
         cmd_prefix = f"conda activate {args.conda_env} & "
 
@@ -68,6 +67,7 @@ if __name__ == "__main__":
 
         common_cxx_flags = f"-std=c++20 {optimization_flags} -stdlib=libc++ -mmacosx-version-min=11.0"
         cmake_cxx_flags = common_cxx_flags
+        cmake_cxx_standard_libraries = ""
 
         if args.conda_script:
             if os.path.exists(args.conda_script):
@@ -132,9 +132,6 @@ if __name__ == "__main__":
 
         common_cxx_flags = f"-std=c++20 {optimization_flags} -D_LIBCPP_ENABLE_EXPERIMENTAL -nostdinc++ -I\'{linux_libcpp_include_dir}\' -Wno-reserved-macro-identifier -stdlib=libc++"
         cmake_cxx_flags = common_cxx_flags
-
-        # libc++ and libc++abi are separate static archives in UE's clang SDK, so they need to come after
-        # the object files on the link line. CMAKE_CXX_FLAGS is emitted before them.
         cmake_cxx_standard_libraries = f"-L\'{linux_libcpp_lib_dir}\' -lc++ -lc++abi"
 
         if args.conda_script:
