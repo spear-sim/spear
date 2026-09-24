@@ -49,6 +49,7 @@ if __name__ == "__main__":
 
         common_cxx_flags = f"/std:c++20 {optimization_flags} /EHsc /GR-"
         cmake_cxx_flags = common_cxx_flags
+        cmake_cxx_standard_libraries = ""
 
         cmd_prefix = f"conda activate {args.conda_env} & "
 
@@ -66,6 +67,7 @@ if __name__ == "__main__":
 
         common_cxx_flags = f"-std=c++20 {optimization_flags} -stdlib=libc++ -mmacosx-version-min=11.0"
         cmake_cxx_flags = common_cxx_flags
+        cmake_cxx_standard_libraries = ""
 
         if args.conda_script:
             if os.path.exists(args.conda_script):
@@ -128,8 +130,9 @@ if __name__ == "__main__":
         else:
             optimization_flags = "-O3"
 
-        common_cxx_flags = f"-std=c++20 {optimization_flags} -D_LIBCPP_ENABLE_EXPERIMENTAL -nostdinc++ -I\'{linux_libcpp_include_dir}\' -Wno-reserved-macro-identifier -stdlib=libc++ -L\'{linux_libcpp_lib_dir}\' -lc++ -lc++abi"
+        common_cxx_flags = f"-std=c++20 {optimization_flags} -D_LIBCPP_ENABLE_EXPERIMENTAL -nostdinc++ -I\'{linux_libcpp_include_dir}\' -Wno-reserved-macro-identifier -stdlib=libc++"
         cmake_cxx_flags = common_cxx_flags
+        cmake_cxx_standard_libraries = f"-L\'{linux_libcpp_lib_dir}\' -lc++ -lc++abi"
 
         if args.conda_script:
             if os.path.exists(args.conda_script):
@@ -174,6 +177,9 @@ if __name__ == "__main__":
         cmd_prefix + cmd_pip + \
         f'-C cmake.define.CMAKE_CXX_COMPILER="{cxx_compiler}" ' + \
         f'-C cmake.define.CMAKE_CXX_FLAGS="{cmake_cxx_flags}"'
+
+    if cmake_cxx_standard_libraries:
+        cmd = cmd + f' -C cmake.define.CMAKE_CXX_STANDARD_LIBRARIES="{cmake_cxx_standard_libraries}"'
 
     if args.debug:
         cmd = cmd + " -C cmake.define.CMAKE_BUILD_TYPE=Debug"
