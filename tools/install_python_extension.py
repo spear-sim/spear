@@ -118,6 +118,12 @@ if __name__ == "__main__":
         spear.log("Found Unreal libc++ include dir: ", linux_libcpp_include_dir)
         spear.log("Found Unreal libc++ lib dir:     ", linux_libcpp_lib_dir)
 
+        assert os.path.isdir(linux_libcpp_include_dir) and os.listdir(linux_libcpp_include_dir)
+        assert os.path.isdir(linux_libcpp_lib_dir) and os.listdir(linux_libcpp_lib_dir)
+
+        spear.log("Found Unreal libc++ include dir: ", linux_libcpp_include_dir)
+        spear.log("Found Unreal libc++ lib dir:     ", linux_libcpp_lib_dir)
+
         cxx_compiler = os.path.join(linux_clang_bin_dir, "clang++")
 
         # Don't use -fexperimental-library here, because this will attempt to link against a libc++ library

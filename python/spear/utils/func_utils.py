@@ -186,7 +186,7 @@ class SendAsyncEntryPointCaller(EntryPointCaller):
     def get(self, obj):
         return None
 
-class EditorEntryPointCaller(EntryPointCaller):
+class EditorCallSyncEntryPointCaller(EntryPointCaller):
     def call_on_worker_thread(self, func_name, convert_func, *args):
         long_func_name = f"{self._service_name}.call_sync_on_worker_thread.{func_name}"
         return_value = self.engine_service.call_on_worker_thread(long_func_name, *args)
@@ -212,7 +212,7 @@ class EditorEntryPointCaller(EntryPointCaller):
     def get(self, obj):
         return obj
 
-class EditorCallAsyncEntryPointCaller(EditorEntryPointCaller):
+class EditorCallAsyncEntryPointCaller(EditorCallSyncEntryPointCaller):
     def call_on_worker_thread(self, func_name, convert_func, *args):
         assert False # worker thread entry points always execute synchronously, so we should never be here
 
@@ -223,7 +223,7 @@ class EditorCallAsyncEntryPointCaller(EditorEntryPointCaller):
     def get(self, obj):
         return Future(future=None, get_future_result_func=lambda future: obj, convert_func=None, return_as=None)
 
-class EditorSendAsyncEntryPointCaller(EditorEntryPointCaller):
+class EditorSendAsyncEntryPointCaller(EditorCallSyncEntryPointCaller):
     def call_on_worker_thread(self, func_name, convert_func, *args):
         assert False # worker thread entry points always execute synchronously, so we should never be here
 
