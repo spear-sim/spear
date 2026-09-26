@@ -41,12 +41,12 @@ public class SpModuleRules : ModuleRules
 
         PublicDependencyModuleNames.AddRange(new string[] {
             "AssetRegistry", "Chaos", "Core", "CoreUObject", "Engine", "EngineSettings", "InputCore", "Json", "JsonUtilities", "Landscape",
-            "LevelSequence", "NavigationSystem", "PhysicsCore", "RenderCore", "Renderer", "RHI", "Slate"});
+            "LevelSequence", "NavigationSystem", "PhysicsCore", "RenderCore", "Renderer", "RHI", "RHICore", "Slate"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
 
         // Required for our RHI interface
         if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Win64) {
-            PublicDependencyModuleNames.AddRange(new string[] {"D3D11RHI", "D3D12RHI", "RHICore", "VulkanRHI"});
+            PublicDependencyModuleNames.AddRange(new string[] {"D3D11RHI", "D3D12RHI", "VulkanRHI"});
             AddEngineThirdPartyPrivateStaticDependencies(readOnlyTargetRules, "DX11", "DX12", "Vulkan");
         } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Linux) {
             PublicDependencyModuleNames.Add("VulkanRHI");

@@ -66,7 +66,7 @@ class Instance():
         self._engine_service.initialize() # must be initialized immediately
 
         if spear.__can_import_unreal__:
-            entry_point_caller_type = spear.EditorEntryPointCaller
+            entry_point_caller_type = spear.EditorCallSyncEntryPointCaller
         else:
             entry_point_caller_type = spear.CallSyncEntryPointCaller
 
@@ -150,7 +150,7 @@ class Instance():
             self._world = None
 
             if spear.__can_import_unreal__:
-                entry_point_caller_type = spear.EditorEntryPointCaller
+                entry_point_caller_type = spear.EditorCallSyncEntryPointCaller
             else:
                 entry_point_caller_type = spear.CallSyncEntryPointCaller
 
@@ -244,7 +244,7 @@ class Instance():
                 config=config)
 
             if spear.__can_import_unreal__:
-                entry_point_caller_type = spear.EditorEntryPointCaller
+                entry_point_caller_type = spear.EditorCallSyncEntryPointCaller
             else:
                 entry_point_caller_type = spear.CallSyncEntryPointCaller
 
@@ -276,7 +276,7 @@ class Instance():
                 config=config)
 
             if spear.__can_import_unreal__:
-                entry_point_caller_type = spear.EditorEntryPointCaller
+                entry_point_caller_type = spear.EditorCallSyncEntryPointCaller
             else:
                 entry_point_caller_type = spear.CallSyncEntryPointCaller
 

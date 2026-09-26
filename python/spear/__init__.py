@@ -48,7 +48,7 @@ from .utils.log_utils import get_default_log_enabled, log, log_current_function,
 from .utils.system_utils import configure_system
 
 # import a curated set of classes directly into the spear namespace
-from .utils.func_utils import CallSyncEntryPointCaller, EditorEntryPointCaller, Future, PropertyValue, Service, Shared
+from .utils.func_utils import CallSyncEntryPointCaller, EditorCallSyncEntryPointCaller, Future, PropertyValue, Service, Shared
 
 # import entire utils files into child namespaces
 from .utils import math_utils as math
