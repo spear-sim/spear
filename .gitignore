@@ -46,6 +46,8 @@ cpp/unreal_projects/SpearSim/SpearSim.code-workspace
 cpp/unreal_projects/SpearSim/SpearSim (Mac).xcworkspace
 cpp/unreal_projects/SpearSim/UpgradeLog.htm
 
+docs/agents.user.md
+
 examples/*/tmp
 examples/*/user_config.yaml
 
