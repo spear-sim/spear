@@ -1,0 +1,4 @@
+# User Preferences
+
+- The Unreal Engine 5.5 source is installed at `/Users/Shared/Epic_Games/UE_5.5`. Do not search this UE source by default. Only search it if asked specifically, and assume UE 5.5 unless told otherwise.
+- The Unreal Engine 5.8 source is installed at `/Users/Shared/Epic_Games/UE_5.8`. Only search this path if asked specifically to search the UE 5.8 code path.
