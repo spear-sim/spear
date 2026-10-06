@@ -54,13 +54,6 @@ if __name__ == "__main__":
 
         bp_multi_view_camera_sensor.K2_SetActorLocationAndRotation(NewLocation=camera_location, NewRotation=camera_rotator)
 
-        post_process_volume_settings = None
-        post_process_volumes = game.unreal_service.find_actors_by_class(uclass="APostProcessVolume")
-        if len(post_process_volumes) == 1:
-            post_process_volume = post_process_volumes[0]
-            spear.log("Found unique post-process volume: ", post_process_volume)
-            post_process_volume_settings = post_process_volume.Settings.get()
-
         # configure components
         component_names = sorted(components.keys())
         for c, component_name in enumerate(component_names):
