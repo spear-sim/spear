@@ -59,7 +59,8 @@ if __name__ == "__main__":
                 os.path.expanduser(os.path.join("~", "anaconda3", "etc", "profile.d", "conda.sh")),  # anaconda shell install
                 os.path.join(os.sep, "opt", "anaconda3", "etc", "profile.d", "conda.sh"),            # anaconda graphical install
                 os.path.expanduser(os.path.join("~", "miniconda3", "etc", "profile.d", "conda.sh")), # miniconda shell install
-                os.path.join(os.sep, "opt", "miniconda3", "etc", "profile.d", "conda.sh")]           # miniconda graphical install
+                os.path.join(os.sep, "opt", "miniconda3", "etc", "profile.d", "conda.sh"),           # miniconda graphical install
+                os.path.expanduser(os.path.join("~", "miniforge3", "etc", "profile.d", "conda.sh"))] # miniforge shell install
 
             conda_script = None
             for conda_script_candidate in conda_script_candidates:
@@ -83,7 +84,8 @@ if __name__ == "__main__":
             # see https://docs.anaconda.com/anaconda/user-guide/faq
             conda_script_candidates = [
                 os.path.expanduser(os.path.join("~", "anaconda3", "etc", "profile.d", "conda.sh")),
-                os.path.expanduser(os.path.join("~", "miniconda3", "etc", "profile.d", "conda.sh"))]
+                os.path.expanduser(os.path.join("~", "miniconda3", "etc", "profile.d", "conda.sh")),
+                os.path.expanduser(os.path.join("~", "miniforge3", "etc", "profile.d", "conda.sh"))]
 
             conda_script = None
             for conda_script_candidate in conda_script_candidates:
