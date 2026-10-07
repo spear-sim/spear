@@ -38,14 +38,15 @@ class RenderingQualityService(spear.Service):
         cinematic_quality_settings=True,
         texture_streaming="Disabled",
         use_lod_zero=True,
-        disable_hlods=True,
         use_high_quality_shadows=True,
         shadow_distance_scale=10.0,
         shadow_radius_threshold=0.001,
         override_view_distance_scale=True,
         view_distance_scale=50.0,
         disable_gpu_timeout=True,
-        flush_streaming_managers=True):
+        flush_streaming_managers=True,
+        enable_vt_invalidate_on_nanite_auto_lod=True,
+        disable_hlods=True):
 
         spear.log_current_function()
 
@@ -116,7 +117,10 @@ class RenderingQualityService(spear.Service):
         cvar_descs.append({"name": "r.SkipRedundantTransformUpdate", "value": 0, "type": "int", "optional": False})
         cvar_descs.append({"name": "p.ChaosCloth.UseTimeStepSmoothing", "value": 0, "type": "int", "optional": False})
         cvar_descs.append({"name": "r.Water.SkipWaterInfoTextureRenderWhenWorldRenderingDisabled", "value": 0, "type": "int", "optional": True})
-        cvar_descs.append({"name": "r.Nanite.VSMInvalidateOnLODDelta", "value": 1, "type": "int", "optional": False})
+
+        # MoviePipeline.EnableVTInvalidateOnNaniteLOD
+        if enable_vt_invalidate_on_nanite_auto_lod:
+            cvar_descs.append({"name": "r.Nanite.VSMInvalidateOnLODDelta", "value": 1, "type": "int", "optional": False})
 
         # Drop any optional cvars that aren't currently registered (e.g., r.D3D12.GPUTimeout without D3D12RHI).
         cvar_descs = [ cvar_desc for cvar_desc in cvar_descs if not (cvar_desc["optional"] and not self._console_service.exists(name=cvar_desc["name"])) ]
@@ -141,7 +145,6 @@ class RenderingQualityService(spear.Service):
 
         # bDisableHLODs
         if disable_hlods:
-            spear.log("    Executing console command: r.HLOD 0")
             self._console_service.execute_command(command="r.HLOD 0")
 
         self._restore_stack.append({"cvar_descs": previous_cvar_descs, "quality_levels": previous_quality_levels})
