@@ -6,6 +6,6 @@ SPEAR:
   LAUNCH_MODE: "editor"
 
   INSTANCE:
-    EDITOR_EXECUTABLE: "/Users/Shared/Epic_Games/UE_5.5/Engine/Binaries/Mac/UnrealEditor.app"
+    EDITOR_EXECUTABLE: "/Users/Shared/Epic_Games/UE_5.8/Engine/Binaries/Mac/UnrealEditor.app"
     EDITOR_UPROJECT: "/Users/mroberts/code/github/spear/cpp/unreal_projects/SpearSim/SpearSim.uproject"
     EDITOR_LAUNCH_MODE: "editor"

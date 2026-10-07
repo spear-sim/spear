@@ -50,7 +50,6 @@ if __name__ == "__main__":
         common_cxx_flags = f"/std:c++20 {optimization_flags} /EHsc /GR-"
         cmake_cxx_flags = common_cxx_flags
         cmake_cxx_standard_libraries = ""
-        cmake_exe_linker_flags = ""
 
         cmd_prefix = f"conda activate {args.conda_env} & "
 
@@ -69,7 +68,6 @@ if __name__ == "__main__":
         common_cxx_flags = f"-std=c++20 {optimization_flags} -stdlib=libc++ -mmacosx-version-min=11.0"
         cmake_cxx_flags = common_cxx_flags
         cmake_cxx_standard_libraries = ""
-        cmake_exe_linker_flags = ""
 
         if args.conda_script:
             if os.path.exists(args.conda_script):
@@ -121,12 +119,6 @@ if __name__ == "__main__":
         spear.log("Found Unreal libc++ include dir: ", linux_libcpp_include_dir)
         spear.log("Found Unreal libc++ lib dir:     ", linux_libcpp_lib_dir)
 
-        assert os.path.isdir(linux_libcpp_include_dir) and os.listdir(linux_libcpp_include_dir)
-        assert os.path.isdir(linux_libcpp_lib_dir) and os.listdir(linux_libcpp_lib_dir)
-
-        spear.log("Found Unreal libc++ include dir: ", linux_libcpp_include_dir)
-        spear.log("Found Unreal libc++ lib dir:     ", linux_libcpp_lib_dir)
-
         cxx_compiler = os.path.join(linux_clang_bin_dir, "clang++")
 
         # Don't use -fexperimental-library here, because this will attempt to link against a libc++ library
@@ -147,15 +139,6 @@ if __name__ == "__main__":
         # inserts CMAKE_CXX_FLAGS before the object files, so we pass these libraries here rather than in
         # cmake_cxx_flags.
         cmake_cxx_standard_libraries = f"-L\'{linux_libcpp_lib_dir}\' -lc++ -lc++abi"
-
-        # Before building spear_ext, CMake checks that the compiler works by building and linking a small test
-        # executable. This test executable is built with cmake_cxx_flags above, which includes -stdlib=libc++,
-        # so clang automatically adds -lc++ when linking it. But the test executable is not built with
-        # cmake_cxx_standard_libraries, so the -L path to UE's libc++ is missing, and the link fails because
-        # UE's libc++ isn't in clang's default search path. CMake does use CMAKE_EXE_LINKER_FLAGS when linking
-        # the test executable, so we pass the -L path there too. This flag has no effect on spear_ext itself,
-        # because spear_ext is a shared library rather than an executable.
-        cmake_exe_linker_flags = f"-L\'{linux_libcpp_lib_dir}\'"
 
         if args.conda_script:
             if os.path.exists(args.conda_script):
@@ -204,9 +187,6 @@ if __name__ == "__main__":
 
     if cmake_cxx_standard_libraries:
         cmd = cmd + f' -C cmake.define.CMAKE_CXX_STANDARD_LIBRARIES="{cmake_cxx_standard_libraries}"'
-
-    if cmake_exe_linker_flags:
-        cmd = cmd + f' -C cmake.define.CMAKE_EXE_LINKER_FLAGS="{cmake_exe_linker_flags}"'
 
     if args.debug:
         cmd = cmd + " -C cmake.define.CMAKE_BUILD_TYPE=Debug"

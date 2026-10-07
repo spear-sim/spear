@@ -7,7 +7,7 @@ In a pre-processing step, we need to install the SPEAR plugins into the `Hillsid
 ```console
 python ../../tools/install_plugins_in_external_project.py --external-project-dir path/to/HillsideSampleProject
 
-python ../../tools/run_uat.py --unreal-engine-dir path/to/UE_5.5 --unreal-project-dir path/to/HillsideSampleProject -build
+python ../../tools/run_uat.py --unreal-engine-dir path/to/UE_5.8 --unreal-project-dir path/to/HillsideSampleProject -build
 ```
 
 Next, we open the Unreal Editor and wait for the default map to fully load. Then we press play in the editor and wait for the Unreal simulation to load and warm up. Note that this project doesn't load its default lighting configuration by default after we press play, so we expect the viewport to be very dark. We will load the default lighting configuration programmatically in our `run.py` script below. Once the simulation is fully loaded and warmed up, we are ready to control the project via SPEAR.

@@ -11,7 +11,7 @@ To run this example, execute the following command in the Unreal Editor's Python
 Alternatively, you can run this script from the command-line as follows.
 
 ```console
-python ../../tools/run_editor_script.py --unreal-engine-dir path/to/UE_5.5 --launch-mode full --render-offscreen --script /absolute/path/to/spear/examples/render_image_editor_script/run.py
+python ../../tools/run_editor_script.py --unreal-engine-dir path/to/UE_5.8 --launch-mode full --render-offscreen --script /absolute/path/to/spear/examples/render_image_editor_script/run.py
 ```
 
 You should see a game window appear, as well as an OpenCV window that matches what you see in the game window. You can close the OpenCV window by pressing any key while it is in focus. Additionally, you should see an image saved in the same directory as this `README` file.

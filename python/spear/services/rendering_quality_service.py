@@ -43,9 +43,14 @@ class RenderingQualityService(spear.Service):
         shadow_radius_threshold=0.001,
         override_view_distance_scale=True,
         view_distance_scale=50.0,
+        override_grass_cull_distance_scale=True,
+        grass_cull_distance_scale=50.0,
+        override_grass_density_scale=False,
+        grass_density_scale=1.0,
         disable_gpu_timeout=True,
         flush_streaming_managers=True,
-        enable_vt_invalidate_on_nanite_auto_lod=True,
+        enable_vt_invalidate_on_nanite_lod=True,
+        alpha_output_override=True,
         disable_hlods=True):
 
         spear.log_current_function()
@@ -94,6 +99,14 @@ class RenderingQualityService(spear.Service):
         if override_view_distance_scale:
             cvar_descs.append({"name": "r.ViewDistanceScale", "value": view_distance_scale, "type": "float", "optional": False})
 
+        # bOverrideGrassCullDistanceScale
+        if override_grass_cull_distance_scale:
+            cvar_descs.append({"name": "grass.CullDistanceScale", "value": grass_cull_distance_scale, "type": "float", "optional": False})
+
+        # bOverrideGrassDensityScale
+        if override_grass_density_scale:
+            cvar_descs.append({"name": "grass.densityScale", "value": grass_density_scale, "type": "float", "optional": False})
+
         # bDisableGPUTimeout (this cvar only exists if the D3D12RHI module is loaded)
         if disable_gpu_timeout:
             cvar_descs.append({"name": "r.D3D12.GPUTimeout", "value": 0, "type": "int", "optional": True})
@@ -109,18 +122,25 @@ class RenderingQualityService(spear.Service):
         # Cvars that UMoviePipelineGameOverrideSetting always overrides, regardless of the switches above.
         cvar_descs.append({"name": "a.URO.Enable", "value": 0, "type": "int", "optional": False})
         cvar_descs.append({"name": "au.NeverMuteNonRealtimeAudioDevices", "value": 1, "type": "int", "optional": False})
+        cvar_descs.append({"name": "au.NeverDisableSubmixes", "value": 1, "type": "int", "optional": False})
         cvar_descs.append({"name": "r.SkyLight.RealTimeReflectionCapture.TimeSlice", "value": 0, "type": "int", "optional": False})
         cvar_descs.append({"name": "r.VolumetricRenderTarget", "value": 1, "type": "int", "optional": False})
         cvar_descs.append({"name": "r.VolumetricRenderTarget.Mode", "value": 3, "type": "int", "optional": False})
         cvar_descs.append({"name": "wp.Runtime.BlockOnSlowStreaming", "value": 0, "type": "int", "optional": False})
         cvar_descs.append({"name": "p.Chaos.ImmPhys.MinStepTime", "value": 0.0, "type": "float", "optional": False})
-        cvar_descs.append({"name": "r.SkipRedundantTransformUpdate", "value": 0, "type": "int", "optional": False})
         cvar_descs.append({"name": "p.ChaosCloth.UseTimeStepSmoothing", "value": 0, "type": "int", "optional": False})
+        cvar_descs.append({"name": "Slate.bAllowThrottling", "value": 0, "type": "int", "optional": False})
         cvar_descs.append({"name": "r.Water.SkipWaterInfoTextureRenderWhenWorldRenderingDisabled", "value": 0, "type": "int", "optional": True})
 
         # MoviePipeline.EnableVTInvalidateOnNaniteLOD
-        if enable_vt_invalidate_on_nanite_auto_lod:
+        if enable_vt_invalidate_on_nanite_lod:
             cvar_descs.append({"name": "r.Nanite.VSMInvalidateOnLODDelta", "value": 1, "type": "int", "optional": False})
+
+        # MoviePipeline.AlphaOutputOverride
+        if alpha_output_override:
+            cvar_descs.append({"name": "r.PostProcessing.PropagateAlpha", "value": 1, "type": "int", "optional": False})
+
+        cvar_descs.append({"name": "r.LUT.Size", "value": 64, "type": "int", "optional": False})
 
         # Drop any optional cvars that aren't currently registered (e.g., r.D3D12.GPUTimeout without D3D12RHI).
         cvar_descs = [ cvar_desc for cvar_desc in cvar_descs if not (cvar_desc["optional"] and not self._console_service.exists(name=cvar_desc["name"])) ]
