@@ -45,7 +45,7 @@ class RenderingQualityService(spear.Service):
         view_distance_scale=50.0,
         disable_gpu_timeout=True,
         flush_streaming_managers=True,
-        enable_vt_invalidate_on_nanite_auto_lod=True,
+        enable_vt_invalidate_on_nanite_lod=True,
         disable_hlods=True):
 
         spear.log_current_function()
@@ -119,7 +119,7 @@ class RenderingQualityService(spear.Service):
         cvar_descs.append({"name": "r.Water.SkipWaterInfoTextureRenderWhenWorldRenderingDisabled", "value": 0, "type": "int", "optional": True})
 
         # MoviePipeline.EnableVTInvalidateOnNaniteLOD
-        if enable_vt_invalidate_on_nanite_auto_lod:
+        if enable_vt_invalidate_on_nanite_lod:
             cvar_descs.append({"name": "r.Nanite.VSMInvalidateOnLODDelta", "value": 1, "type": "int", "optional": False})
 
         # Drop any optional cvars that aren't currently registered (e.g., r.D3D12.GPUTimeout without D3D12RHI).
