@@ -809,12 +809,14 @@ class Instance():
                 if spear.__can_import_spear_ext__:
                     self._client = spear_ext.Client(self._config.SPEAR.INSTANCE.RPC_SERVER_ADDRESS, self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT, self._config.SPEAR.INSTANCE.CLIENT_SUPPRESS_DEFAULT_LOGGING)
                     self._client.set_timeout(int(self._config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS)*1000)
-                else:
+                elif spear.__can_import_unreal__:
                     self._client = spear.editor.Client(
                         address=self._config.SPEAR.INSTANCE.RPC_SERVER_ADDRESS,
                         port=self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT,
                         timeout=float(self._config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS),
                         reconnect_limit=int(self._config.SPEAR.INSTANCE.EDITOR_CLIENT_INTERNAL_RECONNECT_LIMIT))
+                else:
+                    assert false
                 connected = self._client.ping() == "ping"
             except Exception as e:
                 spear.log("        Exception: ", e)
