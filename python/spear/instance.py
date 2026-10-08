@@ -816,7 +816,7 @@ class Instance():
                         timeout=float(self._config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS),
                         reconnect_limit=int(self._config.SPEAR.INSTANCE.EDITOR_CLIENT_INTERNAL_RECONNECT_LIMIT))
                 else:
-                    assert false
+                    assert False
                 connected = self._client.ping() == "ping"
             except Exception as e:
                 spear.log("        Exception: ", e)
