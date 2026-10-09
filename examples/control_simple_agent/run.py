@@ -60,7 +60,7 @@ if __name__ == "__main__":
         final_tone_curve_hdr_component.initialize_sp_funcs()
 
         # show FPS
-        game.console_service.execute_command("stat fps")
+        game.console_service.execute_command(command="stat fps")
 
     with instance.end_frame():
         pass

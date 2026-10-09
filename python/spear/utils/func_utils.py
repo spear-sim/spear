@@ -628,7 +628,7 @@ def _to_script_expr_value(obj):
 # needed to encode structs when passing them to editor Python
 def to_script_struct_expr(value, type_string):
     assert isinstance(value, dict)
-    return to_script_expr(ScriptStruct(value=value, type_string=type_string))
+    return to_script_expr(obj=ScriptStruct(value=value, type_string=type_string))
 
 # Decode a script result dict into a SPEAR Python object.
 def from_script_result(script_result, unreal_service=None, sp_func_service=None, config=None, as_handle=None, as_unreal_struct=None, as_unreal_class=None, as_unreal_object=None, with_sp_funcs=None):

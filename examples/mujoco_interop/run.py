@@ -211,9 +211,9 @@ if __name__ == "__main__":
         cam_position = lookat_pos - lookat_offset
         lookat_dir = lookat_pos - cam_position
         up_world = np.array([0.0, 0.0, 1.0])
-        cam_rotation_x_axis = normalize(lookat_dir)
-        cam_rotation_y_axis = normalize(np.cross(up_world, cam_rotation_x_axis))
-        cam_rotation_z_axis = normalize(np.cross(cam_rotation_x_axis, cam_rotation_y_axis))
+        cam_rotation_x_axis = normalize(vector=lookat_dir)
+        cam_rotation_y_axis = normalize(vector=np.cross(up_world, cam_rotation_x_axis))
+        cam_rotation_z_axis = normalize(vector=np.cross(cam_rotation_x_axis, cam_rotation_y_axis))
         cam_rotation_matrix = np.column_stack([cam_rotation_x_axis, cam_rotation_y_axis, cam_rotation_z_axis])
 
         if args.visual_parity_with_unreal:

@@ -26,7 +26,7 @@ import spear
 def script(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        runner = ScriptRunner(func(*args, **kwargs))
+        runner = ScriptRunner(generator=func(*args, **kwargs))
         runner.start()
         return runner
     return wrapper
@@ -302,17 +302,17 @@ def add_new_subobject_using_params(add_new_subobject_params, subobject_name, sub
 
 def get_subobject_descs_for_instance(instance):
     assert isinstance(instance, unreal.Object)
-    subobject_data_handles = subobject_data_subsystem.k2_gather_subobject_data_for_instance(instance)
-    return get_subobject_descs_for_data_handles(subobject_data_handles)
+    subobject_data_handles = subobject_data_subsystem.k2_gather_subobject_data_for_instance(context=instance)
+    return get_subobject_descs_for_data_handles(subobject_data_handles=subobject_data_handles)
 
 def get_subobject_descs_for_blueprint_asset(blueprint_asset):
     assert isinstance(blueprint_asset, unreal.Blueprint)
-    subobject_data_handles = subobject_data_subsystem.k2_gather_subobject_data_for_blueprint(blueprint_asset)
-    return get_subobject_descs_for_data_handles(subobject_data_handles)
+    subobject_data_handles = subobject_data_subsystem.k2_gather_subobject_data_for_blueprint(context=blueprint_asset)
+    return get_subobject_descs_for_data_handles(subobject_data_handles=subobject_data_handles)
 
 def get_subobject_descs_for_data_handles(subobject_data_handles):
     assert isinstance(subobject_data_handles, unreal.Array)
-    return [ get_subobject_desc_for_data_handle(h) for h in subobject_data_handles ]
+    return [ get_subobject_desc_for_data_handle(subobject_data_handle=h) for h in subobject_data_handles ]
 
 def get_subobject_desc_for_data_handle(subobject_data_handle):
     assert unreal.SubobjectDataBlueprintFunctionLibrary.is_handle_valid(data_handle=subobject_data_handle)
@@ -767,7 +767,7 @@ class Client:
         return_as = desc.type_names[0]
         if self.verbose_rpc_calls:
             spear.log(f"Calling: {func_name} : {args} -> {return_as}")
-        result = self._client.call(func_name, *[self._to_args(arg) for arg in args])
+        result = self._client.call(func_name, *[self._to_args(obj=arg) for arg in args])
         return_value = self._to_return_values(obj=result, return_as=return_as)
         if self.verbose_rpc_calls:
             spear.log(f"Obtained return value: {return_value}")
@@ -777,14 +777,14 @@ class Client:
         if isinstance(obj, str):
             return obj.encode("utf-8")
         elif isinstance(obj, spear.PackedArray):
-            packed_array_arg = self._to_packed_array_arg(obj)
-            return self._to_args(packed_array_arg)
+            packed_array_arg = self._to_packed_array_arg(packed_array=obj)
+            return self._to_args(obj=packed_array_arg)
         elif isinstance(obj, ClientStruct):
-            return { attribute_name: self._to_args(attribute_value) for attribute_name, attribute_value in vars(obj).items() }
+            return { attribute_name: self._to_args(obj=attribute_value) for attribute_name, attribute_value in vars(obj).items() }
         elif isinstance(obj, list):
-            return [ self._to_args(o) for o in obj ]
+            return [ self._to_args(obj=o) for o in obj ]
         elif isinstance(obj, dict):
-            return { self._to_args(k): self._to_args(v) for k, v in obj.items() }
+            return { self._to_args(obj=k): self._to_args(obj=v) for k, v in obj.items() }
         else:
             return obj
 
@@ -809,96 +809,96 @@ class Client:
         if return_as in ["void", "bool", "float", "int32", "int64", "uint64", "vector_of_uint64"]:
             return obj
         elif return_as in ["string", "vector_of_string", "map_of_string_to_uint64", "map_of_string_to_string"]:
-            return self._to_str(obj)
+            return self._to_str(obj=obj)
         elif return_as == "vector_of_static_struct_desc":
-            obj = self._to_dict(obj)
-            return [ StaticStructDesc(static_struct=v["static_struct"], name=self._to_str(v["name"])) for v in obj ]
+            obj = self._to_dict(obj=obj)
+            return [ StaticStructDesc(static_struct=v["static_struct"], name=self._to_str(obj=v["name"])) for v in obj ]
         elif return_as == "vector_of_static_class_desc":
-            obj = self._to_dict(obj)
-            return [ self._to_static_class_desc(v) for v in obj ]
+            obj = self._to_dict(obj=obj)
+            return [ self._to_static_class_desc(obj=v) for v in obj ]
         elif return_as == "map_of_string_to_packed_array":
-            obj = self._to_dict(obj)
-            return { k: self._to_packed_array_return_value(v) for k, v in obj.items() }
+            obj = self._to_dict(obj=obj)
+            return { k: self._to_packed_array_return_value(obj=v) for k, v in obj.items() }
         elif return_as == "map_of_string_to_shared_memory_view":
-            obj = self._to_dict(obj)
-            return { k: SharedMemoryView(id=self._to_str(v["id"]), num_bytes=v["num_bytes"], offset_bytes=v["offset_bytes"], usage_flags=self._to_str(v["usage_flags"]), name=self._to_str(v["name"])) for k, v in obj.items() }
+            obj = self._to_dict(obj=obj)
+            return { k: SharedMemoryView(id=self._to_str(obj=v["id"]), num_bytes=v["num_bytes"], offset_bytes=v["offset_bytes"], usage_flags=self._to_str(obj=v["usage_flags"]), name=self._to_str(obj=v["name"])) for k, v in obj.items() }
         elif return_as == "map_of_string_to_property_value":
-            obj = self._to_dict(obj)
-            return { k: spear.PropertyValue(value=self._to_str(v["value"]), type_id=self._to_str(v["type_id"])) for k, v in obj.items() }
+            obj = self._to_dict(obj=obj)
+            return { k: spear.PropertyValue(value=self._to_str(obj=v["value"]), type_id=self._to_str(obj=v["type_id"])) for k, v in obj.items() }
         elif return_as == "map_of_string_to_func_signature_desc":
-            obj = self._to_dict(obj)
-            return { self._to_str(k): FuncSignatureDesc(name=self._to_str(v["name"]), type_ids=v["type_ids"], type_names=self._to_str(v["type_names"])) for k, v in obj.items() }
+            obj = self._to_dict(obj=obj)
+            return { self._to_str(obj=k): FuncSignatureDesc(name=self._to_str(obj=v["name"]), type_ids=v["type_ids"], type_names=self._to_str(obj=v["type_names"])) for k, v in obj.items() }
         elif return_as == "map_of_string_to_world_desc":
-            obj = self._to_dict(obj)
+            obj = self._to_dict(obj=obj)
             return { k: WorldDesc(world=v["world"], world_id=v["world_id"], is_editor_world=v["is_editor_world"], is_game_world=v["is_game_world"], is_playing=v["is_playing"]) for k, v in obj.items() }
         elif return_as == "output_log_messages":
-            obj = self._to_dict(obj)
-            return OutputLogMessages(messages=self._to_str(obj["messages"]), num_evicted=obj["num_evicted"])
+            obj = self._to_dict(obj=obj)
+            return OutputLogMessages(messages=self._to_str(obj=obj["messages"]), num_evicted=obj["num_evicted"])
         elif return_as == "packed_array":
-            obj = self._to_dict(obj)
-            return self._to_packed_array_return_value(obj)
+            obj = self._to_dict(obj=obj)
+            return self._to_packed_array_return_value(obj=obj)
         elif return_as == "shared_memory_view":
-            obj = self._to_dict(obj)
-            return SharedMemoryView(id=self._to_str(obj["id"]), num_bytes=obj["num_bytes"], offset_bytes=obj["offset_bytes"], usage_flags=self._to_str(obj["usage_flags"]), name=self._to_str(obj["name"]))
+            obj = self._to_dict(obj=obj)
+            return SharedMemoryView(id=self._to_str(obj=obj["id"]), num_bytes=obj["num_bytes"], offset_bytes=obj["offset_bytes"], usage_flags=self._to_str(obj=obj["usage_flags"]), name=self._to_str(obj=obj["name"]))
         elif return_as == "data_bundle":
-            obj = self._to_dict(obj)
-            return spear.DataBundle(packed_arrays={ k: self._to_packed_array_return_value(v) for k, v in obj["packed_arrays"].items() }, unreal_obj_strings=self._to_str(obj["unreal_obj_strings"]), info=self._to_str(obj["info"]))
+            obj = self._to_dict(obj=obj)
+            return spear.DataBundle(packed_arrays={ k: self._to_packed_array_return_value(obj=v) for k, v in obj["packed_arrays"].items() }, unreal_obj_strings=self._to_str(obj=obj["unreal_obj_strings"]), info=self._to_str(obj=obj["info"]))
         elif return_as == "property_desc":
-            obj = self._to_dict(obj)
-            return PropertyDesc(property=obj["property"], value_ptr=obj["value_ptr"], type_id=self._to_str(obj["type_id"]), notify_objects=obj["notify_objects"], notify_member_properties=obj["notify_member_properties"], notify_element_properties=obj["notify_element_properties"], notify_array_indices=obj["notify_array_indices"], notify_map_keys=self._to_str(obj["notify_map_keys"]))
+            obj = self._to_dict(obj=obj)
+            return PropertyDesc(property=obj["property"], value_ptr=obj["value_ptr"], type_id=self._to_str(obj=obj["type_id"]), notify_objects=obj["notify_objects"], notify_member_properties=obj["notify_member_properties"], notify_element_properties=obj["notify_element_properties"], notify_array_indices=obj["notify_array_indices"], notify_map_keys=self._to_str(obj=obj["notify_map_keys"]))
         elif return_as == "property_value":
-            obj = self._to_dict(obj)
-            return spear.PropertyValue(value=self._to_str(obj["value"]), type_id=self._to_str(obj["type_id"]))
+            obj = self._to_dict(obj=obj)
+            return spear.PropertyValue(value=self._to_str(obj=obj["value"]), type_id=self._to_str(obj=obj["type_id"]))
         elif return_as == "future":
-            obj = self._to_dict(obj)
-            return Future(future_ptr=obj["future_ptr"], type_id=self._to_str(obj["type_id"]))
+            obj = self._to_dict(obj=obj)
+            return Future(future_ptr=obj["future_ptr"], type_id=self._to_str(obj=obj["type_id"]))
         elif return_as == "static_struct_desc":
-            obj = self._to_dict(obj)
-            return StaticStructDesc(static_struct=obj["static_struct"], name=self._to_str(obj["name"]))
+            obj = self._to_dict(obj=obj)
+            return StaticStructDesc(static_struct=obj["static_struct"], name=self._to_str(obj=obj["name"]))
         elif return_as == "static_class_desc":
-            obj = self._to_dict(obj)
-            return self._to_static_class_desc(obj)
+            obj = self._to_dict(obj=obj)
+            return self._to_static_class_desc(obj=obj)
         elif return_as == "world_desc":
-            obj = self._to_dict(obj)
+            obj = self._to_dict(obj=obj)
             return WorldDesc(world=obj["world"], world_id=obj["world_id"], is_editor_world=obj["is_editor_world"], is_game_world=obj["is_game_world"], is_playing=obj["is_playing"])
         else:
             assert False
 
     def _to_static_class_desc(self, obj):
-        obj = self._to_dict(obj)
+        obj = self._to_dict(obj=obj)
         function_descs = {}
-        for k, v in self._to_dict(obj.get("function_descs", {})).items():
-            v = self._to_dict(v)
-            function_descs[self._to_str(k)] = FunctionDesc(function=v["function"], function_name=self._to_str(v["function_name"]), static_class=v["static_class"], static_class_name=self._to_str(v["static_class_name"]))
-        return StaticClassDesc(static_class=obj["static_class"], name=self._to_str(obj["name"]), derived_classes=obj.get("derived_classes", []), derived_class_names=self._to_str(obj.get("derived_class_names", [])), function_descs=function_descs)
+        for k, v in self._to_dict(obj=obj.get("function_descs", {})).items():
+            v = self._to_dict(obj=v)
+            function_descs[self._to_str(obj=k)] = FunctionDesc(function=v["function"], function_name=self._to_str(obj=v["function_name"]), static_class=v["static_class"], static_class_name=self._to_str(obj=v["static_class_name"]))
+        return StaticClassDesc(static_class=obj["static_class"], name=self._to_str(obj=obj["name"]), derived_classes=obj.get("derived_classes", []), derived_class_names=self._to_str(obj=obj.get("derived_class_names", [])), function_descs=function_descs)
 
     def _to_str(self, obj):
         if isinstance(obj, bytes):
             return obj.decode("utf-8")
         elif isinstance(obj, list):
-            return [ self._to_str(v) for v in obj ]
+            return [ self._to_str(obj=v) for v in obj ]
         elif isinstance(obj, dict):
-            return { self._to_str(k): self._to_str(v) for k, v in obj.items() }
+            return { self._to_str(obj=k): self._to_str(obj=v) for k, v in obj.items() }
         else:
             return obj
 
     def _to_dict(self, obj):
         if isinstance(obj, list):
-            return [ self._to_dict(v) for v in obj ]
+            return [ self._to_dict(obj=v) for v in obj ]
         elif isinstance(obj, dict):
-            return { self._to_str(k): self._to_dict(v) for k, v in obj.items() }
+            return { self._to_str(obj=k): self._to_dict(obj=v) for k, v in obj.items() }
         else:
             return obj
 
     def _to_packed_array_return_value(self, obj):
-        obj = self._to_dict(obj)
-        if self._to_str(obj["data_source"]) == "Internal":
-            data = np.frombuffer(obj["data"], dtype=_to_dtype[self._to_str(obj["data_type"])], count=-1).reshape(obj["shape"])
-        elif self._to_str(obj["data_source"]) == "Shared":
-            data = np.array([], dtype=_to_dtype[self._to_str(obj["data_type"])])
+        obj = self._to_dict(obj=obj)
+        if self._to_str(obj=obj["data_source"]) == "Internal":
+            data = np.frombuffer(obj["data"], dtype=_to_dtype[self._to_str(obj=obj["data_type"])], count=-1).reshape(obj["shape"])
+        elif self._to_str(obj=obj["data_source"]) == "Shared":
+            data = np.array([], dtype=_to_dtype[self._to_str(obj=obj["data_type"])])
         else:
             assert False
-        return spear.PackedArray(data=data, data_source=self._to_str(obj["data_source"]), shape=obj["shape"], data_type=self._to_str(obj["data_type"]), shared_memory_name=self._to_str(obj["shared_memory_name"]))
+        return spear.PackedArray(data=data, data_source=self._to_str(obj=obj["data_source"]), shape=obj["shape"], data_type=self._to_str(obj=obj["data_type"]), shared_memory_name=self._to_str(obj=obj["shared_memory_name"]))
 
 
 #

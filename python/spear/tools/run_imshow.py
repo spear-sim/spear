@@ -14,7 +14,7 @@ args = parser.parse_args()
 
 image = cv2.imread(args.path, cv2.IMREAD_UNCHANGED)
 if image is None:
-    print(f"Failed to load image: {args.path}", file=sys.stderr)
+    print(f"Failed to load image: {args.path}", file=sys.stderr, flush=True)
     sys.exit(1)
 
 cv2.imshow(args.name, image)

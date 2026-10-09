@@ -54,7 +54,7 @@ if __name__ == "__main__":
         unreal.EditorAssetLibrary.rename_asset(source_asset_path=source_content_path, destination_asset_path=destination_content_path)
 
         if unreal.EditorAssetLibrary.does_asset_exist(asset_path=source_content_path):
-            asset_data = asset_registry.get_asset_by_object_path(get_object_path_from_asset_path(asset_path=source_content_path))
+            asset_data = asset_registry.get_asset_by_object_path(object_path=get_object_path_from_asset_path(asset_path=source_content_path))
             assert asset_data.is_redirector()
             spear.log("Deleting redirector: ", source_content_path)
             unreal.EditorAssetLibrary.delete_asset(asset_path_to_delete=source_content_path)

@@ -29,7 +29,7 @@ def process_scene():
     spear.log("Processing scene: " + editor_world_name)
 
     actors = spear.editor.find_actors()
-    actors = { spear.editor.get_stable_name_for_actor(actor=actor, include_unreal_name=True): get_actor_desc(actor) for actor in actors }
+    actors = { spear.editor.get_stable_name_for_actor(actor=actor, include_unreal_name=True): get_actor_desc(actor=actor) for actor in actors }
 
     unreal_metadata_dir = os.path.realpath(os.path.join(args.export_dir, "unreal_metadata"))
     actors_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "scene.json"))
@@ -52,15 +52,15 @@ def get_actor_desc(actor):
         components_in_hierarchy = []
     components_in_hierarchy_names = [ spear.editor.get_stable_name_for_component(component=c) for c in components_in_hierarchy ]
 
-    other_components = actor.get_components_by_class(unreal.ActorComponent)
+    other_components = actor.get_components_by_class(component_class=unreal.ActorComponent)
     other_components = [ c for c in other_components if spear.editor.get_stable_name_for_component(component=c) not in components_in_hierarchy_names ]
 
     return {
         "class": actor.__class__.__name__,
         "debug_info": {"str": str(actor)},
-        "editor_properties": get_object_descs(actor),
+        "editor_properties": get_object_descs(uobject=actor),
         "name": spear.editor.get_stable_name_for_actor(actor=actor, include_unreal_name=True),
-        "other_components": { spear.editor.get_stable_name_for_component(component=c): get_component_desc(c) for c in other_components },
+        "other_components": { spear.editor.get_stable_name_for_component(component=c): get_component_desc(component=c) for c in other_components },
         "root_component": get_component_desc(component=root_component),
         "stable_name": spear.editor.get_stable_name_for_actor(actor=actor, include_unreal_name=False),
         "unreal_name": actor.get_name()}
@@ -71,7 +71,7 @@ def get_component_desc(component):
         return None
 
     if "get_children_components" in dir(component):
-        children_components = { spear.editor.get_stable_name_for_component(component=c): get_component_desc(c) for c in component.get_children_components(include_all_descendants=False) }
+        children_components = { spear.editor.get_stable_name_for_component(component=c): get_component_desc(component=c) for c in component.get_children_components(include_all_descendants=False) }
     else:
         children_components = None
 
@@ -80,17 +80,17 @@ def get_component_desc(component):
         "children_components": children_components,
         "class": component.__class__.__name__,
         "debug_info": {"str": str(component)},
-        "editor_properties": get_object_descs(component),
+        "editor_properties": get_object_descs(uobject=component),
         "stable_name": spear.editor.get_stable_name_for_component(component=component),
         "pipeline_info": {},
         "unreal_name": component.get_name()}
 
     if isinstance(component, unreal.SceneComponent):
-        component_desc["attributes"]["world_transform"] = get_object_desc(component.get_world_transform())
-        component_desc["attributes"]["world_transform_as_matrix"] = get_object_desc(component.get_world_transform().to_matrix())
+        component_desc["attributes"]["world_transform"] = get_object_desc(editor_property=component.get_world_transform())
+        component_desc["attributes"]["world_transform_as_matrix"] = get_object_desc(editor_property=component.get_world_transform().to_matrix())
 
     if isinstance(component, unreal.StaticMeshComponent):
-        component_desc["attributes"]["local_bounds"] = get_object_desc(component.get_local_bounds())
+        component_desc["attributes"]["local_bounds"] = get_object_desc(editor_property=component.get_local_bounds())
 
     return component_desc
 
@@ -119,7 +119,7 @@ def get_object_descs(uobject):
     for editor_property_candidate_name in editor_property_candidate_names:
         try:
             editor_property = uobject.get_editor_property(name=editor_property_candidate_name)
-            editor_property_descs[editor_property_candidate_name] = get_object_desc(editor_property)
+            editor_property_descs[editor_property_candidate_name] = get_object_desc(editor_property=editor_property)
         except:
             pass
 
@@ -156,7 +156,7 @@ def get_object_desc(editor_property):
         return {
             "class": editor_property.__class__.__name__,
             "debug_info": {"str": str(editor_property)},
-            "editor_properties": get_object_descs(editor_property),
+            "editor_properties": get_object_descs(uobject=editor_property),
             "path": editor_property.get_path_name()}
 
     # Otherwise, if the editor property is an Unreal object or struct, then recurse via get_object_descs(...).
@@ -164,15 +164,15 @@ def get_object_desc(editor_property):
         return {
             "class": editor_property.__class__.__name__,
             "debug_info": {"str": str(editor_property)},
-            "editor_properties": get_object_descs(editor_property)}
+            "editor_properties": get_object_descs(uobject=editor_property)}
 
     # Otherwise, if the editor property is an Unreal array, then recurse via get_object_desc(...).
     elif isinstance(editor_property, unreal.Array):
-        return [ get_object_desc(entry) for entry in editor_property ]
+        return [ get_object_desc(editor_property=entry) for entry in editor_property ]
 
     # Otherwise, if the editor property is a tuple, then recurse via get_object_desc(...).
     elif isinstance(editor_property, tuple):
-        return [ get_object_desc(entry) for entry in editor_property ]
+        return [ get_object_desc(editor_property=entry) for entry in editor_property ]
 
     # Otherwise, if the editor property value is serializable as JSON, then return the object,
     # otherwise return the string representation of the object.

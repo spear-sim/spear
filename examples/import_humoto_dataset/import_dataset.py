@@ -155,13 +155,13 @@ if __name__ == "__main__":
             assert isinstance(blueprint_asset, unreal.Blueprint)
 
             # close the blueprint editor because it opens automatically during import
-            asset_editor_subsystem.close_all_editors_for_asset(blueprint_asset)
+            asset_editor_subsystem.close_all_editors_for_asset(asset=blueprint_asset)
 
             # remove the spawned actor from the current level because it spawns automatically
             for actor in unreal.EditorLevelLibrary.get_all_level_actors():
                 if actor.get_class() == blueprint_asset.generated_class():
                     spear.log("        Destroying actor: ", spear.editor.get_stable_name_for_actor(actor=actor))
-                    unreal.EditorLevelLibrary.destroy_actor(actor)
+                    unreal.EditorLevelLibrary.destroy_actor(actor_to_destroy=actor)
 
             # modify the skeletal mesh components in the imported blueprint
             blueprint_subobject_descs = spear.editor.get_subobject_descs_for_blueprint_asset(blueprint_asset=blueprint_asset)
