@@ -64,8 +64,6 @@ if __name__ == "__main__":
             else:
                 assert component.Width.get() == component_width
                 assert component.Height.get() == component_height
-            if post_process_volume_settings is not None:
-                component.PostProcessSettings = post_process_volume_settings
             component.Initialize()
             component.initialize_sp_funcs()
 
