@@ -152,7 +152,7 @@ if __name__ == "__main__":
     with instance.end_frame():
         for character in characters:
             transforms = { bone_name: character["skeletal_mesh_component"].GetBoneTransform(InBoneName=bone_name, TransformSpace="RTS_World") for bone_name in character["bone_names"] }
-            character["data_frame"] = pd.concat([character["data_frame"], get_data_frame(transforms)])
+            character["data_frame"] = pd.concat([character["data_frame"], get_data_frame(transforms=transforms)])
         gameplay_statics.SetGamePaused(bPaused=True)
 
     for _ in range(100):
@@ -172,7 +172,7 @@ if __name__ == "__main__":
         with instance.end_frame():
             for character in characters:
                 transforms = { bone_name: character["skeletal_mesh_component"].GetBoneTransform(InBoneName=bone_name, TransformSpace="RTS_World") for bone_name in character["bone_names"] }
-                character["data_frame"] = pd.concat([character["data_frame"], get_data_frame(transforms)])
+                character["data_frame"] = pd.concat([character["data_frame"], get_data_frame(transforms=transforms)])
             gameplay_statics.SetGamePaused(bPaused=True)
 
     # unpause now that we're finished recording

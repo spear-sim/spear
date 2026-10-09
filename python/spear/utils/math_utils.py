@@ -415,9 +415,9 @@ def compose_component_transforms(transforms, is_absolute_location=None, is_absol
             assert len(flags) == num_transforms - 1
             return flags
 
-    is_absolute_location = _broadcast(is_absolute_location)
-    is_absolute_rotation = _broadcast(is_absolute_rotation)
-    is_absolute_scale = _broadcast(is_absolute_scale)
+    is_absolute_location = _broadcast(flags=is_absolute_location)
+    is_absolute_rotation = _broadcast(flags=is_absolute_rotation)
+    is_absolute_scale = _broadcast(flags=is_absolute_scale)
 
     transform_composed = transforms[0]
     for i in range(1, num_transforms):

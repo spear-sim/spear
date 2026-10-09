@@ -181,10 +181,10 @@ if __name__ == "__main__":
             new_scale3d=unreal.Vector(x=component_desc["scale3d"]["x"], y=component_desc["scale3d"]["y"], z=component_desc["scale3d"]["z"]))
 
         if "simulate_physics" in component_desc:
-            static_mesh_component.set_simulate_physics(component_desc["simulate_physics"])
+            static_mesh_component.set_simulate_physics(simulate=component_desc["simulate_physics"])
 
         if "collision_profile_name" in component_desc:
-            static_mesh_component.set_collision_profile_name(component_desc["collision_profile_name"])
+            static_mesh_component.set_collision_profile_name(collision_profile_name=component_desc["collision_profile_name"])
 
     #
     # create SpSceneCaptureComponent2Ds
@@ -213,7 +213,7 @@ if __name__ == "__main__":
         sp_scene_capture_component_2d.set_editor_property(name="texture_render_target_format", value=component_desc["texture_render_target_format"])
 
         sp_scene_capture_component_2d.set_relative_location(
-            new_location=unreal.Vector(component_desc["location"]["x"], component_desc["location"]["y"], component_desc["location"]["z"]), sweep=False, teleport=False)
+            new_location=unreal.Vector(x=component_desc["location"]["x"], y=component_desc["location"]["y"], z=component_desc["location"]["z"]), sweep=False, teleport=False)
         sp_scene_capture_component_2d.set_relative_rotation(
             new_rotation=unreal.Rotator(pitch=component_desc["rotation"]["pitch"], yaw=component_desc["rotation"]["yaw"], roll=component_desc["rotation"]["roll"]), sweep=False, teleport=False)
 
@@ -248,6 +248,6 @@ if __name__ == "__main__":
 
     # save blueprint
     spear.log("Saving blueprint: ", blueprint_path)
-    editor_asset_subsystem.save_loaded_asset(blueprint_asset)
+    editor_asset_subsystem.save_loaded_asset(asset_to_save=blueprint_asset)
 
     spear.log("Done.")

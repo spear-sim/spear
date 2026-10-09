@@ -143,7 +143,7 @@ if __name__ == "__main__":
     # destroy shared memory region and re-enable garbage collection for bp_axes_uclass
     with instance.begin_frame():
         instance.shared_memory_service.destroy_shared_memory_region(shared_memory_handle=shared_memory_handle)
-        game.unreal_service.remove_object_from_root(bp_axes_uclass)
+        game.unreal_service.remove_object_from_root(uobject=bp_axes_uclass)
     with instance.end_frame():
         pass
 

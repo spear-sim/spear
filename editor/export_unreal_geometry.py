@@ -30,7 +30,7 @@ def process_scene():
 
     for actor in actors:
         spear.log("    Processing actor: ", spear.editor.get_stable_name_for_actor(actor=actor))
-        generate_unreal_geometry(actor)
+        generate_unreal_geometry(actor=actor)
 
     spear.log("Done.")
 

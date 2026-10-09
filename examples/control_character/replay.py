@@ -82,7 +82,7 @@ if __name__ == "__main__":
         with instance.begin_frame():
             for character in characters:
                 row = character["data_frame"].iloc[i]
-                bone_transforms = get_transforms(row, character["bone_names"])
+                bone_transforms = get_transforms(df=row, transform_names=character["bone_names"])
 
                 # Even though we're setting bone transforms in world-space, we need to update the actor's
                 # transform, otherwise Unreal's default frustum culling behavior will cull the skeletal mesh

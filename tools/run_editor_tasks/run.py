@@ -60,7 +60,7 @@ if __name__ == "__main__":
     if len(raw_tasks) > 0:
 
         # get task with default values
-        initial_task = merge_tasks([default_task, raw_tasks[0]])
+        initial_task = merge_tasks(tasks=[default_task, raw_tasks[0]])
 
         # get config
         user_config_files = [os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))]
@@ -99,7 +99,7 @@ if __name__ == "__main__":
         for raw_task in raw_tasks:
 
             # get task with default values
-            task = merge_tasks([default_task, raw_task])
+            task = merge_tasks(tasks=[default_task, raw_task])
 
             spear.log(f"Task:")
             print_task(task=task, raw_task=raw_task, prefix="    ")
