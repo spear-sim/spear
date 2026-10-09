@@ -954,7 +954,7 @@ struct FSpRHIGlobals
 
     /** Tables of all MSAA sample offset for all MSAA supported. Use GetMSAASampleOffsets() to read it. */
     UPROPERTY()
-    FVector2f DefaultMSAASampleOffsets[MaxMSAASampleOffsets];
+    FVector2f DefaultMSAASampleOffsets[MaxMSAASampleOffsets] = {};
 
     /** True if the RHI supports pipeline precompiling from any thread. */
     UPROPERTY()
@@ -969,7 +969,7 @@ struct FSpRHIGlobals
 
     /** Table for finding out which shader platform corresponds to a given feature level for this RHI. */
     UPROPERTY()
-    ESpShaderPlatform ShaderPlatformForFeatureLevel[(int)ESpRHIFeatureLevel::Num];
+    ESpShaderPlatform ShaderPlatformForFeatureLevel[(int)ESpRHIFeatureLevel::Num] = {};
     
     /** True if the RHI has initialized a device with the debug layer enabled. */
     UPROPERTY()

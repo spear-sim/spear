@@ -128,97 +128,49 @@ public:
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_from_bool",
             [this](uint64_t& cvar, bool& val, std::vector<std::string>& set_by_strings, std::string& tag) -> void {
                 SP_ASSERT(cvar);
-
-                FName tag_fname = NAME_None;
-                if (tag != "") {
-                    tag_fname = Unreal::toFName(tag);
-                }
-
-                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings), tag_fname);
+                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings), Unreal::toFName(tag));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_from_int",
             [this](uint64_t& cvar, int32_t& val, std::vector<std::string>& set_by_strings, std::string& tag) -> void {
                 SP_ASSERT(cvar);
-
-                FName tag_fname = NAME_None;
-                if (tag != "") {
-                    tag_fname = Unreal::toFName(tag);
-                }
-
-                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings), tag_fname);
+                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings), Unreal::toFName(tag));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_from_float",
             [this](uint64_t& cvar, float& val, std::vector<std::string>& set_by_strings, std::string& tag) -> void {
                 SP_ASSERT(cvar);
-
-                FName tag_fname = NAME_None;
-                if (tag != "") {
-                    tag_fname = Unreal::toFName(tag);
-                }
-
-                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings), tag_fname);
+                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings), Unreal::toFName(tag));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_from_string",
             [this](uint64_t& cvar, std::string& val, std::vector<std::string>& set_by_strings, std::string& tag) -> void {
                 SP_ASSERT(cvar);
-
-                FName tag_fname = NAME_None;
-                if (tag != "") {
-                    tag_fname = Unreal::toFName(tag);
-                }
-
-                toPtr<IConsoleVariable>(cvar)->Set(Unreal::toTCharPtr(val), Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings), tag_fname);
+                toPtr<IConsoleVariable>(cvar)->Set(Unreal::toTCharPtr(val), Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings), Unreal::toFName(tag));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_with_current_priority_from_bool",
             [this](uint64_t& cvar, bool& val, std::string& tag) -> void {
                 SP_ASSERT(cvar);
-
-                FName tag_fname = NAME_None;
-                if (tag != "") {
-                    tag_fname = Unreal::toFName(tag);
-                }
-
-                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(val, tag_fname);
+                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(val, Unreal::toFName(tag));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_with_current_priority_from_int",
             [this](uint64_t& cvar, int32_t& val, std::string& tag) -> void {
                 SP_ASSERT(cvar);
-
-                FName tag_fname = NAME_None;
-                if (tag != "") {
-                    tag_fname = Unreal::toFName(tag);
-                }
-
-                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(val, tag_fname);
+                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(val, Unreal::toFName(tag));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_with_current_priority_from_float",
             [this](uint64_t& cvar, float& val, std::string& tag) -> void {
                 SP_ASSERT(cvar);
-
-                FName tag_fname = NAME_None;
-                if (tag != "") {
-                    tag_fname = Unreal::toFName(tag);
-                }
-
-                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(val, tag_fname);
+                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(val, Unreal::toFName(tag));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_with_current_priority_from_string",
             [this](uint64_t& cvar, std::string& val, std::string& tag) -> void {
                 SP_ASSERT(cvar);
-
-                FName tag_fname = NAME_None;
-                if (tag != "") {
-                    tag_fname = Unreal::toFName(tag);
-                }
-
-                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(Unreal::toTCharPtr(val), tag_fname);
+                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(Unreal::toTCharPtr(val), Unreal::toFName(tag));
             });
 
         //
