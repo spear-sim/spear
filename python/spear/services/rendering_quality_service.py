@@ -161,7 +161,7 @@ class RenderingQualityService(spear.Service):
         if cinematic_quality_levels is not None:
             self._sp_scalability.SetQualityLevels(QualityLevels=cinematic_quality_levels)
         for cvar_desc in cvar_descs:
-            self._console_service.set_cvar(name=cvar_desc["name"], value=cvar_desc["value"], set_with_current_priority=True)
+            self._console_service.set_cvar(name=cvar_desc["name"], value=cvar_desc["value"], set_with_current_priority=True, min_priority="ECVF_SetByScalability")
 
         # bDisableHLODs
         if disable_hlods:
@@ -184,7 +184,7 @@ class RenderingQualityService(spear.Service):
         self.log_quality_levels(label="Restoring quality levels:", quality_levels=restore_data["quality_levels"])
 
         for cvar_desc in restore_data["cvar_descs"]:
-            self._console_service.set_cvar(name=cvar_desc["name"], value=cvar_desc["value"], set_with_current_priority=True)
+            self._console_service.set_cvar(name=cvar_desc["name"], value=cvar_desc["value"], set_with_current_priority=True, min_priority="ECVF_SetByScalability")
         if restore_data["quality_levels"] is not None:
             self._sp_scalability.SetQualityLevels(QualityLevels=restore_data["quality_levels"])
 

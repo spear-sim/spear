@@ -381,7 +381,10 @@ enum class ESpConsoleVariableFlags
     ECVF_SetByConsoleVariablesIni = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_SetByConsoleVariablesIni),
     ECVF_SetByCommandline         = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_SetByCommandline),
     ECVF_SetByCode                = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_SetByCode),
-    ECVF_SetByConsole             = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_SetByConsole)
+    ECVF_SetByConsole             = Unreal::getConstEnumValue(EConsoleVariableFlags::ECVF_SetByConsole),
+
+    // These enum values are actually defined by macros so we need to handle them differently
+    SETBY_ERROR_                  = SETBY_ERROR
 };
 ENUM_CLASS_FLAGS(ESpConsoleVariableFlags); // required if combining values using bitwise operations
 

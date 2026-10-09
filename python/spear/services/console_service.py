@@ -42,10 +42,10 @@ class ConsoleService(spear.Service):
     # Set console variable value
     #
 
-    def set_cvar(self, name, value, set_by_flags=None, set_with_current_priority=None):
+    def set_cvar(self, name, value, set_by_flags=None, tag="", set_with_current_priority=None, replace_current_priority_and_tag=None, min_priority="SETBY_ERROR_", max_priority="ECVF_SetByConsole"):
         cvar = self.unreal_service.find_console_variable_by_name(console_variable_name=name)
         assert cvar != 0
-        return self.unreal_service.set_console_variable_value(cvar=cvar, value=value, set_by_flags=set_by_flags, set_with_current_priority=set_with_current_priority)
+        return self.unreal_service.set_console_variable_value(cvar=cvar, value=value, set_by_flags=set_by_flags, tag=tag, set_with_current_priority=set_with_current_priority, replace_current_priority_and_tag=replace_current_priority_and_tag, min_priority=min_priority, max_priority=max_priority)
 
     #
     # Execute console command

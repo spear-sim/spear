@@ -711,16 +711,11 @@ public:
                     outer_ptr = GetTransientPackage();
                 }
 
-                FName fname = NAME_None;
-                if (name != "") {
-                    fname = Unreal::toFName(name);
-                }
-
                 return toUInt64(
                     NewObject<UObject>(
                         outer_ptr,
                         toPtr<UClass>(uclass),
-                        fname,
+                        Unreal::toFName(name),
                         Unreal::getCombinedEnumFlagValueFromStringsAs<EObjectFlags, ESpObjectFlags>(object_flag_strings),
                         toPtr<UObject>(uobject_template),
                         copy_transients_from_class_defaults,

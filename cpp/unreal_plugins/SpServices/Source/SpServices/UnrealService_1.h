@@ -126,51 +126,99 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_from_bool",
-            [this](uint64_t& cvar, bool& val, std::vector<std::string>& set_by_strings) -> void {
+            [this](uint64_t& cvar, bool& val, std::vector<std::string>& set_by_strings, std::string& tag) -> void {
                 SP_ASSERT(cvar);
-                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings));
+                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings), Unreal::toFName(tag));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_from_int",
-            [this](uint64_t& cvar, int32_t& val, std::vector<std::string>& set_by_strings) -> void {
+            [this](uint64_t& cvar, int32_t& val, std::vector<std::string>& set_by_strings, std::string& tag) -> void {
                 SP_ASSERT(cvar);
-                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings));
+                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings), Unreal::toFName(tag));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_from_float",
-            [this](uint64_t& cvar, float& val, std::vector<std::string>& set_by_strings) -> void {
+            [this](uint64_t& cvar, float& val, std::vector<std::string>& set_by_strings, std::string& tag) -> void {
                 SP_ASSERT(cvar);
-                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings));
+                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings), Unreal::toFName(tag));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_from_string",
-            [this](uint64_t& cvar, std::string& val, std::vector<std::string>& set_by_strings) -> void {
+            [this](uint64_t& cvar, std::string& val, std::vector<std::string>& set_by_strings, std::string& tag) -> void {
                 SP_ASSERT(cvar);
-                toPtr<IConsoleVariable>(cvar)->Set(Unreal::toTCharPtr(val), Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings));
+                toPtr<IConsoleVariable>(cvar)->Set(Unreal::toTCharPtr(val), Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings), Unreal::toFName(tag));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_with_current_priority_from_bool",
-            [this](uint64_t& cvar, bool& val) -> void {
+            [this](uint64_t& cvar, bool& val, std::string& tag, std::string& min_priority_string, std::string& max_priority_string) -> void {
                 SP_ASSERT(cvar);
-                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(val);
+                EConsoleVariableFlags min_priority = Unreal::getEnumValueFromStringAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(min_priority_string);
+                EConsoleVariableFlags max_priority = Unreal::getEnumValueFromStringAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(max_priority_string);
+                SP_ASSERT(min_priority <= max_priority);
+                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(val, Unreal::toFName(tag), max_priority, min_priority);
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_with_current_priority_from_int",
-            [this](uint64_t& cvar, int32_t& val) -> void {
+            [this](uint64_t& cvar, int32_t& val, std::string& tag, std::string& min_priority_string, std::string& max_priority_string) -> void {
                 SP_ASSERT(cvar);
-                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(val);
+                EConsoleVariableFlags min_priority = Unreal::getEnumValueFromStringAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(min_priority_string);
+                EConsoleVariableFlags max_priority = Unreal::getEnumValueFromStringAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(max_priority_string);
+                SP_ASSERT(min_priority <= max_priority);
+                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(val, Unreal::toFName(tag), max_priority, min_priority);
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_with_current_priority_from_float",
-            [this](uint64_t& cvar, float& val) -> void {
+            [this](uint64_t& cvar, float& val, std::string& tag, std::string& min_priority_string, std::string& max_priority_string) -> void {
                 SP_ASSERT(cvar);
-                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(val);
+                EConsoleVariableFlags min_priority = Unreal::getEnumValueFromStringAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(min_priority_string);
+                EConsoleVariableFlags max_priority = Unreal::getEnumValueFromStringAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(max_priority_string);
+                SP_ASSERT(min_priority <= max_priority);
+                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(val, Unreal::toFName(tag), max_priority, min_priority);
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_with_current_priority_from_string",
-            [this](uint64_t& cvar, std::string& val) -> void {
+            [this](uint64_t& cvar, std::string& val, std::string& tag, std::string& min_priority_string, std::string& max_priority_string) -> void {
                 SP_ASSERT(cvar);
-                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(Unreal::toTCharPtr(val));
+                EConsoleVariableFlags min_priority = Unreal::getEnumValueFromStringAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(min_priority_string);
+                EConsoleVariableFlags max_priority = Unreal::getEnumValueFromStringAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(max_priority_string);
+                SP_ASSERT(min_priority <= max_priority);
+                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(Unreal::toTCharPtr(val), Unreal::toFName(tag), max_priority, min_priority);
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "replace_console_variable_value_at_current_priority_and_tag_from_bool",
+            [this](uint64_t& cvar, bool& val, std::string& min_priority_string, std::string& max_priority_string) -> void {
+                SP_ASSERT(cvar);
+                EConsoleVariableFlags min_priority = Unreal::getEnumValueFromStringAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(min_priority_string);
+                EConsoleVariableFlags max_priority = Unreal::getEnumValueFromStringAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(max_priority_string);
+                SP_ASSERT(min_priority <= max_priority);
+                toPtr<IConsoleVariable>(cvar)->ReplaceCurrentPriorityAndTag(val, max_priority, min_priority);
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "replace_console_variable_value_at_current_priority_and_tag_from_int",
+            [this](uint64_t& cvar, int32_t& val, std::string& min_priority_string, std::string& max_priority_string) -> void {
+                SP_ASSERT(cvar);
+                EConsoleVariableFlags min_priority = Unreal::getEnumValueFromStringAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(min_priority_string);
+                EConsoleVariableFlags max_priority = Unreal::getEnumValueFromStringAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(max_priority_string);
+                SP_ASSERT(min_priority <= max_priority);
+                toPtr<IConsoleVariable>(cvar)->ReplaceCurrentPriorityAndTag(val, max_priority, min_priority);
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "replace_console_variable_value_at_current_priority_and_tag_from_float",
+            [this](uint64_t& cvar, float& val, std::string& min_priority_string, std::string& max_priority_string) -> void {
+                SP_ASSERT(cvar);
+                EConsoleVariableFlags min_priority = Unreal::getEnumValueFromStringAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(min_priority_string);
+                EConsoleVariableFlags max_priority = Unreal::getEnumValueFromStringAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(max_priority_string);
+                SP_ASSERT(min_priority <= max_priority);
+                toPtr<IConsoleVariable>(cvar)->ReplaceCurrentPriorityAndTag(val, max_priority, min_priority);
+            });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "replace_console_variable_value_at_current_priority_and_tag_from_string",
+            [this](uint64_t& cvar, std::string& val, std::string& min_priority_string, std::string& max_priority_string) -> void {
+                SP_ASSERT(cvar);
+                EConsoleVariableFlags min_priority = Unreal::getEnumValueFromStringAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(min_priority_string);
+                EConsoleVariableFlags max_priority = Unreal::getEnumValueFromStringAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(max_priority_string);
+                SP_ASSERT(min_priority <= max_priority);
+                toPtr<IConsoleVariable>(cvar)->ReplaceCurrentPriorityAndTag(Unreal::toTCharPtr(val), max_priority, min_priority);
             });
 
         //
