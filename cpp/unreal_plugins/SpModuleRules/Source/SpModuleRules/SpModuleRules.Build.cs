@@ -59,6 +59,9 @@ public class SpModuleRules : ModuleRules
         // Needed to expose a private header in Renderer
         PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(readOnlyTargetRules.RelativeEnginePath, "Source", "Runtime", "Renderer", "Private")));
 
+        // Needed to expose an internal header in RHICore
+        PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(readOnlyTargetRules.RelativeEnginePath, "Source", "Runtime", "RHICore", "Internal")));
+
         // MessageLog is a Developer-category module, and is therefore not available in Shipping builds.
         if (readOnlyTargetRules.bBuildDeveloperTools) {
             PublicDependencyModuleNames.Add("MessageLog");
