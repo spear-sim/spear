@@ -211,7 +211,7 @@ def _initialize_instance():
     config = spear.get_config()
     config.defrost()
     config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS = 3600.0
-    config.SPEAR.INSTANCE.CLIENT_SUPPRESS_DEFAULT_LOGGING = True # need to disable default logging otherwise we get errors in Cursor
+    config.SPEAR.INSTANCE.CLIENT_SUPPRESS_DEFAULT_LOGGING = True # need to disable default logging to reserve stdout for MCP communication
     config.freeze()
     _instance = spear.Instance(config=config)
     _log("Instance created.")
@@ -578,7 +578,8 @@ def _get_log():
 
 if __name__ == "__main__":
 
-    # need to disable default logging otherwise we get errors in Cursor
+    # need to disable default logging because we use transport="stdio" in our MCP server,
+    # and therefore stdout in this process should be reserved for MCP communication
     spear.register_log_func(func=_log)
     spear.set_default_log_enabled(enabled=False)
 
