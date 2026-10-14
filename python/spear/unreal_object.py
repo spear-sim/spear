@@ -6,6 +6,32 @@
 import spear
 
 
+# Transform-related UFUNCTIONs and their vector arg names (arg_name, kind). Validating these up
+# front catches out-of-range coordinates and negative scales before they reach the engine, which
+# would otherwise trigger the renderer's precision-loss ensure. Lookup is by unqualified name so
+# both "K2_SetActorLocation" and "Actor.K2_SetActorLocation" match.
+_TRANSFORM_UFUNCTIONS = {
+    "K2_SetActorLocation": [("NewLocation", "location")],
+    "SetActorLocation": [("NewLocation", "location")],
+    "K2_SetActorScale3D": [("NewScale3D", "scale")],
+    "SetActorScale3D": [("NewScale3D", "scale")],
+}
+
+
+def _validate_ufunction_args(function_name, args):
+    """Validate transform-related UFUNCTION args (location/scale) before they reach the engine."""
+    unqualified = function_name.rsplit(".", 1)[-1]
+    validators = _TRANSFORM_UFUNCTIONS.get(unqualified)
+    if validators is None:
+        return
+    for arg_name, kind in validators:
+        if arg_name in args:
+            if kind == "location":
+                spear.validate_location(args[arg_name])
+            elif kind == "scale":
+                spear.validate_scale(args[arg_name])
+
+
 #
 # The UnrealObject class provides a Pythonic interface to UObjects.
 #
@@ -181,6 +207,7 @@ class UnrealObject:
             ufunction = self.derived_state["qualified_function_descs"][function_name].function
         else:
             assert False
+        _validate_ufunction_args(function_name, kwargs)
         result = self._unreal_service.call_function(uobject=self.uobject, uclass=0, ufunction=ufunction, args=kwargs, world_context_object=world_context_object)
         if as_raw_dict is not None:
             assert as_dict is None

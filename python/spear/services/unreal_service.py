@@ -460,6 +460,7 @@ class UnrealService(spear.Service):
         spawn_parameters = spawn_parameters if spawn_parameters is not None else {}
 
         uclass = self.to_uclass(uclass=uclass)
+        spear.validate_location(location)
         location = spear.to_json_string(obj=location)
         rotation = spear.to_json_string(obj=rotation)
         spawn_parameters = spawn_parameters.copy() # shallow copy to prevent this function from mutating user input
@@ -1191,6 +1192,7 @@ class UnrealService(spear.Service):
         elif isinstance(uclass, numbers.Integral):
             return uclass
         elif isinstance(uclass, str):
+            spear.validate_class_path(uclass)
             return self.get_static_class_descs_by_name()[uclass].static_class
         elif isinstance(uclass, spear.UnrealClass):
             return uclass.uclass

@@ -159,9 +159,15 @@ class EngineService():
         except Exception as e:
             spear.log("Exception: ", e)
             spear.log("ERROR: Attempting to exit critical section by calling _execute_frame_impl() and _end_frame_impl()...")
-            self._execute_frame_impl() # ignore return value because we already know we need to call _execute_frame_impl() and _end_frame_impl()
-            self._end_frame_impl()
-            self._frame_state = "error"
+            # Recover the frame state if the server is still healthy. A client-side exception
+            # (e.g., input validation raising before the RPC reaches the server) leaves the
+            # server in a good state, so returning to idle lets subsequent frames proceed.
+            # Only latch the error state if the recovery calls themselves fail.
+            try:
+                recovered = self._execute_frame_impl() and self._end_frame_impl()
+            except Exception:
+                recovered = False
+            self._frame_state = "idle" if recovered else "error"
             raise
 
         success = False

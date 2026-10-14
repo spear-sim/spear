@@ -883,10 +883,14 @@ private:
             SP_LOG("ERROR: Caught unknown exception when executing ", func_name, ".");
         }
 
-        // If we get this far, an exception has occurred, so set the error state, reset the work
-        // queue to allow the game thread to proceed, and return a default-constructed object.
+        // If we get this far, an exception has occurred. Historically this set a permanent error state
+        // (request_error_ = true), which prevented the game thread from ever executing another frame and
+        // hung the engine (e.g., a non-finite transform triggering the renderer's precision-loss ensure).
+        // Instead, clear the error state so the engine can recover and continue executing frames. The error
+        // is still logged above so it remains visible. A persistent error source will keep logging, but the
+        // engine will not be permanently stuck.
 
-        request_error_ = true;
+        request_error_ = false;
 
         return TReturn();
     }

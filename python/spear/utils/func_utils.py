@@ -4,6 +4,7 @@
 #
 
 import json
+import math
 import numbers
 import numpy as np
 import spear
@@ -420,6 +421,75 @@ def to_json_strings(objs):
         assert False
 
 # Convert to a JSON string from an object so it can be passed to a service.
+def _validate_finite_number(obj):
+    # Reject non-finite numeric values (inf/nan) before they reach the engine. Non-finite
+    # transforms in particular reach the renderer and trigger a precision-loss ensure, which
+    # used to permanently wedge the game thread. Raising here gives the caller a clear error
+    # instead of an opaque engine failure.
+    if isinstance(obj, bool):
+        return
+    if isinstance(obj, float) and not math.isfinite(obj):
+        raise ValueError(
+            f"Non-finite numeric value {obj!r} is not allowed. "
+            "Provide a finite value (inf/nan are rejected to avoid invalid engine input)."
+        )
+
+
+# The renderer's precision-loss ensure (see UE_DF_FLOAT_MAX_VALUE in
+# Engine/Source/Runtime/Core/Private/Math/DoubleFloat.cpp) fires when a transform origin
+# exceeds this value. Coordinates beyond this range trigger a renderer error, so reject them
+# up front with a clear message instead of letting the engine hit the ensure.
+MAX_COORDINATE = (1 << 23) * 0.25 - 1.0  # 2097151.0
+
+
+def _validate_vector_component(value, component_name, vector_name, allow_negative=True):
+    """Validate a single component of a transform vector (location/scale)."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return  # non-numeric components are validated elsewhere or are valid as-is
+    _validate_finite_number(value)
+    if vector_name == "location" and abs(value) > MAX_COORDINATE:
+        raise ValueError(
+            f"Coordinate {value!r} in {vector_name}.{component_name} exceeds the renderer "
+            f"precision limit of ±{MAX_COORDINATE:.0f}. Use a smaller value."
+        )
+    if vector_name == "scale" and not allow_negative and value < 0:
+        raise ValueError(
+            f"Negative scale {value!r} in {vector_name}.{component_name} is not allowed. "
+            "Provide a non-negative scale."
+        )
+
+
+def validate_location(location):
+    """Validate that a location vector (dict of X/Y/Z) is within the renderer precision limit."""
+    if isinstance(location, dict):
+        for key, value in location.items():
+            _validate_vector_component(value, key, "location")
+    return location
+
+
+def validate_scale(scale):
+    """Validate that a scale vector (dict of X/Y/Z) is non-negative."""
+    if isinstance(scale, dict):
+        for key, value in scale.items():
+            _validate_vector_component(value, key, "scale", allow_negative=False)
+    return scale
+
+
+def validate_class_path(path):
+    """Validate that a class path is well-formed: a bare class name (e.g. 'AActor') or an
+    absolute UE object path (e.g. '/Game/Blueprints/MyActor.MyActor_C'). Rejects malformed
+    paths that contain '/' but do not start with it."""
+    if not isinstance(path, str):
+        return path  # non-string class paths (e.g., UnrealClass) are validated elsewhere
+    if "/" in path and not path.startswith("/"):
+        raise ValueError(
+            f"Invalid class path {path!r}. Class paths must be a bare class name "
+            "(e.g., 'AActor') or an absolute UE object path starting with '/' "
+            "(e.g., '/Game/Blueprints/MyActor.MyActor_C')."
+        )
+    return path
+
+# Convert to a JSON string from an object so it can be passed to a service.
 def to_json_string(obj, stringify=True):
     if isinstance(obj, str):
         return obj
@@ -436,6 +506,7 @@ def to_json_string(obj, stringify=True):
             if isinstance(obj, bool):
                 return json.dumps(obj)
             elif isinstance(obj, numbers.Number):
+                _validate_finite_number(obj)
                 return json.dumps(obj)
             elif isinstance(obj, list):
                 return json.dumps([ to_json_string(obj=o, stringify=False) for o in obj ])
@@ -447,6 +518,7 @@ def to_json_string(obj, stringify=True):
             if isinstance(obj, bool):
                 return obj
             elif isinstance(obj, numbers.Number):
+                _validate_finite_number(obj)
                 return obj
             elif isinstance(obj, list):
                 return [ to_json_string(obj=o, stringify=False) for o in obj ]

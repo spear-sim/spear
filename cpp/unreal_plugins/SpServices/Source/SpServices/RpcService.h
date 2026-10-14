@@ -7,8 +7,10 @@
 
 #include <stdint.h> // uint16_t
 
+#include <chrono> // std::chrono
 #include <limits> // std::numeric_limits
 #include <memory> // std::unique_ptr
+#include <thread> // std::this_thread::sleep_for
 
 #include <boost/predef.h> // BOOST_OS_LINUX, BOOST_OS_MACOS
 
@@ -45,13 +47,26 @@ public:
 
         SP_ASSERT(rpc_server_port >= 0 && rpc_server_port <= std::numeric_limits<uint16_t>::max());
 
-        try {
-            rpc_server_ = std::make_unique<RpcServer>(static_cast<uint16_t>(rpc_server_port));
-            SP_ASSERT(rpc_server_);
-            preventChildProcessFromInheritingPortFileDescriptor(rpc_server_port);
-        } catch (...) {
-            SP_LOG("    ERROR: Couldn't create an RPC server. The Unreal Editor might be open already, or there might be another SPEAR executable running in the background. Close the Unreal Editor and other SPEAR executables, or change SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT to a different unused port, and try launching again.");
-            SP_ASSERT(false);
+        // The port may be briefly held by a previous SPEAR process that was just terminated (its
+        // listening socket is not always released immediately). Rather than asserting, retry the bind
+        // for a few seconds so back-to-back launches (e.g., a fuzz harness) don't race the OS.
+        constexpr int kMaxBindAttempts = 30;
+        constexpr auto kBindRetryDelay = std::chrono::milliseconds(100);
+        for (int attempt = 1; attempt <= kMaxBindAttempts; ++attempt) {
+            try {
+                rpc_server_ = std::make_unique<RpcServer>(static_cast<uint16_t>(rpc_server_port));
+                SP_ASSERT(rpc_server_);
+                preventChildProcessFromInheritingPortFileDescriptor(rpc_server_port);
+                return;
+            } catch (...) {
+                if (attempt < kMaxBindAttempts) {
+                    SP_LOG("    RPC port ", rpc_server_port, " is busy (attempt ", attempt, "/", kMaxBindAttempts, "), retrying...");
+                    std::this_thread::sleep_for(kBindRetryDelay);
+                    continue;
+                }
+                SP_LOG("    ERROR: Couldn't create an RPC server after ", kMaxBindAttempts, " attempts. The Unreal Editor might be open already, or there might be another SPEAR executable running in the background. Close the Unreal Editor and other SPEAR executables, or change SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT to a different unused port, and try launching again.");
+                SP_ASSERT(false);
+            }
         }
     }
 
