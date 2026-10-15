@@ -1,8 +1,8 @@
-# Control the `GameAnimationSample` Project (for Unreal Engine 5.8)
+# Control the `GameAnimationSample` Project (UE 5.5)
 
-In this example application, we demonstrate how to control the `GameAnimationSample` project (for Unreal Engine 5.8), which is a freely available sample project from Epic Games.
+In this example application, we demonstrate how to control the `GameAnimationSample` project (UE 5.5), which is a freely available sample project from Epic Games.
 
-In a pre-processing step, we need to install the SPEAR plugins in `GameAnimationSample` by adding an `AdditionalPluginDirectories` entry to `GameAnimationSample.uproject`. We could do this by editing the `uproject` file directly, but here we use one of our command-line tools for convenience. We must also build the project, which will build the SPEAR plugin binaries and copy them into the project directory.
+In a pre-processing step, we need to install the SPEAR plugins into the `GameAnimationSample` project. We must also build the project, which will build the SPEAR plugin binaries and copy them into the project directory.
 
 ```console
 python ../../tools/install_plugins_in_external_project.py --external-project-dir path/to/GameAnimationSample
@@ -22,4 +22,4 @@ Finally, in the Unreal Editor, we wait for the default map to fully load. Then w
 python run.py
 ```
 
-You should see the `GameAnimationSample` walker start to move. Additionally, an `images` directory of rendered images will begin to populate.
+You should see a `GameAnimationSample` character start running and jumping. Additionally, an `images` directory of rendered images will begin to populate.

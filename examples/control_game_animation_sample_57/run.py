@@ -6,8 +6,8 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import argparse
+import cv2
 import math
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 import shutil
@@ -25,7 +25,7 @@ component_descs = \
         "name": "final_tone_curve_hdr",
         "long_name": "DefaultSceneRoot.final_tone_curve_hdr_",
         "spatial_supersampling_factor": 1,
-        "visualize_func": lambda data : data[:,:,[2,1,0]] # BGRA to RGB
+        "visualize_func": lambda data : data[:,:,[0,1,2]] # native BGR (drop alpha)
     }
 ]
 
@@ -37,7 +37,7 @@ def save_images(images_dir, frame_index):
         image_file = os.path.realpath(os.path.join(images_dir, component_desc["name"], f"{frame_index:04d}.png"))
         image = component_desc["visualize_func"](data=data)
         spear.log("Saving image: ", image_file)
-        plt.imsave(image_file, image)
+        cv2.imwrite(image_file, image)
 
 
 if __name__ == "__main__":
@@ -68,6 +68,7 @@ if __name__ == "__main__":
 
         new_player_controller_uclass = game.unreal_service.load_class(uclass="APlayerController", name="/Game/Locomotor/PC_Locomotor.PC_Locomotor_C")
         new_player_controller = game.unreal_service.spawn_actor(uclass=new_player_controller_uclass)
+        spear.log("new_player_controller: ", new_player_controller)
 
         # swap player controllers
         game_mode = gameplay_statics.GetGameMode()
@@ -84,6 +85,7 @@ if __name__ == "__main__":
             location={"X": -4200.0, "Y": 5000.0, "Z": 100.0}, 
             rotation={"Pitch": 0.0, "Yaw": 0.0, "Roll": 0.0},
             spawn_parameters={"SpawnCollisionHandlingOverride": "AlwaysSpawn"})
+        spear.log("bp_walker: ", bp_walker)
         player_controller.Possess(InPawn=bp_walker)
 
     with instance.end_frame():
