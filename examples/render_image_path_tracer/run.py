@@ -19,7 +19,6 @@ user_scene_texture_names = [
     "PathTracingDenoisedRadiance",
     "PathTracingNormal",
     "PathTracingRadiance",
-    "PathTracingVariance",
     "SceneDepth"
 ]
 
@@ -62,6 +61,9 @@ elif args.denoiser == "":
     denoiser_name = ""
 else:
     assert False
+
+if denoiser:
+    user_scene_texture_names.append("PathTracingVariance")
 
 
 if __name__ == "__main__":
@@ -121,7 +123,7 @@ if __name__ == "__main__":
         viewport_desc = game.viewport_service.get_current_viewport_desc()
         game.viewport_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=component, viewport_desc=viewport_desc, widths=width, heights=height)
 
-        # enable all the available UserSceneTexture buffers on our capture component; need to call
+        # enable the selected UserSceneTexture buffers on our capture component; need to call
         # initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
         component.UserSceneTextureNames = user_scene_texture_names
         component.Initialize()
