@@ -604,14 +604,14 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "pre_edit_change",
             [this](uint64_t& uobject, uint64_t& property) -> void {
-                #if WITH_EDITOR
+                #if WITH_EDITOR // defined in an auto-generated header
                     toPtr<UObject>(uobject)->PreEditChange(toPtr<FProperty>(property));
                 #endif
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "pre_edit_change_from_string",
             [this](uint64_t& uobject, std::string& property_name) -> void {
-                #if WITH_EDITOR
+                #if WITH_EDITOR // defined in an auto-generated header
                     SpPropertyDesc property_desc = UnrealUtils::resolveProperty(toPtr<UObject>(uobject), property_name);
                     UnrealUtils::preEditChange(property_desc);
                 #endif
@@ -619,14 +619,14 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "pre_edit_change_from_property_desc",
             [this](SpPropertyDesc& property_desc) -> void {
-                #if WITH_EDITOR
+                #if WITH_EDITOR // defined in an auto-generated header
                     UnrealUtils::preEditChange(property_desc);
                 #endif
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "post_edit_change",
             [this](uint64_t& uobject, uint64_t& property) -> void {
-                #if WITH_EDITOR
+                #if WITH_EDITOR // defined in an auto-generated header
                     FPropertyChangedEvent property_changed_event(toPtr<FProperty>(property));
                     toPtr<UObject>(uobject)->PostEditChangeProperty(property_changed_event);
                 #endif
@@ -634,7 +634,7 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "post_edit_change_from_string",
             [this](uint64_t& uobject, std::string& property_name) -> void {
-                #if WITH_EDITOR
+                #if WITH_EDITOR // defined in an auto-generated header
                     SpPropertyDesc property_desc = UnrealUtils::resolveProperty(toPtr<UObject>(uobject), property_name);
                     UnrealUtils::postEditChange(property_desc);
                 #endif
@@ -642,7 +642,7 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "post_edit_change_from_property_desc",
             [this](SpPropertyDesc& property_desc) -> void {
-                #if WITH_EDITOR
+                #if WITH_EDITOR // defined in an auto-generated header
                     UnrealUtils::postEditChange(property_desc);
                 #endif
             });

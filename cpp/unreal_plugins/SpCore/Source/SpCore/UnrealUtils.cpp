@@ -223,7 +223,7 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
     // only perform this validation in the editor because the necessary metadata (i.e., the default value
     // given in the C++ signature) is not available in standalone builds.
 
-    #if WITH_EDITOR
+    #if WITH_EDITOR // defined in an auto-generated header
         std::vector<uint8_t, SpAlignedAllocator<uint8_t, 4096>> metadata_vector(num_bytes, initial_value);
         if (num_bytes > 0) {
             ufunction->InitializeStruct(metadata_vector.data());
@@ -262,7 +262,7 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
         // a value that differs from what the signature implies.
 
         else {
-            #if WITH_EDITOR
+            #if WITH_EDITOR // defined in an auto-generated header
                 FProperty* property = property_desc.property_;
                 if (!property->HasAnyPropertyFlags(EPropertyFlags::CPF_ReturnParm)) {
                     std::string metadata_key = "CPP_Default_" + Unreal::toStdString(property->GetName());
@@ -281,7 +281,7 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
         }
     }
 
-    #if WITH_EDITOR
+    #if WITH_EDITOR // defined in an auto-generated header
         if (num_bytes > 0) {
             ufunction->DestroyStruct(metadata_vector.data());
         }
@@ -416,7 +416,7 @@ void UnrealUtils::setObjectPropertiesFromString(void* value_ptr, const UStruct* 
     SP_ASSERT(value_ptr);
     SP_ASSERT(ustruct);
 
-    #if WITH_EDITOR
+    #if WITH_EDITOR // defined in an auto-generated header
         if (notify_object) {
             notify_object->PreEditChange(nullptr);
         }
@@ -431,7 +431,7 @@ void UnrealUtils::setObjectPropertiesFromString(void* value_ptr, const UStruct* 
     success = FJsonObjectConverter::JsonObjectToUStruct(json_object.ToSharedRef(), ustruct, value_ptr);
     SP_ASSERT(success);
 
-    #if WITH_EDITOR
+    #if WITH_EDITOR // defined in an auto-generated header
         if (notify_object) {
             FPropertyChangedEvent property_changed_event(nullptr);
             notify_object->PostEditChangeProperty(property_changed_event);
@@ -706,7 +706,7 @@ bool UnrealUtils::supportsEditChangeNotify(const SpPropertyDesc& property_desc)
 
 void UnrealUtils::preEditChange(const SpPropertyDesc& property_desc)
 {
-    #if WITH_EDITOR
+    #if WITH_EDITOR // defined in an auto-generated header
         SP_ASSERT(supportsEditChangeNotify(property_desc));
 
         UObject* notify_object = property_desc.notify_objects_.back();
@@ -721,7 +721,7 @@ void UnrealUtils::preEditChange(const SpPropertyDesc& property_desc)
 
 void UnrealUtils::postEditChange(const SpPropertyDesc& property_desc)
 {
-    #if WITH_EDITOR
+    #if WITH_EDITOR // defined in an auto-generated header
         SP_ASSERT(supportsEditChangeNotify(property_desc));
 
         UObject* notify_object = property_desc.notify_objects_.back();
@@ -738,7 +738,7 @@ void UnrealUtils::postEditChange(const SpPropertyDesc& property_desc)
 
 void UnrealUtils::setEditPropertyChain(const SpPropertyDesc& property_desc, FEditPropertyChain& property_chain)
 {
-    #if WITH_EDITOR
+    #if WITH_EDITOR // defined in an auto-generated header
         // supportsEditChangeNotify guarantees every notify_objects_ entry is the same object, so the chain
         // is simply every member property in order from root to leaf
         for (auto member_property : property_desc.notify_member_properties_) {
@@ -761,7 +761,7 @@ FPropertyChangedChainEvent UnrealUtils::getPropertyChangedChainEvent(const SpPro
 
     FPropertyChangedEvent property_changed_event(property_desc.property_);
 
-    #if WITH_EDITOR
+    #if WITH_EDITOR // defined in an auto-generated header
         // The active member property is the top-level member (Head of the edit property chain), which under the
         // single-object invariant guaranteed by supportsEditChangeNotify is notify_member_properties_.front().
         property_changed_event.SetActiveMemberProperty(property_desc.notify_member_properties_.front());
@@ -1004,7 +1004,7 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
     SP_ASSERT(property_desc.property_);
     SP_ASSERT(json_value.IsValid());
 
-    #if WITH_EDITOR
+    #if WITH_EDITOR // defined in an auto-generated header
         if (notify_editor) {
             preEditChange(property_desc);
         }
@@ -1200,7 +1200,7 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
         SP_ASSERT(false);
     }
 
-    #if WITH_EDITOR
+    #if WITH_EDITOR // defined in an auto-generated header
         if (notify_editor) {
             postEditChange(property_desc);
         }

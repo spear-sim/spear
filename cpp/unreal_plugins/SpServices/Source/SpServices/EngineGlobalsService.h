@@ -85,7 +85,7 @@ public:
         });
 
         unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("engine_globals_service", "is_with_editor", []() -> bool {
-            return WITH_EDITOR;
+            return WITH_EDITOR; // defined in an auto-generated header
         });
 
         unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("engine_globals_service", "is_running_commandlet", []() -> bool {

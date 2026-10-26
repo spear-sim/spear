@@ -287,7 +287,7 @@ namespace {
       if (AssertsAreAllowedToThrowScope::insideAssertsAreAllowedToThrowScope()) {
         default_assert_action = AssertAction::Throw;
       } else {
-        #if WITH_EDITOR
+        #if WITH_EDITOR // defined in an auto-generated header
           default_assert_action = AssertAction::Crash;
         #else
           default_assert_action = AssertAction::Exit;
