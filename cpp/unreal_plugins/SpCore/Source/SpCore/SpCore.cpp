@@ -113,7 +113,7 @@ void SpCore::requestInitializeIniConfig(const FString& ini_config_filename, cons
         FConfigFile* config_file = GConfig->Find(ini_config_filename);
         SP_ASSERT(config_file);
 
-        SP_LOG("Overriding ", ini_config_name, " (", Unreal::toStdString(ini_config_filename), ") with the following config string:");
+        SP_LOG("    Overriding ", ini_config_name, " (", Unreal::toStdString(ini_config_filename), ") with the following config string:");
         SP_LOG_NO_PREFIX(ini_config_string);
 
         // CombineFromBuffer parses the string as Unreal INI text (section headers, key=value lines, and the +/-/./!
