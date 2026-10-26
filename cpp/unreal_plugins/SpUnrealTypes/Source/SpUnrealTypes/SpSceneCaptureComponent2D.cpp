@@ -510,7 +510,9 @@ void USpSceneCaptureComponent2D::setupView(FSceneViewFamily& view_family, FScene
     const TArray<FEngineShowFlagsSetting>& engine_show_flag_settings = GetShowFlagSettings();
 
     for (auto& engine_show_flag_setting : engine_show_flag_settings) {
-        // Based on Source\Runtime\Engine\Private\GameViewportClient.cpp
+
+        // Based on Source/Runtime/Engine/Private/GameViewportClient.cpp. If more settings are added here,
+        // they must also be added to the showFlagsNeedSceneViewExtension() function below.
 
         if (Unreal::toStdString(engine_show_flag_setting.ShowFlagName) == "Wireframe" && engine_show_flag_setting.Enabled) {
             // Wireframe color is emissive-only, and mesh-modifying materials do not use material substitution, hence...
@@ -662,8 +664,8 @@ void USpSceneCaptureComponent2D::postRenderViewFamily_RenderThread(FRDGBuilder& 
 
 bool USpSceneCaptureComponent2D::showFlagsNeedSceneViewExtension()
 {
-    std::vector<std::string> setting_names_that_need_sve_when_enabled = {"LightingOnlyOverride", "PathTracing"};
-    std::vector<std::string> setting_names_that_need_sve_when_disabled = {"Specular"};
+    std::vector<std::string> setting_names_that_need_sve_when_enabled = {"Wireframe", "OverrideDiffuseAndSpecular", "LightingOnlyOverride", "ReflectionOverride", "PathTracing"};
+    std::vector<std::string> setting_names_that_need_sve_when_disabled = {"Diffuse", "Specular"};
 
     std::vector<FEngineShowFlagsSetting> show_flag_settings = Unreal::toStdVector(GetShowFlagSettings());
 

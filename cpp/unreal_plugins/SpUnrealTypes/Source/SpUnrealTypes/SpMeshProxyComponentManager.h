@@ -249,7 +249,7 @@ protected:
     {
         mesh_proxy_component_manager_ = mesh_proxy_component_manager;
 
-        #if WITH_EDITOR
+        #if WITH_EDITOR // defined in an auto-generated header
             if (!mesh_proxy_component_manager_) {
                 UnregisterDelayFrames = -1;
                 MeshProxyGeometryDescs.Empty();
