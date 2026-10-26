@@ -10,6 +10,7 @@
 #include <iostream> // std::cin
 #include <map>
 #include <memory>   // std::make_unique, std::unique_ptr
+#include <string>
 
 #include <CoreGlobals.h>                 // GConfig, GEditorIni, GEngineIni, GGameIni, GGameUserSettingsIni, GInputIni
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
