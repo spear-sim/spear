@@ -39,6 +39,7 @@
 
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
+#include "SpCore/Constants.h"
 #include "SpCore/Log.h"
 #include "SpCore/SharedMemory.h"
 #include "SpCore/SpArray.h"
@@ -46,6 +47,11 @@
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealUtils.h"
+
+#if SP_USE_PATH_TRACING_SCENE_VIEW_EXTENSIONS
+    #include <Containers/ArrayView.h>
+    #include <LightComponentId.h>
+#endif
 
 #include "SpUnrealTypes/SpMeshProxyComponentManager.h"
 
@@ -95,6 +101,29 @@ void FSpSceneViewExtensionBase::PostRenderViewFamily_RenderThread(FRDGBuilder& g
         postRenderViewFamily_RenderThread(graph_builder, in_view_family);
     }
 }
+
+#if SP_USE_PATH_TRACING_SCENE_VIEW_EXTENSIONS
+    void FSpSceneViewExtensionBase::PostPathTraceSetLightParameters_RenderThread(FRDGBuilder& graph_builder, const FSceneView& in_view, TConstArrayView<FLightComponentId> light_component_ids)
+    {
+        if (shouldHandleView(in_view.Family, &in_view)) {
+            postPathTraceSetLightParameters_RenderThread(graph_builder, in_view, light_component_ids);
+        }
+    }
+
+    void FSpSceneViewExtensionBase::PrePathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& in_view, uint32 dispatch_id, uint32 num_dispatches)
+    {
+        if (shouldHandleView(in_view.Family, &in_view)) {
+            prePathTraceDispatch_RenderThread(graph_builder, in_view, dispatch_id, num_dispatches);
+        }
+    }
+
+    void FSpSceneViewExtensionBase::PostPathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& in_view, uint32 dispatch_id, uint32 num_dispatches)
+    {
+        if (shouldHandleView(in_view.Family, &in_view)) {
+            postPathTraceDispatch_RenderThread(graph_builder, in_view, dispatch_id, num_dispatches);
+        }
+    }
+#endif
 
 bool FSpSceneViewExtensionBase::shouldHandleViewFamily(const FSceneViewFamily* view_family) const
 {
@@ -166,6 +195,23 @@ void FSpSceneViewExtension::postRenderViewFamily_RenderThread(FRDGBuilder& graph
 {
     getComponent()->postRenderViewFamily_RenderThread(graph_builder, view_family);
 }
+
+#if SP_USE_PATH_TRACING_SCENE_VIEW_EXTENSIONS
+    void FSpSceneViewExtension::postPathTraceSetLightParameters_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view, TConstArrayView<FLightComponentId> light_component_ids)
+    {
+        getComponent()->postPathTraceSetLightParameters_RenderThread(graph_builder, view, light_component_ids);
+    }
+
+    void FSpSceneViewExtension::prePathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view, uint32 dispatch_id, uint32 num_dispatches)
+    {
+        getComponent()->prePathTraceDispatch_RenderThread(graph_builder, view, dispatch_id, num_dispatches);
+    }
+
+    void FSpSceneViewExtension::postPathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view, uint32 dispatch_id, uint32 num_dispatches)
+    {
+        getComponent()->postPathTraceDispatch_RenderThread(graph_builder, view, dispatch_id, num_dispatches);
+    }
+#endif
 
 USpSceneCaptureComponent2D::USpSceneCaptureComponent2D()
 {
@@ -661,6 +707,23 @@ void USpSceneCaptureComponent2D::postRenderViewFamily_RenderThread(FRDGBuilder& 
         }
     }
 }
+
+#if SP_USE_PATH_TRACING_SCENE_VIEW_EXTENSIONS
+    void USpSceneCaptureComponent2D::postPathTraceSetLightParameters_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view, TConstArrayView<FLightComponentId> light_component_ids)
+    {
+        int dummy = 0;
+    }
+
+    void USpSceneCaptureComponent2D::prePathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view, uint32 dispatch_id, uint32 num_dispatches)
+    {
+        int dummy = 0;
+    }
+
+    void USpSceneCaptureComponent2D::postPathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view, uint32 dispatch_id, uint32 num_dispatches)
+    {
+        int dummy = 0;
+    }
+#endif
 
 bool USpSceneCaptureComponent2D::showFlagsNeedSceneViewExtension()
 {

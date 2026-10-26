@@ -25,11 +25,19 @@
 #include <Engine/World.h>
 
 #include "SpCore/Config.h"
+#include "SpCore/Constants.h"
 #include "SpCore/Log.h"
 #include "SpCore/OutputLog.h"
 #include "SpCore/SharedMemory.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealClassRegistry.h"
+
+#if SP_USE_PATH_TRACING_SCENE_VIEW_EXTENSIONS
+    #include <Containers/Map.h>          // TMap::Find
+    #include <Containers/UnrealString.h> // FString
+    #include <Misc/Paths.h>
+    #include <ShaderCore.h>              // AddShaderSourceDirectoryMapping, AllShaderSourceDirectoryMappings
+#endif
 
 void SpCore::StartupModule()
 {
@@ -39,6 +47,10 @@ void SpCore::StartupModule()
 
     requestWaitForKeyboardInput(); // no need to undo in ShutdownModule()
     requestInitializeIniConfigs(); // no need to undo in ShutdownModule()
+
+    #if SP_USE_PATH_TRACING_SCENE_VIEW_EXTENSIONS
+        requestInitializePathTracingExtension(); // no need to undo in ShutdownModule()
+    #endif
 
     registerClasses();
     OutputLog::requestInitialize();
@@ -123,6 +135,31 @@ void SpCore::requestInitializeIniConfig(const FString& ini_config_filename, cons
         config_file->CombineFromBuffer(Unreal::toFString(ini_config_string), ini_config_filename);
     }
 }
+
+#if SP_USE_PATH_TRACING_SCENE_VIEW_EXTENSIONS
+    void SpCore::requestInitializePathTracingExtension() const
+    {
+        SP_ASSERT(GConfig);
+
+        FString shader_dir;
+        GConfig->GetString(Unreal::toTCharPtr("SPEAR.SpCore"), Unreal::toTCharPtr("PathTracingExtensionShaderDirectory"), shader_dir, GGameIni);
+
+        if (!shader_dir.IsEmpty()) {
+            FString virtual_shader_dir = Unreal::toFString("/Engine/Private/PathTracing/Extension");
+            FString real_shader_dir = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir(), shader_dir);
+            const FString* existing_shader_dir = AllShaderSourceDirectoryMappings().Find(virtual_shader_dir);
+
+            // Reopening a project can initialize SpCore again without resetting the shader source mappings.
+            if (existing_shader_dir) {
+                SP_ASSERT(FPaths::IsSamePath(*existing_shader_dir, real_shader_dir));
+                SP_LOG("    Mapping already exists: /Engine/Private/PathTracing/Extension -> ", Unreal::toStdString(*existing_shader_dir));
+            } else {
+                SP_LOG("    Re-mapping: /Engine/Private/PathTracing/Extension -> ", Unreal::toStdString(real_shader_dir));
+                AddShaderSourceDirectoryMapping(virtual_shader_dir, real_shader_dir);
+            }
+        }
+    }
+#endif
 
 // Normally we would do the operations in registerClasses() and unregisterClasses(...) in the opposite order.
 // But we make an exception here (i.e., we do the operations in the same order) to make it easier and less
