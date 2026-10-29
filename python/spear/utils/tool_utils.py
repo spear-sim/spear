@@ -21,10 +21,10 @@ import threading
 def get_default_maps_to_cook():
     return [
         "apartment_0000",   # /Game/SPEAR/Scenes/apartment_0000/Maps/apartment_0000
-        "Lvl_FirstPerson",  # /Game/FirstPerson
+        "Lvl_FirstPerson",  # /Game/FirstPerson/Lvl_FirstPerson
         # "Lvl_IntroRoom",    # /Game/DemoTemplate/_Core/Lvl_IntroRoom doesn't work in standalone builds
-        "Lvl_ThirdPerson",  # /Game/ThirdPerson
-        "Lvl_VehicleBasic"] # /Game/VehicleTemplate/Maps
+        "Lvl_ThirdPerson",  # /Game/ThirdPerson/Lvl_ThirdPerson
+        "Lvl_VehicleBasic"] # /Game/VehicleTemplate/Maps/Lvl_VehicleBasic
 
 
 #
