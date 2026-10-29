@@ -111,36 +111,9 @@ if __name__ == "__main__":
         assert final_tone_curve_hdr_component is not None
 
         # configure components to match the viewport (width, height, FOV, post-processing settings, etc)
-        
-        player_camera_manager = player_controller.PlayerCameraManager.get()
-        view_target_pov = player_camera_manager.ViewTarget.POV.get()
-
-        post_process_volume_settings = None
-        post_process_volumes = game.unreal_service.find_actors_by_class(uclass="APostProcessVolume")
-        if len(post_process_volumes) == 1:
-            post_process_volume = post_process_volumes[0]
-            spear.log("Found unique post-process volume.")
-            post_process_volume_settings = post_process_volume.Settings.get()
-
-        viewport_size_x = 1280
-        viewport_size_y = 720
-
-        viewport_aspect_ratio = viewport_size_x/viewport_size_y # see Engine/Source/Editor/UnrealEd/Private/EditorViewportClient.cpp:2130 for evidence that Unreal's aspect ratio convention is x/y
-        fov = view_target_pov["fOV"]*math.pi/180.0
-        half_fov = fov/2.0
-        half_fov_adjusted = math.atan(math.tan(half_fov)*viewport_aspect_ratio/view_target_pov["aspectRatio"]) # this adjustment is necessary to compute an FOV value that matches the game viewport
-        fov_adjusted = half_fov_adjusted*2.0
-        fov_adjusted_degrees = fov_adjusted*180.0/math.pi
-
-        bp_camera_sensor.K2_SetActorLocation(NewLocation=view_target_pov["location"])
-        bp_camera_sensor.K2_SetActorRotation(NewRotation=view_target_pov["rotation"])
-
-        for component_desc in component_descs:
-            component_desc["component"].Width = viewport_size_x*component_desc["spatial_supersampling_factor"]
-            component_desc["component"].Height = viewport_size_y*component_desc["spatial_supersampling_factor"]
-            component_desc["component"].FOVAngle = fov_adjusted_degrees
-            if post_process_volume_settings is not None:
-                component_desc["component"].PostProcessSettings = post_process_volume_settings
+        viewport_desc = game.viewport_service.get_current_viewport_desc()
+        components = [ desc["component"] for desc in component_descs ]
+        game.viewport_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, widths=1280, heights=720, post_processing_components=components)
 
         # need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize()
         for component_desc in component_descs:
