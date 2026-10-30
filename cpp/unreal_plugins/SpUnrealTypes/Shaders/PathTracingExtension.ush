@@ -1,0 +1,39 @@
+//
+// Copyright (c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+// Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+//
+
+#pragma once
+
+// The following file is intended as a compile-time extension mechanism for game code and plugin code to
+// extend path tracing shaders. Game code and plugin code can optionally override the path /Engine/Private/PathTracing/Extension
+// prior to shader compilation (e.g., early in the editor's lifetime or during cooking) to provide an
+// alternative implementation of PathTracingExtension.ush. If enabled by the PATH_TRACER_USE_SHADER_EXTENSION
+// shader permutation macro, compilation will proceed such that the functions in PathTracingExtension.ush are
+// called at various locations in surrounding path tracing shaders. At runtime, game code or plugin code must
+// set r.PathTracing.UseShaderExtension to true to select the appropriate shader permutation that calls the
+// custom implementation of PathTracingExtension.ush.
+
+// Called at the end of the WritePixel(...) body
+void PathTracingExtensionPostWritePixel(
+    uint2 texture_index,
+    float blend,
+    float4 old_pixel,
+    float4 old_albedo,
+    float4 old_normal,
+    float4 pixel_value,
+    float3 albedo,
+    float3 normal,
+    RWTexture2D<float4> radiance_texture,
+    RWTexture2D<float4> albedo_texture,
+    RWTexture2D<float4> normal_texture)
+{
+    float normal_length = length(normal);
+    float pink_weight = 0.0;
+    if (normal_length > 0.0) {
+        pink_weight = smoothstep(cos(radians(10.0)), 1.0, normal.z/normal_length);
+    }
+
+    float4 tinted_pixel_value = float4(lerp(pixel_value.rgb, float3(1.0, 0.0, 1.0), pink_weight), pixel_value.a);
+    radiance_texture[texture_index] = lerp(old_pixel, tinted_pixel_value, blend);
+}
