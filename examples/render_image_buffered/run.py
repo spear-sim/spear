@@ -91,12 +91,12 @@ if __name__ == "__main__":
         pass
 
     #
-    # double-buffered: spawn one object per frame, enqueue_copy + read pixels each frame (1 frame of latency)
+    # double-buffered: spawn one object per frame, enqueue_copy_pixels + read_pixels each frame (1 frame of latency)
     #
 
     # priming frame
     with instance.begin_frame():
-        db_component.enqueue_copy()
+        db_component.enqueue_copy_pixels()
     with instance.end_frame(single_step=True):
         pass
 
@@ -109,7 +109,7 @@ if __name__ == "__main__":
             obj = game.unreal_service.spawn_actor(uclass=bp_axes_uclass, location={"X": 40.0, "Y": y, "Z": 50.0})
             obj.SetActorScale3D(NewScale3D={"X": 2.0, "Y": 2.0, "Z": 2.0})
             db_objects.append(obj)
-            db_component.enqueue_copy()
+            db_component.enqueue_copy_pixels()
         with instance.end_frame(single_step=True):
             data_bundle = db_component.read_pixels()
 
@@ -119,7 +119,7 @@ if __name__ == "__main__":
     spear.log("Executing double-buffered frame: no spawn (trailing frame 1)")
 
     with instance.begin_frame():
-        db_component.enqueue_copy()
+        db_component.enqueue_copy_pixels()
     with instance.end_frame(single_step=True):
         data_bundle = db_component.read_pixels()
 
@@ -133,18 +133,18 @@ if __name__ == "__main__":
         pass
 
     #
-    # triple-buffered: spawn one object per frame, enqueue_copy + read pixels each frame (2 frames of latency)
+    # triple-buffered: spawn one object per frame, enqueue_copy_pixels + read_pixels each frame (2 frames of latency)
     #
 
     # priming frame 1
     with instance.begin_frame():
-        tb_component.enqueue_copy()
+        tb_component.enqueue_copy_pixels()
     with instance.end_frame(single_step=True):
         pass
 
     # priming frame 2
     with instance.begin_frame():
-        tb_component.enqueue_copy()
+        tb_component.enqueue_copy_pixels()
     with instance.end_frame(single_step=True):
         pass
 
@@ -157,7 +157,7 @@ if __name__ == "__main__":
             obj = game.unreal_service.spawn_actor(uclass=bp_axes_uclass, location={"X": 40.0, "Y": y, "Z": 50.0})
             obj.SetActorScale3D(NewScale3D={"X": 2.0, "Y": 2.0, "Z": 2.0})
             tb_objects.append(obj)
-            tb_component.enqueue_copy()
+            tb_component.enqueue_copy_pixels()
         with instance.end_frame(single_step=True):
             data_bundle = tb_component.read_pixels()
 
@@ -167,7 +167,7 @@ if __name__ == "__main__":
     spear.log("Executing triple-buffered frame: no spawn (trailing frame 1)")
 
     with instance.begin_frame():
-        tb_component.enqueue_copy()
+        tb_component.enqueue_copy_pixels()
     with instance.end_frame(single_step=True):
         data_bundle = tb_component.read_pixels()
 
@@ -177,7 +177,7 @@ if __name__ == "__main__":
     spear.log("Executing triple-buffered frame: no spawn (trailing frame 2)")
 
     with instance.begin_frame():
-        tb_component.enqueue_copy()
+        tb_component.enqueue_copy_pixels()
     with instance.end_frame(single_step=True):
         data_bundle = tb_component.read_pixels()
 
