@@ -13,6 +13,10 @@ import spear
 class UnrealObject:
     def __init__(self, unreal_service, sp_func_service, config, uobject=None, uclass=None, derived_state=None, property_name="", is_top_level=True, with_sp_funcs=False):
 
+        assert unreal_service is not None
+        assert sp_func_service is not None
+        assert config is not None
+
         if is_top_level:
             assert unreal_service.is_top_level_service()
             assert sp_func_service.is_top_level_service()
@@ -31,13 +35,16 @@ class UnrealObject:
         self._sp_func_shared_memory_handles = None
 
         if self._is_top_level:
+
             if uobject is None and uclass is None:
                 assert False
             elif uobject is None and uclass is not None:
                 self.uclass = self._unreal_service.to_uclass(uclass=uclass)
+                assert self.uclass != 0
                 self.uobject = self._unreal_service.get_default_object(uclass=self.uclass, create_if_needed=False, as_handle=True)
             elif uobject is not None and uclass is None:
                 self.uobject = spear.to_handle(obj=uobject)
+                assert self.uobject != 0
                 self.uclass = self._unreal_service.get_class(uobject=self.uobject, as_handle=True)
             else:
                 self.uobject = spear.to_handle(obj=uobject)
@@ -92,7 +99,6 @@ class UnrealObject:
         else:
             assert not with_sp_funcs
 
-
     # SpFunc interface
 
     def initialize_sp_funcs(self):
@@ -135,7 +141,6 @@ class UnrealObject:
         self._sp_func_names = None
         self._sp_func_shared_memory_handles = None
         self._initialized_sp_funcs = False
-
 
     # interface for calling functions; this interface is not necessary most of the time because functions
     # with no spaces in their names can be accessed directly as Python functions, but this interface is
@@ -613,8 +618,10 @@ class UnrealObject:
 
 class UnrealStruct:
     def __init__(self, unreal_service, ustruct):
+        assert unreal_service is not None
         self._unreal_service = unreal_service
         self.ustruct = spear.to_handle(obj=ustruct)
+        assert self.ustruct != 0
 
     def print_debug_info(self, prefix=""):
         type_string = self._unreal_service.get_type_for_struct_as_string(ustruct=self.ustruct)
@@ -633,10 +640,13 @@ class UnrealStruct:
     def __repr__(self):
         return f"UnrealStruct(ustruct={self.ustruct})"
 
+
 class UnrealClass:
     def __init__(self, unreal_service, uclass):
+        assert unreal_service is not None
         self._unreal_service = unreal_service
         self.uclass = spear.to_handle(obj=uclass)
+        assert self.uclass != 0
 
     def print_debug_info(self, prefix=""):
         type_string = self._unreal_service.get_type_for_class_as_string(uclass=self.uclass)

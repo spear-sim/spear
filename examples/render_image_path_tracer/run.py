@@ -110,7 +110,7 @@ if __name__ == "__main__":
         game.console_service.set_cvar(name="r.PathTracing.Denoiser", value=denoiser)
         game.console_service.set_cvar(name="r.PathTracing.Denoiser.Name", value=denoiser_name)
 
-        # Filter Width controls how much primary rays are jittered, so it can be used to effectively
+        # FilterWidth controls how much primary rays are jittered, so it can be used to effectively
         # turn off anti-aliasing for primary rays.
         game.console_service.set_cvar(name="r.PathTracing.FilterWidth", value=args.filter_width)
 
