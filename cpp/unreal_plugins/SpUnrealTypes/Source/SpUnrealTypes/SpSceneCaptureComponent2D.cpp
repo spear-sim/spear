@@ -353,7 +353,7 @@ void USpSceneCaptureComponent2D::Initialize()
 
     // register SpFuncs
 
-    SpFuncComponent->registerFunc("enqueue_copy", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
+    SpFuncComponent->registerFunc("enqueue_copy_pixels", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
         SP_ASSERT(!bReadPixelsEveryFrame);
 
         if (BufferingMode == ESpBufferingMode::DoubleBuffered) {
@@ -409,7 +409,7 @@ void USpSceneCaptureComponent2D::Terminate()
     bIsInitialized = false;
 
     // unregister SpFuncs
-    SpFuncComponent->unregisterFunc("enqueue_copy");
+    SpFuncComponent->unregisterFunc("enqueue_copy_pixels");
     SpFuncComponent->unregisterFunc("read_pixels");
 
     // terminate state for measuring "standalone" and "standalone + extra work" frame rates

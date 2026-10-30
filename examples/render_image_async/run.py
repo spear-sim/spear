@@ -99,14 +99,14 @@ if __name__ == "__main__":
         # priming frames
         for i in range(num_priming_frames):
             with instance.begin_frame():
-                final_tone_curve_hdr_component.send_async.enqueue_copy()
+                final_tone_curve_hdr_component.send_async.enqueue_copy_pixels()
             with instance.end_frame():
                 pass
 
         # steady state frame
         with instance.begin_frame():
             future_read_pixels = final_tone_curve_hdr_component.call_async.read_pixels()
-            final_tone_curve_hdr_component.send_async.enqueue_copy()
+            final_tone_curve_hdr_component.send_async.enqueue_copy_pixels()
         with instance.end_frame():
             data_bundle = future_read_pixels.get()
             pass
@@ -206,7 +206,7 @@ if __name__ == "__main__":
         if buffered_readback:
             for i in range(num_priming_frames):
                 with instance.begin_frame():
-                    final_tone_curve_hdr_component.enqueue_copy()
+                    final_tone_curve_hdr_component.enqueue_copy_pixels()
                 with instance.end_frame():
                     pass
         start_time_seconds = time.time()
@@ -214,7 +214,7 @@ if __name__ == "__main__":
             for i in range(num_steps):
                 with instance.begin_frame():
                     data_bundle = final_tone_curve_hdr_component.read_pixels()
-                    final_tone_curve_hdr_component.enqueue_copy()
+                    final_tone_curve_hdr_component.enqueue_copy_pixels()
                 with instance.end_frame():
                     pass
         else:
@@ -232,7 +232,7 @@ if __name__ == "__main__":
         if buffered_readback:
             for i in range(num_priming_frames):
                 with instance.begin_frame():
-                    final_tone_curve_hdr_component.enqueue_copy()
+                    final_tone_curve_hdr_component.enqueue_copy_pixels()
                 with instance.end_frame(single_step=True):
                     pass
         start_time_seconds = time.time()
@@ -240,7 +240,7 @@ if __name__ == "__main__":
             for i in range(num_steps):
                 with instance.begin_frame():
                     data_bundle = final_tone_curve_hdr_component.read_pixels()
-                    final_tone_curve_hdr_component.enqueue_copy()
+                    final_tone_curve_hdr_component.enqueue_copy_pixels()
                 with instance.end_frame(single_step=True):
                     pass
         else:
@@ -259,7 +259,7 @@ if __name__ == "__main__":
         if buffered_readback:
             for i in range(num_priming_frames):
                 with instance.begin_frame():
-                    final_tone_curve_hdr_component.send_async.enqueue_copy()
+                    final_tone_curve_hdr_component.send_async.enqueue_copy_pixels()
                 with instance.end_frame():
                     pass
         start_time_seconds = time.time()
@@ -267,7 +267,7 @@ if __name__ == "__main__":
             for i in range(num_steps):
                 with instance.begin_frame():
                     future_read_pixels = final_tone_curve_hdr_component.call_async.read_pixels()
-                    final_tone_curve_hdr_component.send_async.enqueue_copy()
+                    final_tone_curve_hdr_component.send_async.enqueue_copy_pixels()
                 with instance.end_frame():
                     data_bundle = future_read_pixels.get()
         else:
@@ -285,7 +285,7 @@ if __name__ == "__main__":
         if buffered_readback:
             for i in range(num_priming_frames):
                 with instance.begin_frame():
-                    final_tone_curve_hdr_component.send_async.enqueue_copy()
+                    final_tone_curve_hdr_component.send_async.enqueue_copy_pixels()
                 with instance.end_frame(single_step=True):
                     pass
         start_time_seconds = time.time()
@@ -293,7 +293,7 @@ if __name__ == "__main__":
             for i in range(num_steps):
                 with instance.begin_frame():
                     future_read_pixels = final_tone_curve_hdr_component.call_async.read_pixels()
-                    final_tone_curve_hdr_component.send_async.enqueue_copy()
+                    final_tone_curve_hdr_component.send_async.enqueue_copy_pixels()
                 with instance.end_frame(single_step=True):
                     data_bundle = future_read_pixels.get()
         else:
