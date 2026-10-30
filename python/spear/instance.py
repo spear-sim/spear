@@ -17,6 +17,7 @@ if spear.__can_import_spear_ext__:
 if spear.__can_import_msgpackrpc__:
     import msgpackrpc
 
+
 #
 # Global constants
 #
@@ -130,7 +131,7 @@ class Instance():
                 config=self._config)
 
     def get_unreal_object(self, uobject=None, uclass=None, with_sp_funcs=False):
-        return spear.UnrealObject(
+        return spear.get_unreal_object(
             unreal_service=self._unreal_service,
             sp_func_service=self.sp_func_service,
             config=self._config,
@@ -213,7 +214,7 @@ class Instance():
             self._world = None
 
         def get_unreal_object(self, uobject=None, uclass=None, with_sp_funcs=False):
-            return spear.UnrealObject(
+            return spear.get_unreal_object(
                 unreal_service=self.unreal_service,
                 sp_func_service=self._sp_func_service,
                 config=self._config,
@@ -584,7 +585,6 @@ class Instance():
 
         return self._game
 
-
     #
     # step(...)
     #
@@ -595,7 +595,6 @@ class Instance():
     def step_in_editor_script(self, num_frames=1, single_step=False):
         yield from self._engine_service.step_in_editor_script(num_frames=num_frames, single_step=single_step)
 
-
     #
     # begin_frame() / end_frame()
     #
@@ -605,7 +604,6 @@ class Instance():
 
     def end_frame(self, single_step=False):
         return self._engine_service.end_frame(single_step=single_step)
-
 
     #
     # Public functions that do not call begin_frame() or end_frame().
@@ -635,14 +633,12 @@ class Instance():
             self._request_terminate_unreal_instance()
         self._terminate_client(verbose=True, log_prefix="    ")
 
-
     #
     # calling flush() inside a begin_frame() or end_frame() block ensures that there is no work pending on the game thread
     #
 
     def flush(self):
         self._engine_service.flush()
-
 
     #
     # Initialize helper functions
@@ -789,7 +785,6 @@ class Instance():
             assert False
 
         spear.log("        Finished requesting to launch Unreal instance.")
-
 
     def _initialize_client(self):
 
@@ -1000,7 +995,6 @@ class Instance():
         yield from self.step_in_editor_script(num_frames=warm_up_desc["num_frames"])
 
         spear.log("        Finished warming up Unreal instance.")
-
 
     #
     # Terminate helper functions

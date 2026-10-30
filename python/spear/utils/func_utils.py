@@ -78,10 +78,7 @@ class Service():
         self._world = world
 
     def get_unreal_object(self, uobject=None, uclass=None, with_sp_funcs=False):
-        assert self.unreal_service is not None
-        assert self.unreal_service is not None
-        assert self.config is not None
-        return spear.UnrealObject(
+        return spear.get_unreal_object(
             unreal_service=self.unreal_service,
             sp_func_service=self.sp_func_service,
             config=self.config,
@@ -291,7 +288,63 @@ class ScriptStruct:
 
 
 #
-# Conversion functions for Unreal types
+# Factories for constructing Unreal proxy types that correctly return None in cases where the input uobjects
+# and uclasses resolve to 0, since uobjects and uclasses that resolve to 0 are considered invalid inputs to
+# the constructors of Unreal proxy types.
+#
+
+def get_unreal_struct(unreal_service, ustruct):
+    if ustruct is None:
+        return None
+    else:
+        ustruct = unreal_service.to_ustruct(ustruct=ustruct)
+        if ustruct == 0:
+            return None
+        else:
+            return spear.UnrealStruct(unreal_service=unreal_service, ustruct=ustruct)
+
+def get_unreal_class(unreal_service, uclass):
+    if uclass is None:
+        return None
+    else:
+        uclass = unreal_service.to_uclass(uclass=uclass)
+        if uclass == 0:
+            return None
+        else:
+            return spear.UnrealClass(unreal_service=unreal_service, uclass=uclass)
+
+def get_unreal_object(unreal_service, sp_func_service, config, uobject, uclass, with_sp_funcs):
+    if uobject is None and uclass is None:
+        return None
+    elif uobject is None and uclass is not None:
+        uclass = unreal_service.to_uclass(uclass=uclass) # needed to handle the case where uclass is a string like "AActor", doesn't handle the case where uclass is a string like "0xabcdabcd"
+        if uclass == 0:
+            return None
+        uobject = unreal_service.get_default_object(uclass=uclass, create_if_needed=False, as_handle=True)
+        assert uobject != 0
+    elif uobject is not None and uclass is None:
+        uobject = to_handle(obj=uobject)
+        if uobject == 0:
+            return None
+        uclass = unreal_service.get_class(uobject=uobject, as_handle=True)
+        assert uclass != 0
+    else:
+        uobject = spear.to_handle(obj=uobject)
+        if uobject == 0:
+            return None
+        uclass = unreal_service.to_uclass(uclass=uclass) # needed to handle the case where uclass is a string like "AActor", doesn't handle the case where uclass is a string like "0xabcdabcd"
+        if uclass == 0:
+            return None
+    return spear.UnrealObject(
+        unreal_service=unreal_service,
+        sp_func_service=sp_func_service,
+        config=config,
+        uobject=uobject,
+        uclass=uclass,
+        with_sp_funcs=with_sp_funcs)
+
+#
+# Converters for handling Unreal types as return values.
 #
 
 # Convert to handle or UnrealStruct
@@ -321,13 +374,13 @@ def to_handle_or_unreal_object(obj, unreal_service, sp_func_service, config, as_
 
 # Convert to UnrealStruct
 def to_unreal_struct(obj, unreal_service):
-    return to_unreal_type(obj=obj, create_func=lambda obj: spear.UnrealStruct(unreal_service=unreal_service, ustruct=obj))
+    return to_unreal_type(obj=obj, create_func=lambda obj: get_unreal_struct(unreal_service=unreal_service, ustruct=obj))
 
 # Convert to UnrealClass
 def to_unreal_class(obj, unreal_service):
-    return to_unreal_type(obj=obj, create_func=lambda obj: spear.UnrealClass(unreal_service=unreal_service, uclass=obj))
+    return to_unreal_type(obj=obj, create_func=lambda obj: get_unreal_class(unreal_service=unreal_service, uclass=obj))
 
-# Convert to UnrealObject
+# Convert to UnrealObject (as_unreal_object=True means return an UnrealObject and discover its class; as_unreal_object=handle means return an UnrealObject and treat handle as its class)
 def to_unreal_object(obj, unreal_service, sp_func_service, config, as_unreal_object=None, with_sp_funcs=None):
     if as_unreal_object is None:
         as_unreal_object = True
@@ -344,7 +397,7 @@ def to_unreal_object(obj, unreal_service, sp_func_service, config, as_unreal_obj
         uclass = as_unreal_object
     else:
         assert False
-    return to_unreal_type(obj=obj, create_func=lambda obj: spear.UnrealObject(unreal_service=unreal_service, sp_func_service=sp_func_service, config=config, uobject=obj, uclass=uclass, with_sp_funcs=with_sp_funcs))
+    return to_unreal_type(obj=obj, create_func=lambda obj: get_unreal_object(unreal_service=unreal_service, sp_func_service=sp_func_service, config=config, uobject=obj, uclass=uclass, with_sp_funcs=with_sp_funcs))
 
 # Convert to UnrealStruct or UnrealClass
 def to_unreal_type(obj, create_func):
@@ -353,7 +406,11 @@ def to_unreal_type(obj, create_func):
     elif isinstance(obj, numbers.Integral):
         return create_func(obj=obj)
     elif isinstance(obj, str):
-        assert obj.startswith("0x")
+        # We need to convert to a handle first, because create_func might be get_unreal_struct or get_unreal_class,
+        # and neither handles the case when obj is a pointer represented as string. This conversion isn't
+        # necessary for get_unreal_object, because get_unreal_object does handle the case when obj is a
+        # pointer represented as a string.
+        obj = to_handle(obj=obj)
         return create_func(obj=obj)
     elif isinstance(obj, list):
         return [ to_unreal_type(obj=o, create_func=create_func) for o in obj ]
@@ -407,7 +464,7 @@ def to_handle(obj):
 
 
 #
-# Conversion functions for calling functions
+# Converters for calling functions
 #
 
 # Convert to a collection of JSON strings from a collection of objects so they can be passed to a service.
@@ -572,7 +629,7 @@ def to_data_bundle_dict(data_bundle, src_byte_order, usage_flags, shared_memory_
 
 
 #
-# Conversion functions for interoperability between SPEAR Python and Editor Python
+# Converters for interoperability between SPEAR Python and Editor Python
 #
 
 # Encode a SPEAR Python object into a script expression string.
