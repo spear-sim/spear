@@ -12,12 +12,16 @@
 #include <memory>   // std::make_unique, std::unique_ptr
 #include <string>
 
+#include <Containers/Map.h>              // TMap::Find
+#include <Containers/UnrealString.h>     // FString
 #include <CoreGlobals.h>                 // GConfig, GEditorIni, GEngineIni, GGameIni, GGameUserSettingsIni, GInputIni
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <HAL/PlatformMisc.h>            // FPlatformMisc
 #include <Misc/ConfigCacheIni.h>         // GConfig
 #include <Misc/CoreDelegates.h>          // FCoreDelegates
+#include <Misc/Paths.h>
 #include <Modules/ModuleManager.h>       // FDefaultGameModuleImpl, FDefaultModuleImpl, IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
+#include <ShaderCore.h>                  // AddShaderSourceDirectoryMapping, AllShaderSourceDirectoryMappings
 
 // Unreal classes to register
 #include <AssetRegistry/IAssetRegistry.h>
@@ -25,19 +29,11 @@
 #include <Engine/World.h>
 
 #include "SpCore/Config.h"
-#include "SpCore/Constants.h"
 #include "SpCore/Log.h"
 #include "SpCore/OutputLog.h"
 #include "SpCore/SharedMemory.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealClassRegistry.h"
-
-#if SP_USE_PATH_TRACING_SCENE_VIEW_EXTENSIONS
-    #include <Containers/Map.h>          // TMap::Find
-    #include <Containers/UnrealString.h> // FString
-    #include <Misc/Paths.h>
-    #include <ShaderCore.h>              // AddShaderSourceDirectoryMapping, AllShaderSourceDirectoryMappings
-#endif
 
 void SpCore::StartupModule()
 {
@@ -45,12 +41,9 @@ void SpCore::StartupModule()
 
     Config::requestInitialize(); // do this first so we know whether or not to wait for keyboard input
 
-    requestWaitForKeyboardInput(); // no need to undo in ShutdownModule()
-    requestInitializeIniConfigs(); // no need to undo in ShutdownModule()
-
-    #if SP_USE_PATH_TRACING_SCENE_VIEW_EXTENSIONS
-        requestInitializePathTracingExtension(); // no need to undo in ShutdownModule()
-    #endif
+    requestWaitForKeyboardInput();                 // no need to undo in ShutdownModule()
+    requestInitializeIniConfigs();                 // no need to undo in ShutdownModule()
+    requestInitializePathTracingShaderExtension(); // no need to undo in ShutdownModule()
 
     registerClasses();
     OutputLog::requestInitialize();
@@ -136,30 +129,30 @@ void SpCore::requestInitializeIniConfig(const FString& ini_config_filename, cons
     }
 }
 
-#if SP_USE_PATH_TRACING_SCENE_VIEW_EXTENSIONS
-    void SpCore::requestInitializePathTracingExtension() const
-    {
-        SP_ASSERT(GConfig);
+void SpCore::requestInitializePathTracingShaderExtension() const
+{
+    SP_ASSERT(GConfig);
 
-        FString shader_dir;
-        GConfig->GetString(Unreal::toTCharPtr("SPEAR.SpCore"), Unreal::toTCharPtr("PathTracingExtensionShaderDirectory"), shader_dir, GGameIni);
+    FString shader_dir;
+    GConfig->GetString(Unreal::toTCharPtr("SPEAR.SpCore"), Unreal::toTCharPtr("PathTracingExtensionShaderDirectory"), shader_dir, GGameIni);
 
-        if (!shader_dir.IsEmpty()) {
-            FString virtual_shader_dir = Unreal::toFString("/Engine/Private/PathTracing/Extension");
-            FString real_shader_dir = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir(), shader_dir);
-            const FString* existing_shader_dir = AllShaderSourceDirectoryMappings().Find(virtual_shader_dir);
+    if (!shader_dir.IsEmpty()) {
+        FString virtual_shader_dir = Unreal::toFString("/Engine/Private/PathTracing/Extension");
+        FString project_dir = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir());
+        FString real_shader_dir = FPaths::ConvertRelativePathToFull(project_dir, shader_dir);
+        SP_ASSERT(FPaths::FileExists(FPaths::Combine(real_shader_dir, Unreal::toFString("PathTracingExtension.ush"))));
+        const FString* existing_shader_dir = AllShaderSourceDirectoryMappings().Find(virtual_shader_dir);
 
-            // Reopening a project can initialize SpCore again without resetting the shader source mappings.
-            if (existing_shader_dir) {
-                SP_ASSERT(FPaths::IsSamePath(*existing_shader_dir, real_shader_dir));
-                SP_LOG("    Mapping already exists: /Engine/Private/PathTracing/Extension -> ", Unreal::toStdString(*existing_shader_dir));
-            } else {
-                SP_LOG("    Re-mapping: /Engine/Private/PathTracing/Extension -> ", Unreal::toStdString(real_shader_dir));
-                AddShaderSourceDirectoryMapping(virtual_shader_dir, real_shader_dir);
-            }
+        // Reopening a project can initialize SpCore again without resetting the shader source mappings.
+        if (existing_shader_dir) {
+            SP_ASSERT(FPaths::IsSamePath(*existing_shader_dir, real_shader_dir));
+            SP_LOG("    Mapping already exists: /Engine/Private/PathTracing/Extension -> ", Unreal::toStdString(*existing_shader_dir));
+        } else {
+            SP_LOG("    Re-mapping: /Engine/Private/PathTracing/Extension -> ", Unreal::toStdString(real_shader_dir));
+            AddShaderSourceDirectoryMapping(virtual_shader_dir, real_shader_dir);
         }
     }
-#endif
+}
 
 // Normally we would do the operations in registerClasses() and unregisterClasses(...) in the opposite order.
 // But we make an exception here (i.e., we do the operations in the same order) to make it easier and less

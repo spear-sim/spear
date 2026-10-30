@@ -12,7 +12,6 @@
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Modules/ModuleInterface.h>
 
-#include "SpCore/Constants.h"
 #include "SpCore/SharedMemory.h"
 
 class SpCore : public IModuleInterface
@@ -29,10 +28,7 @@ private:
 
     void requestInitializeIniConfigs() const;
     void requestInitializeIniConfig(const FString& ini_config_filename, const std::string& ini_config_name, const std::string& sp_config_override_key, const std::string& sp_config_string_key) const;
-
-    #if SP_USE_PATH_TRACING_SCENE_VIEW_EXTENSIONS
-        void requestInitializePathTracingExtension() const;
-    #endif
+    void requestInitializePathTracingShaderExtension() const;
 
     void registerClasses() const;
     void unregisterClasses() const;

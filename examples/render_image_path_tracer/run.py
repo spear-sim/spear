@@ -114,6 +114,9 @@ if __name__ == "__main__":
         # turn off anti-aliasing for primary rays.
         game.console_service.set_cvar(name="r.PathTracing.FilterWidth", value=args.filter_width)
 
+        # optionally use custom path tracing shader extension, requires a custom fork of UE: https://github.com/mikeroberts3000/UnrealEngine
+        # game.console_service.set_cvar(name="r.PathTracing.UseShaderExtension", value=True)
+
         # spawn camera sensor and get the final_tone_curve_hdr component
         bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name=f"/SpContent/Blueprints/BP_CameraSensorPathTracer_UST.BP_CameraSensorPathTracer_UST_C")
         bp_camera_sensor = game.unreal_service.spawn_actor(uclass=bp_camera_sensor_uclass)

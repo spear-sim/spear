@@ -1,6 +1,7 @@
 {
     "FileVersion": 3,
-    "EngineAssociation": "5.8",
+    "NOTE": "To associate this project with a source build of UE, EngineAssociation must be set to an absolute or relative path pointing to the source",
+    "EngineAssociation": "../../../../UnrealEngine",
     "Category": "",
     "Description": "",
     "Modules":
