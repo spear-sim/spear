@@ -71,8 +71,10 @@ public:
 
     // Requires a custom fork of UE: https://github.com/mikeroberts3000/UnrealEngine
     void PostPathTraceSetLightParameters_RenderThread(FRDGBuilder& graph_builder, const FSceneView& in_view, TConstArrayView<FLightComponentId> light_component_ids) override;
-    void PrePathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& in_view, uint32 dispatch_id, uint32 num_dispatches) override;
-    void PostPathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& in_view, uint32 dispatch_id, uint32 num_dispatches) override;
+    void PrePathTraceDispatchGroup_RenderThread(FRDGBuilder& graph_builder, const FSceneView& in_view) override;
+    void PrePathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& in_view) override;
+    void PostPathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& in_view) override;
+    void PostPathTraceDispatchGroup_RenderThread(FRDGBuilder& graph_builder, const FSceneView& in_view) override;
 
 protected:
     virtual void setupViewFamily(FSceneViewFamily& view_family) {};
@@ -81,8 +83,10 @@ protected:
     virtual void postRenderViewFamily_RenderThread(FRDGBuilder& graph_builder, FSceneViewFamily& view_family) {};
 
     virtual void postPathTraceSetLightParameters_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view, TConstArrayView<FLightComponentId> light_component_ids) {};
-    virtual void prePathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view, uint32 dispatch_id, uint32 num_dispatches) {};
-    virtual void postPathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view, uint32 dispatch_id, uint32 num_dispatches) {};
+    virtual void prePathTraceDispatchGroup_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view) {};
+    virtual void prePathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view) {};
+    virtual void postPathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view) {};
+    virtual void postPathTraceDispatchGroup_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view) {};
 
     USpSceneCaptureComponent2D* getComponent() const { SP_ASSERT(component_); return component_; };
 
@@ -104,8 +108,10 @@ protected:
     void postRenderViewFamily_RenderThread(FRDGBuilder& graph_builder, FSceneViewFamily& view_family) override;
 
     void postPathTraceSetLightParameters_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view, TConstArrayView<FLightComponentId> light_component_ids) override;
-    void prePathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view, uint32 dispatch_id, uint32 num_dispatches) override;
-    void postPathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view, uint32 dispatch_id, uint32 num_dispatches) override;
+    void prePathTraceDispatchGroup_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view) override;
+    void prePathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view) override;
+    void postPathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view) override;
+    void postPathTraceDispatchGroup_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view) override;
 };
 
 UENUM(BlueprintType)
@@ -180,8 +186,10 @@ public:
 
     // called from FSpSceneViewExtension to do path tracing work on the render thread
     void postPathTraceSetLightParameters_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view, TConstArrayView<FLightComponentId> light_component_ids);
-    void prePathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view, uint32 dispatch_id, uint32 num_dispatches);
-    void postPathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view, uint32 dispatch_id, uint32 num_dispatches);
+    void prePathTraceDispatchGroup_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view);
+    void prePathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view);
+    void postPathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view);
+    void postPathTraceDispatchGroup_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view);
 
 private:
     bool showFlagsNeedSceneViewExtension();

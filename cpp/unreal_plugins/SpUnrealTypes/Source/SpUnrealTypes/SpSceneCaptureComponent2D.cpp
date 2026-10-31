@@ -105,17 +105,31 @@ void FSpSceneViewExtensionBase::PostPathTraceSetLightParameters_RenderThread(FRD
     }
 }
 
-void FSpSceneViewExtensionBase::PrePathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& in_view, uint32 dispatch_id, uint32 num_dispatches)
+void FSpSceneViewExtensionBase::PrePathTraceDispatchGroup_RenderThread(FRDGBuilder& graph_builder, const FSceneView& in_view)
 {
     if (shouldHandleView(in_view.Family, &in_view)) {
-        prePathTraceDispatch_RenderThread(graph_builder, in_view, dispatch_id, num_dispatches);
+        prePathTraceDispatchGroup_RenderThread(graph_builder, in_view);
     }
 }
 
-void FSpSceneViewExtensionBase::PostPathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& in_view, uint32 dispatch_id, uint32 num_dispatches)
+void FSpSceneViewExtensionBase::PrePathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& in_view)
 {
     if (shouldHandleView(in_view.Family, &in_view)) {
-        postPathTraceDispatch_RenderThread(graph_builder, in_view, dispatch_id, num_dispatches);
+        prePathTraceDispatch_RenderThread(graph_builder, in_view);
+    }
+}
+
+void FSpSceneViewExtensionBase::PostPathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& in_view)
+{
+    if (shouldHandleView(in_view.Family, &in_view)) {
+        postPathTraceDispatch_RenderThread(graph_builder, in_view);
+    }
+}
+
+void FSpSceneViewExtensionBase::PostPathTraceDispatchGroup_RenderThread(FRDGBuilder& graph_builder, const FSceneView& in_view)
+{
+    if (shouldHandleView(in_view.Family, &in_view)) {
+        postPathTraceDispatchGroup_RenderThread(graph_builder, in_view);
     }
 }
 
@@ -195,14 +209,24 @@ void FSpSceneViewExtension::postPathTraceSetLightParameters_RenderThread(FRDGBui
     getComponent()->postPathTraceSetLightParameters_RenderThread(graph_builder, view, light_component_ids);
 }
 
-void FSpSceneViewExtension::prePathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view, uint32 dispatch_id, uint32 num_dispatches)
+void FSpSceneViewExtension::prePathTraceDispatchGroup_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view)
 {
-    getComponent()->prePathTraceDispatch_RenderThread(graph_builder, view, dispatch_id, num_dispatches);
+    getComponent()->prePathTraceDispatchGroup_RenderThread(graph_builder, view);
 }
 
-void FSpSceneViewExtension::postPathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view, uint32 dispatch_id, uint32 num_dispatches)
+void FSpSceneViewExtension::prePathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view)
 {
-    getComponent()->postPathTraceDispatch_RenderThread(graph_builder, view, dispatch_id, num_dispatches);
+    getComponent()->prePathTraceDispatch_RenderThread(graph_builder, view);
+}
+
+void FSpSceneViewExtension::postPathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view)
+{
+    getComponent()->postPathTraceDispatch_RenderThread(graph_builder, view);
+}
+
+void FSpSceneViewExtension::postPathTraceDispatchGroup_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view)
+{
+    getComponent()->postPathTraceDispatchGroup_RenderThread(graph_builder, view);
 }
 
 USpSceneCaptureComponent2D::USpSceneCaptureComponent2D()
@@ -705,12 +729,22 @@ void USpSceneCaptureComponent2D::postPathTraceSetLightParameters_RenderThread(FR
     int dummy = 0;
 }
 
-void USpSceneCaptureComponent2D::prePathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view, uint32 dispatch_id, uint32 num_dispatches)
+void USpSceneCaptureComponent2D::prePathTraceDispatchGroup_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view)
 {
     int dummy = 0;
 }
 
-void USpSceneCaptureComponent2D::postPathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view, uint32 dispatch_id, uint32 num_dispatches)
+void USpSceneCaptureComponent2D::prePathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view)
+{
+    int dummy = 0;
+}
+
+void USpSceneCaptureComponent2D::postPathTraceDispatch_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view)
+{
+    int dummy = 0;
+}
+
+void USpSceneCaptureComponent2D::postPathTraceDispatchGroup_RenderThread(FRDGBuilder& graph_builder, const FSceneView& view)
 {
     int dummy = 0;
 }
