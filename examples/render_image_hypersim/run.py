@@ -204,7 +204,7 @@ if __name__ == "__main__":
 
     # let temporal anti-aliasing etc accumulate additional information across multiple frames, and inserting
     # an extra frame or two can fix occasional render-to-texture initialization issues, and we need to wait
-    # in case the segmentation service is still loading its materials (advances a minimum of 3 frames)
+    # in case the segmentation service is still loading its materials (advances a minimum of 4 frames)
     game.async_loading_service.wait_for_engine_idle()
 
     # get rendered frame

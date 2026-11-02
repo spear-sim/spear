@@ -134,7 +134,7 @@ if __name__ == "__main__":
     with instance.end_frame(single_step=True):
         pass
 
-    # inserting an extra frame or two can fix occasional render-to-texture initialization issues (advances a minimum of 3 frames)
+    # inserting an extra frame or two can fix occasional render-to-texture initialization issues (advances a minimum of 4 frames)
     game.async_loading_service.wait_for_engine_idle()
 
     spear.log("Rendering warm-up frames...")
