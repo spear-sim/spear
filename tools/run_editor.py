@@ -17,7 +17,7 @@ parser.add_argument("--map")
 parser.add_argument("--config-files", nargs="*")
 parser.add_argument("--editor-launch-mode", default="editor")
 parser.add_argument("--unreal-project-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
-args, unknown_args = parser.parse_known_args() # get unknown args to pass to editor
+args = parser.parse_args()
 
 assert os.path.exists(args.unreal_engine_dir)
 
