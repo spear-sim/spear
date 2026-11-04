@@ -41,9 +41,12 @@ void SpCore::StartupModule()
 
     Config::requestInitialize(); // do this first so we know whether or not to wait for keyboard input
 
-    requestWaitForKeyboardInput();                 // no need to undo in ShutdownModule()
-    requestInitializeIniConfigs();                 // no need to undo in ShutdownModule()
-    requestInitializePathTracingShaderExtension(); // no need to undo in ShutdownModule()
+    requestWaitForKeyboardInput(); // no need to undo in ShutdownModule()
+    requestInitializeIniConfigs(); // no need to undo in ShutdownModule()
+
+    #if WITH_EDITOR // defined in an auto-generated header
+        requestInitializePathTracingShaderExtension(); // no need to undo in ShutdownModule()
+    #endif
 
     registerClasses();
     OutputLog::requestInitialize();
@@ -129,30 +132,32 @@ void SpCore::requestInitializeIniConfig(const FString& ini_config_filename, cons
     }
 }
 
-void SpCore::requestInitializePathTracingShaderExtension() const
-{
-    SP_ASSERT(GConfig);
+#if WITH_EDITOR // defined in an auto-generated header
+    void SpCore::requestInitializePathTracingShaderExtension() const
+    {
+        SP_ASSERT(GConfig);
 
-    FString shader_dir;
-    GConfig->GetString(Unreal::toTCharPtr("SPEAR.SpCore"), Unreal::toTCharPtr("PathTracingExtensionShaderDirectory"), shader_dir, GGameIni);
+        FString shader_dir;
+        GConfig->GetString(Unreal::toTCharPtr("SPEAR.SpCore"), Unreal::toTCharPtr("PathTracingExtensionShaderDirectory"), shader_dir, GGameIni);
 
-    if (!shader_dir.IsEmpty()) {
-        FString virtual_shader_dir = Unreal::toFString("/Engine/Private/PathTracing/Extension");
-        FString project_dir = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir());
-        FString real_shader_dir = FPaths::ConvertRelativePathToFull(project_dir, shader_dir);
-        SP_ASSERT(FPaths::FileExists(FPaths::Combine(real_shader_dir, Unreal::toFString("PathTracingExtension.ush"))));
-        const FString* existing_shader_dir = AllShaderSourceDirectoryMappings().Find(virtual_shader_dir);
+        if (!shader_dir.IsEmpty()) {
+            FString virtual_shader_dir = Unreal::toFString("/Engine/Private/PathTracing/Extension");
+            FString project_dir = FPaths::ConvertRelativePathToFull(FPaths::ProjectDir());
+            FString real_shader_dir = FPaths::ConvertRelativePathToFull(project_dir, shader_dir);
+            SP_ASSERT(FPaths::FileExists(FPaths::Combine(real_shader_dir, Unreal::toFString("PathTracingExtension.ush"))));
+            const FString* existing_shader_dir = AllShaderSourceDirectoryMappings().Find(virtual_shader_dir);
 
-        // Reopening a project can initialize SpCore again without resetting the shader source mappings.
-        if (existing_shader_dir) {
-            SP_ASSERT(FPaths::IsSamePath(*existing_shader_dir, real_shader_dir));
-            SP_LOG("    Mapping already exists: /Engine/Private/PathTracing/Extension -> ", Unreal::toStdString(*existing_shader_dir));
-        } else {
-            SP_LOG("    Re-mapping: /Engine/Private/PathTracing/Extension -> ", Unreal::toStdString(real_shader_dir));
-            AddShaderSourceDirectoryMapping(virtual_shader_dir, real_shader_dir);
+            // Reopening a project can initialize SpCore again without resetting the shader source mappings.
+            if (existing_shader_dir) {
+                SP_ASSERT(FPaths::IsSamePath(*existing_shader_dir, real_shader_dir));
+                SP_LOG("    Mapping already exists: /Engine/Private/PathTracing/Extension -> ", Unreal::toStdString(*existing_shader_dir));
+            } else {
+                SP_LOG("    Re-mapping: /Engine/Private/PathTracing/Extension -> ", Unreal::toStdString(real_shader_dir));
+                AddShaderSourceDirectoryMapping(virtual_shader_dir, real_shader_dir);
+            }
         }
     }
-}
+#endif
 
 // Normally we would do the operations in registerClasses() and unregisterClasses(...) in the opposite order.
 // But we make an exception here (i.e., we do the operations in the same order) to make it easier and less

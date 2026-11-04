@@ -28,7 +28,10 @@ private:
 
     void requestInitializeIniConfigs() const;
     void requestInitializeIniConfig(const FString& ini_config_filename, const std::string& ini_config_name, const std::string& sp_config_override_key, const std::string& sp_config_string_key) const;
-    void requestInitializePathTracingShaderExtension() const;
+
+    #if WITH_EDITOR // defined in an auto-generated header
+        void requestInitializePathTracingShaderExtension() const;
+    #endif
 
     void registerClasses() const;
     void unregisterClasses() const;
