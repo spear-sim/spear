@@ -43,7 +43,21 @@ Each tool call populates the exec namespace with these top-level variables:
 
 The `actor`, `component`, and `material` fields in each `segmentation_id_descs` entry are `uint64` handles, not `UnrealObject`s — see **Handles and UnrealObjects** below for how to convert.
 
-**Do not** create a new `spear.Instance()`, call `instance.get_game()`, or `instance.get_editor()`. All `import` statements are banned, as are names like `os`, `sys`, `pathlib`.
+**Do not** create a new `spear.Instance()`, call `instance.get_game()`, or `instance.get_editor()`. All `import` and `from ... import ...` statements are banned.
+
+Both `execute_code` and `execute_editor_code` reject the following names and attribute names, as defined by `_BANNED_NAMES` in [`tools/run_mcp_server.py`](../tools/run_mcp_server.py):
+
+```text
+__bases__, __builtins__, __class__, __code__, __dict__, __func__, __getattr__,
+__getattribute__, __getitem__, __getstate__, __globals__, __import__, __locals__,
+__reduce__, __reduce_ex__, __self__, __subclasses__, __traceback__, __wrapped__,
+bltns, builtins, compile, delattr, eval, exec, f_builtins, f_globals,
+get_default_log_enabled, get_editor, get_game, getattr, getattr_static,
+importlib, inspect, log_utils, open, OpenLevel, os, pathlib, print, python_service,
+register_log_func, remove_path, save, savez, savez_compressed, savetxt,
+set_default_log_enabled, setattr, shutil, socket, subprocess, sys, tofile,
+traceback, unregister_log_func
+```
 
 Agent-defined variables persist across calls. If the world changes (e.g., user opens a different level), agent variables are automatically cleared.
 
