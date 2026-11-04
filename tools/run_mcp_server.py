@@ -14,7 +14,6 @@ import ast
 import colorsys
 import cv2
 import inspect
-import math
 import mcp
 import numpy as np
 import os
@@ -25,15 +24,23 @@ import traceback
 # Constants
 #
 
-_BANNED_ATTRS = {
-    "__bases__", "__builtins__", "__class__", "__code__", "__dict__", "__func__", "__globals__", "__locals__", "__subclasses__", "__wrapped__"}
+_ALLOWED_BUILTIN_NAMES = [
+    "abs", "all", "any", "bool", "dict", "enumerate", "Exception", "float", "int", "isinstance", "KeyError", "len", "list", "max", "min", "range",
+    "RuntimeError", "set", "sorted", "str", "sum", "tuple", "TypeError", "ValueError", "zip"]
 
-_BANNED_CALLS = {
-    "__import__", "compile", "delattr", "eval", "evaluate_expression", "exec", "execute_file", "execute_file_across_frames", "get_editor", "get_game",
-    "getattr", "open", "OpenLevel", "print", "save", "savez", "savez_compressed", "savetxt", "setattr", "tofile"}
+_ALLOWED_BUILTINS_STR = "{" + ", ".join([ f"'{name}': {name}" for name in _ALLOWED_BUILTIN_NAMES ]) + "}"
+_ALLOWED_SAFE_IMPORT_NAMES = ["_strptime", "copy", "datetime", "inspect", "json", "math", "numpy", "re", "time", "traceback"]
 
+# This list must be synchronized with the banned names in docs/agents.mcp_usage.md.
 _BANNED_NAMES = {
-    "__builtins__", "__import__", "builtins", "importlib", "os", "pathlib", "shutil", "socket", "subprocess", "sys"}
+    "__bases__", "__builtins__", "__class__", "__code__", "__dict__", "__func__", "__getattr__", "__getattribute__", "__getitem__", "__getstate__",
+    "__globals__", "__import__", "__locals__", "__reduce__", "__reduce_ex__", "__self__", "__subclasses__", "__traceback__", "__wrapped__", "bltns", "builtins",
+    "compile", "delattr", "eval", "exec", "f_builtins", "f_globals", "get_default_log_enabled", "get_editor", "get_game", "getattr", "getattr_static",
+    "importlib", "inspect", "log_utils", "open", "OpenLevel", "os", "pathlib", "print", "python_service", "register_log_func", "remove_path", "save", "savez",
+    "savez_compressed", "savetxt", "set_default_log_enabled", "setattr", "shutil", "socket", "subprocess", "sys", "tofile", "traceback", "unregister_log_func"}
+
+_EXEC_NAMESPACE_NAMES = [
+    "after_execute", "before_execute", "copy", "datetime", "editor", "game", "instance", "json", "math", "np", "re", "spear", "time", "viewport_desc"]
 
 _SAVE_DIR = os.path.realpath(os.path.join(os.path.dirname(__file__), "tmp", "spear-mcp"))
 _MAX_IMAGE_DIM = 512
@@ -41,7 +48,67 @@ _MAX_IMAGE_DIM = 512
 _STABLE_NAME_CAMERA_SENSOR = "__SP_CAMERA_SENSOR__"
 _M_HYPERSIM_CAMERA_FROM_UNREAL_CAMERA = np.matrix([[0, 1, 0], [0, 0, 1], [-1, 0, 0]], dtype=np.float32)
 
-_EXEC_NAMESPACE_NAMES = ("math", "np", "spear", "instance", "game", "editor", "viewport_desc", "before_execute", "after_execute")
+
+#
+# Code snippets
+#
+
+# {numpy, spear, unreal} get imported implicitly by PythonService so there is no need to include them here
+_EXEC_IMPORT_STR = \
+"""
+import copy
+import datetime
+import json
+import math
+import re
+import time
+"""
+
+_SAFE_IMPORT_FUNC_STR = \
+f"""
+import builtins
+
+def _safe_import(name, globals=None, locals=None, fromlist=(), level=0):
+    if level != 0 or name.split(".")[0] not in {_ALLOWED_SAFE_IMPORT_NAMES!r}:
+        message = f"ERROR: import rejected: name={{name!r}}, level={{level}}, fromlist={{fromlist!r}}. When using the spear-mcp __import__ function, the only allowed imports are {_ALLOWED_SAFE_IMPORT_NAMES}."
+        spear.log(message)
+        raise ImportError(message)
+    return builtins.__import__(name, globals=globals, locals=locals, fromlist=fromlist, level=level)
+"""
+
+_EXEC_NAMESPACE_UPDATE_STR = \
+f"""
+_exec_namespace["__builtins__"] = {_ALLOWED_BUILTINS_STR}
+_exec_namespace["__builtins__"]["__import__"] = _safe_import
+_exec_namespace["copy"] = copy
+_exec_namespace["datetime"] = datetime
+_exec_namespace["json"] = json
+_exec_namespace["math"] = math
+_exec_namespace["np"] = np
+_exec_namespace["re"] = re
+_exec_namespace["spear"] = spear
+_exec_namespace["time"] = time
+"""
+
+_EXEC_NAMESPACE_INITIALIZE_STR_EDITOR = \
+f"""
+if "_exec_namespace" not in globals():
+    _exec_namespace = {{}}
+"""
+
+_EXEC_NAMESPACE_UPDATE_STR_EDITOR = \
+f"""
+{_EXEC_NAMESPACE_UPDATE_STR}
+_exec_namespace["unreal"] = unreal
+"""
+
+
+#
+# Deferred imports
+#
+
+exec(_EXEC_IMPORT_STR)
+exec(_SAFE_IMPORT_FUNC_STR)
 
 
 #
@@ -160,7 +227,7 @@ def execute_editor_code(code):
         _log(f"Executing editor code:\n\n\n{code}\n\n")
         with _instance.begin_frame():
             try:
-                _editor.python_service.execute_string(string=code, execution_scope="Public")
+                _editor.python_service.execute_string(string=f"exec({code!r}, _exec_namespace)", execution_scope="Public")
             except RuntimeError:
                 _log(f"EXCEPTION:\n{traceback.format_exc()}")
         with _instance.end_frame():
@@ -255,16 +322,17 @@ def _initialize_instance():
 
 def _initialize_namespace():
 
-    _exec_namespace["math"] = math
-    _exec_namespace["np"] = np
-    _exec_namespace["spear"] = spear
+    exec(_EXEC_NAMESPACE_UPDATE_STR)
     _exec_namespace["instance"] = _instance
     _exec_namespace["game"] = _game
     _exec_namespace["editor"] = _editor
 
     if _editor is not None:
         with _instance.begin_frame():
-            _editor.python_service.execute_string(string="import math", execution_scope="Public")
+            _editor.python_service.execute_string(string=_EXEC_IMPORT_STR, execution_scope="Public")
+            _editor.python_service.execute_string(string=_SAFE_IMPORT_FUNC_STR, execution_scope="Public")
+            _editor.python_service.execute_string(string=_EXEC_NAMESPACE_INITIALIZE_STR_EDITOR, execution_scope="Public")
+            _editor.python_service.execute_string(string=_EXEC_NAMESPACE_UPDATE_STR_EDITOR, execution_scope="Public")
         with _instance.end_frame():
             pass
 
@@ -498,15 +566,7 @@ def _validate_code(code):
         if isinstance(node, ast.Name) and node.id in _BANNED_NAMES:
             _log(f"ERROR: Name not allowed: {node.id}")
             return False
-        if isinstance(node, ast.Call):
-            func = node.func
-            if isinstance(func, ast.Name) and func.id in _BANNED_CALLS:
-                _log(f"ERROR: Call not allowed: {func.id}()")
-                return False
-            if isinstance(func, ast.Attribute) and func.attr in _BANNED_CALLS:
-                _log(f"ERROR: Call not allowed: .{func.attr}()")
-                return False
-        if isinstance(node, ast.Attribute) and node.attr in _BANNED_ATTRS:
+        if isinstance(node, ast.Attribute) and node.attr in _BANNED_NAMES:
             _log(f"ERROR: Attribute access not allowed: .{node.attr}")
             return False
 
