@@ -143,6 +143,10 @@ if __name__ == "__main__":
     # initialize actors and components
     with instance.begin_frame():
 
+        # force high-res textures for captured images
+        game.console_service.set_cvar(name="r.Streaming.FramesForFullUpdate", value=0)
+        game.console_service.set_cvar(name="r.Streaming.FullyLoadUsedTextures", value=1)
+
         # # force Cinematic rendering quality levels for captured images (except use Epic quality for GI otherwise Lumen's internally allocated textures might be too big depending on viewport size)
         # sp_scalability = game.get_unreal_object(uclass="USpScalability")
         # sp_quality_levels_utils = game.get_unreal_object(uclass="USpQualityLevelsUtils")
