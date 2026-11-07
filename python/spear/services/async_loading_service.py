@@ -26,6 +26,7 @@ class AsyncLoadingService(spear.Service):
         self._sp_landscape_subsystem = None
         self._sp_level_streaming = None
         self._sp_material_interface = None
+        self._sp_pipeline_state_cache = None
         self._sp_renderer_module = None
         self._sp_shader_compiling_manager = None
         self._sp_streaming_manager = None
@@ -42,6 +43,7 @@ class AsyncLoadingService(spear.Service):
         self._sp_landscape_subsystem = self.get_unreal_object(uclass="USpLandscapeSubsystem")
         self._sp_level_streaming = self.get_unreal_object(uclass="USpLevelStreaming")
         self._sp_material_interface = self.get_unreal_object(uclass="USpMaterialInterface")
+        self._sp_pipeline_state_cache = self.get_unreal_object(uclass="USpPipelineStateCache")
         self._sp_renderer_module = self.get_unreal_object(uclass="USpRendererModule")
         self._sp_shader_compiling_manager = self.get_unreal_object(uclass="USpShaderCompilingManager")
         self._sp_streaming_manager = self.get_unreal_object(uclass="USpStreamingManager")
@@ -63,20 +65,22 @@ class AsyncLoadingService(spear.Service):
 
         is_with_editor = self._engine_globals_service.is_with_editor()
 
-        async_loading_idle = self.is_async_loading_idle()
-        asset_registry_idle = self.is_asset_registry_idle()
-        distance_field_async_queue_idle, num_outstanding_distance_field_tasks, is_distance_field_async_queue_initialized = self.is_distance_field_async_queue_idle()
         asset_compiling_manager_idle, asset_compiling_manager_num_remaining_assets = self.is_asset_compiling_manager_idle()
+        asset_registry_idle = self.is_asset_registry_idle()
+        async_loading_idle = self.is_async_loading_idle()
+        distance_field_async_queue_idle, num_outstanding_distance_field_tasks, is_distance_field_async_queue_initialized = self.is_distance_field_async_queue_idle()
+        pipeline_state_cache_idle, num_active_pipeline_precompile_tasks, is_precaching, num_active_precache_requests = self.is_pipeline_state_cache_idle()
         shader_compiling_manager_idle, shader_compiling_manager_num_remaining_shader_jobs, is_shader_compiling_manager_initialized = self.is_shader_compiling_manager_idle()
         streaming_manager_idle, streaming_manager_num_pending_requests, streaming_manager_num_wanting_resources = self.is_streaming_manager_idle()
         streaming_levels_idle = self.are_streaming_levels_idle()
         world_partition_streaming_idle = self.is_world_partition_streaming_idle()
 
         engine_idle = \
-            async_loading_idle and \
-            asset_registry_idle and \
-            distance_field_async_queue_idle and \
             asset_compiling_manager_idle and \
+            asset_registry_idle and \
+            async_loading_idle and \
+            distance_field_async_queue_idle and \
+            pipeline_state_cache_idle and \
             shader_compiling_manager_idle and \
             streaming_manager_idle and \
             streaming_levels_idle and \
@@ -85,10 +89,11 @@ class AsyncLoadingService(spear.Service):
         if verbose:
             if not engine_idle or (is_with_editor and not is_distance_field_async_queue_initialized) or (is_with_editor and not is_shader_compiling_manager_initialized):
                 spear.log(f"engine_idle = {engine_idle} (is_with_editor = {is_with_editor})")
-                spear.log(f"    async_loading_idle              = {async_loading_idle}")
-                spear.log(f"    asset_registry_idle             = {asset_registry_idle}")
-                spear.log(f"    distance_field_async_queue_idle = {distance_field_async_queue_idle} (num_outstanding_tasks = {num_outstanding_distance_field_tasks}, initialized = {is_distance_field_async_queue_initialized})")
                 spear.log(f"    asset_compiling_manager_idle    = {asset_compiling_manager_idle} (num_remaining_assets = {asset_compiling_manager_num_remaining_assets})")
+                spear.log(f"    asset_registry_idle             = {asset_registry_idle}")
+                spear.log(f"    async_loading_idle              = {async_loading_idle}")
+                spear.log(f"    distance_field_async_queue_idle = {distance_field_async_queue_idle} (num_outstanding_tasks = {num_outstanding_distance_field_tasks}, initialized = {is_distance_field_async_queue_initialized})")
+                spear.log(f"    pipeline_state_cache_idle       = {pipeline_state_cache_idle} (num_active_pipeline_precompile_tasks = {num_active_pipeline_precompile_tasks}, is_precaching = {is_precaching}, num_active_precache_requests = {num_active_precache_requests})")
                 spear.log(f"    shader_compiling_manager_idle   = {shader_compiling_manager_idle} (num_remaining_shader_jobs = {shader_compiling_manager_num_remaining_shader_jobs}, initialized ={is_shader_compiling_manager_initialized})")
                 spear.log(f"    streaming_manager_idle          = {streaming_manager_idle} (num_pending_requests = {streaming_manager_num_pending_requests}, num_wanting_resources = {streaming_manager_num_wanting_resources})")
                 spear.log(f"    streaming_levels_idle           = {streaming_levels_idle}")
@@ -135,6 +140,15 @@ class AsyncLoadingService(spear.Service):
         if verbose:
             spear.log(f"distance_field_async_queue_idle = {distance_field_async_queue_idle} (num_outstanding_tasks = {num_outstanding_tasks}, initialized = {is_initialized})")
         return distance_field_async_queue_idle, num_outstanding_tasks, is_initialized
+
+    def is_pipeline_state_cache_idle(self, verbose=False):
+        num_active_pipeline_precompile_tasks = self._sp_pipeline_state_cache.GetNumActivePipelinePrecompileTasks()
+        is_precaching = self._sp_pipeline_state_cache.IsPrecaching()
+        num_active_precache_requests = self._sp_pipeline_state_cache.NumActivePrecacheRequests()
+        pipeline_state_cache_idle = num_active_pipeline_precompile_tasks == 0 and not is_precaching and num_active_precache_requests == 0
+        if verbose:
+            spear.log(f"pipeline_state_cache_idle = {pipeline_state_cache_idle} (num_active_pipeline_precompile_tasks = {num_active_pipeline_precompile_tasks}, is_precaching = {is_precaching}, num_active_precache_requests = {num_active_precache_requests})")
+        return pipeline_state_cache_idle, num_active_pipeline_precompile_tasks, is_precaching, num_active_precache_requests
 
     def is_shader_compiling_manager_idle(self, verbose=False):
         return_values = self._sp_shader_compiling_manager.GetNumRemainingJobs(as_dict=True)
@@ -194,6 +208,12 @@ class AsyncLoadingService(spear.Service):
 
     def wait_for_distance_field_async_queue_idle_in_editor_script(self, max_time_seconds=1000.0, log_interval_seconds=1.0):
         yield from self._wait_for_in_editor_script(func=self.is_distance_field_async_queue_idle, max_time_seconds=max_time_seconds, log_interval_seconds=log_interval_seconds)
+
+    def wait_for_pipeline_state_cache_idle(self, max_time_seconds=1000.0, log_interval_seconds=1.0):
+        self._wait_for(func=self.is_pipeline_state_cache_idle, max_time_seconds=max_time_seconds, log_interval_seconds=log_interval_seconds)
+
+    def wait_for_pipeline_state_cache_idle_in_editor_script(self, max_time_seconds=1000.0, log_interval_seconds=1.0):
+        yield from self._wait_for_in_editor_script(func=self.is_pipeline_state_cache_idle, max_time_seconds=max_time_seconds, log_interval_seconds=log_interval_seconds)
 
     def wait_for_shader_compiling_manager_idle(self, max_time_seconds=1000.0, log_interval_seconds=1.0):
         self._wait_for(func=self.is_shader_compiling_manager_idle, max_time_seconds=max_time_seconds, log_interval_seconds=log_interval_seconds)
