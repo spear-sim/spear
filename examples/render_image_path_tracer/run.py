@@ -157,27 +157,48 @@ if __name__ == "__main__":
     # path-tracing viewport, and stops once it reaches r.PathTracing.SamplesPerPixel (set to args.num_frames
     # above). Moving the camera or anything in the scene invalidates the accumulated samples and restarts
     # from scratch. We poll the internal path tracer accumulation counter to ensure that the image has been
-    # fully rendered. This way we avoid potential loading issues. The engine then applies the denoiser (if
+    # fully rendered, allowing game frames that skip rendering. The engine then applies the denoiser (if
     # one was requested) to the converged result.
 
     spear.log("Path-traced rendering beginning...")
 
-    for i in range(args.num_frames):
+    frame_index = 0
+    sample_index = 0
+    sample_count = args.num_frames
+    num_skipped_frames = 0
+    max_skipped_frames = 4
+    assert sample_count > 0
+
+    while sample_index < sample_count:
+        spear.log("Rendering frame: ", frame_index, " (sample ", sample_index, " of ", sample_count, ")")
+        previous_sample_index = sample_index
 
         with instance.begin_frame():
+            view_states = component.GetViewStates()
+            assert len(view_states) == 1
+            view_state = view_states[0]
+
             # Explicitly reset the path tracer's accumulated samples on the first frame. Nothing moves
             # in this example, but frames rendered above (e.g. during wait_for_engine_idle()) already accumulated
             # samples against this component's persistent view state, so without this reset, sample_index would
             # start ahead of 0 below.
-            if i == 0:
+            if frame_index == 0:
+                assert sample_count == sp_scene_view_state_interface.GetPathTracingSampleCount(ViewState=view_state)
                 component.RequestPathTracerReset()
 
         with instance.end_frame(single_step=True):
-            view_states = component.GetViewStates()
-            assert len(view_states) == 1
-            view_state = view_states[0]
             sample_index = sp_scene_view_state_interface.GetPathTracingSampleIndex(ViewState=view_state)
-            assert sample_index == i + 1
+            assert previous_sample_index <= sample_index
+            assert sample_index <= previous_sample_index + 1
+
+            if sample_index == previous_sample_index:
+                spear.log("WARNING: Unreal did not update its path tracing sample index.")
+                num_skipped_frames += 1
+            else:
+                num_skipped_frames = 0
+            assert num_skipped_frames < max_skipped_frames
+
+        frame_index += 1
 
     spear.log("Path-traced rendering finished.")
 
