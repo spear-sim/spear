@@ -14,9 +14,6 @@ import time
 if spear.__can_import_spear_ext__:
     import spear_ext
 
-if spear.__can_import_msgpackrpc__:
-    import msgpackrpc
-
 
 #
 # Global constants
@@ -47,7 +44,7 @@ class Instance():
             self._config.freeze()
 
         spear.log("    Creating instance with launch mode: ", self._config.SPEAR.LAUNCH_MODE)
-        if spear.__can_import_unreal__ or self._config.SPEAR.LAUNCH_MODE == "none":
+        if self._config.SPEAR.LAUNCH_MODE == "none":
             pass
         elif self._config.SPEAR.LAUNCH_MODE == "editor":
             spear.log("    Editor launch mode: ", self._config.SPEAR.INSTANCE.EDITOR_LAUNCH_MODE)
@@ -649,7 +646,7 @@ class Instance():
         spear.log_current_function(prefix="    ")
         spear.log("        Requesting to launch Unreal instance...")
 
-        if spear.__can_import_unreal__ or self._config.SPEAR.LAUNCH_MODE == "none":
+        if self._config.SPEAR.LAUNCH_MODE == "none":
             pass
 
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
@@ -795,7 +792,7 @@ class Instance():
 
         # If we're connecting to a running instance, then we assume that the server is already running and
         # only try to connect once.
-        if spear.__can_import_unreal__ or self._config.SPEAR.LAUNCH_MODE == "none":
+        if self._config.SPEAR.LAUNCH_MODE == "none":
 
             try:
                 # Once a connection has been established, the client will wait for timeout seconds before
@@ -818,16 +815,19 @@ class Instance():
                 self._terminate_client(verbose=True, log_prefix="        ")
                 assert False
 
-        # otherwise try to connect repeatedly, since the server might not have started yet
+        # Otherwise try to connect repeatedly, since the server might not have started yet.
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
 
+            # We assume we're in standalone Python, because if we were in editor Python, we would have
+            # already set LAUNCH_MODE == "none".
             assert spear.__can_import_spear_ext__
+            assert not spear.__can_import_unreal__
 
             start_time_seconds = time.time()
             elapsed_time_seconds = time.time() - start_time_seconds
             while elapsed_time_seconds < self._config.SPEAR.INSTANCE.INITIALIZE_CLIENT_MAX_TIME_SECONDS:
 
-                # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible values
+                # See https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible values.
                 status = self._process.status()
                 if status not in expected_process_status_values:
                     spear.log("        ERROR: Unrecognized process status: ", status)
@@ -868,7 +868,7 @@ class Instance():
 
         self._client.initialize() # self._engine_service hasn't been initialized yet
 
-        if spear.__can_import_unreal__ or self._config.SPEAR.LAUNCH_MODE == "none":
+        if self._config.SPEAR.LAUNCH_MODE == "none":
             pass
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
             pid = self._client.call("engine_globals_service.call_sync_on_worker_thread.get_current_process_id") # self._engine_service hasn't been initialized yet
@@ -953,7 +953,7 @@ class Instance():
 
     def _get_warm_up_desc(self, warm_up, time_seconds, num_frames, config):
         if warm_up is None:
-            if spear.__can_import_unreal__ or self._config.SPEAR.LAUNCH_MODE == "none":
+            if self._config.SPEAR.LAUNCH_MODE == "none":
                 warm_up = False
             elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
                 warm_up = True
@@ -1005,17 +1005,21 @@ class Instance():
         spear.log_current_function(prefix="    ")
         spear.log("        Requesting to terminate Unreal instance...")
 
-        if spear.__can_import_unreal__ or self._config.SPEAR.LAUNCH_MODE == "none":
+        if self._config.SPEAR.LAUNCH_MODE == "none":
             pass
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
+
+            # We assume we're in standalone Python, because if we were in editor Python, we would have
+            # already set LAUNCH_MODE == "none".
+            assert spear.__can_import_spear_ext__
+            assert not spear.__can_import_unreal__
+
             try:
                 self.step()
                 self.engine_globals_service.request_exit(force=False)
                 self._engine_service.terminate() # EngineService must be explicitly terminated, needs to be the last entry point that gets called
                 spear.log("        Finished terminating engine service, waiting for Unreal process to terminate...")
             except RuntimeError:
-                spear.log("        Caught RPC timeout exception while terminating engine service, waiting for Unreal process to terminate...")
-            except msgpackrpc.error.TimeoutError:
                 spear.log("        Caught RPC timeout exception while terminating engine service, waiting for Unreal process to terminate...")
             except Exception as e:
                 spear.log("        ERROR: Unexpected exception: ", e)
@@ -1048,7 +1052,7 @@ class Instance():
         spear.log_current_function(prefix=log_prefix)
         spear.log(f"{log_prefix}    Forcefully killing Unreal instance...")
 
-        if spear.__can_import_unreal__ or self._config.SPEAR.LAUNCH_MODE == "none":
+        if self._config.SPEAR.LAUNCH_MODE == "none":
             assert False
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
             try:
