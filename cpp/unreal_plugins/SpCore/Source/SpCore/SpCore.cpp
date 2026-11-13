@@ -9,7 +9,6 @@
 
 #include <iostream> // std::cin
 #include <map>
-#include <memory>   // std::make_unique, std::unique_ptr
 #include <string>
 
 #include <Containers/Map.h>              // TMap::Find
@@ -184,22 +183,10 @@ void SpCore::initializeSharedMemory()
         shared_memory_initial_unique_id = Config::get<unsigned int>("SP_CORE.SHARED_MEMORY_INITIAL_UNIQUE_ID");
     }
     SharedMemory::initialize(shared_memory_initial_unique_id);
-
-    try {
-        uint64_t num_bytes = 1;
-        shared_memory_region_ = std::make_unique<SharedMemoryRegion>(num_bytes);
-    } catch (const IdMutexError& e) {
-        SP_LOG("    ERROR: Couldn't acquire shared memory region id=", e.getId(), " (id_string=", e.getIdString(), "). The Unreal Editor might be open already, or there might be another SPEAR executable running in the background. Close the Unreal Editor and other SPEAR executables, or change SP_CORE.SHARED_MEMORY_INITIAL_UNIQUE_ID to an unused ID, and try launching again.");
-        SP_ASSERT(false);
-    } catch (...) {
-        SP_LOG("    ERROR: Unexpected error when attempting to acquire shared memory.");
-        SP_ASSERT(false);
-    }
 }
 
 void SpCore::terminateSharedMemory()
 {
-    shared_memory_region_ = nullptr;
     SharedMemory::terminate();
 }
 

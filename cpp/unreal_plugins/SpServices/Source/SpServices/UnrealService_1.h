@@ -246,7 +246,7 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("unreal_service", "flush_output_log_messages",
-            [this]() -> SpOutputLogMessages { return OutputLog::flush(); });
+            [this]() -> OutputLogMessages { return OutputLog::flush(); });
 
         //
         // Get message log names and messages

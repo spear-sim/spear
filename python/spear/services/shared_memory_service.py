@@ -87,6 +87,14 @@ class SharedMemoryService(spear.Service):
         return shared_memory_handles
 
     #
+    # High-level function for interacting with the shared memory fence. Most users will not need to call this
+    # functions directly.
+    #
+
+    def get_fence_view(self):
+        return self.entry_point_caller.call_on_worker_thread("get_fence_view", None)
+
+    #
     # Low-level helper functions for interacting with shared memory. Most users will not need to call these
     # functions directly.
     #

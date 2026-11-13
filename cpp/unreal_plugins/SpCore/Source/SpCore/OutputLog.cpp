@@ -15,6 +15,7 @@
 
 #include <CoreGlobals.h>       // GLog
 #include <Logging/LogVerbosity.h>
+#include <Misc/Build.h>        // NO_LOGGING
 #include <Misc/CommandLine.h>  // FCommandLine
 #include <Misc/OutputDevice.h> // FOutputDevice
 #include <Misc/Parse.h>        // FParse
@@ -57,10 +58,15 @@ public:
         //
 
         // SP_LOG(...) always writes LogSpear messages directly to std::cout itself (see Log::logString(...)),
-        // regardless of platform, so echoing them here again is always redundant.
-        if (category == LogSpear.GetCategoryName()) {
-            return;
-        }
+        // regardless of platform, so echoing them here again is always redundant. If NO_LOGGING is defined
+        // (e.g., in shipping builds), then LogSpear doesn't provide GetCategoryName(), so we can't return
+        // early. But in this case, UE_LOG(LogSpear, ...) gets compiled out, so LogSpear messages never reach
+        // this function anyway.
+        #if !NO_LOGGING
+            if (category == LogSpear.GetCategoryName()) {
+                return;
+            }
+        #endif
 
         // On Linux, return early if we know Unreal's native console device is going to print this message
         // for us, i.e., when -nostdout is absent. When -nostdout is present, Unreal's native console device
@@ -116,11 +122,11 @@ public:
         messages_.push_back(message_str);
     }
 
-    SpOutputLogMessages flush()
+    OutputLogMessages flush()
     {
         std::lock_guard<std::mutex> lock(mutex_);
 
-        SpOutputLogMessages output_log_messages;
+        OutputLogMessages output_log_messages;
         output_log_messages.messages_ = Std::toVector<std::string>(messages_);
         output_log_messages.num_evicted_ = num_evicted_;
 
@@ -179,11 +185,11 @@ void OutputLog::terminate()
     }
 }
 
-SpOutputLogMessages OutputLog::flush()
+OutputLogMessages OutputLog::flush()
 {
     if (g_buffered_output_device != nullptr) {
         return g_buffered_output_device->flush();
     } else {
-        return SpOutputLogMessages();
+        return OutputLogMessages();
     }
 }

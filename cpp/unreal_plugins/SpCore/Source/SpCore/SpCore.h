@@ -5,14 +5,11 @@
 
 #pragma once
 
-#include <memory> // std::unique_ptr
 #include <string>
 
 #include <Containers/UnrealString.h>     // FString
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 #include <Modules/ModuleInterface.h>
-
-#include "SpCore/SharedMemory.h"
 
 class SpCore : public IModuleInterface
 {
@@ -41,6 +38,4 @@ private:
 
     FDelegateHandle post_engine_init_handle_;
     FDelegateHandle engine_pre_exit_handle_;
-
-    std::unique_ptr<SharedMemoryRegion> shared_memory_region_;
 };

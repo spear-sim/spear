@@ -268,7 +268,6 @@ class AsyncLoadingService(spear.Service):
 
         start_time_seconds = time.time()
         last_verbose_time_seconds = start_time_seconds
-        elapsed_time_seconds = time.time() - start_time_seconds
 
         # Advance a fixed number of frames so that a capture component initialized in the caller's most recent
         # begin_frame block is fully initialized and rendering before the first idle check (otherwise the first
@@ -283,8 +282,8 @@ class AsyncLoadingService(spear.Service):
         # during one of them, that frame submits their shader jobs and the idle signal resets. We only emit the verbose
         # idle breakdown at most once per log_interval_seconds to avoid spam.
         num_consecutive_idle_frames = 0
-        while num_consecutive_idle_frames < num_extra_frames:
-            assert time.time() - start_time_seconds < max_time_seconds
+        elapsed_time_seconds = time.time() - start_time_seconds
+        while num_consecutive_idle_frames < num_extra_frames and elapsed_time_seconds < max_time_seconds:
 
             verbose = time.time() - last_verbose_time_seconds >= log_interval_seconds
             if verbose:
@@ -299,11 +298,18 @@ class AsyncLoadingService(spear.Service):
                     idle = result
             with engine_service.end_frame():
                 pass
+
             if idle:
                 num_consecutive_idle_frames = num_consecutive_idle_frames + 1
             else:
                 num_consecutive_idle_frames = 0
+
             elapsed_time_seconds = time.time() - start_time_seconds
+
+        success = num_consecutive_idle_frames == num_extra_frames
+        if not success:
+            spear.log("ERROR: Function never returned true, giving up...")
+            assert False
 
         spear.log(f"Finished waiting for function to return true (waited for {elapsed_time_seconds:.2f} seconds).")
 
@@ -323,14 +329,13 @@ class AsyncLoadingService(spear.Service):
 
         start_time_seconds = time.time()
         last_verbose_time_seconds = start_time_seconds
-        elapsed_time_seconds = time.time() - start_time_seconds
 
         num_extra_frames = 2
         yield from engine_service.step_in_editor_script(num_frames=num_extra_frames)
 
         num_consecutive_idle_frames = 0
-        while num_consecutive_idle_frames < num_extra_frames:
-            assert time.time() - start_time_seconds < max_time_seconds
+        elapsed_time_seconds = time.time() - start_time_seconds
+        while num_consecutive_idle_frames < num_extra_frames and elapsed_time_seconds < max_time_seconds:
 
             verbose = time.time() - last_verbose_time_seconds >= log_interval_seconds
             if verbose:
@@ -347,10 +352,17 @@ class AsyncLoadingService(spear.Service):
             with engine_service.end_frame():
                 pass
             yield
+
             if idle:
                 num_consecutive_idle_frames = num_consecutive_idle_frames + 1
             else:
                 num_consecutive_idle_frames = 0
+
             elapsed_time_seconds = time.time() - start_time_seconds
+
+        success = num_consecutive_idle_frames == num_extra_frames
+        if not success:
+            spear.log("ERROR: Function never returned true, giving up...")
+            assert False
 
         spear.log(f"Finished waiting for function to return true (waited for {elapsed_time_seconds:.2f} seconds).")

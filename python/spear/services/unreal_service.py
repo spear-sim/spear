@@ -126,6 +126,10 @@ class UnrealService(spear.Service):
         result = self.entry_point_caller.call_on_game_thread("find_static_structs_as_map", None)
         return self.to_handle_or_unreal_struct(obj=result, as_handle=as_handle, as_unreal_struct=as_unreal_struct)
 
+    def get_struct_flags(self, ustruct):
+        ustruct = self.to_ustruct(ustruct=ustruct)
+        return self.entry_point_caller.call_on_game_thread("get_struct_flags", None, ustruct)
+
     def find_static_classes(self, as_handle=None, as_unreal_class=None):
         result = self.entry_point_caller.call_on_game_thread("find_static_classes", None)
         return self.to_handle_or_unreal_class(obj=result, as_handle=as_handle, as_unreal_class=as_unreal_class)
@@ -207,6 +211,16 @@ class UnrealService(spear.Service):
         uclass = self.to_uclass(uclass=uclass)
         return self.entry_point_caller.call_on_game_thread("find_functions", None, uclass, field_iteration_flags)
 
+    def find_functions_as_dict(self, uclass, field_iteration_flags=None):
+        field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
+        uclass = self.to_uclass(uclass=uclass)
+        return self.entry_point_caller.call_on_game_thread("find_functions_as_map", None, uclass, field_iteration_flags)
+
+    def find_functions_by_name(self, uclass, function_name, field_iteration_flags=None):
+        field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
+        uclass = self.to_uclass(uclass=uclass)
+        return self.entry_point_caller.call_on_game_thread("find_functions_by_name", None, uclass, function_name, field_iteration_flags)
+
     def find_functions_by_flags_any(self, uclass, function_flags, field_iteration_flags=None):
         field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
         uclass = self.to_uclass(uclass=uclass)
@@ -217,10 +231,10 @@ class UnrealService(spear.Service):
         uclass = self.to_uclass(uclass=uclass)
         return self.entry_point_caller.call_on_game_thread("find_functions_by_flags_all", None, uclass, function_flags, field_iteration_flags)
 
-    def find_functions_as_dict(self, uclass, field_iteration_flags=None):
+    def find_functions_by_name_as_dict(self, uclass, function_name, field_iteration_flags=None):
         field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
         uclass = self.to_uclass(uclass=uclass)
-        return self.entry_point_caller.call_on_game_thread("find_functions_as_map", None, uclass, field_iteration_flags)
+        return self.entry_point_caller.call_on_game_thread("find_functions_by_name_as_map", None, uclass, function_name, field_iteration_flags)
 
     def find_functions_by_flags_any_as_dict(self, uclass, function_flags, field_iteration_flags=None):
         field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
@@ -236,6 +250,16 @@ class UnrealService(spear.Service):
         field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
         uclass = self.to_uclass(uclass=uclass)
         return self.entry_point_caller.call_on_game_thread("find_function_by_name", None, uclass, function_name, field_iteration_flags)
+
+    def find_function_by_flags_any(self, uclass, function_flags, field_iteration_flags=None):
+        field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
+        uclass = self.to_uclass(uclass=uclass)
+        return self.entry_point_caller.call_on_game_thread("find_function_by_flags_any", None, uclass, function_flags, field_iteration_flags)
+
+    def find_function_by_flags_all(self, uclass, function_flags, field_iteration_flags=None):
+        field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
+        uclass = self.to_uclass(uclass=uclass)
+        return self.entry_point_caller.call_on_game_thread("find_function_by_flags_all", None, uclass, function_flags, field_iteration_flags)
 
     def get_function_flags(self, ufunction):
         return self.entry_point_caller.call_on_game_thread("get_function_flags", None, ufunction)
@@ -289,6 +313,11 @@ class UnrealService(spear.Service):
         field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
         return self.entry_point_caller.call_on_game_thread("find_properties_as_map", None, ustruct, field_iteration_flags)
 
+    def find_properties_by_name(self, ustruct, property_name, field_iteration_flags=None):
+        ustruct = self.to_ustruct(ustruct=ustruct)
+        field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
+        return self.entry_point_caller.call_on_game_thread("find_properties_by_name", None, ustruct, property_name, field_iteration_flags)
+
     def find_properties_by_flags_any(self, ustruct, property_flags, field_iteration_flags=None):
         ustruct = self.to_ustruct(ustruct=ustruct)
         field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
@@ -299,6 +328,11 @@ class UnrealService(spear.Service):
         field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
         return self.entry_point_caller.call_on_game_thread("find_properties_by_flags_all", None, ustruct, property_flags, field_iteration_flags)
 
+    def find_properties_by_name_as_dict(self, ustruct, property_name, field_iteration_flags=None):
+        ustruct = self.to_ustruct(ustruct=ustruct)
+        field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
+        return self.entry_point_caller.call_on_game_thread("find_properties_by_name_as_map", None, ustruct, property_name, field_iteration_flags)
+
     def find_properties_by_flags_any_as_dict(self, ustruct, property_flags, field_iteration_flags=None):
         ustruct = self.to_ustruct(ustruct=ustruct)
         field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
@@ -308,6 +342,21 @@ class UnrealService(spear.Service):
         ustruct = self.to_ustruct(ustruct=ustruct)
         field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
         return self.entry_point_caller.call_on_game_thread("find_properties_by_flags_all_as_map", None, ustruct, property_flags, field_iteration_flags)
+
+    def find_property_by_name(self, ustruct, property_name, field_iteration_flags=None):
+        ustruct = self.to_ustruct(ustruct=ustruct)
+        field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
+        return self.entry_point_caller.call_on_game_thread("find_property_by_name", None, ustruct, property_name, field_iteration_flags)
+
+    def find_property_by_flags_any(self, ustruct, property_flags, field_iteration_flags=None):
+        ustruct = self.to_ustruct(ustruct=ustruct)
+        field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
+        return self.entry_point_caller.call_on_game_thread("find_property_by_flags_any", None, ustruct, property_flags, field_iteration_flags)
+
+    def find_property_by_flags_all(self, ustruct, property_flags, field_iteration_flags=None):
+        ustruct = self.to_ustruct(ustruct=ustruct)
+        field_iteration_flags = field_iteration_flags if field_iteration_flags is not None else ["Default"]
+        return self.entry_point_caller.call_on_game_thread("find_property_by_flags_all", None, ustruct, property_flags, field_iteration_flags)
 
     def get_property_flags(self, prop):
         return self.entry_point_caller.call_on_game_thread("get_property_flags", None, prop)
@@ -362,7 +411,7 @@ class UnrealService(spear.Service):
         if parent is not None:
             assert notify_object == 0 # a non-default parent supplies its own notify object
         notify_object = spear.to_handle(obj=notify_object)
-        parent = parent if parent is not None else spear.PropertyDesc()
+        parent = parent if parent is not None else spear.SpPropertyDesc()
         return self.entry_point_caller.call_on_game_thread("resolve_property_for_struct_from_string", None, value_ptr, ustruct, property_name, notify_object, parent)
 
     def resolve_property_for_property_desc(self, property_desc, property_name):
@@ -407,7 +456,7 @@ class UnrealService(spear.Service):
             assert notify_object == 0 # a non-default parent supplies its own notify object
         property_value = spear.to_json_string(obj=property_value)
         notify_object = spear.to_handle(obj=notify_object)
-        parent = parent if parent is not None else spear.PropertyDesc()
+        parent = parent if parent is not None else spear.SpPropertyDesc()
         return self.entry_point_caller.call_on_game_thread("set_property_value_for_struct_from_string", None, value_ptr, ustruct, property_name, property_value, notify_object, parent)
 
     def set_property_value_for_class(self, value_ptr, uclass, property_name, property_value, notify_object=0, parent=None):
@@ -418,7 +467,7 @@ class UnrealService(spear.Service):
         uclass = self.to_uclass(uclass=uclass)
         property_value = spear.to_json_string(obj=property_value)
         notify_object = spear.to_handle(obj=notify_object)
-        parent = parent if parent is not None else spear.PropertyDesc()
+        parent = parent if parent is not None else spear.SpPropertyDesc()
         return self.entry_point_caller.call_on_game_thread("set_property_value_for_struct_from_string", None, value_ptr, uclass, property_name, property_value, notify_object, parent)
 
     #

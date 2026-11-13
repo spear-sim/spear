@@ -21,6 +21,7 @@
 
 #include "assert.h"
 #include "func_signature_registry.h"
+#include "shared_memory.h"
 #include "types.h"
 
 class Client
@@ -45,12 +46,18 @@ public:
         if (!suppress_default_logging_) { std::cout << "[SPEAR | spear_ext.cpp] Client::initialize()" << std::endl; }
         SP_ASSERT(client_);
 
-        clmdep_msgpack::object_handle type_names_result = client_->call("engine_service.call_sync_on_worker_thread.get_entry_point_signature_type_names");
-        entry_point_signature_type_names_ = type_names_result.get().as<std::vector<std::string>>();
+        clmdep_msgpack::object_handle object_handle;
+
+        object_handle = client_->call("engine_service.call_sync_on_worker_thread.get_entry_point_signature_type_names");
+        entry_point_signature_type_names_ = object_handle.get().as<std::vector<std::string>>();
         validateEntryPointSignatureTypeNames();
 
-        clmdep_msgpack::object_handle descs_result = client_->call("engine_service.call_sync_on_worker_thread.get_entry_point_signature_descs");
-        entry_point_signature_descs_ = descs_result.get().as<std::map<std::string, FuncSignatureDesc>>();
+        object_handle = client_->call("engine_service.call_sync_on_worker_thread.get_entry_point_signature_descs");
+        entry_point_signature_descs_ = object_handle.get().as<std::map<std::string, SpFuncSignatureDesc>>();
+
+        object_handle = client_->call("shared_memory_service.call_sync_on_worker_thread.get_fence_view");
+        SharedMemoryView fence_view = object_handle.get().as<SharedMemoryView>();
+        shared_memory_fence_ = std::make_unique<SharedMemoryFence>(fence_view);
     };
 
     void terminate()
@@ -58,6 +65,7 @@ public:
         if (!suppress_default_logging_) { std::cout << "[SPEAR | spear_ext.cpp] Client::terminate()" << std::endl; }
         SP_ASSERT(client_);
         client_ = nullptr;
+        shared_memory_fence_ = nullptr;
         entry_point_signature_descs_.clear();
         entry_point_signature_type_names_.clear();
     };
@@ -96,8 +104,9 @@ public:
         if (verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] call(...): " << func_name << std::endl; }
 
         SP_ASSERT(client_);
+        SP_ASSERT(shared_memory_fence_);
 
-        const FuncSignatureDesc& desc = entry_point_signature_descs_.at(func_name);
+        const SpFuncSignatureDesc& desc = entry_point_signature_descs_.at(func_name);
         int return_type_id = desc.type_ids_[0];
         SP_ASSERT(args.size() == desc.type_ids_.size() - 1);
 
@@ -113,8 +122,16 @@ public:
             args_msgpack_array.via.array.ptr[i] = FuncSignatureRegistry::getArg(zone, desc.type_ids_[i + 1], args[i]);
         }
 
-        // call via rpclib
+        // Call via rpclib. We call SharedMemoryFence::fence() before sending the request and after receiving
+        // the response. Together with corresponding fences on the server (see RpcServer::bindImpl(...)), these
+        // fences establish that all memory operations in this process before the call happen-before all memory
+        // operations on the server during the call, and all memory operations on the server during the call
+        // happen-before all memory operations in this process after the call, including memory operations on
+        // shared memory (see SharedMemoryFence::fence() in SpCore/SharedMemory.cpp for details).
+
+        shared_memory_fence_->fence();
         clmdep_msgpack::object_handle result = client_->call("rpc_server.call", func_name, args_msgpack_array);
+        shared_memory_fence_->fence();
 
         // unpack result
         return FuncSignatureRegistry::getReturnValue(this, return_type_id, std::move(result));
@@ -126,7 +143,7 @@ public:
     bool verbose_allocations_         = false;
     bool verbose_exceptions_          = false; // owner should set to true once a connection to the server is established
 
-    std::map<std::string, FuncSignatureDesc> getEntryPointSignatureDescs() const
+    std::map<std::string, SpFuncSignatureDesc> getEntryPointSignatureDescs() const
     {
         return entry_point_signature_descs_;
     }
@@ -168,6 +185,7 @@ private:
     }
 
     std::unique_ptr<rpc::client> client_ = nullptr;
-    std::map<std::string, FuncSignatureDesc> entry_point_signature_descs_;
+    std::unique_ptr<SharedMemoryFence> shared_memory_fence_ = nullptr;
+    std::map<std::string, SpFuncSignatureDesc> entry_point_signature_descs_;
     std::vector<std::string> entry_point_signature_type_names_;
 };

@@ -310,11 +310,11 @@ private:
         // Read-side wait counter. Incremented on the game thread at enqueue time so readPixelsImpl()'s game-thread
         // spin-wait always observes an outstanding readback (it must be bumped before read_pixels() can run, so we can't
         // defer it to the render thread), and decremented on the render thread once the staging-to-CPU copy is done.
-        // Double-buffered: GT increments in enqueueCopyPixelsDoubleBuffered(), RT decrements in postRenderViewFamily_RenderThread()
-        // Triple-buffered: GT increments in enqueueCopyPixelsTripleBuffered(), RT decrements in enqueueCopyPixelsTripleBuffered()'s render command
+        // Double-buffered: GT increments in enqueueReadPixelsDoubleBuffered(), RT decrements in postRenderViewFamily_RenderThread()
+        // Triple-buffered: GT increments in enqueueReadPixelsTripleBuffered(), RT decrements in enqueueReadPixelsTripleBuffered()'s render command
         std::atomic<int> num_readbacks_pending_ = 0;
 
-        // Double-buffered consume gate. Incremented on the render thread inside enqueueCopyPixelsDoubleBuffered()'s
+        // Double-buffered consume gate. Incremented on the render thread inside enqueueReadPixelsDoubleBuffered()'s
         // command, immediately after the GPU-to-staging EnqueueCopy() populates the staging texture, and decremented on
         // the render thread in postRenderViewFamily_RenderThread() when the staging-to-CPU copy consumes it. Because the
         // GPU-to-staging copy runs in an async command but the staging-to-CPU copy runs in a separate render-thread
@@ -369,11 +369,11 @@ private:
     SpFuncDataBundle readPixelsSingleBuffered(std::map<std::string, TextureReadbackMinimalDesc>& texture_readback_minimal_descs);
 
     // double-buffered mode
-    void enqueueCopyPixelsDoubleBuffered(std::map<std::string, TextureReadbackMinimalDesc>& texture_readback_minimal_descs);
+    void enqueueReadPixelsDoubleBuffered(std::map<std::string, TextureReadbackMinimalDesc>& texture_readback_minimal_descs);
     SpFuncDataBundle readPixelsDoubleBuffered();
 
     // triple-buffered mode
-    void enqueueCopyPixelsTripleBuffered(std::map<std::string, TextureReadbackMinimalDesc>& texture_readback_minimal_descs);
+    void enqueueReadPixelsTripleBuffered(std::map<std::string, TextureReadbackMinimalDesc>& texture_readback_minimal_descs);
     SpFuncDataBundle readPixelsTripleBuffered();
 
     // game thread helpers
