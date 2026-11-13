@@ -58,14 +58,21 @@ from .utils import rendering_utils as rendering
 from .utils import tool_utils as tools
 
 # conditional imports
+
 if __can_import_spear_ext__:
     assert not __can_import_unreal__
-    from spear_ext import SpFuncDataBundle, SpPackedArray, SpPropertyDesc # directly into the spear namespace
+    try:
+        from spear_ext import SpFuncDataBundle, SpPackedArray, SpPropertyDesc
+    except ImportError:
+        __can_import_spear_ext__ = False
 
 if __can_import_unreal__:
     assert not __can_import_spear_ext__
-    from .utils.editor_utils import SpFuncDataBundle, SpPackedArray, SpPropertyDesc # directly into the spear namespace
-    from .utils import editor_utils as editor # into a child namespace
+    try:
+        from .utils.editor_utils import SpFuncDataBundle, SpPackedArray, SpPropertyDesc
+        from .utils import editor_utils as editor
+    except ImportError:
+        __can_import_unreal__ = False
 
 #
 # services
