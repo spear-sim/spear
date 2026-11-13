@@ -44,6 +44,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Additional include paths
 include_directories(
+    ${CMAKE_CURRENT_LIST_DIR}/../third_party/boost
     ${CMAKE_CURRENT_LIST_DIR}/../third_party/rpclib/include)
 
 # Additional library paths

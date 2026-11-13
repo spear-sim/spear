@@ -13,6 +13,7 @@
 
 #include "SpCore/Assert.h"
 #include "SpCore/OutputLog.h"
+#include "SpCore/SharedMemory.h"
 #include "SpCore/SpArray.h"
 #include "SpCore/SpFuncComponent.h"
 #include "SpCore/Std.h"
@@ -32,14 +33,31 @@ class UWorld;
 // SpCore/OutputLog.h
 //
 
-// SpOutputLogMessages (never received as an arg from the client)
+// OutputLogMessages (never received as an arg from the client)
 
 template <> // needed to send a custom type as a return value to the client
-struct clmdep_msgpack::adaptor::object_with_zone<SpOutputLogMessages> {
-    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpOutputLogMessages const& sp_output_log_messages) const {
+struct clmdep_msgpack::adaptor::object_with_zone<OutputLogMessages> {
+    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, OutputLogMessages const& output_log_messages) const {
         std::map<std::string, clmdep_msgpack::object> objects;
-        Std::insert(objects, "messages",    MsgpackUtils::toMsgpackObject(sp_output_log_messages.messages_,    object_with_zone));
-        Std::insert(objects, "num_evicted", MsgpackUtils::toMsgpackObject(sp_output_log_messages.num_evicted_, object_with_zone));
+        Std::insert(objects, "messages",    MsgpackUtils::toMsgpackObject(output_log_messages.messages_,    object_with_zone));
+        Std::insert(objects, "num_evicted", MsgpackUtils::toMsgpackObject(output_log_messages.num_evicted_, object_with_zone));
+        MsgpackUtils::setMsgpackObjectToMap(object_with_zone, objects);
+    }
+};
+
+//
+// SpCore/SharedMemory.h
+//
+
+// SharedMemoryView (never received as an arg from the client)
+
+template <> // needed to send a custom type as a return value to the client
+struct clmdep_msgpack::adaptor::object_with_zone<SharedMemoryView> {
+    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SharedMemoryView const& shared_memory_view) const {
+        std::map<std::string, clmdep_msgpack::object> objects;
+        Std::insert(objects, "id",           MsgpackUtils::toMsgpackObject(shared_memory_view.id_,           object_with_zone));
+        Std::insert(objects, "num_bytes",    MsgpackUtils::toMsgpackObject(shared_memory_view.num_bytes_,    object_with_zone));
+        Std::insert(objects, "offset_bytes", MsgpackUtils::toMsgpackObject(shared_memory_view.offset_bytes_, object_with_zone));
         MsgpackUtils::setMsgpackObjectToMap(object_with_zone, objects);
     }
 };
@@ -83,13 +101,13 @@ struct clmdep_msgpack::adaptor::object_with_zone<SpPackedArray> {
 
 template <> // needed to send a custom type as a return value to the client
 struct clmdep_msgpack::adaptor::object_with_zone<SpArraySharedMemoryView> {
-    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpArraySharedMemoryView const& sp_shared_memory_view) const {
+    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpArraySharedMemoryView const& sp_array_shared_memory_view) const {
         std::map<std::string, clmdep_msgpack::object> objects;
-        Std::insert(objects, "id",           MsgpackUtils::toMsgpackObject(sp_shared_memory_view.id_,           object_with_zone));
-        Std::insert(objects, "num_bytes",    MsgpackUtils::toMsgpackObject(sp_shared_memory_view.num_bytes_,    object_with_zone));
-        Std::insert(objects, "offset_bytes", MsgpackUtils::toMsgpackObject(sp_shared_memory_view.offset_bytes_, object_with_zone));
-        Std::insert(objects, "usage_flags",  MsgpackUtils::toMsgpackObject(Unreal::getStringsFromCombinedEnumFlagValueAs<ESpArraySharedMemoryUsageFlags>(sp_shared_memory_view.usage_flags_), object_with_zone));
-        Std::insert(objects, "name",         MsgpackUtils::toMsgpackObject(sp_shared_memory_view.name_,         object_with_zone));
+        Std::insert(objects, "id",           MsgpackUtils::toMsgpackObject(sp_array_shared_memory_view.id_,           object_with_zone));
+        Std::insert(objects, "num_bytes",    MsgpackUtils::toMsgpackObject(sp_array_shared_memory_view.num_bytes_,    object_with_zone));
+        Std::insert(objects, "offset_bytes", MsgpackUtils::toMsgpackObject(sp_array_shared_memory_view.offset_bytes_, object_with_zone));
+        Std::insert(objects, "usage_flags",  MsgpackUtils::toMsgpackObject(Unreal::getStringsFromCombinedEnumFlagValueAs<ESpArraySharedMemoryUsageFlags>(sp_array_shared_memory_view.usage_flags_), object_with_zone));
+        Std::insert(objects, "name",         MsgpackUtils::toMsgpackObject(sp_array_shared_memory_view.name_,         object_with_zone));
         MsgpackUtils::setMsgpackObjectToMap(object_with_zone, objects);
     }
 };
@@ -195,21 +213,21 @@ struct clmdep_msgpack::adaptor::object_with_zone<SpFuncSignatureDesc> {
 
 template <> // needed to receive a custom type as an arg from the client
 struct clmdep_msgpack::adaptor::convert<SpFuture> {
-    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpFuture& future) const {
+    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpFuture& sp_future) const {
         std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
         SP_ASSERT(objects.size() == 2);
-        future.future_ptr_ = MsgpackUtils::to<void*>(objects.at("future_ptr"));
-        future.type_id_    = MsgpackUtils::to<std::string>(objects.at("type_id"));
+        sp_future.future_ptr_ = MsgpackUtils::to<void*>(objects.at("future_ptr"));
+        sp_future.type_id_    = MsgpackUtils::to<std::string>(objects.at("type_id"));
         return object;
     }
 };
 
 template <> // needed to send a custom type as a return value to the client
 struct clmdep_msgpack::adaptor::object_with_zone<SpFuture> {
-    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpFuture const& future) const {
+    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpFuture const& sp_future) const {
         std::map<std::string, clmdep_msgpack::object> objects;
-        Std::insert(objects, "future_ptr", MsgpackUtils::toMsgpackObject(future.future_ptr_, object_with_zone));
-        Std::insert(objects, "type_id",    MsgpackUtils::toMsgpackObject(future.type_id_,    object_with_zone));
+        Std::insert(objects, "future_ptr", MsgpackUtils::toMsgpackObject(sp_future.future_ptr_, object_with_zone));
+        Std::insert(objects, "type_id",    MsgpackUtils::toMsgpackObject(sp_future.type_id_,    object_with_zone));
         MsgpackUtils::setMsgpackObjectToMap(object_with_zone, objects);
     }
 };
@@ -218,12 +236,12 @@ struct clmdep_msgpack::adaptor::object_with_zone<SpFuture> {
 
 template <> // needed to send a custom type as a return value to the client
 struct clmdep_msgpack::adaptor::object_with_zone<SpFunctionDesc> {
-    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpFunctionDesc const& function_desc) const {
+    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpFunctionDesc const& sp_function_desc) const {
         std::map<std::string, clmdep_msgpack::object> objects;
-        Std::insert(objects, "function",          MsgpackUtils::toMsgpackObject(function_desc.function_,          object_with_zone));
-        Std::insert(objects, "function_name",     MsgpackUtils::toMsgpackObject(function_desc.function_name_,     object_with_zone));
-        Std::insert(objects, "static_class",      MsgpackUtils::toMsgpackObject(function_desc.static_class_,      object_with_zone));
-        Std::insert(objects, "static_class_name", MsgpackUtils::toMsgpackObject(function_desc.static_class_name_, object_with_zone));
+        Std::insert(objects, "function",          MsgpackUtils::toMsgpackObject(sp_function_desc.function_,          object_with_zone));
+        Std::insert(objects, "function_name",     MsgpackUtils::toMsgpackObject(sp_function_desc.function_name_,     object_with_zone));
+        Std::insert(objects, "static_class",      MsgpackUtils::toMsgpackObject(sp_function_desc.static_class_,      object_with_zone));
+        Std::insert(objects, "static_class_name", MsgpackUtils::toMsgpackObject(sp_function_desc.static_class_name_, object_with_zone));
         MsgpackUtils::setMsgpackObjectToMap(object_with_zone, objects);
     }
 };
@@ -232,10 +250,10 @@ struct clmdep_msgpack::adaptor::object_with_zone<SpFunctionDesc> {
 
 template <> // needed to send a custom type as a return value to the client
 struct clmdep_msgpack::adaptor::object_with_zone<SpStaticStructDesc> {
-    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpStaticStructDesc const& static_struct_desc) const {
+    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpStaticStructDesc const& sp_static_struct_desc) const {
         std::map<std::string, clmdep_msgpack::object> objects;
-        Std::insert(objects, "static_struct", MsgpackUtils::toMsgpackObject(static_struct_desc.static_struct_, object_with_zone));
-        Std::insert(objects, "name",          MsgpackUtils::toMsgpackObject(static_struct_desc.name_,          object_with_zone));
+        Std::insert(objects, "static_struct", MsgpackUtils::toMsgpackObject(sp_static_struct_desc.static_struct_, object_with_zone));
+        Std::insert(objects, "name",          MsgpackUtils::toMsgpackObject(sp_static_struct_desc.name_,          object_with_zone));
         MsgpackUtils::setMsgpackObjectToMap(object_with_zone, objects);
     }
 };
@@ -244,13 +262,13 @@ struct clmdep_msgpack::adaptor::object_with_zone<SpStaticStructDesc> {
 
 template <> // needed to send a custom type as a return value to the client
 struct clmdep_msgpack::adaptor::object_with_zone<SpStaticClassDesc> {
-    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpStaticClassDesc const& static_class_desc) const {
+    void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpStaticClassDesc const& sp_static_class_desc) const {
         std::map<std::string, clmdep_msgpack::object> objects;
-        Std::insert(objects, "static_class",           MsgpackUtils::toMsgpackObject(static_class_desc.static_class_,          object_with_zone));
-        Std::insert(objects, "name",                   MsgpackUtils::toMsgpackObject(static_class_desc.name_,                  object_with_zone));
-        Std::insert(objects, "derived_classes",        MsgpackUtils::toVectorMsgpackObject(static_class_desc.derived_classes_, object_with_zone));
-        Std::insert(objects, "derived_class_names",    MsgpackUtils::toMsgpackObject(static_class_desc.derived_class_names_,   object_with_zone));
-        Std::insert(objects, "function_descs",         MsgpackUtils::toMsgpackObject(static_class_desc.function_descs_,        object_with_zone));
+        Std::insert(objects, "static_class",        MsgpackUtils::toMsgpackObject(sp_static_class_desc.static_class_,          object_with_zone));
+        Std::insert(objects, "name",                MsgpackUtils::toMsgpackObject(sp_static_class_desc.name_,                  object_with_zone));
+        Std::insert(objects, "derived_classes",     MsgpackUtils::toVectorMsgpackObject(sp_static_class_desc.derived_classes_, object_with_zone));
+        Std::insert(objects, "derived_class_names", MsgpackUtils::toMsgpackObject(sp_static_class_desc.derived_class_names_,   object_with_zone));
+        Std::insert(objects, "function_descs",      MsgpackUtils::toMsgpackObject(sp_static_class_desc.function_descs_,        object_with_zone));
         MsgpackUtils::setMsgpackObjectToMap(object_with_zone, objects);
     }
 };

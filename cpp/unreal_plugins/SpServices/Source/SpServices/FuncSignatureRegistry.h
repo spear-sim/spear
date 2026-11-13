@@ -12,6 +12,7 @@
 
 #include "SpCore/Assert.h"
 #include "SpCore/OutputLog.h"
+#include "SpCore/SharedMemory.h"
 #include "SpCore/SpArray.h"
 #include "SpCore/SpFuncComponent.h"
 #include "SpCore/Std.h"
@@ -40,25 +41,26 @@ class FuncSignatureRegistry
         /*  6 */ "string",
         /*  7 */ "vector_of_uint64",
         /*  8 */ "vector_of_string",
-        /*  9 */ "vector_of_static_struct_desc",
-        /* 10 */ "vector_of_static_class_desc",
+        /*  9 */ "vector_of_sp_static_struct_desc",
+        /* 10 */ "vector_of_sp_static_class_desc",
         /* 11 */ "map_of_string_to_uint64",
         /* 12 */ "map_of_string_to_string",
-        /* 13 */ "map_of_string_to_packed_array",
-        /* 14 */ "map_of_string_to_shared_memory_view",
-        /* 15 */ "map_of_string_to_property_value",
-        /* 16 */ "map_of_string_to_func_signature_desc",
-        /* 17 */ "map_of_string_to_world_desc",
+        /* 13 */ "map_of_string_to_sp_packed_array",
+        /* 14 */ "map_of_string_to_sp_array_shared_memory_view",
+        /* 15 */ "map_of_string_to_sp_property_value",
+        /* 16 */ "map_of_string_to_sp_func_signature_desc",
+        /* 17 */ "map_of_string_to_sp_world_desc",
         /* 18 */ "output_log_messages",
-        /* 19 */ "packed_array",
-        /* 20 */ "shared_memory_view",
-        /* 21 */ "data_bundle",
-        /* 22 */ "property_desc",
-        /* 23 */ "property_value",
-        /* 24 */ "future",
-        /* 25 */ "static_struct_desc",
-        /* 26 */ "static_class_desc",
-        /* 27 */ "world_desc" };
+        /* 19 */ "shared_memory_view",
+        /* 20 */ "sp_packed_array",
+        /* 21 */ "sp_array_shared_memory_view",
+        /* 22 */ "sp_func_data_bundle",
+        /* 23 */ "sp_property_desc",
+        /* 24 */ "sp_property_value",
+        /* 25 */ "sp_future",
+        /* 26 */ "sp_static_struct_desc",
+        /* 27 */ "sp_static_class_desc",
+        /* 28 */ "sp_world_desc" };
 
     template <typename T> static int getTypeId() { SP_ASSERT(false); return -1; }
     /*  0 */ template <> int getTypeId<void>                                           () { return  0; }
@@ -79,16 +81,17 @@ class FuncSignatureRegistry
     /* 15 */ template <> int getTypeId<std::map<std::string, SpPropertyValue>>         () { return 15; }
     /* 16 */ template <> int getTypeId<std::map<std::string, SpFuncSignatureDesc>>     () { return 16; }
     /* 17 */ template <> int getTypeId<std::map<std::string, SpWorldDesc>>             () { return 17; }
-    /* 18 */ template <> int getTypeId<SpOutputLogMessages>                            () { return 18; }
-    /* 19 */ template <> int getTypeId<SpPackedArray>                                  () { return 19; }
-    /* 20 */ template <> int getTypeId<SpArraySharedMemoryView>                        () { return 20; }
-    /* 21 */ template <> int getTypeId<SpFuncDataBundle>                               () { return 21; }
-    /* 22 */ template <> int getTypeId<SpPropertyDesc>                                 () { return 22; }
-    /* 23 */ template <> int getTypeId<SpPropertyValue>                                () { return 23; }
-    /* 24 */ template <> int getTypeId<SpFuture>                                       () { return 24; }
-    /* 25 */ template <> int getTypeId<SpStaticStructDesc>                             () { return 25; }
-    /* 26 */ template <> int getTypeId<SpStaticClassDesc>                              () { return 26; }
-    /* 27 */ template <> int getTypeId<SpWorldDesc>                                    () { return 27; }
+    /* 18 */ template <> int getTypeId<OutputLogMessages>                              () { return 18; }
+    /* 19 */ template <> int getTypeId<SharedMemoryView>                               () { return 19; }
+    /* 20 */ template <> int getTypeId<SpPackedArray>                                  () { return 20; }
+    /* 21 */ template <> int getTypeId<SpArraySharedMemoryView>                        () { return 21; }
+    /* 22 */ template <> int getTypeId<SpFuncDataBundle>                               () { return 22; }
+    /* 23 */ template <> int getTypeId<SpPropertyDesc>                                 () { return 23; }
+    /* 24 */ template <> int getTypeId<SpPropertyValue>                                () { return 24; }
+    /* 25 */ template <> int getTypeId<SpFuture>                                       () { return 25; }
+    /* 26 */ template <> int getTypeId<SpStaticStructDesc>                             () { return 26; }
+    /* 27 */ template <> int getTypeId<SpStaticClassDesc>                              () { return 27; }
+    /* 28 */ template <> int getTypeId<SpWorldDesc>                                    () { return 28; }
 
 public:
     template <typename TFunc>

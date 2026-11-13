@@ -59,6 +59,10 @@ public:
                 Std::remove(shared_memory_regions_, name);
                 Std::remove(shared_memory_views_, name);
         });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("shared_memory_service", "get_fence_view", []() -> SharedMemoryView {
+            return SharedMemory::getFenceView();
+        });
     }
 
     template <CUnrealEntryPointBinder TEntryPointBinder>

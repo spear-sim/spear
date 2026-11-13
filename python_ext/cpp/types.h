@@ -25,7 +25,14 @@ struct OutputLogMessages
     int32_t num_evicted_ = 0;
 };
 
-struct PropertyDesc
+struct SharedMemoryView
+{
+    std::string id_;
+    uint64_t num_bytes_ = 0;
+    uint64_t offset_bytes_ = 0;
+};
+
+struct SpPropertyDesc
 {
     uint64_t property_ = 0;
     uint64_t value_ptr_ = 0;
@@ -38,13 +45,13 @@ struct PropertyDesc
     std::vector<std::string> notify_map_keys_;
 };
 
-struct PropertyValue
+struct SpPropertyValue
 {
     std::string value_;
     std::string type_id_;
 };
 
-struct SharedMemoryView
+struct SpArraySharedMemoryView
 {
     std::string id_;
     uint64_t num_bytes_ = 0;
@@ -53,7 +60,7 @@ struct SharedMemoryView
     std::string name_ = "smem:invalid";
 };
 
-struct PackedArray
+struct SpPackedArray
 {
     nanobind::ndarray<nanobind::numpy> data_;
     std::string data_source_ = "Invalid";
@@ -61,27 +68,27 @@ struct PackedArray
     std::string shared_memory_name_;
 };
 
-struct DataBundle
+struct SpFuncDataBundle
 {
-    std::map<std::string, PackedArray> packed_arrays_;
+    std::map<std::string, SpPackedArray> packed_arrays_;
     std::map<std::string, std::string> unreal_obj_strings_;
     std::string info_;
 };
 
-struct FuncSignatureDesc
+struct SpFuncSignatureDesc
 {
     std::string name_;
     std::vector<int> type_ids_;
     std::vector<std::string> type_names_;
 };
 
-struct Future
+struct SpFuture
 {
     uint64_t future_ptr_ = 0;
     std::string type_id_;
 };
 
-struct FunctionDesc
+struct SpFunctionDesc
 {
     uint64_t function_ = 0;
     std::string function_name_;
@@ -89,22 +96,22 @@ struct FunctionDesc
     std::string static_class_name_;
 };
 
-struct StaticStructDesc
+struct SpStaticStructDesc
 {
     uint64_t static_struct_ = 0;
     std::string name_;
 };
 
-struct StaticClassDesc
+struct SpStaticClassDesc
 {
     uint64_t static_class_ = 0;
     std::string name_;
     std::vector<uint64_t> derived_classes_;
     std::vector<std::string> derived_class_names_;
-    std::map<std::string, FunctionDesc> function_descs_;
+    std::map<std::string, SpFunctionDesc> function_descs_;
 };
 
-struct WorldDesc
+struct SpWorldDesc
 {
     uint64_t world_ = 0;
     int64_t world_id_ = -1;
@@ -117,7 +124,7 @@ struct WorldDesc
 // View types
 //
 
-struct PackedArrayView
+struct SpPackedArrayView
 {
     std::span<uint8_t> view_;
     std::string data_source_ = "Invalid";
@@ -126,9 +133,9 @@ struct PackedArrayView
     std::string data_type_;
 };
 
-struct DataBundleView
+struct SpFuncDataBundleView
 {
-    std::map<std::string, PackedArrayView> packed_array_views_;
+    std::map<std::string, SpPackedArrayView> packed_array_views_;
     std::map<std::string, std::string> unreal_obj_strings_;
     std::string info_;
 };
