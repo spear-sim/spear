@@ -108,7 +108,8 @@ SP_END_SUPPRESS_COMPILER_WARNINGS
 // macro. However, Boost uses this macro to decide whether or not to use native posix shared memory objects,
 // rather than emulating them through memory-mapped files. To address this issue, we explicitly define
 // BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS, because this forces Boost to use native posix shared
-// memory objects.
+// memory objects. This configuration must match python_ext/cpp/boost.h exactly, because otherwise spear_ext
+// and the Unreal application might silently use incompatible implementations of the same interprocess object.
 #if BOOST_OS_MACOS
     #define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
 #endif

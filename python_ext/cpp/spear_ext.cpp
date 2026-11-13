@@ -57,42 +57,53 @@ NB_MODULE(spear_ext, module)
         return oss.str();
     });
 
-    auto property_desc_class = nanobind::class_<PropertyDesc>(module, "PropertyDesc");
-    property_desc_class.def(nanobind::init<>());
-    property_desc_class.def_rw("property",                  &PropertyDesc::property_);
-    property_desc_class.def_rw("value_ptr",                 &PropertyDesc::value_ptr_);
-    property_desc_class.def_rw("type_id",                   &PropertyDesc::type_id_);
-    property_desc_class.def_rw("notify_objects",            &PropertyDesc::notify_objects_);
-    property_desc_class.def_rw("notify_member_properties",  &PropertyDesc::notify_member_properties_);
-    property_desc_class.def_rw("notify_element_properties", &PropertyDesc::notify_element_properties_);
-    property_desc_class.def_rw("notify_array_indices",      &PropertyDesc::notify_array_indices_);
-    property_desc_class.def_rw("notify_map_keys",           &PropertyDesc::notify_map_keys_);
-    property_desc_class.def("__repr__", [](const PropertyDesc& self) {
-        std::ostringstream oss;
-        oss << "spear_ext.PropertyDesc(" << "property=" << self.property_ << ", value_ptr=" << self.value_ptr_ << ")";
-        return oss.str();
-    });
-
-    auto property_value_class = nanobind::class_<PropertyValue>(module, "PropertyValue");
-    property_value_class.def(nanobind::init<>());
-    property_value_class.def_rw("value",   &PropertyValue::value_);
-    property_value_class.def_rw("type_id", &PropertyValue::type_id_);
-    property_value_class.def("__repr__", [](const PropertyValue& self) {
-        std::ostringstream oss;
-        oss << "spear_ext.PropertyValue(" << "value=" << self.value_ << ", type_id=" << self.type_id_ << ")";
-        return oss.str();
-    });
-
     auto shared_memory_view_class = nanobind::class_<SharedMemoryView>(module, "SharedMemoryView");
     shared_memory_view_class.def(nanobind::init<>());
     shared_memory_view_class.def_rw("id",           &SharedMemoryView::id_);
     shared_memory_view_class.def_rw("num_bytes",    &SharedMemoryView::num_bytes_);
     shared_memory_view_class.def_rw("offset_bytes", &SharedMemoryView::offset_bytes_);
-    shared_memory_view_class.def_rw("usage_flags",  &SharedMemoryView::usage_flags_);
-    shared_memory_view_class.def_rw("name",         &SharedMemoryView::name_);
     shared_memory_view_class.def("__repr__", [](const SharedMemoryView& self) {
         std::ostringstream oss;
-        oss << "spear_ext.SharedMemoryView(id=" << self.id_ << ", num_bytes=" << self.num_bytes_ << ", offset_bytes=" << self.offset_bytes_ << ", usage_flags=[";
+        oss << "spear_ext.SharedMemoryView(id=" << self.id_ << ", num_bytes=" << self.num_bytes_ << ", offset_bytes=" << self.offset_bytes_ << ")";
+        return oss.str();
+    });
+
+    auto sp_property_desc_class = nanobind::class_<SpPropertyDesc>(module, "SpPropertyDesc");
+    sp_property_desc_class.def(nanobind::init<>());
+    sp_property_desc_class.def_rw("property",                  &SpPropertyDesc::property_);
+    sp_property_desc_class.def_rw("value_ptr",                 &SpPropertyDesc::value_ptr_);
+    sp_property_desc_class.def_rw("type_id",                   &SpPropertyDesc::type_id_);
+    sp_property_desc_class.def_rw("notify_objects",            &SpPropertyDesc::notify_objects_);
+    sp_property_desc_class.def_rw("notify_member_properties",  &SpPropertyDesc::notify_member_properties_);
+    sp_property_desc_class.def_rw("notify_element_properties", &SpPropertyDesc::notify_element_properties_);
+    sp_property_desc_class.def_rw("notify_array_indices",      &SpPropertyDesc::notify_array_indices_);
+    sp_property_desc_class.def_rw("notify_map_keys",           &SpPropertyDesc::notify_map_keys_);
+    sp_property_desc_class.def("__repr__", [](const SpPropertyDesc& self) {
+        std::ostringstream oss;
+        oss << "spear_ext.SpPropertyDesc(" << "property=" << self.property_ << ", value_ptr=" << self.value_ptr_ << ")";
+        return oss.str();
+    });
+
+    auto sp_property_value_class = nanobind::class_<SpPropertyValue>(module, "SpPropertyValue");
+    sp_property_value_class.def(nanobind::init<>());
+    sp_property_value_class.def_rw("value",   &SpPropertyValue::value_);
+    sp_property_value_class.def_rw("type_id", &SpPropertyValue::type_id_);
+    sp_property_value_class.def("__repr__", [](const SpPropertyValue& self) {
+        std::ostringstream oss;
+        oss << "spear_ext.SpPropertyValue(" << "value=" << self.value_ << ", type_id=" << self.type_id_ << ")";
+        return oss.str();
+    });
+
+    auto sp_array_shared_memory_view_class = nanobind::class_<SpArraySharedMemoryView>(module, "SpArraySharedMemoryView");
+    sp_array_shared_memory_view_class.def(nanobind::init<>());
+    sp_array_shared_memory_view_class.def_rw("id",           &SpArraySharedMemoryView::id_);
+    sp_array_shared_memory_view_class.def_rw("num_bytes",    &SpArraySharedMemoryView::num_bytes_);
+    sp_array_shared_memory_view_class.def_rw("offset_bytes", &SpArraySharedMemoryView::offset_bytes_);
+    sp_array_shared_memory_view_class.def_rw("usage_flags",  &SpArraySharedMemoryView::usage_flags_);
+    sp_array_shared_memory_view_class.def_rw("name",         &SpArraySharedMemoryView::name_);
+    sp_array_shared_memory_view_class.def("__repr__", [](const SpArraySharedMemoryView& self) {
+        std::ostringstream oss;
+        oss << "spear_ext.SpArraySharedMemoryView(id=" << self.id_ << ", num_bytes=" << self.num_bytes_ << ", offset_bytes=" << self.offset_bytes_ << ", usage_flags=[";
         for (int i = 0; i < self.usage_flags_.size(); i++) {
             if (i > 0) {
                 oss << ", ";
@@ -103,13 +114,13 @@ NB_MODULE(spear_ext, module)
         return oss.str();
     });
 
-    auto packed_array_class = nanobind::class_<PackedArray>(module, "PackedArray");
-    packed_array_class.def(nanobind::init<>());
-    packed_array_class.def_rw("data",               &PackedArray::data_, nanobind::rv_policy::reference);
-    packed_array_class.def_rw("data_source",        &PackedArray::data_source_);
-    packed_array_class.def_rw("shape",              &PackedArray::shape_);
-    packed_array_class.def_rw("shared_memory_name", &PackedArray::shared_memory_name_);
-    packed_array_class.def("__repr__", [](const PackedArray& self) {
+    auto sp_packed_array_class = nanobind::class_<SpPackedArray>(module, "SpPackedArray");
+    sp_packed_array_class.def(nanobind::init<>());
+    sp_packed_array_class.def_rw("data",               &SpPackedArray::data_, nanobind::rv_policy::reference);
+    sp_packed_array_class.def_rw("data_source",        &SpPackedArray::data_source_);
+    sp_packed_array_class.def_rw("shape",              &SpPackedArray::shape_);
+    sp_packed_array_class.def_rw("shared_memory_name", &SpPackedArray::shared_memory_name_);
+    sp_packed_array_class.def("__repr__", [](const SpPackedArray& self) {
         std::ostringstream oss;
         nanobind::object data = nanobind::cast(self.data_);
         std::string data_str;
@@ -120,7 +131,7 @@ NB_MODULE(spear_ext, module)
         } else {
             data_str = nanobind::repr(data).c_str();
         }
-        oss << "spear_ext.PackedArray(data=" << data_str << ", data_source=\"" << self.data_source_ << "\", shape=[";
+        oss << "spear_ext.SpPackedArray(data=" << data_str << ", data_source=\"" << self.data_source_ << "\", shape=[";
         for (int i = 0; i < self.shape_.size(); i++) {
             if (i > 0) {
                 oss << ", ";
@@ -131,25 +142,25 @@ NB_MODULE(spear_ext, module)
         return oss.str();
     });
 
-    auto data_bundle_class = nanobind::class_<DataBundle>(module, "DataBundle");
-    data_bundle_class.def(nanobind::init<>());
-    data_bundle_class.def_rw("packed_arrays",      &DataBundle::packed_arrays_, nanobind::rv_policy::reference);
-    data_bundle_class.def_rw("unreal_obj_strings", &DataBundle::unreal_obj_strings_);
-    data_bundle_class.def_rw("info",               &DataBundle::info_);
-    data_bundle_class.def("__repr__", [](const DataBundle& self) {
+    auto sp_func_data_bundle_class = nanobind::class_<SpFuncDataBundle>(module, "SpFuncDataBundle");
+    sp_func_data_bundle_class.def(nanobind::init<>());
+    sp_func_data_bundle_class.def_rw("packed_arrays",      &SpFuncDataBundle::packed_arrays_, nanobind::rv_policy::reference);
+    sp_func_data_bundle_class.def_rw("unreal_obj_strings", &SpFuncDataBundle::unreal_obj_strings_);
+    sp_func_data_bundle_class.def_rw("info",               &SpFuncDataBundle::info_);
+    sp_func_data_bundle_class.def("__repr__", [](const SpFuncDataBundle& self) {
         std::ostringstream oss;
-        oss << "spear_ext.DataBundle(packed_arrays=" << self.packed_arrays_.size() << ", unreal_obj_strings=" << self.unreal_obj_strings_.size() << ", info=" << self.info_.size() << ")";
+        oss << "spear_ext.SpFuncDataBundle(packed_arrays=" << self.packed_arrays_.size() << ", unreal_obj_strings=" << self.unreal_obj_strings_.size() << ", info=" << self.info_.size() << ")";
         return oss.str();
     });
 
-    auto func_signature_desc_class = nanobind::class_<FuncSignatureDesc>(module, "FuncSignatureDesc");
-    func_signature_desc_class.def(nanobind::init<>());
-    func_signature_desc_class.def_rw("name",       &FuncSignatureDesc::name_);
-    func_signature_desc_class.def_rw("type_ids",   &FuncSignatureDesc::type_ids_);
-    func_signature_desc_class.def_rw("type_names", &FuncSignatureDesc::type_names_);
-    func_signature_desc_class.def("__repr__", [](const FuncSignatureDesc& self) {
+    auto sp_func_signature_desc_class = nanobind::class_<SpFuncSignatureDesc>(module, "SpFuncSignatureDesc");
+    sp_func_signature_desc_class.def(nanobind::init<>());
+    sp_func_signature_desc_class.def_rw("name",       &SpFuncSignatureDesc::name_);
+    sp_func_signature_desc_class.def_rw("type_ids",   &SpFuncSignatureDesc::type_ids_);
+    sp_func_signature_desc_class.def_rw("type_names", &SpFuncSignatureDesc::type_names_);
+    sp_func_signature_desc_class.def("__repr__", [](const SpFuncSignatureDesc& self) {
         std::ostringstream oss;
-        oss << "spear_ext.FuncSignatureDesc(name='" << self.name_ << "', type_ids=[";
+        oss << "spear_ext.SpFuncSignatureDesc(name='" << self.name_ << "', type_ids=[";
         for (int i = 0; i < self.type_ids_.size(); i++) {
             if (i > 0) {
                 oss << ", ";
@@ -167,61 +178,61 @@ NB_MODULE(spear_ext, module)
         return oss.str();
     });
 
-    auto future_class = nanobind::class_<Future>(module, "Future");
-    future_class.def(nanobind::init<>());
-    future_class.def_rw("future_ptr", &Future::future_ptr_);
-    future_class.def_rw("type_id",    &Future::type_id_);
-    future_class.def("__repr__", [](const Future& self) {
+    auto sp_future_class = nanobind::class_<SpFuture>(module, "SpFuture");
+    sp_future_class.def(nanobind::init<>());
+    sp_future_class.def_rw("future_ptr", &SpFuture::future_ptr_);
+    sp_future_class.def_rw("type_id",    &SpFuture::type_id_);
+    sp_future_class.def("__repr__", [](const SpFuture& self) {
         std::ostringstream oss;
-        oss << "spear_ext.Future(future_ptr=" << self.future_ptr_ << ", type_id=\"" << self.type_id_ << "\")";
+        oss << "spear_ext.SpFuture(future_ptr=" << self.future_ptr_ << ", type_id=\"" << self.type_id_ << "\")";
         return oss.str();
     });
 
-    auto function_desc_class = nanobind::class_<FunctionDesc>(module, "FunctionDesc");
-    function_desc_class.def(nanobind::init<>());
-    function_desc_class.def_rw("function",          &FunctionDesc::function_);
-    function_desc_class.def_rw("function_name",     &FunctionDesc::function_name_);
-    function_desc_class.def_rw("static_class",      &FunctionDesc::static_class_);
-    function_desc_class.def_rw("static_class_name", &FunctionDesc::static_class_name_);
-    function_desc_class.def("__repr__", [](const FunctionDesc &self) {
+    auto sp_function_desc_class = nanobind::class_<SpFunctionDesc>(module, "SpFunctionDesc");
+    sp_function_desc_class.def(nanobind::init<>());
+    sp_function_desc_class.def_rw("function",          &SpFunctionDesc::function_);
+    sp_function_desc_class.def_rw("function_name",     &SpFunctionDesc::function_name_);
+    sp_function_desc_class.def_rw("static_class",      &SpFunctionDesc::static_class_);
+    sp_function_desc_class.def_rw("static_class_name", &SpFunctionDesc::static_class_name_);
+    sp_function_desc_class.def("__repr__", [](const SpFunctionDesc &self) {
         std::ostringstream oss;
-        oss << "spear_ext.FunctionDesc(function_name='" << self.function_name_ << "', static_class_name='" << self.static_class_name_ << "')";
+        oss << "spear_ext.SpFunctionDesc(function_name='" << self.function_name_ << "', static_class_name='" << self.static_class_name_ << "')";
         return oss.str();
     });
 
-    auto static_struct_desc_class = nanobind::class_<StaticStructDesc>(module, "StaticStructDesc");
-    static_struct_desc_class.def(nanobind::init<>());
-    static_struct_desc_class.def_rw("static_struct", &StaticStructDesc::static_struct_);
-    static_struct_desc_class.def_rw("name",          &StaticStructDesc::name_);
-    static_struct_desc_class.def("__repr__", [](const StaticStructDesc &self) {
+    auto sp_static_struct_desc_class = nanobind::class_<SpStaticStructDesc>(module, "SpStaticStructDesc");
+    sp_static_struct_desc_class.def(nanobind::init<>());
+    sp_static_struct_desc_class.def_rw("static_struct", &SpStaticStructDesc::static_struct_);
+    sp_static_struct_desc_class.def_rw("name",          &SpStaticStructDesc::name_);
+    sp_static_struct_desc_class.def("__repr__", [](const SpStaticStructDesc &self) {
         std::ostringstream oss;
-        oss << "spear_ext.StaticStructDesc(name='" << self.name_ << "', static_struct=" << self.static_struct_ << ")";
+        oss << "spear_ext.SpStaticStructDesc(name='" << self.name_ << "', static_struct=" << self.static_struct_ << ")";
         return oss.str();
     });
 
-    auto static_class_desc_class = nanobind::class_<StaticClassDesc>(module, "StaticClassDesc");
-    static_class_desc_class.def(nanobind::init<>());
-    static_class_desc_class.def_rw("static_class",          &StaticClassDesc::static_class_);
-    static_class_desc_class.def_rw("name",                   &StaticClassDesc::name_);
-    static_class_desc_class.def_rw("derived_classes",        &StaticClassDesc::derived_classes_);
-    static_class_desc_class.def_rw("derived_class_names",    &StaticClassDesc::derived_class_names_);
-    static_class_desc_class.def_rw("function_descs",         &StaticClassDesc::function_descs_);
-    static_class_desc_class.def("__repr__", [](const StaticClassDesc &self) {
+    auto sp_static_class_desc_class = nanobind::class_<SpStaticClassDesc>(module, "SpStaticClassDesc");
+    sp_static_class_desc_class.def(nanobind::init<>());
+    sp_static_class_desc_class.def_rw("static_class",          &SpStaticClassDesc::static_class_);
+    sp_static_class_desc_class.def_rw("name",                   &SpStaticClassDesc::name_);
+    sp_static_class_desc_class.def_rw("derived_classes",        &SpStaticClassDesc::derived_classes_);
+    sp_static_class_desc_class.def_rw("derived_class_names",    &SpStaticClassDesc::derived_class_names_);
+    sp_static_class_desc_class.def_rw("function_descs",         &SpStaticClassDesc::function_descs_);
+    sp_static_class_desc_class.def("__repr__", [](const SpStaticClassDesc &self) {
         std::ostringstream oss;
-        oss << "spear_ext.StaticClassDesc(name='" << self.name_ << "', static_class=" << self.static_class_ << ", function_descs=" << self.function_descs_.size() << ")";
+        oss << "spear_ext.SpStaticClassDesc(name='" << self.name_ << "', static_class=" << self.static_class_ << ", function_descs=" << self.function_descs_.size() << ")";
         return oss.str();
     });
 
-    auto world_desc_class = nanobind::class_<WorldDesc>(module, "WorldDesc");
-    world_desc_class.def(nanobind::init<>());
-    world_desc_class.def_rw("world",           &WorldDesc::world_);
-    world_desc_class.def_rw("world_id",        &WorldDesc::world_id_);
-    world_desc_class.def_rw("is_editor_world", &WorldDesc::is_editor_world_);
-    world_desc_class.def_rw("is_game_world",   &WorldDesc::is_game_world_);
-    world_desc_class.def_rw("is_playing",      &WorldDesc::is_playing_);
-    world_desc_class.def("__repr__", [](const WorldDesc& self) {
+    auto sp_world_desc_class = nanobind::class_<SpWorldDesc>(module, "SpWorldDesc");
+    sp_world_desc_class.def(nanobind::init<>());
+    sp_world_desc_class.def_rw("world",           &SpWorldDesc::world_);
+    sp_world_desc_class.def_rw("world_id",        &SpWorldDesc::world_id_);
+    sp_world_desc_class.def_rw("is_editor_world", &SpWorldDesc::is_editor_world_);
+    sp_world_desc_class.def_rw("is_game_world",   &SpWorldDesc::is_game_world_);
+    sp_world_desc_class.def_rw("is_playing",      &SpWorldDesc::is_playing_);
+    sp_world_desc_class.def("__repr__", [](const SpWorldDesc& self) {
         std::ostringstream oss;
-        oss << "spear_ext.WorldDesc(world=" << self.world_ << ", world_id=" << self.world_id_ << ", is_editor_world=" << self.is_editor_world_ << ", is_game_world=" << self.is_game_world_ << ", is_playing=" << self.is_playing_ << ")";
+        oss << "spear_ext.SpWorldDesc(world=" << self.world_ << ", world_id=" << self.world_id_ << ", is_editor_world=" << self.is_editor_world_ << ", is_game_world=" << self.is_game_world_ << ", is_playing=" << self.is_playing_ << ")";
         return oss.str();
     });
 }

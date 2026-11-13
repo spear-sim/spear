@@ -546,7 +546,7 @@ def to_shared(array, shared_memory_handle):
 # Convert to a packed array from a NumPy array.
 def to_packed_array(array, dest_byte_order, usage_flags):
     if isinstance(array, np.ndarray):
-        packed_array = spear.PackedArray()
+        packed_array = spear.SpPackedArray()
         if dest_byte_order == "native":
             packed_array.data = array
         elif dest_byte_order in ["big", "little"]:
@@ -560,7 +560,7 @@ def to_packed_array(array, dest_byte_order, usage_flags):
     elif isinstance(array, Shared):
         assert usage_flags is not None
         assert set(usage_flags) <= set(array._shared_memory_handle["view"].usage_flags)
-        packed_array = spear.PackedArray()
+        packed_array = spear.SpPackedArray()
         packed_array.data = np.array([], dtype=array._array.dtype)
         packed_array.data_source = "Shared"
         packed_array.shape = array._array.shape
@@ -614,7 +614,7 @@ def to_data_bundle(dest_byte_order, usage_flags, arrays=None, unreal_objs=None, 
         unreal_objs = {}
     assert dest_byte_order is not None
     assert usage_flags is not None
-    data_bundle = spear.DataBundle()
+    data_bundle = spear.SpFuncDataBundle()
     data_bundle.packed_arrays = to_packed_arrays(arrays=arrays, dest_byte_order=dest_byte_order, usage_flags=usage_flags)
     data_bundle.unreal_obj_strings = to_json_strings(objs=unreal_objs)
     data_bundle.info = info

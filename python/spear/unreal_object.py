@@ -186,7 +186,12 @@ class UnrealObject:
             ufunction = self.derived_state["qualified_function_descs"][function_name].function
         else:
             assert False
-        result = self._unreal_service.call_function(uobject=self.uobject, uclass=0, ufunction=ufunction, args=kwargs, world_context_object=world_context_object)
+        result = self._unreal_service.call_function(
+            uobject=self.uobject,
+            uclass=0,
+            ufunction=ufunction,
+            args=kwargs,
+            world_context_object=world_context_object)
         if as_raw_dict is not None:
             assert as_dict is None
             assert as_value is None

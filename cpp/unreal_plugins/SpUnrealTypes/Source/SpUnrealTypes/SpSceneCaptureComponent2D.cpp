@@ -353,15 +353,15 @@ void USpSceneCaptureComponent2D::Initialize()
 
     // register SpFuncs
 
-    SpFuncComponent->registerFunc("enqueue_copy_pixels", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
+    SpFuncComponent->registerFunc("enqueue_read_pixels", [this](SpFuncDataBundle& args) -> SpFuncDataBundle {
         SP_ASSERT(!bReadPixelsEveryFrame);
 
         if (BufferingMode == ESpBufferingMode::DoubleBuffered) {
             std::map<std::string, TextureReadbackMinimalDesc> texture_readback_minimal_descs = requestUpdateAndGetTextureReadbackMinimalDescs();
-            enqueueCopyPixelsDoubleBuffered(texture_readback_minimal_descs);
+            enqueueReadPixelsDoubleBuffered(texture_readback_minimal_descs);
         } else if (BufferingMode == ESpBufferingMode::TripleBuffered) {
             std::map<std::string, TextureReadbackMinimalDesc> texture_readback_minimal_descs = requestUpdateAndGetTextureReadbackMinimalDescs(); // in triple-buffered case, must be called exactly once per enqueue
-            enqueueCopyPixelsTripleBuffered(texture_readback_minimal_descs);
+            enqueueReadPixelsTripleBuffered(texture_readback_minimal_descs);
         } else {
             SP_ASSERT(false);
         }
@@ -409,7 +409,7 @@ void USpSceneCaptureComponent2D::Terminate()
     bIsInitialized = false;
 
     // unregister SpFuncs
-    SpFuncComponent->unregisterFunc("enqueue_copy_pixels");
+    SpFuncComponent->unregisterFunc("enqueue_read_pixels");
     SpFuncComponent->unregisterFunc("read_pixels");
 
     // terminate state for measuring "standalone" and "standalone + extra work" frame rates
@@ -701,10 +701,10 @@ void USpSceneCaptureComponent2D::beginFrameHandler()
 
         if (BufferingMode == ESpBufferingMode::DoubleBuffered) {
             std::map<std::string, TextureReadbackMinimalDesc> texture_readback_minimal_descs = requestUpdateAndGetTextureReadbackMinimalDescs();
-            enqueueCopyPixelsDoubleBuffered(texture_readback_minimal_descs);
+            enqueueReadPixelsDoubleBuffered(texture_readback_minimal_descs);
         } else if (BufferingMode == ESpBufferingMode::TripleBuffered) {
             std::map<std::string, TextureReadbackMinimalDesc> texture_readback_minimal_descs = requestUpdateAndGetTextureReadbackMinimalDescs(); // in triple-buffered case, must be called exactly once per enqueue
-            enqueueCopyPixelsTripleBuffered(texture_readback_minimal_descs);
+            enqueueReadPixelsTripleBuffered(texture_readback_minimal_descs);
         } else {
             SP_ASSERT(false);
         }
@@ -782,7 +782,7 @@ SpFuncDataBundle USpSceneCaptureComponent2D::readPixelsSingleBuffered(std::map<s
 // double-buffered mode
 //
 
-void USpSceneCaptureComponent2D::enqueueCopyPixelsDoubleBuffered(std::map<std::string, TextureReadbackMinimalDesc>& texture_readback_minimal_descs)
+void USpSceneCaptureComponent2D::enqueueReadPixelsDoubleBuffered(std::map<std::string, TextureReadbackMinimalDesc>& texture_readback_minimal_descs)
 {
     SP_ASSERT(BufferingMode == ESpBufferingMode::DoubleBuffered);
     SP_ASSERT(IsInitialized());
@@ -805,7 +805,7 @@ void USpSceneCaptureComponent2D::enqueueCopyPixelsDoubleBuffered(std::map<std::s
         // and keeps alive for its lifetime). The staging-to-CPU copy and the matching pending-counter decrement happen
         // later in postRenderViewFamily_RenderThread().
 
-        ENQUEUE_RENDER_COMMAND(SpEnqueueCopyPixelsDoubleBuffered)(
+        ENQUEUE_RENDER_COMMAND(SpEnqueueReadPixelsDoubleBuffered)(
             [this, texture_readback_minimal_descs = std::move(texture_readback_minimal_descs)](FRHICommandListImmediate& command_list) {
                 for (auto& [name, texture_readback_minimal_desc] : texture_readback_minimal_descs) {
                     enqueueCopyPixelsFromGPUToStaging_RenderThread(command_list, texture_readback_minimal_desc);
@@ -850,7 +850,7 @@ SpFuncDataBundle USpSceneCaptureComponent2D::readPixelsDoubleBuffered()
 // triple-buffered mode
 //
 
-void USpSceneCaptureComponent2D::enqueueCopyPixelsTripleBuffered(std::map<std::string, TextureReadbackMinimalDesc>& texture_readback_minimal_descs)
+void USpSceneCaptureComponent2D::enqueueReadPixelsTripleBuffered(std::map<std::string, TextureReadbackMinimalDesc>& texture_readback_minimal_descs)
 {
     SP_ASSERT(BufferingMode == ESpBufferingMode::TripleBuffered);
     SP_ASSERT(IsInitialized());
@@ -877,7 +877,7 @@ void USpSceneCaptureComponent2D::enqueueCopyPixelsTripleBuffered(std::map<std::s
         // each minimal desc holds its pooled render target by value to keep a user scene texture's source alive (null
         // for the main texture, whose source TextureTarget owns and keeps alive for its lifetime).
 
-        ENQUEUE_RENDER_COMMAND(SpEnqueueCopyPixelsTripleBuffered)(
+        ENQUEUE_RENDER_COMMAND(SpEnqueueReadPixelsTripleBuffered)(
             [this, texture_readback_minimal_descs = std::move(texture_readback_minimal_descs)](FRHICommandListImmediate& command_list) {
                 for (auto& [name, texture_readback_minimal_desc] : texture_readback_minimal_descs) {
                     enqueueCopyPixelsFromGPUToStaging_RenderThread(command_list, texture_readback_minimal_desc);
@@ -903,7 +903,7 @@ SpFuncDataBundle USpSceneCaptureComponent2D::readPixelsTripleBuffered()
     SP_ASSERT(IsInitialized());
 
     // Wait for and read back the CPU-side data for the main texture and every user scene texture. The staging-to-CPU
-    // copy already happened on the render thread (inside the enqueue command, see enqueueCopyPixelsTripleBuffered()),
+    // copy already happened on the render thread (inside the enqueue command, see enqueueReadPixelsTripleBuffered()),
     // so we just read the persistent descs' buffers here; readPixelsImpl() spin-waits on each pending counter first.
     // The main texture is omitted entirely when bReadPrimaryPixelData is disabled, matching the descs assembled in
     // requestUpdateAndGetTextureReadbackMinimalDescs().
@@ -928,8 +928,8 @@ std::map<std::string, USpSceneCaptureComponent2D::TextureReadbackMinimalDesc> US
 
     // Assemble a TextureReadbackMinimalDesc for the main texture and every active user scene texture, keyed by public
     // name, so a single batched render command can process all of them. Used by every buffering mode: single-buffered
-    // readback (readPixelsSingleBuffered), double-buffered enqueue (enqueueCopyPixelsDoubleBuffered), and
-    // triple-buffered enqueue (enqueueCopyPixelsTripleBuffered).
+    // readback (readPixelsSingleBuffered), double-buffered enqueue (enqueueReadPixelsDoubleBuffered), and
+    // triple-buffered enqueue (enqueueReadPixelsTripleBuffered).
 
     // The current/prev readback pointers are resolved per buffering mode by requestSwapRHIGPUTextureReadbacks(). For
     // triple-buffered that advances the per-desc ring-buffer state (readback_enqueue_index_/readback_primed_), so this
@@ -1155,7 +1155,7 @@ void USpSceneCaptureComponent2D::copyPixelsFromStagingToCPU_RenderThread(FRHIGPU
     // do not need any RT-side readiness wait here. Lock() returns null only if the readback's staging texture was never
     // populated by EnqueueCopy(); callers must guarantee the matching EnqueueCopy() has executed on the render thread
     // before we reach here. That ordering is enforced by the render-thread consume gate (num_staging_copies_pending_)
-    // in postRenderViewFamily_RenderThread() for DoubleBuffered, and by construction in enqueueCopyPixelsTripleBuffered()
+    // in postRenderViewFamily_RenderThread() for DoubleBuffered, and by construction in enqueueReadPixelsTripleBuffered()
     // and readPixelsSingleBuffered(), where the EnqueueCopy() and this copy run in the same command.
 
     int32 row_pitch_in_pixels = 0;
