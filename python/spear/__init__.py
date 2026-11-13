@@ -10,7 +10,8 @@ __version__ = "v1.1.0"
 # UE doesn't ship with CPython headers. Additionally, the build script that installs spear_ext depends on the
 # spear package for logging, so spear_ext will also be unavailable the first time this build script runs. So
 # spear_ext needs to be conditionally imported, and we provide a spear.__can_import_spear_ext__ variable that
-# can be used for this purpose.
+# can be used for this purpose. We define similar variables for other modules that are not always be
+# available.
 #
 
 try:
@@ -19,9 +20,11 @@ try:
 except ImportError:
     __can_import_spear_ext__ = False
 
-#
-# We define similar variables for other modules that are not always be available.
-#
+try:
+    import unreal
+    __can_import_unreal__ = True
+except ImportError:
+    __can_import_unreal__ = False
 
 try:
     import msgpackrpc
@@ -29,11 +32,7 @@ try:
 except ImportError:
     __can_import_msgpackrpc__ = False
 
-try:
-    import unreal
-    __can_import_unreal__ = True
-except ImportError:
-    __can_import_unreal__ = False
+assert __can_import_spear_ext__ + __can_import_unreal__ <= 1
 
 #
 # utils
@@ -60,14 +59,12 @@ from .utils import tool_utils as tools
 # conditional imports
 
 if __can_import_spear_ext__:
-    assert not __can_import_unreal__
     try:
         from spear_ext import SpFuncDataBundle, SpPackedArray, SpPropertyDesc
     except ImportError:
         __can_import_spear_ext__ = False
 
 if __can_import_unreal__:
-    assert not __can_import_spear_ext__
     try:
         from .utils.editor_utils import SpFuncDataBundle, SpPackedArray, SpPropertyDesc
         from .utils import editor_utils as editor
