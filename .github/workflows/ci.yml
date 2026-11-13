@@ -93,7 +93,7 @@ jobs:
       # only build third-party libs on Windows and macOS
       - if: runner.os != 'Linux'
         name: "Build third-party libraries"
-        run: python tools/build_third_party_libs.py --skip-boost --skip-yaml-cpp
+        run: python tools/build_third_party_libs.py --skip-yaml-cpp
 
       # only install Python extension on Windows and macOS
       - if: runner.os != 'Linux'
