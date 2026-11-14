@@ -83,11 +83,11 @@ pip install cmake
 
 ## Clone this repository including submodules
 
-The next step is to clone this repository including submodules. We have found that the _recurse submodules_ features in some Git applications don't always download submodules as expected. We therefore recommend using the following commands.
+The next step is to clone this repository including submodules. We have found that the _recurse submodules_ features in some Git applications don't always download submodules as expected. We therefore recommend using the following commands. We clone submodules using `--shallow-submodules` (i.e., without their full histories) and in parallel, because some of our submodules (e.g., Boost) are large.
 
 ```console
 # clone repository
-git clone https://github.com/spear-sim/spear path/to/spear --recurse-submodules
+git clone https://github.com/spear-sim/spear path/to/spear --recurse-submodules --shallow-submodules --jobs 8
 ```
 
 ## Install the `spear` Python package

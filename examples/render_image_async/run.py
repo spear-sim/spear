@@ -147,6 +147,8 @@ if __name__ == "__main__":
             with instance.end_frame():
                 pass
 
+        instance.step() # flush any async work that is still pending on the game thread
+
         # instance._client.get_timeout()
         num_steps = 100000
         start_time_seconds = time.time()
@@ -157,7 +159,7 @@ if __name__ == "__main__":
         spear.log(f"Average time for instance._client.get_timeout(): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
 
         # instance.engine_globals_service.get_current_process_id()
-        num_steps = 1000
+        num_steps = 10000
         start_time_seconds = time.time()
         for i in range(num_steps):
             instance.engine_globals_service.get_current_process_id()

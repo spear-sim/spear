@@ -43,10 +43,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # only check out rpclib on Windows and macOS
+      # only check out third-party submodules on Windows and macOS (boost is a superproject with nested
+      # submodules for each of its libraries, so we check it out recursively, without its full history,
+      # and in parallel)
       - if: runner.os != 'Linux'
-        name: "Check out rpclib"
-        run: git submodule update --init third_party/rpclib
+        name: "Check out third-party submodules: boost, rpclib"
+        run: git submodule update --init --recursive --depth 1 --jobs 8 third_party/boost third_party/rpclib
 
       - uses: conda-incubator/setup-miniconda@v3
         with:
