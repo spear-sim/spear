@@ -35,8 +35,8 @@ public class SpModuleRules : ModuleRules
         bEnableExceptions = true;
 
         // Required for:
-        //     ... > SpCore/Std.h    > boost/tokenizer.hpp > ... > boost/exception/exception.h
-        //     ... > SpCore/Rpclib.h > rpc/msgpack.hpp     > ... > rpc/msgpack/predef/other/endian.h
+        //     ... > SpCore/Std.h        > boost/tokenizer.hpp > ... > boost/exception/exception.h
+        //     ... > SpServices/Rpclib.h > rpc/msgpack.hpp     > ... > rpc/msgpack/predef/other/endian.h
         UndefinedIdentifierWarningLevel = WarningLevel.Warning;
 
         PublicDependencyModuleNames.AddRange(new string[] {
@@ -81,6 +81,8 @@ public class SpModuleRules : ModuleRules
 
             PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost")));
 
+            // We need to link against unit_test_framework because SpCore/Boost.h uses boost::debug::under_debugger
+            // from <boost/test/debug.hpp>, even though we don't use Boost's unit testing functionality.
             if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Win64) {
                 PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_unit_test_framework-vc143-mt-x64-1_90.lib")));
             } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Mac) {
