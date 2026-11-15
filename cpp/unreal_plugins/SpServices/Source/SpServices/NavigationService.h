@@ -16,10 +16,10 @@
 #include <AI/Navigation/NavigationTypes.h> // FNavAgentProperties, FNavLocation, FNavPathPoint
 #include <Containers/Array.h>
 #include <Engine/World.h>                  // UWorld
+#include <NavFilters/NavigationQueryFilter.h>
 #include <NavigationData.h>                // FPathFindingResult
 #include <NavigationSystem.h>
 #include <NavigationSystemTypes.h>         // EPathFindingMode, FPathFindingQuery, FSharedConstNavQueryFilter
-#include <NavFilters/NavigationQueryFilter.h>
 #include <NavMesh/RecastNavMesh.h>
 #include <UObject/Class.h>                 // UClass
 #include <UObject/Object.h>                // UObject

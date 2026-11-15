@@ -28,14 +28,14 @@
 #include <UObject/ObjectMacros.h>            // ELoadFlags, EObjectFlags, EPropertyFlags
 #include <UObject/Package.h>
 #include <UObject/Script.h>                  // EFunctionFlags
-#include <UObject/UObjectGlobals.h>          // GetTransientPackage, NewObject, StaticLoadClass, StaticLoadObject
 #include <UObject/UnrealType.h>              // EFieldIterationFlags, FProperty
+#include <UObject/UObjectGlobals.h>          // GetTransientPackage, NewObject, StaticLoadClass, StaticLoadObject
 
 #include "SpCore/Assert.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
-#include "SpCore/UnrealUtils.h"
 #include "SpCore/UnrealClassRegistry.h"
+#include "SpCore/UnrealUtils.h"
 
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/Service.h"
