@@ -24,6 +24,7 @@
 - `as_dict=True` returns a dict whose top-level keys exactly match the UFUNCTION parameter names (plus `"ReturnValue"` for non-void returns). Sub-dictionaries within those values use startingLowerCamelCase keys.
 - In SPEAR Python code, specify Unreal enums as unqualified strings (e.g., `"DoubleBuffered"` not `"ESpBufferingMode::DoubleBuffered"`).
 - Do not use type annotations in Python code (no `def f(x: int) -> str:`, no variable annotations).
+- In Python classes, name a member without a leading underscore (e.g., `self.config`) if anything outside the class accesses it, including derived classes, and with a leading underscore (e.g., `self._config`) if nothing outside the class accesses it. For example, `spear.Service` stores `self.config` because derived services access it, whereas `spear.Instance` stores `self._config`. Check which name the class you're editing actually defines rather than copying from a different class.
 - In argparse, do not pass `description=` to `ArgumentParser()` or `help=` to `add_argument()`. Use `assert args.x in [...]` after `parse_args()` instead of `choices=[...]`.
 - Prefer `if-return-else-return` over `if-return-return` (always use explicit `else` for the alternate branch).
 - Do not include message text in `assert` statements (use bare `assert condition`, not `assert condition, "message"`).
