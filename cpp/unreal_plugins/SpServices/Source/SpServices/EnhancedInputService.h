@@ -17,6 +17,7 @@
 #include <EnhancedInputComponent.h>  // FEnhancedInputActionEventBinding, FInputDebugKeyBinding, UEnhancedInputComponent
 #include <EnhancedInputSubsystems.h> // UEnhancedInputLocalPlayerSubsystem
 #include <Framework/Commands/InputChord.h>
+#include <GameFramework/Actor.h>     // AActor
 #include <InputAction.h>             // FInputActionInstance
 #include <InputActionValue.h>        // EInputActionValueType
 #include <InputModifiers.h>          // UInputModifier
@@ -28,6 +29,7 @@
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
+#include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealUtils.h"
 
@@ -77,6 +79,7 @@ public:
                 std::vector<uint64_t>& triggers) -> void {
 
                 UEnhancedInputLocalPlayerSubsystem* enhanced_input_subsystem_ptr = toPtr<UEnhancedInputLocalPlayerSubsystem>(enhanced_input_subsystem);
+                SP_ASSERT(enhanced_input_subsystem_ptr);
 
                 FSpInputActionValue sp_input_action_value;
                 UnrealUtils::setObjectPropertiesFromString(&sp_input_action_value, FSpInputActionValue::StaticStruct(), input_action_value_string);
@@ -140,7 +143,7 @@ public:
 
                     if (input_action_name == Unreal::toStdString(input_action->GetName()) && trigger_event == event_binding->GetTriggerEvent()) {
 
-                        // SourceAction is a private member variable on FSpInputActionInstance, but it is
+                        // SourceAction is a private member variable on FInputActionInstance, but it is
                         // accessible through Unreal's property system, so we can still get and set it.
                         SpPropertyDesc property_desc = UnrealUtils::resolveProperty(&sp_input_action_instance, FSpInputActionInstance::StaticStruct(), "SourceAction");
                         UnrealUtils::setPropertyValueFromString(property_desc, Std::toStringFromPtr(input_action));

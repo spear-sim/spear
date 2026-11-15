@@ -6,7 +6,7 @@
 #pragma once
 
 //
-// UnrealService_1.h uses a "#define public private" hack to access several private variables, and therefore
+// UnrealService_1.h uses a "#define private public" hack to access several private variables, and therefore
 // it must only be included in cpp files, and must be included after all other headers.
 //
 
@@ -22,6 +22,7 @@
 #include <Components/SceneComponent.h>
 #include <Engine/Engine.h>         // GEngine
 #include <Engine/LocalPlayer.h>    // ULocalPlayer
+#include <Engine/World.h>          // UWorld
 #include <HAL/IConsoleManager.h>   // EConsoleVariableFlags, IConsoleVariable
 #include <HAL/Platform.h>          // uint64
 #include <Modules/ModuleManager.h> // FModuleManager

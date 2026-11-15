@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <stdint.h> // int64_t
+
 #include <map>
 #include <string>
 #include <vector>
@@ -18,7 +20,7 @@ class UStruct;
 class UWorld;
 
 //
-// SpFuncSignatureDesc is a helper structs for tracking the function signatures of RPC entry points.
+// SpFuncSignatureDesc is a helper struct for tracking the function signatures of RPC entry points.
 //
 
 struct SpFuncSignatureDesc

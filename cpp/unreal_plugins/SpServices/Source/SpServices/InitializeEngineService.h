@@ -61,8 +61,8 @@ public:
         }
 
         // Override default game map settings. We want to do this early enough to avoid loading the default map
-        // specified in Unreal's config system, but late enough that that the UGameMapSettings default object
-        // has already been initialized.
+        // specified in Unreal's config system, but late enough that the UGameMapSettings default object has
+        // already been initialized.
 
         if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_GAME_DEFAULT_MAP")) {
             std::string game_default_map = Config::get<std::string>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.GAME_DEFAULT_MAP");
@@ -160,11 +160,10 @@ public:
         }
     }
 
-    ~InitializeEngineService()
+    ~InitializeEngineService() override
     {
         if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.MOUNT_PAK_FILES") && FCoreDelegates::OnUnmountPak.IsBound()) {
             std::vector<std::string> pak_files = Config::get<std::vector<std::string>>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.PAK_FILES");
-            int32 pak_order = 0;
 
             SP_LOG("    Unmounting PAK files...");
             for (auto& pak_file : pak_files) {
@@ -178,7 +177,7 @@ public:
     static std::unique_ptr<InitializeEngineService> create();
 
 protected:
-    void postEngineInit()
+    void postEngineInit() override
     {
         SP_LOG_CURRENT_FUNCTION();
 

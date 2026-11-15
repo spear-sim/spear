@@ -9,7 +9,7 @@ public class SpModuleRulesEditor : SpModuleRules
 {
     public SpModuleRulesEditor(ReadOnlyTargetRules target) : base(target)
     {
-        PublicDependencyModuleNames.AddRange(new string[] {"EditorSubsystem", "UnrealEd"});
+        PublicDependencyModuleNames.AddRange(new string[] {"BlueprintGraph", "EditorSubsystem", "UnrealEd"});
         PrivateDependencyModuleNames.AddRange(new string[] {});
     }
 }

@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <exception>
-#include <memory> // std::unique_ptr
+#include <memory>    // std::unique_ptr
+#include <stdexcept> // std::runtime_error
 #include <string>
 
 #include "SpCore/Assert.h"

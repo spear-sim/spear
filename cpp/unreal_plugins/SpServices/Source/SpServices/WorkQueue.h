@@ -114,14 +114,15 @@ public:
 
         // Even though the lambda below executes asynchronously, we could technically capture func by
         // reference due to some implementation details in the rest of our system. In particular, the
-        // the lifetime of func corresponds to the lifetime of the lambdas declared in EngineService::wrapFuncToExecuteInWorkQueueBlocking(...)
-        // and other similar functions, which in turn corresponds to the the lifetime of the RPC server.
-        // Moreover, the lambda declared below only can only ever execute when run() is called, i.e., during
-        // EngineService::beginFrame(...) or EngineService::endFrame(...), and the RPC server (and therefore
-        // func) is guaranteed to be accessible inside these EngineService functions. So, even if we captured
-        // func by reference, it is guaranteed to be accessible whenever the lambda below is executed.
-        // However, this low-level WorkQueue class should not depend on this high-level system behavior, so
-        // we insist on capturing func by value.
+        // lifetime of func corresponds to the lifetime of the lambdas declared in
+        // EngineService::wrapFuncToExecuteInWorkQueueBlocking(...) and other similar functions, which in
+        // turn corresponds to the lifetime of the RPC server. Moreover, the lambda declared below can only
+        // ever execute when run() is called, i.e., during EngineService::beginFrame(...) or
+        // EngineService::endFrame(...), and the RPC server (and therefore func) is guaranteed to be
+        // accessible inside these EngineService functions. So, even if we captured func by reference, it is
+        // guaranteed to be accessible whenever the lambda below is executed. However, this low-level
+        // WorkQueue class should not depend on this high-level system behavior, so we insist on capturing
+        // func by value.
 
         // Since we capture args... by value, it is deep-copied into the lambda object constructed below. But
         // the user's function accepts all arguments by non-const reference, so args... is not copied again
@@ -132,7 +133,7 @@ public:
         // equivalent to declaring them as const member variables in the anonymous lambda class. It is
         // impossible to pass any const member variable to any function by non-const reference, but we need
         // to pass args... by non-const reference to the user's function, e.g., so the user's function can
-        // resolve references to shared memory, which involves modifying funcion arguments in-place. So we
+        // resolve references to shared memory, which involves modifying function arguments in-place. So we
         // use the mutable keyword to force args... to be treated as a non-const member variable in the
         // anonymous lambda class for the lambda declared below, and therefore as a non-const variable in the
         // lambda body itself.

@@ -6,6 +6,7 @@
 #pragma once
 
 #include <map>
+#include <ranges>      // std::views::transform
 #include <string>
 #include <type_traits> // std::remove_cvref_t
 #include <vector>

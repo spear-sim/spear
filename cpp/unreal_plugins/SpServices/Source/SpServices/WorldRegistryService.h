@@ -12,6 +12,7 @@
 #include <vector>
 
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
+#include <Engine/Engine.h>               // GEngine
 #include <Engine/World.h>                // UWorld::InitializationValues
 #include <HAL/IConsoleManager.h>         // IConsoleVariable
 #include <Kismet/GameplayStatics.h>
@@ -39,7 +40,6 @@ public:
 
         post_world_initialization_handle_ = FWorldDelegates::OnPostWorldInitialization.AddRaw(this, &WorldRegistryService::postWorldInitializationHandler);
         world_initialized_actors_handle_ = FWorldDelegates::OnWorldInitializedActors.AddRaw(this, &WorldRegistryService::worldInitializedActorsHandler);
-        world_begin_tear_down_handle_ = FWorldDelegates::OnWorldBeginTearDown.AddRaw(this, &WorldRegistryService::worldBeginTearDownHandler);
         world_cleanup_handle_ = FWorldDelegates::OnWorldCleanup.AddRaw(this, &WorldRegistryService::worldCleanupHandler);
 
         unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("world_registry_service", "get_world_descs", [this]() -> std::map<std::string, SpWorldDesc> {
@@ -66,12 +66,10 @@ public:
     {
         FWorldDelegates::OnPostWorldInitialization.Remove(post_world_initialization_handle_);
         FWorldDelegates::OnWorldInitializedActors.Remove(world_initialized_actors_handle_);
-        FWorldDelegates::OnWorldBeginTearDown.Remove(world_begin_tear_down_handle_);
         FWorldDelegates::OnWorldCleanup.Remove(world_cleanup_handle_);
 
         post_world_initialization_handle_.Reset();
         world_initialized_actors_handle_.Reset();
-        world_begin_tear_down_handle_.Reset();
         world_cleanup_handle_.Reset();
     }
 
@@ -133,11 +131,6 @@ private:
                 }
             }
         }
-    }
-
-    void worldBeginTearDownHandler(UWorld* world)
-    {
-        SP_ASSERT(world);
     }
 
     void worldCleanupHandler(UWorld* world, bool session_ended, bool cleanup_resources)
@@ -271,6 +264,5 @@ private:
 
     FDelegateHandle post_world_initialization_handle_;
     FDelegateHandle world_initialized_actors_handle_;
-    FDelegateHandle world_begin_tear_down_handle_;
     FDelegateHandle world_cleanup_handle_;
 };

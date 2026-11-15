@@ -15,9 +15,6 @@
 #include "SpCore/AssertModuleLoaded.h"
 #include "SpCore/Log.h"
 
-// EngineService
-#include "SpServices/EngineService.h"
-
 // Services that require a reference to EngineService
 #include "SpServicesEditor/UnrealServiceEditor.h"
 
@@ -33,7 +30,7 @@ void SpServicesEditor::StartupModule()
     SP_ASSERT_MODULE_LOADED("SpServices");
     SP_LOG_CURRENT_FUNCTION();
 
-    // If we're cooking, then return early. In this case, there is no need to launch our services, and if
+    // If we're cooking, then return early. In this case, there is no need to launch our services, and
     // if we attempt to launch the RPC server while cooking, and the editor or game is already open, then we
     // will get an error because the port is in use.
     #if WITH_EDITOR // defined in an auto-generated header

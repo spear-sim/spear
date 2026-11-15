@@ -279,11 +279,11 @@ template <> // needed to send a custom type as a return value to the client
 struct clmdep_msgpack::adaptor::object_with_zone<SpWorldDesc> {
     void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpWorldDesc const& sp_world_desc) const {
         std::map<std::string, clmdep_msgpack::object> objects;
-        Std::insert(objects, "world",           MsgpackUtils::toMsgpackObject(reinterpret_cast<uint64_t>(sp_world_desc.world_), object_with_zone));
-        Std::insert(objects, "world_id",        MsgpackUtils::toMsgpackObject(sp_world_desc.world_id_,                          object_with_zone));
-        Std::insert(objects, "is_editor_world", MsgpackUtils::toMsgpackObject(sp_world_desc.is_editor_world_,                   object_with_zone));
-        Std::insert(objects, "is_game_world",   MsgpackUtils::toMsgpackObject(sp_world_desc.is_game_world_,                     object_with_zone));
-        Std::insert(objects, "is_playing",      MsgpackUtils::toMsgpackObject(sp_world_desc.is_playing_,                        object_with_zone));
+        Std::insert(objects, "world",           MsgpackUtils::toMsgpackObject(sp_world_desc.world_,           object_with_zone));
+        Std::insert(objects, "world_id",        MsgpackUtils::toMsgpackObject(sp_world_desc.world_id_,        object_with_zone));
+        Std::insert(objects, "is_editor_world", MsgpackUtils::toMsgpackObject(sp_world_desc.is_editor_world_, object_with_zone));
+        Std::insert(objects, "is_game_world",   MsgpackUtils::toMsgpackObject(sp_world_desc.is_game_world_,   object_with_zone));
+        Std::insert(objects, "is_playing",      MsgpackUtils::toMsgpackObject(sp_world_desc.is_playing_,      object_with_zone));
         MsgpackUtils::setMsgpackObjectToMap(object_with_zone, objects);
     }
 };

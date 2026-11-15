@@ -26,11 +26,10 @@ class ULevel;
 
 //
 // Each USTRUCT below is intended to be a wrapper for a particular UENUM type. Wrapping enums in structs like
-// this helps us take advantage of the Unreal property system to pass enums to and from Python as human-
-// readable strings. Additionally, we make use of these enum structs to combine strings enum strings as
-// though they were bit flags. Unfortunately, we can't abbreviate these declarations using higher-level
-// macros any more than they already are, because then they wouldn't interact correctly with the Unreal
-// build system.
+// this helps us take advantage of the Unreal property system to pass enums to and from Python as
+// human-readable strings. Additionally, we make use of these enum structs to combine enum strings as though
+// they were bit flags. Unfortunately, we can't abbreviate these declarations using higher-level macros any
+// more than they already are, because then they wouldn't interact correctly with the Unreal build system.
 //
 
 //

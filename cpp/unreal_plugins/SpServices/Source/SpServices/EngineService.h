@@ -164,7 +164,7 @@ public:
             {
                 std::lock_guard<std::mutex> lock(batched_work_queue_mutex_);
 
-                // Now that the being-drained-by-gt queue is empty, it can become the new writable-by-wt queue. 
+                // Now that the being-drained-by-gt queue is empty, it can become the new writable-by-wt queue.
                 std::swap(begin_frame_being_drained_by_gt_, begin_frame_writable_by_wt_);
 
                 batched_work_queue_ready_promises_.at(begin_frame_writable_by_wt_) = std::promise<void>();
@@ -206,7 +206,7 @@ public:
             {
                 std::lock_guard<std::mutex> lock(batched_work_queue_mutex_);
 
-                // Now that the being-drained-by-gt queue is empty, it can become the new writable-by-wt queue. 
+                // Now that the being-drained-by-gt queue is empty, it can become the new writable-by-wt queue.
                 std::swap(end_frame_being_drained_by_gt_, end_frame_writable_by_wt_);
 
                 batched_work_queue_ready_promises_.at(end_frame_writable_by_wt_) = std::promise<void>();
@@ -275,7 +275,7 @@ public:
                 {
                     std::lock_guard<std::mutex> lock(batched_work_queue_mutex_);
 
-                    // Now that the being-drained-by-gt queue is empty, it can become the new writable-by-wt queue. 
+                    // Now that the being-drained-by-gt queue is empty, it can become the new writable-by-wt queue.
                     std::swap(begin_frame_being_drained_by_gt_, begin_frame_writable_by_wt_);
 
                     batched_work_queue_ready_promises_.at(begin_frame_writable_by_wt_) = std::promise<void>();
@@ -427,7 +427,7 @@ public:
         }
     }
 
-    // Called on the game thread from SpServices::StartupModule() and SpServices::ShutdownModule()
+    // Called on the game thread from SpServices::requestInitialize() and SpServices::terminate()
 
     void startup() const {}
 
@@ -634,8 +634,7 @@ private:
         ExecutingBeginFrame = 1,
         ExecutingFrame      = 2,
         ExecutingEndFrame   = 3,
-        Terminating         = 4,
-        Error               = 5
+        Terminating         = 4
     };
 
     // In the wrapFunc(...) functions below, we assume that the input function always accepts all arguments
@@ -708,7 +707,7 @@ private:
     {
         return wrapFuncToExecuteInWorkQueueBlocking(func_name, func, FuncInfoUtils::getFuncInfo<TFunc>());
     }
-    
+
     template <typename TFunc, typename TReturn, typename... TArgs> requires
         CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs&...>
     auto wrapFuncToExecuteInWorkQueueBlocking(const std::string& func_name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
@@ -769,7 +768,7 @@ private:
     {
         return wrapFuncToExecuteInWorkQueueNonBlocking(func_name, func, FuncInfoUtils::getFuncInfo<TFunc>());
     }
-    
+
     template <typename TFunc, typename TReturn, typename... TArgs> requires
         CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs&...>
     auto wrapFuncToExecuteInWorkQueueNonBlocking(const std::string& func_name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
@@ -817,7 +816,7 @@ private:
     {
         return wrapFuncToExecuteInWorkQueueNonBlockingDiscardReturnValue(func_name, func, FuncInfoUtils::getFuncInfo<TFunc>());
     }
-    
+
     template <typename TFunc, typename TReturn, typename... TArgs> requires
         CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs&...>
     auto wrapFuncToExecuteInWorkQueueNonBlockingDiscardReturnValue(const std::string& func_name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
@@ -927,7 +926,7 @@ private:
             std::future<void>* future_ptr = static_cast<std::future<void>*>(future.future_ptr_);
             future_ptr->get();
             delete future_ptr;
-            future_ptr = nullptr;
+            future.future_ptr_ = nullptr;
         } else {
             SP_LOG("ERROR: Attempting to destroy a default-constructed SpFuture, returning...");
         }

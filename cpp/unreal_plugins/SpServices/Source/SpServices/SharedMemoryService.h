@@ -33,13 +33,12 @@ public:
             [this](std::string& shared_memory_name, uint64_t& num_bytes, std::vector<std::string>& usage_flag_strings) -> SpArraySharedMemoryView {
                 std::lock_guard<std::mutex> lock(mutex_);
 
-                std::string name = shared_memory_name; // need to copy so we can pass to functions that expect a const ref
-                SP_ASSERT(!Std::containsKey(shared_memory_regions_, name));
-                SP_ASSERT(!Std::containsKey(shared_memory_views_, name));
+                SP_ASSERT(!Std::containsKey(shared_memory_regions_, shared_memory_name));
+                SP_ASSERT(!Std::containsKey(shared_memory_views_, shared_memory_name));
 
                 std::unique_ptr<SharedMemoryRegion> shared_memory_region = std::make_unique<SharedMemoryRegion>(num_bytes);
                 SP_ASSERT(shared_memory_region);
-                SharedMemoryView view = shared_memory_region->getView(); // get view before moving 
+                SharedMemoryView view = shared_memory_region->getView(); // get view before moving
                 Std::insert(shared_memory_regions_, shared_memory_name, std::move(shared_memory_region));
 
                 SpArraySharedMemoryUsageFlags usage_flags = Unreal::getCombinedEnumFlagValueFromStringsAs<SpArraySharedMemoryUsageFlags, ESpArraySharedMemoryUsageFlags>(usage_flag_strings);
@@ -53,11 +52,10 @@ public:
             [this](std::string& shared_memory_name) -> void {
                 std::lock_guard<std::mutex> lock(mutex_);
 
-                std::string name = shared_memory_name; // need to copy so we can pass to functions that expect a const ref
-                SP_ASSERT(Std::containsKey(shared_memory_regions_, name));
-                SP_ASSERT(Std::containsKey(shared_memory_views_, name));
-                Std::remove(shared_memory_regions_, name);
-                Std::remove(shared_memory_views_, name);
+                SP_ASSERT(Std::containsKey(shared_memory_regions_, shared_memory_name));
+                SP_ASSERT(Std::containsKey(shared_memory_views_, shared_memory_name));
+                Std::remove(shared_memory_regions_, shared_memory_name);
+                Std::remove(shared_memory_views_, shared_memory_name);
         });
 
         unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("shared_memory_service", "get_fence_view", []() -> SharedMemoryView {

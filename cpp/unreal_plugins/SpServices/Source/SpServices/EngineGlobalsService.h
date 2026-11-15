@@ -14,9 +14,9 @@
 
 #include <CoreGlobals.h>   // GIsEditor, IsAsyncLoading, IsRunningCommandlet
 #include <Engine/Engine.h> // GEngine
-#include <Misc/CoreMisc.h> // IsRunningGame
 #include <GenericPlatform/GenericPlatformMisc.h>
 #include <HAL/PlatformProcess.h>
+#include <Misc/CoreMisc.h> // IsRunningGame
 
 #include "SpCore/Assert.h"
 
@@ -40,7 +40,7 @@ public:
         });
 
         unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("engine_globals_service", "get_current_process_id", []() -> int64_t {
-            return static_cast<int>(FPlatformProcess::GetCurrentProcessId());
+            return static_cast<int64_t>(FPlatformProcess::GetCurrentProcessId());
         });
 
         unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("engine_globals_service", "get_byte_order", []() -> std::string {

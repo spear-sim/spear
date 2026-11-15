@@ -9,7 +9,9 @@
 
 #include <map>
 #include <string>
-#include <utility> // std::move
+#include <type_traits> // std::is_pointer_v
+#include <utility>     // std::move
+#include <vector>
 
 #include "SpCore/Assert.h"
 #include "SpCore/Std.h"
@@ -47,7 +49,7 @@ public:
             Std::insert(objects, MsgpackUtils::to<std::string>(object_kvs[i].key), std::move(object_kvs[i].val));
         }
         return objects;
-    };
+    }
 
     template <typename TNonPtr> requires (!std::is_pointer_v<TNonPtr>)
     static TNonPtr to(clmdep_msgpack::object const& object)
@@ -55,7 +57,7 @@ public:
         TNonPtr t;
         object.convert(t);
         return t;
-    };
+    }
 
     template <typename TPtr> requires std::is_pointer_v<TPtr>
     static TPtr to(clmdep_msgpack::object const& object)
@@ -64,7 +66,7 @@ public:
         uint64_t value;
         object.convert(value);
         return reinterpret_cast<TPtr>(value);
-    };
+    }
 
     template <typename T>
     static std::vector<T> toVector(const std::vector<clmdep_msgpack::object>& objects)
@@ -74,7 +76,7 @@ public:
             values.push_back(to<T>(object));
         }
         return values;
-    };
+    }
 
     template <typename T>
     static std::map<std::string, T> toMap(const std::map<std::string, clmdep_msgpack::object>& objects)
@@ -84,7 +86,7 @@ public:
             Std::insert(values, name, to<T>(object));
         }
         return values;
-    };
+    }
 
     //
     // functions for sending custom types as return values to the client
@@ -129,9 +131,9 @@ public:
         object_with_zone.via.map.ptr = static_cast<clmdep_msgpack::object_kv*>(object_with_zone.zone.allocate_align(sizeof(clmdep_msgpack::object_kv)*object_with_zone.via.map.size));
         int i = 0;
         for (auto& [key, value] : objects) {
-            object_with_zone.via.map.ptr[i].key = clmdep_msgpack::object(std::move(key), object_with_zone.zone);
-            object_with_zone.via.map.ptr[i].val = std::move(value);
+            object_with_zone.via.map.ptr[i].key = clmdep_msgpack::object(key, object_with_zone.zone);
+            object_with_zone.via.map.ptr[i].val = value;
             i++;
         }
-    };
+    }
 };

@@ -15,6 +15,7 @@
 
 #include <AI/Navigation/NavigationTypes.h> // FNavAgentProperties, FNavLocation, FNavPathPoint
 #include <Containers/Array.h>
+#include <Engine/World.h>                  // UWorld
 #include <NavigationData.h>                // FPathFindingResult
 #include <NavigationSystem.h>
 #include <NavigationSystemTypes.h>         // EPathFindingMode, FPathFindingQuery, FSharedConstNavQueryFilter
@@ -55,7 +56,7 @@ public:
         SP_ASSERT(shared_memory_service);
 
         shared_memory_service_ = shared_memory_service;
-        
+
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("navigation_service", "get_random_points",
             [this](
                 uint64_t& navigation_data,
@@ -101,7 +102,7 @@ public:
                     if (filter_classes_shape.at(0) == num_points) { filter_class = toPtr<UClass>(Std::at(filter_classes_view, i)); }
                     if (queriers_shape.at(0)       == num_points) { querier      = toPtr<UObject>(Std::at(queriers_view, i)); }
 
-                    if (filter_classes_shape.size() == num_points || queriers_shape.size() == num_points) {
+                    if (filter_classes_shape.at(0) == num_points || queriers_shape.at(0) == num_points) {
                         filter = UNavigationQueryFilter::GetQueryFilter(*navigation_data_ptr, querier, filter_class);
                     }
 
@@ -176,7 +177,7 @@ public:
                     if (filter_classes_shape.at(0) == num_points) { filter_class = toPtr<UClass>(Std::at(filter_classes_view, i)); }
                     if (queriers_shape.at(0)       == num_points) { querier      = toPtr<UObject>(Std::at(queriers_view, i)); }
 
-                    if (filter_classes_shape.size() == num_points || queriers_shape.size() == num_points) {
+                    if (filter_classes_shape.at(0) == num_points || queriers_shape.at(0) == num_points) {
                         filter = UNavigationQueryFilter::GetQueryFilter(*navigation_data_ptr, querier, filter_class);
                     }
 
@@ -301,7 +302,7 @@ public:
                     if (nav_agent_property_strings.size()           == num_paths) { UnrealUtils::setObjectPropertiesFromString(nav_agent_properties.getValuePtr(), nav_agent_properties.getStaticStruct(), nav_agent_property_strings.at(i)); }
                     if (path_finding_mode_strings.size()            == num_paths) { path_finding_mode              = Unreal::getEnumValueFromStringAs<EPathFindingMode::Type, ESpPathFindingMode>(path_finding_mode_strings.at(i)); }
 
-                    if (filter_classes_shape.size() == num_paths || queriers_shape.size() == num_paths) {
+                    if (filter_classes_shape.at(0) == num_paths || queriers_shape.at(0) == num_paths) {
                         filter = UNavigationQueryFilter::GetQueryFilter(*navigation_data_ptr, querier, filter_class);
                     }
 

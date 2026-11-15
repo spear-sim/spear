@@ -10,12 +10,10 @@
 #include <map>
 #include <ranges>  // std::views::transform
 #include <string>
-#include <utility> // std::make_pair
+#include <utility> // std::make_pair, std::move
 #include <vector>
 
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
-#include <Engine/Engine.h>               // GEngine
-#include <Engine/World.h>                // UWorld::InitializationValues
 #include <HAL/Platform.h>                // SPSERVICES_API
 #include <Misc/CoreDelegates.h>
 
@@ -25,7 +23,7 @@
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 
-class SPSERVICES_API Service // SPSERVICES_API is needed here because the SpServicesEditor module needs to link against this class 
+class SPSERVICES_API Service // SPSERVICES_API is needed here because the SpServicesEditor module needs to link against this class
 {
 public:
     Service()

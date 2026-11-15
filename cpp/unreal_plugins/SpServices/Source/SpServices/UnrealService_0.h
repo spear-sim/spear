@@ -775,16 +775,16 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "add_object_to_root",
             [this](uint64_t& uobject) -> void {
-                UObject* uboject_ptr = toPtr<UObject>(uobject);
-                SP_ASSERT(uboject_ptr);
-                uboject_ptr->AddToRoot();
+                UObject* uobject_ptr = toPtr<UObject>(uobject);
+                SP_ASSERT(uobject_ptr);
+                uobject_ptr->AddToRoot();
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "remove_object_from_root",
             [this](uint64_t& uobject) -> void {
-                UObject* uboject_ptr = toPtr<UObject>(uobject);
-                SP_ASSERT(uboject_ptr);
-                uboject_ptr->RemoveFromRoot();
+                UObject* uobject_ptr = toPtr<UObject>(uobject);
+                SP_ASSERT(uobject_ptr);
+                uobject_ptr->RemoveFromRoot();
             });
     }
 

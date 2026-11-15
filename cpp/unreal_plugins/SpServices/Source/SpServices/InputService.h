@@ -44,7 +44,7 @@ public:
     {
         SP_ASSERT(unreal_entry_point_binder);
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("input_service", "setup_player_input_component", 
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("input_service", "setup_player_input_component",
             [this](uint64_t& actor, uint64_t& input_component) -> void {
                 APawn* pawn_ptr = toPtr<APawn>(actor);
                 SP_ASSERT(pawn_ptr);
