@@ -34,13 +34,17 @@ class SpFuncService(spear.Service):
 
     def create_shared_memory_handles_for_object(self, uobject):
         assert self.is_top_level_service() # user should only call this function on the top-level service
-        uobject = spear.to_handle(obj=uobject)
-        views = self.entry_point_caller.call_on_game_thread("get_shared_memory_views", None, uobject)
-        return self._shared_memory_service.create_shared_memory_handles(shared_memory_views=views)
+        if self.entry_point_caller.engine_service.is_server_local():
+            uobject = spear.to_handle(obj=uobject)
+            views = self.entry_point_caller.call_on_game_thread("get_shared_memory_views", None, uobject)
+            return self._shared_memory_service.create_shared_memory_handles(shared_memory_views=views)
+        else:
+            return {}
 
     def destroy_shared_memory_handles_for_object(self, shared_memory_handles):
         assert self.is_top_level_service() # user should only call this function on the top-level service
-        self._shared_memory_service.destroy_shared_memory_handles(shared_memory_handles=shared_memory_handles)
+        if self.entry_point_caller.engine_service.is_server_local():
+            self._shared_memory_service.destroy_shared_memory_handles(shared_memory_handles=shared_memory_handles)
 
     #
     # The caller must ensure that arrays and uobject_shared_memory_handles remain valid until the underlying
@@ -55,9 +59,14 @@ class SpFuncService(spear.Service):
         unreal_objs = unreal_objs if unreal_objs is not None else {}
         uobject_shared_memory_handles = uobject_shared_memory_handles if uobject_shared_memory_handles is not None else {}
 
+        engine_service = self.entry_point_caller.engine_service
+
+        # validate shared memory usage
+        self._shared_memory_service.validate_arrays(arrays=arrays)
+
         # convert args to data bundle
         args_data_bundle = spear.to_data_bundle(
-            dest_byte_order=self.entry_point_caller.engine_service.get_byte_order(),
+            dest_byte_order=engine_service.get_byte_order(),
             usage_flags=["Arg"],
             arrays=arrays,
             unreal_objs=unreal_objs,
@@ -65,6 +74,9 @@ class SpFuncService(spear.Service):
 
         # define convert func
         def convert_func(result_data_bundle):
+
+            # validate shared memory usage
+            self._shared_memory_service.validate_packed_arrays(packed_arrays=result_data_bundle.packed_arrays)
 
             # get the shared memory handle for each arg that uses shared memory and could be used as return value
             arg_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_arrays(
@@ -82,7 +94,7 @@ class SpFuncService(spear.Service):
             # convert data bundle to result
             result = spear.to_data_bundle_dict(
                 data_bundle=result_data_bundle,
-                src_byte_order=self.entry_point_caller.engine_service.get_byte_order(),
+                src_byte_order=engine_service.get_byte_order(),
                 usage_flags=["ReturnValue"],
                 shared_memory_handles=result_shared_memory_handles)
 

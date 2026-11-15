@@ -58,25 +58,35 @@ class NavigationService(spear.Service):
         query_owner = spear.to_handle(obj=query_owner)
         queriers = spear.to_handle(obj=queriers)
 
+        engine_service = self.entry_point_caller.engine_service
+
+        # validate shared memory usage
+        self._shared_memory_service.validate_arrays(arrays=[filter_classes, queriers, out_array])
+
         packed_arrays = spear.to_packed_arrays(
             arrays={"filter_classes": filter_classes, "queriers": queriers},
-            dest_byte_order=self.entry_point_caller.engine_service.get_byte_order(),
+            dest_byte_order=engine_service.get_byte_order(),
             usage_flags=["Arg"])
         out_packed_array = spear.to_packed_array(
             array=out_array,
-            dest_byte_order=self.entry_point_caller.engine_service.get_byte_order(),
+            dest_byte_order=engine_service.get_byte_order(),
             usage_flags=["Arg", "ReturnValue"])
 
         # define convert func
         def convert_func(result_packed_array):
+
+            # validate shared memory usage
+            self._shared_memory_service.validate_packed_array(packed_array=result_packed_array)
+
             result_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_arrays(
                 arrays=[out_array],
                 usage_flags=["Arg", "ReturnValue"])
             result = spear.to_array(
                 packed_array=result_packed_array,
-                src_byte_order=self.entry_point_caller.engine_service.get_byte_order(),
+                src_byte_order=engine_service.get_byte_order(),
                 usage_flags=["Arg", "ReturnValue"],
                 shared_memory_handles=result_shared_memory_handles)
+
             return result
 
         return self.entry_point_caller.call_on_game_thread(
@@ -119,25 +129,35 @@ class NavigationService(spear.Service):
         if radius is not None:
             radii = np.array([radius], dtype=np.float32)
 
+        engine_service = self.entry_point_caller.engine_service
+
+        # validate shared memory usage
+        self._shared_memory_service.validate_arrays(arrays=[origin_points, radii, filter_classes, queriers, out_array])
+
         packed_arrays = spear.to_packed_arrays(
             arrays={"origin_points": origin_points, "radii": radii, "filter_classes": filter_classes, "queriers": queriers},
-            dest_byte_order=self.entry_point_caller.engine_service.get_byte_order(),
+            dest_byte_order=engine_service.get_byte_order(),
             usage_flags=["Arg"])
         out_packed_array = spear.to_packed_array(
             array=out_array,
-            dest_byte_order=self.entry_point_caller.engine_service.get_byte_order(),
+            dest_byte_order=engine_service.get_byte_order(),
             usage_flags=["Arg", "ReturnValue"])
 
         # define convert func
         def convert_func(result_packed_array):
+
+            # validate shared memory usage
+            self._shared_memory_service.validate_packed_array(packed_array=result_packed_array)
+
             result_shared_memory_handles = self._shared_memory_service.get_shared_memory_handles_from_arrays(
                 arrays=[out_array],
                 usage_flags=["Arg", "ReturnValue"])
             result = spear.to_array(
                 packed_array=result_packed_array,
-                src_byte_order=self.entry_point_caller.engine_service.get_byte_order(),
+                src_byte_order=engine_service.get_byte_order(),
                 usage_flags=["Arg", "ReturnValue"],
                 shared_memory_handles=result_shared_memory_handles)
+
             return result
 
         return self.entry_point_caller.call_on_game_thread(
@@ -182,6 +202,11 @@ class NavigationService(spear.Service):
         nav_agent_interface = spear.to_handle(obj=nav_agent_interface)
         queriers = spear.to_handle(obj=queriers)
 
+        engine_service = self.entry_point_caller.engine_service
+
+        # validate shared memory usage
+        self._shared_memory_service.validate_arrays(arrays=[start_points, end_points, filter_classes, queriers, cost_limits, require_navigable_end_locations])
+
         packed_arrays = spear.to_packed_arrays(
             arrays={
                 "start_points": start_points,
@@ -190,16 +215,20 @@ class NavigationService(spear.Service):
                 "queriers": queriers,
                 "cost_limits": cost_limits,
                 "require_navigable_end_locations": require_navigable_end_locations},
-            dest_byte_order=self.entry_point_caller.engine_service.get_byte_order(),
+            dest_byte_order=engine_service.get_byte_order(),
             usage_flags=["Arg"])
 
         nav_agent_property_strings = spear.to_json_strings(objs=nav_agent_properties)
 
         # define convert func
         def convert_func(result_packed_arrays):
+
+            # validate shared memory usage
+            self._shared_memory_service.validate_packed_arrays(packed_arrays=result_packed_arrays)
+
             return_values = spear.to_arrays(
                 packed_arrays=result_packed_arrays,
-                src_byte_order=self.entry_point_caller.engine_service.get_byte_order(),
+                src_byte_order=engine_service.get_byte_order(),
                 usage_flags=None,
                 shared_memory_handles=None)
 

@@ -37,6 +37,8 @@ class SharedMemoryService(spear.Service):
     #
 
     def create_shared_memory_region(self, shared_memory_name, num_bytes, usage_flags):
+        assert self.is_top_level_service() # user should only call this function on the top-level service
+        assert self.entry_point_caller.engine_service.is_server_local()
         assert shared_memory_name not in self._shared_memory_handles.keys()
         view = self.entry_point_caller.call_on_worker_thread("create_shared_memory_region", None, shared_memory_name, num_bytes, usage_flags)
         handle = self._create_shared_memory_handle(shared_memory_name=shared_memory_name, shared_memory_view=view)
@@ -45,6 +47,7 @@ class SharedMemoryService(spear.Service):
 
     def destroy_shared_memory_region(self, shared_memory_handle):
         assert self.is_top_level_service() # user should only call this function on the top-level service
+        assert self.entry_point_caller.engine_service.is_server_local()
         assert shared_memory_handle["name"] in self._shared_memory_handles.keys()
         self._destroy_shared_memory_handle(shared_memory_handle=shared_memory_handle)
         self._shared_memory_handles.pop(shared_memory_handle["name"])
@@ -55,26 +58,42 @@ class SharedMemoryService(spear.Service):
     #
 
     def create_shared_memory_handles(self, shared_memory_views):
+        assert self.is_top_level_service() # user should only call this function on the top-level service
+        assert self.entry_point_caller.engine_service.is_server_local()
         handles = {}
         for shared_memory_name, shared_memory_view in shared_memory_views.items():
             handles[shared_memory_name] = self._create_shared_memory_handle(shared_memory_name=shared_memory_name, shared_memory_view=shared_memory_view)
         return handles
 
     def destroy_shared_memory_handles(self, shared_memory_handles):
+        assert self.is_top_level_service() # user should only call this function on the top-level service
+        assert self.entry_point_caller.engine_service.is_server_local()
         for shared_memory_name, shared_memory_handle in shared_memory_handles.items():
             self._destroy_shared_memory_handle(shared_memory_handle=shared_memory_handle)
 
     #
-    # High-level helper functions for interacting with shared memory handles
+    # High-level helper functions for interacting with shared memory handles belonging to args and return values
     #
 
     def get_shared_memory_handles_from_arrays(self, arrays, usage_flags):
-        return { a._shared_memory_handle["name"]: a._shared_memory_handle for a in arrays if isinstance(a, spear.Shared) and set(usage_flags) <= set(a._shared_memory_handle["view"].usage_flags) }
+        assert self.is_top_level_service() # user should only call this function on the top-level service
+        if isinstance(arrays, list):
+            return { a._shared_memory_handle["name"]: a._shared_memory_handle for a in arrays if isinstance(a, spear.Shared) and set(usage_flags) <= set(a._shared_memory_handle["view"].usage_flags) }
+        elif isinstance(arrays, dict):
+            return { v._shared_memory_handle["name"]: v._shared_memory_handle for k, v in arrays.items() if isinstance(v, spear.Shared) and set(usage_flags) <= set(v._shared_memory_handle["view"].usage_flags) }
+        else:
+            assert False
 
     def get_shared_memory_names_from_packed_arrays(self, packed_arrays):
+        assert self.is_top_level_service() # user should only call this function on the top-level service
+        assert isinstance(packed_arrays, dict)
         return [ v.shared_memory_name for k, v in packed_arrays.items() if v.data_source == "Shared" ]
 
     def get_shared_memory_handles_from_dicts(self, shared_memory_names, shared_memory_handle_dicts):
+        assert self.is_top_level_service() # user should only call this function on the top-level service
+        assert isinstance(shared_memory_names, list)
+        assert isinstance(shared_memory_handle_dicts, list)
+        assert all(isinstance(shared_memory_handle_dict, dict) for shared_memory_handle_dict in shared_memory_handle_dicts)
         shared_memory_handles = {}
         for shared_memory_name in shared_memory_names:
             shared_memory_handle = None
@@ -87,12 +106,53 @@ class SharedMemoryService(spear.Service):
         return shared_memory_handles
 
     #
-    # High-level function for interacting with the shared memory fence. Most users will not need to call this
-    # functions directly.
+    # Validation functions
+    #
+
+    def validate_array(self, array):
+        assert self.is_top_level_service() # user should only call this function on the top-level service
+        if isinstance(array, spear.Shared):
+            assert self.entry_point_caller.engine_service.is_server_local()
+
+    def validate_arrays(self, arrays):
+        assert self.is_top_level_service() # user should only call this function on the top-level service
+        if isinstance(arrays, list):
+            for a in arrays:
+                self.validate_array(array=a)
+        elif isinstance(arrays, dict):
+            for k, v in arrays.items():
+                self.validate_array(array=v)
+        else:
+            assert False
+
+    def validate_packed_array(self, packed_array):
+        assert self.is_top_level_service() # user should only call this function on the top-level service
+        if packed_array.data_source == "Shared":
+            assert self.entry_point_caller.engine_service.is_server_local()
+
+    def validate_packed_arrays(self, packed_arrays):
+        assert self.is_top_level_service() # user should only call this function on the top-level service
+        if isinstance(packed_arrays, list):
+            for p in packed_arrays:
+                self.validate_packed_array(packed_array=p)
+        elif isinstance(packed_arrays, dict):
+            for k, v in packed_arrays.items():
+                self.validate_packed_array(packed_array=v)
+        else:
+            assert False
+
+    #
+    # High-level function for interacting with the server's shared memory fence. Most users will not need to
+    # call this functions directly.
     #
 
     def get_fence_view(self):
+        assert self.is_top_level_service() # user should only call this function on the top-level service
         return self.entry_point_caller.call_on_worker_thread("get_fence_view", None)
+
+    def get_fence_key(self):
+        assert self.is_top_level_service() # user should only call this function on the top-level service
+        return self.entry_point_caller.call_on_worker_thread("get_fence_key", None)
 
     #
     # Low-level helper functions for interacting with shared memory. Most users will not need to call these

@@ -87,11 +87,18 @@ public:
     SharedMemoryFence(uint64_t id); // useful if the caller wants to manage the allocation of uint64_t IDs to shared memory regions
 
     SharedMemoryView getView();
+    std::string getKey() const;
     void fence();
+
+    // The fence region consists of a uint64_t counter, followed by a fixed-size, null-terminated buffer that
+    // contains a key that uniquely identifies this fence (see SharedMemoryFence::SharedMemoryFence(...) in
+    // SpCore/SharedMemory.cpp). Must match SharedMemoryFence in python_ext/cpp/shared_memory.h.
+    inline static constexpr uint64_t s_key_num_bytes_ = 1024;
 
 private:
     SharedMemoryRegion shared_memory_region_;
     uint64_t* counter_ = nullptr;
+    std::string key_;
 };
 
 class SPCORE_API SharedMemory
@@ -104,6 +111,7 @@ public:
     static void terminate();
 
     static SharedMemoryView getFenceView();
+    static std::string getFenceKey();
     static void fence();
 
     static uint64_t getUniqueId();

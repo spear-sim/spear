@@ -9,6 +9,7 @@
 #include <stdint.h> // uint64_t
 
 #include <atomic>    // std::atomic_ref, std::memory_order_acq_rel
+#include <cstring>   // std::memcpy, std::memset
 #include <filesystem>
 #include <fstream>
 #include <limits>    // std::numeric_limits
@@ -18,10 +19,14 @@
 
 #include <boost/predef.h> // BOOST_COMP_CLANG, BOOST_COMP_MSVC, BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
 
+#include <HAL/PlatformProcess.h>
+#include <Misc/Guid.h>
+
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
 #include "SpCore/Log.h"
 #include "SpCore/Std.h"
+#include "SpCore/Unreal.h"
 
 // TODO: remove platform-specific include
 #if BOOST_COMP_MSVC
@@ -152,7 +157,7 @@ SharedMemoryView SharedMemoryRegion::getView()
 
 SharedMemoryFence::SharedMemoryFence() : SharedMemoryFence(SharedMemory::getUniqueId()) {}
 
-SharedMemoryFence::SharedMemoryFence(uint64_t id) : shared_memory_region_(sizeof(uint64_t), id)
+SharedMemoryFence::SharedMemoryFence(uint64_t id) : shared_memory_region_(sizeof(uint64_t) + s_key_num_bytes_, id)
 {
     SP_ASSERT(std::atomic_ref<uint64_t>::is_always_lock_free);
 
@@ -161,11 +166,33 @@ SharedMemoryFence::SharedMemoryFence(uint64_t id) : shared_memory_region_(sizeof
     SP_ASSERT(Std::isPtrSufficientlyAligned(view.data_, std::atomic_ref<uint64_t>::required_alignment));
 
     counter_ = static_cast<uint64_t*>(view.data_);
+
+    // Write a key of the form "<computer name>:<GUID>" after the counter. A client can determine whether or not
+    // it can access shared memory created by the server by opening the fence region, and checking that it
+    // contains the key reported by shared_memory_service.get_fence_key. Opening the region by name alone is not
+    // sufficient, because an unrelated server running on the client's machine might own a region with the same
+    // name. A computer name alone is not sufficient either, because different machines (or containers) might
+    // have the same computer name. The GUID is what uniquely identifies this fence, and we also include the
+    // computer name for diagnostic purposes.
+
+    std::string computer_name = Unreal::toStdString(FPlatformProcess::ComputerName());
+    std::string guid = Unreal::toStdString(FGuid::NewGuid().ToString(EGuidFormats::DigitsWithHyphens));
+    key_ = computer_name + ":" + guid;
+    SP_ASSERT(key_.size() < s_key_num_bytes_); // leave room for the null terminator
+
+    char* key_buffer = reinterpret_cast<char*>(counter_ + 1);
+    std::memset(key_buffer, 0, s_key_num_bytes_);
+    std::memcpy(key_buffer, key_.data(), key_.size());
 }
 
 SharedMemoryView SharedMemoryFence::getView()
 {
     return shared_memory_region_.getView();
+}
+
+std::string SharedMemoryFence::getKey() const
+{
+    return key_;
 }
 
 void SharedMemoryFence::fence()
@@ -192,7 +219,7 @@ void SharedMemoryFence::fence()
     // counter that lives in a small SharedMemoryRegion. The value of the counter is never used; it only exists
     // so there is something to RMW. We increment by 1 rather than 0, so every fence() call is unambiguously a
     // write, because some compilers lower idempotent RMWs (e.g., fetch_add(0)) to an in-process fence followed
-    // by a plain load, which is not sufficient to provide the guarantee we need here.
+    // by a plain load, which is not sufficient for the guarantee we want to provide here.
     //
     // Why it is correct. Consider a sender process that calls fence() and a receiver process that later calls fence(),
     // where the two calls are ordered in physical time* by RPC (i.e., within the sender process, the sender's fence()
@@ -229,29 +256,6 @@ void SharedMemoryFence::fence()
     // can't be performed early, i.e., before the receiver receives the RPC message, because the receiver's RMW
     // is a release operation, and a release operation prevents all earlier memory operations in the same thread
     // (including the ones that receive the RPC message) from being reordered after it.
-    //
-    // An alternative argument is as follows. Assume for the sake of contradiction that the receiver's RMW
-    // precedes the sender's RMW in the modification order. Then we can construct the following chain of events,
-    // where each event happens before the next one in physical time*.
-    //
-    //        [receiver RMW]
-    //            | [receiver RMW] happens before [sender RMW] in physical time* because, by assumption,
-    //            | [receiver RMW] precedes [sender RMW] in the modification order, so [sender RMW] reads from
-    //            | [receiver RMW].
-    //        [sender RMW]
-    //            | [sender RMW] happens before [sender sends message] in physical time* because
-    //            | [sender RMW] is an acquire operation.
-    //        [sender sends message]
-    //            | [sender sends message] happens before [receiver receives message] in physical time*
-    //            | because a message can't be received before it is sent.
-    //        [receiver receives message]
-    //            | [receiver receives message] happens before [receiver RMW] in physical time* because
-    //            | [receiver RMW] is a release operation.
-    //        [receiver RMW]
-    //
-    // This chain implies that the receiver's RMW happens before itself in physical time*, which is impossible.
-    // Therefore, our assumption must be false, i.e., the sender's RMW must precede the receiver's RMW in the
-    // modification order.
     //
     // Why it is correct across processes. The C++ memory model formally describes threads within a single
     // program, but the standard also specifies that lock-free atomic operations should be address-free, i.e.,
@@ -309,6 +313,13 @@ SharedMemoryView SharedMemory::getFenceView()
     SP_ASSERT(s_initialized_);
     SP_ASSERT(s_shared_memory_fence_);
     return s_shared_memory_fence_->getView();
+}
+
+std::string SharedMemory::getFenceKey()
+{
+    SP_ASSERT(s_initialized_);
+    SP_ASSERT(s_shared_memory_fence_);
+    return s_shared_memory_fence_->getKey();
 }
 
 void SharedMemory::fence()

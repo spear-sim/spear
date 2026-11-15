@@ -759,6 +759,9 @@ class Client:
         result = self._client.call("engine_globals_service.call_sync_on_worker_thread.ping")
         return self._to_str(obj=result)
 
+    def is_server_local(self):
+        return True
+
     def get_entry_point_signature_descs(self):
         return self.entry_point_signature_descs
 

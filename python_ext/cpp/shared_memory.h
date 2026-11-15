@@ -6,6 +6,7 @@
 #pragma once
 
 #include <stdint.h> // uint8_t, uint64_t
+#include <string.h> // strnlen
 
 #include <atomic> // std::atomic_ref, std::memory_order_acq_rel
 #include <string>
@@ -26,12 +27,15 @@ class SharedMemoryFence
 {
 public:
     SharedMemoryFence() = delete;
+
+    // Throws boost::interprocess::interprocess_exception if the region can't be opened, e.g., if the server is
+    // running on a different machine.
     SharedMemoryFence(const SharedMemoryView& view)
     {
         SP_ASSERT(std::atomic_ref<uint64_t>::is_always_lock_free);
 
         SP_ASSERT(view.id_ != "");
-        SP_ASSERT(view.num_bytes_ >= sizeof(uint64_t));
+        SP_ASSERT(view.num_bytes_ == sizeof(uint64_t) + s_key_num_bytes_);
 
         #if BOOST_OS_WINDOWS
             boost::interprocess::windows_shared_memory windows_shared_memory(boost::interprocess::open_only, view.id_.c_str(), boost::interprocess::read_write);
@@ -59,7 +63,23 @@ public:
         std::atomic_ref<uint64_t>(*counter_).fetch_add(1, std::memory_order_acq_rel);
     }
 
+    std::string getKey()
+    {
+        SP_ASSERT(counter_);
+
+        // We call fence() before reading the key, so the server's earlier write to the key is guaranteed to be
+        // visible here, provided that the server called fence() after writing the key and before this call (e.g.,
+        // by servicing any RPC call in between).
+        fence();
+
+        const char* key_buffer = reinterpret_cast<const char*>(counter_ + 1);
+        return std::string(key_buffer, strnlen(key_buffer, s_key_num_bytes_));
+    }
+
 private:
+    // Must match SharedMemoryFence in SpCore/SharedMemory.h.
+    inline static constexpr uint64_t s_key_num_bytes_ = 1024;
+
     boost::interprocess::mapped_region mapped_region_;
     uint64_t* counter_ = nullptr;
 };

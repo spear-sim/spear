@@ -132,7 +132,7 @@ public:
     template <typename TDest, typename TSrc>
     static TDest convert(const Client* client, TSrc&& src, std::shared_ptr<clmdep_msgpack::object_handle> object_handle)
     {
-        std::cout << "[SPEAR | spear_ext.cpp] ERROR: Current function: " << SP_CURRENT_FUNCTION << std::endl; SP_ASSERT(false); return TDest();
+        std::cout << "[SPEAR | func_signature_registry.h] ERROR: Current function: " << SP_CURRENT_FUNCTION << std::endl; SP_ASSERT(false); return TDest();
     };
 
 private:

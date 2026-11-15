@@ -32,8 +32,9 @@ NB_MODULE(spear_ext, module)
     client_class.def("clear_timeout", &Client::clearTimeout);
 
     client_class.def("ping",                                 &Client::ping);
-    client_class.def("get_entry_point_signature_descs",      &Client::getEntryPointSignatureDescs);
     client_class.def("get_entry_point_signature_type_names", &Client::getEntryPointSignatureTypeNames);
+    client_class.def("get_entry_point_signature_descs",      &Client::getEntryPointSignatureDescs);
+    client_class.def("is_server_local",                      &Client::isServerLocal);
 
     client_class.def("call", &Client::call);
 

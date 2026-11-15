@@ -31,19 +31,19 @@ public:
     Client(const std::string& address, const uint16_t& port, bool suppress_default_logging = false)
     {
         suppress_default_logging_ = suppress_default_logging;
-        if (!suppress_default_logging_) { std::cout << "[SPEAR | spear_ext.cpp] Client::Client(...)" << std::endl; }
+        if (!suppress_default_logging_) { std::cout << "[SPEAR | client.h] Client::Client(...)" << std::endl; }
         client_ = std::make_unique<rpc::client>(address, port);
     };
 
     ~Client()
     {
-        if (!suppress_default_logging_) { std::cout << "[SPEAR | spear_ext.cpp] Client::~Client()" << std::endl; }
+        if (!suppress_default_logging_) { std::cout << "[SPEAR | client.h] Client::~Client()" << std::endl; }
         client_ = nullptr;
     };
 
     void initialize()
     {
-        if (!suppress_default_logging_) { std::cout << "[SPEAR | spear_ext.cpp] Client::initialize()" << std::endl; }
+        if (!suppress_default_logging_) { std::cout << "[SPEAR | client.h] Client::initialize()" << std::endl; }
         SP_ASSERT(client_);
 
         clmdep_msgpack::object_handle object_handle;
@@ -57,12 +57,40 @@ public:
 
         object_handle = client_->call("shared_memory_service.call_sync_on_worker_thread.get_fence_view");
         SharedMemoryView fence_view = object_handle.get().as<SharedMemoryView>();
-        shared_memory_fence_ = std::make_unique<SharedMemoryFence>(fence_view);
+
+        object_handle = client_->call("shared_memory_service.call_sync_on_worker_thread.get_fence_key");
+        std::string fence_key_from_rpc = object_handle.get().as<std::string>();
+
+        // We consider the server to be local if we can open the fence region, and the fence region contains the
+        // key reported by the server (see SharedMemoryFence::SharedMemoryFence(...) in SpCore/SharedMemory.cpp).
+        // Opening the fence region by name alone is not sufficient, because an unrelated server running on this
+        // machine might own a region with the same name. If the server is not local, we don't create a fence,
+        // and Client::call(...) doesn't call fence().
+
+        std::unique_ptr<SharedMemoryFence> shared_memory_fence;
+
+        try {
+            shared_memory_fence = std::make_unique<SharedMemoryFence>(fence_view);
+        } catch (const boost::interprocess::interprocess_exception&) {
+            if (!suppress_default_logging_) { std::cout << "[SPEAR | client.h]     Couldn't open shared memory fence, assuming the server is remote..." << std::endl; }
+        }
+
+        if (shared_memory_fence) {
+            std::string fence_key_from_shared_memory_region = shared_memory_fence->getKey();
+            if (fence_key_from_shared_memory_region == fence_key_from_rpc) {
+                if (!suppress_default_logging_) { std::cout << "[SPEAR | client.h]     Opened shared memory fence: " << fence_key_from_rpc << std::endl; }
+                shared_memory_fence_ = std::move(shared_memory_fence);
+            } else if (!suppress_default_logging_) {
+                std::cout << "[SPEAR | client.h]     Opened shared memory fence but it belongs to a different server than the one we're connected to, assuming our server is remote..." << std::endl;
+                std::cout << "[SPEAR | client.h]         Expected key from RPC call with server: " << fence_key_from_rpc << std::endl;
+                std::cout << "[SPEAR | client.h]         Actual key from shared memory region:   " << fence_key_from_shared_memory_region << std::endl;
+            }
+        }
     };
 
     void terminate()
     {
-        if (!suppress_default_logging_) { std::cout << "[SPEAR | spear_ext.cpp] Client::terminate()" << std::endl; }
+        if (!suppress_default_logging_) { std::cout << "[SPEAR | client.h] Client::terminate()" << std::endl; }
         SP_ASSERT(client_);
         client_ = nullptr;
         shared_memory_fence_ = nullptr;
@@ -99,12 +127,16 @@ public:
         return client_->call("engine_globals_service.call_sync_on_worker_thread.ping").get().as<std::string>();
     }
 
+    bool isServerLocal() const
+    {
+        return shared_memory_fence_ != nullptr;
+    }
+
     nanobind::object call(const std::string& func_name, const nanobind::args& args)
     {
-        if (verbose_rpc_calls_) { std::cout << "[SPEAR | spear_ext.cpp] call(...): " << func_name << std::endl; }
+        if (verbose_rpc_calls_) { std::cout << "[SPEAR | client.h] call(...): " << func_name << std::endl; }
 
         SP_ASSERT(client_);
-        SP_ASSERT(shared_memory_fence_);
 
         const SpFuncSignatureDesc& desc = entry_point_signature_descs_.at(func_name);
         int return_type_id = desc.type_ids_[0];
@@ -127,11 +159,12 @@ public:
         // fences establish that all memory operations in this process before the call happen-before all memory
         // operations on the server during the call, and all memory operations on the server during the call
         // happen-before all memory operations in this process after the call, including memory operations on
-        // shared memory (see SharedMemoryFence::fence() in SpCore/SharedMemory.cpp for details).
+        // shared memory (see SharedMemoryFence::fence() in SpCore/SharedMemory.cpp for details). If the server
+        // is not local, there is no shared memory, so there is nothing to fence.
 
-        shared_memory_fence_->fence();
+        if (shared_memory_fence_) { shared_memory_fence_->fence(); }
         clmdep_msgpack::object_handle result = client_->call("rpc_server.call", func_name, args_msgpack_array);
-        shared_memory_fence_->fence();
+        if (shared_memory_fence_) { shared_memory_fence_->fence(); }
 
         // unpack result
         return FuncSignatureRegistry::getReturnValue(this, return_type_id, std::move(result));
@@ -172,13 +205,13 @@ private:
             bool has_client_name = i < client_type_names.size();
             bool has_server_name = i < server_type_names.size();
             if (!has_client_name || !has_server_name || client_type_names.at(i) != server_type_names.at(i)) {
-                std::cout << "[SPEAR | spear_ext.cpp] ERROR: type ID/name mismatch at id=" << i << " (server=" << get_display_string_func(server_type_names, i) << ", client=" << get_display_string_func(client_type_names, i) << ")" << std::endl;
+                std::cout << "[SPEAR | client.h] ERROR: type ID/name mismatch at id=" << i << " (server=" << get_display_string_func(server_type_names, i) << ", client=" << get_display_string_func(client_type_names, i) << ")" << std::endl;
                 success = false;
             }
         }
 
         if (!success) {
-            std::cout << "[SPEAR | spear_ext.cpp] ERROR: The spear_ext Python extension module is out of sync with the server. Rebuild both the server and the spear_ext Python extension module." << std::endl;
+            std::cout << "[SPEAR | client.h] ERROR: The spear_ext Python extension module is out of sync with the server. Rebuild both the server and the spear_ext Python extension module." << std::endl;
         }
 
         SP_ASSERT(success);

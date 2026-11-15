@@ -21,6 +21,8 @@ class Service():
 
         self._world = None
 
+        self.entry_point_caller = entry_point_caller
+
         if sp_func_service is not None:
             self.sp_func_service = sp_func_service.get_top_level_service()
         else:
@@ -31,15 +33,11 @@ class Service():
         else:
             self.unreal_service = None
 
-        if config is not None:
-            self.config = config
-        else:
-            self.config = None
+        self.config = config
 
         if parent_service is not None:
             assert not create_children_services # it is only allowed to create children services from the top-level service
 
-        self.entry_point_caller = entry_point_caller
         self._parent_service = parent_service
 
         if create_children_services:

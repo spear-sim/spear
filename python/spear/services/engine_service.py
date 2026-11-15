@@ -19,9 +19,10 @@ class EngineService():
 
         self._frame_state = None
         self._editor_transaction_state = None
+        self._is_server_local = None
         self._byte_order = None
-        self.entry_point_signature_descs = None
 
+        self.entry_point_signature_descs = None
 
     def initialize(self):
         assert self._frame_state is None or self._frame_state == "idle" or self._frame_state == "error"
@@ -37,6 +38,9 @@ class EngineService():
 
         if self.entry_point_signature_descs is None:
             self.entry_point_signature_descs = self._client.get_entry_point_signature_descs()
+
+        if self._is_server_local is None:
+            self._is_server_local = self._client.is_server_local()
 
         if self._byte_order is None:
             byte_order = self._client.call("engine_globals_service.call_sync_on_worker_thread.get_byte_order")
@@ -56,10 +60,13 @@ class EngineService():
     # Helper functions to support initializing a spear.Instance
     #
 
+    def is_server_local(self):
+        assert self._is_server_local is not None
+        return self._is_server_local
+
     def get_byte_order(self):
         assert self._byte_order is not None
         return self._byte_order
-
 
     #
     # These functions advance the server by one or more complete frames, where each frame is an empty

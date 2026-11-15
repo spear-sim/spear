@@ -301,13 +301,13 @@ SpPackedArray FuncSignatureRegistry::convert<SpPackedArray>(const Client* client
     SpPackedArray sp_packed_array;
 
     if (client->verbose_allocations_) {
-        std::cout << "[SPEAR | spear_ext.cpp] Constructing nanobind::ndarray<nanobind::numpy>..." << std::endl;
-        std::cout << "[SPEAR | spear_ext.cpp] sp_packed_array_view.view_.data():        " << sp_packed_array_view.view_.data() << std::endl;
-        std::cout << "[SPEAR | spear_ext.cpp] sp_packed_array_view.view_.size():        " << sp_packed_array_view.view_.size() << std::endl;
-        std::cout << "[SPEAR | spear_ext.cpp] sp_packed_array_view.data_source_:        " << sp_packed_array_view.data_source_ << std::endl;
-        std::cout << "[SPEAR | spear_ext.cpp] sp_packed_array_view.shape_:              "; for (int i = 0; i < sp_packed_array_view.shape_.size(); i++) { std::cout << sp_packed_array_view.shape_.at(i) << " "; } std::cout << std::endl;
-        std::cout << "[SPEAR | spear_ext.cpp] sp_packed_array_view.data_type_:          " << sp_packed_array_view.data_type_ << std::endl;
-        std::cout << "[SPEAR | spear_ext.cpp] sp_packed_array_view.shared_memory_name_: " << sp_packed_array_view.shared_memory_name_ << std::endl;
+        std::cout << "[SPEAR | msgpack_adaptors.h] Constructing nanobind::ndarray<nanobind::numpy>..." << std::endl;
+        std::cout << "[SPEAR | msgpack_adaptors.h] sp_packed_array_view.view_.data():        " << sp_packed_array_view.view_.data() << std::endl;
+        std::cout << "[SPEAR | msgpack_adaptors.h] sp_packed_array_view.view_.size():        " << sp_packed_array_view.view_.size() << std::endl;
+        std::cout << "[SPEAR | msgpack_adaptors.h] sp_packed_array_view.data_source_:        " << sp_packed_array_view.data_source_ << std::endl;
+        std::cout << "[SPEAR | msgpack_adaptors.h] sp_packed_array_view.shape_:              "; for (int i = 0; i < sp_packed_array_view.shape_.size(); i++) { std::cout << sp_packed_array_view.shape_.at(i) << " "; } std::cout << std::endl;
+        std::cout << "[SPEAR | msgpack_adaptors.h] sp_packed_array_view.data_type_:          " << sp_packed_array_view.data_type_ << std::endl;
+        std::cout << "[SPEAR | msgpack_adaptors.h] sp_packed_array_view.shared_memory_name_: " << sp_packed_array_view.shared_memory_name_ << std::endl;
     }
 
     // construct ndarray
@@ -323,7 +323,7 @@ SpPackedArray FuncSignatureRegistry::convert<SpPackedArray>(const Client* client
         // Allocate a Capsule on the heap. Deleted in the deletion callback below.
         Capsule* capsule_ptr = new Capsule();
         SP_ASSERT(capsule_ptr);
-        if (client->verbose_allocations_) { std::cout << "[SPEAR | spear_ext.cpp] Allocated Capsule object at memory location: " << capsule_ptr << std::endl; }
+        if (client->verbose_allocations_) { std::cout << "[SPEAR | msgpack_adaptors.h] Allocated Capsule object at memory location: " << capsule_ptr << std::endl; }
 
         void* data_ptr = nullptr;
 
@@ -353,15 +353,15 @@ SpPackedArray FuncSignatureRegistry::convert<SpPackedArray>(const Client* client
 
         nanobind::capsule capsule = nanobind::capsule(capsule_ptr, [](void* ptr) noexcept -> void {
             if (!ptr) {
-                std::cout << "[SPEAR | spear_ext.cpp] ERROR: Unexpected nullptr (ptr) in deletion callback for Capsule." << std::endl;
+                std::cout << "[SPEAR | msgpack_adaptors.h] ERROR: Unexpected nullptr (ptr) in deletion callback for Capsule." << std::endl;
                 std::terminate(); // can't assert because of noexcept
             }
             // if (!client) {
-            //     std::cout << "[SPEAR | spear_ext.cpp] ERROR: Unexpected nullptr (client) in deletion callback for Capsule." << std::endl;
+            //     std::cout << "[SPEAR | msgpack_adaptors.h] ERROR: Unexpected nullptr (client) in deletion callback for Capsule." << std::endl;
             //     std::terminate(); // can't assert because of noexcept
             // }
             Capsule* capsule_ptr = static_cast<Capsule*>(ptr);
-            // if (client->verbose_allocations_) { std::cout << "[SPEAR | spear_ext.cpp] Deleting Capsule object at memory location: " << capsule_ptr << std::endl; }
+            // if (client->verbose_allocations_) { std::cout << "[SPEAR | msgpack_adaptors.h] Deleting Capsule object at memory location: " << capsule_ptr << std::endl; }
             capsule_ptr->object_handle_ = nullptr;
             delete capsule_ptr;
             capsule_ptr = nullptr;

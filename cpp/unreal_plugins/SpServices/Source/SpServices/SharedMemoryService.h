@@ -63,6 +63,10 @@ public:
         unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("shared_memory_service", "get_fence_view", []() -> SharedMemoryView {
             return SharedMemory::getFenceView();
         });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("shared_memory_service", "get_fence_key", []() -> std::string {
+            return SharedMemory::getFenceKey();
+        });
     }
 
     template <CUnrealEntryPointBinder TEntryPointBinder>

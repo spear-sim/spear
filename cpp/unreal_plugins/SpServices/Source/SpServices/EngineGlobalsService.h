@@ -32,7 +32,7 @@ public:
         SP_ASSERT(unreal_entry_point_binder);
 
         //
-        // Miscellaneous low-level entry points to support spear.Instance and do not interact with Unreal.
+        // Miscellaneous low-level entry points to support spear.Instance that do not interact with Unreal.
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("engine_globals_service", "ping", []() -> std::string {
