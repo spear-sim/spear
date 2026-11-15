@@ -32,7 +32,7 @@ public:
     Config() = delete;
     ~Config() = delete;
 
-    // If the -config_file= command-line argument is passed in to the executable, calling requestInitialize()
+    // If the -sp-config-file= command-line argument is passed in to the executable, calling requestInitialize()
     // will successfully initialize the config system. Otherwise, calling requestInitialize() will fail to
     // initialize the config system. Systems that want to use the config system must check if it has been
     // successfully initialized by checking Config::isInitialized(). Calling terminate() will completely reset
@@ -50,7 +50,7 @@ public:
     //     SIMULATOR:
     //         TIME_DELTA_SECONDS: 0.1
     //
-    // and you want to access to access the configuration parameter SIMULATOR.TIME_DELTA_SECONDS, you would
+    // and you want to access the configuration parameter SIMULATOR.TIME_DELTA_SECONDS, you would
     // need to call this function as follows:
     //
     //     float time_delta_seconds = Config::get<float>("SIMULATOR.TIME_DELTA_SECONDS");

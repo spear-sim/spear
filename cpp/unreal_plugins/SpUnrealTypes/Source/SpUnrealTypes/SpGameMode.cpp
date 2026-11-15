@@ -56,12 +56,11 @@ void ASpGameMode::PostLogin(APlayerController* new_player)
     SP_ASSERT(GetWorld());
     SP_ASSERT(new_player);
 
-    // Set the stable name for the DefaultPawnClass instance so we can find it later. We only do this if the
-    // pawn is non-null (it is possible for pawn to be null if we press "Simulate" in the editor), and if the
-    // pawn has a USpStableNameComponent.
+    // Try to set the stable name for the DefaultPawnClass instance so we can find it later. We only do this
+    // if the pawn is non-null (it is possible for pawn to be null if we press "Simulate" in the editor).
     APawn* pawn = new_player->GetPawn();
     if (pawn) {
-        UnrealUtils::setStableName(pawn, "__SP_DEFAULT_PAWN__");
+        UnrealUtils::trySetStableName(pawn, "__SP_DEFAULT_PAWN__");
     }
 
     // Spawn custom debug camera.

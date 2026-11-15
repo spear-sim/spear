@@ -189,7 +189,8 @@ Concrete kwargs and return shapes for common helpers. See `examples/getting_star
 - `find_actors_by_name(actor_name="my_light", uclass="ASpotLight")` → List (single `actor_name` string, not a list). `actor_name` is the stable name (e.g., `"Meshes/05_chair/LivingRoom_Chair_01"`), not the Unreal name (e.g., `"SM_chair_living_2"`).
 - `find_actor_by_name(actor_name="my_light", uclass="ASpotLight")` → Single actor (asserts exactly one match). `actor_name` is the stable name, same as above.
 - `load_class(uclass="AActor", name="/SpContent/Blueprints/BP_Axes.BP_Axes_C")` → UClass object that can be passed to other functions as a `uclass=` kwarg. Use when the shorthand `uclass="ASpotLight"` form won't resolve (e.g., for Blueprint classes).
-- `set_stable_name_for_actor(actor=my_actor, stable_name="my_light")` → None.
+- `set_stable_name_for_actor(actor=my_actor, stable_name="my_light")` → None. Asserts if the stable name can't be stored; check `can_set_stable_name_for_actor(actor=my_actor)` → bool first.
+- `try_set_stable_name_for_actor(actor=my_actor, stable_name="my_light")` → bool. Sets the stable name if possible and returns whether it was set.
 - `get_stable_name_for_actor(actor=my_actor, include_unreal_name=False)` → Stable-name string.
 - `get_component_by_class(actor=my_actor, uclass="USpotLightComponent")` → Component (asserts exactly one).
 - `get_components_by_class(actor=my_actor, uclass="UStaticMeshComponent")` → List of components.

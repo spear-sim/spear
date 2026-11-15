@@ -51,7 +51,7 @@ std::vector<uint64_t> SpArrayShapeUtils::getShape(const std::vector<int64_t>& sh
 
     // We know shape_non_wildcard is non-empty here, so we can compute the total number of elements
     // implied by non-wildcard values by accumulating.
-    uint64_t num_elements_non_wildcard = std::accumulate(shape_non_wildcard.begin(), shape_non_wildcard.end(), 1, std::multiplies<uint64_t>());
+    uint64_t num_elements_non_wildcard = std::accumulate(shape_non_wildcard.begin(), shape_non_wildcard.end(), static_cast<uint64_t>(1), std::multiplies<uint64_t>());
 
     // If num_elements_non_wildcard is 0, then 0 is the only value for num_elements that matches
     // shape, and we can choose any wildcard value we want, so we choose 0 for simplicity. Otherwise,
@@ -92,7 +92,7 @@ void SpPackedArray::resolve(const SpArraySharedMemoryView& shared_memory_view)
 
     uint64_t num_elements = 0;
     if (!shape_.empty()) {
-        num_elements = std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<uint64_t>());
+        num_elements = std::accumulate(shape_.begin(), shape_.end(), static_cast<uint64_t>(1), std::multiplies<uint64_t>());
     }
 
     // validate consistency of internal state and shared memory state
@@ -111,7 +111,7 @@ void SpPackedArray::validate(SpArraySharedMemoryUsageFlags usage_flags) const
 
     uint64_t num_elements = 0;
     if (!shape_.empty()) {
-        num_elements = std::accumulate(shape_.begin(), shape_.end(), 1, std::multiplies<uint64_t>());
+        num_elements = std::accumulate(shape_.begin(), shape_.end(), static_cast<uint64_t>(1), std::multiplies<uint64_t>());
     }
 
     switch (data_source_) {
@@ -133,7 +133,7 @@ void SpPackedArray::validate(SpArraySharedMemoryUsageFlags usage_flags) const
             SP_ASSERT(shared_memory_name_ == "");
             SP_ASSERT(shared_memory_usage_flags_ == SpArraySharedMemoryUsageFlags::DoNotUse);
 
-            if (num_elements > 0) {
+            if (num_elements == 0) {
                 SP_ASSERT(!view_);
             } else {
                 SP_ASSERT(view_);

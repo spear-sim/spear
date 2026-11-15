@@ -217,7 +217,7 @@ private:
     void createAndRegisterProxyComponentsImpl(const std::map<std::string, TComponent*>& components)
     {
         for (auto& [name, component] : components) {
-            if (Config::isInitialized() && Config::get<bool>("SP_CORE.MESH_PROXY_COMPONENT_MANAGER.VERBOSE")) {
+            if (Config::isInitialized() && Config::get<bool>("SP_CORE.PROXY_COMPONENT_MANAGER.VERBOSE")) {
                 SP_LOG("Creating component: ", name);
             }
 
@@ -232,7 +232,7 @@ private:
             TComponent* proxy_component = createComponent<TComponent>(getPtr()->getOwner(), component, proxy_component_name);
             SP_ASSERT(proxy_component);
 
-            if (Config::isInitialized() && Config::get<bool>("SP_CORE.MESH_PROXY_COMPONENT_MANAGER.VERBOSE")) {
+            if (Config::isInitialized() && Config::get<bool>("SP_CORE.PROXY_COMPONENT_MANAGER.VERBOSE")) {
                 SP_LOG("Registering component: ", name);
             }
 

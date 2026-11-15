@@ -26,7 +26,7 @@ public:
     //     SIMULATOR:
     //         TIME_DELTA_SECONDS: 0.1
     //
-    // and you want to access to access the configuration parameter SIMULATOR.TIME_DELTA_SECONDS, you would
+    // and you want to access the configuration parameter SIMULATOR.TIME_DELTA_SECONDS, you would
     // need to call this function as follows:
     //
     //     float time_delta_seconds = Yaml::get<float>(node, "SIMULATOR.TIME_DELTA_SECONDS");

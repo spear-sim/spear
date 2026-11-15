@@ -27,7 +27,7 @@ class SegmentationService(spear.Service):
         if len(proxy_component_managers) == 0:
             spear.log("No proxy component manager detected, spawning...")
             self.proxy_component_manager = self.unreal_service.spawn_actor(uclass="ASpObjectIdsProxyComponentManager", spawn_parameters={"ObjectFlags": ["RF_Transient"]})
-            self.unreal_service.set_stable_name_for_actor(actor=self.proxy_component_manager, stable_name=_SP_OBJECT_IDS_PROXY_COMPONENT_MANAGER_NAME)
+            self.unreal_service.try_set_stable_name_for_actor(actor=self.proxy_component_manager, stable_name=_SP_OBJECT_IDS_PROXY_COMPONENT_MANAGER_NAME)
             self.proxy_component_manager.Initialize()
             spear.log("Finished spawning.")
         elif len(proxy_component_managers) == 1:

@@ -5,10 +5,14 @@
 
 #include "SpCore/UnrealUtils.h"
 
-#include <cstdlib> // std::atoi
+#include <stddef.h> // size_t
+
+#include <charconv>     // std::from_chars
 #include <map>
-#include <ranges>  // std::views::filter, std::views::transform
+#include <ranges>       // std::views::filter, std::views::transform
 #include <string>
+#include <system_error> // std::errc
+#include <utility>      // std::make_pair, std::pair
 #include <vector>
 
 #include <Components/ActorComponent.h>
@@ -21,11 +25,12 @@
 #include <Engine/Engine.h>            // GEngine
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>             // TCHAR, uint16
+#include <HAL/UnrealMemory.h>         // FMemory
 #include <JsonObjectConverter.h>
 #include <Serialization/JsonReader.h>
 #include <Serialization/JsonSerializer.h>
 #include <Templates/Casts.h>
-#include <Templates/SharedPointer.h>  // TSharedPtr, TSharedRef
+#include <Templates/SharedPointer.h>  // MakeShared, TSharedPtr, TSharedRef
 #include <Templates/UnrealTemplate.h> // TGuardValue
 #include <UObject/Class.h>            // EIncludeSuperFlag, UClass, UScriptStruct, UStruct
 #include <UObject/NameTypes.h>        // FName
@@ -55,9 +60,9 @@ std::vector<UScriptStruct*> UnrealUtils::findStaticStructs()
     return findStaticStructsByType<UScriptStruct>();
 }
 
-std::map<std::string, UScriptStruct*> UnrealUtils::findStaticStructsAsMap()
+std::map<std::string, UScriptStruct*> UnrealUtils::findStaticStructsAsMap(bool include_path)
 {
-    return toMap(findStaticStructs());
+    return toMap(findStaticStructs(), include_path);
 }
 
 //
@@ -69,9 +74,9 @@ std::vector<UClass*> UnrealUtils::findStaticClasses()
     return findStaticStructsByType<UClass>();
 }
 
-std::map<std::string, UClass*> UnrealUtils::findStaticClassesAsMap()
+std::map<std::string, UClass*> UnrealUtils::findStaticClassesAsMap(bool include_path)
 {
-    return toMap(findStaticClasses());
+    return toMap(findStaticClasses(), include_path);
 }
 
 std::vector<UClass*> UnrealUtils::getDerivedClasses(UClass* uclass, bool recursive)
@@ -81,9 +86,9 @@ std::vector<UClass*> UnrealUtils::getDerivedClasses(UClass* uclass, bool recursi
     return Unreal::toStdVector(derived_uclasses);
 }
 
-std::map<std::string, UClass*> UnrealUtils::getDerivedClassesAsMap(UClass* uclass, bool recursive)
+std::map<std::string, UClass*> UnrealUtils::getDerivedClassesAsMap(UClass* uclass, bool recursive, bool include_path)
 {
-    return toMap(getDerivedClasses(uclass, recursive));
+    return toMap(getDerivedClasses(uclass, recursive), include_path);
 }
 
 //
@@ -170,16 +175,16 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
     SP_ASSERT(GEngine->GetWorldContextFromWorld(world));
 
     //
-    // If we call any function on a CDO, and the CDO's class is declared as a Within=World class, and the
-    // world is a PIE world, then we will get a benign error message in the editor. To avoid this error
-    // message, the solution is to wrap the function call in another UFUNCTION that isn't defined on a Within=World
-    // class.
+    // If we call any function on a CDO, and the CDO's class is declared with a Within specifier (e.g.,
+    // Within=World), and the world is a PIE world, then we will get a benign error message in the editor. To
+    // avoid this error message, the solution is to wrap the function call in another UFUNCTION that is defined
+    // on a class that isn't declared with a Within specifier.
     //
 
     if (uobject->HasAnyFlags(RF_ClassDefaultObject) && world->IsEditorWorld() && world->IsGameWorld()) {
         UClass* uclass = uobject->GetClass();
         if (uclass->ClassWithin && uclass->ClassWithin != UObject::StaticClass()) {
-            SP_LOG("WARNING: Calling any function on a CDO will generate a benign error message in the editor if: (1) the CDO's class is declared as Within=Anything; and (2) the world is a PIE world. To avoid this error message, wrap the function call in another UFUNCTION that isn't defined on a Within=World class..");
+            SP_LOG("WARNING: Calling any function on a CDO will generate a benign error message in the editor if: (1) the CDO's class is declared with a Within specifier (e.g., Within=World); and (2) the world is a PIE world. To avoid this error message, wrap the function call in another UFUNCTION that is defined on a class that isn't declared with a Within specifier.");
         }
     }
 
@@ -237,10 +242,10 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
         // arg, then set the property using the input world pointer instead of using a string in args, and
         // make sure the property name is not also present in args. Strictly speaking, we could assign the
         // world pointer directly to *(property_desc.value_ptr), but this could lead to undefined behavior
-        // if the property is not actually a UObject pointer. So we assign via setPropertValueFromString(...),
+        // if the property is not actually a UObject pointer. So we assign via setPropertyValueFromString(...),
         // because it provides well-defined behavior in all cases. Either the assignment is possible
-        // according to Unreal's JSON assignment rules, in which case setPropertValueFromString(...) will
-        // perform the assignment, or the assignment is not possible, in which case setPropertValueFromString(...)
+        // according to Unreal's JSON assignment rules, in which case setPropertyValueFromString(...) will
+        // perform the assignment, or the assignment is not possible, in which case setPropertyValueFromString(...)
         // will assert.
 
         if (property_name == world_context_object) {
@@ -416,6 +421,12 @@ void UnrealUtils::setObjectPropertiesFromString(void* value_ptr, const UStruct* 
     SP_ASSERT(value_ptr);
     SP_ASSERT(ustruct);
 
+    // FJsonObjectConverter::JsonObjectToUStruct(...) can modify any number of properties, so we send a
+    // whole-object edit-change notification by passing nullptr to PreEditChange(...) and by calling
+    // PostEditChange(), which calls PostEditChangeProperty(...) with an FPropertyChangedEvent whose property is
+    // nullptr. This is in contrast to setPropertyValueFromString(...), which sends a notification for a specific
+    // property chain.
+
     #if WITH_EDITOR // defined in an auto-generated header
         if (notify_object) {
             notify_object->PreEditChange(nullptr);
@@ -433,8 +444,7 @@ void UnrealUtils::setObjectPropertiesFromString(void* value_ptr, const UStruct* 
 
     #if WITH_EDITOR // defined in an auto-generated header
         if (notify_object) {
-            FPropertyChangedEvent property_changed_event(nullptr);
-            notify_object->PostEditChangeProperty(property_changed_event);
+            notify_object->PostEditChange();
         }
     #endif
 }
@@ -522,7 +532,7 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
         notify_object = parent.notify_objects_.back();
     }
 
-    std::vector<std::string> property_names = Std::tokenize(property_name, ".");
+    std::vector<std::pair<std::string, std::string>> path_elements = parsePropertyPath(property_name);
 
     SpPropertyDesc property_desc;
     property_desc.value_ptr_ = value_ptr;
@@ -535,13 +545,11 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
 
     UObject* current_object = notify_object; // base object for the current step; changes at each object traversal
 
-    for (int i = 0; i < property_names.size(); i++) {
+    for (int i = 0; i < path_elements.size(); i++) {
 
-        std::string& name = property_names.at(i);
-        std::vector<std::string> name_tokens = Std::tokenize(name, "[]");
-        SP_ASSERT(name_tokens.size() >= 1 && name_tokens.size() <= 2);
+        const auto& [name, index_string] = path_elements.at(i);
 
-        property_desc.property_ = ustruct->FindPropertyByName(Unreal::toFName(name_tokens.at(0)));
+        property_desc.property_ = ustruct->FindPropertyByName(Unreal::toFName(name));
         SP_ASSERT(property_desc.property_);
         property_desc.type_id_ = Unreal::getCppTypeAsString(property_desc.property_);
         SP_ASSERT(property_desc.type_id_ != "");
@@ -557,11 +565,11 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
 
         // If the current property is an array or map property, and the name includes the index operator,
         // then update the current property to refer to the array or map element based on the index. For map
-        // properties, we expect an index string that is enclosed enclosed in "" quotes if the key type is a
-        // string, and not enclosed in quotes otherwise. The index string must exactly match whatever is
-        // returned by getPropertyValueAsString(...) for the key.
+        // properties, we expect an index string that is a JSON string literal enclosed in "" quotes if the key
+        // type is quoted in JSON (e.g., FString, FName, enum), and not enclosed in quotes otherwise (e.g.,
+        // bool, int). See parsePropertyPath(...) for details.
 
-        if (property_desc.property_->IsA(FArrayProperty::StaticClass()) && name_tokens.size() == 2) {
+        if (property_desc.property_->IsA(FArrayProperty::StaticClass()) && !index_string.empty()) {
 
             FArrayProperty* array_property = static_cast<FArrayProperty*>(property_desc.property_);
             FScriptArrayHelper array_helper(array_property, property_desc.value_ptr_);
@@ -571,16 +579,23 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
             property_desc.type_id_ = Unreal::getCppTypeAsString(property_desc.property_);
             SP_ASSERT(property_desc.type_id_ != "");
 
-            int index = std::atoi(name_tokens.at(1).c_str());
+            // Require the index string to be a non-negative decimal integer with no other characters.
+
+            int index = -1;
+            auto [ptr, error_code] = std::from_chars(index_string.data(), index_string.data() + index_string.size(), index);
+            SP_ASSERT(error_code == std::errc());
+            SP_ASSERT(ptr == index_string.data() + index_string.size());
+            SP_ASSERT(index >= 0);
             SP_ASSERT(index < array_helper.Num());
-            property_desc.value_ptr_ = array_property->GetValueAddressAtIndex_Direct(property_desc.property_, property_desc.value_ptr_, index);
+
+            property_desc.value_ptr_ = array_helper.GetRawPtr(index);
             SP_ASSERT(property_desc.value_ptr_);
 
             property_desc.notify_element_properties_.push_back(array_property->Inner);
             property_desc.notify_array_indices_.push_back(index);
             property_desc.notify_map_keys_.push_back("");
 
-        } else if (property_desc.property_->IsA(FMapProperty::StaticClass()) && name_tokens.size() == 2) {
+        } else if (property_desc.property_->IsA(FMapProperty::StaticClass()) && !index_string.empty()) {
 
             FMapProperty* map_property = static_cast<FMapProperty*>(property_desc.property_);
             FScriptMapHelper map_helper(map_property, property_desc.value_ptr_);
@@ -590,49 +605,59 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
             property_desc.type_id_ = Unreal::getCppTypeAsString(property_desc.property_);
             SP_ASSERT(property_desc.type_id_ != "");
 
-            bool found = false;
-            for (int j = 0; j < map_helper.Num(); j++) {
-                SpPropertyDesc inner_key_property_desc;
-                inner_key_property_desc.property_ = map_property->KeyProp;
-                SP_ASSERT(inner_key_property_desc.property_);
-                inner_key_property_desc.type_id_ = Unreal::getCppTypeAsString(inner_key_property_desc.property_);
-                SP_ASSERT(inner_key_property_desc.type_id_ != "");
-                inner_key_property_desc.value_ptr_ = map_property->GetValueAddressAtIndex_Direct(map_property->KeyProp, property_desc.value_ptr_, j);
-                SP_ASSERT(inner_key_property_desc.value_ptr_);
+            // If the key type is quoted in JSON, then we expect the index string to be a JSON string literal, so
+            // we deserialize it to remove the enclosing quotes and unescape any escaped characters. Otherwise, we
+            // expect the index string to be unquoted, so we use it directly. FJsonSerializer::Deserialize(...)
+            // can't deserialize a top-level scalar value, so we wrap the index string in a single-element array.
 
-                SpPropertyValue inner_key_property_value = getPropertyValueAsString(inner_key_property_desc);
-                std::string inner_key_string = inner_key_property_value.value_;
-
-                // If the key type is a string, then we expect the index string to be enclosed in quotes,
-                // otherwise we expect it not to be enclosed in quotes.
-                if (inner_key_property_desc.property_->IsA(FBoolProperty::StaticClass()) ||
-                    inner_key_property_desc.property_->IsA(FIntProperty::StaticClass()) ||
-                    inner_key_property_desc.property_->IsA(FByteProperty::StaticClass()) ||
-                    inner_key_property_desc.property_->IsA(FEnumProperty::StaticClass())) {
-                    if (name_tokens.at(1) == inner_key_string) {
-                        found = true;
-                    }
-                } else if (inner_key_property_desc.property_->IsA(FStrProperty::StaticClass())) {
-                    if (name_tokens.at(1) == "\"" + inner_key_string + "\"") {
-                        found = true;
-                    }
-                } else {
-                    SP_LOG(name, " has an unsupported key type: ", Unreal::toStdString(map_property->KeyProp->GetClass()->GetName()));
-                    SP_ASSERT(false);
-                }
-                if (found) {
-                    property_desc.value_ptr_ = map_property->GetValueAddressAtIndex_Direct(map_property->ValueProp, property_desc.value_ptr_, j);
-                    SP_ASSERT(property_desc.value_ptr_);
-                    break;
-                }
+            FProperty* key_property = map_property->KeyProp;
+            SP_ASSERT(key_property);
+            TSharedPtr<FJsonValue> key_json_value;
+            if (getQuoteStringForProperty(key_property).empty()) {
+                SP_ASSERT(!index_string.starts_with("\""));
+                key_json_value = MakeShared<FJsonValueString>(Unreal::toFString(index_string));
+            } else {
+                SP_ASSERT(index_string.starts_with("\""));
+                bool success = false;
+                TArray<TSharedPtr<FJsonValue>> json_values;
+                TSharedRef<TJsonReader<>> json_reader = TJsonReaderFactory<>::Create(Unreal::toFString("[" + index_string + "]"));
+                success = FJsonSerializer::Deserialize(json_reader, json_values);
+                SP_ASSERT(success);
+                SP_ASSERT(json_values.Num() == 1);
+                key_json_value = json_values[0];
+                SP_ASSERT(key_json_value.IsValid());
+                SP_ASSERT(key_json_value->Type == EJson::String);
             }
-            SP_ASSERT(found);
+
+            // Import the key string into temporary storage and find the key in the map, to match how we
+            // import map keys in setPropertyValueFromJsonValue(...) and how FMapProperty::ImportText_Internal(...)
+            // finds existing keys. FindMapIndexWithKey(...) expects a pointer to a key-value pair, but the key is
+            // stored at offset 0 in each pair, so we only need temporary storage for the key.
+
+            uint8* temp_key_ptr = static_cast<uint8*>(FMemory::Malloc(key_property->GetElementSize()));
+            key_property->InitializeValue(temp_key_ptr);
+            SpPropertyDesc key_property_desc;
+            key_property_desc.property_ = key_property;
+            key_property_desc.value_ptr_ = temp_key_ptr;
+            setPropertyValueFromJsonValue(key_property_desc, key_json_value);
+            int32 index = map_helper.FindMapIndexWithKey(temp_key_ptr);
+            key_property->DestroyValue(temp_key_ptr);
+            FMemory::Free(temp_key_ptr);
+
+            if (index == INDEX_NONE) {
+                SP_LOG(property_name, " refers to a key that isn't in the map.");
+                SP_ASSERT(false);
+            }
+
+            property_desc.value_ptr_ = map_helper.GetValuePtr(index);
+            SP_ASSERT(property_desc.value_ptr_);
 
             property_desc.notify_element_properties_.push_back(map_property->ValueProp);
             property_desc.notify_array_indices_.push_back(-1);
-            property_desc.notify_map_keys_.push_back(name_tokens.at(1));
+            property_desc.notify_map_keys_.push_back(index_string);
 
         } else {
+            SP_ASSERT(index_string.empty()); // the index operator is only supported for array and map properties
             property_desc.notify_element_properties_.push_back(nullptr);
             property_desc.notify_array_indices_.push_back(-1);
             property_desc.notify_map_keys_.push_back("");
@@ -644,7 +669,7 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
         // refers to an object. In contrast, if the current property name is the last name in our sequence,
         // then there is nothing more to do, because we have already filled in our SpPropertyDesc object.
 
-        if (i < property_names.size() - 1) {
+        if (i < path_elements.size() - 1) {
             if (property_desc.property_->IsA(FObjectProperty::StaticClass())) {
                 FObjectProperty* object_property = static_cast<FObjectProperty*>(property_desc.property_);
                 UObject* uobject = object_property->GetObjectPropertyValue(property_desc.value_ptr_);
@@ -796,7 +821,7 @@ SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& prop
 
     SpPropertyValue property_value;
 
-    // Set type_id_ from the inpput desc
+    // Set type_id_ from the input desc
     property_value.type_id_ = property_desc.type_id_;
 
     // We need a special case for FStructProperty in this code block, but not in setPropertyValueFromString(...)
@@ -804,7 +829,7 @@ SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& prop
     // the other hand, the equivalent code block in setPropertyValueFromString(...) doesn't need to call
     // TryGetString(), so it also behaves correctly for structs.
 
-    // See Engine/Source/Editor/Kismet/Internal/Reflection/FunctionUtilsPrivate.h for an exaustive
+    // See Engine/Source/Editor/Kismet/Internal/Reflection/FunctionUtilsPrivate.h for an exhaustive
     // enumeration of all possible property types. For now, we only handle the property types that have come
     // up in practice in our experiments.
 
@@ -867,7 +892,7 @@ SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& prop
             inner_property_desc.property_ = inner_property;
             inner_property_desc.type_id_ = Unreal::getCppTypeAsString(inner_property_desc.property_);
             SP_ASSERT(inner_property_desc.type_id_ != "");
-            inner_property_desc.value_ptr_ = array_property->GetValueAddressAtIndex_Direct(inner_property, property_desc.value_ptr_, i);
+            inner_property_desc.value_ptr_ = array_helper.GetRawPtr(i);
             SP_ASSERT(inner_property_desc.value_ptr_);
             std::string inner_string = getPropertyValueAsString(inner_property_desc).value_;
             inner_strings.push_back(inner_string);
@@ -884,12 +909,12 @@ SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& prop
         SP_ASSERT(inner_property);
 
         std::vector<std::string> inner_strings;
-        for (int i = 0; i < set_helper.Num(); i++) {
+        for (FScriptSetHelper::FIterator itr(set_helper); itr; ++itr) {
             SpPropertyDesc inner_property_desc;
             inner_property_desc.property_ = inner_property;
             inner_property_desc.type_id_ = Unreal::getCppTypeAsString(inner_property_desc.property_);
             SP_ASSERT(inner_property_desc.type_id_ != "");
-            inner_property_desc.value_ptr_ = set_property->GetValueAddressAtIndex_Direct(inner_property, property_desc.value_ptr_, i);
+            inner_property_desc.value_ptr_ = set_helper.GetElementPtr(itr);
             SP_ASSERT(inner_property_desc.value_ptr_);
             std::string inner_string = getPropertyValueAsString(inner_property_desc).value_;
             inner_strings.push_back(inner_string);
@@ -909,12 +934,12 @@ SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& prop
 
         std::vector<std::string> inner_key_strings;
         std::vector<std::string> inner_value_strings;
-        for (int i = 0; i < map_helper.Num(); i++) {
+        for (FScriptMapHelper::FIterator itr(map_helper); itr; ++itr) {
             SpPropertyDesc inner_key_property_desc;
             inner_key_property_desc.property_ = inner_key_property;
             inner_key_property_desc.type_id_ = Unreal::getCppTypeAsString(inner_key_property_desc.property_);
             SP_ASSERT(inner_key_property_desc.type_id_ != "");
-            inner_key_property_desc.value_ptr_ = map_property->GetValueAddressAtIndex_Direct(inner_key_property, property_desc.value_ptr_, i);
+            inner_key_property_desc.value_ptr_ = map_helper.GetKeyPtr(itr);
             SP_ASSERT(inner_key_property_desc.value_ptr_);
             std::string inner_key_string = getPropertyValueAsString(inner_key_property_desc).value_;
             inner_key_strings.push_back(inner_key_string);
@@ -923,7 +948,7 @@ SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& prop
             inner_value_property_desc.property_ = inner_value_property;
             inner_value_property_desc.type_id_ = Unreal::getCppTypeAsString(inner_value_property_desc.property_);
             SP_ASSERT(inner_value_property_desc.type_id_ != "");
-            inner_value_property_desc.value_ptr_ = map_property->GetValueAddressAtIndex_Direct(inner_value_property, property_desc.value_ptr_, i);
+            inner_value_property_desc.value_ptr_ = map_helper.GetValuePtr(itr);
             SP_ASSERT(inner_value_property_desc.value_ptr_);
             std::string inner_value_string = getPropertyValueAsString(inner_value_property_desc).value_;
             inner_value_strings.push_back(inner_value_string);
@@ -969,8 +994,14 @@ void UnrealUtils::setPropertyValueFromString(const SpPropertyDesc& property_desc
 
     std::string quote_string = getQuoteStringForProperty(property_desc.property_);
 
+    // FString and FName values can contain arbitrary characters, so we need to escape them to construct a
+    // well-formed JSON string. We don't need to escape the other quoted property types, because their values
+    // can't contain characters that need escaping: enum values are C++ identifiers, soft object values are
+    // object paths, and object and interface values are hexadecimal pointer strings. For these types, we
+    // assert that no characters need escaping.
+
     std::string json_string;
-    if (property_desc.property_->IsA(FStrProperty::StaticClass())) {
+    if (property_desc.property_->IsA(FStrProperty::StaticClass()) || property_desc.property_->IsA(FNameProperty::StaticClass())) {
         json_string = getJsonString(string);
     } else if (!quote_string.empty()) {
         std::string special_chars = "\"\\\n\r\t\b\f";
@@ -987,12 +1018,15 @@ void UnrealUtils::setPropertyValueFromString(const SpPropertyDesc& property_desc
     // recover the exact value for scalars and for container elements, which are parsed here before those
     // cases run. Other numeric types are unaffected.
 
-    TSharedRef<TJsonReader<>> json_reader = TJsonReaderFactory<>::Create(Unreal::toFString("{ \"dummy\": " + quote_string + json_string + quote_string + " }"));
-    TSharedPtr<FJsonObject> json_object;
-    success = FJsonSerializer::Deserialize(json_reader, json_object, FJsonSerializer::EFlags::StoreNumbersAsStrings);
+    // FJsonSerializer::Deserialize(...) can't deserialize a top-level scalar value, so we wrap our value in a
+    // single-element JSON array and extract the element.
+
+    TSharedRef<TJsonReader<>> json_reader = TJsonReaderFactory<>::Create(Unreal::toFString("[" + quote_string + json_string + quote_string + "]"));
+    TArray<TSharedPtr<FJsonValue>> json_values;
+    success = FJsonSerializer::Deserialize(json_reader, json_values, FJsonSerializer::EFlags::StoreNumbersAsStrings);
     SP_ASSERT(success);
-    SP_ASSERT(json_object.IsValid());
-    TSharedPtr<FJsonValue> json_value = json_object.Get()->TryGetField(Unreal::toFString("dummy"));
+    SP_ASSERT(json_values.Num() == 1);
+    TSharedPtr<FJsonValue> json_value = json_values[0];
     SP_ASSERT(json_value.IsValid());
 
     setPropertyValueFromJsonValue(property_desc, json_value, notify_editor);
@@ -1013,7 +1047,7 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
     // We don't need a special case for FStructProperty in this code block, but we do in getPropertyValueAsString(...).
     // See the discussion above for details.
 
-    // See Engine/Source/Editor/Kismet/Internal/Reflection/FunctionUtilsPrivate.h for an exaustive
+    // See Engine/Source/Editor/Kismet/Internal/Reflection/FunctionUtilsPrivate.h for an exhaustive
     // enumeration of all possible property types. For now, we only handle the property types that have come
     // up in practice in our experiments.
 
@@ -1080,14 +1114,16 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
 
         for (int i = 0; i < json_values->Num(); i++) {
             TSharedPtr<FJsonValue> inner_json_value = (*json_values)[i];
-            SP_ASSERT(inner_json_value.IsValid());
 
-            SpPropertyDesc inner_property_desc;
-            inner_property_desc.property_ = inner_property;
-            inner_property_desc.value_ptr_ = array_property->GetValueAddressAtIndex_Direct(inner_property, property_desc.value_ptr_, i);
-            SP_ASSERT(inner_property_desc.value_ptr_);
+            // Skip null elements, leaving them default-initialized, to match FJsonObjectConverter::JsonValueToUProperty(...).
+            if (inner_json_value.IsValid() && !inner_json_value->IsNull()) {
+                SpPropertyDesc inner_property_desc;
+                inner_property_desc.property_ = inner_property;
+                inner_property_desc.value_ptr_ = array_helper.GetRawPtr(i);
+                SP_ASSERT(inner_property_desc.value_ptr_);
 
-            setPropertyValueFromJsonValue(inner_property_desc, inner_json_value);
+                setPropertyValueFromJsonValue(inner_property_desc, inner_json_value);
+            }
         }
 
     } else if (property_desc.property_->IsA(FSetProperty::StaticClass())) {
@@ -1104,19 +1140,36 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
         FProperty* inner_property = set_property->ElementProp;
         SP_ASSERT(inner_property);
 
+        // Import each element into temporary storage and only add it to the set if it isn't already present,
+        // to match FSetProperty::ImportText_Internal(...). FindElementIndex(...) does a linear search that
+        // doesn't depend on the hash, so it is safe to call before Rehash().
+        uint8* temp_element_ptr = static_cast<uint8*>(FMemory::Malloc(inner_property->GetElementSize()));
+
         for (int i = 0; i < json_values->Num(); i++) {
             TSharedPtr<FJsonValue> inner_json_value = (*json_values)[i];
-            SP_ASSERT(inner_json_value.IsValid());
 
-            int32 index = set_helper.AddDefaultValue_Invalid_NeedsRehash();
+            // Skip null elements to match FJsonObjectConverter::JsonValueToUProperty(...).
+            if (inner_json_value.IsValid() && !inner_json_value->IsNull()) {
+                inner_property->InitializeValue(temp_element_ptr);
 
-            SpPropertyDesc inner_property_desc;
-            inner_property_desc.property_ = inner_property;
-            inner_property_desc.value_ptr_ = set_helper.GetElementPtr(index);
-            SP_ASSERT(inner_property_desc.value_ptr_);
+                SpPropertyDesc inner_property_desc;
+                inner_property_desc.property_ = inner_property;
+                inner_property_desc.value_ptr_ = temp_element_ptr;
 
-            setPropertyValueFromJsonValue(inner_property_desc, inner_json_value);
+                setPropertyValueFromJsonValue(inner_property_desc, inner_json_value);
+
+                if (set_helper.FindElementIndex(temp_element_ptr) == INDEX_NONE) {
+                    int32 index = set_helper.AddDefaultValue_Invalid_NeedsRehash();
+                    uint8* element_ptr = set_helper.GetElementPtr(index);
+                    SP_ASSERT(element_ptr);
+                    inner_property->CopyCompleteValue(element_ptr, temp_element_ptr);
+                }
+
+                inner_property->DestroyValue(temp_element_ptr);
+            }
         }
+
+        FMemory::Free(temp_element_ptr);
 
         set_helper.Rehash();
 
@@ -1127,11 +1180,6 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
         success = json_value->TryGetObject(json_object);
         SP_ASSERT(success);
         SP_ASSERT(json_object->IsValid());
-        TArray<FString> json_keys;
-        TArray<TSharedPtr<FJsonValue>> json_values;
-        json_object->Get()->Values.GenerateKeyArray(json_keys);
-        json_object->Get()->Values.GenerateValueArray(json_values);
-        SP_ASSERT(json_keys.Num() == json_values.Num());
 
         FMapProperty* map_property = static_cast<FMapProperty*>(property_desc.property_);
         FScriptMapHelper map_helper(map_property, property_desc.value_ptr_);
@@ -1142,28 +1190,45 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
         FProperty* inner_value_property = map_property->ValueProp;
         SP_ASSERT(inner_value_property);
 
-        for (int i = 0; i < json_values.Num(); i++) {
-            std::string json_key = Unreal::toStdString(json_keys[i]);
+        // Import each key into temporary storage and only add the key-value pair to the map if the key isn't
+        // already present, e.g., if "1" and "01" are both keys in the input JSON object for an int32 key type, to
+        // match FMapProperty::ImportText_Internal(...). FindMapIndexWithKey(...) does a linear search that doesn't
+        // depend on the hash, so it is safe to call before Rehash(). The key is stored at offset 0 in each pair, so
+        // we only need temporary storage for the key.
+        uint8* temp_key_ptr = static_cast<uint8*>(FMemory::Malloc(inner_key_property->GetElementSize()));
 
-            int32 index = map_helper.AddDefaultValue_Invalid_NeedsRehash();
+        for (auto& [json_key, inner_json_value] : json_object->Get()->Values) {
 
-            SpPropertyDesc inner_key_property_desc;
-            inner_key_property_desc.property_ = inner_key_property;
-            inner_key_property_desc.value_ptr_ = map_helper.GetKeyPtr(index);
-            SP_ASSERT(inner_key_property_desc.value_ptr_);
+            // Skip null values to match FJsonObjectConverter::JsonValueToUProperty(...).
+            if (inner_json_value.IsValid() && !inner_json_value->IsNull()) {
+                inner_key_property->InitializeValue(temp_key_ptr);
 
-            setPropertyValueFromString(inner_key_property_desc, json_key);
+                // Wrap the key in an FJsonValueString to match FJsonObjectConverter::JsonValueToUProperty(...).
+                SpPropertyDesc inner_key_property_desc;
+                inner_key_property_desc.property_ = inner_key_property;
+                inner_key_property_desc.value_ptr_ = temp_key_ptr;
 
-            TSharedPtr<FJsonValue> inner_json_value = json_values[i];
-            SP_ASSERT(inner_json_value.IsValid());
+                setPropertyValueFromJsonValue(inner_key_property_desc, MakeShared<FJsonValueString>(json_key));
 
-            SpPropertyDesc inner_value_property_desc;
-            inner_value_property_desc.property_ = inner_value_property;
-            inner_value_property_desc.value_ptr_ = map_helper.GetValuePtr(index);
-            SP_ASSERT(inner_value_property_desc.value_ptr_);
+                if (map_helper.FindMapIndexWithKey(temp_key_ptr) == INDEX_NONE) {
+                    int32 index = map_helper.AddDefaultValue_Invalid_NeedsRehash();
+                    uint8* key_ptr = map_helper.GetKeyPtr(index);
+                    SP_ASSERT(key_ptr);
+                    inner_key_property->CopyCompleteValue(key_ptr, temp_key_ptr);
 
-            setPropertyValueFromJsonValue(inner_value_property_desc, inner_json_value);
+                    SpPropertyDesc inner_value_property_desc;
+                    inner_value_property_desc.property_ = inner_value_property;
+                    inner_value_property_desc.value_ptr_ = map_helper.GetValuePtr(index);
+                    SP_ASSERT(inner_value_property_desc.value_ptr_);
+
+                    setPropertyValueFromJsonValue(inner_value_property_desc, inner_json_value);
+                }
+
+                inner_key_property->DestroyValue(temp_key_ptr);
+            }
         }
+
+        FMemory::Free(temp_key_ptr);
 
         map_helper.Rehash();
 
@@ -1298,6 +1363,9 @@ std::string UnrealUtils::getStableName(const AActor* actor, bool include_unreal_
 
     } else {
 
+        // If there are multiple USpStableNameComponents, then it is ambiguous which one we should get the
+        // stable name from, so we require there to be at most one.
+
         std::vector<USpStableNameComponent*> sp_stable_name_components = getComponentsByType<USpStableNameComponent>(actor);
         SP_ASSERT(sp_stable_name_components.size() <= 1);
 
@@ -1312,7 +1380,11 @@ std::string UnrealUtils::getStableName(const AActor* actor, bool include_unreal_
 
         } else {
 
+            // If there are multiple ASpStableNameManagers, then it is ambiguous which one we should get the
+            // stable name from, so we require there to be at most one.
+
             std::vector<ASpStableNameManager*> sp_stable_name_managers = findActorsByType<ASpStableNameManager>(actor->GetWorld());
+            SP_ASSERT(sp_stable_name_managers.size() <= 1);
 
             // Try to find an ASpStableNameManager.
 
@@ -1409,6 +1481,40 @@ std::string UnrealUtils::getStableName(const UActorComponent* component, bool in
     return stable_name;
 }
 
+bool UnrealUtils::canSetStableName(const AActor* actor)
+{
+    SP_ASSERT(actor);
+
+    UWorld* world = actor->GetWorld();
+    SP_ASSERT(world);
+    SP_ASSERT(!world->IsPreviewWorld());
+    SP_ASSERT(GEngine->GetWorldContextFromWorld(world));
+
+    // If we're in the editor but outside of a PIE session, we can always set the folder path and actor label.
+
+    if (world->IsEditorWorld() && !world->IsGameWorld()) {
+        #if WITH_EDITOR // defined in an auto-generated header
+            return true;
+        #else
+            SP_ASSERT(false);
+            return false;
+        #endif
+
+    // Otherwise, we're either in a PIE game or a standalone game. In this case, we need a stateful interface
+    // to store the stable name.
+
+    } else {
+        std::vector<USpStableNameComponent*> sp_stable_name_components = getComponentsByType<USpStableNameComponent>(actor);
+
+        if (sp_stable_name_components.size() >= 1) {
+            return true;
+        } else {
+            std::vector<ASpStableNameManager*> sp_stable_name_managers = findActorsByType<ASpStableNameManager>(actor->GetWorld());
+            return sp_stable_name_managers.size() >= 1;
+        }
+    }
+}
+
 void UnrealUtils::setStableName(AActor* actor, const std::string& stable_name)
 {
     SP_ASSERT(actor);
@@ -1435,14 +1541,18 @@ void UnrealUtils::setStableName(AActor* actor, const std::string& stable_name)
     } else {
 
         std::vector<USpStableNameComponent*> sp_stable_name_components = getComponentsByType<USpStableNameComponent>(actor);
-        SP_ASSERT(sp_stable_name_components.size() <= 1);
 
-        // Try to find a UStableNameComponent on the actor.
+        // Try to find a UStableNameComponent on the actor. If there are multiple USpStableNameComponents, then
+        // we set the stable name on all of them. A user might temporarily add multiple USpStableNameComponents
+        // to an actor while editing, and we want to be tolerant of this transient state. Unlike setting a stable
+        // name, getting a stable name from multiple USpStableNameComponents is ambiguous, so getStableName(...)
+        // requires there to be at most one.
 
-        if (sp_stable_name_components.size() == 1) {
-            USpStableNameComponent* sp_stable_name_component = sp_stable_name_components.at(0);
-            SP_ASSERT(sp_stable_name_component);
-            sp_stable_name_component->setStableName(stable_name);
+        if (sp_stable_name_components.size() >= 1) {
+            for (auto sp_stable_name_component : sp_stable_name_components) {
+                SP_ASSERT(sp_stable_name_component);
+                sp_stable_name_component->setStableName(stable_name);
+            }
 
         // Otherwise, try various fallbacks.
 
@@ -1450,26 +1560,42 @@ void UnrealUtils::setStableName(AActor* actor, const std::string& stable_name)
 
             std::vector<ASpStableNameManager*> sp_stable_name_managers = findActorsByType<ASpStableNameManager>(actor->GetWorld());
 
-            // Try to find an ASpStableNameManager.
+            // Try to find an ASpStableNameManager. If there are multiple ASpStableNameManagers, then we set the
+            // stable name on all of them. A user might temporarily add multiple ASpStableNameManagers to a level
+            // while editing, and we want to be tolerant of this transient state. Unlike setting a stable name,
+            // getting a stable name from multiple ASpStableNameManagers is ambiguous, so getStableName(...)
+            // requires there to be at most one.
 
-            if (sp_stable_name_managers.size() == 1) {
-                ASpStableNameManager* sp_stable_name_manager = sp_stable_name_managers.at(0);
-                SP_ASSERT(sp_stable_name_manager);
+            if (sp_stable_name_managers.size() >= 1) {
+                for (auto sp_stable_name_manager : sp_stable_name_managers) {
+                    SP_ASSERT(sp_stable_name_manager);
 
-                // If the actor is registered with the stable name manager, then use setStableName(...).
+                    // If the actor is registered with the stable name manager, then use setStableName(...).
 
-                if (sp_stable_name_manager->hasActor(actor)) {
-                    sp_stable_name_manager->setStableName(actor, stable_name);
+                    if (sp_stable_name_manager->hasActor(actor)) {
+                        sp_stable_name_manager->setStableName(actor, stable_name);
 
-                // Otherwise, use addActor(...).
+                    // Otherwise, use addActor(...).
 
-                } else {
-                    sp_stable_name_manager->addActor(actor, stable_name);
+                    } else {
+                        sp_stable_name_manager->addActor(actor, stable_name);
+                    }
                 }
             } else {
-                SP_LOG("ERROR: Called setStableName(actor=", Std::toStringFromPtr(actor), ", stable_name=\"", stable_name, "\") but no data structure could be found to store the stable name, giving up...");
+                SP_LOG("ERROR: Called setStableName(actor=", Std::toStringFromPtr(actor), ", stable_name=\"", stable_name, "\") but no data structure could be found to store the stable name. Call canSetStableName(...) first.");
+                SP_ASSERT(false);
             }
         }
+    }
+}
+
+bool UnrealUtils::trySetStableName(AActor* actor, const std::string& stable_name)
+{
+    if (canSetStableName(actor)) {
+        setStableName(actor, stable_name);
+        return true;
+    } else {
+        return false;
     }
 }
 
@@ -1606,7 +1732,13 @@ std::string UnrealUtils::getArrayPropertyValueAsFormattedString(const FProperty*
         } else {
             join_prefix_string = "";
         }
-        formatted_string += quote_string + strings.at(i) + quote_string + join_prefix_string + join_string;
+        std::string element_string;
+        if (quote_string.empty()) {
+            element_string = strings.at(i);
+        } else {
+            element_string = getJsonString(strings.at(i));
+        }
+        formatted_string += quote_string + element_string + quote_string + join_prefix_string + join_string;
     }
     formatted_string += "]";
 
@@ -1637,7 +1769,7 @@ std::string UnrealUtils::getMapPropertyValueAsFormattedString(const FProperty* k
     // set the join string to a new-line, even when the map is empty. But we don't try to replicate this
     // behavior for better consistency with our array formatting implementation.
 
-    std::string join_string = "\n";
+    std::string join_string;
     if (num_elements > 0) {
         join_string = "\n";
     } else {
@@ -1659,14 +1791,21 @@ std::string UnrealUtils::getMapPropertyValueAsFormattedString(const FProperty* k
 
     formatted_string += "{" + join_string;
     for (int i = 0; i < num_elements; i++) {
+        std::string key_string = getJsonString(key_strings.at(i));
         std::string join_prefix_string;
         if (i < num_elements - 1) {
             join_prefix_string = ",";
         } else {
             join_prefix_string = "";
         }
+        std::string value_string;
+        if (quote_string.empty()) {
+            value_string = value_strings.at(i);
+        } else {
+            value_string = getJsonString(value_strings.at(i));
+        }
         formatted_string +=
-            "\"" + key_strings.at(i) + "\":" + value_prefix_string + quote_string + value_strings.at(i) + quote_string + join_prefix_string + join_string;
+            "\"" + key_string + "\":" + value_prefix_string + quote_string + value_string + quote_string + join_prefix_string + join_string;
     }
     formatted_string += "}";
 
@@ -1693,7 +1832,7 @@ std::string UnrealUtils::getQuoteStringForProperty(const FProperty* property)
     //
     // On the other hand, if our property is a {enum, string, name, object, interface, soft reference}, then
     // we expect an input string to contain a string with no quotes because this is the formatting convention
-    // of getPropertyValueFromString(...), and in this case we need to add quotes to construct a well-formed
+    // of getPropertyValueAsString(...), and in this case we need to add quotes to construct a well-formed
     // JSON string.
     //
     // If our property is an enum byte, treat it like a string. If it is a non-enum byte, treat it like
@@ -1716,6 +1855,67 @@ std::string UnrealUtils::getQuoteStringForProperty(const FProperty* property)
     }
 
     return quote_string;
+}
+
+std::vector<std::pair<std::string, std::string>> UnrealUtils::parsePropertyPath(const std::string& property_path)
+{
+    // We parse a property path of the form Name0[Index0].Name1[Index1]... into a sequence of (name, index)
+    // pairs, where each [Index] is optional and the index string is empty if there is no index. Each name can
+    // contain any character other than '.', '[', ']', or '"'. Each index is either a JSON string literal
+    // enclosed in "" quotes (e.g., "hello.world" or "a\"b"), which is returned with its enclosing quotes and
+    // escape sequences intact, or an unquoted string that can contain any character other than '[', ']', or
+    // '"'. We scan the path one character at a time rather than tokenizing on "." and "[]" so that quoted map
+    // keys can contain these characters.
+
+    const std::string name_delimiters = ".[]\"";
+    const std::string index_delimiters = "[]\"";
+
+    std::vector<std::pair<std::string, std::string>> path_elements;
+    size_t pos = 0;
+
+    while (true) {
+        size_t name_begin = pos;
+        while (pos < property_path.size() && name_delimiters.find(property_path.at(pos)) == std::string::npos) {
+            pos++;
+        }
+        std::string name = property_path.substr(name_begin, pos - name_begin);
+        SP_ASSERT(!name.empty());
+
+        std::string index;
+        if (pos < property_path.size() && property_path.at(pos) == '[') {
+            pos++;
+            size_t index_begin = pos;
+            if (pos < property_path.size() && property_path.at(pos) == '"') {
+                pos++;
+                while (pos < property_path.size() && property_path.at(pos) != '"') {
+                    if (property_path.at(pos) == '\\') {
+                        pos++; // skip the escaped character so an escaped quote doesn't end the string
+                    }
+                    pos++;
+                }
+                SP_ASSERT(pos < property_path.size()); // expect a closing quote
+                pos++;
+            } else {
+                while (pos < property_path.size() && index_delimiters.find(property_path.at(pos)) == std::string::npos) {
+                    pos++;
+                }
+            }
+            index = property_path.substr(index_begin, pos - index_begin);
+            SP_ASSERT(!index.empty());
+            SP_ASSERT(pos < property_path.size() && property_path.at(pos) == ']');
+            pos++;
+        }
+
+        path_elements.push_back(std::make_pair(name, index));
+
+        if (pos == property_path.size()) {
+            break;
+        }
+        SP_ASSERT(property_path.at(pos) == '.');
+        pos++;
+    }
+
+    return path_elements;
 }
 
 std::string UnrealUtils::getJsonString(const std::string& input)
@@ -1741,9 +1941,14 @@ std::string UnrealUtils::getJsonString(const std::string& input)
 // Helper functions for returning dictionaries
 //
 
-std::string UnrealUtils::toKey(const UStruct* ustruct)
+std::string UnrealUtils::toKey(const UStruct* ustruct, bool include_path)
 {
-    return Unreal::getTypeAsString(ustruct);
+    SP_ASSERT(ustruct);
+    std::string key = Unreal::getTypeAsString(ustruct);
+    if (include_path) {
+        key = key + ":" + Unreal::toStdString(ustruct->GetPathName());
+    }
+    return key;
 }
 
 std::string UnrealUtils::toKey(const UActorComponent* component, bool include_actor_stable_name, bool include_actor_unreal_name)

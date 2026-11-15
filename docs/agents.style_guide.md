@@ -70,6 +70,8 @@ Within each include group, `//` comments must be vertically aligned. The alignme
 
 If a new commented include becomes the longest in the group, update all other commented lines in the group to match the new column.
 
+Don't add include comments that only name the header's eponymous type (e.g., `#include <string> // std::string`). Leave such includes uncommented.
+
 The same alignment principle applies to inline comments on member variable declarations (see the bullet on thread-access pattern comments above).
 
 **Algorithm:**

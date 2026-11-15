@@ -276,8 +276,14 @@ public:
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_stable_name_for_actor",
             [this](uint64_t& actor, bool& include_unreal_name) -> std::string { return UnrealUtils::getStableName(toPtr<AActor>(actor), include_unreal_name); });
 
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "can_set_stable_name_for_actor",
+            [this](uint64_t& actor) -> bool { return UnrealUtils::canSetStableName(toPtr<AActor>(actor)); });
+
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_stable_name_for_actor",
             [this](uint64_t& actor, std::string& stable_name) -> void { UnrealUtils::setStableName(toPtr<AActor>(actor), stable_name); });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "try_set_stable_name_for_actor",
+            [this](uint64_t& actor, std::string& stable_name) -> bool { return UnrealUtils::trySetStableName(toPtr<AActor>(actor), stable_name); });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_stable_name_for_component",
             [this](uint64_t& actor_component, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::string {

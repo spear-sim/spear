@@ -9,7 +9,7 @@
 #include <iostream> // std::cout
 #include <mutex>    // std::recursive_mutex
 #include <regex>
-#include <string>   // std::string::operator<<
+#include <string>
 #include <vector>
 
 #include <Containers/UnrealString.h> // FString
@@ -144,7 +144,7 @@ std::string Log::getCurrentFunctionAbbreviated(const std::string& current_functi
 
         if (i < tokens.size() - 1) {
             std::string& next_token = tokens.at(i + 1);
-            if (Std::endsWith(current_token, "::operator")) {
+            if (current_token.ends_with("::operator")) {
                 return current_token + " " + next_token;
             }
         }

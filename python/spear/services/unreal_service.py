@@ -122,8 +122,8 @@ class UnrealService(spear.Service):
         result = self.entry_point_caller.call_on_game_thread("find_static_structs", None)
         return self.to_handle_or_unreal_struct(obj=result, as_handle=as_handle, as_unreal_struct=as_unreal_struct)
 
-    def find_static_structs_as_dict(self, as_handle=None, as_unreal_struct=None):
-        result = self.entry_point_caller.call_on_game_thread("find_static_structs_as_map", None)
+    def find_static_structs_as_dict(self, include_path=False, as_handle=None, as_unreal_struct=None):
+        result = self.entry_point_caller.call_on_game_thread("find_static_structs_as_map", None, include_path)
         return self.to_handle_or_unreal_struct(obj=result, as_handle=as_handle, as_unreal_struct=as_unreal_struct)
 
     def get_struct_flags(self, ustruct):
@@ -134,8 +134,8 @@ class UnrealService(spear.Service):
         result = self.entry_point_caller.call_on_game_thread("find_static_classes", None)
         return self.to_handle_or_unreal_class(obj=result, as_handle=as_handle, as_unreal_class=as_unreal_class)
 
-    def find_static_classes_as_dict(self, as_handle=None, as_unreal_class=None):
-        result = self.entry_point_caller.call_on_game_thread("find_static_classes_as_map", None)
+    def find_static_classes_as_dict(self, include_path=False, as_handle=None, as_unreal_class=None):
+        result = self.entry_point_caller.call_on_game_thread("find_static_classes_as_map", None, include_path)
         return self.to_handle_or_unreal_class(obj=result, as_handle=as_handle, as_unreal_class=as_unreal_class)
 
     def get_derived_classes(self, uclass, recursive=True, as_handle=None, as_unreal_class=None):
@@ -143,9 +143,9 @@ class UnrealService(spear.Service):
         result = self.entry_point_caller.call_on_game_thread("get_derived_classes", None, uclass, recursive)
         return self.to_handle_or_unreal_class(obj=result, as_handle=as_handle, as_unreal_class=as_unreal_class)
 
-    def get_derived_classes_as_dict(self, uclass, recursive=True, as_handle=None, as_unreal_class=None):
+    def get_derived_classes_as_dict(self, uclass, recursive=True, include_path=False, as_handle=None, as_unreal_class=None):
         uclass = self.to_uclass(uclass=uclass)
-        result = self.entry_point_caller.call_on_game_thread("get_derived_classes_as_map", None, uclass, recursive)
+        result = self.entry_point_caller.call_on_game_thread("get_derived_classes_as_map", None, uclass, recursive, include_path)
         return self.to_handle_or_unreal_class(obj=result, as_handle=as_handle, as_unreal_class=as_unreal_class)
 
     def get_static_class(self, uclass, as_handle=None, as_unreal_class=None):
@@ -699,9 +699,17 @@ class UnrealService(spear.Service):
         actor = spear.to_handle(obj=actor)
         return self.entry_point_caller.call_on_game_thread("get_stable_name_for_actor", None, actor, include_unreal_name)
 
+    def can_set_stable_name_for_actor(self, actor):
+        actor = spear.to_handle(obj=actor)
+        return self.entry_point_caller.call_on_game_thread("can_set_stable_name_for_actor", None, actor)
+
     def set_stable_name_for_actor(self, actor, stable_name):
         actor = spear.to_handle(obj=actor)
         self.entry_point_caller.call_on_game_thread("set_stable_name_for_actor", None, actor, stable_name)
+
+    def try_set_stable_name_for_actor(self, actor, stable_name):
+        actor = spear.to_handle(obj=actor)
+        return self.entry_point_caller.call_on_game_thread("try_set_stable_name_for_actor", None, actor, stable_name)
 
     def get_stable_name_for_component(self, component, include_actor_stable_name=False, include_actor_unreal_name=False):
         component = spear.to_handle(obj=component)

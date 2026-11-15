@@ -21,7 +21,7 @@
                        // std::ranges::sized_range, std::ranges::size, std::views::keys, std::views::transform
 #include <set>
 #include <span>
-#include <string>      // std::equal
+#include <string>
 #include <type_traits> // std::is_empty, std::is_trivially_constructible, std::is_trivially_copyable, std::is_trivially_destructible, std::remove_cvref_t,
                        // std::underlying_type_t
 #include <utility>     // std::forward, std::make_pair, std::move, std::pair
@@ -239,16 +239,6 @@ public:
     static bool contains(const std::string& string, const std::string& substring)
     {
         return string.find(substring) != std::string::npos;
-    }
-
-    static bool startsWith(const std::string& string, const std::string& prefix)
-    {
-        return std::equal(prefix.begin(), prefix.end(), string.begin());
-    }
-
-    static bool endsWith(const std::string& string, const std::string& suffix)
-    {
-        return std::equal(suffix.rbegin(), suffix.rend(), string.rbegin());
     }
 
     static std::vector<std::string> tokenize(const std::string& string, const std::string& separators)

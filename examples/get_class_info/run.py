@@ -39,7 +39,7 @@ if __name__ == "__main__":
         spear.log("    Meta class: ", game.unreal_service.get_type_for_class_as_string(uclass=uobject_meta_uclass))
 
         num_functions = len(game.unreal_service.find_functions(uclass=uobject_uclass, field_iteration_flags=["IncludeDeprecated"])) # exclude base classes
-        num_properties = len(game.unreal_service.find_properties_for_class(uclass=uobject_uclass, field_iteration_flags=["IncludeDeprecated"])) # exclude base classes
+        num_properties = len(game.unreal_service.find_properties(ustruct=uobject_uclass, field_iteration_flags=["IncludeDeprecated"])) # exclude base classes
         spear.log(f"        Class: UObject ({num_functions} functions, {num_properties} properties)")
         total_num_functions = total_num_functions + num_functions
         total_num_properties = total_num_properties + num_properties
@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
         for uclass_name, uclass in uclasses.items():
             num_functions = len(game.unreal_service.find_functions(uclass=uclass, field_iteration_flags=["IncludeDeprecated"])) # exclude base classes
-            num_properties = len(game.unreal_service.find_properties_for_class(uclass=uclass, field_iteration_flags=["IncludeDeprecated"])) # exclude base classes
+            num_properties = len(game.unreal_service.find_properties(ustruct=uclass, field_iteration_flags=["IncludeDeprecated"])) # exclude base classes
             spear.log(f"        Class: {uclass_name} ({num_functions} functions, {num_properties} properties)")
             total_num_functions = total_num_functions + num_functions
             total_num_properties = total_num_properties + num_properties
@@ -58,7 +58,7 @@ if __name__ == "__main__":
         spear.log("    Number of structs that are outside the UObject class hierarchy: ", len(ustructs))
 
         for ustruct_name, ustruct in ustructs.items():
-            num_properties = len(game.unreal_service.find_properties_for_struct(ustruct=ustruct, field_iteration_flags=["IncludeDeprecated"])) # exclude base classes
+            num_properties = len(game.unreal_service.find_properties(ustruct=ustruct, field_iteration_flags=["IncludeDeprecated"])) # exclude base classes
             spear.log(f"        Struct: {ustruct_name} ({num_properties} properties)")
             total_num_properties = total_num_properties + num_properties
 
@@ -80,7 +80,7 @@ if __name__ == "__main__":
         property_flags = ["CPF_BlueprintVisible", "CPF_BlueprintReadOnly", "CPF_BlueprintAssignable", "CPF_Edit"]
 
         num_functions = len(game.unreal_service.find_functions_by_flags_any(uclass=uobject_uclass, function_flags=function_flags, field_iteration_flags=["IncludeDeprecated"])) # exclude base classes
-        num_properties = len(game.unreal_service.find_properties_for_class_by_flags_any(uclass=uobject_uclass, property_flags=property_flags, field_iteration_flags=["IncludeDeprecated"])) # exclude base classes
+        num_properties = len(game.unreal_service.find_properties_by_flags_any(ustruct=uobject_uclass, property_flags=property_flags, field_iteration_flags=["IncludeDeprecated"])) # exclude base classes
         # spear.log(f"        Class: UObject ({num_functions} functions, {num_properties} properties)")
         total_num_functions = total_num_functions + num_functions
         total_num_properties = total_num_properties + num_properties
@@ -90,7 +90,7 @@ if __name__ == "__main__":
 
         for uclass_name, uclass in uclasses.items():
             num_functions = len(game.unreal_service.find_functions_by_flags_any(uclass=uclass, function_flags=function_flags, field_iteration_flags=["IncludeDeprecated"])) # exclude base classes
-            num_properties = len(game.unreal_service.find_properties_for_class_by_flags_any(uclass=uclass, property_flags=property_flags, field_iteration_flags=["IncludeDeprecated"])) # exclude base classes
+            num_properties = len(game.unreal_service.find_properties_by_flags_any(ustruct=uclass, property_flags=property_flags, field_iteration_flags=["IncludeDeprecated"])) # exclude base classes
             # spear.log(f"        Class: {uclass_name} ({num_functions} functions, {num_properties} properties)")
             total_num_functions = total_num_functions + num_functions
             total_num_properties = total_num_properties + num_properties
@@ -99,7 +99,7 @@ if __name__ == "__main__":
         # spear.log("    Number of structs that are outside the UObject class hierarchy: ", len(ustructs))
 
         for ustruct_name, ustruct in ustructs.items():
-            num_properties = len(game.unreal_service.find_properties_for_struct_by_flags_any(ustruct=ustruct, property_flags=property_flags, field_iteration_flags=["IncludeDeprecated"])) # exclude base classes
+            num_properties = len(game.unreal_service.find_properties_by_flags_any(ustruct=ustruct, property_flags=property_flags, field_iteration_flags=["IncludeDeprecated"])) # exclude base classes
             # spear.log(f"        Struct: {ustruct_name} ({num_properties} properties)")
             total_num_properties = total_num_properties + num_properties
 
@@ -121,7 +121,7 @@ if __name__ == "__main__":
         num_functions = 0
         ufunctions = game.unreal_service.find_functions_as_dict(uclass=actor_uclass, field_iteration_flags=["IncludeDeprecated"]) # exclude base classes
         for ufunction_name, ufunction in ufunctions.items():
-            props = game.unreal_service.find_properties_for_function_by_flags_any(ufunction=ufunction, property_flags=property_flags)
+            props = game.unreal_service.find_properties_by_flags_any(ustruct=ufunction, property_flags=property_flags)
             if len(props) == 0:
                 num_functions = num_functions + 1
             # num_functions = num_functions + 1
@@ -136,7 +136,7 @@ if __name__ == "__main__":
             num_functions = 0
             ufunctions = game.unreal_service.find_functions_as_dict(uclass=uclass, field_iteration_flags=["IncludeDeprecated"]) # exclude base classes
             for ufunction_name, ufunction in ufunctions.items():
-                props = game.unreal_service.find_properties_for_function_by_flags_any(ufunction=ufunction, property_flags=property_flags)
+                props = game.unreal_service.find_properties_by_flags_any(ustruct=ufunction, property_flags=property_flags)
                 if len(props) == 0:
                     num_functions = num_functions + 1
                 # num_functions = num_functions + 1

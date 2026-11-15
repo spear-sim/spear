@@ -290,7 +290,7 @@ public:
 
         uint64_t num_elements = 0;
         if (!packed_array.shape_.empty()) {
-            num_elements = std::accumulate(packed_array.shape_.begin(), packed_array.shape_.end(), 1, std::multiplies<uint64_t>());
+            num_elements = std::accumulate(packed_array.shape_.begin(), packed_array.shape_.end(), static_cast<uint64_t>(1), std::multiplies<uint64_t>());
         }
 
         data_ = std::move(packed_array.data_);
@@ -380,18 +380,19 @@ public:
         shared_memory_usage_flags_ = SpArraySharedMemoryUsageFlags::DoNotUse;
     }
 
-    void setDataSource(const void* data, const std::vector<uint64_t>& shape)
+    void setDataSource(void* data, const std::vector<uint64_t>& shape)
     {
         uint64_t num_elements = 0;
         if (!shape.empty()) {
-            num_elements = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<uint64_t>());
+            num_elements = std::accumulate(shape.begin(), shape.end(), static_cast<uint64_t>(1), std::multiplies<uint64_t>());
         }
 
         data_ = {};
         if (num_elements == 0) {
             view_ = std::span<TValue>(static_cast<TValue*>(nullptr), 0);
         } else {
-            view_ = Std::reinterpretAsSpanOf<TValue>(data_);
+            SP_ASSERT(data);
+            view_ = std::span<TValue>(static_cast<TValue*>(data), num_elements);
         }
         data_source_ = SpArrayDataSource::External;
 
@@ -405,7 +406,7 @@ public:
     {
         uint64_t num_elements = 0;
         if (!shape.empty()) {
-            num_elements = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<uint64_t>());
+            num_elements = std::accumulate(shape.begin(), shape.end(), static_cast<uint64_t>(1), std::multiplies<uint64_t>());
         }
         SP_ASSERT(num_elements*sizeof(TValue) <= shared_memory_view.num_bytes_);
 
@@ -413,6 +414,7 @@ public:
         if (num_elements == 0) {
             view_ = std::span<TValue>(static_cast<TValue*>(nullptr), 0);
         } else {
+            SP_ASSERT(shared_memory_view.data_);
             view_ = std::span<TValue>(static_cast<TValue*>(shared_memory_view.data_), num_elements);
         }
         data_source_ = SpArrayDataSource::Shared;
@@ -503,7 +505,7 @@ public:
 
         uint64_t num_elements = 0;
         if (!packed_array.shape_.empty()) {
-            num_elements = std::accumulate(packed_array.shape_.begin(), packed_array.shape_.end(), 1, std::multiplies<uint64_t>());
+            num_elements = std::accumulate(packed_array.shape_.begin(), packed_array.shape_.end(), static_cast<uint64_t>(1), std::multiplies<uint64_t>());
         }
 
         view_ = std::span<const TValue>(static_cast<const TValue*>(packed_array.view_), num_elements);

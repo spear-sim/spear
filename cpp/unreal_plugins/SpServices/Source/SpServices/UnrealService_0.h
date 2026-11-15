@@ -193,8 +193,8 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_static_structs_as_map",
-            [this]() -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::findStaticStructsAsMap());
+            [this](bool& include_path) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::findStaticStructsAsMap(include_path));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_struct_flags",
@@ -209,8 +209,8 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_static_classes_as_map",
-            [this]() -> std::map<std::string, uint64_t> {
-                return toUInt64(UnrealUtils::findStaticClassesAsMap());
+            [this](bool& include_path) -> std::map<std::string, uint64_t> {
+                return toUInt64(UnrealUtils::findStaticClassesAsMap(include_path));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_derived_classes",
@@ -220,9 +220,9 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_derived_classes_as_map",
-            [this](uint64_t& uclass, bool& recursive) -> std::map<std::string, uint64_t> {
+            [this](uint64_t& uclass, bool& recursive, bool& include_path) -> std::map<std::string, uint64_t> {
                 SP_ASSERT(uclass);
-                return toUInt64(UnrealUtils::getDerivedClassesAsMap(toPtr<UClass>(uclass), recursive));
+                return toUInt64(UnrealUtils::getDerivedClassesAsMap(toPtr<UClass>(uclass), recursive, include_path));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_static_class",

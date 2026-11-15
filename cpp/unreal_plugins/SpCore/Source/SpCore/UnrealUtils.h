@@ -87,17 +87,17 @@ public:
     //
 
     static std::vector<UScriptStruct*> findStaticStructs();
-    static std::map<std::string, UScriptStruct*> findStaticStructsAsMap();
+    static std::map<std::string, UScriptStruct*> findStaticStructsAsMap(bool include_path = false);
 
     //
     // Get static classes
     //
 
     static std::vector<UClass*> findStaticClasses();
-    static std::map<std::string, UClass*> findStaticClassesAsMap();
+    static std::map<std::string, UClass*> findStaticClassesAsMap(bool include_path = false);
 
     static std::vector<UClass*> getDerivedClasses(UClass* uclass, bool recursive = true);
-    static std::map<std::string, UClass*> getDerivedClassesAsMap(UClass* uclass, bool recursive = true);
+    static std::map<std::string, UClass*> getDerivedClassesAsMap(UClass* uclass, bool recursive = true, bool include_path = false);
 
     //
     // Find functions
@@ -232,7 +232,9 @@ public:
 
     static std::string getStableName(const AActor* actor, bool include_unreal_name = false);
     static std::string getStableName(const UActorComponent* component, bool include_actor_stable_name = false, bool include_actor_unreal_name = false);
+    static bool canSetStableName(const AActor* actor);
     static void setStableName(AActor* actor, const std::string& stable_name);
+    static bool trySetStableName(AActor* actor, const std::string& stable_name);
 
     #if WITH_EDITOR // defined in an auto-generated header
         static void requestAddOrUpdateAllStableNameActors(const UWorld* world);
@@ -284,30 +286,30 @@ public:
 
     template <CStaticStruct TStaticStruct, CStaticStruct TReturnAsStaticStruct = TStaticStruct> requires
         std::derived_from<TStaticStruct, TReturnAsStaticStruct>
-    static std::map<std::string, TReturnAsStaticStruct*> findStaticStructsByNameAsMap(const std::string& static_struct_name)
+    static std::map<std::string, TReturnAsStaticStruct*> findStaticStructsByNameAsMap(const std::string& static_struct_name, bool include_path = false)
     {
-        return toMap(findStaticStructsByName<TStaticStruct, TReturnAsStaticStruct>(static_struct_name));
+        return toMap(findStaticStructsByName<TStaticStruct, TReturnAsStaticStruct>(static_struct_name), include_path);
     }
 
     template <CStaticStruct TStaticStruct, CStaticStruct TReturnAsStaticStruct = TStaticStruct> requires
         std::derived_from<TStaticStruct, TReturnAsStaticStruct>
-    static std::map<std::string, TReturnAsStaticStruct*> findStaticStructsByTypeAsMap()
+    static std::map<std::string, TReturnAsStaticStruct*> findStaticStructsByTypeAsMap(bool include_path = false)
     {
-        return toMap(findStaticStructsByType<TStaticStruct, TReturnAsStaticStruct>());
+        return toMap(findStaticStructsByType<TStaticStruct, TReturnAsStaticStruct>(), include_path);
     }
 
     // UClass* variants
 
     template <CStaticStruct TReturnAsStaticStruct = UStruct>
-    static std::map<std::string, TReturnAsStaticStruct*> findStaticStructsByNameAsMap(UClass* uclass, const std::string& static_struct_name)
+    static std::map<std::string, TReturnAsStaticStruct*> findStaticStructsByNameAsMap(UClass* uclass, const std::string& static_struct_name, bool include_path = false)
     {
-        return toMap(findStaticStructsByName<TReturnAsStaticStruct>(uclass, static_struct_name));
+        return toMap(findStaticStructsByName<TReturnAsStaticStruct>(uclass, static_struct_name), include_path);
     }
 
     template <CStaticStruct TReturnAsStaticStruct = UStruct>
-    static std::map<std::string, TReturnAsStaticStruct*> findStaticStructsByClassAsMap(UClass* uclass)
+    static std::map<std::string, TReturnAsStaticStruct*> findStaticStructsByClassAsMap(UClass* uclass, bool include_path = false)
     {
-        return toMap(findStaticStructsByClass<TReturnAsStaticStruct>(uclass));
+        return toMap(findStaticStructsByClass<TReturnAsStaticStruct>(uclass), include_path);
     }
 
     //
@@ -1327,10 +1329,16 @@ private:
     static std::string getJsonString(const std::string& input);
 
     //
+    // Helper function for parsing property paths
+    //
+
+    static std::vector<std::pair<std::string, std::string>> parsePropertyPath(const std::string& property_path);
+
+    //
     // Helper functions for returning dictionaries
     //
 
-    static std::string toKey(const UStruct* ustruct);
+    static std::string toKey(const UStruct* ustruct, bool include_path = false);
     static std::string toKey(const UActorComponent* component, bool include_actor_stable_name = false, bool include_actor_unreal_name = false);
     static std::string toKey(const AActor* actor, bool include_unreal_name = false);
     static std::string toKey(const UFunction* ufunction);
@@ -1378,6 +1386,26 @@ private:
     {
         std::vector<std::string> names = Std::toVector<std::string>(objects | std::views::transform([](auto object) { return toKey(object); }));
         return Std::zip(names, objects);
+    }
+
+    // Blueprint types are named according to their asset names, which are only unique within a content
+    // folder, so two loaded blueprint types can have the same name. Analogous to the CActor overload below,
+    // we drop all types whose names collide unless include_path is true, in which case every name is
+    // guaranteed to be unique.
+
+    template <CStaticStruct TStaticStruct>
+    static std::map<std::string, TStaticStruct*> toMap(const std::vector<TStaticStruct*>& static_structs, bool include_path)
+    {
+        std::vector<std::string> names = Std::toVector<std::string>(static_structs | std::views::transform([include_path](auto static_struct) { return toKey(static_struct, include_path); }));
+        if (include_path) {
+            return Std::zip(names, static_structs);
+        } else {
+            std::map<std::string, uint64_t> counts = Std::count(names);
+            return Std::toMap<std::string, TStaticStruct*>(
+                Std::zip(static_structs, names) |
+                std::views::filter([&counts](const auto& pair) { return counts.at(pair.second) == 1; }) |
+                std::views::transform([](const auto& pair) { return std::make_pair(pair.second, pair.first); }));
+        }
     }
 
     template <CActor TActor>
