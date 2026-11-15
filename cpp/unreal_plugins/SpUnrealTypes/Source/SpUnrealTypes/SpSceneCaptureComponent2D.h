@@ -240,9 +240,6 @@ public:
     // Can be enabled for debugging
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bPrintFrameTime = false;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bPrintFrameTimeEveryFrame = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
@@ -366,11 +363,33 @@ private:
     // miscellaneous helpers
     void updateFrameTime();
 
-    UPROPERTY(VisibleAnywhere, Category="SPEAR")
+    UPROPERTY(Transient, VisibleAnywhere, Category="SPEAR")
     bool bIsInitialized = false;
 
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
     USpFuncComponent* SpFuncComponent = nullptr;
+
+    // The user's state that Initialize() modifies, saved so Terminate() can restore it exactly. These are UPROPERTYs
+    // so the garbage collector clears references to destroyed objects, and Transient because they're only meaningful
+    // between Initialize() and Terminate().
+
+    UPROPERTY(Transient)
+    TObjectPtr<UTextureRenderTarget2D> SavedTextureTarget = nullptr;
+
+    UPROPERTY(Transient)
+    FWeightedBlendables SavedWeightedBlendables;
+
+    UPROPERTY(Transient)
+    ESceneCapturePrimitiveRenderMode SavedPrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_LegacySceneCapture;
+
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<AActor>> SavedShowOnlyActors;
+
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<AActor>> SavedHiddenActors;
+
+    UPROPERTY(Transient)
+    bool bSavedAlwaysPersistRenderingState = false;
 
     bool is_initialized_ = false;
 

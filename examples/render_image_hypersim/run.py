@@ -151,7 +151,7 @@ if __name__ == "__main__":
         # sp_scalability = game.get_unreal_object(uclass="USpScalability")
         # sp_quality_levels_utils = game.get_unreal_object(uclass="USpQualityLevelsUtils")
         # previous_quality_levels = sp_scalability.GetQualityLevels()
-        # cinematic_quality_levels = sp_quality_levels_utils.GetQualityLevelsFromSingleQualityLevel(QualityLevel="Cinematic")
+        # cinematic_quality_levels = sp_quality_levels_utils.QualityLevelsFromSingleQualityLevel(QualityLevel="Cinematic")
         # cinematic_quality_levels_epic_gi = sp_quality_levels_utils.SetGlobalIlluminationQuality(QualityLevels=cinematic_quality_levels, QualityLevel="Epic", as_dict=True)["QualityLevels"]
         # game.rendering_quality_service.log_quality_levels(label="Previous quality levels:", quality_levels=previous_quality_levels)
         # game.rendering_quality_service.log_quality_levels(label="New quality levels:", quality_levels=cinematic_quality_levels_epic_gi)
@@ -322,7 +322,7 @@ if __name__ == "__main__":
     # diffuse_reflectance
     gamma = 1.0/2.2
     spatial_supersampling_factor = component_desc_map["diffuse_only_"]["spatial_supersampling_factor"]
-    diffuse_reflectance = component_desc_map["diffuse_only_"]["arrays"]["DiffuseColor"]
+    diffuse_reflectance = component_desc_map["diffuse_only_"]["arrays"]["DiffuseColor"][:,:,[0,1,2]].astype(np.float32)
     diffuse_reflectance = np.power(np.maximum(diffuse_reflectance, 0), gamma)
     diffuse_reflectance = np.clip(diffuse_reflectance, 0.0, 1.0)
     diffuse_reflectance = PIL.Image.fromarray((diffuse_reflectance*255.0).astype(np.uint8))
@@ -330,7 +330,7 @@ if __name__ == "__main__":
     diffuse_reflectance = np.asarray(diffuse_reflectance)
     image_file = os.path.realpath(os.path.join(images_dir, "_diffuse_reflectance.png"))
     spear.log("Saving image: ", image_file)
-    cv2.imwrite(image_file, diffuse_reflectance[:,:,[2,1,0,3]]) # RGBA -> BGRA
+    cv2.imwrite(image_file, diffuse_reflectance[:,:,[2,1,0]]) # RGB -> BGR
 
     # diffuse_illumination
     spatial_supersampling_factor = component_desc_map["lighting_only_"]["spatial_supersampling_factor"]

@@ -292,10 +292,10 @@ protected:
     }
 
 private:
-    UPROPERTY(VisibleAnywhere, Category="SPEAR")
+    UPROPERTY(Transient, VisibleAnywhere, Category="SPEAR")
     int32 UnregisterDelayFrames = -1;
 
-    UPROPERTY(VisibleAnywhere, Category="SPEAR")
+    UPROPERTY(Transient, VisibleAnywhere, Category="SPEAR")
     TArray<FMeshProxyGeometryDesc> MeshProxyGeometryDescs;
 
     MeshProxyComponentManager* mesh_proxy_component_manager_ = nullptr;
@@ -330,7 +330,7 @@ private:
 
 
 UCLASS(ClassGroup="SPEAR", HideCategories=(Actor, Collision, Cooking, DataLayers, HLOD, Input, LevelInstance, Navigation, Networking, Physics, Rendering, Replication, WorldPartition))
-class ASpObjectIdsVisualizerProxyComponentManager : public ASpObjectIdsProxyComponentManager
+class ASpObjectIdsVisualizerProxyComponentManager : public ASpMeshProxyComponentManager
 {
     GENERATED_BODY()
 

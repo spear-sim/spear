@@ -9,7 +9,7 @@
 #include <Components/SceneComponent.h>
 #include <Containers/UnrealString.h> // FString
 #include <Engine/EngineBaseTypes.h>  // ELevelTick, ETickingGroup
-#include <Engine/EngineTypes.h>      // ETeleportType
+#include <Engine/EngineTypes.h>      // EEndPlayReason, ETeleportType
 #include <Engine/HitResult.h>
 #include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UPROPERTY
 
@@ -53,6 +53,20 @@ public:
         }
     }
 
+    void EndPlay(const EEndPlayReason::Type end_play_reason) override
+    {
+        SetWorldRotationHitResult = FHitResult();
+        SetWorldLocationHitResult = FHitResult();
+
+        DestinationComponent = Unreal::toFString("");
+        dest_component_ = nullptr;
+
+        SourceComponent = Unreal::toFString("");
+        src_component_ = nullptr;
+
+        UActorComponent::EndPlay(end_play_reason);
+    }
+
     void TickComponent(float delta_time, ELevelTick level_tick, FActorComponentTickFunction* this_tick_function) override
     {
         UActorComponent::TickComponent(delta_time, level_tick, this_tick_function);
@@ -77,39 +91,39 @@ public:
         }
     }
 
-    // Specifies a component (whose path is SourceComponentPath) to use as the source componennt.
+    // Specifies a component (whose path is SourceComponentPath) to use as the source component.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     FString SourceComponentPath;
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString SourceComponent;
 
-    // Specifies a component (whose path is DestinationComponentPath) to use as the destination componennt.
+    // Specifies a component (whose path is DestinationComponentPath) to use as the destination component.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     FString DestinationComponentPath;
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString DestinationComponent;
 
-    // Set location of the source component using the location of the destination component.
+    // Set the location of the destination component using the location of the source component.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bSetWorldLocation = false;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bSetWorldLocationSweep = false;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FHitResult SetWorldLocationHitResult;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     ETeleportType SetWorldLocationTeleport = ETeleportType::None;
 
-    // Set rotation of the source component using the rotation of the destination component.
+    // Set the rotation of the destination component using the rotation of the source component.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bSetWorldRotation = false;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bSetWorldRotationSweep = false;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
+    UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FHitResult SetWorldRotationHitResult;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     ETeleportType SetWorldRotationTeleport = ETeleportType::None;
 
-    // Set scale of the source component using the scale of the destination component.
+    // Set the scale of the destination component using the scale of the source component.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bSetWorldScale3D = false;
 

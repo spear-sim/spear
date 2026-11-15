@@ -12,7 +12,6 @@
 #include <Materials/MaterialInterface.h>  // UMaterialInterface
 #include <UObject/ObjectMacros.h>         // GENERATED_BODY, UCLASS, UENUM, UFUNCTION
 
-#include "SpCore/Assert.h"
 #include "SpCore/Unreal.h"
 
 #include "SpMaterialInterface.generated.h"
@@ -39,7 +38,6 @@ public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static void SubmitRemainingJobsForWorld(UWorld* World, ESpMaterialShaderPrecompileMode CompileMode)
     {
-        SP_ASSERT(World);
         UMaterialInterface::SubmitRemainingJobsForWorld(World, Unreal::getEnumValueAs<EMaterialShaderPrecompileMode>(CompileMode));
     }
 };

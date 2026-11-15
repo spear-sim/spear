@@ -15,8 +15,10 @@
 #include <Engine/EngineTypes.h> // FFontRenderInfo
 #include <Engine/Font.h>
 #include <GameFramework/Actor.h>
+#include <HAL/IConsoleManager.h>
 #include <Templates/Casts.h>
 
+#include "SpCore/Assert.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealUtils.h"
 
@@ -69,7 +71,7 @@ void ASpDebugCameraHUD::PostRender()
                     y += y_single_line;
 
                     bool include_unreal_name = true;
-                    Canvas->DrawText(font, Unreal::toFString("Actor (stable Name): " + UnrealUtils::getStableName(actor, include_unreal_name)), x, y, 1.0f, 1.0f, font_render_info);
+                    Canvas->DrawText(font, Unreal::toFString("Actor (stable name): " + UnrealUtils::getStableName(actor, include_unreal_name)), x, y, 1.0f, 1.0f, font_render_info);
 
                     y += y_single_line;
                     Canvas->DrawText(font, Unreal::toFString("Component (stable name): " + UnrealUtils::getStableName(component)), x, y, 1.0f, 1.0f, font_render_info);

@@ -40,7 +40,7 @@ struct FActorHitDesc
     FString OtherActorPropertiesString;
 };
 
-UCLASS()
+UCLASS(ClassGroup="SPEAR", HideCategories=(Actor, Collision, Cooking, DataLayers, HLOD, Input, LevelInstance, Navigation, Networking, Physics, Rendering, Replication, WorldPartition))
 class ASpActorHitManager : public AActor
 {
     GENERATED_BODY()

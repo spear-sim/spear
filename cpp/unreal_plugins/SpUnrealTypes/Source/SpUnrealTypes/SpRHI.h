@@ -106,9 +106,9 @@ public:
     }
 
     // Mimics ::RHIGetTrackedResourceStats(...), see Engine/Source/Runtime/RHI/Public/RHI.h (UE 5.8). Takes a fresh
-    // snapshot of all currently tracked RHI resources. Not BlueprintCallable because uint64 is not a Blueprint type.
+    // snapshot of all currently tracked RHI resources.
     UFUNCTION()
-    static TArray<FSpRHIResourceStats> RHIGetTrackedResourceStats()
+    static TArray<FSpRHIResourceStats> RHIGetTrackedResourceStats() // uint64 not supported for BlueprintCallable
     {
         TArray<FSpRHIResourceStats> sp_stats_array;
         #if RHI_ENABLE_RESOURCE_INFO

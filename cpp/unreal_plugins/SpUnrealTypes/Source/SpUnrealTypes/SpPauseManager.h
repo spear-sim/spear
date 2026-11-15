@@ -58,6 +58,6 @@ private:
         UGameplayStatics::SetGamePaused(world, !UGameplayStatics::IsGamePaused(world));
     }
 
-    UPROPERTY(VisibleAnywhere, Category="SPEAR");
+    UPROPERTY(Transient, VisibleAnywhere, Category="SPEAR")
     bool bIsGamePaused = false;
 };

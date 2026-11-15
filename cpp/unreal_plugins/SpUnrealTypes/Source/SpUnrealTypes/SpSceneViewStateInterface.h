@@ -5,9 +5,10 @@
 
 #pragma once
 
+#include <HAL/Platform.h>         // uint32, uint64
 #include <Kismet/BlueprintFunctionLibrary.h>
-#include <SceneManagement.h>      // FSceneViewStateInterface
 #include <RenderingThread.h>      // FlushRenderingCommands
+#include <SceneManagement.h>      // FSceneViewStateInterface
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpCore/Assert.h"
@@ -23,7 +24,7 @@ public:
     static uint32 GetPathTracingSampleIndex(uint64 ViewState) // uint64 not supported for BlueprintCallable
     {
         #if RHI_RAYTRACING
-            FlushRenderingCommands(); // force rendering thread to be fully up-to-date before querying GetPathTracingSampleCount()
+            FlushRenderingCommands(); // force rendering thread to be fully up-to-date before querying GetPathTracingSampleIndex()
             FSceneViewStateInterface* view_state_ptr = reinterpret_cast<FSceneViewStateInterface*>(ViewState);
             SP_ASSERT(view_state_ptr);
             return view_state_ptr->GetPathTracingSampleIndex();
@@ -33,7 +34,7 @@ public:
         #endif
     }
 
-    UFUNCTION(Category="SPEAR")
+    UFUNCTION()
     static uint32 GetPathTracingSampleCount(uint64 ViewState) // uint64 not supported for BlueprintCallable
     {
         #if RHI_RAYTRACING

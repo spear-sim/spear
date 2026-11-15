@@ -52,7 +52,7 @@ class RenderingQualityService(spear.Service):
 
         assert texture_streaming in ["None", "Disabled", "FullyLoad"]
 
-        # Capture the true original state BEFORE applying any override, so restore returns to the pre-call
+        # Capture the true original state before applying any override, so restore returns to the pre-call
         # state. We capture the full Scalability state first, then each individual cvar. Capturing before we
         # change anything avoids the pollution that UMoviePipelineGameOverrideSetting works around, i.e., it
         # applies Scalability first and so caches individual cvar values that have already been bumped to
@@ -128,10 +128,14 @@ class RenderingQualityService(spear.Service):
         # Cache previous cvar values.
         previous_cvar_descs = [ {**cvar_desc, "value": self._get_cvar_value(cvar_desc=cvar_desc)} for cvar_desc in cvar_descs ]
 
-        # bCinematicQualitySettings and bOverrideValues
+        # bCinematicQualitySettings and bOverrideValues. To mimic UMoviePipelineGameOverrideSetting::ApplyCVarSettings(...)
+        # exactly, we could call QualityLevelsFromSingleQualityLevelRelativeToMax(Value=0). But this is functionally
+        # equivalent to calling QualityLevelsFromSingleQualityLevel(QualityLevel="Cinematic") with the default number of
+        # scalability levels, and we prefer QualityLevelsFromSingleQualityLevel(QualityLevel="Cinematic") because it is
+        # more readable.
         cinematic_quality_levels = None
         if cinematic_quality_settings:
-            cinematic_quality_levels = self._sp_quality_levels_utils.GetQualityLevelsFromSingleQualityLevel(QualityLevel="Cinematic")
+            cinematic_quality_levels = self._sp_quality_levels_utils.QualityLevelsFromSingleQualityLevel(QualityLevel="Cinematic")
 
         self.log_quality_levels(label="Previous quality levels:", quality_levels=previous_quality_levels)
         self.log_cvar_descs(label="Previous cvars:", cvar_descs=previous_cvar_descs)

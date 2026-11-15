@@ -1192,29 +1192,33 @@ class UnrealService(spear.Service):
     # Create component
     #
 
-    def create_component(self, owner, component_name, uclass, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
+    def create_component(self, owner, component_name, uclass, object_flags=None, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         owner = spear.to_handle(obj=owner)
         uclass = self.to_uclass(uclass=uclass)
-        result = self.entry_point_caller.call_on_game_thread("create_component_outside_owner_constructor_by_class", None, uclass, owner, component_name)
+        object_flags = object_flags if object_flags is not None else ["RF_NoFlags"]
+        result = self.entry_point_caller.call_on_game_thread("create_component_outside_owner_constructor_by_class", None, uclass, owner, component_name, object_flags)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
-    def create_scene_component_for_actor(self, owner, scene_component_name, uclass, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
+    def create_scene_component_for_actor(self, owner, scene_component_name, uclass, object_flags=None, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         owner = spear.to_handle(obj=owner)
         uclass = self.to_uclass(uclass=uclass)
-        result = self.entry_point_caller.call_on_game_thread("create_scene_component_outside_owner_constructor_for_actor_by_class", None, uclass, owner, scene_component_name)
+        object_flags = object_flags if object_flags is not None else ["RF_NoFlags"]
+        result = self.entry_point_caller.call_on_game_thread("create_scene_component_outside_owner_constructor_for_actor_by_class", None, uclass, owner, scene_component_name, object_flags)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
-    def create_scene_component_for_object(self, owner, parent, scene_component_name, uclass, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
+    def create_scene_component_for_object(self, owner, parent, scene_component_name, uclass, object_flags=None, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         owner = spear.to_handle(obj=owner)
         parent = spear.to_handle(obj=parent)
         uclass = self.to_uclass(uclass=uclass)
-        result = self.entry_point_caller.call_on_game_thread("create_scene_component_outside_owner_constructor_for_object_by_class", None, uclass, owner, parent, scene_component_name)
+        object_flags = object_flags if object_flags is not None else ["RF_NoFlags"]
+        result = self.entry_point_caller.call_on_game_thread("create_scene_component_outside_owner_constructor_for_object_by_class", None, uclass, owner, parent, scene_component_name, object_flags)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
-    def create_scene_component_for_scene_component(self, owner, scene_component_name, uclass, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
+    def create_scene_component_for_scene_component(self, owner, scene_component_name, uclass, object_flags=None, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         owner = spear.to_handle(obj=owner)
         uclass = self.to_uclass(uclass=uclass)
-        result = self.entry_point_caller.call_on_game_thread("create_scene_component_outside_owner_constructor_for_scene_component_by_class", None, uclass, owner, scene_component_name)
+        object_flags = object_flags if object_flags is not None else ["RF_NoFlags"]
+        result = self.entry_point_caller.call_on_game_thread("create_scene_component_outside_owner_constructor_for_scene_component_by_class", None, uclass, owner, scene_component_name, object_flags)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     #

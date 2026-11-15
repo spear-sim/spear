@@ -5,7 +5,10 @@
 
 #include "SpUnrealTypes/SpPlayerController.h"
 
+#include <string>
+
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
+#include <Engine/EngineBaseTypes.h>      // ETickingGroup
 #include <Engine/EngineTypes.h>          // EEndPlayReason
 #include <Framework/Application/SlateApplication.h>
 #include <GenericPlatform/GenericPlatformMisc.h>

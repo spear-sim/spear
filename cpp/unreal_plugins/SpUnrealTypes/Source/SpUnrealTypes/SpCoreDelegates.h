@@ -11,6 +11,8 @@
 #include <Misc/CoreDelegates.h>
 #include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION
 
+#include "SpCore/Assert.h"
+
 #include "SpCoreDelegates.generated.h"
 
 UCLASS()
@@ -19,8 +21,16 @@ class USpCoreDelegates : public UBlueprintFunctionLibrary
     GENERATED_BODY()
 public:
     UFUNCTION()
-    static uint64 MountPak(const FString& PakFile, int32 PakOrder) { return reinterpret_cast<uint64>(FCoreDelegates::MountPak.Execute(PakFile, PakOrder)); } // uint64 not supported for BlueprintCallable
+    static uint64 MountPak(const FString& PakFile, int32 PakOrder) // uint64 not supported for BlueprintCallable
+    {
+        SP_ASSERT(FCoreDelegates::MountPak.IsBound());
+        return reinterpret_cast<uint64>(FCoreDelegates::MountPak.Execute(PakFile, PakOrder));
+    }
 
     UFUNCTION()
-    static bool OnUnmountPak(const FString& PakFile) { return FCoreDelegates::OnUnmountPak.Execute(PakFile); } // not intended to be BlueprintCallable
+    static bool OnUnmountPak(const FString& PakFile) // not intended to be BlueprintCallable
+    {
+        SP_ASSERT(FCoreDelegates::OnUnmountPak.IsBound());
+        return FCoreDelegates::OnUnmountPak.Execute(PakFile);
+    }
 };

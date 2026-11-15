@@ -12,8 +12,4 @@ class SpUnrealTypesEditor : public IModuleInterface
 public:
     void StartupModule() override;
     void ShutdownModule() override;
-
-private:
-    void registerClasses() const;
-    void unregisterClasses() const;
 };

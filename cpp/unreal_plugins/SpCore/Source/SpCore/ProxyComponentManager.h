@@ -21,6 +21,7 @@
 
 #include <Engine/World.h>
 #include <GameFramework/Actor.h>
+#include <UObject/ObjectMacros.h> // EObjectFlags, RF_Transient
 
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
@@ -40,7 +41,7 @@ class UWorld;
 // our current CRTP design, so we can only enforce using a comment.
 //
 // TDerivedProxyComponentManager must provide:
-//   TDerivedProxyComponentData* registerProxyComponent(TComponent* proxy_component, TComponent* component)
+//   TDerivedProxyComponentData registerProxyComponent(TComponent* proxy_component, TComponent* component)
 //   void invalidateProxyComponent(TDerivedProxyComponentData* derived_proxy_component_data)
 //   void unregisterProxyComponent(TDerivedProxyComponentData* derived_proxy_component_data)
 //   bool shouldRegisterProxyForComponent(TComponent* component)
@@ -60,13 +61,16 @@ public:
         std::string name_;
         UActorComponent* proxy_component_ = nullptr;
         UActorComponent* component_ = nullptr;
-        TDerivedProxyComponentData* derived_proxy_component_data_ = nullptr;
+        TDerivedProxyComponentData derived_proxy_component_data_;
         bool mark_as_unregistered_ = false;
         int unregister_frame_counter_ = -1;
     };
 
+    // Rendering can be buffered, so a rendered image might contain proxy IDs from components that have already been
+    // destroyed. So we delay unregistering proxy components for unregister_delay_frames_ updates, so their IDs remain
+    // valid for the images rendered while they were alive. If rendering is single-buffered, this can be set to 0.
     int getUnregisterDelayFrames() const { return unregister_delay_frames_; }
-    void setUnregisterDelayFrames(int value) { unregister_delay_frames_ = value; }
+    void setUnregisterDelayFrames(int value) { SP_ASSERT(value >= 0); unregister_delay_frames_ = value; }
 
     //
     // Request-based functions
@@ -76,15 +80,15 @@ public:
     template <CComponent TComponent>
     void requestCreateAndRegisterProxyComponents(const std::vector<AActor*>& actors)
     {
-        // Find all non-proxy components of type TComponent.
-        std::map<std::string, TComponent*> non_proxy_components = Std::toMap<std::string, TComponent*>(
+        // Find all non-proxy components of type TComponent present in the world.
+        std::map<std::string, TComponent*> non_proxy_components_in_world = Std::toMap<std::string, TComponent*>(
             getComponents<TComponent>(actors) |
             std::views::filter([](auto component) { return !Std::contains(Unreal::toStdString(component->GetName()), "SP_PROXY_COMPONENT"); }) |
             std::views::transform([this](auto component) { return std::make_pair(getLongComponentName(getPtr()->getWorld(), component), component); }));
 
         // Find components to create and register: present in the world, of type TComponent, TDerivedProxyComponentManager thinks it should be registered, and not yet registered.
         std::map<std::string, TComponent*> components_to_create_and_register = Std::toMap<std::string, TComponent*>(
-            non_proxy_components |
+            non_proxy_components_in_world |
             std::views::filter([this](auto& pair) { auto& [name, component] = pair; return getPtr()->shouldRegisterProxyForComponent(component); }) |
             std::views::filter([this](auto& pair) { auto& [name, component] = pair; return !Std::containsKey(name_to_proxy_component_desc_map_, name); }));
 
@@ -96,19 +100,18 @@ public:
     void requestDecrementAndUnregisterProxyComponents()
     {
         // Find marked proxy components.
-        std::vector<std::string> marked_proxy_components = Std::toVector<std::string>(
-            name_to_proxy_component_desc_map_ |
-            std::views::filter([](auto& pair) { auto& [name, proxy_component_desc] = pair; return proxy_component_desc.mark_as_unregistered_; }) |
-            std::views::transform([](auto& pair) { auto& [name, proxy_component_desc] = pair; return name; }));
+        std::vector<uint32_t> marked_proxy_components = Std::toVector<uint32_t>(
+            marked_id_to_proxy_component_desc_map_ |
+            std::views::transform([](auto& pair) { auto& [id, proxy_component_desc] = pair; return id; }));
 
         // Decrement counters for marked proxy components.
         decrementFrameCountersForMarkedProxyComponentsImpl(marked_proxy_components);
 
         // Find marked proxy components whose countdown has reached zero.
-        std::vector<std::string> proxy_components_to_unregister = Std::toVector<std::string>(
-            name_to_proxy_component_desc_map_ |
-            std::views::filter([](auto& pair) { auto& [name, proxy_component_desc] = pair; return proxy_component_desc.mark_as_unregistered_ && proxy_component_desc.unregister_frame_counter_ == 0; }) |
-            std::views::transform([](auto& pair) { auto& [name, proxy_component_desc] = pair; return name; }));
+        std::vector<uint32_t> proxy_components_to_unregister = Std::toVector<uint32_t>(
+            marked_id_to_proxy_component_desc_map_ |
+            std::views::filter([](auto& pair) { auto& [id, proxy_component_desc] = pair; return proxy_component_desc.unregister_frame_counter_ == 0; }) |
+            std::views::transform([](auto& pair) { auto& [id, proxy_component_desc] = pair; return id; }));
 
         // Unregister proxy components.
         unregisterProxyComponentsImpl(proxy_components_to_unregister);
@@ -118,62 +121,59 @@ public:
     template <CComponent TComponent>
     void requestUnregisterAndDestroyProxyComponents(const std::vector<AActor*>& actors)
     {
-        // In this function it is only safe to call proxy_component_desc.proxy_component_->IsA(TComponent::StaticClass())
-        // once we know a proxy_component_desc hasn't been marked as unregistered. If it has been marked as
-        // unregistered, then proxy_component_desc.proxy_component_ will be nullptr. So we always check
-        // mark_as_unregistered_ first, and then check proxy_component_->IsA(...) afterwards.
+        std::vector<std::string> proxy_components_to_mark_as_unregistered_and_destroy;
 
-        // Find all non-proxy components of type TComponent.
-        std::map<std::string, TComponent*> non_proxy_components = Std::toMap<std::string, TComponent*>(
+        // Find all non-proxy components of type TComponent present in the world.
+        std::map<std::string, TComponent*> non_proxy_components_in_world = Std::toMap<std::string, TComponent*>(
             getComponents<TComponent>(actors) |
             std::views::filter([](auto component) { return !Std::contains(Unreal::toStdString(component->GetName()), "SP_PROXY_COMPONENT"); }) |
             std::views::transform([this](auto component) { return std::make_pair(getLongComponentName(getPtr()->getWorld(), component), component); }));
 
-        // Find proxy components to mark as unregistered and destroy: registered, not already marked, of type TComponent, and not present in the world.
-        std::vector<std::string> proxy_components_to_mark_as_unregistered_and_destroy = Std::toVector<std::string>(
-            name_to_proxy_component_desc_map_ |
-            std::views::filter([](auto& pair) { auto& [name, proxy_component_desc] = pair; return !proxy_component_desc.mark_as_unregistered_; }) |
-            std::views::filter([](auto& pair) { auto& [name, proxy_component_desc] = pair; return proxy_component_desc.proxy_component_->IsA(TComponent::StaticClass()); }) |
-            std::views::filter([&non_proxy_components](auto& pair) { auto& [name, proxy_component_desc] = pair; return !Std::containsKey(non_proxy_components, name); }) |
-            std::views::transform([](auto& pair) { auto& [name, proxy_component_desc] = pair; return name; }));
-
-        // Mark as unregistered and destroy proxy components.
-        markAsUnregisteredAndDestroyProxyComponentsImpl(proxy_components_to_mark_as_unregistered_and_destroy);
-
-        // Find proxy components to mark as unregistered and destroy: registered, not already marked, of type TComponent, and TDerivedProxyComponentManager thinks it should be unregistered.
+        // Find proxy components to mark as unregistered and destroy: registered, of type TComponent, and not present in the world.
         proxy_components_to_mark_as_unregistered_and_destroy = Std::toVector<std::string>(
             name_to_proxy_component_desc_map_ |
-            std::views::filter([](auto& pair) { auto& [name, proxy_component_desc] = pair; return !proxy_component_desc.mark_as_unregistered_; }) |
+            std::views::filter([](auto& pair) { auto& [name, proxy_component_desc] = pair; return proxy_component_desc.proxy_component_->IsA(TComponent::StaticClass()); }) |
+            std::views::filter([&non_proxy_components_in_world](auto& pair) { auto& [name, proxy_component_desc] = pair; return !Std::containsKey(non_proxy_components_in_world, name); }) |
+            std::views::transform([](auto& pair) { auto& [name, proxy_component_desc] = pair; return name; }));
+
+        // Mark as unregistered and destroy proxy components. This moves their descs from name_to_proxy_component_desc_map_
+        // to marked_id_to_proxy_component_desc_map_.
+        markAsUnregisteredAndDestroyProxyComponentsImpl(proxy_components_to_mark_as_unregistered_and_destroy);
+
+        // Find proxy components to mark as unregistered and destroy: registered, of type TComponent, and TDerivedProxyComponentManager thinks it should be unregistered.
+        proxy_components_to_mark_as_unregistered_and_destroy = Std::toVector<std::string>(
+            name_to_proxy_component_desc_map_ |
             std::views::filter([](auto& pair) { auto& [name, proxy_component_desc] = pair; return proxy_component_desc.proxy_component_->IsA(TComponent::StaticClass()); }) |
             std::views::filter([this](auto& pair) {
                 auto& [name, proxy_component_desc] = pair;
                 SP_ASSERT(proxy_component_desc.component_->IsA(TComponent::StaticClass()));
-                return getPtr()->shouldUnregisterProxyForComponent(static_cast<TComponent*>(proxy_component_desc.component_), proxy_component_desc.derived_proxy_component_data_); }) |
+                return getPtr()->shouldUnregisterProxyForComponent(static_cast<TComponent*>(proxy_component_desc.component_), &proxy_component_desc.derived_proxy_component_data_); }) |
             std::views::transform([](auto& pair) { auto& [name, proxy_component_desc] = pair; return name; }));
 
-        // Mark as unregistered and destroy proxy components.
+        // Mark as unregistered and destroy proxy components. This moves their descs from name_to_proxy_component_desc_map_
+        // to marked_id_to_proxy_component_desc_map_.
         markAsUnregisteredAndDestroyProxyComponentsImpl(proxy_components_to_mark_as_unregistered_and_destroy);
     }
 
     // Called from ASpProxyComponentManager::unregisterAndDestroyProxyComponentsForAllTypes(...)
     void unregisterAndDestroyProxyComponents()
     {
-        // Find proxy components to mark as unregistered and destroy: registered, not already marked.
+        // Find proxy components to mark as unregistered and destroy: registered.
         std::vector<std::string> proxy_components_to_mark_as_unregistered_and_destroy = Std::toVector<std::string>(
             name_to_proxy_component_desc_map_ |
-            std::views::filter([](auto& pair) { auto& [name, proxy_component_desc] = pair; return !proxy_component_desc.mark_as_unregistered_; }) |
             std::views::transform([](auto& pair) { auto& [name, proxy_component_desc] = pair; return name; }));
 
-        // Mark as unregistered and destroy components.
+        // Mark as unregistered and destroy proxy components. This moves their descs from name_to_proxy_component_desc_map_
+        // to marked_id_to_proxy_component_desc_map_.
         markAsUnregisteredAndDestroyProxyComponentsImpl(proxy_components_to_mark_as_unregistered_and_destroy);
 
         // All proxy components should be marked as unregistered at this point.
-        SP_ASSERT(Std::all(name_to_proxy_component_desc_map_ | std::views::transform([](auto& pair) { auto& [name, proxy_component_desc] = pair; return proxy_component_desc.mark_as_unregistered_; })));
+        SP_ASSERT(name_to_proxy_component_desc_map_.empty());
 
-        // Find proxy components to unregister: registered, already marked
-        std::vector<std::string> proxy_components_to_unregister = Std::toVector<std::string>(
-            name_to_proxy_component_desc_map_ |
-            std::views::transform([](auto& pair) { auto& [name, proxy_component_desc] = pair; return name; }));
+        // Find proxy components to unregister: marked.
+        std::vector<uint32_t> proxy_components_to_unregister = Std::toVector<uint32_t>(
+            marked_id_to_proxy_component_desc_map_ |
+            std::views::transform([](auto& pair) { auto& [id, proxy_component_desc] = pair; return id; }));
 
         // Unregister proxy components.
         unregisterProxyComponentsImpl(proxy_components_to_unregister);
@@ -229,31 +229,32 @@ private:
             SP_ASSERT(!proxy_component_desc_ids_.contains(proxy_component_desc_id));
             SP_ASSERT(!Std::containsKey(name_to_proxy_component_desc_map_, name));
 
-            TComponent* proxy_component = createComponent<TComponent>(getPtr()->getOwner(), component, proxy_component_name);
+            // Proxy components are always created at runtime, so we mark them as transient. This prevents them from
+            // being saved into a map, and from being duplicated from the editor world into a PIE world, see
+            // AActor::Serialize(...) in Engine/Source/Runtime/Engine/Private/Actor.cpp.
+            TComponent* proxy_component = createComponent<TComponent>(getPtr()->getOwner(), component, proxy_component_name, RF_Transient);
             SP_ASSERT(proxy_component);
 
             if (Config::isInitialized() && Config::get<bool>("SP_CORE.PROXY_COMPONENT_MANAGER.VERBOSE")) {
                 SP_LOG("Registering component: ", name);
             }
 
-            TDerivedProxyComponentData* derived_proxy_component_data = getPtr()->registerProxyComponent(proxy_component, component);
-
             ProxyComponentDesc proxy_component_desc;
             proxy_component_desc.id_ = proxy_component_desc_id;
             proxy_component_desc.name_ = name;
             proxy_component_desc.proxy_component_ = proxy_component;
             proxy_component_desc.component_ = component;
-            proxy_component_desc.derived_proxy_component_data_ = derived_proxy_component_data;
+            proxy_component_desc.derived_proxy_component_data_ = getPtr()->registerProxyComponent(proxy_component, component);
 
             Std::insert(proxy_component_desc_ids_, proxy_component_desc_id);
             Std::insert(name_to_proxy_component_desc_map_, name, std::move(proxy_component_desc));
         }
     }
 
-    void decrementFrameCountersForMarkedProxyComponentsImpl(const std::vector<std::string>& component_names)
+    void decrementFrameCountersForMarkedProxyComponentsImpl(const std::vector<uint32_t>& proxy_component_desc_ids)
     {
-        for (auto& name : component_names) {
-            ProxyComponentDesc& proxy_component_desc = name_to_proxy_component_desc_map_.at(name);
+        for (auto id : proxy_component_desc_ids) {
+            ProxyComponentDesc& proxy_component_desc = marked_id_to_proxy_component_desc_map_.at(id);
             SP_ASSERT(proxy_component_desc.mark_as_unregistered_);
             SP_ASSERT(proxy_component_desc.unregister_frame_counter_ >= 1);
             proxy_component_desc.unregister_frame_counter_--;
@@ -265,8 +266,13 @@ private:
         for (auto& name : component_names) {
             SP_ASSERT(Std::containsKey(name_to_proxy_component_desc_map_, name));
 
-            ProxyComponentDesc& proxy_component_desc = name_to_proxy_component_desc_map_.at(name);
+            // We move the proxy component desc out of name_to_proxy_component_desc_map_ and into
+            // marked_id_to_proxy_component_desc_map_. This way, if a component is removed and then re-added (e.g.,
+            // if it is hidden and then shown again), a new proxy component can be created for it immediately,
+            // without needing to wait for the old proxy component to be unregistered.
+            ProxyComponentDesc proxy_component_desc = std::move(name_to_proxy_component_desc_map_.at(name));
             SP_ASSERT(!proxy_component_desc.mark_as_unregistered_);
+            Std::remove(name_to_proxy_component_desc_map_, name);
 
             if (Config::isInitialized() && Config::get<bool>("SP_CORE.PROXY_COMPONENT_MANAGER.VERBOSE")) {
                 SP_LOG("Marking component as unregistered and invalidating: ", name);
@@ -275,33 +281,42 @@ private:
             proxy_component_desc.unregister_frame_counter_ = unregister_delay_frames_;
             proxy_component_desc.component_ = nullptr;
 
-            getPtr()->invalidateProxyComponent(proxy_component_desc.derived_proxy_component_data_);
+            getPtr()->invalidateProxyComponent(&proxy_component_desc.derived_proxy_component_data_);
 
             if (Config::isInitialized() && Config::get<bool>("SP_CORE.PROXY_COMPONENT_MANAGER.VERBOSE")) {
                 SP_LOG("Destroying component: ", name);
             }
             destroyComponent(proxy_component_desc.proxy_component_);
             proxy_component_desc.proxy_component_ = nullptr;
+
+            uint32_t proxy_component_desc_id = proxy_component_desc.id_;
+            Std::insert(marked_id_to_proxy_component_desc_map_, proxy_component_desc_id, std::move(proxy_component_desc));
+
+            // If unregister_delay_frames_ is 0, then there is no need to delay unregistering, e.g., because rendering
+            // is single-buffered, so we unregister immediately.
+            if (unregister_delay_frames_ == 0) {
+                unregisterProxyComponentsImpl({proxy_component_desc_id});
+            }
         }
     }
 
-    void unregisterProxyComponentsImpl(const std::vector<std::string>& component_names)
+    void unregisterProxyComponentsImpl(const std::vector<uint32_t>& proxy_component_desc_ids)
     {
-        for (auto& name : component_names) {
+        for (auto id : proxy_component_desc_ids) {
+            SP_ASSERT(proxy_component_desc_ids_.contains(id));
+            SP_ASSERT(Std::containsKey(marked_id_to_proxy_component_desc_map_, id));
+
+            ProxyComponentDesc proxy_component_desc = std::move(marked_id_to_proxy_component_desc_map_.at(id));
+            SP_ASSERT(proxy_component_desc.mark_as_unregistered_);
+
             if (Config::isInitialized() && Config::get<bool>("SP_CORE.PROXY_COMPONENT_MANAGER.VERBOSE")) {
-                SP_LOG("Unregistering component: ", name);
+                SP_LOG("Unregistering component: ", proxy_component_desc.name_);
             }
 
-            ProxyComponentDesc proxy_component_desc = name_to_proxy_component_desc_map_.at(name);
-            uint32_t proxy_component_desc_id = proxy_component_desc.id_;
+            getPtr()->unregisterProxyComponent(&proxy_component_desc.derived_proxy_component_data_);
 
-            SP_ASSERT(proxy_component_desc_ids_.contains(proxy_component_desc_id));
-            SP_ASSERT(Std::containsKey(name_to_proxy_component_desc_map_, name));
-
-            getPtr()->unregisterProxyComponent(proxy_component_desc.derived_proxy_component_data_);
-
-            Std::remove(proxy_component_desc_ids_, proxy_component_desc_id);
-            Std::remove(name_to_proxy_component_desc_map_, name);
+            Std::remove(proxy_component_desc_ids_, id);
+            Std::remove(marked_id_to_proxy_component_desc_map_, id);
         }
     }
 
@@ -347,26 +362,15 @@ private:
     }
 
     template <CNonSceneComponent TNonSceneComponent>
-    static TNonSceneComponent* createComponent(UObject* owner, TNonSceneComponent* component, const std::string& name)
+    static TNonSceneComponent* createComponent(UObject* owner, TNonSceneComponent* component, const std::string& name, EObjectFlags object_flags)
     {
-        return UnrealUtils::createComponentOutsideOwnerConstructor<TNonSceneComponent>(owner, name);
+        return UnrealUtils::createComponentOutsideOwnerConstructor<TNonSceneComponent>(owner, name, object_flags);
     }
 
     template <CSceneComponent TSceneComponent>
-    static TSceneComponent* createComponent(UObject* owner, TSceneComponent* component, const std::string& name)
+    static TSceneComponent* createComponent(UObject* owner, TSceneComponent* component, const std::string& name, EObjectFlags object_flags)
     {
-        return UnrealUtils::createSceneComponentOutsideOwnerConstructor<TSceneComponent>(owner, component, name);
-    }
-
-    template <CComponent TComponent>
-    void destroyProxyComponentsImpl(const std::vector<TComponent*>& components)
-    {
-        for (auto component : components) {
-            if (Config::isInitialized() && Config::get<bool>("SP_CORE.PROXY_COMPONENT_MANAGER.VERBOSE")) {
-                SP_LOG("Destroying component: ", getLongComponentName(getPtr()->getWorld(), component));
-            }
-            destroyComponent(component);
-        }
+        return UnrealUtils::createSceneComponentOutsideOwnerConstructor<TSceneComponent>(owner, component, name, object_flags);
     }
 
     static void destroyComponent(UActorComponent* component)
@@ -375,6 +379,7 @@ private:
     }
 
     std::map<std::string, ProxyComponentDesc> name_to_proxy_component_desc_map_;
+    std::map<uint32_t, ProxyComponentDesc> marked_id_to_proxy_component_desc_map_;
     std::set<uint32_t> proxy_component_desc_ids_;
     uint32_t proxy_component_desc_id_initial_guess_ = 1;
     int unregister_delay_frames_ = 3;

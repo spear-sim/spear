@@ -51,8 +51,10 @@ struct FSpQualityLevels
 {
     GENERATED_BODY()
 public:
+    // Matches the effective default set by Scalability::FQualityLevels::SetDefaults(), where 0.0 means "fall back to
+    // the project's default screen percentage", see Engine/Source/Runtime/Engine/Private/Scalability.cpp.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    float ResolutionQuality = 100.0f;
+    float ResolutionQuality = 0.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     ESpPerQualityLevels ViewDistanceQuality = ESpPerQualityLevels::Epic;
@@ -78,6 +80,14 @@ public:
     ESpPerQualityLevels LandscapeQuality = ESpPerQualityLevels::Epic;
 };
 
+//
+// USpQualityLevelsUtils wraps the member functions of Scalability::FQualityLevels. Functions named Set* and Get* mimic
+// FQualityLevels member functions with the same names. Functions named QualityLevels* construct a default
+// FQualityLevels, optionally call the corresponding Set* function on it, and return the result. We avoid the word Get
+// in these function names to avoid confusion with USpScalability::GetQualityLevels(), which returns the current
+// engine-level quality levels.
+//
+
 UCLASS()
 class USpQualityLevelsUtils : public UBlueprintFunctionLibrary
 {
@@ -85,13 +95,13 @@ class USpQualityLevelsUtils : public UBlueprintFunctionLibrary
 public:
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FSpQualityLevels GetQualityLevels()
+    static FSpQualityLevels QualityLevels()
     {
         return toSpQualityLevels(Scalability::FQualityLevels());
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FSpQualityLevels GetQualityLevelsFromSingleQualityLevel(ESpPerQualityLevels QualityLevel)
+    static FSpQualityLevels QualityLevelsFromSingleQualityLevel(ESpPerQualityLevels QualityLevel)
     {
         Scalability::FQualityLevels quality_levels;
         quality_levels.SetFromSingleQualityLevel(Unreal::getEnumValue(QualityLevel));
@@ -107,7 +117,7 @@ public:
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FSpQualityLevels GetQualityLevelsFromSingleQualityLevelRelativeToMax(int32 Value)
+    static FSpQualityLevels QualityLevelsFromSingleQualityLevelRelativeToMax(int32 Value)
     {
         Scalability::FQualityLevels quality_levels;
         quality_levels.SetFromSingleQualityLevelRelativeToMax(Value);
@@ -123,7 +133,7 @@ public:
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FSpQualityLevels GetQualityLevelsFromViewDistanceQuality(ESpPerQualityLevels QualityLevel)
+    static FSpQualityLevels QualityLevelsFromViewDistanceQuality(ESpPerQualityLevels QualityLevel)
     {
         Scalability::FQualityLevels quality_levels;
         quality_levels.SetViewDistanceQuality(Unreal::getEnumValue(QualityLevel));
@@ -139,7 +149,7 @@ public:
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FSpQualityLevels GetQualityLevelsFromAntiAliasingQuality(ESpPerQualityLevels QualityLevel)
+    static FSpQualityLevels QualityLevelsFromAntiAliasingQuality(ESpPerQualityLevels QualityLevel)
     {
         Scalability::FQualityLevels quality_levels;
         quality_levels.SetAntiAliasingQuality(Unreal::getEnumValue(QualityLevel));
@@ -155,7 +165,7 @@ public:
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FSpQualityLevels GetQualityLevelsFromShadowQuality(ESpPerQualityLevels QualityLevel)
+    static FSpQualityLevels QualityLevelsFromShadowQuality(ESpPerQualityLevels QualityLevel)
     {
         Scalability::FQualityLevels quality_levels;
         quality_levels.SetShadowQuality(Unreal::getEnumValue(QualityLevel));
@@ -171,7 +181,7 @@ public:
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FSpQualityLevels GetQualityLevelsFromGlobalIlluminationQuality(ESpPerQualityLevels QualityLevel)
+    static FSpQualityLevels QualityLevelsFromGlobalIlluminationQuality(ESpPerQualityLevels QualityLevel)
     {
         Scalability::FQualityLevels quality_levels;
         quality_levels.SetGlobalIlluminationQuality(Unreal::getEnumValue(QualityLevel));
@@ -187,7 +197,7 @@ public:
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FSpQualityLevels GetQualityLevelsFromReflectionQuality(ESpPerQualityLevels QualityLevel)
+    static FSpQualityLevels QualityLevelsFromReflectionQuality(ESpPerQualityLevels QualityLevel)
     {
         Scalability::FQualityLevels quality_levels;
         quality_levels.SetReflectionQuality(Unreal::getEnumValue(QualityLevel));
@@ -203,7 +213,7 @@ public:
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FSpQualityLevels GetQualityLevelsFromPostProcessQuality(ESpPerQualityLevels QualityLevel)
+    static FSpQualityLevels QualityLevelsFromPostProcessQuality(ESpPerQualityLevels QualityLevel)
     {
         Scalability::FQualityLevels quality_levels;
         quality_levels.SetPostProcessQuality(Unreal::getEnumValue(QualityLevel));
@@ -219,7 +229,7 @@ public:
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FSpQualityLevels GetQualityLevelsFromTextureQuality(ESpPerQualityLevels QualityLevel)
+    static FSpQualityLevels QualityLevelsFromTextureQuality(ESpPerQualityLevels QualityLevel)
     {
         Scalability::FQualityLevels quality_levels;
         quality_levels.SetTextureQuality(Unreal::getEnumValue(QualityLevel));
@@ -235,7 +245,7 @@ public:
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FSpQualityLevels GetQualityLevelsFromEffectsQuality(ESpPerQualityLevels QualityLevel)
+    static FSpQualityLevels QualityLevelsFromEffectsQuality(ESpPerQualityLevels QualityLevel)
     {
         Scalability::FQualityLevels quality_levels;
         quality_levels.SetEffectsQuality(Unreal::getEnumValue(QualityLevel));
@@ -251,7 +261,7 @@ public:
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FSpQualityLevels GetQualityLevelsFromFoliageQuality(ESpPerQualityLevels QualityLevel)
+    static FSpQualityLevels QualityLevelsFromFoliageQuality(ESpPerQualityLevels QualityLevel)
     {
         Scalability::FQualityLevels quality_levels;
         quality_levels.SetFoliageQuality(Unreal::getEnumValue(QualityLevel));
@@ -267,7 +277,7 @@ public:
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FSpQualityLevels GetQualityLevelsFromShadingQuality(ESpPerQualityLevels QualityLevel)
+    static FSpQualityLevels QualityLevelsFromShadingQuality(ESpPerQualityLevels QualityLevel)
     {
         Scalability::FQualityLevels quality_levels;
         quality_levels.SetShadingQuality(Unreal::getEnumValue(QualityLevel));
@@ -283,7 +293,7 @@ public:
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FSpQualityLevels GetQualityLevelsFromLandscapeQuality(ESpPerQualityLevels QualityLevel)
+    static FSpQualityLevels QualityLevelsFromLandscapeQuality(ESpPerQualityLevels QualityLevel)
     {
         Scalability::FQualityLevels quality_levels;
         quality_levels.SetLandscapeQuality(Unreal::getEnumValue(QualityLevel));
@@ -299,7 +309,7 @@ public:
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static FSpQualityLevels GetQualityLevelsFromBenchmarkFallback()
+    static FSpQualityLevels QualityLevelsFromBenchmarkFallback()
     {
         Scalability::FQualityLevels quality_levels;
         quality_levels.SetBenchmarkFallback();
@@ -329,36 +339,36 @@ public:
     static FSpQualityLevels toSpQualityLevels(const Scalability::FQualityLevels& quality_levels)
     {
         FSpQualityLevels sp_quality_levels;
-        sp_quality_levels.ResolutionQuality          = quality_levels.ResolutionQuality;
-        sp_quality_levels.ViewDistanceQuality        = Unreal::getEnumValueAs<ESpPerQualityLevels>(quality_levels.ViewDistanceQuality);
-        sp_quality_levels.AntiAliasingQuality        = Unreal::getEnumValueAs<ESpPerQualityLevels>(quality_levels.AntiAliasingQuality);
-        sp_quality_levels.ShadowQuality              = Unreal::getEnumValueAs<ESpPerQualityLevels>(quality_levels.ShadowQuality);
-        sp_quality_levels.GlobalIlluminationQuality  = Unreal::getEnumValueAs<ESpPerQualityLevels>(quality_levels.GlobalIlluminationQuality);
-        sp_quality_levels.ReflectionQuality          = Unreal::getEnumValueAs<ESpPerQualityLevels>(quality_levels.ReflectionQuality);
-        sp_quality_levels.PostProcessQuality         = Unreal::getEnumValueAs<ESpPerQualityLevels>(quality_levels.PostProcessQuality);
-        sp_quality_levels.TextureQuality             = Unreal::getEnumValueAs<ESpPerQualityLevels>(quality_levels.TextureQuality);
-        sp_quality_levels.EffectsQuality             = Unreal::getEnumValueAs<ESpPerQualityLevels>(quality_levels.EffectsQuality);
-        sp_quality_levels.FoliageQuality             = Unreal::getEnumValueAs<ESpPerQualityLevels>(quality_levels.FoliageQuality);
-        sp_quality_levels.ShadingQuality             = Unreal::getEnumValueAs<ESpPerQualityLevels>(quality_levels.ShadingQuality);
-        sp_quality_levels.LandscapeQuality           = Unreal::getEnumValueAs<ESpPerQualityLevels>(quality_levels.LandscapeQuality);
+        sp_quality_levels.ResolutionQuality         = quality_levels.ResolutionQuality;
+        sp_quality_levels.ViewDistanceQuality       = Unreal::getEnumValueAs<ESpPerQualityLevels>(quality_levels.ViewDistanceQuality);
+        sp_quality_levels.AntiAliasingQuality       = Unreal::getEnumValueAs<ESpPerQualityLevels>(quality_levels.AntiAliasingQuality);
+        sp_quality_levels.ShadowQuality             = Unreal::getEnumValueAs<ESpPerQualityLevels>(quality_levels.ShadowQuality);
+        sp_quality_levels.GlobalIlluminationQuality = Unreal::getEnumValueAs<ESpPerQualityLevels>(quality_levels.GlobalIlluminationQuality);
+        sp_quality_levels.ReflectionQuality         = Unreal::getEnumValueAs<ESpPerQualityLevels>(quality_levels.ReflectionQuality);
+        sp_quality_levels.PostProcessQuality        = Unreal::getEnumValueAs<ESpPerQualityLevels>(quality_levels.PostProcessQuality);
+        sp_quality_levels.TextureQuality            = Unreal::getEnumValueAs<ESpPerQualityLevels>(quality_levels.TextureQuality);
+        sp_quality_levels.EffectsQuality            = Unreal::getEnumValueAs<ESpPerQualityLevels>(quality_levels.EffectsQuality);
+        sp_quality_levels.FoliageQuality            = Unreal::getEnumValueAs<ESpPerQualityLevels>(quality_levels.FoliageQuality);
+        sp_quality_levels.ShadingQuality            = Unreal::getEnumValueAs<ESpPerQualityLevels>(quality_levels.ShadingQuality);
+        sp_quality_levels.LandscapeQuality          = Unreal::getEnumValueAs<ESpPerQualityLevels>(quality_levels.LandscapeQuality);
         return sp_quality_levels;
     }
 
     static Scalability::FQualityLevels toQualityLevels(const FSpQualityLevels& sp_quality_levels)
     {
         Scalability::FQualityLevels quality_levels;
-        quality_levels.ResolutionQuality          = sp_quality_levels.ResolutionQuality;
-        quality_levels.ViewDistanceQuality        = Unreal::getEnumValue(sp_quality_levels.ViewDistanceQuality);
-        quality_levels.AntiAliasingQuality        = Unreal::getEnumValue(sp_quality_levels.AntiAliasingQuality);
-        quality_levels.ShadowQuality              = Unreal::getEnumValue(sp_quality_levels.ShadowQuality);
-        quality_levels.GlobalIlluminationQuality  = Unreal::getEnumValue(sp_quality_levels.GlobalIlluminationQuality);
-        quality_levels.ReflectionQuality          = Unreal::getEnumValue(sp_quality_levels.ReflectionQuality);
-        quality_levels.PostProcessQuality         = Unreal::getEnumValue(sp_quality_levels.PostProcessQuality);
-        quality_levels.TextureQuality             = Unreal::getEnumValue(sp_quality_levels.TextureQuality);
-        quality_levels.EffectsQuality             = Unreal::getEnumValue(sp_quality_levels.EffectsQuality);
-        quality_levels.FoliageQuality             = Unreal::getEnumValue(sp_quality_levels.FoliageQuality);
-        quality_levels.ShadingQuality             = Unreal::getEnumValue(sp_quality_levels.ShadingQuality);
-        quality_levels.LandscapeQuality           = Unreal::getEnumValue(sp_quality_levels.LandscapeQuality);
+        quality_levels.ResolutionQuality         = sp_quality_levels.ResolutionQuality;
+        quality_levels.ViewDistanceQuality       = Unreal::getEnumValue(sp_quality_levels.ViewDistanceQuality);
+        quality_levels.AntiAliasingQuality       = Unreal::getEnumValue(sp_quality_levels.AntiAliasingQuality);
+        quality_levels.ShadowQuality             = Unreal::getEnumValue(sp_quality_levels.ShadowQuality);
+        quality_levels.GlobalIlluminationQuality = Unreal::getEnumValue(sp_quality_levels.GlobalIlluminationQuality);
+        quality_levels.ReflectionQuality         = Unreal::getEnumValue(sp_quality_levels.ReflectionQuality);
+        quality_levels.PostProcessQuality        = Unreal::getEnumValue(sp_quality_levels.PostProcessQuality);
+        quality_levels.TextureQuality            = Unreal::getEnumValue(sp_quality_levels.TextureQuality);
+        quality_levels.EffectsQuality            = Unreal::getEnumValue(sp_quality_levels.EffectsQuality);
+        quality_levels.FoliageQuality            = Unreal::getEnumValue(sp_quality_levels.FoliageQuality);
+        quality_levels.ShadingQuality            = Unreal::getEnumValue(sp_quality_levels.ShadingQuality);
+        quality_levels.LandscapeQuality          = Unreal::getEnumValue(sp_quality_levels.LandscapeQuality);
         return quality_levels;
     }
 };

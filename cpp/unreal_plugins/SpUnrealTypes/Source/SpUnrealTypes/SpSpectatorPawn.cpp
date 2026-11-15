@@ -54,7 +54,6 @@ void ASpSpectatorPawn::BeginPlay()
 
     int num_samples = 200;
     previous_time_deltas_.set_capacity(num_samples);
-    previous_time_deltas_.resize(num_samples, 0.0);
     previous_time_point_ = std::chrono::high_resolution_clock::now();
     previous_is_benchmarking_ = false;
     previous_max_speed_ = SpectatorPawnMovement->MaxSpeed;

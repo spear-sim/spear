@@ -15,7 +15,6 @@
 #include <Engine/EngineTypes.h>          // EEndPlayReason
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>                // uint8
-#include <Math/Matrix.h>                 // FMatrix
 #include <Math/Vector.h>
 #include <UObject/ObjectMacros.h>        // GENERATED_BODY, UCLASS, UENUM, UFUNCTION, UPROPERTY
 
@@ -126,9 +125,6 @@ private:
     FVector GetVector(FString Arg0, bool Arg1, int Arg2, FVector& Arg3) const;
 
     UFUNCTION()
-    FMatrix GetMatrix(FMatrix Arg0) const;
-
-    UFUNCTION()
     static UObject* GetWorldContextObject(const UObject* WorldContextObject, FString Arg0, bool Arg1);
 
     UFUNCTION()
@@ -144,18 +140,6 @@ private:
 
     UPROPERTY()
     TArray<int> ArrayOfInts;
-
-    UPROPERTY()
-    int64 Int64Value = 0;
-
-    UPROPERTY()
-    uint64 UInt64Value = 0;
-
-    UPROPERTY()
-    TArray<int64> ArrayOfInt64;
-
-    UPROPERTY()
-    TArray<uint64> ArrayOfUInt64;
 
     UPROPERTY()
     TArray<FVector> ArrayOfVectors;
@@ -174,9 +158,6 @@ private:
 
     UPROPERTY()
     TMap<FString, FVector> MapFromStringToVector;
-
-    UPROPERTY()
-    TMap<FString, FVector> OtherMapFromStringToVector;
 
     UPROPERTY()
     TSet<FString> SetOfStrings;

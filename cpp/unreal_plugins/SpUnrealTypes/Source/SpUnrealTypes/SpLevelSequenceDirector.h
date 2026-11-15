@@ -13,10 +13,13 @@
 #include <Engine/LevelStreamingDynamic.h>
 #include <LevelSequenceDirector.h>
 #include <LevelSequencePlayer.h>
+#include <Math/Rotator.h>
+#include <Math/Vector.h>
 #include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
+#include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 
 #include "SpLevelSequenceDirector.generated.h"
@@ -26,7 +29,7 @@ class USpLevelSequenceDirector : public ULevelSequenceDirector
 {
     GENERATED_BODY()
 public:
-    UFUNCTION(BlueprintCallable, Category="SPEAR")    
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
     void OnCreatedImpl()
     {
         SP_LOG_CURRENT_FUNCTION();
@@ -77,16 +80,14 @@ private:
     void terminate()
     {
         if (Player && GetWorld()) {
-            for (auto& level_instance_path : LevelInstancePaths) {
-                std::string level_instance_path_str = Unreal::toStdString(level_instance_path);
+            // Iterate over level_instances_ rather than LevelInstancePaths, because level instances that failed to
+            // load in initialize() are not stored in level_instances_.
+            for (auto& [level_instance_path_str, level_instance] : level_instances_) {
                 SP_LOG("Unloading: ", level_instance_path_str);
-
-                bool success = false;
-                ULevelStreamingDynamic* level_instance = level_instances_.at(level_instance_path_str);
                 SP_ASSERT(level_instance);
                 level_instance->SetIsRequestingUnloadAndRemoval(true);
-                Std::remove(level_instances_, level_instance_path_str);
             }
+            level_instances_.clear();
 
             Player->OnStop.RemoveDynamic(this, &USpLevelSequenceDirector::StopHandler);
             Player->OnFinished.RemoveDynamic(this, &USpLevelSequenceDirector::FinishedHandler);

@@ -104,9 +104,9 @@ public:
         return !shouldRegisterProxyForComponent(component);
     }
 
-    MeshProxyComponentData* registerProxyComponent(UStaticMeshComponent* proxy_component, UStaticMeshComponent* component)
+    MeshProxyComponentData registerProxyComponent(UStaticMeshComponent* proxy_component, UStaticMeshComponent* component)
     {
-        MeshProxyComponentData* mesh_proxy_component_data = createMeshProxyComponentData();
+        MeshProxyComponentData mesh_proxy_component_data;
 
         bool new_visibility;
         bool propagate_to_children;
@@ -140,7 +140,7 @@ public:
             UMaterialInterface* material = createMaterialForProxyComponentMaterialSlot(mesh_proxy_geometry_desc_id, component, component->GetMaterial(i));
             SP_ASSERT(material);
             proxy_component->SetMaterial(i, material);
-            Std::insert(mesh_proxy_component_data->mesh_proxy_geometry_desc_ids_, mesh_proxy_geometry_desc_id);
+            Std::insert(mesh_proxy_component_data.mesh_proxy_geometry_desc_ids_, mesh_proxy_geometry_desc_id);
         }
 
         // mark as dirty
@@ -161,9 +161,9 @@ public:
         return mesh_proxy_component_data;
     }
 
-    MeshProxyComponentData* registerProxyComponent(USkeletalMeshComponent* proxy_component, USkeletalMeshComponent* component)
+    MeshProxyComponentData registerProxyComponent(USkeletalMeshComponent* proxy_component, USkeletalMeshComponent* component)
     {
-        MeshProxyComponentData* mesh_proxy_component_data = createMeshProxyComponentData();
+        MeshProxyComponentData mesh_proxy_component_data;
 
         bool new_visibility;
         bool propagate_to_children;
@@ -198,7 +198,7 @@ public:
             UMaterialInterface* material = createMaterialForProxyComponentMaterialSlot(mesh_proxy_geometry_desc_id, component, component->GetMaterial(i));
             SP_ASSERT(material);
             proxy_component->SetMaterial(i, material);
-            Std::insert(mesh_proxy_component_data->mesh_proxy_geometry_desc_ids_, mesh_proxy_geometry_desc_id);
+            Std::insert(mesh_proxy_component_data.mesh_proxy_geometry_desc_ids_, mesh_proxy_geometry_desc_id);
         }
 
         // mark as dirty
@@ -243,8 +243,6 @@ public:
             }
             unregisterMeshProxyGeometryImpl(mesh_proxy_geometry_desc_id);
         }
-
-        destroyMeshProxyComponentData(mesh_proxy_component_data);
     }
 
     UWorld* getWorld() { return owner_->GetWorld(); }
@@ -310,6 +308,9 @@ private:
 
     bool isCompatibleType(USceneComponent* component)
     {
+        // We only support exact class matches, because derived classes (e.g., instanced foliage) can store their
+        // geometry in derived-only data structures that aren't visible to the base class, so creating a proxy for them
+        // using the base class interface isn't meaningful.
         static std::set<UClass*> allowed_classes = {UStaticMeshComponent::StaticClass(), USkeletalMeshComponent::StaticClass()};
         return allowed_classes.contains(component->GetClass());
     }
@@ -343,17 +344,6 @@ private:
     {
         Std::remove(mesh_proxy_geometry_desc_ids_, mesh_proxy_geometry_desc_id);
         Std::remove(id_to_mesh_proxy_geometry_desc_map_, mesh_proxy_geometry_desc_id);
-    }
-
-    static MeshProxyComponentData* createMeshProxyComponentData()
-    {
-        return new MeshProxyComponentData();
-    }
-
-    static void destroyMeshProxyComponentData(MeshProxyComponentData* mesh_proxy_component_data)
-    {
-        SP_ASSERT(mesh_proxy_component_data);
-        delete mesh_proxy_component_data;
     }
 
     AActor* owner_ = nullptr;

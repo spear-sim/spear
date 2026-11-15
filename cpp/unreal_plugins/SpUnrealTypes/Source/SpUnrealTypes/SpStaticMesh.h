@@ -5,8 +5,9 @@
 
 #pragma once
 
-#include <Engine/StaticMesh.h> // UStaticMesh
+#include <Engine/StaticMesh.h>     // UStaticMesh
 #include <Kismet/BlueprintFunctionLibrary.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpCore/Assert.h"
 

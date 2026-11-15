@@ -19,16 +19,16 @@ class USpPCGSubsystem : public UBlueprintFunctionLibrary
     GENERATED_BODY()
 public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    bool IsInitialized(UPCGSubsystem* PCGSubsystem)
+    static bool IsInitialized(UPCGSubsystem* PCGSubsystem)
     {
         SP_ASSERT(PCGSubsystem);
         return PCGSubsystem->IsInitialized();
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    void FlushCache(UPCGSubsystem* PCGSubsystem)
+    static void FlushCache(UPCGSubsystem* PCGSubsystem)
     {
         SP_ASSERT(PCGSubsystem);
-        return PCGSubsystem->FlushCache();
+        PCGSubsystem->FlushCache();
     }
 };

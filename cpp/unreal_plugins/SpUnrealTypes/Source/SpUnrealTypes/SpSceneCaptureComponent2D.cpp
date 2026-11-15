@@ -197,6 +197,9 @@ void USpSceneCaptureComponent2D::Initialize()
         return;
     }
 
+    // Save the user's state that we modify below, so Terminate() can restore it exactly.
+    SavedTextureTarget = TextureTarget;
+
     TextureTarget = NewObject<UTextureRenderTarget2D>(this);
     SP_ASSERT(TextureTarget);
     TextureTarget->ClearColor = FLinearColor(1.0f, 1.0f, 0.0f, 1.0f); // bright yellow
@@ -222,9 +225,17 @@ void USpSceneCaptureComponent2D::Initialize()
     bool clear_render_target = true;
     TextureTarget->UpdateResourceImmediate(clear_render_target);
 
+    // Save the user's state that we modify below, so Terminate() can restore it exactly.
+    SavedWeightedBlendables = PostProcessSettings.WeightedBlendables;
+
     if (Material) {
         PostProcessSettings.AddBlendable(Material, 1.0f);
     }
+
+    // Save the user's state that we modify below, so Terminate() can restore it exactly.
+    SavedPrimitiveRenderMode = PrimitiveRenderMode;
+    SavedShowOnlyActors = ShowOnlyActors;
+    SavedHiddenActors = HiddenActors;
 
     if (MeshProxyComponentManagerClass) {
         PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_UseShowOnlyList;
@@ -238,6 +249,9 @@ void USpSceneCaptureComponent2D::Initialize()
     }
 
     if (BufferingMode == ESpBufferingMode::DoubleBuffered || UserSceneTextureNames.Num() > 0 || showFlagsNeedSceneViewExtension()) {
+        // Save the user's state that we modify below, so Terminate() can restore it exactly.
+        bSavedAlwaysPersistRenderingState = bAlwaysPersistRenderingState;
+
         bAlwaysPersistRenderingState = true; // ensure that the underlying view-state data is stable across frames so FSpSceneViewExtensionBase can match view-state data to this component
         scene_view_extension_ = FSceneViewExtensions::NewExtension<FSpSceneViewExtension>();
         scene_view_extension_->initialize(this);
@@ -399,12 +413,12 @@ void USpSceneCaptureComponent2D::Terminate()
 
     SetVisibility(false); // disable rendering to texture
 
+    is_initialized_ = false;
+    bIsInitialized = false;
+
     request_path_tracer_reset_ = false;
     request_override_is_offline_render_ = false;
     request_is_offline_render_ = false;
-
-    is_initialized_ = false;
-    bIsInitialized = false;
 
     // unregister SpFuncs
     SpFuncComponent->unregisterFunc("enqueue_read_pixels");
@@ -420,13 +434,20 @@ void USpSceneCaptureComponent2D::Terminate()
         end_frame_handle_.Reset();
     }
 
+    // The render thread can still be accessing our state if we registered a scene view extension (whose render-thread
+    // callbacks access this component), or if we enqueued asynchronous readback commands (which hold raw pointers
+    // into our readback descs). So in these cases, we need to flush before we terminate the scene view extension and
+    // destroy our readback descs. Single-buffered mode doesn't need a flush because it flushes after every readback.
+
+    if (BufferingMode == ESpBufferingMode::DoubleBuffered || BufferingMode == ESpBufferingMode::TripleBuffered || UserSceneTextureNames.Num() > 0 || showFlagsNeedSceneViewExtension()) {
+        FlushRenderingCommands();
+    }
+
     //
     // user scene textures
     //
 
     if (UserSceneTextureNames.Num() > 0) {
-        FlushRenderingCommands();
-
         for (auto& name : UserSceneTextureNames) {
             SP_ASSERT(UserSceneTextureMaterialDescs.Contains(name));
 
@@ -439,9 +460,6 @@ void USpSceneCaptureComponent2D::Terminate()
 
                 SpFuncComponent->unregisterSharedMemoryView(texture_readback_desc.shared_memory_view_);
             }
-
-            const FSpUserSceneTextureMaterialDesc& user_scene_texture_material_desc = UserSceneTextureMaterialDescs[name];
-            PostProcessSettings.RemoveBlendable(user_scene_texture_material_desc.Material);
         }
 
         user_scene_texture_readback_descs_.clear();
@@ -461,17 +479,26 @@ void USpSceneCaptureComponent2D::Terminate()
         SP_ASSERT(scene_view_extension_);
         scene_view_extension_->terminate();
         scene_view_extension_ = nullptr;
-        bAlwaysPersistRenderingState = false;
+        bAlwaysPersistRenderingState = bSavedAlwaysPersistRenderingState;
+        bSavedAlwaysPersistRenderingState = false;
     }
 
-    ShowOnlyActors.Empty();
-    HiddenActors.Empty();
+    // Restore the user's state that we modified in Initialize().
+    HiddenActors = SavedHiddenActors;
+    ShowOnlyActors = SavedShowOnlyActors;
+    PrimitiveRenderMode = SavedPrimitiveRenderMode;
+    SavedHiddenActors.Empty();
+    SavedShowOnlyActors.Empty();
+    SavedPrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_LegacySceneCapture;
 
-    if (Material) {
-        PostProcessSettings.RemoveBlendable(Material);
-    }
+    // Restore the user's state that we modified in Initialize(). This also removes the blendables we added for the
+    // user scene textures.
+    PostProcessSettings.WeightedBlendables = SavedWeightedBlendables;
+    SavedWeightedBlendables.Array.Empty();
 
-    TextureTarget = nullptr;
+    // Restore the user's state that we modified in Initialize().
+    TextureTarget = SavedTextureTarget;
+    SavedTextureTarget = nullptr;
 }
 
 bool USpSceneCaptureComponent2D::IsInitialized()
@@ -512,31 +539,30 @@ void USpSceneCaptureComponent2D::setupView(FSceneViewFamily& view_family, FScene
         // Based on Source/Runtime/Engine/Private/GameViewportClient.cpp. If more settings are added here,
         // they must also be added to the showFlagsNeedSceneViewExtension() function below.
 
-        if (Unreal::toStdString(engine_show_flag_setting.ShowFlagName) == "Wireframe" && engine_show_flag_setting.Enabled) {
+        std::string show_flag_name = Unreal::toStdString(engine_show_flag_setting.ShowFlagName);
+
+        if (show_flag_name == "Wireframe" && engine_show_flag_setting.Enabled) {
             // Wireframe color is emissive-only, and mesh-modifying materials do not use material substitution, hence...
             view.DiffuseOverrideParameter = FVector4f(0.0f, 0.0f, 0.0f, 0.0f);
             view.SpecularOverrideParameter = FVector4f(0.0f, 0.0f, 0.0f, 0.0f);
-        }
-        else if (Unreal::toStdString(engine_show_flag_setting.ShowFlagName) == "OverrideDiffuseAndSpecular" && engine_show_flag_setting.Enabled) {
+        } else if (show_flag_name == "OverrideDiffuseAndSpecular" && engine_show_flag_setting.Enabled) {
             view.DiffuseOverrideParameter = FVector4f(GEngine->LightingOnlyBrightness.R, GEngine->LightingOnlyBrightness.G, GEngine->LightingOnlyBrightness.B, 0.0f);
             view.SpecularOverrideParameter = FVector4f(0.1f, 0.1f, 0.1f, 0.0f);
-        }
-        else if (Unreal::toStdString(engine_show_flag_setting.ShowFlagName) == "LightingOnlyOverride" && engine_show_flag_setting.Enabled) {
+        } else if (show_flag_name == "LightingOnlyOverride" && engine_show_flag_setting.Enabled) {
             view.DiffuseOverrideParameter = FVector4f(GEngine->LightingOnlyBrightness.R, GEngine->LightingOnlyBrightness.G, GEngine->LightingOnlyBrightness.B, 0.0f);
             view.SpecularOverrideParameter = FVector4f(0.0f, 0.0f, 0.0f, 0.0f);
-        }
-        else if (Unreal::toStdString(engine_show_flag_setting.ShowFlagName) == "ReflectionOverride" && engine_show_flag_setting.Enabled) {
+        } else if (show_flag_name == "ReflectionOverride" && engine_show_flag_setting.Enabled) {
             view.DiffuseOverrideParameter = FVector4f(0.0f, 0.0f, 0.0f, 0.0f);
             view.SpecularOverrideParameter = FVector4f(1.0f, 1.0f, 1.0f, 0.0f);
             view.NormalOverrideParameter = FVector4f(0.0f, 0.0f, 1.0f, 0.0f);
             view.RoughnessOverrideParameter = FVector2D(0.0, 0.0);
         }
 
-        if (Unreal::toStdString(engine_show_flag_setting.ShowFlagName) == "Diffuse" && !engine_show_flag_setting.Enabled) {
+        if (show_flag_name == "Diffuse" && !engine_show_flag_setting.Enabled) {
             view.DiffuseOverrideParameter = FVector4f(0.0f, 0.0f, 0.0f, 0.0f);
         }
 
-        if (Unreal::toStdString(engine_show_flag_setting.ShowFlagName) == "Specular" && !engine_show_flag_setting.Enabled) {
+        if (show_flag_name == "Specular" && !engine_show_flag_setting.Enabled) {
             view.SpecularOverrideParameter = FVector4f(0.0f, 0.0f, 0.0f, 0.0f);
         }
     }
@@ -798,10 +824,11 @@ void USpSceneCaptureComponent2D::enqueueReadPixelsDoubleBuffered(std::map<std::s
         }
 
         // Enqueue every GPU-to-staging copy in a single command, then do a single flush. This command is async, so each
-        // source texture must stay valid until it runs; each minimal desc holds its pooled render target by value,
-        // which keeps a user scene texture's source alive (null for the main texture, whose source TextureTarget owns
-        // and keeps alive for its lifetime). The staging-to-CPU copy and the matching pending-counter decrement happen
-        // later in postRenderViewFamily_RenderThread().
+        // source texture must stay valid until it runs. For the main texture, TextureTarget keeps its source alive for
+        // its lifetime. For a user scene texture, the minimal desc holds a pointer to the persistent desc's
+        // pooled_render_target_, which enqueueCopyPixelsFromGPUToStaging_RenderThread() copies into a local reference
+        // to keep the source alive through EnqueueCopy(). The staging-to-CPU copy and the matching pending-counter
+        // decrement happen later in postRenderViewFamily_RenderThread().
 
         ENQUEUE_RENDER_COMMAND(SpEnqueueReadPixelsDoubleBuffered)(
             [this, texture_readback_minimal_descs = std::move(texture_readback_minimal_descs)](FRHICommandListImmediate& command_list) {
@@ -871,9 +898,11 @@ void USpSceneCaptureComponent2D::enqueueReadPixelsTripleBuffered(std::map<std::s
         // Enqueue every GPU-to-staging copy (into current_readback_) in a single command, do a single flush, then copy
         // every previous frame's staging buffer (prev_readback_) to the CPU and decrement its pending counter. The
         // whole batch lives in one command because copyPixelsFromStagingToCPU_RenderThread() blocks on Lock(), so we
-        // can't interleave a Lock() before the one flush that dispatches all the copies. This command is async, so
-        // each minimal desc holds its pooled render target by value to keep a user scene texture's source alive (null
-        // for the main texture, whose source TextureTarget owns and keeps alive for its lifetime).
+        // can't interleave a Lock() before the one flush that dispatches all the copies. This command is async, so each
+        // source texture must stay valid until it runs. For the main texture, TextureTarget keeps its source alive for
+        // its lifetime. For a user scene texture, the minimal desc holds a pointer to the persistent desc's
+        // pooled_render_target_, which enqueueCopyPixelsFromGPUToStaging_RenderThread() copies into a local reference
+        // to keep the source alive through EnqueueCopy().
 
         ENQUEUE_RENDER_COMMAND(SpEnqueueReadPixelsTripleBuffered)(
             [this, texture_readback_minimal_descs = std::move(texture_readback_minimal_descs)](FRHICommandListImmediate& command_list) {

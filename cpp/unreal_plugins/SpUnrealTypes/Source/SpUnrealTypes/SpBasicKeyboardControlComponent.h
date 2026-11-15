@@ -31,19 +31,19 @@ public:
     // Specifies a component (whose path is AddRotationComponentPath) to add a rotation to.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     FString AddRotationComponentPath;
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString AddRotationComponent;
 
     // Specifies a component (whose path is AddForceTargetComponentPath) to apply a force to, optionally mapping
     // the force vector into world-space from the component-space of another component (whose path is AddForceRotationComponentPath).
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     FString AddForceTargetComponentPath;
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString AddForceTargetComponent;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     FString AddForceRotationComponentPath;
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    UPROPERTY(Transient, VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString AddForceRotationComponent;
 
     // Required for custom debug keyboard commands.

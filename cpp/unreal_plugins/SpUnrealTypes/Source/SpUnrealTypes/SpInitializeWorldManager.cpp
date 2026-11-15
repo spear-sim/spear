@@ -6,30 +6,23 @@
 #include "SpUnrealTypes/SpInitializeWorldManager.h"
 
 #include <filesystem>
-#include <ranges> // std::views::transform
 #include <string>
 
-#include <Engine/Engine.h>      // GEngine
 #include <Engine/EngineTypes.h> // EEndPlayReason
 #include <GameFramework/Actor.h>
-#include <HAL/IConsoleManager.h>
 #include <Kismet/GameplayStatics.h>
 #include <Misc/App.h>
 #include <PhysicsEngine/PhysicsSettings.h>
 
+#include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
-#include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealUtils.h"
 
 ASpInitializeWorldManager::ASpInitializeWorldManager()
 {
     SP_LOG_CURRENT_FUNCTION();
-
-    PrimaryActorTick.bCanEverTick = true;
-    PrimaryActorTick.bTickEvenWhenPaused = true;
-    PrimaryActorTick.TickGroup = ETickingGroup::TG_PrePhysics;
 }
 
 ASpInitializeWorldManager::~ASpInitializeWorldManager()
@@ -75,6 +68,7 @@ void ASpInitializeWorldManager::BeginPlay()
         SP_LOG("    Overriding benchmarking...");
         SP_LOG("    Old benchmarking: ", FApp::IsBenchmarking());
         SP_LOG("    New benchmarking: ", Benchmarking);
+        saved_benchmarking_ = FApp::IsBenchmarking();
         FApp::SetBenchmarking(Benchmarking);
     }
 
@@ -86,6 +80,7 @@ void ASpInitializeWorldManager::BeginPlay()
         SP_LOG("    Overriding fixed delta time...");
         SP_LOG("    Old fixed delta time: ", FApp::GetFixedDeltaTime());
         SP_LOG("    New fixed delta time: ", FixedDeltaTime);
+        saved_fixed_delta_time_ = FApp::GetFixedDeltaTime();
         FApp::SetFixedDeltaTime(FixedDeltaTime);
     }
 
@@ -95,10 +90,11 @@ void ASpInitializeWorldManager::BeginPlay()
 
     if (bOverridePhysicsSettings) {
         std::string physics_settings_str = UnrealUtils::getObjectPropertiesAsString(&PhysicsSettings, FSpPhysicsSettings::StaticStruct());
+        saved_physics_settings_str_ = UnrealUtils::getObjectPropertiesAsString(UPhysicsSettings::Get());
 
         SP_LOG("    Overriding physics settings...");
         SP_LOG("    Old physics settings: ");
-        SP_LOG_NO_PREFIX(UnrealUtils::getObjectPropertiesAsString(UPhysicsSettings::Get()));
+        SP_LOG_NO_PREFIX(saved_physics_settings_str_);
         SP_LOG("    New physics settings: ");
         SP_LOG_NO_PREFIX(physics_settings_str);
 
@@ -124,6 +120,27 @@ void ASpInitializeWorldManager::BeginPlay()
 void ASpInitializeWorldManager::EndPlay(const EEndPlayReason::Type end_play_reason)
 {
     SP_LOG_CURRENT_FUNCTION();
+
+    // FApp and UPhysicsSettings are global, so we restore them here to avoid leaking our overrides into the editor
+    // after a play-in-editor session ends. We don't need to restore the game paused state because it is per-world.
+
+    if (bOverridePhysicsSettings) {
+        SP_LOG("    Restoring physics settings...");
+        UnrealUtils::setObjectPropertiesFromString(UPhysicsSettings::Get(), saved_physics_settings_str_);
+        saved_physics_settings_str_.clear();
+    }
+
+    if (bOverrideFixedDeltaTime) {
+        SP_LOG("    Restoring fixed delta time: ", saved_fixed_delta_time_);
+        FApp::SetFixedDeltaTime(saved_fixed_delta_time_);
+        saved_fixed_delta_time_ = 0.0;
+    }
+
+    if (bOverrideBenchmarking) {
+        SP_LOG("    Restoring benchmarking: ", saved_benchmarking_);
+        FApp::SetBenchmarking(saved_benchmarking_);
+        saved_benchmarking_ = false;
+    }
 
     if (initialized_config_system_) {
         SP_LOG("    Terminating config system...");

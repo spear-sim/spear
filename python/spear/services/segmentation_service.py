@@ -215,16 +215,24 @@ class SegmentationService(spear.Service):
 
     #
     # Explicit update functions. The default behavior of SegmentationService is to automatically update its
-    # internal segmentation book-keeping data structures every frame. This behavior guarantees correct
-    # segmentation maps for fully dynamic scenes, regardless of how actors are spawned and destroyed. But
-    # this approach can be expensive for large scenes. So a user can optionally call set_update_every_tick(update_every_tick=False)
-    # to disable automatic updates, in which case the user must call update() whenever a segmentation-visible
-    # actor is spawned or destroyed.
+    # internal segmentation book-keeping data structures every frame. These automatic updates handle actors
+    # and components being spawned, destroyed, hidden, or shown, but they don't handle changes to the meshes
+    # or materials of existing components. Moving and animating existing components doesn't require any
+    # updates. Automatic updates can be expensive for large scenes, so a user can optionally call
+    # set_update_every_tick(update_every_tick=False) to disable them, in which case the user must call update()
+    # whenever a segmentation-visible actor or component is spawned, destroyed, hidden, or shown.
+    #
+    # A user can call rebuild() after changing the meshes or materials of existing components to recreate all
+    # segmentation data from scratch. Note that segmentation IDs will be different after calling rebuild().
     #
 
     def update(self):
         assert self.proxy_component_manager is not None
         return self.proxy_component_manager.Update()
+
+    def rebuild(self):
+        assert self.proxy_component_manager is not None
+        return self.proxy_component_manager.Rebuild()
 
     def get_update_every_tick(self):
         assert self.proxy_component_manager is not None

@@ -8,8 +8,7 @@
 #include <string>
 
 #include <Components/SceneComponent.h>
-#include <Engine/EngineBaseTypes.h> // ELevelTick
-#include <Engine/EngineTypes.h>     // EEndPlayReason, ETickingGroup
+#include <Engine/EngineTypes.h> // EEndPlayReason
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 
@@ -19,14 +18,8 @@
 
 #include "SpUnrealTypes/SpUserInputComponent.h"
 
-struct FActorComponentTickFunction;
-
 USpBasicKeyboardControlComponent::USpBasicKeyboardControlComponent()
 {
-    PrimaryComponentTick.bCanEverTick = true;
-    PrimaryComponentTick.bTickEvenWhenPaused = false;
-    PrimaryComponentTick.TickGroup = ETickingGroup::TG_PrePhysics;
-
     SpUserInputComponent = UnrealUtils::createSceneComponentInsideOwnerConstructor<USpUserInputComponent>(this, "sp_user_input_component");
     SP_ASSERT(SpUserInputComponent);
 }

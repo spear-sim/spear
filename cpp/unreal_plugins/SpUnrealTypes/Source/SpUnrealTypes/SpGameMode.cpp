@@ -74,7 +74,7 @@ void ASpGameMode::SpAddOnScreenDebugMessage(uint64 Key, float TimeToDisplay, con
     SP_ASSERT(GEngine);
 
     // Note that GEngine->AddOnScreenDebugMessage(...) is only available when the game is running, either in
-    // standalone mode or in play-in-editor mode. But in practice this is not an issue, because UFUNTION(Exec)
+    // standalone mode or in play-in-editor mode. But in practice this is not an issue, because UFUNCTION(Exec)
     // methods only execute when the game is running anyway.
     std::string display_color_str = Unreal::toStdString(DisplayColor.ToLower());
     std::string debug_message_str = SP_LOG_GET_PREFIX() + Unreal::toStdString(DebugMessage);
@@ -83,23 +83,17 @@ void ASpGameMode::SpAddOnScreenDebugMessage(uint64 Key, float TimeToDisplay, con
 
 void ASpGameMode::SpMountPak(const FString& PakFile) const
 {
-    if (FCoreDelegates::MountPak.IsBound()) {
-        int32 pak_order = 0;
-        IPakFile* pak_file = FCoreDelegates::MountPak.Execute(PakFile, pak_order);
-        SP_ASSERT(pak_file);
-    } else {
-        SP_LOG("WARNING: FCoreDelegates::MountPak delegate is not bound.");
-    }
+    SP_ASSERT(FCoreDelegates::MountPak.IsBound());
+    int32 pak_order = 0;
+    IPakFile* pak_file = FCoreDelegates::MountPak.Execute(PakFile, pak_order);
+    SP_ASSERT(pak_file);
 }
 
 void ASpGameMode::SpUnmountPak(const FString& PakFile) const
 {
-    if (FCoreDelegates::OnUnmountPak.IsBound()) {
-        bool success = FCoreDelegates::OnUnmountPak.Execute(PakFile);
-        SP_ASSERT(success);
-    } else {
-        SP_LOG("WARNING: FCoreDelegates::OnUnmountPak delegate is not bound.");
-    }
+    SP_ASSERT(FCoreDelegates::OnUnmountPak.IsBound());
+    bool success = FCoreDelegates::OnUnmountPak.Execute(PakFile);
+    SP_ASSERT(success);
 }
 
 void ASpGameMode::SpLoadStreamLevel(const FString& LevelName) const
@@ -146,7 +140,6 @@ void ASpGameMode::SpUnloadLevelInstance(const FString& LevelName)
         return;
     }
 
-    bool success = false;
     ULevelStreamingDynamic* level_instance = level_instances_.at(level_name);
     SP_ASSERT(level_instance);
     level_instance->SetIsRequestingUnloadAndRemoval(true);
@@ -164,6 +157,7 @@ void ASpGameMode::SpToggleDebugCamera()
 
     APlayerController* player_controller = GetWorld()->GetFirstPlayerController();
     SP_ASSERT(player_controller);
+    SP_ASSERT(sp_debug_camera_controller_);
 
     // currently enabled so disable
     if (sp_debug_camera_controller_->OriginalPlayer && sp_debug_camera_controller_->OriginalControllerRef) {
@@ -176,6 +170,6 @@ void ASpGameMode::SpToggleDebugCamera()
     } else if (player_controller->Player) {
         sp_debug_camera_controller_->OnActivate(player_controller);
         player_controller->Player->SwitchController(sp_debug_camera_controller_);
-         SP_ASSERT(!player_controller->Player);
+        SP_ASSERT(!player_controller->Player);
     }
 }

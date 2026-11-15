@@ -77,17 +77,18 @@ public:
 
     void RenderSample_GameThreadImpl(const FMoviePipelineRenderPassMetrics& in_sample_state) override
     {
-        std::vector<std::pair<FString, float>> previous_cvar_values;
+        // We save and restore each cvar's previous value as a string so we don't lose precision or type information.
+        std::vector<std::pair<FString, FString>> previous_cvar_values;
 
         // save the value of each cvar
         for (auto& cvar_entry : ConsoleVariables) {
             if (cvar_entry.bIsEnabled) {
-                IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr(cvar_entry.Name)); 
+                IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr(cvar_entry.Name));
                 SP_ASSERT(cvar);
-                float previous_cvar_value = cvar->GetFloat();
+                FString previous_cvar_value = cvar->GetString();
                 previous_cvar_values.push_back(std::make_pair(cvar_entry.Name, previous_cvar_value));
                 if (bVerbose) {
-                    SP_LOG(Unreal::toStdString(PassIdentifier.Name), ": setting console variable ", Unreal::toStdString(cvar_entry.Name), " to value ", cvar_entry.Value, " (previous value ", previous_cvar_value, ")");
+                    SP_LOG(Unreal::toStdString(PassIdentifier.Name), ": setting console variable ", Unreal::toStdString(cvar_entry.Name), " to value ", cvar_entry.Value, " (previous value ", Unreal::toStdString(previous_cvar_value), ")");
                 }
                 cvar->Set(cvar_entry.Value, EConsoleVariableFlags::ECVF_SetByConsole); // EConsoleVariableFlags::ECVF_SetByConsole is highest-priority
             }
@@ -96,7 +97,7 @@ public:
         for (auto& cmd : PreRenderConsoleCommands) {
             SP_ASSERT(GEngine);
             if (bVerbose) {
-                SP_LOG("Execucting console command: ", Unreal::toStdString(cmd));
+                SP_LOG("Executing console command: ", Unreal::toStdString(cmd));
             }
             GEngine->Exec(GetWorld(), Unreal::toTCharPtr(cmd));
         }
@@ -106,7 +107,7 @@ public:
         for (auto& cmd : PostRenderConsoleCommands) {
             SP_ASSERT(GEngine);
             if (bVerbose) {
-                SP_LOG("Execucting console command: ", Unreal::toStdString(cmd));
+                SP_LOG("Executing console command: ", Unreal::toStdString(cmd));
             }
             GEngine->Exec(GetWorld(), Unreal::toTCharPtr(cmd));
         }
@@ -114,12 +115,12 @@ public:
         // restore previous cvar values in reverse order
         for (int i = previous_cvar_values.size() - 1; i >= 0; i--) {
             const auto& [cvar_name, cvar_value] = previous_cvar_values.at(i);
-            IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr(cvar_name)); 
+            IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr(cvar_name));
             SP_ASSERT(cvar);
             if (bVerbose) {
-                SP_LOG(Unreal::toStdString(PassIdentifier.Name), ": restoring console variable ", Unreal::toStdString(cvar_name), " to value ", cvar_value);
+                SP_LOG(Unreal::toStdString(PassIdentifier.Name), ": restoring console variable ", Unreal::toStdString(cvar_name), " to value ", Unreal::toStdString(cvar_value));
             }
-            cvar->Set(cvar_value, EConsoleVariableFlags::ECVF_SetByConsole); // EConsoleVariableFlags::ECVF_SetByConsole is highest-priority
+            cvar->Set(Unreal::toTCharPtr(cvar_value), EConsoleVariableFlags::ECVF_SetByConsole); // EConsoleVariableFlags::ECVF_SetByConsole is highest-priority
         }
     }
 

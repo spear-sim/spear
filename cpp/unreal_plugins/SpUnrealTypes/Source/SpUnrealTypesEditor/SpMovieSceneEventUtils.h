@@ -8,17 +8,17 @@
 #include <Channels/MovieSceneChannelData.h>
 #include <Channels/MovieSceneEvent.h>
 #include <Containers/ArrayView.h>
-#include <HAL/Platform.h> // int32
+#include <HAL/Platform.h>         // int32
 #include <K2Node.h>
 #include <K2Node_CustomEvent.h>
 #include <Kismet/BlueprintFunctionLibrary.h>
 #include <MovieSceneEventUtils.h>
 #include <Sections/MovieSceneEventRepeaterSection.h>
 #include <Sections/MovieSceneEventTriggerSection.h>
+#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION
 
 // private headers need custom include paths in SpUnrealTypesEditor.Build.cs
 #include <KeysAndChannels/MovieSceneScriptingEvent.h> // UMovieSceneScriptingEventKey
-#include <UObject/ObjectMacros.h>                     // GENERATED_BODY, UCLASS, UFUNCTION
 
 #include "SpCore/Assert.h"
 
@@ -31,34 +31,28 @@ class USpMovieSceneEventUtils : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public:
-    UFUNCTION(BlueprintCallable, Category="SPEAR")    
-    static void BindNewUserFacingEventForKey(UMovieSceneScriptingEventKey* Key, UMovieSceneEventTriggerSection* EventTriggerSection, UBlueprint* Blueprint)
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    static UK2Node* BindNewUserFacingEventForKey(UMovieSceneScriptingEventKey* Key, UMovieSceneEventTriggerSection* EventTriggerSection, UBlueprint* Blueprint)
     {
         SP_ASSERT(EventTriggerSection);
         SP_ASSERT(Key);
-        SP_ASSERT(Blueprint);
 
         TMovieSceneChannelData<FMovieSceneEvent> channel_data = EventTriggerSection->EventChannel.GetData();
         TArrayView<FMovieSceneEvent> values = channel_data.GetValues();
         const int32 index = channel_data.GetIndex(Key->KeyHandle);
         SP_ASSERT(index >= 0 && index < values.Num());
         FMovieSceneEvent* event = &(values[index]);
-        SP_ASSERT(event);
 
-        UK2Node* node = FMovieSceneEventUtils::BindNewUserFacingEvent(event, EventTriggerSection, Blueprint);
-        SP_ASSERT(node);
+        return FMovieSceneEventUtils::BindNewUserFacingEvent(event, EventTriggerSection, Blueprint);
     }
 
-    UFUNCTION(BlueprintCallable, Category="SPEAR")    
-    static void BindNewUserFacingEventForRepeaterSection(UMovieSceneEventRepeaterSection* EventRepeaterSection, UBlueprint* Blueprint)
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    static UK2Node* BindNewUserFacingEventForRepeaterSection(UMovieSceneEventRepeaterSection* EventRepeaterSection, UBlueprint* Blueprint)
     {
         SP_ASSERT(EventRepeaterSection);
-        SP_ASSERT(Blueprint);
 
         FMovieSceneEvent* event = &(EventRepeaterSection->Event);
-        SP_ASSERT(event);
 
-        UK2Node* node = FMovieSceneEventUtils::BindNewUserFacingEvent(event, EventRepeaterSection, Blueprint);
-        SP_ASSERT(node);
+        return FMovieSceneEventUtils::BindNewUserFacingEvent(event, EventRepeaterSection, Blueprint);
     }
 };

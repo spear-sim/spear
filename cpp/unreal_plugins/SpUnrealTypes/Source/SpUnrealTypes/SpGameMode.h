@@ -40,7 +40,7 @@ public:
     ASpGameMode();
     ~ASpGameMode() override;
 
-    // AGameMode interface
+    // AGameModeBase interface
     void PostLogin(APlayerController* new_player) override;
 
 private:

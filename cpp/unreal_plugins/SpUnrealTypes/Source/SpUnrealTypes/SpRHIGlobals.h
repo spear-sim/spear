@@ -5,16 +5,17 @@
 
 #pragma once
 
-#include <HAL/Platform.h>         // int32, int64, uint8, uint16, uint32, uint64
+#include <HAL/Platform.h>             // int32, int64, uint8, uint16, uint32, uint64
 #include <Kismet/BlueprintFunctionLibrary.h>
-#include <Math/IntVector.h>       // FIntVector
-#include <Math/Vector2D.h>        // FVector2f
-#include <Misc/EnumClassFlags.h>  // ENUM_CLASS_FLAGS
-#include <PixelFormat.h>          // EPixelFormat
-#include <RHIDefinitions.h>       // ERHIBindlessSupport, ERequestedGPUCrash, EVRSImageDataType, MAX_TEXTURE_MIP_COUNT
-#include <RHIGlobals.h>           // FRHIGlobals, GRHIGlobals
-#include <RHIShaderPlatform.h>    // EShaderPlatform
-#include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UENUM, UPROPERTY, USTRUCT
+#include <Math/IntVector.h>           // FIntVector
+#include <Math/Vector2D.h>            // FVector2f
+#include <Misc/EnumClassFlags.h>      // ENUM_CLASS_FLAGS
+#include <PixelFormat.h>              // EPixelFormat
+#include <RHIDefinitions.h>           // ERHIBindlessSupport, ERequestedGPUCrash, EVRSImageDataType, MAX_TEXTURE_MIP_COUNT
+#include <RHIGlobals.h>               // FRHIGlobals, GRHIGlobals
+#include <RHIShaderPlatform.h>        // EShaderPlatform
+#include <Templates/UnrealTemplate.h> // UE_ARRAY_COUNT
+#include <UObject/ObjectMacros.h>     // GENERATED_BODY, UCLASS, UENUM, UPROPERTY, USTRUCT
 
 #include "SpCore/Unreal.h"
 
@@ -422,8 +423,6 @@ USTRUCT(BlueprintType)
 struct FSpRHIGlobals
 {
     GENERATED_BODY()
-
-    static constexpr int MaxMSAASampleOffsets = 1 + 2 + 4 + 8 + 16;
 
     /** True if the render hardware has been initialized. */
     UPROPERTY()
@@ -954,7 +953,7 @@ struct FSpRHIGlobals
 
     /** Tables of all MSAA sample offset for all MSAA supported. Use GetMSAASampleOffsets() to read it. */
     UPROPERTY()
-    FVector2f DefaultMSAASampleOffsets[MaxMSAASampleOffsets] = {};
+    FVector2f DefaultMSAASampleOffsets[UE_ARRAY_COUNT(GRHIGlobals.DefaultMSAASampleOffsets)] = {};
 
     /** True if the RHI supports pipeline precompiling from any thread. */
     UPROPERTY()
@@ -969,7 +968,7 @@ struct FSpRHIGlobals
 
     /** Table for finding out which shader platform corresponds to a given feature level for this RHI. */
     UPROPERTY()
-    ESpShaderPlatform ShaderPlatformForFeatureLevel[(int)ESpRHIFeatureLevel::Num] = {};
+    ESpShaderPlatform ShaderPlatformForFeatureLevel[(int)ESpRHIFeatureLevel::Num] = {}; // UHT only recognizes C-style casts when detecting that an array is sized by an enum
     
     /** True if the RHI has initialized a device with the debug layer enabled. */
     UPROPERTY()
@@ -996,16 +995,14 @@ struct FSpRHIGlobals
     bool SupportLinearTextureVolumeFormat = true;
 };
 
-
 UCLASS()
 class USpRHIGlobalsInterface : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public:
-    // Transcribes the entire GRHIGlobals struct, see Engine/Source/Runtime/RHI/Public/RHIGlobals.h. Not
-    // BlueprintCallable because uint64 is not a Blueprint type.
+    // Transcribes the entire GRHIGlobals struct, see Engine/Source/Runtime/RHI/Public/RHIGlobals.h.
     UFUNCTION()
-    static FSpRHIGlobals GetRHIGlobals()
+    static FSpRHIGlobals GetRHIGlobals() // uint64 not supported for BlueprintCallable
     {
         FSpRHIGlobals result;
 
@@ -1057,143 +1054,143 @@ public:
         result.ReservedResources.TextureArrayMinimumMipDimension = GRHIGlobals.ReservedResources.TextureArrayMinimumMipDimension;
         result.ReservedResources.TileSizeInBytes                 = GRHIGlobals.ReservedResources.TileSizeInBytes;
 
-        result.IsRHIInitialized =                                    GRHIGlobals.IsRHIInitialized;
-        result.PersistentThreadGroupCount =                          GRHIGlobals.PersistentThreadGroupCount;
-        result.MaxTextureMipCount =                                  GRHIGlobals.MaxTextureMipCount;
-        result.SupportsQuadBufferStereo =                            GRHIGlobals.SupportsQuadBufferStereo;
-        result.SupportsRenderDepthTargetableShaderResources =        GRHIGlobals.SupportsRenderDepthTargetableShaderResources;
-        result.SupportsDrawIndirect =                                GRHIGlobals.SupportsDrawIndirect;
-        result.SupportsMultiDrawIndirect =                           GRHIGlobals.SupportsMultiDrawIndirect;
-        result.SupportsMultithreading =                              GRHIGlobals.SupportsMultithreading;
-        result.SupportsAsyncGetRenderQueryResult =                   GRHIGlobals.SupportsAsyncGetRenderQueryResult;
-        result.SupportsPixelShaderUAVs =                             GRHIGlobals.SupportsPixelShaderUAVs;
-        result.SupportsVertexShaderUAVs =                            GRHIGlobals.SupportsVertexShaderUAVs;
-        result.SupportsRenderTargetFormat_PF_G8 =                    GRHIGlobals.SupportsRenderTargetFormat_PF_G8;
-        result.SupportsRenderTargetFormat_PF_FloatRGBA =             GRHIGlobals.SupportsRenderTargetFormat_PF_FloatRGBA;
-        result.SupportsShaderFramebufferFetch =                      GRHIGlobals.SupportsShaderFramebufferFetch;
-        result.SupportsShaderMRTFramebufferFetch =                   GRHIGlobals.SupportsShaderMRTFramebufferFetch;
-        result.SupportsShaderFramebufferFetchProgrammableBlending =  GRHIGlobals.SupportsShaderFramebufferFetchProgrammableBlending;
-        result.SupportsPixelLocalStorage =                           GRHIGlobals.SupportsPixelLocalStorage;
-        result.SupportsShaderDepthStencilFetch =                     GRHIGlobals.SupportsShaderDepthStencilFetch;
-        result.SupportsTimestampRenderQueries =                      GRHIGlobals.SupportsTimestampRenderQueries;
-        result.SupportsGPUTimestampBubblesRemoval =                  GRHIGlobals.SupportsGPUTimestampBubblesRemoval;
-        result.SupportsFrameCyclesBubblesRemoval =                   GRHIGlobals.SupportsFrameCyclesBubblesRemoval;
-        result.SupportsGPUUsage =                                    GRHIGlobals.SupportsGPUUsage;
-        result.HardwareHiddenSurfaceRemoval =                        GRHIGlobals.HardwareHiddenSurfaceRemoval;
-        result.SupportsAsyncTextureCreation =                        GRHIGlobals.SupportsAsyncTextureCreation;
-        result.SupportsQuadTopology =                                GRHIGlobals.SupportsQuadTopology;
-        result.SupportsRectTopology =                                GRHIGlobals.SupportsRectTopology;
-        result.SupportsPrimitiveShaders =                            GRHIGlobals.SupportsPrimitiveShaders;
-        result.SupportsAtomicUInt64 =                                GRHIGlobals.SupportsAtomicUInt64;
-        result.SupportsPipelineStateSortKey =                        GRHIGlobals.SupportsPipelineStateSortKey;
+        result.IsRHIInitialized                                    = GRHIGlobals.IsRHIInitialized;
+        result.PersistentThreadGroupCount                          = GRHIGlobals.PersistentThreadGroupCount;
+        result.MaxTextureMipCount                                  = GRHIGlobals.MaxTextureMipCount;
+        result.SupportsQuadBufferStereo                            = GRHIGlobals.SupportsQuadBufferStereo;
+        result.SupportsRenderDepthTargetableShaderResources        = GRHIGlobals.SupportsRenderDepthTargetableShaderResources;
+        result.SupportsDrawIndirect                                = GRHIGlobals.SupportsDrawIndirect;
+        result.SupportsMultiDrawIndirect                           = GRHIGlobals.SupportsMultiDrawIndirect;
+        result.SupportsMultithreading                              = GRHIGlobals.SupportsMultithreading;
+        result.SupportsAsyncGetRenderQueryResult                   = GRHIGlobals.SupportsAsyncGetRenderQueryResult;
+        result.SupportsPixelShaderUAVs                             = GRHIGlobals.SupportsPixelShaderUAVs;
+        result.SupportsVertexShaderUAVs                            = GRHIGlobals.SupportsVertexShaderUAVs;
+        result.SupportsRenderTargetFormat_PF_G8                    = GRHIGlobals.SupportsRenderTargetFormat_PF_G8;
+        result.SupportsRenderTargetFormat_PF_FloatRGBA             = GRHIGlobals.SupportsRenderTargetFormat_PF_FloatRGBA;
+        result.SupportsShaderFramebufferFetch                      = GRHIGlobals.SupportsShaderFramebufferFetch;
+        result.SupportsShaderMRTFramebufferFetch                   = GRHIGlobals.SupportsShaderMRTFramebufferFetch;
+        result.SupportsShaderFramebufferFetchProgrammableBlending  = GRHIGlobals.SupportsShaderFramebufferFetchProgrammableBlending;
+        result.SupportsPixelLocalStorage                           = GRHIGlobals.SupportsPixelLocalStorage;
+        result.SupportsShaderDepthStencilFetch                     = GRHIGlobals.SupportsShaderDepthStencilFetch;
+        result.SupportsTimestampRenderQueries                      = GRHIGlobals.SupportsTimestampRenderQueries;
+        result.SupportsGPUTimestampBubblesRemoval                  = GRHIGlobals.SupportsGPUTimestampBubblesRemoval;
+        result.SupportsFrameCyclesBubblesRemoval                   = GRHIGlobals.SupportsFrameCyclesBubblesRemoval;
+        result.SupportsGPUUsage                                    = GRHIGlobals.SupportsGPUUsage;
+        result.HardwareHiddenSurfaceRemoval                        = GRHIGlobals.HardwareHiddenSurfaceRemoval;
+        result.SupportsAsyncTextureCreation                        = GRHIGlobals.SupportsAsyncTextureCreation;
+        result.SupportsQuadTopology                                = GRHIGlobals.SupportsQuadTopology;
+        result.SupportsRectTopology                                = GRHIGlobals.SupportsRectTopology;
+        result.SupportsPrimitiveShaders                            = GRHIGlobals.SupportsPrimitiveShaders;
+        result.SupportsAtomicUInt64                                = GRHIGlobals.SupportsAtomicUInt64;
+        result.SupportsPipelineStateSortKey                        = GRHIGlobals.SupportsPipelineStateSortKey;
         result.SupportsParallelRenderingTasksWithSeparateRHIThread = GRHIGlobals.SupportsParallelRenderingTasksWithSeparateRHIThread;
-        result.RHIThreadNeedsKicking =                               GRHIGlobals.RHIThreadNeedsKicking;
-        result.MaximumInFlightQueries =                              GRHIGlobals.MaximumInFlightQueries;
-        result.SupportsExactOcclusionQueries =                       GRHIGlobals.SupportsExactOcclusionQueries;
-        result.SupportsVolumeTextureRendering =                      GRHIGlobals.SupportsVolumeTextureRendering;
-        result.SupportsSeparateRenderTargetBlendState =              GRHIGlobals.SupportsSeparateRenderTargetBlendState;
-        result.SupportsDualSrcBlending =                             GRHIGlobals.SupportsDualSrcBlending;
-        result.NeedsUnatlasedCSMDepthsWorkaround =                   GRHIGlobals.NeedsUnatlasedCSMDepthsWorkaround;
-        result.SupportsTexture3D =                                   GRHIGlobals.SupportsTexture3D;
-        result.UseTexture3DBulkData =                                GRHIGlobals.UseTexture3DBulkData;
-        result.SupportsMobileMultiView =                             GRHIGlobals.SupportsMobileMultiView;
-        result.SupportsImageExternal =                               GRHIGlobals.SupportsImageExternal;
-        result.SupportsWideMRT =                                     GRHIGlobals.SupportsWideMRT;
-        result.SupportsDepthBoundsTest =                             GRHIGlobals.SupportsDepthBoundsTest;
-        result.SupportsExplicitHTile =                               GRHIGlobals.SupportsExplicitHTile;
-        result.SupportsExplicitFMask =                               GRHIGlobals.SupportsExplicitFMask;
-        result.SupportsResummarizeHTile =                            GRHIGlobals.SupportsResummarizeHTile;
-        result.SupportsDepthUAV =                                    GRHIGlobals.SupportsDepthUAV;
-        result.SupportsEfficientAsyncCompute =                       GRHIGlobals.SupportsEfficientAsyncCompute;
-        result.SupportsAsyncComputeTransientAliasing =               GRHIGlobals.SupportsAsyncComputeTransientAliasing;
-        result.SupportsParallelOcclusionQueries =                    GRHIGlobals.SupportsParallelOcclusionQueries;
-        result.RequiresRenderTargetForPixelShaderUAVs =              GRHIGlobals.RequiresRenderTargetForPixelShaderUAVs;
-        result.SupportsUAVFormatAliasing =                           GRHIGlobals.SupportsUAVFormatAliasing;
-        result.SupportsTextureViews =                                GRHIGlobals.SupportsTextureViews;
-        result.SupportsDirectGPUMemoryLock =                         GRHIGlobals.SupportsDirectGPUMemoryLock;
-        result.SupportsMultithreadedShaderCreation =                 GRHIGlobals.SupportsMultithreadedShaderCreation;
-        result.SupportsMultithreadedResources =                      GRHIGlobals.SupportsMultithreadedResources;
-        result.NeedsExtraDeletionLatency =                           GRHIGlobals.NeedsExtraDeletionLatency;
-        result.ForceNoDeletionLatencyForStreamingTextures =          GRHIGlobals.ForceNoDeletionLatencyForStreamingTextures;
-        result.MaxComputeDispatchDimension =                         GRHIGlobals.MaxComputeDispatchDimension;
-        result.LazyShaderCodeLoading =                               GRHIGlobals.LazyShaderCodeLoading;
-        result.SupportsLazyShaderCodeLoading =                       GRHIGlobals.SupportsLazyShaderCodeLoading;
-        result.SupportsUpdateFromBufferTexture =                     GRHIGlobals.SupportsUpdateFromBufferTexture;
-        result.MaxShadowDepthBufferSizeX =                           GRHIGlobals.MaxShadowDepthBufferSizeX;
-        result.MaxShadowDepthBufferSizeY =                           GRHIGlobals.MaxShadowDepthBufferSizeY;
-        result.MaxTextureDimensions =                                GRHIGlobals.MaxTextureDimensions;
-        result.MaxBufferDimensions =                                 GRHIGlobals.MaxBufferDimensions;
-        result.MaxConstantBufferByteSize =                           GRHIGlobals.MaxConstantBufferByteSize;
-        result.MaxComputeSharedMemory =                              GRHIGlobals.MaxComputeSharedMemory;
-        result.MaxVolumeTextureDimensions =                          GRHIGlobals.MaxVolumeTextureDimensions;
-        result.MaxCubeTextureDimensions =                            GRHIGlobals.MaxCubeTextureDimensions;
-        result.SupportsRWTextureBuffers =                            GRHIGlobals.SupportsRWTextureBuffers;
-        result.SupportsRawViewsForAnyBuffer =                        GRHIGlobals.SupportsRawViewsForAnyBuffer;
-        result.SupportsSeparateDepthStencilCopyAccess =              GRHIGlobals.SupportsSeparateDepthStencilCopyAccess;
-        result.SupportsAsyncTextureStreamOut =                       GRHIGlobals.SupportsAsyncTextureStreamOut;
-        result.MaxTextureArrayLayers =                               GRHIGlobals.MaxTextureArrayLayers;
-        result.MaxTextureSamplers =                                  GRHIGlobals.MaxTextureSamplers;
-        result.MaxWorkGroupInvocations =                             GRHIGlobals.MaxWorkGroupInvocations;
-        result.UsingNullRHI =                                        GRHIGlobals.UsingNullRHI;
-        result.DrawUPVertexCheckCount =                              GRHIGlobals.DrawUPVertexCheckCount;
-        result.DrawUPIndexCheckCount =                               GRHIGlobals.DrawUPIndexCheckCount;
-        result.TriggerGPUProfile =                                   GRHIGlobals.TriggerGPUProfile;
-        result.TriggerGPUHitchProfile =                              GRHIGlobals.TriggerGPUHitchProfile;
-        result.TriggerGPUCrash =                                     Unreal::getEnumValueAs<ESpRequestedGPUCrash>(GRHIGlobals.TriggerGPUCrash);
-        result.GPUTraceFileName =                                    GRHIGlobals.GPUTraceFileName;
-        result.SupportsTextureStreaming =                            GRHIGlobals.SupportsTextureStreaming;
-        result.StreamingTextureMemorySizeInKB =                      GRHIGlobals.StreamingTextureMemorySizeInKB;
-        result.NonStreamingTextureMemorySizeInKB =                   GRHIGlobals.NonStreamingTextureMemorySizeInKB;
-        result.TexturePoolSize =                                     GRHIGlobals.TexturePoolSize;
-        result.PoolSizeVRAMPercentage =                              GRHIGlobals.PoolSizeVRAMPercentage;
-        result.DemotedLocalMemorySize =                              GRHIGlobals.DemotedLocalMemorySize;
-        result.BufferMemorySize =                                    GRHIGlobals.BufferMemorySize;
-        result.UniformBufferMemorySize =                             GRHIGlobals.UniformBufferMemorySize;
-        result.SupportsBaseVertexIndex =                             GRHIGlobals.SupportsBaseVertexIndex;
-        result.SupportsFirstInstance =                               GRHIGlobals.SupportsFirstInstance;
-        result.SupportsDynamicResolution =                           GRHIGlobals.SupportsDynamicResolution;
-        result.SupportsWaveOperations =                              GRHIGlobals.SupportsWaveOperations;
-        result.DeviceIsIntegrated =                                  GRHIGlobals.DeviceIsIntegrated;
-        result.MinimumWaveSize =                                     GRHIGlobals.MinimumWaveSize;
-        result.MaximumWaveSize =                                     GRHIGlobals.MaximumWaveSize;
-        result.SupportsNative16BitOps =                              GRHIGlobals.SupportsNative16BitOps;
-        result.SupportsRHIThread =                                   GRHIGlobals.SupportsRHIThread;
-        result.SupportsRHIOnTaskThread =                             GRHIGlobals.SupportsRHIOnTaskThread;
-        result.SupportsParallelRHIExecute =                          GRHIGlobals.SupportsParallelRHIExecute;
-        result.SupportsMSAADepthSampleAccess =                       GRHIGlobals.SupportsMSAADepthSampleAccess;
-        result.SupportsBackBufferWithCustomDepthStencil =            GRHIGlobals.SupportsBackBufferWithCustomDepthStencil;
-        result.IsHDREnabled =                                        GRHIGlobals.IsHDREnabled;
-        result.SupportsHDROutput =                                   GRHIGlobals.SupportsHDROutput;
-        result.MaxDispatchThreadGroupsPerDimension =                 GRHIGlobals.MaxDispatchThreadGroupsPerDimension;
-        result.HDRDisplayOutputFormat =                              Unreal::getEnumValueAs<ESpPixelFormat>(GRHIGlobals.HDRDisplayOutputFormat);
-        result.PresentCounter =                                      GRHIGlobals.PresentCounter;
-        result.SupportsArrayIndexFromAnyShader =                     GRHIGlobals.SupportsArrayIndexFromAnyShader;
-        result.SupportsPipelineFileCache =                           GRHIGlobals.SupportsPipelineFileCache;
-        result.SupportsPSOPrecaching =                               GRHIGlobals.SupportsPSOPrecaching;
-        result.SupportsStencilRefFromPixelShader =                   GRHIGlobals.SupportsStencilRefFromPixelShader;
-        result.SupportsRasterOrderViews =                            GRHIGlobals.SupportsRasterOrderViews;
-        result.SupportsConservativeRasterization =                   GRHIGlobals.SupportsConservativeRasterization;
-        result.SupportsShaderRootConstants =                         GRHIGlobals.SupportsShaderRootConstants;
-        result.SupportsMeshShadersTier0 =                            GRHIGlobals.SupportsMeshShadersTier0;
-        result.SupportsMeshShadersTier1 =                            GRHIGlobals.SupportsMeshShadersTier1;
-        result.SupportsShaderWorkGraphsTier1 =                       GRHIGlobals.SupportsShaderWorkGraphsTier1;
-        result.SupportsShaderTimestamp =                             GRHIGlobals.SupportsShaderTimestamp;
-        result.SupportsEfficientUploadOnResourceCreation =           GRHIGlobals.SupportsEfficientUploadOnResourceCreation;
-        result.SupportsMapWriteNoOverwrite =                         GRHIGlobals.SupportsMapWriteNoOverwrite;
-        result.SupportsAsyncPipelinePrecompile =                     GRHIGlobals.SupportsAsyncPipelinePrecompile;
-        result.BindlessSupport =                                     Unreal::getEnumValueAs<ESpRHIBindlessSupport>(GRHIGlobals.BindlessSupport);
-        result.IsDebugLayerEnabled =                                 GRHIGlobals.IsDebugLayerEnabled;
-        result.NeedsShaderUnbinds =                                  GRHIGlobals.NeedsShaderUnbinds;
-        result.SupportsBarycentricsSemantic =                        GRHIGlobals.SupportsBarycentricsSemantic;
-        result.SupportsMSAAShaderResolve =                           GRHIGlobals.SupportsMSAAShaderResolve;
-        result.SupportsDepthStencilResolve =                         GRHIGlobals.SupportsDepthStencilResolve;
-        result.SupportLinearTextureVolumeFormat =                    GRHIGlobals.SupportLinearTextureVolumeFormat;
+        result.RHIThreadNeedsKicking                               = GRHIGlobals.RHIThreadNeedsKicking;
+        result.MaximumInFlightQueries                              = GRHIGlobals.MaximumInFlightQueries;
+        result.SupportsExactOcclusionQueries                       = GRHIGlobals.SupportsExactOcclusionQueries;
+        result.SupportsVolumeTextureRendering                      = GRHIGlobals.SupportsVolumeTextureRendering;
+        result.SupportsSeparateRenderTargetBlendState              = GRHIGlobals.SupportsSeparateRenderTargetBlendState;
+        result.SupportsDualSrcBlending                             = GRHIGlobals.SupportsDualSrcBlending;
+        result.NeedsUnatlasedCSMDepthsWorkaround                   = GRHIGlobals.NeedsUnatlasedCSMDepthsWorkaround;
+        result.SupportsTexture3D                                   = GRHIGlobals.SupportsTexture3D;
+        result.UseTexture3DBulkData                                = GRHIGlobals.UseTexture3DBulkData;
+        result.SupportsMobileMultiView                             = GRHIGlobals.SupportsMobileMultiView;
+        result.SupportsImageExternal                               = GRHIGlobals.SupportsImageExternal;
+        result.SupportsWideMRT                                     = GRHIGlobals.SupportsWideMRT;
+        result.SupportsDepthBoundsTest                             = GRHIGlobals.SupportsDepthBoundsTest;
+        result.SupportsExplicitHTile                               = GRHIGlobals.SupportsExplicitHTile;
+        result.SupportsExplicitFMask                               = GRHIGlobals.SupportsExplicitFMask;
+        result.SupportsResummarizeHTile                            = GRHIGlobals.SupportsResummarizeHTile;
+        result.SupportsDepthUAV                                    = GRHIGlobals.SupportsDepthUAV;
+        result.SupportsEfficientAsyncCompute                       = GRHIGlobals.SupportsEfficientAsyncCompute;
+        result.SupportsAsyncComputeTransientAliasing               = GRHIGlobals.SupportsAsyncComputeTransientAliasing;
+        result.SupportsParallelOcclusionQueries                    = GRHIGlobals.SupportsParallelOcclusionQueries;
+        result.RequiresRenderTargetForPixelShaderUAVs              = GRHIGlobals.RequiresRenderTargetForPixelShaderUAVs;
+        result.SupportsUAVFormatAliasing                           = GRHIGlobals.SupportsUAVFormatAliasing;
+        result.SupportsTextureViews                                = GRHIGlobals.SupportsTextureViews;
+        result.SupportsDirectGPUMemoryLock                         = GRHIGlobals.SupportsDirectGPUMemoryLock;
+        result.SupportsMultithreadedShaderCreation                 = GRHIGlobals.SupportsMultithreadedShaderCreation;
+        result.SupportsMultithreadedResources                      = GRHIGlobals.SupportsMultithreadedResources;
+        result.NeedsExtraDeletionLatency                           = GRHIGlobals.NeedsExtraDeletionLatency;
+        result.ForceNoDeletionLatencyForStreamingTextures          = GRHIGlobals.ForceNoDeletionLatencyForStreamingTextures;
+        result.MaxComputeDispatchDimension                         = GRHIGlobals.MaxComputeDispatchDimension;
+        result.LazyShaderCodeLoading                               = GRHIGlobals.LazyShaderCodeLoading;
+        result.SupportsLazyShaderCodeLoading                       = GRHIGlobals.SupportsLazyShaderCodeLoading;
+        result.SupportsUpdateFromBufferTexture                     = GRHIGlobals.SupportsUpdateFromBufferTexture;
+        result.MaxShadowDepthBufferSizeX                           = GRHIGlobals.MaxShadowDepthBufferSizeX;
+        result.MaxShadowDepthBufferSizeY                           = GRHIGlobals.MaxShadowDepthBufferSizeY;
+        result.MaxTextureDimensions                                = GRHIGlobals.MaxTextureDimensions;
+        result.MaxBufferDimensions                                 = GRHIGlobals.MaxBufferDimensions;
+        result.MaxConstantBufferByteSize                           = GRHIGlobals.MaxConstantBufferByteSize;
+        result.MaxComputeSharedMemory                              = GRHIGlobals.MaxComputeSharedMemory;
+        result.MaxVolumeTextureDimensions                          = GRHIGlobals.MaxVolumeTextureDimensions;
+        result.MaxCubeTextureDimensions                            = GRHIGlobals.MaxCubeTextureDimensions;
+        result.SupportsRWTextureBuffers                            = GRHIGlobals.SupportsRWTextureBuffers;
+        result.SupportsRawViewsForAnyBuffer                        = GRHIGlobals.SupportsRawViewsForAnyBuffer;
+        result.SupportsSeparateDepthStencilCopyAccess              = GRHIGlobals.SupportsSeparateDepthStencilCopyAccess;
+        result.SupportsAsyncTextureStreamOut                       = GRHIGlobals.SupportsAsyncTextureStreamOut;
+        result.MaxTextureArrayLayers                               = GRHIGlobals.MaxTextureArrayLayers;
+        result.MaxTextureSamplers                                  = GRHIGlobals.MaxTextureSamplers;
+        result.MaxWorkGroupInvocations                             = GRHIGlobals.MaxWorkGroupInvocations;
+        result.UsingNullRHI                                        = GRHIGlobals.UsingNullRHI;
+        result.DrawUPVertexCheckCount                              = GRHIGlobals.DrawUPVertexCheckCount;
+        result.DrawUPIndexCheckCount                               = GRHIGlobals.DrawUPIndexCheckCount;
+        result.TriggerGPUProfile                                   = GRHIGlobals.TriggerGPUProfile;
+        result.TriggerGPUHitchProfile                              = GRHIGlobals.TriggerGPUHitchProfile;
+        result.TriggerGPUCrash                                     = Unreal::getEnumValueAs<ESpRequestedGPUCrash>(GRHIGlobals.TriggerGPUCrash);
+        result.GPUTraceFileName                                    = GRHIGlobals.GPUTraceFileName;
+        result.SupportsTextureStreaming                            = GRHIGlobals.SupportsTextureStreaming;
+        result.StreamingTextureMemorySizeInKB                      = GRHIGlobals.StreamingTextureMemorySizeInKB;
+        result.NonStreamingTextureMemorySizeInKB                   = GRHIGlobals.NonStreamingTextureMemorySizeInKB;
+        result.TexturePoolSize                                     = GRHIGlobals.TexturePoolSize;
+        result.PoolSizeVRAMPercentage                              = GRHIGlobals.PoolSizeVRAMPercentage;
+        result.DemotedLocalMemorySize                              = GRHIGlobals.DemotedLocalMemorySize;
+        result.BufferMemorySize                                    = GRHIGlobals.BufferMemorySize;
+        result.UniformBufferMemorySize                             = GRHIGlobals.UniformBufferMemorySize;
+        result.SupportsBaseVertexIndex                             = GRHIGlobals.SupportsBaseVertexIndex;
+        result.SupportsFirstInstance                               = GRHIGlobals.SupportsFirstInstance;
+        result.SupportsDynamicResolution                           = GRHIGlobals.SupportsDynamicResolution;
+        result.SupportsWaveOperations                              = GRHIGlobals.SupportsWaveOperations;
+        result.DeviceIsIntegrated                                  = GRHIGlobals.DeviceIsIntegrated;
+        result.MinimumWaveSize                                     = GRHIGlobals.MinimumWaveSize;
+        result.MaximumWaveSize                                     = GRHIGlobals.MaximumWaveSize;
+        result.SupportsNative16BitOps                              = GRHIGlobals.SupportsNative16BitOps;
+        result.SupportsRHIThread                                   = GRHIGlobals.SupportsRHIThread;
+        result.SupportsRHIOnTaskThread                             = GRHIGlobals.SupportsRHIOnTaskThread;
+        result.SupportsParallelRHIExecute                          = GRHIGlobals.SupportsParallelRHIExecute;
+        result.SupportsMSAADepthSampleAccess                       = GRHIGlobals.SupportsMSAADepthSampleAccess;
+        result.SupportsBackBufferWithCustomDepthStencil            = GRHIGlobals.SupportsBackBufferWithCustomDepthStencil;
+        result.IsHDREnabled                                        = GRHIGlobals.IsHDREnabled;
+        result.SupportsHDROutput                                   = GRHIGlobals.SupportsHDROutput;
+        result.MaxDispatchThreadGroupsPerDimension                 = GRHIGlobals.MaxDispatchThreadGroupsPerDimension;
+        result.HDRDisplayOutputFormat                              = Unreal::getEnumValueAs<ESpPixelFormat>(GRHIGlobals.HDRDisplayOutputFormat);
+        result.PresentCounter                                      = GRHIGlobals.PresentCounter;
+        result.SupportsArrayIndexFromAnyShader                     = GRHIGlobals.SupportsArrayIndexFromAnyShader;
+        result.SupportsPipelineFileCache                           = GRHIGlobals.SupportsPipelineFileCache;
+        result.SupportsPSOPrecaching                               = GRHIGlobals.SupportsPSOPrecaching;
+        result.SupportsStencilRefFromPixelShader                   = GRHIGlobals.SupportsStencilRefFromPixelShader;
+        result.SupportsRasterOrderViews                            = GRHIGlobals.SupportsRasterOrderViews;
+        result.SupportsConservativeRasterization                   = GRHIGlobals.SupportsConservativeRasterization;
+        result.SupportsShaderRootConstants                         = GRHIGlobals.SupportsShaderRootConstants;
+        result.SupportsMeshShadersTier0                            = GRHIGlobals.SupportsMeshShadersTier0;
+        result.SupportsMeshShadersTier1                            = GRHIGlobals.SupportsMeshShadersTier1;
+        result.SupportsShaderWorkGraphsTier1                       = GRHIGlobals.SupportsShaderWorkGraphsTier1;
+        result.SupportsShaderTimestamp                             = GRHIGlobals.SupportsShaderTimestamp;
+        result.SupportsEfficientUploadOnResourceCreation           = GRHIGlobals.SupportsEfficientUploadOnResourceCreation;
+        result.SupportsMapWriteNoOverwrite                         = GRHIGlobals.SupportsMapWriteNoOverwrite;
+        result.SupportsAsyncPipelinePrecompile                     = GRHIGlobals.SupportsAsyncPipelinePrecompile;
+        result.BindlessSupport                                     = Unreal::getEnumValueAs<ESpRHIBindlessSupport>(GRHIGlobals.BindlessSupport);
+        result.IsDebugLayerEnabled                                 = GRHIGlobals.IsDebugLayerEnabled;
+        result.NeedsShaderUnbinds                                  = GRHIGlobals.NeedsShaderUnbinds;
+        result.SupportsBarycentricsSemantic                        = GRHIGlobals.SupportsBarycentricsSemantic;
+        result.SupportsMSAAShaderResolve                           = GRHIGlobals.SupportsMSAAShaderResolve;
+        result.SupportsDepthStencilResolve                         = GRHIGlobals.SupportsDepthStencilResolve;
+        result.SupportLinearTextureVolumeFormat                    = GRHIGlobals.SupportLinearTextureVolumeFormat;
 
-        for (int i = 0; i < FSpRHIGlobals::MaxMSAASampleOffsets; i++) {
+        for (int i = 0; i < static_cast<int>(UE_ARRAY_COUNT(GRHIGlobals.DefaultMSAASampleOffsets)); i++) {
             result.DefaultMSAASampleOffsets[i] = GRHIGlobals.DefaultMSAASampleOffsets[i];
         }
 
-        for (int i = 0; i < (int)ESpRHIFeatureLevel::Num; i++) {
+        for (int i = 0; i < static_cast<int>(ESpRHIFeatureLevel::Num); i++) {
             result.ShaderPlatformForFeatureLevel[i] = Unreal::getEnumValueAs<ESpShaderPlatform>(GRHIGlobals.ShaderPlatformForFeatureLevel[i]);
         }
 

@@ -5,10 +5,15 @@
 
 #pragma once
 
+#include <Containers/Array.h>     // TArray
 #include <Editor.h>               // GEditor
 #include <Kismet/BlueprintFunctionLibrary.h>
 #include <LevelEditorViewport.h>  // FLevelEditorViewportClient, GCurrentLevelEditingViewportClient
+#include <Math/IntPoint.h>        // FIntPoint
+#include <Math/Rotator.h>         // FRotator
+#include <Math/Vector.h>          // FVector
 #include <UObject/ObjectMacros.h> // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY, USTRUCT
+#include <UnrealClient.h>         // FViewportClient
 
 #include "SpCore/Assert.h"
 
@@ -59,13 +64,14 @@ public:
     static TArray<FSpLevelViewportClientDesc> GetLevelViewportClients()
     {
         SP_ASSERT(GEditor);
+        SP_ASSERT(GEditor->GetActiveViewport());
+        FViewportClient* active_viewport_client = GEditor->GetActiveViewport()->GetClient();
+        SP_ASSERT(active_viewport_client);
 
         TArray<FSpLevelViewportClientDesc> level_viewport_client_descs;
         for (auto level_editor_viewport_client : GEditor->GetLevelViewportClients()) {
             SP_ASSERT(level_editor_viewport_client);
             SP_ASSERT(level_editor_viewport_client->Viewport);
-            SP_ASSERT(GEditor->GetActiveViewport());
-            SP_ASSERT(GEditor->GetActiveViewport()->GetClient());
 
             FSpLevelViewportClientDesc desc;
             desc.bIsPerspective = level_editor_viewport_client->IsPerspective();
@@ -77,7 +83,7 @@ public:
             desc.OrthoZoom = level_editor_viewport_client->GetOrthoZoom();
             desc.ViewportSize = level_editor_viewport_client->Viewport->GetSizeXY();
             desc.bIsCurrentLevelEditing = level_editor_viewport_client == GCurrentLevelEditingViewportClient;
-            desc.bIsActive = level_editor_viewport_client == GEditor->GetActiveViewport()->GetClient();
+            desc.bIsActive = level_editor_viewport_client == active_viewport_client;
             level_viewport_client_descs.Add(desc);
         }
 

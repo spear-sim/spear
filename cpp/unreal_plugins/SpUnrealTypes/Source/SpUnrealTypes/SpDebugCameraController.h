@@ -18,6 +18,6 @@ public:
     ASpDebugCameraController();
     ~ASpDebugCameraController() override;
 
-    // APlayerController interface
+    // AActor interface
     void PostInitializeComponents() override;
 };

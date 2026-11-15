@@ -18,7 +18,6 @@
 
 #include "SpUserInputComponent.generated.h"
 
-class UInputComponent;
 struct FActorComponentTickFunction;
 
 // We need meta=(BlueprintSpawnableComponent) for the component to show up when using the "+Add" button in the editor.
@@ -47,7 +46,7 @@ public:
 private:
     std::string getUniqueAxisNameFromUserInputName(const std::string& user_input_name) const;
 
-    UPROPERTY(VisibleAnywhere, Category="SPEAR")
+    UPROPERTY(Transient, VisibleAnywhere, Category="SPEAR")
     TArray<FString> SubscribedToUserInputs;
 
     struct UserInputDesc
@@ -60,7 +59,4 @@ private:
 
     std::map<std::string, UserInputDesc> user_input_descs_;
     std::function<void(const std::string&, float)> handle_user_input_func_;
-
-    UInputComponent* input_component_ = nullptr;
-    UPlayerInput* player_input_ = nullptr;
 };

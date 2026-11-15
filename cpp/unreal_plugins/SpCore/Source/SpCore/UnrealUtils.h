@@ -24,7 +24,7 @@
 #include <Templates/SharedPointer.h> // TSharedPtr
 #include <UObject/Class.h>           // EIncludeSuperFlag
 #include <UObject/Object.h>          // UObject
-#include <UObject/ObjectMacros.h>    // EPropertyFlags
+#include <UObject/ObjectMacros.h>    // EObjectFlags, EPropertyFlags
 #include <UObject/Script.h>          // EFunctionFlags
 #include <UObject/UnrealType.h>      // EFieldIterationFlags, FProperty, TFieldIterator
 #include <UObject/UObjectGlobals.h>  // NewObject
@@ -1214,65 +1214,65 @@ public:
 
     template <CNonSceneComponent TNonSceneComponent, CNonSceneComponent TReturnAsNonSceneComponent = TNonSceneComponent> requires
         std::derived_from<TNonSceneComponent, TReturnAsNonSceneComponent>
-    static TReturnAsNonSceneComponent* createComponentOutsideOwnerConstructor(AActor* owner, const std::string& component_name)
+    static TReturnAsNonSceneComponent* createComponentOutsideOwnerConstructor(AActor* owner, const std::string& component_name, EObjectFlags object_flags = RF_NoFlags)
     {
-        return Cast<TReturnAsNonSceneComponent>(createComponentOutsideOwnerConstructorByClass(TNonSceneComponent::StaticClass(), owner, component_name)); // no RTTI available
+        return Cast<TReturnAsNonSceneComponent>(createComponentOutsideOwnerConstructorByClass(TNonSceneComponent::StaticClass(), owner, component_name, object_flags)); // no RTTI available
     }
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
-    static TReturnAsSceneComponent* createSceneComponentOutsideOwnerConstructor(AActor* owner, const std::string& scene_component_name)
+    static TReturnAsSceneComponent* createSceneComponentOutsideOwnerConstructor(AActor* owner, const std::string& scene_component_name, EObjectFlags object_flags = RF_NoFlags)
     {
-        return Cast<TReturnAsSceneComponent>(createSceneComponentOutsideOwnerConstructorByClass(TSceneComponent::StaticClass(), owner, scene_component_name)); // no RTTI available
+        return Cast<TReturnAsSceneComponent>(createSceneComponentOutsideOwnerConstructorByClass(TSceneComponent::StaticClass(), owner, scene_component_name, object_flags)); // no RTTI available
     }
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
-    static TReturnAsSceneComponent* createSceneComponentOutsideOwnerConstructor(UObject* owner, USceneComponent* parent, const std::string& scene_component_name)
+    static TReturnAsSceneComponent* createSceneComponentOutsideOwnerConstructor(UObject* owner, USceneComponent* parent, const std::string& scene_component_name, EObjectFlags object_flags = RF_NoFlags)
     {
-        return Cast<TReturnAsSceneComponent>(createSceneComponentOutsideOwnerConstructorByClass(TSceneComponent::StaticClass(), owner, parent, scene_component_name)); // no RTTI available
+        return Cast<TReturnAsSceneComponent>(createSceneComponentOutsideOwnerConstructorByClass(TSceneComponent::StaticClass(), owner, parent, scene_component_name, object_flags)); // no RTTI available
     }
 
     template <CSceneComponent TSceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
-    static TReturnAsSceneComponent* createSceneComponentOutsideOwnerConstructor(USceneComponent* owner, const std::string& scene_component_name)
+    static TReturnAsSceneComponent* createSceneComponentOutsideOwnerConstructor(USceneComponent* owner, const std::string& scene_component_name, EObjectFlags object_flags = RF_NoFlags)
     {
-        return createSceneComponentOutsideOwnerConstructor<TSceneComponent, TReturnAsSceneComponent>(owner, owner, scene_component_name);
+        return createSceneComponentOutsideOwnerConstructor<TSceneComponent, TReturnAsSceneComponent>(owner, owner, scene_component_name, object_flags);
     }
 
-    static UActorComponent* createComponentOutsideOwnerConstructorByClass(UClass* component_class, AActor* owner, const std::string& component_name)
+    static UActorComponent* createComponentOutsideOwnerConstructorByClass(UClass* component_class, AActor* owner, const std::string& component_name, EObjectFlags object_flags = RF_NoFlags)
     {
         SP_ASSERT(owner);
-        UActorComponent* component = NewObject<UActorComponent>(owner, component_class, Unreal::toFName(component_name));
+        UActorComponent* component = NewObject<UActorComponent>(owner, component_class, Unreal::toFName(component_name), object_flags);
         SP_ASSERT(component);
         component->RegisterComponent();
         return component;
     }
 
-    static USceneComponent* createSceneComponentOutsideOwnerConstructorByClass(UClass* scene_component_class, AActor* owner, const std::string& scene_component_name)
+    static USceneComponent* createSceneComponentOutsideOwnerConstructorByClass(UClass* scene_component_class, AActor* owner, const std::string& scene_component_name, EObjectFlags object_flags = RF_NoFlags)
     {
         SP_ASSERT(owner);
-        USceneComponent* scene_component = NewObject<USceneComponent>(owner, scene_component_class, Unreal::toFName(scene_component_name));
+        USceneComponent* scene_component = NewObject<USceneComponent>(owner, scene_component_class, Unreal::toFName(scene_component_name), object_flags);
         SP_ASSERT(scene_component);
         owner->SetRootComponent(scene_component);
         scene_component->RegisterComponent();
         return scene_component;
     }
 
-    static USceneComponent* createSceneComponentOutsideOwnerConstructorByClass(UClass* scene_component_class, UObject* owner, USceneComponent* parent, const std::string& scene_component_name)
+    static USceneComponent* createSceneComponentOutsideOwnerConstructorByClass(UClass* scene_component_class, UObject* owner, USceneComponent* parent, const std::string& scene_component_name, EObjectFlags object_flags = RF_NoFlags)
     {
         SP_ASSERT(owner);
         SP_ASSERT(parent);
-        USceneComponent* scene_component = NewObject<USceneComponent>(owner, scene_component_class, Unreal::toFName(scene_component_name));
+        USceneComponent* scene_component = NewObject<USceneComponent>(owner, scene_component_class, Unreal::toFName(scene_component_name), object_flags);
         SP_ASSERT(scene_component);
         scene_component->SetupAttachment(parent);
         scene_component->RegisterComponent();
         return scene_component;
     }
 
-    static USceneComponent* createSceneComponentOutsideOwnerConstructorByClass(UClass* scene_component_class, USceneComponent* owner, const std::string& scene_component_name)
+    static USceneComponent* createSceneComponentOutsideOwnerConstructorByClass(UClass* scene_component_class, USceneComponent* owner, const std::string& scene_component_name, EObjectFlags object_flags = RF_NoFlags)
     {
-        return createSceneComponentOutsideOwnerConstructorByClass(scene_component_class, owner, owner, scene_component_name);
+        return createSceneComponentOutsideOwnerConstructorByClass(scene_component_class, owner, owner, scene_component_name, object_flags);
     }
 
     //

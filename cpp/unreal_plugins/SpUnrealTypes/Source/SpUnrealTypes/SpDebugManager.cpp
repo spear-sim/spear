@@ -13,18 +13,14 @@
 #include <vector>
 
 #include <Components/ActorComponent.h>
-#include <Components/PoseableMeshComponent.h>
-#include <Components/SkinnedMeshComponent.h> // EBoneSpaces
 #include <Components/StaticMeshComponent.h>
 #include <Containers/Array.h>
 #include <Containers/Map.h>
 #include <Containers/UnrealString.h>         // FString
-#include <Engine/Engine.h>                   // GEngine
 #include <Engine/EngineTypes.h>              // EEndPlayReason
 #include <Engine/StaticMeshActor.h>
 #include <Engine/World.h>                    // FActorSpawnParameters
 #include <GameFramework/Actor.h>
-#include <Math/Matrix.h>                     // FMatrix
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
 #include <PhysicsEngine/BodyInstance.h>
@@ -43,8 +39,6 @@
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealUtils.h"
 #include "SpCore/UnrealObj.h"
-#include "SpCore/Yaml.h"
-#include "SpCore/YamlCpp.h"
 
 #include "SpUnrealTypes/SpActorHitManager.h"
 #include "SpUnrealTypes/SpSceneCaptureComponent2D.h"
@@ -148,7 +142,7 @@ void ASpDebugManager::Initialize()
         SP_ASSERT(shared_memory_region_);
 
         // The name chosen here for our shared memory region does not need to be globally unique. It only needs
-        // unique within this SpFuncComponent.
+        // to be unique within this SpFuncComponent.
         shared_memory_view_ = SpArraySharedMemoryView(shared_memory_region_->getView(), "smem:sp_debug_manager", SpArraySharedMemoryUsageFlags::ReturnValue);
         SpFuncComponent->registerSharedMemoryView(shared_memory_view_);
 
@@ -334,7 +328,7 @@ void ASpDebugManager::GetAndSetObjectProperties()
 
     // Get property values from void* and UStruct*
     value_ptr = &(static_mesh_component->BodyInstance);
-    ustruct = FBodyInstance::StaticStruct(); // Unreal::getStaticStruct<FBodyInstance>(); // could also use FBodyInstance::StaticStruct()
+    ustruct = FBodyInstance::StaticStruct(); // could also use Unreal::getStaticStruct<FBodyInstance>()
     SP_LOG(UnrealUtils::getObjectPropertiesAsString(value_ptr, ustruct));
     SP_LOG();
 
@@ -447,11 +441,11 @@ void ASpDebugManager::GetAndSetObjectProperties()
     SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "SetOfStrings")).value_);
 
     //
-    // We need to do this do see visual updates in the editor. But this interface is not ideal because
+    // We need to do this to see visual updates in the editor. But this interface is not ideal because
     // it requires passing in a position and rotation delta, and it doesn't take the UPROPERTIES we set
     // previously into account. Therefore, we must update the position of objects by calling UFUNCTIONS
     // rather than setting UPROPERTIES.
-    // 
+    //
     // static_mesh_component->MoveComponentImpl(FVector(5.0, 5.0, 5.0), FQuat::Identity, false);
     //
 
@@ -464,7 +458,7 @@ void ASpDebugManager::CallFunctions()
 
     static int i = 1;
 
-    UWorld* world = GetWorld(); 
+    UWorld* world = GetWorld();
     SP_ASSERT(world);
 
     AStaticMeshActor* static_mesh_actor = UnrealUtils::findActorByName<AStaticMeshActor>(GetWorld(), "Debug/SM_Prop_04");
@@ -528,15 +522,15 @@ void ASpDebugManager::CallFunctions()
     // target function, but always allows the caller to fully initialize the object if necessary. We also
     // allow entire arguments to be omitted from args, in which case the default-initialized (as
     // described above) object will be passed to the target function without further modification.
-    // 
+    //
     // The signature for the target function below is as follows,
     //
     //     void SceneComponent::K2_AddRelativeLocation(
     //         FVector DeltaLocation, bool bSweep, FHitResult& SweepHitResult, bool bTeleport);
-    // 
+    //
     // where SweepHitResult is an "out" parameter used to return additional data to the caller. Since
     // SweepHitResult will be filled in by the target function anyway, we simply omit it from args.
-    // Regardless of whether or not it is included in args, SweepHitResult (and all other arguments), are
+    // Regardless of whether or not it is included in args, SweepHitResult (and all other arguments) are
     // always included in the values returned by callFunction(...). So the caller can always access any
     // additional data that was filled in by the target function, as well as the target function's formal
     // return value.
@@ -548,14 +542,20 @@ void ASpDebugManager::CallFunctions()
     return_values = UnrealUtils::callFunction(GetWorld(), static_mesh_component, ufunction, args);
     SP_LOG(return_values.at("SweepHitResult").value_);
 
-    UObject* uobject = ASpActorHitManager::StaticClass()->GetDefaultObject();
-    SP_ASSERT(uobject);
-    ufunction = UnrealUtils::findFunctionByName(uobject->GetClass(), "GetActorHitDescs");
-    SP_ASSERT(ufunction);
-    return_values = UnrealUtils::callFunction(GetWorld(), uobject, ufunction);
-    SP_LOG(return_values.at("ReturnValue").value_);
-
     i++;
+
+    std::vector<ASpActorHitManager*> sp_actor_hit_managers = UnrealUtils::findActorsByName<ASpActorHitManager>(GetWorld(), "Debug/ActorHitManager");
+    if (sp_actor_hit_managers.empty()) {
+        SP_LOG("    Couldn't find Debug/ActorHitManager, giving up...");
+        return;
+    }
+    ASpActorHitManager* sp_actor_hit_manager = sp_actor_hit_managers.at(0);
+    SP_ASSERT(sp_actor_hit_manager);
+
+    ufunction = UnrealUtils::findFunctionByName(sp_actor_hit_manager->GetClass(), "GetActorHitDescs");
+    SP_ASSERT(ufunction);
+    return_values = UnrealUtils::callFunction(GetWorld(), sp_actor_hit_manager, ufunction);
+    SP_LOG(return_values.at("ReturnValue").value_);
 }
 
 void ASpDebugManager::CallSpFunc() const
@@ -670,10 +670,16 @@ void ASpDebugManager::SubscribeToActorHitEvents() const
     AStaticMeshActor* static_mesh_actor = UnrealUtils::findActorByName<AStaticMeshActor>(GetWorld(), "Debug/SM_Prop_04");
     SP_ASSERT(static_mesh_actor);
 
-    UObject* sp_actor_hit_manager = ASpActorHitManager::StaticClass()->GetDefaultObject();
+    std::vector<ASpActorHitManager*> sp_actor_hit_managers = UnrealUtils::findActorsByName<ASpActorHitManager>(GetWorld(), "Debug/ActorHitManager");
+    if (sp_actor_hit_managers.empty()) {
+        SP_LOG("    Couldn't find Debug/ActorHitManager, giving up...");
+        return;
+    }
+    ASpActorHitManager* sp_actor_hit_manager = sp_actor_hit_managers.at(0);
     SP_ASSERT(sp_actor_hit_manager);
 
     UFunction* ufunction = UnrealUtils::findFunctionByName(sp_actor_hit_manager->GetClass(), "SubscribeToActor");
+    SP_ASSERT(ufunction);
     UnrealUtils::callFunction(GetWorld(), sp_actor_hit_manager, ufunction, {{"Actor", Std::toStringFromPtr(static_mesh_actor)}});
 }
 
@@ -684,10 +690,16 @@ void ASpDebugManager::UnsubscribeFromActorHitEvents() const
     AStaticMeshActor* static_mesh_actor = UnrealUtils::findActorByName<AStaticMeshActor>(GetWorld(), "Debug/SM_Prop_04");
     SP_ASSERT(static_mesh_actor);
 
-    UObject* sp_actor_hit_manager = ASpActorHitManager::StaticClass()->GetDefaultObject();
+    std::vector<ASpActorHitManager*> sp_actor_hit_managers = UnrealUtils::findActorsByName<ASpActorHitManager>(GetWorld(), "Debug/ActorHitManager");
+    if (sp_actor_hit_managers.empty()) {
+        SP_LOG("    Couldn't find Debug/ActorHitManager, giving up...");
+        return;
+    }
+    ASpActorHitManager* sp_actor_hit_manager = sp_actor_hit_managers.at(0);
     SP_ASSERT(sp_actor_hit_manager);
 
     UFunction* ufunction = UnrealUtils::findFunctionByName(sp_actor_hit_manager->GetClass(), "UnsubscribeFromActor");
+    SP_ASSERT(ufunction);
     UnrealUtils::callFunction(GetWorld(), sp_actor_hit_manager, ufunction, {{"Actor", Std::toStringFromPtr(static_mesh_actor)}});
 }
 
@@ -695,17 +707,18 @@ void ASpDebugManager::ReadPixels() const
 {
     SP_LOG_CURRENT_FUNCTION();
 
-    std::vector<AActor*> actors = UnrealUtils::findActorsByName<AActor>(GetWorld(), {"Debug/BP_Camera_Sensor"});
-    AActor* actor = actors.at(0);
-    if (!actor) {
+    std::vector<AActor*> actors = UnrealUtils::findActorsByName<AActor>(GetWorld(), "Debug/BP_Camera_Sensor");
+    if (actors.empty()) {
         SP_LOG("    Couldn't find Debug/BP_Camera_Sensor, giving up...");
         return;
     }
+    AActor* actor = actors.at(0);
+    SP_ASSERT(actor);
 
     USpSceneCaptureComponent2D* sp_scene_capture_component_2d = UnrealUtils::getComponentByName<USpSceneCaptureComponent2D>(actor, "DefaultSceneRoot.final_tone_curve_hdr_");
     SP_ASSERT(sp_scene_capture_component_2d);
     if (!sp_scene_capture_component_2d->IsInitialized()) {
-        SP_LOG("    Debug/BP_Camera_Sensor:DefaultSceneRoot.final_tone_curve_hdr isn't initialized, giving up...");
+        SP_LOG("    Debug/BP_Camera_Sensor:DefaultSceneRoot.final_tone_curve_hdr_ isn't initialized, giving up...");
         return;
     }
 
@@ -758,13 +771,14 @@ void ASpDebugManager::PrintActorDebugInfo() const
     SP_LOG_CURRENT_FUNCTION();
 
     AStaticMeshActor* static_mesh_actor = UnrealUtils::findActorByName<AStaticMeshActor>(GetWorld(), "Debug/SM_Prop_04");
+    SP_ASSERT(static_mesh_actor);
     SP_LOG("    Printing debug info for actor: ", UnrealUtils::getStableName(static_mesh_actor));
 
     SP_LOG("    Non-scene components: ");
     std::map<std::string, UActorComponent*> components = UnrealUtils::getComponentsAsMap(static_mesh_actor);
     for (auto& [name, component] : components) {
         if (!component->IsA(USceneComponent::StaticClass())) {
-            SP_LOG("        ", name, " (", Unreal::getTypeAsString(component->GetClass()), + ")");
+            SP_LOG("        ", name, " (", Unreal::getTypeAsString(component->GetClass()), ")");
         }
     }
 
@@ -940,7 +954,7 @@ void ASpDebugManager::PrintAllClassesDebugInfo() const
 
     for (auto& [uclass_name, uclass] : uclasses) {
         num_functions = UnrealUtils::findFunctions(uclass, EFieldIterationFlags::IncludeDeprecated).size(); // exclude base classes
-        SP_LOG("        Class: ", uclass_name, " (", num_functions, " functions, ", num_properties, " properties)");
+        SP_LOG("        Class: ", uclass_name, " (", num_functions, " functions)");
         total_num_functions += num_functions;
     }
 
@@ -1095,12 +1109,6 @@ FVector ASpDebugManager::GetVector(FString Arg0, bool Arg1, int Arg2, FVector& A
     SP_LOG_CURRENT_FUNCTION();
     Arg3 = FVector(1.11, 2.22, 3.33);
     return FVector(9.87, 6.54, 3.21);
-}
-
-FMatrix ASpDebugManager::GetMatrix(FMatrix Arg0) const
-{
-    SP_LOG_CURRENT_FUNCTION();
-    return Arg0*2;
 }
 
 UObject* ASpDebugManager::GetWorldContextObject(const UObject* WorldContextObject, FString Arg0, bool Arg1)

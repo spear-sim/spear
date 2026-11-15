@@ -116,8 +116,6 @@ struct FSpRHIMemoryStats
     {
         FSpRHIMemoryStats stats;
 
-        // Mimics FDeviceMemoryManager::UpdateMemoryProperties() in UE 5.8, see
-        // Engine/Source/Runtime/VulkanRHI/Private/VulkanMemory.cpp
         IVulkanDynamicRHI* vulkan_dynamic_rhi = GetIVulkanDynamicRHI();
         SP_ASSERT(vulkan_dynamic_rhi);
         VkPhysicalDevice vk_physical_device = vulkan_dynamic_rhi->RHIGetVkPhysicalDevice();
@@ -211,9 +209,9 @@ public:
     // Mimics ::RHIGetMemoryStats(...) in UE 5.8, see Engine/Source/Runtime/RHI/Public/DynamicRHI.h. In UE 5.8 the
     // per-backend logic below is implemented by each RHI's own RHIGetMemoryStats() override, but UE 5.5 doesn't
     // provide it, so we inline the equivalent logic here. Metal leaves the stats zeroed, matching UE 5.8's no-op
-    // behavior on Metal. Not BlueprintCallable because uint64 is not a Blueprint type.
+    // behavior on Metal.
     UFUNCTION()
-    static FSpRHIMemoryStats RHIGetMemoryStats()
+    static FSpRHIMemoryStats RHIGetMemoryStats() // uint64 not supported for BlueprintCallable
     {
         FSpRHIMemoryStats stats;
 

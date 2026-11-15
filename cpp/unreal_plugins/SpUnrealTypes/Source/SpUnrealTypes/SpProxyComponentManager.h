@@ -87,19 +87,11 @@ public:
 
         //
         // We must take care to handle the case where an ASpProxyComponentManager actor in the editor world has
-        // already been initialized, and we press play in the editor. In this case, the proxy components that
-        // were created in the editor world will be duplicated in the PIE world, but they will not have been
-        // correctly registered with the ASpProxyComponentManager in the PIE world. So we destroy these
-        // components and re-initialize. We can't do this re-initialization step in BeginPlay() because there
-        // might be some actors and components that haven't been created yet.
-        //
-        // We also need to do a full tear-down and re-initialize step here, as opposed to trying to find the
-        // intended non-proxy component for each proxy component, because it is not possible to find the intended
-        // non-proxy component in all cases. In particular, if the type of the component is not a USceneComponent,
-        // then we can't use the unique parent-child relationship between the proxy and non-proxy component to
-        // determine how to re-initialize the proxy component. We could work around this issue with some
-        // additional book-keeping data structures, but we prefer the simple solution of doing a full tear-down
-        // and re-initialization step.
+        // already been initialized, and we press play in the editor. In this case, bIsInitialized is duplicated
+        // into the PIE world, but the internal state of the ASpProxyComponentManager is not. Proxy components are
+        // marked as transient, so they are not duplicated into the PIE world either. So we re-initialize here and
+        // create new proxy components in the PIE world. We can't do this re-initialization step in BeginPlay()
+        // because there might be some actors and components that haven't been created yet.
         //
 
         if (request_reinitialize_) {
@@ -140,7 +132,11 @@ public:
         terminateImpl();
     }
 
-    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    // Update() incrementally creates proxy components for new source components, and destroys proxy components
+    // whose source components have been destroyed or are no longer visible or allowed. If bUpdateProxyComponentsEveryTick
+    // is true, this happens automatically every tick. Otherwise, call Update() after spawning or destroying actors.
+
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void Update()
     {
         if (!IsInitialized()) {
@@ -152,27 +148,50 @@ public:
         requestCreateAndRegisterProxyComponentsForAllTypes(actors);
     }
 
+    // Rebuild() destroys and recreates all proxy components. Update() doesn't refresh proxy components whose
+    // source components have changed (e.g., a new mesh or new materials), so call Rebuild() after making such
+    // changes. Note that proxy component IDs will be different after calling Rebuild().
+
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
+    void Rebuild()
+    {
+        if (!IsInitialized()) {
+            return;
+        }
+
+        // Terminate()
+        unregisterAndDestroyProxyComponentsForAllTypes();
+
+        // Initialize()
+        std::vector<AActor*> actors = UnrealUtils::findActors(GetWorld());
+        requestCreateAndRegisterProxyComponentsForAllTypes(actors);
+    }
+
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     bool IsInitialized() const { return is_initialized_; }
 
 protected:
-    // Called from ThisClass::Initialize(), ThisClass::Tick(...)
+    // Called from Initialize(), Tick(...)
     virtual void initializeImpl()
     {
         is_initialized_ = true;
         bIsInitialized = true;
     }
 
-    // Called from ThisClass::Terminate()
+    // Called from Terminate()
     virtual void terminateImpl()
     {
         is_initialized_ = false;
         bIsInitialized = false;
     }
 
-    // Called from ThisClass::Initialize(), ThisClass::Tick(...), ThisClass::Terminate()
+    // Called from Initialize(), Tick(...), Update(), Rebuild()
     virtual void requestCreateAndRegisterProxyComponentsForAllTypes(const std::vector<AActor*>& actors) { SP_ASSERT(false); }
+
+    // Called from Tick(...), Update()
     virtual void requestUnregisterAndDestroyProxyComponentsForAllTypes(const std::vector<AActor*>& actors) { SP_ASSERT(false); }
+
+    // Called from Tick(...), Terminate(), Rebuild()
     virtual void unregisterAndDestroyProxyComponentsForAllTypes() { SP_ASSERT(false); }
 
 private:

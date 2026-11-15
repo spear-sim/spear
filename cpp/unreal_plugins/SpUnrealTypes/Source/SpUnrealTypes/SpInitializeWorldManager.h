@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <string>
+
 #include <BodySetupEnums.h>                // ECollisionTraceFlag
 #include <ChaosSolverConfiguration.h>
 #include <Containers/Array.h>
@@ -292,25 +294,11 @@ public:
     UPROPERTY(EditAnywhere, Category="SPEAR")
     FSpPhysicsSettings PhysicsSettings;
 
-    // Force skylight update. We set bForceSkylightUpdate to true here, rather than setting the corresponding
-    // config parameter in default_config.sp_components.yaml, becasue because we always want this default
-    // behavior, even when the config system isn't loaded.
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bForceSkylightUpdate = false;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    float ForceSkylightUpdateMaxDurationSeconds = 1.0f;
-
-    bool force_skylight_update_ = false;
-    int force_skylight_update_previous_cvar_value_ = -1;
-    float force_skylight_update_duration_seconds_ = 0.0f;
-
-    // Execute console commands
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    bool bExecuteConsoleCommands = false;
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
-    TArray<FString> ConsoleCommands;
-
 private:
     bool initialized_config_system_ = false;
+
+    // Values saved in BeginPlay() so they can be restored in EndPlay().
+    bool saved_benchmarking_ = false;
+    double saved_fixed_delta_time_ = 0.0;
+    std::string saved_physics_settings_str_;
 };

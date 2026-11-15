@@ -21,7 +21,7 @@ class USpMovieSceneSequenceEditor : public UBlueprintFunctionLibrary
 {
     GENERATED_BODY()
 public:
-    UFUNCTION(BlueprintCallable, Category="SPEAR")    
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
     static UBlueprint* FindDirectorBlueprint(UMovieSceneSequence* Sequence)
     {
         SP_ASSERT(Sequence);
@@ -30,7 +30,7 @@ public:
         return sequence_editor->FindDirectorBlueprint(Sequence);
     }
 
-    UFUNCTION(BlueprintCallable, Category="SPEAR")    
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
     static UBlueprint* GetOrCreateDirectorBlueprint(UMovieSceneSequence* Sequence)
     {
         SP_ASSERT(Sequence);

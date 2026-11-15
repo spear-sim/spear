@@ -80,9 +80,6 @@ private:
     void postEngineInitHandler();
     void enginePreExitHandler();
 
-    void registerClasses() const;
-    void unregisterClasses() const;
-
     FDelegateHandle post_engine_init_handle_;
     FDelegateHandle engine_pre_exit_handle_;
 

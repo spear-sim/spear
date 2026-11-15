@@ -28,6 +28,7 @@
 #include <UObject/Class.h>         // UClass
 #include <UObject/NameTypes.h>     // FName
 #include <UObject/Object.h>        // UObject
+#include <UObject/ObjectMacros.h>  // EObjectFlags
 
 // MessageLog is a Developer-category module and is therefore not available in Shipping builds.
 #if WITH_UNREAL_DEVELOPER_TOOLS
@@ -720,23 +721,27 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "create_component_outside_owner_constructor_by_class",
-            [this](uint64_t& uclass, uint64_t& owner, std::string& component_name) -> uint64_t {
-                return toUInt64(UnrealUtils::createComponentOutsideOwnerConstructorByClass(toPtr<UClass>(uclass), toPtr<AActor>(owner), component_name));
+            [this](uint64_t& uclass, uint64_t& owner, std::string& component_name, std::vector<std::string>& object_flag_strings) -> uint64_t {
+                EObjectFlags object_flags = Unreal::getCombinedEnumFlagValueFromStringsAs<EObjectFlags, ESpObjectFlags>(object_flag_strings);
+                return toUInt64(UnrealUtils::createComponentOutsideOwnerConstructorByClass(toPtr<UClass>(uclass), toPtr<AActor>(owner), component_name, object_flags));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "create_scene_component_outside_owner_constructor_for_actor_by_class",
-            [this](uint64_t& uclass, uint64_t& owner, std::string& scene_component_name) -> uint64_t {
-                return toUInt64(UnrealUtils::createSceneComponentOutsideOwnerConstructorByClass(toPtr<UClass>(uclass), toPtr<AActor>(owner), scene_component_name));
+            [this](uint64_t& uclass, uint64_t& owner, std::string& scene_component_name, std::vector<std::string>& object_flag_strings) -> uint64_t {
+                EObjectFlags object_flags = Unreal::getCombinedEnumFlagValueFromStringsAs<EObjectFlags, ESpObjectFlags>(object_flag_strings);
+                return toUInt64(UnrealUtils::createSceneComponentOutsideOwnerConstructorByClass(toPtr<UClass>(uclass), toPtr<AActor>(owner), scene_component_name, object_flags));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "create_scene_component_outside_owner_constructor_for_object_by_class",
-            [this](uint64_t& uclass, uint64_t& owner, uint64_t& parent, std::string& scene_component_name) -> uint64_t {
-                return toUInt64(UnrealUtils::createSceneComponentOutsideOwnerConstructorByClass(toPtr<UClass>(uclass), toPtr<UObject>(owner), toPtr<USceneComponent>(parent), scene_component_name));
+            [this](uint64_t& uclass, uint64_t& owner, uint64_t& parent, std::string& scene_component_name, std::vector<std::string>& object_flag_strings) -> uint64_t {
+                EObjectFlags object_flags = Unreal::getCombinedEnumFlagValueFromStringsAs<EObjectFlags, ESpObjectFlags>(object_flag_strings);
+                return toUInt64(UnrealUtils::createSceneComponentOutsideOwnerConstructorByClass(toPtr<UClass>(uclass), toPtr<UObject>(owner), toPtr<USceneComponent>(parent), scene_component_name, object_flags));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "create_scene_component_outside_owner_constructor_for_scene_component_by_class",
-            [this](uint64_t& uclass, uint64_t& owner, std::string& scene_component_name) -> uint64_t {
-                return toUInt64(UnrealUtils::createSceneComponentOutsideOwnerConstructorByClass(toPtr<UClass>(uclass), toPtr<USceneComponent>(owner), scene_component_name));
+            [this](uint64_t& uclass, uint64_t& owner, std::string& scene_component_name, std::vector<std::string>& object_flag_strings) -> uint64_t {
+                EObjectFlags object_flags = Unreal::getCombinedEnumFlagValueFromStringsAs<EObjectFlags, ESpObjectFlags>(object_flag_strings);
+                return toUInt64(UnrealUtils::createSceneComponentOutsideOwnerConstructorByClass(toPtr<UClass>(uclass), toPtr<USceneComponent>(owner), scene_component_name, object_flags));
             });
 
         //
