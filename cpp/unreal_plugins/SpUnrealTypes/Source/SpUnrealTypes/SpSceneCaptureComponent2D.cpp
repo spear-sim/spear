@@ -501,7 +501,7 @@ void USpSceneCaptureComponent2D::Terminate()
     SavedTextureTarget = nullptr;
 }
 
-bool USpSceneCaptureComponent2D::IsInitialized()
+bool USpSceneCaptureComponent2D::IsInitialized() const
 {
     return is_initialized_;
 }
@@ -686,7 +686,7 @@ void USpSceneCaptureComponent2D::postRenderViewFamily_RenderThread(FRDGBuilder& 
     }
 }
 
-bool USpSceneCaptureComponent2D::showFlagsNeedSceneViewExtension()
+bool USpSceneCaptureComponent2D::showFlagsNeedSceneViewExtension() const
 {
     std::vector<std::string> setting_names_that_need_sve_when_enabled = {"Wireframe", "OverrideDiffuseAndSpecular", "LightingOnlyOverride", "ReflectionOverride", "PathTracing"};
     std::vector<std::string> setting_names_that_need_sve_when_disabled = {"Diffuse", "Specular"};
@@ -1025,7 +1025,7 @@ USpSceneCaptureComponent2D::TextureReadbackMinimalDesc USpSceneCaptureComponent2
     FRHIGPUTextureReadback* current_readback,
     FRHIGPUTextureReadback* prev_readback,
     FTextureRenderTargetResource* render_target_resource_ptr,
-    TRefCountPtr<IPooledRenderTarget>* pooled_render_target_ptr)
+    TRefCountPtr<IPooledRenderTarget>* pooled_render_target_ptr) const
 {
     SP_ASSERT(IsInitialized());
     SP_ASSERT(current_readback);
@@ -1071,7 +1071,7 @@ USpSceneCaptureComponent2D::TextureReadbackMinimalDesc USpSceneCaptureComponent2
     return texture_readback_minimal_desc;
 }
 
-SpPackedArray USpSceneCaptureComponent2D::getPackedArray(const TextureReadbackDescBase& texture_readback_desc_base)
+SpPackedArray USpSceneCaptureComponent2D::getPackedArray(const TextureReadbackDescBase& texture_readback_desc_base) const
 {
     SP_ASSERT(IsInitialized());
     SP_ASSERT(texture_readback_desc_base.width_ >= 0);
@@ -1101,7 +1101,7 @@ SpPackedArray USpSceneCaptureComponent2D::getPackedArray(const TextureReadbackDe
     return packed_array;
 }
 
-SpPackedArray USpSceneCaptureComponent2D::readPixelsImpl(const TextureReadbackDesc& texture_readback_desc)
+SpPackedArray USpSceneCaptureComponent2D::readPixelsImpl(const TextureReadbackDesc& texture_readback_desc) const
 {
     SP_ASSERT(IsInitialized());
 
@@ -1134,7 +1134,7 @@ SpPackedArray USpSceneCaptureComponent2D::readPixelsImpl(const TextureReadbackDe
 // render thread helpers
 //
 
-void USpSceneCaptureComponent2D::enqueueCopyPixelsFromGPUToStaging_RenderThread(FRHICommandListImmediate& command_list, const TextureReadbackMinimalDesc& texture_readback_minimal_desc)
+void USpSceneCaptureComponent2D::enqueueCopyPixelsFromGPUToStaging_RenderThread(FRHICommandListImmediate& command_list, const TextureReadbackMinimalDesc& texture_readback_minimal_desc) const
 {
     SP_ASSERT(texture_readback_minimal_desc.current_readback_);
 
@@ -1163,7 +1163,7 @@ void USpSceneCaptureComponent2D::enqueueCopyPixelsFromGPUToStaging_RenderThread(
     texture_readback_minimal_desc.current_readback_->EnqueueCopy(command_list, src_texture);
 }
 
-void USpSceneCaptureComponent2D::copyPixelsFromStagingToCPU_RenderThread(FRHIGPUTextureReadback* readback, void* dest_ptr, const TextureReadbackDescBase& texture_readback_desc_base)
+void USpSceneCaptureComponent2D::copyPixelsFromStagingToCPU_RenderThread(FRHIGPUTextureReadback* readback, void* dest_ptr, const TextureReadbackDescBase& texture_readback_desc_base) const
 {
     SP_ASSERT(readback);
     SP_ASSERT(dest_ptr);

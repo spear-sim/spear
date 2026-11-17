@@ -8,12 +8,13 @@
 #include <vector>
 
 #include <Containers/Array.h>
-#include <Containers/UnrealString.h> // FString
+#include <Containers/UnrealString.h>        // FString
 #include <Engine/HitResult.h>
 #include <GameFramework/Actor.h>
-#include <HAL/Platform.h>            // uint64
+#include <HAL/Platform.h>                   // uint64
 #include <Math/Vector.h>
-#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
+#include <UObject/ObjectMacros.h>           // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
+#include <UObject/WeakObjectPtrTemplates.h> // TWeakObjectPtr
 
 #include "SpActorHitManager.generated.h"
 
@@ -58,7 +59,7 @@ public:
     void UnsubscribeFromActor(AActor* Actor); // not intended to be BlueprintCallable
 
     UFUNCTION()
-    TArray<FActorHitDesc> GetActorHitDescs(bool bIncludeDebugInfo = false); // TArray<FActorHitDesc> not supported for BlueprintCallable
+    TArray<FActorHitDesc> GetActorHitDescs(bool bIncludeDebugInfo = false) const; // TArray<FActorHitDesc> not supported for BlueprintCallable
 
 private:
     UFUNCTION()
@@ -66,8 +67,8 @@ private:
 
     struct ActorHitDesc
     {
-        AActor* self_actor_ = nullptr;
-        AActor* other_actor_ = nullptr;
+        TWeakObjectPtr<AActor> self_actor_;
+        TWeakObjectPtr<AActor> other_actor_;
         FVector normal_impulse_ = FVector::ZeroVector;
         FHitResult hit_result_;
     };

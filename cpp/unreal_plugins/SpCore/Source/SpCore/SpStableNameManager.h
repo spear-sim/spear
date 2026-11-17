@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include <set>
 #include <string>
 
 #include <Components/ActorComponent.h>
@@ -34,10 +33,6 @@ class SPCORE_API ASpStableNameManager : public AActor
 {
     GENERATED_BODY()
 public:
-    // AActor interface
-    void BeginPlay() override;
-    void EndPlay(const EEndPlayReason::Type end_play_reason) override;
-
     #if WITH_EDITOR // defined in an auto-generated header
         // AActor interface
         void PostActorCreated() override;
@@ -63,8 +58,6 @@ private:
 
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
     TMap<FString, FString> StableNames;
-
-    inline static std::set<UWorld*> s_worlds_with_stable_name_manager_;
 };
 
 //
@@ -84,7 +77,7 @@ public:
         void OnComponentCreated() override;
     #endif
 
-    std::string getStableName();
+    std::string getStableName() const;
     void setStableName(const std::string& stable_name);
 
     #if WITH_EDITOR // defined in an auto-generated header

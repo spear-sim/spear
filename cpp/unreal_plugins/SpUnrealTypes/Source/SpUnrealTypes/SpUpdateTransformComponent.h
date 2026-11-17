@@ -7,12 +7,14 @@
 
 #include <Components/ActorComponent.h>
 #include <Components/SceneComponent.h>
-#include <Containers/UnrealString.h> // FString
-#include <Engine/EngineBaseTypes.h>  // ELevelTick, ETickingGroup
-#include <Engine/EngineTypes.h>      // EEndPlayReason, ETeleportType
+#include <Containers/UnrealString.h>        // FString
+#include <Engine/EngineBaseTypes.h>         // ELevelTick, ETickingGroup
+#include <Engine/EngineTypes.h>             // EEndPlayReason, ETeleportType
 #include <Engine/HitResult.h>
-#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UPROPERTY
+#include <UObject/ObjectMacros.h>           // GENERATED_BODY, UCLASS, UPROPERTY
+#include <UObject/WeakObjectPtrTemplates.h> // TWeakObjectPtr
 
+#include "SpCore/Assert.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealUtils.h"
 
@@ -43,13 +45,13 @@ public:
         if (!SourceComponentPath.IsEmpty()) {
             auto [_, src_component] = UnrealUtils::findActorAndComponentByPath<AActor, USceneComponent>(GetWorld(), GetOwner(), Unreal::toStdString(SourceComponentPath));
             src_component_ = src_component;
-            SourceComponent = Unreal::toFString(UnrealUtils::getStableName(src_component_));
+            SourceComponent = Unreal::toFString(UnrealUtils::getStableName(src_component));
         }
 
         if (!DestinationComponentPath.IsEmpty()) {
             auto [_, dest_component] = UnrealUtils::findActorAndComponentByPath<AActor, USceneComponent>(GetWorld(), GetOwner(), Unreal::toStdString(DestinationComponentPath));
             dest_component_ = dest_component;
-            DestinationComponent = Unreal::toFString(UnrealUtils::getStableName(dest_component_));
+            DestinationComponent = Unreal::toFString(UnrealUtils::getStableName(dest_component));
         }
     }
 
@@ -71,23 +73,26 @@ public:
     {
         UActorComponent::TickComponent(delta_time, level_tick, this_tick_function);
 
-        SetWorldLocationHitResult = FHitResult();
-        SetWorldRotationHitResult = FHitResult();
+        if (Unreal::isSet(src_component_) && Unreal::isSet(dest_component_)) {
+            USceneComponent* src_component = Unreal::toPtr(src_component_);
+            USceneComponent* dest_component = Unreal::toPtr(dest_component_);
+            SP_ASSERT(src_component);
+            SP_ASSERT(dest_component);
 
-        if (!src_component_ || !dest_component_) {
-            return;
-        }
+            SetWorldLocationHitResult = FHitResult();
+            SetWorldRotationHitResult = FHitResult();
 
-        if (bSetWorldLocation) {
-            dest_component_->SetWorldLocation(src_component_->K2_GetComponentLocation(), bSetWorldLocationSweep, &SetWorldLocationHitResult, SetWorldLocationTeleport);
-        }
+            if (bSetWorldLocation) {
+                dest_component->SetWorldLocation(src_component->K2_GetComponentLocation(), bSetWorldLocationSweep, &SetWorldLocationHitResult, SetWorldLocationTeleport);
+            }
 
-        if (bSetWorldRotation) {
-            dest_component_->SetWorldRotation(src_component_->K2_GetComponentRotation(), bSetWorldRotationSweep, &SetWorldRotationHitResult, SetWorldRotationTeleport);
-        }
+            if (bSetWorldRotation) {
+                dest_component->SetWorldRotation(src_component->K2_GetComponentRotation(), bSetWorldRotationSweep, &SetWorldRotationHitResult, SetWorldRotationTeleport);
+            }
 
-        if (bSetWorldScale3D) {
-            dest_component_->SetWorldScale3D(src_component_->K2_GetComponentScale());
+            if (bSetWorldScale3D) {
+                dest_component->SetWorldScale3D(src_component->K2_GetComponentScale());
+            }
         }
     }
 
@@ -128,6 +133,6 @@ public:
     bool bSetWorldScale3D = false;
 
 private:
-    USceneComponent* src_component_ = nullptr;
-    USceneComponent* dest_component_ = nullptr;
+    TWeakObjectPtr<USceneComponent> src_component_;
+    TWeakObjectPtr<USceneComponent> dest_component_;
 };

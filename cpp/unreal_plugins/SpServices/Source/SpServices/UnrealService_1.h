@@ -216,9 +216,13 @@ public:
                     SP_ASSERT(message_log_module);
                     SP_ASSERT(message_log_module->MessageLogViewModel);
 
+                    std::vector<IMessageLogListingPtr> listings = Unreal::toStdVector(message_log_module->MessageLogViewModel->GetLogListingViewModels());
+                    SP_ASSERT(Std::all(
+                        listings |
+                        std::views::transform([](const IMessageLogListingPtr& listing) { return listing.IsValid(); })));
                     return Std::toVector<std::string>(
-                        Unreal::toStdVector(message_log_module->MessageLogViewModel->GetLogListingViewModels()) |
-                        std::views::transform([](const IMessageLogListingPtr& listing) { SP_ASSERT(listing); return Unreal::toStdString(listing->GetName()); }));
+                        listings |
+                        std::views::transform([](const IMessageLogListingPtr& listing) { return Unreal::toStdString(listing->GetName()); }));
                 #else
                     SP_ASSERT(false);
                     return std::vector<std::string>();

@@ -77,7 +77,7 @@ protected:
         return reinterpret_cast<TPtr*>(src);
     }
 
-    template <CObject TObject>
+    template <CObject TObject> // specialization to validate UObject pointers
     static TObject* toPtr(uint64_t src)
     {
         TObject* src_ptr = reinterpret_cast<TObject*>(src);
@@ -93,7 +93,19 @@ protected:
         return Std::reinterpretAsVectorOf<TPtr*>(std::move(src));
     }
 
-    template <typename TKey, typename TPtr>
+    template <CObject TObject> // specialization to validate UObject pointers
+    static std::vector<TObject*> toPtr(std::vector<uint64_t>&& src)
+    {
+        std::vector<TObject*> dest = Std::reinterpretAsVectorOf<TObject*>(std::move(src));
+        for (auto dest_ptr : dest) {
+            if (dest_ptr) {
+                SP_ASSERT(Unreal::isValid(dest_ptr));
+            }
+        }
+        return dest;
+    }
+
+    template <typename TKey, typename TPtr> // specialization not needed because we delegate to the scalar implementation
     static std::map<TKey, TPtr*> toPtr(const std::map<TKey, uint64_t>& src)
     {
         return Std::toMap<TKey, TPtr*>(src | std::views::transform([](auto& pair) { auto& [key, value] = pair; return std::make_pair(key, toPtr<TPtr>(value)); }));

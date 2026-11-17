@@ -101,11 +101,11 @@ concept CVectorValuesAreConvertibleFrom =
     CVector<TDestVector> &&
     CConvertibleFrom<typename TDestVector::value_type, TSrcValue>;
 
-template <typename TDestVector, typename TSrcVectorValues>
+template <typename TDestVector, typename TSrcVector>
 concept CVectorValuesAreConvertibleFromVector =
     CVector<TDestVector> &&
-    CVector<TSrcVectorValues> &&
-    CConvertibleFrom<typename TDestVector::value_type, typename TSrcVectorValues::value_type>;
+    CVector<TSrcVector> &&
+    CConvertibleFrom<typename TDestVector::value_type, typename TSrcVector::value_type>;
 
 //
 // Map (e.g., std::map) concepts
@@ -136,10 +136,11 @@ concept CMapKeysAreConvertibleFrom =
     CMap<TDestMap> &&
     CConvertibleFrom<typename TDestMap::key_type, TSrcKey>;
 
-template <typename TDestMap, typename TSrcVectorKeys>
+template <typename TDestMap, typename TSrcVector>
 concept CMapKeysAreConvertibleFromVector =
     CMap<TDestMap> &&
-    CConvertibleFrom<typename TDestMap::key_type, typename TSrcVectorKeys::value_type>;
+    CVector<TSrcVector> &&
+    CConvertibleFrom<typename TDestMap::key_type, typename TSrcVector::value_type>;
 
 template <typename TDestMap, typename TSrcValue>
 concept CMapValuesAreConvertibleFrom =
@@ -175,7 +176,7 @@ concept CMapKeysAndValuesAreConvertibleFromMap =
 template <typename TSet>
 concept CSet =
     std::ranges::range<TSet> &&
-    requires (TSet map) {
+    requires (TSet set) {
         typename TSet::iterator;
         typename TSet::key_type;
         typename TSet::value_type;
@@ -195,10 +196,11 @@ concept CSetKeysAreConvertibleFrom =
     CSet<TDestSet> &&
     CConvertibleFrom<typename TDestSet::key_type, TSrcKey>;
 
-template <typename TDestSet, typename TSrcVectorKeys>
+template <typename TDestSet, typename TSrcVector>
 concept CSetKeysAreConvertibleFromVector =
     CSet<TDestSet> &&
-    CConvertibleFrom<typename TDestSet::key_type, typename TSrcVectorKeys::value_type>;
+    CVector<TSrcVector> &&
+    CConvertibleFrom<typename TDestSet::key_type, typename TSrcVector::value_type>;
 
 //
 // std utility functions
@@ -403,9 +405,9 @@ public:
         return std::ranges::find(vector, value) != vector.end();
     }
 
-    template <typename TVector, typename TValues> requires
-        CVectorValuesAreConvertibleFromVector<TVector, TValues>
-    static std::vector<bool> contains(const TVector& vector, const TValues& values)
+    template <typename TVector, typename TVectorOfValues> requires
+        CVectorValuesAreConvertibleFromVector<TVector, TVectorOfValues>
+    static std::vector<bool> contains(const TVector& vector, const TVectorOfValues& values)
     {
         return toVector<bool>(values | std::views::transform([&vector](const auto& value) { return contains(vector, value); }));
     }
@@ -477,12 +479,12 @@ public:
         return counts;
     }
 
-    template <typename TVectorKeys, typename TVectorValues> requires
-        CVector<TVectorKeys> && CVector<TVectorValues>
-    static auto zip(const TVectorKeys& keys, const TVectorValues& values)
+    template <typename TVectorOfKeys, typename TVectorOfValues> requires
+        CVector<TVectorOfKeys> && CVector<TVectorOfValues>
+    static auto zip(const TVectorOfKeys& keys, const TVectorOfValues& values)
     {
-        using TKey = typename TVectorKeys::value_type;
-        using TValue = typename TVectorValues::value_type;
+        using TKey = typename TVectorOfKeys::value_type;
+        using TValue = typename TVectorOfValues::value_type;
 
         SP_ASSERT(keys.size() == values.size());
         int num_elements = keys.size();
@@ -504,17 +506,16 @@ public:
         return map.contains(key);
     }
 
-    template <typename TMap, typename TVectorKeys> requires
-        CMapKeysAreConvertibleFromVector<TMap, TVectorKeys> &&
-        CVector<TVectorKeys>
-    static std::vector<bool> containsKeys(const TMap& map, const TVectorKeys& keys)
+    template <typename TMap, typename TVectorOfKeys> requires
+        CMapKeysAreConvertibleFromVector<TMap, TVectorOfKeys>
+    static std::vector<bool> containsKeys(const TMap& map, const TVectorOfKeys& keys)
     {
         return contains(Std::keys(map), keys); // need fully qualified Std::keys(...) because keys is a local variable
     }
 
-    template <typename TMap, typename TVectorKeys> requires
-        CMapKeysAreConvertibleFromVector<TMap, TVectorKeys>
-    static auto at(const TMap& map, const TVectorKeys& keys)
+    template <typename TMap, typename TVectorOfKeys> requires
+        CMapKeysAreConvertibleFromVector<TMap, TVectorOfKeys>
+    static auto at(const TMap& map, const TVectorOfKeys& keys)
     {
         using TValue = typename TMap::mapped_type;
 
@@ -523,10 +524,10 @@ public:
         return toVector<TValue>(keys | std::views::transform([&map](const auto& key) { return map.at(key); }));
     }
 
-    template <typename TMap, typename TVectorKeys, typename TDefaultValue> requires
-        CMapKeysAreConvertibleFromVector<TMap, TVectorKeys> &&
+    template <typename TMap, typename TVectorOfKeys, typename TDefaultValue> requires
+        CMapKeysAreConvertibleFromVector<TMap, TVectorOfKeys> &&
         CMapValuesAreConvertibleFrom<TMap, TDefaultValue>
-    static auto at(const TMap& map, const TVectorKeys& keys, const TDefaultValue& def)
+    static auto at(const TMap& map, const TVectorOfKeys& keys, const TDefaultValue& def)
     {
         // not necessarily the same as TDefaultValue, e.g., if we pass in nullptr
         using TValue = typename TMap::mapped_type;
@@ -598,10 +599,9 @@ public:
         SP_ASSERT(num_elements_removed == 1);
     }
 
-    template <typename TMap, typename TVectorKeys> requires
-        CMapKeysAreConvertibleFromVector<TMap, TVectorKeys> &&
-        CVector<TVectorKeys>
-    static void remove(TMap& map, const TVectorKeys& keys)
+    template <typename TMap, typename TVectorOfKeys> requires
+        CMapKeysAreConvertibleFromVector<TMap, TVectorOfKeys>
+    static void remove(TMap& map, const TVectorOfKeys& keys)
     {
         for (auto& key : keys) {
             remove(map, key);
@@ -662,10 +662,9 @@ public:
         set.erase(key);
     }
 
-    template <typename TSet, typename TVectorKeys> requires
-        CSetKeysAreConvertibleFromVector<TSet, TVectorKeys> &&
-        CVector<TVectorKeys>
-    static void remove(TSet& set, const TVectorKeys& keys)
+    template <typename TSet, typename TVectorOfKeys> requires
+        CSetKeysAreConvertibleFromVector<TSet, TVectorOfKeys>
+    static void remove(TSet& set, const TVectorOfKeys& keys)
     {
         for (auto& key : keys) {
             remove(set, key);

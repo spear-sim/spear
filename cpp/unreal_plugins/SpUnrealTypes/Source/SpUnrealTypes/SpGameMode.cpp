@@ -140,7 +140,7 @@ void ASpGameMode::SpUnloadLevelInstance(const FString& LevelName)
         return;
     }
 
-    ULevelStreamingDynamic* level_instance = level_instances_.at(level_name);
+    ULevelStreamingDynamic* level_instance = Unreal::toPtr(level_instances_.at(level_name));
     SP_ASSERT(level_instance);
     level_instance->SetIsRequestingUnloadAndRemoval(true);
     Std::remove(level_instances_, level_name);
@@ -157,19 +157,20 @@ void ASpGameMode::SpToggleDebugCamera()
 
     APlayerController* player_controller = GetWorld()->GetFirstPlayerController();
     SP_ASSERT(player_controller);
-    SP_ASSERT(sp_debug_camera_controller_);
+    ASpDebugCameraController* sp_debug_camera_controller = Unreal::toPtr(sp_debug_camera_controller_);
+    SP_ASSERT(sp_debug_camera_controller);
 
     // currently enabled so disable
-    if (sp_debug_camera_controller_->OriginalPlayer && sp_debug_camera_controller_->OriginalControllerRef) {
+    if (sp_debug_camera_controller->OriginalPlayer && sp_debug_camera_controller->OriginalControllerRef) {
         SP_ASSERT(!player_controller->Player);
-        sp_debug_camera_controller_->OriginalPlayer->SwitchController(sp_debug_camera_controller_->OriginalControllerRef);
-        sp_debug_camera_controller_->OnDeactivate(sp_debug_camera_controller_->OriginalControllerRef);
+        sp_debug_camera_controller->OriginalPlayer->SwitchController(sp_debug_camera_controller->OriginalControllerRef);
+        sp_debug_camera_controller->OnDeactivate(sp_debug_camera_controller->OriginalControllerRef);
         SP_ASSERT(player_controller->Player);
 
     // currently disabled (and the default debug camera is disabled) so enable
     } else if (player_controller->Player) {
-        sp_debug_camera_controller_->OnActivate(player_controller);
-        player_controller->Player->SwitchController(sp_debug_camera_controller_);
+        sp_debug_camera_controller->OnActivate(player_controller);
+        player_controller->Player->SwitchController(sp_debug_camera_controller);
         SP_ASSERT(!player_controller->Player);
     }
 }

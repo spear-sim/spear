@@ -33,6 +33,129 @@
 #include "SpServices/SpTypes.h"
 #include "SpServices/WorkQueue.h"
 
+//
+// EngineService implements the server side of the programming model described in the SPEAR paper (see the README for a
+// link). The purpose of this overview is to connect that programming model with the code below.
+//
+// Entry points
+//
+// The primary responsibility of the SpServices plugin is to expose C++ functionality to Python. SpServices does so by
+// binding named C++ lambda functions to an RPC server, and allowing the user's Python code to call these functions over
+// an RPC connection. We refer to these lambda functions as entry points, and all communication with Python goes through
+// these entry points. The RPC server executes entry points on a single worker thread inside the UE process, one
+// function at a time, in the order the RPC calls arrive at the server. Additionally, the user's Python code calls our
+// entry points one function at a time using blocking RPC calls. Therefore, the user's Python code and the RPC worker
+// thread operate in lock-step, and the system behaves as if the user's Python code was synchronously calling into the
+// worker thread within a single process. In contrast, the worker thread and the game thread run concurrently, and most
+// of the code below is concerned with coordinating them.
+//
+// A pointer to the RPC server is passed directly into the EngineService constructor below. EngineService caches this
+// pointer and exposes two high-level binding helper functions for the rest of the services in SpServices to use:
+// bindFuncToExecuteOnWorkerThread(...) and bindFuncToExecuteOnGameThread(...). (In SPEAR, a service is simply a C++
+// object that defines zero or more entry points, and whose lifetime matches the lifetime of the UE application.) Entry
+// points that are passed into bindFuncToExecuteOnWorkerThread(...) execute directly on the worker thread. Entry points
+// that are bound with bindFuncToExecuteOnGameThread(...) must execute on the game thread, so
+// bindFuncToExecuteOnGameThread(...) wraps each such input function in a lambda function that is executed on the worker
+// thread, and the wrapper lambda schedules the input function on a work queue that is eventually drained on the game
+// thread. For each entry point that is passed into bindFuncToExecuteOnGameThread(...),
+// bindFuncToExecuteOnGameThread(...) binds three distinct variants, each with a different synchronization policy, and a
+// different prefix that is attached to the original name of the entry point. The synchronization policy of each variant
+// is as follows:
+//
+//     - The call_sync  variant schedules the work, waits until the game thread has executed it, and returns its result.
+//     - The call_async variant schedules the work and immediately returns a future object, whose result can be obtained
+//                              later by calling the "engine_service.get_future_result_from_game_thread_as_<type>" entry
+//                              point, which waits for the work to finish if it is still pending, and returns its
+//                              result.
+//     - The send_async variant schedules the work, immediately returns, and discards the result.
+//
+// Transactions and work queues
+//
+// In the SPEAR programming model, user Python code specifies a transaction of UE work by defining an
+// instance.begin_frame() context followed by an instance.end_frame() context. Inside of these contexts, the user is
+// allowed to call game thread entry points (i.e., bound with bindFuncToExecuteOnGameThread(...)), but is not allowed to
+// call game thread entry points anywhere else. The user's Python code is allowed to call worker thread entry points
+// (i.e., bound with bindFuncToExecuteOnWorkerThread(...)) anywhere. All work in the instance.begin_frame() context is
+// guaranteed to execute on the game thread at the beginning of a UE frame, all work in the instance.end_frame() context
+// is guaranteed to execute at the end of the same UE frame, and all work executes on the game thread in the order it
+// was specified in the user's Python code. As the user's Python code enters and leaves these instance.begin_frame() and
+// instance.end_frame() contexts, the SPEAR Python library internally calls the following worker thread entry points
+// (see python/spear/services/engine_service.py):
+//
+//     - When entering an instance.begin_frame() context, the SPEAR Python library calls "engine_service.begin_frame".
+//     - When exiting  an instance.begin_frame() context, the SPEAR Python library calls "engine_service.execute_frame".
+//     - When exiting  an instance.end_frame()   context, the SPEAR Python library calls "engine_service.end_frame".
+//
+// In order to execute the incoming work items from the user's Python program on the UE game thread, EngineService
+// maintains two distinct work queues to store the incoming work, as well as a current work queue pointer; one of these
+// queues is for instance.begin_frame() work and the other is for instance.end_frame() work. As the user's Python
+// program calls "engine_service.begin_frame", "engine_service.execute_frame", and "engine_service.end_frame",
+// EngineService updates the current work queue pointer. As the user's Python program calls other entry points (e.g.,
+// "unreal_service.spawn_actor"), the current work queue is populated with work items. To drain the queues,
+// EngineService receives callbacks from the UE game thread at the beginning and the end of each UE frame, and
+// EngineService drains the appropriate queue in each callback.
+//
+// The game thread executes each queue indefinitely, waiting for new work items to come in until a break signal is
+// queued and executed. These break signals are queued by EngineService in "engine_service.execute_frame" and
+// "engine_service.end_frame". If the user's Python code is too far ahead of the game thread, then the
+// "engine_service.begin_frame" and "engine_service.execute_frame" entry points will block until the game thread has a
+// chance to catch up. By default, the user's Python code is allowed to get one full frame ahead of the UE game thread,
+// meaning that the user's Python code is allowed to have executed one full instance.begin_frame() context and one full
+// instance.end_frame() context before the game thread has started executing the instance.begin_frame() work.
+// Optionally, EngineService can maintain two sets of queues and alternate between them, which allows the user's Python
+// code to get two full frames ahead of the game thread instead of one. We refer to this approach as double-buffered
+// mode in the code below.
+//
+// If there is no pending transaction when the game thread reaches the beginning of a UE frame, then by default the game
+// thread doesn't wait, and UE executes the frame normally (i.e., without involving any of EngineService's work queues).
+// An important consequence of this design is that consecutive user transactions are not guaranteed to execute on
+// consecutive UE frames. This is intentional, because it enables the UE application to remain responsive in between
+// user transactions, e.g., the user can interact with the Unreal Editor while their Python program is paused in between
+// transactions. If desired, it is possible to prevent the game thread from advancing in between transactions by calling
+// instance.end_frame(single_step=True), which guarantees that consecutive transactions execute on consecutive frames.
+//
+// The cooperative execution model described here enables two distinct use cases. First, user Python code can
+// conveniently specify complex graphs of synchronous UE work, and the user can reason precisely about when and how
+// their graphs will execute on the game thread. Second, user Python code can conveniently specify streams of
+// asynchronous UE work in a way that is maximally efficient and completely avoids slowing down the game thread.
+//
+// Editor transactions
+//
+// SPEAR programs can be executed with minimal modifications as editor Python scripts inside the Unreal Editor's
+// embedded Python environment. In this case, the user's Python code runs on a Python interpreter that executes directly
+// on the game thread, and SPEAR functions communicate with the RPC worker thread using the execution model described
+// above. But if the Python interpreter executes directly on the game thread, then our execution model is guaranteed to
+// deadlock when calling the call_sync variant of any game thread entry point. This is because the Python thread (i.e.,
+// the game thread) will synchronously call the worker thread wrapper for the entry point and wait for it to return.
+// Meanwhile, the worker thread wrapper will schedule the work on a queue that must be drained on the game thread and
+// wait for the game thread to drain it. But the game thread can't drain the queue because it is waiting for the worker
+// thread wrapper to return.
+//
+// To avoid this deadlock when operating inside the Unreal Editor's embedded Python environment, the SPEAR Python
+// library executes each game thread function call in four steps, all of which happen internally so the user's code
+// doesn't need to be aware of them. First, the SPEAR Python library enters into a special editor transaction context
+// that sets the current queue to be a dedicated editor queue. Second, the Python SPEAR Python library calls the
+// call_async variant of the entry point, which schedules the work on the dedicated editor queue and immediately returns
+// a future. Third, the SPEAR Python library calls EngineService::executeEditorPostTransaction() directly on the game
+// thread (i.e., not through our RPC server), which drains a single work item from the editor queue and stores the
+// result for later retrieval. Fourth, the SPEAR python library retrieves the result on the worker thread and returns it
+// to the user's code, which is guaranteed to return immediately because the work has already executed.
+//
+// Error handling
+//
+// If an exception occurs in a game thread or worker thread entry point during a transaction, EngineService enters an
+// error state. However, EngineService only reports its error state to Python at well-defined points in the transaction,
+// (e.g., via the return values of "engine_service.execute_frame" and "engine_service.end_frame"). So, if the user's
+// Python code is in the middle of a transaction when the error occurs, the SPEAR Python library can't stop it
+// immediately, and the user's Python code will continue calling entry points until it reaches the end of its current
+// instance.begin_frame() or instance.end_frame() context. To handle these in-flight calls despite being in an error
+// state, the wrapper lambdas that wrap each game-thread entry point immediately return default-constructed values
+// without scheduling any additional work. Eventually, once the error state has propagated to Python, the SPEAR Python
+// library will conclude the transaction and assert. By design, the only way to reset the server's error state is to
+// call the "engine_service.initialize" entry point, which will happen automatically when the user's Python code creates
+// a new instance.
+//
+
 template <CEntryPointBinder TEntryPointBinder>
 class EngineService : public Service
 {
@@ -981,8 +1104,8 @@ private:
     int batched_work_queue_fifo_size_ = BATCHED_WORK_QUEUE_FIFO_SIZE_SINGLE_BUFFERED; // set to BATCHED_WORK_QUEUE_FIFO_SIZE_DOUBLE_BUFFERED in double-buffered
 
     // This FIFO is written to by the worker thread in engine_service.begin_frame, engine_service.execute_frame,
-    // and in a lambda that is scheduled on the game thread in engine_service.end_frame (if in single-step mode).
-    // The FIFO is drained by the game thread in beginFrame() and endFrame().
+    // and engine_service.end_frame (if in single-step mode). The FIFO is drained by the game thread in
+    // beginFrame() and endFrame().
     boost::circular_buffer<std::pair<int, BatchedQueueType>> batched_work_queue_fifo_ = boost::circular_buffer<std::pair<int, BatchedQueueType>>(NUM_BATCHED_QUEUES);
 
     // These promises and futures are each initialized by the worker thread in engine_service.initialize,

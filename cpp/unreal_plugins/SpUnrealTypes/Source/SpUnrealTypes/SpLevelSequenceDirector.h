@@ -9,13 +9,14 @@
 #include <string>
 
 #include <Containers/Array.h>
-#include <Containers/UnrealString.h> // FString
+#include <Containers/UnrealString.h>        // FString
 #include <Engine/LevelStreamingDynamic.h>
 #include <LevelSequenceDirector.h>
 #include <LevelSequencePlayer.h>
 #include <Math/Rotator.h>
 #include <Math/Vector.h>
-#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
+#include <UObject/ObjectMacros.h>           // GENERATED_BODY, UCLASS, UFUNCTION, UPROPERTY
+#include <UObject/WeakObjectPtrTemplates.h> // TWeakObjectPtr
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
@@ -82,8 +83,9 @@ private:
         if (Player && GetWorld()) {
             // Iterate over level_instances_ rather than LevelInstancePaths, because level instances that failed to
             // load in initialize() are not stored in level_instances_.
-            for (auto& [level_instance_path_str, level_instance] : level_instances_) {
+            for (auto& [level_instance_path_str, level_instance_weak_ptr] : level_instances_) {
                 SP_LOG("Unloading: ", level_instance_path_str);
+                ULevelStreamingDynamic* level_instance = Unreal::toPtr(level_instance_weak_ptr);
                 SP_ASSERT(level_instance);
                 level_instance->SetIsRequestingUnloadAndRemoval(true);
             }
@@ -94,5 +96,5 @@ private:
         }
     }
 
-    std::map<std::string, ULevelStreamingDynamic*> level_instances_;
+    std::map<std::string, TWeakObjectPtr<ULevelStreamingDynamic>> level_instances_;
 };

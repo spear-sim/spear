@@ -51,6 +51,137 @@ class FRHICommandListImmediate;
 class FRHITexture;
 class UMaterialInterface;
 
+//
+// USpSceneCaptureComponent2D is the component that SPEAR uses to render images and return them to Python. The purpose
+// of this overview is to connect the code below with the camera sensor described in the SPEAR paper (see the README for
+// a link), and in the programming model described in SpServices/EngineService.h.
+//
+// Reading pixels
+//
+// The primary responsibility of USpSceneCaptureComponent2D is to copy rendered images from the GPU to the CPU, and to
+// return them to the user's Python code with a predictable amount of latency. USpSceneCaptureComponent2D derives from
+// UE's USceneCaptureComponent2D, which renders the scene from the component's point of view into a render target on the
+// GPU once per frame. USpSceneCaptureComponent2D adds the machinery to copy that render target back to the CPU, and
+// exposes this machinery to the user's Python code through two SpFuncs, "enqueue_read_pixels" and "read_pixels". (In
+// SPEAR, an SpFunc is a named C++ lambda function that is registered on a scene component that the user's Python code
+// can call like an ordinary method on the Python component, e.g., component.read_pixels()). Internally, SpFuncs are
+// called through the "sp_func_service.call_function" game thread entry point, so they always execute on the game
+// thread.)
+//
+// UE renders each frame on a dedicated thread, which we refer to as the render thread. As the game thread executes a
+// frame, it enqueues commands for the render thread, and the render thread executes these commands in the order they
+// were enqueued, concurrently with the game thread. The render thread, in turn, enqueues commands for the GPU, and the
+// GPU executes these commands asynchronously with respect to both threads.
+//
+// Copying an already-rendered image from the GPU to the CPU happens in two steps. First, the render thread enqueues a
+// GPU command that copies the GPU buffer into a staging buffer (i.e., a buffer that the render thread is allowed to
+// read from via a Lock() and Unlock() interface). We refer to this step as the GPU-to-staging copy. Second, the render
+// thread calls Lock() on the staging buffer and copies its contents into a CPU buffer that is managed by
+// USpSceneCaptureComponent2D. We refer to this step as the staging-to-CPU copy. The GPU can't execute the
+// GPU-to-staging copy until it has finished rendering an image to the GPU buffer, and Lock() blocks until the GPU has
+// finished executing the GPU-to-staging copy. If the GPU-to-staging copy happens too late after the frame is finished
+// rendering, or if the staging-to-CPU copy happens too soon after the GPU-to-staging copy has been enqueued, then the
+// end-to-end copy operation will block waiting for the GPU. So the key design question is how to arrange the
+// GPU-to-staging and staging-to-CPU copy operations with respect to the rest of the rendering work that must happen
+// during each frame. USpSceneCaptureComponent2D supports three buffering modes, each of which addresses this question
+// differently in a way that makes a different latency-vs-throughput tradeoff.
+//
+//     - SingleBuffered: The user's Python code calls read_pixels() in its instance.end_frame() context. At this point,
+//                       the game thread has already enqueued the necessary commands to render the current frame to the
+//                       GPU buffer. read_pixels() enqueues the GPU-to-staging copy and the staging-to-CPU copy on the
+//                       rendering thread and blocks until the render thread has completed all of them. Therefore,
+//                       read_pixels() returns the image that was rendered during the current frame. SingleBuffered mode
+//                       is the most convenient mode, because it doesn't require any setup work, and the user's Python
+//                       code receives the most up-to-date possible each image with 0 frames of latency. But it is also
+//                       the slowest, because it must wait for the GPU to finish rendering the current frame, and for
+//                       the GPU-to-staging copy, and for the staging-to-CPU copy.
+//
+//     - DoubleBuffered: Instead of waiting for all of this work in read_pixels(), DoubleBuffered mode assumes that the
+//                       user's Python code is willing to receive each image with 1 frame of latency in exchange for
+//                       higher throughput. In this mode, the user's Python code must call enqueue_read_pixels() in its
+//                       instance.begin_frame() context, which enqueues the GPU-to-staging copy and returns immediately.
+//                       The GPU-to-staging copy executes at the start of the frame using the previous frame's GPU
+//                       buffer. Importantly, the render thread (and even the GPU itself) make progress with the rest of
+//                       the frame while the GPU-to-staging copy is happening. Then, the staging-to-CPU copy is
+//                       performed in a post-frame callback on the render thread. The user's Python code still calls
+//                       read_pixels() in its instance.end_frame() context, which must still wait until the
+//                       staging-to-CPU copy has finished, but this requires much less waiting than in SingleBuffered
+//                       mode. The tradeoff is that read_pixels() returns the image that was rendered during the
+//                       previous frame. Ideally we would prefer to schedule the staging-to-CPU copy somewhere in the
+//                       middle of the rendering thread's per-frame work, instead of near the end in our post-frame
+//                       rendering callback. More specifically, we would prefer for the staging-to-CPU copy to happen
+//                       late enough that the GPU-to-staging copy has had time to finish to avoid stalling the rendering
+//                       thread, but early enough that we can overlap the staging-to-CPU copy with other per-frame
+//                       rendering thread work. But this is not straightforward using Unreal's rendering thread
+//                       callbacks (there is no middle-of-frame rendering thread callback), so we settle for doing the
+//                       staging-to-CPU copy in a post-frame rendering thread callback.
+//
+//     - TripleBuffered: Like DoubleBuffered mode, TripleBuffered mode requires the user's Python code to call
+//                       enqueue_read_pixels() in its instance.begin_frame() context and read_pixels() in its
+//                       instance.end_frame() context. But in this mode, the GPU-to-staging copy and the staging-to-CPU
+//                       copy are pipelined, and both are enqueued at the start of the frame. This gives the GPU an
+//                       entire frame to do GPU-to-staging copy, and likewise with the staging-to-CPU copy. Importantly,
+//                       the rendering thread (and the GPU) can make progress with the rest of the frame while both
+//                       copies are happening concurrently. The user's Python code still calls read_pixels() in its
+//                       instance.end_frame() context, which must still wait until the staging-to-CPU copy has finished,
+//                       but in practice this always finishes much faster than rendering, so the data is ready in the
+//                       final destination buffer by the time the user calls read_pixels(). The tradeoff is an
+//                       additional frame of latency (i.e., read_pixels() returns the image that was rendered two frames
+//                       ago), and USpSceneCaptureComponent2D must maintain two staging buffers, since one is being
+//                       copied to, and the other is being copied from, concurrently, during each frame.
+//
+// An important consequence of this design is that, in DoubleBuffered and TripleBuffered modes, read_pixels() doesn't
+// return a meaningful image until enqueue_read_pixels() has been called once or twice, respectively, which we refer to
+// as priming the readback pipeline (see examples/render_image_buffered). Additionally, the latencies described above
+// are measured in UE frames. Consecutive user transactions are only guaranteed to execute on consecutive frames when
+// the user's Python code calls instance.end_frame(single_step=True) (see EngineService.h), so this is the only case
+// where DoubleBuffered and TripleBuffered modes return images with a fixed amount of transaction latency.
+//
+// User Scene Textures
+//
+// In addition to a final beauty image, our implementation can return intermediate images that are written by
+// post-process materials during rendering, which UE refers to as User Scene Textures (USTs). USTs are useful for
+// returning additional per-pixel data that is computed during the same overall rendering pass as the final image. From
+// the user's perspective, USTs behave exactly like the final image. They are read back using the same buffering mode as
+// the final image data, with the same amount of latency, and read_pixels() returns them alongside the final image.
+//
+// The only complication is that UE allocates each UST as a transient texture that only exists while the render thread
+// is rendering the frame. So, during each frame, our implementation enqueues a GPU-to-GPU copy for each UST into a
+// persistent GPU texture owned by our implementation in a post-frame rendering thread callback. Once these GPU-to-GPU
+// copies have been enqueued, the rest of our implementation can proceed as though the USTs were rendered directly to
+// our persistent textures, just like the final image data, and our persistent textures interact with all of our
+// buffering modes identically to the final image data.
+//
+// Shared memory
+//
+// By default, our implementation returns images to the user's Python code via shared memory, i.e., a region of memory
+// that is mapped into both the UE process and the user's Python process. Shared memory enables our implementation to
+// return large images to the user's Python code efficiently, because the images don't need to be serialized and sent
+// over an RPC connection to the user's Python code. Our use of shared memory doesn't fundamentally change how any of
+// our buffering modes work, it only changes the CPU destination of our staging-to-CPU copy operations. When shared
+// memory is enabled, our implementation performs the staging-to-CPU copies directly into shared memory regions, and
+// read_pixels() returns SpPackedArrays that refer to these regions, so returning images to the user's Python code
+// doesn't require any additional copying.
+//
+// To facilitate the use of shared memory, we must introduce a volatility contract with the user that governs when the
+// user is allowed to read from shared memory, and when our implementation is allowed to write to shared memory. This
+// contract is necessary because the render thread writes into memory that the user's Python code reads, without any
+// synchronization beyond the programming model described in SpServices/EngineService.h and the interprocess shared
+// memory fence guarantees in SpCore/SharedMemory.h. Each buffering mode has a distinct contract.
+//
+//     - SingleBuffered: Our implementation writes to the shared memory region during each call to read_pixels(), and
+//                       read_pixels() doesn't return until the write has finished. So the user can safely access the
+//                       shared memory region in between calls to read_pixels().
+//
+//     - DoubleBuffered: Our implementation writes to the shared memory region at some point after each call to
+//                       enqueue_read_pixels(), and may continue writing to the shared memory region until read_pixels()
+//                       returns. So the user can safely access the shared memory region after read_pixels() returns and
+//                       before calling enqueue_read_pixels() again, but must not access the shared memory in between
+//                       calls to enqueue_read_pixels() and read_pixels().
+//
+//     - TripleBuffered: Same as DoubleBuffered mode.
+//
+
 class FSpSceneViewExtensionBase : public FSceneViewExtensionBase
 {
 public:
@@ -142,7 +273,7 @@ public:
     UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void Terminate();
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    bool IsInitialized();
+    bool IsInitialized() const;
 
     UFUNCTION()
     TArray<uint64> GetViewStates(); // uint64 not supported for BlueprintCallable, can't be const, FSceneViewStateInterface is not a UCLASS so we can't return FSceneViewStateInterface* and we return uint64 instead
@@ -163,7 +294,7 @@ public:
     void postRenderViewFamily_RenderThread(FRDGBuilder& graph_builder, FSceneViewFamily& view_family);
 
 private:
-    bool showFlagsNeedSceneViewExtension();
+    bool showFlagsNeedSceneViewExtension() const;
 
 public:
     // BlueprintReadWrite is incompatible with uint32 so we use int32
@@ -352,13 +483,13 @@ private:
         FRHIGPUTextureReadback* current_readback,
         FRHIGPUTextureReadback* prev_readback,
         FTextureRenderTargetResource* render_target_resource_ptr,
-        TRefCountPtr<IPooledRenderTarget>* pooled_render_target_ptr);
-    SpPackedArray getPackedArray(const TextureReadbackDescBase& texture_readback_desc_base);
-    SpPackedArray readPixelsImpl(const TextureReadbackDesc& texture_readback_desc);
+        TRefCountPtr<IPooledRenderTarget>* pooled_render_target_ptr) const;
+    SpPackedArray getPackedArray(const TextureReadbackDescBase& texture_readback_desc_base) const;
+    SpPackedArray readPixelsImpl(const TextureReadbackDesc& texture_readback_desc) const;
 
     // render thread helpers
-    void enqueueCopyPixelsFromGPUToStaging_RenderThread(FRHICommandListImmediate& rhi_command_list_immediate, const TextureReadbackMinimalDesc& texture_readback_minimal_desc);
-    void copyPixelsFromStagingToCPU_RenderThread(FRHIGPUTextureReadback* readback, void* dest_ptr, const TextureReadbackDescBase& texture_readback_desc_base);
+    void enqueueCopyPixelsFromGPUToStaging_RenderThread(FRHICommandListImmediate& rhi_command_list_immediate, const TextureReadbackMinimalDesc& texture_readback_minimal_desc) const;
+    void copyPixelsFromStagingToCPU_RenderThread(FRHIGPUTextureReadback* readback, void* dest_ptr, const TextureReadbackDescBase& texture_readback_desc_base) const;
 
     // miscellaneous helpers
     void updateFrameTime();

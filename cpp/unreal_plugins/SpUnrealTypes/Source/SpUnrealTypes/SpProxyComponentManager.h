@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -17,18 +18,21 @@
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
+#include "SpCore/ProxyComponentManager.h"
 #include "SpCore/SpStableNameManager.h"
 #include "SpCore/UnrealUtils.h"
 
 #include "SpProxyComponentManager.generated.h"
 
+class UActorComponent;
+class UClass;
 class USpStableNameComponent;
 
 //
 // ASpProxyComponentManager is a UCLASS AActor that manages the lifecycle of a proxy component manager.
 // It handles initialization, ticking, termination, and re-initialization across PIE transitions.
-// Derived classes (e.g., ASpMeshProxyComponentManager) hold the actual CRTP proxy component manager
-// and override the virtual hooks to dispatch into it.
+// Derived classes (e.g., ASpMeshProxyComponentManager) hold the actual CRTP proxy component manager,
+// return it from getProxyComponentManager(), and override the virtual hooks to dispatch into it.
 //
 
 UCLASS(Abstract, ClassGroup="SPEAR", HideCategories=(Actor, Collision, Cooking, DataLayers, HLOD, Input, LevelInstance, Navigation, Networking, Physics, Rendering, Replication, WorldPartition))
@@ -54,7 +58,9 @@ public:
         SP_LOG_CURRENT_FUNCTION();
     }
 
+    //
     // AActor interface
+    //
 
     void BeginPlay() override
     {
@@ -96,14 +102,12 @@ public:
 
         if (request_reinitialize_) {
             request_reinitialize_ = false;
-            initializeImpl();
-            std::vector<AActor*> actors = UnrealUtils::findActors(GetWorld());
-            unregisterAndDestroyProxyComponentsForAllTypes();
-            requestCreateAndRegisterProxyComponentsForAllTypes(actors);
+            Terminate(); // no-op unless Initialize() has already been called in the PIE world
+            Initialize();
         } else if (IsInitialized() && bUpdateProxyComponentsEveryTick) {
-            std::vector<AActor*> actors = UnrealUtils::findActors(GetWorld());
-            requestUnregisterAndDestroyProxyComponentsForAllTypes(actors);
-            requestCreateAndRegisterProxyComponentsForAllTypes(actors);
+            std::map<UClass*, std::vector<UActorComponent*>> non_proxy_components = getNonProxyComponentsForAllTypes();
+            requestUnregisterAndDestroyProxyComponentsForAllTypes(non_proxy_components);
+            requestCreateAndRegisterProxyComponentsForAllTypes(non_proxy_components);
         }
     }
 
@@ -116,9 +120,13 @@ public:
             return;
         }
 
+        // this logic is unique to Initialize()
         initializeImpl();
-        std::vector<AActor*> actors = UnrealUtils::findActors(GetWorld());
-        requestCreateAndRegisterProxyComponentsForAllTypes(actors);
+        initializeProxyComponentDescsForAllTypes();
+
+        // this logic duplicates the logic in Rebuild() and the per-frame logic in Tick()
+        std::map<UClass*, std::vector<UActorComponent*>> non_proxy_components = getNonProxyComponentsForAllTypes();
+        requestCreateAndRegisterProxyComponentsForAllTypes(non_proxy_components);
     }
 
     UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
@@ -128,12 +136,16 @@ public:
             return;
         }
 
-        unregisterAndDestroyProxyComponentsForAllTypes();
+        // this logic duplicates the logic in Rebuild()
+        unregisterAndDestroyProxyComponentsForAllTypes(); // full update
+
+        // this logic is unique to Terminate()
+        terminateProxyComponentDescsForAllTypes();
         terminateImpl();
     }
 
-    // Update() incrementally creates proxy components for new source components, and destroys proxy components
-    // whose source components have been destroyed or are no longer visible or allowed. If bUpdateProxyComponentsEveryTick
+    // Update() incrementally creates proxy components for new non-proxy components, and destroys proxy components
+    // whose non-proxy components have been destroyed or are no longer visible or allowed. If bUpdateProxyComponentsEveryTick
     // is true, this happens automatically every tick. Otherwise, call Update() after spawning or destroying actors.
 
     UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
@@ -143,14 +155,16 @@ public:
             return;
         }
 
-        std::vector<AActor*> actors = UnrealUtils::findActors(GetWorld());
-        requestUnregisterAndDestroyProxyComponentsForAllTypes(actors);
-        requestCreateAndRegisterProxyComponentsForAllTypes(actors);
+        std::map<UClass*, std::vector<UActorComponent*>> non_proxy_components = getNonProxyComponentsForAllTypes();
+        requestUnregisterAndDestroyProxyComponentsForAllTypes(non_proxy_components); // incremental update
+        requestCreateAndRegisterProxyComponentsForAllTypes(non_proxy_components);
     }
 
     // Rebuild() destroys and recreates all proxy components. Update() doesn't refresh proxy components whose
-    // source components have changed (e.g., a new mesh or new materials), so call Rebuild() after making such
-    // changes. Note that proxy component IDs will be different after calling Rebuild().
+    // non-proxy components have changed (e.g., a new mesh or new materials), so call Rebuild() after making such
+    // changes. Note that proxy component IDs will be different after calling Rebuild(). Rebuild() unregisters all
+    // proxy components immediately, ignoring the unregister delay, so after calling Rebuild(), flush enough frames
+    // to ensure that rendered images no longer contain old IDs.
 
     UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void Rebuild()
@@ -159,39 +173,60 @@ public:
             return;
         }
 
-        // Terminate()
-        unregisterAndDestroyProxyComponentsForAllTypes();
-
-        // Initialize()
-        std::vector<AActor*> actors = UnrealUtils::findActors(GetWorld());
-        requestCreateAndRegisterProxyComponentsForAllTypes(actors);
+        std::map<UClass*, std::vector<UActorComponent*>> non_proxy_components = getNonProxyComponentsForAllTypes();
+        unregisterAndDestroyProxyComponentsForAllTypes(); // full update
+        requestCreateAndRegisterProxyComponentsForAllTypes(non_proxy_components);
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     bool IsInitialized() const { return is_initialized_; }
 
 protected:
-    // Called from Initialize(), Tick(...)
+
+    //
+    // Called from Initialize()
+    //
+
     virtual void initializeImpl()
     {
         is_initialized_ = true;
         bIsInitialized = true;
+        getProxyComponentManager()->initialize();
     }
 
     // Called from Terminate()
     virtual void terminateImpl()
     {
+        getProxyComponentManager()->terminate();
         is_initialized_ = false;
         bIsInitialized = false;
     }
 
+    //
+    // Called from initializeImpl(), terminateImpl(), and derived classes (e.g., ASpMeshProxyComponentManager). Derived
+    // classes override these functions to return their proxy component manager, typically with a more derived return
+    // type.
+    //
+
+    virtual ProxyComponentManagerBase* getProxyComponentManager() { SP_ASSERT(false); return nullptr; }
+    virtual const ProxyComponentManagerBase* getProxyComponentManager() const { SP_ASSERT(false); return nullptr; }
+
+    // Called from Initialize()
+    virtual void initializeProxyComponentDescsForAllTypes() { SP_ASSERT(false); }
+
+    // Called from Terminate()
+    virtual void terminateProxyComponentDescsForAllTypes() { SP_ASSERT(false); }
+
     // Called from Initialize(), Tick(...), Update(), Rebuild()
-    virtual void requestCreateAndRegisterProxyComponentsForAllTypes(const std::vector<AActor*>& actors) { SP_ASSERT(false); }
+    virtual std::map<UClass*, std::vector<UActorComponent*>> getNonProxyComponentsForAllTypes() const { SP_ASSERT(false); return std::map<UClass*, std::vector<UActorComponent*>>(); }
+
+    // Called from Initialize(), Tick(...), Update(), Rebuild()
+    virtual void requestCreateAndRegisterProxyComponentsForAllTypes(const std::map<UClass*, std::vector<UActorComponent*>>& non_proxy_components) { SP_ASSERT(false); }
 
     // Called from Tick(...), Update()
-    virtual void requestUnregisterAndDestroyProxyComponentsForAllTypes(const std::vector<AActor*>& actors) { SP_ASSERT(false); }
+    virtual void requestUnregisterAndDestroyProxyComponentsForAllTypes(const std::map<UClass*, std::vector<UActorComponent*>>& non_proxy_components) { SP_ASSERT(false); }
 
-    // Called from Tick(...), Terminate(), Rebuild()
+    // Called from Terminate(), Rebuild()
     virtual void unregisterAndDestroyProxyComponentsForAllTypes() { SP_ASSERT(false); }
 
 private:

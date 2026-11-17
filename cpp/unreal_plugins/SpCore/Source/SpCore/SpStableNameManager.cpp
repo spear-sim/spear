@@ -26,32 +26,6 @@
 // ASpStableNameManager
 //
 
-void ASpStableNameManager::BeginPlay()
-{
-    AActor::BeginPlay();
-
-    UWorld* world = GetWorld();
-    if (!world) {
-        return;
-    }
-
-    SP_ASSERT(!s_worlds_with_stable_name_manager_.contains(world));
-    Std::insert(s_worlds_with_stable_name_manager_, world);
-}
-
-void ASpStableNameManager::EndPlay(const EEndPlayReason::Type end_play_reason)
-{
-    AActor::EndPlay(end_play_reason);
-
-    UWorld* world = GetWorld();
-    if (!world) {
-        return;
-    }
-
-    SP_ASSERT(s_worlds_with_stable_name_manager_.contains(world));
-    Std::remove(s_worlds_with_stable_name_manager_, world);
-}
-
 #if WITH_EDITOR // defined in an auto-generated header
     void ASpStableNameManager::PostActorCreated()
     {
@@ -227,7 +201,7 @@ std::string ASpStableNameManager::getStableIdString(const AActor* actor)
     }
 #endif
 
-std::string USpStableNameComponent::getStableName()
+std::string USpStableNameComponent::getStableName() const
 {
     return Unreal::toStdString(StableName);
 }

@@ -35,6 +35,7 @@
 #include <UObject/Object.h>                 // UObject
 #include <UObject/ReflectedTypeAccessors.h> // StaticEnum
 #include <UObject/UnrealType.h>             // FProperty
+#include <UObject/WeakObjectPtrTemplates.h> // TWeakObjectPtr
 
 #include "SpCore/Assert.h"
 #include "SpCore/Std.h"
@@ -463,7 +464,63 @@ public:
         return uobject && uobject->IsValidLowLevelFast() && uobject->IsValidLowLevel() && IsValid(uobject);
     }
 
-    static std::string toStringFromPtr(const void* ptr)
+    template <CObject TObject>
+    static bool isValid(const TWeakObjectPtr<TObject>& weak_object_ptr)
+    {
+        return weak_object_ptr.IsValid() && isValid(weak_object_ptr.Get());
+    }
+
+    template <CObject TObject>
+    static bool isValid(const std::vector<TObject*>& objects)
+    {
+        return Std::all(objects | std::views::transform([](auto object) { return isValid(object); }));
+    }
+
+    template <CObject TObject>
+    static bool isValid(const std::vector<TWeakObjectPtr<TObject>>& weak_object_ptrs)
+    {
+        return Std::all(weak_object_ptrs | std::views::transform([](const auto& weak_object_ptr) { return isValid(weak_object_ptr); }));
+    }
+
+    // Returns true if weak_object_ptr was assigned a non-null object and hasn't been reset since, even if the object is no longer valid.
+    template <CObject TObject>
+    static bool isSet(const TWeakObjectPtr<TObject>& weak_object_ptr)
+    {
+        return !weak_object_ptr.IsExplicitlyNull();
+    }
+
+    template <CObject TObject>
+    static TObject* toPtr(TObject* object)
+    {
+        if (!isValid(object)) {
+            return nullptr;
+        }
+        return object;
+    }
+
+    template <CObject TObject>
+    static TObject* toPtr(const TWeakObjectPtr<TObject>& weak_object_ptr)
+    {
+        if (!isValid(weak_object_ptr)) {
+            return nullptr;
+        }
+        return weak_object_ptr.Get();
+    }
+
+    template <CObject TObject>
+    static std::vector<TObject*> toPtr(const std::vector<TObject*>& objects)
+    {
+        return Std::toVector<TObject*>(objects | std::views::transform([](auto object) { return toPtr(object); }));
+    }
+
+    template <CObject TObject>
+    static std::vector<TObject*> toPtr(const std::vector<TWeakObjectPtr<TObject>>& weak_object_ptrs)
+    {
+        return Std::toVector<TObject*>(weak_object_ptrs | std::views::transform([](const auto& weak_object_ptr) { return toPtr(weak_object_ptr); }));
+    }
+
+    template <CObject TObject>
+    static std::string toStringFromPtr(const TObject* ptr)
     {
         return Std::toStringFromPtr(ptr);
     }

@@ -7,6 +7,7 @@
 
 #include <stdint.h> // uint32_t
 
+#include <map>
 #include <vector>
 
 #include <Components/SkeletalMeshComponent.h>
@@ -35,6 +36,8 @@
 
 #include "SpMeshProxyComponentManager.generated.h"
 
+class UActorComponent;
+class UClass;
 class USceneComponent;
 
 //
@@ -48,17 +51,22 @@ struct FMeshProxyGeometryDesc
     GENERATED_BODY()
 public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
-    int64 RawId = 0;
+    int64 Id = 0;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     bool bIsValid = false;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
-    FString Component = "0x0";
+    FString NonProxyComponent = "0x0";
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
-    FString ComponentStableName;
+    FString NonProxyComponentStableName;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
-    FString ComponentUnrealName;
+    FString NonProxyComponentUnrealName;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    FString NonProxyMaterial = "0x0";
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    FString NonProxyMaterialUnrealName;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString Actor = "0x0";
@@ -69,25 +77,21 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString ActorStableName;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
-    FString Material = "0x0";
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
-    FString MaterialUnrealName;
-
     // Optional debug info
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
-    FString ComponentPropertiesString = "{}";
+    FString NonProxyComponentPropertiesString = "{}";
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
-    FString MaterialPropertiesString = "{}";
+    FString NonProxyMaterialPropertiesString = "{}";
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString ActorPropertiesString = "{}";
 };
 
 //
-// ASpMeshProxyComponentManager holds a MeshProxyComponentManager* and dispatches the
-// ASpProxyComponentManager virtual hooks into it. Derived classes own a concrete
-// MeshProxyComponentManager subclass and set the pointer via setMeshProxyComponentManager()
-// in initializeImpl().
+// ASpMeshProxyComponentManager is an abstract ASpProxyComponentManager for UStaticMeshComponent and
+// USkeletalMeshComponent. It implements the ASpProxyComponentManager virtual hooks by calling into a
+// MeshProxyComponentManager for each of these component types, and exposes the MeshProxyComponentManager's state
+// (proxy geometry descs, allow and ignore lists, unregister delay) to Python. Derived classes own a concrete
+// MeshProxyComponentManager subclass and return it from getProxyComponentManager().
 //
 
 UCLASS(Abstract, ClassGroup="SPEAR", HideCategories=(Actor, Collision, Cooking, DataLayers, HLOD, Input, LevelInstance, Navigation, Networking, Physics, Rendering, Replication, WorldPartition))
@@ -104,43 +108,44 @@ public:
 
         // only need to update these variables for debugging in the editor
         #if WITH_EDITOR // defined in an auto-generated header
-            if (mesh_proxy_component_manager_ && bUpdateDebugInfoEveryTick) {
+            if (IsInitialized() && bUpdateDebugInfoEveryTick) {
                 UnregisterDelayFrames = GetUnregisterDelayFrames();
                 MeshProxyGeometryDescs = GetMeshProxyGeometryDescs();
             }
         #endif
     }
 
+    //
     // Public interface for Python users
+    //
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    TArray<FMeshProxyGeometryDesc> GetMeshProxyGeometryDescs(bool bIncludeDebugInfo = false)
+    TArray<FMeshProxyGeometryDesc> GetMeshProxyGeometryDescs(bool bIncludeDebugInfo = false) const
     {
-        SP_ASSERT(mesh_proxy_component_manager_);
+        SP_ASSERT(IsInitialized());
 
         TArray<FMeshProxyGeometryDesc> mesh_proxy_geometry_descs;
 
         // explicitly add empty desc at index 0
         mesh_proxy_geometry_descs.Add(FMeshProxyGeometryDesc());
 
-        for (auto& [id, desc] : mesh_proxy_component_manager_->getMeshProxyGeometryDescs()) {
+        for (auto& [id, desc] : getProxyComponentManager()->getMeshProxyGeometryDescs()) {
             FMeshProxyGeometryDesc mesh_proxy_geometry_desc;
-            mesh_proxy_geometry_desc.RawId = id;
+            mesh_proxy_geometry_desc.Id = id;
             mesh_proxy_geometry_desc.bIsValid = desc.is_valid_;
 
-            // It is possible for desc.is_valid_ to be true, but for desc.component_.IsValid() or desc.material_.IsValid()
-            // to be false, e.g., if an actor gets destroyed after SpProxyComponentManager has ticked, but
-            // before this function is called.
+            // It is possible for desc.is_valid_ to be true, but for Unreal::toPtr(desc.non_proxy_component_) or
+            // Unreal::toPtr(desc.non_proxy_material_) to return nullptr, e.g., if an actor gets destroyed after
+            // SpProxyComponentManager has ticked, but before this function is called.
 
             if (desc.is_valid_) {
-                if (desc.component_.IsValid()) { // check if TWeakObjectPtr is valid
-                    USceneComponent* component = desc.component_.Get();
-                    SP_ASSERT(Unreal::isValid(component));
-                    mesh_proxy_geometry_desc.Component = Unreal::toFString(Std::toStringFromPtr(component));
-                    mesh_proxy_geometry_desc.ComponentStableName = Unreal::toFString(UnrealUtils::getStableName(component));
-                    mesh_proxy_geometry_desc.ComponentUnrealName = component->GetName();
+                USceneComponent* component = Unreal::toPtr(desc.non_proxy_component_);
+                if (component) {
+                    mesh_proxy_geometry_desc.NonProxyComponent = Unreal::toFString(Std::toStringFromPtr(component));
+                    mesh_proxy_geometry_desc.NonProxyComponentStableName = Unreal::toFString(UnrealUtils::getStableName(component));
+                    mesh_proxy_geometry_desc.NonProxyComponentUnrealName = component->GetName();
                     if (bIncludeDebugInfo) {
-                        mesh_proxy_geometry_desc.ComponentPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(component));
+                        mesh_proxy_geometry_desc.NonProxyComponentPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(component));
                     }
 
                     AActor* actor = component->GetOwner();
@@ -154,13 +159,12 @@ public:
                     }
                 }
 
-                if (desc.material_.IsValid()) { // check if TWeakObjectPtr is valid
-                    UMaterialInterface* material = desc.material_.Get();
-                    SP_ASSERT(Unreal::isValid(material));
-                    mesh_proxy_geometry_desc.Material = Unreal::toFString(Std::toStringFromPtr(material));
-                    mesh_proxy_geometry_desc.MaterialUnrealName = material->GetName();
+                UMaterialInterface* material = Unreal::toPtr(desc.non_proxy_material_);
+                if (material) {
+                    mesh_proxy_geometry_desc.NonProxyMaterial = Unreal::toFString(Std::toStringFromPtr(material));
+                    mesh_proxy_geometry_desc.NonProxyMaterialUnrealName = material->GetName();
                     if (bIncludeDebugInfo) {
-                        mesh_proxy_geometry_desc.MaterialPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(material));
+                        mesh_proxy_geometry_desc.NonProxyMaterialPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(material));
                     }
                 }
             }
@@ -172,123 +176,155 @@ public:
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    TArray<AActor*> GetAllowedActors()
+    TArray<AActor*> GetAllowedActors() const
     {
-        SP_ASSERT(mesh_proxy_component_manager_);
-        return Unreal::toTArray(mesh_proxy_component_manager_->getAllowedActors());
+        SP_ASSERT(IsInitialized());
+        return Unreal::toTArray(getProxyComponentManager()->getAllowedActors());
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     void SetAllowedActors(const TArray<AActor*>& AllowedActors)
     {
-        SP_ASSERT(mesh_proxy_component_manager_);
-        mesh_proxy_component_manager_->setAllowedActors(Unreal::toStdVector(AllowedActors));
+        SP_ASSERT(IsInitialized());
+        getProxyComponentManager()->setAllowedActors(Unreal::toStdVector(AllowedActors));
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    TArray<USceneComponent*> GetAllowedComponents()
+    TArray<USceneComponent*> GetAllowedComponents() const
     {
-        SP_ASSERT(mesh_proxy_component_manager_);
-        return Unreal::toTArray(mesh_proxy_component_manager_->getAllowedComponents());
+        SP_ASSERT(IsInitialized());
+        return Unreal::toTArray(getProxyComponentManager()->getAllowedComponents());
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     void SetAllowedComponents(const TArray<USceneComponent*>& AllowedComponents)
     {
-        SP_ASSERT(mesh_proxy_component_manager_);
-        mesh_proxy_component_manager_->setAllowedComponents(Unreal::toStdVector(AllowedComponents));
+        SP_ASSERT(IsInitialized());
+        getProxyComponentManager()->setAllowedComponents(Unreal::toStdVector(AllowedComponents));
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    TArray<AActor*> GetIgnoredActors()
+    TArray<AActor*> GetIgnoredActors() const
     {
-        SP_ASSERT(mesh_proxy_component_manager_);
-        return Unreal::toTArray(mesh_proxy_component_manager_->getIgnoredActors());
+        SP_ASSERT(IsInitialized());
+        return Unreal::toTArray(getProxyComponentManager()->getIgnoredActors());
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     void SetIgnoredActors(const TArray<AActor*>& IgnoredActors)
     {
-        SP_ASSERT(mesh_proxy_component_manager_);
-        mesh_proxy_component_manager_->setIgnoredActors(Unreal::toStdVector(IgnoredActors));
+        SP_ASSERT(IsInitialized());
+        getProxyComponentManager()->setIgnoredActors(Unreal::toStdVector(IgnoredActors));
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    TArray<USceneComponent*> GetIgnoredComponents()
+    TArray<USceneComponent*> GetIgnoredComponents() const
     {
-        SP_ASSERT(mesh_proxy_component_manager_);
-        return Unreal::toTArray(mesh_proxy_component_manager_->getIgnoredComponents());
+        SP_ASSERT(IsInitialized());
+        return Unreal::toTArray(getProxyComponentManager()->getIgnoredComponents());
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     void SetIgnoredComponents(const TArray<USceneComponent*>& IgnoredComponents)
     {
-        SP_ASSERT(mesh_proxy_component_manager_);
-        mesh_proxy_component_manager_->setIgnoredComponents(Unreal::toStdVector(IgnoredComponents));
+        SP_ASSERT(IsInitialized());
+        getProxyComponentManager()->setIgnoredComponents(Unreal::toStdVector(IgnoredComponents));
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     int32 GetUnregisterDelayFrames() const
     {
-        SP_ASSERT(mesh_proxy_component_manager_);
-        return mesh_proxy_component_manager_->getUnregisterDelayFrames();
+        SP_ASSERT(IsInitialized());
+        return getProxyComponentManager()->getUnregisterDelayFrames();
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     void SetUnregisterDelayFrames(int32 InUnregisterDelayFrames)
     {
-        SP_ASSERT(mesh_proxy_component_manager_);
-        mesh_proxy_component_manager_->setUnregisterDelayFrames(InUnregisterDelayFrames);
+        SP_ASSERT(IsInitialized());
+        getProxyComponentManager()->setUnregisterDelayFrames(InUnregisterDelayFrames);
     }
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="SPEAR")
     bool bUpdateDebugInfoEveryTick = false;
 
 protected:
-    void setMeshProxyComponentManager(MeshProxyComponentManager* mesh_proxy_component_manager)
-    {
-        mesh_proxy_component_manager_ = mesh_proxy_component_manager;
 
-        #if WITH_EDITOR // defined in an auto-generated header
-            if (!mesh_proxy_component_manager_) {
-                UnregisterDelayFrames = -1;
-                MeshProxyGeometryDescs.Empty();
-            }
-        #endif
-    }
-
+    //
     // ASpProxyComponentManager interface
+    //
 
     void initializeImpl() override
     {
-        SP_ASSERT(mesh_proxy_component_manager_);
         ASpProxyComponentManager::initializeImpl();
     }
 
     void terminateImpl() override
     {
+        #if WITH_EDITOR // defined in an auto-generated header
+            UnregisterDelayFrames = -1;
+            MeshProxyGeometryDescs.Empty();
+        #endif
+
         ASpProxyComponentManager::terminateImpl();
     }
 
-    void requestCreateAndRegisterProxyComponentsForAllTypes(const std::vector<AActor*>& actors) override
+    MeshProxyComponentManager* getProxyComponentManager() override { SP_ASSERT(false); return nullptr; }
+    const MeshProxyComponentManager* getProxyComponentManager() const override { SP_ASSERT(false); return nullptr; }
+
+    void initializeProxyComponentDescsForAllTypes() override
     {
-        SP_ASSERT(mesh_proxy_component_manager_);
-        mesh_proxy_component_manager_->requestCreateAndRegisterProxyComponents<UStaticMeshComponent>(actors);
-        mesh_proxy_component_manager_->requestCreateAndRegisterProxyComponents<USkeletalMeshComponent>(actors);
+        SP_ASSERT(IsInitialized());
+        getProxyComponentManager()->initializeProxyComponentDescs<UStaticMeshComponent>();
+        getProxyComponentManager()->initializeProxyComponentDescs<USkeletalMeshComponent>();
     }
 
-    void requestUnregisterAndDestroyProxyComponentsForAllTypes(const std::vector<AActor*>& actors) override
+    void terminateProxyComponentDescsForAllTypes() override
     {
-        SP_ASSERT(mesh_proxy_component_manager_);
-        mesh_proxy_component_manager_->requestDecrementAndUnregisterProxyComponents();
-        mesh_proxy_component_manager_->requestUnregisterAndDestroyProxyComponents<UStaticMeshComponent>(actors);
-        mesh_proxy_component_manager_->requestUnregisterAndDestroyProxyComponents<USkeletalMeshComponent>(actors);
+        SP_ASSERT(IsInitialized());
+        getProxyComponentManager()->terminateProxyComponentDescs<UStaticMeshComponent>();
+        getProxyComponentManager()->terminateProxyComponentDescs<USkeletalMeshComponent>();
+    }
+
+    std::map<UClass*, std::vector<UActorComponent*>> getNonProxyComponentsForAllTypes() const override
+    {
+        std::vector<AActor*> actors = UnrealUtils::findActors(GetWorld());
+        std::map<UClass*, std::vector<UActorComponent*>> non_proxy_components = {{UStaticMeshComponent::StaticClass(), {}}, {USkeletalMeshComponent::StaticClass(), {}}};
+
+        for (auto actor : actors) {
+            for (auto component : UnrealUtils::getComponents(actor)) {
+                if (!Std::contains(Unreal::toStdString(component->GetName()), "__SP_PROXY_COMPONENT__")) {
+                    for (auto& [component_class, non_proxy_components_for_class] : non_proxy_components) {
+                        if (component->IsA(component_class)) {
+                            non_proxy_components_for_class.push_back(component);
+                        }
+                    }
+                }
+            }
+        }
+
+        return non_proxy_components;
+    }
+
+    void requestCreateAndRegisterProxyComponentsForAllTypes(const std::map<UClass*, std::vector<UActorComponent*>>& non_proxy_components) override
+    {
+        SP_ASSERT(IsInitialized());
+        getProxyComponentManager()->requestCreateAndRegisterProxyComponents<UStaticMeshComponent>(non_proxy_components.at(UStaticMeshComponent::StaticClass()));
+        getProxyComponentManager()->requestCreateAndRegisterProxyComponents<USkeletalMeshComponent>(non_proxy_components.at(USkeletalMeshComponent::StaticClass()));
+    }
+
+    void requestUnregisterAndDestroyProxyComponentsForAllTypes(const std::map<UClass*, std::vector<UActorComponent*>>& non_proxy_components) override
+    {
+        SP_ASSERT(IsInitialized());
+        getProxyComponentManager()->requestDecrementAndUnregisterProxyComponents();
+        getProxyComponentManager()->requestUnregisterAndDestroyProxyComponents<UStaticMeshComponent>(non_proxy_components.at(UStaticMeshComponent::StaticClass()));
+        getProxyComponentManager()->requestUnregisterAndDestroyProxyComponents<USkeletalMeshComponent>(non_proxy_components.at(USkeletalMeshComponent::StaticClass()));
     }
 
     void unregisterAndDestroyProxyComponentsForAllTypes() override
     {
-        SP_ASSERT(mesh_proxy_component_manager_);
-        mesh_proxy_component_manager_->unregisterAndDestroyProxyComponents();
+        SP_ASSERT(IsInitialized());
+        getProxyComponentManager()->unregisterAndDestroyProxyComponents();
     }
 
 private:
@@ -298,9 +334,15 @@ private:
     UPROPERTY(Transient, VisibleAnywhere, Category="SPEAR")
     TArray<FMeshProxyGeometryDesc> MeshProxyGeometryDescs;
 
-    MeshProxyComponentManager* mesh_proxy_component_manager_ = nullptr;
 };
 
+//
+// ASpObjectIdsProxyComponentManager and ASpObjectIdsVisualizerProxyComponentManager choose a proxy strategy by owning an
+// ObjectIdsMeshProxyComponentManager or an ObjectIdsVisualizerMeshProxyComponentManager, see MeshProxyComponentManager.h.
+// ASpObjectIdsProxyComponentManager renders proxy components only in scene captures, and is used by SegmentationService
+// (python/spear/services/segmentation_service.py). ASpObjectIdsVisualizerProxyComponentManager renders proxy components
+// with random colors in the viewport, so users can inspect the segmentation in the editor.
+//
 
 UCLASS(ClassGroup="SPEAR", HideCategories=(Actor, Collision, Cooking, DataLayers, HLOD, Input, LevelInstance, Navigation, Networking, Physics, Rendering, Replication, WorldPartition))
 class ASpObjectIdsProxyComponentManager : public ASpMeshProxyComponentManager
@@ -308,21 +350,8 @@ class ASpObjectIdsProxyComponentManager : public ASpMeshProxyComponentManager
     GENERATED_BODY()
 
 protected:
-    void initializeImpl() override
-    {
-        setMeshProxyComponentManager(&object_ids_mesh_proxy_component_manager_);
-
-        object_ids_mesh_proxy_component_manager_.initialize();
-        ASpMeshProxyComponentManager::initializeImpl();
-    }
-
-    void terminateImpl() override
-    {
-        ASpMeshProxyComponentManager::terminateImpl();
-        object_ids_mesh_proxy_component_manager_.terminate();
-
-        setMeshProxyComponentManager(nullptr);
-    }
+    MeshProxyComponentManager* getProxyComponentManager() override { return &object_ids_mesh_proxy_component_manager_; }
+    const MeshProxyComponentManager* getProxyComponentManager() const override { return &object_ids_mesh_proxy_component_manager_; }
 
 private:
     ObjectIdsMeshProxyComponentManager object_ids_mesh_proxy_component_manager_ = ObjectIdsMeshProxyComponentManager(this);
@@ -335,21 +364,8 @@ class ASpObjectIdsVisualizerProxyComponentManager : public ASpMeshProxyComponent
     GENERATED_BODY()
 
 protected:
-    void initializeImpl() override
-    {
-        setMeshProxyComponentManager(&object_ids_visualizer_mesh_proxy_component_manager_);
-
-        object_ids_visualizer_mesh_proxy_component_manager_.initialize();
-        ASpMeshProxyComponentManager::initializeImpl();
-    }
-
-    void terminateImpl() override
-    {
-        object_ids_visualizer_mesh_proxy_component_manager_.terminate();
-        ASpMeshProxyComponentManager::terminateImpl();
-
-        setMeshProxyComponentManager(nullptr);
-    }
+    MeshProxyComponentManager* getProxyComponentManager() override { return &object_ids_visualizer_mesh_proxy_component_manager_; }
+    const MeshProxyComponentManager* getProxyComponentManager() const override { return &object_ids_visualizer_mesh_proxy_component_manager_; }
 
 private:
     ObjectIdsVisualizerMeshProxyComponentManager object_ids_visualizer_mesh_proxy_component_manager_ = ObjectIdsVisualizerMeshProxyComponentManager(this);

@@ -41,7 +41,7 @@ Each tool call populates the exec namespace with these top-level variables:
 | `segmentation_id_image` | Per-pixel index into `segmentation_id_descs`, int32, (H,W) |
 | `segmentation_id_descs` | List of dicts with actor/component/material handles and names |
 
-The `actor`, `component`, and `material` fields in each `segmentation_id_descs` entry are `uint64` handles, not `UnrealObject`s — see **Handles and UnrealObjects** below for how to convert.
+The `actor`, `nonProxyComponent`, and `nonProxyMaterial` fields in each `segmentation_id_descs` entry are `uint64` handles, not `UnrealObject`s — see **Handles and UnrealObjects** below for how to convert.
 
 **Do not** create a new `spear.Instance()`, call `instance.get_game()`, or `instance.get_editor()`. All `import` and `from ... import ...` statements are banned.
 
@@ -93,7 +93,7 @@ Scene metadata from Unreal is unreliable for spatial/visual tasks. Treat the ren
   seg_id = before_execute["segmentation_id_image"][py, px]
   desc   = before_execute["segmentation_id_descs"][seg_id]
   with instance.begin_frame():
-      comp = game.get_unreal_object(uobject=desc["component"], with_sp_funcs=False)
+      comp = game.get_unreal_object(uobject=desc["nonProxyComponent"], with_sp_funcs=False)
   ```
 - **Compute directions and distances from pixel data, not from metadata.** `world_position[y, x]` gives a 3D point you can trust for opaque surfaces. An actor's location and bounds are fine. A yaw or forward vector alone is not.
 - **Don't trust actor forward vectors or rotation values to tell you which way something "visually" faces.** Meshes can be authored with any local orientation — the reported forward has no guaranteed relationship to a visual front (seat front, door opening, camera lens direction, etc.). If facing matters, render and look.
@@ -140,12 +140,12 @@ Normal usage is `UnrealObject`s all the way down: `unreal_service.*` helpers (`s
 
 Raw `uint64` handles surface in one routine place:
 
-- `segmentation_id_descs` — each entry's `actor`, `component`, and `material` fields are raw handles.
+- `segmentation_id_descs` — each entry's `actor`, `nonProxyComponent`, and `nonProxyMaterial` fields are raw handles.
 
 To work with those handles:
 
 - **Handle → UnrealObject** (usually needed to call methods on the segmented actor/component/material): `obj = game.get_unreal_object(uobject=handle, with_sp_funcs=False)`. Use `editor.get_unreal_object(...)` for editor-world objects. Must be called inside `with instance.begin_frame()` or `with instance.end_frame()`.
-- **UnrealObject → handle** (rarely needed): `obj.uobject` returns the raw `uint64`. The only common reason to reach for this is comparing an `UnrealObject` against a handle from `segmentation_id_descs` (e.g., `m.uobject == desc["material"]`). To pass a wrapped object to a UFUNCTION, pass the `UnrealObject` itself — do not extract the handle.
+- **UnrealObject → handle** (rarely needed): `obj.uobject` returns the raw `uint64`. The only common reason to reach for this is comparing an `UnrealObject` against a handle from `segmentation_id_descs` (e.g., `m.uobject == desc["nonProxyMaterial"]`). To pass a wrapped object to a UFUNCTION, pass the `UnrealObject` itself — do not extract the handle.
 
 ## Actor naming
 

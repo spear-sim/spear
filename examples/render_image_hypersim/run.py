@@ -232,7 +232,7 @@ if __name__ == "__main__":
     assert actor_handles[0] == 0
 
     # get material handles
-    material_handles = [ proxy_id_desc["material"] for proxy_id_desc in proxy_id_descs ]
+    material_handles = [ proxy_id_desc["nonProxyMaterial"] for proxy_id_desc in proxy_id_descs ]
     assert material_handles[0] == 0
 
     # get unique actors

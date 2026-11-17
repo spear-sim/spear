@@ -27,20 +27,19 @@ std::map<std::string, std::string> UnrealObjUtils::getObjectPropertiesAsStrings(
     // convert from vector to map
     SP_ASSERT(!Std::contains(unreal_objs, nullptr));
     auto unreal_obj_map = Std::toMap<std::string, UnrealObjBase*>(
-        unreal_objs | std::views::transform([](auto unreal_obj) { return std::make_pair(unreal_obj->getName(), unreal_obj); }));
+        unreal_objs |
+        std::views::transform([](auto unreal_obj) { return std::make_pair(unreal_obj->getName(), unreal_obj); }));
     return getObjectPropertiesAsStrings(unreal_obj_map);
 }
 
 std::map<std::string, std::string> UnrealObjUtils::getObjectPropertiesAsStrings(const std::map<std::string, UnrealObjBase*>& unreal_objs)
 {
-    // input is a map from names to pointers, output is a map from names to property strings
+    SP_ASSERT(Std::all(
+        unreal_objs |
+        std::views::transform([](auto& pair) { auto& [name, unreal_obj] = pair; return unreal_obj != nullptr; })));
     return Std::toMap<std::string, std::string>(
         unreal_objs |
-        std::views::transform([](auto& pair) {
-            auto& [name, unreal_obj] = pair;
-            SP_ASSERT(unreal_obj);
-            return std::make_pair(name, UnrealUtils::getObjectPropertiesAsString(unreal_obj->getValuePtr(), unreal_obj->getStaticStruct()));
-        }));
+        std::views::transform([](auto& pair) { auto& [name, unreal_obj] = pair; return std::make_pair(name, UnrealUtils::getObjectPropertiesAsString(unreal_obj->getValuePtr(), unreal_obj->getStaticStruct())); }));
 }
 
 void UnrealObjUtils::setObjectPropertiesFromStrings(std::initializer_list<UnrealObjBase*> unreal_objs, const std::map<std::string, std::string>& strings)
@@ -54,7 +53,8 @@ void UnrealObjUtils::setObjectPropertiesFromStrings(const std::vector<UnrealObjB
     // convert from vector to map
     SP_ASSERT(!Std::contains(unreal_objs, nullptr));
     auto unreal_obj_map = Std::toMap<std::string, UnrealObjBase*>(
-        unreal_objs | std::views::transform([](auto unreal_obj) { return std::make_pair(unreal_obj->getName(), unreal_obj); }));
+        unreal_objs |
+        std::views::transform([](auto unreal_obj) { return std::make_pair(unreal_obj->getName(), unreal_obj); }));
     setObjectPropertiesFromStrings(unreal_obj_map, strings);
 }
 

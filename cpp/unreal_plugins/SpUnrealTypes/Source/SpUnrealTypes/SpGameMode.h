@@ -8,12 +8,13 @@
 #include <map>
 #include <string>
 
-#include <Containers/UnrealString.h> // FString
+#include <Containers/UnrealString.h>        // FString
 #include <GameFramework/GameModeBase.h>
-#include <HAL/Platform.h>            // uint64
+#include <HAL/Platform.h>                   // uint64
 #include <Templates/SubclassOf.h>
-#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UFUNCTION
+#include <UObject/ObjectMacros.h>           // GENERATED_BODY, UCLASS, UFUNCTION
 #include <UObject/ObjectPtr.h>
+#include <UObject/WeakObjectPtrTemplates.h> // TWeakObjectPtr
 
 #include "SpUnrealTypes/SpDebugCameraController.h"
 
@@ -71,6 +72,6 @@ private:
     UFUNCTION(Exec)
     void SpToggleDebugCamera();
 
-    std::map<std::string, ULevelStreamingDynamic*> level_instances_;
-    ASpDebugCameraController* sp_debug_camera_controller_ = nullptr;
+    std::map<std::string, TWeakObjectPtr<ULevelStreamingDynamic>> level_instances_;
+    TWeakObjectPtr<ASpDebugCameraController> sp_debug_camera_controller_;
 };

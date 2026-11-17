@@ -75,22 +75,22 @@ class SegmentationService(spear.Service):
 
         # convert pointer strings to handles (no-op if already handles)
         for desc in descs:
-            desc["component"] = spear.to_handle(obj=desc["component"])
-            desc["material"] = spear.to_handle(obj=desc["material"])
+            desc["nonProxyComponent"] = spear.to_handle(obj=desc["nonProxyComponent"])
+            desc["nonProxyMaterial"] = spear.to_handle(obj=desc["nonProxyMaterial"])
             desc["actor"] = spear.to_handle(obj=desc["actor"])
 
         # parse property JSON strings into dicts and relabel
         if include_debug_info:
             for desc in descs:
-                desc["componentProperties"] = json.loads(desc.pop("componentPropertiesString"))
-                desc["materialProperties"] = json.loads(desc.pop("materialPropertiesString"))
+                desc["nonProxyComponentProperties"] = json.loads(desc.pop("nonProxyComponentPropertiesString"))
+                desc["nonProxyMaterialProperties"] = json.loads(desc.pop("nonProxyMaterialPropertiesString"))
                 desc["actorProperties"] = json.loads(desc.pop("actorPropertiesString"))
 
         if as_raw:
             return descs
 
         # as_global or as_visible: sort descs by raw ID
-        descs_sort_indices = np.argsort([ desc["rawId"] for desc in descs ])
+        descs_sort_indices = np.argsort([ desc["id"] for desc in descs ])
         descs = [ descs[i] for i in descs_sort_indices ]
 
         return descs
@@ -132,7 +132,7 @@ class SegmentationService(spear.Service):
             return raw_id_image, global_descs
 
         # caller-provided descs must be sorted for as_global and as_visible
-        global_raw_ids = np.array([ desc["rawId"] for desc in global_descs ])
+        global_raw_ids = np.array([ desc["id"] for desc in global_descs ])
         if mesh_proxy_geometry_descs is not None:
             assert np.all(global_raw_ids[:-1] <= global_raw_ids[1:])
 

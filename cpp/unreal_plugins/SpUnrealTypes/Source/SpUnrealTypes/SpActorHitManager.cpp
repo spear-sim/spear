@@ -32,32 +32,38 @@ void ASpActorHitManager::Tick(float delta_time)
 
 void ASpActorHitManager::SubscribeToActor(AActor* Actor)
 {
-    SP_ASSERT(Actor);
+    SP_ASSERT(Unreal::isValid(Actor));
     Actor->OnActorHit.AddDynamic(this, &ASpActorHitManager::ActorHitHandler);
 }
 
 void ASpActorHitManager::UnsubscribeFromActor(AActor* Actor)
 {
-    SP_ASSERT(Actor);
+    SP_ASSERT(Unreal::isValid(Actor));
     Actor->OnActorHit.RemoveDynamic(this, &ASpActorHitManager::ActorHitHandler);
 }
 
-TArray<FActorHitDesc> ASpActorHitManager::GetActorHitDescs(bool bIncludeDebugInfo)
+TArray<FActorHitDesc> ASpActorHitManager::GetActorHitDescs(bool bIncludeDebugInfo) const
 {
     TArray<FActorHitDesc> actor_hit_descs;
 
-    for (auto& desc : actor_hit_descs_) {
+    for (const auto& desc : actor_hit_descs_) {
         FActorHitDesc actor_hit_desc;
 
-        actor_hit_desc.SelfActor     = Unreal::toFString(Std::toStringFromPtr(desc.self_actor_));
-        actor_hit_desc.OtherActor    = Unreal::toFString(Std::toStringFromPtr(desc.other_actor_));
-        actor_hit_desc.NormalImpulse = desc.normal_impulse_;
-        actor_hit_desc.HitResult     = desc.hit_result_;
-
+        AActor* self_actor = Unreal::toPtr(desc.self_actor_);
+        SP_ASSERT(self_actor);
+        actor_hit_desc.SelfActor = Unreal::toFString(Std::toStringFromPtr(self_actor));
         if (bIncludeDebugInfo) {
-            actor_hit_desc.SelfActorPropertiesString  = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.self_actor_));
-            actor_hit_desc.OtherActorPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(desc.other_actor_));
+            actor_hit_desc.SelfActorPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(self_actor));
         }
+
+        AActor* other_actor = Unreal::toPtr(desc.other_actor_);
+        actor_hit_desc.OtherActor = Unreal::toFString(Std::toStringFromPtr(other_actor));
+        if (bIncludeDebugInfo && other_actor) {
+            actor_hit_desc.OtherActorPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(other_actor));
+        }
+
+        actor_hit_desc.NormalImpulse = desc.normal_impulse_;
+        actor_hit_desc.HitResult = desc.hit_result_;
 
         actor_hit_descs.Add(actor_hit_desc);
     }

@@ -31,45 +31,61 @@ void USpBasicKeyboardControlComponent::BeginPlay()
     if (!AddRotationComponentPath.IsEmpty()) {
         auto [_, add_rotation_component] = UnrealUtils::findActorAndComponentByPath<AActor, USceneComponent>(GetWorld(), GetOwner(), Unreal::toStdString(AddRotationComponentPath));
         add_rotation_component_ = add_rotation_component;
-        AddRotationComponent = Unreal::toFString(UnrealUtils::getStableName(add_rotation_component_));
+        AddRotationComponent = Unreal::toFString(UnrealUtils::getStableName(add_rotation_component));
     }
 
     if (!AddForceTargetComponentPath.IsEmpty()) {
         auto [_, add_force_target_component] = UnrealUtils::findActorAndComponentByPath<AActor, UPrimitiveComponent>(GetWorld(), GetOwner(), Unreal::toStdString(AddForceTargetComponentPath));
         add_force_target_component_ = add_force_target_component;
-        AddForceTargetComponent = Unreal::toFString(UnrealUtils::getStableName(add_force_target_component_));
+        AddForceTargetComponent = Unreal::toFString(UnrealUtils::getStableName(add_force_target_component));
     }
 
     if (!AddForceRotationComponentPath.IsEmpty()) {
         auto [_, add_force_rotation_component] = UnrealUtils::findActorAndComponentByPath<AActor, USceneComponent>(GetWorld(), GetOwner(), Unreal::toStdString(AddForceRotationComponentPath));
         add_force_rotation_component_ = add_force_rotation_component;
-        AddForceRotationComponent = Unreal::toFString(UnrealUtils::getStableName(add_force_rotation_component_));
+        AddForceRotationComponent = Unreal::toFString(UnrealUtils::getStableName(add_force_rotation_component));
     }
 
     SpUserInputComponent->subscribeToUserInputs({"One", "Two", "Three", "Four"});
     SpUserInputComponent->setHandleUserInputFunc([this](const std::string& key, float axis_value) -> void {
-        if (key == "One" && add_rotation_component_) {
-            add_rotation_component_->AddRelativeRotation(FRotator(0.0, -2.0, 0.0)); // TODO: could be a UPROPERTY
+        if (key == "One" && Unreal::isSet(add_rotation_component_)) {
+            USceneComponent* add_rotation_component = Unreal::toPtr(add_rotation_component_);
+            SP_ASSERT(add_rotation_component);
+            add_rotation_component->AddRelativeRotation(FRotator(0.0, -2.0, 0.0)); // could be a UPROPERTY
         }
 
-        if (key == "Two" && add_rotation_component_) {
-            add_rotation_component_->AddRelativeRotation(FRotator(0.0, 2.0, 0.0)); // TODO: could be a UPROPERTY
+        if (key == "Two" && Unreal::isSet(add_rotation_component_)) {
+            USceneComponent* add_rotation_component = Unreal::toPtr(add_rotation_component_);
+            SP_ASSERT(add_rotation_component);
+            add_rotation_component->AddRelativeRotation(FRotator(0.0, 2.0, 0.0)); // could be a UPROPERTY
         }
 
-        if (key == "Three" && add_force_target_component_) {
-            FVector force = FVector(-1000.0, 0.0, 0.0); // TODO: could be a UPROPERTY
-            if (add_force_rotation_component_) {
-                force = add_force_rotation_component_->K2_GetComponentRotation().RotateVector(force);
+        if (key == "Three" && Unreal::isSet(add_force_target_component_)) {
+            UPrimitiveComponent* add_force_target_component = Unreal::toPtr(add_force_target_component_);
+            SP_ASSERT(add_force_target_component);
+
+            FVector force = FVector(-1000.0, 0.0, 0.0); // could be a UPROPERTY
+            if (Unreal::isSet(add_force_rotation_component_)) {
+                USceneComponent* add_force_rotation_component = Unreal::toPtr(add_force_rotation_component_);
+                SP_ASSERT(add_force_rotation_component);
+                force = add_force_rotation_component->K2_GetComponentRotation().RotateVector(force);
             }
-            add_force_target_component_->AddForce(force);
+
+            add_force_target_component->AddForce(force);
         }
 
-        if (key == "Four" && add_force_target_component_) {
-            FVector force = FVector(1000.0, 0.0, 0.0); // TODO: could be a UPROPERTY
-            if (add_force_rotation_component_) {
-                force = add_force_rotation_component_->K2_GetComponentRotation().RotateVector(force);
+        if (key == "Four" && Unreal::isSet(add_force_target_component_)) {
+            UPrimitiveComponent* add_force_target_component = Unreal::toPtr(add_force_target_component_);
+            SP_ASSERT(add_force_target_component);
+
+            FVector force = FVector(1000.0, 0.0, 0.0); // could be a UPROPERTY
+            if (Unreal::isSet(add_force_rotation_component_)) {
+                USceneComponent* add_force_rotation_component = Unreal::toPtr(add_force_rotation_component_);
+                SP_ASSERT(add_force_rotation_component);
+                force = add_force_rotation_component->K2_GetComponentRotation().RotateVector(force);
             }
-            add_force_target_component_->AddForce(force);
+
+            add_force_target_component->AddForce(force);
         }
     });
 }

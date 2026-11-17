@@ -7,9 +7,10 @@
 
 #include <Components/PrimitiveComponent.h>
 #include <Components/SceneComponent.h>
-#include <Containers/UnrealString.h> // FString
-#include <Engine/EngineTypes.h>      // EEndPlayReason
-#include <UObject/ObjectMacros.h>    // GENERATED_BODY, UCLASS, UPROPERTY
+#include <Containers/UnrealString.h>        // FString
+#include <Engine/EngineTypes.h>             // EEndPlayReason
+#include <UObject/ObjectMacros.h>           // GENERATED_BODY, UCLASS, UPROPERTY
+#include <UObject/WeakObjectPtrTemplates.h> // TWeakObjectPtr
 
 #include "SpUnrealTypes/SpUserInputComponent.h"
 
@@ -51,8 +52,8 @@ public:
     USpUserInputComponent* SpUserInputComponent = nullptr;
 
 private:
-    USceneComponent* add_rotation_component_ = nullptr;
+    TWeakObjectPtr<USceneComponent> add_rotation_component_;
 
-    UPrimitiveComponent* add_force_target_component_ = nullptr;
-    USceneComponent* add_force_rotation_component_ = nullptr;
+    TWeakObjectPtr<UPrimitiveComponent> add_force_target_component_;
+    TWeakObjectPtr<USceneComponent> add_force_rotation_component_;
 };

@@ -82,7 +82,7 @@ struct SpStaticClassDesc
 
 struct SpWorldDesc
 {
-    UWorld* world_ = nullptr;
+    UWorld* world_ = nullptr; // raw pointer rather than TWeakObjectPtr because SpWorldDesc is read on the worker thread
     int64_t world_id_ = -1;
     bool is_editor_world_ = false;
     bool is_game_world_ = false;
