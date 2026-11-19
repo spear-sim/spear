@@ -16,6 +16,20 @@
 #include <nanobind/ndarray.h>
 
 //
+// Base class for Client that contains Client's configuration flags, so they can be accessed by code
+// that can't include client.h, e.g., MsgpackUtils::convert(...)
+//
+
+struct ClientBase
+{
+    bool force_return_aligned_arrays_ = false;
+    bool suppress_default_logging_    = false;
+    bool verbose_rpc_calls_           = false;
+    bool verbose_allocations_         = false;
+    bool verbose_exceptions_          = false; // owner should set to true once a connection to the server is established
+};
+
+//
 // Custom types
 //
 
@@ -29,7 +43,31 @@ struct SharedMemoryView
 {
     std::string id_;
     uint64_t num_bytes_ = 0;
-    uint64_t offset_bytes_ = 0;
+    uint16_t offset_bytes_ = 0;
+};
+
+struct SpArraySharedMemoryView
+{
+    std::string id_;
+    uint64_t num_bytes_ = 0;
+    uint16_t offset_bytes_ = 0;
+    std::vector<std::string> usage_flags_ = {"DoNotUse"};
+    std::string name_ = "smem:invalid";
+};
+
+struct SpPackedArray
+{
+    nanobind::ndarray<nanobind::numpy> data_;
+    std::string data_source_ = "Invalid";
+    std::vector<size_t> shape_;
+    std::string shared_memory_name_;
+};
+
+struct SpFuncDataBundle
+{
+    std::map<std::string, SpPackedArray> packed_arrays_;
+    std::map<std::string, std::string> unreal_obj_strings_;
+    std::string info_;
 };
 
 struct SpPropertyDesc
@@ -49,30 +87,6 @@ struct SpPropertyValue
 {
     std::string value_;
     std::string type_id_;
-};
-
-struct SpArraySharedMemoryView
-{
-    std::string id_;
-    uint64_t num_bytes_ = 0;
-    uint64_t offset_bytes_ = 0;
-    std::vector<std::string> usage_flags_ = {"DoNotUse"};
-    std::string name_ = "smem:invalid";
-};
-
-struct SpPackedArray
-{
-    nanobind::ndarray<nanobind::numpy> data_;
-    std::string data_source_ = "Invalid";
-    std::vector<size_t> shape_;
-    std::string shared_memory_name_;
-};
-
-struct SpFuncDataBundle
-{
-    std::map<std::string, SpPackedArray> packed_arrays_;
-    std::map<std::string, std::string> unreal_obj_strings_;
-    std::string info_;
 };
 
 struct SpFuncSignatureDesc

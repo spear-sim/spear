@@ -48,6 +48,9 @@ class EngineGlobalsService(spear.Service):
     # worker thread.
     #
 
+    def get_ue_build(self):
+        return self.entry_point_caller.call_on_worker_thread("get_ue_build", None)
+
     def is_editor(self):
         return self.entry_point_caller.call_on_worker_thread("is_editor", None)
 
@@ -67,10 +70,14 @@ class EngineGlobalsService(spear.Service):
     # Miscellaneous low-level entry points that potentially interact with Unreal globals and must be called
     # from the game thread.
     #
+    # In the case of get_engine, the "get_engine" entry point executes on the worker thread, but by default
+    # this function returns an UnrealObject, and creating an UnrealObject calls entry points that execute on
+    # the game thread.
+    #
 
     def get_engine(self, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         result = self.entry_point_caller.call_on_worker_thread("get_engine", None)
-        return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs) # must be called on game thread
+        return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     def is_async_loading(self):
         return self.entry_point_caller.call_on_game_thread("is_async_loading", None)

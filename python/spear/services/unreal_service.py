@@ -43,8 +43,12 @@ class UnrealService(spear.Service):
     def initialize(self, unreal_service=None):
         assert self.is_top_level_service() # this function should only be called on the top-level service
 
-        # cache data that will be constant for the life of the server, using data from an already initialized
-        # UnrealService instance if available
+        # Take a snapshot of all the structs and classes that are loaded when UnrealService is initialized,
+        # using data from an already initialized UnrealService instance if available. It is possible for
+        # these caches to become stale, e.g., if a Blueprint type is loaded dynamically at runtime. In those
+        # cases, call rebuild() to rebuild the caches, or pass in a UClass* handle obtained from, e.g.,
+        # load_class(...) when calling a function that expects a uclass. Passing a string is only possible
+        # (e.g., uclass="AActor") if that class is present in these caches.
 
         if unreal_service is None:
             if self._static_struct_descs is None:
@@ -69,6 +73,22 @@ class UnrealService(spear.Service):
 
     def terminate(self):
         pass
+
+    # Re-fetch the static struct and class descs, e.g., after a Blueprint class has been recompiled. If unreal_service
+    # is not None, copy its already-rebuilt data instead, so the expensive fetch happens once per top-level rebuild.
+
+    def rebuild(self, unreal_service=None):
+        assert self.is_top_level_service() # this function should only be called on the top-level service
+
+        if unreal_service is None:
+            self._static_struct_descs = None
+            self._static_class_descs = None
+            self._static_struct_descs_by_name = None
+            self._static_class_descs_by_name = None
+            self._static_struct_descs_by_id = None
+            self._static_class_descs_by_id = None
+
+        self.initialize(unreal_service=unreal_service)
 
     #
     # Get static struct descs
@@ -265,10 +285,13 @@ class UnrealService(spear.Service):
         return self.entry_point_caller.call_on_game_thread("get_function_flags", None, ufunction)
 
     #
-    # Interface for calling functions. When using this interface, pointers must be handled specially. For
-    # example, suppose you want to call a function that takes a pointer as input and returns a pointer as
-    # output. Suppose that you already have a handle that you would like to pass as input to the function,
-    # that you obtained from another UnrealService function, e.g.,
+    # Interface for calling functions. Most users shouldn't need to call call_function(...) directly, and
+    # should instead use the higher-level interface provided by UnrealObject.
+    #
+    # When using this interface, pointers must be handled specially. For example, suppose you want to call a
+    # function that takes a pointer as input and returns a pointer as output. Suppose that you already have a
+    # handle that you would like to pass as input to the function, that you obtained from another
+    # UnrealService function, e.g.,
     #
     #     arg_handle = unreal_service.find_actor_by_name(..., as_handle=True)
     #
@@ -276,25 +299,26 @@ class UnrealService(spear.Service):
     # be in the correct form to pass into other functions in unreal_service.
     # 
     #     args = {"Actor": spear.to_ptr(handle=arg_handle)}
-    #     data_bundle = unreal_service.call_function(uobject=uobject, ufunction=ufunction, args=args)
-    #     return_handle = spear.to_handle(string=data_bundle["ReturnValue"])
+    #     return_values = unreal_service.call_function(uobject=uobject, ufunction=ufunction, args=args)
+    #     return_value_handle = spear.to_handle(obj=return_values["ReturnValue"].value)
     #
 
     def call_function(self, uobject=None, uclass=None, ufunction=None, args=None, world_context_object="WorldContextObject"):
-        assert uclass is not None
+        assert uobject is not None or uclass is not None
         assert ufunction is not None
+
+        if uobject is not None:
+            assert uclass is None
+        if uclass is not None:
+            assert uobject is None
 
         args = args if args is not None else {}
         uobject = uobject if uobject is not None else 0
+        uclass = uclass if uclass is not None else 0
 
         uobject = spear.to_handle(obj=uobject)
         uclass = self.to_uclass(uclass=uclass)
         args = spear.to_json_strings(objs=args)
-
-        if uobject != 0:
-            assert uclass == 0
-        if uclass != 0:
-            assert uobject == 0
 
         convert_func = lambda result: { k: spear.PropertyValue(value=spear.try_to_dict(json_string=v.value), type_id=v.type_id) for k, v in result.items() }
         return self.entry_point_caller.call_on_game_thread("call_function", convert_func, self.get_world(), uobject, uclass, ufunction, args, world_context_object)
@@ -988,10 +1012,10 @@ class UnrealService(spear.Service):
     # Get children components conditionally from an actor and return a list
     #
 
-    def get_children_components_for_actor_by_name(self, parent, children_component_name, uclass, include_all_descendants=True, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
+    def get_children_components_for_actor_by_name(self, parent, child_component_name, uclass, include_all_descendants=True, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         parent = spear.to_handle(obj=parent)
         uclass = self.to_uclass(uclass=uclass)
-        result = self.entry_point_caller.call_on_game_thread("get_children_components_for_actor_by_name", None, uclass, parent, children_component_name, include_all_descendants)
+        result = self.entry_point_caller.call_on_game_thread("get_children_components_for_actor_by_name", None, uclass, parent, child_component_name, include_all_descendants)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     def get_children_components_for_actor_by_tag(self, parent, tag, uclass, include_all_descendants=True, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
@@ -1022,10 +1046,10 @@ class UnrealService(spear.Service):
     # Get children components conditionally from an actor and return a dict
     #
 
-    def get_children_components_for_actor_by_name_as_dict(self, parent, children_component_name, uclass, include_all_descendants=True, include_actor_stable_name=False, include_actor_unreal_name=False, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
+    def get_children_components_for_actor_by_name_as_dict(self, parent, child_component_name, uclass, include_all_descendants=True, include_actor_stable_name=False, include_actor_unreal_name=False, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         parent = spear.to_handle(obj=parent)
         uclass = self.to_uclass(uclass=uclass)
-        result = self.entry_point_caller.call_on_game_thread("get_children_components_for_actor_by_name_as_map", None, uclass, parent, children_component_name, include_all_descendants, include_actor_stable_name, include_actor_unreal_name)
+        result = self.entry_point_caller.call_on_game_thread("get_children_components_for_actor_by_name_as_map", None, uclass, parent, child_component_name, include_all_descendants, include_actor_stable_name, include_actor_unreal_name)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     def get_children_components_for_actor_by_tag_as_dict(self, parent, tag, uclass, include_all_descendants=True, include_actor_stable_name=False, include_actor_unreal_name=False, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
@@ -1096,25 +1120,25 @@ class UnrealService(spear.Service):
         result = self.entry_point_caller.call_on_game_thread("get_children_components_for_scene_component_by_name", None, uclass, parent, child_component_name, include_all_descendants)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
-    def get_children_components_for_scene_component_by_tag_from_scene_component(self, parent, tag, uclass, include_all_descendants=True, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
+    def get_children_components_for_scene_component_by_tag(self, parent, tag, uclass, include_all_descendants=True, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         parent = spear.to_handle(obj=parent)
         uclass = self.to_uclass(uclass=uclass)
         result = self.entry_point_caller.call_on_game_thread("get_children_components_for_scene_component_by_tag", None, uclass, parent, tag, include_all_descendants)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
-    def get_children_components_for_scene_component_by_tags_any_from_scene_component(self, parent, tags, uclass, include_all_descendants=True, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
+    def get_children_components_for_scene_component_by_tags_any(self, parent, tags, uclass, include_all_descendants=True, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         parent = spear.to_handle(obj=parent)
         uclass = self.to_uclass(uclass=uclass)
         result = self.entry_point_caller.call_on_game_thread("get_children_components_for_scene_component_by_tags_any", None, uclass, parent, tags, include_all_descendants)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
-    def get_children_components_for_scene_component_by_tags_all_from_scene_component(self, parent, tags, uclass, include_all_descendants=True, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
+    def get_children_components_for_scene_component_by_tags_all(self, parent, tags, uclass, include_all_descendants=True, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         parent = spear.to_handle(obj=parent)
         uclass = self.to_uclass(uclass=uclass)
         result = self.entry_point_caller.call_on_game_thread("get_children_components_for_scene_component_by_tags_all", None, uclass, parent, tags, include_all_descendants)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
-    def get_children_components_for_scene_component_by_class_from_scene_component(self, parent, uclass, include_all_descendants=True, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
+    def get_children_components_for_scene_component_by_class(self, parent, uclass, include_all_descendants=True, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
         parent = spear.to_handle(obj=parent)
         uclass = self.to_uclass(uclass=uclass)
         result = self.entry_point_caller.call_on_game_thread("get_children_components_for_scene_component_by_class", None, uclass, parent, include_all_descendants)

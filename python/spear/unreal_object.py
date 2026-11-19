@@ -177,6 +177,8 @@ class UnrealObject:
             spear.log(f"    as_dict:          {as_dict}")
             spear.log(f"    as_value:         {as_value}")
             spear.log(f"    as_handle:        {as_handle}")
+            spear.log(f"    as_unreal_struct: {as_unreal_struct}")
+            spear.log(f"    as_unreal_class:  {as_unreal_class}")
             spear.log(f"    as_unreal_object: {as_unreal_object}")
             spear.log(f"    with_sp_funcs:    {with_sp_funcs}")
             spear.log(f"    kwargs:           {kwargs}")
@@ -188,11 +190,11 @@ class UnrealObject:
             assert False
         result = self._unreal_service.call_function(
             uobject=self.uobject,
-            uclass=0,
             ufunction=ufunction,
             args=kwargs,
             world_context_object=world_context_object)
         if as_raw_dict is not None:
+            assert as_raw_dict
             assert as_dict is None
             assert as_value is None
             assert as_handle is None
@@ -202,6 +204,7 @@ class UnrealObject:
             assert with_sp_funcs is None
             return result
         elif as_dict is not None:
+            assert as_dict
             assert as_value is None
             assert as_handle is None
             assert as_unreal_struct is None
@@ -211,7 +214,7 @@ class UnrealObject:
             return self._unpack_property_values(obj=result)
         else:
             return_value = self._try_to_return_value(obj=result) # don't unpack yet because we still need PropertyValue metadata
-            return self._try_to_handle_or_unreal_type(obj=return_value, as_value=as_value, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
+            return self._try_to_handle_or_unreal_type(obj=return_value, as_value=as_value, as_handle=as_handle, as_unreal_struct=as_unreal_struct, as_unreal_class=as_unreal_class, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     def _call_sp_func(self, function_name, arrays=None, unreal_objs=None, info=""):
         if self._config.SPEAR.UNREAL_OBJECT.PRINT_CALL_DEBUG_INFO:
@@ -245,24 +248,27 @@ class UnrealObject:
         assert self.property_name == ""
         return self._unreal_service.set_properties_for_object(uobject=self.uobject, properties=properties, notify_editor=notify_editor)
 
-    def get(self, as_raw_value=None, as_value=None, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
-        return self.get_property_value(property_name=self.property_name, as_raw_value=as_raw_value, as_value=as_value, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
+    def get(self, as_raw_value=None, as_value=None, as_handle=None, as_unreal_struct=None, as_unreal_class=None, as_unreal_object=None, with_sp_funcs=None):
+        return self.get_property_value(property_name=self.property_name, as_raw_value=as_raw_value, as_value=as_value, as_handle=as_handle, as_unreal_struct=as_unreal_struct, as_unreal_class=as_unreal_class, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     # interface for getting and setting a specific property; this interface is not necessary most of the time
     # because properties with no spaces in their names can be accessed directly as Python attributes, but
     # this interface is useful when the property has spaces in its name
 
-    def get_property_value(self, property_name, as_raw_value=None, as_value=None, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
+    def get_property_value(self, property_name, as_raw_value=None, as_value=None, as_handle=None, as_unreal_struct=None, as_unreal_class=None, as_unreal_object=None, with_sp_funcs=None):
         assert property_name != ""
         result = self._unreal_service.get_property_value_for_object(uobject=self.uobject, property_name=property_name)
         if as_raw_value is not None:
+            assert as_raw_value
             assert as_value is None
             assert as_handle is None
+            assert as_unreal_struct is None
+            assert as_unreal_class is None
             assert as_unreal_object is None
             assert with_sp_funcs is None
             return result
         else:
-            return self._try_to_handle_or_unreal_type(obj=result, as_value=as_value, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
+            return self._try_to_handle_or_unreal_type(obj=result, as_value=as_value, as_handle=as_handle, as_unreal_struct=as_unreal_struct, as_unreal_class=as_unreal_class, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
     def set_property_value(self, property_name, property_value, notify_editor=False):
         assert property_name != ""
@@ -337,53 +343,62 @@ class UnrealObject:
     # built-in function overrides
 
     def __getattr__(self, attr_name):
-        assert self.uclass != 0
-        assert self.uobject != 0
-        assert attr_name not in ["call_async", "send_async"]
-
-        # if self represents a UObject directly (i.e., it doesn't represent a possibly nested property), then we can call functions on it
-        if self.property_name == "":
-            # if attr_name is the name of a UFunction
-            if attr_name in self.derived_state["unqualified_function_descs"]:
-                def call_ufunction(*args, world_context_object="WorldContextObject", as_raw_dict=None, as_dict=None, as_value=None, as_handle=None, as_unreal_object=None, with_sp_funcs=None, **kwargs):
-                    return self._call_ufunction(
-                        function_name=attr_name,
-                        world_context_object=world_context_object,
-                        as_raw_dict=as_raw_dict,
-                        as_dict=as_dict,
-                        as_value=as_value,
-                        as_handle=as_handle,
-                        as_unreal_object=as_unreal_object,
-                        with_sp_funcs=with_sp_funcs,
-                        **kwargs)
-                return call_ufunction
-
-            # else if attr_name is the name of an SpFunc
-            elif self._sp_func_names is not None and attr_name in self._sp_func_names:
-                def call_sp_func(arrays=None, unreal_objs=None, info=""):
-                    return self._call_sp_func(
-                        function_name=attr_name,
-                        arrays=arrays,
-                        unreal_objs=unreal_objs,
-                        info=info)
-                return call_sp_func
-
-        # if attr_name isn't a UFunction or an SpFunc, then assume it is a property, and return a new UnrealObject
-
-        if self.property_name == "":
-            property_name = attr_name
+        # Python looks up __dunder__ names to probe for protocol support, e.g., copy.deepcopy(...) looks up
+        # __deepcopy__, and np.array(...) looks up __array_struct__. So we raise AttributeError for these names
+        # instead of treating them as properties. Properties with these names can still be accessed via
+        # get_property_value(...).
+        if attr_name.startswith("__") and attr_name.endswith("__"):
+            raise AttributeError(attr_name)
         else:
-            property_name = self.property_name + "." + attr_name
+            assert self.uclass != 0
+            assert self.uobject != 0
+            assert attr_name not in ["call_async", "send_async"]
 
-        return UnrealObject(
-            unreal_service=self._unreal_service,
-            sp_func_service=self._sp_func_service,
-            config=self._config,
-            uobject=self.uobject,
-            uclass=self.uclass,
-            derived_state=self.derived_state,
-            property_name=property_name,
-            is_top_level=self._is_top_level)
+            # if self represents a UObject directly (i.e., it doesn't represent a possibly nested property), then we can call functions on it
+            if self.property_name == "":
+                # if attr_name is the name of a UFunction
+                if attr_name in self.derived_state["unqualified_function_descs"]:
+                    def call_ufunction(world_context_object="WorldContextObject", as_raw_dict=None, as_dict=None, as_value=None, as_handle=None, as_unreal_struct=None, as_unreal_class=None, as_unreal_object=None, with_sp_funcs=None, **kwargs):
+                        return self._call_ufunction(
+                            function_name=attr_name,
+                            world_context_object=world_context_object,
+                            as_raw_dict=as_raw_dict,
+                            as_dict=as_dict,
+                            as_value=as_value,
+                            as_handle=as_handle,
+                            as_unreal_struct=as_unreal_struct,
+                            as_unreal_class=as_unreal_class,
+                            as_unreal_object=as_unreal_object,
+                            with_sp_funcs=with_sp_funcs,
+                            **kwargs)
+                    return call_ufunction
+
+                # else if attr_name is the name of an SpFunc
+                elif self._sp_func_names is not None and attr_name in self._sp_func_names:
+                    def call_sp_func(arrays=None, unreal_objs=None, info=""):
+                        return self._call_sp_func(
+                            function_name=attr_name,
+                            arrays=arrays,
+                            unreal_objs=unreal_objs,
+                            info=info)
+                    return call_sp_func
+
+            # if attr_name isn't a UFunction or an SpFunc, then assume it is a property, and return a new UnrealObject
+
+            if self.property_name == "":
+                property_name = attr_name
+            else:
+                property_name = self.property_name + "." + attr_name
+
+            return UnrealObject(
+                unreal_service=self._unreal_service,
+                sp_func_service=self._sp_func_service,
+                config=self._config,
+                uobject=self.uobject,
+                uclass=self.uclass,
+                derived_state=self.derived_state,
+                property_name=property_name,
+                is_top_level=self._is_top_level)
 
     def __getitem__(self, item_index):
         assert self.property_name != ""
@@ -474,6 +489,7 @@ class UnrealObject:
             return None
         elif isinstance(obj, spear.PropertyValue):
             if as_value is not None:
+                assert as_value
                 assert as_handle is None
                 assert as_unreal_struct is None
                 assert as_unreal_class is None
@@ -481,12 +497,14 @@ class UnrealObject:
                 assert with_sp_funcs is None
                 return obj.value
             elif as_handle is not None:
+                assert as_handle
                 assert as_unreal_struct is None
                 assert as_unreal_class is None
                 assert as_unreal_object is None
                 assert with_sp_funcs is None
                 return spear.to_handle(obj=obj.value)
             elif as_unreal_struct is not None:
+                assert as_unreal_struct
                 assert as_unreal_class is None
                 assert as_unreal_object is None
                 assert with_sp_funcs is None
@@ -495,6 +513,7 @@ class UnrealObject:
                     obj=handle,
                     unreal_service=self._unreal_service.get_top_level_service())
             elif as_unreal_class is not None:
+                assert as_unreal_class
                 assert as_unreal_object is None
                 assert with_sp_funcs is None
                 handle = spear.to_handle(obj=obj.value)

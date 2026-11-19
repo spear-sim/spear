@@ -43,7 +43,7 @@ SPEAR:
     # locations:
     #     - Windows: path\to\spear\cpp\unreal_projects\SpearSim\Standalone-Development\Windows\SpearSim\Saved\Logs
     #     - macOS:   ~/Library/Logs/SpearSim
-    #     - Linux:   path\to\spear\cpp\unreal_projects\SpearSim\Standalone-Development/Linux/SpearSim/Saved/Logs
+    #     - Linux:   path/to/spear/cpp/unreal_projects/SpearSim/Standalone-Development/Linux/SpearSim/Saved/Logs
 
     COMMAND_LINE_ARGS:
       resx: 512                 # window resolution
@@ -113,7 +113,7 @@ SPEAR:
     # are still loading during the game's first few frames. If this amount of time is set too low, then we
     # need to set CLIENT_INTERNAL_TIMEOUT_SECONDS to be overly conservative.
     #
-    # Likewise, it is useful to warm up for a minumum number of frames to initialize various caches and
+    # Likewise, it is useful to warm up for a minimum number of frames to initialize various caches and
     # rendering features that leverage temporal coherence between frames. The number of warmup frames should
     # be at least 1 to guarantee that visual observations are always valid. If Unreal does not execute at
     # least one full frame before we try to retrieve visual observations, it is possible that Unreal will
@@ -166,3 +166,7 @@ SPEAR:
   # Print debug info when calling entry points through EngineService.
   ENGINE_SERVICE:
     PRINT_CALL_DEBUG_INFO: False
+
+  # Show debug images when SegmentationService encounters unexpected object IDs.
+  SEGMENTATION_SERVICE:
+    VISUAL_DEBUGGING: False

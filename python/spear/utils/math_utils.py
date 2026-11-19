@@ -90,18 +90,17 @@ import scipy
 
 def to_numpy_matrix_from_spear_matrix(spear_matrix, as_matrix=None):
     assert isinstance(spear_matrix, dict)
-    spear_matrix = { k.lower(): v for k, v in spear_matrix.items() }
-    assert set(["xplane", "yplane", "zplane", "wplane"]) == set(spear_matrix.keys())
+    assert set(spear_matrix.keys()) == set(["XPlane", "YPlane", "ZPlane", "WPlane"])
     numpy_matrix = np.column_stack([ # each plane is a column
-        to_numpy_array_from_spear_plane(spear_plane=spear_matrix["xplane"]),
-        to_numpy_array_from_spear_plane(spear_plane=spear_matrix["yplane"]),
-        to_numpy_array_from_spear_plane(spear_plane=spear_matrix["zplane"]),
-        to_numpy_array_from_spear_plane(spear_plane=spear_matrix["wplane"])])
-    if as_matrix is None:
-        return numpy_matrix
-    else:
+        to_numpy_array_from_spear_plane(spear_plane=spear_matrix["XPlane"]),
+        to_numpy_array_from_spear_plane(spear_plane=spear_matrix["YPlane"]),
+        to_numpy_array_from_spear_plane(spear_plane=spear_matrix["ZPlane"]),
+        to_numpy_array_from_spear_plane(spear_plane=spear_matrix["WPlane"])])
+    if as_matrix is not None:
         assert as_matrix
         return np.matrix(numpy_matrix)
+    else:
+        return numpy_matrix
 
 def to_spear_matrix_from_numpy_matrix(numpy_matrix):
     if isinstance(numpy_matrix, np.matrix):
@@ -120,14 +119,13 @@ def to_spear_matrix_from_numpy_matrix(numpy_matrix):
 
 def to_numpy_array_from_spear_plane(spear_plane, as_matrix=None):
     assert isinstance(spear_plane, dict)
-    spear_plane = { k.lower(): v for k, v in spear_plane.items() }
-    assert set(["x", "y", "z", "w"]) == set(spear_plane.keys())
-    numpy_array = np.array([spear_plane["x"], spear_plane["y"], spear_plane["z"], spear_plane["w"]])
-    if as_matrix is None:
-        return numpy_array
-    else:
+    assert set(spear_plane.keys()) == set(["X", "Y", "Z", "W"])
+    numpy_array = np.array([spear_plane["X"], spear_plane["Y"], spear_plane["Z"], spear_plane["W"]])
+    if as_matrix is not None:
         assert as_matrix
         return np.matrix(numpy_array).T
+    else:
+        return numpy_array
 
 def to_spear_plane_from_numpy_array(numpy_array):
     if isinstance(numpy_array, np.matrix):
@@ -142,20 +140,21 @@ def to_spear_plane_from_numpy_array(numpy_array):
 
 def to_numpy_array_from_spear_quat(spear_quat):
     assert isinstance(spear_quat, dict)
-    spear_quat = { k.lower(): v for k, v in spear_quat.items() }
-    assert set(["x", "y", "z", "w"]) == set(spear_quat.keys())
-    return np.array([spear_quat["x"], spear_quat["y"], spear_quat["z"], spear_quat["w"]]) # scipy.spatial.transform.Rotation assumes scalar-last (xyzw) order so we follow that convention here
+    assert set(spear_quat.keys()) == set(["X", "Y", "Z", "W"])
+    return np.array([spear_quat["X"], spear_quat["Y"], spear_quat["Z"], spear_quat["W"]]) # scipy.spatial.transform.Rotation assumes scalar-last (xyzw) order so we follow that convention here
 
 def to_numpy_matrix_from_spear_quat(spear_quat, as_matrix=None):
     numpy_array_xyzw = to_numpy_array_from_spear_quat(spear_quat=spear_quat)
     numpy_matrix = np.array(scipy.spatial.transform.Rotation.from_quat(numpy_array_xyzw).as_matrix())
-    if as_matrix is None:
-        return numpy_matrix
-    else:
+    if as_matrix is not None:
         assert as_matrix
         return np.matrix(numpy_matrix)
+    else:
+        return numpy_matrix
 
 def to_spear_quat_from_numpy_array(numpy_array_xyzw):
+    if isinstance(numpy_array_xyzw, np.matrix):
+        numpy_array_xyzw = numpy_array_xyzw.A1
     if isinstance(numpy_array_xyzw, np.ndarray):
         assert numpy_array_xyzw.shape == (4,)
     else:
@@ -176,25 +175,25 @@ def to_spear_quat_from_numpy_matrix(numpy_matrix):
 
 def to_numpy_array_from_spear_rotator(spear_rotator):
     assert isinstance(spear_rotator, dict)
-    spear_rotator = { k.lower(): v for k, v in spear_rotator.items() }
-    assert set(["roll", "pitch", "yaw"]) == set(spear_rotator.keys())
-    return np.array([spear_rotator["pitch"], spear_rotator["yaw"], spear_rotator["roll"]]) # assumes pyr order
+    assert set(spear_rotator.keys()) == set(["Roll", "Pitch", "Yaw"])
+    return np.array([spear_rotator["Pitch"], spear_rotator["Yaw"], spear_rotator["Roll"]]) # assumes pyr order
 
 def to_numpy_matrix_from_spear_rotator(spear_rotator, as_matrix=None):
     assert isinstance(spear_rotator, dict)
-    spear_rotator = { k.lower(): v for k, v in spear_rotator.items() }
-    assert set(["roll", "pitch", "yaw"]) == set(spear_rotator.keys())
-    roll  = np.deg2rad(-spear_rotator["roll"])
-    pitch = np.deg2rad(-spear_rotator["pitch"])
-    yaw   = np.deg2rad(spear_rotator["yaw"])
+    assert set(spear_rotator.keys()) == set(["Roll", "Pitch", "Yaw"])
+    roll  = np.deg2rad(-spear_rotator["Roll"])
+    pitch = np.deg2rad(-spear_rotator["Pitch"])
+    yaw   = np.deg2rad(spear_rotator["Yaw"])
     numpy_matrix = scipy.spatial.transform.Rotation.from_euler("xyz", [roll, pitch, yaw]).as_matrix()
-    if as_matrix is None:
-        return numpy_matrix
-    else:
+    if as_matrix is not None:
         assert as_matrix
         return np.matrix(numpy_matrix)
+    else:
+        return numpy_matrix
 
 def to_spear_rotator_from_numpy_array(numpy_array_pyr):
+    if isinstance(numpy_array_pyr, np.matrix):
+        numpy_array_pyr = numpy_array_pyr.A1
     if isinstance(numpy_array_pyr, np.ndarray):
         assert numpy_array_pyr.shape == (3,)
     else:
@@ -202,8 +201,10 @@ def to_spear_rotator_from_numpy_array(numpy_array_pyr):
     return {"Pitch": float(numpy_array_pyr[0]), "Yaw": float(numpy_array_pyr[1]), "Roll": float(numpy_array_pyr[2])}
 
 def to_spear_rotator_from_numpy_matrix(numpy_matrix):
-    if isinstance(numpy_matrix, np.ndarray) or isinstance(numpy_matrix, np.matrix):
-        assert numpy_matrix.shape == (3,3)
+    if isinstance(numpy_matrix, np.matrix):
+        numpy_matrix = numpy_matrix.A
+    if isinstance(numpy_matrix, np.ndarray):
+        assert numpy_matrix.shape == (3, 3)
     else:
         assert False
     scipy_roll, scipy_pitch, scipy_yaw = scipy.spatial.transform.Rotation.from_matrix(numpy_matrix).as_euler("xyz")
@@ -223,11 +224,11 @@ def to_numpy_matrix_from_spear_transform(spear_transform, as_matrix=None):
     M_R = np.matrix(np.block([[numpy_transform["rotation"], np.zeros((3, 1))],               [np.zeros((1, 3)), 1.0]]))
     M_S = np.matrix(np.block([[numpy_transform["scale"],    np.zeros((3, 1))],               [np.zeros((1, 3)), 1.0]]))
     M = M_t*M_R*M_S
-    if as_matrix is None:
-        return M.A
-    else:
+    if as_matrix is not None:
         assert as_matrix
         return M
+    else:
+        return M.A
 
 def to_spear_transform_from_numpy_transform(numpy_transform):
     return convert_transform(transform=numpy_transform, as_spear=True)
@@ -254,7 +255,7 @@ def to_spear_transform_from_numpy_matrix(numpy_matrix):
         M_R[:, 0] = -M_R[:, 0]
 
     translation = to_spear_vector_from_numpy_array(numpy_array=t)
-    rotation = to_spear_rotator_from_numpy_matrix(numpy_matrix=M_R)
+    rotation = to_spear_quat_from_numpy_matrix(numpy_matrix=M_R)
     scale_3d = to_spear_vector_from_numpy_array(numpy_array=s)
     return {"Translation": translation, "Rotation": rotation, "Scale3D": scale_3d}
 
@@ -262,19 +263,17 @@ def to_spear_transform_from_numpy_matrix(numpy_matrix):
 
 def to_numpy_array_from_spear_vector(spear_vector, as_matrix=None):
     assert isinstance(spear_vector, dict)
-    spear_vector = { k.lower(): v for k, v in spear_vector.items() }
-    assert set(["x", "y", "z"]) == set(spear_vector.keys())
-    if as_matrix is None:
-        return np.array([spear_vector["x"], spear_vector["y"], spear_vector["z"]])
-    else:
+    assert set(spear_vector.keys()) == set(["X", "Y", "Z"])
+    if as_matrix is not None:
         assert as_matrix
-        return np.matrix([spear_vector["x"], spear_vector["y"], spear_vector["z"]]).T
+        return np.matrix([spear_vector["X"], spear_vector["Y"], spear_vector["Z"]]).T
+    else:
+        return np.array([spear_vector["X"], spear_vector["Y"], spear_vector["Z"]])
 
 def to_spear_vector_from_numpy_array(numpy_array):
     if isinstance(numpy_array, np.matrix):
-        assert numpy_array.shape == (3, 1)
         numpy_array = numpy_array.A1
-    elif isinstance(numpy_array, np.ndarray):
+    if isinstance(numpy_array, np.ndarray):
         assert numpy_array.shape == (3,)
     else:
         assert False
@@ -293,19 +292,22 @@ def convert_transform(transform, as_numpy=None, as_spear=None, as_quat=None, as_
     if as_numpy is not None:
         assert as_numpy
         assert as_spear is None
-    if as_spear is not None:
+    elif as_spear is not None:
         assert as_spear
-        assert as_numpy is None
         assert as_quat is None
         assert as_array is None
         assert as_matrix is None
+    else:
+        assert False
     if as_quat is not None:
         assert as_quat
         assert as_array is None
         assert as_matrix is None
-    if as_array is not None:
+    elif as_array is not None:
         assert as_array
         assert as_matrix is None
+    elif as_matrix is not None:
+        assert as_matrix
 
     # normalize input to a numpy transform with a (3,) np.ndarray translation vector, a (3,3) np.ndarray
     # rotation matrix, and a (3,) np.ndarray scale vector
@@ -313,12 +315,11 @@ def convert_transform(transform, as_numpy=None, as_spear=None, as_quat=None, as_
     keys = set(transform.keys())
     if keys == set(["translation", "rotation", "scale"]):
         numpy_transform = transform
-    elif set(k.lower() for k in keys) == set(["translation", "rotation", "scale3d"]):
-        spear_transform = { k.lower(): v for k, v in transform.items() }
+    elif keys == set(["Translation", "Rotation", "Scale3D"]):
         numpy_transform = {
-            "translation": to_numpy_array_from_spear_vector(spear_vector=spear_transform["translation"]),
-            "rotation": to_numpy_matrix_from_spear_quat(spear_quat=spear_transform["rotation"]),
-            "scale": to_numpy_array_from_spear_vector(spear_vector=spear_transform["scale3d"])}
+            "translation": to_numpy_array_from_spear_vector(spear_vector=transform["Translation"]),
+            "rotation": to_numpy_matrix_from_spear_quat(spear_quat=transform["Rotation"]),
+            "scale": to_numpy_array_from_spear_vector(spear_vector=transform["Scale3D"])}
     else:
         assert False
 
@@ -355,7 +356,7 @@ def convert_transform(transform, as_numpy=None, as_spear=None, as_quat=None, as_
 
     # format output
 
-    if as_numpy:
+    if as_numpy is not None:
         if as_quat is not None:
             rotation = scipy.spatial.transform.Rotation.from_matrix(rotation).as_quat()
         elif as_array is not None:
@@ -367,7 +368,7 @@ def convert_transform(transform, as_numpy=None, as_spear=None, as_quat=None, as_
         else:
             rotation = scipy.spatial.transform.Rotation.from_matrix(rotation).as_quat()
         return {"translation": translation, "rotation": rotation, "scale": scale}
-    elif as_spear:
+    elif as_spear is not None:
         translation = to_spear_vector_from_numpy_array(numpy_array=translation)
         rotation = to_spear_quat_from_numpy_matrix(numpy_matrix=rotation)
         scale = to_spear_vector_from_numpy_array(numpy_array=scale)
@@ -446,4 +447,5 @@ def compose_component_transforms(transforms, is_absolute_location=None, is_absol
 # Identity transform
 #
 
-identity_transform = to_spear_transform_from_numpy_transform(numpy_transform={"translation": np.zeros(3), "rotation": np.identity(3), "scale": np.ones(3)})
+def get_identity_transform():
+    return to_spear_transform_from_numpy_transform(numpy_transform={"translation": np.zeros(3), "rotation": np.identity(3), "scale": np.ones(3)})

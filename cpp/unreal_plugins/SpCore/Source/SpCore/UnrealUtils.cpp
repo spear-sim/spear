@@ -18,30 +18,31 @@
 #include <Components/ActorComponent.h>
 #include <Components/SceneComponent.h>
 #include <Containers/Array.h>
-#include <Containers/UnrealString.h>  // FString::operator*
-#include <CoreGlobals.h>              // GAllowActorScriptExecutionInEditor
+#include <Containers/UnrealString.h>        // FString::operator*
+#include <CoreGlobals.h>                    // GAllowActorScriptExecutionInEditor
 #include <Dom/JsonObject.h>
 #include <Dom/JsonValue.h>
-#include <Engine/Engine.h>            // GEngine
+#include <Engine/Engine.h>                  // GEngine
 #include <GameFramework/Actor.h>
-#include <HAL/Platform.h>             // TCHAR, uint16
-#include <HAL/UnrealMemory.h>         // FMemory
-#include <JsonObjectConverter.h>
+#include <HAL/Platform.h>                   // TCHAR, uint16
+#include <HAL/UnrealMemory.h>               // FMemory
+#include <JsonObjectConverter.h>            // EJsonObjectConversionFlags, FJsonObjectConverter
+#include <Policies/PrettyJsonPrintPolicy.h> // TPrettyJsonPrintPolicy
 #include <Serialization/JsonReader.h>
 #include <Serialization/JsonSerializer.h>
 #include <Templates/Casts.h>
-#include <Templates/SharedPointer.h>  // MakeShared, TSharedPtr, TSharedRef
-#include <Templates/UnrealTemplate.h> // TGuardValue
-#include <UObject/Class.h>            // EIncludeSuperFlag, UClass, UScriptStruct, UStruct
-#include <UObject/NameTypes.h>        // FName
-#include <UObject/Object.h>           // UObject
-#include <UObject/Script.h>           // EFunctionFlags
-#include <UObject/ScriptInterface.h>  // FScriptInterface
-#include <UObject/UnrealType.h>       // EFieldIterationFlags, EPropertyPortFlags, FArrayProperty, FBoolProperty, FByteProperty, FDoubleProperty, FInt8Property,
-                                      // FInt16Property, FInt64Property, FFloatProperty, FIntProperty, FMapProperty, FProperty, FScriptArrayHelper, FScriptMapHelper,
-                                      // FScriptSetHelper, FSetProperty, FStrProperty, FStructProperty, FUInt16Property, FUInt32Property, FUInt64Property,
-                                      // TFieldIterator
-#include <UObject/UObjectHash.h>      // GetDerivedClasses
+#include <Templates/SharedPointer.h>        // MakeShared, TSharedPtr, TSharedRef
+#include <Templates/UnrealTemplate.h>       // TGuardValue
+#include <UObject/Class.h>                  // EIncludeSuperFlag, UClass, UScriptStruct, UStruct
+#include <UObject/NameTypes.h>              // FName
+#include <UObject/Object.h>                 // UObject
+#include <UObject/Script.h>                 // EFunctionFlags
+#include <UObject/ScriptInterface.h>        // FScriptInterface
+#include <UObject/UnrealType.h>             // EFieldIterationFlags, EPropertyPortFlags, FArrayProperty, FBoolProperty, FByteProperty, FDoubleProperty, FInt8Property,
+                                            // FInt16Property, FInt64Property, FFloatProperty, FIntProperty, FMapProperty, FProperty, FScriptArrayHelper, FScriptMapHelper,
+                                            // FScriptSetHelper, FSetProperty, FStrProperty, FStructProperty, FUInt16Property, FUInt32Property, FUInt64Property,
+                                            // TFieldIterator
+#include <UObject/UObjectHash.h>            // GetDerivedClasses
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
@@ -399,8 +400,21 @@ std::string UnrealUtils::getObjectPropertiesAsString(const void* value_ptr, cons
 {
     SP_ASSERT(value_ptr);
     SP_ASSERT(ustruct);
+
+    // By default, FJsonObjectConverter lowercases the first character of each property name and replaces each
+    // occurrence of "ID" with "Id" (e.g., "SegmentationID" becomes "segmentationId"). We skip this step so
+    // property names in the output string match the names that appear in C++, because our Python code assumes
+    // this convention.
     FString string;
-    FJsonObjectConverter::UStructToJsonObjectString(ustruct, value_ptr, string);
+    FJsonObjectConverter::UStructToFormattedJsonObjectString<TCHAR, TPrettyJsonPrintPolicy>(
+        ustruct,                                          // StructDefinition
+        value_ptr,                                        // Struct
+        string,                                           // OutJsonString
+        0,                                                // CheckFlags      (default value: 0)
+        0,                                                // SkipFlags       (default value: 0)
+        0,                                                // Indent          (default value: 0)
+        nullptr,                                          // ExportCb        (default value: nullptr)
+        EJsonObjectConversionFlags::SkipStandardizeCase); // ConversionFlags (default value: EJsonObjectConversionFlags::None)
     return Unreal::toStdString(string);
 }
 
@@ -960,9 +974,7 @@ SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& prop
 
         FStructProperty* struct_property = static_cast<FStructProperty*>(property_desc.property_);
         UStruct* ustruct = struct_property->Struct;
-        FString fstring;
-        FJsonObjectConverter::UStructToJsonObjectString(ustruct, property_desc.value_ptr_, fstring);
-        property_value.value_ = Unreal::toStdString(fstring);
+        property_value.value_ = getObjectPropertiesAsString(property_desc.value_ptr_, ustruct);
 
     } else if (property_desc.property_->IsA(FObjectProperty::StaticClass())) {
 

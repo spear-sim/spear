@@ -3,19 +3,14 @@
 // Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
-using System;                          // Console, Exception
+using System;                          // Console
 using System.IO;                       // Path
 using System.Runtime.CompilerServices; // CallerFilePath, CallerLineNumber, CallerMemberName
 using UnrealBuildTool;                 // ModuleRules, ReadOnlyTargetRules
 
 public class SpModuleRules : ModuleRules
 {
-    // UBT instantiates this constructor via reflection when building the SpModuleRules module itself, so it
-    // must take exactly one argument (reflection doesn't perform C#'s compile-time default-parameter substitution).
-    // Delegate to the constructor below so this module defaults to bLinkThirdPartyLibraries: false.
-    public SpModuleRules(ReadOnlyTargetRules readOnlyTargetRules) : this(readOnlyTargetRules, bLinkThirdPartyLibraries: false) {}
-
-    public SpModuleRules(ReadOnlyTargetRules readOnlyTargetRules, bool bLinkThirdPartyLibraries) : base(readOnlyTargetRules)
+    public SpModuleRules(ReadOnlyTargetRules readOnlyTargetRules) : base(readOnlyTargetRules)
     {
         // Disable precompiled headers entirely because they somehow force full rebuilds in UE 5.5.
         // Additionally, we prefer to avoid precompiled headers for easier debugging of compile errors, and
@@ -60,71 +55,6 @@ public class SpModuleRules : ModuleRules
         if (readOnlyTargetRules.bBuildDeveloperTools) {
             PublicDependencyModuleNames.Add("MessageLog");
             PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(readOnlyTargetRules.RelativeEnginePath, "Source", "Developer", "MessageLog", "Private")));
-        }
-
-        // Only add library dependencies if explicitly requested, because the third-party paths below are
-        // computed relative to ModuleDirectory and assume the module lives inside the SPEAR repo (under
-        // spear/cpp/unreal_plugins/<Plugin>/Source/<Module>). bLinkThirdPartyLibraries therefore defaults to
-        // false, and modules that actually need these libraries (e.g., SpCore.Build.cs, SpServices.Build.cs,
-        // SpUnrealTypes.Build.cs, SpearSim.Build.cs) must opt in with bLinkThirdPartyLibraries: true. This
-        // default also avoids build issues on Linux where the SpModuleRules dummy plugin is trying to link
-        // against Boost but isn't set up correctly, which can happen in UE 5.7, and it lets a project's own
-        // auto-generated primary game module (see tools/install_plugins_in_external_project.py) opt out too,
-        // since that module lives inside the external project's own directory tree instead.
-        if (bLinkThirdPartyLibraries) {
-
-            string thirdPartyDir = Path.GetFullPath(Path.Combine(ModuleDirectory, "..", "..", "..", "..", "..", "third_party"));
-
-            //
-            // boost
-            //
-
-            PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost")));
-
-            // We need to link against unit_test_framework because SpCore/Boost.h uses boost::debug::under_debugger
-            // from <boost/test/debug.hpp>, even though we don't use Boost's unit testing functionality.
-            if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Win64) {
-                PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_unit_test_framework-vc143-mt-x64-1_90.lib")));
-            } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Mac) {
-                PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_unit_test_framework.a")));
-            } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Linux) {
-                PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "boost", "stage", "lib", "libboost_unit_test_framework.a")));
-            } else {
-                throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + readOnlyTargetRules.Platform);
-            }
-
-            //
-            // rpclib
-            //
-
-            PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "rpclib", "include")));
-
-            if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Win64) {
-                PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "rpclib", "BUILD", "Win64", "Release", "rpc.lib")));
-            } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Mac) {
-                PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "rpclib", "BUILD", "Mac", "librpc.a")));
-            } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Linux) {
-                PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "rpclib", "BUILD", "Linux", "librpc.a")));
-            } else {
-                throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + readOnlyTargetRules.Platform);
-            }
-
-            //
-            // yaml-cpp
-            //
-
-            PublicIncludePaths.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "yaml-cpp", "include")));
-
-            if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Win64) {
-                PublicDefinitions.Add("YAML_CPP_STATIC_DEFINE");
-                PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "yaml-cpp", "BUILD", "Win64", "Release", "yaml-cpp.lib")));
-            } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Mac) {
-                PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "yaml-cpp", "BUILD", "Mac", "libyaml-cpp.a")));
-            } else if (readOnlyTargetRules.Platform == UnrealTargetPlatform.Linux) {
-                PublicAdditionalLibraries.Add(Path.GetFullPath(Path.Combine(thirdPartyDir, "yaml-cpp", "BUILD", "Linux", "libyaml-cpp.a")));
-            } else {
-                throw new Exception(SP_LOG_GET_PREFIX() + "Unexpected target platform: " + readOnlyTargetRules.Platform);
-            }
         }
     }
 

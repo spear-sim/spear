@@ -41,7 +41,7 @@ Each tool call populates the exec namespace with these top-level variables:
 | `segmentation_id_image` | Per-pixel index into `segmentation_id_descs`, int32, (H,W) |
 | `segmentation_id_descs` | List of dicts with actor/component/material handles and names |
 
-The `actor`, `nonProxyComponent`, and `nonProxyMaterial` fields in each `segmentation_id_descs` entry are `uint64` handles, not `UnrealObject`s — see **Handles and UnrealObjects** below for how to convert.
+The `Actor`, `NonProxyComponent`, and `NonProxyMaterial` fields in each `segmentation_id_descs` entry are `uint64` handles, not `UnrealObject`s — see **Handles and UnrealObjects** below for how to convert.
 
 **Do not** create a new `spear.Instance()`, call `instance.get_game()`, or `instance.get_editor()`. All `import` and `from ... import ...` statements are banned.
 
@@ -93,7 +93,7 @@ Scene metadata from Unreal is unreliable for spatial/visual tasks. Treat the ren
   seg_id = before_execute["segmentation_id_image"][py, px]
   desc   = before_execute["segmentation_id_descs"][seg_id]
   with instance.begin_frame():
-      comp = game.get_unreal_object(uobject=desc["nonProxyComponent"], with_sp_funcs=False)
+      comp = game.get_unreal_object(uobject=desc["NonProxyComponent"], with_sp_funcs=False)
   ```
 - **Compute directions and distances from pixel data, not from metadata.** `world_position[y, x]` gives a 3D point you can trust for opaque surfaces. An actor's location and bounds are fine. A yaw or forward vector alone is not.
 - **Don't trust actor forward vectors or rotation values to tell you which way something "visually" faces.** Meshes can be authored with any local orientation — the reported forward has no guaranteed relationship to a visual front (seat front, door opening, camera lens direction, etc.). If facing matters, render and look.
@@ -140,12 +140,12 @@ Normal usage is `UnrealObject`s all the way down: `unreal_service.*` helpers (`s
 
 Raw `uint64` handles surface in one routine place:
 
-- `segmentation_id_descs` — each entry's `actor`, `nonProxyComponent`, and `nonProxyMaterial` fields are raw handles.
+- `segmentation_id_descs` — each entry's `Actor`, `NonProxyComponent`, and `NonProxyMaterial` fields are raw handles.
 
 To work with those handles:
 
 - **Handle → UnrealObject** (usually needed to call methods on the segmented actor/component/material): `obj = game.get_unreal_object(uobject=handle, with_sp_funcs=False)`. Use `editor.get_unreal_object(...)` for editor-world objects. Must be called inside `with instance.begin_frame()` or `with instance.end_frame()`.
-- **UnrealObject → handle** (rarely needed): `obj.uobject` returns the raw `uint64`. The only common reason to reach for this is comparing an `UnrealObject` against a handle from `segmentation_id_descs` (e.g., `m.uobject == desc["nonProxyMaterial"]`). To pass a wrapped object to a UFUNCTION, pass the `UnrealObject` itself — do not extract the handle.
+- **UnrealObject → handle** (rarely needed): `obj.uobject` returns the raw `uint64`. The only common reason to reach for this is comparing an `UnrealObject` against a handle from `segmentation_id_descs` (e.g., `m.uobject == desc["NonProxyMaterial"]`). To pass a wrapped object to a UFUNCTION, pass the `UnrealObject` itself — do not extract the handle.
 
 ## Actor naming
 
@@ -178,7 +178,7 @@ To work with those handles:
 
 Concrete kwargs and return shapes for common helpers. See `examples/getting_started`, `examples/render_image`, `examples/render_image_hypersim` for full usage.
 
-**Case convention:** FVector/FRotator dicts **returned** by UFUNCTIONs use lowercase keys (`{"x", "y", "z"}`, `{"pitch", "yaw", "roll"}`). Dicts you **pass in** to setters use uppercase (`{"X", "Y", "Z"}`, `{"Pitch", "Yaw", "Roll"}`) to match Unreal's C++ field names.
+**Case convention:** Struct dicts use Unreal's C++ field names (e.g., `{"X", "Y", "Z"}`, `{"Pitch", "Yaw", "Roll"}`), both when they are returned by UFUNCTIONs and when you pass them in.
 
 ### `game.unreal_service` / `editor.unreal_service`
 
@@ -199,6 +199,7 @@ Concrete kwargs and return shapes for common helpers. See `examples/getting_star
 
 - `game.get_unreal_object(uobject=handle_uint64, with_sp_funcs=False)` → Python wrapper. `editor.get_unreal_object(...)` for editor-world objects. Must be called inside `with instance.begin_frame()` / `end_frame()`.
 - `obj.uobject` → Raw uint64 handle from an UnrealObject.
+- `game.cdo.UGameplayStatics` → Cached class default object (CDO) for a class, typically used to call static UFUNCTIONs, e.g., `game.cdo.UGameplayStatics.GetPlayerController(PlayerIndex=0)`. Use `editor.cdo` for the editor world. All CDO access must happen inside `with instance.begin_frame()` / `end_frame()`. Call `instance.rebuild()` to refresh the static class table and clear cached CDOs (e.g., after recompiling a Blueprint class).
 
 ### Introspection and UProperty access
 
@@ -208,13 +209,13 @@ Concrete kwargs and return shapes for common helpers. See `examples/getting_star
 
 ### Actor UFUNCTIONs
 
-- `actor.K2_GetActorLocation()` → `{"x": float, "y": float, "z": float}`.
-- `actor.K2_GetActorRotation()` → `{"pitch": float, "yaw": float, "roll": float}`.
+- `actor.K2_GetActorLocation()` → `{"X": float, "Y": float, "Z": float}`.
+- `actor.K2_GetActorRotation()` → `{"Pitch": float, "Yaw": float, "Roll": float}`.
 - `actor.K2_SetActorLocationAndRotation(NewLocation={"X": 0.0, "Y": 0.0, "Z": 0.0}, NewRotation={"Pitch": 0.0, "Yaw": 0.0, "Roll": 0.0}, bSweep=False, bTeleport=True)` → bool.
 - `actor.K2_SetActorRotation(NewRotation={"Pitch": 0.0, "Yaw": 0.0, "Roll": 0.0}, bTeleportPhysics=True)` → bool.
-- `actor.GetActorScale3D()` → `{"x": float, "y": float, "z": float}`.
+- `actor.GetActorScale3D()` → `{"X": float, "Y": float, "Z": float}`.
 - `actor.SetActorScale3D(NewScale3D={"X": 1.0, "Y": 1.0, "Z": 1.0})` → None.
-- `actor.GetActorBounds(bOnlyCollidingComponents=False, as_dict=True)` → `{"Origin": {"x":.., "y":.., "z":..}, "BoxExtent": {"x":.., "y":.., "z":..}}`. `BoxExtent` values are half-extents.
+- `actor.GetActorBounds(bOnlyCollidingComponents=False, as_dict=True)` → `{"Origin": {"X":.., "Y":.., "Z":..}, "BoxExtent": {"X":.., "Y":.., "Z":..}}`. `BoxExtent` values are half-extents.
 - `actor.K2_GetRootComponent()` → Root component.
 
 ### Component UFUNCTIONs

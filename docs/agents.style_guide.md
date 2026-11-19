@@ -4,6 +4,7 @@
 - Treat nearby code as the canonical style; match naming, spacing, casing, and call patterns in the file being edited.
 - Prefer minimal diffs: change only what is needed for the requested behavior. Check `git diff` against the base branch to verify minimality before presenting changes.
 - Prefer simple, direct code over extra helpers or temporary variables unless they improve clarity.
+- Prefer `if condition: ... else: ...` (or `if (condition) { ... } else { ... }` in C++) over an early return followed by fallthrough code. Put the positive condition in the `if` branch (e.g., `if (ptr) { return f(*ptr); } else { return false; }`, not `if (!ptr) { return false; } return f(*ptr);`).
 - Keep logging/noise low; do not add extra debug output unless requested.
 - Prefer single-line calls when they comfortably fit and remain readable. When a call with keyword arguments doesn't fit on one line, put one argument per line.
 - Omit explicit default arguments when behavior is unchanged.
@@ -52,7 +53,7 @@
 - Prefer aggregate assignment for `std::array` initialization and teardown (e.g., `readback_buffers_ = { make_unique(...), nullptr }`) over per-element `.at(i) = ...` or `.at(i).reset()`.
 - Suffix C++ functions that execute on the render thread with `_RenderThread` (e.g., `copyPixelsFromStagingToCPU_RenderThread`).
 - For C++ `enum class` declarations, assign explicit integer values with aligned `=` signs (e.g., `Idle = 0`, `Pending = 1`). See `EngineService.h` for reference.
-- When adding an `_in_editor_script` generator variant of an existing method, use `yield` only as pause points (after each `begin_frame`/`end_frame` context block) and `return` for the value; use `yield from` to delegate to sub-generators. Factor shared setup into a single `_impl` helper that returns resolved parameters rather than duplicating the impl for regular and generator variants.
+- When adding an `_in_editor_script` generator variant of an existing method, use `yield` only as pause points (after each `begin_frame`/`end_frame` context block) and `return` for the value; use `yield from` to delegate to sub-generators. If the regular and generator variants share an obvious long prefix and/or suffix, then factor it into shared `_impl` helpers rather than duplicating it. But if the differences between the variants are too interleaved, so factoring would only lead to a tiny amount of savings, then don't break up the behavioral locality of a 20-line function for a 2-line shared prefix.
 - When adding a new buffering/readback mode, keep the same SpFunc interface (`enqueue_read_pixels` + `read_pixels`) and express mode differences through priming frame count and internal dispatch. In C++ if-else chains checking `BufferingMode`, order branches as SingleBuffered, DoubleBuffered, TripleBuffered.
 - Prefer generic byte buffers (`std::vector<uint8_t>` with `SpAlignedAllocator`) and `SpArrayDataTypeUtils::getSizeOf` over typed containers with per-type if-else chains for pixel data.
 - When a synchronous code path (e.g., single-buffered readback with `FlushRenderingCommands`) can write directly to the final output buffer, avoid intermediate copies through a scratchpad.

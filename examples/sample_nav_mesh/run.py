@@ -31,17 +31,15 @@ if __name__ == "__main__":
         game.unreal_service.add_object_to_root(uobject=bp_axes_uclass)
 
         # get navigation system
-        navigation_system_v1 = game.get_unreal_object(uclass="UNavigationSystemV1")
-        sp_navigation_system_v1 = game.get_unreal_object(uclass="USpNavigationSystemV1")
-        navigation_system = sp_navigation_system_v1.GetNavigationSystem()
-        supports_rebuilding = navigation_system.bSupportRebuilding.get()                                   # get bSupportRebuilding flag
-        navigation_system.bSupportRebuilding = True                                                        # needs to be set at runtime to force a rebuild
-        sp_navigation_system_v1.Build(NavigationSystem=navigation_system)                                  # force a rebuild
-        sp_navigation_system_v1.AddNavigationBuildLock(NavigationSystem=navigation_system, Flags="Custom") # prevent nav mesh from updating from now on
-        navigation_system.bSupportRebuilding = supports_rebuilding                                         # restore bSupportRebuilding flag
+        navigation_system = game.cdo.USpNavigationSystemV1.GetNavigationSystem()
+        supports_rebuilding = navigation_system.bSupportRebuilding.get()                                          # get bSupportRebuilding flag
+        navigation_system.bSupportRebuilding = True                                                               # needs to be set at runtime to force a rebuild
+        game.cdo.USpNavigationSystemV1.Build(NavigationSystem=navigation_system)                                  # force a rebuild
+        game.cdo.USpNavigationSystemV1.AddNavigationBuildLock(NavigationSystem=navigation_system, Flags="Custom") # prevent nav mesh from updating from now on
+        navigation_system.bSupportRebuilding = supports_rebuilding                                                # restore bSupportRebuilding flag
 
         # get navigation data
-        navigation_data = sp_navigation_system_v1.GetNavDataForAgentName(NavigationSystem=navigation_system, AgentName="Default")
+        navigation_data = game.cdo.USpNavigationSystemV1.GetNavDataForAgentName(NavigationSystem=navigation_system, AgentName="Default")
         spear.log("navigation_data: ", navigation_data)
         pprint.pprint(navigation_data.get_properties(), depth=1)
 

@@ -50,50 +50,54 @@ class SegmentationService(spear.Service):
             self.unreal_service.destroy_actor(actor=self.proxy_component_manager)
             self.proxy_component_manager = None
 
-    def get_mesh_proxy_geometry_descs(self, include_debug_info=False, mesh_proxy_geometry_descs=None, as_raw=None, as_global=None, as_visible=None):
+    def get_mesh_proxy_geometry_descs(self, include_debug_info=False, raw_mesh_proxy_geometry_descs=None, as_raw=None, as_global=None, as_visible=None):
         assert self.proxy_component_manager is not None
 
         if as_raw is not None:
+            assert as_raw
             assert as_global is None
             assert as_visible is None
         elif as_global is not None:
-            assert as_raw is None
+            assert as_global
             assert as_visible is None
         elif as_visible is not None:
-            assert as_raw is None
-            assert as_global is None
+            assert as_visible
         else:
             as_global = True
 
-        # get descs from the manager or use caller-provided descs
-        if mesh_proxy_geometry_descs is not None:
-            descs = mesh_proxy_geometry_descs
+        # get raw descs from the manager or use caller-provided raw descs (we treat raw descs as read-only)
+        if raw_mesh_proxy_geometry_descs is not None:
+            assert not include_debug_info
+            raw_descs = raw_mesh_proxy_geometry_descs
         else:
-            spear.log("Getting mesh proxy geomery descs...")
-            descs = self.proxy_component_manager.GetMeshProxyGeometryDescs(bIncludeDebugInfo=include_debug_info)
-            spear.log("Finished getting mesh proxy geomery descs.")
+            spear.log("Getting mesh proxy geometry descs...")
+            raw_descs = self.proxy_component_manager.GetMeshProxyGeometryDescs(bIncludeDebugInfo=include_debug_info)
+            spear.log("Finished getting mesh proxy geometry descs.")
 
-        # convert pointer strings to handles (no-op if already handles)
-        for desc in descs:
-            desc["nonProxyComponent"] = spear.to_handle(obj=desc["nonProxyComponent"])
-            desc["nonProxyMaterial"] = spear.to_handle(obj=desc["nonProxyMaterial"])
-            desc["actor"] = spear.to_handle(obj=desc["actor"])
+        descs = []
+        for raw_desc in raw_descs:
+            desc = dict(raw_desc)
 
-        # parse property JSON strings into dicts and relabel
-        if include_debug_info:
-            for desc in descs:
-                desc["nonProxyComponentProperties"] = json.loads(desc.pop("nonProxyComponentPropertiesString"))
-                desc["nonProxyMaterialProperties"] = json.loads(desc.pop("nonProxyMaterialPropertiesString"))
-                desc["actorProperties"] = json.loads(desc.pop("actorPropertiesString"))
+            # convert pointer strings to handles
+            desc["NonProxyComponent"] = spear.to_handle(obj=raw_desc["NonProxyComponent"])
+            desc["NonProxyMaterial"] = spear.to_handle(obj=raw_desc["NonProxyMaterial"])
+            desc["Actor"] = spear.to_handle(obj=raw_desc["Actor"])
+
+            # parse property JSON strings into dicts and relabel (the strings are "{}" if debug info wasn't requested)
+            desc["NonProxyComponentProperties"] = json.loads(desc.pop("NonProxyComponentPropertiesString"))
+            desc["NonProxyMaterialProperties"] = json.loads(desc.pop("NonProxyMaterialPropertiesString"))
+            desc["ActorProperties"] = json.loads(desc.pop("ActorPropertiesString"))
+
+            descs.append(desc)
 
         if as_raw:
+            # as_raw: don't sort descs
             return descs
-
-        # as_global or as_visible: sort descs by raw ID
-        descs_sort_indices = np.argsort([ desc["id"] for desc in descs ])
-        descs = [ descs[i] for i in descs_sort_indices ]
-
-        return descs
+        else:
+            # as_global or as_visible: sort descs by ID
+            descs_sort_indices = np.argsort([ desc["ProxyId"] for desc in descs ])
+            descs = [ descs[i] for i in descs_sort_indices ]
+            return descs
 
     def get_segmentation_data(self, object_ids_bgra_uint8_image=None, object_ids_rgba_float16_image=None, include_debug_info=False, mesh_proxy_geometry_descs=None, as_raw=None, as_global=None, as_visible=None):
         assert self.proxy_component_manager is not None
@@ -106,11 +110,14 @@ class SegmentationService(spear.Service):
             assert False
 
         if as_raw is not None:
+            assert as_raw
             assert as_global is None
             assert as_visible is None
         elif as_global is not None:
-            assert as_raw is None
+            assert as_global
             assert as_visible is None
+        elif as_visible is not None:
+            assert as_visible
         else:
             as_visible = True
 
@@ -132,7 +139,7 @@ class SegmentationService(spear.Service):
             return raw_id_image, global_descs
 
         # caller-provided descs must be sorted for as_global and as_visible
-        global_raw_ids = np.array([ desc["id"] for desc in global_descs ])
+        global_raw_ids = np.array([ desc["ProxyId"] for desc in global_descs ])
         if mesh_proxy_geometry_descs is not None:
             assert np.all(global_raw_ids[:-1] <= global_raw_ids[1:])
 
@@ -140,16 +147,28 @@ class SegmentationService(spear.Service):
         visible_raw_ids, visible_raw_ids_inverse = np.unique(raw_id_image, return_inverse=True)
 
         if not np.all(np.isin(visible_raw_ids, global_raw_ids)):
-            import cv2
             visible_raw_ids_not_in_global_raw_ids = visible_raw_ids[np.logical_not(np.isin(visible_raw_ids, global_raw_ids))]
             spear.log("visible_raw_ids: ", visible_raw_ids)
             spear.log("global_raw_ids: ", global_raw_ids)
             spear.log("visible_raw_ids not in global_raw_ids: ", visible_raw_ids_not_in_global_raw_ids)
-            # Show both debug images in their own windows (cv2 displays the BGRA image natively) and wait for a keypress.
-            cv2.imshow("object_ids_bgra_uint8_image", object_ids_bgra_uint8_image)
-            cv2.imshow("visible_raw_ids_not_in_global_raw_ids", (np.isin(raw_id_image, visible_raw_ids_not_in_global_raw_ids) * 255).astype(np.uint8))
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
+
+            if self.config.SPEAR.SEGMENTATION_SERVICE.VISUAL_DEBUGGING:
+                import cv2
+
+                # Show both debug images in their own windows and wait for a keypress. cv2 displays BGRA uint8
+                # images natively, but doesn't support float16 images, so we convert RGBA float16 images to BGRA
+                # float32 images.
+                if object_ids_bgra_uint8_image is not None:
+                    cv2.imshow("object_ids_bgra_uint8_image", object_ids_bgra_uint8_image)
+                elif object_ids_rgba_float16_image is not None:
+                    cv2.imshow("object_ids_rgba_float16_image", object_ids_rgba_float16_image[:,:,[2,1,0,3]].astype(np.float32))
+                else:
+                    assert False
+
+                cv2.imshow("visible_raw_ids_not_in_global_raw_ids", (np.isin(raw_id_image, visible_raw_ids_not_in_global_raw_ids) * 255).astype(np.uint8))
+
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
 
         # verify all visible raw IDs are known to the manager
         assert np.all(np.isin(visible_raw_ids, global_raw_ids))

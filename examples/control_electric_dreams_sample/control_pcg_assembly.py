@@ -72,11 +72,8 @@ if __name__ == "__main__":
 
     with instance.begin_frame():
 
-        # get UGameplayStatics
-        gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
-
         # get player controller
-        player_controller = gameplay_statics.GetPlayerController(PlayerIndex=0)
+        player_controller = game.cdo.UGameplayStatics.GetPlayerController(PlayerIndex=0)
 
         # get and configure drone
         drone = player_controller.K2_GetPawn()
@@ -84,9 +81,8 @@ if __name__ == "__main__":
 
         # get PCG subsystem and assemblies
 
-        sp_pcg_subsystem = game.get_unreal_object(uclass="USpPCGSubsystem")
         pcg_subsystem = game.unreal_service.get_subsystem(subsystem_provider_class_name="UWorld", subsystem_uclass="UPCGSubsystem")
-        assert sp_pcg_subsystem.IsInitialized(PCGSubsystem=pcg_subsystem)
+        assert game.cdo.USpPCGSubsystem.IsInitialized(PCGSubsystem=pcg_subsystem)
 
         bp_pcg_large_assembly = None
 
@@ -144,7 +140,7 @@ if __name__ == "__main__":
     #
 
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
         # set PCG assembly pose
         bp_pcg_large_assembly.K2_SetActorLocationAndRotation(
@@ -158,17 +154,17 @@ if __name__ == "__main__":
         # move -- so the input CRC is unchanged after K2_SetActorLocationAndRotation. Without flushing, the
         # graph cache would hit and return stale geometry at the old pose; clearing it forces the elements
         # to re-sample the live (moved) components.
-        sp_pcg_subsystem.FlushCache(PCGSubsystem=pcg_subsystem)
+        game.cdo.USpPCGSubsystem.FlushCache(PCGSubsystem=pcg_subsystem)
         for bp_pcg_assembly_desc in bp_pcg_assembly_descs:
             for pcg_component in bp_pcg_assembly_desc["pcg_components"]:
                 pcg_component.Generate(bForce=True)
 
     with instance.end_frame():
-        gameplay_statics.SetGamePaused(bPaused=True)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     for _ in range(num_frames_for_drone_update):
         with instance.begin_frame():
-            gameplay_statics.SetGamePaused(bPaused=False)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
             # set camera pose
             viewport_desc = game.viewport_service.get_current_viewport_desc(only_get_pose=True)
@@ -183,20 +179,20 @@ if __name__ == "__main__":
                 input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
         with instance.end_frame():
-            gameplay_statics.SetGamePaused(bPaused=True)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     # give PCG assemblies a chance to update
     for _ in range(num_frames_for_pcg_update):
         with instance.begin_frame():
-            gameplay_statics.SetGamePaused(bPaused=False)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
             viewport_desc = game.viewport_service.get_current_viewport_desc(only_get_pose=True)
             game.viewport_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, only_align_pose=True)
         with instance.end_frame():
-            gameplay_statics.SetGamePaused(bPaused=True)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     # set camera pose
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
         viewport_desc = game.viewport_service.get_current_viewport_desc(only_get_pose=True)
         game.viewport_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, only_align_pose=True)
     with instance.end_frame():
@@ -216,7 +212,7 @@ if __name__ == "__main__":
 
     for i, t in enumerate(np.linspace(0.0, 1.0, num_frames)):
         with instance.begin_frame():
-            gameplay_statics.SetGamePaused(bPaused=False)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
             location = t*location_end + (1 - t)*location_start
             rotator_pyr = t*rotator_pyr_end + (1 - t)*rotator_pyr_start
@@ -230,7 +226,7 @@ if __name__ == "__main__":
 
             # Force the PCG assemblies to regenerate at the new pose. FlushCache is required (see the
             # detailed rationale at the first FlushCache call above).
-            sp_pcg_subsystem.FlushCache(PCGSubsystem=pcg_subsystem)
+            game.cdo.USpPCGSubsystem.FlushCache(PCGSubsystem=pcg_subsystem)
             for bp_pcg_assembly_desc in bp_pcg_assembly_descs:
                 for pcg_component in bp_pcg_assembly_desc["pcg_components"]:
                     pcg_component.Generate(bForce=True)
@@ -242,7 +238,7 @@ if __name__ == "__main__":
                     data_bundle = component_desc["component"].read_pixels()
                     component_desc["data"] = data_bundle["arrays"]["data"]
 
-            gameplay_statics.SetGamePaused(bPaused=True)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
         if not args.skip_read_pixels and not args.skip_save_images:
             save_images(images_dir=images_dir, frame_index=frame_index)
@@ -251,16 +247,16 @@ if __name__ == "__main__":
         # give PCG assemblies a chance to update
         for _ in range(num_frames_for_pcg_update):
             with instance.begin_frame():
-                gameplay_statics.SetGamePaused(bPaused=False)
+                game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
             with instance.end_frame():
-                gameplay_statics.SetGamePaused(bPaused=True)
+                game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     #
     # unpause now that we're finished controlling the PCG assembly
     #
 
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
     with instance.end_frame():
         pass
 

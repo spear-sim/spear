@@ -56,6 +56,7 @@ class NavigationService(spear.Service):
 
         navigation_data = spear.to_handle(obj=navigation_data)
         query_owner = spear.to_handle(obj=query_owner)
+        filter_classes = spear.to_handle(obj=filter_classes)
         queriers = spear.to_handle(obj=queriers)
 
         engine_service = self.entry_point_caller.engine_service
@@ -124,6 +125,7 @@ class NavigationService(spear.Service):
 
         navigation_data = spear.to_handle(obj=navigation_data)
         query_owner = spear.to_handle(obj=query_owner)
+        filter_classes = spear.to_handle(obj=filter_classes)
         queriers = spear.to_handle(obj=queriers)
 
         if radius is not None:
@@ -200,6 +202,7 @@ class NavigationService(spear.Service):
         navigation_system = spear.to_handle(obj=navigation_system)
         navigation_data = spear.to_handle(obj=navigation_data)
         nav_agent_interface = spear.to_handle(obj=nav_agent_interface)
+        filter_classes = spear.to_handle(obj=filter_classes)
         queriers = spear.to_handle(obj=queriers)
 
         engine_service = self.entry_point_caller.engine_service
@@ -234,11 +237,9 @@ class NavigationService(spear.Service):
 
             # return paths as a list of NumPy arrays rather than as a points array and an indices array
             points = return_values["points"]
-            indices = return_values["indices"]
-            paths = []
-            for i in range(indices.shape[0] - 1):
-                paths.append(points[indices[i]:indices[i + 1]])
-            paths.append(points[indices[-1]:])
+            start_indices = return_values["indices"]
+            end_indices = np.append(start_indices[1:], np.uint64(points.shape[0]))
+            paths = [ points[start_index:end_index] for start_index, end_index in zip(start_indices, end_indices) ]
 
             return paths
 

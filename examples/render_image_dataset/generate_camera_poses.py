@@ -42,9 +42,8 @@ if __name__ == "__main__":
 
     with instance.begin_frame():
 
-        sp_navigation_system_v1 = game.get_unreal_object(uclass="USpNavigationSystemV1")
-        navigation_system = sp_navigation_system_v1.GetNavigationSystem()
-        navigation_data = sp_navigation_system_v1.GetNavDataForAgentName(NavigationSystem=navigation_system, AgentName="Default")
+        navigation_system = game.cdo.USpNavigationSystemV1.GetNavigationSystem()
+        navigation_data = game.cdo.USpNavigationSystemV1.GetNavDataForAgentName(NavigationSystem=navigation_system, AgentName="Default")
 
         # sample random points
         points = game.navigation_service.get_random_points(navigation_data=navigation_data, num_points=num_camera_poses_per_scene)

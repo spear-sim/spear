@@ -7,7 +7,7 @@ import spear
 
 
 class ViewportService(spear.Service):
-    def __init__(self, entry_point_caller, sp_func_service, unreal_service, config):
+    def __init__(self, entry_point_caller, sp_func_service, unreal_service, cdo, config):
         assert sp_func_service.is_top_level_service()
         assert unreal_service.is_top_level_service()
 
@@ -15,6 +15,7 @@ class ViewportService(spear.Service):
             entry_point_caller=entry_point_caller,
             sp_func_service=sp_func_service,
             unreal_service=unreal_service,
+            cdo=cdo,
             config=config)
 
     def align_camera_with_viewport(self, camera_sensor, camera_components, viewport_desc, widths=None, heights=None, only_align_pose=False, post_processing_components=None, post_processing_volumes=None):
@@ -80,99 +81,92 @@ class ViewportService(spear.Service):
 
 
 class GameViewportService(ViewportService):
-    def __init__(self, entry_point_caller, sp_func_service, unreal_service, engine_globals_service, config):
+    def __init__(self, entry_point_caller, sp_func_service, unreal_service, engine_globals_service, cdo, config):
         super().__init__(
             entry_point_caller=entry_point_caller,
             sp_func_service=sp_func_service,
             unreal_service=unreal_service,
+            cdo=cdo,
             config=config)
 
         self._engine_globals_service = engine_globals_service
         self._game_viewport_client = None
-        self._gameplay_statics = None
-        self._sp_game_viewport = None
 
     def initialize(self):
         engine = self._engine_globals_service.get_engine()
         self._game_viewport_client = engine.GameViewport.get()
-        self._gameplay_statics = self.get_unreal_object(uclass="UGameplayStatics")
-        self._sp_game_viewport = self.get_unreal_object(uclass="USpGameViewportClient")
 
     def get_current_viewport_desc(self, only_get_pose=False):
-        player_controller = self._gameplay_statics.GetPlayerController(PlayerIndex=0)
+        player_controller = self.cdo.UGameplayStatics.GetPlayerController(PlayerIndex=0)
         pov = player_controller.PlayerCameraManager.ViewTarget.POV.get()
 
         if only_get_pose:
             return {
-                "camera_location": pov["location"],
-                "camera_rotation": pov["rotation"]}
+                "camera_location": pov["Location"],
+                "camera_rotation": pov["Rotation"]}
 
         else:
-            viewport_size = self._sp_game_viewport.GetViewportSize(GameViewportClient=self._game_viewport_client, as_dict=True)["ViewportSize"]
-            is_perspective = pov["projectionMode"] == "Perspective"
+            viewport_size = self.cdo.USpGameViewportClient.GetViewportSize(GameViewportClient=self._game_viewport_client, as_dict=True)["ViewportSize"]
+            is_perspective = pov["ProjectionMode"] == "Perspective"
 
             if is_perspective:
-                viewport_aspect_ratio = viewport_size["x"]/viewport_size["y"]
-                half_fov = pov["fOV"]*math.pi/360.0
-                fov_x_degrees = math.atan(math.tan(half_fov)*viewport_aspect_ratio/pov["aspectRatio"])*360.0/math.pi
+                viewport_aspect_ratio = viewport_size["X"]/viewport_size["Y"]
+                half_fov = pov["FOV"]*math.pi/360.0
+                fov_x_degrees = math.atan(math.tan(half_fov)*viewport_aspect_ratio/pov["AspectRatio"])*360.0/math.pi
                 fov_y_degrees = math.atan(math.tan(fov_x_degrees*math.pi/360.0)/viewport_aspect_ratio)*360.0/math.pi
 
             return {
-                "viewport_size_x": viewport_size["x"],
-                "viewport_size_y": viewport_size["y"],
-                "camera_location": pov["location"],
-                "camera_rotation": pov["rotation"],
+                "viewport_size_x": viewport_size["X"],
+                "viewport_size_y": viewport_size["Y"],
+                "camera_location": pov["Location"],
+                "camera_rotation": pov["Rotation"],
                 "is_perspective": is_perspective,
                 "fov_x_degrees": fov_x_degrees if is_perspective else None,
                 "fov_y_degrees": fov_y_degrees if is_perspective else None,
-                "fov_degrees": pov["fOV"] if is_perspective else None,
-                "aspect_ratio": pov["aspectRatio"] if is_perspective else None,
-                "ortho_width": pov["orthoWidth"] if not is_perspective else None,
+                "fov_degrees": pov["FOV"] if is_perspective else None,
+                "aspect_ratio": pov["AspectRatio"] if is_perspective else None,
+                "ortho_width": pov["OrthoWidth"] if not is_perspective else None,
                 "post_process_volumes": self.unreal_service.find_actors_by_class(uclass="APostProcessVolume")}
 
 
 class EditorViewportService(ViewportService):
-    def __init__(self, entry_point_caller, sp_func_service, unreal_service, config):
+    def __init__(self, entry_point_caller, sp_func_service, unreal_service, cdo, config):
         super().__init__(
             entry_point_caller=entry_point_caller,
             sp_func_service=sp_func_service,
             unreal_service=unreal_service,
+            cdo=cdo,
             config=config)
 
-        self._sp_editor_engine = None
-
-    def initialize(self):
-        self._sp_editor_engine = self.get_unreal_object(uclass="USpEditorEngine")
-
     def get_current_viewport_desc(self, only_get_pose=False):
-        viewport_client_descs = self._sp_editor_engine.GetLevelViewportClients()
+        viewport_client_descs = self.cdo.USpEditorEngine.GetLevelViewportClients()
         editing_descs = [ desc for desc in viewport_client_descs if desc["bIsCurrentLevelEditing"] ]
         assert len(editing_descs) == 1
         client = editing_descs[0]
 
         if only_get_pose:
             return {
-                "camera_location": client["cameraLocation"],
-                "camera_rotation": client["cameraRotation"]}
+                "camera_location": client["CameraLocation"],
+                "camera_rotation": client["CameraRotation"]}
 
         else:
             is_perspective = client["bIsPerspective"]
 
             if is_perspective:
-                viewport_aspect_ratio = client["viewportSize"]["x"]/client["viewportSize"]["y"]
-                half_fov = client["viewFOV"]*math.pi/360.0
-                fov_x_degrees = math.atan(math.tan(half_fov)*viewport_aspect_ratio/client["aspectRatio"])*360.0/math.pi
+                viewport_aspect_ratio = client["ViewportSize"]["X"]/client["ViewportSize"]["Y"]
+                half_fov = client["ViewFOV"]*math.pi/360.0
+                fov_x_degrees = math.atan(math.tan(half_fov)*viewport_aspect_ratio/client["AspectRatio"])*360.0/math.pi
                 fov_y_degrees = math.atan(math.tan(fov_x_degrees*math.pi/360.0)/viewport_aspect_ratio)*360.0/math.pi
 
             return {
-                "viewport_size_x": client["viewportSize"]["x"],
-                "viewport_size_y": client["viewportSize"]["y"],
-                "camera_location": client["cameraLocation"],
-                "camera_rotation": client["cameraRotation"],
+                "viewport_size_x": client["ViewportSize"]["X"],
+                "viewport_size_y": client["ViewportSize"]["Y"],
+                "camera_location": client["CameraLocation"],
+                "camera_rotation": client["CameraRotation"],
                 "is_perspective": is_perspective,
                 "fov_x_degrees": fov_x_degrees if is_perspective else None,
                 "fov_y_degrees": fov_y_degrees if is_perspective else None,
-                "fov_degrees": client["viewFOV"] if is_perspective else None,
-                "aspect_ratio": client["aspectRatio"] if is_perspective else None,
-                "ortho_width": client["orthoZoom"] if not is_perspective else None,
+                "fov_degrees": client["ViewFOV"] if is_perspective else None,
+                "aspect_ratio": client["AspectRatio"] if is_perspective else None,
+                "ortho_width": client["OrthoZoom"] if not is_perspective else None,
                 "post_process_volumes": self.unreal_service.find_actors_by_class(uclass="APostProcessVolume")}

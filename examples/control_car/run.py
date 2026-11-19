@@ -21,9 +21,6 @@ if __name__ == "__main__":
 
     with instance.begin_frame():
 
-        # get UGameplayStatics
-        gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
-
         # get car
         car = game.unreal_service.find_actor_by_class(uclass="AWheeledVehiclePawn")
 
@@ -42,7 +39,7 @@ if __name__ == "__main__":
         #
         # If we spawned a new car, then we would need to possess it as follows:
         #
-        # player_controller = gameplay_statics.GetPlayerController(PlayerIndex=0)
+        # player_controller = game.cdo.UGameplayStatics.GetPlayerController(PlayerIndex=0)
         # player_controller.Possess(InPawn=car)
         #
 
@@ -59,7 +56,7 @@ if __name__ == "__main__":
 
     # set throttle to 1.0 (value will persist across frames until reset)
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
         #
         # If we wanted to control the car by calling its UFUNCTIONS directly, we could do so as follows:
@@ -82,18 +79,18 @@ if __name__ == "__main__":
             input_action_instance={"TriggerEvent": action_trigger_event, "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
     with instance.end_frame(single_step=True):
-        gameplay_statics.SetGamePaused(bPaused=True)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     # drive for multiple frames
     for _ in range(100):
         with instance.begin_frame():
-            gameplay_statics.SetGamePaused(bPaused=False)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
         with instance.end_frame(single_step=True):
-            gameplay_statics.SetGamePaused(bPaused=True)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     # set steering to 1.0 (value will persist across frames until reset)
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
         #
         # If we wanted to control the car by calling its UFUNCTIONS directly, we could do so as follows:
@@ -116,18 +113,18 @@ if __name__ == "__main__":
             input_action_instance={"TriggerEvent": action_trigger_event, "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
     with instance.end_frame(single_step=True):
-        gameplay_statics.SetGamePaused(bPaused=True)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     # drive for multiple frames
     for _ in range(50):
         with instance.begin_frame():
-            gameplay_statics.SetGamePaused(bPaused=False)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
         with instance.end_frame(single_step=True):
-            gameplay_statics.SetGamePaused(bPaused=True)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     # set throttle to 1.0 and steering to -1.0 (values will persist across frames until reset)
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
         action_name = "IA_Steering"
         action_trigger_event = "Triggered"
@@ -144,18 +141,18 @@ if __name__ == "__main__":
             input_action_instance={"TriggerEvent": action_trigger_event, "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
     with instance.end_frame(single_step=True):
-        gameplay_statics.SetGamePaused(bPaused=True)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     # drive for multiple frames
     for _ in range(50):
         with instance.begin_frame():
-            gameplay_statics.SetGamePaused(bPaused=False)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
         with instance.end_frame(single_step=True):
-            gameplay_statics.SetGamePaused(bPaused=True)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     # set throttle to 0.0 (value will persist across frames until reset)
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
         action_name = "IA_Throttle"
         action_trigger_event = "Triggered"
@@ -172,18 +169,18 @@ if __name__ == "__main__":
             input_action_instance={"TriggerEvent": action_trigger_event, "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
     with instance.end_frame(single_step=True):
-        gameplay_statics.SetGamePaused(bPaused=True)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     # drive for multiple frames
     for _ in range(100):
         with instance.begin_frame():
-            gameplay_statics.SetGamePaused(bPaused=False)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
         with instance.end_frame(single_step=True):
-            gameplay_statics.SetGamePaused(bPaused=True)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     # unpause now that we're finished controlling the car
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
     with instance.end_frame(single_step=True):
         pass
 

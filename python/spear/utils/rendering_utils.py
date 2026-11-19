@@ -46,8 +46,8 @@ def tone_map_hypersim(image, mask, as_dict=None):
 
     image_tone_map = np.power(np.maximum(scale*image, 0.0), gamma)
 
-    if as_dict is None:
-        return image_tone_map
-    else:
+    if as_dict is not None:
         assert as_dict
         return {"image_tone_map": image_tone_map, "scale": scale, "gamma": gamma}
+    else:
+        return image_tone_map

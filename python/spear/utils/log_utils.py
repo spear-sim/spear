@@ -25,16 +25,16 @@ def unregister_log_func(func):
     _log_funcs.remove(func)
 
 def log(*args):
-    current_frame = inspect.currentframe()
-    message = _log_get_prefix(current_frame=current_frame) + "".join([str(arg) for arg in args])
+    caller_frame = inspect.currentframe().f_back
+    message = _log_get_prefix(caller_frame=caller_frame) + "".join([str(arg) for arg in args])
     if _default_log_enabled:
         print(message, flush=True)
     for func in _log_funcs:
         func(message)
 
 def log_current_function(prefix=""):
-    current_frame = inspect.currentframe()
-    message = _log_get_prefix(current_frame=current_frame) + prefix + _get_current_function_abbreviated(current_frame=current_frame)
+    caller_frame = inspect.currentframe().f_back
+    message = _log_get_prefix(caller_frame=caller_frame) + prefix + caller_frame.f_code.co_qualname
     if _default_log_enabled:
         print(message, flush=True)
     for func in _log_funcs:
@@ -48,20 +48,8 @@ def log_no_prefix(*args):
         func(message)
 
 def log_get_prefix():
-    current_frame = inspect.currentframe()
-    return _log_get_prefix(current_frame=current_frame)
+    caller_frame = inspect.currentframe().f_back
+    return _log_get_prefix(caller_frame=caller_frame)
 
-def _log_get_prefix(current_frame):
-    return f"[SPEAR | {_get_current_file_abbreviated(current_frame=current_frame)}:{_get_current_line(current_frame=current_frame)}] "
-
-def _get_current_file_abbreviated(current_frame):
-    outer_frames = inspect.getouterframes(current_frame)
-    return os.path.basename(outer_frames[1].filename)
-
-def _get_current_line(current_frame):
-    outer_frames = inspect.getouterframes(current_frame)
-    return f"{outer_frames[1].lineno:04}"
-
-def _get_current_function_abbreviated(current_frame):
-    outer_frames = inspect.getouterframes(current_frame)
-    return outer_frames[1].function
+def _log_get_prefix(caller_frame):
+    return f"[SPEAR | {os.path.basename(caller_frame.f_code.co_filename)}:{caller_frame.f_lineno:04}] "

@@ -60,14 +60,8 @@ if __name__ == "__main__":
 
     with instance.begin_frame():
 
-        # get UGameplayStatics
-        gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
-
-        # get UCitySampleBlueprintLibrary
-        city_sample_blueprint_library = game.get_unreal_object(uclass="UCitySampleBlueprintLibrary")
-
         # get player controller
-        player_controller = gameplay_statics.GetPlayerController(PlayerIndex=0)
+        player_controller = game.cdo.UGameplayStatics.GetPlayerController(PlayerIndex=0)
 
         # get character
         character = player_controller.K2_GetPawn()
@@ -75,7 +69,7 @@ if __name__ == "__main__":
 
         # spawn car and possess
 
-        return_values = city_sample_blueprint_library.FindNearestLaneLocationByName(InPoint=character_transform, LaneName="Vehicle", Radius=10000.0, as_dict=True)
+        return_values = game.cdo.UCitySampleBlueprintLibrary.FindNearestLaneLocationByName(InPoint=character_transform, LaneName="Vehicle", Radius=10000.0, as_dict=True)
         success = return_values["ReturnValue"]
         car_transform = return_values["OutPoint"]
         assert success
@@ -83,8 +77,8 @@ if __name__ == "__main__":
         car_uclass = game.unreal_service.load_class(uclass="AActor", name="/Game/Vehicle/vehCar_vehicle03/BP_vehCar_vehicle03_Sandbox.BP_vehCar_vehicle03_Sandbox_C")
         car = game.unreal_service.spawn_actor(
             uclass=car_uclass,
-            location=car_transform["translation"],
-            rotation=car_transform["rotation"],
+            location=car_transform["Translation"],
+            rotation=car_transform["Rotation"],
             spawn_parameters={"SpawnCollisionHandlingOverride": "AlwaysSpawn"})
 
         player_controller.Possess(InPawn=car)
@@ -138,7 +132,7 @@ if __name__ == "__main__":
     #
 
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
         action_name = "IA_VH_Throttle"
         action_trigger_event = "Triggered"
@@ -163,7 +157,7 @@ if __name__ == "__main__":
                 data_bundle = component_desc["component"].read_pixels()
                 component_desc["data"] = data_bundle["arrays"]["data"]
 
-        gameplay_statics.SetGamePaused(bPaused=True)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     if not args.skip_read_pixels and not args.skip_save_images:
         save_images(images_dir=images_dir, frame_index=frame_index)
@@ -175,7 +169,7 @@ if __name__ == "__main__":
 
     for i in range(num_frames_per_trajectory_segment):
         with instance.begin_frame():
-            gameplay_statics.SetGamePaused(bPaused=False)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
             # set camera pose
             viewport_desc = game.viewport_service.get_current_viewport_desc(only_get_pose=True)
@@ -189,7 +183,7 @@ if __name__ == "__main__":
                     data_bundle = component_desc["component"].read_pixels()
                     component_desc["data"] = data_bundle["arrays"]["data"]
 
-            gameplay_statics.SetGamePaused(bPaused=True)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
         if not args.skip_read_pixels and not args.skip_save_images:
             save_images(images_dir=images_dir, frame_index=frame_index)
@@ -200,7 +194,7 @@ if __name__ == "__main__":
     #
 
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
         action_name = "IA_VH_Throttle"
         action_trigger_event = "Triggered"
@@ -229,7 +223,7 @@ if __name__ == "__main__":
                 data_bundle = component_desc["component"].read_pixels()
                 component_desc["data"] = data_bundle["arrays"]["data"]
 
-        gameplay_statics.SetGamePaused(bPaused=True)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     if not args.skip_read_pixels and not args.skip_save_images:
         save_images(images_dir=images_dir, frame_index=frame_index)
@@ -241,7 +235,7 @@ if __name__ == "__main__":
 
     for i in range(20):
         with instance.begin_frame():
-            gameplay_statics.SetGamePaused(bPaused=False)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
             action_name = "IA_VH_Brake"
             action_trigger_event = "Triggered"
@@ -270,7 +264,7 @@ if __name__ == "__main__":
                     data_bundle = component_desc["component"].read_pixels()
                     component_desc["data"] = data_bundle["arrays"]["data"]
 
-            gameplay_statics.SetGamePaused(bPaused=True)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
         if not args.skip_read_pixels and not args.skip_save_images:
             save_images(images_dir=images_dir, frame_index=frame_index)
@@ -281,7 +275,7 @@ if __name__ == "__main__":
     #
 
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
         action_name = "IA_VH_Brake"
         action_trigger_event = "Triggered"
@@ -310,7 +304,7 @@ if __name__ == "__main__":
                 data_bundle = component_desc["component"].read_pixels()
                 component_desc["data"] = data_bundle["arrays"]["data"]
 
-        gameplay_statics.SetGamePaused(bPaused=True)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     if not args.skip_read_pixels and not args.skip_save_images:
         save_images(images_dir=images_dir, frame_index=frame_index)
@@ -321,7 +315,7 @@ if __name__ == "__main__":
     #
 
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
     with instance.end_frame():
         pass
 

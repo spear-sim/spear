@@ -124,7 +124,7 @@ public:
     SpArrayDataTypeUtils() = delete;
     ~SpArrayDataTypeUtils() = delete;
 
-    template <typename TValue> static SpArrayDataType getDataType() { SP_LOG_CURRENT_FUNCTION(); SP_ASSERT(false); return SpArrayDataType::Invalid; }
+    template <typename TValue> static SpArrayDataType getDataType() = delete;
     template <> SpArrayDataType getDataType<uint8_t>()  { return SpArrayDataType::UInt8; }
     template <> SpArrayDataType getDataType<int8_t>()   { return SpArrayDataType::Int8; }
     template <> SpArrayDataType getDataType<uint16_t>() { return SpArrayDataType::UInt16; }

@@ -69,32 +69,6 @@ NB_MODULE(spear_ext, module)
         return oss.str();
     });
 
-    auto sp_property_desc_class = nanobind::class_<SpPropertyDesc>(module, "SpPropertyDesc");
-    sp_property_desc_class.def(nanobind::init<>());
-    sp_property_desc_class.def_rw("property",                  &SpPropertyDesc::property_);
-    sp_property_desc_class.def_rw("value_ptr",                 &SpPropertyDesc::value_ptr_);
-    sp_property_desc_class.def_rw("type_id",                   &SpPropertyDesc::type_id_);
-    sp_property_desc_class.def_rw("notify_objects",            &SpPropertyDesc::notify_objects_);
-    sp_property_desc_class.def_rw("notify_member_properties",  &SpPropertyDesc::notify_member_properties_);
-    sp_property_desc_class.def_rw("notify_element_properties", &SpPropertyDesc::notify_element_properties_);
-    sp_property_desc_class.def_rw("notify_array_indices",      &SpPropertyDesc::notify_array_indices_);
-    sp_property_desc_class.def_rw("notify_map_keys",           &SpPropertyDesc::notify_map_keys_);
-    sp_property_desc_class.def("__repr__", [](const SpPropertyDesc& self) {
-        std::ostringstream oss;
-        oss << "spear_ext.SpPropertyDesc(" << "property=" << self.property_ << ", value_ptr=" << self.value_ptr_ << ")";
-        return oss.str();
-    });
-
-    auto sp_property_value_class = nanobind::class_<SpPropertyValue>(module, "SpPropertyValue");
-    sp_property_value_class.def(nanobind::init<>());
-    sp_property_value_class.def_rw("value",   &SpPropertyValue::value_);
-    sp_property_value_class.def_rw("type_id", &SpPropertyValue::type_id_);
-    sp_property_value_class.def("__repr__", [](const SpPropertyValue& self) {
-        std::ostringstream oss;
-        oss << "spear_ext.SpPropertyValue(" << "value=" << self.value_ << ", type_id=" << self.type_id_ << ")";
-        return oss.str();
-    });
-
     auto sp_array_shared_memory_view_class = nanobind::class_<SpArraySharedMemoryView>(module, "SpArraySharedMemoryView");
     sp_array_shared_memory_view_class.def(nanobind::init<>());
     sp_array_shared_memory_view_class.def_rw("id",           &SpArraySharedMemoryView::id_);
@@ -123,13 +97,13 @@ NB_MODULE(spear_ext, module)
     sp_packed_array_class.def_rw("shared_memory_name", &SpPackedArray::shared_memory_name_);
     sp_packed_array_class.def("__repr__", [](const SpPackedArray& self) {
         std::ostringstream oss;
-        nanobind::object data = nanobind::cast(self.data_);
         std::string data_str;
         if (!self.data_.is_valid()) {
             data_str = "is_valid()==false";
         } else if (!self.data_.data()) {
             data_str = "data()==nullptr";
         } else {
+            nanobind::object data = nanobind::cast(self.data_);
             data_str = nanobind::repr(data).c_str();
         }
         oss << "spear_ext.SpPackedArray(data=" << data_str << ", data_source=\"" << self.data_source_ << "\", shape=[";
@@ -151,6 +125,32 @@ NB_MODULE(spear_ext, module)
     sp_func_data_bundle_class.def("__repr__", [](const SpFuncDataBundle& self) {
         std::ostringstream oss;
         oss << "spear_ext.SpFuncDataBundle(packed_arrays=" << self.packed_arrays_.size() << ", unreal_obj_strings=" << self.unreal_obj_strings_.size() << ", info=" << self.info_.size() << ")";
+        return oss.str();
+    });
+
+    auto sp_property_desc_class = nanobind::class_<SpPropertyDesc>(module, "SpPropertyDesc");
+    sp_property_desc_class.def(nanobind::init<>());
+    sp_property_desc_class.def_rw("property",                  &SpPropertyDesc::property_);
+    sp_property_desc_class.def_rw("value_ptr",                 &SpPropertyDesc::value_ptr_);
+    sp_property_desc_class.def_rw("type_id",                   &SpPropertyDesc::type_id_);
+    sp_property_desc_class.def_rw("notify_objects",            &SpPropertyDesc::notify_objects_);
+    sp_property_desc_class.def_rw("notify_member_properties",  &SpPropertyDesc::notify_member_properties_);
+    sp_property_desc_class.def_rw("notify_element_properties", &SpPropertyDesc::notify_element_properties_);
+    sp_property_desc_class.def_rw("notify_array_indices",      &SpPropertyDesc::notify_array_indices_);
+    sp_property_desc_class.def_rw("notify_map_keys",           &SpPropertyDesc::notify_map_keys_);
+    sp_property_desc_class.def("__repr__", [](const SpPropertyDesc& self) {
+        std::ostringstream oss;
+        oss << "spear_ext.SpPropertyDesc(" << "property=" << self.property_ << ", value_ptr=" << self.value_ptr_ << ")";
+        return oss.str();
+    });
+
+    auto sp_property_value_class = nanobind::class_<SpPropertyValue>(module, "SpPropertyValue");
+    sp_property_value_class.def(nanobind::init<>());
+    sp_property_value_class.def_rw("value",   &SpPropertyValue::value_);
+    sp_property_value_class.def_rw("type_id", &SpPropertyValue::type_id_);
+    sp_property_value_class.def("__repr__", [](const SpPropertyValue& self) {
+        std::ostringstream oss;
+        oss << "spear_ext.SpPropertyValue(" << "value=" << self.value_ << ", type_id=" << self.type_id_ << ")";
         return oss.str();
     });
 

@@ -227,7 +227,7 @@ def execute_editor_code(code):
         _log(f"Executing editor code:\n\n\n{code}\n\n")
         with _instance.begin_frame():
             try:
-                _editor.python_service.execute_string(string=f"exec({code!r}, _exec_namespace)", execution_scope="Public")
+                _editor.python_service.execute_string(string=f"exec({code!r}, _exec_namespace)")
             except RuntimeError:
                 _log(f"EXCEPTION:\n{traceback.format_exc()}")
         with _instance.end_frame():
@@ -242,7 +242,7 @@ def execute_editor_code(code):
 
 
 #
-# Helper functionss
+# Helper functions
 #
 
 def _tool_prefix():
@@ -329,10 +329,10 @@ def _initialize_namespace():
 
     if _editor is not None:
         with _instance.begin_frame():
-            _editor.python_service.execute_string(string=_EXEC_IMPORT_STR, execution_scope="Public")
-            _editor.python_service.execute_string(string=_SAFE_IMPORT_FUNC_STR, execution_scope="Public")
-            _editor.python_service.execute_string(string=_EXEC_NAMESPACE_INITIALIZE_STR_EDITOR, execution_scope="Public")
-            _editor.python_service.execute_string(string=_EXEC_NAMESPACE_UPDATE_STR_EDITOR, execution_scope="Public")
+            _editor.python_service.execute_string(string=_EXEC_IMPORT_STR)
+            _editor.python_service.execute_string(string=_SAFE_IMPORT_FUNC_STR)
+            _editor.python_service.execute_string(string=_EXEC_NAMESPACE_INITIALIZE_STR_EDITOR)
+            _editor.python_service.execute_string(string=_EXEC_NAMESPACE_UPDATE_STR_EDITOR)
         with _instance.end_frame():
             pass
 

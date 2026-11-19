@@ -93,11 +93,8 @@ if __name__ == "__main__":
         ue_actors = sp_game.unreal_service.find_actors_as_dict(include_unreal_name=True)
         ue_actors = { ue_actor_name: ue_actor for ue_actor_name, ue_actor in ue_actors.items() if ue_actor_name.startswith(name_prefix) }
 
-        # get UGameplayStatics
-        gameplay_statics = sp_game.get_unreal_object(uclass="UGameplayStatics")
-
         # get player controller
-        player_controller = gameplay_statics.GetPlayerController(PlayerIndex=0)
+        player_controller = sp_game.cdo.UGameplayStatics.GetPlayerController(PlayerIndex=0)
 
         # get pawn
         pawn = player_controller.K2_GetPawn()

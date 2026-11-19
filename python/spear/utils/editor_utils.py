@@ -13,7 +13,6 @@ import os
 import pathlib
 import posixpath
 import subprocess
-import sys
 import traceback
 import unreal
 import spear
@@ -240,12 +239,14 @@ def get_stable_name_for_actor(actor, include_unreal_name=False):
     if include_unreal_name:
         if stable_name != "":
             sep = ":"
+        else:
+            sep = ""
         stable_name = stable_name + sep + actor.get_name()
 
     return stable_name
 
-def get_stable_name_for_component(component, include_stable_actor_name=False):
-    if include_stable_actor_name:
+def get_stable_name_for_component(component, include_actor_stable_name=False):
+    if include_actor_stable_name:
         actor_name_str = f"{get_stable_name_for_actor(actor=component.get_owner())}:"
     else:
         actor_name_str = ""
@@ -547,7 +548,7 @@ def _to_spear_transform(transform):
         return to_spear_transform_from_unreal_transform(unreal_transform=transform)
     elif isinstance(transform, dict) and set(transform.keys()) == set(["translation", "rotation", "scale"]):
         return spear.math.to_spear_transform_from_numpy_transform(numpy_transform=transform)
-    elif isinstance(transform, dict) and set(k.lower() for k in transform.keys()) == set(["translation", "rotation", "scale3d"]):
+    elif isinstance(transform, dict) and set(transform.keys()) == set(["Translation", "Rotation", "Scale3D"]):
         return transform
     else:
         assert False
@@ -568,15 +569,7 @@ def imshow(name, image, temp_dir=None, temp_file=None):
     spear.log("Saving image: ", path)
     cv2.imwrite(path, image)
 
-    unreal_engine_dir = os.path.abspath(os.path.join(os.path.dirname(sys.executable), "..", "..", ".."))
-    if sys.platform == "win32":
-        python_bin = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Binaries", "ThirdParty", "Python3", "Win64", "python.exe"))
-    elif sys.platform == "darwin":
-        python_bin = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Binaries", "ThirdParty", "Python3", "Mac", "bin", "python3"))
-    elif sys.platform == "linux":
-        python_bin = os.path.realpath(os.path.join(unreal_engine_dir, "Engine", "Binaries", "ThirdParty", "Python3", "Linux", "bin", "python3"))
-    else:
-        assert False
+    python_bin = unreal.get_interpreter_executable_path()
 
     run_imshow = os.path.abspath(os.path.join(os.path.dirname(spear.__file__), "tools", "run_imshow.py"))
     cmd = [python_bin, run_imshow, "--path", path, "--name", name]
@@ -646,11 +639,11 @@ def from_script_expr(script_expr_dict):
         return np.matrix(np.array(value["data"], dtype=np.dtype(value["dtype"])).reshape(value["shape"]))
     elif type_string == "numpy.ndarray":
         return np.array(value["data"], dtype=np.dtype(value["dtype"])).reshape(value["shape"])
-    elif type_string == "UnrealObject":
+    elif type_string == "UnrealStruct":
         return unreal.SpFuncUtils.to_object_from_handle(handle=value)
     elif type_string == "UnrealClass":
         return unreal.SpFuncUtils.to_object_from_handle(handle=value)
-    elif type_string == "UnrealStruct":
+    elif type_string == "UnrealObject":
         return unreal.SpFuncUtils.to_object_from_handle(handle=value)
     elif type_string == "StructInstance":
         struct_type_string = script_expr_dict["struct_type_string"]
@@ -833,7 +826,7 @@ class Client:
             return { k: SpArraySharedMemoryView(id=self._to_str(obj=v["id"]), num_bytes=v["num_bytes"], offset_bytes=v["offset_bytes"], usage_flags=self._to_str(obj=v["usage_flags"]), name=self._to_str(obj=v["name"])) for k, v in obj.items() }
         elif return_as == "map_of_string_to_sp_property_value":
             obj = self._to_dict(obj=obj)
-            return { k: spear.PropertyValue(value=self._to_str(obj=v["value"]), type_id=self._to_str(obj=v["type_id"])) for k, v in obj.items() }
+            return { k: SpPropertyValue(value=self._to_str(obj=v["value"]), type_id=self._to_str(obj=v["type_id"])) for k, v in obj.items() }
         elif return_as == "map_of_string_to_sp_func_signature_desc":
             obj = self._to_dict(obj=obj)
             return { self._to_str(obj=k): SpFuncSignatureDesc(name=self._to_str(obj=v["name"]), type_ids=v["type_ids"], type_names=self._to_str(obj=v["type_names"])) for k, v in obj.items() }
@@ -860,7 +853,7 @@ class Client:
             return SpPropertyDesc(property=obj["property"], value_ptr=obj["value_ptr"], type_id=self._to_str(obj=obj["type_id"]), notify_objects=obj["notify_objects"], notify_member_properties=obj["notify_member_properties"], notify_element_properties=obj["notify_element_properties"], notify_array_indices=obj["notify_array_indices"], notify_map_keys=self._to_str(obj=obj["notify_map_keys"]))
         elif return_as == "sp_property_value":
             obj = self._to_dict(obj=obj)
-            return spear.PropertyValue(value=self._to_str(obj=obj["value"]), type_id=self._to_str(obj=obj["type_id"]))
+            return SpPropertyValue(value=self._to_str(obj=obj["value"]), type_id=self._to_str(obj=obj["type_id"]))
         elif return_as == "sp_future":
             obj = self._to_dict(obj=obj)
             return SpFuture(future_ptr=obj["future_ptr"], type_id=self._to_str(obj=obj["type_id"]))
@@ -877,10 +870,8 @@ class Client:
             assert False
 
     def _to_sp_static_class_desc(self, obj):
-        obj = self._to_dict(obj=obj)
         function_descs = {}
-        for k, v in self._to_dict(obj=obj.get("function_descs", {})).items():
-            v = self._to_dict(obj=v)
+        for k, v in obj.get("function_descs", {}).items():
             function_descs[self._to_str(obj=k)] = SpFunctionDesc(function=v["function"], function_name=self._to_str(obj=v["function_name"]), static_class=v["static_class"], static_class_name=self._to_str(obj=v["static_class_name"]))
         return SpStaticClassDesc(static_class=obj["static_class"], name=self._to_str(obj=obj["name"]), derived_classes=obj.get("derived_classes", []), derived_class_names=self._to_str(obj=obj.get("derived_class_names", [])), function_descs=function_descs)
 

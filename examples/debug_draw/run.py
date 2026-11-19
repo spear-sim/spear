@@ -55,10 +55,6 @@ if __name__ == "__main__":
 
         game.segmentation_service.initialize()
 
-        sp_actor_component = game.get_unreal_object(uclass="USpActorComponent")
-        sp_scene_component = game.get_unreal_object(uclass="USpSceneComponent")
-        kismet_system_library = game.get_unreal_object(uclass="UKismetSystemLibrary")
-
         bounding_box_mesh = game.unreal_service.load_object(uclass="UStaticMesh", name="/Engine/BasicShapes/Cube.Cube")
         bounding_box_material = game.unreal_service.load_object(uclass="UMaterialInterface", name="/Game/SPEAR/Materials/M_LocalPositionMultipliedByObjectScale.M_LocalPositionMultipliedByObjectScale")
 
@@ -106,7 +102,7 @@ if __name__ == "__main__":
 
         # debug draw bounding boxes (skip index 0 which is the "none" entry)
         for desc, color in zip(bounding_box_descs[1:], bounding_box_colors[1:]):
-            kismet_system_library.DrawDebugBox(
+            game.cdo.UKismetSystemLibrary.DrawDebugBox(
                 Center=spear.math.to_spear_vector_from_numpy_array(numpy_array=desc["world_center"]),
                 Extent=spear.math.to_spear_vector_from_numpy_array(numpy_array=desc["world_extent"]),
                 LineColor={"R": float(color[0]), "G": float(color[1]), "B": float(color[2]), "A": 1.0},
@@ -138,15 +134,15 @@ if __name__ == "__main__":
             static_mesh_component.bAffectDistanceFieldLighting = False
             static_mesh_component.bAffectDynamicIndirectLighting = False
 
-            sp_actor_component.SetCanEverAffectNavigation(ActorComponent=static_mesh_component, bCanEverAffectNavigation=False)
+            game.cdo.USpActorComponent.SetCanEverAffectNavigation(ActorComponent=static_mesh_component, bCanEverAffectNavigation=False)
             static_mesh_component.SetCollisionEnabled(NewType="NoCollision")
             static_mesh_component.SetCollisionProfileName(InCollisionProfileName="NoCollision") # needed for editor worlds
             static_mesh_component.SetGenerateOverlapEvents(bInGenerateOverlapEvents=False)
 
             bounding_box_actor.SetActorScale3D(NewScale3D=spear.math.to_spear_vector_from_numpy_array(numpy_array=desc["world_extent"]/50.0))
 
-            sp_actor_component.MarkRenderStateDirty(ActorComponent=static_mesh_component)
-            sp_scene_component.MarkRenderTransformDirty(SceneComponent=static_mesh_component)
+            game.cdo.USpActorComponent.MarkRenderStateDirty(ActorComponent=static_mesh_component)
+            game.cdo.USpSceneComponent.MarkRenderTransformDirty(SceneComponent=static_mesh_component)
 
             desc["bounding_box_actor"] = bounding_box_actor
 
@@ -229,8 +225,8 @@ if __name__ == "__main__":
 
     # save segmentation image with colors matching debug draw
     bounding_box_handles = [ 0 if actor is None else actor.uobject for actor in bounding_box_actors ]
-    assert all([ proxy_id_desc["actor"] in bounding_box_handles for proxy_id_desc in proxy_id_descs ])
-    proxy_bounding_box_ids = np.array([ bounding_box_handles.index(proxy_id_desc["actor"]) for proxy_id_desc in proxy_id_descs ])
+    assert all([ proxy_id_desc["Actor"] in bounding_box_handles for proxy_id_desc in proxy_id_descs ])
+    proxy_bounding_box_ids = np.array([ bounding_box_handles.index(proxy_id_desc["Actor"]) for proxy_id_desc in proxy_id_descs ])
     bounding_box_colors_uint8 = np.round(bounding_box_colors*255.0).astype(np.uint8)
     segmentation_image = bounding_box_colors_uint8[proxy_bounding_box_ids[proxy_id_image]]
     image_file = os.path.realpath(os.path.join(images_dir, "segmentation.png"))

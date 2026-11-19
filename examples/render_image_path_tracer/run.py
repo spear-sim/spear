@@ -129,8 +129,6 @@ if __name__ == "__main__":
         component.Initialize()
         component.initialize_sp_funcs()
 
-        sp_scene_view_state_interface = game.get_unreal_object(uclass="USpSceneViewStateInterface")
-
     with instance.end_frame(single_step=True):
         pass
 
@@ -180,11 +178,11 @@ if __name__ == "__main__":
             # samples against this component's persistent view state, so without this reset, sample_index would
             # start ahead of 0 below.
             if frame_index == 0:
-                assert sample_count == sp_scene_view_state_interface.GetPathTracingSampleCount(ViewState=view_state)
+                assert sample_count == game.cdo.USpSceneViewStateInterface.GetPathTracingSampleCount(ViewState=view_state)
                 component.RequestPathTracerReset()
 
         with instance.end_frame(single_step=True):
-            sample_index = sp_scene_view_state_interface.GetPathTracingSampleIndex(ViewState=view_state)
+            sample_index = game.cdo.USpSceneViewStateInterface.GetPathTracingSampleIndex(ViewState=view_state)
             assert previous_sample_index <= sample_index
             assert sample_index <= previous_sample_index + 1
 

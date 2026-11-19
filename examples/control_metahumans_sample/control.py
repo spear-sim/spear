@@ -22,8 +22,7 @@ if __name__ == "__main__":
     game = instance.get_game()
 
     with instance.begin_frame():
-        gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
         # get control rig component
         character = game.unreal_service.find_actor_by_name(actor_name="Actor_metahuman_004_CR", uclass="AActor")
@@ -37,7 +36,7 @@ if __name__ == "__main__":
         spear.log(f"Found {len(control_names)} controls:")
         for control_name in control_names:
             control = hierarchy.FindControl_ForBlueprintOnly(InKey={"Name": control_name, "Type": "Control"})
-            control_type = control["settings"]["controlType"]
+            control_type = control["Settings"]["ControlType"]
             spear.log_no_prefix("    ", f"{control_name} ({control_type})")
 
     with instance.end_frame():

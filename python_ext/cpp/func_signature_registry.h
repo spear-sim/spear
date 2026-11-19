@@ -7,7 +7,6 @@
 
 #include <stdint.h> // int32_t, int64_t, uint64_t
 
-#include <iostream>
 #include <map>
 #include <memory>  // std::make_shared, std::shared_ptr
 #include <string>
@@ -16,15 +15,12 @@
 
 #include <nanobind/nanobind.h>
 
+#include <rpc/msgpack.hpp> // clmdep_msgpack
+
+#include "assert.h"
+#include "msgpack_adaptors.h"
+#include "msgpack_utils.h"
 #include "types.h"
-
-#ifdef _MSC_VER
-    #define SP_CURRENT_FUNCTION __FUNCSIG__
-#else
-    #define SP_CURRENT_FUNCTION __PRETTY_FUNCTION__
-#endif
-
-class Client;
 
 //
 // The type IDs used in getTypeNames(), getArg(...), and getReturnValue(...) need to match the ones in:
@@ -92,7 +88,7 @@ public:
         }
     }
 
-    static nanobind::object getReturnValue(const Client* client, int type_id, clmdep_msgpack::object_handle&& result)
+    static nanobind::object getReturnValue(const ClientBase* client, int type_id, clmdep_msgpack::object_handle&& result)
     {
         switch (type_id) {
             case  0: return nanobind::none();
@@ -128,19 +124,12 @@ public:
         }
     }
 
-    // defined for each type in msgpack_adaptors.h
-    template <typename TDest, typename TSrc>
-    static TDest convert(const Client* client, TSrc&& src, std::shared_ptr<clmdep_msgpack::object_handle> object_handle)
-    {
-        std::cout << "[SPEAR | func_signature_registry.h] ERROR: Current function: " << SP_CURRENT_FUNCTION << std::endl; SP_ASSERT(false); return TDest();
-    };
-
 private:
     template <typename TReturnDest, typename TReturnSrc>
-    static TReturnDest getConvertedReturnValue(const Client* client, clmdep_msgpack::object_handle&& object_handle)
+    static TReturnDest getConvertedReturnValue(const ClientBase* client, clmdep_msgpack::object_handle&& object_handle)
     {
         std::shared_ptr<clmdep_msgpack::object_handle> object_handle_ptr = std::make_shared<clmdep_msgpack::object_handle>(std::move(object_handle));
         TReturnSrc return_value_src = object_handle_ptr->template as<TReturnSrc>(); // .template needed on macOS
-        return convert<TReturnDest>(client, std::move(return_value_src), object_handle_ptr);
+        return MsgpackUtils::convert<TReturnDest>(client, std::move(return_value_src), object_handle_ptr);
     };
 };

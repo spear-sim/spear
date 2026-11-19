@@ -56,11 +56,8 @@ if __name__ == "__main__":
 
     with instance.begin_frame():
 
-        # get UGameplayStatics
-        gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
-
         # get player controller
-        player_controller = gameplay_statics.GetPlayerController(PlayerIndex=0)
+        player_controller = game.cdo.UGameplayStatics.GetPlayerController(PlayerIndex=0)
 
         # get and configure drone
         drone = player_controller.K2_GetPawn()
@@ -115,14 +112,14 @@ if __name__ == "__main__":
     #
 
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
         light.K2_SetActorRotation(NewRotation={"Pitch": 0.0, "Yaw": 25.0, "Roll": -130.0}) # set light direction
     with instance.end_frame():
-        gameplay_statics.SetGamePaused(bPaused=True)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     for _ in range(num_frames_for_drone_update):
         with instance.begin_frame():
-            gameplay_statics.SetGamePaused(bPaused=False)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
             # inject input
             instance.enhanced_input_service.inject_input_for_actor(
@@ -133,11 +130,11 @@ if __name__ == "__main__":
                 input_action_instance={"TriggerEvent": "Triggered", "LastTriggeredWorldTime": 0.0, "ElapsedProcessedTime": 0.01, "ElapsedTriggeredTime": 0.01})
 
         with instance.end_frame():
-            gameplay_statics.SetGamePaused(bPaused=True)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     # set camera pose
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
         viewport_desc = game.viewport_service.get_current_viewport_desc(only_get_pose=True)
         game.viewport_service.align_camera_with_viewport(camera_sensor=bp_camera_sensor, camera_components=components, viewport_desc=viewport_desc, only_align_pose=True)
     with instance.end_frame():
@@ -157,7 +154,7 @@ if __name__ == "__main__":
 
     for i in range(0, -181, -1):
         with instance.begin_frame():
-            gameplay_statics.SetGamePaused(bPaused=False)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
             # set light direction
             rotation = {"Pitch": float(i), "Yaw": 25.0, "Roll": -130.0}
@@ -171,7 +168,7 @@ if __name__ == "__main__":
                     data_bundle = component_desc["component"].read_pixels()
                     component_desc["data"] = data_bundle["arrays"]["data"]
 
-            gameplay_statics.SetGamePaused(bPaused=True)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
         if not args.skip_read_pixels and not args.skip_save_images:
             save_images(images_dir=images_dir, frame_index=frame_index)
@@ -180,16 +177,16 @@ if __name__ == "__main__":
         # give cached lighting data structures and auto-exposure etc a chance to update
         for _ in range(3):
             with instance.begin_frame():
-                gameplay_statics.SetGamePaused(bPaused=False)
+                game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
             with instance.end_frame():
-                gameplay_statics.SetGamePaused(bPaused=True)
+                game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     #
     # unpause now that we're finished controlling the light
     #
 
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
     with instance.end_frame():
         pass
 

@@ -51,7 +51,7 @@ struct FMeshProxyGeometryDesc
     GENERATED_BODY()
 public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
-    int64 Id = 0;
+    int64 ProxyId = 0; // Id gets converted to ID by Unreal's JSON serialization code because of an FName collision
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     bool bIsValid = false;
@@ -131,7 +131,7 @@ public:
 
         for (auto& [id, desc] : getProxyComponentManager()->getMeshProxyGeometryDescs()) {
             FMeshProxyGeometryDesc mesh_proxy_geometry_desc;
-            mesh_proxy_geometry_desc.Id = id;
+            mesh_proxy_geometry_desc.ProxyId = id;
             mesh_proxy_geometry_desc.bIsValid = desc.is_valid_;
 
             // It is possible for desc.is_valid_ to be true, but for Unreal::toPtr(desc.non_proxy_component_) or

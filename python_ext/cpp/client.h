@@ -9,6 +9,7 @@
 #include <stdint.h> // int64_t, uint16_t
 
 #include <algorithm> // std::max
+#include <exception> // std::exception
 #include <iostream>
 #include <map>
 #include <memory>    // std::make_unique, std::unique_ptr
@@ -24,7 +25,7 @@
 #include "shared_memory.h"
 #include "types.h"
 
-class Client
+class Client : public ClientBase
 {
 public:
     Client() = delete;
@@ -162,19 +163,25 @@ public:
         // shared memory (see SharedMemoryFence::fence() in SpCore/SharedMemory.cpp for details). If the server
         // is not local, there is no shared memory, so there is nothing to fence.
 
-        if (shared_memory_fence_) { shared_memory_fence_->fence(); }
-        clmdep_msgpack::object_handle result = client_->call("rpc_server.call", func_name, args_msgpack_array);
-        if (shared_memory_fence_) { shared_memory_fence_->fence(); }
+        // Every entry point is called via "rpc_server.call", so exceptions thrown by rpclib don't include
+        // func_name. So we catch exceptions here, optionally log func_name, and rethrow.
 
-        // unpack result
-        return FuncSignatureRegistry::getReturnValue(this, return_type_id, std::move(result));
+        try {
+            if (shared_memory_fence_) { shared_memory_fence_->fence(); }
+            clmdep_msgpack::object_handle result = client_->call("rpc_server.call", func_name, args_msgpack_array);
+            if (shared_memory_fence_) { shared_memory_fence_->fence(); }
+
+            // unpack result
+            return FuncSignatureRegistry::getReturnValue(this, return_type_id, std::move(result));
+
+        } catch (const std::exception& e) {
+            if (verbose_exceptions_) { std::cout << "[SPEAR | client.h] ERROR: Caught exception when calling \"" << func_name << "\": " << e.what() << std::endl; }
+            throw;
+        } catch (...) {
+            if (verbose_exceptions_) { std::cout << "[SPEAR | client.h] ERROR: Caught unknown exception when calling \"" << func_name << "\"." << std::endl; }
+            throw;
+        }
     }
-
-    bool force_return_aligned_arrays_ = false;
-    bool suppress_default_logging_    = false;
-    bool verbose_rpc_calls_           = false;
-    bool verbose_allocations_         = false;
-    bool verbose_exceptions_          = false; // owner should set to true once a connection to the server is established
 
     std::map<std::string, SpFuncSignatureDesc> getEntryPointSignatureDescs() const
     {

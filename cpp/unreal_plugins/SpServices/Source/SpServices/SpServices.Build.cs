@@ -7,7 +7,7 @@ using UnrealBuildTool; // ReadOnlyTargetRules
 
 public class SpServices : SpModuleRules
 {
-    public SpServices(ReadOnlyTargetRules target) : base(target, bLinkThirdPartyLibraries: true)
+    public SpServices(ReadOnlyTargetRules target) : base(target)
     {
         SP_LOG_CURRENT_FUNCTION();
 

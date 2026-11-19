@@ -8,13 +8,12 @@ import json
 import numpy as np
 import os
 import pathlib
-import scipy
 import spear
 
 
 #
 # Math conversion functions. In the functions below, converting to or from a JSON type means a dictionary
-# that has been serialized to JSON by editor/export_unreal_metadata/export_scene.py and subsequentially deserialized
+# that has been serialized to JSON by editor/export_unreal_metadata/export_scene.py and subsequently deserialized
 # back into a dictionary.
 #
 
@@ -26,7 +25,7 @@ def to_numpy_matrix_from_json_matrix(json_matrix, as_matrix=None):
 # JSON plane
 
 def to_numpy_array_from_json_plane(json_plane, as_matrix=None):
-    return spear.math.to_numpy_array_from_spear_plane(spear_plane=to_spear_plane_from_json_plane(json_plane=json_plane), as_matrix=None)
+    return spear.math.to_numpy_array_from_spear_plane(spear_plane=to_spear_plane_from_json_plane(json_plane=json_plane), as_matrix=as_matrix)
 
 # JSON quaternion
 
@@ -197,10 +196,48 @@ def expand_bounding_box(bounding_box, eps):
 
 
 #
-# Function for getting a physical filesystem path from a logical content path.
+# Functions for getting a physical filesystem path from a logical content path.
 #
 
-def get_filesystem_path_from_content_path(content_path, unreal_project_dir=None, unreal_engine_dir=None, follow_symlinks=False):
+def get_plugin_dirs(unreal_project_dir=None, unreal_engine_dir=None, follow_symlinks=False):
+
+    assert unreal_engine_dir is not None
+    assert unreal_project_dir is not None
+
+    if follow_symlinks:
+        path_func = lambda path: os.path.realpath(path)
+    else:
+        path_func = lambda path: path
+
+    plugins_dirs = [
+        os.path.join(unreal_project_dir, "Plugins"),
+        os.path.join(unreal_engine_dir, "Engine", "Plugins")]
+
+    uprojects = glob.glob(path_func(os.path.join(unreal_project_dir, "*.uproject")))
+    assert len(uprojects) == 1
+    uproject = uprojects[0]
+    with open(uproject) as f:
+        uproject_dict = json.load(f)
+    if "AdditionalPluginDirectories" in uproject_dict:
+        for additional_plugins_dir in uproject_dict["AdditionalPluginDirectories"]:
+            if os.path.isabs(additional_plugins_dir):
+                plugins_dirs.append(additional_plugins_dir)
+            else:
+                plugins_dirs.append(path_func(os.path.join(unreal_project_dir, additional_plugins_dir)))
+
+    # Unreal names a plugin after its .uplugin file, not after the directory containing it, and plugins can be
+    # nested arbitrarily deeply inside a plugins directory (e.g., Engine/Plugins/Runtime), so we search
+    # recursively for .uplugin files.
+    plugin_dirs = {}
+    for plugins_dir in plugins_dirs:
+        for uplugin in glob.glob(path_func(os.path.join(plugins_dir, "**", "*.uplugin")), recursive=True):
+            plugin_name = os.path.splitext(os.path.basename(uplugin))[0]
+            assert plugin_name not in plugin_dirs
+            plugin_dirs[plugin_name] = path_func(os.path.dirname(uplugin))
+
+    return plugin_dirs
+
+def get_filesystem_path_from_content_path(content_path, unreal_project_dir=None, unreal_engine_dir=None, plugin_dirs=None, follow_symlinks=False):
 
     if follow_symlinks:
         path_func = lambda path: os.path.realpath(path)
@@ -220,35 +257,9 @@ def get_filesystem_path_from_content_path(content_path, unreal_project_dir=None,
         filesystem_base_dir = os.path.join(unreal_engine_dir, "Engine", "Content")
 
     else:
-        assert unreal_engine_dir is not None
-        assert unreal_project_dir is not None
-
-        plugins_dirs = [
-            os.path.join(unreal_project_dir, "Plugins"),
-            os.path.join(unreal_engine_dir, "Engine", "Plugins"),
-            os.path.join(unreal_engine_dir, "Engine", "Experimental")]
-
-        uprojects = glob.glob(path_func(os.path.join(unreal_project_dir, "*.uproject")))
-        assert len(uprojects) == 1
-        uproject = uprojects[0]
-        uproject_dict = {}
-        with open(uproject) as f:
-            uproject_dict = json.load(f)
-        if "AdditionalPluginDirectories" in uproject_dict:
-            for additional_plugins_dir in uproject_dict["AdditionalPluginDirectories"]:
-                if os.path.isabs(additional_plugins_dir):
-                    plugins_dirs.append(additional_plugins_dir)
-                else:
-                    plugins_dirs.append(path_func(os.path.join(unreal_project_dir, additional_plugins_dir)))
-
-        found_plugin = False
-        for plugins_dir in plugins_dirs:
-            plugin_dir = path_func(os.path.join(plugins_dir, content_root))
-            if os.path.exists(plugin_dir):
-                filesystem_base_dir = path_func(os.path.join(plugin_dir, "Content"))
-                found_plugin = True
-                break
-        assert found_plugin
+        assert plugin_dirs is not None
+        assert content_root in plugin_dirs
+        filesystem_base_dir = path_func(os.path.join(plugin_dirs[content_root], "Content"))
 
     # try to follow Unreal's rules for resolving asset paths
 
@@ -260,7 +271,6 @@ def get_filesystem_path_from_content_path(content_path, unreal_project_dir=None,
         if os.path.exists(filesystem_path) and os.path.isdir(filesystem_path):
             return filesystem_path
         elif os.path.islink(filesystem_path) and os.path.exists(os.path.realpath(filesystem_path)):
-            spear.log("hello")
             return filesystem_path
         else:
             content_file_tokens = content_path_tokens[-1].split(".")

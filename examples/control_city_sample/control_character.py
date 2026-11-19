@@ -60,11 +60,8 @@ if __name__ == "__main__":
 
     with instance.begin_frame():
 
-        # get UGameplayStatics
-        gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
-
         # get player controller
-        player_controller = gameplay_statics.GetPlayerController(PlayerIndex=0)
+        player_controller = game.cdo.UGameplayStatics.GetPlayerController(PlayerIndex=0)
 
         # get character
         character = player_controller.K2_GetPawn()
@@ -117,7 +114,7 @@ if __name__ == "__main__":
 
     for i in range(num_frames_per_trajectory_segment):
         with instance.begin_frame():
-            gameplay_statics.SetGamePaused(bPaused=False)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
             # set camera pose
             viewport_desc = game.viewport_service.get_current_viewport_desc(only_get_pose=True)
@@ -146,7 +143,7 @@ if __name__ == "__main__":
                     data_bundle = component_desc["component"].read_pixels()
                     component_desc["data"] = data_bundle["arrays"]["data"]
 
-            gameplay_statics.SetGamePaused(bPaused=True)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
         if not args.skip_read_pixels and not args.skip_save_images:
             save_images(images_dir=images_dir, frame_index=frame_index)
@@ -158,7 +155,7 @@ if __name__ == "__main__":
     #
 
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
     with instance.end_frame():
         pass
 

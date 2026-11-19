@@ -41,12 +41,8 @@ public class SpTargetRulesTarget : TargetRules
 
         } else if (targetInfo.Platform == UnrealTargetPlatform.Mac) {
 
-            // Suppresses warning on Xcode 16:
-            //     ld: warning: ignoring duplicate libraries: 'path/to/spear/third_party/rpclib/BUILD/Mac/librpc.a', 'path/to/spear/third_party/yaml-cpp/BUILD/Mac/libyaml-cpp.a'
-            bOverrideBuildEnvironment = true;
-            AdditionalLinkerArguments = " -Wl,-no_warn_duplicate_libraries";
-
             // Needed for building UE 5.5 projects on Xcode 26 (which is a newer version of Xcode than is officially supported by UE 5.5)
+            bOverrideBuildEnvironment = true;
             AdditionalCompilerArguments = "-Wno-deprecated-literal-operator";
 
             // Sometimes useful for debugging:

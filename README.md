@@ -121,17 +121,16 @@ Once the `UFUNCTION` and `UPROPERTY` annotations have been added to the C++ head
 ```python
 with instance.begin_frame():
 
-    # get the default object for the UMyBlueprintFunctionLibrary class
-    my_blueprint_function_library = game.get_unreal_object(uclass="UMyBlueprintFunctionLibrary")
+    # game.cdo provides access to the default object for any class, e.g., UMyBlueprintFunctionLibrary
 
     # returns "Vec is [1.0 2.0 3.0]"
-    return_value = my_blueprint_function_library.MyFunction(Vec={"X": 1.0, "Y": 2.0, "Z": 3.0})
+    return_value = game.cdo.UMyBlueprintFunctionLibrary.MyFunction(Vec={"X": 1.0, "Y": 2.0, "Z": 3.0})
 
     # returns 42
-    my_property = my_blueprint_function_library.MyProperty.get()
+    my_property = game.cdo.UMyBlueprintFunctionLibrary.MyProperty.get()
 
     # set MyProperty to 43
-    my_blueprint_function_library.MyProperty = 43
+    game.cdo.UMyBlueprintFunctionLibrary.MyProperty = 43
 
 with instance.end_frame():
     pass

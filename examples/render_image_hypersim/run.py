@@ -148,17 +148,18 @@ if __name__ == "__main__":
         game.console_service.set_cvar(name="r.Streaming.FullyLoadUsedTextures", value=1)
 
         # # force Cinematic rendering quality levels for captured images (except use Epic quality for GI otherwise Lumen's internally allocated textures might be too big depending on viewport size)
-        # sp_scalability = game.get_unreal_object(uclass="USpScalability")
-        # sp_quality_levels_utils = game.get_unreal_object(uclass="USpQualityLevelsUtils")
-        # previous_quality_levels = sp_scalability.GetQualityLevels()
-        # cinematic_quality_levels = sp_quality_levels_utils.QualityLevelsFromSingleQualityLevel(QualityLevel="Cinematic")
-        # cinematic_quality_levels_epic_gi = sp_quality_levels_utils.SetGlobalIlluminationQuality(QualityLevels=cinematic_quality_levels, QualityLevel="Epic", as_dict=True)["QualityLevels"]
+        # previous_quality_levels = game.cdo.USpScalability.GetQualityLevels()
+        # cinematic_quality_levels = game.cdo.USpQualityLevelsUtils.QualityLevelsFromSingleQualityLevel(QualityLevel="Cinematic")
+        # cinematic_quality_levels_epic_gi = game.cdo.USpQualityLevelsUtils.SetGlobalIlluminationQuality(QualityLevels=cinematic_quality_levels, QualityLevel="Epic", as_dict=True)["QualityLevels"]
         # game.rendering_quality_service.log_quality_levels(label="Previous quality levels:", quality_levels=previous_quality_levels)
         # game.rendering_quality_service.log_quality_levels(label="New quality levels:", quality_levels=cinematic_quality_levels_epic_gi)
-        # sp_scalability.SetQualityLevels(QualityLevels=cinematic_quality_levels_epic_gi)
+        # game.cdo.USpScalability.SetQualityLevels(QualityLevels=cinematic_quality_levels_epic_gi)
 
         # # we set cinematic_quality_settings=False because we already do our own customization above
         # game.rendering_quality_service.set_default_mrq_rendering_quality(cinematic_quality_settings=False)
+
+        # alternatively we can just set default MRQ quality if we know our viewport isn't too big
+        game.rendering_quality_service.set_default_mrq_rendering_quality()
 
         # initialize segmentation service
         game.segmentation_service.initialize()
@@ -226,13 +227,13 @@ if __name__ == "__main__":
         proxy_id_image, proxy_id_descs = game.segmentation_service.get_segmentation_data(object_ids_bgra_uint8_image=object_ids_bgra_uint8_image)
 
     # get actor names and handles
-    actor_names = [ proxy_id_desc["actorName"].split(":")[0] for proxy_id_desc in proxy_id_descs ]
-    actor_handles = [ proxy_id_desc["actor"] for proxy_id_desc in proxy_id_descs ]
+    actor_names = [ proxy_id_desc["ActorName"].split(":")[0] for proxy_id_desc in proxy_id_descs ]
+    actor_handles = [ proxy_id_desc["Actor"] for proxy_id_desc in proxy_id_descs ]
     assert actor_names[0] == ""
     assert actor_handles[0] == 0
 
     # get material handles
-    material_handles = [ proxy_id_desc["nonProxyMaterial"] for proxy_id_desc in proxy_id_descs ]
+    material_handles = [ proxy_id_desc["NonProxyMaterial"] for proxy_id_desc in proxy_id_descs ]
     assert material_handles[0] == 0
 
     # get unique actors
@@ -401,11 +402,11 @@ if __name__ == "__main__":
         # terminate segmentation service
         game.segmentation_service.terminate()
 
-        # # restore rendering quality
-        # game.rendering_quality_service.restore_rendering_quality()
+        # restore rendering quality
+        game.rendering_quality_service.restore_rendering_quality()
 
         # # restore quality levels from our own customization
         # game.rendering_quality_service.log_quality_levels(label="Restoring quality levels:", quality_levels=previous_quality_levels)
-        # sp_scalability.SetQualityLevels(QualityLevels=previous_quality_levels)
+        # game.cdo.USpScalability.SetQualityLevels(QualityLevels=previous_quality_levels)
 
     spear.log("Done.")

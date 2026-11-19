@@ -54,25 +54,16 @@ if __name__ == "__main__":
     game = instance.get_game()
 
     #
-    # get gameplay statics
-    #
-
-    with instance.begin_frame():
-        gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
-    with instance.end_frame():
-        pass
-
-    #
     # load sublevels
     #
 
     with instance.begin_frame():
-        gameplay_statics.LoadStreamLevel(LevelName="LV_Lighting_Default", bMakeVisibleAfterLoad=True, bShouldBlockOnLoad=True)
+        game.cdo.UGameplayStatics.LoadStreamLevel(LevelName="LV_Lighting_Default", bMakeVisibleAfterLoad=True, bShouldBlockOnLoad=True)
     with instance.end_frame():
         pass
 
     with instance.begin_frame():
-        gameplay_statics.LoadStreamLevel(LevelName="LV_S_Vehicles", bMakeVisibleAfterLoad=True, bShouldBlockOnLoad=True)
+        game.cdo.UGameplayStatics.LoadStreamLevel(LevelName="LV_S_Vehicles", bMakeVisibleAfterLoad=True, bShouldBlockOnLoad=True)
     with instance.end_frame():
         pass
 
@@ -82,11 +73,8 @@ if __name__ == "__main__":
 
     with instance.begin_frame():
 
-        # get UGameplayStatics
-        gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
-
         # get player controller
-        player_controller = gameplay_statics.GetPlayerController(PlayerIndex=0)
+        player_controller = game.cdo.UGameplayStatics.GetPlayerController(PlayerIndex=0)
 
         # get and configure pawn
         pawn = player_controller.K2_GetPawn()

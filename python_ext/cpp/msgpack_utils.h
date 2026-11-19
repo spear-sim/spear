@@ -8,11 +8,15 @@
 #include <stdint.h> // uint8_t
 
 #include <map>
+#include <memory>  // std::shared_ptr
 #include <span>
 #include <string>
 #include <utility> // std::move
 
 #include <rpc/msgpack.hpp> // clmdep_msgpack
+
+#include "assert.h"
+#include "types.h"
 
 class MsgpackUtils
 {
@@ -50,4 +54,12 @@ public:
         SP_ASSERT(object.type == clmdep_msgpack::type::BIN);
         return std::span<uint8_t>(reinterpret_cast<uint8_t*>(const_cast<char*>(object.via.bin.ptr)), object.via.bin.size);
     }
+
+    //
+    // functions for converting custom view types, received as return values from the server, into
+    // custom types that can be returned to Python, specialized for each type in msgpack_adaptors.h
+    //
+
+    template <typename TDest, typename TSrc>
+    static TDest convert(const ClientBase* client, TSrc&& src, std::shared_ptr<clmdep_msgpack::object_handle> object_handle) = delete;
 };

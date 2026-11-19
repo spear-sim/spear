@@ -31,7 +31,6 @@ if __name__ == "__main__":
 
     spear.log("Reading uproject file: ", uproject)
 
-    uproject_dict = {}
     with open(uproject) as f:
         uproject_dict = json.load(f)
 
@@ -158,10 +157,6 @@ using UnrealBuildTool; // ReadOnlyTargetRules
 
 public class {project_name} : SpModuleRules
 {{
-    // Deliberately not passing bLinkThirdPartyLibraries: true here (see SpModuleRules.Build.cs), because this
-    // module lives inside the external project's own directory tree, not inside the SPEAR repo, so
-    // SpModuleRules can't compute a valid path to spear/third_party. This module gets everything it needs
-    // transitively through its PublicDependencyModuleNames dependency on SpCore.
     public {project_name}(ReadOnlyTargetRules target) : base(target)
     {{
         SP_LOG_CURRENT_FUNCTION();

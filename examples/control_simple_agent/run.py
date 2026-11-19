@@ -29,9 +29,6 @@ if __name__ == "__main__":
         game.console_service.set_cvar(name="r.Streaming.FramesForFullUpdate", value=0)
         game.console_service.set_cvar(name="r.Streaming.FullyLoadUsedTextures", value=1)
 
-        # get UGameplayStatics
-        gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
-
         # spawn object and get components
         bp_sphere_agent_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_SphereAgent.BP_SphereAgent_C")
         bp_sphere_agent = game.unreal_service.spawn_actor(uclass=bp_sphere_agent_uclass, location={"X": -10.0, "Y": 280.0, "Z": 150.0})
@@ -77,7 +74,7 @@ if __name__ == "__main__":
         with instance.begin_frame():
 
             # unpause
-            gameplay_statics.SetGamePaused(bPaused=False)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
             # add rotation
             root_component.K2_AddRelativeRotation(DeltaRotation={"Pitch": 0.0, "Yaw": 1.0, "Roll": 0.0})
@@ -96,7 +93,7 @@ if __name__ == "__main__":
             data_bundle = final_tone_curve_hdr_component.read_pixels()
 
             # pause
-            gameplay_statics.SetGamePaused(bPaused=True)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
         # show image in an OpenCV window
         cv2.imshow("final_tone_curve_hdr", data_bundle["arrays"]["data"])

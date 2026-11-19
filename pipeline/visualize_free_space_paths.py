@@ -174,7 +174,7 @@ def process_scene():
 
 def draw_actor(actor_desc, color):
     draw_component(
-        transform_world_from_parent_component=spear.math.identity_transform,
+        transform_world_from_parent_component=spear.math.get_identity_transform(),
         component_desc=actor_desc["root_component"],
         color=color,
         log_prefix_str="    ")

@@ -5,10 +5,11 @@
 
 #pragma once
 
+#include <Containers/UnrealString.h>   // FString
 #include <HAL/Platform.h>              // int32
 #include <Kismet/BlueprintFunctionLibrary.h>
 #include <PerQualityLevelProperties.h> // EPerQualityLevels
-#include <Scalability.h>               // Scalability::FQualityLevels, Scalability::GetQualityLevels, Scalability::SetQualityLevels
+#include <Scalability.h>
 #include <UObject/ObjectMacros.h>      // GENERATED_BODY, UCLASS, UENUM, UFUNCTION, UPROPERTY, USTRUCT
 
 #include "SpCore/Unreal.h"
@@ -389,5 +390,11 @@ public:
     static void SetQualityLevels(const FSpQualityLevels& QualityLevels)
     {
         Scalability::SetQualityLevels(USpQualityLevelsUtils::toQualityLevels(QualityLevels));
+    }
+
+    UFUNCTION(BlueprintCallable, Category="SPEAR")
+    static FString GetScalabilitySectionString(const FString& InGroupName, ESpPerQualityLevels InQualityLevel, int32 InNumLevels)
+    {
+        return Scalability::GetScalabilitySectionString(*InGroupName, Unreal::getEnumValue(InQualityLevel), InNumLevels);
     }
 };

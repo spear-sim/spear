@@ -63,7 +63,7 @@ class FuncSignatureRegistry
         /* 27 */ "sp_static_class_desc",
         /* 28 */ "sp_world_desc" };
 
-    template <typename T> static int getTypeId() { SP_ASSERT(false); return -1; }
+    template <typename T> static int getTypeId() = delete;
     /*  0 */ template <> int getTypeId<void>                                           () { return  0; }
     /*  1 */ template <> int getTypeId<bool>                                           () { return  1; }
     /*  2 */ template <> int getTypeId<float>                                          () { return  2; }

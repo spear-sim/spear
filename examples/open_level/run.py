@@ -30,12 +30,6 @@ if __name__ == "__main__":
         with instance.end_frame():
             pass
 
-    # get UGameplayStatics
-    with instance.begin_frame():
-        gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
-    with instance.end_frame():
-        pass
-
     # sleep for a few seconds
     spear.log("Sleeping...")
     time.sleep(5.0)
@@ -52,7 +46,7 @@ if __name__ == "__main__":
         pass
     with instance.end_frame():
         game.invalidate() # need to call invalidate() before calling OpenLevel()
-        gameplay_statics.OpenLevel(LevelName="/Game/ThirdPerson/Maps/ThirdPersonMap", bAbsolute=True, Options="")
+        game.cdo.UGameplayStatics.OpenLevel(LevelName="/Game/ThirdPerson/Maps/ThirdPersonMap", bAbsolute=True, Options="")
 
     # Calling OpenLevel invalidates the old game object, so get a new one here. This call will block until
     # the new game object is ready.
@@ -87,7 +81,7 @@ if __name__ == "__main__":
         pass
     with instance.end_frame():
         game.invalidate() # need to call invalidate() before calling OpenLevel()
-        gameplay_statics.OpenLevel(LevelName="/Game/SPEAR/Scenes/apartment_0000/Maps/apartment_0000", bAbsolute=True, Options="")
+        game.cdo.UGameplayStatics.OpenLevel(LevelName="/Game/SPEAR/Scenes/apartment_0000/Maps/apartment_0000", bAbsolute=True, Options="")
 
     # get a new game object again
     game = instance.get_game(

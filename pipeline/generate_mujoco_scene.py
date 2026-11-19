@@ -102,7 +102,7 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
         kinematic_tree_node=kinematic_tree["root_node"],
         meshes_element=meshes_element,
         parent_element=bodies_element,
-        transform_world_from_parent_node=spear.math.identity_transform,
+        transform_world_from_parent_node=spear.math.get_identity_transform(),
         root_node=True,
         color=color,
         log_prefix_str="    ")

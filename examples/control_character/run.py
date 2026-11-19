@@ -46,16 +46,16 @@ def get_data_frame(transforms):
             f"{transform_name}_scale3D_z"]
         columns.extend(cols)
         vals = [
-            transform["translation"]["x"],
-            transform["translation"]["y"],
-            transform["translation"]["z"],
-            transform["rotation"]["x"],
-            transform["rotation"]["y"],
-            transform["rotation"]["z"],
-            transform["rotation"]["w"],
-            transform["scale3D"]["x"],
-            transform["scale3D"]["y"],
-            transform["scale3D"]["z"]]
+            transform["Translation"]["X"],
+            transform["Translation"]["Y"],
+            transform["Translation"]["Z"],
+            transform["Rotation"]["X"],
+            transform["Rotation"]["Y"],
+            transform["Rotation"]["Z"],
+            transform["Rotation"]["W"],
+            transform["Scale3D"]["X"],
+            transform["Scale3D"]["Y"],
+            transform["Scale3D"]["Z"]]
         data.extend(vals)
     df = pd.DataFrame(columns=columns, data=np.array(data).reshape(1, -1))
     return df
@@ -89,9 +89,6 @@ if __name__ == "__main__":
 
         bp_character_uclass = game.unreal_service.load_class(uclass="AActor", name="/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter.BP_ThirdPersonCharacter_C")
         enhanced_input_component_uclass = game.unreal_service.get_static_class(uclass="UEnhancedInputComponent")
-
-        # get UGameplayStatics
-        gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
 
         # load objects
         manny_simple = game.unreal_service.load_object(uclass="USkeletalMesh", name="/Game/Characters/Mannequins/Meshes/SKM_Manny_Simple.SKM_Manny_Simple")
@@ -139,7 +136,7 @@ if __name__ == "__main__":
 
     # jump
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
         for character in characters:
             instance.enhanced_input_service.inject_input_for_actor(
                 actor=character["actor"],
@@ -153,13 +150,13 @@ if __name__ == "__main__":
         for character in characters:
             transforms = { bone_name: character["skeletal_mesh_component"].GetBoneTransform(InBoneName=bone_name, TransformSpace="RTS_World") for bone_name in character["bone_names"] }
             character["data_frame"] = pd.concat([character["data_frame"], get_data_frame(transforms=transforms)])
-        gameplay_statics.SetGamePaused(bPaused=True)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     for _ in range(100):
         
         # move
         with instance.begin_frame():
-            gameplay_statics.SetGamePaused(bPaused=False)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
             for character in characters:
                 instance.enhanced_input_service.inject_input_for_actor(
                     actor=character["actor"],
@@ -173,11 +170,11 @@ if __name__ == "__main__":
             for character in characters:
                 transforms = { bone_name: character["skeletal_mesh_component"].GetBoneTransform(InBoneName=bone_name, TransformSpace="RTS_World") for bone_name in character["bone_names"] }
                 character["data_frame"] = pd.concat([character["data_frame"], get_data_frame(transforms=transforms)])
-            gameplay_statics.SetGamePaused(bPaused=True)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     # unpause now that we're finished recording
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
     with instance.end_frame():
         pass
 

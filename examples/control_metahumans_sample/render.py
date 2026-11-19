@@ -42,9 +42,6 @@ if __name__ == "__main__":
 
     with instance.begin_frame():
 
-        # get UGameplayStatics
-        gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
-
         # spawn camera sensor and get its components
         bp_multi_view_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensorMultiView_13.BP_CameraSensorMultiView_13_C")
         bp_multi_view_camera_sensor = game.unreal_service.spawn_actor(uclass=bp_multi_view_camera_sensor_uclass)
@@ -85,9 +82,9 @@ if __name__ == "__main__":
 
     for _ in range(65):
         with instance.begin_frame():
-            gameplay_statics.SetGamePaused(bPaused=False)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
         with instance.end_frame():
-            gameplay_statics.SetGamePaused(bPaused=True)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     # set camera pose and configure components to match the viewport
     with instance.begin_frame():
@@ -113,7 +110,7 @@ if __name__ == "__main__":
 
     for i in range(num_frames):
         with instance.begin_frame():
-            gameplay_statics.SetGamePaused(bPaused=False)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
         with instance.end_frame():
             # read pixels from camera sensor
@@ -123,7 +120,7 @@ if __name__ == "__main__":
                     data_bundle = component.read_pixels()
                     component_data[component_name] = data_bundle["arrays"]["data"]
 
-            gameplay_statics.SetGamePaused(bPaused=True)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
         if not args.skip_read_pixels and not args.skip_save_images:
             save_images(images_dir=images_dir, frame_index=frame_index)
@@ -134,7 +131,7 @@ if __name__ == "__main__":
     #
 
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
     with instance.end_frame():
         pass
 

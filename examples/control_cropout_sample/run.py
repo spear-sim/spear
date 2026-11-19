@@ -62,11 +62,8 @@ if __name__ == "__main__":
 
     with instance.begin_frame():
 
-        # get UGameplayStatics
-        gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
-
         # get player controller
-        player_controller = gameplay_statics.GetPlayerController(PlayerIndex=0)
+        player_controller = game.cdo.UGameplayStatics.GetPlayerController(PlayerIndex=0)
 
         # get player
         player = player_controller.K2_GetPawn()
@@ -120,16 +117,15 @@ if __name__ == "__main__":
         villager_uclass = game.unreal_service.load_class(uclass="AActor", name="/Game/Blueprint/Villagers/BP_Villager.BP_Villager_C")
 
         # get UnrealObject instances
-        sp_navigation_system_v1 = game.get_unreal_object(uclass="USpNavigationSystemV1")
         bpf_shared = game.get_unreal_object(uclass=bpf_shared_uclass)
 
         # get game mode
-        game_mode = gameplay_statics.GetGameMode()
+        game_mode = game.cdo.UGameplayStatics.GetGameMode()
         # game_mode.print_debug_info()
 
         # get navigation data
-        navigation_system = sp_navigation_system_v1.GetNavigationSystem()
-        navigation_data = sp_navigation_system_v1.GetNavDataForAgentName(NavigationSystem=navigation_system, AgentName="Main")
+        navigation_system = game.cdo.USpNavigationSystemV1.GetNavigationSystem()
+        navigation_data = game.cdo.USpNavigationSystemV1.GetNavDataForAgentName(NavigationSystem=navigation_system, AgentName="Main")
 
         #
         # use call(...) when a function or argument name has spaces, and use get_property_value(...) or set_property_value(...)

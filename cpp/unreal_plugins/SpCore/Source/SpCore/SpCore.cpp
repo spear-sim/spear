@@ -11,12 +11,13 @@
 #include <map>
 #include <string>
 
-#include <CoreGlobals.h>                 // GConfig, GEditorIni, GEngineIni, GGameIni, GGameUserSettingsIni, GInputIni
+#include <CoreGlobals.h>                 // GConfig, GEngineIni, GGameIni, GInputIni, GScalabilityIni, etc
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
+#include <HAL/Platform.h>                // PLATFORM_DESKTOP
 #include <HAL/PlatformMisc.h>            // FPlatformMisc
 #include <Misc/ConfigCacheIni.h>         // GConfig
 #include <Misc/CoreDelegates.h>          // FCoreDelegates
-#include <Modules/ModuleManager.h>       // FDefaultGameModuleImpl, FDefaultModuleImpl, IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
+#include <Modules/ModuleManager.h>       // IMPLEMENT_MODULE
 
 // Unreal classes to register
 #include <AssetRegistry/IAssetRegistry.h>
@@ -94,12 +95,35 @@ void SpCore::requestWaitForKeyboardInput() const
 
 void SpCore::requestInitializeIniConfigs() const
 {
+    // See Engine/Source/Runtime/Core/Public/CoreGlobals.h for an exhaustive list of global INI filenames.
     if (Config::isInitialized()) {
-        requestInitializeIniConfig(GEditorIni,           "GEditorIni",           "SP_CORE.OVERRIDE_CONFIG_EDITOR_INI",             "SP_CORE.CONFIG_EDITOR_INI_STRING");
-        requestInitializeIniConfig(GEngineIni,           "GEngineIni",           "SP_CORE.OVERRIDE_CONFIG_ENGINE_INI",             "SP_CORE.CONFIG_ENGINE_INI_STRING");
-        requestInitializeIniConfig(GGameIni,             "GGameIni",             "SP_CORE.OVERRIDE_CONFIG_GAME_INI",               "SP_CORE.CONFIG_GAME_INI_STRING");
-        requestInitializeIniConfig(GGameUserSettingsIni, "GGameUserSettingsIni", "SP_CORE.OVERRIDE_CONFIG_GAME_USER_SETTINGS_INI", "SP_CORE.CONFIG_GAME_USER_SETTINGS_INI_STRING");
-        requestInitializeIniConfig(GInputIni,            "GInputIni",            "SP_CORE.OVERRIDE_CONFIG_INPUT_INI",              "SP_CORE.CONFIG_INPUT_INI_STRING");
+        requestInitializeIniConfig(GDeviceProfilesIni,   "GDeviceProfilesIni",    "SP_CORE.OVERRIDE_CONFIG_DEVICE_PROFILES_INI",     "SP_CORE.CONFIG_DEVICE_PROFILES_INI_STRING");
+        requestInitializeIniConfig(GEngineIni,           "GEngineIni",            "SP_CORE.OVERRIDE_CONFIG_ENGINE_INI",              "SP_CORE.CONFIG_ENGINE_INI_STRING");
+        requestInitializeIniConfig(GGameIni,             "GGameIni",              "SP_CORE.OVERRIDE_CONFIG_GAME_INI",                "SP_CORE.CONFIG_GAME_INI_STRING");
+        requestInitializeIniConfig(GGameplayTagsIni,     "GGameplayTagsIni",      "SP_CORE.OVERRIDE_CONFIG_GAMEPLAY_TAGS_INI",       "SP_CORE.CONFIG_GAMEPLAY_TAGS_INI_STRING");
+        requestInitializeIniConfig(GGameUserSettingsIni, "GGameUserSettingsIni",  "SP_CORE.OVERRIDE_CONFIG_GAME_USER_SETTINGS_INI",  "SP_CORE.CONFIG_GAME_USER_SETTINGS_INI_STRING");
+        requestInitializeIniConfig(GHardwareIni,         "GHardwareIni",          "SP_CORE.OVERRIDE_CONFIG_HARDWARE_INI",            "SP_CORE.CONFIG_HARDWARE_INI_STRING");
+        requestInitializeIniConfig(GInputIni,            "GInputIni",             "SP_CORE.OVERRIDE_CONFIG_INPUT_INI",               "SP_CORE.CONFIG_INPUT_INI_STRING");
+        requestInitializeIniConfig(GInstallBundleIni,    "GInstallBundleIni",     "SP_CORE.OVERRIDE_CONFIG_INSTALL_BUNDLE_INI",      "SP_CORE.CONFIG_INSTALL_BUNDLE_INI_STRING");
+        requestInitializeIniConfig(GRuntimeOptionsIni,   "GRuntimeOptionsIni",    "SP_CORE.OVERRIDE_CONFIG_RUNTIME_OPTIONS_INI",     "SP_CORE.CONFIG_RUNTIME_OPTIONS_INI_STRING");
+        requestInitializeIniConfig(GScalabilityIni,      "GScalabilityIni",       "SP_CORE.OVERRIDE_CONFIG_SCALABILITY_INI",         "SP_CORE.CONFIG_SCALABILITY_INI_STRING");
+
+        // These INI files are only loaded in desktop builds, see LoadRemainingConfigFiles(...) in
+        // Engine/Source/Runtime/Core/Private/Misc/ConfigCacheIni.cpp.
+        #if PLATFORM_DESKTOP
+            requestInitializeIniConfig(GCompatIni,    "GCompatIni",    "SP_CORE.OVERRIDE_CONFIG_COMPAT_INI",    "SP_CORE.CONFIG_COMPAT_INI_STRING");
+            requestInitializeIniConfig(GLightmassIni, "GLightmassIni", "SP_CORE.OVERRIDE_CONFIG_LIGHTMASS_INI", "SP_CORE.CONFIG_LIGHTMASS_INI_STRING");
+        #endif
+
+        // These INI files are only loaded in editor builds, see LoadRemainingConfigFiles(...) in
+        // Engine/Source/Runtime/Core/Private/Misc/ConfigCacheIni.cpp.
+        #if WITH_EDITOR // defined in an auto-generated header
+            requestInitializeIniConfig(GEditorIni,            "GEditorIni",            "SP_CORE.OVERRIDE_CONFIG_EDITOR_INI",              "SP_CORE.CONFIG_EDITOR_INI_STRING");
+            requestInitializeIniConfig(GEditorKeyBindingsIni, "GEditorKeyBindingsIni", "SP_CORE.OVERRIDE_CONFIG_EDITOR_KEY_BINDINGS_INI", "SP_CORE.CONFIG_EDITOR_KEY_BINDINGS_INI_STRING");
+            requestInitializeIniConfig(GEditorLayoutIni,      "GEditorLayoutIni",      "SP_CORE.OVERRIDE_CONFIG_EDITOR_LAYOUT_INI",       "SP_CORE.CONFIG_EDITOR_LAYOUT_INI_STRING");
+            requestInitializeIniConfig(GEditorPerProjectIni,  "GEditorPerProjectIni",  "SP_CORE.OVERRIDE_CONFIG_EDITOR_PER_PROJECT_INI",  "SP_CORE.CONFIG_EDITOR_PER_PROJECT_INI_STRING");
+            requestInitializeIniConfig(GEditorSettingsIni,    "GEditorSettingsIni",    "SP_CORE.OVERRIDE_CONFIG_EDITOR_SETTINGS_INI",     "SP_CORE.CONFIG_EDITOR_SETTINGS_INI_STRING");
+        #endif
     }
 }
 
@@ -155,5 +179,4 @@ void SpCore::terminateSharedMemory()
     SharedMemory::terminate();
 }
 
-// use IMPLEMENT_GAME_MODULE if module implements Unreal classes, use IMPLEMENT_MODULE otherwise
-IMPLEMENT_GAME_MODULE(SpCore, SpCore);
+IMPLEMENT_MODULE(SpCore, SpCore);

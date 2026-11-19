@@ -17,19 +17,19 @@ def get_transforms(df, transform_names):
     transforms = {}
     for transform_name in transform_names:
         transform = {
-            "translation": {
-                "x": df[f"{transform_name}_translation_x"],
-                "y": df[f"{transform_name}_translation_y"],
-                "z": df[f"{transform_name}_translation_z"]},
-            "rotation": {
-                "x": df[f"{transform_name}_rotation_x"],
-                "y": df[f"{transform_name}_rotation_y"],
-                "z": df[f"{transform_name}_rotation_z"],
-                "w": df[f"{transform_name}_rotation_w"]},
-            "scale3D": {
-                "x": df[f"{transform_name}_scale3D_x"],
-                "y": df[f"{transform_name}_scale3D_y"],
-                "z": df[f"{transform_name}_scale3D_z"]}}
+            "Translation": {
+                "X": df[f"{transform_name}_translation_x"],
+                "Y": df[f"{transform_name}_translation_y"],
+                "Z": df[f"{transform_name}_translation_z"]},
+            "Rotation": {
+                "X": df[f"{transform_name}_rotation_x"],
+                "Y": df[f"{transform_name}_rotation_y"],
+                "Z": df[f"{transform_name}_rotation_z"],
+                "W": df[f"{transform_name}_rotation_w"]},
+            "Scale3D": {
+                "X": df[f"{transform_name}_scale3D_x"],
+                "Y": df[f"{transform_name}_scale3D_y"],
+                "Z": df[f"{transform_name}_scale3D_z"]}}
         transforms[transform_name] = transform
     return transforms
 

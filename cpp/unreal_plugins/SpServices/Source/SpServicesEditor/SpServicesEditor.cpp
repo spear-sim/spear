@@ -9,7 +9,7 @@
 
 #include <CoreGlobals.h>           // IsRunningCommandlet
 #include <Misc/CoreDelegates.h>    // FCoreDelegates
-#include <Modules/ModuleManager.h> // FDefaultGameModuleImpl, FDefaultModuleImpl, IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
+#include <Modules/ModuleManager.h> // FModuleManager, IMPLEMENT_MODULE
 
 #include "SpCore/Assert.h"
 #include "SpCore/AssertModuleLoaded.h"
@@ -88,5 +88,4 @@ void SpServicesEditor::enginePreExitHandler()
     editor_unreal_service_editor_ = nullptr;
 }
 
-// use IMPLEMENT_GAME_MODULE if module implements Unreal classes, use IMPLEMENT_MODULE otherwise
-IMPLEMENT_GAME_MODULE(SpServicesEditor, SpServicesEditor);
+IMPLEMENT_MODULE(SpServicesEditor, SpServicesEditor);

@@ -57,7 +57,6 @@ if __name__ == "__main__":
 
     result = editor.python_service.execute_string_across_frames(
         string="eaf_output = eaf_input*5",
-        execution_scope="Public",
         inputs={"eaf_input": 10},
         outputs=["eaf_output"])
     spear.log("Expecting dict:         ", type(result), " ", result)
@@ -95,7 +94,6 @@ if __name__ == "__main__":
         # execute a string with inputs and outputs (list form)
         result = editor.python_service.execute_string(
             string="es_output = es_input*3",
-            execution_scope="Public",
             inputs={"es_input": 7},
             outputs=["es_output"])
         spear.log("Expecting dict:         ", type(result), " ", result)
@@ -104,7 +102,6 @@ if __name__ == "__main__":
         # execute a string with numpy inputs and outputs (dict form with kwargs)
         result = editor.python_service.execute_string(
             string="es_arr_output = es_arr_input + 1",
-            execution_scope="Public",
             inputs={"es_arr_input": np.array([10.0, 20.0, 30.0])},
             outputs={"es_arr_output": None})
         spear.log("Expecting dict:         ", type(result), " ", result)
@@ -115,7 +112,7 @@ if __name__ == "__main__":
         #
 
         editor.python_service.execute_statement(statement="test_stmt_var = 123")
-        result = editor.python_service.evaluate_expression(expression="test_stmt_var", execution_scope="Public")
+        result = editor.python_service.evaluate_expression(expression="test_stmt_var")
         spear.log("Expecting int:          ", type(result), " ", result)
         assert result == 123
 
@@ -170,9 +167,9 @@ if __name__ == "__main__":
         result = editor.python_service.evaluate_expression(expression="unreal.Vector(x=1.0, y=2.0, z=3.0)")
         spear.log("Expecting dict:         ", type(result), " ", result)
         assert isinstance(result, dict)
-        assert result["x"] == 1.0
-        assert result["y"] == 2.0
-        assert result["z"] == 3.0
+        assert result["X"] == 1.0
+        assert result["Y"] == 2.0
+        assert result["Z"] == 3.0
 
         # evaluate an Unreal object (e.g., an actor) and get back an UnrealObject
         result = editor.python_service.evaluate_expression(expression="spear.editor.find_actors()[0]")

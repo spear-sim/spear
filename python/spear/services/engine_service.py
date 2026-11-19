@@ -128,7 +128,7 @@ class EngineService():
                 spear.log(f"ERROR: Don't know how to recover from frame state '{self._frame_state}'")
                 assert False
 
-        success = False
+        inside_critical_section = False
 
         # if we're currently in the idle state, we need to call begin_frame_impl()
         if self._frame_state == "idle":
@@ -136,14 +136,14 @@ class EngineService():
 
             # try calling begin_frame_impl()
             try:
-                success = self._begin_frame_impl()
+                inside_critical_section = self._begin_frame_impl()
             except Exception as e:
                 spear.log("Exception: ", e)
                 spear.log("ERROR: We might or might not be in a critical section, but we don't know how to get out of it from here. Giving up...")
                 self._frame_state = "error"
                 raise
 
-            if not success:
+            if not inside_critical_section:
                 spear.log("ERROR: Server error state detected when calling _begin_frame_impl(), but we do not appear to be in a critical section.")
                 self._frame_state = "error"
                 assert False
@@ -247,16 +247,16 @@ class EngineService():
         assert self._editor_transaction_state == "idle"
         self._editor_transaction_state = "request_editor_transaction"
 
-        success = False
+        inside_critical_section = False
 
         try:
-            success = self._begin_editor_transaction_impl()
+            inside_critical_section = self._begin_editor_transaction_impl()
         except Exception as e:
             spear.log("Exception: ", e)
             self._editor_transaction_state = "error"
             raise
 
-        if not success:
+        if not inside_critical_section:
             spear.log("ERROR: Server error state detected when calling _begin_editor_transaction_impl().")
             self._editor_transaction_state = "error"
             assert False
@@ -269,6 +269,8 @@ class EngineService():
             self._editor_transaction_state = "executing_editor_post_transaction"
         except Exception as e:
             spear.log("Exception: ", e)
+            spear.log("ERROR: Attempting to exit critical section by calling _end_editor_transaction_impl()...")
+            self._end_editor_transaction_impl()
             self._editor_transaction_state = "error"
             raise
 

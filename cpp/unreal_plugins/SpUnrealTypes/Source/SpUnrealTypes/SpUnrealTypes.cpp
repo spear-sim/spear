@@ -5,7 +5,7 @@
 
 #include "SpUnrealTypes/SpUnrealTypes.h"
 
-#include <Modules/ModuleManager.h> // FDefaultGameModuleImpl, FDefaultModuleImpl, IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
+#include <Modules/ModuleManager.h> // IMPLEMENT_MODULE
 
 #include "SpCore/AssertModuleLoaded.h"
 #include "SpCore/Log.h"
@@ -21,5 +21,4 @@ void SpUnrealTypes::ShutdownModule()
     SP_LOG_CURRENT_FUNCTION();
 }
 
-// use IMPLEMENT_GAME_MODULE if module implements Unreal classes, use IMPLEMENT_MODULE otherwise
-IMPLEMENT_GAME_MODULE(SpUnrealTypes, SpUnrealTypes);
+IMPLEMENT_MODULE(SpUnrealTypes, SpUnrealTypes);

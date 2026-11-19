@@ -62,14 +62,12 @@ if __can_import_spear_ext__:
     try:
         from spear_ext import SpFuncDataBundle, SpPackedArray, SpPropertyDesc
     except ImportError:
+        log("WARNING: spear_ext is out of date, rebuild it with tools/install_python_extension.py...")
         __can_import_spear_ext__ = False
 
 if __can_import_unreal__:
-    try:
-        from .utils.editor_utils import SpFuncDataBundle, SpPackedArray, SpPropertyDesc
-        from .utils import editor_utils as editor
-    except ImportError:
-        __can_import_unreal__ = False
+    from .utils.editor_utils import SpFuncDataBundle, SpPackedArray, SpPropertyDesc
+    from .utils import editor_utils as editor
 
 #
 # services
@@ -77,12 +75,12 @@ if __can_import_unreal__:
 
 # import a curated set of classes directly into the spear namespace
 from .services.async_loading_service import AsyncLoadingService
+from .services.class_default_object_service import ClassDefaultObjectService
 from .services.console_service import ConsoleService
 from .services.debug_service import DebugService
 from .services.engine_service import EngineService
 from .services.engine_globals_service import EngineGlobalsService
 from .services.enhanced_input_service import EnhancedInputService
-from .services.initialize_world_service import InitializeWorldService
 from .services.input_service import InputService
 from .services.navigation_service import NavigationService
 from .services.python_service import PythonService

@@ -19,9 +19,6 @@ if __name__ == "__main__":
     
     with instance.begin_frame():
 
-        # get UKismetSystemLibrary
-        kismet_system_library = game.get_unreal_object(uclass="UKismetSystemLibrary")
-
         # spawn object
         bp_axes_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_Axes.BP_Axes_C")
         bp_axes = game.unreal_service.spawn_actor(uclass=bp_axes_uclass, location={"X": -10.0, "Y": 280.0, "Z": 50.0})

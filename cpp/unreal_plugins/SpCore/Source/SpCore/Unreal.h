@@ -401,7 +401,7 @@ public:
     //
 
     template <CSubsystemProvider TSubsystemProvider>
-    static TSubsystemProvider* getSubsystemProvider(UWorld* world) { SP_ASSERT(false); return nullptr; }
+    static TSubsystemProvider* getSubsystemProvider(UWorld* world) = delete;
 
     template <>
     ULocalPlayer* getSubsystemProvider<ULocalPlayer>(UWorld* world)

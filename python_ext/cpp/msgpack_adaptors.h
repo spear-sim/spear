@@ -8,10 +8,16 @@
 #include <stddef.h> // size_t
 #include <stdint.h> // int8_t, int16_t, int32_t, int64_t, uint8_t, uint16_t, uint32_t, uint64_t
 
+#include <string.h> // memcpy
+
+#include <exception> // std::terminate
+#include <iostream>
 #include <map>
-#include <new> // std::align_val_t
+#include <memory>    // std::make_unique, std::shared_ptr, std::unique_ptr
+#include <new>       // std::align_val_t
 #include <span>
 #include <string>
+#include <utility>   // std::move
 #include <vector>
 
 #include <nanobind/nanobind.h>
@@ -19,8 +25,6 @@
 #include <rpc/msgpack.hpp> // clmdep_msgpack
 
 #include "assert.h"
-#include "client.h"
-#include "func_signature_registry.h"
 #include "msgpack_utils.h"
 #include "std.h"
 #include "types.h"
@@ -158,76 +162,6 @@ struct clmdep_msgpack::adaptor::convert<SharedMemoryView> {
 };
 
 //
-// SpPropertyDesc
-//
-
-template <> // needed to send a custom type as an arg to the server
-struct clmdep_msgpack::adaptor::pack<SpPropertyDesc> {
-    template <typename TStream>
-    clmdep_msgpack::packer<TStream>& operator()(clmdep_msgpack::packer<TStream>& packer, SpPropertyDesc const& sp_property_desc) const {
-        packer.pack_map(8);
-        packer.pack("property");                  packer.pack(sp_property_desc.property_);
-        packer.pack("value_ptr");                 packer.pack(sp_property_desc.value_ptr_);
-        packer.pack("type_id");                   packer.pack(sp_property_desc.type_id_);
-        packer.pack("notify_objects");            packer.pack(sp_property_desc.notify_objects_);
-        packer.pack("notify_member_properties");  packer.pack(sp_property_desc.notify_member_properties_);
-        packer.pack("notify_element_properties"); packer.pack(sp_property_desc.notify_element_properties_);
-        packer.pack("notify_array_indices");      packer.pack(sp_property_desc.notify_array_indices_);
-        packer.pack("notify_map_keys");           packer.pack(sp_property_desc.notify_map_keys_);
-        return packer;
-    }
-};
-
-template <> // needed to send a custom type as an arg to the server
-struct clmdep_msgpack::adaptor::object_with_zone<SpPropertyDesc> {
-    void operator()(clmdep_msgpack::object::with_zone& o, const SpPropertyDesc& v) const {
-        o.type = clmdep_msgpack::type::MAP;
-        o.via.map.size = 8;
-        o.via.map.ptr = static_cast<clmdep_msgpack::object_kv*>(o.zone.allocate_align(sizeof(clmdep_msgpack::object_kv) * 8, MSGPACK_ZONE_ALIGNOF(clmdep_msgpack::object_kv)));
-        o.via.map.ptr[0].key = clmdep_msgpack::object("property",                  o.zone); o.via.map.ptr[0].val = clmdep_msgpack::object(v.property_,                  o.zone);
-        o.via.map.ptr[1].key = clmdep_msgpack::object("value_ptr",                 o.zone); o.via.map.ptr[1].val = clmdep_msgpack::object(v.value_ptr_,                 o.zone);
-        o.via.map.ptr[2].key = clmdep_msgpack::object("type_id",                   o.zone); o.via.map.ptr[2].val = clmdep_msgpack::object(v.type_id_,                   o.zone);
-        o.via.map.ptr[3].key = clmdep_msgpack::object("notify_objects",            o.zone); o.via.map.ptr[3].val = clmdep_msgpack::object(v.notify_objects_,            o.zone);
-        o.via.map.ptr[4].key = clmdep_msgpack::object("notify_member_properties",  o.zone); o.via.map.ptr[4].val = clmdep_msgpack::object(v.notify_member_properties_,  o.zone);
-        o.via.map.ptr[5].key = clmdep_msgpack::object("notify_element_properties", o.zone); o.via.map.ptr[5].val = clmdep_msgpack::object(v.notify_element_properties_, o.zone);
-        o.via.map.ptr[6].key = clmdep_msgpack::object("notify_array_indices",      o.zone); o.via.map.ptr[6].val = clmdep_msgpack::object(v.notify_array_indices_,      o.zone);
-        o.via.map.ptr[7].key = clmdep_msgpack::object("notify_map_keys",           o.zone); o.via.map.ptr[7].val = clmdep_msgpack::object(v.notify_map_keys_,           o.zone);
-    }
-};
-
-template <> // needed to receive a custom type as a return value from the server
-struct clmdep_msgpack::adaptor::convert<SpPropertyDesc> {
-    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpPropertyDesc& sp_property_desc) const {
-        std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
-        SP_ASSERT(objects.size() == 8);
-        sp_property_desc.property_                  = MsgpackUtils::to<uint64_t>(objects.at("property"));
-        sp_property_desc.value_ptr_                 = MsgpackUtils::to<uint64_t>(objects.at("value_ptr"));
-        sp_property_desc.type_id_                   = MsgpackUtils::to<std::string>(objects.at("type_id"));
-        sp_property_desc.notify_objects_            = MsgpackUtils::to<std::vector<uint64_t>>(objects.at("notify_objects"));
-        sp_property_desc.notify_member_properties_  = MsgpackUtils::to<std::vector<uint64_t>>(objects.at("notify_member_properties"));
-        sp_property_desc.notify_element_properties_ = MsgpackUtils::to<std::vector<uint64_t>>(objects.at("notify_element_properties"));
-        sp_property_desc.notify_array_indices_      = MsgpackUtils::to<std::vector<int>>(objects.at("notify_array_indices"));
-        sp_property_desc.notify_map_keys_           = MsgpackUtils::to<std::vector<std::string>>(objects.at("notify_map_keys"));
-        return object;
-    }
-};
-
-//
-// SpPropertyValue (never sent as an arg to the server)
-//
-
-template <> // needed to receive a custom type as a return value from the server
-struct clmdep_msgpack::adaptor::convert<SpPropertyValue> {
-    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpPropertyValue& sp_property_value) const {
-        std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
-        SP_ASSERT(objects.size() == 2);
-        sp_property_value.value_   = MsgpackUtils::to<std::string>(objects.at("value"));
-        sp_property_value.type_id_ = MsgpackUtils::to<std::string>(objects.at("type_id"));
-        return object;
-    }
-};
-
-//
 // SpArraySharedMemoryView (never sent as an arg to the server)
 //
 
@@ -294,7 +228,7 @@ struct clmdep_msgpack::adaptor::convert<SpPackedArrayView> {
 };
 
 template <> // needed to convert a custom view type, received as a return value from the server, into a custom type that be returned to Python
-SpPackedArray FuncSignatureRegistry::convert<SpPackedArray>(const Client* client, SpPackedArrayView&& sp_packed_array_view, std::shared_ptr<clmdep_msgpack::object_handle> object_handle)
+inline SpPackedArray MsgpackUtils::convert<SpPackedArray>(const ClientBase* client, SpPackedArrayView&& sp_packed_array_view, std::shared_ptr<clmdep_msgpack::object_handle> object_handle)
 {
     SP_ASSERT(client);
 
@@ -318,12 +252,14 @@ SpPackedArray FuncSignatureRegistry::convert<SpPackedArray>(const Client* client
         {
             std::vector<uint8_t, SpAlignedAllocator<uint8_t, 4096>> data_;
             std::shared_ptr<clmdep_msgpack::object_handle> object_handle_ = nullptr;
+            bool verbose_allocations_ = false; // needed because the deletion callback below can't capture client
         };
 
-        // Allocate a Capsule on the heap. Deleted in the deletion callback below.
-        Capsule* capsule_ptr = new Capsule();
-        SP_ASSERT(capsule_ptr);
-        if (client->verbose_allocations_) { std::cout << "[SPEAR | msgpack_adaptors.h] Allocated Capsule object at memory location: " << capsule_ptr << std::endl; }
+        // Allocate a Capsule on the heap. Owned by a std::unique_ptr until ownership is transferred to the
+        // nanobind capsule below, so the Capsule is deleted if an exception is thrown before then.
+        std::unique_ptr<Capsule> capsule_ptr = std::make_unique<Capsule>();
+        capsule_ptr->verbose_allocations_ = client->verbose_allocations_;
+        if (client->verbose_allocations_) { std::cout << "[SPEAR | msgpack_adaptors.h] Allocated Capsule object at memory location: " << capsule_ptr.get() << std::endl; }
 
         void* data_ptr = nullptr;
 
@@ -351,38 +287,36 @@ SpPackedArray FuncSignatureRegistry::convert<SpPackedArray>(const Client* client
         // don't need to keep the clmdep_msgpack::object_handle alive any more and clean up our
         // heap-allocated Capsule.
 
-        nanobind::capsule capsule = nanobind::capsule(capsule_ptr, [](void* ptr) noexcept -> void {
+        nanobind::capsule capsule = nanobind::capsule(capsule_ptr.get(), [](void* ptr) noexcept -> void {
             if (!ptr) {
                 std::cout << "[SPEAR | msgpack_adaptors.h] ERROR: Unexpected nullptr (ptr) in deletion callback for Capsule." << std::endl;
                 std::terminate(); // can't assert because of noexcept
             }
-            // if (!client) {
-            //     std::cout << "[SPEAR | msgpack_adaptors.h] ERROR: Unexpected nullptr (client) in deletion callback for Capsule." << std::endl;
-            //     std::terminate(); // can't assert because of noexcept
-            // }
             Capsule* capsule_ptr = static_cast<Capsule*>(ptr);
-            // if (client->verbose_allocations_) { std::cout << "[SPEAR | msgpack_adaptors.h] Deleting Capsule object at memory location: " << capsule_ptr << std::endl; }
+            if (capsule_ptr->verbose_allocations_) { std::cout << "[SPEAR | msgpack_adaptors.h] Deleting Capsule object at memory location: " << capsule_ptr << std::endl; }
             capsule_ptr->object_handle_ = nullptr;
-            delete capsule_ptr;
+            delete capsule_ptr; // need to delete manually because capsule_ptr.release() releases ownership without deleting
             capsule_ptr = nullptr;
         });
 
+        capsule_ptr.release(); // the nanobind capsule now owns the Capsule and must call delete
+
         ndarray = nanobind::ndarray<nanobind::numpy>(
-            data_ptr,                                                  // data_ptr
+            data_ptr,                                                     // data_ptr
             sp_packed_array_view.shape_.size(),                           // ndim
             sp_packed_array_view.shape_.data(),                           // shape_ptr
-            capsule,                                                   // owner
-            nullptr,                                                   // strides
+            capsule,                                                      // owner
+            nullptr,                                                      // strides
             DataTypeUtils::getDataType(sp_packed_array_view.data_type_)); // dtype
 
     } else if (sp_packed_array_view.data_source_ == "Shared") {
 
         ndarray = nanobind::ndarray<nanobind::numpy>(
-            nullptr,                                                   // data_ptr
-            0,                                                         // ndim
-            nullptr,                                                   // shape_ptr
-            {},                                                        // owner
-            nullptr,                                                   // strides
+            nullptr,                                                      // data_ptr
+            0,                                                            // ndim
+            nullptr,                                                      // shape_ptr
+            {},                                                           // owner
+            nullptr,                                                      // strides
             DataTypeUtils::getDataType(sp_packed_array_view.data_type_)); // dtype
 
     } else {
@@ -402,7 +336,7 @@ SpPackedArray FuncSignatureRegistry::convert<SpPackedArray>(const Client* client
 //
 
 template <> // needed to convert a custom view type, received as a return value from the server, into a custom type that be returned to Python
-std::map<std::string, SpPackedArray> FuncSignatureRegistry::convert<std::map<std::string, SpPackedArray>>(const Client* client, std::map<std::string, SpPackedArrayView>&& sp_packed_array_views, std::shared_ptr<clmdep_msgpack::object_handle> object_handle)
+inline std::map<std::string, SpPackedArray> MsgpackUtils::convert<std::map<std::string, SpPackedArray>>(const ClientBase* client, std::map<std::string, SpPackedArrayView>&& sp_packed_array_views, std::shared_ptr<clmdep_msgpack::object_handle> object_handle)
 {
     std::map<std::string, SpPackedArray> sp_packed_arrays;
     for (auto& [name, sp_packed_array_view] : sp_packed_array_views) {
@@ -453,7 +387,7 @@ struct clmdep_msgpack::adaptor::convert<SpFuncDataBundleView> {
 };
 
 template <> // needed to convert a custom view type, received as a return value from the server, into a custom type that be returned to Python
-SpFuncDataBundle FuncSignatureRegistry::convert<SpFuncDataBundle>(const Client* client, SpFuncDataBundleView&& sp_func_data_bundle_view, std::shared_ptr<clmdep_msgpack::object_handle> object_handle)
+inline SpFuncDataBundle MsgpackUtils::convert<SpFuncDataBundle>(const ClientBase* client, SpFuncDataBundleView&& sp_func_data_bundle_view, std::shared_ptr<clmdep_msgpack::object_handle> object_handle)
 {
     SpFuncDataBundle sp_func_data_bundle;
     sp_func_data_bundle.packed_arrays_      = convert<std::map<std::string, SpPackedArray>>(client, std::move(sp_func_data_bundle_view.packed_array_views_), object_handle);
@@ -463,19 +397,71 @@ SpFuncDataBundle FuncSignatureRegistry::convert<SpFuncDataBundle>(const Client* 
 };
 
 //
-// SpWorldDesc (never sent as an arg to the server)
+// SpPropertyDesc
+//
+
+template <> // needed to send a custom type as an arg to the server
+struct clmdep_msgpack::adaptor::pack<SpPropertyDesc> {
+    template <typename TStream>
+    clmdep_msgpack::packer<TStream>& operator()(clmdep_msgpack::packer<TStream>& packer, SpPropertyDesc const& sp_property_desc) const {
+        packer.pack_map(8);
+        packer.pack("property");                  packer.pack(sp_property_desc.property_);
+        packer.pack("value_ptr");                 packer.pack(sp_property_desc.value_ptr_);
+        packer.pack("type_id");                   packer.pack(sp_property_desc.type_id_);
+        packer.pack("notify_objects");            packer.pack(sp_property_desc.notify_objects_);
+        packer.pack("notify_member_properties");  packer.pack(sp_property_desc.notify_member_properties_);
+        packer.pack("notify_element_properties"); packer.pack(sp_property_desc.notify_element_properties_);
+        packer.pack("notify_array_indices");      packer.pack(sp_property_desc.notify_array_indices_);
+        packer.pack("notify_map_keys");           packer.pack(sp_property_desc.notify_map_keys_);
+        return packer;
+    }
+};
+
+template <> // needed to send a custom type as an arg to the server
+struct clmdep_msgpack::adaptor::object_with_zone<SpPropertyDesc> {
+    void operator()(clmdep_msgpack::object::with_zone& o, const SpPropertyDesc& v) const {
+        o.type = clmdep_msgpack::type::MAP;
+        o.via.map.size = 8;
+        o.via.map.ptr = static_cast<clmdep_msgpack::object_kv*>(o.zone.allocate_align(sizeof(clmdep_msgpack::object_kv) * 8, MSGPACK_ZONE_ALIGNOF(clmdep_msgpack::object_kv)));
+        o.via.map.ptr[0].key = clmdep_msgpack::object("property",                  o.zone); o.via.map.ptr[0].val = clmdep_msgpack::object(v.property_,                  o.zone);
+        o.via.map.ptr[1].key = clmdep_msgpack::object("value_ptr",                 o.zone); o.via.map.ptr[1].val = clmdep_msgpack::object(v.value_ptr_,                 o.zone);
+        o.via.map.ptr[2].key = clmdep_msgpack::object("type_id",                   o.zone); o.via.map.ptr[2].val = clmdep_msgpack::object(v.type_id_,                   o.zone);
+        o.via.map.ptr[3].key = clmdep_msgpack::object("notify_objects",            o.zone); o.via.map.ptr[3].val = clmdep_msgpack::object(v.notify_objects_,            o.zone);
+        o.via.map.ptr[4].key = clmdep_msgpack::object("notify_member_properties",  o.zone); o.via.map.ptr[4].val = clmdep_msgpack::object(v.notify_member_properties_,  o.zone);
+        o.via.map.ptr[5].key = clmdep_msgpack::object("notify_element_properties", o.zone); o.via.map.ptr[5].val = clmdep_msgpack::object(v.notify_element_properties_, o.zone);
+        o.via.map.ptr[6].key = clmdep_msgpack::object("notify_array_indices",      o.zone); o.via.map.ptr[6].val = clmdep_msgpack::object(v.notify_array_indices_,      o.zone);
+        o.via.map.ptr[7].key = clmdep_msgpack::object("notify_map_keys",           o.zone); o.via.map.ptr[7].val = clmdep_msgpack::object(v.notify_map_keys_,           o.zone);
+    }
+};
+
+template <> // needed to receive a custom type as a return value from the server
+struct clmdep_msgpack::adaptor::convert<SpPropertyDesc> {
+    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpPropertyDesc& sp_property_desc) const {
+        std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
+        SP_ASSERT(objects.size() == 8);
+        sp_property_desc.property_                  = MsgpackUtils::to<uint64_t>(objects.at("property"));
+        sp_property_desc.value_ptr_                 = MsgpackUtils::to<uint64_t>(objects.at("value_ptr"));
+        sp_property_desc.type_id_                   = MsgpackUtils::to<std::string>(objects.at("type_id"));
+        sp_property_desc.notify_objects_            = MsgpackUtils::to<std::vector<uint64_t>>(objects.at("notify_objects"));
+        sp_property_desc.notify_member_properties_  = MsgpackUtils::to<std::vector<uint64_t>>(objects.at("notify_member_properties"));
+        sp_property_desc.notify_element_properties_ = MsgpackUtils::to<std::vector<uint64_t>>(objects.at("notify_element_properties"));
+        sp_property_desc.notify_array_indices_      = MsgpackUtils::to<std::vector<int>>(objects.at("notify_array_indices"));
+        sp_property_desc.notify_map_keys_           = MsgpackUtils::to<std::vector<std::string>>(objects.at("notify_map_keys"));
+        return object;
+    }
+};
+
+//
+// SpPropertyValue (never sent as an arg to the server)
 //
 
 template <> // needed to receive a custom type as a return value from the server
-struct clmdep_msgpack::adaptor::convert<SpWorldDesc> {
-    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpWorldDesc& sp_world_desc) const {
+struct clmdep_msgpack::adaptor::convert<SpPropertyValue> {
+    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpPropertyValue& sp_property_value) const {
         std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
-        SP_ASSERT(objects.size() == 5);
-        sp_world_desc.world_           = MsgpackUtils::to<uint64_t>(objects.at("world"));
-        sp_world_desc.world_id_        = MsgpackUtils::to<int64_t>(objects.at("world_id"));
-        sp_world_desc.is_editor_world_ = MsgpackUtils::to<bool>(objects.at("is_editor_world"));
-        sp_world_desc.is_game_world_   = MsgpackUtils::to<bool>(objects.at("is_game_world"));
-        sp_world_desc.is_playing_      = MsgpackUtils::to<bool>(objects.at("is_playing"));
+        SP_ASSERT(objects.size() == 2);
+        sp_property_value.value_   = MsgpackUtils::to<std::string>(objects.at("value"));
+        sp_property_value.type_id_ = MsgpackUtils::to<std::string>(objects.at("type_id"));
         return object;
     }
 };
@@ -579,6 +565,24 @@ struct clmdep_msgpack::adaptor::convert<SpStaticClassDesc> {
         sp_static_class_desc.derived_classes_     = MsgpackUtils::to<std::vector<uint64_t>>(objects.at("derived_classes"));
         sp_static_class_desc.derived_class_names_ = MsgpackUtils::to<std::vector<std::string>>(objects.at("derived_class_names"));
         sp_static_class_desc.function_descs_      = MsgpackUtils::to<std::map<std::string, SpFunctionDesc>>(objects.at("function_descs"));
+        return object;
+    }
+};
+
+//
+// SpWorldDesc (never sent as an arg to the server)
+//
+
+template <> // needed to receive a custom type as a return value from the server
+struct clmdep_msgpack::adaptor::convert<SpWorldDesc> {
+    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpWorldDesc& sp_world_desc) const {
+        std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
+        SP_ASSERT(objects.size() == 5);
+        sp_world_desc.world_           = MsgpackUtils::to<uint64_t>(objects.at("world"));
+        sp_world_desc.world_id_        = MsgpackUtils::to<int64_t>(objects.at("world_id"));
+        sp_world_desc.is_editor_world_ = MsgpackUtils::to<bool>(objects.at("is_editor_world"));
+        sp_world_desc.is_game_world_   = MsgpackUtils::to<bool>(objects.at("is_game_world"));
+        sp_world_desc.is_playing_      = MsgpackUtils::to<bool>(objects.at("is_playing"));
         return object;
     }
 };

@@ -464,23 +464,23 @@ public:
                 return false;
             }
 
+            // Push current work queue.
             current_queuing_modes_.push_back(QueuingMode::Incremental);
             current_incremental_work_queues_.push_back(&editor_transaction_work_queue_);
-            return true;
+
+            return true; // return value should be interpreted as "inside critical section", not whether or not we're in an error state
         });
 
         bindFuncToExecuteOnWorkerThread("engine_service", "end_editor_transaction", [this]() -> bool {
 
             SP_ASSERT(!request_terminate_);
 
-            if (request_error_) {
-                return false;
-            }
-
+            // Pop current work queue.
             SP_ASSERT(!current_incremental_work_queues_.empty() && current_incremental_work_queues_.back() == &editor_transaction_work_queue_);
             current_queuing_modes_.pop_back();
             current_incremental_work_queues_.pop_back();
-            return true;
+
+            return !request_error_; // return value should be interpreted as error state
         });
 
         bindFuncToExecuteOnGameThread("engine_service", "flush", []() -> void {});

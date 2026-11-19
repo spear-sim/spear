@@ -90,7 +90,6 @@ if __name__ == "__main__":
             editor = instance.get_editor()
 
         with instance.begin_frame():
-            kismet_system_library = editor.get_unreal_object(uclass="UKismetSystemLibrary")
             level_editor_subsystem = editor.unreal_service.get_editor_subsystem(uclass="ULevelEditorSubsystem")
             unreal_editor_subsystem = editor.unreal_service.get_editor_subsystem(uclass="UUnrealEditorSubsystem")
         with instance.end_frame():
@@ -127,7 +126,7 @@ if __name__ == "__main__":
                 # make sure the requested map was actually loaded.
                 with instance.begin_frame():
                     editor_world = unreal_editor_subsystem.GetEditorWorld()
-                    editor_world_name = kismet_system_library.GetObjectName(Object=editor_world)
+                    editor_world_name = editor.cdo.UKismetSystemLibrary.GetObjectName(Object=editor_world)
                 with instance.end_frame():
                     pass
 
@@ -152,10 +151,7 @@ if __name__ == "__main__":
 
             if "script" in task:
                 if across_frames:
-                    with instance.begin_frame():
-                        editor.python_service.execute_file_across_frames(file=script, args_string=args_string, execution_scope="Private")
-                    with instance.end_frame():
-                        pass
+                    editor.python_service.execute_file_across_frames(file=script, args_string=args_string, execution_scope="Private")
                 else:
                     with instance.begin_frame():
                         editor.python_service.execute_file(file=script, args_string=args_string, execution_scope="Private")

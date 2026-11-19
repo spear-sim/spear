@@ -9,7 +9,7 @@
 
 #include <CoreGlobals.h>           // IsRunningCommandlet
 #include <Misc/CoreDelegates.h>    // FCoreDelegates
-#include <Modules/ModuleManager.h> // FDefaultGameModuleImpl, FDefaultModuleImpl, IMPLEMENT_GAME_MODULE, IMPLEMENT_MODULE
+#include <Modules/ModuleManager.h> // IMPLEMENT_MODULE
 
 #include "SpCore/Assert.h"
 #include "SpCore/AssertModuleLoaded.h"
@@ -190,5 +190,4 @@ bool SpServices::isInitialized() const
     return initialized_;
 }
 
-// use IMPLEMENT_GAME_MODULE if module implements Unreal classes, use IMPLEMENT_MODULE otherwise
-IMPLEMENT_GAME_MODULE(SpServices, SpServices);
+IMPLEMENT_MODULE(SpServices, SpServices);

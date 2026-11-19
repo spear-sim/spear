@@ -17,7 +17,7 @@ if spear.__can_import_unreal__:
 #
 
 class Service():
-    def __init__(self, entry_point_caller, sp_func_service=None, unreal_service=None, config=None, parent_service=None, create_children_services=False):
+    def __init__(self, entry_point_caller, sp_func_service=None, unreal_service=None, cdo=None, config=None, parent_service=None, create_children_services=False):
 
         self._world = None
 
@@ -33,10 +33,13 @@ class Service():
         else:
             self.unreal_service = None
 
-        self.config = config
-
-        if parent_service is not None:
+        if parent_service is None:
+            self.cdo = cdo
+        else:
+            assert cdo is None
             assert not create_children_services # it is only allowed to create children services from the top-level service
+
+        self.config = config
 
         self._parent_service = parent_service
 
@@ -348,22 +351,31 @@ def get_unreal_object(unreal_service, sp_func_service, config, uobject, uclass, 
 # Convert to handle or UnrealStruct
 def to_handle_or_unreal_struct(obj, unreal_service, as_handle=None, as_unreal_struct=None):
     if as_handle is not None:
+        assert as_handle
         assert as_unreal_struct is None
         return to_handle(obj=obj)
+    elif as_unreal_struct is not None:
+        assert as_unreal_struct
+        return to_unreal_struct(obj=obj, unreal_service=unreal_service)
     else:
         return to_unreal_struct(obj=obj, unreal_service=unreal_service)
 
 # Convert to handle or UnrealClass
 def to_handle_or_unreal_class(obj, unreal_service, as_handle=None, as_unreal_class=None):
     if as_handle is not None:
+        assert as_handle
         assert as_unreal_class is None
         return to_handle(obj=obj)
+    elif as_unreal_class is not None:
+        assert as_unreal_class
+        return to_unreal_class(obj=obj, unreal_service=unreal_service)
     else:
         return to_unreal_class(obj=obj, unreal_service=unreal_service)
 
 # Convert to handle or UnrealObject
 def to_handle_or_unreal_object(obj, unreal_service, sp_func_service, config, as_handle=None, as_unreal_object=None, with_sp_funcs=None):
     if as_handle is not None:
+        assert as_handle
         assert as_unreal_object is None
         assert with_sp_funcs is None
         return to_handle(obj=obj)
@@ -527,7 +539,7 @@ def try_to_dicts(json_strings, default_value=None):
 def try_to_dict(json_string, default_value=None):
     try:
         return json.loads(json_string)
-    except:
+    except json.JSONDecodeError:
         if default_value is None:
             return json_string
         else:
@@ -651,12 +663,12 @@ def _to_script_expr_type_string(obj):
         return "numpy.matrix"
     elif isinstance(obj, np.ndarray):
         return "numpy.ndarray"
-    elif isinstance(obj, spear.UnrealObject):
-        return "UnrealObject"
-    elif isinstance(obj, spear.UnrealClass):
-        return "UnrealClass"
     elif isinstance(obj, spear.UnrealStruct):
         return "UnrealStruct"
+    elif isinstance(obj, spear.UnrealClass):
+        return "UnrealClass"
+    elif isinstance(obj, spear.UnrealObject):
+        return "UnrealObject"
     elif type(obj).__module__ == "builtins":
         return type(obj).__qualname__
     else:
@@ -671,11 +683,11 @@ def _to_script_expr_value(obj):
         return { k: _to_script_expr_dict(obj=v) for k, v in obj.items() }
     elif isinstance(obj, np.ndarray):
         return { "shape": list(obj.shape), "dtype": str(obj.dtype), "data": obj.tolist() }
-    elif isinstance(obj, spear.UnrealObject):
+    elif isinstance(obj, spear.UnrealStruct):
         return to_handle(obj=obj)
     elif isinstance(obj, spear.UnrealClass):
         return to_handle(obj=obj)
-    elif isinstance(obj, spear.UnrealStruct):
+    elif isinstance(obj, spear.UnrealObject):
         return to_handle(obj=obj)
     else:
         return obj
@@ -724,20 +736,20 @@ def from_script_result(script_result, unreal_service=None, sp_func_service=None,
         assert as_unreal_object is None
         assert with_sp_funcs is None
         return np.array(value["data"], dtype=np.dtype(value["dtype"])).reshape(value["shape"])
-    elif type_string == "UnrealObject":
-        assert as_unreal_struct is None
-        assert as_unreal_class is None
-        return to_handle_or_unreal_object(obj=value, unreal_service=unreal_service, sp_func_service=sp_func_service, config=config, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
-    elif type_string == "UnrealClass":
-        assert as_unreal_struct is None
-        assert as_unreal_object is None
-        assert with_sp_funcs is None
-        return to_handle_or_unreal_class(obj=value, unreal_service=unreal_service, as_handle=as_handle, as_unreal_class=as_unreal_class)
     elif type_string == "UnrealStruct":
         assert as_unreal_class is None
         assert as_unreal_object is None
         assert with_sp_funcs is None
         return to_handle_or_unreal_struct(obj=value, unreal_service=unreal_service, as_handle=as_handle, as_unreal_struct=as_unreal_struct)
+    elif type_string == "UnrealClass":
+        assert as_unreal_struct is None
+        assert as_unreal_object is None
+        assert with_sp_funcs is None
+        return to_handle_or_unreal_class(obj=value, unreal_service=unreal_service, as_handle=as_handle, as_unreal_class=as_unreal_class)
+    elif type_string == "UnrealObject":
+        assert as_unreal_struct is None
+        assert as_unreal_class is None
+        return to_handle_or_unreal_object(obj=value, unreal_service=unreal_service, sp_func_service=sp_func_service, config=config, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
     elif type_string == "StructInstance":
         assert as_handle is None
         assert as_unreal_struct is None

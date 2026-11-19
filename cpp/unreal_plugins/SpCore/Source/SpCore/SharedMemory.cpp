@@ -150,7 +150,7 @@ SharedMemoryView SharedMemoryRegion::getView()
     SharedMemoryView view;
     view.id_ = id_;
     view.num_bytes_ = num_bytes_;
-    view.offset_bytes_ = static_cast<int16_t>(offset_bytes);
+    view.offset_bytes_ = static_cast<uint16_t>(offset_bytes);
     view.data_ = address_aligned;
     return view;
 }

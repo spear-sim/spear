@@ -118,7 +118,11 @@ def run_build(unreal_engine_dir, args):
 
 
 #
-# Helper functions for paths that handle symlinks robustly.
+# Helper functions for paths that handle symlinks robustly. We can't simply call os.path.exists(...) or
+# os.path.lexists(...), because a symlink created on Linux, on a drive that is also visible to Windows, might
+# not be recognized as a symlink by Windows, and might not even be queryable, e.g., if the file server fails
+# to resolve it. In this case, the only way to observe the symlink is that it appears in the listing of its
+# parent directory.
 #
 
 def path_exists(path):
@@ -145,8 +149,10 @@ def remove_path(path):
     elif os.path.isdir(path):
         shutil.rmtree(path, ignore_errors=True)
     else:
-        # if we have a broken symlink, then try to use the command-line (we don't attempt to use
-        # subprocess.run() because it returns an error when attempting to remove broken symlinks
+        # If we get here, then path_exists(...) found path in the listing of its parent directory, but Python
+        # can't classify it, e.g., a symlink created on Linux and viewed on Windows. In this case, try to use
+        # the command-line (we don't attempt to use subprocess.run() because it returns an error when
+        # attempting to remove broken symlinks).
         if sys.platform == "win32":
             rm_cmd = "del"
         elif sys.platform in ["darwin", "linux"]:
@@ -156,3 +162,5 @@ def remove_path(path):
         cmd = f'{rm_cmd} "{path}"'
         cmd_result = os.system(cmd)
         assert cmd_result == 0
+
+    assert not path_exists(path=path)

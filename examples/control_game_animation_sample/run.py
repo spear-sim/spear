@@ -58,11 +58,8 @@ if __name__ == "__main__":
 
     with instance.begin_frame():
 
-        # get UGameplayStatics
-        gameplay_statics = game.get_unreal_object(uclass="UGameplayStatics")
-
         # get player controller
-        player_controller = gameplay_statics.GetPlayerController(PlayerIndex=0)
+        player_controller = game.cdo.UGameplayStatics.GetPlayerController(PlayerIndex=0)
 
         # spawn character
         bp_character_uclass = game.unreal_service.load_class(uclass="AActor", name="/Game/Blueprints/RetargetedCharacters/CBP_SandboxCharacter_Metahuman_Kellan.CBP_SandboxCharacter_Metahuman_Kellan_C")
@@ -120,7 +117,7 @@ if __name__ == "__main__":
     #
 
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
         # set camera pose
         viewport_desc = game.viewport_service.get_current_viewport_desc(only_get_pose=True)
@@ -134,7 +131,7 @@ if __name__ == "__main__":
                 data_bundle = component_desc["component"].read_pixels()
                 component_desc["data"] = data_bundle["arrays"]["data"]
 
-        gameplay_statics.SetGamePaused(bPaused=True)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     if not args.skip_read_pixels and not args.skip_save_images:
         save_images(images_dir=images_dir, frame_index=frame_index)
@@ -146,7 +143,7 @@ if __name__ == "__main__":
 
     for i in range(80):
         with instance.begin_frame():
-            gameplay_statics.SetGamePaused(bPaused=False)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
             # set camera pose
             viewport_desc = game.viewport_service.get_current_viewport_desc(only_get_pose=True)
@@ -175,7 +172,7 @@ if __name__ == "__main__":
                     data_bundle = component_desc["component"].read_pixels()
                     component_desc["data"] = data_bundle["arrays"]["data"]
 
-            gameplay_statics.SetGamePaused(bPaused=True)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
         if not args.skip_read_pixels and not args.skip_save_images:
             save_images(images_dir=images_dir, frame_index=frame_index)
@@ -186,7 +183,7 @@ if __name__ == "__main__":
     #
 
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
         # set camera pose
         viewport_desc = game.viewport_service.get_current_viewport_desc(only_get_pose=True)
@@ -215,7 +212,7 @@ if __name__ == "__main__":
                 data_bundle = component_desc["component"].read_pixels()
                 component_desc["data"] = data_bundle["arrays"]["data"]
 
-        gameplay_statics.SetGamePaused(bPaused=True)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     if not args.skip_read_pixels and not args.skip_save_images:
         save_images(images_dir=images_dir, frame_index=frame_index)
@@ -227,7 +224,7 @@ if __name__ == "__main__":
 
     for i in range(74):
         with instance.begin_frame():
-            gameplay_statics.SetGamePaused(bPaused=False)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
             # set camera pose
             viewport_desc = game.viewport_service.get_current_viewport_desc(only_get_pose=True)
@@ -256,7 +253,7 @@ if __name__ == "__main__":
                     data_bundle = component_desc["component"].read_pixels()
                     component_desc["data"] = data_bundle["arrays"]["data"]
 
-            gameplay_statics.SetGamePaused(bPaused=True)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
         if not args.skip_read_pixels and not args.skip_save_images:
             save_images(images_dir=images_dir, frame_index=frame_index)
@@ -267,7 +264,7 @@ if __name__ == "__main__":
     #
 
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
         # set camera pose
         viewport_desc = game.viewport_service.get_current_viewport_desc(only_get_pose=True)
@@ -296,7 +293,7 @@ if __name__ == "__main__":
                 data_bundle = component_desc["component"].read_pixels()
                 component_desc["data"] = data_bundle["arrays"]["data"]
 
-        gameplay_statics.SetGamePaused(bPaused=True)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     if not args.skip_read_pixels and not args.skip_save_images:
         save_images(images_dir=images_dir, frame_index=frame_index)
@@ -308,7 +305,7 @@ if __name__ == "__main__":
 
     for i in range(180):
         with instance.begin_frame():
-            gameplay_statics.SetGamePaused(bPaused=False)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
 
             # set camera pose
             viewport_desc = game.viewport_service.get_current_viewport_desc(only_get_pose=True)
@@ -322,7 +319,7 @@ if __name__ == "__main__":
                     data_bundle = component_desc["component"].read_pixels()
                     component_desc["data"] = data_bundle["arrays"]["data"]
 
-            gameplay_statics.SetGamePaused(bPaused=True)
+            game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
         if not args.skip_read_pixels and not args.skip_save_images:
             save_images(images_dir=images_dir, frame_index=frame_index)
@@ -333,7 +330,7 @@ if __name__ == "__main__":
     #
 
     with instance.begin_frame():
-        gameplay_statics.SetGamePaused(bPaused=False)
+        game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)
     with instance.end_frame():
         pass
 

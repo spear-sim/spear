@@ -16,6 +16,7 @@
 #include <Engine/Engine.h> // GEngine
 #include <GenericPlatform/GenericPlatformMisc.h>
 #include <HAL/PlatformProcess.h>
+#include <Misc/Build.h>    // UE_BUILD_DEBUG, UE_BUILD_DEVELOPMENT, UE_BUILD_SHIPPING, UE_BUILD_TEST
 #include <Misc/CoreMisc.h> // IsRunningGame
 
 #include "SpCore/Assert.h"
@@ -74,6 +75,22 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("engine_globals_service", "get_engine", []() -> uint64_t {
             return toUInt64(GEngine);
+        });
+
+        unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("engine_globals_service", "get_ue_build", []() -> std::string {
+            SP_ASSERT(UE_BUILD_DEBUG + UE_BUILD_DEVELOPMENT + UE_BUILD_TEST + UE_BUILD_SHIPPING == 1);
+            if (UE_BUILD_DEBUG) {
+                return "debug";
+            } else if (UE_BUILD_DEVELOPMENT) {
+                return "development";
+            } else if (UE_BUILD_TEST) {
+                return "test";
+            } else if (UE_BUILD_SHIPPING) {
+                return "shipping";
+            } else {
+                SP_ASSERT(false);
+                return "";
+            }
         });
 
         unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("engine_globals_service", "is_editor", []() -> bool {
