@@ -199,7 +199,7 @@ Concrete kwargs and return shapes for common helpers. See `examples/getting_star
 
 - `game.get_unreal_object(uobject=handle_uint64, with_sp_funcs=False)` → Python wrapper. `editor.get_unreal_object(...)` for editor-world objects. Must be called inside `with instance.begin_frame()` / `end_frame()`.
 - `obj.uobject` → Raw uint64 handle from an UnrealObject.
-- `game.cdo.UGameplayStatics` → Cached class default object (CDO) for a class, typically used to call static UFUNCTIONs, e.g., `game.cdo.UGameplayStatics.GetPlayerController(PlayerIndex=0)`. Use `editor.cdo` for the editor world. All CDO access must happen inside `with instance.begin_frame()` / `end_frame()`. Call `instance.rebuild()` to refresh the static class table and clear cached CDOs (e.g., after recompiling a Blueprint class).
+- `game.cdo.UGameplayStatics` → Cached class default object (CDO) for a class, typically used to call static UFUNCTIONs, e.g., `game.cdo.UGameplayStatics.GetPlayerController(PlayerIndex=0)`. Use `editor.cdo` for the editor world. All CDO access must happen inside `with instance.begin_frame()` / `end_frame()`. Call `instance.rebuild()` to rebuild cached data, including cached CDOs (e.g., after recompiling a Blueprint class). `instance.rebuild()` is an expensive operation, so only call it if CDOs or cvars have changed.
 
 ### Introspection and UProperty access
 

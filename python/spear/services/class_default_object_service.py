@@ -25,6 +25,9 @@ class ClassDefaultObjectService(spear.Service):
 
         self._cdos = {}
 
+    def invalidate_cache(self):
+        self._cdos = {}
+
     def __getattr__(self, name):
         if name in self.unreal_service.get_static_class_descs_by_name():
             return self.get(uclass=name)
@@ -38,11 +41,3 @@ class ClassDefaultObjectService(spear.Service):
             assert cdo is not None
             self._cdos[uclass] = cdo
         return self._cdos[uclass]
-
-    # Clear the cached CDO for uclass, or every cached CDO if uclass is None, e.g., after a Blueprint class has been
-    # recompiled.
-    def rebuild(self, uclass=None):
-        if uclass is None:
-            self._cdos = {}
-        else:
-            self._cdos.pop(self.unreal_service.to_uclass(uclass=uclass), None)

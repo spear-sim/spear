@@ -127,15 +127,6 @@ class Instance():
                 engine_globals_service=self.engine_globals_service,
                 config=self._config)
 
-    def get_unreal_object(self, uobject=None, uclass=None, with_sp_funcs=False):
-        return spear.get_unreal_object(
-            unreal_service=self._unreal_service,
-            sp_func_service=self.sp_func_service,
-            config=self._config,
-            uobject=uobject,
-            uclass=uclass,
-            with_sp_funcs=with_sp_funcs)
-
     class WorldScopedServices():
         def __init__(self, engine_service, shared_memory_service, world_registry_service, sp_func_service, engine_globals_service, config):
 
@@ -214,11 +205,8 @@ class Instance():
 
         def initialize(self, unreal_service=None):
             self.unreal_service.initialize(unreal_service=unreal_service)
-            # self.console_service.initialize() console service doesn't have an initialize() function
-            # self.navigation_service.initialize() navigation service doesn't have an initialize() function
             # self.segmentation_service.initialize() this has a non-trivial runtime cost, so we don't initialize by default
             self.async_loading_service.initialize()
-            # self.rendering_quality_service.initialize() rendering quality service doesn't have an initialize() function
 
         def terminate(self):
             pass
@@ -228,8 +216,9 @@ class Instance():
             self._world = None
 
         def rebuild(self, unreal_service=None):
-            self.unreal_service.rebuild(unreal_service=unreal_service)
-            self.class_default_object_service.rebuild()
+            self.unreal_service.rebuild_cache(unreal_service=unreal_service)
+            self.class_default_object_service.invalidate_cache()
+            self.console_service.invalidate_cache()
 
         def get_unreal_object(self, uobject=None, uclass=None, with_sp_funcs=False):
             return spear.get_unreal_object(
@@ -322,7 +311,6 @@ class Instance():
         def initialize(self, unreal_service=None):
             super().initialize(unreal_service=unreal_service)
             self.python_service.initialize()
-            # self.viewport_service.initialize() editor viewport service doesn't have an initialize() function
 
         def terminate(self):
             super().terminate()
@@ -617,9 +605,7 @@ class Instance():
         return self._game
 
     #
-    # rebuild(...) re-fetches cached data that describes the types loaded in the Unreal instance, e.g., after a
-    # Blueprint class has been recompiled. We fetch this data once from the Unreal instance and then share it with
-    # all world-scoped services.
+    # rebuild(...)
     #
 
     def rebuild(self):
@@ -627,7 +613,7 @@ class Instance():
         spear.log_current_function()
 
         with self.begin_frame():
-            self._unreal_service.rebuild()
+            self._unreal_service.rebuild_cache()
             self._game.rebuild(unreal_service=self._unreal_service)
             if self.engine_globals_service.is_with_editor() and not self.engine_globals_service.is_running_commandlet():
                 self._editor.rebuild(unreal_service=self._unreal_service)
@@ -639,7 +625,7 @@ class Instance():
         spear.log_current_function()
 
         with self.begin_frame():
-            self._unreal_service.rebuild()
+            self._unreal_service.rebuild_cache()
             self._game.rebuild(unreal_service=self._unreal_service)
             if self.engine_globals_service.is_with_editor() and not self.engine_globals_service.is_running_commandlet():
                 self._editor.rebuild(unreal_service=self._unreal_service)
@@ -679,7 +665,6 @@ class Instance():
         except Exception:
             pass # no need to log exception because this case is expected when the instance is no longer running
         return False
-
 
     def close(self, force=False):
 

@@ -19,6 +19,9 @@ class ConsoleService(spear.Service):
 
         self._cvars = {}
 
+    def invalidate_cache(self):
+        self._cvars = {}
+
     #
     # Get console variable value
     #

@@ -46,9 +46,10 @@ class UnrealService(spear.Service):
         # Take a snapshot of all the structs and classes that are loaded when UnrealService is initialized,
         # using data from an already initialized UnrealService instance if available. It is possible for
         # these caches to become stale, e.g., if a Blueprint type is loaded dynamically at runtime. In those
-        # cases, call rebuild() to rebuild the caches, or pass in a UClass* handle obtained from, e.g.,
-        # load_class(...) when calling a function that expects a uclass. Passing a string is only possible
-        # (e.g., uclass="AActor") if that class is present in these caches.
+        # cases, call instance.rebuild() / game.rebuild() / editor.rebuild() / unreal_service.rebuild_cache()
+        # to rebuild the caches, or pass in a UClass* handle obtained from, e.g., unreal_service.load_class(...)
+        # when calling a function that expects a uclass. Passing a string is only possible (e.g., uclass="AActor")
+        # if that class is present in these caches.
 
         if unreal_service is None:
             if self._static_struct_descs is None:
@@ -74,10 +75,7 @@ class UnrealService(spear.Service):
     def terminate(self):
         pass
 
-    # Re-fetch the static struct and class descs, e.g., after a Blueprint class has been recompiled. If unreal_service
-    # is not None, copy its already-rebuilt data instead, so the expensive fetch happens once per top-level rebuild.
-
-    def rebuild(self, unreal_service=None):
+    def rebuild_cache(self, unreal_service=None):
         assert self.is_top_level_service() # this function should only be called on the top-level service
 
         if unreal_service is None:
