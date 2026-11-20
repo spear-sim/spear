@@ -100,7 +100,7 @@ jobs:
       # only install Python extension on Windows and macOS
       - if: runner.os != 'Linux'
         name: "Install the spear_ext Python extension module"
-        run: python tools/install_python_extension.py --conda-script "$CONDA/etc/profile.d/conda.sh"
+        run: python tools/install_python_extension.py
 
       # only import spear_ext on Windows and macOS
       - if: runner.os != 'Linux'
