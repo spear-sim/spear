@@ -7,6 +7,11 @@ SPEAR:
   LAUNCH_MODE: "game"
   INSTANCE:
     GAME_EXECUTABLE: "/Users/mroberts/Downloads/SpearSim-Mac-Shipping/SpearSim-Mac-Shipping.app"
+
+    # In this example, we set the game viewport be larger than usual, thereby increasing the amount of
+    # rendering work relative to data transfer work. This simulates very high-fidelity rendering (e.g., with
+    # hardware ray-tracing enabled), or rendering with multiple warm-up frames per transfeered image, etc.
+
     COMMAND_LINE_ARGS:
-      resx: 1024
-      resy: 512
+      resx: 1536
+      resy: 1024
