@@ -269,7 +269,7 @@ public:
         return str;
     }
 
-    static std::string getCppTypeAsString(FProperty* property)
+    static std::string getCppTypeAsString(FProperty* property, bool fixed_size_array_element = false)
     {
         // FProperty::GetCPPType(&extended_type) fills extended_type with the template parameter suffix
         // (e.g., "<int32>") for container properties like FArrayProperty, FSetProperty, and FMapProperty,
@@ -277,10 +277,17 @@ public:
         // handled without any special-casing here. Unreal inserts a space before ">" when nesting template
         // closers (e.g. "TArray<TArray<int32> >") to work around an old MSVC parser limit, so we strip all
         // whitespace, which is a safe operation because because C++ type names don't contain spaces.
+        //
+        // A fixed-size array property (e.g., float Foo[4]) is a single FProperty with ArrayDim > 1, and
+        // GetCPPType(...) only returns the element type, so we append "[N]" unless the caller is asking
+        // for the type of a single element.
         FString extended_type;
         FString type = property->GetCPPType(&extended_type);
         std::string str = toStdString(type + extended_type);
         str = Std::join(Std::tokenize(str, " "), "");
+        if (property->ArrayDim > 1 && !fixed_size_array_element) {
+            str += "[" + Std::toString(property->ArrayDim) + "]";
+        }
         SP_ASSERT(str != "");
         return str;
     }

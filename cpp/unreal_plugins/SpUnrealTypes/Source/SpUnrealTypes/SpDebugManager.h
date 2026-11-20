@@ -104,6 +104,9 @@ private:
     UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
     void TestInt64(); // can't be const
 
+    UFUNCTION(BlueprintCallable, CallInEditor, Category="SPEAR")
+    void TestFixedSizeArrays(); // can't be const
+
     // not intended to be BlueprintCallable
 
     UFUNCTION()
@@ -161,6 +164,18 @@ private:
 
     UPROPERTY()
     TSet<FString> SetOfStrings;
+
+    UPROPERTY()
+    float FixedSizeArrayOfFloats[3];
+
+    UPROPERTY()
+    FString FixedSizeArrayOfStrings[2];
+
+    UPROPERTY()
+    FVector FixedSizeArrayOfVectors[2];
+
+    UPROPERTY()
+    int64 FixedSizeArrayOfInt64[2];
 
     std::unique_ptr<SharedMemoryRegion> shared_memory_region_;
     SpArraySharedMemoryView shared_memory_view_;

@@ -582,6 +582,9 @@ class UnrealObject:
         elif type_id.startswith("TSet<") and type_id.endswith(">"):
             value_type_id = type_id.removeprefix("TSet<").removesuffix(">")
             return self._is_ustruct_pointer_or_container(type_id=value_type_id)
+        elif type_id.endswith("]"): # fixed-size array, e.g., AActor*[4]
+            value_type_id = type_id[:type_id.rindex("[")]
+            return self._is_ustruct_pointer_or_container(type_id=value_type_id)
         else:
             return False
 
@@ -592,8 +595,6 @@ class UnrealObject:
             return True
         elif type_id.startswith("TSubclassOf<") and type_id.endswith(">"):
             return True
-        elif type_id.startswith("TSoftClassPtr<") and type_id.endswith(">"):
-            return True
         elif type_id.startswith("TArray<") and type_id.endswith(">"):
             value_type_id = type_id.removeprefix("TArray<").removesuffix(">")
             return self._is_uclass_pointer_or_container(type_id=value_type_id)
@@ -602,6 +603,9 @@ class UnrealObject:
             return self._is_uclass_pointer_or_container(type_id=value_type_id)
         elif type_id.startswith("TSet<") and type_id.endswith(">"):
             value_type_id = type_id.removeprefix("TSet<").removesuffix(">")
+            return self._is_uclass_pointer_or_container(type_id=value_type_id)
+        elif type_id.endswith("]"): # fixed-size array, e.g., AActor*[4]
+            value_type_id = type_id[:type_id.rindex("[")]
             return self._is_uclass_pointer_or_container(type_id=value_type_id)
         else:
             return False
@@ -617,8 +621,6 @@ class UnrealObject:
             return True
         elif type_id.startswith("TLazyObjectPtr<") and type_id.endswith(">"):
             return True
-        elif type_id.startswith("TSoftObjectPtr<") and type_id.endswith(">"):
-            return True
         elif type_id.startswith("TWeakObjectPtr<") and type_id.endswith(">"):
             return True
         elif type_id.startswith("TScriptInterface<") and type_id.endswith(">"):
@@ -631,6 +633,9 @@ class UnrealObject:
             return self._is_uobject_pointer_or_container(type_id=value_type_id)
         elif type_id.startswith("TSet<") and type_id.endswith(">"):
             value_type_id = type_id.removeprefix("TSet<").removesuffix(">")
+            return self._is_uobject_pointer_or_container(type_id=value_type_id)
+        elif type_id.endswith("]"): # fixed-size array, e.g., AActor*[4]
+            value_type_id = type_id[:type_id.rindex("[")]
             return self._is_uobject_pointer_or_container(type_id=value_type_id)
         else:
             return False

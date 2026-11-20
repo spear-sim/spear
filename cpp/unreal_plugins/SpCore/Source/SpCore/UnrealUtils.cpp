@@ -25,7 +25,6 @@
 #include <Engine/Engine.h>                  // GEngine
 #include <GameFramework/Actor.h>
 #include <HAL/Platform.h>                   // TCHAR, uint16
-#include <HAL/UnrealMemory.h>               // FMemory
 #include <JsonObjectConverter.h>            // EJsonObjectConversionFlags, FJsonObjectConverter
 #include <Policies/PrettyJsonPrintPolicy.h> // TPrettyJsonPrintPolicy
 #include <Serialization/JsonReader.h>
@@ -34,14 +33,18 @@
 #include <Templates/SharedPointer.h>        // MakeShared, TSharedPtr, TSharedRef
 #include <Templates/UnrealTemplate.h>       // TGuardValue
 #include <UObject/Class.h>                  // EIncludeSuperFlag, UClass, UScriptStruct, UStruct
+#include <UObject/EnumProperty.h>           // FEnumProperty
+#include <UObject/FieldPathProperty.h>      // FFieldPathProperty
 #include <UObject/NameTypes.h>              // FName
 #include <UObject/Object.h>                 // UObject
 #include <UObject/Script.h>                 // EFunctionFlags
 #include <UObject/ScriptInterface.h>        // FScriptInterface
+#include <UObject/TextProperty.h>           // FTextProperty
 #include <UObject/UnrealType.h>             // EFieldIterationFlags, EPropertyPortFlags, FArrayProperty, FBoolProperty, FByteProperty, FDoubleProperty, FInt8Property,
-                                            // FInt16Property, FInt64Property, FFloatProperty, FIntProperty, FMapProperty, FProperty, FScriptArrayHelper, FScriptMapHelper,
-                                            // FScriptSetHelper, FSetProperty, FStrProperty, FStructProperty, FUInt16Property, FUInt32Property, FUInt64Property,
-                                            // TFieldIterator
+                                            // FInt16Property, FInt64Property, FFloatProperty, FInterfaceProperty, FIntProperty, FLazyObjectProperty, FMapProperty,
+                                            // FNameProperty, FNumericProperty, FObjectProperty, FObjectPropertyBase, FProperty, FScriptArrayHelper, FScriptMapHelper,
+                                            // FScriptSetHelper, FSetProperty, FSoftObjectProperty, FStrProperty, FStructProperty, FUInt16Property, FUInt32Property,
+                                            // FUInt64Property, FWeakObjectProperty, TFieldIterator
 #include <UObject/UObjectHash.h>            // GetDerivedClasses
 
 #include "SpCore/Assert.h"
@@ -577,11 +580,15 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
         property_desc.notify_objects_.push_back(current_object);
         property_desc.notify_member_properties_.push_back(property_desc.property_);
 
-        // If the current property is an array or map property, and the name includes the index operator,
-        // then update the current property to refer to the array or map element based on the index. For map
+        // If the current property is an array, map, or fixed-size array property, and the name includes the index
+        // operator, then update the current property to refer to the element based on the index. For map
         // properties, we expect an index string that is a JSON string literal enclosed in "" quotes if the key
         // type is quoted in JSON (e.g., FString, FName, enum), and not enclosed in quotes otherwise (e.g.,
         // bool, int). See parsePropertyPath(...) for details.
+
+        // We record this before the block below, because the block below updates property_desc.property_ to
+        // refer to the element for array and map properties.
+        bool fixed_size_array_property = isFixedSizeArrayProperty(property_desc.property_);
 
         if (property_desc.property_->IsA(FArrayProperty::StaticClass()) && !index_string.empty()) {
 
@@ -648,15 +655,19 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
             // finds existing keys. FindMapIndexWithKey(...) expects a pointer to a key-value pair, but the key is
             // stored at offset 0 in each pair, so we only need temporary storage for the key.
 
-            uint8* temp_key_ptr = static_cast<uint8*>(FMemory::Malloc(key_property->GetElementSize()));
-            key_property->InitializeValue(temp_key_ptr);
+            int num_bytes = key_property->GetElementSize();
+            uint8_t initial_value = 0;
+            std::vector<uint8_t, SpAlignedAllocator<uint8_t, 4096>> temp_key_vector(num_bytes, initial_value);
+            SP_ASSERT(key_property->GetMinAlignment() <= 4096);
+            SP_ASSERT(4096 % key_property->GetMinAlignment() == 0);
+            SP_ASSERT(Std::isPtrSufficientlyAligned(temp_key_vector.data(), 4096));
+            key_property->InitializeValue(temp_key_vector.data());
             SpPropertyDesc key_property_desc;
             key_property_desc.property_ = key_property;
-            key_property_desc.value_ptr_ = temp_key_ptr;
+            key_property_desc.value_ptr_ = temp_key_vector.data();
             setPropertyValueFromJsonValue(key_property_desc, key_json_value);
-            int32 index = map_helper.FindMapIndexWithKey(temp_key_ptr);
-            key_property->DestroyValue(temp_key_ptr);
-            FMemory::Free(temp_key_ptr);
+            int32 index = map_helper.FindMapIndexWithKey(temp_key_vector.data());
+            key_property->DestroyValue(temp_key_vector.data());
 
             if (index == INDEX_NONE) {
                 SP_LOG(property_name, " refers to a key that isn't in the map.");
@@ -670,8 +681,32 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
             property_desc.notify_array_indices_.push_back(-1);
             property_desc.notify_map_keys_.push_back(index_string);
 
+        } else if (fixed_size_array_property && !index_string.empty()) {
+
+            // A fixed-size array property (e.g., float Foo[4]) is a single FProperty with ArrayDim > 1, and
+            // its elements are stored contiguously. So the element's property is the same as the array's
+            // property, and we only need to offset value_ptr_.
+
+            property_desc.type_id_ = Unreal::getCppTypeAsString(property_desc.property_, true); // fixed_size_array_element
+            SP_ASSERT(property_desc.type_id_ != "");
+
+            // Require the index string to be a non-negative decimal integer with no other characters.
+
+            int index = -1;
+            auto [ptr, error_code] = std::from_chars(index_string.data(), index_string.data() + index_string.size(), index);
+            SP_ASSERT(error_code == std::errc());
+            SP_ASSERT(ptr == index_string.data() + index_string.size());
+            SP_ASSERT(index >= 0);
+            SP_ASSERT(index < property_desc.property_->ArrayDim);
+
+            property_desc.value_ptr_ = static_cast<uint8*>(property_desc.value_ptr_) + index * property_desc.property_->GetElementSize();
+
+            property_desc.notify_element_properties_.push_back(property_desc.property_);
+            property_desc.notify_array_indices_.push_back(index);
+            property_desc.notify_map_keys_.push_back("");
+
         } else {
-            SP_ASSERT(index_string.empty()); // the index operator is only supported for array and map properties
+            SP_ASSERT(index_string.empty()); // the index operator is only supported for array, map, and fixed-size array properties
             property_desc.notify_element_properties_.push_back(nullptr);
             property_desc.notify_array_indices_.push_back(-1);
             property_desc.notify_map_keys_.push_back("");
@@ -684,8 +719,11 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
         // then there is nothing more to do, because we have already filled in our SpPropertyDesc object.
 
         if (i < path_elements.size() - 1) {
-            if (property_desc.property_->IsA(FObjectProperty::StaticClass())) {
-                FObjectProperty* object_property = static_cast<FObjectProperty*>(property_desc.property_);
+            SP_ASSERT(!fixed_size_array_property || !index_string.empty()); // a fixed-size array must be indexed before traversing into one of its elements
+            if (property_desc.property_->IsA(FObjectProperty::StaticClass())     ||
+                property_desc.property_->IsA(FWeakObjectProperty::StaticClass()) ||
+                property_desc.property_->IsA(FLazyObjectProperty::StaticClass())) {
+                FObjectPropertyBase* object_property = static_cast<FObjectPropertyBase*>(property_desc.property_); // FObjectProperty, FWeakObjectProperty, and FLazyObjectProperty are-a FObjectPropertyBase
                 UObject* uobject = object_property->GetObjectPropertyValue(property_desc.value_ptr_);
                 SP_ASSERT(uobject);
                 property_desc.value_ptr_ = uobject;
@@ -827,7 +865,7 @@ FPropertyChangedChainEvent UnrealUtils::getPropertyChangedChainEvent(const SpPro
     return FPropertyChangedChainEvent(property_chain, property_changed_event);
 }
 
-SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& property_desc)
+SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& property_desc, bool allow_element_to_recurse)
 {
     SP_ASSERT(property_desc.property_);
     SP_ASSERT(property_desc.value_ptr_);
@@ -847,25 +885,87 @@ SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& prop
     // enumeration of all possible property types. For now, we only handle the property types that have come
     // up in practice in our experiments.
 
-    if (property_desc.property_->IsA(FBoolProperty::StaticClass()) ||
-        property_desc.property_->IsA(FIntProperty::StaticClass()) ||
-        property_desc.property_->IsA(FInt8Property::StaticClass()) ||
-        property_desc.property_->IsA(FInt16Property::StaticClass()) ||
-        // no FInt32Property because the int32 C++ type maps to FIntProperty
-        // no FInt64Property because it could lose precision when passed through FJsonObjectConverter, which stores integers in a double-backed FJsonValue
-        // no FUInt8Property because the uint8 C++ type maps to FByteProperty
-        property_desc.property_->IsA(FUInt16Property::StaticClass()) ||
-        property_desc.property_->IsA(FUInt32Property::StaticClass()) ||
-        // no FUInt64Property because it could lose precision when passed through FJsonObjectConverter, which stores integers in a double-backed FJsonValue
-        property_desc.property_->IsA(FFloatProperty::StaticClass()) ||
-        property_desc.property_->IsA(FDoubleProperty::StaticClass()) ||
-        property_desc.property_->IsA(FStrProperty::StaticClass()) ||
-        property_desc.property_->IsA(FNameProperty::StaticClass()) ||
-        property_desc.property_->IsA(FByteProperty::StaticClass()) ||
-        property_desc.property_->IsA(FEnumProperty::StaticClass()) ||
-        property_desc.property_->IsA(FSoftObjectProperty::StaticClass())) {
+    bool fixed_size_array = isFixedSizeArray(property_desc, allow_element_to_recurse);
+    bool fixed_size_array_element = isFixedSizeArrayElement(property_desc, allow_element_to_recurse);
 
-        TSharedPtr<FJsonValue> json_value = FJsonObjectConverter::UPropertyToJsonValue(property_desc.property_, property_desc.value_ptr_);
+    if (fixed_size_array) {
+
+        // A fixed-size array property (e.g., float Foo[4]) is a single FProperty with ArrayDim > 1, and its
+        // elements are stored contiguously, so we format each element and then format the elements as an
+        // array, to match how FJsonObjectConverter::UPropertyToJsonValue(...) formats fixed-size arrays.
+
+        std::vector<std::string> element_strings;
+        for (int i = 0; i < property_desc.property_->ArrayDim; i++) {
+            SpPropertyDesc element_property_desc;
+            element_property_desc.property_ = property_desc.property_;
+            element_property_desc.type_id_ = Unreal::getCppTypeAsString(element_property_desc.property_, true); // fixed_size_array_element
+            SP_ASSERT(element_property_desc.type_id_ != "");
+            element_property_desc.value_ptr_ = static_cast<uint8*>(property_desc.value_ptr_) + i * property_desc.property_->GetElementSize();
+            SP_ASSERT(element_property_desc.value_ptr_);
+            std::string element_string = getPropertyValueAsString(element_property_desc, false).value_; // allow_element_to_recurse
+            element_strings.push_back(element_string);
+        }
+
+        property_value.value_ = getArrayPropertyValueAsFormattedString(property_desc.property_, element_strings);
+
+    } else if (property_desc.property_->IsA(FBoolProperty::StaticClass())       ||
+               property_desc.property_->IsA(FIntProperty::StaticClass())        ||
+               property_desc.property_->IsA(FInt8Property::StaticClass())       ||
+               property_desc.property_->IsA(FInt16Property::StaticClass())      ||
+               // no FInt32Property because the int32 C++ type maps to FIntProperty
+               // no FInt64Property because it could lose precision when passed through FJsonObjectConverter, which stores integers in a double-backed FJsonValue
+               // no FUInt8Property because the uint8 C++ type maps to FByteProperty
+               property_desc.property_->IsA(FUInt16Property::StaticClass())     ||
+               property_desc.property_->IsA(FUInt32Property::StaticClass())     ||
+               // no FUInt64Property because it could lose precision when passed through FJsonObjectConverter, which stores integers in a double-backed FJsonValue
+               property_desc.property_->IsA(FFloatProperty::StaticClass())      ||
+               property_desc.property_->IsA(FDoubleProperty::StaticClass())     ||
+               property_desc.property_->IsA(FStrProperty::StaticClass())        ||
+               property_desc.property_->IsA(FNameProperty::StaticClass())       ||
+               property_desc.property_->IsA(FTextProperty::StaticClass())       ||
+               property_desc.property_->IsA(FByteProperty::StaticClass())       ||
+               property_desc.property_->IsA(FEnumProperty::StaticClass())       ||
+               property_desc.property_->IsA(FSoftObjectProperty::StaticClass()) || // FSoftClassProperty is-a FSoftObjectProperty
+               // no FOptionalProperty because FJsonObjectConverter exports a set TOptional<FString> without quotes or escaping, so it can't be round-tripped
+               property_desc.property_->IsA(FFieldPathProperty::StaticClass())) {
+
+        TSharedPtr<FJsonValue> json_value;
+
+        if (fixed_size_array_element) {
+
+            // FJsonObjectConverter::UPropertyToJsonValue(...) always reads ArrayDim elements when ArrayDim > 1,
+            // so we can't pass it a pointer to a single element. Instead, we copy our element into the first
+            // element of a temporary fixed-size array, convert the entire temporary array, and extract the
+            // first element. FProperty::InitializeValue(...) and FProperty::DestroyValue(...) operate on all
+            // ArrayDim elements, and FProperty::CopySingleValue(...) copies a single element using the
+            // element type's copy semantics.
+
+            int num_bytes = property_desc.property_->ArrayDim * property_desc.property_->GetElementSize();
+            uint8_t initial_value = 0;
+            std::vector<uint8_t, SpAlignedAllocator<uint8_t, 4096>> temp_value_vector(num_bytes, initial_value);
+            SP_ASSERT(property_desc.property_->GetMinAlignment() <= 4096);
+            SP_ASSERT(4096 % property_desc.property_->GetMinAlignment() == 0);
+            SP_ASSERT(Std::isPtrSufficientlyAligned(temp_value_vector.data(), 4096));
+            property_desc.property_->InitializeValue(temp_value_vector.data());
+            property_desc.property_->CopySingleValue(temp_value_vector.data(), property_desc.value_ptr_);
+
+            TSharedPtr<FJsonValue> temp_json_value = FJsonObjectConverter::UPropertyToJsonValue(property_desc.property_, temp_value_vector.data());
+            SP_ASSERT(temp_json_value.IsValid());
+
+            bool success = false;
+            TArray<TSharedPtr<FJsonValue>>* temp_json_values;
+            success = temp_json_value->TryGetArray(temp_json_values);
+            SP_ASSERT(success);
+            SP_ASSERT(temp_json_values);
+            SP_ASSERT(temp_json_values->Num() == property_desc.property_->ArrayDim);
+            json_value = (*temp_json_values)[0];
+
+            property_desc.property_->DestroyValue(temp_value_vector.data());
+
+        } else {
+            json_value = FJsonObjectConverter::UPropertyToJsonValue(property_desc.property_, property_desc.value_ptr_);
+        }
+
         SP_ASSERT(json_value.IsValid());
 
         bool success = false;
@@ -976,9 +1076,11 @@ SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& prop
         UStruct* ustruct = struct_property->Struct;
         property_value.value_ = getObjectPropertiesAsString(property_desc.value_ptr_, ustruct);
 
-    } else if (property_desc.property_->IsA(FObjectProperty::StaticClass())) {
+    } else if (property_desc.property_->IsA(FObjectProperty::StaticClass())     ||
+               property_desc.property_->IsA(FWeakObjectProperty::StaticClass()) ||
+               property_desc.property_->IsA(FLazyObjectProperty::StaticClass())) {
 
-        FObjectProperty* object_property = static_cast<FObjectProperty*>(property_desc.property_);
+        FObjectPropertyBase* object_property = static_cast<FObjectPropertyBase*>(property_desc.property_); // FObjectProperty, FWeakObjectProperty, and FLazyObjectProperty are-a FObjectPropertyBase
         UObject* uobject = object_property->GetObjectPropertyValue(property_desc.value_ptr_);
         property_value.value_ = Std::toStringFromPtr(uobject);
 
@@ -1004,16 +1106,28 @@ void UnrealUtils::setPropertyValueFromString(const SpPropertyDesc& property_desc
     SP_ASSERT(property_desc.value_ptr_);
     SP_ASSERT(property_desc.property_);
 
-    std::string quote_string = getQuoteStringForProperty(property_desc.property_);
+    // If our property is an entire fixed-size array, then we expect the input string to already be a
+    // well-formed JSON array, so we don't add any quotes or escape any characters.
 
-    // FString and FName values can contain arbitrary characters, so we need to escape them to construct a
-    // well-formed JSON string. We don't need to escape the other quoted property types, because their values
+    bool fixed_size_array = isFixedSizeArray(property_desc, true); // allow_element_to_recurse
+
+    std::string quote_string;
+    if (!fixed_size_array) {
+        quote_string = getQuoteStringForProperty(property_desc.property_);
+    }
+
+    // FString, FName, and FText values can contain arbitrary characters, so we need to escape them to
+    // construct a well-formed JSON string. We don't need to escape the other quoted property types, because their values
     // can't contain characters that need escaping: enum values are C++ identifiers, soft object values are
-    // object paths, and object and interface values are hexadecimal pointer strings. For these types, we
-    // assert that no characters need escaping.
+    // object paths, field path values are property paths, and object and interface values are hexadecimal
+    // pointer strings. For these types, we assert that no characters need escaping.
 
     std::string json_string;
-    if (property_desc.property_->IsA(FStrProperty::StaticClass()) || property_desc.property_->IsA(FNameProperty::StaticClass())) {
+    if (fixed_size_array) {
+        json_string = string;
+    } else if (property_desc.property_->IsA(FStrProperty::StaticClass())  ||
+               property_desc.property_->IsA(FNameProperty::StaticClass()) ||
+               property_desc.property_->IsA(FTextProperty::StaticClass())) {
         json_string = getJsonString(string);
     } else if (!quote_string.empty()) {
         std::string special_chars = "\"\\\n\r\t\b\f";
@@ -1044,7 +1158,7 @@ void UnrealUtils::setPropertyValueFromString(const SpPropertyDesc& property_desc
     setPropertyValueFromJsonValue(property_desc, json_value, notify_editor);
 }
 
-void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_desc, TSharedPtr<FJsonValue> json_value, bool notify_editor)
+void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_desc, TSharedPtr<FJsonValue> json_value, bool notify_editor, bool allow_element_to_recurse)
 {
     SP_ASSERT(property_desc.value_ptr_);
     SP_ASSERT(property_desc.property_);
@@ -1063,28 +1177,88 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
     // enumeration of all possible property types. For now, we only handle the property types that have come
     // up in practice in our experiments.
 
-    if (property_desc.property_->IsA(FBoolProperty::StaticClass()) ||
-        property_desc.property_->IsA(FIntProperty::StaticClass()) ||
-        property_desc.property_->IsA(FInt8Property::StaticClass()) ||
-        property_desc.property_->IsA(FInt16Property::StaticClass()) ||
-        // no FInt32Property because the int32 C++ type maps to FIntProperty
-        // no FInt64Property because it could lose precision when passed through FJsonObjectConverter, which stores integers in a double-backed FJsonValue
-        // no FUInt8Property because the uint8 C++ type maps to FByteProperty
-        property_desc.property_->IsA(FUInt16Property::StaticClass()) ||
-        property_desc.property_->IsA(FUInt32Property::StaticClass()) ||
-        // no FUInt64Property because it could lose precision when passed through FJsonObjectConverter, which stores integers in a double-backed FJsonValue
-        property_desc.property_->IsA(FFloatProperty::StaticClass()) ||
-        property_desc.property_->IsA(FDoubleProperty::StaticClass()) ||
-        property_desc.property_->IsA(FStrProperty::StaticClass()) ||
-        property_desc.property_->IsA(FNameProperty::StaticClass()) ||
-        property_desc.property_->IsA(FByteProperty::StaticClass()) ||
-        property_desc.property_->IsA(FEnumProperty::StaticClass()) ||
-        property_desc.property_->IsA(FStructProperty::StaticClass()) ||
-        property_desc.property_->IsA(FSoftObjectProperty::StaticClass())) {
+    bool fixed_size_array = isFixedSizeArray(property_desc, allow_element_to_recurse);
+    bool fixed_size_array_element = isFixedSizeArrayElement(property_desc, allow_element_to_recurse);
+
+    if (fixed_size_array) {
+
+        // See the corresponding comment in getPropertyValueAsString(...).
 
         bool success = false;
-        success = FJsonObjectConverter::JsonValueToUProperty(json_value, property_desc.property_, property_desc.value_ptr_);
+        TArray<TSharedPtr<FJsonValue>>* json_values;
+        success = json_value->TryGetArray(json_values);
         SP_ASSERT(success);
+        SP_ASSERT(json_values);
+        SP_ASSERT(json_values->Num() == property_desc.property_->ArrayDim);
+
+        for (int i = 0; i < json_values->Num(); i++) {
+            TSharedPtr<FJsonValue> element_json_value = (*json_values)[i];
+
+            // Skip null elements, leaving them unchanged, to match FJsonObjectConverter::JsonValueToUProperty(...).
+            if (element_json_value.IsValid() && !element_json_value->IsNull()) {
+                SpPropertyDesc element_property_desc;
+                element_property_desc.property_ = property_desc.property_;
+                element_property_desc.value_ptr_ = static_cast<uint8*>(property_desc.value_ptr_) + i * property_desc.property_->GetElementSize();
+                SP_ASSERT(element_property_desc.value_ptr_);
+
+                setPropertyValueFromJsonValue(element_property_desc, element_json_value, false, false); // notify_editor, allow_element_to_recurse
+            }
+        }
+
+    } else if (property_desc.property_->IsA(FBoolProperty::StaticClass())       ||
+               property_desc.property_->IsA(FIntProperty::StaticClass())        ||
+               property_desc.property_->IsA(FInt8Property::StaticClass())       ||
+               property_desc.property_->IsA(FInt16Property::StaticClass())      ||
+               // no FInt32Property because the int32 C++ type maps to FIntProperty
+               // no FInt64Property because it could lose precision when passed through FJsonObjectConverter, which stores integers in a double-backed FJsonValue
+               // no FUInt8Property because the uint8 C++ type maps to FByteProperty
+               property_desc.property_->IsA(FUInt16Property::StaticClass())     ||
+               property_desc.property_->IsA(FUInt32Property::StaticClass())     ||
+               // no FUInt64Property because it could lose precision when passed through FJsonObjectConverter, which stores integers in a double-backed FJsonValue
+               property_desc.property_->IsA(FFloatProperty::StaticClass())      ||
+               property_desc.property_->IsA(FDoubleProperty::StaticClass())     ||
+               property_desc.property_->IsA(FStrProperty::StaticClass())        ||
+               property_desc.property_->IsA(FNameProperty::StaticClass())       ||
+               property_desc.property_->IsA(FTextProperty::StaticClass())       ||
+               property_desc.property_->IsA(FByteProperty::StaticClass())       ||
+               property_desc.property_->IsA(FEnumProperty::StaticClass())       ||
+               property_desc.property_->IsA(FStructProperty::StaticClass())     ||
+               property_desc.property_->IsA(FSoftObjectProperty::StaticClass()) || // FSoftClassProperty is-a FSoftObjectProperty
+               // no FOptionalProperty because FJsonObjectConverter exports a set TOptional<FString> without quotes or escaping, so it can't be round-tripped
+               property_desc.property_->IsA(FFieldPathProperty::StaticClass())) {
+
+        if (fixed_size_array_element) {
+
+            // See the corresponding comment in getPropertyValueAsString(...). FJsonObjectConverter::JsonValueToUProperty(...)
+            // always writes to a fixed-size array when ArrayDim > 1, so we can't pass it a pointer to a single element.
+            // Instead, we convert a single-element JSON array into the first element of a temporary fixed-size array, and
+            // then copy the first element into our element. We pass a single-element JSON array, rather than a scalar JSON
+            // value, to avoid a warning from FJsonObjectConverter::JsonValueToUProperty(...).
+
+            int num_bytes = property_desc.property_->ArrayDim * property_desc.property_->GetElementSize();
+            uint8_t initial_value = 0;
+            std::vector<uint8_t, SpAlignedAllocator<uint8_t, 4096>> temp_value_vector(num_bytes, initial_value);
+            SP_ASSERT(property_desc.property_->GetMinAlignment() <= 4096);
+            SP_ASSERT(4096 % property_desc.property_->GetMinAlignment() == 0);
+            SP_ASSERT(Std::isPtrSufficientlyAligned(temp_value_vector.data(), 4096));
+            property_desc.property_->InitializeValue(temp_value_vector.data());
+
+            TArray<TSharedPtr<FJsonValue>> temp_json_values = {json_value};
+            TSharedPtr<FJsonValue> temp_json_value = MakeShared<FJsonValueArray>(temp_json_values);
+
+            bool success = false;
+            success = FJsonObjectConverter::JsonValueToUProperty(temp_json_value, property_desc.property_, temp_value_vector.data());
+            SP_ASSERT(success);
+
+            property_desc.property_->CopySingleValue(property_desc.value_ptr_, temp_value_vector.data());
+
+            property_desc.property_->DestroyValue(temp_value_vector.data());
+
+        } else {
+            bool success = false;
+            success = FJsonObjectConverter::JsonValueToUProperty(json_value, property_desc.property_, property_desc.value_ptr_);
+            SP_ASSERT(success);
+        }
 
     } else if (property_desc.property_->IsA(FInt64Property::StaticClass())) {
 
@@ -1155,33 +1329,36 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
         // Import each element into temporary storage and only add it to the set if it isn't already present,
         // to match FSetProperty::ImportText_Internal(...). FindElementIndex(...) does a linear search that
         // doesn't depend on the hash, so it is safe to call before Rehash().
-        uint8* temp_element_ptr = static_cast<uint8*>(FMemory::Malloc(inner_property->GetElementSize()));
+        int num_bytes = inner_property->GetElementSize();
+        uint8_t initial_value = 0;
+        std::vector<uint8_t, SpAlignedAllocator<uint8_t, 4096>> temp_element_vector(num_bytes, initial_value);
+        SP_ASSERT(inner_property->GetMinAlignment() <= 4096);
+        SP_ASSERT(4096 % inner_property->GetMinAlignment() == 0);
+        SP_ASSERT(Std::isPtrSufficientlyAligned(temp_element_vector.data(), 4096));
 
         for (int i = 0; i < json_values->Num(); i++) {
             TSharedPtr<FJsonValue> inner_json_value = (*json_values)[i];
 
             // Skip null elements to match FJsonObjectConverter::JsonValueToUProperty(...).
             if (inner_json_value.IsValid() && !inner_json_value->IsNull()) {
-                inner_property->InitializeValue(temp_element_ptr);
+                inner_property->InitializeValue(temp_element_vector.data());
 
                 SpPropertyDesc inner_property_desc;
                 inner_property_desc.property_ = inner_property;
-                inner_property_desc.value_ptr_ = temp_element_ptr;
+                inner_property_desc.value_ptr_ = temp_element_vector.data();
 
                 setPropertyValueFromJsonValue(inner_property_desc, inner_json_value);
 
-                if (set_helper.FindElementIndex(temp_element_ptr) == INDEX_NONE) {
+                if (set_helper.FindElementIndex(temp_element_vector.data()) == INDEX_NONE) {
                     int32 index = set_helper.AddDefaultValue_Invalid_NeedsRehash();
                     uint8* element_ptr = set_helper.GetElementPtr(index);
                     SP_ASSERT(element_ptr);
-                    inner_property->CopyCompleteValue(element_ptr, temp_element_ptr);
+                    inner_property->CopyCompleteValue(element_ptr, temp_element_vector.data());
                 }
 
-                inner_property->DestroyValue(temp_element_ptr);
+                inner_property->DestroyValue(temp_element_vector.data());
             }
         }
-
-        FMemory::Free(temp_element_ptr);
 
         set_helper.Rehash();
 
@@ -1207,26 +1384,31 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
         // match FMapProperty::ImportText_Internal(...). FindMapIndexWithKey(...) does a linear search that doesn't
         // depend on the hash, so it is safe to call before Rehash(). The key is stored at offset 0 in each pair, so
         // we only need temporary storage for the key.
-        uint8* temp_key_ptr = static_cast<uint8*>(FMemory::Malloc(inner_key_property->GetElementSize()));
+        int num_bytes = inner_key_property->GetElementSize();
+        uint8_t initial_value = 0;
+        std::vector<uint8_t, SpAlignedAllocator<uint8_t, 4096>> temp_key_vector(num_bytes, initial_value);
+        SP_ASSERT(inner_key_property->GetMinAlignment() <= 4096);
+        SP_ASSERT(4096 % inner_key_property->GetMinAlignment() == 0);
+        SP_ASSERT(Std::isPtrSufficientlyAligned(temp_key_vector.data(), 4096));
 
         for (auto& [json_key, inner_json_value] : json_object->Get()->Values) {
 
             // Skip null values to match FJsonObjectConverter::JsonValueToUProperty(...).
             if (inner_json_value.IsValid() && !inner_json_value->IsNull()) {
-                inner_key_property->InitializeValue(temp_key_ptr);
+                inner_key_property->InitializeValue(temp_key_vector.data());
 
                 // Wrap the key in an FJsonValueString to match FJsonObjectConverter::JsonValueToUProperty(...).
                 SpPropertyDesc inner_key_property_desc;
                 inner_key_property_desc.property_ = inner_key_property;
-                inner_key_property_desc.value_ptr_ = temp_key_ptr;
+                inner_key_property_desc.value_ptr_ = temp_key_vector.data();
 
                 setPropertyValueFromJsonValue(inner_key_property_desc, MakeShared<FJsonValueString>(json_key));
 
-                if (map_helper.FindMapIndexWithKey(temp_key_ptr) == INDEX_NONE) {
+                if (map_helper.FindMapIndexWithKey(temp_key_vector.data()) == INDEX_NONE) {
                     int32 index = map_helper.AddDefaultValue_Invalid_NeedsRehash();
                     uint8* key_ptr = map_helper.GetKeyPtr(index);
                     SP_ASSERT(key_ptr);
-                    inner_key_property->CopyCompleteValue(key_ptr, temp_key_ptr);
+                    inner_key_property->CopyCompleteValue(key_ptr, temp_key_vector.data());
 
                     SpPropertyDesc inner_value_property_desc;
                     inner_value_property_desc.property_ = inner_value_property;
@@ -1236,17 +1418,17 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
                     setPropertyValueFromJsonValue(inner_value_property_desc, inner_json_value);
                 }
 
-                inner_key_property->DestroyValue(temp_key_ptr);
+                inner_key_property->DestroyValue(temp_key_vector.data());
             }
         }
 
-        FMemory::Free(temp_key_ptr);
-
         map_helper.Rehash();
 
-    } else if (property_desc.property_->IsA(FObjectProperty::StaticClass())) {
+    } else if (property_desc.property_->IsA(FObjectProperty::StaticClass())     ||
+               property_desc.property_->IsA(FWeakObjectProperty::StaticClass()) ||
+               property_desc.property_->IsA(FLazyObjectProperty::StaticClass())) {
 
-        FObjectProperty* object_property = static_cast<FObjectProperty*>(property_desc.property_);
+        FObjectPropertyBase* object_property = static_cast<FObjectPropertyBase*>(property_desc.property_); // FObjectProperty, FWeakObjectProperty, and FLazyObjectProperty are-a FObjectPropertyBase
 
         bool success = false;
         FString fstring;
@@ -1842,22 +2024,26 @@ std::string UnrealUtils::getQuoteStringForProperty(const FProperty* property)
     // a well-formed JSON string. Likewise, if our property is an {array, set, map, struct}, then we expect
     // an input string to already be a well-formed JSON string, and again we do not need to add any quotes.
     //
-    // On the other hand, if our property is a {enum, string, name, object, interface, soft reference}, then
-    // we expect an input string to contain a string with no quotes because this is the formatting convention
-    // of getPropertyValueAsString(...), and in this case we need to add quotes to construct a well-formed
-    // JSON string.
+    // On the other hand, if our property is a {enum, string, name, text, object, interface, soft reference,
+    // field path}, then we expect an input string to contain a string with no quotes because this is the
+    // formatting convention of getPropertyValueAsString(...), and in this case we need to add quotes to
+    // construct a well-formed JSON string.
     //
     // If our property is an enum byte, treat it like a string. If it is a non-enum byte, treat it like
     // an int.
 
     std::string quote_string;
 
-    if (property->IsA(FEnumProperty::StaticClass()) ||
-        property->IsA(FStrProperty::StaticClass()) ||
-        property->IsA(FNameProperty::StaticClass()) ||
-        property->IsA(FObjectProperty::StaticClass()) ||
-        property->IsA(FInterfaceProperty::StaticClass()) ||
-        property->IsA(FSoftObjectProperty::StaticClass())) {
+    if (property->IsA(FEnumProperty::StaticClass())       ||
+        property->IsA(FStrProperty::StaticClass())        ||
+        property->IsA(FNameProperty::StaticClass())       ||
+        property->IsA(FTextProperty::StaticClass())       ||
+        property->IsA(FObjectProperty::StaticClass())     ||
+        property->IsA(FWeakObjectProperty::StaticClass()) ||
+        property->IsA(FLazyObjectProperty::StaticClass()) ||
+        property->IsA(FInterfaceProperty::StaticClass())  ||
+        property->IsA(FSoftObjectProperty::StaticClass()) ||
+        property->IsA(FFieldPathProperty::StaticClass())) {
         quote_string = "\"";
     } else if (property->IsA(FByteProperty::StaticClass())) {
         const FByteProperty* byte_property = static_cast<const FByteProperty*>(property);
@@ -1947,6 +2133,44 @@ std::string UnrealUtils::getJsonString(const std::string& input)
         }
     }
     return output;
+}
+
+//
+// Helper functions for fixed-size array properties
+//
+
+bool UnrealUtils::isFixedSizeArrayProperty(const FProperty* property)
+{
+    SP_ASSERT(property);
+    return property->ArrayDim > 1;
+}
+
+bool UnrealUtils::isFixedSizeArray(const SpPropertyDesc& property_desc, bool allow_element_to_recurse)
+{
+    SP_ASSERT(property_desc.property_);
+    return isFixedSizeArrayProperty(property_desc.property_) && !isFixedSizeArrayElement(property_desc, allow_element_to_recurse);
+}
+
+bool UnrealUtils::isFixedSizeArrayElement(const SpPropertyDesc& property_desc, bool allow_element_to_recurse)
+{
+    SP_ASSERT(property_desc.property_);
+
+    // A fixed-size array element has the same FProperty as the entire fixed-size array, so we can't tell them
+    // apart by looking at the FProperty alone. If allow_element_to_recurse is false, then we're being called
+    // recursively on an element of a fixed-size array. Otherwise, resolveProperty(...) records a non-negative
+    // array index for the final property in the path if the user indexed into a fixed-size array. Note that the
+    // Inner property of an FArrayProperty always has ArrayDim == 1, so this function never returns true for an
+    // FArrayProperty element.
+
+    if (!isFixedSizeArrayProperty(property_desc.property_)) {
+        return false;
+    }
+
+    if (!allow_element_to_recurse) {
+        return true;
+    }
+
+    return !property_desc.notify_array_indices_.empty() && property_desc.notify_array_indices_.back() != -1;
 }
 
 //

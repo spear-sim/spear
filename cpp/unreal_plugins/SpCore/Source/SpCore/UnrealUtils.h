@@ -58,7 +58,7 @@ struct SpPropertyDesc
     // plain member step. The object to notify is notify_objects_.back().
     std::vector<UObject*> notify_objects_;              // base object at each step (repeated across a struct segment; changes each time a new object is traversed
     std::vector<FProperty*> notify_member_properties_;  // named member property at each step (i.e., the container for an array or map entry)
-    std::vector<FProperty*> notify_element_properties_; // array Inner or map ValueProp at each step, or nullptr for a plain member step
+    std::vector<FProperty*> notify_element_properties_; // array Inner, fixed-size array property, or map ValueProp at each step, or nullptr for a plain member step
     std::vector<int> notify_array_indices_;             // array index at each step, or -1 for a non-array step
     std::vector<std::string> notify_map_keys_;          // map key at each step, or "" for a non-map step
 
@@ -170,9 +170,13 @@ public:
     static SpPropertyDesc resolveProperty(const SpPropertyDesc& parent, FProperty* property);
     static SpPropertyDesc resolveProperty(const SpPropertyDesc& parent, const std::string& property_name);
 
-    static SpPropertyValue getPropertyValueAsString(const SpPropertyDesc& property_desc);
+    // If property_desc refers to an entire fixed-size array (e.g., float Foo[4]), then getPropertyValueAsString(...)
+    // and setPropertyValueFromJsonValue(...) recurse into each element. Recursive calls pass
+    // allow_element_to_recurse=false to indicate that property_desc refers to a single element.
+
+    static SpPropertyValue getPropertyValueAsString(const SpPropertyDesc& property_desc, bool allow_element_to_recurse = true);
     static void setPropertyValueFromString(const SpPropertyDesc& property_desc, const std::string& string, bool notify_editor = false);
-    static void setPropertyValueFromJsonValue(const SpPropertyDesc& property_desc, TSharedPtr<FJsonValue> json_value, bool notify_editor = false);
+    static void setPropertyValueFromJsonValue(const SpPropertyDesc& property_desc, TSharedPtr<FJsonValue> json_value, bool notify_editor = false, bool allow_element_to_recurse = true);
 
     //
     // Helper functions to fire editor property notifications. supportsEditChangeNotify returns true only if
@@ -1327,6 +1331,14 @@ private:
     static std::string getMapPropertyValueAsFormattedString(const FProperty* key_property, const std::vector<std::string>& key_strings, const FProperty* value_property, const std::vector<std::string>& value_strings);
     static std::string getQuoteStringForProperty(const FProperty* property);
     static std::string getJsonString(const std::string& input);
+
+    //
+    // Helper functions for fixed-size array properties
+    //
+
+    static bool isFixedSizeArrayProperty(const FProperty* property);
+    static bool isFixedSizeArray(const SpPropertyDesc& property_desc, bool allow_element_to_recurse);
+    static bool isFixedSizeArrayElement(const SpPropertyDesc& property_desc, bool allow_element_to_recurse);
 
     //
     // Helper function for parsing property paths

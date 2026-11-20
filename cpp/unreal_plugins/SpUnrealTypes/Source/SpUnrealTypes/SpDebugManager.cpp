@@ -8,8 +8,10 @@
 #include <stdint.h> // uint8_t, uint64_t
 
 #include <map>
-#include <memory> // std::make_unique
-#include <ranges> // std::views::all, std::views::transform
+#include <memory>  // std::make_unique
+#include <ranges>  // std::views::all, std::views::transform
+#include <string>  // std::to_string
+#include <utility> // std::pair
 #include <vector>
 
 #include <Components/ActorComponent.h>
@@ -1072,6 +1074,70 @@ void ASpDebugManager::TestInt64()
     return_values = UnrealUtils::callFunction(GetWorld(), this, ufunction, args);
     SP_LOG("GetArrayOfUInt64 in:  ", uint64_array_string);
     SP_LOG("GetArrayOfUInt64 out: ", return_values.at("ReturnValue").value_, " (", return_values.at("ReturnValue").type_id_, ")");
+}
+
+void ASpDebugManager::TestFixedSizeArrays()
+{
+    SP_LOG_CURRENT_FUNCTION();
+
+    SpPropertyDesc property_desc;
+    SpPropertyValue property_value;
+
+    // Get and set entire fixed-size arrays. We expect the type_id_ of an entire fixed-size array to include
+    // the array size (e.g., float[3]).
+
+    std::vector<std::pair<std::string, std::string>> property_names_and_strings = {
+        {"FixedSizeArrayOfFloats",  "[1.5, 2.5, 3.5]"},
+        {"FixedSizeArrayOfStrings", "[\"hello\", \"\\\"world\\\"\"]"},
+        {"FixedSizeArrayOfVectors", "[{\"X\": 1.0, \"Y\": 2.0, \"Z\": 3.0}, {\"X\": 4.0, \"Y\": 5.0, \"Z\": 6.0}]"},
+        {"FixedSizeArrayOfInt64",   "[" + std::to_string(INT64_MAX) + ", " + std::to_string(INT64_MIN) + "]"}};
+
+    for (auto& [property_name, string] : property_names_and_strings) {
+        property_desc = UnrealUtils::resolveProperty(this, property_name);
+        property_value = UnrealUtils::getPropertyValueAsString(property_desc);
+        SP_LOG(property_name, " before: ", property_value.value_, " (", property_value.type_id_, ")");
+        UnrealUtils::setPropertyValueFromString(property_desc, string);
+        property_value = UnrealUtils::getPropertyValueAsString(property_desc);
+        SP_LOG(property_name, " after:  ", property_value.value_, " (", property_value.type_id_, ")");
+    }
+
+    // Get and set individual elements. We expect the type_id_ of an element to not include the array size.
+    // Strings with special characters exercise quoting and escaping for individual elements.
+
+    std::vector<std::pair<std::string, std::string>> element_property_names_and_strings = {
+        {"FixedSizeArrayOfFloats[1]",  "20.5"},
+        {"FixedSizeArrayOfStrings[1]", "\"new\"\nworld"},
+        {"FixedSizeArrayOfVectors[1]", "{\"X\": 40.0, \"Y\": 50.0, \"Z\": 60.0}"},
+        {"FixedSizeArrayOfInt64[1]",   std::to_string(INT64_MAX)}};
+
+    for (auto& [property_name, string] : element_property_names_and_strings) {
+        property_desc = UnrealUtils::resolveProperty(this, property_name);
+        property_value = UnrealUtils::getPropertyValueAsString(property_desc);
+        SP_LOG(property_name, " before: ", property_value.value_, " (", property_value.type_id_, ")");
+        UnrealUtils::setPropertyValueFromString(property_desc, string);
+        property_value = UnrealUtils::getPropertyValueAsString(property_desc);
+        SP_LOG(property_name, " after:  ", property_value.value_, " (", property_value.type_id_, ")");
+    }
+
+    // Traverse into an element of a fixed-size array of structs.
+
+    property_desc = UnrealUtils::resolveProperty(this, "FixedSizeArrayOfVectors[0].Z");
+    property_value = UnrealUtils::getPropertyValueAsString(property_desc);
+    SP_LOG("FixedSizeArrayOfVectors[0].Z before: ", property_value.value_, " (", property_value.type_id_, ")");
+    UnrealUtils::setPropertyValueFromString(property_desc, "300.0");
+    property_value = UnrealUtils::getPropertyValueAsString(property_desc);
+    SP_LOG("FixedSizeArrayOfVectors[0].Z after:  ", property_value.value_, " (", property_value.type_id_, ")");
+
+    // Verify that individual element updates are reflected in the entire fixed-size arrays. Then get all of our
+    // object's properties, which calls FJsonObjectConverter directly, so we can compare our formatting of
+    // fixed-size arrays to Unreal's formatting. Note that Unreal's formatting will lose precision for int64.
+
+    for (auto& [property_name, string] : property_names_and_strings) {
+        property_value = UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, property_name));
+        SP_LOG(property_name, " final:  ", property_value.value_, " (", property_value.type_id_, ")");
+    }
+
+    SP_LOG(UnrealUtils::getObjectPropertiesAsString(this));
 }
 
 FString ASpDebugManager::GetString(FString Arg0, bool Arg1, int Arg2, FVector Arg3) const
