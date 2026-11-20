@@ -23,6 +23,7 @@ parser.add_argument("--ignore-actors", nargs="*")
 parser.add_argument("--color-mode", default="unique_color_per_geom")
 args = parser.parse_args()
 
+assert os.path.exists(args.pipeline_dir)
 assert args.color_mode in ["single_color", "unique_color_per_actor", "unique_color_per_body", "unique_color_per_merge_id", "unique_color_per_geom"]
 
 ignore_actors = []

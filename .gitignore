@@ -13,7 +13,11 @@ cpp/unreal_projects/SpearSim/.vsconfig
 cpp/unreal_projects/SpearSim/.vscode
 cpp/unreal_projects/SpearSim/Backup
 cpp/unreal_projects/SpearSim/Binaries
-cpp/unreal_projects/SpearSim/Build
+cpp/unreal_projects/SpearSim/Build/Linux
+cpp/unreal_projects/SpearSim/Build/Mac/FileOpenOrder
+cpp/unreal_projects/SpearSim/Build/Mac/Resources/Info.Template.plist
+cpp/unreal_projects/SpearSim/Build/Mac/SpearSim.PackageVersionCounter
+cpp/unreal_projects/SpearSim/Build/Windows
 cpp/unreal_projects/SpearSim/Content/__ExternalActors__
 cpp/unreal_projects/SpearSim/Content/__ExternalObjects__
 cpp/unreal_projects/SpearSim/Content/Characters

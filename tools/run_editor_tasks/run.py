@@ -3,7 +3,8 @@
 # Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-# Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
+# Before running this file, copy user_config.yaml.example to a directory of your choice, rename to user_config.yaml, and modify it with appropriate paths for your system.
+# Then pass it in using --config-files, e.g., --config-files path/to/user_config.yaml
 
 import argparse
 import json
@@ -20,6 +21,7 @@ parser.add_argument("--when-finished", default="force_close") # iterating over s
 args = parser.parse_args()
 
 assert args.when_finished in ["keep_open", "close", "force_close"]
+assert os.path.exists(args.tasks_file)
 
 
 def merge_tasks(tasks):
@@ -63,9 +65,10 @@ if __name__ == "__main__":
         initial_task = merge_tasks(tasks=[default_task, raw_tasks[0]])
 
         # get config
-        user_config_files = [os.path.realpath(os.path.join(os.path.dirname(__file__), "user_config.yaml"))]
         if args.config_files is not None:
-            user_config_files = user_config_files + args.config_files
+            user_config_files = [ os.path.realpath(config_file) for config_file in args.config_files ]
+        else:
+            user_config_files = []
         config = spear.get_config(user_config_files=user_config_files)
 
         # modify config params
@@ -100,7 +103,7 @@ if __name__ == "__main__":
             # get task with default values
             task = merge_tasks(tasks=[default_task, raw_task])
 
-            spear.log(f"Task:")
+            spear.log("Task:")
             print_task(task=task, raw_task=raw_task, prefix="    ")
 
             # optionally load a map if it is specified and it is different from current map.

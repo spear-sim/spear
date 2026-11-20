@@ -12,7 +12,6 @@ import numpy as np
 import os
 import pathlib
 import posixpath
-import subprocess
 import traceback
 import unreal
 import spear
@@ -573,8 +572,7 @@ def imshow(name, image, temp_dir=None, temp_file=None):
 
     run_imshow = os.path.abspath(os.path.join(os.path.dirname(spear.__file__), "tools", "run_imshow.py"))
     cmd = [python_bin, run_imshow, "--path", path, "--name", name]
-    spear.log("Executing: ", " ".join(cmd))
-    subprocess.run(cmd, check=True)
+    spear.tools.run_cmd(cmd=cmd)
 
 
 #

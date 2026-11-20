@@ -20,6 +20,7 @@ parser.add_argument("--unreal-project-dir", default=os.path.realpath(os.path.joi
 args = parser.parse_args()
 
 assert os.path.exists(args.unreal_engine_dir)
+assert os.path.exists(args.unreal_project_dir)
 
 
 if __name__ == "__main__":
@@ -39,7 +40,7 @@ if __name__ == "__main__":
     uproject = uprojects[0]
 
     if args.config_files is not None:
-        user_config_files = [ os.path.realpath(os.path.join(os.path.dirname(__file__), config_file)) for config_file in args.config_files ]
+        user_config_files = [ os.path.realpath(config_file) for config_file in args.config_files ]
     else:
         user_config_files = []
 

@@ -11,7 +11,6 @@ import pandas as pd
 import posixpath
 import shutil
 import spear
-import subprocess
 import sys
 
 
@@ -28,19 +27,23 @@ args = parser.parse_args()
 
 assert os.path.exists(args.unreal_engine_dir)
 assert os.path.exists(args.include_assets_file)
+assert os.path.exists(args.unreal_project_dir)
 
 if args.cook_dirs_file is not None:
     assert os.path.exists(args.cook_dirs_file)
 
+if args.cook_maps_file is not None:
+    assert os.path.exists(args.cook_maps_file)
+
 if args.exclude_assets_file is not None:
     assert os.path.exists(args.exclude_assets_file)
 
-        
+
 if __name__ == "__main__":
 
     if sys.platform == "win32":
         platform          = "Windows"
-        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealEditor.exe"))
+        unreal_editor_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealEditor-Cmd.exe"))
         unreal_pak_bin    = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealPak.exe"))
     elif sys.platform == "darwin":
         platform          = "Mac"
@@ -68,7 +71,7 @@ if __name__ == "__main__":
     if args.cook_dirs_file is not None:
         cook_dirs.extend(pd.read_csv(args.cook_dirs_file, comment="#")["cook_dirs"].tolist())
 
-    cook_dir_args = [ f'-cookdir="{os.path.join(args.unreal_project_dir, cook_dir)}"' for cook_dir in cook_dirs ]
+    cook_dir_args = [ f"-cookdir={spear.tools.normalize_unreal_cmd_path(path=os.path.join(unreal_project_dir, cook_dir))}" for cook_dir in cook_dirs ]
 
     # assemble maps to cook
 
@@ -86,20 +89,19 @@ if __name__ == "__main__":
     # cook project, see https://docs.unrealengine.com/5.2/en-US/SharingAndReleasing/Deployment/Cooking for more details
     cmd = [
         unreal_editor_bin,
-        uproject,
+        spear.tools.normalize_unreal_cmd_path(path=uproject),
         "-run=Cook",
         f"-targetplatform={platform}",
         "-unattended",                           # don't require any user input
         "-fileopenlog",                          # generate a log of which files are opened in which order
         "-ddc=InstalledDerivedDataBackendGraph", # use the default cache location for installed (i.e., not source) builds of the engine
         "-unversioned",                          # save all of the cooked packages without versions
-        "-stdout",                               # ensure log output is written to the terminal 
+        "-stdout",                               # ensure log output is written to the terminal
         "-fullstdoutlogoutput",                  # ensure log output is written to the terminal, -nologtimes means don't print timestamps next to log messages twice
         "-nologtimes"] + \
         cook_dir_args + \
         cook_maps_arg
-    spear.log("Executing: ", " ".join(cmd))
-    subprocess.run(cmd, check=True)
+    spear.tools.run_unreal_cmd(cmd=cmd)
 
     # create manifest file
     pak_file = os.path.realpath(os.path.join(args.pak_file))
@@ -120,16 +122,21 @@ if __name__ == "__main__":
             include_asset_path = os.path.realpath(os.path.join(unreal_project_cooked_dir, include_asset))
             for asset_path in sorted(glob.glob(include_asset_path, recursive=True)):
                 asset_path_posix = asset_path.replace(ntpath.sep, posixpath.sep)
-                assert asset_path.startswith(unreal_project_cooked_dir_posix)
+                assert asset_path_posix.startswith(unreal_project_cooked_dir_posix)
                 asset_path_posix_suffix = asset_path_posix.removeprefix(unreal_project_cooked_dir_posix + posixpath.sep)
                 if asset_path_posix_suffix not in exclude_assets:
                     mount_asset_path_posix = posixpath.join("..", "..", "..", asset_path_posix_suffix)
                     f.write(f'"{asset_path_posix}" "{mount_asset_path_posix}" "" \n')
 
     # build pak file
-    cmd = [unreal_pak_bin, pak_file, f'-create="{manifest_file}"', f"-platform={platform}", "-multiprocess", "-compressed"]
-    spear.log("Executing: ", " ".join(cmd))
-    subprocess.run(cmd, check=True)
+    cmd = [
+        unreal_pak_bin,
+        spear.tools.normalize_unreal_cmd_path(path=pak_file),
+        f"-create={spear.tools.normalize_unreal_cmd_path(path=manifest_file)}",
+        f"-platform={platform}",
+        "-multiprocess",
+        "-compressed"]
+    spear.tools.run_unreal_cmd(cmd=cmd)
 
     assert os.path.exists(pak_file)
     spear.log("Successfully built: ", pak_file)

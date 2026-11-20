@@ -11,7 +11,7 @@ import sys
 
 if __name__ == "__main__":
 
-    project_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..")) 
+    project_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
     unreal_project_dir = os.path.realpath(os.path.join(project_dir, "cpp", "unreal_projects", "SpearSim"))
     unreal_plugins_dir = os.path.realpath(os.path.join(project_dir, "cpp", "unreal_plugins"))
     assert os.path.exists(project_dir)
@@ -46,10 +46,11 @@ if __name__ == "__main__":
             os.path.realpath(os.path.join(plugin_dir, "Binaries")),
             os.path.realpath(os.path.join(plugin_dir, "Intermediate"))])
 
-    # platform-specific files and directories
+    # platform-specific files and directories, we remove generated files from the Build directory selectively,
+    # because Build/Mac/Resources/entitlements.plist is checked in
     if sys.platform == "win32":
         dirs.extend([
-            os.path.realpath(os.path.join(unreal_project_dir, "Build"))])
+            os.path.realpath(os.path.join(unreal_project_dir, "Build", "Windows"))])
 
     elif sys.platform == "darwin":
         dirs.extend([
@@ -58,9 +59,12 @@ if __name__ == "__main__":
             os.path.realpath(os.path.join(unreal_project_dir, "Build", "Mac", "Resources", "Info.Template.plist")),
             os.path.realpath(os.path.join(unreal_project_dir, "Build", "Mac", "SpearSim.PackageVersionCounter"))])
 
-    else:
+    elif sys.platform == "linux":
         dirs.extend([
-            os.path.realpath(os.path.join(unreal_project_dir, "Build"))])
+            os.path.realpath(os.path.join(unreal_project_dir, "Build", "Linux"))])
+
+    else:
+        assert False
 
     # remove dirs
     for d in dirs:

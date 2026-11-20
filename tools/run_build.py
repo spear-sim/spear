@@ -12,11 +12,12 @@ import spear
 parser = argparse.ArgumentParser()
 parser.add_argument("--unreal-engine-dir", required=True)
 parser.add_argument("--build-target")
-parser.add_argument("--unreal-project-dir")
+parser.add_argument("--unreal-project-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
 parser.add_argument("--build-config", default="Development")
 args, unknown_args = parser.parse_known_args() # get unknown args to pass to RunUAT
 
 assert os.path.exists(args.unreal_engine_dir)
+assert os.path.exists(args.unreal_project_dir)
 assert args.build_config in ["Debug", "DebugGame", "Development", "Shipping", "Test"]
 
 
@@ -26,10 +27,7 @@ if __name__ == "__main__":
 
     target_platform = spear.tools.get_target_platform()
 
-    if args.unreal_project_dir is None:
-        unreal_project_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim"))
-    else:
-        unreal_project_dir = os.path.realpath(args.unreal_project_dir)
+    unreal_project_dir = os.path.realpath(args.unreal_project_dir)
 
     uprojects = glob.glob(os.path.realpath(os.path.join(unreal_project_dir, "*.uproject")))
     assert len(uprojects) == 1
@@ -46,7 +44,7 @@ if __name__ == "__main__":
         build_target,
         target_platform,
         args.build_config,
-        uproject] + \
+        spear.tools.normalize_unreal_cmd_path(path=uproject)] + \
         unknown_args
 
     spear.tools.run_build(unreal_engine_dir=args.unreal_engine_dir, args=build_args)

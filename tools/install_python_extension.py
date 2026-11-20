@@ -6,14 +6,11 @@
 import argparse
 import glob
 import os
-import shutil
 import spear
-import subprocess
 import sys
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--conda-script")
 parser.add_argument("--cxx-compiler")
 parser.add_argument("--unreal-engine-dir") # only required on Linux
 parser.add_argument("--debug", action="store_true")
@@ -24,6 +21,8 @@ args = parser.parse_args()
 
 if __name__ == "__main__":
 
+    spear.tools.validate_build_environment()
+
     #
     # define build variables
     #
@@ -33,14 +32,6 @@ if __name__ == "__main__":
         assert args.cxx_compiler is None
 
         cxx_compiler = "cl"
-        cxx_compiler_path = shutil.which(cxx_compiler)
-        if cxx_compiler_path is None:
-            spear.log("ERROR: Can't find the Visual Studio command-line tools. All SPEAR build steps must run in a terminal where the Visual Studio command-line tools are visible. Giving up...")
-            assert False
-        if cxx_compiler_path.lower().endswith("hostx86\\x86\\cl.exe") or cxx_compiler_path.lower().endswith("hostx86\\x64\\cl.exe"):
-            spear.log("ERROR: 32-bit terminal detected. All SPEAR build steps must run in a 64-bit terminal. Giving up...")
-            spear.log("ERROR: Compiler path:", cxx_compiler_path)
-            assert False
 
         if args.debug:
             optimization_flags = "/Od /Zi /DDEBUG /D_DEBUG"
@@ -52,7 +43,7 @@ if __name__ == "__main__":
         cmake_cxx_standard_libraries = ""
         cmake_exe_linker_flags = ""
 
-        cmd_prefix = f"conda activate {args.conda_env} & "
+        cmd_env_vars = {}
 
     elif sys.platform == "darwin":
 
@@ -71,30 +62,7 @@ if __name__ == "__main__":
         cmake_cxx_standard_libraries = ""
         cmake_exe_linker_flags = ""
 
-        if args.conda_script:
-            if os.path.exists(args.conda_script):
-                spear.log("Found conda script at: ", args.conda_script)
-                conda_script = args.conda_script
-            assert conda_script is not None
-
-        else:
-            # see https://docs.anaconda.com/anaconda/user-guide/faq
-            conda_script_candidates = [
-                os.path.expanduser(os.path.join("~", "anaconda3", "etc", "profile.d", "conda.sh")),  # anaconda shell install
-                os.path.join(os.sep, "opt", "anaconda3", "etc", "profile.d", "conda.sh"),            # anaconda graphical install
-                os.path.expanduser(os.path.join("~", "miniconda3", "etc", "profile.d", "conda.sh")), # miniconda shell install
-                os.path.join(os.sep, "opt", "miniconda3", "etc", "profile.d", "conda.sh"),           # miniconda graphical install
-                os.path.expanduser(os.path.join("~", "miniforge3", "etc", "profile.d", "conda.sh"))] # miniforge shell install
-
-            conda_script = None
-            for conda_script_candidate in conda_script_candidates:
-                if os.path.exists(conda_script_candidate):
-                    spear.log("Found conda script at: ", conda_script_candidate)
-                    conda_script = conda_script_candidate
-                    break
-            assert conda_script is not None
-
-        cmd_prefix = f". {conda_script}; conda activate {args.conda_env}; MACOSX_DEPLOYMENT_TARGET=11.0 "
+        cmd_env_vars = {"MACOSX_DEPLOYMENT_TARGET": "11.0"}
 
     elif sys.platform == "linux":
 
@@ -151,28 +119,7 @@ if __name__ == "__main__":
         # because spear_ext is a shared library rather than an executable.
         cmake_exe_linker_flags = f"-L\'{linux_libcpp_lib_dir}\'"
 
-        if args.conda_script:
-            if os.path.exists(args.conda_script):
-                spear.log("Found conda script at: ", args.conda_script)
-                conda_script = args.conda_script
-            assert conda_script is not None
-
-        else:
-            # see https://docs.anaconda.com/anaconda/user-guide/faq
-            conda_script_candidates = [
-                os.path.expanduser(os.path.join("~", "anaconda3", "etc", "profile.d", "conda.sh")),
-                os.path.expanduser(os.path.join("~", "miniconda3", "etc", "profile.d", "conda.sh")),
-                os.path.expanduser(os.path.join("~", "miniforge3", "etc", "profile.d", "conda.sh"))]
-
-            conda_script = None
-            for conda_script_candidate in conda_script_candidates:
-                if os.path.exists(conda_script_candidate):
-                    spear.log("Found conda script at: ", conda_script_candidate)
-                    conda_script = conda_script_candidate
-                    break
-            assert conda_script is not None
-
-        cmd_prefix = f". {conda_script}; conda activate {args.conda_env}; "
+        cmd_env_vars = {}
 
     else:
         assert False
@@ -186,36 +133,33 @@ if __name__ == "__main__":
 
     if args.wheel:
         spear.log("Building the spear_ext Python extension module...")
-        cmd_pip = f'pip wheel "{python_ext_dir}" -w "{build_dir}" '
+        cmd = ["pip", "wheel", python_ext_dir, "-w", build_dir]
     else:
         spear.log("Building and installing the spear_ext Python extension module...")
-        cmd_pip = f'pip install -e "{python_ext_dir}" '
+        cmd = ["pip", "install", "-e", python_ext_dir]
 
-    cmd = \
-        cmd_prefix + cmd_pip + \
-        f'-C cmake.define.CMAKE_CXX_COMPILER="{cxx_compiler}" ' + \
-        f'-C cmake.define.CMAKE_CXX_FLAGS="{cmake_cxx_flags}"'
+    cmd = cmd + [
+        "-C", f"cmake.define.CMAKE_CXX_COMPILER={cxx_compiler}",
+        "-C", f"cmake.define.CMAKE_CXX_FLAGS={cmake_cxx_flags}"]
 
     if cmake_cxx_standard_libraries:
-        cmd = cmd + f' -C cmake.define.CMAKE_CXX_STANDARD_LIBRARIES="{cmake_cxx_standard_libraries}"'
+        cmd = cmd + ["-C", f"cmake.define.CMAKE_CXX_STANDARD_LIBRARIES={cmake_cxx_standard_libraries}"]
 
     if cmake_exe_linker_flags:
-        cmd = cmd + f' -C cmake.define.CMAKE_EXE_LINKER_FLAGS="{cmake_exe_linker_flags}"'
+        cmd = cmd + ["-C", f"cmake.define.CMAKE_EXE_LINKER_FLAGS={cmake_exe_linker_flags}"]
 
     if args.debug:
-        cmd = cmd + " -C cmake.define.CMAKE_BUILD_TYPE=Debug"
+        cmd = cmd + ["-C", "cmake.define.CMAKE_BUILD_TYPE=Debug"]
 
-    spear.log("Executing: ", cmd)
-    subprocess.run(cmd, shell=True, check=True)
+    spear.tools.run_conda_cmd(conda_env=args.conda_env, cmd=cmd, env=os.environ | cmd_env_vars)
 
     # generate dSYM debug symbols on macOS
     if args.debug and sys.platform == "darwin":
         python_ext_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "python_ext"))
         so_files = glob.glob(os.path.join(python_ext_dir, "**", "*.so"), recursive=True)
         for so_file in so_files:
-            dsym_cmd = f'dsymutil "{so_file}" -o "{so_file}.dSYM"'
-            spear.log("Executing: ", dsym_cmd)
-            subprocess.run(dsym_cmd, shell=True, check=True)
+            cmd = ["dsymutil", so_file, "-o", f"{so_file}.dSYM"]
+            spear.tools.run_cmd(cmd=cmd)
 
     if args.wheel:
         spear.log("Successfully built the spear_ext Python extension module.")

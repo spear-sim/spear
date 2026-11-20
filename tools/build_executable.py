@@ -37,21 +37,22 @@ if __name__ == "__main__":
     # set various platform-specific variables that we use throughout our build procedure
     if sys.platform == "win32":
         archive_dir           = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{args.build_config}-Unsigned"))
-        run_uat_platform_args = ""
+        run_uat_platform_args = []
         unreal_tmp_dir        = ""
 
     elif sys.platform == "darwin":
         archive_dir           = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{args.build_config}-Unsigned"))
-        run_uat_platform_args = "-specifiedarchitecture=arm64+x86_64"
+        run_uat_platform_args = ["-specifiedarchitecture=arm64+x86_64"]
         unreal_tmp_dir        = os.path.expanduser(os.path.join("~", "Library", "Preferences", "Unreal Engine", "SpearSimEditor"))
 
     elif sys.platform == "linux":
         archive_dir           = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-{target_platform}-{args.build_config}"))
-        run_uat_platform_args = ""
+        run_uat_platform_args = []
         unreal_tmp_dir        = ""
 
     else:
         assert False
+
 
     if os.path.exists(archive_dir):
         spear.log("Archive directory exists, removing: ", archive_dir)
@@ -79,9 +80,9 @@ if __name__ == "__main__":
 
         # verify
         cmd = ["signtool", "verify", "/a", "/pa", "/all", "/v", bootstrap_bin]
-        spear.log("Executing: ", " ".join(cmd))
-        ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
+        ps = spear.tools.popen_cmd(cmd=cmd, stdout=subprocess.PIPE, text=True)
 
+        # we don't check the return code, because signtool returns a non-zero return code if the file isn't signed
         num_signatures = None
         for line in ps.stdout:
             spear.log_no_prefix(line)
@@ -97,15 +98,14 @@ if __name__ == "__main__":
 
             spear.log("Removing all signatures from file: ", bootstrap_bin)
             cmd = ["signtool", "remove", "/s", "/v", bootstrap_bin]
-            spear.log("Executing: ", " ".join(cmd))
-            subprocess.run(cmd, check=True)
+            spear.tools.run_cmd(cmd=cmd)
             spear.log("Removed all signatures, proceeding...")
         else:
             spear.log("File has no signatures, proceeding...")
 
     # assemble dirs to cook
     cook_dirs = args.cook_dirs if args.cook_dirs is not None else []
-    cook_dir_args = [ f"-cookdir={os.path.join(unreal_project_dir, cook_dir)}" for cook_dir in cook_dirs ]
+    cook_dir_args = [ f"-cookdir={spear.tools.normalize_unreal_cmd_path(path=os.path.join(unreal_project_dir, cook_dir))}" for cook_dir in cook_dirs ]
 
     # assemble maps to cook
     cook_maps = []
@@ -121,7 +121,7 @@ if __name__ == "__main__":
 
     run_uat_args = [
         "BuildCookRun",
-        f"-project={uproject}",
+        f"-project={spear.tools.normalize_unreal_cmd_path(path=uproject)}",
         "-target=SpearSim",
         "-build",   # build C++ executable
         "-cook",    # prepare cross-platform content for a specific platform (e.g., compile shaders)
@@ -131,8 +131,8 @@ if __name__ == "__main__":
         "-pak",     # generate a pak file for cooked content and configure executable so it can load pak files
         f"-targetplatform={target_platform}",
         f"-clientconfig={args.build_config}",
-        f"-archivedirectory={archive_dir}",
-        run_uat_platform_args] + \
+        f"-archivedirectory={spear.tools.normalize_unreal_cmd_path(path=archive_dir)}"] + \
+        run_uat_platform_args + \
         unknown_args + \
         cook_args
 

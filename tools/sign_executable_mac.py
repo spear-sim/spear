@@ -103,17 +103,15 @@ if __name__ == "__main__":
 
         spear.log("Signing file: ", sign_file)
 
-        os.path.exists(sign_file)
+        assert os.path.exists(sign_file)
 
         # sign
         cmd = ["codesign", "--force", "--timestamp", "--verbose", "--options", "runtime", "--entitlements", args.entitlements_file, "--sign", args.apple_developer_id, sign_file]
-        spear.log("Executing: ", " ".join(cmd))
-        subprocess.run(cmd, check=True)
+        spear.tools.run_cmd(cmd=cmd)
 
         # verify
         cmd = ["codesign", "--verify", "--deep", "--strict", "--verbose", sign_file]
-        spear.log("Executing: ", " ".join(cmd))
-        ps = subprocess.Popen(cmd, stderr=subprocess.PIPE, text=True) # need to use stderr instead of stdout
+        ps = spear.tools.popen_cmd(cmd=cmd, stderr=subprocess.PIPE, text=True) # need to use stderr instead of stdout
         valid_on_disk = None
         satisfies_designated_requirement = None
         for line in ps.stderr: # need to use stderr instead of stdout
@@ -122,8 +120,9 @@ if __name__ == "__main__":
                 valid_on_disk = True
             if satisfies_designated_requirement is None and "satisfies its Designated Requirement" in line:
                 satisfies_designated_requirement = True
-        ps.wait()
+        return_code = ps.wait()
         ps.stderr.close() # need to use stderr instead of stdout
+        assert return_code == 0
         assert valid_on_disk
         assert satisfies_designated_requirement
 
@@ -134,14 +133,12 @@ if __name__ == "__main__":
     cmd = ["ditto", "-c", "-k", "--sequesterRsrc", "--keepParent",
         executable_app_path,
         notarization_zip]
-    spear.log("Executing: ", " ".join(cmd))
-    subprocess.run(cmd, check=True)
+    spear.tools.run_cmd(cmd=cmd)
 
     # Customizing the Notarization Workflow - upload the archive for notarization
     #     https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow
     cmd = ["xcrun", "notarytool", "submit", notarization_zip, "--apple-id", args.apple_id, "--team-id", args.apple_team_id, "--password", args.apple_password, "--wait"]
-    spear.log("Executing: ", " ".join(cmd))
-    ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
+    ps = spear.tools.popen_cmd(cmd=cmd, stdout=subprocess.PIPE, text=True)
     submission_id = None
     status = None
     for line in ps.stdout:
@@ -150,7 +147,7 @@ if __name__ == "__main__":
             submission_id = line.split("  id: ")[1].strip()
         if "  status: " in line:
             status = line.split("  status: ")[1].strip()
-    ps.wait()
+    return_code = ps.wait()
     ps.stdout.close()
     assert submission_id is not None
 
@@ -158,43 +155,43 @@ if __name__ == "__main__":
     #     https://developer.apple.com/forums/thread/705839
     log_file = os.path.realpath(os.path.join(notarize_dir, "log.json"))
     cmd = ["xcrun", "notarytool", "log", submission_id, "--apple-id", args.apple_id, "--team-id", args.apple_team_id, "--password", args.apple_password, log_file]
-    spear.log("Executing: ", " ".join(cmd))
-    subprocess.run(cmd, check=True)
+    spear.tools.run_cmd(cmd=cmd)
     spear.log(f"Log file associated with the notarization process has been successfully written to {log_file}.")
     spear.log("Printing the contents of this log file...")
     with open(log_file) as f:
         spear.log_no_prefix(json.dumps(json.load(f), indent=4))
 
-    # validate status from previous cmd
+    # validate return code and status from previous cmd, we do this after fetching the log so the log is printed even if notarization fails
+    assert return_code == 0
     assert status == "Accepted"
 
     # Customizing the Notarization Workflow - staple the executable
     #     https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution/customizing_the_notarization_workflow
     cmd = ["xcrun", "stapler", "staple", executable_app_path]
-    spear.log("Executing: ", " ".join(cmd))
-    ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
+    ps = spear.tools.popen_cmd(cmd=cmd, stdout=subprocess.PIPE, text=True)
 
     worked = None
     for line in ps.stdout:
         spear.log_no_prefix(line)
         if worked is None and "The staple and validate action worked!" in line:
             worked = True
-    ps.wait()
+    return_code = ps.wait()
     ps.stdout.close()
+    assert return_code == 0
     assert worked
 
     # verify
     cmd = ["spctl", "--assess", "--type", "execute", "--verbose", executable_app_path]
-    spear.log("Executing: ", " ".join(cmd))
-    ps = subprocess.Popen(cmd, stderr=subprocess.PIPE, text=True) # need to use stderr instead of stdout
+    ps = spear.tools.popen_cmd(cmd=cmd, stderr=subprocess.PIPE, text=True) # need to use stderr instead of stdout
 
     accepted = None
     for line in ps.stderr: # need to use stderr instead of stdout
         spear.log_no_prefix(line)
         if accepted is None and ": accepted" in line:
             accepted = True
-    ps.wait()
+    return_code = ps.wait()
     ps.stderr.close() # need to use stderr instead of stdout
+    assert return_code == 0
     assert accepted
 
     spear.log(f"{executable_app_path} has been successfully signed.")

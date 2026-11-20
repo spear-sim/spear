@@ -23,6 +23,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--pipeline-dir", required=True)
 args = parser.parse_args()
 
+assert os.path.exists(args.pipeline_dir)
+
 np.random.seed(0)
 
 # Factor to convert the scene's Unreal centimeters to meters. We plan in meters rather than centimeters: the

@@ -3,6 +3,11 @@
 # Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
+import numpy as np
+import scipy
+
+#
+# In this comment, we describe how Unreal represents rotations and transforms.
 #
 # NOTES ON UNREAL'S CONVENTIONS FOR REPRESENTING ROTATIONS AND TRANSFORMING COORDINATES
 #
@@ -76,10 +81,6 @@
 #         R_composed = R_current*R_composed
 #         S_composed = S_composed*S_current
 #
-
-import numpy as np
-import scipy
-
 
 #
 # Math conversion functions. In the functions below, converting to or from a "spear" type means a

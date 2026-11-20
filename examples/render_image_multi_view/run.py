@@ -8,7 +8,6 @@ import math
 import numpy as np
 import os
 import spear
-import subprocess
 
 
 num_frames = 300
@@ -129,7 +128,6 @@ if __name__ == "__main__":
         "-pix_fmt", "yuv420p",
         video_file]
     spear.log("Writing video file: ", video_file)
-    spear.log("Executing: ", " ".join(cmd))
-    subprocess.run(cmd, check=True)
+    spear.tools.run_cmd(cmd=cmd)
 
     spear.log("Done.")

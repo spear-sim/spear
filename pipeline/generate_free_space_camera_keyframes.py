@@ -13,9 +13,11 @@ import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--pipeline-dir", required=True)
-parser.add_argument("--user-config-files", nargs="*", default=[])
+parser.add_argument("--config-files", nargs="*", default=[])
 parser.add_argument("--view-selection-mode", default="proportional")
 args = parser.parse_args()
+
+assert os.path.exists(args.pipeline_dir)
 
 # "proportional" selects a view at each location by sampling proportionally to the number of segments it sees;
 # "argmax" (useful for debugging) deterministically selects the view that sees the most segments.
@@ -59,7 +61,7 @@ def process_scene():
 
     # Launch SPEAR and get the game-scoped services. The user-provided config files specify how to launch the game
     # offscreen and which scene to open (the scene must be the one this export directory was generated from).
-    config = spear.get_config(user_config_files=[ os.path.realpath(user_config_file) for user_config_file in args.user_config_files ])
+    config = spear.get_config(user_config_files=[ os.path.realpath(config_file) for config_file in args.config_files ])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
     game = instance.get_game()

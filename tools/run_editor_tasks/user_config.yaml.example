@@ -10,6 +10,6 @@ SPEAR:
     EDITOR_EXECUTABLE: "/Users/Shared/Epic_Games/UE_5.5/Engine/Binaries/Mac/UnrealEditor.app"
     EDITOR_UPROJECT: "/Users/mroberts/code/github/spear/cpp/unreal_projects/SpearSim/SpearSim.uproject"
     EDITOR_LAUNCH_MODE: "editor"
-    COMMAND_LINE_ARGS:
-      # renderoffscreen: null
-    CLIENT_INTERNAL_TIMEOUT_SECONDS: 1000.0 # set this to longer than usual because it can takes a while to execute editor scripts
+    # COMMAND_LINE_ARGS:
+    #   renderoffscreen: null
+    CLIENT_INTERNAL_TIMEOUT_SECONDS: 1000.0 # set this to longer than usual because it can take a while to execute editor scripts

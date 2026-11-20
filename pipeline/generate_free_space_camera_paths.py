@@ -15,6 +15,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--pipeline-dir", required=True)
 args = parser.parse_args()
 
+assert os.path.exists(args.pipeline_dir)
+
 np.random.seed(0)
 
 # Maximum absolute roll (in degrees) added to each keyframe's camera orientation. A roll in [-max_roll_degrees,

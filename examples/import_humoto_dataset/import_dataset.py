@@ -18,6 +18,8 @@ parser.add_argument("--num-indices", type=int)
 parser.add_argument("--skip-if-exists", action="store_true")
 args = parser.parse_args()
 
+assert os.path.exists(args.filesystem_base_dir)
+
 asset_editor_subsystem = unreal.get_editor_subsystem(unreal.AssetEditorSubsystem)
 asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
 editor_asset_subsystem = unreal.get_editor_subsystem(unreal.EditorAssetSubsystem)

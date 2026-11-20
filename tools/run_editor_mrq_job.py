@@ -7,7 +7,6 @@ import argparse
 import glob
 import os
 import spear
-import subprocess
 import sys
 
 
@@ -20,6 +19,7 @@ parser.add_argument("--unreal-project-dir", default=os.path.realpath(os.path.joi
 args, unknown_args = parser.parse_known_args() # get unknown args to pass to the editor
 
 assert os.path.exists(args.unreal_engine_dir)
+assert os.path.exists(args.unreal_project_dir)
 
 
 if __name__ == "__main__":
@@ -38,13 +38,15 @@ if __name__ == "__main__":
     assert len(uprojects) == 1
     uproject = uprojects[0]
 
-    unknown_arg_string = ""
-    if len(unknown_args) > 0:
-        unknown_arg_string = " ".join(unknown_args)
-
-    # need shell=True to correctly handle the quotes in cmd
-    cmd = f'"{unreal_editor_bin}" "{uproject}" "{args.map}" -game -levelsequence="{args.level_sequence}" -moviepipelineconfig="{args.mrq_config}"'
-    spear.log("Executing: ", cmd)
-    subprocess.run(cmd, shell=True, check=True)
+    # unknown args are passed to the editor (see python/spear/utils/tool_utils.py)
+    cmd = [
+        unreal_editor_bin,
+        spear.tools.normalize_unreal_cmd_path(path=uproject),
+        args.map,
+        "-game",
+        f"-levelsequence={args.level_sequence}",
+        f"-moviepipelineconfig={args.mrq_config}"] + \
+        unknown_args
+    spear.tools.run_unreal_cmd(cmd=cmd)
 
     spear.log("Done.")

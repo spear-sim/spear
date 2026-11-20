@@ -7,7 +7,6 @@ import glob
 import os
 import psutil
 import spear
-import subprocess
 import sys
 import time
 
@@ -723,7 +722,7 @@ class Instance():
                 assert self._config.SPEAR.INSTANCE.EDITOR_LAUNCH_MODE in ["editor", "game"]
                 assert os.path.exists(self._config.SPEAR.INSTANCE.EDITOR_UPROJECT)
                 launch_executable = self._config.SPEAR.INSTANCE.EDITOR_EXECUTABLE
-                launch_args.append(self._config.SPEAR.INSTANCE.EDITOR_UPROJECT)
+                launch_args.append(spear.tools.normalize_unreal_cmd_path(path=self._config.SPEAR.INSTANCE.EDITOR_UPROJECT))
                 if self._config.SPEAR.INSTANCE.EDITOR_LAUNCH_MODE == "game":
                     launch_args.append("-game")
             elif self._config.SPEAR.LAUNCH_MODE == "game":
@@ -802,13 +801,15 @@ class Instance():
             spear.log("        Attempting to launch executable: ", launch_executable_internal)
             assert os.path.exists(launch_executable_internal)
   
+            # spear.tools.popen_unreal_cmd(...) only adds quotes around values that contain spaces, which matters
+            # because Unreal doesn't parse quoted numerical values correctly (e.g., -resx="512").
             for arg, value in (self._config.SPEAR.INSTANCE.COMMAND_LINE_ARGS).items():
                 if value is None:
                     launch_args.append(f"-{arg}")
                 else:
                     launch_args.append(f"-{arg}={value}")
 
-            launch_args.append(f"-sp-config-file={temp_config_file}")
+            launch_args.append(f"-sp-config-file={spear.tools.normalize_unreal_cmd_path(path=temp_config_file)}")
             cmd = [launch_executable_internal] + launch_args
 
             spear.log("        Launching executable with the following command-line arguments:")
@@ -818,7 +819,7 @@ class Instance():
             spear.log("        Launching executable with the following config values:")
             spear.log_no_prefix(self._config)
 
-            popen = subprocess.Popen(cmd)
+            popen = spear.tools.popen_unreal_cmd(cmd=cmd)
             self._process = psutil.Process(popen.pid)
 
             # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible status values

@@ -14,9 +14,11 @@ import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--pipeline-dir", required=True)
-parser.add_argument("--user-config-files", nargs="*", default=[])
+parser.add_argument("--config-files", nargs="*", default=[])
 parser.add_argument("--preview", action="store_true")
 args = parser.parse_args()
+
+assert os.path.exists(args.pipeline_dir)
 
 # The final rendered images are 1080p, with a horizontal field of view (in degrees) matching the one used to choose
 # the camera orientations in generate_free_space_camera_keyframes.py.
@@ -61,7 +63,7 @@ def process_scene():
 
     # Launch SPEAR and get the game-scoped services. The user-provided config files specify how to launch the game
     # offscreen and which scene to open (the scene must be the one this export directory was generated from).
-    config = spear.get_config(user_config_files=[ os.path.realpath(user_config_file) for user_config_file in args.user_config_files ])
+    config = spear.get_config(user_config_files=[ os.path.realpath(config_file) for config_file in args.config_files ])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
     game = instance.get_game()

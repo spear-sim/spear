@@ -15,6 +15,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--pipeline-dir", required=True)
 args = parser.parse_args()
 
+assert os.path.exists(args.pipeline_dir)
+
 # Component classes that export the local-space bounds we use to build oriented bounding boxes.
 static_mesh_component_classes = ["StaticMeshComponent"]
 

@@ -6,10 +6,8 @@
 import argparse
 import fnmatch
 import glob
-import ntpath
 import os
 import pandas as pd
-import posixpath
 import spear
 import subprocess
 import sys
@@ -21,7 +19,6 @@ parser.add_argument("--external-content-dir", required=True)
 parser.add_argument("--paks-dir", required=True)
 parser.add_argument("--unreal-engine-dir", required=True)
 parser.add_argument("--version-tag", required=True)
-parser.add_argument("--conda-script")
 parser.add_argument("--skip-build-common-pak", action="store_true")
 parser.add_argument("--skip-build-scene-paks", action="store_true")
 parser.add_argument("--scene-ids", nargs="*")
@@ -35,6 +32,23 @@ assert os.path.exists(args.unreal_engine_dir)
 assert os.path.exists(args.build_dir)
 
 
+def get_assets_in_pak_files(unreal_pak_bin, pak_files):
+    assets = []
+    for pak_file in pak_files:
+        assert os.path.exists(pak_file)
+        cmd = [unreal_pak_bin, "-List", spear.tools.normalize_unreal_cmd_path(path=pak_file)]
+        ps = spear.tools.popen_unreal_cmd(cmd=cmd, stdout=subprocess.PIPE, text=True)
+        for line in ps.stdout:
+            line_split = line.split('"')
+            if len(line_split) == 3 and line_split[0] == "LogPakFile: Display: " and line_split[2].startswith(" offset: "):
+                asset = line_split[1]
+                assets.append(asset)
+        return_code = ps.wait()
+        ps.stdout.close()
+        assert return_code == 0
+    return sorted(list(set(assets)))
+
+
 if __name__ == "__main__":
 
     if sys.platform == "win32":
@@ -42,7 +56,6 @@ if __name__ == "__main__":
         platform       = "Windows"
         unreal_pak_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Win64", "UnrealPak.exe"))
         default_pak    = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-Win64-{args.build_config}", "Windows", "SpearSim", "Content", "Paks", "SpearSim-Windows.pak"))
-        cmd_prefix     = f"conda activate {args.conda_env} & "
 
     elif sys.platform == "darwin":
 
@@ -60,58 +73,11 @@ if __name__ == "__main__":
         unreal_pak_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Mac", "UnrealPak"))
         default_pak    = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-Mac-{args.build_config}-Unsigned", "Mac", executable_app, "Contents", "UE", "SpearSim", "Content", "Paks", "SpearSim-Mac.pak"))
 
-        if args.conda_script:
-            if os.path.exists(args.conda_script):
-                spear.log("Found conda script at: ", args.conda_script)
-                conda_script = args.conda_script
-            assert conda_script is not None
-
-        else:
-            # see https://docs.anaconda.com/anaconda/user-guide/faq
-            conda_script_candidates = [
-                os.path.expanduser(os.path.join("~", "anaconda3", "etc", "profile.d", "conda.sh")),  # anaconda shell install
-                os.path.join(os.sep, "opt", "anaconda3", "etc", "profile.d", "conda.sh"),            # anaconda graphical install
-                os.path.expanduser(os.path.join("~", "miniconda3", "etc", "profile.d", "conda.sh")), # miniconda shell install
-                os.path.join(os.sep, "opt", "miniconda3", "etc", "profile.d", "conda.sh"),           # miniconda graphical install
-                os.path.expanduser(os.path.join("~", "miniforge3", "etc", "profile.d", "conda.sh"))] # miniforge shell install
-
-            conda_script = None
-            for conda_script_candidate in conda_script_candidates:
-                if os.path.exists(conda_script_candidate):
-                    spear.log("Found conda script at: ", conda_script_candidate)
-                    conda_script = conda_script_candidate
-                    break
-            assert conda_script is not None
-
-        cmd_prefix = f". {conda_script}; conda activate {args.conda_env}; "
-
     elif sys.platform == "linux":
 
         platform       = "Linux"
         unreal_pak_bin = os.path.realpath(os.path.join(args.unreal_engine_dir, "Engine", "Binaries", "Linux", "UnrealPak"))
         default_pak    = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-Linux-{args.build_config}", "Linux", "SpearSim", "Content", "Paks", "SpearSim-Linux.pak"))
-
-        if args.conda_script:
-            if os.path.exists(args.conda_script):
-                spear.log("Found conda script at: ", args.conda_script)
-                conda_script = args.conda_script
-            assert conda_script is not None
-
-            # see https://docs.anaconda.com/anaconda/user-guide/faq
-            conda_script_candidates = [
-                os.path.expanduser(os.path.join("~", "anaconda3", "etc", "profile.d", "conda.sh")),
-                os.path.expanduser(os.path.join("~", "miniconda3", "etc", "profile.d", "conda.sh")),
-                os.path.expanduser(os.path.join("~", "miniforge3", "etc", "profile.d", "conda.sh"))]
-
-            conda_script = None
-            for conda_script_candidate in conda_script_candidates:
-                if os.path.exists(conda_script_candidate):
-                    spear.log("Found conda script at: ", conda_script_candidate)
-                    conda_script = conda_script_candidate
-                    break
-            assert conda_script is not None
-
-        cmd_prefix = f". {conda_script}; conda activate {args.conda_env}; "
 
     else:
         assert False
@@ -141,16 +107,14 @@ if __name__ == "__main__":
     for common_content_dir in common_content_dirs:
 
         update_action = "create"
-        cmd = \
-            cmd_prefix + \
-            "python " + \
-            f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlinks_for_external_content.py"))}" ' + \
-            f'--external-content-dir "{os.path.realpath(os.path.join(args.external_content_dir, common_content_dir))}" ' + \
-            f'--unreal-project-dir "{unreal_project_dir}" ' + \
-            f'--unreal-project-content-dir "{common_content_dir}" ' + \
-            f"--{update_action}"
-        spear.log("Executing: ", cmd)
-        subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
+        cmd = [
+            "python",
+            os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlink_for_external_content.py")),
+            "--external-content-dir", os.path.realpath(os.path.join(args.external_content_dir, common_content_dir)),
+            "--unreal-project-dir", unreal_project_dir,
+            "--unreal-project-content-dir", common_content_dir,
+            f"--{update_action}"]
+        spear.tools.run_conda_cmd(conda_env=args.conda_env, cmd=cmd)
 
     #
     # build common pak
@@ -187,35 +151,21 @@ if __name__ == "__main__":
 
         exclude_assets_file = os.path.realpath(os.path.join(build_paks_dir, f"kujiale_common-{args.version_tag}-{platform}_exclude_assets.csv"))
         exclude_pak_files = [default_pak]
-        exclude_assets = []
-        for exclude_pak_file in exclude_pak_files:
-            cmd = [unreal_pak_bin, "-List", exclude_pak_file]
-            spear.log("Executing: ", " ".join(cmd))
-            ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
-            for line in ps.stdout:
-                line_split = line.split('"')
-                if len(line_split) == 3 and line_split[0] == "LogPakFile: Display: " and line_split[2].startswith(" offset: "):
-                    asset = line_split[1]
-                    exclude_assets.append(asset)
-            ps.wait()
-            ps.stdout.close()
-        exclude_assets = sorted(list(set(exclude_assets)))
+        exclude_assets = get_assets_in_pak_files(unreal_pak_bin=unreal_pak_bin, pak_files=exclude_pak_files)
         df = pd.DataFrame(columns=["exclude_assets"], data={"exclude_assets": exclude_assets})
         df.to_csv(exclude_assets_file, index=False)
 
         pak_file = os.path.realpath(os.path.join(args.paks_dir, args.version_tag, f"kujiale_common-{args.version_tag}-{platform}.pak"))
-        cmd = \
-            cmd_prefix + \
-            "python " + \
-            f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "build_pak.py"))}" ' + \
-            f'--pak-file "{pak_file}" ' + \
-            f'--cook-dirs-file "{cook_dirs_file}" ' + \
-            f'--include-assets-file "{include_assets_file}" ' + \
-            f'--exclude-assets-file "{exclude_assets_file}" ' + \
-            f'--unreal-engine-dir "{args.unreal_engine_dir}" ' + \
-            f'--unreal-project-dir "{unreal_project_dir}"'
-        spear.log("Executing: ", cmd)
-        subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
+        cmd = [
+            "python",
+            os.path.realpath(os.path.join(os.path.dirname(__file__), "build_pak.py")),
+            "--pak-file", pak_file,
+            "--cook-dirs-file", cook_dirs_file,
+            "--include-assets-file", include_assets_file,
+            "--exclude-assets-file", exclude_assets_file,
+            "--unreal-engine-dir", args.unreal_engine_dir,
+            "--unreal-project-dir", unreal_project_dir]
+        spear.tools.run_conda_cmd(conda_env=args.conda_env, cmd=cmd)
 
     #
     # build scene-specific paks
@@ -244,16 +194,14 @@ if __name__ == "__main__":
 
             # create symlink
             update_action = "create"
-            cmd = \
-                cmd_prefix + \
-                "python " + \
-                f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlinks_for_external_content.py"))}" ' + \
-                f'--external-content-dir "{os.path.realpath(os.path.join(args.external_content_dir, scene_content_dir))}" ' + \
-                f'--unreal-project-dir "{unreal_project_dir}" ' + \
-                f'--unreal-project-content-dir "{scene_content_dir}" ' + \
-                f"--{update_action}"
-            spear.log("Executing: ", cmd)
-            subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
+            cmd = [
+                "python",
+                os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlink_for_external_content.py")),
+                "--external-content-dir", os.path.realpath(os.path.join(args.external_content_dir, scene_content_dir)),
+                "--unreal-project-dir", unreal_project_dir,
+                "--unreal-project-content-dir", scene_content_dir,
+                f"--{update_action}"]
+            spear.tools.run_conda_cmd(conda_env=args.conda_env, cmd=cmd)
 
             # build pak
 
@@ -293,50 +241,33 @@ if __name__ == "__main__":
 
             exclude_assets_file = os.path.realpath(os.path.join(build_paks_dir, f"{scene_id}-{args.version_tag}-{platform}_exclude_assets.csv"))
             exclude_pak_files = [default_pak, os.path.realpath(os.path.join(args.paks_dir, args.version_tag, f"kujiale_common-{args.version_tag}-{platform}.pak"))]
-            exclude_assets = []
-            for exclude_pak_file in exclude_pak_files:
-                assert os.path.exists(exclude_pak_file)
-                cmd = [unreal_pak_bin, "-List", exclude_pak_file]
-                spear.log("Executing: ", " ".join(cmd))
-                ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
-                for line in ps.stdout:
-                    line_split = line.split('"')
-                    if len(line_split) == 3 and line_split[0] == "LogPakFile: Display: " and line_split[2].startswith(" offset: "):
-                        asset = line_split[1]
-                        exclude_assets.append(asset)
-                ps.wait()
-                ps.stdout.close()
-            exclude_assets = sorted(list(set(exclude_assets)))
+            exclude_assets = get_assets_in_pak_files(unreal_pak_bin=unreal_pak_bin, pak_files=exclude_pak_files)
             df = pd.DataFrame(columns=["exclude_assets"], data={"exclude_assets": exclude_assets})
             df.to_csv(exclude_assets_file, index=False)
 
             pak_file = os.path.realpath(os.path.join(args.paks_dir, args.version_tag, f"{scene_id}-{args.version_tag}-{platform}.pak"))
-            cmd = \
-                cmd_prefix + \
-                "python " + \
-                f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "build_pak.py"))}" ' + \
-                f'--pak-file "{pak_file}" ' + \
-                f'--cook-dirs-file "{cook_dirs_file}" ' + \
-                f'--cook-maps-file "{cook_maps_file}" ' + \
-                f'--include-assets-file "{include_assets_file}" ' + \
-                f'--exclude-assets-file "{exclude_assets_file}" ' + \
-                f'--unreal-engine-dir "{args.unreal_engine_dir}" ' + \
-                f'--unreal-project-dir "{unreal_project_dir}"'
-            spear.log("Executing: ", cmd)
-            subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
+            cmd = [
+                "python",
+                os.path.realpath(os.path.join(os.path.dirname(__file__), "build_pak.py")),
+                "--pak-file", pak_file,
+                "--cook-dirs-file", cook_dirs_file,
+                "--cook-maps-file", cook_maps_file,
+                "--include-assets-file", include_assets_file,
+                "--exclude-assets-file", exclude_assets_file,
+                "--unreal-engine-dir", args.unreal_engine_dir,
+                "--unreal-project-dir", unreal_project_dir]
+            spear.tools.run_conda_cmd(conda_env=args.conda_env, cmd=cmd)
 
             # remove symlink
             update_action = "remove"
-            cmd = \
-                cmd_prefix + \
-                "python " + \
-                f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlinks_for_external_content.py"))}" ' + \
-                f'--external-content-dir "{os.path.realpath(os.path.join(args.external_content_dir, scene_content_dir))}" ' + \
-                f'--unreal-project-dir "{unreal_project_dir}" ' + \
-                f'--unreal-project-content-dir "{scene_content_dir}" ' + \
-                f"--{update_action}"
-            spear.log("Executing: ", cmd)
-            subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
+            cmd = [
+                "python",
+                os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlink_for_external_content.py")),
+                "--external-content-dir", os.path.realpath(os.path.join(args.external_content_dir, scene_content_dir)),
+                "--unreal-project-dir", unreal_project_dir,
+                "--unreal-project-content-dir", scene_content_dir,
+                f"--{update_action}"]
+            spear.tools.run_conda_cmd(conda_env=args.conda_env, cmd=cmd)
 
     #
     # remove symlinks for common dirs
@@ -345,15 +276,13 @@ if __name__ == "__main__":
     for common_content_dir in common_content_dirs:
 
         update_action = "remove"
-        cmd = \
-            cmd_prefix + \
-            "python " + \
-            f'"{os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlinks_for_external_content.py"))}" ' + \
-            f'--external-content-dir "{os.path.realpath(os.path.join(args.external_content_dir, common_content_dir))}" ' + \
-            f'--unreal-project-dir "{unreal_project_dir}" ' + \
-            f'--unreal-project-content-dir "{common_content_dir}" ' + \
-            f"--{update_action}"
-        spear.log("Executing: ", cmd)
-        subprocess.run(cmd, shell=True, check=True) # we need shell=True because we want to run in a specific anaconda env
+        cmd = [
+            "python",
+            os.path.realpath(os.path.join(os.path.dirname(__file__), "update_symlink_for_external_content.py")),
+            "--external-content-dir", os.path.realpath(os.path.join(args.external_content_dir, common_content_dir)),
+            "--unreal-project-dir", unreal_project_dir,
+            "--unreal-project-content-dir", common_content_dir,
+            f"--{update_action}"]
+        spear.tools.run_conda_cmd(conda_env=args.conda_env, cmd=cmd)
 
     spear.log("Done.")

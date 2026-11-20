@@ -11,11 +11,11 @@ In order to execute the pipeline in this document, we will assume that you have 
 In order to execute the pipeline in this document, you will need to install the `pipeline` optional dependencies. When executing the command below, `PIP_BUILD_CONSTRAINT` forces `pip` to build against the versions we specify in `python/pip_build_constraint.txt`, and `--no-cache-dir` forces a fresh build.
 
 ```console
-# install additional pipeline dependencies (Windows Powershell)
+# install additional pipeline dependencies (Windows Developer PowerShell for VS 2022)
 $env:PIP_BUILD_CONSTRAINT="python/pip_build_constraint.txt"; pip install --no-cache-dir -e "python[pipeline]"
 
 # install additional pipeline dependencies (Windows Command Prompt)
-set PIP_BUILD_CONSTRAINT=python/pip_build_constraint.txt && pip install --no-cache-dir -e "python[pipeline]"
+set "PIP_BUILD_CONSTRAINT=python/pip_build_constraint.txt" && pip install --no-cache-dir -e "python[pipeline]"
 
 # install additional pipeline dependencies (macOS and Linux)
 PIP_BUILD_CONSTRAINT=python/pip_build_constraint.txt pip install --no-cache-dir -e "python[pipeline]"
@@ -94,7 +94,7 @@ python pipeline/generate_free_space_paths.py --pipeline-dir path/to/spear-pipeli
 python pipeline/visualize_free_space_paths.py --pipeline-dir path/to/spear-pipeline/scenes/apartment_0000 --visual-parity-with-unreal --ignore-actors Meshes/22_ceiling/Ceiling
 
 # generate camera keyframes that include orientations along each path
-python pipeline/generate_free_space_camera_keyframes.py --pipeline-dir path/to/spear-pipeline/scenes/apartment_0000 --user-config-files path/to/user_config.yaml --view-selection-mode argmax
+python pipeline/generate_free_space_camera_keyframes.py --pipeline-dir path/to/spear-pipeline/scenes/apartment_0000 --config-files path/to/user_config.yaml --view-selection-mode argmax
 
 # visualize the camera keyframes (optional)
 python pipeline/visualize_free_space_camera_keyframes.py --pipeline-dir path/to/spear-pipeline/scenes/apartment_0000 --visual-parity-with-unreal --ignore-actors Meshes/22_ceiling/Ceiling
@@ -106,7 +106,7 @@ python pipeline/generate_free_space_camera_paths.py --pipeline-dir path/to/spear
 python pipeline/visualize_free_space_camera_paths.py --pipeline-dir path/to/spear-pipeline/scenes/apartment_0000 --visual-parity-with-unreal --ignore-actors Meshes/22_ceiling/Ceiling
 
 # generate rendered images along each camera path
-python pipeline/generate_free_space_camera_path_images.py --pipeline-dir path/to/spear-pipeline/scenes/apartment_0000 --user-config-files path/to/user_config.yaml
+python pipeline/generate_free_space_camera_path_images.py --pipeline-dir path/to/spear-pipeline/scenes/apartment_0000 --config-files path/to/user_config.yaml
 
 # generate rendered videos
 python pipeline/generate_free_space_camera_path_videos.py --pipeline-dir path/to/spear-pipeline/scenes/apartment_0000

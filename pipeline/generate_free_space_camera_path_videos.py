@@ -7,7 +7,6 @@ import argparse
 import glob
 import imageio_ffmpeg
 import os
-import subprocess
 import spear
 
 
@@ -15,6 +14,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--pipeline-dir", required=True)
 parser.add_argument("--preview", action="store_true")
 args = parser.parse_args()
+
+assert os.path.exists(args.pipeline_dir)
 
 # Main quality-vs-size setting: the H.264 constant rate factor. Lower means higher quality and larger files, higher
 # means lower quality and smaller files; 23 is libx264's default and ~18 is visually near-lossless.
@@ -64,8 +65,7 @@ def process_scene():
             "-crf", str(video_crf),
             "-pix_fmt", "yuv420p",
             video_file]
-        spear.log("Executing: ", " ".join(cmd))
-        subprocess.run(cmd, check=True)
+        spear.tools.run_cmd(cmd=cmd)
 
     spear.log("Done.")
 

@@ -16,6 +16,8 @@ parser.add_argument("--version-tag", required=True)
 parser.add_argument("--build-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "BUILD")))
 args = parser.parse_args()
 
+assert os.path.exists(args.build_dir)
+
 
 if __name__ == "__main__":
 

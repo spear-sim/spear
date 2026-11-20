@@ -21,6 +21,10 @@ parser.add_argument("--config-files", nargs="*")
 parser.add_argument("--pak-files", nargs="*")
 args = parser.parse_args()
 
+if args.pak_files is not None:
+    for pak_file in args.pak_files:
+        assert os.path.exists(pak_file)
+
 
 if __name__ == "__main__":
 
@@ -37,7 +41,7 @@ if __name__ == "__main__":
             assert False
 
     if args.config_files is not None:
-        user_config_files = [ os.path.realpath(os.path.join(os.path.dirname(__file__), config_file)) for config_file in args.config_files ]
+        user_config_files = [ os.path.realpath(config_file) for config_file in args.config_files ]
     else:
         user_config_files = []
 

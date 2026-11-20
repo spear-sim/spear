@@ -33,6 +33,7 @@ def get_config(user_config_files=None):
         config.merge_from_file(c)
 
     for c in user_config_files:
+        assert os.path.exists(c)
         config.set_new_allowed(True) # required to override an empty dict with a non-empty dict
         config.merge_from_file(c)
 

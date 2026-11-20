@@ -7,7 +7,6 @@ import argparse
 import glob
 import os
 import spear
-import subprocess
 import sys
 
 
@@ -21,6 +20,8 @@ parser.add_argument("--unreal-project-dir", default=os.path.realpath(os.path.joi
 args, unknown_args = parser.parse_known_args() # get unknown args to pass to inner script
 
 assert os.path.exists(args.unreal_engine_dir)
+assert os.path.exists(args.unreal_project_dir)
+assert os.path.exists(args.script)
 
 
 if __name__ == "__main__":
@@ -39,31 +40,35 @@ if __name__ == "__main__":
     assert len(uprojects) == 1
     uproject = uprojects[0]
 
-    unknown_arg_string = ""
-    if len(unknown_args) > 0:
-        unknown_arg_string = " ".join(unknown_args)
 
-    editor_script_args_string = f"{args.script} {unknown_arg_string}".strip()
+    # unknown args are passed to the inner script (see python/spear/utils/tool_utils.py)
+    editor_script_args = [
+        spear.tools.normalize_unreal_cmd_path(path=args.script)] + \
+        unknown_args
+    editor_script_args_string = spear.tools.get_unreal_python_script_args_string(args=editor_script_args)
 
-    map_arg_string = ""
+    map_args = []
     if args.map is not None:
-        map_arg_string = args.map
+        map_args = [args.map]
 
-    render_offscreen_arg_string = ""
+    render_offscreen_args = []
     if args.render_offscreen:
         assert args.launch_mode == "full"
-        render_offscreen_arg_string = "-renderoffscreen"
+        render_offscreen_args = ["-renderoffscreen"]
 
     if args.launch_mode == "commandlet":
-        python_arg_string = "-run=pythonscript -script="
+        python_args = ["-run=pythonscript", f"-script={editor_script_args_string}"]
     elif args.launch_mode == "full":
-        python_arg_string = "-executepythonscript="
+        python_args = [f"-executepythonscript={editor_script_args_string}"]
     else:
         assert False
 
-    # need shell=True to correctly handle the quotes in cmd
-    cmd = f'"{unreal_editor_bin}" "{uproject}" {map_arg_string} {render_offscreen_arg_string} {python_arg_string}"{editor_script_args_string}"'
-    spear.log("Executing: ", cmd)
-    subprocess.run(cmd, shell=True, check=True)
+    cmd = [
+        unreal_editor_bin,
+        spear.tools.normalize_unreal_cmd_path(path=uproject)] + \
+        map_args + \
+        render_offscreen_args + \
+        python_args
+    spear.tools.run_unreal_cmd(cmd=cmd)
 
     spear.log("Done.")

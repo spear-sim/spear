@@ -616,11 +616,9 @@ def _rotate_log_file():
         _log(f"Rotated previous log file to: {_log_file_prev}")
 
 def _log(*args):
-    frame = inspect.currentframe()
-    outer = inspect.getouterframes(frame)
-    assert len(outer) >= 2
-    filename = os.path.basename(outer[1].filename)
-    lineno = f"{outer[1].lineno:04}"
+    caller_frame = inspect.currentframe().f_back
+    filename = os.path.basename(caller_frame.f_code.co_filename)
+    lineno = f"{caller_frame.f_lineno:04}"
     message = f"[spear-mcp | {filename}:{lineno}] " + "".join([str(arg) for arg in args])
     _log_lines.append(message)
     with open(_log_file, "a") as f:

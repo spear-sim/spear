@@ -21,6 +21,8 @@ parser.add_argument("--visual-parity-with-unreal", action="store_true")
 parser.add_argument("--ignore-actors", nargs="*")
 args = parser.parse_args()
 
+assert os.path.exists(args.pipeline_dir)
+
 ignore_actors = []
 if args.ignore_actors is not None:
     ignore_actors = args.ignore_actors

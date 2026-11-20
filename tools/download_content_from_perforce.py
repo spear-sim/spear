@@ -77,17 +77,17 @@ if __name__ == '__main__':
         source_full_path_tokens = pathlib.PurePosixPath(source_full_path).parts
         source_path = posixpath.join(*source_full_path_tokens[3:])
         source_file = source_full_path_tokens[-1]
-        
+
         assert source_full_path_tokens[0] == "//"
         assert source_full_path_tokens[1] == source_depot_name
         assert source_full_path_tokens[2] == source_stream_name
 
         source_base_path_tokens = pathlib.PurePosixPath(source_base_path).parts
-        source_base_dir = os.path.join(*source_base_path_tokens[:-1])
+        source_base_dir = posixpath.join(*source_base_path_tokens[:-1])
         assert source_path.startswith(source_base_dir)
 
         source_rel_path = posixpath.relpath(source_path, source_base_dir)
-        source_rel_dir = os.path.dirname(source_rel_path)
+        source_rel_dir = posixpath.dirname(source_rel_path)
         source_rel_dir_tokens = pathlib.PurePosixPath(source_rel_dir).parts
         destination_path = os.path.join(destination_base_path, *source_rel_dir_tokens, source_file)
         destination_dir = os.path.dirname(destination_path)
@@ -95,11 +95,14 @@ if __name__ == '__main__':
         os.makedirs(destination_dir, exist_ok=True)
 
         print(f"[SPEAR | download_content_from_perforce.py] Downloading {source_full_path} -> {destination_path}")
-        
+
         cmd = ["print", "-o", destination_path, source_full_path]
         print(f'[SPEAR | download_content_from_perforce.py] Executing: {" ".join(cmd)}')
         p4.connect()
         print_results = p4.run(*cmd)
         p4.disconnect()
+
+        for k, v in print_results[0].items():
+            print(f"{k}: {v}")
 
     print("[SPEAR | download_content_from_perforce.py] Done.")

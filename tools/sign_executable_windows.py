@@ -14,16 +14,6 @@ import sys
 
 assert sys.platform == "win32"
 
-cxx_compiler = "cl"
-cxx_compiler_path = shutil.which(cxx_compiler)
-if cxx_compiler_path is None:
-    spear.log("ERROR: Can't find the Visual Studio command-line tools. All SPEAR build steps must run in a terminal where the Visual Studio command-line tools are visible. Giving up...")
-    assert False
-if cxx_compiler_path.lower().endswith("hostx86\\x86\\cl.exe") or cxx_compiler_path.lower().endswith("hostx86\\x64\\cl.exe"):
-    spear.log("ERROR: 32-bit terminal detected. All SPEAR build steps must run in a 64-bit terminal. Giving up...")
-    spear.log("ERROR: Compiler path:", cxx_compiler_path)
-    assert False
-
 parser = argparse.ArgumentParser()
 parser.add_argument("--build-config", required=True)
 parser.add_argument("--code-sign-tool-dir", required=True)
@@ -39,6 +29,8 @@ assert args.build_config in ["Debug", "DebugGame", "Development", "Shipping", "T
 
 
 if __name__ == "__main__":
+
+    spear.tools.validate_build_environment()
 
     input_dir = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-Win64-{args.build_config}-Unsigned"))
     output_dir = os.path.realpath(os.path.join(args.build_dir, f"SpearSim-Win64-{args.build_config}"))
@@ -71,8 +63,7 @@ if __name__ == "__main__":
     os.chdir(args.code_sign_tool_dir)
 
     cmd = ["CodeSignTool.bat", "get_credential_ids", f"-username={args.ssl_username}", f"-password={args.ssl_password}"]
-    spear.log("Executing: ", " ".join(cmd))
-    ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
+    ps = spear.tools.popen_cmd(cmd=cmd, stdout=subprocess.PIPE, text=True)
 
     has_credential_id = None
     crediential_id = None
@@ -82,8 +73,9 @@ if __name__ == "__main__":
             has_credential_id = True
         if "- " in line:
             crediential_id = line.split("- ")[1].strip()
-    ps.wait()
+    return_code = ps.wait()
     ps.stdout.close()
+    assert return_code == 0
     assert has_credential_id
     assert crediential_id is not None
 
@@ -106,30 +98,30 @@ if __name__ == "__main__":
             f"-totp_secret={args.ssl_totp_secret}",
             f"-input_file_path={input_file}",
             f"-output_dir_path={output_dir_internal}"]
-        spear.log("Executing: ", " ".join(cmd))
-        ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
+        ps = spear.tools.popen_cmd(cmd=cmd, stdout=subprocess.PIPE, text=True)
 
         signed = None
         for line in ps.stdout:
             spear.log_no_prefix(line)
             if signed is None and "Code signed successfully: " in line:
                 signed = True
-        ps.wait()
+        return_code = ps.wait()
         ps.stdout.close()
+        assert return_code == 0
         assert signed
 
         # verify
         cmd = ["signtool", "verify", "/a", "/pa", "/all", "/v", f"{output_file}"]
-        spear.log("Executing: ", " ".join(cmd))
-        ps = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)
+        ps = spear.tools.popen_cmd(cmd=cmd, stdout=subprocess.PIPE, text=True)
 
         verified = None
         for line in ps.stdout:
             spear.log_no_prefix(line)
             if verified is None and "Successfully verified: " in line:
                 verified = True
-        ps.wait()
+        return_code = ps.wait()
         ps.stdout.close()
+        assert return_code == 0
         assert verified
 
         spear.log(f"{output_file} has been successfully signed.")

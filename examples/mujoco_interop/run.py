@@ -24,6 +24,8 @@ parser.add_argument("--save-images", action="store_true")
 parser.add_argument("--visual-parity-with-unreal", action="store_true")
 args = parser.parse_args()
 
+assert os.path.exists(args.mjcf_file)
+
 num_ue_steps_per_frame = 10
 num_mj_steps_per_ue_step = 10
 name_prefix = "Meshes/05_chair"

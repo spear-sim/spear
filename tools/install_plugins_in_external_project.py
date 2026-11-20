@@ -16,6 +16,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--external-project-dir", required=True)
 args = parser.parse_args()
 
+assert os.path.exists(args.external_project_dir)
+
 
 if __name__ == "__main__":
 

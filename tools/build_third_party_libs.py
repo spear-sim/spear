@@ -8,7 +8,6 @@ import glob
 import os
 import shutil
 import spear
-import subprocess
 import sys
 
 
@@ -31,6 +30,8 @@ if __name__ == "__main__":
 
     third_party_dir = os.path.realpath(args.third_party_dir)
 
+    spear.tools.validate_build_environment()
+
     #
     # define build variables
     #
@@ -44,12 +45,6 @@ if __name__ == "__main__":
         boost_toolset = "msvc"
         boost_toolset_version = "14.3"
         cxx_compiler = "cl"
-
-        cxx_compiler_path = shutil.which(cxx_compiler)
-        if cxx_compiler_path.lower().endswith("hostx86\\x86\\cl.exe") or cxx_compiler_path.lower().endswith("hostx86\\x64\\cl.exe"):
-            spear.log("ERROR: 32-bit terminal detected. All SPEAR build steps must run in a 64-bit terminal. Giving up...")
-            spear.log("ERROR: Compiler path:", cxx_compiler_path)
-            assert False
 
         # On Windows, we don't include cxx_compiler in our generated user-config.jam file to avoid the
         # following warning:
@@ -130,11 +125,11 @@ if __name__ == "__main__":
         assert False
 
     if args.verbose:
-        boost_verbose_build_flag = "-d+4"
+        boost_verbose_build_flags = ["-d+4"]
         cmake_verbose_makefile = "ON"
 
     else:
-        boost_verbose_build_flag = ""
+        boost_verbose_build_flags = []
         cmake_verbose_makefile = "OFF"
 
     #
@@ -188,46 +183,37 @@ if __name__ == "__main__":
         if sys.platform == "win32":
 
             cmd = ["bootstrap.bat"] # --with-toolset not needed because bootstrap.bat doesn't build boost library code, it only builds the b2 build tool
-            spear.log("Executing: ", " ".join(cmd))
-            subprocess.run(cmd, check=True)
+            spear.tools.run_cmd(cmd=cmd)
 
-            cmd = ["b2", "headers", f"toolset={boost_toolset}", f'--user-config="{user_config_file}"']
-            spear.log("Executing: ", " ".join(cmd))
-            subprocess.run(cmd, check=True)
+            cmd = ["b2", "headers", f"toolset={boost_toolset}", f"--user-config={user_config_file}"]
+            spear.tools.run_cmd(cmd=cmd)
 
-            cmd = f'b2 --with-test toolset={boost_toolset} --user-config="{user_config_file}" link=static cxxflags="{boost_cxx_flags}" {boost_verbose_build_flag}'
-            spear.log("Executing: ", cmd)
-            subprocess.run(cmd, shell=True, check=True) # need shell=True to handle cxxflags
+            cmd = ["b2", "--with-test", f"toolset={boost_toolset}", f"--user-config={user_config_file}", "link=static", f"cxxflags={boost_cxx_flags}"] + boost_verbose_build_flags
+            spear.tools.run_cmd(cmd=cmd)
 
         elif sys.platform == "darwin":
 
             cmd = ["./bootstrap.sh"] # --with-toolset not needed because bootstrap.sh doesn't build boost library code, it only builds the b2 build tool
-            spear.log("Executing: ", " ".join(cmd))
-            subprocess.run(cmd, check=True)
+            spear.tools.run_cmd(cmd=cmd)
 
-            cmd = ["./b2", "headers", f"toolset={boost_toolset}", f'--user-config="{user_config_file}"']
-            spear.log("Executing: ", " ".join(cmd))
-            subprocess.run(cmd, check=True)
+            cmd = ["./b2", "headers", f"toolset={boost_toolset}", f"--user-config={user_config_file}"]
+            spear.tools.run_cmd(cmd=cmd)
 
-            cmd = f'./b2 --with-test toolset={boost_toolset} --user-config="{user_config_file}" link=static architecture=arm+x86 cxxflags="{boost_cxx_flags}" {boost_verbose_build_flag}'
-            spear.log("Executing: ", cmd)
-            subprocess.run(cmd, shell=True, check=True) # need shell=True to handle cxxflags
+            cmd = ["./b2", "--with-test", f"toolset={boost_toolset}", f"--user-config={user_config_file}", "link=static", "architecture=arm+x86", f"cxxflags={boost_cxx_flags}"] + boost_verbose_build_flags
+            spear.tools.run_cmd(cmd=cmd)
 
         elif sys.platform == "linux":
 
             cmd = ["./bootstrap.sh"] # --with-toolset not needed because bootstrap.sh doesn't build boost library code, it only builds the b2 build tool
-            spear.log("Executing: ", " ".join(cmd))
-            subprocess.run(cmd, check=True)
+            spear.tools.run_cmd(cmd=cmd)
 
-            cmd = ["./b2", "headers", f"toolset={boost_toolset}", f'--user-config="{user_config_file}"']
-            spear.log("Executing: ", " ".join(cmd))
-            subprocess.run(cmd, check=True)
+            cmd = ["./b2", "headers", f"toolset={boost_toolset}", f"--user-config={user_config_file}"]
+            spear.tools.run_cmd(cmd=cmd)
 
             # we don't include -fPIC in cxx_flags for consistency with cmake libraries below, where -fPIC is
             # added to the compilation process via the CMAKE_POSITION_INDEPENDENT_CODE variable
-            cmd = f'./b2 -a --with-test toolset={boost_toolset} --user-config="{user_config_file}" link=static cxxflags="{boost_cxx_flags} -fPIC" {boost_verbose_build_flag}'
-            spear.log("Executing: ", cmd)
-            subprocess.run(cmd, shell=True, check=True) # need shell=True to handle cxxflags
+            cmd = ["./b2", "-a", "--with-test", f"toolset={boost_toolset}", f"--user-config={user_config_file}", "link=static", f"cxxflags={boost_cxx_flags} -fPIC"] + boost_verbose_build_flags
+            spear.tools.run_cmd(cmd=cmd)
 
         else:
             assert False
@@ -254,52 +240,48 @@ if __name__ == "__main__":
 
         if sys.platform == "win32":
 
-            cmd = \
-                "cmake " + \
-                f'"-DCMAKE_CXX_COMPILER={cxx_compiler}" ' + \
-                f'"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}" ' + \
-                f'"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}" ' + \
-                os.path.join("..", "..")
+            cmd = [
+                "cmake",
+                f"-DCMAKE_CXX_COMPILER={cxx_compiler}",
+                f"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}",
+                f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
+                os.path.join("..", "..")]
 
-            spear.log("Executing: ", cmd)
-            subprocess.run(cmd, shell=True, check=True) # need shell=True to handle cxxflags
+            spear.tools.run_cmd(cmd=cmd)
 
             cmd = ["cmake", "--build", ".", "--config", "Release"]
 
         elif sys.platform == "darwin":
 
-            cmd = \
-                "cmake " + \
-                f'"-DCMAKE_CXX_COMPILER={cxx_compiler}" ' + \
-                '"-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" ' + \
-                f'"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}" ' + \
-                f'"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}" ' + \
-                os.path.join("..", "..")
+            cmd = [
+                "cmake",
+                f"-DCMAKE_CXX_COMPILER={cxx_compiler}",
+                "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64",
+                f"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}",
+                f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
+                os.path.join("..", "..")]
 
-            spear.log("Executing: ", cmd)
-            subprocess.run(cmd, shell=True, check=True) # need shell=True to handle cxxflags
+            spear.tools.run_cmd(cmd=cmd)
 
             cmd = ["cmake", "--build", ".", "--config", "Release"]
 
         elif sys.platform == "linux":
-            cmd = \
-                "cmake " + \
-                f'"-DCMAKE_CXX_COMPILER={cxx_compiler}" ' + \
-                '"-DCMAKE_POSITION_INDEPENDENT_CODE=ON" ' + \
-                f'"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}" ' + \
-                f'"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}" ' + \
-                os.path.join("..", "..")
+            cmd = [
+                "cmake",
+                f"-DCMAKE_CXX_COMPILER={cxx_compiler}",
+                "-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
+                f"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}",
+                f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
+                os.path.join("..", "..")]
 
-            spear.log("Executing: ", cmd)
-            subprocess.run(cmd, shell=True, check=True) # need shell=True to handle cxxflags
+            spear.tools.run_cmd(cmd=cmd)
 
             cmd = ["cmake", "--build", ".", "--config", "Release"]
 
         else:
             assert False
 
-        spear.log("Executing: ", " ".join(cmd))
-        subprocess.run(cmd, check=True)
+        spear.tools.run_cmd(cmd=cmd)
 
         spear.log("Successfully built rpclib.")
 
@@ -322,63 +304,59 @@ if __name__ == "__main__":
 
         if sys.platform == "win32":
 
-            cmd = \
-                "cmake " + \
-                f'"-DCMAKE_CXX_COMPILER={cxx_compiler}" ' + \
-                f'"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}" ' + \
-                f'"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}" ' + \
-                '"-DYAML_CPP_BUILD_TESTS=OFF" ' + \
-                '"-DYAML_CPP_BUILD_TOOLS=OFF" ' + \
-                '"-DCMAKE_POLICY_VERSION_MINIMUM=3.5" ' + \
-                os.path.join("..", "..")
+            cmd = [
+                "cmake",
+                f"-DCMAKE_CXX_COMPILER={cxx_compiler}",
+                f"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}",
+                f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
+                "-DYAML_CPP_BUILD_TESTS=OFF",
+                "-DYAML_CPP_BUILD_TOOLS=OFF",
+                "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
+                os.path.join("..", "..")]
 
-            spear.log("Executing: ", cmd)
-            subprocess.run(cmd, shell=True, check=True) # need shell=True to handle cxxflags
+            spear.tools.run_cmd(cmd=cmd)
 
             cmd = ["cmake", "--build", ".", "--config", "Release"]
 
         elif sys.platform == "darwin":
 
-            cmd = \
-                "cmake " + \
-                f'"-DCMAKE_CXX_COMPILER={cxx_compiler}" ' + \
-                '"-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" ' + \
-                f'"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}" ' + \
-                f'"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}" ' + \
-                '"-DYAML_CPP_BUILD_TESTS=OFF" ' + \
-                '"-DYAML_CPP_BUILD_TOOLS=OFF" ' + \
-                '"-DCMAKE_POLICY_VERSION_MINIMUM=3.5" ' + \
-                os.path.join("..", "..")
+            cmd = [
+                "cmake",
+                f"-DCMAKE_CXX_COMPILER={cxx_compiler}",
+                "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64",
+                f"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}",
+                f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
+                "-DYAML_CPP_BUILD_TESTS=OFF",
+                "-DYAML_CPP_BUILD_TOOLS=OFF",
+                "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
+                os.path.join("..", "..")]
 
-            spear.log("Executing: ", cmd)
-            subprocess.run(cmd, shell=True, check=True) # need shell=True to handle cxxflags
+            spear.tools.run_cmd(cmd=cmd)
 
             cmd = ["cmake", "--build", ".", "--config", "Release"]
 
         elif sys.platform == "linux":
 
             # -lpthread needed on some Linux environments
-            cmd = \
-                "cmake " + \
-                f'"-DCMAKE_CXX_COMPILER={cxx_compiler}" ' + \
-                f'"-DCMAKE_POSITION_INDEPENDENT_CODE=ON" ' + \
-                f'"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}" ' + \
-                f'"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}" ' + \
-                '"-DYAML_CPP_BUILD_TESTS=OFF" ' + \
-                '"-DYAML_CPP_BUILD_TOOLS=OFF" ' + \
-                '"-DCMAKE_POLICY_VERSION_MINIMUM=3.5" ' + \
-                os.path.join("..", "..")
+            cmd = [
+                "cmake",
+                f"-DCMAKE_CXX_COMPILER={cxx_compiler}",
+                f"-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
+                f"-DCMAKE_CXX_FLAGS={cmake_cxx_flags}",
+                f"-DCMAKE_VERBOSE_MAKEFILE={cmake_verbose_makefile}",
+                "-DYAML_CPP_BUILD_TESTS=OFF",
+                "-DYAML_CPP_BUILD_TOOLS=OFF",
+                "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
+                os.path.join("..", "..")]
 
-            spear.log("Executing: ", cmd)
-            subprocess.run(cmd, shell=True, check=True) # need shell=True to handle cxxflags
+            spear.tools.run_cmd(cmd=cmd)
 
             cmd = ["cmake", "--build", ".", "--config", "Release"]
 
         else:
             assert False
 
-        spear.log("Executing: ", " ".join(cmd))
-        subprocess.run(cmd, check=True)
+        spear.tools.run_cmd(cmd=cmd)
 
         spear.log("Successfully built yaml-cpp.")
 

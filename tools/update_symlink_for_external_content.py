@@ -20,6 +20,7 @@ parser.add_argument("--unreal-project-dir", default=os.path.realpath(os.path.joi
 args = parser.parse_args()
 
 assert args.create + args.remove == 1
+assert os.path.exists(args.unreal_project_dir)
 
 
 if __name__ == "__main__":
@@ -51,8 +52,8 @@ if __name__ == "__main__":
         spear.log(f"Creating symlink: {unreal_project_content_dir} -> {external_content_dir}")
         os.symlink(external_content_dir, unreal_project_content_dir)
 
-    # If --remove is passed in, then after removing the symlink, we attempt to the remove all of the
-    # directories we created when --create was passed in. The heuristic we use here is imperfect, becasue we
+    # If --remove is passed in, then after removing the symlink, we attempt to remove all of the
+    # directories we created when --create was passed in. The heuristic we use here is imperfect, because we
     # don't know exactly which directories were created by --create. As a result, we might remove more
     # directories than were created by --create, but we only ever remove empty directories, so we don't think
     # it is especially harmful if this happens occasionally. In other words, we think our heuristic is worth
@@ -72,7 +73,7 @@ if __name__ == "__main__":
                 spear.log("Removing empty directory: ", current_dir)
                 os.rmdir(current_dir)
 
-        external_content_dir_parts = list(pathlib.Path(unreal_project_content_root_dir).parts)
+        external_content_dir_parts = list(pathlib.Path(external_content_dir).parts)
         while len(external_content_dir_parts) != 0:
             current_part = external_content_dir_parts.pop()
             current_dir = pathlib.Path(*external_content_dir_parts, current_part)

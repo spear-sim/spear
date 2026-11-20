@@ -13,7 +13,7 @@ import spear
 parser = argparse.ArgumentParser()
 parser.add_argument("--unreal-engine-dir", required=True)
 parser.add_argument("--build-target")
-parser.add_argument("--unreal-project-dir")
+parser.add_argument("--unreal-project-dir", default=os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim")))
 parser.add_argument("--clean-archive-dir", action="store_true")
 parser.add_argument("--skip-cook-default-maps", action="store_true")
 parser.add_argument("--cook-dirs", nargs="*")
@@ -22,6 +22,7 @@ parser.add_argument("--build-config", default="Development")
 args, unknown_args = parser.parse_known_args() # get unknown args to pass to RunUAT
 
 assert os.path.exists(args.unreal_engine_dir)
+assert os.path.exists(args.unreal_project_dir)
 assert args.build_config in ["Debug", "DebugGame", "Development", "Shipping", "Test"]
 
 
@@ -31,10 +32,8 @@ if __name__ == "__main__":
 
     target_platform = spear.tools.get_target_platform()
 
-    if args.unreal_project_dir is None:
-        unreal_project_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim"))
-    else:
-        unreal_project_dir = os.path.realpath(args.unreal_project_dir)
+    unreal_project_dir = os.path.realpath(args.unreal_project_dir)
+    spear_sim_unreal_project_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "SpearSim"))
 
     uprojects = glob.glob(os.path.realpath(os.path.join(unreal_project_dir, "*.uproject")))
     assert len(uprojects) == 1
@@ -53,11 +52,11 @@ if __name__ == "__main__":
 
     # assemble dirs to cook
     cook_dirs = args.cook_dirs if args.cook_dirs is not None else []
-    cook_dir_args = [ f"-cookdir={os.path.join(unreal_project_dir, cook_dir)}" for cook_dir in cook_dirs ]
+    cook_dir_args = [ f"-cookdir={spear.tools.normalize_unreal_cmd_path(path=os.path.join(unreal_project_dir, cook_dir))}" for cook_dir in cook_dirs ]
 
     # assemble maps to cook; only cook default maps if we're building the default SpearSim project and the caller hasn't opted out
     cook_maps = []
-    if args.unreal_project_dir is None and not args.skip_cook_default_maps:
+    if unreal_project_dir == spear_sim_unreal_project_dir and not args.skip_cook_default_maps:
         cook_maps.extend(spear.tools.get_default_maps_to_cook())
     if args.cook_maps is not None:
         cook_maps.extend(args.cook_maps)
@@ -68,11 +67,11 @@ if __name__ == "__main__":
     # build project
     run_uat_args = [
         "BuildCookRun",
-        f"-project={uproject}",
+        f"-project={spear.tools.normalize_unreal_cmd_path(path=uproject)}",
         f"-target={build_target}",
         f"-targetplatform={target_platform}",
         f"-clientconfig={args.build_config}",
-        f"-archivedirectory={archive_dir}"] + \
+        f"-archivedirectory={spear.tools.normalize_unreal_cmd_path(path=archive_dir)}"] + \
         unknown_args + \
         cook_args
 

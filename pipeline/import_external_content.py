@@ -9,7 +9,6 @@ import os
 import pathlib
 import shutil
 import spear
-import subprocess
 import sys
 
 
@@ -23,6 +22,8 @@ parser.add_argument("--temp-dir", default=os.path.realpath(os.path.join(os.path.
 args = parser.parse_args()
 
 assert os.path.exists(args.unreal_engine_dir)
+assert os.path.exists(args.source_unreal_project_dir)
+assert os.path.exists(args.destination_unreal_project_dir)
 
 #
 # Our strategy for importing external content from a source project into a destination project,
@@ -149,12 +150,19 @@ if __name__ == "__main__":
     # isn't any more convenient than calling the editor directly.
 
     script = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "editor", "editor_asset_library_utils_rename_content.py"))
-    script_args = f'--source_content_path "{args.source_content_path}" --destination_content_path "{args.destination_content_path}"'
 
-    # need shell=True to correctly handle the quotes in cmd
-    cmd = f'"{unreal_editor_bin}" "{temp_uproject}" -run=pythonscript -script="{script} {script_args}"'
-    spear.log("Executing: ", cmd)
-    subprocess.run(cmd, shell=True, check=True)
+    script_args = [
+        spear.tools.normalize_unreal_cmd_path(path=script),
+        "--source_content_path", args.source_content_path,
+        "--destination_content_path", args.destination_content_path]
+    script_args_string = spear.tools.get_unreal_python_script_args_string(args=script_args)
+
+    cmd = [
+        unreal_editor_bin,
+        spear.tools.normalize_unreal_cmd_path(path=temp_uproject),
+        "-run=pythonscript",
+        f"-script={script_args_string}"]
+    spear.tools.run_unreal_cmd(cmd=cmd)
 
     assert not os.path.exists(temp_unreal_project_source_content_filesystem_path)
     assert os.path.exists(temp_unreal_project_destination_content_filesystem_path)
