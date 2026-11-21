@@ -3,6 +3,7 @@
 # Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
+import _thread
 import argparse
 import cvxpy as cp
 import fastpathplanning as fpp
@@ -13,7 +14,6 @@ import numpy as np
 import os
 import scipy.sparse.csgraph
 import scipy.special
-import signal
 import spear
 import threading
 import time
@@ -58,8 +58,9 @@ solver_time_limit = 30.0
 
 # Wall-clock time limit (in seconds) for planning a single path, covering its polygonal phase as well as its smooth
 # solve. fastpathplanning's polygonal phase (iterative_planner) occasionally fails to converge quickly for a given
-# geometry, looping while it re-solves and grows a continuous min-distance program; this limit (enforced with
-# SIGALRM, which can interrupt that Python-level loop) abandons such a waypoint sequence and moves on.
+# geometry, looping while it re-solves and grows a continuous min-distance program; this limit (enforced by a timer
+# thread that interrupts the main thread, which can interrupt that Python-level loop) abandons such a waypoint
+# sequence and moves on.
 planning_time_limit = 60
 
 # Interval (in seconds) at which a background thread prints which planning step is currently running, so a slow step
@@ -76,8 +77,8 @@ def process_scene():
     # network (the phase-1 covering boxes plus the phase-2 overlapping boxes) computed by
     # generate_free_space_bounding_boxes.py.
     free_space_bounding_boxes_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_bounding_boxes", "free_space_bounding_boxes.h5"))
-    assert os.path.exists(free_space_bounding_boxes_file)
     spear.log("Reading free-space bounding boxes file: ", free_space_bounding_boxes_file)
+    assert os.path.exists(free_space_bounding_boxes_file)
     with h5py.File(free_space_bounding_boxes_file, "r") as f:
         box_mins = f["box_mins"][:]
         box_maxs = f["box_maxs"][:]
@@ -145,10 +146,10 @@ def process_scene():
     # Plan num_paths paths, taking candidate waypoint sequences in order of decreasing complexity. Two things can go
     # wrong on an individual candidate: the smooth-phase solver can fail numerically (raising an exception), and
     # fastpathplanning's polygonal phase can fail to converge quickly for some geometry and run for a very long time.
-    # We bound each candidate with a wall-clock timeout (SIGALRM, which interrupts the polygonal phase's Python-level
-    # loop) and skip any candidate that times out or raises, moving on to the next one. A background thread prints
-    # which planning step is in progress every heartbeat_seconds so a slow step is visible rather than looking hung.
-    signal.signal(signal.SIGALRM, raise_planning_timeout)
+    # We bound each candidate with a wall-clock timeout (a timer thread that interrupts the main thread, which
+    # interrupts the polygonal phase's Python-level loop) and skip any candidate that times out or raises, moving on
+    # to the next one. A background thread prints which planning step is in progress every
+    # heartbeat_seconds so a slow step is visible rather than looking hung.
     heartbeat_stop = threading.Event()
     heartbeat_thread = threading.Thread(target=print_planning_heartbeats, kwargs={"stop_event": heartbeat_stop}, daemon=True)
     heartbeat_thread.start()
@@ -164,14 +165,29 @@ def process_scene():
             connectivity, distance, waypoints = candidate_paths[candidate_index]
             candidate_index += 1
             spear.log(f"Planning path {len(path_points)} through {num_waypoints} waypoints (total box hops {int(connectivity)}, total distance {distance:.1f}).")
-            signal.alarm(planning_time_limit)
+
+            # If planning exceeds planning_time_limit, the timer thread sets planning_timed_out and raises a
+            # KeyboardInterrupt in the main thread, which we distinguish from the user pressing Ctrl-C by checking
+            # planning_timed_out. The timer can fire after planning finishes but before we cancel it, so we wait for
+            # the timer thread to exit inside the inner finally block, so that the KeyboardInterrupt is raised inside
+            # the outer try block.
+            planning_timed_out = threading.Event()
+            planning_timer = threading.Timer(interval=planning_time_limit, function=interrupt_planning, kwargs={"planning_timed_out": planning_timed_out})
+            planning_timer.start()
             try:
-                path, waypoint_times = plan_through_waypoints(safe_set=safe_set, waypoints=waypoints, cost_weights=path_cost_weights)
+                try:
+                    path, waypoint_times = plan_through_waypoints(safe_set=safe_set, waypoints=waypoints, cost_weights=path_cost_weights)
+                finally:
+                    planning_timer.cancel()
+                    planning_timer.join()
+            except KeyboardInterrupt:
+                if not planning_timed_out.is_set():
+                    raise
+                spear.log(f"Planning exceeded planning_time_limit ({planning_time_limit}s) for this waypoint sequence, so skipping it.")
+                continue
             except Exception as e:
                 spear.log(f"Planning failed for this waypoint sequence ({type(e).__name__}: {e}), so skipping it.")
                 continue
-            finally:
-                signal.alarm(0)
             sample_times = np.linspace(path.a, path.b, num_path_samples)
             path_points.append(np.array([ path(sample_time) for sample_time in sample_times ]))
             path_point_times.append((sample_times - path.a)/(path.b - path.a))
@@ -219,10 +235,14 @@ def print_planning_heartbeats(stop_event):
         if description is not None:
             spear.log(f"    ...still running: {description} ({time.time() - planning_step['start_time']:.0f}s elapsed)")
 
-def raise_planning_timeout(signum, frame):
+def interrupt_planning(planning_timed_out):
 
-    # SIGALRM handler that aborts a path that has exceeded planning_time_limit (see process_scene).
-    raise TimeoutError(f"planning exceeded planning_time_limit ({planning_time_limit}s)")
+    # Timer callback that aborts a path that has exceeded planning_time_limit (see process_scene). We use
+    # _thread.interrupt_main rather than SIGALRM because SIGALRM is not available on Windows. interrupt_main raises a
+    # KeyboardInterrupt in the main thread the next time it executes Python bytecode, so we set planning_timed_out
+    # first to distinguish it from the user pressing Ctrl-C.
+    planning_timed_out.set()
+    _thread.interrupt_main()
 
 def sample_reachable_waypoints(L, U, box_component, box_volumes, component_volumes):
 

@@ -140,7 +140,7 @@ with instance.end_frame():
 
 - Our [Getting Started](docs/getting_started.md) tutorial explains how to set up your development environment.
 - Our [Running our Example Applications](docs/running_our_example_applications.md) tutorial explains how to run our example applications.
-- Our [Importing and Exporting Assets](docs/importing_and_exporting_assets.md) tutorial explains how to import and export assets.
+- Our [Designing Flexible Asset Pipelines](docs/designing_flexible_asset_pipelines.md) tutorial explains how to work with exported Unreal assets.
 - Our [Controlling with Natural Language](docs/controlling_with_natural_language.md) tutorial explains how to control Unreal apps with natural language.
 
 ## Citation

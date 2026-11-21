@@ -5,10 +5,10 @@
 
 import argparse
 import h5py
-import json
 import numpy as np
 import os
 import spear
+import unreal_geometry_utils
 
 
 parser = argparse.ArgumentParser()
@@ -16,9 +16,6 @@ parser.add_argument("--pipeline-dir", required=True)
 args = parser.parse_args()
 
 assert os.path.exists(args.pipeline_dir)
-
-# Component classes that export the local-space bounds we use to build oriented bounding boxes.
-static_mesh_component_classes = ["StaticMeshComponent"]
 
 # Tolerance in Unreal world units (cm). visibility_tolerance prevents the bounding boxes containing a segment's
 # own endpoints from counting as occluders.
@@ -31,15 +28,15 @@ expand_bounding_box_eps = 20.0
 
 def process_scene():
 
-    bounding_boxes = get_component_bounding_boxes_for_scene()
+    bounding_boxes = unreal_geometry_utils.get_component_bounding_boxes_for_scene(pipeline_dir=args.pipeline_dir, expand_bounding_box_eps=expand_bounding_box_eps)
     assert len(bounding_boxes) > 0
 
     # Read the free-space points sampled by generate_free_space_points.py.
     free_space_points_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_points", "free_space_points.h5"))
-    assert os.path.exists(free_space_points_file)
     spear.log("Reading free-space points file: ", free_space_points_file)
+    assert os.path.exists(free_space_points_file)
     with h5py.File(free_space_points_file, "r") as f:
-        free_space_points = f["scene_points"][:]
+        free_space_points = f["free_space_points"][:]
 
     edges = compute_visibility_graph(free_space_points=free_space_points, bounding_boxes=bounding_boxes)
     spear.log(f"Generated {edges.shape[0]} mutual-visibility edges between {free_space_points.shape[0]} free-space points.")
@@ -54,45 +51,6 @@ def process_scene():
         f.create_dataset("visibility_graph_edges", data=edges)
 
     spear.log("Done.")
-
-def get_component_bounding_boxes_for_scene():
-
-    unreal_metadata_dir = os.path.realpath(os.path.join(args.pipeline_dir, "unreal_metadata"))
-    actors_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "scene.json"))
-    spear.log("Reading JSON file: ", actors_json_file)
-    assert os.path.exists(unreal_metadata_dir)
-    with open(actors_json_file, "r") as f:
-        actors_json = json.load(f)
-
-    # We only export geometry for actors for which relevant_for_level_bounds is True, so we apply the same
-    # filter here, and ignore actors with no root component.
-    bounding_boxes = []
-    for actor_name, actor_desc in actors_json.items():
-        if actor_desc["root_component"] is None or not actor_desc["editor_properties"]["relevant_for_level_bounds"]:
-            continue
-        spear.log("Processing actor: ", actor_name)
-        bounding_boxes.extend(get_component_bounding_boxes(component_desc=actor_desc["root_component"], log_prefix_str="    "))
-
-    return bounding_boxes
-
-def get_component_bounding_boxes(component_desc, log_prefix_str):
-
-    spear.log(f"{log_prefix_str}Processing component: {component_desc['stable_name']}")
-
-    # We only build a bounding box for StaticMeshComponents that have a static mesh assigned.
-    bounding_boxes = []
-    if component_desc["class"] in static_mesh_component_classes and component_desc["editor_properties"]["static_mesh"] is not None:
-        bounding_box = spear.pipeline.get_bounding_box(component_desc=component_desc)
-        bounding_box = spear.pipeline.expand_bounding_box(bounding_box=bounding_box, eps=expand_bounding_box_eps)
-        bounding_boxes.append(bounding_box)
-
-    # Recurse for each child component.
-    if component_desc["children_components"] is not None:
-        for child_component_desc in component_desc["children_components"].values():
-            child_bounding_boxes = get_component_bounding_boxes(component_desc=child_component_desc, log_prefix_str=f"{log_prefix_str}    ")
-            bounding_boxes.extend(child_bounding_boxes)
-
-    return bounding_boxes
 
 def compute_visibility_graph(free_space_points, bounding_boxes):
 

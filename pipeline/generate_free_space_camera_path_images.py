@@ -6,7 +6,6 @@
 import argparse
 import cv2
 import h5py
-import numpy as np
 import os
 import spear
 import time
@@ -55,14 +54,14 @@ def process_scene():
     # Read the camera paths computed by generate_free_space_camera_paths.py: a camera position and a camera-to-world
     # rotation matrix at each of a dense set of samples along each path.
     free_space_camera_paths_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_camera_paths", "free_space_camera_paths.h5"))
-    assert os.path.exists(free_space_camera_paths_file)
     spear.log("Reading free-space camera paths file: ", free_space_camera_paths_file)
+    assert os.path.exists(free_space_camera_paths_file)
     with h5py.File(free_space_camera_paths_file, "r") as f:
         camera_path_positions = f["camera_path_positions"][:]
         camera_path_orientations = f["camera_path_orientations"][:]
 
     # Launch SPEAR and get the game-scoped services. The user-provided config files specify how to launch the game
-    # offscreen and which scene to open (the scene must be the one this export directory was generated from).
+    # offscreen and which scene to open (the scene must be the one this pipeline directory was generated from).
     config = spear.get_config(user_config_files=[ os.path.realpath(config_file) for config_file in args.config_files ])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
@@ -83,7 +82,8 @@ def process_scene():
     with instance.end_frame():
         pass
 
-    # Wait for the engine to finish loading, and step a couple of frames to let the render targets initialize, before rendering.
+    # Wait for the engine to finish loading, and step a couple of frames to let the render targets initialize, before
+    # rendering.
     game.async_loading_service.wait_for_engine_idle()
     instance.step(num_frames=2)
 

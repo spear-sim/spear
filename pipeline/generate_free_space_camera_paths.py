@@ -32,10 +32,10 @@ def process_scene():
     # path) computed by generate_free_space_paths.py and generate_free_space_camera_keyframes.py.
     free_space_paths_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_paths", "free_space_paths.h5"))
     free_space_camera_keyframes_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_camera_keyframes", "free_space_camera_keyframes.h5"))
-    assert os.path.exists(free_space_paths_file)
-    assert os.path.exists(free_space_camera_keyframes_file)
     spear.log("Reading free-space paths file: ", free_space_paths_file)
+    assert os.path.exists(free_space_paths_file)
     spear.log("Reading free-space camera keyframes file: ", free_space_camera_keyframes_file)
+    assert os.path.exists(free_space_camera_keyframes_file)
     with h5py.File(free_space_paths_file, "r") as f:
         path_points = f["path_points"][:]
         path_point_times = f["path_point_times"][:]

@@ -5,10 +5,10 @@
 
 import argparse
 import h5py
-import json
 import numpy as np
 import os
 import spear
+import unreal_geometry_utils
 
 
 parser = argparse.ArgumentParser()
@@ -19,9 +19,6 @@ assert os.path.exists(args.pipeline_dir)
 
 np.random.seed(0)
 
-# Component classes that export the local-space bounds we use to build oriented bounding boxes.
-static_mesh_component_classes = ["StaticMeshComponent"]
-
 # Distance in Unreal world units (cm) by which every obstacle is expanded so the camera frustum's near face is
 # guaranteed to lie in free space. See generate_free_space_points.py for the derivation.
 expand_bounding_box_eps = 20.0
@@ -30,8 +27,9 @@ expand_bounding_box_eps = 20.0
 # from a free-space point until it collides with a component bounding box.
 num_candidate_bounding_boxes = 500
 
-# Cross-product separating axes shorter than this (in world units) arise from near-parallel box edges and are
-# skipped when computing how far a candidate free-space bounding box's face can advance before contact.
+# Cross-product separating axes shorter than this arise from near-parallel box edges and are skipped when computing
+# how far a candidate free-space bounding box's face can advance before contact. The cross product of two unit-length
+# edge directions has length equal to the sine of the angle between them, so this tolerance is unitless.
 cross_axis_tolerance = 0.000001
 
 # Each round of growth advances one face by at most this fraction of the box's current extent along that face's
@@ -73,19 +71,19 @@ overlapping_quota_fraction = 0.95
 
 def process_scene():
 
-    bounding_boxes = get_component_bounding_boxes_for_scene()
+    bounding_boxes = unreal_geometry_utils.get_component_bounding_boxes_for_scene(pipeline_dir=args.pipeline_dir, expand_bounding_box_eps=expand_bounding_box_eps)
     assert len(bounding_boxes) > 0
 
     # Read the free-space points and the mutual-visibility graph computed by generate_free_space_points.py and
     # generate_free_space_visibility_graph.py.
     free_space_points_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_points", "free_space_points.h5"))
     visibility_graph_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_visibility_graph", "free_space_visibility_graph.h5"))
-    assert os.path.exists(free_space_points_file)
-    assert os.path.exists(visibility_graph_file)
     spear.log("Reading free-space points file: ", free_space_points_file)
+    assert os.path.exists(free_space_points_file)
     spear.log("Reading visibility graph file: ", visibility_graph_file)
+    assert os.path.exists(visibility_graph_file)
     with h5py.File(free_space_points_file, "r") as f:
-        free_space_points = f["scene_points"][:]
+        free_space_points = f["free_space_points"][:]
     with h5py.File(visibility_graph_file, "r") as f:
         edges = f["visibility_graph_edges"][:]
 
@@ -126,46 +124,6 @@ def process_scene():
         f.create_dataset("box_overlapping_indices", data=overlapping_indices)
 
     spear.log("Done.")
-
-def get_component_bounding_boxes_for_scene():
-
-    unreal_metadata_dir = os.path.realpath(os.path.join(args.pipeline_dir, "unreal_metadata"))
-    actors_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "scene.json"))
-    spear.log("Reading JSON file: ", actors_json_file)
-    assert os.path.exists(unreal_metadata_dir)
-    with open(actors_json_file, "r") as f:
-        actors_json = json.load(f)
-
-    # We only export geometry for actors for which relevant_for_level_bounds is True, so we apply the same
-    # filter here, and ignore actors with no root component.
-    bounding_boxes = []
-    for actor_name, actor_desc in actors_json.items():
-        if actor_desc["root_component"] is None or not actor_desc["editor_properties"]["relevant_for_level_bounds"]:
-            continue
-        spear.log("Processing actor: ", actor_name)
-        actor_bounding_boxes = get_component_bounding_boxes(component_desc=actor_desc["root_component"], log_prefix_str="    ")
-        bounding_boxes.extend(actor_bounding_boxes)
-
-    return bounding_boxes
-
-def get_component_bounding_boxes(component_desc, log_prefix_str):
-
-    spear.log(f"{log_prefix_str}Processing component: {component_desc['stable_name']}")
-
-    # We only build a bounding box for StaticMeshComponents that have a static mesh assigned.
-    bounding_boxes = []
-    if component_desc["class"] in static_mesh_component_classes and component_desc["editor_properties"]["static_mesh"] is not None:
-        bounding_box = spear.pipeline.get_bounding_box(component_desc=component_desc)
-        bounding_box = spear.pipeline.expand_bounding_box(bounding_box=bounding_box, eps=expand_bounding_box_eps)
-        bounding_boxes.append(bounding_box)
-
-    # Recurse for each child component.
-    if component_desc["children_components"] is not None:
-        for child_component_desc in component_desc["children_components"].values():
-            child_bounding_boxes = get_component_bounding_boxes(component_desc=child_component_desc, log_prefix_str=f"{log_prefix_str}    ")
-            bounding_boxes.extend(child_bounding_boxes)
-
-    return bounding_boxes
 
 def compute_free_space_bounding_boxes(free_space_points, edges, bounding_boxes, scene_min, scene_max):
 
@@ -212,9 +170,9 @@ def find_maximal_clique(adjacency, start_node):
 
 def grow_axis_aligned_bounding_box(center, scene_min, scene_max, bounding_boxes):
 
-    # Stack the component bounding boxes' precomputed world-space centers, axes, and half-extents once here (they
-    # are all already computed in get_bounding_box), so the face-advance computations in the growth loop below can
-    # reuse them without restacking on every call.
+    # Stack the component bounding boxes' precomputed world-space centers, axes, and half-extents once here (they are
+    # all already computed in unreal_geometry_utils.get_bounding_box), so the face-advance computations in the growth
+    # loop below can reuse them without restacking on every call.
     obb_centers = np.array([ bounding_box["center_world"] for bounding_box in bounding_boxes ])
     obb_axes = np.array([ bounding_box["axes_world"] for bounding_box in bounding_boxes ])
     obb_half_extents = np.array([ bounding_box["half_extent"] for bounding_box in bounding_boxes ])

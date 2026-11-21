@@ -54,8 +54,8 @@ def process_scene():
 
     kinematic_trees_dir = os.path.realpath(os.path.join(args.pipeline_dir, "kinematic_trees"))
     actors_json_file = os.path.realpath(os.path.join(kinematic_trees_dir, "scene.json"))
-    assert os.path.exists(kinematic_trees_dir)
     spear.log("Reading JSON file: ", actors_json_file)
+    assert os.path.exists(actors_json_file)
     with open(actors_json_file, "r") as f:
         actors_json = json.load(f)
 
@@ -95,7 +95,7 @@ def draw_kinematic_tree(kinematic_tree, color):
 
 def draw_kinematic_tree_node(transform_world_from_parent_node, kinematic_tree_node, color, log_prefix_str):
 
-    spear.log(log_prefix_str, "Processing kinematic tree node: ", kinematic_tree_node["name"])
+    spear.log(f"{log_prefix_str}Processing kinematic tree node: {kinematic_tree_node['name']}")
 
     transform_parent_node_from_current_node = kinematic_tree_node["transform_parent_node_from_current_node"]
     transform_world_from_current_node = spear.math.compose_transforms(
@@ -117,7 +117,7 @@ def draw_kinematic_tree_node(transform_world_from_parent_node, kinematic_tree_no
 
         obj_path_suffix = f"{os.path.join(*static_mesh_asset_path.parts[1:])}.obj"
         numerical_parity_obj_path = os.path.realpath(os.path.join(args.pipeline_dir, "unreal_geometry", "numerical_parity", obj_path_suffix))
-        spear.log(log_prefix_str, "Reading OBJ file: ", numerical_parity_obj_path)
+        spear.log(f"{log_prefix_str}Reading OBJ file: {numerical_parity_obj_path}")
 
         mesh = trimesh.load_mesh(numerical_parity_obj_path, process=False, validate=False)
         V_current_component = np.matrix(np.c_[mesh.vertices, np.ones(mesh.vertices.shape[0])]).T

@@ -8,7 +8,6 @@ import colorsys
 import json
 import numpy as np
 import os
-import pathlib
 import posixpath
 import spear
 import xml.dom.minidom
@@ -61,7 +60,7 @@ def process_scene():
     collision_geometry_dir = os.path.realpath(os.path.join(args.pipeline_dir, "collision_geometry"))
     actors_json_file = os.path.realpath(os.path.join(collision_geometry_dir, "scene.json"))
     spear.log("Reading JSON file: ", actors_json_file)
-    assert os.path.exists(collision_geometry_dir)
+    assert os.path.exists(actors_json_file)
     with open(actors_json_file, "r") as f:
         actors_json = json.load(f)
 
@@ -122,7 +121,7 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
 # projected through each tree's various reference frames. But, as we will see here, the projected vertices
 # can be made to match at a particular reference frame. In this derivation, we choose the world frame as our
 # target reference frame.
-# 
+#
 # Let v be a mesh vertex in object space, and let u_w be its corresponding location in world space, as
 # computed by Unreal. Given a hierarchy of transforms that map to world space from object space, Unreal
 # computes u_w as follows.
@@ -175,7 +174,7 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
 #
 # Let m_w be the world-space position of v, as computed by MuJoCo. If we expand equation (5) for a tree of
 # depth 3, we get the following expression for m_w.
-# 
+#
 #     m_w = R_w3*R_32*R_21 * S              * v    +
 #           R_w3*R_32                       * t_21 +
 #           R_w3                            * t_32 +
@@ -197,7 +196,7 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
 # t_pc that apply for all tree depths.
 #
 #        S := transform_world_from_current_node["scale"]
-#     t_pc := transform_world_from_parent_node["scale"]*transform_parent_node_from_current_node["location"] 
+#     t_pc := transform_world_from_parent_node["scale"]*transform_parent_node_from_current_node["location"]
 #
 # We store these variables in the "pos" and "scale" attributes below.
 #
@@ -206,7 +205,7 @@ def add_mujoco_elements_for_kinematic_tree_node(
     actor_name, kinematic_tree_node, meshes_element, parent_element, transform_world_from_parent_node, root_node, color, log_prefix_str):
 
     kinematic_tree_node_name = kinematic_tree_node["name"]
-    spear.log(log_prefix_str, "Processing kinematic tree node: ", kinematic_tree_node_name)
+    spear.log(f"{log_prefix_str}Processing kinematic tree node: {kinematic_tree_node_name}")
 
     transform_parent_node_from_current_node = kinematic_tree_node["transform_parent_node_from_current_node"]
     transform_world_from_current_node = spear.math.compose_transforms(
@@ -287,16 +286,16 @@ def add_mujoco_elements_for_kinematic_tree_node(
 
             # negate y-axis to maintain visual parity with Unreal
             if args.visual_parity_with_unreal:
-                scale = np.diag([1,-1,1])*scale
+                scale = np.array([1.0, -1.0, 1.0])*scale
 
             part_name = f"{actor_name}:{kinematic_tree_node_name}:merge_id_{int(merge_id):04}:part_id_{part_id:04}"
             mesh_name = f"{part_name}:mesh"
             geom_name = f"{part_name}:geom"
-            mesh_element = xml.etree.ElementTree.SubElement(meshes_element, "mesh", attrib={
+            xml.etree.ElementTree.SubElement(meshes_element, "mesh", attrib={
                 "file": part_id_obj_path,
                 "name": mesh_name,
                 "scale": get_mujoco_scale_str(scale=scale)})
-            geom_element = xml.etree.ElementTree.SubElement(body_element, "geom", attrib={
+            xml.etree.ElementTree.SubElement(body_element, "geom", attrib={
                 "mesh": mesh_name,
                 "name": geom_name,
                 "rgba": get_mujoco_rgba_str(rgb=color),
@@ -324,7 +323,7 @@ def get_mujoco_xyaxes_str(rotation):
     return f"{' '.join([ str(value) for value in rotation[:,0].A1 ])} {' '.join([ str(value) for value in rotation[:,1].A1 ])}"
 
 def get_mujoco_scale_str(scale):
-    return " ".join([ str(value) for value in np.diag(scale) ])
+    return " ".join([ str(value) for value in scale ])
 
 def get_mujoco_rgba_str(rgb):
     rgba = list(rgb) + [1.0]

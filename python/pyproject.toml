@@ -37,6 +37,7 @@ examples = [
     "wget==3.2"]
 pipeline = [
     "coacd==1.0.0",
+    "cvxpy==1.9.1",              # required by fastpathplanning but not pinned
     "fastpathplanning @ git+https://github.com/cvxgrp/fastpathplanning.git@v0.1.2",
     "h5py==3.12.1",
     "imageio-ffmpeg==0.6.0",

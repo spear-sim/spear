@@ -30,7 +30,7 @@ assert os.path.exists(args.destination_unreal_project_dir)
 # potentially into a different location in the Content Browser, is to perform a renaming step in a
 # minimal temporary Unreal project. The reason for doing it this way is as follows. Performing bulk
 # renaming operations only seem to work reliably if the assets being renamed are not currently loaded.
-# So, bulk asset renaming will not work in the case where source assets are loaded by a source project's
+# So, bulk asset renaming will not work in the case where source assets are loaded by a source
 # project's default map, and we therefore do our renaming in a minimal temporary project.
 #
 # However, an important consequence of this design decision is that both the source and destination
@@ -59,7 +59,7 @@ if __name__ == "__main__":
     # projects
     #
 
-    reference_unreal_project_dir = os.path.realpath(os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "DefaultProjectBp")))
+    reference_unreal_project_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "cpp", "unreal_projects", "DefaultProjectBp"))
     reference_unreal_project_dir_name = os.path.split(reference_unreal_project_dir)[1]
     reference_uprojects = glob.glob(os.path.realpath(os.path.join(reference_unreal_project_dir, "*.uproject")))
     assert len(reference_uprojects) == 1

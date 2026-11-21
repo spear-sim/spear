@@ -41,7 +41,8 @@ max_pitch_degrees = 30.0
 camera_resolution = 256
 camera_fov_degrees = 90.0
 
-# The golden ratio, used to spread the candidate views' azimuths evenly around the sphere (see get_candidate_view_rotations).
+# The golden ratio, used to spread the candidate views' azimuths evenly around the sphere (see
+# get_candidate_view_rotations).
 golden_ratio = (1.0 + np.sqrt(5.0))/2.0
 
 
@@ -50,8 +51,8 @@ def process_scene():
     # Read the planned paths computed by generate_free_space_paths.py. Each path is a sequence of points sampled
     # uniformly in time along it, with the corresponding normalized times in [0, 1].
     free_space_paths_file = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_paths", "free_space_paths.h5"))
-    assert os.path.exists(free_space_paths_file)
     spear.log("Reading free-space paths file: ", free_space_paths_file)
+    assert os.path.exists(free_space_paths_file)
     with h5py.File(free_space_paths_file, "r") as f:
         path_points = f["path_points"][:]
         path_point_times = f["path_point_times"][:]
@@ -60,7 +61,7 @@ def process_scene():
     candidate_view_rotations = get_candidate_view_rotations()
 
     # Launch SPEAR and get the game-scoped services. The user-provided config files specify how to launch the game
-    # offscreen and which scene to open (the scene must be the one this export directory was generated from).
+    # offscreen and which scene to open (the scene must be the one this pipeline directory was generated from).
     config = spear.get_config(user_config_files=[ os.path.realpath(config_file) for config_file in args.config_files ])
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
@@ -157,11 +158,11 @@ def process_scene():
         game.segmentation_service.terminate()
     instance.close()
 
-    # Save the chosen camera keyframes for each path as a normalized time and a camera-to-world rotation matrix per location. Each rotation
-    # matrix maps points (as column vectors) from camera space to world space, following the Unreal convention that
-    # the camera's +X is its look direction, +Y is its right direction, and +Z is its up direction (so the matrix's
-    # columns are those three directions in world space). The camera position at each location is recoverable from
-    # the path itself at the corresponding normalized time.
+    # Save the chosen camera keyframes for each path as a normalized time and a camera-to-world rotation matrix per
+    # location. Each rotation matrix maps points (as column vectors) from camera space to world space, following the
+    # Unreal convention that the camera's +X is its look direction, +Y is its right direction, and +Z is its up
+    # direction (so the matrix's columns are those three directions in world space). The camera position at each
+    # location is recoverable from the path itself at the corresponding normalized time.
     free_space_dir = os.path.realpath(os.path.join(args.pipeline_dir, "free_space_camera_keyframes"))
     free_space_camera_keyframes_file = os.path.realpath(os.path.join(free_space_dir, "free_space_camera_keyframes.h5"))
     spear.log("Writing free-space camera keyframes file: ", free_space_camera_keyframes_file)

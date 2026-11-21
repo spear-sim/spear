@@ -9,7 +9,6 @@ import json
 import mayavi.mlab
 import numpy as np
 import os
-import pathlib
 import trimesh
 import spear
 
@@ -55,7 +54,7 @@ def process_scene():
     collision_geometry_dir = os.path.realpath(os.path.join(args.pipeline_dir, "collision_geometry"))
     actors_json_file = os.path.realpath(os.path.join(collision_geometry_dir, "scene.json"))
     spear.log("Reading JSON file: ", actors_json_file)
-    assert os.path.exists(collision_geometry_dir)
+    assert os.path.exists(actors_json_file)
     with open(actors_json_file, "r") as f:
         actors_json = json.load(f)
 
@@ -95,7 +94,7 @@ def draw_collision_geometry(actor_name, kinematic_tree, color):
 
 def draw_collision_geometry_for_kinematic_tree_node(actor_name, transform_world_from_parent_node, kinematic_tree_node, color, log_prefix_str):
 
-    spear.log(log_prefix_str, "Processing kinematic tree node: ", kinematic_tree_node["name"])
+    spear.log(f"{log_prefix_str}Processing kinematic tree node: {kinematic_tree_node['name']}")
 
     transform_parent_node_from_current_node = kinematic_tree_node["transform_parent_node_from_current_node"]
     transform_world_from_current_node = spear.math.compose_transforms(
@@ -126,7 +125,7 @@ def draw_collision_geometry_for_kinematic_tree_node(actor_name, transform_world_
         for part_id in part_ids:
 
             part_id_obj_path = os.path.realpath(os.path.join(merge_id_obj_dir, f"part_id_{part_id:04}.obj"))
-            spear.log(log_prefix_str, "Reading OBJ file: ", part_id_obj_path)
+            spear.log(f"{log_prefix_str}Reading OBJ file: {part_id_obj_path}")
 
             mesh = trimesh.load_mesh(part_id_obj_path, process=False, validate=False)
             V_current_node = np.matrix(np.c_[mesh.vertices, np.ones(mesh.vertices.shape[0])]).T

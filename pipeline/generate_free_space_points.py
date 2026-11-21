@@ -5,10 +5,10 @@
 
 import argparse
 import h5py
-import json
 import numpy as np
 import os
 import spear
+import unreal_geometry_utils
 
 
 parser = argparse.ArgumentParser()
@@ -18,9 +18,6 @@ args = parser.parse_args()
 assert os.path.exists(args.pipeline_dir)
 
 np.random.seed(0)
-
-# Component classes that export the local-space bounds we use to build oriented bounding boxes.
-static_mesh_component_classes = ["StaticMeshComponent"]
 
 # Number of candidate points to sample uniformly within the scene AABB.
 num_candidate_points = 2000
@@ -35,33 +32,26 @@ inside_tolerance = 0.01
 # obstacle, which makes the rendered images clip against geometry. eps is the distance from the pinhole to the
 # farthest corner of the near face, so a clear sphere of radius eps around the pinhole contains the entire near
 # face. We compute it once, here, and the other free-space stages just reuse the value. The final images are
-# rendered at 1080p, with Unreal's default near clipping plane (which we never override on the capture component):
+# rendered by generate_free_space_camera_path_images.py at 1080p, with a 90 degree horizontal field of view (which
+# it sets directly on the capture component), and with Unreal's default near clipping plane (which we never
+# override on the capture component):
 #
 #     final_image_width          = 1920
 #     final_image_height         = 1080
+#     final_image_fov_horizontal = 90.0    # In degrees.
 #     final_image_znear          = 10.0    # Unreal's default near clipping plane GNearClippingPlane, in cm.
-#
-# render_image sets the capture component's horizontal field of view to match the viewport, so we set ours the same
-# way, following viewport_service.align_camera_with_viewport. For a standalone game the viewport field of view and
-# aspect ratio are Unreal's default camera field of view and aspect ratio (the ViewTarget POV's fOV and aspectRatio):
-#
-#     viewport_fov_degrees       = 90.0     # Unreal's default camera field of view.
-#     viewport_aspect_ratio      = 4.0/3.0  # Unreal's default camera aspect ratio.
-#     render_target_aspect_ratio = final_image_width/final_image_height
-#     half_fov                   = (viewport_fov_degrees*pi/180.0)/2.0
-#     half_fov_adjusted          = atan(tan(half_fov)*render_target_aspect_ratio/viewport_aspect_ratio)
-#     final_image_fov_horizontal = half_fov_adjusted*2.0*180.0/pi = 106.26 degrees
 #
 # The vertical field of view follows from the horizontal field of view and the image aspect ratio (Unreal's
 # BuildProjectionMatrix applies the horizontal half-angle to the x axis and scales the y axis by width/height):
 #
-#     half_fov_vertical          = atan(tan((final_image_fov_horizontal*pi/180.0)/2.0)*final_image_height/final_image_width)
-#     final_image_fov_vertical   = half_fov_vertical*2.0*180.0/pi = 73.74 degrees
+#     half_fov_horizontal        = (final_image_fov_horizontal*pi/180.0)/2.0
+#     half_fov_vertical          = atan(tan(half_fov_horizontal)*final_image_height/final_image_width)
+#     final_image_fov_vertical   = half_fov_vertical*2.0*180.0/pi = 58.72 degrees
 #
 # and the pinhole-to-near-face-corner distance is:
 #
-#     expand_bounding_box_eps    = final_image_znear*sqrt(1 + tan((final_image_fov_horizontal*pi/180.0)/2.0)**2 + tan((final_image_fov_vertical*pi/180.0)/2.0)**2)
-#                                = 18.28 cm
+#     expand_bounding_box_eps    = final_image_znear*sqrt(1 + tan(half_fov_horizontal)**2 + tan(half_fov_vertical)**2)
+#                                = 15.22 cm
 #                               ~= 20.0 cm
 
 expand_bounding_box_eps = 20.0
@@ -69,7 +59,7 @@ expand_bounding_box_eps = 20.0
 
 def process_scene():
 
-    bounding_boxes = get_component_bounding_boxes_for_scene()
+    bounding_boxes = unreal_geometry_utils.get_component_bounding_boxes_for_scene(pipeline_dir=args.pipeline_dir, expand_bounding_box_eps=expand_bounding_box_eps)
     assert len(bounding_boxes) > 0
 
     # Sample candidate points uniformly within the AABB of all the oriented bounding boxes' corners.
@@ -87,49 +77,9 @@ def process_scene():
     spear.log("Writing free-space points file: ", free_space_points_file)
     os.makedirs(free_space_dir, exist_ok=True)
     with h5py.File(free_space_points_file, "w") as f:
-        f.create_dataset("scene_points", data=free_space_points)
+        f.create_dataset("free_space_points", data=free_space_points)
 
     spear.log("Done.")
-
-def get_component_bounding_boxes_for_scene():
-
-    unreal_metadata_dir = os.path.realpath(os.path.join(args.pipeline_dir, "unreal_metadata"))
-    actors_json_file = os.path.realpath(os.path.join(unreal_metadata_dir, "scene.json"))
-    spear.log("Reading JSON file: ", actors_json_file)
-    assert os.path.exists(unreal_metadata_dir)
-    with open(actors_json_file, "r") as f:
-        actors_json = json.load(f)
-
-    # We only export geometry for actors for which relevant_for_level_bounds is True, so we apply the same
-    # filter here, and ignore actors with no root component.
-    bounding_boxes = []
-    for actor_name, actor_desc in actors_json.items():
-        if actor_desc["root_component"] is None or not actor_desc["editor_properties"]["relevant_for_level_bounds"]:
-            continue
-        spear.log("Processing actor: ", actor_name)
-        actor_bounding_boxes = get_component_bounding_boxes(component_desc=actor_desc["root_component"], log_prefix_str="    ")
-        bounding_boxes.extend(actor_bounding_boxes)
-
-    return bounding_boxes
-
-def get_component_bounding_boxes(component_desc, log_prefix_str):
-
-    spear.log(f"{log_prefix_str}Processing component: {component_desc['stable_name']}")
-
-    # We only build a bounding box for StaticMeshComponents that have a static mesh assigned.
-    bounding_boxes = []
-    if component_desc["class"] in static_mesh_component_classes and component_desc["editor_properties"]["static_mesh"] is not None:
-        bounding_box = spear.pipeline.get_bounding_box(component_desc=component_desc)
-        bounding_box = spear.pipeline.expand_bounding_box(bounding_box=bounding_box, eps=expand_bounding_box_eps)
-        bounding_boxes.append(bounding_box)
-
-    # Recurse for each child component.
-    if component_desc["children_components"] is not None:
-        for child_component_desc in component_desc["children_components"].values():
-            child_bounding_boxes = get_component_bounding_boxes(component_desc=child_component_desc, log_prefix_str=f"{log_prefix_str}    ")
-            bounding_boxes.extend(child_bounding_boxes)
-
-    return bounding_boxes
 
 def are_points_inside_any_bounding_box(points, bounding_boxes):
 

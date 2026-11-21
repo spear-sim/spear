@@ -1,14 +1,14 @@
-# Importing and Exporting Assets
+# Designing Flexible Asset Pipelines
 
-In general, our approach for importing/exporting assets to/from the Unreal Engine is to formulate each import/export task (e.g., import from dataset X, export to destination application Y, etc) as a pipeline consisting of modular stages. We typically implement each pipeline as a directed acyclic graph of stages, and each stage is a Python program that produces and/or consumes data in a user-specified top-level directory for a particular scene. Each stage can optionally access functionality available in the Unreal Editor using the SPEAR API or the editor's built-in Python API. In this document, we demonstrate some example export pipelines that are implemented in this style.
+In general, our approach for importing/exporting assets to/from the Unreal Engine, and working with these assets in downstream applications, is to formulate each distinct task of interest (e.g., import from dataset X, export to destination application Y, etc) as a pipeline. We typically implement each pipeline as a directed acyclic graph of stages, where each stage is a Python program that produces and/or consumes data in a user-specified top-level directory for a particular scene. Each stage can optionally access functionality available in the Unreal Editor using the SPEAR API or the editor's built-in Python API. In this tutorial, we demonstrate some example pipelines that are implemented in this style.
 
 ## Assumptions
 
-In order to execute the pipeline in this document, we will assume that you have completed our [Getting Started](getting_started.md) tutorial. We will also assume that you want to execute the pipeline for the `apartment_0000` scene only, and that you want all pipeline output to be generated in a top-level directory called `spear-pipeline`.
+In order to execute the pipelines in this tutorial, we will assume that you have completed our [Getting Started](getting_started.md) tutorial. We will also assume that you want to execute the pipeline for the `apartment_0000` scene only, and that you want all pipeline output to be generated in a top-level directory called `spear-pipeline`.
 
 ## Installing additional Python dependencies
 
-In order to execute the pipeline in this document, you will need to install the `pipeline` optional dependencies. When executing the command below, `PIP_BUILD_CONSTRAINT` forces `pip` to build against the versions we specify in `python/pip_build_constraint.txt`, and `--no-cache-dir` forces a fresh build.
+In order to execute the pipelines in this tutorial, you will need to install the `pipeline` optional dependencies. When executing the command below, `PIP_BUILD_CONSTRAINT` forces `pip` to build against the versions we specify in `python/pip_build_constraint.txt`, and `--no-cache-dir` forces a fresh build.
 
 ```console
 # install additional pipeline dependencies (Windows Developer PowerShell for VS 2022)
@@ -21,9 +21,9 @@ set "PIP_BUILD_CONSTRAINT=python/pip_build_constraint.txt" && pip install --no-c
 PIP_BUILD_CONSTRAINT=python/pip_build_constraint.txt pip install --no-cache-dir -e "python[pipeline]"
 ```
 
-## Accessing the Unreal Editor's built-in Python interface
+## Accessing the Unreal Editor's built-in Python environment
 
-Any pipeline stage that needs to access the Unreal Editor using the editor's built-in Python API can be executed using our `run_editor_script.py` tool, which runs a user-specified script `--script` from within the editor's built-in Python environment. `run_editor_script.py` consumes `--script`, `--unreal-engine-dir`, and several optional arguments such as `--launch-mode` and `--render-offscreen`, and forwards all other arguments directly to the user's script. `--script` must be relative to `spear/pipeline` or absolute. Any path arguments that are forwarded to the user screen must be absolute.
+Any pipeline stage that needs to access the Unreal Editor using the editor's built-in Python API can be executed using our `run_editor_script.py` tool, which runs a user-specified script `--script` from within the editor's built-in Python environment. `run_editor_script.py` consumes `--script`, `--unreal-engine-dir`, and several optional arguments such as `--launch-mode` and `--render-offscreen`, and forwards all other arguments directly to the user's script. `--script` must be relative to `spear/pipeline` or absolute. Any path arguments that are forwarded to the user's script must be absolute.
 
 ## Maintaining visual parity with Unreal
 
