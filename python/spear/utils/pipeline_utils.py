@@ -13,7 +13,7 @@ import spear
 
 #
 # Math conversion functions. In the functions below, converting to or from a JSON type means a dictionary
-# that has been serialized to JSON by editor/export_unreal_metadata/export_scene.py and subsequently deserialized
+# that has been serialized to JSON by editor/export_scene_metadata.py and subsequently deserialized
 # back into a dictionary.
 #
 

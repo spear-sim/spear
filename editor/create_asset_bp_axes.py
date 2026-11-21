@@ -51,7 +51,6 @@ blueprint_desc = \
 
 asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
 editor_asset_subsystem = unreal.get_editor_subsystem(unreal.EditorAssetSubsystem)
-subobject_data_subsystem = unreal.get_engine_subsystem(unreal.SubobjectDataSubsystem)
 
 
 if __name__ == "__main__":

@@ -54,17 +54,37 @@ import sys
 #        Windows Command Prompt:                    python run_editor_script.py ... --script "C:\my dir\script.py" --my-path "C:\my dir\my file.txt"
 #        macOS and Linux:                           python run_editor_script.py ... --script "/my dir/script.py" --my-path "/my dir/my file.txt"
 #
+# 5. Python scripts that you run from the Unreal Editor's console. In "Cmd" mode, type py followed by the
+#    script path and its arguments. In "Python" mode, type the script path and its arguments without py. In
+#    both modes, the Unreal Editor parses the line itself rather than passing it through a shell. If the script
+#    path or an argument contains spaces, enclose it in double quotes. For arguments of the form --name=value,
+#    enclose the entire argument in quotes (e.g., "--my-path=/my dir/my file.txt") or pass the name and value
+#    separately (e.g., --my-path "/my dir/my file.txt"), because quotes that begin in the middle of an argument
+#    are passed to your script. Paths can use backslashes or forward slashes.
+#
+#        Cmd mode on Windows:                       py "C:\my dir\script.py" --my-path "C:\my dir\my file.txt"
+#        Cmd mode on macOS and Linux:               py "/my dir/script.py" --my-path "/my dir/my file.txt"
+#        Python mode on Windows:                    "C:\my dir\script.py" --my-path "C:\my dir\my file.txt"
+#        Python mode on macOS and Linux:            "/my dir/script.py" --my-path "/my dir/my file.txt"
+#
 # The following arguments are unsupported:
 #
 #     - On Windows, quoted paths that end with a backslash, e.g., "C:\my dir\", because the backslash escapes
 #       the closing quote. Omit the trailing backslash, e.g., "C:\my dir".
 #     - Double quotes and empty arguments in arguments that are forwarded to a Python script running inside
-#       the Unreal Editor (recommendation 4). This is a limitation of the Unreal Editor, not our tools. The
-#       Unreal Editor splits the string inside -script="..." or -ExecutePythonScript="..." into sys.argv
-#       using FParse::Token(...), which has no way to escape a double quote inside an argument, and which stops
-#       at the first empty argument. See:
+#       the Unreal Editor (recommendations 4 and 5). This is a limitation of the Unreal Editor, not our tools.
+#       The Unreal Editor splits the string inside -script="..." or -ExecutePythonScript="...", or the text
+#       after the script path in the console, into sys.argv using FParse::Token(...), which has no way to
+#       escape a double quote inside an argument, and which stops at the first empty argument. See:
 #           Engine/Plugins/Experimental/PythonScriptPlugin/Source/PythonScriptPlugin/Private/PythonScriptPlugin.cpp
 #           Engine/Source/Runtime/Core/Private/Misc/Parse.cpp.
+#     - Script paths that contain ".py" before the end of the file name (e.g., "/my.python/script.py") when
+#       running a script from the Unreal Editor's console (recommendation 5), because the Unreal Editor treats
+#       everything up to the first ".py" as the script path. If the Unreal Editor can't find a valid script
+#       path, it executes the entire line as Python code instead.
+#     - In "Cmd" mode in the Unreal Editor's console (recommendation 5), the characters | and // outside of
+#       quotes, because the Unreal Editor interprets | as a separator between multiple commands, and // as the
+#       start of a comment. Enclose any argument that contains these characters in quotes.
 #     - Tabs and newlines in arguments that are forwarded to the Unreal Editor or a standalone executable
 #       (recommendation 2), and arguments that contain a space and an "=" but don't begin with "-" (e.g., a
 #       positional argument like "my dir/a=b"), because Unreal on macOS splits these arguments at the first

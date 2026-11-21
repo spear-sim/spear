@@ -40,10 +40,10 @@ if __name__ == "__main__":
         source_material = unreal.load_asset(name=source_material_path)
         assert isinstance(source_material, unreal.Material)
 
-        # The UserSceneTexture output name is the source material name without the "PPM_" prefix (e.g.,
-        # PPM_DiffuseColor -> DiffuseColor). This is the name that FSpUserSceneTextureMaterialDesc::InternalName
-        # must match on the SPEAR side.
-        user_scene_texture_name = source_material_name[len(source_material_name_prefix):] + "_UST"
+        # The UserSceneTexture output name is the source material name without the "PPM_" prefix, and with the
+        # "_UST" suffix (e.g., PPM_DiffuseColor -> DiffuseColor_UST). This is the name that
+        # FSpUserSceneTextureMaterialDesc::InternalName must match in C++.
+        user_scene_texture_name = source_material_name[len(source_material_name_prefix):] + material_instance_name_suffix
 
         # The material instance keeps the full parent name so its parentage is obvious (e.g.,
         # PPM_DiffuseColor -> MI_PPM_DiffuseColor_UST).

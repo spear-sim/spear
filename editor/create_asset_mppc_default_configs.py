@@ -17,17 +17,17 @@ config_descs = \
 {
     "without_lighting" :
     {
-        "name": f"MPPC_DefaultConfigWithoutLighting",
+        "name": "MPPC_DefaultConfigWithoutLighting",
         "dir": "/SpContent/Cinematic"
     },
     "with_lighting" :
     {
-        "name": f"MPPC_DefaultConfigWithLighting",
+        "name": "MPPC_DefaultConfigWithLighting",
         "dir": "/SpContent/Cinematic"
     },
     "with_path_tracer" :
     {
-        "name": f"MPPC_DefaultConfigWithPathTracer",
+        "name": "MPPC_DefaultConfigWithPathTracer",
         "dir": "/SpContent/Cinematic"
     }
 }
@@ -63,8 +63,8 @@ post_process_material_descs = \
         "path": "/SpContent/Materials/PPM_SceneDepth",
     },
     {
-        "name": "sp_camera_normal",
-        "path": "/SpContent/Materials/PPM_SpCameraNormal",
+        "name": "sp_view_normal",
+        "path": "/SpContent/Materials/PPM_SpViewNormal",
     },
     {
         "name": "sp_depth_meters",
@@ -151,7 +151,7 @@ if __name__ == "__main__":
         post_process_material_descs["metallic"]["post_process_pass"],
         post_process_material_descs["roughness"]["post_process_pass"],
         post_process_material_descs["scene_depth"]["post_process_pass"],
-        post_process_material_descs["sp_camera_normal"]["post_process_pass"],
+        post_process_material_descs["sp_view_normal"]["post_process_pass"],
         post_process_material_descs["sp_depth_meters"]["post_process_pass"],
         post_process_material_descs["sp_world_position"]["post_process_pass"],
         post_process_material_descs["specular_for_lighting"]["post_process_pass"],
@@ -161,7 +161,7 @@ if __name__ == "__main__":
     console_variables = []
     engine_show_flag_settings = []
 
-    # mimic engine_show_flag_settings["disable_all_but_allow_post_processing_material"] in create_asset_bp_camera_sensor.py
+    # mimic engine_show_flag_settings["disable_all_except_post_processing_material"] in create_asset_bp_camera_sensor.py
     engine_show_flag_settings = engine_show_flag_settings + \
     [
         unreal.EngineShowFlagsSetting(show_flag_name="AmbientCubemap", enabled=False),
@@ -277,7 +277,7 @@ if __name__ == "__main__":
     setting.set_editor_property(name="additional_post_process_materials", value=additional_post_process_materials)
     setting.set_editor_property(name="disable_multisample_effects", value=True)
 
-    
+
     # Deferred Rendering (SPEAR customizations extra pass 0) - disable material AO, disable specular
     setting = config.find_or_add_setting_by_class(class_=unreal.SpMoviePipelineDeferredPass_ExtraPass0, include_disabled_settings=False, exact_match=True)
     additional_post_process_materials = \
@@ -321,6 +321,7 @@ if __name__ == "__main__":
     [
         post_process_material_descs["post_process_input_2"]["post_process_pass"]
     ]
+    console_variables = []
     engine_show_flag_settings = \
     [
         unreal.EngineShowFlagsSetting(show_flag_name="Specular", enabled=False) # disable specular
@@ -383,9 +384,6 @@ if __name__ == "__main__":
     spear.log("Saving config: ", config)
     editor_asset_subsystem.save_loaded_asset(asset_to_save=config)
 
-    spear.log("Done.")
-
-
     #
     #
     # With path tracing
@@ -428,7 +426,7 @@ if __name__ == "__main__":
     ]
     setting.set_editor_property(name="additional_post_process_materials", value=additional_post_process_materials)
     setting.set_editor_property(name="disable_multisample_effects", value=True)
-    
+
     #
     # Settings
     #

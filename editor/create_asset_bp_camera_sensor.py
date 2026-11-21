@@ -570,8 +570,6 @@ if __name__ == "__main__":
             material = unreal.load_asset(name=component_desc["material_path"])
             sp_scene_capture_component_2d.set_editor_property(name="material", value=material)
 
-        # SpSceneCaptureComponent2D properties (optional)
-
         if "mesh_proxy_component_manager_class" in component_desc:
             sp_scene_capture_component_2d.set_editor_property(name="mesh_proxy_component_manager_class", value=component_desc["mesh_proxy_component_manager_class"])
 

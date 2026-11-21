@@ -156,7 +156,7 @@ if __name__ == "__main__":
             instance._client.get_timeout()
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log(f"Average time for instance._client.get_timeout(): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
+        spear.log(f"Average time for instance._client.get_timeout(): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} FPS)")
 
         # instance.engine_globals_service.get_current_process_id()
         num_steps = 10000
@@ -165,7 +165,7 @@ if __name__ == "__main__":
             instance.engine_globals_service.get_current_process_id()
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log(f"Average time for instance.engine_globals_service.get_current_process_id(): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
+        spear.log(f"Average time for instance.engine_globals_service.get_current_process_id(): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} FPS)")
 
         # empty with instance.begin_frame() / with instance.end_frame()
         num_steps = 100
@@ -177,7 +177,7 @@ if __name__ == "__main__":
                 pass
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log(f"Average frame time for empty with instance.begin_frame() / with instance.end_frame(): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
+        spear.log(f"Average frame time for empty with instance.begin_frame() / with instance.end_frame(): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} FPS)")
 
         # game.unreal_service.get_default_object(...)
         num_steps = 100
@@ -189,7 +189,7 @@ if __name__ == "__main__":
                 return_value = game.unreal_service.get_default_object(uclass="AActor", as_handle=True)
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log(f"Average frame time for game.unreal_service.get_default_object(...): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
+        spear.log(f"Average frame time for game.unreal_service.get_default_object(...): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} FPS)")
 
         # game.unreal_service.call_async.get_default_object(...)
         num_steps = 100
@@ -201,7 +201,7 @@ if __name__ == "__main__":
                 return_value = future.get()
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log(f"Average frame time for game.unreal_service.call_async.get_default_object(...): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
+        spear.log(f"Average frame time for game.unreal_service.call_async.get_default_object(...): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} FPS)")
 
         # instance.sp_func_service.call_function(...)
         num_steps = 100
@@ -227,7 +227,7 @@ if __name__ == "__main__":
                     pass
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log(f"Average frame time for instance.sp_func_service.call_function(...): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
+        spear.log(f"Average frame time for instance.sp_func_service.call_function(...): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} FPS)")
 
         # instance.sp_func_service.call_function(...) (single-step)
         num_steps = 100
@@ -254,7 +254,7 @@ if __name__ == "__main__":
         end_time_seconds = time.time()
         instance.step() # needed after the last call to instance.end_frame(single_step=True)
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log(f"Average frame time for instance.sp_func_service.call_function(...) (single-step): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
+        spear.log(f"Average frame time for instance.sp_func_service.call_function(...) (single-step): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} FPS)")
 
         # instance.sp_func_service.call_async.call_function(...)
         num_steps = 100
@@ -280,7 +280,7 @@ if __name__ == "__main__":
                     data_bundle = future.get()
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log(f"Average frame time for instance.sp_func_service.call_async.call_function(...): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
+        spear.log(f"Average frame time for instance.sp_func_service.call_async.call_function(...): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} FPS)")
 
         # instance.sp_func_service.call_async.call_function(...) (single-step)
         num_steps = 100
@@ -307,7 +307,7 @@ if __name__ == "__main__":
         end_time_seconds = time.time()
         instance.step() # needed after the last call to instance.end_frame(single_step=True)
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log(f"Average frame time for instance.sp_func_service.call_async.call_function(...) (single-step): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} fps)")
+        spear.log(f"Average frame time for instance.sp_func_service.call_async.call_function(...) (single-step): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} FPS)")
 
     input("Press any key to continue...")
 

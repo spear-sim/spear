@@ -13,7 +13,6 @@ parser.add_argument("--save", action="store_true")
 args = parser.parse_args()
 
 level_editor_subsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
-subobject_data_subsystem = unreal.get_engine_subsystem(unreal.SubobjectDataSubsystem)
 unreal_editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
 
 editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
@@ -36,7 +35,7 @@ if __name__ == "__main__":
         for actor_subobject_desc in actor_subobject_descs:
             if isinstance(actor_subobject_desc["object"], unreal.SpStableNameComponent):
                 actor_has_stable_name_component = True
-                spear.log("        Actor has an unreal.unreal.SpStableNameComponent component, skipping...")
+                spear.log("        Actor has an unreal.SpStableNameComponent component, skipping...")
                 break
 
         if not actor_has_stable_name_component:
@@ -48,7 +47,7 @@ if __name__ == "__main__":
                 subobject_name="sp_stable_name_component",
                 subobject_class=unreal.SpStableNameComponent)
 
-            scene_modified = False
+            scene_modified = True
 
     if scene_modified and args.save:
         spear.log("Saving scene: ", editor_world_name)

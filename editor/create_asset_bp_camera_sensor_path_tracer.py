@@ -131,7 +131,7 @@ engine_show_flag_settings["lighting_only_path_tracing_radiance"] = engine_show_f
 # Show flags for multiple components
 #
 
-# path_tracing_radiance
+# enable_path_tracing
 
 engine_show_flag_settings["enable_path_tracing"] = []
 engine_show_flag_settings["enable_path_tracing"] = engine_show_flag_settings["enable_path_tracing"] + \
@@ -215,7 +215,7 @@ blueprint_desc = \
             "height": height*spatial_supersampling_factor,
             "fov_angle": fov_angle,
             "num_channels_per_pixel": 4,
-            "channel_data_type": unreal.SpArrayDataType.FLOAT16,
+            "channel_data_type": unreal.SpArrayDataType.FLOAT32,
             "capture_source": unreal.SceneCaptureSource.SCS_FINAL_COLOR_HDR,
             "material_path": "/SpContent/Materials/PPM_DiffuseColor",
             "show_flag_settings": engine_show_flag_settings["lighting_only_diffuse_color"],

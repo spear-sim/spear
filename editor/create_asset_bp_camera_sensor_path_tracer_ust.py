@@ -8,17 +8,21 @@ import spear
 import unreal
 
 
+material_dir = "/SpContent/Materials"
+source_material_name_prefix = "PPM_"
+material_instance_name_prefix = "MI_"
+material_instance_name_suffix = "_UST"
+
 width = 512
 height = 512
 fov_angle = 90.0
 spatial_supersampling_factor = 2
 
-# The universe of possible UserSceneTexture buffers that can be extracted by each capture component. Each name
-# here adds a MI_PPM_<name>_UST material instance (see create_asset_mi_ppm_ust_instances.py) to the capture
-# component via the UserSceneTextures property. Each PPM is configured to route its output to a buffer named
-# <name>_UST, and the capture component knows how to extract data from these buffers. In order to enable the
-# capture component to extract data from a buffer, the user must add <name> to the component's UserSceneTextureNames
-# property at runtime.
+# The universe of possible UserSceneTexture buffers that can be extracted by each capture component. Each name here adds
+# a MI_PPM_<name>_UST material instance (see create_asset_mi_ppm_ust_instances.py) to the capture component via the
+# UserSceneTextureMaterialDescs property. Each PPM is configured to route its output to a buffer named <name>_UST, and
+# the capture component knows how to extract data from these buffers. In order to enable the capture component to
+# extract data from a buffer, the user must add <name> to the component's UserSceneTextureNames property at runtime.
 
 user_scene_texture_material_names = \
 [
@@ -191,7 +195,8 @@ if __name__ == "__main__":
     # mismatch would assert on the render thread and take the whole engine down.
     user_scene_texture_material_descs = {}
     for user_scene_texture_material_name in user_scene_texture_material_names:
-        material_instance_path = posixpath.join("/SpContent/Materials", "MI_PPM_" + user_scene_texture_material_name + "_UST")
+        material_instance_name = material_instance_name_prefix + source_material_name_prefix + user_scene_texture_material_name + material_instance_name_suffix
+        material_instance_path = posixpath.join(material_dir, material_instance_name)
         material_instance = unreal.load_asset(name=material_instance_path)
         assert isinstance(material_instance, unreal.MaterialInstanceConstant)
 
@@ -204,7 +209,8 @@ if __name__ == "__main__":
         material_desc.set_editor_property(name="material", value=material_instance)
         material_desc.set_editor_property(name="internal_name", value=internal_name)
 
-        # the public key is derived from the material name and matches InternalName
+        # the key is the public name (e.g., DiffuseColor) that users add to UserSceneTextureNames at runtime, which
+        # is different from InternalName (e.g., DiffuseColor_UST)
         user_scene_texture_material_descs[user_scene_texture_material_name] = material_desc
 
     # create SpSceneCaptureComponent2Ds

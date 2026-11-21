@@ -17,11 +17,10 @@ args = parser.parse_args()
 
 asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
 unreal_editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
-level_editor_subsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
 
 
 def process_scene():
-    
+
     editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
     spear.log("Processing scene: ", editor_world_name)
 
@@ -57,7 +56,7 @@ def generate_unreal_geometry(actor):
         asset_export_task = unreal.AssetExportTask()
         asset_export_task.set_editor_property(name="automated", value=True)
         asset_export_task.set_editor_property(name="errors", value=errors)
-        asset_export_task.set_editor_property(name="exporter", value=None)            
+        asset_export_task.set_editor_property(name="exporter", value=None)
         asset_export_task.set_editor_property(name="filename", value=raw_obj_path)
         asset_export_task.set_editor_property(name="ignore_object_list", value=[])
         asset_export_task.set_editor_property(name="object", value=asset_registry.get_asset_by_object_path(object_path=str(static_mesh_asset_path)).get_asset())
@@ -98,8 +97,7 @@ def generate_unreal_geometry(actor):
         numerical_parity_obj_dir = os.path.realpath(os.path.join(args.export_dir, "unreal_geometry", "numerical_parity", obj_dir_suffix))
         numerical_parity_obj_path = os.path.realpath(os.path.join(args.export_dir, "unreal_geometry", "numerical_parity", obj_path_suffix))
         os.makedirs(numerical_parity_obj_dir, exist_ok=True)
-        with open(numerical_parity_obj_path, "w"):
-            mesh.export(numerical_parity_obj_path, "obj")
+        mesh.export(numerical_parity_obj_path, "obj")
 
 
 if __name__ == "__main__":

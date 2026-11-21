@@ -34,7 +34,7 @@ def get_object_path_from_asset_path(asset_path):
 
 if __name__ == "__main__":
 
-    # Strip the trailing "/"" from our input paths. Calling does_asset_exist(...) with a path that ends in
+    # Strip the trailing "/" from our input paths. Calling does_asset_exist(...) with a path that ends in
     # "/" will cause a non-fatal error. The editor won't terminate, but it will return a non-zero error code
     # when exiting, which can cause problems for outer scripts.
     source_content_path = args.source_content_path.rstrip("/")

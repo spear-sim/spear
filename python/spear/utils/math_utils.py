@@ -9,9 +9,6 @@ import scipy
 #
 # In this comment, we describe how Unreal represents rotations and transforms.
 #
-# NOTES ON UNREAL'S CONVENTIONS FOR REPRESENTING ROTATIONS AND TRANSFORMING COORDINATES
-#
-#
 # Unreal defines each individual Euler angle according to the following conventions, which can be
 # verified by manual inspection in the editor.
 #     A positive roll  is a rotation around X, starting from +Z and rotating towards +Y

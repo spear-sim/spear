@@ -22,7 +22,7 @@ dependencies = [
     "numpy==2.0.2",
     "opencv-python==4.10.0.84",
     "p4python==2025.1.2767466",  # tools/download_content_from_perforce.py
-    "pandas==2.2.3",             # tools
+    "pandas==2.2.3",
     "psutil==5.9.0",
     "scipy==1.14.1",
     "yacs==0.1.8"]

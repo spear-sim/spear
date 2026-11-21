@@ -10,6 +10,7 @@ import json
 import msgpackrpc
 import numpy as np
 import os
+import pandas as pd
 import pathlib
 import posixpath
 import traceback
@@ -172,9 +173,13 @@ def get_script_delta_time():
 # Module-level globals
 #
 
+asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
 asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
 editor_actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 subobject_data_subsystem = unreal.get_engine_subsystem(unreal.SubobjectDataSubsystem)
+
+editor_properties_csv_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "data", "editor_properties.csv"))
+df_editor_properties = pd.read_csv(editor_properties_csv_file, comment="#")
 
 #
 # Get actors and components
@@ -254,7 +259,7 @@ def get_stable_name_for_component(component, include_actor_stable_name=False):
         component_name_str = ".".join([ c.get_name() for c in list(component.get_parent_components())[::-1] ] + [component.get_name()])
     else:
         component_name_str = component.get_name()
-    
+
     return actor_name_str + component_name_str
 
 #
@@ -320,6 +325,189 @@ def get_subobject_desc_for_data_handle(subobject_data_handle):
     assert unreal.SubobjectDataBlueprintFunctionLibrary.is_valid(data=subobject_data)
     subobject_object = unreal.SubobjectDataBlueprintFunctionLibrary.get_object(data=subobject_data)
     return {"data_handle": subobject_data_handle, "data": subobject_data, "object": subobject_object, "name": subobject_object.get_name().removesuffix("_GEN_VARIABLE")}
+
+#
+# Get actor, component, asset, and editor property descs
+#
+
+def get_actor_desc(actor):
+    actor_name = get_stable_name_for_actor(actor=actor, include_unreal_name=True)
+    spear.log("Processing actor: ", actor_name)
+
+    root_component = actor.get_editor_property(name="root_component")
+
+    if root_component is not None:
+        components_in_hierarchy = [root_component] + list(root_component.get_children_components(include_all_descendants=True))
+    else:
+        components_in_hierarchy = []
+    components_in_hierarchy_names = [ get_stable_name_for_component(component=c) for c in components_in_hierarchy ]
+
+    other_components = actor.get_components_by_class(component_class=unreal.ActorComponent)
+    other_components = [ c for c in other_components if get_stable_name_for_component(component=c) not in components_in_hierarchy_names ]
+
+    return {
+        "class": actor.__class__.__name__,
+        "debug_info": {"str": str(actor)},
+        "editor_properties": get_editor_property_descs(uobject=actor, recurse_into_objects=True),
+        "name": get_stable_name_for_actor(actor=actor, include_unreal_name=True),
+        "other_components": { get_stable_name_for_component(component=c): get_component_desc(component=c) for c in other_components },
+        "root_component": get_component_desc(component=root_component),
+        "stable_name": get_stable_name_for_actor(actor=actor, include_unreal_name=False),
+        "unreal_name": actor.get_name()}
+
+def get_component_desc(component):
+
+    if component is None:
+        return None
+
+    if "get_children_components" in dir(component):
+        children_components = { get_stable_name_for_component(component=c): get_component_desc(component=c) for c in component.get_children_components(include_all_descendants=False) }
+    else:
+        children_components = None
+
+    component_desc = {
+        "attributes": {},
+        "children_components": children_components,
+        "class": component.__class__.__name__,
+        "debug_info": {"str": str(component)},
+        "editor_properties": get_editor_property_descs(uobject=component, recurse_into_objects=True),
+        "stable_name": get_stable_name_for_component(component=component),
+        "pipeline_info": {},
+        "unreal_name": component.get_name()}
+
+    if isinstance(component, unreal.SceneComponent):
+        component_desc["attributes"]["world_transform"] = get_value_desc(value=component.get_world_transform(), recurse_into_objects=True)
+        component_desc["attributes"]["world_transform_as_matrix"] = get_value_desc(value=component.get_world_transform().to_matrix(), recurse_into_objects=True)
+
+    if isinstance(component, unreal.StaticMeshComponent):
+        component_desc["attributes"]["local_bounds"] = get_value_desc(value=component.get_local_bounds(), recurse_into_objects=True)
+
+    return component_desc
+
+def get_asset_desc(asset_data):
+
+    asset_path = f"{asset_data.package_name}.{asset_data.asset_name}"
+    spear.log("Processing asset: " + asset_path)
+
+    # Immediate (non-recursive) dependencies come from the Asset Registry's cached metadata, so we get the
+    # dependency package names without loading the referenced assets.
+    dependency_options = unreal.AssetRegistryDependencyOptions(include_soft_package_references=True, include_hard_package_references=True)
+    dependencies = sorted( str(d) for d in asset_registry.get_dependencies(package_name=asset_data.package_name, dependency_options=dependency_options) )
+
+    # We don't recurse into objects, since every referenced asset is already its own top-level entry, and
+    # following references could cycle.
+    asset = asset_data.get_asset()
+    return {
+        "class": str(asset_data.asset_class_path.asset_name),
+        "dependencies": dependencies,
+        "editor_properties": get_editor_property_descs(uobject=asset, recurse_into_objects=False) if asset is not None else None,
+        "name": str(asset_data.asset_name),
+        "package": str(asset_data.package_name),
+        "path": asset_path}
+
+def get_editor_property_descs(uobject, recurse_into_objects):
+
+    assert "get_editor_property" in dir(uobject)
+
+    # The Unreal Python interface does not provide a mechanism to iterate over editor properties directly,
+    # so we use the fact that most editor properties are exposed as Python attributes, and iterate over
+    # attributes instead. For each attribute, we use a guess-and-check strategy to see if it is an editor
+    # property. We call uobject.get_editor_property(...) and if doing so doesn't throw an exception, we
+    # assume that the attribute is a valid editor property. To obtain any remaining editor properties that
+    # are not exposed as Python attributes, we maintain a CSV file with a list of editor properties for
+    # various classes of interest. We populate the CSV file by manually copying and pasting from the Unreal
+    # documentation.
+
+    # Get all Python attributes, and all editor properties from our CSV file.
+    uobject_class_names = [ c.__name__ for c in uobject.__class__.mro() ] # derived-to-base order
+    editor_property_candidate_names = set(dir(uobject))
+    for uobject_class_name in uobject_class_names:
+        editor_property_candidate_names = editor_property_candidate_names | set(df_editor_properties.loc[df_editor_properties["class"] == uobject_class_name]["editor_property"])
+
+    # Guess-and-check all editor property candidates.
+    editor_property_descs = {}
+    for editor_property_candidate_name in editor_property_candidate_names:
+        try:
+            editor_property = uobject.get_editor_property(name=editor_property_candidate_name)
+            editor_property_descs[editor_property_candidate_name] = get_value_desc(value=editor_property, recurse_into_objects=recurse_into_objects)
+        except Exception:
+            pass
+
+    return editor_property_descs
+
+def get_value_desc(value, recurse_into_objects):
+
+    # If the value is None, then return None, because we want it to be serialized as null rather than "None".
+    if value is None:
+        return None
+
+    # Otherwise, if the value is an Unreal array, Unreal set, or tuple, then recurse via get_value_desc(...).
+    elif isinstance(value, (unreal.Array, unreal.Set, tuple)):
+        return [ get_value_desc(value=entry, recurse_into_objects=recurse_into_objects) for entry in value ]
+
+    # Otherwise, if the value is an Unreal map, then recurse via get_value_desc(...).
+    elif isinstance(value, unreal.Map):
+        return { str(k): get_value_desc(value=v, recurse_into_objects=recurse_into_objects) for k, v in value.items() }
+
+    # Otherwise, if the value is an Unreal struct, then recurse via get_editor_property_descs(...). Structs are
+    # stored inline, so we always recurse into them.
+    elif isinstance(value, unreal.StructBase):
+        return {
+            "class": value.__class__.__name__,
+            "debug_info": {"str": str(value)},
+            "editor_properties": get_editor_property_descs(uobject=value, recurse_into_objects=recurse_into_objects)}
+
+    # Otherwise, if the value is an Unreal object and recurse_into_objects is False, then return a reference to
+    # the object rather than recursing into it. This is useful when each referenced object will be described
+    # separately anyway, and following references could cycle.
+    elif isinstance(value, unreal.Object) and not recurse_into_objects:
+        return {
+            "class": value.__class__.__name__,
+            "debug_info": {"str": str(value)},
+            "path": value.get_path_name()}
+
+    # Otherwise, if the value is an Actor or ActorComponent, then do not return any editor properties to avoid
+    # an infinite recursion. If users want to obtain the editor properties for an Actor or ActorComponent, they
+    # must call get_editor_property_descs(...).
+
+    elif isinstance(value, unreal.Actor):
+        return {
+            "class": value.__class__.__name__,
+            "debug_info": {"str": str(value)},
+            "name": get_stable_name_for_actor(actor=value, include_unreal_name=True),
+            "stable_name": get_stable_name_for_actor(actor=value, include_unreal_name=False),
+            "unreal_name": value.get_name()}
+
+    elif isinstance(value, unreal.ActorComponent):
+        return {
+            "class": value.__class__.__name__,
+            "debug_info": {"str": str(value)},
+            "stable_name": get_stable_name_for_component(component=value),
+            "unreal_name": value.get_name()}
+
+    # Otherwise, if the value is a StaticMesh, then recurse via get_editor_property_descs(...).
+    elif isinstance(value, unreal.StaticMesh):
+        return {
+            "class": value.__class__.__name__,
+            "debug_info": {"str": str(value)},
+            "editor_properties": get_editor_property_descs(uobject=value, recurse_into_objects=recurse_into_objects),
+            "path": value.get_path_name()}
+
+    # Otherwise, if the value is an Unreal object, then recurse via get_editor_property_descs(...).
+    elif isinstance(value, unreal.Object):
+        return {
+            "class": value.__class__.__name__,
+            "debug_info": {"str": str(value)},
+            "editor_properties": get_editor_property_descs(uobject=value, recurse_into_objects=recurse_into_objects)}
+
+    # Otherwise, if the value is serializable as JSON, then return the value, otherwise return the string
+    # representation of the value.
+    else:
+        try:
+            json.dumps(value)
+            return value
+        except TypeError:
+            return str(value)
 
 
 #

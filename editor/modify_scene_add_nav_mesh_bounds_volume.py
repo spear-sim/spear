@@ -16,7 +16,6 @@ args = parser.parse_args()
 
 editor_actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 level_editor_subsystem = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
-subobject_data_subsystem = unreal.get_engine_subsystem(unreal.SubobjectDataSubsystem)
 unreal_editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
 
 editor_world_name = unreal_editor_subsystem.get_editor_world().get_name()
@@ -36,8 +35,8 @@ if __name__ == "__main__":
         spear.log("    Scene doesn't have an unreal.NavMeshBoundsVolume actor, computing bounds...")
 
         scene_has_valid_geometry = False
-        scene_bounds_min = np.zeros((3))
-        scene_bounds_max = np.zeros((3))
+        scene_bounds_min = np.full((3), np.inf)
+        scene_bounds_max = np.full((3), -np.inf)
 
         actors = spear.editor.find_actors()
         actors = [ actor for actor in actors if actor.get_editor_property(name="relevant_for_level_bounds") ]
@@ -51,8 +50,8 @@ if __name__ == "__main__":
                 scene_has_valid_geometry = True
 
                 origin_ue, half_extent_ue, sphere_radius = unreal.SystemLibrary.get_component_bounds(component=component)
-                origin = spear.editor.to_numpy_array_from_vector(vector=origin_ue)
-                half_extent = spear.editor.to_numpy_array_from_vector(vector=half_extent_ue)
+                origin = spear.editor.to_numpy_array_from_unreal_vector(unreal_vector=origin_ue)
+                half_extent = spear.editor.to_numpy_array_from_unreal_vector(unreal_vector=half_extent_ue)
 
                 spear.log(f"        {spear.editor.get_stable_name_for_component(component=component)} (origin={origin}, half_extent={half_extent}, sphere_radius={sphere_radius})")
 
@@ -70,10 +69,10 @@ if __name__ == "__main__":
 
             nav_mesh_bounds_volume = editor_actor_subsystem.spawn_actor_from_class(
                 actor_class=unreal.NavMeshBoundsVolume,
-                location=spear.editor.to_vector_from_numpy_array(array=nav_mesh_bounds_location))
+                location=spear.editor.to_unreal_vector_from_numpy_array(numpy_array=nav_mesh_bounds_location))
             nav_mesh_bounds_volume.set_folder_path(new_folder_path="Navigation")
             nav_mesh_bounds_volume.set_actor_label(new_actor_label="NavMeshBoundsVolume")
-            nav_mesh_bounds_volume.set_actor_scale3d(new_scale3d=nav_mesh_bounds_scale)
+            nav_mesh_bounds_volume.set_actor_scale3d(new_scale3d=spear.editor.to_unreal_vector_from_numpy_array(numpy_array=nav_mesh_bounds_scale))
 
             if not args.skip_add_stable_name_component:
                 spear.log("    Adding unreal.SpStableNameComponent...")
@@ -94,8 +93,8 @@ if __name__ == "__main__":
     else:
         for nav_mesh_bounds_volume in nav_mesh_bounds_volumes:
             origin_ue, half_extent_ue = nav_mesh_bounds_volume.get_actor_bounds(only_colliding_components=False)
-            origin = spear.editor.to_array_from_vector(vector=origin_ue)
-            half_extent = spear.editor.to_array_from_vector(vector=half_extent_ue)
+            origin = spear.editor.to_numpy_array_from_unreal_vector(unreal_vector=origin_ue)
+            half_extent = spear.editor.to_numpy_array_from_unreal_vector(unreal_vector=half_extent_ue)
             spear.log(f"    Scene already has an unreal.NavMeshBoundsVolume actor: {spear.editor.get_stable_name_for_actor(actor=nav_mesh_bounds_volume)} (origin={origin}, half_extent={half_extent})")
 
     if scene_modified and args.save:
