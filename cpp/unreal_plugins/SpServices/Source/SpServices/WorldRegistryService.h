@@ -82,6 +82,8 @@ private:
         SP_ASSERT(world);
         std::lock_guard<std::mutex> lock(mutex_);
 
+        SP_LOG_CURRENT_FUNCTION();
+
         // if not a preview world (e.g., the StaticMesh viewer in the editor) and if not a short-lived temporary world (e.g., during application startup)
         if (!world->IsPreviewWorld() && GEngine->GetWorldContextFromWorld(world)) {
             SP_ASSERT(world->IsEditorWorld() || world->IsGameWorld());
@@ -105,6 +107,8 @@ private:
 
     void worldInitializedActorsHandler(const FActorsInitializedParams& params)
     {
+        SP_LOG_CURRENT_FUNCTION();
+
         UWorld* world = params.World;
         SP_ASSERT(world);
 
@@ -138,6 +142,8 @@ private:
         SP_ASSERT(world);
         std::lock_guard<std::mutex> lock(mutex_);
 
+        SP_LOG_CURRENT_FUNCTION();
+
         std::string name = Unreal::toStdString(world->GetPathName());
 
         if (Std::containsKey(world_descs_, name)) {
@@ -163,6 +169,8 @@ private:
     {
         SP_ASSERT(world);
         std::lock_guard<std::mutex> lock(mutex_);
+
+        SP_LOG_CURRENT_FUNCTION();
 
         std::string name = Unreal::toStdString(world->GetPathName());
         SP_ASSERT(Std::containsKey(world_descs_, name));
@@ -231,6 +239,8 @@ private:
             }
 
             if (skylight_state_.empty()) {
+                SP_LOG_CURRENT_FUNCTION();
+                SP_LOG("    Restoring skylight updates...");
                 restoreSkylightCVar();
             }
         }

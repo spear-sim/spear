@@ -132,7 +132,7 @@ class EntryPointCaller():
     def call_on_game_thread(self, func_name, convert_func, *args):
         assert False
 
-    def get(self, obj):
+    def to_result(self, obj):
         assert False
 
     def __repr__(self):
@@ -155,7 +155,7 @@ class CallSyncEntryPointCaller(EntryPointCaller):
         else:
             return return_value
 
-    def get(self, obj):
+    def to_result(self, obj):
         return obj
 
 class CallAsyncEntryPointCaller(EntryPointCaller):
@@ -170,7 +170,7 @@ class CallAsyncEntryPointCaller(EntryPointCaller):
         get_future_result_func = lambda future: self.engine_service.get_future_result_from_game_thread(future=future.future, return_as=return_as)
         return Future(future=future, get_future_result_func=get_future_result_func, convert_func=convert_func, return_as=return_as)
 
-    def get(self, obj):
+    def to_result(self, obj):
         return Future(future=None, get_future_result_func=lambda future: obj, convert_func=None, return_as=None)
 
 class SendAsyncEntryPointCaller(EntryPointCaller):
@@ -181,7 +181,7 @@ class SendAsyncEntryPointCaller(EntryPointCaller):
         long_func_name = f"{self._service_name}.send_async_on_game_thread.{func_name}"
         self.engine_service.call_on_game_thread(long_func_name, *args)
 
-    def get(self, obj):
+    def to_result(self, obj):
         return None
 
 class EditorCallSyncEntryPointCaller(EntryPointCaller):
@@ -207,18 +207,22 @@ class EditorCallSyncEntryPointCaller(EntryPointCaller):
         else:
             return return_value
 
-    def get(self, obj):
+    def to_result(self, obj):
         return obj
 
 class EditorCallAsyncEntryPointCaller(EditorCallSyncEntryPointCaller):
     def call_on_worker_thread(self, func_name, convert_func, *args):
         assert False # worker thread entry points always execute synchronously, so we should never be here
 
+    # In editor Python, we execute the entry point eagerly and store the result in a Future, so get() has the same
+    # interface inside and outside the editor. We can't defer execution until get() is called, because then the
+    # entry point would execute at get() time rather than at queuing time, which would violate the ordering
+    # guarantees of our programming model.
     def call_on_game_thread(self, func_name, convert_func, *args):
-        call_on_game_thread_func = super().call_on_game_thread
-        return Future(future=None, get_future_result_func=lambda future: call_on_game_thread_func(func_name, convert_func, *args), convert_func=None, return_as=None)
+        result = super().call_on_game_thread(func_name, convert_func, *args)
+        return Future(future=None, get_future_result_func=lambda future: result, convert_func=None, return_as=None)
 
-    def get(self, obj):
+    def to_result(self, obj):
         return Future(future=None, get_future_result_func=lambda future: obj, convert_func=None, return_as=None)
 
 class EditorSendAsyncEntryPointCaller(EditorCallSyncEntryPointCaller):
@@ -228,7 +232,7 @@ class EditorSendAsyncEntryPointCaller(EditorCallSyncEntryPointCaller):
     def call_on_game_thread(self, func_name, convert_func, *args):
         super().call_on_game_thread(func_name, None, *args)
 
-    def get(self, obj):
+    def to_result(self, obj):
         return None
 
 

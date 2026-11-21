@@ -3,6 +3,8 @@
 # Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
+# Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
+
 import argparse
 import cv2
 import math
@@ -58,16 +60,30 @@ def to_spear_vector_from_mujoco_array(mujoco_array):
         numpy_array = (np.diag([1,-1,1])*np.matrix(numpy_array).T).A1
     return spear.math.to_spear_vector_from_numpy_array(numpy_array=numpy_array)
 
-def to_spear_rotator_from_mujoco_quat(mujoco_quat):
-
-    # MuJoCo assumes quaternions are stored in scalar-first (wxyz) order, but scipy.spatial.transform.Rotation assumes scalar-last (xyzw) order
-    numpy_quat = mujoco_quat[[1,2,3,0]]
-    numpy_matrix = scipy.spatial.transform.Rotation.from_quat(numpy_quat).as_matrix()
-
+def to_spear_rotator_from_mujoco_matrix(mujoco_matrix):
+    numpy_matrix = mujoco_matrix
     if args.visual_parity_with_unreal:
         numpy_matrix = np.diag([1,-1,1])*np.matrix(numpy_matrix)*np.diag([1,-1,1])
-
     return spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=numpy_matrix)
+
+def to_spear_rotator_from_mujoco_quat(mujoco_quat):
+    # MuJoCo assumes quaternions are stored in scalar-first (wxyz) order, but scipy.spatial.transform.Rotation
+    # assumes scalar-last (xyzw) order
+    numpy_quat = mujoco_quat[[1,2,3,0]]
+    mujoco_matrix = scipy.spatial.transform.Rotation.from_quat(numpy_quat).as_matrix()
+    return to_spear_rotator_from_mujoco_matrix(mujoco_matrix=mujoco_matrix)
+
+def to_mujoco_array_from_spear_vector(spear_vector):
+    numpy_array = spear.math.to_numpy_array_from_spear_vector(spear_vector=spear_vector)
+    if args.visual_parity_with_unreal:
+        numpy_array = (np.diag([1,-1,1])*np.matrix(numpy_array).T).A1
+    return numpy_array
+
+def to_mujoco_matrix_from_spear_rotator(spear_rotator):
+    numpy_matrix = spear.math.to_numpy_matrix_from_spear_rotator(spear_rotator=spear_rotator)
+    if args.visual_parity_with_unreal:
+        numpy_matrix = (np.diag([1,-1,1])*np.matrix(numpy_matrix)*np.diag([1,-1,1])).A
+    return numpy_matrix
 
 
 if __name__ == "__main__":
@@ -149,12 +165,8 @@ if __name__ == "__main__":
 
     # initialize MuJoCo camera (not needed when launching the viewer through the command-line, but needed when using launch_passive)
 
-    cam_position = spear.math.to_numpy_array_from_spear_vector(spear_vector=viewport_desc["camera_location"])
-    cam_rotation_matrix = spear.math.to_numpy_matrix_from_spear_rotator(spear_rotator=viewport_desc["camera_rotation"])
-
-    if args.visual_parity_with_unreal:
-        cam_position = (np.diag([1,-1,1])*np.matrix(cam_position).T).A1
-        cam_rotation_matrix = (np.diag([1,-1,1])*np.matrix(cam_rotation_matrix)*np.diag([1,-1,1])).A
+    cam_position = to_mujoco_array_from_spear_vector(spear_vector=viewport_desc["camera_location"])
+    cam_rotation_matrix = to_mujoco_matrix_from_spear_rotator(spear_rotator=viewport_desc["camera_rotation"])
 
     # convert camera position and rotation matrix to MuJoCo's look-at camera parameterization
 
@@ -215,19 +227,15 @@ if __name__ == "__main__":
         cam_rotation_z_axis = normalize(vector=np.cross(cam_rotation_x_axis, cam_rotation_y_axis))
         cam_rotation_matrix = np.column_stack([cam_rotation_x_axis, cam_rotation_y_axis, cam_rotation_z_axis])
 
-        if args.visual_parity_with_unreal:
-            cam_position = (np.diag([1,-1,1])*np.matrix(cam_position).T).A1
-            cam_rotation_matrix = (np.diag([1,-1,1])*np.matrix(cam_rotation_matrix)*np.diag([1,-1,1])).A
+        cam_location = to_spear_vector_from_mujoco_array(mujoco_array=cam_position)
+        cam_rotation = to_spear_rotator_from_mujoco_matrix(mujoco_matrix=cam_rotation_matrix)
 
-        ue_actor_futures = {}
         with sp_instance.begin_frame():
 
             # update SPEAR camera pose
-            pawn.send_async.K2_SetActorLocation(NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=cam_position))
-            player_controller.send_async.SetControlRotation(NewRotation=spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=cam_rotation_matrix))
-            bp_camera_sensor.send_async.K2_SetActorLocationAndRotation(
-                NewLocation=spear.math.to_spear_vector_from_numpy_array(numpy_array=cam_position),
-                NewRotation=spear.math.to_spear_rotator_from_numpy_matrix(numpy_matrix=cam_rotation_matrix))
+            pawn.send_async.K2_SetActorLocation(NewLocation=cam_location)
+            player_controller.send_async.SetControlRotation(NewRotation=cam_rotation)
+            bp_camera_sensor.send_async.K2_SetActorLocationAndRotation(NewLocation=cam_location, NewRotation=cam_rotation)
 
             # update SPEAR object poses
             for ue_actor_name, ue_actor in ue_actors.items():
@@ -240,31 +248,25 @@ if __name__ == "__main__":
         with sp_instance.end_frame():
 
             # read pixels from camera sensor
-            if args.save_images:
-                if ue_step_index % num_ue_steps_per_frame == 0:
-                    for component_desc in component_descs:
-                        data_bundle = component_desc["component"].read_pixels()
-                        component_desc["data"] = data_bundle["arrays"]["data"]
+            if args.save_images and ue_step_index % num_ue_steps_per_frame == 0:
+                for component_desc in component_descs:
+                    data_bundle = component_desc["component"].read_pixels()
+                    component_desc["data"] = data_bundle["arrays"]["data"]
 
-        # save UE images
-        if args.save_images:
-            if ue_step_index % num_ue_steps_per_frame == 0:
-                save_images(images_dir=images_dir, frame_index=frame_index)
+        if args.save_images and ue_step_index % num_ue_steps_per_frame == 0:
 
-        # save MuJoCo images
-        if args.save_images:
-            if ue_step_index % num_ue_steps_per_frame == 0:
-                mj_renderer.update_scene(data=mj_data, camera=mj_viewer.cam)
-                mj_render = mj_renderer.render()
-                image_file = os.path.realpath(os.path.join(images_dir, "mujoco", f"{frame_index:04d}.png"))
-                image = mj_render[:,:,[2,1,0]] # MuJoCo renders RGB -> BGR for cv2
-                spear.log("Saving image: ", image_file)
-                cv2.imwrite(image_file, image)
+            # save UE images
+            save_images(images_dir=images_dir, frame_index=frame_index)
 
-        # increment counters
-        if args.save_images:
-            if ue_step_index % num_ue_steps_per_frame == 0:
-                frame_index = frame_index + 1
+            # save MuJoCo images
+            mj_renderer.update_scene(data=mj_data, camera=mj_viewer.cam)
+            mj_render = mj_renderer.render()
+            image_file = os.path.realpath(os.path.join(images_dir, "mujoco", f"{frame_index:04d}.png"))
+            image = mj_render[:,:,[2,1,0]] # MuJoCo renders RGB -> BGR for cv2
+            spear.log("Saving image: ", image_file)
+            cv2.imwrite(image_file, image)
+
+            frame_index = frame_index + 1
 
         ue_step_index = ue_step_index + 1
 

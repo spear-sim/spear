@@ -1,12 +1,17 @@
+#
+# Copyright (c) 2025 The SPEAR Development Team. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+# Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+#
+
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 # Before running this example, you should have a good understanding of the example in render_image/run.py
 
 import cv2
 import imageio_ffmpeg
-import math
 import numpy as np
 import os
+import shutil
 import spear
 
 
@@ -21,9 +26,9 @@ camera_rotator = {"Pitch": -20.0, "Yaw": 20.0, "Roll": 0.0}
 frame_rate = 30
 crf = 23
 
-rotator = {"Pitch": 0.0, "Yaw": 20.0, "Roll": 0.0}
+trajectory_rotator = {"Pitch": 0.0, "Yaw": 20.0, "Roll": 0.0}
 p_world_init = spear.math.to_numpy_array_from_spear_vector(spear_vector=camera_location, as_matrix=True)
-R_world_from_actor = spear.math.to_numpy_matrix_from_spear_rotator(spear_rotator=rotator, as_matrix=True)
+R_world_from_actor = spear.math.to_numpy_matrix_from_spear_rotator(spear_rotator=trajectory_rotator, as_matrix=True)
 
 
 if __name__ == "__main__":
@@ -34,9 +39,12 @@ if __name__ == "__main__":
     instance = spear.Instance(config=config)
     game = instance.get_game()
 
-    images_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "images")
-    if not os.path.exists(images_dir):
-        os.makedirs(images_dir)
+    # create output dir
+    images_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "images"))
+    if os.path.exists(images_dir):
+        spear.log("Directory exists, removing: ", images_dir)
+        shutil.rmtree(images_dir, ignore_errors=True)
+    os.makedirs(images_dir, exist_ok=True)
 
     # initialize actors and components
     with instance.begin_frame():
@@ -74,10 +82,6 @@ if __name__ == "__main__":
     # 4 frames)
     game.async_loading_service.wait_for_engine_idle()
 
-    # let temporal anti-aliasing etc accumulate additional information across multiple frames, and
-    # inserting an extra frame or two can fix occasional render-to-texture initialization issues
-    instance.step(num_frames=2)
-
     for f in range(num_frames):
         with instance.begin_frame():
 
@@ -94,8 +98,8 @@ if __name__ == "__main__":
             canvas = np.zeros((component_height*num_rows, component_width*num_cols, 4), dtype=np.uint8)
             for c, component_name in enumerate(component_names):
                 component = components[component_name]
-                i = int(c % num_cols)
-                j = int(c / num_cols)
+                i = c % num_cols
+                j = c // num_cols
                 data_bundle = component.read_pixels()
                 data = data_bundle["arrays"]["data"]
                 canvas[component_height*j : component_height*(j+1), component_width*i : component_width*(i+1)] = data

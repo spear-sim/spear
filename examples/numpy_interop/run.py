@@ -66,6 +66,7 @@ if __name__ == "__main__":
 
         sp_debug_manager.terminate_sp_funcs()
         sp_debug_manager.Terminate()
+        game.unreal_service.destroy_actor(actor=sp_debug_manager)
 
         # Destroy our shared memory region.
         instance.shared_memory_service.destroy_shared_memory_region(shared_memory_handle=shared_memory_handle)

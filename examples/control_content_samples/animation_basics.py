@@ -4,7 +4,6 @@
 #
 
 import math
-import os
 import spear
 import time
 
@@ -46,10 +45,8 @@ if __name__ == "__main__":
     spear.log(f"Animating character for {_ANIMATION_DURATION_SECONDS} seconds...")
 
     start_time = time.time()
-    current_time = start_time
 
     while True:
-        previous_time = current_time
         current_time = time.time()
         elapsed_time = current_time - start_time
 
@@ -65,5 +62,5 @@ if __name__ == "__main__":
         if elapsed_time >= _ANIMATION_DURATION_SECONDS:
             break
 
-    spear.log(f"Finished animation.")
+    spear.log("Finished animation.")
     spear.log("Done.")

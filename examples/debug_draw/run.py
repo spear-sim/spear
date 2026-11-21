@@ -59,7 +59,7 @@ if __name__ == "__main__":
         bounding_box_material = game.unreal_service.load_object(uclass="UMaterialInterface", name="/Game/SPEAR/Materials/M_LocalPositionMultipliedByObjectScale.M_LocalPositionMultipliedByObjectScale")
 
         # compute bounding boxes from scene actors
-        actors = [ actor for actor in game.unreal_service.find_actors() ]
+        actors = game.unreal_service.find_actors()
         actors = [ actor for actor in actors if not actor.is_a(uclass="ASpProxyComponentManager") ]
 
         spear.log("Computing bounding box extents...")
@@ -67,7 +67,7 @@ if __name__ == "__main__":
         bounding_box_descs = [None]
         for actor in actors:
 
-            static_mesh_components = [ component for component in game.unreal_service.get_components_by_class(actor=actor, uclass="UStaticMeshComponent") ]
+            static_mesh_components = game.unreal_service.get_components_by_class(actor=actor, uclass="UStaticMeshComponent")
             static_mesh_components = [ component for component in static_mesh_components if component.uclass == game.unreal_service.get_static_class(uclass="UStaticMeshComponent", as_handle=True) ]
 
             for static_mesh_component in static_mesh_components:

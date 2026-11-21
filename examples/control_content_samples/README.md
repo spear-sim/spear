@@ -1,4 +1,4 @@
-# Control to `ContentSamples` Project
+# Control the `ContentSamples` Project
 
 In this example application, we demonstrate how to control the `ContentSamples` project, which is a freely available sample project from Epic Games.
 

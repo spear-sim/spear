@@ -1,6 +1,6 @@
 # Debug Draw
 
-In this example application, we demonstrate how to draw oriented 3D debug bounding boxes around all components in the current scene. You can run this example as follows.
+In this example application, we demonstrate how to draw oriented 3D debug bounding boxes around all static mesh components in the current scene. You can run this example as follows.
 
 ```console
 python run.py

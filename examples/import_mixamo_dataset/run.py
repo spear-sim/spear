@@ -11,7 +11,7 @@ if __name__ == "__main__":
     # create instance
     instance = spear.Instance()
     game = instance.get_game()
-    
+
     with instance.begin_frame():
 
         # spawn Crouch To Stand animation

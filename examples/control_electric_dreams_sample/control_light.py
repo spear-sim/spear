@@ -5,7 +5,6 @@
 
 import argparse
 import cv2
-import numpy as np
 import os
 import shutil
 import spear

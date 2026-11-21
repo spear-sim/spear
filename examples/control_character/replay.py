@@ -92,12 +92,12 @@ if __name__ == "__main__":
                 # that if we execute run.py in the editor, we must take care to also execute replay.py in the
                 # editor. This is why we check for "root" and "Root" below.
 
-                root_transform = {}
                 if "root" in bone_transforms.keys():
                     root_transform = bone_transforms["root"]
                 elif "Root" in bone_transforms.keys():
                     root_transform = bone_transforms["Root"]
-                args = {"NewTransform": root_transform}
+                else:
+                    assert False
                 character["actor"].K2_SetActorTransform(NewTransform=root_transform)
 
                 # set bone transforms

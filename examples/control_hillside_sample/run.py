@@ -124,10 +124,6 @@ if __name__ == "__main__":
     instance.step(num_frames=90)
 
     #
-    # render image
-    #
-
-    #
     # initialize frame counter
     #
 

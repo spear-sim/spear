@@ -4,6 +4,7 @@
 - Treat nearby code as the canonical style; match naming, spacing, casing, and call patterns in the file being edited.
 - Prefer minimal diffs: change only what is needed for the requested behavior. Check `git diff` against the base branch to verify minimality before presenting changes.
 - Prefer simple, direct code over extra helpers or temporary variables unless they improve clarity.
+- Prefer not to write helper functions that call into the SPEAR programming model (e.g., `spear.*` services, `UnrealObject` methods, `instance.begin_frame()`/`instance.end_frame()`) unless there is an especially good reason to do so, because it is hard to make it obvious if the function expects to be called inside a SPEAR transaction or not. Some functions in the `spear` library break this rule (e.g., `instance.step()` and `game.async_loading_service.wait_for_engine_idle()` must be called outside a transaction), but their contracts are explicit and obvious.
 - Prefer `if condition: ... else: ...` (or `if (condition) { ... } else { ... }` in C++) over an early return followed by fallthrough code. Put the positive condition in the `if` branch (e.g., `if (ptr) { return f(*ptr); } else { return false; }`, not `if (!ptr) { return false; } return f(*ptr);`).
 - Keep logging/noise low; do not add extra debug output unless requested.
 - Prefer single-line calls when they comfortably fit and remain readable. When a call with keyword arguments doesn't fit on one line, put one argument per line.

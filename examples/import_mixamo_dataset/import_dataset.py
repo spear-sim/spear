@@ -33,7 +33,6 @@ replace_chars_map = {
 content_path_extra_chars = 6                             # the Unreal Editor adds up to this many characters when reporting the length of paths
 max_content_path_length = 210 - content_path_extra_chars # Unreal's stated maximum path length is 210, but we need to account for the fact that the Unreal Editor adds a few chars when reporting path lengths
 num_content_dirs_after_base_dir = 2                      # assume we will be creating Unreal paths of the form /content_base_dir/sub_dir_1/sub_dir_2/fbx_name.fbx_name
-num_content_file_parts = 2
 
 
 def truncate_from_middle(string, max_length):
@@ -76,14 +75,14 @@ if __name__ == "__main__":
 
     for filesystem_sub_dir in filesystem_sub_dirs[begin_index: end_index+1]:
 
-        spear.log(f"    Processing filesystem subdirectory: ", filesystem_sub_dir)
+        spear.log("    Processing filesystem subdirectory: ", filesystem_sub_dir)
 
         # import each FBX file
 
         fbx_files = [ f for f in sorted(os.listdir(os.path.join(args.filesystem_base_dir, filesystem_sub_dir))) if f.lower().endswith(".fbx") ]
         for fbx_file in fbx_files:
 
-            max_content_dir_length = (max_content_path_length - content_path_extra_chars - len(args.content_base_dir) - 2*(len("BP_") + len(fbx_file) + len("_Anim") - len(".fbx"))) // num_content_file_parts
+            max_content_dir_length = (max_content_path_length - len(args.content_base_dir) - 2*(len("BP_") + len(fbx_file) + len("_Anim") - len(".fbx"))) // num_content_dirs_after_base_dir
             spear.log(f"    Truncating content dirs to {max_content_dir_length} chars to stay within Unreal's limits for content paths...")
 
             fbx_content_dir = truncate_from_middle(string=replace_chars(string=filesystem_sub_dir, replace_chars_map=replace_chars_map), max_length=max_content_dir_length)
@@ -121,7 +120,7 @@ if __name__ == "__main__":
             assert unreal.EditorAssetLibrary.does_directory_exist(directory_path=fbx_content_path)
             asset_paths = unreal.EditorAssetLibrary.list_assets(directory_path=fbx_content_path)
 
-            spear.log(f"        Imported assets: ")
+            spear.log("        Imported assets: ")
             for asset_path in asset_paths:
                 spear.log("            ", asset_path)
 
@@ -136,7 +135,7 @@ if __name__ == "__main__":
                     anim_sequence_dir = str(asset_data.get_editor_property(name="package_path"))
                     anim_sequence_name = str(asset_data.get_editor_property(name="asset_name"))
                     anim_sequence_path = posixpath.join(anim_sequence_dir, f"{anim_sequence_name}.{anim_sequence_name}")
-                    spear.log(f"            Creating blueprint for AnimSequence: ", anim_sequence_path)
+                    spear.log("            Creating blueprint for AnimSequence: ", anim_sequence_path)
 
                     blueprint_dir = anim_sequence_dir
                     blueprint_name = f"BP_{anim_sequence_name}"

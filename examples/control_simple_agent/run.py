@@ -46,7 +46,7 @@ if __name__ == "__main__":
         # could just search by name using the name "sphere_". But this would be confusing. And we have a
         # dedicated C++ function for searching by path, which is helpful, e.g., inside an actor's BeginPlay()
         # method, since in BeginPlay() it isn't clear if a relocation operation has happened yet. As a matter
-        # of readability, we choose to search by path here, so we can search for the component using it's
+        # of readability, we choose to search by path here, so we can search for the component using its
         # original path.
         #
 

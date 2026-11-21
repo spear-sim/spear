@@ -1,6 +1,6 @@
 # Sample Nav Mesh
 
-In this example application, we demonstrate how to sample points and shortest paths from Unreal's nav mesh system.. You can run this example as follows.
+In this example application, we demonstrate how to sample points and shortest paths from Unreal's nav mesh system. You can run this example as follows.
 
 ```console
 python run.py

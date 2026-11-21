@@ -16,7 +16,7 @@ if __name__ == "__main__":
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
     game = instance.get_game()
-    
+
     with instance.begin_frame():
 
         # spawn object
@@ -28,7 +28,6 @@ if __name__ == "__main__":
 
         total_num_functions = 0
         total_num_properties = 0
-        uclasses = {}
 
         uobject_uclass = game.unreal_service.get_static_class(uclass="UObject")
         uobject_meta_uclass = game.unreal_service.get_class(uobject=uobject_uclass)
@@ -66,7 +65,6 @@ if __name__ == "__main__":
 
         total_num_functions = 0
         total_num_properties = 0
-        uclasses = {}
 
         uobject_uclass = game.unreal_service.get_static_class(uclass="UObject")
         uobject_meta_uclass = game.unreal_service.get_class(uobject=uobject_uclass)
@@ -106,7 +104,6 @@ if __name__ == "__main__":
         spear.log("Counting the number of functions (with a return value of void) available on AActor classes...")
 
         total_num_functions = 0
-        uclasses = {}
 
         property_flags = ["CPF_ReturnParm"]
 

@@ -6,4 +6,4 @@ In this example application, we demonstrate how to get information about Unreal 
 python run.py
 ```
 
-You should see a lot of debug intformation print to the console.
+You should see a lot of debug information print to the console.

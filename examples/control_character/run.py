@@ -5,15 +5,15 @@
 
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
-import os
 import numpy as np
+import os
 import pandas as pd
 import shutil
 import spear
 
 
 character_descs = \
-[ 
+[
     {
         "name": "character_0",
         "location": {"X": 900.0, "Y": 950.0, "Z": 100.0},
@@ -153,7 +153,7 @@ if __name__ == "__main__":
         game.cdo.UGameplayStatics.SetGamePaused(bPaused=True)
 
     for _ in range(100):
-        
+
         # move
         with instance.begin_frame():
             game.cdo.UGameplayStatics.SetGamePaused(bPaused=False)

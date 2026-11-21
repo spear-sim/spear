@@ -7,7 +7,6 @@
 
 import argparse
 import cv2
-import numpy as np
 import os
 import shutil
 import spear
@@ -148,7 +147,6 @@ if __name__ == "__main__":
         if not args.skip_read_pixels and not args.skip_save_images:
             save_images(images_dir=images_dir, frame_index=frame_index)
             frame_index = frame_index + 1
-
 
     #
     # unpause now that we're finished controlling the character

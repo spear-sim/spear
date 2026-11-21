@@ -6,7 +6,6 @@
 import argparse
 import numpy as np
 import spear
-import unreal
 
 
 parser = argparse.ArgumentParser()

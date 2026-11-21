@@ -15,7 +15,7 @@ SPEAR:
     # CLIENT_INTERNAL_TIMEOUT_SECONDS: 60.0
 
 #
-# Uncomment and adjust as necessary to cpature a GPU trace using --capture
+# Uncomment and adjust as necessary to capture a GPU trace using --capture
 #
 
 # SP_CORE:

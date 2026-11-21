@@ -6,4 +6,4 @@ In this example application, we demonstrate how to control the Unreal Editor and
 python run.py
 ```
 
-You should see the Unreal Editor open, then a play-in-editor simulation will be launched, then the play-in-editor simulation will be closed, then screenshot will be saved to this directory.
+You should see the Unreal Editor open, then a play-in-editor simulation will be launched, then the play-in-editor simulation will be closed, then a screenshot will be saved to this directory.

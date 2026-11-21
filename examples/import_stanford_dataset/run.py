@@ -3,9 +3,10 @@
 # Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
+# Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
+
 import os
 import spear
-import time
 
 
 if __name__ == "__main__":
@@ -15,7 +16,7 @@ if __name__ == "__main__":
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
     game = instance.get_game()
-    
+
     with instance.begin_frame():
 
         # load classes

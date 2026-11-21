@@ -26,6 +26,31 @@ import time
 # modes use interprocess shared memory to avoid unnecessary data copying between the Unreal application and Python.
 #
 
+#
+# IMPORTANT: Shared memory volatility contract. When a camera sensor uses shared memory, the arrays returned by
+# read_pixels() are not copies. They are NumPy arrays that point directly into shared memory regions that Unreal
+# writes to during subsequent readbacks. So these arrays are only safe to read during a window of time that depends on
+# the camera sensor's buffering mode.
+#
+#     - SingleBuffered: Unreal writes to shared memory during each call to read_pixels(), and read_pixels() doesn't
+#                       return until the write has finished. So the arrays returned by read_pixels() are safe to read
+#                       until the next call to read_pixels().
+#
+#     - DoubleBuffered and TripleBuffered: Unreal may write to shared memory at any point after each call to
+#                       enqueue_read_pixels(), until the next call to read_pixels() returns. So the arrays returned by
+#                       read_pixels() are safe to read until the next call to enqueue_read_pixels().
+#
+# In all buffering modes, calling Terminate() on the camera sensor ends this guarantee, so the arrays returned by
+# read_pixels() must not be read after calling Terminate(). Reading them after calling Terminate() is undefined
+# behavior, and can crash the Python process.
+#
+# Reading these arrays outside of this window will silently return data from a different frame, or partially
+# overwritten data. If you need an image for longer than this window (e.g., if you want to save it to disk while the
+# next frame is executing, or if you want to accumulate images in a list), copy it into an array owned by Python
+# immediately after calling read_pixels(). In this example, we index each array with a list of channels, which copies
+# the data out of shared memory as a side effect. See the comments in SpSceneCaptureComponent2D.h for more details.
+#
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--optimized", action="store_true")
 args = parser.parse_args()
@@ -162,7 +187,8 @@ if __name__ == "__main__":
             bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor.BP_CameraSensor_C")
             bp_camera_sensor = game.unreal_service.spawn_actor(uclass=bp_camera_sensor_uclass)
 
-            # initialize components (need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize())
+            # initialize components (need to call initialize_sp_funcs() after calling Initialize() because
+            # read_pixels() is registered during Initialize())
             for image_desc in image_descs:
                 image_desc["component"] = game.unreal_service.get_component_by_name(uclass="USpSceneCaptureComponent2D", actor=bp_camera_sensor, component_name=image_desc["component_name"])
                 image_desc["component"].Width = width
@@ -177,7 +203,8 @@ if __name__ == "__main__":
             bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensor_UST.BP_CameraSensor_UST_C")
             bp_camera_sensor = game.unreal_service.spawn_actor(uclass=bp_camera_sensor_uclass)
 
-            # initialize components (need to call initialize_sp_funcs() after calling Initialize() because read_pixels() is registered during Initialize())
+            # initialize components (need to call initialize_sp_funcs() after calling Initialize() because
+            # read_pixels() is registered during Initialize())
             components = {}
             for image_desc in image_descs:
                 source_component_name = get_source_component_name(image_desc=image_desc)

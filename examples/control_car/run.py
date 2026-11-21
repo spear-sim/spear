@@ -27,8 +27,8 @@ if __name__ == "__main__":
         #
         # Instead of finding the existing car in the scene, it is also possible to spawn a new car (e.g., the
         # default Unreal off-road car) as follows:
-        #        
-        # bp_car_uclass = game.unreal_service.load_class(class_name="AActor", name="/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_Pawn.OffroadCar_Pawn_C")
+        #
+        # bp_car_uclass = game.unreal_service.load_class(uclass="AActor", name="/Game/VehicleTemplate/Blueprints/OffroadCar/OffroadCar_Pawn.OffroadCar_Pawn_C")
         # car = game.unreal_service.spawn_actor(
         #     uclass=bp_car_uclass,
         #     location={"X": -2500.0, "Y": -9330.0, "Z": 20.0},

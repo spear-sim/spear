@@ -1,6 +1,6 @@
 # Render an Image (in the Unreal Editor using SPEAR)
 
-In this example editor script, we demonstrate how to how to render an image. If you're working in the Unreal Editor, you can run this script from the editor's Python console as follows. See [here](https://dev.epicgames.com/documentation/en-us/unreal-engine/scripting-the-unreal-editor-using-python) for details. Unlike the `render_image_editor` example, this script uses SPEAR functionality to do the do the rendering.
+In this example editor script, we demonstrate how to render an image. If you're working in the Unreal Editor, you can run this script from the editor's Python console as follows. See [here](https://dev.epicgames.com/documentation/en-us/unreal-engine/scripting-the-unreal-editor-using-python) for details. Unlike the `render_image_editor` example, this script uses SPEAR functionality to do the rendering.
 
 To run this example, execute the following command in the Unreal Editor's Python console:
 

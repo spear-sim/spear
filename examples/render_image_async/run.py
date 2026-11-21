@@ -109,7 +109,6 @@ if __name__ == "__main__":
             final_tone_curve_hdr_component.send_async.enqueue_read_pixels()
         with instance.end_frame():
             data_bundle = future_read_pixels.get()
-            pass
 
     else:
         with instance.begin_frame():
@@ -309,7 +308,8 @@ if __name__ == "__main__":
         elapsed_time_seconds = end_time_seconds - start_time_seconds
         spear.log(f"Average frame time for instance.sp_func_service.call_async.call_function(...) (single-step): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} FPS)")
 
-    input("Press any key to continue...")
+        # pause so the benchmark results above are easy to read before the UE application's shutdown output
+        input("Press any key to continue...")
 
     # show debug data now that we're outside of instance.end_frame()
     spear.log('data_bundle["arrays"]["data"].flags["ALIGNED"]: ', data_bundle["arrays"]["data"].flags["ALIGNED"])

@@ -11,7 +11,7 @@ if __name__ == "__main__":
     # create instance
     instance = spear.Instance()
     game = instance.get_game()
-    
+
     with instance.begin_frame():
 
         # spawn checking_floor_lamp_with_right_hand_suit animation

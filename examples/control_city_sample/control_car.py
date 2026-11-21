@@ -7,7 +7,6 @@
 
 import argparse
 import cv2
-import numpy as np
 import os
 import shutil
 import spear
@@ -137,7 +136,7 @@ if __name__ == "__main__":
         action_name = "IA_VH_Throttle"
         action_trigger_event = "Triggered"
         action_value_type = "Axis1D"
-        action_value = {"X": 10.0, "Y": 0.0, "Z": 0.0}
+        action_value = {"X": 1.0, "Y": 0.0, "Z": 0.0}
 
         spear.log(f'Injecting action: "{action_name}" ({action_value_type}, {action_trigger_event}, {action_value})')
 
@@ -311,7 +310,7 @@ if __name__ == "__main__":
         frame_index = frame_index + 1
 
     #
-    # unpause now that we're finished controlling the character
+    # unpause now that we're finished controlling the car
     #
 
     with instance.begin_frame():

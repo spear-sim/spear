@@ -5,7 +5,6 @@
 
 import argparse
 import cv2
-import numpy as np
 import os
 import shutil
 import spear
@@ -59,7 +58,6 @@ if __name__ == "__main__":
                 os.makedirs(os.path.realpath(os.path.join(images_dir, component_name)), exist_ok=True)
 
         # configure components to match the viewport
-        component_names = sorted(components.keys())
         component_list = [ components[name] for name in component_names ]
 
         for component in component_list:
@@ -76,8 +74,7 @@ if __name__ == "__main__":
         pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing etc accumulate additional information across frames
 
     #
-    # execute warm-up frames to give Unreal's default auto-exposure settings a chance to settle down, and to
-    # give the drone camera actor a chance to rotate
+    # execute warm-up frames to give Unreal's default auto-exposure settings a chance to settle down
     #
 
     for _ in range(65):

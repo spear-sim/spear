@@ -37,7 +37,6 @@ replace_chars_map = {
 content_path_extra_chars = 6                             # the Unreal Editor adds up to this many characters when reporting the length of paths
 max_content_path_length = 210 - content_path_extra_chars # Unreal's stated maximum path length is 210, but we need to account for the fact that the Unreal Editor adds a few chars when reporting path lengths
 num_content_dirs_after_base_dir = 2                      # assume we will be creating Unreal paths of the form /content_base_dir/sub_dir_1/sub_dir_2/fbx_name.fbx_name
-num_content_file_parts = 2
 
 
 def truncate_from_middle(string, max_length):
@@ -90,7 +89,7 @@ if __name__ == "__main__":
         fbx_files = [ f for f in sorted(os.listdir(os.path.join(args.filesystem_base_dir, filesystem_sub_dir))) if f.lower().endswith(".fbx") ]
         for fbx_file in fbx_files:
 
-            max_content_dir_length = (max_content_path_length - content_path_extra_chars - len(args.content_base_dir) - 2*(len("FbxScene_") + len(fbx_file) - len(".fbx"))) // num_content_file_parts
+            max_content_dir_length = (max_content_path_length - len(args.content_base_dir) - 2*(len("FbxScene_") + len(fbx_file) - len(".fbx"))) // num_content_dirs_after_base_dir
             spear.log(f"    Truncating content subdirectories to {max_content_dir_length} chars to stay within Unreal's limits for content paths...")
 
             fbx_content_subdir = truncate_from_middle(string=replace_chars(string=filesystem_sub_dir, replace_chars_map=replace_chars_map), max_length=max_content_dir_length)
@@ -117,8 +116,6 @@ if __name__ == "__main__":
             fbx_filesystem_path = os.path.join(args.filesystem_base_dir, filesystem_sub_dir, fbx_file)
 
             spear.log(f"        Importing {fbx_filesystem_path} to {fbx_content_dir}...")
-
-
 
             fbx_scene_import_options = unreal.FbxSceneImportOptions()
             fbx_scene_import_options.set_editor_property(name="import_as_dynamic", value=True)

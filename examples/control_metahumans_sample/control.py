@@ -3,11 +3,7 @@
 # Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-import argparse
-import cv2
 import math
-import numpy as np
-import shutil
 import spear
 import time
 
@@ -45,12 +41,9 @@ if __name__ == "__main__":
     spear.log(f"Animating character for {_ANIMATION_DURATION_SECONDS} seconds...")
 
     start_time = time.time()
-    current_time = start_time
 
     while True:
-        previous_time = current_time
         current_time = time.time()
-        dt = current_time - previous_time
         elapsed_time = current_time - start_time
 
         t = elapsed_time
@@ -67,13 +60,15 @@ if __name__ == "__main__":
 
             control_rig_component.send_async.SetControlVector2D(ControlName="CTRL_L_eye", Value=v_2)
             control_rig_component.send_async.SetControlVector2D(ControlName="CTRL_L_nose", Value=v_2)
+
             control_rig_component.send_async.SetControlFloat(ControlName="CTRL_L_brow_raiseIn", Value=cs)
 
             control_rig_component.send_async.SetControlVector2D(ControlName="CTRL_R_eye", Value=v_1)
             control_rig_component.send_async.SetControlVector2D(ControlName="CTRL_R_nose", Value=v_2)
-            control_rig_component.send_async.SetControlFloat(ControlName="CTRL_R_brow_raiseOut", Value=s)
-            control_rig_component.send_async.SetControlFloat(ControlName="CTRL_R_eye_faceScrunch", Value=s)
-            control_rig_component.send_async.SetControlFloat(ControlName="CTRL_R_eye_cheekRaise", Value=s)
+
+            control_rig_component.send_async.SetControlFloat(ControlName="CTRL_R_brow_raiseOut", Value=ss)
+            control_rig_component.send_async.SetControlFloat(ControlName="CTRL_R_eye_faceScrunch", Value=ss)
+            control_rig_component.send_async.SetControlFloat(ControlName="CTRL_R_eye_cheekRaise", Value=ss)
 
         with instance.end_frame():
             pass
@@ -81,5 +76,5 @@ if __name__ == "__main__":
         if elapsed_time >= _ANIMATION_DURATION_SECONDS:
             break
 
-    spear.log(f"Finished animation.")
+    spear.log("Finished animation.")
     spear.log("Done.")

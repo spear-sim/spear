@@ -17,7 +17,7 @@ if __name__ == "__main__":
     spear.configure_system(config=config)
     instance = spear.Instance(config=config)
     game = instance.get_game()
-    
+
     with instance.begin_frame():
 
         # get UEnhancedInputLocalPlayerSubsystem
@@ -25,7 +25,7 @@ if __name__ == "__main__":
         spear.log("enhanced_input_subsystem: ", enhanced_input_subsystem)
         pprint.pprint(enhanced_input_subsystem.get_properties(), depth=1)
 
-        # create UInputAction
+        # load UInputAction
         input_action = game.unreal_service.load_object(uclass="UInputAction", name="/SpContent/Input/IA_InputAction.IA_InputAction")
         spear.log("input_action: ", input_action)
         pprint.pprint(input_action.get_properties(), depth=1)

@@ -3,8 +3,6 @@
 # Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-# Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
-
 import argparse
 import cv2
 import os
@@ -52,9 +50,10 @@ def script():
         pass # we could get rendered data here, but the rendered image will look better if we let temporal anti-aliasing etc accumulate additional information across frames
     yield
 
-    # let temporal anti-aliasing etc accumulate additional information across multiple frames, and
-    # inserting an extra frame or two can fix occasional render-to-texture initialization issues
-    yield from instance.flush_in_editor_script(num_frames=2)
+    # let temporal anti-aliasing etc accumulate additional information across multiple frames, and inserting
+    # an extra frame or two can fix occasional render-to-texture initialization issues (advances a minimum of
+    # 4 frames)
+    yield from game.async_loading_service.wait_for_engine_idle_in_editor_script()
 
     # get rendered frame
     with instance.begin_frame():

@@ -36,7 +36,7 @@ mesh_descs = \
 ]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     # create output dirs
     download_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "download"))

@@ -5,13 +5,11 @@
 
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
-import argparse
 import numpy as np
 import os
 import pandas as pd
 import shutil
 import spear
-import sys
 
 
 num_camera_poses_per_scene = 50
@@ -19,7 +17,7 @@ camera_pose_location_offset = np.array([[0.0, 0.0, 180.0]])
 
 scene_desc = \
 {
-    "name": "apartment_0000",
+    "name": "apartment_0000"
 }
 
 
@@ -51,9 +49,9 @@ if __name__ == "__main__":
         camera_locations = points + camera_pose_location_offset
 
         # generate random pitch, yaw, roll values
-        pitch_values = np.random.uniform(low=0.0, high=0.0, size=num_camera_poses_per_scene)
+        pitch_values = np.zeros(num_camera_poses_per_scene)
         yaw_values   = np.random.uniform(low=-180.0, high=180.0, size=num_camera_poses_per_scene)
-        roll_values  = np.random.uniform(low=0.0, high=0.0, size=num_camera_poses_per_scene)
+        roll_values  = np.zeros(num_camera_poses_per_scene)
 
         # store poses in a csv file
         df = pd.DataFrame(

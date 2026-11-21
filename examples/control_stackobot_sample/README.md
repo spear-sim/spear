@@ -7,10 +7,10 @@ In a pre-processing step, we need to install the SPEAR plugins into the `StackOB
 ```console
 python ../../tools/install_plugins_in_external_project.py --external-project-dir path/to/StackOBot
 
-python ../../tools/run_build.py --unreal-engine-dir path/to/UE_5.5 --unreal-project-dir path/to/ElectricDreamsEnv --build-target ElectricDreamsSampleEditor -build
+python ../../tools/run_uat.py --unreal-engine-dir path/to/UE_5.5 --unreal-project-dir path/to/StackOBot -build
 ```
 
-Our next step is to launch the Unreal Editor via the command-line, which is necessary to override some of the project settings in `StackOBot`. Alternatively, we could override these settings by editing the files in the `StackOBot/Config` directly, but we choose to launch the editor via the command-line so we can avoid modifying the project any more than necessary.
+Our next step is to launch the Unreal Editor via the command-line, which is necessary to override some of the project settings in `StackOBot`. Alternatively, we could override these settings by editing the files in the `StackOBot/Config` directory directly, but we choose to launch the editor via the command-line so we can avoid modifying the project any more than necessary.
 
 ```console
 python ../../tools/run_editor.py --unreal-engine-dir path/to/UE_5.5 --unreal-project-dir path/to/StackOBot --config-files user_config.yaml
@@ -22,4 +22,4 @@ Finally, in the Unreal Editor, we wait for the default map to fully load. Then w
 python run.py
 ```
 
-You should a robot jump and use his jet pack. Additionally, an `images` directory of rendered images will begin to populate.
+You should see a robot jump and use his jet pack. Additionally, an `images` directory of rendered images will begin to populate.

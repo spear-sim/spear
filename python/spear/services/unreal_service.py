@@ -19,6 +19,11 @@ class UnrealService(spear.Service):
         self._static_struct_descs_by_id = None
         self._static_class_descs_by_id = None
 
+        # The static class descs above don't include function descs as a performance optimization, so we cache the
+        # complete static class desc for each class (along with derived info that is expensive to compute from it)
+        # lazily, the first time get_static_class_derived_info(...) is called for that class.
+        self._static_class_derived_infos_by_id = None
+
         # do this after initializing local state
         super().__init__(
             entry_point_caller=entry_point_caller,
@@ -64,6 +69,8 @@ class UnrealService(spear.Service):
                 self._static_struct_descs_by_id = { desc.static_struct: desc for desc in self._static_struct_descs }
             if self._static_class_descs_by_id is None:
                 self._static_class_descs_by_id = { desc.static_class: desc for desc in self._static_class_descs }
+            if self._static_class_derived_infos_by_id is None:
+                self._static_class_derived_infos_by_id = {} # populated lazily in get_static_class_derived_info(...)
         else:
             self._static_struct_descs = unreal_service.get_static_struct_descs()
             self._static_class_descs = unreal_service.get_static_class_descs()
@@ -71,6 +78,7 @@ class UnrealService(spear.Service):
             self._static_class_descs_by_name = unreal_service.get_static_class_descs_by_name()
             self._static_struct_descs_by_id = unreal_service.get_static_struct_descs_by_id()
             self._static_class_descs_by_id = unreal_service.get_static_class_descs_by_id()
+            self._static_class_derived_infos_by_id = unreal_service.get_static_class_derived_infos_by_id()
 
     def terminate(self):
         pass
@@ -85,6 +93,7 @@ class UnrealService(spear.Service):
             self._static_class_descs_by_name = None
             self._static_struct_descs_by_id = None
             self._static_class_descs_by_id = None
+            self._static_class_derived_infos_by_id = None
 
         self.initialize(unreal_service=unreal_service)
 
@@ -92,13 +101,34 @@ class UnrealService(spear.Service):
     # Get static struct descs
     #
 
-    def get_static_struct_desc(self, ustruct, as_handle=None, as_unreal_struct=None):
+    def get_static_struct_desc(self, ustruct):
         ustruct = self.to_ustruct(ustruct=ustruct)
         return self.entry_point_caller.call_on_game_thread("get_static_struct_desc", None, ustruct)
 
-    def get_static_class_desc(self, uclass, as_handle=None, as_unreal_class=None):
+    def get_static_class_desc(self, uclass):
         uclass = self.to_uclass(uclass=uclass)
         return self.entry_point_caller.call_on_game_thread("get_static_class_desc", None, uclass)
+
+    def get_static_class_derived_info(self, uclass):
+        uclass = self.to_uclass(uclass=uclass)
+        static_class_derived_infos = self.get_static_class_derived_infos_by_id()
+
+        if uclass in static_class_derived_infos:
+            return self.entry_point_caller.to_result(obj=static_class_derived_infos[uclass])
+        else:
+            def convert_func(static_class_desc):
+                unqualified_function_descs = {} # build unqualified function name lookup; more-derived classes overwrite less-derived
+                for class_id in static_class_desc.derived_classes[::-1]:
+                    for function_desc in static_class_desc.function_descs.values():
+                        if function_desc.static_class == class_id:
+                            unqualified_function_descs[function_desc.function_name] = function_desc
+                static_class_derived_info = {
+                    "static_class_desc": static_class_desc,
+                    "unqualified_function_descs": unqualified_function_descs}
+                static_class_derived_infos[uclass] = static_class_derived_info
+                return static_class_derived_info
+
+            return self.entry_point_caller.call_on_game_thread("get_static_class_desc", convert_func, uclass)
 
     #
     # Get engine subsystem
@@ -133,7 +163,7 @@ class UnrealService(spear.Service):
 
     def get_static_struct(self, ustruct, as_handle=None, as_unreal_struct=None):
         ustruct = self.to_ustruct(ustruct=ustruct) # if ustruct is a string, it must be in our cached dict
-        result = self.entry_point_caller.get(obj=ustruct)
+        result = self.entry_point_caller.to_result(obj=ustruct)
         return self.to_handle_or_unreal_struct(obj=result, as_handle=as_handle, as_unreal_struct=as_unreal_struct)
 
     def find_static_structs(self, as_handle=None, as_unreal_struct=None):
@@ -171,13 +201,13 @@ class UnrealService(spear.Service):
             assert False
         if isinstance(uclass, numbers.Integral):
             uclass = self.to_uclass(uclass=uclass)
-            result = self.entry_point_caller.get(obj=uclass)
+            result = self.entry_point_caller.to_result(obj=uclass)
             return self.to_handle_or_unreal_class(obj=result, as_handle=as_handle, as_unreal_class=as_unreal_class)
         elif isinstance(uclass, str):
             # uclass might not be in our cached dict if it is an interface
             if uclass in self.get_static_class_descs_by_name():
                 uclass = self.to_uclass(uclass=uclass)
-                result = self.entry_point_caller.get(obj=uclass)
+                result = self.entry_point_caller.to_result(obj=uclass)
                 return self.to_handle_or_unreal_class(obj=result, as_handle=as_handle, as_unreal_class=as_unreal_class)
             else:
                 # the get_static_class entry point takes a string
@@ -1298,3 +1328,6 @@ class UnrealService(spear.Service):
 
     def get_static_class_descs_by_id(self):
         return self.get_top_level_service()._static_class_descs_by_id
+
+    def get_static_class_derived_infos_by_id(self):
+        return self.get_top_level_service()._static_class_derived_infos_by_id

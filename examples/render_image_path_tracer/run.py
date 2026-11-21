@@ -115,7 +115,7 @@ if __name__ == "__main__":
         game.console_service.set_cvar(name="r.PathTracing.FilterWidth", value=args.filter_width)
 
         # spawn camera sensor and get the final_tone_curve_hdr component
-        bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name=f"/SpContent/Blueprints/BP_CameraSensorPathTracer_UST.BP_CameraSensorPathTracer_UST_C")
+        bp_camera_sensor_uclass = game.unreal_service.load_class(uclass="AActor", name="/SpContent/Blueprints/BP_CameraSensorPathTracer_UST.BP_CameraSensorPathTracer_UST_C")
         bp_camera_sensor = game.unreal_service.spawn_actor(uclass=bp_camera_sensor_uclass)
         component = game.unreal_service.get_component_by_name(actor=bp_camera_sensor, component_name=f"DefaultSceneRoot.{component_name}", uclass="USpSceneCaptureComponent2D")
 
@@ -165,7 +165,7 @@ if __name__ == "__main__":
     assert sample_count > 0
 
     while sample_index < sample_count:
-        spear.log("Rendering frame: ", frame_index, " (sample ", sample_index, " of ", sample_count, ")")
+        spear.log(f"Rendering frame: {frame_index} (sample {sample_index} of {sample_count})")
         previous_sample_index = sample_index
 
         with instance.begin_frame():

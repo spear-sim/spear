@@ -120,14 +120,14 @@ if __name__ == "__main__":
 
         actor = blueprint_subobject_descs[0]["object"]
         static_mesh_component = blueprint_subobject_descs[1]["object"]
-        static_mesh_path = posixpath.join(mesh_desc["static_mesh_dir"], mesh_desc['static_mesh_name'])
         static_mesh = unreal.load_asset(name=static_mesh_path)
-        material_path = posixpath.join(mesh_desc["material_dir"], mesh_desc['material_name'])
+        material_path = posixpath.join(mesh_desc["material_dir"], mesh_desc["material_name"])
         material = unreal.load_asset(name=material_path)
         static_mesh_component.set_editor_property(name="static_mesh", value=static_mesh)
         static_mesh_component.set_material(element_index=0, material=material)
 
-        # actor.get_actor_bounds(...) returns an empty bounding box here, so we use the static_mesh_component.get_local_bounds(...) instead
+        # actor.get_actor_bounds(...) returns an empty bounding box here, so we use the
+        # static_mesh_component.get_local_bounds(...) instead
         bounds_min, bounds_max = static_mesh_component.get_local_bounds()
         bounds_origin = (bounds_max + bounds_min) / 2.0
         bounds_half_extent = (bounds_max - bounds_min) / 2.0
@@ -139,7 +139,7 @@ if __name__ == "__main__":
 
     # create cook dirs file
     cook_dirs_file = os.path.realpath(os.path.join(csv_dir, "cook_dirs.csv"))
-    spear.log("Writing cook dirs file: :", cook_dirs_file)
+    spear.log("Writing cook dirs file: ", cook_dirs_file)
     df = pd.DataFrame(columns=["cook_dirs"], data={"cook_dirs": cook_dirs})
     df.to_csv(cook_dirs_file, index=False)
 

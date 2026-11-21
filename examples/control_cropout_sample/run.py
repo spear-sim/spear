@@ -129,7 +129,7 @@ if __name__ == "__main__":
 
         #
         # use call(...) when a function or argument name has spaces, and use get_property_value(...) or set_property_value(...)
-        # when a property name has spaces; spaces with names in them can occur when functions and properties
+        # when a property name has spaces; names with spaces in them can occur when functions and properties
         # are defined in Blueprints
         #
 
@@ -145,15 +145,15 @@ if __name__ == "__main__":
 
         # add resources so we have enough resources to build
 
-        resource = {"Resource": "Food",  "Value": 1000}
+        resource = {"Resource": "Food", "Value": 1000}
         spear.log("Add resource: ", resource)
         game_mode.call(function_name="Add Resource", args=resource)
 
-        resource = {"Resource": "Wood",  "Value": 1000}
+        resource = {"Resource": "Wood", "Value": 1000}
         spear.log("Add resource: ", resource)
         game_mode.call(function_name="Add Resource", args=resource)
 
-        resource = {"Resource": "Stone",  "Value": 1000}
+        resource = {"Resource": "Stone", "Value": 1000}
         spear.log("Add resource: ", resource)
         game_mode.call(function_name="Add Resource", args=resource)
 
@@ -190,7 +190,7 @@ if __name__ == "__main__":
             spawn_candidate_location_stepped = return_values["NewParam"]
             temp_build_target.K2_SetActorLocation(NewLocation=spawn_candidate_location_stepped)
 
-            # test if the build object is overlapping any interactable actors 
+            # test if the build object is overlapping any interactable actors
             return_values = temp_build_target.GetOverlappingActors(ClassFilter=interactable_uclass, as_dict=True)
             num_overlapping_actors = len(return_values["OverlappingActors"])
 
@@ -204,7 +204,7 @@ if __name__ == "__main__":
             spear.log(f"Candidate location: {temp_build_target.K2_GetActorLocation()} (distance={distance:.1f}, num_overlapping_actors={num_overlapping_actors}, corners_in_nav={corners_in_nav}, can_spawn={can_spawn})")
 
             if can_spawn:
-                spear.log(f"Found a location to spawn the build target object.")
+                spear.log("Found a location to spawn the build target object.")
                 break
 
         if not can_spawn:
@@ -239,7 +239,7 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass
 
-    spear.log(f"Rendering images...")
+    spear.log("Rendering images...")
 
     #
     # initialize frame counter

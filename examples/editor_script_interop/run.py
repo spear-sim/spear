@@ -44,12 +44,14 @@ if __name__ == "__main__":
     with instance.end_frame():
         pass
 
-    # test exception propagation
+    # test exception propagation (the ValueError raised by inner_script_raise should be re-raised as a RuntimeError)
+    caught_expected_error = False
     try:
         editor.python_service.execute_file_across_frames(file=inner_script_raise_file, args_string="")
-        assert False # expecting AssertionError from inner_script_raise
-    except AssertionError as e:
+    except RuntimeError as e:
         spear.log("Caught expected error: ", type(e))
+        caught_expected_error = True
+    assert caught_expected_error
 
     #
     # execute_string_across_frames with inputs and outputs
