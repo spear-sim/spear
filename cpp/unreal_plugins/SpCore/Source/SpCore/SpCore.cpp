@@ -85,8 +85,6 @@ void SpCore::enginePreExitHandler()
     SP_LOG_CURRENT_FUNCTION();
 
     UnrealUtils::terminate();
-
-    // See above.
     terminateSharedMemory();
 }
 
