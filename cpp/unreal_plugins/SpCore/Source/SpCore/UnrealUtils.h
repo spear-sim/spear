@@ -1187,7 +1187,7 @@ public:
     static UActorComponent* createComponentInsideOwnerConstructorByClass(UClass* component_class, AActor* owner, const std::string& component_name)
     {
         SP_ASSERT(owner);
-        UActorComponent* component = Cast<UActorComponent>(owner->CreateDefaultSubobject(Unreal::toFName(component_name), component_class, component_class, true, false)); // no RTTI available
+        UActorComponent* component = Cast<UActorComponent>(owner->CreateDefaultSubobject(Unreal::createFName(component_name), component_class, component_class, true, false)); // no RTTI available
         SP_ASSERT(component);
         return component;
     }
@@ -1195,7 +1195,7 @@ public:
     static USceneComponent* createSceneComponentInsideOwnerConstructorByClass(UClass* scene_component_class, AActor* owner, const std::string& scene_component_name)
     {
         SP_ASSERT(owner);
-        USceneComponent* scene_component = Cast<USceneComponent>(owner->CreateDefaultSubobject(Unreal::toFName(scene_component_name), scene_component_class, scene_component_class, true, false)); // no RTTI available
+        USceneComponent* scene_component = Cast<USceneComponent>(owner->CreateDefaultSubobject(Unreal::createFName(scene_component_name), scene_component_class, scene_component_class, true, false)); // no RTTI available
         SP_ASSERT(scene_component);
         owner->SetRootComponent(scene_component);
         return scene_component;
@@ -1205,7 +1205,7 @@ public:
     {
         SP_ASSERT(owner);
         SP_ASSERT(parent);
-        USceneComponent* scene_component = Cast<USceneComponent>(owner->CreateDefaultSubobject(Unreal::toFName(scene_component_name), scene_component_class, scene_component_class, true, false)); // no RTTI available
+        USceneComponent* scene_component = Cast<USceneComponent>(owner->CreateDefaultSubobject(Unreal::createFName(scene_component_name), scene_component_class, scene_component_class, true, false)); // no RTTI available
         SP_ASSERT(scene_component);
         scene_component->SetupAttachment(parent);
         return scene_component;
@@ -1247,7 +1247,7 @@ public:
     static UActorComponent* createComponentOutsideOwnerConstructorByClass(UClass* component_class, AActor* owner, const std::string& component_name, EObjectFlags object_flags = RF_NoFlags)
     {
         SP_ASSERT(owner);
-        UActorComponent* component = NewObject<UActorComponent>(owner, component_class, Unreal::toFName(component_name), object_flags);
+        UActorComponent* component = NewObject<UActorComponent>(owner, component_class, Unreal::createFName(component_name), object_flags);
         SP_ASSERT(component);
         component->RegisterComponent();
         return component;
@@ -1256,7 +1256,7 @@ public:
     static USceneComponent* createSceneComponentOutsideOwnerConstructorByClass(UClass* scene_component_class, AActor* owner, const std::string& scene_component_name, EObjectFlags object_flags = RF_NoFlags)
     {
         SP_ASSERT(owner);
-        USceneComponent* scene_component = NewObject<USceneComponent>(owner, scene_component_class, Unreal::toFName(scene_component_name), object_flags);
+        USceneComponent* scene_component = NewObject<USceneComponent>(owner, scene_component_class, Unreal::createFName(scene_component_name), object_flags);
         SP_ASSERT(scene_component);
         owner->SetRootComponent(scene_component);
         scene_component->RegisterComponent();
@@ -1267,7 +1267,7 @@ public:
     {
         SP_ASSERT(owner);
         SP_ASSERT(parent);
-        USceneComponent* scene_component = NewObject<USceneComponent>(owner, scene_component_class, Unreal::toFName(scene_component_name), object_flags);
+        USceneComponent* scene_component = NewObject<USceneComponent>(owner, scene_component_class, Unreal::createFName(scene_component_name), object_flags);
         SP_ASSERT(scene_component);
         scene_component->SetupAttachment(parent);
         scene_component->RegisterComponent();
@@ -1354,7 +1354,12 @@ private:
     static std::string toKey(const UActorComponent* component, bool include_actor_stable_name = false, bool include_actor_unreal_name = false);
     static std::string toKey(const AActor* actor, bool include_unreal_name = false);
     static std::string toKey(const UFunction* ufunction);
-    static std::string toKey(const FProperty* property);
+
+    template <CMappableNameObject TMappableNameObject>
+    static std::string toKey(const TMappableNameObject* mappable_name_object)
+    {
+        return Unreal::getUnrealName(mappable_name_object);
+    }
 
     //
     // Helper functions for finding actors and getting components and getting properties

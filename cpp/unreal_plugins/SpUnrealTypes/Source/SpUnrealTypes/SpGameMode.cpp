@@ -101,14 +101,18 @@ void ASpGameMode::SpLoadStreamLevel(const FString& LevelName) const
     SP_ASSERT(GetWorld());
     bool make_visible_after_load = true;
     bool should_block_on_load = true;
-    UGameplayStatics::LoadStreamLevel(GetWorld(), Unreal::toFName(Unreal::toStdString(LevelName)), make_visible_after_load, should_block_on_load, FLatentActionInfo());
+    // We use createFName(...) because UE converts LevelName back to a string and matches it as a suffix of each
+    // streaming level's package name, so LevelName might not be a registered name.
+    UGameplayStatics::LoadStreamLevel(GetWorld(), Unreal::createFName(LevelName), make_visible_after_load, should_block_on_load, FLatentActionInfo());
 }
 
 void ASpGameMode::SpUnloadStreamLevel(const FString& LevelName) const
 {
     SP_ASSERT(GetWorld());
     bool should_block_on_unload = true;
-    UGameplayStatics::UnloadStreamLevel(GetWorld(), Unreal::toFName(Unreal::toStdString(LevelName)), FLatentActionInfo(), should_block_on_unload);
+    // We use createFName(...) because UE converts LevelName back to a string and matches it as a suffix of each
+    // streaming level's package name, so LevelName might not be a registered name.
+    UGameplayStatics::UnloadStreamLevel(GetWorld(), Unreal::createFName(LevelName), FLatentActionInfo(), should_block_on_unload);
 }
 
 void ASpGameMode::SpLoadLevelInstance(const FString& LevelName)
@@ -148,7 +152,9 @@ void ASpGameMode::SpUnloadLevelInstance(const FString& LevelName)
 
 void ASpGameMode::SpOpenLevel(const FString& LevelName) const
 {
-    UGameplayStatics::OpenLevel(GetWorld(), Unreal::toFName(Unreal::toStdString(LevelName)));
+    // We use createFName(...) because UE converts LevelName back to a string and uses it as a travel URL (e.g., a
+    // map that hasn't been loaded or a server address), so LevelName might not be a registered name.
+    UGameplayStatics::OpenLevel(GetWorld(), Unreal::createFName(LevelName));
 }
 
 void ASpGameMode::SpToggleDebugCamera()

@@ -141,7 +141,7 @@ public:
                     SP_ASSERT(ufunction);
                     SpFunctionDesc function_desc;
                     function_desc.function_ = ufunction;
-                    function_desc.function_name_ = Unreal::toStdString(ufunction->GetName());
+                    function_desc.function_name_ = Unreal::getUnrealName(ufunction);
                     UStruct* outer = Cast<UStruct>(ufunction->GetOuter());
                     SP_ASSERT(outer);
                     function_desc.static_class_ = Cast<UClass>(outer);
@@ -169,7 +169,6 @@ public:
         #if !WITH_EDITOR // defined in an auto-generated header
             unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_editor_subsystem_by_class",
                 [this](uint64_t& uclass) -> uint64_t {
-                    SP_ASSERT(false);
                     return 0;
                 });
         #endif
@@ -715,7 +714,7 @@ public:
                     NewObject<UObject>(
                         outer_ptr,
                         toPtr<UClass>(uclass),
-                        Unreal::toFName(name),
+                        Unreal::createFName(name),
                         Unreal::getCombinedEnumFlagValueFromStringsAs<EObjectFlags, ESpObjectFlags>(object_flag_strings),
                         toPtr<UObject>(uobject_template),
                         copy_transients_from_class_defaults,

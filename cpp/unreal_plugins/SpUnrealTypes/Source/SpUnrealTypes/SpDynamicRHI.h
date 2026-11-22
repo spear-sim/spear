@@ -203,7 +203,7 @@ public:
     static FString GetName()
     {
         SP_ASSERT(GDynamicRHI);
-        return GDynamicRHI->GetName();
+        return GDynamicRHI->GetName(); // returns const TCHAR* (e.g., "D3D12"), not an FName, so there is no need to use Unreal::getUnrealName(...)
     }
 
     // Mimics ::RHIGetMemoryStats(...) in UE 5.8, see Engine/Source/Runtime/RHI/Public/DynamicRHI.h. In UE 5.8 the

@@ -3,6 +3,7 @@
 # Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
+import collections.abc
 import json
 import numbers
 import numpy as np
@@ -291,6 +292,121 @@ class ScriptStruct:
     def __repr__(self):
         return f'ScriptStruct(value={self.value}, type_string="{self.type_string}")'
 
+#
+# CaseInsensitiveDict is a dict with string keys that are looked up case-insensitively. Each key is stored with the
+# spelling it was first inserted with, so iterating over, printing, or serializing a CaseInsensitiveDict shows those
+# spellings. Constructing a CaseInsensitiveDict asserts if two keys differ only by case. Only the top level is
+# case-insensitive; nested dicts are not converted. This is useful for dicts whose keys are FName strings returned by
+# Unreal (e.g., function parameter names), because outside the editor an FName only stores the first spelling
+# registered in the process, so a parameter declared as, e.g., "Result" might be returned as "result" if some other
+# code registered FName("result") first. Lookups, membership tests (including "key in d.keys()" and "(key, value) in
+# d.items()"), "d == other", and "d | other" all compare keys case-insensitively. Operations that construct a plain
+# dict from a CaseInsensitiveDict, e.g., "dict(d)" and "{**d}", return a dict that compares keys exactly, so use
+# "d.copy()" if a case-insensitive copy is needed.
+#
+
+class CaseInsensitiveDict(dict):
+    def __init__(self, in_dict=None):
+        in_dict = in_dict if in_dict is not None else {}
+        super().__init__()
+        self._stored_keys = {} # map from lowercase key to stored key
+        for key, value in in_dict.items():
+            assert isinstance(key, str)
+            assert key.lower() not in self._stored_keys # keys must not differ only by case
+            self[key] = value
+
+    def __getitem__(self, key):
+        return super().__getitem__(self._get_stored_key(key=key))
+
+    def __setitem__(self, key, value):
+        assert isinstance(key, str)
+        stored_key = self._stored_keys.setdefault(key.lower(), key)
+        super().__setitem__(stored_key, value)
+
+    def __delitem__(self, key):
+        stored_key = self._get_stored_key(key=key)
+        super().__delitem__(stored_key)
+        del self._stored_keys[stored_key.lower()]
+
+    def __contains__(self, key):
+        return super().__contains__(self._get_stored_key(key=key))
+
+    def __eq__(self, other):
+        assert isinstance(other, collections.abc.Mapping)
+        # each key in other must match a distinct key in self, ignoring case, with an equal value
+        stored_keys = { self._get_stored_key(key=key) for key in other.keys() }
+        return len(other) == len(self) and len(stored_keys) == len(self) and all(key in self and self[key] == value for key, value in other.items())
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __or__(self, other):
+        assert isinstance(other, collections.abc.Mapping)
+        result = self.copy()
+        result.update(other)
+        return result
+
+    def __ror__(self, other):
+        assert isinstance(other, collections.abc.Mapping)
+        result = CaseInsensitiveDict()
+        result.update(other)
+        result.update(self)
+        return result
+
+    def __ior__(self, other):
+        self.update(other)
+        return self
+
+    def __reduce__(self):
+        # needed for pickle, because pickle restores items before restoring self._stored_keys, and pickle passes args
+        # positionally, so dict(self) is passed as in_dict
+        return (CaseInsensitiveDict, (dict(self),))
+
+    def __repr__(self):
+        return f"CaseInsensitiveDict(in_dict={super().__repr__()})"
+
+    def get(self, key, default=None):
+        return super().get(self._get_stored_key(key=key), default)
+
+    def keys(self):
+        return collections.abc.KeysView(self) # uses self.__contains__(...) for membership tests
+
+    def items(self):
+        return collections.abc.ItemsView(self) # uses self.__getitem__(...) for membership tests
+
+    def pop(self, key, *args):
+        stored_key = self._get_stored_key(key=key)
+        if super().__contains__(stored_key):
+            del self._stored_keys[stored_key.lower()]
+        return super().pop(stored_key, *args)
+
+    def popitem(self):
+        key, value = super().popitem()
+        del self._stored_keys[key.lower()]
+        return key, value
+
+    def setdefault(self, key, default=None):
+        if key not in self:
+            self[key] = default
+        return self[key]
+
+    def update(self, *args, **kwargs):
+        for key, value in dict(*args, **kwargs).items():
+            self[key] = value
+
+    def clear(self):
+        super().clear()
+        self._stored_keys.clear()
+
+    def copy(self):
+        return CaseInsensitiveDict(in_dict=self)
+
+    def _get_stored_key(self, key):
+        if isinstance(key, str) and key.lower() in self._stored_keys:
+            return self._stored_keys[key.lower()]
+        else:
+            return key
+
 
 #
 # Factories for constructing Unreal proxy types that correctly return None in cases where the input uobjects
@@ -548,6 +664,26 @@ def try_to_dict(json_string, default_value=None):
             return json_string
         else:
             return default_value
+
+# Convert to a CaseInsensitiveDict from a dict. Only the top level is converted; nested dicts are not converted.
+def to_case_insensitive(in_dict):
+    return CaseInsensitiveDict(in_dict=in_dict)
+
+# Convert to a dict from a CaseInsensitiveDict. Only the top level is converted; nested CaseInsensitiveDicts are not
+# converted.
+def to_case_sensitive(in_dict):
+    return dict(in_dict)
+
+# Convert to a CaseInsensitiveDict from a JSON value returned by a service if the JSON value is a struct, where type_id is
+# the C++ type of the JSON value. If obj is a dict and type_id is not a TMap, then obj must be a struct, so its keys are
+# property names. Only the top level is converted. We don't convert structs inside containers (e.g., TArray<FVector>)
+# or dicts nested inside struct fields, so a struct value behaves the same as the value returned by
+# get_properties_for_struct(...).
+def try_to_case_insensitive(obj, type_id):
+    if isinstance(obj, dict) and not type_id.startswith("TMap<"):
+        return to_case_insensitive(in_dict=obj)
+    else:
+        return obj
 
 # Convert to a Ptr object that can be passed to a service from a handle.
 def to_ptr(handle):

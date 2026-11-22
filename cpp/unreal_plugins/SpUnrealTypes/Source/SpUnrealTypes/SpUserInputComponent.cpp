@@ -67,8 +67,8 @@ void USpUserInputComponent::subscribeToUserInputs(const std::vector<std::string>
 
         user_input_desc.scale_ = 1.0f;
         user_input_desc.threshold_ = 1.0f;
-        user_input_desc.axis_ = Unreal::toFName(getUniqueAxisNameFromUserInputName(user_input_name));
-        user_input_desc.input_axis_key_mapping_ = FInputAxisKeyMapping(user_input_desc.axis_, FKey(Unreal::toFName(user_input_name)), user_input_desc.scale_);
+        user_input_desc.axis_ = Unreal::createFName(getUniqueAxisNameFromUserInputName(user_input_name));
+        user_input_desc.input_axis_key_mapping_ = FInputAxisKeyMapping(user_input_desc.axis_, FKey(Unreal::getFName(user_input_name)), user_input_desc.scale_);
 
         player_controller->PlayerInput->AddAxisMapping(user_input_desc.input_axis_key_mapping_);
         player_controller->InputComponent->BindAxis(user_input_desc.axis_);

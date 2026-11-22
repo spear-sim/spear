@@ -180,6 +180,8 @@ Concrete kwargs and return shapes for common helpers. See `examples/getting_star
 
 **Case convention:** Struct dicts use Unreal's C++ field names (e.g., `{"X", "Y", "Z"}`, `{"Pitch", "Yaw", "Roll"}`), both when they are returned by UFUNCTIONs and when you pass them in.
 
+**Name lookups are case-insensitive:** Unreal names (FNames) compare case-insensitively, and outside the editor the spelling Unreal returns for a name (e.g., a UFUNCTION parameter declared as `Result`) can be the first spelling registered in the process (e.g., `result`). So SPEAR looks up all names (e.g., class, struct, function, parameter, and property names) case-insensitively, and returns top-level dicts keyed by these names (e.g., from `as_dict=True` and `get_properties_for_object(...)`), as well as struct values returned directly from functions and properties, as `spear.CaseInsensitiveDict`s. Always look up keys with the declared spelling (e.g., `return_values["Result"]`), and don't rely on the spelling of keys when iterating.
+
 ### `game.unreal_service` / `editor.unreal_service`
 
 - `spawn_actor(uclass="ASpotLight", location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Pitch": 0.0, "Yaw": 0.0, "Roll": 0.0})` → Actor. `rotation` is optional and defaults to zeros.

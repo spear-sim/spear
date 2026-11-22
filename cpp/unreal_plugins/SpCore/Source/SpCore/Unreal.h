@@ -128,21 +128,40 @@ template <typename TParent>
 concept CParent =
     CActor<TParent> || CSceneComponent<TParent>;
 
-template <typename TNameObject>
-concept CNameObject =
-    !CStaticStruct<TNameObject> &&
-    !CComponent<TNameObject> &&
-    !CActor<TNameObject> &&
-    (requires (TNameObject name_object) {
-        { name_object.GetName() } -> std::same_as<FName>;
-    } ||
-    requires (TNameObject name_object) {
-        { name_object.GetName() } -> std::same_as<FString>;
-    });
+template <typename TFNameObject>
+concept CFNameObject =
+    requires (TFNameObject fname_object) {
+        { fname_object.GetFName() } -> std::same_as<FName>;
+    };
+
+template <typename TNameIsFNameObject>
+concept CNameIsFNameObject =
+    !CFNameObject<TNameIsFNameObject> &&
+    requires (TNameIsFNameObject name_is_fname_object) {
+        { name_is_fname_object.GetName() } -> std::same_as<FName>;
+    };
+
+template <typename TNameIsFStringObject>
+concept CNameIsFStringObject =
+    !CFNameObject<TNameIsFStringObject> &&
+    requires (TNameIsFStringObject name_is_fstring_object) {
+        { name_is_fstring_object.GetName() } -> std::same_as<FString>;
+    };
+
+template <typename TNameableObject>
+concept CNameableObject =
+    CFNameObject<TNameableObject> || CNameIsFNameObject<TNameableObject> || CNameIsFStringObject<TNameableObject>;
+
+template <typename TMappableNameObject>
+concept CMappableNameObject =
+    CNameableObject<TMappableNameObject> &&
+    !CStaticStruct<TMappableNameObject> &&
+    !CComponent<TMappableNameObject> &&
+    !CActor<TMappableNameObject>;
 
 template <typename TMappable>
 concept CMappable =
-    (CStaticStruct<TMappable> || CComponent<TMappable> || CActor<TMappable> || CNameObject<TMappable>);
+    (CStaticStruct<TMappable> || CComponent<TMappable> || CActor<TMappable> || CMappableNameObject<TMappable>);
 
 template <typename TSubsystem>
 concept CSubsystem =
@@ -262,7 +281,7 @@ public:
         } else {
             SP_ASSERT(false);
         }
-        std::string str = toStdString(ustruct->GetPrefixCPP()) + toStdString(ustruct->GetName());
+        std::string str = toStdString(ustruct->GetPrefixCPP()) + getUnrealName(ustruct);
         str = Std::join(Std::tokenize(str, " "), "");
 
         SP_ASSERT(str != "");
@@ -305,7 +324,7 @@ public:
         } else {
             SP_ASSERT(false);
         }
-        std::string str = toStdString(ustruct->GetName());
+        std::string str = getUnrealName(ustruct);
 
         str.erase(0, str.find_first_not_of(" ")); // strip leading white space
         str.erase(str.find_last_not_of(" ") + 1); // strip trailing white space
@@ -347,7 +366,11 @@ public:
     static TEnum getEnumValueFromString(const std::string& string)
     {
         UEnum* uenum = StaticEnum<TEnum>();
-        return getEnumValueAs<TEnum>(uenum->GetValueByName(toFName(string), EGetByNameFlags::ErrorIfNotFound | EGetByNameFlags::CaseSensitive));
+        // We use GetValueByNameString(...) instead of GetValueByName(...), because for enum classes, UE registers each
+        // name with its namespace (e.g., "ESpObjectFlags::RF_Transactional"), so the name without its namespace (e.g.,
+        // "RF_Transactional") might not be registered. GetValueByNameString(...) handles both forms without
+        // registering a new name.
+        return getEnumValueAs<TEnum>(uenum->GetValueByNameString(toFString(string), EGetByNameFlags::ErrorIfNotFound));
     }
 
     template <typename TDestEnum, CEnum TEnum>
@@ -643,11 +666,6 @@ public:
         return std::string(TCHAR_TO_UTF8(str));
     }
 
-    static FName toFName(const std::string& str)
-    {
-        return FName(str.c_str());
-    }
-
     static FString toFString(const std::string& str)
     {
         return FString(UTF8_TO_TCHAR(str.c_str()));
@@ -675,5 +693,93 @@ public:
     static Unreal::FStringContainer toTCharPtr(TStr&& str)
     {
         return FStringContainer(std::forward<TStr>(str));
+    }
+
+    //
+    // Name helpers. FNames compare case-insensitively, and the spelling returned by FName::ToString() and
+    // UObject::GetName() can differ across builds (e.g., outside the editor, FName("Result").ToString() returns
+    // "result" if some other code registered FName("result") first, but inside the editor, it returns "Result").
+    // So we always use isNamed(...) to compare names, and we only use getUnrealName(...) to return names as
+    // output. We use createFName(...) only when we intend to register a new name, and getFName(...) to look up an
+    // existing name without registering it.
+    //
+
+    static FName createFName(const FString& name)
+    {
+        return FName(*name, FNAME_Add);
+    }
+
+    static FName createFName(const std::string& name)
+    {
+        return createFName(toFString(name));
+    }
+
+    static FName createFName(const char* name)
+    {
+        SP_ASSERT(name);
+        return createFName(std::string(name));
+    }
+
+    static FName getFName(const FString& name)
+    {
+        FName fname = FName(*name, FNAME_Find); // use FNAME_Find to avoid registering a new name
+        SP_ASSERT(!fname.IsNone());
+        return fname;
+    }
+
+    static FName getFName(const std::string& name)
+    {
+        return getFName(toFString(name));
+    }
+
+    static FName getFName(const char* name)
+    {
+        SP_ASSERT(name);
+        return getFName(std::string(name));
+    }
+
+    template <CFNameObject TFNameObject>
+    static FName getFName(const TFNameObject* fname_object)
+    {
+        SP_ASSERT(fname_object);
+        return fname_object->GetFName();
+    }
+
+    template <CNameIsFNameObject TNameIsFNameObject>
+    static FName getFName(const TNameIsFNameObject* name_is_fname_object)
+    {
+        SP_ASSERT(name_is_fname_object);
+        return name_is_fname_object->GetName();
+    }
+
+    template <CNameIsFStringObject TNameIsFStringObject>
+    static FName getFName(const TNameIsFStringObject* name_is_fstring_object)
+    {
+        SP_ASSERT(name_is_fstring_object);
+        return getFName(name_is_fstring_object->GetName());
+    }
+
+    static bool isNamed(const FName& fname, const std::string& name)
+    {
+        // FName::operator==(const TCHAR*) compares case-insensitively without registering a new name.
+        FString name_fstring = toFString(name);
+        return fname == *name_fstring;
+    }
+
+    template <CNameableObject TNameableObject>
+    static bool isNamed(const TNameableObject* nameable_object, const std::string& name)
+    {
+        return isNamed(getFName(nameable_object), name);
+    }
+
+    static std::string getUnrealName(const FName& name)
+    {
+        return toStdString(name);
+    }
+
+    template <CNameableObject TNameableObject>
+    static std::string getUnrealName(const TNameableObject* nameable_object)
+    {
+        return getUnrealName(getFName(nameable_object));
     }
 };

@@ -136,12 +136,12 @@ public:
                     SP_ASSERT(input_action);
 
                     if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENHANCED_INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
-                        SP_LOG(Unreal::toStdString(input_action->GetName()));
+                        SP_LOG(Unreal::getUnrealName(input_action));
                         SP_LOG(Unreal::getStringFromEnumValue(event_binding->GetTriggerEvent()));
                         SP_LOG();
                     }
 
-                    if (input_action_name == Unreal::toStdString(input_action->GetName()) && trigger_event == event_binding->GetTriggerEvent()) {
+                    if (Unreal::isNamed(input_action, input_action_name) && trigger_event == event_binding->GetTriggerEvent()) {
 
                         // SourceAction is a private member variable on FInputActionInstance, but it is
                         // accessible through Unreal's property system, so we can still get and set it.

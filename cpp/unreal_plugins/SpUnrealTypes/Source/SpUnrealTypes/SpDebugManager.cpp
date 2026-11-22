@@ -261,7 +261,7 @@ void ASpDebugManager::GetAndSetObjectProperties()
     std::vector<AActor*> static_mesh_actors_from_class = UnrealUtils::findActorsByClass(AStaticMeshActor::StaticClass(), world);
     SP_ASSERT(!static_mesh_actors_from_class.empty());
     AActor* static_mesh_actor_from_class = static_mesh_actors_from_class.at(0);
-    SP_LOG(Unreal::toStdString(static_mesh_actor_from_class->GetName()));
+    SP_LOG(Unreal::getUnrealName(static_mesh_actor_from_class));
 
     // Get and set object properties from UObject*
     SP_LOG(UnrealUtils::getObjectPropertiesAsString(static_mesh_actor));

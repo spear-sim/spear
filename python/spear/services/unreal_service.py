@@ -54,7 +54,8 @@ class UnrealService(spear.Service):
         # cases, call instance.rebuild() / game.rebuild() / editor.rebuild() / unreal_service.rebuild_cache()
         # to rebuild the caches, or pass in a UClass* handle obtained from, e.g., unreal_service.load_class(...)
         # when calling a function that expects a uclass. Passing a string is only possible (e.g., uclass="AActor")
-        # if that class is present in these caches.
+        # if that class is present in these caches. Like all other names, class and struct names are looked up
+        # case-insensitively.
 
         if unreal_service is None:
             if self._static_struct_descs is None:
@@ -62,9 +63,9 @@ class UnrealService(spear.Service):
             if self._static_class_descs is None:
                 self._static_class_descs = self.entry_point_caller.call_on_game_thread("get_static_class_descs", None)
             if self._static_struct_descs_by_name is None:
-                self._static_struct_descs_by_name = { desc.name: desc for desc in self._static_struct_descs }
+                self._static_struct_descs_by_name = spear.to_case_insensitive(in_dict={ desc.name: desc for desc in self._static_struct_descs })
             if self._static_class_descs_by_name is None:
-                self._static_class_descs_by_name = { desc.name: desc for desc in self._static_class_descs }
+                self._static_class_descs_by_name = spear.to_case_insensitive(in_dict={ desc.name: desc for desc in self._static_class_descs })
             if self._static_struct_descs_by_id is None:
                 self._static_struct_descs_by_id = { desc.static_struct: desc for desc in self._static_struct_descs }
             if self._static_class_descs_by_id is None:
@@ -117,13 +118,18 @@ class UnrealService(spear.Service):
             return self.entry_point_caller.to_result(obj=static_class_derived_infos[uclass])
         else:
             def convert_func(static_class_desc):
-                unqualified_function_descs = {} # build unqualified function name lookup; more-derived classes overwrite less-derived
+                # Function names are FNames, so we look them up case-insensitively. We store qualified_function_descs
+                # separately instead of replacing static_class_desc.function_descs, because static_class_desc might be
+                # a C++ object that would convert a CaseInsensitiveDict back to a std::map.
+                qualified_function_descs = spear.to_case_insensitive(in_dict=static_class_desc.function_descs)
+                unqualified_function_descs = spear.CaseInsensitiveDict() # build unqualified function name lookup; more-derived classes overwrite less-derived
                 for class_id in static_class_desc.derived_classes[::-1]:
-                    for function_desc in static_class_desc.function_descs.values():
+                    for function_desc in qualified_function_descs.values():
                         if function_desc.static_class == class_id:
                             unqualified_function_descs[function_desc.function_name] = function_desc
                 static_class_derived_info = {
                     "static_class_desc": static_class_desc,
+                    "qualified_function_descs": qualified_function_descs,
                     "unqualified_function_descs": unqualified_function_descs}
                 static_class_derived_infos[uclass] = static_class_derived_info
                 return static_class_derived_info
@@ -348,7 +354,7 @@ class UnrealService(spear.Service):
         uclass = self.to_uclass(uclass=uclass)
         args = spear.to_json_strings(objs=args)
 
-        convert_func = lambda result: { k: spear.PropertyValue(value=spear.try_to_dict(json_string=v.value), type_id=v.type_id) for k, v in result.items() }
+        convert_func = lambda result: spear.to_case_insensitive(in_dict={ k: spear.PropertyValue(value=spear.try_to_case_insensitive(obj=spear.try_to_dict(json_string=v.value), type_id=v.type_id), type_id=v.type_id) for k, v in result.items() })
         return self.entry_point_caller.call_on_game_thread("call_function", convert_func, self.get_world(), uobject, uclass, ufunction, args, world_context_object)
 
     #
@@ -419,17 +425,17 @@ class UnrealService(spear.Service):
 
     def get_properties_for_object(self, uobject):
         uobject = spear.to_handle(obj=uobject)
-        convert_func = lambda result: spear.try_to_dict(json_string=result, default_value={})
+        convert_func = lambda result: spear.to_case_insensitive(in_dict=spear.try_to_dict(json_string=result, default_value={}))
         return self.entry_point_caller.call_on_game_thread("get_properties_for_object_as_string", convert_func, uobject)
 
     def get_properties_for_struct(self, value_ptr, ustruct):
         ustruct = self.to_ustruct(ustruct=ustruct)
-        convert_func = lambda result: spear.try_to_dict(json_string=result, default_value={})
+        convert_func = lambda result: spear.to_case_insensitive(in_dict=spear.try_to_dict(json_string=result, default_value={}))
         return self.entry_point_caller.call_on_game_thread("get_properties_for_struct_as_string", convert_func, value_ptr, ustruct)
 
     def get_properties_for_class(self, value_ptr, uclass):
         uclass = self.to_uclass(uclass=uclass)
-        convert_func = lambda result: spear.try_to_dict(json_string=result, default_value={})
+        convert_func = lambda result: spear.to_case_insensitive(in_dict=spear.try_to_dict(json_string=result, default_value={}))
         return self.entry_point_caller.call_on_game_thread("get_properties_for_struct_as_string", convert_func, value_ptr, uclass)
 
     def set_properties_for_object(self, uobject, properties, notify_editor=False):
@@ -483,17 +489,17 @@ class UnrealService(spear.Service):
 
     def get_property_value_for_object(self, uobject, property_name):
         uobject = spear.to_handle(obj=uobject)
-        convert_func = lambda result: spear.PropertyValue(value=spear.try_to_dict(json_string=result.value), type_id=result.type_id)
+        convert_func = lambda result: spear.PropertyValue(value=spear.try_to_case_insensitive(obj=spear.try_to_dict(json_string=result.value), type_id=result.type_id), type_id=result.type_id)
         return self.entry_point_caller.call_on_game_thread("get_property_value_for_object_as_string", convert_func, uobject, property_name)
 
     def get_property_value_for_struct(self, value_ptr, ustruct, property_name):
         ustruct = self.to_ustruct(ustruct=ustruct)
-        convert_func = lambda result: spear.PropertyValue(value=spear.try_to_dict(json_string=result.value), type_id=result.type_id)
+        convert_func = lambda result: spear.PropertyValue(value=spear.try_to_case_insensitive(obj=spear.try_to_dict(json_string=result.value), type_id=result.type_id), type_id=result.type_id)
         return self.entry_point_caller.call_on_game_thread( "get_property_value_for_struct_as_string", convert_func, value_ptr, ustruct, property_name)
 
     def get_property_value_for_class(self, value_ptr, uclass, property_name):
         uclass = self.to_uclass(uclass=uclass)
-        convert_func = lambda result: spear.PropertyValue(value=spear.try_to_dict(json_string=result.value), type_id=result.type_id)
+        convert_func = lambda result: spear.PropertyValue(value=spear.try_to_case_insensitive(obj=spear.try_to_dict(json_string=result.value), type_id=result.type_id), type_id=result.type_id)
         return self.entry_point_caller.call_on_game_thread( "get_property_value_for_struct_as_string", convert_func, value_ptr, uclass, property_name)
 
     def set_property_value_for_object(self, uobject, property_name, property_value, notify_editor=False):

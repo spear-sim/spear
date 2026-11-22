@@ -134,7 +134,7 @@ class UnrealObject:
 
     def call(self, function_name, args=None, world_context_object="WorldContextObject", as_raw_dict=None, as_dict=None, as_value=None, as_handle=None, as_unreal_struct=None, as_unreal_class=None, as_unreal_object=None, with_sp_funcs=None, arrays=None, unreal_objs=None, info=""):
         args = args if args is not None else {}
-        if function_name in self.derived_info["unqualified_function_descs"] or function_name in self.derived_info["static_class_desc"].function_descs:
+        if function_name in self.derived_info["unqualified_function_descs"] or function_name in self.derived_info["qualified_function_descs"]:
             return self._call_ufunction(
                 function_name=function_name,
                 world_context_object=world_context_object,
@@ -170,8 +170,8 @@ class UnrealObject:
             spear.log(f"    kwargs:           {kwargs}")
         if function_name in self.derived_info["unqualified_function_descs"]:
             ufunction = self.derived_info["unqualified_function_descs"][function_name].function
-        elif function_name in self.derived_info["static_class_desc"].function_descs:
-            ufunction = self.derived_info["static_class_desc"].function_descs[function_name].function
+        elif function_name in self.derived_info["qualified_function_descs"]:
+            ufunction = self.derived_info["qualified_function_descs"][function_name].function
         else:
             assert False
         result = self._unreal_service.call_function(
@@ -443,6 +443,8 @@ class UnrealObject:
             return obj.value
         elif isinstance(obj, list):
             return [ self._unpack_property_values(obj=o) for o in obj ]
+        elif isinstance(obj, spear.CaseInsensitiveDict):
+            return spear.to_case_insensitive(in_dict={ k: self._unpack_property_values(obj=v) for k, v in obj.items() })
         elif isinstance(obj, dict):
             return { k: self._unpack_property_values(obj=v) for k, v in obj.items() }
         elif isinstance(obj, spear.Future):

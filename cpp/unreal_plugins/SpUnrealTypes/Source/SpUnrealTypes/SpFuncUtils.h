@@ -77,7 +77,7 @@ public:
             nullptr,                        // OwnerObject
             EPropertyPortFlags::PPF_None,   // PortFlags
             GWarn,                          // ErrorText (GWarn is an FFeedbackContext*, so <Misc/FeedbackContext.h> is needed for the implicit conversion to FOutputDevice*)
-            ScriptStruct->GetName());       // StructName
+            ScriptStruct->GetName());       // StructName (passed to UE, so use GetName() instead of Unreal::getUnrealName(...))
         SP_ASSERT(result);
 
         FString json_string = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(struct_data.data(), ScriptStruct));

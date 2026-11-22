@@ -130,49 +130,49 @@ public:
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_from_bool",
             [this](uint64_t& cvar, bool& val, std::vector<std::string>& set_by_strings, std::string& tag) -> void {
                 SP_ASSERT(cvar);
-                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings), Unreal::toFName(tag));
+                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings), Unreal::createFName(tag));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_from_int",
             [this](uint64_t& cvar, int32_t& val, std::vector<std::string>& set_by_strings, std::string& tag) -> void {
                 SP_ASSERT(cvar);
-                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings), Unreal::toFName(tag));
+                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings), Unreal::createFName(tag));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_from_float",
             [this](uint64_t& cvar, float& val, std::vector<std::string>& set_by_strings, std::string& tag) -> void {
                 SP_ASSERT(cvar);
-                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings), Unreal::toFName(tag));
+                toPtr<IConsoleVariable>(cvar)->Set(val, Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings), Unreal::createFName(tag));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_from_string",
             [this](uint64_t& cvar, std::string& val, std::vector<std::string>& set_by_strings, std::string& tag) -> void {
                 SP_ASSERT(cvar);
-                toPtr<IConsoleVariable>(cvar)->Set(Unreal::toTCharPtr(val), Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings), Unreal::toFName(tag));
+                toPtr<IConsoleVariable>(cvar)->Set(Unreal::toTCharPtr(val), Unreal::getCombinedEnumFlagValueFromStringsAs<EConsoleVariableFlags, ESpConsoleVariableFlags>(set_by_strings), Unreal::createFName(tag));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_with_current_priority_from_bool",
             [this](uint64_t& cvar, bool& val, std::string& tag) -> void {
                 SP_ASSERT(cvar);
-                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(val, Unreal::toFName(tag));
+                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(val, Unreal::createFName(tag));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_with_current_priority_from_int",
             [this](uint64_t& cvar, int32_t& val, std::string& tag) -> void {
                 SP_ASSERT(cvar);
-                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(val, Unreal::toFName(tag));
+                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(val, Unreal::createFName(tag));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_with_current_priority_from_float",
             [this](uint64_t& cvar, float& val, std::string& tag) -> void {
                 SP_ASSERT(cvar);
-                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(val, Unreal::toFName(tag));
+                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(val, Unreal::createFName(tag));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_console_variable_value_with_current_priority_from_string",
             [this](uint64_t& cvar, std::string& val, std::string& tag) -> void {
                 SP_ASSERT(cvar);
-                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(Unreal::toTCharPtr(val), Unreal::toFName(tag));
+                toPtr<IConsoleVariable>(cvar)->SetWithCurrentPriority(Unreal::toTCharPtr(val), Unreal::createFName(tag));
             });
 
         //
@@ -222,9 +222,8 @@ public:
                         std::views::transform([](const IMessageLogListingPtr& listing) { return listing.IsValid(); })));
                     return Std::toVector<std::string>(
                         listings |
-                        std::views::transform([](const IMessageLogListingPtr& listing) { return Unreal::toStdString(listing->GetName()); }));
+                        std::views::transform([](const IMessageLogListingPtr& listing) { return Unreal::getUnrealName(listing->GetName()); })); // GetName() returns const FName& which doesn't satisfy CNameIsFNameObject
                 #else
-                    SP_ASSERT(false);
                     return std::vector<std::string>();
                 #endif
             });
@@ -244,11 +243,10 @@ public:
                     // no MESSAGELOG_API), so we can't call them directly across the module boundary. We instead
                     // linearly search the (inline, and therefore always linkable) GetLogListingViewModels() array
                     // for the matching name.
-                    FName log_name = Unreal::toFName(name);
                     TSharedPtr<FMessageLogListingViewModel> listing;
                     for (const IMessageLogListingPtr& candidate : message_log_module->MessageLogViewModel->GetLogListingViewModels()) {
                         SP_ASSERT(candidate);
-                        if (candidate->GetName() == log_name) {
+                        if (Unreal::isNamed(candidate->GetName(), name)) { // GetName() returns const FName& which doesn't satisfy CNameIsFNameObject
                             listing = StaticCastSharedPtr<FMessageLogListingViewModel>(candidate);
                             break;
                         }
@@ -270,7 +268,6 @@ public:
 
                     return messages;
                 #else
-                    SP_ASSERT(false);
                     return std::vector<std::string>();
                 #endif
             });

@@ -119,7 +119,7 @@ std::vector<UFunction*> UnrealUtils::findFunctionsByName(const UClass* uclass, c
 {
     return Std::toVector<UFunction*>(
         findFunctions(uclass, field_iteration_flags) |
-        std::views::filter([&function_name](auto function) { return Unreal::toStdString(function->GetName()) == function_name; }));
+        std::views::filter([&function_name](auto function) { return Unreal::isNamed(function, function_name); }));
 }
 
 std::vector<UFunction*> UnrealUtils::findFunctionsByFlagsAny(const UClass* uclass, EFunctionFlags function_flags, EFieldIterationFlags field_iteration_flags)
@@ -219,13 +219,23 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
             property_desc.value_ptr_ = property_desc.property_->ContainerPtrToValuePtr<void>(args_vector.data());
             SP_ASSERT(property_desc.value_ptr_);
 
-            std::string property_name = Unreal::toStdString(property_desc.property_->GetName());
+            std::string property_name = Unreal::getUnrealName(property_desc.property_);
             Std::insert(property_descs, std::move(property_name), std::move(property_desc));
         }
     }
 
-    // Input args must be a subset of the function's args.
-    SP_ASSERT(Std::isSubsetOf(Std::keys(args), Std::keys(property_descs)));
+    // Resolve each arg name to the name of the corresponding property. We use Unreal::isNamed(...) to compare
+    // names, so each arg name must match a property name, ignoring case. Std::insert(...) asserts if two args
+    // match the same property, and input args must be a subset of the function's args.
+    std::map<std::string, std::string> resolved_args;
+    for (auto& [arg_name, arg_value] : args) {
+        for (auto& [property_name, property_desc] : property_descs) {
+            if (Unreal::isNamed(property_desc.property_, arg_name)) {
+                Std::insert(resolved_args, property_name, arg_value);
+            }
+        }
+    }
+    SP_ASSERT(resolved_args.size() == args.size());
 
     // In the editor, we perform extra validation to make sure that if the user omits an argument, it will be
     // initialized correctly (i.e., in a way that matches the C++ signature) by InitializeStruct(...). We can
@@ -233,9 +243,9 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
     // given in the C++ signature) is not available in standalone builds.
 
     #if WITH_EDITOR // defined in an auto-generated header
-        std::vector<uint8_t, SpAlignedAllocator<uint8_t, 4096>> metadata_vector(num_bytes, initial_value);
+        std::vector<uint8_t, SpAlignedAllocator<uint8_t, 4096>> cpp_default_args_vector(num_bytes, initial_value);
         if (num_bytes > 0) {
-            ufunction->InitializeStruct(metadata_vector.data());
+            ufunction->InitializeStruct(cpp_default_args_vector.data());
         }
     #endif
 
@@ -252,17 +262,17 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
         // perform the assignment, or the assignment is not possible, in which case setPropertyValueFromString(...)
         // will assert.
 
-        if (property_name == world_context_object) {
-            SP_ASSERT(!Std::containsKey(args, property_name));
+        if (Unreal::isNamed(property_desc.property_, world_context_object)) {
+            SP_ASSERT(!Std::containsKey(resolved_args, property_name));
             setPropertyValueFromString(property_desc, Std::toStringFromPtr(world));
         }
 
         // If the property name is in args, then set it using the string in args, and make sure the property
         // name was not also flagged by the caller as being the special world_context_object arg.
 
-        else if (Std::containsKey(args, property_name)) {
-            SP_ASSERT(property_name != world_context_object);
-            setPropertyValueFromString(property_desc, args.at(property_name));
+        else if (Std::containsKey(resolved_args, property_name)) {
+            SP_ASSERT(!Unreal::isNamed(property_desc.property_, world_context_object));
+            setPropertyValueFromString(property_desc, resolved_args.at(property_name));
         }
 
         // If the caller omitted this parameter (i.e., it is not present in args), the RPC path uses the parameter's
@@ -274,14 +284,14 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
             #if WITH_EDITOR // defined in an auto-generated header
                 FProperty* property = property_desc.property_;
                 if (!property->HasAnyPropertyFlags(EPropertyFlags::CPF_ReturnParm)) {
-                    std::string metadata_key = "CPP_Default_" + Unreal::toStdString(property->GetName());
-                    if (ufunction->HasMetaData(Unreal::toTCharPtr(metadata_key))) {
-                        std::string metadata_value_string = Unreal::toStdString(ufunction->GetMetaData(Unreal::toTCharPtr(metadata_key)));
-                        void* metadata_value_ptr = property->ContainerPtrToValuePtr<void>(metadata_vector.data());
-                        const TCHAR* success = property->ImportText_Direct(Unreal::toTCharPtr(metadata_value_string), metadata_value_ptr, nullptr, EPropertyPortFlags::PPF_None);
+                    std::string cpp_default_key = "CPP_Default_" + Unreal::toStdString(property->GetName()); // passed to UE, so use GetName() instead of Unreal::getUnrealName(...)
+                    if (ufunction->HasMetaData(Unreal::toTCharPtr(cpp_default_key))) {
+                        std::string cpp_default_value_string = Unreal::toStdString(ufunction->GetMetaData(Unreal::toTCharPtr(cpp_default_key)));
+                        void* cpp_default_value_ptr = property->ContainerPtrToValuePtr<void>(cpp_default_args_vector.data());
+                        const TCHAR* success = property->ImportText_Direct(Unreal::toTCharPtr(cpp_default_value_string), cpp_default_value_ptr, nullptr, EPropertyPortFlags::PPF_None);
                         SP_ASSERT(success);
-                        if (!property->Identical(property_desc.value_ptr_, metadata_value_ptr, EPropertyPortFlags::PPF_None)) {
-                            SP_LOG("ERROR: UFUNCTION \"", Unreal::toStdString(ufunction->GetName()), "\" argument \"", property_name, "\" is declared in C++ with a non-zero default value of ", metadata_value_string, " that is not available in standalone builds, and must therefore be passed in explicitly.");
+                        if (!property->Identical(property_desc.value_ptr_, cpp_default_value_ptr, EPropertyPortFlags::PPF_None)) {
+                            SP_LOG("ERROR: UFUNCTION \"", Unreal::getUnrealName(ufunction), "\" argument \"", property_name, "\" is declared in C++ with a non-zero default value of ", cpp_default_value_string, " that is not available in standalone builds, and must therefore be passed in explicitly.");
                             SP_ASSERT(false);
                         }
                     }
@@ -292,7 +302,7 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
 
     #if WITH_EDITOR // defined in an auto-generated header
         if (num_bytes > 0) {
-            ufunction->DestroyStruct(metadata_vector.data());
+            ufunction->DestroyStruct(cpp_default_args_vector.data());
         }
     #endif
 
@@ -343,7 +353,7 @@ std::vector<FProperty*> UnrealUtils::findPropertiesByName(const UStruct* ustruct
 {
     return Std::toVector<FProperty*>(
         findProperties(ustruct, field_iteration_flags) |
-        std::views::filter([&property_name](auto property) { return Unreal::toStdString(property->GetName()) == property_name; }));
+        std::views::filter([&property_name](auto property) { return Unreal::isNamed(property, property_name); }));
 }
 
 std::vector<FProperty*> UnrealUtils::findPropertiesByFlagsAny(const UStruct* ustruct, EPropertyFlags property_flags, EFieldIterationFlags field_iteration_flags)
@@ -566,7 +576,9 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
 
         const auto& [name, index_string] = path_elements.at(i);
 
-        property_desc.property_ = ustruct->FindPropertyByName(Unreal::toFName(name));
+        // By default, findPropertyByName(...) includes super class properties and deprecated properties, which matches
+        // the lookup behavior of ustruct->FindPropertyByName(...).
+        property_desc.property_ = findPropertyByName(ustruct, name);
         SP_ASSERT(property_desc.property_);
         property_desc.type_id_ = Unreal::getCppTypeAsString(property_desc.property_);
         SP_ASSERT(property_desc.type_id_ != "");
@@ -735,7 +747,7 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
                 ustruct = struct_property->Struct;
 
             } else {
-                SP_LOG(name, " is an unsupported type: ", Unreal::toStdString(property_desc.property_->GetClass()->GetName()));
+                SP_LOG(name, " is an unsupported type: ", Unreal::getUnrealName(property_desc.property_->GetClass()));
                 SP_ASSERT(false);
             }
         }
@@ -852,7 +864,7 @@ FPropertyChangedChainEvent UnrealUtils::getPropertyChangedChainEvent(const SpPro
             if (array_index != -1) {
                 FProperty* member_property = property_desc.notify_member_properties_.at(i);
                 SP_ASSERT(member_property);
-                array_indices_per_object.Last().Add(member_property->GetName(), array_index);
+                array_indices_per_object.Last().Add(member_property->GetName(), array_index); // passed to UE, so use GetName() instead of Unreal::getUnrealName(...)
             }
         }
 
@@ -1094,7 +1106,7 @@ SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& prop
 
     } else {
 
-        SP_LOG(Unreal::toStdString(property_desc.property_->GetName()), " is an unsupported type: ", Unreal::toStdString(property_desc.property_->GetClass()->GetName()));
+        SP_LOG(Unreal::getUnrealName(property_desc.property_), " is an unsupported type: ", Unreal::getUnrealName(property_desc.property_->GetClass()));
         SP_ASSERT(false);
     }
 
@@ -1455,7 +1467,7 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
 
     } else {
 
-        SP_LOG(Unreal::toStdString(property_desc.property_->GetName()), " is an unsupported type: ", Unreal::toStdString(property_desc.property_->GetClass()->GetName()));
+        SP_LOG(Unreal::getUnrealName(property_desc.property_), " is an unsupported type: ", Unreal::getUnrealName(property_desc.property_->GetClass()));
         SP_ASSERT(false);
     }
 
@@ -1605,7 +1617,7 @@ std::string UnrealUtils::getStableName(const AActor* actor, bool include_unreal_
                             SP_ASSERT(false);
                         #endif
                     } else if (!world->IsEditorWorld() && world->IsGameWorld()) {
-                        stable_name = Unreal::toStdString(actor->GetName());
+                        stable_name = Unreal::getUnrealName(actor);
                     } else {
                         SP_ASSERT(false);
                     }
@@ -1625,7 +1637,7 @@ std::string UnrealUtils::getStableName(const AActor* actor, bool include_unreal_
                         SP_ASSERT(false);
                     #endif
                 } else if (!world->IsEditorWorld() && world->IsGameWorld()) { 
-                    stable_name = Unreal::toStdString(actor->GetName());
+                    stable_name = Unreal::getUnrealName(actor);
                 } else {
                     SP_ASSERT(false);
                 }
@@ -1638,7 +1650,7 @@ std::string UnrealUtils::getStableName(const AActor* actor, bool include_unreal_
         if (stable_name != "") {
             sep = ":";
         }
-        stable_name = stable_name + sep + Unreal::toStdString(actor->GetName());
+        stable_name = stable_name + sep + Unreal::getUnrealName(actor);
     }
 
     return stable_name;
@@ -1655,11 +1667,11 @@ std::string UnrealUtils::getStableName(const UActorComponent* component, bool in
         TArray<USceneComponent*> parents;
         scene_component->GetParentComponents(parents);
         for (auto parent : parents) {
-            stable_name = Unreal::toStdString(parent->GetName()) + "." + stable_name;
+            stable_name = Unreal::getUnrealName(parent) + "." + stable_name;
         }
     }
 
-    stable_name = stable_name + Unreal::toStdString(component->GetName());
+    stable_name = stable_name + Unreal::getUnrealName(component);
 
     if (include_actor_stable_name) {
         const AActor* actor = component->GetOwner();
@@ -1723,7 +1735,7 @@ void UnrealUtils::setStableName(AActor* actor, const std::string& stable_name)
     if (world->IsEditorWorld() && !world->IsGameWorld()) {
         #if WITH_EDITOR // defined in an auto-generated header
             auto [folder_path, actor_label] = unresolveStableName(stable_name);
-            actor->SetFolderPath(Unreal::toFName(folder_path));
+            actor->SetFolderPath(Unreal::createFName(folder_path));
             actor->SetActorLabel(Unreal::toFString(actor_label));
         #else
             SP_ASSERT(false);
@@ -2202,11 +2214,5 @@ std::string UnrealUtils::toKey(const UFunction* ufunction)
     SP_ASSERT(ufunction);
     UStruct* outer = Cast<UStruct>(ufunction->GetOuter());
     SP_ASSERT(outer);
-    return Unreal::getTypeAsString(outer) + "::" + Unreal::toStdString(ufunction->GetName());
-}
-
-std::string UnrealUtils::toKey(const FProperty* property)
-{
-    SP_ASSERT(property);
-    return Unreal::toStdString(property->GetName());
+    return Unreal::getTypeAsString(outer) + "::" + Unreal::getUnrealName(ufunction);
 }

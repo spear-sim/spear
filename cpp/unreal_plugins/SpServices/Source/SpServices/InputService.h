@@ -139,7 +139,7 @@ public:
                         SP_LOG();
                     }
 
-                    if (axis_name == Unreal::toStdString(axis_binding.AxisName)) {
+                    if (Unreal::isNamed(axis_binding.AxisName, axis_name)) {
                         axis_binding.AxisDelegate.Execute(axis_value);
                     }
                 }
@@ -157,13 +157,13 @@ public:
 
                     if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
                         SP_LOG(Unreal::toStdString(axis_key_binding.AxisKey.GetDisplayName()));
-                        SP_LOG(Unreal::toStdString(axis_key_binding.AxisKey.GetFName()));
+                        SP_LOG(Unreal::getUnrealName(&(axis_key_binding.AxisKey)));
                         SP_LOG(Unreal::toStdString(axis_key_binding.AxisKey.ToString()));
                         SP_LOG(axis_key_binding.AxisValue);
                         SP_LOG();
                     }
 
-                    if (axis_key_name == Unreal::toStdString(axis_key_binding.AxisKey.GetDisplayName())) {
+                    if (Unreal::isNamed(&(axis_key_binding.AxisKey), axis_key_name)) {
                         axis_key_binding.AxisDelegate.Execute(axis_key_value);
                     }
                 }
@@ -184,13 +184,13 @@ public:
 
                     if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
                         SP_LOG(Unreal::toStdString(vector_axis_binding.AxisKey.GetDisplayName()));
-                        SP_LOG(Unreal::toStdString(vector_axis_binding.AxisKey.GetFName()));
+                        SP_LOG(Unreal::getUnrealName(&(vector_axis_binding.AxisKey)));
                         SP_LOG(Unreal::toStdString(vector_axis_binding.AxisKey.ToString()));
                         SP_LOG(UnrealUtils::getObjectPropertiesAsString(&(vector_axis_binding.AxisValue), Unreal::getStaticStruct<FVector>()));
                         SP_LOG();
                     }
 
-                    if (vector_axis_name == Unreal::toStdString(vector_axis_binding.AxisKey.GetDisplayName())) {
+                    if (Unreal::isNamed(&(vector_axis_binding.AxisKey), vector_axis_name)) {
                         vector_axis_binding.AxisDelegate.Execute(vector_axis_value);
                     }
                 }
@@ -208,13 +208,13 @@ public:
 
                     if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
                         SP_LOG(Unreal::toStdString(gesture_binding.GestureKey.GetDisplayName()));
-                        SP_LOG(Unreal::toStdString(gesture_binding.GestureKey.GetFName()));
+                        SP_LOG(Unreal::getUnrealName(&(gesture_binding.GestureKey)));
                         SP_LOG(Unreal::toStdString(gesture_binding.GestureKey.ToString()));
                         SP_LOG(gesture_binding.GestureValue);
                         SP_LOG();
                     }
 
-                    if (gesture_name == Unreal::toStdString(gesture_binding.GestureKey.GetDisplayName())) {
+                    if (Unreal::isNamed(&(gesture_binding.GestureKey), gesture_name)) {
                         gesture_binding.GestureDelegate.Execute(gesture_value);
                     }
                 }
@@ -229,7 +229,7 @@ public:
                 }
 
                 EInputEvent key_event = Unreal::getEnumValueFromString<EInputEvent>(key_event_string);
-                FKey key(Unreal::toFName(key_name));
+                FKey key(Unreal::getFName(key_name));
 
                 for (int i = 0; i < input_component->GetNumActionBindings(); i++) {
                     FInputActionBinding& action_binding = input_component->GetActionBinding(i);
@@ -239,7 +239,7 @@ public:
                         SP_LOG(Unreal::getStringFromEnumValue(action_binding.KeyEvent.GetValue()));
                     }
 
-                    if (action_name == Unreal::toStdString(action_binding.GetActionName()) && key_event == action_binding.KeyEvent.GetValue()) {
+                    if (Unreal::isNamed(action_binding.GetActionName(), action_name) && key_event == action_binding.KeyEvent.GetValue()) {
                         action_binding.ActionDelegate.Execute(key);
                     }
                 }

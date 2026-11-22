@@ -143,7 +143,7 @@ public:
                 if (component) {
                     mesh_proxy_geometry_desc.NonProxyComponent = Unreal::toFString(Std::toStringFromPtr(component));
                     mesh_proxy_geometry_desc.NonProxyComponentStableName = Unreal::toFString(UnrealUtils::getStableName(component));
-                    mesh_proxy_geometry_desc.NonProxyComponentUnrealName = component->GetName();
+                    mesh_proxy_geometry_desc.NonProxyComponentUnrealName = Unreal::toFString(Unreal::getUnrealName(component));
                     if (bIncludeDebugInfo) {
                         mesh_proxy_geometry_desc.NonProxyComponentPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(component));
                     }
@@ -152,7 +152,7 @@ public:
                     SP_ASSERT(Unreal::isValid(actor));
                     mesh_proxy_geometry_desc.Actor = Unreal::toFString(Std::toStringFromPtr(actor));
                     mesh_proxy_geometry_desc.ActorName = Unreal::toFString(UnrealUtils::getStableName(actor, true)); // include_unreal_name=true
-                    mesh_proxy_geometry_desc.ActorUnrealName = actor->GetName();
+                    mesh_proxy_geometry_desc.ActorUnrealName = Unreal::toFString(Unreal::getUnrealName(actor));
                     mesh_proxy_geometry_desc.ActorStableName = Unreal::toFString(UnrealUtils::getStableName(actor, false)); // include_unreal_name=false
                     if (bIncludeDebugInfo) {
                         mesh_proxy_geometry_desc.ActorPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(actor));
@@ -162,7 +162,7 @@ public:
                 UMaterialInterface* material = Unreal::toPtr(desc.non_proxy_material_);
                 if (material) {
                     mesh_proxy_geometry_desc.NonProxyMaterial = Unreal::toFString(Std::toStringFromPtr(material));
-                    mesh_proxy_geometry_desc.NonProxyMaterialUnrealName = material->GetName();
+                    mesh_proxy_geometry_desc.NonProxyMaterialUnrealName = Unreal::toFString(Unreal::getUnrealName(material));
                     if (bIncludeDebugInfo) {
                         mesh_proxy_geometry_desc.NonProxyMaterialPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(material));
                     }
@@ -293,7 +293,7 @@ protected:
 
         for (auto actor : actors) {
             for (auto component : UnrealUtils::getComponents(actor)) {
-                if (!Std::contains(Unreal::toStdString(component->GetName()), "__SP_PROXY_COMPONENT__")) {
+                if (!Std::contains(Unreal::getUnrealName(component), "__SP_PROXY_COMPONENT__")) {
                     for (auto& [component_class, non_proxy_components_for_class] : non_proxy_components) {
                         if (component->IsA(component_class)) {
                             non_proxy_components_for_class.push_back(component);

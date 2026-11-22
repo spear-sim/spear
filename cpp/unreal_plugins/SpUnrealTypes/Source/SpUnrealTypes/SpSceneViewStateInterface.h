@@ -29,7 +29,6 @@ public:
             SP_ASSERT(view_state_ptr);
             return view_state_ptr->GetPathTracingSampleIndex();
         #else
-            SP_ASSERT(false);
             return 0;
         #endif
     }
@@ -43,7 +42,6 @@ public:
             SP_ASSERT(view_state_ptr);
             return view_state_ptr->GetPathTracingSampleCount();
         #else
-            SP_ASSERT(false);
             return 0;
         #endif
     }
