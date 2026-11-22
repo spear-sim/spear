@@ -63,9 +63,9 @@ class UnrealService(spear.Service):
             if self._static_class_descs is None:
                 self._static_class_descs = self.entry_point_caller.call_on_game_thread("get_static_class_descs", None)
             if self._static_struct_descs_by_name is None:
-                self._static_struct_descs_by_name = spear.to_case_insensitive(in_dict={ desc.name: desc for desc in self._static_struct_descs })
+                self._static_struct_descs_by_name = spear.to_case_insensitive(obj={ desc.name: desc for desc in self._static_struct_descs })
             if self._static_class_descs_by_name is None:
-                self._static_class_descs_by_name = spear.to_case_insensitive(in_dict={ desc.name: desc for desc in self._static_class_descs })
+                self._static_class_descs_by_name = spear.to_case_insensitive(obj={ desc.name: desc for desc in self._static_class_descs })
             if self._static_struct_descs_by_id is None:
                 self._static_struct_descs_by_id = { desc.static_struct: desc for desc in self._static_struct_descs }
             if self._static_class_descs_by_id is None:
@@ -121,7 +121,7 @@ class UnrealService(spear.Service):
                 # Function names are FNames, so we look them up case-insensitively. We store qualified_function_descs
                 # separately instead of replacing static_class_desc.function_descs, because static_class_desc might be
                 # a C++ object that would convert a CaseInsensitiveDict back to a std::map.
-                qualified_function_descs = spear.to_case_insensitive(in_dict=static_class_desc.function_descs)
+                qualified_function_descs = spear.to_case_insensitive(obj=static_class_desc.function_descs)
                 unqualified_function_descs = spear.CaseInsensitiveDict() # build unqualified function name lookup; more-derived classes overwrite less-derived
                 for class_id in static_class_desc.derived_classes[::-1]:
                     for function_desc in qualified_function_descs.values():
@@ -354,7 +354,7 @@ class UnrealService(spear.Service):
         uclass = self.to_uclass(uclass=uclass)
         args = spear.to_json_strings(objs=args)
 
-        convert_func = lambda result: spear.to_case_insensitive(in_dict={ k: spear.PropertyValue(value=spear.try_to_case_insensitive(obj=spear.try_to_dict(json_string=v.value), type_id=v.type_id), type_id=v.type_id) for k, v in result.items() })
+        convert_func = lambda result: spear.to_case_insensitive(obj={ k: spear.PropertyValue(value=spear.to_case_insensitive(obj=spear.try_to_dict(json_string=v.value)), type_id=v.type_id) for k, v in result.items() })
         return self.entry_point_caller.call_on_game_thread("call_function", convert_func, self.get_world(), uobject, uclass, ufunction, args, world_context_object)
 
     #
@@ -423,37 +423,61 @@ class UnrealService(spear.Service):
     # Get and set multiple object properties
     #
 
-    def get_properties_for_object(self, uobject):
+    def get_properties_for_object(self, uobject, check_property_flags=None, skip_property_flags=None, force_no_skip=False):
+        if force_no_skip:
+            assert skip_property_flags is None # skip_property_flags is ignored if force_no_skip is True
         uobject = spear.to_handle(obj=uobject)
-        convert_func = lambda result: spear.to_case_insensitive(in_dict=spear.try_to_dict(json_string=result, default_value={}))
-        return self.entry_point_caller.call_on_game_thread("get_properties_for_object_as_string", convert_func, uobject)
+        check_property_flags = check_property_flags if check_property_flags is not None else ["CPF_None"]
+        skip_property_flags = skip_property_flags if skip_property_flags is not None else ["CPF_Deprecated", "CPF_Transient"]
+        convert_func = lambda result: spear.to_case_insensitive(obj=spear.try_to_dict(json_string=result, default_value={}))
+        return self.entry_point_caller.call_on_game_thread("get_properties_for_object_as_string", convert_func, uobject, check_property_flags, skip_property_flags, force_no_skip)
 
-    def get_properties_for_struct(self, value_ptr, ustruct):
+    def get_properties_for_struct(self, value_ptr, ustruct, check_property_flags=None, skip_property_flags=None, force_no_skip=False):
+        if force_no_skip:
+            assert skip_property_flags is None # skip_property_flags is ignored if force_no_skip is True
         ustruct = self.to_ustruct(ustruct=ustruct)
-        convert_func = lambda result: spear.to_case_insensitive(in_dict=spear.try_to_dict(json_string=result, default_value={}))
-        return self.entry_point_caller.call_on_game_thread("get_properties_for_struct_as_string", convert_func, value_ptr, ustruct)
+        check_property_flags = check_property_flags if check_property_flags is not None else ["CPF_None"]
+        skip_property_flags = skip_property_flags if skip_property_flags is not None else ["CPF_Deprecated", "CPF_Transient"]
+        convert_func = lambda result: spear.to_case_insensitive(obj=spear.try_to_dict(json_string=result, default_value={}))
+        return self.entry_point_caller.call_on_game_thread("get_properties_for_struct_as_string", convert_func, value_ptr, ustruct, check_property_flags, skip_property_flags, force_no_skip)
 
-    def get_properties_for_class(self, value_ptr, uclass):
+    def get_properties_for_class(self, value_ptr, uclass, check_property_flags=None, skip_property_flags=None, force_no_skip=False):
+        if force_no_skip:
+            assert skip_property_flags is None # skip_property_flags is ignored if force_no_skip is True
         uclass = self.to_uclass(uclass=uclass)
-        convert_func = lambda result: spear.to_case_insensitive(in_dict=spear.try_to_dict(json_string=result, default_value={}))
-        return self.entry_point_caller.call_on_game_thread("get_properties_for_struct_as_string", convert_func, value_ptr, uclass)
+        check_property_flags = check_property_flags if check_property_flags is not None else ["CPF_None"]
+        skip_property_flags = skip_property_flags if skip_property_flags is not None else ["CPF_Deprecated", "CPF_Transient"]
+        convert_func = lambda result: spear.to_case_insensitive(obj=spear.try_to_dict(json_string=result, default_value={}))
+        return self.entry_point_caller.call_on_game_thread("get_properties_for_struct_as_string", convert_func, value_ptr, uclass, check_property_flags, skip_property_flags, force_no_skip)
 
-    def set_properties_for_object(self, uobject, properties, notify_editor=False):
+    def set_properties_for_object(self, uobject, properties, notify_editor=False, check_property_flags=None, skip_property_flags=None, force_no_skip=False):
+        if force_no_skip:
+            assert skip_property_flags is None # skip_property_flags is ignored if force_no_skip is True
         uobject = spear.to_handle(obj=uobject)
         properties = spear.to_json_string(obj=properties)
-        return self.entry_point_caller.call_on_game_thread("set_properties_for_object_from_string", None, uobject, properties, notify_editor)
+        check_property_flags = check_property_flags if check_property_flags is not None else ["CPF_None"]
+        skip_property_flags = skip_property_flags if skip_property_flags is not None else ["CPF_Deprecated", "CPF_Transient"]
+        return self.entry_point_caller.call_on_game_thread("set_properties_for_object_from_string", None, uobject, properties, notify_editor, check_property_flags, skip_property_flags, force_no_skip)
 
-    def set_properties_for_struct(self, value_ptr, ustruct, properties, notify_object=0):
+    def set_properties_for_struct(self, value_ptr, ustruct, properties, notify_object=0, check_property_flags=None, skip_property_flags=None, force_no_skip=False):
+        if force_no_skip:
+            assert skip_property_flags is None # skip_property_flags is ignored if force_no_skip is True
         ustruct = self.to_ustruct(ustruct=ustruct)
         properties = spear.to_json_string(obj=properties)
         notify_object = spear.to_handle(obj=notify_object)
-        return self.entry_point_caller.call_on_game_thread("set_properties_for_struct_from_string", None, value_ptr, ustruct, properties, notify_object)
+        check_property_flags = check_property_flags if check_property_flags is not None else ["CPF_None"]
+        skip_property_flags = skip_property_flags if skip_property_flags is not None else ["CPF_Deprecated", "CPF_Transient"]
+        return self.entry_point_caller.call_on_game_thread("set_properties_for_struct_from_string", None, value_ptr, ustruct, properties, notify_object, check_property_flags, skip_property_flags, force_no_skip)
 
-    def set_properties_for_class(self, value_ptr, uclass, properties, notify_object=0):
+    def set_properties_for_class(self, value_ptr, uclass, properties, notify_object=0, check_property_flags=None, skip_property_flags=None, force_no_skip=False):
+        if force_no_skip:
+            assert skip_property_flags is None # skip_property_flags is ignored if force_no_skip is True
         uclass = self.to_uclass(uclass=uclass)
         properties = spear.to_json_string(obj=properties)
         notify_object = spear.to_handle(obj=notify_object)
-        return self.entry_point_caller.call_on_game_thread("set_properties_for_struct_from_string", None, value_ptr, uclass, properties, notify_object)
+        check_property_flags = check_property_flags if check_property_flags is not None else ["CPF_None"]
+        skip_property_flags = skip_property_flags if skip_property_flags is not None else ["CPF_Deprecated", "CPF_Transient"]
+        return self.entry_point_caller.call_on_game_thread("set_properties_for_struct_from_string", None, value_ptr, uclass, properties, notify_object, check_property_flags, skip_property_flags, force_no_skip)
 
     #
     # Get and set individual property values using property descs
@@ -489,17 +513,17 @@ class UnrealService(spear.Service):
 
     def get_property_value_for_object(self, uobject, property_name):
         uobject = spear.to_handle(obj=uobject)
-        convert_func = lambda result: spear.PropertyValue(value=spear.try_to_case_insensitive(obj=spear.try_to_dict(json_string=result.value), type_id=result.type_id), type_id=result.type_id)
+        convert_func = lambda result: spear.PropertyValue(value=spear.to_case_insensitive(obj=spear.try_to_dict(json_string=result.value)), type_id=result.type_id)
         return self.entry_point_caller.call_on_game_thread("get_property_value_for_object_as_string", convert_func, uobject, property_name)
 
     def get_property_value_for_struct(self, value_ptr, ustruct, property_name):
         ustruct = self.to_ustruct(ustruct=ustruct)
-        convert_func = lambda result: spear.PropertyValue(value=spear.try_to_case_insensitive(obj=spear.try_to_dict(json_string=result.value), type_id=result.type_id), type_id=result.type_id)
+        convert_func = lambda result: spear.PropertyValue(value=spear.to_case_insensitive(obj=spear.try_to_dict(json_string=result.value)), type_id=result.type_id)
         return self.entry_point_caller.call_on_game_thread( "get_property_value_for_struct_as_string", convert_func, value_ptr, ustruct, property_name)
 
     def get_property_value_for_class(self, value_ptr, uclass, property_name):
         uclass = self.to_uclass(uclass=uclass)
-        convert_func = lambda result: spear.PropertyValue(value=spear.try_to_case_insensitive(obj=spear.try_to_dict(json_string=result.value), type_id=result.type_id), type_id=result.type_id)
+        convert_func = lambda result: spear.PropertyValue(value=spear.to_case_insensitive(obj=spear.try_to_dict(json_string=result.value)), type_id=result.type_id)
         return self.entry_point_caller.call_on_game_thread( "get_property_value_for_struct_as_string", convert_func, value_ptr, uclass, property_name)
 
     def set_property_value_for_object(self, uobject, property_name, property_value, notify_editor=False):

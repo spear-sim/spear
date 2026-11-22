@@ -12,7 +12,6 @@ import numpy as np
 import os
 import pandas as pd
 import PIL.Image
-import pprint
 import re
 import shutil
 import spear
@@ -260,7 +259,7 @@ if __name__ == "__main__":
     spear.log("foreground_actor_proxy_ids: ", foreground_actor_proxy_ids)
     spear.log("foreground_actor_proxy_descs:")
     for proxy_id in foreground_actor_proxy_ids:
-        pprint.pprint(proxy_id_descs[proxy_id], depth=1)
+        spear.pprint(obj=proxy_id_descs[proxy_id], depth=1)
 
     # get colors for semantic IDs from CSV
     df = pd.read_csv(os.path.realpath(os.path.join(os.path.dirname(__file__), "semantic_label_descs.csv")), comment="#")

@@ -6,7 +6,6 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import os
-import pprint
 import spear
 
 
@@ -35,7 +34,7 @@ if __name__ == "__main__":
         # get all object properties as nested Python dictionaries
         spear.log("bp_axes: ", bp_axes)
         spear.log("bp_axes.get_properties():")
-        pprint.pprint(bp_axes.get_properties(), depth=1)
+        spear.pprint(obj=bp_axes.get_properties(), depth=1)
 
         # get scale by calling the AActor::GetActorScale3D C++ function
         scale = bp_axes.GetActorScale3D()
@@ -54,7 +53,7 @@ if __name__ == "__main__":
         # get all object properties for root_component as nested Python dictionaries
         spear.log("root_component: ", root_component)
         spear.log("root_component.get_properties():")
-        pprint.pprint(root_component.get_properties(), depth=1)
+        spear.pprint(obj=root_component.get_properties(), depth=1)
 
         # use our async API to issue a non-blocking call to the USceneComponent::K2_GetComponentLocation C++ function
         future = root_component.call_async.K2_GetComponentLocation()

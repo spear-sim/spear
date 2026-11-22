@@ -504,23 +504,45 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_properties_for_object_as_string",
-            [this](uint64_t& uobject) -> std::string {
-                return UnrealUtils::getObjectPropertiesAsString(toPtr<UObject>(uobject));
+            [this](uint64_t& uobject, std::vector<std::string>& check_property_flag_strings, std::vector<std::string>& skip_property_flag_strings, bool& force_no_skip) -> std::string {
+                return UnrealUtils::getObjectPropertiesAsString(
+                    toPtr<UObject>(uobject),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(check_property_flag_strings),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(skip_property_flag_strings),
+                    force_no_skip);
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_properties_for_struct_as_string",
-            [this](uint64_t& value_ptr, uint64_t& ustruct) -> std::string {
-                return UnrealUtils::getObjectPropertiesAsString(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct));
+            [this](uint64_t& value_ptr, uint64_t& ustruct, std::vector<std::string>& check_property_flag_strings, std::vector<std::string>& skip_property_flag_strings, bool& force_no_skip) -> std::string {
+                return UnrealUtils::getObjectPropertiesAsString(
+                    toPtr<void>(value_ptr),
+                    toPtr<UStruct>(ustruct),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(check_property_flag_strings),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(skip_property_flag_strings),
+                    force_no_skip);
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_properties_for_object_from_string",
-            [this](uint64_t& uobject, std::string& properties_string, bool& notify_editor) -> void {
-                UnrealUtils::setObjectPropertiesFromString(toPtr<UObject>(uobject), properties_string, notify_editor);
+            [this](uint64_t& uobject, std::string& properties_string, bool& notify_editor, std::vector<std::string>& check_property_flag_strings, std::vector<std::string>& skip_property_flag_strings, bool& force_no_skip) -> void {
+                UnrealUtils::setObjectPropertiesFromString(
+                    toPtr<UObject>(uobject),
+                    properties_string,
+                    notify_editor,
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(check_property_flag_strings),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(skip_property_flag_strings),
+                    force_no_skip);
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "set_properties_for_struct_from_string",
-            [this](uint64_t& value_ptr, uint64_t& ustruct, std::string& properties_string, uint64_t& notify_object) -> void {
-                UnrealUtils::setObjectPropertiesFromString(toPtr<void>(value_ptr), toPtr<UStruct>(ustruct), properties_string, toPtr<UObject>(notify_object));
+            [this](uint64_t& value_ptr, uint64_t& ustruct, std::string& properties_string, uint64_t& notify_object, std::vector<std::string>& check_property_flag_strings, std::vector<std::string>& skip_property_flag_strings, bool& force_no_skip) -> void {
+                UnrealUtils::setObjectPropertiesFromString(
+                    toPtr<void>(value_ptr),
+                    toPtr<UStruct>(ustruct),
+                    properties_string,
+                    toPtr<UObject>(notify_object),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(check_property_flag_strings),
+                    Unreal::getCombinedEnumFlagValueFromStringsAs<EPropertyFlags, ESpPropertyFlags>(skip_property_flag_strings),
+                    force_no_skip);
             });
 
         //

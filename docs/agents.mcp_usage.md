@@ -180,7 +180,7 @@ Concrete kwargs and return shapes for common helpers. See `examples/getting_star
 
 **Case convention:** Struct dicts use Unreal's C++ field names (e.g., `{"X", "Y", "Z"}`, `{"Pitch", "Yaw", "Roll"}`), both when they are returned by UFUNCTIONs and when you pass them in.
 
-**Name lookups are case-insensitive:** Unreal names (FNames) compare case-insensitively, and outside the editor the spelling Unreal returns for a name (e.g., a UFUNCTION parameter declared as `Result`) can be the first spelling registered in the process (e.g., `result`). So SPEAR looks up all names (e.g., class, struct, function, parameter, and property names) case-insensitively, and returns top-level dicts keyed by these names (e.g., from `as_dict=True` and `get_properties_for_object(...)`), as well as struct values returned directly from functions and properties, as `spear.CaseInsensitiveDict`s. Always look up keys with the declared spelling (e.g., `return_values["Result"]`), and don't rely on the spelling of keys when iterating.
+**Name lookups are case-insensitive:** Unreal names (FNames) compare case-insensitively, and outside the editor the spelling Unreal returns for a name (e.g., a UFUNCTION parameter declared as `Result`) can be the first spelling registered in the process (e.g., `result`). So SPEAR looks up all names (e.g., class, struct, function, parameter, and property names) case-insensitively, and returns every dict with string keys (e.g., from `as_dict=True` and `get_properties_for_object(...)`, including nested dicts inside struct values, containers, and `TMap` values) as a `spear.CaseInsensitiveDict`. Unreal collapses JSON object keys that differ only by case, so when passing dicts to SPEAR, keys must not differ only by case (this is asserted), and a dict must not mix string and non-string keys. Always look up keys with the declared spelling (e.g., `return_values["Result"]`), and don't rely on the spelling of keys when iterating.
 
 ### `game.unreal_service` / `editor.unreal_service`
 
@@ -206,7 +206,7 @@ Concrete kwargs and return shapes for common helpers. See `examples/getting_star
 ### Introspection and UProperty access
 
 - `obj.print_debug_info()` → None. Dumps every UFUNCTION and UProperty on the object's class — use this when you don't know what a class exposes instead of guessing signatures.
-- `obj.get_properties()` → Nested dict of all UProperty values on `obj`.
+- `obj.get_properties()` → Nested dict of all UProperty values on `obj`, except transient and deprecated properties (e.g., `AActor::Children`). By default, `get_properties()` and `set_properties(...)` skip these properties (`skip_property_flags=["CPF_Deprecated", "CPF_Transient"]`). Pass `force_no_skip=True` to include all properties. Pass `check_property_flags` (e.g., `["CPF_Edit"]`) to include only properties that have any of the given flags.
 - `obj.SomePropertyName.get()` → Read a UProperty directly. Distinct from calling a UFUNCTION. Example: `actor.RootComponent.get()` returns the root component (equivalent to `actor.K2_GetRootComponent()`).
 
 ### Actor UFUNCTIONs

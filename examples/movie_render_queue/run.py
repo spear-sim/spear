@@ -6,7 +6,6 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import os
-import pprint
 import spear
 import time
 
@@ -24,22 +23,22 @@ if __name__ == "__main__":
         # get UMoviePipelineQueueEngineSubsystem
         movie_pipeline_queue_engine_subsystem = game.unreal_service.get_engine_subsystem(uclass="UMoviePipelineQueueEngineSubsystem")
         spear.log("movie_pipeline_queue_engine_subsystem: ", movie_pipeline_queue_engine_subsystem)
-        pprint.pprint(movie_pipeline_queue_engine_subsystem.get_properties(), depth=1)
+        spear.pprint(obj=movie_pipeline_queue_engine_subsystem.get_properties(), depth=1)
 
         # load level sequence
         level_sequence = game.unreal_service.load_object(uclass="ULevelSequence", name="/Game/SPEAR/Scenes/apartment_0000/Cinematic/LS_DebugLevelSequence.LS_DebugLevelSequence")
         spear.log("level_sequence: ", level_sequence)
-        pprint.pprint(level_sequence.get_properties(), depth=1)
+        spear.pprint(obj=level_sequence.get_properties(), depth=1)
 
         # load configuration
         movie_pipeline_primary_config = game.unreal_service.load_object(uclass="UMoviePipelinePrimaryConfig", name="/SpContent/Cinematic/MPPC_DefaultConfigWithLighting.MPPC_DefaultConfigWithLighting")
         spear.log("movie_pipeline_primary_config: ", movie_pipeline_primary_config)
-        pprint.pprint(movie_pipeline_primary_config.get_properties(), depth=1)
+        spear.pprint(obj=movie_pipeline_primary_config.get_properties(), depth=1)
 
         # allocate job
         movie_pipeline_executor_job = movie_pipeline_queue_engine_subsystem.AllocateJob(InSequence=level_sequence)
         spear.log("movie_pipeline_executor_job: ", movie_pipeline_executor_job)
-        pprint.pprint(movie_pipeline_executor_job.get_properties(), depth=1)
+        spear.pprint(obj=movie_pipeline_executor_job.get_properties(), depth=1)
 
         #
         # On Windows, it is possible to access Unreal's path tracer if the UMoviePipelinePrimaryConfig object
@@ -50,7 +49,7 @@ if __name__ == "__main__":
         # game.console_service.set_cvar(name="r.RayTracing.Enable", value=1)
         # movie_pipeline_primary_config = game.unreal_service.load_object(uclass="UMoviePipelinePrimaryConfig", name="/SpContent/Cinematic/MPPC_DefaultConfigWithPathTracer.MPPC_DefaultConfigWithPathTracer")
         # spear.log("movie_pipeline_primary_config: ", movie_pipeline_primary_config)
-        # pprint.pprint(movie_pipeline_primary_config.get_properties(), depth=1)
+        # spear.pprint(obj=movie_pipeline_primary_config.get_properties(), depth=1)
 
         # set job's configuration
         movie_pipeline_executor_job.SetConfiguration(InPreset=movie_pipeline_primary_config)

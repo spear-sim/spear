@@ -226,13 +226,13 @@ class UnrealObject:
 
     # interface for getting properties
 
-    def get_properties(self):
+    def get_properties(self, check_property_flags=None, skip_property_flags=None, force_no_skip=False):
         assert self.property_name == ""
-        return self._unreal_service.get_properties_for_object(uobject=self.uobject)
+        return self._unreal_service.get_properties_for_object(uobject=self.uobject, check_property_flags=check_property_flags, skip_property_flags=skip_property_flags, force_no_skip=force_no_skip)
 
-    def set_properties(self, properties, notify_editor=False):
+    def set_properties(self, properties, notify_editor=False, check_property_flags=None, skip_property_flags=None, force_no_skip=False):
         assert self.property_name == ""
-        return self._unreal_service.set_properties_for_object(uobject=self.uobject, properties=properties, notify_editor=notify_editor)
+        return self._unreal_service.set_properties_for_object(uobject=self.uobject, properties=properties, notify_editor=notify_editor, check_property_flags=check_property_flags, skip_property_flags=skip_property_flags, force_no_skip=force_no_skip)
 
     def get(self, as_raw_value=None, as_value=None, as_handle=None, as_unreal_struct=None, as_unreal_class=None, as_unreal_object=None, with_sp_funcs=None):
         return self.get_property_value(property_name=self.property_name, as_raw_value=as_raw_value, as_value=as_value, as_handle=as_handle, as_unreal_struct=as_unreal_struct, as_unreal_class=as_unreal_class, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
@@ -278,6 +278,10 @@ class UnrealObject:
 
     def is_a(self, uclass):
         return self._unreal_service.to_uclass(uclass=uclass) in self.derived_info["static_class_desc"].derived_classes
+
+    # Returns False for the call_async and send_async objects associated with an UnrealObject.
+    def is_top_level(self):
+        return self._is_top_level
 
     # interface for debug printing
 
@@ -419,16 +423,17 @@ class UnrealObject:
 
             self._unreal_service.set_property_value_for_object(uobject=self.uobject, property_name=property_name, property_value=attr_value)
 
-    # Two UnrealObjects are equal if they refer to the same UObject (and the same property path), regardless of whether
-    # they are distinct Python objects, so expressions like "actor in actors" behave as expected.
+    # Two UnrealObjects are equal if they refer to the same UObject (and the same property path, and are both top-level or
+    # both not top-level), regardless of whether they are distinct Python objects, so expressions like "actor in actors"
+    # behave as expected.
     def __eq__(self, other):
         if isinstance(other, UnrealObject):
-            return self.uobject == other.uobject and self.property_name == other.property_name
+            return self.uobject == other.uobject and self.property_name == other.property_name and self._is_top_level == other._is_top_level
         else:
             return NotImplemented
 
     def __hash__(self):
-        return hash((self.uobject, self.property_name))
+        return hash((self.uobject, self.property_name, self._is_top_level))
 
     def __repr__(self):
         class_name = self.derived_info["static_class_desc"].name
@@ -443,8 +448,10 @@ class UnrealObject:
             return obj.value
         elif isinstance(obj, list):
             return [ self._unpack_property_values(obj=o) for o in obj ]
-        elif isinstance(obj, spear.CaseInsensitiveDict):
-            return spear.to_case_insensitive(in_dict={ k: self._unpack_property_values(obj=v) for k, v in obj.items() })
+        elif isinstance(obj, spear.CaseInsensitiveDict): # must be before dict, because CaseInsensitiveDict inherits from dict
+            # The values have already been converted by spear.to_case_insensitive(...) when they were returned from a
+            # service, so we only need to convert the top level here, which is why we pass recursive=False.
+            return spear.to_case_insensitive(obj={ k: self._unpack_property_values(obj=v) for k, v in obj.items() }, recursive=False)
         elif isinstance(obj, dict):
             return { k: self._unpack_property_values(obj=v) for k, v in obj.items() }
         elif isinstance(obj, spear.Future):

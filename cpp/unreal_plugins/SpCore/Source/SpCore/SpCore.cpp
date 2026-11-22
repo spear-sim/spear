@@ -30,6 +30,7 @@
 #include "SpCore/SharedMemory.h"
 #include "SpCore/Unreal.h"
 #include "SpCore/UnrealClassRegistry.h"
+#include "SpCore/UnrealUtils.h"
 
 void SpCore::StartupModule()
 {
@@ -73,11 +74,17 @@ void SpCore::postEngineInitHandler()
     // This can't happen in StartupModule() because if we re-open a SPEAR project in the editor, then
     // StartupModule() will get called again before the first ShutdownModule() gets called.
     initializeSharedMemory(); 
+
+    // This must happen after engine initialization so all UStructs from modules in the Default loading phase
+    // (or earlier) are loaded.
+    UnrealUtils::initialize();
 }
 
 void SpCore::enginePreExitHandler()
 {
     SP_LOG_CURRENT_FUNCTION();
+
+    UnrealUtils::terminate();
 
     // See above.
     terminateSharedMemory();

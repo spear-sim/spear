@@ -6,7 +6,6 @@
 # Before running this file, rename user_config.yaml.example -> user_config.yaml and modify it with appropriate paths for your system.
 
 import os
-import pprint
 import spear
 
 
@@ -23,32 +22,32 @@ if __name__ == "__main__":
         # get UEnhancedInputLocalPlayerSubsystem
         enhanced_input_subsystem = game.unreal_service.get_subsystem(subsystem_provider_class_name="ULocalPlayer", subsystem_uclass="UEnhancedInputLocalPlayerSubsystem")
         spear.log("enhanced_input_subsystem: ", enhanced_input_subsystem)
-        pprint.pprint(enhanced_input_subsystem.get_properties(), depth=1)
+        spear.pprint(obj=enhanced_input_subsystem.get_properties(), depth=1)
 
         # load UInputAction
         input_action = game.unreal_service.load_object(uclass="UInputAction", name="/SpContent/Input/IA_InputAction.IA_InputAction")
         spear.log("input_action: ", input_action)
-        pprint.pprint(input_action.get_properties(), depth=1)
+        spear.pprint(obj=input_action.get_properties(), depth=1)
 
         # create UInputModifierScalar
         modifier_scalar = game.unreal_service.new_object(uclass="UInputModifierScalar")
         spear.log("modifier_scalar: ", modifier_scalar)
-        pprint.pprint(modifier_scalar.get_properties(), depth=1)
+        spear.pprint(obj=modifier_scalar.get_properties(), depth=1)
 
         # modify UInputModifierScalar
         modifier_scalar.Scalar = {"X": 4.0, "Y": 5.0, "Z": 6.0}
         spear.log("modifier_scalar: ", modifier_scalar)
-        pprint.pprint(modifier_scalar.get_properties(), depth=1)
+        spear.pprint(obj=modifier_scalar.get_properties(), depth=1)
 
         # create UInputTriggerPressed
         trigger_pressed = game.unreal_service.new_object(uclass="UInputTriggerPressed")
         spear.log("trigger_pressed: ", trigger_pressed)
-        pprint.pprint(trigger_pressed.get_properties(), depth=1)
+        spear.pprint(obj=trigger_pressed.get_properties(), depth=1)
 
         # modify UInputTriggerPressed
         trigger_pressed.ActuationThreshold = 0.75
         spear.log("trigger_pressed: ", trigger_pressed)
-        pprint.pprint(trigger_pressed.get_properties(), depth=1)
+        spear.pprint(obj=trigger_pressed.get_properties(), depth=1)
 
         # call UEnhancedInputLocalPlayerSubsystem
         instance.enhanced_input_service.inject_input(
@@ -61,7 +60,7 @@ if __name__ == "__main__":
         # get actor
         actor = game.unreal_service.find_actor_by_name(actor_name="__SP_DEFAULT_PAWN__", uclass="AActor")
         spear.log("actor: ", actor)
-        pprint.pprint(actor.get_properties(), depth=1)
+        spear.pprint(obj=actor.get_properties(), depth=1)
 
         # inject input for a specific actor
         instance.enhanced_input_service.inject_input_for_actor(

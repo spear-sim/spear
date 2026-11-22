@@ -6,7 +6,9 @@
 #include "SpCore/UnrealUtils.h"
 
 #include <stddef.h> // size_t
+#include <stdint.h> // uint64_t
 
+#include <bit>          // std::countl_one
 #include <charconv>     // std::from_chars
 #include <map>
 #include <ranges>       // std::views::filter, std::views::transform
@@ -24,7 +26,7 @@
 #include <Dom/JsonValue.h>
 #include <Engine/Engine.h>                  // GEngine
 #include <GameFramework/Actor.h>
-#include <HAL/Platform.h>                   // TCHAR, uint16
+#include <HAL/Platform.h>                   // TCHAR, uint16, uint64
 #include <JsonObjectConverter.h>            // EJsonObjectConversionFlags, FJsonObjectConverter
 #include <Policies/PrettyJsonPrintPolicy.h> // TPrettyJsonPrintPolicy
 #include <Serialization/JsonReader.h>
@@ -46,6 +48,7 @@
                                             // FScriptSetHelper, FSetProperty, FSoftObjectProperty, FStrProperty, FStructProperty, FUInt16Property, FUInt32Property,
                                             // FUInt64Property, FWeakObjectProperty, TFieldIterator
 #include <UObject/UObjectHash.h>            // GetDerivedClasses
+#include <UObject/UObjectIterator.h>        // TObjectIterator
 
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
@@ -54,6 +57,41 @@
 #include "SpCore/Unreal.h"
 
 class UWorld;
+
+//
+// Initialize and terminate
+//
+
+void UnrealUtils::initialize()
+{
+    //
+    // Find a property flag that isn't used by any property. If SkipFlags is CPF_None, then
+    // FJsonObjectConverter::UStructToJsonObject(...) skips properties that have any of the flags
+    // CPF_Deprecated | CPF_Transient, so getObjectPropertiesAsString(...) passes this unused flag if force_no_skip
+    // is true to avoid skipping any properties. We combine the flags of every property in every loaded UStruct,
+    // and choose the highest bit that isn't set. We choose the highest bit rather than the lowest bit because
+    // Unreal assigns new flags in increasing order, and because a rarely used low flag (e.g., CPF_RequiredParm)
+    // might not be set on any loaded property. This function is called after engine initialization, so all
+    // UStructs from modules in the Default loading phase (or earlier) are loaded.
+    //
+
+    uint64 used_property_flags = 0;
+    for (TObjectIterator<UStruct> itr; itr; ++itr) {
+        for (TFieldIterator<FProperty> property_itr(*itr, EFieldIterationFlags::IncludeDeprecated); property_itr; ++property_itr) {
+            used_property_flags |= property_itr->GetPropertyFlags();
+        }
+    }
+    int num_leading_ones = std::countl_one(used_property_flags);
+    SP_ASSERT(num_leading_ones < 64);
+    s_unused_property_flag_ = static_cast<EPropertyFlags>(uint64{1} << (63 - num_leading_ones));
+    SP_ASSERT(s_unused_property_flag_ != CPF_None);
+    SP_ASSERT(!(used_property_flags & s_unused_property_flag_));
+}
+
+void UnrealUtils::terminate()
+{
+    s_unused_property_flag_ = CPF_None;
+}
 
 //
 // Functions for finding static structs
@@ -404,34 +442,52 @@ FProperty* UnrealUtils::findPropertyByFlagsAll(const UStruct* ustruct, EProperty
 // Get and set object properties, uobject can't be const because we cast it to void*
 //
 
-std::string UnrealUtils::getObjectPropertiesAsString(const UObject* uobject)
+std::string UnrealUtils::getObjectPropertiesAsString(const UObject* uobject, EPropertyFlags check_property_flags, EPropertyFlags skip_property_flags, bool force_no_skip)
 {
-    return getObjectPropertiesAsString(uobject, uobject->GetClass());
+    return getObjectPropertiesAsString(uobject, uobject->GetClass(), check_property_flags, skip_property_flags, force_no_skip);
 }
 
-std::string UnrealUtils::getObjectPropertiesAsString(const void* value_ptr, const UStruct* ustruct)
+std::string UnrealUtils::getObjectPropertiesAsString(const void* value_ptr, const UStruct* ustruct, EPropertyFlags check_property_flags, EPropertyFlags skip_property_flags, bool force_no_skip)
 {
     SP_ASSERT(value_ptr);
     SP_ASSERT(ustruct);
 
     // By default, FJsonObjectConverter lowercases the first character of each property name and replaces each
     // occurrence of "ID" with "Id" (e.g., "SegmentationID" becomes "segmentationId"). We skip this step so
-    // property names in the output string match the names that appear in C++, because our Python code assumes
-    // this convention.
+    // property names in the output string match the names that appear in C++, because we think the exact C++
+    // names are clearer, and make it easier to search for properties online and in the UE codebase. However, we
+    // can't strictly guarantee that every property name matches the name that appears in C++, because FNames
+    // compare case-insensitively, and outside the editor, the spelling of an FName is the first spelling that was
+    // registered in the process (e.g., a property declared as "Result" is returned as "result" if some other code
+    // registered FName("result") first; see the name helpers in Unreal.h). To account for this edge case, our
+    // Python code uses case-insensitive key lookups throughout.
+
+    // If SkipFlags is CPF_None, then FJsonObjectConverter::UStructToJsonObject(...) skips properties that have any
+    // of the flags CPF_Deprecated | CPF_Transient (e.g., AActor::Children). So to avoid skipping any properties if
+    // force_no_skip is true, we pass a nonzero flag that isn't used by any property (see initialize()).
+
+    EPropertyFlags json_skip_property_flags = CPF_None;
+    if (force_no_skip) {
+        SP_ASSERT(s_unused_property_flag_ != CPF_None);
+        json_skip_property_flags = s_unused_property_flag_;
+    } else {
+        json_skip_property_flags = skip_property_flags;
+    }
+
     FString string;
     FJsonObjectConverter::UStructToFormattedJsonObjectString<TCHAR, TPrettyJsonPrintPolicy>(
         ustruct,                                          // StructDefinition
         value_ptr,                                        // Struct
         string,                                           // OutJsonString
-        0,                                                // CheckFlags      (default value: 0)
-        0,                                                // SkipFlags       (default value: 0)
+        check_property_flags,                             // CheckFlags      (default value: 0)
+        json_skip_property_flags,                         // SkipFlags       (default value: 0)
         0,                                                // Indent          (default value: 0)
         nullptr,                                          // ExportCb        (default value: nullptr)
         EJsonObjectConversionFlags::SkipStandardizeCase); // ConversionFlags (default value: EJsonObjectConversionFlags::None)
     return Unreal::toStdString(string);
 }
 
-void UnrealUtils::setObjectPropertiesFromString(UObject* uobject, const std::string& string, bool notify_editor)
+void UnrealUtils::setObjectPropertiesFromString(UObject* uobject, const std::string& string, bool notify_editor, EPropertyFlags check_property_flags, EPropertyFlags skip_property_flags, bool force_no_skip)
 {
     SP_ASSERT(uobject);
 
@@ -440,10 +496,10 @@ void UnrealUtils::setObjectPropertiesFromString(UObject* uobject, const std::str
         notify_object = uobject;
     }
 
-    setObjectPropertiesFromString(static_cast<void*>(uobject), uobject->GetClass(), string, notify_object);
+    setObjectPropertiesFromString(static_cast<void*>(uobject), uobject->GetClass(), string, notify_object, check_property_flags, skip_property_flags, force_no_skip);
 }
 
-void UnrealUtils::setObjectPropertiesFromString(void* value_ptr, const UStruct* ustruct, const std::string& string, UObject* notify_object)
+void UnrealUtils::setObjectPropertiesFromString(void* value_ptr, const UStruct* ustruct, const std::string& string, UObject* notify_object, EPropertyFlags check_property_flags, EPropertyFlags skip_property_flags, bool force_no_skip)
 {
     SP_ASSERT(value_ptr);
     SP_ASSERT(ustruct);
@@ -466,7 +522,24 @@ void UnrealUtils::setObjectPropertiesFromString(void* value_ptr, const UStruct* 
     success = FJsonSerializer::Deserialize(json_reader, json_object);
     SP_ASSERT(success);
     SP_ASSERT(json_object.IsValid());
-    success = FJsonObjectConverter::JsonObjectToUStruct(json_object.ToSharedRef(), ustruct, value_ptr);
+
+    // Unlike FJsonObjectConverter::UStructToJsonObject(...), FJsonObjectConverter::JsonObjectToUStruct(...)
+    // doesn't skip any properties if SkipFlags is CPF_None. So to avoid skipping any properties if force_no_skip is
+    // true, we pass CPF_None.
+
+    EPropertyFlags json_skip_property_flags = CPF_None;
+    if (force_no_skip) {
+        json_skip_property_flags = CPF_None;
+    } else {
+        json_skip_property_flags = skip_property_flags;
+    }
+
+    success = FJsonObjectConverter::JsonObjectToUStruct(
+        json_object.ToSharedRef(), // JsonObject
+        ustruct,                   // StructDefinition
+        value_ptr,                 // OutStruct
+        check_property_flags,      // CheckFlags (default value: 0)
+        json_skip_property_flags); // SkipFlags  (default value: 0)
     SP_ASSERT(success);
 
     #if WITH_EDITOR // defined in an auto-generated header
@@ -1080,6 +1153,24 @@ SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& prop
             inner_value_strings.push_back(inner_value_string);
         }
 
+        // In most cases, TMap keys are already handled case-insensitively (e.g., when the key type is FString
+        // or FName). So most TMaps can't have two keys that differ only by case. An exception to this rule is
+        // when the key type is a UENUM, and the enum has two distinct values where the C++ names of those
+        // values differ only by case. In this setting, the keys in the TMap are the underlying numerical enum
+        // values, so the two keys are distinct. But getPropertyValueAsString(...) converts each key to its
+        // enum name, and enum names are stored as FNames, so the two enum names have identical strings. The
+        // formatted JSON string would then contain duplicate keys, which json.loads(...) would silently
+        // collapse in Python, so we detect this case here.
+        if (!Std::allUnique(inner_key_strings)) {
+            std::map<std::string, uint64_t> counts = Std::count(inner_key_strings);
+            std::vector<std::string> duplicate_key_strings = Std::toVector<std::string>(
+                counts |
+                std::views::filter([](const auto& pair) { return pair.second > 1; }) |
+                std::views::transform([](const auto& pair) { return pair.first; }));
+            SP_LOG("    ERROR: TMap property \"", Unreal::getUnrealName(map_property), "\" has distinct keys with identical string representations: [", Std::join(duplicate_key_strings, ", "), "]");
+            SP_ASSERT(false);
+        }
+
         property_value.value_ = getMapPropertyValueAsFormattedString(inner_key_property, inner_key_strings, inner_value_property, inner_value_strings);
 
     } else if (property_desc.property_->IsA(FStructProperty::StaticClass())) {
@@ -1105,8 +1196,7 @@ SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& prop
         property_value.value_ = Std::toStringFromPtr(uobject);
 
     } else {
-
-        SP_LOG(Unreal::getUnrealName(property_desc.property_), " is an unsupported type: ", Unreal::getUnrealName(property_desc.property_->GetClass()));
+        SP_LOG("    ERROR: Property ", Unreal::getUnrealName(property_desc.property_), " is an unsupported type: ", Unreal::getUnrealName(property_desc.property_->GetClass()));
         SP_ASSERT(false);
     }
 

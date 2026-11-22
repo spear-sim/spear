@@ -7,6 +7,7 @@ import collections.abc
 import json
 import numbers
 import numpy as np
+import pprint as pp # imported as pp because spear.pprint(...) is defined below
 import spear
 
 if spear.__can_import_unreal__:
@@ -251,6 +252,15 @@ class Ptr:
     def __repr__(self):
         return f"Ptr(_handle={self._handle})"
 
+    def __eq__(self, other):
+        if isinstance(other, Ptr):
+            return self._handle == other._handle
+        else:
+            return NotImplemented
+
+    def __hash__(self):
+        return hash(self._handle)
+
 class Shared:
     def __init__(self, array, shared_memory_handle):
         self._array = array
@@ -306,11 +316,11 @@ class ScriptStruct:
 #
 
 class CaseInsensitiveDict(dict):
-    def __init__(self, in_dict=None):
-        in_dict = in_dict if in_dict is not None else {}
+    def __init__(self, dict_=None):
+        dict_ = dict_ if dict_ is not None else {}
         super().__init__()
         self._stored_keys = {} # map from lowercase key to stored key
-        for key, value in in_dict.items():
+        for key, value in dict_.items():
             assert isinstance(key, str)
             assert key.lower() not in self._stored_keys # keys must not differ only by case
             self[key] = value
@@ -359,11 +369,11 @@ class CaseInsensitiveDict(dict):
 
     def __reduce__(self):
         # needed for pickle, because pickle restores items before restoring self._stored_keys, and pickle passes args
-        # positionally, so dict(self) is passed as in_dict
+        # positionally, so dict(self) is passed as dict_
         return (CaseInsensitiveDict, (dict(self),))
 
     def __repr__(self):
-        return f"CaseInsensitiveDict(in_dict={super().__repr__()})"
+        return f"CaseInsensitiveDict(dict_={super().__repr__()})"
 
     def get(self, key, default=None):
         return super().get(self._get_stored_key(key=key), default)
@@ -399,7 +409,7 @@ class CaseInsensitiveDict(dict):
         self._stored_keys.clear()
 
     def copy(self):
-        return CaseInsensitiveDict(in_dict=self)
+        return CaseInsensitiveDict(dict_=self)
 
     def _get_stored_key(self, key):
         if isinstance(key, str) and key.lower() in self._stored_keys:
@@ -617,6 +627,10 @@ def to_json_string(obj, stringify=True):
     elif isinstance(obj, spear.UnrealClass):
         return to_ptr(handle=obj.uclass).to_string()
     elif isinstance(obj, spear.UnrealObject):
+        # Only a top-level UnrealObject without a property name can be converted, because the conversion only
+        # preserves the UObject handle.
+        assert obj.is_top_level()
+        assert obj.property_name == ""
         return to_ptr(handle=obj.uobject).to_string()
     elif isinstance(obj, bool) or isinstance(obj, numbers.Number) or isinstance(obj, list) or isinstance(obj, dict):
         if stringify:
@@ -627,7 +641,7 @@ def to_json_string(obj, stringify=True):
             elif isinstance(obj, list):
                 return json.dumps([ to_json_string(obj=o, stringify=False) for o in obj ])
             elif isinstance(obj, dict):
-                return json.dumps({ to_json_string(obj=k, stringify=True): to_json_string(obj=v, stringify=False) for k, v in obj.items() })
+                return json.dumps(_to_json_validated_dict(dict_=obj))
             else:
                 assert False
         else:
@@ -638,13 +652,24 @@ def to_json_string(obj, stringify=True):
             elif isinstance(obj, list):
                 return [ to_json_string(obj=o, stringify=False) for o in obj ]
             elif isinstance(obj, dict):
-                return { to_json_string(obj=k, stringify=True): to_json_string(obj=v, stringify=False) for k, v in obj.items() }
+                return _to_json_validated_dict(dict_=obj)
             else:
                 assert False
     elif spear.__can_import_unreal__ and isinstance(obj, unreal.Object):
         return unreal.SpFuncUtils.to_string_from_object(object=obj)
     else:
         return json.dumps(obj)
+
+# Unreal collapses JSON object keys that differ only by case (e.g., "a" and "A"), so we assert that the JSON keys are
+# still unique, ignoring case, after converting them to strings. This also detects distinct keys that convert to the
+# same string (e.g., a Ptr and an UnrealObject that refer to the same UObject). This assert is the set-side equivalent
+# of the assert in UnrealUtils::getPropertyValueAsString(...) for TMap keys.
+def _to_json_validated_dict(dict_):
+    assert all(isinstance(k, str) for k in dict_.keys()) or not any(isinstance(k, str) for k in dict_.keys()) # keys must not mix strings and non-strings
+    json_dict = { to_json_string(obj=k, stringify=True): to_json_string(obj=v, stringify=False) for k, v in dict_.items() }
+    assert len(json_dict) == len(dict_)
+    assert len({ k.lower() for k in json_dict.keys() }) == len(json_dict)
+    return json_dict
 
 # Convert to a collection of dicts from a collection of JSON strings returned by a service.
 def try_to_dicts(json_strings, default_value=None):
@@ -665,25 +690,51 @@ def try_to_dict(json_string, default_value=None):
         else:
             return default_value
 
-# Convert to a CaseInsensitiveDict from a dict. Only the top level is converted; nested dicts are not converted.
-def to_case_insensitive(in_dict):
-    return CaseInsensitiveDict(in_dict=in_dict)
-
-# Convert to a dict from a CaseInsensitiveDict. Only the top level is converted; nested CaseInsensitiveDicts are not
-# converted.
-def to_case_sensitive(in_dict):
-    return dict(in_dict)
-
-# Convert to a CaseInsensitiveDict from a JSON value returned by a service if the JSON value is a struct, where type_id is
-# the C++ type of the JSON value. If obj is a dict and type_id is not a TMap, then obj must be a struct, so its keys are
-# property names. Only the top level is converted. We don't convert structs inside containers (e.g., TArray<FVector>)
-# or dicts nested inside struct fields, so a struct value behaves the same as the value returned by
-# get_properties_for_struct(...).
-def try_to_case_insensitive(obj, type_id):
-    if isinstance(obj, dict) and not type_id.startswith("TMap<"):
-        return to_case_insensitive(in_dict=obj)
+# Convert each dict in obj to a CaseInsensitiveDict if all of its keys are strings. Dicts whose keys are all non-strings
+# (e.g., ints) are recursed into but the keys are left unchanged, and dicts that mix string and non-string keys are not
+# allowed. Every dict returned by a service has string keys, because JSON object keys are always strings, so every dict
+# returned by a service is converted. If recursive is True, then nested dicts inside dicts and lists are also converted;
+# otherwise only obj itself is converted.
+def to_case_insensitive(obj, recursive=True):
+    if isinstance(obj, dict):
+        if recursive:
+            dict_ = { k: to_case_insensitive(obj=v) for k, v in obj.items() }
+        else:
+            dict_ = dict(obj)
+        if all(isinstance(k, str) for k in dict_.keys()):
+            return CaseInsensitiveDict(dict_=dict_)
+        else:
+            assert not any(isinstance(k, str) for k in dict_.keys()) # keys must not mix strings and non-strings
+            return dict_
+    elif isinstance(obj, list):
+        if recursive:
+            return [ to_case_insensitive(obj=o) for o in obj ]
+        else:
+            return obj
     else:
         return obj
+
+# Convert each CaseInsensitiveDict in obj to a dict. If recursive is True, then nested CaseInsensitiveDicts inside dicts
+# and lists are also converted; otherwise only obj itself is converted.
+def to_case_sensitive(obj, recursive=True):
+    if isinstance(obj, dict):
+        if recursive:
+            return { k: to_case_sensitive(obj=v) for k, v in obj.items() }
+        else:
+            return dict(obj)
+    elif isinstance(obj, list):
+        if recursive:
+            return [ to_case_sensitive(obj=o) for o in obj ]
+        else:
+            return obj
+    else:
+        return obj
+
+# Pretty-print obj using the standard pprint module. The standard pprint module doesn't pretty-print CaseInsensitiveDicts,
+# because pprint only pretty-prints dicts that don't override __repr__, so we convert each CaseInsensitiveDict in obj to
+# a dict before printing.
+def pprint(obj, **kwargs):
+    pp.pprint(to_case_sensitive(obj=obj), **kwargs)
 
 # Convert to a Ptr object that can be passed to a service from a handle.
 def to_ptr(handle):

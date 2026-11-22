@@ -83,6 +83,14 @@ public:
     ~UnrealUtils() = delete;
 
     //
+    // Initialize and terminate. These functions must be called after engine initialization (see
+    // SpCore::postEngineInitHandler()) and before engine exit (see SpCore::enginePreExitHandler()).
+    //
+
+    static void initialize();
+    static void terminate();
+
+    //
     // Find static structs
     //
 
@@ -152,11 +160,15 @@ public:
     // Get and set multiple properties
     //
 
-    static std::string getObjectPropertiesAsString(const UObject* uobject);
-    static std::string getObjectPropertiesAsString(const void* value_ptr, const UStruct* ustruct);
+    //
+    // If force_no_skip is true, then skip_property_flags is ignored and no properties are skipped.
+    //
 
-    static void setObjectPropertiesFromString(UObject* uobject, const std::string& string, bool notify_editor = false);
-    static void setObjectPropertiesFromString(void* value_ptr, const UStruct* ustruct, const std::string& string, UObject* notify_object = nullptr);
+    static std::string getObjectPropertiesAsString(const UObject* uobject, EPropertyFlags check_property_flags = CPF_None, EPropertyFlags skip_property_flags = CPF_Deprecated | CPF_Transient, bool force_no_skip = false);
+    static std::string getObjectPropertiesAsString(const void* value_ptr, const UStruct* ustruct, EPropertyFlags check_property_flags = CPF_None, EPropertyFlags skip_property_flags = CPF_Deprecated | CPF_Transient, bool force_no_skip = false);
+
+    static void setObjectPropertiesFromString(UObject* uobject, const std::string& string, bool notify_editor = false, EPropertyFlags check_property_flags = CPF_None, EPropertyFlags skip_property_flags = CPF_Deprecated | CPF_Transient, bool force_no_skip = false);
+    static void setObjectPropertiesFromString(void* value_ptr, const UStruct* ustruct, const std::string& string, UObject* notify_object = nullptr, EPropertyFlags check_property_flags = CPF_None, EPropertyFlags skip_property_flags = CPF_Deprecated | CPF_Transient, bool force_no_skip = false);
 
     //
     // Get and set individual properties. Note that uobject can't be const because we cast it to (non-const)
@@ -1460,4 +1472,6 @@ private:
         SP_ASSERT(vector.size() == 1);
         return vector.at(0);
     }
+
+    inline static EPropertyFlags s_unused_property_flag_ = CPF_None;
 };
