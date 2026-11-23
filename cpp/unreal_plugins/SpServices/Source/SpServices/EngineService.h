@@ -543,15 +543,16 @@ public:
     template <typename TFunc, typename TReturn, typename... TArgs>
     void bindFuncToExecuteOnGameThread(const std::string& service_name, const std::string& func_name, UnrealEntryPointBindFlags bind_flags, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
     {
-        // gt_func lambda is typically executed on the game thread after it has been scheduled by the worker thread
+        // Each gt_func lambda is typically executed on the game thread after it has been scheduled by the
+        // worker thread.
 
         std::string gt_thread_name = "game_thread";
-        std::string gt_call_sync_long_func_name = service_name + ".call_sync_on_game_thread." + func_name;
         bool gt_return_early_if_error = true;
         bool gt_return_early_if_terminating = true;
-        auto gt_func = wrapFuncToExecuteInTryCatch(gt_thread_name, gt_call_sync_long_func_name, gt_return_early_if_error, gt_return_early_if_terminating, func);
 
         if (Std::toBool(bind_flags & UnrealEntryPointBindFlags::CallSync)) {
+            std::string gt_call_sync_long_func_name = service_name + ".call_sync_on_game_thread." + func_name;
+            auto gt_func = wrapFuncToExecuteInTryCatch(gt_thread_name, gt_call_sync_long_func_name, gt_return_early_if_error, gt_return_early_if_terminating, func);
             SP_ASSERT(!func_signature_registry_.isFuncSignatureRegistered(gt_call_sync_long_func_name));
             func_signature_registry_.registerFuncSignature<TReturn, TArgs...>(gt_call_sync_long_func_name);
             entry_point_binder_->bind(gt_call_sync_long_func_name, wrapFuncToExecuteInWorkQueueBlocking(gt_call_sync_long_func_name, gt_func));
@@ -559,6 +560,7 @@ public:
 
         if (Std::toBool(bind_flags & UnrealEntryPointBindFlags::CallAsync)) {
             std::string gt_call_async_long_func_name = service_name + ".call_async_on_game_thread." + func_name;
+            auto gt_func = wrapFuncToExecuteInTryCatch(gt_thread_name, gt_call_async_long_func_name, gt_return_early_if_error, gt_return_early_if_terminating, func);
             SP_ASSERT(!func_signature_registry_.isFuncSignatureRegistered(gt_call_async_long_func_name));
             func_signature_registry_.registerFuncSignature<SpFuture, TArgs...>(gt_call_async_long_func_name);
             entry_point_binder_->bind(gt_call_async_long_func_name, wrapFuncToExecuteInWorkQueueNonBlocking(gt_call_async_long_func_name, gt_func)); // bound function calls createFuture
@@ -593,6 +595,7 @@ public:
 
         if (Std::toBool(bind_flags & UnrealEntryPointBindFlags::SendAsync)) {
             std::string gt_send_async_long_func_name = service_name + ".send_async_on_game_thread." + func_name;
+            auto gt_func = wrapFuncToExecuteInTryCatch(gt_thread_name, gt_send_async_long_func_name, gt_return_early_if_error, gt_return_early_if_terminating, func);
             SP_ASSERT(!func_signature_registry_.isFuncSignatureRegistered(gt_send_async_long_func_name));
             func_signature_registry_.registerFuncSignature<void, TArgs...>(gt_send_async_long_func_name);
             entry_point_binder_->bind(gt_send_async_long_func_name, wrapFuncToExecuteInWorkQueueNonBlockingDiscardReturnValue(gt_send_async_long_func_name, gt_func));
