@@ -6,6 +6,7 @@
 #include "SpCore/Config.h"
 
 #include <filesystem>
+#include <mutex> // std::lock_guard, std::recursive_mutex
 
 #include <Containers/UnrealString.h> // FString
 #include <Misc/CommandLine.h>
@@ -24,6 +25,7 @@
 //
 
 YAML::Node g_config_node;
+std::recursive_mutex g_config_mutex;
 
 void Config::requestInitialize()
 {
@@ -39,6 +41,8 @@ void Config::requestInitialize()
 void Config::initialize(const std::string& config_file)
 {
     SP_LOG("    Initializing config system from file: ", config_file);
+
+    std::lock_guard<std::recursive_mutex> lock(g_config_mutex);
     g_config_node = YAML::LoadFile(config_file);
     s_initialized_ = true;
 }
@@ -46,11 +50,14 @@ void Config::initialize(const std::string& config_file)
 void Config::terminate()
 {
     SP_LOG("    Terminating config system...");
+
+    std::lock_guard<std::recursive_mutex> lock(g_config_mutex);
     g_config_node.reset();
     s_initialized_ = false;
 }
 
 bool Config::isInitialized()
 {
+    std::lock_guard<std::recursive_mutex> lock(g_config_mutex);
     return s_initialized_;
 }

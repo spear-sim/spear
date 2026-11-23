@@ -220,7 +220,7 @@ public:
 
         for (int i = 0; i < non_proxy_component->GetNumMaterials(); i++) {
             uint32_t mesh_proxy_geometry_desc_id = registerMeshProxyGeometryImpl(non_proxy_component, non_proxy_component->GetMaterial(i));
-            if (Config::isInitialized() && Config::get<bool>("SP_CORE.MESH_PROXY_COMPONENT_MANAGER.VERBOSE")) {
+            if (Config::get<bool>("SP_CORE.MESH_PROXY_COMPONENT_MANAGER.VERBOSE")) {
                 SP_LOG("Registering proxy geometry for non-proxy component: ", UnrealUtils::getStableName(non_proxy_component), " (material slot = ", i, ", ID = ", mesh_proxy_geometry_desc_id, ")");
             }
             UMaterialInterface* material = createMaterialForProxyComponentMaterialSlot(mesh_proxy_geometry_desc_id, non_proxy_component, non_proxy_component->GetMaterial(i));
@@ -278,7 +278,7 @@ public:
 
         for (int i = 0; i < non_proxy_component->GetNumMaterials(); i++) {
             uint32_t mesh_proxy_geometry_desc_id = registerMeshProxyGeometryImpl(non_proxy_component, non_proxy_component->GetMaterial(i));
-            if (Config::isInitialized() && Config::get<bool>("SP_CORE.MESH_PROXY_COMPONENT_MANAGER.VERBOSE")) {
+            if (Config::get<bool>("SP_CORE.MESH_PROXY_COMPONENT_MANAGER.VERBOSE")) {
                 SP_LOG("Registering proxy geometry for non-proxy component: ", UnrealUtils::getStableName(non_proxy_component), " (material slot = ", i, ", ID = ", mesh_proxy_geometry_desc_id, ")");
             }
             UMaterialInterface* material = createMaterialForProxyComponentMaterialSlot(mesh_proxy_geometry_desc_id, non_proxy_component, non_proxy_component->GetMaterial(i));
@@ -312,7 +312,7 @@ public:
         SP_ASSERT(mesh_proxy_component_data);
 
         for (auto mesh_proxy_geometry_desc_id : mesh_proxy_component_data->mesh_proxy_geometry_desc_ids_) {
-            if (Config::isInitialized() && Config::get<bool>("SP_CORE.MESH_PROXY_COMPONENT_MANAGER.VERBOSE")) {
+            if (Config::get<bool>("SP_CORE.MESH_PROXY_COMPONENT_MANAGER.VERBOSE")) {
                 SP_LOG("Invalidating proxy geometry (ID = ", mesh_proxy_geometry_desc_id, ")");
             }
             invalidateMeshProxyGeometryImpl(mesh_proxy_geometry_desc_id);
@@ -330,7 +330,7 @@ public:
         SP_ASSERT(mesh_proxy_component_data);
 
         for (auto mesh_proxy_geometry_desc_id : mesh_proxy_component_data->mesh_proxy_geometry_desc_ids_) {
-            if (Config::isInitialized() && Config::get<bool>("SP_CORE.MESH_PROXY_COMPONENT_MANAGER.VERBOSE")) {
+            if (Config::get<bool>("SP_CORE.MESH_PROXY_COMPONENT_MANAGER.VERBOSE")) {
                 SP_LOG("Unregistering proxy geometry (ID = ", mesh_proxy_geometry_desc_id, ")");
             }
             unregisterMeshProxyGeometryImpl(mesh_proxy_geometry_desc_id);

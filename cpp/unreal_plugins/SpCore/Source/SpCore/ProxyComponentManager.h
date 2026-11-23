@@ -329,7 +329,7 @@ private:
         std::map<std::string, ProxyComponentDesc>& non_proxy_name_to_proxy_component_desc_map = non_proxy_name_to_proxy_component_desc_maps_.at(TComponent::StaticClass());
 
         for (auto& [non_proxy_name, non_proxy_component] : non_proxy_components) {
-            if (Config::isInitialized() && Config::get<bool>("SP_CORE.PROXY_COMPONENT_MANAGER.VERBOSE")) {
+            if (Config::get<bool>("SP_CORE.PROXY_COMPONENT_MANAGER.VERBOSE")) {
                 SP_LOG("Creating proxy component for non-proxy component: ", non_proxy_name);
             }
 
@@ -354,7 +354,7 @@ private:
             SP_ASSERT(Unreal::isNamed(proxy_component, proxy_component_name));
             SP_ASSERT(proxy_component->HasAnyFlags(RF_Transient));
 
-            if (Config::isInitialized() && Config::get<bool>("SP_CORE.PROXY_COMPONENT_MANAGER.VERBOSE")) {
+            if (Config::get<bool>("SP_CORE.PROXY_COMPONENT_MANAGER.VERBOSE")) {
                 SP_LOG("Registering proxy component for non-proxy component: ", non_proxy_name);
             }
 
@@ -394,7 +394,7 @@ private:
             SP_ASSERT(proxy_component_desc.is_valid_);
             Std::remove(non_proxy_name_to_proxy_component_desc_map, non_proxy_name);
 
-            if (Config::isInitialized() && Config::get<bool>("SP_CORE.PROXY_COMPONENT_MANAGER.VERBOSE")) {
+            if (Config::get<bool>("SP_CORE.PROXY_COMPONENT_MANAGER.VERBOSE")) {
                 SP_LOG("Invalidating proxy component for non-proxy component: ", non_proxy_name);
             }
             proxy_component_desc.is_valid_ = false;
@@ -403,7 +403,7 @@ private:
 
             getPtr()->invalidateProxyComponent(&proxy_component_desc.derived_proxy_component_data_);
 
-            if (Config::isInitialized() && Config::get<bool>("SP_CORE.PROXY_COMPONENT_MANAGER.VERBOSE")) {
+            if (Config::get<bool>("SP_CORE.PROXY_COMPONENT_MANAGER.VERBOSE")) {
                 SP_LOG("Destroying proxy component for non-proxy component: ", non_proxy_name);
             }
             UActorComponent* proxy_component = Unreal::toPtr(proxy_component_desc.proxy_component_);
@@ -432,7 +432,7 @@ private:
             ProxyComponentDesc proxy_component_desc = std::move(invalid_id_to_proxy_component_desc_map_.at(id));
             SP_ASSERT(!proxy_component_desc.is_valid_);
 
-            if (Config::isInitialized() && Config::get<bool>("SP_CORE.PROXY_COMPONENT_MANAGER.VERBOSE")) {
+            if (Config::get<bool>("SP_CORE.PROXY_COMPONENT_MANAGER.VERBOSE")) {
                 SP_LOG("Unregistering proxy component for non-proxy component: ", proxy_component_desc.non_proxy_name_);
             }
 

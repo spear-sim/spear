@@ -50,7 +50,7 @@ public:
         //         return 0;
         //     }
 
-        if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.MOUNT_PAK_FILES") && FCoreDelegates::MountPak.IsBound()) {
+        if (Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.MOUNT_PAK_FILES") && FCoreDelegates::MountPak.IsBound()) {
             std::vector<std::string> pak_files = Config::get<std::vector<std::string>>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.PAK_FILES");
             int32 pak_order = 0;
 
@@ -66,7 +66,7 @@ public:
         // specified in Unreal's config system, but late enough that the UGameMapSettings default object has
         // already been initialized.
 
-        if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_GAME_DEFAULT_MAP")) {
+        if (Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_GAME_DEFAULT_MAP")) {
             std::string game_default_map = Config::get<std::string>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.GAME_DEFAULT_MAP");
 
             SP_LOG("    Overriding game default map...");
@@ -77,7 +77,7 @@ public:
             SP_LOG("    New game default map: ", Unreal::toStdString(UGameMapsSettings::GetGameDefaultMap()));
         }
 
-        if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_GLOBAL_DEFAULT_GAME_MODE")) {
+        if (Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_GLOBAL_DEFAULT_GAME_MODE")) {
             std::string global_default_game_mode = Config::get<std::string>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.GLOBAL_DEFAULT_GAME_MODE");
 
             SP_LOG("    Overriding global default game mode...");
@@ -89,7 +89,7 @@ public:
         }
 
         #if WITH_EDITORONLY_DATA // defined in an auto-generated header
-            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_EDITOR_STARTUP_MAP")) {
+            if (Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_EDITOR_STARTUP_MAP")) {
                 std::string editor_startup_map = Config::get<std::string>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.EDITOR_STARTUP_MAP");
 
                 UGameMapsSettings* game_maps_settings = GetMutableDefault<UGameMapsSettings>();
@@ -108,7 +108,7 @@ public:
         // Override benchmarking and fixed delta time
         //
 
-        if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_BENCHMARKING")) {
+        if (Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_BENCHMARKING")) {
             bool benchmarking = Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.BENCHMARKING");
 
             SP_LOG("    Overriding benchmarking...");
@@ -119,7 +119,7 @@ public:
             SP_LOG("    New benchmarking: ", FApp::IsBenchmarking());
         }
 
-        if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_FIXED_DELTA_TIME")) {
+        if (Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_FIXED_DELTA_TIME")) {
             float fixed_delta_time = Config::get<float>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.FIXED_DELTA_TIME");
 
             SP_LOG("    Overriding fixed delta time...");
@@ -134,7 +134,7 @@ public:
         // Override physics settings
         //
 
-        if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_PHYSICS_SETTINGS")) {
+        if (Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_PHYSICS_SETTINGS")) {
             std::string physics_settings_str = Config::get<std::string>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.PHYSICS_SETTINGS_STRING");
 
             UPhysicsSettings* physics_settings = UPhysicsSettings::Get();
@@ -166,7 +166,7 @@ public:
     {
         SP_LOG_CURRENT_FUNCTION();
 
-        if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.MOUNT_PAK_FILES") && FCoreDelegates::OnUnmountPak.IsBound()) {
+        if (Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.MOUNT_PAK_FILES") && FCoreDelegates::OnUnmountPak.IsBound()) {
             std::vector<std::string> pak_files = Config::get<std::vector<std::string>>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.PAK_FILES");
 
             SP_LOG("    Unmounting PAK files...");
@@ -192,7 +192,7 @@ protected:
         // initialized.
         //
 
-        if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_NAVIGATION_SYSTEM_DEFAULT_OBJECT")) {
+        if (Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_NAVIGATION_SYSTEM_DEFAULT_OBJECT")) {
             std::string navigation_system_default_object_str = Config::get<std::string>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.NAVIGATION_SYSTEM_DEFAULT_OBJECT_STRING");
 
             SP_ASSERT(GEngine);
@@ -215,7 +215,7 @@ protected:
             SP_LOG_NO_PREFIX(UnrealUtils::getObjectPropertiesAsString(navigation_system_default_object));
         }
 
-        if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_RECAST_NAV_MESH_DEFAULT_OBJECT")) {
+        if (Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_RECAST_NAV_MESH_DEFAULT_OBJECT")) {
             std::string recast_nav_mesh_default_object_str = Config::get<std::string>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.RECAST_NAV_MESH_DEFAULT_OBJECT_STRING");
 
             ARecastNavMesh* recast_nav_mesh_default_object = GetMutableDefault<ARecastNavMesh>();

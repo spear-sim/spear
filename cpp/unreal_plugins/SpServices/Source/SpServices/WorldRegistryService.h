@@ -181,7 +181,7 @@ private:
         // Override game paused
         //
 
-        if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.WORLD_REGISTRY_SERVICE.OVERRIDE_GAME_PAUSED")) {
+        if (Config::get<bool>("SP_SERVICES.WORLD_REGISTRY_SERVICE.OVERRIDE_GAME_PAUSED")) {
             bool game_paused = Config::get<bool>("SP_SERVICES.WORLD_REGISTRY_SERVICE.GAME_PAUSED");
 
             SP_LOG("    Overriding game paused for world: ", name);

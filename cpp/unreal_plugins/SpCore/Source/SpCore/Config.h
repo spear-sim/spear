@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <mutex>  // std::lock_guard, std::recursive_mutex
 #include <string>
 #include <vector>
 
@@ -25,6 +26,7 @@
 //
 
 extern SPCORE_API YAML::Node g_config_node;
+extern SPCORE_API std::recursive_mutex g_config_mutex;
 
 class SPCORE_API Config
 {
@@ -34,9 +36,15 @@ public:
 
     // If the -sp-config-file= command-line argument is passed in to the executable, calling requestInitialize()
     // will successfully initialize the config system. Otherwise, calling requestInitialize() will fail to
-    // initialize the config system. Systems that want to use the config system must check if it has been
-    // successfully initialized by checking Config::isInitialized(). Calling terminate() will completely reset
-    // the state of the config system, regardless of whether or not it was successfully initialized.
+    // initialize the config system. If the config system isn't initialized, then get(...) returns a
+    // default-constructed value, so systems that need a different fallback value must check if the config system
+    // has been successfully initialized by calling Config::isInitialized(). Calling terminate() will completely
+    // reset the state of the config system, regardless of whether or not it was successfully initialized.
+    //
+    // The config system can be accessed from any thread, and can be re-initialized while other threads are
+    // accessing it, e.g., by ASpInitializeWorldManager on the game thread while the RPC worker thread is reading
+    // config values. So we protect it with g_config_mutex. We use a recursive mutex because get(...) can log
+    // while holding the mutex, and logging can read config values on the same thread (see OutputLog.cpp).
 
     static void requestInitialize();
     static void initialize(const std::string& config_file);
@@ -58,31 +66,37 @@ public:
     template <typename TValue>
     static TValue get(const std::string& key)
     {
-        SP_ASSERT(isInitialized());
+        std::lock_guard<std::recursive_mutex> lock(g_config_mutex);
 
-        try {
-            return Yaml::get<TValue>(g_config_node, key);
-        } catch (...) {
-            SP_LOG_CURRENT_FUNCTION();
-            SP_LOG("    ERROR: Couldn't get value for key: ", key);
-            SP_ASSERT(false);
-            return TValue();
+        TValue value = TValue();
+        if (isInitialized()) {
+            try {
+                value = Yaml::get<TValue>(g_config_node, key);
+            } catch (...) {
+                SP_LOG_CURRENT_FUNCTION();
+                SP_LOG("    ERROR: Couldn't get value for key: ", key);
+                SP_ASSERT(false);
+            }
         }
+        return value;
     }
 
     template <typename TValue>
     static TValue get(const std::vector<std::string>& keys)
     {
-        SP_ASSERT(isInitialized());
+        std::lock_guard<std::recursive_mutex> lock(g_config_mutex);
 
-        try {
-            return Yaml::get<TValue>(g_config_node, keys);
-        } catch (...) {
-            SP_LOG_CURRENT_FUNCTION();
-            SP_LOG("    ERROR: Couldn't get value for keys: [", Std::join(keys, ", "), "]");
-            SP_ASSERT(false);
-            return TValue();
+        TValue value = TValue();
+        if (isInitialized()) {
+            try {
+                value = Yaml::get<TValue>(g_config_node, keys);
+            } catch (...) {
+                SP_LOG_CURRENT_FUNCTION();
+                SP_LOG("    ERROR: Couldn't get value for keys: [", Std::join(keys, ", "), "]");
+                SP_ASSERT(false);
+            }
         }
+        return value;
     }
 
 private:

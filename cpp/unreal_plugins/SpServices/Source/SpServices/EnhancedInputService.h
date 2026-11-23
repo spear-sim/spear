@@ -135,7 +135,7 @@ public:
                     const UInputAction* input_action = event_binding->GetAction();
                     SP_ASSERT(input_action);
 
-                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENHANCED_INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
+                    if (Config::get<bool>("SP_SERVICES.ENHANCED_INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
                         SP_LOG(Unreal::getUnrealName(input_action));
                         SP_LOG(Unreal::getStringFromEnumValue(event_binding->GetTriggerEvent()));
                         SP_LOG();
@@ -176,7 +176,7 @@ public:
 
                 for (const auto& debug_key_binding : enhanced_input_component->GetDebugKeyBindings()) {
 
-                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENHANCED_INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
+                    if (Config::get<bool>("SP_SERVICES.ENHANCED_INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
                         SP_LOG(UnrealUtils::getObjectPropertiesAsString(&(debug_key_binding->Chord), FInputChord::StaticStruct()));
                         SP_LOG(Unreal::getStringFromEnumValue(debug_key_binding->KeyEvent.GetValue()));
                         SP_LOG();

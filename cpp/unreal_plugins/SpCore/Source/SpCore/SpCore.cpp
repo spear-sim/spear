@@ -91,7 +91,7 @@ void SpCore::enginePreExitHandler()
 void SpCore::requestWaitForKeyboardInput() const
 {
     // Wait for keyboard input, which is useful when attempting to attach a debugger to the running executable.
-    if (Config::isInitialized() && Config::get<bool>("SP_CORE.WAIT_FOR_KEYBOARD_INPUT_DURING_INITIALIZATION")) {
+    if (Config::get<bool>("SP_CORE.WAIT_FOR_KEYBOARD_INPUT_DURING_INITIALIZATION")) {
         SP_LOG("    Press any key to continue...");
         std::cin.get();
         SP_LOG("    Received keyboard input, continuing...");
@@ -172,10 +172,7 @@ void SpCore::unregisterClasses() const
 
 void SpCore::initializeSharedMemory()
 {
-    uint64_t shared_memory_initial_unique_id = 0;
-    if (Config::isInitialized()) {
-        shared_memory_initial_unique_id = Config::get<unsigned int>("SP_CORE.SHARED_MEMORY_INITIAL_UNIQUE_ID");
-    }
+    uint64_t shared_memory_initial_unique_id = Config::get<unsigned int>("SP_CORE.SHARED_MEMORY_INITIAL_UNIQUE_ID");
     SharedMemory::initialize(shared_memory_initial_unique_id);
 }
 

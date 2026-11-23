@@ -5,6 +5,9 @@
 
 #pragma once
 
+#include <stdint.h> // uint64_t
+
+#include <atomic>
 #include <future>      // std::packaged_task
 #include <memory>      // std::make_shared, std::make_unique, std::unique_ptr
 #include <mutex>       // std::lock_guard
@@ -61,7 +64,9 @@ public:
         SP_ASSERT(io_context_);
 
         // run all scheduled work and wait for executor_work_guard_->reset() to be called
+        beginRun();
         io_context_->run();
+        endRun();
 
         {
             std::lock_guard<std::mutex> lock(mutex_);
@@ -69,20 +74,6 @@ public:
             io_context_->restart();
             executor_work_guard_ = std::make_unique<boost::asio::executor_work_guard<boost::asio::io_context::executor_type>>(io_context_->get_executor());
         }
-    }
-
-    // Typically called from the engine_service.execute_frame and engine_service.end_frame entry points to
-    // instruct the WorkQueue that it can stop blocking, as soon as it is finished executing all of its
-    // scheduled work.
-
-    void reset()
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-
-        SP_ASSERT(executor_work_guard_);
-
-        // request io_context_->run() to stop executing once all of its scheduled work is finished
-        executor_work_guard_->reset();
     }
 
     std::size_t pollOne()
@@ -145,31 +136,48 @@ public:
                 // template specialization. Since templated functions cannot be partially specialized, we use
                 // if constexpr to achieve our desired specialization.
 
+                // We call endExecuteFunc() whether func returns or throws, and we rethrow any exception thrown
+                // by func, so std::packaged_task can store it in the future.
+
                 if constexpr (std::is_void_v<TReturn>) {
 
-                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.WORK_QUEUE.PRINT_CALL_DEBUG_INFO")) {
+                    if (Config::get<bool>("SP_SERVICES.WORK_QUEUE.PRINT_CALL_DEBUG_INFO")) {
                         SP_LOG("Executing function ", func_name, " on work queue ", getName(), "...");
                     }
 
-                    func(args...);
+                    beginExecuteFunc();
+                    try {
+                        func(args...);
+                        endExecuteFunc();
+                    } catch (...) {
+                        endExecuteFunc();
+                        throw;
+                    }
 
-                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.WORK_QUEUE.PRINT_CALL_DEBUG_INFO")) {
+                    if (Config::get<bool>("SP_SERVICES.WORK_QUEUE.PRINT_CALL_DEBUG_INFO")) {
                         SP_LOG("Finished executing function ", func_name, " on work queue ", getName(), ".");
                     }
 
                 } else {
 
-                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.WORK_QUEUE.PRINT_CALL_DEBUG_INFO")) {
+                    if (Config::get<bool>("SP_SERVICES.WORK_QUEUE.PRINT_CALL_DEBUG_INFO")) {
                         SP_LOG("Executing function ", func_name, " on work queue ", getName(), "...");
                     }
 
-                    TReturn return_value = func(args...);
+                    beginExecuteFunc();
+                    try {
+                        TReturn return_value = func(args...);
+                        endExecuteFunc();
 
-                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.WORK_QUEUE.PRINT_CALL_DEBUG_INFO")) {
-                        SP_LOG("Finished executing function ", func_name, " on work queue ", getName(), ".");
+                        if (Config::get<bool>("SP_SERVICES.WORK_QUEUE.PRINT_CALL_DEBUG_INFO")) {
+                            SP_LOG("Finished executing function ", func_name, " on work queue ", getName(), ".");
+                        }
+
+                        return return_value;
+                    } catch (...) {
+                        endExecuteFunc();
+                        throw;
                     }
-
-                    return return_value;
                 }
             });
 
@@ -188,10 +196,90 @@ public:
         return future;
     }
 
+    // Typically called from the engine_service.execute_frame and engine_service.end_frame entry points to
+    // instruct the WorkQueue that it can stop blocking, as soon as it is finished executing all of the work that
+    // was scheduled before calling scheduleReset(...). We schedule the reset as work rather than resetting
+    // immediately, because the Python code can be ahead of the game thread, so this function might be called
+    // before the game thread calls run() to execute the work that was scheduled before calling this function, so
+    // scheduleReset() guarantees that the reset() operation happens after the call to run().
+
+    void scheduleReset(const std::string& func_name)
+    {
+        scheduleFunc(func_name, [this]() -> void {
+            reset();
+        });
+    }
+
+    // Returns a nonzero ID that is unique to the game thread's current idle period, i.e., while it is in run()
+    // waiting for work, or 0 if the game thread isn't in run() or is executing a work item. Can be called from any
+    // thread, e.g., to determine if the game thread has been waiting in run() for work that will never arrive.
+    uint64_t getIdleId() const { return idle_id_; }
+
     std::string getName() const { return name_; }
 
 private:
+    void reset()
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+
+        SP_ASSERT(executor_work_guard_);
+
+        // request io_context_->run() to stop executing once all of its scheduled work is finished
+        executor_work_guard_->reset();
+    }
+
+    // The functions below are called on the game thread to maintain idle_id_. The game thread is considered idle
+    // while it is in run() and isn't executing a work item. Whenever the game thread becomes idle, we assign a new
+    // idle ID, and whenever it stops being idle, we set idle_id_ to 0. Work items can also be executed outside of
+    // run() by pollOne(), e.g., when the editor work queue is drained during the editor tick. In this case, in_run_
+    // is false in beginExecuteFunc() and endExecuteFunc(), idle_id_ is already 0, and we leave it unchanged so the
+    // game thread isn't considered idle after the work item finishes executing.
+
+    void beginRun()
+    {
+        in_run_ = true;
+        beginIdleIdActive();
+    }
+
+    void endRun()
+    {
+        endIdleIdActive();
+        in_run_ = false;
+    }
+
+    void beginExecuteFunc()
+    {
+        if (in_run_) {
+            endIdleIdActive();
+        }
+    }
+
+    void endExecuteFunc()
+    {
+        if (in_run_) {
+            beginIdleIdActive();
+        }
+    }
+
+    void beginIdleIdActive()
+    {
+        // 0 is reserved to mean "not idle"
+        idle_counter_++;
+        if (idle_counter_ == 0) {
+            idle_counter_++;
+        }
+        idle_id_ = idle_counter_;
+    }
+
+    void endIdleIdActive()
+    {
+        idle_id_ = 0;
+    }
+
     std::string name_;
+    bool in_run_ = false;               // only accessed from the game thread
+    uint64_t idle_counter_ = 0;         // only accessed from the game thread
+    std::atomic<uint64_t> idle_id_ = 0; // accessed from any thread
 
     std::mutex mutex_;
     std::unique_ptr<boost::asio::io_context> io_context_;

@@ -85,7 +85,7 @@ public:
 
                 for (auto& key_binding : input_component->KeyBindings) {
 
-                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
+                    if (Config::get<bool>("SP_SERVICES.INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
                         SP_LOG(UnrealUtils::getObjectPropertiesAsString(&(key_binding.Chord), FInputChord::StaticStruct()));
                         SP_LOG(Unreal::getStringFromEnumValue(key_binding.KeyEvent.GetValue()));
                         SP_LOG();
@@ -112,7 +112,7 @@ public:
 
                 for (auto& touch_binding : input_component->TouchBindings) {
 
-                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
+                    if (Config::get<bool>("SP_SERVICES.INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
                         SP_LOG(Unreal::getStringFromEnumValue(touch_binding.KeyEvent.GetValue()));
                         SP_LOG();
                     }
@@ -133,7 +133,7 @@ public:
 
                 for (auto& axis_binding : input_component->AxisBindings) {
 
-                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
+                    if (Config::get<bool>("SP_SERVICES.INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
                         SP_LOG(Unreal::toStdString(axis_binding.AxisName));
                         SP_LOG(axis_binding.AxisValue);
                         SP_LOG();
@@ -155,7 +155,7 @@ public:
 
                 for (auto& axis_key_binding : input_component->AxisKeyBindings) {
 
-                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
+                    if (Config::get<bool>("SP_SERVICES.INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
                         SP_LOG(Unreal::toStdString(axis_key_binding.AxisKey.GetDisplayName()));
                         SP_LOG(Unreal::getUnrealName(&(axis_key_binding.AxisKey)));
                         SP_LOG(Unreal::toStdString(axis_key_binding.AxisKey.ToString()));
@@ -182,7 +182,7 @@ public:
 
                 for (auto& vector_axis_binding : input_component->VectorAxisBindings) {
 
-                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
+                    if (Config::get<bool>("SP_SERVICES.INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
                         SP_LOG(Unreal::toStdString(vector_axis_binding.AxisKey.GetDisplayName()));
                         SP_LOG(Unreal::getUnrealName(&(vector_axis_binding.AxisKey)));
                         SP_LOG(Unreal::toStdString(vector_axis_binding.AxisKey.ToString()));
@@ -206,7 +206,7 @@ public:
 
                 for (auto& gesture_binding : input_component->GestureBindings) {
 
-                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
+                    if (Config::get<bool>("SP_SERVICES.INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
                         SP_LOG(Unreal::toStdString(gesture_binding.GestureKey.GetDisplayName()));
                         SP_LOG(Unreal::getUnrealName(&(gesture_binding.GestureKey)));
                         SP_LOG(Unreal::toStdString(gesture_binding.GestureKey.ToString()));
@@ -234,7 +234,7 @@ public:
                 for (int i = 0; i < input_component->GetNumActionBindings(); i++) {
                     FInputActionBinding& action_binding = input_component->GetActionBinding(i);
 
-                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
+                    if (Config::get<bool>("SP_SERVICES.INPUT_SERVICE.PRINT_INJECT_DEBUG_INFO")) {
                         SP_LOG(Unreal::toStdString(action_binding.GetActionName()));
                         SP_LOG(Unreal::getStringFromEnumValue(action_binding.KeyEvent.GetValue()));
                     }

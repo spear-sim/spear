@@ -10,15 +10,24 @@
 #include <algorithm>   // std::swap
 #include <array>
 #include <atomic>
+#include <chrono>      // std::chrono::duration, std::chrono::seconds, std::chrono::steady_clock
+#include <condition_variable>
 #include <exception>
-#include <future>      // std::promise
+#include <future>      // std::future_status, std::promise
 #include <map>
-#include <mutex>       // std::lock_guard
+#include <mutex>       // std::lock_guard, std::unique_lock
 #include <ranges>      // std::views::transform
 #include <string>
+#include <thread>
 #include <type_traits> // std::invoke_result_t, std::is_void_v
 #include <utility>     // std::make_pair, std::move, std::pair
 #include <vector>
+
+#include <boost/predef.h> // BOOST_COMP_CLANG, BOOST_COMP_MSVC
+
+#if BOOST_COMP_MSVC
+    #include <format>
+#endif
 
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
@@ -150,10 +159,17 @@
 // immediately, and the user's Python code will continue calling entry points until it reaches the end of its current
 // instance.begin_frame() or instance.end_frame() context. To handle these in-flight calls despite being in an error
 // state, the wrapper lambdas that wrap each game-thread entry point immediately return default-constructed values
-// without scheduling any additional work. Eventually, once the error state has propagated to Python, the SPEAR Python
-// library will conclude the transaction and assert. By design, the only way to reset the server's error state is to
-// call the "engine_service.initialize" entry point, which will happen automatically when the user's Python code creates
-// a new instance.
+// without scheduling any additional work. Likewise, any work that was already scheduled before the error occurred
+// immediately returns a default-constructed value when it executes on the game thread. Eventually, once the error state
+// has propagated to Python, the SPEAR Python library will conclude the transaction and assert. By design, the only way
+// to reset the server's error state is to call the "engine_service.initialize" entry point, which will happen
+// automatically when the user's Python code creates a new instance.
+//
+// If the user's Python code exits in the middle of a transaction, the game thread can be stalled indefinitely, waiting
+// for work that will never arrive. To handle this case, a watchdog thread enters the error state and releases the game
+// thread if it has been waiting for too long. Additionally, "engine_service.initialize" and "engine_service.terminate"
+// enter the error state and release the game thread immediately, so a new instance can always connect to a stalled
+// server.
 //
 
 template <CEntryPointBinder TEntryPointBinder>
@@ -173,6 +189,14 @@ public:
 
         bindFuncToExecuteOnWorkerThread("engine_service", "initialize", [this]() -> void {
 
+            // Make sure the game thread isn't using any batched work queues before we re-initialize them.
+            releaseGameThread();
+
+            // Prevent the watchdog thread from accessing the work queues or setting the error state while we
+            // re-initialize them. We acquire this lock after calling releaseGameThread() rather than before,
+            // to avoid holding it while waiting on the game thread.
+            std::lock_guard<std::mutex> watchdog_lock(watchdog_mutex_);
+
             // Reset frame state.
             frame_state_ = FrameState::Idle;
 
@@ -191,10 +215,7 @@ public:
             current_batched_work_queues_.clear();
             current_incremental_work_queues_.clear();
 
-            bool double_buffered_work_queues = false;
-            if (Config::isInitialized()) {
-                double_buffered_work_queues = Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.DOUBLE_BUFFERED_WORK_QUEUES");
-            }
+            bool double_buffered_work_queues = Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.DOUBLE_BUFFERED_WORK_QUEUES");
 
             if (double_buffered_work_queues) {
                 batched_work_queue_fifo_size_    = BATCHED_WORK_QUEUE_FIFO_SIZE_DOUBLE_BUFFERED;
@@ -230,6 +251,14 @@ public:
         });
 
         bindFuncToExecuteOnWorkerThread("engine_service", "terminate", [this]() -> void {
+
+            // Make sure the game thread isn't using any batched work queues before we terminate them.
+            releaseGameThread();
+
+            // Prevent the watchdog thread from accessing the work queues while we terminate them. We acquire
+            // this lock after calling releaseGameThread() rather than before, to avoid holding it while waiting
+            // on the game thread.
+            std::lock_guard<std::mutex> watchdog_lock(watchdog_mutex_);
 
             // Set the frame state to prevent calling any more entry points.
             frame_state_ = FrameState::Terminating;
@@ -270,16 +299,16 @@ public:
                 return false;
             }
 
-            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("engine_service.begin_frame: Waiting for beginFrame() to finish executing...");
+            if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
+                SP_LOG("worker_thread: engine_service.begin_frame: Waiting for beginFrame() to finish executing...");
             }
 
             // Wait until beginFrame() on frame i-1 (or i-2 if we're in double-buffered mode) has finished
             // executing before we allow the user to start queuing work on the queue for frame i.
             batched_work_queue_ready_futures_.at(begin_frame_being_drained_by_gt_).get();
 
-            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("engine_service.begin_frame: Finished waiting.");
+            if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
+                SP_LOG("worker_thread: engine_service.begin_frame: Finished waiting.");
             }
 
             // Reset promise and future and swap read/write indices.
@@ -312,16 +341,16 @@ public:
 
             SP_ASSERT(!request_terminate_);
 
-            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("engine_service.execute_frame: Waiting for endFrame() to finish executing...");
+            if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
+                SP_LOG("worker_thread: engine_service.execute_frame: Waiting for endFrame() to finish executing...");
             }
 
             // Wait until endFrame() on frame i-1 (or i-2 if we're in double-buffered mode) has finished
             // executing before we allow the user to start queuing work on the end_frame queue for frame i.
             batched_work_queue_ready_futures_.at(end_frame_being_drained_by_gt_).get();
 
-            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("engine_service.execute_frame: Finished waiting.");
+            if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
+                SP_LOG("worker_thread: engine_service.execute_frame: Finished waiting.");
             }
 
             // Reset promise and future and swap read/write indices.
@@ -351,17 +380,14 @@ public:
             std::string queue_name = batched_work_queues_.at(begin_frame_writable_by_wt_).getName();
             std::string func_name = "engine_service.execute_frame." + queue_name + ".reset";
 
-            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("engine_service.execute_frame: Scheduling ", func_name, " on work queue ", queue_name);
+            if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
+                SP_LOG("worker_thread: engine_service.execute_frame: Scheduling ", func_name, " on work queue ", queue_name);
             }
 
-            int writable_by_gt = begin_frame_writable_by_wt_;
-            batched_work_queues_.at(writable_by_gt).scheduleFunc(func_name, [this, writable_by_gt]() -> void {
-                batched_work_queues_.at(writable_by_gt).reset();
-            });
+            batched_work_queues_.at(begin_frame_writable_by_wt_).scheduleReset(func_name);
 
-            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("engine_service.execute_frame: Finished scheduling ", func_name);
+            if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
+                SP_LOG("worker_thread: engine_service.execute_frame: Finished scheduling ", func_name);
             }
 
             return !request_error_; // return value should be interpreted as error state
@@ -381,16 +407,16 @@ public:
                 // but with some minor differences. See comments below.
                 //
 
-                if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                    SP_LOG("engine_service.end_frame (single-step): Waiting for beginFrame() to finish executing...");
+                if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
+                    SP_LOG("worker_thread: engine_service.end_frame (single-step): Waiting for beginFrame() to finish executing...");
                 }
 
                 // Wait until beginFrame() on frame i-2 has finished executing before we allow the user to start
                 // queuing work on the queue for frame i.
                 batched_work_queue_ready_futures_.at(begin_frame_being_drained_by_gt_).get();
 
-                if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                    SP_LOG("engine_service.end_frame (single-step): Finished waiting.");
+                if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
+                    SP_LOG("worker_thread: engine_service.end_frame (single-step): Finished waiting.");
                 }
 
                 // Reset promise and future and swap read/write indices.
@@ -401,13 +427,15 @@ public:
                     // Now that the being-drained-by-gt queue is empty, it can become the new writable-by-wt queue.
                     std::swap(begin_frame_being_drained_by_gt_, begin_frame_writable_by_wt_);
 
-                    batched_work_queue_ready_promises_.at(begin_frame_writable_by_wt_) = std::promise<void>();
-                    batched_work_queue_ready_futures_.at(begin_frame_writable_by_wt_) = batched_work_queue_ready_promises_.at(begin_frame_writable_by_wt_).get_future();
-                    batched_work_queue_ready_promises_set_.at(begin_frame_writable_by_wt_) = false;
-
                     // If we're not in an error state according to our local copy of the error state, then
-                    // signal to the game thread that we will be queuing additional work.
+                    // signal to the game thread that we will be queuing additional work. We only reset the promise
+                    // and future if we push the queue to the FIFO, because otherwise the game thread will never
+                    // set the promise, and releaseGameThread() would wait on the future forever.
                     if (request_begin_frame) {
+                        batched_work_queue_ready_promises_.at(begin_frame_writable_by_wt_) = std::promise<void>();
+                        batched_work_queue_ready_futures_.at(begin_frame_writable_by_wt_) = batched_work_queue_ready_promises_.at(begin_frame_writable_by_wt_).get_future();
+                        batched_work_queue_ready_promises_set_.at(begin_frame_writable_by_wt_) = false;
+
                         SP_ASSERT(batched_work_queue_fifo_.size() < batched_work_queue_fifo_size_);
                         SP_ASSERT(batched_work_queue_fifo_.empty() || batched_work_queue_fifo_.back().second == BatchedQueueType::EndFrame);
                         batched_work_queue_fifo_.push_back(std::make_pair(begin_frame_writable_by_wt_, BatchedQueueType::BeginFrame));
@@ -436,17 +464,14 @@ public:
             std::string queue_name = batched_work_queues_.at(end_frame_writable_by_wt_).getName();
             std::string func_name = "engine_service.end_frame." + queue_name + ".reset";
 
-            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("engine_service.end_frame: Scheduling ", func_name, " on work queue ", queue_name);
+            if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
+                SP_LOG("worker_thread: engine_service.end_frame: Scheduling ", func_name, " on work queue ", queue_name);
             }
 
-            int writable_by_gt = end_frame_writable_by_wt_;
-            batched_work_queues_.at(writable_by_gt).scheduleFunc(func_name, [this, writable_by_gt]() -> void {
-                batched_work_queues_.at(writable_by_gt).reset();
-            });
+            batched_work_queues_.at(end_frame_writable_by_wt_).scheduleReset(func_name);
 
-            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("engine_service.end_frame: Finished scheduling ", func_name);
+            if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
+                SP_LOG("worker_thread: engine_service.end_frame: Finished scheduling ", func_name);
             }
 
             if (single_step) {
@@ -491,10 +516,15 @@ public:
     template <typename TFunc>
     void bindFuncToExecuteOnWorkerThread(const std::string& service_name, const std::string& func_name, const TFunc& func)
     {
-        std::string long_func_name = service_name + ".call_sync_on_worker_thread." + func_name;
-        SP_ASSERT(!func_signature_registry_.isFuncSignatureRegistered(long_func_name));
-        func_signature_registry_.registerFuncSignature(long_func_name, func);
-        entry_point_binder_->bind(long_func_name, wrapFuncToExecuteInTryCatch(long_func_name, func));
+        std::string wt_thread_name = "worker_thread";
+        std::string wt_long_func_name = service_name + ".call_sync_on_worker_thread." + func_name;
+        bool wt_return_early_if_error = false;
+        bool wt_return_early_if_terminating = true;
+        auto wt_func = wrapFuncToExecuteInTryCatch(wt_thread_name, wt_long_func_name, wt_return_early_if_error, wt_return_early_if_terminating, func);
+
+        SP_ASSERT(!func_signature_registry_.isFuncSignatureRegistered(wt_long_func_name));
+        func_signature_registry_.registerFuncSignature(wt_long_func_name, func);
+        entry_point_binder_->bind(wt_long_func_name, wt_func); 
     }
 
     template <typename TFunc>
@@ -513,49 +543,87 @@ public:
     template <typename TFunc, typename TReturn, typename... TArgs>
     void bindFuncToExecuteOnGameThread(const std::string& service_name, const std::string& func_name, UnrealEntryPointBindFlags bind_flags, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
     {
-        if (Std::toBool(bind_flags & UnrealEntryPointBindFlags::CallSync)) {
-            std::string long_func_name = service_name + ".call_sync_on_game_thread." + func_name;
+        // gt_func lambda is typically executed on the game thread after it has been scheduled by the worker thread
 
-            SP_ASSERT(!func_signature_registry_.isFuncSignatureRegistered(long_func_name));
-            func_signature_registry_.registerFuncSignature<TReturn, TArgs...>(long_func_name);
-            entry_point_binder_->bind(long_func_name, wrapFuncToExecuteInWorkQueueBlocking(long_func_name, func));
+        std::string gt_thread_name = "game_thread";
+        std::string gt_call_sync_long_func_name = service_name + ".call_sync_on_game_thread." + func_name;
+        bool gt_return_early_if_error = true;
+        bool gt_return_early_if_terminating = true;
+        auto gt_func = wrapFuncToExecuteInTryCatch(gt_thread_name, gt_call_sync_long_func_name, gt_return_early_if_error, gt_return_early_if_terminating, func);
+
+        if (Std::toBool(bind_flags & UnrealEntryPointBindFlags::CallSync)) {
+            SP_ASSERT(!func_signature_registry_.isFuncSignatureRegistered(gt_call_sync_long_func_name));
+            func_signature_registry_.registerFuncSignature<TReturn, TArgs...>(gt_call_sync_long_func_name);
+            entry_point_binder_->bind(gt_call_sync_long_func_name, wrapFuncToExecuteInWorkQueueBlocking(gt_call_sync_long_func_name, gt_func));
         }
 
         if (Std::toBool(bind_flags & UnrealEntryPointBindFlags::CallAsync)) {
-            std::string call_async_long_func_name = service_name + ".call_async_on_game_thread." + func_name;
-
-            SP_ASSERT(!func_signature_registry_.isFuncSignatureRegistered(call_async_long_func_name));
-            func_signature_registry_.registerFuncSignature<SpFuture, TArgs...>(call_async_long_func_name);
-            entry_point_binder_->bind(call_async_long_func_name, wrapFuncToExecuteInWorkQueueNonBlocking(call_async_long_func_name, func)); // bound function calls createFuture
+            std::string gt_call_async_long_func_name = service_name + ".call_async_on_game_thread." + func_name;
+            SP_ASSERT(!func_signature_registry_.isFuncSignatureRegistered(gt_call_async_long_func_name));
+            func_signature_registry_.registerFuncSignature<SpFuture, TArgs...>(gt_call_async_long_func_name);
+            entry_point_binder_->bind(gt_call_async_long_func_name, wrapFuncToExecuteInWorkQueueNonBlocking(gt_call_async_long_func_name, gt_func)); // bound function calls createFuture
 
             // if we're binding a call_async function, then we also need to bind a corresponding
             // engine_service.get_future_result_as_return_type function if we haven't already
 
-            std::string get_future_result_long_func_name = "engine_service.get_future_result_from_game_thread_as_" + FuncSignatureRegistry::getTypeName<TReturn>();
+            std::string wt_thread_name = "worker_thread";
+            std::string wt_get_future_result_long_func_name = "engine_service.get_future_result_from_game_thread_as_" + FuncSignatureRegistry::getTypeName<TReturn>();
+            bool wt_return_early_if_error = false;
+            bool wt_return_early_if_terminating = false;
+            auto wt_func = wrapFuncToExecuteInTryCatch(wt_thread_name, wt_get_future_result_long_func_name, wt_return_early_if_error, wt_return_early_if_terminating,
+                [this, wt_get_future_result_long_func_name](SpFuture& future) -> TReturn {
 
-            if (!func_signature_registry_.isFuncSignatureRegistered(get_future_result_long_func_name)) {
-                func_signature_registry_.registerFuncSignature<TReturn, SpFuture&>(get_future_result_long_func_name);
-                entry_point_binder_->bind(get_future_result_long_func_name, wrapFuncToExecuteInTryCatch(get_future_result_long_func_name, [this](SpFuture& future) -> TReturn {
+                    // If we're in an error state and the future isn't ready, then the corresponding work item
+                    // might never execute, e.g., because its work queue will be skipped by beginFrame() or
+                    // endFrame(), so calling get() could block forever. In this case, we return a
+                    // default-constructed object and intentionally leak the future.
+                    if (request_error_ && !isFutureReady<TReturn>(future)) {
+                        SP_LOG("worker_thread: ERROR: In an error state when attempting to execute ", wt_get_future_result_long_func_name, " and the future isn't ready. Attempting to wait for the future could deadlock because its corresponding task might never execute. Intentionally leaking the future object and returning a default-constructed return value...");
+                        return TReturn();
+                    }
+
                     return destroyFuture<TReturn>(future); // bound function calls destroyFuture
-                }));
+                });
+
+            if (!func_signature_registry_.isFuncSignatureRegistered(wt_get_future_result_long_func_name)) {
+                func_signature_registry_.registerFuncSignature<TReturn, SpFuture&>(wt_get_future_result_long_func_name);
+                entry_point_binder_->bind(wt_get_future_result_long_func_name, wt_func);
             }
         }
 
         if (Std::toBool(bind_flags & UnrealEntryPointBindFlags::SendAsync)) {
-            std::string long_func_name = service_name + ".send_async_on_game_thread." + func_name;
-
-            SP_ASSERT(!func_signature_registry_.isFuncSignatureRegistered(long_func_name));
-            func_signature_registry_.registerFuncSignature<void, TArgs...>(long_func_name);
-            entry_point_binder_->bind(long_func_name, wrapFuncToExecuteInWorkQueueNonBlockingDiscardReturnValue(long_func_name, func));
+            std::string gt_send_async_long_func_name = service_name + ".send_async_on_game_thread." + func_name;
+            SP_ASSERT(!func_signature_registry_.isFuncSignatureRegistered(gt_send_async_long_func_name));
+            func_signature_registry_.registerFuncSignature<void, TArgs...>(gt_send_async_long_func_name);
+            entry_point_binder_->bind(gt_send_async_long_func_name, wrapFuncToExecuteInWorkQueueNonBlockingDiscardReturnValue(gt_send_async_long_func_name, gt_func));
         }
     }
 
     // Called on the game thread from SpServices::requestInitialize() and SpServices::terminate()
 
-    void startup() const {}
+    void startup()
+    {
+        if (Config::isInitialized()) {
+            watchdog_sleep_time_seconds_ = Config::get<double>("SP_SERVICES.ENGINE_SERVICE.WATCHDOG_SLEEP_TIME_SECONDS");
+            watchdog_max_time_seconds_ = Config::get<double>("SP_SERVICES.ENGINE_SERVICE.WATCHDOG_MAX_TIME_SECONDS");
+        }
+
+        watchdog_stop_requested_ = false;
+        watchdog_thread_ = std::thread([this]() -> void { watchdog(); });
+    }
 
     void shutdown()
     {
+        // Request the watchdog thread to stop, and wake it up so it stops immediately rather than after its
+        // current sleep time.
+
+        {
+            std::lock_guard<std::mutex> lock(watchdog_mutex_);
+            watchdog_stop_requested_ = true;
+        }
+        watchdog_condition_variable_.notify_one();
+        watchdog_thread_.join();
+
         {
             std::lock_guard lock(batched_work_queue_mutex_);
             for (int i = 0; i < NUM_BATCHED_QUEUES; i++) {
@@ -603,31 +671,30 @@ protected:
             frame_state_ = FrameState::ExecutingBeginFrame;
 
             std::string queue_name = batched_work_queues_.at(readable_by_gt).getName();
-            std::string func_name = queue_name + ".run";
 
-            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("beginFrame(): Executing ", queue_name, "...");
+            if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
+                SP_LOG("game_thread: beginFrame(): Executing ", queue_name, "...");
             }
 
-            // Execute all pre-frame work and wait here until engine_service.execute_frame queues a call to
-            // reset() and the call executes.
-            executeFuncInTryCatch(func_name, [this, readable_by_gt]() -> void {
-                batched_work_queues_.at(readable_by_gt).run();
-            });
+            // Execute all pre-frame work and wait here until engine_service.execute_frame calls
+            // scheduleReset(...) and the scheduled reset executes.
+            batched_work_queues_.at(readable_by_gt).run();
 
-            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("beginFrame(): Finished executing ", queue_name, ".");
+            if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
+                SP_LOG("game_thread: beginFrame(): Finished executing ", queue_name, ".");
             }
 
             frame_state_ = FrameState::ExecutingFrame;
+        }
 
-            // Allow engine_service.begin_frame (or engine_service.end_frame if we're in single-step mode) to finish executing.
-
-            {
-                std::lock_guard<std::mutex> lock(batched_work_queue_mutex_);
-                batched_work_queue_ready_promises_.at(readable_by_gt).set_value();
-                batched_work_queue_ready_promises_set_.at(readable_by_gt) = true;
-            }
+        // Allow engine_service.begin_frame (or engine_service.end_frame if we're in single-step mode) to finish
+        // executing. If we popped a queue from the FIFO, set its promise even if we didn't handle the frame, e.g., because
+        // we're in an error state, so the worker thread can always proceed if it is waiting on the corresponding
+        // future, e.g., in releaseGameThread().
+        if (readable_by_gt != -1) {
+            std::lock_guard<std::mutex> lock(batched_work_queue_mutex_);
+            batched_work_queue_ready_promises_.at(readable_by_gt).set_value();
+            batched_work_queue_ready_promises_set_.at(readable_by_gt) = true;
         }
     }
 
@@ -664,32 +731,30 @@ protected:
             frame_state_ = FrameState::ExecutingEndFrame;
 
             std::string queue_name = batched_work_queues_.at(readable_by_gt).getName();
-            std::string func_name = queue_name + ".run";
 
-            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("endFrame(): Executing ", queue_name, "...");
+            if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
+                SP_LOG("game_thread: endFrame(): Executing ", queue_name, "...");
             }
 
-            // Execute all post-frame work and wait here until engine_service.end_frame queues a call to
-            // reset() and the call executes.
-            executeFuncInTryCatch(func_name, [this, readable_by_gt]() -> void {
-                batched_work_queues_.at(readable_by_gt).run();
-            });
+            // Execute all post-frame work and wait here until engine_service.end_frame calls
+            // scheduleReset(...) and the scheduled reset executes.
+            batched_work_queues_.at(readable_by_gt).run();
 
-            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("endFrame(): Finished executing ", queue_name, ".");
+            if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
+                SP_LOG("game_thread: endFrame(): Finished executing ", queue_name, ".");
             }
 
             // Update frame state.
             frame_state_ = FrameState::Idle;
+        }
 
-            // Allow engine_service.execute_frame to finish executing.
-
-            {
-                std::lock_guard<std::mutex> lock(batched_work_queue_mutex_);
-                batched_work_queue_ready_promises_.at(readable_by_gt).set_value();
-                batched_work_queue_ready_promises_set_.at(readable_by_gt) = true;
-            }
+        // Allow engine_service.execute_frame to finish executing. If we popped a queue from the FIFO, set its promise even if we didn't handle the frame, e.g., because
+        // we're in an error state, so the worker thread can always proceed if it is waiting on the corresponding
+        // future, e.g., in releaseGameThread().
+        if (readable_by_gt != -1) {
+            std::lock_guard<std::mutex> lock(batched_work_queue_mutex_);
+            batched_work_queue_ready_promises_.at(readable_by_gt).set_value();
+            batched_work_queue_ready_promises_set_.at(readable_by_gt) = true;
         }
 
         Service::endFrame();
@@ -700,7 +765,11 @@ public:
     {
         bool handle_frame = true;
 
-        if (request_terminate_ || request_error_) {
+        if (request_error_) {
+            handle_frame = false;
+        }
+
+        if (request_terminate_) {
             handle_frame = false;
         }
 
@@ -711,20 +780,17 @@ public:
         if (handle_frame) {
 
             std::string queue_name = editor_transaction_work_queue_.getName();
-            std::string func_name = queue_name + ".pollOne";
 
-            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("executeEditorPostTransaction(): Executing ", queue_name, "...");
+            if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
+                SP_LOG("game_thread: executeEditorPostTransaction(): Executing ", queue_name, "...");
             }
 
             // Execute a single editor-transaction task.
-            executeFuncInTryCatch(func_name, [this]() -> void {
-                std::size_t num_tasks_executed = editor_transaction_work_queue_.pollOne();
-                SP_ASSERT(num_tasks_executed == 1);
-            });
+            std::size_t num_tasks_executed = editor_transaction_work_queue_.pollOne();
+            SP_ASSERT(num_tasks_executed == 1);
 
-            if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
-                SP_LOG("executeEditorPostTransaction(): Finished executing ", queue_name, ".");
+            if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_FRAME_DEBUG_INFO")) {
+                SP_LOG("game_thread: executeEditorPostTransaction(): Finished executing ", queue_name, ".");
             }
         }
     }
@@ -766,53 +832,49 @@ private:
     // might want to modify the arguments, e.g., when an input function resolves pointers to shared memory
     // for an input SpPackedArray& before forwarding it to an inner function.
 
-    // Typically called from the game thread in EngineService::bindFuncToExecuteOnWorkerThread(...) to get an
-    // outer func that executes the given inner func in a try-catch block.
+    // Typically called from the game thread in EngineService::bindFuncToExecuteOnWorkerThread(...) and
+    // EngineService::bindFuncToExecuteOnGameThread(...) to get an outer func that executes the given inner func
+    // in a try-catch block.
 
     template <typename TFunc>
-    auto wrapFuncToExecuteInTryCatch(const std::string& func_name, const TFunc& func)
+    auto wrapFuncToExecuteInTryCatch(const std::string& thread_name, const std::string& func_name, bool return_early_if_error, bool return_early_if_terminating, const TFunc& func)
     {
-        return wrapFuncToExecuteInTryCatch(func_name, func, FuncInfoUtils::getFuncInfo<TFunc>());
+        return wrapFuncToExecuteInTryCatch(thread_name, func_name, return_early_if_error, return_early_if_terminating, func, FuncInfoUtils::getFuncInfo<TFunc>());
     }
 
     template <typename TFunc, typename TReturn, typename... TArgs> requires
         CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs&...>
-    auto wrapFuncToExecuteInTryCatch(const std::string& func_name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
+    auto wrapFuncToExecuteInTryCatch(const std::string& thread_name, const std::string& func_name, bool return_early_if_error, bool return_early_if_terminating, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
     {
-        // The lambda declared below is typically bound to a specific RPC entry point and called from the
-        // worker thread by the RPC server. Note that we capture func_name and func by value because we want
-        // to guarantee that func_name and func are still accessible after wrapFuncToExecuteInTryCatch(...)
-        // returns.
+        // The lambda declared below is either bound to a specific RPC entry point and called from the worker
+        // thread by the RPC server, or scheduled on a work queue and called from the game thread. Note that we
+        // capture by value because we want to guarantee that our captured variables are still accessible after
+        // wrapFuncToExecuteInTryCatch(...) returns.
 
-        return [this, func_name, func](TArgs&... args) -> TReturn {
-
-            if (frame_state_ == FrameState::Terminating) {
-                return TReturn();
-            }
-
-            return executeFuncInTryCatch(func_name, [&func_name, &func, &args...]() -> TReturn {
+        return [this, thread_name, func_name, return_early_if_error, return_early_if_terminating, func](TArgs&... args) -> TReturn {
+            return executeFuncInTryCatch(thread_name, func_name, return_early_if_error, return_early_if_terminating, [&thread_name, &func_name, &func, &args...]() -> TReturn {
                 if constexpr (std::is_void_v<TReturn>) {
 
-                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                        SP_LOG("Executing function ", func_name, "...");
+                    if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
+                        SP_LOG(thread_name, ": Executing function ", func_name, "...");
                     }
 
                     func(args...);
 
-                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                        SP_LOG("Finished executing function ", func_name, ".");
+                    if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
+                        SP_LOG(thread_name, ": Finished executing function ", func_name, ".");
                     }
 
                 } else {
 
-                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                        SP_LOG("Executing function ", func_name, "...");
+                    if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
+                        SP_LOG(thread_name, ": Executing function ", func_name, "...");
                     }
 
                     TReturn return_value = func(args...);
 
-                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                        SP_LOG("Finished executing function ", func_name, ".");
+                    if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
+                        SP_LOG(thread_name, ": Finished executing function ", func_name, ".");
                     }
 
                     return return_value;
@@ -836,45 +898,44 @@ private:
     auto wrapFuncToExecuteInWorkQueueBlocking(const std::string& func_name, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
     {
         // The lambda declared below is typically bound to a specific RPC entry point and called from the
-        // worker thread by the RPC server. Note that we capture func_name and func by value because we want
-        // to guarantee that func_name and func are still accessible after wrapFuncToExecuteInWorkQueueBlocking(...)
+        // worker thread by the RPC server. Note that we capture by value because we want
+        // to guarantee that our captured variables are still accessible after wrapFuncToExecuteInWorkQueueBlocking(...)
         // returns.
 
         return [this, func_name, func](TArgs&... args) -> TReturn {
-            return executeFuncInTryCatch(func_name, [this, &func_name, &func, &args...]() -> TReturn {
 
-                if (request_error_) {
-                    SP_LOG("ERROR: In an error state when attempting to execute ", func_name, " returning a default-constructed return value...");
-                    return TReturn();
-                }
+            std::string thread_name = "worker_thread";
+            bool return_early_if_error = true;
+            bool return_early_if_terminating = true;
+
+            return executeFuncInTryCatch(thread_name, func_name, return_early_if_error, return_early_if_terminating, [this, &func_name, &func, &args...]() -> TReturn {
 
                 WorkQueue* work_queue = getCurrentWorkQueue();
                 if (!work_queue) {
-                    SP_LOG_CURRENT_FUNCTION();
-                    SP_LOG("ERROR: Current work queue is null when attempting to execute function: ", func_name);
+                    SP_LOG("worker_thread: ERROR: Current work queue is null when attempting to execute function: ", func_name);
+                    SP_ASSERT(false);
                 }
-                SP_ASSERT(work_queue);
 
                 if constexpr (std::is_void_v<TReturn>) {
-                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                        SP_LOG("Executing function ", func_name, " on work queue ", work_queue->getName(), " (blocking)...");
+                    if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
+                        SP_LOG("worker_thread: Executing function ", func_name, " on work queue ", work_queue->getName(), " (blocking)...");
                     }
 
                     work_queue->scheduleFunc(func_name, func, args...).get();
 
-                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                        SP_LOG("Finished executing function ", func_name, " on work queue ", work_queue->getName(), " (blocking).");
+                    if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
+                        SP_LOG("worker_thread: Finished executing function ", func_name, " on work queue ", work_queue->getName(), " (blocking).");
                     }
 
                 } else {
-                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                        SP_LOG("Executing function ", func_name, " on work queue ", work_queue->getName(), " (blocking)...");
+                    if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
+                        SP_LOG("worker_thread: Executing function ", func_name, " on work queue ", work_queue->getName(), " (blocking)...");
                     }
 
                     TReturn return_value = work_queue->scheduleFunc(func_name, func, args...).get();
 
-                    if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                        SP_LOG("Finished executing function ", func_name, " on work queue ", work_queue->getName(), " (blocking).");
+                    if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
+                        SP_LOG("worker_thread: Finished executing function ", func_name, " on work queue ", work_queue->getName(), " (blocking).");
                     }
 
                     return return_value;
@@ -902,28 +963,27 @@ private:
         // returns.
 
         return [this, func_name, func](TArgs&... args) -> SpFuture {
-            return executeFuncInTryCatch(func_name, [this, &func_name, &func, &args...]() -> SpFuture {
 
-                if (request_error_) {
-                    SP_LOG("ERROR: In an error state when attempting to execute ", func_name, " returning a default-constructed SpFuture...");
-                    return SpFuture();
-                }
+            std::string thread_name = "worker_thread";
+            bool return_early_if_error = true;
+            bool return_early_if_terminating = true;
+
+            return executeFuncInTryCatch(thread_name, func_name, return_early_if_error, return_early_if_terminating, [this, &func_name, &func, &args...]() -> SpFuture {
 
                 WorkQueue* work_queue = getCurrentWorkQueue();
                 if (!work_queue) {
-                    SP_LOG_CURRENT_FUNCTION();
-                    SP_LOG("ERROR: Current work queue is null when attempting to execute function: ", func_name);
+                    SP_LOG("worker_thread: ERROR: Current work queue is null when attempting to execute function: ", func_name);
+                    SP_ASSERT(false);
                 }
-                SP_ASSERT(work_queue);
 
-                if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                    SP_LOG("Scheduling function ", func_name, " on work queue ", work_queue->getName(), " (non-blocking)...");
+                if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
+                    SP_LOG("worker_thread: Scheduling function ", func_name, " on work queue ", work_queue->getName(), " (non-blocking)...");
                 }
 
                 SpFuture future = createFuture(work_queue->scheduleFunc(func_name, func, args...));
 
-                if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                    SP_LOG("Finished scheduling function ", func_name, " on work queue ", work_queue->getName(), " (non-blocking).");
+                if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
+                    SP_LOG("worker_thread: Finished scheduling function ", func_name, " on work queue ", work_queue->getName(), " (non-blocking).");
                 }
 
                 return future;
@@ -950,28 +1010,27 @@ private:
         // returns.
 
         return [this, func_name, func](TArgs&... args) -> void {
-            executeFuncInTryCatch(func_name, [this, &func_name, &func, &args...]() -> void {
 
-                if (request_error_) {
-                    SP_LOG("ERROR: In an error state when attempting to execute ", func_name, " returning...");
-                    return;
-                }
+            std::string thread_name = "worker_thread";
+            bool return_early_if_error = true;
+            bool return_early_if_terminating = true;
+
+            executeFuncInTryCatch(thread_name, func_name, return_early_if_error, return_early_if_terminating, [this, &func_name, &func, &args...]() -> void {
 
                 WorkQueue* work_queue = getCurrentWorkQueue();
                 if (!work_queue) {
-                    SP_LOG_CURRENT_FUNCTION();
-                    SP_LOG("ERROR: Current work queue is null when attempting to execute function: ", func_name);
+                    SP_LOG("worker_thread: ERROR: Current work queue is null when attempting to execute function: ", func_name);
+                    SP_ASSERT(false);
                 }
-                SP_ASSERT(work_queue);
 
-                if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                    SP_LOG("Scheduling function ", func_name, " on work queue ", work_queue->getName(), " (non-blocking, discarding return value)...");
+                if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
+                    SP_LOG("worker_thread: Scheduling function ", func_name, " on work queue ", work_queue->getName(), " (non-blocking, discarding return value)...");
                 }
 
                 work_queue->scheduleFunc(func_name, func, args...);
 
-                if (Config::isInitialized() && Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
-                    SP_LOG("Finished scheduling function ", func_name, " on work queue ", work_queue->getName(), " (non-blocking, discarding return value)...");
+                if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
+                    SP_LOG("worker_thread: Finished scheduling function ", func_name, " on work queue ", work_queue->getName(), " (non-blocking, discarding return value)...");
                 }
             });
         };
@@ -980,9 +1039,19 @@ private:
     // Called from the worker thread and the game thread to execute a function in a try-catch block.
 
     template <typename TFunc>
-    auto executeFuncInTryCatch(const std::string& func_name, const TFunc& func)
+    auto executeFuncInTryCatch(const std::string& thread_name, const std::string& func_name, bool return_early_if_error, bool return_early_if_terminating, const TFunc& func)
     {
         using TReturn = std::invoke_result_t<TFunc>;
+
+        if (return_early_if_error && request_error_) {
+            SP_LOG(thread_name, ": ERROR: In an error state when attempting to execute ", func_name, ", returning a default-constructed return value...");
+            return TReturn();
+        }
+
+        if (return_early_if_terminating && (frame_state_ == FrameState::Terminating || request_terminate_)) {
+            SP_LOG(thread_name, ": In a terminating state when attempting to execute ", func_name, " (frame_state_ == ", static_cast<int>(frame_state_.load()), ", request_terminate_ == ", request_terminate_.load(), "), returning a default-constructed return value...");
+            return TReturn();
+        }
 
         try {
 
@@ -999,18 +1068,56 @@ private:
 
         } catch (const std::exception& e) {
             SP_LOG_CURRENT_FUNCTION();
-            SP_LOG("ERROR: Caught exception when executing ", func_name, ": ", e.what());
+            SP_LOG(thread_name, ": ERROR: Caught exception when executing ", func_name, ": ", e.what());
         } catch (...) {
             SP_LOG_CURRENT_FUNCTION();
-            SP_LOG("ERROR: Caught unknown exception when executing ", func_name, ".");
+            SP_LOG(thread_name, ": ERROR: Caught unknown exception when executing ", func_name, ".");
         }
 
-        // If we get this far, an exception has occurred, so set the error state, reset the work
-        // queue to allow the game thread to proceed, and return a default-constructed object.
+        // If we get this far, an exception has occurred, so set the error state and return a
+        // default-constructed object.
 
         request_error_ = true;
 
         return TReturn();
+    }
+
+    // Called from the worker thread at the start of engine_service.initialize and engine_service.terminate, so it's
+    // safe for those entry points to re-initialize or terminate the batched work queues, promises, and futures. If a
+    // previous client exited in the middle of a transaction, the game thread might be stalled in run() waiting for a
+    // reset that will never arrive. So we put the system into the same state as if an exception had occurred (as in
+    // watchdog()), schedule a reset on every queue whose ready promise hasn't been set, and wait until the game
+    // thread has set each of those promises. The game thread sets a queue's promise after it finishes executing the
+    // queue, or after it pops the queue from the FIFO and skips it because we're in an error state.
+    //
+    // Only the worker thread clears a queue's ready promise flag, so the set of unready queues can only shrink after
+    // we read it, and we don't need to hold batched_work_queue_mutex_ while scheduling resets. If a queue becomes
+    // ready before its scheduled reset executes, the reset is discarded when the queue is re-initialized or
+    // terminated. Each future we wait on is valid, because whenever the worker thread clears a queue's ready promise
+    // flag, it also creates a new promise and future for the queue.
+
+    void releaseGameThread()
+    {
+        request_error_ = true;
+
+        std::vector<int> unready_queue_ids;
+        {
+            std::lock_guard<std::mutex> lock(batched_work_queue_mutex_);
+            for (int i = 0; i < NUM_BATCHED_QUEUES; i++) {
+                if (!batched_work_queue_ready_promises_set_.at(i)) {
+                    unready_queue_ids.push_back(i);
+                }
+            }
+        }
+
+        for (int i : unready_queue_ids) {
+            std::string func_name = "engine_service.release_game_thread." + batched_work_queues_.at(i).getName() + ".reset";
+            batched_work_queues_.at(i).scheduleReset(func_name);
+        }
+
+        for (int i : unready_queue_ids) {
+            batched_work_queue_ready_futures_.at(i).wait();
+        }
     }
 
     // Functions for creating and destroying futures
@@ -1023,6 +1130,18 @@ private:
         future.type_id_ = Std::getTypeIdString<TReturn>();
         SP_ASSERT(future.future_ptr_);
         return future;
+    }
+
+    template <typename TReturn>
+    static bool isFutureReady(const SpFuture& future)
+    {
+        if (future.future_ptr_) {
+            SP_ASSERT(future.type_id_ == Std::getTypeIdString<TReturn>());
+            std::future<TReturn>* future_ptr = static_cast<std::future<TReturn>*>(future.future_ptr_);
+            return future_ptr->wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+        } else {
+            return true; // destroyFuture(...) handles default-constructed SpFuture objects without blocking
+        }
     }
 
     template <typename TReturn>
@@ -1073,6 +1192,55 @@ private:
         }
     }
 
+    // Executes on the watchdog thread. Periodically checks if the game thread has been waiting for work in a
+    // batched work queue's run() for longer than WATCHDOG_MAX_TIME_SECONDS, e.g., because the user's Python code
+    // terminated in the middle of a transaction. Time spent executing work items doesn't count, because each
+    // queue's idle ID is 0 while a work item is executing, and changes whenever a work item finishes executing.
+    // The watchdog only needs each queue's idle ID, so it keeps track of when each idle ID last changed locally.
+    // If a queue has been stalled for too long, we set the error state and reset the stalled queue, mirroring
+    // what we do when an exception is thrown in executeFuncInTryCatch(...). We set the error state before
+    // resetting the queue, so beginFrame() and endFrame() will discard any remaining entries in the FIFO rather
+    // than stalling the game thread again.
+
+    void watchdog()
+    {
+        std::array<uint64_t, NUM_BATCHED_QUEUES> last_idle_ids;
+        std::array<std::chrono::steady_clock::time_point, NUM_BATCHED_QUEUES> last_idle_id_change_times;
+        last_idle_ids.fill(0);
+        last_idle_id_change_times.fill(std::chrono::steady_clock::now());
+
+        std::chrono::duration<double> sleep_time(watchdog_sleep_time_seconds_);
+
+        std::unique_lock<std::mutex> lock(watchdog_mutex_);
+        while (!watchdog_condition_variable_.wait_for(lock, sleep_time, [this]() -> bool { return watchdog_stop_requested_; })) {
+            std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+            for (int i = 0; i < NUM_BATCHED_QUEUES; i++) {
+                uint64_t idle_id = batched_work_queues_.at(i).getIdleId();
+                if (idle_id != last_idle_ids.at(i)) {
+                    last_idle_ids.at(i) = idle_id;
+                    last_idle_id_change_times.at(i) = now;
+                }
+                if (idle_id != 0) {
+                    double seconds = std::chrono::duration<double>(now - last_idle_id_change_times.at(i)).count();
+                    if (seconds > watchdog_max_time_seconds_) {
+                        std::string queue_name = batched_work_queues_.at(i).getName();
+                        #if BOOST_COMP_MSVC
+                            std::string seconds_str = std::format("{:.2f}", seconds);
+                        #elif BOOST_COMP_CLANG
+                            std::string seconds_str = (boost::format("%.2f")%seconds).str();
+                        #else
+                            #error
+                        #endif
+                        SP_LOG("watchdog_thread: ERROR: The game thread has been stalled for ", seconds_str, " seconds while executing the work queue \"", queue_name, "\". No new work has been scheduled on the queue in that time, and it has also not received a signal indicating that it is allowed to proceed. Attempting to un-stall the game thread by calling scheduleReset() on the queue.");
+                        request_error_ = true;
+                        batched_work_queues_.at(i).scheduleReset("engine_service.watchdog." + queue_name + ".reset");
+                        last_idle_id_change_times.at(i) = now;
+                    }
+                }
+            }
+        }
+    }
+
     FuncSignatureRegistry func_signature_registry_;
     TEntryPointBinder* entry_point_binder_ = nullptr;
 
@@ -1117,7 +1285,7 @@ private:
     // shutdown() to avoid deadlocks when shutting down the application.
     std::array<std::promise<void>, NUM_BATCHED_QUEUES> batched_work_queue_ready_promises_;
     std::array<std::future<void>,  NUM_BATCHED_QUEUES> batched_work_queue_ready_futures_;
-    std::array<std::atomic<bool>,  NUM_BATCHED_QUEUES> batched_work_queue_ready_promises_set_ = {false, false, false, false};
+    std::array<std::atomic<bool>,  NUM_BATCHED_QUEUES> batched_work_queue_ready_promises_set_ = {true, true, true, true};
 
     // Incremental work queue state.
 
@@ -1136,22 +1304,37 @@ private:
     std::vector<WorkQueue*> current_incremental_work_queues_;
 
     // Written and read by the game thread in beginFrame() and endFrame(). Written by the worker thread in
-    // engine_service.initialize and engine_service.terminate. Read by the worker thread in the lambda returned
-    // by wrapFuncToExecuteInTryCatch(...), which is used when executing all entry points on the worker thread.
+    // engine_service.initialize and engine_service.terminate. Read by the worker thread and the game thread in
+    // executeFuncInTryCatch(...), and by the game thread in executeEditorPostTransaction().
     std::atomic<FrameState> frame_state_ = FrameState::Idle;
 
     // Written by the worker thread in engine_service.initialize and engine_service.terminate to indicate to
     // the game thread that we want to terminate the application. Read by the worker thread in
     // engine_service.begin_frame, engine_service.execute_frame, engine_service.end_frame, and
     // engine_service.begin_editor_transaction, engine_service.end_editor_transaction. Read by the game thread
-    // in beginFrame(), endFrame(), and executeEditorPostTransaction().
+    // in beginFrame(), endFrame(), and executeEditorPostTransaction(). Read by the worker thread and the game
+    // thread in executeFuncInTryCatch(...).
     std::atomic<bool> request_terminate_ = false;
 
     // Written by the worker thread in engine_service.initialize. Written by the worker thread and the game
-    // thread in executeFuncInTryCatch(...) to indicate that an error has occurred. Read by the worker thread
-    // in engine_service.begin_frame, engine_service.execute_frame, engine_service.end_frame, and
-    // engine_service.begin_editor_transaction, engine_service.end_editor_transaction. Read by the game thread
-    // in beginFrame(), endFrame(), executeEditorPostTransaction(), and the lambdas returned by the
-    // wrapFuncToExecuteInWorkQueue(...) methods.
+    // thread in executeFuncInTryCatch(...), and by the watchdog thread in watchdog(), to indicate that an error
+    // has occurred. Read by the worker thread in engine_service.begin_frame, engine_service.execute_frame,
+    // engine_service.end_frame, and engine_service.begin_editor_transaction, engine_service.end_editor_transaction.
+    // Read by the game thread in beginFrame(), endFrame(), and executeEditorPostTransaction(). Read by the worker
+    // thread and the game thread in executeFuncInTryCatch(...).
     std::atomic<bool> request_error_ = false;
+
+    // Watchdog state.
+
+    // The watchdog thread is started in startup() and stopped in shutdown(), which are both called on the game
+    // thread. The mutex and condition variable are used to wake up the watchdog thread immediately when
+    // shutdown() requests it to stop. The mutex is also held by the watchdog thread while it checks and resets
+    // the batched work queues, and by the worker thread in engine_service.initialize and
+    // engine_service.terminate while it re-initializes or terminates them.
+    std::thread watchdog_thread_;
+    std::mutex watchdog_mutex_;
+    std::condition_variable watchdog_condition_variable_;
+    bool watchdog_stop_requested_ = false;
+    double watchdog_sleep_time_seconds_ = 1.0;
+    double watchdog_max_time_seconds_ = 10.0;
 };
