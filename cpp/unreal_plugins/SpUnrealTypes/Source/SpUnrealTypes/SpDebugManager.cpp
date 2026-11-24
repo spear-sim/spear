@@ -69,7 +69,7 @@ ASpDebugManager::~ASpDebugManager()
 // CALLED for the CDO
 // CALLED for a newly added editor-world object, when adding the object to a map
 // CALLED for an existing editor-world object, when loading the map
-// CALLED for an existing PIE-world object, when pressing play (SpFuncComponent is set to the USpFuncComponent* owned by the CDO in this function)
+// CALLED for an existing PIE-world object, when pressing play (at this point, SpFuncComponent points to the USpFuncComponent* owned by the CDO)
 void ASpDebugManager::PostInitProperties()
 {
     // SP_LOG_CURRENT_FUNCTION();
@@ -91,7 +91,7 @@ void ASpDebugManager::PostActorCreated()
 // NOT CALLED for the CDO
 // NOT CALLED for a newly added editor-world object, when adding the object to a map
 // CALLED for an existing editor-world object, when loading the map
-// CALLED for an existing PIE-world object, when pressing play (SpFuncComponent is set to the new USpFuncComponent* from the constructor in this function)
+// CALLED for an existing PIE-world object, when pressing play (at this point, SpFuncComponent points to the new USpFuncComponent* from the constructor)
 void ASpDebugManager::PostLoad()
 {
     // SP_LOG_CURRENT_FUNCTION();
@@ -102,7 +102,7 @@ void ASpDebugManager::PostLoad()
 // NOT CALLED for the CDO
 // NOT CALLED for a newly added editor-world object, when adding the object to a map
 // NOT CALLED for an existing editor-world object, when loading the map
-// CALLED for an existing PIE-world object, when pressing play (SpFuncComponent is set to the new USpFuncComponent* from the constructor in this function)
+// CALLED for an existing PIE-world object, when pressing play (at this point, SpFuncComponent points to the new USpFuncComponent* from the constructor)
 void ASpDebugManager::BeginPlay()
 {
     // SP_LOG_CURRENT_FUNCTION();
@@ -113,7 +113,7 @@ void ASpDebugManager::BeginPlay()
 // NOT CALLED for the CDO
 // NOT CALLED for a newly added editor-world object, when adding the object to a map
 // NOT CALLED for an existing editor-world object, when loading the map
-// CALLED for an existing PIE-world object, when pressing stop (SpFuncComponent is set to the new USpFuncComponent* from the constructor in this function)
+// CALLED for an existing PIE-world object, when pressing stop (at this point, SpFuncComponent points to the new USpFuncComponent* from the constructor)
 void ASpDebugManager::EndPlay(const EEndPlayReason::Type end_play_reason)
 {
     // SP_LOG_CURRENT_FUNCTION();
@@ -124,7 +124,7 @@ void ASpDebugManager::EndPlay(const EEndPlayReason::Type end_play_reason)
 // CALLED for the CDO
 // CALLED for a newly removed editor-world object, when removing the object from the map (but only called when the map is unloaded)
 // CALLED for an existing editor-world object, when unloading the map
-// CALLED for an existing PIE-world object, when pressing stop (SpFuncComponent is set to the new USpFuncComponent* from the constructor in this function)
+// CALLED for an existing PIE-world object, when pressing stop (at this point, SpFuncComponent points to the new USpFuncComponent* from the constructor)
 void ASpDebugManager::BeginDestroy()
 {
     // SP_LOG_CURRENT_FUNCTION();
@@ -386,9 +386,9 @@ void ASpDebugManager::GetAndSetObjectProperties()
     ArrayOfPointers.Add(this);
     ArrayOfPointers.Add(nullptr);
     ArrayOfPointers.Add(this);
-    ArrayOfEnums.Add(EDebugManagerEnum::Hello);
-    ArrayOfEnums.Add(EDebugManagerEnum::World);
-    ArrayOfEnums.Add(EDebugManagerEnum::Hello);
+    ArrayOfEnums.Add(ESpDebugManagerEnum::Hello);
+    ArrayOfEnums.Add(ESpDebugManagerEnum::World);
+    ArrayOfEnums.Add(ESpDebugManagerEnum::Hello);
     SP_LOG(UnrealUtils::getObjectPropertiesAsString(this));
 
     SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "ArrayOfInts[1]")).value_);
@@ -441,15 +441,6 @@ void ASpDebugManager::GetAndSetObjectProperties()
     SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "SetOfStrings")).value_);
     UnrealUtils::setPropertyValueFromString(UnrealUtils::resolveProperty(this, "SetOfStrings"), "[\"10\", \"Hello\", \"30\"]");
     SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "SetOfStrings")).value_);
-
-    //
-    // We need to do this to see visual updates in the editor. But this interface is not ideal because
-    // it requires passing in a position and rotation delta, and it doesn't take the UPROPERTIES we set
-    // previously into account. Therefore, we must update the position of objects by calling UFUNCTIONS
-    // rather than setting UPROPERTIES.
-    //
-    // static_mesh_component->MoveComponentImpl(FVector(5.0, 5.0, 5.0), FQuat::Identity, false);
-    //
 
     i++;
 }

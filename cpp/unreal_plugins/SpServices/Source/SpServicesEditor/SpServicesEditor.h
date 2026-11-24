@@ -19,8 +19,8 @@ public:
     void StartupModule() override;
     void ShutdownModule() override;
 
-    // Editor world services
-    std::unique_ptr<UnrealServiceEditor> editor_unreal_service_editor_;
+    // Services that require a reference to EngineService
+    std::unique_ptr<UnrealServiceEditor> unreal_service_editor_;
 
 private:
     void postEngineInitHandler();

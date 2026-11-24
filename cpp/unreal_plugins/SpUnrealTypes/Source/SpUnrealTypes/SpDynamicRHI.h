@@ -150,10 +150,9 @@ struct FSpRHIMemoryStats
         // percentage before use (see Engine/Source/Runtime/VulkanRHI/Private/VulkanMemory.cpp). It defaults
         // to 100 (a no-op) and is only exposed as the console variable r.Vulkan.BudgetScale, not a linkable
         // symbol, so we read it the same way any other external code would have to.
-        int32 vulkan_budget_percentage_scale = 100;
-        if (IConsoleVariable* console_variable = IConsoleManager::Get().FindConsoleVariable(TEXT("r.Vulkan.BudgetScale"))) {
-            vulkan_budget_percentage_scale = console_variable->GetInt();
-        }
+        IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr("r.Vulkan.BudgetScale"));
+        SP_ASSERT(cvar);
+        int32 vulkan_budget_percentage_scale = cvar->GetInt();
 
         const VkPhysicalDeviceMemoryProperties& vk_physical_device_memory_properties = vk_physical_device_memory_properties_2.memoryProperties;
         for (uint32 i = 0; i < vk_physical_device_memory_properties.memoryHeapCount; i++) {

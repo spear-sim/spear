@@ -30,6 +30,8 @@ class USpLevelSequenceDirector : public ULevelSequenceDirector
 {
     GENERATED_BODY()
 public:
+    // ULevelSequenceDirector::OnCreated() is a BlueprintImplementableEvent, so it can't be overridden in C++. Instead,
+    // the OnCreated event in BP_SpLevelSequenceDirector (in the SpContent plugin) calls OnCreatedImpl().
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     void OnCreatedImpl()
     {

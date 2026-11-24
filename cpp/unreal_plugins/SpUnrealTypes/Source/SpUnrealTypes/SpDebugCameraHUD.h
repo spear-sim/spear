@@ -10,8 +10,6 @@
 
 #include "SpDebugCameraHUD.generated.h"
 
-class UMeshComponent;
-
 UCLASS()
 class ASpDebugCameraHUD : public ADebugCameraHUD
 {

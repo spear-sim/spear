@@ -27,7 +27,7 @@
 class UObject;
 
 UENUM(BlueprintType)
-enum class EDebugManagerEnum : uint8
+enum class ESpDebugManagerEnum : uint8
 {
     Hello,
     World
@@ -154,7 +154,7 @@ private:
     TArray<UObject*> ArrayOfPointers;
 
     UPROPERTY()
-    TArray<EDebugManagerEnum> ArrayOfEnums;
+    TArray<ESpDebugManagerEnum> ArrayOfEnums;
 
     UPROPERTY()
     TMap<int, int> MapFromIntToInt;

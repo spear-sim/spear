@@ -24,6 +24,11 @@
 
 #include "SpFuncUtils.generated.h"
 
+//
+// USpFuncUtils mimics python/spear/utils/func_utils.py and is unrelated to SpFuncs. It provides conversion helpers for
+// func_utils.py and editor_utils.py when they run inside the editor's Python environment.
+//
+
 UCLASS()
 class USpFuncUtils : public UBlueprintFunctionLibrary
 {

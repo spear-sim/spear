@@ -42,12 +42,12 @@ void ASpActorHitManager::UnsubscribeFromActor(AActor* Actor)
     Actor->OnActorHit.RemoveDynamic(this, &ASpActorHitManager::ActorHitHandler);
 }
 
-TArray<FActorHitDesc> ASpActorHitManager::GetActorHitDescs(bool bIncludeDebugInfo) const
+TArray<FSpActorHitDesc> ASpActorHitManager::GetActorHitDescs(bool bIncludeDebugInfo) const
 {
-    TArray<FActorHitDesc> actor_hit_descs;
+    TArray<FSpActorHitDesc> actor_hit_descs;
 
     for (const auto& desc : actor_hit_descs_) {
-        FActorHitDesc actor_hit_desc;
+        FSpActorHitDesc actor_hit_desc;
 
         AActor* self_actor = Unreal::toPtr(desc.self_actor_);
         SP_ASSERT(self_actor);

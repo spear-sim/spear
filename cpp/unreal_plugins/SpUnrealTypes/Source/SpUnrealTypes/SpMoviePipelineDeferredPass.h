@@ -112,7 +112,8 @@ public:
             GEngine->Exec(GetWorld(), Unreal::toTCharPtr(cmd));
         }
 
-        // restore previous cvar values in reverse order
+        // restore previous cvar values in reverse order, so if a cvar appears more than once in ConsoleVariables, it gets
+        // restored to its original value
         for (int i = previous_cvar_values.size() - 1; i >= 0; i--) {
             const auto& [cvar_name, cvar_value] = previous_cvar_values.at(i);
             IConsoleVariable* cvar = IConsoleManager::Get().FindConsoleVariable(Unreal::toTCharPtr(cvar_name));
@@ -149,7 +150,8 @@ public:
     bool bVerbose = false;
 };
 
-// Define some extra passes because each distinct type will only show up once in the MPPC editor
+// Define some extra passes because each distinct type will only show up once in the Movie Pipeline Primary Config (MPPC)
+// editor
 
 UCLASS()
 class USpMoviePipelineDeferredPass_ExtraPass0 : public USpMoviePipelineDeferredPass

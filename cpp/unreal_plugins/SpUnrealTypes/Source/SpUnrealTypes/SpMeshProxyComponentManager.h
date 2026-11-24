@@ -41,12 +41,12 @@ class UClass;
 class USceneComponent;
 
 //
-// FMeshProxyGeometryDesc is the UE-friendly representation of a MeshProxyGeometryDesc, returned by
+// FSpMeshProxyGeometryDesc is the UE-friendly representation of a MeshProxyGeometryDesc, returned by
 // ASpMeshProxyComponentManager::GetMeshProxyGeometryDescs().
 //
 
 USTRUCT(BlueprintType)
-struct FMeshProxyGeometryDesc
+struct FSpMeshProxyGeometryDesc
 {
     GENERATED_BODY()
 public:
@@ -120,17 +120,17 @@ public:
     //
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    TArray<FMeshProxyGeometryDesc> GetMeshProxyGeometryDescs(bool bIncludeDebugInfo = false) const
+    TArray<FSpMeshProxyGeometryDesc> GetMeshProxyGeometryDescs(bool bIncludeDebugInfo = false) const
     {
         SP_ASSERT(IsInitialized());
 
-        TArray<FMeshProxyGeometryDesc> mesh_proxy_geometry_descs;
+        TArray<FSpMeshProxyGeometryDesc> mesh_proxy_geometry_descs;
 
         // explicitly add empty desc at index 0
-        mesh_proxy_geometry_descs.Add(FMeshProxyGeometryDesc());
+        mesh_proxy_geometry_descs.Add(FSpMeshProxyGeometryDesc());
 
         for (auto& [id, desc] : getProxyComponentManager()->getMeshProxyGeometryDescs()) {
-            FMeshProxyGeometryDesc mesh_proxy_geometry_desc;
+            FSpMeshProxyGeometryDesc mesh_proxy_geometry_desc;
             mesh_proxy_geometry_desc.ProxyId = id;
             mesh_proxy_geometry_desc.bIsValid = desc.is_valid_;
 
@@ -293,7 +293,7 @@ protected:
 
         for (auto actor : actors) {
             for (auto component : UnrealUtils::getComponents(actor)) {
-                if (!Std::contains(Unreal::getUnrealName(component), "__SP_PROXY_COMPONENT__")) {
+                if (!Std::contains(Unreal::getUnrealName(component), getProxyComponentManager()->getProxyComponentNamePrefix())) {
                     for (auto& [component_class, non_proxy_components_for_class] : non_proxy_components) {
                         if (component->IsA(component_class)) {
                             non_proxy_components_for_class.push_back(component);
@@ -332,7 +332,7 @@ private:
     int32 UnregisterDelayFrames = -1;
 
     UPROPERTY(Transient, VisibleAnywhere, Category="SPEAR")
-    TArray<FMeshProxyGeometryDesc> MeshProxyGeometryDescs;
+    TArray<FSpMeshProxyGeometryDesc> MeshProxyGeometryDescs;
 
 };
 

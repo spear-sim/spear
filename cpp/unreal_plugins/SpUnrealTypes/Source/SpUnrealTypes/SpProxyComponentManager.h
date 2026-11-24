@@ -183,10 +183,7 @@ public:
 
 protected:
 
-    //
     // Called from Initialize()
-    //
-
     virtual void initializeImpl()
     {
         is_initialized_ = true;

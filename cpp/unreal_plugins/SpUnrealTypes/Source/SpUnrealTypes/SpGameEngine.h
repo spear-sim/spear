@@ -19,7 +19,7 @@
 class FOutputDevice;
 class UWorld;
 
-// The purpose of this class is to access Unreal console commands when the game is running.
+// The purpose of this class is to log each console command that gets executed when the game is running.
 
 UCLASS()
 class USpGameEngine : public UGameEngine

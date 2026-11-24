@@ -75,7 +75,7 @@ void SpServicesEditor::postEngineInitHandler()
     SP_ASSERT(sp_services->isInitialized());
 
     // Create editor world services.
-    editor_unreal_service_editor_ = UnrealServiceEditor::create(sp_services->engine_service_.get());
+    unreal_service_editor_ = UnrealServiceEditor::create(sp_services->engine_service_.get());
 }
 
 void SpServicesEditor::enginePreExitHandler()
@@ -84,8 +84,8 @@ void SpServicesEditor::enginePreExitHandler()
 
     // Note that sp_services is not guaranteed to be initialized here, see above.
 
-    SP_ASSERT(editor_unreal_service_editor_);
-    editor_unreal_service_editor_ = nullptr;
+    SP_ASSERT(unreal_service_editor_);
+    unreal_service_editor_ = nullptr;
 }
 
 IMPLEMENT_MODULE(SpServicesEditor, SpServicesEditor);

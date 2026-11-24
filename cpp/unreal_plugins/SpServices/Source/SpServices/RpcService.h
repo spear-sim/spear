@@ -60,11 +60,6 @@ public:
         SP_LOG_CURRENT_FUNCTION();
         SP_LOG("    Destroying RPC server...");
 
-        // Destroy the RPC server. This should be done before destroying our other services. Otherwise, the
-        // RPC server might attempt to call a service's entry points after the service has been destroyed.
-        // Many of our services bind entry points that capture a pointer back to the service itself, so we
-        // need to make sure that these entry points are not called after the services that bound them have
-        // been destroyed.
         SP_ASSERT(rpc_server_);
         rpc_server_->closeSessions();
         rpc_server_->stop();

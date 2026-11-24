@@ -21,7 +21,7 @@
 class USpStableNameComponent;
 
 USTRUCT() // not intended to be Blueprint-accessible
-struct FActorHitDesc
+struct FSpActorHitDesc
 {
     GENERATED_BODY()
 
@@ -59,7 +59,7 @@ public:
     void UnsubscribeFromActor(AActor* Actor); // not intended to be BlueprintCallable
 
     UFUNCTION()
-    TArray<FActorHitDesc> GetActorHitDescs(bool bIncludeDebugInfo = false) const; // TArray<FActorHitDesc> not supported for BlueprintCallable
+    TArray<FSpActorHitDesc> GetActorHitDescs(bool bIncludeDebugInfo = false) const; // TArray<FSpActorHitDesc> not supported for BlueprintCallable
 
 private:
     UFUNCTION()

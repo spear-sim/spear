@@ -104,6 +104,9 @@ public:
     // initialize() and last in terminate().
     virtual void initialize() {}
     virtual void terminate() {}
+
+    // Proxy component names begin with this prefix, so they can be distinguished from non-proxy components.
+    virtual std::string getProxyComponentNamePrefix() const { return "__SP_PROXY_COMPONENT__"; }
 };
 
 template <typename TDerivedProxyComponentManager, typename TDerivedProxyComponentData>
@@ -192,7 +195,7 @@ public:
         // We know from the call site that all components are valid, of type TComponent, and not proxy components
         SP_ASSERT(Std::all(
             non_proxy_components |
-            std::views::transform([](auto non_proxy_component) { return Unreal::isValid(non_proxy_component) && non_proxy_component->IsA(TComponent::StaticClass()) && !Std::contains(Unreal::getUnrealName(non_proxy_component), "__SP_PROXY_COMPONENT__"); })));
+            std::views::transform([this](auto non_proxy_component) { return Unreal::isValid(non_proxy_component) && non_proxy_component->IsA(TComponent::StaticClass()) && !Std::contains(Unreal::getUnrealName(non_proxy_component), getProxyComponentNamePrefix()); })));
 
         // We know from the call site that we have ProxyComponentDescs for the type TComponent
         SP_ASSERT(Std::containsKey(non_proxy_name_to_proxy_component_desc_maps_, TComponent::StaticClass()));
@@ -240,7 +243,7 @@ public:
         // We know from the call site that all components are valid, of type TComponent, and not proxy components
         SP_ASSERT(Std::all(
             non_proxy_components |
-            std::views::transform([](auto non_proxy_component) { return Unreal::isValid(non_proxy_component) && non_proxy_component->IsA(TComponent::StaticClass()) && !Std::contains(Unreal::getUnrealName(non_proxy_component), "__SP_PROXY_COMPONENT__"); })));
+            std::views::transform([this](auto non_proxy_component) { return Unreal::isValid(non_proxy_component) && non_proxy_component->IsA(TComponent::StaticClass()) && !Std::contains(Unreal::getUnrealName(non_proxy_component), getProxyComponentNamePrefix()); })));
 
         // We know from the call site that we have ProxyComponentDescs for the type TComponent
         SP_ASSERT(Std::containsKey(non_proxy_name_to_proxy_component_desc_maps_, TComponent::StaticClass()));
@@ -488,9 +491,9 @@ private:
     std::string getProxyComponentName(uint32_t id) const
     {
         #if BOOST_COMP_MSVC
-            return "__SP_PROXY_COMPONENT__" + getManagerName() + "_" + std::format("{:#018x}", id) + "__";
+            return getProxyComponentNamePrefix() + getManagerName() + "_" + std::format("{:#018x}", id) + "__";
         #elif BOOST_COMP_CLANG
-            return "__SP_PROXY_COMPONENT__" + getManagerName() + "_" + (boost::format("0x%016x")%id).str() + "__";
+            return getProxyComponentNamePrefix() + getManagerName() + "_" + (boost::format("0x%016x")%id).str() + "__";
         #else
             #error
         #endif

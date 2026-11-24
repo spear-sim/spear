@@ -19,7 +19,8 @@
 
 class ANavigationData;
 
-// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value, BlueprintType enums must have a 0 entry
+// UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value, not BlueprintType
+// because BlueprintType enums must have a 0 entry, and ENavigationBuildLock doesn't have one
 UENUM(Flags)
 enum class ESpNavigationBuildLock : uint8
 {

@@ -64,7 +64,7 @@ class UMaterialInterface;
 // GPU once per frame. USpSceneCaptureComponent2D adds the machinery to copy that render target back to the CPU, and
 // exposes this machinery to the user's Python code through two SpFuncs, "enqueue_read_pixels" and "read_pixels". (In
 // SPEAR, an SpFunc is a named C++ lambda function that is registered on a scene component that the user's Python code
-// can call like an ordinary method on the Python component, e.g., component.read_pixels()). Internally, SpFuncs are
+// can call like an ordinary method on the Python component, e.g., component.read_pixels(). Internally, SpFuncs are
 // called through the "sp_func_service.call_function" game thread entry point, so they always execute on the game
 // thread.)
 //
@@ -92,9 +92,9 @@ class UMaterialInterface;
 //                       rendering thread and blocks until the render thread has completed all of them. Therefore,
 //                       read_pixels() returns the image that was rendered during the current frame. SingleBuffered mode
 //                       is the most convenient mode, because it doesn't require any setup work, and the user's Python
-//                       code receives the most up-to-date possible each image with 0 frames of latency. But it is also
-//                       the slowest, because it must wait for the GPU to finish rendering the current frame, and for
-//                       the GPU-to-staging copy, and for the staging-to-CPU copy.
+//                       code receives the most up-to-date possible image with 0 frames of latency. But it is also the
+//                       slowest, because it must wait for the GPU to finish rendering the current frame, and for the
+//                       GPU-to-staging copy, and for the staging-to-CPU copy.
 //
 //     - DoubleBuffered: Instead of waiting for all of this work in read_pixels(), DoubleBuffered mode assumes that the
 //                       user's Python code is willing to receive each image with 1 frame of latency in exchange for
