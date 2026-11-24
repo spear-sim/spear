@@ -277,12 +277,12 @@ void ASpDebugManager::GetAndSetObjectProperties()
     SpPropertyDesc relative_location_property_desc = UnrealUtils::resolveProperty(static_mesh_actor, "RootComponent.RelativeLocation");
 
     // Get property value from SpPropertyDesc
-    SP_LOG(Std::toStringFromPtr(static_mesh_actor->GetStaticMeshComponent()));
+    SP_LOG(UnrealUtils::toStringFromPtr(static_mesh_actor->GetStaticMeshComponent()));
     SP_LOG(UnrealUtils::getPropertyValueAsString(root_component_property_desc).value_);
     SP_LOG(UnrealUtils::getPropertyValueAsString(relative_location_property_desc).value_);
 
     // Pointer properties can be set by converting the desired pointer value to a string
-    UnrealUtils::setPropertyValueFromString(root_component_property_desc, Std::toStringFromPtr(static_mesh_actor->GetStaticMeshComponent()));
+    UnrealUtils::setPropertyValueFromString(root_component_property_desc, UnrealUtils::toStringFromPtr(static_mesh_actor->GetStaticMeshComponent()));
     SP_LOG(UnrealUtils::getPropertyValueAsString(root_component_property_desc).value_);
 
     UStaticMeshComponent* static_mesh_component = UnrealUtils::getComponentByType<UStaticMeshComponent>(static_mesh_actor);
@@ -409,7 +409,7 @@ void ASpDebugManager::GetAndSetObjectProperties()
     SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "ArrayOfVectors")).value_);
 
     SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "ArrayOfPointers")).value_);
-    UnrealUtils::setPropertyValueFromString(UnrealUtils::resolveProperty(this, "ArrayOfPointers"), "[\"0x0\", \"" + Std::toStringFromPtr(static_mesh_actor->GetStaticMeshComponent()) + "\"]");
+    UnrealUtils::setPropertyValueFromString(UnrealUtils::resolveProperty(this, "ArrayOfPointers"), "[\"0x0\", \"" + UnrealUtils::toStringFromPtr(static_mesh_actor->GetStaticMeshComponent()) + "\"]");
     SP_LOG(UnrealUtils::getPropertyValueAsString(UnrealUtils::resolveProperty(this, "ArrayOfPointers")).value_);
 
     MapFromIntToInt.Add(1, 2);
@@ -682,7 +682,7 @@ void ASpDebugManager::SubscribeToActorHitEvents() const
 
     UFunction* ufunction = UnrealUtils::findFunctionByName(sp_actor_hit_manager->GetClass(), "SubscribeToActor");
     SP_ASSERT(ufunction);
-    UnrealUtils::callFunction(GetWorld(), sp_actor_hit_manager, ufunction, {{"Actor", Std::toStringFromPtr(static_mesh_actor)}});
+    UnrealUtils::callFunction(GetWorld(), sp_actor_hit_manager, ufunction, {{"Actor", UnrealUtils::toStringFromPtr(static_mesh_actor)}});
 }
 
 void ASpDebugManager::UnsubscribeFromActorHitEvents() const
@@ -702,7 +702,7 @@ void ASpDebugManager::UnsubscribeFromActorHitEvents() const
 
     UFunction* ufunction = UnrealUtils::findFunctionByName(sp_actor_hit_manager->GetClass(), "UnsubscribeFromActor");
     SP_ASSERT(ufunction);
-    UnrealUtils::callFunction(GetWorld(), sp_actor_hit_manager, ufunction, {{"Actor", Std::toStringFromPtr(static_mesh_actor)}});
+    UnrealUtils::callFunction(GetWorld(), sp_actor_hit_manager, ufunction, {{"Actor", UnrealUtils::toStringFromPtr(static_mesh_actor)}});
 }
 
 void ASpDebugManager::ReadPixels() const

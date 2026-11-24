@@ -99,6 +99,8 @@ if __name__ == "__main__":
         cv2.imshow("final_tone_curve_hdr", data_bundle["arrays"]["data"])
         cv2.waitKey(0)
 
+    cv2.destroyAllWindows()
+
     # terminate actors and components
     with instance.begin_frame():
         pass
@@ -106,8 +108,5 @@ if __name__ == "__main__":
         final_tone_curve_hdr_component.terminate_sp_funcs()
         final_tone_curve_hdr_component.Terminate()
         game.unreal_service.destroy_actor(actor=bp_sphere_agent)
-
-    # close OpenCV window
-    cv2.destroyAllWindows()
 
     spear.log("Done.")

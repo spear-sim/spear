@@ -33,13 +33,13 @@ struct ClientBase
 // Custom types
 //
 
-struct OutputLogMessages
+struct SpOutputLogMessages
 {
     std::vector<std::string> messages_;
     int32_t num_evicted_ = 0;
 };
 
-struct SharedMemoryView
+struct SpSharedMemoryView
 {
     std::string id_;
     uint64_t num_bytes_ = 0;
@@ -70,13 +70,20 @@ struct SpFuncDataBundle
     std::string info_;
 };
 
+struct SpHandle
+{
+    uint64_t ptr_ = 0;
+    int32_t object_index_ = 0;
+    int32_t object_serial_number_ = 0;
+};
+
 struct SpPropertyDesc
 {
     uint64_t property_ = 0;
     uint64_t value_ptr_ = 0;
     std::string type_id_;
 
-    std::vector<uint64_t> notify_objects_;
+    std::vector<SpHandle> notify_objects_;
     std::vector<uint64_t> notify_member_properties_;
     std::vector<uint64_t> notify_element_properties_;
     std::vector<int> notify_array_indices_;
@@ -104,30 +111,30 @@ struct SpFuture
 
 struct SpFunctionDesc
 {
-    uint64_t function_ = 0;
+    SpHandle function_;
     std::string function_name_;
-    uint64_t static_class_ = 0;
+    SpHandle static_class_;
     std::string static_class_name_;
 };
 
 struct SpStaticStructDesc
 {
-    uint64_t static_struct_ = 0;
+    SpHandle static_struct_;
     std::string name_;
 };
 
 struct SpStaticClassDesc
 {
-    uint64_t static_class_ = 0;
+    SpHandle static_class_;
     std::string name_;
-    std::vector<uint64_t> derived_classes_;
+    std::vector<SpHandle> derived_classes_;
     std::vector<std::string> derived_class_names_;
     std::map<std::string, SpFunctionDesc> function_descs_;
 };
 
 struct SpWorldDesc
 {
-    uint64_t world_ = 0;
+    SpHandle world_;
     int64_t world_id_ = -1;
     bool is_editor_world_ = false;
     bool is_game_world_ = false;

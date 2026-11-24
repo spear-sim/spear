@@ -12,7 +12,7 @@
 
 #include <HAL/Platform.h> // SPCORE_API
 
-struct OutputLogMessages
+struct SpOutputLogMessages // exposed to Python via SpServices/MsgpackAdaptors.h
 {
     std::vector<std::string> messages_;
     int32_t num_evicted_ = 0;
@@ -28,5 +28,5 @@ public:
     static void terminate();
     static bool isInitialized();
 
-    static OutputLogMessages flush();
+    static SpOutputLogMessages flush();
 };

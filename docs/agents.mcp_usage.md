@@ -41,7 +41,7 @@ Each tool call populates the exec namespace with these top-level variables:
 | `segmentation_id_image` | Per-pixel index into `segmentation_id_descs`, int32, (H,W) |
 | `segmentation_id_descs` | List of dicts with actor/component/material handles and names |
 
-The `Actor`, `NonProxyComponent`, and `NonProxyMaterial` fields in each `segmentation_id_descs` entry are `uint64` handles, not `UnrealObject`s — see **Handles and UnrealObjects** below for how to convert.
+The `Actor`, `NonProxyComponent`, and `NonProxyMaterial` fields in each `segmentation_id_descs` entry are `SpHandle`s, not `UnrealObject`s — see **Handles and UnrealObjects** below for how to convert.
 
 **Do not** create a new `spear.Instance()`, call `instance.get_game()`, or `instance.get_editor()`. All `import` and `from ... import ...` statements are banned.
 
@@ -138,14 +138,14 @@ Practical consequences:
 
 Normal usage is `UnrealObject`s all the way down: `unreal_service.*` helpers (`spawn_actor`, `get_component_by_*`, `find_actors_by_*`, `load_class`, etc.) return `UnrealObject`s, UFUNCTIONs return `UnrealObject`s, and UFUNCTION parameters typed as UObject pointers accept `UnrealObject`s directly. You do not need to touch raw handles to call methods, pass arguments, or chain calls.
 
-Raw `uint64` handles surface in one routine place:
+Raw `SpHandle`s surface in one routine place:
 
-- `segmentation_id_descs` — each entry's `Actor`, `NonProxyComponent`, and `NonProxyMaterial` fields are raw handles.
+- `segmentation_id_descs` — each entry's `Actor`, `NonProxyComponent`, and `NonProxyMaterial` fields are raw `SpHandle`s.
 
 To work with those handles:
 
 - **Handle → UnrealObject** (usually needed to call methods on the segmented actor/component/material): `obj = game.get_unreal_object(uobject=handle, with_sp_funcs=False)`. Use `editor.get_unreal_object(...)` for editor-world objects. Must be called inside `with instance.begin_frame()` or `with instance.end_frame()`.
-- **UnrealObject → handle** (rarely needed): `obj.uobject` returns the raw `uint64`. The only common reason to reach for this is comparing an `UnrealObject` against a handle from `segmentation_id_descs` (e.g., `m.uobject == desc["NonProxyMaterial"]`). To pass a wrapped object to a UFUNCTION, pass the `UnrealObject` itself — do not extract the handle.
+- **UnrealObject → handle** (rarely needed): `obj.uobject` returns an `SpHandle`. The only common reason to reach for this is comparing an `UnrealObject` against a handle from `segmentation_id_descs` (e.g., `m.uobject == desc["NonProxyMaterial"]`). To pass a wrapped object to a UFUNCTION, pass the `UnrealObject` itself — do not extract the handle.
 
 ## Actor naming
 
@@ -199,8 +199,8 @@ Concrete kwargs and return shapes for common helpers. See `examples/getting_star
 
 ### Handles ↔ UnrealObjects
 
-- `game.get_unreal_object(uobject=handle_uint64, with_sp_funcs=False)` → Python wrapper. `editor.get_unreal_object(...)` for editor-world objects. Must be called inside `with instance.begin_frame()` / `end_frame()`.
-- `obj.uobject` → Raw uint64 handle from an UnrealObject.
+- `game.get_unreal_object(uobject=handle, with_sp_funcs=False)` → Python wrapper. `editor.get_unreal_object(...)` for editor-world objects. Must be called inside `with instance.begin_frame()` / `end_frame()`.
+- `obj.uobject` → `SpHandle` from an UnrealObject. Use `obj.uobject.ptr` for the raw `uint64` pointer.
 - `game.cdo.UGameplayStatics` → Cached class default object (CDO) for a class, typically used to call static UFUNCTIONs, e.g., `game.cdo.UGameplayStatics.GetPlayerController(PlayerIndex=0)`. Use `editor.cdo` for the editor world. All CDO access must happen inside `with instance.begin_frame()` / `end_frame()`. Call `instance.rebuild()` to rebuild cached data, including cached CDOs (e.g., after recompiling a Blueprint class). `instance.rebuild()` is an expensive operation, so only call it if CDOs or cvars have changed.
 
 ### Introspection and UProperty access

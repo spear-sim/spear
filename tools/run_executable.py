@@ -53,7 +53,7 @@ if __name__ == "__main__":
     config.defrost()
 
     config.SPEAR.LAUNCH_MODE = "game"
-    config.SPEAR.INSTANCE.GAME_EXECUTABLE = executable
+    config.SPEAR.GAME_EXECUTABLE = executable
 
     if not args.skip_override_benchmarking:
         config.SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_BENCHMARKING = True
@@ -64,7 +64,7 @@ if __name__ == "__main__":
         config.SP_SERVICES.WORLD_REGISTRY_SERVICE.GAME_PAUSED = False
 
     if args.graphics_adaptor is not None:
-        config.SPEAR.INSTANCE.COMMAND_LINE_ARGS.graphics_adaptor = args.graphics_adaptor
+        config.SPEAR.LAUNCHER.COMMAND_LINE_ARGS.graphics_adaptor = args.graphics_adaptor
 
     if args.map is not None:
         config.SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_GAME_DEFAULT_MAP = True

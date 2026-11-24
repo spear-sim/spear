@@ -131,32 +131,32 @@ public:
 };
 
 //
-// OutputLogMessages (never sent as an arg to the server)
+// SpOutputLogMessages (never sent as an arg to the server)
 //
 
 template <> // needed to receive a custom type as a return value from the server
-struct clmdep_msgpack::adaptor::convert<OutputLogMessages> {
-    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, OutputLogMessages& output_log_messages) const {
+struct clmdep_msgpack::adaptor::convert<SpOutputLogMessages> {
+    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpOutputLogMessages& sp_output_log_messages) const {
         std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
         SP_ASSERT(objects.size() == 2);
-        output_log_messages.messages_    = MsgpackUtils::to<std::vector<std::string>>(objects.at("messages"));
-        output_log_messages.num_evicted_ = MsgpackUtils::to<int32_t>(objects.at("num_evicted"));
+        sp_output_log_messages.messages_    = MsgpackUtils::to<std::vector<std::string>>(objects.at("messages"));
+        sp_output_log_messages.num_evicted_ = MsgpackUtils::to<int32_t>(objects.at("num_evicted"));
         return object;
     }
 };
 
 //
-// SharedMemoryView (never sent as an arg to the server)
+// SpSharedMemoryView (never sent as an arg to the server)
 //
 
 template <> // needed to receive a custom type as a return value from the server
-struct clmdep_msgpack::adaptor::convert<SharedMemoryView> {
-    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SharedMemoryView& shared_memory_view) const {
+struct clmdep_msgpack::adaptor::convert<SpSharedMemoryView> {
+    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpSharedMemoryView& sp_shared_memory_view) const {
         std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
         SP_ASSERT(objects.size() == 3);
-        shared_memory_view.id_           = MsgpackUtils::to<std::string>(objects.at("id"));
-        shared_memory_view.num_bytes_    = MsgpackUtils::to<uint64_t>(objects.at("num_bytes"));
-        shared_memory_view.offset_bytes_ = MsgpackUtils::to<uint16_t>(objects.at("offset_bytes"));
+        sp_shared_memory_view.id_           = MsgpackUtils::to<std::string>(objects.at("id"));
+        sp_shared_memory_view.num_bytes_    = MsgpackUtils::to<uint64_t>(objects.at("num_bytes"));
+        sp_shared_memory_view.offset_bytes_ = MsgpackUtils::to<uint16_t>(objects.at("offset_bytes"));
         return object;
     }
 };
@@ -397,6 +397,46 @@ inline SpFuncDataBundle MsgpackUtils::convert<SpFuncDataBundle>(const ClientBase
 };
 
 //
+// SpHandle
+//
+
+template <> // needed to send a custom type as an arg to the server
+struct clmdep_msgpack::adaptor::pack<SpHandle> {
+    template <typename TStream>
+    clmdep_msgpack::packer<TStream>& operator()(clmdep_msgpack::packer<TStream>& packer, SpHandle const& sp_handle) const {
+        packer.pack_map(3);
+        packer.pack("ptr");                  packer.pack(sp_handle.ptr_);
+        packer.pack("object_index");         packer.pack(sp_handle.object_index_);
+        packer.pack("object_serial_number"); packer.pack(sp_handle.object_serial_number_);
+        return packer;
+    }
+};
+
+template <> // needed to send a custom type as an arg to the server via dynamic dispatch
+struct clmdep_msgpack::adaptor::object_with_zone<SpHandle> {
+    void operator()(clmdep_msgpack::object::with_zone& o, const SpHandle& v) const {
+        o.type = clmdep_msgpack::type::MAP;
+        o.via.map.size = 3;
+        o.via.map.ptr = static_cast<clmdep_msgpack::object_kv*>(o.zone.allocate_align(sizeof(clmdep_msgpack::object_kv) * 3, MSGPACK_ZONE_ALIGNOF(clmdep_msgpack::object_kv)));
+        o.via.map.ptr[0].key = clmdep_msgpack::object("ptr",                  o.zone); o.via.map.ptr[0].val = clmdep_msgpack::object(v.ptr_,                  o.zone);
+        o.via.map.ptr[1].key = clmdep_msgpack::object("object_index",         o.zone); o.via.map.ptr[1].val = clmdep_msgpack::object(v.object_index_,         o.zone);
+        o.via.map.ptr[2].key = clmdep_msgpack::object("object_serial_number", o.zone); o.via.map.ptr[2].val = clmdep_msgpack::object(v.object_serial_number_, o.zone);
+    }
+};
+
+template <> // needed to receive a custom type as a return value from the server
+struct clmdep_msgpack::adaptor::convert<SpHandle> {
+    clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpHandle& sp_handle) const {
+        std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
+        SP_ASSERT(objects.size() == 3);
+        sp_handle.ptr_                  = MsgpackUtils::to<uint64_t>(objects.at("ptr"));
+        sp_handle.object_index_         = MsgpackUtils::to<int32_t>(objects.at("object_index"));
+        sp_handle.object_serial_number_ = MsgpackUtils::to<int32_t>(objects.at("object_serial_number"));
+        return object;
+    }
+};
+
+//
 // SpPropertyDesc
 //
 
@@ -442,7 +482,7 @@ struct clmdep_msgpack::adaptor::convert<SpPropertyDesc> {
         sp_property_desc.property_                  = MsgpackUtils::to<uint64_t>(objects.at("property"));
         sp_property_desc.value_ptr_                 = MsgpackUtils::to<uint64_t>(objects.at("value_ptr"));
         sp_property_desc.type_id_                   = MsgpackUtils::to<std::string>(objects.at("type_id"));
-        sp_property_desc.notify_objects_            = MsgpackUtils::to<std::vector<uint64_t>>(objects.at("notify_objects"));
+        sp_property_desc.notify_objects_            = MsgpackUtils::to<std::vector<SpHandle>>(objects.at("notify_objects"));
         sp_property_desc.notify_member_properties_  = MsgpackUtils::to<std::vector<uint64_t>>(objects.at("notify_member_properties"));
         sp_property_desc.notify_element_properties_ = MsgpackUtils::to<std::vector<uint64_t>>(objects.at("notify_element_properties"));
         sp_property_desc.notify_array_indices_      = MsgpackUtils::to<std::vector<int>>(objects.at("notify_array_indices"));
@@ -528,9 +568,9 @@ struct clmdep_msgpack::adaptor::convert<SpFunctionDesc> {
     clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpFunctionDesc& sp_function_desc) const {
         std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
         SP_ASSERT(objects.size() == 4);
-        sp_function_desc.function_          = MsgpackUtils::to<uint64_t>(objects.at("function"));
+        sp_function_desc.function_          = MsgpackUtils::to<SpHandle>(objects.at("function"));
         sp_function_desc.function_name_     = MsgpackUtils::to<std::string>(objects.at("function_name"));
-        sp_function_desc.static_class_      = MsgpackUtils::to<uint64_t>(objects.at("static_class"));
+        sp_function_desc.static_class_      = MsgpackUtils::to<SpHandle>(objects.at("static_class"));
         sp_function_desc.static_class_name_ = MsgpackUtils::to<std::string>(objects.at("static_class_name"));
         return object;
     }
@@ -545,7 +585,7 @@ struct clmdep_msgpack::adaptor::convert<SpStaticStructDesc> {
     clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpStaticStructDesc& sp_static_struct_desc) const {
         std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
         SP_ASSERT(objects.size() == 2);
-        sp_static_struct_desc.static_struct_ = MsgpackUtils::to<uint64_t>(objects.at("static_struct"));
+        sp_static_struct_desc.static_struct_ = MsgpackUtils::to<SpHandle>(objects.at("static_struct"));
         sp_static_struct_desc.name_          = MsgpackUtils::to<std::string>(objects.at("name"));
         return object;
     }
@@ -560,9 +600,9 @@ struct clmdep_msgpack::adaptor::convert<SpStaticClassDesc> {
     clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpStaticClassDesc& sp_static_class_desc) const {
         std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
         SP_ASSERT(objects.size() == 5);
-        sp_static_class_desc.static_class_        = MsgpackUtils::to<uint64_t>(objects.at("static_class"));
+        sp_static_class_desc.static_class_        = MsgpackUtils::to<SpHandle>(objects.at("static_class"));
         sp_static_class_desc.name_                = MsgpackUtils::to<std::string>(objects.at("name"));
-        sp_static_class_desc.derived_classes_     = MsgpackUtils::to<std::vector<uint64_t>>(objects.at("derived_classes"));
+        sp_static_class_desc.derived_classes_     = MsgpackUtils::to<std::vector<SpHandle>>(objects.at("derived_classes"));
         sp_static_class_desc.derived_class_names_ = MsgpackUtils::to<std::vector<std::string>>(objects.at("derived_class_names"));
         sp_static_class_desc.function_descs_      = MsgpackUtils::to<std::map<std::string, SpFunctionDesc>>(objects.at("function_descs"));
         return object;
@@ -578,7 +618,7 @@ struct clmdep_msgpack::adaptor::convert<SpWorldDesc> {
     clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpWorldDesc& sp_world_desc) const {
         std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
         SP_ASSERT(objects.size() == 5);
-        sp_world_desc.world_           = MsgpackUtils::to<uint64_t>(objects.at("world"));
+        sp_world_desc.world_           = MsgpackUtils::to<SpHandle>(objects.at("world"));
         sp_world_desc.world_id_        = MsgpackUtils::to<int64_t>(objects.at("world_id"));
         sp_world_desc.is_editor_world_ = MsgpackUtils::to<bool>(objects.at("is_editor_world"));
         sp_world_desc.is_game_world_   = MsgpackUtils::to<bool>(objects.at("is_game_world"));

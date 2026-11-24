@@ -57,7 +57,7 @@ public:
         entry_point_signature_descs_ = object_handle.get().as<std::map<std::string, SpFuncSignatureDesc>>();
 
         object_handle = client_->call("shared_memory_service.call_sync_on_worker_thread.get_fence_view");
-        SharedMemoryView fence_view = object_handle.get().as<SharedMemoryView>();
+        SpSharedMemoryView fence_view = object_handle.get().as<SpSharedMemoryView>();
 
         object_handle = client_->call("shared_memory_service.call_sync_on_worker_thread.get_fence_key");
         std::string fence_key_from_rpc = object_handle.get().as<std::string>();

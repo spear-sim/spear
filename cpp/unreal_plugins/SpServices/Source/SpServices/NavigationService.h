@@ -59,9 +59,9 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("navigation_service", "get_random_points",
             [this](
-                uint64_t& navigation_data,
+                SpHandle& navigation_data,
                 int64_t& num_points,
-                uint64_t& query_owner,
+                SpHandle& query_owner,
                 std::map<std::string, SpPackedArray>& packed_arrays,
                 SpPackedArray& out_packed_array) -> SpPackedArray {
 
@@ -70,8 +70,8 @@ public:
                 SP_ASSERT(packed_arrays.at("queriers").shape_.size() == 1);
                 SP_ASSERT(packed_arrays.at("queriers").shape_.at(0) == 0 || packed_arrays.at("queriers").shape_.at(0) == 1 || packed_arrays.at("queriers").shape_.at(0) == num_points);
 
-                ANavigationData* navigation_data_ptr = toPtr<ANavigationData>(navigation_data);
-                UObject* query_owner_ptr = toPtr<UObject>(query_owner);
+                ANavigationData* navigation_data_ptr = UnrealUtils::toPtr<ANavigationData>(navigation_data);
+                UObject* query_owner_ptr = UnrealUtils::toPtr<UObject>(query_owner);
                 SP_ASSERT(navigation_data_ptr);
 
                 std::map<std::string, SpArraySharedMemoryView> shared_memory_views = shared_memory_service_->getSharedMemoryViews();
@@ -91,16 +91,16 @@ public:
                 UClass* filter_class = nullptr;
                 UObject* querier     = nullptr;
 
-                if (filter_classes_shape.at(0) == 1) { filter_class = toPtr<UClass>(Std::at(filter_classes_view, 0)); }
-                if (queriers_shape.at(0)       == 1) { querier      = toPtr<UObject>(Std::at(queriers_view, 0)); }
+                if (filter_classes_shape.at(0) == 1) { filter_class = UnrealUtils::toPtr<UClass>(Std::at(filter_classes_view, 0)); }
+                if (queriers_shape.at(0)       == 1) { querier      = UnrealUtils::toPtr<UObject>(Std::at(queriers_view, 0)); }
 
                 FSharedConstNavQueryFilter filter = UNavigationQueryFilter::GetQueryFilter(*navigation_data_ptr, querier, filter_class);
 
                 std::vector<double> points;
                 for (int i = 0; i < num_points; i++) {
 
-                    if (filter_classes_shape.at(0) == num_points) { filter_class = toPtr<UClass>(Std::at(filter_classes_view, i)); }
-                    if (queriers_shape.at(0)       == num_points) { querier      = toPtr<UObject>(Std::at(queriers_view, i)); }
+                    if (filter_classes_shape.at(0) == num_points) { filter_class = UnrealUtils::toPtr<UClass>(Std::at(filter_classes_view, i)); }
+                    if (queriers_shape.at(0)       == num_points) { querier      = UnrealUtils::toPtr<UObject>(Std::at(queriers_view, i)); }
 
                     if (filter_classes_shape.at(0) == num_points || queriers_shape.at(0) == num_points) {
                         filter = UNavigationQueryFilter::GetQueryFilter(*navigation_data_ptr, querier, filter_class);
@@ -117,9 +117,9 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("navigation_service", "get_random_reachable_points_in_radius",
             [this](
-                uint64_t& navigation_data,
+                SpHandle& navigation_data,
                 int64_t& num_points,
-                uint64_t& query_owner,
+                SpHandle& query_owner,
                 std::map<std::string, SpPackedArray>& packed_arrays,
                 SpPackedArray& out_packed_array) -> SpPackedArray {
 
@@ -133,8 +133,8 @@ public:
                 SP_ASSERT(packed_arrays.at("queriers").shape_.size() == 1);
                 SP_ASSERT(packed_arrays.at("queriers").shape_.at(0) == 0 || packed_arrays.at("queriers").shape_.at(0) == 1 || packed_arrays.at("queriers").shape_.at(0) == num_points);
 
-                ANavigationData* navigation_data_ptr = toPtr<ANavigationData>(navigation_data);
-                UObject* query_owner_ptr = toPtr<UObject>(query_owner);
+                ANavigationData* navigation_data_ptr = UnrealUtils::toPtr<ANavigationData>(navigation_data);
+                UObject* query_owner_ptr = UnrealUtils::toPtr<UObject>(query_owner);
                 SP_ASSERT(navigation_data_ptr);
 
                 std::map<std::string, SpArraySharedMemoryView> shared_memory_views = shared_memory_service_->getSharedMemoryViews();
@@ -164,8 +164,8 @@ public:
 
                 if (origin_points_shape.at(0)  == 1) { origin       = {Std::at(origin_points_view, 0), Std::at(origin_points_view, 1), Std::at(origin_points_view, 2)}; }
                 if (radii_shape.at(0)          == 1) { radius       = Std::at(radii_view, 0); }
-                if (filter_classes_shape.at(0) == 1) { filter_class = toPtr<UClass>(Std::at(filter_classes_view, 0)); }
-                if (queriers_shape.at(0)       == 1) { querier      = toPtr<UObject>(Std::at(queriers_view, 0)); }
+                if (filter_classes_shape.at(0) == 1) { filter_class = UnrealUtils::toPtr<UClass>(Std::at(filter_classes_view, 0)); }
+                if (queriers_shape.at(0)       == 1) { querier      = UnrealUtils::toPtr<UObject>(Std::at(queriers_view, 0)); }
 
                 FSharedConstNavQueryFilter filter = UNavigationQueryFilter::GetQueryFilter(*navigation_data_ptr, querier, filter_class);
 
@@ -174,8 +174,8 @@ public:
 
                     if (origin_points_shape.at(0)  == num_points) { origin       = {Std::at(origin_points_view, i*3 + 0), Std::at(origin_points_view, i*3 + 1), Std::at(origin_points_view, i*3 + 2)}; }
                     if (radii_shape.at(0)          == num_points) { radius       = Std::at(radii_view, i); }
-                    if (filter_classes_shape.at(0) == num_points) { filter_class = toPtr<UClass>(Std::at(filter_classes_view, i)); }
-                    if (queriers_shape.at(0)       == num_points) { querier      = toPtr<UObject>(Std::at(queriers_view, i)); }
+                    if (filter_classes_shape.at(0) == num_points) { filter_class = UnrealUtils::toPtr<UClass>(Std::at(filter_classes_view, i)); }
+                    if (queriers_shape.at(0)       == num_points) { querier      = UnrealUtils::toPtr<UObject>(Std::at(queriers_view, i)); }
 
                     if (filter_classes_shape.at(0) == num_points || queriers_shape.at(0) == num_points) {
                         filter = UNavigationQueryFilter::GetQueryFilter(*navigation_data_ptr, querier, filter_class);
@@ -209,11 +209,11 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("navigation_service", "find_paths",
             [this](
-                uint64_t& navigation_system,
-                uint64_t& navigation_data,
+                SpHandle& navigation_system,
+                SpHandle& navigation_data,
                 int64_t& num_paths,
-                uint64_t& nav_agent_interface,
-                uint64_t& world,
+                SpHandle& nav_agent_interface,
+                SpHandle& world,
                 std::map<std::string, SpPackedArray>& packed_arrays,
                 std::vector<std::string>& nav_agent_property_strings,
                 std::vector<std::string>& path_finding_mode_strings) -> std::map<std::string, SpPackedArray> {
@@ -235,9 +235,9 @@ public:
                 SP_ASSERT(nav_agent_property_strings.size() == 0 || nav_agent_property_strings.size() == 1 || nav_agent_property_strings.size() == num_paths);
                 SP_ASSERT(path_finding_mode_strings.size() == 0 || path_finding_mode_strings.size() == 1 || path_finding_mode_strings.size() == num_paths);
 
-                UNavigationSystemV1* navigation_system_ptr = toPtr<UNavigationSystemV1>(navigation_system);
-                ANavigationData* navigation_data_ptr = toPtr<ANavigationData>(navigation_data);
-                INavAgentInterface* nav_agent_interface_ptr = toPtr<INavAgentInterface>(nav_agent_interface);
+                UNavigationSystemV1* navigation_system_ptr = UnrealUtils::toPtr<UNavigationSystemV1>(navigation_system);
+                ANavigationData* navigation_data_ptr = UnrealUtils::toPtr<ANavigationData>(navigation_data);
+                INavAgentInterface* nav_agent_interface_ptr = UnrealUtils::toPtr<INavAgentInterface>(nav_agent_interface);
                 SP_ASSERT(navigation_system_ptr);
                 SP_ASSERT(navigation_data_ptr);
 
@@ -279,8 +279,8 @@ public:
 
                 if (start_points_shape.at(0)                    == 1) { start_point                    = {Std::at(start_points_view, 0), Std::at(start_points_view, 1), Std::at(start_points_view, 2)}; }
                 if (end_points_shape.at(0)                      == 1) { end_point                      = {Std::at(end_points_view, 0), Std::at(end_points_view, 1), Std::at(end_points_view, 2)}; }
-                if (filter_classes_shape.at(0)                  == 1) { filter_class                   = toPtr<UClass>(Std::at(filter_classes_view, 0)); }
-                if (queriers_shape.at(0)                        == 1) { querier                        = toPtr<UObject>(Std::at(queriers_view, 0)); }
+                if (filter_classes_shape.at(0)                  == 1) { filter_class                   = UnrealUtils::toPtr<UClass>(Std::at(filter_classes_view, 0)); }
+                if (queriers_shape.at(0)                        == 1) { querier                        = UnrealUtils::toPtr<UObject>(Std::at(queriers_view, 0)); }
                 if (cost_limits_shape.at(0)                     == 1) { cost_limit                     = Std::at(cost_limits_view, 0); }
                 if (require_navigable_end_locations_shape.at(0) == 1) { require_navigable_end_location = Std::at(require_navigable_end_locations_view, 0) != 0; }
                 if (nav_agent_property_strings.size()           == 1) { UnrealUtils::setObjectPropertiesFromString(nav_agent_properties.getValuePtr(), nav_agent_properties.getStaticStruct(), nav_agent_property_strings.at(0)); }
@@ -295,8 +295,8 @@ public:
 
                     if (start_points_shape.at(0)                    == num_paths) { start_point                    = {Std::at(start_points_view, i*3 + 0), Std::at(start_points_view, i*3 + 1), Std::at(start_points_view, i*3 + 2)}; }
                     if (end_points_shape.at(0)                      == num_paths) { end_point                      = {Std::at(end_points_view, i*3 + 0), Std::at(end_points_view, i*3 + 1), Std::at(end_points_view, i*3 + 2)}; }
-                    if (filter_classes_shape.at(0)                  == num_paths) { filter_class                   = toPtr<UClass>(Std::at(filter_classes_view, i)); }
-                    if (queriers_shape.at(0)                        == num_paths) { querier                        = toPtr<UObject>(Std::at(queriers_view, i)); }
+                    if (filter_classes_shape.at(0)                  == num_paths) { filter_class                   = UnrealUtils::toPtr<UClass>(Std::at(filter_classes_view, i)); }
+                    if (queriers_shape.at(0)                        == num_paths) { querier                        = UnrealUtils::toPtr<UObject>(Std::at(queriers_view, i)); }
                     if (cost_limits_shape.at(0)                     == num_paths) { cost_limit                     = Std::at(cost_limits_view, i); }
                     if (require_navigable_end_locations_shape.at(0) == num_paths) { require_navigable_end_location = Std::at(require_navigable_end_locations_view, i) != 0; }
                     if (nav_agent_property_strings.size()           == num_paths) { UnrealUtils::setObjectPropertiesFromString(nav_agent_properties.getValuePtr(), nav_agent_properties.getStaticStruct(), nav_agent_property_strings.at(i)); }
@@ -310,7 +310,7 @@ public:
                     if (nav_agent_interface_ptr) {
                         path_finding_query = FPathFindingQuery(*nav_agent_interface_ptr, *navigation_data_ptr, start_point, end_point, filter, nullptr, cost_limit, require_navigable_end_location);
                     } else {
-                        path_finding_query = FPathFindingQuery(toPtr<UWorld>(world), *navigation_data_ptr, start_point, end_point, filter, nullptr, cost_limit, require_navigable_end_location);
+                        path_finding_query = FPathFindingQuery(UnrealUtils::toPtr<UWorld>(world), *navigation_data_ptr, start_point, end_point, filter, nullptr, cost_limit, require_navigable_end_location);
                     }
 
                     FPathFindingResult path_finding_result;

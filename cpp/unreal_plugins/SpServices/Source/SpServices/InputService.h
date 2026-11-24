@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include <stdint.h> // uint64_t
-
 #include <memory> // std::unique_ptr
 #include <string>
 #include <vector>
@@ -45,11 +43,11 @@ public:
         SP_ASSERT(unreal_entry_point_binder);
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("input_service", "setup_player_input_component",
-            [this](uint64_t& actor, uint64_t& input_component) -> void {
-                APawn* pawn_ptr = toPtr<APawn>(actor);
+            [this](SpHandle& actor, SpHandle& input_component) -> void {
+                APawn* pawn_ptr = UnrealUtils::toPtr<APawn>(actor);
                 SP_ASSERT(pawn_ptr);
 
-                UInputComponent* input_component_ptr = toPtr<UInputComponent>(input_component);
+                UInputComponent* input_component_ptr = UnrealUtils::toPtr<UInputComponent>(input_component);
                 SP_ASSERT(input_component_ptr);
 
                 //
@@ -72,7 +70,7 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("input_service", "inject_key_for_actor",
-            [this](uint64_t& actor, std::string& chord_string, std::string& key_event_string) -> void {
+            [this](SpHandle& actor, std::string& chord_string, std::string& key_event_string) -> void {
 
                 UInputComponent* input_component = getInputComponent(actor);
                 if (!input_component) {
@@ -98,7 +96,7 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("input_service", "inject_touch_for_actor",
-            [this](uint64_t& actor, std::string& key_event_string, std::string& finger_index_string, std::string& location_string) -> void {
+            [this](SpHandle& actor, std::string& key_event_string, std::string& finger_index_string, std::string& location_string) -> void {
 
                 UInputComponent* input_component = getInputComponent(actor);
                 if (!input_component) {
@@ -124,7 +122,7 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("input_service", "inject_axis_for_actor",
-            [this](uint64_t& actor, std::string& axis_name, float& axis_value) -> void {
+            [this](SpHandle& actor, std::string& axis_name, float& axis_value) -> void {
 
                 UInputComponent* input_component = getInputComponent(actor);
                 if (!input_component) {
@@ -146,7 +144,7 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("input_service", "inject_axis_key_for_actor",
-            [this](uint64_t& actor, std::string& axis_key_name, float& axis_key_value) -> void {
+            [this](SpHandle& actor, std::string& axis_key_name, float& axis_key_value) -> void {
 
                 UInputComponent* input_component = getInputComponent(actor);
                 if (!input_component) {
@@ -170,7 +168,7 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("input_service", "inject_vector_axis_for_actor",
-            [this](uint64_t& actor, std::string& vector_axis_name, std::string& vector_axis_value_string) -> void {
+            [this](SpHandle& actor, std::string& vector_axis_name, std::string& vector_axis_value_string) -> void {
 
                 UInputComponent* input_component = getInputComponent(actor);
                 if (!input_component) {
@@ -197,7 +195,7 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("input_service", "inject_gesture_for_actor",
-            [this](uint64_t& actor, std::string& gesture_name, float& gesture_value) -> void {
+            [this](SpHandle& actor, std::string& gesture_name, float& gesture_value) -> void {
 
                 UInputComponent* input_component = getInputComponent(actor);
                 if (!input_component) {
@@ -221,7 +219,7 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("input_service", "inject_action_for_actor",
-            [this](uint64_t& actor, std::string& action_name, std::string& key_event_string, std::string& key_name) -> void {
+            [this](SpHandle& actor, std::string& action_name, std::string& key_event_string, std::string& key_name) -> void {
 
                 UInputComponent* input_component = getInputComponent(actor);
                 if (!input_component) {
@@ -250,9 +248,9 @@ public:
     static std::unique_ptr<InputService> create(TEntryPointBinder* unreal_entry_point_binder);
 
 private:
-    static UInputComponent* getInputComponent(uint64_t& actor)
+    static UInputComponent* getInputComponent(SpHandle& actor)
     {
-        AActor* actor_ptr = toPtr<AActor>(actor);
+        AActor* actor_ptr = UnrealUtils::toPtr<AActor>(actor);
         std::vector<UInputComponent*> input_components = UnrealUtils::getComponentsByType<UInputComponent>(actor_ptr);
         if (input_components.size() != 1) {
             SP_LOG_CURRENT_FUNCTION();

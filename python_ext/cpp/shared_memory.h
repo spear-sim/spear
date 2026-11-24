@@ -19,7 +19,7 @@
 #include "types.h"
 
 // Client-side counterpart to SharedMemoryFence in SpCore/SharedMemory.h. The server owns the underlying shared
-// memory region, and the client opens it by name using the SharedMemoryView returned by the server. See
+// memory region, and the client opens it by name using the SpSharedMemoryView returned by the server. See
 // SharedMemoryFence::fence() in SpCore/SharedMemory.cpp for details on why the fence is necessary and why it
 // is correct.
 
@@ -30,7 +30,7 @@ public:
 
     // Throws boost::interprocess::interprocess_exception if the region can't be opened, e.g., if the server is
     // running on a different machine.
-    SharedMemoryFence(const SharedMemoryView& view)
+    SharedMemoryFence(const SpSharedMemoryView& view)
     {
         SP_ASSERT(std::atomic_ref<uint64_t>::is_always_lock_free);
 

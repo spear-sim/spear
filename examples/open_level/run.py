@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
     # Call OpenLevel. It is recommended to call OpenLevel() in a "with instance.end_frame()" block, rather
     # than in a "with instance.begin_frame()" block. Calling OpenLevel in a "with instance.begin_frame()"
-    # does work, but it requires the user to set the SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS config
+    # does work, but it requires the user to set the SPEAR.CLIENT.INTERNAL_TIMEOUT_SECONDS config
     # parameter conservatively due to various implementation details in begin_frame() and end_frame(). At the
     # end of the frame block where you called OpenLevel(), it is required to call game.invalidate(),
     # as we do here.

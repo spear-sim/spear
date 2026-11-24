@@ -223,35 +223,35 @@ if __name__ == "__main__":
         object_ids_bgra_uint8_image = component_desc_map["sp_object_ids_uint8_"]["arrays"]["data"]
         proxy_id_image, proxy_id_descs = game.segmentation_service.get_segmentation_data(object_ids_bgra_uint8_image=object_ids_bgra_uint8_image)
 
-    # get actor names and handles
+    # get actor names and pointers
     actor_names = [ proxy_id_desc["ActorName"].split(":")[0] for proxy_id_desc in proxy_id_descs ]
-    actor_handles = [ proxy_id_desc["Actor"] for proxy_id_desc in proxy_id_descs ]
+    actor_ptrs = [ proxy_id_desc["Actor"].ptr for proxy_id_desc in proxy_id_descs ]
     assert actor_names[0] == ""
-    assert actor_handles[0] == 0
+    assert actor_ptrs[0] == 0
 
-    # get material handles
-    material_handles = [ proxy_id_desc["NonProxyMaterial"] for proxy_id_desc in proxy_id_descs ]
-    assert material_handles[0] == 0
+    # get material pointers
+    material_ptrs = [ proxy_id_desc["NonProxyMaterial"].ptr for proxy_id_desc in proxy_id_descs ]
+    assert material_ptrs[0] == 0
 
     # get unique actors
-    unique_actor_handles, unique_actor_handles_index, unique_actor_handles_inverse = np.unique(actor_handles, return_index=True, return_inverse=True)
-    unique_actor_names = [ actor_names[i] for i in unique_actor_handles_index ]
+    unique_actor_ptrs, unique_actor_ptrs_index, unique_actor_ptrs_inverse = np.unique(actor_ptrs, return_index=True, return_inverse=True)
+    unique_actor_names = [ actor_names[i] for i in unique_actor_ptrs_index ]
 
     # get per-unique-actor semantic IDs
     unique_actor_semantic_ids = np.array([ 0 if not re.search(r"Meshes/(\d+)_", name) else int(re.search(r"Meshes/(\d+)_", name).group(1)) for name in unique_actor_names ])
-    semantic_id_image = unique_actor_semantic_ids[unique_actor_handles_inverse[proxy_id_image]]
+    semantic_id_image = unique_actor_semantic_ids[unique_actor_ptrs_inverse[proxy_id_image]]
 
     # get per-unique-actor semantic instance IDs
     unique_actor_is_semantic_instance = np.array([ any([ name.startswith(category) for category in semantic_instance_categories ]) for name in unique_actor_names ])
     num_semantic_instances = np.count_nonzero(unique_actor_is_semantic_instance) + 1
-    unique_actor_semantic_instance_ids = np.zeros(len(unique_actor_handles), dtype=np.uint32)
+    unique_actor_semantic_instance_ids = np.zeros(len(unique_actor_ptrs), dtype=np.uint32)
     unique_actor_semantic_instance_ids[unique_actor_is_semantic_instance] = np.arange(1, num_semantic_instances)
-    semantic_instance_id_image = unique_actor_semantic_instance_ids[unique_actor_handles_inverse[proxy_id_image]]
+    semantic_instance_id_image = unique_actor_semantic_instance_ids[unique_actor_ptrs_inverse[proxy_id_image]]
 
     # get unique materials
-    unique_material_handles, unique_material_handles_inverse = np.unique(material_handles, return_inverse=True)
-    num_materials = len(unique_material_handles)
-    material_id_image = unique_material_handles_inverse[proxy_id_image]
+    unique_material_ptrs, unique_material_ptrs_inverse = np.unique(material_ptrs, return_inverse=True)
+    num_materials = len(unique_material_ptrs)
+    material_id_image = unique_material_ptrs_inverse[proxy_id_image]
 
     # get foreground actor
     assert foreground_actor_name in unique_actor_names

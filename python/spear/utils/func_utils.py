@@ -242,25 +242,6 @@ class EditorSendAsyncEntryPointCaller(EditorCallSyncEntryPointCaller):
 # These classes are for internal use, and do not need to be instantiated directly by most users.
 #
 
-class Ptr:
-    def __init__(self, handle):
-        self._handle = handle
-
-    def to_string(self):
-        return f"{self._handle:#0{18}x}"
-
-    def __repr__(self):
-        return f"Ptr(_handle={self._handle})"
-
-    def __eq__(self, other):
-        if isinstance(other, Ptr):
-            return self._handle == other._handle
-        else:
-            return NotImplemented
-
-    def __hash__(self):
-        return hash(self._handle)
-
 class Shared:
     def __init__(self, array, shared_memory_handle):
         self._array = array
@@ -429,7 +410,7 @@ def get_unreal_struct(unreal_service, ustruct):
         return None
     else:
         ustruct = unreal_service.to_ustruct(ustruct=ustruct)
-        if ustruct == 0:
+        if ustruct.ptr == 0:
             return None
         else:
             return spear.UnrealStruct(unreal_service=unreal_service, ustruct=ustruct)
@@ -439,7 +420,7 @@ def get_unreal_class(unreal_service, uclass):
         return None
     else:
         uclass = unreal_service.to_uclass(uclass=uclass)
-        if uclass == 0:
+        if uclass.ptr == 0:
             return None
         else:
             return spear.UnrealClass(unreal_service=unreal_service, uclass=uclass)
@@ -449,22 +430,22 @@ def get_unreal_object(unreal_service, sp_func_service, config, uobject, uclass, 
         return None
     elif uobject is None and uclass is not None:
         uclass = unreal_service.to_uclass(uclass=uclass) # needed to handle the case where uclass is a string like "AActor", doesn't handle the case where uclass is a string like "0xabcdabcd"
-        if uclass == 0:
+        if uclass.ptr == 0:
             return None
         uobject = unreal_service.get_default_object(uclass=uclass, create_if_needed=False, as_handle=True)
-        assert uobject != 0
+        assert uobject.ptr != 0
     elif uobject is not None and uclass is None:
         uobject = to_handle(obj=uobject)
-        if uobject == 0:
+        if uobject.ptr == 0:
             return None
         uclass = unreal_service.get_class(uobject=uobject, as_handle=True)
-        assert uclass != 0
+        assert uclass.ptr != 0
     else:
         uobject = spear.to_handle(obj=uobject)
-        if uobject == 0:
+        if uobject.ptr == 0:
             return None
         uclass = unreal_service.to_uclass(uclass=uclass) # needed to handle the case where uclass is a string like "AActor", doesn't handle the case where uclass is a string like "0xabcdabcd"
-        if uclass == 0:
+        if uclass.ptr == 0:
             return None
     return spear.UnrealObject(
         unreal_service=unreal_service,
@@ -473,6 +454,7 @@ def get_unreal_object(unreal_service, sp_func_service, config, uobject, uclass, 
         uobject=uobject,
         uclass=uclass,
         with_sp_funcs=with_sp_funcs)
+
 
 #
 # Converters for handling Unreal types as return values.
@@ -532,6 +514,9 @@ def to_unreal_object(obj, unreal_service, sp_func_service, config, as_unreal_obj
     elif isinstance(as_unreal_object, numbers.Integral):
         assert as_unreal_object != 0
         uclass = as_unreal_object
+    elif isinstance(as_unreal_object, spear.SpHandle):
+        assert as_unreal_object.ptr != 0
+        uclass = as_unreal_object
     elif isinstance(as_unreal_object, str):
         assert as_unreal_object != ""
         uclass = as_unreal_object
@@ -543,14 +528,14 @@ def to_unreal_object(obj, unreal_service, sp_func_service, config, as_unreal_obj
 def to_unreal_type(obj, create_func):
     if isinstance(obj, bool):
         assert False
-    elif isinstance(obj, numbers.Integral):
-        return create_func(obj=obj)
-    elif isinstance(obj, str):
+    elif isinstance(obj, numbers.Integral) or isinstance(obj, str):
         # We need to convert to a handle first, because create_func might be get_unreal_struct or get_unreal_class,
         # and neither handles the case when obj is a pointer represented as string. This conversion isn't
         # necessary for get_unreal_object, because get_unreal_object does handle the case when obj is a
         # pointer represented as a string.
         obj = to_handle(obj=obj)
+        return create_func(obj=obj)
+    elif isinstance(obj, spear.SpHandle):
         return create_func(obj=obj)
     elif isinstance(obj, list):
         return [ to_unreal_type(obj=o, create_func=create_func) for o in obj ]
@@ -571,11 +556,14 @@ def to_unreal_type(obj, create_func):
 def to_handle(obj):
     if isinstance(obj, bool):
         assert False
-    elif isinstance(obj, numbers.Integral):
+    elif isinstance(obj, spear.SpHandle):
         return obj
+    elif isinstance(obj, numbers.Integral):
+        handle = spear.SpHandle()
+        handle.ptr = obj
+        return handle
     elif isinstance(obj, str):
-        assert obj.startswith("0x")
-        return int(obj, 16)
+        return to_handle_from_string(string=obj)
     elif isinstance(obj, spear.UnrealStruct):
         return obj.ustruct
     elif isinstance(obj, spear.UnrealClass):
@@ -598,9 +586,22 @@ def to_handle(obj):
         obj.convert_func = convert_func
         return obj
     elif spear.__can_import_unreal__ and isinstance(obj, unreal.Object):
-        return unreal.SpFuncUtils.to_handle_from_object(object=obj)
+        return to_handle_from_string(string=unreal.SpFuncUtils.to_string_from_object(object=obj))
     else:
         assert False
+
+# Convert to a handle from a long or short string, see to_long_string_from_handle(...) and to_short_string_from_handle(...)
+def to_handle_from_string(string):
+    assert isinstance(string, str)
+    tokens = string.split(":")
+    assert len(tokens) == 1 or len(tokens) == 3
+    assert tokens[0].startswith("0x")
+    handle = spear.SpHandle()
+    handle.ptr = int(tokens[0], 16)
+    if len(tokens) == 3:
+        handle.object_index = int(tokens[1])
+        handle.object_serial_number = int(tokens[2])
+    return handle
 
 
 #
@@ -620,18 +621,18 @@ def to_json_strings(objs):
 def to_json_string(obj, stringify=True):
     if isinstance(obj, str):
         return obj
-    elif isinstance(obj, Ptr):
-        return obj.to_string()
+    elif isinstance(obj, spear.SpHandle):
+        return to_long_string_from_handle(handle=obj)
     elif isinstance(obj, spear.UnrealStruct):
-        return to_ptr(handle=obj.ustruct).to_string()
+        return to_json_string(obj=obj.ustruct)
     elif isinstance(obj, spear.UnrealClass):
-        return to_ptr(handle=obj.uclass).to_string()
+        return to_json_string(obj=obj.uclass)
     elif isinstance(obj, spear.UnrealObject):
         # Only a top-level UnrealObject without a property name can be converted, because the conversion only
         # preserves the UObject handle.
         assert obj.is_top_level()
         assert obj.property_name == ""
-        return to_ptr(handle=obj.uobject).to_string()
+        return to_json_string(obj=obj.uobject)
     elif isinstance(obj, bool) or isinstance(obj, numbers.Number) or isinstance(obj, list) or isinstance(obj, dict):
         if stringify:
             if isinstance(obj, bool):
@@ -660,9 +661,21 @@ def to_json_string(obj, stringify=True):
     else:
         return json.dumps(obj)
 
+# Convert to a long string of the form "0x<ptr>:<object_index>:<object_serial_number>" from a handle. This is the
+# form expected by UnrealUtils::toPtrFromString(...), because it can be validated in the same way as an SpHandle.
+def to_long_string_from_handle(handle):
+    assert isinstance(handle, spear.SpHandle)
+    return f"{to_short_string_from_handle(handle=handle)}:{handle.object_index}:{handle.object_serial_number}"
+
+# Convert to a short string of the form "0x<ptr>" from a handle. UnrealUtils::toPtrFromString(...) also accepts this
+# form, but it can't be validated as strongly.
+def to_short_string_from_handle(handle):
+    assert isinstance(handle, spear.SpHandle)
+    return f"{handle.ptr:#0{18}x}"
+
 # Unreal collapses JSON object keys that differ only by case (e.g., "a" and "A"), so we assert that the JSON keys are
 # still unique, ignoring case, after converting them to strings. This also detects distinct keys that convert to the
-# same string (e.g., a Ptr and an UnrealObject that refer to the same UObject). This assert is the set-side equivalent
+# same string (e.g., an SpHandle and an UnrealObject that refer to the same UObject). This assert is the set-side equivalent
 # of the assert in UnrealUtils::getPropertyValueAsString(...) for TMap keys.
 def _to_json_validated_dict(dict_):
     assert all(isinstance(k, str) for k in dict_.keys()) or not any(isinstance(k, str) for k in dict_.keys()) # keys must not mix strings and non-strings
@@ -735,10 +748,6 @@ def to_case_sensitive(obj, recursive=True):
 # a dict before printing.
 def pprint(obj, **kwargs):
     pp.pprint(to_case_sensitive(obj=obj), **kwargs)
-
-# Convert to a Ptr object that can be passed to a service from a handle.
-def to_ptr(handle):
-    return Ptr(handle=handle)
 
 # Convert to a Shared object that can be passed to a service from a NumPy array backed by shared memory.
 def to_shared(array, shared_memory_handle):
@@ -875,11 +884,11 @@ def _to_script_expr_value(obj):
     elif isinstance(obj, np.ndarray):
         return { "shape": list(obj.shape), "dtype": str(obj.dtype), "data": obj.tolist() }
     elif isinstance(obj, spear.UnrealStruct):
-        return to_handle(obj=obj)
+        return to_long_string_from_handle(handle=to_handle(obj=obj))
     elif isinstance(obj, spear.UnrealClass):
-        return to_handle(obj=obj)
+        return to_long_string_from_handle(handle=to_handle(obj=obj))
     elif isinstance(obj, spear.UnrealObject):
-        return to_handle(obj=obj)
+        return to_long_string_from_handle(handle=to_handle(obj=obj))
     else:
         return obj
 

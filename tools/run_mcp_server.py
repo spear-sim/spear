@@ -277,8 +277,8 @@ def _initialize_instance():
 
     config = spear.get_config()
     config.defrost()
-    config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS = 3600.0
-    config.SPEAR.INSTANCE.CLIENT_SUPPRESS_DEFAULT_LOGGING = True # need to disable default logging to reserve stdout for MCP communication
+    config.SPEAR.CLIENT.INTERNAL_TIMEOUT_SECONDS = 3600.0
+    config.SPEAR.CLIENT.SUPPRESS_DEFAULT_LOGGING = True # need to disable default logging to reserve stdout for MCP communication
     config.freeze()
     _instance = spear.Instance(config=config)
     _log("Instance created.")

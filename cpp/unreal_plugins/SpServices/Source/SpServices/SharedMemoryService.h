@@ -38,7 +38,7 @@ public:
 
                 std::unique_ptr<SharedMemoryRegion> shared_memory_region = std::make_unique<SharedMemoryRegion>(num_bytes);
                 SP_ASSERT(shared_memory_region);
-                SharedMemoryView view = shared_memory_region->getView(); // get view before moving
+                SpSharedMemoryView view = shared_memory_region->getView(); // get view before moving
                 Std::insert(shared_memory_regions_, shared_memory_name, std::move(shared_memory_region));
 
                 SpArraySharedMemoryUsageFlags usage_flags = Unreal::getCombinedEnumFlagValueFromStringsAs<SpArraySharedMemoryUsageFlags, ESpArraySharedMemoryUsageFlags>(usage_flag_strings);
@@ -58,7 +58,7 @@ public:
                 Std::remove(shared_memory_views_, shared_memory_name);
         });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("shared_memory_service", "get_fence_view", []() -> SharedMemoryView {
+        unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("shared_memory_service", "get_fence_view", []() -> SpSharedMemoryView {
             return SharedMemory::getFenceView();
         });
 

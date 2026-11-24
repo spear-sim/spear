@@ -122,11 +122,11 @@ public:
         messages_.push_back(message_str);
     }
 
-    OutputLogMessages flush()
+    SpOutputLogMessages flush()
     {
         std::lock_guard<std::mutex> lock(mutex_);
 
-        OutputLogMessages output_log_messages;
+        SpOutputLogMessages output_log_messages;
         output_log_messages.messages_ = Std::toVector<std::string>(messages_);
         output_log_messages.num_evicted_ = num_evicted_;
 
@@ -187,11 +187,11 @@ void OutputLog::terminate()
     }
 }
 
-OutputLogMessages OutputLog::flush()
+SpOutputLogMessages OutputLog::flush()
 {
     if (g_buffered_output_device != nullptr) {
         return g_buffered_output_device->flush();
     } else {
-        return OutputLogMessages();
+        return SpOutputLogMessages();
     }
 }

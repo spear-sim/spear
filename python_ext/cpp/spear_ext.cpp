@@ -48,24 +48,24 @@ NB_MODULE(spear_ext, module)
     // Custom types
     //
 
-    auto output_log_messages_class = nanobind::class_<OutputLogMessages>(module, "OutputLogMessages");
-    output_log_messages_class.def(nanobind::init<>());
-    output_log_messages_class.def_rw("messages",    &OutputLogMessages::messages_);
-    output_log_messages_class.def_rw("num_evicted", &OutputLogMessages::num_evicted_);
-    output_log_messages_class.def("__repr__", [](const OutputLogMessages& self) {
+    auto sp_output_log_messages_class = nanobind::class_<SpOutputLogMessages>(module, "SpOutputLogMessages");
+    sp_output_log_messages_class.def(nanobind::init<>());
+    sp_output_log_messages_class.def_rw("messages",    &SpOutputLogMessages::messages_);
+    sp_output_log_messages_class.def_rw("num_evicted", &SpOutputLogMessages::num_evicted_);
+    sp_output_log_messages_class.def("__repr__", [](const SpOutputLogMessages& self) {
         std::ostringstream oss;
-        oss << "spear_ext.OutputLogMessages(messages=" << self.messages_.size() << ", num_evicted=" << self.num_evicted_ << ")";
+        oss << "spear_ext.SpOutputLogMessages(messages=" << self.messages_.size() << ", num_evicted=" << self.num_evicted_ << ")";
         return oss.str();
     });
 
-    auto shared_memory_view_class = nanobind::class_<SharedMemoryView>(module, "SharedMemoryView");
-    shared_memory_view_class.def(nanobind::init<>());
-    shared_memory_view_class.def_rw("id",           &SharedMemoryView::id_);
-    shared_memory_view_class.def_rw("num_bytes",    &SharedMemoryView::num_bytes_);
-    shared_memory_view_class.def_rw("offset_bytes", &SharedMemoryView::offset_bytes_);
-    shared_memory_view_class.def("__repr__", [](const SharedMemoryView& self) {
+    auto sp_shared_memory_view_class = nanobind::class_<SpSharedMemoryView>(module, "SpSharedMemoryView");
+    sp_shared_memory_view_class.def(nanobind::init<>());
+    sp_shared_memory_view_class.def_rw("id",           &SpSharedMemoryView::id_);
+    sp_shared_memory_view_class.def_rw("num_bytes",    &SpSharedMemoryView::num_bytes_);
+    sp_shared_memory_view_class.def_rw("offset_bytes", &SpSharedMemoryView::offset_bytes_);
+    sp_shared_memory_view_class.def("__repr__", [](const SpSharedMemoryView& self) {
         std::ostringstream oss;
-        oss << "spear_ext.SharedMemoryView(id=" << self.id_ << ", num_bytes=" << self.num_bytes_ << ", offset_bytes=" << self.offset_bytes_ << ")";
+        oss << "spear_ext.SpSharedMemoryView(id=" << self.id_ << ", num_bytes=" << self.num_bytes_ << ", offset_bytes=" << self.offset_bytes_ << ")";
         return oss.str();
     });
 
@@ -125,6 +125,23 @@ NB_MODULE(spear_ext, module)
     sp_func_data_bundle_class.def("__repr__", [](const SpFuncDataBundle& self) {
         std::ostringstream oss;
         oss << "spear_ext.SpFuncDataBundle(packed_arrays=" << self.packed_arrays_.size() << ", unreal_obj_strings=" << self.unreal_obj_strings_.size() << ", info=" << self.info_.size() << ")";
+        return oss.str();
+    });
+
+    auto sp_handle_class = nanobind::class_<SpHandle>(module, "SpHandle");
+    sp_handle_class.def(nanobind::init<>());
+    sp_handle_class.def_rw("ptr",                  &SpHandle::ptr_);
+    sp_handle_class.def_rw("object_index",         &SpHandle::object_index_);
+    sp_handle_class.def_rw("object_serial_number", &SpHandle::object_serial_number_);
+    sp_handle_class.def("__eq__", [](const SpHandle& self, const SpHandle& other) {
+        return self.ptr_ == other.ptr_ && self.object_index_ == other.object_index_ && self.object_serial_number_ == other.object_serial_number_;
+    });
+    sp_handle_class.def("__hash__", [](const SpHandle& self) {
+        return std::hash<uint64_t>()(self.ptr_) ^ (std::hash<int64_t>()((static_cast<int64_t>(self.object_index_) << 32) | static_cast<uint32_t>(self.object_serial_number_)) << 1);
+    });
+    sp_handle_class.def("__repr__", [](const SpHandle& self) {
+        std::ostringstream oss;
+        oss << "spear_ext.SpHandle(ptr=0x" << std::hex << self.ptr_ << std::dec << ", object_index=" << self.object_index_ << ", object_serial_number=" << self.object_serial_number_ << ")";
         return oss.str();
     });
 
@@ -207,7 +224,7 @@ NB_MODULE(spear_ext, module)
     sp_static_struct_desc_class.def_rw("name",          &SpStaticStructDesc::name_);
     sp_static_struct_desc_class.def("__repr__", [](const SpStaticStructDesc &self) {
         std::ostringstream oss;
-        oss << "spear_ext.SpStaticStructDesc(name='" << self.name_ << "', static_struct=" << self.static_struct_ << ")";
+        oss << "spear_ext.SpStaticStructDesc(name='" << self.name_ << "', static_struct=0x" << std::hex << self.static_struct_.ptr_ << std::dec << ")";
         return oss.str();
     });
 
@@ -220,7 +237,7 @@ NB_MODULE(spear_ext, module)
     sp_static_class_desc_class.def_rw("function_descs",         &SpStaticClassDesc::function_descs_);
     sp_static_class_desc_class.def("__repr__", [](const SpStaticClassDesc &self) {
         std::ostringstream oss;
-        oss << "spear_ext.SpStaticClassDesc(name='" << self.name_ << "', static_class=" << self.static_class_ << ", function_descs=" << self.function_descs_.size() << ")";
+        oss << "spear_ext.SpStaticClassDesc(name='" << self.name_ << "', static_class=0x" << std::hex << self.static_class_.ptr_ << std::dec << ", function_descs=" << self.function_descs_.size() << ")";
         return oss.str();
     });
 
@@ -233,7 +250,7 @@ NB_MODULE(spear_ext, module)
     sp_world_desc_class.def_rw("is_playing",      &SpWorldDesc::is_playing_);
     sp_world_desc_class.def("__repr__", [](const SpWorldDesc& self) {
         std::ostringstream oss;
-        oss << "spear_ext.SpWorldDesc(world=" << self.world_ << ", world_id=" << self.world_id_ << ", is_editor_world=" << self.is_editor_world_ << ", is_game_world=" << self.is_game_world_ << ", is_playing=" << self.is_playing_ << ")";
+        oss << "spear_ext.SpWorldDesc(world=0x" << std::hex << self.world_.ptr_ << std::dec << ", world_id=" << self.world_id_ << ", is_editor_world=" << self.is_editor_world_ << ", is_game_world=" << self.is_game_world_ << ", is_playing=" << self.is_playing_ << ")";
         return oss.str();
     });
 }

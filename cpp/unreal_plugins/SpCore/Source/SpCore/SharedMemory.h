@@ -16,6 +16,14 @@
 
 #include "SpCore/Boost.h"
 
+struct SpSharedMemoryView // exposed to Python via SpServices/MsgpackAdaptors.h
+{
+    std::string id_; // platform-dependent name used to access the shared memory resource from other processes
+    uint64_t num_bytes_ = 0;
+    uint16_t offset_bytes_ = 0;
+    void* data_ = nullptr;
+};
+
 // Acquires exclusive ownership of id for the lifetime of this object, regardless of how the application
 // eventually shuts down. Throws SharedIdMutexError if id is already held by another process. The underlying
 // OS-level lock is released automatically on process termination for any reason (including a crash), so id
@@ -53,14 +61,6 @@ private:
     std::string id_string_;
 };
 
-struct SharedMemoryView
-{
-    std::string id_; // platform-dependent name used to access the shared memory resource from other processes
-    uint64_t num_bytes_ = 0;
-    uint16_t offset_bytes_ = 0;
-    void* data_ = nullptr;
-};
-
 class SPCORE_API SharedMemoryRegion
 {
 public:
@@ -69,7 +69,7 @@ public:
     SharedMemoryRegion(uint64_t num_bytes, uint64_t id); // useful if the caller wants to manage the allocation of uint64_t IDs to shared memory regions
     ~SharedMemoryRegion();
 
-    SharedMemoryView getView();
+    SpSharedMemoryView getView();
 
 private:
     inline static constexpr uint16_t s_alignment_bytes_ = 4096;
@@ -86,7 +86,7 @@ public:
     SharedMemoryFence();
     SharedMemoryFence(uint64_t id); // useful if the caller wants to manage the allocation of uint64_t IDs to shared memory regions
 
-    SharedMemoryView getView();
+    SpSharedMemoryView getView();
     std::string getKey() const;
     void fence();
 
@@ -110,7 +110,7 @@ public:
     static void initialize(uint64_t initial_unique_id);
     static void terminate();
 
-    static SharedMemoryView getFenceView();
+    static SpSharedMemoryView getFenceView();
     static std::string getFenceKey();
     static void fence();
 

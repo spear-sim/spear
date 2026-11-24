@@ -52,9 +52,9 @@ if __name__ == "__main__":
     config.defrost()
 
     config.SPEAR.LAUNCH_MODE = "editor"
-    config.SPEAR.INSTANCE.EDITOR_EXECUTABLE = unreal_editor_bin
-    config.SPEAR.INSTANCE.EDITOR_UPROJECT = uproject
-    config.SPEAR.INSTANCE.EDITOR_LAUNCH_MODE = args.editor_launch_mode
+    config.SPEAR.EDITOR_EXECUTABLE = unreal_editor_bin
+    config.SPEAR.EDITOR_UPROJECT = uproject
+    config.SPEAR.EDITOR_LAUNCH_MODE = args.editor_launch_mode
 
     if args.map is not None:
         config.SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_EDITOR_STARTUP_MAP = True

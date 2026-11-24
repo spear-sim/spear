@@ -9,7 +9,7 @@
 
 #include <Containers/UnrealString.h> // FString
 #include <CoreGlobals.h>             // GWarn
-#include <HAL/Platform.h>            // int64, TCHAR, uint32
+#include <HAL/Platform.h>            // TCHAR, uint32
 #include <Kismet/BlueprintFunctionLibrary.h>
 #include <Misc/FeedbackContext.h>    // FFeedbackContext
 #include <UObject/Class.h>           // UScriptStruct
@@ -30,31 +30,15 @@ class USpFuncUtils : public UBlueprintFunctionLibrary
     GENERATED_BODY()
 public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static int64 ToHandleFromObject(UObject* Object) // uint64 not supported for BlueprintCallable
-    {
-        return reinterpret_cast<int64>(Object);
-    }
-
-    UFUNCTION(BlueprintCallable, Category="SPEAR")
-    static UObject* ToObjectFromHandle(int64 Handle) // uint64 not supported for BlueprintCallable
-    {
-        UObject* uobject = reinterpret_cast<UObject*>(Handle);
-        if (uobject) {
-            SP_ASSERT(Unreal::isValid(uobject));
-        }
-        return uobject;
-    }
-
-    UFUNCTION(BlueprintCallable, Category="SPEAR")
     static FString ToStringFromObject(UObject* Object)
     {
-        return Unreal::toFString(Unreal::toStringFromPtr(Object));
+        return Unreal::toFString(UnrealUtils::toStringFromPtr(Object));
     }
 
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     static UObject* ToObjectFromString(FString String)
     {
-        UObject* uobject = Unreal::toPtrFromString<UObject>(Unreal::toStdString(String));
+        UObject* uobject = UnrealUtils::toPtrFromString<UObject>(Unreal::toStdString(String));
         return uobject;
     }
 

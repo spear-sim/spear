@@ -5,10 +5,12 @@
 
 #pragma once
 
+#include <stdint.h> // int32_t, uint64_t
+
 #include <concepts> // std::derived_from
 #include <map>
 #include <ranges>   // std::views::drop, std::views::filter, std::views::transform
-#include <string>
+#include <string>   // std::stoi
 #include <utility>  // std::make_pair, std::pair
 #include <vector>
 
@@ -16,6 +18,7 @@
 #include <Components/SceneComponent.h>
 #include <Containers/Array.h>
 #include <Containers/UnrealString.h> // FString::operator*
+#include <CoreGlobals.h>             // IsInGameThread
 #include <Dom/JsonValue.h>
 #include <EngineUtils.h>             // TActorIterator
 #include <GameFramework/Actor.h>
@@ -27,6 +30,7 @@
 #include <UObject/ObjectMacros.h>    // EObjectFlags, EPropertyFlags
 #include <UObject/Script.h>          // EFunctionFlags
 #include <UObject/UnrealType.h>      // EFieldIterationFlags, FProperty, TFieldIterator
+#include <UObject/UObjectArray.h>    // FUObjectItem, GUObjectArray
 #include <UObject/UObjectGlobals.h>  // NewObject
 #include <UObject/UObjectIterator.h>
 
@@ -43,10 +47,26 @@ class UScriptStruct;
 class UWorld;
 
 //
+// SpHandle is an opaque reference to an object that can be passed back and forth between Python and C++.
+// For UObjects, object_index_ and object_serial_number_ store the same data as a TWeakObjectPtr, so we can
+// detect when a handle refers to an object that has been destroyed, even if its address has been reused by a
+// new object. For all other types, object_index_ and object_serial_number_ are 0.
+//
+
+struct SpHandle // exposed to Python via SpServices/MsgpackAdaptors.h
+{
+    uint64_t ptr_ = 0;
+    int32_t object_index_ = 0;
+    int32_t object_serial_number_ = 0;
+
+    bool operator==(const SpHandle& other) const = default; // needed by SpPropertyDesc::operator==
+};
+
+//
 // SpPropertyDesc and SpPropertyValue encapsulate the data needed to get and set a UPROPERTY on a specific UObject.
 //
 
-struct SpPropertyDesc
+struct SpPropertyDesc // exposed to Python via SpServices/MsgpackAdaptors.h
 {
     FProperty* property_ = nullptr; // leaf property, not always equal to the tail of notify_member_properties_ when property_ refers to a specific entry in an array or map
     void* value_ptr_ = nullptr;     // pointer to property_'s value for a specific object or struct
@@ -56,7 +76,7 @@ struct SpPropertyDesc
     // in the resolved traversal. notify_objects_ and notify_member_properties_ are always set, and the
     // remaining arrays describe an array or map entry at each step and are sentinels (nullptr, -1, "") for a
     // plain member step. The object to notify is notify_objects_.back().
-    std::vector<UObject*> notify_objects_;              // base object at each step (repeated across a struct segment; changes each time a new object is traversed
+    std::vector<SpHandle> notify_objects_;              // base object at each step (repeated across a struct segment; changes each time a new object is traversed), SpHandle needed so SpPropertyDesc can be serialized safely on the worker thread
     std::vector<FProperty*> notify_member_properties_;  // named member property at each step (i.e., the container for an array or map entry)
     std::vector<FProperty*> notify_element_properties_; // array Inner, fixed-size array property, or map ValueProp at each step, or nullptr for a plain member step
     std::vector<int> notify_array_indices_;             // array index at each step, or -1 for a non-array step
@@ -65,7 +85,7 @@ struct SpPropertyDesc
     bool operator==(const SpPropertyDesc& other) const = default; // used to assert that a parent desc is entirely default
 };
 
-struct SpPropertyValue
+struct SpPropertyValue // exposed to Python via SpServices/MsgpackAdaptors.h
 {
     std::string value_;
     std::string type_id_;
@@ -261,6 +281,186 @@ public:
         static std::string resolveStableName(const AActor* actor);
         static std::pair<std::string, std::string> unresolveStableName(const std::string& stable_name);
     #endif
+
+    //
+    // Convert pointers to SpHandles. These functions must be called on the game thread, because creating an
+    // SpHandle from a UObject pointer accesses GUObjectArray.
+    //
+
+    template <typename TValue>
+    static SpHandle toHandle(const TValue* src)
+    {
+        SpHandle handle;
+        handle.ptr_ = reinterpret_cast<uint64_t>(src);
+        return handle;
+    }
+
+    template <CObject TObject> // specialization to store the same data as a TWeakObjectPtr for UObject pointers
+    static SpHandle toHandle(const TObject* src)
+    {
+        SP_ASSERT(IsInGameThread());
+        SpHandle handle;
+        if (src) {
+            handle.ptr_ = reinterpret_cast<uint64_t>(src);
+            handle.object_index_ = GUObjectArray.ObjectToIndex(src);
+            handle.object_serial_number_ = GUObjectArray.AllocateSerialNumber(handle.object_index_);
+        }
+        return handle;
+    }
+
+    template <typename TValue>
+    static std::vector<SpHandle> toHandle(const std::vector<TValue*>& src)
+    {
+        return Std::toVector<SpHandle>(src | std::views::transform([](auto src_ptr) { return toHandle(src_ptr); }));
+    }
+
+    template <typename TKey, typename TValue>
+    static std::map<TKey, SpHandle> toHandle(const std::map<TKey, TValue*>& src)
+    {
+        return Std::toMap<TKey, SpHandle>(src | std::views::transform([](auto& pair) { auto& [key, value] = pair; return std::make_pair(key, toHandle(value)); }));
+    }
+
+    //
+    // Convert SpHandles to pointers. These functions must be called on the game thread, because validating a
+    // UObject pointer accesses GUObjectArray.
+    //
+
+    template <typename TPtr>
+    static TPtr* toPtr(const SpHandle& src)
+    {
+        return reinterpret_cast<TPtr*>(src.ptr_);
+    }
+
+    template <CObject TObject> // specialization to validate UObject pointers
+    static TObject* toPtr(const SpHandle& src)
+    {
+        SP_ASSERT(IsInGameThread());
+        TObject* src_ptr = reinterpret_cast<TObject*>(src.ptr_);
+        if (src_ptr) {
+
+            // If the handle has a serial number, then validate it in the same way as TWeakObjectPtr, and check
+            // that the object at object_index_ is the object that src_ptr points to. Otherwise, the handle was
+            // created without a serial number (e.g., from a uint64_t or a bare hexadecimal pointer string), so we
+            // fall back to checking src_ptr directly.
+
+            if (src.object_serial_number_ != 0) {
+                FUObjectItem* object_item = GUObjectArray.IndexToObject(src.object_index_);
+                SP_ASSERT(object_item);
+                SP_ASSERT(object_item->Object == src_ptr); // TODO: replace with object_item->GetObject() in UE 5.8
+                SP_ASSERT(object_item->GetSerialNumber() == src.object_serial_number_);
+                SP_ASSERT(GUObjectArray.IsValid(object_item, false));
+            }
+            SP_ASSERT(Unreal::isValid(src_ptr));
+        }
+        return src_ptr;
+    }
+
+    template <typename TPtr> // specialization not needed because we delegate to the scalar implementation
+    static std::vector<TPtr*> toPtr(const std::vector<SpHandle>& src)
+    {
+        return Std::toVector<TPtr*>(src | std::views::transform([](const auto& handle) { return toPtr<TPtr>(handle); }));
+    }
+
+    template <typename TKey, typename TPtr> // specialization not needed because we delegate to the scalar implementation
+    static std::map<TKey, TPtr*> toPtr(const std::map<TKey, SpHandle>& src)
+    {
+        return Std::toMap<TKey, TPtr*>(src | std::views::transform([](auto& pair) { auto& [key, value] = pair; return std::make_pair(key, toPtr<TPtr>(value)); }));
+    }
+
+    //
+    // Convert between UObject pointers and strings. These functions are used to pass UObject pointers to and
+    // from UFUNCTIONs and properties via JSON. A pointer string has the form "0x<ptr>:<object_index>:<object_serial_number>",
+    // so it can be validated in the same way as an SpHandle. A bare hexadecimal pointer string of the form
+    // "0x<ptr>" is also accepted, but it can't be validated as strongly. These functions must be called on the
+    // game thread, because they call toHandle(...) and toPtr(...).
+    //
+
+    template <CObject TObject>
+    static std::string toStringFromPtr(const TObject* src)
+    {
+        SpHandle handle = toHandle(src);
+        return Std::toStringFromPtr(src) + ":" + Std::toString(handle.object_index_) + ":" + Std::toString(handle.object_serial_number_);
+    }
+
+    template <CObject TObject>
+    static TObject* toPtrFromString(const std::string& src)
+    {
+        std::vector<std::string> tokens = Std::tokenize(src, ":");
+        SP_ASSERT(tokens.size() == 1 || tokens.size() == 3);
+        SpHandle handle;
+        handle.ptr_ = reinterpret_cast<uint64_t>(Std::toPtrFromString<void>(tokens.at(0)));
+        if (tokens.size() == 3) {
+            handle.object_index_ = std::stoi(tokens.at(1));
+            handle.object_serial_number_ = std::stoi(tokens.at(2));
+        }
+        return toPtr<TObject>(handle);
+    }
+
+    //
+    // Convert between pointers and uint64_t. These functions are useful in cases where pointers need to be
+    // stored as numeric data (e.g., in an SpArray<uint64_t>). UObject pointers obtained this way are validated
+    // with Unreal::isValid(...), which is weaker than the validation that is possible with an SpHandle.
+    //
+
+    template <typename TValue>
+    static uint64_t toUInt64(const TValue* src)
+    {
+        return reinterpret_cast<uint64_t>(src);
+    }
+
+    template <typename TValue>
+    static std::vector<uint64_t> toUInt64(std::vector<TValue>&& src)
+    {
+        return Std::reinterpretAsVectorOf<uint64_t>(std::move(src));
+    }
+
+    template <typename TKey, typename TValue>
+    static std::map<TKey, uint64_t> toUInt64(const std::map<TKey, TValue>& src)
+    {
+        return Std::toMap<TKey, uint64_t>(src | std::views::transform([](auto& pair) { auto& [key, value] = pair; return std::make_pair(key, toUInt64(value)); }));
+    }
+
+    template <typename TPtr>
+    static TPtr* toPtr(uint64_t src)
+    {
+        return reinterpret_cast<TPtr*>(src);
+    }
+
+    template <CObject TObject> // specialization to validate UObject pointers
+    static TObject* toPtr(uint64_t src)
+    {
+        SP_ASSERT(IsInGameThread());
+        TObject* src_ptr = reinterpret_cast<TObject*>(src);
+        if (src_ptr) {
+            SP_ASSERT(Unreal::isValid(src_ptr));
+        }
+        return src_ptr;
+    }
+
+    template <typename TPtr>
+    static std::vector<TPtr*> toPtr(std::vector<uint64_t>&& src)
+    {
+        return Std::reinterpretAsVectorOf<TPtr*>(std::move(src));
+    }
+
+    template <CObject TObject> // specialization to validate UObject pointers
+    static std::vector<TObject*> toPtr(std::vector<uint64_t>&& src)
+    {
+        SP_ASSERT(IsInGameThread());
+        std::vector<TObject*> dest = Std::reinterpretAsVectorOf<TObject*>(std::move(src));
+        for (auto dest_ptr : dest) {
+            if (dest_ptr) {
+                SP_ASSERT(Unreal::isValid(dest_ptr));
+            }
+        }
+        return dest;
+    }
+
+    template <typename TKey, typename TPtr> // specialization not needed because we delegate to the scalar implementation
+    static std::map<TKey, TPtr*> toPtr(const std::map<TKey, uint64_t>& src)
+    {
+        return Std::toMap<TKey, TPtr*>(src | std::views::transform([](auto& pair) { auto& [key, value] = pair; return std::make_pair(key, toPtr<TPtr>(value)); }));
+    }
 
     //
     // Find static structs by name or type and return an std::vector

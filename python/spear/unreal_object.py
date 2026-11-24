@@ -40,18 +40,18 @@ class UnrealObject:
                 assert False
             elif uobject is None and uclass is not None:
                 self.uclass = self._unreal_service.to_uclass(uclass=uclass)
-                assert self.uclass != 0
+                assert self.uclass.ptr != 0
                 self.uobject = self._unreal_service.get_default_object(uclass=self.uclass, create_if_needed=False, as_handle=True)
             elif uobject is not None and uclass is None:
                 self.uobject = spear.to_handle(obj=uobject)
-                assert self.uobject != 0
+                assert self.uobject.ptr != 0
                 self.uclass = self._unreal_service.get_class(uobject=self.uobject, as_handle=True)
             else:
                 self.uobject = spear.to_handle(obj=uobject)
                 self.uclass = self._unreal_service.to_uclass(uclass=uclass)
 
-            assert self.uobject != 0
-            assert self.uclass != 0
+            assert self.uobject.ptr != 0
+            assert self.uclass.ptr != 0
 
             self.derived_info = self._unreal_service.get_static_class_derived_info(uclass=self.uclass)
 
@@ -340,8 +340,8 @@ class UnrealObject:
         if attr_name.startswith("__") and attr_name.endswith("__"):
             raise AttributeError(attr_name)
         else:
-            assert self.uclass != 0
-            assert self.uobject != 0
+            assert self.uclass.ptr != 0
+            assert self.uobject.ptr != 0
             assert attr_name not in ["call_async", "send_async"]
 
             # if self represents a UObject directly (i.e., it doesn't represent a possibly nested property), then we can call functions on it
@@ -412,7 +412,7 @@ class UnrealObject:
         if attr_name.startswith("_") or attr_name in ["uobject", "uclass", "property_name", "call_async", "send_async", "derived_info"]:
             super().__setattr__(attr_name, attr_value)
         else:
-            assert self.uobject != 0
+            assert self.uobject.ptr != 0
             assert self._is_top_level
             assert self._unreal_service.is_top_level_service()
 
@@ -656,7 +656,7 @@ class UnrealStruct:
         assert unreal_service is not None
         self._unreal_service = unreal_service
         self.ustruct = spear.to_handle(obj=ustruct)
-        assert self.ustruct != 0
+        assert self.ustruct.ptr != 0
 
     def print_debug_info(self, prefix=""):
         type_string = self._unreal_service.get_type_for_struct_as_string(ustruct=self.ustruct)
@@ -681,7 +681,7 @@ class UnrealClass:
         assert unreal_service is not None
         self._unreal_service = unreal_service
         self.uclass = spear.to_handle(obj=uclass)
-        assert self.uclass != 0
+        assert self.uclass.ptr != 0
 
     def print_debug_info(self, prefix=""):
         type_string = self._unreal_service.get_type_for_class_as_string(uclass=self.uclass)
@@ -694,13 +694,13 @@ class UnrealClass:
 
         spear.log(f"{prefix}    Class hierarchy:")
         current_uclass = self.uclass
-        while current_uclass != 0:
+        while current_uclass.ptr != 0:
             spear.log(f"{prefix}        {self._unreal_service.get_type_for_class_as_string(uclass=current_uclass)}")
             current_uclass = self._unreal_service.get_super_class(uclass=current_uclass, as_handle=True)
 
         spear.log(f"{prefix}    Functions:")
         current_uclass = self.uclass
-        while current_uclass != 0:
+        while current_uclass.ptr != 0:
             spear.log(f"{prefix}        Functions for class: {self._unreal_service.get_type_for_class_as_string(uclass=current_uclass)}")
             ufunctions = self._unreal_service.find_functions_as_dict(uclass=current_uclass, field_iteration_flags=["IncludeDeprecated"]) # exclude base classes
             for ufunction_name, ufunction in ufunctions.items():
@@ -726,7 +726,7 @@ class UnrealClass:
 
         spear.log(f"{prefix}    Properties:")
         current_uclass = self.uclass
-        while current_uclass != 0:
+        while current_uclass.ptr != 0:
             spear.log(f"{prefix}        Properties for type: {self._unreal_service.get_type_for_class_as_string(uclass=current_uclass)}")
             props = self._unreal_service.find_properties_as_dict(ustruct=current_uclass, field_iteration_flags=["IncludeDeprecated"]) # exclude base classes
             for name, prop in props.items():

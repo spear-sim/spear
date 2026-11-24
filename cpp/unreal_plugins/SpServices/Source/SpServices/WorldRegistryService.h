@@ -47,11 +47,11 @@ public:
             return world_descs_;
         });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("world_registry_service", "remove_world", [this](uint64_t& world) -> void {
-            SP_ASSERT(world);
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("world_registry_service", "remove_world", [this](SpHandle& world) -> void {
             std::lock_guard<std::mutex> lock(mutex_);
 
-            UWorld* world_ptr = toPtr<UWorld>(world);
+            UWorld* world_ptr = UnrealUtils::toPtr<UWorld>(world);
+            SP_ASSERT(world_ptr);
             std::string name = Unreal::toStdString(world_ptr->GetPathName());
             SP_ASSERT(Std::containsKey(world_descs_, name));
             SpWorldDesc& desc = world_descs_.at(name);
@@ -92,7 +92,7 @@ private:
             SP_ASSERT(!Std::containsKey(world_descs_, name));
 
             SpWorldDesc desc;
-            desc.world_ = world;
+            desc.world_ = UnrealUtils::toHandle(world);
             desc.world_id_ = current_world_id_++;
             desc.is_editor_world_ = world->IsEditorWorld();
             desc.is_game_world_ = world->IsGameWorld();
@@ -185,10 +185,10 @@ private:
             bool game_paused = Config::get<bool>("SP_SERVICES.WORLD_REGISTRY_SERVICE.GAME_PAUSED");
 
             SP_LOG("    Overriding game paused for world: ", name);
-            SP_LOG("    Old game paused: ", UGameplayStatics::IsGamePaused(desc.world_));
+            SP_LOG("    Old game paused: ", UGameplayStatics::IsGamePaused(world));
             SP_LOG("    New game paused: ", game_paused);
 
-            UGameplayStatics::SetGamePaused(desc.world_, game_paused);
+            UGameplayStatics::SetGamePaused(world, game_paused);
         }
 
         //

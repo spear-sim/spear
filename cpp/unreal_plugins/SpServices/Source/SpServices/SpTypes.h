@@ -13,17 +13,13 @@
 
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
 
-class FProperty;
-class UClass;
-class UFunction;
-class UStruct;
-class UWorld;
+#include "SpCore/UnrealUtils.h"
 
 //
 // SpFuncSignatureDesc is a helper struct for tracking the function signatures of RPC entry points.
 //
 
-struct SpFuncSignatureDesc
+struct SpFuncSignatureDesc // exposed to Python via SpServices/MsgpackAdaptors.h
 {
     std::string name_;
     std::vector<int> type_ids_;
@@ -35,7 +31,7 @@ struct SpFuncSignatureDesc
 // being cast correctly when casting back to a particular type.
 //
 
-struct SpFuture
+struct SpFuture // exposed to Python via SpServices/MsgpackAdaptors.h
 {
     void* future_ptr_ = nullptr;
     std::string type_id_;
@@ -45,11 +41,11 @@ struct SpFuture
 // SpFunctionDesc stores metadata about a UFunction.
 //
 
-struct SpFunctionDesc
+struct SpFunctionDesc // exposed to Python via SpServices/MsgpackAdaptors.h
 {
-    UFunction* function_ = nullptr;
+    SpHandle function_;     // SpHandle needed so SpFunctionDesc can be serialized safely on the worker thread
     std::string function_name_;
-    UClass* static_class_ = nullptr;
+    SpHandle static_class_; // SpHandle needed so SpFunctionDesc can be serialized safely on the worker thread
     std::string static_class_name_;
 };
 
@@ -57,9 +53,9 @@ struct SpFunctionDesc
 // SpStaticStructDesc stores reflection metadata for a UScriptStruct.
 //
 
-struct SpStaticStructDesc
+struct SpStaticStructDesc // exposed to Python via SpServices/MsgpackAdaptors.h
 {
-    UStruct* static_struct_ = nullptr;
+    SpHandle static_struct_; // SpHandle needed so SpStaticStructDesc can be serialized safely on the worker thread
     std::string name_;
 };
 
@@ -67,11 +63,11 @@ struct SpStaticStructDesc
 // SpStaticClassDesc stores reflection metadata for a UClass.
 //
 
-struct SpStaticClassDesc
+struct SpStaticClassDesc // exposed to Python via SpServices/MsgpackAdaptors.h
 {
-    UClass* static_class_ = nullptr;
+    SpHandle static_class_;                 // SpHandle needed so SpStaticClassDesc can be serialized safely on the worker thread
     std::string name_;
-    std::vector<UClass*> derived_classes_;
+    std::vector<SpHandle> derived_classes_; // SpHandle needed so SpStaticClassDesc can be serialized safely on the worker thread
     std::vector<std::string> derived_class_names_;
     std::map<std::string, SpFunctionDesc> function_descs_;
 };
@@ -80,9 +76,9 @@ struct SpStaticClassDesc
 // SpWorldDesc stores the state of a tracked UWorld.
 //
 
-struct SpWorldDesc
+struct SpWorldDesc // exposed to Python via SpServices/MsgpackAdaptors.h
 {
-    UWorld* world_ = nullptr; // raw pointer rather than TWeakObjectPtr because SpWorldDesc is read on the worker thread
+    SpHandle world_; // SpHandle needed so SpWorldDesc can be serialized safely on the worker thread
     int64_t world_id_ = -1;
     bool is_editor_world_ = false;
     bool is_game_world_ = false;

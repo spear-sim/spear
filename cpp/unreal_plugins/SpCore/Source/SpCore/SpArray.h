@@ -157,7 +157,7 @@ public:
 };
 
 //
-// SpArraySharedMemoryView is similar to a SharedMemoryView, but with extra members variables that can be
+// SpArraySharedMemoryView is similar to an SpSharedMemoryView, but with extra members variables that can be
 // specified by the system that owns the shared memory to indicate how the shared memory should be used, and
 // a public name that other systems should use to access the memory.
 //
@@ -180,10 +180,10 @@ enum class ESpArraySharedMemoryUsageFlags
 };
 ENUM_CLASS_FLAGS(ESpArraySharedMemoryUsageFlags); // required if combining values using bitwise operations
 
-struct SpArraySharedMemoryView : SharedMemoryView
+struct SpArraySharedMemoryView : SpSharedMemoryView // exposed to Python via SpServices/MsgpackAdaptors.h
 {
     SpArraySharedMemoryView() = default;
-    SpArraySharedMemoryView(const SharedMemoryView& view, const std::string& name, SpArraySharedMemoryUsageFlags usage_flags) : SharedMemoryView(view)
+    SpArraySharedMemoryView(const SpSharedMemoryView& view, const std::string& name, SpArraySharedMemoryUsageFlags usage_flags) : SpSharedMemoryView(view)
     {
         name_ = name;
         usage_flags_ = usage_flags;
@@ -203,7 +203,7 @@ struct SpArraySharedMemoryView : SharedMemoryView
 
 using SpPackedArrayAllocator = SpAlignedAllocator<uint8_t, 4096>;
 
-class SPCORE_API SpPackedArray
+class SPCORE_API SpPackedArray // exposed to Python via SpServices/MsgpackAdaptors.h
 {
 public:
     inline static constexpr int s_alignment_padding_bytes_ = 4096;
@@ -328,7 +328,7 @@ public:
     }
 
     // when passing in a shape, the shape can include a single -1 as a wildcard, except when passing in a
-    // void* or a SharedMemoryView
+    // void* or an SpSharedMemoryView
 
     void setDataSource(std::vector<uint8_t, SpPackedArrayAllocator>&& src, const std::vector<int64_t>& shape)
     {

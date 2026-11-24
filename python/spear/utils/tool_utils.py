@@ -35,7 +35,7 @@ import sys
 #        Windows Command Prompt:                    python run_editor_mrq_job.py ... "-ExecCmds=r.MyCVar 1" "-MyPath=C:/my dir/my file.txt"
 #        macOS and Linux:                           python run_editor_mrq_job.py ... "-ExecCmds=r.MyCVar 1" "-MyPath=/my dir/my file.txt"
 #
-#    Values in SPEAR.INSTANCE.COMMAND_LINE_ARGS don't pass through a shell, so don't enclose them in quotes,
+#    Values in SPEAR.LAUNCHER.COMMAND_LINE_ARGS don't pass through a shell, so don't enclose them in quotes,
 #    even if they contain spaces.
 #
 # 3. Extra arguments that our tools forward to RunUAT or UnrealBuildTool (e.g., unknown arguments passed to

@@ -302,7 +302,7 @@ std::map<std::string, SpPropertyValue> UnrealUtils::callFunction(const UWorld* w
 
         if (Unreal::isNamed(property_desc.property_, world_context_object)) {
             SP_ASSERT(!Std::containsKey(resolved_args, property_name));
-            setPropertyValueFromString(property_desc, Std::toStringFromPtr(world));
+            setPropertyValueFromString(property_desc, toStringFromPtr(world));
         }
 
         // If the property name is in args, then set it using the string in args, and make sure the property
@@ -586,7 +586,7 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
         SP_ASSERT(parent.notify_element_properties_.size() == parent.notify_objects_.size());
         SP_ASSERT(parent.notify_array_indices_.size() == parent.notify_objects_.size());
         SP_ASSERT(parent.notify_map_keys_.size() == parent.notify_objects_.size());
-        notify_object = parent.notify_objects_.back();
+        notify_object = toPtr<UObject>(parent.notify_objects_.back());
     }
 
     SpPropertyDesc property_desc;
@@ -602,7 +602,7 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
     property_desc.notify_array_indices_      = parent.notify_array_indices_;
     property_desc.notify_map_keys_           = parent.notify_map_keys_;
 
-    property_desc.notify_objects_.push_back(notify_object);
+    property_desc.notify_objects_.push_back(toHandle(notify_object));
     property_desc.notify_member_properties_.push_back(property);
     property_desc.notify_element_properties_.push_back(nullptr);
     property_desc.notify_array_indices_.push_back(-1);
@@ -629,7 +629,7 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
         SP_ASSERT(parent.notify_element_properties_.size() == parent.notify_objects_.size());
         SP_ASSERT(parent.notify_array_indices_.size() == parent.notify_objects_.size());
         SP_ASSERT(parent.notify_map_keys_.size() == parent.notify_objects_.size());
-        notify_object = parent.notify_objects_.back();
+        notify_object = toPtr<UObject>(parent.notify_objects_.back());
     }
 
     std::vector<std::pair<std::string, std::string>> path_elements = parsePropertyPath(property_name);
@@ -662,7 +662,7 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
         // here; notify_member_properties_ is set before the array/map block below so it refers to the
         // container property rather than the array/map element. The array/map/default blocks below set the
         // other three arrays.
-        property_desc.notify_objects_.push_back(current_object);
+        property_desc.notify_objects_.push_back(toHandle(current_object));
         property_desc.notify_member_properties_.push_back(property_desc.property_);
 
         // If the current property is an array, map, or fixed-size array property, and the name includes the index
@@ -858,10 +858,10 @@ bool UnrealUtils::supportsEditChangeNotify(const SpPropertyDesc& property_desc)
     SP_ASSERT(!property_desc.notify_objects_.empty());
     SP_ASSERT(property_desc.property_);
 
-    UObject* notify_object = property_desc.notify_objects_.back();
-    bool single_object     = Std::all(property_desc.notify_objects_ | std::views::transform([notify_object](auto object) { return object == notify_object; }));
-    int num_array_indices  = Std::countNonzero(property_desc.notify_array_indices_ | std::views::transform([](auto array_index) { return array_index != -1; }));
-    int num_map_keys       = Std::countNonzero(property_desc.notify_map_keys_ | std::views::transform([](auto& map_key) { return map_key != ""; }));
+    const SpHandle& notify_object = property_desc.notify_objects_.back();
+    bool single_object            = Std::all(property_desc.notify_objects_ | std::views::transform([&notify_object](const auto& object) { return object == notify_object; }));
+    int num_array_indices         = Std::countNonzero(property_desc.notify_array_indices_ | std::views::transform([](auto array_index) { return array_index != -1; }));
+    int num_map_keys              = Std::countNonzero(property_desc.notify_map_keys_ | std::views::transform([](auto& map_key) { return map_key != ""; }));
 
     return single_object && num_array_indices <= 1 && num_map_keys == 0;
 }
@@ -871,7 +871,7 @@ void UnrealUtils::preEditChange(const SpPropertyDesc& property_desc)
     #if WITH_EDITOR // defined in an auto-generated header
         SP_ASSERT(supportsEditChangeNotify(property_desc));
 
-        UObject* notify_object = property_desc.notify_objects_.back();
+        UObject* notify_object = toPtr<UObject>(property_desc.notify_objects_.back());
         SP_ASSERT(notify_object);
 
         FEditPropertyChain property_chain;
@@ -886,7 +886,7 @@ void UnrealUtils::postEditChange(const SpPropertyDesc& property_desc)
     #if WITH_EDITOR // defined in an auto-generated header
         SP_ASSERT(supportsEditChangeNotify(property_desc));
 
-        UObject* notify_object = property_desc.notify_objects_.back();
+        UObject* notify_object = toPtr<UObject>(property_desc.notify_objects_.back());
         SP_ASSERT(notify_object);
 
         FEditPropertyChain property_chain;
@@ -1185,7 +1185,7 @@ SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& prop
 
         FObjectPropertyBase* object_property = static_cast<FObjectPropertyBase*>(property_desc.property_); // FObjectProperty, FWeakObjectProperty, and FLazyObjectProperty are-a FObjectPropertyBase
         UObject* uobject = object_property->GetObjectPropertyValue(property_desc.value_ptr_);
-        property_value.value_ = Std::toStringFromPtr(uobject);
+        property_value.value_ = toStringFromPtr(uobject);
 
     } else if (property_desc.property_->IsA(FInterfaceProperty::StaticClass())) {
 
@@ -1193,7 +1193,7 @@ SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& prop
         FScriptInterface* script_interface = interface_property->GetPropertyValuePtr(property_desc.value_ptr_);
         SP_ASSERT(script_interface);
         UObject* uobject = script_interface->GetObject();
-        property_value.value_ = Std::toStringFromPtr(uobject);
+        property_value.value_ = toStringFromPtr(uobject);
 
     } else {
         SP_LOG("    ERROR: Property ", Unreal::getUnrealName(property_desc.property_), " is an unsupported type: ", Unreal::getUnrealName(property_desc.property_->GetClass()));
@@ -1221,8 +1221,8 @@ void UnrealUtils::setPropertyValueFromString(const SpPropertyDesc& property_desc
     // FString, FName, and FText values can contain arbitrary characters, so we need to escape them to
     // construct a well-formed JSON string. We don't need to escape the other quoted property types, because their values
     // can't contain characters that need escaping: enum values are C++ identifiers, soft object values are
-    // object paths, field path values are property paths, and object and interface values are hexadecimal
-    // pointer strings. For these types, we assert that no characters need escaping.
+    // object paths, field path values are property paths, and object and interface values are pointer
+    // strings. For these types, we assert that no characters need escaping.
 
     std::string json_string;
     if (fixed_size_array) {
@@ -1537,7 +1537,7 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
         success = json_value.Get()->TryGetString(fstring);
         SP_ASSERT(success);
 
-        UObject* uobject = Unreal::toPtrFromString<UObject>(Unreal::toStdString(fstring));
+        UObject* uobject = toPtrFromString<UObject>(Unreal::toStdString(fstring));
         object_property->SetObjectPropertyValue(property_desc.value_ptr_, uobject);
 
     } else if (property_desc.property_->IsA(FInterfaceProperty::StaticClass())) {
@@ -1549,7 +1549,7 @@ void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_d
         success = json_value.Get()->TryGetString(fstring);
         SP_ASSERT(success);
 
-        UObject* uobject = Unreal::toPtrFromString<UObject>(Unreal::toStdString(fstring));
+        UObject* uobject = toPtrFromString<UObject>(Unreal::toStdString(fstring));
 
         FScriptInterface* script_interface = interface_property->GetPropertyValuePtr(property_desc.value_ptr_);
         SP_ASSERT(script_interface);
@@ -1878,7 +1878,7 @@ void UnrealUtils::setStableName(AActor* actor, const std::string& stable_name)
                     }
                 }
             } else {
-                SP_LOG("ERROR: Called setStableName(actor=", Std::toStringFromPtr(actor), ", stable_name=\"", stable_name, "\") but no data structure could be found to store the stable name. Call canSetStableName(...) first.");
+                SP_LOG("ERROR: Called setStableName(actor=", toStringFromPtr(actor), ", stable_name=\"", stable_name, "\") but no data structure could be found to store the stable name. Call canSetStableName(...) first.");
                 SP_ASSERT(false);
             }
         }

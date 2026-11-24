@@ -224,9 +224,9 @@ if __name__ == "__main__":
         cv2.imwrite(image_file, image)
 
     # save segmentation image with colors matching debug draw
-    bounding_box_handles = [ 0 if actor is None else actor.uobject for actor in bounding_box_actors ]
-    assert all([ proxy_id_desc["Actor"] in bounding_box_handles for proxy_id_desc in proxy_id_descs ])
-    proxy_bounding_box_ids = np.array([ bounding_box_handles.index(proxy_id_desc["Actor"]) for proxy_id_desc in proxy_id_descs ])
+    bounding_box_ptrs = [ 0 if actor is None else actor.uobject.ptr for actor in bounding_box_actors ]
+    assert all([ proxy_id_desc["Actor"].ptr in bounding_box_ptrs for proxy_id_desc in proxy_id_descs ])
+    proxy_bounding_box_ids = np.array([ bounding_box_ptrs.index(proxy_id_desc["Actor"].ptr) for proxy_id_desc in proxy_id_descs ])
     bounding_box_colors_uint8 = np.round(bounding_box_colors*255.0).astype(np.uint8)
     segmentation_image = bounding_box_colors_uint8[proxy_bounding_box_ids[proxy_id_image]]
     image_file = os.path.realpath(os.path.join(images_dir, "segmentation.png"))

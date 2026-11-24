@@ -363,10 +363,11 @@ class EngineService():
             spear.log(f'ERROR: self._frame_state == "{self._frame_state}"')
 
             if self._frame_state == "executing_frame":
-                spear.log("ERROR: Attempting to exit critical section by calling _end_frame_impl()...")
-                self._end_frame_impl()
-                self._frame_state = "error"
+                if not spear.__can_import_unreal__:
+                    spear.log("ERROR: Attempting to exit critical section by calling _end_frame_impl()...")
+                    self._end_frame_impl()
 
+            self._frame_state = "error"
             assert False
 
     def _validate_editor_transaction_state_for_worker_thread_work(self):

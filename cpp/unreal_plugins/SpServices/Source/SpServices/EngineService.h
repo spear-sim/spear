@@ -252,6 +252,10 @@ public:
 
         bindFuncToExecuteOnWorkerThread("engine_service", "terminate", [this]() -> void {
 
+            // The editor transaction work queue isn't covered by releaseGameThread(), but it is not in use, because
+            // engine_service.terminate is not allowed to be called inside an editor transaction.
+            SP_ASSERT(current_incremental_work_queues_.empty());
+
             // Make sure the game thread isn't using any batched work queues before we terminate them.
             releaseGameThread();
 
@@ -260,7 +264,7 @@ public:
             // on the game thread.
             std::lock_guard<std::mutex> watchdog_lock(watchdog_mutex_);
 
-            // Set the frame state to prevent calling any more entry points.
+            // Set the frame state to prevent the game thread from executing any more work queues.
             frame_state_ = FrameState::Terminating;
 
             // There is no need to lock because it is safe to access WorkQueue objects from multiple threads.
@@ -519,8 +523,7 @@ public:
         std::string wt_thread_name = "worker_thread";
         std::string wt_long_func_name = service_name + ".call_sync_on_worker_thread." + func_name;
         bool wt_return_early_if_error = false;
-        bool wt_return_early_if_terminating = true;
-        auto wt_func = wrapFuncToExecuteInTryCatch(wt_thread_name, wt_long_func_name, wt_return_early_if_error, wt_return_early_if_terminating, func);
+        auto wt_func = wrapFuncToExecuteInTryCatch(wt_thread_name, wt_long_func_name, wt_return_early_if_error, func);
 
         SP_ASSERT(!func_signature_registry_.isFuncSignatureRegistered(wt_long_func_name));
         func_signature_registry_.registerFuncSignature(wt_long_func_name, func);
@@ -548,11 +551,10 @@ public:
 
         std::string gt_thread_name = "game_thread";
         bool gt_return_early_if_error = true;
-        bool gt_return_early_if_terminating = true;
 
         if (Std::toBool(bind_flags & UnrealEntryPointBindFlags::CallSync)) {
             std::string gt_call_sync_long_func_name = service_name + ".call_sync_on_game_thread." + func_name;
-            auto gt_func = wrapFuncToExecuteInTryCatch(gt_thread_name, gt_call_sync_long_func_name, gt_return_early_if_error, gt_return_early_if_terminating, func);
+            auto gt_func = wrapFuncToExecuteInTryCatch(gt_thread_name, gt_call_sync_long_func_name, gt_return_early_if_error, func);
             SP_ASSERT(!func_signature_registry_.isFuncSignatureRegistered(gt_call_sync_long_func_name));
             func_signature_registry_.registerFuncSignature<TReturn, TArgs...>(gt_call_sync_long_func_name);
             entry_point_binder_->bind(gt_call_sync_long_func_name, wrapFuncToExecuteInWorkQueueBlocking(gt_call_sync_long_func_name, gt_func));
@@ -560,7 +562,7 @@ public:
 
         if (Std::toBool(bind_flags & UnrealEntryPointBindFlags::CallAsync)) {
             std::string gt_call_async_long_func_name = service_name + ".call_async_on_game_thread." + func_name;
-            auto gt_func = wrapFuncToExecuteInTryCatch(gt_thread_name, gt_call_async_long_func_name, gt_return_early_if_error, gt_return_early_if_terminating, func);
+            auto gt_func = wrapFuncToExecuteInTryCatch(gt_thread_name, gt_call_async_long_func_name, gt_return_early_if_error, func);
             SP_ASSERT(!func_signature_registry_.isFuncSignatureRegistered(gt_call_async_long_func_name));
             func_signature_registry_.registerFuncSignature<SpFuture, TArgs...>(gt_call_async_long_func_name);
             entry_point_binder_->bind(gt_call_async_long_func_name, wrapFuncToExecuteInWorkQueueNonBlocking(gt_call_async_long_func_name, gt_func)); // bound function calls createFuture
@@ -571,8 +573,7 @@ public:
             std::string wt_thread_name = "worker_thread";
             std::string wt_get_future_result_long_func_name = "engine_service.get_future_result_from_game_thread_as_" + FuncSignatureRegistry::getTypeName<TReturn>();
             bool wt_return_early_if_error = false;
-            bool wt_return_early_if_terminating = false;
-            auto wt_func = wrapFuncToExecuteInTryCatch(wt_thread_name, wt_get_future_result_long_func_name, wt_return_early_if_error, wt_return_early_if_terminating,
+            auto wt_func = wrapFuncToExecuteInTryCatch(wt_thread_name, wt_get_future_result_long_func_name, wt_return_early_if_error,
                 [this, wt_get_future_result_long_func_name](SpFuture& future) -> TReturn {
 
                     // If we're in an error state and the future isn't ready, then the corresponding work item
@@ -595,7 +596,7 @@ public:
 
         if (Std::toBool(bind_flags & UnrealEntryPointBindFlags::SendAsync)) {
             std::string gt_send_async_long_func_name = service_name + ".send_async_on_game_thread." + func_name;
-            auto gt_func = wrapFuncToExecuteInTryCatch(gt_thread_name, gt_send_async_long_func_name, gt_return_early_if_error, gt_return_early_if_terminating, func);
+            auto gt_func = wrapFuncToExecuteInTryCatch(gt_thread_name, gt_send_async_long_func_name, gt_return_early_if_error, func);
             SP_ASSERT(!func_signature_registry_.isFuncSignatureRegistered(gt_send_async_long_func_name));
             func_signature_registry_.registerFuncSignature<void, TArgs...>(gt_send_async_long_func_name);
             entry_point_binder_->bind(gt_send_async_long_func_name, wrapFuncToExecuteInWorkQueueNonBlockingDiscardReturnValue(gt_send_async_long_func_name, gt_func));
@@ -840,22 +841,22 @@ private:
     // in a try-catch block.
 
     template <typename TFunc>
-    auto wrapFuncToExecuteInTryCatch(const std::string& thread_name, const std::string& func_name, bool return_early_if_error, bool return_early_if_terminating, const TFunc& func)
+    auto wrapFuncToExecuteInTryCatch(const std::string& thread_name, const std::string& func_name, bool return_early_if_error, const TFunc& func)
     {
-        return wrapFuncToExecuteInTryCatch(thread_name, func_name, return_early_if_error, return_early_if_terminating, func, FuncInfoUtils::getFuncInfo<TFunc>());
+        return wrapFuncToExecuteInTryCatch(thread_name, func_name, return_early_if_error, func, FuncInfoUtils::getFuncInfo<TFunc>());
     }
 
     template <typename TFunc, typename TReturn, typename... TArgs> requires
         CFuncReturnsAndIsCallableWithArgs<TFunc, TReturn, TArgs&...>
-    auto wrapFuncToExecuteInTryCatch(const std::string& thread_name, const std::string& func_name, bool return_early_if_error, bool return_early_if_terminating, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
+    auto wrapFuncToExecuteInTryCatch(const std::string& thread_name, const std::string& func_name, bool return_early_if_error, const TFunc& func, const FuncInfo<TReturn, TArgs...>& fi)
     {
         // The lambda declared below is either bound to a specific RPC entry point and called from the worker
         // thread by the RPC server, or scheduled on a work queue and called from the game thread. Note that we
         // capture by value because we want to guarantee that our captured variables are still accessible after
         // wrapFuncToExecuteInTryCatch(...) returns.
 
-        return [this, thread_name, func_name, return_early_if_error, return_early_if_terminating, func](TArgs&... args) -> TReturn {
-            return executeFuncInTryCatch(thread_name, func_name, return_early_if_error, return_early_if_terminating, [&thread_name, &func_name, &func, &args...]() -> TReturn {
+        return [this, thread_name, func_name, return_early_if_error, func](TArgs&... args) -> TReturn {
+            return executeFuncInTryCatch(thread_name, func_name, return_early_if_error, [&thread_name, &func_name, &func, &args...]() -> TReturn {
                 if constexpr (std::is_void_v<TReturn>) {
 
                     if (Config::get<bool>("SP_SERVICES.ENGINE_SERVICE.PRINT_CALL_DEBUG_INFO")) {
@@ -909,9 +910,8 @@ private:
 
             std::string thread_name = "worker_thread";
             bool return_early_if_error = true;
-            bool return_early_if_terminating = true;
 
-            return executeFuncInTryCatch(thread_name, func_name, return_early_if_error, return_early_if_terminating, [this, &func_name, &func, &args...]() -> TReturn {
+            return executeFuncInTryCatch(thread_name, func_name, return_early_if_error, [this, &func_name, &func, &args...]() -> TReturn {
 
                 WorkQueue* work_queue = getCurrentWorkQueue();
                 if (!work_queue) {
@@ -969,9 +969,8 @@ private:
 
             std::string thread_name = "worker_thread";
             bool return_early_if_error = true;
-            bool return_early_if_terminating = true;
 
-            return executeFuncInTryCatch(thread_name, func_name, return_early_if_error, return_early_if_terminating, [this, &func_name, &func, &args...]() -> SpFuture {
+            return executeFuncInTryCatch(thread_name, func_name, return_early_if_error, [this, &func_name, &func, &args...]() -> SpFuture {
 
                 WorkQueue* work_queue = getCurrentWorkQueue();
                 if (!work_queue) {
@@ -1016,9 +1015,8 @@ private:
 
             std::string thread_name = "worker_thread";
             bool return_early_if_error = true;
-            bool return_early_if_terminating = true;
 
-            executeFuncInTryCatch(thread_name, func_name, return_early_if_error, return_early_if_terminating, [this, &func_name, &func, &args...]() -> void {
+            executeFuncInTryCatch(thread_name, func_name, return_early_if_error, [this, &func_name, &func, &args...]() -> void {
 
                 WorkQueue* work_queue = getCurrentWorkQueue();
                 if (!work_queue) {
@@ -1042,17 +1040,12 @@ private:
     // Called from the worker thread and the game thread to execute a function in a try-catch block.
 
     template <typename TFunc>
-    auto executeFuncInTryCatch(const std::string& thread_name, const std::string& func_name, bool return_early_if_error, bool return_early_if_terminating, const TFunc& func)
+    auto executeFuncInTryCatch(const std::string& thread_name, const std::string& func_name, bool return_early_if_error, const TFunc& func)
     {
         using TReturn = std::invoke_result_t<TFunc>;
 
         if (return_early_if_error && request_error_) {
             SP_LOG(thread_name, ": ERROR: In an error state when attempting to execute ", func_name, ", returning a default-constructed return value...");
-            return TReturn();
-        }
-
-        if (return_early_if_terminating && (frame_state_ == FrameState::Terminating || request_terminate_)) {
-            SP_LOG(thread_name, ": In a terminating state when attempting to execute ", func_name, " (frame_state_ == ", static_cast<int>(frame_state_.load()), ", request_terminate_ == ", request_terminate_.load(), "), returning a default-constructed return value...");
             return TReturn();
         }
 
@@ -1307,16 +1300,14 @@ private:
     std::vector<WorkQueue*> current_incremental_work_queues_;
 
     // Written and read by the game thread in beginFrame() and endFrame(). Written by the worker thread in
-    // engine_service.initialize and engine_service.terminate. Read by the worker thread and the game thread in
-    // executeFuncInTryCatch(...), and by the game thread in executeEditorPostTransaction().
+    // engine_service.initialize and engine_service.terminate. Read by the game thread in executeEditorPostTransaction().
     std::atomic<FrameState> frame_state_ = FrameState::Idle;
 
     // Written by the worker thread in engine_service.initialize and engine_service.terminate to indicate to
     // the game thread that we want to terminate the application. Read by the worker thread in
     // engine_service.begin_frame, engine_service.execute_frame, engine_service.end_frame, and
     // engine_service.begin_editor_transaction, engine_service.end_editor_transaction. Read by the game thread
-    // in beginFrame(), endFrame(), and executeEditorPostTransaction(). Read by the worker thread and the game
-    // thread in executeFuncInTryCatch(...).
+    // in beginFrame(), endFrame(), and executeEditorPostTransaction().
     std::atomic<bool> request_terminate_ = false;
 
     // Written by the worker thread in engine_service.initialize. Written by the worker thread and the game

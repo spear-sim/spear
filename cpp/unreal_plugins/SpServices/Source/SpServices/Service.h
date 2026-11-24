@@ -5,12 +5,11 @@
 
 #pragma once
 
-#include <stdint.h> // uint64_t
+#include <stdint.h> // int64_t
 
 #include <map>
-#include <ranges>  // std::views::transform
 #include <string>
-#include <utility> // std::make_pair, std::move
+#include <utility> // std::move
 #include <vector>
 
 #include <Delegates/IDelegateInstance.h> // FDelegateHandle
@@ -20,8 +19,6 @@
 #include "SpCore/Assert.h"
 #include "SpCore/Log.h"
 #include "SpCore/SpArray.h"
-#include "SpCore/Std.h"
-#include "SpCore/Unreal.h"
 
 class SPSERVICES_API Service // SPSERVICES_API is needed here because the SpServicesEditor module needs to link against this class
 {
@@ -52,64 +49,6 @@ protected:
     virtual void enginePreExit() {}
     virtual void beginFrame() {}
     virtual void endFrame() {}
-
-    template <typename TValue>
-    static uint64_t toUInt64(const TValue* src)
-    {
-        return reinterpret_cast<uint64_t>(src);
-    }
-
-    template <typename TValue>
-    static std::vector<uint64_t> toUInt64(std::vector<TValue>&& src)
-    {
-        return Std::reinterpretAsVectorOf<uint64_t>(std::move(src));
-    }
-
-    template <typename TKey, typename TValue>
-    static std::map<TKey, uint64_t> toUInt64(const std::map<TKey, TValue>& src)
-    {
-        return Std::toMap<TKey, uint64_t>(src | std::views::transform([](auto& pair) { auto& [key, value] = pair; return std::make_pair(key, toUInt64(value)); }));
-    }
-
-    template <typename TPtr>
-    static TPtr* toPtr(uint64_t src)
-    {
-        return reinterpret_cast<TPtr*>(src);
-    }
-
-    template <CObject TObject> // specialization to validate UObject pointers
-    static TObject* toPtr(uint64_t src)
-    {
-        TObject* src_ptr = reinterpret_cast<TObject*>(src);
-        if (src_ptr) {
-            SP_ASSERT(Unreal::isValid(src_ptr));
-        }
-        return src_ptr;
-    }
-
-    template <typename TPtr>
-    static std::vector<TPtr*> toPtr(std::vector<uint64_t>&& src)
-    {
-        return Std::reinterpretAsVectorOf<TPtr*>(std::move(src));
-    }
-
-    template <CObject TObject> // specialization to validate UObject pointers
-    static std::vector<TObject*> toPtr(std::vector<uint64_t>&& src)
-    {
-        std::vector<TObject*> dest = Std::reinterpretAsVectorOf<TObject*>(std::move(src));
-        for (auto dest_ptr : dest) {
-            if (dest_ptr) {
-                SP_ASSERT(Unreal::isValid(dest_ptr));
-            }
-        }
-        return dest;
-    }
-
-    template <typename TKey, typename TPtr> // specialization not needed because we delegate to the scalar implementation
-    static std::map<TKey, TPtr*> toPtr(const std::map<TKey, uint64_t>& src)
-    {
-        return Std::toMap<TKey, TPtr*>(src | std::views::transform([](auto& pair) { auto& [key, value] = pair; return std::make_pair(key, toPtr<TPtr>(value)); }));
-    }
 
     template <typename TValue>
     static SpPackedArray toPackedArray(

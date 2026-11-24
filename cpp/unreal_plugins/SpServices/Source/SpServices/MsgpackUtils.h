@@ -9,12 +9,13 @@
 
 #include <map>
 #include <string>
-#include <type_traits> // std::is_pointer_v
+#include <type_traits> // std::is_pointer_v, std::remove_pointer_t
 #include <utility>     // std::move
 #include <vector>
 
 #include "SpCore/Assert.h"
 #include "SpCore/Std.h"
+#include "SpCore/Unreal.h"
 
 #include "SpServices/Rpclib.h"
 
@@ -59,7 +60,7 @@ public:
         return t;
     }
 
-    template <typename TPtr> requires std::is_pointer_v<TPtr>
+    template <typename TPtr> requires std::is_pointer_v<TPtr> && CNonObject<std::remove_pointer_t<TPtr>> // UObject pointers must be sent as SpHandles
     static TPtr to(clmdep_msgpack::object const& object)
     {
         SP_ASSERT(object.type == clmdep_msgpack::type::POSITIVE_INTEGER);
@@ -98,13 +99,13 @@ public:
         return clmdep_msgpack::object(value, object_with_zone.zone);
     }
 
-    template <typename TPtr> requires std::is_pointer_v<TPtr>
+    template <typename TPtr> requires std::is_pointer_v<TPtr> && CNonObject<std::remove_pointer_t<TPtr>> // UObject pointers must be sent as SpHandles
     static clmdep_msgpack::object toMsgpackObject(TPtr value, clmdep_msgpack::object::with_zone& object_with_zone)
     {
         return clmdep_msgpack::object(reinterpret_cast<uint64_t>(value), object_with_zone.zone);
     }
 
-    template <typename TPtr> requires std::is_pointer_v<TPtr>
+    template <typename TPtr> requires std::is_pointer_v<TPtr> && CNonObject<std::remove_pointer_t<TPtr>> // UObject pointers must be sent as SpHandles
     static clmdep_msgpack::object toVectorMsgpackObject(const std::vector<TPtr>& values, clmdep_msgpack::object::with_zone& object_with_zone)
     {
         std::vector<uint64_t> ptrs;
@@ -114,7 +115,7 @@ public:
         return clmdep_msgpack::object(ptrs, object_with_zone.zone);
     }
 
-    template <typename TPtr> requires std::is_pointer_v<TPtr>
+    template <typename TPtr> requires std::is_pointer_v<TPtr> && CNonObject<std::remove_pointer_t<TPtr>> // UObject pointers must be sent as SpHandles
     static clmdep_msgpack::object toMapMsgpackObject(const std::map<std::string, TPtr>& values, clmdep_msgpack::object::with_zone& object_with_zone)
     {
         std::map<std::string, uint64_t> ptrs;

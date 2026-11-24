@@ -21,13 +21,13 @@
 void USpFuncComponent::OnComponentCreated()
 {
     UActorComponent::OnComponentCreated();
-    SpFuncComponentPtr = Unreal::toFString(Std::toStringFromPtr(this));
+    SpFuncComponentPtr = Unreal::toFString(Std::toStringFromPtr(this)); // for consistency with PostLoad()
 }
 
 void USpFuncComponent::PostLoad()
 {
     UActorComponent::PostLoad();
-    SpFuncComponentPtr = Unreal::toFString(Std::toStringFromPtr(this));
+    SpFuncComponentPtr = Unreal::toFString(Std::toStringFromPtr(this)); // PostLoad() can be called off the game thread, so we can't call UnrealUtils::toStringFromPtr(...)
 }
 
 void USpFuncComponent::BeginPlay()

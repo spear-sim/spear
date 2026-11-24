@@ -219,6 +219,10 @@ class UnrealService(spear.Service):
                 # the get_static_class entry point takes a string
                 result = self.entry_point_caller.call_on_game_thread("get_static_class", None, uclass)
                 return self.to_handle_or_unreal_class(obj=result, as_handle=as_handle, as_unreal_class=as_unreal_class)
+        elif isinstance(uclass, spear.SpHandle):
+            uclass = self.to_uclass(uclass=uclass)
+            result = self.entry_point_caller.to_result(obj=uclass)
+            return self.to_handle_or_unreal_class(obj=result, as_handle=as_handle, as_unreal_class=as_unreal_class)
         else:
             assert False
 
@@ -254,6 +258,7 @@ class UnrealService(spear.Service):
         return self.entry_point_caller.call_on_game_thread("get_type_for_struct_as_string", None, uclass)
 
     def get_type_for_property_as_string(self, prop):
+        prop = spear.to_handle(obj=prop)
         return self.entry_point_caller.call_on_game_thread("get_type_for_property_as_string", None, prop)
 
     #
@@ -316,25 +321,12 @@ class UnrealService(spear.Service):
         return self.entry_point_caller.call_on_game_thread("find_function_by_flags_all", None, uclass, function_flags, field_iteration_flags)
 
     def get_function_flags(self, ufunction):
+        ufunction = spear.to_handle(obj=ufunction)
         return self.entry_point_caller.call_on_game_thread("get_function_flags", None, ufunction)
 
     #
     # Interface for calling functions. Most users shouldn't need to call call_function(...) directly, and
     # should instead use the higher-level interface provided by UnrealObject.
-    #
-    # When using this interface, pointers must be handled specially. For example, suppose you want to call a
-    # function that takes a pointer as input and returns a pointer as output. Suppose that you already have a
-    # handle that you would like to pass as input to the function, that you obtained from another
-    # UnrealService function, e.g.,
-    #
-    #     arg_handle = unreal_service.find_actor_by_name(..., as_handle=True)
-    #
-    # You would invoke your desired function as follows. After executing this code, return_value_handle will
-    # be in the correct form to pass into other functions in unreal_service.
-    # 
-    #     args = {"Actor": spear.to_ptr(handle=arg_handle)}
-    #     return_values = unreal_service.call_function(uobject=uobject, ufunction=ufunction, args=args)
-    #     return_value_handle = spear.to_handle(obj=return_values["ReturnValue"].value)
     #
 
     def call_function(self, uobject=None, uclass=None, ufunction=None, args=None, world_context_object="WorldContextObject"):
@@ -352,6 +344,7 @@ class UnrealService(spear.Service):
 
         uobject = spear.to_handle(obj=uobject)
         uclass = self.to_uclass(uclass=uclass)
+        ufunction = spear.to_handle(obj=ufunction)
         args = spear.to_json_strings(objs=args)
 
         convert_func = lambda result: spear.to_case_insensitive(obj={ k: spear.PropertyValue(value=spear.to_case_insensitive(obj=spear.try_to_dict(json_string=v.value)), type_id=v.type_id) for k, v in result.items() })
@@ -417,6 +410,7 @@ class UnrealService(spear.Service):
         return self.entry_point_caller.call_on_game_thread("find_property_by_flags_all", None, ustruct, property_flags, field_iteration_flags)
 
     def get_property_flags(self, prop):
+        prop = spear.to_handle(obj=prop)
         return self.entry_point_caller.call_on_game_thread("get_property_flags", None, prop)
 
     #
@@ -433,6 +427,7 @@ class UnrealService(spear.Service):
         return self.entry_point_caller.call_on_game_thread("get_properties_for_object_as_string", convert_func, uobject, check_property_flags, skip_property_flags, force_no_skip)
 
     def get_properties_for_struct(self, value_ptr, ustruct, check_property_flags=None, skip_property_flags=None, force_no_skip=False):
+        value_ptr = spear.to_handle(obj=value_ptr)
         if force_no_skip:
             assert skip_property_flags is None # skip_property_flags is ignored if force_no_skip is True
         ustruct = self.to_ustruct(ustruct=ustruct)
@@ -442,6 +437,7 @@ class UnrealService(spear.Service):
         return self.entry_point_caller.call_on_game_thread("get_properties_for_struct_as_string", convert_func, value_ptr, ustruct, check_property_flags, skip_property_flags, force_no_skip)
 
     def get_properties_for_class(self, value_ptr, uclass, check_property_flags=None, skip_property_flags=None, force_no_skip=False):
+        value_ptr = spear.to_handle(obj=value_ptr)
         if force_no_skip:
             assert skip_property_flags is None # skip_property_flags is ignored if force_no_skip is True
         uclass = self.to_uclass(uclass=uclass)
@@ -460,6 +456,7 @@ class UnrealService(spear.Service):
         return self.entry_point_caller.call_on_game_thread("set_properties_for_object_from_string", None, uobject, properties, notify_editor, check_property_flags, skip_property_flags, force_no_skip)
 
     def set_properties_for_struct(self, value_ptr, ustruct, properties, notify_object=0, check_property_flags=None, skip_property_flags=None, force_no_skip=False):
+        value_ptr = spear.to_handle(obj=value_ptr)
         if force_no_skip:
             assert skip_property_flags is None # skip_property_flags is ignored if force_no_skip is True
         ustruct = self.to_ustruct(ustruct=ustruct)
@@ -470,6 +467,7 @@ class UnrealService(spear.Service):
         return self.entry_point_caller.call_on_game_thread("set_properties_for_struct_from_string", None, value_ptr, ustruct, properties, notify_object, check_property_flags, skip_property_flags, force_no_skip)
 
     def set_properties_for_class(self, value_ptr, uclass, properties, notify_object=0, check_property_flags=None, skip_property_flags=None, force_no_skip=False):
+        value_ptr = spear.to_handle(obj=value_ptr)
         if force_no_skip:
             assert skip_property_flags is None # skip_property_flags is ignored if force_no_skip is True
         uclass = self.to_uclass(uclass=uclass)
@@ -488,11 +486,13 @@ class UnrealService(spear.Service):
         return self.entry_point_caller.call_on_game_thread("resolve_property_for_object_from_string", None, uobject, property_name)
 
     def resolve_property_for_struct(self, value_ptr, ustruct, property_name, notify_object=0, parent=None):
-        if notify_object != 0:
+        ustruct = self.to_ustruct(ustruct=ustruct)
+        value_ptr = spear.to_handle(obj=value_ptr)
+        notify_object = spear.to_handle(obj=notify_object)
+        if notify_object.ptr != 0:
             assert parent is None # notify_object is only valid without a parent; a non-default parent supplies its own notify object
         if parent is not None:
-            assert notify_object == 0 # a non-default parent supplies its own notify object
-        notify_object = spear.to_handle(obj=notify_object)
+            assert notify_object.ptr == 0 # a non-default parent supplies its own notify object
         parent = parent if parent is not None else spear.SpPropertyDesc()
         return self.entry_point_caller.call_on_game_thread("resolve_property_for_struct_from_string", None, value_ptr, ustruct, property_name, notify_object, parent)
 
@@ -517,11 +517,13 @@ class UnrealService(spear.Service):
         return self.entry_point_caller.call_on_game_thread("get_property_value_for_object_as_string", convert_func, uobject, property_name)
 
     def get_property_value_for_struct(self, value_ptr, ustruct, property_name):
+        value_ptr = spear.to_handle(obj=value_ptr)
         ustruct = self.to_ustruct(ustruct=ustruct)
         convert_func = lambda result: spear.PropertyValue(value=spear.to_case_insensitive(obj=spear.try_to_dict(json_string=result.value)), type_id=result.type_id)
         return self.entry_point_caller.call_on_game_thread( "get_property_value_for_struct_as_string", convert_func, value_ptr, ustruct, property_name)
 
     def get_property_value_for_class(self, value_ptr, uclass, property_name):
+        value_ptr = spear.to_handle(obj=value_ptr)
         uclass = self.to_uclass(uclass=uclass)
         convert_func = lambda result: spear.PropertyValue(value=spear.to_case_insensitive(obj=spear.try_to_dict(json_string=result.value)), type_id=result.type_id)
         return self.entry_point_caller.call_on_game_thread( "get_property_value_for_struct_as_string", convert_func, value_ptr, uclass, property_name)
@@ -532,23 +534,26 @@ class UnrealService(spear.Service):
         return self.entry_point_caller.call_on_game_thread("set_property_value_for_object_from_string", None, uobject, property_name, property_value, notify_editor)
 
     def set_property_value_for_struct(self, value_ptr, ustruct, property_name, property_value, notify_object=0, parent=None):
-        if notify_object != 0:
+        ustruct = self.to_ustruct(ustruct=ustruct)
+        value_ptr = spear.to_handle(obj=value_ptr)
+        notify_object = spear.to_handle(obj=notify_object)
+        if notify_object.ptr != 0:
             assert parent is None # notify_object is only valid without a parent; a non-default parent supplies its own notify object
         if parent is not None:
-            assert notify_object == 0 # a non-default parent supplies its own notify object
+            assert notify_object.ptr == 0 # a non-default parent supplies its own notify object
         property_value = spear.to_json_string(obj=property_value)
-        notify_object = spear.to_handle(obj=notify_object)
         parent = parent if parent is not None else spear.SpPropertyDesc()
         return self.entry_point_caller.call_on_game_thread("set_property_value_for_struct_from_string", None, value_ptr, ustruct, property_name, property_value, notify_object, parent)
 
     def set_property_value_for_class(self, value_ptr, uclass, property_name, property_value, notify_object=0, parent=None):
-        if notify_object != 0:
+        value_ptr = spear.to_handle(obj=value_ptr)
+        notify_object = spear.to_handle(obj=notify_object)
+        if notify_object.ptr != 0:
             assert parent is None # notify_object is only valid without a parent; a non-default parent supplies its own notify object
         if parent is not None:
-            assert notify_object == 0 # a non-default parent supplies its own notify object
+            assert notify_object.ptr == 0 # a non-default parent supplies its own notify object
         uclass = self.to_uclass(uclass=uclass)
         property_value = spear.to_json_string(obj=property_value)
-        notify_object = spear.to_handle(obj=notify_object)
         parent = parent if parent is not None else spear.SpPropertyDesc()
         return self.entry_point_caller.call_on_game_thread("set_property_value_for_struct_from_string", None, value_ptr, uclass, property_name, property_value, notify_object, parent)
 
@@ -561,6 +566,7 @@ class UnrealService(spear.Service):
 
     def pre_edit_change(self, uobject, prop=0):
         uobject = spear.to_handle(obj=uobject)
+        prop = spear.to_handle(obj=prop)
         return self.entry_point_caller.call_on_game_thread("pre_edit_change", None, uobject, prop)
 
     def pre_edit_change_from_string(self, uobject, property_name):
@@ -572,6 +578,7 @@ class UnrealService(spear.Service):
 
     def post_edit_change(self, uobject, prop=0):
         uobject = spear.to_handle(obj=uobject)
+        prop = spear.to_handle(obj=prop)
         return self.entry_point_caller.call_on_game_thread("post_edit_change", None, uobject, prop)
 
     def post_edit_change_from_string(self, uobject, property_name):
@@ -624,6 +631,9 @@ class UnrealService(spear.Service):
         object_flags = object_flags if object_flags is not None else ["RF_NoFlags"]
         uclass = self.to_uclass(uclass=uclass)
         outer = spear.to_handle(obj=outer)
+        template = spear.to_handle(obj=template)
+        in_instance_graph = spear.to_handle(obj=in_instance_graph)
+        external_package = spear.to_handle(obj=external_package)
         result = self.entry_point_caller.call_on_game_thread("new_object", None, outer, uclass, name, object_flags, template, copy_transients_from_class_defaults, in_instance_graph, external_package)
         return self.to_handle_or_unreal_object(obj=result, as_handle=as_handle, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
 
@@ -671,6 +681,8 @@ class UnrealService(spear.Service):
         load_flags = load_flags if load_flags is not None else ["LOAD_None"]
         uclass = self.to_uclass(uclass=uclass)
         in_outer = spear.to_handle(obj=in_outer)
+        sandbox = spear.to_handle(obj=sandbox)
+        instancing_context = spear.to_handle(obj=instancing_context)
 
         # it is not supported to construct an UnrealObject using a UClass instance as the backing UObject, even though UClass instances are technically UObjects
         if uclass == self.to_uclass(uclass="UClass"):
@@ -683,6 +695,7 @@ class UnrealService(spear.Service):
         load_flags = load_flags if load_flags is not None else ["LOAD_None"]
         uclass = self.to_uclass(uclass=uclass)
         in_outer = spear.to_handle(obj=in_outer)
+        sandbox = spear.to_handle(obj=sandbox)
         result = self.entry_point_caller.call_on_game_thread("static_load_class", None, uclass, in_outer, name, filename, load_flags, sandbox)
         return self.to_handle_or_unreal_class(obj=result, as_handle=as_handle, as_unreal_class=as_unreal_class)
 
@@ -706,18 +719,23 @@ class UnrealService(spear.Service):
         return self.entry_point_caller.call_on_game_thread("find_console_variable_by_name", None, console_variable_name)
 
     def get_console_variable_value_as_bool(self, cvar):
+        cvar = spear.to_handle(obj=cvar)
         return self.entry_point_caller.call_on_game_thread("get_console_variable_value_as_bool", None, cvar)
 
     def get_console_variable_value_as_int(self, cvar):
+        cvar = spear.to_handle(obj=cvar)
         return self.entry_point_caller.call_on_game_thread("get_console_variable_value_as_int", None, cvar)
 
     def get_console_variable_value_as_float(self, cvar):
+        cvar = spear.to_handle(obj=cvar)
         return self.entry_point_caller.call_on_game_thread("get_console_variable_value_as_float", None, cvar)
 
     def get_console_variable_value_as_string(self, cvar):
+        cvar = spear.to_handle(obj=cvar)
         return self.entry_point_caller.call_on_game_thread("get_console_variable_value_as_string", None, cvar)
 
     def set_console_variable_value(self, cvar, value, set_by_flags=None, tag="", set_with_current_priority=None):
+        cvar = spear.to_handle(obj=cvar)
 
         # If set_with_current_priority is True, set the value at the variable's current priority (i.e., without
         # changing its ECVF_SetBy* provenance), which is what IConsoleVariable::SetWithCurrentPriority(...) does and
@@ -1319,9 +1337,11 @@ class UnrealService(spear.Service):
         if isinstance(ustruct, bool):
             assert False
         elif isinstance(ustruct, numbers.Integral):
-            return ustruct
+            return spear.to_handle(obj=ustruct)
         elif isinstance(ustruct, str):
             return self.get_static_struct_descs_by_name()[ustruct].static_struct
+        elif isinstance(ustruct, spear.SpHandle):
+            return ustruct
         elif isinstance(ustruct, spear.UnrealStruct):
             return ustruct.ustruct
         elif isinstance(ustruct, spear.UnrealClass):
@@ -1333,9 +1353,11 @@ class UnrealService(spear.Service):
         if isinstance(uclass, bool):
             assert False
         elif isinstance(uclass, numbers.Integral):
-            return uclass
+            return spear.to_handle(obj=uclass)
         elif isinstance(uclass, str):
             return self.get_static_class_descs_by_name()[uclass].static_class
+        elif isinstance(uclass, spear.SpHandle):
+            return uclass
         elif isinstance(uclass, spear.UnrealClass):
             return uclass.uclass
         else:

@@ -28,9 +28,9 @@ class ConsoleService(spear.Service):
 
     def get_cvar_as(self, name, as_type):
         cvar = self._find_cvar(name=name)
-        if cvar == 0:
+        if cvar.ptr == 0:
             spear.log(f"ERROR: Console variable not found: {name}")
-        assert cvar != 0
+        assert cvar.ptr != 0
         if as_type is bool:
             return self.unreal_service.get_console_variable_value_as_bool(cvar=cvar)
         elif as_type is int:
@@ -43,7 +43,7 @@ class ConsoleService(spear.Service):
             assert False
 
     def exists(self, name):
-        return self._find_cvar(name=name) != 0
+        return self._find_cvar(name=name).ptr != 0
 
     #
     # Set console variable value
@@ -51,9 +51,9 @@ class ConsoleService(spear.Service):
 
     def set_cvar(self, name, value, set_by_flags=None, tag="", set_with_current_priority=None):
         cvar = self._find_cvar(name=name)
-        if cvar == 0:
+        if cvar.ptr == 0:
             spear.log(f"ERROR: Console variable not found: {name}")
-        assert cvar != 0
+        assert cvar.ptr != 0
         return self.unreal_service.set_console_variable_value(cvar=cvar, value=value, set_by_flags=set_by_flags, tag=tag, set_with_current_priority=set_with_current_priority)
 
     #
@@ -90,6 +90,6 @@ class ConsoleService(spear.Service):
         if name in self._cvars:
             return self._cvars[name]
         cvar = self.unreal_service.find_console_variable_by_name(console_variable_name=name)
-        if cvar != 0:
+        if cvar.ptr != 0:
             self._cvars[name] = cvar
         return cvar

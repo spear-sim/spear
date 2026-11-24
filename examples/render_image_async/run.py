@@ -148,14 +148,14 @@ if __name__ == "__main__":
 
         instance.step() # flush any async work that is still pending on the game thread
 
-        # instance._client.get_timeout()
+        # instance._client.client.get_timeout()
         num_steps = 100000
         start_time_seconds = time.time()
         for i in range(num_steps):
-            instance._client.get_timeout()
+            instance._client.client.get_timeout()
         end_time_seconds = time.time()
         elapsed_time_seconds = end_time_seconds - start_time_seconds
-        spear.log(f"Average time for instance._client.get_timeout(): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} FPS)")
+        spear.log(f"Average time for instance._client.client.get_timeout(): {(elapsed_time_seconds / num_steps)*1000.0:.4f} ms ({num_steps / elapsed_time_seconds:.4f} FPS)")
 
         # instance.engine_globals_service.get_current_process_id()
         num_steps = 10000
@@ -317,6 +317,7 @@ if __name__ == "__main__":
     # show rendered frame now that we're outside of with instance.end_frame()
     cv2.imshow("final_tone_curve_hdr", data_bundle["arrays"]["data"])
     cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
     # save image (cv2 writes the native BGR, dropping alpha)
     image_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "image.png"))

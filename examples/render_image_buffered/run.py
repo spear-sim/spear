@@ -183,14 +183,13 @@ if __name__ == "__main__":
 
     cv2.imshow(f"Triple-buffered frame: expecting {len(spawn_y_positions)} object(s)", data_bundle["arrays"]["data"])
     cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
     with instance.begin_frame():
         for obj in tb_objects:
             game.unreal_service.destroy_actor(actor=obj)
     with instance.end_frame(single_step=True):
         pass
-
-    cv2.destroyAllWindows()
 
     # terminate
     with instance.begin_frame():

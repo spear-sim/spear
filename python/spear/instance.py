@@ -3,22 +3,8 @@
 # Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 #
 
-import glob
-import os
-import psutil
 import spear
-import sys
 import time
-
-if spear.__can_import_spear_ext__:
-    import spear_ext
-
-
-#
-# Global constants
-#
-
-expected_process_status_values = ["disk-sleep", "running", "sleeping", "stopped"] # stopped can happen when attaching to a debugger
 
 
 #
@@ -34,7 +20,6 @@ class Instance():
             config = spear.get_config()
 
         self._config = config
-        self._client = None
 
         if spear.__can_import_unreal__:
             spear.log('    Running inside the Unreal Editor Python environment, setting launch mode: "none"')
@@ -46,21 +31,35 @@ class Instance():
         if self._config.SPEAR.LAUNCH_MODE == "none":
             pass
         elif self._config.SPEAR.LAUNCH_MODE == "editor":
-            spear.log("    Editor launch mode: ", self._config.SPEAR.INSTANCE.EDITOR_LAUNCH_MODE)
-            spear.log("    Editor executable:  ", self._config.SPEAR.INSTANCE.EDITOR_EXECUTABLE)
-            spear.log("    Editor uproject:    ", self._config.SPEAR.INSTANCE.EDITOR_UPROJECT)
+            spear.log("    Editor launch mode: ", self._config.SPEAR.EDITOR_LAUNCH_MODE)
+            spear.log("    Editor executable:  ", self._config.SPEAR.EDITOR_EXECUTABLE)
+            spear.log("    Editor uproject:    ", self._config.SPEAR.EDITOR_UPROJECT)
         elif self._config.SPEAR.LAUNCH_MODE == "game":
-            spear.log("    Game executable: ", self._config.SPEAR.INSTANCE.GAME_EXECUTABLE)
+            spear.log("    Game executable: ", self._config.SPEAR.GAME_EXECUTABLE)
         else:
             assert False
 
-        # Request to launch the unreal instance and initialize the client.
-        self._request_launch_unreal_instance()
-        self._initialize_client()
+        # Launch the Unreal executable.
+        self._launcher = spear.Launcher(config=self._config)
+        self._launcher.launch()
 
-        # Initialize EngineService.
-        self._engine_service = spear.EngineService(client=self._client, config=self._config)
-        self._engine_service.initialize() # must be initialized immediately
+        # Initialize the client. We do this after launching the Unreal executable because initializing the
+        # client will not proceed until it is able to form an RPC connection with the Unreal executable.
+        self._client = spear.Client(config=self._config)
+        self._client.initialize(process=self._launcher.process)
+
+        # Create EngineService but do not initialize yet.
+        self._engine_service = spear.EngineService(client=self._client.client, config=self._config)
+
+        # Initialize the launcher, which will cache our client and EngineService, and will immediately
+        # validate that the PID of the Unreal executable we launched matches the PID reported via the client.
+        self._launcher.initialize(client=self._client, engine_service=self._engine_service)
+
+        # Initialize EngineService. We do this after initializing the launcher because we want the launcher to
+        # perform its PID validation as soon as possible, but we initialize EngineService immediately after
+        # that so we can begin calling other entry points through EngineService and its higher-level helper
+        # functionality instead of directly through the client.
+        self._engine_service.initialize()
 
         if spear.__can_import_unreal__:
             entry_point_caller_type = spear.EditorCallSyncEntryPointCaller
@@ -334,15 +333,6 @@ class Instance():
     # initialize(...)
     #
 
-    def _is_any_world_initialized(self):
-        world_descs = self.world_registry_service.get_world_descs()
-        for world_desc in world_descs.values():
-            if world_desc.is_editor_world:
-                return True
-            elif world_desc.is_game_world and world_desc.is_playing:
-                return True
-        return False
-
     def initialize(self,
         wait_for_world_initialized=None, wait_for_world_initialized_max_time_seconds=0.0, wait_for_world_initialized_sleep_time_seconds=0.0,
         warm_up=None, warm_up_time_seconds=0.0, warm_up_num_frames=0):
@@ -393,23 +383,18 @@ class Instance():
             pass
         yield
 
-    #
-    # get_editor(...)
-    #
-
-    def _is_editor_world_initialized(self):
+    def _is_any_world_initialized(self):
         world_descs = self.world_registry_service.get_world_descs()
         for world_desc in world_descs.values():
             if world_desc.is_editor_world:
                 return True
+            elif world_desc.is_game_world and world_desc.is_playing:
+                return True
         return False
 
-    def _get_editor_world(self):
-        world_descs = self.world_registry_service.get_world_descs()
-        for world_desc in world_descs.values():
-            if world_desc.is_editor_world:
-                return world_desc.world
-        assert False
+    #
+    # get_editor(...)
+    #
 
     def get_editor(self,
         wait_for_world_initialized=None, wait_for_world_initialized_max_time_seconds=0.0, wait_for_world_initialized_sleep_time_seconds=0.0,
@@ -501,23 +486,23 @@ class Instance():
 
         return self._editor
 
-    #
-    # get_game(...)
-    #
-
-    def _is_game_world_initialized(self):
+    def _is_editor_world_initialized(self):
         world_descs = self.world_registry_service.get_world_descs()
         for world_desc in world_descs.values():
-            if world_desc.is_game_world and world_desc.is_playing:
+            if world_desc.is_editor_world:
                 return True
         return False
 
-    def _get_game_world(self):
+    def _get_editor_world(self):
         world_descs = self.world_registry_service.get_world_descs()
         for world_desc in world_descs.values():
-            if world_desc.is_game_world and world_desc.is_playing:
+            if world_desc.is_editor_world:
                 return world_desc.world
         assert False
+
+    #
+    # get_game(...)
+    #
 
     def get_game(self,
         wait_for_world_initialized=None, wait_for_world_initialized_max_time_seconds=0.0, wait_for_world_initialized_sleep_time_seconds=0.0,
@@ -603,6 +588,20 @@ class Instance():
 
         return self._game
 
+    def _is_game_world_initialized(self):
+        world_descs = self.world_registry_service.get_world_descs()
+        for world_desc in world_descs.values():
+            if world_desc.is_game_world and world_desc.is_playing:
+                return True
+        return False
+
+    def _get_game_world(self):
+        world_descs = self.world_registry_service.get_world_descs()
+        for world_desc in world_descs.values():
+            if world_desc.is_game_world and world_desc.is_playing:
+                return world_desc.world
+        assert False
+
     #
     # rebuild(...)
     #
@@ -662,23 +661,23 @@ class Instance():
             connected = self.engine_globals_service.ping() == "ping"
             return connected
         except Exception:
-            pass # no need to log exception because this case is expected when the instance is no longer running
+            pass # no need to log exception because this case is expected when the Unreal executable is no longer running
         return False
 
     def close(self, force=False):
 
         spear.log_current_function()
 
-        # Note that in the constructor, we launch the Unreal instance first and then initialize the client
+        # Note that in the constructor, we launch the Unreal executable first and then initialize the client.
         # Normally, we would do things in the reverse order here. But if we terminate the client first, then
-        # we can't call the "request_exit" and "terminate" entry points to close the Unreal instance. So we
-        # terminate the Unreal instance first, and then terminate the client afterwards.
+        # we can't call the "terminate" and "request_exit" entry points to shut down the Unreal executable. So
+        # we terminate the Unreal executable first, and then terminate the client afterwards.
 
         if force:
-            self._force_kill_unreal_instance(log_prefix="    ")
+            self._launcher.kill(log_prefix="    ")
         else:
-            self._request_terminate_unreal_instance()
-        self._terminate_client(verbose=True, log_prefix="    ")
+            self._launcher.terminate()
+        self._client.terminate(log_prefix="    ")
 
     #
     # calling flush() inside a begin_frame() or end_frame() block ensures that there is no work pending on the game thread
@@ -686,261 +685,6 @@ class Instance():
 
     def flush(self):
         self._engine_service.flush()
-
-    #
-    # Initialize helper functions
-    #
-
-    def _request_launch_unreal_instance(self):
-
-        spear.log_current_function(prefix="    ")
-        spear.log("        Requesting to launch Unreal instance...")
-
-        if self._config.SPEAR.LAUNCH_MODE == "none":
-            pass
-
-        elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
-
-            # Write a temp config file. We do this before checking LAUNCH_MODE in case the user wants to
-            # initialize the config system in the editor using the temp file that gets written here.
-            temp_dir = os.path.realpath(os.path.join(self._config.SPEAR.INSTANCE.TEMP_DIR))
-            temp_config_file = os.path.realpath(os.path.join(temp_dir, self._config.SPEAR.INSTANCE.TEMP_CONFIG_FILE))
-
-            spear.log("        Writing temp config file: ", temp_config_file)
-
-            os.makedirs(temp_dir, exist_ok=True)
-            with open(temp_config_file, "w") as f:
-                self._config.dump(stream=f, default_flow_style=False)
-
-            # Find launch executable to launch. The correct executable to launch depends on the platform and
-            # whether we're launching a standalone game or editor. Also create a list of command-line
-            # arguments.
-
-            launch_args = []
-
-            if self._config.SPEAR.LAUNCH_MODE == "editor":
-                assert self._config.SPEAR.INSTANCE.EDITOR_LAUNCH_MODE in ["editor", "game"]
-                assert os.path.exists(self._config.SPEAR.INSTANCE.EDITOR_UPROJECT)
-                launch_executable = self._config.SPEAR.INSTANCE.EDITOR_EXECUTABLE
-                launch_args.append(spear.tools.normalize_unreal_cmd_path(path=self._config.SPEAR.INSTANCE.EDITOR_UPROJECT))
-                if self._config.SPEAR.INSTANCE.EDITOR_LAUNCH_MODE == "game":
-                    launch_args.append("-game")
-            elif self._config.SPEAR.LAUNCH_MODE == "game":
-                launch_executable = self._config.SPEAR.INSTANCE.GAME_EXECUTABLE
-            else:
-                assert False
-
-            assert os.path.exists(launch_executable)
-
-            launch_executable_dir, launch_executable_name = os.path.split(launch_executable)
-            launch_executable_name_no_ext, launch_executable_ext = os.path.splitext(launch_executable_name)
-
-            if sys.platform == "win32":
-                assert launch_executable_ext == ".exe"
-            elif sys.platform == "darwin":
-                assert launch_executable_ext == ".app"
-            elif sys.platform == "linux":
-                if self._config.SPEAR.LAUNCH_MODE == "editor":
-                    assert launch_executable_ext == ""
-                elif self._config.SPEAR.LAUNCH_MODE == "game":
-                    assert launch_executable_ext == ".sh"
-                else:
-                    assert False
-            else:
-                assert False
-
-            if self._config.SPEAR.LAUNCH_MODE == "editor":
-                if sys.platform == "win32":
-                    launch_executable_dir_internal = launch_executable_dir
-                elif sys.platform == "darwin":
-                    launch_executable_dir_internal = os.path.realpath(os.path.join(launch_executable, "Contents", "MacOS"))
-                elif sys.platform == "linux":
-                    launch_executable_dir_internal = launch_executable_dir
-                else:
-                    assert False
-            elif self._config.SPEAR.LAUNCH_MODE == "game":
-                if sys.platform == "win32":
-                    launch_executable_dir_internal = os.path.realpath(os.path.join(launch_executable_dir, launch_executable_name_no_ext, "Binaries", "Win64"))
-                elif sys.platform == "darwin":
-                    launch_executable_dir_internal = os.path.realpath(os.path.join(launch_executable, "Contents", "MacOS"))
-                elif sys.platform == "linux":
-                    launch_executable_dir_internal = os.path.realpath(os.path.join(launch_executable_dir, launch_executable_name_no_ext, "Binaries", "Linux"))
-                else:
-                    assert False
-            else:
-                assert False
-
-            if sys.platform == "win32":
-                launch_executable_internal_template = os.path.realpath(os.path.join(launch_executable_dir_internal, f"{launch_executable_name_no_ext}*-Cmd.exe"))
-                if self._config.SPEAR.LAUNCH_MODE == "editor":
-                    launch_executable_internal_paths = [ p for p in glob.glob(launch_executable_internal_template) if not "-Win64-" in os.path.basename(p) ]
-                elif self._config.SPEAR.LAUNCH_MODE == "game":
-                    launch_executable_internal_paths = glob.glob(launch_executable_internal_template)
-                else:
-                    assert False
-                assert len(launch_executable_internal_paths) == 1
-                launch_executable_internal = launch_executable_internal_paths[0]
-            elif sys.platform == "darwin":
-                launch_executable_internal_template = os.path.realpath(os.path.join(launch_executable_dir_internal, f"{launch_executable_name_no_ext}*"))
-                launch_executable_internal_paths = glob.glob(launch_executable_internal_template)
-                assert len(launch_executable_internal_paths) == 1
-                launch_executable_internal = launch_executable_internal_paths[0]
-            elif sys.platform == "linux":
-                launch_executable_internal_template = os.path.realpath(os.path.join(launch_executable_dir_internal, f"{launch_executable_name_no_ext}*"))
-                if self._config.SPEAR.LAUNCH_MODE == "editor":
-                    launch_executable_internal_paths = [ p for p in glob.glob(launch_executable_internal_template) if (not "." in os.path.basename(p)) and (not "-" in os.path.basename(p)) ]
-                elif self._config.SPEAR.LAUNCH_MODE == "game":
-                    launch_executable_internal_paths = [ p for p in glob.glob(launch_executable_internal_template) if not "." in os.path.basename(p) ]
-                else:
-                    assert False
-                assert len(launch_executable_internal_paths) == 1
-                launch_executable_internal = launch_executable_internal_paths[0]
-            else:
-                assert False
-
-            spear.log("        Attempting to launch executable: ", launch_executable_internal)
-            assert os.path.exists(launch_executable_internal)
-  
-            # spear.tools.popen_unreal_cmd(...) only adds quotes around values that contain spaces, which matters
-            # because Unreal doesn't parse quoted numerical values correctly (e.g., -resx="512").
-            for arg, value in (self._config.SPEAR.INSTANCE.COMMAND_LINE_ARGS).items():
-                if value is None:
-                    launch_args.append(f"-{arg}")
-                else:
-                    launch_args.append(f"-{arg}={value}")
-
-            launch_args.append(f"-sp-config-file={spear.tools.normalize_unreal_cmd_path(path=temp_config_file)}")
-            cmd = [launch_executable_internal] + launch_args
-
-            spear.log("        Launching executable with the following command-line arguments:")
-            spear.log(f"            {launch_executable_internal}")
-            for launch_arg in launch_args:
-                spear.log(f"                {launch_arg}")
-            spear.log("        Launching executable with the following config values:")
-            spear.log_no_prefix(self._config)
-
-            popen = spear.tools.popen_unreal_cmd(cmd=cmd)
-            self._process = psutil.Process(popen.pid)
-
-            # see https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible status values
-            status = self._process.status()
-            if status not in expected_process_status_values:
-                spear.log("        ERROR: Unrecognized process status: ", status)
-                spear.log(f"        ERROR: Killing process {self._process.pid}...")
-                self._force_kill_unreal_instance(log_prefix="        ")
-                assert False
-
-        else:
-            assert False
-
-        spear.log("        Finished requesting to launch Unreal instance.")
-
-    def _initialize_client(self):
-
-        spear.log_current_function(prefix="    ")        
-        spear.log("        Initializing client...")
-
-        connected = False
-
-        # If we're connecting to a running instance, then we assume that the server is already running and
-        # only try to connect once.
-        if self._config.SPEAR.LAUNCH_MODE == "none":
-
-            try:
-                # Once a connection has been established, the client will wait for timeout seconds before
-                # throwing when calling a server function.
-                spear.log("        Attempting to connect to server...")
-                if spear.__can_import_spear_ext__:
-                    self._client = spear_ext.Client(self._config.SPEAR.INSTANCE.RPC_SERVER_ADDRESS, self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT, self._config.SPEAR.INSTANCE.CLIENT_SUPPRESS_DEFAULT_LOGGING)
-                    self._client.set_timeout(int(self._config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS)*1000)
-                elif spear.__can_import_unreal__:
-                    self._client = spear.editor.Client(
-                        address=self._config.SPEAR.INSTANCE.RPC_SERVER_ADDRESS,
-                        port=self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT,
-                        timeout=float(self._config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS),
-                        reconnect_limit=int(self._config.SPEAR.INSTANCE.EDITOR_CLIENT_INTERNAL_RECONNECT_LIMIT))
-                else:
-                    assert False
-                connected = self._client.ping() == "ping"
-            except Exception as e:
-                spear.log("        Exception: ", e)
-                self._terminate_client(verbose=True, log_prefix="        ")
-                assert False
-
-        # Otherwise try to connect repeatedly, since the server might not have started yet.
-        elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
-
-            # We assume we're in standalone Python, because if we were in editor Python, we would have
-            # already set LAUNCH_MODE == "none".
-            assert spear.__can_import_spear_ext__
-            assert not spear.__can_import_unreal__
-
-            start_time_seconds = time.time()
-            elapsed_time_seconds = time.time() - start_time_seconds
-            while elapsed_time_seconds < self._config.SPEAR.INSTANCE.INITIALIZE_CLIENT_MAX_TIME_SECONDS:
-
-                # See https://github.com/giampaolo/psutil/blob/master/psutil/_common.py for possible values.
-                status = self._process.status()
-                if status not in expected_process_status_values:
-                    spear.log("        ERROR: Unrecognized process status: ", status)
-                    break
-
-                try:
-                    # Once a connection has been established, the client will wait for timeout seconds before
-                    # throwing when calling a server function.
-                    spear.log("        Attempting to connect to server...")
-                    self._client = spear_ext.Client(self._config.SPEAR.INSTANCE.RPC_SERVER_ADDRESS, self._config.SP_SERVICES.RPC_SERVICE.RPC_SERVER_PORT, self._config.SPEAR.INSTANCE.CLIENT_SUPPRESS_DEFAULT_LOGGING)
-                    self._client.set_timeout(int(self._config.SPEAR.INSTANCE.CLIENT_INTERNAL_TIMEOUT_SECONDS)*1000)
-                    connected = self._client.ping() == "ping"
-                    break
-
-                except RuntimeError:
-                    # There is no need to log the exception because this case is expected until we can
-                    # successfully connect to the server, which is why we set verbose=False when terminating
-                    # the client.
-                    self._terminate_client(verbose=False)
-
-                except Exception as e:
-                    spear.log("        Exception: ", e)
-                    self._terminate_client(verbose=True, log_prefix="        ")
-                    assert False
-
-                time.sleep(self._config.SPEAR.INSTANCE.INITIALIZE_CLIENT_SLEEP_TIME_SECONDS)
-                elapsed_time_seconds = time.time() - start_time_seconds
-
-        else:
-            assert False
-
-        if connected:
-            spear.log("        Connected to server.")
-        else:
-            spear.log("        ERROR: Couldn't connect to RPC server, giving up...")
-            self._terminate_client(verbose=True, log_prefix="        ")
-            assert False
-
-        self._client.initialize() # self._engine_service hasn't been initialized yet
-
-        if self._config.SPEAR.LAUNCH_MODE == "none":
-            pass
-        elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
-            pid = self._client.call("engine_globals_service.call_sync_on_worker_thread.get_current_process_id") # self._engine_service hasn't been initialized yet
-            if pid == self._process.pid:
-                spear.log("        Validated engine_globals_service.call_sync_on_worker_thread.get_current_process_id: ", pid)
-            else:            
-                spear.log(f"        ERROR: engine_globals_service.call_sync_on_worker_thread.get_current_process_id returned {pid} but the PID of the process we just launched is {self._process.pid}. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables and try launching again.")
-                self._terminate_client(verbose=True, log_prefix="        ")
-                self._force_kill_unreal_instance(log_prefix="        ")
-                assert False
-        else:
-            assert False
-
-        self._client.force_return_aligned_arrays = self._config.SPEAR.INSTANCE.CLIENT_FORCE_RETURN_ALIGNED_ARRAYS
-        self._client.suppress_default_logging = self._config.SPEAR.INSTANCE.CLIENT_SUPPRESS_DEFAULT_LOGGING
-        self._client.verbose_rpc_calls = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_RPC_CALLS
-        self._client.verbose_allocations = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_ALLOCATIONS
-        self._client.verbose_exceptions = self._config.SPEAR.INSTANCE.CLIENT_VERBOSE_EXCEPTIONS
-
-        spear.log("        Finished initializing client.")
 
     #
     # _wait_for
@@ -994,7 +738,7 @@ class Instance():
 
         if not success:
             spear.log("        ERROR: Function never returned true, giving up...")
-            self._terminate_client(verbose=True, log_prefix="        ")
+            self._client.terminate(log_prefix="        ")
             assert False
 
         if retry:
@@ -1034,7 +778,7 @@ class Instance():
 
         if not success:
             spear.log("        ERROR: Function never returned true, giving up...")
-            self._terminate_client(verbose=True, log_prefix="        ")
+            self._client.terminate(log_prefix="        ")
             assert False
 
         if retry:
@@ -1064,14 +808,14 @@ class Instance():
             return
 
         spear.log_current_function(prefix="    ")
-        spear.log(f"        Warming up Unreal instance for {warm_up_desc['time_seconds']} seconds and {warm_up_desc['num_frames']} frames...")
+        spear.log(f"        Warming up Unreal executable for {warm_up_desc['time_seconds']} seconds and {warm_up_desc['num_frames']} frames...")
 
         if warm_up_desc["time_seconds"] > 0.0:
             time.sleep(warm_up_desc["time_seconds"])
 
         self.step(num_frames=warm_up_desc["num_frames"])
 
-        spear.log("        Finished warming up Unreal instance.")
+        spear.log("        Finished warming up Unreal executable.")
 
     def _warm_up_in_editor_script(self, warm_up_desc):
 
@@ -1079,7 +823,7 @@ class Instance():
             return
 
         spear.log_current_function(prefix="    ")
-        spear.log(f"        Warming up Unreal instance for {warm_up_desc['time_seconds']} seconds and {warm_up_desc['num_frames']} frames...")
+        spear.log(f"        Warming up Unreal executable for {warm_up_desc['time_seconds']} seconds and {warm_up_desc['num_frames']} frames...")
 
         start_time_seconds = time.time()
         elapsed_time_seconds = time.time() - start_time_seconds
@@ -1089,89 +833,7 @@ class Instance():
 
         yield from self.step_in_editor_script(num_frames=warm_up_desc["num_frames"])
 
-        spear.log("        Finished warming up Unreal instance.")
-
-    #
-    # Terminate helper functions
-    #
-
-    def _request_terminate_unreal_instance(self):
-
-        spear.log_current_function(prefix="    ")
-        spear.log("        Requesting to terminate Unreal instance...")
-
-        if self._config.SPEAR.LAUNCH_MODE == "none":
-            pass
-        elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
-
-            # We assume we're in standalone Python, because if we were in editor Python, we would have
-            # already set LAUNCH_MODE == "none".
-            assert spear.__can_import_spear_ext__
-            assert not spear.__can_import_unreal__
-
-            try:
-                self.step()
-                self.engine_globals_service.request_exit(force=False)
-                self._engine_service.terminate() # EngineService must be explicitly terminated, needs to be the last entry point that gets called
-                spear.log("        Finished terminating engine service, waiting for Unreal process to terminate...")
-            except RuntimeError:
-                spear.log("        Caught RPC timeout exception while terminating engine service, waiting for Unreal process to terminate...")
-            except Exception as e:
-                spear.log("        ERROR: Unexpected exception: ", e)
-
-            start_time_seconds = time.time()
-            elapsed_time_seconds = time.time() - start_time_seconds
-            try:
-                status = self._process.status()
-            except psutil.NoSuchProcess:
-                status = None
-            while status in expected_process_status_values and elapsed_time_seconds < self._config.SPEAR.INSTANCE.REQUEST_TERMINATE_UNREAL_INSTANCE_MAX_TIME_SECONDS:
-                time.sleep(self._config.SPEAR.INSTANCE.REQUEST_TERMINATE_UNREAL_INSTANCE_SLEEP_TIME_SECONDS)
-                try:
-                    status = self._process.status()
-                except psutil.NoSuchProcess:
-                    status = None
-                    break
-                elapsed_time_seconds = time.time() - start_time_seconds
-
-            if status in expected_process_status_values:
-                spear.log("        ERROR: Unreal process did not terminate successfully, forcefully killing...")
-                self._force_kill_unreal_instance(log_prefix="        ")
-        else:
-            assert False
-
-        spear.log("        Finished requesting to terminate Unreal instance.")
-
-
-    def _force_kill_unreal_instance(self, log_prefix=""):
-        spear.log_current_function(prefix=log_prefix)
-        spear.log(f"{log_prefix}    Forcefully killing Unreal instance...")
-
-        if self._config.SPEAR.LAUNCH_MODE == "none":
-            assert False
-        elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
-            try:
-                self._process.terminate()
-                self._process.kill()
-            except psutil.NoSuchProcess:
-                spear.log(f"{log_prefix}    Process already terminated.")
-            except Exception as e:
-                spear.log(f"{log_prefix}    Exception: ", e)
-            spear.log(f"{log_prefix}    Finished forcefully killing Unreal instance.")
-        else:
-            assert False
-
-
-    def _terminate_client(self, verbose, log_prefix=""):
-        if verbose:
-            spear.log_current_function(prefix=log_prefix)
-            spear.log(f"{log_prefix}    Terminating client: {self._client}")
-        if self._client is not None:
-            self._client.terminate()
-            self._client = None
-        if verbose:
-            spear.log(f"{log_prefix}    Finished terminating client.")
-
+        spear.log("        Finished warming up Unreal executable.")
 
     def __repr__(self):
-        return f"Instance(_client={self._client})"
+        return f"Instance(_launcher={self._launcher}, _client={self._client})"

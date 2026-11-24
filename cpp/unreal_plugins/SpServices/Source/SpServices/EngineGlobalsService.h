@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include <stdint.h> // int64_t, uint64_t
+#include <stdint.h> // int64_t
 
 #include <memory> // std::unique_ptr
 #include <string>
@@ -20,6 +20,7 @@
 #include <Misc/CoreMisc.h> // IsRunningGame
 
 #include "SpCore/Assert.h"
+#include "SpCore/UnrealUtils.h"
 
 #include "SpServices/EntryPointBinder.h"
 #include "SpServices/Service.h"
@@ -73,10 +74,6 @@ public:
         // the overall system behavior is correct.
         //
 
-        unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("engine_globals_service", "get_engine", []() -> uint64_t {
-            return toUInt64(GEngine);
-        });
-
         unreal_entry_point_binder->bindFuncToExecuteOnWorkerThread("engine_globals_service", "get_ue_build", []() -> std::string {
             SP_ASSERT(UE_BUILD_DEBUG + UE_BUILD_DEVELOPMENT + UE_BUILD_TEST + UE_BUILD_SHIPPING == 1);
             if (UE_BUILD_DEBUG) {
@@ -129,6 +126,10 @@ public:
         // Miscellaneous low-level entry points that interact with Unreal globals and must be called from the
         // game thread.
         //
+
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("engine_globals_service", "get_engine", []() -> SpHandle {
+            return UnrealUtils::toHandle(GEngine);
+        });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("engine_globals_service", "is_async_loading", []() -> bool {
             return IsAsyncLoading();

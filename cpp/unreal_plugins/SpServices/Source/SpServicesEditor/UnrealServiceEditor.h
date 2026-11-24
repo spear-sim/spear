@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include <stdint.h> // uint64_t
-
 #include <memory> // std::unique_ptr
 #include <string>
+
+#include "SpCore/UnrealUtils.h"
 
 #include "SpCoreEditor/UnrealEditor.h"
 
@@ -26,8 +26,8 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_editor_subsystem_by_class",
-            [this](uint64_t& uclass) -> uint64_t {
-                return toUInt64(UnrealEditor::getEditorSubsystemByClass(toPtr<UClass>(uclass)));
+            [this](SpHandle& uclass) -> SpHandle {
+                return UnrealUtils::toHandle(UnrealEditor::getEditorSubsystemByClass(UnrealUtils::toPtr<UClass>(uclass)));
             });
     }
 

@@ -15,4 +15,5 @@ class WorldRegistryService(spear.Service):
         return self.entry_point_caller.call_on_worker_thread("get_world_descs", None)
 
     def remove_world(self, world):
+        world = spear.to_handle(obj=world)
         return self.entry_point_caller.call_on_game_thread("remove_world", None, world)

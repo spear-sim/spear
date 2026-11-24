@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include <stdint.h> // uint64_t
-
 #include <memory>  // std::unique_ptr
 #include <string>
 #include <utility> // std::move
@@ -72,13 +70,13 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("enhanced_input_service", "inject_input",
             [this](
-                uint64_t& enhanced_input_subsystem,
-                uint64_t& input_action,
+                SpHandle& enhanced_input_subsystem,
+                SpHandle& input_action,
                 std::string& input_action_value_string,
-                std::vector<uint64_t>& modifiers,
-                std::vector<uint64_t>& triggers) -> void {
+                std::vector<SpHandle>& modifiers,
+                std::vector<SpHandle>& triggers) -> void {
 
-                UEnhancedInputLocalPlayerSubsystem* enhanced_input_subsystem_ptr = toPtr<UEnhancedInputLocalPlayerSubsystem>(enhanced_input_subsystem);
+                UEnhancedInputLocalPlayerSubsystem* enhanced_input_subsystem_ptr = UnrealUtils::toPtr<UEnhancedInputLocalPlayerSubsystem>(enhanced_input_subsystem);
                 SP_ASSERT(enhanced_input_subsystem_ptr);
 
                 FSpInputActionValue sp_input_action_value;
@@ -86,21 +84,21 @@ public:
                 FInputActionValue input_action_value(sp_input_action_value.ValueType, sp_input_action_value.Value);
 
                 enhanced_input_subsystem_ptr->InjectInputForAction(
-                    toPtr<UInputAction>(input_action),
+                    UnrealUtils::toPtr<UInputAction>(input_action),
                     input_action_value,
-                    Unreal::toTArray(toPtr<UInputModifier>(std::move(modifiers))),
-                    Unreal::toTArray(toPtr<UInputTrigger>(std::move(triggers))));
+                    Unreal::toTArray(UnrealUtils::toPtr<UInputModifier>(std::move(modifiers))),
+                    Unreal::toTArray(UnrealUtils::toPtr<UInputTrigger>(std::move(triggers))));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("enhanced_input_service", "inject_input_for_actor",
             [this](
-                uint64_t& actor,
+                SpHandle& actor,
                 std::string& input_action_name,
                 std::string& trigger_event_string,
                 std::string& input_action_value_string,
                 std::string& input_action_instance_string,
-                std::vector<uint64_t>& modifiers,
-                std::vector<uint64_t>& triggers) -> void {
+                std::vector<SpHandle>& modifiers,
+                std::vector<SpHandle>& triggers) -> void {
 
                 UEnhancedInputComponent* enhanced_input_component = getEnhancedInputComponent(actor);
                 if (!enhanced_input_component) {
@@ -109,8 +107,8 @@ public:
 
                 ETriggerEvent trigger_event = Unreal::getEnumValueFromString<ETriggerEvent>(trigger_event_string);
 
-                TArray<TObjectPtr<UInputModifier>> modifiers_tarray = Unreal::toTArrayOf<TObjectPtr<UInputModifier>>(toPtr<UInputModifier>(std::move(modifiers)));
-                TArray<TObjectPtr<UInputTrigger>> triggers_tarray = Unreal::toTArrayOf<TObjectPtr<UInputTrigger>>(toPtr<UInputTrigger>(std::move(triggers)));
+                TArray<TObjectPtr<UInputModifier>> modifiers_tarray = Unreal::toTArrayOf<TObjectPtr<UInputModifier>>(UnrealUtils::toPtr<UInputModifier>(std::move(modifiers)));
+                TArray<TObjectPtr<UInputTrigger>> triggers_tarray = Unreal::toTArrayOf<TObjectPtr<UInputTrigger>>(UnrealUtils::toPtr<UInputTrigger>(std::move(triggers)));
 
                 FSpInputActionValue sp_input_action_value;
                 UnrealUtils::setObjectPropertiesFromString(&sp_input_action_value, FSpInputActionValue::StaticStruct(), input_action_value_string);
@@ -146,7 +144,7 @@ public:
                         // SourceAction is a private member variable on FInputActionInstance, but it is
                         // accessible through Unreal's property system, so we can still get and set it.
                         SpPropertyDesc property_desc = UnrealUtils::resolveProperty(&sp_input_action_instance, FSpInputActionInstance::StaticStruct(), "SourceAction");
-                        UnrealUtils::setPropertyValueFromString(property_desc, Std::toStringFromPtr(input_action));
+                        UnrealUtils::setPropertyValueFromString(property_desc, UnrealUtils::toStringFromPtr(input_action));
 
                         event_binding->Execute(sp_input_action_instance);
                     }
@@ -155,7 +153,7 @@ public:
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("enhanced_input_service", "inject_debug_key_for_actor",
             [this](
-                uint64_t& actor,
+                SpHandle& actor,
                 std::string& chord_string,
                 std::string& key_event_string,
                 std::string& input_action_value_string) -> void {
@@ -193,9 +191,9 @@ public:
     static std::unique_ptr<EnhancedInputService> create(TEntryPointBinder* unreal_entry_point_binder);
 
 private:
-    static UEnhancedInputComponent* getEnhancedInputComponent(uint64_t& actor)
+    static UEnhancedInputComponent* getEnhancedInputComponent(SpHandle& actor)
     {
-        AActor* actor_ptr = toPtr<AActor>(actor);
+        AActor* actor_ptr = UnrealUtils::toPtr<AActor>(actor);
         std::vector<UEnhancedInputComponent*> enhanced_input_components = UnrealUtils::getComponentsByType<UEnhancedInputComponent>(actor_ptr);
         if (enhanced_input_components.size() != 1) {
             SP_LOG_CURRENT_FUNCTION();

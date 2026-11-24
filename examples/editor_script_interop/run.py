@@ -180,9 +180,9 @@ if __name__ == "__main__":
 
         # evaluate an Unreal object (e.g., an actor) and get back a handle
         result = editor.python_service.evaluate_expression(expression="spear.editor.find_actors()[0]", as_handle=True)
-        spear.log("Expecting int:          ", type(result), " ", result)
-        assert isinstance(result, int)
-        assert result != 0
+        spear.log("Expecting SpHandle:     ", type(result), " ", result)
+        assert isinstance(result, spear.SpHandle)
+        assert result.ptr != 0
 
         # pass a SPEAR-side numpy array into an editor expression using spear.to_script_expr
         arr = np.array([100.0, 200.0, 300.0])

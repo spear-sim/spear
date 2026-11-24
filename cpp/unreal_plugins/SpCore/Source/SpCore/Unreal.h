@@ -549,22 +549,6 @@ public:
         return Std::toVector<TObject*>(weak_object_ptrs | std::views::transform([](const auto& weak_object_ptr) { return toPtr(weak_object_ptr); }));
     }
 
-    template <CObject TObject>
-    static std::string toStringFromPtr(const TObject* ptr)
-    {
-        return Std::toStringFromPtr(ptr);
-    }
-
-    template <CObject TObject>
-    static TObject* toPtrFromString(const std::string& string)
-    {
-        TObject* uobject = Std::toPtrFromString<TObject>(string);
-        if (uobject) {
-            SP_ASSERT(isValid(uobject));
-        }
-        return uobject;
-    }
-
     static std::vector<std::string> getTags(const AActor* actor)
     {
         SP_ASSERT(actor);

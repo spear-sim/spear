@@ -184,7 +184,7 @@ class AsyncLoadingService(spear.Service):
     def are_streaming_levels_idle(self, verbose=False, return_detailed_info=False):
         are_streaming_levels_loading = False
         world = self.get_world()
-        streaming_levels = self.cdo.USpWorld.GetStreamingLevels(World=spear.to_ptr(handle=world))
+        streaming_levels = self.cdo.USpWorld.GetStreamingLevels(World=spear.to_handle(obj=world))
         for streaming_level in streaming_levels:
             if self.cdo.USpLevelStreaming.IsStreamingStatePending(LevelStreaming=streaming_level):
                 are_streaming_levels_loading = True
@@ -282,8 +282,8 @@ class AsyncLoadingService(spear.Service):
     def _force_update_engine(self):
         # Force update async-loading engine systems in the same order as UMoviePipeline::FlushAsyncEngineSystems()
         world = self.get_world()
-        feature_level = self.cdo.USpWorld.GetFeatureLevel(World=spear.to_ptr(handle=world))
-        self.cdo.USpMaterialInterface.SubmitRemainingJobsForWorld(World=spear.to_ptr(handle=world), CompileMode="Background")
+        feature_level = self.cdo.USpWorld.GetFeatureLevel(World=spear.to_handle(obj=world))
+        self.cdo.USpMaterialInterface.SubmitRemainingJobsForWorld(World=spear.to_handle(obj=world), CompileMode="Background")
         self.cdo.USpStreamingManager.StreamAllResources(TimeLimit=0.1)
         self.cdo.USpLandscapeSubsystem.RegenerateGrass(LandscapeSubsystem=self._landscape_subsystem, bFlushGrass=False, bForceSync=True, bOverrideCameraLocations=True, CameraLocations=[])
         self.cdo.USpRendererModule.LoadPendingVirtualTextureTiles(FeatureLevel=feature_level)

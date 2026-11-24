@@ -129,7 +129,7 @@ SharedMemoryRegion::~SharedMemoryRegion()
     #endif
 }
 
-SharedMemoryView SharedMemoryRegion::getView()
+SpSharedMemoryView SharedMemoryRegion::getView()
 {
     uint64_t num_bytes_internal = num_bytes_ + s_alignment_bytes_ - 1;
 
@@ -147,7 +147,7 @@ SharedMemoryView SharedMemoryRegion::getView()
     SP_ASSERT(offset_bytes >= 0);
     SP_ASSERT(offset_bytes < s_alignment_bytes_);
 
-    SharedMemoryView view;
+    SpSharedMemoryView view;
     view.id_ = id_;
     view.num_bytes_ = num_bytes_;
     view.offset_bytes_ = static_cast<uint16_t>(offset_bytes);
@@ -161,7 +161,7 @@ SharedMemoryFence::SharedMemoryFence(uint64_t id) : shared_memory_region_(sizeof
 {
     SP_ASSERT(std::atomic_ref<uint64_t>::is_always_lock_free);
 
-    SharedMemoryView view = shared_memory_region_.getView();
+    SpSharedMemoryView view = shared_memory_region_.getView();
     SP_ASSERT(view.data_);
     SP_ASSERT(Std::isPtrSufficientlyAligned(view.data_, std::atomic_ref<uint64_t>::required_alignment));
 
@@ -185,7 +185,7 @@ SharedMemoryFence::SharedMemoryFence(uint64_t id) : shared_memory_region_(sizeof
     std::memcpy(key_buffer, key_.data(), key_.size());
 }
 
-SharedMemoryView SharedMemoryFence::getView()
+SpSharedMemoryView SharedMemoryFence::getView()
 {
     return shared_memory_region_.getView();
 }
@@ -308,7 +308,7 @@ void SharedMemory::terminate()
     s_initialized_ = false;
 }
 
-SharedMemoryView SharedMemory::getFenceView()
+SpSharedMemoryView SharedMemory::getFenceView()
 {
     SP_ASSERT(s_initialized_);
     SP_ASSERT(s_shared_memory_fence_);

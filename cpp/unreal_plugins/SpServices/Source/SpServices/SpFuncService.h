@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include <stdint.h> // uint64_t
-
 #include <map>
 #include <memory> // std::unique_ptr
 #include <string>
@@ -35,35 +33,35 @@ public:
 
         shared_memory_service_ = shared_memory_service;
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("sp_func_service", "has_functions", [this](uint64_t& uobject) -> bool {
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("sp_func_service", "has_functions", [this](SpHandle& uobject) -> bool {
 
-            UObject* uobject_ptr = toPtr<UObject>(uobject);
+            UObject* uobject_ptr = UnrealUtils::toPtr<UObject>(uobject);
             USpFuncComponent* sp_func_component = getSpFuncComponent(uobject_ptr);
 
             return sp_func_component && !sp_func_component->getFuncNames().empty();
         });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("sp_func_service", "get_function_names", [this](uint64_t& uobject) -> std::vector<std::string> {
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("sp_func_service", "get_function_names", [this](SpHandle& uobject) -> std::vector<std::string> {
 
-            UObject* uobject_ptr = toPtr<UObject>(uobject);
+            UObject* uobject_ptr = UnrealUtils::toPtr<UObject>(uobject);
             USpFuncComponent* sp_func_component = getSpFuncComponent(uobject_ptr);
             SP_ASSERT(sp_func_component);
 
             return sp_func_component->getFuncNames();
         });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("sp_func_service", "get_shared_memory_views", [this](uint64_t& uobject) -> std::map<std::string, SpArraySharedMemoryView> {
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("sp_func_service", "get_shared_memory_views", [this](SpHandle& uobject) -> std::map<std::string, SpArraySharedMemoryView> {
 
-            UObject* uobject_ptr = toPtr<UObject>(uobject);
+            UObject* uobject_ptr = UnrealUtils::toPtr<UObject>(uobject);
             USpFuncComponent* sp_func_component = getSpFuncComponent(uobject_ptr);
             SP_ASSERT(sp_func_component);
 
             return sp_func_component->getSharedMemoryViews();
         });
 
-        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("sp_func_service", "call_function", [this](uint64_t& uobject, std::string& function_name, SpFuncDataBundle& args) -> SpFuncDataBundle {
+        unreal_entry_point_binder->bindFuncToExecuteOnGameThread("sp_func_service", "call_function", [this](SpHandle& uobject, std::string& function_name, SpFuncDataBundle& args) -> SpFuncDataBundle {
 
-            UObject* uobject_ptr = toPtr<UObject>(uobject);
+            UObject* uobject_ptr = UnrealUtils::toPtr<UObject>(uobject);
             USpFuncComponent* sp_func_component = getSpFuncComponent(uobject_ptr);
             SP_ASSERT(sp_func_component);
 

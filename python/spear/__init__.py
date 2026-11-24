@@ -41,8 +41,8 @@ assert __can_import_spear_ext__ + __can_import_unreal__ <= 1
 # import a curated set of functions directly into the spear namespace
 from .utils.config_utils import get_config
 from .utils.func_utils import get_unreal_class, get_unreal_object, get_unreal_struct
-from .utils.func_utils import to_array, to_arrays, to_case_insensitive, to_case_sensitive, to_data_bundle, to_data_bundle_dict, try_to_dict, try_to_dicts, to_json_string, to_json_strings, to_packed_array, to_packed_arrays, to_ptr, to_shared
-from .utils.func_utils import to_handle_or_unreal_struct, to_handle_or_unreal_class, to_handle_or_unreal_object, to_handle, to_unreal_struct, to_unreal_class, to_unreal_object
+from .utils.func_utils import to_array, to_arrays, to_case_insensitive, to_case_sensitive, to_data_bundle, to_data_bundle_dict, try_to_dict, try_to_dicts, to_json_string, to_json_strings, to_packed_array, to_packed_arrays, to_shared
+from .utils.func_utils import to_handle_or_unreal_struct, to_handle_or_unreal_class, to_handle_or_unreal_object, to_handle, to_handle_from_string, to_long_string_from_handle, to_short_string_from_handle, to_unreal_struct, to_unreal_class, to_unreal_object
 from .utils.func_utils import from_script_result, to_script_expr, to_script_struct_expr
 from .utils.func_utils import pprint
 from .utils.log_utils import get_default_log_enabled, log, log_current_function, log_get_prefix, log_no_prefix, register_log_func, set_default_log_enabled, unregister_log_func
@@ -61,13 +61,13 @@ from .utils import tool_utils as tools
 
 if __can_import_spear_ext__:
     try:
-        from spear_ext import SpFuncDataBundle, SpPackedArray, SpPropertyDesc
+        from spear_ext import SpFuncDataBundle, SpHandle, SpPackedArray, SpPropertyDesc
     except ImportError:
         log("WARNING: spear_ext is out of date, rebuild it with tools/install_python_extension.py...")
         __can_import_spear_ext__ = False
 
 if __can_import_unreal__:
-    from .utils.editor_utils import SpFuncDataBundle, SpPackedArray, SpPropertyDesc
+    from .utils.editor_utils import SpFuncDataBundle, SpHandle, SpPackedArray, SpPropertyDesc
     from .utils import editor_utils as editor
 
 #
@@ -99,6 +99,20 @@ from .services.world_registry_service import WorldRegistryService
 
 # import a curated set of classes directly into the spear namespace
 from .unreal_object import UnrealStruct, UnrealClass, UnrealObject
+
+#
+# client
+#
+
+# import a curated set of classes directly into the spear namespace
+from .client import Client
+
+#
+# launcher
+#
+
+# import a curated set of classes directly into the spear namespace
+from .launcher import Launcher
 
 #
 # instance
