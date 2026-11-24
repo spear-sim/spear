@@ -264,8 +264,14 @@ class Future:
         self.convert_func = convert_func
         self._get_future_result_func = get_future_result_func
         self._return_as = return_as
+        self._result_obtained = False
 
+    # get() can only be called once, because getting the result of an RPC-backed future destroys the server's
+    # corresponding std::future object. For consistency, we enforce this rule for all futures, including futures
+    # that already store their result (e.g., in editor Python).
     def get(self):
+        assert not self._result_obtained
+        self._result_obtained = True
         result = self._get_future_result_func(future=self)
         if self.convert_func is not None:
             return self.convert_func(result)

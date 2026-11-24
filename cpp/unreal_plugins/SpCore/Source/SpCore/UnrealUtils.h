@@ -7,7 +7,7 @@
 
 #include <stdint.h> // int32_t, uint64_t
 
-#include <concepts> // std::derived_from
+#include <concepts> // std::derived_from, std::same_as
 #include <map>
 #include <ranges>   // std::views::drop, std::views::filter, std::views::transform
 #include <string>   // std::stoi
@@ -22,6 +22,7 @@
 #include <Dom/JsonValue.h>
 #include <EngineUtils.h>             // TActorIterator
 #include <GameFramework/Actor.h>
+#include <HAL/IConsoleManager.h>     // ECVF_Unregistered, IConsoleVariable
 #include <HAL/Platform.h>            // SPCORE_API
 #include <Templates/Casts.h>
 #include <Templates/SharedPointer.h> // TSharedPtr
@@ -318,6 +319,24 @@ public:
         return toHandle(toObjectPtr(src));
     }
 
+    // Specialization to store the owning UObject's index and serial number for property pointers. FProperty
+    // isn't a UObject, so it doesn't have an entry in GUObjectArray, but it is owned by a UStruct (or a UClass
+    // or UFunction), and it lives exactly as long as its owner. So we store the property's address in ptr_, and
+    // we store the owner's index and serial number in object_index_ and object_serial_number_.
+    template <typename TProperty> requires std::derived_from<TProperty, FProperty>
+    static SpHandle toHandle(const TProperty* src)
+    {
+        SpHandle handle;
+        if (src) {
+            SpHandle owner_handle = toHandle(src->GetOwnerUObject());
+            SP_ASSERT(owner_handle.ptr_);
+            handle.ptr_ = reinterpret_cast<uint64_t>(static_cast<const FProperty*>(src));
+            handle.object_index_ = owner_handle.object_index_;
+            handle.object_serial_number_ = owner_handle.object_serial_number_;
+        }
+        return handle;
+    }
+
     template <typename TValue>
     static std::vector<SpHandle> toHandle(const std::vector<TValue*>& src)
     {
@@ -369,6 +388,43 @@ public:
     static TInterface* toPtr(const SpHandle& src)
     {
         return toInterfacePtr<TInterface>(toPtr<UObject>(src));
+    }
+
+    // Specialization to validate the owning UObject for property pointers. See the corresponding toHandle(...)
+    // specialization above. This check can detect a property whose owner has been destroyed, but it can't
+    // detect a property that has been destroyed while its owner remains alive (e.g., if a Blueprint class is
+    // recompiled in place). If the handle doesn't have a serial number (e.g., if it was created from a
+    // uint64_t), then we can't validate it.
+    template <typename TProperty> requires std::derived_from<TProperty, FProperty>
+    static TProperty* toPtr(const SpHandle& src)
+    {
+        TProperty* src_ptr = reinterpret_cast<TProperty*>(src.ptr_);
+        if (src_ptr && src.object_serial_number_ != 0) {
+            SP_ASSERT(IsInGameThread());
+            FUObjectItem* owner_item = GUObjectArray.IndexToObject(src.object_index_);
+            SP_ASSERT(owner_item);
+            SpHandle owner_handle;
+            owner_handle.ptr_ = reinterpret_cast<uint64_t>(owner_item->Object); // TODO: replace with owner_item->GetObject() in UE 5.8
+            owner_handle.object_index_ = src.object_index_;
+            owner_handle.object_serial_number_ = src.object_serial_number_;
+            UObject* owner = toPtr<UObject>(owner_handle);
+            SP_ASSERT(owner);
+            SP_ASSERT(src_ptr->GetOwnerUObject() == owner);
+        }
+        return src_ptr;
+    }
+
+    // Specialization to validate console variable pointers. IConsoleVariable isn't a UObject, but unregistering
+    // a console variable usually doesn't delete it. Instead, Unreal keeps it alive and sets ECVF_Unregistered,
+    // so we can detect a stale handle in the common case by checking this flag.
+    template <typename TPtr> requires std::same_as<TPtr, IConsoleVariable>
+    static TPtr* toPtr(const SpHandle& src)
+    {
+        IConsoleVariable* src_ptr = reinterpret_cast<IConsoleVariable*>(src.ptr_);
+        if (src_ptr) {
+            SP_ASSERT(!(src_ptr->GetFlags() & ECVF_Unregistered));
+        }
+        return src_ptr;
     }
 
     template <typename TPtr> // specialization not needed because we delegate to the scalar implementation
@@ -1615,6 +1671,12 @@ private:
     static std::string getMapPropertyValueAsFormattedString(const FProperty* key_property, const std::vector<std::string>& key_strings, const FProperty* value_property, const std::vector<std::string>& value_strings);
     static std::string getQuoteStringForProperty(const FProperty* property);
     static std::string getJsonString(const std::string& input);
+
+    //
+    // Helper function for validating an SpPropertyDesc that might have been stored by the caller
+    //
+
+    static void validatePropertyDesc(const SpPropertyDesc& property_desc);
 
     //
     // Helper functions for fixed-size array properties

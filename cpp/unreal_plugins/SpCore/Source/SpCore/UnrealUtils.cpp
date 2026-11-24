@@ -580,6 +580,7 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
     }
 
     if (parent != SpPropertyDesc()) {
+        validatePropertyDesc(parent);
         SP_ASSERT(!parent.notify_objects_.empty());
         SP_ASSERT(parent.value_ptr_ == value_ptr);
         SP_ASSERT(parent.notify_member_properties_.size() == parent.notify_objects_.size());
@@ -623,6 +624,7 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
     }
 
     if (parent != SpPropertyDesc()) {
+        validatePropertyDesc(parent);
         SP_ASSERT(!parent.notify_objects_.empty());
         SP_ASSERT(parent.value_ptr_ == value_ptr);
         SP_ASSERT(parent.notify_member_properties_.size() == parent.notify_objects_.size());
@@ -831,6 +833,7 @@ SpPropertyDesc UnrealUtils::resolveProperty(void* value_ptr, const UStruct* ustr
 
 SpPropertyDesc UnrealUtils::resolveProperty(const SpPropertyDesc& parent, FProperty* property)
 {
+    validatePropertyDesc(parent);
     SP_ASSERT(parent.property_);
     SP_ASSERT(parent.property_->IsA(FStructProperty::StaticClass()));
     SP_ASSERT(!parent.notify_objects_.empty());
@@ -841,6 +844,7 @@ SpPropertyDesc UnrealUtils::resolveProperty(const SpPropertyDesc& parent, FPrope
 
 SpPropertyDesc UnrealUtils::resolveProperty(const SpPropertyDesc& parent, const std::string& property_name)
 {
+    validatePropertyDesc(parent);
     SP_ASSERT(parent.property_);
     SP_ASSERT(parent.property_->IsA(FStructProperty::StaticClass()));
     SP_ASSERT(!parent.notify_objects_.empty());
@@ -851,6 +855,7 @@ SpPropertyDesc UnrealUtils::resolveProperty(const SpPropertyDesc& parent, const 
 
 bool UnrealUtils::supportsEditChangeNotify(const SpPropertyDesc& property_desc)
 {
+    validatePropertyDesc(property_desc);
     // We can send an edit-change notification directly only if the resolved path stays within one object,
     // has at most one array entry (its index is conveyed via the FPropertyChangedEvent array index map),
     // and has no map entries (a map key can't be conveyed).
@@ -952,6 +957,7 @@ FPropertyChangedChainEvent UnrealUtils::getPropertyChangedChainEvent(const SpPro
 
 SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& property_desc, bool allow_element_to_recurse)
 {
+    validatePropertyDesc(property_desc);
     SP_ASSERT(property_desc.property_);
     SP_ASSERT(property_desc.value_ptr_);
     SP_ASSERT(property_desc.type_id_ != "");
@@ -1205,6 +1211,7 @@ SpPropertyValue UnrealUtils::getPropertyValueAsString(const SpPropertyDesc& prop
 
 void UnrealUtils::setPropertyValueFromString(const SpPropertyDesc& property_desc, const std::string& string, bool notify_editor)
 {
+    validatePropertyDesc(property_desc);
     SP_ASSERT(property_desc.value_ptr_);
     SP_ASSERT(property_desc.property_);
 
@@ -1262,6 +1269,7 @@ void UnrealUtils::setPropertyValueFromString(const SpPropertyDesc& property_desc
 
 void UnrealUtils::setPropertyValueFromJsonValue(const SpPropertyDesc& property_desc, TSharedPtr<FJsonValue> json_value, bool notify_editor, bool allow_element_to_recurse)
 {
+    validatePropertyDesc(property_desc);
     SP_ASSERT(property_desc.value_ptr_);
     SP_ASSERT(property_desc.property_);
     SP_ASSERT(json_value.IsValid());
@@ -2245,6 +2253,18 @@ bool UnrealUtils::isFixedSizeArrayProperty(const FProperty* property)
 {
     SP_ASSERT(property);
     return property->ArrayDim > 1;
+}
+
+void UnrealUtils::validatePropertyDesc(const SpPropertyDesc& property_desc)
+{
+    // An SpPropertyDesc can be stored by the caller and used later, after the objects it refers to have been
+    // destroyed. value_ptr_ points into memory owned by notify_objects_.back(), so we validate every entry in
+    // notify_objects_ before dereferencing value_ptr_ or property_. This check can't detect a desc that refers
+    // to an element of a container that has been resized since the desc was resolved.
+
+    for (auto& notify_object : property_desc.notify_objects_) {
+        toPtr<UObject>(notify_object);
+    }
 }
 
 bool UnrealUtils::isFixedSizeArray(const SpPropertyDesc& property_desc, bool allow_element_to_recurse)

@@ -231,7 +231,10 @@ public:
                 end_frame_being_drained_by_gt_   = static_cast<int>(BatchedQueues::EndFrameA);
             }
 
-            // There is no need to lock because it is safe to access WorkQueue objects from multiple threads.
+            // WorkQueue::initialize() replaces the queue's io_context, which is only safe if no other thread is
+            // using it. The game thread isn't inside run() on any batched work queue, because we called
+            // releaseGameThread() above, and the watchdog thread can't schedule work on them, because we're holding
+            // watchdog_mutex_.
 
             for (int i = 0; i < NUM_BATCHED_QUEUES; i++) {
                 batched_work_queues_.at(i).initialize();
@@ -267,7 +270,10 @@ public:
             // Set the frame state to prevent the game thread from executing any more work queues.
             frame_state_ = FrameState::Terminating;
 
-            // There is no need to lock because it is safe to access WorkQueue objects from multiple threads.
+            // WorkQueue::terminate() destroys the queue's io_context, which is only safe if no other thread is
+            // using it. The game thread isn't inside run() on any batched work queue, because we called
+            // releaseGameThread() above, and the watchdog thread can't schedule work on them, because we're holding
+            // watchdog_mutex_.
 
             for (int i = 0; i < NUM_BATCHED_QUEUES; i++) {
                 batched_work_queues_.at(i).terminate();
@@ -692,9 +698,9 @@ protected:
         }
 
         // Allow engine_service.begin_frame (or engine_service.end_frame if we're in single-step mode) to finish
-        // executing. If we popped a queue from the FIFO, set its promise even if we didn't handle the frame, e.g., because
-        // we're in an error state, so the worker thread can always proceed if it is waiting on the corresponding
-        // future, e.g., in releaseGameThread().
+        // executing. If we popped a queue from the FIFO, set its promise even if we didn't handle the frame, e.g.,
+        // because we're in an error state, so the worker thread can always proceed if it is waiting on the
+        // corresponding future, e.g., in releaseGameThread().
         if (readable_by_gt != -1) {
             std::lock_guard<std::mutex> lock(batched_work_queue_mutex_);
             batched_work_queue_ready_promises_.at(readable_by_gt).set_value();
@@ -752,9 +758,9 @@ protected:
             frame_state_ = FrameState::Idle;
         }
 
-        // Allow engine_service.execute_frame to finish executing. If we popped a queue from the FIFO, set its promise even if we didn't handle the frame, e.g., because
-        // we're in an error state, so the worker thread can always proceed if it is waiting on the corresponding
-        // future, e.g., in releaseGameThread().
+        // Allow engine_service.execute_frame to finish executing. If we popped a queue from the FIFO, set its
+        // promise even if we didn't handle the frame, e.g., because we're in an error state, so the worker thread
+        // can always proceed if it is waiting on the corresponding future, e.g., in releaseGameThread().
         if (readable_by_gt != -1) {
             std::lock_guard<std::mutex> lock(batched_work_queue_mutex_);
             batched_work_queue_ready_promises_.at(readable_by_gt).set_value();
@@ -1008,8 +1014,8 @@ private:
     {
         // The lambda declared below is typically bound to a specific RPC entry point and called from the
         // worker thread by the RPC server. Note that we capture func_name and func by value because we want
-        // to guarantee that func_name and func are still accessible after wrapFuncToExecuteInWorkQueueNonBlockingDiscardReturnValue(...)
-        // returns.
+        // to guarantee that func_name and func are still accessible after
+        // wrapFuncToExecuteInWorkQueueNonBlockingDiscardReturnValue(...) returns.
 
         return [this, func_name, func](TArgs&... args) -> void {
 
@@ -1242,8 +1248,9 @@ private:
 
     // Batched work queue state.
     //
-    // Batched work queues are safe to access on multiple threads. The mutex is used to coordinate access
-    // to the FIFO, promises, futures, and bools defined below.
+    // Batched work queues are safe to access on multiple threads, except when they are initialized or
+    // terminated (see engine_service.initialize and engine_service.terminate). The mutex is used to coordinate
+    // access to the FIFO, promises, futures, and bools defined below.
 
     static const int BATCHED_WORK_QUEUE_FIFO_SIZE_SINGLE_BUFFERED = 2;
     static const int BATCHED_WORK_QUEUE_FIFO_SIZE_DOUBLE_BUFFERED = 4;
@@ -1275,17 +1282,20 @@ private:
     // These promises and futures are each initialized by the worker thread in engine_service.initialize,
     // engine_service.begin_frame, engine_service.execute_frame, and engine_service.end_frame (if in single-step
     // mode). Subsequently, the promises are only ever set by the game thread in beginFrame(), endFrame(), and
-    // shutdown(). The futures are only ever read on the worker thread in engine_service.begin_frame,
-    // engine_service.execute_frame, and engine_service.end_frame (if in single-step mode). Each bool variable
-    // is set by the game thread whenever the corresponding promise is set, and is read by the game thread in
-    // shutdown() to avoid deadlocks when shutting down the application.
+    // shutdown(). The futures are read on the worker thread in engine_service.begin_frame,
+    // engine_service.execute_frame, engine_service.end_frame (if in single-step mode), and releaseGameThread().
+    // Each bool variable is set to true by the game thread whenever the corresponding promise is set, and set to
+    // false by the worker thread whenever the corresponding promise is re-initialized. The bools are read by the
+    // worker thread in releaseGameThread() to determine which queues the game thread might be stalled on, and
+    // by the game thread in shutdown() to avoid deadlocks when shutting down the application.
     std::array<std::promise<void>, NUM_BATCHED_QUEUES> batched_work_queue_ready_promises_;
     std::array<std::future<void>,  NUM_BATCHED_QUEUES> batched_work_queue_ready_futures_;
     std::array<std::atomic<bool>,  NUM_BATCHED_QUEUES> batched_work_queue_ready_promises_set_ = {true, true, true, true};
 
     // Incremental work queue state.
 
-    // The incremental work queue is safe to access on multiple threads. Work is scheduled on the worker
+    // The incremental work queue is safe to access on multiple threads, except when it is initialized or
+    // terminated. Work is scheduled on the worker
     // thread in engine_service.begin_editor_transaction and engine_service.end_editor_transaction. Work is
     // drained by the game thread in executeEditorPostTransaction().
     WorkQueue editor_transaction_work_queue_ = WorkQueue("editor_transaction_work_queue");
@@ -1300,7 +1310,8 @@ private:
     std::vector<WorkQueue*> current_incremental_work_queues_;
 
     // Written and read by the game thread in beginFrame() and endFrame(). Written by the worker thread in
-    // engine_service.initialize and engine_service.terminate. Read by the game thread in executeEditorPostTransaction().
+    // engine_service.initialize and engine_service.terminate. Read by the game thread in
+    // executeEditorPostTransaction().
     std::atomic<FrameState> frame_state_ = FrameState::Idle;
 
     // Written by the worker thread in engine_service.initialize and engine_service.terminate to indicate to
