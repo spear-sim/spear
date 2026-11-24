@@ -284,7 +284,11 @@ public:
 
     //
     // Convert pointers to SpHandles. These functions must be called on the game thread, because creating an
-    // SpHandle from a UObject pointer accesses GUObjectArray.
+    // SpHandle from a UObject pointer accesses GUObjectArray. A native interface (e.g., INavAgentInterface)
+    // isn't a UObject, and may be located at a non-zero offset within the UObject that implements it (e.g.,
+    // APawn), so an interface pointer can't be reinterpret_cast to or from a UObject pointer. So we always
+    // store the address of the implementing UObject in an SpHandle, and we use Unreal's Cast<...> function to
+    // convert between the UObject and the interface.
     //
 
     template <typename TValue>
@@ -306,6 +310,12 @@ public:
             handle.object_serial_number_ = GUObjectArray.AllocateSerialNumber(handle.object_index_);
         }
         return handle;
+    }
+
+    template <CInterface TInterface> // specialization to store the implementing UObject for interface pointers
+    static SpHandle toHandle(const TInterface* src)
+    {
+        return toHandle(toObjectPtr(src));
     }
 
     template <typename TValue>
@@ -355,6 +365,12 @@ public:
         return src_ptr;
     }
 
+    template <CInterface TInterface> // specialization to validate the implementing UObject for interface pointers
+    static TInterface* toPtr(const SpHandle& src)
+    {
+        return toInterfacePtr<TInterface>(toPtr<UObject>(src));
+    }
+
     template <typename TPtr> // specialization not needed because we delegate to the scalar implementation
     static std::vector<TPtr*> toPtr(const std::vector<SpHandle>& src)
     {
@@ -399,7 +415,8 @@ public:
     //
     // Convert between pointers and uint64_t. These functions are useful in cases where pointers need to be
     // stored as numeric data (e.g., in an SpArray<uint64_t>). UObject pointers obtained this way are validated
-    // with Unreal::isValid(...), which is weaker than the validation that is possible with an SpHandle.
+    // with Unreal::isValid(...), which is weaker than the validation that is possible with an SpHandle. As with
+    // SpHandles, interface pointers are stored as the address of the implementing UObject.
     //
 
     template <typename TValue>
@@ -408,10 +425,22 @@ public:
         return reinterpret_cast<uint64_t>(src);
     }
 
+    template <CInterface TInterface> // specialization to store the implementing UObject for interface pointers
+    static uint64_t toUInt64(const TInterface* src)
+    {
+        return toUInt64(toObjectPtr(src));
+    }
+
     template <typename TValue>
     static std::vector<uint64_t> toUInt64(std::vector<TValue>&& src)
     {
         return Std::reinterpretAsVectorOf<uint64_t>(std::move(src));
+    }
+
+    template <CInterface TInterface> // specialization to store the implementing UObject for interface pointers
+    static std::vector<uint64_t> toUInt64(std::vector<TInterface*>&& src)
+    {
+        return Std::toVector<uint64_t>(src | std::views::transform([](auto src_ptr) { return toUInt64(src_ptr); }));
     }
 
     template <typename TKey, typename TValue>
@@ -437,6 +466,12 @@ public:
         return src_ptr;
     }
 
+    template <CInterface TInterface> // specialization to validate the implementing UObject for interface pointers
+    static TInterface* toPtr(uint64_t src)
+    {
+        return toInterfacePtr<TInterface>(toPtr<UObject>(src));
+    }
+
     template <typename TPtr>
     static std::vector<TPtr*> toPtr(std::vector<uint64_t>&& src)
     {
@@ -454,6 +489,12 @@ public:
             }
         }
         return dest;
+    }
+
+    template <CInterface TInterface> // specialization to validate the implementing UObject for interface pointers
+    static std::vector<TInterface*> toPtr(std::vector<uint64_t>&& src)
+    {
+        return Std::toVector<TInterface*>(src | std::views::transform([](auto src_uint64) { return toPtr<TInterface>(src_uint64); }));
     }
 
     template <typename TKey, typename TPtr> // specialization not needed because we delegate to the scalar implementation
@@ -1534,6 +1575,37 @@ public:
     }
 
 private:
+
+    //
+    // Helper functions for converting between interface pointers and the UObjects that implement them. In both
+    // directions, we check that converting back yields the original pointer.
+    //
+
+    template <CInterface TInterface>
+    static UObject* toObjectPtr(const TInterface* src)
+    {
+        if (src) {
+            UObject* object_ptr = src->_getUObject();
+            SP_ASSERT(object_ptr);
+            SP_ASSERT(Cast<TInterface>(object_ptr) == src);
+            return object_ptr;
+        } else {
+            return nullptr;
+        }
+    }
+
+    template <CInterface TInterface>
+    static TInterface* toInterfacePtr(UObject* src)
+    {
+        if (src) {
+            TInterface* interface_ptr = Cast<TInterface>(src);
+            SP_ASSERT(interface_ptr);
+            SP_ASSERT(interface_ptr->_getUObject() == src);
+            return interface_ptr;
+        } else {
+            return nullptr;
+        }
+    }
 
     //
     // Helper functions for formatting container properties as strings in the same style as Unreal

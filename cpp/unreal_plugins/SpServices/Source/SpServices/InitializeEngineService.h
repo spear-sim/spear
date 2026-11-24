@@ -160,36 +160,10 @@ public:
                 SP_ASSERT(FApp::GetFixedDeltaTime() <= max_fixed_delta_time);
             }
         }
-    }
-
-    ~InitializeEngineService() override
-    {
-        SP_LOG_CURRENT_FUNCTION();
-
-        if (Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.MOUNT_PAK_FILES") && FCoreDelegates::OnUnmountPak.IsBound()) {
-            std::vector<std::string> pak_files = Config::get<std::vector<std::string>>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.PAK_FILES");
-
-            SP_LOG("    Unmounting PAK files...");
-            for (auto& pak_file : pak_files) {
-                SP_LOG("    Unmounting PAK file: ", pak_file);
-                bool success = FCoreDelegates::OnUnmountPak.Execute(Unreal::toFString(pak_file));
-                SP_ASSERT(success);
-            }
-        }
-    }
-
-    static std::unique_ptr<InitializeEngineService> create();
-
-protected:
-    void postEngineInit() override
-    {
-        SP_LOG_CURRENT_FUNCTION();
-
-        Service::postEngineInit();
 
         //
-        // Override navigation settings. We do this in postEngineInit() because we need GEngine to be
-        // initialized.
+        // Override navigation settings. We need GEngine to be initialized, which is guaranteed because
+        // services are constructed in an OnPostEngineInit handler (see SpServices::postEngineInitHandler()).
         //
 
         if (Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.OVERRIDE_NAVIGATION_SYSTEM_DEFAULT_OBJECT")) {
@@ -230,4 +204,22 @@ protected:
             SP_LOG_NO_PREFIX(UnrealUtils::getObjectPropertiesAsString(recast_nav_mesh_default_object));
         }
     }
+
+    ~InitializeEngineService() override
+    {
+        SP_LOG_CURRENT_FUNCTION();
+
+        if (Config::get<bool>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.MOUNT_PAK_FILES") && FCoreDelegates::OnUnmountPak.IsBound()) {
+            std::vector<std::string> pak_files = Config::get<std::vector<std::string>>("SP_SERVICES.INITIALIZE_ENGINE_SERVICE.PAK_FILES");
+
+            SP_LOG("    Unmounting PAK files...");
+            for (auto& pak_file : pak_files) {
+                SP_LOG("    Unmounting PAK file: ", pak_file);
+                bool success = FCoreDelegates::OnUnmountPak.Execute(Unreal::toFString(pak_file));
+                SP_ASSERT(success);
+            }
+        }
+    }
+
+    static std::unique_ptr<InitializeEngineService> create();
 };

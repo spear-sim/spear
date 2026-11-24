@@ -25,28 +25,20 @@ class SPSERVICES_API Service // SPSERVICES_API is needed here because the SpServ
 public:
     Service()
     {
-        post_engine_init_handle_ = FCoreDelegates::OnPostEngineInit.AddRaw(this, &Service::postEngineInitHandler);
-        engine_pre_exit_handle_ = FCoreDelegates::OnEnginePreExit.AddRaw(this, &Service::enginePreExitHandler);
         begin_frame_handle_ = FCoreDelegates::OnBeginFrame.AddRaw(this, &Service::beginFrameHandler);
         end_frame_handle_ = FCoreDelegates::OnEndFrame.AddRaw(this, &Service::endFrameHandler);
     }
 
     virtual ~Service()
     {
-        FCoreDelegates::OnPostEngineInit.Remove(post_engine_init_handle_);
-        FCoreDelegates::OnEnginePreExit.Remove(engine_pre_exit_handle_);
         FCoreDelegates::OnBeginFrame.Remove(begin_frame_handle_);
         FCoreDelegates::OnEndFrame.Remove(end_frame_handle_);
 
-        post_engine_init_handle_.Reset();
-        engine_pre_exit_handle_.Reset();
         begin_frame_handle_.Reset();
         end_frame_handle_.Reset();
     }
 
 protected:
-    virtual void postEngineInit() {}
-    virtual void enginePreExit() {}
     virtual void beginFrame() {}
     virtual void endFrame() {}
 
@@ -89,16 +81,6 @@ protected:
     }
 
 private:
-    void postEngineInitHandler()
-    {
-        postEngineInit();
-    }
-
-    void enginePreExitHandler()
-    {
-        enginePreExit();
-    }
-
     void beginFrameHandler()
     {
         beginFrame();
@@ -109,8 +91,6 @@ private:
         endFrame();
     }
 
-    FDelegateHandle post_engine_init_handle_;
-    FDelegateHandle engine_pre_exit_handle_;
     FDelegateHandle begin_frame_handle_;
     FDelegateHandle end_frame_handle_;
 };
