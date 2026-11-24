@@ -275,6 +275,9 @@ public:
     UFUNCTION(BlueprintCallable, Category="SPEAR")
     bool IsInitialized() const;
 
+    // The view states returned by GetViewStates() are not guaranteed to remain valid across SPEAR transaction
+    // blocks (i.e., a begin_frame() block or an end_frame() block), so they should be consumed immediately in the
+    // same block where they were obtained.
     UFUNCTION()
     TArray<uint64> GetViewStates(); // uint64 not supported for BlueprintCallable, can't be const, FSceneViewStateInterface is not a UCLASS so we can't return FSceneViewStateInterface* and we return uint64 instead
 

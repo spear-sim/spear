@@ -182,6 +182,10 @@ if __name__ == "__main__":
                 component.RequestPathTracerReset()
 
         with instance.end_frame(single_step=True):
+            view_states = component.GetViewStates() # view states aren't guaranteed to be valid across begin_frame() and end_frame() blocks
+            assert len(view_states) == 1
+            view_state = view_states[0]
+
             sample_index = game.cdo.USpSceneViewStateInterface.GetPathTracingSampleIndex(ViewState=view_state)
             assert previous_sample_index <= sample_index
             assert sample_index <= previous_sample_index + 1
