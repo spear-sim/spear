@@ -25,4 +25,5 @@
     #error
 #endif
 
+#include <boost/interprocess/exceptions.hpp> // boost::interprocess::interprocess_exception
 #include <boost/interprocess/mapped_region.hpp>

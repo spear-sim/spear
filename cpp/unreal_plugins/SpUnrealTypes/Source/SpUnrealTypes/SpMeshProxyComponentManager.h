@@ -71,11 +71,9 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString Actor = "0x0";
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
-    FString ActorName;
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
-    FString ActorUnrealName;
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FString ActorStableName;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    FString ActorUnrealIdString;
 
     // Optional debug info
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
@@ -151,9 +149,8 @@ public:
                     AActor* actor = component->GetOwner();
                     SP_ASSERT(Unreal::isValid(actor));
                     mesh_proxy_geometry_desc.Actor = Unreal::toFString(UnrealUtils::toStringFromPtr(actor));
-                    mesh_proxy_geometry_desc.ActorName = Unreal::toFString(UnrealUtils::getStableName(actor, true)); // include_unreal_name=true
-                    mesh_proxy_geometry_desc.ActorUnrealName = Unreal::toFString(Unreal::getUnrealName(actor));
-                    mesh_proxy_geometry_desc.ActorStableName = Unreal::toFString(UnrealUtils::getStableName(actor, false)); // include_unreal_name=false
+                    mesh_proxy_geometry_desc.ActorStableName = Unreal::toFString(UnrealUtils::getStableName(actor, false)); // include_unreal_id=false
+                    mesh_proxy_geometry_desc.ActorUnrealIdString = Unreal::toFString(Unreal::getUnrealIdString(actor));
                     if (bIncludeDebugInfo) {
                         mesh_proxy_geometry_desc.ActorPropertiesString = Unreal::toFString(UnrealUtils::getObjectPropertiesAsString(actor));
                     }

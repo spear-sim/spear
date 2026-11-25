@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <stddef.h> // size_t
 #include <stdint.h> // int32_t, uint64_t
 
 #include <concepts> // std::derived_from, std::same_as
@@ -95,6 +96,39 @@ struct SpPropertyValue // exposed to Python via SpServices/MsgpackAdaptors.h
 //
 // General-purpose utility functions for working with Unreal objects. The functions here are higher-level
 // than the ones in the Unreal class.
+//
+
+//
+// Unreal FNames compare case-insensitively, so we design our functions that search for FNames (e.g., that match a given
+// std::string) to search case-insensitively. More specifically, our functions that search for types (classes and
+// structs), functions, properties, components, and tags do so case-insensitively unless otherwise noted.
+//
+// In SPEAR, we introduce the concept of a "stable name" for actors and components. A stable name is a human-readable
+// name that is consistent across the editor, PIE sessions, and standalone games. An actor's stable name is its folder
+// path and label, as displayed in the editor's World Outliner (e.g., "Meshes/05_chair/LivingRoom_Chair_01"). Actor
+// stable names are based on Unreal FStrings, which compare case-sensitively. We design our functions that search for
+// actors to do so according to their stable names, and therefore our functions that search for actors do so
+// case-sensitively. On the other hand, component stable names are based on Unreal FNames, i.e., a component's stable
+// name is the "."-separated path of FNames from its root component to itself (e.g., "DefaultSceneRoot.StaticMeshComponent0"),
+// and therefore our functions that search for components do so case-insensitively. Our findActorAndComponentByName and
+// findActorAndComponentByPath functions search for actor+component pairs based on input strings of the form
+// "actor:component" (e.g., "Meshes/05_chair/LivingRoom_Chair_01:DefaultSceneRoot.StaticMeshComponent0"), which are
+// split on the last ":", such that the actor part is compared case-sensitively, and the component part is compared
+// case-insensitively.
+//
+// In some cases, the keys that are used to assemble the std::map objects returned by our *AsMap functions are not
+// guaranteed to be unique, e.g., when calling findActorsAsMap there can be two actors with the stable name "MyActor" in
+// a scene. To address this issue, our *AsMap functions drop duplicate keys according to the case-sensitivity policies
+// described above. For types, keys are compared and dropped case-insensitively. For actors, keys are compared and dropped
+// case-sensitively. For components, keys are compared and dropped case-insensitively if include_actor_stable_name=false.
+// If include_actor_stable_name=true, then keys have the form "actor:component", and the actor part is compared
+// case-sensitively, and the component part is compared case-insensitively.
+//
+// To guarantee that no keys are dropped when calling *AsMap functions, a user can set include_path=true for types,
+// include_unreal_id=true for actors, and include_actor_stable_name=true and include_actor_unreal_id=true for components.
+// Doing so will append or prepend a string to each key that guarantees uniqueness for the purpose of constructing a
+// dictionary, and will therefore make it so our *AsMap functions don't drop any keys, but will also make it so the keys
+// cannot be passed directly back into our *ByName functions.
 //
 
 class SPCORE_API UnrealUtils
@@ -244,14 +278,14 @@ public:
     //
 
     static std::vector<AActor*> findActors(const UWorld* world);
-    static std::map<std::string, AActor*> findActorsAsMap(const UWorld* world, bool include_unreal_name = false);
+    static std::map<std::string, AActor*> findActorsAsMap(const UWorld* world, bool include_unreal_id = false);
 
     //
     // Get components unconditionally and return an std::vector or an std::map
     //
 
     static std::vector<UActorComponent*> getComponents(const AActor* actor);
-    static std::map<std::string, UActorComponent*> getComponentsAsMap(const AActor* actor, bool include_actor_stable_name = false, bool include_actor_unreal_name = false);
+    static std::map<std::string, UActorComponent*> getComponentsAsMap(const AActor* actor, bool include_actor_stable_name = false, bool include_actor_unreal_id = false);
 
     //
     // Get children components unconditionally and return an std::vector or an std::map (could be templated but we choose to explicitly instantiate for readability)
@@ -260,15 +294,15 @@ public:
     static std::vector<USceneComponent*> getChildrenComponents(const AActor* parent, bool include_all_descendants = true);
     static std::vector<USceneComponent*> getChildrenComponents(const USceneComponent* parent, bool include_all_descendants = true);
 
-    static std::map<std::string, USceneComponent*> getChildrenComponentsAsMap(const AActor* parent, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_name = false);
-    static std::map<std::string, USceneComponent*> getChildrenComponentsAsMap(const USceneComponent* parent, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_name = false);
+    static std::map<std::string, USceneComponent*> getChildrenComponentsAsMap(const AActor* parent, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_id = false);
+    static std::map<std::string, USceneComponent*> getChildrenComponentsAsMap(const USceneComponent* parent, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_id = false);
 
     //
     // Get and set actor and component stable names
     //
 
-    static std::string getStableName(const AActor* actor, bool include_unreal_name = false);
-    static std::string getStableName(const UActorComponent* component, bool include_actor_stable_name = false, bool include_actor_unreal_name = false);
+    static std::string getStableName(const AActor* actor, bool include_unreal_id = false);
+    static std::string getStableName(const UActorComponent* component, bool include_actor_stable_name = false, bool include_actor_unreal_id = false);
     static bool canSetStableName(const AActor* actor);
     static void setStableName(AActor* actor, const std::string& stable_name);
     static bool trySetStableName(AActor* actor, const std::string& stable_name);
@@ -584,7 +618,7 @@ public:
     {
         return Std::toVector<TReturnAsStaticStruct*>(
             findObjectsByClass<TReturnAsStaticStruct>(uclass) |
-            std::views::filter([&static_struct_name](auto static_struct) { return Unreal::getTypeAsString(static_struct) == static_struct_name; }));
+            std::views::filter([&static_struct_name](auto static_struct) { return Std::toLower(Unreal::getTypeAsString(static_struct)) == Std::toLower(static_struct_name); })); // case-insensitive comparison
     }
 
     template <CStaticStruct TReturnAsStaticStruct = UStruct>
@@ -737,7 +771,7 @@ public:
     {
         return Std::toVector<TReturnAsActor*>(
             findActorsByClass<TReturnAsActor>(uclass, world) |
-            std::views::filter([&tags](auto actor) { return Std::any(Std::contains(Unreal::getTags(actor), tags)); }));
+            std::views::filter([&tags](auto actor) { return Std::any(Std::contains(toLower(Unreal::getTags(actor)), toLower(tags))); })); // case-insensitive comparison
     }
 
     template <CActor TReturnAsActor = AActor>
@@ -745,7 +779,7 @@ public:
     {
         return Std::toVector<TReturnAsActor*>(
             findActorsByClass<TReturnAsActor>(uclass, world) |
-            std::views::filter([&tags](auto actor) { return Std::all(Std::contains(Unreal::getTags(actor), tags)); }));
+            std::views::filter([&tags](auto actor) { return Std::all(Std::contains(toLower(Unreal::getTags(actor)), toLower(tags))); })); // case-insensitive comparison
     }
 
     template <CActor TReturnAsActor = AActor>
@@ -769,69 +803,69 @@ public:
 
     template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires
         std::derived_from<TActor, TReturnAsActor>
-    static std::map<std::string, TReturnAsActor*> findActorsByNameAsMap(const UWorld* world, const std::string& actor_name, bool include_unreal_name = false)
+    static std::map<std::string, TReturnAsActor*> findActorsByNameAsMap(const UWorld* world, const std::string& actor_name, bool include_unreal_id = false)
     {
-        return toMap(findActorsByName<TActor, TReturnAsActor>(world, actor_name), include_unreal_name);
+        return toMap(findActorsByName<TActor, TReturnAsActor>(world, actor_name), include_unreal_id);
     }
 
     template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires
         std::derived_from<TActor, TReturnAsActor>
-    static std::map<std::string, TReturnAsActor*> findActorsByTagAsMap(const UWorld* world, const std::string& tag, bool include_unreal_name = false)
+    static std::map<std::string, TReturnAsActor*> findActorsByTagAsMap(const UWorld* world, const std::string& tag, bool include_unreal_id = false)
     {
-        return toMap(findActorsByTag<TActor, TReturnAsActor>(world, tag), include_unreal_name);
+        return toMap(findActorsByTag<TActor, TReturnAsActor>(world, tag), include_unreal_id);
     }
 
     template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires
         std::derived_from<TActor, TReturnAsActor>
-    static std::map<std::string, TReturnAsActor*> findActorsByTagsAnyAsMap(const UWorld* world, const std::vector<std::string>& tags, bool include_unreal_name = false)
+    static std::map<std::string, TReturnAsActor*> findActorsByTagsAnyAsMap(const UWorld* world, const std::vector<std::string>& tags, bool include_unreal_id = false)
     {
-        return toMap(findActorsByTagsAny<TActor, TReturnAsActor>(world, tags), include_unreal_name);
+        return toMap(findActorsByTagsAny<TActor, TReturnAsActor>(world, tags), include_unreal_id);
     }
 
     template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires
         std::derived_from<TActor, TReturnAsActor>
-    static std::map<std::string, TReturnAsActor*> findActorsByTagsAllAsMap(const UWorld* world, const std::vector<std::string>& tags, bool include_unreal_name = false)
+    static std::map<std::string, TReturnAsActor*> findActorsByTagsAllAsMap(const UWorld* world, const std::vector<std::string>& tags, bool include_unreal_id = false)
     {
-        return toMap(findActorsByTagsAll<TActor, TReturnAsActor>(world, tags), include_unreal_name);
+        return toMap(findActorsByTagsAll<TActor, TReturnAsActor>(world, tags), include_unreal_id);
     }
 
     template <CActor TActor = AActor, CActor TReturnAsActor = TActor> requires
         std::derived_from<TActor, TReturnAsActor>
-    static std::map<std::string, TReturnAsActor*> findActorsByTypeAsMap(const UWorld* world, bool include_unreal_name = false)
+    static std::map<std::string, TReturnAsActor*> findActorsByTypeAsMap(const UWorld* world, bool include_unreal_id = false)
     {
-        return toMap(findActorsByType<TActor, TReturnAsActor>(world), include_unreal_name);
+        return toMap(findActorsByType<TActor, TReturnAsActor>(world), include_unreal_id);
     }
 
     // UClass* variants
 
     template <CActor TReturnAsActor = AActor>
-    static std::map<std::string, TReturnAsActor*> findActorsByNameAsMap(UClass* uclass, const UWorld* world, const std::string& actor_name, bool include_unreal_name = false)
+    static std::map<std::string, TReturnAsActor*> findActorsByNameAsMap(UClass* uclass, const UWorld* world, const std::string& actor_name, bool include_unreal_id = false)
     {
-        return toMap(findActorsByName<TReturnAsActor>(uclass, world, actor_name), include_unreal_name);
+        return toMap(findActorsByName<TReturnAsActor>(uclass, world, actor_name), include_unreal_id);
     }
 
     template <CActor TReturnAsActor = AActor>
-    static std::map<std::string, TReturnAsActor*> findActorsByTagAsMap(UClass* uclass, const UWorld* world, const std::string& tag, bool include_unreal_name = false)
+    static std::map<std::string, TReturnAsActor*> findActorsByTagAsMap(UClass* uclass, const UWorld* world, const std::string& tag, bool include_unreal_id = false)
     {
-        return toMap(findActorsByTag<TReturnAsActor>(uclass, world, tag), include_unreal_name);
+        return toMap(findActorsByTag<TReturnAsActor>(uclass, world, tag), include_unreal_id);
     }
 
     template <CActor TReturnAsActor = AActor>
-    static std::map<std::string, TReturnAsActor*> findActorsByTagsAnyAsMap(UClass* uclass, const UWorld* world, const std::vector<std::string>& tags, bool include_unreal_name = false)
+    static std::map<std::string, TReturnAsActor*> findActorsByTagsAnyAsMap(UClass* uclass, const UWorld* world, const std::vector<std::string>& tags, bool include_unreal_id = false)
     {
-        return toMap(findActorsByTagsAny<TReturnAsActor>(uclass, world, tags), include_unreal_name);
+        return toMap(findActorsByTagsAny<TReturnAsActor>(uclass, world, tags), include_unreal_id);
     }
 
     template <CActor TReturnAsActor = AActor>
-    static std::map<std::string, TReturnAsActor*> findActorsByTagsAllAsMap(UClass* uclass, const UWorld* world, const std::vector<std::string>& tags, bool include_unreal_name = false)
+    static std::map<std::string, TReturnAsActor*> findActorsByTagsAllAsMap(UClass* uclass, const UWorld* world, const std::vector<std::string>& tags, bool include_unreal_id = false)
     {
-        return toMap(findActorsByTagsAll<TReturnAsActor>(uclass, world, tags), include_unreal_name);
+        return toMap(findActorsByTagsAll<TReturnAsActor>(uclass, world, tags), include_unreal_id);
     }
 
     template <CActor TReturnAsActor = AActor>
-    static std::map<std::string, TReturnAsActor*> findActorsByClassAsMap(UClass* uclass, const UWorld* world, bool include_unreal_name = false)
+    static std::map<std::string, TReturnAsActor*> findActorsByClassAsMap(UClass* uclass, const UWorld* world, bool include_unreal_id = false)
     {
-        return toMap(findActorsByClass<TReturnAsActor>(uclass, world), include_unreal_name);
+        return toMap(findActorsByClass<TReturnAsActor>(uclass, world), include_unreal_id);
     }
 
     //
@@ -958,7 +992,7 @@ public:
     {
         return Std::toVector<TReturnAsComponent*>(
             getComponentsByClass<TReturnAsComponent>(uclass, actor, include_from_child_actors) |
-            std::views::filter([&component_name](auto component) { return getStableName(component) == component_name; }));
+            std::views::filter([&component_name](auto component) { return Std::toLower(getStableName(component)) == Std::toLower(component_name); })); // case-insensitive comparison
     }
 
     template <CComponent TReturnAsComponent = UActorComponent>
@@ -995,7 +1029,7 @@ public:
     {
         return Std::toVector<TReturnAsComponent*>(
             getComponentsByClass<TReturnAsComponent>(uclass, actor, include_from_child_actors) |
-            std::views::filter([&tags](auto component) { return Std::any(Std::contains(Unreal::getTags(component), tags)); }));
+            std::views::filter([&tags](auto component) { return Std::any(Std::contains(toLower(Unreal::getTags(component)), toLower(tags))); })); // case-insensitive comparison
     }
 
     template <CComponent TReturnAsComponent = UActorComponent>
@@ -1003,7 +1037,7 @@ public:
     {
         return Std::toVector<TReturnAsComponent*>(
             getComponentsByClass<TReturnAsComponent>(uclass, actor, include_from_child_actors) |
-            std::views::filter([&tags](auto component) { return Std::all(Std::contains(Unreal::getTags(component), tags)); }));
+            std::views::filter([&tags](auto component) { return Std::all(Std::contains(toLower(Unreal::getTags(component)), toLower(tags))); })); // case-insensitive comparison
     }
 
     template <CComponent TReturnAsComponent = UActorComponent>
@@ -1029,82 +1063,82 @@ public:
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires
         std::derived_from<TComponent, TReturnAsComponent>
-    static std::map<std::string, TReturnAsComponent*> getComponentsByNameAsMap(const AActor* actor, const std::string& component_name, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_name = false)
+    static std::map<std::string, TReturnAsComponent*> getComponentsByNameAsMap(const AActor* actor, const std::string& component_name, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_id = false)
     {
-        return toMap(getComponentsByName<TComponent, TReturnAsComponent>(actor, component_name, include_from_child_actors), include_actor_stable_name, include_actor_unreal_name);
+        return toMap(getComponentsByName<TComponent, TReturnAsComponent>(actor, component_name, include_from_child_actors), include_actor_stable_name, include_actor_unreal_id);
     }
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires
         std::derived_from<TComponent, TReturnAsComponent>
-    static std::map<std::string, TReturnAsComponent*> getComponentsByPathAsMap(const AActor* actor, const std::string& component_path, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_name = false)
+    static std::map<std::string, TReturnAsComponent*> getComponentsByPathAsMap(const AActor* actor, const std::string& component_path, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_id = false)
     {
-        return toMap(getComponentsByPath<TComponent, TReturnAsComponent>(actor, component_path, include_from_child_actors), include_actor_stable_name, include_actor_unreal_name);
+        return toMap(getComponentsByPath<TComponent, TReturnAsComponent>(actor, component_path, include_from_child_actors), include_actor_stable_name, include_actor_unreal_id);
     }
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires
         std::derived_from<TComponent, TReturnAsComponent>
-    static std::map<std::string, TReturnAsComponent*> getComponentsByTagAsMap(const AActor* actor, const std::string& tag, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_name = false)
+    static std::map<std::string, TReturnAsComponent*> getComponentsByTagAsMap(const AActor* actor, const std::string& tag, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_id = false)
     {
-        return toMap(getComponentsByTag<TComponent, TReturnAsComponent>(actor, tag, include_from_child_actors), include_actor_stable_name, include_actor_unreal_name);
+        return toMap(getComponentsByTag<TComponent, TReturnAsComponent>(actor, tag, include_from_child_actors), include_actor_stable_name, include_actor_unreal_id);
     }
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires
         std::derived_from<TComponent, TReturnAsComponent>
-    static std::map<std::string, TReturnAsComponent*> getComponentsByTagsAnyAsMap(const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_name = false)
+    static std::map<std::string, TReturnAsComponent*> getComponentsByTagsAnyAsMap(const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_id = false)
     {
-        return toMap(getComponentsByTagsAny<TComponent, TReturnAsComponent>(actor, tags, include_from_child_actors), include_actor_stable_name, include_actor_unreal_name);
+        return toMap(getComponentsByTagsAny<TComponent, TReturnAsComponent>(actor, tags, include_from_child_actors), include_actor_stable_name, include_actor_unreal_id);
     }
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires
         std::derived_from<TComponent, TReturnAsComponent>
-    static std::map<std::string, TReturnAsComponent*> getComponentsByTagsAllAsMap(const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_name = false)
+    static std::map<std::string, TReturnAsComponent*> getComponentsByTagsAllAsMap(const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_id = false)
     {
-        return toMap(getComponentsByTagsAll<TComponent, TReturnAsComponent>(actor, tags, include_from_child_actors), include_actor_stable_name, include_actor_unreal_name);
+        return toMap(getComponentsByTagsAll<TComponent, TReturnAsComponent>(actor, tags, include_from_child_actors), include_actor_stable_name, include_actor_unreal_id);
     }
 
     template <CComponent TComponent = UActorComponent, CComponent TReturnAsComponent = TComponent> requires
         std::derived_from<TComponent, TReturnAsComponent>
-    static std::map<std::string, TReturnAsComponent*> getComponentsByTypeAsMap(const AActor* actor, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_name = false)
+    static std::map<std::string, TReturnAsComponent*> getComponentsByTypeAsMap(const AActor* actor, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_id = false)
     {
-        return toMap(getComponentsByType<TComponent, TReturnAsComponent>(actor, include_from_child_actors), include_actor_stable_name, include_actor_unreal_name);
+        return toMap(getComponentsByType<TComponent, TReturnAsComponent>(actor, include_from_child_actors), include_actor_stable_name, include_actor_unreal_id);
     }
 
     // UClass* variants
 
     template <CComponent TReturnAsComponent = UActorComponent>
-    static std::map<std::string, TReturnAsComponent*> getComponentsByNameAsMap(UClass* uclass, const AActor* actor, const std::string& component_name, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_name = false)
+    static std::map<std::string, TReturnAsComponent*> getComponentsByNameAsMap(UClass* uclass, const AActor* actor, const std::string& component_name, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_id = false)
     {
-        return toMap(getComponentsByName<TReturnAsComponent>(uclass, actor, component_name, include_from_child_actors), include_actor_stable_name, include_actor_unreal_name);
+        return toMap(getComponentsByName<TReturnAsComponent>(uclass, actor, component_name, include_from_child_actors), include_actor_stable_name, include_actor_unreal_id);
     }
 
     template <CComponent TReturnAsComponent = UActorComponent>
-    static std::map<std::string, TReturnAsComponent*> getComponentsByPathAsMap(UClass* uclass, const AActor* actor, const std::string& component_path, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_name = false)
+    static std::map<std::string, TReturnAsComponent*> getComponentsByPathAsMap(UClass* uclass, const AActor* actor, const std::string& component_path, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_id = false)
     {
-        return toMap(getComponentsByPath<TReturnAsComponent>(uclass, actor, component_path, include_from_child_actors), include_actor_stable_name, include_actor_unreal_name);
+        return toMap(getComponentsByPath<TReturnAsComponent>(uclass, actor, component_path, include_from_child_actors), include_actor_stable_name, include_actor_unreal_id);
     }
 
     template <CComponent TReturnAsComponent = UActorComponent>
-    static std::map<std::string, TReturnAsComponent*> getComponentsByTagAsMap(UClass* uclass, const AActor* actor, const std::string& tag, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_name = false)
+    static std::map<std::string, TReturnAsComponent*> getComponentsByTagAsMap(UClass* uclass, const AActor* actor, const std::string& tag, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_id = false)
     {
-        return toMap(getComponentsByTag<TReturnAsComponent>(uclass, actor, tag, include_from_child_actors), include_actor_stable_name, include_actor_unreal_name);
+        return toMap(getComponentsByTag<TReturnAsComponent>(uclass, actor, tag, include_from_child_actors), include_actor_stable_name, include_actor_unreal_id);
     }
 
     template <CComponent TReturnAsComponent = UActorComponent>
-    static std::map<std::string, TReturnAsComponent*> getComponentsByTagsAnyAsMap(UClass* uclass, const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_name = false)
+    static std::map<std::string, TReturnAsComponent*> getComponentsByTagsAnyAsMap(UClass* uclass, const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_id = false)
     {
-        return toMap(getComponentsByTagsAny<TReturnAsComponent>(uclass, actor, tags, include_from_child_actors), include_actor_stable_name, include_actor_unreal_name);
+        return toMap(getComponentsByTagsAny<TReturnAsComponent>(uclass, actor, tags, include_from_child_actors), include_actor_stable_name, include_actor_unreal_id);
     }
 
     template <CComponent TReturnAsComponent = UActorComponent>
-    static std::map<std::string, TReturnAsComponent*> getComponentsByTagsAllAsMap(UClass* uclass, const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_name = false)
+    static std::map<std::string, TReturnAsComponent*> getComponentsByTagsAllAsMap(UClass* uclass, const AActor* actor, const std::vector<std::string>& tags, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_id = false)
     {
-        return toMap(getComponentsByTagsAll<TReturnAsComponent>(uclass, actor, tags, include_from_child_actors), include_actor_stable_name, include_actor_unreal_name);
+        return toMap(getComponentsByTagsAll<TReturnAsComponent>(uclass, actor, tags, include_from_child_actors), include_actor_stable_name, include_actor_unreal_id);
     }
 
     template <CComponent TReturnAsComponent = UActorComponent>
-    static std::map<std::string, TReturnAsComponent*> getComponentsByClassAsMap(UClass* uclass, const AActor* actor, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_name = false)
+    static std::map<std::string, TReturnAsComponent*> getComponentsByClassAsMap(UClass* uclass, const AActor* actor, bool include_from_child_actors = false, bool include_actor_stable_name = false, bool include_actor_unreal_id = false)
     {
-        return toMap(getComponentsByClass<TReturnAsComponent>(uclass, actor, include_from_child_actors), include_actor_stable_name, include_actor_unreal_name);
+        return toMap(getComponentsByClass<TReturnAsComponent>(uclass, actor, include_from_child_actors), include_actor_stable_name, include_actor_unreal_id);
     }
 
     //
@@ -1237,7 +1271,7 @@ public:
     {
         return Std::toVector<TReturnAsSceneComponent*>(
             getChildrenComponentsByClass<TReturnAsSceneComponent>(uclass, parent, include_all_descendants) |
-            std::views::filter([&child_component_name](auto component) { return getStableName(component) == child_component_name; }));
+            std::views::filter([&child_component_name](auto component) { return Std::toLower(getStableName(component)) == Std::toLower(child_component_name); })); // case-insensitive comparison
     }
 
     template <CSceneComponent TReturnAsSceneComponent = USceneComponent, CParent TParent>
@@ -1251,7 +1285,7 @@ public:
     {
         return Std::toVector<TReturnAsSceneComponent*>(
             getChildrenComponentsByClass<TReturnAsSceneComponent>(uclass, parent, include_all_descendants) |
-            std::views::filter([&tags](auto component) { return Std::any(Std::contains(Unreal::getTags(component), tags)); }));
+            std::views::filter([&tags](auto component) { return Std::any(Std::contains(toLower(Unreal::getTags(component)), toLower(tags))); })); // case-insensitive comparison
     }
 
     template <CSceneComponent TReturnAsSceneComponent = USceneComponent, CParent TParent>
@@ -1259,7 +1293,7 @@ public:
     {
         return Std::toVector<TReturnAsSceneComponent*>(
             getChildrenComponentsByClass<TReturnAsSceneComponent>(uclass, parent, include_all_descendants) |
-            std::views::filter([&tags](auto component) { return Std::all(Std::contains(Unreal::getTags(component), tags)); }));
+            std::views::filter([&tags](auto component) { return Std::all(Std::contains(toLower(Unreal::getTags(component)), toLower(tags))); })); // case-insensitive comparison
     }
 
     // specialization for AActor
@@ -1308,69 +1342,69 @@ public:
 
     template <CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent, CParent TParent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
-    static std::map<std::string, TReturnAsSceneComponent*> getChildrenComponentsByNameAsMap(const TParent* parent, const std::string& child_component_name, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_name = false)
+    static std::map<std::string, TReturnAsSceneComponent*> getChildrenComponentsByNameAsMap(const TParent* parent, const std::string& child_component_name, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_id = false)
     {
-        return toMap(getChildrenComponentsByName<TSceneComponent, TReturnAsSceneComponent>(parent, child_component_name, include_all_descendants), include_actor_stable_name, include_actor_unreal_name);
+        return toMap(getChildrenComponentsByName<TSceneComponent, TReturnAsSceneComponent>(parent, child_component_name, include_all_descendants), include_actor_stable_name, include_actor_unreal_id);
     }
 
     template <CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent, CParent TParent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
-    static std::map<std::string, TReturnAsSceneComponent*> getChildrenComponentsByTagAsMap(const TParent* parent, const std::string& tag, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_name = false)
+    static std::map<std::string, TReturnAsSceneComponent*> getChildrenComponentsByTagAsMap(const TParent* parent, const std::string& tag, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_id = false)
     {
-        return toMap(getChildrenComponentsByTag<TSceneComponent, TReturnAsSceneComponent>(parent, tag, include_all_descendants), include_actor_stable_name, include_actor_unreal_name);
+        return toMap(getChildrenComponentsByTag<TSceneComponent, TReturnAsSceneComponent>(parent, tag, include_all_descendants), include_actor_stable_name, include_actor_unreal_id);
     }
 
     template <CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent, CParent TParent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
-    static std::map<std::string, TReturnAsSceneComponent*> getChildrenComponentsByTagsAnyAsMap(const TParent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_name = false)
+    static std::map<std::string, TReturnAsSceneComponent*> getChildrenComponentsByTagsAnyAsMap(const TParent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_id = false)
     {
-        return toMap(getChildrenComponentsByTagsAny<TSceneComponent, TReturnAsSceneComponent>(parent, tags, include_all_descendants), include_actor_stable_name, include_actor_unreal_name);
+        return toMap(getChildrenComponentsByTagsAny<TSceneComponent, TReturnAsSceneComponent>(parent, tags, include_all_descendants), include_actor_stable_name, include_actor_unreal_id);
     }
 
     template <CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent, CParent TParent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
-    static std::map<std::string, TReturnAsSceneComponent*> getChildrenComponentsByTagsAllAsMap(const TParent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_name = false)
+    static std::map<std::string, TReturnAsSceneComponent*> getChildrenComponentsByTagsAllAsMap(const TParent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_id = false)
     {
-        return toMap(getChildrenComponentsByTagsAll<TSceneComponent, TReturnAsSceneComponent>(parent, tags, include_all_descendants), include_actor_stable_name, include_actor_unreal_name);
+        return toMap(getChildrenComponentsByTagsAll<TSceneComponent, TReturnAsSceneComponent>(parent, tags, include_all_descendants), include_actor_stable_name, include_actor_unreal_id);
     }
 
     template <CSceneComponent TSceneComponent = USceneComponent, CSceneComponent TReturnAsSceneComponent = TSceneComponent, CParent TParent> requires
         std::derived_from<TSceneComponent, TReturnAsSceneComponent>
-    static std::map<std::string, TReturnAsSceneComponent*> getChildrenComponentsByTypeAsMap(const TParent* parent, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_name = false)
+    static std::map<std::string, TReturnAsSceneComponent*> getChildrenComponentsByTypeAsMap(const TParent* parent, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_id = false)
     {
-        return toMap(getChildrenComponentsByType<TSceneComponent, TReturnAsSceneComponent>(parent, include_all_descendants), include_actor_stable_name, include_actor_unreal_name);
+        return toMap(getChildrenComponentsByType<TSceneComponent, TReturnAsSceneComponent>(parent, include_all_descendants), include_actor_stable_name, include_actor_unreal_id);
     }
 
     // UClass* variants
 
     template <CSceneComponent TReturnAsSceneComponent = USceneComponent, CParent TParent>
-    static std::map<std::string, TReturnAsSceneComponent*> getChildrenComponentsByNameAsMap(UClass* uclass, const TParent* parent, const std::string& child_component_name, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_name = false)
+    static std::map<std::string, TReturnAsSceneComponent*> getChildrenComponentsByNameAsMap(UClass* uclass, const TParent* parent, const std::string& child_component_name, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_id = false)
     {
-        return toMap(getChildrenComponentsByName<TReturnAsSceneComponent>(uclass, parent, child_component_name, include_all_descendants), include_actor_stable_name, include_actor_unreal_name);
+        return toMap(getChildrenComponentsByName<TReturnAsSceneComponent>(uclass, parent, child_component_name, include_all_descendants), include_actor_stable_name, include_actor_unreal_id);
     }
 
     template <CSceneComponent TReturnAsSceneComponent = USceneComponent, CParent TParent>
-    static std::map<std::string, TReturnAsSceneComponent*> getChildrenComponentsByTagAsMap(UClass* uclass, const TParent* parent, const std::string& tag, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_name = false)
+    static std::map<std::string, TReturnAsSceneComponent*> getChildrenComponentsByTagAsMap(UClass* uclass, const TParent* parent, const std::string& tag, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_id = false)
     {
-        return toMap(getChildrenComponentsByTag<TReturnAsSceneComponent>(uclass, parent, tag, include_all_descendants), include_actor_stable_name, include_actor_unreal_name);
+        return toMap(getChildrenComponentsByTag<TReturnAsSceneComponent>(uclass, parent, tag, include_all_descendants), include_actor_stable_name, include_actor_unreal_id);
     }
 
     template <CSceneComponent TReturnAsSceneComponent = USceneComponent, CParent TParent>
-    static std::map<std::string, TReturnAsSceneComponent*> getChildrenComponentsByTagsAnyAsMap(UClass* uclass, const TParent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_name = false)
+    static std::map<std::string, TReturnAsSceneComponent*> getChildrenComponentsByTagsAnyAsMap(UClass* uclass, const TParent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_id = false)
     {
-        return toMap(getChildrenComponentsByTagsAny<TReturnAsSceneComponent>(uclass, parent, tags, include_all_descendants), include_actor_stable_name, include_actor_unreal_name);
+        return toMap(getChildrenComponentsByTagsAny<TReturnAsSceneComponent>(uclass, parent, tags, include_all_descendants), include_actor_stable_name, include_actor_unreal_id);
     }
 
     template <CSceneComponent TReturnAsSceneComponent = USceneComponent, CParent TParent>
-    static std::map<std::string, TReturnAsSceneComponent*> getChildrenComponentsByTagsAllAsMap(UClass* uclass, const TParent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_name = false)
+    static std::map<std::string, TReturnAsSceneComponent*> getChildrenComponentsByTagsAllAsMap(UClass* uclass, const TParent* parent, const std::vector<std::string>& tags, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_id = false)
     {
-        return toMap(getChildrenComponentsByTagsAll<TReturnAsSceneComponent>(uclass, parent, tags, include_all_descendants), include_actor_stable_name, include_actor_unreal_name);
+        return toMap(getChildrenComponentsByTagsAll<TReturnAsSceneComponent>(uclass, parent, tags, include_all_descendants), include_actor_stable_name, include_actor_unreal_id);
     }
 
     template <CSceneComponent TReturnAsSceneComponent = USceneComponent, CParent TParent>
-    static std::map<std::string, TReturnAsSceneComponent*> getChildrenComponentsByClassAsMap(UClass* uclass, const TParent* parent, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_name = false)
+    static std::map<std::string, TReturnAsSceneComponent*> getChildrenComponentsByClassAsMap(UClass* uclass, const TParent* parent, bool include_all_descendants = true, bool include_actor_stable_name = false, bool include_actor_unreal_id = false)
     {
-        return toMap(getChildrenComponentsByClass<TReturnAsSceneComponent>(uclass, parent, include_all_descendants), include_actor_stable_name, include_actor_unreal_name);
+        return toMap(getChildrenComponentsByClass<TReturnAsSceneComponent>(uclass, parent, include_all_descendants), include_actor_stable_name, include_actor_unreal_id);
     }
 
     //
@@ -1697,8 +1731,8 @@ private:
     //
 
     static std::string toKey(const UStruct* ustruct, bool include_path = false);
-    static std::string toKey(const UActorComponent* component, bool include_actor_stable_name = false, bool include_actor_unreal_name = false);
-    static std::string toKey(const AActor* actor, bool include_unreal_name = false);
+    static std::string toKey(const UActorComponent* component, bool include_actor_stable_name = false, bool include_actor_unreal_id = false);
+    static std::string toKey(const AActor* actor, bool include_unreal_id = false);
     static std::string toKey(const UFunction* ufunction);
 
     template <CMappableNameObject TMappableNameObject>
@@ -1717,19 +1751,19 @@ private:
     {
         std::pair<TReturnAsActor*, TReturnAsComponent*> pair = std::make_pair(nullptr, nullptr);
 
-        std::vector<std::string> path_tokens = Std::tokenize(path, ":");
-        SP_ASSERT(path_tokens.size() == 1 || path_tokens.size() == 2);
+        // Actor stable names can contain ":", but component names can't, so we split path on the last ":".
+        size_t pos = path.rfind(":");
 
         TReturnAsActor* actor = nullptr;
         TReturnAsComponent* component = nullptr;
         std::string component_path;
 
-        if (path_tokens.size() == 1) {
+        if (pos == std::string::npos) {
             actor = const_cast<TReturnAsActor*>(Cast<TReturnAsActor>(owner)); // no RTTI available
-            component_path = path_tokens.at(0);
-        } else if (path_tokens.size() == 2) {
-            actor = findActorByName<TActor, TReturnAsActor>(world, path_tokens.at(0));
-            component_path = path_tokens.at(1);
+            component_path = path;
+        } else {
+            actor = findActorByName<TActor, TReturnAsActor>(world, path.substr(0, pos));
+            component_path = path.substr(pos + 1);
         }
 
         if (get_component_by_path) {
@@ -1747,50 +1781,89 @@ private:
     template <CMappable TMappable>
     static std::map<std::string, TMappable*> toMap(const std::vector<TMappable*>& objects)
     {
-        std::vector<std::string> names = Std::toVector<std::string>(objects | std::views::transform([](auto object) { return toKey(object); }));
+        std::vector<std::string> names = Std::toVector<std::string>(
+            objects |
+            std::views::transform([](auto object) { return toKey(object); }));
+
         return Std::zip(names, objects);
     }
 
-    // Blueprint types are named according to their asset names, which are only unique within a content
-    // folder, so two loaded blueprint types can have the same name. Analogous to the CActor overload below,
-    // we drop all types whose names collide unless include_path is true, in which case every name is
-    // guaranteed to be unique.
+    // Blueprint types are named according to their asset names, which are only unique within a content folder, so two
+    // loaded blueprint types can have the same name. Analogous to the CActor overload below, we drop all types whose
+    // names collide unless include_path is true, in which case every name is guaranteed to be case-insensitively
+    // unique. Type names are FNames, which compare case-insensitively, so names that differ only by case also collide.
 
     template <CStaticStruct TStaticStruct>
     static std::map<std::string, TStaticStruct*> toMap(const std::vector<TStaticStruct*>& static_structs, bool include_path)
     {
-        std::vector<std::string> names = Std::toVector<std::string>(static_structs | std::views::transform([include_path](auto static_struct) { return toKey(static_struct, include_path); }));
-        if (include_path) {
-            return Std::zip(names, static_structs);
-        } else {
-            std::map<std::string, uint64_t> counts = Std::count(names);
-            return Std::toMap<std::string, TStaticStruct*>(
-                Std::zip(static_structs, names) |
-                std::views::filter([&counts](const auto& pair) { return counts.at(pair.second) == 1; }) |
-                std::views::transform([](const auto& pair) { return std::make_pair(pair.second, pair.first); }));
-        }
+        std::vector<std::string> names = Std::toVector<std::string>(
+            static_structs |
+            std::views::transform([include_path](auto static_struct) { return toKey(static_struct, include_path); }));
+
+        bool names_are_case_insensitive_unique = include_path;
+        bool case_insensitive_filter = true;
+        return toNameMap(names, static_structs, names_are_case_insensitive_unique, case_insensitive_filter);
     }
 
     template <CActor TActor>
-    static std::map<std::string, TActor*> toMap(const std::vector<TActor*>& actors, bool include_unreal_name)
+    static std::map<std::string, TActor*> toMap(const std::vector<TActor*>& actors, bool include_unreal_id)
     {
-        std::vector<std::string> names = Std::toVector<std::string>(actors | std::views::transform([include_unreal_name](auto actor) { return toKey(actor, include_unreal_name); }));
-        if (include_unreal_name) {
-            return Std::zip(names, actors);
-        } else {
-            std::map<std::string, uint64_t> counts = Std::count(names);
-            return Std::toMap<std::string, TActor*>(
-                Std::zip(actors, names) |
-                std::views::filter([&counts](const auto& pair) { return counts.at(pair.second) == 1; }) |
-                std::views::transform([](const auto& pair) { return std::make_pair(pair.second, pair.first); }));
-        }
+        std::vector<std::string> names = Std::toVector<std::string>(actors | std::views::transform([include_unreal_id](auto actor) { return toKey(actor, include_unreal_id); }));
+
+        bool names_are_case_insensitive_unique = include_unreal_id;
+        bool case_insensitive_filter = false;
+        return toNameMap(names, actors, names_are_case_insensitive_unique, case_insensitive_filter);
     }
 
+    // Actor stable names aren't guaranteed to be unique, so if components come from multiple actors, then two
+    // components can have the same key. Analogous to the CActor overload above, we drop all components whose keys
+    // collide. If include_actor_stable_name is true, then each key has the form "actor:component", so we compare the
+    // actor part case-sensitively and the component part case-insensitively, consistent with
+    // findActorAndComponentBy*(...).
+
     template <CComponent TComponent>
-    static std::map<std::string, TComponent*> toMap(const std::vector<TComponent*>& components, bool include_actor_stable_name, bool include_actor_unreal_name)
+    static std::map<std::string, TComponent*> toMap(const std::vector<TComponent*>& components, bool include_actor_stable_name, bool include_actor_unreal_id)
     {
-        std::vector<std::string> names = Std::toVector<std::string>(components | std::views::transform([include_actor_stable_name, include_actor_unreal_name](auto component) { return toKey(component, include_actor_stable_name, include_actor_unreal_name); }));
-        return Std::zip(names, components);
+        std::vector<std::string> names = Std::toVector<std::string>(
+            components |
+            std::views::transform([include_actor_stable_name, include_actor_unreal_id](auto component) { return toKey(component, include_actor_stable_name, include_actor_unreal_id); }));
+
+        if (include_actor_unreal_id) {
+
+            // If include_actor_unreal_id is true, then each key has the form "actor:unreal_id:component". Each
+            // actor's Unreal ID is case-insensitively unique, and each component's stable name is case-insensitively
+            // unique within its actor (because both are built from FNames). So every key is case-insensitively
+            // unique, and therefore no keys can collide under any comparison, including the mixed comparison below.
+            // So we can skip the collision check without changing which components are returned.
+            bool names_are_case_insensitive_unique = true;
+            bool case_insensitive_filter = true;
+            return toNameMap(names, components, names_are_case_insensitive_unique, case_insensitive_filter);
+
+        } else if (include_actor_stable_name) {
+
+            // If an actor's stable name is empty (which can happen because it is allowed to set an actor's stable name
+            // to ""), then its components' keys don't contain ":", so we compare the entire key case-insensitively
+            // because there is nothing to compare case-sensitively.
+            auto get_key = [](const std::string& name) -> std::string {
+                size_t pos = name.rfind(":");
+                if (pos == std::string::npos) {
+                    return Std::toLower(name); // case-insensitive comparison
+                } else {
+                    return name.substr(0, pos + 1) + Std::toLower(name.substr(pos + 1)); // case-sensitive actor part, case-insensitive component part
+                }
+            };
+
+            std::map<std::string, uint64_t> counts = Std::count(Std::toVector<std::string>(names | std::views::transform(get_key)));
+            return Std::toMap<std::string, TComponent*>(
+                Std::zip(components, names) |
+                std::views::filter([&counts, &get_key](const auto& pair) { return counts.at(get_key(pair.second)) == 1; }) |
+                std::views::transform([](const auto& pair) { return std::make_pair(pair.second, pair.first); }));
+
+        } else {
+            bool names_are_case_insensitive_unique = false;
+            bool case_insensitive_filter = true;
+            return toNameMap(names, components, names_are_case_insensitive_unique, case_insensitive_filter);
+        }
     }
 
     template <typename TValue>
@@ -1805,6 +1878,37 @@ private:
         }
         SP_ASSERT(vector.size() == 1);
         return vector.at(0);
+    }
+
+    // Returns a map from names to objects. If names_are_case_insensitive_unique is false, then we drop all objects
+    // whose names collide, and if case_insensitive_filter is true, then names that differ only by case also collide. If
+    // names_are_case_insensitive_unique is true, then no names can collide under either comparison, so we skip the
+    // collision check.
+    template <typename TObject>
+    static std::map<std::string, TObject*> toNameMap(const std::vector<std::string>& names, const std::vector<TObject*>& objects, bool names_are_case_insensitive_unique, bool case_insensitive_filter)
+    {
+        if (names_are_case_insensitive_unique) {
+            return Std::zip(names, objects);
+        } else {
+            if (case_insensitive_filter) {
+                std::map<std::string, uint64_t> counts = Std::count(toLower(names));
+                return Std::toMap<std::string, TObject*>(
+                    Std::zip(objects, names) |
+                    std::views::filter([&counts](const auto& pair) { return counts.at(Std::toLower(pair.second)) == 1; }) | // case-insensitive comparison
+                    std::views::transform([](const auto& pair) { return std::make_pair(pair.second, pair.first); }));
+            } else {
+                std::map<std::string, uint64_t> counts = Std::count(names);
+                return Std::toMap<std::string, TObject*>(
+                    Std::zip(objects, names) |
+                    std::views::filter([&counts](const auto& pair) { return counts.at(pair.second) == 1; }) |
+                    std::views::transform([](const auto& pair) { return std::make_pair(pair.second, pair.first); }));
+            }
+        }
+    }
+
+    static std::vector<std::string> toLower(const std::vector<std::string>& strings)
+    {
+        return Std::toVector<std::string>(strings | std::views::transform([](const auto& string) { return Std::toLower(string); }));
     }
 
     inline static EPropertyFlags s_unused_property_flag_ = CPF_None;

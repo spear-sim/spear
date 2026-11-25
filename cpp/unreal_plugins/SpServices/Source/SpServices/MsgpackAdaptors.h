@@ -288,11 +288,11 @@ template <> // needed to send a custom type as a return value to the client
 struct clmdep_msgpack::adaptor::object_with_zone<SpStaticClassDesc> {
     void operator()(clmdep_msgpack::object::with_zone& object_with_zone, SpStaticClassDesc const& sp_static_class_desc) const {
         std::map<std::string, clmdep_msgpack::object> objects;
-        Std::insert(objects, "static_class",        MsgpackUtils::toMsgpackObject(sp_static_class_desc.static_class_,          object_with_zone));
-        Std::insert(objects, "name",                MsgpackUtils::toMsgpackObject(sp_static_class_desc.name_,                  object_with_zone));
-        Std::insert(objects, "derived_classes",     MsgpackUtils::toMsgpackObject(sp_static_class_desc.derived_classes_,       object_with_zone));
-        Std::insert(objects, "derived_class_names", MsgpackUtils::toMsgpackObject(sp_static_class_desc.derived_class_names_,   object_with_zone));
-        Std::insert(objects, "function_descs",      MsgpackUtils::toMsgpackObject(sp_static_class_desc.function_descs_,        object_with_zone));
+        Std::insert(objects, "static_class",                MsgpackUtils::toMsgpackObject(sp_static_class_desc.static_class_,                object_with_zone));
+        Std::insert(objects, "name",                        MsgpackUtils::toMsgpackObject(sp_static_class_desc.name_,                        object_with_zone));
+        Std::insert(objects, "derived_to_base_classes",     MsgpackUtils::toMsgpackObject(sp_static_class_desc.derived_to_base_classes_,     object_with_zone));
+        Std::insert(objects, "derived_to_base_class_names", MsgpackUtils::toMsgpackObject(sp_static_class_desc.derived_to_base_class_names_, object_with_zone));
+        Std::insert(objects, "function_descs",              MsgpackUtils::toMsgpackObject(sp_static_class_desc.function_descs_,              object_with_zone));
         MsgpackUtils::setMsgpackObjectToMap(object_with_zone, objects);
     }
 };

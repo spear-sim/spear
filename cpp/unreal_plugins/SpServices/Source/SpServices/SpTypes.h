@@ -65,10 +65,10 @@ struct SpStaticStructDesc // exposed to Python via SpServices/MsgpackAdaptors.h
 
 struct SpStaticClassDesc // exposed to Python via SpServices/MsgpackAdaptors.h
 {
-    SpHandle static_class_;                 // SpHandle needed so SpStaticClassDesc can be serialized safely on the worker thread
+    SpHandle static_class_;                         // SpHandle needed so SpStaticClassDesc can be serialized safely on the worker thread
     std::string name_;
-    std::vector<SpHandle> derived_classes_; // SpHandle needed so SpStaticClassDesc can be serialized safely on the worker thread
-    std::vector<std::string> derived_class_names_;
+    std::vector<SpHandle> derived_to_base_classes_; // SpHandle needed so SpStaticClassDesc can be serialized safely on the worker thread; includes the class itself
+    std::vector<std::string> derived_to_base_class_names_;
     std::map<std::string, SpFunctionDesc> function_descs_;
 };
 

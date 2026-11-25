@@ -118,6 +118,6 @@ void USpUserInputComponent::setHandleUserInputFunc(const std::function<void(cons
 
 std::string USpUserInputComponent::getUniqueAxisNameFromUserInputName(const std::string& user_input_name) const
 {
-    bool include_unreal_name = true;
-    return UnrealUtils::getStableName(this, include_unreal_name) + ":" + user_input_name;
+    bool include_actor_stable_name = true;
+    return UnrealUtils::getStableName(this, include_actor_stable_name) + ":" + user_input_name;
 }

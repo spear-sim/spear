@@ -15,8 +15,6 @@
 #include <GameFramework/Actor.h>
 #include <Misc/CoreDelegates.h>
 #include <UObject/NameTypes.h>           // FName
-#include <UObject/Package.h>
-#include <UObject/SoftObjectPath.h>
 
 #include "SpCore/Assert.h"
 #include "SpCore/Unreal.h"
@@ -36,34 +34,34 @@
 
 bool ASpStableNameManager::hasActor(const AActor* actor) const
 {
-    FString id = Unreal::toFString(getStableIdString(actor));
+    FString id = Unreal::toFString(Unreal::getUnrealIdString(actor));
     return StableNames.Contains(id);
 }
 
 void ASpStableNameManager::addActor(const AActor* actor, const std::string& stable_name)
 {
-    FString id = Unreal::toFString(getStableIdString(actor));
+    FString id = Unreal::toFString(Unreal::getUnrealIdString(actor));
     SP_ASSERT(!StableNames.Contains(id));
     StableNames.Add(id, Unreal::toFString(stable_name));
 }
 
 void ASpStableNameManager::removeActor(const AActor* actor)
 {
-    FString id = Unreal::toFString(getStableIdString(actor));
+    FString id = Unreal::toFString(Unreal::getUnrealIdString(actor));
     SP_ASSERT(StableNames.Contains(id));
     StableNames.Remove(id);
 }
 
 std::string ASpStableNameManager::getStableName(const AActor* actor) const
 {
-    FString id = Unreal::toFString(getStableIdString(actor));
+    FString id = Unreal::toFString(Unreal::getUnrealIdString(actor));
     SP_ASSERT(StableNames.Contains(id));
     return Unreal::toStdString(StableNames[id]);
 }
 
 void ASpStableNameManager::setStableName(const AActor* actor, const std::string& stable_name)
 {
-    FString id = Unreal::toFString(getStableIdString(actor));
+    FString id = Unreal::toFString(Unreal::getUnrealIdString(actor));
     SP_ASSERT(StableNames.Contains(id));
     StableNames[id] = Unreal::toFString(stable_name);
 }
@@ -99,7 +97,7 @@ void ASpStableNameManager::setStableName(const AActor* actor, const std::string&
         SP_ASSERT(world == actor->GetWorld());
 
         if (world->IsEditorWorld() && !world->IsPreviewWorld() && !world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
-            FString id = Unreal::toFString(getStableIdString(actor));
+            FString id = Unreal::toFString(Unreal::getUnrealIdString(actor));
             FString stable_name = Unreal::toFString(UnrealUtils::resolveStableName(actor));
             if (StableNames.Contains(id)) {
                 
@@ -120,7 +118,7 @@ void ASpStableNameManager::setStableName(const AActor* actor, const std::string&
         SP_ASSERT(world == actor->GetWorld());
 
         if (world->IsEditorWorld() && !world->IsPreviewWorld() && !world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
-            FString id = Unreal::toFString(getStableIdString(actor));
+            FString id = Unreal::toFString(Unreal::getUnrealIdString(actor));
             FString stable_name = Unreal::toFString(UnrealUtils::resolveStableName(actor));
             SP_ASSERT(!StableNames.Contains(id));
             StableNames.Add(id, stable_name);
@@ -137,7 +135,7 @@ void ASpStableNameManager::setStableName(const AActor* actor, const std::string&
         SP_ASSERT(world == actor->GetWorld());
 
         if (world->IsEditorWorld() && !world->IsPreviewWorld() && !world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
-            FString id = Unreal::toFString(getStableIdString(actor));
+            FString id = Unreal::toFString(Unreal::getUnrealIdString(actor));
             FString stable_name = Unreal::toFString(UnrealUtils::resolveStableName(actor));
             SP_ASSERT(StableNames.Contains(id));
             StableNames[id] = stable_name;
@@ -156,38 +154,13 @@ void ASpStableNameManager::setStableName(const AActor* actor, const std::string&
         SP_ASSERT(world == actor->GetWorld());
 
         if (world->IsEditorWorld() && !world->IsPreviewWorld() && !world->IsGameWorld() && GEngine->GetWorldContextFromWorld(world)) {
-            FString id = Unreal::toFString(getStableIdString(actor));
+            FString id = Unreal::toFString(Unreal::getUnrealIdString(actor));
             SP_ASSERT(StableNames.Contains(id));
             StableNames.Remove(id);
         }
     }
 
 #endif
-
-std::string ASpStableNameManager::getStableIdString(const AActor* actor)
-{
-    SP_ASSERT(actor);
-
-    UWorld* world = actor->GetWorld();
-    SP_ASSERT(world);
-    SP_ASSERT(!world->IsPreviewWorld());
-    SP_ASSERT(GEngine->GetWorldContextFromWorld(world));
-
-    FSoftObjectPath soft_object_path = FSoftObjectPath(actor);
-
-    FString asset_path_string = soft_object_path.GetAssetPathString();
-    FString sub_path_string = soft_object_path.GetSubPathString();
-    FString non_pie_asset_path_string;
-
-    if (world->IsEditorWorld() && world->IsGameWorld()) {
-        FString pie_prefix = UWorld::BuildPIEPackagePrefix(actor->GetOutermost()->GetPIEInstanceID());
-        non_pie_asset_path_string = UWorld::StripPIEPrefixFromPackageName(asset_path_string, pie_prefix);
-    } else {
-        non_pie_asset_path_string = asset_path_string;
-    }
-
-    return Unreal::toStdString(non_pie_asset_path_string + ":" + sub_path_string);
-}
 
 //
 // USpStableNameComponent

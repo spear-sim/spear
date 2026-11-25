@@ -89,8 +89,8 @@ public:
                     // populate derived-to-base class chain (includes the class itself)
                     UClass* current_static_class = static_class;
                     while (current_static_class) {
-                        static_class_desc.derived_classes_.push_back(UnrealUtils::toHandle(current_static_class));
-                        static_class_desc.derived_class_names_.push_back(Unreal::getTypeAsString(current_static_class));
+                        static_class_desc.derived_to_base_classes_.push_back(UnrealUtils::toHandle(current_static_class));
+                        static_class_desc.derived_to_base_class_names_.push_back(Unreal::getTypeAsString(current_static_class));
                         current_static_class = current_static_class->GetSuperClass();
                     }
 
@@ -128,8 +128,8 @@ public:
                 // populate derived-to-base class chain (includes the class itself)
                 UClass* current_static_class = uclass_ptr;
                 while (current_static_class) {
-                    static_class_desc.derived_classes_.push_back(UnrealUtils::toHandle(current_static_class));
-                    static_class_desc.derived_class_names_.push_back(Unreal::getTypeAsString(current_static_class));
+                    static_class_desc.derived_to_base_classes_.push_back(UnrealUtils::toHandle(current_static_class));
+                    static_class_desc.derived_to_base_class_names_.push_back(Unreal::getTypeAsString(current_static_class));
                     current_static_class = current_static_class->GetSuperClass();
                 }
 

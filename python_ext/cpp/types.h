@@ -6,7 +6,7 @@
 #pragma once
 
 #include <stddef.h> // size_t
-#include <stdint.h> // uint8_t, uint64_t
+#include <stdint.h> // int32_t, int64_t, uint8_t, uint16_t, uint64_t
 
 #include <map>
 #include <span>
@@ -127,8 +127,8 @@ struct SpStaticClassDesc
 {
     SpHandle static_class_;
     std::string name_;
-    std::vector<SpHandle> derived_classes_;
-    std::vector<std::string> derived_class_names_;
+    std::vector<SpHandle> derived_to_base_classes_;
+    std::vector<std::string> derived_to_base_class_names_;
     std::map<std::string, SpFunctionDesc> function_descs_;
 };
 

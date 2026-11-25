@@ -37,9 +37,8 @@ class Launcher():
 
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
 
-            # Write a temp config file. We do this before checking LAUNCH_MODE in case the user wants to
-            # initialize the config system in the editor using the temp file that gets written here.
-            temp_dir = os.path.realpath(os.path.join(self._config.SPEAR.LAUNCHER.TEMP_DIR))
+            # Write a temp config file.
+            temp_dir = os.path.realpath(self._config.SPEAR.LAUNCHER.TEMP_DIR)
             temp_config_file = os.path.realpath(os.path.join(temp_dir, self._config.SPEAR.LAUNCHER.TEMP_CONFIG_FILE))
 
             spear.log("        Writing temp config file: ", temp_config_file)
@@ -136,7 +135,7 @@ class Launcher():
 
             spear.log("        Attempting to launch executable: ", launch_executable_internal)
             assert os.path.exists(launch_executable_internal)
-  
+
             # spear.tools.popen_unreal_cmd(...) only adds quotes around values that contain spaces, which matters
             # because Unreal doesn't parse quoted numerical values correctly (e.g., -resx="512").
             for arg, value in (self._config.SPEAR.LAUNCHER.COMMAND_LINE_ARGS).items():
@@ -184,7 +183,7 @@ class Launcher():
             pid = self._client.client.call("engine_globals_service.call_sync_on_worker_thread.get_current_process_id")
             if pid == self.process.pid:
                 spear.log("        Validated engine_globals_service.call_sync_on_worker_thread.get_current_process_id: ", pid)
-            else:            
+            else:
                 spear.log(f"        ERROR: engine_globals_service.call_sync_on_worker_thread.get_current_process_id returned {pid} but the PID of the process we just launched is {self.process.pid}. The Unreal Editor might be open already, or there might be another SpearSim executable running in the background. Close the Unreal Editor and other SpearSim executables and try launching again.")
                 self._client.terminate(log_prefix="        ")
                 self.kill(log_prefix="        ")
@@ -251,7 +250,6 @@ class Launcher():
             assert False
         elif self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
             try:
-                self.process.terminate()
                 self.process.kill()
             except psutil.NoSuchProcess:
                 spear.log(f"{log_prefix}    Process already terminated.")

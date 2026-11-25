@@ -505,8 +505,8 @@ private:
         SP_ASSERT(component);
 
         bool include_actor_stable_name = true;
-        bool include_actor_unreal_name = true;
-        std::string actor_and_component_name = UnrealUtils::getStableName(component, include_actor_stable_name, include_actor_unreal_name);
+        bool include_actor_unreal_id = true;
+        std::string actor_and_component_name = UnrealUtils::getStableName(component, include_actor_stable_name, include_actor_unreal_id);
 
         return Unreal::toStdString(world->GetPathName()) + ":" + actor_and_component_name + ":" + Std::toString(component->GetUniqueID()) + ":" + Std::toStringFromPtr(component);
     }

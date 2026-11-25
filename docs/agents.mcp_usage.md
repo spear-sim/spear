@@ -180,20 +180,20 @@ Concrete kwargs and return shapes for common helpers. See `examples/getting_star
 
 **Case convention:** Struct dicts use Unreal's C++ field names (e.g., `{"X", "Y", "Z"}`, `{"Pitch", "Yaw", "Roll"}`), both when they are returned by UFUNCTIONs and when you pass them in.
 
-**Name lookups are case-insensitive:** Unreal names (FNames) compare case-insensitively, and outside the editor the spelling Unreal returns for a name (e.g., a UFUNCTION parameter declared as `Result`) can be the first spelling registered in the process (e.g., `result`). So SPEAR looks up all names (e.g., class, struct, function, parameter, and property names) case-insensitively, and returns every dict with string keys (e.g., from `as_dict=True` and `get_properties_for_object(...)`, including nested dicts inside struct values, containers, and `TMap` values) as a `spear.CaseInsensitiveDict`. Unreal collapses JSON object keys that differ only by case, so when passing dicts to SPEAR, keys must not differ only by case (this is asserted), and a dict must not mix string and non-string keys. Always look up keys with the declared spelling (e.g., `return_values["Result"]`), and don't rely on the spelling of keys when iterating.
+**Name lookups are case-insensitive:** Unreal names (FNames) compare case-insensitively, and outside the editor the spelling Unreal returns for a name (e.g., a UFUNCTION parameter declared as `Result`) can be the first spelling registered in the process (e.g., `result`). So SPEAR looks up all names (e.g., class, struct, function, parameter, property, and component names) case-insensitively, and returns every dict with string keys (e.g., from `as_dict=True` and `get_properties_for_object(...)`, including nested dicts inside struct values, containers, and `TMap` values) as a `spear.CaseInsensitiveDict`. The exception is actor stable names (e.g., `"Meshes/05_chair/LivingRoom_Chair_01"`), which are compared case-sensitively, because an actor label is an `FString` rather than an `FName`. So `"actor:component"` paths match the actor part case-sensitively and the component part case-insensitively, dicts keyed by actor stable names (e.g., from `find_actors_*_as_dict(...)`) are plain dicts, and component dicts with `include_actor_stable_name=True` are `spear.CaseInsensitiveDict`s that compare the actor part of each key case-sensitively and the component part case-insensitively. Unreal collapses JSON object keys that differ only by case, so when passing dicts to SPEAR, keys must not differ only by case (this is asserted), and a dict must not mix string and non-string keys. Always look up keys with the declared spelling (e.g., `return_values["Result"]`), and don't rely on the spelling of keys when iterating.
 
 ### `game.unreal_service` / `editor.unreal_service`
 
 - `spawn_actor(uclass="ASpotLight", location={"X": 0.0, "Y": 0.0, "Z": 0.0}, rotation={"Pitch": 0.0, "Yaw": 0.0, "Roll": 0.0})` → Actor. `rotation` is optional and defaults to zeros.
 - `destroy_actor(actor=my_actor)` → None.
 - `find_actors_by_class(uclass="AStaticMeshActor")` → List of actors.
-- `find_actors_by_class_as_dict(uclass="AStaticMeshActor", include_unreal_name=False)` → Dict keyed by stable name.
+- `find_actors_by_class_as_dict(uclass="AStaticMeshActor", include_unreal_id=False)` → Dict keyed by stable name.
 - `find_actors_by_name(actor_name="my_light", uclass="ASpotLight")` → List (single `actor_name` string, not a list). `actor_name` is the stable name (e.g., `"Meshes/05_chair/LivingRoom_Chair_01"`), not the Unreal name (e.g., `"SM_chair_living_2"`).
 - `find_actor_by_name(actor_name="my_light", uclass="ASpotLight")` → Single actor (asserts exactly one match). `actor_name` is the stable name, same as above.
 - `load_class(uclass="AActor", name="/SpContent/Blueprints/BP_Axes.BP_Axes_C")` → UClass object that can be passed to other functions as a `uclass=` kwarg. Use when the shorthand `uclass="ASpotLight"` form won't resolve (e.g., for Blueprint classes).
 - `set_stable_name_for_actor(actor=my_actor, stable_name="my_light")` → None. Asserts if the stable name can't be stored; check `can_set_stable_name_for_actor(actor=my_actor)` → bool first.
 - `try_set_stable_name_for_actor(actor=my_actor, stable_name="my_light")` → bool. Sets the stable name if possible and returns whether it was set.
-- `get_stable_name_for_actor(actor=my_actor, include_unreal_name=False)` → Stable-name string.
+- `get_stable_name_for_actor(actor=my_actor, include_unreal_id=False)` → Stable-name string.
 - `get_component_by_class(actor=my_actor, uclass="USpotLightComponent")` → Component (asserts exactly one).
 - `get_components_by_class(actor=my_actor, uclass="UStaticMeshComponent")` → List of components.
 

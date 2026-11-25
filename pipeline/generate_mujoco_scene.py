@@ -64,7 +64,7 @@ def process_scene():
     with open(actors_json_file, "r") as f:
         actors_json = json.load(f)
 
-    actors = { actor_name: actor_kinematic_tree for actor_name, actor_kinematic_tree in actors_json.items() if actor_name.split(":")[0] not in ignore_actors }
+    actors = { actor_name: actor_kinematic_tree for actor_name, actor_kinematic_tree in actors_json.items() if actor_kinematic_tree["stable_name"] not in ignore_actors }
 
     meshes_element = xml.etree.ElementTree.Element("meshes")
     bodies_element = xml.etree.ElementTree.Element("bodies")
@@ -99,6 +99,7 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
         color = colorsys.hsv_to_rgb(np.random.uniform(), 0.8, 1.0)
     add_mujoco_elements_for_kinematic_tree_node(
         actor_name=actor_name,
+        actor_stable_name=kinematic_tree["stable_name"],
         kinematic_tree_node=kinematic_tree["root_node"],
         meshes_element=meshes_element,
         parent_element=bodies_element,
@@ -202,7 +203,7 @@ def add_mujoco_elements(actor_name, kinematic_tree, meshes_element, bodies_eleme
 #
 
 def add_mujoco_elements_for_kinematic_tree_node(
-    actor_name, kinematic_tree_node, meshes_element, parent_element, transform_world_from_parent_node, root_node, color, log_prefix_str):
+    actor_name, actor_stable_name, kinematic_tree_node, meshes_element, parent_element, transform_world_from_parent_node, root_node, color, log_prefix_str):
 
     kinematic_tree_node_name = kinematic_tree_node["name"]
     spear.log(f"{log_prefix_str}Processing kinematic tree node: {kinematic_tree_node_name}")
@@ -219,7 +220,7 @@ def add_mujoco_elements_for_kinematic_tree_node(
 
     # HACK: get dynamic-vs-static flag from the JSON data
 
-    if actor_name.startswith("Meshes/05_chair"):
+    if actor_stable_name.startswith("Meshes/05_chair"):
         body_type = "dynamic"
     else:
         body_type = "static"
@@ -228,7 +229,6 @@ def add_mujoco_elements_for_kinematic_tree_node(
 
     pos_offset = np.matrix([0.0, 0.0, 0.0]).T
 
-    actor_stable_name = actor_name.split(":")[0]
     if actor_stable_name == "Meshes/02_floor/Floor":
         pos_offset = np.matrix([0.0, 0.0, -14.0]).T
     if actor_stable_name == "Meshes/05_chair/Round_Table_Chair_03":
@@ -305,6 +305,7 @@ def add_mujoco_elements_for_kinematic_tree_node(
     for child_kinematic_tree_node in kinematic_tree_node["children_nodes"].values():
         add_mujoco_elements_for_kinematic_tree_node(
             actor_name=actor_name,
+            actor_stable_name=actor_stable_name,
             kinematic_tree_node=child_kinematic_tree_node["node"],
             meshes_element=meshes_element,
             parent_element=body_element,

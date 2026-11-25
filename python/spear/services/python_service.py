@@ -63,6 +63,7 @@ class PythonService(spear.Service):
             for message in self.evaluate_expression(expression=f"spear.editor.ScriptRunner.clear_log_messages(token='{token}')"):
                 spear.log("INFO (Unreal Editor): ", message)
             exception_text = self.evaluate_expression(expression=f"spear.editor.ScriptRunner.clear_exception(token='{token}')")
+            self.execute_statement(statement=f"spear.editor.ScriptRunner.destroy_token(token='{token}')")
         with engine_service.end_frame():
             pass
 
@@ -104,6 +105,7 @@ class PythonService(spear.Service):
             for message in self.evaluate_expression(expression=f"spear.editor.ScriptRunner.clear_log_messages(token='{token}')"):
                 spear.log("INFO (Unreal Editor): ", message)
             exception_text = self.evaluate_expression(expression=f"spear.editor.ScriptRunner.clear_exception(token='{token}')")
+            self.execute_statement(statement=f"spear.editor.ScriptRunner.destroy_token(token='{token}')")
         yield
         with engine_service.end_frame():
             pass
@@ -147,10 +149,11 @@ class PythonService(spear.Service):
             for message in self.evaluate_expression(expression=f"spear.editor.ScriptRunner.clear_log_messages(token='{token}')"):
                 spear.log("INFO (Unreal Editor): ", message)
             exception_text = self.evaluate_expression(expression=f"spear.editor.ScriptRunner.clear_exception(token='{token}')")
+            self.execute_statement(statement=f"spear.editor.ScriptRunner.destroy_token(token='{token}')")
             if outputs is None:
                 result = None
             else:
-                # resolved_outputs for consistency with the process_result closure in execute_string
+                # resolved_outputs for consistency with the convert_func closure in execute_string
                 if isinstance(outputs, list):
                     resolved_outputs = { name: {} for name in outputs }
                 elif isinstance(outputs, dict):
@@ -203,10 +206,11 @@ class PythonService(spear.Service):
             for message in self.evaluate_expression(expression=f"spear.editor.ScriptRunner.clear_log_messages(token='{token}')"):
                 spear.log("INFO (Unreal Editor): ", message)
             exception_text = self.evaluate_expression(expression=f"spear.editor.ScriptRunner.clear_exception(token='{token}')")
+            self.execute_statement(statement=f"spear.editor.ScriptRunner.destroy_token(token='{token}')")
             if outputs is None:
                 result = None
             else:
-                # resolved_outputs for consistency with the process_result closure in execute_string
+                # resolved_outputs for consistency with the convert_func closure in execute_string
                 if isinstance(outputs, list):
                     resolved_outputs = { name: {} for name in outputs }
                 elif isinstance(outputs, dict):
@@ -255,14 +259,14 @@ class PythonService(spear.Service):
 
         result = self.execute_python_command_ex(python_command=python_command, execution_mode="ExecuteFile", file_execution_scope=execution_scope)
 
-        def process_result(result):
+        def convert_func(result):
             for log_output in result["LogOutput"]:
                 spear.log(f"{log_output['Type'].upper()} (Unreal Editor): {log_output['Output'].strip()}")
             if not result["ReturnValue"]:
                 spear.log("ERROR (Unreal Editor): ", result["CommandResult"])
                 raise RuntimeError(result["CommandResult"])
 
-        return self._get_result(result=result, process_result_func=process_result)
+        return self._to_result(result=result, convert_func=convert_func)
 
     # Execute a string with optional strongly typed inputs and outputs. If called synchronously, returns
     # user-specified outputs in a dict. If called asynchronously, returns a spear.Future.
@@ -275,7 +279,7 @@ class PythonService(spear.Service):
 
         result = self.execute_python_command_ex(python_command=string, execution_mode="ExecuteFile", file_execution_scope="Public")
 
-        def process_result(result):
+        def convert_func(result):
             for log_output in result["LogOutput"]:
                 spear.log(f"{log_output['Type'].upper()} (Unreal Editor): {log_output['Output'].strip()}")
             if not result["ReturnValue"]:
@@ -294,7 +298,7 @@ class PythonService(spear.Service):
                     assert False
                 return { name: self.get(name=name, **args) for name, args in resolved_outputs.items() }
 
-        return self._get_result(result=result, process_result_func=process_result)
+        return self._to_result(result=result, convert_func=convert_func)
 
     # Execute a single statement. If called synchronously, returns nothing. If called asynchronously, returns
     # a spear.Future.
@@ -302,14 +306,14 @@ class PythonService(spear.Service):
         python_command = statement
         result = self.execute_python_command_ex(python_command=python_command, execution_mode="ExecuteStatement")
 
-        def process_result(result):
+        def convert_func(result):
             for log_output in result["LogOutput"]:
                 spear.log(f"{log_output['Type'].upper()} (Unreal Editor): {log_output['Output'].strip()}")
             if not result["ReturnValue"]:
                 spear.log("ERROR (Unreal Editor): ", result["CommandResult"])
                 raise RuntimeError(result["CommandResult"])
 
-        return self._get_result(result=result, process_result_func=process_result)
+        return self._to_result(result=result, convert_func=convert_func)
 
     # Evaluate a single expression. If called synchronously, returns a strongly typed result. If called
     # asynchronously, returns a spear.Future.
@@ -317,7 +321,7 @@ class PythonService(spear.Service):
         python_command = f"spear.editor.to_script_result(obj={expression})"
         result = self.execute_python_command_ex(python_command=python_command, execution_mode="EvaluateStatement")
 
-        def process_result(result):
+        def convert_func(result):
             for log_output in result["LogOutput"]:
                 spear.log(f"{log_output['Type'].upper()} (Unreal Editor): {log_output['Output'].strip()}")
             if result["ReturnValue"]:
@@ -333,23 +337,21 @@ class PythonService(spear.Service):
                 spear.log("ERROR (Unreal Editor): ", result["CommandResult"])
                 raise RuntimeError(result["CommandResult"])
 
-        return self._get_result(result=result, process_result_func=process_result)
+        return self._to_result(result=result, convert_func=convert_func)
 
     # Exposes the low-level UFUNCTION used to interact with Editor Python. Most users will not need to call
-    # this function directly. 
+    # this function directly.
     def execute_python_command_ex(self, python_command, execution_mode="ExecuteFile", file_execution_scope="Private"):
         return self.cdo.UPythonScriptLibrary.ExecutePythonCommandEx(PythonCommand=python_command, ExecutionMode=execution_mode, FileExecutionScope=file_execution_scope, as_dict=True)
 
-    def _get_result(self, result, process_result_func):
+    # PythonService calls a cdo UFUNCTION rather than an entry point, so it can't pass convert_func to an
+    # EntryPointCaller. Instead, we apply convert_func to the result directly, or, if the cdo was called via
+    # call_async, we apply convert_func when Future.get() is called via Future.apply_last(...).
+    def _to_result(self, result, convert_func):
         if isinstance(result, dict):
-            return process_result_func(result)
+            return convert_func(result=result)
         elif isinstance(result, spear.Future):
-            inner_convert_func = result.convert_func
-            def convert_func(o):
-                if inner_convert_func is not None:
-                    o = inner_convert_func(o)
-                return process_result_func(o)
-            result.convert_func = convert_func
+            result.apply_last(convert_func=convert_func)
             return result
         else:
             assert False

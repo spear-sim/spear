@@ -54,8 +54,6 @@ public:
     #endif
 
 private:
-    static std::string getStableIdString(const AActor* actor);
-
     UPROPERTY(VisibleAnywhere, Category="SPEAR")
     TMap<FString, FString> StableNames;
 };

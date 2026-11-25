@@ -6,7 +6,7 @@
 #pragma once
 
 #include <stddef.h> // size_t
-#include <stdint.h> // int64_t, uint16_t
+#include <stdint.h> // int64_t, uint16_t, uint32_t
 
 #include <algorithm> // std::max
 #include <exception> // std::exception
@@ -14,14 +14,19 @@
 #include <map>
 #include <memory>    // std::make_unique, std::unique_ptr
 #include <string>
+#include <utility>   // std::move
 #include <vector>
 
 #include <nanobind/nanobind.h>
 
 #include <rpc/client.h>
+#include <rpc/msgpack.hpp>         // clmdep_msgpack, MSGPACK_ZONE_ALIGNOF
+#include <rpc/nonstd/optional.hpp> // nonstd::optional
 
 #include "assert.h"
+#include "boost.h"
 #include "func_signature_registry.h"
+#include "msgpack_adaptors.h"
 #include "shared_memory.h"
 #include "types.h"
 

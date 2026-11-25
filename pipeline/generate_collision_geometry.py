@@ -47,7 +47,8 @@ def generate_collision_geometry(actor_name, kinematic_tree):
         "root_node": generate_collision_geometry_for_kinematic_tree_node(
             actor_name=actor_name,
             kinematic_tree_node=kinematic_tree["root_node"],
-            log_prefix_str="    ")}
+            log_prefix_str="    "),
+        "stable_name": kinematic_tree["stable_name"]}
 
 def generate_collision_geometry_for_kinematic_tree_node(actor_name, kinematic_tree_node, log_prefix_str):
 

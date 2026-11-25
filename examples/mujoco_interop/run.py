@@ -108,7 +108,7 @@ if __name__ == "__main__":
     # initialize actors and components
     with sp_instance.begin_frame():
 
-        ue_actors = sp_game.unreal_service.find_actors_as_dict(include_unreal_name=True)
+        ue_actors = sp_game.unreal_service.find_actors_as_dict(include_unreal_id=True)
         ue_actors = { ue_actor_name: ue_actor for ue_actor_name, ue_actor in ue_actors.items() if ue_actor_name.startswith(name_prefix) }
 
         # get player controller

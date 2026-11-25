@@ -155,6 +155,15 @@ class ScriptRunner:
         ScriptRunner._log_messages[token] = []
         return log_messages
 
+    # Called by SPEAR after the script has finished and its exception and log messages have been retrieved.
+    # Destroys all state associated with the token. We don't assert that the token is complete, because if
+    # the script ran synchronously, then no ScriptRunner claimed the token, so it was never marked complete.
+    @staticmethod
+    def destroy_token(token):
+        del ScriptRunner._tokens[token]
+        del ScriptRunner._exceptions[token]
+        del ScriptRunner._log_messages[token]
+
     # Called by tick callbacks to get the most recent delta time.
     @staticmethod
     def get_delta_time():
@@ -176,6 +185,7 @@ def get_script_delta_time():
 asset_registry = unreal.AssetRegistryHelpers.get_asset_registry()
 asset_tools = unreal.AssetToolsHelpers.get_asset_tools()
 editor_actor_subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+unreal_editor_subsystem = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
 subobject_data_subsystem = unreal.get_engine_subsystem(unreal.SubobjectDataSubsystem)
 
 editor_properties_csv_file = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "data", "editor_properties.csv"))
@@ -206,7 +216,6 @@ def get_components(actor, component_class=unreal.ActorComponent):
     # add main component hierarchy
     if actor.root_component is not None:
         candidate_components = [actor.root_component] + list(actor.root_component.get_children_components(include_all_descendants=True))
-        candidate_components = [ c for c in candidate_components if get_stable_name_for_component(component=c) not in component_names ]
         candidate_components = [ c for c in candidate_components if isinstance(c, component_class) ]
         components = components + candidate_components
         component_names = component_names + [ get_stable_name_for_component(component=c) for c in candidate_components ]
@@ -215,7 +224,6 @@ def get_components(actor, component_class=unreal.ActorComponent):
     # adding any components redundantly
     candidate_components = actor.get_components_by_class(component_class=component_class)
     candidate_components = [ c for c in candidate_components if get_stable_name_for_component(component=c) not in component_names ]
-    candidate_components = [ c for c in candidate_components if isinstance(c, component_class) ]
     components = components + candidate_components
     component_names = component_names + [ get_stable_name_for_component(component=c) for c in candidate_components ]
 
@@ -223,29 +231,31 @@ def get_components(actor, component_class=unreal.ActorComponent):
 
 def get_component(stable_name, actor=None):
     if actor is None:
-        stable_actor_name, stable_component_name = stable_name.split(":")
+        # Actor stable names can contain ":", but component names can't, so we split stable_name on the last ":".
+        stable_actor_name, stable_component_name = stable_name.rsplit(":", 1)
         actor = find_actor(stable_name=stable_actor_name)
     else:
         stable_component_name = stable_name
-    components = [ c for c in get_components(actor=actor) if get_stable_name_for_component(component=c) == stable_component_name ]
+    components = [ c for c in get_components(actor=actor) if get_stable_name_for_component(component=c).lower() == stable_component_name.lower() ] # case-insensitive comparison
     if len(components) == 1:
         return components[0]
     else:
         return None
 
-def get_stable_name_for_actor(actor, include_unreal_name=False):
+def get_stable_name_for_actor(actor, include_unreal_id=False):
     folder_path = actor.get_folder_path()
     if folder_path.is_none():
         stable_name = actor.get_actor_label()
     else:
         stable_name = posixpath.join(str(folder_path), actor.get_actor_label())
 
-    if include_unreal_name:
+    if include_unreal_id:
+        assert actor.get_world() == unreal_editor_subsystem.get_editor_world() # get_path_name() would include a PIE prefix in a PIE game
         if stable_name != "":
             sep = ":"
         else:
             sep = ""
-        stable_name = stable_name + sep + actor.get_name()
+        stable_name = stable_name + sep + actor.get_path_name() # equivalent to Unreal::getUnrealIdString(...) in C++, because we're not in a PIE game
 
     return stable_name
 
@@ -331,7 +341,7 @@ def get_subobject_desc_for_data_handle(subobject_data_handle):
 #
 
 def get_actor_desc(actor):
-    actor_name = get_stable_name_for_actor(actor=actor, include_unreal_name=True)
+    actor_name = get_stable_name_for_actor(actor=actor, include_unreal_id=True)
     spear.log("Processing actor: ", actor_name)
 
     root_component = actor.get_editor_property(name="root_component")
@@ -349,10 +359,10 @@ def get_actor_desc(actor):
         "class": actor.__class__.__name__,
         "debug_info": {"str": str(actor)},
         "editor_properties": get_editor_property_descs(uobject=actor, recurse_into_objects=True),
-        "name": get_stable_name_for_actor(actor=actor, include_unreal_name=True),
+        "name": get_stable_name_for_actor(actor=actor, include_unreal_id=True),
         "other_components": { get_stable_name_for_component(component=c): get_component_desc(component=c) for c in other_components },
         "root_component": get_component_desc(component=root_component),
-        "stable_name": get_stable_name_for_actor(actor=actor, include_unreal_name=False),
+        "stable_name": get_stable_name_for_actor(actor=actor, include_unreal_id=False),
         "unreal_name": actor.get_name()}
 
 def get_component_desc(component):
@@ -474,8 +484,8 @@ def get_value_desc(value, recurse_into_objects):
         return {
             "class": value.__class__.__name__,
             "debug_info": {"str": str(value)},
-            "name": get_stable_name_for_actor(actor=value, include_unreal_name=True),
-            "stable_name": get_stable_name_for_actor(actor=value, include_unreal_name=False),
+            "name": get_stable_name_for_actor(actor=value, include_unreal_id=True),
+            "stable_name": get_stable_name_for_actor(actor=value, include_unreal_id=False),
             "unreal_name": value.get_name()}
 
     elif isinstance(value, unreal.ActorComponent):
@@ -692,11 +702,13 @@ def to_spear_transform_from_unreal_transform(unreal_transform):
         "Rotation": to_spear_quat_from_unreal_quat(unreal_quat=unreal_transform.get_editor_property(name="rotation")),
         "Scale3D": to_spear_vector_from_unreal_vector(unreal_vector=unreal_transform.get_editor_property(name="scale3d"))}
 
+# The unreal.Transform(...) constructor expects an unreal.Rotator, so we set the unreal.Quat directly instead.
 def to_unreal_transform_from_spear_transform(spear_transform):
-    return unreal.Transform(
-        location=to_unreal_vector_from_spear_vector(spear_vector=spear_transform["Translation"]),
-        rotation=to_unreal_quat_from_spear_quat(spear_quat=spear_transform["Rotation"]),
-        scale=to_unreal_vector_from_spear_vector(spear_vector=spear_transform["Scale3D"]))
+    unreal_transform = unreal.Transform()
+    unreal_transform.set_editor_property(name="translation", value=to_unreal_vector_from_spear_vector(spear_vector=spear_transform["Translation"]))
+    unreal_transform.set_editor_property(name="rotation", value=to_unreal_quat_from_spear_quat(spear_quat=spear_transform["Rotation"]))
+    unreal_transform.set_editor_property(name="scale3d", value=to_unreal_vector_from_spear_vector(spear_vector=spear_transform["Scale3D"]))
+    return unreal_transform
 
 # unreal.Vector
 
@@ -808,10 +820,13 @@ def get_filesystem_path_from_content_path(content_path):
 
 
 #
-# Interoperability between SPEAR Python and Editor Python
+# Converters for interoperability between SPEAR Python and Editor Python
 #
 
-# Decode a {type_string, value} script expression dict into an Editor Python object.
+# For passing values from SPEAR Python to Editor Python. Decode a {type_string, value} script expression dict,
+# produced in SPEAR Python by spear.to_script_expr(...), into an Editor Python object. Called when the expression
+# strings returned by spear.to_script_expr(...) are evaluated in Editor Python.
+
 def from_script_expr(script_expr_dict):
     type_string = script_expr_dict["type_string"]
     value = script_expr_dict["value"]
@@ -839,7 +854,10 @@ def from_script_expr(script_expr_dict):
     else:
         return value
 
-# Encode an Editor Python object into a script result string.
+# For passing values from Editor Python to SPEAR Python. Encode an Editor Python object into a {type_string, value}
+# script result JSON string, which is decoded in SPEAR Python by spear.from_script_result(...). Used by
+# PythonService.evaluate_expression(...), which wraps its expression in spear.editor.to_script_result(...).
+
 def to_script_result(obj):
     result = _to_script_result_dict(obj=obj)
     return json.dumps(result)
@@ -889,7 +907,11 @@ def _to_script_result_value(obj):
 
 
 #
-# Client
+# Client. Mirrors the spear_ext client (see python_ext/cpp/client.h), and is responsible for converting between Python
+# types and the msgpack representation expected by the server. For args, the client encodes strings as bytes, converts
+# ClientStruct types to dicts, and converts SpPackedArray types to dicts with raw byte data. For return values, the client
+# decodes bytes as strings, converts dicts to ClientStruct types, and converts raw byte data to NumPy arrays. The client
+# is not responsible for any higher-level conversions, e.g., JSON strings are returned as strings.
 #
 
 _to_data_type = {
@@ -913,9 +935,32 @@ class Client:
         self.verbose_rpc_calls = False
         self._client = msgpackrpc.Client(msgpackrpc.Address(address, port), timeout=timeout, reconnect_limit=reconnect_limit)
 
+        # Custom converters for args that can't be converted generically by _to_arg(...), keyed by Python type.
+        self._arg_converters = {
+            SpPackedArray: self._to_sp_packed_array_arg}
+
+        # Custom converters for return values that can't be converted generically by _to_return_value(...), keyed by
+        # return_as string. Keep sorted in the same order as the ClientStruct classes below. The return_as strings need to
+        # match the s_type_names_ values in cpp/unreal_plugins/SpServices/Source/SpServices/FuncSignatureRegistry.h
+        self._return_value_converters = {
+            "sp_output_log_messages":      self._to_sp_output_log_messages_return_value,
+            "sp_shared_memory_view":       self._to_sp_shared_memory_view_return_value,
+            "sp_packed_array":             self._to_sp_packed_array_return_value,
+            "sp_array_shared_memory_view": self._to_sp_array_shared_memory_view_return_value,
+            "sp_func_data_bundle":         self._to_sp_func_data_bundle_return_value,
+            "sp_handle":                   self._to_sp_handle_return_value,
+            "sp_property_desc":            self._to_sp_property_desc_return_value,
+            "sp_property_value":           self._to_sp_property_value_return_value,
+            "sp_func_signature_desc":      self._to_sp_func_signature_desc_return_value,
+            "sp_future":                   self._to_sp_future_return_value,
+            "sp_function_desc":            self._to_sp_function_desc_return_value, # never returned directly by an entry point, only nested inside SpStaticClassDesc::function_descs
+            "sp_static_struct_desc":       self._to_sp_static_struct_desc_return_value,
+            "sp_static_class_desc":        self._to_sp_static_class_desc_return_value,
+            "sp_world_desc":               self._to_sp_world_desc_return_value}
+
     def initialize(self):
         result = self._client.call("engine_service.call_sync_on_worker_thread.get_entry_point_signature_descs")
-        self.entry_point_signature_descs = self._to_return_values(obj=result, return_as="map_of_string_to_sp_func_signature_desc")
+        self.entry_point_signature_descs = self._to_return_value(return_value=result, return_as="map_of_string_to_sp_func_signature_desc")
 
     def terminate(self):
         self._client.close()
@@ -932,7 +977,7 @@ class Client:
 
     def ping(self):
         result = self._client.call("engine_globals_service.call_sync_on_worker_thread.ping")
-        return self._to_str(obj=result)
+        return self._to_return_value(return_value=result, return_as="string")
 
     def is_server_local(self):
         return True
@@ -951,151 +996,179 @@ class Client:
         # Python doesn't provide an atomic read-modify-write operation. So the server-side fences in
         # RpcServer::bindImpl(...) are not paired with corresponding fences here, and it is not strictly
         # guaranteed that memory operations on shared memory are ordered across this client and the server.
-        result = self._client.call(func_name, *[self._to_args(obj=arg) for arg in args])
-        return_value = self._to_return_values(obj=result, return_as=return_as)
+        args = self._to_args(args=args)
+        return_value = self._client.call(func_name, *args)
+        return_value = self._to_return_value(return_value=return_value, return_as=return_as)
         if self.verbose_rpc_calls:
             spear.log(f"Obtained return value: {return_value}")
         return return_value
 
-    def _to_args(self, obj):
-        if isinstance(obj, str):
-            return obj.encode("utf-8")
-        elif isinstance(obj, spear.SpPackedArray):
-            sp_packed_array_arg = self._to_sp_packed_array_arg(sp_packed_array=obj)
-            return self._to_args(obj=sp_packed_array_arg)
-        elif isinstance(obj, ClientStruct):
-            return { attribute_name: self._to_args(obj=attribute_value) for attribute_name, attribute_value in vars(obj).items() }
-        elif isinstance(obj, list):
-            return [ self._to_args(obj=o) for o in obj ]
-        elif isinstance(obj, dict):
-            return { self._to_args(obj=k): self._to_args(obj=v) for k, v in obj.items() }
-        else:
-            return obj
+    #
+    # Args
+    #
 
-    def _to_sp_packed_array_arg(self, sp_packed_array):
-        assert isinstance(sp_packed_array.data, np.ndarray)
-        assert sp_packed_array.data_type == ""
-        data_type = _to_data_type[np.dtype(sp_packed_array.data.dtype)]
-        if sp_packed_array.data_source == "Internal":
-            data = sp_packed_array.data.tobytes()
-        elif sp_packed_array.data_source == "Shared":
+    def _to_args(self, args):
+        return [ self._to_arg(arg=arg) for arg in args ]
+
+    def _to_arg(self, arg):
+        if isinstance(arg, str):
+            return self._to_str_arg(arg=arg)
+        elif type(arg) in self._arg_converters:
+            return self._to_arg(arg=self._arg_converters[type(arg)](arg=arg))
+        elif isinstance(arg, ClientStruct):
+            return { self._to_arg(arg=attribute_name): self._to_arg(arg=attribute_value) for attribute_name, attribute_value in vars(arg).items() }
+        elif isinstance(arg, list):
+            return [ self._to_arg(arg=a) for a in arg ]
+        elif isinstance(arg, dict):
+            return { self._to_arg(arg=k): self._to_arg(arg=v) for k, v in arg.items() }
+        else:
+            return arg
+
+    def _to_str_arg(self, arg):
+        return arg.encode("utf-8")
+
+    # Custom arg converters
+
+    def _to_sp_packed_array_arg(self, arg):
+        assert isinstance(arg.data, np.ndarray)
+        data_type = _to_data_type[np.dtype(arg.data.dtype)]
+        if arg.data_source == "Internal":
+            data = arg.data.tobytes()
+        elif arg.data_source == "Shared":
             data = b""
         else:
             assert False
-        return {"data": data, "data_source": sp_packed_array.data_source, "shape": sp_packed_array.shape, "data_type": data_type, "shared_memory_name": sp_packed_array.shared_memory_name}
+        return {"data": data, "data_source": arg.data_source, "shape": arg.shape, "data_type": data_type, "shared_memory_name": arg.shared_memory_name}
 
     #
-    # The return_as strings used in _to_return_values(...) need to match the s_type_names_ values in:
+    # Return values. The return_as strings used in _to_return_value(...) need to match the s_type_names_ values in:
     #     cpp/unreal_plugins/SpServices/Source/SpServices/FuncSignatureRegistry.h
     #
 
-    def _to_return_values(self, obj, return_as):
-        if return_as in ["void", "bool", "float", "int32", "int64", "uint64"]:
-            return obj
-        elif return_as in ["string", "vector_of_string", "map_of_string_to_string"]:
-            return self._to_str(obj=obj)
-        elif return_as == "vector_of_sp_handle":
-            obj = self._to_dict(obj=obj)
-            return [ self._to_sp_handle(obj=v) for v in obj ]
-        elif return_as == "vector_of_sp_static_struct_desc":
-            obj = self._to_dict(obj=obj)
-            return [ SpStaticStructDesc(static_struct=self._to_sp_handle(obj=v["static_struct"]), name=self._to_str(obj=v["name"])) for v in obj ]
-        elif return_as == "vector_of_sp_static_class_desc":
-            obj = self._to_dict(obj=obj)
-            return [ self._to_sp_static_class_desc(obj=v) for v in obj ]
-        elif return_as == "map_of_string_to_sp_packed_array":
-            obj = self._to_dict(obj=obj)
-            return { k: self._to_sp_packed_array_return_value(obj=v) for k, v in obj.items() }
-        elif return_as == "map_of_string_to_sp_array_shared_memory_view":
-            obj = self._to_dict(obj=obj)
-            return { k: SpArraySharedMemoryView(id=self._to_str(obj=v["id"]), num_bytes=v["num_bytes"], offset_bytes=v["offset_bytes"], usage_flags=self._to_str(obj=v["usage_flags"]), name=self._to_str(obj=v["name"])) for k, v in obj.items() }
-        elif return_as == "map_of_string_to_sp_handle":
-            obj = self._to_dict(obj=obj)
-            return { k: self._to_sp_handle(obj=v) for k, v in obj.items() }
-        elif return_as == "map_of_string_to_sp_property_value":
-            obj = self._to_dict(obj=obj)
-            return { k: SpPropertyValue(value=self._to_str(obj=v["value"]), type_id=self._to_str(obj=v["type_id"])) for k, v in obj.items() }
-        elif return_as == "map_of_string_to_sp_func_signature_desc":
-            obj = self._to_dict(obj=obj)
-            return { self._to_str(obj=k): SpFuncSignatureDesc(name=self._to_str(obj=v["name"]), type_ids=v["type_ids"], type_names=self._to_str(obj=v["type_names"])) for k, v in obj.items() }
-        elif return_as == "map_of_string_to_sp_world_desc":
-            obj = self._to_dict(obj=obj)
-            return { k: SpWorldDesc(world=self._to_sp_handle(obj=v["world"]), world_id=v["world_id"], is_editor_world=v["is_editor_world"], is_game_world=v["is_game_world"], is_playing=v["is_playing"]) for k, v in obj.items() }
-        elif return_as == "sp_output_log_messages":
-            obj = self._to_dict(obj=obj)
-            return SpOutputLogMessages(messages=self._to_str(obj=obj["messages"]), num_evicted=obj["num_evicted"])
-        elif return_as == "sp_shared_memory_view":
-            obj = self._to_dict(obj=obj)
-            return SpSharedMemoryView(id=self._to_str(obj=obj["id"]), num_bytes=obj["num_bytes"], offset_bytes=obj["offset_bytes"])
-        elif return_as == "sp_packed_array":
-            obj = self._to_dict(obj=obj)
-            return self._to_sp_packed_array_return_value(obj=obj)
-        elif return_as == "sp_array_shared_memory_view":
-            obj = self._to_dict(obj=obj)
-            return SpArraySharedMemoryView(id=self._to_str(obj=obj["id"]), num_bytes=obj["num_bytes"], offset_bytes=obj["offset_bytes"], usage_flags=self._to_str(obj=obj["usage_flags"]), name=self._to_str(obj=obj["name"]))
-        elif return_as == "sp_func_data_bundle":
-            obj = self._to_dict(obj=obj)
-            return spear.SpFuncDataBundle(packed_arrays={ k: self._to_sp_packed_array_return_value(obj=v) for k, v in obj["packed_arrays"].items() }, unreal_obj_strings=self._to_str(obj=obj["unreal_obj_strings"]), info=self._to_str(obj=obj["info"]))
-        elif return_as == "sp_handle":
-            obj = self._to_dict(obj=obj)
-            return self._to_sp_handle(obj=obj)
-        elif return_as == "sp_property_desc":
-            obj = self._to_dict(obj=obj)
-            return SpPropertyDesc(property=obj["property"], value_ptr=obj["value_ptr"], type_id=self._to_str(obj=obj["type_id"]), notify_objects=[ self._to_sp_handle(obj=o) for o in obj["notify_objects"] ], notify_member_properties=obj["notify_member_properties"], notify_element_properties=obj["notify_element_properties"], notify_array_indices=obj["notify_array_indices"], notify_map_keys=self._to_str(obj=obj["notify_map_keys"]))
-        elif return_as == "sp_property_value":
-            obj = self._to_dict(obj=obj)
-            return SpPropertyValue(value=self._to_str(obj=obj["value"]), type_id=self._to_str(obj=obj["type_id"]))
-        elif return_as == "sp_future":
-            obj = self._to_dict(obj=obj)
-            return SpFuture(future_ptr=obj["future_ptr"], type_id=self._to_str(obj=obj["type_id"]))
-        elif return_as == "sp_static_struct_desc":
-            obj = self._to_dict(obj=obj)
-            return SpStaticStructDesc(static_struct=self._to_sp_handle(obj=obj["static_struct"]), name=self._to_str(obj=obj["name"]))
-        elif return_as == "sp_static_class_desc":
-            obj = self._to_dict(obj=obj)
-            return self._to_sp_static_class_desc(obj=obj)
-        elif return_as == "sp_world_desc":
-            obj = self._to_dict(obj=obj)
-            return SpWorldDesc(world=self._to_sp_handle(obj=obj["world"]), world_id=obj["world_id"], is_editor_world=obj["is_editor_world"], is_game_world=obj["is_game_world"], is_playing=obj["is_playing"])
+    def _to_return_value(self, return_value, return_as):
+        if return_as == "string":
+            return self._to_str_return_value(return_value=return_value)
+        elif return_as in self._return_value_converters:
+            return_value = { self._to_str_return_value(return_value=k): v for k, v in return_value.items() }
+            return self._return_value_converters[return_as](return_value=return_value)
+        elif return_as.startswith("vector_of_"):
+            value_return_as = return_as.removeprefix("vector_of_")
+            return [ self._to_return_value(return_value=v, return_as=value_return_as) for v in return_value ]
+        elif return_as.startswith("map_of_"):
+            key_return_as, value_return_as = return_as.removeprefix("map_of_").split("_to_", 1)
+            return { self._to_return_value(return_value=k, return_as=key_return_as): self._to_return_value(return_value=v, return_as=value_return_as) for k, v in return_value.items() }
+        else:
+            assert return_as in ["void", "bool", "float", "int32", "int64", "uint64"]
+            return return_value
+
+    # Custom return value converters
+
+    def _to_sp_output_log_messages_return_value(self, return_value):
+        return SpOutputLogMessages(
+            messages=self._to_return_value(return_value=return_value["messages"], return_as="vector_of_string"),
+            num_evicted=return_value["num_evicted"])
+
+    def _to_sp_shared_memory_view_return_value(self, return_value):
+        return SpSharedMemoryView(
+            id=self._to_str_return_value(return_value=return_value["id"]),
+            num_bytes=return_value["num_bytes"],
+            offset_bytes=return_value["offset_bytes"])
+
+    def _to_sp_packed_array_return_value(self, return_value):
+        data_source = self._to_str_return_value(return_value=return_value["data_source"])
+        dtype = _to_dtype[self._to_str_return_value(return_value=return_value["data_type"])]
+        if data_source == "Internal":
+            data = np.frombuffer(return_value["data"], dtype=dtype, count=-1).reshape(return_value["shape"])
+        elif data_source == "Shared":
+            data = np.array([], dtype=dtype)
         else:
             assert False
+        return SpPackedArray(
+            data=data,
+            data_source=data_source,
+            shape=return_value["shape"],
+            shared_memory_name=self._to_str_return_value(return_value=return_value["shared_memory_name"]))
 
-    def _to_sp_handle(self, obj):
-        return SpHandle(ptr=obj["ptr"], object_index=obj["object_index"], object_serial_number=obj["object_serial_number"])
+    def _to_sp_array_shared_memory_view_return_value(self, return_value):
+        return SpArraySharedMemoryView(
+            id=self._to_str_return_value(return_value=return_value["id"]),
+            num_bytes=return_value["num_bytes"],
+            offset_bytes=return_value["offset_bytes"],
+            usage_flags=self._to_return_value(return_value=return_value["usage_flags"], return_as="vector_of_string"),
+            name=self._to_str_return_value(return_value=return_value["name"]))
 
-    def _to_sp_static_class_desc(self, obj):
-        function_descs = {}
-        for k, v in obj.get("function_descs", {}).items():
-            function_descs[self._to_str(obj=k)] = SpFunctionDesc(function=self._to_sp_handle(obj=v["function"]), function_name=self._to_str(obj=v["function_name"]), static_class=self._to_sp_handle(obj=v["static_class"]), static_class_name=self._to_str(obj=v["static_class_name"]))
-        return SpStaticClassDesc(static_class=self._to_sp_handle(obj=obj["static_class"]), name=self._to_str(obj=obj["name"]), derived_classes=[ self._to_sp_handle(obj=v) for v in obj.get("derived_classes", []) ], derived_class_names=self._to_str(obj=obj.get("derived_class_names", [])), function_descs=function_descs)
+    def _to_sp_func_data_bundle_return_value(self, return_value):
+        return SpFuncDataBundle(
+            packed_arrays=self._to_return_value(return_value=return_value["packed_arrays"], return_as="map_of_string_to_sp_packed_array"),
+            unreal_obj_strings=self._to_return_value(return_value=return_value["unreal_obj_strings"], return_as="map_of_string_to_string"),
+            info=self._to_str_return_value(return_value=return_value["info"]))
 
-    def _to_str(self, obj):
-        if isinstance(obj, bytes):
-            return obj.decode("utf-8")
-        elif isinstance(obj, list):
-            return [ self._to_str(obj=v) for v in obj ]
-        elif isinstance(obj, dict):
-            return { self._to_str(obj=k): self._to_str(obj=v) for k, v in obj.items() }
+    def _to_sp_handle_return_value(self, return_value):
+        return SpHandle(
+            ptr=return_value["ptr"],
+            object_index=return_value["object_index"],
+            object_serial_number=return_value["object_serial_number"])
+
+    def _to_sp_property_desc_return_value(self, return_value):
+        return SpPropertyDesc(
+            property=return_value["property"],
+            value_ptr=return_value["value_ptr"],
+            type_id=self._to_str_return_value(return_value=return_value["type_id"]),
+            notify_objects=self._to_return_value(return_value=return_value["notify_objects"], return_as="vector_of_sp_handle"),
+            notify_member_properties=return_value["notify_member_properties"],
+            notify_element_properties=return_value["notify_element_properties"],
+            notify_array_indices=return_value["notify_array_indices"],
+            notify_map_keys=self._to_return_value(return_value=return_value["notify_map_keys"], return_as="vector_of_string"))
+
+    def _to_sp_property_value_return_value(self, return_value):
+        return SpPropertyValue(
+            value=self._to_str_return_value(return_value=return_value["value"]),
+            type_id=self._to_str_return_value(return_value=return_value["type_id"]))
+
+    def _to_sp_func_signature_desc_return_value(self, return_value):
+        return SpFuncSignatureDesc(
+            name=self._to_str_return_value(return_value=return_value["name"]),
+            type_ids=return_value["type_ids"],
+            type_names=self._to_return_value(return_value=return_value["type_names"], return_as="vector_of_string"))
+
+    def _to_sp_future_return_value(self, return_value):
+        return SpFuture(
+            future_ptr=return_value["future_ptr"],
+            type_id=self._to_str_return_value(return_value=return_value["type_id"]))
+
+    def _to_sp_function_desc_return_value(self, return_value):
+        return SpFunctionDesc(
+            function=self._to_return_value(return_value=return_value["function"], return_as="sp_handle"),
+            function_name=self._to_str_return_value(return_value=return_value["function_name"]),
+            static_class=self._to_return_value(return_value=return_value["static_class"], return_as="sp_handle"),
+            static_class_name=self._to_str_return_value(return_value=return_value["static_class_name"]))
+
+    def _to_sp_static_struct_desc_return_value(self, return_value):
+        return SpStaticStructDesc(
+            static_struct=self._to_return_value(return_value=return_value["static_struct"], return_as="sp_handle"),
+            name=self._to_str_return_value(return_value=return_value["name"]))
+
+    def _to_sp_static_class_desc_return_value(self, return_value):
+        return SpStaticClassDesc(
+            static_class=self._to_return_value(return_value=return_value["static_class"], return_as="sp_handle"),
+            name=self._to_str_return_value(return_value=return_value["name"]),
+            derived_to_base_classes=self._to_return_value(return_value=return_value.get("derived_to_base_classes", []), return_as="vector_of_sp_handle"),
+            derived_to_base_class_names=self._to_return_value(return_value=return_value.get("derived_to_base_class_names", []), return_as="vector_of_string"),
+            function_descs=self._to_return_value(return_value=return_value.get("function_descs", {}), return_as="map_of_string_to_sp_function_desc"))
+
+    def _to_sp_world_desc_return_value(self, return_value):
+        return SpWorldDesc(
+            world=self._to_return_value(return_value=return_value["world"], return_as="sp_handle"),
+            world_id=return_value["world_id"],
+            is_editor_world=return_value["is_editor_world"],
+            is_game_world=return_value["is_game_world"],
+            is_playing=return_value["is_playing"])
+
+    def _to_str_return_value(self, return_value):
+        if isinstance(return_value, bytes):
+            return return_value.decode("utf-8")
         else:
-            return obj
-
-    def _to_dict(self, obj):
-        if isinstance(obj, list):
-            return [ self._to_dict(obj=v) for v in obj ]
-        elif isinstance(obj, dict):
-            return { self._to_str(obj=k): self._to_dict(obj=v) for k, v in obj.items() }
-        else:
-            return obj
-
-    def _to_sp_packed_array_return_value(self, obj):
-        obj = self._to_dict(obj=obj)
-        if self._to_str(obj=obj["data_source"]) == "Internal":
-            data = np.frombuffer(obj["data"], dtype=_to_dtype[self._to_str(obj=obj["data_type"])], count=-1).reshape(obj["shape"])
-        elif self._to_str(obj=obj["data_source"]) == "Shared":
-            data = np.array([], dtype=_to_dtype[self._to_str(obj=obj["data_type"])])
-        else:
-            assert False
-        return spear.SpPackedArray(data=data, data_source=self._to_str(obj=obj["data_source"]), shape=obj["shape"], data_type=self._to_str(obj=obj["data_type"]), shared_memory_name=self._to_str(obj=obj["shared_memory_name"]))
+            return return_value
 
 
 #
@@ -1124,16 +1197,15 @@ class SpSharedMemoryView(ClientStruct):
         return f"spear.SpSharedMemoryView(id={self.id}, num_bytes={self.num_bytes}, offset_bytes={self.offset_bytes})"
 
 class SpPackedArray(ClientStruct):
-    def __init__(self, data=None, data_source="Invalid", shape=None, data_type="", shared_memory_name=""):
+    def __init__(self, data=None, data_source="Invalid", shape=None, shared_memory_name=""):
         shape = shape if shape is not None else []
         self.data = data
         self.data_source = data_source
         self.shape = shape
-        self.data_type = data_type
         self.shared_memory_name = shared_memory_name
 
     def __repr__(self):
-        return f'spear.SpPackedArray(data={self.data}, data_source="{self.data_source}", shape={self.shape}, data_type="{self.data_type}", shared_memory_name="{self.shared_memory_name}")'
+        return f'spear.SpPackedArray(data={self.data}, data_source="{self.data_source}", shape={self.shape}, shared_memory_name="{self.shared_memory_name}")'
 
 class SpArraySharedMemoryView(ClientStruct):
     def __init__(self, id="", num_bytes=0, offset_bytes=0, usage_flags=None, name="smem:invalid"):
@@ -1185,7 +1257,7 @@ class SpPropertyDesc(ClientStruct):
         self.notify_map_keys = notify_map_keys if notify_map_keys is not None else []
 
     def __repr__(self):
-        return f"spear.SpPropertyDesc(property={self.property}, value_ptr={self.value_ptr})"
+        return f"spear.SpPropertyDesc(property={self.property:#x}, value_ptr={self.value_ptr:#x})"
 
 class SpPropertyValue(ClientStruct):
     def __init__(self, value="", type_id=""):
@@ -1212,7 +1284,7 @@ class SpFuture(ClientStruct):
         self.type_id = type_id
 
     def __repr__(self):
-        return f'spear.SpFuture(future_ptr={self.future_ptr}, type_id="{self.type_id}")'
+        return f'spear.SpFuture(future_ptr={self.future_ptr:#x}, type_id="{self.type_id}")'
 
 class SpFunctionDesc(ClientStruct):
     def __init__(self, function=None, function_name="", static_class=None, static_class_name=""):
@@ -1236,15 +1308,15 @@ class SpStaticStructDesc(ClientStruct):
         return f"spear.SpStaticStructDesc(name='{self.name}', static_struct={self.static_struct.ptr:#x})"
 
 class SpStaticClassDesc(ClientStruct):
-    def __init__(self, static_class=None, name="", derived_classes=None, derived_class_names=None, function_descs=None):
+    def __init__(self, static_class=None, name="", derived_to_base_classes=None, derived_to_base_class_names=None, function_descs=None):
         static_class = static_class if static_class is not None else SpHandle()
-        derived_classes = derived_classes if derived_classes is not None else []
-        derived_class_names = derived_class_names if derived_class_names is not None else []
+        derived_to_base_classes = derived_to_base_classes if derived_to_base_classes is not None else []
+        derived_to_base_class_names = derived_to_base_class_names if derived_to_base_class_names is not None else []
         function_descs = function_descs if function_descs is not None else {}
         self.static_class = static_class
         self.name = name
-        self.derived_classes = derived_classes
-        self.derived_class_names = derived_class_names
+        self.derived_to_base_classes = derived_to_base_classes
+        self.derived_to_base_class_names = derived_to_base_class_names
         self.function_descs = function_descs
 
     def __repr__(self):

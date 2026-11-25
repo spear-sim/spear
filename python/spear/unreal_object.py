@@ -7,7 +7,12 @@ import spear
 
 
 #
-# The UnrealObject class provides a Pythonic interface to UObjects.
+# The UnrealObject class provides a Pythonic interface to UObjects. UnrealObject is a thin layer on top of
+# UnrealService and SpFuncService, and is only responsible for resolving Python attribute names to UFUNCTIONs,
+# SpFuncs, and properties. UnrealObject doesn't perform any type conversions itself. Instead, it forwards args and
+# as_* args unchanged to UnrealService (e.g., UnrealService.call_function(...) and
+# UnrealService.get_property_value_for_object(...)) or SpFuncService, which perform all type conversions (see the
+# comment above the UnrealService class in python/spear/services/unreal_service.py).
 #
 
 class UnrealObject:
@@ -94,8 +99,6 @@ class UnrealObject:
 
         if has_functions:
             self._sp_func_names = self._sp_func_service.get_function_names(uobject=self.uobject)
-
-        if has_functions:
             self._sp_func_shared_memory_handles = self._sp_func_service.create_shared_memory_handles_for_object(uobject=self.uobject)
 
         self.call_async._set_sp_funcs(sp_func_names=self._sp_func_names, sp_func_shared_memory_handles=self._sp_func_shared_memory_handles)
@@ -174,33 +177,19 @@ class UnrealObject:
             ufunction = self.derived_info["qualified_function_descs"][function_name].function
         else:
             assert False
-        result = self._unreal_service.call_function(
+        return self._unreal_service.call_function(
             uobject=self.uobject,
             ufunction=ufunction,
             args=kwargs,
-            world_context_object=world_context_object)
-        if as_raw_dict is not None:
-            assert as_raw_dict
-            assert as_dict is None
-            assert as_value is None
-            assert as_handle is None
-            assert as_unreal_struct is None
-            assert as_unreal_class is None
-            assert as_unreal_object is None
-            assert with_sp_funcs is None
-            return result
-        elif as_dict is not None:
-            assert as_dict
-            assert as_value is None
-            assert as_handle is None
-            assert as_unreal_struct is None
-            assert as_unreal_class is None
-            assert as_unreal_object is None
-            assert with_sp_funcs is None
-            return self._unpack_property_values(obj=result)
-        else:
-            return_value = self._try_to_return_value(obj=result) # don't unpack yet because we still need PropertyValue metadata
-            return self._try_to_handle_or_unreal_type(obj=return_value, as_value=as_value, as_handle=as_handle, as_unreal_struct=as_unreal_struct, as_unreal_class=as_unreal_class, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
+            world_context_object=world_context_object,
+            as_raw_dict=as_raw_dict,
+            as_dict=as_dict,
+            as_value=as_value,
+            as_handle=as_handle,
+            as_unreal_struct=as_unreal_struct,
+            as_unreal_class=as_unreal_class,
+            as_unreal_object=as_unreal_object,
+            with_sp_funcs=with_sp_funcs)
 
     def _call_sp_func(self, function_name, arrays=None, unreal_objs=None, info=""):
         if self._config.SPEAR.UNREAL_OBJECT.PRINT_CALL_DEBUG_INFO:
@@ -243,18 +232,16 @@ class UnrealObject:
 
     def get_property_value(self, property_name, as_raw_value=None, as_value=None, as_handle=None, as_unreal_struct=None, as_unreal_class=None, as_unreal_object=None, with_sp_funcs=None):
         assert property_name != ""
-        result = self._unreal_service.get_property_value_for_object(uobject=self.uobject, property_name=property_name)
-        if as_raw_value is not None:
-            assert as_raw_value
-            assert as_value is None
-            assert as_handle is None
-            assert as_unreal_struct is None
-            assert as_unreal_class is None
-            assert as_unreal_object is None
-            assert with_sp_funcs is None
-            return result
-        else:
-            return self._try_to_handle_or_unreal_type(obj=result, as_value=as_value, as_handle=as_handle, as_unreal_struct=as_unreal_struct, as_unreal_class=as_unreal_class, as_unreal_object=as_unreal_object, with_sp_funcs=with_sp_funcs)
+        return self._unreal_service.get_property_value_for_object(
+            uobject=self.uobject,
+            property_name=property_name,
+            as_raw_value=as_raw_value,
+            as_value=as_value,
+            as_handle=as_handle,
+            as_unreal_struct=as_unreal_struct,
+            as_unreal_class=as_unreal_class,
+            as_unreal_object=as_unreal_object,
+            with_sp_funcs=with_sp_funcs)
 
     def set_property_value(self, property_name, property_value, notify_editor=False):
         assert property_name != ""
@@ -277,7 +264,7 @@ class UnrealObject:
     # type checking interface
 
     def is_a(self, uclass):
-        return self._unreal_service.to_uclass(uclass=uclass) in self.derived_info["static_class_desc"].derived_classes
+        return self._unreal_service.to_uclass(uclass=uclass) in self.derived_info["static_class_desc"].derived_to_base_classes
 
     # Returns False for the call_async and send_async objects associated with an UnrealObject.
     def is_top_level(self):
@@ -438,213 +425,6 @@ class UnrealObject:
     def __repr__(self):
         class_name = self.derived_info["static_class_desc"].name
         return f'UnrealObject(uobject={self.uobject}, uclass={self.uclass}, property_name="{self.property_name}", _is_top_level={self._is_top_level}, _class_name={class_name}, _initialized_sp_funcs={self._initialized_sp_funcs}, _sp_func_names={self._sp_func_names})'
-
-    # private helper functions
-
-    def _unpack_property_values(self, obj):
-        if obj is None:
-            return None # send_async discards the return value entirely, so obj can legitimately be None here
-        elif isinstance(obj, spear.PropertyValue):
-            return obj.value
-        elif isinstance(obj, list):
-            return [ self._unpack_property_values(obj=o) for o in obj ]
-        elif isinstance(obj, spear.CaseInsensitiveDict): # must be before dict, because CaseInsensitiveDict inherits from dict
-            # The values have already been converted by spear.to_case_insensitive(...) when they were returned from a
-            # service, so we only need to convert the top level here, which is why we pass recursive=False.
-            return spear.to_case_insensitive(obj={ k: self._unpack_property_values(obj=v) for k, v in obj.items() }, recursive=False)
-        elif isinstance(obj, dict):
-            return { k: self._unpack_property_values(obj=v) for k, v in obj.items() }
-        elif isinstance(obj, spear.Future):
-            inner_convert_func = obj.convert_func
-            def convert_func(o):
-                if inner_convert_func is not None:
-                    o = inner_convert_func(o)
-                return self._unpack_property_values(obj=o)
-            obj.convert_func = convert_func
-            return obj
-        else:
-            assert False
-
-    def _try_to_return_value(self, obj):
-        if obj is None:
-            return None # send_async discards the return value entirely, so obj can legitimately be None here
-        elif isinstance(obj, dict):
-            if "ReturnValue" in obj:
-                return obj["ReturnValue"]
-            else:
-                return None
-        elif isinstance(obj, spear.Future):
-            inner_convert_func = obj.convert_func
-            def convert_func(o):
-                if inner_convert_func is not None:
-                    o = inner_convert_func(o)
-                return self._try_to_return_value(obj=o)
-            obj.convert_func = convert_func
-            return obj
-        else:
-            assert False
-
-    def _try_to_handle_or_unreal_type(self, obj, as_value=None, as_handle=None, as_unreal_struct=None, as_unreal_class=None, as_unreal_object=None, with_sp_funcs=None):
-        if obj is None:
-            assert as_value is None
-            assert as_handle is None
-            assert as_unreal_struct is None
-            assert as_unreal_class is None
-            assert as_unreal_object is None
-            assert with_sp_funcs is None
-            return None
-        elif isinstance(obj, spear.PropertyValue):
-            if as_value is not None:
-                assert as_value
-                assert as_handle is None
-                assert as_unreal_struct is None
-                assert as_unreal_class is None
-                assert as_unreal_object is None
-                assert with_sp_funcs is None
-                return obj.value
-            elif as_handle is not None:
-                assert as_handle
-                assert as_unreal_struct is None
-                assert as_unreal_class is None
-                assert as_unreal_object is None
-                assert with_sp_funcs is None
-                return spear.to_handle(obj=obj.value)
-            elif as_unreal_struct is not None:
-                assert as_unreal_struct
-                assert as_unreal_class is None
-                assert as_unreal_object is None
-                assert with_sp_funcs is None
-                handle = spear.to_handle(obj=obj.value)
-                return spear.to_unreal_struct(
-                    obj=handle,
-                    unreal_service=self._unreal_service.get_top_level_service())
-            elif as_unreal_class is not None:
-                assert as_unreal_class
-                assert as_unreal_object is None
-                assert with_sp_funcs is None
-                handle = spear.to_handle(obj=obj.value)
-                return spear.to_unreal_class(
-                    obj=handle,
-                    unreal_service=self._unreal_service.get_top_level_service())
-            elif as_unreal_object is not None:
-                handle = spear.to_handle(obj=obj.value)
-                return spear.to_unreal_object(
-                    obj=handle,
-                    unreal_service=self._unreal_service.get_top_level_service(),
-                    sp_func_service=self._sp_func_service.get_top_level_service(),
-                    config=self._config,
-                    as_unreal_object=as_unreal_object,
-                    with_sp_funcs=with_sp_funcs)
-            elif self._is_ustruct_pointer_or_container(type_id=obj.type_id):
-                handle = spear.to_handle(obj=obj.value)
-                return spear.to_unreal_struct(
-                    obj=handle,
-                    unreal_service=self._unreal_service.get_top_level_service())
-            elif self._is_uclass_pointer_or_container(type_id=obj.type_id):
-                handle = spear.to_handle(obj=obj.value)
-                return spear.to_unreal_class(
-                    obj=handle,
-                    unreal_service=self._unreal_service.get_top_level_service())
-            elif self._is_uobject_pointer_or_container(type_id=obj.type_id):
-                handle = spear.to_handle(obj=obj.value)
-                return spear.to_unreal_object(
-                    obj=handle,
-                    unreal_service=self._unreal_service.get_top_level_service(),
-                    sp_func_service=self._sp_func_service.get_top_level_service(),
-                    config=self._config,
-                    as_unreal_object=as_unreal_object,
-                    with_sp_funcs=with_sp_funcs)
-            else:
-                return obj.value
-        elif isinstance(obj, spear.Future):
-            inner_convert_func = obj.convert_func
-            def convert_func(o):
-                if inner_convert_func is not None:
-                    o = inner_convert_func(o)
-                return self._try_to_handle_or_unreal_type(
-                    obj=o,
-                    as_value=as_value,
-                    as_handle=as_handle,
-                    as_unreal_struct=as_unreal_struct,
-                    as_unreal_class=as_unreal_class,
-                    as_unreal_object=as_unreal_object,
-                    with_sp_funcs=with_sp_funcs)
-            obj.convert_func = convert_func
-            return obj
-        else:
-            assert False
-
-    def _is_ustruct_pointer_or_container(self, type_id):
-        assert not type_id.startswith(" ") and not type_id.endswith(" ")
-        assert type_id != "UStruct*" # unexpected
-        if type_id == "UScriptStruct*" or type_id == "UUserDefinedStruct*":
-            return True
-        elif type_id.startswith("TArray<") and type_id.endswith(">"):
-            value_type_id = type_id.removeprefix("TArray<").removesuffix(">")
-            return self._is_ustruct_pointer_or_container(type_id=value_type_id)
-        elif type_id.startswith("TMap<") and type_id.endswith(">"):
-            value_type_id = type_id.removeprefix("TMap<").removesuffix(">").split(",", 1)[1] # split on the first comma only
-            return self._is_ustruct_pointer_or_container(type_id=value_type_id)
-        elif type_id.startswith("TSet<") and type_id.endswith(">"):
-            value_type_id = type_id.removeprefix("TSet<").removesuffix(">")
-            return self._is_ustruct_pointer_or_container(type_id=value_type_id)
-        elif type_id.endswith("]"): # fixed-size array, e.g., AActor*[4]
-            value_type_id = type_id[:type_id.rindex("[")]
-            return self._is_ustruct_pointer_or_container(type_id=value_type_id)
-        else:
-            return False
-
-    def _is_uclass_pointer_or_container(self, type_id):
-        assert not type_id.startswith(" ") and not type_id.endswith(" ")
-        assert type_id != "UStruct*" # unexpected
-        if type_id == "UClass*":
-            return True
-        elif type_id.startswith("TSubclassOf<") and type_id.endswith(">"):
-            return True
-        elif type_id.startswith("TArray<") and type_id.endswith(">"):
-            value_type_id = type_id.removeprefix("TArray<").removesuffix(">")
-            return self._is_uclass_pointer_or_container(type_id=value_type_id)
-        elif type_id.startswith("TMap<") and type_id.endswith(">"):
-            value_type_id = type_id.removeprefix("TMap<").removesuffix(">").split(",", 1)[1] # split on the first comma only
-            return self._is_uclass_pointer_or_container(type_id=value_type_id)
-        elif type_id.startswith("TSet<") and type_id.endswith(">"):
-            value_type_id = type_id.removeprefix("TSet<").removesuffix(">")
-            return self._is_uclass_pointer_or_container(type_id=value_type_id)
-        elif type_id.endswith("]"): # fixed-size array, e.g., AActor*[4]
-            value_type_id = type_id[:type_id.rindex("[")]
-            return self._is_uclass_pointer_or_container(type_id=value_type_id)
-        else:
-            return False
-
-    def _is_uobject_pointer_or_container(self, type_id):
-        assert not type_id.startswith(" ") and not type_id.endswith(" ")
-        assert type_id != "UStruct*" # unexpected
-        if type_id != "UScriptStruct*" and type_id != "UUserDefinedStruct*" and type_id != "UClass*" and type_id.endswith("*"):
-            return True
-        elif type_id == "TScriptInterface":
-            return True
-        elif type_id.startswith("TObjectPtr<") and type_id.endswith(">"):
-            return True
-        elif type_id.startswith("TLazyObjectPtr<") and type_id.endswith(">"):
-            return True
-        elif type_id.startswith("TWeakObjectPtr<") and type_id.endswith(">"):
-            return True
-        elif type_id.startswith("TScriptInterface<") and type_id.endswith(">"):
-            return True
-        elif type_id.startswith("TArray<") and type_id.endswith(">"):
-            value_type_id = type_id.removeprefix("TArray<").removesuffix(">")
-            return self._is_uobject_pointer_or_container(type_id=value_type_id)
-        elif type_id.startswith("TMap<") and type_id.endswith(">"):
-            value_type_id = type_id.removeprefix("TMap<").removesuffix(">").split(",", 1)[1] # split on the first comma only
-            return self._is_uobject_pointer_or_container(type_id=value_type_id)
-        elif type_id.startswith("TSet<") and type_id.endswith(">"):
-            value_type_id = type_id.removeprefix("TSet<").removesuffix(">")
-            return self._is_uobject_pointer_or_container(type_id=value_type_id)
-        elif type_id.endswith("]"): # fixed-size array, e.g., AActor*[4]
-            value_type_id = type_id[:type_id.rindex("[")]
-            return self._is_uobject_pointer_or_container(type_id=value_type_id)
-        else:
-            return False
 
 
 #

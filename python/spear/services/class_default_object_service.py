@@ -29,6 +29,12 @@ class ClassDefaultObjectService(spear.Service):
         self._cdos = {}
 
     def __getattr__(self, name):
+        # Names that start with an underscore can't be Unreal class names, so we don't look them up. This is necessary
+        # to avoid infinite recursion if self.unreal_service hasn't been set yet (e.g., during __init__(...) or when
+        # copy and pickle look for dunder methods on a partially constructed object), and it avoids an unnecessary
+        # lookup when Python probes for optional methods like __len__ or _ipython_display_.
+        if name.startswith("_"):
+            raise AttributeError(name)
         if name in self.unreal_service.get_static_class_descs_by_name():
             return self.get(uclass=name)
         else:

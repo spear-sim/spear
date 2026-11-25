@@ -8,8 +8,7 @@
 #include <stddef.h> // size_t
 #include <stdint.h> // int8_t, int16_t, int32_t, int64_t, uint8_t, uint16_t, uint32_t, uint64_t
 
-#include <string.h> // memcpy
-
+#include <cstring>   // std::memcpy
 #include <exception> // std::terminate
 #include <iostream>
 #include <map>
@@ -21,6 +20,7 @@
 #include <vector>
 
 #include <nanobind/nanobind.h>
+#include <nanobind/ndarray.h>
 
 #include <rpc/msgpack.hpp> // clmdep_msgpack
 
@@ -227,7 +227,7 @@ struct clmdep_msgpack::adaptor::convert<SpPackedArrayView> {
     }
 };
 
-template <> // needed to convert a custom view type, received as a return value from the server, into a custom type that be returned to Python
+template <> // needed to convert a custom view type, received as a return value from the server, into a custom type that can be returned to Python
 inline SpPackedArray MsgpackUtils::convert<SpPackedArray>(const ClientBase* client, SpPackedArrayView&& sp_packed_array_view, std::shared_ptr<clmdep_msgpack::object_handle> object_handle)
 {
     SP_ASSERT(client);
@@ -335,7 +335,7 @@ inline SpPackedArray MsgpackUtils::convert<SpPackedArray>(const ClientBase* clie
 // std::map<std::string, SpPackedArray>
 //
 
-template <> // needed to convert a custom view type, received as a return value from the server, into a custom type that be returned to Python
+template <> // needed to convert a custom view type, received as a return value from the server, into a custom type that can be returned to Python
 inline std::map<std::string, SpPackedArray> MsgpackUtils::convert<std::map<std::string, SpPackedArray>>(const ClientBase* client, std::map<std::string, SpPackedArrayView>&& sp_packed_array_views, std::shared_ptr<clmdep_msgpack::object_handle> object_handle)
 {
     std::map<std::string, SpPackedArray> sp_packed_arrays;
@@ -386,7 +386,7 @@ struct clmdep_msgpack::adaptor::convert<SpFuncDataBundleView> {
     }
 };
 
-template <> // needed to convert a custom view type, received as a return value from the server, into a custom type that be returned to Python
+template <> // needed to convert a custom view type, received as a return value from the server, into a custom type that can be returned to Python
 inline SpFuncDataBundle MsgpackUtils::convert<SpFuncDataBundle>(const ClientBase* client, SpFuncDataBundleView&& sp_func_data_bundle_view, std::shared_ptr<clmdep_msgpack::object_handle> object_handle)
 {
     SpFuncDataBundle sp_func_data_bundle;
@@ -600,11 +600,11 @@ struct clmdep_msgpack::adaptor::convert<SpStaticClassDesc> {
     clmdep_msgpack::object const& operator()(clmdep_msgpack::object const& object, SpStaticClassDesc& sp_static_class_desc) const {
         std::map<std::string, clmdep_msgpack::object> objects = MsgpackUtils::toMapOfMsgpackObjects(object);
         SP_ASSERT(objects.size() == 5);
-        sp_static_class_desc.static_class_        = MsgpackUtils::to<SpHandle>(objects.at("static_class"));
-        sp_static_class_desc.name_                = MsgpackUtils::to<std::string>(objects.at("name"));
-        sp_static_class_desc.derived_classes_     = MsgpackUtils::to<std::vector<SpHandle>>(objects.at("derived_classes"));
-        sp_static_class_desc.derived_class_names_ = MsgpackUtils::to<std::vector<std::string>>(objects.at("derived_class_names"));
-        sp_static_class_desc.function_descs_      = MsgpackUtils::to<std::map<std::string, SpFunctionDesc>>(objects.at("function_descs"));
+        sp_static_class_desc.static_class_                = MsgpackUtils::to<SpHandle>(objects.at("static_class"));
+        sp_static_class_desc.name_                        = MsgpackUtils::to<std::string>(objects.at("name"));
+        sp_static_class_desc.derived_to_base_classes_     = MsgpackUtils::to<std::vector<SpHandle>>(objects.at("derived_to_base_classes"));
+        sp_static_class_desc.derived_to_base_class_names_ = MsgpackUtils::to<std::vector<std::string>>(objects.at("derived_to_base_class_names"));
+        sp_static_class_desc.function_descs_              = MsgpackUtils::to<std::map<std::string, SpFunctionDesc>>(objects.at("function_descs"));
         return object;
     }
 };

@@ -11,6 +11,12 @@ if spear.__can_import_unreal__:
     import unreal
 
 
+#
+# EngineService sits above the client and below the EntryPointCaller types (see python/spear/utils/func_utils.py). It is
+# responsible for validating frame and editor transaction state before calling entry points, but it does not perform
+# any type conversions. Args and return values are passed between the client and the EntryPointCaller types unchanged.
+#
+
 class EngineService():
     def __init__(self, client, config):
 

@@ -1594,9 +1594,9 @@ std::vector<AActor*> UnrealUtils::findActors(const UWorld* world)
     return findActorsByType(world);
 }
 
-std::map<std::string, AActor*> UnrealUtils::findActorsAsMap(const UWorld* world, bool include_unreal_name)
+std::map<std::string, AActor*> UnrealUtils::findActorsAsMap(const UWorld* world, bool include_unreal_id)
 {
-    return toMap(findActors(world), include_unreal_name);
+    return toMap(findActors(world), include_unreal_id);
 }
 
 // 
@@ -1608,9 +1608,9 @@ std::vector<UActorComponent*> UnrealUtils::getComponents(const AActor* actor)
     return getComponentsByType(actor);
 }
 
-std::map<std::string, UActorComponent*> UnrealUtils::getComponentsAsMap(const AActor* actor, bool include_actor_stable_name, bool include_actor_unreal_name)
+std::map<std::string, UActorComponent*> UnrealUtils::getComponentsAsMap(const AActor* actor, bool include_actor_stable_name, bool include_actor_unreal_id)
 {
-    return toMap(getComponents(actor), include_actor_stable_name, include_actor_unreal_name);
+    return toMap(getComponents(actor), include_actor_stable_name, include_actor_unreal_id);
 }
 
 //
@@ -1627,21 +1627,21 @@ std::vector<USceneComponent*> UnrealUtils::getChildrenComponents(const USceneCom
     return getChildrenComponentsByType(parent, include_all_descendants);
 }
 
-std::map<std::string, USceneComponent*> UnrealUtils::getChildrenComponentsAsMap(const AActor* parent, bool include_all_descendants, bool include_actor_stable_name, bool include_actor_unreal_name)
+std::map<std::string, USceneComponent*> UnrealUtils::getChildrenComponentsAsMap(const AActor* parent, bool include_all_descendants, bool include_actor_stable_name, bool include_actor_unreal_id)
 {
-    return toMap(getChildrenComponents(parent, include_all_descendants), include_actor_stable_name, include_actor_unreal_name);
+    return toMap(getChildrenComponents(parent, include_all_descendants), include_actor_stable_name, include_actor_unreal_id);
 }
 
-std::map<std::string, USceneComponent*> UnrealUtils::getChildrenComponentsAsMap(const USceneComponent* parent, bool include_all_descendants, bool include_actor_stable_name, bool include_actor_unreal_name)
+std::map<std::string, USceneComponent*> UnrealUtils::getChildrenComponentsAsMap(const USceneComponent* parent, bool include_all_descendants, bool include_actor_stable_name, bool include_actor_unreal_id)
 {
-    return toMap(getChildrenComponents(parent, include_all_descendants), include_actor_stable_name, include_actor_unreal_name);
+    return toMap(getChildrenComponents(parent, include_all_descendants), include_actor_stable_name, include_actor_unreal_id);
 }
 
 //
 // Get and set actor and component stable names
 //
 
-std::string UnrealUtils::getStableName(const AActor* actor, bool include_unreal_name)
+std::string UnrealUtils::getStableName(const AActor* actor, bool include_unreal_id)
 {
     SP_ASSERT(actor);
 
@@ -1743,20 +1743,23 @@ std::string UnrealUtils::getStableName(const AActor* actor, bool include_unreal_
         }
     }
 
-    if (include_unreal_name) {
+    if (include_unreal_id) {
         std::string sep;
         if (stable_name != "") {
             sep = ":";
         }
-        stable_name = stable_name + sep + Unreal::getUnrealName(actor);
+        stable_name = stable_name + sep + Unreal::getUnrealIdString(actor);
     }
 
     return stable_name;
 }
 
-std::string UnrealUtils::getStableName(const UActorComponent* component, bool include_actor_stable_name, bool include_actor_unreal_name)
+std::string UnrealUtils::getStableName(const UActorComponent* component, bool include_actor_stable_name, bool include_actor_unreal_id)
 {
     SP_ASSERT(component);
+    if (include_actor_unreal_id) {
+        SP_ASSERT(include_actor_stable_name);
+    }
 
     std::string stable_name;
 
@@ -1774,7 +1777,7 @@ std::string UnrealUtils::getStableName(const UActorComponent* component, bool in
     if (include_actor_stable_name) {
         const AActor* actor = component->GetOwner();
         SP_ASSERT(actor);
-        std::string actor_stable_name = getStableName(actor, include_actor_unreal_name);
+        std::string actor_stable_name = getStableName(actor, include_actor_unreal_id);
         std::string sep;
         if (actor_stable_name != "") {
             sep = ":";
@@ -1835,6 +1838,11 @@ void UnrealUtils::setStableName(AActor* actor, const std::string& stable_name)
             auto [folder_path, actor_label] = unresolveStableName(stable_name);
             actor->SetFolderPath(Unreal::createFName(folder_path));
             actor->SetActorLabel(Unreal::toFString(actor_label));
+
+            // SetFolderPath(...) and SetActorLabel(...) can silently modify or reject their inputs (e.g., a folder
+            // named "None", an empty label, or a label with leading or trailing whitespace), and unresolveStableName(...)
+            // ignores empty path segments, so we check that the actor's stable name is what the caller requested.
+            SP_ASSERT(resolveStableName(actor) == stable_name);
         #else
             SP_ASSERT(false);
         #endif
@@ -2309,14 +2317,14 @@ std::string UnrealUtils::toKey(const UStruct* ustruct, bool include_path)
     return key;
 }
 
-std::string UnrealUtils::toKey(const UActorComponent* component, bool include_actor_stable_name, bool include_actor_unreal_name)
+std::string UnrealUtils::toKey(const UActorComponent* component, bool include_actor_stable_name, bool include_actor_unreal_id)
 {
-    return getStableName(component, include_actor_stable_name, include_actor_unreal_name);
+    return getStableName(component, include_actor_stable_name, include_actor_unreal_id);
 }
 
-std::string UnrealUtils::toKey(const AActor* actor, bool include_unreal_name)
+std::string UnrealUtils::toKey(const AActor* actor, bool include_unreal_id)
 {
-    return getStableName(actor, include_unreal_name);
+    return getStableName(actor, include_unreal_id);
 }
 
 std::string UnrealUtils::toKey(const UFunction* ufunction)

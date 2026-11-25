@@ -3,13 +3,19 @@
 // Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
+#include <stdint.h> // int64_t, uint16_t, uint32_t, uint64_t
+
+#include <functional> // std::hash
+#include <ios>        // std::dec, std::hex
+#include <sstream>    // std::ostringstream
+#include <string>
+
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/map.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 
 #include "client.h"
-#include "msgpack_adaptors.h"
 #include "std.h"
 #include "types.h"
 
@@ -157,7 +163,7 @@ NB_MODULE(spear_ext, module)
     sp_property_desc_class.def_rw("notify_map_keys",           &SpPropertyDesc::notify_map_keys_);
     sp_property_desc_class.def("__repr__", [](const SpPropertyDesc& self) {
         std::ostringstream oss;
-        oss << "spear_ext.SpPropertyDesc(" << "property=" << self.property_ << ", value_ptr=" << self.value_ptr_ << ")";
+        oss << "spear_ext.SpPropertyDesc(" << "property=0x" << std::hex << self.property_ << ", value_ptr=0x" << self.value_ptr_ << std::dec << ")";
         return oss.str();
     });
 
@@ -202,7 +208,7 @@ NB_MODULE(spear_ext, module)
     sp_future_class.def_rw("type_id",    &SpFuture::type_id_);
     sp_future_class.def("__repr__", [](const SpFuture& self) {
         std::ostringstream oss;
-        oss << "spear_ext.SpFuture(future_ptr=" << self.future_ptr_ << ", type_id=\"" << self.type_id_ << "\")";
+        oss << "spear_ext.SpFuture(future_ptr=0x" << std::hex << self.future_ptr_ << std::dec << ", type_id=\"" << self.type_id_ << "\")";
         return oss.str();
     });
 
@@ -230,11 +236,11 @@ NB_MODULE(spear_ext, module)
 
     auto sp_static_class_desc_class = nanobind::class_<SpStaticClassDesc>(module, "SpStaticClassDesc");
     sp_static_class_desc_class.def(nanobind::init<>());
-    sp_static_class_desc_class.def_rw("static_class",          &SpStaticClassDesc::static_class_);
-    sp_static_class_desc_class.def_rw("name",                   &SpStaticClassDesc::name_);
-    sp_static_class_desc_class.def_rw("derived_classes",        &SpStaticClassDesc::derived_classes_);
-    sp_static_class_desc_class.def_rw("derived_class_names",    &SpStaticClassDesc::derived_class_names_);
-    sp_static_class_desc_class.def_rw("function_descs",         &SpStaticClassDesc::function_descs_);
+    sp_static_class_desc_class.def_rw("static_class",                &SpStaticClassDesc::static_class_);
+    sp_static_class_desc_class.def_rw("name",                        &SpStaticClassDesc::name_);
+    sp_static_class_desc_class.def_rw("derived_to_base_classes",     &SpStaticClassDesc::derived_to_base_classes_);
+    sp_static_class_desc_class.def_rw("derived_to_base_class_names", &SpStaticClassDesc::derived_to_base_class_names_);
+    sp_static_class_desc_class.def_rw("function_descs",              &SpStaticClassDesc::function_descs_);
     sp_static_class_desc_class.def("__repr__", [](const SpStaticClassDesc &self) {
         std::ostringstream oss;
         oss << "spear_ext.SpStaticClassDesc(name='" << self.name_ << "', static_class=0x" << std::hex << self.static_class_.ptr_ << std::dec << ", function_descs=" << self.function_descs_.size() << ")";

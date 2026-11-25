@@ -45,6 +45,9 @@ class ViewportService(spear.Service):
         elif not isinstance(heights, list):
             heights = [heights]*len(camera_components)
 
+        assert len(widths) == len(camera_components)
+        assert len(heights) == len(camera_components)
+
         # normalize post_processing_components and post_processing_volumes to lists
         if post_processing_components is not None:
             if not isinstance(post_processing_components, list):
@@ -56,6 +59,8 @@ class ViewportService(spear.Service):
                     post_processing_volumes = post_processing_volumes*len(post_processing_components)
             elif not isinstance(post_processing_volumes, list):
                 post_processing_volumes = [post_processing_volumes]*len(post_processing_components)
+
+            assert len(post_processing_volumes) == len(post_processing_components)
 
         # configure camera components
         for camera_component, w, h in zip(camera_components, widths, heights):
@@ -168,5 +173,5 @@ class EditorViewportService(ViewportService):
                 "fov_y_degrees": fov_y_degrees if is_perspective else None,
                 "fov_degrees": client["ViewFOV"] if is_perspective else None,
                 "aspect_ratio": client["AspectRatio"] if is_perspective else None,
-                "ortho_width": client["OrthoZoom"] if not is_perspective else None,
+                "ortho_width": client["OrthoWidth"] if not is_perspective else None,
                 "post_process_volumes": self.unreal_service.find_actors_by_class(uclass="APostProcessVolume")}

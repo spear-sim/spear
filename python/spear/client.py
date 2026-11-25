@@ -19,7 +19,7 @@ class Client():
         self._config = config
         self.client = None
 
-    def initialize(self, process=None):
+    def initialize(self, launcher):
 
         spear.log_current_function(prefix="    ")
         spear.log("        Initializing client...")
@@ -58,13 +58,13 @@ class Client():
             # already set LAUNCH_MODE == "none".
             assert spear.__can_import_spear_ext__
             assert not spear.__can_import_unreal__
-            assert process is not None
+            assert launcher.process is not None
 
             start_time_seconds = time.time()
             elapsed_time_seconds = time.time() - start_time_seconds
             while elapsed_time_seconds < self._config.SPEAR.CLIENT.INITIALIZE_MAX_TIME_SECONDS:
 
-                status = process.status()
+                status = launcher.process.status()
                 if status not in spear.Launcher.expected_process_status_values:
                     spear.log("        ERROR: Unrecognized process status: ", status)
                     break
@@ -87,6 +87,7 @@ class Client():
                 except Exception as e:
                     spear.log("        Exception: ", e)
                     self.terminate(log_prefix="        ")
+                    launcher.kill(log_prefix="        ")
                     assert False
 
                 time.sleep(self._config.SPEAR.CLIENT.INITIALIZE_SLEEP_TIME_SECONDS)
@@ -100,6 +101,8 @@ class Client():
         else:
             spear.log("        ERROR: Couldn't connect to RPC server, giving up...")
             self.terminate(log_prefix="        ")
+            if self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
+                launcher.kill(log_prefix="        ")
             assert False
 
         self.client.initialize() # EngineService hasn't been initialized yet

@@ -38,7 +38,7 @@ def get_actors(pipeline_dir, ignore_actors=None):
     # here, and ignore actors with no root component.
     actors = actors_json
     if ignore_actors is not None:
-        actors = { actor_name: actor_desc for actor_name, actor_desc in actors.items() if actor_name.split(":")[0] not in ignore_actors }
+        actors = { actor_name: actor_desc for actor_name, actor_desc in actors.items() if actor_desc["stable_name"] not in ignore_actors }
     actors = { actor_name: actor_desc for actor_name, actor_desc in actors.items() if actor_desc["editor_properties"]["relevant_for_level_bounds"] }
     actors = { actor_name: actor_desc for actor_name, actor_desc in actors.items() if actor_desc["root_component"] is not None }
 

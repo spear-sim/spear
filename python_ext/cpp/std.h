@@ -5,11 +5,21 @@
 
 #pragma once
 
-#include <algorithm> // std::ranges::sort
-#include <concepts>  // std::convertible_to, std::same_as
-#include <memory>    // std::allocator_traits
-#include <ranges>    // std::ranges::contiguous_range, std::ranges::sized_range, std::views::transform
+#include <stddef.h> // size_t
+#include <stdint.h> // uint8_t, uint64_t, uintptr_t
+
+#include <algorithm>   // std::ranges::copy, std::ranges::sort, std::ranges::unique
+#include <concepts>    // std::convertible_to, std::same_as
+#include <iterator>    // std::back_inserter
+#include <map>
+#include <memory>      // std::allocator_traits
+#include <ranges>      // std::ranges::begin, std::ranges::contiguous_range, std::ranges::end, std::ranges::range, std::ranges::sized_range,
+                       // std::views::transform
+#include <type_traits> // std::is_empty
+#include <utility>     // std::forward, std::pair
 #include <vector>
+
+#include "assert.h"
 
 template <typename TRange, typename TValue>
 concept CRangeValuesAreConvertibleTo =
@@ -103,25 +113,30 @@ public:
     }
 
     template <typename TValue, typename... TVectorTraits>
-    static void resizeUninitialized(std::vector<TValue, TVectorTraits...>& vector, int size)
+    static void resizeUninitialized(std::vector<TValue, TVectorTraits...>& vector, uint64_t size)
     {
-        struct TValueNoDefaultInit { TValue value; TValueNoDefaultInit() {} };
+        // This function is unsafe because it relies on undefined behavior when invoking vector_no_default_init->resize().
+
+        struct alignas(alignof(TValue)) TValueNoDefaultInit { uint8_t value[sizeof(TValue)]; TValueNoDefaultInit() = default; };
 
         using TVector = std::vector<TValue, TVectorTraits...>;
         using TAllocator = typename TVector::allocator_type;
         using TVectorNoDefaultInit = std::vector<TValueNoDefaultInit, typename std::allocator_traits<TAllocator>::template rebind_alloc<TValueNoDefaultInit>>;
 
-        SP_ASSERT(sizeof(TValue)    == sizeof(TValueNoDefaultInit));
-        SP_ASSERT(sizeof(TValue[2]) == sizeof(TValueNoDefaultInit[2]));
-        SP_ASSERT(sizeof(TValue[4]) == sizeof(TValueNoDefaultInit[4]));
+        SP_ASSERT(sizeof(TValue) == sizeof(TValueNoDefaultInit));
+        SP_ASSERT(alignof(TValue) == alignof(TValueNoDefaultInit));
+
+        // check to make sure the allocator is stateless and can be used to deallocate memory from a different instance 
+        SP_ASSERT(std::is_empty<TAllocator>());
+        SP_ASSERT(std::allocator_traits<TAllocator>::is_always_equal::value);
 
         TVectorNoDefaultInit* vector_no_default_init = reinterpret_cast<TVectorNoDefaultInit*>(&vector);
-        vector_no_default_init->resize(size);
+        vector_no_default_init->resize(size); // undefined behavior
 
         SP_ASSERT(vector.size() == size);
     }
 
-    static bool isPtrSufficientlyAligned(void* ptr, size_t alignment_num_bytes)
+    static bool isPtrSufficientlyAligned(const void* ptr, size_t alignment_num_bytes)
     {
         return reinterpret_cast<std::uintptr_t>(ptr) % alignment_num_bytes == 0;
     }

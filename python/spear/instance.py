@@ -46,7 +46,7 @@ class Instance():
         # Initialize the client. We do this after launching the Unreal executable because initializing the
         # client will not proceed until it is able to form an RPC connection with the Unreal executable.
         self._client = spear.Client(config=self._config)
-        self._client.initialize(process=self._launcher.process)
+        self._client.initialize(launcher=self._launcher)
 
         # Create EngineService but do not initialize yet.
         self._engine_service = spear.EngineService(client=self._client.client, config=self._config)
@@ -93,7 +93,7 @@ class Instance():
 
         # intended for internal use only
         self._unreal_service = spear.UnrealService(
-            entry_point_caller=entry_point_caller_type(service_name=f"unreal_service", engine_service=self._engine_service),
+            entry_point_caller=entry_point_caller_type(service_name="unreal_service", engine_service=self._engine_service),
             sp_func_service=self.sp_func_service,
             config=self._config)
 
@@ -115,8 +115,10 @@ class Instance():
             engine_globals_service=self.engine_globals_service,
             config=self._config)
 
-        # only create editor-scoped services if we're in the editor (regardless of PIE session) and we're not running a commandlet
-        if self.engine_globals_service.is_with_editor() and not self.engine_globals_service.is_running_commandlet():
+        # Only create editor-scoped services if we're running the editor (regardless of whether or not we're in a PIE session)
+        # and we're not running a commandlet. We check is_editor() rather than is_with_editor(), because is_with_editor() is
+        # also true when running the editor executable with -game, in which case there is no editor world.
+        if self.engine_globals_service.is_editor() and not self.engine_globals_service.is_running_commandlet():
             self._editor = Instance.EditorWorldScopedServices(
                 engine_service=self._engine_service,
                 shared_memory_service=self.shared_memory_service,
@@ -144,7 +146,7 @@ class Instance():
             # Initialize services that require a reference to EngineService, SpFuncService.
 
             self.unreal_service = spear.UnrealService(
-                entry_point_caller=entry_point_caller_type(service_name=f"unreal_service", engine_service=engine_service),
+                entry_point_caller=entry_point_caller_type(service_name="unreal_service", engine_service=engine_service),
                 sp_func_service=self._sp_func_service,
                 config=self._config)
 
@@ -158,20 +160,20 @@ class Instance():
             # Initialize services that require a reference to EngineService, SpFuncService, UnrealService.
 
             self.console_service = spear.ConsoleService(
-                entry_point_caller=entry_point_caller_type(service_name=f"console_service", engine_service=engine_service),
+                entry_point_caller=entry_point_caller_type(service_name="console_service", engine_service=engine_service),
                 sp_func_service=self._sp_func_service,
                 unreal_service=self.unreal_service,
                 config=self._config)
 
             self.navigation_service = spear.NavigationService(
-                entry_point_caller=entry_point_caller_type(service_name=f"navigation_service", engine_service=engine_service),
+                entry_point_caller=entry_point_caller_type(service_name="navigation_service", engine_service=engine_service),
                 shared_memory_service=shared_memory_service,
                 sp_func_service=self._sp_func_service,
                 unreal_service=self.unreal_service,
                 config=self._config)
 
             self.segmentation_service = spear.SegmentationService(
-                entry_point_caller=entry_point_caller_type(service_name=f"segmentation_service", engine_service=engine_service),
+                entry_point_caller=entry_point_caller_type(service_name="segmentation_service", engine_service=engine_service),
                 sp_func_service=self._sp_func_service,
                 unreal_service=self.unreal_service,
                 config=self._config)
@@ -179,7 +181,7 @@ class Instance():
             # Initialize services that require a reference to EngineService, SpFuncService, UnrealService, EngineGlobalsService, and ClassDefaultObjectService.
 
             self.async_loading_service = spear.AsyncLoadingService(
-                entry_point_caller=entry_point_caller_type(service_name=f"async_loading_service", engine_service=engine_service),
+                entry_point_caller=entry_point_caller_type(service_name="async_loading_service", engine_service=engine_service),
                 sp_func_service=self._sp_func_service,
                 unreal_service=self.unreal_service,
                 engine_globals_service=engine_globals_service,
@@ -189,7 +191,7 @@ class Instance():
             # Initialize services that require a reference to EngineService, SpFuncService, UnrealService, EngineGlobalsService, ConsoleService, and ClassDefaultObjectService.
 
             self.rendering_quality_service = spear.RenderingQualityService(
-                entry_point_caller=entry_point_caller_type(service_name=f"rendering_quality_service", engine_service=engine_service),
+                entry_point_caller=entry_point_caller_type(service_name="rendering_quality_service", engine_service=engine_service),
                 sp_func_service=self._sp_func_service,
                 unreal_service=self.unreal_service,
                 engine_globals_service=engine_globals_service,
@@ -257,7 +259,7 @@ class Instance():
             # Initialize services that require a reference to EngineService, SpFuncService, UnrealService, EngineGlobalsService, and ClassDefaultObjectService.
 
             self.viewport_service = spear.GameViewportService(
-                entry_point_caller=entry_point_caller_type(service_name=f"viewport_service", engine_service=engine_service),
+                entry_point_caller=entry_point_caller_type(service_name="viewport_service", engine_service=engine_service),
                 sp_func_service=sp_func_service,
                 unreal_service=self.unreal_service,
                 engine_globals_service=engine_globals_service,
@@ -293,14 +295,14 @@ class Instance():
             # Initialize services that require a reference to EngineService, SpFuncService, UnrealService, and ClassDefaultObjectService.
 
             self.python_service = spear.PythonService(
-                entry_point_caller=entry_point_caller_type(service_name=f"python_service", engine_service=engine_service),
+                entry_point_caller=entry_point_caller_type(service_name="python_service", engine_service=engine_service),
                 sp_func_service=sp_func_service,
                 unreal_service=self.unreal_service,
                 cdo=self.class_default_object_service,
                 config=config)
 
             self.viewport_service = spear.EditorViewportService(
-                entry_point_caller=entry_point_caller_type(service_name=f"viewport_service", engine_service=engine_service),
+                entry_point_caller=entry_point_caller_type(service_name="viewport_service", engine_service=engine_service),
                 sp_func_service=sp_func_service,
                 unreal_service=self.unreal_service,
                 cdo=self.class_default_object_service,
@@ -403,8 +405,8 @@ class Instance():
 
         spear.log_current_function()
 
-        # only allow getting editor-scoped services if we're in the editor (regardless of PIE session) and we're not running a commandlet
-        assert self.engine_globals_service.is_with_editor() and not self.engine_globals_service.is_running_commandlet()
+        # only allow getting editor-scoped services if editor-scoped services were created in __init__(...)
+        assert self.engine_globals_service.is_editor() and not self.engine_globals_service.is_running_commandlet()
 
         # wait until world initialized (if not wait_for_world_initialized then only try once)
         wait_for_desc = self._get_wait_for_desc(
@@ -447,7 +449,7 @@ class Instance():
 
         spear.log_current_function()
 
-        # only allow getting editor-scoped services if we're in the editor not in a PIE session and we're not running a commandlet
+        # only allow getting editor-scoped services if editor-scoped services were created in __init__(...)
         assert self.engine_globals_service.is_editor() and not self.engine_globals_service.is_running_commandlet()
 
         # wait until world initialized
@@ -613,7 +615,7 @@ class Instance():
         with self.begin_frame():
             self._unreal_service.rebuild_cache()
             self._game.rebuild(unreal_service=self._unreal_service)
-            if self.engine_globals_service.is_with_editor() and not self.engine_globals_service.is_running_commandlet():
+            if self.engine_globals_service.is_editor() and not self.engine_globals_service.is_running_commandlet():
                 self._editor.rebuild(unreal_service=self._unreal_service)
         with self.end_frame():
             pass
@@ -625,7 +627,7 @@ class Instance():
         with self.begin_frame():
             self._unreal_service.rebuild_cache()
             self._game.rebuild(unreal_service=self._unreal_service)
-            if self.engine_globals_service.is_with_editor() and not self.engine_globals_service.is_running_commandlet():
+            if self.engine_globals_service.is_editor() and not self.engine_globals_service.is_running_commandlet():
                 self._editor.rebuild(unreal_service=self._unreal_service)
         yield
         with self.end_frame():
@@ -722,14 +724,12 @@ class Instance():
 
         if retry:
             spear.log(f"        Waiting for up to {max_time_seconds} seconds, retrying every {sleep_time_seconds} seconds...")
-            success = func()
             start_time_seconds = time.time()
+            success = func()
             elapsed_time_seconds = time.time() - start_time_seconds
             while not success and elapsed_time_seconds < max_time_seconds:
-                success = func()
-                if success:
-                    break
                 time.sleep(sleep_time_seconds)
+                success = func()
                 elapsed_time_seconds = time.time() - start_time_seconds
         else:
             spear.log("        Attempting to call function once...")
@@ -739,12 +739,14 @@ class Instance():
         if not success:
             spear.log("        ERROR: Function never returned true, giving up...")
             self._client.terminate(log_prefix="        ")
+            if self._config.SPEAR.LAUNCH_MODE in ["editor", "game"]:
+                self._launcher.kill(log_prefix="        ")
             assert False
 
         if retry:
             spear.log(f"        Finished waiting for function to return true (waited for {elapsed_time_seconds:.2f} seconds).")
         else:
-            spear.log(f"        Finished waiting for function to return true.")
+            spear.log("        Finished waiting for function to return true.")
 
     def _wait_for_in_editor_script(self, wait_for_desc):
         spear.log_current_function(prefix="    ")
@@ -760,16 +762,14 @@ class Instance():
 
         if retry:
             spear.log(f"        Waiting for up to {max_time_seconds} seconds, retrying every {sleep_time_seconds} seconds...")
-            success = func()
             start_time_seconds = time.time()
+            success = func()
             elapsed_time_seconds = time.time() - start_time_seconds
             while not success and elapsed_time_seconds < max_time_seconds:
-                success = func()
-                if success:
-                    break
                 sleep_start_time_seconds = time.time()
                 while time.time() - sleep_start_time_seconds < sleep_time_seconds:
                     yield
+                success = func()
                 elapsed_time_seconds = time.time() - start_time_seconds
         else:
             spear.log("        Attempting to call function once...")
@@ -784,7 +784,7 @@ class Instance():
         if retry:
             spear.log(f"        Finished waiting for function to return true (waited for {elapsed_time_seconds:.2f} seconds).")
         else:
-            spear.log(f"        Finished waiting for function to return true.")
+            spear.log("        Finished waiting for function to return true.")
 
     #
     # _warm_up

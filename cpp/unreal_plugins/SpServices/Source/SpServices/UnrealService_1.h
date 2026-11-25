@@ -277,7 +277,7 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_stable_name_for_actor",
-            [this](SpHandle& actor, bool& include_unreal_name) -> std::string { return UnrealUtils::getStableName(UnrealUtils::toPtr<AActor>(actor), include_unreal_name); });
+            [this](SpHandle& actor, bool& include_unreal_id) -> std::string { return UnrealUtils::getStableName(UnrealUtils::toPtr<AActor>(actor), include_unreal_id); });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "can_set_stable_name_for_actor",
             [this](SpHandle& actor) -> bool { return UnrealUtils::canSetStableName(UnrealUtils::toPtr<AActor>(actor)); });
@@ -289,8 +289,8 @@ public:
             [this](SpHandle& actor, std::string& stable_name) -> bool { return UnrealUtils::trySetStableName(UnrealUtils::toPtr<AActor>(actor), stable_name); });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_stable_name_for_component",
-            [this](SpHandle& actor_component, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::string {
-                return UnrealUtils::getStableName(UnrealUtils::toPtr<UActorComponent>(actor_component), include_actor_stable_name, include_actor_unreal_name);
+            [this](SpHandle& actor_component, bool& include_actor_stable_name, bool& include_actor_unreal_id) -> std::string {
+                return UnrealUtils::getStableName(UnrealUtils::toPtr<UActorComponent>(actor_component), include_actor_stable_name, include_actor_unreal_id);
             });
 
         //
@@ -313,8 +313,8 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_actors_as_map",
-            [this](SpHandle& world, bool& include_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::findActorsAsMap(UnrealUtils::toPtr<UWorld>(world), include_unreal_name));
+            [this](SpHandle& world, bool& include_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::findActorsAsMap(UnrealUtils::toPtr<UWorld>(world), include_unreal_id));
             });
 
         //
@@ -327,8 +327,8 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_components_as_map",
-            [this](SpHandle& actor, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::getComponentsAsMap(UnrealUtils::toPtr<AActor>(actor), include_actor_stable_name, include_actor_unreal_name));
+            [this](SpHandle& actor, bool& include_actor_stable_name, bool& include_actor_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::getComponentsAsMap(UnrealUtils::toPtr<AActor>(actor), include_actor_stable_name, include_actor_unreal_id));
             });
 
         //
@@ -341,8 +341,8 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_actor_as_map",
-            [this](SpHandle& parent, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsAsMap(UnrealUtils::toPtr<AActor>(parent), include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
+            [this](SpHandle& parent, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsAsMap(UnrealUtils::toPtr<AActor>(parent), include_all_descendants, include_actor_stable_name, include_actor_unreal_id));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_scene_component",
@@ -351,8 +351,8 @@ public:
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_scene_component_as_map",
-            [this](SpHandle& parent, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsAsMap(UnrealUtils::toPtr<USceneComponent>(parent), include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
+            [this](SpHandle& parent, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsAsMap(UnrealUtils::toPtr<USceneComponent>(parent), include_all_descendants, include_actor_stable_name, include_actor_unreal_id));
             });
 
         //
@@ -389,28 +389,28 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_actors_by_name_as_map",
-            [this](SpHandle& uclass, SpHandle& world, std::string& actor_name, bool& include_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::findActorsByNameAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<UWorld>(world), actor_name, include_unreal_name));
+            [this](SpHandle& uclass, SpHandle& world, std::string& actor_name, bool& include_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::findActorsByNameAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<UWorld>(world), actor_name, include_unreal_id));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_actors_by_tag_as_map",
-            [this](SpHandle& uclass, SpHandle& world, std::string& tag, bool& include_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::findActorsByTagAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<UWorld>(world), tag, include_unreal_name));
+            [this](SpHandle& uclass, SpHandle& world, std::string& tag, bool& include_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::findActorsByTagAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<UWorld>(world), tag, include_unreal_id));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_actors_by_tags_any_as_map",
-            [this](SpHandle& uclass, SpHandle& world, std::vector<std::string>& tags, bool& include_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::findActorsByTagsAnyAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<UWorld>(world), tags, include_unreal_name));
+            [this](SpHandle& uclass, SpHandle& world, std::vector<std::string>& tags, bool& include_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::findActorsByTagsAnyAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<UWorld>(world), tags, include_unreal_id));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_actors_by_tags_all_as_map",
-            [this](SpHandle& uclass, SpHandle& world, std::vector<std::string>& tags, bool& include_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::findActorsByTagsAllAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<UWorld>(world), tags, include_unreal_name));
+            [this](SpHandle& uclass, SpHandle& world, std::vector<std::string>& tags, bool& include_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::findActorsByTagsAllAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<UWorld>(world), tags, include_unreal_id));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "find_actors_by_class_as_map",
-            [this](SpHandle& uclass, SpHandle& world, bool& include_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::findActorsByClassAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<UWorld>(world), include_unreal_name));
+            [this](SpHandle& uclass, SpHandle& world, bool& include_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::findActorsByClassAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<UWorld>(world), include_unreal_id));
             });
 
         //
@@ -481,33 +481,33 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_components_by_name_as_map",
-            [this](SpHandle& uclass, SpHandle& actor, std::string& component_name, bool& include_from_child_actors, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::getComponentsByNameAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<AActor>(actor), component_name, include_from_child_actors, include_actor_stable_name, include_actor_unreal_name));
+            [this](SpHandle& uclass, SpHandle& actor, std::string& component_name, bool& include_from_child_actors, bool& include_actor_stable_name, bool& include_actor_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::getComponentsByNameAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<AActor>(actor), component_name, include_from_child_actors, include_actor_stable_name, include_actor_unreal_id));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_components_by_path_as_map",
-            [this](SpHandle& uclass, SpHandle& actor, std::string& component_path, bool& include_from_child_actors, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::getComponentsByPathAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<AActor>(actor), component_path, include_from_child_actors, include_actor_stable_name, include_actor_unreal_name));
+            [this](SpHandle& uclass, SpHandle& actor, std::string& component_path, bool& include_from_child_actors, bool& include_actor_stable_name, bool& include_actor_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::getComponentsByPathAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<AActor>(actor), component_path, include_from_child_actors, include_actor_stable_name, include_actor_unreal_id));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_components_by_tag_as_map",
-            [this](SpHandle& uclass, SpHandle& actor, std::string& tag, bool& include_from_child_actors, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::getComponentsByTagAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<AActor>(actor), tag, include_from_child_actors, include_actor_stable_name, include_actor_unreal_name));
+            [this](SpHandle& uclass, SpHandle& actor, std::string& tag, bool& include_from_child_actors, bool& include_actor_stable_name, bool& include_actor_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::getComponentsByTagAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<AActor>(actor), tag, include_from_child_actors, include_actor_stable_name, include_actor_unreal_id));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_components_by_tags_any_as_map",
-            [this](SpHandle& uclass, SpHandle& actor, std::vector<std::string>& tags, bool& include_from_child_actors, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::getComponentsByTagsAnyAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<AActor>(actor), tags, include_from_child_actors, include_actor_stable_name, include_actor_unreal_name));
+            [this](SpHandle& uclass, SpHandle& actor, std::vector<std::string>& tags, bool& include_from_child_actors, bool& include_actor_stable_name, bool& include_actor_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::getComponentsByTagsAnyAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<AActor>(actor), tags, include_from_child_actors, include_actor_stable_name, include_actor_unreal_id));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_components_by_tags_all_as_map",
-            [this](SpHandle& uclass, SpHandle& actor, std::vector<std::string>& tags, bool& include_from_child_actors, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::getComponentsByTagsAllAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<AActor>(actor), tags, include_from_child_actors, include_actor_stable_name, include_actor_unreal_name));
+            [this](SpHandle& uclass, SpHandle& actor, std::vector<std::string>& tags, bool& include_from_child_actors, bool& include_actor_stable_name, bool& include_actor_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::getComponentsByTagsAllAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<AActor>(actor), tags, include_from_child_actors, include_actor_stable_name, include_actor_unreal_id));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_components_by_class_as_map",
-            [this](SpHandle& uclass, SpHandle& actor, bool& include_from_child_actors, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::getComponentsByClassAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<AActor>(actor), include_from_child_actors, include_actor_stable_name, include_actor_unreal_name));
+            [this](SpHandle& uclass, SpHandle& actor, bool& include_from_child_actors, bool& include_actor_stable_name, bool& include_actor_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::getComponentsByClassAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<AActor>(actor), include_from_child_actors, include_actor_stable_name, include_actor_unreal_id));
             });
 
         //
@@ -578,28 +578,28 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_actor_by_name_as_map",
-            [this](SpHandle& uclass, SpHandle& parent, std::string& child_component_name, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsByNameAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<AActor>(parent), child_component_name, include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
+            [this](SpHandle& uclass, SpHandle& parent, std::string& child_component_name, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsByNameAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<AActor>(parent), child_component_name, include_all_descendants, include_actor_stable_name, include_actor_unreal_id));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_actor_by_tag_as_map",
-            [this](SpHandle& uclass, SpHandle& parent, std::string& tag, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsByTagAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<AActor>(parent), tag, include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
+            [this](SpHandle& uclass, SpHandle& parent, std::string& tag, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsByTagAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<AActor>(parent), tag, include_all_descendants, include_actor_stable_name, include_actor_unreal_id));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_actor_by_tags_any_as_map",
-            [this](SpHandle& uclass, SpHandle& parent, std::vector<std::string>& tags, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsByTagsAnyAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<AActor>(parent), tags, include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
+            [this](SpHandle& uclass, SpHandle& parent, std::vector<std::string>& tags, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsByTagsAnyAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<AActor>(parent), tags, include_all_descendants, include_actor_stable_name, include_actor_unreal_id));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_actor_by_tags_all_as_map",
-            [this](SpHandle& uclass, SpHandle& parent, std::vector<std::string>& tags, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsByTagsAllAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<AActor>(parent), tags, include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
+            [this](SpHandle& uclass, SpHandle& parent, std::vector<std::string>& tags, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsByTagsAllAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<AActor>(parent), tags, include_all_descendants, include_actor_stable_name, include_actor_unreal_id));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_actor_by_class_as_map",
-            [this](SpHandle& uclass, SpHandle& parent, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsByClassAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<AActor>(parent), include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
+            [this](SpHandle& uclass, SpHandle& parent, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsByClassAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<AActor>(parent), include_all_descendants, include_actor_stable_name, include_actor_unreal_id));
             });
 
         //
@@ -665,28 +665,28 @@ public:
         //
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_scene_component_by_name_as_map",
-            [this](SpHandle& uclass, SpHandle& parent, std::string& child_component_name, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsByNameAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<USceneComponent>(parent), child_component_name, include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
+            [this](SpHandle& uclass, SpHandle& parent, std::string& child_component_name, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsByNameAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<USceneComponent>(parent), child_component_name, include_all_descendants, include_actor_stable_name, include_actor_unreal_id));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_scene_component_by_tag_as_map",
-            [this](SpHandle& uclass, SpHandle& parent, std::string& tag, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsByTagAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<USceneComponent>(parent), tag, include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
+            [this](SpHandle& uclass, SpHandle& parent, std::string& tag, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsByTagAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<USceneComponent>(parent), tag, include_all_descendants, include_actor_stable_name, include_actor_unreal_id));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_scene_component_by_tags_any_as_map",
-            [this](SpHandle& uclass, SpHandle& parent, std::vector<std::string>& tags, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsByTagsAnyAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<USceneComponent>(parent), tags, include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
+            [this](SpHandle& uclass, SpHandle& parent, std::vector<std::string>& tags, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsByTagsAnyAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<USceneComponent>(parent), tags, include_all_descendants, include_actor_stable_name, include_actor_unreal_id));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_scene_component_by_tags_all_as_map",
-            [this](SpHandle& uclass, SpHandle& parent, std::vector<std::string>& tags, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsByTagsAllAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<USceneComponent>(parent), tags, include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
+            [this](SpHandle& uclass, SpHandle& parent, std::vector<std::string>& tags, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsByTagsAllAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<USceneComponent>(parent), tags, include_all_descendants, include_actor_stable_name, include_actor_unreal_id));
             });
 
         unreal_entry_point_binder->bindFuncToExecuteOnGameThread("unreal_service", "get_children_components_for_scene_component_by_class_as_map",
-            [this](SpHandle& uclass, SpHandle& parent, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_name) -> std::map<std::string, SpHandle> {
-                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsByClassAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<USceneComponent>(parent), include_all_descendants, include_actor_stable_name, include_actor_unreal_name));
+            [this](SpHandle& uclass, SpHandle& parent, bool& include_all_descendants, bool& include_actor_stable_name, bool& include_actor_unreal_id) -> std::map<std::string, SpHandle> {
+                return UnrealUtils::toHandle(UnrealUtils::getChildrenComponentsByClassAsMap(UnrealUtils::toPtr<UClass>(uclass), UnrealUtils::toPtr<USceneComponent>(parent), include_all_descendants, include_actor_stable_name, include_actor_unreal_id));
             });
 
         //

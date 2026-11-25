@@ -33,7 +33,9 @@
 #include <UObject/Class.h>                  // EGetByNameFlags, TBaseStructure, UClass, UEnum, UFunction, UScriptStruct, UStruct
 #include <UObject/NameTypes.h>              // FName
 #include <UObject/Object.h>                 // UObject
+#include <UObject/Package.h>                // UPackage
 #include <UObject/ReflectedTypeAccessors.h> // StaticEnum
+#include <UObject/SoftObjectPath.h>         // FSoftObjectPath
 #include <UObject/UnrealType.h>             // FProperty
 #include <UObject/WeakObjectPtrTemplates.h> // TWeakObjectPtr
 
@@ -295,7 +297,7 @@ public:
         // and recurses into inner properties, so nested containers like TMap<FString, TArray<int32>> are
         // handled without any special-casing here. Unreal inserts a space before ">" when nesting template
         // closers (e.g. "TArray<TArray<int32> >") to work around an old MSVC parser limit, so we strip all
-        // whitespace, which is a safe operation because because C++ type names don't contain spaces.
+        // whitespace, which is a safe operation because C++ type names don't contain spaces.
         //
         // A fixed-size array property (e.g., float Foo[4]) is a single FProperty with ArrayDim > 1, and
         // GetCPPType(...) only returns the element type, so we append "[N]" unless the caller is asking
@@ -765,5 +767,34 @@ public:
     static std::string getUnrealName(const TNameableObject* nameable_object)
     {
         return getUnrealName(getFName(nameable_object));
+    }
+
+    // Unlike getUnrealName(...), which is only unique within an actor's level, getUnrealIdString(...) is unique within
+    // a world, and is the same in the editor, in a PIE game, and in a standalone game. It isn't intended to be
+    // human-readable, e.g., "/Game/Maps/Apartment_Lighting.Apartment_Lighting:PersistentLevel.StaticMeshActor_3".
+
+    static std::string getUnrealIdString(const AActor* actor)
+    {
+        SP_ASSERT(actor);
+
+        UWorld* world = actor->GetWorld();
+        SP_ASSERT(world);
+        SP_ASSERT(!world->IsPreviewWorld());
+        SP_ASSERT(GEngine->GetWorldContextFromWorld(world));
+
+        FSoftObjectPath soft_object_path = FSoftObjectPath(actor);
+
+        FString asset_path_string = soft_object_path.GetAssetPathString();
+        FString sub_path_string = soft_object_path.GetSubPathString();
+        FString non_pie_asset_path_string;
+
+        if (world->IsEditorWorld() && world->IsGameWorld()) {
+            FString pie_prefix = UWorld::BuildPIEPackagePrefix(actor->GetOutermost()->GetPIEInstanceID());
+            non_pie_asset_path_string = UWorld::StripPIEPrefixFromPackageName(asset_path_string, pie_prefix);
+        } else {
+            non_pie_asset_path_string = asset_path_string;
+        }
+
+        return toStdString(non_pie_asset_path_string + ":" + sub_path_string);
     }
 };

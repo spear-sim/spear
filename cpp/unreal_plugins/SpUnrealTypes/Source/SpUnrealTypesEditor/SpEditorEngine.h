@@ -46,6 +46,9 @@ struct FSpLevelViewportClientDesc
     float OrthoZoom = 0.0f;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
+    float OrthoWidth = 0.0f;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
     FIntPoint ViewportSize = FIntPoint::ZeroValue;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="SPEAR")
@@ -81,6 +84,12 @@ public:
             desc.FOVAngle = level_editor_viewport_client->FOVAngle;
             desc.AspectRatio = level_editor_viewport_client->AspectRatio;
             desc.OrthoZoom = level_editor_viewport_client->GetOrthoZoom();
+
+            // OrthoZoom is not a world-space width, so we compute the full world-space width of the viewport the
+            // same way as FEditorViewportClient::CalcSceneView(...). This width matches the semantics of
+            // UCameraComponent::OrthoWidth.
+            desc.OrthoWidth = level_editor_viewport_client->GetOrthoUnitsPerPixel(level_editor_viewport_client->Viewport)*level_editor_viewport_client->Viewport->GetSizeXY().X;
+
             desc.ViewportSize = level_editor_viewport_client->Viewport->GetSizeXY();
             desc.bIsCurrentLevelEditing = level_editor_viewport_client == GCurrentLevelEditingViewportClient;
             desc.bIsActive = level_editor_viewport_client == active_viewport_client;

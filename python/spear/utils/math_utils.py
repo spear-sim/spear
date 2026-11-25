@@ -20,15 +20,15 @@ import scipy
 # scipy.spatial.transform.Rotation.from_euler(...).as_matrix().
 #     A rotation around X by theta radians is defined by the following matrix,
 #         [[1 0 0  ]
-#          [0 c -s ] 
+#          [0 c -s ]
 #          [0 s c  ]], where c=cos(theta) and s=sin(theta)
 #     A rotation around Y by theta radians is defined by the following matrix,
 #         [[c  0 s ]
-#          [0  1 0 ] 
+#          [0  1 0 ]
 #          [-s 0 c ]], where c=cos(theta) and s=sin(theta)
 #     A rotation around Z by theta radians is defined by the following matrix,
 #         [[c -s 0 ]
-#          [s c  0 ] 
+#          [s c  0 ]
 #          [0 0  1 ]], where c=cos(theta) and s=sin(theta)
 #
 # These conventions conflict. We therefore need to negate Unreal's roll (rotation around X) and pitch
@@ -41,7 +41,7 @@ import scipy
 #     yaw   = np.deg2rad(unreal_yaw)
 #
 # Additionally, Unreal applies a triplet of roll-pitch-yaw Euler angles in the fixed parent coordinate
-# system in the following order, which can be verified by manual inspection the editor.
+# system in the following order, which can be verified by manual inspection of the editor.
 #     1. Rotate around fixed parent-space X by roll degrees
 #     2. Rotate around fixed parent-space Y by pitch degrees
 #     3. Rotate around fixed parent-space Z by yaw degrees
@@ -73,7 +73,7 @@ import scipy
 #         l_current = transform["location"]
 #         R_current = transform["rotation"]
 #         S_current = transform["scale"]
-#     
+#
 #         l_composed = R_current*S_current*l_composed + l_current
 #         R_composed = R_current*R_composed
 #         S_composed = S_composed*S_current

@@ -72,7 +72,7 @@ def process_scene():
                          mode="arrow", scale_factor=origin_scale_factor, color=c_z_axis)
 
     actors = actors_json
-    actors = { actor_name: actor_kinematic_tree for actor_name, actor_kinematic_tree in actors.items() if actor_name.split(":")[0] not in ignore_actors }
+    actors = { actor_name: actor_kinematic_tree for actor_name, actor_kinematic_tree in actors.items() if actor_kinematic_tree["stable_name"] not in ignore_actors }
 
     color = (0.75, 0.75, 0.75)
 

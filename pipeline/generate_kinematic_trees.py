@@ -58,7 +58,8 @@ def get_kinematic_tree(actor_desc):
             component_desc=actor_desc["root_component"],
             component_is_root_within_node=True,
             transform_node_from_parent_component=spear.math.get_identity_transform(),
-            log_prefix_str="    ")}
+            log_prefix_str="    "),
+        "stable_name": actor_desc["stable_name"]}
 
 def get_kinematic_tree_node(actor_name, component_desc, component_is_root_within_node, transform_node_from_parent_component, log_prefix_str):
 
