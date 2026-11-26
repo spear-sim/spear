@@ -3,6 +3,10 @@
 // Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
+//
+// This header participates in SP_PLATFORM_PURE builds.
+//
+
 #pragma once
 
 #include <filesystem>
@@ -10,13 +14,15 @@
 #include <string>
 #include <utility> // std::forward
 
-#include <HAL/Platform.h>      // SPCORE_API
-#include <Logging/LogMacros.h> // DECLARE_LOG_CATEGORY_EXTERN
-
 #include "SpCore/Boost.h"
+#include "SpCore/Platform.h"
 #include "SpCore/Std.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogSpear, Log, All);
+#if SP_PLATFORM_UNREAL
+    #include <Logging/LogMacros.h> // DECLARE_LOG_CATEGORY_EXTERN
+
+    DECLARE_LOG_CATEGORY_EXTERN(LogSpear, Log, All);
+#endif
 
 //
 // In some situations, the output from UE_LOG is not available, e.g., running on a cluster through an RL framework like RLLib.
@@ -71,7 +77,9 @@ public:
     // Exposed (rather than private) so that Assert.cpp's vendored print() function can route its already-
     // formatted buffer to UE_LOG without also writing to std::cout, since print() already writes to stdout
     // directly itself; calling SP_LOG_NO_PREFIX(...) there instead would print the same content twice.
-    static void logStringToUnreal(const std::string& str);
+    #if SP_PLATFORM_UNREAL
+        static void logStringToUnreal(const std::string& str);
+    #endif
 
 private:
     static void logString(const std::string& str);

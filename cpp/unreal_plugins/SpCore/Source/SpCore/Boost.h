@@ -3,6 +3,10 @@
 // Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
+//
+// This header participates in SP_PLATFORM_PURE builds.
+//
+
 #pragma once
 
 //
@@ -11,6 +15,7 @@
 
 #include <boost/predef.h> // BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
 
+#include "SpCore/Platform.h"
 #include "SpCore/SuppressCompilerWarnings.h"
 #include "SpCore/Windows.h"
 
@@ -108,8 +113,8 @@ SP_END_SUPPRESS_COMPILER_WARNINGS
 // macro. However, Boost uses this macro to decide whether or not to use native posix shared memory objects,
 // rather than emulating them through memory-mapped files. To address this issue, we explicitly define
 // BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS, because this forces Boost to use native posix shared
-// memory objects. This configuration must match python_ext/cpp/boost.h exactly, because otherwise spear_ext
-// and the Unreal application might silently use incompatible implementations of the same interprocess object.
+// memory objects. spear_ext includes this header too, so both sides of every interprocess object are
+// guaranteed to use the same implementation.
 #if BOOST_OS_MACOS
     #define BOOST_INTERPROCESS_POSIX_SHARED_MEMORY_OBJECTS
 #endif
@@ -123,6 +128,7 @@ SP_BEGIN_SUPPRESS_COMPILER_WARNINGS
         #error
     #endif
 
+    #include <boost/interprocess/exceptions.hpp>
     #include <boost/interprocess/mapped_region.hpp>
     #include <boost/interprocess/sync/file_lock.hpp>
 SP_END_SUPPRESS_COMPILER_WARNINGS
@@ -132,6 +138,21 @@ SP_END_SUPPRESS_COMPILER_WARNINGS
 SP_BEGIN_SUPPRESS_COMPILER_WARNINGS
     #include <boost/lexical_cast.hpp>
 SP_END_SUPPRESS_COMPILER_WARNINGS
+
+// ----------------------------------------------------------------------------------------------------------
+
+// Outside of Unreal, we use Boost.Stacktrace in header-only mode to print the call stack when an assert fails. Inside
+// Unreal, we use FPlatformStackWalk instead, and we don't include Boost.Stacktrace at all, because on Windows it would
+// add a link dependency on Dbgeng.lib and ole32.lib to every module that includes this header. Boost.Stacktrace
+// requires _GNU_SOURCE or BOOST_STACKTRACE_GNU_SOURCE_NOT_REQUIRED to be defined on macOS and Linux, even though
+// _Unwind_Backtrace(...) is available on all of the platforms we support.
+#if SP_PLATFORM_PURE
+    #define BOOST_STACKTRACE_GNU_SOURCE_NOT_REQUIRED
+
+    SP_BEGIN_SUPPRESS_COMPILER_WARNINGS
+        #include <boost/stacktrace.hpp> // boost::stacktrace::stacktrace, boost::stacktrace::to_string
+    SP_END_SUPPRESS_COMPILER_WARNINGS
+#endif
 
 // ----------------------------------------------------------------------------------------------------------
 

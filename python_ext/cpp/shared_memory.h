@@ -13,10 +13,10 @@
 
 #include <boost/predef.h> // BOOST_OS_LINUX, BOOST_OS_MACOS, BOOST_OS_WINDOWS
 
-#include "assert.h"
-#include "boost.h"
-#include "std.h"
-#include "types.h"
+#include "SpCore/Assert.h"
+#include "SpCore/Boost.h"
+#include "SpCore/SpTypes.h"
+#include "SpCore/Std.h"
 
 // Client-side counterpart to SharedMemoryFence in SpCore/SharedMemory.h. The server owns the underlying shared
 // memory region, and the client opens it by name using the SpSharedMemoryView returned by the server. See
@@ -35,7 +35,7 @@ public:
         SP_ASSERT(std::atomic_ref<uint64_t>::is_always_lock_free);
 
         SP_ASSERT(view.id_ != "");
-        SP_ASSERT(view.num_bytes_ == sizeof(uint64_t) + s_key_num_bytes_);
+        SP_ASSERT(view.num_bytes_ == sizeof(uint64_t) + SpSharedMemoryFenceLayout::s_key_num_bytes_);
 
         #if BOOST_OS_WINDOWS
             boost::interprocess::windows_shared_memory windows_shared_memory(boost::interprocess::open_only, view.id_.c_str(), boost::interprocess::read_write);
@@ -73,13 +73,10 @@ public:
         fence();
 
         const char* key_buffer = reinterpret_cast<const char*>(counter_ + 1);
-        return std::string(key_buffer, strnlen(key_buffer, s_key_num_bytes_));
+        return std::string(key_buffer, strnlen(key_buffer, SpSharedMemoryFenceLayout::s_key_num_bytes_));
     }
 
 private:
-    // Must match SharedMemoryFence in SpCore/SharedMemory.h.
-    inline static constexpr uint64_t s_key_num_bytes_ = 1024;
-
     boost::interprocess::mapped_region mapped_region_;
     uint64_t* counter_ = nullptr;
 };

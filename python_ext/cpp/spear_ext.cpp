@@ -15,9 +15,11 @@
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 
+#include "SpCore/Std.h"
+
+#include "SpServices/SpTypes.h"
+
 #include "client.h"
-#include "std.h"
-#include "types.h"
 
 NB_MODULE(spear_ext, module)
 {

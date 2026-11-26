@@ -3,6 +3,10 @@
 // Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
+//
+// This header participates in SP_PLATFORM_PURE builds.
+//
+
 #pragma once
 
 #include <stddef.h> // size_t
@@ -27,26 +31,15 @@
 #include <utility>     // std::forward, std::make_pair, std::move, std::pair
 #include <vector>
 
-#include <boost/predef.h> // BOOST_COMP_CLANG, BOOST_COMP_MSVC, BOOST_OS_LINUX
-
-#include <HAL/Platform.h> // SPCORE_API
+#include <boost/predef.h> // BOOST_COMP_CLANG, BOOST_COMP_MSVC
 
 #include "SpCore/Assert.h"
 #include "SpCore/Boost.h"
+#include "SpCore/Platform.h"
 
 // TODO: remove platform-specific include
 #if BOOST_COMP_MSVC
     #include <format>
-#endif
-
-#if BOOST_OS_LINUX
-    #ifdef __cplusplus
-        #define SP_EXTERN_C extern "C"
-    #else
-        #define SP_EXTERN_C
-    #endif
-    SP_EXTERN_C SPCORE_API long int __isoc23_sscanf(const char *str, const char *format, ...);
-    SP_EXTERN_C SPCORE_API long int __isoc23_strtol(const char* str, char** endptr, int base);
 #endif
 
 // These operators are needed so an enum class can be used like an integer to represent bit flags. Note that operator|| and operator! are needed for SP_ASSERT

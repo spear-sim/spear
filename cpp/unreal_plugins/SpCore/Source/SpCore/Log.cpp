@@ -3,6 +3,10 @@
 // Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
+//
+// This implementation participates in SP_PLATFORM_PURE builds.
+//
+
 #include "SpCore/Log.h"
 
 #include <filesystem>
@@ -12,17 +16,19 @@
 #include <string>
 #include <vector>
 
-#include <Containers/UnrealString.h> // FString
-#include <CoreGlobals.h>             // IsRunningCommandlet
-#include <Misc/CoreMisc.h>           // IsRunningGame
-#include <HAL/Platform.h>            // TEXT
-#include <Logging/LogMacros.h>       // DECLARE_LOG_CATEGORY_EXTERN, DEFINE_LOG_CATEGORY, UE_LOG
-#include <Misc/CommandLine.h>
-#include <Misc/Parse.h>
-
 #include "SpCore/Assert.h"
+#include "SpCore/Platform.h"
 #include "SpCore/Std.h"
-#include "SpCore/Unreal.h"
+
+#if SP_PLATFORM_UNREAL
+    #include <Containers/UnrealString.h> // FString
+    #include <CoreGlobals.h>             // IsRunningCommandlet
+    #include <Misc/CoreMisc.h>           // IsRunningGame
+    #include <HAL/Platform.h>            // TEXT
+    #include <Logging/LogMacros.h>       // DECLARE_LOG_CATEGORY_EXTERN, DEFINE_LOG_CATEGORY, UE_LOG
+
+    #include "SpCore/Unreal.h"
+#endif
 
 // TODO: remove platform-specific include
 #if BOOST_COMP_MSVC
@@ -33,7 +39,9 @@
     #error
 #endif
 
-DEFINE_LOG_CATEGORY(LogSpear);
+#if SP_PLATFORM_UNREAL
+    DEFINE_LOG_CATEGORY(LogSpear);
+#endif
 
 std::recursive_mutex g_mutex;
 
@@ -44,7 +52,9 @@ void Log::logCurrentFunction(const std::filesystem::path& current_file, int curr
 
 void Log::logString(const std::string& str)
 {
-    logStringToUnreal(str); // logStringToUnreal(...) is a no-op unless we're in editor mode via GUI
+    #if SP_PLATFORM_UNREAL
+        logStringToUnreal(str); // logStringToUnreal(...) is a no-op unless we're in editor mode via GUI
+    #endif
     logStringToStdout(str);
 }
 
@@ -59,27 +69,29 @@ std::recursive_mutex& Log::getStdoutMutex()
     return g_mutex;
 }
 
-void Log::logStringToUnreal(const std::string& str)
-{
-    // This is the single source of truth for whether we should route a message to UE_LOG at all: only in
-    // editor mode via GUI, not via the command line (e.g., during cooking or using -game), and not in
-    // standalone mode. Assert.cpp's print() function also calls this function directly (rather than going
-    // through logString(...)).
-    #if WITH_EDITOR // defined in an auto-generated header
-        if (IsRunningCommandlet() || IsRunningGame()) {
+#if SP_PLATFORM_UNREAL
+    void Log::logStringToUnreal(const std::string& str)
+    {
+        // This is the single source of truth for whether we should route a message to UE_LOG at all: only in
+        // editor mode via GUI, not via the command line (e.g., during cooking or using -game), and not in
+        // standalone mode. Assert.cpp's print() function also calls this function directly (rather than going
+        // through logString(...)).
+        #if WITH_EDITOR // defined in an auto-generated header
+            if (IsRunningCommandlet() || IsRunningGame()) {
+                return;
+            }
+        #else // standalone mode
             return;
-        }
-    #else // standalone mode
-        return;
-    #endif
+        #endif
 
-    // We need to use TEXT(...) and *Unreal::toFString(...) because if we use Unreal::toTCharPtr(...) we will
-    // fail static assertions and get errors in the UE_LOG macro:
-    //     error: static assertion failed due to requirement 'std::is_const_v<Unreal::FStringContainer>': Formatting string must be a const TCHAR array.
-    //     error: static assertion failed due to requirement 'TIsArrayOrRefOfTypeByPredicate<Unreal::FStringContainer, TIsCharEncodingCompatibleWithTCHAR>::Value': Formatting string must be a TCHAR array.
-    //     error: cannot pass object of non-trivial type 'Unreal::FStringContainer' through variadic function; call will abort at runtime [-Wnon-pod-varargs]
-    UE_LOG(LogSpear, Log, TEXT("%s"), *Unreal::toFString(str));
-}
+        // We need to use TEXT(...) and *Unreal::toFString(...) because if we use Unreal::toTCharPtr(...) we will
+        // fail static assertions and get errors in the UE_LOG macro:
+        //     error: static assertion failed due to requirement 'std::is_const_v<Unreal::FStringContainer>': Formatting string must be a const TCHAR array.
+        //     error: static assertion failed due to requirement 'TIsArrayOrRefOfTypeByPredicate<Unreal::FStringContainer, TIsCharEncodingCompatibleWithTCHAR>::Value': Formatting string must be a TCHAR array.
+        //     error: cannot pass object of non-trivial type 'Unreal::FStringContainer' through variadic function; call will abort at runtime [-Wnon-pod-varargs]
+        UE_LOG(LogSpear, Log, TEXT("%s"), *Unreal::toFString(str));
+    }
+#endif
 
 std::string Log::getPrefix(const std::filesystem::path& current_file, int current_line)
 {

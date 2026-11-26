@@ -452,6 +452,16 @@ class UnrealStruct:
         for name, prop in props.items():
             spear.log(f"{prefix}        Property: {name} ({self._unreal_service.get_type_for_property_as_string(prop=prop)})")
 
+    # Two UnrealStructs are equal if they refer to the same UStruct, regardless of whether they are distinct Python objects.
+    def __eq__(self, other):
+        if isinstance(other, UnrealStruct):
+            return self.ustruct == other.ustruct
+        else:
+            return NotImplemented
+
+    def __hash__(self):
+        return hash(self.ustruct)
+
     def __repr__(self):
         return f"UnrealStruct(ustruct={self.ustruct})"
 
@@ -512,6 +522,16 @@ class UnrealClass:
             for name, prop in props.items():
                 spear.log(f"{prefix}            Property: {name} ({self._unreal_service.get_type_for_property_as_string(prop=prop)})")
             current_uclass = self._unreal_service.get_super_class(uclass=current_uclass, as_handle=True)
+
+    # Two UnrealClasses are equal if they refer to the same UClass, regardless of whether they are distinct Python objects.
+    def __eq__(self, other):
+        if isinstance(other, UnrealClass):
+            return self.uclass == other.uclass
+        else:
+            return NotImplemented
+
+    def __hash__(self):
+        return hash(self.uclass)
 
     def __repr__(self):
         return f"UnrealClass(uclass={self.uclass})"

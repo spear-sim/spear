@@ -15,14 +15,7 @@
 #include <HAL/Platform.h> // SPCORE_API
 
 #include "SpCore/Boost.h"
-
-struct SpSharedMemoryView // exposed to Python via SpServices/MsgpackAdaptors.h
-{
-    std::string id_; // platform-dependent name used to access the shared memory resource from other processes
-    uint64_t num_bytes_ = 0;
-    uint16_t offset_bytes_ = 0;
-    void* data_ = nullptr;
-};
+#include "SpCore/SpTypes.h"
 
 // Acquires exclusive ownership of id for the lifetime of this object, regardless of how the application
 // eventually shuts down. Throws SharedIdMutexError if id is already held by another process. The underlying
@@ -89,11 +82,6 @@ public:
     SpSharedMemoryView getView();
     std::string getKey() const;
     void fence();
-
-    // The fence region consists of a uint64_t counter, followed by a fixed-size, null-terminated buffer that
-    // contains a key that uniquely identifies this fence (see SharedMemoryFence::SharedMemoryFence(...) in
-    // SpCore/SharedMemory.cpp). Must match SharedMemoryFence in python_ext/cpp/shared_memory.h.
-    inline static constexpr uint64_t s_key_num_bytes_ = 1024;
 
 private:
     SharedMemoryRegion shared_memory_region_;

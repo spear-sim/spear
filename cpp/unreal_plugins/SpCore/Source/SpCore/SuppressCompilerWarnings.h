@@ -4,6 +4,10 @@
 // Copyright (c) Microsoft Corporation. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
+//
+// This header participates in SP_PLATFORM_PURE builds.
+//
+
 #pragma once
 
 #include <boost/predef.h> // BOOST_COMP_CLANG, BOOST_COMP_MSVC

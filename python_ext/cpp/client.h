@@ -19,18 +19,19 @@
 
 #include <nanobind/nanobind.h>
 
-#include <rpc/client.h>
-#include <rpc/msgpack.hpp>         // clmdep_msgpack, MSGPACK_ZONE_ALIGNOF
 #include <rpc/nonstd/optional.hpp> // nonstd::optional
 
-#include "assert.h"
-#include "boost.h"
-#include "func_signature_registry.h"
-#include "msgpack_adaptors.h"
-#include "shared_memory.h"
-#include "types.h"
+#include "SpCore/Assert.h"
+#include "SpCore/Boost.h"
 
-class Client : public ClientBase
+#include "SpServices/FuncSignatureRegistry.h"
+#include "SpServices/MsgpackAdaptors.h"
+#include "SpServices/Rpclib.h"
+#include "SpServices/SpTypes.h"
+
+#include "shared_memory.h"
+
+class Client : public SpClientBase
 {
 public:
     Client() = delete;

@@ -4,13 +4,17 @@
 // Copyright (c) 2004 Gregory Pakosz. Licensed under the WTFPLv2 License <http://www.wtfpl.net>.
 //
 
+//
+// This header participates in SP_PLATFORM_PURE builds.
+//
+
 // Borrowed and modified from https://github.com/gpakosz/PPK_ASSERT
 
 #pragma once
 
 #include <boost/predef.h> // BOOST_OS_MACOS
 
-#include <HAL/Platform.h> // SPCORE_API
+#include "SpCore/Platform.h"
 
 #define PPK_ASSERT_ENABLED 1
 

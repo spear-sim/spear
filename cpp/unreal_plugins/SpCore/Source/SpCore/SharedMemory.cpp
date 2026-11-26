@@ -157,7 +157,7 @@ SpSharedMemoryView SharedMemoryRegion::getView()
 
 SharedMemoryFence::SharedMemoryFence() : SharedMemoryFence(SharedMemory::getUniqueId()) {}
 
-SharedMemoryFence::SharedMemoryFence(uint64_t id) : shared_memory_region_(sizeof(uint64_t) + s_key_num_bytes_, id)
+SharedMemoryFence::SharedMemoryFence(uint64_t id) : shared_memory_region_(sizeof(uint64_t) + SpSharedMemoryFenceLayout::s_key_num_bytes_, id)
 {
     SP_ASSERT(std::atomic_ref<uint64_t>::is_always_lock_free);
 
@@ -178,10 +178,10 @@ SharedMemoryFence::SharedMemoryFence(uint64_t id) : shared_memory_region_(sizeof
     std::string computer_name = Unreal::toStdString(FPlatformProcess::ComputerName());
     std::string guid = Unreal::toStdString(FGuid::NewGuid().ToString(EGuidFormats::DigitsWithHyphens));
     key_ = computer_name + ":" + guid;
-    SP_ASSERT(key_.size() < s_key_num_bytes_); // leave room for the null terminator
+    SP_ASSERT(key_.size() < SpSharedMemoryFenceLayout::s_key_num_bytes_); // leave room for the null terminator
 
     char* key_buffer = reinterpret_cast<char*>(counter_ + 1);
-    std::memset(key_buffer, 0, s_key_num_bytes_);
+    std::memset(key_buffer, 0, SpSharedMemoryFenceLayout::s_key_num_bytes_);
     std::memcpy(key_buffer, key_.data(), key_.size());
 }
 

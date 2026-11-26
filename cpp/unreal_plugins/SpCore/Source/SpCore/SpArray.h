@@ -26,6 +26,7 @@
 #include "SpCore/Boost.h"
 #include "SpCore/Log.h"
 #include "SpCore/SharedMemory.h"
+#include "SpCore/SpTypes.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 
@@ -50,22 +51,6 @@ public:
 // Each SpArray has a data type (uint8, float32, etc) and a data source (backed by an internal std::vector,
 // backed by an external pointer, backed by shared memory, etc).
 //
-
-enum class SpArrayDataType
-{
-    Invalid = -1,
-    UInt8   = 0,
-    Int8    = 1,
-    UInt16  = 2,
-    Int16   = 3,
-    UInt32  = 4,
-    Int32   = 5,
-    UInt64  = 6,
-    Int64   = 7,
-    Float16 = 8,
-    Float32 = 9,
-    Float64 = 10
-};
 
 UENUM() // not intended to be Blueprint-accessible
 enum class ESpArrayDataType
@@ -99,14 +84,6 @@ enum class ESpArrayShortDataType
     f2      = Unreal::getConstEnumValue(SpArrayDataType::Float16),
     f4      = Unreal::getConstEnumValue(SpArrayDataType::Float32),
     f8      = Unreal::getConstEnumValue(SpArrayDataType::Float64)
-};
-
-enum class SpArrayDataSource
-{
-    Invalid  = -1,
-    Internal = 0,
-    External = 1,
-    Shared   = 2
 };
 
 UENUM() // not intended to be Blueprint-accessible
@@ -156,20 +133,6 @@ public:
     }
 };
 
-//
-// SpArraySharedMemoryView is similar to an SpSharedMemoryView, but with extra members variables that can be
-// specified by the system that owns the shared memory to indicate how the shared memory should be used, and
-// a public name that other systems should use to access the memory.
-//
-
-enum class SpArraySharedMemoryUsageFlags
-{
-    DoNotUse    = 0,
-    Arg         = 1 << 0,
-    ReturnValue = 1 << 1
-};
-SP_DECLARE_ENUM_FLAG_OPERATORS(SpArraySharedMemoryUsageFlags);
-
 // UENUM(Flags) decorator is required to obtain an "A | B | C" string representation from a value, not intended to be Blueprint-accessible
 UENUM(Flags)
 enum class ESpArraySharedMemoryUsageFlags
@@ -179,53 +142,6 @@ enum class ESpArraySharedMemoryUsageFlags
     ReturnValue = Unreal::getConstEnumValue(SpArraySharedMemoryUsageFlags::ReturnValue)
 };
 ENUM_CLASS_FLAGS(ESpArraySharedMemoryUsageFlags); // required if combining values using bitwise operations
-
-struct SpArraySharedMemoryView : SpSharedMemoryView // exposed to Python via SpServices/MsgpackAdaptors.h
-{
-    SpArraySharedMemoryView() = default;
-    SpArraySharedMemoryView(const SpSharedMemoryView& view, const std::string& name, SpArraySharedMemoryUsageFlags usage_flags) : SpSharedMemoryView(view)
-    {
-        name_ = name;
-        usage_flags_ = usage_flags;
-    }
-
-    std::string name_ = "smem:invalid";
-    SpArraySharedMemoryUsageFlags usage_flags_ = SpArraySharedMemoryUsageFlags::DoNotUse;
-};
-
-//
-// SpPackedArray represents an array that can be passed to or returned from an SpFunc. We represent the data
-// payload in each SpPackedArray as an std::vector<uint8_t>, regardless of its actual data type, because
-// vectors of uint8_t get converted to a more efficient msgpack representation than other types. This results
-// in faster data movement. See the following link for details:
-//     https://github.com/msgpack/msgpack-c/wiki/v2_0_cpp_adaptor
-//
-
-using SpPackedArrayAllocator = SpAlignedAllocator<uint8_t, 4096>;
-
-class SPCORE_API SpPackedArray // exposed to Python via SpServices/MsgpackAdaptors.h
-{
-public:
-    inline static constexpr int s_alignment_padding_bytes_ = 4096;
-
-    // typically called before calling an SpFunc to resolve pointers to shared memory
-    void resolve();
-    void resolve(const SpArraySharedMemoryView& shared_memory_view);
-
-    // typically called before calling an SpFunc to validate that an SpPackedArray can be used as an arg, and
-    // after calling an SpFunc to validate that an SpPackedArray can be used as a return value
-    void validate(SpArraySharedMemoryUsageFlags usage_flags) const;
-
-    std::vector<uint8_t, SpPackedArrayAllocator> data_;
-    void* view_ = nullptr;
-    SpArrayDataSource data_source_ = SpArrayDataSource::Invalid;
-
-    std::vector<uint64_t> shape_;
-    SpArrayDataType data_type_ = SpArrayDataType::Invalid;
-
-    std::string shared_memory_name_;
-    SpArraySharedMemoryUsageFlags shared_memory_usage_flags_ = SpArraySharedMemoryUsageFlags::DoNotUse;
-};
 
 //
 // SpArray represents a strongly typed array that can be instantiated to manipulate an arg or return value. A

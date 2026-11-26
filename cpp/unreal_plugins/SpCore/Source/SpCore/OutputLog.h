@@ -5,18 +5,9 @@
 
 #pragma once
 
-#include <stdint.h> // int32_t
-
-#include <string>
-#include <vector>
-
 #include <HAL/Platform.h> // SPCORE_API
 
-struct SpOutputLogMessages // exposed to Python via SpServices/MsgpackAdaptors.h
-{
-    std::vector<std::string> messages_;
-    int32_t num_evicted_ = 0;
-};
+#include "SpCore/SpTypes.h"
 
 class SPCORE_API OutputLog
 {

@@ -3,11 +3,17 @@
 // Copyright (c) 2022 Intel. Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 //
 
+//
+// This header participates in SP_PLATFORM_PURE builds.
+//
+
 #pragma once
 
 #include <boost/predef.h> // BOOST_OS_MACOS, BOOST_OS_WINDOWS
 
 #include "SpCore/Windows.h" // On Windows, rpclib expects <windows.h> to have been included
+
+#include "SpServices/Platform.h"
 
 #pragma push_macro("check") // Unreal macro, conflicts with rpclib
 #undef check
@@ -29,7 +35,14 @@
 
 #include <rpc/config.h>
 #include <rpc/msgpack.hpp> // clmdep_msgpack
-#include <rpc/server.h>
+
+#if SP_PLATFORM_SERVER
+    #include <rpc/server.h>
+#elif SP_PLATFORM_CLIENT
+    #include <rpc/client.h>
+#else
+    #error
+#endif
 
 #if BOOST_OS_WINDOWS
     #undef MSGPACK_ARCH_AMD64

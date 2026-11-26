@@ -157,6 +157,7 @@ if __name__ == "__main__":
     if args.debug and sys.platform == "darwin":
         python_ext_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), "..", "python_ext"))
         so_files = glob.glob(os.path.join(python_ext_dir, "**", "*.so"), recursive=True)
+        so_files = [ so_file for so_file in so_files if ".dSYM" not in so_file ] # skip DWARF files inside previously generated .dSYM bundles
         for so_file in so_files:
             cmd = ["dsymutil", so_file, "-o", f"{so_file}.dSYM"]
             spear.tools.run_cmd(cmd=cmd)

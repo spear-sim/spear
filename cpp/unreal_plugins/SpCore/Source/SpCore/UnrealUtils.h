@@ -39,6 +39,7 @@
 #include "SpCore/Assert.h"
 #include "SpCore/Config.h"
 #include "SpCore/Log.h"
+#include "SpCore/SpTypes.h"
 #include "SpCore/Std.h"
 #include "SpCore/Unreal.h"
 
@@ -47,51 +48,6 @@ class UFunction;
 class UStruct;
 class UScriptStruct;
 class UWorld;
-
-//
-// SpHandle is an opaque reference to an object that can be passed back and forth between Python and C++.
-// For UObjects, object_index_ and object_serial_number_ store the same data as a TWeakObjectPtr, so we can
-// detect when a handle refers to an object that has been destroyed, even if its address has been reused by a
-// new object. For all other types, object_index_ and object_serial_number_ are 0.
-//
-
-struct SpHandle // exposed to Python via SpServices/MsgpackAdaptors.h
-{
-    uint64_t ptr_ = 0;
-    int32_t object_index_ = 0;
-    int32_t object_serial_number_ = 0;
-
-    bool operator==(const SpHandle& other) const = default; // needed by SpPropertyDesc::operator==
-};
-
-//
-// SpPropertyDesc and SpPropertyValue encapsulate the data needed to get and set a UPROPERTY on a specific UObject.
-//
-
-struct SpPropertyDesc // exposed to Python via SpServices/MsgpackAdaptors.h
-{
-    FProperty* property_ = nullptr; // leaf property, not always equal to the tail of notify_member_properties_ when property_ refers to a specific entry in an array or map
-    void* value_ptr_ = nullptr;     // pointer to property_'s value for a specific object or struct
-    std::string type_id_;           // string ID representing the type of property_
-
-    // The following arrays are intended to be parallel, i.e., all the same length, with one entry per step
-    // in the resolved traversal. notify_objects_ and notify_member_properties_ are always set, and the
-    // remaining arrays describe an array or map entry at each step and are sentinels (nullptr, -1, "") for a
-    // plain member step. The object to notify is notify_objects_.back().
-    std::vector<SpHandle> notify_objects_;              // base object at each step (repeated across a struct segment; changes each time a new object is traversed), SpHandle needed so SpPropertyDesc can be serialized safely on the worker thread
-    std::vector<FProperty*> notify_member_properties_;  // named member property at each step (i.e., the container for an array or map entry)
-    std::vector<FProperty*> notify_element_properties_; // array Inner, fixed-size array property, or map ValueProp at each step, or nullptr for a plain member step
-    std::vector<int> notify_array_indices_;             // array index at each step, or -1 for a non-array step
-    std::vector<std::string> notify_map_keys_;          // map key at each step, or "" for a non-map step
-
-    bool operator==(const SpPropertyDesc& other) const = default; // used to assert that a parent desc is entirely default
-};
-
-struct SpPropertyValue // exposed to Python via SpServices/MsgpackAdaptors.h
-{
-    std::string value_;
-    std::string type_id_;
-};
 
 //
 // General-purpose utility functions for working with Unreal objects. The functions here are higher-level

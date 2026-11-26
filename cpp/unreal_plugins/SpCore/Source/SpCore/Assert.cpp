@@ -4,28 +4,37 @@
 // Copyright (c) 2004 Gregory Pakosz. Licensed under the WTFPLv2 License <http://www.wtfpl.net>.
 //
 
+//
+// This implementation participates in SP_PLATFORM_PURE builds.
+//
+
 // Borrowed and modified from https://github.com/gpakosz/PPK_ASSERT
 
 #include "SpCore/Assert.h"
 
 #include <boost/predef.h> // BOOST_OS_MACOS, BOOST_OS_LINUX
 
-#include <mutex>  // std::lock_guard, std::recursive_mutex
-#include <string> // std::string
+#include <stddef.h> // size_t
 
-#include <HAL/PlatformMisc.h>      // FPlatformMisc
-#include <HAL/PlatformStackWalk.h> // FPlatformStackWalk
+#include <cstdlib> // std::abort, std::exit
+#include <limits>  // std::numeric_limits
+#include <mutex>   // std::lock_guard, std::recursive_mutex
+#include <string>  // std::string
 
 #include "SpCore/Boost.h"
 #include "SpCore/Log.h"
+#include "SpCore/Platform.h"
 #include "SpCore/SuppressCompilerWarnings.h"
-#include "SpCore/Unreal.h"
 #include "SpCore/Windows.h"
+
+#if SP_PLATFORM_UNREAL
+  #include "SpCore/Unreal.h"
+#endif
 
 // ---- BEGIN SPEAR MODIFICATION ----
 
 #if BOOST_OS_MACOS || BOOST_OS_LINUX
-    #include <unistd.h> // fileno, isatty
+  #include <unistd.h> // fileno, isatty
 #endif
 
 // ---- END SPEAR MODIFICATION ----
@@ -168,6 +177,7 @@ namespace {
     // already wrote this same content to stdout via vfprintf(...) above; SP_LOG_NO_PREFIX(...) would write
     // it to stdout a second time in addition to routing it to UE_LOG. logStringToUnreal(...) is a no-op
     // unless we're in editor mode via GUI, so we don't need to duplicate that condition here ourselves.
+    #if SP_PLATFORM_UNREAL
     {
       char buffer[PPK_ASSERT_MESSAGE_BUFFER_SIZE];
       va_start(args, format);
@@ -175,6 +185,7 @@ namespace {
       Log::logStringToUnreal(std::string("ERROR: ") + buffer);
       va_end(args);
     }
+    #endif
 
     // ---- END SPEAR MODIFICATION ----
 
@@ -220,6 +231,16 @@ namespace {
                                                               int level,
                                                               const char* message)
   {
+    // ---- BEGIN SPEAR MODIFICATION ----
+
+    // We only need to force a console into existence in SP_PLATFORM_UNREAL builds, because that's the only
+    // situation where we show the interactive prompt below. In SP_PLATFORM_PURE builds (e.g., python_ext), we
+    // don't want to steal stdout from the host process (e.g., a Jupyter kernel or pythonw.exe).
+
+    #if SP_PLATFORM_UNREAL
+
+    // ---- END SPEAR MODIFICATION ----
+
 #if defined(_WIN32)
     if (::GetConsoleWindow() == NULL)
     {
@@ -233,6 +254,12 @@ namespace {
       }
     }
 #endif
+
+    // ---- BEGIN SPEAR MODIFICATION ----
+
+    #endif
+
+    // ---- END SPEAR MODIFICATION ----
 
     // ---- BEGIN SPEAR MODIFICATION ----
 
@@ -275,25 +302,42 @@ namespace {
     // On Windows we don't need this special case, because we already forced a console into existence above
     // if one didn't already exist.
     //
+    // In SP_PLATFORM_PURE builds (e.g., python_ext), we always throw, or break then throw if a debugger is
+    // attached, and we never show the interactive prompt below, so a failed assert behaves like a failed Python
+    // assert. Throwing gives error-handling code in the host process (e.g., Python code that is responsible for
+    // cleaning up after a critical section) a chance to execute, rather than requiring us to duplicate that logic
+    // in C++. We don't show the prompt because there is no reliable way to read a response from inside a Jupyter
+    // kernel, which has no controlling terminal and whose stdin is a closed pipe.
+    //
 
     AssertAction::AssertAction default_assert_action = AssertAction::None;
-    if (boost::debug::under_debugger()) {
-      if (AssertsAreAllowedToThrowScope::insideAssertsAreAllowedToThrowScope()) {
+    #if SP_PLATFORM_UNREAL
+      if (boost::debug::under_debugger()) {
+        if (AssertsAreAllowedToThrowScope::insideAssertsAreAllowedToThrowScope()) {
+          default_assert_action = AssertAction::BreakThenThrow;
+        } else {
+          default_assert_action = AssertAction::Break;
+        }
+      } else {
+        if (AssertsAreAllowedToThrowScope::insideAssertsAreAllowedToThrowScope()) {
+          default_assert_action = AssertAction::Throw;
+        } else {
+          #if WITH_EDITOR // defined in an auto-generated header
+            default_assert_action = AssertAction::Crash;
+          #else
+            default_assert_action = AssertAction::Exit;
+          #endif
+        }
+      }
+    #elif SP_PLATFORM_PURE
+      if (boost::debug::under_debugger()) {
         default_assert_action = AssertAction::BreakThenThrow;
       } else {
-        default_assert_action = AssertAction::Break;
-      }
-    } else {
-      if (AssertsAreAllowedToThrowScope::insideAssertsAreAllowedToThrowScope()) {
         default_assert_action = AssertAction::Throw;
-      } else {
-        #if WITH_EDITOR // defined in an auto-generated header
-          default_assert_action = AssertAction::Crash;
-        #else
-          default_assert_action = AssertAction::Exit;
-        #endif
       }
-    }
+    #else
+      #error
+    #endif
 
     // ---- END SPEAR MODIFICATION ----
 
@@ -314,6 +358,10 @@ namespace {
       // for (;;)
       // {
       //
+
+      #if SP_PLATFORM_PURE
+        return default_assert_action;
+      #endif
 
       #if BOOST_OS_MACOS || BOOST_OS_LINUX
         if (!isatty(fileno(stdin))) {
@@ -464,35 +512,46 @@ namespace {
   // reaches the original SP_ASSERT call site.
   void _printCallStack(int32 num_frames_to_skip)
   {
-    const int32 max_call_stack_chars = 65535;
-    ANSICHAR call_stack[max_call_stack_chars] = {0};
-    FPlatformStackWalk::StackWalkAndDump(call_stack, max_call_stack_chars, num_frames_to_skip);
+    #if SP_PLATFORM_UNREAL
+      const int32 max_call_stack_chars = 65535;
+      ANSICHAR call_stack[max_call_stack_chars] = {0};
+      FPlatformStackWalk::StackWalkAndDump(call_stack, max_call_stack_chars, num_frames_to_skip);
+      std::string call_stack_string = std::string(call_stack);
+    #elif SP_PLATFORM_PURE
+      size_t max_depth = std::numeric_limits<size_t>::max();
+      boost::stacktrace::stacktrace call_stack(static_cast<size_t>(num_frames_to_skip), max_depth);
+      std::string call_stack_string = boost::stacktrace::to_string(call_stack);
+    #else
+      #error
+    #endif
     SP_LOG_NO_PREFIX("Call stack:");
-    SP_LOG_NO_PREFIX(std::string(call_stack));
+    SP_LOG_NO_PREFIX(call_stack_string);
   }
 
   // Returns a human-readable description of a single call stack frame (e.g., "0x0b7f9868
   // SpearSim!SpCore::initializeSharedMemory() [UnknownFile]"), so we can pass something more useful than a
   // hardcoded string to FPlatformMisc::RequestExit(...)'s CallSite parameter. See _printCallStack(...) above
   // for how to choose num_frames_to_skip.
-  std::string _getCallSiteString(int32 num_frames_to_skip)
-  {
-    const int32 max_depth = 16;
-    SP_ASSERT(num_frames_to_skip < max_depth);
+  #if SP_PLATFORM_UNREAL
+    std::string _getCallSiteString(int32 num_frames_to_skip)
+    {
+      const int32 max_depth = 16;
+      SP_ASSERT(num_frames_to_skip < max_depth);
 
-    uint64 back_trace[max_depth] = {0};
-    uint32 num_frames_captured = FPlatformStackWalk::CaptureStackBackTrace(back_trace, num_frames_to_skip + 1);
+      uint64 back_trace[max_depth] = {0};
+      uint32 num_frames_captured = FPlatformStackWalk::CaptureStackBackTrace(back_trace, num_frames_to_skip + 1);
 
-    if (num_frames_captured <= static_cast<uint32>(num_frames_to_skip)) {
-      return "";
+      if (num_frames_captured <= static_cast<uint32>(num_frames_to_skip)) {
+        return "";
+      }
+
+      const int32 max_buffer_chars = 8192;
+      ANSICHAR buffer[max_buffer_chars] = {0};
+      int32 current_call_depth = 0;
+      FPlatformStackWalk::ProgramCounterToHumanReadableString(current_call_depth, back_trace[num_frames_to_skip], buffer, max_buffer_chars);
+      return std::string(buffer);
     }
-
-    const int32 max_buffer_chars = 8192;
-    ANSICHAR buffer[max_buffer_chars] = {0};
-    int32 current_call_depth = 0;
-    FPlatformStackWalk::ProgramCounterToHumanReadableString(current_call_depth, back_trace[num_frames_to_skip], buffer, max_buffer_chars);
-    return std::string(buffer);
-  }
+  #endif
 
   // ---- END SPEAR MODIFICATION ----
 
@@ -518,10 +577,16 @@ namespace {
     if (message) {
         SP_LOG_NO_PREFIX("    with message: ", message);
     }
-    int32 num_frames_to_skip = 3;
-    std::string call_site_string = _getCallSiteString(num_frames_to_skip);
-    bool force = true;
-    FPlatformMisc::RequestExit(force, Unreal::toTCharPtr(call_site_string));
+    #if SP_PLATFORM_UNREAL
+      int32 num_frames_to_skip = 3;
+      std::string call_site_string = _getCallSiteString(num_frames_to_skip);
+      bool force = true;
+      FPlatformMisc::RequestExit(force, Unreal::toTCharPtr(call_site_string));
+    #elif SP_PLATFORM_PURE
+      std::exit(EXIT_FAILURE);
+    #else
+      #error
+    #endif
   }
 
   void _crash(const char* file,
@@ -535,11 +600,17 @@ namespace {
         SP_LOG_NO_PREFIX("    with message: ", message);
     }
 
-    // Deliberately trigger a hardware fault so Unreal's own crash-handling pipeline (e.g., the editor's
-    // built-in crash handler) engages, in case it can produce a more complete call stack than the one
-    // printed earlier in _defaultHandler(...).
-    uint32 exception_code = 1;
-    FPlatformMisc::RaiseException(exception_code);
+    #if SP_PLATFORM_UNREAL
+      // Deliberately trigger a hardware fault so Unreal's own crash-handling pipeline (e.g., the editor's
+      // built-in crash handler) engages, in case it can produce a more complete call stack than the one
+      // printed earlier in _defaultHandler(...).
+      uint32 exception_code = 1;
+      FPlatformMisc::RaiseException(exception_code);
+    #elif SP_PLATFORM_PURE
+      std::abort();
+    #else
+      #error
+    #endif
   }
 
   // ---- END SPEAR MODIFICATION ----

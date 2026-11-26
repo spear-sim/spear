@@ -939,32 +939,56 @@ class Client:
         self._arg_converters = {
             SpPackedArray: self._to_sp_packed_array_arg}
 
-        # Custom converters for return values that can't be converted generically by _to_return_value(...), keyed by
-        # return_as string. Keep sorted in the same order as the ClientStruct classes below. The return_as strings need to
-        # match the s_type_names_ values in cpp/unreal_plugins/SpServices/Source/SpServices/FuncSignatureRegistry.h
+        # Converters for return values, keyed by return_as string. Must match the s_type_names_ values in
+        # cpp/unreal_plugins/SpServices/Source/SpServices/FuncSignatureRegistry.h, in the same order, which is validated
+        # in _validate_entry_point_signature_type_names(). A converter is None if no conversion is needed, or if the
+        # return value is a container that _to_return_value(...) converts by recursively converting its elements.
         self._return_value_converters = {
-            "sp_output_log_messages":      self._to_sp_output_log_messages_return_value,
-            "sp_shared_memory_view":       self._to_sp_shared_memory_view_return_value,
-            "sp_packed_array":             self._to_sp_packed_array_return_value,
-            "sp_array_shared_memory_view": self._to_sp_array_shared_memory_view_return_value,
-            "sp_func_data_bundle":         self._to_sp_func_data_bundle_return_value,
-            "sp_handle":                   self._to_sp_handle_return_value,
-            "sp_property_desc":            self._to_sp_property_desc_return_value,
-            "sp_property_value":           self._to_sp_property_value_return_value,
-            "sp_func_signature_desc":      self._to_sp_func_signature_desc_return_value,
-            "sp_future":                   self._to_sp_future_return_value,
-            "sp_function_desc":            self._to_sp_function_desc_return_value, # never returned directly by an entry point, only nested inside SpStaticClassDesc::function_descs
-            "sp_static_struct_desc":       self._to_sp_static_struct_desc_return_value,
-            "sp_static_class_desc":        self._to_sp_static_class_desc_return_value,
-            "sp_world_desc":               self._to_sp_world_desc_return_value}
+            "void":                                         None,
+            "bool":                                         None,
+            "float":                                        None,
+            "int32":                                        None,
+            "int64":                                        None,
+            "uint64":                                       None,
+            "string":                                       self._to_str_return_value,
+            "vector_of_string":                             None,
+            "vector_of_sp_handle":                          None,
+            "vector_of_sp_static_struct_desc":              None,
+            "vector_of_sp_static_class_desc":               None,
+            "map_of_string_to_string":                      None,
+            "map_of_string_to_sp_array_shared_memory_view": None,
+            "map_of_string_to_sp_packed_array":             None,
+            "map_of_string_to_sp_handle":                   None,
+            "map_of_string_to_sp_property_value":           None,
+            "map_of_string_to_sp_func_signature_desc":      None,
+            "map_of_string_to_sp_world_desc":               None,
+            "sp_output_log_messages":                       self._to_sp_output_log_messages_return_value,
+            "sp_shared_memory_view":                        self._to_sp_shared_memory_view_return_value,
+            "sp_array_shared_memory_view":                  self._to_sp_array_shared_memory_view_return_value,
+            "sp_packed_array":                              self._to_sp_packed_array_return_value,
+            "sp_func_data_bundle":                          self._to_sp_func_data_bundle_return_value,
+            "sp_handle":                                    self._to_sp_handle_return_value,
+            "sp_property_desc":                             self._to_sp_property_desc_return_value,
+            "sp_property_value":                            self._to_sp_property_value_return_value,
+            "sp_func_signature_desc":                       self._to_sp_func_signature_desc_return_value,
+            "sp_future":                                    self._to_sp_future_return_value,
+            "sp_function_desc":                             self._to_sp_function_desc_return_value,
+            "sp_static_struct_desc":                        self._to_sp_static_struct_desc_return_value,
+            "sp_static_class_desc":                         self._to_sp_static_class_desc_return_value,
+            "sp_world_desc":                                self._to_sp_world_desc_return_value}
 
     def initialize(self):
+        result = self._client.call("engine_service.call_sync_on_worker_thread.get_entry_point_signature_type_names")
+        self.entry_point_signature_type_names = self._to_return_value(return_value=result, return_as="vector_of_string")
+        self._validate_entry_point_signature_type_names()
+
         result = self._client.call("engine_service.call_sync_on_worker_thread.get_entry_point_signature_descs")
         self.entry_point_signature_descs = self._to_return_value(return_value=result, return_as="map_of_string_to_sp_func_signature_desc")
 
     def terminate(self):
         self._client.close()
         self.entry_point_signature_descs = {}
+        self.entry_point_signature_type_names = []
 
     def get_timeout(self):
         assert False
@@ -985,6 +1009,9 @@ class Client:
     def get_entry_point_signature_descs(self):
         return self.entry_point_signature_descs
 
+    def get_entry_point_signature_type_names(self):
+        return self.entry_point_signature_type_names
+
     def call(self, func_name, *args):
         desc = self.entry_point_signature_descs[func_name]
         return_as = desc.type_names[0]
@@ -1002,6 +1029,26 @@ class Client:
         if self.verbose_rpc_calls:
             spear.log(f"Obtained return value: {return_value}")
         return return_value
+
+    def _validate_entry_point_signature_type_names(self):
+        client_type_names = list(self._return_value_converters.keys())
+        server_type_names = self.entry_point_signature_type_names
+        success = True
+        for i in range(max(len(client_type_names), len(server_type_names))):
+            if i < len(client_type_names):
+                client_type_name = f'"{client_type_names[i]}"'
+            else:
+                client_type_name = "<missing>"
+            if i < len(server_type_names):
+                server_type_name = f'"{server_type_names[i]}"'
+            else:
+                server_type_name = "<missing>"
+            if client_type_name != server_type_name:
+                spear.log(f"ERROR: Type ID/name mismatch at id={i} (server={server_type_name}, client={client_type_name})")
+                success = False
+        if not success:
+            spear.log("ERROR: The editor client is out of sync with the server. Make sure the return value converters in spear/utils/editor_utils.py match the type names in SpServices/FuncSignatureRegistry.h.")
+        assert success
 
     #
     # Args
@@ -1046,20 +1093,20 @@ class Client:
     #
 
     def _to_return_value(self, return_value, return_as):
-        if return_as == "string":
-            return self._to_str_return_value(return_value=return_value)
-        elif return_as in self._return_value_converters:
-            return_value = { self._to_str_return_value(return_value=k): v for k, v in return_value.items() }
-            return self._return_value_converters[return_as](return_value=return_value)
-        elif return_as.startswith("vector_of_"):
+        if return_as.startswith("vector_of_"):
             value_return_as = return_as.removeprefix("vector_of_")
             return [ self._to_return_value(return_value=v, return_as=value_return_as) for v in return_value ]
         elif return_as.startswith("map_of_"):
             key_return_as, value_return_as = return_as.removeprefix("map_of_").split("_to_", 1)
             return { self._to_return_value(return_value=k, return_as=key_return_as): self._to_return_value(return_value=v, return_as=value_return_as) for k, v in return_value.items() }
         else:
-            assert return_as in ["void", "bool", "float", "int32", "int64", "uint64"]
-            return return_value
+            converter = self._return_value_converters[return_as]
+            if converter is None:
+                return return_value
+            elif isinstance(return_value, dict):
+                return converter(return_value={ self._to_str_return_value(return_value=k): v for k, v in return_value.items() })
+            else:
+                return converter(return_value=return_value)
 
     # Custom return value converters
 
@@ -1073,6 +1120,14 @@ class Client:
             id=self._to_str_return_value(return_value=return_value["id"]),
             num_bytes=return_value["num_bytes"],
             offset_bytes=return_value["offset_bytes"])
+
+    def _to_sp_array_shared_memory_view_return_value(self, return_value):
+        return SpArraySharedMemoryView(
+            id=self._to_str_return_value(return_value=return_value["id"]),
+            num_bytes=return_value["num_bytes"],
+            offset_bytes=return_value["offset_bytes"],
+            usage_flags=self._to_return_value(return_value=return_value["usage_flags"], return_as="vector_of_string"),
+            name=self._to_str_return_value(return_value=return_value["name"]))
 
     def _to_sp_packed_array_return_value(self, return_value):
         data_source = self._to_str_return_value(return_value=return_value["data_source"])
@@ -1088,14 +1143,6 @@ class Client:
             data_source=data_source,
             shape=return_value["shape"],
             shared_memory_name=self._to_str_return_value(return_value=return_value["shared_memory_name"]))
-
-    def _to_sp_array_shared_memory_view_return_value(self, return_value):
-        return SpArraySharedMemoryView(
-            id=self._to_str_return_value(return_value=return_value["id"]),
-            num_bytes=return_value["num_bytes"],
-            offset_bytes=return_value["offset_bytes"],
-            usage_flags=self._to_return_value(return_value=return_value["usage_flags"], return_as="vector_of_string"),
-            name=self._to_str_return_value(return_value=return_value["name"]))
 
     def _to_sp_func_data_bundle_return_value(self, return_value):
         return SpFuncDataBundle(
@@ -1196,17 +1243,6 @@ class SpSharedMemoryView(ClientStruct):
     def __repr__(self):
         return f"spear.SpSharedMemoryView(id={self.id}, num_bytes={self.num_bytes}, offset_bytes={self.offset_bytes})"
 
-class SpPackedArray(ClientStruct):
-    def __init__(self, data=None, data_source="Invalid", shape=None, shared_memory_name=""):
-        shape = shape if shape is not None else []
-        self.data = data
-        self.data_source = data_source
-        self.shape = shape
-        self.shared_memory_name = shared_memory_name
-
-    def __repr__(self):
-        return f'spear.SpPackedArray(data={self.data}, data_source="{self.data_source}", shape={self.shape}, shared_memory_name="{self.shared_memory_name}")'
-
 class SpArraySharedMemoryView(ClientStruct):
     def __init__(self, id="", num_bytes=0, offset_bytes=0, usage_flags=None, name="smem:invalid"):
         usage_flags = usage_flags if usage_flags is not None else ["DoNotUse"]
@@ -1218,6 +1254,17 @@ class SpArraySharedMemoryView(ClientStruct):
 
     def __repr__(self):
         return f"spear.SpArraySharedMemoryView(id={self.id}, num_bytes={self.num_bytes}, offset_bytes={self.offset_bytes}, usage_flags={self.usage_flags}, name={self.name})"
+
+class SpPackedArray(ClientStruct):
+    def __init__(self, data=None, data_source="Invalid", shape=None, shared_memory_name=""):
+        shape = shape if shape is not None else []
+        self.data = data
+        self.data_source = data_source
+        self.shape = shape
+        self.shared_memory_name = shared_memory_name
+
+    def __repr__(self):
+        return f'spear.SpPackedArray(data={self.data}, data_source="{self.data_source}", shape={self.shape}, shared_memory_name="{self.shared_memory_name}")'
 
 class SpFuncDataBundle(ClientStruct):
     def __init__(self, packed_arrays=None, unreal_obj_strings=None, info=""):
